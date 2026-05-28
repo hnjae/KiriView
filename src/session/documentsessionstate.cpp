@@ -55,7 +55,7 @@ const QUrl &DocumentSessionState::sourceUrl() const { return m_sourceUrl; }
 
 DocumentSessionKind DocumentSessionState::documentKind() const { return m_documentKind; }
 
-const QString &DocumentSessionState::sessionErrorString() const { return m_sessionErrorString; }
+const QString &DocumentSessionState::sessionErrorString() const { return m_sourceErrorString; }
 
 const QString &DocumentSessionState::windowTitleSubject() const
 {
@@ -245,7 +245,7 @@ bool DocumentSessionState::applyPublicProjection(DocumentSessionPublicProjection
 
 void DocumentSessionState::setSessionErrorString(const QString &errorString)
 {
-    if (replaceIfChanged(m_sessionErrorString, errorString)) {
+    if (replaceIfChanged(m_sourceErrorString, errorString)) {
         publish(DocumentSessionChange::ErrorString);
     }
 }

@@ -14,20 +14,20 @@ int predecodeDebounceMsec() { return rustPredecodeDebounceMsec(); }
 
 int predecodeNeutralRefreshMsec() { return rustPredecodeNeutralRefreshMsec(); }
 
-PredecodePolicyInput predecodePolicyInputForImagePageScope(
-    const ImagePageScopeLocation &imagePageScope, PredecodeMomentumMode momentumMode,
+PredecodePolicyInput predecodePolicyInputForOpenedCollectionScope(
+    const OpenedCollectionScopeLocation &openedCollectionScope, PredecodeMomentumMode momentumMode,
     bool powerSaverEnabled, int idealThreadCount)
 {
     PredecodePolicyInput input {};
     input.momentumMode = momentumMode;
     input.powerSaverEnabled = powerSaverEnabled;
     input.idealThreadCount = idealThreadCount;
-    if (imagePageScope.isEmpty()) {
-        input.documentKind = PredecodeDocumentKind::Regular;
-    } else if (imagePageScope.isDirectory()) {
-        input.documentKind = PredecodeDocumentKind::DirectoryDocument;
+    if (openedCollectionScope.isEmpty()) {
+        input.scopeKind = PredecodeScopeKind::DirectMedia;
+    } else if (openedCollectionScope.isDirectory()) {
+        input.scopeKind = PredecodeScopeKind::DirectoryCollection;
     } else {
-        input.documentKind = PredecodeDocumentKind::ArchiveDocument;
+        input.scopeKind = PredecodeScopeKind::ArchiveCollection;
     }
     return input;
 }

@@ -86,17 +86,17 @@ Fit Height mode scales the image height to the viewport height while preserving 
 
 Fit Width mode scales the image width to the viewport width while preserving aspect ratio.
 
-Within the same directly opened archive or directory document, KiriView preserves the current zoom state while users move between pages with Previous, Next, or page number navigation.
+Within the same directly opened archive or directory collection, KiriView preserves the current zoom state while users move between pages with Previous, Next, or page number navigation.
 
 If the user has selected Fit, Fit Height, or Fit Width, that fit mode remains selected and recalculates for each page and viewport size.
 
 If the user has entered a manual zoom value, that exact percentage remains active.
 
-When the displayed page changes inside the archive or directory document through ordinary page navigation, any panning position from the previous page is cleared. The newly displayed page starts at its scan start at the preserved zoom level: top-left normally and top-right in Right-to-Left Reading mode.
+When the displayed page changes inside the archive or directory collection through ordinary page navigation, any panning position from the previous page is cleared. The newly displayed page starts at its scan start at the preserved zoom level: top-left normally and top-right in Right-to-Left Reading mode.
 
 The scan-backward shortcut may open the previous image at its final scan position instead: bottom-right normally and bottom-left in Right-to-Left Reading mode.
 
-Starting KiriView, opening a regular image, moving between regular directory images, opening a KDE archive URL image directly, opening a different archive or directory document, or moving to a sibling archive resets zoom to Fit mode when the new image is displayed.
+Starting KiriView, opening a regular image, moving between regular directory images, opening a KDE archive URL image directly, opening a different archive or directory collection, or moving to a sibling archive resets zoom to Fit mode when the new image is displayed.
 
 ## Rotation
 

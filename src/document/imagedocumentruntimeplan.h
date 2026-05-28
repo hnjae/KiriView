@@ -19,7 +19,7 @@ struct StopPresentationAnimationOperation {
 };
 struct ShutdownSpreadOperation {
 };
-struct ClearArchiveSessionOperation {
+struct ClearMediaEntrySourceOperation {
 };
 struct ClearPredecodeOperation {
 };
@@ -99,7 +99,7 @@ struct FinishEmptySourceLoadOperation {
 };
 
 using ImageDocumentRuntimeOperation = std::variant<CancelFileDeletionOperation,
-    StopPresentationAnimationOperation, ShutdownSpreadOperation, ClearArchiveSessionOperation,
+    StopPresentationAnimationOperation, ShutdownSpreadOperation, ClearMediaEntrySourceOperation,
     ClearPredecodeOperation, CancelPredecodeOperation, ScheduleAdjacentImagePredecodeOperation,
     FinishSpreadTransitionOperation, ResetRightToLeftReadingOperation, ClearSecondaryPageOperation,
     NotifyRightToLeftReadingChangedOperation, ResetZoomOperation, PrepareFailedContainerOperation,

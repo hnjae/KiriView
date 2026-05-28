@@ -65,45 +65,51 @@ private:
     QUrl m_url;
 };
 
-enum class ImagePageScopeKind {
+enum class OpenedCollectionScopeKind {
     ComicBookArchive,
     GeneralArchive,
     Directory,
 };
 
-class ImagePageScopeLocation
+class OpenedCollectionScopeLocation
 {
 public:
-    ImagePageScopeLocation() = default;
-    ImagePageScopeLocation(QUrl fileUrl, QUrl rootUrl, ImagePageScopeKind kind)
+    OpenedCollectionScopeLocation() = default;
+    OpenedCollectionScopeLocation(QUrl fileUrl, QUrl rootUrl, OpenedCollectionScopeKind kind)
         : m_fileUrl(normalizedUrlForIdentity(fileUrl))
         , m_rootUrl(normalizedUrlForIdentity(rootUrl))
         , m_kind(kind)
     {
     }
 
-    static ImagePageScopeLocation none() { return ImagePageScopeLocation(); }
-    static ImagePageScopeLocation fromUrls(QUrl fileUrl, QUrl rootUrl, ImagePageScopeKind kind)
+    static OpenedCollectionScopeLocation none() { return OpenedCollectionScopeLocation(); }
+    static OpenedCollectionScopeLocation fromUrls(
+        QUrl fileUrl, QUrl rootUrl, OpenedCollectionScopeKind kind)
     {
-        return ImagePageScopeLocation(std::move(fileUrl), std::move(rootUrl), kind);
+        return OpenedCollectionScopeLocation(std::move(fileUrl), std::move(rootUrl), kind);
     }
 
     const QUrl &fileUrl() const { return m_fileUrl; }
     const QUrl &rootUrl() const { return m_rootUrl; }
-    ImagePageScopeKind kind() const { return m_kind; }
+    OpenedCollectionScopeKind kind() const { return m_kind; }
     bool isEmpty() const { return m_fileUrl.isEmpty() || m_rootUrl.isEmpty(); }
     bool isComicBook() const
     {
-        return !isEmpty() && m_kind == ImagePageScopeKind::ComicBookArchive;
+        return !isEmpty() && m_kind == OpenedCollectionScopeKind::ComicBookArchive;
     }
-    bool isDirectory() const { return !isEmpty() && m_kind == ImagePageScopeKind::Directory; }
+    bool isDirectory() const
+    {
+        return !isEmpty() && m_kind == OpenedCollectionScopeKind::Directory;
+    }
 
-    friend bool operator==(const ImagePageScopeLocation &left, const ImagePageScopeLocation &right)
+    friend bool operator==(
+        const OpenedCollectionScopeLocation &left, const OpenedCollectionScopeLocation &right)
     {
         return left.m_fileUrl == right.m_fileUrl && left.m_rootUrl == right.m_rootUrl
             && left.m_kind == right.m_kind;
     }
-    friend bool operator!=(const ImagePageScopeLocation &left, const ImagePageScopeLocation &right)
+    friend bool operator!=(
+        const OpenedCollectionScopeLocation &left, const OpenedCollectionScopeLocation &right)
     {
         return !(left == right);
     }
@@ -111,55 +117,63 @@ public:
 private:
     QUrl m_fileUrl;
     QUrl m_rootUrl;
-    ImagePageScopeKind m_kind = ImagePageScopeKind::GeneralArchive;
+    OpenedCollectionScopeKind m_kind = OpenedCollectionScopeKind::GeneralArchive;
 };
 
-bool sameImagePageScopeLocation(
-    const ImagePageScopeLocation &left, const ImagePageScopeLocation &right);
+bool sameOpenedCollectionScopeLocation(
+    const OpenedCollectionScopeLocation &left, const OpenedCollectionScopeLocation &right);
 
 class DisplayedImageLocation
 {
 public:
     DisplayedImageLocation() = default;
-    DisplayedImageLocation(ImageLocation image, ImagePageScopeLocation imagePageScope)
+    DisplayedImageLocation(ImageLocation image, OpenedCollectionScopeLocation openedCollectionScope)
         : m_image(std::move(image))
-        , m_imagePageScope(std::move(imagePageScope))
+        , m_openedCollectionScope(std::move(openedCollectionScope))
     {
     }
 
     static DisplayedImageLocation fromUrl(QUrl imageUrl)
     {
         return DisplayedImageLocation { ImageLocation::fromUrl(std::move(imageUrl)),
-            ImagePageScopeLocation::none() };
+            OpenedCollectionScopeLocation::none() };
     }
 
-    static DisplayedImageLocation fromUrl(QUrl imageUrl, ImagePageScopeLocation imagePageScope)
+    static DisplayedImageLocation fromUrl(
+        QUrl imageUrl, OpenedCollectionScopeLocation openedCollectionScope)
     {
         return DisplayedImageLocation { ImageLocation::fromUrl(std::move(imageUrl)),
-            std::move(imagePageScope) };
+            std::move(openedCollectionScope) };
     }
 
-    static DisplayedImageLocation fromImagePageScope(
-        QUrl imageUrl, ImagePageScopeLocation imagePageScope)
+    static DisplayedImageLocation fromOpenedCollectionScope(
+        QUrl imageUrl, OpenedCollectionScopeLocation openedCollectionScope)
     {
-        return fromUrl(std::move(imageUrl), std::move(imagePageScope));
+        return fromUrl(std::move(imageUrl), std::move(openedCollectionScope));
     }
 
     const QUrl &imageUrl() const { return m_image.url(); }
-    const ImagePageScopeLocation &imagePageScope() const { return m_imagePageScope; }
-    const QUrl &imagePageScopeSourceUrl() const { return m_imagePageScope.fileUrl(); }
-    const QUrl &imagePageScopeRootUrl() const { return m_imagePageScope.rootUrl(); }
+    const OpenedCollectionScopeLocation &openedCollectionScope() const
+    {
+        return m_openedCollectionScope;
+    }
+    const QUrl &openedCollectionScopeSourceUrl() const { return m_openedCollectionScope.fileUrl(); }
+    const QUrl &openedCollectionScopeRootUrl() const { return m_openedCollectionScope.rootUrl(); }
     bool isEmpty() const { return m_image.isEmpty(); }
     void setImageUrl(QUrl url) { m_image = ImageLocation::fromUrl(std::move(url)); }
-    void setImagePageScope(ImagePageScopeLocation imagePageScope)
+    void setOpenedCollectionScope(OpenedCollectionScopeLocation openedCollectionScope)
     {
-        m_imagePageScope = std::move(imagePageScope);
+        m_openedCollectionScope = std::move(openedCollectionScope);
     }
-    void clearImagePageScope() { m_imagePageScope = ImagePageScopeLocation::none(); }
+    void clearOpenedCollectionScope()
+    {
+        m_openedCollectionScope = OpenedCollectionScopeLocation::none();
+    }
 
     friend bool operator==(const DisplayedImageLocation &left, const DisplayedImageLocation &right)
     {
-        return left.m_image == right.m_image && left.m_imagePageScope == right.m_imagePageScope;
+        return left.m_image == right.m_image
+            && left.m_openedCollectionScope == right.m_openedCollectionScope;
     }
     friend bool operator!=(const DisplayedImageLocation &left, const DisplayedImageLocation &right)
     {
@@ -168,7 +182,7 @@ public:
 
 private:
     ImageLocation m_image;
-    ImagePageScopeLocation m_imagePageScope;
+    OpenedCollectionScopeLocation m_openedCollectionScope;
 };
 
 }

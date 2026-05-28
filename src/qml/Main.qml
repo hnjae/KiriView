@@ -224,7 +224,7 @@ StatefulApp.StatefulWindow {
         readonly property var videoDocument: documentSession.videoDocument
         readonly property bool imageMode: documentSession.documentKind === KiriDocumentSession.Image
         readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
-        readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready && !imageDocument.unsupportedDocumentVideo
+        readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready && !imageDocument.unsupportedOpenedCollectionVideo
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
         property bool documentDeletionWasInProgress: false
 
@@ -338,7 +338,7 @@ StatefulApp.StatefulWindow {
                 toastNotification.show(errorString, "general");
             }
 
-            function onUnsupportedDocumentVideoEntered(message) {
+            function onUnsupportedOpenedCollectionVideoEntered(message) {
                 toastNotification.show(message, "unsupported-document-video");
             }
         }
@@ -434,10 +434,10 @@ StatefulApp.StatefulWindow {
                 documentSession.openActiveNavigationAtNumber(number);
             }
             rightToLeftReadingActive: imageActions.rightToLeftReadingActive
-            rightToLeftReadingControlVisible: page.imageMode && page.imageDocument.archiveOrDirectoryDocumentScopeActive
+            rightToLeftReadingControlVisible: page.imageMode && page.imageDocument.openedCollectionScopeActive
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             transientOverlay: root.fullscreen
-            twoPageModeControlVisible: page.imageMode && page.imageDocument.archiveOrDirectoryDocumentScopeActive
+            twoPageModeControlVisible: page.imageMode && page.imageDocument.openedCollectionScopeActive
             videoMode: page.videoMode
             visible: !root.fullscreen || root.fullscreenToolBarRevealed
             zoomEditable: documentSession.activeZoomEditable

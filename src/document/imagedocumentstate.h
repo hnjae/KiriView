@@ -28,7 +28,7 @@ public:
     const QUrl &sourceUrl() const;
     ImageNavigationCandidateKind sourceKind() const;
     const DisplayedImageLocation &displayedImageLocation() const;
-    const ImagePageScopeLocation &displayedImagePageScope() const;
+    const OpenedCollectionScopeLocation &displayedOpenedCollectionScope() const;
     const QUrl &displayedUrl() const;
     ImageDocumentStatus status() const;
     bool loading() const;
@@ -37,7 +37,7 @@ public:
     const QUrl &containerNavigationUrl() const;
     const QUrl &loadingContainerNavigationUrl() const;
     bool containerNavigationAvailable() const;
-    bool unsupportedDocumentVideo() const;
+    bool unsupportedOpenedCollectionVideo() const;
 
     void setSourceUrl(const QUrl &sourceUrl);
     void setSourceKind(ImageNavigationCandidateKind sourceKind);
@@ -49,7 +49,7 @@ public:
     void setContainerNavigationUrl(const QUrl &containerUrl);
     void setLoadingContainerNavigationUrl(const QUrl &containerUrl);
     void clearLoadingContainerNavigationUrl();
-    void setUnsupportedDocumentVideo(bool unsupported);
+    void setUnsupportedOpenedCollectionVideo(bool unsupported);
 
 private:
     void replaceDisplayedImageLocation(DisplayedImageLocation location);
@@ -62,7 +62,7 @@ private:
     DisplayedImageLocation m_displayedImageLocation;
     ImageDocumentStatus m_status = ImageDocumentStatus::Null;
     bool m_loading = false;
-    bool m_unsupportedDocumentVideo = false;
+    bool m_unsupportedOpenedCollectionVideo = false;
     QString m_errorString;
     QUrl m_containerNavigationUrl;
     QUrl m_loadingContainerNavigationUrl;

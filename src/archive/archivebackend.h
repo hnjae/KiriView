@@ -31,26 +31,26 @@ template <typename Value> using ArchiveResult = std::variant<Value, ArchiveError
 using ArchiveImageCandidatesResult = ArchiveResult<ArchiveImageCandidates>;
 using ArchiveImageDataResult = ArchiveResult<ArchiveImageData>;
 
-class ArchiveDocumentSession
+class MediaEntrySource
 {
 public:
-    virtual ~ArchiveDocumentSession() = default;
+    virtual ~MediaEntrySource() = default;
 
     virtual ArchiveImageCandidatesResult loadImageCandidates() = 0;
     virtual ArchiveImageDataResult loadImageData(const QUrl &imageUrl) = 0;
 };
 
-using ArchiveDocumentSessionPtr = std::shared_ptr<ArchiveDocumentSession>;
-using ArchiveDocumentSessionOpenResult = ArchiveResult<ArchiveDocumentSessionPtr>;
-using ArchiveDocumentSessionFactory
-    = std::function<ArchiveDocumentSessionOpenResult(const ImagePageScopeLocation &)>;
+using MediaEntrySourcePtr = std::shared_ptr<MediaEntrySource>;
+using MediaEntrySourceOpenResult = ArchiveResult<MediaEntrySourcePtr>;
+using MediaEntrySourceFactory
+    = std::function<MediaEntrySourceOpenResult(const OpenedCollectionScopeLocation &)>;
 
-ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
-    const ImagePageScopeLocation &archiveDocument);
-ArchiveImageDataResult loadArchiveDocumentImageData(
-    const ImagePageScopeLocation &archiveDocument, const QUrl &imageUrl);
-ArchiveDocumentSessionOpenResult openArchiveDocumentSession(
-    const ImagePageScopeLocation &archiveDocument);
+ArchiveImageCandidatesResult loadMediaEntrySourceCandidates(
+    const OpenedCollectionScopeLocation &archiveCollection);
+ArchiveImageDataResult loadMediaEntrySourceImageData(
+    const OpenedCollectionScopeLocation &archiveCollection, const QUrl &imageUrl);
+MediaEntrySourceOpenResult openMediaEntrySource(
+    const OpenedCollectionScopeLocation &archiveCollection);
 }
 
 #endif

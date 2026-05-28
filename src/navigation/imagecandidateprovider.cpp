@@ -28,7 +28,7 @@ ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider()
                 receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));
         },
         startDirectoryContainerCandidateList,
-        startArchiveImageCandidateList,
+        startOpenedCollectionCandidateList,
         [candidateStore](QObject *receiver, QUrl directoryUrl, ImageCandidatesCallback callback,
             ErrorCallback errorCallback) {
             return candidateStore->watchDirectoryImages(
@@ -41,7 +41,7 @@ ImageNavigationCandidateProvider imageNavigationCandidateProviderWithDefaults(
     ImageNavigationCandidateProvider provider)
 {
     const bool providerIsEmpty = !provider.directoryImages && !provider.directoryContainers
-        && !provider.archiveImages && !provider.directoryImageChanges;
+        && !provider.openedCollectionCandidates && !provider.directoryImageChanges;
     ImageNavigationCandidateProvider defaults = defaultImageNavigationCandidateProvider();
     if (!provider.directoryImages) {
         provider.directoryImages = std::move(defaults.directoryImages);
@@ -49,8 +49,8 @@ ImageNavigationCandidateProvider imageNavigationCandidateProviderWithDefaults(
     if (!provider.directoryContainers) {
         provider.directoryContainers = std::move(defaults.directoryContainers);
     }
-    if (!provider.archiveImages) {
-        provider.archiveImages = std::move(defaults.archiveImages);
+    if (!provider.openedCollectionCandidates) {
+        provider.openedCollectionCandidates = std::move(defaults.openedCollectionCandidates);
     }
     if (!provider.directoryImageChanges) {
         provider.directoryImageChanges = providerIsEmpty ? std::move(defaults.directoryImageChanges)

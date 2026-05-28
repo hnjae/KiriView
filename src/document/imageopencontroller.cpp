@@ -42,7 +42,7 @@ QString animationLoadErrorMessage(const QString &errorString)
         : errorString;
 }
 
-QString unsupportedDocumentVideoMessage()
+QString unsupportedOpenedCollectionVideoMessage()
 {
     return i18nc("@info:status", "Video playback is not supported in archive or folder documents");
 }
@@ -68,7 +68,7 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
                 finishPredecodedImageLoad(std::move(session), std::move(image));
             },
             [this](ImageLoadSession session) {
-                finishUnsupportedDocumentVideoLoad(std::move(session));
+                finishUnsupportedOpenedCollectionVideoLoad(std::move(session));
             },
             [this](const QUrl &url) {
                 if (!m_callbacks.findPredecodedImage) {
@@ -95,7 +95,7 @@ void ImageOpenController::open()
 
     const ImageLoadRequest request = ImageLoadRequest::fromTarget(
         ImageNavigationTarget { m_state.sourceUrl(), m_state.sourceKind() },
-        m_state.displayedImagePageScope(), m_state.loadingContainerNavigationUrl());
+        m_state.displayedOpenedCollectionScope(), m_state.loadingContainerNavigationUrl());
     beginSourceLoad();
     m_imageLoader->start(request, m_presentationController.firstDisplayDecodeContext());
 }
@@ -111,14 +111,14 @@ void ImageOpenController::finishAnimationLoadWithError(const QString &errorStrin
 
 void ImageOpenController::finishEmptySourceLoad()
 {
-    m_state.setUnsupportedDocumentVideo(false);
+    m_state.setUnsupportedOpenedCollectionVideo(false);
     reportRuntimePlan(
         applyImageOpenApplicationPlan(m_state, ImageOpenWorkflow::finishEmptySourceLoadPlan()));
 }
 
 void ImageOpenController::beginSourceLoad()
 {
-    m_state.setUnsupportedDocumentVideo(false);
+    m_state.setUnsupportedOpenedCollectionVideo(false);
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot {
             m_presentationController.hasImage(),
@@ -139,7 +139,7 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
     const QString message = archiveOpenErrorMessage(errorString);
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::finishContainerNavigationLoadWithErrorPlan(containerUrl, message)));
-    m_state.setUnsupportedDocumentVideo(false);
+    m_state.setUnsupportedOpenedCollectionVideo(false);
 }
 
 void ImageOpenController::finishSourceResolved(ImageLoadSession session)
@@ -149,9 +149,9 @@ void ImageOpenController::finishSourceResolved(ImageLoadSession session)
     m_state.setSourceKind(session.kind());
 }
 
-void ImageOpenController::finishUnsupportedDocumentVideoLoad(ImageLoadSession session)
+void ImageOpenController::finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSession session)
 {
-    const QString message = unsupportedDocumentVideoMessage();
+    const QString message = unsupportedOpenedCollectionVideoMessage();
     {
         ImageDocumentState::ChangeBatch batch = m_state.beginChangeBatch();
         m_presentationController.clearImage();
@@ -163,10 +163,10 @@ void ImageOpenController::finishUnsupportedDocumentVideoLoad(ImageLoadSession se
         m_state.clearLoadingContainerNavigationUrl();
         m_state.setLoading(false);
         m_state.setStatus(ImageDocumentStatus::Ready);
-        m_state.setUnsupportedDocumentVideo(true);
+        m_state.setUnsupportedOpenedCollectionVideo(true);
     }
 
-    invokeIfSet(m_callbacks.unsupportedDocumentVideoEntered, message);
+    invokeIfSet(m_callbacks.unsupportedOpenedCollectionVideoEntered, message);
     reportRuntimePlan(ImageDocumentRuntimePlan {
         ClearSecondaryPageOperation {},
         UpdatePageNavigationOperation {},
@@ -212,13 +212,13 @@ void ImageOpenController::finishLoadWithError(
             },
             session, displayedUrl, message)));
     if (m_state.status() == ImageDocumentStatus::Error) {
-        m_state.setUnsupportedDocumentVideo(false);
+        m_state.setUnsupportedOpenedCollectionVideo(false);
     }
 }
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)
 {
-    m_state.setUnsupportedDocumentVideo(false);
+    m_state.setUnsupportedOpenedCollectionVideo(false);
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::finishSuccessfulImageLoadPlan(
             ImageOpenSuccessfulImageLoadSnapshot {

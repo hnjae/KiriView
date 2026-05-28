@@ -18,10 +18,10 @@ src/archive/archivebackend.cpp
 src/archive/archivebackend_directory.cpp
 src/archive/archivebackend_karchive.cpp
 src/archive/archivebackend_libarchive.cpp
-src/archive/archivedocumentcandidateloadstate.cpp
-src/archive/archivedocumentsessionstore.cpp
-src/archive/archivedocumentsessionruntime.cpp
-src/archive/archivedocumentsessionrunner.cpp
+src/archive/mediaentrysourcecandidateloadstate.cpp
+src/archive/mediaentrysourcestore.cpp
+src/archive/mediaentrysourceruntime.cpp
+src/archive/mediaentrysourcerunner.cpp
 src/archive/archiveformat.cpp
 src/archive/archivepath.cpp
 src/decoding/bufferedimagereader.cpp

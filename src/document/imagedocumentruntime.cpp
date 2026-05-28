@@ -23,7 +23,7 @@ namespace {
     {
         return ImageDocumentSourceLoadSnapshot {
             state.sourceUrl(),
-            state.displayedImagePageScope(),
+            state.displayedOpenedCollectionScope(),
             spreadController.rightToLeftReadingEnabled(),
         };
     }
@@ -33,7 +33,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
     ImageDocumentRuntimeDependencyOverrides dependencies,
     FileDeletionFailedCallback fileDeletionFailedCallback,
-    UnsupportedDocumentVideoEnteredCallback unsupportedDocumentVideoEnteredCallback)
+    UnsupportedOpenedCollectionVideoEnteredCallback unsupportedOpenedCollectionVideoEnteredCallback)
     : changeBatcher(ImageDocumentChangeBatcher::ChangeBatchCallback(
           [this](const std::vector<ImageDocumentChange> &changes) { publishChanges(changes); }))
     , state(changeBatcher)
@@ -47,7 +47,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
             [this](ImageDocumentChange change) { notify(change); },
             [this](const ImageDocumentSourceLoadRequest &request) { loadSource(request); },
             std::move(fileDeletionFailedCallback),
-            std::move(unsupportedDocumentVideoEnteredCallback),
+            std::move(unsupportedOpenedCollectionVideoEnteredCallback),
         });
 }
 
@@ -76,9 +76,9 @@ QString ImageDocumentRuntime::windowTitleFileName() const { return state.windowT
 
 QUrl ImageDocumentRuntime::displayedUrl() const { return state.displayedUrl(); }
 
-ImagePageScopeLocation ImageDocumentRuntime::displayedImagePageScope() const
+OpenedCollectionScopeLocation ImageDocumentRuntime::displayedOpenedCollectionScope() const
 {
-    return state.displayedImagePageScope();
+    return state.displayedOpenedCollectionScope();
 }
 
 QSize ImageDocumentRuntime::imageSize() const
@@ -234,12 +234,12 @@ bool ImageDocumentRuntime::containerNavigationAvailable() const
 
 bool ImageDocumentRuntime::ordinaryDirectMediaScopeActive() const
 {
-    return !state.displayedUrl().isEmpty() && state.displayedImagePageScope().isEmpty();
+    return !state.displayedUrl().isEmpty() && state.displayedOpenedCollectionScope().isEmpty();
 }
 
-bool ImageDocumentRuntime::archiveOrDirectoryDocumentScopeActive() const
+bool ImageDocumentRuntime::openedCollectionScopeActive() const
 {
-    return !state.displayedImagePageScope().isEmpty();
+    return !state.displayedOpenedCollectionScope().isEmpty();
 }
 
 bool ImageDocumentRuntime::fileDeletionInProgress() const
@@ -282,9 +282,9 @@ bool ImageDocumentRuntime::secondaryPageVisible() const
     return controllers->spreadController().secondaryPageVisible();
 }
 
-bool ImageDocumentRuntime::unsupportedDocumentVideo() const
+bool ImageDocumentRuntime::unsupportedOpenedCollectionVideo() const
 {
-    return state.unsupportedDocumentVideo();
+    return state.unsupportedOpenedCollectionVideo();
 }
 
 std::optional<DisplayedPredecodeImage> ImageDocumentRuntime::primaryDisplayedPredecodeImage() const

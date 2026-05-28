@@ -14,11 +14,12 @@
 #include <vector>
 
 namespace {
-KiriView::ImagePageScopeLocation testArchiveDocument()
+KiriView::OpenedCollectionScopeLocation testArchiveCollection()
 {
-    return KiriView::ImagePageScopeLocation::fromUrls(QUrl(QStringLiteral("file:///tmp/book.cbz")),
+    return KiriView::OpenedCollectionScopeLocation::fromUrls(
+        QUrl(QStringLiteral("file:///tmp/book.cbz")),
         QUrl(QStringLiteral("file:///tmp/book.cbz#/")),
-        KiriView::ImagePageScopeKind::ComicBookArchive);
+        KiriView::OpenedCollectionScopeKind::ComicBookArchive);
 }
 
 class FakePowerSaverMonitor final : public KiriView::PowerSaverStateMonitor
@@ -33,21 +34,21 @@ class TestImageDocumentRuntimeDependencies : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void defaultDependenciesUseArchiveSessionStore();
-    void partialNonArchiveOverridesStillUseArchiveSessionStore();
+    void defaultDependenciesUseMediaEntrySourceStore();
+    void partialNonSourceOverridesStillUseMediaEntrySourceStore();
     void customSessionFactoryWrapsArchiveProviders();
     void explicitArchiveProvidersAvoidSessionStore();
 };
 
-void TestImageDocumentRuntimeDependencies::defaultDependenciesUseArchiveSessionStore()
+void TestImageDocumentRuntimeDependencies::defaultDependenciesUseMediaEntrySourceStore()
 {
     KiriView::ImageDocumentRuntimeDependencies resolved
         = KiriView::resolveImageDocumentRuntimeDependencies({}, this);
 
-    QVERIFY(resolved.archiveSessionStore);
+    QVERIFY(resolved.mediaEntrySourceStore);
     QVERIFY(resolved.candidateProvider.directoryImages);
     QVERIFY(resolved.candidateProvider.directoryContainers);
-    QVERIFY(resolved.candidateProvider.archiveImages);
+    QVERIFY(resolved.candidateProvider.openedCollectionCandidates);
     QVERIFY(resolved.candidateProvider.directoryImageChanges);
     QVERIFY(resolved.imageDecode.dataLoader);
     QVERIFY(resolved.imageDecode.dataDecoder);
@@ -57,7 +58,7 @@ void TestImageDocumentRuntimeDependencies::defaultDependenciesUseArchiveSessionS
     QVERIFY(resolved.predecodeCacheByteBudget <= KiriView::predecodeCachePreferredByteBudget());
 }
 
-void TestImageDocumentRuntimeDependencies::partialNonArchiveOverridesStillUseArchiveSessionStore()
+void TestImageDocumentRuntimeDependencies::partialNonSourceOverridesStillUseMediaEntrySourceStore()
 {
     int directoryLoadCount = 0;
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
@@ -72,9 +73,9 @@ void TestImageDocumentRuntimeDependencies::partialNonArchiveOverridesStillUseArc
     KiriView::ImageDocumentRuntimeDependencies resolved
         = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
 
-    QVERIFY(resolved.archiveSessionStore);
+    QVERIFY(resolved.mediaEntrySourceStore);
     QVERIFY(resolved.candidateProvider.directoryImages);
-    QVERIFY(resolved.candidateProvider.archiveImages);
+    QVERIFY(resolved.candidateProvider.openedCollectionCandidates);
     QVERIFY(resolved.imageDecode.dataLoader);
 
     bool candidatesReported = false;
@@ -91,8 +92,9 @@ void TestImageDocumentRuntimeDependencies::customSessionFactoryWrapsArchiveProvi
 {
     int openCount = 0;
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
-    dependencies.archiveDocumentSessions = [&openCount](const KiriView::ImagePageScopeLocation &)
-        -> KiriView::ArchiveDocumentSessionOpenResult {
+    dependencies.mediaEntrySourceFactory
+        = [&openCount](const KiriView::OpenedCollectionScopeLocation &)
+        -> KiriView::MediaEntrySourceOpenResult {
         ++openCount;
         return KiriView::ArchiveError { QStringLiteral("session failed") };
     };
@@ -100,12 +102,12 @@ void TestImageDocumentRuntimeDependencies::customSessionFactoryWrapsArchiveProvi
     KiriView::ImageDocumentRuntimeDependencies resolved
         = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
 
-    QVERIFY(resolved.archiveSessionStore);
+    QVERIFY(resolved.mediaEntrySourceStore);
 
     bool candidatesReported = false;
     QString errorString;
-    resolved.candidateProvider.archiveImages(
-        nullptr, testArchiveDocument(),
+    resolved.candidateProvider.openedCollectionCandidates(
+        nullptr, testArchiveCollection(),
         [&candidatesReported](
             std::vector<KiriView::ImageNavigationCandidate>) { candidatesReported = true; },
         [&errorString](const QString &error) { errorString = error; });
@@ -123,8 +125,8 @@ void TestImageDocumentRuntimeDependencies::explicitArchiveProvidersAvoidSessionS
     int powerSaverMonitorCount = 0;
 
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
-    dependencies.candidateProvider.archiveImages
-        = [&archiveLoadCount](QObject *, KiriView::ImagePageScopeLocation,
+    dependencies.candidateProvider.openedCollectionCandidates
+        = [&archiveLoadCount](QObject *, KiriView::OpenedCollectionScopeLocation,
               KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback) {
               ++archiveLoadCount;
               callback({});
@@ -152,10 +154,10 @@ void TestImageDocumentRuntimeDependencies::explicitArchiveProvidersAvoidSessionS
     KiriView::ImageDocumentRuntimeDependencies resolved
         = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
 
-    QVERIFY(!resolved.archiveSessionStore);
+    QVERIFY(!resolved.mediaEntrySourceStore);
     QVERIFY(resolved.candidateProvider.directoryImages);
     QVERIFY(resolved.candidateProvider.directoryContainers);
-    QVERIFY(resolved.candidateProvider.archiveImages);
+    QVERIFY(resolved.candidateProvider.openedCollectionCandidates);
     QVERIFY(resolved.candidateProvider.directoryImageChanges);
     QVERIFY(resolved.imageDecode.dataLoader);
     QVERIFY(resolved.imageDecode.dataDecoder);
@@ -165,7 +167,7 @@ void TestImageDocumentRuntimeDependencies::explicitArchiveProvidersAvoidSessionS
 
     bool candidatesReported = false;
     QByteArray loadedData;
-    resolved.candidateProvider.archiveImages(nullptr, testArchiveDocument(),
+    resolved.candidateProvider.openedCollectionCandidates(nullptr, testArchiveCollection(),
         [&candidatesReported](
             std::vector<KiriView::ImageNavigationCandidate>) { candidatesReported = true; },
         {});

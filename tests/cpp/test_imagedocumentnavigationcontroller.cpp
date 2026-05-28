@@ -92,10 +92,11 @@ public:
         presentation.setStaticImage(staticTestImagePayload(testImage()), false);
     }
 
-    void displayComicPage(const QUrl &url, const KiriView::ImagePageScopeLocation &archiveDocument)
+    void displayComicPage(
+        const QUrl &url, const KiriView::OpenedCollectionScopeLocation &archiveCollection)
     {
         state.setDisplayedImageLocation(
-            KiriView::DisplayedImageLocation::fromImagePageScope(url, archiveDocument));
+            KiriView::DisplayedImageLocation::fromOpenedCollectionScope(url, archiveCollection));
         presentation.setStaticImage(staticTestImagePayload(testImage(QSize(800, 1200))), false);
     }
 
@@ -211,17 +212,17 @@ void TestImageDocumentNavigationController::spreadPageSelectionStartsTrackedTran
 {
     DocumentNavigationFixture fixture;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    const QUrl secondUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    fixture.candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    fixture.candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageCandidate(firstUrl),
             imageCandidate(secondUrl),
         });
-    fixture.displayComicPage(firstUrl, *archiveDocument);
+    fixture.displayComicPage(firstUrl, *archiveCollection);
     fixture.controller.updatePageNavigation();
     fixture.spread.setTwoPageModeEnabled(true);
 

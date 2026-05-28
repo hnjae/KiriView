@@ -211,30 +211,31 @@ void TestImageUrl::imageLocationTypesExposeExplicitState()
     const KiriView::DisplayedImageLocation emptyLocation;
     QVERIFY(emptyLocation.isEmpty());
 
-    const KiriView::ImagePageScopeLocation archiveDocument
-        = KiriView::ImagePageScopeLocation::fromUrls(
+    const KiriView::OpenedCollectionScopeLocation archiveCollection
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(
             QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),
             QUrl(QStringLiteral("zip:///books/book.cbz/")),
-            KiriView::ImagePageScopeKind::ComicBookArchive);
+            KiriView::OpenedCollectionScopeKind::ComicBookArchive);
     const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromImagePageScope(
-            QUrl(QStringLiteral("zip:///books/book.cbz/page.png")), archiveDocument);
+        = KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+            QUrl(QStringLiteral("zip:///books/book.cbz/page.png")), archiveCollection);
     QVERIFY(!location.isEmpty());
-    QCOMPARE(location.imagePageScopeSourceUrl(), archiveDocument.fileUrl());
-    QCOMPARE(location.imagePageScopeRootUrl(), archiveDocument.rootUrl());
+    QCOMPARE(location.openedCollectionScopeSourceUrl(), archiveCollection.fileUrl());
+    QCOMPARE(location.openedCollectionScopeRootUrl(), archiveCollection.rootUrl());
 
     const KiriView::ImageLoadRequest plainOpen
         = KiriView::ImageLoadRequest::fromUrl(location.imageUrl());
     QVERIFY(!plainOpen.isEmpty());
     QVERIFY(!plainOpen.isContainerNavigation());
     QCOMPARE(plainOpen.sourceUrl(), location.imageUrl());
-    QVERIFY(plainOpen.imagePageScope().rootUrl().isEmpty());
+    QVERIFY(plainOpen.openedCollectionScope().rootUrl().isEmpty());
 
     const QUrl containerUrl = QUrl::fromLocalFile(QStringLiteral("/images/"));
     const KiriView::ImageLoadRequest containerOpen = KiriView::ImageLoadRequest::fromLocation(
-        location.imageUrl(), location.imagePageScope(), containerUrl);
+        location.imageUrl(), location.openedCollectionScope(), containerUrl);
     QVERIFY(containerOpen.isContainerNavigation());
-    QCOMPARE(containerOpen.imagePageScope().rootUrl(), location.imagePageScopeRootUrl());
+    QCOMPARE(
+        containerOpen.openedCollectionScope().rootUrl(), location.openedCollectionScopeRootUrl());
     QCOMPARE(containerOpen.containerNavigationUrl(), containerUrl);
 }
 

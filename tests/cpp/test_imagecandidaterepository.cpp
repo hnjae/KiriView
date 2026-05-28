@@ -71,15 +71,18 @@ void TestImageCandidateRepository::loadImagesRoutesArchiveSources()
 {
     FakeImageNavigationCandidateProvider fakeProvider;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> imagePageScope
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(imagePageScope.has_value());
-    const QUrl imageUrl = archivePageUrl(imagePageScope->rootUrl(), QStringLiteral("01.png"));
-    fakeProvider.setArchiveImages(imagePageScope->rootUrl(), { imageCandidate(imageUrl) });
+    const std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScope
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(openedCollectionScope.has_value());
+    const QUrl imageUrl
+        = archivePageUrl(openedCollectionScope->rootUrl(), QStringLiteral("01.png"));
+    fakeProvider.setOpenedCollectionCandidates(
+        openedCollectionScope->rootUrl(), { imageCandidate(imageUrl) });
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
     std::vector<ImageNavigationCandidate> loadedCandidates;
-    repository.loadImages(nullptr, ImageCandidateListSource::forImagePageScope(*imagePageScope),
+    repository.loadImages(nullptr,
+        ImageCandidateListSource::forOpenedCollectionScope(*openedCollectionScope),
         [&loadedCandidates](std::vector<ImageNavigationCandidate> candidates) {
             loadedCandidates = std::move(candidates);
         },

@@ -108,8 +108,8 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
         = [&document]() { Q_EMIT document.rightToLeftReadingChanged(); };
     operations.rotationDegreesChanged = [&document]() { Q_EMIT document.rotationDegreesChanged(); };
     operations.mediaScopeChanged = [&document]() { Q_EMIT document.mediaScopeChanged(); };
-    operations.unsupportedDocumentVideoChanged
-        = [&document]() { Q_EMIT document.unsupportedDocumentVideoChanged(); };
+    operations.unsupportedOpenedCollectionVideoChanged
+        = [&document]() { Q_EMIT document.unsupportedOpenedCollectionVideoChanged(); };
     operations.repaintRequested = [&document]() { Q_EMIT document.repaintRequested(); };
     return operations;
 }
@@ -129,7 +129,8 @@ KiriImageDocument::KiriImageDocument(
         [this](const std::vector<ImageDocumentChange> &changes) { handleDocumentChanges(changes); },
         std::move(dependencies),
         [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); },
-        [this](const QString &message) { Q_EMIT unsupportedDocumentVideoEntered(message); });
+        [this](
+            const QString &message) { Q_EMIT unsupportedOpenedCollectionVideoEntered(message); });
 }
 
 KiriImageDocument::~KiriImageDocument() = default;
@@ -151,9 +152,9 @@ QString KiriImageDocument::windowTitleFileName() const { return m_runtime->windo
 
 QUrl KiriImageDocument::displayedUrl() const { return m_runtime->displayedUrl(); }
 
-KiriView::ImagePageScopeLocation KiriImageDocument::displayedImagePageScope() const
+KiriView::OpenedCollectionScopeLocation KiriImageDocument::displayedOpenedCollectionScope() const
 {
-    return m_runtime->displayedImagePageScope();
+    return m_runtime->displayedOpenedCollectionScope();
 }
 
 QSize KiriImageDocument::imageSize() const { return m_runtime->imageSize(); }
@@ -266,9 +267,9 @@ bool KiriImageDocument::ordinaryDirectMediaScopeActive() const
     return m_runtime->ordinaryDirectMediaScopeActive();
 }
 
-bool KiriImageDocument::archiveOrDirectoryDocumentScopeActive() const
+bool KiriImageDocument::openedCollectionScopeActive() const
 {
-    return m_runtime->archiveOrDirectoryDocumentScopeActive();
+    return m_runtime->openedCollectionScopeActive();
 }
 
 bool KiriImageDocument::fileDeletionInProgress() const
@@ -302,9 +303,9 @@ bool KiriImageDocument::rightToLeftReadingAvailable() const
 
 bool KiriImageDocument::secondaryPageVisible() const { return m_runtime->secondaryPageVisible(); }
 
-bool KiriImageDocument::unsupportedDocumentVideo() const
+bool KiriImageDocument::unsupportedOpenedCollectionVideo() const
 {
-    return m_runtime->unsupportedDocumentVideo();
+    return m_runtime->unsupportedOpenedCollectionVideo();
 }
 
 std::optional<KiriView::DisplayedPredecodeImage>

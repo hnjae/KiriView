@@ -6,32 +6,32 @@
 #include "bridge/rustqtconversion.h"
 
 namespace KiriView::Bridge {
-RustPredecodeDocumentKind rustPredecodeDocumentKind(PredecodeDocumentKind kind)
+RustPredecodeScopeKind rustPredecodeScopeKind(PredecodeScopeKind kind)
 {
     switch (kind) {
-    case PredecodeDocumentKind::Regular:
-        return RustPredecodeDocumentKind::Regular;
-    case PredecodeDocumentKind::DirectoryDocument:
-        return RustPredecodeDocumentKind::DirectoryDocument;
-    case PredecodeDocumentKind::ArchiveDocument:
-        return RustPredecodeDocumentKind::ArchiveDocument;
+    case PredecodeScopeKind::DirectMedia:
+        return RustPredecodeScopeKind::DirectMedia;
+    case PredecodeScopeKind::DirectoryCollection:
+        return RustPredecodeScopeKind::DirectoryCollection;
+    case PredecodeScopeKind::ArchiveCollection:
+        return RustPredecodeScopeKind::ArchiveCollection;
     }
 
-    return RustPredecodeDocumentKind::Regular;
+    return RustPredecodeScopeKind::DirectMedia;
 }
 
-PredecodeDocumentKind predecodeDocumentKindFromRust(RustPredecodeDocumentKind kind)
+PredecodeScopeKind predecodeScopeKindFromRust(RustPredecodeScopeKind kind)
 {
     switch (kind) {
-    case RustPredecodeDocumentKind::Regular:
-        return PredecodeDocumentKind::Regular;
-    case RustPredecodeDocumentKind::DirectoryDocument:
-        return PredecodeDocumentKind::DirectoryDocument;
-    case RustPredecodeDocumentKind::ArchiveDocument:
-        return PredecodeDocumentKind::ArchiveDocument;
+    case RustPredecodeScopeKind::DirectMedia:
+        return PredecodeScopeKind::DirectMedia;
+    case RustPredecodeScopeKind::DirectoryCollection:
+        return PredecodeScopeKind::DirectoryCollection;
+    case RustPredecodeScopeKind::ArchiveCollection:
+        return PredecodeScopeKind::ArchiveCollection;
     }
 
-    return PredecodeDocumentKind::Regular;
+    return PredecodeScopeKind::DirectMedia;
 }
 
 RustPredecodeMomentumMode rustPredecodeMomentumMode(PredecodeMomentumMode mode)
@@ -102,7 +102,7 @@ PredecodeMomentumDirection predecodeMomentumDirectionFromRust(
 RustPredecodePolicyInput rustPredecodePolicyInput(PredecodePolicyInput input)
 {
     RustPredecodePolicyInput rustInput {};
-    rustInput.document_kind = rustPredecodeDocumentKind(input.documentKind);
+    rustInput.scope_kind = rustPredecodeScopeKind(input.scopeKind);
     rustInput.momentum_mode = rustPredecodeMomentumMode(input.momentumMode);
     rustInput.power_saver_enabled = input.powerSaverEnabled;
     rustInput.ideal_thread_count = input.idealThreadCount;

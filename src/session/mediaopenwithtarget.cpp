@@ -6,7 +6,7 @@
 #include "archive/archiveformat.h"
 
 namespace {
-bool imagePageScopeOpenWithAvailable(const KiriView::ImagePageScopeLocation &scope)
+bool openedCollectionScopeOpenWithAvailable(const KiriView::OpenedCollectionScopeLocation &scope)
 {
     if (scope.isEmpty() || scope.isDirectory()) {
         return true;
@@ -18,7 +18,7 @@ bool imagePageScopeOpenWithAvailable(const KiriView::ImagePageScopeLocation &sco
 QUrl imageOpenWithTargetUrl(const KiriView::MediaOpenWithTargetInput &input)
 {
     if (!input.imageReady || input.imageDisplayedUrl.isEmpty()
-        || !imagePageScopeOpenWithAvailable(input.imagePageScope)) {
+        || !openedCollectionScopeOpenWithAvailable(input.openedCollectionScope)) {
         return {};
     }
 

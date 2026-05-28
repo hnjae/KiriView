@@ -829,7 +829,7 @@ QUrl DocumentSessionRuntime::currentMediaOpenWithTargetUrl() const
         m_state.documentKind(),
         m_imageDocument.status() == KiriImageDocument::Status::Ready,
         m_imageDocument.displayedUrl(),
-        m_imageDocument.displayedImagePageScope(),
+        m_imageDocument.displayedOpenedCollectionScope(),
         m_videoDocument.status() == KiriVideoDocument::Status::Ready,
         m_videoDocument.sourceUrl(),
     });

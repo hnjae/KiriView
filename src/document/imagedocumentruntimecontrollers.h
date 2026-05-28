@@ -16,7 +16,7 @@
 class QObject;
 
 namespace KiriView {
-class ArchiveDocumentSessionStore;
+class MediaEntrySourceStore;
 class ImageDocumentDeletionController;
 class ImageDocumentRuntimePlanExecutor;
 struct ImageDocumentRuntimeOperations;
@@ -34,7 +34,7 @@ struct ImageDocumentRuntimeControllerCallbacks {
     std::function<void(ImageDocumentChange)> notify;
     std::function<void(const ImageDocumentSourceLoadRequest &)> loadSource;
     std::function<void(const QString &)> fileDeletionFailed;
-    std::function<void(const QString &)> unsupportedDocumentVideoEntered;
+    std::function<void(const QString &)> unsupportedOpenedCollectionVideoEntered;
 };
 
 class ImageDocumentRuntimeControllers final
@@ -57,7 +57,7 @@ private:
     ImageDocumentRuntimeOperations runtimeOperations(ImageDocumentState &state);
 
     ImageDocumentRuntimeControllerCallbacks m_callbacks;
-    std::unique_ptr<ArchiveDocumentSessionStore> m_archiveSessionStore;
+    std::unique_ptr<MediaEntrySourceStore> m_mediaEntrySourceStore;
     std::unique_ptr<ImageDocumentDeletionController> m_deletionController;
     std::unique_ptr<ImagePresentationController> m_presentationController;
     std::unique_ptr<ImageOpenController> m_openController;

@@ -10,37 +10,37 @@
 #include <utility>
 
 namespace {
-using KiriView::directOpenImagePageScopeLocationForLocalUrl;
 using KiriView::ImageLoadStartEffect;
-using KiriView::imagePageScopeContainsUrl;
-using KiriView::ImagePageScopeLoadEffect;
-using KiriView::ImagePageScopeLocation;
-using KiriView::imagePageScopeLocationForLocalArchiveUrl;
+using KiriView::openedCollectionScopeContainsUrl;
+using KiriView::OpenedCollectionScopeLoadEffect;
+using KiriView::OpenedCollectionScopeLocation;
+using KiriView::openedCollectionScopeLocationForDirectlyOpenedLocalUrl;
+using KiriView::openedCollectionScopeLocationForLocalArchiveUrl;
 
-std::optional<ImagePageScopeLocation> containerImagePageScopeForImageLoadRequest(
+std::optional<OpenedCollectionScopeLocation> containerOpenedCollectionScopeForImageLoadRequest(
     const KiriView::ImageLoadRequest &request)
 {
     if (!request.isContainerNavigation()) {
         return std::nullopt;
     }
 
-    const std::optional<ImagePageScopeLocation> containerImagePageScope
-        = imagePageScopeLocationForLocalArchiveUrl(request.containerNavigationUrl());
-    if (containerImagePageScope.has_value()
-        && imagePageScopeContainsUrl(*containerImagePageScope, request.sourceUrl())) {
-        return containerImagePageScope;
+    const std::optional<OpenedCollectionScopeLocation> containerOpenedCollectionScope
+        = openedCollectionScopeLocationForLocalArchiveUrl(request.containerNavigationUrl());
+    if (containerOpenedCollectionScope.has_value()
+        && openedCollectionScopeContainsUrl(*containerOpenedCollectionScope, request.sourceUrl())) {
+        return containerOpenedCollectionScope;
     }
 
     return std::nullopt;
 }
 
-ImageLoadStartEffect imageLoadStartEffectForPageScopeEffect(ImagePageScopeLoadEffect effect)
+ImageLoadStartEffect imageLoadStartEffectForPageScopeEffect(OpenedCollectionScopeLoadEffect effect)
 {
     switch (effect) {
-    case ImagePageScopeLoadEffect::ReadImage:
+    case OpenedCollectionScopeLoadEffect::ReadImage:
         return ImageLoadStartEffect::DecodeImage;
-    case ImagePageScopeLoadEffect::LoadImageCandidates:
-        return ImageLoadStartEffect::LoadImagePageScopeCandidates;
+    case OpenedCollectionScopeLoadEffect::LoadImageCandidates:
+        return ImageLoadStartEffect::LoadOpenedCollectionScopeCandidates;
     }
 
     return ImageLoadStartEffect::DecodeImage;
@@ -48,37 +48,38 @@ ImageLoadStartEffect imageLoadStartEffectForPageScopeEffect(ImagePageScopeLoadEf
 }
 
 namespace KiriView {
-ImagePageScopeLoadPlan imagePageScopeLoadPlan(const ImageLoadRequest &request)
+OpenedCollectionScopeLoadPlan openedCollectionScopeLoadPlan(const ImageLoadRequest &request)
 {
-    const std::optional<ImagePageScopeLocation> sourceImagePageScope
-        = directOpenImagePageScopeLocationForLocalUrl(request.sourceUrl());
-    if (sourceImagePageScope.has_value()) {
-        return { *sourceImagePageScope, ImagePageScopeLoadEffect::LoadImageCandidates };
+    const std::optional<OpenedCollectionScopeLocation> sourceOpenedCollectionScope
+        = openedCollectionScopeLocationForDirectlyOpenedLocalUrl(request.sourceUrl());
+    if (sourceOpenedCollectionScope.has_value()) {
+        return { *sourceOpenedCollectionScope,
+            OpenedCollectionScopeLoadEffect::LoadImageCandidates };
     }
 
-    const std::optional<ImagePageScopeLocation> containerImagePageScope
-        = containerImagePageScopeForImageLoadRequest(request);
-    if (containerImagePageScope.has_value()) {
-        return { *containerImagePageScope, ImagePageScopeLoadEffect::ReadImage };
+    const std::optional<OpenedCollectionScopeLocation> containerOpenedCollectionScope
+        = containerOpenedCollectionScopeForImageLoadRequest(request);
+    if (containerOpenedCollectionScope.has_value()) {
+        return { *containerOpenedCollectionScope, OpenedCollectionScopeLoadEffect::ReadImage };
     }
 
-    if (imagePageScopeContainsUrl(request.imagePageScope(), request.sourceUrl())) {
-        return { request.imagePageScope(), ImagePageScopeLoadEffect::ReadImage };
+    if (openedCollectionScopeContainsUrl(request.openedCollectionScope(), request.sourceUrl())) {
+        return { request.openedCollectionScope(), OpenedCollectionScopeLoadEffect::ReadImage };
     }
 
-    return { ImagePageScopeLocation::none(), ImagePageScopeLoadEffect::ReadImage };
+    return { OpenedCollectionScopeLocation::none(), OpenedCollectionScopeLoadEffect::ReadImage };
 }
 
 ImageLoadPlan imageLoadPlan(
     quint64 id, ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext)
 {
     QUrl sourceUrl = request.sourceUrl();
-    ImagePageScopeLoadPlan pageScopePlan = imagePageScopeLoadPlan(request);
+    OpenedCollectionScopeLoadPlan pageScopePlan = openedCollectionScopeLoadPlan(request);
     const ImageLoadStartEffect startEffect
         = imageLoadStartEffectForPageScopeEffect(pageScopePlan.effect);
     ImageLoadSession session(id, std::move(request),
         DisplayedImageLocation::fromUrl(
-            std::move(sourceUrl), std::move(pageScopePlan.imagePageScope)),
+            std::move(sourceUrl), std::move(pageScopePlan.openedCollectionScope)),
         firstDisplayContext);
 
     return ImageLoadPlan { std::move(session), startEffect };

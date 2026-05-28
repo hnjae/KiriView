@@ -10,15 +10,15 @@ The MVP direct video format list is MP4, M4V, and MOV, case-insensitively. These
 
 Direct video playback supports direct file-like URLs that KiriView can hand to KDE/KIO as ordinary file items, including local paths, `file://` URLs, and KDE-supported archive URLs that point at a file entry such as `zip:///path/archive.zip!/clip.mp4`.
 
-Direct KDE archive-entry URLs are not KiriView archive document mode. KiriView may open `zip:///path/archive.zip!/clip.mp4` as a direct media URL while still opening `/path/archive.zip` as an archive document when the archive itself is selected.
+Direct KDE archive-entry URLs are not KiriView archive collection scope. KiriView may open `zip:///path/archive.zip!/clip.mp4` as a direct media URL while still opening `/path/archive.zip` as an archive collection when the archive itself is selected.
 
-The product boundary is based on KiriView's document-mode state, not on URL scheme alone. If KiriView has opened an archive or directory as a document, supported video entries inside that document are document navigation items with an unsupported-video placeholder and are not played. If KiriView is handling a direct media URL without an active archive or directory document context, that URL remains eligible for video support even when its scheme is a KDE archive scheme.
+The product boundary is based on KiriView's opened collection state, not on URL scheme alone. If KiriView has opened an archive or directory as an opened collection, supported video entries inside that collection are opened collection navigation items with an unsupported-video placeholder and are not played. If KiriView is handling a direct media URL without an active archive or directory collection context, that URL remains eligible for video support even when its scheme is a KDE archive scheme.
 
 Video files do not participate in video-frame predecode, video-frame image cache, editable image zoom, image pan, image rotate, two-page spread pairing, or Right-to-Left Reading.
 
 In ordinary direct media URL scopes, showing a video must not clear or stop the background predecode/cache lifecycle for nearby supported image files. KiriView may keep and continue predecoding adjacent still images around the current video cursor, but it must not attempt to predecode the video itself.
 
-Archive-document-internal video playback, directly opened directory-document video playback, playlists, subtitles, track selection, metadata panels, frame stepping, and timeline preview thumbnails are out of scope.
+Archive-collection-internal video playback, directly opened directory-collection video playback, playlists, subtitles, track selection, metadata panels, frame stepping, and timeline preview thumbnails are out of scope.
 
 KiriView advertises direct video support through the desktop file for the MIME types that cover the MVP MP4, M4V, and MOV format list: `video/mp4` and `video/quicktime`.
 
@@ -26,7 +26,7 @@ KiriView advertises direct video support through the desktop file for the MIME t
 
 KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend, such as through KIOFuse or another KIO-backed resolver. Resolution succeeds only when the resolved playback URL can be consumed by the video backend; otherwise the video load fails while keeping the original direct media URL as the public source and error context.
 
-Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent media navigation, deletion target, error context, and document-mode decisions remain based on the original direct media URL.
+Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent media navigation, deletion target, error context, and direct-media versus opened-collection routing decisions remain based on the original direct media URL.
 
 Resolver-local playback URLs are video-only. Opening a direct image after a direct video must route the image through the image document with the original image URL, not through the previous video playback URL or another KIOFuse local playback URL.
 
@@ -44,17 +44,17 @@ An ordinary direct media URL scope is the non-recursive parent URL of the active
 
 This includes ordinary local parent directories and KDE archive URL parent locations such as `zip:///path/archive.zip!/chapter/`.
 
-Opening a directory URL creates the existing directory document and does not create a video-capable media scope.
+Opening a directory URL creates the existing directory collection and does not create a video-capable media scope.
 
 The ordinary direct media URL parent follows KiriView's existing direct image candidate context rule rather than a new URL-scheme-specific parser: KiriView normalizes the original direct URL through the same `navigationSourceUrl(...)` path used for displayed direct images, then derives the parent with `QUrl::RemoveFilename | QUrl::NormalizePathSegments`.
 
-Direct KDE archive-entry URLs use this direct URL branch unless KiriView has explicitly opened an archive or directory document scope.
+Direct KDE archive-entry URLs use this direct URL branch unless KiriView has explicitly opened an archive or directory collection scope.
 
 Supported image files and supported direct video files share one locale-aware sibling order in ordinary direct media URL scopes.
 
 Adjacent media navigation is non-recursive, does not wrap, and uses the same session-owned active navigation projection and boundary-feedback model as image navigation. Boundary feedback in a media-aware scope uses neutral first-media-item and last-media-item wording rather than calling every boundary item an image.
 
-The top-level document session dispatches adjacent Previous and Next through media navigation in video mode and in image mode only when the active image belongs to an ordinary direct media URL scope. Archive document and directly opened directory document image scopes keep image-document navigation as the session projection's internal source.
+The top-level document session dispatches adjacent Previous and Next through media navigation in video mode and in image mode only when the active image belongs to an ordinary direct media URL scope. Archive collection and directly opened directory collection scopes keep opened-collection navigation as the session projection's internal source.
 
 ## Playback
 
@@ -98,7 +98,7 @@ If keyboard focus is inside the timeline control, that control may handle its ow
 
 Video mode also supports fixed local seek shortcuts: `Alt+Left` seeks backward 5 seconds, `Alt+Right` seeks forward 5 seconds, `Alt+Up` seeks forward 45 seconds, and `Alt+Down` seeks backward 45 seconds.
 
-Video seek shortcuts are video-mode-only and must not affect image mode, archive document mode, or directly opened directory document mode.
+Video seek shortcuts are video-mode-only and must not affect image mode, archive collection scope, or directly opened directory collection scope.
 
 Video seek shortcuts are best-effort time seeks through Qt Multimedia position seeking. They run only when the media is seekable, clamp to the valid `[0, duration]` range when duration is known, and must not promise frame-accurate seeking.
 
@@ -116,4 +116,4 @@ If deletion fails, the current video remains open and the file operation error i
 
 After successful video deletion, playback stops and KiriView opens the next supported media item in the current ordinary media scope when possible, falls back to the previous supported media item when no next item exists, and otherwise returns to empty state.
 
-In image mode, ordinary direct media deletion uses the same media-aware fallback order, so deleting an image can open a neighboring supported video. Archive document and directly opened directory document image deletion keep their image and document-specific fallback behavior.
+In image mode, ordinary direct media deletion uses the same media-aware fallback order, so deleting an image can open a neighboring supported video. Archive collection and directly opened directory collection image deletion keep their image and collection-specific fallback behavior.

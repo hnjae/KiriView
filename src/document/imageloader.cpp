@@ -81,12 +81,12 @@ void ImageLoader::start(
     switch (plan.startEffect) {
     case ImageLoadStartEffect::DecodeImage:
         break;
-    case ImageLoadStartEffect::LoadImagePageScopeCandidates:
-        startArchiveLoad(session);
+    case ImageLoadStartEffect::LoadOpenedCollectionScopeCandidates:
+        startOpenedCollectionLoad(session);
         return;
     }
 
-    if (tryReportUnsupportedDocumentVideo(session)) {
+    if (tryReportUnsupportedOpenedCollectionVideo(session)) {
         return;
     }
 
@@ -106,27 +106,28 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
     m_decodeJob.start(session.decodeRequest());
 }
 
-void ImageLoader::startArchiveLoad(ImageLoadSession session)
+void ImageLoader::startOpenedCollectionLoad(ImageLoadSession session)
 {
     const ImageCandidateListSource candidateSource
-        = ImageCandidateListSource::forImagePageScope(session.imagePageScope());
+        = ImageCandidateListSource::forOpenedCollectionScope(session.openedCollectionScope());
     m_archiveListJob = m_candidateRepository.loadImages(
         this, candidateSource,
         [this, session](std::vector<ImageNavigationCandidate> candidates) mutable {
-            ImageArchiveCandidateCompletion completion
-                = m_sessionTracker.completeArchiveCandidates(session, candidates);
+            OpenedCollectionCandidateCompletion completion
+                = m_sessionTracker.completeOpenedCollectionCandidates(session, candidates);
             switch (completion.action) {
-            case ImageArchiveCandidateCompletionAction::Ignored:
+            case OpenedCollectionCandidateCompletionAction::Ignored:
                 return;
-            case ImageArchiveCandidateCompletionAction::ReportEmptyArchive:
+            case OpenedCollectionCandidateCompletionAction::ReportEmptyArchive:
                 invokeIfSet(m_callbacks.error, std::move(completion.session),
                     ImageLoadError::EmptyArchive, QString());
                 return;
-            case ImageArchiveCandidateCompletionAction::ReportUnsupportedDocumentVideo:
+            case OpenedCollectionCandidateCompletionAction::ReportUnsupportedOpenedCollectionVideo:
                 invokeIfSet(m_callbacks.sourceResolved, completion.session);
-                invokeIfSet(m_callbacks.unsupportedDocumentVideo, std::move(completion.session));
+                invokeIfSet(
+                    m_callbacks.unsupportedOpenedCollectionVideo, std::move(completion.session));
                 return;
-            case ImageArchiveCandidateCompletionAction::StartImageDecode:
+            case OpenedCollectionCandidateCompletionAction::StartImageDecode:
                 break;
             }
 
@@ -151,9 +152,9 @@ void ImageLoader::cancel()
     m_archiveListJob.cancel();
 }
 
-bool ImageLoader::tryReportUnsupportedDocumentVideo(ImageLoadSession session)
+bool ImageLoader::tryReportUnsupportedOpenedCollectionVideo(ImageLoadSession session)
 {
-    if (session.imagePageScope().isEmpty()) {
+    if (session.openedCollectionScope().isEmpty()) {
         return false;
     }
 
@@ -166,7 +167,7 @@ bool ImageLoader::tryReportUnsupportedDocumentVideo(ImageLoadSession session)
         return false;
     }
 
-    invokeIfSet(m_callbacks.unsupportedDocumentVideo, std::move(*currentSession));
+    invokeIfSet(m_callbacks.unsupportedOpenedCollectionVideo, std::move(*currentSession));
     return true;
 }
 

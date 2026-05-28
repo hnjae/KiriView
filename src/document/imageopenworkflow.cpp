@@ -23,8 +23,9 @@ bool sourceWithinDisplayedComicBookArchive(
     const KiriView::ImageDocumentSourceLoadSnapshot &snapshot,
     const KiriView::ImageDocumentSourceLoadRequest &request)
 {
-    return snapshot.displayedImagePageScope.isComicBook()
-        && KiriView::imagePageScopeContainsUrl(snapshot.displayedImagePageScope, request.sourceUrl);
+    return snapshot.displayedOpenedCollectionScope.isComicBook()
+        && KiriView::openedCollectionScopeContainsUrl(
+            snapshot.displayedOpenedCollectionScope, request.sourceUrl);
 }
 
 KiriView::Bridge::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(

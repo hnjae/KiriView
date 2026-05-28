@@ -63,8 +63,8 @@ KiriView::ImageDocumentPublicSignalOperations recordingOperations(QStringList &e
     operations.rotationDegreesChanged
         = [&events]() { events.append(QStringLiteral("rotationDegrees")); };
     operations.mediaScopeChanged = [&events]() { events.append(QStringLiteral("mediaScope")); };
-    operations.unsupportedDocumentVideoChanged
-        = [&events]() { events.append(QStringLiteral("unsupportedDocumentVideo")); };
+    operations.unsupportedOpenedCollectionVideoChanged
+        = [&events]() { events.append(QStringLiteral("unsupportedOpenedCollectionVideo")); };
     operations.repaintRequested = [&events]() { events.append(QStringLiteral("repaint")); };
     return operations;
 }
@@ -115,8 +115,9 @@ void TestImageDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
         { Signal::RightToLeftReading });
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::Rotation), { Signal::RotationDegrees });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::UnsupportedDocumentVideo),
-        { Signal::UnsupportedDocumentVideo, Signal::ZoomPercentKnown });
+    comparePublicSignals(
+        KiriView::imageDocumentPublicSignals(Change::UnsupportedOpenedCollectionVideo),
+        { Signal::UnsupportedOpenedCollectionVideo, Signal::ZoomPercentKnown });
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::RenderFrame), { Signal::Repaint });
     comparePublicSignals(

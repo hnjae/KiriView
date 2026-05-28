@@ -17,8 +17,8 @@ struct ImageDocumentLifecycleRuntimeOperations {
     std::function<void()> shutdownSpread;
 };
 
-struct ImageDocumentArchiveRuntimeOperations {
-    std::function<void()> clearSession;
+struct ImageDocumentMediaEntrySourceOperations {
+    std::function<void()> clear;
 };
 
 struct ImageDocumentPredecodeRuntimeOperations {
@@ -69,7 +69,7 @@ struct ImageDocumentSourceLoadRuntimeOperations {
 
 struct ImageDocumentRuntimeOperations {
     ImageDocumentLifecycleRuntimeOperations lifecycle;
-    ImageDocumentArchiveRuntimeOperations archive;
+    ImageDocumentMediaEntrySourceOperations mediaEntrySource;
     ImageDocumentPredecodeRuntimeOperations predecode;
     ImageDocumentSpreadRuntimeOperations spread;
     ImageDocumentNavigationRuntimeOperations navigation;

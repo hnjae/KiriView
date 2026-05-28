@@ -47,22 +47,22 @@ void TestImageDocumentState::displayedUrlAndWindowTitleFollowDisplayedImageLocat
     QCOMPARE(changes.size(), localChangeCount);
 
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl firstArchivePageUrl
-        = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page001.png"));
-    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromImagePageScope(
-        firstArchivePageUrl, *archiveDocument));
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("page001.png"));
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+        firstArchivePageUrl, *archiveCollection));
     QCOMPARE(state.displayedUrl(), firstArchivePageUrl);
     QCOMPARE(state.windowTitleFileName(), QStringLiteral("book.cbz"));
     QCOMPARE(changes.back(), KiriView::ImageDocumentChange::WindowTitleFileName);
 
     const std::size_t changeCount = changes.size();
     const QUrl secondArchivePageUrl
-        = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page002.png"));
-    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromImagePageScope(
-        secondArchivePageUrl, *archiveDocument));
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("page002.png"));
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+        secondArchivePageUrl, *archiveCollection));
     QCOMPARE(state.displayedUrl(), secondArchivePageUrl);
     QCOMPARE(state.windowTitleFileName(), QStringLiteral("book.cbz"));
     QCOMPARE(changes.size(), changeCount + 1);

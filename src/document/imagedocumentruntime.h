@@ -38,12 +38,14 @@ public:
     using RenderContextProvider = std::function<ImageDocumentRenderContext()>;
     using ChangeCallback = std::function<void(const std::vector<ImageDocumentChange> &)>;
     using FileDeletionFailedCallback = std::function<void(const QString &)>;
-    using UnsupportedDocumentVideoEnteredCallback = std::function<void(const QString &)>;
+    using UnsupportedOpenedCollectionVideoEnteredCallback = std::function<void(const QString &)>;
 
     ImageDocumentRuntime(QObject *documentObject, RenderContextProvider renderContextProvider,
         ChangeCallback changeCallback, ImageDocumentRuntimeDependencyOverrides dependencies,
         FileDeletionFailedCallback fileDeletionFailedCallback = {},
-        UnsupportedDocumentVideoEnteredCallback unsupportedDocumentVideoEnteredCallback = {});
+        UnsupportedOpenedCollectionVideoEnteredCallback
+            unsupportedOpenedCollectionVideoEnteredCallback
+        = {});
     ~ImageDocumentRuntime();
 
     QUrl sourceUrl() const;
@@ -53,7 +55,7 @@ public:
     QString errorString() const;
     QString windowTitleFileName() const;
     QUrl displayedUrl() const;
-    ImagePageScopeLocation displayedImagePageScope() const;
+    OpenedCollectionScopeLocation displayedOpenedCollectionScope() const;
     QSize imageSize() const;
     QSize primaryImageSize() const;
     QSize secondaryImageSize() const;
@@ -85,7 +87,7 @@ public:
     ImagePageNavigationSnapshot pageNavigationSnapshot() const;
     bool containerNavigationAvailable() const;
     bool ordinaryDirectMediaScopeActive() const;
-    bool archiveOrDirectoryDocumentScopeActive() const;
+    bool openedCollectionScopeActive() const;
     bool fileDeletionInProgress() const;
     bool twoPageModeEnabled() const;
     void setTwoPageModeEnabled(bool enabled);
@@ -94,7 +96,7 @@ public:
     void setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
-    bool unsupportedDocumentVideo() const;
+    bool unsupportedOpenedCollectionVideo() const;
     std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     DisplayedImageRenderSnapshot renderSnapshot(

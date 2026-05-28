@@ -17,10 +17,11 @@ bool sameImageCandidateListSourcePayload(const KiriView::ImageCandidateListSourc
 }
 
 bool sameImageCandidateListSourcePayload(
-    const KiriView::ImageCandidateListSource::ImagePageScope &left,
-    const KiriView::ImageCandidateListSource::ImagePageScope &right)
+    const KiriView::ImageCandidateListSource::OpenedCollectionScope &left,
+    const KiriView::ImageCandidateListSource::OpenedCollectionScope &right)
 {
-    return KiriView::sameImagePageScopeLocation(left.imagePageScope, right.imagePageScope);
+    return KiriView::sameOpenedCollectionScopeLocation(
+        left.openedCollectionScope, right.openedCollectionScope);
 }
 
 template <typename Left, typename Right>
@@ -36,17 +37,17 @@ ImageCandidateListSource ImageCandidateListSource::forDirectory(QUrl directoryUr
     return ImageCandidateListSource { Directory { std::move(directoryUrl) } };
 }
 
-ImageCandidateListSource ImageCandidateListSource::forImagePageScope(
-    ImagePageScopeLocation imagePageScope)
+ImageCandidateListSource ImageCandidateListSource::forOpenedCollectionScope(
+    OpenedCollectionScopeLocation openedCollectionScope)
 {
-    return ImageCandidateListSource { ImagePageScope { std::move(imagePageScope) } };
+    return ImageCandidateListSource { OpenedCollectionScope { std::move(openedCollectionScope) } };
 }
 
-ImagePageScopeLocation ImageCandidateListSource::imagePageScope() const
+OpenedCollectionScopeLocation ImageCandidateListSource::openedCollectionScope() const
 {
-    const auto *archiveSource = std::get_if<ImagePageScope>(&m_source);
-    return archiveSource == nullptr ? ImagePageScopeLocation::none()
-                                    : archiveSource->imagePageScope;
+    const auto *archiveSource = std::get_if<OpenedCollectionScope>(&m_source);
+    return archiveSource == nullptr ? OpenedCollectionScopeLocation::none()
+                                    : archiveSource->openedCollectionScope;
 }
 
 ImageCandidateListSource::ImageCandidateListSource(Payload source)
@@ -73,12 +74,12 @@ ImageCandidateListContext ImageCandidateListContext::forDirectory(
     };
 }
 
-ImageCandidateListContext ImageCandidateListContext::forImagePageScope(
-    QUrl currentUrl, ImagePageScopeLocation imagePageScope)
+ImageCandidateListContext ImageCandidateListContext::forOpenedCollectionScope(
+    QUrl currentUrl, OpenedCollectionScopeLocation openedCollectionScope)
 {
     return ImageCandidateListContext {
         std::move(currentUrl),
-        ImageCandidateListSource::forImagePageScope(std::move(imagePageScope)),
+        ImageCandidateListSource::forOpenedCollectionScope(std::move(openedCollectionScope)),
     };
 }
 
@@ -95,9 +96,9 @@ const QUrl &ImageCandidateListContext::currentUrl() const { return m_currentUrl;
 
 const ImageCandidateListSource &ImageCandidateListContext::source() const { return m_source; }
 
-ImagePageScopeLocation ImageCandidateListContext::imagePageScope() const
+OpenedCollectionScopeLocation ImageCandidateListContext::openedCollectionScope() const
 {
-    return m_source.imagePageScope();
+    return m_source.openedCollectionScope();
 }
 
 ImageCandidateListContext::ImageCandidateListContext(
@@ -122,13 +123,14 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
         return std::nullopt;
     }
 
-    if (displayedLocationIsInsideImagePageScope(location)) {
+    if (displayedLocationIsInsideOpenedCollectionScope(location)) {
         const QUrl currentUrl = normalizedImageUrl(displayedUrl);
         if (!currentUrl.isValid()) {
             return std::nullopt;
         }
 
-        return ImageCandidateListContext::forImagePageScope(currentUrl, location.imagePageScope());
+        return ImageCandidateListContext::forOpenedCollectionScope(
+            currentUrl, location.openedCollectionScope());
     }
 
     const DirectoryNavigationLocation navigationLocation

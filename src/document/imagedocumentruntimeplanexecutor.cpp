@@ -50,8 +50,8 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
                 run(m_operations.lifecycle.stopPresentationAnimation);
             } else if constexpr (std::is_same_v<Operation, ShutdownSpreadOperation>) {
                 run(m_operations.lifecycle.shutdownSpread);
-            } else if constexpr (std::is_same_v<Operation, ClearArchiveSessionOperation>) {
-                run(m_operations.archive.clearSession);
+            } else if constexpr (std::is_same_v<Operation, ClearMediaEntrySourceOperation>) {
+                run(m_operations.mediaEntrySource.clear);
             } else if constexpr (std::is_same_v<Operation, ClearPredecodeOperation>) {
                 run(m_operations.predecode.clearPredecode);
             } else if constexpr (std::is_same_v<Operation, CancelPredecodeOperation>) {

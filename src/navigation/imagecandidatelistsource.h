@@ -19,14 +19,15 @@ public:
         QUrl directoryUrl;
     };
 
-    struct ImagePageScope {
-        ImagePageScopeLocation imagePageScope;
+    struct OpenedCollectionScope {
+        OpenedCollectionScopeLocation openedCollectionScope;
     };
 
     static ImageCandidateListSource forDirectory(QUrl directoryUrl);
-    static ImageCandidateListSource forImagePageScope(ImagePageScopeLocation imagePageScope);
+    static ImageCandidateListSource forOpenedCollectionScope(
+        OpenedCollectionScopeLocation openedCollectionScope);
 
-    ImagePageScopeLocation imagePageScope() const;
+    OpenedCollectionScopeLocation openedCollectionScope() const;
 
     template <typename Visitor> decltype(auto) visit(Visitor &&visitor) const
     {
@@ -34,7 +35,7 @@ public:
     }
 
 private:
-    using Payload = std::variant<Directory, ImagePageScope>;
+    using Payload = std::variant<Directory, OpenedCollectionScope>;
 
     explicit ImageCandidateListSource(Payload source);
 
@@ -48,16 +49,16 @@ class ImageCandidateListContext
 {
 public:
     using DirectoryContext = ImageCandidateListSource::Directory;
-    using ImagePageScopeContext = ImageCandidateListSource::ImagePageScope;
+    using OpenedCollectionScopeContext = ImageCandidateListSource::OpenedCollectionScope;
 
     static ImageCandidateListContext forDirectory(QUrl currentUrl, QUrl directoryUrl);
-    static ImageCandidateListContext forImagePageScope(
-        QUrl currentUrl, ImagePageScopeLocation imagePageScope);
+    static ImageCandidateListContext forOpenedCollectionScope(
+        QUrl currentUrl, OpenedCollectionScopeLocation openedCollectionScope);
     static ImageCandidateListContext forSource(QUrl currentUrl, ImageCandidateListSource source);
 
     const QUrl &currentUrl() const;
     const ImageCandidateListSource &source() const;
-    ImagePageScopeLocation imagePageScope() const;
+    OpenedCollectionScopeLocation openedCollectionScope() const;
 
     template <typename Visitor> decltype(auto) visit(Visitor &&visitor) const
     {

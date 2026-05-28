@@ -8,14 +8,14 @@
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
-KiriView::ImagePageScopeLocation archiveScope(const QString &scheme)
+KiriView::OpenedCollectionScopeLocation archiveScope(const QString &scheme)
 {
     QUrl rootUrl;
     rootUrl.setScheme(scheme);
     rootUrl.setPath(QStringLiteral("/books/book.%1/").arg(scheme));
-    return KiriView::ImagePageScopeLocation::fromUrls(
+    return KiriView::OpenedCollectionScopeLocation::fromUrls(
         localUrl(QStringLiteral("/books/book.%1").arg(scheme)), rootUrl,
-        KiriView::ImagePageScopeKind::ComicBookArchive);
+        KiriView::OpenedCollectionScopeKind::ComicBookArchive);
 }
 }
 
@@ -27,10 +27,10 @@ private Q_SLOTS:
     void emptyAndUnreadyDocumentsHaveNoTarget();
     void directImageUsesDisplayedUrl();
     void directVideoUsesSourceUrl();
-    void directoryDocumentUsesCurrentImageUrl();
-    void kioSupportedArchiveDocumentsUseCurrentImageUrl_data();
-    void kioSupportedArchiveDocumentsUseCurrentImageUrl();
-    void rarArchiveDocumentsHaveNoTarget();
+    void directoryCollectionUsesCurrentImageUrl();
+    void kioSupportedArchiveCollectionsUseCurrentImageUrl_data();
+    void kioSupportedArchiveCollectionsUseCurrentImageUrl();
+    void rarArchiveCollectionsHaveNoTarget();
 };
 
 void TestMediaOpenWithTarget::emptyAndUnreadyDocumentsHaveNoTarget()
@@ -80,12 +80,12 @@ void TestMediaOpenWithTarget::directVideoUsesSourceUrl()
         videoUrl);
 }
 
-void TestMediaOpenWithTarget::directoryDocumentUsesCurrentImageUrl()
+void TestMediaOpenWithTarget::directoryCollectionUsesCurrentImageUrl()
 {
     const QUrl imageUrl = localUrl(QStringLiteral("/book/page.png"));
-    const KiriView::ImagePageScopeLocation scope
-        = KiriView::ImagePageScopeLocation::fromUrls(localUrl(QStringLiteral("/book")),
-            localUrl(QStringLiteral("/book")), KiriView::ImagePageScopeKind::Directory);
+    const KiriView::OpenedCollectionScopeLocation scope
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(localUrl(QStringLiteral("/book")),
+            localUrl(QStringLiteral("/book")), KiriView::OpenedCollectionScopeKind::Directory);
     QCOMPARE(KiriView::mediaOpenWithTargetUrl(KiriView::MediaOpenWithTargetInput {
                  KiriView::DocumentSessionKind::Image,
                  true,
@@ -95,7 +95,7 @@ void TestMediaOpenWithTarget::directoryDocumentUsesCurrentImageUrl()
         imageUrl);
 }
 
-void TestMediaOpenWithTarget::kioSupportedArchiveDocumentsUseCurrentImageUrl_data()
+void TestMediaOpenWithTarget::kioSupportedArchiveCollectionsUseCurrentImageUrl_data()
 {
     QTest::addColumn<QString>("scheme");
 
@@ -104,7 +104,7 @@ void TestMediaOpenWithTarget::kioSupportedArchiveDocumentsUseCurrentImageUrl_dat
     QTest::newRow("sevenz") << QStringLiteral("sevenz");
 }
 
-void TestMediaOpenWithTarget::kioSupportedArchiveDocumentsUseCurrentImageUrl()
+void TestMediaOpenWithTarget::kioSupportedArchiveCollectionsUseCurrentImageUrl()
 {
     QFETCH(QString, scheme);
 
@@ -120,7 +120,7 @@ void TestMediaOpenWithTarget::kioSupportedArchiveDocumentsUseCurrentImageUrl()
         imageUrl);
 }
 
-void TestMediaOpenWithTarget::rarArchiveDocumentsHaveNoTarget()
+void TestMediaOpenWithTarget::rarArchiveCollectionsHaveNoTarget()
 {
     QUrl imageUrl;
     imageUrl.setScheme(QStringLiteral("rar"));

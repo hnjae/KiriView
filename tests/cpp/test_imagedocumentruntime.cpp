@@ -179,13 +179,13 @@ class TestImageDocumentRuntime : public QObject
 
 private Q_SLOTS:
     void initialLoadSuccessUpdatesDocumentState();
-    void archiveOrDirectoryDocumentScopeProjectionsFollowDisplayedImageScope();
-    void documentVideoPlaceholderKeepsDocumentNavigation();
+    void archiveOrDirectoryCollectionScopeProjectionsFollowDisplayedImageScope();
+    void openedCollectionVideoPlaceholderKeepsNavigation();
     void imageLoadsUsePhysicalViewportForFirstDisplayDecode();
     void renderContextProviderCanBeReplacedAfterConstruction();
     void maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates();
     void directoryImageNavigationResetsManualZoom();
-    void archiveDocumentPageNavigationPreservesManualZoom();
+    void archiveCollectionPageNavigationPreservesManualZoom();
     void rotationChangesLogicalSizeAndPreservesManualZoom();
     void rotationRecomputesFitZoomForRotatedBounds();
     void rotationResetsOnImageNavigation();
@@ -250,7 +250,8 @@ void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
     QVERIFY(runtime->renderSnapshot().isRenderable());
 }
 
-void TestImageDocumentRuntime::archiveOrDirectoryDocumentScopeProjectionsFollowDisplayedImageScope()
+void TestImageDocumentRuntime::
+    archiveOrDirectoryCollectionScopeProjectionsFollowDisplayedImageScope()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -262,23 +263,23 @@ void TestImageDocumentRuntime::archiveOrDirectoryDocumentScopeProjectionsFollowD
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
     QVERIFY(!runtime->ordinaryDirectMediaScopeActive());
-    QVERIFY(!runtime->archiveOrDirectoryDocumentScopeActive());
+    QVERIFY(!runtime->openedCollectionScopeActive());
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
     QVERIFY(runtime->ordinaryDirectMediaScopeActive());
-    QVERIFY(!runtime->archiveOrDirectoryDocumentScopeActive());
+    QVERIFY(!runtime->openedCollectionScopeActive());
 
     const QUrl comicArchiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> comicArchiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(comicArchiveUrl);
-    QVERIFY(comicArchiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> comicArchiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(comicArchiveUrl);
+    QVERIFY(comicArchiveCollection.has_value());
     const QUrl comicArchivePage
-        = archivePageUrl(comicArchiveDocument->rootUrl(), QStringLiteral("01.png"));
-    candidateProvider.setArchiveImages(
-        comicArchiveDocument->rootUrl(), { imageCandidate(comicArchivePage) });
+        = archivePageUrl(comicArchiveCollection->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setOpenedCollectionCandidates(
+        comicArchiveCollection->rootUrl(), { imageCandidate(comicArchivePage) });
 
     RuntimeHandle archiveRuntime = createRuntime(this, candidateProvider, dataLoader);
     archiveRuntime->setViewportSize(QSizeF(400.0, 300.0));
@@ -288,16 +289,16 @@ void TestImageDocumentRuntime::archiveOrDirectoryDocumentScopeProjectionsFollowD
     QTRY_COMPARE(archiveRuntime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(archiveRuntime->displayedUrl(), comicArchivePage);
     QVERIFY(!archiveRuntime->ordinaryDirectMediaScopeActive());
-    QVERIFY(archiveRuntime->archiveOrDirectoryDocumentScopeActive());
+    QVERIFY(archiveRuntime->openedCollectionScopeActive());
 
     const QUrl generalArchiveUrl = localUrl(QStringLiteral("/books/book.zip"));
-    const std::optional<KiriView::ImagePageScopeLocation> generalArchiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(generalArchiveUrl);
-    QVERIFY(generalArchiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> generalArchiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(generalArchiveUrl);
+    QVERIFY(generalArchiveCollection.has_value());
     const QUrl generalArchivePage
-        = archivePageUrl(generalArchiveDocument->rootUrl(), QStringLiteral("01.png"));
-    candidateProvider.setArchiveImages(
-        generalArchiveDocument->rootUrl(), { imageCandidate(generalArchivePage) });
+        = archivePageUrl(generalArchiveCollection->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setOpenedCollectionCandidates(
+        generalArchiveCollection->rootUrl(), { imageCandidate(generalArchivePage) });
 
     RuntimeHandle generalArchiveRuntime = createRuntime(this, candidateProvider, dataLoader);
     generalArchiveRuntime->setViewportSize(QSizeF(400.0, 300.0));
@@ -307,18 +308,18 @@ void TestImageDocumentRuntime::archiveOrDirectoryDocumentScopeProjectionsFollowD
     QTRY_COMPARE(generalArchiveRuntime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(generalArchiveRuntime->displayedUrl(), generalArchivePage);
     QVERIFY(!generalArchiveRuntime->ordinaryDirectMediaScopeActive());
-    QVERIFY(generalArchiveRuntime->archiveOrDirectoryDocumentScopeActive());
+    QVERIFY(generalArchiveRuntime->openedCollectionScopeActive());
 
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
     const QUrl directoryUrl = localUrl(directory.path());
-    const std::optional<KiriView::ImagePageScopeLocation> directoryDocument
-        = KiriView::directOpenImagePageScopeLocationForLocalUrl(directoryUrl);
-    QVERIFY(directoryDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> directoryCollection
+        = KiriView::openedCollectionScopeLocationForDirectlyOpenedLocalUrl(directoryUrl);
+    QVERIFY(directoryCollection.has_value());
     const QUrl directoryPage
-        = archivePageUrl(directoryDocument->rootUrl(), QStringLiteral("01.png"));
-    candidateProvider.setArchiveImages(
-        directoryDocument->rootUrl(), { imageCandidate(directoryPage) });
+        = archivePageUrl(directoryCollection->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setOpenedCollectionCandidates(
+        directoryCollection->rootUrl(), { imageCandidate(directoryPage) });
 
     RuntimeHandle directoryRuntime = createRuntime(this, candidateProvider, dataLoader);
     directoryRuntime->setViewportSize(QSizeF(400.0, 300.0));
@@ -328,7 +329,7 @@ void TestImageDocumentRuntime::archiveOrDirectoryDocumentScopeProjectionsFollowD
     QTRY_COMPARE(directoryRuntime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(directoryRuntime->displayedUrl(), directoryPage);
     QVERIFY(!directoryRuntime->ordinaryDirectMediaScopeActive());
-    QVERIFY(directoryRuntime->archiveOrDirectoryDocumentScopeActive());
+    QVERIFY(directoryRuntime->openedCollectionScopeActive());
 
     const QUrl archiveEntryUrl(QStringLiteral("zip:///books/book.zip!/page.png"));
     candidateProvider.setDirectoryImages(
@@ -342,21 +343,23 @@ void TestImageDocumentRuntime::archiveOrDirectoryDocumentScopeProjectionsFollowD
     QTRY_COMPARE(archiveEntryRuntime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(archiveEntryRuntime->displayedUrl(), archiveEntryUrl);
     QVERIFY(archiveEntryRuntime->ordinaryDirectMediaScopeActive());
-    QVERIFY(!archiveEntryRuntime->archiveOrDirectoryDocumentScopeActive());
+    QVERIFY(!archiveEntryRuntime->openedCollectionScopeActive());
 }
 
-void TestImageDocumentRuntime::documentVideoPlaceholderKeepsDocumentNavigation()
+void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    const QUrl videoUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.mp4"));
-    const QUrl thirdPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
-    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl videoUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.mp4"));
+    const QUrl thirdPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageCandidate(firstPageUrl),
             videoCandidate(videoUrl),
@@ -372,7 +375,7 @@ void TestImageDocumentRuntime::documentVideoPlaceholderKeepsDocumentNavigation()
     QCOMPARE(runtime->displayedUrl(), firstPageUrl);
     QCOMPARE(runtime->currentPageNumber(), 1);
     QCOMPARE(runtime->imageCount(), 3);
-    QVERIFY(!runtime->unsupportedDocumentVideo());
+    QVERIFY(!runtime->unsupportedOpenedCollectionVideo());
     QVERIFY(hasRenderableSnapshot(*runtime));
 
     const std::size_t loadCountBeforeVideo = dataLoader.loadCount();
@@ -382,7 +385,7 @@ void TestImageDocumentRuntime::documentVideoPlaceholderKeepsDocumentNavigation()
     QCOMPARE(runtime->displayedUrl(), videoUrl);
     QCOMPARE(runtime->currentPageNumber(), 2);
     QCOMPARE(runtime->imageCount(), 3);
-    QVERIFY(runtime->unsupportedDocumentVideo());
+    QVERIFY(runtime->unsupportedOpenedCollectionVideo());
     QVERIFY(!hasRenderableSnapshot(*runtime));
     QCOMPARE(dataLoader.loadCount(), loadCountBeforeVideo);
 
@@ -390,13 +393,13 @@ void TestImageDocumentRuntime::documentVideoPlaceholderKeepsDocumentNavigation()
 
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeVideo + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, thirdPageUrl);
-    QVERIFY(!runtime->unsupportedDocumentVideo());
+    QVERIFY(!runtime->unsupportedOpenedCollectionVideo());
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->displayedUrl(), thirdPageUrl);
     QTRY_COMPARE(runtime->currentPageNumber(), 3);
     QCOMPARE(runtime->imageCount(), 3);
-    QVERIFY(!runtime->unsupportedDocumentVideo());
+    QVERIFY(!runtime->unsupportedOpenedCollectionVideo());
     QVERIFY(hasRenderableSnapshot(*runtime));
 }
 
@@ -554,17 +557,19 @@ void TestImageDocumentRuntime::directoryImageNavigationResetsManualZoom()
     QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Fit);
 }
 
-void TestImageDocumentRuntime::archiveDocumentPageNavigationPreservesManualZoom()
+void TestImageDocumentRuntime::archiveCollectionPageNavigationPreservesManualZoom()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageCandidate(firstPageUrl),
             imageCandidate(secondPageUrl),
@@ -718,12 +723,14 @@ void TestImageDocumentRuntime::rotationResetsAndStopsWhileTwoPageModeIsEnabled()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageCandidate(firstPageUrl),
             imageCandidate(secondPageUrl),
@@ -896,21 +903,21 @@ void TestImageDocumentRuntime::siblingArchiveNavigationResetsManualZoom()
     ManualImageDataLoader dataLoader;
     const QUrl firstArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl secondArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> firstArchiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(firstArchiveUrl);
-    const std::optional<KiriView::ImagePageScopeLocation> secondArchiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(secondArchiveUrl);
-    QVERIFY(firstArchiveDocument.has_value());
-    QVERIFY(secondArchiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> firstArchiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(firstArchiveUrl);
+    const std::optional<KiriView::OpenedCollectionScopeLocation> secondArchiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(secondArchiveUrl);
+    QVERIFY(firstArchiveCollection.has_value());
+    QVERIFY(secondArchiveCollection.has_value());
     const QUrl firstPageUrl
-        = archivePageUrl(firstArchiveDocument->rootUrl(), QStringLiteral("01.png"));
+        = archivePageUrl(firstArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPageUrl
-        = archivePageUrl(secondArchiveDocument->rootUrl(), QStringLiteral("01.png"));
-    candidateProvider.setArchiveImages(firstArchiveDocument->rootUrl(),
+        = archivePageUrl(secondArchiveCollection->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setOpenedCollectionCandidates(firstArchiveCollection->rootUrl(),
         {
             imageCandidate(firstPageUrl),
         });
-    candidateProvider.setArchiveImages(secondArchiveDocument->rootUrl(),
+    candidateProvider.setOpenedCollectionCandidates(secondArchiveCollection->rootUrl(),
         {
             imageCandidate(secondPageUrl),
         });
@@ -1168,15 +1175,15 @@ void TestImageDocumentRuntime::emptyContainerNavigationClearsImageAndSelectsCont
     ManualImageDataLoader dataLoader;
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> currentArchiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(currentContainerUrl);
-    const std::optional<KiriView::ImagePageScopeLocation> targetArchiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(targetContainerUrl);
-    QVERIFY(currentArchiveDocument.has_value());
-    QVERIFY(targetArchiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> currentArchiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(currentContainerUrl);
+    const std::optional<KiriView::OpenedCollectionScopeLocation> targetArchiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(targetContainerUrl);
+    QVERIFY(currentArchiveCollection.has_value());
+    QVERIFY(targetArchiveCollection.has_value());
     const QUrl currentImageUrl
-        = archivePageUrl(currentArchiveDocument->rootUrl(), QStringLiteral("01.png"));
-    candidateProvider.setArchiveImages(currentArchiveDocument->rootUrl(),
+        = archivePageUrl(currentArchiveCollection->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setOpenedCollectionCandidates(currentArchiveCollection->rootUrl(),
         {
             imageCandidate(currentImageUrl),
         });
@@ -1185,7 +1192,7 @@ void TestImageDocumentRuntime::emptyContainerNavigationClearsImageAndSelectsCont
             comicBookContainerCandidate(currentContainerUrl),
             comicBookContainerCandidate(targetContainerUrl),
         });
-    candidateProvider.setArchiveImages(targetArchiveDocument->rootUrl(), {});
+    candidateProvider.setOpenedCollectionCandidates(targetArchiveCollection->rootUrl(), {});
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
     runtime->setViewportSize(QSizeF(400.0, 300.0));
@@ -1398,17 +1405,17 @@ void TestImageDocumentRuntime::successfulComicBookDeletionOpensNextSiblingArchiv
     ManualFileOperationProvider fileOperations;
     const QUrl currentArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl nextArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> currentArchiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(currentArchiveUrl);
-    const std::optional<KiriView::ImagePageScopeLocation> nextArchiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(nextArchiveUrl);
-    QVERIFY(currentArchiveDocument.has_value());
-    QVERIFY(nextArchiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> currentArchiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(currentArchiveUrl);
+    const std::optional<KiriView::OpenedCollectionScopeLocation> nextArchiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(nextArchiveUrl);
+    QVERIFY(currentArchiveCollection.has_value());
+    QVERIFY(nextArchiveCollection.has_value());
     const QUrl currentImageUrl
-        = archivePageUrl(currentArchiveDocument->rootUrl(), QStringLiteral("01.png"));
+        = archivePageUrl(currentArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl nextImageUrl
-        = archivePageUrl(nextArchiveDocument->rootUrl(), QStringLiteral("01.png"));
-    candidateProvider.setArchiveImages(currentArchiveDocument->rootUrl(),
+        = archivePageUrl(nextArchiveCollection->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setOpenedCollectionCandidates(currentArchiveCollection->rootUrl(),
         {
             imageCandidate(currentImageUrl),
         });
@@ -1416,7 +1423,7 @@ void TestImageDocumentRuntime::successfulComicBookDeletionOpensNextSiblingArchiv
         {
             comicBookContainerCandidate(nextArchiveUrl),
         });
-    candidateProvider.setArchiveImages(nextArchiveDocument->rootUrl(),
+    candidateProvider.setOpenedCollectionCandidates(nextArchiveCollection->rootUrl(),
         {
             imageCandidate(nextImageUrl),
         });
@@ -1450,16 +1457,16 @@ void TestImageDocumentRuntime::rightToLeftReadingIsOnlyAvailableForComicArchives
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl archivePageUrl = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+        archiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
             imageCandidate(imageUrl),
         });
-    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageCandidate(archivePageUrl),
         });
@@ -1488,21 +1495,21 @@ void TestImageDocumentRuntime::rightToLeftReadingPersistsAcrossSiblingArchiveNav
     const QUrl firstArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl secondArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
     const QUrl ordinaryImageUrl = localUrl(QStringLiteral("/images/01.png"));
-    const std::optional<KiriView::ImagePageScopeLocation> firstArchiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(firstArchiveUrl);
-    const std::optional<KiriView::ImagePageScopeLocation> secondArchiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(secondArchiveUrl);
-    QVERIFY(firstArchiveDocument.has_value());
-    QVERIFY(secondArchiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> firstArchiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(firstArchiveUrl);
+    const std::optional<KiriView::OpenedCollectionScopeLocation> secondArchiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(secondArchiveUrl);
+    QVERIFY(firstArchiveCollection.has_value());
+    QVERIFY(secondArchiveCollection.has_value());
     const QUrl firstPageUrl
-        = archivePageUrl(firstArchiveDocument->rootUrl(), QStringLiteral("01.png"));
+        = archivePageUrl(firstArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPageUrl
-        = archivePageUrl(secondArchiveDocument->rootUrl(), QStringLiteral("01.png"));
-    candidateProvider.setArchiveImages(firstArchiveDocument->rootUrl(),
+        = archivePageUrl(secondArchiveCollection->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setOpenedCollectionCandidates(firstArchiveCollection->rootUrl(),
         {
             imageCandidate(firstPageUrl),
         });
-    candidateProvider.setArchiveImages(secondArchiveDocument->rootUrl(),
+    candidateProvider.setOpenedCollectionCandidates(secondArchiveCollection->rootUrl(),
         {
             imageCandidate(secondPageUrl),
         });
@@ -1545,13 +1552,16 @@ void TestImageDocumentRuntime::twoPageModeDisplaysCurrentAndNextComicArchivePage
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    const QUrl thirdPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
-    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageCandidate(firstPageUrl),
             imageCandidate(secondPageUrl),
@@ -1612,13 +1622,16 @@ void TestImageDocumentRuntime::twoPageModeUsesRightToLeftPageOrder()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    const QUrl thirdPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
-    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageCandidate(firstPageUrl),
             imageCandidate(secondPageUrl),
@@ -1658,14 +1671,18 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    const QUrl thirdPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
-    const QUrl fourthPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("04.png"));
-    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
+    const QUrl fourthPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("04.png"));
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageCandidate(firstPageUrl),
             imageCandidate(secondPageUrl),
@@ -1722,15 +1739,20 @@ void TestImageDocumentRuntime::twoPageModeWaitsForTargetSpreadBeforeRenderingNav
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    const QUrl thirdPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
-    const QUrl fourthPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("04.png"));
-    const QUrl fifthPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("05.png"));
-    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
+    const QUrl fourthPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("04.png"));
+    const QUrl fifthPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("05.png"));
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageCandidate(firstPageUrl),
             imageCandidate(secondPageUrl),
@@ -1791,15 +1813,20 @@ void TestImageDocumentRuntime::twoPageModeLoadingNavigationUsesPendingPrimaryPag
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    const QUrl thirdPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
-    const QUrl fourthPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("04.png"));
-    const QUrl fifthPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("05.png"));
-    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
+    const QUrl fourthPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("04.png"));
+    const QUrl fifthPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("05.png"));
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageCandidate(firstPageUrl),
             imageCandidate(secondPageUrl),

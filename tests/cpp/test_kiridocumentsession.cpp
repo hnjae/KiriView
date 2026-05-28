@@ -256,7 +256,7 @@ private Q_SLOTS:
     void imagePageNavigationChangesEmitActiveNavigationWhenRelevant();
     void activeNavigationNumberDispatchRoutesDirectMedia();
     void activeNavigationNumberDispatchRoutesImageDocumentPages();
-    void archiveDocumentThumbnailModelUsesPageCandidateNames();
+    void archiveCollectionThumbnailModelUsesPageCandidateNames();
     void activeNavigationRequestReportsDispatchAndBoundaryResults();
     void activeNavigationBoundaryTextFollowsSessionSource();
     void activeNavigationNumberDispatchIgnoresUnknownNavigation();
@@ -419,7 +419,7 @@ void TestKiriDocumentSession::kioArchiveImageAfterKioArchiveVideoUsesOriginalIma
     QCOMPARE(session->videoDocument()->sourceUrl(), QUrl());
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, imageUrl);
-    QVERIFY(dataLoader.backLoad().imagePageScope.isEmpty());
+    QVERIFY(dataLoader.backLoad().openedCollectionScope.isEmpty());
     QVERIFY(!dataLoader.backLoad().url.isLocalFile());
     QVERIFY(!dataLoader.backLoad().url.toString().contains(QStringLiteral("kio-fuse")));
 }
@@ -747,14 +747,14 @@ void TestKiriDocumentSession::archiveImageDocumentProjectsActiveNavigationFromPa
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+        archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         { KiriView::TestSupport::imageCandidate(firstPage),
             KiriView::TestSupport::imageCandidate(secondPage) });
     std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
@@ -789,14 +789,14 @@ void TestKiriDocumentSession::imagePageNavigationChangesEmitActiveNavigationWhen
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/signals.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+        archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         { KiriView::TestSupport::imageCandidate(firstPage),
             KiriView::TestSupport::imageCandidate(secondPage) });
     std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
@@ -846,14 +846,14 @@ void TestKiriDocumentSession::activeNavigationNumberDispatchRoutesImageDocumentP
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/number-dispatch.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+        archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         { KiriView::TestSupport::imageCandidate(firstPage),
             KiriView::TestSupport::imageCandidate(secondPage) });
     std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
@@ -874,20 +874,20 @@ void TestKiriDocumentSession::activeNavigationNumberDispatchRoutesImageDocumentP
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
 }
 
-void TestKiriDocumentSession::archiveDocumentThumbnailModelUsesPageCandidateNames()
+void TestKiriDocumentSession::archiveCollectionThumbnailModelUsesPageCandidateNames()
 {
     FakeMediaCandidateProvider mediaProvider;
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/thumbnails.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("chapter/01.png"));
+        archiveCollection->rootUrl(), QStringLiteral("chapter/01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("extras/clip.mp4"));
-    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        archiveCollection->rootUrl(), QStringLiteral("extras/clip.mp4"));
+    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             KiriView::ImageNavigationCandidate { firstPage, QStringLiteral("chapter/01.png"),
                 KiriView::ImageNavigationCandidateKind::Image },
@@ -919,14 +919,14 @@ void TestKiriDocumentSession::activeNavigationRequestReportsDispatchAndBoundaryR
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/request-results.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+        archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         { KiriView::TestSupport::imageCandidate(firstPage),
             KiriView::TestSupport::imageCandidate(secondPage) });
     std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
@@ -958,14 +958,14 @@ void TestKiriDocumentSession::activeNavigationBoundaryTextFollowsSessionSource()
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/request-boundary-text.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+        archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         { KiriView::TestSupport::imageCandidate(firstPage),
             KiriView::TestSupport::imageCandidate(secondPage) });
     FakeMediaCandidateProvider unusedMediaProvider;
@@ -1032,13 +1032,13 @@ void TestKiriDocumentSession::activeNavigationClearsWhenSwitchingFromKnownDirect
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/clear.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl page = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    imageCandidates.setArchiveImages(
-        archiveDocument->rootUrl(), { KiriView::TestSupport::imageCandidate(page) });
+        archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    imageCandidates.setOpenedCollectionCandidates(
+        archiveCollection->rootUrl(), { KiriView::TestSupport::imageCandidate(page) });
     const QUrl clip = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl nextClip = localUrl(QStringLiteral("/media/02.mp4"));
     const QUrl lastClip = localUrl(QStringLiteral("/media/03.mp4"));
@@ -1125,13 +1125,13 @@ void TestKiriDocumentSession::activeNavigationBoundaryScopeFollowsSessionSource(
     const QUrl clip = localUrl(QStringLiteral("/media/01.mp4"));
     mediaProvider.setMedia(localUrl(QStringLiteral("/media/")), { mediaCandidate(clip) });
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/boundary.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl page = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    imageCandidates.setArchiveImages(
-        archiveDocument->rootUrl(), { KiriView::TestSupport::imageCandidate(page) });
+        archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    imageCandidates.setOpenedCollectionCandidates(
+        archiveCollection->rootUrl(), { KiriView::TestSupport::imageCandidate(page) });
     std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
         mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
 
@@ -1233,16 +1233,16 @@ void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavi
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+        archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("02.png"));
+        archiveCollection->rootUrl(), QStringLiteral("02.png"));
     const QUrl thirdPage = KiriView::TestSupport::archivePageUrl(
-        archiveDocument->rootUrl(), QStringLiteral("03.png"));
-    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        archiveCollection->rootUrl(), QStringLiteral("03.png"));
+    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         { KiriView::TestSupport::imageCandidate(firstPage),
             KiriView::TestSupport::imageCandidate(secondPage),
             KiriView::TestSupport::imageCandidate(thirdPage) });

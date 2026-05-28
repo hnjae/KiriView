@@ -52,8 +52,9 @@ public:
             = [](QObject *, QUrl, KiriView::ContainerCandidatesCallback, KiriView::ErrorCallback) {
                   return KiriView::ImageIoJob();
               };
-        provider.archiveImages
-            = [](QObject *, KiriView::ImagePageScopeLocation, KiriView::ImageCandidatesCallback,
+        provider.openedCollectionCandidates
+            = [](QObject *, KiriView::OpenedCollectionScopeLocation,
+                  KiriView::ImageCandidatesCallback,
                   KiriView::ErrorCallback) { return KiriView::ImageIoJob(); };
         provider.directoryImageChanges
             = [](QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback) {

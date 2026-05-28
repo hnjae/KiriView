@@ -22,14 +22,14 @@ using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::localUrl;
 
 KiriView::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageUrl,
-    const KiriView::ImagePageScopeLocation &archiveDocument
-    = KiriView::ImagePageScopeLocation::none(),
+    const KiriView::OpenedCollectionScopeLocation &archiveCollection
+    = KiriView::OpenedCollectionScopeLocation::none(),
     const QUrl &containerNavigationUrl = QUrl())
 {
     return KiriView::ImageLoadSession(1,
         KiriView::ImageLoadRequest::fromLocation(
-            sourceUrl, archiveDocument, containerNavigationUrl),
-        KiriView::DisplayedImageLocation::fromUrl(imageUrl, archiveDocument));
+            sourceUrl, archiveCollection, containerNavigationUrl),
+        KiriView::DisplayedImageLocation::fromUrl(imageUrl, archiveCollection));
 }
 
 template <typename Operation>
@@ -178,16 +178,16 @@ void TestImageOpenWorkflow::sourceResolutionUsesCanonicalSessionImageUrl()
 {
     KiriView::ImageDocumentState state;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl imageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl imageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     state.setSourceUrl(archiveUrl);
     state.setLoading(true);
     state.setStatus(KiriView::ImageDocumentStatus::Loading);
 
     const KiriView::ImageDocumentRuntimePlan plan
-        = resolveSourceImage(state, loadSession(archiveUrl, imageUrl, *archiveDocument));
+        = resolveSourceImage(state, loadSession(archiveUrl, imageUrl, *archiveCollection));
 
     QVERIFY(plan.empty());
     QCOMPARE(state.sourceUrl(), imageUrl);
@@ -206,7 +206,7 @@ void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
     QVERIFY(hasOperation<KiriView::ClearPresentationImageOperation>(beginPlan));
     QVERIFY(hasOperation<KiriView::ResetZoomOperation>(beginPlan));
     QCOMPARE(beginPlan.size(), std::size_t(10));
-    QVERIFY(operationAtType<KiriView::ClearArchiveSessionOperation>(beginPlan, 0));
+    QVERIFY(operationAtType<KiriView::ClearMediaEntrySourceOperation>(beginPlan, 0));
     QVERIFY(operationAtType<KiriView::ClearPresentationImageOperation>(beginPlan, 6));
     QVERIFY(operationAtType<KiriView::ResetZoomOperation>(beginPlan, 9));
     QVERIFY(state.loading());
@@ -230,15 +230,15 @@ void TestImageOpenWorkflow::directArchiveImageLoadSuccessDisablesContainerNaviga
 {
     KiriView::ImageDocumentState state;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl imageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl imageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
 
     state.setSourceUrl(archiveUrl);
 
     const KiriView::ImageDocumentRuntimePlan successPlan
-        = finishSuccessfulImageLoad(state, loadSession(archiveUrl, imageUrl, *archiveDocument));
+        = finishSuccessfulImageLoad(state, loadSession(archiveUrl, imageUrl, *archiveCollection));
 
     QVERIFY(hasOperation<KiriView::UpdatePageNavigationOperation>(successPlan));
     QCOMPARE(state.sourceUrl(), imageUrl);
@@ -317,7 +317,7 @@ void TestImageOpenWorkflow::routedLoadFailureAppliesErrorTransitions()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const KiriView::ImageLoadSession containerNavigationSession = loadSession(
-        containerUrl, imageUrl, KiriView::ImagePageScopeLocation::none(), containerUrl);
+        containerUrl, imageUrl, KiriView::OpenedCollectionScopeLocation::none(), containerUrl);
     const KiriView::ImageLoadSession imageSession = loadSession(imageUrl, imageUrl);
 
     {

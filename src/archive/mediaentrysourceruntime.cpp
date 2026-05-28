@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "archivedocumentsessionruntime.h"
+#include "mediaentrysourceruntime.h"
 
 #include "archivebackend_p.h"
-#include "archivedocumentsessionrunner.h"
 #include "async/imagecallback.h"
 #include "async/imageioworkerjob.h"
+#include "mediaentrysourcerunner.h"
 
 #include <optional>
 #include <utility>
@@ -15,7 +15,7 @@
 namespace {
 namespace Backend = KiriView::ArchiveBackendDetail;
 
-void finishArchiveCandidateResult(const KiriView::ArchiveImageCandidatesResult &result,
+void finishMediaEntrySourceCandidateResult(const KiriView::ArchiveImageCandidatesResult &result,
     const KiriView::ImageCandidatesCallback &callback, const KiriView::ErrorCallback &errorCallback)
 {
     if (const auto *error = std::get_if<KiriView::ArchiveError>(&result)) {
@@ -29,7 +29,7 @@ void finishArchiveCandidateResult(const KiriView::ArchiveImageCandidatesResult &
     }
 }
 
-void finishArchiveDataResult(KiriView::ArchiveImageDataResult result,
+void finishMediaEntrySourceDataResult(KiriView::ArchiveImageDataResult result,
     KiriView::ImageDataCallback callback, KiriView::ErrorCallback errorCallback)
 {
     if (const auto *error = std::get_if<KiriView::ArchiveError>(&result)) {
@@ -46,58 +46,59 @@ void finishArchiveDataResult(KiriView::ArchiveImageDataResult result,
 }
 
 namespace KiriView {
-ArchiveDocumentSessionRuntime::ArchiveDocumentSessionRuntime(
-    QObject *context, ArchiveDocumentSessionFactory sessionFactory)
+MediaEntrySourceRuntime::MediaEntrySourceRuntime(
+    QObject *context, MediaEntrySourceFactory sourceFactory)
     : m_context(context)
-    , m_sessionFactory(std::move(sessionFactory))
+    , m_sourceFactory(std::move(sourceFactory))
 {
 }
 
-ArchiveDocumentSessionRuntime::~ArchiveDocumentSessionRuntime() { clear(); }
+MediaEntrySourceRuntime::~MediaEntrySourceRuntime() { clear(); }
 
-void ArchiveDocumentSessionRuntime::clear()
+void MediaEntrySourceRuntime::clear()
 {
     cancelCandidateLoadBatch();
-    m_sessionGeneration.invalidate();
+    m_sourceGeneration.invalidate();
     m_runner.reset();
 }
 
-void ArchiveDocumentSessionRuntime::switchToArchiveDocument(ImagePageScopeLocation archiveDocument)
+void MediaEntrySourceRuntime::switchToOpenedCollectionScope(
+    OpenedCollectionScopeLocation archiveCollection)
 {
-    if (archiveDocument.isEmpty()) {
+    if (archiveCollection.isEmpty()) {
         clear();
         return;
     }
-    if (hasCurrentArchiveDocument(archiveDocument)) {
+    if (hasCurrentOpenedCollectionScope(archiveCollection)) {
         return;
     }
 
     cancelCandidateLoadBatch();
-    m_sessionGeneration.invalidate();
-    m_runner = std::make_shared<ArchiveDocumentSessionRunner>(
-        std::move(archiveDocument), m_sessionFactory);
+    m_sourceGeneration.invalidate();
+    m_runner
+        = std::make_shared<MediaEntrySourceRunner>(std::move(archiveCollection), m_sourceFactory);
 }
 
-bool ArchiveDocumentSessionRuntime::hasCurrentArchiveDocument() const
+bool MediaEntrySourceRuntime::hasCurrentOpenedCollectionScope() const
 {
-    return m_runner != nullptr && !m_runner->imagePageScope().isEmpty();
+    return m_runner != nullptr && !m_runner->openedCollectionScope().isEmpty();
 }
 
-bool ArchiveDocumentSessionRuntime::hasCurrentArchiveDocument(
-    const ImagePageScopeLocation &archiveDocument) const
+bool MediaEntrySourceRuntime::hasCurrentOpenedCollectionScope(
+    const OpenedCollectionScopeLocation &archiveCollection) const
 {
-    return hasCurrentArchiveDocument()
-        && sameImagePageScopeLocation(m_runner->imagePageScope(), archiveDocument);
+    return hasCurrentOpenedCollectionScope()
+        && sameOpenedCollectionScopeLocation(m_runner->openedCollectionScope(), archiveCollection);
 }
 
-ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImages(QObject *receiver,
-    ImagePageScopeLocation archiveDocument, ImageCandidatesCallback callback,
+ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionCandidates(QObject *receiver,
+    OpenedCollectionScopeLocation archiveCollection, ImageCandidatesCallback callback,
     ErrorCallback errorCallback)
 {
-    const ImagePageScopeLocation requestedArchiveDocument = archiveDocument;
-    switchToArchiveDocument(std::move(archiveDocument));
+    const OpenedCollectionScopeLocation requestedArchiveCollection = archiveCollection;
+    switchToOpenedCollectionScope(std::move(archiveCollection));
     if (m_runner == nullptr) {
-        invokeIfSet(errorCallback, Backend::fallbackArchiveOpenError(requestedArchiveDocument));
+        invokeIfSet(errorCallback, Backend::fallbackArchiveOpenError(requestedArchiveCollection));
         return ImageIoJob();
     }
 
@@ -113,13 +114,14 @@ ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImages(QObject *receiver,
     }
 
     if (receiver == nullptr) {
-        finishArchiveCandidateResult(m_runner->loadImageCandidates(), callback, errorCallback);
+        finishMediaEntrySourceCandidateResult(
+            m_runner->loadImageCandidates(), callback, errorCallback);
         return ImageIoJob();
     }
 
     ImageIoJob ioJob
         = m_candidateLoadState.addLoad(receiver, std::move(callback), std::move(errorCallback));
-    if (const std::optional<ArchiveDocumentCandidateLoadBatch> batch
+    if (const std::optional<MediaEntrySourceCandidateLoadBatch> batch
         = m_candidateLoadState.startBatch()) {
         startCandidateLoad(*batch);
     }
@@ -127,47 +129,48 @@ ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImages(QObject *receiver,
     return ioJob;
 }
 
-ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImageData(QObject *receiver,
+ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionImageData(QObject *receiver,
     ImageDecodeRequest request, ImageDataCallback callback, ErrorCallback errorCallback)
 {
-    const ImagePageScopeLocation requestedArchiveDocument = request.imagePageScope();
-    switchToArchiveDocument(request.imagePageScope());
+    const OpenedCollectionScopeLocation requestedArchiveCollection
+        = request.openedCollectionScope();
+    switchToOpenedCollectionScope(request.openedCollectionScope());
     if (m_runner == nullptr) {
-        invokeIfSet(errorCallback, Backend::fallbackArchiveOpenError(requestedArchiveDocument));
+        invokeIfSet(errorCallback, Backend::fallbackArchiveOpenError(requestedArchiveCollection));
         return ImageIoJob();
     }
 
     if (receiver == nullptr) {
-        finishArchiveDataResult(m_runner->loadImageData(request.imageUrl()), std::move(callback),
-            std::move(errorCallback));
+        finishMediaEntrySourceDataResult(m_runner->loadImageData(request.imageUrl()),
+            std::move(callback), std::move(errorCallback));
         return ImageIoJob();
     }
 
-    const quint64 generation = m_sessionGeneration.current();
+    const quint64 generation = m_sourceGeneration.current();
     const QUrl imageUrl = request.imageUrl();
-    std::shared_ptr<ArchiveDocumentSessionRunner> runner = m_runner;
+    std::shared_ptr<MediaEntrySourceRunner> runner = m_runner;
 
     return startImageIoWorkerJob(
         m_context, receiver,
         [runner = std::move(runner), imageUrl]() { return runner->loadImageData(imageUrl); },
         [generation, this, callback = std::move(callback),
             errorCallback = std::move(errorCallback)](ArchiveImageDataResult result) mutable {
-            if (!m_sessionGeneration.accepts(generation)) {
+            if (!m_sourceGeneration.accepts(generation)) {
                 return;
             }
 
-            finishArchiveDataResult(
+            finishMediaEntrySourceDataResult(
                 std::move(result), std::move(callback), std::move(errorCallback));
         });
 }
 
-void ArchiveDocumentSessionRuntime::startCandidateLoad(ArchiveDocumentCandidateLoadBatch batch)
+void MediaEntrySourceRuntime::startCandidateLoad(MediaEntrySourceCandidateLoadBatch batch)
 {
     if (m_runner == nullptr || !m_candidateLoadState.acceptsBatch(batch)) {
         return;
     }
 
-    std::shared_ptr<ArchiveDocumentSessionRunner> runner = m_runner;
+    std::shared_ptr<MediaEntrySourceRunner> runner = m_runner;
     runAsyncWorker(
         m_context, [runner = std::move(runner)]() { return runner->loadImageCandidates(); },
         [this, batch](ArchiveImageCandidatesResult result) mutable {
@@ -175,17 +178,18 @@ void ArchiveDocumentSessionRuntime::startCandidateLoad(ArchiveDocumentCandidateL
         });
 }
 
-void ArchiveDocumentSessionRuntime::finishCandidateLoad(
-    ArchiveDocumentCandidateLoadBatch batch, ArchiveImageCandidatesResult result)
+void MediaEntrySourceRuntime::finishCandidateLoad(
+    MediaEntrySourceCandidateLoadBatch batch, ArchiveImageCandidatesResult result)
 {
-    std::vector<ArchiveDocumentCandidateLoad> pendingLoads
+    std::vector<MediaEntrySourceCandidateLoad> pendingLoads
         = m_candidateLoadState.finishBatch(batch);
 
-    for (const ArchiveDocumentCandidateLoad &load : pendingLoads) {
-        load.completion.claimAndDelete(
-            [&]() { finishArchiveCandidateResult(result, load.callback, load.errorCallback); });
+    for (const MediaEntrySourceCandidateLoad &load : pendingLoads) {
+        load.completion.claimAndDelete([&]() {
+            finishMediaEntrySourceCandidateResult(result, load.callback, load.errorCallback);
+        });
     }
 }
 
-void ArchiveDocumentSessionRuntime::cancelCandidateLoadBatch() { m_candidateLoadState.cancel(); }
+void MediaEntrySourceRuntime::cancelCandidateLoadBatch() { m_candidateLoadState.cancel(); }
 }

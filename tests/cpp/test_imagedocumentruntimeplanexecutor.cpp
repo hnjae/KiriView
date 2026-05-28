@@ -31,8 +31,8 @@ struct RecordedRuntimeOperations {
             = [this]() { record(QStringLiteral("stopPresentationAnimation")); };
         operations.lifecycle.shutdownSpread
             = [this]() { record(QStringLiteral("shutdownSpread")); };
-        operations.archive.clearSession
-            = [this]() { record(QStringLiteral("clearArchiveSession")); };
+        operations.mediaEntrySource.clear
+            = [this]() { record(QStringLiteral("clearMediaEntrySource")); };
         operations.predecode.clearPredecode
             = [this]() { record(QStringLiteral("clearPredecode")); };
         operations.predecode.cancelPredecode
@@ -165,7 +165,7 @@ void TestImageDocumentRuntimePlanExecutor::clearImageDispatchesOrderedRuntimeOpe
 
     QCOMPARE(recorded.events,
         QStringList({
-            QStringLiteral("clearArchiveSession"),
+            QStringLiteral("clearMediaEntrySource"),
             QStringLiteral("clearPredecode"),
             QStringLiteral("finishSpreadTransition"),
             QStringLiteral("clearSecondaryPage"),
@@ -187,7 +187,7 @@ void TestImageDocumentRuntimePlanExecutor::
 
     QCOMPARE(recorded.events,
         QStringList({
-            QStringLiteral("clearArchiveSession"),
+            QStringLiteral("clearMediaEntrySource"),
             QStringLiteral("cancelAllNavigation"),
             QStringLiteral("cancelPredecode"),
             QStringLiteral("cancelOpen"),
@@ -216,7 +216,7 @@ void TestImageDocumentRuntimePlanExecutor::shutdownRuntimeDispatchesOrderedLifec
             QStringLiteral("cancelPredecode"),
             QStringLiteral("cancelAllNavigation"),
             QStringLiteral("cancelOpen"),
-            QStringLiteral("clearArchiveSession"),
+            QStringLiteral("clearMediaEntrySource"),
         }));
 }
 
@@ -362,7 +362,7 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
         KiriView::CancelFileDeletionOperation {},
         KiriView::StopPresentationAnimationOperation {},
         KiriView::ShutdownSpreadOperation {},
-        KiriView::ClearArchiveSessionOperation {},
+        KiriView::ClearMediaEntrySourceOperation {},
         KiriView::ClearPredecodeOperation {},
         KiriView::CancelPredecodeOperation {},
         KiriView::ScheduleAdjacentImagePredecodeOperation {},
@@ -426,7 +426,7 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
             QStringLiteral("cancelFileDeletion"),
             QStringLiteral("stopPresentationAnimation"),
             QStringLiteral("shutdownSpread"),
-            QStringLiteral("clearArchiveSession"),
+            QStringLiteral("clearMediaEntrySource"),
             QStringLiteral("clearPredecode"),
             QStringLiteral("cancelPredecode"),
             QStringLiteral("scheduleAdjacentImagePredecode"),

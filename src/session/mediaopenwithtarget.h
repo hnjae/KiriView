@@ -14,7 +14,7 @@ struct MediaOpenWithTargetInput {
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     bool imageReady = false;
     QUrl imageDisplayedUrl;
-    ImagePageScopeLocation imagePageScope;
+    OpenedCollectionScopeLocation openedCollectionScope;
     bool videoReady = false;
     QUrl videoSourceUrl;
 };

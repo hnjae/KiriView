@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_ARCHIVEDOCUMENTSESSIONRUNNER_H
-#define KIRIVIEW_ARCHIVEDOCUMENTSESSIONRUNNER_H
+#ifndef KIRIVIEW_MEDIAENTRYSOURCERUNNER_H
+#define KIRIVIEW_MEDIAENTRYSOURCERUNNER_H
 
 #include "archivebackend.h"
 
@@ -11,24 +11,24 @@
 #include <vector>
 
 namespace KiriView {
-class ArchiveDocumentSessionRunner final
+class MediaEntrySourceRunner final
 {
 public:
-    ArchiveDocumentSessionRunner(
-        ImagePageScopeLocation archiveDocument, ArchiveDocumentSessionFactory sessionFactory);
+    MediaEntrySourceRunner(
+        OpenedCollectionScopeLocation archiveCollection, MediaEntrySourceFactory sourceFactory);
 
-    const ImagePageScopeLocation &imagePageScope() const;
+    const OpenedCollectionScopeLocation &openedCollectionScope() const;
 
     ArchiveImageCandidatesResult loadImageCandidates();
     ArchiveImageDataResult loadImageData(const QUrl &imageUrl);
     std::optional<std::vector<ImageNavigationCandidate>> cachedImageCandidates();
 
 private:
-    std::optional<QString> ensureSession();
+    std::optional<QString> ensureSource();
 
-    ImagePageScopeLocation m_archiveDocument;
-    ArchiveDocumentSessionFactory m_sessionFactory;
-    ArchiveDocumentSessionPtr m_session;
+    OpenedCollectionScopeLocation m_archiveCollection;
+    MediaEntrySourceFactory m_sourceFactory;
+    MediaEntrySourcePtr m_source;
     QString m_openErrorString;
     std::optional<std::vector<ImageNavigationCandidate>> m_cachedCandidates;
     bool m_openAttempted = false;

@@ -46,9 +46,9 @@ const DisplayedImageLocation &ImageDocumentState::displayedImageLocation() const
     return m_displayedImageLocation;
 }
 
-const ImagePageScopeLocation &ImageDocumentState::displayedImagePageScope() const
+const OpenedCollectionScopeLocation &ImageDocumentState::displayedOpenedCollectionScope() const
 {
-    return m_displayedImageLocation.imagePageScope();
+    return m_displayedImageLocation.openedCollectionScope();
 }
 
 const QUrl &ImageDocumentState::displayedUrl() const { return m_displayedImageLocation.imageUrl(); }
@@ -76,7 +76,10 @@ bool ImageDocumentState::containerNavigationAvailable() const
     return !m_containerNavigationUrl.isEmpty();
 }
 
-bool ImageDocumentState::unsupportedDocumentVideo() const { return m_unsupportedDocumentVideo; }
+bool ImageDocumentState::unsupportedOpenedCollectionVideo() const
+{
+    return m_unsupportedOpenedCollectionVideo;
+}
 
 void ImageDocumentState::setSourceUrl(const QUrl &sourceUrl)
 {
@@ -150,10 +153,10 @@ void ImageDocumentState::clearLoadingContainerNavigationUrl()
     m_loadingContainerNavigationUrl = QUrl();
 }
 
-void ImageDocumentState::setUnsupportedDocumentVideo(bool unsupported)
+void ImageDocumentState::setUnsupportedOpenedCollectionVideo(bool unsupported)
 {
-    if (replaceIfChanged(m_unsupportedDocumentVideo, unsupported)) {
-        notify(ImageDocumentChange::UnsupportedDocumentVideo);
+    if (replaceIfChanged(m_unsupportedOpenedCollectionVideo, unsupported)) {
+        notify(ImageDocumentChange::UnsupportedOpenedCollectionVideo);
     }
 }
 

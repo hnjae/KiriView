@@ -9,7 +9,7 @@
 #include <optional>
 
 namespace KiriView {
-class ImagePageScopeLocation;
+class OpenedCollectionScopeLocation;
 
 struct KioFuseArchivePath {
     QString scheme;
@@ -19,8 +19,10 @@ struct KioFuseArchivePath {
 QString normalizedArchiveRootPath(const QUrl &archiveRootUrl);
 QString normalizedArchiveEntryPath(const QString &entryPath);
 QString archiveRelativePathForUrl(const QUrl &archiveRootUrl, const QUrl &url);
-QString archiveEntryPathForUrl(const ImagePageScopeLocation &archiveDocument, const QUrl &imageUrl);
-QUrl archiveEntryUrl(const ImagePageScopeLocation &archiveDocument, const QString &entryPath);
+QString archiveEntryPathForUrl(
+    const OpenedCollectionScopeLocation &archiveCollection, const QUrl &imageUrl);
+QUrl archiveEntryUrl(
+    const OpenedCollectionScopeLocation &archiveCollection, const QString &entryPath);
 std::optional<KioFuseArchivePath> kioFuseArchivePath(
     const QString &localPath, const QString &runtimeDir);
 std::optional<QUrl> kioFuseArchiveUrlForLocalPath(

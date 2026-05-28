@@ -33,7 +33,7 @@ enum class ImageDocumentChange {
     TwoPageMode,
     RightToLeftReading,
     Rotation,
-    UnsupportedDocumentVideo,
+    UnsupportedOpenedCollectionVideo,
     RenderFrame,
     Repaint,
 };

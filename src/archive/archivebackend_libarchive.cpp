@@ -85,11 +85,11 @@ LibArchiveReader makeLibArchiveReader()
 }
 
 OpenArchiveFileResult openArchiveFileDescriptor(
-    const KiriView::ImagePageScopeLocation &archiveDocument)
+    const KiriView::OpenedCollectionScopeLocation &archiveCollection)
 {
-    const QString filePath = archiveDocument.fileUrl().toLocalFile();
+    const QString filePath = archiveCollection.fileUrl().toLocalFile();
     if (filePath.isEmpty()) {
-        return OpenArchiveFileResult { {}, Backend::fallbackArchiveOpenError(archiveDocument) };
+        return OpenArchiveFileResult { {}, Backend::fallbackArchiveOpenError(archiveCollection) };
     }
 
 #ifdef O_CLOEXEC
@@ -101,47 +101,48 @@ OpenArchiveFileResult openArchiveFileDescriptor(
     const QByteArray encodedFilePath = QFile::encodeName(filePath);
     const int fileDescriptor = ::open(encodedFilePath.constData(), openFlags);
     if (fileDescriptor < 0) {
-        return OpenArchiveFileResult { {}, Backend::fallbackArchiveOpenError(archiveDocument) };
+        return OpenArchiveFileResult { {}, Backend::fallbackArchiveOpenError(archiveCollection) };
     }
 
     return OpenArchiveFileResult { ScopedFileDescriptor(fileDescriptor), QString() };
 }
 
-bool configureLibArchiveReader(
-    archive *reader, const KiriView::ImagePageScopeLocation &archiveDocument, QString *errorString)
+bool configureLibArchiveReader(archive *reader,
+    const KiriView::OpenedCollectionScopeLocation &archiveCollection, QString *errorString)
 {
     if (archive_read_support_filter_all(reader) != ARCHIVE_OK
         || archive_read_support_format_rar(reader) != ARCHIVE_OK
         || archive_read_support_format_rar5(reader) != ARCHIVE_OK) {
         *errorString
-            = libArchiveErrorString(reader, Backend::fallbackArchiveOpenError(archiveDocument));
+            = libArchiveErrorString(reader, Backend::fallbackArchiveOpenError(archiveCollection));
         return false;
     }
 
     return true;
 }
 
-LibArchiveReader openLibArchiveReaderOnFd(const KiriView::ImagePageScopeLocation &archiveDocument,
-    int fileDescriptor, QString *errorString)
+LibArchiveReader openLibArchiveReaderOnFd(
+    const KiriView::OpenedCollectionScopeLocation &archiveCollection, int fileDescriptor,
+    QString *errorString)
 {
     if (fileDescriptor < 0 || ::lseek(fileDescriptor, 0, SEEK_SET) < 0) {
-        *errorString = Backend::fallbackArchiveOpenError(archiveDocument);
+        *errorString = Backend::fallbackArchiveOpenError(archiveCollection);
         return LibArchiveReader(nullptr, archive_read_free);
     }
 
     LibArchiveReader reader = makeLibArchiveReader();
     if (reader == nullptr) {
-        *errorString = Backend::fallbackArchiveOpenError(archiveDocument);
+        *errorString = Backend::fallbackArchiveOpenError(archiveCollection);
         return reader;
     }
 
-    if (!configureLibArchiveReader(reader.get(), archiveDocument, errorString)) {
+    if (!configureLibArchiveReader(reader.get(), archiveCollection, errorString)) {
         return LibArchiveReader(nullptr, archive_read_free);
     }
 
     if (archive_read_open_fd(reader.get(), fileDescriptor, 10240) != ARCHIVE_OK) {
         *errorString = libArchiveErrorString(
-            reader.get(), Backend::fallbackArchiveOpenError(archiveDocument));
+            reader.get(), Backend::fallbackArchiveOpenError(archiveCollection));
         return LibArchiveReader(nullptr, archive_read_free);
     }
 
@@ -201,15 +202,16 @@ KiriView::ArchiveImageDataResult readLibArchiveEntryData(archive *reader, archiv
     return Backend::archiveImageDataResult(std::move(data));
 }
 
-struct LibArchiveSessionMetadata {
+struct LibArchiveMediaEntrySourceMetadata {
     std::vector<KiriView::ImageNavigationCandidate> candidates;
     std::map<QString, int> entryOrderByPath;
 };
 
-std::optional<LibArchiveSessionMetadata> scanLibArchiveSessionMetadata(
-    const KiriView::ImagePageScopeLocation &archiveDocument, archive *reader, QString *errorString)
+std::optional<LibArchiveMediaEntrySourceMetadata> scanLibArchiveMediaEntrySourceMetadata(
+    const KiriView::OpenedCollectionScopeLocation &archiveCollection, archive *reader,
+    QString *errorString)
 {
-    LibArchiveSessionMetadata metadata;
+    LibArchiveMediaEntrySourceMetadata metadata;
     archive_entry *entry = nullptr;
     int entryOrder = 0;
 
@@ -219,8 +221,8 @@ std::optional<LibArchiveSessionMetadata> scanLibArchiveSessionMetadata(
             return metadata;
         }
         if (status != ARCHIVE_OK) {
-            *errorString
-                = libArchiveErrorString(reader, Backend::fallbackArchiveOpenError(archiveDocument));
+            *errorString = libArchiveErrorString(
+                reader, Backend::fallbackArchiveOpenError(archiveCollection));
             return std::nullopt;
         }
 
@@ -229,7 +231,7 @@ std::optional<LibArchiveSessionMetadata> scanLibArchiveSessionMetadata(
 
         if (archive_entry_filetype(entry) == AE_IFREG) {
             std::optional<KiriView::ImageNavigationCandidate> candidate
-                = Backend::archiveMediaCandidate(archiveDocument, libArchiveEntryPath(entry));
+                = Backend::archiveMediaCandidate(archiveCollection, libArchiveEntryPath(entry));
             if (candidate.has_value()) {
                 metadata.entryOrderByPath[candidate->name] = currentEntryOrder;
                 metadata.candidates.push_back(std::move(*candidate));
@@ -242,44 +244,42 @@ std::optional<LibArchiveSessionMetadata> scanLibArchiveSessionMetadata(
     }
 }
 
-class LibArchiveDocumentSession final : public Backend::ArchiveDocumentSessionWithCandidateSnapshot
+class LibArchiveMediaEntrySource final : public Backend::MediaEntrySourceWithCandidateSnapshot
 {
 public:
-    static KiriView::ArchiveDocumentSessionOpenResult create(
-        const KiriView::ImagePageScopeLocation &archiveDocument)
+    static KiriView::MediaEntrySourceOpenResult create(
+        const KiriView::OpenedCollectionScopeLocation &archiveCollection)
     {
-        OpenArchiveFileResult opened = openArchiveFileDescriptor(archiveDocument);
+        OpenArchiveFileResult opened = openArchiveFileDescriptor(archiveCollection);
         if (!opened.fileDescriptor) {
-            return Backend::archiveErrorResult<KiriView::ArchiveDocumentSessionOpenResult>(
+            return Backend::archiveErrorResult<KiriView::MediaEntrySourceOpenResult>(
                 opened.errorString);
         }
 
-        auto session = std::shared_ptr<LibArchiveDocumentSession>(
-            new LibArchiveDocumentSession(archiveDocument, std::move(opened.fileDescriptor)));
+        auto source = std::shared_ptr<LibArchiveMediaEntrySource>(
+            new LibArchiveMediaEntrySource(archiveCollection, std::move(opened.fileDescriptor)));
         QString errorString;
-        LibArchiveReader reader
-            = openLibArchiveReaderOnFd(archiveDocument, session->m_archiveFile.get(), &errorString);
+        LibArchiveReader reader = openLibArchiveReaderOnFd(
+            archiveCollection, source->m_archiveFile.get(), &errorString);
         if (reader == nullptr) {
-            return Backend::archiveErrorResult<KiriView::ArchiveDocumentSessionOpenResult>(
-                errorString);
+            return Backend::archiveErrorResult<KiriView::MediaEntrySourceOpenResult>(errorString);
         }
 
-        std::optional<LibArchiveSessionMetadata> metadata
-            = scanLibArchiveSessionMetadata(archiveDocument, reader.get(), &errorString);
+        std::optional<LibArchiveMediaEntrySourceMetadata> metadata
+            = scanLibArchiveMediaEntrySourceMetadata(archiveCollection, reader.get(), &errorString);
         if (!metadata.has_value()) {
-            return Backend::archiveErrorResult<KiriView::ArchiveDocumentSessionOpenResult>(
-                errorString);
+            return Backend::archiveErrorResult<KiriView::MediaEntrySourceOpenResult>(errorString);
         }
 
-        session->m_entryOrderByPath = std::move(metadata->entryOrderByPath);
-        session->replaceCandidateSnapshot(std::move(metadata->candidates));
-        return KiriView::ArchiveDocumentSessionPtr(std::move(session));
+        source->m_entryOrderByPath = std::move(metadata->entryOrderByPath);
+        source->replaceCandidateSnapshot(std::move(metadata->candidates));
+        return KiriView::MediaEntrySourcePtr(std::move(source));
     }
 
     KiriView::ArchiveImageDataResult loadImageData(const QUrl &imageUrl) override
     {
         const std::optional<QString> entryPath
-            = Backend::archiveImageEntryPathForRead(m_archiveDocument, imageUrl);
+            = Backend::archiveImageEntryPathForRead(m_archiveCollection, imageUrl);
         if (!entryPath.has_value()) {
             return Backend::archiveErrorResult<KiriView::ArchiveImageDataResult>(
                 Backend::archiveImageNotFoundError());
@@ -295,10 +295,10 @@ public:
     }
 
 private:
-    LibArchiveDocumentSession(
-        KiriView::ImagePageScopeLocation archiveDocument, ScopedFileDescriptor archiveFile)
-        : Backend::ArchiveDocumentSessionWithCandidateSnapshot({})
-        , m_archiveDocument(std::move(archiveDocument))
+    LibArchiveMediaEntrySource(
+        KiriView::OpenedCollectionScopeLocation archiveCollection, ScopedFileDescriptor archiveFile)
+        : Backend::MediaEntrySourceWithCandidateSnapshot({})
+        , m_archiveCollection(std::move(archiveCollection))
         , m_archiveFile(std::move(archiveFile))
     {
     }
@@ -358,7 +358,7 @@ private:
         m_nextEntryOrder = 0;
         m_readerExhausted = false;
 
-        m_reader = openLibArchiveReaderOnFd(m_archiveDocument, m_archiveFile.get(), errorString);
+        m_reader = openLibArchiveReaderOnFd(m_archiveCollection, m_archiveFile.get(), errorString);
         if (m_reader == nullptr) {
             m_readerExhausted = true;
             return false;
@@ -367,7 +367,7 @@ private:
         return true;
     }
 
-    KiriView::ImagePageScopeLocation m_archiveDocument;
+    KiriView::OpenedCollectionScopeLocation m_archiveCollection;
     ScopedFileDescriptor m_archiveFile;
     std::map<QString, int> m_entryOrderByPath;
     LibArchiveReader m_reader { nullptr, archive_read_free };
@@ -375,10 +375,10 @@ private:
     bool m_readerExhausted = true;
 };
 
-KiriView::ArchiveDocumentSessionOpenResult openLibArchiveDocumentSession(
-    const KiriView::ImagePageScopeLocation &archiveDocument)
+KiriView::MediaEntrySourceOpenResult openLibArchiveMediaEntrySource(
+    const KiriView::OpenedCollectionScopeLocation &archiveCollection)
 {
-    return LibArchiveDocumentSession::create(archiveDocument);
+    return LibArchiveMediaEntrySource::create(archiveCollection);
 }
 }
 
@@ -386,7 +386,7 @@ namespace KiriView::ArchiveBackendDetail {
 const ArchiveBackendOperations *libArchiveBackendOperations()
 {
     static const ArchiveBackendOperations operations {
-        openLibArchiveDocumentSession,
+        openLibArchiveMediaEntrySource,
     };
     return &operations;
 }

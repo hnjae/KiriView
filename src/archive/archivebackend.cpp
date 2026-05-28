@@ -18,14 +18,14 @@
 namespace {
 namespace Backend = KiriView::ArchiveBackendDetail;
 
-const Backend::ArchiveBackendOperations *archiveBackendOperationsForDocument(
-    const KiriView::ImagePageScopeLocation &archiveDocument)
+const Backend::ArchiveBackendOperations *archiveBackendOperationsForOpenedCollection(
+    const KiriView::OpenedCollectionScopeLocation &archiveCollection)
 {
-    if (archiveDocument.isDirectory()) {
+    if (archiveCollection.isDirectory()) {
         return Backend::directoryBackendOperations();
     }
 
-    switch (KiriView::archiveStorageBackendForRootScheme(archiveDocument.rootUrl().scheme())) {
+    switch (KiriView::archiveStorageBackendForRootScheme(archiveCollection.rootUrl().scheme())) {
     case KiriView::ArchiveStorageBackend::KZip:
     case KiriView::ArchiveStorageBackend::KTar:
     case KiriView::ArchiveStorageBackend::K7Zip:
@@ -39,33 +39,33 @@ const Backend::ArchiveBackendOperations *archiveBackendOperationsForDocument(
     return nullptr;
 }
 
-KiriView::ArchiveDocumentSessionOpenResult openWithArchiveBackend(
-    const KiriView::ImagePageScopeLocation &archiveDocument)
+KiriView::MediaEntrySourceOpenResult openWithArchiveBackend(
+    const KiriView::OpenedCollectionScopeLocation &archiveCollection)
 {
     const Backend::ArchiveBackendOperations *backend
-        = archiveBackendOperationsForDocument(archiveDocument);
+        = archiveBackendOperationsForOpenedCollection(archiveCollection);
     if (backend == nullptr) {
-        return Backend::archiveErrorResult<KiriView::ArchiveDocumentSessionOpenResult>(
-            Backend::fallbackArchiveOpenError(archiveDocument));
+        return Backend::archiveErrorResult<KiriView::MediaEntrySourceOpenResult>(
+            Backend::fallbackArchiveOpenError(archiveCollection));
     }
 
-    return backend->openSession(archiveDocument);
+    return backend->openSource(archiveCollection);
 }
 }
 
 namespace KiriView::ArchiveBackendDetail {
-ArchiveDocumentSessionWithCandidateSnapshot::ArchiveDocumentSessionWithCandidateSnapshot(
+MediaEntrySourceWithCandidateSnapshot::MediaEntrySourceWithCandidateSnapshot(
     std::vector<ImageNavigationCandidate> candidates)
 {
     replaceCandidateSnapshot(std::move(candidates));
 }
 
-ArchiveImageCandidatesResult ArchiveDocumentSessionWithCandidateSnapshot::loadImageCandidates()
+ArchiveImageCandidatesResult MediaEntrySourceWithCandidateSnapshot::loadImageCandidates()
 {
     return ArchiveImageCandidates { m_candidates };
 }
 
-void ArchiveDocumentSessionWithCandidateSnapshot::replaceCandidateSnapshot(
+void MediaEntrySourceWithCandidateSnapshot::replaceCandidateSnapshot(
     std::vector<ImageNavigationCandidate> candidates)
 {
     sortImageNavigationCandidates(&candidates);
@@ -73,14 +73,14 @@ void ArchiveDocumentSessionWithCandidateSnapshot::replaceCandidateSnapshot(
 }
 
 std::optional<ImageNavigationCandidate> archiveMediaCandidate(
-    const ImagePageScopeLocation &archiveDocument, const QString &entryPath)
+    const OpenedCollectionScopeLocation &archiveCollection, const QString &entryPath)
 {
     const QString candidateName = normalizedArchiveEntryPath(entryPath);
     if (candidateName.isEmpty() || !isSupportedOrdinaryMediaFileName(candidateName)) {
         return std::nullopt;
     }
 
-    const QUrl url = archiveEntryUrl(archiveDocument, candidateName);
+    const QUrl url = archiveEntryUrl(archiveCollection, candidateName);
     if (url.isEmpty()) {
         return std::nullopt;
     }
@@ -91,19 +91,19 @@ std::optional<ImageNavigationCandidate> archiveMediaCandidate(
 }
 
 std::optional<QString> archiveImageEntryPathForRead(
-    const ImagePageScopeLocation &archiveDocument, const QUrl &imageUrl)
+    const OpenedCollectionScopeLocation &archiveCollection, const QUrl &imageUrl)
 {
-    const QString entryPath = archiveEntryPathForUrl(archiveDocument, imageUrl);
-    if (archiveDocument.isEmpty() || entryPath.isEmpty()) {
+    const QString entryPath = archiveEntryPathForUrl(archiveCollection, imageUrl);
+    if (archiveCollection.isEmpty() || entryPath.isEmpty()) {
         return std::nullopt;
     }
 
     return entryPath;
 }
 
-QString fallbackArchiveOpenError(const ImagePageScopeLocation &archiveDocument)
+QString fallbackArchiveOpenError(const OpenedCollectionScopeLocation &archiveCollection)
 {
-    const QString fileName = archiveDocument.fileUrl().fileName();
+    const QString fileName = archiveCollection.fileUrl().fileName();
     if (fileName.isEmpty()) {
         return i18nc("@info:status", "Could not open the selected archive.");
     }
@@ -135,48 +135,48 @@ ArchiveImageDataResult archiveImageDataResult(QByteArray data)
 }
 
 namespace KiriView {
-ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
-    const ImagePageScopeLocation &archiveDocument)
+ArchiveImageCandidatesResult loadMediaEntrySourceCandidates(
+    const OpenedCollectionScopeLocation &archiveCollection)
 {
-    ArchiveDocumentSessionOpenResult opened = openArchiveDocumentSession(archiveDocument);
+    MediaEntrySourceOpenResult opened = openMediaEntrySource(archiveCollection);
     if (const auto *error = std::get_if<ArchiveError>(&opened)) {
         return Backend::archiveErrorResult<ArchiveImageCandidatesResult>(error->errorString);
     }
 
-    const auto *session = std::get_if<ArchiveDocumentSessionPtr>(&opened);
-    if (session == nullptr || *session == nullptr) {
+    const auto *source = std::get_if<MediaEntrySourcePtr>(&opened);
+    if (source == nullptr || *source == nullptr) {
         return Backend::archiveErrorResult<ArchiveImageCandidatesResult>(
-            Backend::fallbackArchiveOpenError(archiveDocument));
+            Backend::fallbackArchiveOpenError(archiveCollection));
     }
 
-    return (*session)->loadImageCandidates();
+    return (*source)->loadImageCandidates();
 }
 
-ArchiveImageDataResult loadArchiveDocumentImageData(
-    const ImagePageScopeLocation &archiveDocument, const QUrl &imageUrl)
+ArchiveImageDataResult loadMediaEntrySourceImageData(
+    const OpenedCollectionScopeLocation &archiveCollection, const QUrl &imageUrl)
 {
-    ArchiveDocumentSessionOpenResult opened = openArchiveDocumentSession(archiveDocument);
+    MediaEntrySourceOpenResult opened = openMediaEntrySource(archiveCollection);
     if (const auto *error = std::get_if<ArchiveError>(&opened)) {
         return Backend::archiveErrorResult<ArchiveImageDataResult>(error->errorString);
     }
 
-    const auto *session = std::get_if<ArchiveDocumentSessionPtr>(&opened);
-    if (session == nullptr || *session == nullptr) {
+    const auto *source = std::get_if<MediaEntrySourcePtr>(&opened);
+    if (source == nullptr || *source == nullptr) {
         return Backend::archiveErrorResult<ArchiveImageDataResult>(
-            Backend::fallbackArchiveOpenError(archiveDocument));
+            Backend::fallbackArchiveOpenError(archiveCollection));
     }
 
-    return (*session)->loadImageData(imageUrl);
+    return (*source)->loadImageData(imageUrl);
 }
 
-ArchiveDocumentSessionOpenResult openArchiveDocumentSession(
-    const ImagePageScopeLocation &archiveDocument)
+MediaEntrySourceOpenResult openMediaEntrySource(
+    const OpenedCollectionScopeLocation &archiveCollection)
 {
-    if (archiveDocument.isEmpty()) {
-        return Backend::archiveErrorResult<ArchiveDocumentSessionOpenResult>(
+    if (archiveCollection.isEmpty()) {
+        return Backend::archiveErrorResult<MediaEntrySourceOpenResult>(
             i18nc("@info:status", "Could not open the selected archive."));
     }
 
-    return openWithArchiveBackend(archiveDocument);
+    return openWithArchiveBackend(archiveCollection);
 }
 }

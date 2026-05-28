@@ -26,7 +26,7 @@
 #include <vector>
 
 namespace KiriView {
-class ImagePageScopeLocation;
+class OpenedCollectionScopeLocation;
 class ImageDocumentRuntime;
 }
 
@@ -77,8 +77,8 @@ class KiriImageDocument : public QObject
             containerNavigationChanged)
     Q_PROPERTY(bool ordinaryDirectMediaScopeActive READ ordinaryDirectMediaScopeActive NOTIFY
             mediaScopeChanged)
-    Q_PROPERTY(bool archiveOrDirectoryDocumentScopeActive READ archiveOrDirectoryDocumentScopeActive
-            NOTIFY mediaScopeChanged)
+    Q_PROPERTY(
+        bool openedCollectionScopeActive READ openedCollectionScopeActive NOTIFY mediaScopeChanged)
     Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress NOTIFY
             fileDeletionInProgressChanged)
     Q_PROPERTY(bool twoPageModeEnabled READ twoPageModeEnabled WRITE setTwoPageModeEnabled NOTIFY
@@ -89,8 +89,8 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(bool rightToLeftReadingAvailable READ rightToLeftReadingAvailable NOTIFY
             rightToLeftReadingChanged)
     Q_PROPERTY(bool secondaryPageVisible READ secondaryPageVisible NOTIFY twoPageModeChanged)
-    Q_PROPERTY(bool unsupportedDocumentVideo READ unsupportedDocumentVideo NOTIFY
-            unsupportedDocumentVideoChanged)
+    Q_PROPERTY(bool unsupportedOpenedCollectionVideo READ unsupportedOpenedCollectionVideo NOTIFY
+            unsupportedOpenedCollectionVideoChanged)
 
 public:
     using RenderContextProvider = std::function<KiriView::ImageDocumentRenderContext()>;
@@ -130,7 +130,7 @@ public:
     QString errorString() const;
     QString windowTitleFileName() const;
     QUrl displayedUrl() const;
-    KiriView::ImagePageScopeLocation displayedImagePageScope() const;
+    KiriView::OpenedCollectionScopeLocation displayedOpenedCollectionScope() const;
     QSize imageSize() const;
     QSize primaryImageSize() const;
     QSize secondaryImageSize() const;
@@ -163,7 +163,7 @@ public:
     KiriView::ImagePageNavigationSnapshot pageNavigationSnapshot() const;
     bool containerNavigationAvailable() const;
     bool ordinaryDirectMediaScopeActive() const;
-    bool archiveOrDirectoryDocumentScopeActive() const;
+    bool openedCollectionScopeActive() const;
     bool fileDeletionInProgress() const;
     bool twoPageModeEnabled() const;
     void setTwoPageModeEnabled(bool enabled);
@@ -172,7 +172,7 @@ public:
     void setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
-    bool unsupportedDocumentVideo() const;
+    bool unsupportedOpenedCollectionVideo() const;
     std::optional<KiriView::DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     KiriView::ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     KiriView::DisplayedImageRenderSnapshot renderSnapshot(
@@ -221,8 +221,8 @@ Q_SIGNALS:
     void rightToLeftReadingChanged();
     void fileDeletionFailed(const QString &errorString);
     void repaintRequested();
-    void unsupportedDocumentVideoChanged();
-    void unsupportedDocumentVideoEntered(const QString &message);
+    void unsupportedOpenedCollectionVideoChanged();
+    void unsupportedOpenedCollectionVideoEntered(const QString &message);
 
 private:
     void handleDocumentChanges(const std::vector<KiriView::ImageDocumentChange> &changes);

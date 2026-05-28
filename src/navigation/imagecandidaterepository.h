@@ -25,8 +25,9 @@ public:
         ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
     ImageIoJob loadDirectoryImages(QObject *receiver, const QUrl &directoryUrl,
         ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
-    ImageIoJob loadArchiveImages(QObject *receiver, ImagePageScopeLocation imagePageScope,
-        ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
+    ImageIoJob loadOpenedCollectionCandidates(QObject *receiver,
+        OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
+        ErrorCallback errorCallback) const;
     ImageIoJob loadContainers(QObject *receiver, const QUrl &directoryUrl,
         ContainerCandidatesCallback callback, ErrorCallback errorCallback) const;
     ImageIoJob watchCandidateChanges(QObject *receiver, const ImageCandidateListSource &source,

@@ -15,7 +15,7 @@ MediaViewportDelegate {
     property bool publishingViewportContentPosition: false
     property int viewportFrameApplyGeneration: 0
     readonly property var imageDocument: root.documentSession.imageDocument
-    property bool imageReady: root.presentationActive && root.imageDocument.status === KiriImageDocument.Ready && !root.imageDocument.unsupportedDocumentVideo
+    property bool imageReady: root.presentationActive && root.imageDocument.status === KiriImageDocument.Ready && !root.imageDocument.unsupportedOpenedCollectionVideo
     readonly property int minimumManualZoomPercent: root.imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: root.imageDocument.maximumManualZoomPercent
     readonly property int wheelAngleDeltaPerStep: 120

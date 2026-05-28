@@ -47,7 +47,7 @@ void TestRuntimeProviderDefaults::candidateProviderDefaultsFillMissingLoadersAnd
 
     QVERIFY(resolved.directoryImages);
     QVERIFY(resolved.directoryContainers);
-    QVERIFY(resolved.archiveImages);
+    QVERIFY(resolved.openedCollectionCandidates);
     QVERIFY(resolved.directoryImageChanges);
 
     resolved.directoryImages(nullptr, QUrl(), {}, {});

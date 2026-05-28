@@ -35,7 +35,7 @@ void TestImageDocumentRuntimePlan::clearImagePlansOrderedRuntimeOperations()
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentClearImagePlan();
 
     QVERIFY(hasOperationTypes(plan,
-        operationTypes<KiriView::ClearArchiveSessionOperation, KiriView::ClearPredecodeOperation,
+        operationTypes<KiriView::ClearMediaEntrySourceOperation, KiriView::ClearPredecodeOperation,
             KiriView::FinishSpreadTransitionOperation, KiriView::ClearSecondaryPageOperation,
             KiriView::CancelPageNavigationUpdateOperation,
             KiriView::ClearDisplayedImageLocationOperation,
@@ -48,7 +48,7 @@ void TestImageDocumentRuntimePlan::clearDeletedImagePlansDeletionClearAndEmptySo
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentClearDeletedImagePlan();
 
     QVERIFY(hasOperationTypes(plan,
-        operationTypes<KiriView::ClearArchiveSessionOperation,
+        operationTypes<KiriView::ClearMediaEntrySourceOperation,
             KiriView::CancelAllNavigationOperation, KiriView::CancelPredecodeOperation,
             KiriView::CancelOpenOperation, KiriView::FinishSpreadTransitionOperation,
             KiriView::ClearSecondaryPageOperation, KiriView::SetSourceUrlOperation,
@@ -65,7 +65,7 @@ void TestImageDocumentRuntimePlan::shutdownPlansOrderedRuntimeOperations()
         operationTypes<KiriView::CancelFileDeletionOperation,
             KiriView::StopPresentationAnimationOperation, KiriView::ShutdownSpreadOperation,
             KiriView::CancelPredecodeOperation, KiriView::CancelAllNavigationOperation,
-            KiriView::CancelOpenOperation, KiriView::ClearArchiveSessionOperation>()));
+            KiriView::CancelOpenOperation, KiriView::ClearMediaEntrySourceOperation>()));
 }
 
 void TestImageDocumentRuntimePlan::payloadOperationsCarryRuntimeData()
@@ -141,7 +141,7 @@ void TestImageDocumentRuntimePlan::operationTypeAssertionsCoverEveryRuntimeOpera
         KiriView::CancelFileDeletionOperation {},
         KiriView::StopPresentationAnimationOperation {},
         KiriView::ShutdownSpreadOperation {},
-        KiriView::ClearArchiveSessionOperation {},
+        KiriView::ClearMediaEntrySourceOperation {},
         KiriView::ClearPredecodeOperation {},
         KiriView::CancelPredecodeOperation {},
         KiriView::ScheduleAdjacentImagePredecodeOperation {},
@@ -203,7 +203,7 @@ void TestImageDocumentRuntimePlan::operationTypeAssertionsCoverEveryRuntimeOpera
     QVERIFY(hasOperationTypes(plan,
         operationTypes<KiriView::CancelFileDeletionOperation,
             KiriView::StopPresentationAnimationOperation, KiriView::ShutdownSpreadOperation,
-            KiriView::ClearArchiveSessionOperation, KiriView::ClearPredecodeOperation,
+            KiriView::ClearMediaEntrySourceOperation, KiriView::ClearPredecodeOperation,
             KiriView::CancelPredecodeOperation, KiriView::ScheduleAdjacentImagePredecodeOperation,
             KiriView::FinishSpreadTransitionOperation, KiriView::ResetRightToLeftReadingOperation,
             KiriView::ClearSecondaryPageOperation,

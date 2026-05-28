@@ -8,7 +8,7 @@ The document session owns the active navigation projection used by the toolbar r
 
 The document session also owns the active navigation thumbnail-strip projection. When the active navigation list is known, the strip exposes one item per supported active navigation item with the same ordering and 1-based numbering as the toolbar readout and page-number entry.
 
-For ordinary direct media URL scopes, archive document scopes, and directly opened directory document scopes, the page navigation controls count and select supported images and supported videos together.
+For ordinary direct media URL scopes, archive collection scopes, and directly opened directory collection scopes, the page navigation controls count and select supported images and supported videos together.
 
 First and Last are page navigation actions available through their configured shortcuts and menus. They open the first or last known page or media item in the current scope.
 
@@ -18,9 +18,9 @@ Page numbers are shown to users starting at 1.
 
 The active navigation projection has these user-visible invariants: `available` means the current mode exposes a navigable scope; `known` means KiriView has a confirmed current position and total count for the active scope; `editable` means entering a page number can dispatch to that same scope. When navigation is unavailable or unknown, the page-number entry is disabled, Previous, Next, First, and Last are disabled, and KiriView does not display a stale current/count pair. When navigation is known, the current number is within `1..total`, the total count is at least 1, previous and next availability match whether a previous or next target exists in reading order, and first/last boundary state matches whether the active visible item or spread is at the known start or end of the scope.
 
-For image-document scopes, the active navigation projection consumes the image document's full page-navigation snapshot rather than a single raw current page number. The snapshot includes the current first and last visible page for spread-aware display, total count, previous and next availability, and first and last boundary state, so QML does not recompute spread boundaries.
+For image-mode scopes, the active navigation projection consumes the image document's full page-navigation snapshot rather than a single raw current page number. The snapshot includes the current first and last visible page for spread-aware display, total count, previous and next availability, and first and last boundary state, so QML does not recompute spread boundaries.
 
-For image-document scopes, the thumbnail strip uses the image document page-navigation candidate names. Directory and archive document names may be document-relative paths so that same-basename items in different folders remain distinguishable.
+For image-mode scopes, the thumbnail strip uses the image document page-navigation candidate names. Directory and archive collection names may be collection-relative paths so that same-basename items in different folders remain distinguishable.
 
 When a new directory, archive, or ordinary direct media scope is being listed and KiriView has no confirmed supported item list for that same scope yet, the current page number and total item count are unknown, and KiriView does not treat the current item as the first or last item.
 
@@ -72,13 +72,13 @@ The ordinary direct media URL parent follows KiriView's existing direct image ca
 
 When an image or video is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats the opened item as a single direct media URL, and navigation moves between supported media files in the same directory inside that archive URL.
 
-When an image or unsupported-video placeholder is displayed from a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive document opened directly by KiriView, navigation moves between all supported image and video files inside that archive document, including supported media in subdirectories.
+When an image or unsupported-video placeholder is displayed from a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive collection opened directly by KiriView, navigation moves between all supported image and video files inside that archive collection, including supported media in subdirectories.
 
-When an image or unsupported-video placeholder is displayed from a local directory document opened directly by KiriView, navigation moves between all supported image and video files inside that directory tree, including supported media in subdirectories.
+When an image or unsupported-video placeholder is displayed from a local directory collection opened directly by KiriView, navigation moves between all supported image and video files inside that directory tree, including supported media in subdirectories.
 
-After the archive or directory document has been listed, page navigation uses all supported image and video files inside that document as its navigation target set.
+After the archive or directory collection has been listed, page navigation uses all supported image and video files inside that opened collection as its navigation target set.
 
-Supported video entries inside directly opened archive documents and directly opened directory documents are valid document navigation items. KiriView does not play those videos in document mode; selecting one keeps image document mode active and shows an unsupported-video placeholder with the message `Video playback is not supported in archive or folder documents`. Entering that placeholder also shows the same text as an in-app toast.
+Supported video entries inside directly opened archive collections and directly opened directory collections are valid opened collection navigation items. KiriView does not play those videos while an opened collection scope is active; selecting one keeps image mode active and shows an unsupported-video placeholder with the message `Video playback is not supported in archive or folder documents`. Entering that placeholder also shows the same text as an in-app toast.
 
 If the parent URL cannot be listed, the current media item is not found, or no adjacent supported media item exists, the current media item remains open and the app remains ready for another open action.
 
@@ -88,9 +88,9 @@ The previous and next files are determined by sorting candidate names with the u
 
 For ordinary direct media navigation, the candidate name is the file name.
 
-For archive and directory documents opened directly by KiriView, candidate names are document-relative paths such as `foo/a.jpg` and `bar/a.jpg`.
+For archive and directory collections opened directly by KiriView, candidate names are collection-relative paths such as `foo/a.jpg` and `bar/a.jpg`.
 
-Navigation does not wrap. Pressing Page Up on the first candidate or Page Down on the last candidate keeps the current item open and notifies the user that it is the first or last media item in ordinary direct media scopes and the first or last item in archive or directory document scopes.
+Navigation does not wrap. Pressing Page Up on the first candidate or Page Down on the last candidate keeps the current item open and notifies the user that it is the first or last media item in ordinary direct media scopes and the first or last item in archive or directory collection scopes.
 
 KiriView shows those first-item and last-item notifications only when the current supported list is known and the current item is at a known boundary.
 
@@ -132,7 +132,7 @@ If keyboard focus is inside the timeline control, that control may handle its ow
 
 Video mode supports fixed local seek shortcuts: `Alt+Left` seeks backward 5 seconds, `Alt+Right` seeks forward 5 seconds, `Alt+Up` seeks forward 45 seconds, and `Alt+Down` seeks backward 45 seconds.
 
-Video seek shortcuts are video-mode-only and do not affect image mode, archive document mode, or directly opened directory document mode.
+Video seek shortcuts are video-mode-only and do not affect image mode, archive collection scope, or directly opened directory collection scope.
 
 Video seek shortcuts are best-effort time seeks through Qt Multimedia position seeking. They run only when the media is seekable, clamp to the valid `[0, duration]` range when duration is known, and do not promise frame-accurate seeking.
 
@@ -164,7 +164,7 @@ When Two-Page Spread shows two pages, both the current primary page and the visi
 
 When users move quickly through pages, KiriView may briefly postpone this background work and then prioritize pages around the page where navigation settles, rather than every skipped page.
 
-Directly opened archive and directory documents may make more pages available in the current reading direction than ordinary image navigation. Document video items are positions for navigation and predecode planning, but KiriView predecodes only nearby supported images.
+Directly opened archive and directory collections may make more pages available in the current reading direction than ordinary image navigation. Opened collection video items are positions for navigation and predecode planning, but KiriView predecodes only nearby supported images.
 
 When the desktop Power Saver mode is enabled, KiriView does not newly schedule or run background work for adjacent pages.
 

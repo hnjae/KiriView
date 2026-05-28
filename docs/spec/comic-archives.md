@@ -16,13 +16,13 @@ If the next document item after the current image is a video, the current image 
 
 Two-Page Spread is unavailable for ordinary image files, direct video files, KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories.
 
-Showing a disabled Two-Page Spread toolbar control while a directly opened ZIP, TAR, 7Z, RAR, or directory document is active does not make Two-Page Spread available.
+Showing a disabled Two-Page Spread toolbar control while a directly opened ZIP, TAR, 7Z, RAR, or directory collection is active does not make Two-Page Spread available.
 
 When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is displayed, Ctrl+B toggles Right-to-Left Reading mode.
 
 Right-to-Left Reading mode is off by default, is unavailable for ordinary image files, direct video files, KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories, and is not saved as a global setting.
 
-Showing a disabled Right-to-Left Reading toolbar control while a directly opened ZIP, TAR, 7Z, RAR, or directory document is active does not make Right-to-Left Reading available.
+Showing a disabled Right-to-Left Reading toolbar control while a directly opened ZIP, TAR, 7Z, RAR, or directory collection is active does not make Right-to-Left Reading available.
 
 Moving to a sibling comic book archive with Previous Archive or Next Archive preserves the current Right-to-Left Reading mode state.
 
@@ -74,13 +74,13 @@ When the current image is inside a local comic book archive opened directly by K
 
 The Previous Archive and Next Archive actions open the previous or next sibling comic book archive beside the current archive.
 
-When the current item is a normal image file, direct video file, inside a KDE-supported archive URL, or inside a directly opened ZIP, TAR, 7Z, or RAR archive document, the Previous Archive and Next Archive actions are disabled.
+When the current item is a normal image file, direct video file, inside a KDE-supported archive URL, or inside a directly opened ZIP, TAR, 7Z, or RAR archive collection, the Previous Archive and Next Archive actions are disabled.
 
-Previous Archive and Next Archive are also disabled inside directly opened directory documents.
+Previous Archive and Next Archive are also disabled inside directly opened directory collections.
 
-Supported video entries inside a comic book archive opened directly by KiriView participate in archive document navigation, but KiriView shows them as unsupported-video placeholders instead of playing them.
+Supported video entries inside a comic book archive opened directly by KiriView participate in archive collection navigation, but KiriView shows them as unsupported-video placeholders instead of playing them.
 
-KDE archive URLs that point at individual video file entries remain direct media URLs and do not create comic book archive document context.
+KDE archive URLs that point at individual video file entries remain direct media URLs and do not create comic book archive collection context.
 
 Sibling archive candidates are local `.cbz`, `.cbt`, `.cb7`, or `.cbr` files in the current archive's parent directory.
 

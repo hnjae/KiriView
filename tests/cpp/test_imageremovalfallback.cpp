@@ -29,12 +29,12 @@ private Q_SLOTS:
     void emptyLocationHasNoRemovalPlanTarget();
     void regularImagePlanTargetsDisplayedUrl();
     void explicitKioArchiveImagePlanTargetsDisplayedUrl();
-    void directArchiveDocumentPlanTargetsArchiveFile();
-    void directDirectoryDocumentPlanTargetsDirectory();
+    void directArchiveCollectionPlanTargetsArchiveFile();
+    void directDirectoryCollectionPlanTargetsDirectory();
     void regularImagePlanUsesSiblingImageContext();
     void comicBookPagePlanUsesArchiveContainer();
     void generalArchivePageHasNoFallbackPlan();
-    void directoryDocumentPageHasNoFallbackPlan();
+    void directoryCollectionPageHasNoFallbackPlan();
     void imageFallbackPrefersNextImage();
     void imageFallbackFallsBackToPreviousImage();
     void imageFallbackReturnsNoUrlWithoutSiblingImages();
@@ -76,35 +76,35 @@ void TestImageRemovalFallback::explicitKioArchiveImagePlanTargetsDisplayedUrl()
     QCOMPARE(plan.targetUrl, imageUrl);
 }
 
-void TestImageRemovalFallback::directArchiveDocumentPlanTargetsArchiveFile()
+void TestImageRemovalFallback::directArchiveCollectionPlanTargetsArchiveFile()
 {
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl pageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page.png"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("page.png"));
 
     const KiriView::ImageRemovalPlan plan = KiriView::imageRemovalPlanForDisplayedLocation(
-        KiriView::DisplayedImageLocation::fromImagePageScope(pageUrl, *archiveDocument));
+        KiriView::DisplayedImageLocation::fromOpenedCollectionScope(pageUrl, *archiveCollection));
 
     QVERIFY(plan.hasTarget());
     QCOMPARE(plan.targetUrl, archiveUrl);
 }
 
-void TestImageRemovalFallback::directDirectoryDocumentPlanTargetsDirectory()
+void TestImageRemovalFallback::directDirectoryCollectionPlanTargetsDirectory()
 {
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
 
     const QUrl directoryUrl = QUrl::fromLocalFile(directory.path());
-    const std::optional<KiriView::ImagePageScopeLocation> directoryDocument
-        = KiriView::directOpenImagePageScopeLocationForLocalUrl(directoryUrl);
-    QVERIFY(directoryDocument.has_value());
-    QUrl pageUrl = directoryDocument->rootUrl();
-    pageUrl.setPath(directoryDocument->rootUrl().path() + QStringLiteral("page.png"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> directoryCollection
+        = KiriView::openedCollectionScopeLocationForDirectlyOpenedLocalUrl(directoryUrl);
+    QVERIFY(directoryCollection.has_value());
+    QUrl pageUrl = directoryCollection->rootUrl();
+    pageUrl.setPath(directoryCollection->rootUrl().path() + QStringLiteral("page.png"));
 
     const KiriView::ImageRemovalPlan plan = KiriView::imageRemovalPlanForDisplayedLocation(
-        KiriView::DisplayedImageLocation::fromImagePageScope(pageUrl, *directoryDocument));
+        KiriView::DisplayedImageLocation::fromOpenedCollectionScope(pageUrl, *directoryCollection));
 
     QVERIFY(plan.hasTarget());
     QCOMPARE(plan.targetUrl, directoryUrl);
@@ -127,13 +127,13 @@ void TestImageRemovalFallback::regularImagePlanUsesSiblingImageContext()
 void TestImageRemovalFallback::comicBookPagePlanUsesArchiveContainer()
 {
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl pageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page.png"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("page.png"));
 
     const KiriView::ImageRemovalPlan plan = KiriView::imageRemovalPlanForDisplayedLocation(
-        KiriView::DisplayedImageLocation::fromImagePageScope(pageUrl, *archiveDocument));
+        KiriView::DisplayedImageLocation::fromOpenedCollectionScope(pageUrl, *archiveCollection));
     const auto *comicBookPlan = std::get_if<KiriView::ComicBookRemovalFallback>(&plan.fallbackPlan);
 
     QVERIFY(comicBookPlan != nullptr);
@@ -145,26 +145,26 @@ void TestImageRemovalFallback::comicBookPagePlanUsesArchiveContainer()
 void TestImageRemovalFallback::generalArchivePageHasNoFallbackPlan()
 {
     const QUrl archiveUrl = localUrl(QStringLiteral("/archives/document.zip"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl pageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page.png"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("page.png"));
 
     const KiriView::ImageRemovalPlan plan = KiriView::imageRemovalPlanForDisplayedLocation(
-        KiriView::DisplayedImageLocation::fromImagePageScope(pageUrl, *archiveDocument));
+        KiriView::DisplayedImageLocation::fromOpenedCollectionScope(pageUrl, *archiveCollection));
 
     QVERIFY(std::holds_alternative<KiriView::NoImageRemovalFallback>(plan.fallbackPlan));
 }
 
-void TestImageRemovalFallback::directoryDocumentPageHasNoFallbackPlan()
+void TestImageRemovalFallback::directoryCollectionPageHasNoFallbackPlan()
 {
-    const KiriView::ImagePageScopeLocation directoryDocument
-        = KiriView::ImagePageScopeLocation::fromUrls(localUrl(QStringLiteral("/books/")),
-            localUrl(QStringLiteral("/books/")), KiriView::ImagePageScopeKind::Directory);
+    const KiriView::OpenedCollectionScopeLocation directoryCollection
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(localUrl(QStringLiteral("/books/")),
+            localUrl(QStringLiteral("/books/")), KiriView::OpenedCollectionScopeKind::Directory);
     const QUrl pageUrl = localUrl(QStringLiteral("/books/page.png"));
 
     const KiriView::ImageRemovalPlan plan = KiriView::imageRemovalPlanForDisplayedLocation(
-        KiriView::DisplayedImageLocation::fromImagePageScope(pageUrl, directoryDocument));
+        KiriView::DisplayedImageLocation::fromOpenedCollectionScope(pageUrl, directoryCollection));
 
     QVERIFY(std::holds_alternative<KiriView::NoImageRemovalFallback>(plan.fallbackPlan));
 }

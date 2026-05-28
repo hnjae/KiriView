@@ -1,14 +1,14 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "archive/archivedocumentcandidateloadstate.h"
+#include "archive/mediaentrysourcecandidateloadstate.h"
 
 #include <QObject>
 #include <QTest>
 #include <optional>
 #include <vector>
 
-class TestArchiveDocumentCandidateLoadState : public QObject
+class TestMediaEntrySourceCandidateLoadState : public QObject
 {
     Q_OBJECT
 
@@ -20,20 +20,20 @@ private Q_SLOTS:
     void cancelInvalidatesPendingLoads();
 };
 
-void TestArchiveDocumentCandidateLoadState::pendingLoadsShareOneStartableBatch()
+void TestMediaEntrySourceCandidateLoadState::pendingLoadsShareOneStartableBatch()
 {
-    KiriView::ArchiveDocumentCandidateLoadState state;
+    KiriView::MediaEntrySourceCandidateLoadState state;
     KiriView::ImageIoJob firstJob = state.addLoad(this, {}, {});
     KiriView::ImageIoJob secondJob = state.addLoad(this, {}, {});
 
     QVERIFY(firstJob.isActive());
     QVERIFY(secondJob.isActive());
-    const std::optional<KiriView::ArchiveDocumentCandidateLoadBatch> batch = state.startBatch();
+    const std::optional<KiriView::MediaEntrySourceCandidateLoadBatch> batch = state.startBatch();
     QVERIFY(batch.has_value());
     QVERIFY(state.batchInProgress());
     QVERIFY(!state.startBatch().has_value());
 
-    std::vector<KiriView::ArchiveDocumentCandidateLoad> loads = state.finishBatch(*batch);
+    std::vector<KiriView::MediaEntrySourceCandidateLoad> loads = state.finishBatch(*batch);
     QCOMPARE(loads.size(), std::size_t(2));
     QVERIFY(loads[0].completion.claimAndDelete([]() { }));
     QVERIFY(loads[1].completion.claimAndDelete([]() { }));
@@ -43,12 +43,12 @@ void TestArchiveDocumentCandidateLoadState::pendingLoadsShareOneStartableBatch()
     QVERIFY(!state.startBatch().has_value());
 }
 
-void TestArchiveDocumentCandidateLoadState::loadAddedDuringBatchJoinsActiveBatch()
+void TestMediaEntrySourceCandidateLoadState::loadAddedDuringBatchJoinsActiveBatch()
 {
-    KiriView::ArchiveDocumentCandidateLoadState state;
+    KiriView::MediaEntrySourceCandidateLoadState state;
     KiriView::ImageIoJob firstJob = state.addLoad(this, {}, {});
 
-    const std::optional<KiriView::ArchiveDocumentCandidateLoadBatch> batch = state.startBatch();
+    const std::optional<KiriView::MediaEntrySourceCandidateLoadBatch> batch = state.startBatch();
     QVERIFY(batch.has_value());
     QVERIFY(state.batchInProgress());
     KiriView::ImageIoJob secondJob = state.addLoad(this, {}, {});
@@ -57,7 +57,7 @@ void TestArchiveDocumentCandidateLoadState::loadAddedDuringBatchJoinsActiveBatch
     QVERIFY(secondJob.isActive());
     QVERIFY(!state.startBatch().has_value());
 
-    std::vector<KiriView::ArchiveDocumentCandidateLoad> loads = state.finishBatch(*batch);
+    std::vector<KiriView::MediaEntrySourceCandidateLoad> loads = state.finishBatch(*batch);
     QCOMPARE(loads.size(), std::size_t(2));
     QVERIFY(loads[0].completion.claimAndDelete([]() { }));
     QVERIFY(loads[1].completion.claimAndDelete([]() { }));
@@ -66,12 +66,12 @@ void TestArchiveDocumentCandidateLoadState::loadAddedDuringBatchJoinsActiveBatch
     QVERIFY(!state.batchInProgress());
 }
 
-void TestArchiveDocumentCandidateLoadState::cancelRejectsActiveBatch()
+void TestMediaEntrySourceCandidateLoadState::cancelRejectsActiveBatch()
 {
-    KiriView::ArchiveDocumentCandidateLoadState state;
+    KiriView::MediaEntrySourceCandidateLoadState state;
     KiriView::ImageIoJob job = state.addLoad(this, {}, {});
 
-    const std::optional<KiriView::ArchiveDocumentCandidateLoadBatch> batch = state.startBatch();
+    const std::optional<KiriView::MediaEntrySourceCandidateLoadBatch> batch = state.startBatch();
     QVERIFY(batch.has_value());
     state.cancel();
 
@@ -81,17 +81,17 @@ void TestArchiveDocumentCandidateLoadState::cancelRejectsActiveBatch()
     QVERIFY(!state.batchInProgress());
 }
 
-void TestArchiveDocumentCandidateLoadState::wrongBatchCannotFinishPendingLoads()
+void TestMediaEntrySourceCandidateLoadState::wrongBatchCannotFinishPendingLoads()
 {
-    KiriView::ArchiveDocumentCandidateLoadState state;
+    KiriView::MediaEntrySourceCandidateLoadState state;
     KiriView::ImageIoJob staleJob = state.addLoad(this, {}, {});
-    const std::optional<KiriView::ArchiveDocumentCandidateLoadBatch> staleBatch
+    const std::optional<KiriView::MediaEntrySourceCandidateLoadBatch> staleBatch
         = state.startBatch();
     QVERIFY(staleBatch.has_value());
     state.cancel();
 
     KiriView::ImageIoJob currentJob = state.addLoad(this, {}, {});
-    const std::optional<KiriView::ArchiveDocumentCandidateLoadBatch> currentBatch
+    const std::optional<KiriView::MediaEntrySourceCandidateLoadBatch> currentBatch
         = state.startBatch();
     QVERIFY(currentBatch.has_value());
     QVERIFY(!staleJob.isActive());
@@ -99,15 +99,15 @@ void TestArchiveDocumentCandidateLoadState::wrongBatchCannotFinishPendingLoads()
     QCOMPARE(state.finishBatch(*staleBatch).size(), std::size_t(0));
     QVERIFY(currentJob.isActive());
 
-    std::vector<KiriView::ArchiveDocumentCandidateLoad> loads = state.finishBatch(*currentBatch);
+    std::vector<KiriView::MediaEntrySourceCandidateLoad> loads = state.finishBatch(*currentBatch);
     QCOMPARE(loads.size(), std::size_t(1));
     QVERIFY(loads.front().completion.claimAndDelete([]() { }));
     QVERIFY(!currentJob.isActive());
 }
 
-void TestArchiveDocumentCandidateLoadState::cancelInvalidatesPendingLoads()
+void TestMediaEntrySourceCandidateLoadState::cancelInvalidatesPendingLoads()
 {
-    KiriView::ArchiveDocumentCandidateLoadState state;
+    KiriView::MediaEntrySourceCandidateLoadState state;
     KiriView::ImageIoJob job = state.addLoad(this, {}, {});
 
     state.cancel();
@@ -117,6 +117,6 @@ void TestArchiveDocumentCandidateLoadState::cancelInvalidatesPendingLoads()
     QCOMPARE(state.finishBatch({ 1 }).size(), std::size_t(0));
 }
 
-QTEST_GUILESS_MAIN(TestArchiveDocumentCandidateLoadState)
+QTEST_GUILESS_MAIN(TestMediaEntrySourceCandidateLoadState)
 
-#include "test_archivedocumentcandidateloadstate.moc"
+#include "test_mediaentrysourcecandidateloadstate.moc"

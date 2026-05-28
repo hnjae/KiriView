@@ -3,7 +3,7 @@
 
 #include "imagedocumentruntimecontrollers.h"
 
-#include "archive/archivedocumentsessionstore.h"
+#include "archive/mediaentrysourcestore.h"
 #include "async/imagecallback.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
@@ -42,7 +42,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         = resolveImageDocumentRuntimeDependencies(std::move(dependencies), documentObject);
     ExternalPredecodedImageFinder externalPredecodedImageFinder
         = std::move(runtimeDependencies.externalPredecodedImageFinder);
-    m_archiveSessionStore = std::move(runtimeDependencies.archiveSessionStore);
+    m_mediaEntrySourceStore = std::move(runtimeDependencies.mediaEntrySourceStore);
     m_presentationController = std::make_unique<ImagePresentationController>(
         documentObject, [this]() { return renderContextOrDefault(m_callbacks.renderContext); },
         ImagePresentationController::Callbacks {
@@ -77,7 +77,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
                 return m_predecodeController->findPredecodedImage(url);
             },
             [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); },
-            std::move(m_callbacks.unsupportedDocumentVideoEntered),
+            std::move(m_callbacks.unsupportedOpenedCollectionVideoEntered),
         },
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
     m_navigationService = std::make_unique<ImageNavigationService>(documentObject,
@@ -161,9 +161,9 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
     operations.lifecycle.stopPresentationAnimation
         = [this]() { m_presentationController->stopAnimation(); };
     operations.lifecycle.shutdownSpread = [this]() { m_spreadController->shutdown(); };
-    operations.archive.clearSession = [this]() {
-        if (m_archiveSessionStore != nullptr) {
-            m_archiveSessionStore->clear();
+    operations.mediaEntrySource.clear = [this]() {
+        if (m_mediaEntrySourceStore != nullptr) {
+            m_mediaEntrySourceStore->clear();
         }
     };
     operations.predecode.clearPredecode = [this]() { m_predecodeController->clear(); };
@@ -227,9 +227,9 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
         = [stateOwner](const QUrl &url) { stateOwner->setContainerNavigationUrl(url); };
     operations.sourceLoad.prepareSourceLoad
         = [this, stateOwner](const ImageDocumentSourceLoadRequest &request) {
-              if (m_archiveSessionStore != nullptr) {
-                  m_archiveSessionStore->prepareForSourceLoad(
-                      request, stateOwner->displayedImagePageScope());
+              if (m_mediaEntrySourceStore != nullptr) {
+                  m_mediaEntrySourceStore->prepareForSourceLoad(
+                      request, stateOwner->displayedOpenedCollectionScope());
               }
           };
     operations.open.setSourceUrl = [stateOwner](const ImageNavigationTarget &target) {

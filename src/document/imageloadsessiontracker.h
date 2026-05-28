@@ -16,15 +16,16 @@
 #include <vector>
 
 namespace KiriView {
-enum class ImageArchiveCandidateCompletionAction {
+enum class OpenedCollectionCandidateCompletionAction {
     Ignored,
     ReportEmptyArchive,
     StartImageDecode,
-    ReportUnsupportedDocumentVideo,
+    ReportUnsupportedOpenedCollectionVideo,
 };
 
-struct ImageArchiveCandidateCompletion {
-    ImageArchiveCandidateCompletionAction action = ImageArchiveCandidateCompletionAction::Ignored;
+struct OpenedCollectionCandidateCompletion {
+    OpenedCollectionCandidateCompletionAction action
+        = OpenedCollectionCandidateCompletionAction::Ignored;
     ImageLoadSession session;
 };
 
@@ -39,7 +40,7 @@ public:
 
     bool isCurrent(const ImageLoadSession &session) const;
     std::optional<ImageLoadSession> claimCurrentForDecodeRequest(const ImageDecodeRequest &request);
-    ImageArchiveCandidateCompletion completeArchiveCandidates(
+    OpenedCollectionCandidateCompletion completeOpenedCollectionCandidates(
         const ImageLoadSession &session, const std::vector<ImageNavigationCandidate> &candidates);
     std::optional<ImageLoadSession> claimPredecodedImage(
         const ImageLoadSession &session, DisplayedImageLocation location);

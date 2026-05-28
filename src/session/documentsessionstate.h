@@ -72,7 +72,7 @@ private:
     ActiveZoomSnapshot m_activeZoomSnapshot;
     bool m_mediaNavigationKnown = false;
     bool m_fileDeletionInProgress = false;
-    QString m_sessionErrorString;
+    QString m_sourceErrorString;
 };
 }
 

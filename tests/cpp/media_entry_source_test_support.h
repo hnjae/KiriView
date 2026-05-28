@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_TESTS_ARCHIVE_SESSION_TEST_SUPPORT_H
-#define KIRIVIEW_TESTS_ARCHIVE_SESSION_TEST_SUPPORT_H
+#ifndef KIRIVIEW_TESTS_MEDIA_ENTRY_SOURCE_TEST_SUPPORT_H
+#define KIRIVIEW_TESTS_MEDIA_ENTRY_SOURCE_TEST_SUPPORT_H
 
 #include "archive/archivebackend.h"
 #include "image_test_support.h"
@@ -26,7 +26,7 @@ struct InstrumentedArchiveFixture {
     std::map<QString, QByteArray> dataByUrl;
 };
 
-struct InstrumentedArchiveSessionState {
+struct InstrumentedMediaEntrySourceState {
     std::atomic<int> openCount = 0;
     std::atomic<int> candidateLoadCount = 0;
     std::atomic<int> dataLoadCount = 0;
@@ -41,12 +41,12 @@ struct InstrumentedArchiveSessionState {
     bool releaseLoads = false;
 };
 
-class InstrumentedArchiveSession final : public ArchiveDocumentSession
+class InstrumentedMediaEntrySource final : public MediaEntrySource
 {
 public:
-    InstrumentedArchiveSession(ImagePageScopeLocation archiveDocument,
-        std::shared_ptr<InstrumentedArchiveSessionState> state)
-        : m_archiveDocument(std::move(archiveDocument))
+    InstrumentedMediaEntrySource(OpenedCollectionScopeLocation archiveCollection,
+        std::shared_ptr<InstrumentedMediaEntrySourceState> state)
+        : m_archiveCollection(std::move(archiveCollection))
         , m_state(std::move(state))
     {
     }
@@ -101,31 +101,32 @@ private:
 
     const InstrumentedArchiveFixture &fixture() const
     {
-        return m_state->fixturesByRootUrl.at(keyForUrl(m_archiveDocument.rootUrl()));
+        return m_state->fixturesByRootUrl.at(keyForUrl(m_archiveCollection.rootUrl()));
     }
 
-    ImagePageScopeLocation m_archiveDocument;
-    std::shared_ptr<InstrumentedArchiveSessionState> m_state;
+    OpenedCollectionScopeLocation m_archiveCollection;
+    std::shared_ptr<InstrumentedMediaEntrySourceState> m_state;
 };
 
-inline ArchiveDocumentSessionFactory instrumentedArchiveSessionFactory(
-    std::shared_ptr<InstrumentedArchiveSessionState> state)
+inline MediaEntrySourceFactory instrumentedMediaEntrySourceFactory(
+    std::shared_ptr<InstrumentedMediaEntrySourceState> state)
 {
-    return [state = std::move(state)](
-               const ImagePageScopeLocation &archiveDocument) -> ArchiveDocumentSessionOpenResult {
-        ++state->openCount;
-        std::lock_guard<std::mutex> lock(state->mutex);
-        if (!state->fixturesByRootUrl.count(keyForUrl(archiveDocument.rootUrl()))) {
-            return ArchiveError { QStringLiteral("missing fake archive fixture") };
-        }
+    return
+        [state = std::move(state)](
+            const OpenedCollectionScopeLocation &archiveCollection) -> MediaEntrySourceOpenResult {
+            ++state->openCount;
+            std::lock_guard<std::mutex> lock(state->mutex);
+            if (!state->fixturesByRootUrl.count(keyForUrl(archiveCollection.rootUrl()))) {
+                return ArchiveError { QStringLiteral("missing fake archive fixture") };
+            }
 
-        return ArchiveDocumentSessionPtr(
-            std::make_shared<InstrumentedArchiveSession>(archiveDocument, state));
-    };
+            return MediaEntrySourcePtr(
+                std::make_shared<InstrumentedMediaEntrySource>(archiveCollection, state));
+        };
 }
 
 inline void blockInstrumentedArchiveCandidateLoads(
-    const std::shared_ptr<InstrumentedArchiveSessionState> &state)
+    const std::shared_ptr<InstrumentedMediaEntrySourceState> &state)
 {
     std::lock_guard<std::mutex> lock(state->loadBlockMutex);
     state->blockCandidateLoads = true;
@@ -133,7 +134,7 @@ inline void blockInstrumentedArchiveCandidateLoads(
 }
 
 inline void blockInstrumentedArchiveDataLoads(
-    const std::shared_ptr<InstrumentedArchiveSessionState> &state)
+    const std::shared_ptr<InstrumentedMediaEntrySourceState> &state)
 {
     std::lock_guard<std::mutex> lock(state->loadBlockMutex);
     state->blockDataLoads = true;
@@ -141,7 +142,7 @@ inline void blockInstrumentedArchiveDataLoads(
 }
 
 inline void releaseInstrumentedArchiveLoads(
-    const std::shared_ptr<InstrumentedArchiveSessionState> &state)
+    const std::shared_ptr<InstrumentedMediaEntrySourceState> &state)
 {
     {
         std::lock_guard<std::mutex> lock(state->loadBlockMutex);
@@ -150,14 +151,15 @@ inline void releaseInstrumentedArchiveLoads(
     state->loadBlockChanged.notify_all();
 }
 
-inline std::optional<ImagePageScopeLocation> archiveDocumentForLocalArchiveUrl(
+inline std::optional<OpenedCollectionScopeLocation> archiveCollectionForLocalArchiveUrl(
     const QUrl &archiveUrl)
 {
-    return imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
+    return openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
 }
 
-inline void addInstrumentedArchiveFixture(std::shared_ptr<InstrumentedArchiveSessionState> state,
-    const ImagePageScopeLocation &archiveDocument, std::vector<ImageNavigationCandidate> candidates)
+inline void addInstrumentedArchiveFixture(std::shared_ptr<InstrumentedMediaEntrySourceState> state,
+    const OpenedCollectionScopeLocation &archiveCollection,
+    std::vector<ImageNavigationCandidate> candidates)
 {
     InstrumentedArchiveFixture fixture;
     fixture.candidates = std::move(candidates);
@@ -166,7 +168,7 @@ inline void addInstrumentedArchiveFixture(std::shared_ptr<InstrumentedArchiveSes
     }
 
     std::lock_guard<std::mutex> lock(state->mutex);
-    state->fixturesByRootUrl[keyForUrl(archiveDocument.rootUrl())] = std::move(fixture);
+    state->fixturesByRootUrl[keyForUrl(archiveCollection.rootUrl())] = std::move(fixture);
 }
 }
 

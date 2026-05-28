@@ -71,7 +71,7 @@ KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &
 }
 
 template <typename Work, typename Finish>
-KiriView::ImageIoJob startArchiveWorkerJob(QObject *receiver, Work work, Finish finish)
+KiriView::ImageIoJob startMediaEntrySourceWorkerJob(QObject *receiver, Work work, Finish finish)
 {
     return KiriView::startImageIoWorkerJob(receiver, std::move(work), std::move(finish));
 }
@@ -92,13 +92,14 @@ ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl director
         std::move(errorCallback), containerNavigationCandidates);
 }
 
-ImageIoJob startArchiveImageCandidateList(QObject *receiver, ImagePageScopeLocation archiveDocument,
-    ImageCandidatesCallback callback, ErrorCallback errorCallback)
+ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
+    OpenedCollectionScopeLocation archiveCollection, ImageCandidatesCallback callback,
+    ErrorCallback errorCallback)
 {
-    return startArchiveWorkerJob(
+    return startMediaEntrySourceWorkerJob(
         receiver,
-        [archiveDocument = std::move(archiveDocument)]() {
-            return loadArchiveDocumentImageCandidates(archiveDocument);
+        [archiveCollection = std::move(archiveCollection)]() {
+            return loadMediaEntrySourceCandidates(archiveCollection);
         },
         [callback = std::move(callback), errorCallback = std::move(errorCallback)](
             ArchiveImageCandidatesResult result) mutable {
@@ -113,11 +114,12 @@ ImageIoJob startArchiveImageCandidateList(QObject *receiver, ImagePageScopeLocat
 ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
     ImageDataCallback callback, ErrorCallback errorCallback)
 {
-    if (imagePageScopeContainsUrl(request.imagePageScope(), request.imageUrl())) {
-        return startArchiveWorkerJob(
+    if (openedCollectionScopeContainsUrl(request.openedCollectionScope(), request.imageUrl())) {
+        return startMediaEntrySourceWorkerJob(
             receiver,
             [request = std::move(request)]() {
-                return loadArchiveDocumentImageData(request.imagePageScope(), request.imageUrl());
+                return loadMediaEntrySourceImageData(
+                    request.openedCollectionScope(), request.imageUrl());
             },
             [callback = std::move(callback), errorCallback = std::move(errorCallback)](
                 ArchiveImageDataResult result) mutable {

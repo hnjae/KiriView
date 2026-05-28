@@ -13,7 +13,7 @@ class TestPredecodePolicyConversion : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void documentKindMapsBothDirections();
+    void scopeKindMapsBothDirections();
     void momentumModeMapsBothDirections();
     void momentumDirectionMapsBothDirections();
     void policyInputMapsPlainFields();
@@ -23,25 +23,24 @@ private Q_SLOTS:
     void queuedLoadPlanMapsFromRust();
 };
 
-void TestPredecodePolicyConversion::documentKindMapsBothDirections()
+void TestPredecodePolicyConversion::scopeKindMapsBothDirections()
 {
-    using KiriView::PredecodeDocumentKind;
-    using KiriView::RustPredecodeDocumentKind;
+    using KiriView::PredecodeScopeKind;
+    using KiriView::RustPredecodeScopeKind;
 
-    QVERIFY(KiriView::Bridge::rustPredecodeDocumentKind(PredecodeDocumentKind::Regular)
-        == RustPredecodeDocumentKind::Regular);
-    QVERIFY(KiriView::Bridge::rustPredecodeDocumentKind(PredecodeDocumentKind::DirectoryDocument)
-        == RustPredecodeDocumentKind::DirectoryDocument);
-    QVERIFY(KiriView::Bridge::rustPredecodeDocumentKind(PredecodeDocumentKind::ArchiveDocument)
-        == RustPredecodeDocumentKind::ArchiveDocument);
-    QVERIFY(KiriView::Bridge::predecodeDocumentKindFromRust(RustPredecodeDocumentKind::Regular)
-        == PredecodeDocumentKind::Regular);
-    QVERIFY(KiriView::Bridge::predecodeDocumentKindFromRust(
-                RustPredecodeDocumentKind::DirectoryDocument)
-        == PredecodeDocumentKind::DirectoryDocument);
+    QVERIFY(KiriView::Bridge::rustPredecodeScopeKind(PredecodeScopeKind::DirectMedia)
+        == RustPredecodeScopeKind::DirectMedia);
+    QVERIFY(KiriView::Bridge::rustPredecodeScopeKind(PredecodeScopeKind::DirectoryCollection)
+        == RustPredecodeScopeKind::DirectoryCollection);
+    QVERIFY(KiriView::Bridge::rustPredecodeScopeKind(PredecodeScopeKind::ArchiveCollection)
+        == RustPredecodeScopeKind::ArchiveCollection);
+    QVERIFY(KiriView::Bridge::predecodeScopeKindFromRust(RustPredecodeScopeKind::DirectMedia)
+        == PredecodeScopeKind::DirectMedia);
     QVERIFY(
-        KiriView::Bridge::predecodeDocumentKindFromRust(RustPredecodeDocumentKind::ArchiveDocument)
-        == PredecodeDocumentKind::ArchiveDocument);
+        KiriView::Bridge::predecodeScopeKindFromRust(RustPredecodeScopeKind::DirectoryCollection)
+        == PredecodeScopeKind::DirectoryCollection);
+    QVERIFY(KiriView::Bridge::predecodeScopeKindFromRust(RustPredecodeScopeKind::ArchiveCollection)
+        == PredecodeScopeKind::ArchiveCollection);
 }
 
 void TestPredecodePolicyConversion::momentumModeMapsBothDirections()
@@ -99,13 +98,13 @@ void TestPredecodePolicyConversion::policyInputMapsPlainFields()
 {
     const KiriView::RustPredecodePolicyInput converted
         = KiriView::Bridge::rustPredecodePolicyInput(KiriView::PredecodePolicyInput {
-            KiriView::PredecodeDocumentKind::ArchiveDocument,
+            KiriView::PredecodeScopeKind::ArchiveCollection,
             KiriView::PredecodeMomentumMode::ScrubbingPrev,
             true,
             6,
         });
 
-    QVERIFY(converted.document_kind == KiriView::RustPredecodeDocumentKind::ArchiveDocument);
+    QVERIFY(converted.scope_kind == KiriView::RustPredecodeScopeKind::ArchiveCollection);
     QVERIFY(converted.momentum_mode == KiriView::RustPredecodeMomentumMode::ScrubbingPrev);
     QVERIFY(converted.power_saver_enabled);
     QCOMPARE(converted.ideal_thread_count, 6);

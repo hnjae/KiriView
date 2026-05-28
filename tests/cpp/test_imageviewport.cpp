@@ -511,7 +511,7 @@ Item {
         id: documentSession
 
         property var imageDocument: root.testImageDocument
-        property int documentKind: 0
+        property int scopeKind: 0
     }
 
     KiriViewQml.ImageViewport {

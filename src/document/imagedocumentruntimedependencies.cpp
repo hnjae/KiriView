@@ -3,17 +3,18 @@
 
 #include "imagedocumentruntimedependencies.h"
 
-#include "archive/archivedocumentsessionstore.h"
+#include "archive/mediaentrysourcestore.h"
 #include "predecode/predecodecachebudget.h"
 
 #include <utility>
 
 namespace {
-bool shouldUseArchiveSessionStore(
+bool shouldUseMediaEntrySourceStore(
     const KiriView::ImageDocumentRuntimeDependencyOverrides &overrides)
 {
-    return overrides.archiveDocumentSessions
-        || (!overrides.candidateProvider.archiveImages && !overrides.imageDecode.dataLoader);
+    return overrides.mediaEntrySourceFactory
+        || (!overrides.candidateProvider.openedCollectionCandidates
+            && !overrides.imageDecode.dataLoader);
 }
 
 }
@@ -24,10 +25,9 @@ ImageDocumentRuntimeDependencies::~ImageDocumentRuntimeDependencies() = default;
 ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     ImageDocumentRuntimeDependencyOverrides overrides, QObject *parent)
 {
-    const bool useArchiveSessionStore = shouldUseArchiveSessionStore(overrides);
-    ArchiveDocumentSessionFactory archiveDocumentSessions
-        = std::move(overrides.archiveDocumentSessions);
-    overrides.archiveDocumentSessions = {};
+    const bool useMediaEntrySourceStore = shouldUseMediaEntrySourceStore(overrides);
+    MediaEntrySourceFactory mediaEntrySourceFactory = std::move(overrides.mediaEntrySourceFactory);
+    overrides.mediaEntrySourceFactory = {};
     overrides.candidateProvider
         = imageNavigationCandidateProviderWithDefaults(std::move(overrides.candidateProvider));
     overrides.imageDecode = imageDecodeDependenciesWithDefaults(std::move(overrides.imageDecode));
@@ -37,14 +37,14 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     overrides.predecodeCacheByteBudget
         = KiriView::resolvedPredecodeCacheByteBudget(overrides.predecodeCacheByteBudget);
 
-    std::unique_ptr<ArchiveDocumentSessionStore> archiveSessionStore;
-    if (useArchiveSessionStore) {
-        archiveSessionStore = std::make_unique<ArchiveDocumentSessionStore>(
-            std::move(archiveDocumentSessions), parent);
+    std::unique_ptr<MediaEntrySourceStore> mediaEntrySourceStore;
+    if (useMediaEntrySourceStore) {
+        mediaEntrySourceStore
+            = std::make_unique<MediaEntrySourceStore>(std::move(mediaEntrySourceFactory), parent);
         overrides.candidateProvider
-            = archiveSessionStore->wrapCandidateProvider(std::move(overrides.candidateProvider));
+            = mediaEntrySourceStore->wrapCandidateProvider(std::move(overrides.candidateProvider));
         overrides.imageDecode
-            = archiveSessionStore->wrapDecodeDependencies(std::move(overrides.imageDecode));
+            = mediaEntrySourceStore->wrapDecodeDependencies(std::move(overrides.imageDecode));
     }
 
     return ImageDocumentRuntimeDependencies {
@@ -53,7 +53,7 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
         std::move(overrides.fileOperations),
         std::move(overrides.powerSaver),
         overrides.predecodeCacheByteBudget,
-        std::move(archiveSessionStore),
+        std::move(mediaEntrySourceStore),
         std::move(overrides.externalPredecodedImageFinder),
     };
 }

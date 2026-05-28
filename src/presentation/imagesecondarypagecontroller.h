@@ -61,7 +61,8 @@ public:
 
     void setViewportSize(const QSizeF &viewportSize);
     void updateRenderContext();
-    void startLoad(const QUrl &url, const ImagePageScopeLocation &displayedImagePageScope,
+    void startLoad(const QUrl &url,
+        const OpenedCollectionScopeLocation &displayedOpenedCollectionScope,
         const ImageFirstDisplayDecodeContext &firstDisplayContext);
     void clear();
     void cancel();

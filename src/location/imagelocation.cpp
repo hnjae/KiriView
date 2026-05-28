@@ -6,8 +6,8 @@
 #include "location/imageurl.h"
 
 namespace KiriView {
-bool sameImagePageScopeLocation(
-    const ImagePageScopeLocation &left, const ImagePageScopeLocation &right)
+bool sameOpenedCollectionScopeLocation(
+    const OpenedCollectionScopeLocation &left, const OpenedCollectionScopeLocation &right)
 {
     return sameNormalizedUrl(left.fileUrl(), right.fileUrl())
         && sameNormalizedUrl(left.rootUrl(), right.rootUrl()) && left.kind() == right.kind();

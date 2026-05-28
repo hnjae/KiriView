@@ -54,8 +54,9 @@ public:
             = [](QObject *, QUrl, KiriView::ContainerCandidatesCallback, KiriView::ErrorCallback) {
                   return KiriView::ImageIoJob();
               };
-        provider.archiveImages
-            = [](QObject *, KiriView::ImagePageScopeLocation, KiriView::ImageCandidatesCallback,
+        provider.openedCollectionCandidates
+            = [](QObject *, KiriView::OpenedCollectionScopeLocation,
+                  KiriView::ImageCandidatesCallback,
                   KiriView::ErrorCallback) { return KiriView::ImageIoJob(); };
         provider.directoryImageChanges
             = [](QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback) {
@@ -191,16 +192,17 @@ void TestImageDocumentDeletionFallbackController::
             comicBookContainerCandidate(nextContainerUrl),
         });
 
-    const std::optional<KiriView::ImagePageScopeLocation> previousArchive
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(previousContainerUrl);
+    const std::optional<KiriView::OpenedCollectionScopeLocation> previousArchive
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(previousContainerUrl);
     QVERIFY(previousArchive.has_value());
-    const std::optional<KiriView::ImagePageScopeLocation> nextArchive
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(nextContainerUrl);
+    const std::optional<KiriView::OpenedCollectionScopeLocation> nextArchive
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(nextContainerUrl);
     QVERIFY(nextArchive.has_value());
     const QUrl previousPageUrl
         = archivePageUrl(previousArchive->rootUrl(), QStringLiteral("page.png"));
-    provider.setArchiveImages(nextArchive->rootUrl(), {});
-    provider.setArchiveImages(previousArchive->rootUrl(), { imageCandidate(previousPageUrl) });
+    provider.setOpenedCollectionCandidates(nextArchive->rootUrl(), {});
+    provider.setOpenedCollectionCandidates(
+        previousArchive->rootUrl(), { imageCandidate(previousPageUrl) });
 
     KiriView::ImageDocumentDeletionFallbackController controller(
         &parent, provider.provider(), [&runtimePlans](KiriView::ImageDocumentRuntimePlan plan) {

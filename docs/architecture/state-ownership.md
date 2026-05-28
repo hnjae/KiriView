@@ -55,4 +55,4 @@ Extracting active navigation helpers must not move authoritative state to Rust. 
 
 Direct media cursor generation is part of stale async-completion rejection. Future helper extraction must preserve idempotent cursor operations and reject candidate results unless the cursor URL, scope URL, and generation still match the accepted session request. Cursor generation changes when the effective direct media identity or parent scope changes, not merely when ownership transitions from pending to confirmed for the same direct media URL.
 
-Mixed-media deletion fallback remains session-owned for ordinary direct media scopes. Archive and directory document deletion remains image-document owned unless a later ADR changes that ownership.
+Mixed-media deletion fallback remains session-owned for ordinary direct media scopes. Archive and directory collection deletion remains image-document owned unless a later ADR changes that ownership.

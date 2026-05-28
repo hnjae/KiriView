@@ -22,7 +22,7 @@ KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
 KiriView::PredecodePolicyInput regularPolicyInput()
 {
     return KiriView::PredecodePolicyInput {
-        KiriView::PredecodeDocumentKind::Regular,
+        KiriView::PredecodeScopeKind::DirectMedia,
         KiriView::PredecodeMomentumMode::Neutral,
         false,
         4,
@@ -62,7 +62,7 @@ void TestMediaPredecodeWindowPlan::mediaWindowUsesVideoCursorAndQueuesOnlyImages
                                                  currentVideo),
             regularPolicyInput());
 
-    QCOMPARE(windowPlan.imagePageScope, KiriView::ImagePageScopeLocation {});
+    QCOMPARE(windowPlan.openedCollectionScope, KiriView::OpenedCollectionScopeLocation {});
     QCOMPARE(windowPlan.parallelLimit, std::size_t(1));
     QCOMPARE(windowPlan.urls.size(), std::size_t(2));
     QCOMPARE(windowPlan.urls.at(0), nextImage);

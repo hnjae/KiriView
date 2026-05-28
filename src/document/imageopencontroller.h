@@ -29,12 +29,12 @@ class ImageOpenController final
 public:
     using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
     using RuntimePlanCallback = std::function<void(const ImageDocumentRuntimePlan &)>;
-    using UnsupportedDocumentVideoEnteredCallback = std::function<void(const QString &)>;
+    using UnsupportedOpenedCollectionVideoEnteredCallback = std::function<void(const QString &)>;
 
     struct Callbacks {
         FindPredecodedImageCallback findPredecodedImage;
         RuntimePlanCallback runtimePlan;
-        UnsupportedDocumentVideoEnteredCallback unsupportedDocumentVideoEntered;
+        UnsupportedOpenedCollectionVideoEnteredCallback unsupportedOpenedCollectionVideoEntered;
     };
 
     ImageOpenController(QObject *parent, ImageDocumentState &state,
@@ -54,7 +54,7 @@ public:
 private:
     void beginSourceLoad();
     void finishSourceResolved(ImageLoadSession session);
-    void finishUnsupportedDocumentVideoLoad(ImageLoadSession session);
+    void finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSession session);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
     void finishPresentedImageLoad(

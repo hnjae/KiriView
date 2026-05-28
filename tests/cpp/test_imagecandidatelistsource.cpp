@@ -17,7 +17,7 @@ using KiriView::ImageCandidateListContext;
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::localUrl;
 
-using ArchiveCandidateContext = ImageCandidateListContext::ImagePageScopeContext;
+using OpenedCollectionCandidateContext = ImageCandidateListContext::OpenedCollectionScopeContext;
 using DirectoryCandidateContext = ImageCandidateListContext::DirectoryContext;
 
 template <typename ExpectedContext>
@@ -55,43 +55,45 @@ void TestImageCandidateListSource::displayedImageContextsSelectDirectoryOrArchiv
         = typedCandidateContext<DirectoryCandidateContext>(*directoryContext);
     QVERIFY(directory != nullptr);
     QCOMPARE(directory->directoryUrl, localUrl(QStringLiteral("/images/")));
-    QVERIFY(directoryContext->imagePageScope().isEmpty());
+    QVERIFY(directoryContext->openedCollectionScope().isEmpty());
 
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> imagePageScope
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(imagePageScope.has_value());
-    const QUrl pageUrl = archivePageUrl(imagePageScope->rootUrl(), QStringLiteral("02.png"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScope
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(openedCollectionScope.has_value());
+    const QUrl pageUrl = archivePageUrl(openedCollectionScope->rootUrl(), QStringLiteral("02.png"));
 
     const std::optional<KiriView::ImageCandidateListContext> archiveContext
         = KiriView::imageCandidateListContextForDisplayedImage(
-            KiriView::DisplayedImageLocation::fromImagePageScope(pageUrl, *imagePageScope));
+            KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+                pageUrl, *openedCollectionScope));
     QVERIFY(archiveContext.has_value());
     QCOMPARE(archiveContext->currentUrl(), pageUrl);
-    const ArchiveCandidateContext *archive
-        = typedCandidateContext<ArchiveCandidateContext>(*archiveContext);
+    const OpenedCollectionCandidateContext *archive
+        = typedCandidateContext<OpenedCollectionCandidateContext>(*archiveContext);
     QVERIFY(archive != nullptr);
-    QCOMPARE(archive->imagePageScope.rootUrl(), imagePageScope->rootUrl());
-    QCOMPARE(archiveContext->imagePageScope().rootUrl(), imagePageScope->rootUrl());
+    QCOMPARE(archive->openedCollectionScope.rootUrl(), openedCollectionScope->rootUrl());
+    QCOMPARE(archiveContext->openedCollectionScope().rootUrl(), openedCollectionScope->rootUrl());
 
     const QUrl directArchiveUrl = localUrl(QStringLiteral("/books/book.zip"));
-    const std::optional<KiriView::ImagePageScopeLocation> directArchiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(directArchiveUrl);
-    QVERIFY(directArchiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> directArchiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(directArchiveUrl);
+    QVERIFY(directArchiveCollection.has_value());
     const QUrl directArchivePageUrl
-        = archivePageUrl(directArchiveDocument->rootUrl(), QStringLiteral("02.png"));
+        = archivePageUrl(directArchiveCollection->rootUrl(), QStringLiteral("02.png"));
 
     const std::optional<KiriView::ImageCandidateListContext> directArchiveContext
         = KiriView::imageCandidateListContextForDisplayedImage(
-            KiriView::DisplayedImageLocation::fromImagePageScope(
-                directArchivePageUrl, *directArchiveDocument));
+            KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+                directArchivePageUrl, *directArchiveCollection));
     QVERIFY(directArchiveContext.has_value());
     QCOMPARE(directArchiveContext->currentUrl(), directArchivePageUrl);
-    const ArchiveCandidateContext *directArchive
-        = typedCandidateContext<ArchiveCandidateContext>(*directArchiveContext);
+    const OpenedCollectionCandidateContext *directArchive
+        = typedCandidateContext<OpenedCollectionCandidateContext>(*directArchiveContext);
     QVERIFY(directArchive != nullptr);
-    QCOMPARE(directArchive->imagePageScope.rootUrl(), directArchiveDocument->rootUrl());
-    QCOMPARE(directArchiveContext->imagePageScope().rootUrl(), directArchiveDocument->rootUrl());
+    QCOMPARE(directArchive->openedCollectionScope.rootUrl(), directArchiveCollection->rootUrl());
+    QCOMPARE(directArchiveContext->openedCollectionScope().rootUrl(),
+        directArchiveCollection->rootUrl());
 
     const QUrl explicitArchiveImageUrl(QStringLiteral("zip:///books/book.cbz/chapter/02.png"));
     const std::optional<KiriView::ImageCandidateListContext> explicitArchiveContext
@@ -124,12 +126,12 @@ void TestImageCandidateListSource::candidateListIdentityComparesNormalizedSource
     QVERIFY(!KiriView::sameImageCandidateListContext(directoryContext, otherDirectoryContext));
 
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> imagePageScope
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(imagePageScope.has_value());
-    const QUrl pageUrl = archivePageUrl(imagePageScope->rootUrl(), QStringLiteral("01.png"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScope
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(openedCollectionScope.has_value());
+    const QUrl pageUrl = archivePageUrl(openedCollectionScope->rootUrl(), QStringLiteral("01.png"));
     const ImageCandidateListContext archiveContext
-        = ImageCandidateListContext::forImagePageScope(pageUrl, *imagePageScope);
+        = ImageCandidateListContext::forOpenedCollectionScope(pageUrl, *openedCollectionScope);
 
     QVERIFY(!KiriView::sameImageCandidateListSource(
         directoryContext.source(), archiveContext.source()));

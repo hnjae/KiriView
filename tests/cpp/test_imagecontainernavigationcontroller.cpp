@@ -131,8 +131,8 @@ public:
                 return startContainerList(receiver, std::move(directoryUrl), std::move(callback),
                     std::move(errorCallback));
             },
-            [](QObject *, KiriView::ImagePageScopeLocation, KiriView::ImageCandidatesCallback,
-                KiriView::ErrorCallback errorCallback) {
+            [](QObject *, KiriView::OpenedCollectionScopeLocation,
+                KiriView::ImageCandidatesCallback, KiriView::ErrorCallback errorCallback) {
                 if (errorCallback) {
                     errorCallback(QStringLiteral("unexpected archive image listing"));
                 }
@@ -226,18 +226,19 @@ void TestImageContainerNavigationController::opensFirstImageFromAdjacentArchiveC
     const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(targetContainerUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(targetContainerUrl);
+    QVERIFY(archiveCollection.has_value());
     const QUrl targetImageUrl
-        = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     fakeProvider.setContainerCandidates(parentUrl,
         {
             containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
             containerCandidate(
                 targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
         });
-    fakeProvider.setArchiveImages(archiveDocument->rootUrl(), { imageCandidate(targetImageUrl) });
+    fakeProvider.setOpenedCollectionCandidates(
+        archiveCollection->rootUrl(), { imageCandidate(targetImageUrl) });
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
     QUrl openedImageUrl;

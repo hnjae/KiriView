@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_ARCHIVEDOCUMENTCANDIDATELOADSTATE_H
-#define KIRIVIEW_ARCHIVEDOCUMENTCANDIDATELOADSTATE_H
+#ifndef KIRIVIEW_MEDIAENTRYSOURCECANDIDATELOADSTATE_H
+#define KIRIVIEW_MEDIAENTRYSOURCECANDIDATELOADSTATE_H
 
 #include "async/imageasynccallbacks.h"
 #include "async/imageasyncoperationstate.h"
@@ -16,31 +16,32 @@
 class QObject;
 
 namespace KiriView {
-struct ArchiveDocumentCandidateLoad {
+struct MediaEntrySourceCandidateLoad {
     ImageIoJobCompletion completion;
     ImageCandidatesCallback callback;
     ErrorCallback errorCallback;
 };
 
-struct ArchiveDocumentCandidateLoadBatch {
+struct MediaEntrySourceCandidateLoadBatch {
     quint64 operationId = 0;
 };
 
-class ArchiveDocumentCandidateLoadState final
+class MediaEntrySourceCandidateLoadState final
 {
 public:
     ImageIoJob addLoad(
         QObject *receiver, ImageCandidatesCallback callback, ErrorCallback errorCallback);
-    std::optional<ArchiveDocumentCandidateLoadBatch> startBatch();
-    bool acceptsBatch(ArchiveDocumentCandidateLoadBatch batch) const;
+    std::optional<MediaEntrySourceCandidateLoadBatch> startBatch();
+    bool acceptsBatch(MediaEntrySourceCandidateLoadBatch batch) const;
     bool batchInProgress() const;
-    std::vector<ArchiveDocumentCandidateLoad> finishBatch(ArchiveDocumentCandidateLoadBatch batch);
+    std::vector<MediaEntrySourceCandidateLoad> finishBatch(
+        MediaEntrySourceCandidateLoadBatch batch);
     void cancel();
 
 private:
     void reset();
 
-    std::vector<ArchiveDocumentCandidateLoad> m_pendingLoads;
+    std::vector<MediaEntrySourceCandidateLoad> m_pendingLoads;
     ImageAsyncOperationState m_batch;
 };
 }

@@ -7,7 +7,7 @@ namespace KiriView {
 ImageDocumentRuntimePlan imageDocumentClearImagePlan()
 {
     return {
-        ClearArchiveSessionOperation {},
+        ClearMediaEntrySourceOperation {},
         ClearPredecodeOperation {},
         FinishSpreadTransitionOperation {},
         ClearSecondaryPageOperation {},
@@ -22,7 +22,7 @@ ImageDocumentRuntimePlan imageDocumentClearImagePlan()
 ImageDocumentRuntimePlan imageDocumentClearDeletedImagePlan()
 {
     return {
-        ClearArchiveSessionOperation {},
+        ClearMediaEntrySourceOperation {},
         CancelAllNavigationOperation {},
         CancelPredecodeOperation {},
         CancelOpenOperation {},
@@ -43,7 +43,7 @@ ImageDocumentRuntimePlan imageDocumentShutdownPlan()
         CancelPredecodeOperation {},
         CancelAllNavigationOperation {},
         CancelOpenOperation {},
-        ClearArchiveSessionOperation {},
+        ClearMediaEntrySourceOperation {},
     };
 }
 }

@@ -31,14 +31,14 @@ public:
     using ErrorCallback = std::function<void(ImageLoadSession, ImageLoadError, const QString &)>;
     using DecodedImageCallback = std::function<void(ImageLoadSession, DecodedImage)>;
     using PredecodedImageCallback = std::function<void(ImageLoadSession, PredecodedImage)>;
-    using UnsupportedDocumentVideoCallback = std::function<void(ImageLoadSession)>;
+    using UnsupportedOpenedCollectionVideoCallback = std::function<void(ImageLoadSession)>;
     using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
 
     struct Callbacks {
         ErrorCallback error;
         DecodedImageCallback decodedImage;
         PredecodedImageCallback predecodedImage;
-        UnsupportedDocumentVideoCallback unsupportedDocumentVideo;
+        UnsupportedOpenedCollectionVideoCallback unsupportedOpenedCollectionVideo;
         FindPredecodedImageCallback findPredecodedImage;
         SourceResolvedCallback sourceResolved;
     };
@@ -57,8 +57,8 @@ private:
     void finishDecodeResult(ImageDecodeRequest request, DecodedImageResult result);
     void finishImageLoadError(const ImageDecodeRequest &request, const QString &errorString);
     void startImageLoad(ImageLoadSession session);
-    void startArchiveLoad(ImageLoadSession session);
-    bool tryReportUnsupportedDocumentVideo(ImageLoadSession session);
+    void startOpenedCollectionLoad(ImageLoadSession session);
+    bool tryReportUnsupportedOpenedCollectionVideo(ImageLoadSession session);
     bool tryDisplayPredecodedImage(ImageLoadSession session);
     void finishDecodeRequestWithError(
         const ImageDecodeRequest &request, ImageLoadError error, const QString &errorString);

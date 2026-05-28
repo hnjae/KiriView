@@ -32,7 +32,7 @@ KiriView::PredecodeLoadWindow loadWindow(
 {
     return KiriView::PredecodeLoadWindow {
         displayedUrl,
-        KiriView::ImagePageScopeLocation::none(),
+        KiriView::OpenedCollectionScopeLocation::none(),
         std::move(urls),
         { displayedImage(displayedUrl, KiriView::StaticImageDisplayHints { 0.5 }) },
         KiriView::ImageFirstDisplayDecodeContext { QSize(640, 480) },

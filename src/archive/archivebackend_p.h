@@ -15,17 +15,17 @@
 #include <vector>
 
 namespace KiriView::ArchiveBackendDetail {
-using ArchiveDocumentSessionOpener
-    = ArchiveDocumentSessionOpenResult (*)(const ImagePageScopeLocation &);
+using MediaEntrySourceOpener
+    = MediaEntrySourceOpenResult (*)(const OpenedCollectionScopeLocation &);
 
 struct ArchiveBackendOperations {
-    ArchiveDocumentSessionOpener openSession;
+    MediaEntrySourceOpener openSource;
 };
 
-class ArchiveDocumentSessionWithCandidateSnapshot : public ArchiveDocumentSession
+class MediaEntrySourceWithCandidateSnapshot : public MediaEntrySource
 {
 public:
-    explicit ArchiveDocumentSessionWithCandidateSnapshot(
+    explicit MediaEntrySourceWithCandidateSnapshot(
         std::vector<ImageNavigationCandidate> candidates);
 
     ArchiveImageCandidatesResult loadImageCandidates() final;
@@ -38,10 +38,10 @@ private:
 };
 
 std::optional<ImageNavigationCandidate> archiveMediaCandidate(
-    const ImagePageScopeLocation &archiveDocument, const QString &entryPath);
+    const OpenedCollectionScopeLocation &archiveCollection, const QString &entryPath);
 std::optional<QString> archiveImageEntryPathForRead(
-    const ImagePageScopeLocation &archiveDocument, const QUrl &imageUrl);
-QString fallbackArchiveOpenError(const ImagePageScopeLocation &archiveDocument);
+    const OpenedCollectionScopeLocation &archiveCollection, const QUrl &imageUrl);
+QString fallbackArchiveOpenError(const OpenedCollectionScopeLocation &archiveCollection);
 QString archiveImageNotFoundError();
 QString archiveImageReadError();
 

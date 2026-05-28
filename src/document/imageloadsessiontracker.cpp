@@ -40,7 +40,7 @@ std::optional<ImageLoadSession> ImageLoadSessionTracker::claimCurrentForDecodeRe
     return currentSession;
 }
 
-ImageArchiveCandidateCompletion ImageLoadSessionTracker::completeArchiveCandidates(
+OpenedCollectionCandidateCompletion ImageLoadSessionTracker::completeOpenedCollectionCandidates(
     const ImageLoadSession &session, const std::vector<ImageNavigationCandidate> &candidates)
 {
     if (!isCurrent(session)) {
@@ -49,8 +49,8 @@ ImageArchiveCandidateCompletion ImageLoadSessionTracker::completeArchiveCandidat
 
     if (candidates.empty()) {
         std::optional<ImageLoadSession> claimedSession = claimCurrent(session);
-        return ImageArchiveCandidateCompletion {
-            ImageArchiveCandidateCompletionAction::ReportEmptyArchive,
+        return OpenedCollectionCandidateCompletion {
+            OpenedCollectionCandidateCompletionAction::ReportEmptyArchive,
             claimedSession.value_or(ImageLoadSession {}),
         };
     }
@@ -58,14 +58,14 @@ ImageArchiveCandidateCompletion ImageLoadSessionTracker::completeArchiveCandidat
     m_session->setImageCandidate(candidates.front());
     if (candidates.front().kind == ImageNavigationCandidateKind::Video) {
         std::optional<ImageLoadSession> claimedSession = claimCurrent(*m_session);
-        return ImageArchiveCandidateCompletion {
-            ImageArchiveCandidateCompletionAction::ReportUnsupportedDocumentVideo,
+        return OpenedCollectionCandidateCompletion {
+            OpenedCollectionCandidateCompletionAction::ReportUnsupportedOpenedCollectionVideo,
             claimedSession.value_or(ImageLoadSession {}),
         };
     }
 
-    return ImageArchiveCandidateCompletion {
-        ImageArchiveCandidateCompletionAction::StartImageDecode,
+    return OpenedCollectionCandidateCompletion {
+        OpenedCollectionCandidateCompletionAction::StartImageDecode,
         *m_session,
     };
 }

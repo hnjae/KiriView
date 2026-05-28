@@ -44,8 +44,8 @@ void PredecodeLoadState::cacheDisplayedImages(const std::vector<DisplayedPredeco
             continue;
         }
 
-        m_cache.cacheDisplayedImage(
-            true, image.location.imageUrl(), image.location.imagePageScope(), *image.staticImage);
+        m_cache.cacheDisplayedImage(true, image.location.imageUrl(),
+            image.location.openedCollectionScope(), *image.staticImage);
     }
 }
 
@@ -67,7 +67,7 @@ void PredecodeLoadState::startWindow(PredecodeLoadWindow window)
     m_cache.setWindowUrls(window.urls);
     cacheDisplayedImages(window.displayedImages);
     m_cache.enqueueMissingWindowLoads(
-        window.primaryDisplayedUrl, window.imagePageScope, PredecodeActiveLoads {});
+        window.primaryDisplayedUrl, window.openedCollectionScope, PredecodeActiveLoads {});
 }
 
 bool PredecodeLoadState::canStartMoreLoads(const PredecodeActiveLoads &activeLoads) const
@@ -95,7 +95,7 @@ std::optional<PredecodeLoadStart> PredecodeLoadState::takeNextLoad(
                                   << request->url << "activeLoads" << activeLoads.size();
     return PredecodeLoadStart {
         ImageDecodeRequest::fromLocation(m_activeWindow->generation,
-            DisplayedImageLocation::fromUrl(request->url, request->imagePageScope),
+            DisplayedImageLocation::fromUrl(request->url, request->openedCollectionScope),
             m_activeWindow->firstDisplayContext),
     };
 }
@@ -105,7 +105,7 @@ void PredecodeLoadState::cacheDecodedImage(
 {
     qCDebug(kiriviewPredecodeLog) << "cache decoded predecode image"
                                   << "generation" << request.id() << "url" << request.imageUrl();
-    m_cache.cacheImage(request.imageUrl(), request.imagePageScope(), std::move(staticImage));
+    m_cache.cacheImage(request.imageUrl(), request.openedCollectionScope(), std::move(staticImage));
 }
 
 void PredecodeLoadState::cancelBackgroundWork()

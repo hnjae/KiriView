@@ -18,8 +18,8 @@ namespace KiriView {
 struct ImageNavigationCandidateProvider {
     using ImageCandidateLoader
         = std::function<ImageIoJob(QObject *, QUrl, ImageCandidatesCallback, ErrorCallback)>;
-    using ArchiveImageCandidateLoader = std::function<ImageIoJob(
-        QObject *, ImagePageScopeLocation, ImageCandidatesCallback, ErrorCallback)>;
+    using OpenedCollectionCandidateLoader = std::function<ImageIoJob(
+        QObject *, OpenedCollectionScopeLocation, ImageCandidatesCallback, ErrorCallback)>;
     using ContainerCandidateLoader
         = std::function<ImageIoJob(QObject *, QUrl, ContainerCandidatesCallback, ErrorCallback)>;
     using ImageCandidateChangeSubscriber
@@ -27,7 +27,7 @@ struct ImageNavigationCandidateProvider {
 
     ImageCandidateLoader directoryImages;
     ContainerCandidateLoader directoryContainers;
-    ArchiveImageCandidateLoader archiveImages;
+    OpenedCollectionCandidateLoader openedCollectionCandidates;
     ImageCandidateChangeSubscriber directoryImageChanges;
 };
 

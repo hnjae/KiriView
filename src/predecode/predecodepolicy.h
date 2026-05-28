@@ -12,10 +12,10 @@
 #include <vector>
 
 namespace KiriView {
-enum class PredecodeDocumentKind {
-    Regular,
-    DirectoryDocument,
-    ArchiveDocument,
+enum class PredecodeScopeKind {
+    DirectMedia,
+    DirectoryCollection,
+    ArchiveCollection,
 };
 
 enum class PredecodeMomentumMode {
@@ -33,7 +33,7 @@ enum class PredecodeMomentumDirection {
 };
 
 struct PredecodePolicyInput {
-    PredecodeDocumentKind documentKind = PredecodeDocumentKind::Regular;
+    PredecodeScopeKind scopeKind = PredecodeScopeKind::DirectMedia;
     PredecodeMomentumMode momentumMode = PredecodeMomentumMode::Neutral;
     bool powerSaverEnabled = false;
     int idealThreadCount = 1;
@@ -82,8 +82,8 @@ struct PredecodeQueuedLoadPlan {
 
 int predecodeDebounceMsec();
 int predecodeNeutralRefreshMsec();
-PredecodePolicyInput predecodePolicyInputForImagePageScope(
-    const ImagePageScopeLocation &imagePageScope, PredecodeMomentumMode momentumMode,
+PredecodePolicyInput predecodePolicyInputForOpenedCollectionScope(
+    const OpenedCollectionScopeLocation &openedCollectionScope, PredecodeMomentumMode momentumMode,
     bool powerSaverEnabled, int idealThreadCount);
 std::vector<std::size_t> predecodeRetainedCachedImageIndices(
     const std::vector<PredecodeCachedImageState> &states, std::size_t windowCount,

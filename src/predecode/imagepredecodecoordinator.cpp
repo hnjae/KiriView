@@ -106,7 +106,7 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(
                                   << plan.urls.size() << "parallelLimit" << plan.parallelLimit;
     m_loadController.startWindowLoads(PredecodeLoadWindow {
         schedule.context.currentLocation.imageUrl(),
-        plan.imagePageScope,
+        plan.openedCollectionScope,
         plan.urls,
         schedule.context.displayedImages,
         schedule.context.firstDisplayContext,

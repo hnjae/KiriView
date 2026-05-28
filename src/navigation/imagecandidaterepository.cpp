@@ -35,11 +35,11 @@ KiriView::ImageIoJob loadImagesForSource(const KiriView::ImageCandidateRepositor
 }
 
 KiriView::ImageIoJob loadImagesForSource(const KiriView::ImageCandidateRepository &repository,
-    QObject *receiver, const KiriView::ImageCandidateListSource::ImagePageScope &source,
+    QObject *receiver, const KiriView::ImageCandidateListSource::OpenedCollectionScope &source,
     KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
 {
-    return repository.loadArchiveImages(
-        receiver, source.imagePageScope, std::move(callback), std::move(errorCallback));
+    return repository.loadOpenedCollectionCandidates(
+        receiver, source.openedCollectionScope, std::move(callback), std::move(errorCallback));
 }
 
 KiriView::ImageIoJob watchChangesForSource(const KiriView::ImageCandidateRepository &repository,
@@ -51,8 +51,8 @@ KiriView::ImageIoJob watchChangesForSource(const KiriView::ImageCandidateReposit
 }
 
 KiriView::ImageIoJob watchChangesForSource(const KiriView::ImageCandidateRepository &, QObject *,
-    const KiriView::ImageCandidateListSource::ImagePageScope &, KiriView::ImageCandidatesCallback,
-    KiriView::ErrorCallback)
+    const KiriView::ImageCandidateListSource::OpenedCollectionScope &,
+    KiriView::ImageCandidatesCallback, KiriView::ErrorCallback)
 {
     return KiriView::ImageIoJob();
 }
@@ -91,12 +91,12 @@ ImageIoJob ImageCandidateRepository::loadDirectoryImages(QObject *receiver,
         directoryUrl, std::move(callback));
 }
 
-ImageIoJob ImageCandidateRepository::loadArchiveImages(QObject *receiver,
-    ImagePageScopeLocation imagePageScope, ImageCandidatesCallback callback,
+ImageIoJob ImageCandidateRepository::loadOpenedCollectionCandidates(QObject *receiver,
+    OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
     ErrorCallback errorCallback) const
 {
-    return loadWithProvider(m_provider.archiveImages, std::move(errorCallback), receiver,
-        std::move(imagePageScope), std::move(callback));
+    return loadWithProvider(m_provider.openedCollectionCandidates, std::move(errorCallback),
+        receiver, std::move(openedCollectionScope), std::move(callback));
 }
 
 ImageIoJob ImageCandidateRepository::loadContainers(QObject *receiver, const QUrl &directoryUrl,

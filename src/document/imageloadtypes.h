@@ -17,35 +17,40 @@ namespace KiriView {
 struct ImageLoadRequest {
     ImageLocation source;
     ImageNavigationCandidateKind sourceKind = ImageNavigationCandidateKind::Image;
-    ImagePageScopeLocation displayedImagePageScope;
+    OpenedCollectionScopeLocation displayedOpenedCollectionScope;
     ContainerLocation containerNavigation;
 
     static ImageLoadRequest fromUrl(QUrl sourceUrl, QUrl containerNavigationUrl = QUrl())
     {
         return ImageLoadRequest { ImageLocation::fromUrl(std::move(sourceUrl)),
-            ImageNavigationCandidateKind::Image, ImagePageScopeLocation::none(),
+            ImageNavigationCandidateKind::Image, OpenedCollectionScopeLocation::none(),
             ContainerLocation::fromUrl(std::move(containerNavigationUrl)) };
     }
 
     static ImageLoadRequest fromLocation(QUrl sourceUrl,
-        ImagePageScopeLocation displayedImagePageScope, QUrl containerNavigationUrl = QUrl())
+        OpenedCollectionScopeLocation displayedOpenedCollectionScope,
+        QUrl containerNavigationUrl = QUrl())
     {
         return ImageLoadRequest { ImageLocation::fromUrl(std::move(sourceUrl)),
-            ImageNavigationCandidateKind::Image, std::move(displayedImagePageScope),
+            ImageNavigationCandidateKind::Image, std::move(displayedOpenedCollectionScope),
             ContainerLocation::fromUrl(std::move(containerNavigationUrl)) };
     }
 
     static ImageLoadRequest fromTarget(ImageNavigationTarget target,
-        ImagePageScopeLocation displayedImagePageScope, QUrl containerNavigationUrl = QUrl())
+        OpenedCollectionScopeLocation displayedOpenedCollectionScope,
+        QUrl containerNavigationUrl = QUrl())
     {
         return ImageLoadRequest { ImageLocation::fromUrl(std::move(target.url)), target.kind,
-            std::move(displayedImagePageScope),
+            std::move(displayedOpenedCollectionScope),
             ContainerLocation::fromUrl(std::move(containerNavigationUrl)) };
     }
 
     const QUrl &sourceUrl() const { return source.url(); }
     ImageNavigationCandidateKind kind() const { return sourceKind; }
-    const ImagePageScopeLocation &imagePageScope() const { return displayedImagePageScope; }
+    const OpenedCollectionScopeLocation &openedCollectionScope() const
+    {
+        return displayedOpenedCollectionScope;
+    }
     const QUrl &containerNavigationUrl() const { return containerNavigation.url(); }
     bool isEmpty() const { return source.isEmpty(); }
     bool isContainerNavigation() const { return !containerNavigation.isEmpty(); }
@@ -64,7 +69,7 @@ public:
     const ImageFirstDisplayDecodeContext &firstDisplay() const;
     const QUrl &imageUrl() const;
     ImageNavigationCandidateKind kind() const;
-    const ImagePageScopeLocation &imagePageScope() const;
+    const OpenedCollectionScopeLocation &openedCollectionScope() const;
     const QUrl &containerNavigationUrl() const;
     bool hasContainerNavigationTarget() const;
     ImageDecodeRequest decodeRequest() const;

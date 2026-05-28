@@ -31,9 +31,9 @@ const QUrl &ImageLoadSession::imageUrl() const { return m_location.imageUrl(); }
 
 ImageNavigationCandidateKind ImageLoadSession::kind() const { return m_kind; }
 
-const ImagePageScopeLocation &ImageLoadSession::imagePageScope() const
+const OpenedCollectionScopeLocation &ImageLoadSession::openedCollectionScope() const
 {
-    return m_location.imagePageScope();
+    return m_location.openedCollectionScope();
 }
 
 const QUrl &ImageLoadSession::containerNavigationUrl() const

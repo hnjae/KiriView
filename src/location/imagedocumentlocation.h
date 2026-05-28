@@ -13,11 +13,14 @@
 namespace KiriView {
 std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url);
 std::optional<QUrl> directArchiveOpenRootUrl(const QUrl &url);
-std::optional<ImagePageScopeLocation> imagePageScopeLocationForLocalArchiveUrl(const QUrl &url);
-std::optional<ImagePageScopeLocation> directOpenImagePageScopeLocationForLocalUrl(const QUrl &url);
+std::optional<OpenedCollectionScopeLocation> openedCollectionScopeLocationForLocalArchiveUrl(
+    const QUrl &url);
+std::optional<OpenedCollectionScopeLocation> openedCollectionScopeLocationForDirectlyOpenedLocalUrl(
+    const QUrl &url);
 bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl);
-bool imagePageScopeContainsUrl(const ImagePageScopeLocation &imagePageScope, const QUrl &url);
-bool displayedLocationIsInsideImagePageScope(const DisplayedImageLocation &location);
+bool openedCollectionScopeContainsUrl(
+    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &url);
+bool displayedLocationIsInsideOpenedCollectionScope(const DisplayedImageLocation &location);
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url);
 std::optional<QUrl> containingDirectArchiveOpenRootUrl(const QUrl &url);
 QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &location);

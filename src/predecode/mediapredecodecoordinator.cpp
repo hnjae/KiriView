@@ -93,7 +93,7 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
                                   << "parallelLimit" << plan.parallelLimit;
     m_loadController.startWindowLoads(PredecodeLoadWindow {
         schedule.context.currentLocation.imageUrl(),
-        plan.imagePageScope,
+        plan.openedCollectionScope,
         plan.urls,
         schedule.context.displayedImages,
         schedule.context.firstDisplayContext,
@@ -105,7 +105,7 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
 PredecodePolicyInput MediaPredecodeCoordinator::policyInput() const
 {
     return PredecodePolicyInput {
-        PredecodeDocumentKind::Regular,
+        PredecodeScopeKind::DirectMedia,
         m_scheduleRuntime.momentumMode(),
         m_scheduleRuntime.powerSaverEnabled(),
         QThread::idealThreadCount(),

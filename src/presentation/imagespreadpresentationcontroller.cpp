@@ -530,8 +530,8 @@ void ImageSpreadPresentationController::notifyRightToLeftReadingChanged()
 
 void ImageSpreadPresentationController::startSecondaryPageLoad(const QUrl &url)
 {
-    m_secondaryPageController->startLoad(
-        url, m_state.displayedImagePageScope(), m_primaryPresentation.firstDisplayDecodeContext());
+    m_secondaryPageController->startLoad(url, m_state.displayedOpenedCollectionScope(),
+        m_primaryPresentation.firstDisplayDecodeContext());
     notifyTwoPageModeChanged();
 }
 
@@ -596,7 +596,7 @@ ImageSpreadReadingAvailability ImageSpreadPresentationController::readingAvailab
 {
     const DisplayedImageLocation &location = m_state.displayedImageLocation();
     return ImageSpreadReadingAvailability { m_primaryPresentation.hasImage(), !location.isEmpty(),
-        location.imagePageScope().isComicBook() };
+        location.openedCollectionScope().isComicBook() };
 }
 
 void ImageSpreadPresentationController::scheduleAdjacentPredecode()

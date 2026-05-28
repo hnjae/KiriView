@@ -33,7 +33,10 @@ public:
     quint64 id() const { return m_id; }
     const DisplayedImageLocation &location() const { return m_location; }
     const QUrl &imageUrl() const { return m_location.imageUrl(); }
-    const ImagePageScopeLocation &imagePageScope() const { return m_location.imagePageScope(); }
+    const OpenedCollectionScopeLocation &openedCollectionScope() const
+    {
+        return m_location.openedCollectionScope();
+    }
     const ImageFirstDisplayDecodeContext &firstDisplay() const { return m_firstDisplay; }
     bool isEmpty() const { return m_location.isEmpty(); }
     bool matches(quint64 id, const QUrl &imageUrl) const

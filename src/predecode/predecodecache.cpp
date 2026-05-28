@@ -73,7 +73,8 @@ void PredecodeCache::setDisplayedUrls(const std::vector<QUrl> &urls)
 }
 
 void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
-    const ImagePageScopeLocation &imagePageScope, const PredecodeActiveLoads &activeLoads)
+    const OpenedCollectionScopeLocation &openedCollectionScope,
+    const PredecodeActiveLoads &activeLoads)
 {
     const QUrl normalizedDisplayedUrl = normalizedImageUrl(displayedUrl);
     std::vector<PredecodeWindowLoadState> states;
@@ -92,8 +93,9 @@ void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
         if (index < m_windowUrls.size()) {
             qCDebug(kiriviewPredecodeLog)
                 << "predecode enqueue"
-                << "url" << m_windowUrls.at(index) << "imagePageScope" << !imagePageScope.isEmpty();
-            m_queue.push_back(PredecodeRequest { m_windowUrls.at(index), imagePageScope });
+                << "url" << m_windowUrls.at(index) << "openedCollectionScope"
+                << !openedCollectionScope.isEmpty();
+            m_queue.push_back(PredecodeRequest { m_windowUrls.at(index), openedCollectionScope });
         }
     }
     qCDebug(kiriviewPredecodeLog) << "predecode enqueue missing complete"
@@ -179,12 +181,12 @@ std::optional<PredecodedImage> PredecodeCache::findImage(const QUrl &url) const
     }
 
     const DisplayedImageLocation location
-        = DisplayedImageLocation::fromUrl(cached->url, cached->imagePageScope);
+        = DisplayedImageLocation::fromUrl(cached->url, cached->openedCollectionScope);
     return PredecodedImage { cached->staticImage, location };
 }
 
-void PredecodeCache::cacheImage(
-    const QUrl &url, const ImagePageScopeLocation &imagePageScope, StaticImagePayload staticImage)
+void PredecodeCache::cacheImage(const QUrl &url,
+    const OpenedCollectionScopeLocation &openedCollectionScope, StaticImagePayload staticImage)
 {
     const std::optional<qsizetype> byteCost = staticImage.byteCostWithinBudget(m_byteBudget);
     if (!byteCost.has_value()) {
@@ -209,7 +211,7 @@ void PredecodeCache::cacheImage(
 
     removeCachedImage(*normalizedUrl);
     m_images.push_back(
-        CachedImage { *normalizedUrl, imagePageScope, std::move(staticImage), *byteCost });
+        CachedImage { *normalizedUrl, openedCollectionScope, std::move(staticImage), *byteCost });
     qCDebug(kiriviewPredecodeLog) << "predecode cache stored"
                                   << "url" << *normalizedUrl << "byteCost" << *byteCost
                                   << "cachedImages" << m_images.size();
@@ -218,7 +220,7 @@ void PredecodeCache::cacheImage(
 }
 
 void PredecodeCache::cacheDisplayedImage(bool cacheable, const QUrl &url,
-    const ImagePageScopeLocation &imagePageScope, StaticImagePayload staticImage)
+    const OpenedCollectionScopeLocation &openedCollectionScope, StaticImagePayload staticImage)
 {
     if (!cacheable || url.isEmpty()) {
         qCDebug(kiriviewPredecodeLog)
@@ -227,7 +229,7 @@ void PredecodeCache::cacheDisplayedImage(bool cacheable, const QUrl &url,
         return;
     }
 
-    cacheImage(url, imagePageScope, std::move(staticImage));
+    cacheImage(url, openedCollectionScope, std::move(staticImage));
 }
 
 bool PredecodeCache::containsUrl(const std::vector<QUrl> &urls, const QUrl &url)

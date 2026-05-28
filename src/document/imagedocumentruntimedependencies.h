@@ -20,7 +20,7 @@
 class QObject;
 
 namespace KiriView {
-class ArchiveDocumentSessionStore;
+class MediaEntrySourceStore;
 
 using ExternalPredecodedImageFinder = std::function<std::optional<PredecodedImage>(const QUrl &)>;
 
@@ -28,7 +28,7 @@ struct ImageDocumentRuntimeDependencyOverrides {
     ImageNavigationCandidateProvider candidateProvider;
     ImageDecodeDependencies imageDecode;
     FileOperationProvider fileOperations;
-    ArchiveDocumentSessionFactory archiveDocumentSessions;
+    MediaEntrySourceFactory mediaEntrySourceFactory;
     PowerSaverProvider powerSaver;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;
     qsizetype predecodeCacheByteBudget = 0;
@@ -40,7 +40,7 @@ struct ImageDocumentRuntimeDependencies {
     FileOperationProvider fileOperations;
     PowerSaverProvider powerSaver;
     qsizetype predecodeCacheByteBudget = 0;
-    std::unique_ptr<ArchiveDocumentSessionStore> archiveSessionStore;
+    std::unique_ptr<MediaEntrySourceStore> mediaEntrySourceStore;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;
 
     ~ImageDocumentRuntimeDependencies();

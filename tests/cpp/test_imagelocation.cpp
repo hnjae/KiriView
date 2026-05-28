@@ -14,7 +14,7 @@ class TestImageLocation : public QObject
 
 private Q_SLOTS:
     void locationValuesStoreCanonicalUrlIdentity();
-    void archiveDocumentIdentityComparesNormalizedUrlsAndKind();
+    void archiveCollectionIdentityComparesNormalizedUrlsAndKind();
 };
 
 void TestImageLocation::locationValuesStoreCanonicalUrlIdentity()
@@ -36,41 +36,43 @@ void TestImageLocation::locationValuesStoreCanonicalUrlIdentity()
     QVERIFY(containerLocation == KiriView::ContainerLocation::fromUrl(normalizedImageUrl));
     QVERIFY(KiriView::ContainerLocation::none() == KiriView::ContainerLocation::none());
 
-    const KiriView::ImagePageScopeLocation archiveDocument
-        = KiriView::ImagePageScopeLocation::fromUrls(
-            rawImageUrl, rawArchiveRootUrl, KiriView::ImagePageScopeKind::ComicBookArchive);
-    QCOMPARE(archiveDocument.fileUrl(), normalizedImageUrl);
-    QCOMPARE(archiveDocument.rootUrl(), normalizedArchiveRootUrl);
-    QVERIFY(archiveDocument
-        == KiriView::ImagePageScopeLocation::fromUrls(normalizedImageUrl, normalizedArchiveRootUrl,
-            KiriView::ImagePageScopeKind::ComicBookArchive));
+    const KiriView::OpenedCollectionScopeLocation archiveCollection
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(
+            rawImageUrl, rawArchiveRootUrl, KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+    QCOMPARE(archiveCollection.fileUrl(), normalizedImageUrl);
+    QCOMPARE(archiveCollection.rootUrl(), normalizedArchiveRootUrl);
+    QVERIFY(archiveCollection
+        == KiriView::OpenedCollectionScopeLocation::fromUrls(normalizedImageUrl,
+            normalizedArchiveRootUrl, KiriView::OpenedCollectionScopeKind::ComicBookArchive));
 
     const KiriView::DisplayedImageLocation displayedLocation
-        = KiriView::DisplayedImageLocation::fromImagePageScope(rawImageUrl, archiveDocument);
+        = KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+            rawImageUrl, archiveCollection);
     QCOMPARE(displayedLocation.imageUrl(), normalizedImageUrl);
     QVERIFY(displayedLocation
-        == KiriView::DisplayedImageLocation::fromImagePageScope(
-            normalizedImageUrl, archiveDocument));
+        == KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+            normalizedImageUrl, archiveCollection));
 }
 
-void TestImageLocation::archiveDocumentIdentityComparesNormalizedUrlsAndKind()
+void TestImageLocation::archiveCollectionIdentityComparesNormalizedUrlsAndKind()
 {
-    const KiriView::ImagePageScopeLocation archiveDocument
-        = KiriView::ImagePageScopeLocation::fromUrls(
+    const KiriView::OpenedCollectionScopeLocation archiveCollection
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(
             KiriView::TestSupport::localUrl(QStringLiteral("/books/book.cbz")),
             QUrl(QStringLiteral("kio-fuse:///books/book.cbz/")),
-            KiriView::ImagePageScopeKind::ComicBookArchive);
-    const KiriView::ImagePageScopeLocation normalizedArchiveDocument
-        = KiriView::ImagePageScopeLocation::fromUrls(
+            KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+    const KiriView::OpenedCollectionScopeLocation normalizedArchiveCollection
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(
             KiriView::TestSupport::localUrl(QStringLiteral("/books/./book.cbz")),
             QUrl(QStringLiteral("kio-fuse:///books/./book.cbz/")),
-            KiriView::ImagePageScopeKind::ComicBookArchive);
-    const KiriView::ImagePageScopeLocation differentKind
-        = KiriView::ImagePageScopeLocation::fromUrls(archiveDocument.fileUrl(),
-            archiveDocument.rootUrl(), KiriView::ImagePageScopeKind::GeneralArchive);
+            KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+    const KiriView::OpenedCollectionScopeLocation differentKind
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(archiveCollection.fileUrl(),
+            archiveCollection.rootUrl(), KiriView::OpenedCollectionScopeKind::GeneralArchive);
 
-    QVERIFY(KiriView::sameImagePageScopeLocation(archiveDocument, normalizedArchiveDocument));
-    QVERIFY(!KiriView::sameImagePageScopeLocation(archiveDocument, differentKind));
+    QVERIFY(KiriView::sameOpenedCollectionScopeLocation(
+        archiveCollection, normalizedArchiveCollection));
+    QVERIFY(!KiriView::sameOpenedCollectionScopeLocation(archiveCollection, differentKind));
 }
 
 QTEST_GUILESS_MAIN(TestImageLocation)

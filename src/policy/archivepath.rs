@@ -63,9 +63,9 @@ mod ffi {
             path: &str,
         ) -> RustArchiveRootPath;
 
-        #[cxx_name = "rustArchiveDocumentContainsUrl"]
-        fn rust_archive_document_contains_url(
-            archive_document_empty: bool,
+        #[cxx_name = "rustOpenedCollectionScopeContainsUrl"]
+        fn rust_opened_collection_scope_contains_url(
+            opened_collection_scope_empty: bool,
             archive_root_url_empty: bool,
             archive_root_scheme: &str,
             archive_root_path: &str,
@@ -139,8 +139,8 @@ fn rust_containing_direct_archive_open_root_path(scheme: &str, path: &str) -> Ru
     containing_archive_root_path(path, &markers)
 }
 
-fn rust_archive_document_contains_url(
-    archive_document_empty: bool,
+fn rust_opened_collection_scope_contains_url(
+    opened_collection_scope_empty: bool,
     archive_root_url_empty: bool,
     archive_root_scheme: &str,
     archive_root_path: &str,
@@ -148,7 +148,7 @@ fn rust_archive_document_contains_url(
     url_scheme: &str,
     url_path: &str,
 ) -> bool {
-    !archive_document_empty
+    !opened_collection_scope_empty
         && !archive_relative_path_for_url_parts(
             archive_root_url_empty,
             archive_root_scheme,
@@ -542,7 +542,7 @@ mod tests {
 
     #[test]
     fn archive_containment_requires_matching_archive_scope() {
-        assert!(rust_archive_document_contains_url(
+        assert!(rust_opened_collection_scope_contains_url(
             false,
             false,
             "zip",
@@ -551,7 +551,7 @@ mod tests {
             "zip",
             "/books/book.cbz/chapter/page001.png"
         ));
-        assert!(!rust_archive_document_contains_url(
+        assert!(!rust_opened_collection_scope_contains_url(
             false,
             false,
             "zip",

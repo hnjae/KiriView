@@ -12,17 +12,17 @@
 #include <vector>
 
 namespace {
-using KiriView::PredecodeDocumentKind;
 using KiriView::PredecodeMomentumDirection;
 using KiriView::PredecodeMomentumMode;
 using KiriView::PredecodeMomentumState;
 using KiriView::PredecodePolicyInput;
 using KiriView::PredecodeSchedulePlan;
+using KiriView::PredecodeScopeKind;
 using KiriView::TestSupport::imagesDirectoryUrl;
 using KiriView::TestSupport::localUrl;
 
 PredecodePolicyInput policyInput(
-    PredecodeDocumentKind kind, PredecodeMomentumMode mode = PredecodeMomentumMode::Neutral)
+    PredecodeScopeKind kind, PredecodeMomentumMode mode = PredecodeMomentumMode::Neutral)
 {
     return PredecodePolicyInput { kind, mode, false, 8 };
 }
@@ -34,39 +34,42 @@ class TestPredecodePolicy : public QObject
 
 private Q_SLOTS:
     void schedulePlanUsesCppCandidateSnapshot();
-    void imagePageScopeInputClassifiesRuntimeLocation();
+    void openedCollectionScopeInputClassifiesRuntimeLocation();
     void momentumStateRoundTripsThroughPolicyBoundary();
 };
 
 void TestPredecodePolicy::schedulePlanUsesCppCandidateSnapshot()
 {
     const PredecodeSchedulePlan plan = KiriView::predecodeSchedulePlan(
-        15, 5, policyInput(PredecodeDocumentKind::ArchiveDocument));
+        15, 5, policyInput(PredecodeScopeKind::ArchiveCollection));
 
     QCOMPARE(plan.parallelLimit, std::size_t(4));
     QVERIFY(plan.targetIndices == std::vector<std::size_t>({ 5, 6, 4, 7, 3, 8, 9 }));
 
     const PredecodeSchedulePlan missingCurrent = KiriView::predecodeSchedulePlan(
-        15, std::nullopt, policyInput(PredecodeDocumentKind::Regular));
+        15, std::nullopt, policyInput(PredecodeScopeKind::DirectMedia));
     QCOMPARE(missingCurrent.parallelLimit, std::size_t(1));
     QVERIFY(missingCurrent.targetIndices.empty());
 }
 
-void TestPredecodePolicy::imagePageScopeInputClassifiesRuntimeLocation()
+void TestPredecodePolicy::openedCollectionScopeInputClassifiesRuntimeLocation()
 {
-    const KiriView::ImagePageScopeLocation directoryDocument
-        = KiriView::ImagePageScopeLocation::fromUrls(
-            imagesDirectoryUrl(), imagesDirectoryUrl(), KiriView::ImagePageScopeKind::Directory);
-    const PredecodePolicyInput directoryInput = KiriView::predecodePolicyInputForImagePageScope(
-        directoryDocument, PredecodeMomentumMode::Neutral, false, 8);
-    QVERIFY(directoryInput.documentKind == PredecodeDocumentKind::DirectoryDocument);
+    const KiriView::OpenedCollectionScopeLocation directoryCollection
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(imagesDirectoryUrl(),
+            imagesDirectoryUrl(), KiriView::OpenedCollectionScopeKind::Directory);
+    const PredecodePolicyInput directoryInput
+        = KiriView::predecodePolicyInputForOpenedCollectionScope(
+            directoryCollection, PredecodeMomentumMode::Neutral, false, 8);
+    QVERIFY(directoryInput.scopeKind == PredecodeScopeKind::DirectoryCollection);
 
-    const std::optional<KiriView::ImagePageScopeLocation> imagePageScope
-        = KiriView::imagePageScopeLocationForLocalArchiveUrl(localUrl(QStringLiteral("/book.cbz")));
-    QVERIFY(imagePageScope.has_value());
-    const PredecodePolicyInput archiveInput = KiriView::predecodePolicyInputForImagePageScope(
-        *imagePageScope, PredecodeMomentumMode::Neutral, false, 8);
-    QVERIFY(archiveInput.documentKind == PredecodeDocumentKind::ArchiveDocument);
+    const std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScope
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(
+            localUrl(QStringLiteral("/book.cbz")));
+    QVERIFY(openedCollectionScope.has_value());
+    const PredecodePolicyInput archiveInput
+        = KiriView::predecodePolicyInputForOpenedCollectionScope(
+            *openedCollectionScope, PredecodeMomentumMode::Neutral, false, 8);
+    QVERIFY(archiveInput.scopeKind == PredecodeScopeKind::ArchiveCollection);
 }
 
 void TestPredecodePolicy::momentumStateRoundTripsThroughPolicyBoundary()

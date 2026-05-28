@@ -175,7 +175,7 @@ std::unique_ptr<QTemporaryDir> createMediaDirectory(
     return directory;
 }
 
-std::unique_ptr<QTemporaryDir> createDirectoryDocument(QString *sourcePath, QString *errorString)
+std::unique_ptr<QTemporaryDir> createDirectoryCollection(QString *sourcePath, QString *errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -373,7 +373,7 @@ void TestMainWindowToolBar::directoryImageDocumentShowsPagePosition()
     QString sourcePath;
     QString errorString;
     std::unique_ptr<QTemporaryDir> imageDirectory
-        = createDirectoryDocument(&sourcePath, &errorString);
+        = createDirectoryCollection(&sourcePath, &errorString);
     QVERIFY2(imageDirectory != nullptr, qPrintable(errorString));
 
     MainWindowFixture fixture = createMainWindowFixture();

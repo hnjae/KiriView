@@ -124,10 +124,10 @@ public:
         m_directoryImages.setItems(directoryUrl, std::move(candidates));
     }
 
-    void setArchiveImages(
+    void setOpenedCollectionCandidates(
         const QUrl &archiveRootUrl, std::vector<ImageNavigationCandidate> candidates)
     {
-        m_archiveImages.setItems(archiveRootUrl, std::move(candidates));
+        m_openedCollectionCandidates.setItems(archiveRootUrl, std::move(candidates));
     }
 
     void setContainerCandidates(
@@ -141,9 +141,9 @@ public:
         m_directoryImages.setError(directoryUrl, std::move(errorString));
     }
 
-    void setArchiveImageError(const QUrl &archiveRootUrl, QString errorString)
+    void setOpenedCollectionCandidateError(const QUrl &archiveRootUrl, QString errorString)
     {
-        m_archiveImages.setError(archiveRootUrl, std::move(errorString));
+        m_openedCollectionCandidates.setError(archiveRootUrl, std::move(errorString));
     }
 
     void setContainerError(const QUrl &directoryUrl, QString errorString)
@@ -201,10 +201,10 @@ public:
                     std::move(directoryUrl), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
-            [this](QObject *, ImagePageScopeLocation imagePageScope,
+            [this](QObject *, OpenedCollectionScopeLocation openedCollectionScope,
                 ImageCandidatesCallback callback, ErrorCallback errorCallback) {
-                m_archiveImages.load(
-                    imagePageScope.rootUrl(), std::move(callback), std::move(errorCallback));
+                m_openedCollectionCandidates.load(
+                    openedCollectionScope.rootUrl(), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
             [this](QObject *receiver, QUrl directoryUrl, ImageCandidatesCallback callback,
@@ -247,7 +247,7 @@ private:
     }
 
     FakeCandidateListing<std::vector<ImageNavigationCandidate>> m_directoryImages;
-    FakeCandidateListing<std::vector<ImageNavigationCandidate>> m_archiveImages;
+    FakeCandidateListing<std::vector<ImageNavigationCandidate>> m_openedCollectionCandidates;
     FakeCandidateListing<std::vector<ContainerNavigationCandidate>> m_containerCandidates;
     std::vector<std::shared_ptr<FakeCandidateChangeSubscription>>
         m_directoryImageChangeSubscriptions;

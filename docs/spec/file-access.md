@@ -8,21 +8,21 @@ KiriView opens direct video URLs as direct media items for MP4, M4V, and MOV fil
 
 Direct video URLs include local paths, `file://` URLs, and KDE-supported archive URLs that point at a file entry such as `zip:///path/archive.zip!/clip.mp4`.
 
-When a video is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats it as a single direct media URL rather than opening the whole archive as an archive document.
+When a video is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats it as a single direct media URL rather than opening the whole archive as an archive collection.
 
-KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend, such as through KIOFuse or another KIO-backed resolver. KiriView treats this resolution as successful only when the resolved playback URL can be consumed by the video backend. This does not change the user-facing source URL for the window title, adjacent media navigation, deletion target, error context, or document-mode decisions.
+KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend, such as through KIOFuse or another KIO-backed resolver. KiriView treats this resolution as successful only when the resolved playback URL can be consumed by the video backend. This does not change the user-facing source URL for the window title, adjacent media navigation, deletion target, error context, or direct-media versus opened-collection routing decisions.
 
-KiriView opens local `.cbz`, `.cbt`, `.cb7`, and `.cbr` comic book archives. When a local comic book archive is opened directly, KiriView uses that archive as the current archive document and displays the first supported image inside that archive.
+KiriView opens local `.cbz`, `.cbt`, `.cb7`, and `.cbr` comic book archives. When a local comic book archive is opened directly, KiriView uses that archive as the current archive collection and displays the first supported image inside that archive.
 
-KiriView opens local `.zip`, `.tar`, `.7z`, and `.rar` archives only when they are directly provided, such as through a startup argument or the open dialog's `All files (*)` filter. When a local general archive is opened directly, KiriView uses that archive as the current archive document and displays the first supported image inside that archive.
+KiriView opens local `.zip`, `.tar`, `.7z`, and `.rar` archives only when they are directly provided, such as through a startup argument or the open dialog's `All files (*)` filter. When a local general archive is opened directly, KiriView uses that archive as the current archive collection and displays the first supported image inside that archive.
 
 General archives are not advertised through the desktop file's file associations, the open dialog's default image, video, and comic book filter, or sibling archive navigation.
 
-KiriView opens local directories only when they are directly provided, such as through a startup argument, file URL, or drop. When a local directory is opened directly, KiriView uses that directory as the current directory document and displays the first supported image inside that directory tree.
+KiriView opens local directories only when they are directly provided, such as through a startup argument, file URL, or drop. When a local directory is opened directly, KiriView uses that directory as the current directory collection and displays the first supported image inside that directory tree.
 
-Opening a directory URL creates a directory document and does not create a video-capable ordinary media scope.
+Opening a directory URL creates a directory collection and does not create a video-capable ordinary media scope.
 
-Directory documents use the same recursive supported-image page ordering as archive documents, with page names based on directory-relative paths such as `chapter/page001.png`.
+Directory collections use the same recursive supported-image page ordering as archive collections, with page names based on directory-relative paths such as `chapter/page001.png`.
 
 Directly opened directories are not advertised through the desktop file's file associations, the open dialog's default image, video, and comic book filter, or sibling archive navigation.
 
@@ -30,7 +30,7 @@ KiriView's open dialog default filter includes supported image files, supported 
 
 KiriView's desktop file advertises file-manager Open With handling for supported image, supported direct video, and comic book archive MIME types. For direct videos, the advertised MIME types are `video/mp4` and `video/quicktime`.
 
-When an image is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats it as a single image URL rather than opening the whole archive as an archive document.
+When an image is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats it as a single image URL rather than opening the whole archive as an archive collection.
 
 ## Flatpak Access
 
@@ -56,19 +56,19 @@ The deletion target is the displayed image URL for ordinary images, remote URLs,
 
 The deletion target is the original direct media URL for direct videos, including videos opened directly from KDE-supported archive URLs such as `zip://`, even if KiriView resolved a separate local playback URL internally.
 
-When the displayed image is inside a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive document opened directly by KiriView, the deletion target is the archive file itself rather than the currently displayed internal image entry.
+When the displayed image is inside a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive collection opened directly by KiriView, the deletion target is the archive file itself rather than the currently displayed internal image entry.
 
-When the displayed image is inside a local directory document opened directly by KiriView, the deletion target is the directory itself rather than the currently displayed image file. Confirming the deletion deletes the entire directly opened directory as handled by KDE.
+When the displayed image is inside a local directory collection opened directly by KiriView, the deletion target is the directory itself rather than the currently displayed image file. Confirming the deletion deletes the entire directly opened directory as handled by KDE.
 
 After deletion succeeds, KiriView immediately clears the deleted image or stops playback for the deleted video.
 
 For ordinary direct media URL scopes, KiriView then opens the next supported media item in the current ordinary media scope when possible, falls back to the previous supported media item when no next item exists, and otherwise shows the empty state.
 
-Archive document and directly opened directory document image deletion keep their image and document-specific fallback behavior.
+Archive collection and directly opened directory collection image deletion keep their image and collection-specific fallback behavior.
 
 After deleting a directly opened comic book archive, KiriView opens the first image in the next sibling comic book archive when possible, falls back to the first image in the previous sibling comic book archive, and otherwise shows the empty state.
 
-After deleting a directly opened directory document, KiriView shows the empty state.
+After deleting a directly opened directory collection, KiriView shows the empty state.
 
 ## Live Directory Updates
 
@@ -78,16 +78,16 @@ External additions and removals update the page number, total item count, and fi
 
 If the currently displayed local image or video is removed outside KiriView, KiriView immediately clears that image or stops playback for that video, opens the next supported media item in the same sorted directory order when possible, falls back to the previous supported media item when no next media item exists, and otherwise shows the empty state.
 
-Non-local URL scopes, explicit archive URL scopes such as `zip://`, directly opened archive documents, and directly opened recursive directory documents are snapshots and do not guarantee live external update handling.
+Non-local URL scopes, explicit archive URL scopes such as `zip://`, directly opened archive collections, and directly opened recursive directory collections are snapshots and do not guarantee live external update handling.
 
 ## Open With
 
 The Open With action opens the currently displayed media item with another application and delegates application selection and launching to KDE/KIO open-with handling.
 
-The Open With target is the current media item rather than the deletion target. For direct images, remote images, direct videos, and media opened directly from KDE-supported archive URLs such as `zip://`, the target is the displayed or original direct media URL. For a directly opened local directory document, the target is the currently displayed image file inside that directory.
+The Open With target is the current media item rather than the deletion target. For direct images, remote images, direct videos, and media opened directly from KDE-supported archive URLs such as `zip://`, the target is the displayed or original direct media URL. For a directly opened local directory collection, the target is the currently displayed image file inside that directory.
 
-For images displayed inside a directly opened local CBZ, CBT, CB7, ZIP, TAR, or 7Z archive document, the Open With target is the currently displayed internal image URL when that URL uses a KDE-supported archive scheme such as `zip://`, `tar://`, or `sevenz://`.
+For images displayed inside a directly opened local CBZ, CBT, CB7, ZIP, TAR, or 7Z archive collection, the Open With target is the currently displayed internal image URL when that URL uses a KDE-supported archive scheme such as `zip://`, `tar://`, or `sevenz://`.
 
-For images displayed inside a directly opened local CBR or RAR archive document, Open With is disabled because KiriView's internal RAR support is not treated as a KDE/KIO-openable media URL.
+For images displayed inside a directly opened local CBR or RAR archive collection, Open With is disabled because KiriView's internal RAR support is not treated as a KDE/KIO-openable media URL.
 
 Open With is disabled when no media item is ready, when the current document is empty, loading, or failed, or when KiriView cannot derive a KDE/KIO-openable current media URL. Canceling the KDE/KIO open-with flow leaves KiriView unchanged and does not show an in-app notification.
