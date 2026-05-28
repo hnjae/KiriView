@@ -36,7 +36,7 @@ Opening an image after a video restores image behavior.
 
 The top-level document session owns the active document kind for direct image and video routing. Its public source URL follows the same user-facing identity as the active image or video document: assigning it starts an open request, successful opens expose the original direct media URL, replacement failures keep the previously displayed direct URL, initial failures may keep the failed request as error context, and resolver-local playback URLs are never exposed as the session source.
 
-For direct video and direct image media scopes, the document session owns the active navigation projection used by toolbar readouts, shared action availability, and navigation dispatch. Asynchronous sibling discovery uses the requested session-owned direct media URL as the cursor for the eventual readout, not an image-document displayed URL.
+For direct image and direct video URLs in direct media scopes, the document session owns the active navigation projection used by toolbar readouts, shared action availability, and navigation dispatch. Asynchronous sibling discovery uses the requested session-owned direct media URL as the cursor for the eventual readout, not an image-document displayed URL.
 
 ## Ordinary Direct Media URL Scope
 
@@ -44,7 +44,7 @@ An ordinary direct media URL scope is the non-recursive parent URL of the active
 
 This includes ordinary local parent directories and KDE archive URL parent locations such as `zip:///path/archive.zip!/chapter/`.
 
-Opening a directory URL creates the existing directory collection and does not create a video-capable media scope.
+Opening a directory URL creates the existing directory collection and does not create a video-capable direct media scope.
 
 The ordinary direct media URL parent follows KiriView's existing direct image candidate context rule rather than a new URL-scheme-specific parser: KiriView normalizes the original direct URL through the same `navigationSourceUrl(...)` path used for displayed direct images, then derives the parent with `QUrl::RemoveFilename | QUrl::NormalizePathSegments`.
 
@@ -52,9 +52,9 @@ Direct KDE archive-entry URLs use this direct URL branch unless KiriView has exp
 
 Supported image files and supported direct video files share one locale-aware sibling order in ordinary direct media URL scopes.
 
-Adjacent media navigation is non-recursive, does not wrap, and uses the same session-owned active navigation projection and boundary-feedback model as image navigation. Boundary feedback in a media-aware scope uses neutral first-media-item and last-media-item wording rather than calling every boundary item an image.
+Direct media navigation is non-recursive, does not wrap, and uses the same session-owned active navigation projection and boundary-feedback model as image-document page navigation. Boundary feedback in a direct media scope uses neutral first-media-item and last-media-item wording rather than calling every boundary item an image.
 
-The top-level document session dispatches adjacent Previous and Next through media navigation in video mode and in image mode only when the active image belongs to an ordinary direct media URL scope. Archive collection and directly opened directory collection scopes keep opened-collection navigation as the session projection's internal source.
+The top-level document session dispatches adjacent Previous and Next through direct media navigation in video mode and in image mode only when the active image belongs to an ordinary direct media URL scope. Archive collection and directly opened directory collection scopes keep opened-collection navigation as the session projection's internal source.
 
 ## Playback
 
@@ -88,7 +88,7 @@ Unknown duration, invalid duration, and non-seekable media produce a stable disa
 
 In video mode, viewer Left and Right and existing adjacent navigation actions move to the previous or next supported media item in the ordinary parent location. They do not seek within the video.
 
-Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit. Shared media navigation shortcuts use session active-navigation dispatch and availability.
+Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit. Shared direct-media navigation shortcuts use session active-navigation dispatch and availability.
 
 When an image-only configurable shortcut is pressed in video mode, KiriView does not trigger the image action and shows the in-app toast `This action is not available for videos`. Repeated unsupported video shortcut presses update the same toast instance.
 
@@ -114,6 +114,6 @@ If deletion is canceled, the current video remains open and no notification is s
 
 If deletion fails, the current video remains open and the file operation error is shown as an in-app toast notification.
 
-After successful video deletion, playback stops and KiriView opens the next supported media item in the current ordinary media scope when possible, falls back to the previous supported media item when no next item exists, and otherwise returns to empty state.
+After successful video deletion, playback stops and KiriView opens the next supported media item in the current direct media scope when possible, falls back to the previous supported media item when no next item exists, and otherwise returns to empty state.
 
-In image mode, ordinary direct media deletion uses the same media-aware fallback order, so deleting an image can open a neighboring supported video. Archive collection and directly opened directory collection image deletion keep their image and collection-specific fallback behavior.
+In image mode, ordinary direct media deletion uses the same direct-media fallback order, so deleting an image can open a neighboring supported video. Archive collection and directly opened directory collection image deletion keep their image and collection-specific fallback behavior.

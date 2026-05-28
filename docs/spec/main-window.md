@@ -8,7 +8,7 @@ The main window toolbar shows media controls without a page title.
 
 The leading side of the toolbar contains Previous, the current page number, `of`, the total item count, and Next.
 
-The toolbar page navigation readout and page-number entry use the document session's active navigation projection. The toolbar does not combine raw image-document page state with separate media-navigation state.
+The toolbar page navigation readout and page-number entry use the document session's active navigation projection. The toolbar does not combine raw image-document page state with separate direct-media-navigation state.
 
 When the active navigation projection is unavailable or unknown, the toolbar page navigation readout displays `– of –` and keeps the page-number entry and navigation buttons disabled.
 
@@ -90,7 +90,7 @@ The viewer context menu is available in image and video mode, including fullscre
 
 Right-clicking the toolbar, menubar, Info Panel, or Thumbnail Panel does not open the viewer context menu.
 
-The viewer context menu contains a concise set of viewer actions: Open, Open With, media navigation, image-only view actions such as zoom, fit, and rotation, panel toggles, and Fullscreen.
+The viewer context menu contains a concise set of viewer actions: Open, Open With, active navigation, image-only view actions such as zoom, fit, and rotation, panel toggles, and Fullscreen.
 
 The viewer context menu uses the same internal application actions as the toolbar application menu and menubar. Action identity, text, shortcut display, enabled state, and checked state remain consistent across all menus.
 
@@ -124,11 +124,11 @@ When a direct video file is displayed and its intrinsic video frame size is know
 
 When a direct video file is displayed and its intrinsic video frame size is unknown, the title omits the size and uses the original direct media URL's file name, a spaced em dash, and `KiriView`.
 
-When a CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive opened by KiriView is displayed and the active document page position is known, the title is the archive file name, a spaced en dash, the current primary page number, `/`, the total supported item count, a spaced em dash, and `KiriView`.
+When a CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive collection opened by KiriView is displayed and the active page position is known, the title is the archive file name, a spaced en dash, the current primary page number, `/`, the total supported item count, a spaced em dash, and `KiriView`.
 
-When a directly opened local directory is displayed and the active document page position is known, the title is the directory name, a spaced en dash, the current primary page number, `/`, the total supported item count, a spaced em dash, and `KiriView`.
+When a directly opened local directory collection is displayed and the active page position is known, the title is the directory name, a spaced en dash, the current primary page number, `/`, the total supported item count, a spaced em dash, and `KiriView`.
 
-When an archive or directly opened local directory is displayed and the active document page position is unknown, the title omits the page counter and uses the archive file name or directory name, a spaced em dash, and `KiriView`.
+When an archive collection or directly opened local directory collection is displayed and the active page position is unknown, the title omits the page counter and uses the archive file name or directory name, a spaced em dash, and `KiriView`.
 
 KiriView does not show file paths in the window title.
 

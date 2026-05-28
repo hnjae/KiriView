@@ -12,7 +12,7 @@ Any page whose pixel width is greater than its pixel height is treated as a wide
 
 If the next page after the current page is wide, the current page is displayed alone and the next navigation action opens that wide page.
 
-If the next document item after the current image is a video, the current image is displayed alone and the next navigation action opens that video item as an unsupported-video placeholder.
+If the next opened collection item after the current image is a video, the current image is displayed alone and the next navigation action opens that video item as an unsupported-video placeholder.
 
 Two-Page Spread is unavailable for ordinary image files, direct video files, KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories.
 

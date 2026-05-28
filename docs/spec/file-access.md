@@ -20,7 +20,7 @@ General archives are not advertised through the desktop file's file associations
 
 KiriView opens local directories only when they are directly provided, such as through a startup argument, file URL, or drop. When a local directory is opened directly, KiriView uses that directory as the current directory collection and displays the first supported image inside that directory tree.
 
-Opening a directory URL creates a directory collection and does not create a video-capable ordinary media scope.
+Opening a directory URL creates a directory collection and does not create a video-capable direct media scope.
 
 Directory collections use the same recursive supported-image page ordering as archive collections, with page names based on directory-relative paths such as `chapter/page001.png`.
 
@@ -64,7 +64,7 @@ When the displayed image is inside a local directory collection opened directly 
 
 After deletion succeeds, KiriView immediately clears the deleted image or stops playback for the deleted video.
 
-For ordinary direct media URL scopes, KiriView then opens the next supported media item in the current ordinary media scope when possible, falls back to the previous supported media item when no next item exists, and otherwise shows the empty state.
+For ordinary direct media URL scopes, KiriView then opens the next supported media item in the current direct media scope when possible, falls back to the previous supported media item when no next item exists, and otherwise shows the empty state.
 
 Archive collection and directly opened directory collection image deletion keep their image and collection-specific fallback behavior.
 

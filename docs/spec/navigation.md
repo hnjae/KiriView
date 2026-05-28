@@ -4,7 +4,7 @@
 
 The toolbar provides page navigation with Previous and Next actions, the current page number, the total number of supported items in the current scope after that scope's supported list has been confirmed, and editable page number entry.
 
-The document session owns the active navigation projection used by the toolbar readout, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts. QML renders that projection and calls session dispatch; it does not decide whether the active item is backed by direct media siblings or image-document pages.
+The document session owns the active navigation projection used by the toolbar readout, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts. QML renders that projection and calls session dispatch; it does not decide whether the active item is backed by direct media siblings or image-document page navigation.
 
 The document session also owns the active navigation thumbnail-strip projection. When the active navigation list is known, the strip exposes one item per supported active navigation item with the same ordering and 1-based numbering as the toolbar readout and page-number entry.
 
@@ -20,9 +20,9 @@ The active navigation projection has these user-visible invariants: `available` 
 
 For image-mode scopes, the active navigation projection consumes the image document's full page-navigation snapshot rather than a single raw current page number. The snapshot includes the current first and last visible page for spread-aware display, total count, previous and next availability, and first and last boundary state, so QML does not recompute spread boundaries.
 
-For image-mode scopes, the thumbnail strip uses the image document page-navigation candidate names. Directory and archive collection names may be collection-relative paths so that same-basename items in different folders remain distinguishable.
+For image-mode scopes, the thumbnail strip uses the image-document page candidate names. Directory and archive collection names may be collection-relative paths so that same-basename items in different folders remain distinguishable.
 
-When a new directory, archive, or ordinary direct media scope is being listed and KiriView has no confirmed supported item list for that same scope yet, the current page number and total item count are unknown, and KiriView does not treat the current item as the first or last item.
+When a new directory collection, archive collection, or ordinary direct media scope is being listed and KiriView has no confirmed supported item list for that same scope yet, the current page number and total item count are unknown, and KiriView does not treat the current item as the first or last item.
 
 During that unknown interval, KiriView also exposes an empty thumbnail strip rather than a partial or stale item list.
 
@@ -90,7 +90,7 @@ For ordinary direct media navigation, the candidate name is the file name.
 
 For archive and directory collections opened directly by KiriView, candidate names are collection-relative paths such as `foo/a.jpg` and `bar/a.jpg`.
 
-Navigation does not wrap. Pressing Page Up on the first candidate or Page Down on the last candidate keeps the current item open and notifies the user that it is the first or last media item in ordinary direct media scopes and the first or last item in archive or directory collection scopes.
+Navigation does not wrap. Pressing Page Up on the first candidate or Page Down on the last candidate keeps the current item open and notifies the user that it is the first or last media item in ordinary direct media scopes and the first or last item in archive collection or directory collection scopes.
 
 KiriView shows those first-item and last-item notifications only when the current supported list is known and the current item is at a known boundary.
 

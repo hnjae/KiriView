@@ -20,7 +20,7 @@ The source is discarded when the document runtime leaves that opened collection 
 
 ## Consequences
 
-Archive collection navigation and predecode reuse the candidate list and archive storage already opened for the current source. This keeps archive storage open count to one filesystem-level open per active archive collection source in the default runtime path.
+Archive collection navigation and predecode reuse the candidate list and archive storage already opened for the current media entry source. This keeps archive storage open count to one filesystem-level open per active archive collection source in the default runtime path.
 
 Libarchive media entry sources avoid source-owned memory or temporary-file payload caches. The tradeoff is that backward and random reads are O(n) replays through the archive from the beginning. The requested image still exists transiently in the returned image data buffer.
 
