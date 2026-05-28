@@ -41,7 +41,8 @@ ImageShortcutNavigationPolicy::ScanAction ImageShortcutNavigationPolicy::scanFor
 }
 
 ImageShortcutNavigationPolicy::ScanAction ImageShortcutNavigationPolicy::scanBackwardAction(
-    bool imagePannable, bool viewportMoved, bool atFirstImage, int currentPageNumber) const
+    bool imagePannable, bool viewportMoved, bool imageDocumentPageNavigationActive,
+    bool atKnownFirstActiveNavigation, bool canOpenPreviousActiveNavigation) const
 {
     if (!imagePannable) {
         return ScanAction::RequestPreviousActiveNavigationFromScan;
@@ -51,11 +52,11 @@ ImageShortcutNavigationPolicy::ScanAction ImageShortcutNavigationPolicy::scanBac
         return ScanAction::NoScanAction;
     }
 
-    if (atFirstImage) {
+    if (imageDocumentPageNavigationActive && atKnownFirstActiveNavigation) {
         return ScanAction::ShowFirstImageBoundary;
     }
 
-    if (currentPageNumber > 1) {
+    if (imageDocumentPageNavigationActive && canOpenPreviousActiveNavigation) {
         return ScanAction::OpenPreviousPageFromFinalScanStart;
     }
 

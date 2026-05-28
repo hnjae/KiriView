@@ -34,8 +34,9 @@ public:
         bool leftArrow, bool rightToLeftReadingActive) const;
     ImageShortcutNavigationPolicy::ScanAction scanForwardAction(
         bool imagePannable, bool viewportMoved) const;
-    ImageShortcutNavigationPolicy::ScanAction scanBackwardAction(
-        bool imagePannable, bool viewportMoved, bool atFirstImage, int currentPageNumber) const;
+    ImageShortcutNavigationPolicy::ScanAction scanBackwardAction(bool imagePannable,
+        bool viewportMoved, bool imageDocumentPageNavigationActive,
+        bool atKnownFirstActiveNavigation, bool canOpenPreviousActiveNavigation) const;
 };
 }
 

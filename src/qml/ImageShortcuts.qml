@@ -111,10 +111,8 @@ Item {
             root.requestNextActiveNavigation();
             return;
         case ImageShortcutNavigationPolicy.OpenPreviousPageFromFinalScanStart:
-            // Image-internal scan fallback intentionally opens the previous document page and
-            // hands off the viewport start. Shared active Previous/Next routing uses the session.
             root.imageInteractionSurface.setNextDisplayedImageStartToFinalScanPosition();
-            root.imageDocument.openImageAtPage(root.imageDocument.currentPageNumber - 1);
+            root.requestPreviousActiveNavigation();
             return;
         case ImageShortcutNavigationPolicy.ShowFirstImageBoundary:
             root.imageBoundaryReached(KI18n.i18nc("@info:status", "First image"));
@@ -148,7 +146,8 @@ Item {
     }
 
     function scanBackward() {
-        const action = navigationPolicy.scanBackwardAction(root.actionAvailability.imagePannable, root.actionAvailability.imagePannable && root.imageInteractionSurface.scanBackward(), root.actionAvailability.scanBackwardAtFirstImageBoundary, root.imageDocument.currentPageNumber);
+        const imageDocumentPageNavigationActive = root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.ImageDocumentPageNavigationBoundary;
+        const action = navigationPolicy.scanBackwardAction(root.actionAvailability.imagePannable, root.actionAvailability.imagePannable && root.imageInteractionSurface.scanBackward(), imageDocumentPageNavigationActive, root.documentSession.atKnownFirstActiveNavigation, root.documentSession.canOpenPreviousActiveNavigation);
         root.applyScanAction(action);
     }
 

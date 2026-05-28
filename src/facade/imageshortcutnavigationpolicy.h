@@ -46,8 +46,9 @@ public:
         bool leftArrow, bool rightToLeftReadingActive) const;
     Q_INVOKABLE ImageShortcutNavigationPolicy::ScanAction scanForwardAction(
         bool imagePannable, bool viewportMoved) const;
-    Q_INVOKABLE ImageShortcutNavigationPolicy::ScanAction scanBackwardAction(
-        bool imagePannable, bool viewportMoved, bool atFirstImage, int currentPageNumber) const;
+    Q_INVOKABLE ImageShortcutNavigationPolicy::ScanAction scanBackwardAction(bool imagePannable,
+        bool viewportMoved, bool imageDocumentPageNavigationActive,
+        bool atKnownFirstActiveNavigation, bool canOpenPreviousActiveNavigation) const;
 
 private:
     static HorizontalArrowAction facadeAction(

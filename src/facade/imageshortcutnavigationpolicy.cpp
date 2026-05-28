@@ -30,10 +30,12 @@ ImageShortcutNavigationPolicy::ScanAction ImageShortcutNavigationPolicy::scanFor
 }
 
 ImageShortcutNavigationPolicy::ScanAction ImageShortcutNavigationPolicy::scanBackwardAction(
-    bool imagePannable, bool viewportMoved, bool atFirstImage, int currentPageNumber) const
+    bool imagePannable, bool viewportMoved, bool imageDocumentPageNavigationActive,
+    bool atKnownFirstActiveNavigation, bool canOpenPreviousActiveNavigation) const
 {
     return facadeAction(
-        m_policy.scanBackwardAction(imagePannable, viewportMoved, atFirstImage, currentPageNumber));
+        m_policy.scanBackwardAction(imagePannable, viewportMoved, imageDocumentPageNavigationActive,
+            atKnownFirstActiveNavigation, canOpenPreviousActiveNavigation));
 }
 
 ImageShortcutNavigationPolicy::HorizontalArrowAction ImageShortcutNavigationPolicy::facadeAction(
