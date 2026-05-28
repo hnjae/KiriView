@@ -78,7 +78,7 @@ When an image or unsupported-video placeholder is displayed from a local directo
 
 After the archive or directory collection has been listed, page navigation uses all supported image and video files inside that opened collection as its navigation target set.
 
-Supported video entries inside directly opened archive collections and directly opened directory collections are valid opened collection navigation items. KiriView does not play those videos while an opened collection scope is active; selecting one keeps image mode active and shows an unsupported-video placeholder with the message `Video playback is not supported in archive or folder documents`. Entering that placeholder also shows the same text as an in-app toast.
+Supported video entries inside directly opened archive collections and directly opened directory collections are valid opened collection navigation items. KiriView does not play those videos while an opened collection scope is active; selecting one keeps image mode active and shows an unsupported-video placeholder with the message `KiriView can’t play videos inside directly opened archives or directories yet.` Entering that placeholder also shows the same text as an in-app toast.
 
 If the parent URL cannot be listed, the current media item is not found, or no adjacent supported media item exists, the current media item remains open and the app remains ready for another open action.
 
