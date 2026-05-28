@@ -7,7 +7,7 @@
 #include "archivepath.h"
 #include "decoding/imageformatregistry.h"
 #include "mediaentrysourcebackend_p.h"
-#include "navigation/imagenavigationmodel.h"
+#include "navigation/imagedocumentpagenavigationpolicy.h"
 #include "navigation/mediaformatregistry.h"
 
 #include <KLocalizedString>
@@ -23,7 +23,7 @@ mediaEntrySourceBackendOperationsForOpenedCollection(
     const KiriView::OpenedCollectionScopeLocation &openedCollectionScope)
 {
     if (openedCollectionScope.isDirectory()) {
-        return Backend::directoryMediaEntrySourceBackendOperations();
+        return Backend::directoryCollectionMediaEntrySourceBackendOperations();
     }
 
     switch (
@@ -57,24 +57,25 @@ KiriView::MediaEntrySourceOpenResult openWithMediaEntrySourceBackend(
 
 namespace KiriView::MediaEntrySourceBackendDetail {
 MediaEntrySourceWithCandidateSnapshot::MediaEntrySourceWithCandidateSnapshot(
-    std::vector<ImageNavigationCandidate> candidates)
+    std::vector<ImageDocumentPageCandidate> candidates)
 {
     replaceCandidateSnapshot(std::move(candidates));
 }
 
-MediaEntrySourceCandidatesResult MediaEntrySourceWithCandidateSnapshot::loadImageCandidates()
+MediaEntrySourceCandidatesResult
+MediaEntrySourceWithCandidateSnapshot::loadImageDocumentPageCandidates()
 {
     return MediaEntrySourceCandidates { m_candidates };
 }
 
 void MediaEntrySourceWithCandidateSnapshot::replaceCandidateSnapshot(
-    std::vector<ImageNavigationCandidate> candidates)
+    std::vector<ImageDocumentPageCandidate> candidates)
 {
-    sortImageNavigationCandidates(&candidates);
+    sortImageDocumentPageCandidates(&candidates);
     m_candidates = std::move(candidates);
 }
 
-std::optional<ImageNavigationCandidate> openedCollectionMediaCandidate(
+std::optional<ImageDocumentPageCandidate> openedCollectionImageDocumentPageCandidate(
     const OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath)
 {
     const QString candidateName = normalizedArchiveEntryPath(entryPath);
@@ -87,9 +88,9 @@ std::optional<ImageNavigationCandidate> openedCollectionMediaCandidate(
         return std::nullopt;
     }
 
-    return ImageNavigationCandidate { url, candidateName,
-        isSupportedDirectVideoFileName(candidateName) ? ImageNavigationCandidateKind::Video
-                                                      : ImageNavigationCandidateKind::Image };
+    return ImageDocumentPageCandidate { url, candidateName,
+        isSupportedDirectVideoFileName(candidateName) ? ImageDocumentPageKind::Video
+                                                      : ImageDocumentPageKind::Image };
 }
 
 std::optional<QString> openedCollectionImageEntryPathForRead(
@@ -125,9 +126,9 @@ QString openedCollectionImageReadError()
 }
 
 MediaEntrySourceCandidatesResult mediaEntrySourceCandidatesResult(
-    std::vector<ImageNavigationCandidate> candidates)
+    std::vector<ImageDocumentPageCandidate> candidates)
 {
-    sortImageNavigationCandidates(&candidates);
+    sortImageDocumentPageCandidates(&candidates);
     return MediaEntrySourceCandidates { std::move(candidates) };
 }
 
@@ -153,7 +154,7 @@ MediaEntrySourceCandidatesResult loadMediaEntrySourceCandidates(
             Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope));
     }
 
-    return (*source)->loadImageCandidates();
+    return (*source)->loadImageDocumentPageCandidates();
 }
 
 MediaEntrySourceImageDataResult loadMediaEntrySourceImageData(

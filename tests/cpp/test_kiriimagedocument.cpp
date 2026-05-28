@@ -25,13 +25,13 @@ private Q_SLOTS:
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::imageDocumentRuntimeDependencyOverridesFor;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticImageDataDecoder;
 
-using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
 
 std::unique_ptr<KiriImageDocument> createDocument(
     QObject *parent, FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
@@ -47,7 +47,7 @@ std::unique_ptr<KiriImageDocument> createDocument(
 void loadReady(KiriImageDocument &document, ManualImageDataLoader &dataLoader,
     const QUrl &sourceUrl, const QUrl &loadUrl)
 {
-    QSignalSpy scopeSpy(&document, &KiriImageDocument::mediaScopeChanged);
+    QSignalSpy scopeSpy(&document, &KiriImageDocument::imageDocumentSourceScopeChanged);
 
     document.setSourceUrl(sourceUrl);
     QVERIFY(dataLoader.finishOldestActiveLoadForUrl(loadUrl, QByteArrayLiteral("ok")));
@@ -64,7 +64,7 @@ void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation(
 
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     candidateProvider.setDirectoryImages(
-        localUrl(QStringLiteral("/images/")), { imageCandidate(imageUrl) });
+        localUrl(QStringLiteral("/images/")), { imageDocumentPageCandidate(imageUrl) });
     std::unique_ptr<KiriImageDocument> directImageDocument
         = createDocument(this, candidateProvider, dataLoader);
 
@@ -79,7 +79,7 @@ void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation(
     const QUrl comicArchivePage
         = archivePageUrl(comicArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(
-        comicArchiveCollection->rootUrl(), { imageCandidate(comicArchivePage) });
+        comicArchiveCollection->rootUrl(), { imageDocumentPageCandidate(comicArchivePage) });
     std::unique_ptr<KiriImageDocument> comicDocument
         = createDocument(this, candidateProvider, dataLoader);
 
@@ -93,7 +93,7 @@ void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation(
     const QUrl generalArchivePage
         = archivePageUrl(generalArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(
-        generalArchiveCollection->rootUrl(), { imageCandidate(generalArchivePage) });
+        generalArchiveCollection->rootUrl(), { imageDocumentPageCandidate(generalArchivePage) });
     std::unique_ptr<KiriImageDocument> generalDocument
         = createDocument(this, candidateProvider, dataLoader);
 
@@ -109,7 +109,7 @@ void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation(
     const QUrl directoryPage
         = archivePageUrl(directoryCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(
-        directoryCollection->rootUrl(), { imageCandidate(directoryPage) });
+        directoryCollection->rootUrl(), { imageDocumentPageCandidate(directoryPage) });
     std::unique_ptr<KiriImageDocument> openedDirectoryCollection
         = createDocument(this, candidateProvider, dataLoader);
 
@@ -118,7 +118,7 @@ void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation(
 
     const QUrl openedCollectionEntryUrl(QStringLiteral("zip:///books/book.zip!/page.png"));
     candidateProvider.setDirectoryImages(QUrl(QStringLiteral("zip:///books/book.zip!/")),
-        { imageCandidate(openedCollectionEntryUrl) });
+        { imageDocumentPageCandidate(openedCollectionEntryUrl) });
     std::unique_ptr<KiriImageDocument> archiveEntryDocument
         = createDocument(this, candidateProvider, dataLoader);
 

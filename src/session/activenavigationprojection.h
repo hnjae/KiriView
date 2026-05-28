@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_ACTIVENAVIGATIONPROJECTION_H
 #define KIRIVIEW_ACTIVENAVIGATIONPROJECTION_H
 
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationmodel.h"
 
 #include <variant>
 
@@ -17,8 +17,8 @@ enum class ActiveNavigationSourceKind {
 
 enum class ActiveNavigationBoundaryScope {
     None,
-    Media,
-    ImageDocument,
+    DirectMedia,
+    ImageDocumentPage,
 };
 
 enum class ActiveNavigationDispatchRequestKind {
@@ -68,12 +68,12 @@ struct ActiveNavigationSnapshot {
     int count = 0;
 };
 
-struct MediaActiveNavigationInput {
-    MediaNavigationBoundaryState boundaryState;
+struct DirectMediaActiveNavigationInput {
+    DirectMediaNavigationBoundaryState boundaryState;
     bool known = false;
 };
 
-struct ImageDocumentActiveNavigationInput {
+struct ImageDocumentPageActiveNavigationInput {
     int currentNumber = 0;
     int currentLastNumber = 0;
     int count = 0;
@@ -92,8 +92,8 @@ struct ActiveNavigationDispatchPlan {
 };
 
 ActiveNavigationSnapshot projectActiveNavigation(ActiveNavigationSourceKind sourceKind,
-    MediaActiveNavigationInput mediaInput, ImageDocumentActiveNavigationInput imageInput,
-    bool fileDeletionInProgress);
+    DirectMediaActiveNavigationInput directMediaInput,
+    ImageDocumentPageActiveNavigationInput imageDocumentPageInput, bool fileDeletionInProgress);
 ActiveNavigationSnapshot maskActiveNavigationDuringDeletion(ActiveNavigationSnapshot snapshot);
 ActiveNavigationBoundaryScope activeNavigationBoundaryScopeForSource(
     ActiveNavigationSourceKind sourceKind);

@@ -5,8 +5,8 @@
 #define KIRIVIEW_PREDECODEWINDOWPLAN_H
 
 #include "location/imagelocation.h"
-#include "navigation/imagecandidatelistsource.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagecandidatelistsource.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecodepolicy.h"
 
 #include <QUrl>
@@ -21,7 +21,7 @@ struct PredecodeWindowPlanRequest {
 };
 
 struct PredecodeCandidateListLoadPlan {
-    ImageCandidateListContext context;
+    ImageDocumentPageCandidateListContext context;
     PredecodePolicyInput policyInput;
 };
 
@@ -39,8 +39,8 @@ struct PredecodeWindowStartPlan {
 };
 
 PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanRequest &request);
-PredecodeWindowPlan predecodeWindowPlanForCandidates(
-    const PredecodeWindowStartPlan &plan, const std::vector<ImageNavigationCandidate> &candidates);
+PredecodeWindowPlan predecodeWindowPlanForCandidates(const PredecodeWindowStartPlan &plan,
+    const std::vector<ImageDocumentPageCandidate> &candidates);
 }
 
 #endif

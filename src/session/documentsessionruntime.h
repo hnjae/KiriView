@@ -7,12 +7,12 @@
 #include "document/filedeletion.h"
 #include "document/imagedocumentruntimedependencies.h"
 #include "document/mediaopenwith.h"
-#include "navigation/mediacandidateprovider.h"
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationcandidateprovider.h"
+#include "navigation/directmedianavigationmodel.h"
 #include "session/activenavigationprojection.h"
 #include "session/activenavigationthumbnailmodel.h"
+#include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessionmediadeletionruntime.h"
-#include "session/documentsessionmedianavigationruntime.h"
 #include "session/documentsessionpublicprojection.h"
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
@@ -36,7 +36,7 @@ namespace KiriView {
 class MediaPredecodeCoordinator;
 
 struct DocumentSessionRuntimeDependencies {
-    MediaNavigationCandidateProvider mediaCandidateProvider;
+    DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProvider;
     FileOperationProvider fileOperationProvider;
     MediaOpenWithProvider mediaOpenWithProvider;
     ImageDocumentRuntimeDependencyOverrides imageDocumentDependencies;
@@ -101,47 +101,49 @@ private:
     void syncActiveNavigationThumbnailRows();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
-    bool mediaNavigationActive() const;
+    bool directMediaNavigationActive() const;
     void openPreviousMedia();
     void openNextMedia();
     void openMediaAtNumber(int mediaNumber);
-    void openMedia(MediaNavigationOpenRequest request);
+    void openMedia(DirectMediaNavigationOpenRequest request);
     void executeRoutePlan(const DocumentSessionRoutePlan &plan);
     void leaveVideoMode();
     void syncFromImageDocument();
     void syncFromVideoDocument();
-    void refreshMediaNavigation();
-    void loadMediaCandidates(DocumentSessionMediaNavigationRuntime::CandidatesCallback callback);
-    void finishMediaNavigation(DocumentSessionMediaNavigationOpenResult result);
-    void updateMediaBoundaryState(DocumentSessionMediaNavigationRefreshResult result);
-    void scheduleMediaPredecode(const std::vector<MediaNavigationCandidate> &candidates);
+    void refreshDirectMediaNavigation();
+    void loadDirectMediaNavigationCandidates(
+        DocumentSessionDirectMediaNavigationRuntime::CandidatesCallback callback);
+    void finishDirectMediaNavigation(DocumentSessionDirectMediaNavigationOpenResult result);
+    void updateDirectMediaNavigationBoundaryState(
+        DocumentSessionDirectMediaNavigationRefreshResult result);
+    void scheduleMediaPredecode(const std::vector<DirectMediaNavigationCandidate> &candidates);
     std::vector<DisplayedPredecodeImage> displayedPredecodeImages() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     void cancelMediaDeletion();
     void startMediaDeletion(
-        FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates = {});
+        FileDeletionMode mode, std::vector<DirectMediaNavigationCandidate> candidates = {});
     QUrl currentMediaOpenWithTargetUrl() const;
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
     void executeMediaDeletionCompletionPlan(
         const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString);
-    DirectMediaScope mediaNavigationLoadScope() const;
+    DirectMediaScope directMediaNavigationLoadScope() const;
     QUrl activeDirectMediaCursorUrl() const;
     bool directMediaCursorMatches(const DirectMediaScope &scope) const;
-    bool activeImageUsesMediaScope() const;
-    bool directImageLoadMayUseMediaScope() const;
+    bool activeImageUsesImageDocumentSourceScope() const;
+    bool directImageLoadMayUseImageDocumentSourceScope() const;
     bool syncDirectImageCursorFromDocument();
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
     DocumentSessionPublicProjectionInput publicProjectionInput() const;
-    MediaActiveNavigationInput mediaActiveNavigationInput() const;
-    ImageDocumentActiveNavigationInput imageDocumentActiveNavigationInput() const;
+    DirectMediaActiveNavigationInput directMediaActiveNavigationInput() const;
+    ImageDocumentPageActiveNavigationInput imageDocumentPageActiveNavigationInput() const;
 
     QObject *m_owner = nullptr;
     KiriImageDocument &m_imageDocument;
     KiriVideoDocument &m_videoDocument;
     DocumentSessionState m_state;
     std::unique_ptr<ActiveNavigationThumbnailModel> m_activeNavigationThumbnailModel;
-    DocumentSessionMediaNavigationRuntime m_mediaNavigationRuntime;
-    std::vector<MediaNavigationCandidate> m_mediaNavigationCandidates;
+    DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
+    std::vector<DirectMediaNavigationCandidate> m_directMediaNavigationCandidates;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
     MediaOpenWithProvider m_mediaOpenWithProvider;
     ImageIoJob m_mediaOpenWithJob;

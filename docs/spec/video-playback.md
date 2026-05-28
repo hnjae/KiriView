@@ -4,7 +4,7 @@
 
 KiriView supports direct video files as moving, sound-capable image-like media items in the MVP.
 
-Supported direct video inputs may come from the startup argument, drop, open dialog selection, or ordinary adjacent media navigation from a direct media URL scope.
+Supported direct video inputs may come from the startup argument, drop, open dialog selection, or ordinary adjacent direct media navigation from a direct media URL scope.
 
 The MVP direct video format list is MP4, M4V, and MOV, case-insensitively. These cover common camera and phone video files without expanding the initial scope to less common container behavior.
 
@@ -26,7 +26,7 @@ KiriView advertises direct video support through the desktop file for the MIME t
 
 KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend, such as through KIOFuse or another KIO-backed resolver. Resolution succeeds only when the resolved playback URL can be consumed by the video backend; otherwise the video load fails while keeping the original direct media URL as the public source and error context.
 
-Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent media navigation, deletion target, error context, and direct-media versus opened-collection routing decisions remain based on the original direct media URL.
+Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent direct media navigation, deletion target, error context, and direct-media versus opened-collection routing decisions remain based on the original direct media URL.
 
 Resolver-local playback URLs are video-only. Opening a direct image after a direct video must route the image through the image document with the original image URL, not through the previous video playback URL or another KIOFuse local playback URL.
 
@@ -88,7 +88,7 @@ Unknown duration, invalid duration, and non-seekable media produce a stable disa
 
 In video mode, viewer Left and Right and existing adjacent navigation actions move to the previous or next supported media item in the ordinary parent location. They do not seek within the video.
 
-Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit. Shared direct-media navigation shortcuts use session active-navigation dispatch and availability.
+Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit. Shared direct media navigation shortcuts use session active-navigation dispatch and availability.
 
 When an image-only configurable shortcut is pressed in video mode, KiriView does not trigger the image action and shows the in-app toast `This action is not available for videos`. Repeated unsupported video shortcut presses update the same toast instance.
 

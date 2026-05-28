@@ -46,10 +46,10 @@ void TestImageDocumentRuntimeDependencies::defaultDependenciesUseMediaEntrySourc
         = KiriView::resolveImageDocumentRuntimeDependencies({}, this);
 
     QVERIFY(resolved.mediaEntrySourceStore);
-    QVERIFY(resolved.candidateProvider.directoryImages);
+    QVERIFY(resolved.candidateProvider.directoryImageDocumentPages);
     QVERIFY(resolved.candidateProvider.directoryContainers);
     QVERIFY(resolved.candidateProvider.openedCollectionCandidates);
-    QVERIFY(resolved.candidateProvider.directoryImageChanges);
+    QVERIFY(resolved.candidateProvider.directoryImageDocumentPageChanges);
     QVERIFY(resolved.imageDecode.dataLoader);
     QVERIFY(resolved.imageDecode.dataDecoder);
     QVERIFY(resolved.fileOperations);
@@ -62,9 +62,9 @@ void TestImageDocumentRuntimeDependencies::partialNonSourceOverridesStillUseMedi
 {
     int directoryLoadCount = 0;
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
-    dependencies.candidateProvider.directoryImages
-        = [&directoryLoadCount](QObject *, QUrl, KiriView::ImageCandidatesCallback callback,
-              KiriView::ErrorCallback) {
+    dependencies.candidateProvider.directoryImageDocumentPages
+        = [&directoryLoadCount](QObject *, QUrl,
+              KiriView::ImageDocumentPageCandidatesCallback callback, KiriView::ErrorCallback) {
               ++directoryLoadCount;
               callback({});
               return KiriView::ImageIoJob();
@@ -74,15 +74,15 @@ void TestImageDocumentRuntimeDependencies::partialNonSourceOverridesStillUseMedi
         = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
 
     QVERIFY(resolved.mediaEntrySourceStore);
-    QVERIFY(resolved.candidateProvider.directoryImages);
+    QVERIFY(resolved.candidateProvider.directoryImageDocumentPages);
     QVERIFY(resolved.candidateProvider.openedCollectionCandidates);
     QVERIFY(resolved.imageDecode.dataLoader);
 
     bool candidatesReported = false;
-    resolved.candidateProvider.directoryImages(nullptr,
+    resolved.candidateProvider.directoryImageDocumentPages(nullptr,
         QUrl::fromLocalFile(QStringLiteral("/tmp/images/")),
         [&candidatesReported](
-            std::vector<KiriView::ImageNavigationCandidate>) { candidatesReported = true; },
+            std::vector<KiriView::ImageDocumentPageCandidate>) { candidatesReported = true; },
         {});
     QCOMPARE(directoryLoadCount, 1);
     QVERIFY(candidatesReported);
@@ -110,7 +110,7 @@ void TestImageDocumentRuntimeDependencies::
     resolved.candidateProvider.openedCollectionCandidates(
         nullptr, testArchiveCollection(),
         [&candidatesReported](
-            std::vector<KiriView::ImageNavigationCandidate>) { candidatesReported = true; },
+            std::vector<KiriView::ImageDocumentPageCandidate>) { candidatesReported = true; },
         [&errorString](const QString &error) { errorString = error; });
 
     QCOMPARE(openCount, 1);
@@ -129,7 +129,7 @@ void TestImageDocumentRuntimeDependencies::
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.candidateProvider.openedCollectionCandidates
         = [&openedCollectionLoadCount](QObject *, KiriView::OpenedCollectionScopeLocation,
-              KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback) {
+              KiriView::ImageDocumentPageCandidatesCallback callback, KiriView::ErrorCallback) {
               ++openedCollectionLoadCount;
               callback({});
               return KiriView::ImageIoJob();
@@ -157,10 +157,10 @@ void TestImageDocumentRuntimeDependencies::
         = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
 
     QVERIFY(!resolved.mediaEntrySourceStore);
-    QVERIFY(resolved.candidateProvider.directoryImages);
+    QVERIFY(resolved.candidateProvider.directoryImageDocumentPages);
     QVERIFY(resolved.candidateProvider.directoryContainers);
     QVERIFY(resolved.candidateProvider.openedCollectionCandidates);
-    QVERIFY(resolved.candidateProvider.directoryImageChanges);
+    QVERIFY(resolved.candidateProvider.directoryImageDocumentPageChanges);
     QVERIFY(resolved.imageDecode.dataLoader);
     QVERIFY(resolved.imageDecode.dataDecoder);
     QVERIFY(resolved.fileOperations);
@@ -171,7 +171,7 @@ void TestImageDocumentRuntimeDependencies::
     QByteArray loadedData;
     resolved.candidateProvider.openedCollectionCandidates(nullptr, testArchiveCollection(),
         [&candidatesReported](
-            std::vector<KiriView::ImageNavigationCandidate>) { candidatesReported = true; },
+            std::vector<KiriView::ImageDocumentPageCandidate>) { candidatesReported = true; },
         {});
     resolved.imageDecode.dataLoader(nullptr, KiriView::ImageDecodeRequest(),
         [&loadedData](QByteArray data) { loadedData = std::move(data); }, {});

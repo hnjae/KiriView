@@ -9,9 +9,9 @@ namespace {
 QString firstBoundaryText(KiriView::ActiveNavigationBoundaryScope scope)
 {
     switch (scope) {
-    case KiriView::ActiveNavigationBoundaryScope::Media:
+    case KiriView::ActiveNavigationBoundaryScope::DirectMedia:
         return i18nc("@info:status", "First media item");
-    case KiriView::ActiveNavigationBoundaryScope::ImageDocument:
+    case KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage:
         return i18nc("@info:status", "First image");
     case KiriView::ActiveNavigationBoundaryScope::None:
         return {};
@@ -23,9 +23,9 @@ QString firstBoundaryText(KiriView::ActiveNavigationBoundaryScope scope)
 QString lastBoundaryText(KiriView::ActiveNavigationBoundaryScope scope)
 {
     switch (scope) {
-    case KiriView::ActiveNavigationBoundaryScope::Media:
+    case KiriView::ActiveNavigationBoundaryScope::DirectMedia:
         return i18nc("@info:status", "Last media item");
-    case KiriView::ActiveNavigationBoundaryScope::ImageDocument:
+    case KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage:
         return i18nc("@info:status", "Last image");
     case KiriView::ActiveNavigationBoundaryScope::None:
         return {};

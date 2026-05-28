@@ -283,7 +283,7 @@ StatefulApp.StatefulWindow {
             imageReady: page.imageReady
             rightToLeftReadingAvailable: page.imageMode && page.imageDocument.rightToLeftReadingAvailable
             rightToLeftReadingEnabled: page.imageMode && page.imageDocument.rightToLeftReadingEnabled
-            scanBackwardAtFirstImageBoundary: page.imageMode && page.imageDocument.imageCount > 0 && page.imageDocument.currentPageNumber === 1
+            scanBackwardAtFirstImageBoundary: page.imageMode && page.imageDocument.pageCount > 0 && page.imageDocument.currentPageNumber === 1
             twoPageModeAvailable: page.imageMode && page.imageDocument.twoPageModeAvailable
             twoPageModeEnabled: page.imageMode && page.imageDocument.twoPageModeEnabled
         }

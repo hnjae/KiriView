@@ -6,8 +6,8 @@
 
 #include "async/imageiojob.h"
 #include "decoding/imagedecodedependencies.h"
-#include "navigation/imagecandidateprovider.h"
-#include "navigation/imagecandidaterepository.h"
+#include "navigation/imagedocumentpagecandidateprovider.h"
+#include "navigation/imagedocumentpagecandidaterepository.h"
 #include "predecodedimage.h"
 #include "predecodeloadcontroller.h"
 #include "predecodescheduleruntime.h"
@@ -29,7 +29,7 @@ public:
     using Context = PredecodeScheduleContext;
 
     explicit ImagePredecodeCoordinator(QObject *parent = nullptr);
-    ImagePredecodeCoordinator(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
+    ImagePredecodeCoordinator(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,
         qsizetype cacheByteBudget);
 
@@ -46,7 +46,7 @@ private:
         const PredecodeWindowPlan &plan, const PredecodePendingSchedule &schedule);
 
     ImageIoJob m_listerJob;
-    ImageCandidateRepository m_candidateRepository;
+    ImageDocumentPageCandidateRepository m_candidateRepository;
     PredecodeLoadController m_loadController;
     PredecodeScheduleRuntime m_scheduleRuntime;
 };

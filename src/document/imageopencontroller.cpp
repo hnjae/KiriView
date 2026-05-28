@@ -54,7 +54,8 @@ QString unsupportedOpenedCollectionVideoMessage()
 namespace KiriView {
 ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &state,
     ImagePresentationController &presentationController, ImageOpenController::Callbacks callbacks,
-    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies)
+    ImageDocumentPageCandidateProvider candidateProvider,
+    ImageDecodeDependencies decodeDependencies)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_callbacks(std::move(callbacks))
@@ -97,7 +98,7 @@ void ImageOpenController::open()
     }
 
     const ImageLoadRequest request = ImageLoadRequest::fromTarget(
-        ImageNavigationTarget { m_state.sourceUrl(), m_state.sourceKind() },
+        ImageDocumentPageTarget { m_state.sourceUrl(), m_state.sourceKind() },
         m_state.displayedOpenedCollectionScope(), m_state.loadingContainerNavigationUrl());
     beginSourceLoad();
     m_imageLoader->start(request, m_presentationController.firstDisplayDecodeContext());

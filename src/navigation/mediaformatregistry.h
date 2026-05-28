@@ -10,7 +10,7 @@
 class QUrl;
 
 namespace KiriView {
-struct MediaNavigationCandidate;
+struct DirectMediaNavigationCandidate;
 
 QStringList supportedOrdinaryMediaExtensions();
 QStringList supportedOrdinaryMediaMimeTypes();
@@ -18,7 +18,8 @@ bool isSupportedOrdinaryMediaFileName(const QString &name);
 bool isSupportedDirectVideoFileName(const QString &name);
 bool isSupportedDirectImageUrl(const QUrl &url);
 bool isSupportedDirectVideoUrl(const QUrl &url);
-bool isSupportedStillImageMediaCandidate(const MediaNavigationCandidate &candidate);
+bool isSupportedStillImageDirectMediaNavigationCandidate(
+    const DirectMediaNavigationCandidate &candidate);
 QStringList ordinaryMediaOpenDialogNameFilters();
 }
 

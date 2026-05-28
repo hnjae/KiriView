@@ -18,9 +18,9 @@ private Q_SLOTS:
     void readyActionAvailabilityRejectsCompetingModes();
     void shortcutAvailabilityUsesViewerAndRuntimeGates();
     void policyScopeLookupUsesApplicationScope();
-    void activeMediaScopeLookupUsesSessionNavigationInput();
+    void activeImageDocumentSourceScopeLookupUsesSessionNavigationInput();
     void shortcutScopeLookupUsesProjectionFields();
-    void facadeMediaScopeLookupUsesRuntimePolicy();
+    void facadeImageDocumentSourceScopeLookupUsesRuntimePolicy();
     void settersNotifyOnlyWhenInputsChange();
 };
 
@@ -194,7 +194,7 @@ void TestImageActionAvailability::policyScopeLookupUsesApplicationScope()
         !imageActionAvailabilityShortcutsEnabledForScope(projection, Scope::ViewerShortcutScope));
 }
 
-void TestImageActionAvailability::activeMediaScopeLookupUsesSessionNavigationInput()
+void TestImageActionAvailability::activeImageDocumentSourceScopeLookupUsesSessionNavigationInput()
 {
     using Scope = KiriView::ApplicationActions::ImageShortcutScope;
 
@@ -273,7 +273,7 @@ void TestImageActionAvailability::shortcutScopeLookupUsesProjectionFields()
         static_cast<ImageActionAvailability::ShortcutScope>(999)));
 }
 
-void TestImageActionAvailability::facadeMediaScopeLookupUsesRuntimePolicy()
+void TestImageActionAvailability::facadeImageDocumentSourceScopeLookupUsesRuntimePolicy()
 {
     ImageActionAvailability availability;
     availability.setImageReady(true);

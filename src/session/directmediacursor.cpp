@@ -4,7 +4,7 @@
 #include "directmediacursor.h"
 
 #include "location/imageurl.h"
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationmodel.h"
 #include "navigation/navigationlogging.h"
 
 #include <QDebug>
@@ -54,7 +54,7 @@ DirectMediaScope directMediaScopeForCursor(const DirectMediaCursor &cursor)
     const QUrl currentUrl = effectiveDirectMediaCursorUrl(cursor);
     return DirectMediaScope {
         currentUrl,
-        mediaNavigationParentUrl(currentUrl),
+        directMediaNavigationParentUrl(currentUrl),
         cursor.generation,
     };
 }

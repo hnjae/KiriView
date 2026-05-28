@@ -27,9 +27,9 @@ enum class PredecodeMomentumDirection {
 };
 
 struct PredecodeSourceProfile {
-    std::size_t neutralPreviousImageCount = 1;
-    std::size_t neutralNextImageCount = 2;
-    std::size_t biasedDirectionImageCount = 3;
+    std::size_t neutralPreviousPageCount = 1;
+    std::size_t neutralNextPageCount = 2;
+    std::size_t biasedDirectionPageCount = 3;
     std::size_t parallelLimit = 1;
 };
 

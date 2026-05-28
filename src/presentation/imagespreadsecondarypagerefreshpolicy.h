@@ -14,7 +14,7 @@ enum class ImageSpreadSecondaryPageDecision {
 struct ImageSpreadSecondaryPageRefreshState {
     bool twoPageModeActive = false;
     int currentPageNumber = 0;
-    int imageCount = 0;
+    int pageCount = 0;
     bool primaryPageIsWide = false;
     bool nextPageAvailable = false;
     bool nextPageIsWide = false;

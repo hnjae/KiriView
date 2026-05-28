@@ -14,9 +14,9 @@
 namespace {
 using KiriView::TestSupport::localUrl;
 
-KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
+KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::MediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
 KiriView::PredecodePolicyInput regularPolicyInput()
@@ -29,7 +29,7 @@ KiriView::PredecodePolicyInput regularPolicyInput()
 }
 
 KiriView::MediaPredecodeEligibilitySnapshot eligibilitySnapshot(
-    const std::vector<KiriView::MediaNavigationCandidate> &candidates, const QUrl &currentUrl)
+    const std::vector<KiriView::DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
     return KiriView::mediaPredecodeEligibilitySnapshot(candidates, currentUrl);
 }
@@ -53,10 +53,10 @@ void TestMediaPredecodeWindowPlan::mediaWindowUsesVideoCursorAndQueuesOnlyImages
     const KiriView::PredecodeWindowPlan windowPlan
         = KiriView::mediaPredecodeWindowPlan(eligibilitySnapshot(
                                                  {
-                                                     mediaCandidate(previousImage),
-                                                     mediaCandidate(currentVideo),
-                                                     mediaCandidate(nextImage),
-                                                     mediaCandidate(nextVideo),
+                                                     directMediaNavigationCandidate(previousImage),
+                                                     directMediaNavigationCandidate(currentVideo),
+                                                     directMediaNavigationCandidate(nextImage),
+                                                     directMediaNavigationCandidate(nextVideo),
                                                  },
                                                  currentVideo),
             regularPolicyInput());
@@ -73,9 +73,9 @@ void TestMediaPredecodeWindowPlan::missingCurrentCandidateYieldsEmptyWindow()
     const KiriView::PredecodeWindowPlan windowPlan = KiriView::mediaPredecodeWindowPlan(
         eligibilitySnapshot(
             {
-                mediaCandidate(localUrl(QStringLiteral("/media/00.png"))),
-                mediaCandidate(localUrl(QStringLiteral("/media/01.mp4"))),
-                mediaCandidate(localUrl(QStringLiteral("/media/02.png"))),
+                directMediaNavigationCandidate(localUrl(QStringLiteral("/media/00.png"))),
+                directMediaNavigationCandidate(localUrl(QStringLiteral("/media/01.mp4"))),
+                directMediaNavigationCandidate(localUrl(QStringLiteral("/media/02.png"))),
             },
             localUrl(QStringLiteral("/media/99.mp4"))),
         regularPolicyInput());

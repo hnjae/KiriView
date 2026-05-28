@@ -9,8 +9,8 @@
 #include "image_async_test_support.h"
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
-#include "navigation/imagecandidateprovider.h"
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationmodel.h"
+#include "navigation/imagedocumentpagecandidateprovider.h"
 #include "session/activenavigationthumbnailmodel.h"
 
 #include <QAbstractItemModel>
@@ -31,9 +31,9 @@ QString keyForUrl(const QUrl &url) { return url.adjusted(QUrl::NormalizePathSegm
 
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
-KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
+KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::MediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
 QVariant thumbnailData(const KiriDocumentSession &session, int row, int role)
@@ -61,23 +61,25 @@ void compareThumbnailRow(const KiriDocumentSession &session, int row, int number
         current);
 }
 
-class FakeMediaCandidateProvider
+class FakeDirectMediaNavigationCandidateProvider
 {
 public:
-    void setMedia(const QUrl &parentUrl, std::vector<KiriView::MediaNavigationCandidate> candidates)
+    void setMedia(
+        const QUrl &parentUrl, std::vector<KiriView::DirectMediaNavigationCandidate> candidates)
     {
         m_candidates[keyForUrl(parentUrl)] = std::move(candidates);
     }
 
-    KiriView::MediaNavigationCandidateProvider provider()
+    KiriView::DirectMediaNavigationCandidateProvider provider()
     {
-        return KiriView::MediaNavigationCandidateProvider {
-            [this](QObject *, QUrl parentUrl, KiriView::MediaCandidatesCallback callback,
+        return KiriView::DirectMediaNavigationCandidateProvider {
+            [this](QObject *, QUrl parentUrl,
+                KiriView::DirectMediaNavigationCandidatesCallback callback,
                 KiriView::ErrorCallback errorCallback) {
                 const auto candidates = m_candidates.find(keyForUrl(parentUrl));
                 if (candidates == m_candidates.cend()) {
                     if (errorCallback) {
-                        errorCallback(QStringLiteral("missing media candidates"));
+                        errorCallback(QStringLiteral("missing direct media candidates"));
                     }
                     return KiriView::ImageIoJob();
                 }
@@ -91,27 +93,28 @@ public:
     }
 
 private:
-    std::map<QString, std::vector<KiriView::MediaNavigationCandidate>> m_candidates;
+    std::map<QString, std::vector<KiriView::DirectMediaNavigationCandidate>> m_candidates;
 };
 
-struct ManualMediaCandidateLoad {
+struct ManualDirectMediaNavigationCandidateLoad {
     QObject *object = nullptr;
     QUrl parentUrl;
-    KiriView::MediaCandidatesCallback callback;
+    KiriView::DirectMediaNavigationCandidatesCallback callback;
     KiriView::ErrorCallback errorCallback;
     KiriView::ImageIoJobCompletion completion;
     bool canceled = false;
 };
 
-class ManualMediaCandidateProvider
+class ManualDirectMediaNavigationCandidateProvider
 {
 public:
-    KiriView::MediaNavigationCandidateProvider provider()
+    KiriView::DirectMediaNavigationCandidateProvider provider()
     {
-        return KiriView::MediaNavigationCandidateProvider {
-            [this](QObject *receiver, QUrl parentUrl, KiriView::MediaCandidatesCallback callback,
+        return KiriView::DirectMediaNavigationCandidateProvider {
+            [this](QObject *receiver, QUrl parentUrl,
+                KiriView::DirectMediaNavigationCandidatesCallback callback,
                 KiriView::ErrorCallback errorCallback) {
-                auto load = std::make_shared<ManualMediaCandidateLoad>();
+                auto load = std::make_shared<ManualDirectMediaNavigationCandidateLoad>();
                 load->parentUrl = std::move(parentUrl);
                 load->callback = std::move(callback);
                 load->errorCallback = std::move(errorCallback);
@@ -126,12 +129,17 @@ public:
 
     std::size_t loadCount() const { return m_loads.size(); }
 
-    ManualMediaCandidateLoad &loadAt(std::size_t index) { return *m_loads.at(index); }
+    ManualDirectMediaNavigationCandidateLoad &loadAt(std::size_t index)
+    {
+        return *m_loads.at(index);
+    }
 
-    void finishLoad(std::size_t index, std::vector<KiriView::MediaNavigationCandidate> candidates)
+    void finishLoad(
+        std::size_t index, std::vector<KiriView::DirectMediaNavigationCandidate> candidates)
     {
         KiriView::TestSupport::Detail::finishManualIoJob(m_loads.at(index),
-            [candidates = std::move(candidates)](ManualMediaCandidateLoad &load) mutable {
+            [candidates = std::move(candidates)](
+                ManualDirectMediaNavigationCandidateLoad &load) mutable {
                 if (load.callback) {
                     load.callback(std::move(candidates));
                 }
@@ -139,16 +147,16 @@ public:
     }
 
     void deliverIgnoringCancellation(
-        std::size_t index, std::vector<KiriView::MediaNavigationCandidate> candidates)
+        std::size_t index, std::vector<KiriView::DirectMediaNavigationCandidate> candidates)
     {
-        ManualMediaCandidateLoad &load = loadAt(index);
+        ManualDirectMediaNavigationCandidateLoad &load = loadAt(index);
         if (load.callback) {
             load.callback(std::move(candidates));
         }
     }
 
 private:
-    std::vector<std::shared_ptr<ManualMediaCandidateLoad>> m_loads;
+    std::vector<std::shared_ptr<ManualDirectMediaNavigationCandidateLoad>> m_loads;
 };
 
 class FakeMediaOpenWithProvider
@@ -172,17 +180,19 @@ public:
 };
 
 std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
-    KiriView::MediaNavigationCandidateProvider mediaCandidateProvider,
+    KiriView::DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProvider,
     KiriView::TestSupport::ManualFileOperationProvider *fileOperations = nullptr,
     KiriView::TestSupport::ManualImageDataLoader *imageDataLoader = nullptr,
-    KiriView::ImageNavigationCandidateProvider imageCandidateProvider = {},
+    KiriView::ImageDocumentPageCandidateProvider imageDocumentPageCandidateProvider = {},
     KiriView::ImageDataDecoder imageDataDecoder = KiriView::TestSupport::staticImageDataDecoder(),
     KiriView::MediaOpenWithProvider mediaOpenWithProvider = {})
 {
     KiriView::DocumentSessionRuntimeDependencies dependencies;
-    dependencies.mediaCandidateProvider = std::move(mediaCandidateProvider);
+    dependencies.directMediaNavigationCandidateProvider
+        = std::move(directMediaNavigationCandidateProvider);
     dependencies.mediaOpenWithProvider = std::move(mediaOpenWithProvider);
-    dependencies.imageDocumentDependencies.candidateProvider = std::move(imageCandidateProvider);
+    dependencies.imageDocumentDependencies.candidateProvider
+        = std::move(imageDocumentPageCandidateProvider);
     if (fileOperations != nullptr) {
         dependencies.fileOperationProvider
             = KiriView::TestSupport::fileOperationProviderFor(*fileOperations);
@@ -197,11 +207,13 @@ std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
     return std::make_unique<KiriDocumentSession>(std::move(dependencies));
 }
 
-std::unique_ptr<KiriDocumentSession> createSession(FakeMediaCandidateProvider &mediaProvider,
+std::unique_ptr<KiriDocumentSession> createSession(
+    FakeDirectMediaNavigationCandidateProvider &directMediaNavigationProvider,
     KiriView::TestSupport::ManualFileOperationProvider *fileOperations = nullptr,
     KiriView::TestSupport::ManualImageDataLoader *imageDataLoader = nullptr)
 {
-    return createSessionWithProvider(mediaProvider.provider(), fileOperations, imageDataLoader);
+    return createSessionWithProvider(
+        directMediaNavigationProvider.provider(), fileOperations, imageDataLoader);
 }
 
 void compareUnavailableActiveNavigation(const KiriDocumentSession &session)
@@ -242,18 +254,18 @@ private Q_SLOTS:
     void archiveAndDirectoryInputsRouteToImageDocument();
     void directImageAfterVideoRestoresImageDocument();
     void kioArchiveImageAfterKioArchiveVideoUsesOriginalImageUrl();
-    void directImageMediaNavigationIncludesSiblingVideos();
+    void directImageDirectMediaNavigationIncludesSiblingVideos();
     void directMediaThumbnailModelTracksSiblingCandidates();
     void directMediaThumbnailModelStaysEmptyUntilCandidatesAreKnown();
     void defaultMediaProviderListsLocalDirectImageSiblings();
     void defaultMediaProviderListsLocalDirectVideoSiblings();
     void freshDirectImageReadoutUsesRequestedCursorBeforeDisplayedUrl();
-    void directImageCandidateCompletionSurvivesCursorConfirmation();
+    void directImageDocumentPageCandidateCompletionSurvivesCursorConfirmation();
     void directImageReplacementFailureRestoresPreviousMediaCursor();
-    void stalePendingDirectImageCandidateCompletionCannotPublishForNewCursor();
+    void stalePendingDirectImageDocumentPageCandidateCompletionCannotPublishForNewCursor();
     void freshDirectImageFailureLeavesNavigationUnknown();
     void archiveImageDocumentProjectsActiveNavigationFromPages();
-    void imagePageNavigationChangesEmitActiveNavigationWhenRelevant();
+    void imageDocumentPageNavigationChangesEmitActiveNavigationWhenRelevant();
     void activeNavigationNumberDispatchRoutesDirectMedia();
     void activeNavigationNumberDispatchRoutesImageDocumentPages();
     void archiveCollectionThumbnailModelUsesPageCandidateNames();
@@ -270,8 +282,8 @@ private Q_SLOTS:
     void videoNavigationKeepsStillImagePredecodeCache();
     void videoActiveNavigationExposesCurrentNumberAndCount();
     void initialDirectImagePredecodeUsesRequestedMediaCursor();
-    void staleMediaCandidateCompletionCannotPublishForNewSource();
-    void nextMediaFromVideoCanRouteToImageWithoutUsingImageNavigation();
+    void staleDirectMediaNavigationCandidateCompletionCannotPublishForNewSource();
+    void nextMediaFromVideoCanRouteToImageWithoutUsingImageDocumentPageNavigation();
     void nonMediaImageDeletionProgressIsMirroredThroughSessionState();
     void directMediaDeletionInProgressDisablesActiveNavigationDispatch();
     void directImageDeletionCanOpenVideoFallback();
@@ -284,18 +296,19 @@ private Q_SLOTS:
 
 void TestKiriDocumentSession::emptySessionProjectsUnavailableActiveNavigation()
 {
-    FakeMediaCandidateProvider mediaProvider;
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     compareUnavailableActiveNavigation(*session);
 }
 
 void TestKiriDocumentSession::directVideoRoutesToVideoDocumentWithOriginalSource()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl clip = localUrl(QStringLiteral("/media/clip.mp4"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")), { mediaCandidate(clip) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+    directMediaNavigationProvider.setMedia(
+        localUrl(QStringLiteral("/media/")), { directMediaNavigationCandidate(clip) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     session->setSourceUrl(clip);
 
@@ -323,12 +336,12 @@ void TestKiriDocumentSession::activeZoomReadoutFollowsSessionDocumentKind()
     const QString imagePath = directory.filePath(QStringLiteral("01.png"));
     QVERIFY(writeTestImage(imagePath));
 
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl imageUrl = localUrl(imagePath);
     const QUrl videoUrl = localUrl(directory.filePath(QStringLiteral("02.mp4")));
-    mediaProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
-        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Empty);
     QVERIFY(!session->activeZoomPercentAvailable());
@@ -357,8 +370,8 @@ void TestKiriDocumentSession::activeZoomReadoutFollowsSessionDocumentKind()
 
 void TestKiriDocumentSession::archiveAndDirectoryInputsRouteToImageDocument()
 {
-    FakeMediaCandidateProvider mediaProvider;
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     const QUrl archive = localUrl(QStringLiteral("/books/book.zip"));
     session->setSourceUrl(archive);
@@ -375,12 +388,12 @@ void TestKiriDocumentSession::archiveAndDirectoryInputsRouteToImageDocument()
 
 void TestKiriDocumentSession::directImageAfterVideoRestoresImageDocument()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl clip = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl image = localUrl(QStringLiteral("/media/02.svg"));
-    mediaProvider.setMedia(
-        localUrl(QStringLiteral("/media/")), { mediaCandidate(clip), mediaCandidate(image) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(clip), directMediaNavigationCandidate(image) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     session->setSourceUrl(clip);
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
@@ -396,21 +409,21 @@ void TestKiriDocumentSession::directImageAfterVideoRestoresImageDocument()
 
 void TestKiriDocumentSession::kioArchiveImageAfterKioArchiveVideoUsesOriginalImageUrl()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl parentUrl(QStringLiteral("zip:///books/book.zip!/chapter/"));
     const QUrl videoUrl(QStringLiteral("zip:///books/book.zip!/chapter/clip.mp4"));
     const QUrl imageUrl(QStringLiteral("zip:///books/book.zip!/chapter/page.png"));
-    mediaProvider.setMedia(parentUrl, { mediaCandidate(videoUrl) });
+    directMediaNavigationProvider.setMedia(parentUrl, { directMediaNavigationCandidate(videoUrl) });
     std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(mediaProvider.provider(), nullptr, &dataLoader);
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, &dataLoader);
 
     session->setSourceUrl(videoUrl);
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
     QCOMPARE(session->sourceUrl(), videoUrl);
     QCOMPARE(session->videoDocument()->sourceUrl(), videoUrl);
 
-    mediaProvider.setMedia(parentUrl, { mediaCandidate(imageUrl) });
+    directMediaNavigationProvider.setMedia(parentUrl, { directMediaNavigationCandidate(imageUrl) });
     session->setSourceUrl(imageUrl);
 
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
@@ -424,7 +437,7 @@ void TestKiriDocumentSession::kioArchiveImageAfterKioArchiveVideoUsesOriginalIma
     QVERIFY(!dataLoader.backLoad().url.toString().contains(QStringLiteral("kio-fuse")));
 }
 
-void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
+void TestKiriDocumentSession::directImageDirectMediaNavigationIncludesSiblingVideos()
 {
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
@@ -432,12 +445,12 @@ void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
     const QString imagePath = directory.filePath(QStringLiteral("01.png"));
     QVERIFY(writeTestImage(imagePath));
 
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl imageUrl = localUrl(imagePath);
     const QUrl videoUrl = localUrl(directory.filePath(QStringLiteral("02.mp4")));
-    mediaProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
-        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     session->setSourceUrl(imageUrl);
 
@@ -466,12 +479,12 @@ void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
 
 void TestKiriDocumentSession::directMediaThumbnailModelTracksSiblingCandidates()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl videoUrl = localUrl(QStringLiteral("/media/02.mp4"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     session->setSourceUrl(videoUrl);
 
@@ -489,22 +502,23 @@ void TestKiriDocumentSession::directMediaThumbnailModelTracksSiblingCandidates()
 
 void TestKiriDocumentSession::directMediaThumbnailModelStaysEmptyUntilCandidatesAreKnown()
 {
-    ManualMediaCandidateProvider mediaProvider;
+    ManualDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl videoUrl = localUrl(QStringLiteral("/media/02.mp4"));
     std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(mediaProvider.provider());
+        = createSessionWithProvider(directMediaNavigationProvider.provider());
 
     session->setSourceUrl(videoUrl);
 
     QAbstractItemModel *model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(1));
     QVERIFY(session->activeNavigationAvailable());
     QVERIFY(!session->activeNavigationKnown());
     QCOMPARE(model->rowCount(), 0);
 
-    mediaProvider.finishLoad(0, { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
+    directMediaNavigationProvider.finishLoad(
+        0, { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(videoUrl) });
 
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
@@ -527,7 +541,7 @@ void TestKiriDocumentSession::defaultMediaProviderListsLocalDirectImageSiblings(
     QVERIFY(writeTestImage(currentImagePath));
 
     std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(KiriView::MediaNavigationCandidateProvider {});
+        = createSessionWithProvider(KiriView::DirectMediaNavigationCandidateProvider {});
 
     session->setSourceUrl(localUrl(currentImagePath));
 
@@ -556,7 +570,7 @@ void TestKiriDocumentSession::defaultMediaProviderListsLocalDirectVideoSiblings(
     QVERIFY(writeEmptyFile(nextVideoPath));
 
     std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(KiriView::MediaNavigationCandidateProvider {});
+        = createSessionWithProvider(KiriView::DirectMediaNavigationCandidateProvider {});
 
     session->setSourceUrl(localUrl(currentVideoPath));
 
@@ -575,14 +589,14 @@ void TestKiriDocumentSession::defaultMediaProviderListsLocalDirectVideoSiblings(
 
 void TestKiriDocumentSession::freshDirectImageReadoutUsesRequestedCursorBeforeDisplayedUrl()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl videoUrl = localUrl(QStringLiteral("/media/02.mp4"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(videoUrl) });
     std::unique_ptr<KiriDocumentSession> session
-        = createSession(mediaProvider, nullptr, &imageDataLoader);
+        = createSession(directMediaNavigationProvider, nullptr, &imageDataLoader);
 
     session->setSourceUrl(imageUrl);
 
@@ -596,20 +610,21 @@ void TestKiriDocumentSession::freshDirectImageReadoutUsesRequestedCursorBeforeDi
     QCOMPARE(session->activeNavigationCount(), 2);
 }
 
-void TestKiriDocumentSession::directImageCandidateCompletionSurvivesCursorConfirmation()
+void TestKiriDocumentSession::directImageDocumentPageCandidateCompletionSurvivesCursorConfirmation()
 {
-    ManualMediaCandidateProvider mediaProvider;
+    ManualDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl siblingUrl = localUrl(QStringLiteral("/media/02.mp4"));
-    std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(mediaProvider.provider(), nullptr, &imageDataLoader);
+    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
+        directMediaNavigationProvider.provider(), nullptr, &imageDataLoader);
 
     session->setSourceUrl(imageUrl);
 
     QCOMPARE(imageDataLoader.loadCount(), std::size_t(1));
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
-    QCOMPARE(mediaProvider.loadAt(0).parentUrl, localUrl(QStringLiteral("/media/")));
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(1));
+    QCOMPARE(
+        directMediaNavigationProvider.loadAt(0).parentUrl, localUrl(QStringLiteral("/media/")));
     QVERIFY(session->activeNavigationAvailable());
     QVERIFY(!session->activeNavigationKnown());
     QVERIFY(!session->activeNavigationEditable());
@@ -618,13 +633,14 @@ void TestKiriDocumentSession::directImageCandidateCompletionSurvivesCursorConfir
 
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     QCOMPARE(session->imageDocument()->displayedUrl(), imageUrl);
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
-    QVERIFY(!mediaProvider.loadAt(0).canceled);
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(1));
+    QVERIFY(!directMediaNavigationProvider.loadAt(0).canceled);
     QVERIFY(session->activeNavigationAvailable());
     QVERIFY(!session->activeNavigationKnown());
     QVERIFY(!session->activeNavigationEditable());
 
-    mediaProvider.finishLoad(0, { mediaCandidate(imageUrl), mediaCandidate(siblingUrl) });
+    directMediaNavigationProvider.finishLoad(0,
+        { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(siblingUrl) });
 
     QVERIFY(session->activeNavigationKnown());
     QVERIFY(session->activeNavigationEditable());
@@ -635,14 +651,15 @@ void TestKiriDocumentSession::directImageCandidateCompletionSurvivesCursorConfir
 
 void TestKiriDocumentSession::directImageReplacementFailureRestoresPreviousMediaCursor()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
     const QUrl firstImage = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondImage = localUrl(QStringLiteral("/media/02.png"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(firstImage), mediaCandidate(secondImage) });
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(firstImage),
+            directMediaNavigationCandidate(secondImage) });
     std::unique_ptr<KiriDocumentSession> session
-        = createSession(mediaProvider, nullptr, &imageDataLoader);
+        = createSession(directMediaNavigationProvider, nullptr, &imageDataLoader);
 
     session->setSourceUrl(firstImage);
     QCOMPARE(imageDataLoader.loadCount(), std::size_t(1));
@@ -680,34 +697,38 @@ void TestKiriDocumentSession::directImageReplacementFailureRestoresPreviousMedia
     QVERIFY(!session->atKnownLastActiveNavigation());
 }
 
-void TestKiriDocumentSession::stalePendingDirectImageCandidateCompletionCannotPublishForNewCursor()
+void TestKiriDocumentSession::
+    stalePendingDirectImageDocumentPageCandidateCompletionCannotPublishForNewCursor()
 {
-    ManualMediaCandidateProvider mediaProvider;
+    ManualDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
-    std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(mediaProvider.provider(), nullptr, &imageDataLoader);
+    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
+        directMediaNavigationProvider.provider(), nullptr, &imageDataLoader);
 
     const QUrl firstImage = localUrl(QStringLiteral("/first/01.png"));
     const QUrl staleSibling = localUrl(QStringLiteral("/first/02.mp4"));
     const QUrl secondImage = localUrl(QStringLiteral("/second/01.png"));
 
     session->setSourceUrl(firstImage);
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
-    QCOMPARE(mediaProvider.loadAt(0).parentUrl, localUrl(QStringLiteral("/first/")));
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(1));
+    QCOMPARE(
+        directMediaNavigationProvider.loadAt(0).parentUrl, localUrl(QStringLiteral("/first/")));
 
     session->setSourceUrl(secondImage);
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(2));
-    QCOMPARE(mediaProvider.loadAt(1).parentUrl, localUrl(QStringLiteral("/second/")));
-    QVERIFY(mediaProvider.loadAt(0).canceled);
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(2));
+    QCOMPARE(
+        directMediaNavigationProvider.loadAt(1).parentUrl, localUrl(QStringLiteral("/second/")));
+    QVERIFY(directMediaNavigationProvider.loadAt(0).canceled);
     QVERIFY(!session->activeNavigationKnown());
 
-    mediaProvider.deliverIgnoringCancellation(
-        0, { mediaCandidate(firstImage), mediaCandidate(staleSibling) });
+    directMediaNavigationProvider.deliverIgnoringCancellation(0,
+        { directMediaNavigationCandidate(firstImage),
+            directMediaNavigationCandidate(staleSibling) });
 
     QVERIFY(!session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCount(), 0);
 
-    mediaProvider.finishLoad(1, { mediaCandidate(secondImage) });
+    directMediaNavigationProvider.finishLoad(1, { directMediaNavigationCandidate(secondImage) });
 
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
@@ -716,14 +737,14 @@ void TestKiriDocumentSession::stalePendingDirectImageCandidateCompletionCannotPu
 
 void TestKiriDocumentSession::freshDirectImageFailureLeavesNavigationUnknown()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl siblingUrl = localUrl(QStringLiteral("/media/02.mp4"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(imageUrl), mediaCandidate(siblingUrl) });
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(siblingUrl) });
     std::unique_ptr<KiriDocumentSession> session
-        = createSession(mediaProvider, nullptr, &imageDataLoader);
+        = createSession(directMediaNavigationProvider, nullptr, &imageDataLoader);
 
     session->setSourceUrl(imageUrl);
     QCOMPARE(imageDataLoader.loadCount(), std::size_t(1));
@@ -743,8 +764,8 @@ void TestKiriDocumentSession::freshDirectImageFailureLeavesNavigationUnknown()
 
 void TestKiriDocumentSession::archiveImageDocumentProjectsActiveNavigationFromPages()
 {
-    FakeMediaCandidateProvider mediaProvider;
-    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider imageDocumentPageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
@@ -754,11 +775,12 @@ void TestKiriDocumentSession::archiveImageDocumentProjectsActiveNavigationFromPa
         archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
         archiveCollection->rootUrl(), QStringLiteral("02.png"));
-    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
-        { KiriView::TestSupport::imageCandidate(firstPage),
-            KiriView::TestSupport::imageCandidate(secondPage) });
-    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
-        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+    imageDocumentPageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+        { KiriView::TestSupport::imageDocumentPageCandidate(firstPage),
+            KiriView::TestSupport::imageDocumentPageCandidate(secondPage) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, &dataLoader,
+            imageDocumentPageCandidates.provider());
 
     session->setSourceUrl(archiveUrl);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
@@ -767,11 +789,11 @@ void TestKiriDocumentSession::archiveImageDocumentProjectsActiveNavigationFromPa
     QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     QCOMPARE(session->activeNavigationBoundaryScope(),
-        KiriDocumentSession::ActiveNavigationBoundaryScope::ImageNavigationBoundary);
+        KiriDocumentSession::ActiveNavigationBoundaryScope::ImageDocumentPageNavigationBoundary);
     QVERIFY(session->activeNavigationAvailable());
     QTRY_COMPARE(session->imageDocument()->currentPageNumber(), 1);
     QTRY_COMPARE(session->imageDocument()->currentLastPageNumber(), 1);
-    QTRY_COMPARE(session->imageDocument()->imageCount(), 2);
+    QTRY_COMPARE(session->imageDocument()->pageCount(), 2);
     QTRY_VERIFY(session->activeNavigationKnown());
     QVERIFY(session->activeNavigationEditable());
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
@@ -783,10 +805,10 @@ void TestKiriDocumentSession::archiveImageDocumentProjectsActiveNavigationFromPa
     QVERIFY(!session->atKnownLastActiveNavigation());
 }
 
-void TestKiriDocumentSession::imagePageNavigationChangesEmitActiveNavigationWhenRelevant()
+void TestKiriDocumentSession::imageDocumentPageNavigationChangesEmitActiveNavigationWhenRelevant()
 {
-    FakeMediaCandidateProvider mediaProvider;
-    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider imageDocumentPageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/signals.cbz"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
@@ -796,11 +818,12 @@ void TestKiriDocumentSession::imagePageNavigationChangesEmitActiveNavigationWhen
         archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
         archiveCollection->rootUrl(), QStringLiteral("02.png"));
-    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
-        { KiriView::TestSupport::imageCandidate(firstPage),
-            KiriView::TestSupport::imageCandidate(secondPage) });
-    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
-        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+    imageDocumentPageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+        { KiriView::TestSupport::imageDocumentPageCandidate(firstPage),
+            KiriView::TestSupport::imageDocumentPageCandidate(secondPage) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, &dataLoader,
+            imageDocumentPageCandidates.provider());
     QSignalSpy activeNavigationSpy(session.get(), &KiriDocumentSession::activeNavigationChanged);
 
     session->setSourceUrl(archiveUrl);
@@ -820,12 +843,12 @@ void TestKiriDocumentSession::imagePageNavigationChangesEmitActiveNavigationWhen
 
 void TestKiriDocumentSession::activeNavigationNumberDispatchRoutesDirectMedia()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl videoUrl = localUrl(QStringLiteral("/media/02.mp4"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     session->setSourceUrl(videoUrl);
 
@@ -842,8 +865,8 @@ void TestKiriDocumentSession::activeNavigationNumberDispatchRoutesDirectMedia()
 
 void TestKiriDocumentSession::activeNavigationNumberDispatchRoutesImageDocumentPages()
 {
-    FakeMediaCandidateProvider mediaProvider;
-    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider imageDocumentPageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/number-dispatch.cbz"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
@@ -853,11 +876,12 @@ void TestKiriDocumentSession::activeNavigationNumberDispatchRoutesImageDocumentP
         archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
         archiveCollection->rootUrl(), QStringLiteral("02.png"));
-    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
-        { KiriView::TestSupport::imageCandidate(firstPage),
-            KiriView::TestSupport::imageCandidate(secondPage) });
-    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
-        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+    imageDocumentPageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+        { KiriView::TestSupport::imageDocumentPageCandidate(firstPage),
+            KiriView::TestSupport::imageDocumentPageCandidate(secondPage) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, &dataLoader,
+            imageDocumentPageCandidates.provider());
 
     session->setSourceUrl(archiveUrl);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
@@ -876,8 +900,8 @@ void TestKiriDocumentSession::activeNavigationNumberDispatchRoutesImageDocumentP
 
 void TestKiriDocumentSession::archiveCollectionThumbnailModelUsesPageCandidateNames()
 {
-    FakeMediaCandidateProvider mediaProvider;
-    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider imageDocumentPageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/thumbnails.cbz"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
@@ -887,15 +911,16 @@ void TestKiriDocumentSession::archiveCollectionThumbnailModelUsesPageCandidateNa
         archiveCollection->rootUrl(), QStringLiteral("chapter/01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
         archiveCollection->rootUrl(), QStringLiteral("extras/clip.mp4"));
-    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+    imageDocumentPageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
-            KiriView::ImageNavigationCandidate { firstPage, QStringLiteral("chapter/01.png"),
-                KiriView::ImageNavigationCandidateKind::Image },
-            KiriView::ImageNavigationCandidate { secondPage, QStringLiteral("extras/clip.mp4"),
-                KiriView::ImageNavigationCandidateKind::Video },
+            KiriView::ImageDocumentPageCandidate { firstPage, QStringLiteral("chapter/01.png"),
+                KiriView::ImageDocumentPageKind::Image },
+            KiriView::ImageDocumentPageCandidate { secondPage, QStringLiteral("extras/clip.mp4"),
+                KiriView::ImageDocumentPageKind::Video },
         });
-    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
-        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, &dataLoader,
+            imageDocumentPageCandidates.provider());
 
     session->setSourceUrl(archiveUrl);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
@@ -915,8 +940,8 @@ void TestKiriDocumentSession::archiveCollectionThumbnailModelUsesPageCandidateNa
 
 void TestKiriDocumentSession::activeNavigationRequestReportsDispatchAndBoundaryResults()
 {
-    FakeMediaCandidateProvider mediaProvider;
-    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider imageDocumentPageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/request-results.cbz"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
@@ -926,11 +951,12 @@ void TestKiriDocumentSession::activeNavigationRequestReportsDispatchAndBoundaryR
         archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
         archiveCollection->rootUrl(), QStringLiteral("02.png"));
-    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
-        { KiriView::TestSupport::imageCandidate(firstPage),
-            KiriView::TestSupport::imageCandidate(secondPage) });
-    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
-        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+    imageDocumentPageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+        { KiriView::TestSupport::imageDocumentPageCandidate(firstPage),
+            KiriView::TestSupport::imageDocumentPageCandidate(secondPage) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, &dataLoader,
+            imageDocumentPageCandidates.provider());
 
     session->setSourceUrl(archiveUrl);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
@@ -955,7 +981,7 @@ void TestKiriDocumentSession::activeNavigationRequestReportsDispatchAndBoundaryR
 
 void TestKiriDocumentSession::activeNavigationBoundaryTextFollowsSessionSource()
 {
-    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider imageDocumentPageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/request-boundary-text.cbz"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
@@ -965,12 +991,13 @@ void TestKiriDocumentSession::activeNavigationBoundaryTextFollowsSessionSource()
         archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
         archiveCollection->rootUrl(), QStringLiteral("02.png"));
-    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
-        { KiriView::TestSupport::imageCandidate(firstPage),
-            KiriView::TestSupport::imageCandidate(secondPage) });
-    FakeMediaCandidateProvider unusedMediaProvider;
-    std::unique_ptr<KiriDocumentSession> imageSession = createSessionWithProvider(
-        unusedMediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+    imageDocumentPageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+        { KiriView::TestSupport::imageDocumentPageCandidate(firstPage),
+            KiriView::TestSupport::imageDocumentPageCandidate(secondPage) });
+    FakeDirectMediaNavigationCandidateProvider unusedDirectMediaNavigationProvider;
+    std::unique_ptr<KiriDocumentSession> imageSession
+        = createSessionWithProvider(unusedDirectMediaNavigationProvider.provider(), nullptr,
+            &dataLoader, imageDocumentPageCandidates.provider());
 
     imageSession->setSourceUrl(archiveUrl);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
@@ -992,15 +1019,15 @@ void TestKiriDocumentSession::activeNavigationBoundaryTextFollowsSessionSource()
 
 void TestKiriDocumentSession::activeNavigationNumberDispatchIgnoresUnknownNavigation()
 {
-    ManualMediaCandidateProvider mediaProvider;
+    ManualDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl first = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl second = localUrl(QStringLiteral("/media/02.mp4"));
     std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(mediaProvider.provider());
+        = createSessionWithProvider(directMediaNavigationProvider.provider());
 
     session->setSourceUrl(first);
 
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(1));
     QVERIFY(session->activeNavigationAvailable());
     QVERIFY(!session->activeNavigationKnown());
     QVERIFY(!session->activeNavigationEditable());
@@ -1015,21 +1042,23 @@ void TestKiriDocumentSession::activeNavigationNumberDispatchIgnoresUnknownNaviga
 
     session->openActiveNavigationAtNumber(2);
 
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(1));
     QCOMPARE(session->sourceUrl(), first);
 
-    mediaProvider.finishLoad(0, { mediaCandidate(first), mediaCandidate(second) });
+    directMediaNavigationProvider.finishLoad(
+        0, { directMediaNavigationCandidate(first), directMediaNavigationCandidate(second) });
     QVERIFY(session->activeNavigationKnown());
     session->openActiveNavigationAtNumber(2);
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(2));
-    mediaProvider.finishLoad(1, { mediaCandidate(first), mediaCandidate(second) });
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(2));
+    directMediaNavigationProvider.finishLoad(
+        1, { directMediaNavigationCandidate(first), directMediaNavigationCandidate(second) });
     QCOMPARE(session->sourceUrl(), second);
 }
 
 void TestKiriDocumentSession::activeNavigationClearsWhenSwitchingFromKnownDirectMedia()
 {
-    FakeMediaCandidateProvider mediaProvider;
-    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider imageDocumentPageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/clear.cbz"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
@@ -1037,15 +1066,17 @@ void TestKiriDocumentSession::activeNavigationClearsWhenSwitchingFromKnownDirect
     QVERIFY(archiveCollection.has_value());
     const QUrl page = KiriView::TestSupport::archivePageUrl(
         archiveCollection->rootUrl(), QStringLiteral("01.png"));
-    imageCandidates.setOpenedCollectionCandidates(
-        archiveCollection->rootUrl(), { KiriView::TestSupport::imageCandidate(page) });
+    imageDocumentPageCandidates.setOpenedCollectionCandidates(
+        archiveCollection->rootUrl(), { KiriView::TestSupport::imageDocumentPageCandidate(page) });
     const QUrl clip = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl nextClip = localUrl(QStringLiteral("/media/02.mp4"));
     const QUrl lastClip = localUrl(QStringLiteral("/media/03.mp4"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(clip), mediaCandidate(nextClip), mediaCandidate(lastClip) });
-    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
-        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(clip), directMediaNavigationCandidate(nextClip),
+            directMediaNavigationCandidate(lastClip) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, &dataLoader,
+            imageDocumentPageCandidates.provider());
 
     session->setSourceUrl(nextClip);
     QVERIFY(session->activeNavigationKnown());
@@ -1078,13 +1109,14 @@ void TestKiriDocumentSession::activeNavigationClearsWhenSwitchingFromKnownDirect
 
 void TestKiriDocumentSession::activeNavigationAvailabilityUsesSameSnapshotAsCurrentAndCount()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl first = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl second = localUrl(QStringLiteral("/media/02.mp4"));
     const QUrl third = localUrl(QStringLiteral("/media/03.mp4"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(first), mediaCandidate(second), mediaCandidate(third) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(first), directMediaNavigationCandidate(second),
+            directMediaNavigationCandidate(third) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     session->setSourceUrl(second);
 
@@ -1119,21 +1151,23 @@ void TestKiriDocumentSession::activeNavigationAvailabilityUsesSameSnapshotAsCurr
 
 void TestKiriDocumentSession::activeNavigationBoundaryScopeFollowsSessionSource()
 {
-    FakeMediaCandidateProvider mediaProvider;
-    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider imageDocumentPageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl clip = localUrl(QStringLiteral("/media/01.mp4"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")), { mediaCandidate(clip) });
+    directMediaNavigationProvider.setMedia(
+        localUrl(QStringLiteral("/media/")), { directMediaNavigationCandidate(clip) });
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/boundary.cbz"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
         = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl page = KiriView::TestSupport::archivePageUrl(
         archiveCollection->rootUrl(), QStringLiteral("01.png"));
-    imageCandidates.setOpenedCollectionCandidates(
-        archiveCollection->rootUrl(), { KiriView::TestSupport::imageCandidate(page) });
-    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
-        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+    imageDocumentPageCandidates.setOpenedCollectionCandidates(
+        archiveCollection->rootUrl(), { KiriView::TestSupport::imageDocumentPageCandidate(page) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, &dataLoader,
+            imageDocumentPageCandidates.provider());
 
     QCOMPARE(session->activeNavigationBoundaryScope(),
         KiriDocumentSession::ActiveNavigationBoundaryScope::NoNavigationBoundary);
@@ -1142,7 +1176,7 @@ void TestKiriDocumentSession::activeNavigationBoundaryScopeFollowsSessionSource(
 
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationBoundaryScope(),
-        KiriDocumentSession::ActiveNavigationBoundaryScope::MediaNavigationBoundary);
+        KiriDocumentSession::ActiveNavigationBoundaryScope::DirectMediaNavigationBoundary);
 
     session->setSourceUrl(archiveUrl);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
@@ -1150,15 +1184,15 @@ void TestKiriDocumentSession::activeNavigationBoundaryScopeFollowsSessionSource(
     QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QTRY_VERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationBoundaryScope(),
-        KiriDocumentSession::ActiveNavigationBoundaryScope::ImageNavigationBoundary);
+        KiriDocumentSession::ActiveNavigationBoundaryScope::ImageDocumentPageNavigationBoundary);
 }
 
 void TestKiriDocumentSession::openWithIsUnavailableInEmptySession()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     FakeMediaOpenWithProvider openWithProvider;
     std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(mediaProvider.provider(), nullptr, nullptr, {},
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, nullptr, {},
             KiriView::TestSupport::staticImageDataDecoder(), openWithProvider.provider());
 
     QVERIFY(!session->displayedMediaOpenWithAvailable());
@@ -1177,12 +1211,12 @@ void TestKiriDocumentSession::openWithUsesCurrentDirectImageUrl()
     QVERIFY(writeTestImage(imagePath));
     const QUrl imageUrl = localUrl(imagePath);
 
-    FakeMediaCandidateProvider mediaProvider;
-    mediaProvider.setMedia(
-        localUrl(directory.path() + QStringLiteral("/")), { mediaCandidate(imageUrl) });
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(imageUrl) });
     FakeMediaOpenWithProvider openWithProvider;
     std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(mediaProvider.provider(), nullptr, nullptr, {},
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, nullptr, {},
             KiriView::TestSupport::staticImageDataDecoder(), openWithProvider.provider());
 
     QSignalSpy availabilitySpy(
@@ -1208,14 +1242,14 @@ void TestKiriDocumentSession::openWithFailureEmitsToastSignal()
     QVERIFY(writeTestImage(imagePath));
     const QUrl imageUrl = localUrl(imagePath);
 
-    FakeMediaCandidateProvider mediaProvider;
-    mediaProvider.setMedia(
-        localUrl(directory.path() + QStringLiteral("/")), { mediaCandidate(imageUrl) });
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(imageUrl) });
     FakeMediaOpenWithProvider openWithProvider;
     openWithProvider.result = KiriView::MediaOpenWithResult::Failed;
     openWithProvider.errorString = QStringLiteral("launcher failed");
     std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(mediaProvider.provider(), nullptr, nullptr, {},
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, nullptr, {},
             KiriView::TestSupport::staticImageDataDecoder(), openWithProvider.provider());
     QSignalSpy failureSpy(session.get(), &KiriDocumentSession::openWithFailed);
 
@@ -1229,8 +1263,8 @@ void TestKiriDocumentSession::openWithFailureEmitsToastSignal()
 
 void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavigation()
 {
-    FakeMediaCandidateProvider mediaProvider;
-    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider imageDocumentPageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
@@ -1242,14 +1276,15 @@ void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavi
         archiveCollection->rootUrl(), QStringLiteral("02.png"));
     const QUrl thirdPage = KiriView::TestSupport::archivePageUrl(
         archiveCollection->rootUrl(), QStringLiteral("03.png"));
-    imageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
-        { KiriView::TestSupport::imageCandidate(firstPage),
-            KiriView::TestSupport::imageCandidate(secondPage),
-            KiriView::TestSupport::imageCandidate(thirdPage) });
-    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
-        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider(),
-        KiriView::TestSupport::staticImageDataDecoder(
-            KiriView::TestSupport::testImage(QSize(100, 200))));
+    imageDocumentPageCandidates.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+        { KiriView::TestSupport::imageDocumentPageCandidate(firstPage),
+            KiriView::TestSupport::imageDocumentPageCandidate(secondPage),
+            KiriView::TestSupport::imageDocumentPageCandidate(thirdPage) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, &dataLoader,
+            imageDocumentPageCandidates.provider(),
+            KiriView::TestSupport::staticImageDataDecoder(
+                KiriView::TestSupport::testImage(QSize(100, 200))));
     session->imageDocument()->setViewportSize(QSizeF(400.0, 300.0));
 
     session->setSourceUrl(archiveUrl);
@@ -1258,7 +1293,7 @@ void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavi
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
 
     session->imageDocument()->setTwoPageModeEnabled(true);
-    session->imageDocument()->openNextImage();
+    session->imageDocument()->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPage);
     dataLoader.finishBackLoad(QByteArrayLiteral("second"));
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPage);
@@ -1278,15 +1313,16 @@ void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavi
 
 void TestKiriDocumentSession::videoNavigationKeepsStillImagePredecodeCache()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
     const QUrl firstImage = localUrl(QStringLiteral("/media/00.png"));
     const QUrl video = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl nextImage = localUrl(QStringLiteral("/media/02.png"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(firstImage), mediaCandidate(video), mediaCandidate(nextImage) });
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(firstImage), directMediaNavigationCandidate(video),
+            directMediaNavigationCandidate(nextImage) });
     std::unique_ptr<KiriDocumentSession> session
-        = createSession(mediaProvider, nullptr, &imageDataLoader);
+        = createSession(directMediaNavigationProvider, nullptr, &imageDataLoader);
 
     session->setSourceUrl(firstImage);
     QTRY_COMPARE(imageDataLoader.loadCount(), std::size_t(1));
@@ -1314,12 +1350,12 @@ void TestKiriDocumentSession::videoNavigationKeepsStillImagePredecodeCache()
 
 void TestKiriDocumentSession::videoActiveNavigationExposesCurrentNumberAndCount()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl videoUrl = localUrl(QStringLiteral("/media/02.mp4"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     session->setSourceUrl(videoUrl);
 
@@ -1341,15 +1377,16 @@ void TestKiriDocumentSession::videoActiveNavigationExposesCurrentNumberAndCount(
 
 void TestKiriDocumentSession::initialDirectImagePredecodeUsesRequestedMediaCursor()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
     const QUrl firstImage = localUrl(QStringLiteral("/media/01.png"));
     const QUrl video = localUrl(QStringLiteral("/media/02.mp4"));
     const QUrl nextImage = localUrl(QStringLiteral("/media/03.png"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(firstImage), mediaCandidate(video), mediaCandidate(nextImage) });
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(firstImage), directMediaNavigationCandidate(video),
+            directMediaNavigationCandidate(nextImage) });
     std::unique_ptr<KiriDocumentSession> session
-        = createSession(mediaProvider, nullptr, &imageDataLoader);
+        = createSession(directMediaNavigationProvider, nullptr, &imageDataLoader);
 
     session->setSourceUrl(firstImage);
 
@@ -1362,48 +1399,54 @@ void TestKiriDocumentSession::initialDirectImagePredecodeUsesRequestedMediaCurso
     QCOMPARE(imageDataLoader.backLoad().url, nextImage);
 }
 
-void TestKiriDocumentSession::staleMediaCandidateCompletionCannotPublishForNewSource()
+void TestKiriDocumentSession::
+    staleDirectMediaNavigationCandidateCompletionCannotPublishForNewSource()
 {
-    ManualMediaCandidateProvider mediaProvider;
+    ManualDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(mediaProvider.provider());
+        = createSessionWithProvider(directMediaNavigationProvider.provider());
 
     const QUrl firstClip = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl secondClip = localUrl(QStringLiteral("/media/02.mp4"));
     const QUrl secondSibling = localUrl(QStringLiteral("/media/03.mp4"));
 
     session->setSourceUrl(firstClip);
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
-    QCOMPARE(mediaProvider.loadAt(0).parentUrl, localUrl(QStringLiteral("/media/")));
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(1));
+    QCOMPARE(
+        directMediaNavigationProvider.loadAt(0).parentUrl, localUrl(QStringLiteral("/media/")));
 
     session->setSourceUrl(secondClip);
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(2));
-    QCOMPARE(mediaProvider.loadAt(1).parentUrl, localUrl(QStringLiteral("/media/")));
-    QVERIFY(mediaProvider.loadAt(0).canceled);
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(2));
+    QCOMPARE(
+        directMediaNavigationProvider.loadAt(1).parentUrl, localUrl(QStringLiteral("/media/")));
+    QVERIFY(directMediaNavigationProvider.loadAt(0).canceled);
     QVERIFY(!session->activeNavigationKnown());
 
-    mediaProvider.deliverIgnoringCancellation(
-        0, { mediaCandidate(secondClip), mediaCandidate(secondSibling) });
+    directMediaNavigationProvider.deliverIgnoringCancellation(0,
+        { directMediaNavigationCandidate(secondClip),
+            directMediaNavigationCandidate(secondSibling) });
 
     QVERIFY(!session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 0);
     QCOMPARE(session->activeNavigationCount(), 0);
 
-    mediaProvider.finishLoad(1, { mediaCandidate(firstClip), mediaCandidate(secondClip) });
+    directMediaNavigationProvider.finishLoad(1,
+        { directMediaNavigationCandidate(firstClip), directMediaNavigationCandidate(secondClip) });
 
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
     QCOMPARE(session->activeNavigationCount(), 2);
 }
 
-void TestKiriDocumentSession::nextMediaFromVideoCanRouteToImageWithoutUsingImageNavigation()
+void TestKiriDocumentSession::
+    nextMediaFromVideoCanRouteToImageWithoutUsingImageDocumentPageNavigation()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl clip = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl image = localUrl(QStringLiteral("/media/02.png"));
-    mediaProvider.setMedia(
-        localUrl(QStringLiteral("/media/")), { mediaCandidate(clip), mediaCandidate(image) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(clip), directMediaNavigationCandidate(image) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
     session->setSourceUrl(clip);
 
     QVERIFY(session->canOpenNextActiveNavigation());
@@ -1425,17 +1468,18 @@ void TestKiriDocumentSession::nonMediaImageDeletionProgressIsMirroredThroughSess
     image.fill(Qt::red);
     QVERIFY(image.save(imagePath, "PNG"));
 
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     const QUrl directoryUrl = localUrl(directory.path());
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider, &fileOperations);
+    std::unique_ptr<KiriDocumentSession> session
+        = createSession(directMediaNavigationProvider, &fileOperations);
     QSignalSpy progressSpy(session.get(), &KiriDocumentSession::fileDeletionInProgressChanged);
 
     session->setSourceUrl(directoryUrl);
     QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     QCOMPARE(session->activeNavigationBoundaryScope(),
-        KiriDocumentSession::ActiveNavigationBoundaryScope::ImageNavigationBoundary);
+        KiriDocumentSession::ActiveNavigationBoundaryScope::ImageDocumentPageNavigationBoundary);
 
     session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
 
@@ -1452,14 +1496,16 @@ void TestKiriDocumentSession::nonMediaImageDeletionProgressIsMirroredThroughSess
 
 void TestKiriDocumentSession::directMediaDeletionInProgressDisablesActiveNavigationDispatch()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     const QUrl firstClip = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl currentClip = localUrl(QStringLiteral("/media/02.mp4"));
     const QUrl lastClip = localUrl(QStringLiteral("/media/03.mp4"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(firstClip), mediaCandidate(currentClip), mediaCandidate(lastClip) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider, &fileOperations);
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(firstClip), directMediaNavigationCandidate(currentClip),
+            directMediaNavigationCandidate(lastClip) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSession(directMediaNavigationProvider, &fileOperations);
 
     session->setSourceUrl(currentClip);
 
@@ -1520,18 +1566,19 @@ void TestKiriDocumentSession::directImageDeletionCanOpenVideoFallback()
     image.fill(Qt::red);
     QVERIFY(image.save(imagePath, "PNG"));
 
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     const QUrl imageUrl = localUrl(imagePath);
     const QUrl videoUrl = localUrl(directory.filePath(QStringLiteral("02.mp4")));
-    mediaProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
-        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider, &fileOperations);
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSession(directMediaNavigationProvider, &fileOperations);
     session->setSourceUrl(imageUrl);
     QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     QCOMPARE(session->activeNavigationBoundaryScope(),
-        KiriDocumentSession::ActiveNavigationBoundaryScope::MediaNavigationBoundary);
+        KiriDocumentSession::ActiveNavigationBoundaryScope::DirectMediaNavigationBoundary);
 
     session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
 
@@ -1547,15 +1594,16 @@ void TestKiriDocumentSession::directImageDeletionCanOpenVideoFallback()
 
 void TestKiriDocumentSession::pendingDirectImageReplacementDoesNotDeletePreviousDisplayedFile()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
     const QUrl firstImage = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondImage = localUrl(QStringLiteral("/media/02.png"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { mediaCandidate(firstImage), mediaCandidate(secondImage) });
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(firstImage),
+            directMediaNavigationCandidate(secondImage) });
     std::unique_ptr<KiriDocumentSession> session
-        = createSession(mediaProvider, &fileOperations, &imageDataLoader);
+        = createSession(directMediaNavigationProvider, &fileOperations, &imageDataLoader);
 
     session->setSourceUrl(firstImage);
     QCOMPARE(imageDataLoader.loadCount(), std::size_t(1));
@@ -1586,21 +1634,23 @@ void TestKiriDocumentSession::pendingDirectImageReplacementDoesNotDeletePrevious
 
 void TestKiriDocumentSession::pendingDirectMediaDeletionCandidateLoadIsCanceledBySourceChange()
 {
-    ManualMediaCandidateProvider mediaProvider;
+    ManualDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     const QUrl firstClip = localUrl(QStringLiteral("/first/01.mp4"));
     const QUrl firstFallback = localUrl(QStringLiteral("/first/02.png"));
     const QUrl secondClip = localUrl(QStringLiteral("/second/01.mp4"));
     std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(mediaProvider.provider(), &fileOperations);
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), &fileOperations);
 
     session->setSourceUrl(firstClip);
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
-    mediaProvider.finishLoad(0, { mediaCandidate(firstClip), mediaCandidate(firstFallback) });
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(1));
+    directMediaNavigationProvider.finishLoad(0,
+        { directMediaNavigationCandidate(firstClip),
+            directMediaNavigationCandidate(firstFallback) });
 
     session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
 
-    QCOMPARE(mediaProvider.loadCount(), std::size_t(2));
+    QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(2));
     QVERIFY(session->fileDeletionInProgress());
     QCOMPARE(fileOperations.operationCount(), std::size_t(0));
 
@@ -1609,10 +1659,11 @@ void TestKiriDocumentSession::pendingDirectMediaDeletionCandidateLoadIsCanceledB
     QCOMPARE(session->sourceUrl(), secondClip);
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
     QVERIFY(!session->fileDeletionInProgress());
-    QVERIFY(mediaProvider.loadAt(1).canceled);
+    QVERIFY(directMediaNavigationProvider.loadAt(1).canceled);
 
-    mediaProvider.deliverIgnoringCancellation(
-        1, { mediaCandidate(firstClip), mediaCandidate(firstFallback) });
+    directMediaNavigationProvider.deliverIgnoringCancellation(1,
+        { directMediaNavigationCandidate(firstClip),
+            directMediaNavigationCandidate(firstFallback) });
 
     QCOMPARE(fileOperations.operationCount(), std::size_t(0));
     QCOMPARE(session->sourceUrl(), secondClip);
@@ -1621,13 +1672,15 @@ void TestKiriDocumentSession::pendingDirectMediaDeletionCandidateLoadIsCanceledB
 
 void TestKiriDocumentSession::videoDeletionUsesOriginalUrlAndOpensMediaFallback()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     const QUrl clip = QUrl(QStringLiteral("zip:///path/archive.zip!/chapter/01.mp4"));
     const QUrl fallback = QUrl(QStringLiteral("zip:///path/archive.zip!/chapter/02.jpg"));
-    mediaProvider.setMedia(QUrl(QStringLiteral("zip:///path/archive.zip!/chapter/")),
-        { mediaCandidate(clip), mediaCandidate(fallback) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider, &fileOperations);
+    directMediaNavigationProvider.setMedia(
+        QUrl(QStringLiteral("zip:///path/archive.zip!/chapter/")),
+        { directMediaNavigationCandidate(clip), directMediaNavigationCandidate(fallback) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSession(directMediaNavigationProvider, &fileOperations);
     session->setSourceUrl(clip);
 
     session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
@@ -1645,11 +1698,13 @@ void TestKiriDocumentSession::videoDeletionUsesOriginalUrlAndOpensMediaFallback(
 
 void TestKiriDocumentSession::canceledVideoDeletionKeepsCurrentVideo()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     const QUrl clip = localUrl(QStringLiteral("/media/01.mov"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")), { mediaCandidate(clip) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider, &fileOperations);
+    directMediaNavigationProvider.setMedia(
+        localUrl(QStringLiteral("/media/")), { directMediaNavigationCandidate(clip) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSession(directMediaNavigationProvider, &fileOperations);
     session->setSourceUrl(clip);
 
     session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::DeletePermanently);
@@ -1663,15 +1718,18 @@ void TestKiriDocumentSession::canceledVideoDeletionKeepsCurrentVideo()
 
 void TestKiriDocumentSession::staleVideoDeletionCompletionAfterSourceChangeIsIgnored()
 {
-    FakeMediaCandidateProvider mediaProvider;
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     const QUrl firstClip = localUrl(QStringLiteral("/first/01.mov"));
     const QUrl staleFallback = localUrl(QStringLiteral("/first/02.png"));
     const QUrl secondClip = localUrl(QStringLiteral("/second/01.mov"));
-    mediaProvider.setMedia(localUrl(QStringLiteral("/first/")),
-        { mediaCandidate(firstClip), mediaCandidate(staleFallback) });
-    mediaProvider.setMedia(localUrl(QStringLiteral("/second/")), { mediaCandidate(secondClip) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider, &fileOperations);
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/first/")),
+        { directMediaNavigationCandidate(firstClip),
+            directMediaNavigationCandidate(staleFallback) });
+    directMediaNavigationProvider.setMedia(
+        localUrl(QStringLiteral("/second/")), { directMediaNavigationCandidate(secondClip) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSession(directMediaNavigationProvider, &fileOperations);
     session->setSourceUrl(firstClip);
 
     session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);

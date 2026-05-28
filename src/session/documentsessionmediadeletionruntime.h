@@ -7,7 +7,7 @@
 #include "async/imageasyncoperationstate.h"
 #include "async/imageiojob.h"
 #include "document/filedeletion.h"
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationmodel.h"
 #include "session/documentsessionmediadeletionplan.h"
 #include "session/documentsessiontypes.h"
 
@@ -33,7 +33,7 @@ public:
     ~DocumentSessionMediaDeletionRuntime();
 
     DocumentSessionMediaDeletionStartPlan start(QObject *receiver, FileDeletionMode mode,
-        std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl,
+        std::vector<DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl,
         DocumentSessionKind documentKind, CompletionCallback callback);
     void cancel();
     bool active() const;

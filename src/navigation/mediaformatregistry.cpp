@@ -7,7 +7,7 @@
 #include "bridge/rustqtconversion.h"
 #include "decoding/imageformatregistry.h"
 #include "kiriview/src/policy/mediaformatregistry.cxx.h"
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationmodel.h"
 
 #include <KLocalizedString>
 #include <QUrl>
@@ -55,7 +55,8 @@ bool isSupportedDirectVideoUrl(const QUrl &url)
     return matchesUrlFileNameOrString(url, KiriView::isSupportedDirectVideoFileName);
 }
 
-bool isSupportedStillImageMediaCandidate(const MediaNavigationCandidate &candidate)
+bool isSupportedStillImageDirectMediaNavigationCandidate(
+    const DirectMediaNavigationCandidate &candidate)
 {
     return isSupportedImageFileName(candidate.name) || isSupportedDirectImageUrl(candidate.url);
 }

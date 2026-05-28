@@ -9,9 +9,9 @@ namespace KiriView::Bridge {
 RustPredecodeSourceProfile rustPredecodeSourceProfile(PredecodeSourceProfile profile)
 {
     return RustPredecodeSourceProfile {
-        profile.neutralPreviousImageCount,
-        profile.neutralNextImageCount,
-        profile.biasedDirectionImageCount,
+        profile.neutralPreviousPageCount,
+        profile.neutralNextPageCount,
+        profile.biasedDirectionPageCount,
         profile.parallelLimit,
     };
 }

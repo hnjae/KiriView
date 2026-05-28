@@ -16,7 +16,7 @@ src/policy/imageformatregistry.rs
 src/policy/imageinputclassification.rs
 src/policy/mediaformatregistry.rs
 src/policy/imagemath.rs
-src/policy/imagenavigationmodel.rs
+src/policy/imagedocumentpagenavigation.rs
 src/policy/imageopenworkflow.rs
 src/policy/imagerendergeometry.rs
 src/policy/imagespreadgeometry.rs

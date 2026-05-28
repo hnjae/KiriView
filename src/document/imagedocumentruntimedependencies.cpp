@@ -28,8 +28,8 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     const bool useMediaEntrySourceStore = shouldUseMediaEntrySourceStore(overrides);
     MediaEntrySourceFactory mediaEntrySourceFactory = std::move(overrides.mediaEntrySourceFactory);
     overrides.mediaEntrySourceFactory = {};
-    overrides.candidateProvider
-        = imageNavigationCandidateProviderWithDefaults(std::move(overrides.candidateProvider));
+    overrides.candidateProvider = imageDocumentPageNavigationCandidateProviderWithDefaults(
+        std::move(overrides.candidateProvider));
     overrides.imageDecode = imageDecodeDependenciesWithDefaults(std::move(overrides.imageDecode));
     overrides.fileOperations
         = fileOperationProviderWithDefault(std::move(overrides.fileOperations));

@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_ACTIVENAVIGATIONTHUMBNAILPROJECTION_H
 #define KIRIVIEW_ACTIVENAVIGATIONTHUMBNAILPROJECTION_H
 
-#include "navigation/imagenavigationtypes.h"
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationmodel.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 #include "session/activenavigationprojection.h"
 
 #include <QString>
@@ -28,8 +28,8 @@ struct ActiveNavigationThumbnailRow {
 
 std::vector<ActiveNavigationThumbnailRow> projectActiveNavigationThumbnailRows(
     ActiveNavigationSourceKind sourceKind, const ActiveNavigationSnapshot &navigation,
-    const std::vector<MediaNavigationCandidate> &mediaCandidates,
-    const ImagePageNavigationSnapshot &imageNavigationSnapshot);
+    const std::vector<DirectMediaNavigationCandidate> &directMediaNavigationCandidates,
+    const ImageDocumentPageNavigationSnapshot &imageDocumentPageNavigationSnapshot);
 }
 
 #endif

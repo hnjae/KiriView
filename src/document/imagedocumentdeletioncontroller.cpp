@@ -20,8 +20,8 @@ QString genericFileDeletionErrorMessage()
 namespace KiriView {
 ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent,
     ImageDocumentState &state, ImagePresentationController &presentationController,
-    ImageNavigationCandidateProvider candidateProvider, FileOperationProvider fileOperationProvider,
-    Callbacks callbacks)
+    ImageDocumentPageCandidateProvider candidateProvider,
+    FileOperationProvider fileOperationProvider, Callbacks callbacks)
     : m_parent(parent)
     , m_state(state)
     , m_presentationController(presentationController)

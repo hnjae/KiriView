@@ -24,7 +24,7 @@ class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
 struct ImageDocumentSourceLoadRequest;
-class ImageNavigationService;
+class ImageDocumentPageNavigationService;
 class ImageOpenController;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
@@ -61,7 +61,7 @@ private:
     std::unique_ptr<ImageDocumentDeletionController> m_deletionController;
     std::unique_ptr<ImagePresentationController> m_presentationController;
     std::unique_ptr<ImageOpenController> m_openController;
-    std::unique_ptr<ImageNavigationService> m_navigationService;
+    std::unique_ptr<ImageDocumentPageNavigationService> m_navigationService;
     std::unique_ptr<ImageDocumentPredecodeController> m_predecodeController;
     std::unique_ptr<ImageSpreadPresentationController> m_spreadController;
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;

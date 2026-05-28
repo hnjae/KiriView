@@ -6,7 +6,7 @@
 
 #include "document/imagedocumentruntimedependencies.h"
 #include "document/imagedocumenttypes.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
@@ -72,13 +72,13 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(QStringList openDialogNameFilters READ openDialogNameFilters CONSTANT)
     Q_PROPERTY(int currentPageNumber READ currentPageNumber NOTIFY pageNavigationChanged)
     Q_PROPERTY(int currentLastPageNumber READ currentLastPageNumber NOTIFY pageNavigationChanged)
-    Q_PROPERTY(int imageCount READ imageCount NOTIFY pageNavigationChanged)
+    Q_PROPERTY(int pageCount READ pageCount NOTIFY pageNavigationChanged)
     Q_PROPERTY(bool containerNavigationAvailable READ containerNavigationAvailable NOTIFY
             containerNavigationChanged)
     Q_PROPERTY(bool ordinaryDirectMediaScopeActive READ ordinaryDirectMediaScopeActive NOTIFY
-            mediaScopeChanged)
-    Q_PROPERTY(
-        bool openedCollectionScopeActive READ openedCollectionScopeActive NOTIFY mediaScopeChanged)
+            imageDocumentSourceScopeChanged)
+    Q_PROPERTY(bool openedCollectionScopeActive READ openedCollectionScopeActive NOTIFY
+            imageDocumentSourceScopeChanged)
     Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress NOTIFY
             fileDeletionInProgressChanged)
     Q_PROPERTY(bool twoPageModeEnabled READ twoPageModeEnabled WRITE setTwoPageModeEnabled NOTIFY
@@ -159,8 +159,8 @@ public:
     QStringList openDialogNameFilters() const;
     int currentPageNumber() const;
     int currentLastPageNumber() const;
-    int imageCount() const;
-    KiriView::ImagePageNavigationSnapshot pageNavigationSnapshot() const;
+    int pageCount() const;
+    KiriView::ImageDocumentPageNavigationSnapshot pageNavigationSnapshot() const;
     bool containerNavigationAvailable() const;
     bool ordinaryDirectMediaScopeActive() const;
     bool openedCollectionScopeActive() const;
@@ -180,8 +180,8 @@ public:
 
     void setRenderContextProvider(RenderContextProvider provider);
 
-    Q_INVOKABLE void openPreviousImage();
-    Q_INVOKABLE void openNextImage();
+    Q_INVOKABLE void openPreviousPage();
+    Q_INVOKABLE void openNextPage();
     Q_INVOKABLE void openPreviousSinglePage();
     Q_INVOKABLE void openNextSinglePage();
     Q_INVOKABLE void openImageAtPage(int pageNumber);
@@ -215,7 +215,7 @@ Q_SIGNALS:
     void maximumManualZoomPercentChanged();
     void pageNavigationChanged();
     void containerNavigationChanged();
-    void mediaScopeChanged();
+    void imageDocumentSourceScopeChanged();
     void fileDeletionInProgressChanged();
     void twoPageModeChanged();
     void rightToLeftReadingChanged();

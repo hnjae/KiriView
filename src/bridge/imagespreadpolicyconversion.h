@@ -6,7 +6,7 @@
 
 #include "kiriview/src/policy/imagespreadnavigation.cxx.h"
 #include "kiriview/src/policy/imagespreadpolicy.cxx.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 #include "presentation/imagespreadmodepolicy.h"
 #include "presentation/imagespreadnavigation.h"
 #include "presentation/imagespreadsecondarypagerefreshpolicy.h"

@@ -8,7 +8,7 @@ PredecodeWindowPlan mediaPredecodeWindowPlan(
     const MediaPredecodeEligibilitySnapshot &snapshot, PredecodePolicyInput policyInput)
 {
     const PredecodeSchedulePlan schedule = predecodeSchedulePlan(
-        snapshot.mediaCandidateCount, snapshot.currentMediaIndex, policyInput);
+        snapshot.directMediaNavigationCandidateCount, snapshot.currentMediaIndex, policyInput);
     return PredecodeWindowPlan {
         OpenedCollectionScopeLocation {},
         mediaPredecodeEligibleUrlsForTargetIndices(snapshot, schedule.targetIndices),

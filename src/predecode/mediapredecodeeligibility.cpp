@@ -9,18 +9,18 @@
 
 namespace KiriView {
 MediaPredecodeEligibilitySnapshot mediaPredecodeEligibilitySnapshot(
-    const std::vector<MediaNavigationCandidate> &candidates, const QUrl &currentUrl)
+    const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
     MediaPredecodeEligibilitySnapshot snapshot {
         candidates.size(),
-        mediaNavigationCandidateIndex(candidates, currentUrl),
+        directMediaNavigationCandidateIndex(candidates, currentUrl),
         {},
     };
     snapshot.images.reserve(candidates.size());
 
     for (std::size_t index = 0; index < candidates.size(); ++index) {
-        const MediaNavigationCandidate &candidate = candidates.at(index);
-        if (isSupportedStillImageMediaCandidate(candidate)) {
+        const DirectMediaNavigationCandidate &candidate = candidates.at(index);
+        if (isSupportedStillImageDirectMediaNavigationCandidate(candidate)) {
             snapshot.images.push_back(MediaPredecodeEligibleImage { candidate.url, index });
         }
     }

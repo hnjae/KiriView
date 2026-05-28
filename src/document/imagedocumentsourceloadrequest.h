@@ -4,23 +4,23 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTSOURCELOADREQUEST_H
 #define KIRIVIEW_IMAGEDOCUMENTSOURCELOADREQUEST_H
 
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 
 #include <QUrl>
 
 namespace KiriView {
 struct ImageDocumentSourceLoadRequest {
     QUrl sourceUrl;
-    ImageNavigationCandidateKind sourceKind = ImageNavigationCandidateKind::Image;
+    ImageDocumentPageKind sourceKind = ImageDocumentPageKind::Image;
     QUrl containerNavigationUrl;
     bool preserveTwoPageSpreadTransition = false;
 
     static ImageDocumentSourceLoadRequest fromUrl(const QUrl &sourceUrl)
     {
-        return fromTarget(ImageNavigationTarget { sourceUrl, ImageNavigationCandidateKind::Image });
+        return fromTarget(ImageDocumentPageTarget { sourceUrl, ImageDocumentPageKind::Image });
     }
 
-    static ImageDocumentSourceLoadRequest fromTarget(const ImageNavigationTarget &target)
+    static ImageDocumentSourceLoadRequest fromTarget(const ImageDocumentPageTarget &target)
     {
         return ImageDocumentSourceLoadRequest { target.url, target.kind, QUrl(), false };
     }
@@ -29,11 +29,11 @@ struct ImageDocumentSourceLoadRequest {
         const QUrl &imageUrl, const QUrl &containerUrl)
     {
         return fromContainerTarget(
-            ImageNavigationTarget { imageUrl, ImageNavigationCandidateKind::Image }, containerUrl);
+            ImageDocumentPageTarget { imageUrl, ImageDocumentPageKind::Image }, containerUrl);
     }
 
     static ImageDocumentSourceLoadRequest fromContainerTarget(
-        const ImageNavigationTarget &target, const QUrl &containerUrl)
+        const ImageDocumentPageTarget &target, const QUrl &containerUrl)
     {
         return ImageDocumentSourceLoadRequest { target.url, target.kind, containerUrl, false };
     }
@@ -42,12 +42,12 @@ struct ImageDocumentSourceLoadRequest {
         const QUrl &sourceUrl, bool preserveTwoPageSpreadTransition)
     {
         return fromPageNavigationTarget(
-            ImageNavigationTarget { sourceUrl, ImageNavigationCandidateKind::Image },
+            ImageDocumentPageTarget { sourceUrl, ImageDocumentPageKind::Image },
             preserveTwoPageSpreadTransition);
     }
 
     static ImageDocumentSourceLoadRequest fromPageNavigationTarget(
-        const ImageNavigationTarget &target, bool preserveTwoPageSpreadTransition)
+        const ImageDocumentPageTarget &target, bool preserveTwoPageSpreadTransition)
     {
         return ImageDocumentSourceLoadRequest {
             target.url,

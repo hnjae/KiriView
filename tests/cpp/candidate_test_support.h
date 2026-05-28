@@ -5,8 +5,8 @@
 #define KIRIVIEW_TESTS_CANDIDATE_TEST_SUPPORT_H
 
 #include "async/imageiojob.h"
-#include "navigation/imagecandidateprovider.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagecandidateprovider.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 
 #include <QObject>
 #include <QString>
@@ -44,17 +44,17 @@ inline QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
     return pageUrl;
 }
 
-inline ImageNavigationCandidate imageCandidate(const QUrl &url)
+inline ImageDocumentPageCandidate imageDocumentPageCandidate(const QUrl &url)
 {
-    return ImageNavigationCandidate { url, url.fileName() };
+    return ImageDocumentPageCandidate { url, url.fileName() };
 }
 
-inline ImageNavigationCandidate videoCandidate(const QUrl &url)
+inline ImageDocumentPageCandidate videoCandidate(const QUrl &url)
 {
-    return ImageNavigationCandidate {
+    return ImageDocumentPageCandidate {
         url,
         url.fileName(),
-        ImageNavigationCandidateKind::Video,
+        ImageDocumentPageKind::Video,
     };
 }
 
@@ -113,19 +113,19 @@ private:
     std::map<QString, QString> m_errorsByUrl;
 };
 
-class FakeImageNavigationCandidateProvider
+class FakeImageDocumentPageCandidateProvider
 {
     struct FakeCandidateChangeSubscription;
 
 public:
     void setDirectoryImages(
-        const QUrl &directoryUrl, std::vector<ImageNavigationCandidate> candidates)
+        const QUrl &directoryUrl, std::vector<ImageDocumentPageCandidate> candidates)
     {
-        m_directoryImages.setItems(directoryUrl, std::move(candidates));
+        m_directoryImageDocumentPages.setItems(directoryUrl, std::move(candidates));
     }
 
     void setOpenedCollectionCandidates(
-        const QUrl &archiveRootUrl, std::vector<ImageNavigationCandidate> candidates)
+        const QUrl &archiveRootUrl, std::vector<ImageDocumentPageCandidate> candidates)
     {
         m_openedCollectionCandidates.setItems(archiveRootUrl, std::move(candidates));
     }
@@ -138,7 +138,7 @@ public:
 
     void setDirectoryImageError(const QUrl &directoryUrl, QString errorString)
     {
-        m_directoryImages.setError(directoryUrl, std::move(errorString));
+        m_directoryImageDocumentPages.setError(directoryUrl, std::move(errorString));
     }
 
     void setOpenedCollectionCandidateError(const QUrl &archiveRootUrl, QString errorString)
@@ -152,7 +152,7 @@ public:
     }
 
     void emitDirectoryImageChanges(
-        const QUrl &directoryUrl, std::vector<ImageNavigationCandidate> candidates)
+        const QUrl &directoryUrl, std::vector<ImageDocumentPageCandidate> candidates)
     {
         const QString key = keyForUrl(directoryUrl);
         for (const std::shared_ptr<FakeCandidateChangeSubscription> &subscription :
@@ -186,12 +186,12 @@ public:
             }));
     }
 
-    ImageNavigationCandidateProvider provider()
+    ImageDocumentPageCandidateProvider provider()
     {
-        return ImageNavigationCandidateProvider {
-            [this](QObject *, QUrl directoryUrl, ImageCandidatesCallback callback,
+        return ImageDocumentPageCandidateProvider {
+            [this](QObject *, QUrl directoryUrl, ImageDocumentPageCandidatesCallback callback,
                 ErrorCallback errorCallback) {
-                m_directoryImages.load(
+                m_directoryImageDocumentPages.load(
                     std::move(directoryUrl), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
@@ -202,13 +202,13 @@ public:
                 return ImageIoJob();
             },
             [this](QObject *, OpenedCollectionScopeLocation openedCollectionScope,
-                ImageCandidatesCallback callback, ErrorCallback errorCallback) {
+                ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) {
                 m_openedCollectionCandidates.load(
                     openedCollectionScope.rootUrl(), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
-            [this](QObject *receiver, QUrl directoryUrl, ImageCandidatesCallback callback,
-                ErrorCallback) {
+            [this](QObject *receiver, QUrl directoryUrl,
+                ImageDocumentPageCandidatesCallback callback, ErrorCallback) {
                 return subscribeToDirectoryImageChanges(
                     receiver, std::move(directoryUrl), std::move(callback));
             },
@@ -219,12 +219,12 @@ private:
     struct FakeCandidateChangeSubscription {
         QObject *object = nullptr;
         QString key;
-        ImageCandidatesCallback callback;
+        ImageDocumentPageCandidatesCallback callback;
         bool canceled = false;
     };
 
     ImageIoJob subscribeToDirectoryImageChanges(
-        QObject *receiver, QUrl directoryUrl, ImageCandidatesCallback callback)
+        QObject *receiver, QUrl directoryUrl, ImageDocumentPageCandidatesCallback callback)
     {
         auto subscription = std::make_shared<FakeCandidateChangeSubscription>();
         subscription->object = new QObject(receiver);
@@ -246,8 +246,8 @@ private:
         return job;
     }
 
-    FakeCandidateListing<std::vector<ImageNavigationCandidate>> m_directoryImages;
-    FakeCandidateListing<std::vector<ImageNavigationCandidate>> m_openedCollectionCandidates;
+    FakeCandidateListing<std::vector<ImageDocumentPageCandidate>> m_directoryImageDocumentPages;
+    FakeCandidateListing<std::vector<ImageDocumentPageCandidate>> m_openedCollectionCandidates;
     FakeCandidateListing<std::vector<ContainerNavigationCandidate>> m_containerCandidates;
     std::vector<std::shared_ptr<FakeCandidateChangeSubscription>>
         m_directoryImageChangeSubscriptions;

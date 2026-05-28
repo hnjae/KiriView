@@ -23,7 +23,7 @@ RustImageSpreadSecondaryPageRefreshState rustImageSpreadSecondaryPageRefreshStat
     const ImageSpreadSecondaryPageRefreshState &state)
 {
     return RustImageSpreadSecondaryPageRefreshState { state.twoPageModeActive,
-        state.currentPageNumber, state.imageCount, state.primaryPageIsWide, state.nextPageAvailable,
+        state.currentPageNumber, state.pageCount, state.primaryPageIsWide, state.nextPageAvailable,
         state.nextPageIsWide, state.currentSecondaryMatchesNext };
 }
 
@@ -67,7 +67,7 @@ RustImageSpreadNavigationState rustImageSpreadNavigationState(
     const ImageSpreadNavigationState &state)
 {
     return RustImageSpreadNavigationState { state.twoPageModeActive, state.currentPageNumber,
-        state.imageCount, state.secondaryPageVisible, state.previousPageIsWide };
+        state.pageCount, state.secondaryPageVisible, state.previousPageIsWide };
 }
 
 ImageSpreadPageNavigationTarget imageSpreadPageNavigationTargetFromRust(

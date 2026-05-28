@@ -13,11 +13,11 @@
 namespace KiriView {
 struct DocumentSessionPublicProjectionInput {
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
-    bool directImageLoadMayUseMediaScope = false;
+    bool directImageLoadMayUseImageDocumentSourceScope = false;
     bool imageSourceMayRepresentDocument = false;
     bool fileDeletionInProgress = false;
-    MediaActiveNavigationInput mediaNavigation;
-    ImageDocumentActiveNavigationInput imageDocumentNavigation;
+    DirectMediaActiveNavigationInput directMediaNavigation;
+    ImageDocumentPageActiveNavigationInput imageDocumentPageNavigation;
     QString imageWindowTitleFileName;
     QSize imageDirectMediaSize;
     QString videoWindowTitleFileName;

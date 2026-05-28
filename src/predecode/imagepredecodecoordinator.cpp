@@ -15,14 +15,15 @@
 
 namespace KiriView {
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent)
-    : ImagePredecodeCoordinator(parent, ImageNavigationCandidateProvider {},
+    : ImagePredecodeCoordinator(parent, ImageDocumentPageCandidateProvider {},
           ImageDecodeDependencies {}, PowerSaverProvider {}, defaultPredecodeCacheByteBudget())
 {
 }
 
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
-    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies,
-    PowerSaverProvider powerSaverProvider, qsizetype cacheByteBudget)
+    ImageDocumentPageCandidateProvider candidateProvider,
+    ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,
+    qsizetype cacheByteBudget)
     : QObject(parent)
     , m_candidateRepository(std::move(candidateProvider))
     , m_loadController(this, std::move(decodeDependencies), cacheByteBudget)
@@ -79,7 +80,7 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
 
     m_listerJob = m_candidateRepository.loadImages(
         this, plan.candidateList->context,
-        [this, schedule, plan](const std::vector<ImageNavigationCandidate> &candidates) {
+        [this, schedule, plan](const std::vector<ImageDocumentPageCandidate> &candidates) {
             qCDebug(kiriviewPredecodeLog)
                 << "image predecode candidates loaded"
                 << "generation" << schedule.generation << "count" << candidates.size();

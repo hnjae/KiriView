@@ -14,18 +14,18 @@
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::imagesDirectoryUrl;
 using KiriView::TestSupport::indexedImageUrl;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::videoCandidate;
 
-std::vector<KiriView::ImageNavigationCandidate> imageCandidates(int count)
+std::vector<KiriView::ImageDocumentPageCandidate> imageDocumentPageCandidates(int count)
 {
-    std::vector<KiriView::ImageNavigationCandidate> candidates;
+    std::vector<KiriView::ImageDocumentPageCandidate> candidates;
     candidates.reserve(static_cast<std::size_t>(count));
     for (int index = 0; index < count; ++index) {
-        candidates.push_back(imageCandidate(indexedImageUrl(index)));
+        candidates.push_back(imageDocumentPageCandidate(indexedImageUrl(index)));
     }
     return candidates;
 }
@@ -85,7 +85,7 @@ void TestPredecodeWindowPlan::regularImagePlansCandidateContextAndNeutralWindow(
     QCOMPARE(startPlan.candidateList->context.currentUrl(), indexedImageUrl(5));
 
     const KiriView::PredecodeWindowPlan windowPlan
-        = KiriView::predecodeWindowPlanForCandidates(startPlan, imageCandidates(15));
+        = KiriView::predecodeWindowPlanForCandidates(startPlan, imageDocumentPageCandidates(15));
 
     QCOMPARE(windowPlan.parallelLimit, std::size_t(1));
     QCOMPARE(windowPlan.urls.size(), std::size_t(4));
@@ -139,7 +139,7 @@ void TestPredecodeWindowPlan::directoryCollectionUsesDocumentParallelLimit()
     QCOMPARE(startPlan.fallbackWindow.openedCollectionScope, directoryCollection);
 
     const KiriView::PredecodeWindowPlan windowPlan
-        = KiriView::predecodeWindowPlanForCandidates(startPlan, imageCandidates(15));
+        = KiriView::predecodeWindowPlanForCandidates(startPlan, imageDocumentPageCandidates(15));
 
     QCOMPARE(windowPlan.parallelLimit, std::size_t(2));
     QVERIFY(windowPlan.urls.size() >= 2);
@@ -163,9 +163,9 @@ void TestPredecodeWindowPlan::predecodeWindowSkipsOpenedCollectionVideoCandidate
     const KiriView::PredecodeWindowPlan windowPlan
         = KiriView::predecodeWindowPlanForCandidates(startPlan,
             {
-                imageCandidate(displayedUrl),
+                imageDocumentPageCandidate(displayedUrl),
                 videoCandidate(videoUrl),
-                imageCandidate(nextImageUrl),
+                imageDocumentPageCandidate(nextImageUrl),
             });
 
     QCOMPARE(windowPlan.urls.size(), std::size_t(2));
@@ -194,8 +194,8 @@ void TestPredecodeWindowPlan::archiveWindowPreservesOpenedCollectionScopeContext
     const KiriView::PredecodeWindowPlan windowPlan
         = KiriView::predecodeWindowPlanForCandidates(startPlan,
             {
-                imageCandidate(displayedUrl),
-                imageCandidate(nextUrl),
+                imageDocumentPageCandidate(displayedUrl),
+                imageDocumentPageCandidate(nextUrl),
             });
 
     QCOMPARE(windowPlan.openedCollectionScope, *openedCollectionScope);
@@ -214,9 +214,9 @@ void TestPredecodeWindowPlan::missingCurrentCandidateYieldsEmptyWindow()
     const KiriView::PredecodeWindowPlan windowPlan
         = KiriView::predecodeWindowPlanForCandidates(startPlan,
             {
-                imageCandidate(indexedImageUrl(0)),
-                imageCandidate(indexedImageUrl(1)),
-                imageCandidate(indexedImageUrl(2)),
+                imageDocumentPageCandidate(indexedImageUrl(0)),
+                imageDocumentPageCandidate(indexedImageUrl(1)),
+                imageDocumentPageCandidate(indexedImageUrl(2)),
             });
 
     QCOMPARE(windowPlan.parallelLimit, std::size_t(1));
@@ -238,7 +238,7 @@ void TestPredecodeWindowPlan::candidateListingFailureUsesPlannedFallbackWindow()
             startPlan.fallbackWindow,
             std::nullopt,
         },
-        imageCandidates(15));
+        imageDocumentPageCandidates(15));
 
     QCOMPARE(fallbackWindow.parallelLimit, startPlan.fallbackWindow.parallelLimit);
     QVERIFY(fallbackWindow.urls.empty());

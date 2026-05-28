@@ -10,8 +10,8 @@
 #include "decoding/imagedecodejob.h"
 #include "imageloadsessiontracker.h"
 #include "imageloadtypes.h"
-#include "navigation/imagecandidateprovider.h"
-#include "navigation/imagecandidaterepository.h"
+#include "navigation/imagedocumentpagecandidateprovider.h"
+#include "navigation/imagedocumentpagecandidaterepository.h"
 #include "predecode/predecodedimage.h"
 
 #include <QByteArray>
@@ -45,9 +45,9 @@ public:
 
     explicit ImageLoader(QObject *parent = nullptr);
     ImageLoader(QObject *parent, Callbacks callbacks);
-    ImageLoader(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
+    ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies);
-    ImageLoader(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
+    ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, Callbacks callbacks);
 
     void start(ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
@@ -67,7 +67,7 @@ private:
 
     Callbacks m_callbacks;
     ImageDecodeJob m_decodeJob;
-    ImageCandidateRepository m_candidateRepository;
+    ImageDocumentPageCandidateRepository m_candidateRepository;
     ImageIoJob m_openedCollectionCandidateLoadJob;
     ImageLoadSessionTracker m_sessionTracker;
 };

@@ -73,7 +73,7 @@ private Q_SLOTS:
     void archiveInteriorUrlsResolveToTheirRootAndTitle();
     void archiveCollectionPagesResolveToArchiveZoomScope();
     void directArchivePagesResolveToZoomScopeOnly();
-    void directDirectoryPagesResolveToDirectoryCollectionScope();
+    void directoryCollectionPagesResolveToDirectoryCollectionScope();
     void regularImagesDoNotResolveToZoomScopes();
     void explicitKdeArchiveUrlImagesDoNotResolveToZoomScopes();
 };
@@ -203,7 +203,7 @@ void TestImageDocumentLocation::directArchivePagesResolveToZoomScopeOnly()
     QCOMPARE(KiriView::zoomScopeUrlForLocation(location), archiveUrl);
 }
 
-void TestImageDocumentLocation::directDirectoryPagesResolveToDirectoryCollectionScope()
+void TestImageDocumentLocation::directoryCollectionPagesResolveToDirectoryCollectionScope()
 {
     QTemporaryDir directory;
     QVERIFY(directory.isValid());

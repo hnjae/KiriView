@@ -19,13 +19,13 @@
 namespace {
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::comicBookContainerCandidate;
-using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::localUrl;
 
-struct ManualImageCandidateLoad {
+struct ManualImageDocumentPageCandidateLoad {
     QObject *object = nullptr;
     QUrl url;
-    KiriView::ImageCandidatesCallback callback;
+    KiriView::ImageDocumentPageCandidatesCallback callback;
     KiriView::ErrorCallback errorCallback;
     KiriView::ImageIoJobCompletion completion;
     bool canceled = false;
@@ -34,43 +34,43 @@ struct ManualImageCandidateLoad {
 class ManualDeletionFallbackCandidateProvider
 {
 public:
-    KiriView::ImageNavigationCandidateProvider provider()
+    KiriView::ImageDocumentPageCandidateProvider provider()
     {
-        KiriView::ImageNavigationCandidateProvider provider;
-        provider.directoryImages = [this](QObject *receiver, QUrl directoryUrl,
-                                       KiriView::ImageCandidatesCallback callback,
-                                       KiriView::ErrorCallback errorCallback) {
-            auto load = std::make_shared<ManualImageCandidateLoad>();
-            load->url = std::move(directoryUrl);
-            load->callback = std::move(callback);
-            load->errorCallback = std::move(errorCallback);
+        KiriView::ImageDocumentPageCandidateProvider provider;
+        provider.directoryImageDocumentPages
+            = [this](QObject *receiver, QUrl directoryUrl,
+                  KiriView::ImageDocumentPageCandidatesCallback callback,
+                  KiriView::ErrorCallback errorCallback) {
+                  auto load = std::make_shared<ManualImageDocumentPageCandidateLoad>();
+                  load->url = std::move(directoryUrl);
+                  load->callback = std::move(callback);
+                  load->errorCallback = std::move(errorCallback);
 
-            KiriView::ImageIoJob job
-                = KiriView::TestSupport::Detail::startManualIoJob(receiver, load);
-            m_imageLoads.push_back(load);
-            return job;
-        };
+                  KiriView::ImageIoJob job
+                      = KiriView::TestSupport::Detail::startManualIoJob(receiver, load);
+                  m_imageLoads.push_back(load);
+                  return job;
+              };
         provider.directoryContainers
             = [](QObject *, QUrl, KiriView::ContainerCandidatesCallback, KiriView::ErrorCallback) {
                   return KiriView::ImageIoJob();
               };
         provider.openedCollectionCandidates
             = [](QObject *, KiriView::OpenedCollectionScopeLocation,
-                  KiriView::ImageCandidatesCallback,
+                  KiriView::ImageDocumentPageCandidatesCallback,
                   KiriView::ErrorCallback) { return KiriView::ImageIoJob(); };
-        provider.directoryImageChanges
-            = [](QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback) {
-                  return KiriView::ImageIoJob();
-              };
+        provider.directoryImageDocumentPageChanges
+            = [](QObject *, QUrl, KiriView::ImageDocumentPageCandidatesCallback,
+                  KiriView::ErrorCallback) { return KiriView::ImageIoJob(); };
         return provider;
     }
 
     std::size_t imageLoadCount() const { return m_imageLoads.size(); }
 
-    ManualImageCandidateLoad &backImageLoad() { return *m_imageLoads.back(); }
+    ManualImageDocumentPageCandidateLoad &backImageLoad() { return *m_imageLoads.back(); }
 
-    void deliverBackImageCandidatesIgnoringCancellation(
-        std::vector<KiriView::ImageNavigationCandidate> candidates)
+    void deliverBackImageDocumentPageCandidatesIgnoringCancellation(
+        std::vector<KiriView::ImageDocumentPageCandidate> candidates)
     {
         if (m_imageLoads.back()->callback) {
             m_imageLoads.back()->callback(std::move(candidates));
@@ -78,7 +78,7 @@ public:
     }
 
 private:
-    std::vector<std::shared_ptr<ManualImageCandidateLoad>> m_imageLoads;
+    std::vector<std::shared_ptr<ManualImageDocumentPageCandidateLoad>> m_imageLoads;
 };
 
 template <typename Operation>
@@ -121,14 +121,14 @@ private Q_SLOTS:
 void TestImageDocumentDeletionFallbackController::imageFallbackOpensNextSibling()
 {
     QObject parent;
-    KiriView::TestSupport::FakeImageNavigationCandidateProvider provider;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider provider;
     std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
     const QUrl currentUrl = localUrl(QStringLiteral("/images/02.png"));
     const QUrl nextUrl = localUrl(QStringLiteral("/images/03.png"));
     provider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(localUrl(QStringLiteral("/images/01.png"))),
-            imageCandidate(nextUrl),
+            imageDocumentPageCandidate(localUrl(QStringLiteral("/images/01.png"))),
+            imageDocumentPageCandidate(nextUrl),
         });
 
     KiriView::ImageDocumentDeletionFallbackController controller(
@@ -137,7 +137,7 @@ void TestImageDocumentDeletionFallbackController::imageFallbackOpensNextSibling(
         });
 
     controller.open(KiriView::ImageRemovalFallback {
-        KiriView::ImageCandidateListContext::forDirectory(
+        KiriView::ImageDocumentPageCandidateListContext::forDirectory(
             currentUrl, localUrl(QStringLiteral("/images/"))),
         currentUrl,
         QStringLiteral("02.png"),
@@ -161,7 +161,7 @@ void TestImageDocumentDeletionFallbackController::canceledImageFallbackCompletio
         });
 
     controller.open(KiriView::ImageRemovalFallback {
-        KiriView::ImageCandidateListContext::forDirectory(
+        KiriView::ImageDocumentPageCandidateListContext::forDirectory(
             currentUrl, localUrl(QStringLiteral("/images/"))),
         currentUrl,
         QStringLiteral("02.png"),
@@ -171,7 +171,8 @@ void TestImageDocumentDeletionFallbackController::canceledImageFallbackCompletio
     controller.cancel();
     QVERIFY(provider.backImageLoad().canceled);
 
-    provider.deliverBackImageCandidatesIgnoringCancellation({ imageCandidate(nextUrl) });
+    provider.deliverBackImageDocumentPageCandidatesIgnoringCancellation(
+        { imageDocumentPageCandidate(nextUrl) });
 
     QVERIFY(runtimePlans.empty());
 }
@@ -180,7 +181,7 @@ void TestImageDocumentDeletionFallbackController::
     comicBookFallbackTriesPreviousContainerWhenPreferredIsEmpty()
 {
     QObject parent;
-    KiriView::TestSupport::FakeImageNavigationCandidateProvider provider;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider provider;
     std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
     const QUrl previousContainerUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/b.cbz"));
@@ -202,7 +203,7 @@ void TestImageDocumentDeletionFallbackController::
         = archivePageUrl(previousArchive->rootUrl(), QStringLiteral("page.png"));
     provider.setOpenedCollectionCandidates(nextArchive->rootUrl(), {});
     provider.setOpenedCollectionCandidates(
-        previousArchive->rootUrl(), { imageCandidate(previousPageUrl) });
+        previousArchive->rootUrl(), { imageDocumentPageCandidate(previousPageUrl) });
 
     KiriView::ImageDocumentDeletionFallbackController controller(
         &parent, provider.provider(), [&runtimePlans](KiriView::ImageDocumentRuntimePlan plan) {

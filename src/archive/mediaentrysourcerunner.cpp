@@ -31,7 +31,7 @@ const OpenedCollectionScopeLocation &MediaEntrySourceRunner::openedCollectionSco
     return m_openedCollectionScope;
 }
 
-MediaEntrySourceCandidatesResult MediaEntrySourceRunner::loadImageCandidates()
+MediaEntrySourceCandidatesResult MediaEntrySourceRunner::loadImageDocumentPageCandidates()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_cachedCandidates.has_value()) {
@@ -43,7 +43,7 @@ MediaEntrySourceCandidatesResult MediaEntrySourceRunner::loadImageCandidates()
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceCandidatesResult>(*errorString);
     }
 
-    MediaEntrySourceCandidatesResult result = m_source->loadImageCandidates();
+    MediaEntrySourceCandidatesResult result = m_source->loadImageDocumentPageCandidates();
     if (const auto *candidates = std::get_if<MediaEntrySourceCandidates>(&result)) {
         m_cachedCandidates = candidates->candidates;
     }
@@ -61,7 +61,8 @@ MediaEntrySourceImageDataResult MediaEntrySourceRunner::loadImageData(const QUrl
     return m_source->loadImageData(imageUrl);
 }
 
-std::optional<std::vector<ImageNavigationCandidate>> MediaEntrySourceRunner::cachedImageCandidates()
+std::optional<std::vector<ImageDocumentPageCandidate>>
+MediaEntrySourceRunner::cachedImageDocumentPageCandidates()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     return m_cachedCandidates;

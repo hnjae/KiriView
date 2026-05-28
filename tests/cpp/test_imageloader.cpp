@@ -17,8 +17,8 @@
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::imageDecodeDependenciesFor;
+using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
@@ -27,12 +27,12 @@ using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::testImageDecodeFailureString;
 using KiriView::TestSupport::videoCandidate;
 
-using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
 
 struct ManualOpenedCollectionCandidateLoad {
     QObject *object = nullptr;
     KiriView::OpenedCollectionScopeLocation archiveCollection;
-    KiriView::ImageCandidatesCallback callback;
+    KiriView::ImageDocumentPageCandidatesCallback callback;
     KiriView::ErrorCallback errorCallback;
     KiriView::ImageIoJobCompletion completion;
     bool canceled = false;
@@ -43,7 +43,8 @@ class ManualOpenedCollectionCandidateProvider
 public:
     KiriView::ImageIoJob start(QObject *receiver,
         KiriView::OpenedCollectionScopeLocation archiveCollection,
-        KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
+        KiriView::ImageDocumentPageCandidatesCallback callback,
+        KiriView::ErrorCallback errorCallback)
     {
         auto load = std::make_shared<ManualOpenedCollectionCandidateLoad>();
         load->archiveCollection = std::move(archiveCollection);
@@ -59,7 +60,7 @@ public:
 
     const ManualOpenedCollectionCandidateLoad &frontLoad() const { return *m_loads.front(); }
 
-    void finishFrontLoad(std::vector<KiriView::ImageNavigationCandidate> candidates)
+    void finishFrontLoad(std::vector<KiriView::ImageDocumentPageCandidate> candidates)
     {
         KiriView::TestSupport::Detail::finishManualIoJob(m_loads.front(),
             [candidates = std::move(candidates)](
@@ -70,10 +71,10 @@ public:
             });
     }
 
-    KiriView::ImageNavigationCandidateProvider provider()
+    KiriView::ImageDocumentPageCandidateProvider provider()
     {
-        return KiriView::ImageNavigationCandidateProvider {
-            [](QObject *, QUrl, KiriView::ImageCandidatesCallback,
+        return KiriView::ImageDocumentPageCandidateProvider {
+            [](QObject *, QUrl, KiriView::ImageDocumentPageCandidatesCallback,
                 KiriView::ErrorCallback errorCallback) {
                 if (errorCallback) {
                     errorCallback(QStringLiteral("unexpected directory image listing"));
@@ -88,13 +89,13 @@ public:
                 return KiriView::ImageIoJob();
             },
             [this](QObject *receiver, KiriView::OpenedCollectionScopeLocation archiveCollection,
-                KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback) {
+                KiriView::ImageDocumentPageCandidatesCallback callback,
+                KiriView::ErrorCallback errorCallback) {
                 return start(receiver, std::move(archiveCollection), std::move(callback),
                     std::move(errorCallback));
             },
-            [](QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback) {
-                return KiriView::ImageIoJob();
-            },
+            [](QObject *, QUrl, KiriView::ImageDocumentPageCandidatesCallback,
+                KiriView::ErrorCallback) { return KiriView::ImageIoJob(); },
         };
     }
 
@@ -122,7 +123,7 @@ private Q_SLOTS:
     void comicBookArchiveResolvesFirstImage();
     void directArchiveResolvesFirstVideoAsUnsupportedOpenedCollectionVideo();
     void directArchiveResolvesFirstImage();
-    void directDirectoryResolvesFirstImage();
+    void directoryCollectionResolvesFirstImage();
     void explicitKioArchiveImageStaysImageUrlMode();
     void archiveInteriorVideoReportsUnsupportedOpenedCollectionVideo();
     void archiveInteriorImageKeepsComicBookRoot();
@@ -242,7 +243,7 @@ void TestImageLoader::comicBookArchiveResolvesFirstImage()
     const QUrl firstImageUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(*archiveRootUrl,
         {
-            imageCandidate(firstImageUrl),
+            imageDocumentPageCandidate(firstImageUrl),
         });
 
     std::optional<KiriView::ImageLoadSession> resolvedSession;
@@ -310,7 +311,7 @@ void TestImageLoader::directArchiveResolvesFirstImage()
     const QUrl firstImageUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(*archiveRootUrl,
         {
-            imageCandidate(firstImageUrl),
+            imageDocumentPageCandidate(firstImageUrl),
         });
 
     std::optional<KiriView::ImageLoadSession> decodedSession;
@@ -340,7 +341,7 @@ void TestImageLoader::directArchiveResolvesFirstImage()
         KiriView::OpenedCollectionScopeKind::GeneralArchive);
 }
 
-void TestImageLoader::directDirectoryResolvesFirstImage()
+void TestImageLoader::directoryCollectionResolvesFirstImage()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -355,7 +356,7 @@ void TestImageLoader::directDirectoryResolvesFirstImage()
         = archivePageUrl(directoryCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(directoryCollection->rootUrl(),
         {
-            imageCandidate(firstImageUrl),
+            imageDocumentPageCandidate(firstImageUrl),
         });
 
     std::optional<KiriView::ImageLoadSession> decodedSession;
@@ -430,15 +431,15 @@ void TestImageLoader::archiveInteriorVideoReportsUnsupportedOpenedCollectionVide
     const QUrl videoUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.bin"));
 
     loader.start(KiriView::ImageLoadRequest::fromTarget(
-        KiriView::ImageNavigationTarget {
+        KiriView::ImageDocumentPageTarget {
             videoUrl,
-            KiriView::ImageNavigationCandidateKind::Video,
+            KiriView::ImageDocumentPageKind::Video,
         },
         *archiveCollection));
 
     QVERIFY(unsupportedSession.has_value());
     QCOMPARE(unsupportedSession->imageUrl(), videoUrl);
-    QCOMPARE(unsupportedSession->kind(), KiriView::ImageNavigationCandidateKind::Video);
+    QCOMPARE(unsupportedSession->kind(), KiriView::ImageDocumentPageKind::Video);
     QCOMPARE(unsupportedSession->location().openedCollectionScopeRootUrl(),
         archiveCollection->rootUrl());
     QVERIFY(dataLoader.empty());
@@ -531,7 +532,7 @@ void TestImageLoader::staleArchiveListingResultIsIgnored()
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, replacementUrl);
 
-    candidateProvider.finishFrontLoad({ imageCandidate(staleImageUrl) });
+    candidateProvider.finishFrontLoad({ imageDocumentPageCandidate(staleImageUrl) });
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
 
     dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));

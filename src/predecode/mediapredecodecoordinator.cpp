@@ -72,7 +72,7 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
         return;
     }
 
-    const std::vector<MediaNavigationCandidate> *candidates
+    const std::vector<DirectMediaNavigationCandidate> *candidates
         = mediaPredecodeScheduleCandidates(schedule);
     const MediaPredecodeEligibilitySnapshot *eligibility
         = mediaPredecodeScheduleEligibility(schedule);

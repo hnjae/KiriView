@@ -86,7 +86,7 @@ bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerS
             videoMode,
             imageReadyViewerShortcutsEnabled,
             videoInput.viewerShortcutsEnabled,
-            videoInput.mediaNavigationActive,
+            videoInput.directMediaNavigationActive,
             videoInput.fileDeletionInProgress,
         });
 }

@@ -6,7 +6,7 @@
 #include "session/windowtitleprojection.h"
 
 namespace {
-bool imageDocumentPagesArePresent(const KiriView::ImageDocumentActiveNavigationInput &input)
+bool imageDocumentPagesArePresent(const KiriView::ImageDocumentPageActiveNavigationInput &input)
 {
     return input.currentNumber > 0 || input.count > 0;
 }
@@ -18,10 +18,10 @@ KiriView::ActiveNavigationSourceKind sourceKindForInput(
     case KiriView::DocumentSessionKind::Video:
         return KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia;
     case KiriView::DocumentSessionKind::Image:
-        if (input.directImageLoadMayUseMediaScope) {
+        if (input.directImageLoadMayUseImageDocumentSourceScope) {
             return KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia;
         }
-        if (imageDocumentPagesArePresent(input.imageDocumentNavigation)
+        if (imageDocumentPagesArePresent(input.imageDocumentPageNavigation)
             || input.imageSourceMayRepresentDocument) {
             return KiriView::ActiveNavigationSourceKind::ImageDocumentPages;
         }
@@ -75,7 +75,8 @@ bool displayedFileDeletionAvailableForInput(
 
     switch (input.documentKind) {
     case KiriView::DocumentSessionKind::Image:
-        if (input.directImageLoadMayUseMediaScope && input.directImageReplacementPending) {
+        if (input.directImageLoadMayUseImageDocumentSourceScope
+            && input.directImageReplacementPending) {
             return false;
         }
         return input.imageReadyForDeletion;
@@ -96,8 +97,9 @@ DocumentSessionPublicProjection projectDocumentSessionPublicState(
     DocumentSessionPublicProjection projection;
     projection.sourceKind = sourceKindForInput(input);
     projection.boundaryScope = activeNavigationBoundaryScopeForSource(projection.sourceKind);
-    projection.activeNavigation = projectActiveNavigation(projection.sourceKind,
-        input.mediaNavigation, input.imageDocumentNavigation, input.fileDeletionInProgress);
+    projection.activeNavigation
+        = projectActiveNavigation(projection.sourceKind, input.directMediaNavigation,
+            input.imageDocumentPageNavigation, input.fileDeletionInProgress);
     projection.windowTitleSubject = projectWindowTitleSubject(WindowTitleSubjectInput {
         windowTitleFileNameForInput(input),
         projection.sourceKind,

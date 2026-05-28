@@ -6,7 +6,7 @@
 
 #include "location/imagelocation.h"
 #include "mediaentrysourcebackend.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 
 #include <QByteArray>
 #include <QString>
@@ -26,18 +26,18 @@ class MediaEntrySourceWithCandidateSnapshot : public MediaEntrySource
 {
 public:
     explicit MediaEntrySourceWithCandidateSnapshot(
-        std::vector<ImageNavigationCandidate> candidates);
+        std::vector<ImageDocumentPageCandidate> candidates);
 
-    MediaEntrySourceCandidatesResult loadImageCandidates() final;
+    MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates() final;
 
 protected:
-    void replaceCandidateSnapshot(std::vector<ImageNavigationCandidate> candidates);
+    void replaceCandidateSnapshot(std::vector<ImageDocumentPageCandidate> candidates);
 
 private:
-    std::vector<ImageNavigationCandidate> m_candidates;
+    std::vector<ImageDocumentPageCandidate> m_candidates;
 };
 
-std::optional<ImageNavigationCandidate> openedCollectionMediaCandidate(
+std::optional<ImageDocumentPageCandidate> openedCollectionImageDocumentPageCandidate(
     const OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath);
 std::optional<QString> openedCollectionImageEntryPathForRead(
     const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl);
@@ -52,12 +52,12 @@ template <typename Result> Result mediaEntrySourceErrorResult(QString errorStrin
 }
 
 MediaEntrySourceCandidatesResult mediaEntrySourceCandidatesResult(
-    std::vector<ImageNavigationCandidate> candidates);
+    std::vector<ImageDocumentPageCandidate> candidates);
 MediaEntrySourceImageDataResult mediaEntrySourceImageDataResult(QByteArray data);
 
 const MediaEntrySourceBackendOperations *kArchiveMediaEntrySourceBackendOperations();
 const MediaEntrySourceBackendOperations *libArchiveMediaEntrySourceBackendOperations();
-const MediaEntrySourceBackendOperations *directoryMediaEntrySourceBackendOperations();
+const MediaEntrySourceBackendOperations *directoryCollectionMediaEntrySourceBackendOperations();
 }
 
 #endif

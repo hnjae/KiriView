@@ -44,8 +44,8 @@ mod videoformatregistry;
 mod imageopenworkflow;
 
 // Navigation policy.
-#[path = "policy/imagenavigationmodel.rs"]
-mod imagenavigationmodel;
+#[path = "policy/imagedocumentpagenavigation.rs"]
+mod imagedocumentpagenavigation;
 
 // Predecode policy.
 #[path = "policy/predecodepolicy.rs"]

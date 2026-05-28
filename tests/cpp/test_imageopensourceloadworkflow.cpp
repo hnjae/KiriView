@@ -41,9 +41,9 @@ void TestImageOpenSourceLoadWorkflow::currentSourceLoadUsesRuntimeSnapshotAndReq
     };
     const KiriView::ImageDocumentSourceLoadRequest request
         = KiriView::ImageDocumentSourceLoadRequest::fromContainerTarget(
-            KiriView::ImageNavigationTarget {
+            KiriView::ImageDocumentPageTarget {
                 sourceUrl,
-                KiriView::ImageNavigationCandidateKind::Video,
+                KiriView::ImageDocumentPageKind::Video,
             },
             containerUrl);
     const KiriView::ImageDocumentRuntimePlan plan
@@ -124,9 +124,9 @@ void TestImageOpenSourceLoadWorkflow::sourceLoadPlanResolvesRequestedRuntimePayl
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const KiriView::ImageDocumentSourceLoadRequest request
         = KiriView::ImageDocumentSourceLoadRequest::fromContainerTarget(
-            KiriView::ImageNavigationTarget {
+            KiriView::ImageDocumentPageTarget {
                 sourceUrl,
-                KiriView::ImageNavigationCandidateKind::Video,
+                KiriView::ImageDocumentPageKind::Video,
             },
             containerUrl);
     const KiriView::ImageDocumentSourceLoadSnapshot replacementSnapshot {
@@ -152,14 +152,14 @@ void TestImageOpenSourceLoadWorkflow::sourceLoadPlanResolvesRequestedRuntimePayl
         sourceUrl);
     QCOMPARE(
         operationAt<KiriView::PrepareSourceLoadOperation>(replacementPlan, 6).request.sourceKind,
-        KiriView::ImageNavigationCandidateKind::Video);
+        KiriView::ImageDocumentPageKind::Video);
     QCOMPARE(operationAt<KiriView::PrepareSourceLoadOperation>(replacementPlan, 6)
                  .request.containerNavigationUrl,
         containerUrl);
     QCOMPARE(
         operationAt<KiriView::SetSourceUrlOperation>(replacementPlan, 7).target.url, sourceUrl);
     QCOMPARE(operationAt<KiriView::SetSourceUrlOperation>(replacementPlan, 7).target.kind,
-        KiriView::ImageNavigationCandidateKind::Video);
+        KiriView::ImageDocumentPageKind::Video);
 
     const KiriView::ImageDocumentSourceLoadSnapshot currentSnapshot {
         sourceUrl,

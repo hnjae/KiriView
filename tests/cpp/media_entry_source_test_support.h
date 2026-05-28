@@ -22,7 +22,7 @@
 
 namespace KiriView::TestSupport {
 struct InstrumentedMediaEntrySourceFixture {
-    std::vector<ImageNavigationCandidate> candidates;
+    std::vector<ImageDocumentPageCandidate> candidates;
     std::map<QString, QByteArray> dataByUrl;
 };
 
@@ -51,7 +51,7 @@ public:
     {
     }
 
-    MediaEntrySourceCandidatesResult loadImageCandidates() override
+    MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates() override
     {
         ++m_state->candidateLoadCount;
         waitIfBlocked(InstrumentedMediaEntrySourceLoadKind::Candidate);
@@ -161,11 +161,11 @@ inline std::optional<OpenedCollectionScopeLocation> archiveCollectionForLocalArc
 inline void addInstrumentedMediaEntrySourceFixture(
     std::shared_ptr<InstrumentedMediaEntrySourceState> state,
     const OpenedCollectionScopeLocation &openedCollectionScope,
-    std::vector<ImageNavigationCandidate> candidates)
+    std::vector<ImageDocumentPageCandidate> candidates)
 {
     InstrumentedMediaEntrySourceFixture fixture;
     fixture.candidates = std::move(candidates);
-    for (const ImageNavigationCandidate &candidate : fixture.candidates) {
+    for (const ImageDocumentPageCandidate &candidate : fixture.candidates) {
         fixture.dataByUrl[keyForUrl(candidate.url)] = QByteArrayLiteral("image");
     }
 

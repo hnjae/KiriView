@@ -15,7 +15,7 @@
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::videoCandidate;
 }
@@ -69,7 +69,8 @@ void TestImageLoadSessionTracker::staleSessionsCannotResolveOrFinishCurrentLoad(
         = tracker.start(KiriView::ImageLoadRequest::fromUrl(secondUrl)).session;
 
     const KiriView::OpenedCollectionCandidateCompletion staleArchiveCompletion
-        = tracker.completeOpenedCollectionCandidates(staleSession, { imageCandidate(firstUrl) });
+        = tracker.completeOpenedCollectionCandidates(
+            staleSession, { imageDocumentPageCandidate(firstUrl) });
     QCOMPARE(staleArchiveCompletion.action,
         KiriView::OpenedCollectionCandidateCompletionAction::Ignored);
     QVERIFY(!tracker
@@ -100,13 +101,14 @@ void TestImageLoadSessionTracker::archiveResolutionUpdatesCanonicalCurrentSessio
                   KiriView::ImageFirstDisplayDecodeContext { QSize(320, 240) })
               .session;
     const KiriView::OpenedCollectionCandidateCompletion completion
-        = tracker.completeOpenedCollectionCandidates(session, { imageCandidate(imageUrl) });
+        = tracker.completeOpenedCollectionCandidates(
+            session, { imageDocumentPageCandidate(imageUrl) });
 
     QCOMPARE(
         completion.action, KiriView::OpenedCollectionCandidateCompletionAction::StartImageDecode);
     const KiriView::ImageLoadSession &resolvedSession = completion.session;
     QCOMPARE(resolvedSession.imageUrl(), imageUrl);
-    QCOMPARE(resolvedSession.kind(), KiriView::ImageNavigationCandidateKind::Image);
+    QCOMPARE(resolvedSession.kind(), KiriView::ImageDocumentPageKind::Image);
     QCOMPARE(resolvedSession.firstDisplay().physicalViewportSize, QSize(320, 240));
     const KiriView::ImageDecodeRequest request = resolvedSession.decodeRequest();
     const std::optional<KiriView::ImageLoadSession> currentSession
@@ -133,7 +135,7 @@ void TestImageLoadSessionTracker::archiveResolutionReportsUnsupportedOpenedColle
         KiriView::OpenedCollectionCandidateCompletionAction::
             ReportUnsupportedOpenedCollectionVideo);
     QCOMPARE(completion.session.imageUrl(), videoUrl);
-    QCOMPARE(completion.session.kind(), KiriView::ImageNavigationCandidateKind::Video);
+    QCOMPARE(completion.session.kind(), KiriView::ImageDocumentPageKind::Video);
     QVERIFY(!tracker.isCurrent(session));
 }
 
@@ -148,12 +150,13 @@ void TestImageLoadSessionTracker::archiveResolutionUsesCandidateKindInsteadOfExt
     const KiriView::ImageLoadSession session
         = tracker.start(KiriView::ImageLoadRequest::fromUrl(archiveUrl)).session;
     const KiriView::OpenedCollectionCandidateCompletion completion
-        = tracker.completeOpenedCollectionCandidates(session, { imageCandidate(imageUrl) });
+        = tracker.completeOpenedCollectionCandidates(
+            session, { imageDocumentPageCandidate(imageUrl) });
 
     QCOMPARE(
         completion.action, KiriView::OpenedCollectionCandidateCompletionAction::StartImageDecode);
     QCOMPARE(completion.session.imageUrl(), imageUrl);
-    QCOMPARE(completion.session.kind(), KiriView::ImageNavigationCandidateKind::Image);
+    QCOMPARE(completion.session.kind(), KiriView::ImageDocumentPageKind::Image);
 }
 
 void TestImageLoadSessionTracker::emptyOpenedCollectionResolutionClaimsCurrentSessionForError()

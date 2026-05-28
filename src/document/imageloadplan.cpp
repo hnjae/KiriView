@@ -39,7 +39,7 @@ ImageLoadStartEffect imageLoadStartEffectForPageScopeEffect(OpenedCollectionScop
     switch (effect) {
     case OpenedCollectionScopeLoadEffect::ReadImage:
         return ImageLoadStartEffect::DecodeImage;
-    case OpenedCollectionScopeLoadEffect::LoadImageCandidates:
+    case OpenedCollectionScopeLoadEffect::LoadImageDocumentPageCandidates:
         return ImageLoadStartEffect::LoadOpenedCollectionScopeCandidates;
     }
 
@@ -54,7 +54,7 @@ OpenedCollectionScopeLoadPlan openedCollectionScopeLoadPlan(const ImageLoadReque
         = openedCollectionScopeLocationForDirectlyOpenedLocalUrl(request.sourceUrl());
     if (sourceOpenedCollectionScope.has_value()) {
         return { *sourceOpenedCollectionScope,
-            OpenedCollectionScopeLoadEffect::LoadImageCandidates };
+            OpenedCollectionScopeLoadEffect::LoadImageDocumentPageCandidates };
     }
 
     const std::optional<OpenedCollectionScopeLocation> containerOpenedCollectionScope

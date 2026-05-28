@@ -8,7 +8,7 @@
 #include "session/documentsessionpublicprojection.h"
 #include "session/documentsessiontypes.h"
 
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationmodel.h"
 
 #include <QUrl>
 #include <functional>
@@ -28,8 +28,8 @@ public:
     const QString &windowTitleSubject() const;
     bool fileDeletionInProgress() const;
     const ActiveZoomSnapshot &activeZoomSnapshot() const;
-    const MediaNavigationBoundaryState &mediaNavigationState() const;
-    bool mediaNavigationKnown() const;
+    const DirectMediaNavigationBoundaryState &directMediaNavigationState() const;
+    bool directMediaNavigationKnown() const;
     const ActiveNavigationSnapshot &activeNavigationSnapshot() const;
     ActiveNavigationSourceKind activeNavigationSourceKind() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
@@ -46,7 +46,7 @@ public:
         DocumentSessionKind kind, ActiveZoomSnapshot activeZoomSnapshot);
     void setFileDeletionInProgress(bool inProgress);
     void setActiveZoomSnapshot(ActiveZoomSnapshot snapshot);
-    void setMediaNavigationState(MediaNavigationBoundaryState state, bool known);
+    void setDirectMediaNavigationState(DirectMediaNavigationBoundaryState state, bool known);
     bool updatePublicProjection(DocumentSessionPublicProjectionInput input);
     bool updatePublicProjectionForSourceKind(
         DocumentSessionPublicProjectionInput input, ActiveNavigationSourceKind sourceKind);
@@ -67,10 +67,10 @@ private:
     QUrl m_sourceUrl;
     DocumentSessionKind m_documentKind = DocumentSessionKind::Empty;
     DirectMediaCursor m_directMediaCursor;
-    MediaNavigationBoundaryState m_mediaNavigationState;
+    DirectMediaNavigationBoundaryState m_directMediaNavigationState;
     DocumentSessionPublicProjection m_publicProjection;
     ActiveZoomSnapshot m_activeZoomSnapshot;
-    bool m_mediaNavigationKnown = false;
+    bool m_directMediaNavigationKnown = false;
     bool m_fileDeletionInProgress = false;
     QString m_sourceErrorString;
 };

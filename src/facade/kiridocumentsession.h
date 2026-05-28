@@ -78,8 +78,8 @@ public:
 
     enum class ActiveNavigationBoundaryScope {
         NoNavigationBoundary,
-        MediaNavigationBoundary,
-        ImageNavigationBoundary,
+        DirectMediaNavigationBoundary,
+        ImageDocumentPageNavigationBoundary,
     };
     Q_ENUM(ActiveNavigationBoundaryScope)
 

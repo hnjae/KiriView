@@ -217,12 +217,12 @@ int ImageDocumentRuntime::currentLastPageNumber() const
     return controllers->spreadController().currentLastPageNumber();
 }
 
-int ImageDocumentRuntime::imageCount() const
+int ImageDocumentRuntime::pageCount() const
 {
-    return controllers->navigationController().imageCount();
+    return controllers->navigationController().pageCount();
 }
 
-ImagePageNavigationSnapshot ImageDocumentRuntime::pageNavigationSnapshot() const
+ImageDocumentPageNavigationSnapshot ImageDocumentRuntime::pageNavigationSnapshot() const
 {
     return controllers->navigationController().pageNavigationSnapshot();
 }
@@ -346,14 +346,14 @@ void ImageDocumentRuntime::publishChanges(const std::vector<ImageDocumentChange>
 
 void ImageDocumentRuntime::shutdown() { controllers->shutdownRuntime(); }
 
-void ImageDocumentRuntime::openPreviousImage()
+void ImageDocumentRuntime::openPreviousPage()
 {
-    controllers->navigationController().openAdjacentImage(NavigationDirection::Previous);
+    controllers->navigationController().openAdjacentPage(NavigationDirection::Previous);
 }
 
-void ImageDocumentRuntime::openNextImage()
+void ImageDocumentRuntime::openNextPage()
 {
-    controllers->navigationController().openAdjacentImage(NavigationDirection::Next);
+    controllers->navigationController().openAdjacentPage(NavigationDirection::Next);
 }
 
 void ImageDocumentRuntime::openPreviousSinglePage()

@@ -6,8 +6,8 @@
 
 #include "decoding/imagedecodedependencies.h"
 #include "document/imagedocumentstate.h"
-#include "navigation/imagecandidateprovider.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagecandidateprovider.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
 #include "presentation/imagespreadgeometry.h"
 #include "presentation/imagespreadmodepolicy.h"
@@ -44,7 +44,7 @@ public:
     using RenderContextProvider = std::function<ImageDocumentRenderContext()>;
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
     using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
-    using PageNavigationSnapshotProvider = std::function<ImagePageNavigationSnapshot()>;
+    using PageNavigationSnapshotProvider = std::function<ImageDocumentPageNavigationSnapshot()>;
     using ScheduleAdjacentPredecodeCallback = std::function<void()>;
 
     struct Callbacks {
@@ -56,7 +56,7 @@ public:
 
     ImageSpreadPresentationController(QObject *parent, RenderContextProvider renderContextProvider,
         ImageDocumentState &state, ImagePresentationController &primaryPresentation,
-        Callbacks callbacks, ImageNavigationCandidateProvider candidateProvider,
+        Callbacks callbacks, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, qsizetype predecodeCacheByteBudget = 0);
     ~ImageSpreadPresentationController();
 
@@ -86,7 +86,8 @@ public:
     qreal steppedManualZoomPercent(qreal stepCount) const;
     int rotationDegrees() const;
     int currentLastPageNumber() const;
-    ImageSpreadPageNavigationTarget imageNavigationTarget(NavigationDirection direction) const;
+    ImageSpreadPageNavigationTarget imageDocumentPageNavigationTarget(
+        NavigationDirection direction) const;
     int relativePageNavigationTarget(int offset) const;
 
     bool twoPageModeEnabled() const;
@@ -131,7 +132,7 @@ private:
     ImageSpreadReadingAvailability readingAvailability() const;
     ImageSpreadPageNavigationContext pageNavigationContext() const;
     void scheduleAdjacentPredecode();
-    ImagePageNavigationSnapshot pageNavigationSnapshot() const;
+    ImageDocumentPageNavigationSnapshot pageNavigationSnapshot() const;
     void notifyTwoPageModeChanged();
     void applySpreadZoomChanges(const ImageZoomChangeSet &changes, bool notifyPublicChanges = true);
     void notifySpreadZoomChanged(const ImageZoomChangeSet &changes);

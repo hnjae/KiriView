@@ -13,11 +13,11 @@ void appendSourceRoutingPreparation(KiriView::DocumentSessionRoutePlan &plan)
             KiriView::DocumentSessionRouteOperation {
                 KiriView::ClearSessionErrorStringRouteOperation {} },
             KiriView::DocumentSessionRouteOperation {
-                KiriView::CancelMediaNavigationRouteOperation {} },
+                KiriView::CancelDirectMediaNavigationRouteOperation {} },
             KiriView::DocumentSessionRouteOperation {
                 KiriView::CancelMediaDeletionRouteOperation {} },
             KiriView::DocumentSessionRouteOperation {
-                KiriView::ClearMediaNavigationRouteOperation {} },
+                KiriView::ClearDirectMediaNavigationRouteOperation {} },
         });
 }
 
@@ -46,7 +46,7 @@ void appendRefreshableImageDocumentOperations(KiriView::DocumentSessionRoutePlan
     plan.operations.push_back(KiriView::SyncDirectImageCursorFromDocumentRouteOperation {});
     plan.operations.push_back(KiriView::UseImageDocumentSourceIdentityRouteOperation {});
     plan.operations.push_back(KiriView::RecomputePublicProjectionRouteOperation {});
-    plan.operations.push_back(KiriView::RefreshMediaNavigationAfterRoutingRouteOperation {});
+    plan.operations.push_back(KiriView::RefreshDirectMediaNavigationAfterRoutingRouteOperation {});
 }
 
 KiriView::DocumentSessionRoutePlan emptyRoutePlan(const QUrl &sourceUrl)
@@ -74,7 +74,7 @@ KiriView::DocumentSessionRoutePlan directVideoRoutePlan(const QUrl &sourceUrl)
     plan.operations.push_back(KiriView::EnterVideoDocumentRouteOperation { sourceUrl });
     plan.operations.push_back(KiriView::UseOriginalSourceIdentityRouteOperation { sourceUrl });
     plan.operations.push_back(KiriView::RecomputePublicProjectionRouteOperation {});
-    plan.operations.push_back(KiriView::RefreshMediaNavigationAfterRoutingRouteOperation {});
+    plan.operations.push_back(KiriView::RefreshDirectMediaNavigationAfterRoutingRouteOperation {});
     return plan;
 }
 

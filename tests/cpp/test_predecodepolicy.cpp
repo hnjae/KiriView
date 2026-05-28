@@ -66,9 +66,9 @@ void TestPredecodePolicy::openedCollectionSourceProfilesPreserveRuntimeTuning()
             imagesDirectoryUrl(), KiriView::OpenedCollectionScopeKind::Directory);
     const PredecodeSourceProfile directoryProfile
         = KiriView::predecodeSourceProfileForOpenedCollectionScope(directoryCollection, 8);
-    QCOMPARE(directoryProfile.neutralPreviousImageCount, std::size_t(2));
-    QCOMPARE(directoryProfile.neutralNextImageCount, std::size_t(4));
-    QCOMPARE(directoryProfile.biasedDirectionImageCount, std::size_t(6));
+    QCOMPARE(directoryProfile.neutralPreviousPageCount, std::size_t(2));
+    QCOMPARE(directoryProfile.neutralNextPageCount, std::size_t(4));
+    QCOMPARE(directoryProfile.biasedDirectionPageCount, std::size_t(6));
     QCOMPARE(directoryProfile.parallelLimit, std::size_t(2));
 
     const std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScope
@@ -77,9 +77,9 @@ void TestPredecodePolicy::openedCollectionSourceProfilesPreserveRuntimeTuning()
     QVERIFY(openedCollectionScope.has_value());
     const PredecodeSourceProfile archiveProfile
         = KiriView::predecodeSourceProfileForOpenedCollectionScope(*openedCollectionScope, 8);
-    QCOMPARE(archiveProfile.neutralPreviousImageCount, std::size_t(2));
-    QCOMPARE(archiveProfile.neutralNextImageCount, std::size_t(4));
-    QCOMPARE(archiveProfile.biasedDirectionImageCount, std::size_t(8));
+    QCOMPARE(archiveProfile.neutralPreviousPageCount, std::size_t(2));
+    QCOMPARE(archiveProfile.neutralNextPageCount, std::size_t(4));
+    QCOMPARE(archiveProfile.biasedDirectionPageCount, std::size_t(8));
     QCOMPARE(archiveProfile.parallelLimit, std::size_t(4));
 }
 

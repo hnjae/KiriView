@@ -17,7 +17,7 @@ private Q_SLOTS:
     void documentKindPublishesConsistentActiveZoomSnapshot();
     void activeZoomSnapshotOnlyNotifiesWhenProjectionChanges();
     void fileDeletionProgressOnlyPublishesProgress();
-    void mediaNavigationStateOnlyUpdatesWhenBoundaryChanges();
+    void directMediaNavigationStateOnlyUpdatesWhenBoundaryChanges();
     void publicProjectionCommitsValuesBeforePublishing();
     void publicProjectionOnlyNotifiesChangedOutputs();
     void publishDeduplicatesChangesInOrder();
@@ -116,7 +116,7 @@ void TestDocumentSessionState::fileDeletionProgressOnlyPublishesProgress()
     QCOMPARE(batches.size(), std::size_t(1));
 }
 
-void TestDocumentSessionState::mediaNavigationStateOnlyUpdatesWhenBoundaryChanges()
+void TestDocumentSessionState::directMediaNavigationStateOnlyUpdatesWhenBoundaryChanges()
 {
     std::vector<KiriView::DocumentSessionChange> changes;
     KiriView::DocumentSessionState state(
@@ -124,7 +124,7 @@ void TestDocumentSessionState::mediaNavigationStateOnlyUpdatesWhenBoundaryChange
             changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
         });
 
-    KiriView::MediaNavigationBoundaryState boundary {
+    KiriView::DirectMediaNavigationBoundaryState boundary {
         true,
         false,
         false,
@@ -132,18 +132,18 @@ void TestDocumentSessionState::mediaNavigationStateOnlyUpdatesWhenBoundaryChange
         2,
         2,
     };
-    state.setMediaNavigationState(boundary, true);
+    state.setDirectMediaNavigationState(boundary, true);
 
-    QVERIFY(state.mediaNavigationKnown());
-    QCOMPARE(state.mediaNavigationState().currentNumber, 2);
+    QVERIFY(state.directMediaNavigationKnown());
+    QCOMPARE(state.directMediaNavigationState().currentNumber, 2);
     QCOMPARE(changes.size(), std::size_t(0));
 
-    state.setMediaNavigationState(boundary, true);
+    state.setDirectMediaNavigationState(boundary, true);
     QCOMPARE(changes.size(), std::size_t(0));
 
     boundary.canOpenNext = true;
-    state.setMediaNavigationState(boundary, true);
-    QCOMPARE(state.mediaNavigationState().canOpenNext, true);
+    state.setDirectMediaNavigationState(boundary, true);
+    QCOMPARE(state.directMediaNavigationState().canOpenNext, true);
     QCOMPARE(changes.size(), std::size_t(0));
 }
 
@@ -159,7 +159,7 @@ void TestDocumentSessionState::publicProjectionCommitsValuesBeforePublishing()
             QCOMPARE(stateDuringCallback->activeNavigationSourceKind(),
                 KiriView::ActiveNavigationSourceKind::ImageDocumentPages);
             QCOMPARE(stateDuringCallback->activeNavigationBoundaryScope(),
-                KiriView::ActiveNavigationBoundaryScope::ImageDocument);
+                KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage);
             QCOMPARE(stateDuringCallback->activeNavigationSnapshot().currentNumber, 2);
             QCOMPARE(stateDuringCallback->activeNavigationSnapshot().count, 4);
             QCOMPARE(stateDuringCallback->windowTitleSubject(), QStringLiteral("book.cbz – 2/4"));
@@ -171,7 +171,8 @@ void TestDocumentSessionState::publicProjectionCommitsValuesBeforePublishing()
     KiriView::DocumentSessionPublicProjectionInput input;
     input.documentKind = KiriView::DocumentSessionKind::Image;
     input.imageSourceMayRepresentDocument = true;
-    input.imageDocumentNavigation = KiriView::ImageDocumentActiveNavigationInput { 2, 3, 4 };
+    input.imageDocumentPageNavigation
+        = KiriView::ImageDocumentPageActiveNavigationInput { 2, 3, 4 };
     input.imageWindowTitleFileName = QStringLiteral("book.cbz");
     input.imageReadyForDeletion = true;
     input.displayedMediaOpenWithAvailable = true;
@@ -199,8 +200,8 @@ void TestDocumentSessionState::publicProjectionOnlyNotifiesChangedOutputs()
 
     KiriView::DocumentSessionPublicProjectionInput input;
     input.documentKind = KiriView::DocumentSessionKind::Video;
-    input.mediaNavigation = KiriView::MediaActiveNavigationInput {
-        KiriView::MediaNavigationBoundaryState { false, false, true, true, 1, 1 },
+    input.directMediaNavigation = KiriView::DirectMediaActiveNavigationInput {
+        KiriView::DirectMediaNavigationBoundaryState { false, false, true, true, 1, 1 },
         true,
     };
     input.videoSourcePresent = true;
@@ -210,9 +211,10 @@ void TestDocumentSessionState::publicProjectionOnlyNotifiesChangedOutputs()
     QCOMPARE(batches.size(), std::size_t(1));
 
     input.documentKind = KiriView::DocumentSessionKind::Image;
-    input.mediaNavigation = {};
+    input.directMediaNavigation = {};
     input.imageSourceMayRepresentDocument = true;
-    input.imageDocumentNavigation = KiriView::ImageDocumentActiveNavigationInput { 1, 1, 1 };
+    input.imageDocumentPageNavigation
+        = KiriView::ImageDocumentPageActiveNavigationInput { 1, 1, 1 };
     input.imageReadyForDeletion = true;
     input.videoSourcePresent = false;
     state.updatePublicProjection(input);
@@ -221,7 +223,7 @@ void TestDocumentSessionState::publicProjectionOnlyNotifiesChangedOutputs()
     QCOMPARE(batches.back().size(), std::size_t(1));
     QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::ActiveNavigation);
     QCOMPARE(state.activeNavigationBoundaryScope(),
-        KiriView::ActiveNavigationBoundaryScope::ImageDocument);
+        KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage);
 
     input.imageReadyForDeletion = false;
     state.updatePublicProjection(input);

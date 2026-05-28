@@ -5,7 +5,7 @@
 #define KIRIVIEW_MEDIAPREDECODECOORDINATOR_H
 
 #include "decoding/imagedecodedependencies.h"
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationmodel.h"
 #include "predecodedimage.h"
 #include "predecodeloadcontroller.h"
 #include "predecodescheduleruntime.h"
@@ -24,7 +24,7 @@ class MediaPredecodeCoordinator final : public QObject
 public:
     struct Context {
         QUrl currentUrl;
-        std::vector<MediaNavigationCandidate> candidates;
+        std::vector<DirectMediaNavigationCandidate> candidates;
         std::vector<DisplayedPredecodeImage> displayedImages;
         ImageFirstDisplayDecodeContext firstDisplayContext;
     };

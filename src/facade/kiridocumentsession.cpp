@@ -45,10 +45,11 @@ KiriDocumentSession::ActiveNavigationBoundaryScope fromRuntimeBoundaryScope(
     KiriView::ActiveNavigationBoundaryScope scope)
 {
     switch (scope) {
-    case KiriView::ActiveNavigationBoundaryScope::Media:
-        return KiriDocumentSession::ActiveNavigationBoundaryScope::MediaNavigationBoundary;
-    case KiriView::ActiveNavigationBoundaryScope::ImageDocument:
-        return KiriDocumentSession::ActiveNavigationBoundaryScope::ImageNavigationBoundary;
+    case KiriView::ActiveNavigationBoundaryScope::DirectMedia:
+        return KiriDocumentSession::ActiveNavigationBoundaryScope::DirectMediaNavigationBoundary;
+    case KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage:
+        return KiriDocumentSession::ActiveNavigationBoundaryScope::
+            ImageDocumentPageNavigationBoundary;
     case KiriView::ActiveNavigationBoundaryScope::None:
         return KiriDocumentSession::ActiveNavigationBoundaryScope::NoNavigationBoundary;
     }

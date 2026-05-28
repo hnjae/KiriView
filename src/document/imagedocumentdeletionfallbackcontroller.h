@@ -8,7 +8,7 @@
 #include "async/imageiojob.h"
 #include "imagedocumentruntimeplan.h"
 #include "imageremovalfallback.h"
-#include "navigation/imagecandidaterepository.h"
+#include "navigation/imagedocumentpagecandidaterepository.h"
 
 #include <QtGlobal>
 #include <functional>
@@ -24,7 +24,7 @@ public:
     using RuntimePlanCallback = std::function<void(ImageDocumentRuntimePlan)>;
 
     ImageDocumentDeletionFallbackController(QObject *parent,
-        ImageNavigationCandidateProvider candidateProvider,
+        ImageDocumentPageCandidateProvider candidateProvider,
         RuntimePlanCallback runtimePlanCallback);
     ~ImageDocumentDeletionFallbackController();
 
@@ -43,13 +43,13 @@ private:
         const std::optional<ContainerNavigationCandidate> &fallbackCandidate);
     void finishComicBookFallbackImageLoad(quint64 operationId, const QUrl &containerUrl,
         const std::optional<ContainerNavigationCandidate> &fallbackCandidate,
-        std::vector<ImageNavigationCandidate> candidates);
+        std::vector<ImageDocumentPageCandidate> candidates);
     void failComicBookFallbackImageLoad(
         quint64 operationId, const std::optional<ContainerNavigationCandidate> &fallbackCandidate);
     void reportRuntimePlan(ImageDocumentRuntimePlan plan);
 
     QObject *m_parent = nullptr;
-    ImageCandidateRepository m_candidateRepository;
+    ImageDocumentPageCandidateRepository m_candidateRepository;
     RuntimePlanCallback m_runtimePlanCallback;
     ImageIoJob m_job;
     ImageAsyncOperationState m_operation;

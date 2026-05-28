@@ -48,7 +48,7 @@ class TestActiveNavigationProjection : public QObject
 private Q_SLOTS:
     void unavailableSourceProjectsUnavailable();
     void unknownMediaStateProjectsAvailableButUnknown();
-    void validMediaBoundaryStateProjectsReadoutAndActions();
+    void validDirectMediaNavigationBoundaryStateProjectsReadoutAndActions();
     void invalidMediaNumbersNormalizeToUnknown();
     void validImageDocumentSnapshotProjectsSpreadAwareBoundaries();
     void invalidImagePageValuesNormalizeToUnknown();
@@ -76,12 +76,13 @@ void TestActiveNavigationProjection::unknownMediaStateProjectsAvailableButUnknow
     compareUnknown(snapshot);
 }
 
-void TestActiveNavigationProjection::validMediaBoundaryStateProjectsReadoutAndActions()
+void TestActiveNavigationProjection::
+    validDirectMediaNavigationBoundaryStateProjectsReadoutAndActions()
 {
     const KiriView::ActiveNavigationSnapshot snapshot = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
-        KiriView::MediaActiveNavigationInput {
-            KiriView::MediaNavigationBoundaryState { true, true, false, false, 2, 4 }, true },
+        KiriView::DirectMediaActiveNavigationInput {
+            KiriView::DirectMediaNavigationBoundaryState { true, true, false, false, 2, 4 }, true },
         {}, false);
 
     QVERIFY(snapshot.available);
@@ -99,15 +100,15 @@ void TestActiveNavigationProjection::invalidMediaNumbersNormalizeToUnknown()
 {
     const KiriView::ActiveNavigationSnapshot zeroCurrent = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
-        KiriView::MediaActiveNavigationInput {
-            KiriView::MediaNavigationBoundaryState { true, true, false, false, 0, 4 }, true },
+        KiriView::DirectMediaActiveNavigationInput {
+            KiriView::DirectMediaNavigationBoundaryState { true, true, false, false, 0, 4 }, true },
         {}, false);
     compareUnknown(zeroCurrent);
 
     const KiriView::ActiveNavigationSnapshot outOfRange = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
-        KiriView::MediaActiveNavigationInput {
-            KiriView::MediaNavigationBoundaryState { true, false, false, true, 5, 4 }, true },
+        KiriView::DirectMediaActiveNavigationInput {
+            KiriView::DirectMediaNavigationBoundaryState { true, false, false, true, 5, 4 }, true },
         {}, false);
     compareUnknown(outOfRange);
 }
@@ -116,7 +117,7 @@ void TestActiveNavigationProjection::validImageDocumentSnapshotProjectsSpreadAwa
 {
     const KiriView::ActiveNavigationSnapshot firstSpread = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentActiveNavigationInput { 1, 2, 5 }, false);
+        KiriView::ImageDocumentPageActiveNavigationInput { 1, 2, 5 }, false);
     QVERIFY(firstSpread.available);
     QVERIFY(firstSpread.known);
     QVERIFY(firstSpread.editable);
@@ -129,7 +130,7 @@ void TestActiveNavigationProjection::validImageDocumentSnapshotProjectsSpreadAwa
 
     const KiriView::ActiveNavigationSnapshot lastSpread = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentActiveNavigationInput { 4, 5, 5 }, false);
+        KiriView::ImageDocumentPageActiveNavigationInput { 4, 5, 5 }, false);
     QVERIFY(lastSpread.canOpenPrevious);
     QVERIFY(!lastSpread.canOpenNext);
     QVERIFY(!lastSpread.atKnownFirst);
@@ -142,12 +143,12 @@ void TestActiveNavigationProjection::invalidImagePageValuesNormalizeToUnknown()
 {
     const KiriView::ActiveNavigationSnapshot reversedSpread = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentActiveNavigationInput { 3, 2, 5 }, false);
+        KiriView::ImageDocumentPageActiveNavigationInput { 3, 2, 5 }, false);
     compareUnknown(reversedSpread);
 
     const KiriView::ActiveNavigationSnapshot lastPastCount = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentActiveNavigationInput { 4, 6, 5 }, false);
+        KiriView::ImageDocumentPageActiveNavigationInput { 4, 6, 5 }, false);
     compareUnknown(lastPastCount);
 }
 
@@ -155,8 +156,8 @@ void TestActiveNavigationProjection::deletionMaskingDisablesDispatchButKeepsKnow
 {
     const KiriView::ActiveNavigationSnapshot snapshot = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
-        KiriView::MediaActiveNavigationInput {
-            KiriView::MediaNavigationBoundaryState { true, true, false, false, 2, 4 }, true },
+        KiriView::DirectMediaActiveNavigationInput {
+            KiriView::DirectMediaNavigationBoundaryState { true, true, false, false, 2, 4 }, true },
         {}, true);
 
     QVERIFY(snapshot.available);
@@ -177,18 +178,18 @@ void TestActiveNavigationProjection::boundaryScopeMapsSourceKind()
         == KiriView::ActiveNavigationBoundaryScope::None);
     QVERIFY(KiriView::activeNavigationBoundaryScopeForSource(
                 KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia)
-        == KiriView::ActiveNavigationBoundaryScope::Media);
+        == KiriView::ActiveNavigationBoundaryScope::DirectMedia);
     QVERIFY(KiriView::activeNavigationBoundaryScopeForSource(
                 KiriView::ActiveNavigationSourceKind::ImageDocumentPages)
-        == KiriView::ActiveNavigationBoundaryScope::ImageDocument);
+        == KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage);
 }
 
 void TestActiveNavigationProjection::directMediaDispatchPlanFollowsProjectedBoundaryGates()
 {
     const KiriView::ActiveNavigationSnapshot snapshot = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
-        KiriView::MediaActiveNavigationInput {
-            KiriView::MediaNavigationBoundaryState { true, true, false, false, 2, 4 }, true },
+        KiriView::DirectMediaActiveNavigationInput {
+            KiriView::DirectMediaNavigationBoundaryState { true, true, false, false, 2, 4 }, true },
         {}, false);
 
     const KiriView::ActiveNavigationDispatchPlan previous = KiriView::activeNavigationDispatchPlan(
@@ -218,8 +219,8 @@ void TestActiveNavigationProjection::directMediaDispatchPlanFollowsProjectedBoun
 
     const KiriView::ActiveNavigationSnapshot firstSnapshot = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
-        KiriView::MediaActiveNavigationInput {
-            KiriView::MediaNavigationBoundaryState { false, true, true, false, 1, 4 }, true },
+        KiriView::DirectMediaActiveNavigationInput {
+            KiriView::DirectMediaNavigationBoundaryState { false, true, true, false, 1, 4 }, true },
         {}, false);
     QVERIFY(!KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, firstSnapshot,
@@ -231,7 +232,7 @@ void TestActiveNavigationProjection::imageDocumentDispatchPlanUsesNumberedPageTa
 {
     const KiriView::ActiveNavigationSnapshot snapshot = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentActiveNavigationInput { 2, 3, 5 }, false);
+        KiriView::ImageDocumentPageActiveNavigationInput { 2, 3, 5 }, false);
 
     const KiriView::ActiveNavigationDispatchPlan first = KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, snapshot,
@@ -268,7 +269,7 @@ void TestActiveNavigationProjection::previousNextDispatchPlanReportsEditableBoun
 {
     const KiriView::ActiveNavigationSnapshot firstSnapshot = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentActiveNavigationInput { 1, 1, 3 }, false);
+        KiriView::ImageDocumentPageActiveNavigationInput { 1, 1, 3 }, false);
     const KiriView::ActiveNavigationDispatchPlan previous = KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, firstSnapshot,
         KiriView::previousActiveNavigationDispatchRequest());
@@ -277,7 +278,7 @@ void TestActiveNavigationProjection::previousNextDispatchPlanReportsEditableBoun
 
     const KiriView::ActiveNavigationSnapshot lastSnapshot = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentActiveNavigationInput { 3, 3, 3 }, false);
+        KiriView::ImageDocumentPageActiveNavigationInput { 3, 3, 3 }, false);
     const KiriView::ActiveNavigationDispatchPlan next = KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, lastSnapshot,
         KiriView::nextActiveNavigationDispatchRequest());
@@ -296,8 +297,8 @@ void TestActiveNavigationProjection::dispatchPlanRejectsUnknownMaskedAndUnavaila
 
     const KiriView::ActiveNavigationSnapshot masked = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
-        KiriView::MediaActiveNavigationInput {
-            KiriView::MediaNavigationBoundaryState { true, true, false, false, 2, 4 }, true },
+        KiriView::DirectMediaActiveNavigationInput {
+            KiriView::DirectMediaNavigationBoundaryState { true, true, false, false, 2, 4 }, true },
         {}, true);
     QVERIFY(!KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, masked,

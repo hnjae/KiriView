@@ -101,8 +101,8 @@ void ImageDocumentPublicSignalEmitter::emitSignal(ImageDocumentPublicSignal sign
     case ImageDocumentPublicSignal::RotationDegrees:
         run(m_operations.rotationDegreesChanged);
         return;
-    case ImageDocumentPublicSignal::MediaScope:
-        run(m_operations.mediaScopeChanged);
+    case ImageDocumentPublicSignal::ImageDocumentSourceScope:
+        run(m_operations.imageDocumentSourceScopeChanged);
         return;
     case ImageDocumentPublicSignal::UnsupportedOpenedCollectionVideo:
         run(m_operations.unsupportedOpenedCollectionVideoChanged);
@@ -175,10 +175,10 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignalsForChanges(
     const std::vector<ImageDocumentChange> &changes)
 {
     std::vector<ImageDocumentPublicSignal> plannedSignals;
-    bool mediaScopeChanged = false;
+    bool imageDocumentSourceScopeChanged = false;
     for (ImageDocumentChange change : changes) {
-        mediaScopeChanged = mediaScopeChanged || change == ImageDocumentChange::DisplayedUrl
-            || change == ImageDocumentChange::Status;
+        imageDocumentSourceScopeChanged = imageDocumentSourceScopeChanged
+            || change == ImageDocumentChange::DisplayedUrl || change == ImageDocumentChange::Status;
         for (ImageDocumentPublicSignal signal : imageDocumentPublicSignals(change)) {
             const bool alreadyPlanned
                 = std::find(plannedSignals.cbegin(), plannedSignals.cend(), signal)
@@ -188,8 +188,8 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignalsForChanges(
             }
         }
     }
-    if (mediaScopeChanged) {
-        plannedSignals.push_back(ImageDocumentPublicSignal::MediaScope);
+    if (imageDocumentSourceScopeChanged) {
+        plannedSignals.push_back(ImageDocumentPublicSignal::ImageDocumentSourceScope);
     }
     return plannedSignals;
 }

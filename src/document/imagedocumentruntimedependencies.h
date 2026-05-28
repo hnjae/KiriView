@@ -7,7 +7,7 @@
 #include "archive/mediaentrysourcebackend.h"
 #include "decoding/imagedecodedependencies.h"
 #include "filedeletion.h"
-#include "navigation/imagecandidateprovider.h"
+#include "navigation/imagedocumentpagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
 #include "system/powersaverprovider.h"
 
@@ -25,7 +25,7 @@ class MediaEntrySourceStore;
 using ExternalPredecodedImageFinder = std::function<std::optional<PredecodedImage>(const QUrl &)>;
 
 struct ImageDocumentRuntimeDependencyOverrides {
-    ImageNavigationCandidateProvider candidateProvider;
+    ImageDocumentPageCandidateProvider candidateProvider;
     ImageDecodeDependencies imageDecode;
     FileOperationProvider fileOperations;
     MediaEntrySourceFactory mediaEntrySourceFactory;
@@ -35,7 +35,7 @@ struct ImageDocumentRuntimeDependencyOverrides {
 };
 
 struct ImageDocumentRuntimeDependencies {
-    ImageNavigationCandidateProvider candidateProvider;
+    ImageDocumentPageCandidateProvider candidateProvider;
     ImageDecodeDependencies imageDecode;
     FileOperationProvider fileOperations;
     PowerSaverProvider powerSaver;

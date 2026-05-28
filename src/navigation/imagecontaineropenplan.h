@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGECONTAINEROPENPLAN_H
 #define KIRIVIEW_IMAGECONTAINEROPENPLAN_H
 
-#include "imagecandidatelistsource.h"
-#include "imagenavigationtypes.h"
+#include "imagedocumentpagecandidatelistsource.h"
+#include "imagedocumentpagenavigationtypes.h"
 
 #include <QUrl>
 #include <optional>
@@ -19,14 +19,14 @@ enum class ImageContainerOpenError {
 };
 
 struct ImageContainerOpenPlan {
-    std::optional<ImageCandidateListSource> source;
+    std::optional<ImageDocumentPageCandidateListSource> source;
     ImageContainerOpenError error = ImageContainerOpenError::Generic;
 
     bool shouldLoadCandidates() const;
 };
 
 struct ImageContainerOpenResult {
-    std::optional<ImageNavigationTarget> target;
+    std::optional<ImageDocumentPageTarget> target;
     ImageContainerOpenError error = ImageContainerOpenError::Generic;
 
     bool openedImage() const;
@@ -35,7 +35,7 @@ struct ImageContainerOpenResult {
 ImageContainerOpenPlan imageContainerOpenPlanForCandidate(
     const ContainerNavigationCandidate &container);
 ImageContainerOpenResult imageContainerOpenResultForCandidates(
-    const std::vector<ImageNavigationCandidate> &candidates);
+    const std::vector<ImageDocumentPageCandidate> &candidates);
 }
 
 #endif

@@ -31,8 +31,8 @@ public:
         const OpenedCollectionScopeLocation &openedCollectionScope) const;
 
     ImageIoJob loadOpenedCollectionCandidates(QObject *receiver,
-        OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
-        ErrorCallback errorCallback);
+        OpenedCollectionScopeLocation openedCollectionScope,
+        ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback);
     ImageIoJob loadOpenedCollectionImageData(QObject *receiver, ImageDecodeRequest request,
         ImageDataCallback callback, ErrorCallback errorCallback);
 

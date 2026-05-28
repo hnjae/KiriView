@@ -3,20 +3,20 @@
 
 #include "predecodewindowplan.h"
 
-#include "navigation/imagenavigationmodel.h"
+#include "navigation/imagedocumentpagenavigationpolicy.h"
 
 #include <optional>
 #include <utility>
 
 namespace {
 std::vector<QUrl> predecodeWindowImageUrls(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates,
+    const std::vector<KiriView::ImageDocumentPageCandidate> &candidates,
     const std::vector<std::size_t> &indices)
 {
     std::vector<QUrl> urls;
     urls.reserve(indices.size());
     for (std::size_t index : indices) {
-        if (index < candidates.size() && imageNavigationCandidateIsImage(candidates.at(index))) {
+        if (index < candidates.size() && imageDocumentPageCandidateIsImage(candidates.at(index))) {
             urls.push_back(candidates.at(index).url);
         }
     }
@@ -34,8 +34,8 @@ PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanReque
         = request.displayedLocation.openedCollectionScope();
     const PredecodeSchedulePlan initialSchedule
         = predecodeSchedulePlan(0, std::nullopt, request.policyInput);
-    const std::optional<ImageCandidateListContext> candidateContext
-        = imageCandidateListContextForDisplayedImage(request.displayedLocation);
+    const std::optional<ImageDocumentPageCandidateListContext> candidateContext
+        = imageDocumentPageCandidateListContextForDisplayedImage(request.displayedLocation);
 
     PredecodeWindowStartPlan plan {
         PredecodeWindowPlan {
@@ -54,14 +54,14 @@ PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanReque
 }
 
 PredecodeWindowPlan predecodeWindowPlanForCandidates(
-    const PredecodeWindowStartPlan &plan, const std::vector<ImageNavigationCandidate> &candidates)
+    const PredecodeWindowStartPlan &plan, const std::vector<ImageDocumentPageCandidate> &candidates)
 {
     if (!plan.candidateList.has_value()) {
         return plan.fallbackWindow;
     }
 
     const PredecodeSchedulePlan schedule = predecodeSchedulePlan(candidates.size(),
-        imageNavigationCandidateIndex(candidates, plan.candidateList->context.currentUrl()),
+        imageDocumentPageCandidateIndex(candidates, plan.candidateList->context.currentUrl()),
         plan.candidateList->policyInput);
     return PredecodeWindowPlan {
         plan.fallbackWindow.openedCollectionScope,

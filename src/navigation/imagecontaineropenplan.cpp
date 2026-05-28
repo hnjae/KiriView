@@ -15,13 +15,14 @@ ImageContainerOpenPlan imageContainerOpenPlanForCandidate(
 {
     switch (container.type) {
     case ContainerNavigationCandidateType::Directory:
-        return { ImageCandidateListSource::forDirectory(container.url),
+        return { ImageDocumentPageCandidateListSource::forDirectory(container.url),
             ImageContainerOpenError::Generic };
     case ContainerNavigationCandidateType::ComicBookArchive: {
         const std::optional<OpenedCollectionScopeLocation> openedCollectionScope
             = openedCollectionScopeLocationForLocalArchiveUrl(container.url);
         if (openedCollectionScope.has_value() && openedCollectionScope->isComicBook()) {
-            return { ImageCandidateListSource::forOpenedCollectionScope(*openedCollectionScope),
+            return { ImageDocumentPageCandidateListSource::forOpenedCollectionScope(
+                         *openedCollectionScope),
                 ImageContainerOpenError::Generic };
         }
 
@@ -33,14 +34,14 @@ ImageContainerOpenPlan imageContainerOpenPlanForCandidate(
 }
 
 ImageContainerOpenResult imageContainerOpenResultForCandidates(
-    const std::vector<ImageNavigationCandidate> &candidates)
+    const std::vector<ImageDocumentPageCandidate> &candidates)
 {
     if (candidates.empty()) {
         return { std::nullopt, ImageContainerOpenError::EmptyContainer };
     }
 
-    const ImageNavigationCandidate &candidate = candidates.front();
-    return { ImageNavigationTarget { candidate.url, candidate.kind },
+    const ImageDocumentPageCandidate &candidate = candidates.front();
+    return { ImageDocumentPageTarget { candidate.url, candidate.kind },
         ImageContainerOpenError::Generic };
 }
 }

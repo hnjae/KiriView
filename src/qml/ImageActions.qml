@@ -98,11 +98,11 @@ Item {
     signal toggleThumbnailPanelRequested
 
     function activeFirstMenuText() {
-        return root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.MediaNavigationBoundary ? KI18n.i18nc("@action:inmenu", "&First Media Item") : "";
+        return root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.DirectMediaNavigationBoundary ? KI18n.i18nc("@action:inmenu", "&First Media Item") : "";
     }
 
     function activeLastMenuText() {
-        return root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.MediaNavigationBoundary ? KI18n.i18nc("@action:inmenu", "&Last Media Item") : "";
+        return root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.DirectMediaNavigationBoundary ? KI18n.i18nc("@action:inmenu", "&Last Media Item") : "";
     }
 
     function openFirstImage() {
@@ -113,14 +113,14 @@ Item {
         root.documentSession.openLastActiveNavigation();
     }
 
-    function openNextImage() {
+    function openNextPage() {
         const boundaryText = root.documentSession.requestNextActiveNavigationBoundaryText();
         if (boundaryText.length > 0) {
             root.imageBoundaryReached(boundaryText);
         }
     }
 
-    function openPreviousImage() {
+    function openPreviousPage() {
         const boundaryText = root.documentSession.requestPreviousActiveNavigationBoundaryText();
         if (boundaryText.length > 0) {
             root.imageBoundaryReached(boundaryText);
@@ -259,7 +259,7 @@ Item {
         bindEnabled: true
         proxyEnabled: root.previousPageProxyAvailable
 
-        onTriggered: root.openPreviousImage()
+        onTriggered: root.openPreviousPage()
     }
 
     ManagedAction {
@@ -271,7 +271,7 @@ Item {
         bindEnabled: true
         proxyEnabled: root.nextPageProxyAvailable
 
-        onTriggered: root.openNextImage()
+        onTriggered: root.openNextPage()
     }
 
     ManagedAction {

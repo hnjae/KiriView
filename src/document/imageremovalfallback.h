@@ -5,8 +5,8 @@
 #define KIRIVIEW_IMAGEREMOVALFALLBACK_H
 
 #include "location/imagelocation.h"
-#include "navigation/imagecandidatelistsource.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagecandidatelistsource.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 
 #include <QString>
 #include <QUrl>
@@ -19,7 +19,7 @@ struct NoImageRemovalFallback {
 };
 
 struct ImageRemovalFallback {
-    ImageCandidateListContext imageContext;
+    ImageDocumentPageCandidateListContext imageContext;
     QUrl currentUrl;
     QString currentName;
 };
@@ -46,9 +46,10 @@ struct ImageRemovalPlan {
 };
 
 ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocation &location);
-ImageRemovalFallback imageRemovalFallbackForImageContext(const ImageCandidateListContext &context);
-std::optional<ImageNavigationTarget> imageRemovalFallbackTarget(
-    std::vector<ImageNavigationCandidate> candidates, const ImageRemovalFallback &fallback);
+ImageRemovalFallback imageRemovalFallbackForImageContext(
+    const ImageDocumentPageCandidateListContext &context);
+std::optional<ImageDocumentPageTarget> imageRemovalFallbackTarget(
+    std::vector<ImageDocumentPageCandidate> candidates, const ImageRemovalFallback &fallback);
 ComicBookRemovalFallbackCandidates comicBookRemovalFallbackCandidates(
     std::vector<ContainerNavigationCandidate> candidates, const ComicBookRemovalFallback &fallback);
 }

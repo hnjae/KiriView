@@ -5,7 +5,7 @@
 #define KIRIVIEW_MEDIAENTRYSOURCEBACKEND_H
 
 #include "location/imagelocation.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 
 #include <QByteArray>
 #include <QString>
@@ -20,7 +20,7 @@ struct MediaEntrySourceError {
 };
 
 struct MediaEntrySourceCandidates {
-    std::vector<ImageNavigationCandidate> candidates;
+    std::vector<ImageDocumentPageCandidate> candidates;
 };
 
 struct MediaEntrySourceImageData {
@@ -36,7 +36,7 @@ class MediaEntrySource
 public:
     virtual ~MediaEntrySource() = default;
 
-    virtual MediaEntrySourceCandidatesResult loadImageCandidates() = 0;
+    virtual MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates() = 0;
     virtual MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) = 0;
 };
 

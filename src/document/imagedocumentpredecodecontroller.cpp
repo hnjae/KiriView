@@ -14,9 +14,9 @@
 namespace KiriView {
 ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject *parent,
     ImageDocumentState &state, ImagePresentationController &presentationController,
-    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies,
-    qsizetype cacheByteBudget, CurrentPageNumberCallback currentPageNumber,
-    PowerSaverProvider powerSaverProvider)
+    ImageDocumentPageCandidateProvider candidateProvider,
+    ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
+    CurrentPageNumberCallback currentPageNumber, PowerSaverProvider powerSaverProvider)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_coordinator(

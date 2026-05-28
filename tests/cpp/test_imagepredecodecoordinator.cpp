@@ -17,8 +17,8 @@
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::imageDecodeDependenciesFor;
+using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::imagesDirectoryUrl;
 using KiriView::TestSupport::indexedImageUrl;
 using KiriView::TestSupport::localUrl;
@@ -29,7 +29,7 @@ using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
-using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
 
 constexpr qsizetype testCacheByteBudget = 1024 * 1024;
 
@@ -57,12 +57,12 @@ KiriView::ImagePredecodeCoordinator createCoordinator(
     return createCoordinator(parent, candidateProvider, dataLoader, noOpPowerSaverProvider());
 }
 
-std::vector<KiriView::ImageNavigationCandidate> imageCandidates(int count)
+std::vector<KiriView::ImageDocumentPageCandidate> imageDocumentPageCandidates(int count)
 {
-    std::vector<KiriView::ImageNavigationCandidate> candidates;
+    std::vector<KiriView::ImageDocumentPageCandidate> candidates;
     candidates.reserve(static_cast<std::size_t>(count));
     for (int index = 0; index < count; ++index) {
-        candidates.push_back(imageCandidate(indexedImageUrl(index)));
+        candidates.push_back(imageDocumentPageCandidate(indexedImageUrl(index)));
     }
     return candidates;
 }
@@ -119,9 +119,9 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
     const QUrl nextUrl = indexedImageUrl(2);
     candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
         {
-            imageCandidate(previousUrl),
-            imageCandidate(displayedUrl),
-            imageCandidate(nextUrl),
+            imageDocumentPageCandidate(previousUrl),
+            imageDocumentPageCandidate(displayedUrl),
+            imageDocumentPageCandidate(nextUrl),
         });
 
     const QImage displayedImage = testImage();
@@ -161,9 +161,9 @@ void TestImagePredecodeCoordinator::scheduleCachesVisibleSpreadPagesAndSkipsSeco
     const QUrl nextUrl = indexedImageUrl(2);
     candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
         {
-            imageCandidate(primaryUrl),
-            imageCandidate(secondaryUrl),
-            imageCandidate(nextUrl),
+            imageDocumentPageCandidate(primaryUrl),
+            imageDocumentPageCandidate(secondaryUrl),
+            imageDocumentPageCandidate(nextUrl),
         });
 
     coordinator.schedule(predecodeContext(
@@ -220,8 +220,8 @@ void TestImagePredecodeCoordinator::archivePredecodeKeepsOpenedCollectionScopeCo
     const QUrl nextUrl = archivePageUrl(openedCollectionScope->rootUrl(), QStringLiteral("02.png"));
     candidateProvider.setOpenedCollectionCandidates(openedCollectionScope->rootUrl(),
         {
-            imageCandidate(displayedUrl),
-            imageCandidate(nextUrl),
+            imageDocumentPageCandidate(displayedUrl),
+            imageDocumentPageCandidate(nextUrl),
         });
 
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
@@ -252,7 +252,7 @@ void TestImagePredecodeCoordinator::regularPredecodeWindowKeepsOnePreviousAndTwo
         = createCoordinator(this, candidateProvider, dataLoader);
 
     const QUrl displayedUrl = indexedImageUrl(5);
-    candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageCandidates(15));
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageDocumentPageCandidates(15));
 
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
@@ -290,7 +290,7 @@ void TestImagePredecodeCoordinator::directoryCollectionStartsTwoBackgroundDecode
             imagesDirectoryUrl(), KiriView::OpenedCollectionScopeKind::Directory);
     const QUrl displayedUrl = indexedImageUrl(5);
     candidateProvider.setOpenedCollectionCandidates(
-        directoryCollection.rootUrl(), imageCandidates(15));
+        directoryCollection.rootUrl(), imageDocumentPageCandidates(15));
 
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
@@ -333,7 +333,7 @@ void TestImagePredecodeCoordinator::staleGenerationDecodeIsIgnored()
     KiriView::ImagePredecodeCoordinator coordinator
         = createCoordinator(this, candidateProvider, dataLoader);
 
-    candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageCandidates(5));
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageDocumentPageCandidates(5));
 
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(0)),
@@ -361,7 +361,7 @@ void TestImagePredecodeCoordinator::rapidNavigationDebouncesSkippedPagePredecode
     KiriView::ImagePredecodeCoordinator coordinator
         = createCoordinator(this, candidateProvider, dataLoader);
 
-    candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageCandidates(10));
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageDocumentPageCandidates(10));
 
     const auto schedulePage = [&coordinator](int pageIndex) {
         coordinator.schedule(predecodeContext(
@@ -400,8 +400,8 @@ void TestImagePredecodeCoordinator::powerSaverMonitorSuppressesAndReschedulesPre
     const QUrl nextUrl = indexedImageUrl(2);
     candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
         {
-            imageCandidate(displayedUrl),
-            imageCandidate(nextUrl),
+            imageDocumentPageCandidate(displayedUrl),
+            imageDocumentPageCandidate(nextUrl),
         });
 
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
@@ -439,8 +439,8 @@ void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()
     const QUrl nextUrl = indexedImageUrl(2);
     candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
         {
-            imageCandidate(displayedUrl),
-            imageCandidate(nextUrl),
+            imageDocumentPageCandidate(displayedUrl),
+            imageDocumentPageCandidate(nextUrl),
         });
 
     const QImage displayedImage = testImage();

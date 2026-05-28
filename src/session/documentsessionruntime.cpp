@@ -77,7 +77,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
     , m_videoDocument(videoDocument)
     , m_state(std::move(changeCallback))
     , m_activeNavigationThumbnailModel(std::make_unique<ActiveNavigationThumbnailModel>(owner))
-    , m_mediaNavigationRuntime(std::move(dependencies.mediaCandidateProvider))
+    , m_directMediaNavigationRuntime(std::move(dependencies.directMediaNavigationCandidateProvider))
     , m_mediaDeletionRuntime(std::move(dependencies.fileOperationProvider))
     , m_mediaOpenWithProvider(
           mediaOpenWithProviderWithDefault(std::move(dependencies.mediaOpenWithProvider)))
@@ -94,7 +94,7 @@ DocumentSessionRuntime::~DocumentSessionRuntime()
 {
     QObject::disconnect(&m_imageDocument, nullptr, m_owner, nullptr);
     QObject::disconnect(&m_videoDocument, nullptr, m_owner, nullptr);
-    m_mediaNavigationRuntime.cancel();
+    m_directMediaNavigationRuntime.cancel();
     m_mediaDeletionRuntime.cancel();
     m_mediaOpenWithJob.cancel();
 }
@@ -160,11 +160,11 @@ bool DocumentSessionRuntime::activeZoomEditable() const
     return m_state.activeZoomSnapshot().editable;
 }
 
-bool DocumentSessionRuntime::mediaNavigationActive() const
+bool DocumentSessionRuntime::directMediaNavigationActive() const
 {
     return m_state.documentKind() == DocumentSessionKind::Video
         || (m_state.documentKind() == DocumentSessionKind::Image
-            && directImageLoadMayUseMediaScope());
+            && directImageLoadMayUseImageDocumentSourceScope());
 }
 
 bool DocumentSessionRuntime::activeNavigationAvailable() const
@@ -231,27 +231,27 @@ std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const
 
 void DocumentSessionRuntime::openPreviousMedia()
 {
-    openMedia(previousMediaNavigationOpenRequest());
+    openMedia(previousDirectMediaNavigationOpenRequest());
 }
 
-void DocumentSessionRuntime::openNextMedia() { openMedia(nextMediaNavigationOpenRequest()); }
+void DocumentSessionRuntime::openNextMedia() { openMedia(nextDirectMediaNavigationOpenRequest()); }
 
 void DocumentSessionRuntime::openMediaAtNumber(int mediaNumber)
 {
-    openMedia(numberedMediaNavigationOpenRequest(mediaNumber));
+    openMedia(numberedDirectMediaNavigationOpenRequest(mediaNumber));
 }
 
-void DocumentSessionRuntime::openMedia(MediaNavigationOpenRequest request)
+void DocumentSessionRuntime::openMedia(DirectMediaNavigationOpenRequest request)
 {
-    if (!mediaNavigationActive()) {
+    if (!directMediaNavigationActive()) {
         return;
     }
 
-    m_mediaNavigationRuntime.open(
-        m_owner, mediaNavigationLoadScope(), request,
+    m_directMediaNavigationRuntime.open(
+        m_owner, directMediaNavigationLoadScope(), request,
         [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
-        [this](DocumentSessionMediaNavigationOpenResult result) {
-            finishMediaNavigation(std::move(result));
+        [this](DocumentSessionDirectMediaNavigationOpenResult result) {
+            finishDirectMediaNavigation(std::move(result));
         });
 }
 
@@ -313,9 +313,9 @@ void DocumentSessionRuntime::executeActiveNavigationDispatchPlan(
                 openMediaAtNumber(operation.number);
             } else if constexpr (std::is_same_v<Operation,
                                      OpenPreviousImageDocumentPageOperation>) {
-                m_imageDocument.openPreviousImage();
+                m_imageDocument.openPreviousPage();
             } else if constexpr (std::is_same_v<Operation, OpenNextImageDocumentPageOperation>) {
-                m_imageDocument.openNextImage();
+                m_imageDocument.openNextPage();
             } else if constexpr (std::is_same_v<Operation,
                                      OpenImageDocumentPageAtNumberOperation>) {
                 m_imageDocument.openImageAtPage(operation.number);
@@ -327,7 +327,7 @@ void DocumentSessionRuntime::executeActiveNavigationDispatchPlan(
 void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 {
     if (m_state.documentKind() == DocumentSessionKind::Image
-        && !directImageLoadMayUseMediaScope()) {
+        && !directImageLoadMayUseImageDocumentSourceScope()) {
         m_imageDocument.deleteDisplayedFile(mode == FileDeletionMode::MoveToTrash
                 ? KiriImageDocument::DeletionMode::MoveToTrash
                 : KiriImageDocument::DeletionMode::DeletePermanently);
@@ -335,14 +335,14 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
         return;
     }
 
-    if (!displayedFileDeletionAvailable() || !mediaNavigationActive()) {
+    if (!displayedFileDeletionAvailable() || !directMediaNavigationActive()) {
         return;
     }
 
     m_state.setFileDeletionInProgress(true);
     recomputePublicProjection();
-    loadMediaCandidates(
-        [this, mode](DocumentSessionMediaNavigationCandidatesResult result) mutable {
+    loadDirectMediaNavigationCandidates(
+        [this, mode](DocumentSessionDirectMediaNavigationCandidatesResult result) mutable {
             startMediaDeletion(mode, std::move(result.candidates));
         });
 }
@@ -373,17 +373,18 @@ void DocumentSessionRuntime::connectDocuments()
         [this]() { recomputePublicProjection(); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::errorStringChanged, m_owner,
         [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
-    QObject::connect(&m_imageDocument, &KiriImageDocument::mediaScopeChanged, m_owner, [this]() {
-        if (m_routingSource) {
-            return;
-        }
+    QObject::connect(
+        &m_imageDocument, &KiriImageDocument::imageDocumentSourceScopeChanged, m_owner, [this]() {
+            if (m_routingSource) {
+                return;
+            }
 
-        const bool directMediaScopeChanged = syncDirectImageCursorFromDocument();
-        if (directMediaScopeChanged || !mediaNavigationActive()) {
-            refreshMediaNavigation();
-        }
-        recomputePublicProjection();
-    });
+            const bool directMediaScopeChanged = syncDirectImageCursorFromDocument();
+            if (directMediaScopeChanged || !directMediaNavigationActive()) {
+                refreshDirectMediaNavigation();
+            }
+            recomputePublicProjection();
+        });
     QObject::connect(&m_imageDocument, &KiriImageDocument::fileDeletionInProgressChanged, m_owner,
         [this]() { syncImageDocumentFileDeletionProgress(); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::zoomPercentKnownChanged, m_owner,
@@ -411,7 +412,8 @@ void DocumentSessionRuntime::connectDocuments()
 
 void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
 {
-    if (m_state.documentKind() != DocumentSessionKind::Image || directImageLoadMayUseMediaScope()) {
+    if (m_state.documentKind() != DocumentSessionKind::Image
+        || directImageLoadMayUseImageDocumentSourceScope()) {
         return;
     }
 
@@ -462,7 +464,7 @@ void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
 
     std::vector<ActiveNavigationThumbnailRow> rows = projectActiveNavigationThumbnailRows(
         m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(),
-        m_mediaNavigationCandidates, m_imageDocument.pageNavigationSnapshot());
+        m_directMediaNavigationCandidates, m_imageDocument.pageNavigationSnapshot());
     if (rows.empty()) {
         m_activeNavigationThumbnailModel->clear();
         return;
@@ -497,7 +499,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
 {
     struct RouteExecutionState {
         bool directMediaScopeChanged = false;
-        bool mediaNavigationCleared = false;
+        bool directMediaNavigationCleared = false;
     };
 
     RouteExecutionState state;
@@ -518,15 +520,15 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
                 if constexpr (std::is_same_v<Operation, ClearSessionErrorStringRouteOperation>) {
                     m_state.setSessionErrorString(QString());
                 } else if constexpr (std::is_same_v<Operation,
-                                         CancelMediaNavigationRouteOperation>) {
-                    m_mediaNavigationRuntime.cancel();
+                                         CancelDirectMediaNavigationRouteOperation>) {
+                    m_directMediaNavigationRuntime.cancel();
                 } else if constexpr (std::is_same_v<Operation, CancelMediaDeletionRouteOperation>) {
                     cancelMediaDeletion();
                 } else if constexpr (std::is_same_v<Operation,
-                                         ClearMediaNavigationRouteOperation>) {
-                    m_state.setMediaNavigationState({}, false);
-                    m_mediaNavigationCandidates.clear();
-                    state.mediaNavigationCleared = true;
+                                         ClearDirectMediaNavigationRouteOperation>) {
+                    m_state.setDirectMediaNavigationState({}, false);
+                    m_directMediaNavigationCandidates.clear();
+                    state.directMediaNavigationCleared = true;
                 } else if constexpr (std::is_same_v<Operation,
                                          ClearDirectMediaCursorRouteOperation>) {
                     state.directMediaScopeChanged
@@ -587,14 +589,14 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
                                          RecomputePublicProjectionRouteOperation>) {
                     recomputePublicProjection();
                 } else if constexpr (std::is_same_v<Operation,
-                                         RefreshMediaNavigationAfterRoutingRouteOperation>) {
-                    if (state.directMediaScopeChanged || state.mediaNavigationCleared
-                        || mediaNavigationActive()) {
-                        refreshMediaNavigation();
+                                         RefreshDirectMediaNavigationAfterRoutingRouteOperation>) {
+                    if (state.directMediaScopeChanged || state.directMediaNavigationCleared
+                        || directMediaNavigationActive()) {
+                        refreshDirectMediaNavigation();
                     }
                 } else if constexpr (std::is_same_v<Operation, ClearMediaPredecodeRouteOperation>) {
-                    if (state.mediaNavigationCleared) {
-                        m_state.setMediaNavigationState({}, false);
+                    if (state.directMediaNavigationCleared) {
+                        m_state.setDirectMediaNavigationState({}, false);
                         recomputePublicProjection();
                     }
                     if (m_mediaPredecodeCoordinator != nullptr) {
@@ -637,7 +639,7 @@ void DocumentSessionRuntime::syncFromImageDocument()
     recomputePublicProjection();
     m_state.publish(DocumentSessionChange::ErrorString);
     if (directMediaScopeChanged) {
-        refreshMediaNavigation();
+        refreshDirectMediaNavigation();
     }
 }
 
@@ -653,15 +655,15 @@ void DocumentSessionRuntime::syncFromVideoDocument()
         m_state.clearDirectMediaCursor();
         m_state.setSourceIdentity(QUrl());
         setDocumentKind(DocumentSessionKind::Empty);
-        m_state.setMediaNavigationState({}, false);
-        m_mediaNavigationCandidates.clear();
+        m_state.setDirectMediaNavigationState({}, false);
+        m_directMediaNavigationCandidates.clear();
     } else {
         const bool directMediaScopeChanged
             = m_state.setDirectVideoCursor(m_videoDocument.sourceUrl());
         logDirectMediaScope("sync from video document", m_state.directMediaScope());
         m_state.setSourceIdentity(m_videoDocument.sourceUrl());
         if (directMediaScopeChanged) {
-            refreshMediaNavigation();
+            refreshDirectMediaNavigation();
         }
     }
 
@@ -670,57 +672,58 @@ void DocumentSessionRuntime::syncFromVideoDocument()
     m_state.publish(DocumentSessionChange::ErrorString);
 }
 
-void DocumentSessionRuntime::refreshMediaNavigation()
+void DocumentSessionRuntime::refreshDirectMediaNavigation()
 {
-    if (!mediaNavigationActive()) {
-        qCDebug(kiriviewNavigationLog) << "media navigation refresh skipped"
+    if (!directMediaNavigationActive()) {
+        qCDebug(kiriviewNavigationLog) << "direct media navigation refresh skipped"
                                        << "reason"
                                        << "inactive"
                                        << "documentKind" << documentKindName(m_state.documentKind())
                                        << "cursorUrl" << activeDirectMediaCursorUrl();
-        m_state.setMediaNavigationState({}, false);
-        m_mediaNavigationCandidates.clear();
+        m_state.setDirectMediaNavigationState({}, false);
+        m_directMediaNavigationCandidates.clear();
         recomputePublicProjection();
-        if (!directImageLoadMayUseMediaScope()) {
+        if (!directImageLoadMayUseImageDocumentSourceScope()) {
             m_mediaPredecodeCoordinator->clear();
         }
         return;
     }
 
-    const DirectMediaScope scope = mediaNavigationLoadScope();
-    logDirectMediaScope("media navigation refresh requested", scope);
-    m_mediaNavigationRuntime.refresh(
+    const DirectMediaScope scope = directMediaNavigationLoadScope();
+    logDirectMediaScope("direct media navigation refresh requested", scope);
+    m_directMediaNavigationRuntime.refresh(
         m_owner, scope,
         [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
-        [this](DocumentSessionMediaNavigationRefreshResult result) {
-            updateMediaBoundaryState(std::move(result));
+        [this](DocumentSessionDirectMediaNavigationRefreshResult result) {
+            updateDirectMediaNavigationBoundaryState(std::move(result));
         });
 }
 
-void DocumentSessionRuntime::loadMediaCandidates(
-    DocumentSessionMediaNavigationRuntime::CandidatesCallback callback)
+void DocumentSessionRuntime::loadDirectMediaNavigationCandidates(
+    DocumentSessionDirectMediaNavigationRuntime::CandidatesCallback callback)
 {
-    m_mediaNavigationRuntime.loadCandidates(
-        m_owner, mediaNavigationLoadScope(),
+    m_directMediaNavigationRuntime.loadCandidates(
+        m_owner, directMediaNavigationLoadScope(),
         [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
         std::move(callback));
 }
 
-void DocumentSessionRuntime::finishMediaNavigation(DocumentSessionMediaNavigationOpenResult result)
+void DocumentSessionRuntime::finishDirectMediaNavigation(
+    DocumentSessionDirectMediaNavigationOpenResult result)
 {
     if (!result.succeeded) {
-        qCDebug(kiriviewNavigationLog) << "media navigation open failed"
+        qCDebug(kiriviewNavigationLog) << "direct media navigation open failed"
                                        << "error" << result.errorString;
-        m_state.setMediaNavigationState({}, false);
-        m_mediaNavigationCandidates.clear();
+        m_state.setDirectMediaNavigationState({}, false);
+        m_directMediaNavigationCandidates.clear();
         recomputePublicProjection();
         return;
     }
 
-    m_mediaNavigationCandidates = result.candidates;
-    m_state.setMediaNavigationState(result.plan.boundaryState, true);
+    m_directMediaNavigationCandidates = result.candidates;
+    m_state.setDirectMediaNavigationState(result.plan.boundaryState, true);
     qCDebug(kiriviewNavigationLog)
-        << "media navigation open finished"
+        << "direct media navigation open finished"
         << "candidates" << result.candidates.size() << "currentNumber"
         << result.plan.boundaryState.currentNumber << "count" << result.plan.boundaryState.count
         << "targetUrl" << result.plan.targetUrl.value_or(QUrl());
@@ -731,22 +734,22 @@ void DocumentSessionRuntime::finishMediaNavigation(DocumentSessionMediaNavigatio
     }
 }
 
-void DocumentSessionRuntime::updateMediaBoundaryState(
-    DocumentSessionMediaNavigationRefreshResult result)
+void DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState(
+    DocumentSessionDirectMediaNavigationRefreshResult result)
 {
     if (!result.succeeded) {
-        qCDebug(kiriviewNavigationLog) << "media navigation refresh failed"
+        qCDebug(kiriviewNavigationLog) << "direct media navigation refresh failed"
                                        << "error" << result.errorString;
-        m_state.setMediaNavigationState({}, false);
-        m_mediaNavigationCandidates.clear();
+        m_state.setDirectMediaNavigationState({}, false);
+        m_directMediaNavigationCandidates.clear();
         recomputePublicProjection();
         return;
     }
 
-    m_mediaNavigationCandidates = result.candidates;
-    m_state.setMediaNavigationState(result.boundaryState, true);
+    m_directMediaNavigationCandidates = result.candidates;
+    m_state.setDirectMediaNavigationState(result.boundaryState, true);
     qCDebug(kiriviewNavigationLog)
-        << "media navigation refresh finished"
+        << "direct media navigation refresh finished"
         << "candidates" << result.candidates.size() << "currentNumber"
         << result.boundaryState.currentNumber << "count" << result.boundaryState.count
         << "canPrevious" << result.boundaryState.canOpenPrevious << "canNext"
@@ -756,9 +759,9 @@ void DocumentSessionRuntime::updateMediaBoundaryState(
 }
 
 void DocumentSessionRuntime::scheduleMediaPredecode(
-    const std::vector<MediaNavigationCandidate> &candidates)
+    const std::vector<DirectMediaNavigationCandidate> &candidates)
 {
-    if (!mediaNavigationActive() || m_mediaPredecodeCoordinator == nullptr) {
+    if (!directMediaNavigationActive() || m_mediaPredecodeCoordinator == nullptr) {
         return;
     }
 
@@ -777,7 +780,8 @@ void DocumentSessionRuntime::scheduleMediaPredecode(
 
 std::vector<DisplayedPredecodeImage> DocumentSessionRuntime::displayedPredecodeImages() const
 {
-    if (m_state.documentKind() != DocumentSessionKind::Image || !activeImageUsesMediaScope()
+    if (m_state.documentKind() != DocumentSessionKind::Image
+        || !activeImageUsesImageDocumentSourceScope()
         || m_imageDocument.status() != KiriImageDocument::Status::Ready) {
         return {};
     }
@@ -799,7 +803,7 @@ ImageFirstDisplayDecodeContext DocumentSessionRuntime::firstDisplayDecodeContext
 void DocumentSessionRuntime::cancelMediaDeletion()
 {
     const bool sessionMediaDeletionInProgress
-        = m_state.fileDeletionInProgress() && mediaNavigationActive();
+        = m_state.fileDeletionInProgress() && directMediaNavigationActive();
     if (!m_mediaDeletionRuntime.active() && !sessionMediaDeletionInProgress) {
         return;
     }
@@ -810,7 +814,7 @@ void DocumentSessionRuntime::cancelMediaDeletion()
 }
 
 void DocumentSessionRuntime::startMediaDeletion(
-    FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates)
+    FileDeletionMode mode, std::vector<DirectMediaNavigationCandidate> candidates)
 {
     const DocumentSessionMediaDeletionStartPlan plan = m_mediaDeletionRuntime.start(m_owner, mode,
         std::move(candidates), activeDirectMediaCursorUrl(), m_state.documentKind(),
@@ -868,9 +872,9 @@ void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
     case DocumentSessionMediaDeletionFollowUp::ClearSession:
         m_state.setSourceIdentity(QUrl());
         setDocumentKind(DocumentSessionKind::Empty);
-        if (plan.clearMediaNavigation) {
-            m_state.setMediaNavigationState({}, false);
-            m_mediaNavigationCandidates.clear();
+        if (plan.clearDirectMediaNavigation) {
+            m_state.setDirectMediaNavigationState({}, false);
+            m_directMediaNavigationCandidates.clear();
             recomputePublicProjection();
         }
         if (plan.clearPredecode && m_mediaPredecodeCoordinator != nullptr) {
@@ -884,7 +888,7 @@ void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
     }
 }
 
-DirectMediaScope DocumentSessionRuntime::mediaNavigationLoadScope() const
+DirectMediaScope DocumentSessionRuntime::directMediaNavigationLoadScope() const
 {
     return m_state.directMediaScope();
 }
@@ -899,12 +903,12 @@ bool DocumentSessionRuntime::directMediaCursorMatches(const DirectMediaScope &sc
     return directMediaScopeMatchesCursor(m_state.directMediaCursor(), scope);
 }
 
-bool DocumentSessionRuntime::activeImageUsesMediaScope() const
+bool DocumentSessionRuntime::activeImageUsesImageDocumentSourceScope() const
 {
     return m_imageDocument.ordinaryDirectMediaScopeActive();
 }
 
-bool DocumentSessionRuntime::directImageLoadMayUseMediaScope() const
+bool DocumentSessionRuntime::directImageLoadMayUseImageDocumentSourceScope() const
 {
     return m_state.documentKind() == DocumentSessionKind::Image
         && !activeDirectMediaCursorUrl().isEmpty();
@@ -919,7 +923,8 @@ bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
     const QUrl pendingUrl = m_state.directMediaCursor().pendingUrl;
     const QUrl displayedUrl = m_imageDocument.displayedUrl();
     if (!pendingUrl.isEmpty()) {
-        if (activeImageUsesMediaScope() && sameNormalizedUrl(displayedUrl, pendingUrl)) {
+        if (activeImageUsesImageDocumentSourceScope()
+            && sameNormalizedUrl(displayedUrl, pendingUrl)) {
             return m_state.confirmDirectImageCursor(displayedUrl);
         }
 
@@ -931,7 +936,7 @@ bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
         return false;
     }
 
-    if (activeImageUsesMediaScope() && !displayedUrl.isEmpty()) {
+    if (activeImageUsesImageDocumentSourceScope() && !displayedUrl.isEmpty()) {
         return m_state.confirmDirectImageCursor(displayedUrl);
     }
 
@@ -968,12 +973,12 @@ DocumentSessionPublicProjectionInput DocumentSessionRuntime::publicProjectionInp
 {
     return DocumentSessionPublicProjectionInput {
         m_state.documentKind(),
-        directImageLoadMayUseMediaScope(),
+        directImageLoadMayUseImageDocumentSourceScope(),
         !m_imageDocument.sourceUrl().isEmpty()
             && !isSupportedDirectImageUrl(m_imageDocument.sourceUrl()),
         m_state.fileDeletionInProgress(),
-        mediaActiveNavigationInput(),
-        imageDocumentActiveNavigationInput(),
+        directMediaActiveNavigationInput(),
+        imageDocumentPageActiveNavigationInput(),
         m_imageDocument.windowTitleFileName(),
         m_imageDocument.primaryImageSize(),
         m_videoDocument.windowTitleFileName(),
@@ -986,16 +991,16 @@ DocumentSessionPublicProjectionInput DocumentSessionRuntime::publicProjectionInp
     };
 }
 
-MediaActiveNavigationInput DocumentSessionRuntime::mediaActiveNavigationInput() const
+DirectMediaActiveNavigationInput DocumentSessionRuntime::directMediaActiveNavigationInput() const
 {
-    return MediaActiveNavigationInput { m_state.mediaNavigationState(),
-        m_state.mediaNavigationKnown() };
+    return DirectMediaActiveNavigationInput { m_state.directMediaNavigationState(),
+        m_state.directMediaNavigationKnown() };
 }
 
-ImageDocumentActiveNavigationInput
-DocumentSessionRuntime::imageDocumentActiveNavigationInput() const
+ImageDocumentPageActiveNavigationInput
+DocumentSessionRuntime::imageDocumentPageActiveNavigationInput() const
 {
-    return ImageDocumentActiveNavigationInput { m_imageDocument.currentPageNumber(),
-        m_imageDocument.currentLastPageNumber(), m_imageDocument.imageCount() };
+    return ImageDocumentPageActiveNavigationInput { m_imageDocument.currentPageNumber(),
+        m_imageDocument.currentLastPageNumber(), m_imageDocument.pageCount() };
 }
 }

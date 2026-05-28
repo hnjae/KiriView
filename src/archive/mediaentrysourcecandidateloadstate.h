@@ -7,7 +7,7 @@
 #include "async/imageasynccallbacks.h"
 #include "async/imageasyncoperationstate.h"
 #include "async/imageiojob.h"
-#include "navigation/imagecandidatecallbacks.h"
+#include "navigation/imagedocumentpagecandidatecallbacks.h"
 
 #include <QtGlobal>
 #include <optional>
@@ -18,7 +18,7 @@ class QObject;
 namespace KiriView {
 struct MediaEntrySourceCandidateLoad {
     ImageIoJobCompletion completion;
-    ImageCandidatesCallback callback;
+    ImageDocumentPageCandidatesCallback callback;
     ErrorCallback errorCallback;
 };
 
@@ -29,8 +29,8 @@ struct MediaEntrySourceCandidateLoadBatch {
 class MediaEntrySourceCandidateLoadState final
 {
 public:
-    ImageIoJob addLoad(
-        QObject *receiver, ImageCandidatesCallback callback, ErrorCallback errorCallback);
+    ImageIoJob addLoad(QObject *receiver, ImageDocumentPageCandidatesCallback callback,
+        ErrorCallback errorCallback);
     std::optional<MediaEntrySourceCandidateLoadBatch> startBatch();
     bool acceptsBatch(MediaEntrySourceCandidateLoadBatch batch) const;
     bool batchInProgress() const;

@@ -62,7 +62,8 @@ KiriView::ImageDocumentPublicSignalOperations recordingOperations(QStringList &e
         = [&events]() { events.append(QStringLiteral("rightToLeftReading")); };
     operations.rotationDegreesChanged
         = [&events]() { events.append(QStringLiteral("rotationDegrees")); };
-    operations.mediaScopeChanged = [&events]() { events.append(QStringLiteral("mediaScope")); };
+    operations.imageDocumentSourceScopeChanged
+        = [&events]() { events.append(QStringLiteral("imageDocumentSourceScope")); };
     operations.unsupportedOpenedCollectionVideoChanged
         = [&events]() { events.append(QStringLiteral("unsupportedOpenedCollectionVideo")); };
     operations.repaintRequested = [&events]() { events.append(QStringLiteral("repaint")); };
@@ -134,7 +135,7 @@ void TestImageDocumentPublicSignals::
                              { Change::TwoPageMode, Change::PageNavigation, Change::DisplayedUrl,
                                  Change::Status, Change::Repaint, Change::TwoPageMode }),
         { Signal::TwoPageMode, Signal::PageNavigation, Signal::DisplayedUrl, Signal::Status,
-            Signal::ZoomPercentKnown, Signal::Repaint, Signal::MediaScope });
+            Signal::ZoomPercentKnown, Signal::Repaint, Signal::ImageDocumentSourceScope });
 }
 
 void TestImageDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionOrder()

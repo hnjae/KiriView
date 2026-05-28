@@ -304,7 +304,7 @@ void TestApplicationShortcutPolicy::videoShortcutScopesUseViewerDeletionAndNavig
     KiriView::ApplicationActions::VideoShortcutAvailabilityInput input;
     input.helpShortcutsEnabled = true;
     input.viewerShortcutsEnabled = true;
-    input.mediaNavigationActive = true;
+    input.directMediaNavigationActive = true;
 
     QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::HelpShortcutScope));
@@ -328,7 +328,7 @@ void TestApplicationShortcutPolicy::videoShortcutScopesUseViewerDeletionAndNavig
         input, Scope::ImageSelectionViewerShortcutScope));
 
     input.viewerShortcutsEnabled = true;
-    input.mediaNavigationActive = false;
+    input.directMediaNavigationActive = false;
     QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ImageSelectionShortcutScope));
     QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
@@ -366,7 +366,7 @@ void TestApplicationShortcutPolicy::horizontalArrowShortcutPolicyUsesActiveMedia
 {
     KiriView::ApplicationActions::VideoShortcutAvailabilityInput input;
     input.viewerShortcutsEnabled = true;
-    input.mediaNavigationActive = true;
+    input.directMediaNavigationActive = true;
 
     QVERIFY(KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(false, true, input));
     QVERIFY(
@@ -381,7 +381,7 @@ void TestApplicationShortcutPolicy::horizontalArrowShortcutPolicyUsesActiveMedia
     QVERIFY(!KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
 
     input.fileDeletionInProgress = false;
-    input.mediaNavigationActive = false;
+    input.directMediaNavigationActive = false;
     QVERIFY(!KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
 }
 

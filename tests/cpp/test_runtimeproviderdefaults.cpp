@@ -4,7 +4,7 @@
 #include "async/imageiojob.h"
 #include "decoding/imagedecodedependencies.h"
 #include "document/filedeletion.h"
-#include "navigation/imagecandidateprovider.h"
+#include "navigation/imagedocumentpagecandidateprovider.h"
 #include "system/powersaverprovider.h"
 
 #include <QByteArray>
@@ -29,29 +29,30 @@ void TestRuntimeProviderDefaults::candidateProviderDefaultsFillMissingLoadersAnd
 {
     int directoryLoadCount = 0;
     int directoryChangeSubscriptionCount = 0;
-    KiriView::ImageNavigationCandidateProvider provider;
-    provider.directoryImages = [&directoryLoadCount](QObject *, QUrl,
-                                   KiriView::ImageCandidatesCallback, KiriView::ErrorCallback) {
-        ++directoryLoadCount;
-        return KiriView::ImageIoJob();
-    };
-    provider.directoryImageChanges
-        = [&directoryChangeSubscriptionCount](
-              QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback) {
+    KiriView::ImageDocumentPageCandidateProvider provider;
+    provider.directoryImageDocumentPages
+        = [&directoryLoadCount](QObject *, QUrl, KiriView::ImageDocumentPageCandidatesCallback,
+              KiriView::ErrorCallback) {
+              ++directoryLoadCount;
+              return KiriView::ImageIoJob();
+          };
+    provider.directoryImageDocumentPageChanges
+        = [&directoryChangeSubscriptionCount](QObject *, QUrl,
+              KiriView::ImageDocumentPageCandidatesCallback, KiriView::ErrorCallback) {
               ++directoryChangeSubscriptionCount;
               return KiriView::ImageIoJob();
           };
 
-    KiriView::ImageNavigationCandidateProvider resolved
-        = KiriView::imageNavigationCandidateProviderWithDefaults(std::move(provider));
+    KiriView::ImageDocumentPageCandidateProvider resolved
+        = KiriView::imageDocumentPageNavigationCandidateProviderWithDefaults(std::move(provider));
 
-    QVERIFY(resolved.directoryImages);
+    QVERIFY(resolved.directoryImageDocumentPages);
     QVERIFY(resolved.directoryContainers);
     QVERIFY(resolved.openedCollectionCandidates);
-    QVERIFY(resolved.directoryImageChanges);
+    QVERIFY(resolved.directoryImageDocumentPageChanges);
 
-    resolved.directoryImages(nullptr, QUrl(), {}, {});
-    resolved.directoryImageChanges(nullptr, QUrl(), {}, {});
+    resolved.directoryImageDocumentPages(nullptr, QUrl(), {}, {});
+    resolved.directoryImageDocumentPageChanges(nullptr, QUrl(), {}, {});
     QCOMPARE(directoryLoadCount, 1);
     QCOMPARE(directoryChangeSubscriptionCount, 1);
 }

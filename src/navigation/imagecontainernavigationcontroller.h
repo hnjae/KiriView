@@ -7,8 +7,8 @@
 #include "async/imageiojob.h"
 #include "imagecontainernavigationstate.h"
 #include "imagecontaineropenplan.h"
-#include "imagenavigationplan.h"
-#include "imagenavigationtypes.h"
+#include "imagedocumentpagenavigationplan.h"
+#include "imagedocumentpagenavigationtypes.h"
 
 #include <QObject>
 #include <QString>
@@ -17,19 +17,19 @@
 #include <vector>
 
 namespace KiriView {
-class ImageCandidateRepository;
+class ImageDocumentPageCandidateRepository;
 
 class ImageContainerNavigationController final : public QObject
 {
 public:
-    using NavigationPlanCallback = std::function<void(ImageNavigationPlan)>;
+    using NavigationPlanCallback = std::function<void(ImageDocumentPageNavigationPlan)>;
 
     struct Callbacks {
         NavigationPlanCallback navigationPlan;
     };
 
-    ImageContainerNavigationController(
-        QObject *parent, const ImageCandidateRepository &candidateRepository, Callbacks callbacks);
+    ImageContainerNavigationController(QObject *parent,
+        const ImageDocumentPageCandidateRepository &candidateRepository, Callbacks callbacks);
 
     static bool canOpenAdjacentContainer(const QUrl &currentContainerUrl);
 
@@ -44,14 +44,14 @@ private:
     void loadFirstImageFromContainerNavigation(
         quint64 operationId, const ContainerNavigationCandidate &container);
     void finishContainerNavigationImageLoad(quint64 operationId, const QUrl &containerUrl,
-        std::vector<ImageNavigationCandidate> candidates);
+        std::vector<ImageDocumentPageCandidate> candidates);
     void openImageFromContainerNavigation(
-        quint64 operationId, const ImageNavigationTarget &target, const QUrl &containerUrl);
+        quint64 operationId, const ImageDocumentPageTarget &target, const QUrl &containerUrl);
     void finishContainerNavigationLoadWithError(quint64 operationId, const QUrl &containerUrl,
         ContainerNavigationError error, const QString &errorString);
-    void reportNavigationPlan(ImageNavigationPlan plan);
+    void reportNavigationPlan(ImageDocumentPageNavigationPlan plan);
 
-    const ImageCandidateRepository &m_candidateRepository;
+    const ImageDocumentPageCandidateRepository &m_candidateRepository;
     Callbacks m_callbacks;
     ImageContainerNavigationState m_navigationState;
     ImageIoJob m_containerListJob;

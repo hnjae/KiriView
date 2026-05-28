@@ -5,17 +5,17 @@
 
 #include "location/imagedocumentlocation.h"
 #include "location/imageurl.h"
-#include "navigation/imagenavigationmodel.h"
+#include "navigation/imagedocumentpagenavigationpolicy.h"
 
 #include <optional>
 #include <utility>
 #include <vector>
 
 namespace {
-void appendRemovedCandidate(std::vector<KiriView::ImageNavigationCandidate> *candidates,
+void appendRemovedCandidate(std::vector<KiriView::ImageDocumentPageCandidate> *candidates,
     const QUrl &currentUrl, const QString &currentName)
 {
-    candidates->push_back(KiriView::ImageNavigationCandidate { currentUrl, currentName });
+    candidates->push_back(KiriView::ImageDocumentPageCandidate { currentUrl, currentName });
 }
 
 void appendRemovedCandidate(std::vector<KiriView::ContainerNavigationCandidate> *candidates,
@@ -25,9 +25,9 @@ void appendRemovedCandidate(std::vector<KiriView::ContainerNavigationCandidate> 
         currentUrl, currentName, KiriView::ContainerNavigationCandidateType::ComicBookArchive });
 }
 
-void sortRemovalFallbackCandidates(std::vector<KiriView::ImageNavigationCandidate> *candidates)
+void sortRemovalFallbackCandidates(std::vector<KiriView::ImageDocumentPageCandidate> *candidates)
 {
-    KiriView::sortImageNavigationCandidates(candidates);
+    KiriView::sortImageDocumentPageCandidates(candidates);
 }
 
 void sortRemovalFallbackCandidates(std::vector<KiriView::ContainerNavigationCandidate> *candidates)
@@ -45,17 +45,17 @@ std::vector<Candidate> removalFallbackCandidates(
     return candidates;
 }
 
-std::optional<KiriView::ImageNavigationCandidate> nextFallbackCandidate(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
+std::optional<KiriView::ImageDocumentPageCandidate> nextFallbackCandidate(
+    const std::vector<KiriView::ImageDocumentPageCandidate> &candidates, const QUrl &currentUrl)
 {
-    return KiriView::adjacentImageNavigationCandidate(
+    return KiriView::adjacentImageDocumentPageCandidate(
         candidates, currentUrl, KiriView::NavigationDirection::Next);
 }
 
-std::optional<KiriView::ImageNavigationCandidate> previousFallbackCandidate(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
+std::optional<KiriView::ImageDocumentPageCandidate> previousFallbackCandidate(
+    const std::vector<KiriView::ImageDocumentPageCandidate> &candidates, const QUrl &currentUrl)
 {
-    return KiriView::adjacentImageNavigationCandidate(
+    return KiriView::adjacentImageDocumentPageCandidate(
         candidates, currentUrl, KiriView::NavigationDirection::Previous);
 }
 
@@ -90,8 +90,8 @@ QUrl removalTargetUrlForDisplayedLocation(const KiriView::DisplayedImageLocation
 KiriView::ImageRemovalFallbackPlan removalFallbackPlanForDisplayedLocation(
     const KiriView::DisplayedImageLocation &location)
 {
-    const std::optional<KiriView::ImageCandidateListContext> imageContext
-        = KiriView::imageCandidateListContextForDisplayedImage(location);
+    const std::optional<KiriView::ImageDocumentPageCandidateListContext> imageContext
+        = KiriView::imageDocumentPageCandidateListContextForDisplayedImage(location);
 
     if (KiriView::displayedLocationIsInsideOpenedCollectionScope(location)) {
         if (location.openedCollectionScope().kind()
@@ -124,35 +124,36 @@ ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocati
     return ImageRemovalPlan { targetUrl, removalFallbackPlanForDisplayedLocation(location) };
 }
 
-ImageRemovalFallback imageRemovalFallbackForImageContext(const ImageCandidateListContext &context)
+ImageRemovalFallback imageRemovalFallbackForImageContext(
+    const ImageDocumentPageCandidateListContext &context)
 {
     const QUrl currentUrl = context.currentUrl();
     return ImageRemovalFallback { context, currentUrl, currentUrl.fileName() };
 }
 
-std::optional<ImageNavigationTarget> imageRemovalFallbackTarget(
-    std::vector<ImageNavigationCandidate> candidates, const ImageRemovalFallback &fallback)
+std::optional<ImageDocumentPageTarget> imageRemovalFallbackTarget(
+    std::vector<ImageDocumentPageCandidate> candidates, const ImageRemovalFallback &fallback)
 {
     if (fallback.currentUrl.isEmpty()) {
         return std::nullopt;
     }
 
-    const std::vector<ImageNavigationCandidate> fallbackCandidates = removalFallbackCandidates(
+    const std::vector<ImageDocumentPageCandidate> fallbackCandidates = removalFallbackCandidates(
         std::move(candidates), fallback.currentUrl, fallback.currentName);
 
-    const std::optional<ImageNavigationCandidate> preferred
+    const std::optional<ImageDocumentPageCandidate> preferred
         = nextFallbackCandidate(fallbackCandidates, fallback.currentUrl);
     if (preferred.has_value()) {
-        return ImageNavigationTarget { preferred->url, preferred->kind };
+        return ImageDocumentPageTarget { preferred->url, preferred->kind };
     }
 
-    const std::optional<ImageNavigationCandidate> fallbackCandidate
+    const std::optional<ImageDocumentPageCandidate> fallbackCandidate
         = previousFallbackCandidate(fallbackCandidates, fallback.currentUrl);
     if (!fallbackCandidate.has_value()) {
         return std::nullopt;
     }
 
-    return ImageNavigationTarget { fallbackCandidate->url, fallbackCandidate->kind };
+    return ImageDocumentPageTarget { fallbackCandidate->url, fallbackCandidate->kind };
 }
 
 ComicBookRemovalFallbackCandidates comicBookRemovalFallbackCandidates(

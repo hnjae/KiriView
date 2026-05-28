@@ -32,7 +32,7 @@ std::optional<QString> directoryPathForCollection(
     return path;
 }
 
-KiriView::MediaEntrySourceCandidatesResult loadDirectoryCollectionImageCandidates(
+KiriView::MediaEntrySourceCandidatesResult loadDirectoryCollectionImageDocumentPageCandidates(
     const KiriView::OpenedCollectionScopeLocation &openedCollectionScope)
 {
     const std::optional<QString> directoryPath = directoryPathForCollection(openedCollectionScope);
@@ -45,7 +45,7 @@ KiriView::MediaEntrySourceCandidatesResult loadDirectoryCollectionImageCandidate
     QDirIterator iterator(rootDirectory.absolutePath(),
         QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
 
-    std::vector<KiriView::ImageNavigationCandidate> candidates;
+    std::vector<KiriView::ImageDocumentPageCandidate> candidates;
     while (iterator.hasNext()) {
         iterator.next();
 
@@ -54,8 +54,8 @@ KiriView::MediaEntrySourceCandidatesResult loadDirectoryCollectionImageCandidate
             continue;
         }
 
-        std::optional<KiriView::ImageNavigationCandidate> candidate
-            = Backend::openedCollectionMediaCandidate(
+        std::optional<KiriView::ImageDocumentPageCandidate> candidate
+            = Backend::openedCollectionImageDocumentPageCandidate(
                 openedCollectionScope, rootDirectory.relativeFilePath(fileInfo.filePath()));
         if (candidate.has_value()) {
             candidates.push_back(std::move(*candidate));
@@ -95,11 +95,13 @@ KiriView::MediaEntrySourceImageDataResult loadDirectoryCollectionImageData(
     return Backend::mediaEntrySourceImageDataResult(std::move(data));
 }
 
-class DirectoryMediaEntrySource final : public Backend::MediaEntrySourceWithCandidateSnapshot
+class DirectoryCollectionMediaEntrySource final
+    : public Backend::MediaEntrySourceWithCandidateSnapshot
 {
 public:
-    DirectoryMediaEntrySource(KiriView::OpenedCollectionScopeLocation openedCollectionScope,
-        std::vector<KiriView::ImageNavigationCandidate> candidates)
+    DirectoryCollectionMediaEntrySource(
+        KiriView::OpenedCollectionScopeLocation openedCollectionScope,
+        std::vector<KiriView::ImageDocumentPageCandidate> candidates)
         : Backend::MediaEntrySourceWithCandidateSnapshot(std::move(candidates))
         , m_openedCollectionScope(std::move(openedCollectionScope))
     {
@@ -121,11 +123,11 @@ private:
     KiriView::OpenedCollectionScopeLocation m_openedCollectionScope;
 };
 
-KiriView::MediaEntrySourceOpenResult openDirectoryMediaEntrySource(
+KiriView::MediaEntrySourceOpenResult openDirectoryCollectionMediaEntrySource(
     const KiriView::OpenedCollectionScopeLocation &openedCollectionScope)
 {
     KiriView::MediaEntrySourceCandidatesResult candidatesResult
-        = loadDirectoryCollectionImageCandidates(openedCollectionScope);
+        = loadDirectoryCollectionImageDocumentPageCandidates(openedCollectionScope);
     if (const auto *error = std::get_if<KiriView::MediaEntrySourceError>(&candidatesResult)) {
         return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceOpenResult>(
             error->errorString);
@@ -137,16 +139,16 @@ KiriView::MediaEntrySourceOpenResult openDirectoryMediaEntrySource(
             Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope));
     }
 
-    return KiriView::MediaEntrySourcePtr(
-        std::make_shared<DirectoryMediaEntrySource>(openedCollectionScope, candidates->candidates));
+    return KiriView::MediaEntrySourcePtr(std::make_shared<DirectoryCollectionMediaEntrySource>(
+        openedCollectionScope, candidates->candidates));
 }
 }
 
 namespace KiriView::MediaEntrySourceBackendDetail {
-const MediaEntrySourceBackendOperations *directoryMediaEntrySourceBackendOperations()
+const MediaEntrySourceBackendOperations *directoryCollectionMediaEntrySourceBackendOperations()
 {
     static const MediaEntrySourceBackendOperations operations {
-        openDirectoryMediaEntrySource,
+        openDirectoryCollectionMediaEntrySource,
     };
     return &operations;
 }

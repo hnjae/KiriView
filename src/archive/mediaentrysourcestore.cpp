@@ -36,12 +36,12 @@ MediaEntrySourceStore::MediaEntrySourceStore(MediaEntrySourceFactory sourceFacto
 
 MediaEntrySourceStore::~MediaEntrySourceStore() { clear(); }
 
-ImageNavigationCandidateProvider MediaEntrySourceStore::wrapCandidateProvider(
-    ImageNavigationCandidateProvider provider)
+ImageDocumentPageCandidateProvider MediaEntrySourceStore::wrapCandidateProvider(
+    ImageDocumentPageCandidateProvider provider)
 {
     provider.openedCollectionCandidates
         = [this](QObject *receiver, OpenedCollectionScopeLocation openedCollectionScope,
-              ImageCandidatesCallback callback, ErrorCallback errorCallback) {
+              ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) {
               return loadOpenedCollectionCandidates(receiver, std::move(openedCollectionScope),
                   std::move(callback), std::move(errorCallback));
           };
@@ -98,8 +98,8 @@ bool MediaEntrySourceStore::hasCurrentOpenedCollectionScope(
 }
 
 ImageIoJob MediaEntrySourceStore::loadOpenedCollectionCandidates(QObject *receiver,
-    OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
-    ErrorCallback errorCallback)
+    OpenedCollectionScopeLocation openedCollectionScope,
+    ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
     return m_runtime.loadOpenedCollectionCandidates(
         receiver, std::move(openedCollectionScope), std::move(callback), std::move(errorCallback));

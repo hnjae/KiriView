@@ -17,8 +17,8 @@
 #include <utility>
 
 namespace {
-using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::imageDecodeDependenciesFor;
+using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::imagesDirectoryUrl;
 using KiriView::TestSupport::indexedImageUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
@@ -28,7 +28,7 @@ using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
-using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
 
 constexpr qsizetype testCacheByteBudget = 1024 * 1024;
 
@@ -69,8 +69,8 @@ void TestImageDocumentPredecodeController::scheduleAdjacentImagePredecodeUsesPre
     const QUrl nextUrl = indexedImageUrl(2);
     candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
         {
-            imageCandidate(displayedUrl),
-            imageCandidate(nextUrl),
+            imageDocumentPageCandidate(displayedUrl),
+            imageDocumentPageCandidate(nextUrl),
         });
 
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
@@ -106,8 +106,8 @@ void TestImageDocumentPredecodeController::
     const QUrl nextUrl = indexedImageUrl(2);
     candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
         {
-            imageCandidate(displayedUrl),
-            imageCandidate(nextUrl),
+            imageDocumentPageCandidate(displayedUrl),
+            imageDocumentPageCandidate(nextUrl),
         });
 
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
@@ -141,8 +141,8 @@ void TestImageDocumentPredecodeController::
     const QUrl nextUrl = indexedImageUrl(2);
     candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
         {
-            imageCandidate(displayedUrl),
-            imageCandidate(nextUrl),
+            imageDocumentPageCandidate(displayedUrl),
+            imageDocumentPageCandidate(nextUrl),
         });
 
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));

@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTPREDECODECONTROLLER_H
 
 #include "decoding/imagedecodedependencies.h"
-#include "navigation/imagecandidateprovider.h"
+#include "navigation/imagedocumentpagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
 #include "system/powersaverprovider.h"
 
@@ -29,7 +29,7 @@ public:
 
     ImageDocumentPredecodeController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController,
-        ImageNavigationCandidateProvider candidateProvider,
+        ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
         CurrentPageNumberCallback currentPageNumber = {},
         PowerSaverProvider powerSaverProvider = {});

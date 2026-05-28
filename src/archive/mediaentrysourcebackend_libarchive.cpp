@@ -206,7 +206,7 @@ KiriView::MediaEntrySourceImageDataResult readLibArchiveEntryData(
 }
 
 struct LibArchiveMediaEntrySourceMetadata {
-    std::vector<KiriView::ImageNavigationCandidate> candidates;
+    std::vector<KiriView::ImageDocumentPageCandidate> candidates;
     std::map<QString, int> entryOrderByPath;
 };
 
@@ -233,8 +233,8 @@ std::optional<LibArchiveMediaEntrySourceMetadata> scanLibArchiveMediaEntrySource
         ++entryOrder;
 
         if (archive_entry_filetype(entry) == AE_IFREG) {
-            std::optional<KiriView::ImageNavigationCandidate> candidate
-                = Backend::openedCollectionMediaCandidate(
+            std::optional<KiriView::ImageDocumentPageCandidate> candidate
+                = Backend::openedCollectionImageDocumentPageCandidate(
                     openedCollectionScope, libArchiveEntryPath(entry));
             if (candidate.has_value()) {
                 metadata.entryOrderByPath[candidate->name] = currentEntryOrder;

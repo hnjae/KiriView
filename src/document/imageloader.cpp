@@ -11,23 +11,23 @@
 
 namespace KiriView {
 ImageLoader::ImageLoader(QObject *parent)
-    : ImageLoader(parent, ImageNavigationCandidateProvider {}, ImageDecodeDependencies {})
+    : ImageLoader(parent, ImageDocumentPageCandidateProvider {}, ImageDecodeDependencies {})
 {
 }
 
 ImageLoader::ImageLoader(QObject *parent, Callbacks callbacks)
-    : ImageLoader(parent, ImageNavigationCandidateProvider {}, ImageDecodeDependencies {},
+    : ImageLoader(parent, ImageDocumentPageCandidateProvider {}, ImageDecodeDependencies {},
           std::move(callbacks))
 {
 }
 
-ImageLoader::ImageLoader(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
+ImageLoader::ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies)
     : ImageLoader(parent, std::move(candidateProvider), std::move(decodeDependencies), {})
 {
 }
 
-ImageLoader::ImageLoader(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
+ImageLoader::ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, Callbacks callbacks)
     : QObject(parent)
     , m_callbacks(std::move(callbacks))
@@ -108,11 +108,12 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
 
 void ImageLoader::startOpenedCollectionLoad(ImageLoadSession session)
 {
-    const ImageCandidateListSource candidateSource
-        = ImageCandidateListSource::forOpenedCollectionScope(session.openedCollectionScope());
+    const ImageDocumentPageCandidateListSource candidateSource
+        = ImageDocumentPageCandidateListSource::forOpenedCollectionScope(
+            session.openedCollectionScope());
     m_openedCollectionCandidateLoadJob = m_candidateRepository.loadImages(
         this, candidateSource,
-        [this, session](std::vector<ImageNavigationCandidate> candidates) mutable {
+        [this, session](std::vector<ImageDocumentPageCandidate> candidates) mutable {
             OpenedCollectionCandidateCompletion completion
                 = m_sessionTracker.completeOpenedCollectionCandidates(session, candidates);
             switch (completion.action) {
@@ -158,7 +159,7 @@ bool ImageLoader::tryReportUnsupportedOpenedCollectionVideo(ImageLoadSession ses
         return false;
     }
 
-    if (session.kind() != ImageNavigationCandidateKind::Video) {
+    if (session.kind() != ImageDocumentPageKind::Video) {
         return false;
     }
 

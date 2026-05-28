@@ -96,7 +96,7 @@ RustVideoShortcutAvailabilityInput rustVideoShortcutAvailabilityInput(
         input.helpShortcutsEnabled,
         input.viewerShortcutsEnabled,
         input.fileDeletionInProgress,
-        input.mediaNavigationActive,
+        input.directMediaNavigationActive,
     };
 }
 

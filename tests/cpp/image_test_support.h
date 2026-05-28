@@ -150,7 +150,7 @@ inline ImageDecodeDependencies imageDecodeDependenciesFor(
 }
 
 inline ImageDocumentRuntimeDependencyOverrides imageDocumentRuntimeDependencyOverridesFor(
-    FakeImageNavigationCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
+    FakeImageDocumentPageCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
     ImageDataDecoder dataDecoder, FileOperationProvider fileOperations = {})
 {
     return ImageDocumentRuntimeDependencyOverrides {

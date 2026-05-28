@@ -7,7 +7,7 @@
 #include "async/imageasyncticket.h"
 #include "decoding/imagedecoderequest.h"
 #include "imageloadplan.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 #include "rendering/staticimage.h"
 
 #include <QUrl>
@@ -41,7 +41,7 @@ public:
     bool isCurrent(const ImageLoadSession &session) const;
     std::optional<ImageLoadSession> claimCurrentForDecodeRequest(const ImageDecodeRequest &request);
     OpenedCollectionCandidateCompletion completeOpenedCollectionCandidates(
-        const ImageLoadSession &session, const std::vector<ImageNavigationCandidate> &candidates);
+        const ImageLoadSession &session, const std::vector<ImageDocumentPageCandidate> &candidates);
     std::optional<ImageLoadSession> claimPredecodedImage(
         const ImageLoadSession &session, DisplayedImageLocation location);
     std::optional<ImageLoadSession> claimCurrent(const ImageLoadSession &session);

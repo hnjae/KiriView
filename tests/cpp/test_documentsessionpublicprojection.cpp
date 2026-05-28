@@ -13,7 +13,7 @@ class TestDocumentSessionPublicProjection : public QObject
 
 private Q_SLOTS:
     void emptySessionProjectsUnavailableNavigationAndEmptyTitle();
-    void directImageProjectsMediaNavigationAndIntrinsicSizeTitle();
+    void directImageProjectsDirectMediaNavigationAndIntrinsicSizeTitle();
     void archiveImageProjectsPageNavigationAndCounterTitle();
     void deletionMasksNavigationDispatchWithoutDroppingTitleCounter();
     void imageDeletionAvailabilityRequiresReadyImageWithoutPendingReplacement();
@@ -33,7 +33,8 @@ void TestDocumentSessionPublicProjection::emptySessionProjectsUnavailableNavigat
     QVERIFY(!projection.displayedFileDeletionAvailable);
 }
 
-void TestDocumentSessionPublicProjection::directImageProjectsMediaNavigationAndIntrinsicSizeTitle()
+void TestDocumentSessionPublicProjection::
+    directImageProjectsDirectMediaNavigationAndIntrinsicSizeTitle()
 {
     const KiriView::DocumentSessionPublicProjection projection
         = KiriView::projectDocumentSessionPublicState(
@@ -42,8 +43,8 @@ void TestDocumentSessionPublicProjection::directImageProjectsMediaNavigationAndI
                 true,
                 false,
                 false,
-                KiriView::MediaActiveNavigationInput {
-                    KiriView::MediaNavigationBoundaryState { false, true, true, false, 1, 3 },
+                KiriView::DirectMediaActiveNavigationInput {
+                    KiriView::DirectMediaNavigationBoundaryState { false, true, true, false, 1, 3 },
                     true,
                 },
                 {},
@@ -58,7 +59,7 @@ void TestDocumentSessionPublicProjection::directImageProjectsMediaNavigationAndI
             });
 
     QCOMPARE(projection.sourceKind, KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia);
-    QCOMPARE(projection.boundaryScope, KiriView::ActiveNavigationBoundaryScope::Media);
+    QCOMPARE(projection.boundaryScope, KiriView::ActiveNavigationBoundaryScope::DirectMedia);
     QVERIFY(projection.activeNavigation.known);
     QVERIFY(projection.activeNavigation.canOpenNext);
     QCOMPARE(projection.activeNavigation.currentNumber, 1);
@@ -77,7 +78,7 @@ void TestDocumentSessionPublicProjection::archiveImageProjectsPageNavigationAndC
                 true,
                 false,
                 {},
-                KiriView::ImageDocumentActiveNavigationInput { 2, 3, 5 },
+                KiriView::ImageDocumentPageActiveNavigationInput { 2, 3, 5 },
                 QStringLiteral("book.cbz"),
                 QSize(640, 480),
                 {},
@@ -89,7 +90,7 @@ void TestDocumentSessionPublicProjection::archiveImageProjectsPageNavigationAndC
             });
 
     QCOMPARE(projection.sourceKind, KiriView::ActiveNavigationSourceKind::ImageDocumentPages);
-    QCOMPARE(projection.boundaryScope, KiriView::ActiveNavigationBoundaryScope::ImageDocument);
+    QCOMPARE(projection.boundaryScope, KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage);
     QVERIFY(projection.activeNavigation.known);
     QVERIFY(projection.activeNavigation.canOpenPrevious);
     QVERIFY(projection.activeNavigation.canOpenNext);
@@ -109,8 +110,8 @@ void TestDocumentSessionPublicProjection::
                 false,
                 false,
                 true,
-                KiriView::MediaActiveNavigationInput {
-                    KiriView::MediaNavigationBoundaryState { true, true, false, false, 2, 4 },
+                KiriView::DirectMediaActiveNavigationInput {
+                    KiriView::DirectMediaNavigationBoundaryState { true, true, false, false, 2, 4 },
                     true,
                 },
                 {},
@@ -150,7 +151,7 @@ void TestDocumentSessionPublicProjection::
     projection = KiriView::projectDocumentSessionPublicState(input);
     QVERIFY(!projection.displayedFileDeletionAvailable);
 
-    input.directImageLoadMayUseMediaScope = true;
+    input.directImageLoadMayUseImageDocumentSourceScope = true;
     input.imageReadyForDeletion = true;
     input.directImageReplacementPending = true;
     projection = KiriView::projectDocumentSessionPublicState(input);

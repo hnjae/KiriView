@@ -18,8 +18,8 @@ DocumentSessionMediaDeletionRuntime::DocumentSessionMediaDeletionRuntime(
 DocumentSessionMediaDeletionRuntime::~DocumentSessionMediaDeletionRuntime() { cancel(); }
 
 DocumentSessionMediaDeletionStartPlan DocumentSessionMediaDeletionRuntime::start(QObject *receiver,
-    FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl,
-    DocumentSessionKind documentKind, CompletionCallback callback)
+    FileDeletionMode mode, std::vector<DirectMediaNavigationCandidate> candidates,
+    const QUrl &currentUrl, DocumentSessionKind documentKind, CompletionCallback callback)
 {
     const DocumentSessionMediaDeletionStartPlan plan
         = documentSessionMediaDeletionStartPlan(mode, std::move(candidates), currentUrl);

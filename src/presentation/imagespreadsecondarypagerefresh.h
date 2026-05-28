@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGESPREADSECONDARYPAGEREFRESH_H
 #define KIRIVIEW_IMAGESPREADSECONDARYPAGEREFRESH_H
 
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 #include "presentation/imagespreadnavigation.h"
 #include "presentation/imagespreadpagecache.h"
 
@@ -24,7 +24,7 @@ struct ImageSpreadSecondaryPageRefreshRequest {
     bool primaryPageIsWide = false;
     bool secondaryPageVisible = false;
     QUrl currentSecondaryUrl;
-    ImagePageNavigationSnapshot navigation;
+    ImageDocumentPageNavigationSnapshot navigation;
 };
 
 struct ImageSpreadSecondaryPageRefreshResult {
@@ -36,7 +36,7 @@ struct ImageSpreadSecondaryPageRefreshResult {
 struct ImageSpreadPageNavigationContext {
     bool twoPageModeActive = false;
     bool secondaryPageVisible = false;
-    ImagePageNavigationSnapshot navigation;
+    ImageDocumentPageNavigationSnapshot navigation;
 };
 
 class ImageSpreadSecondaryPageRefresh final
@@ -55,7 +55,7 @@ public:
     bool shouldBeginNavigationTransition(
         int targetPageNumber, const ImageSpreadPageNavigationContext &context) const;
     bool primarySelectionMatchesDisplayed(
-        const ImagePageNavigationSnapshot &navigation, const QUrl &displayedUrl) const;
+        const ImageDocumentPageNavigationSnapshot &navigation, const QUrl &displayedUrl) const;
 
 private:
     ImageSpreadNavigationState navigationState(

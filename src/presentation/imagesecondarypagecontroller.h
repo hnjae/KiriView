@@ -8,7 +8,7 @@
 #include "document/imagedocumenttypes.h"
 #include "document/imageloadtypes.h"
 #include "location/imagelocation.h"
-#include "navigation/imagecandidateprovider.h"
+#include "navigation/imagedocumentpagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
 #include "presentation/imagepresentationload.h"
 #include "presentation/imagesecondarypagestate.h"
@@ -48,7 +48,7 @@ public:
     };
 
     ImageSecondaryPageController(QObject *parent, RenderContextProvider renderContextProvider,
-        Callbacks callbacks, ImageNavigationCandidateProvider candidateProvider,
+        Callbacks callbacks, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, qsizetype predecodeCacheByteBudget = 0);
     ~ImageSecondaryPageController();
 

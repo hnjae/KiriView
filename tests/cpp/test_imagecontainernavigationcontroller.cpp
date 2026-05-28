@@ -5,8 +5,8 @@
 #include "candidate_test_support.h"
 #include "image_async_test_support.h"
 #include "location/imagedocumentlocation.h"
-#include "navigation/imagecandidaterepository.h"
 #include "navigation/imagecontainernavigationcontroller.h"
+#include "navigation/imagedocumentpagecandidaterepository.h"
 
 #include <QObject>
 #include <QTest>
@@ -21,12 +21,12 @@ namespace {
 using KiriView::ContainerNavigationCandidate;
 using KiriView::ContainerNavigationCandidateType;
 using KiriView::ImageContainerOpenError;
-using KiriView::ImageNavigationCandidate;
+using KiriView::ImageDocumentPageCandidate;
 using KiriView::NavigationDirection;
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::containerCandidate;
-using KiriView::TestSupport::FakeImageNavigationCandidateProvider;
-using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
+using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::localUrl;
 
 template <typename Candidates, typename Callback> struct ManualCandidateLoad {
@@ -40,8 +40,8 @@ template <typename Candidates, typename Callback> struct ManualCandidateLoad {
 
 using ManualContainerList = ManualCandidateLoad<std::vector<ContainerNavigationCandidate>,
     KiriView::ContainerCandidatesCallback>;
-using ManualImageList
-    = ManualCandidateLoad<std::vector<ImageNavigationCandidate>, KiriView::ImageCandidatesCallback>;
+using ManualImageList = ManualCandidateLoad<std::vector<ImageDocumentPageCandidate>,
+    KiriView::ImageDocumentPageCandidatesCallback>;
 
 class ManualContainerNavigationProvider
 {
@@ -60,7 +60,8 @@ public:
     }
 
     KiriView::ImageIoJob startImageList(QObject *receiver, QUrl directoryUrl,
-        KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
+        KiriView::ImageDocumentPageCandidatesCallback callback,
+        KiriView::ErrorCallback errorCallback)
     {
         auto load = std::make_shared<ManualImageList>();
         load->url = std::move(directoryUrl);
@@ -98,7 +99,7 @@ public:
         }
     }
 
-    void finishImageListAt(std::size_t index, std::vector<ImageNavigationCandidate> candidates)
+    void finishImageListAt(std::size_t index, std::vector<ImageDocumentPageCandidate> candidates)
     {
         KiriView::TestSupport::Detail::finishManualIoJob(m_imageLists.at(index),
             [candidates = std::move(candidates)](ManualImageList &load) mutable {
@@ -109,7 +110,7 @@ public:
     }
 
     void deliverImageListAtIgnoringCancellation(
-        std::size_t index, std::vector<ImageNavigationCandidate> candidates)
+        std::size_t index, std::vector<ImageDocumentPageCandidate> candidates)
     {
         ManualImageList &load = *m_imageLists.at(index);
         if (load.callback) {
@@ -117,10 +118,11 @@ public:
         }
     }
 
-    KiriView::ImageNavigationCandidateProvider provider()
+    KiriView::ImageDocumentPageCandidateProvider provider()
     {
-        return KiriView::ImageNavigationCandidateProvider {
-            [this](QObject *receiver, QUrl directoryUrl, KiriView::ImageCandidatesCallback callback,
+        return KiriView::ImageDocumentPageCandidateProvider {
+            [this](QObject *receiver, QUrl directoryUrl,
+                KiriView::ImageDocumentPageCandidatesCallback callback,
                 KiriView::ErrorCallback errorCallback) {
                 return startImageList(receiver, std::move(directoryUrl), std::move(callback),
                     std::move(errorCallback));
@@ -132,7 +134,8 @@ public:
                     std::move(errorCallback));
             },
             [](QObject *, KiriView::OpenedCollectionScopeLocation,
-                KiriView::ImageCandidatesCallback, KiriView::ErrorCallback errorCallback) {
+                KiriView::ImageDocumentPageCandidatesCallback,
+                KiriView::ErrorCallback errorCallback) {
                 if (errorCallback) {
                     errorCallback(QStringLiteral("unexpected archive image listing"));
                 }
@@ -155,10 +158,11 @@ KiriView::ImageContainerNavigationController::Callbacks controllerCallbacks(
     return KiriView::ImageContainerNavigationController::Callbacks {
         [openContainerImage = std::move(openContainerImage),
             containerNavigationError = std::move(containerNavigationError)](
-            KiriView::ImageNavigationPlan plan) mutable {
-            for (const KiriView::ImageNavigationEffect &effect : plan) {
+            KiriView::ImageDocumentPageNavigationPlan plan) mutable {
+            for (const KiriView::ImageDocumentPageNavigationEffect &effect : plan) {
                 if (const auto *openEffect
-                    = std::get_if<KiriView::OpenContainerImageNavigationEffect>(&effect)) {
+                    = std::get_if<KiriView::OpenContainerImageDocumentPageNavigationEffect>(
+                        &effect)) {
                     KiriView::invokeIfSet(
                         openContainerImage, openEffect->target.url, openEffect->containerUrl);
                 } else if (const auto *errorEffect
@@ -191,7 +195,7 @@ private Q_SLOTS:
 void TestImageContainerNavigationController::opensFirstImageFromAdjacentContainer()
 {
     ManualContainerNavigationProvider provider;
-    KiriView::ImageCandidateRepository repository(provider.provider());
+    KiriView::ImageDocumentPageCandidateRepository repository(provider.provider());
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
     const QUrl targetImageUrl = localUrl(QStringLiteral("/books/b/01.png"));
@@ -214,7 +218,7 @@ void TestImageContainerNavigationController::opensFirstImageFromAdjacentContaine
         });
 
     QCOMPARE(provider.imageListCount(), std::size_t(1));
-    provider.finishImageListAt(0, { imageCandidate(targetImageUrl) });
+    provider.finishImageListAt(0, { imageDocumentPageCandidate(targetImageUrl) });
 
     QCOMPARE(openedImageUrl, targetImageUrl);
     QCOMPARE(openedContainerUrl, targetContainerUrl);
@@ -222,7 +226,7 @@ void TestImageContainerNavigationController::opensFirstImageFromAdjacentContaine
 
 void TestImageContainerNavigationController::opensFirstImageFromAdjacentArchiveContainer()
 {
-    FakeImageNavigationCandidateProvider fakeProvider;
+    FakeImageDocumentPageCandidateProvider fakeProvider;
     const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/book.cbz"));
@@ -238,9 +242,9 @@ void TestImageContainerNavigationController::opensFirstImageFromAdjacentArchiveC
                 targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
         });
     fakeProvider.setOpenedCollectionCandidates(
-        archiveCollection->rootUrl(), { imageCandidate(targetImageUrl) });
+        archiveCollection->rootUrl(), { imageDocumentPageCandidate(targetImageUrl) });
 
-    KiriView::ImageCandidateRepository repository(fakeProvider.provider());
+    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     QUrl openedImageUrl;
     QUrl openedContainerUrl;
     KiriView::ImageContainerNavigationController controller(nullptr, repository,
@@ -258,7 +262,7 @@ void TestImageContainerNavigationController::opensFirstImageFromAdjacentArchiveC
 
 void TestImageContainerNavigationController::reportsEmptyAdjacentContainer()
 {
-    FakeImageNavigationCandidateProvider fakeProvider;
+    FakeImageDocumentPageCandidateProvider fakeProvider;
     const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
@@ -269,7 +273,7 @@ void TestImageContainerNavigationController::reportsEmptyAdjacentContainer()
         });
     fakeProvider.setDirectoryImages(targetContainerUrl, {});
 
-    KiriView::ImageCandidateRepository repository(fakeProvider.provider());
+    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     QUrl errorContainerUrl;
     ImageContainerOpenError error = ImageContainerOpenError::Generic;
     KiriView::ImageContainerNavigationController controller(nullptr, repository,
@@ -288,7 +292,7 @@ void TestImageContainerNavigationController::reportsEmptyAdjacentContainer()
 
 void TestImageContainerNavigationController::reportsInvalidAdjacentArchiveContainer()
 {
-    FakeImageNavigationCandidateProvider fakeProvider;
+    FakeImageDocumentPageCandidateProvider fakeProvider;
     const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/not-an-archive.png"));
@@ -299,7 +303,7 @@ void TestImageContainerNavigationController::reportsInvalidAdjacentArchiveContai
                 targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
         });
 
-    KiriView::ImageCandidateRepository repository(fakeProvider.provider());
+    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     bool openedImage = false;
     QUrl errorContainerUrl;
     ImageContainerOpenError error = ImageContainerOpenError::Generic;
@@ -320,7 +324,7 @@ void TestImageContainerNavigationController::reportsInvalidAdjacentArchiveContai
 
 void TestImageContainerNavigationController::forwardsAdjacentContainerImageListingError()
 {
-    FakeImageNavigationCandidateProvider fakeProvider;
+    FakeImageDocumentPageCandidateProvider fakeProvider;
     const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
@@ -331,7 +335,7 @@ void TestImageContainerNavigationController::forwardsAdjacentContainerImageListi
         });
     fakeProvider.setDirectoryImageError(targetContainerUrl, QStringLiteral("No access"));
 
-    KiriView::ImageCandidateRepository repository(fakeProvider.provider());
+    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     QUrl errorContainerUrl;
     ImageContainerOpenError error = ImageContainerOpenError::EmptyContainer;
     QString errorString;
@@ -354,7 +358,7 @@ void TestImageContainerNavigationController::forwardsAdjacentContainerImageListi
 void TestImageContainerNavigationController::cancelRejectsPendingContainerListing()
 {
     ManualContainerNavigationProvider provider;
-    KiriView::ImageCandidateRepository repository(provider.provider());
+    KiriView::ImageDocumentPageCandidateRepository repository(provider.provider());
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
 
@@ -382,7 +386,7 @@ void TestImageContainerNavigationController::cancelRejectsPendingContainerListin
 void TestImageContainerNavigationController::newRequestCancelsPendingFirstImageLoad()
 {
     ManualContainerNavigationProvider provider;
-    KiriView::ImageCandidateRepository repository(provider.provider());
+    KiriView::ImageDocumentPageCandidateRepository repository(provider.provider());
     const QUrl firstCurrentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl firstTargetContainerUrl = localUrl(QStringLiteral("/books/b/"));
     const QUrl firstTargetImageUrl = localUrl(QStringLiteral("/books/b/01.png"));
@@ -408,7 +412,8 @@ void TestImageContainerNavigationController::newRequestCancelsPendingFirstImageL
 
     controller.openAdjacentContainer(secondCurrentContainerUrl, NavigationDirection::Next);
     QVERIFY(provider.imageListAt(0).canceled);
-    provider.deliverImageListAtIgnoringCancellation(0, { imageCandidate(firstTargetImageUrl) });
+    provider.deliverImageListAtIgnoringCancellation(
+        0, { imageDocumentPageCandidate(firstTargetImageUrl) });
 
     QCOMPARE(provider.containerListCount(), std::size_t(2));
     provider.finishContainerListAt(1,
@@ -419,7 +424,7 @@ void TestImageContainerNavigationController::newRequestCancelsPendingFirstImageL
                 secondTargetContainerUrl, ContainerNavigationCandidateType::Directory),
         });
     QCOMPARE(provider.imageListCount(), std::size_t(2));
-    provider.finishImageListAt(1, { imageCandidate(secondTargetImageUrl) });
+    provider.finishImageListAt(1, { imageDocumentPageCandidate(secondTargetImageUrl) });
 
     QCOMPARE(openedImageUrls.size(), std::size_t(1));
     QCOMPARE(openedImageUrls.front(), secondTargetImageUrl);
@@ -428,7 +433,7 @@ void TestImageContainerNavigationController::newRequestCancelsPendingFirstImageL
 void TestImageContainerNavigationController::canceledContainerListingCompletionIsIgnored()
 {
     ManualContainerNavigationProvider provider;
-    KiriView::ImageCandidateRepository repository(provider.provider());
+    KiriView::ImageDocumentPageCandidateRepository repository(provider.provider());
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
 
@@ -455,7 +460,7 @@ void TestImageContainerNavigationController::canceledContainerListingCompletionI
 void TestImageContainerNavigationController::canceledFirstImageCompletionIsIgnored()
 {
     ManualContainerNavigationProvider provider;
-    KiriView::ImageCandidateRepository repository(provider.provider());
+    KiriView::ImageDocumentPageCandidateRepository repository(provider.provider());
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
     const QUrl targetImageUrl = localUrl(QStringLiteral("/books/b/01.png"));
@@ -475,7 +480,8 @@ void TestImageContainerNavigationController::canceledFirstImageCompletionIsIgnor
     QCOMPARE(provider.imageListCount(), std::size_t(1));
 
     controller.cancel();
-    provider.deliverImageListAtIgnoringCancellation(0, { imageCandidate(targetImageUrl) });
+    provider.deliverImageListAtIgnoringCancellation(
+        0, { imageDocumentPageCandidate(targetImageUrl) });
 
     QVERIFY(openedImageUrl.isEmpty());
 }

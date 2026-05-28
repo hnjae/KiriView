@@ -7,7 +7,7 @@
 #include "decoding/imagedecodedependencies.h"
 #include "imagedocumentruntimeplan.h"
 #include "imageloadtypes.h"
-#include "navigation/imagecandidateprovider.h"
+#include "navigation/imagedocumentpagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
 #include "presentation/imagepresentationload.h"
 
@@ -39,7 +39,7 @@ public:
 
     ImageOpenController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController, Callbacks callbacks,
-        ImageNavigationCandidateProvider candidateProvider,
+        ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies);
     ~ImageOpenController();
 

@@ -26,8 +26,8 @@ KiriView::ActiveNavigationSnapshot normalizedActiveNavigation(
     return snapshot;
 }
 
-KiriView::ActiveNavigationSnapshot mediaActiveNavigationSnapshot(
-    KiriView::MediaActiveNavigationInput input)
+KiriView::ActiveNavigationSnapshot directMediaActiveNavigationSnapshot(
+    KiriView::DirectMediaActiveNavigationInput input)
 {
     if (!input.known) {
         return unknownActiveNavigation();
@@ -46,8 +46,8 @@ KiriView::ActiveNavigationSnapshot mediaActiveNavigationSnapshot(
     });
 }
 
-KiriView::ActiveNavigationSnapshot imageDocumentActiveNavigationSnapshot(
-    KiriView::ImageDocumentActiveNavigationInput input)
+KiriView::ActiveNavigationSnapshot imageDocumentPageActiveNavigationSnapshot(
+    KiriView::ImageDocumentPageActiveNavigationInput input)
 {
     if (input.currentNumber < 1 || input.currentLastNumber < input.currentNumber || input.count < 1
         || input.currentLastNumber > input.count) {
@@ -143,16 +143,16 @@ bool ActiveNavigationDispatchPlan::shouldDispatch() const
 }
 
 ActiveNavigationSnapshot projectActiveNavigation(ActiveNavigationSourceKind sourceKind,
-    MediaActiveNavigationInput mediaInput, ImageDocumentActiveNavigationInput imageInput,
-    bool fileDeletionInProgress)
+    DirectMediaActiveNavigationInput directMediaInput,
+    ImageDocumentPageActiveNavigationInput imageDocumentPageInput, bool fileDeletionInProgress)
 {
     ActiveNavigationSnapshot snapshot;
     switch (sourceKind) {
     case ActiveNavigationSourceKind::OrdinaryDirectMedia:
-        snapshot = mediaActiveNavigationSnapshot(mediaInput);
+        snapshot = directMediaActiveNavigationSnapshot(directMediaInput);
         break;
     case ActiveNavigationSourceKind::ImageDocumentPages:
-        snapshot = imageDocumentActiveNavigationSnapshot(imageInput);
+        snapshot = imageDocumentPageActiveNavigationSnapshot(imageDocumentPageInput);
         break;
     case ActiveNavigationSourceKind::None:
         snapshot = unavailableActiveNavigation();
@@ -175,9 +175,9 @@ ActiveNavigationBoundaryScope activeNavigationBoundaryScopeForSource(
 {
     switch (sourceKind) {
     case ActiveNavigationSourceKind::OrdinaryDirectMedia:
-        return ActiveNavigationBoundaryScope::Media;
+        return ActiveNavigationBoundaryScope::DirectMedia;
     case ActiveNavigationSourceKind::ImageDocumentPages:
-        return ActiveNavigationBoundaryScope::ImageDocument;
+        return ActiveNavigationBoundaryScope::ImageDocumentPage;
     case ActiveNavigationSourceKind::None:
         return ActiveNavigationBoundaryScope::None;
     }

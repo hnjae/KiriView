@@ -5,11 +5,11 @@
 #define KIRIVIEW_IMAGEDOCUMENTNAVIGATIONRUNTIMEPLAN_H
 
 #include "imagedocumentruntimeplan.h"
-#include "navigation/imagenavigationplan.h"
+#include "navigation/imagedocumentpagenavigationplan.h"
 
 namespace KiriView {
 ImageDocumentRuntimePlan imageDocumentRuntimePlanForNavigationPlan(
-    const ImageNavigationPlan &navigationPlan);
+    const ImageDocumentPageNavigationPlan &navigationPlan);
 }
 
 #endif

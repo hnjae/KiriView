@@ -12,16 +12,16 @@
 namespace {
 template <typename> inline constexpr bool alwaysFalse = false;
 
-void appendNavigationEffectRuntimeOperation(
-    KiriView::ImageDocumentRuntimePlan &plan, const KiriView::ImageNavigationEffect &effect)
+void appendNavigationEffectRuntimeOperation(KiriView::ImageDocumentRuntimePlan &plan,
+    const KiriView::ImageDocumentPageNavigationEffect &effect)
 {
     std::visit(
         [&plan](const auto &payload) {
             using Effect = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Effect, KiriView::OpenImageNavigationUrlEffect>) {
+            if constexpr (std::is_same_v<Effect, KiriView::OpenImageDocumentPageUrlEffect>) {
                 plan.push_back(KiriView::LoadUrlOperation { payload.target });
             } else if constexpr (std::is_same_v<Effect,
-                                     KiriView::OpenContainerImageNavigationEffect>) {
+                                     KiriView::OpenContainerImageDocumentPageNavigationEffect>) {
                 plan.push_back(KiriView::LoadContainerImageOperation {
                     payload.target,
                     payload.containerUrl,
@@ -47,7 +47,7 @@ void appendNavigationEffectRuntimeOperation(
                     payload.errorString,
                 });
             } else if constexpr (std::is_same_v<Effect,
-                                     KiriView::ClearCurrentImageNavigationEffect>) {
+                                     KiriView::ClearCurrentImageDocumentPageNavigationEffect>) {
                 KiriView::ImageDocumentRuntimePlan clearPlan
                     = KiriView::imageDocumentClearDeletedImagePlan();
                 plan.insert(plan.end(), std::make_move_iterator(clearPlan.begin()),
@@ -62,11 +62,11 @@ void appendNavigationEffectRuntimeOperation(
 
 namespace KiriView {
 ImageDocumentRuntimePlan imageDocumentRuntimePlanForNavigationPlan(
-    const ImageNavigationPlan &navigationPlan)
+    const ImageDocumentPageNavigationPlan &navigationPlan)
 {
     ImageDocumentRuntimePlan runtimePlan;
     runtimePlan.reserve(navigationPlan.size());
-    for (const ImageNavigationEffect &effect : navigationPlan) {
+    for (const ImageDocumentPageNavigationEffect &effect : navigationPlan) {
         appendNavigationEffectRuntimeOperation(runtimePlan, effect);
     }
     return runtimePlan;

@@ -8,7 +8,7 @@
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentstate.h"
 #include "imagedocumenttypes.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagerendercontext.h"
@@ -83,8 +83,8 @@ public:
     int rotationDegrees() const;
     int currentPageNumber() const;
     int currentLastPageNumber() const;
-    int imageCount() const;
-    ImagePageNavigationSnapshot pageNavigationSnapshot() const;
+    int pageCount() const;
+    ImageDocumentPageNavigationSnapshot pageNavigationSnapshot() const;
     bool containerNavigationAvailable() const;
     bool ordinaryDirectMediaScopeActive() const;
     bool openedCollectionScopeActive() const;
@@ -105,8 +105,8 @@ public:
     void notify(ImageDocumentChange change);
     void setRenderContextProvider(RenderContextProvider provider);
     void shutdown();
-    void openPreviousImage();
-    void openNextImage();
+    void openPreviousPage();
+    void openNextPage();
     void openPreviousSinglePage();
     void openNextSinglePage();
     void openImageAtPage(int pageNumber);

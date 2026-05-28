@@ -21,13 +21,13 @@ enum class DocumentSessionRouteKind {
 struct ClearSessionErrorStringRouteOperation {
 };
 
-struct CancelMediaNavigationRouteOperation {
+struct CancelDirectMediaNavigationRouteOperation {
 };
 
 struct CancelMediaDeletionRouteOperation {
 };
 
-struct ClearMediaNavigationRouteOperation {
+struct ClearDirectMediaNavigationRouteOperation {
 };
 
 struct ClearDirectMediaCursorRouteOperation {
@@ -78,15 +78,15 @@ struct UseImageDocumentSourceIdentityRouteOperation {
 struct RecomputePublicProjectionRouteOperation {
 };
 
-struct RefreshMediaNavigationAfterRoutingRouteOperation {
+struct RefreshDirectMediaNavigationAfterRoutingRouteOperation {
 };
 
 struct ClearMediaPredecodeRouteOperation {
 };
 
 using DocumentSessionRouteOperation
-    = std::variant<ClearSessionErrorStringRouteOperation, CancelMediaNavigationRouteOperation,
-        CancelMediaDeletionRouteOperation, ClearMediaNavigationRouteOperation,
+    = std::variant<ClearSessionErrorStringRouteOperation, CancelDirectMediaNavigationRouteOperation,
+        CancelMediaDeletionRouteOperation, ClearDirectMediaNavigationRouteOperation,
         ClearDirectMediaCursorRouteOperation, SetDirectVideoCursorRouteOperation,
         RequestDirectImageCursorRouteOperation, ClearThenRequestDirectImageCursorRouteOperation,
         ClearImageDocumentRouteOperation, LeaveVideoModeRouteOperation,
@@ -94,7 +94,7 @@ using DocumentSessionRouteOperation
         EnterVideoDocumentRouteOperation, SyncDirectImageCursorFromDocumentRouteOperation,
         ClearSourceIdentityRouteOperation, UseOriginalSourceIdentityRouteOperation,
         UseImageDocumentSourceIdentityRouteOperation, RecomputePublicProjectionRouteOperation,
-        RefreshMediaNavigationAfterRoutingRouteOperation, ClearMediaPredecodeRouteOperation>;
+        RefreshDirectMediaNavigationAfterRoutingRouteOperation, ClearMediaPredecodeRouteOperation>;
 
 struct DocumentSessionRoutePlan {
     DocumentSessionRouteKind kind = DocumentSessionRouteKind::Empty;

@@ -8,7 +8,7 @@
 #include "decoding/imagedecodedependencies.h"
 #include "mediaentrysourcebackend.h"
 #include "mediaentrysourceruntime.h"
-#include "navigation/imagecandidateprovider.h"
+#include "navigation/imagedocumentpagecandidateprovider.h"
 
 #include <QObject>
 
@@ -22,8 +22,8 @@ public:
         MediaEntrySourceFactory sourceFactory = {}, QObject *parent = nullptr);
     ~MediaEntrySourceStore() override;
 
-    ImageNavigationCandidateProvider wrapCandidateProvider(
-        ImageNavigationCandidateProvider provider);
+    ImageDocumentPageCandidateProvider wrapCandidateProvider(
+        ImageDocumentPageCandidateProvider provider);
     ImageDecodeDependencies wrapDecodeDependencies(ImageDecodeDependencies dependencies);
 
     void prepareForSourceLoad(const ImageDocumentSourceLoadRequest &request,
@@ -35,8 +35,8 @@ public:
         const OpenedCollectionScopeLocation &openedCollectionScope) const;
 
     ImageIoJob loadOpenedCollectionCandidates(QObject *receiver,
-        OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
-        ErrorCallback errorCallback);
+        OpenedCollectionScopeLocation openedCollectionScope,
+        ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback);
     ImageIoJob loadOpenedCollectionImageData(QObject *receiver, ImageDecodeRequest request,
         ImageDataCallback callback, ErrorCallback errorCallback);
 

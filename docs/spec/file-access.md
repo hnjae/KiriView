@@ -10,7 +10,7 @@ Direct video URLs include local paths, `file://` URLs, and KDE-supported archive
 
 When a video is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats it as a single direct media URL rather than opening the whole archive as an archive collection.
 
-KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend, such as through KIOFuse or another KIO-backed resolver. KiriView treats this resolution as successful only when the resolved playback URL can be consumed by the video backend. This does not change the user-facing source URL for the window title, adjacent media navigation, deletion target, error context, or direct-media versus opened-collection routing decisions.
+KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend, such as through KIOFuse or another KIO-backed resolver. KiriView treats this resolution as successful only when the resolved playback URL can be consumed by the video backend. This does not change the user-facing source URL for the window title, adjacent direct media navigation, deletion target, error context, or direct-media versus opened-collection routing decisions.
 
 KiriView opens local `.cbz`, `.cbt`, `.cb7`, and `.cbr` comic book archives. When a local comic book archive is opened directly, KiriView uses that archive as the current archive collection and displays the first supported image inside that archive.
 
@@ -36,7 +36,7 @@ When an image is opened from a KDE-supported archive URL such as `zip://`, `tar:
 
 ## Flatpak Access
 
-In Flatpak, adjacent media navigation can list neighboring files under `home`, `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`.
+In Flatpak, adjacent direct media navigation can list neighboring files under `home`, `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`.
 
 In Flatpak, KiriView may use KIOFuse direct-video playback paths when the sandbox has access to the specific session KIOFuse mount path. KiriView does not expose the entire user runtime filesystem for KIOFuse playback.
 

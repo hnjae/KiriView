@@ -351,7 +351,7 @@ Controls.ToolBar {
     contentItem: RowLayout {
         spacing: root.controlSpacing
 
-        ImagePageNavigation {
+        ImageDocumentPageNavigation {
             id: pageNavigation
 
             Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter

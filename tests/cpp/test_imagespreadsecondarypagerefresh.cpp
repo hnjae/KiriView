@@ -14,10 +14,10 @@
 namespace {
 using KiriView::TestSupport::localUrl;
 
-KiriView::ImagePageNavigationSnapshot navigationSnapshot(
+KiriView::ImageDocumentPageNavigationSnapshot navigationSnapshot(
     const std::vector<QUrl> &urls, int currentPageNumber)
 {
-    return KiriView::ImagePageNavigationSnapshot {
+    return KiriView::ImageDocumentPageNavigationSnapshot {
         KiriView::PageNavigationState {
             urls,
             currentPageNumber - 1,

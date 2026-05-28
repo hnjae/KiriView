@@ -33,8 +33,8 @@ ImageSpreadPresentationController::ImageSpreadPresentationController(QObject *pa
     RenderContextProvider renderContextProvider, ImageDocumentState &state,
     ImagePresentationController &primaryPresentation,
     ImageSpreadPresentationController::Callbacks callbacks,
-    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies,
-    qsizetype predecodeCacheByteBudget)
+    ImageDocumentPageCandidateProvider candidateProvider,
+    ImageDecodeDependencies decodeDependencies, qsizetype predecodeCacheByteBudget)
     : m_state(state)
     , m_primaryPresentation(primaryPresentation)
     , m_callbacks(std::move(callbacks))
@@ -234,7 +234,8 @@ int ImageSpreadPresentationController::currentLastPageNumber() const
     return m_secondaryPageRefresh.currentLastPageNumber(pageNavigationContext());
 }
 
-ImageSpreadPageNavigationTarget ImageSpreadPresentationController::imageNavigationTarget(
+ImageSpreadPageNavigationTarget
+ImageSpreadPresentationController::imageDocumentPageNavigationTarget(
     NavigationDirection direction) const
 {
     return m_secondaryPageRefresh.pageNavigationTarget(direction, pageNavigationContext());
@@ -610,10 +611,11 @@ ImageSpreadPageNavigationContext ImageSpreadPresentationController::pageNavigati
         pageNavigationSnapshot() };
 }
 
-ImagePageNavigationSnapshot ImageSpreadPresentationController::pageNavigationSnapshot() const
+ImageDocumentPageNavigationSnapshot
+ImageSpreadPresentationController::pageNavigationSnapshot() const
 {
     return m_callbacks.pageNavigationSnapshot ? m_callbacks.pageNavigationSnapshot()
-                                              : ImagePageNavigationSnapshot {};
+                                              : ImageDocumentPageNavigationSnapshot {};
 }
 
 void ImageSpreadPresentationController::notifyTwoPageModeChanged()

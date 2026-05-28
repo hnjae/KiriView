@@ -5,7 +5,7 @@
 #define KIRIVIEW_NAVIGATIONCANDIDATEORDERING_H
 
 #include "location/imageurl.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 
 #include <QCollator>
 #include <QLocale>

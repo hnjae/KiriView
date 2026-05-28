@@ -118,7 +118,7 @@ public:
     Q_INVOKABLE bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool mediaHorizontalArrowShortcutsEnabled(bool videoMode,
         bool imageReadyViewerShortcutsEnabled, bool videoViewerShortcutsEnabled,
-        bool videoMediaNavigationActive, bool videoFileDeletionInProgress) const;
+        bool videoDirectMediaNavigationActive, bool videoFileDeletionInProgress) const;
 
 Q_SIGNALS:
     void menuPresentationChanged();

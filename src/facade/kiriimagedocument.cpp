@@ -107,7 +107,8 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
     operations.rightToLeftReadingChanged
         = [&document]() { Q_EMIT document.rightToLeftReadingChanged(); };
     operations.rotationDegreesChanged = [&document]() { Q_EMIT document.rotationDegreesChanged(); };
-    operations.mediaScopeChanged = [&document]() { Q_EMIT document.mediaScopeChanged(); };
+    operations.imageDocumentSourceScopeChanged
+        = [&document]() { Q_EMIT document.imageDocumentSourceScopeChanged(); };
     operations.unsupportedOpenedCollectionVideoChanged
         = [&document]() { Q_EMIT document.unsupportedOpenedCollectionVideoChanged(); };
     operations.repaintRequested = [&document]() { Q_EMIT document.repaintRequested(); };
@@ -250,9 +251,9 @@ int KiriImageDocument::currentPageNumber() const { return m_runtime->currentPage
 
 int KiriImageDocument::currentLastPageNumber() const { return m_runtime->currentLastPageNumber(); }
 
-int KiriImageDocument::imageCount() const { return m_runtime->imageCount(); }
+int KiriImageDocument::pageCount() const { return m_runtime->pageCount(); }
 
-KiriView::ImagePageNavigationSnapshot KiriImageDocument::pageNavigationSnapshot() const
+KiriView::ImageDocumentPageNavigationSnapshot KiriImageDocument::pageNavigationSnapshot() const
 {
     return m_runtime->pageNavigationSnapshot();
 }
@@ -330,9 +331,9 @@ void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
     m_runtime->setRenderContextProvider(std::move(provider));
 }
 
-void KiriImageDocument::openPreviousImage() { m_runtime->openPreviousImage(); }
+void KiriImageDocument::openPreviousPage() { m_runtime->openPreviousPage(); }
 
-void KiriImageDocument::openNextImage() { m_runtime->openNextImage(); }
+void KiriImageDocument::openNextPage() { m_runtime->openNextPage(); }
 
 void KiriImageDocument::openPreviousSinglePage() { m_runtime->openPreviousSinglePage(); }
 

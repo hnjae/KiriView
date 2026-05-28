@@ -14,7 +14,7 @@
 #include "imagedocumentsourceloadrequest.h"
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
-#include "navigation/imagenavigationservice.h"
+#include "navigation/imagedocumentpagenavigationservice.h"
 #include "presentation/imagepresentationcontroller.h"
 #include "presentation/imagespreadpresentationcontroller.h"
 
@@ -80,10 +80,10 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             std::move(m_callbacks.unsupportedOpenedCollectionVideoEntered),
         },
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
-    m_navigationService = std::make_unique<ImageNavigationService>(documentObject,
+    m_navigationService = std::make_unique<ImageDocumentPageNavigationService>(documentObject,
         runtimeDependencies.candidateProvider,
-        ImageNavigationService::Callbacks {
-            [this](ImageNavigationPlan plan) {
+        ImageDocumentPageNavigationService::Callbacks {
+            [this](ImageDocumentPageNavigationPlan plan) {
                 dispatchPlan(imageDocumentRuntimePlanForNavigationPlan(plan));
             },
             [this]() { invokeIfSet(m_callbacks.notify, ImageDocumentChange::PageNavigation); },
@@ -194,11 +194,11 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
         = [this]() { m_navigationController->clearPageNavigation(); };
     operations.navigation.updatePageNavigation
         = [this]() { m_navigationController->updatePageNavigation(); };
-    operations.navigation.loadUrl = [this](const ImageNavigationTarget &target) {
+    operations.navigation.loadUrl = [this](const ImageDocumentPageTarget &target) {
         invokeIfSet(m_callbacks.loadSource, ImageDocumentSourceLoadRequest::fromTarget(target));
     };
     operations.navigation.loadContainerImage
-        = [this](const ImageNavigationTarget &target, const QUrl &containerUrl) {
+        = [this](const ImageDocumentPageTarget &target, const QUrl &containerUrl) {
               invokeIfSet(m_callbacks.loadSource,
                   ImageDocumentSourceLoadRequest::fromContainerTarget(target, containerUrl));
           };
@@ -210,7 +210,7 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
               m_openController->finishContainerNavigationLoadWithError(containerUrl, errorString);
           };
     operations.navigation.loadPageNavigationUrl
-        = [this](const ImageNavigationTarget &target, bool preserveTwoPageSpreadTransition) {
+        = [this](const ImageDocumentPageTarget &target, bool preserveTwoPageSpreadTransition) {
               invokeIfSet(m_callbacks.loadSource,
                   ImageDocumentSourceLoadRequest::fromPageNavigationTarget(
                       target, preserveTwoPageSpreadTransition));
@@ -232,7 +232,7 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
                       request, stateOwner->displayedOpenedCollectionScope());
               }
           };
-    operations.open.setSourceUrl = [stateOwner](const ImageNavigationTarget &target) {
+    operations.open.setSourceUrl = [stateOwner](const ImageDocumentPageTarget &target) {
         stateOwner->setSourceKind(target.kind);
         stateOwner->setSourceUrl(target.url);
     };

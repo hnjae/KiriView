@@ -201,7 +201,7 @@ Item {
     property real lastPanY: 0
     property alias currentPageNumber: imageDocument.currentPageNumber
     property alias currentLastPageNumber: imageDocument.currentLastPageNumber
-    property alias imageCount: imageDocument.imageCount
+    property alias pageCount: imageDocument.pageCount
     property alias rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
     property alias rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
     property alias secondaryPageVisible: imageDocument.secondaryPageVisible
@@ -305,7 +305,7 @@ Item {
         imageReady: imageDocument.status === KiriImageDocument.Ready
         rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
         rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
-        scanBackwardAtFirstImageBoundary: imageDocument.imageCount > 0 && imageDocument.currentPageNumber === 1
+        scanBackwardAtFirstImageBoundary: imageDocument.pageCount > 0 && imageDocument.currentPageNumber === 1
         textInputFocused: imageToolBar.textInputFocused()
         twoPageModeAvailable: imageDocument.twoPageModeAvailable
         twoPageModeEnabled: imageDocument.twoPageModeEnabled
@@ -441,7 +441,7 @@ void prepareTwoPageSpread(ImageShortcutsFixture &fixture)
 {
     QVERIFY(fixture.isValid());
     QTRY_VERIFY(documentReady(fixture.root));
-    QTRY_COMPARE(fixture.root->property("imageCount").toInt(), 4);
+    QTRY_COMPARE(fixture.root->property("pageCount").toInt(), 4);
     QTRY_VERIFY(fixture.root->property("twoPageModeAvailable").toBool());
     QTRY_VERIFY(fixture.root->property("rightToLeftReadingAvailable").toBool());
     QVERIFY(fixture.root->setProperty("twoPageModeEnabled", true));

@@ -204,11 +204,11 @@ bool KiriViewApplication::videoActionUnsupported(ActionId actionId) const
 
 bool KiriViewApplication::mediaHorizontalArrowShortcutsEnabled(bool videoMode,
     bool imageReadyViewerShortcutsEnabled, bool videoViewerShortcutsEnabled,
-    bool videoMediaNavigationActive, bool videoFileDeletionInProgress) const
+    bool videoDirectMediaNavigationActive, bool videoFileDeletionInProgress) const
 {
     return m_actionRuntime->mediaHorizontalArrowShortcutsEnabled(videoMode,
-        imageReadyViewerShortcutsEnabled, videoViewerShortcutsEnabled, videoMediaNavigationActive,
-        videoFileDeletionInProgress);
+        imageReadyViewerShortcutsEnabled, videoViewerShortcutsEnabled,
+        videoDirectMediaNavigationActive, videoFileDeletionInProgress);
 }
 
 void KiriViewApplication::setupActions()

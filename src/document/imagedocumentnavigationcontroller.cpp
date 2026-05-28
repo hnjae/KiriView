@@ -5,8 +5,8 @@
 
 #include "async/imagecallback.h"
 #include "imagedocumentstate.h"
-#include "navigation/imagecandidatelistsource.h"
-#include "navigation/imagenavigationservice.h"
+#include "navigation/imagedocumentpagecandidatelistsource.h"
+#include "navigation/imagedocumentpagenavigationservice.h"
 #include "presentation/imagepresentationcontroller.h"
 #include "presentation/imagespreadpresentationcontroller.h"
 
@@ -15,7 +15,7 @@
 #include <utility>
 
 namespace {
-std::optional<KiriView::ImageCandidateListContext> navigationCandidateContext(
+std::optional<KiriView::ImageDocumentPageCandidateListContext> navigationCandidateContext(
     const KiriView::ImageDocumentState &state,
     const KiriView::ImagePresentationController &presentationController)
 {
@@ -23,13 +23,15 @@ std::optional<KiriView::ImageCandidateListContext> navigationCandidateContext(
         return std::nullopt;
     }
 
-    return KiriView::imageCandidateListContextForDisplayedImage(state.displayedImageLocation());
+    return KiriView::imageDocumentPageCandidateListContextForDisplayedImage(
+        state.displayedImageLocation());
 }
 }
 
 namespace KiriView {
 ImageDocumentNavigationController::ImageDocumentNavigationController(ImageDocumentState &state,
-    ImagePresentationController &presentationController, ImageNavigationService &navigationService,
+    ImagePresentationController &presentationController,
+    ImageDocumentPageNavigationService &navigationService,
     ImageSpreadPresentationController &spreadController, RuntimePlanCallback runtimePlanCallback)
     : m_state(state)
     , m_presentationController(presentationController)
@@ -44,22 +46,20 @@ int ImageDocumentNavigationController::currentPageNumber() const
     return m_navigationService.currentPageNumber();
 }
 
-int ImageDocumentNavigationController::imageCount() const
-{
-    return m_navigationService.imageCount();
-}
+int ImageDocumentNavigationController::pageCount() const { return m_navigationService.pageCount(); }
 
-ImagePageNavigationSnapshot ImageDocumentNavigationController::pageNavigationSnapshot() const
+ImageDocumentPageNavigationSnapshot
+ImageDocumentNavigationController::pageNavigationSnapshot() const
 {
     return m_navigationService.pageNavigationSnapshot();
 }
 
-void ImageDocumentNavigationController::openAdjacentImage(NavigationDirection direction)
+void ImageDocumentNavigationController::openAdjacentPage(NavigationDirection direction)
 {
     const ImageSpreadPageNavigationTarget target
-        = m_spreadController.imageNavigationTarget(direction);
+        = m_spreadController.imageDocumentPageNavigationTarget(direction);
     if (!target.handledBySpread) {
-        m_navigationService.openAdjacentImage(
+        m_navigationService.openAdjacentPage(
             navigationCandidateContext(m_state, m_presentationController), direction);
         return;
     }
@@ -79,7 +79,8 @@ void ImageDocumentNavigationController::openAdjacentContainer(NavigationDirectio
 void ImageDocumentNavigationController::openImageAtPage(int pageNumber)
 {
     const bool spreadTransition = m_spreadController.shouldBeginTransition(pageNumber);
-    const std::optional<ImageNavigationTarget> target = m_navigationService.selectPage(pageNumber);
+    const std::optional<ImageDocumentPageTarget> target
+        = m_navigationService.selectPage(pageNumber);
     if (!target.has_value()) {
         return;
     }

@@ -207,7 +207,7 @@ foreach(test_source IN LISTS KIRIVIEW_CPP_TEST_SOURCES)
     add_kiriview_cpp_test("${test_target}" "${test_source}")
 endforeach()
 
-foreach(kdirnotify_test IN ITEMS test_imagecandidatedirectoryentry test_imagecandidatestore)
+foreach(kdirnotify_test IN ITEMS test_imagedocumentpagecandidatedirectoryentry test_imagedocumentpagecandidatestore)
     if(TARGET ${kdirnotify_test})
         set_tests_properties(${kdirnotify_test} PROPERTIES
             RESOURCE_LOCK kdirnotify

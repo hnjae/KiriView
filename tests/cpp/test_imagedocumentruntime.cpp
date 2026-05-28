@@ -23,7 +23,7 @@ namespace {
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::comicBookContainerCandidate;
 using KiriView::TestSupport::fileOperationProviderFor;
-using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::imageDocumentRuntimeDependencyOverridesFor;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualFileOperationProvider;
@@ -35,7 +35,7 @@ using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::testImageDecodeFailureString;
 using KiriView::TestSupport::videoCandidate;
 
-using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
 
 class RuntimeOwner final : public QObject
 {
@@ -184,11 +184,11 @@ private Q_SLOTS:
     void imageLoadsUsePhysicalViewportForFirstDisplayDecode();
     void renderContextProviderCanBeReplacedAfterConstruction();
     void maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates();
-    void directoryImageNavigationResetsManualZoom();
+    void directoryImageDocumentPageNavigationResetsManualZoom();
     void archiveCollectionPageNavigationPreservesManualZoom();
     void rotationChangesLogicalSizeAndPreservesManualZoom();
     void rotationRecomputesFitZoomForRotatedBounds();
-    void rotationResetsOnImageNavigation();
+    void rotationResetsOnImageDocumentPageNavigation();
     void rotationResetsAndStopsWhileTwoPageModeIsEnabled();
     void pendingAdjacentNavigationSkipsIntermediateLoad();
     void pendingPageSelectionSupersedesEarlierLoad();
@@ -226,7 +226,7 @@ void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
+            imageDocumentPageCandidate(imageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -245,7 +245,7 @@ void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
     QCOMPARE(runtime->displayedUrl(), imageUrl);
     QCOMPARE(runtime->imageSize(), QSize(2, 1));
     QCOMPARE(runtime->currentPageNumber(), 1);
-    QCOMPARE(runtime->imageCount(), 1);
+    QCOMPARE(runtime->pageCount(), 1);
     QVERIFY(!runtime->containerNavigationAvailable());
     QVERIFY(runtime->renderSnapshot().isRenderable());
 }
@@ -257,7 +257,7 @@ void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedIm
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
+            imageDocumentPageCandidate(imageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -278,7 +278,7 @@ void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedIm
     const QUrl comicArchivePage
         = archivePageUrl(comicArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(
-        comicArchiveCollection->rootUrl(), { imageCandidate(comicArchivePage) });
+        comicArchiveCollection->rootUrl(), { imageDocumentPageCandidate(comicArchivePage) });
 
     RuntimeHandle archiveRuntime = createRuntime(this, candidateProvider, dataLoader);
     archiveRuntime->setViewportSize(QSizeF(400.0, 300.0));
@@ -297,7 +297,7 @@ void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedIm
     const QUrl generalArchivePage
         = archivePageUrl(generalArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(
-        generalArchiveCollection->rootUrl(), { imageCandidate(generalArchivePage) });
+        generalArchiveCollection->rootUrl(), { imageDocumentPageCandidate(generalArchivePage) });
 
     RuntimeHandle generalArchiveRuntime = createRuntime(this, candidateProvider, dataLoader);
     generalArchiveRuntime->setViewportSize(QSizeF(400.0, 300.0));
@@ -318,7 +318,7 @@ void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedIm
     const QUrl directoryPage
         = archivePageUrl(directoryCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(
-        directoryCollection->rootUrl(), { imageCandidate(directoryPage) });
+        directoryCollection->rootUrl(), { imageDocumentPageCandidate(directoryPage) });
 
     RuntimeHandle directoryRuntime = createRuntime(this, candidateProvider, dataLoader);
     directoryRuntime->setViewportSize(QSizeF(400.0, 300.0));
@@ -332,7 +332,7 @@ void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedIm
 
     const QUrl openedCollectionEntryUrl(QStringLiteral("zip:///books/book.zip!/page.png"));
     candidateProvider.setDirectoryImages(QUrl(QStringLiteral("zip:///books/book.zip!/")),
-        { imageCandidate(openedCollectionEntryUrl) });
+        { imageDocumentPageCandidate(openedCollectionEntryUrl) });
 
     RuntimeHandle archiveEntryRuntime = createRuntime(this, candidateProvider, dataLoader);
     archiveEntryRuntime->setViewportSize(QSizeF(400.0, 300.0));
@@ -360,9 +360,9 @@ void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
     candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
-            imageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(firstPageUrl),
             videoCandidate(videoUrl),
-            imageCandidate(thirdPageUrl),
+            imageDocumentPageCandidate(thirdPageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -373,22 +373,22 @@ void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), firstPageUrl);
     QCOMPARE(runtime->currentPageNumber(), 1);
-    QCOMPARE(runtime->imageCount(), 3);
+    QCOMPARE(runtime->pageCount(), 3);
     QVERIFY(!runtime->unsupportedOpenedCollectionVideo());
     QVERIFY(hasRenderableSnapshot(*runtime));
 
     const std::size_t loadCountBeforeVideo = dataLoader.loadCount();
-    runtime->openNextImage();
+    runtime->openNextPage();
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), videoUrl);
     QCOMPARE(runtime->currentPageNumber(), 2);
-    QCOMPARE(runtime->imageCount(), 3);
+    QCOMPARE(runtime->pageCount(), 3);
     QVERIFY(runtime->unsupportedOpenedCollectionVideo());
     QVERIFY(!hasRenderableSnapshot(*runtime));
     QCOMPARE(dataLoader.loadCount(), loadCountBeforeVideo);
 
-    runtime->openNextImage();
+    runtime->openNextPage();
 
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeVideo + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, thirdPageUrl);
@@ -397,7 +397,7 @@ void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
 
     QTRY_COMPARE(runtime->displayedUrl(), thirdPageUrl);
     QTRY_COMPARE(runtime->currentPageNumber(), 3);
-    QCOMPARE(runtime->imageCount(), 3);
+    QCOMPARE(runtime->pageCount(), 3);
     QVERIFY(!runtime->unsupportedOpenedCollectionVideo());
     QVERIFY(hasRenderableSnapshot(*runtime));
 }
@@ -410,8 +410,8 @@ void TestImageDocumentRuntime::imageLoadsUsePhysicalViewportForFirstDisplayDecod
     const QUrl nextImageUrl = localUrl(QStringLiteral("/images/02.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
-            imageCandidate(nextImageUrl),
+            imageDocumentPageCandidate(imageUrl),
+            imageDocumentPageCandidate(nextImageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
@@ -524,7 +524,7 @@ void TestImageDocumentRuntime::maximumManualZoomChangesAfterViewportImageAndRend
         runtime->maximumManualZoomPercent(), 9000.0 * 8.0 * 2.0 * 100.0 / 1000.0));
 }
 
-void TestImageDocumentRuntime::directoryImageNavigationResetsManualZoom()
+void TestImageDocumentRuntime::directoryImageDocumentPageNavigationResetsManualZoom()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -532,8 +532,8 @@ void TestImageDocumentRuntime::directoryImageNavigationResetsManualZoom()
     const QUrl secondImageUrl = localUrl(QStringLiteral("/images/02.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(firstImageUrl),
-            imageCandidate(secondImageUrl),
+            imageDocumentPageCandidate(firstImageUrl),
+            imageDocumentPageCandidate(secondImageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -546,7 +546,7 @@ void TestImageDocumentRuntime::directoryImageNavigationResetsManualZoom()
     QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
-    runtime->openNextImage();
+    runtime->openNextPage();
 
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, secondImageUrl);
@@ -570,8 +570,8 @@ void TestImageDocumentRuntime::archiveCollectionPageNavigationPreservesManualZoo
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
     candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
-            imageCandidate(firstPageUrl),
-            imageCandidate(secondPageUrl),
+            imageDocumentPageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -585,7 +585,7 @@ void TestImageDocumentRuntime::archiveCollectionPageNavigationPreservesManualZoo
     QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
-    runtime->openNextImage();
+    runtime->openNextPage();
 
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, secondPageUrl);
@@ -604,7 +604,7 @@ void TestImageDocumentRuntime::rotationChangesLogicalSizeAndPreservesManualZoom(
     const QUrl imageUrl = localUrl(QStringLiteral("/images/portrait.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
+            imageDocumentPageCandidate(imageUrl),
         });
 
     RuntimeHandle runtime(
@@ -657,7 +657,7 @@ void TestImageDocumentRuntime::rotationRecomputesFitZoomForRotatedBounds()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/portrait.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
+            imageDocumentPageCandidate(imageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
@@ -681,7 +681,7 @@ void TestImageDocumentRuntime::rotationRecomputesFitZoomForRotatedBounds()
     QCOMPARE(runtime->displaySize(), QSizeF(400.0, 200.0));
 }
 
-void TestImageDocumentRuntime::rotationResetsOnImageNavigation()
+void TestImageDocumentRuntime::rotationResetsOnImageDocumentPageNavigation()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -689,8 +689,8 @@ void TestImageDocumentRuntime::rotationResetsOnImageNavigation()
     const QUrl secondImageUrl = localUrl(QStringLiteral("/images/02.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(firstImageUrl),
-            imageCandidate(secondImageUrl),
+            imageDocumentPageCandidate(firstImageUrl),
+            imageDocumentPageCandidate(secondImageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
@@ -707,7 +707,7 @@ void TestImageDocumentRuntime::rotationResetsOnImageNavigation()
     QCOMPARE(runtime->imageSize(), QSize(200, 100));
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, secondImageUrl);
     finishLoad(dataLoader);
@@ -731,8 +731,8 @@ void TestImageDocumentRuntime::rotationResetsAndStopsWhileTwoPageModeIsEnabled()
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
     candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
-            imageCandidate(firstPageUrl),
-            imageCandidate(secondPageUrl),
+            imageDocumentPageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
@@ -765,9 +765,9 @@ void TestImageDocumentRuntime::pendingAdjacentNavigationSkipsIntermediateLoad()
     const QUrl thirdImageUrl = localUrl(QStringLiteral("/images/03.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(firstImageUrl),
-            imageCandidate(secondImageUrl),
-            imageCandidate(thirdImageUrl),
+            imageDocumentPageCandidate(firstImageUrl),
+            imageDocumentPageCandidate(secondImageUrl),
+            imageDocumentPageCandidate(thirdImageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -776,11 +776,11 @@ void TestImageDocumentRuntime::pendingAdjacentNavigationSkipsIntermediateLoad()
     finishLoad(dataLoader);
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
     QCOMPARE(runtime->currentPageNumber(), 2);
 
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, thirdImageUrl);
     QCOMPARE(runtime->currentPageNumber(), 3);
     QVERIFY(!finishOldestActiveLoadForUrl(dataLoader, secondImageUrl));
@@ -801,9 +801,9 @@ void TestImageDocumentRuntime::pendingPageSelectionSupersedesEarlierLoad()
     const QUrl thirdImageUrl = localUrl(QStringLiteral("/images/03.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(firstImageUrl),
-            imageCandidate(secondImageUrl),
-            imageCandidate(thirdImageUrl),
+            imageDocumentPageCandidate(firstImageUrl),
+            imageDocumentPageCandidate(secondImageUrl),
+            imageDocumentPageCandidate(thirdImageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -812,7 +812,7 @@ void TestImageDocumentRuntime::pendingPageSelectionSupersedesEarlierLoad()
     finishLoad(dataLoader);
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
     QCOMPARE(runtime->currentPageNumber(), 2);
 
@@ -837,8 +837,8 @@ void TestImageDocumentRuntime::pageSelectionStartsTrackedLoadThroughEffectExecut
     const QUrl secondImageUrl = localUrl(QStringLiteral("/images/02.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(firstImageUrl),
-            imageCandidate(secondImageUrl),
+            imageDocumentPageCandidate(firstImageUrl),
+            imageDocumentPageCandidate(secondImageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -871,8 +871,8 @@ void TestImageDocumentRuntime::pendingLoadFailureRestoresDisplayedPageNavigation
     const QUrl secondImageUrl = localUrl(QStringLiteral("/images/02.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(firstImageUrl),
-            imageCandidate(secondImageUrl),
+            imageDocumentPageCandidate(firstImageUrl),
+            imageDocumentPageCandidate(secondImageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -881,7 +881,7 @@ void TestImageDocumentRuntime::pendingLoadFailureRestoresDisplayedPageNavigation
     finishLoad(dataLoader);
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
     QCOMPARE(runtime->sourceUrl(), secondImageUrl);
     QCOMPARE(runtime->displayedUrl(), firstImageUrl);
@@ -914,11 +914,11 @@ void TestImageDocumentRuntime::siblingArchiveNavigationResetsManualZoom()
         = archivePageUrl(secondArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(firstArchiveCollection->rootUrl(),
         {
-            imageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(firstPageUrl),
         });
     candidateProvider.setOpenedCollectionCandidates(secondArchiveCollection->rootUrl(),
         {
-            imageCandidate(secondPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
         });
     candidateProvider.setContainerCandidates(localUrl(QStringLiteral("/books/")),
         {
@@ -954,7 +954,7 @@ void TestImageDocumentRuntime::smallStaticImageUsesFullImageSurface()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/small.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
+            imageDocumentPageCandidate(imageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(
@@ -981,7 +981,7 @@ void TestImageDocumentRuntime::largeStaticImageUsesTiledSurface()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/large.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
+            imageDocumentPageCandidate(imageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(
@@ -1012,7 +1012,7 @@ void TestImageDocumentRuntime::tiledStaticImageRefinesNewVisibleTilesAfterPan()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/large.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
+            imageDocumentPageCandidate(imageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(
@@ -1045,7 +1045,7 @@ void TestImageDocumentRuntime::firstDisplayDefersTilesUntilZoomNeedsMoreDetail()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/large.jpg"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
+            imageDocumentPageCandidate(imageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(
@@ -1077,8 +1077,8 @@ void TestImageDocumentRuntime::smallFullImageSurfaceStillSchedulesAdjacentPredec
     const QUrl nextImageUrl = localUrl(QStringLiteral("/images/02.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
-            imageCandidate(nextImageUrl),
+            imageDocumentPageCandidate(imageUrl),
+            imageDocumentPageCandidate(nextImageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(
@@ -1107,8 +1107,8 @@ void TestImageDocumentRuntime::replacementLoadFailureKeepsDisplayedImage()
     const QUrl missingUrl = localUrl(QStringLiteral("/images/missing.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
-            imageCandidate(missingUrl),
+            imageDocumentPageCandidate(imageUrl),
+            imageDocumentPageCandidate(missingUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -1141,8 +1141,8 @@ void TestImageDocumentRuntime::decodedReplacementFailureSchedulesRecoveryPredeco
     const QUrl badUrl = localUrl(QStringLiteral("/images/02.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
-            imageCandidate(badUrl),
+            imageDocumentPageCandidate(imageUrl),
+            imageDocumentPageCandidate(badUrl),
         });
 
     RuntimeHandle runtime = createRuntime(
@@ -1184,7 +1184,7 @@ void TestImageDocumentRuntime::emptyContainerNavigationClearsImageAndSelectsCont
         = archivePageUrl(currentArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(currentArchiveCollection->rootUrl(),
         {
-            imageCandidate(currentImageUrl),
+            imageDocumentPageCandidate(currentImageUrl),
         });
     candidateProvider.setContainerCandidates(localUrl(QStringLiteral("/books/")),
         {
@@ -1235,7 +1235,7 @@ void TestImageDocumentRuntime::fileDeletionFailureKeepsDisplayedImageAndReportsE
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
+            imageDocumentPageCandidate(imageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
@@ -1275,7 +1275,7 @@ void TestImageDocumentRuntime::fileDeletionCancelKeepsDisplayedImageWithoutError
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
+            imageDocumentPageCandidate(imageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
@@ -1314,8 +1314,8 @@ void TestImageDocumentRuntime::successfulFileDeletionOpensNextImageFallback()
     const QUrl nextUrl = localUrl(QStringLiteral("/images/03.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(previousUrl),
-            imageCandidate(nextUrl),
+            imageDocumentPageCandidate(previousUrl),
+            imageDocumentPageCandidate(nextUrl),
         });
 
     RuntimeHandle runtime
@@ -1348,8 +1348,8 @@ void TestImageDocumentRuntime::successfulFileDeletionOpensPreviousImageFallback(
     const QUrl currentUrl = localUrl(QStringLiteral("/images/03.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(firstUrl),
-            imageCandidate(previousUrl),
+            imageDocumentPageCandidate(firstUrl),
+            imageDocumentPageCandidate(previousUrl),
         });
 
     RuntimeHandle runtime
@@ -1416,7 +1416,7 @@ void TestImageDocumentRuntime::successfulComicBookDeletionOpensNextSiblingArchiv
         = archivePageUrl(nextArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(currentArchiveCollection->rootUrl(),
         {
-            imageCandidate(currentImageUrl),
+            imageDocumentPageCandidate(currentImageUrl),
         });
     candidateProvider.setContainerCandidates(localUrl(QStringLiteral("/books/")),
         {
@@ -1424,7 +1424,7 @@ void TestImageDocumentRuntime::successfulComicBookDeletionOpensNextSiblingArchiv
         });
     candidateProvider.setOpenedCollectionCandidates(nextArchiveCollection->rootUrl(),
         {
-            imageCandidate(nextImageUrl),
+            imageDocumentPageCandidate(nextImageUrl),
         });
 
     RuntimeHandle runtime
@@ -1463,11 +1463,11 @@ void TestImageDocumentRuntime::rightToLeftReadingIsOnlyAvailableForComicArchives
         archiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(imageUrl),
+            imageDocumentPageCandidate(imageUrl),
         });
     candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
-            imageCandidate(archivePageUrl),
+            imageDocumentPageCandidate(archivePageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -1506,11 +1506,11 @@ void TestImageDocumentRuntime::rightToLeftReadingPersistsAcrossSiblingArchiveNav
         = archivePageUrl(secondArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(firstArchiveCollection->rootUrl(),
         {
-            imageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(firstPageUrl),
         });
     candidateProvider.setOpenedCollectionCandidates(secondArchiveCollection->rootUrl(),
         {
-            imageCandidate(secondPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
         });
     candidateProvider.setContainerCandidates(localUrl(QStringLiteral("/books/")),
         {
@@ -1519,7 +1519,7 @@ void TestImageDocumentRuntime::rightToLeftReadingPersistsAcrossSiblingArchiveNav
         });
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
-            imageCandidate(ordinaryImageUrl),
+            imageDocumentPageCandidate(ordinaryImageUrl),
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
@@ -1562,9 +1562,9 @@ void TestImageDocumentRuntime::twoPageModeDisplaysCurrentAndNextComicArchivePage
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
     candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
-            imageCandidate(firstPageUrl),
-            imageCandidate(secondPageUrl),
-            imageCandidate(thirdPageUrl),
+            imageDocumentPageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
+            imageDocumentPageCandidate(thirdPageUrl),
         });
 
     auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
@@ -1591,7 +1591,7 @@ void TestImageDocumentRuntime::twoPageModeDisplaysCurrentAndNextComicArchivePage
     QVERIFY(!runtime->secondaryPageVisible());
     QCOMPARE(runtime->imageSize(), QSize(100, 200));
 
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
@@ -1632,9 +1632,9 @@ void TestImageDocumentRuntime::twoPageModeUsesRightToLeftPageOrder()
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
     candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
-            imageCandidate(firstPageUrl),
-            imageCandidate(secondPageUrl),
-            imageCandidate(thirdPageUrl),
+            imageDocumentPageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
+            imageDocumentPageCandidate(thirdPageUrl),
         });
 
     auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
@@ -1649,7 +1649,7 @@ void TestImageDocumentRuntime::twoPageModeUsesRightToLeftPageOrder()
     QTRY_COMPARE(runtime->displayedUrl(), firstPageUrl);
     runtime->setTwoPageModeEnabled(true);
     runtime->setRightToLeftReadingEnabled(true);
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
@@ -1683,10 +1683,10 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("04.png"));
     candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
-            imageCandidate(firstPageUrl),
-            imageCandidate(secondPageUrl),
-            imageCandidate(thirdPageUrl),
-            imageCandidate(fourthPageUrl),
+            imageDocumentPageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
+            imageDocumentPageCandidate(thirdPageUrl),
+            imageDocumentPageCandidate(fourthPageUrl),
         });
 
     auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
@@ -1700,7 +1700,7 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
     QTRY_COMPARE(runtime->displayedUrl(), firstPageUrl);
     runtime->setTwoPageModeEnabled(true);
     runtime->setRightToLeftReadingEnabled(true);
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
@@ -1753,11 +1753,11 @@ void TestImageDocumentRuntime::twoPageModeWaitsForTargetSpreadBeforeRenderingNav
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("05.png"));
     candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
-            imageCandidate(firstPageUrl),
-            imageCandidate(secondPageUrl),
-            imageCandidate(thirdPageUrl),
-            imageCandidate(fourthPageUrl),
-            imageCandidate(fifthPageUrl),
+            imageDocumentPageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
+            imageDocumentPageCandidate(thirdPageUrl),
+            imageDocumentPageCandidate(fourthPageUrl),
+            imageDocumentPageCandidate(fifthPageUrl),
         });
 
     auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
@@ -1770,7 +1770,7 @@ void TestImageDocumentRuntime::twoPageModeWaitsForTargetSpreadBeforeRenderingNav
     QTRY_COMPARE(runtime->displayedUrl(), firstPageUrl);
 
     runtime->setTwoPageModeEnabled(true);
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
@@ -1782,7 +1782,7 @@ void TestImageDocumentRuntime::twoPageModeWaitsForTargetSpreadBeforeRenderingNav
     QVERIFY(hasRenderableSnapshot(*runtime));
     QVERIFY(hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
 
-    runtime->openNextImage();
+    runtime->openNextPage();
 
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
     QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
@@ -1827,11 +1827,11 @@ void TestImageDocumentRuntime::twoPageModeLoadingNavigationUsesPendingPrimaryPag
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("05.png"));
     candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
-            imageCandidate(firstPageUrl),
-            imageCandidate(secondPageUrl),
-            imageCandidate(thirdPageUrl),
-            imageCandidate(fourthPageUrl),
-            imageCandidate(fifthPageUrl),
+            imageDocumentPageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
+            imageDocumentPageCandidate(thirdPageUrl),
+            imageDocumentPageCandidate(fourthPageUrl),
+            imageDocumentPageCandidate(fifthPageUrl),
         });
 
     auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
@@ -1844,7 +1844,7 @@ void TestImageDocumentRuntime::twoPageModeLoadingNavigationUsesPendingPrimaryPag
     QTRY_COMPARE(runtime->displayedUrl(), firstPageUrl);
 
     runtime->setTwoPageModeEnabled(true);
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
@@ -1853,11 +1853,11 @@ void TestImageDocumentRuntime::twoPageModeLoadingNavigationUsesPendingPrimaryPag
     QTRY_COMPARE(runtime->currentLastPageNumber(), 3);
     QVERIFY(runtime->secondaryPageVisible());
 
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
     QCOMPARE(runtime->currentPageNumber(), 4);
 
-    runtime->openNextImage();
+    runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
     QCOMPARE(runtime->currentPageNumber(), 5);
     QVERIFY(!finishOldestActiveLoadForUrl(dataLoader, fourthPageUrl));

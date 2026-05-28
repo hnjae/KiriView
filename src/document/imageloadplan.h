@@ -11,7 +11,7 @@
 namespace KiriView {
 enum class OpenedCollectionScopeLoadEffect {
     ReadImage,
-    LoadImageCandidates,
+    LoadImageDocumentPageCandidates,
 };
 
 enum class ImageLoadStartEffect {

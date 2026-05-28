@@ -14,13 +14,13 @@
 
 namespace {
 using KiriView::ContainerNavigationCandidateType;
-using KiriView::ImageCandidateListSource;
 using KiriView::ImageContainerOpenError;
-using KiriView::TestSupport::imageCandidate;
+using KiriView::ImageDocumentPageCandidateListSource;
+using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::localUrl;
 
 template <typename ExpectedSource>
-const ExpectedSource *typedSource(const ImageCandidateListSource &source)
+const ExpectedSource *typedSource(const ImageDocumentPageCandidateListSource &source)
 {
     return source.visit([](const auto &typedSource) -> const ExpectedSource * {
         using Source = std::decay_t<decltype(typedSource)>;
@@ -52,7 +52,8 @@ void TestImageContainerOpenPlan::directoryContainerPlansDirectoryListing()
             containerUrl, QStringLiteral("a"), ContainerNavigationCandidateType::Directory });
 
     QVERIFY(plan.shouldLoadCandidates());
-    const auto *directory = typedSource<ImageCandidateListSource::Directory>(*plan.source);
+    const auto *directory
+        = typedSource<ImageDocumentPageCandidateListSource::Directory>(*plan.source);
     QVERIFY(directory != nullptr);
     QCOMPARE(directory->directoryUrl, containerUrl);
 }
@@ -70,7 +71,7 @@ void TestImageContainerOpenPlan::comicBookArchiveContainerPlansArchiveListing()
 
     QVERIFY(plan.shouldLoadCandidates());
     const auto *archive
-        = typedSource<ImageCandidateListSource::OpenedCollectionScope>(*plan.source);
+        = typedSource<ImageDocumentPageCandidateListSource::OpenedCollectionScope>(*plan.source);
     QVERIFY(archive != nullptr);
     QCOMPARE(archive->openedCollectionScope.rootUrl(), openedCollectionScope->rootUrl());
     QVERIFY(archive->openedCollectionScope.isComicBook());
@@ -92,13 +93,13 @@ void TestImageContainerOpenPlan::firstCandidateSelectionReportsImageOrEmptyConta
     const QUrl firstImageUrl = localUrl(QStringLiteral("/books/a/01.png"));
     const KiriView::ImageContainerOpenResult opened
         = KiriView::imageContainerOpenResultForCandidates(
-            { KiriView::ImageNavigationCandidate { firstImageUrl, QStringLiteral("01.bin"),
-                  KiriView::ImageNavigationCandidateKind::Video },
-                imageCandidate(localUrl(QStringLiteral("/books/a/02.png"))) });
+            { KiriView::ImageDocumentPageCandidate {
+                  firstImageUrl, QStringLiteral("01.bin"), KiriView::ImageDocumentPageKind::Video },
+                imageDocumentPageCandidate(localUrl(QStringLiteral("/books/a/02.png"))) });
 
     QVERIFY(opened.openedImage());
     QCOMPARE(opened.target->url, firstImageUrl);
-    QCOMPARE(opened.target->kind, KiriView::ImageNavigationCandidateKind::Video);
+    QCOMPARE(opened.target->kind, KiriView::ImageDocumentPageKind::Video);
 
     const KiriView::ImageContainerOpenResult empty
         = KiriView::imageContainerOpenResultForCandidates({});

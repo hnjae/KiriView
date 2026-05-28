@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_MEDIAPREDECODESCHEDULEPLAN_H
 #define KIRIVIEW_MEDIAPREDECODESCHEDULEPLAN_H
 
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationmodel.h"
 #include "predecode/mediapredecodeeligibility.h"
 #include "predecodeschedulestate.h"
 
@@ -13,13 +13,13 @@
 
 namespace KiriView {
 struct MediaPredecodeSchedulePayload final : PredecodeSchedulePayload {
-    std::vector<MediaNavigationCandidate> mediaCandidates;
+    std::vector<DirectMediaNavigationCandidate> directMediaNavigationCandidates;
     MediaPredecodeEligibilitySnapshot eligibleImages;
 };
 
 struct MediaPredecodeScheduleRequest {
     QUrl currentUrl;
-    std::vector<MediaNavigationCandidate> candidates;
+    std::vector<DirectMediaNavigationCandidate> candidates;
     std::vector<DisplayedPredecodeImage> displayedImages;
     ImageFirstDisplayDecodeContext firstDisplayContext;
 };
@@ -31,7 +31,7 @@ struct MediaPredecodeSchedulePlan {
 };
 
 MediaPredecodeSchedulePlan mediaPredecodeSchedulePlan(MediaPredecodeScheduleRequest request);
-const std::vector<MediaNavigationCandidate> *mediaPredecodeScheduleCandidates(
+const std::vector<DirectMediaNavigationCandidate> *mediaPredecodeScheduleCandidates(
     const PredecodePendingSchedule &schedule);
 const MediaPredecodeEligibilitySnapshot *mediaPredecodeScheduleEligibility(
     const PredecodePendingSchedule &schedule);

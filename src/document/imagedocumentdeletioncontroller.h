@@ -10,7 +10,7 @@
 #include "imagedocumentdeletionstate.h"
 #include "imagedocumentruntimeplan.h"
 #include "imageremovalfallback.h"
-#include "navigation/imagecandidaterepository.h"
+#include "navigation/imagedocumentpagecandidaterepository.h"
 
 #include <QString>
 #include <QtGlobal>
@@ -37,7 +37,7 @@ public:
 
     ImageDocumentDeletionController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController,
-        ImageNavigationCandidateProvider candidateProvider,
+        ImageDocumentPageCandidateProvider candidateProvider,
         FileOperationProvider fileOperationProvider, Callbacks callbacks);
     ~ImageDocumentDeletionController();
 

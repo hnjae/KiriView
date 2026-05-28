@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMEPLAN_H
 
 #include "imagedocumentsourceloadrequest.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 
 #include <QString>
 #include <QUrl>
@@ -53,10 +53,10 @@ struct ClearPageNavigationOperation {
 struct UpdatePageNavigationOperation {
 };
 struct LoadUrlOperation {
-    ImageNavigationTarget target;
+    ImageDocumentPageTarget target;
 };
 struct LoadContainerImageOperation {
-    ImageNavigationTarget target;
+    ImageDocumentPageTarget target;
     QUrl containerUrl;
 };
 struct FinishEmptyContainerNavigationOperation {
@@ -67,7 +67,7 @@ struct FinishContainerNavigationLoadWithErrorOperation {
     QString errorString;
 };
 struct LoadPageNavigationUrlOperation {
-    ImageNavigationTarget target;
+    ImageDocumentPageTarget target;
     bool preserveTwoPageSpreadTransition = false;
 };
 struct CancelOpenOperation {
@@ -88,7 +88,7 @@ struct PrepareSourceLoadOperation {
     ImageDocumentSourceLoadRequest request;
 };
 struct SetSourceUrlOperation {
-    ImageNavigationTarget target;
+    ImageDocumentPageTarget target;
 };
 struct BeginOpenOperation {
 };

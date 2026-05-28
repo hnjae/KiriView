@@ -18,8 +18,8 @@ template <typename Value> bool replaceIfChanged(Value &current, const Value &nex
     return true;
 }
 
-bool sameMediaNavigationState(const KiriView::MediaNavigationBoundaryState &left,
-    const KiriView::MediaNavigationBoundaryState &right)
+bool sameDirectMediaNavigationState(const KiriView::DirectMediaNavigationBoundaryState &left,
+    const KiriView::DirectMediaNavigationBoundaryState &right)
 {
     return left.canOpenPrevious == right.canOpenPrevious && left.canOpenNext == right.canOpenNext
         && left.atKnownFirst == right.atKnownFirst && left.atKnownLast == right.atKnownLast
@@ -69,12 +69,15 @@ const ActiveZoomSnapshot &DocumentSessionState::activeZoomSnapshot() const
     return m_activeZoomSnapshot;
 }
 
-const MediaNavigationBoundaryState &DocumentSessionState::mediaNavigationState() const
+const DirectMediaNavigationBoundaryState &DocumentSessionState::directMediaNavigationState() const
 {
-    return m_mediaNavigationState;
+    return m_directMediaNavigationState;
 }
 
-bool DocumentSessionState::mediaNavigationKnown() const { return m_mediaNavigationKnown; }
+bool DocumentSessionState::directMediaNavigationKnown() const
+{
+    return m_directMediaNavigationKnown;
+}
 
 const ActiveNavigationSnapshot &DocumentSessionState::activeNavigationSnapshot() const
 {
@@ -172,15 +175,16 @@ void DocumentSessionState::setActiveZoomSnapshot(ActiveZoomSnapshot snapshot)
     publish(DocumentSessionChange::ActiveZoomReadout);
 }
 
-void DocumentSessionState::setMediaNavigationState(MediaNavigationBoundaryState state, bool known)
+void DocumentSessionState::setDirectMediaNavigationState(
+    DirectMediaNavigationBoundaryState state, bool known)
 {
-    if (m_mediaNavigationKnown == known
-        && sameMediaNavigationState(m_mediaNavigationState, state)) {
+    if (m_directMediaNavigationKnown == known
+        && sameDirectMediaNavigationState(m_directMediaNavigationState, state)) {
         return;
     }
 
-    m_mediaNavigationKnown = known;
-    m_mediaNavigationState = state;
+    m_directMediaNavigationKnown = known;
+    m_directMediaNavigationState = state;
 }
 
 bool DocumentSessionState::updatePublicProjection(DocumentSessionPublicProjectionInput input)

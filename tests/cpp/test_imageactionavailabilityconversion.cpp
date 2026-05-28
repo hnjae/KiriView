@@ -161,7 +161,7 @@ void TestImageActionAvailabilityConversion::videoAvailabilityInputMapsPlainField
     input.helpShortcutsEnabled = true;
     input.viewerShortcutsEnabled = true;
     input.fileDeletionInProgress = true;
-    input.mediaNavigationActive = true;
+    input.directMediaNavigationActive = true;
 
     const KiriView::RustVideoShortcutAvailabilityInput converted
         = KiriView::Bridge::rustVideoShortcutAvailabilityInput(input);

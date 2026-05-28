@@ -15,13 +15,14 @@ namespace {
 namespace Actions = KiriView::ApplicationActions;
 
 Actions::VideoShortcutAvailabilityInput videoShortcutInput(bool helpShortcutsEnabled,
-    bool viewerShortcutsEnabled, bool videoFileDeletionInProgress, bool videoMediaNavigationActive)
+    bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
+    bool videoDirectMediaNavigationActive)
 {
     return Actions::VideoShortcutAvailabilityInput {
         helpShortcutsEnabled,
         viewerShortcutsEnabled,
         videoFileDeletionInProgress,
-        videoMediaNavigationActive,
+        videoDirectMediaNavigationActive,
     };
 }
 }
@@ -97,12 +98,12 @@ bool ApplicationActionRuntime::videoActionUnsupported(ActionId actionId) const
 
 bool ApplicationActionRuntime::mediaHorizontalArrowShortcutsEnabled(bool videoMode,
     bool imageReadyViewerShortcutsEnabled, bool videoViewerShortcutsEnabled,
-    bool videoMediaNavigationActive, bool videoFileDeletionInProgress) const
+    bool videoDirectMediaNavigationActive, bool videoFileDeletionInProgress) const
 {
     return ApplicationActions::mediaHorizontalArrowShortcutsEnabled(videoMode,
         imageReadyViewerShortcutsEnabled,
         videoShortcutInput(false, videoViewerShortcutsEnabled, videoFileDeletionInProgress,
-            videoMediaNavigationActive));
+            videoDirectMediaNavigationActive));
 }
 
 void ApplicationActionRuntime::setupActions()

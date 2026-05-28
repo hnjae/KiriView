@@ -19,7 +19,7 @@ struct RecordedRuntimeOperations {
     QStringList events;
     QUrl url;
     QUrl secondaryUrl;
-    KiriView::ImageNavigationCandidateKind kind = KiriView::ImageNavigationCandidateKind::Image;
+    KiriView::ImageDocumentPageKind kind = KiriView::ImageDocumentPageKind::Image;
     QString errorString;
     bool flag = false;
 
@@ -64,13 +64,13 @@ struct RecordedRuntimeOperations {
             = [this]() { record(QStringLiteral("clearPageNavigation")); };
         operations.navigation.updatePageNavigation
             = [this]() { record(QStringLiteral("updatePageNavigation")); };
-        operations.navigation.loadUrl = [this](const KiriView::ImageNavigationTarget &target) {
+        operations.navigation.loadUrl = [this](const KiriView::ImageDocumentPageTarget &target) {
             url = target.url;
             kind = target.kind;
             record(QStringLiteral("loadUrl"));
         };
         operations.navigation.loadContainerImage
-            = [this](const KiriView::ImageNavigationTarget &target, const QUrl &containerUrl) {
+            = [this](const KiriView::ImageDocumentPageTarget &target, const QUrl &containerUrl) {
                   url = target.url;
                   kind = target.kind;
                   secondaryUrl = containerUrl;
@@ -87,7 +87,7 @@ struct RecordedRuntimeOperations {
                   record(QStringLiteral("finishContainerNavigationLoadWithError"));
               };
         operations.navigation.loadPageNavigationUrl
-            = [this](const KiriView::ImageNavigationTarget &target, bool preserveTransition) {
+            = [this](const KiriView::ImageDocumentPageTarget &target, bool preserveTransition) {
                   url = target.url;
                   kind = target.kind;
                   flag = preserveTransition;
@@ -115,7 +115,7 @@ struct RecordedRuntimeOperations {
                   flag = request.preserveTwoPageSpreadTransition;
                   record(QStringLiteral("prepareSourceLoad"));
               };
-        operations.open.setSourceUrl = [this](const KiriView::ImageNavigationTarget &target) {
+        operations.open.setSourceUrl = [this](const KiriView::ImageDocumentPageTarget &target) {
             url = target.url;
             kind = target.kind;
             record(QStringLiteral("setSourceUrl"));
@@ -134,7 +134,7 @@ struct RecordedRuntimeOperations {
         events.clear();
         url = QUrl();
         secondaryUrl = QUrl();
-        kind = KiriView::ImageNavigationCandidateKind::Image;
+        kind = KiriView::ImageDocumentPageKind::Image;
         errorString.clear();
         flag = false;
     }
@@ -226,26 +226,26 @@ void TestImageDocumentRuntimePlanExecutor::payloadRuntimePlansDispatchToOperatio
     KiriView::ImageDocumentRuntimePlanExecutor executor(recorded.operations);
 
     executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::LoadUrlOperation {
-        KiriView::ImageNavigationTarget {
+        KiriView::ImageDocumentPageTarget {
             localUrl(QStringLiteral("/image.png")),
-            KiriView::ImageNavigationCandidateKind::Video,
+            KiriView::ImageDocumentPageKind::Video,
         },
     } });
     QCOMPARE(recorded.events, QStringList({ QStringLiteral("loadUrl") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/image.png")));
-    QCOMPARE(recorded.kind, KiriView::ImageNavigationCandidateKind::Video);
+    QCOMPARE(recorded.kind, KiriView::ImageDocumentPageKind::Video);
 
     recorded.clear();
     executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::LoadContainerImageOperation {
-        KiriView::ImageNavigationTarget {
+        KiriView::ImageDocumentPageTarget {
             localUrl(QStringLiteral("/book/01.png")),
-            KiriView::ImageNavigationCandidateKind::Video,
+            KiriView::ImageDocumentPageKind::Video,
         },
         localUrl(QStringLiteral("/book.cbz")),
     } });
     QCOMPARE(recorded.events, QStringList({ QStringLiteral("loadContainerImage") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/book/01.png")));
-    QCOMPARE(recorded.kind, KiriView::ImageNavigationCandidateKind::Video);
+    QCOMPARE(recorded.kind, KiriView::ImageDocumentPageKind::Video);
     QCOMPARE(recorded.secondaryUrl, localUrl(QStringLiteral("/book.cbz")));
 
     recorded.clear();
@@ -269,15 +269,15 @@ void TestImageDocumentRuntimePlanExecutor::payloadRuntimePlansDispatchToOperatio
 
     recorded.clear();
     executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::LoadPageNavigationUrlOperation {
-        KiriView::ImageNavigationTarget {
+        KiriView::ImageDocumentPageTarget {
             localUrl(QStringLiteral("/next.png")),
-            KiriView::ImageNavigationCandidateKind::Video,
+            KiriView::ImageDocumentPageKind::Video,
         },
         true,
     } });
     QCOMPARE(recorded.events, QStringList({ QStringLiteral("loadPageNavigationUrl") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/next.png")));
-    QCOMPARE(recorded.kind, KiriView::ImageNavigationCandidateKind::Video);
+    QCOMPARE(recorded.kind, KiriView::ImageDocumentPageKind::Video);
     QVERIFY(recorded.flag);
 
     recorded.clear();
@@ -320,9 +320,9 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchSourceLoadOperati
             KiriView::ImageDocumentSourceLoadRequest::fromPageNavigation(sourceUrl, true),
         },
         KiriView::SetSourceUrlOperation {
-            KiriView::ImageNavigationTarget {
+            KiriView::ImageDocumentPageTarget {
                 sourceUrl,
-                KiriView::ImageNavigationCandidateKind::Video,
+                KiriView::ImageDocumentPageKind::Video,
             },
         },
         KiriView::BeginOpenOperation {},
@@ -346,7 +346,7 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchSourceLoadOperati
             QStringLiteral("notifyRightToLeftReadingChanged"),
         }));
     QCOMPARE(recorded.url, sourceUrl);
-    QCOMPARE(recorded.kind, KiriView::ImageNavigationCandidateKind::Video);
+    QCOMPARE(recorded.kind, KiriView::ImageDocumentPageKind::Video);
     QVERIFY(recorded.secondaryUrl.isEmpty());
     QVERIFY(recorded.flag);
 }
@@ -378,14 +378,14 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
         KiriView::CancelAllNavigationOperation {},
         KiriView::ClearPageNavigationOperation {},
         KiriView::UpdatePageNavigationOperation {},
-        KiriView::LoadUrlOperation { KiriView::ImageNavigationTarget {
+        KiriView::LoadUrlOperation { KiriView::ImageDocumentPageTarget {
             sourceUrl,
-            KiriView::ImageNavigationCandidateKind::Image,
+            KiriView::ImageDocumentPageKind::Image,
         } },
         KiriView::LoadContainerImageOperation {
-            KiriView::ImageNavigationTarget {
+            KiriView::ImageDocumentPageTarget {
                 sourceUrl,
-                KiriView::ImageNavigationCandidateKind::Image,
+                KiriView::ImageDocumentPageKind::Image,
             },
             containerUrl,
         },
@@ -395,9 +395,9 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
             QStringLiteral("broken"),
         },
         KiriView::LoadPageNavigationUrlOperation {
-            KiriView::ImageNavigationTarget {
+            KiriView::ImageDocumentPageTarget {
                 sourceUrl,
-                KiriView::ImageNavigationCandidateKind::Image,
+                KiriView::ImageDocumentPageKind::Image,
             },
             true,
         },
@@ -411,9 +411,9 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
             KiriView::ImageDocumentSourceLoadRequest::fromContainerImage(sourceUrl, containerUrl),
         },
         KiriView::SetSourceUrlOperation {
-            KiriView::ImageNavigationTarget {
+            KiriView::ImageDocumentPageTarget {
                 sourceUrl,
-                KiriView::ImageNavigationCandidateKind::Image,
+                KiriView::ImageDocumentPageKind::Image,
             },
         },
         KiriView::BeginOpenOperation {},

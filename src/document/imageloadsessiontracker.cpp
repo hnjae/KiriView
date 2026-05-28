@@ -41,7 +41,7 @@ std::optional<ImageLoadSession> ImageLoadSessionTracker::claimCurrentForDecodeRe
 }
 
 OpenedCollectionCandidateCompletion ImageLoadSessionTracker::completeOpenedCollectionCandidates(
-    const ImageLoadSession &session, const std::vector<ImageNavigationCandidate> &candidates)
+    const ImageLoadSession &session, const std::vector<ImageDocumentPageCandidate> &candidates)
 {
     if (!isCurrent(session)) {
         return {};
@@ -55,8 +55,8 @@ OpenedCollectionCandidateCompletion ImageLoadSessionTracker::completeOpenedColle
         };
     }
 
-    m_session->setImageCandidate(candidates.front());
-    if (candidates.front().kind == ImageNavigationCandidateKind::Video) {
+    m_session->setImageDocumentPageCandidate(candidates.front());
+    if (candidates.front().kind == ImageDocumentPageKind::Video) {
         std::optional<ImageLoadSession> claimedSession = claimCurrent(*m_session);
         return OpenedCollectionCandidateCompletion {
             OpenedCollectionCandidateCompletionAction::ReportUnsupportedOpenedCollectionVideo,

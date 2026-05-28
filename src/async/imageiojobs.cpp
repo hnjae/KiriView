@@ -8,7 +8,7 @@
 #include "async/imagecallback.h"
 #include "async/imageioworkerjob.h"
 #include "location/imagedocumentlocation.h"
-#include "navigation/imagecandidateitems.h"
+#include "navigation/imagedocumentpagecandidateitems.h"
 
 #include <KIO/Job>
 #include <KIO/StoredTransferJob>
@@ -21,7 +21,7 @@
 namespace {
 using KiriView::containerNavigationCandidates;
 using KiriView::ErrorCallback;
-using KiriView::imageNavigationCandidates;
+using KiriView::imageDocumentPageNavigationCandidates;
 using KiriView::MediaEntrySourceCandidates;
 using KiriView::MediaEntrySourceCandidatesResult;
 using KiriView::MediaEntrySourceError;
@@ -79,11 +79,11 @@ KiriView::ImageIoJob startMediaEntrySourceWorkerJob(QObject *receiver, Work work
 }
 
 namespace KiriView {
-ImageIoJob startDirectoryImageCandidateList(QObject *receiver, QUrl directoryUrl,
-    ImageCandidatesCallback callback, ErrorCallback errorCallback)
+ImageIoJob startDirectoryImageDocumentPageCandidateList(QObject *receiver, QUrl directoryUrl,
+    ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
     return startDirectoryCandidateList(receiver, directoryUrl, std::move(callback),
-        std::move(errorCallback), imageNavigationCandidates);
+        std::move(errorCallback), imageDocumentPageNavigationCandidates);
 }
 
 ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl directoryUrl,
@@ -94,8 +94,8 @@ ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl director
 }
 
 ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
-    OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
-    ErrorCallback errorCallback)
+    OpenedCollectionScopeLocation openedCollectionScope,
+    ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
     return startMediaEntrySourceWorkerJob(
         receiver,

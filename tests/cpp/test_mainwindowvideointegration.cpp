@@ -24,8 +24,8 @@ private Q_SLOTS:
     void shortcutsRouteSharedActiveNavigationThroughSessionRequests();
     void imageActionAvailabilityDoesNotDriveSharedActiveNavigation();
     void pageNavigationComponentDoesNotChooseBetweenRawNavigationSources();
-    void documentSessionFacadeDoesNotExposeRawMediaNavigation();
-    void documentSessionRuntimePublicApiDoesNotExposeRawMediaNavigation();
+    void documentSessionFacadeDoesNotExposeRawDirectMediaNavigation();
+    void documentSessionRuntimePublicApiDoesNotExposeRawDirectMediaNavigation();
     void videoFloatingControlsUsesViewportResponsiveWidth();
 };
 
@@ -262,23 +262,24 @@ void TestMainWindowVideoIntegration::toolbarPageNavigationUsesSessionActiveProje
         {
             QStringLiteral("currentMediaNumber: documentSession.currentMediaNumber"),
             QStringLiteral("mediaCount: documentSession.mediaCount"),
-            QStringLiteral("mediaNavigationKnown: documentSession.mediaNavigationKnown"),
+            QStringLiteral(
+                "directMediaNavigationKnown: documentSession.directMediaNavigationKnown"),
             QStringLiteral("activeNavigationAvailable: actionAvailability"),
             QStringLiteral("activeNavigationKnown: actionAvailability"),
             QStringLiteral("activeNavigationEditable: actionAvailability"),
             QStringLiteral("activeNavigationCurrentNumber: page.imageDocument.currentPageNumber"),
-            QStringLiteral("activeNavigationCount: page.imageDocument.imageCount"),
+            QStringLiteral("activeNavigationCount: page.imageDocument.pageCount"),
         });
 
     verifySourceOmits(imageToolBarQml,
         {
-            QStringLiteral("property bool mediaNavigationActive"),
-            QStringLiteral("property bool mediaNavigationKnown"),
+            QStringLiteral("property bool directMediaNavigationActive"),
+            QStringLiteral("property bool directMediaNavigationKnown"),
             QStringLiteral("property int currentMediaNumber"),
             QStringLiteral("property int mediaCount"),
             QStringLiteral("ImageActionAvailability"),
             QStringLiteral("imageDocument.currentPageNumber"),
-            QStringLiteral("imageDocument.imageCount"),
+            QStringLiteral("imageDocument.pageCount"),
             QStringLiteral("imageDocument.openImageAtPage"),
         });
     QVERIFY(imageToolBarQml.contains(
@@ -340,8 +341,8 @@ void TestMainWindowVideoIntegration::activeNavigationActionsUseSessionSnapshotAn
         imageActionsQml.contains(QStringLiteral("requestPreviousActiveNavigationBoundaryText")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("requestNextActiveNavigationBoundaryText")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("activeNavigationBoundaryScope")));
-    QVERIFY(
-        imageActionsQml.contains(QStringLiteral("KiriDocumentSession.MediaNavigationBoundary")));
+    QVERIFY(imageActionsQml.contains(
+        QStringLiteral("KiriDocumentSession.DirectMediaNavigationBoundary")));
 
     verifySourceOmits(imageActionsQml,
         {
@@ -351,8 +352,8 @@ void TestMainWindowVideoIntegration::activeNavigationActionsUseSessionSnapshotAn
             QStringLiteral("Last media item"),
             QStringLiteral("First image"),
             QStringLiteral("Last image"),
-            QStringLiteral("mediaNavigationActive"),
-            QStringLiteral("mediaNavigationKnown"),
+            QStringLiteral("directMediaNavigationActive"),
+            QStringLiteral("directMediaNavigationKnown"),
             QStringLiteral("currentMediaNumber"),
             QStringLiteral("mediaCount"),
             QStringLiteral("openMediaAtNumber"),
@@ -360,7 +361,7 @@ void TestMainWindowVideoIntegration::activeNavigationActionsUseSessionSnapshotAn
             QStringLiteral("openPreviousMedia"),
             QStringLiteral("currentPageNumber"),
             QStringLiteral("currentLastPageNumber"),
-            QStringLiteral("imageCount"),
+            QStringLiteral("pageCount"),
             QStringLiteral("canOpenPreviousImage"),
             QStringLiteral("canOpenNextImage"),
             QStringLiteral("atKnownFirstImage"),
@@ -371,8 +372,8 @@ void TestMainWindowVideoIntegration::activeNavigationActionsUseSessionSnapshotAn
             QStringLiteral("pageShortcutsEnabled"),
             QStringLiteral("openImageAtPage"),
         });
-    QVERIFY(!mainQml.contains(
-        QStringLiteral("mediaNavigationActive: documentSession.mediaNavigationActive")));
+    QVERIFY(!mainQml.contains(QStringLiteral(
+        "directMediaNavigationActive: documentSession.directMediaNavigationActive")));
 }
 
 void TestMainWindowVideoIntegration::shortcutsRouteSharedActiveNavigationThroughSessionRequests()
@@ -383,7 +384,7 @@ void TestMainWindowVideoIntegration::shortcutsRouteSharedActiveNavigationThrough
     QVERIFY2(!imageShortcutsQml.isEmpty(), "ImageShortcuts.qml should be readable");
 
     QVERIFY(mainQml.contains(QStringLiteral("documentSession: documentSession")));
-    QVERIFY(!mainQml.contains(QStringLiteral("videoMediaNavigationActive:")));
+    QVERIFY(!mainQml.contains(QStringLiteral("videoDirectMediaNavigationActive:")));
 
     QVERIFY(imageShortcutsQml.contains(
         QStringLiteral("required property KiriDocumentSession documentSession")));
@@ -396,16 +397,16 @@ void TestMainWindowVideoIntegration::shortcutsRouteSharedActiveNavigationThrough
         {
             QStringLiteral("activeNavigationShortcutsEnabledForScope"),
             QStringLiteral("videoShortcutsEnabledForScope"),
-            QStringLiteral("videoMediaNavigationActive"),
-            QStringLiteral("mediaNavigationActive"),
-            QStringLiteral("mediaNavigationKnown"),
+            QStringLiteral("videoDirectMediaNavigationActive"),
+            QStringLiteral("directMediaNavigationActive"),
+            QStringLiteral("directMediaNavigationKnown"),
             QStringLiteral("currentMediaNumber"),
             QStringLiteral("mediaCount"),
             QStringLiteral("openMediaAtNumber"),
             QStringLiteral("openNextMedia"),
             QStringLiteral("openPreviousMedia"),
-            QStringLiteral("openPreviousImage()"),
-            QStringLiteral("openNextImage()"),
+            QStringLiteral("openPreviousPage()"),
+            QStringLiteral("openNextPage()"),
         });
 
     const int activeNavigationOpenPageCalls
@@ -433,7 +434,7 @@ void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedAc
             QStringLiteral("activeNavigationCount: actionAvailability"),
             QStringLiteral("currentLastPageNumber: page.imageDocument"),
             QStringLiteral("currentPageNumber: page.imageDocument"),
-            QStringLiteral("imageCount: page.imageDocument"),
+            QStringLiteral("pageCount: page.imageDocument"),
         });
     verifySourceOmits(imageActionsQml,
         {
@@ -455,21 +456,22 @@ void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedAc
 void TestMainWindowVideoIntegration::
     pageNavigationComponentDoesNotChooseBetweenRawNavigationSources()
 {
-    const QString pageNavigationQml = readSource(QStringLiteral("src/qml/ImagePageNavigation.qml"));
-    QVERIFY2(!pageNavigationQml.isEmpty(), "ImagePageNavigation.qml should be readable");
+    const QString pageNavigationQml
+        = readSource(QStringLiteral("src/qml/ImageDocumentPageNavigation.qml"));
+    QVERIFY2(!pageNavigationQml.isEmpty(), "ImageDocumentPageNavigation.qml should be readable");
 
     verifySourceOmits(pageNavigationQml,
         {
             QStringLiteral("required property KiriImageDocument"),
-            QStringLiteral("mediaNavigationActive"),
-            QStringLiteral("mediaNavigationKnown"),
+            QStringLiteral("directMediaNavigationActive"),
+            QStringLiteral("directMediaNavigationKnown"),
             QStringLiteral("currentMediaNumber"),
             QStringLiteral("mediaCount"),
             QStringLiteral("openMediaAtNumber"),
             QStringLiteral("openNextMedia"),
             QStringLiteral("openPreviousMedia"),
             QStringLiteral("imageDocument.currentPageNumber"),
-            QStringLiteral("imageDocument.imageCount"),
+            QStringLiteral("imageDocument.pageCount"),
             QStringLiteral("openImageAtPage"),
         });
     QVERIFY(pageNavigationQml.contains(QStringLiteral("activeNavigationCurrentNumber")));
@@ -478,7 +480,7 @@ void TestMainWindowVideoIntegration::
     QVERIFY(pageNavigationQml.contains(QStringLiteral("openActiveNavigationAtNumber")));
 }
 
-void TestMainWindowVideoIntegration::documentSessionFacadeDoesNotExposeRawMediaNavigation()
+void TestMainWindowVideoIntegration::documentSessionFacadeDoesNotExposeRawDirectMediaNavigation()
 {
     const QString documentSessionHeader
         = readSource(QStringLiteral("src/facade/kiridocumentsession.h"));
@@ -486,8 +488,8 @@ void TestMainWindowVideoIntegration::documentSessionFacadeDoesNotExposeRawMediaN
 
     verifySourceOmits(documentSessionHeader,
         {
-            QStringLiteral("mediaNavigationActive"),
-            QStringLiteral("mediaNavigationKnown"),
+            QStringLiteral("directMediaNavigationActive"),
+            QStringLiteral("directMediaNavigationKnown"),
             QStringLiteral("currentMediaNumber"),
             QStringLiteral("mediaCount"),
             QStringLiteral("canOpenPreviousMedia"),
@@ -497,12 +499,12 @@ void TestMainWindowVideoIntegration::documentSessionFacadeDoesNotExposeRawMediaN
             QStringLiteral("openPreviousMedia"),
             QStringLiteral("openNextMedia"),
             QStringLiteral("openMediaAtNumber"),
-            QStringLiteral("mediaNavigationAvailabilityChanged"),
+            QStringLiteral("directMediaNavigationAvailabilityChanged"),
         });
 }
 
 void TestMainWindowVideoIntegration::
-    documentSessionRuntimePublicApiDoesNotExposeRawMediaNavigation()
+    documentSessionRuntimePublicApiDoesNotExposeRawDirectMediaNavigation()
 {
     const QString documentSessionRuntimeHeader
         = readSource(QStringLiteral("src/session/documentsessionruntime.h"));
@@ -516,8 +518,8 @@ void TestMainWindowVideoIntegration::
 
     verifySourceOmits(publicSection,
         {
-            QStringLiteral("mediaNavigationActive"),
-            QStringLiteral("mediaNavigationKnown"),
+            QStringLiteral("directMediaNavigationActive"),
+            QStringLiteral("directMediaNavigationKnown"),
             QStringLiteral("currentMediaNumber"),
             QStringLiteral("mediaCount"),
             QStringLiteral("canOpenPreviousMedia"),

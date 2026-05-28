@@ -17,7 +17,7 @@
 namespace {
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::comicBookContainerCandidate;
-using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::localUrl;
 }
 
@@ -30,7 +30,7 @@ private Q_SLOTS:
     void regularImagePlanTargetsDisplayedUrl();
     void explicitKioArchiveImagePlanTargetsDisplayedUrl();
     void directArchiveCollectionPlanTargetsArchiveFile();
-    void directDirectoryCollectionPlanTargetsDirectory();
+    void directoryCollectionPlanTargetsDirectory();
     void regularImagePlanUsesSiblingImageContext();
     void comicBookPagePlanUsesArchiveContainer();
     void generalArchivePageHasNoFallbackPlan();
@@ -91,7 +91,7 @@ void TestImageRemovalFallback::directArchiveCollectionPlanTargetsArchiveFile()
     QCOMPARE(plan.targetUrl, archiveUrl);
 }
 
-void TestImageRemovalFallback::directDirectoryCollectionPlanTargetsDirectory()
+void TestImageRemovalFallback::directoryCollectionPlanTargetsDirectory()
 {
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
@@ -173,60 +173,60 @@ void TestImageRemovalFallback::imageFallbackPrefersNextImage()
 {
     const QUrl currentUrl = localUrl(QStringLiteral("/images/02.png"));
     const KiriView::ImageRemovalFallback fallback {
-        KiriView::ImageCandidateListContext::forDirectory(
+        KiriView::ImageDocumentPageCandidateListContext::forDirectory(
             currentUrl, localUrl(QStringLiteral("/images/"))),
         currentUrl,
         QStringLiteral("02.png"),
     };
 
-    const std::optional<KiriView::ImageNavigationTarget> fallbackTarget
+    const std::optional<KiriView::ImageDocumentPageTarget> fallbackTarget
         = KiriView::imageRemovalFallbackTarget(
             {
-                imageCandidate(localUrl(QStringLiteral("/images/01.png"))),
-                KiriView::ImageNavigationCandidate { localUrl(QStringLiteral("/images/03.bin")),
-                    QStringLiteral("03.bin"), KiriView::ImageNavigationCandidateKind::Video },
+                imageDocumentPageCandidate(localUrl(QStringLiteral("/images/01.png"))),
+                KiriView::ImageDocumentPageCandidate { localUrl(QStringLiteral("/images/03.bin")),
+                    QStringLiteral("03.bin"), KiriView::ImageDocumentPageKind::Video },
             },
             fallback);
 
     QVERIFY(fallbackTarget.has_value());
     QCOMPARE(fallbackTarget->url, localUrl(QStringLiteral("/images/03.bin")));
-    QCOMPARE(fallbackTarget->kind, KiriView::ImageNavigationCandidateKind::Video);
+    QCOMPARE(fallbackTarget->kind, KiriView::ImageDocumentPageKind::Video);
 }
 
 void TestImageRemovalFallback::imageFallbackFallsBackToPreviousImage()
 {
     const QUrl currentUrl = localUrl(QStringLiteral("/images/03.png"));
     const KiriView::ImageRemovalFallback fallback {
-        KiriView::ImageCandidateListContext::forDirectory(
+        KiriView::ImageDocumentPageCandidateListContext::forDirectory(
             currentUrl, localUrl(QStringLiteral("/images/"))),
         currentUrl,
         QStringLiteral("03.png"),
     };
 
-    const std::optional<KiriView::ImageNavigationTarget> fallbackTarget
+    const std::optional<KiriView::ImageDocumentPageTarget> fallbackTarget
         = KiriView::imageRemovalFallbackTarget(
             {
-                imageCandidate(localUrl(QStringLiteral("/images/01.png"))),
-                imageCandidate(localUrl(QStringLiteral("/images/02.png"))),
+                imageDocumentPageCandidate(localUrl(QStringLiteral("/images/01.png"))),
+                imageDocumentPageCandidate(localUrl(QStringLiteral("/images/02.png"))),
             },
             fallback);
 
     QVERIFY(fallbackTarget.has_value());
     QCOMPARE(fallbackTarget->url, localUrl(QStringLiteral("/images/02.png")));
-    QCOMPARE(fallbackTarget->kind, KiriView::ImageNavigationCandidateKind::Image);
+    QCOMPARE(fallbackTarget->kind, KiriView::ImageDocumentPageKind::Image);
 }
 
 void TestImageRemovalFallback::imageFallbackReturnsNoUrlWithoutSiblingImages()
 {
     const QUrl currentUrl = localUrl(QStringLiteral("/images/03.png"));
     const KiriView::ImageRemovalFallback fallback {
-        KiriView::ImageCandidateListContext::forDirectory(
+        KiriView::ImageDocumentPageCandidateListContext::forDirectory(
             currentUrl, localUrl(QStringLiteral("/images/"))),
         currentUrl,
         QStringLiteral("03.png"),
     };
 
-    const std::optional<KiriView::ImageNavigationTarget> fallbackTarget
+    const std::optional<KiriView::ImageDocumentPageTarget> fallbackTarget
         = KiriView::imageRemovalFallbackTarget({}, fallback);
 
     QVERIFY(!fallbackTarget.has_value());

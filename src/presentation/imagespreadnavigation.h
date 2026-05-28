@@ -4,13 +4,13 @@
 #ifndef KIRIVIEW_IMAGESPREADNAVIGATION_H
 #define KIRIVIEW_IMAGESPREADNAVIGATION_H
 
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 
 namespace KiriView {
 struct ImageSpreadNavigationState {
     bool twoPageModeActive = false;
     int currentPageNumber = 0;
-    int imageCount = 0;
+    int pageCount = 0;
     bool secondaryPageVisible = false;
     bool previousPageIsWide = false;
 };

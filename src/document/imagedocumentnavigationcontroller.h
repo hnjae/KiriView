@@ -5,13 +5,13 @@
 #define KIRIVIEW_IMAGEDOCUMENTNAVIGATIONCONTROLLER_H
 
 #include "imagedocumentruntimeplan.h"
-#include "navigation/imagenavigationtypes.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 
 #include <functional>
 
 namespace KiriView {
 class ImageDocumentState;
-class ImageNavigationService;
+class ImageDocumentPageNavigationService;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
 
@@ -22,15 +22,15 @@ public:
 
     ImageDocumentNavigationController(ImageDocumentState &state,
         ImagePresentationController &presentationController,
-        ImageNavigationService &navigationService,
+        ImageDocumentPageNavigationService &navigationService,
         ImageSpreadPresentationController &spreadController,
         RuntimePlanCallback runtimePlanCallback);
 
     int currentPageNumber() const;
-    int imageCount() const;
-    ImagePageNavigationSnapshot pageNavigationSnapshot() const;
+    int pageCount() const;
+    ImageDocumentPageNavigationSnapshot pageNavigationSnapshot() const;
 
-    void openAdjacentImage(NavigationDirection direction);
+    void openAdjacentPage(NavigationDirection direction);
     void openAdjacentContainer(NavigationDirection direction);
     void openImageAtPage(int pageNumber);
     void openImageAtRelativePageOffset(int offset);
@@ -45,7 +45,7 @@ public:
 private:
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
-    ImageNavigationService &m_navigationService;
+    ImageDocumentPageNavigationService &m_navigationService;
     ImageSpreadPresentationController &m_spreadController;
     RuntimePlanCallback m_runtimePlanCallback;
 };

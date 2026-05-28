@@ -4,7 +4,7 @@
 #include "navigation/mediaformatregistry.h"
 
 #include "archive/archiveformat.h"
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationmodel.h"
 
 #include <QFile>
 #include <QObject>
@@ -23,9 +23,9 @@ QStringList sortedUnique(QStringList values)
     return values;
 }
 
-KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
+KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::MediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 }
 
@@ -39,7 +39,7 @@ private Q_SLOTS:
     void ordinaryMediaFileNamesIncludeImagesAndDirectVideos();
     void directVideoFileNamesStayExposedThroughMediaRegistry();
     void directMediaUrlsClassifyImagesAndVideos();
-    void stillImageMediaCandidatesUseCandidateNameAndUrlIdentity();
+    void stillImageDirectMediaNavigationCandidatesUseCandidateNameAndUrlIdentity();
     void openDialogFilterIncludesMediaAndArchives();
     void desktopMimeTypesMatchSupportedOpenMimeTypes();
 };
@@ -123,22 +123,26 @@ void TestMediaFormatRegistry::directMediaUrlsClassifyImagesAndVideos()
     QVERIFY(!KiriView::isSupportedDirectImageUrl(unsupported));
 }
 
-void TestMediaFormatRegistry::stillImageMediaCandidatesUseCandidateNameAndUrlIdentity()
+void TestMediaFormatRegistry::
+    stillImageDirectMediaNavigationCandidatesUseCandidateNameAndUrlIdentity()
 {
-    QVERIFY(KiriView::isSupportedStillImageMediaCandidate(KiriView::MediaNavigationCandidate {
-        localUrl(QStringLiteral("/media/blob.bin")),
-        QStringLiteral("cover.png"),
-    }));
-    QVERIFY(KiriView::isSupportedStillImageMediaCandidate(KiriView::MediaNavigationCandidate {
-        localUrl(QStringLiteral("/media/photo.avif")),
-        QString(),
-    }));
-    QVERIFY(KiriView::isSupportedStillImageMediaCandidate(KiriView::MediaNavigationCandidate {
-        QUrl(QStringLiteral("file:///media/download?name=cover.webp")),
-        QString(),
-    }));
-    QVERIFY(!KiriView::isSupportedStillImageMediaCandidate(
-        mediaCandidate(localUrl(QStringLiteral("/media/clip.mp4")))));
+    QVERIFY(KiriView::isSupportedStillImageDirectMediaNavigationCandidate(
+        KiriView::DirectMediaNavigationCandidate {
+            localUrl(QStringLiteral("/media/blob.bin")),
+            QStringLiteral("cover.png"),
+        }));
+    QVERIFY(KiriView::isSupportedStillImageDirectMediaNavigationCandidate(
+        KiriView::DirectMediaNavigationCandidate {
+            localUrl(QStringLiteral("/media/photo.avif")),
+            QString(),
+        }));
+    QVERIFY(KiriView::isSupportedStillImageDirectMediaNavigationCandidate(
+        KiriView::DirectMediaNavigationCandidate {
+            QUrl(QStringLiteral("file:///media/download?name=cover.webp")),
+            QString(),
+        }));
+    QVERIFY(!KiriView::isSupportedStillImageDirectMediaNavigationCandidate(
+        directMediaNavigationCandidate(localUrl(QStringLiteral("/media/clip.mp4")))));
 }
 
 void TestMediaFormatRegistry::openDialogFilterIncludesMediaAndArchives()

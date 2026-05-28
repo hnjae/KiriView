@@ -7,10 +7,11 @@
 #include <utility>
 
 namespace {
-void appendDeletedMediaCandidate(
-    std::vector<KiriView::MediaNavigationCandidate> *candidates, const QUrl &currentUrl)
+void appendDeletedDirectMediaNavigationCandidate(
+    std::vector<KiriView::DirectMediaNavigationCandidate> *candidates, const QUrl &currentUrl)
 {
-    candidates->push_back(KiriView::MediaNavigationCandidate { currentUrl, currentUrl.fileName() });
+    candidates->push_back(
+        KiriView::DirectMediaNavigationCandidate { currentUrl, currentUrl.fileName() });
 }
 
 KiriView::DocumentSessionMediaDeletionDocumentClear clearDocumentForKind(
@@ -40,8 +41,8 @@ std::optional<QUrl> preferredMediaDeletionFallback(
 }
 
 namespace KiriView {
-DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(
-    FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl)
+DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(FileDeletionMode mode,
+    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl)
 {
     const DocumentSessionMediaDeletionFallbackPlan fallbackPlan
         = documentSessionMediaDeletionFallbackPlan(std::move(candidates), currentUrl);
@@ -57,22 +58,22 @@ DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(
 }
 
 DocumentSessionMediaDeletionFallbackPlan documentSessionMediaDeletionFallbackPlan(
-    std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl)
+    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl)
 {
-    const QUrl identityUrl = mediaNavigationSourceUrl(currentUrl);
+    const QUrl identityUrl = directMediaNavigationSourceUrl(currentUrl);
     if (identityUrl.isEmpty()) {
         return {};
     }
 
-    if (!mediaNavigationCandidateIndex(candidates, identityUrl).has_value()) {
-        appendDeletedMediaCandidate(&candidates, identityUrl);
-        sortMediaNavigationCandidates(&candidates);
+    if (!directMediaNavigationCandidateIndex(candidates, identityUrl).has_value()) {
+        appendDeletedDirectMediaNavigationCandidate(&candidates, identityUrl);
+        sortDirectMediaNavigationCandidates(&candidates);
     }
 
     return DocumentSessionMediaDeletionFallbackPlan {
         identityUrl,
-        adjacentMediaNavigationUrl(candidates, identityUrl, NavigationDirection::Next),
-        adjacentMediaNavigationUrl(candidates, identityUrl, NavigationDirection::Previous),
+        adjacentDirectMediaNavigationUrl(candidates, identityUrl, NavigationDirection::Next),
+        adjacentDirectMediaNavigationUrl(candidates, identityUrl, NavigationDirection::Previous),
     };
 }
 
@@ -93,7 +94,7 @@ DocumentSessionMediaDeletionCompletionPlan documentSessionMediaDeletionCompletio
         }
 
         plan.followUp = DocumentSessionMediaDeletionFollowUp::ClearSession;
-        plan.clearMediaNavigation = true;
+        plan.clearDirectMediaNavigation = true;
         plan.clearPredecode = true;
         return plan;
     }

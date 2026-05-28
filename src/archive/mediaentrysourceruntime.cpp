@@ -16,7 +16,8 @@ namespace {
 namespace Backend = KiriView::MediaEntrySourceBackendDetail;
 
 void finishMediaEntrySourceCandidateResult(const KiriView::MediaEntrySourceCandidatesResult &result,
-    const KiriView::ImageCandidatesCallback &callback, const KiriView::ErrorCallback &errorCallback)
+    const KiriView::ImageDocumentPageCandidatesCallback &callback,
+    const KiriView::ErrorCallback &errorCallback)
 {
     if (const auto *error = std::get_if<KiriView::MediaEntrySourceError>(&result)) {
         KiriView::invokeIfSet(errorCallback, error->errorString);
@@ -93,8 +94,8 @@ bool MediaEntrySourceRuntime::hasCurrentOpenedCollectionScope(
 }
 
 ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionCandidates(QObject *receiver,
-    OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
-    ErrorCallback errorCallback)
+    OpenedCollectionScopeLocation openedCollectionScope,
+    ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
     const OpenedCollectionScopeLocation requestedOpenedCollectionScope = openedCollectionScope;
     switchToOpenedCollectionScope(std::move(openedCollectionScope));
@@ -109,15 +110,15 @@ ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionCandidates(QObject *rece
             receiver, std::move(callback), std::move(errorCallback));
     }
 
-    if (const std::optional<std::vector<ImageNavigationCandidate>> cachedCandidates
-        = m_runner->cachedImageCandidates()) {
+    if (const std::optional<std::vector<ImageDocumentPageCandidate>> cachedCandidates
+        = m_runner->cachedImageDocumentPageCandidates()) {
         invokeIfSet(callback, *cachedCandidates);
         return ImageIoJob();
     }
 
     if (receiver == nullptr) {
         finishMediaEntrySourceCandidateResult(
-            m_runner->loadImageCandidates(), callback, errorCallback);
+            m_runner->loadImageDocumentPageCandidates(), callback, errorCallback);
         return ImageIoJob();
     }
 
@@ -176,7 +177,8 @@ void MediaEntrySourceRuntime::startCandidateLoad(MediaEntrySourceCandidateLoadBa
 
     std::shared_ptr<MediaEntrySourceRunner> runner = m_runner;
     runAsyncWorker(
-        m_context, [runner = std::move(runner)]() { return runner->loadImageCandidates(); },
+        m_context,
+        [runner = std::move(runner)]() { return runner->loadImageDocumentPageCandidates(); },
         [this, batch](MediaEntrySourceCandidatesResult result) mutable {
             finishCandidateLoad(batch, std::move(result));
         });

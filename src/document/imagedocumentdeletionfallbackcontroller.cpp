@@ -12,7 +12,7 @@
 
 namespace KiriView {
 ImageDocumentDeletionFallbackController::ImageDocumentDeletionFallbackController(QObject *parent,
-    ImageNavigationCandidateProvider candidateProvider, RuntimePlanCallback runtimePlanCallback)
+    ImageDocumentPageCandidateProvider candidateProvider, RuntimePlanCallback runtimePlanCallback)
     : m_parent(parent)
     , m_candidateRepository(std::move(candidateProvider))
     , m_runtimePlanCallback(std::move(runtimePlanCallback))
@@ -47,12 +47,12 @@ void ImageDocumentDeletionFallbackController::openFallbackPlan(
 {
     m_job = m_candidateRepository.loadImages(
         m_parent, fallback.imageContext,
-        [this, operationId, fallback](std::vector<ImageNavigationCandidate> candidates) {
+        [this, operationId, fallback](std::vector<ImageDocumentPageCandidate> candidates) {
             if (!m_operation.accepts(operationId)) {
                 return;
             }
 
-            const std::optional<ImageNavigationTarget> fallbackTarget
+            const std::optional<ImageDocumentPageTarget> fallbackTarget
                 = imageRemovalFallbackTarget(std::move(candidates), fallback);
             m_operation.finish(operationId);
             if (fallbackTarget.has_value()) {
@@ -120,7 +120,7 @@ void ImageDocumentDeletionFallbackController::loadComicBookFallbackImage(quint64
     m_job = m_candidateRepository.loadImages(
         m_parent, *plan.source,
         [this, operationId, containerUrl, fallbackCandidate](
-            std::vector<ImageNavigationCandidate> candidates) {
+            std::vector<ImageDocumentPageCandidate> candidates) {
             finishComicBookFallbackImageLoad(
                 operationId, containerUrl, fallbackCandidate, std::move(candidates));
         },
@@ -130,7 +130,7 @@ void ImageDocumentDeletionFallbackController::loadComicBookFallbackImage(quint64
 
 void ImageDocumentDeletionFallbackController::finishComicBookFallbackImageLoad(quint64 operationId,
     const QUrl &containerUrl, const std::optional<ContainerNavigationCandidate> &fallbackCandidate,
-    std::vector<ImageNavigationCandidate> candidates)
+    std::vector<ImageDocumentPageCandidate> candidates)
 {
     if (!m_operation.accepts(operationId)) {
         return;

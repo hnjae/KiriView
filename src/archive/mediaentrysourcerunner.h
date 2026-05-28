@@ -19,9 +19,9 @@ public:
 
     const OpenedCollectionScopeLocation &openedCollectionScope() const;
 
-    MediaEntrySourceCandidatesResult loadImageCandidates();
+    MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates();
     MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl);
-    std::optional<std::vector<ImageNavigationCandidate>> cachedImageCandidates();
+    std::optional<std::vector<ImageDocumentPageCandidate>> cachedImageDocumentPageCandidates();
 
 private:
     std::optional<QString> ensureSource();
@@ -30,7 +30,7 @@ private:
     MediaEntrySourceFactory m_sourceFactory;
     MediaEntrySourcePtr m_source;
     QString m_openErrorString;
-    std::optional<std::vector<ImageNavigationCandidate>> m_cachedCandidates;
+    std::optional<std::vector<ImageDocumentPageCandidate>> m_cachedCandidates;
     bool m_openAttempted = false;
     std::mutex m_mutex;
 };

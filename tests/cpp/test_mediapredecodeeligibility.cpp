@@ -13,9 +13,9 @@
 namespace {
 using KiriView::TestSupport::localUrl;
 
-KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
+KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::MediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 }
 
@@ -39,15 +39,15 @@ void TestMediaPredecodeEligibility::snapshotKeepsMixedMediaIndicesForStillImages
     const KiriView::MediaPredecodeEligibilitySnapshot snapshot
         = KiriView::mediaPredecodeEligibilitySnapshot(
             {
-                mediaCandidate(previousImage),
-                mediaCandidate(currentVideo),
-                mediaCandidate(nextImage),
-                mediaCandidate(laterVideo),
-                mediaCandidate(laterImage),
+                directMediaNavigationCandidate(previousImage),
+                directMediaNavigationCandidate(currentVideo),
+                directMediaNavigationCandidate(nextImage),
+                directMediaNavigationCandidate(laterVideo),
+                directMediaNavigationCandidate(laterImage),
             },
             currentVideo);
 
-    QCOMPARE(snapshot.mediaCandidateCount, std::size_t(5));
+    QCOMPARE(snapshot.directMediaNavigationCandidateCount, std::size_t(5));
     QVERIFY(snapshot.currentMediaIndex.has_value());
     QCOMPARE(*snapshot.currentMediaIndex, std::size_t(1));
     QCOMPARE(snapshot.images.size(), std::size_t(3));
@@ -68,11 +68,11 @@ void TestMediaPredecodeEligibility::targetIndicesReturnOnlyEligibleStillImages()
     const KiriView::MediaPredecodeEligibilitySnapshot snapshot
         = KiriView::mediaPredecodeEligibilitySnapshot(
             {
-                mediaCandidate(previousImage),
-                mediaCandidate(currentVideo),
-                mediaCandidate(nextImage),
-                mediaCandidate(localUrl(QStringLiteral("/media/03.mov"))),
-                mediaCandidate(laterImage),
+                directMediaNavigationCandidate(previousImage),
+                directMediaNavigationCandidate(currentVideo),
+                directMediaNavigationCandidate(nextImage),
+                directMediaNavigationCandidate(localUrl(QStringLiteral("/media/03.mov"))),
+                directMediaNavigationCandidate(laterImage),
             },
             currentVideo);
 

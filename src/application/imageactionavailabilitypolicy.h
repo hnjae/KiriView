@@ -11,7 +11,7 @@ struct VideoShortcutAvailabilityInput {
     bool helpShortcutsEnabled = false;
     bool viewerShortcutsEnabled = false;
     bool fileDeletionInProgress = false;
-    bool mediaNavigationActive = false;
+    bool directMediaNavigationActive = false;
 };
 }
 

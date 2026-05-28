@@ -54,7 +54,7 @@ ImageSpreadSecondaryPageRefreshResult ImageSpreadSecondaryPageRefresh::planRefre
         = imageSpreadSecondaryPageRefreshPlan(ImageSpreadSecondaryPageRefreshState {
             request.twoPageModeActive,
             currentPage,
-            request.navigation.imageCount(),
+            request.navigation.pageCount(),
             request.primaryPageIsWide,
             nextUrl.has_value(),
             nextPageIsWide,
@@ -110,7 +110,7 @@ bool ImageSpreadSecondaryPageRefresh::shouldBeginNavigationTransition(
 }
 
 bool ImageSpreadSecondaryPageRefresh::primarySelectionMatchesDisplayed(
-    const ImagePageNavigationSnapshot &navigation, const QUrl &displayedUrl) const
+    const ImageDocumentPageNavigationSnapshot &navigation, const QUrl &displayedUrl) const
 {
     const int pageNumber = navigation.currentPageNumber();
     if (pageNumber <= 0) {
@@ -129,7 +129,7 @@ ImageSpreadNavigationState ImageSpreadSecondaryPageRefresh::navigationState(
     const ImageSpreadPageNavigationContext &context, bool previousPageIsWide) const
 {
     return ImageSpreadNavigationState { context.twoPageModeActive,
-        context.navigation.currentPageNumber(), context.navigation.imageCount(),
+        context.navigation.currentPageNumber(), context.navigation.pageCount(),
         context.secondaryPageVisible, previousPageIsWide };
 }
 

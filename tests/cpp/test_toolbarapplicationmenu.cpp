@@ -451,11 +451,11 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         actions: toolbarActions
-        activeNavigationAvailable: imageDocument.imageCount > 0
-        activeNavigationCount: imageDocument.imageCount
+        activeNavigationAvailable: imageDocument.pageCount > 0
+        activeNavigationCount: imageDocument.pageCount
         activeNavigationCurrentNumber: imageDocument.currentPageNumber
-        activeNavigationEditable: imageDocument.imageCount > 0
-        activeNavigationKnown: imageDocument.currentPageNumber > 0 && imageDocument.imageCount > 0
+        activeNavigationEditable: imageDocument.pageCount > 0
+        activeNavigationKnown: imageDocument.currentPageNumber > 0 && imageDocument.pageCount > 0
         applicationMenuActions: [openMenuAction, separatorAction, quitMenuAction]
         compact: true
         imageDocument: imageDocument

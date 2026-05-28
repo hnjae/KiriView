@@ -5,7 +5,7 @@
 #define KIRIVIEW_DOCUMENTSESSIONMEDIADELETIONPLAN_H
 
 #include "document/filedeletion.h"
-#include "navigation/medianavigationmodel.h"
+#include "navigation/directmedianavigationmodel.h"
 #include "session/documentsessiontypes.h"
 
 #include <QUrl>
@@ -45,14 +45,14 @@ struct DocumentSessionMediaDeletionCompletionPlan {
         = DocumentSessionMediaDeletionDocumentClear::None;
     DocumentSessionMediaDeletionFollowUp followUp = DocumentSessionMediaDeletionFollowUp::None;
     QUrl fallbackUrl;
-    bool clearMediaNavigation = false;
+    bool clearDirectMediaNavigation = false;
     bool clearPredecode = false;
 };
 
 DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(FileDeletionMode mode,
-    std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl);
+    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl);
 DocumentSessionMediaDeletionFallbackPlan documentSessionMediaDeletionFallbackPlan(
-    std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl);
+    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl);
 DocumentSessionMediaDeletionCompletionPlan documentSessionMediaDeletionCompletionPlan(
     DocumentSessionKind currentKind, const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan,
     FileDeletionResult result);

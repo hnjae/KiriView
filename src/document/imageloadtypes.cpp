@@ -29,7 +29,7 @@ const ImageFirstDisplayDecodeContext &ImageLoadSession::firstDisplay() const
 
 const QUrl &ImageLoadSession::imageUrl() const { return m_location.imageUrl(); }
 
-ImageNavigationCandidateKind ImageLoadSession::kind() const { return m_kind; }
+ImageDocumentPageKind ImageLoadSession::kind() const { return m_kind; }
 
 const OpenedCollectionScopeLocation &ImageLoadSession::openedCollectionScope() const
 {
@@ -56,12 +56,12 @@ bool ImageLoadSession::sameSession(const ImageLoadSession &session) const
     return m_id != 0 && m_id == session.m_id;
 }
 
-void ImageLoadSession::setImageCandidate(const ImageNavigationCandidate &candidate)
+void ImageLoadSession::setImageDocumentPageCandidate(const ImageDocumentPageCandidate &candidate)
 {
-    setImageTarget(ImageNavigationTarget { candidate.url, candidate.kind });
+    setImageTarget(ImageDocumentPageTarget { candidate.url, candidate.kind });
 }
 
-void ImageLoadSession::setImageTarget(const ImageNavigationTarget &target)
+void ImageLoadSession::setImageTarget(const ImageDocumentPageTarget &target)
 {
     m_location.setImageUrl(target.url);
     m_kind = target.kind;
@@ -69,7 +69,7 @@ void ImageLoadSession::setImageTarget(const ImageNavigationTarget &target)
 
 void ImageLoadSession::setImageUrl(const QUrl &url)
 {
-    setImageTarget(ImageNavigationTarget { url, ImageNavigationCandidateKind::Image });
+    setImageTarget(ImageDocumentPageTarget { url, ImageDocumentPageKind::Image });
 }
 
 void ImageLoadSession::setLocation(DisplayedImageLocation location)

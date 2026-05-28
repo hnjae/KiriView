@@ -42,10 +42,10 @@ KiriView::DisplayedImageLocation displayedLocation(const QUrl &url)
         url, openedCollectionScope());
 }
 
-KiriView::ImagePageNavigationSnapshot navigationSnapshot(
+KiriView::ImageDocumentPageNavigationSnapshot navigationSnapshot(
     const std::vector<QUrl> &urls, int currentPageNumber)
 {
-    return KiriView::ImagePageNavigationSnapshot {
+    return KiriView::ImageDocumentPageNavigationSnapshot {
         KiriView::PageNavigationState {
             urls,
             currentPageNumber - 1,
@@ -102,7 +102,7 @@ public:
         localUrl(QStringLiteral("/books/006.png")),
     };
     std::map<QUrl, QSize> predecodedImageSizes;
-    KiriView::ImagePageNavigationSnapshot snapshot;
+    KiriView::ImageDocumentPageNavigationSnapshot snapshot;
     KiriView::ImageSpreadPresentationController controller;
 };
 }
@@ -130,7 +130,8 @@ void TestImageSpreadPresentationController::pageWidthCacheBelongsToSpreadNavigat
     QVERIFY(fixture.controller.secondaryPageVisible());
 
     const KiriView::ImageSpreadPageNavigationTarget target
-        = fixture.controller.imageNavigationTarget(KiriView::NavigationDirection::Previous);
+        = fixture.controller.imageDocumentPageNavigationTarget(
+            KiriView::NavigationDirection::Previous);
 
     QVERIFY(target.handledBySpread);
     QCOMPARE(target.pageNumber, 4);

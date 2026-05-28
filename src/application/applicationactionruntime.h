@@ -45,7 +45,7 @@ public:
     ApplicationShortcutProjection shortcutProjectionForId(ActionId actionId) const;
     bool videoActionUnsupported(ActionId actionId) const;
     bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
-        bool videoViewerShortcutsEnabled, bool videoMediaNavigationActive,
+        bool videoViewerShortcutsEnabled, bool videoDirectMediaNavigationActive,
         bool videoFileDeletionInProgress) const;
 
     void setupActions();
