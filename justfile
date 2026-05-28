@@ -167,3 +167,6 @@ _flatpak-builder mode:
     run_flatpak_builder "$@" \
         --force-clean build-dir \
         io.github.hnjae.KiriView.json
+
+refresh-fc-cache:
+    flatpak run --user --command=fc-cache io.github.hnjae.KiriView -rv /run/host/fonts
