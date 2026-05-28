@@ -178,19 +178,43 @@ KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithP
     return dependencies;
 }
 
-KiriView::DocumentSessionRuntimeDependencies documentSessionDependenciesWithResolvedCacheBudgets(
-    KiriView::DocumentSessionRuntimeDependencies dependencies)
+void inheritMissingDirectMediaPredecodeDependencies(
+    KiriView::KiriDocumentSessionDependencies &dependencies)
+{
+    KiriView::MediaPredecodeDependencyOverrides &directMediaPredecode
+        = dependencies.sessionRuntime.directMediaPredecodeDependencies;
+    const KiriView::ImageDocumentRuntimeDependencyOverrides &imageDocument
+        = dependencies.imageDocument;
+
+    if (!directMediaPredecode.imageDecode.dataLoader) {
+        directMediaPredecode.imageDecode.dataLoader = imageDocument.imageDecode.dataLoader;
+    }
+    if (!directMediaPredecode.imageDecode.dataDecoder) {
+        directMediaPredecode.imageDecode.dataDecoder = imageDocument.imageDecode.dataDecoder;
+    }
+    if (!directMediaPredecode.powerSaver.monitor) {
+        directMediaPredecode.powerSaver.monitor = imageDocument.powerSaver.monitor;
+    }
+    if (directMediaPredecode.cacheBudgetRequest.predecodeCacheByteBudget <= 0) {
+        directMediaPredecode.cacheBudgetRequest.predecodeCacheByteBudget
+            = imageDocument.cacheBudgetRequest.predecodeCacheByteBudget;
+    }
+}
+
+KiriView::KiriDocumentSessionDependencies documentSessionDependenciesWithComposedDefaults(
+    KiriView::KiriDocumentSessionDependencies dependencies)
 {
     KiriView::ImageCacheBudgetRequest request
         = KiriView::imageDocumentCacheBudgetRequestWithDefaults(
-            dependencies.imageDocumentDependencies.cacheBudgetRequest);
+            dependencies.imageDocument.cacheBudgetRequest);
     if (request.predecodeCacheByteBudget <= 0 || request.staticTileCacheByteBudget <= 0) {
         const KiriView::ImageCacheBudgets cacheBudgets
             = KiriView::resolvedImageCacheBudgets(request, KiriView::systemMemorySnapshot());
         request.predecodeCacheByteBudget = cacheBudgets.predecodeCacheByteBudget;
         request.staticTileCacheByteBudget = cacheBudgets.staticTileCacheByteBudget;
     }
-    dependencies.imageDocumentDependencies.cacheBudgetRequest = request;
+    dependencies.imageDocument.cacheBudgetRequest = request;
+    inheritMissingDirectMediaPredecodeDependencies(dependencies);
     return dependencies;
 }
 
@@ -216,23 +240,22 @@ KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
 }
 
 KiriDocumentSession::KiriDocumentSession(QObject *parent)
-    : KiriDocumentSession(KiriView::DocumentSessionRuntimeDependencies {}, parent)
+    : KiriDocumentSession(KiriView::KiriDocumentSessionDependencies {}, parent)
 {
 }
 
 KiriDocumentSession::KiriDocumentSession(
-    KiriView::DocumentSessionRuntimeDependencies dependencies, QObject *parent)
-    : KiriDocumentSession(
-          documentSessionDependenciesWithResolvedCacheBudgets(std::move(dependencies)),
+    KiriView::KiriDocumentSessionDependencies dependencies, QObject *parent)
+    : KiriDocumentSession(documentSessionDependenciesWithComposedDefaults(std::move(dependencies)),
           ResolvedDependenciesTag {}, parent)
 {
 }
 
-KiriDocumentSession::KiriDocumentSession(KiriView::DocumentSessionRuntimeDependencies dependencies,
+KiriDocumentSession::KiriDocumentSession(KiriView::KiriDocumentSessionDependencies dependencies,
     ResolvedDependenciesTag, QObject *parent)
     : QObject(parent)
     , m_imageDocument(std::make_unique<KiriImageDocument>(
-          imageDocumentDependenciesWithPredecodeFinder(dependencies.imageDocumentDependencies,
+          imageDocumentDependenciesWithPredecodeFinder(dependencies.imageDocument,
               [this](const QUrl &url) {
                   return m_runtime != nullptr ? m_runtime->findPredecodedImage(url)
                                               : std::optional<KiriView::PredecodedImage>();
@@ -245,7 +268,7 @@ KiriDocumentSession::KiriDocumentSession(KiriView::DocumentSessionRuntimeDepende
         [this](const std::vector<KiriView::DocumentSessionChange> &changes) {
             handleSessionChanges(changes);
         },
-        std::move(dependencies));
+        std::move(dependencies.sessionRuntime));
 }
 
 KiriDocumentSession::~KiriDocumentSession() = default;

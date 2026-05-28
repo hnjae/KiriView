@@ -187,22 +187,20 @@ std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
     KiriView::ImageDataDecoder imageDataDecoder = KiriView::TestSupport::staticImageDataDecoder(),
     KiriView::MediaOpenWithProvider mediaOpenWithProvider = {})
 {
-    KiriView::DocumentSessionRuntimeDependencies dependencies;
-    dependencies.directMediaNavigationCandidateProvider
+    KiriView::KiriDocumentSessionDependencies dependencies;
+    dependencies.sessionRuntime.directMediaNavigationCandidateProvider
         = std::move(directMediaNavigationCandidateProvider);
-    dependencies.mediaOpenWithProvider = std::move(mediaOpenWithProvider);
-    dependencies.imageDocumentDependencies.candidateProvider
-        = std::move(imageDocumentPageCandidateProvider);
+    dependencies.sessionRuntime.mediaOpenWithProvider = std::move(mediaOpenWithProvider);
+    dependencies.imageDocument.candidateProvider = std::move(imageDocumentPageCandidateProvider);
     if (fileOperations != nullptr) {
-        dependencies.fileOperationProvider
+        dependencies.sessionRuntime.fileOperationProvider
             = KiriView::TestSupport::fileOperationProviderFor(*fileOperations);
-        dependencies.imageDocumentDependencies.fileOperations
+        dependencies.imageDocument.fileOperations
             = KiriView::TestSupport::fileOperationProviderFor(*fileOperations);
     }
     if (imageDataLoader != nullptr) {
-        dependencies.imageDocumentDependencies.imageDecode
-            = KiriView::TestSupport::imageDecodeDependenciesFor(
-                *imageDataLoader, std::move(imageDataDecoder));
+        dependencies.imageDocument.imageDecode = KiriView::TestSupport::imageDecodeDependenciesFor(
+            *imageDataLoader, std::move(imageDataDecoder));
     }
     return std::make_unique<KiriDocumentSession>(std::move(dependencies));
 }
@@ -284,6 +282,7 @@ private Q_SLOTS:
     void videoNavigationKeepsStillImagePredecodeCache();
     void videoActiveNavigationExposesCurrentNumberAndCount();
     void initialDirectImagePredecodeUsesRequestedMediaCursor();
+    void directImagePredecodeUsesSessionDependencyOverrides();
     void directImagePredecodeDoesNotUseImageDocumentPageCandidates();
     void staleDirectMediaNavigationCandidateCompletionCannotPublishForNewSource();
     void nextMediaFromVideoCanRouteToImageWithoutUsingImageDocumentPageNavigation();
@@ -1469,6 +1468,37 @@ void TestKiriDocumentSession::initialDirectImagePredecodeUsesRequestedMediaCurso
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
     QTRY_COMPARE(imageDataLoader.loadCount(), std::size_t(2));
     QCOMPARE(imageDataLoader.backLoad().url, nextImage);
+}
+
+void TestKiriDocumentSession::directImagePredecodeUsesSessionDependencyOverrides()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
+    KiriView::TestSupport::ManualImageDataLoader directMediaPredecodeDataLoader;
+    const QUrl currentImage = localUrl(QStringLiteral("/media/current.png"));
+    const QUrl nextImage = localUrl(QStringLiteral("/media/next.png"));
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(currentImage),
+            directMediaNavigationCandidate(nextImage) });
+
+    KiriView::KiriDocumentSessionDependencies dependencies;
+    dependencies.sessionRuntime.directMediaNavigationCandidateProvider
+        = directMediaNavigationProvider.provider();
+    dependencies.imageDocument.imageDecode = KiriView::TestSupport::imageDecodeDependenciesFor(
+        imageDataLoader, KiriView::TestSupport::staticImageDataDecoder());
+    dependencies.sessionRuntime.directMediaPredecodeDependencies.imageDecode
+        = KiriView::TestSupport::imageDecodeDependenciesFor(
+            directMediaPredecodeDataLoader, KiriView::TestSupport::staticImageDataDecoder());
+    std::unique_ptr<KiriDocumentSession> session
+        = std::make_unique<KiriDocumentSession>(std::move(dependencies));
+
+    session->setSourceUrl(currentImage);
+
+    QCOMPARE(imageDataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(imageDataLoader.frontLoad().url, currentImage);
+    QTRY_COMPARE(directMediaPredecodeDataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(directMediaPredecodeDataLoader.frontLoad().url, nextImage);
+    QCOMPARE(imageDataLoader.loadCount(), std::size_t(1));
 }
 
 void TestKiriDocumentSession::directImagePredecodeDoesNotUseImageDocumentPageCandidates()

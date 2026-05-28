@@ -17,6 +17,13 @@
 #include <memory>
 #include <vector>
 
+namespace KiriView {
+struct KiriDocumentSessionDependencies {
+    DocumentSessionRuntimeDependencies sessionRuntime;
+    ImageDocumentRuntimeDependencyOverrides imageDocument;
+};
+}
+
 class KiriDocumentSession : public QObject
 {
     Q_OBJECT
@@ -93,7 +100,7 @@ public:
 
     explicit KiriDocumentSession(QObject *parent = nullptr);
     explicit KiriDocumentSession(
-        KiriView::DocumentSessionRuntimeDependencies dependencies, QObject *parent = nullptr);
+        KiriView::KiriDocumentSessionDependencies dependencies, QObject *parent = nullptr);
     ~KiriDocumentSession() override;
 
     QUrl sourceUrl() const;
@@ -152,7 +159,7 @@ private:
     struct ResolvedDependenciesTag {
     };
 
-    KiriDocumentSession(KiriView::DocumentSessionRuntimeDependencies dependencies,
+    KiriDocumentSession(KiriView::KiriDocumentSessionDependencies dependencies,
         ResolvedDependenciesTag, QObject *parent = nullptr);
 
     void handleSessionChanges(const std::vector<KiriView::DocumentSessionChange> &changes);

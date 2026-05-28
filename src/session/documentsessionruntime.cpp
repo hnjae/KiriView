@@ -87,11 +87,8 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_mediaOpenWithProvider(
           mediaOpenWithProviderWithDefault(std::move(dependencies.mediaOpenWithProvider)))
     , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,
-          std::move(dependencies.imageDocumentDependencies.imageDecode),
-          std::move(dependencies.imageDocumentDependencies.powerSaver),
-          resolveImageDocumentCacheBudgets(
-              dependencies.imageDocumentDependencies.cacheBudgetRequest)
-              .predecodeCacheByteBudget))
+          resolveMediaPredecodeDependencies(
+              std::move(dependencies.directMediaPredecodeDependencies))))
 {
     connectDocuments();
 }

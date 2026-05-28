@@ -5,9 +5,9 @@
 #define KIRIVIEW_DOCUMENTSESSIONRUNTIME_H
 
 #include "document/filedeletion.h"
-#include "document/imagedocumentruntimedependencies.h"
 #include "navigation/directmedianavigationcandidateprovider.h"
 #include "navigation/directmedianavigationmodel.h"
+#include "predecode/mediapredecodedependencies.h"
 #include "session/activenavigationprojection.h"
 #include "session/activenavigationthumbnailmodel.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
@@ -39,7 +39,7 @@ struct DocumentSessionRuntimeDependencies {
     DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProvider;
     FileOperationProvider fileOperationProvider;
     MediaOpenWithProvider mediaOpenWithProvider;
-    ImageDocumentRuntimeDependencyOverrides imageDocumentDependencies;
+    MediaPredecodeDependencyOverrides directMediaPredecodeDependencies;
 };
 
 class DocumentSessionRuntime final

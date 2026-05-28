@@ -13,15 +13,14 @@
 #include <utility>
 
 namespace KiriView {
-MediaPredecodeCoordinator::MediaPredecodeCoordinator(QObject *parent,
-    ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,
-    qsizetype cacheByteBudget)
+MediaPredecodeCoordinator::MediaPredecodeCoordinator(
+    QObject *parent, MediaPredecodeDependencies dependencies)
     : QObject(parent)
-    , m_loadController(this, std::move(decodeDependencies), cacheByteBudget)
+    , m_loadController(this, std::move(dependencies.imageDecode), dependencies.cacheByteBudget)
     , m_scheduleRuntime(
           this, m_loadController,
           [this](const PredecodePendingSchedule &schedule) { startPredecodeWindow(schedule); },
-          std::move(powerSaverProvider))
+          std::move(dependencies.powerSaver))
 {
 }
 

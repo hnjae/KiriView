@@ -4,12 +4,11 @@
 #ifndef KIRIVIEW_MEDIAPREDECODECOORDINATOR_H
 #define KIRIVIEW_MEDIAPREDECODECOORDINATOR_H
 
-#include "decoding/imagedecodedependencies.h"
+#include "mediapredecodedependencies.h"
 #include "navigation/directmedianavigationmodel.h"
 #include "predecodedimage.h"
 #include "predecodeloadcontroller.h"
 #include "predecodescheduleruntime.h"
-#include "system/powersaverprovider.h"
 
 #include <QObject>
 #include <QUrl>
@@ -29,8 +28,7 @@ public:
         ImageFirstDisplayDecodeContext firstDisplayContext;
     };
 
-    MediaPredecodeCoordinator(QObject *parent, ImageDecodeDependencies decodeDependencies,
-        PowerSaverProvider powerSaverProvider, qsizetype cacheByteBudget);
+    MediaPredecodeCoordinator(QObject *parent, MediaPredecodeDependencies dependencies);
 
     void schedule(Context context);
     void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage> &images);

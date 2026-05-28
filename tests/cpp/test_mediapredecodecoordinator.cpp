@@ -62,8 +62,11 @@ KiriView::MediaPredecodeCoordinator createCoordinator(QObject *parent,
     ManualImageDataLoader &dataLoader, KiriView::PowerSaverProvider powerSaverProvider)
 {
     return KiriView::MediaPredecodeCoordinator(parent,
-        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()),
-        std::move(powerSaverProvider), testCacheByteBudget);
+        KiriView::MediaPredecodeDependencies {
+            imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()),
+            std::move(powerSaverProvider),
+            testCacheByteBudget,
+        });
 }
 
 KiriView::MediaPredecodeCoordinator createCoordinator(

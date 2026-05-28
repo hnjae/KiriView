@@ -128,6 +128,7 @@ src/navigation/directmedianavigationcandidateprovider.cpp
 src/navigation/directmedianavigationmodel.cpp
 src/predecode/imagepredecodecoordinator.cpp
 src/predecode/mediapredecodecoordinator.cpp
+src/predecode/mediapredecodedependencies.cpp
 src/predecode/mediapredecodeeligibility.cpp
 src/predecode/mediapredecodescheduleplan.cpp
 src/predecode/mediapredecodewindowplan.cpp
