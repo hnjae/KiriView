@@ -14,81 +14,20 @@
 namespace {
 using ActionId = KiriView::ApplicationActions::ActionId;
 
-struct ShortcutHelpCategory {
-    QString key;
-    QString text;
-};
-
-ShortcutHelpCategory shortcutHelpCategory(ActionId actionId)
+KiriView::ApplicationActions::ShortcutHelpCategory shortcutHelpCategory(ActionId actionId)
 {
-    switch (actionId) {
-    case ActionId::FileOpenAction:
-    case ActionId::FileOpenWithAction:
-    case ActionId::FileMoveToTrashAction:
-    case ActionId::FileDeleteAction:
-    case ActionId::FileQuitAction:
-        return { QStringLiteral("file"), i18nc("@title:group", "File") };
-    case ActionId::GoPreviousArchiveAction:
-    case ActionId::GoNextArchiveAction:
-    case ActionId::GoPreviousImageAction:
-    case ActionId::GoNextImageAction:
-    case ActionId::GoFirstImageAction:
-    case ActionId::GoLastImageAction:
-        return { QStringLiteral("navigation"), i18nc("@title:group", "Navigation") };
-    case ActionId::ViewZoomInAction:
-    case ActionId::ViewZoomOutAction:
-    case ActionId::ViewFitAction:
-    case ActionId::ViewFitHeightAction:
-    case ActionId::ViewFitWidthAction:
-    case ActionId::ViewActualSizeAction:
-    case ActionId::ViewRotateClockwiseAction:
-    case ActionId::ViewRotateCounterclockwiseAction:
-    case ActionId::ViewToggleTwoPageModeAction:
-    case ActionId::ViewToggleRightToLeftReadingAction:
-    case ActionId::ViewPanTopLeftAction:
-    case ActionId::ViewPanBottomRightAction:
-    case ActionId::ViewScanForwardAction:
-    case ActionId::ViewScanBackwardAction:
-        return { QStringLiteral("view"), i18nc("@title:group", "View") };
-    case ActionId::ViewToggleInfoPanelAction:
-    case ActionId::ViewToggleThumbnailPanelAction:
-        return { QStringLiteral("panels"), i18nc("@title:group", "Panels") };
-    case ActionId::WindowFullscreenAction:
-        return { QStringLiteral("window"), i18nc("@title:group", "Window") };
-    case ActionId::OptionsConfigureKeybindingAction:
-    case ActionId::OptionsShowMenubarAction:
-        return { QStringLiteral("settings"), i18nc("@title:group", "Settings") };
-    case ActionId::HelpShortcutsAction:
-        return { QStringLiteral("help"), i18nc("@title:group", "Help") };
-    case ActionId::OpenApplicationMenuAction:
-    case ActionId::ActionCount:
-        return { QStringLiteral("help"), i18nc("@title:group", "Help") };
+    const KiriView::ApplicationActions::ActionDefinition *definition
+        = KiriView::ApplicationActions::definitionForId(actionId);
+    if (definition != nullptr) {
+        return definition->shortcutHelpCategory;
     }
 
-    return { QStringLiteral("help"), i18nc("@title:group", "Help") };
+    return KiriView::ApplicationActions::ShortcutHelpCategory::Help;
 }
 
-int shortcutHelpCategoryOrder(const QString &categoryKey)
+int shortcutHelpCategoryOrderForAction(ActionId actionId)
 {
-    if (categoryKey == QStringLiteral("file")) {
-        return 0;
-    }
-    if (categoryKey == QStringLiteral("navigation")) {
-        return 1;
-    }
-    if (categoryKey == QStringLiteral("view")) {
-        return 2;
-    }
-    if (categoryKey == QStringLiteral("panels")) {
-        return 3;
-    }
-    if (categoryKey == QStringLiteral("window")) {
-        return 4;
-    }
-    if (categoryKey == QStringLiteral("settings")) {
-        return 5;
-    }
-    return 6;
+    return KiriView::ApplicationActions::shortcutHelpCategoryOrder(shortcutHelpCategory(actionId));
 }
 }
 
@@ -258,16 +197,18 @@ QList<ShortcutHelpRow> ApplicationShortcutRuntime::shortcutHelpRows() const
             registeredAction.actionName,
             actionDisplayText(registeredAction.action),
             shortcutDisplayText(registeredAction.action),
-            category.key,
-            category.text,
+            shortcutHelpCategoryKey(category),
+            shortcutHelpCategoryText(category),
             shortcutKeyDisplayTexts(registeredAction.action),
         });
     }
 
     std::stable_sort(
         rows.begin(), rows.end(), [](const ShortcutHelpRow &left, const ShortcutHelpRow &right) {
-            const int leftOrder = shortcutHelpCategoryOrder(left.categoryKey);
-            const int rightOrder = shortcutHelpCategoryOrder(right.categoryKey);
+            const int leftOrder
+                = shortcutHelpCategoryOrderForAction(static_cast<ActionId>(left.actionId));
+            const int rightOrder
+                = shortcutHelpCategoryOrderForAction(static_cast<ActionId>(right.actionId));
             if (leftOrder != rightOrder) {
                 return leftOrder < rightOrder;
             }

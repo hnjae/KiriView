@@ -5,6 +5,7 @@
 #include "application/kiriviewapplicationactions.h"
 
 #include <QObject>
+#include <QStringList>
 #include <QTest>
 #include <QVariantList>
 #include <cstddef>
@@ -12,6 +13,7 @@
 
 namespace {
 using ActionId = KiriView::ApplicationActions::ActionId;
+using Category = KiriView::ApplicationActions::ShortcutHelpCategory;
 using Filter = KiriView::ApplicationActions::ApplicationShortcutFilter;
 using Scope = KiriView::ApplicationActions::ImageShortcutScope;
 
@@ -89,6 +91,7 @@ private Q_SLOTS:
     void shortcutProjectionDerivesPublicViewsFromOneShortcutList();
     void sanitizeShortcutsRemovesUnmodifiedTextInputShortcuts();
     void actionDefinitionsOwnApplicationShortcutRoutes();
+    void actionDefinitionsOwnShortcutHelpCategories();
     void shortcutRoutesGroupDefinitionOwnedSpecs();
     void shortcutScopeValuesMapOnlyKnownScopes();
     void videoShortcutScopesUseViewerDeletionAndNavigationGates();
@@ -235,6 +238,54 @@ void TestApplicationShortcutPolicy::actionDefinitionsOwnApplicationShortcutRoute
         ActionId::HelpShortcutsAction, Filter::ShortcutAliases, Scope::ViewerShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::OptionsConfigureKeybindingAction, Filter::AllShortcuts,
         Scope::HelpShortcutScope));
+}
+
+void TestApplicationShortcutPolicy::actionDefinitionsOwnShortcutHelpCategories()
+{
+    const auto categoryFor = [](ActionId actionId) {
+        const KiriView::ApplicationActions::ActionDefinition *definition
+            = KiriView::ApplicationActions::definitionForId(actionId);
+        Q_ASSERT(definition != nullptr);
+        return definition->shortcutHelpCategory;
+    };
+
+    QCOMPARE(categoryFor(ActionId::FileOpenAction), Category::File);
+    QCOMPARE(categoryFor(ActionId::FileQuitAction), Category::File);
+    QCOMPARE(categoryFor(ActionId::GoPreviousImageAction), Category::Navigation);
+    QCOMPARE(categoryFor(ActionId::ViewZoomInAction), Category::View);
+    QCOMPARE(categoryFor(ActionId::ViewToggleInfoPanelAction), Category::Panels);
+    QCOMPARE(categoryFor(ActionId::WindowFullscreenAction), Category::Window);
+    QCOMPARE(categoryFor(ActionId::OptionsConfigureKeybindingAction), Category::Settings);
+    QCOMPARE(categoryFor(ActionId::OptionsShowMenubarAction), Category::Settings);
+    QCOMPARE(categoryFor(ActionId::HelpShortcutsAction), Category::Help);
+    QCOMPARE(categoryFor(ActionId::OpenApplicationMenuAction), Category::Help);
+
+    const QList<Category> orderedCategories {
+        Category::File,
+        Category::Navigation,
+        Category::View,
+        Category::Panels,
+        Category::Window,
+        Category::Settings,
+        Category::Help,
+    };
+    const QStringList orderedKeys {
+        QStringLiteral("file"),
+        QStringLiteral("navigation"),
+        QStringLiteral("view"),
+        QStringLiteral("panels"),
+        QStringLiteral("window"),
+        QStringLiteral("settings"),
+        QStringLiteral("help"),
+    };
+
+    for (int index = 0; index < orderedCategories.size(); ++index) {
+        QCOMPARE(
+            KiriView::ApplicationActions::shortcutHelpCategoryOrder(orderedCategories.at(index)),
+            index);
+        QCOMPARE(KiriView::ApplicationActions::shortcutHelpCategoryKey(orderedCategories.at(index)),
+            orderedKeys.at(index));
+    }
 }
 
 void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
