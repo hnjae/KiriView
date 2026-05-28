@@ -40,9 +40,9 @@ ImageNavigationCandidateProvider MediaEntrySourceStore::wrapCandidateProvider(
     ImageNavigationCandidateProvider provider)
 {
     provider.openedCollectionCandidates
-        = [this](QObject *receiver, OpenedCollectionScopeLocation archiveCollection,
+        = [this](QObject *receiver, OpenedCollectionScopeLocation openedCollectionScope,
               ImageCandidatesCallback callback, ErrorCallback errorCallback) {
-              return loadOpenedCollectionCandidates(receiver, std::move(archiveCollection),
+              return loadOpenedCollectionCandidates(receiver, std::move(openedCollectionScope),
                   std::move(callback), std::move(errorCallback));
           };
     return provider;
@@ -74,10 +74,10 @@ ImageDecodeDependencies MediaEntrySourceStore::wrapDecodeDependencies(
 void MediaEntrySourceStore::prepareForSourceLoad(const ImageDocumentSourceLoadRequest &request,
     const OpenedCollectionScopeLocation &displayedOpenedCollectionScope)
 {
-    const std::optional<OpenedCollectionScopeLocation> archiveCollection
+    const std::optional<OpenedCollectionScopeLocation> openedCollectionScope
         = openedCollectionScopeForSourceLoad(request, displayedOpenedCollectionScope);
-    if (archiveCollection.has_value()) {
-        m_runtime.switchToOpenedCollectionScope(*archiveCollection);
+    if (openedCollectionScope.has_value()) {
+        m_runtime.switchToOpenedCollectionScope(*openedCollectionScope);
         return;
     }
 
@@ -92,17 +92,17 @@ bool MediaEntrySourceStore::hasCurrentOpenedCollectionScope() const
 }
 
 bool MediaEntrySourceStore::hasCurrentOpenedCollectionScope(
-    const OpenedCollectionScopeLocation &archiveCollection) const
+    const OpenedCollectionScopeLocation &openedCollectionScope) const
 {
-    return m_runtime.hasCurrentOpenedCollectionScope(archiveCollection);
+    return m_runtime.hasCurrentOpenedCollectionScope(openedCollectionScope);
 }
 
 ImageIoJob MediaEntrySourceStore::loadOpenedCollectionCandidates(QObject *receiver,
-    OpenedCollectionScopeLocation archiveCollection, ImageCandidatesCallback callback,
+    OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
     ErrorCallback errorCallback)
 {
     return m_runtime.loadOpenedCollectionCandidates(
-        receiver, std::move(archiveCollection), std::move(callback), std::move(errorCallback));
+        receiver, std::move(openedCollectionScope), std::move(callback), std::move(errorCallback));
 }
 
 ImageIoJob MediaEntrySourceStore::loadOpenedCollectionImageData(QObject *receiver,

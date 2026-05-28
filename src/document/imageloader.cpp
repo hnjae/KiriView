@@ -110,7 +110,7 @@ void ImageLoader::startOpenedCollectionLoad(ImageLoadSession session)
 {
     const ImageCandidateListSource candidateSource
         = ImageCandidateListSource::forOpenedCollectionScope(session.openedCollectionScope());
-    m_archiveListJob = m_candidateRepository.loadImages(
+    m_openedCollectionCandidateLoadJob = m_candidateRepository.loadImages(
         this, candidateSource,
         [this, session](std::vector<ImageNavigationCandidate> candidates) mutable {
             OpenedCollectionCandidateCompletion completion
@@ -118,9 +118,9 @@ void ImageLoader::startOpenedCollectionLoad(ImageLoadSession session)
             switch (completion.action) {
             case OpenedCollectionCandidateCompletionAction::Ignored:
                 return;
-            case OpenedCollectionCandidateCompletionAction::ReportEmptyArchive:
+            case OpenedCollectionCandidateCompletionAction::ReportEmptyOpenedCollection:
                 invokeIfSet(m_callbacks.error, std::move(completion.session),
-                    ImageLoadError::EmptyArchive, QString());
+                    ImageLoadError::EmptyOpenedCollection, QString());
                 return;
             case OpenedCollectionCandidateCompletionAction::ReportUnsupportedOpenedCollectionVideo:
                 invokeIfSet(m_callbacks.sourceResolved, completion.session);
@@ -149,7 +149,7 @@ void ImageLoader::cancel()
 {
     m_sessionTracker.cancel();
     m_decodeJob.cancel();
-    m_archiveListJob.cancel();
+    m_openedCollectionCandidateLoadJob.cancel();
 }
 
 bool ImageLoader::tryReportUnsupportedOpenedCollectionVideo(ImageLoadSession session)

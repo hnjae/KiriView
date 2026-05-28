@@ -17,10 +17,10 @@ QString imageErrorText(ImageErrorTextId id)
         return i18n("Could not decode the selected APNG animation.");
     case ImageErrorTextId::DecodeImageAnimation:
         return i18n("Could not decode the selected image animation.");
-    case ImageErrorTextId::EmptyArchive:
-        return i18n("The selected archive does not contain any supported images.");
-    case ImageErrorTextId::OpenArchive:
-        return i18n("Could not open the selected archive.");
+    case ImageErrorTextId::EmptyOpenedCollection:
+        return i18n("The selected collection does not contain any supported media.");
+    case ImageErrorTextId::OpenOpenedCollection:
+        return i18n("Could not open the selected collection.");
     case ImageErrorTextId::OpenComicBookArchive:
         return i18n("Could not open the selected comic book archive.");
     case ImageErrorTextId::DeleteFile:

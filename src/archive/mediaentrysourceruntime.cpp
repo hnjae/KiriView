@@ -3,9 +3,9 @@
 
 #include "mediaentrysourceruntime.h"
 
-#include "archivebackend_p.h"
 #include "async/imagecallback.h"
 #include "async/imageioworkerjob.h"
+#include "mediaentrysourcebackend_p.h"
 #include "mediaentrysourcerunner.h"
 
 #include <optional>
@@ -13,31 +13,31 @@
 #include <variant>
 
 namespace {
-namespace Backend = KiriView::ArchiveBackendDetail;
+namespace Backend = KiriView::MediaEntrySourceBackendDetail;
 
-void finishMediaEntrySourceCandidateResult(const KiriView::ArchiveImageCandidatesResult &result,
+void finishMediaEntrySourceCandidateResult(const KiriView::MediaEntrySourceCandidatesResult &result,
     const KiriView::ImageCandidatesCallback &callback, const KiriView::ErrorCallback &errorCallback)
 {
-    if (const auto *error = std::get_if<KiriView::ArchiveError>(&result)) {
+    if (const auto *error = std::get_if<KiriView::MediaEntrySourceError>(&result)) {
         KiriView::invokeIfSet(errorCallback, error->errorString);
         return;
     }
 
-    const auto *candidates = std::get_if<KiriView::ArchiveImageCandidates>(&result);
+    const auto *candidates = std::get_if<KiriView::MediaEntrySourceCandidates>(&result);
     if (candidates != nullptr) {
         KiriView::invokeIfSet(callback, candidates->candidates);
     }
 }
 
-void finishMediaEntrySourceDataResult(KiriView::ArchiveImageDataResult result,
+void finishMediaEntrySourceDataResult(KiriView::MediaEntrySourceImageDataResult result,
     KiriView::ImageDataCallback callback, KiriView::ErrorCallback errorCallback)
 {
-    if (const auto *error = std::get_if<KiriView::ArchiveError>(&result)) {
+    if (const auto *error = std::get_if<KiriView::MediaEntrySourceError>(&result)) {
         KiriView::invokeIfSet(errorCallback, error->errorString);
         return;
     }
 
-    auto *data = std::get_if<KiriView::ArchiveImageData>(&result);
+    auto *data = std::get_if<KiriView::MediaEntrySourceImageData>(&result);
     if (data != nullptr) {
         KiriView::invokeIfSet(callback, std::move(data->data));
     }
@@ -63,20 +63,20 @@ void MediaEntrySourceRuntime::clear()
 }
 
 void MediaEntrySourceRuntime::switchToOpenedCollectionScope(
-    OpenedCollectionScopeLocation archiveCollection)
+    OpenedCollectionScopeLocation openedCollectionScope)
 {
-    if (archiveCollection.isEmpty()) {
+    if (openedCollectionScope.isEmpty()) {
         clear();
         return;
     }
-    if (hasCurrentOpenedCollectionScope(archiveCollection)) {
+    if (hasCurrentOpenedCollectionScope(openedCollectionScope)) {
         return;
     }
 
     cancelCandidateLoadBatch();
     m_sourceGeneration.invalidate();
-    m_runner
-        = std::make_shared<MediaEntrySourceRunner>(std::move(archiveCollection), m_sourceFactory);
+    m_runner = std::make_shared<MediaEntrySourceRunner>(
+        std::move(openedCollectionScope), m_sourceFactory);
 }
 
 bool MediaEntrySourceRuntime::hasCurrentOpenedCollectionScope() const
@@ -85,20 +85,22 @@ bool MediaEntrySourceRuntime::hasCurrentOpenedCollectionScope() const
 }
 
 bool MediaEntrySourceRuntime::hasCurrentOpenedCollectionScope(
-    const OpenedCollectionScopeLocation &archiveCollection) const
+    const OpenedCollectionScopeLocation &openedCollectionScope) const
 {
     return hasCurrentOpenedCollectionScope()
-        && sameOpenedCollectionScopeLocation(m_runner->openedCollectionScope(), archiveCollection);
+        && sameOpenedCollectionScopeLocation(
+            m_runner->openedCollectionScope(), openedCollectionScope);
 }
 
 ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionCandidates(QObject *receiver,
-    OpenedCollectionScopeLocation archiveCollection, ImageCandidatesCallback callback,
+    OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
     ErrorCallback errorCallback)
 {
-    const OpenedCollectionScopeLocation requestedArchiveCollection = archiveCollection;
-    switchToOpenedCollectionScope(std::move(archiveCollection));
+    const OpenedCollectionScopeLocation requestedOpenedCollectionScope = openedCollectionScope;
+    switchToOpenedCollectionScope(std::move(openedCollectionScope));
     if (m_runner == nullptr) {
-        invokeIfSet(errorCallback, Backend::fallbackArchiveOpenError(requestedArchiveCollection));
+        invokeIfSet(errorCallback,
+            Backend::fallbackMediaEntrySourceOpenError(requestedOpenedCollectionScope));
         return ImageIoJob();
     }
 
@@ -132,11 +134,12 @@ ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionCandidates(QObject *rece
 ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionImageData(QObject *receiver,
     ImageDecodeRequest request, ImageDataCallback callback, ErrorCallback errorCallback)
 {
-    const OpenedCollectionScopeLocation requestedArchiveCollection
+    const OpenedCollectionScopeLocation requestedOpenedCollectionScope
         = request.openedCollectionScope();
     switchToOpenedCollectionScope(request.openedCollectionScope());
     if (m_runner == nullptr) {
-        invokeIfSet(errorCallback, Backend::fallbackArchiveOpenError(requestedArchiveCollection));
+        invokeIfSet(errorCallback,
+            Backend::fallbackMediaEntrySourceOpenError(requestedOpenedCollectionScope));
         return ImageIoJob();
     }
 
@@ -154,7 +157,8 @@ ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionImageData(QObject *recei
         m_context, receiver,
         [runner = std::move(runner), imageUrl]() { return runner->loadImageData(imageUrl); },
         [generation, this, callback = std::move(callback),
-            errorCallback = std::move(errorCallback)](ArchiveImageDataResult result) mutable {
+            errorCallback = std::move(errorCallback)](
+            MediaEntrySourceImageDataResult result) mutable {
             if (!m_sourceGeneration.accepts(generation)) {
                 return;
             }
@@ -173,13 +177,13 @@ void MediaEntrySourceRuntime::startCandidateLoad(MediaEntrySourceCandidateLoadBa
     std::shared_ptr<MediaEntrySourceRunner> runner = m_runner;
     runAsyncWorker(
         m_context, [runner = std::move(runner)]() { return runner->loadImageCandidates(); },
-        [this, batch](ArchiveImageCandidatesResult result) mutable {
+        [this, batch](MediaEntrySourceCandidatesResult result) mutable {
             finishCandidateLoad(batch, std::move(result));
         });
 }
 
 void MediaEntrySourceRuntime::finishCandidateLoad(
-    MediaEntrySourceCandidateLoadBatch batch, ArchiveImageCandidatesResult result)
+    MediaEntrySourceCandidateLoadBatch batch, MediaEntrySourceCandidatesResult result)
 {
     std::vector<MediaEntrySourceCandidateLoad> pendingLoads
         = m_candidateLoadState.finishBatch(batch);

@@ -50,7 +50,7 @@ OpenedCollectionCandidateCompletion ImageLoadSessionTracker::completeOpenedColle
     if (candidates.empty()) {
         std::optional<ImageLoadSession> claimedSession = claimCurrent(session);
         return OpenedCollectionCandidateCompletion {
-            OpenedCollectionCandidateCompletionAction::ReportEmptyArchive,
+            OpenedCollectionCandidateCompletionAction::ReportEmptyOpenedCollection,
             claimedSession.value_or(ImageLoadSession {}),
         };
     }

@@ -36,8 +36,8 @@ class TestImageDocumentRuntimeDependencies : public QObject
 private Q_SLOTS:
     void defaultDependenciesUseMediaEntrySourceStore();
     void partialNonSourceOverridesStillUseMediaEntrySourceStore();
-    void customSessionFactoryWrapsArchiveProviders();
-    void explicitArchiveProvidersAvoidSessionStore();
+    void customMediaEntrySourceFactoryWrapsOpenedCollectionProviders();
+    void explicitOpenedCollectionProvidersAvoidMediaEntrySourceStore();
 };
 
 void TestImageDocumentRuntimeDependencies::defaultDependenciesUseMediaEntrySourceStore()
@@ -88,7 +88,8 @@ void TestImageDocumentRuntimeDependencies::partialNonSourceOverridesStillUseMedi
     QVERIFY(candidatesReported);
 }
 
-void TestImageDocumentRuntimeDependencies::customSessionFactoryWrapsArchiveProviders()
+void TestImageDocumentRuntimeDependencies::
+    customMediaEntrySourceFactoryWrapsOpenedCollectionProviders()
 {
     int openCount = 0;
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
@@ -96,7 +97,7 @@ void TestImageDocumentRuntimeDependencies::customSessionFactoryWrapsArchiveProvi
         = [&openCount](const KiriView::OpenedCollectionScopeLocation &)
         -> KiriView::MediaEntrySourceOpenResult {
         ++openCount;
-        return KiriView::ArchiveError { QStringLiteral("session failed") };
+        return KiriView::MediaEntrySourceError { QStringLiteral("session failed") };
     };
 
     KiriView::ImageDocumentRuntimeDependencies resolved
@@ -117,18 +118,19 @@ void TestImageDocumentRuntimeDependencies::customSessionFactoryWrapsArchiveProvi
     QCOMPARE(errorString, QStringLiteral("session failed"));
 }
 
-void TestImageDocumentRuntimeDependencies::explicitArchiveProvidersAvoidSessionStore()
+void TestImageDocumentRuntimeDependencies::
+    explicitOpenedCollectionProvidersAvoidMediaEntrySourceStore()
 {
-    int archiveLoadCount = 0;
+    int openedCollectionLoadCount = 0;
     int dataLoadCount = 0;
     int fileOperationCount = 0;
     int powerSaverMonitorCount = 0;
 
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.candidateProvider.openedCollectionCandidates
-        = [&archiveLoadCount](QObject *, KiriView::OpenedCollectionScopeLocation,
+        = [&openedCollectionLoadCount](QObject *, KiriView::OpenedCollectionScopeLocation,
               KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback) {
-              ++archiveLoadCount;
+              ++openedCollectionLoadCount;
               callback({});
               return KiriView::ImageIoJob();
           };
@@ -177,7 +179,7 @@ void TestImageDocumentRuntimeDependencies::explicitArchiveProvidersAvoidSessionS
     std::unique_ptr<KiriView::PowerSaverStateMonitor> monitor
         = resolved.powerSaver.monitor(nullptr, {});
 
-    QCOMPARE(archiveLoadCount, 1);
+    QCOMPARE(openedCollectionLoadCount, 1);
     QVERIFY(candidatesReported);
     QCOMPARE(dataLoadCount, 1);
     QCOMPARE(loadedData, QByteArrayLiteral("custom image data"));

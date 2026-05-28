@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_TESTS_MEDIA_ENTRY_SOURCE_TEST_SUPPORT_H
 #define KIRIVIEW_TESTS_MEDIA_ENTRY_SOURCE_TEST_SUPPORT_H
 
-#include "archive/archivebackend.h"
+#include "archive/mediaentrysourcebackend.h"
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
 
@@ -21,7 +21,7 @@
 #include <vector>
 
 namespace KiriView::TestSupport {
-struct InstrumentedArchiveFixture {
+struct InstrumentedMediaEntrySourceFixture {
     std::vector<ImageNavigationCandidate> candidates;
     std::map<QString, QByteArray> dataByUrl;
 };
@@ -35,7 +35,7 @@ struct InstrumentedMediaEntrySourceState {
     std::mutex mutex;
     std::mutex loadBlockMutex;
     std::condition_variable loadBlockChanged;
-    std::map<QString, InstrumentedArchiveFixture> fixturesByRootUrl;
+    std::map<QString, InstrumentedMediaEntrySourceFixture> fixturesByRootUrl;
     bool blockCandidateLoads = false;
     bool blockDataLoads = false;
     bool releaseLoads = false;
@@ -44,54 +44,55 @@ struct InstrumentedMediaEntrySourceState {
 class InstrumentedMediaEntrySource final : public MediaEntrySource
 {
 public:
-    InstrumentedMediaEntrySource(OpenedCollectionScopeLocation archiveCollection,
+    InstrumentedMediaEntrySource(OpenedCollectionScopeLocation openedCollectionScope,
         std::shared_ptr<InstrumentedMediaEntrySourceState> state)
-        : m_archiveCollection(std::move(archiveCollection))
+        : m_openedCollectionScope(std::move(openedCollectionScope))
         , m_state(std::move(state))
     {
     }
 
-    ArchiveImageCandidatesResult loadImageCandidates() override
+    MediaEntrySourceCandidatesResult loadImageCandidates() override
     {
         ++m_state->candidateLoadCount;
-        waitIfBlocked(InstrumentedArchiveLoadKind::Candidate);
+        waitIfBlocked(InstrumentedMediaEntrySourceLoadKind::Candidate);
         std::lock_guard<std::mutex> lock(m_state->mutex);
-        return ArchiveImageCandidates {
+        return MediaEntrySourceCandidates {
             fixture().candidates,
         };
     }
 
-    ArchiveImageDataResult loadImageData(const QUrl &imageUrl) override
+    MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) override
     {
         ++m_state->dataLoadCount;
-        waitIfBlocked(InstrumentedArchiveLoadKind::Data);
+        waitIfBlocked(InstrumentedMediaEntrySourceLoadKind::Data);
 
         std::lock_guard<std::mutex> lock(m_state->mutex);
         const auto data = fixture().dataByUrl.find(keyForUrl(imageUrl));
         if (data == fixture().dataByUrl.cend()) {
-            return ArchiveError { QStringLiteral("missing fake archive image data") };
+            return MediaEntrySourceError { QStringLiteral(
+                "missing fake media entry source image data") };
         }
 
-        return ArchiveImageData { data->second };
+        return MediaEntrySourceImageData { data->second };
     }
 
 private:
-    enum class InstrumentedArchiveLoadKind {
+    enum class InstrumentedMediaEntrySourceLoadKind {
         Candidate,
         Data,
     };
 
-    void waitIfBlocked(InstrumentedArchiveLoadKind kind)
+    void waitIfBlocked(InstrumentedMediaEntrySourceLoadKind kind)
     {
         std::unique_lock<std::mutex> lock(m_state->loadBlockMutex);
-        const bool blocked = kind == InstrumentedArchiveLoadKind::Candidate
+        const bool blocked = kind == InstrumentedMediaEntrySourceLoadKind::Candidate
             ? m_state->blockCandidateLoads
             : m_state->blockDataLoads;
         if (!blocked || m_state->releaseLoads) {
             return;
         }
 
-        std::atomic<int> &waitingCount = kind == InstrumentedArchiveLoadKind::Candidate
+        std::atomic<int> &waitingCount = kind == InstrumentedMediaEntrySourceLoadKind::Candidate
             ? m_state->waitingCandidateLoadCount
             : m_state->waitingDataLoadCount;
         ++waitingCount;
@@ -99,33 +100,33 @@ private:
         m_state->loadBlockChanged.wait(lock, [this]() { return m_state->releaseLoads; });
     }
 
-    const InstrumentedArchiveFixture &fixture() const
+    const InstrumentedMediaEntrySourceFixture &fixture() const
     {
-        return m_state->fixturesByRootUrl.at(keyForUrl(m_archiveCollection.rootUrl()));
+        return m_state->fixturesByRootUrl.at(keyForUrl(m_openedCollectionScope.rootUrl()));
     }
 
-    OpenedCollectionScopeLocation m_archiveCollection;
+    OpenedCollectionScopeLocation m_openedCollectionScope;
     std::shared_ptr<InstrumentedMediaEntrySourceState> m_state;
 };
 
 inline MediaEntrySourceFactory instrumentedMediaEntrySourceFactory(
     std::shared_ptr<InstrumentedMediaEntrySourceState> state)
 {
-    return
-        [state = std::move(state)](
-            const OpenedCollectionScopeLocation &archiveCollection) -> MediaEntrySourceOpenResult {
-            ++state->openCount;
-            std::lock_guard<std::mutex> lock(state->mutex);
-            if (!state->fixturesByRootUrl.count(keyForUrl(archiveCollection.rootUrl()))) {
-                return ArchiveError { QStringLiteral("missing fake archive fixture") };
-            }
+    return [state = std::move(state)](const OpenedCollectionScopeLocation &openedCollectionScope)
+               -> MediaEntrySourceOpenResult {
+        ++state->openCount;
+        std::lock_guard<std::mutex> lock(state->mutex);
+        if (!state->fixturesByRootUrl.count(keyForUrl(openedCollectionScope.rootUrl()))) {
+            return MediaEntrySourceError { QStringLiteral(
+                "missing fake media entry source fixture") };
+        }
 
-            return MediaEntrySourcePtr(
-                std::make_shared<InstrumentedMediaEntrySource>(archiveCollection, state));
-        };
+        return MediaEntrySourcePtr(
+            std::make_shared<InstrumentedMediaEntrySource>(openedCollectionScope, state));
+    };
 }
 
-inline void blockInstrumentedArchiveCandidateLoads(
+inline void blockInstrumentedMediaEntrySourceCandidateLoads(
     const std::shared_ptr<InstrumentedMediaEntrySourceState> &state)
 {
     std::lock_guard<std::mutex> lock(state->loadBlockMutex);
@@ -133,7 +134,7 @@ inline void blockInstrumentedArchiveCandidateLoads(
     state->releaseLoads = false;
 }
 
-inline void blockInstrumentedArchiveDataLoads(
+inline void blockInstrumentedMediaEntrySourceDataLoads(
     const std::shared_ptr<InstrumentedMediaEntrySourceState> &state)
 {
     std::lock_guard<std::mutex> lock(state->loadBlockMutex);
@@ -141,7 +142,7 @@ inline void blockInstrumentedArchiveDataLoads(
     state->releaseLoads = false;
 }
 
-inline void releaseInstrumentedArchiveLoads(
+inline void releaseInstrumentedMediaEntrySourceLoads(
     const std::shared_ptr<InstrumentedMediaEntrySourceState> &state)
 {
     {
@@ -157,18 +158,19 @@ inline std::optional<OpenedCollectionScopeLocation> archiveCollectionForLocalArc
     return openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
 }
 
-inline void addInstrumentedArchiveFixture(std::shared_ptr<InstrumentedMediaEntrySourceState> state,
-    const OpenedCollectionScopeLocation &archiveCollection,
+inline void addInstrumentedMediaEntrySourceFixture(
+    std::shared_ptr<InstrumentedMediaEntrySourceState> state,
+    const OpenedCollectionScopeLocation &openedCollectionScope,
     std::vector<ImageNavigationCandidate> candidates)
 {
-    InstrumentedArchiveFixture fixture;
+    InstrumentedMediaEntrySourceFixture fixture;
     fixture.candidates = std::move(candidates);
     for (const ImageNavigationCandidate &candidate : fixture.candidates) {
         fixture.dataByUrl[keyForUrl(candidate.url)] = QByteArrayLiteral("image");
     }
 
     std::lock_guard<std::mutex> lock(state->mutex);
-    state->fixturesByRootUrl[keyForUrl(archiveCollection.rootUrl())] = std::move(fixture);
+    state->fixturesByRootUrl[keyForUrl(openedCollectionScope.rootUrl())] = std::move(fixture);
 }
 }
 

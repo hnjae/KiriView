@@ -14,10 +14,10 @@ src/application/applicationmenupresentationstate.cpp
 src/application/applicationshortcutruntime.cpp
 src/application/applicationruntime.cpp
 src/application/applicationstartupsource.cpp
-src/archive/archivebackend.cpp
-src/archive/archivebackend_directory.cpp
-src/archive/archivebackend_karchive.cpp
-src/archive/archivebackend_libarchive.cpp
+src/archive/mediaentrysourcebackend.cpp
+src/archive/mediaentrysourcebackend_directory.cpp
+src/archive/mediaentrysourcebackend_karchive.cpp
+src/archive/mediaentrysourcebackend_libarchive.cpp
 src/archive/mediaentrysourcecandidateloadstate.cpp
 src/archive/mediaentrysourcestore.cpp
 src/archive/mediaentrysourceruntime.cpp

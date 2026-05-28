@@ -21,7 +21,7 @@ ImageIoJob startDirectoryImageCandidateList(QObject *receiver, QUrl directoryUrl
 ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl directoryUrl,
     ContainerCandidatesCallback callback, ErrorCallback errorCallback);
 ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
-    OpenedCollectionScopeLocation archiveCollection, ImageCandidatesCallback callback,
+    OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
     ErrorCallback errorCallback);
 ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
     ImageDataCallback callback, ErrorCallback errorCallback);

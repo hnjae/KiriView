@@ -14,16 +14,16 @@
 
 namespace {
 using KiriView::ImageNavigationCandidate;
-using KiriView::TestSupport::addInstrumentedArchiveFixture;
+using KiriView::TestSupport::addInstrumentedMediaEntrySourceFixture;
 using KiriView::TestSupport::archiveCollectionForLocalArchiveUrl;
 using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::blockInstrumentedArchiveCandidateLoads;
-using KiriView::TestSupport::blockInstrumentedArchiveDataLoads;
+using KiriView::TestSupport::blockInstrumentedMediaEntrySourceCandidateLoads;
+using KiriView::TestSupport::blockInstrumentedMediaEntrySourceDataLoads;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::instrumentedMediaEntrySourceFactory;
 using KiriView::TestSupport::InstrumentedMediaEntrySourceState;
 using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::releaseInstrumentedArchiveLoads;
+using KiriView::TestSupport::releaseInstrumentedMediaEntrySourceLoads;
 }
 
 class TestMediaEntrySourceRuntime : public QObject
@@ -35,7 +35,7 @@ private Q_SLOTS:
     void simultaneousCandidateLoadsSharePendingBatch();
     void candidateLoadAddedDuringActiveBatchSharesWorker();
     void candidateBatchCancellationPreventsStaleCallbacks();
-    void dataCompletionAfterArchiveSwitchIsIgnored();
+    void dataCompletionAfterOpenedCollectionSwitchIsIgnored();
 };
 
 void TestMediaEntrySourceRuntime::synchronousLoadsShareLazyOpenAndCandidateCache()
@@ -46,7 +46,7 @@ void TestMediaEntrySourceRuntime::synchronousLoadsShareLazyOpenAndCandidateCache
     QVERIFY(archiveCollection.has_value());
     const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
-    addInstrumentedArchiveFixture(
+    addInstrumentedMediaEntrySourceFixture(
         state, *archiveCollection, { imageCandidate(firstUrl), imageCandidate(secondUrl) });
 
     KiriView::MediaEntrySourceRuntime runtime(this, instrumentedMediaEntrySourceFactory(state));
@@ -79,8 +79,8 @@ void TestMediaEntrySourceRuntime::simultaneousCandidateLoadsSharePendingBatch()
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
     const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
-    addInstrumentedArchiveFixture(state, *archiveCollection, { imageCandidate(pageUrl) });
-    blockInstrumentedArchiveCandidateLoads(state);
+    addInstrumentedMediaEntrySourceFixture(state, *archiveCollection, { imageCandidate(pageUrl) });
+    blockInstrumentedMediaEntrySourceCandidateLoads(state);
 
     KiriView::MediaEntrySourceRuntime runtime(this, instrumentedMediaEntrySourceFactory(state));
     int callbackCount = 0;
@@ -91,7 +91,7 @@ void TestMediaEntrySourceRuntime::simultaneousCandidateLoadsSharePendingBatch()
             [&callbackCount](std::vector<ImageNavigationCandidate>) { ++callbackCount; }, {});
     QTRY_COMPARE(state->waitingCandidateLoadCount.load(), 1);
 
-    releaseInstrumentedArchiveLoads(state);
+    releaseInstrumentedMediaEntrySourceLoads(state);
 
     QTRY_COMPARE(callbackCount, 2);
     QCOMPARE(state->openCount.load(), 1);
@@ -105,8 +105,8 @@ void TestMediaEntrySourceRuntime::candidateLoadAddedDuringActiveBatchSharesWorke
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
     const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
-    addInstrumentedArchiveFixture(state, *archiveCollection, { imageCandidate(pageUrl) });
-    blockInstrumentedArchiveCandidateLoads(state);
+    addInstrumentedMediaEntrySourceFixture(state, *archiveCollection, { imageCandidate(pageUrl) });
+    blockInstrumentedMediaEntrySourceCandidateLoads(state);
 
     KiriView::MediaEntrySourceRuntime runtime(this, instrumentedMediaEntrySourceFactory(state));
     int callbackCount = 0;
@@ -117,7 +117,7 @@ void TestMediaEntrySourceRuntime::candidateLoadAddedDuringActiveBatchSharesWorke
     KiriView::ImageIoJob secondJob
         = runtime.loadOpenedCollectionCandidates(this, *archiveCollection,
             [&callbackCount](std::vector<ImageNavigationCandidate>) { ++callbackCount; }, {});
-    releaseInstrumentedArchiveLoads(state);
+    releaseInstrumentedMediaEntrySourceLoads(state);
 
     QTRY_COMPARE(callbackCount, 2);
     QVERIFY(!firstJob.isActive());
@@ -139,10 +139,11 @@ void TestMediaEntrySourceRuntime::candidateBatchCancellationPreventsStaleCallbac
         = archivePageUrl(firstArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPageUrl
         = archivePageUrl(secondArchiveCollection->rootUrl(), QStringLiteral("01.png"));
-    addInstrumentedArchiveFixture(state, *firstArchiveCollection, { imageCandidate(firstPageUrl) });
-    addInstrumentedArchiveFixture(
+    addInstrumentedMediaEntrySourceFixture(
+        state, *firstArchiveCollection, { imageCandidate(firstPageUrl) });
+    addInstrumentedMediaEntrySourceFixture(
         state, *secondArchiveCollection, { imageCandidate(secondPageUrl) });
-    blockInstrumentedArchiveCandidateLoads(state);
+    blockInstrumentedMediaEntrySourceCandidateLoads(state);
 
     KiriView::MediaEntrySourceRuntime runtime(this, instrumentedMediaEntrySourceFactory(state));
     int staleCallbackCount = 0;
@@ -152,14 +153,14 @@ void TestMediaEntrySourceRuntime::candidateBatchCancellationPreventsStaleCallbac
     QTRY_COMPARE(state->waitingCandidateLoadCount.load(), 1);
 
     runtime.switchToOpenedCollectionScope(*secondArchiveCollection);
-    releaseInstrumentedArchiveLoads(state);
+    releaseInstrumentedMediaEntrySourceLoads(state);
 
     QTRY_VERIFY(!staleJob.isActive());
     QCOMPARE(staleCallbackCount, 0);
     QVERIFY(runtime.hasCurrentOpenedCollectionScope(*secondArchiveCollection));
 }
 
-void TestMediaEntrySourceRuntime::dataCompletionAfterArchiveSwitchIsIgnored()
+void TestMediaEntrySourceRuntime::dataCompletionAfterOpenedCollectionSwitchIsIgnored()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
     const std::optional<KiriView::OpenedCollectionScopeLocation> firstArchiveCollection
@@ -172,10 +173,11 @@ void TestMediaEntrySourceRuntime::dataCompletionAfterArchiveSwitchIsIgnored()
         = archivePageUrl(firstArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPageUrl
         = archivePageUrl(secondArchiveCollection->rootUrl(), QStringLiteral("01.png"));
-    addInstrumentedArchiveFixture(state, *firstArchiveCollection, { imageCandidate(firstPageUrl) });
-    addInstrumentedArchiveFixture(
+    addInstrumentedMediaEntrySourceFixture(
+        state, *firstArchiveCollection, { imageCandidate(firstPageUrl) });
+    addInstrumentedMediaEntrySourceFixture(
         state, *secondArchiveCollection, { imageCandidate(secondPageUrl) });
-    blockInstrumentedArchiveDataLoads(state);
+    blockInstrumentedMediaEntrySourceDataLoads(state);
 
     KiriView::MediaEntrySourceRuntime runtime(this, instrumentedMediaEntrySourceFactory(state));
     int staleCallbackCount = 0;
@@ -187,7 +189,7 @@ void TestMediaEntrySourceRuntime::dataCompletionAfterArchiveSwitchIsIgnored()
     QTRY_COMPARE(state->waitingDataLoadCount.load(), 1);
 
     runtime.switchToOpenedCollectionScope(*secondArchiveCollection);
-    releaseInstrumentedArchiveLoads(state);
+    releaseInstrumentedMediaEntrySourceLoads(state);
 
     QTRY_VERIFY(!staleJob.isActive());
     QCOMPARE(staleCallbackCount, 0);

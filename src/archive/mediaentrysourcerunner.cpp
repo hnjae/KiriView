@@ -3,13 +3,13 @@
 
 #include "mediaentrysourcerunner.h"
 
-#include "archivebackend_p.h"
+#include "mediaentrysourcebackend_p.h"
 
 #include <utility>
 #include <variant>
 
 namespace {
-namespace Backend = KiriView::ArchiveBackendDetail;
+namespace Backend = KiriView::MediaEntrySourceBackendDetail;
 
 KiriView::MediaEntrySourceFactory defaultSourceFactory(
     KiriView::MediaEntrySourceFactory sourceFactory)
@@ -20,42 +20,42 @@ KiriView::MediaEntrySourceFactory defaultSourceFactory(
 
 namespace KiriView {
 MediaEntrySourceRunner::MediaEntrySourceRunner(
-    OpenedCollectionScopeLocation archiveCollection, MediaEntrySourceFactory sourceFactory)
-    : m_archiveCollection(std::move(archiveCollection))
+    OpenedCollectionScopeLocation openedCollectionScope, MediaEntrySourceFactory sourceFactory)
+    : m_openedCollectionScope(std::move(openedCollectionScope))
     , m_sourceFactory(defaultSourceFactory(std::move(sourceFactory)))
 {
 }
 
 const OpenedCollectionScopeLocation &MediaEntrySourceRunner::openedCollectionScope() const
 {
-    return m_archiveCollection;
+    return m_openedCollectionScope;
 }
 
-ArchiveImageCandidatesResult MediaEntrySourceRunner::loadImageCandidates()
+MediaEntrySourceCandidatesResult MediaEntrySourceRunner::loadImageCandidates()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_cachedCandidates.has_value()) {
-        return ArchiveImageCandidates { *m_cachedCandidates };
+        return MediaEntrySourceCandidates { *m_cachedCandidates };
     }
 
     const std::optional<QString> errorString = ensureSource();
     if (errorString.has_value()) {
-        return Backend::archiveErrorResult<ArchiveImageCandidatesResult>(*errorString);
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceCandidatesResult>(*errorString);
     }
 
-    ArchiveImageCandidatesResult result = m_source->loadImageCandidates();
-    if (const auto *candidates = std::get_if<ArchiveImageCandidates>(&result)) {
+    MediaEntrySourceCandidatesResult result = m_source->loadImageCandidates();
+    if (const auto *candidates = std::get_if<MediaEntrySourceCandidates>(&result)) {
         m_cachedCandidates = candidates->candidates;
     }
     return result;
 }
 
-ArchiveImageDataResult MediaEntrySourceRunner::loadImageData(const QUrl &imageUrl)
+MediaEntrySourceImageDataResult MediaEntrySourceRunner::loadImageData(const QUrl &imageUrl)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     const std::optional<QString> errorString = ensureSource();
     if (errorString.has_value()) {
-        return Backend::archiveErrorResult<ArchiveImageDataResult>(*errorString);
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceImageDataResult>(*errorString);
     }
 
     return m_source->loadImageData(imageUrl);
@@ -77,15 +77,15 @@ std::optional<QString> MediaEntrySourceRunner::ensureSource()
     }
 
     m_openAttempted = true;
-    MediaEntrySourceOpenResult result = m_sourceFactory(m_archiveCollection);
-    if (const auto *error = std::get_if<ArchiveError>(&result)) {
+    MediaEntrySourceOpenResult result = m_sourceFactory(m_openedCollectionScope);
+    if (const auto *error = std::get_if<MediaEntrySourceError>(&result)) {
         m_openErrorString = error->errorString;
         return m_openErrorString;
     }
 
     const auto *source = std::get_if<MediaEntrySourcePtr>(&result);
     if (source == nullptr || *source == nullptr) {
-        m_openErrorString = Backend::fallbackArchiveOpenError(m_archiveCollection);
+        m_openErrorString = Backend::fallbackMediaEntrySourceOpenError(m_openedCollectionScope);
         return m_openErrorString;
     }
 

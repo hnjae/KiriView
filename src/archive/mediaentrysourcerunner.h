@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_MEDIAENTRYSOURCERUNNER_H
 #define KIRIVIEW_MEDIAENTRYSOURCERUNNER_H
 
-#include "archivebackend.h"
+#include "mediaentrysourcebackend.h"
 
 #include <mutex>
 #include <optional>
@@ -15,18 +15,18 @@ class MediaEntrySourceRunner final
 {
 public:
     MediaEntrySourceRunner(
-        OpenedCollectionScopeLocation archiveCollection, MediaEntrySourceFactory sourceFactory);
+        OpenedCollectionScopeLocation openedCollectionScope, MediaEntrySourceFactory sourceFactory);
 
     const OpenedCollectionScopeLocation &openedCollectionScope() const;
 
-    ArchiveImageCandidatesResult loadImageCandidates();
-    ArchiveImageDataResult loadImageData(const QUrl &imageUrl);
+    MediaEntrySourceCandidatesResult loadImageCandidates();
+    MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl);
     std::optional<std::vector<ImageNavigationCandidate>> cachedImageCandidates();
 
 private:
     std::optional<QString> ensureSource();
 
-    OpenedCollectionScopeLocation m_archiveCollection;
+    OpenedCollectionScopeLocation m_openedCollectionScope;
     MediaEntrySourceFactory m_sourceFactory;
     MediaEntrySourcePtr m_source;
     QString m_openErrorString;

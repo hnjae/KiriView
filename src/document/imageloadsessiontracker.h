@@ -18,7 +18,7 @@
 namespace KiriView {
 enum class OpenedCollectionCandidateCompletionAction {
     Ignored,
-    ReportEmptyArchive,
+    ReportEmptyOpenedCollection,
     StartImageDecode,
     ReportUnsupportedOpenedCollectionVideo,
 };

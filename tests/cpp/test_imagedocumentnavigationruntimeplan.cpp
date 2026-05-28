@@ -28,7 +28,7 @@ private Q_SLOTS:
     void openImageNavigationMapsToLoadUrl();
     void openContainerImageNavigationMapsToContainerLoad();
     void emptyContainerErrorMapsToEmptyContainerCompletion();
-    void invalidComicArchiveErrorMapsToLocalizedOpenError();
+    void invalidComicMediaEntrySourceErrorMapsToLocalizedOpenError();
     void genericContainerErrorKeepsReportedErrorString();
     void clearCurrentImageNavigationExpandsDeletedImageClearPlan();
     void mixedNavigationPlanPreservesOperationOrder();
@@ -88,7 +88,8 @@ void TestImageDocumentNavigationRuntimePlan::emptyContainerErrorMapsToEmptyConta
         containerUrl);
 }
 
-void TestImageDocumentNavigationRuntimePlan::invalidComicArchiveErrorMapsToLocalizedOpenError()
+void TestImageDocumentNavigationRuntimePlan::
+    invalidComicMediaEntrySourceErrorMapsToLocalizedOpenError()
 {
     const QUrl containerUrl = localUrl(QStringLiteral("/books/broken.cbz"));
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({

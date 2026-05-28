@@ -18,21 +18,23 @@
 #include <utility>
 
 namespace {
-QString emptyArchiveErrorMessage()
+QString emptyOpenedCollectionErrorMessage()
 {
-    return KiriView::imageErrorText(KiriView::ImageErrorTextId::EmptyArchive);
+    return KiriView::imageErrorText(KiriView::ImageErrorTextId::EmptyOpenedCollection);
 }
 
-QString archiveOpenErrorMessage(const QString &errorString)
+QString openedCollectionOpenErrorMessage(const QString &errorString)
 {
-    return errorString.isEmpty() ? KiriView::imageErrorText(KiriView::ImageErrorTextId::OpenArchive)
-                                 : errorString;
+    return errorString.isEmpty()
+        ? KiriView::imageErrorText(KiriView::ImageErrorTextId::OpenOpenedCollection)
+        : errorString;
 }
 
 QString loadErrorMessage(KiriView::ImageLoadError error, const QString &errorString)
 {
-    return error == KiriView::ImageLoadError::EmptyArchive ? emptyArchiveErrorMessage()
-                                                           : errorString;
+    return error == KiriView::ImageLoadError::EmptyOpenedCollection
+        ? emptyOpenedCollectionErrorMessage()
+        : errorString;
 }
 
 QString animationLoadErrorMessage(const QString &errorString)
@@ -129,7 +131,7 @@ void ImageOpenController::beginSourceLoad()
 
 void ImageOpenController::finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl)
 {
-    finishContainerNavigationLoadWithError(containerUrl, emptyArchiveErrorMessage());
+    finishContainerNavigationLoadWithError(containerUrl, emptyOpenedCollectionErrorMessage());
 }
 
 void ImageOpenController::finishContainerNavigationLoadWithError(
@@ -137,7 +139,7 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
 {
     cancel();
 
-    const QString message = archiveOpenErrorMessage(errorString);
+    const QString message = openedCollectionOpenErrorMessage(errorString);
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::finishContainerNavigationLoadWithErrorPlan(containerUrl, message)));
     m_state.setUnsupportedOpenedCollectionVideo(false);

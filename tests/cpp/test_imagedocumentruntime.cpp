@@ -179,7 +179,7 @@ class TestImageDocumentRuntime : public QObject
 
 private Q_SLOTS:
     void initialLoadSuccessUpdatesDocumentState();
-    void archiveOrDirectoryCollectionScopeProjectionsFollowDisplayedImageScope();
+    void openedCollectionScopeProjectionsFollowDisplayedImageScope();
     void openedCollectionVideoPlaceholderKeepsNavigation();
     void imageLoadsUsePhysicalViewportForFirstDisplayDecode();
     void renderContextProviderCanBeReplacedAfterConstruction();
@@ -250,8 +250,7 @@ void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
     QVERIFY(runtime->renderSnapshot().isRenderable());
 }
 
-void TestImageDocumentRuntime::
-    archiveOrDirectoryCollectionScopeProjectionsFollowDisplayedImageScope()
+void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedImageScope()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -331,17 +330,17 @@ void TestImageDocumentRuntime::
     QVERIFY(!directoryRuntime->ordinaryDirectMediaScopeActive());
     QVERIFY(directoryRuntime->openedCollectionScopeActive());
 
-    const QUrl archiveEntryUrl(QStringLiteral("zip:///books/book.zip!/page.png"));
-    candidateProvider.setDirectoryImages(
-        QUrl(QStringLiteral("zip:///books/book.zip!/")), { imageCandidate(archiveEntryUrl) });
+    const QUrl openedCollectionEntryUrl(QStringLiteral("zip:///books/book.zip!/page.png"));
+    candidateProvider.setDirectoryImages(QUrl(QStringLiteral("zip:///books/book.zip!/")),
+        { imageCandidate(openedCollectionEntryUrl) });
 
     RuntimeHandle archiveEntryRuntime = createRuntime(this, candidateProvider, dataLoader);
     archiveEntryRuntime->setViewportSize(QSizeF(400.0, 300.0));
-    archiveEntryRuntime->setSourceUrl(archiveEntryUrl);
-    QVERIFY(finishOldestActiveLoadForUrl(dataLoader, archiveEntryUrl));
+    archiveEntryRuntime->setSourceUrl(openedCollectionEntryUrl);
+    QVERIFY(finishOldestActiveLoadForUrl(dataLoader, openedCollectionEntryUrl));
 
     QTRY_COMPARE(archiveEntryRuntime->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(archiveEntryRuntime->displayedUrl(), archiveEntryUrl);
+    QCOMPARE(archiveEntryRuntime->displayedUrl(), openedCollectionEntryUrl);
     QVERIFY(archiveEntryRuntime->ordinaryDirectMediaScopeActive());
     QVERIFY(!archiveEntryRuntime->openedCollectionScopeActive());
 }

@@ -90,7 +90,7 @@ private:
 
 enum class ImageLoadError {
     Generic,
-    EmptyArchive,
+    EmptyOpenedCollection,
 };
 }
 

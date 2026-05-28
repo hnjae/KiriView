@@ -4,10 +4,10 @@
 #ifndef KIRIVIEW_MEDIAENTRYSOURCERUNTIME_H
 #define KIRIVIEW_MEDIAENTRYSOURCERUNTIME_H
 
-#include "archivebackend.h"
 #include "async/imageasyncticket.h"
 #include "async/imageiojob.h"
 #include "decoding/imagedecodedependencies.h"
+#include "mediaentrysourcebackend.h"
 #include "mediaentrysourcecandidateloadstate.h"
 
 #include <memory>
@@ -24,14 +24,14 @@ public:
     ~MediaEntrySourceRuntime();
 
     void clear();
-    void switchToOpenedCollectionScope(OpenedCollectionScopeLocation archiveCollection);
+    void switchToOpenedCollectionScope(OpenedCollectionScopeLocation openedCollectionScope);
 
     bool hasCurrentOpenedCollectionScope() const;
     bool hasCurrentOpenedCollectionScope(
-        const OpenedCollectionScopeLocation &archiveCollection) const;
+        const OpenedCollectionScopeLocation &openedCollectionScope) const;
 
     ImageIoJob loadOpenedCollectionCandidates(QObject *receiver,
-        OpenedCollectionScopeLocation archiveCollection, ImageCandidatesCallback callback,
+        OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
         ErrorCallback errorCallback);
     ImageIoJob loadOpenedCollectionImageData(QObject *receiver, ImageDecodeRequest request,
         ImageDataCallback callback, ErrorCallback errorCallback);
@@ -39,7 +39,7 @@ public:
 private:
     void startCandidateLoad(MediaEntrySourceCandidateLoadBatch batch);
     void finishCandidateLoad(
-        MediaEntrySourceCandidateLoadBatch batch, ArchiveImageCandidatesResult result);
+        MediaEntrySourceCandidateLoadBatch batch, MediaEntrySourceCandidatesResult result);
     void cancelCandidateLoadBatch();
 
     QObject *m_context = nullptr;

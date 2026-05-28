@@ -30,7 +30,7 @@ private Q_SLOTS:
     void archiveResolutionUpdatesCanonicalCurrentSession();
     void archiveResolutionReportsUnsupportedOpenedCollectionVideo();
     void archiveResolutionUsesCandidateKindInsteadOfExtension();
-    void emptyArchiveResolutionClaimsCurrentSessionForError();
+    void emptyOpenedCollectionResolutionClaimsCurrentSessionForError();
     void predecodedLocationReplacementUpdatesCanonicalCurrentSession();
     void decodeRequestClaimClearsTheActiveSession();
     void claimCurrentClearsTheActiveSession();
@@ -156,7 +156,7 @@ void TestImageLoadSessionTracker::archiveResolutionUsesCandidateKindInsteadOfExt
     QCOMPARE(completion.session.kind(), KiriView::ImageNavigationCandidateKind::Image);
 }
 
-void TestImageLoadSessionTracker::emptyArchiveResolutionClaimsCurrentSessionForError()
+void TestImageLoadSessionTracker::emptyOpenedCollectionResolutionClaimsCurrentSessionForError()
 {
     KiriView::ImageLoadSessionTracker tracker;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
@@ -167,8 +167,8 @@ void TestImageLoadSessionTracker::emptyArchiveResolutionClaimsCurrentSessionForE
     const KiriView::OpenedCollectionCandidateCompletion completion
         = tracker.completeOpenedCollectionCandidates(session, {});
 
-    QCOMPARE(
-        completion.action, KiriView::OpenedCollectionCandidateCompletionAction::ReportEmptyArchive);
+    QCOMPARE(completion.action,
+        KiriView::OpenedCollectionCandidateCompletionAction::ReportEmptyOpenedCollection);
     QCOMPARE(completion.session.imageUrl(), archiveUrl);
     QVERIFY(!tracker.isCurrent(session));
 }

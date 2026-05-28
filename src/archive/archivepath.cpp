@@ -39,26 +39,26 @@ QString archiveRelativePathForUrl(const QUrl &archiveRootUrl, const QUrl &url)
         Bridge::rustStr(urlScheme), Bridge::rustStr(urlPath)));
 }
 
-QString archiveEntryPathForUrl(
-    const OpenedCollectionScopeLocation &archiveCollection, const QUrl &imageUrl)
+QString openedCollectionEntryPathForUrl(
+    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl)
 {
-    if (archiveCollection.isEmpty()) {
+    if (openedCollectionScope.isEmpty()) {
         return {};
     }
 
     return normalizedArchiveEntryPath(
-        archiveRelativePathForUrl(archiveCollection.rootUrl(), imageUrl));
+        archiveRelativePathForUrl(openedCollectionScope.rootUrl(), imageUrl));
 }
 
-QUrl archiveEntryUrl(
-    const OpenedCollectionScopeLocation &archiveCollection, const QString &entryPath)
+QUrl openedCollectionEntryUrl(
+    const OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath)
 {
     const QString cleanEntryPath = normalizedArchiveEntryPath(entryPath);
-    if (archiveCollection.isEmpty() || cleanEntryPath.isEmpty()) {
+    if (openedCollectionScope.isEmpty() || cleanEntryPath.isEmpty()) {
         return {};
     }
 
-    QUrl url = archiveCollection.rootUrl();
+    QUrl url = openedCollectionScope.rootUrl();
     url.setPath(normalizedArchiveRootPath(url) + cleanEntryPath);
     url.setQuery(QString());
     url.setFragment(QString());

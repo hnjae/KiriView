@@ -480,7 +480,7 @@ Item {
             readingControlsVisibleExpression, readingControlsEnabledExpression);
 }
 
-QString archiveOrDirectoryCollectionScopeFixtureQml(const QString &sourceUrl = QString())
+QString openedCollectionScopeFixtureQml(const QString &sourceUrl = QString())
 {
     return fixtureQml(sourceUrl, false,
         QStringLiteral("!root.videoMode && imageDocument.openedCollectionScopeActive"),
@@ -742,11 +742,10 @@ ToolBarMenuFixture createFixture(
         QUrl(QStringLiteral("memory:test_toolbarapplicationmenu.qml")));
 }
 
-ToolBarMenuFixture createArchiveOrDirectoryCollectionScopeFixture(
-    const QString &sourceUrl = QString())
+ToolBarMenuFixture createOpenedCollectionScopeFixture(const QString &sourceUrl = QString())
 {
-    return createFixtureFromQml(archiveOrDirectoryCollectionScopeFixtureQml(sourceUrl),
-        QUrl(QStringLiteral("memory:test_toolbar_archive_or_directory_document_scope.qml")));
+    return createFixtureFromQml(openedCollectionScopeFixtureQml(sourceUrl),
+        QUrl(QStringLiteral("memory:test_toolbar_opened_collection_scope.qml")));
 }
 
 ToolBarMenuFixture createMenuBarFixture()
@@ -1030,7 +1029,7 @@ void TestToolBarApplicationMenu::toolbarActionOrderKeepsReadingDirectionBesideSp
 
 void TestToolBarApplicationMenu::emptyToolbarHidesReadingControls()
 {
-    ToolBarMenuFixture fixture = createArchiveOrDirectoryCollectionScopeFixture();
+    ToolBarMenuFixture fixture = createOpenedCollectionScopeFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
     bool ok = false;
@@ -1046,8 +1045,8 @@ void TestToolBarApplicationMenu::directImageToolbarHidesReadingControls()
     std::unique_ptr<QTemporaryDir> imageDirectory = createImageDirectory(&sourcePath, &errorString);
     QVERIFY2(imageDirectory != nullptr, qPrintable(errorString));
 
-    ToolBarMenuFixture fixture = createArchiveOrDirectoryCollectionScopeFixture(
-        QUrl::fromLocalFile(sourcePath).toString());
+    ToolBarMenuFixture fixture
+        = createOpenedCollectionScopeFixture(QUrl::fromLocalFile(sourcePath).toString());
     fixture.temporaryDirectory = std::move(imageDirectory);
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
@@ -1060,7 +1059,7 @@ void TestToolBarApplicationMenu::directImageToolbarHidesReadingControls()
 
 void TestToolBarApplicationMenu::videoToolbarHidesReadingControlsAndDisablesImageControls()
 {
-    ToolBarMenuFixture fixture = createArchiveOrDirectoryCollectionScopeFixture();
+    ToolBarMenuFixture fixture = createOpenedCollectionScopeFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QVERIFY(fixture.root->setProperty("videoMode", true));
     QCoreApplication::processEvents();
@@ -1088,8 +1087,8 @@ void TestToolBarApplicationMenu::comicArchiveToolbarShowsEnabledReadingControls(
         = createComicBookArchive(&sourcePath, &errorString);
     QVERIFY2(archiveDirectory != nullptr, qPrintable(errorString));
 
-    ToolBarMenuFixture fixture = createArchiveOrDirectoryCollectionScopeFixture(
-        QUrl::fromLocalFile(sourcePath).toString());
+    ToolBarMenuFixture fixture
+        = createOpenedCollectionScopeFixture(QUrl::fromLocalFile(sourcePath).toString());
     fixture.temporaryDirectory = std::move(archiveDirectory);
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
@@ -1117,8 +1116,8 @@ void TestToolBarApplicationMenu::generalArchiveToolbarShowsDisabledReadingContro
     std::unique_ptr<QTemporaryDir> archiveDirectory = createZipArchive(&sourcePath, &errorString);
     QVERIFY2(archiveDirectory != nullptr, qPrintable(errorString));
 
-    ToolBarMenuFixture fixture = createArchiveOrDirectoryCollectionScopeFixture(
-        QUrl::fromLocalFile(sourcePath).toString());
+    ToolBarMenuFixture fixture
+        = createOpenedCollectionScopeFixture(QUrl::fromLocalFile(sourcePath).toString());
     fixture.temporaryDirectory = std::move(archiveDirectory);
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
@@ -1147,8 +1146,8 @@ void TestToolBarApplicationMenu::directoryCollectionToolbarShowsDisabledReadingC
         = createDirectoryCollection(&sourcePath, &errorString);
     QVERIFY2(imageDirectory != nullptr, qPrintable(errorString));
 
-    ToolBarMenuFixture fixture = createArchiveOrDirectoryCollectionScopeFixture(
-        QUrl::fromLocalFile(sourcePath).toString());
+    ToolBarMenuFixture fixture
+        = createOpenedCollectionScopeFixture(QUrl::fromLocalFile(sourcePath).toString());
     fixture.temporaryDirectory = std::move(imageDirectory);
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));

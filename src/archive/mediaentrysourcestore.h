@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_MEDIAENTRYSOURCESTORE_H
 #define KIRIVIEW_MEDIAENTRYSOURCESTORE_H
 
-#include "archivebackend.h"
 #include "async/imageiojob.h"
 #include "decoding/imagedecodedependencies.h"
+#include "mediaentrysourcebackend.h"
 #include "mediaentrysourceruntime.h"
 #include "navigation/imagecandidateprovider.h"
 
@@ -32,10 +32,10 @@ public:
 
     bool hasCurrentOpenedCollectionScope() const;
     bool hasCurrentOpenedCollectionScope(
-        const OpenedCollectionScopeLocation &archiveCollection) const;
+        const OpenedCollectionScopeLocation &openedCollectionScope) const;
 
     ImageIoJob loadOpenedCollectionCandidates(QObject *receiver,
-        OpenedCollectionScopeLocation archiveCollection, ImageCandidatesCallback callback,
+        OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
         ErrorCallback errorCallback);
     ImageIoJob loadOpenedCollectionImageData(QObject *receiver, ImageDecodeRequest request,
         ImageDataCallback callback, ErrorCallback errorCallback);

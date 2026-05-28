@@ -68,7 +68,7 @@ private:
     Callbacks m_callbacks;
     ImageDecodeJob m_decodeJob;
     ImageCandidateRepository m_candidateRepository;
-    ImageIoJob m_archiveListJob;
+    ImageIoJob m_openedCollectionCandidateLoadJob;
     ImageLoadSessionTracker m_sessionTracker;
 };
 }

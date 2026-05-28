@@ -22,20 +22,20 @@
 namespace {
 using KiriView::ImageNavigationCandidate;
 using KiriView::NavigationDirection;
-using KiriView::TestSupport::addInstrumentedArchiveFixture;
+using KiriView::TestSupport::addInstrumentedMediaEntrySourceFixture;
 using KiriView::TestSupport::archiveCollectionForLocalArchiveUrl;
 using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::blockInstrumentedArchiveDataLoads;
+using KiriView::TestSupport::blockInstrumentedMediaEntrySourceDataLoads;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::instrumentedMediaEntrySourceFactory;
 using KiriView::TestSupport::InstrumentedMediaEntrySourceState;
 using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::releaseInstrumentedArchiveLoads;
+using KiriView::TestSupport::releaseInstrumentedMediaEntrySourceLoads;
 using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
-KiriView::ImageNavigationCandidateProvider archiveOnlyProvider()
+KiriView::ImageNavigationCandidateProvider openedCollectionOnlyProvider()
 {
     return KiriView::ImageNavigationCandidateProvider {
         [](QObject *, QUrl, KiriView::ImageCandidatesCallback,
@@ -87,7 +87,7 @@ private Q_SLOTS:
     void simultaneousCandidateLoadsSharePendingSourceLoad();
     void staleDataLoadCompletionIsIgnoredAfterArchiveSwitch();
     void navigationReusesCachedOpenedCollectionCandidates();
-    void predecodeLoadsAdjacentArchiveImagesThroughSource();
+    void predecodeLoadsAdjacentOpenedCollectionImagesThroughSource();
     void lifecycleClearsSourceForDifferentArchiveNormalImageAndClear();
 };
 
@@ -100,7 +100,7 @@ void TestMediaEntrySourceStore::candidateAndDataLoadsShareOneArchiveOpen()
     QVERIFY(archiveCollection.has_value());
     const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
-    addInstrumentedArchiveFixture(
+    addInstrumentedMediaEntrySourceFixture(
         state, *archiveCollection, { imageCandidate(firstUrl), imageCandidate(secondUrl) });
 
     KiriView::MediaEntrySourceStore store(instrumentedMediaEntrySourceFactory(state));
@@ -139,7 +139,7 @@ void TestMediaEntrySourceStore::simultaneousCandidateLoadsSharePendingSourceLoad
         = archiveCollectionForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
-    addInstrumentedArchiveFixture(state, *archiveCollection, { imageCandidate(pageUrl) });
+    addInstrumentedMediaEntrySourceFixture(state, *archiveCollection, { imageCandidate(pageUrl) });
 
     KiriView::MediaEntrySourceStore store(instrumentedMediaEntrySourceFactory(state));
     int callbackCount = 0;
@@ -168,10 +168,11 @@ void TestMediaEntrySourceStore::staleDataLoadCompletionIsIgnoredAfterArchiveSwit
         = archivePageUrl(firstArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPageUrl
         = archivePageUrl(secondArchiveCollection->rootUrl(), QStringLiteral("01.png"));
-    addInstrumentedArchiveFixture(state, *firstArchiveCollection, { imageCandidate(firstPageUrl) });
-    addInstrumentedArchiveFixture(
+    addInstrumentedMediaEntrySourceFixture(
+        state, *firstArchiveCollection, { imageCandidate(firstPageUrl) });
+    addInstrumentedMediaEntrySourceFixture(
         state, *secondArchiveCollection, { imageCandidate(secondPageUrl) });
-    blockInstrumentedArchiveDataLoads(state);
+    blockInstrumentedMediaEntrySourceDataLoads(state);
 
     KiriView::MediaEntrySourceStore store(instrumentedMediaEntrySourceFactory(state));
     int staleCallbackCount = 0;
@@ -184,7 +185,7 @@ void TestMediaEntrySourceStore::staleDataLoadCompletionIsIgnoredAfterArchiveSwit
 
     store.prepareForSourceLoad(KiriView::ImageDocumentSourceLoadRequest::fromUrl(secondArchiveUrl),
         *firstArchiveCollection);
-    releaseInstrumentedArchiveLoads(state);
+    releaseInstrumentedMediaEntrySourceLoads(state);
 
     QTRY_VERIFY(!staleJob.isActive());
     QCOMPARE(staleCallbackCount, 0);
@@ -201,13 +202,13 @@ void TestMediaEntrySourceStore::navigationReusesCachedOpenedCollectionCandidates
     const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
     const QUrl thirdUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
-    addInstrumentedArchiveFixture(state, *archiveCollection,
+    addInstrumentedMediaEntrySourceFixture(state, *archiveCollection,
         { imageCandidate(firstUrl), imageCandidate(secondUrl), imageCandidate(thirdUrl) });
 
     KiriView::MediaEntrySourceStore store(instrumentedMediaEntrySourceFactory(state));
     QUrl openedUrl;
     KiriView::ImageNavigationService service(this,
-        store.wrapCandidateProvider(archiveOnlyProvider()),
+        store.wrapCandidateProvider(openedCollectionOnlyProvider()),
         navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }));
 
     service.updatePageNavigation(navigationContext(
@@ -234,7 +235,7 @@ void TestMediaEntrySourceStore::navigationReusesCachedOpenedCollectionCandidates
     QCOMPARE(state->candidateLoadCount.load(), 1);
 }
 
-void TestMediaEntrySourceStore::predecodeLoadsAdjacentArchiveImagesThroughSource()
+void TestMediaEntrySourceStore::predecodeLoadsAdjacentOpenedCollectionImagesThroughSource()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
@@ -245,12 +246,12 @@ void TestMediaEntrySourceStore::predecodeLoadsAdjacentArchiveImagesThroughSource
     const QUrl displayedUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
     const QUrl thirdUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
-    addInstrumentedArchiveFixture(state, *archiveCollection,
+    addInstrumentedMediaEntrySourceFixture(state, *archiveCollection,
         { imageCandidate(firstUrl), imageCandidate(displayedUrl), imageCandidate(thirdUrl) });
 
     KiriView::MediaEntrySourceStore store(instrumentedMediaEntrySourceFactory(state));
     KiriView::ImagePredecodeCoordinator coordinator(this,
-        store.wrapCandidateProvider(archiveOnlyProvider()),
+        store.wrapCandidateProvider(openedCollectionOnlyProvider()),
         store.wrapDecodeDependencies(KiriView::ImageDecodeDependencies {
             {},
             staticImageDataDecoder(),
@@ -293,8 +294,9 @@ void TestMediaEntrySourceStore::lifecycleClearsSourceForDifferentArchiveNormalIm
         = archivePageUrl(firstArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPageUrl
         = archivePageUrl(secondArchiveCollection->rootUrl(), QStringLiteral("01.png"));
-    addInstrumentedArchiveFixture(state, *firstArchiveCollection, { imageCandidate(firstPageUrl) });
-    addInstrumentedArchiveFixture(
+    addInstrumentedMediaEntrySourceFixture(
+        state, *firstArchiveCollection, { imageCandidate(firstPageUrl) });
+    addInstrumentedMediaEntrySourceFixture(
         state, *secondArchiveCollection, { imageCandidate(secondPageUrl) });
 
     KiriView::MediaEntrySourceStore store(instrumentedMediaEntrySourceFactory(state));

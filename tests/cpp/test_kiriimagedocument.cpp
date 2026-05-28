@@ -116,13 +116,14 @@ void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation(
     loadReady(*openedDirectoryCollection, dataLoader, directoryUrl, directoryPage);
     QVERIFY(openedDirectoryCollection->openedCollectionScopeActive());
 
-    const QUrl archiveEntryUrl(QStringLiteral("zip:///books/book.zip!/page.png"));
-    candidateProvider.setDirectoryImages(
-        QUrl(QStringLiteral("zip:///books/book.zip!/")), { imageCandidate(archiveEntryUrl) });
+    const QUrl openedCollectionEntryUrl(QStringLiteral("zip:///books/book.zip!/page.png"));
+    candidateProvider.setDirectoryImages(QUrl(QStringLiteral("zip:///books/book.zip!/")),
+        { imageCandidate(openedCollectionEntryUrl) });
     std::unique_ptr<KiriImageDocument> archiveEntryDocument
         = createDocument(this, candidateProvider, dataLoader);
 
-    loadReady(*archiveEntryDocument, dataLoader, archiveEntryUrl, archiveEntryUrl);
+    loadReady(
+        *archiveEntryDocument, dataLoader, openedCollectionEntryUrl, openedCollectionEntryUrl);
     QVERIFY(!archiveEntryDocument->openedCollectionScopeActive());
 }
 

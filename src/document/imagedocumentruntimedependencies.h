@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMEDEPENDENCIES_H
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMEDEPENDENCIES_H
 
-#include "archive/archivebackend.h"
+#include "archive/mediaentrysourcebackend.h"
 #include "decoding/imagedecodedependencies.h"
 #include "filedeletion.h"
 #include "navigation/imagecandidateprovider.h"

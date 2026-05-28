@@ -3,7 +3,7 @@
 
 #include "async/imageiojobs.h"
 
-#include "archive/archivebackend.h"
+#include "archive/mediaentrysourcebackend.h"
 #include "async/directorylistingjob.h"
 #include "async/imagecallback.h"
 #include "async/imageioworkerjob.h"
@@ -19,29 +19,30 @@
 #include <variant>
 
 namespace {
-using KiriView::ArchiveError;
-using KiriView::ArchiveImageCandidates;
-using KiriView::ArchiveImageCandidatesResult;
-using KiriView::ArchiveImageData;
-using KiriView::ArchiveImageDataResult;
 using KiriView::containerNavigationCandidates;
 using KiriView::ErrorCallback;
 using KiriView::imageNavigationCandidates;
+using KiriView::MediaEntrySourceCandidates;
+using KiriView::MediaEntrySourceCandidatesResult;
+using KiriView::MediaEntrySourceError;
+using KiriView::MediaEntrySourceImageData;
+using KiriView::MediaEntrySourceImageDataResult;
 
-template <typename... Handlers> struct ArchiveResultHandler : Handlers... {
+template <typename... Handlers> struct MediaEntrySourceResultHandler : Handlers... {
     using Handlers::operator()...;
 };
 
 template <typename... Handlers>
-ArchiveResultHandler(Handlers...) -> ArchiveResultHandler<Handlers...>;
+MediaEntrySourceResultHandler(Handlers...) -> MediaEntrySourceResultHandler<Handlers...>;
 
 template <typename Success, typename Result, typename SuccessCallback>
-void finishArchiveWorkerResult(
+void finishMediaEntrySourceWorkerResult(
     Result result, ErrorCallback errorCallback, SuccessCallback successCallback)
 {
-    auto resultHandler = ArchiveResultHandler {
-        [&errorCallback](
-            const ArchiveError &error) { KiriView::invokeIfSet(errorCallback, error.errorString); },
+    auto resultHandler = MediaEntrySourceResultHandler {
+        [&errorCallback](const MediaEntrySourceError &error) {
+            KiriView::invokeIfSet(errorCallback, error.errorString);
+        },
         [&successCallback](Success &success) mutable { successCallback(std::move(success)); },
     };
     std::visit(resultHandler, result);
@@ -93,19 +94,19 @@ ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl director
 }
 
 ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
-    OpenedCollectionScopeLocation archiveCollection, ImageCandidatesCallback callback,
+    OpenedCollectionScopeLocation openedCollectionScope, ImageCandidatesCallback callback,
     ErrorCallback errorCallback)
 {
     return startMediaEntrySourceWorkerJob(
         receiver,
-        [archiveCollection = std::move(archiveCollection)]() {
-            return loadMediaEntrySourceCandidates(archiveCollection);
+        [openedCollectionScope = std::move(openedCollectionScope)]() {
+            return loadMediaEntrySourceCandidates(openedCollectionScope);
         },
         [callback = std::move(callback), errorCallback = std::move(errorCallback)](
-            ArchiveImageCandidatesResult result) mutable {
-            finishArchiveWorkerResult<ArchiveImageCandidates>(std::move(result),
+            MediaEntrySourceCandidatesResult result) mutable {
+            finishMediaEntrySourceWorkerResult<MediaEntrySourceCandidates>(std::move(result),
                 std::move(errorCallback),
-                [callback = std::move(callback)](ArchiveImageCandidates candidates) mutable {
+                [callback = std::move(callback)](MediaEntrySourceCandidates candidates) mutable {
                     KiriView::invokeIfSet(callback, std::move(candidates.candidates));
                 });
         });
@@ -122,10 +123,10 @@ ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest reques
                     request.openedCollectionScope(), request.imageUrl());
             },
             [callback = std::move(callback), errorCallback = std::move(errorCallback)](
-                ArchiveImageDataResult result) mutable {
-                finishArchiveWorkerResult<ArchiveImageData>(std::move(result),
+                MediaEntrySourceImageDataResult result) mutable {
+                finishMediaEntrySourceWorkerResult<MediaEntrySourceImageData>(std::move(result),
                     std::move(errorCallback),
-                    [callback = std::move(callback)](ArchiveImageData data) mutable {
+                    [callback = std::move(callback)](MediaEntrySourceImageData data) mutable {
                         KiriView::invokeIfSet(callback, std::move(data.data));
                     });
             });

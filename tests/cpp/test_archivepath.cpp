@@ -41,7 +41,8 @@ void TestArchivePath::entryUrlsNormalizePathsAndClearUrlMetadata()
     archive = KiriView::OpenedCollectionScopeLocation::fromUrls(
         archive.fileUrl(), rootUrl, archive.kind());
 
-    const QUrl url = KiriView::archiveEntryUrl(archive, QStringLiteral("./chapter/./page001.png"));
+    const QUrl url
+        = KiriView::openedCollectionEntryUrl(archive, QStringLiteral("./chapter/./page001.png"));
 
     QCOMPARE(url, QUrl(QStringLiteral("zip:///books/book.cbz/chapter/page001.png")));
     QVERIFY(url.query().isEmpty());
@@ -52,9 +53,11 @@ void TestArchivePath::entryUrlsRejectUnsafePaths()
 {
     const KiriView::OpenedCollectionScopeLocation archive = openedCollectionScope();
 
-    QVERIFY(KiriView::archiveEntryUrl(archive, QStringLiteral("../page001.png")).isEmpty());
-    QVERIFY(KiriView::archiveEntryUrl(archive, QStringLiteral("/tmp/page001.png")).isEmpty());
-    QVERIFY(KiriView::archiveEntryUrl(
+    QVERIFY(
+        KiriView::openedCollectionEntryUrl(archive, QStringLiteral("../page001.png")).isEmpty());
+    QVERIFY(
+        KiriView::openedCollectionEntryUrl(archive, QStringLiteral("/tmp/page001.png")).isEmpty());
+    QVERIFY(KiriView::openedCollectionEntryUrl(
         KiriView::OpenedCollectionScopeLocation::none(), QStringLiteral("page001.png"))
             .isEmpty());
 }
@@ -63,16 +66,16 @@ void TestArchivePath::entryPathsResolveOnlyInsideArchiveRoot()
 {
     const KiriView::OpenedCollectionScopeLocation archive = openedCollectionScope();
 
-    QCOMPARE(KiriView::archiveEntryPathForUrl(
+    QCOMPARE(KiriView::openedCollectionEntryPathForUrl(
                  archive, QUrl(QStringLiteral("zip:///books/book.cbz/chapter/page001.png"))),
         QStringLiteral("chapter/page001.png"));
-    QVERIFY(
-        KiriView::archiveEntryPathForUrl(archive, QUrl(QStringLiteral("zip:///books/book.cbz/")))
+    QVERIFY(KiriView::openedCollectionEntryPathForUrl(
+        archive, QUrl(QStringLiteral("zip:///books/book.cbz/")))
             .isEmpty());
-    QVERIFY(KiriView::archiveEntryPathForUrl(
+    QVERIFY(KiriView::openedCollectionEntryPathForUrl(
         archive, QUrl(QStringLiteral("zip:///books/book.cbz/../page001.png")))
             .isEmpty());
-    QVERIFY(KiriView::archiveEntryPathForUrl(
+    QVERIFY(KiriView::openedCollectionEntryPathForUrl(
         archive, QUrl(QStringLiteral("tar:///books/book.cbz/chapter/page001.png")))
             .isEmpty());
 }

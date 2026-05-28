@@ -14,11 +14,11 @@
 #include <vector>
 
 namespace {
-using KiriView::ArchiveError;
-using KiriView::ArchiveImageCandidates;
-using KiriView::ArchiveImageData;
 using KiriView::ImageNavigationCandidate;
-using KiriView::TestSupport::addInstrumentedArchiveFixture;
+using KiriView::MediaEntrySourceCandidates;
+using KiriView::MediaEntrySourceError;
+using KiriView::MediaEntrySourceImageData;
+using KiriView::TestSupport::addInstrumentedMediaEntrySourceFixture;
 using KiriView::TestSupport::archiveCollectionForLocalArchiveUrl;
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::imageCandidate;
@@ -32,13 +32,13 @@ class TestMediaEntrySourceRunner : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void ownsArchiveIdentity();
+    void ownsOpenedCollectionScope();
     void candidateLoadsAreCachedAfterLazyOpen();
     void dataLoadsReuseLazyOpenSource();
     void failedOpenIsMemoized();
 };
 
-void TestMediaEntrySourceRunner::ownsArchiveIdentity()
+void TestMediaEntrySourceRunner::ownsOpenedCollectionScope()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
     const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
@@ -60,17 +60,17 @@ void TestMediaEntrySourceRunner::candidateLoadsAreCachedAfterLazyOpen()
     QVERIFY(archiveCollection.has_value());
     const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
-    addInstrumentedArchiveFixture(
+    addInstrumentedMediaEntrySourceFixture(
         state, *archiveCollection, { imageCandidate(firstUrl), imageCandidate(secondUrl) });
 
     KiriView::MediaEntrySourceRunner runner(
         *archiveCollection, instrumentedMediaEntrySourceFactory(state));
 
-    KiriView::ArchiveImageCandidatesResult firstResult = runner.loadImageCandidates();
-    KiriView::ArchiveImageCandidatesResult secondResult = runner.loadImageCandidates();
+    KiriView::MediaEntrySourceCandidatesResult firstResult = runner.loadImageCandidates();
+    KiriView::MediaEntrySourceCandidatesResult secondResult = runner.loadImageCandidates();
 
-    const auto *firstCandidates = std::get_if<ArchiveImageCandidates>(&firstResult);
-    const auto *secondCandidates = std::get_if<ArchiveImageCandidates>(&secondResult);
+    const auto *firstCandidates = std::get_if<MediaEntrySourceCandidates>(&firstResult);
+    const auto *secondCandidates = std::get_if<MediaEntrySourceCandidates>(&secondResult);
     QVERIFY(firstCandidates != nullptr);
     QVERIFY(secondCandidates != nullptr);
     QCOMPARE(firstCandidates->candidates.size(), std::size_t(2));
@@ -91,16 +91,16 @@ void TestMediaEntrySourceRunner::dataLoadsReuseLazyOpenSource()
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
     const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
-    addInstrumentedArchiveFixture(state, *archiveCollection, { imageCandidate(pageUrl) });
+    addInstrumentedMediaEntrySourceFixture(state, *archiveCollection, { imageCandidate(pageUrl) });
 
     KiriView::MediaEntrySourceRunner runner(
         *archiveCollection, instrumentedMediaEntrySourceFactory(state));
 
-    KiriView::ArchiveImageDataResult firstResult = runner.loadImageData(pageUrl);
-    KiriView::ArchiveImageDataResult secondResult = runner.loadImageData(pageUrl);
+    KiriView::MediaEntrySourceImageDataResult firstResult = runner.loadImageData(pageUrl);
+    KiriView::MediaEntrySourceImageDataResult secondResult = runner.loadImageData(pageUrl);
 
-    const auto *firstData = std::get_if<ArchiveImageData>(&firstResult);
-    const auto *secondData = std::get_if<ArchiveImageData>(&secondResult);
+    const auto *firstData = std::get_if<MediaEntrySourceImageData>(&firstResult);
+    const auto *secondData = std::get_if<MediaEntrySourceImageData>(&secondResult);
     QVERIFY(firstData != nullptr);
     QVERIFY(secondData != nullptr);
     QCOMPARE(firstData->data, QByteArrayLiteral("image"));
@@ -119,12 +119,12 @@ void TestMediaEntrySourceRunner::failedOpenIsMemoized()
     KiriView::MediaEntrySourceRunner runner(
         *archiveCollection, instrumentedMediaEntrySourceFactory(state));
 
-    KiriView::ArchiveImageCandidatesResult candidatesResult = runner.loadImageCandidates();
-    KiriView::ArchiveImageDataResult dataResult = runner.loadImageData(
+    KiriView::MediaEntrySourceCandidatesResult candidatesResult = runner.loadImageCandidates();
+    KiriView::MediaEntrySourceImageDataResult dataResult = runner.loadImageData(
         archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png")));
 
-    QVERIFY(std::get_if<ArchiveError>(&candidatesResult) != nullptr);
-    QVERIFY(std::get_if<ArchiveError>(&dataResult) != nullptr);
+    QVERIFY(std::get_if<MediaEntrySourceError>(&candidatesResult) != nullptr);
+    QVERIFY(std::get_if<MediaEntrySourceError>(&dataResult) != nullptr);
     QCOMPARE(state->openCount.load(), 1);
     QCOMPARE(state->candidateLoadCount.load(), 0);
     QCOMPARE(state->dataLoadCount.load(), 0);
