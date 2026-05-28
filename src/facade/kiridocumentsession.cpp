@@ -41,6 +41,18 @@ KiriView::FileDeletionMode toFileDeletionMode(KiriDocumentSession::DeletionMode 
     return KiriView::FileDeletionMode::MoveToTrash;
 }
 
+KiriImageDocument::DeletionMode toImageDocumentDeletionMode(KiriView::FileDeletionMode mode)
+{
+    switch (mode) {
+    case KiriView::FileDeletionMode::MoveToTrash:
+        return KiriImageDocument::DeletionMode::MoveToTrash;
+    case KiriView::FileDeletionMode::DeletePermanently:
+        return KiriImageDocument::DeletionMode::DeletePermanently;
+    }
+
+    return KiriImageDocument::DeletionMode::MoveToTrash;
+}
+
 KiriDocumentSession::ActiveNavigationBoundaryScope fromRuntimeBoundaryScope(
     KiriView::ActiveNavigationBoundaryScope scope)
 {
@@ -73,6 +85,88 @@ KiriDocumentSession::ActiveNavigationRequestResult fromRuntimeRequestOutcome(
     }
 
     return KiriDocumentSession::ActiveNavigationRequestResult::NoActiveNavigationRequestResult;
+}
+
+template <typename Document, typename Signal>
+KiriView::DocumentSessionDocumentSignalConnector documentSignalConnector(
+    Document &document, Signal signal)
+{
+    return [&document, signal](
+               QObject *context, KiriView::DocumentSessionDocumentChangeHandler handler) {
+        return QObject::connect(&document, signal, context, [handler = std::move(handler)]() {
+            if (handler) {
+                handler();
+            }
+        });
+    };
+}
+
+KiriView::DocumentSessionImageDocumentPort imageDocumentPort(KiriImageDocument &document)
+{
+    return KiriView::DocumentSessionImageDocumentPort {
+        [&document]() { return document.sourceUrl(); },
+        [&document](const QUrl &url) { document.setSourceUrl(url); },
+        [&document]() { return document.errorString(); },
+        [&document]() { return document.windowTitleFileName(); },
+        [&document]() { return document.displayedUrl(); },
+        [&document]() { return document.displayedOpenedCollectionScope(); },
+        [&document]() { return document.primaryImageSize(); },
+        [&document]() { return document.status() == KiriImageDocument::Status::Ready; },
+        [&document]() { return document.status() == KiriImageDocument::Status::Error; },
+        [&document]() { return document.fileDeletionInProgress(); },
+        [&document]() { return document.ordinaryDirectMediaScopeActive(); },
+        [&document]() { return document.zoomPercentKnown(); },
+        [&document]() { return document.zoomPercent(); },
+        [&document]() { return document.pageNavigationSnapshot(); },
+        [&document]() { return document.activeNavigationSnapshot(); },
+        [&document]() { return document.primaryDisplayedPredecodeImage(); },
+        [&document]() { return document.firstDisplayDecodeContext(); },
+        [&document]() { document.openPreviousPage(); },
+        [&document]() { document.openNextPage(); },
+        [&document](int pageNumber) { document.openImageAtPage(pageNumber); },
+        [&document](KiriView::FileDeletionMode mode) {
+            document.deleteDisplayedFile(toImageDocumentDeletionMode(mode));
+        },
+        KiriView::DocumentSessionImageDocumentSignals {
+            documentSignalConnector(document, &KiriImageDocument::sourceUrlChanged),
+            documentSignalConnector(document, &KiriImageDocument::statusChanged),
+            documentSignalConnector(document, &KiriImageDocument::windowTitleFileNameChanged),
+            documentSignalConnector(document, &KiriImageDocument::imageSizeChanged),
+            documentSignalConnector(document, &KiriImageDocument::errorStringChanged),
+            documentSignalConnector(document, &KiriImageDocument::imageDocumentSourceScopeChanged),
+            documentSignalConnector(document, &KiriImageDocument::fileDeletionInProgressChanged),
+            documentSignalConnector(document, &KiriImageDocument::zoomPercentKnownChanged),
+            documentSignalConnector(document, &KiriImageDocument::zoomPercentChanged),
+            documentSignalConnector(document, &KiriImageDocument::pageNavigationChanged),
+        },
+    };
+}
+
+KiriView::DocumentSessionVideoDocumentPort videoDocumentPort(KiriVideoDocument &document)
+{
+    return KiriView::DocumentSessionVideoDocumentPort {
+        [&document]() { return document.sourceUrl(); },
+        [&document](const QUrl &url) { document.setSourceUrl(url); },
+        [&document]() { return document.errorString(); },
+        [&document]() { return document.windowTitleFileName(); },
+        [&document]() { return document.videoSize(); },
+        [&document]() { return document.status() == KiriVideoDocument::Status::Ready; },
+        [&document]() { return document.status() == KiriVideoDocument::Status::Error; },
+        [&document]() { return document.zoomPercentKnown(); },
+        [&document]() { return document.zoomPercent(); },
+        [&document]() { return document.videoOutput(); },
+        [&document]() { document.stop(); },
+        [&document](QObject *videoOutput) { document.setVideoOutput(videoOutput); },
+        KiriView::DocumentSessionVideoDocumentSignals {
+            documentSignalConnector(document, &KiriVideoDocument::sourceUrlChanged),
+            documentSignalConnector(document, &KiriVideoDocument::statusChanged),
+            documentSignalConnector(document, &KiriVideoDocument::windowTitleFileNameChanged),
+            documentSignalConnector(document, &KiriVideoDocument::videoSizeChanged),
+            documentSignalConnector(document, &KiriVideoDocument::errorStringChanged),
+            documentSignalConnector(document, &KiriVideoDocument::zoomPercentKnownChanged),
+            documentSignalConnector(document, &KiriVideoDocument::zoomPercentChanged),
+        },
+    };
 }
 
 KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithPredecodeFinder(
@@ -147,7 +241,7 @@ KiriDocumentSession::KiriDocumentSession(KiriView::DocumentSessionRuntimeDepende
     , m_videoDocument(std::make_unique<KiriVideoDocument>(this))
 {
     m_runtime = std::make_unique<KiriView::DocumentSessionRuntime>(
-        this, *m_imageDocument, *m_videoDocument,
+        this, imageDocumentPort(*m_imageDocument), videoDocumentPort(*m_videoDocument),
         [this](const std::vector<KiriView::DocumentSessionChange> &changes) {
             handleSessionChanges(changes);
         },

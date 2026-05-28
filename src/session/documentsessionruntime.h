@@ -12,11 +12,13 @@
 #include "session/activenavigationprojection.h"
 #include "session/activenavigationthumbnailmodel.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
+#include "session/documentsessiondocumentports.h"
 #include "session/documentsessionmediadeletionruntime.h"
 #include "session/documentsessionpublicprojection.h"
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
 
+#include <QMetaObject>
 #include <QSize>
 #include <QString>
 #include <QUrl>
@@ -26,8 +28,6 @@
 #include <optional>
 #include <vector>
 
-class KiriImageDocument;
-class KiriVideoDocument;
 class QAbstractListModel;
 class QObject;
 class QString;
@@ -47,8 +47,8 @@ class DocumentSessionRuntime final
 public:
     using ChangeCallback = DocumentSessionState::ChangeCallback;
 
-    DocumentSessionRuntime(QObject *owner, KiriImageDocument &imageDocument,
-        KiriVideoDocument &videoDocument, ChangeCallback changeCallback = {},
+    DocumentSessionRuntime(QObject *owner, DocumentSessionImageDocumentPort imageDocument,
+        DocumentSessionVideoDocumentPort videoDocument, ChangeCallback changeCallback = {},
         DocumentSessionRuntimeDependencies dependencies = {});
     ~DocumentSessionRuntime();
 
@@ -139,8 +139,8 @@ private:
     ImageDocumentPageActiveNavigationSnapshot imageDocumentPageActiveNavigationSnapshot() const;
 
     QObject *m_owner = nullptr;
-    KiriImageDocument &m_imageDocument;
-    KiriVideoDocument &m_videoDocument;
+    DocumentSessionImageDocumentPort m_imageDocument;
+    DocumentSessionVideoDocumentPort m_videoDocument;
     DocumentSessionState m_state;
     std::unique_ptr<ActiveNavigationThumbnailModel> m_activeNavigationThumbnailModel;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
@@ -148,6 +148,7 @@ private:
     MediaOpenWithProvider m_mediaOpenWithProvider;
     ImageIoJob m_mediaOpenWithJob;
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
+    std::vector<QMetaObject::Connection> m_documentConnections;
     bool m_routingSource = false;
 };
 }

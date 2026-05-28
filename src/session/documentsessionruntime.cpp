@@ -3,8 +3,6 @@
 
 #include "documentsessionruntime.h"
 
-#include "facade/kiriimagedocument.h"
-#include "facade/kirivideodocument.h"
 #include "localization/imageerrortext.h"
 #include "location/imageurl.h"
 #include "navigation/mediaformatregistry.h"
@@ -65,15 +63,24 @@ void logDirectMediaScope(const char *message, const KiriView::DirectMediaScope &
     qCDebug(kiriviewNavigationLog) << message << "currentUrl" << scope.currentUrl << "parentUrl"
                                    << scope.parentUrl << "generation" << scope.generation;
 }
+
+void appendConnection(std::vector<QMetaObject::Connection> &connections,
+    const KiriView::DocumentSessionDocumentSignalConnector &connector, QObject *owner,
+    KiriView::DocumentSessionDocumentChangeHandler handler)
+{
+    if (connector) {
+        connections.push_back(connector(owner, std::move(handler)));
+    }
+}
 }
 
 namespace KiriView {
-DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument &imageDocument,
-    KiriVideoDocument &videoDocument, ChangeCallback changeCallback,
-    DocumentSessionRuntimeDependencies dependencies)
+DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
+    DocumentSessionImageDocumentPort imageDocument, DocumentSessionVideoDocumentPort videoDocument,
+    ChangeCallback changeCallback, DocumentSessionRuntimeDependencies dependencies)
     : m_owner(owner)
-    , m_imageDocument(imageDocument)
-    , m_videoDocument(videoDocument)
+    , m_imageDocument(std::move(imageDocument))
+    , m_videoDocument(std::move(videoDocument))
     , m_state(std::move(changeCallback))
     , m_activeNavigationThumbnailModel(std::make_unique<ActiveNavigationThumbnailModel>(owner))
     , m_directMediaNavigationRuntime(std::move(dependencies.directMediaNavigationCandidateProvider))
@@ -92,8 +99,9 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
 
 DocumentSessionRuntime::~DocumentSessionRuntime()
 {
-    QObject::disconnect(&m_imageDocument, nullptr, m_owner, nullptr);
-    QObject::disconnect(&m_videoDocument, nullptr, m_owner, nullptr);
+    for (const QMetaObject::Connection &connection : m_documentConnections) {
+        QObject::disconnect(connection);
+    }
     m_directMediaNavigationRuntime.cancel();
     m_mediaDeletionRuntime.cancel();
     m_mediaOpenWithJob.cancel();
@@ -328,9 +336,7 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 {
     if (m_state.documentKind() == DocumentSessionKind::Image
         && !directImageLoadMayUseImageDocumentSourceScope()) {
-        m_imageDocument.deleteDisplayedFile(mode == FileDeletionMode::MoveToTrash
-                ? KiriImageDocument::DeletionMode::MoveToTrash
-                : KiriImageDocument::DeletionMode::DeletePermanently);
+        m_imageDocument.deleteDisplayedFile(mode);
         syncImageDocumentFileDeletionProgress();
         return;
     }
@@ -363,18 +369,19 @@ void DocumentSessionRuntime::openCurrentMediaWith(MediaOpenWithCallback callback
 
 void DocumentSessionRuntime::connectDocuments()
 {
-    QObject::connect(&m_imageDocument, &KiriImageDocument::sourceUrlChanged, m_owner,
+    appendConnection(m_documentConnections, m_imageDocument.notifications.sourceUrlChanged, m_owner,
         [this]() { syncFromImageDocument(); });
-    QObject::connect(&m_imageDocument, &KiriImageDocument::statusChanged, m_owner,
+    appendConnection(m_documentConnections, m_imageDocument.notifications.statusChanged, m_owner,
         [this]() { syncFromImageDocument(); });
-    QObject::connect(&m_imageDocument, &KiriImageDocument::windowTitleFileNameChanged, m_owner,
+    appendConnection(m_documentConnections,
+        m_imageDocument.notifications.windowTitleFileNameChanged, m_owner,
         [this]() { recomputePublicProjection(); });
-    QObject::connect(&m_imageDocument, &KiriImageDocument::imageSizeChanged, m_owner,
+    appendConnection(m_documentConnections, m_imageDocument.notifications.imageSizeChanged, m_owner,
         [this]() { recomputePublicProjection(); });
-    QObject::connect(&m_imageDocument, &KiriImageDocument::errorStringChanged, m_owner,
-        [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
-    QObject::connect(
-        &m_imageDocument, &KiriImageDocument::imageDocumentSourceScopeChanged, m_owner, [this]() {
+    appendConnection(m_documentConnections, m_imageDocument.notifications.errorStringChanged,
+        m_owner, [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
+    appendConnection(m_documentConnections,
+        m_imageDocument.notifications.imageDocumentSourceScopeChanged, m_owner, [this]() {
             if (m_routingSource) {
                 return;
             }
@@ -385,29 +392,31 @@ void DocumentSessionRuntime::connectDocuments()
             }
             recomputePublicProjection();
         });
-    QObject::connect(&m_imageDocument, &KiriImageDocument::fileDeletionInProgressChanged, m_owner,
+    appendConnection(m_documentConnections,
+        m_imageDocument.notifications.fileDeletionInProgressChanged, m_owner,
         [this]() { syncImageDocumentFileDeletionProgress(); });
-    QObject::connect(&m_imageDocument, &KiriImageDocument::zoomPercentKnownChanged, m_owner,
-        [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); });
-    QObject::connect(&m_imageDocument, &KiriImageDocument::zoomPercentChanged, m_owner,
-        [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); });
-    QObject::connect(&m_imageDocument, &KiriImageDocument::pageNavigationChanged, m_owner,
-        [this]() { publishActiveNavigationForImagePages(); });
+    appendConnection(m_documentConnections, m_imageDocument.notifications.zoomPercentKnownChanged,
+        m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); });
+    appendConnection(m_documentConnections, m_imageDocument.notifications.zoomPercentChanged,
+        m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); });
+    appendConnection(m_documentConnections, m_imageDocument.notifications.pageNavigationChanged,
+        m_owner, [this]() { publishActiveNavigationForImagePages(); });
 
-    QObject::connect(&m_videoDocument, &KiriVideoDocument::sourceUrlChanged, m_owner,
+    appendConnection(m_documentConnections, m_videoDocument.notifications.sourceUrlChanged, m_owner,
         [this]() { syncFromVideoDocument(); });
-    QObject::connect(&m_videoDocument, &KiriVideoDocument::statusChanged, m_owner,
+    appendConnection(m_documentConnections, m_videoDocument.notifications.statusChanged, m_owner,
         [this]() { syncFromVideoDocument(); });
-    QObject::connect(&m_videoDocument, &KiriVideoDocument::windowTitleFileNameChanged, m_owner,
+    appendConnection(m_documentConnections,
+        m_videoDocument.notifications.windowTitleFileNameChanged, m_owner,
         [this]() { recomputePublicProjection(); });
-    QObject::connect(&m_videoDocument, &KiriVideoDocument::videoSizeChanged, m_owner,
+    appendConnection(m_documentConnections, m_videoDocument.notifications.videoSizeChanged, m_owner,
         [this]() { recomputePublicProjection(); });
-    QObject::connect(&m_videoDocument, &KiriVideoDocument::errorStringChanged, m_owner,
-        [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
-    QObject::connect(&m_videoDocument, &KiriVideoDocument::zoomPercentKnownChanged, m_owner,
-        [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); });
-    QObject::connect(&m_videoDocument, &KiriVideoDocument::zoomPercentChanged, m_owner,
-        [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); });
+    appendConnection(m_documentConnections, m_videoDocument.notifications.errorStringChanged,
+        m_owner, [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
+    appendConnection(m_documentConnections, m_videoDocument.notifications.zoomPercentKnownChanged,
+        m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); });
+    appendConnection(m_documentConnections, m_videoDocument.notifications.zoomPercentChanged,
+        m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); });
 }
 
 void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
@@ -790,8 +799,7 @@ void DocumentSessionRuntime::cacheDisplayedMediaPredecodeImages()
 std::vector<DisplayedPredecodeImage> DocumentSessionRuntime::displayedPredecodeImages() const
 {
     if (m_state.documentKind() != DocumentSessionKind::Image
-        || !activeImageUsesImageDocumentSourceScope()
-        || m_imageDocument.status() != KiriImageDocument::Status::Ready) {
+        || !activeImageUsesImageDocumentSourceScope() || !m_imageDocument.ready()) {
         return {};
     }
 
@@ -840,10 +848,10 @@ QUrl DocumentSessionRuntime::currentMediaOpenWithTargetUrl() const
 {
     return mediaOpenWithTargetUrl(MediaOpenWithTargetInput {
         m_state.documentKind(),
-        m_imageDocument.status() == KiriImageDocument::Status::Ready,
+        m_imageDocument.ready(),
         m_imageDocument.displayedUrl(),
         m_imageDocument.displayedOpenedCollectionScope(),
-        m_videoDocument.status() == KiriVideoDocument::Status::Ready,
+        m_videoDocument.ready(),
         m_videoDocument.sourceUrl(),
     });
 }
@@ -911,7 +919,7 @@ bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
             return m_state.confirmDirectImageCursor(displayedUrl);
         }
 
-        if (m_imageDocument.status() == KiriImageDocument::Status::Error
+        if (m_imageDocument.error()
             || (!m_imageDocument.sourceUrl().isEmpty()
                 && m_imageDocument.sourceUrl() != pendingUrl)) {
             return m_state.restoreDirectImageCursorAfterFailure();
@@ -923,7 +931,7 @@ bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
         return m_state.confirmDirectImageCursor(displayedUrl);
     }
 
-    if (m_imageDocument.status() == KiriImageDocument::Status::Error) {
+    if (m_imageDocument.error()) {
         return m_state.restoreDirectImageCursorAfterFailure();
     }
 
@@ -966,10 +974,10 @@ DocumentSessionPublicProjectionInput DocumentSessionRuntime::publicProjectionInp
         m_imageDocument.primaryImageSize(),
         m_videoDocument.windowTitleFileName(),
         m_videoDocument.videoSize(),
-        m_imageDocument.status() == KiriImageDocument::Status::Ready,
+        m_imageDocument.ready(),
         !m_state.directMediaCursor().pendingUrl.isEmpty(),
         !m_videoDocument.sourceUrl().isEmpty(),
-        m_videoDocument.status() == KiriVideoDocument::Status::Error,
+        m_videoDocument.error(),
         !currentMediaOpenWithTargetUrl().isEmpty(),
     };
 }
