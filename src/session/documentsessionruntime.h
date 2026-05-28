@@ -6,7 +6,6 @@
 
 #include "document/filedeletion.h"
 #include "document/imagedocumentruntimedependencies.h"
-#include "document/mediaopenwith.h"
 #include "navigation/directmedianavigationcandidateprovider.h"
 #include "navigation/directmedianavigationmodel.h"
 #include "session/activenavigationprojection.h"
@@ -17,6 +16,7 @@
 #include "session/documentsessionpublicprojection.h"
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
+#include "session/mediaopenwith.h"
 
 #include <QMetaObject>
 #include <QSize>
@@ -123,7 +123,7 @@ private:
     void cancelMediaDeletion();
     void startMediaDeletion(
         FileDeletionMode mode, std::vector<DirectMediaNavigationCandidate> candidates = {});
-    QUrl currentMediaOpenWithTargetUrl() const;
+    MediaOpenWithPlan currentMediaOpenWithPlan() const;
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
     void executeMediaDeletionCompletionPlan(
         const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString);

@@ -1,16 +1,21 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_MEDIAOPENWITHTARGET_H
-#define KIRIVIEW_MEDIAOPENWITHTARGET_H
+#ifndef KIRIVIEW_MEDIAOPENWITHPLAN_H
+#define KIRIVIEW_MEDIAOPENWITHPLAN_H
 
 #include "location/imagelocation.h"
 #include "session/documentsessiontypes.h"
 
 #include <QUrl>
+#include <optional>
 
 namespace KiriView {
-struct MediaOpenWithTargetInput {
+struct MediaOpenWithRequest {
+    QUrl targetUrl;
+};
+
+struct MediaOpenWithPlanInput {
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     bool imageReady = false;
     QUrl imageDisplayedUrl;
@@ -19,7 +24,13 @@ struct MediaOpenWithTargetInput {
     QUrl videoSourceUrl;
 };
 
-QUrl mediaOpenWithTargetUrl(const MediaOpenWithTargetInput &input);
+struct MediaOpenWithPlan {
+    std::optional<MediaOpenWithRequest> request;
+
+    bool hasRequest() const { return request.has_value(); }
+};
+
+MediaOpenWithPlan mediaOpenWithPlan(const MediaOpenWithPlanInput &input);
 }
 
 #endif

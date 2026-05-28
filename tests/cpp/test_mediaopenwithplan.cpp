@@ -1,0 +1,151 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#include "session/mediaopenwithplan.h"
+
+#include <QTest>
+
+namespace {
+QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+
+KiriView::OpenedCollectionScopeLocation archiveScope(const QString &scheme)
+{
+    QUrl rootUrl;
+    rootUrl.setScheme(scheme);
+    rootUrl.setPath(QStringLiteral("/books/book.%1/").arg(scheme));
+    return KiriView::OpenedCollectionScopeLocation::fromUrls(
+        localUrl(QStringLiteral("/books/book.%1").arg(scheme)), rootUrl,
+        KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+}
+}
+
+class TestMediaOpenWithPlan : public QObject
+{
+    Q_OBJECT
+
+private Q_SLOTS:
+    void emptyAndUnreadyDocumentsHaveNoRequest();
+    void directImageUsesDisplayedUrl();
+    void directVideoUsesSourceUrl();
+    void directoryCollectionUsesCurrentImageUrl();
+    void kioSupportedArchiveCollectionsUseCurrentImageUrl_data();
+    void kioSupportedArchiveCollectionsUseCurrentImageUrl();
+    void rarArchiveCollectionsHaveNoTarget();
+};
+
+namespace {
+void expectNoRequest(const KiriView::MediaOpenWithPlan &plan)
+{
+    QVERIFY(!plan.hasRequest());
+    QVERIFY(!plan.request.has_value());
+}
+
+void expectRequestTarget(const KiriView::MediaOpenWithPlan &plan, const QUrl &targetUrl)
+{
+    QVERIFY(plan.hasRequest());
+    QVERIFY(plan.request.has_value());
+    QCOMPARE(plan.request->targetUrl, targetUrl);
+}
+}
+
+void TestMediaOpenWithPlan::emptyAndUnreadyDocumentsHaveNoRequest()
+{
+    expectNoRequest(KiriView::mediaOpenWithPlan({}));
+
+    expectNoRequest(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
+        KiriView::DocumentSessionKind::Image,
+        false,
+        localUrl(QStringLiteral("/images/page.png")),
+    }));
+
+    expectNoRequest(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
+        KiriView::DocumentSessionKind::Video,
+        false,
+        {},
+        {},
+        false,
+        localUrl(QStringLiteral("/videos/clip.mp4")),
+    }));
+}
+
+void TestMediaOpenWithPlan::directImageUsesDisplayedUrl()
+{
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
+    expectRequestTarget(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
+                            KiriView::DocumentSessionKind::Image,
+                            true,
+                            imageUrl,
+                        }),
+        imageUrl);
+}
+
+void TestMediaOpenWithPlan::directVideoUsesSourceUrl()
+{
+    const QUrl videoUrl = localUrl(QStringLiteral("/videos/clip.mp4"));
+    expectRequestTarget(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
+                            KiriView::DocumentSessionKind::Video,
+                            false,
+                            {},
+                            {},
+                            true,
+                            videoUrl,
+                        }),
+        videoUrl);
+}
+
+void TestMediaOpenWithPlan::directoryCollectionUsesCurrentImageUrl()
+{
+    const QUrl imageUrl = localUrl(QStringLiteral("/book/page.png"));
+    const KiriView::OpenedCollectionScopeLocation scope
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(localUrl(QStringLiteral("/book")),
+            localUrl(QStringLiteral("/book")), KiriView::OpenedCollectionScopeKind::Directory);
+    expectRequestTarget(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
+                            KiriView::DocumentSessionKind::Image,
+                            true,
+                            imageUrl,
+                            scope,
+                        }),
+        imageUrl);
+}
+
+void TestMediaOpenWithPlan::kioSupportedArchiveCollectionsUseCurrentImageUrl_data()
+{
+    QTest::addColumn<QString>("scheme");
+
+    QTest::newRow("zip") << QStringLiteral("zip");
+    QTest::newRow("tar") << QStringLiteral("tar");
+    QTest::newRow("sevenz") << QStringLiteral("sevenz");
+}
+
+void TestMediaOpenWithPlan::kioSupportedArchiveCollectionsUseCurrentImageUrl()
+{
+    QFETCH(QString, scheme);
+
+    QUrl imageUrl;
+    imageUrl.setScheme(scheme);
+    imageUrl.setPath(QStringLiteral("/books/book.%1/page.png").arg(scheme));
+    expectRequestTarget(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
+                            KiriView::DocumentSessionKind::Image,
+                            true,
+                            imageUrl,
+                            archiveScope(scheme),
+                        }),
+        imageUrl);
+}
+
+void TestMediaOpenWithPlan::rarArchiveCollectionsHaveNoTarget()
+{
+    QUrl imageUrl;
+    imageUrl.setScheme(QStringLiteral("rar"));
+    imageUrl.setPath(QStringLiteral("/books/book.rar/page.png"));
+    expectNoRequest(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
+        KiriView::DocumentSessionKind::Image,
+        true,
+        imageUrl,
+        archiveScope(QStringLiteral("rar")),
+    }));
+}
+
+QTEST_GUILESS_MAIN(TestMediaOpenWithPlan)
+
+#include "test_mediaopenwithplan.moc"

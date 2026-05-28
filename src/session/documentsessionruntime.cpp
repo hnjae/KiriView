@@ -9,7 +9,6 @@
 #include "navigation/navigationlogging.h"
 #include "predecode/mediapredecodecoordinator.h"
 #include "session/activenavigationthumbnailprojection.h"
-#include "session/mediaopenwithtarget.h"
 
 #include <QAbstractListModel>
 #include <QDebug>
@@ -355,16 +354,15 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 
 void DocumentSessionRuntime::openCurrentMediaWith(MediaOpenWithCallback callback)
 {
-    const QUrl targetUrl = currentMediaOpenWithTargetUrl();
-    if (targetUrl.isEmpty()) {
+    const MediaOpenWithPlan plan = currentMediaOpenWithPlan();
+    if (!plan.hasRequest()) {
         if (callback) {
             callback(MediaOpenWithResult::Failed, QString());
         }
         return;
     }
 
-    m_mediaOpenWithJob
-        = m_mediaOpenWithProvider(m_owner, MediaOpenWithRequest { targetUrl }, std::move(callback));
+    m_mediaOpenWithJob = m_mediaOpenWithProvider(m_owner, *plan.request, std::move(callback));
 }
 
 void DocumentSessionRuntime::connectDocuments()
@@ -844,9 +842,9 @@ void DocumentSessionRuntime::startMediaDeletion(
     }
 }
 
-QUrl DocumentSessionRuntime::currentMediaOpenWithTargetUrl() const
+MediaOpenWithPlan DocumentSessionRuntime::currentMediaOpenWithPlan() const
 {
-    return mediaOpenWithTargetUrl(MediaOpenWithTargetInput {
+    return mediaOpenWithPlan(MediaOpenWithPlanInput {
         m_state.documentKind(),
         m_imageDocument.ready(),
         m_imageDocument.displayedUrl(),
@@ -978,7 +976,7 @@ DocumentSessionPublicProjectionInput DocumentSessionRuntime::publicProjectionInp
         !m_state.directMediaCursor().pendingUrl.isEmpty(),
         !m_videoDocument.sourceUrl().isEmpty(),
         m_videoDocument.error(),
-        !currentMediaOpenWithTargetUrl().isEmpty(),
+        currentMediaOpenWithPlan().hasRequest(),
     };
 }
 

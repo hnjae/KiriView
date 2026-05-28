@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "mediaopenwithtarget.h"
+#include "mediaopenwithplan.h"
 
 #include "archive/archiveformat.h"
 
@@ -15,7 +15,7 @@ bool openedCollectionScopeOpenWithAvailable(const KiriView::OpenedCollectionScop
     return KiriView::archiveRootSchemeUsesKioFuse(scope.rootUrl().scheme());
 }
 
-QUrl imageOpenWithTargetUrl(const KiriView::MediaOpenWithTargetInput &input)
+QUrl imageOpenWithTargetUrl(const KiriView::MediaOpenWithPlanInput &input)
 {
     if (!input.imageReady || input.imageDisplayedUrl.isEmpty()
         || !openedCollectionScopeOpenWithAvailable(input.openedCollectionScope)) {
@@ -25,7 +25,7 @@ QUrl imageOpenWithTargetUrl(const KiriView::MediaOpenWithTargetInput &input)
     return input.imageDisplayedUrl;
 }
 
-QUrl videoOpenWithTargetUrl(const KiriView::MediaOpenWithTargetInput &input)
+QUrl videoOpenWithTargetUrl(const KiriView::MediaOpenWithPlanInput &input)
 {
     if (!input.videoReady || input.videoSourceUrl.isEmpty()) {
         return {};
@@ -36,17 +36,25 @@ QUrl videoOpenWithTargetUrl(const KiriView::MediaOpenWithTargetInput &input)
 }
 
 namespace KiriView {
-QUrl mediaOpenWithTargetUrl(const MediaOpenWithTargetInput &input)
+MediaOpenWithPlan mediaOpenWithPlan(const MediaOpenWithPlanInput &input)
 {
+    QUrl targetUrl;
+
     switch (input.documentKind) {
     case DocumentSessionKind::Image:
-        return imageOpenWithTargetUrl(input);
+        targetUrl = imageOpenWithTargetUrl(input);
+        break;
     case DocumentSessionKind::Video:
-        return videoOpenWithTargetUrl(input);
+        targetUrl = videoOpenWithTargetUrl(input);
+        break;
     case DocumentSessionKind::Empty:
+        break;
+    }
+
+    if (targetUrl.isEmpty()) {
         return {};
     }
 
-    return {};
+    return MediaOpenWithPlan { MediaOpenWithRequest { targetUrl } };
 }
 }
