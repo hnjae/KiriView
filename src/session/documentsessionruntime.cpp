@@ -464,7 +464,7 @@ void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
 
     std::vector<ActiveNavigationThumbnailRow> rows = projectActiveNavigationThumbnailRows(
         m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(),
-        m_directMediaNavigationCandidates, m_imageDocument.pageNavigationSnapshot());
+        m_state.directMediaNavigationCandidates(), m_imageDocument.pageNavigationSnapshot());
     if (rows.empty()) {
         m_activeNavigationThumbnailModel->clear();
         return;
@@ -526,8 +526,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
                     cancelMediaDeletion();
                 } else if constexpr (std::is_same_v<Operation,
                                          ClearDirectMediaNavigationRouteOperation>) {
-                    m_state.setDirectMediaNavigationState({}, false);
-                    m_directMediaNavigationCandidates.clear();
+                    m_state.setDirectMediaNavigation({}, false, {});
                     state.directMediaNavigationCleared = true;
                 } else if constexpr (std::is_same_v<Operation,
                                          ClearDirectMediaCursorRouteOperation>) {
@@ -596,7 +595,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
                     }
                 } else if constexpr (std::is_same_v<Operation, ClearMediaPredecodeRouteOperation>) {
                     if (state.directMediaNavigationCleared) {
-                        m_state.setDirectMediaNavigationState({}, false);
+                        m_state.setDirectMediaNavigation({}, false, {});
                         recomputePublicProjection();
                     }
                     if (m_mediaPredecodeCoordinator != nullptr) {
@@ -657,8 +656,7 @@ void DocumentSessionRuntime::syncFromVideoDocument()
         m_state.clearDirectMediaCursor();
         m_state.setSourceIdentity(QUrl());
         setDocumentKind(DocumentSessionKind::Empty);
-        m_state.setDirectMediaNavigationState({}, false);
-        m_directMediaNavigationCandidates.clear();
+        m_state.setDirectMediaNavigation({}, false, {});
     } else {
         const bool directMediaScopeChanged
             = m_state.setDirectVideoCursor(m_videoDocument.sourceUrl());
@@ -682,8 +680,7 @@ void DocumentSessionRuntime::refreshDirectMediaNavigation()
                                        << "inactive"
                                        << "documentKind" << documentKindName(m_state.documentKind())
                                        << "cursorUrl" << activeDirectMediaCursorUrl();
-        m_state.setDirectMediaNavigationState({}, false);
-        m_directMediaNavigationCandidates.clear();
+        m_state.setDirectMediaNavigation({}, false, {});
         recomputePublicProjection();
         if (!directImageLoadMayUseImageDocumentSourceScope()) {
             m_mediaPredecodeCoordinator->clear();
@@ -716,14 +713,12 @@ void DocumentSessionRuntime::finishDirectMediaNavigation(
     if (!result.succeeded) {
         qCDebug(kiriviewNavigationLog) << "direct media navigation open failed"
                                        << "error" << result.errorString;
-        m_state.setDirectMediaNavigationState({}, false);
-        m_directMediaNavigationCandidates.clear();
+        m_state.setDirectMediaNavigation({}, false, {});
         recomputePublicProjection();
         return;
     }
 
-    m_directMediaNavigationCandidates = result.candidates;
-    m_state.setDirectMediaNavigationState(result.plan.boundaryState, true);
+    m_state.setDirectMediaNavigation(result.plan.boundaryState, true, result.candidates);
     qCDebug(kiriviewNavigationLog)
         << "direct media navigation open finished"
         << "candidates" << result.candidates.size() << "currentNumber"
@@ -742,14 +737,12 @@ void DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState(
     if (!result.succeeded) {
         qCDebug(kiriviewNavigationLog) << "direct media navigation refresh failed"
                                        << "error" << result.errorString;
-        m_state.setDirectMediaNavigationState({}, false);
-        m_directMediaNavigationCandidates.clear();
+        m_state.setDirectMediaNavigation({}, false, {});
         recomputePublicProjection();
         return;
     }
 
-    m_directMediaNavigationCandidates = result.candidates;
-    m_state.setDirectMediaNavigationState(result.boundaryState, true);
+    m_state.setDirectMediaNavigation(result.boundaryState, true, result.candidates);
     qCDebug(kiriviewNavigationLog)
         << "direct media navigation refresh finished"
         << "candidates" << result.candidates.size() << "currentNumber"
@@ -889,8 +882,7 @@ void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
         m_state.setSourceIdentity(QUrl());
         setDocumentKind(DocumentSessionKind::Empty);
         if (plan.clearDirectMediaNavigation) {
-            m_state.setDirectMediaNavigationState({}, false);
-            m_directMediaNavigationCandidates.clear();
+            m_state.setDirectMediaNavigation({}, false, {});
             recomputePublicProjection();
         }
         if (plan.clearPredecode && m_mediaPredecodeCoordinator != nullptr) {

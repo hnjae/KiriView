@@ -5,6 +5,7 @@
 
 #include <QtGlobal>
 #include <algorithm>
+#include <cstddef>
 #include <utility>
 
 namespace {
@@ -24,6 +25,24 @@ bool sameDirectMediaNavigationState(const KiriView::DirectMediaNavigationBoundar
     return left.canOpenPrevious == right.canOpenPrevious && left.canOpenNext == right.canOpenNext
         && left.atKnownFirst == right.atKnownFirst && left.atKnownLast == right.atKnownLast
         && left.currentNumber == right.currentNumber && left.count == right.count;
+}
+
+bool sameDirectMediaNavigationCandidates(
+    const std::vector<KiriView::DirectMediaNavigationCandidate> &left,
+    const std::vector<KiriView::DirectMediaNavigationCandidate> &right)
+{
+    if (left.size() != right.size()) {
+        return false;
+    }
+
+    for (std::size_t index = 0; index < left.size(); ++index) {
+        if (left.at(index).url != right.at(index).url
+            || left.at(index).name != right.at(index).name) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool sameActiveNavigationSnapshot(
@@ -77,6 +96,12 @@ const DirectMediaNavigationBoundaryState &DocumentSessionState::directMediaNavig
 bool DocumentSessionState::directMediaNavigationKnown() const
 {
     return m_directMediaNavigationKnown;
+}
+
+const std::vector<DirectMediaNavigationCandidate> &
+DocumentSessionState::directMediaNavigationCandidates() const
+{
+    return m_directMediaNavigationCandidates;
 }
 
 const ActiveNavigationSnapshot &DocumentSessionState::activeNavigationSnapshot() const
@@ -175,16 +200,18 @@ void DocumentSessionState::setActiveZoomSnapshot(ActiveZoomSnapshot snapshot)
     publish(DocumentSessionChange::ActiveZoomReadout);
 }
 
-void DocumentSessionState::setDirectMediaNavigationState(
-    DirectMediaNavigationBoundaryState state, bool known)
+void DocumentSessionState::setDirectMediaNavigation(DirectMediaNavigationBoundaryState state,
+    bool known, std::vector<DirectMediaNavigationCandidate> candidates)
 {
     if (m_directMediaNavigationKnown == known
-        && sameDirectMediaNavigationState(m_directMediaNavigationState, state)) {
+        && sameDirectMediaNavigationState(m_directMediaNavigationState, state)
+        && sameDirectMediaNavigationCandidates(m_directMediaNavigationCandidates, candidates)) {
         return;
     }
 
     m_directMediaNavigationKnown = known;
     m_directMediaNavigationState = state;
+    m_directMediaNavigationCandidates = std::move(candidates);
 }
 
 bool DocumentSessionState::updatePublicProjection(DocumentSessionPublicProjectionInput input)

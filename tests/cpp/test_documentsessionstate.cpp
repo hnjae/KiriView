@@ -8,6 +8,13 @@
 #include <QUrl>
 #include <vector>
 
+namespace {
+KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+{
+    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+}
+}
+
 class TestDocumentSessionState : public QObject
 {
     Q_OBJECT
@@ -17,7 +24,7 @@ private Q_SLOTS:
     void documentKindPublishesConsistentActiveZoomSnapshot();
     void activeZoomSnapshotOnlyNotifiesWhenProjectionChanges();
     void fileDeletionProgressOnlyPublishesProgress();
-    void directMediaNavigationStateOnlyUpdatesWhenBoundaryChanges();
+    void directMediaNavigationSnapshotOwnsBoundaryAndCandidates();
     void publicProjectionCommitsValuesBeforePublishing();
     void publicProjectionOnlyNotifiesChangedOutputs();
     void publishDeduplicatesChangesInOrder();
@@ -116,7 +123,7 @@ void TestDocumentSessionState::fileDeletionProgressOnlyPublishesProgress()
     QCOMPARE(batches.size(), std::size_t(1));
 }
 
-void TestDocumentSessionState::directMediaNavigationStateOnlyUpdatesWhenBoundaryChanges()
+void TestDocumentSessionState::directMediaNavigationSnapshotOwnsBoundaryAndCandidates()
 {
     std::vector<KiriView::DocumentSessionChange> changes;
     KiriView::DocumentSessionState state(
@@ -132,19 +139,41 @@ void TestDocumentSessionState::directMediaNavigationStateOnlyUpdatesWhenBoundary
         2,
         2,
     };
-    state.setDirectMediaNavigationState(boundary, true);
+    const QUrl firstUrl = QUrl::fromLocalFile(QStringLiteral("/media/01.png"));
+    const QUrl secondUrl = QUrl::fromLocalFile(QStringLiteral("/media/02.mp4"));
+    state.setDirectMediaNavigation(boundary, true,
+        {
+            directMediaNavigationCandidate(firstUrl),
+            directMediaNavigationCandidate(secondUrl),
+        });
 
     QVERIFY(state.directMediaNavigationKnown());
     QCOMPARE(state.directMediaNavigationState().currentNumber, 2);
+    QCOMPARE(state.directMediaNavigationCandidates().size(), std::size_t(2));
+    QCOMPARE(state.directMediaNavigationCandidates().at(0).url, firstUrl);
+    QCOMPARE(state.directMediaNavigationCandidates().at(1).url, secondUrl);
     QCOMPARE(changes.size(), std::size_t(0));
 
-    state.setDirectMediaNavigationState(boundary, true);
+    state.setDirectMediaNavigation(boundary, true,
+        {
+            directMediaNavigationCandidate(firstUrl),
+            directMediaNavigationCandidate(secondUrl),
+        });
     QCOMPARE(changes.size(), std::size_t(0));
 
     boundary.canOpenNext = true;
-    state.setDirectMediaNavigationState(boundary, true);
+    state.setDirectMediaNavigation(boundary, true,
+        {
+            directMediaNavigationCandidate(firstUrl),
+            directMediaNavigationCandidate(secondUrl),
+        });
     QCOMPARE(state.directMediaNavigationState().canOpenNext, true);
     QCOMPARE(changes.size(), std::size_t(0));
+
+    state.setDirectMediaNavigation({}, false, {});
+    QVERIFY(!state.directMediaNavigationKnown());
+    QCOMPARE(state.directMediaNavigationState().currentNumber, 0);
+    QVERIFY(state.directMediaNavigationCandidates().empty());
 }
 
 void TestDocumentSessionState::publicProjectionCommitsValuesBeforePublishing()
