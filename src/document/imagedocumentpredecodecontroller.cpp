@@ -4,6 +4,7 @@
 #include "imagedocumentpredecodecontroller.h"
 
 #include "imagedocumentstate.h"
+#include "location/imagedocumentlocation.h"
 #include "predecode/imagepredecodecoordinator.h"
 #include "presentation/imagepresentationcontroller.h"
 
@@ -16,13 +17,15 @@ ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject *pare
     ImageDocumentState &state, ImagePresentationController &presentationController,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
-    CurrentPageNumberCallback currentPageNumber, PowerSaverProvider powerSaverProvider)
+    CurrentPageNumberCallback currentPageNumber, PowerSaverProvider powerSaverProvider,
+    bool ordinaryDirectMediaPredecodeEnabled)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_coordinator(
           std::make_unique<ImagePredecodeCoordinator>(parent, std::move(candidateProvider),
               std::move(decodeDependencies), std::move(powerSaverProvider), cacheByteBudget))
     , m_currentPageNumber(std::move(currentPageNumber))
+    , m_ordinaryDirectMediaPredecodeEnabled(ordinaryDirectMediaPredecodeEnabled)
 {
 }
 
@@ -34,6 +37,12 @@ void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
     std::optional<StaticImagePayload> staticImage = m_presentationController.staticImage();
     if (!m_presentationController.hasImage() || m_state.displayedUrl().isEmpty()
         || !staticImage.has_value()) {
+        m_coordinator->cancel();
+        return;
+    }
+
+    if (!m_ordinaryDirectMediaPredecodeEnabled
+        && !displayedLocationIsInsideOpenedCollectionScope(m_state.displayedImageLocation())) {
         m_coordinator->cancel();
         return;
     }

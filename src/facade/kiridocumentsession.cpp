@@ -80,6 +80,7 @@ KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithP
     KiriView::ExternalPredecodedImageFinder predecodedImageFinder)
 {
     dependencies.externalPredecodedImageFinder = std::move(predecodedImageFinder);
+    dependencies.ordinaryDirectMediaPredecodeEnabled = false;
     return dependencies;
 }
 

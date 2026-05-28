@@ -640,6 +640,8 @@ void DocumentSessionRuntime::syncFromImageDocument()
     m_state.publish(DocumentSessionChange::ErrorString);
     if (directMediaScopeChanged) {
         refreshDirectMediaNavigation();
+    } else if (m_state.directMediaNavigationKnown()) {
+        cacheDisplayedMediaPredecodeImages();
     }
 }
 
@@ -776,6 +778,20 @@ void DocumentSessionRuntime::scheduleMediaPredecode(
         displayedPredecodeImages(),
         firstDisplayDecodeContext(),
     });
+}
+
+void DocumentSessionRuntime::cacheDisplayedMediaPredecodeImages()
+{
+    if (!directMediaNavigationActive() || m_mediaPredecodeCoordinator == nullptr) {
+        return;
+    }
+
+    std::vector<DisplayedPredecodeImage> displayedImages = displayedPredecodeImages();
+    if (displayedImages.empty()) {
+        return;
+    }
+
+    m_mediaPredecodeCoordinator->cacheDisplayedImages(displayedImages);
 }
 
 std::vector<DisplayedPredecodeImage> DocumentSessionRuntime::displayedPredecodeImages() const

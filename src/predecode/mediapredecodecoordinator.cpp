@@ -52,6 +52,12 @@ void MediaPredecodeCoordinator::schedule(Context context)
     m_scheduleRuntime.schedule(std::move(plan.context));
 }
 
+void MediaPredecodeCoordinator::cacheDisplayedImages(
+    const std::vector<DisplayedPredecodeImage> &images)
+{
+    m_loadController.cacheDisplayedImages(images);
+}
+
 void MediaPredecodeCoordinator::setPowerSaverEnabled(bool enabled)
 {
     m_scheduleRuntime.setPowerSaverEnabled(enabled);

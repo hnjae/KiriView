@@ -32,6 +32,7 @@ struct ImageDocumentRuntimeDependencyOverrides {
     PowerSaverProvider powerSaver;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;
     qsizetype predecodeCacheByteBudget = 0;
+    bool ordinaryDirectMediaPredecodeEnabled = true;
 };
 
 struct ImageDocumentRuntimeDependencies {
@@ -42,6 +43,7 @@ struct ImageDocumentRuntimeDependencies {
     qsizetype predecodeCacheByteBudget = 0;
     std::unique_ptr<MediaEntrySourceStore> mediaEntrySourceStore;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;
+    bool ordinaryDirectMediaPredecodeEnabled = true;
 
     ~ImageDocumentRuntimeDependencies();
 };

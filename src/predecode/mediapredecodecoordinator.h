@@ -34,6 +34,7 @@ public:
         PowerSaverProvider powerSaverProvider, qsizetype cacheByteBudget);
 
     void schedule(Context context);
+    void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage> &images);
     void setPowerSaverEnabled(bool enabled);
     bool powerSaverEnabled() const;
     void cancel();

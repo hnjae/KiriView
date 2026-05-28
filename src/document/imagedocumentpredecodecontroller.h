@@ -32,7 +32,8 @@ public:
         ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
         CurrentPageNumberCallback currentPageNumber = {},
-        PowerSaverProvider powerSaverProvider = {});
+        PowerSaverProvider powerSaverProvider = {},
+        bool ordinaryDirectMediaPredecodeEnabled = true);
     ~ImageDocumentPredecodeController();
 
     void scheduleAdjacentImagePredecode(
@@ -46,6 +47,7 @@ private:
     ImagePresentationController &m_presentationController;
     std::unique_ptr<ImagePredecodeCoordinator> m_coordinator;
     CurrentPageNumberCallback m_currentPageNumber;
+    bool m_ordinaryDirectMediaPredecodeEnabled = true;
 };
 }
 

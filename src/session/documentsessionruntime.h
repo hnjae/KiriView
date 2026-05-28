@@ -117,6 +117,7 @@ private:
     void updateDirectMediaNavigationBoundaryState(
         DocumentSessionDirectMediaNavigationRefreshResult result);
     void scheduleMediaPredecode(const std::vector<DirectMediaNavigationCandidate> &candidates);
+    void cacheDisplayedMediaPredecodeImages();
     std::vector<DisplayedPredecodeImage> displayedPredecodeImages() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     void cancelMediaDeletion();
