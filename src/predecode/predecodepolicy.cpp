@@ -10,20 +10,9 @@
 #include <utility>
 
 namespace KiriView {
-qsizetype predecodePreferredByteBudget()
-{
-    return Bridge::qtByteSize(rustPredecodePreferredByteBudget());
-}
-
 int predecodeDebounceMsec() { return rustPredecodeDebounceMsec(); }
 
 int predecodeNeutralRefreshMsec() { return rustPredecodeNeutralRefreshMsec(); }
-
-qsizetype predecodeByteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
-{
-    return Bridge::qtByteSize(
-        rustPredecodeByteBudgetForSystemMemory(Bridge::rustByteSize(systemMemoryByteSize)));
-}
 
 PredecodePolicyInput predecodePolicyInputForImagePageScope(
     const ImagePageScopeLocation &imagePageScope, PredecodeMomentumMode momentumMode,

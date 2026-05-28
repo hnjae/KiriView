@@ -15,13 +15,6 @@
 #include <utility>
 
 namespace KiriView {
-qsizetype PredecodeCache::preferredByteBudget() { return predecodePreferredByteBudget(); }
-
-qsizetype PredecodeCache::byteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
-{
-    return predecodeByteBudgetForSystemMemory(systemMemoryByteSize);
-}
-
 bool PredecodeCache::canCacheImage(const StaticImagePayload &staticImage, qsizetype byteBudget)
 {
     return staticImage.byteCostWithinBudget(byteBudget).has_value();

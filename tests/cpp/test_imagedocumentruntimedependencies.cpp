@@ -3,7 +3,7 @@
 
 #include "document/imagedocumentruntimedependencies.h"
 
-#include "predecode/predecodecache.h"
+#include "cache/imagecachepolicy.h"
 
 #include <QByteArray>
 #include <QObject>
@@ -54,7 +54,7 @@ void TestImageDocumentRuntimeDependencies::defaultDependenciesUseArchiveSessionS
     QVERIFY(resolved.fileOperations);
     QVERIFY(resolved.powerSaver.monitor);
     QVERIFY(resolved.predecodeCacheByteBudget > 0);
-    QVERIFY(resolved.predecodeCacheByteBudget <= KiriView::PredecodeCache::preferredByteBudget());
+    QVERIFY(resolved.predecodeCacheByteBudget <= KiriView::predecodeCachePreferredByteBudget());
 }
 
 void TestImageDocumentRuntimeDependencies::partialNonArchiveOverridesStillUseArchiveSessionStore()

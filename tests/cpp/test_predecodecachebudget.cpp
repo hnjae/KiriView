@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "predecode/predecodecache.h"
+#include "cache/imagecachepolicy.h"
 #include "predecode/predecodecachebudget.h"
 
 #include <QObject>
@@ -22,10 +22,10 @@ void TestPredecodeCacheBudget::defaultBudgetUsesSystemMemorySnapshot()
     constexpr qsizetype preferredByteBudget = 1024 * 1024 * 1024;
 
     QCOMPARE(KiriView::defaultPredecodeCacheByteBudget(KiriView::SystemMemorySnapshot {}),
-        KiriView::PredecodeCache::byteBudgetForSystemMemory(0));
+        KiriView::predecodeCacheByteBudgetForSystemMemory(0));
     QCOMPARE(KiriView::defaultPredecodeCacheByteBudget(
                  KiriView::SystemMemorySnapshot { preferredByteBudget }),
-        KiriView::PredecodeCache::byteBudgetForSystemMemory(preferredByteBudget));
+        KiriView::predecodeCacheByteBudgetForSystemMemory(preferredByteBudget));
 }
 
 void TestPredecodeCacheBudget::explicitPositiveBudgetIsPreserved()

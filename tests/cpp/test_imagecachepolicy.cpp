@@ -17,6 +17,7 @@ private Q_SLOTS:
     void rejectsInvalidEntriesAndBudgets();
     void reportsRetainedByteCosts();
     void staticTileCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap();
+    void predecodeCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap();
 };
 
 void TestImageCachePolicy::retainsLeastRecentlyUsedEntriesWithinBudget()
@@ -76,6 +77,18 @@ void TestImageCachePolicy::staticTileCacheByteBudgetUsesPreferredLimitAndSystemM
         preferredByteBudget);
     QCOMPARE(
         KiriView::staticTileCacheByteBudgetForSystemMemory(preferredByteBudget, -1), qsizetype(0));
+}
+
+void TestImageCachePolicy::predecodeCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap()
+{
+    constexpr qsizetype preferredByteBudget = 1024 * 1024 * 1024;
+
+    QCOMPARE(KiriView::predecodeCachePreferredByteBudget(), preferredByteBudget);
+    QCOMPARE(KiriView::predecodeCacheByteBudgetForSystemMemory(0), preferredByteBudget);
+    QCOMPARE(KiriView::predecodeCacheByteBudgetForSystemMemory(preferredByteBudget),
+        preferredByteBudget / 8);
+    QCOMPARE(KiriView::predecodeCacheByteBudgetForSystemMemory(preferredByteBudget * 16),
+        preferredByteBudget);
 }
 
 QTEST_GUILESS_MAIN(TestImageCachePolicy)

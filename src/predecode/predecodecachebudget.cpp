@@ -3,7 +3,7 @@
 
 #include "predecodecachebudget.h"
 
-#include "predecode/predecodecache.h"
+#include "cache/imagecachepolicy.h"
 
 namespace KiriView {
 qsizetype defaultPredecodeCacheByteBudget()
@@ -13,7 +13,7 @@ qsizetype defaultPredecodeCacheByteBudget()
 
 qsizetype defaultPredecodeCacheByteBudget(SystemMemorySnapshot systemMemory)
 {
-    return PredecodeCache::byteBudgetForSystemMemory(systemMemory.physicalByteSize);
+    return predecodeCacheByteBudgetForSystemMemory(systemMemory.physicalByteSize);
 }
 
 qsizetype resolvedPredecodeCacheByteBudget(qsizetype requestedByteBudget)

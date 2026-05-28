@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#[path = "predecodepolicy/budget.rs"]
-mod budget;
 #[path = "predecodepolicy/cache_retention.rs"]
 mod cache_retention;
 #[path = "predecodepolicy/config.rs"]
@@ -102,17 +100,11 @@ mod ffi {
     }
 
     extern "Rust" {
-        #[cxx_name = "rustPredecodePreferredByteBudget"]
-        fn rust_predecode_preferred_byte_budget() -> i64;
-
         #[cxx_name = "rustPredecodeDebounceMsec"]
         fn rust_predecode_debounce_msec() -> i32;
 
         #[cxx_name = "rustPredecodeNeutralRefreshMsec"]
         fn rust_predecode_neutral_refresh_msec() -> i32;
-
-        #[cxx_name = "rustPredecodeByteBudgetForSystemMemory"]
-        fn rust_predecode_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64;
 
         #[cxx_name = "rustPredecodeRetainedCachedImageIndices"]
         fn rust_predecode_retained_cached_image_indices(
@@ -153,20 +145,12 @@ pub(super) use ffi::{
     RustPredecodeSchedulePlan, RustPredecodeWindowLoadState,
 };
 
-fn rust_predecode_preferred_byte_budget() -> i64 {
-    budget::preferred_byte_budget()
-}
-
 fn rust_predecode_debounce_msec() -> i32 {
-    budget::debounce_msec()
+    config::debounce_msec()
 }
 
 fn rust_predecode_neutral_refresh_msec() -> i32 {
-    budget::neutral_refresh_msec()
-}
-
-fn rust_predecode_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64 {
-    budget::byte_budget_for_system_memory(system_memory_byte_size)
+    config::neutral_refresh_msec()
 }
 
 fn rust_predecode_retained_cached_image_indices(

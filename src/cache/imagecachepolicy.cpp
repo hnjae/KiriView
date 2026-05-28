@@ -58,4 +58,15 @@ qsizetype staticTileCacheByteBudgetForSystemMemory(
     return Bridge::qtByteSize(rustStaticTileCacheByteBudgetForSystemMemory(
         Bridge::rustByteSize(systemMemoryByteSize), Bridge::rustByteSize(preferredByteBudget)));
 }
+
+qsizetype predecodeCachePreferredByteBudget()
+{
+    return Bridge::qtByteSize(rustPredecodeCachePreferredByteBudget());
+}
+
+qsizetype predecodeCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
+{
+    return Bridge::qtByteSize(
+        rustPredecodeCacheByteBudgetForSystemMemory(Bridge::rustByteSize(systemMemoryByteSize)));
+}
 }

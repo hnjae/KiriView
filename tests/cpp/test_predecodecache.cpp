@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "cache/imagecachepolicy.h"
 #include "image_test_support.h"
 #include "predecode/predecodecache.h"
 
@@ -46,7 +47,7 @@ KiriView::PredecodeActiveLoads activeLoads(std::vector<QUrl> urls)
 
 KiriView::PredecodeCache defaultCache()
 {
-    return KiriView::PredecodeCache(KiriView::PredecodeCache::preferredByteBudget());
+    return KiriView::PredecodeCache(KiriView::predecodeCachePreferredByteBudget());
 }
 }
 
@@ -58,7 +59,6 @@ private Q_SLOTS:
     void queueContainsOnlyMissingWindowImages();
     void queueSkipsAllDisplayedWindowImages();
     void takeNextRequestDiscardsSkippedQueuePrefix();
-    void byteBudgetUsesPreferredLimitAndSystemMemoryCap();
     void cacheEligibilityUsesByteBudgetPolicy();
     void cacheStoresAndFindsWindowImages();
     void cacheRetainsDisplayedImagesBeforeAdjacentImages();
@@ -137,24 +137,13 @@ void TestPredecodeCache::takeNextRequestDiscardsSkippedQueuePrefix()
     QVERIFY(!cache.takeNextRequest(KiriView::PredecodeActiveLoads {}).has_value());
 }
 
-void TestPredecodeCache::byteBudgetUsesPreferredLimitAndSystemMemoryCap()
-{
-    const qsizetype preferredByteBudget = 1024 * 1024 * 1024;
-    QCOMPARE(KiriView::PredecodeCache::preferredByteBudget(), preferredByteBudget);
-    QCOMPARE(KiriView::PredecodeCache::byteBudgetForSystemMemory(0), preferredByteBudget);
-    QCOMPARE(KiriView::PredecodeCache::byteBudgetForSystemMemory(preferredByteBudget),
-        preferredByteBudget / 8);
-    QCOMPARE(KiriView::PredecodeCache::byteBudgetForSystemMemory(preferredByteBudget * 16),
-        preferredByteBudget);
-}
-
 void TestPredecodeCache::cacheEligibilityUsesByteBudgetPolicy()
 {
     const KiriView::StaticImagePayload image = staticTestImagePayload(cacheImage());
     const qsizetype byteCost = image.byteCost();
 
     QVERIFY(KiriView::PredecodeCache::canCacheImage(
-        image, KiriView::PredecodeCache::preferredByteBudget()));
+        image, KiriView::predecodeCachePreferredByteBudget()));
     QVERIFY(KiriView::PredecodeCache::canCacheImage(image, byteCost));
     QVERIFY(!KiriView::PredecodeCache::canCacheImage(image, byteCost - 1));
     QVERIFY(!KiriView::PredecodeCache::canCacheImage(KiriView::StaticImagePayload {}, byteCost));

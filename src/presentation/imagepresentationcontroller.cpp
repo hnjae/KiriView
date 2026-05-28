@@ -4,7 +4,7 @@
 #include "presentation/imagepresentationcontroller.h"
 
 #include "async/imagecallback.h"
-#include "predecode/predecodecache.h"
+#include "cache/imagecachepolicy.h"
 #include "presentation/imageanimationplayer.h"
 #include "presentation/imagepresentationviewportcontroller.h"
 #include "rendering/displayedimagesurfacestate.h"
@@ -18,9 +18,8 @@ ImagePresentationController::ImagePresentationController(QObject *context,
     RenderContextProvider renderContextProvider, ImagePresentationController::Callbacks callbacks,
     qsizetype predecodeCacheByteBudget)
     : m_callbacks(std::move(callbacks))
-    , m_predecodeCacheByteBudget(predecodeCacheByteBudget > 0
-              ? predecodeCacheByteBudget
-              : PredecodeCache::preferredByteBudget())
+    , m_predecodeCacheByteBudget(predecodeCacheByteBudget > 0 ? predecodeCacheByteBudget
+                                                              : predecodeCachePreferredByteBudget())
     , m_staticTileCacheByteBudget(StaticTileSurface::defaultTileCacheByteBudget())
 {
     m_displayedSurfaceState = std::make_unique<DisplayedImageSurfaceState>();

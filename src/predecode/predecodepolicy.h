@@ -80,10 +80,8 @@ struct PredecodeQueuedLoadPlan {
     std::size_t discardCount = 0;
 };
 
-qsizetype predecodePreferredByteBudget();
 int predecodeDebounceMsec();
 int predecodeNeutralRefreshMsec();
-qsizetype predecodeByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
 PredecodePolicyInput predecodePolicyInputForImagePageScope(
     const ImagePageScopeLocation &imagePageScope, PredecodeMomentumMode momentumMode,
     bool powerSaverEnabled, int idealThreadCount);

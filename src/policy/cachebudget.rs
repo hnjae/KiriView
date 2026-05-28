@@ -27,10 +27,18 @@ mod ffi {
             system_memory_byte_size: i64,
             preferred_byte_budget: i64,
         ) -> i64;
+
+        #[cxx_name = "rustPredecodeCachePreferredByteBudget"]
+        fn rust_predecode_cache_preferred_byte_budget() -> i64;
+
+        #[cxx_name = "rustPredecodeCacheByteBudgetForSystemMemory"]
+        fn rust_predecode_cache_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64;
     }
 }
 
 const STATIC_TILE_CACHE_SYSTEM_MEMORY_DIVISOR: i64 = 16;
+const PREDECODE_CACHE_PREFERRED_BYTE_BUDGET: i64 = 1024 * 1024 * 1024;
+const PREDECODE_CACHE_SYSTEM_MEMORY_DIVISOR: i64 = 8;
 
 #[derive(Clone, Copy)]
 struct IndexedLruCacheRetentionEntry {
@@ -68,6 +76,14 @@ fn rust_static_tile_cache_byte_budget_for_system_memory(
     preferred_byte_budget: i64,
 ) -> i64 {
     static_tile_cache_byte_budget_for_system_memory(system_memory_byte_size, preferred_byte_budget)
+}
+
+fn rust_predecode_cache_preferred_byte_budget() -> i64 {
+    predecode_cache_preferred_byte_budget()
+}
+
+fn rust_predecode_cache_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64 {
+    predecode_cache_byte_budget_for_system_memory(system_memory_byte_size)
 }
 
 pub(crate) fn lru_cache_retention_plan(
@@ -127,6 +143,18 @@ pub(crate) fn static_tile_cache_byte_budget_for_system_memory(
         preferred_byte_budget,
         system_memory_byte_size,
         STATIC_TILE_CACHE_SYSTEM_MEMORY_DIVISOR,
+    )
+}
+
+pub(crate) fn predecode_cache_preferred_byte_budget() -> i64 {
+    PREDECODE_CACHE_PREFERRED_BYTE_BUDGET
+}
+
+pub(crate) fn predecode_cache_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64 {
+    system_memory_capped_byte_budget(
+        predecode_cache_preferred_byte_budget(),
+        system_memory_byte_size,
+        PREDECODE_CACHE_SYSTEM_MEMORY_DIVISOR,
     )
 }
 
@@ -210,6 +238,21 @@ mod tests {
         assert_eq!(
             static_tile_cache_byte_budget_for_system_memory(preferred, -1),
             0
+        );
+    }
+
+    #[test]
+    fn predecode_cache_byte_budget_uses_preferred_limit_and_system_memory_cap() {
+        let preferred = predecode_cache_preferred_byte_budget();
+
+        assert_eq!(predecode_cache_byte_budget_for_system_memory(0), preferred);
+        assert_eq!(
+            predecode_cache_byte_budget_for_system_memory(preferred),
+            preferred / PREDECODE_CACHE_SYSTEM_MEMORY_DIVISOR
+        );
+        assert_eq!(
+            predecode_cache_byte_budget_for_system_memory(preferred * 16),
+            preferred
         );
     }
 

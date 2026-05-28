@@ -26,8 +26,6 @@ struct PredecodeRequest {
 class PredecodeCache
 {
 public:
-    static qsizetype preferredByteBudget();
-    static qsizetype byteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
     static bool canCacheImage(const StaticImagePayload &staticImage, qsizetype byteBudget);
 
     explicit PredecodeCache(qsizetype byteBudget);

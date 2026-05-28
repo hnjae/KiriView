@@ -26,7 +26,6 @@ src/policy/imagetilegeometry.rs
 src/policy/imageviewportgeometry.rs
 src/policy/imagezoomstate.rs
 src/policy/predecodepolicy.rs
-src/policy/predecodepolicy/budget.rs
 src/policy/predecodepolicy/cache_retention.rs
 src/policy/predecodepolicy/config.rs
 src/policy/predecodepolicy/load_queue.rs

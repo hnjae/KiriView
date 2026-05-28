@@ -21,6 +21,8 @@ struct ImageCacheRetainedEntry {
 
 std::vector<ImageCacheRetainedEntry> lruCacheRetentionPlan(
     const std::vector<ImageCacheRetentionEntry> &entries, qsizetype byteBudget);
+qsizetype predecodeCachePreferredByteBudget();
+qsizetype predecodeCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
 qsizetype staticTileCacheByteBudgetForSystemMemory(
     qsizetype systemMemoryByteSize, qsizetype preferredByteBudget);
 }
