@@ -25,8 +25,8 @@ namespace Bridge {
 
 RustImageDocumentSourceLoadPolicyInput rustImageDocumentSourceLoadPolicyInput(
     const Bridge::ImageDocumentSourceLoadPolicyInput &input);
-ImageDocumentRuntimePlan imageDocumentRuntimePlanFromBridge(
-    const RustImageDocumentSourceLoadPlan &rustPlan, const ImageDocumentSourceLoadRequest &request);
+ImageDocumentSourceLoadPlan imageDocumentSourceLoadPlanFromBridge(
+    const RustImageDocumentSourceLoadPlan &rustPlan);
 
 RustImageOpenWorkflowEvent rustImageOpenWorkflowEvent(RustImageOpenWorkflowEventKind kind);
 RustImageOpenWorkflowEvent rustBeginSourceLoadEvent(ImageOpenBeginSourceLoadSnapshot snapshot);

@@ -40,6 +40,73 @@ KiriView::Bridge::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
         !request.containerNavigationUrl.isEmpty(),
     };
 }
+
+void appendSourceLoadRuntimeOperation(KiriView::ImageDocumentRuntimePlan &runtimePlan,
+    KiriView::ImageDocumentSourceLoadEffect effect,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
+{
+    using Effect = KiriView::ImageDocumentSourceLoadEffect;
+
+    switch (effect) {
+    case Effect::CancelFileDeletion:
+        runtimePlan.push_back(KiriView::CancelFileDeletionOperation {});
+        return;
+    case Effect::CancelAllNavigation:
+        runtimePlan.push_back(KiriView::CancelAllNavigationOperation {});
+        return;
+    case Effect::CancelPredecode:
+        runtimePlan.push_back(KiriView::CancelPredecodeOperation {});
+        return;
+    case Effect::FinishSpreadTransition:
+        runtimePlan.push_back(KiriView::FinishSpreadTransitionOperation {});
+        return;
+    case Effect::ResetRightToLeftReading:
+        runtimePlan.push_back(KiriView::ResetRightToLeftReadingOperation {});
+        return;
+    case Effect::NotifyRightToLeftReadingChanged:
+        runtimePlan.push_back(KiriView::NotifyRightToLeftReadingChangedOperation {});
+        return;
+    case Effect::ClearSecondaryPage:
+        runtimePlan.push_back(KiriView::ClearSecondaryPageOperation {});
+        return;
+    case Effect::ClearLoadingContainerNavigationUrl:
+        runtimePlan.push_back(KiriView::ClearLoadingContainerNavigationUrlOperation {});
+        return;
+    case Effect::SetLoadingContainerNavigationUrlToRequested:
+        runtimePlan.push_back(KiriView::SetLoadingContainerNavigationUrlOperation {
+            request.containerNavigationUrl,
+        });
+        return;
+    case Effect::SetContainerNavigationUrlToRequested:
+        runtimePlan.push_back(KiriView::SetContainerNavigationUrlOperation {
+            request.containerNavigationUrl,
+        });
+        return;
+    case Effect::PrepareSourceLoad:
+        runtimePlan.push_back(KiriView::PrepareSourceLoadOperation { request });
+        return;
+    case Effect::SetSourceUrlToRequested:
+        runtimePlan.push_back(KiriView::SetSourceUrlOperation {
+            KiriView::ImageDocumentPageTarget { request.sourceUrl, request.sourceKind },
+        });
+        return;
+    case Effect::BeginOpen:
+        runtimePlan.push_back(KiriView::BeginOpenOperation {});
+        return;
+    }
+}
+
+KiriView::ImageDocumentRuntimePlan sourceLoadRuntimePlan(
+    const KiriView::ImageDocumentSourceLoadPlan &sourceLoadPlan,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
+{
+    KiriView::ImageDocumentRuntimePlan runtimePlan;
+    runtimePlan.reserve(sourceLoadPlan.size());
+    for (KiriView::ImageDocumentSourceLoadEffect effect : sourceLoadPlan) {
+        appendSourceLoadRuntimeOperation(runtimePlan, effect, request);
+    }
+    return runtimePlan;
+}
 }
 
 namespace KiriView::ImageOpenWorkflow {
@@ -48,8 +115,9 @@ ImageDocumentRuntimePlan sourceLoadPlan(
 {
     const Bridge::ImageDocumentSourceLoadPolicyInput input
         = sourceLoadPolicyInput(snapshot, request);
-    return imageDocumentRuntimePlanFromBridge(
-        rustImageDocumentSourceLoadPlan(rustImageDocumentSourceLoadPolicyInput(input)), request);
+    const ImageDocumentSourceLoadPlan plan = imageDocumentSourceLoadPlanFromBridge(
+        rustImageDocumentSourceLoadPlan(rustImageDocumentSourceLoadPolicyInput(input)));
+    return sourceLoadRuntimePlan(plan, request);
 }
 
 ImageOpenApplicationPlan beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot snapshot)

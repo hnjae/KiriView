@@ -10,6 +10,8 @@
 #include "imageopentransition.h"
 #include "location/imagelocation.h"
 
+#include <vector>
+
 namespace KiriView {
 struct ImageDocumentSourceLoadSnapshot {
     QUrl currentSourceUrl;
@@ -31,6 +33,24 @@ struct ImageOpenLoadErrorSnapshot {
     bool hasImage = false;
     bool hasDisplayedUrl = false;
 };
+
+enum class ImageDocumentSourceLoadEffect {
+    CancelFileDeletion,
+    CancelAllNavigation,
+    CancelPredecode,
+    FinishSpreadTransition,
+    ResetRightToLeftReading,
+    NotifyRightToLeftReadingChanged,
+    ClearSecondaryPage,
+    ClearLoadingContainerNavigationUrl,
+    SetLoadingContainerNavigationUrlToRequested,
+    SetContainerNavigationUrlToRequested,
+    PrepareSourceLoad,
+    SetSourceUrlToRequested,
+    BeginOpen,
+};
+
+using ImageDocumentSourceLoadPlan = std::vector<ImageDocumentSourceLoadEffect>;
 
 namespace ImageOpenWorkflow {
     ImageDocumentRuntimePlan sourceLoadPlan(const ImageDocumentSourceLoadSnapshot &snapshot,
