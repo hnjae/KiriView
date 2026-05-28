@@ -44,7 +44,8 @@ QString animationLoadErrorMessage(const QString &errorString)
 
 QString unsupportedOpenedCollectionVideoMessage()
 {
-    return i18nc("@info:status", "Video playback is not supported in archive or folder documents");
+    return i18nc("@info:status",
+        "KiriView can’t play videos inside directly opened archives or directories yet.");
 }
 }
 

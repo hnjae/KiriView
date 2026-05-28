@@ -205,7 +205,9 @@ msgstr ""
 #: src/document/imageopencontroller.cpp
 #, kde-format
 msgctxt "@info:status"
-msgid "Video playback is not supported in archive or folder documents"
+msgid ""
+"KiriView can’t play videos inside directly opened archives or directories "
+"yet."
 msgstr ""
 
 #: src/localization/activenavigationboundarytext.cpp
@@ -713,7 +715,9 @@ msgstr ""
 
 #: src/qml/ImageStateOverlay.qml
 msgctxt "@info:placeholder"
-msgid "Video playback is not supported in archive or folder documents"
+msgid ""
+"KiriView can’t play videos inside directly opened archives or directories "
+"yet."
 msgstr ""
 
 #: src/qml/ImageStateOverlay.qml
@@ -769,11 +773,6 @@ msgstr ""
 #: src/qml/ShortcutHelpDialog.qml
 msgctxt "@title:window"
 msgid "Keyboard Shortcuts"
-msgstr ""
-
-#: src/qml/ThumbnailPanel.qml
-msgctxt "@title:group"
-msgid "Thumbnails"
 msgstr ""
 
 #: src/qml/VideoFloatingControls.qml
