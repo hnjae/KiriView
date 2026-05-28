@@ -72,13 +72,14 @@ void TestImageShortcutNavigationPolicy::scanBackwardSelectsBoundaryPageOrPreviou
 {
     Policy policy;
 
-    QCOMPARE(policy.scanBackwardAction(false, false, false, 3),
+    QCOMPARE(policy.scanBackwardAction(false, false, false, false, true),
         ScanAction::RequestPreviousActiveNavigationFromScan);
-    QCOMPARE(policy.scanBackwardAction(true, true, false, 3), ScanAction::NoScanAction);
-    QCOMPARE(policy.scanBackwardAction(true, false, true, 1), ScanAction::ShowFirstImageBoundary);
-    QCOMPARE(policy.scanBackwardAction(true, false, false, 3),
+    QCOMPARE(policy.scanBackwardAction(true, true, true, false, true), ScanAction::NoScanAction);
+    QCOMPARE(policy.scanBackwardAction(true, false, true, true, false),
+        ScanAction::ShowFirstImageBoundary);
+    QCOMPARE(policy.scanBackwardAction(true, false, true, false, true),
         ScanAction::OpenPreviousPageFromFinalScanStart);
-    QCOMPARE(policy.scanBackwardAction(true, false, false, 0),
+    QCOMPARE(policy.scanBackwardAction(true, false, false, false, true),
         ScanAction::RequestPreviousActiveNavigationFromScan);
 }
 

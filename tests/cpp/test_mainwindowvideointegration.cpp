@@ -407,12 +407,18 @@ void TestMainWindowVideoIntegration::shortcutsRouteSharedActiveNavigationThrough
             QStringLiteral("openPreviousMedia"),
             QStringLiteral("openPreviousPage()"),
             QStringLiteral("openNextPage()"),
+            QStringLiteral("openImageAtPage"),
+            QStringLiteral("imageDocument.currentPageNumber"),
+            QStringLiteral("actionAvailability.scanBackwardAtFirstImageBoundary"),
         });
-
-    const int activeNavigationOpenPageCalls
-        = imageShortcutsQml.count(QStringLiteral("openImageAtPage"));
-    QCOMPARE(activeNavigationOpenPageCalls, 1);
-    QVERIFY(imageShortcutsQml.contains(QStringLiteral("Image-internal scan fallback")));
+    QVERIFY(imageShortcutsQml.contains(
+        QStringLiteral("root.documentSession.activeNavigationBoundaryScope")));
+    QVERIFY(imageShortcutsQml.contains(
+        QStringLiteral("KiriDocumentSession.ImageDocumentPageNavigationBoundary")));
+    QVERIFY(imageShortcutsQml.contains(
+        QStringLiteral("root.documentSession.atKnownFirstActiveNavigation")));
+    QVERIFY(imageShortcutsQml.contains(
+        QStringLiteral("root.documentSession.canOpenPreviousActiveNavigation")));
 }
 
 void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedActiveNavigation()
@@ -424,7 +430,6 @@ void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedAc
     QVERIFY2(!imageActionsQml.isEmpty(), "ImageActions.qml should be readable");
     QVERIFY2(!imageShortcutsQml.isEmpty(), "ImageShortcuts.qml should be readable");
 
-    QVERIFY(mainQml.contains(QStringLiteral("scanBackwardAtFirstImageBoundary")));
     verifySourceOmits(mainQml,
         {
             QStringLiteral("activeNavigationAvailable: actionAvailability"),
@@ -435,6 +440,7 @@ void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedAc
             QStringLiteral("currentLastPageNumber: page.imageDocument"),
             QStringLiteral("currentPageNumber: page.imageDocument"),
             QStringLiteral("pageCount: page.imageDocument"),
+            QStringLiteral("scanBackwardAtFirstImageBoundary:"),
         });
     verifySourceOmits(imageActionsQml,
         {
@@ -448,9 +454,9 @@ void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedAc
     QVERIFY(imageShortcutsQml.contains(QStringLiteral("mediaShortcutsEnabledForScope")));
     QVERIFY(
         !imageShortcutsQml.contains(QStringLiteral("activeNavigationShortcutsEnabledForScope")));
-    QVERIFY(imageShortcutsQml.contains(QStringLiteral("Image-internal scan fallback")));
-    QVERIFY(imageShortcutsQml.contains(
+    QVERIFY(!imageShortcutsQml.contains(
         QStringLiteral("actionAvailability.scanBackwardAtFirstImageBoundary")));
+    QVERIFY(!imageShortcutsQml.contains(QStringLiteral("imageDocument.currentPageNumber")));
 }
 
 void TestMainWindowVideoIntegration::
