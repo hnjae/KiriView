@@ -284,6 +284,7 @@ private Q_SLOTS:
     void videoNavigationKeepsStillImagePredecodeCache();
     void videoActiveNavigationExposesCurrentNumberAndCount();
     void initialDirectImagePredecodeUsesRequestedMediaCursor();
+    void directImagePredecodeDoesNotUseImageDocumentPageCandidates();
     void staleDirectMediaNavigationCandidateCompletionCannotPublishForNewSource();
     void nextMediaFromVideoCanRouteToImageWithoutUsingImageDocumentPageNavigation();
     void nonMediaImageDeletionProgressIsMirroredThroughSessionState();
@@ -1468,6 +1469,41 @@ void TestKiriDocumentSession::initialDirectImagePredecodeUsesRequestedMediaCurso
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
     QTRY_COMPARE(imageDataLoader.loadCount(), std::size_t(2));
     QCOMPARE(imageDataLoader.backLoad().url, nextImage);
+}
+
+void TestKiriDocumentSession::directImagePredecodeDoesNotUseImageDocumentPageCandidates()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    KiriView::TestSupport::FakeImageDocumentPageCandidateProvider imageDocumentPageCandidates;
+    KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
+    const QUrl currentImage = localUrl(QStringLiteral("/media/current.png"));
+    const QUrl directMediaNextImage = localUrl(QStringLiteral("/media/next.png"));
+    const QUrl imageDocumentOnlyImage = localUrl(QStringLiteral("/media/page-only.png"));
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(currentImage),
+            directMediaNavigationCandidate(directMediaNextImage) });
+    imageDocumentPageCandidates.setDirectoryImages(localUrl(QStringLiteral("/media/")),
+        { KiriView::TestSupport::imageDocumentPageCandidate(currentImage),
+            KiriView::TestSupport::imageDocumentPageCandidate(imageDocumentOnlyImage) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr,
+            &imageDataLoader, imageDocumentPageCandidates.provider());
+
+    session->setSourceUrl(currentImage);
+
+    QCOMPARE(imageDataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(imageDataLoader.frontLoad().url, currentImage);
+    QTRY_COMPARE(imageDataLoader.loadCount(), std::size_t(2));
+    QCOMPARE(imageDataLoader.backLoad().url, directMediaNextImage);
+    QVERIFY(imageDataLoader.finishOldestActiveLoadForUrl(
+        directMediaNextImage, QByteArrayLiteral("direct-next")));
+    QVERIFY(
+        imageDataLoader.finishOldestActiveLoadForUrl(currentImage, QByteArrayLiteral("current")));
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+
+    QTest::qWait(250);
+
+    QCOMPARE(imageDataLoader.loadCount(), std::size_t(2));
 }
 
 void TestKiriDocumentSession::
