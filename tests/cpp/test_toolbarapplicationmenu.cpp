@@ -1176,7 +1176,7 @@ void TestToolBarApplicationMenu::toolbarActionOrderKeepsReadingDirectionBesideSp
     QVERIFY(ok);
     QCOMPARE(texts,
         QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
-            QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
+            QStringLiteral("Fit to Window"), QStringLiteral("Zoom") }));
 }
 
 void TestToolBarApplicationMenu::emptyToolbarHidesReadingControls()
@@ -1187,7 +1187,7 @@ void TestToolBarApplicationMenu::emptyToolbarHidesReadingControls()
     bool ok = false;
     const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
     QVERIFY(ok);
-    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
+    QCOMPARE(texts, QStringList({ QStringLiteral("Fit to Window"), QStringLiteral("Zoom") }));
 }
 
 void TestToolBarApplicationMenu::directImageToolbarHidesReadingControls()
@@ -1206,7 +1206,7 @@ void TestToolBarApplicationMenu::directImageToolbarHidesReadingControls()
     bool ok = false;
     const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
     QVERIFY(ok);
-    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
+    QCOMPARE(texts, QStringList({ QStringLiteral("Fit to Window"), QStringLiteral("Zoom") }));
 }
 
 void TestToolBarApplicationMenu::videoToolbarHidesReadingControlsAndDisablesImageControls()
@@ -1219,7 +1219,7 @@ void TestToolBarApplicationMenu::videoToolbarHidesReadingControlsAndDisablesImag
     bool ok = false;
     const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
     QVERIFY(ok);
-    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
+    QCOMPARE(texts, QStringList({ QStringLiteral("Fit to Window"), QStringLiteral("Zoom") }));
 
     bool invoked = false;
     const QVariantList enabledStates
@@ -1250,7 +1250,7 @@ void TestToolBarApplicationMenu::comicArchiveToolbarShowsEnabledReadingControls(
     QVERIFY(ok);
     QCOMPARE(texts,
         QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
-            QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
+            QStringLiteral("Fit to Window"), QStringLiteral("Zoom") }));
 
     bool invoked = false;
     const QVariantList enabledStates
@@ -1279,7 +1279,7 @@ void TestToolBarApplicationMenu::generalArchiveToolbarShowsDisabledReadingContro
     QVERIFY(ok);
     QCOMPARE(texts,
         QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
-            QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
+            QStringLiteral("Fit to Window"), QStringLiteral("Zoom") }));
 
     bool invoked = false;
     const QVariantList enabledStates
@@ -1309,7 +1309,7 @@ void TestToolBarApplicationMenu::directoryCollectionToolbarShowsDisabledReadingC
     QVERIFY(ok);
     QCOMPARE(texts,
         QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
-            QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
+            QStringLiteral("Fit to Window"), QStringLiteral("Zoom") }));
 
     bool invoked = false;
     const QVariantList enabledStates

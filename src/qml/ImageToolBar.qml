@@ -50,7 +50,7 @@ Controls.ToolBar {
     readonly property bool fitSplitButtonTextVisible: width >= Kirigami.Units.gridUnit * 40
     readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused()
     readonly property int toolbarVerticalPadding: controlSpacing
-    readonly property var imageToolbarControls: (root.rightToLeftReadingControlVisible ? [root.actions.rightToLeftReadingAction] : []).concat(root.twoPageModeControlVisible ? [root.actions.twoPageModeAction] : [], [zoomLevelAction, fitMenuAction])
+    readonly property var imageToolbarControls: (root.rightToLeftReadingControlVisible ? [root.actions.rightToLeftReadingAction] : []).concat(root.twoPageModeControlVisible ? [root.actions.twoPageModeAction] : [], [fitMenuAction, zoomLevelAction])
     readonly property var toolbarControls: imageToolbarControls
     readonly property var toolbarActions: showApplicationMenuActions ? toolbarControls.concat([applicationMenuAction]) : toolbarControls
 
