@@ -158,7 +158,9 @@ The Keyboard Shortcuts help is shown as a modal dialog over the main window.
 
 It lists user-configurable KiriView actions and their current configured shortcut text.
 
-Shortcut help is presented as a Kirigami form-style two-column list with the shortcut text as the leading label and the action text as the value.
+Shortcut help is presented as a Kirigami Addons FormCard dialog grouped by app-menu category headers.
+
+Each listed action is shown as a compact form-card delegate with the action text on the leading side and one or more rounded, fixed-width keycap badges for its configured shortcut sequences on the trailing side.
 
 It does not list fixed shortcuts, mouse gestures, or mouse-wheel gestures.
 
