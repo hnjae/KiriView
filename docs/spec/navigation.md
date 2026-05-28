@@ -8,6 +8,10 @@ The document session owns the active navigation projection used by the toolbar r
 
 The document session also owns the active navigation thumbnail-strip projection. When the active navigation list is known, the strip exposes one item per supported active navigation item with the same ordering and 1-based numbering as the toolbar readout and page-number entry.
 
+For ordinary direct media URL scopes, including direct image files, direct video files, and KDE archive-entry media URLs opened as individual media items, the document session's direct media navigation is the only active page-control navigation source. The image document must not keep a competing ordinary direct media page-navigation list for those scopes.
+
+Image-document page navigation is active only for image-document page scopes such as directly opened archive collections and directly opened directory collections.
+
 For ordinary direct media URL scopes, archive collection scopes, and directly opened directory collection scopes, the page navigation controls count and select supported images and supported videos together.
 
 First and Last are page navigation actions available through their configured shortcuts and menus. They open the first or last known page or media item in the current scope.
