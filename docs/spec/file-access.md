@@ -26,6 +26,8 @@ Directory collections use the same recursive supported-image page ordering as ar
 
 Directly opened directories are not advertised through the desktop file's file associations, the open dialog's default image, video, and comic book filter, or sibling archive navigation.
 
+Errors shown while opening or reading media from a directly opened archive or directory collection use collection-neutral wording such as "selected collection" unless the failed operation specifically concerns an archive file, archive URL scheme, or archive format.
+
 KiriView's open dialog default filter includes supported image files, supported direct video files, and supported comic book archive files.
 
 KiriView's desktop file advertises file-manager Open With handling for supported image, supported direct video, and comic book archive MIME types. For direct videos, the advertised MIME types are `video/mp4` and `video/quicktime`.
