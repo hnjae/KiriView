@@ -22,10 +22,9 @@ KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
 KiriView::PredecodePolicyInput regularPolicyInput()
 {
     return KiriView::PredecodePolicyInput {
-        KiriView::PredecodeScopeKind::DirectMedia,
+        KiriView::directMediaPredecodeSourceProfile(),
         KiriView::PredecodeMomentumMode::Neutral,
         false,
-        4,
     };
 }
 

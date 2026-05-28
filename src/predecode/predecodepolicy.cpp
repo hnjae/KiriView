@@ -7,6 +7,7 @@
 #include "bridge/rustqtconversion.h"
 #include "kiriview/src/policy/predecodepolicy.cxx.h"
 
+#include <algorithm>
 #include <utility>
 
 namespace KiriView {
@@ -14,22 +15,20 @@ int predecodeDebounceMsec() { return rustPredecodeDebounceMsec(); }
 
 int predecodeNeutralRefreshMsec() { return rustPredecodeNeutralRefreshMsec(); }
 
-PredecodePolicyInput predecodePolicyInputForOpenedCollectionScope(
-    const OpenedCollectionScopeLocation &openedCollectionScope, PredecodeMomentumMode momentumMode,
-    bool powerSaverEnabled, int idealThreadCount)
+PredecodeSourceProfile predecodeSourceProfileForOpenedCollectionScope(
+    const OpenedCollectionScopeLocation &openedCollectionScope, int idealThreadCount)
 {
-    PredecodePolicyInput input {};
-    input.momentumMode = momentumMode;
-    input.powerSaverEnabled = powerSaverEnabled;
-    input.idealThreadCount = idealThreadCount;
     if (openedCollectionScope.isEmpty()) {
-        input.scopeKind = PredecodeScopeKind::DirectMedia;
-    } else if (openedCollectionScope.isDirectory()) {
-        input.scopeKind = PredecodeScopeKind::DirectoryCollection;
-    } else {
-        input.scopeKind = PredecodeScopeKind::ArchiveCollection;
+        return directMediaPredecodeSourceProfile();
     }
-    return input;
+
+    if (openedCollectionScope.isDirectory()) {
+        return PredecodeSourceProfile { 2, 4, 6, 2 };
+    }
+
+    const int halfThreadCount = idealThreadCount / 2;
+    const std::size_t parallelLimit = static_cast<std::size_t>(std::clamp(halfThreadCount, 1, 4));
+    return PredecodeSourceProfile { 2, 4, 8, parallelLimit };
 }
 
 std::vector<std::size_t> predecodeRetainedCachedImageIndices(

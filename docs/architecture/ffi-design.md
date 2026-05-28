@@ -9,6 +9,8 @@ Use small bridge structs and enums for:
 - Change sets.
 - Effect plans.
 
+Predecode policy inputs should describe source access profiles rather than concrete storage or collection kinds. C++ runtime code may translate a displayed source or opened collection scope into profile values such as neutral window size, biased-direction window size, and parallel limit, but Rust predecode scheduling should not branch on archive, directory, or backend implementation names.
+
 Avoid bridges that expose:
 
 - Raw Qt object ownership.

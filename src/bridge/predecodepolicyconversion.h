@@ -8,8 +8,7 @@
 #include "predecode/predecodepolicy.h"
 
 namespace KiriView::Bridge {
-RustPredecodeScopeKind rustPredecodeScopeKind(PredecodeScopeKind kind);
-PredecodeScopeKind predecodeScopeKindFromRust(RustPredecodeScopeKind kind);
+RustPredecodeSourceProfile rustPredecodeSourceProfile(PredecodeSourceProfile profile);
 RustPredecodeMomentumMode rustPredecodeMomentumMode(PredecodeMomentumMode mode);
 PredecodeMomentumMode predecodeMomentumModeFromRust(RustPredecodeMomentumMode mode);
 RustPredecodeMomentumDirection rustPredecodeMomentumDirection(PredecodeMomentumDirection direction);

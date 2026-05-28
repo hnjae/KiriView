@@ -13,7 +13,7 @@ class TestPredecodePolicyConversion : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void scopeKindMapsBothDirections();
+    void sourceProfileMapsPlainFields();
     void momentumModeMapsBothDirections();
     void momentumDirectionMapsBothDirections();
     void policyInputMapsPlainFields();
@@ -23,24 +23,16 @@ private Q_SLOTS:
     void queuedLoadPlanMapsFromRust();
 };
 
-void TestPredecodePolicyConversion::scopeKindMapsBothDirections()
+void TestPredecodePolicyConversion::sourceProfileMapsPlainFields()
 {
-    using KiriView::PredecodeScopeKind;
-    using KiriView::RustPredecodeScopeKind;
+    const KiriView::RustPredecodeSourceProfile converted
+        = KiriView::Bridge::rustPredecodeSourceProfile(
+            KiriView::PredecodeSourceProfile { 2, 4, 8, 3 });
 
-    QVERIFY(KiriView::Bridge::rustPredecodeScopeKind(PredecodeScopeKind::DirectMedia)
-        == RustPredecodeScopeKind::DirectMedia);
-    QVERIFY(KiriView::Bridge::rustPredecodeScopeKind(PredecodeScopeKind::DirectoryCollection)
-        == RustPredecodeScopeKind::DirectoryCollection);
-    QVERIFY(KiriView::Bridge::rustPredecodeScopeKind(PredecodeScopeKind::ArchiveCollection)
-        == RustPredecodeScopeKind::ArchiveCollection);
-    QVERIFY(KiriView::Bridge::predecodeScopeKindFromRust(RustPredecodeScopeKind::DirectMedia)
-        == PredecodeScopeKind::DirectMedia);
-    QVERIFY(
-        KiriView::Bridge::predecodeScopeKindFromRust(RustPredecodeScopeKind::DirectoryCollection)
-        == PredecodeScopeKind::DirectoryCollection);
-    QVERIFY(KiriView::Bridge::predecodeScopeKindFromRust(RustPredecodeScopeKind::ArchiveCollection)
-        == PredecodeScopeKind::ArchiveCollection);
+    QCOMPARE(converted.neutral_previous_image_count, std::size_t(2));
+    QCOMPARE(converted.neutral_next_image_count, std::size_t(4));
+    QCOMPARE(converted.biased_direction_image_count, std::size_t(8));
+    QCOMPARE(converted.parallel_limit, std::size_t(3));
 }
 
 void TestPredecodePolicyConversion::momentumModeMapsBothDirections()
@@ -98,16 +90,17 @@ void TestPredecodePolicyConversion::policyInputMapsPlainFields()
 {
     const KiriView::RustPredecodePolicyInput converted
         = KiriView::Bridge::rustPredecodePolicyInput(KiriView::PredecodePolicyInput {
-            KiriView::PredecodeScopeKind::ArchiveCollection,
+            KiriView::PredecodeSourceProfile { 2, 4, 8, 3 },
             KiriView::PredecodeMomentumMode::ScrubbingPrev,
             true,
-            6,
         });
 
-    QVERIFY(converted.scope_kind == KiriView::RustPredecodeScopeKind::ArchiveCollection);
+    QCOMPARE(converted.source_profile.neutral_previous_image_count, std::size_t(2));
+    QCOMPARE(converted.source_profile.neutral_next_image_count, std::size_t(4));
+    QCOMPARE(converted.source_profile.biased_direction_image_count, std::size_t(8));
+    QCOMPARE(converted.source_profile.parallel_limit, std::size_t(3));
     QVERIFY(converted.momentum_mode == KiriView::RustPredecodeMomentumMode::ScrubbingPrev);
     QVERIFY(converted.power_saver_enabled);
-    QCOMPARE(converted.ideal_thread_count, 6);
 }
 
 void TestPredecodePolicyConversion::momentumStateMapsPlainFieldsBothDirections()

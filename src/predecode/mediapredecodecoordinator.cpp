@@ -9,7 +9,6 @@
 #include "predecodelogging.h"
 
 #include <QDebug>
-#include <QThread>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -105,10 +104,9 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
 PredecodePolicyInput MediaPredecodeCoordinator::policyInput() const
 {
     return PredecodePolicyInput {
-        PredecodeScopeKind::DirectMedia,
+        directMediaPredecodeSourceProfile(),
         m_scheduleRuntime.momentumMode(),
         m_scheduleRuntime.powerSaverEnabled(),
-        QThread::idealThreadCount(),
     };
 }
 

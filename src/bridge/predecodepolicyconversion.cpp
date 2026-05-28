@@ -6,32 +6,14 @@
 #include "bridge/rustqtconversion.h"
 
 namespace KiriView::Bridge {
-RustPredecodeScopeKind rustPredecodeScopeKind(PredecodeScopeKind kind)
+RustPredecodeSourceProfile rustPredecodeSourceProfile(PredecodeSourceProfile profile)
 {
-    switch (kind) {
-    case PredecodeScopeKind::DirectMedia:
-        return RustPredecodeScopeKind::DirectMedia;
-    case PredecodeScopeKind::DirectoryCollection:
-        return RustPredecodeScopeKind::DirectoryCollection;
-    case PredecodeScopeKind::ArchiveCollection:
-        return RustPredecodeScopeKind::ArchiveCollection;
-    }
-
-    return RustPredecodeScopeKind::DirectMedia;
-}
-
-PredecodeScopeKind predecodeScopeKindFromRust(RustPredecodeScopeKind kind)
-{
-    switch (kind) {
-    case RustPredecodeScopeKind::DirectMedia:
-        return PredecodeScopeKind::DirectMedia;
-    case RustPredecodeScopeKind::DirectoryCollection:
-        return PredecodeScopeKind::DirectoryCollection;
-    case RustPredecodeScopeKind::ArchiveCollection:
-        return PredecodeScopeKind::ArchiveCollection;
-    }
-
-    return PredecodeScopeKind::DirectMedia;
+    return RustPredecodeSourceProfile {
+        profile.neutralPreviousImageCount,
+        profile.neutralNextImageCount,
+        profile.biasedDirectionImageCount,
+        profile.parallelLimit,
+    };
 }
 
 RustPredecodeMomentumMode rustPredecodeMomentumMode(PredecodeMomentumMode mode)
@@ -102,10 +84,9 @@ PredecodeMomentumDirection predecodeMomentumDirectionFromRust(
 RustPredecodePolicyInput rustPredecodePolicyInput(PredecodePolicyInput input)
 {
     RustPredecodePolicyInput rustInput {};
-    rustInput.scope_kind = rustPredecodeScopeKind(input.scopeKind);
+    rustInput.source_profile = rustPredecodeSourceProfile(input.sourceProfile);
     rustInput.momentum_mode = rustPredecodeMomentumMode(input.momentumMode);
     rustInput.power_saver_enabled = input.powerSaverEnabled;
-    rustInput.ideal_thread_count = input.idealThreadCount;
     return rustInput;
 }
 

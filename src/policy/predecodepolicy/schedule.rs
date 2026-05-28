@@ -3,16 +3,8 @@
 
 use super::{
     RustPredecodeMomentumMode, RustPredecodePolicyInput, RustPredecodeSchedulePlan,
-    RustPredecodeScopeKind,
+    RustPredecodeSourceProfile,
 };
-
-const DIRECT_MEDIA_NEUTRAL_PREVIOUS_IMAGE_COUNT: usize = 1;
-const DIRECT_MEDIA_NEUTRAL_NEXT_IMAGE_COUNT: usize = 2;
-const DIRECT_MEDIA_BIASED_DIRECTION_IMAGE_COUNT: usize = 3;
-const COLLECTION_NEUTRAL_PREVIOUS_IMAGE_COUNT: usize = 2;
-const COLLECTION_NEUTRAL_NEXT_IMAGE_COUNT: usize = 4;
-const DIRECTORY_BIASED_DIRECTION_IMAGE_COUNT: usize = 6;
-const ARCHIVE_BIASED_DIRECTION_IMAGE_COUNT: usize = 8;
 
 #[derive(Clone, Copy)]
 struct PredecodeWindowProfile {
@@ -67,61 +59,36 @@ fn parallel_limit(input: RustPredecodePolicyInput) -> usize {
         return 0;
     }
 
-    match input.scope_kind {
-        RustPredecodeScopeKind::DirectMedia => 1,
-        RustPredecodeScopeKind::DirectoryCollection => 2,
-        RustPredecodeScopeKind::ArchiveCollection => {
-            let half_thread_count = input.ideal_thread_count / 2;
-            usize::try_from(half_thread_count.clamp(1, 4)).unwrap_or(1)
-        }
-        _ => 1,
-    }
+    input.source_profile.parallel_limit
 }
 
 fn window_profile(input: RustPredecodePolicyInput) -> PredecodeWindowProfile {
     match input.momentum_mode {
-        RustPredecodeMomentumMode::Neutral => neutral_window_profile(input.scope_kind),
-        RustPredecodeMomentumMode::NextBiased => biased_window_profile(input.scope_kind, true),
-        RustPredecodeMomentumMode::PrevBiased => biased_window_profile(input.scope_kind, false),
+        RustPredecodeMomentumMode::Neutral => neutral_window_profile(input.source_profile),
+        RustPredecodeMomentumMode::NextBiased => biased_window_profile(input.source_profile, true),
+        RustPredecodeMomentumMode::PrevBiased => biased_window_profile(input.source_profile, false),
         RustPredecodeMomentumMode::ScrubbingNext | RustPredecodeMomentumMode::ScrubbingPrev => {
             PredecodeWindowProfile {
                 next_count: 0,
                 previous_count: 0,
             }
         }
-        _ => neutral_window_profile(input.scope_kind),
+        _ => neutral_window_profile(input.source_profile),
     }
 }
 
-fn neutral_window_profile(scope_kind: RustPredecodeScopeKind) -> PredecodeWindowProfile {
-    match scope_kind {
-        RustPredecodeScopeKind::DirectoryCollection | RustPredecodeScopeKind::ArchiveCollection => {
-            PredecodeWindowProfile {
-                next_count: COLLECTION_NEUTRAL_NEXT_IMAGE_COUNT,
-                previous_count: COLLECTION_NEUTRAL_PREVIOUS_IMAGE_COUNT,
-            }
-        }
-        RustPredecodeScopeKind::DirectMedia => PredecodeWindowProfile {
-            next_count: DIRECT_MEDIA_NEUTRAL_NEXT_IMAGE_COUNT,
-            previous_count: DIRECT_MEDIA_NEUTRAL_PREVIOUS_IMAGE_COUNT,
-        },
-        _ => PredecodeWindowProfile {
-            next_count: DIRECT_MEDIA_NEUTRAL_NEXT_IMAGE_COUNT,
-            previous_count: DIRECT_MEDIA_NEUTRAL_PREVIOUS_IMAGE_COUNT,
-        },
+fn neutral_window_profile(source_profile: RustPredecodeSourceProfile) -> PredecodeWindowProfile {
+    PredecodeWindowProfile {
+        next_count: source_profile.neutral_next_image_count,
+        previous_count: source_profile.neutral_previous_image_count,
     }
 }
 
 fn biased_window_profile(
-    scope_kind: RustPredecodeScopeKind,
+    source_profile: RustPredecodeSourceProfile,
     next_biased: bool,
 ) -> PredecodeWindowProfile {
-    let direction_count = match scope_kind {
-        RustPredecodeScopeKind::ArchiveCollection => ARCHIVE_BIASED_DIRECTION_IMAGE_COUNT,
-        RustPredecodeScopeKind::DirectoryCollection => DIRECTORY_BIASED_DIRECTION_IMAGE_COUNT,
-        RustPredecodeScopeKind::DirectMedia => DIRECT_MEDIA_BIASED_DIRECTION_IMAGE_COUNT,
-        _ => DIRECT_MEDIA_BIASED_DIRECTION_IMAGE_COUNT,
-    };
+    let direction_count = source_profile.biased_direction_image_count;
     if next_biased {
         return PredecodeWindowProfile {
             next_count: direction_count,
@@ -174,6 +141,25 @@ fn scrubbing(mode: RustPredecodeMomentumMode) -> bool {
 mod tests {
     use super::*;
 
+    const DIRECT_MEDIA_PROFILE: RustPredecodeSourceProfile = RustPredecodeSourceProfile {
+        neutral_previous_image_count: 1,
+        neutral_next_image_count: 2,
+        biased_direction_image_count: 3,
+        parallel_limit: 1,
+    };
+    const DIRECTORY_COLLECTION_PROFILE: RustPredecodeSourceProfile = RustPredecodeSourceProfile {
+        neutral_previous_image_count: 2,
+        neutral_next_image_count: 4,
+        biased_direction_image_count: 6,
+        parallel_limit: 2,
+    };
+    const ARCHIVE_COLLECTION_PROFILE: RustPredecodeSourceProfile = RustPredecodeSourceProfile {
+        neutral_previous_image_count: 2,
+        neutral_next_image_count: 4,
+        biased_direction_image_count: 8,
+        parallel_limit: 4,
+    };
+
     #[test]
     fn schedule_plan_uses_direct_media_neutral_profile() {
         assert_eq!(
@@ -181,10 +167,9 @@ mod tests {
                 15,
                 5,
                 policy_input(
-                    RustPredecodeScopeKind::DirectMedia,
+                    DIRECT_MEDIA_PROFILE,
                     RustPredecodeMomentumMode::Neutral,
                     false,
-                    8,
                 ),
             ),
             expected_schedule_plan(1, vec![5, 6, 4, 7])
@@ -198,10 +183,9 @@ mod tests {
                 15,
                 5,
                 policy_input(
-                    RustPredecodeScopeKind::ArchiveCollection,
+                    ARCHIVE_COLLECTION_PROFILE,
                     RustPredecodeMomentumMode::Neutral,
                     false,
-                    8,
                 ),
             ),
             expected_schedule_plan(4, vec![5, 6, 4, 7, 3, 8, 9])
@@ -215,10 +199,9 @@ mod tests {
                 15,
                 5,
                 policy_input(
-                    RustPredecodeScopeKind::ArchiveCollection,
+                    ARCHIVE_COLLECTION_PROFILE,
                     RustPredecodeMomentumMode::NextBiased,
                     false,
-                    8,
                 ),
             ),
             expected_schedule_plan(4, vec![5, 6, 4, 7, 8, 9, 10, 11, 12, 13])
@@ -228,10 +211,9 @@ mod tests {
                 15,
                 8,
                 policy_input(
-                    RustPredecodeScopeKind::DirectoryCollection,
+                    DIRECTORY_COLLECTION_PROFILE,
                     RustPredecodeMomentumMode::PrevBiased,
                     false,
-                    8,
                 ),
             ),
             expected_schedule_plan(2, vec![8, 9, 7, 6, 5, 4, 3, 2])
@@ -245,10 +227,9 @@ mod tests {
                 7,
                 3,
                 policy_input(
-                    RustPredecodeScopeKind::ArchiveCollection,
+                    ARCHIVE_COLLECTION_PROFILE,
                     RustPredecodeMomentumMode::ScrubbingNext,
                     false,
-                    8,
                 ),
             ),
             expected_schedule_plan(0, vec![])
@@ -258,10 +239,9 @@ mod tests {
                 7,
                 3,
                 policy_input(
-                    RustPredecodeScopeKind::ArchiveCollection,
+                    ARCHIVE_COLLECTION_PROFILE,
                     RustPredecodeMomentumMode::NextBiased,
                     true,
-                    8,
                 ),
             ),
             expected_schedule_plan(0, vec![])
@@ -269,15 +249,14 @@ mod tests {
     }
 
     #[test]
-    fn parallel_limit_uses_scope_kind_and_runtime_state() {
+    fn parallel_limit_uses_source_profile_and_runtime_state() {
         assert_eq!(
             schedule_plan_without_current(
                 0,
                 policy_input(
-                    RustPredecodeScopeKind::DirectMedia,
+                    DIRECT_MEDIA_PROFILE,
                     RustPredecodeMomentumMode::Neutral,
                     false,
-                    8,
                 ),
             )
             .parallel_limit,
@@ -287,10 +266,9 @@ mod tests {
             schedule_plan_without_current(
                 0,
                 policy_input(
-                    RustPredecodeScopeKind::DirectoryCollection,
+                    DIRECTORY_COLLECTION_PROFILE,
                     RustPredecodeMomentumMode::Neutral,
                     false,
-                    8,
                 ),
             )
             .parallel_limit,
@@ -300,23 +278,25 @@ mod tests {
             schedule_plan_without_current(
                 0,
                 policy_input(
-                    RustPredecodeScopeKind::ArchiveCollection,
+                    ARCHIVE_COLLECTION_PROFILE,
                     RustPredecodeMomentumMode::Neutral,
                     false,
-                    16,
                 ),
             )
             .parallel_limit,
             4,
         );
+        let low_parallel_archive_profile = RustPredecodeSourceProfile {
+            parallel_limit: 1,
+            ..ARCHIVE_COLLECTION_PROFILE
+        };
         assert_eq!(
             schedule_plan_without_current(
                 0,
                 policy_input(
-                    RustPredecodeScopeKind::ArchiveCollection,
+                    low_parallel_archive_profile,
                     RustPredecodeMomentumMode::Neutral,
                     false,
-                    1,
                 ),
             )
             .parallel_limit,
@@ -326,10 +306,9 @@ mod tests {
             schedule_plan_without_current(
                 0,
                 policy_input(
-                    RustPredecodeScopeKind::ArchiveCollection,
+                    ARCHIVE_COLLECTION_PROFILE,
                     RustPredecodeMomentumMode::ScrubbingPrev,
                     false,
-                    16,
                 ),
             )
             .parallel_limit,
@@ -339,10 +318,9 @@ mod tests {
             schedule_plan_without_current(
                 0,
                 policy_input(
-                    RustPredecodeScopeKind::ArchiveCollection,
+                    ARCHIVE_COLLECTION_PROFILE,
                     RustPredecodeMomentumMode::Neutral,
                     true,
-                    16,
                 ),
             )
             .parallel_limit,
@@ -367,25 +345,22 @@ mod tests {
     }
 
     fn policy_input(
-        scope_kind: RustPredecodeScopeKind,
+        source_profile: RustPredecodeSourceProfile,
         momentum_mode: RustPredecodeMomentumMode,
         power_saver_enabled: bool,
-        ideal_thread_count: i32,
     ) -> RustPredecodePolicyInput {
         RustPredecodePolicyInput {
-            scope_kind,
+            source_profile,
             momentum_mode,
             power_saver_enabled,
-            ideal_thread_count,
         }
     }
 
     fn direct_media_policy_input() -> RustPredecodePolicyInput {
         policy_input(
-            RustPredecodeScopeKind::DirectMedia,
+            DIRECT_MEDIA_PROFILE,
             RustPredecodeMomentumMode::Neutral,
             false,
-            1,
         )
     }
 

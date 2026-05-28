@@ -32,11 +32,8 @@ PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanReque
 {
     const OpenedCollectionScopeLocation openedCollectionScope
         = request.displayedLocation.openedCollectionScope();
-    const PredecodePolicyInput policyInput
-        = predecodePolicyInputForOpenedCollectionScope(openedCollectionScope, request.momentumMode,
-            request.powerSaverEnabled, request.idealThreadCount);
     const PredecodeSchedulePlan initialSchedule
-        = predecodeSchedulePlan(0, std::nullopt, policyInput);
+        = predecodeSchedulePlan(0, std::nullopt, request.policyInput);
     const std::optional<ImageCandidateListContext> candidateContext
         = imageCandidateListContextForDisplayedImage(request.displayedLocation);
 
@@ -49,7 +46,8 @@ PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanReque
         std::nullopt,
     };
     if (initialSchedule.parallelLimit > 0 && candidateContext.has_value()) {
-        plan.candidateList = PredecodeCandidateListLoadPlan { *candidateContext, policyInput };
+        plan.candidateList
+            = PredecodeCandidateListLoadPlan { *candidateContext, request.policyInput };
     }
 
     return plan;

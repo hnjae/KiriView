@@ -12,12 +12,6 @@
 #include <vector>
 
 namespace KiriView {
-enum class PredecodeScopeKind {
-    DirectMedia,
-    DirectoryCollection,
-    ArchiveCollection,
-};
-
 enum class PredecodeMomentumMode {
     Neutral,
     NextBiased,
@@ -32,11 +26,22 @@ enum class PredecodeMomentumDirection {
     Next,
 };
 
+struct PredecodeSourceProfile {
+    std::size_t neutralPreviousImageCount = 1;
+    std::size_t neutralNextImageCount = 2;
+    std::size_t biasedDirectionImageCount = 3;
+    std::size_t parallelLimit = 1;
+};
+
+constexpr PredecodeSourceProfile directMediaPredecodeSourceProfile()
+{
+    return PredecodeSourceProfile { 1, 2, 3, 1 };
+}
+
 struct PredecodePolicyInput {
-    PredecodeScopeKind scopeKind = PredecodeScopeKind::DirectMedia;
+    PredecodeSourceProfile sourceProfile = directMediaPredecodeSourceProfile();
     PredecodeMomentumMode momentumMode = PredecodeMomentumMode::Neutral;
     bool powerSaverEnabled = false;
-    int idealThreadCount = 1;
 };
 
 struct PredecodeSchedulePlan {
@@ -82,9 +87,8 @@ struct PredecodeQueuedLoadPlan {
 
 int predecodeDebounceMsec();
 int predecodeNeutralRefreshMsec();
-PredecodePolicyInput predecodePolicyInputForOpenedCollectionScope(
-    const OpenedCollectionScopeLocation &openedCollectionScope, PredecodeMomentumMode momentumMode,
-    bool powerSaverEnabled, int idealThreadCount);
+PredecodeSourceProfile predecodeSourceProfileForOpenedCollectionScope(
+    const OpenedCollectionScopeLocation &openedCollectionScope, int idealThreadCount);
 std::vector<std::size_t> predecodeRetainedCachedImageIndices(
     const std::vector<PredecodeCachedImageState> &states, std::size_t windowCount,
     qsizetype byteBudget);

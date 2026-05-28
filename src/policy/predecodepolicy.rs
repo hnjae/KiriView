@@ -15,10 +15,11 @@ mod schedule;
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum RustPredecodeScopeKind {
-        DirectMedia = 0,
-        DirectoryCollection = 1,
-        ArchiveCollection = 2,
+    struct RustPredecodeSourceProfile {
+        neutral_previous_image_count: usize,
+        neutral_next_image_count: usize,
+        biased_direction_image_count: usize,
+        parallel_limit: usize,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -39,10 +40,9 @@ mod ffi {
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustPredecodePolicyInput {
-        scope_kind: RustPredecodeScopeKind,
+        source_profile: RustPredecodeSourceProfile,
         momentum_mode: RustPredecodeMomentumMode,
         power_saver_enabled: bool,
-        ideal_thread_count: i32,
     }
 
     #[derive(Debug, PartialEq, Eq)]
@@ -142,7 +142,7 @@ pub(super) use ffi::{
     RustPredecodeCachedImageState, RustPredecodeMomentumDirection, RustPredecodeMomentumMode,
     RustPredecodeMomentumState, RustPredecodeMomentumUpdateInput, RustPredecodePolicyInput,
     RustPredecodeQueuedLoadPlan, RustPredecodeQueuedLoadState, RustPredecodeSchedulePlan,
-    RustPredecodeScopeKind, RustPredecodeWindowLoadState,
+    RustPredecodeSourceProfile, RustPredecodeWindowLoadState,
 };
 
 fn rust_predecode_debounce_msec() -> i32 {

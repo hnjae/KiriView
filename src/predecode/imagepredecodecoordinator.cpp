@@ -58,9 +58,13 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
 {
     const PredecodeWindowStartPlan plan = predecodeWindowStartPlan(PredecodeWindowPlanRequest {
         schedule.context.currentLocation,
-        m_scheduleRuntime.momentumMode(),
-        m_scheduleRuntime.powerSaverEnabled(),
-        QThread::idealThreadCount(),
+        PredecodePolicyInput {
+            predecodeSourceProfileForOpenedCollectionScope(
+                schedule.context.currentLocation.openedCollectionScope(),
+                QThread::idealThreadCount()),
+            m_scheduleRuntime.momentumMode(),
+            m_scheduleRuntime.powerSaverEnabled(),
+        },
     });
     qCDebug(kiriviewPredecodeLog) << "image predecode start plan"
                                   << "generation" << schedule.generation << "url"

@@ -17,9 +17,7 @@
 namespace KiriView {
 struct PredecodeWindowPlanRequest {
     DisplayedImageLocation displayedLocation;
-    PredecodeMomentumMode momentumMode = PredecodeMomentumMode::Neutral;
-    bool powerSaverEnabled = false;
-    int idealThreadCount = 1;
+    PredecodePolicyInput policyInput;
 };
 
 struct PredecodeCandidateListLoadPlan {
