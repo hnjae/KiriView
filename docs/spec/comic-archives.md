@@ -94,6 +94,6 @@ Ctrl+Home opens the first image in the current archive, and Ctrl+End opens the l
 
 Opening a comic book archive displays the first supported image or supported video in that archive using the same archive media ordering as page navigation. If the first supported item is a video, KiriView displays the unsupported-video placeholder.
 
-If a target sibling archive has no supported images or supported videos, KiriView clears any displayed image and shows an error state explaining that the selected archive does not contain supported images or videos.
+If a target sibling archive has no supported media, KiriView clears any displayed image and shows an error state explaining that the selected collection does not contain any supported media.
 
 That empty archive remains the current archive navigation position, so Previous Archive and Next Archive can continue to move to neighboring archives.
