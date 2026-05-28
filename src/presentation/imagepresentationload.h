@@ -7,8 +7,8 @@
 #include "decoding/decodedimageresult.h"
 #include "document/imageloadtypes.h"
 #include "predecode/predecodedimage.h"
+#include "presentation/imageanimationplaybacksource.h"
 
-#include <QByteArray>
 #include <QImage>
 #include <QSize>
 #include <QtGlobal>
@@ -36,26 +36,14 @@ struct ImagePresentationFrameLoad {
     QImage frame;
 };
 
-struct ImagePresentationApngAnimationLoad {
+struct ImagePresentationAnimationLoad {
     QImage firstFrame;
-    QByteArray data;
-};
-
-struct ImagePresentationReaderAnimationLoad {
-    QImage firstFrame;
-    QByteArray data;
-    QByteArray format;
-};
-
-struct ImagePresentationHeifSequenceAnimationLoad {
-    QImage firstFrame;
-    QByteArray data;
+    ImageAnimationPlaybackRequest playback;
 };
 
 struct ImagePresentationLoadPlan {
     using Payload = std::variant<std::monostate, ImagePresentationStaticImageLoad,
-        ImagePresentationFrameLoad, ImagePresentationApngAnimationLoad,
-        ImagePresentationReaderAnimationLoad, ImagePresentationHeifSequenceAnimationLoad>;
+        ImagePresentationFrameLoad, ImagePresentationAnimationLoad>;
 
     Payload payload;
 

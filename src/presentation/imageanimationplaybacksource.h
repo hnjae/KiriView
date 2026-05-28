@@ -10,8 +10,31 @@
 #include <QImage>
 #include <QString>
 #include <memory>
+#include <variant>
 
 namespace KiriView {
+struct ReaderAnimationPlaybackRequest {
+    QByteArray data;
+    QByteArray format;
+};
+
+struct ApngAnimationPlaybackRequest {
+    QByteArray data;
+};
+
+struct HeifSequenceAnimationPlaybackRequest {
+    QByteArray data;
+};
+
+struct ImageAnimationPlaybackRequest {
+    using Payload = std::variant<std::monostate, ReaderAnimationPlaybackRequest,
+        ApngAnimationPlaybackRequest, HeifSequenceAnimationPlaybackRequest>;
+
+    Payload payload;
+
+    bool isValid() const;
+};
+
 enum class ImageAnimationPlaybackOpenStatus {
     Success,
     Error,
@@ -49,11 +72,11 @@ public:
     virtual bool restartable() const = 0;
 };
 
-std::unique_ptr<ImageAnimationPlaybackSource> makeReaderAnimationPlaybackSource(
-    QByteArray data, QByteArray format);
-std::unique_ptr<ImageAnimationPlaybackSource> makeApngAnimationPlaybackSource(QByteArray data);
-std::unique_ptr<ImageAnimationPlaybackSource> makeHeifSequenceAnimationPlaybackSource(
-    QByteArray data);
+ImageAnimationPlaybackRequest readerAnimationPlaybackRequest(QByteArray data, QByteArray format);
+ImageAnimationPlaybackRequest apngAnimationPlaybackRequest(QByteArray data);
+ImageAnimationPlaybackRequest heifSequenceAnimationPlaybackRequest(QByteArray data);
+std::unique_ptr<ImageAnimationPlaybackSource> makeImageAnimationPlaybackSource(
+    ImageAnimationPlaybackRequest request);
 }
 
 #endif

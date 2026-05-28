@@ -141,6 +141,7 @@ class TestImageAnimationPlayer : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void playbackRequestsAreTypedValues();
     void startConsumesFirstFrameAndEmitsSubsequentFrames();
     void restartableSourcesEmitFirstFrameOnLoopRestart();
     void nonRestartableSourcesDoNotReopenAtSequenceEnd();
@@ -149,6 +150,39 @@ private Q_SLOTS:
     void readEndStopsOptimisticSourceWithoutError();
     void restartOpenErrorsAreReported();
 };
+
+void TestImageAnimationPlayer::playbackRequestsAreTypedValues()
+{
+    KiriView::ImageAnimationPlaybackRequest invalidRequest;
+    QVERIFY(!invalidRequest.isValid());
+    QVERIFY(KiriView::makeImageAnimationPlaybackSource(std::move(invalidRequest)) == nullptr);
+
+    KiriView::ImageAnimationPlaybackRequest readerRequest
+        = KiriView::readerAnimationPlaybackRequest(
+            QByteArrayLiteral("reader-data"), QByteArrayLiteral("gif"));
+    QVERIFY(readerRequest.isValid());
+    const auto *readerPayload
+        = std::get_if<KiriView::ReaderAnimationPlaybackRequest>(&readerRequest.payload);
+    QVERIFY(readerPayload != nullptr);
+    QCOMPARE(readerPayload->data, QByteArrayLiteral("reader-data"));
+    QCOMPARE(readerPayload->format, QByteArrayLiteral("gif"));
+
+    KiriView::ImageAnimationPlaybackRequest apngRequest
+        = KiriView::apngAnimationPlaybackRequest(QByteArrayLiteral("apng-data"));
+    QVERIFY(apngRequest.isValid());
+    const auto *apngPayload
+        = std::get_if<KiriView::ApngAnimationPlaybackRequest>(&apngRequest.payload);
+    QVERIFY(apngPayload != nullptr);
+    QCOMPARE(apngPayload->data, QByteArrayLiteral("apng-data"));
+
+    KiriView::ImageAnimationPlaybackRequest heifRequest
+        = KiriView::heifSequenceAnimationPlaybackRequest(QByteArrayLiteral("heif-data"));
+    QVERIFY(heifRequest.isValid());
+    const auto *heifPayload
+        = std::get_if<KiriView::HeifSequenceAnimationPlaybackRequest>(&heifRequest.payload);
+    QVERIFY(heifPayload != nullptr);
+    QCOMPARE(heifPayload->data, QByteArrayLiteral("heif-data"));
+}
 
 void TestImageAnimationPlayer::startConsumesFirstFrameAndEmitsSubsequentFrames()
 {

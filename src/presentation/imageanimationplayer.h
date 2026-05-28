@@ -7,7 +7,6 @@
 #include "presentation/imageanimationplaybacksource.h"
 #include "presentation/imageanimationpolicy.h"
 
-#include <QByteArray>
 #include <QImage>
 #include <QTimer>
 #include <functional>
@@ -27,9 +26,7 @@ public:
         QObject *context, FrameReadyCallback frameReady, ErrorCallback animationError);
     ~ImageAnimationPlayer();
 
-    void start(const QByteArray &data, const QByteArray &format);
-    void startApng(const QByteArray &data);
-    void startHeifSequence(const QByteArray &data);
+    void start(ImageAnimationPlaybackRequest request);
     void start(std::unique_ptr<ImageAnimationPlaybackSource> source);
     void stop();
 

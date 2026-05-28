@@ -12,6 +12,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <variant>
 
 namespace {
 KiriView::ImageAnimationPlaybackOpenResult playbackOpenResult(
@@ -235,23 +236,89 @@ private:
     QByteArray m_data;
     std::unique_ptr<KiriView::HeifSequenceReader> m_reader;
 };
+
+std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makeReaderPlaybackSource(
+    KiriView::ReaderAnimationPlaybackRequest request)
+{
+    return std::make_unique<ReaderAnimationPlaybackSource>(
+        std::move(request.data), std::move(request.format));
+}
+
+std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makeApngPlaybackSource(
+    KiriView::ApngAnimationPlaybackRequest request)
+{
+    return std::make_unique<ApngAnimationPlaybackSource>(std::move(request.data));
+}
+
+std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makeHeifSequencePlaybackSource(
+    KiriView::HeifSequenceAnimationPlaybackRequest request)
+{
+    return std::make_unique<HeifSequenceAnimationPlaybackSource>(std::move(request.data));
+}
+
+std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makePlaybackSource(std::monostate)
+{
+    return {};
+}
+
+std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makePlaybackSource(
+    KiriView::ReaderAnimationPlaybackRequest request)
+{
+    return makeReaderPlaybackSource(std::move(request));
+}
+
+std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makePlaybackSource(
+    KiriView::ApngAnimationPlaybackRequest request)
+{
+    return makeApngPlaybackSource(std::move(request));
+}
+
+std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makePlaybackSource(
+    KiriView::HeifSequenceAnimationPlaybackRequest request)
+{
+    return makeHeifSequencePlaybackSource(std::move(request));
+}
 }
 
 namespace KiriView {
-std::unique_ptr<ImageAnimationPlaybackSource> makeReaderAnimationPlaybackSource(
-    QByteArray data, QByteArray format)
+bool ImageAnimationPlaybackRequest::isValid() const
 {
-    return std::make_unique<ReaderAnimationPlaybackSource>(std::move(data), std::move(format));
+    return !std::holds_alternative<std::monostate>(payload);
 }
 
-std::unique_ptr<ImageAnimationPlaybackSource> makeApngAnimationPlaybackSource(QByteArray data)
+ImageAnimationPlaybackRequest readerAnimationPlaybackRequest(QByteArray data, QByteArray format)
 {
-    return std::make_unique<ApngAnimationPlaybackSource>(std::move(data));
+    return ImageAnimationPlaybackRequest {
+        ReaderAnimationPlaybackRequest {
+            std::move(data),
+            std::move(format),
+        },
+    };
 }
 
-std::unique_ptr<ImageAnimationPlaybackSource> makeHeifSequenceAnimationPlaybackSource(
-    QByteArray data)
+ImageAnimationPlaybackRequest apngAnimationPlaybackRequest(QByteArray data)
 {
-    return std::make_unique<HeifSequenceAnimationPlaybackSource>(std::move(data));
+    return ImageAnimationPlaybackRequest {
+        ApngAnimationPlaybackRequest {
+            std::move(data),
+        },
+    };
+}
+
+ImageAnimationPlaybackRequest heifSequenceAnimationPlaybackRequest(QByteArray data)
+{
+    return ImageAnimationPlaybackRequest {
+        HeifSequenceAnimationPlaybackRequest {
+            std::move(data),
+        },
+    };
+}
+
+std::unique_ptr<ImageAnimationPlaybackSource> makeImageAnimationPlaybackSource(
+    ImageAnimationPlaybackRequest request)
+{
+    return std::visit(
+        [](auto &&playbackRequest) { return makePlaybackSource(std::move(playbackRequest)); },
+        std::move(request.payload));
 }
 }

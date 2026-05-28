@@ -63,32 +63,13 @@ KiriView::ImagePresentationLoadPlan framePlan(QImage frame)
     } };
 }
 
-KiriView::ImagePresentationLoadPlan apngAnimationPlan(QImage firstFrame, QByteArray data)
+KiriView::ImagePresentationLoadPlan animationPlan(
+    QImage firstFrame, KiriView::ImageAnimationPlaybackRequest request)
 {
-    return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationApngAnimationLoad {
+    return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationAnimationLoad {
         std::move(firstFrame),
-        std::move(data),
+        std::move(request),
     } };
-}
-
-KiriView::ImagePresentationLoadPlan readerAnimationPlan(
-    QImage firstFrame, QByteArray data, QByteArray format)
-{
-    return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationReaderAnimationLoad {
-        std::move(firstFrame),
-        std::move(data),
-        std::move(format),
-    } };
-}
-
-KiriView::ImagePresentationLoadPlan heifSequenceAnimationPlan(QImage firstFrame, QByteArray data)
-{
-    return KiriView::ImagePresentationLoadPlan {
-        KiriView::ImagePresentationHeifSequenceAnimationLoad {
-            std::move(firstFrame),
-            std::move(data),
-        },
-    };
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::StaticDecodedImage &decoded,
@@ -110,7 +91,8 @@ KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ApngAnimationImag
         return framePlan(std::move(decoded.firstFrame));
     }
 
-    return apngAnimationPlan(std::move(decoded.firstFrame), std::move(decoded.data));
+    return animationPlan(std::move(decoded.firstFrame),
+        KiriView::apngAnimationPlaybackRequest(std::move(decoded.data)));
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ReaderAnimationImage &decoded,
@@ -120,8 +102,9 @@ KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ReaderAnimationIm
         return framePlan(std::move(decoded.firstFrame));
     }
 
-    return readerAnimationPlan(
-        std::move(decoded.firstFrame), std::move(decoded.data), std::move(decoded.format));
+    return animationPlan(std::move(decoded.firstFrame),
+        KiriView::readerAnimationPlaybackRequest(
+            std::move(decoded.data), std::move(decoded.format)));
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::HeifSequenceAnimationImage &decoded,
@@ -131,7 +114,8 @@ KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::HeifSequenceAnima
         return framePlan(std::move(decoded.firstFrame));
     }
 
-    return heifSequenceAnimationPlan(std::move(decoded.firstFrame), std::move(decoded.data));
+    return animationPlan(std::move(decoded.firstFrame),
+        KiriView::heifSequenceAnimationPlaybackRequest(std::move(decoded.data)));
 }
 }
 
@@ -170,22 +154,10 @@ ImagePresentationLoadResult executeImagePresentationLoadPlan(
     if (const auto *frame = std::get_if<ImagePresentationFrameLoad>(&plan.payload)) {
         return presentImageFrame(presentation, session, frame->frame);
     }
-    if (auto *animation = std::get_if<ImagePresentationApngAnimationLoad>(&plan.payload)) {
+    if (auto *animation = std::get_if<ImagePresentationAnimationLoad>(&plan.payload)) {
         ImagePresentationLoadResult result
             = presentImageFrame(presentation, session, animation->firstFrame);
-        presentation.startApngAnimation(animation->data);
-        return result;
-    }
-    if (auto *animation = std::get_if<ImagePresentationReaderAnimationLoad>(&plan.payload)) {
-        ImagePresentationLoadResult result
-            = presentImageFrame(presentation, session, animation->firstFrame);
-        presentation.startAnimation(animation->data, animation->format);
-        return result;
-    }
-    if (auto *animation = std::get_if<ImagePresentationHeifSequenceAnimationLoad>(&plan.payload)) {
-        ImagePresentationLoadResult result
-            = presentImageFrame(presentation, session, animation->firstFrame);
-        presentation.startHeifSequenceAnimation(animation->data);
+        presentation.startAnimation(std::move(animation->playback));
         return result;
     }
 

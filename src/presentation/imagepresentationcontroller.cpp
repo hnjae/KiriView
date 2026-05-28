@@ -236,19 +236,9 @@ void ImagePresentationController::clearImage()
     }
 }
 
-void ImagePresentationController::startAnimation(const QByteArray &data, const QByteArray &format)
+void ImagePresentationController::startAnimation(ImageAnimationPlaybackRequest request)
 {
-    m_animationPlayer->start(data, format);
-}
-
-void ImagePresentationController::startApngAnimation(const QByteArray &data)
-{
-    m_animationPlayer->startApng(data);
-}
-
-void ImagePresentationController::startHeifSequenceAnimation(const QByteArray &data)
-{
-    m_animationPlayer->startHeifSequence(data);
+    m_animationPlayer->start(std::move(request));
 }
 
 void ImagePresentationController::stopAnimation() { m_animationPlayer->stop(); }

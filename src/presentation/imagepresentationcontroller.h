@@ -6,11 +6,11 @@
 
 #include "cache/imagecachepolicy.h"
 #include "document/imagedocumenttypes.h"
+#include "presentation/imageanimationplaybacksource.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
 
-#include <QByteArray>
 #include <QImage>
 #include <QRectF>
 #include <QSize>
@@ -80,9 +80,7 @@ public:
     void discardDecodedTiles();
     void clearImage();
 
-    void startAnimation(const QByteArray &data, const QByteArray &format);
-    void startApngAnimation(const QByteArray &data);
-    void startHeifSequenceAnimation(const QByteArray &data);
+    void startAnimation(ImageAnimationPlaybackRequest request);
     void stopAnimation();
 
 private:

@@ -21,19 +21,9 @@ ImageAnimationPlayer::ImageAnimationPlayer(
 
 ImageAnimationPlayer::~ImageAnimationPlayer() { stop(); }
 
-void ImageAnimationPlayer::start(const QByteArray &data, const QByteArray &format)
+void ImageAnimationPlayer::start(ImageAnimationPlaybackRequest request)
 {
-    start(makeReaderAnimationPlaybackSource(data, format));
-}
-
-void ImageAnimationPlayer::startApng(const QByteArray &data)
-{
-    start(makeApngAnimationPlaybackSource(data));
-}
-
-void ImageAnimationPlayer::startHeifSequence(const QByteArray &data)
-{
-    start(makeHeifSequenceAnimationPlaybackSource(data));
+    start(makeImageAnimationPlaybackSource(std::move(request)));
 }
 
 void ImageAnimationPlayer::start(std::unique_ptr<ImageAnimationPlaybackSource> source)

@@ -151,11 +151,32 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
             std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation,
             testPredecodeCacheByteBudget);
 
-        const auto *load = planPayload<KiriView::ImagePresentationReaderAnimationLoad>(plan);
+        const auto *load = planPayload<KiriView::ImagePresentationAnimationLoad>(plan);
         QVERIFY(load != nullptr);
         QCOMPARE(load->firstFrame.size(), QSize(10, 6));
-        QCOMPARE(load->data, QByteArrayLiteral("reader-data"));
-        QCOMPARE(load->format, QByteArrayLiteral("gif"));
+        const auto *request
+            = std::get_if<KiriView::ReaderAnimationPlaybackRequest>(&load->playback.payload);
+        QVERIFY(request != nullptr);
+        QCOMPARE(request->data, QByteArrayLiteral("reader-data"));
+        QCOMPARE(request->format, QByteArrayLiteral("gif"));
+    }
+
+    {
+        KiriView::DecodedImage decoded = KiriView::ApngAnimationImage {
+            testImage(QSize(14, 8)),
+            QByteArrayLiteral("apng-data"),
+        };
+        const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation,
+            testPredecodeCacheByteBudget);
+
+        const auto *load = planPayload<KiriView::ImagePresentationAnimationLoad>(plan);
+        QVERIFY(load != nullptr);
+        QCOMPARE(load->firstFrame.size(), QSize(14, 8));
+        const auto *request
+            = std::get_if<KiriView::ApngAnimationPlaybackRequest>(&load->playback.payload);
+        QVERIFY(request != nullptr);
+        QCOMPARE(request->data, QByteArrayLiteral("apng-data"));
     }
 
     {
@@ -167,10 +188,13 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
             std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation,
             testPredecodeCacheByteBudget);
 
-        const auto *load = planPayload<KiriView::ImagePresentationHeifSequenceAnimationLoad>(plan);
+        const auto *load = planPayload<KiriView::ImagePresentationAnimationLoad>(plan);
         QVERIFY(load != nullptr);
         QCOMPARE(load->firstFrame.size(), QSize(11, 5));
-        QCOMPARE(load->data, QByteArrayLiteral("heif-data"));
+        const auto *request
+            = std::get_if<KiriView::HeifSequenceAnimationPlaybackRequest>(&load->playback.payload);
+        QVERIFY(request != nullptr);
+        QCOMPARE(request->data, QByteArrayLiteral("heif-data"));
     }
 }
 
