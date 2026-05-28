@@ -480,9 +480,10 @@ Item {
             readingControlsVisibleExpression, readingControlsEnabledExpression);
 }
 
-QString openedCollectionScopeFixtureQml(const QString &sourceUrl = QString())
+QString openedCollectionScopeFixtureQml(
+    const QString &sourceUrl = QString(), bool navigationActionsEnabled = false)
 {
-    return fixtureQml(sourceUrl, false,
+    return fixtureQml(sourceUrl, navigationActionsEnabled,
         QStringLiteral("!root.videoMode && imageDocument.openedCollectionScopeActive"),
         QStringLiteral("!root.videoMode && imageDocument.rightToLeftReadingAvailable"));
 }
@@ -742,9 +743,11 @@ ToolBarMenuFixture createFixture(
         QUrl(QStringLiteral("memory:test_toolbarapplicationmenu.qml")));
 }
 
-ToolBarMenuFixture createOpenedCollectionScopeFixture(const QString &sourceUrl = QString())
+ToolBarMenuFixture createOpenedCollectionScopeFixture(
+    const QString &sourceUrl = QString(), bool navigationActionsEnabled = false)
 {
-    return createFixtureFromQml(openedCollectionScopeFixtureQml(sourceUrl),
+    return createFixtureFromQml(
+        openedCollectionScopeFixtureQml(sourceUrl, navigationActionsEnabled),
         QUrl(QStringLiteral("memory:test_toolbar_opened_collection_scope.qml")));
 }
 
@@ -1172,10 +1175,12 @@ void TestToolBarApplicationMenu::pageNavigationButtonsUseSemanticActionsForReadi
 {
     QString sourcePath;
     QString errorString;
-    std::unique_ptr<QTemporaryDir> imageDirectory = createImageDirectory(&sourcePath, &errorString);
+    std::unique_ptr<QTemporaryDir> imageDirectory
+        = createDirectoryCollection(&sourcePath, &errorString);
     QVERIFY2(imageDirectory != nullptr, qPrintable(errorString));
 
-    ToolBarMenuFixture fixture = createFixture(QUrl::fromLocalFile(sourcePath).toString(), true);
+    ToolBarMenuFixture fixture
+        = createOpenedCollectionScopeFixture(QUrl::fromLocalFile(sourcePath).toString(), true);
     fixture.temporaryDirectory = std::move(imageDirectory);
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));

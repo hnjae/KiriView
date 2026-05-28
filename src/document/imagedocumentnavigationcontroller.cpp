@@ -5,6 +5,7 @@
 
 #include "async/imagecallback.h"
 #include "imagedocumentstate.h"
+#include "location/imagedocumentlocation.h"
 #include "navigation/imagedocumentpagecandidatelistsource.h"
 #include "navigation/imagedocumentpagenavigationservice.h"
 #include "presentation/imagepresentationcontroller.h"
@@ -15,11 +16,27 @@
 #include <utility>
 
 namespace {
+bool imageDocumentPageNavigationScopeActive(const KiriView::ImageDocumentState &state)
+{
+    const KiriView::DisplayedImageLocation &location = state.displayedImageLocation();
+    if (!KiriView::displayedLocationIsInsideOpenedCollectionScope(location)) {
+        return false;
+    }
+
+    return !state.sourceUrl().isEmpty()
+        && KiriView::openedCollectionScopeContainsUrl(
+            location.openedCollectionScope(), state.sourceUrl());
+}
+
 std::optional<KiriView::ImageDocumentPageCandidateListContext> navigationCandidateContext(
     const KiriView::ImageDocumentState &state,
     const KiriView::ImagePresentationController &presentationController)
 {
     if (!presentationController.hasImage() && !state.unsupportedOpenedCollectionVideo()) {
+        return std::nullopt;
+    }
+
+    if (!imageDocumentPageNavigationScopeActive(state)) {
         return std::nullopt;
     }
 
@@ -56,11 +73,17 @@ ImageDocumentNavigationController::pageNavigationSnapshot() const
 
 void ImageDocumentNavigationController::openAdjacentPage(NavigationDirection direction)
 {
+    const std::optional<ImageDocumentPageCandidateListContext> context
+        = navigationCandidateContext(m_state, m_presentationController);
+    if (!context.has_value()) {
+        m_navigationService.clearPageNavigation();
+        return;
+    }
+
     const ImageSpreadPageNavigationTarget target
         = m_spreadController.imageDocumentPageNavigationTarget(direction);
     if (!target.handledBySpread) {
-        m_navigationService.openAdjacentPage(
-            navigationCandidateContext(m_state, m_presentationController), direction);
+        m_navigationService.openAdjacentPage(context, direction);
         return;
     }
 
@@ -78,6 +101,11 @@ void ImageDocumentNavigationController::openAdjacentContainer(NavigationDirectio
 
 void ImageDocumentNavigationController::openImageAtPage(int pageNumber)
 {
+    if (!navigationCandidateContext(m_state, m_presentationController).has_value()) {
+        m_navigationService.clearPageNavigation();
+        return;
+    }
+
     const bool spreadTransition = m_spreadController.shouldBeginTransition(pageNumber);
     const std::optional<ImageDocumentPageTarget> target
         = m_navigationService.selectPage(pageNumber);

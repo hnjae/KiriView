@@ -88,6 +88,7 @@ public:
 
     void displayImage(const QUrl &url)
     {
+        state.setSourceUrl(url);
         state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(url));
         presentation.setStaticImage(staticTestImagePayload(testImage()), false);
     }
@@ -95,6 +96,7 @@ public:
     void displayComicPage(
         const QUrl &url, const KiriView::OpenedCollectionScopeLocation &archiveCollection)
     {
+        state.setSourceUrl(url);
         state.setDisplayedImageLocation(
             KiriView::DisplayedImageLocation::fromOpenedCollectionScope(url, archiveCollection));
         presentation.setStaticImage(staticTestImagePayload(testImage(QSize(800, 1200))), false);
@@ -117,14 +119,38 @@ class TestImageDocumentNavigationController : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void updatePageNavigationUsesDisplayedImageContext();
+    void updatePageNavigationUsesOpenedCollectionContext();
+    void updatePageNavigationIgnoresOrdinaryDirectImage();
     void updatePageNavigationRequiresPresentedImage();
-    void adjacentImageDocumentPageNavigationUsesDisplayedImageContext();
+    void stalePageNavigationCannotDispatchForOrdinaryDirectImage();
+    void adjacentImageDocumentPageNavigationUsesOpenedCollectionContext();
     void pageSelectionDispatchesPageNavigationRuntimePlan();
     void spreadPageSelectionStartsTrackedTransition();
 };
 
-void TestImageDocumentNavigationController::updatePageNavigationUsesDisplayedImageContext()
+void TestImageDocumentNavigationController::updatePageNavigationUsesOpenedCollectionContext()
+{
+    DocumentNavigationFixture fixture;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    fixture.candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+        {
+            imageDocumentPageCandidate(firstUrl),
+            imageDocumentPageCandidate(secondUrl),
+        });
+    fixture.displayComicPage(firstUrl, *archiveCollection);
+
+    fixture.controller.updatePageNavigation();
+
+    QCOMPARE(fixture.controller.currentPageNumber(), 1);
+    QCOMPARE(fixture.controller.pageCount(), 2);
+}
+
+void TestImageDocumentNavigationController::updatePageNavigationIgnoresOrdinaryDirectImage()
 {
     DocumentNavigationFixture fixture;
     const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
@@ -138,21 +164,27 @@ void TestImageDocumentNavigationController::updatePageNavigationUsesDisplayedIma
 
     fixture.controller.updatePageNavigation();
 
-    QCOMPARE(fixture.controller.currentPageNumber(), 1);
-    QCOMPARE(fixture.controller.pageCount(), 2);
+    QCOMPARE(fixture.controller.currentPageNumber(), 0);
+    QCOMPARE(fixture.controller.pageCount(), 0);
 }
 
 void TestImageDocumentNavigationController::updatePageNavigationRequiresPresentedImage()
 {
     DocumentNavigationFixture fixture;
-    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
-    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
-    fixture.candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    fixture.candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageDocumentPageCandidate(firstUrl),
             imageDocumentPageCandidate(secondUrl),
         });
-    fixture.state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(firstUrl));
+    fixture.state.setSourceUrl(firstUrl);
+    fixture.state.setDisplayedImageLocation(
+        KiriView::DisplayedImageLocation::fromOpenedCollectionScope(firstUrl, *archiveCollection));
 
     fixture.controller.updatePageNavigation();
     fixture.controller.openAdjacentPage(KiriView::NavigationDirection::Next);
@@ -163,17 +195,64 @@ void TestImageDocumentNavigationController::updatePageNavigationRequiresPresente
 }
 
 void TestImageDocumentNavigationController::
-    adjacentImageDocumentPageNavigationUsesDisplayedImageContext()
+    stalePageNavigationCannotDispatchForOrdinaryDirectImage()
 {
     DocumentNavigationFixture fixture;
-    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
-    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
-    fixture.candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    fixture.candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+        {
+            imageDocumentPageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
+        });
+    fixture.displayComicPage(firstPageUrl, *archiveCollection);
+    fixture.controller.updatePageNavigation();
+    QCOMPARE(fixture.controller.pageCount(), 2);
+
+    fixture.runtimePlans.clear();
+    fixture.displayImage(localUrl(QStringLiteral("/images/01.png")));
+
+    fixture.controller.openAdjacentPage(KiriView::NavigationDirection::Next);
+
+    QVERIFY(fixture.runtimePlans.empty());
+    QCOMPARE(fixture.controller.currentPageNumber(), 0);
+    QCOMPARE(fixture.controller.pageCount(), 0);
+
+    fixture.displayComicPage(firstPageUrl, *archiveCollection);
+    fixture.controller.updatePageNavigation();
+    QCOMPARE(fixture.controller.pageCount(), 2);
+    fixture.runtimePlans.clear();
+    fixture.displayImage(localUrl(QStringLiteral("/images/02.png")));
+
+    fixture.controller.openImageAtPage(2);
+
+    QVERIFY(fixture.runtimePlans.empty());
+    QCOMPARE(fixture.controller.currentPageNumber(), 0);
+    QCOMPARE(fixture.controller.pageCount(), 0);
+}
+
+void TestImageDocumentNavigationController::
+    adjacentImageDocumentPageNavigationUsesOpenedCollectionContext()
+{
+    DocumentNavigationFixture fixture;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    fixture.candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageDocumentPageCandidate(firstUrl),
             imageDocumentPageCandidate(secondUrl),
         });
-    fixture.displayImage(firstUrl);
+    fixture.displayComicPage(firstUrl, *archiveCollection);
 
     fixture.controller.openAdjacentPage(KiriView::NavigationDirection::Next);
 
@@ -186,15 +265,19 @@ void TestImageDocumentNavigationController::
 void TestImageDocumentNavigationController::pageSelectionDispatchesPageNavigationRuntimePlan()
 {
     DocumentNavigationFixture fixture;
-    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
-    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.bin"));
-    fixture.candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.mp4"));
+    fixture.candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageDocumentPageCandidate(firstUrl),
             KiriView::ImageDocumentPageCandidate {
-                secondUrl, QStringLiteral("02.bin"), KiriView::ImageDocumentPageKind::Video },
+                secondUrl, QStringLiteral("02.mp4"), KiriView::ImageDocumentPageKind::Video },
         });
-    fixture.displayImage(firstUrl);
+    fixture.displayComicPage(firstUrl, *archiveCollection);
     fixture.controller.updatePageNavigation();
 
     fixture.controller.openImageAtPage(2);
