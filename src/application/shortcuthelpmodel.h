@@ -9,6 +9,7 @@
 #include <QHash>
 #include <QList>
 #include <QString>
+#include <QStringList>
 #include <QVariant>
 #include <functional>
 
@@ -18,6 +19,11 @@ struct ShortcutHelpRow {
     QString actionName;
     QString actionText;
     QString shortcutText;
+    QString categoryKey;
+    QString categoryText;
+    QStringList shortcutKeyTexts;
+    bool categoryFirst = false;
+    bool categoryLast = false;
 };
 
 using ShortcutHelpRowsProvider = std::function<QList<ShortcutHelpRow>()>;
@@ -30,6 +36,11 @@ public:
         ActionNameRole,
         ActionTextRole,
         ShortcutTextRole,
+        CategoryKeyRole,
+        CategoryTextRole,
+        CategoryFirstRole,
+        CategoryLastRole,
+        ShortcutKeyTextsRole,
     };
 
     explicit ShortcutHelpModel(ShortcutHelpRowsProvider rowsProvider, QObject *parent = nullptr);

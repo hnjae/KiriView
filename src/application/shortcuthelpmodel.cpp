@@ -38,6 +38,16 @@ QVariant ShortcutHelpModel::data(const QModelIndex &index, int role) const
         return row.actionText;
     case ShortcutTextRole:
         return row.shortcutText;
+    case CategoryKeyRole:
+        return row.categoryKey;
+    case CategoryTextRole:
+        return row.categoryText;
+    case CategoryFirstRole:
+        return row.categoryFirst;
+    case CategoryLastRole:
+        return row.categoryLast;
+    case ShortcutKeyTextsRole:
+        return row.shortcutKeyTexts;
     default:
         return {};
     }
@@ -50,6 +60,11 @@ QHash<int, QByteArray> ShortcutHelpModel::roleNames() const
         { ActionNameRole, QByteArrayLiteral("actionName") },
         { ActionTextRole, QByteArrayLiteral("actionText") },
         { ShortcutTextRole, QByteArrayLiteral("shortcutText") },
+        { CategoryKeyRole, QByteArrayLiteral("categoryKey") },
+        { CategoryTextRole, QByteArrayLiteral("categoryText") },
+        { CategoryFirstRole, QByteArrayLiteral("categoryFirst") },
+        { CategoryLastRole, QByteArrayLiteral("categoryLast") },
+        { ShortcutKeyTextsRole, QByteArrayLiteral("shortcutKeyTexts") },
     };
 }
 
@@ -72,7 +87,9 @@ void ShortcutHelpModel::handleRowsChanged()
 
     m_rows = rows;
     for (int row : changedRows) {
-        Q_EMIT dataChanged(index(row, 0), index(row, 0), { ActionTextRole, ShortcutTextRole });
+        Q_EMIT dataChanged(index(row, 0), index(row, 0),
+            { ActionTextRole, ShortcutTextRole, CategoryKeyRole, CategoryTextRole,
+                CategoryFirstRole, CategoryLastRole, ShortcutKeyTextsRole });
     }
 }
 
@@ -100,6 +117,9 @@ bool ShortcutHelpModel::sameRowIdentities(
 
 bool ShortcutHelpModel::sameRowData(const ShortcutHelpRow &left, const ShortcutHelpRow &right)
 {
-    return left.actionText == right.actionText && left.shortcutText == right.shortcutText;
+    return left.actionText == right.actionText && left.shortcutText == right.shortcutText
+        && left.categoryKey == right.categoryKey && left.categoryText == right.categoryText
+        && left.shortcutKeyTexts == right.shortcutKeyTexts
+        && left.categoryFirst == right.categoryFirst && left.categoryLast == right.categoryLast;
 }
 }

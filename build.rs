@@ -243,6 +243,7 @@ fn qml_module() -> QmlModule {
     let mut module = QmlModule::new("io.github.hnjae.kiriview")
         .depend("QtMultimedia")
         .depend("QtQuick")
+        .depend("org.kde.kirigamiaddons.formcard")
         .depend("org.kde.kirigamiaddons.statefulapp");
     for qml_file in qml_files() {
         module = module.qml_file(qml_file);

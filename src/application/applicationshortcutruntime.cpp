@@ -8,7 +8,89 @@
 
 #include <KLocalizedString>
 #include <KirigamiActionCollection>
+#include <algorithm>
 #include <utility>
+
+namespace {
+using ActionId = KiriView::ApplicationActions::ActionId;
+
+struct ShortcutHelpCategory {
+    QString key;
+    QString text;
+};
+
+ShortcutHelpCategory shortcutHelpCategory(ActionId actionId)
+{
+    switch (actionId) {
+    case ActionId::FileOpenAction:
+    case ActionId::FileOpenWithAction:
+    case ActionId::FileMoveToTrashAction:
+    case ActionId::FileDeleteAction:
+    case ActionId::FileQuitAction:
+        return { QStringLiteral("file"), i18nc("@title:group", "File") };
+    case ActionId::GoPreviousArchiveAction:
+    case ActionId::GoNextArchiveAction:
+    case ActionId::GoPreviousImageAction:
+    case ActionId::GoNextImageAction:
+    case ActionId::GoFirstImageAction:
+    case ActionId::GoLastImageAction:
+        return { QStringLiteral("navigation"), i18nc("@title:group", "Navigation") };
+    case ActionId::ViewZoomInAction:
+    case ActionId::ViewZoomOutAction:
+    case ActionId::ViewFitAction:
+    case ActionId::ViewFitHeightAction:
+    case ActionId::ViewFitWidthAction:
+    case ActionId::ViewActualSizeAction:
+    case ActionId::ViewRotateClockwiseAction:
+    case ActionId::ViewRotateCounterclockwiseAction:
+    case ActionId::ViewToggleTwoPageModeAction:
+    case ActionId::ViewToggleRightToLeftReadingAction:
+    case ActionId::ViewPanTopLeftAction:
+    case ActionId::ViewPanBottomRightAction:
+    case ActionId::ViewScanForwardAction:
+    case ActionId::ViewScanBackwardAction:
+        return { QStringLiteral("view"), i18nc("@title:group", "View") };
+    case ActionId::ViewToggleInfoPanelAction:
+    case ActionId::ViewToggleThumbnailPanelAction:
+        return { QStringLiteral("panels"), i18nc("@title:group", "Panels") };
+    case ActionId::WindowFullscreenAction:
+        return { QStringLiteral("window"), i18nc("@title:group", "Window") };
+    case ActionId::OptionsConfigureKeybindingAction:
+    case ActionId::OptionsShowMenubarAction:
+        return { QStringLiteral("settings"), i18nc("@title:group", "Settings") };
+    case ActionId::HelpShortcutsAction:
+        return { QStringLiteral("help"), i18nc("@title:group", "Help") };
+    case ActionId::OpenApplicationMenuAction:
+    case ActionId::ActionCount:
+        return { QStringLiteral("help"), i18nc("@title:group", "Help") };
+    }
+
+    return { QStringLiteral("help"), i18nc("@title:group", "Help") };
+}
+
+int shortcutHelpCategoryOrder(const QString &categoryKey)
+{
+    if (categoryKey == QStringLiteral("file")) {
+        return 0;
+    }
+    if (categoryKey == QStringLiteral("navigation")) {
+        return 1;
+    }
+    if (categoryKey == QStringLiteral("view")) {
+        return 2;
+    }
+    if (categoryKey == QStringLiteral("panels")) {
+        return 3;
+    }
+    if (categoryKey == QStringLiteral("window")) {
+        return 4;
+    }
+    if (categoryKey == QStringLiteral("settings")) {
+        return 5;
+    }
+    return 6;
+}
+}
 
 namespace KiriView::ApplicationActions {
 ApplicationShortcutRuntime::ApplicationShortcutRuntime(ApplicationActionHost &host,
@@ -136,12 +218,27 @@ QString ApplicationShortcutRuntime::actionDisplayText(const QAction *action)
 
 QString ApplicationShortcutRuntime::shortcutDisplayText(const QAction *action)
 {
-    if (action == nullptr) {
-        return {};
+    return shortcutKeyDisplayTexts(action).join(QStringLiteral(" / "));
+}
+
+QStringList ApplicationShortcutRuntime::shortcutKeyDisplayTexts(const QAction *action)
+{
+    QStringList texts;
+    if (action != nullptr) {
+        const QList<QKeySequence> shortcuts = action->shortcuts();
+        texts.reserve(shortcuts.size());
+        for (const QKeySequence &shortcut : shortcuts) {
+            if (!shortcut.isEmpty()) {
+                texts.push_back(shortcut.toString(QKeySequence::NativeText));
+            }
+        }
     }
 
-    const QString text = ApplicationActions::shortcutProjection(action->shortcuts()).shortcutText;
-    return text.isEmpty() ? i18nc("@info:keyboard shortcut", "Unassigned") : text;
+    if (texts.isEmpty()) {
+        texts.push_back(i18nc("@info:keyboard shortcut", "Unassigned"));
+    }
+
+    return texts;
 }
 
 QList<ShortcutHelpRow> ApplicationShortcutRuntime::shortcutHelpRows() const
@@ -155,9 +252,33 @@ QList<ShortcutHelpRow> ApplicationShortcutRuntime::shortcutHelpRows() const
             continue;
         }
 
-        rows.push_back(ShortcutHelpRow { static_cast<int>(registeredAction.actionId),
-            registeredAction.actionName, actionDisplayText(registeredAction.action),
-            shortcutDisplayText(registeredAction.action) });
+        const ShortcutHelpCategory category = shortcutHelpCategory(registeredAction.actionId);
+        rows.push_back(ShortcutHelpRow {
+            static_cast<int>(registeredAction.actionId),
+            registeredAction.actionName,
+            actionDisplayText(registeredAction.action),
+            shortcutDisplayText(registeredAction.action),
+            category.key,
+            category.text,
+            shortcutKeyDisplayTexts(registeredAction.action),
+        });
+    }
+
+    std::stable_sort(
+        rows.begin(), rows.end(), [](const ShortcutHelpRow &left, const ShortcutHelpRow &right) {
+            const int leftOrder = shortcutHelpCategoryOrder(left.categoryKey);
+            const int rightOrder = shortcutHelpCategoryOrder(right.categoryKey);
+            if (leftOrder != rightOrder) {
+                return leftOrder < rightOrder;
+            }
+            return left.actionId < right.actionId;
+        });
+
+    for (qsizetype index = 0; index < rows.size(); ++index) {
+        rows[index].categoryFirst
+            = index == 0 || rows.at(index - 1).categoryKey != rows.at(index).categoryKey;
+        rows[index].categoryLast = index == rows.size() - 1
+            || rows.at(index + 1).categoryKey != rows.at(index).categoryKey;
     }
 
     return rows;

@@ -34,7 +34,7 @@ private Q_SLOTS:
     void escapeClosesDialog();
     void enterAcceptsAndClosesDialog();
     void outsideClickClosesDialog();
-    void listsConfigurableActionShortcuts();
+    void presentsConfigurableActionShortcutsAsFormCards();
 };
 
 namespace {
@@ -187,26 +187,47 @@ void openDialog(ShortcutHelpDialogFixture &fixture)
     QTRY_VERIFY(dialogOpened(fixture.root));
 }
 
-void collectChildTexts(QQuickItem *root, const QString &objectName, QStringList &texts)
+void collectChildProperties(
+    QQuickItem *root, const QString &objectName, const char *propertyName, QStringList &values)
 {
     if (root == nullptr) {
         return;
     }
 
     if (root->objectName() == objectName) {
-        texts.push_back(root->property("text").toString());
+        values.push_back(root->property(propertyName).toString());
     }
 
     for (QQuickItem *child : root->childItems()) {
-        collectChildTexts(child, objectName, texts);
+        collectChildProperties(child, objectName, propertyName, values);
     }
 }
 
 QStringList childTexts(QQuickItem *root, const QString &objectName)
 {
     QStringList texts;
-    collectChildTexts(root, objectName, texts);
+    collectChildProperties(root, objectName, "text", texts);
     return texts;
+}
+
+QStringList childTitles(QQuickItem *root, const QString &objectName)
+{
+    QStringList titles;
+    collectChildProperties(root, objectName, "title", titles);
+    return titles;
+}
+
+int childObjectCount(QQuickItem *root, const QString &objectName)
+{
+    if (root == nullptr) {
+        return 0;
+    }
+
+    int count = root->objectName() == objectName ? 1 : 0;
+    for (QQuickItem *child : root->childItems()) {
+        count += childObjectCount(child, objectName);
+    }
+    return count;
 }
 }
 
@@ -261,22 +282,40 @@ void TestShortcutHelpDialog::outsideClickClosesDialog()
     QTRY_COMPARE(intProperty(fixture.root, "closedCount"), 1);
 }
 
-void TestShortcutHelpDialog::listsConfigurableActionShortcuts()
+void TestShortcutHelpDialog::presentsConfigurableActionShortcutsAsFormCards()
 {
     ShortcutHelpDialogFixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     openDialog(fixture);
 
+    QVERIFY(fixture.view->contentItem()->findChild<QObject *>(QStringLiteral("shortcutHelpForm"))
+        == nullptr);
+    QVERIFY(
+        fixture.view->contentItem()->findChild<QObject *>(QStringLiteral("shortcutHelpScrollView"))
+        != nullptr);
+    QVERIFY(childObjectCount(fixture.view->contentItem(), QStringLiteral("shortcutDelegate")) > 0);
+
     const QStringList shortcutTexts
-        = childTexts(fixture.view->contentItem(), QStringLiteral("shortcutTextLabel"));
+        = childTexts(fixture.view->contentItem(), QStringLiteral("shortcutKeycap"));
     const QStringList actionTexts
         = childTexts(fixture.view->contentItem(), QStringLiteral("shortcutActionLabel"));
+    const QStringList categoryTitles
+        = childTitles(fixture.view->contentItem(), QStringLiteral("shortcutCategoryHeader"));
     const QString actionTextDebug = actionTexts.join(QLatin1String(" | "));
     QVERIFY2(actionTexts.contains(QStringLiteral("Move to Trash")), qPrintable(actionTextDebug));
     QVERIFY2(
         actionTexts.contains(QStringLiteral("Delete Permanently")), qPrintable(actionTextDebug));
+    QVERIFY(categoryTitles.contains(QStringLiteral("File")));
+    QVERIFY(categoryTitles.contains(QStringLiteral("Navigation")));
+    QVERIFY(categoryTitles.contains(QStringLiteral("View")));
+    QVERIFY(categoryTitles.contains(QStringLiteral("Panels")));
+    QVERIFY(categoryTitles.contains(QStringLiteral("Window")));
+    QVERIFY(categoryTitles.contains(QStringLiteral("Settings")));
+    QVERIFY(categoryTitles.contains(QStringLiteral("Help")));
+    QVERIFY(shortcutTexts.contains(QStringLiteral("F11")));
 
-    const QString allRowText = (shortcutTexts + actionTexts).join(QLatin1Char('\n'));
+    const QString allRowText
+        = (shortcutTexts + actionTexts + categoryTitles).join(QLatin1Char('\n'));
     QVERIFY(!allRowText.contains(QStringLiteral("Ctrl+wheel")));
     QVERIFY(!allRowText.contains(QStringLiteral("Drag")));
     QVERIFY(!allRowText.contains(QStringLiteral("Esc")));

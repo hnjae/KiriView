@@ -18,6 +18,7 @@
 #include <QObject>
 #include <QSignalSpy>
 #include <QStandardPaths>
+#include <QStringList>
 #include <QTest>
 #include <QVariantList>
 #include <cstddef>
@@ -34,6 +35,11 @@ constexpr int shortcutHelpActionIdRole = Qt::UserRole + 1;
 constexpr int shortcutHelpActionNameRole = Qt::UserRole + 2;
 constexpr int shortcutHelpActionTextRole = Qt::UserRole + 3;
 constexpr int shortcutHelpShortcutTextRole = Qt::UserRole + 4;
+constexpr int shortcutHelpCategoryKeyRole = Qt::UserRole + 5;
+constexpr int shortcutHelpCategoryTextRole = Qt::UserRole + 6;
+constexpr int shortcutHelpCategoryFirstRole = Qt::UserRole + 7;
+constexpr int shortcutHelpCategoryLastRole = Qt::UserRole + 8;
+constexpr int shortcutHelpShortcutKeyTextsRole = Qt::UserRole + 9;
 
 QKeySequence shortcut(const QString &sequence)
 {
@@ -544,11 +550,66 @@ void TestKiriViewApplication::shortcutHelpModelListsConfigurableActions()
         QStringLiteral("Move to Trash"));
     QCOMPARE(model->data(moveToTrashIndex, shortcutHelpShortcutTextRole).toString(),
         nativeText(shortcut(QStringLiteral("Delete"))));
+    QCOMPARE(model->data(moveToTrashIndex, shortcutHelpCategoryKeyRole).toString(),
+        QStringLiteral("file"));
+    QCOMPARE(model->data(moveToTrashIndex, shortcutHelpCategoryTextRole).toString(),
+        QStringLiteral("File"));
+    QCOMPARE(model->data(moveToTrashIndex, shortcutHelpShortcutKeyTextsRole).toStringList(),
+        QStringList({ nativeText(shortcut(QStringLiteral("Delete"))) }));
 
     const QModelIndex deleteIndex = shortcutHelpIndexForAction(model, QStringLiteral("deletefile"));
     QVERIFY(deleteIndex.isValid());
     QCOMPARE(model->data(deleteIndex, shortcutHelpActionTextRole).toString(),
         QStringLiteral("Delete Permanently"));
+
+    const QModelIndex openIndex = shortcutHelpIndexForAction(model, QStringLiteral("file_open"));
+    QVERIFY(openIndex.isValid());
+    QVERIFY(model->data(openIndex, shortcutHelpCategoryFirstRole).toBool());
+
+    const QModelIndex navigationIndex
+        = shortcutHelpIndexForAction(model, QStringLiteral("go_previous_archive"));
+    QVERIFY(navigationIndex.isValid());
+    QCOMPARE(model->data(navigationIndex, shortcutHelpCategoryKeyRole).toString(),
+        QStringLiteral("navigation"));
+    QCOMPARE(model->data(navigationIndex, shortcutHelpCategoryTextRole).toString(),
+        QStringLiteral("Navigation"));
+    QVERIFY(model->data(navigationIndex, shortcutHelpCategoryFirstRole).toBool());
+
+    const QModelIndex viewIndex = shortcutHelpIndexForAction(model, QStringLiteral("view_zoom_in"));
+    QVERIFY(viewIndex.isValid());
+    QCOMPARE(
+        model->data(viewIndex, shortcutHelpCategoryKeyRole).toString(), QStringLiteral("view"));
+    QVERIFY(model->data(viewIndex, shortcutHelpCategoryFirstRole).toBool());
+
+    const QModelIndex panelsIndex
+        = shortcutHelpIndexForAction(model, QStringLiteral("view_toggle_info_panel"));
+    QVERIFY(panelsIndex.isValid());
+    QCOMPARE(
+        model->data(panelsIndex, shortcutHelpCategoryKeyRole).toString(), QStringLiteral("panels"));
+    QVERIFY(model->data(panelsIndex, shortcutHelpCategoryFirstRole).toBool());
+
+    const QModelIndex fullscreenIndex
+        = shortcutHelpIndexForAction(model, QStringLiteral("window_fullscreen"));
+    QVERIFY(fullscreenIndex.isValid());
+    QCOMPARE(model->data(fullscreenIndex, shortcutHelpCategoryKeyRole).toString(),
+        QStringLiteral("window"));
+    QCOMPARE(model->data(fullscreenIndex, shortcutHelpShortcutKeyTextsRole).toStringList(),
+        QStringList({ nativeText(shortcut(QStringLiteral("Ctrl+F"))),
+            nativeText(shortcut(QStringLiteral("F11"))) }));
+
+    const QModelIndex configureIndex
+        = shortcutHelpIndexForAction(model, QStringLiteral("options_configure_keybinding"));
+    QVERIFY(configureIndex.isValid());
+    QCOMPARE(model->data(configureIndex, shortcutHelpCategoryKeyRole).toString(),
+        QStringLiteral("settings"));
+    QVERIFY(model->data(configureIndex, shortcutHelpCategoryFirstRole).toBool());
+
+    const QModelIndex helpIndex
+        = shortcutHelpIndexForAction(model, QStringLiteral("help_shortcuts"));
+    QVERIFY(helpIndex.isValid());
+    QCOMPARE(
+        model->data(helpIndex, shortcutHelpCategoryKeyRole).toString(), QStringLiteral("help"));
+    QVERIFY(model->data(helpIndex, shortcutHelpCategoryFirstRole).toBool());
 
     QVERIFY(
         !shortcutHelpIndexForAction(model, QStringLiteral("go_previous_single_page")).isValid());
@@ -568,6 +629,8 @@ void TestKiriViewApplication::shortcutHelpModelUpdatesShortcutText()
     QVERIFY(rotateIndex.isValid());
     QCOMPARE(model->data(rotateIndex, shortcutHelpShortcutTextRole).toString(),
         nativeText(shortcut(QStringLiteral("Ctrl+R"))));
+    QCOMPARE(model->data(rotateIndex, shortcutHelpShortcutKeyTextsRole).toStringList(),
+        QStringList({ nativeText(shortcut(QStringLiteral("Ctrl+R"))) }));
 
     QSignalSpy dataChangedSpy(model, &QAbstractItemModel::dataChanged);
     QAction *rotateAction = application.action(QStringLiteral("view_rotate_clockwise"));
@@ -578,6 +641,8 @@ void TestKiriViewApplication::shortcutHelpModelUpdatesShortcutText()
     QTRY_VERIFY(!dataChangedSpy.isEmpty());
     QCOMPARE(model->data(rotateIndex, shortcutHelpShortcutTextRole).toString(),
         nativeText(shortcut(QStringLiteral("Alt+R"))));
+    QCOMPARE(model->data(rotateIndex, shortcutHelpShortcutKeyTextsRole).toStringList(),
+        QStringList({ nativeText(shortcut(QStringLiteral("Alt+R"))) }));
 }
 
 void TestKiriViewApplication::shortcutHelpModelResetsWhenConfigurableRowsChange()

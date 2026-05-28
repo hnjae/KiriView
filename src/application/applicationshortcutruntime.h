@@ -13,6 +13,7 @@
 #include <QKeySequence>
 #include <QList>
 #include <QString>
+#include <QStringList>
 #include <functional>
 #include <memory>
 
@@ -46,6 +47,7 @@ private:
         const QAction *action, ShortcutAliasPolicy aliasPolicy) const;
     static QString actionDisplayText(const QAction *action);
     static QString shortcutDisplayText(const QAction *action);
+    static QStringList shortcutKeyDisplayTexts(const QAction *action);
     QList<ShortcutHelpRow> shortcutHelpRows() const;
 
     ApplicationActionHost &m_host;

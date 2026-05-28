@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QSignalSpy>
 #include <QString>
+#include <QStringList>
 #include <QTest>
 
 namespace {
@@ -15,6 +16,11 @@ constexpr int actionIdRole = Qt::UserRole + 1;
 constexpr int actionNameRole = Qt::UserRole + 2;
 constexpr int actionTextRole = Qt::UserRole + 3;
 constexpr int shortcutTextRole = Qt::UserRole + 4;
+constexpr int categoryKeyRole = Qt::UserRole + 5;
+constexpr int categoryTextRole = Qt::UserRole + 6;
+constexpr int categoryFirstRole = Qt::UserRole + 7;
+constexpr int categoryLastRole = Qt::UserRole + 8;
+constexpr int shortcutKeyTextsRole = Qt::UserRole + 9;
 
 KiriView::ApplicationActions::ShortcutHelpRow row(
     int actionId, const QString &actionName, const QString &actionText, const QString &shortcutText)
@@ -24,6 +30,11 @@ KiriView::ApplicationActions::ShortcutHelpRow row(
         actionName,
         actionText,
         shortcutText,
+        QStringLiteral("view"),
+        QStringLiteral("View"),
+        QStringList { shortcutText },
+        true,
+        true,
     };
 }
 }
@@ -52,6 +63,12 @@ void TestShortcutHelpModel::rowsComeFromRuntimeProvider()
     QCOMPARE(model.data(index, actionNameRole).toString(), QStringLiteral("view_rotate_clockwise"));
     QCOMPARE(model.data(index, actionTextRole).toString(), QStringLiteral("Rotate Clockwise"));
     QCOMPARE(model.data(index, shortcutTextRole).toString(), QStringLiteral("Ctrl+R"));
+    QCOMPARE(model.data(index, categoryKeyRole).toString(), QStringLiteral("view"));
+    QCOMPARE(model.data(index, categoryTextRole).toString(), QStringLiteral("View"));
+    QVERIFY(model.data(index, categoryFirstRole).toBool());
+    QVERIFY(model.data(index, categoryLastRole).toBool());
+    QCOMPARE(model.data(index, shortcutKeyTextsRole).toStringList(),
+        QStringList({ QStringLiteral("Ctrl+R") }));
 }
 
 void TestShortcutHelpModel::changedRowDataUpdatesOnlyMatchingRow()
@@ -65,6 +82,7 @@ void TestShortcutHelpModel::changedRowDataUpdatesOnlyMatchingRow()
     QSignalSpy dataChangedSpy(&model, &QAbstractItemModel::dataChanged);
 
     rows[1].shortcutText = QStringLiteral("Alt+R");
+    rows[1].shortcutKeyTexts = QStringList({ QStringLiteral("Alt+R") });
     model.handleRowsChanged();
 
     QCOMPARE(dataChangedSpy.count(), 1);
