@@ -188,7 +188,7 @@ The Info Panel is a layout-reserving right-side panel that spans the full conten
 
 The Thumbnail Panel is a layout-reserving bottom panel in the remaining media area to the left of the Info Panel.
 
-The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a media-type icon, not a generated preview thumbnail, above the existing active-navigation candidate name.
+The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a media-type icon, not a generated preview thumbnail, above the existing active-navigation candidate name. The candidate name is rendered in a fixed-width font on one elided line.
 
 The Thumbnail Panel uses image and video icons to distinguish supported still images from supported videos.
 
