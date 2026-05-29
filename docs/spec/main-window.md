@@ -212,9 +212,13 @@ On narrow windows, the Info Panel is a right-edge overlay drawer that does not s
 
 The Info Panel uses the same width bounds in inline and overlay modes: minimum 16 Kirigami grid units, preferred 18 Kirigami grid units, and maximum 20 Kirigami grid units.
 
-The Thumbnail Panel is a layout-reserving bottom panel in the remaining media area to the left of the Info Panel.
+The Thumbnail Panel is a compact, layout-reserving bottom filmstrip in the remaining media area to the left of the Info Panel. It uses the same dark viewer surface and matching foreground colors as the media viewport rather than a light page-panel surface.
 
-The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a media-type icon at Kirigami's enormous icon size, not a generated preview thumbnail, above the existing active-navigation candidate name. The candidate name is rendered in a fixed-width font on one elided line. The horizontal scrollbar occupies a dedicated lane below the strip items and must not overlap or obscure candidate names.
+The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a media-type icon, not a generated image or video preview thumbnail, above the existing active-navigation candidate name. The candidate name is rendered in a fixed-width font on one elided line. The horizontal scrollbar occupies a dedicated lane below the strip items and must not overlap or obscure candidate names.
+
+The Thumbnail Panel uses native Qt Quick ListView and Flickable scrolling behavior only. It does not remap vertical mouse-wheel events to horizontal movement.
+
+The Thumbnail Panel has a subtle top separator using the viewer foreground color at reduced opacity. Strip items use compact spacing, a small corner radius, and a subtle hover fill without shadow, glow, or card treatment. The selected strip item is indicated with a 2-pixel border using the theme highlight color, and the strip automatically scrolls enough to keep the selected item in view when active navigation changes.
 
 The Thumbnail Panel uses image and video icons to distinguish supported still images from supported videos.
 
@@ -224,7 +228,7 @@ Activating a Thumbnail Panel strip item opens the item at that active navigation
 
 When both panels are visible, the Info Panel occupies the right side for the full content height, and the Thumbnail Panel occupies only the bottom of the media area that remains to its left.
 
-The panels are resizable with splitters. The Thumbnail Panel minimum height is tall enough to show the enormous icon, one-line candidate name, and dedicated horizontal scrollbar lane without clipping.
+The panels are resizable with splitters. The Thumbnail Panel minimum height is tall enough to show the media-type icon, one-line candidate name, and dedicated horizontal scrollbar lane without clipping. Its default resizable height range is compact, roughly 6 to 7.5 Kirigami grid units.
 
 Ctrl+I toggles the Info Panel, and Ctrl+T toggles the Thumbnail Panel.
 
