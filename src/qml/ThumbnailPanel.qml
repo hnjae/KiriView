@@ -21,6 +21,14 @@ Controls.Pane {
     topPadding: Kirigami.Units.smallSpacing
     bottomPadding: Kirigami.Units.smallSpacing
 
+    onVisibleChanged: {
+        if (visible) {
+            thumbnailStrip.containCurrentItem(true);
+        } else {
+            thumbnailStrip.automaticScrollAnimationEnabled = false;
+        }
+    }
+
     background: Rectangle {
         color: root.viewerSurfaceColor
 
@@ -51,16 +59,89 @@ Controls.Pane {
             orientation: ListView.Horizontal
             spacing: Kirigami.Units.smallSpacing
 
-            function containCurrentItem() {
+            readonly property real delegateWidth: Kirigami.Units.gridUnit * 6
+            readonly property real itemPitch: delegateWidth + spacing
+            readonly property int rapidCurrentIndexIntervalMs: 180
+            property bool automaticScrollAnimationEnabled: false
+            property bool automaticScrollAnimationRunning: false
+            property double lastCurrentIndexChangeTimestamp: 0
+
+            function containCurrentItem(forceImmediate) {
                 if (currentIndex < 0 || currentIndex >= count) {
+                    automaticScrollAnimationEnabled = false;
                     return;
                 }
 
+                automaticScrollAnimationEnabled = shouldAnimateContainment(forceImmediate !== true);
                 positionViewAtIndex(currentIndex, ListView.Contain);
             }
 
-            onCountChanged: containCurrentItem()
-            onCurrentIndexChanged: containCurrentItem()
+            function containmentDeltaForCurrentItem() {
+                if (width <= 0 || contentWidth <= 0 || delegateWidth <= 0) {
+                    return 0;
+                }
+
+                const itemStart = currentIndex * itemPitch;
+                const itemEnd = itemStart + delegateWidth;
+                const viewportStart = contentX;
+                const viewportEnd = viewportStart + width;
+                let delta = 0;
+
+                if (itemStart < viewportStart) {
+                    delta = itemStart - viewportStart;
+                } else if (itemEnd > viewportEnd) {
+                    delta = itemEnd - viewportEnd;
+                }
+
+                if (delta === 0) {
+                    return 0;
+                }
+
+                const maxViewportStart = Math.max(0, contentWidth - width);
+                const targetViewportStart = Math.max(0, Math.min(maxViewportStart, viewportStart + delta));
+                return targetViewportStart - viewportStart;
+            }
+
+            function currentIndexChangedRapidly() {
+                const now = Date.now();
+                const rapid = lastCurrentIndexChangeTimestamp > 0 && now - lastCurrentIndexChangeTimestamp < rapidCurrentIndexIntervalMs;
+                lastCurrentIndexChangeTimestamp = now;
+                return rapid;
+            }
+
+            function shouldAnimateContainment(allowAnimation) {
+                if (!allowAnimation || !root.visible || width <= 0 || automaticScrollAnimationRunning) {
+                    return false;
+                }
+
+                const delta = containmentDeltaForCurrentItem();
+                if (delta === 0) {
+                    return false;
+                }
+
+                const nearThreshold = Math.max(itemPitch, Math.min(width * 0.5, itemPitch * 3));
+                return Math.abs(delta) <= nearThreshold;
+            }
+
+            onCountChanged: containCurrentItem(true)
+            onCurrentIndexChanged: containCurrentItem(currentIndexChangedRapidly())
+            onWidthChanged: containCurrentItem(true)
+
+            Behavior on contentX {
+                enabled: thumbnailStrip.automaticScrollAnimationEnabled
+
+                NumberAnimation {
+                    duration: 140
+                    easing.type: Easing.OutCubic
+
+                    onRunningChanged: {
+                        thumbnailStrip.automaticScrollAnimationRunning = running;
+                        if (!running) {
+                            thumbnailStrip.automaticScrollAnimationEnabled = false;
+                        }
+                    }
+                }
+            }
 
             Controls.ScrollBar.horizontal: Controls.ScrollBar {
                 id: thumbnailScrollBar
@@ -95,7 +176,7 @@ Controls.Pane {
                 rightPadding: Kirigami.Units.smallSpacing
                 topPadding: Kirigami.Units.smallSpacing
                 bottomPadding: Kirigami.Units.smallSpacing
-                width: Kirigami.Units.gridUnit * 6
+                width: thumbnailStrip.delegateWidth
 
                 Controls.ToolTip.text: label
                 Controls.ToolTip.visible: hovered && label.length > 0 && !Kirigami.Settings.hasTransientTouchInput

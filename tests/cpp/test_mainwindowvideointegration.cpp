@@ -334,15 +334,26 @@ void TestMainWindowVideoIntegration::thumbnailPanelUsesSessionThumbnailModel()
         QStringLiteral("currentIndex: root.documentSession.activeNavigationCurrentNumber - 1")));
     QVERIFY(thumbnailPanelQml.contains(
         QStringLiteral("positionViewAtIndex(currentIndex, ListView.Contain)")));
-    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("onCountChanged: containCurrentItem()")));
-    QVERIFY(
-        thumbnailPanelQml.contains(QStringLiteral("onCurrentIndexChanged: containCurrentItem()")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("onCountChanged: containCurrentItem(true)")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("onCurrentIndexChanged: containCurrentItem(currentIndexChangedRapidly())")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("onVisibleChanged:")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("Behavior on contentX")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("NumberAnimation")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("duration: 140")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("easing.type: Easing.OutCubic")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("rapidCurrentIndexIntervalMs: 180")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("Math.abs(delta) <= nearThreshold")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("orientation: ListView.Horizontal")));
     QVERIFY(thumbnailPanelQml.contains(
         QStringLiteral("Controls.ScrollBar.horizontal: Controls.ScrollBar")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("objectName: \"thumbnailStrip\"")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("objectName: \"thumbnailStripItem\"")));
-    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("width: Kirigami.Units.gridUnit * 6")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("readonly property real delegateWidth: Kirigami.Units.gridUnit * 6")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("readonly property real itemPitch: delegateWidth + spacing")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("width: thumbnailStrip.delegateWidth")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("Kirigami.Units.iconSizes.large")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("font: Kirigami.Theme.fixedWidthFont")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("maximumLineCount: 1")));
@@ -363,6 +374,7 @@ void TestMainWindowVideoIntegration::thumbnailPanelUsesSessionThumbnailModel()
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("openPreviousMedia")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("Kirigami.Theme.backgroundColor")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("Kirigami.ShadowedRectangle")));
+    QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("SmoothedAnimation")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("onPositionChanged")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("contentX =")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("WheelHandler")));
