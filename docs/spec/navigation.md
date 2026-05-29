@@ -98,6 +98,8 @@ Navigation does not wrap. Pressing Page Up on the first candidate or Page Down o
 
 KiriView shows those first-item and last-item notifications only when the current supported list is known and the current item is at a known boundary.
 
+Previous Archive and Next Archive are collection navigation actions for the current opened collection. When users trigger Previous Archive or Next Archive from a menu or configured shortcut and KiriView confirms that no adjacent collection exists in that direction, the current collection remains open and KiriView shows an in-app toast: `No previous collection` or `No next collection`.
+
 KiriView has one visible in-app toast notification slot.
 
 New toast requests replace the current toast and replay the entrance animation, including when the same message and scope are requested again while already visible.
