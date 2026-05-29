@@ -186,9 +186,31 @@ The floating panel remains usable in fullscreen and remains visible while video 
 
 ## Side and Thumbnail Panels
 
-KiriView provides an empty shell Info Panel for future media information content.
+KiriView provides an Info Panel with user-visible media information for the current document session.
 
-The Info Panel is a layout-reserving right-side panel that spans the full content height below the normal toolbar outside fullscreen, or the full window content height in fullscreen.
+The Info Panel header shows an information icon, the title `Information`, and a close button that hides the panel.
+
+When no media item is available, the Info Panel shows an unavailable state rather than stale media details.
+
+When a media item is available, the Info Panel shows the current file name, a summary line, General and media-specific metadata sections, and a Camera section only when camera metadata rows are available.
+
+The General section includes dummy placeholder metadata for type, file size, modified date, and path until real metadata extraction is implemented.
+
+The Image section uses the current image dimensions when they are known and otherwise shows placeholder image metadata including color space and bit depth.
+
+The Video section uses the current video frame dimensions when they are known and otherwise shows placeholder video metadata including color space and bit depth.
+
+The Camera section shows sample EXIF placeholder rows while dummy metadata is active.
+
+The Info Panel provides icon buttons to copy the current file path and open the containing folder when those operations have a valid target for the current media item.
+
+The Info Panel content is vertically scrollable and keeps labels and values on one elided line per row.
+
+On wide windows, the Info Panel is an inline layout-reserving right-side panel that spans the full content height below the normal toolbar outside fullscreen, or the full window content height in fullscreen.
+
+On narrow windows, the Info Panel is a right-edge overlay drawer that does not shrink the media viewport.
+
+The Info Panel uses the same width bounds in inline and overlay modes: minimum 16 Kirigami grid units, preferred 18 Kirigami grid units, and maximum 20 Kirigami grid units.
 
 The Thumbnail Panel is a layout-reserving bottom panel in the remaining media area to the left of the Info Panel.
 
@@ -214,6 +236,8 @@ The panels are closed by default. Panel open state and splitter sizes are runtim
 
 The panels remain available in fullscreen.
 
+The overlay Info Panel closes when the user presses Escape, clicks outside the drawer, or activates its close button.
+
 ## Menu Presentation
 
 Ctrl+M toggles the application menu presentation between Hamburger Menu and Menubar.
@@ -232,7 +256,9 @@ KiriView may show F10 as display-only shortcut text on the toolbar application m
 
 Escape first cancels an active page number or zoom input edit.
 
-When no toolbar input is focused, Escape leaves fullscreen if the main window is fullscreen.
+When no toolbar input is focused and the Info Panel is open, Escape closes the Info Panel before fullscreen handling.
+
+When no toolbar input is focused and the Info Panel is closed, Escape leaves fullscreen if the main window is fullscreen.
 
 Outside fullscreen, Escape does not close the main window.
 

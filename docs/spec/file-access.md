@@ -93,3 +93,19 @@ For images displayed inside a directly opened local CBZ, CBT, CB7, ZIP, TAR, or 
 For images displayed inside a directly opened local CBR or RAR archive collection, Open With is disabled because KiriView's internal RAR support is not treated as a KDE/KIO-openable media URL.
 
 Open With is disabled when no media item is ready, when the current document is empty, loading, or failed, or when KiriView cannot derive a KDE/KIO-openable current media URL. Canceling the KDE/KIO open-with flow leaves KiriView unchanged and does not show an in-app notification.
+
+## Information Panel File Actions
+
+The Info Panel's Copy File Path action copies the current media target's display path to the clipboard.
+
+For direct images, remote images, direct videos, and media opened directly from KDE-supported archive URLs such as `zip://`, the Copy File Path target is the displayed or original direct media URL. For local file URLs, the copied text is the local file path.
+
+For images displayed inside a directly opened local directory collection, the Copy File Path target is the currently displayed image file inside that directory.
+
+For images displayed inside a directly opened local CBZ, CBT, CB7, ZIP, TAR, or 7Z archive collection, the Copy File Path target is the currently displayed internal image URL when that URL uses a KDE-supported archive scheme such as `zip://`, `tar://`, or `sevenz://`.
+
+For images displayed inside a directly opened local CBR or RAR archive collection, Copy File Path is disabled because KiriView's internal RAR support is not treated as a KDE/KIO-openable media URL.
+
+The Info Panel's Open Containing Folder action opens the current media target's parent location in the file manager and selects or highlights the target when the desktop environment supports it.
+
+Open Containing Folder is available for local file targets and KDE/KIO URLs with a parent location. It is disabled when no media target is available or when KiriView cannot derive a containing location.
