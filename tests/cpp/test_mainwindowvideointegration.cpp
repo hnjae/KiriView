@@ -293,27 +293,57 @@ void TestMainWindowVideoIntegration::toolbarPageNavigationUsesSessionActiveProje
 
 void TestMainWindowVideoIntegration::thumbnailPanelUsesSessionThumbnailModel()
 {
+    const QString mainQml = readSource(QStringLiteral("src/qml/Main.qml"));
     const QString mediaWorkspaceHostQml
         = readSource(QStringLiteral("src/qml/MediaWorkspaceHost.qml"));
     const QString thumbnailPanelQml = readSource(QStringLiteral("src/qml/ThumbnailPanel.qml"));
+    QVERIFY2(!mainQml.isEmpty(), "Main.qml should be readable");
     QVERIFY2(!mediaWorkspaceHostQml.isEmpty(), "MediaWorkspaceHost.qml should be readable");
     QVERIFY2(!thumbnailPanelQml.isEmpty(), "ThumbnailPanel.qml should be readable");
 
-    QVERIFY(mediaWorkspaceHostQml.contains(
-        QStringLiteral("Controls.SplitView.maximumHeight: Kirigami.Units.gridUnit * 12")));
-    QVERIFY(mediaWorkspaceHostQml.contains(
-        QStringLiteral("Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 10")));
+    QVERIFY(mainQml.contains(QStringLiteral("readonly property color darkForegroundColor")));
     QVERIFY(
-        mediaWorkspaceHostQml.contains(QStringLiteral("Math.max(Kirigami.Units.gridUnit * 10")));
+        mainQml.contains(QStringLiteral("viewerSurfaceColor: imageViewTheme.darkBackgroundColor")));
+    QVERIFY(mainQml.contains(
+        QStringLiteral("viewerForegroundColor: imageViewTheme.darkForegroundColor")));
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("required property color viewerSurfaceColor")));
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("required property color viewerForegroundColor")));
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("viewerSurfaceColor: root.viewerSurfaceColor")));
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("viewerForegroundColor: root.viewerForegroundColor")));
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("Controls.SplitView.maximumHeight: Kirigami.Units.gridUnit * 7.5")));
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 6")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("Math.max(Kirigami.Units.gridUnit * 6")));
     QVERIFY(thumbnailPanelQml.contains(
         QStringLiteral("required property KiriDocumentSession documentSession")));
+    QVERIFY(
+        thumbnailPanelQml.contains(QStringLiteral("required property color viewerSurfaceColor")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("required property color viewerForegroundColor")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("color: root.viewerSurfaceColor")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("color: root.viewerForegroundColor")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("opacity: 0.18")));
     QVERIFY(thumbnailPanelQml.contains(
         QStringLiteral("model: root.documentSession.activeNavigationThumbnailModel")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("currentIndex: root.documentSession.activeNavigationCurrentNumber - 1")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("positionViewAtIndex(currentIndex, ListView.Contain)")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("onCountChanged: containCurrentItem()")));
+    QVERIFY(
+        thumbnailPanelQml.contains(QStringLiteral("onCurrentIndexChanged: containCurrentItem()")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("orientation: ListView.Horizontal")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("Controls.ScrollBar.horizontal: Controls.ScrollBar")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("objectName: \"thumbnailStrip\"")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("objectName: \"thumbnailStripItem\"")));
-    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("width: Kirigami.Units.gridUnit * 8")));
-    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("Kirigami.Units.iconSizes.enormous")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("width: Kirigami.Units.gridUnit * 6")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("Kirigami.Units.iconSizes.large")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("font: Kirigami.Theme.fixedWidthFont")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("maximumLineCount: 1")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("wrapMode: Text.NoWrap")));
@@ -323,10 +353,19 @@ void TestMainWindowVideoIntegration::thumbnailPanelUsesSessionThumbnailModel()
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("required property string iconName")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("required property bool current")));
     QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("border.color: thumbnailDelegate.current ? Kirigami.Theme.highlightColor")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("border.width: thumbnailDelegate.current ? 2 : 0")));
+    QVERIFY(thumbnailPanelQml.contains(
         QStringLiteral("root.documentSession.openActiveNavigationAtNumber(number)")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("imageDocument.openImageAtPage")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("openNextMedia")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("openPreviousMedia")));
+    QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("Kirigami.Theme.backgroundColor")));
+    QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("Kirigami.ShadowedRectangle")));
+    QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("onPositionChanged")));
+    QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("contentX =")));
+    QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("WheelHandler")));
 }
 
 void TestMainWindowVideoIntegration::infoPanelUsesSessionMediaInformationAndResponsiveLayouts()

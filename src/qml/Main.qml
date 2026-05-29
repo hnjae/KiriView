@@ -253,6 +253,7 @@ StatefulApp.StatefulWindow {
             readonly property color viewTextColor: Kirigami.Theme.textColor
             readonly property bool lightColorScheme: viewBackgroundColor.hslLightness > viewTextColor.hslLightness
             readonly property color darkBackgroundColor: lightColorScheme ? viewTextColor : viewBackgroundColor
+            readonly property color darkForegroundColor: lightColorScheme ? viewBackgroundColor : viewTextColor
         }
 
         MediaWorkspaceHost {
@@ -265,6 +266,8 @@ StatefulApp.StatefulWindow {
 
             documentSession: documentSession
             openAction: imageActions.openAction
+            viewerForegroundColor: imageViewTheme.darkForegroundColor
+            viewerSurfaceColor: imageViewTheme.darkBackgroundColor
 
             onViewerClicked: {
                 if (root.activeImageToolBar().commitTextInputEditing(true)) {

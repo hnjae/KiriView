@@ -15,6 +15,8 @@ Item {
 
     required property KiriDocumentSession documentSession
     required property var openAction
+    required property color viewerForegroundColor
+    required property color viewerSurfaceColor
     property bool infoPanelOpen: false
     readonly property real infoPanelMinimumWidth: Kirigami.Units.gridUnit * 16
     readonly property real infoPanelPreferredWidth: Kirigami.Units.gridUnit * 18
@@ -88,10 +90,12 @@ Item {
 
                 documentSession: root.documentSession
                 objectName: "thumbnailPanel"
+                viewerForegroundColor: root.viewerForegroundColor
+                viewerSurfaceColor: root.viewerSurfaceColor
                 visible: false
-                Controls.SplitView.maximumHeight: Kirigami.Units.gridUnit * 12
-                Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 10
-                Controls.SplitView.preferredHeight: Math.min(Kirigami.Units.gridUnit * 12, Math.max(Kirigami.Units.gridUnit * 10, mediaPanelSplitView.height * 0.28))
+                Controls.SplitView.maximumHeight: Kirigami.Units.gridUnit * 7.5
+                Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 6
+                Controls.SplitView.preferredHeight: Math.min(Kirigami.Units.gridUnit * 7.5, Math.max(Kirigami.Units.gridUnit * 6, mediaPanelSplitView.height * 0.2))
             }
         }
 

@@ -13,11 +13,26 @@ Controls.Pane {
     id: root
 
     required property KiriDocumentSession documentSession
+    required property color viewerForegroundColor
+    required property color viewerSurfaceColor
 
-    leftPadding: Kirigami.Units.largeSpacing
-    rightPadding: Kirigami.Units.largeSpacing
+    leftPadding: Kirigami.Units.smallSpacing
+    rightPadding: Kirigami.Units.smallSpacing
     topPadding: Kirigami.Units.smallSpacing
     bottomPadding: Kirigami.Units.smallSpacing
+
+    background: Rectangle {
+        color: root.viewerSurfaceColor
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            color: root.viewerForegroundColor
+            height: 1
+            opacity: 0.18
+        }
+    }
 
     contentItem: ColumnLayout {
         spacing: Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2))
@@ -31,9 +46,35 @@ Controls.Pane {
             Layout.fillWidth: true
             boundsBehavior: Flickable.StopAtBounds
             clip: true
+            currentIndex: root.documentSession.activeNavigationCurrentNumber - 1
             model: root.documentSession.activeNavigationThumbnailModel
             orientation: ListView.Horizontal
             spacing: Kirigami.Units.smallSpacing
+
+            function containCurrentItem() {
+                if (currentIndex < 0 || currentIndex >= count) {
+                    return;
+                }
+
+                positionViewAtIndex(currentIndex, ListView.Contain);
+            }
+
+            onCountChanged: containCurrentItem()
+            onCurrentIndexChanged: containCurrentItem()
+
+            Controls.ScrollBar.horizontal: Controls.ScrollBar {
+                id: thumbnailScrollBar
+
+                parent: horizontalScrollBarLane
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                height: implicitHeight
+
+                active: hovered || pressed || thumbnailStrip.moving
+                hoverEnabled: true
+                policy: Controls.ScrollBar.AsNeeded
+            }
 
             delegate: Controls.ItemDelegate {
                 id: thumbnailDelegate
@@ -50,15 +91,30 @@ Controls.Pane {
                 enabled: root.documentSession.activeNavigationEditable
                 height: thumbnailStrip.height
                 hoverEnabled: true
-                width: Kirigami.Units.gridUnit * 8
+                leftPadding: Kirigami.Units.smallSpacing
+                rightPadding: Kirigami.Units.smallSpacing
+                topPadding: Kirigami.Units.smallSpacing
+                bottomPadding: Kirigami.Units.smallSpacing
+                width: Kirigami.Units.gridUnit * 6
 
                 Controls.ToolTip.text: label
                 Controls.ToolTip.visible: hovered && label.length > 0 && !Kirigami.Settings.hasTransientTouchInput
 
-                background: Rectangle {
-                    color: thumbnailDelegate.current ? Kirigami.Theme.highlightColor : "transparent"
-                    opacity: thumbnailDelegate.current ? 0.22 : 0
-                    radius: 4
+                background: Item {
+                    Rectangle {
+                        anchors.fill: parent
+                        color: root.viewerForegroundColor
+                        opacity: thumbnailDelegate.hovered ? 0.08 : 0
+                        radius: 3
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        border.color: thumbnailDelegate.current ? Kirigami.Theme.highlightColor : "transparent"
+                        border.width: thumbnailDelegate.current ? 2 : 0
+                        color: "transparent"
+                        radius: 3
+                    }
                 }
 
                 contentItem: ColumnLayout {
@@ -66,14 +122,15 @@ Controls.Pane {
 
                     Kirigami.Icon {
                         Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredHeight: Kirigami.Units.iconSizes.enormous
-                        Layout.preferredWidth: Kirigami.Units.iconSizes.enormous
+                        Layout.preferredHeight: Kirigami.Units.iconSizes.large
+                        Layout.preferredWidth: Kirigami.Units.iconSizes.large
+                        color: root.viewerForegroundColor
                         source: thumbnailDelegate.iconName
                     }
 
                     Controls.Label {
                         Layout.fillWidth: true
-                        color: Kirigami.Theme.textColor
+                        color: root.viewerForegroundColor
                         elide: Text.ElideRight
                         font: Kirigami.Theme.fixedWidthFont
                         horizontalAlignment: Text.AlignHCenter
@@ -96,38 +153,6 @@ Controls.Pane {
             Layout.fillWidth: true
             Layout.minimumHeight: laneHeight
             Layout.preferredHeight: laneHeight
-
-            Controls.ScrollBar {
-                id: thumbnailScrollBar
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: implicitHeight
-
-                active: visible && (hovered || pressed || thumbnailStrip.moving)
-                enabled: visible
-                hoverEnabled: true
-                orientation: Qt.Horizontal
-                policy: Controls.ScrollBar.AsNeeded
-                size: thumbnailStrip.contentWidth > 0 ? Math.min(1, thumbnailStrip.visibleArea.widthRatio) : 1
-                visible: thumbnailStrip.contentWidth > thumbnailStrip.width
-
-                onPositionChanged: {
-                    if (!pressed || thumbnailStrip.contentWidth <= thumbnailStrip.width) {
-                        return;
-                    }
-
-                    thumbnailStrip.contentX = Math.max(0, Math.min(thumbnailStrip.contentWidth - thumbnailStrip.width, position * thumbnailStrip.contentWidth));
-                }
-            }
-
-            Binding {
-                property: "position"
-                target: thumbnailScrollBar
-                value: thumbnailStrip.contentWidth > thumbnailStrip.width ? thumbnailStrip.visibleArea.xPosition : 0
-                when: !thumbnailScrollBar.pressed
-            }
         }
     }
 }
