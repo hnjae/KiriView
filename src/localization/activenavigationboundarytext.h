@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_ACTIVENAVIGATIONBOUNDARYTEXT_H
 #define KIRIVIEW_ACTIVENAVIGATIONBOUNDARYTEXT_H
 
+#include "navigation/imagedocumentpagenavigationtypes.h"
 #include "session/activenavigationprojection.h"
 
 #include <QString>
@@ -11,6 +12,7 @@
 namespace KiriView {
 QString activeNavigationBoundaryFeedbackText(
     ActiveNavigationBoundaryScope scope, ActiveNavigationDispatchOutcome outcome);
+QString containerNavigationBoundaryFeedbackText(NavigationDirection direction);
 }
 
 #endif

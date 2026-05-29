@@ -20,6 +20,7 @@ struct RecordedRuntimeOperations {
     QUrl url;
     QUrl secondaryUrl;
     KiriView::ImageDocumentPageKind kind = KiriView::ImageDocumentPageKind::Image;
+    KiriView::NavigationDirection direction = KiriView::NavigationDirection::Next;
     QString errorString;
     bool flag = false;
 
@@ -86,6 +87,11 @@ struct RecordedRuntimeOperations {
                   errorString = message;
                   record(QStringLiteral("finishContainerNavigationLoadWithError"));
               };
+        operations.navigation.reportContainerNavigationBoundary
+            = [this](KiriView::NavigationDirection boundaryDirection) {
+                  direction = boundaryDirection;
+                  record(QStringLiteral("reportContainerNavigationBoundary"));
+              };
         operations.navigation.loadPageNavigationUrl
             = [this](const KiriView::ImageDocumentPageTarget &target, bool preserveTransition) {
                   url = target.url;
@@ -135,6 +141,7 @@ struct RecordedRuntimeOperations {
         url = QUrl();
         secondaryUrl = QUrl();
         kind = KiriView::ImageDocumentPageKind::Image;
+        direction = KiriView::NavigationDirection::Next;
         errorString.clear();
         flag = false;
     }
@@ -268,6 +275,14 @@ void TestImageDocumentRuntimePlanExecutor::payloadRuntimePlansDispatchToOperatio
     QCOMPARE(recorded.errorString, QStringLiteral("broken"));
 
     recorded.clear();
+    executor.dispatchPlan(
+        ImageDocumentRuntimePlan { KiriView::ReportContainerNavigationBoundaryOperation {
+            KiriView::NavigationDirection::Previous,
+        } });
+    QCOMPARE(recorded.events, QStringList({ QStringLiteral("reportContainerNavigationBoundary") }));
+    QCOMPARE(recorded.direction, KiriView::NavigationDirection::Previous);
+
+    recorded.clear();
     executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::LoadPageNavigationUrlOperation {
         KiriView::ImageDocumentPageTarget {
             localUrl(QStringLiteral("/next.png")),
@@ -394,6 +409,9 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
             containerUrl,
             QStringLiteral("broken"),
         },
+        KiriView::ReportContainerNavigationBoundaryOperation {
+            KiriView::NavigationDirection::Next,
+        },
         KiriView::LoadPageNavigationUrlOperation {
             KiriView::ImageDocumentPageTarget {
                 sourceUrl,
@@ -446,6 +464,7 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
             QStringLiteral("loadContainerImage"),
             QStringLiteral("finishEmptyContainerNavigation"),
             QStringLiteral("finishContainerNavigationLoadWithError"),
+            QStringLiteral("reportContainerNavigationBoundary"),
             QStringLiteral("loadPageNavigationUrl"),
             QStringLiteral("cancelOpen"),
             QStringLiteral("clearDisplayedImageLocation"),

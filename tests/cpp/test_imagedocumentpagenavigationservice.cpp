@@ -38,12 +38,14 @@ KiriView::ImageDocumentPageNavigationService::Callbacks navigationCallbacks(
     = {},
     std::function<void()> clearCurrentImage = {},
     KiriView::ImageDocumentPageNavigationService::DeletionInProgressCallback deletionInProgress
-    = {})
+    = {},
+    std::function<void(KiriView::NavigationDirection)> containerNavigationBoundary = {})
 {
     return KiriView::ImageDocumentPageNavigationService::Callbacks {
         [openUrl = std::move(openUrl), openContainerImage = std::move(openContainerImage),
             containerNavigationError = std::move(containerNavigationError),
-            clearCurrentImage = std::move(clearCurrentImage)](
+            clearCurrentImage = std::move(clearCurrentImage),
+            containerNavigationBoundary = std::move(containerNavigationBoundary)](
             KiriView::ImageDocumentPageNavigationPlan plan) mutable {
             for (const KiriView::ImageDocumentPageNavigationEffect &effect : plan) {
                 if (const auto *openEffect
@@ -61,6 +63,9 @@ KiriView::ImageDocumentPageNavigationService::Callbacks navigationCallbacks(
                 } else if (std::holds_alternative<
                                KiriView::ClearCurrentImageDocumentPageNavigationEffect>(effect)) {
                     KiriView::invokeIfSet(clearCurrentImage);
+                } else if (const auto *boundaryEffect
+                    = std::get_if<KiriView::ReportContainerNavigationBoundaryEffect>(&effect)) {
+                    KiriView::invokeIfSet(containerNavigationBoundary, boundaryEffect->direction);
                 }
             }
         },
@@ -172,6 +177,7 @@ private Q_SLOTS:
     void cancelAllNavigationCancelsPendingAdjacentImageLoad();
     void cancelAllNavigationStopsPageRefreshWatcher();
     void directoryContainerNavigationOpensFirstImage();
+    void containerNavigationBoundaryPropagates();
     void emptyContainerReportsNavigationError();
     void invalidArchiveContainerReportsNavigationError();
     void archiveContainerNavigationOpensFirstImage();
@@ -828,6 +834,33 @@ void TestImageDocumentPageNavigationService::directoryContainerNavigationOpensFi
 
     QCOMPARE(openedImageUrl, targetImageUrl);
     QCOMPARE(openedContainerUrl, targetContainerUrl);
+}
+
+void TestImageDocumentPageNavigationService::containerNavigationBoundaryPropagates()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
+            containerCandidate(
+                localUrl(QStringLiteral("/books/b/")), ContainerNavigationCandidateType::Directory),
+        });
+
+    int boundaryCount = 0;
+    NavigationDirection boundaryDirection = NavigationDirection::Next;
+    KiriView::ImageDocumentPageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks({}, {}, {}, {}, {}, {},
+            [&boundaryCount, &boundaryDirection](NavigationDirection direction) {
+                ++boundaryCount;
+                boundaryDirection = direction;
+            }));
+
+    service.openAdjacentContainer(currentContainerUrl, NavigationDirection::Previous);
+
+    QCOMPARE(boundaryCount, 1);
+    QCOMPARE(boundaryDirection, NavigationDirection::Previous);
 }
 
 void TestImageDocumentPageNavigationService::emptyContainerReportsNavigationError()

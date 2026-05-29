@@ -33,7 +33,8 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
     ImageDocumentRuntimeDependencyOverrides dependencies,
     FileDeletionFailedCallback fileDeletionFailedCallback,
-    UnsupportedOpenedCollectionVideoEnteredCallback unsupportedOpenedCollectionVideoEnteredCallback)
+    UnsupportedOpenedCollectionVideoEnteredCallback unsupportedOpenedCollectionVideoEnteredCallback,
+    ContainerNavigationBoundaryReachedCallback containerNavigationBoundaryReachedCallback)
     : changeBatcher(ImageDocumentChangeBatcher::ChangeBatchCallback(
           [this](const std::vector<ImageDocumentChange> &changes) { publishChanges(changes); }))
     , state(changeBatcher)
@@ -48,6 +49,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
             [this](const ImageDocumentSourceLoadRequest &request) { loadSource(request); },
             std::move(fileDeletionFailedCallback),
             std::move(unsupportedOpenedCollectionVideoEnteredCallback),
+            std::move(containerNavigationBoundaryReachedCallback),
         });
 }
 

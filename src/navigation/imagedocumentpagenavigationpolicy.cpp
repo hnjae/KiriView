@@ -165,6 +165,12 @@ std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate
     return adjacentNavigationCandidate(candidates, currentContainerUrl, direction);
 }
 
+std::optional<std::size_t> containerNavigationCandidateIndex(
+    const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &currentContainerUrl)
+{
+    return navigationCandidateIndex(candidates, currentContainerUrl);
+}
+
 int pageNavigationCurrentPageNumber(const PageNavigationState &state)
 {
     return state.currentIndex < 0 ? 0 : state.currentIndex + 1;

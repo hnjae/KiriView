@@ -13,50 +13,43 @@ msgstr ""
 
 #: src/application/applicationshortcutruntime.cpp
 #, kde-format
+msgctxt "@info:keyboard shortcut"
+msgid "Unassigned"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
 msgctxt "@title:group"
 msgid "File"
 msgstr ""
 
-#: src/application/applicationshortcutruntime.cpp
-#, kde-format
+#: src/application/kiriviewapplicationactions.cpp
 msgctxt "@title:group"
 msgid "Navigation"
 msgstr ""
 
-#: src/application/applicationshortcutruntime.cpp
-#, kde-format
+#: src/application/kiriviewapplicationactions.cpp
 msgctxt "@title:group"
 msgid "View"
 msgstr ""
 
-#: src/application/applicationshortcutruntime.cpp
-#, kde-format
+#: src/application/kiriviewapplicationactions.cpp
 msgctxt "@title:group"
 msgid "Panels"
 msgstr ""
 
-#: src/application/applicationshortcutruntime.cpp
-#, kde-format
+#: src/application/kiriviewapplicationactions.cpp
 msgctxt "@title:group"
 msgid "Window"
 msgstr ""
 
-#: src/application/applicationshortcutruntime.cpp
-#, kde-format
+#: src/application/kiriviewapplicationactions.cpp
 msgctxt "@title:group"
 msgid "Settings"
 msgstr ""
 
-#: src/application/applicationshortcutruntime.cpp
-#, kde-format
+#: src/application/kiriviewapplicationactions.cpp
 msgctxt "@title:group"
 msgid "Help"
-msgstr ""
-
-#: src/application/applicationshortcutruntime.cpp
-#, kde-format
-msgctxt "@info:keyboard shortcut"
-msgid "Unassigned"
 msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp
@@ -274,6 +267,18 @@ msgstr ""
 #, kde-format
 msgctxt "@info:status"
 msgid "Last image"
+msgstr ""
+
+#: src/localization/activenavigationboundarytext.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "No previous collection"
+msgstr ""
+
+#: src/localization/activenavigationboundarytext.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "No next collection"
 msgstr ""
 
 #: src/localization/imageerrortext.cpp
@@ -710,6 +715,31 @@ msgctxt "@info:tooltip"
 msgid "Open menu"
 msgstr "열기"
 
+#: src/qml/FitSplitButton.qml
+msgctxt "@info:tooltip"
+msgid "Choose fit mode"
+msgstr ""
+
+#: src/qml/FitSplitButton.qml
+msgctxt "@action"
+msgid "Fit Mode"
+msgstr ""
+
+#: src/qml/FitSplitButton.qml
+msgctxt "@action:inmenu"
+msgid "Fit to Window"
+msgstr ""
+
+#: src/qml/FitSplitButton.qml
+msgctxt "@action:inmenu"
+msgid "Fit Width"
+msgstr ""
+
+#: src/qml/FitSplitButton.qml
+msgctxt "@action:inmenu"
+msgid "Fit Height"
+msgstr ""
+
 #: src/qml/ImageActions.qml
 msgctxt "@action:inmenu"
 msgid "&Delete Permanently"
@@ -770,6 +800,21 @@ msgstr ""
 #: src/qml/ImageStateOverlay.qml
 msgctxt "@info:placeholder"
 msgid "Unable to open image"
+msgstr ""
+
+#: src/qml/ImageToolBar.qml
+msgctxt "@action:button"
+msgid "Fit Height"
+msgstr ""
+
+#: src/qml/ImageToolBar.qml
+msgctxt "@action:button"
+msgid "Fit Width"
+msgstr ""
+
+#: src/qml/ImageToolBar.qml
+msgctxt "@action:button"
+msgid "Fit to Window"
 msgstr ""
 
 #: src/qml/ImageToolBar.qml

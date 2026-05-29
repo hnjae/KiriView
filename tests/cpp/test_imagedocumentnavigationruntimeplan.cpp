@@ -30,6 +30,7 @@ private Q_SLOTS:
     void emptyContainerErrorMapsToEmptyContainerCompletion();
     void invalidComicMediaEntrySourceErrorMapsToLocalizedOpenError();
     void genericContainerErrorKeepsReportedErrorString();
+    void containerBoundaryMapsToBoundaryOperation();
     void clearCurrentImageDocumentPageNavigationExpandsDeletedImageClearPlan();
     void mixedNavigationPlanPreservesOperationOrder();
 };
@@ -133,6 +134,20 @@ void TestImageDocumentNavigationRuntimePlan::genericContainerErrorKeepsReportedE
         errorString);
 }
 
+void TestImageDocumentNavigationRuntimePlan::containerBoundaryMapsToBoundaryOperation()
+{
+    const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
+        KiriView::ReportContainerNavigationBoundaryEffect {
+            KiriView::NavigationDirection::Previous,
+        },
+    });
+
+    QVERIFY(hasOperationTypes(
+        plan, operationTypes<KiriView::ReportContainerNavigationBoundaryOperation>()));
+    QCOMPARE(operationAt<KiriView::ReportContainerNavigationBoundaryOperation>(plan, 0).direction,
+        KiriView::NavigationDirection::Previous);
+}
+
 void TestImageDocumentNavigationRuntimePlan::
     clearCurrentImageDocumentPageNavigationExpandsDeletedImageClearPlan()
 {
@@ -171,15 +186,21 @@ void TestImageDocumentNavigationRuntimePlan::mixedNavigationPlanPreservesOperati
             KiriView::ContainerNavigationError::EmptyContainer,
             QString(),
         },
+        KiriView::ReportContainerNavigationBoundaryEffect {
+            KiriView::NavigationDirection::Next,
+        },
     });
 
     QVERIFY(hasOperationTypes(plan,
         operationTypes<KiriView::LoadUrlOperation, KiriView::LoadContainerImageOperation,
-            KiriView::FinishEmptyContainerNavigationOperation>()));
+            KiriView::FinishEmptyContainerNavigationOperation,
+            KiriView::ReportContainerNavigationBoundaryOperation>()));
     QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).target.url, firstUrl);
     QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 1).target.url, imageUrl);
     QCOMPARE(operationAt<KiriView::FinishEmptyContainerNavigationOperation>(plan, 2).containerUrl,
         containerUrl);
+    QCOMPARE(operationAt<KiriView::ReportContainerNavigationBoundaryOperation>(plan, 3).direction,
+        KiriView::NavigationDirection::Next);
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentNavigationRuntimePlan)

@@ -130,8 +130,8 @@ KiriImageDocument::KiriImageDocument(
         [this](const std::vector<ImageDocumentChange> &changes) { handleDocumentChanges(changes); },
         std::move(dependencies),
         [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); },
-        [this](
-            const QString &message) { Q_EMIT unsupportedOpenedCollectionVideoEntered(message); });
+        [this](const QString &message) { Q_EMIT unsupportedOpenedCollectionVideoEntered(message); },
+        [this](const QString &message) { Q_EMIT containerNavigationBoundaryReached(message); });
 }
 
 KiriImageDocument::~KiriImageDocument() = default;

@@ -224,6 +224,7 @@ Q_SIGNALS:
     void repaintRequested();
     void unsupportedOpenedCollectionVideoChanged();
     void unsupportedOpenedCollectionVideoEntered(const QString &message);
+    void containerNavigationBoundaryReached(const QString &message);
 
 private:
     void handleDocumentChanges(const std::vector<KiriView::ImageDocumentChange> &changes);

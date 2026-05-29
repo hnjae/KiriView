@@ -51,4 +51,16 @@ QString activeNavigationBoundaryFeedbackText(
 
     return {};
 }
+
+QString containerNavigationBoundaryFeedbackText(NavigationDirection direction)
+{
+    switch (direction) {
+    case NavigationDirection::Previous:
+        return i18nc("@info:status", "No previous collection");
+    case NavigationDirection::Next:
+        return i18nc("@info:status", "No next collection");
+    }
+
+    return {};
+}
 }

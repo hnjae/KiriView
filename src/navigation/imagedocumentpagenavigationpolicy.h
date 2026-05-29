@@ -33,6 +33,8 @@ std::optional<ImageDocumentPageCandidate> adjacentImageDocumentPageCandidate(
 std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate(
     const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &currentContainerUrl,
     NavigationDirection direction);
+std::optional<std::size_t> containerNavigationCandidateIndex(
+    const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &currentContainerUrl);
 int pageNavigationCurrentPageNumber(const PageNavigationState &state);
 int pageNavigationPageCount(const PageNavigationState &state);
 bool pageNavigationHasKnownSelection(const PageNavigationState &state);

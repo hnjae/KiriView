@@ -47,6 +47,11 @@ void appendNavigationEffectRuntimeOperation(KiriView::ImageDocumentRuntimePlan &
                     payload.errorString,
                 });
             } else if constexpr (std::is_same_v<Effect,
+                                     KiriView::ReportContainerNavigationBoundaryEffect>) {
+                plan.push_back(KiriView::ReportContainerNavigationBoundaryOperation {
+                    payload.direction,
+                });
+            } else if constexpr (std::is_same_v<Effect,
                                      KiriView::ClearCurrentImageDocumentPageNavigationEffect>) {
                 KiriView::ImageDocumentRuntimePlan clearPlan
                     = KiriView::imageDocumentClearDeletedImagePlan();

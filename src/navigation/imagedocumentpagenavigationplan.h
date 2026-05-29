@@ -30,12 +30,16 @@ struct ReportContainerNavigationErrorEffect {
     QString errorString;
 };
 
+struct ReportContainerNavigationBoundaryEffect {
+    NavigationDirection direction = NavigationDirection::Next;
+};
+
 struct ClearCurrentImageDocumentPageNavigationEffect {
 };
 
-using ImageDocumentPageNavigationEffect
-    = std::variant<OpenImageDocumentPageUrlEffect, OpenContainerImageDocumentPageNavigationEffect,
-        ReportContainerNavigationErrorEffect, ClearCurrentImageDocumentPageNavigationEffect>;
+using ImageDocumentPageNavigationEffect = std::variant<OpenImageDocumentPageUrlEffect,
+    OpenContainerImageDocumentPageNavigationEffect, ReportContainerNavigationErrorEffect,
+    ReportContainerNavigationBoundaryEffect, ClearCurrentImageDocumentPageNavigationEffect>;
 
 using ImageDocumentPageNavigationPlan = std::vector<ImageDocumentPageNavigationEffect>;
 }

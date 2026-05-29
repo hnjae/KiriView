@@ -14,6 +14,7 @@
 #include "imagedocumentsourceloadrequest.h"
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
+#include "localization/activenavigationboundarytext.h"
 #include "navigation/imagedocumentpagenavigationservice.h"
 #include "presentation/imagepresentationcontroller.h"
 #include "presentation/imagespreadpresentationcontroller.h"
@@ -209,6 +210,11 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
     operations.navigation.finishContainerNavigationLoadWithError
         = [this](const QUrl &containerUrl, const QString &errorString) {
               m_openController->finishContainerNavigationLoadWithError(containerUrl, errorString);
+          };
+    operations.navigation.reportContainerNavigationBoundary
+        = [this](NavigationDirection direction) {
+              invokeIfSet(m_callbacks.containerNavigationBoundaryReached,
+                  containerNavigationBoundaryFeedbackText(direction));
           };
     operations.navigation.loadPageNavigationUrl
         = [this](const ImageDocumentPageTarget &target, bool preserveTwoPageSpreadTransition) {

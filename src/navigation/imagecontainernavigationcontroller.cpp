@@ -73,10 +73,19 @@ void ImageContainerNavigationController::finishContainerNavigation(quint64 opera
         return;
     }
 
+    if (!containerNavigationCandidateIndex(candidates, currentContainerUrl).has_value()) {
+        m_navigationState.finishNavigation(operationId);
+        return;
+    }
+
     const auto target
         = adjacentContainerNavigationCandidate(candidates, currentContainerUrl, direction);
     if (!target.has_value()) {
-        m_navigationState.finishNavigation(operationId);
+        if (m_navigationState.finishNavigation(operationId)) {
+            reportNavigationPlan(ImageDocumentPageNavigationPlan {
+                ReportContainerNavigationBoundaryEffect { direction },
+            });
+        }
         return;
     }
 

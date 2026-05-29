@@ -153,11 +153,13 @@ KiriView::ImageContainerNavigationController::Callbacks controllerCallbacks(
     std::function<void(const QUrl &, const QUrl &)> openContainerImage = {},
     std::function<void(const QUrl &, KiriView::ContainerNavigationError, const QString &)>
         containerNavigationError
-    = {})
+    = {},
+    std::function<void(KiriView::NavigationDirection)> containerNavigationBoundary = {})
 {
     return KiriView::ImageContainerNavigationController::Callbacks {
         [openContainerImage = std::move(openContainerImage),
-            containerNavigationError = std::move(containerNavigationError)](
+            containerNavigationError = std::move(containerNavigationError),
+            containerNavigationBoundary = std::move(containerNavigationBoundary)](
             KiriView::ImageDocumentPageNavigationPlan plan) mutable {
             for (const KiriView::ImageDocumentPageNavigationEffect &effect : plan) {
                 if (const auto *openEffect
@@ -169,6 +171,9 @@ KiriView::ImageContainerNavigationController::Callbacks controllerCallbacks(
                     = std::get_if<KiriView::ReportContainerNavigationErrorEffect>(&effect)) {
                     KiriView::invokeIfSet(containerNavigationError, errorEffect->containerUrl,
                         errorEffect->error, errorEffect->errorString);
+                } else if (const auto *boundaryEffect
+                    = std::get_if<KiriView::ReportContainerNavigationBoundaryEffect>(&effect)) {
+                    KiriView::invokeIfSet(containerNavigationBoundary, boundaryEffect->direction);
                 }
             }
         },
@@ -183,6 +188,9 @@ class TestImageContainerNavigationController : public QObject
 private Q_SLOTS:
     void opensFirstImageFromAdjacentContainer();
     void opensFirstImageFromAdjacentArchiveContainer();
+    void reportsPreviousBoundaryWhenNoAdjacentContainerExists();
+    void reportsNextBoundaryWhenNoAdjacentContainerExists();
+    void missingCurrentContainerDoesNotReportBoundary();
     void reportsEmptyAdjacentContainer();
     void reportsInvalidAdjacentArchiveContainer();
     void forwardsAdjacentContainerImageListingError();
@@ -258,6 +266,85 @@ void TestImageContainerNavigationController::opensFirstImageFromAdjacentArchiveC
 
     QCOMPARE(openedImageUrl, targetImageUrl);
     QCOMPARE(openedContainerUrl, targetContainerUrl);
+}
+
+void TestImageContainerNavigationController::reportsPreviousBoundaryWhenNoAdjacentContainerExists()
+{
+    FakeImageDocumentPageCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
+            containerCandidate(
+                localUrl(QStringLiteral("/books/b/")), ContainerNavigationCandidateType::Directory),
+        });
+
+    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    int boundaryCount = 0;
+    NavigationDirection boundaryDirection = NavigationDirection::Next;
+    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+        controllerCallbacks(
+            {}, {}, [&boundaryCount, &boundaryDirection](NavigationDirection direction) {
+                ++boundaryCount;
+                boundaryDirection = direction;
+            }));
+
+    controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Previous);
+
+    QCOMPARE(boundaryCount, 1);
+    QCOMPARE(boundaryDirection, NavigationDirection::Previous);
+}
+
+void TestImageContainerNavigationController::reportsNextBoundaryWhenNoAdjacentContainerExists()
+{
+    FakeImageDocumentPageCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/b/"));
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(
+                localUrl(QStringLiteral("/books/a/")), ContainerNavigationCandidateType::Directory),
+            containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
+        });
+
+    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    int boundaryCount = 0;
+    NavigationDirection boundaryDirection = NavigationDirection::Previous;
+    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+        controllerCallbacks(
+            {}, {}, [&boundaryCount, &boundaryDirection](NavigationDirection direction) {
+                ++boundaryCount;
+                boundaryDirection = direction;
+            }));
+
+    controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
+
+    QCOMPARE(boundaryCount, 1);
+    QCOMPARE(boundaryDirection, NavigationDirection::Next);
+}
+
+void TestImageContainerNavigationController::missingCurrentContainerDoesNotReportBoundary()
+{
+    FakeImageDocumentPageCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/missing/"));
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(
+                localUrl(QStringLiteral("/books/a/")), ContainerNavigationCandidateType::Directory),
+            containerCandidate(
+                localUrl(QStringLiteral("/books/b/")), ContainerNavigationCandidateType::Directory),
+        });
+
+    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    int boundaryCount = 0;
+    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+        controllerCallbacks({}, {}, [&boundaryCount](NavigationDirection) { ++boundaryCount; }));
+
+    controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
+
+    QCOMPARE(boundaryCount, 0);
 }
 
 void TestImageContainerNavigationController::reportsEmptyAdjacentContainer()

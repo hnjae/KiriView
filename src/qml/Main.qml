@@ -330,10 +330,15 @@ StatefulApp.StatefulWindow {
 
             function onDisplayedUrlChanged() {
                 toastNotification.dismissIfScope("image-boundary");
+                toastNotification.dismissIfScope("collection-boundary");
             }
 
             function onFileDeletionFailed(errorString) {
                 toastNotification.show(errorString, "general");
+            }
+
+            function onContainerNavigationBoundaryReached(message) {
+                toastNotification.show(message, "collection-boundary");
             }
 
             function onUnsupportedOpenedCollectionVideoEntered(message) {
@@ -370,6 +375,7 @@ StatefulApp.StatefulWindow {
 
             function onSourceUrlChanged() {
                 toastNotification.dismissIfScope("image-boundary");
+                toastNotification.dismissIfScope("collection-boundary");
             }
         }
 

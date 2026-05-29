@@ -47,6 +47,7 @@ struct ImageDocumentNavigationRuntimeOperations {
     std::function<void(const ImageDocumentPageTarget &, const QUrl &)> loadContainerImage;
     std::function<void(const QUrl &)> finishEmptyContainerNavigation;
     std::function<void(const QUrl &, const QString &)> finishContainerNavigationLoadWithError;
+    std::function<void(NavigationDirection)> reportContainerNavigationBoundary;
     std::function<void(const ImageDocumentPageTarget &, bool)> loadPageNavigationUrl;
 };
 

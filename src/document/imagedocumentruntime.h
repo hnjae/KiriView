@@ -39,13 +39,15 @@ public:
     using ChangeCallback = std::function<void(const std::vector<ImageDocumentChange> &)>;
     using FileDeletionFailedCallback = std::function<void(const QString &)>;
     using UnsupportedOpenedCollectionVideoEnteredCallback = std::function<void(const QString &)>;
+    using ContainerNavigationBoundaryReachedCallback = std::function<void(const QString &)>;
 
     ImageDocumentRuntime(QObject *documentObject, RenderContextProvider renderContextProvider,
         ChangeCallback changeCallback, ImageDocumentRuntimeDependencyOverrides dependencies,
         FileDeletionFailedCallback fileDeletionFailedCallback = {},
         UnsupportedOpenedCollectionVideoEnteredCallback
             unsupportedOpenedCollectionVideoEnteredCallback
-        = {});
+        = {},
+        ContainerNavigationBoundaryReachedCallback containerNavigationBoundaryReachedCallback = {});
     ~ImageDocumentRuntime();
 
     QUrl sourceUrl() const;
