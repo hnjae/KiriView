@@ -216,9 +216,15 @@ The Thumbnail Panel is a compact, layout-reserving bottom filmstrip in the remai
 
 The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a media-type icon, not a generated image or video preview thumbnail, above the existing active-navigation candidate name. The candidate name is rendered in a fixed-width font on one elided line. The horizontal scrollbar occupies a dedicated lane below the strip items and must not overlap or obscure candidate names.
 
+The Thumbnail Panel highlights the selected active-navigation item immediately when the active navigation position changes.
+
+The Thumbnail Panel scrolls the horizontal strip enough to keep the selected item visible. Nearby automatic scroll adjustments may use a short easing animation.
+
+Far active-navigation jumps, synchronization while the Thumbnail Panel is hidden, and rapid repeated active-navigation changes update the strip position immediately without scroll animation.
+
 The Thumbnail Panel uses native Qt Quick ListView and Flickable scrolling behavior only. It does not remap vertical mouse-wheel events to horizontal movement.
 
-The Thumbnail Panel has a subtle top separator using the viewer foreground color at reduced opacity. Strip items use compact spacing, a small corner radius, and a subtle hover fill without shadow, glow, or card treatment. The selected strip item is indicated with a 2-pixel border using the theme highlight color, and the strip automatically scrolls enough to keep the selected item in view when active navigation changes.
+The Thumbnail Panel has a subtle top separator using the viewer foreground color at reduced opacity. Strip items use compact spacing, a small corner radius, and a subtle hover fill without shadow, glow, or card treatment. The selected strip item is indicated with a 2-pixel border using the theme highlight color.
 
 The Thumbnail Panel uses image and video icons to distinguish supported still images from supported videos.
 
