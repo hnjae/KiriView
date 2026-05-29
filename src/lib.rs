@@ -48,6 +48,8 @@ mod imageopenworkflow;
 mod videodocumentpolicy;
 
 // Navigation policy.
+#[path = "policy/activenavigation.rs"]
+mod activenavigation;
 #[path = "policy/imagedocumentpagenavigation.rs"]
 mod imagedocumentpagenavigation;
 

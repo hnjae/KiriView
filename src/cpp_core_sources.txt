@@ -25,6 +25,7 @@ src/archive/mediaentrysourcerunner.cpp
 src/archive/archiveformat.cpp
 src/archive/archivepath.cpp
 src/decoding/bufferedimagereader.cpp
+src/bridge/activenavigationprojectionconversion.cpp
 src/bridge/archiveformatconversion.cpp
 src/bridge/imageactionavailabilityconversion.cpp
 src/bridge/imageinputclassificationconversion.cpp
