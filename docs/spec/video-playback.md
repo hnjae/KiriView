@@ -60,7 +60,7 @@ The top-level document session dispatches adjacent Previous and Next through dir
 
 Opening a video starts playback automatically.
 
-Video mode shows a video viewport and a Kirigami floating playback panel over the bottom of the video.
+Video mode shows a video viewport and a Breeze-style playback control panel at the bottom edge of the video viewport.
 
 The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, the total supported media item count for the ordinary direct media URL scope when that list is known, and the same trailing control order as image mode, all from the document session's active navigation projection.
 
@@ -68,15 +68,21 @@ Video mode keeps image-only toolbar controls visible in their image-mode positio
 
 Video mode shows a read-only zoom percentage when the video frame size, displayed video content rectangle, and target window effective device pixel ratio are known. The value is the current fitted display size in physical pixels relative to the video's intrinsic frame size. When the percentage is unknown, the read-only zoom control displays `? %`. Users cannot edit this value or use image zoom actions for video.
 
-The floating playback panel includes play/pause, timeline position selection and scrubbing, duration and position display, and a disabled non-interactive timeline state when the media is not seekable.
+The playback control panel is shown only when the current video is ready and has a video track.
 
-The floating playback panel uses a responsive width based on the video viewport, not the full window or only its implicit content width. It targets 65% of the viewport width, remains at least wide enough for its controls and about 24 grid units, caps at about 44 grid units, and preserves side margins on narrow viewports.
+The playback control panel includes icon-only play/pause and mute/unmute buttons, current time, timeline position selection and scrubbing, total duration, and a disabled non-interactive timeline state when the media is not seekable. The timeline row order is play/pause, current time, timeline, total duration, and mute/unmute. Time readouts use fixed-width digits and are the only visible text in the panel.
+
+Muting is session state owned by the video document. Toggling mute affects the current backend audio output and persists across video source changes during the app session, including when a new media backend is created lazily for a later source.
+
+In regular windowed and fullscreen video mode, the default playback control style is a floating panel inside the video viewport, aligned to the bottom edge with a large-spacing bottom margin. The floating panel uses the active Kirigami background color with theme-aware translucency, the Kirigami corner radius, a weak shadow, centered content width, and a maximum width of about 75% of the viewport while preserving viewport side margins.
+
+The playback controls switch to a fixed bottom bar inside the video viewport when the viewport is compact, touch/mobile input is active, or system animations are disabled or reduced. Compact means roughly narrower than 32 grid units or shorter than 16 grid units. The fixed bottom bar is full-width, has no floating bottom margin, has no shadow, has square outer bottom corners, and reserves its height from the video display area so the video is not covered by the controls.
 
 When video playback reaches the natural end of the media, KiriView keeps the direct video output as the active presentation and must not clear the video output into an empty or null-like visual state. Playback stops at the final position. Pressing Play from that ended state restarts playback from the beginning when seeking is available.
 
 The floating playback panel must not reserve page layout height and must remain usable in fullscreen.
 
-For the MVP, the floating playback panel remains visible while video mode is active. Auto-hide is out of scope unless explicitly specified later.
+Auto-hide applies only in floating control mode while video is playing. Pointer movement, hover, focus, slider drag, button press, tap, or paused playback reveals the controls and keeps them visible while interaction continues. When controls are eligible to hide, they fade after a human-moment delay. If system animations are disabled or reduced, fixed bottom bar mode is used and controls do not auto-hide.
 
 In Flatpak, KiriView exposes the host PipeWire runtime socket for Qt Multimedia video playback initialization while keeping PulseAudio-compatible audio output available.
 
