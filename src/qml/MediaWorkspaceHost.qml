@@ -15,8 +15,14 @@ Item {
 
     required property KiriDocumentSession documentSession
     required property var openAction
+    property bool infoPanelOpen: false
+    readonly property real infoPanelMinimumWidth: Kirigami.Units.gridUnit * 16
+    readonly property real infoPanelPreferredWidth: Kirigami.Units.gridUnit * 18
+    readonly property real infoPanelMaximumWidth: Kirigami.Units.gridUnit * 20
+    readonly property real infoPanelWideBreakpoint: Kirigami.Units.gridUnit * 42
+    readonly property bool infoPanelInlineMode: width >= infoPanelWideBreakpoint
     readonly property ImageViewportInteractionSurface imageInteractionSurface: mediaViewportHost.imageInteractionSurface
-    readonly property bool infoPanelVisible: infoPanel.visible
+    readonly property bool infoPanelVisible: infoPanelOpen
     readonly property bool thumbnailPanelVisible: thumbnailPanel.visible
 
     signal viewerClicked
@@ -27,12 +33,28 @@ Item {
     }
 
     function toggleInfoPanel() {
-        infoPanel.visible = !infoPanel.visible;
+        infoPanelOpen = !infoPanelOpen;
+    }
+
+    function closeInfoPanel() {
+        infoPanelOpen = false;
     }
 
     function toggleThumbnailPanel() {
         thumbnailPanel.visible = !thumbnailPanel.visible;
     }
+
+    function syncInfoPanelDrawer() {
+        const drawerShouldOpen = infoPanelOpen && !infoPanelInlineMode;
+        if (infoPanelOverlayDrawer.drawerOpen === drawerShouldOpen) {
+            return;
+        }
+
+        infoPanelOverlayDrawer.drawerOpen = drawerShouldOpen;
+    }
+
+    onInfoPanelInlineModeChanged: syncInfoPanelDrawer()
+    onInfoPanelOpenChanged: syncInfoPanelDrawer()
 
     Controls.SplitView {
         id: contentSplitView
@@ -76,11 +98,41 @@ Item {
         InfoPanel {
             id: infoPanel
 
+            documentSession: root.documentSession
             objectName: "infoPanel"
-            visible: false
-            Controls.SplitView.maximumWidth: Kirigami.Units.gridUnit * 18
-            Controls.SplitView.minimumWidth: Kirigami.Units.gridUnit * 8
-            Controls.SplitView.preferredWidth: Math.min(Kirigami.Units.gridUnit * 18, Math.max(Kirigami.Units.gridUnit * 10, contentSplitView.width * 0.3))
+            visible: root.infoPanelOpen && root.infoPanelInlineMode
+            Controls.SplitView.maximumWidth: root.infoPanelMaximumWidth
+            Controls.SplitView.minimumWidth: root.infoPanelMinimumWidth
+            Controls.SplitView.preferredWidth: root.infoPanelPreferredWidth
+
+            onCloseRequested: root.closeInfoPanel()
+        }
+    }
+
+    Kirigami.OverlayDrawer {
+        id: infoPanelOverlayDrawer
+
+        objectName: "infoPanelOverlayDrawer"
+
+        closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnReleaseOutside
+        edge: Qt.RightEdge
+        handleVisible: false
+        maximumSize: Math.min(root.infoPanelMaximumWidth, root.width)
+        minimumSize: Math.min(root.infoPanelMinimumWidth, maximumSize)
+        modal: true
+        preferredSize: Math.min(maximumSize, Math.max(minimumSize, root.infoPanelPreferredWidth))
+
+        contentItem: InfoPanel {
+            documentSession: root.documentSession
+            objectName: "infoPanelOverlayContent"
+
+            onCloseRequested: root.closeInfoPanel()
+        }
+
+        onDrawerOpenChanged: {
+            if (!drawerOpen && root.infoPanelOpen && !root.infoPanelInlineMode) {
+                root.infoPanelOpen = false;
+            }
         }
     }
 }

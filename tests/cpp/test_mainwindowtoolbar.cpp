@@ -7,6 +7,7 @@
 #include "facade/kiridocumentsession.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kiriimageview.h"
+#include "facade/kirimediainformation.h"
 #include "facade/kirivideodocument.h"
 #include "facade/kiriviewapplication.h"
 #include "facade/menuaccesskeyrouter.h"
@@ -44,6 +45,8 @@ private Q_SLOTS:
     void directoryImageDocumentShowsPagePosition();
     void mediaViewportHostLoadsOnlyActiveDelegate();
     void panelActionsToggleResizablePanels();
+    void infoPanelUsesOverlayDrawerOnNarrowWindows();
+    void escapeClosesInfoPanelBeforeLeavingFullscreen();
     void panelShortcutsToggleResizablePanels();
     void commandFixedShortcutsUseApplicationActions();
     void viewerRightClickOpensContextMenuOnlyFromMediaViewport();
@@ -84,6 +87,7 @@ void registerKiriViewQmlTypes()
     qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
     qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
     qmlRegisterType<KiriImageView>("io.github.hnjae.kiriview", 1, 0, "KiriImageView");
+    qmlRegisterType<KiriMediaInformation>("io.github.hnjae.kiriview", 1, 0, "KiriMediaInformation");
     qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
     qmlRegisterType<MenuAccessKeyRouter>("io.github.hnjae.kiriview", 1, 0, "MenuAccessKeyRouter");
     registered = true;
@@ -117,13 +121,24 @@ QList<QQuickItem *> controlToolBars(QObject *root)
     return toolbars;
 }
 
+bool effectivelyVisible(QQuickItem *item)
+{
+    for (QQuickItem *current = item; current != nullptr; current = current->parentItem()) {
+        if (!current->isVisible()) {
+            return false;
+        }
+    }
+
+    return item != nullptr;
+}
+
 QList<QQuickItem *> visibleItemsByObjectName(QObject *root, const QString &objectName)
 {
     QList<QQuickItem *> visibleItems;
     const QList<QQuickItem *> items
         = root->findChildren<QQuickItem *>(objectName, Qt::FindChildrenRecursively);
     for (QQuickItem *item : items) {
-        if (item->isVisible()) {
+        if (effectivelyVisible(item)) {
             visibleItems.append(item);
         }
     }
@@ -242,6 +257,13 @@ void openSourceUrl(MainWindowFixture &fixture, const QString &sourcePath)
     KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
     QVERIFY(documentSession != nullptr);
     documentSession->setSourceUrl(QUrl::fromLocalFile(sourcePath));
+}
+
+void resizeWindow(MainWindowFixture &fixture, const QSize &size)
+{
+    fixture.window->resize(size);
+    QTRY_COMPARE(fixture.window->size(), size);
+    QCoreApplication::processEvents();
 }
 
 void compareToolbarPageReadout(
@@ -432,6 +454,7 @@ void TestMainWindowToolBar::panelActionsToggleResizablePanels()
 {
     MainWindowFixture fixture = createMainWindowFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    resizeWindow(fixture, QSize(1200, 800));
 
     KiriViewApplication *application = findApplication(fixture.window);
     QVERIFY(application != nullptr);
@@ -447,18 +470,25 @@ void TestMainWindowToolBar::panelActionsToggleResizablePanels()
     QQuickItem *mediaPanelSplitView
         = findQuickItem(fixture.window, QStringLiteral("mediaPanelSplitView"));
     QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem *infoPanelOverlay
+        = findQuickItem(fixture.window, QStringLiteral("infoPanelOverlayContent"));
     QQuickItem *thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
     QVERIFY(contentSplitView != nullptr);
     QVERIFY(mediaPanelSplitView != nullptr);
     QVERIFY(infoPanel != nullptr);
+    QVERIFY(infoPanelOverlay != nullptr);
     QVERIFY(thumbnailPanel != nullptr);
     QVERIFY(!infoPanel->isVisible());
+    QVERIFY(!infoPanelOverlay->isVisible());
     QVERIFY(!thumbnailPanel->isVisible());
 
     infoPanelAction->trigger();
     QTRY_VERIFY(infoPanel->isVisible());
+    QVERIFY(!infoPanelOverlay->isVisible());
     QVERIFY(!thumbnailPanel->isVisible());
     QVERIFY(infoPanel->width() > 0);
+    QVERIFY(infoPanel->width() >= 16 * 16);
+    QVERIFY(infoPanel->width() <= 20 * 32);
     QTRY_VERIFY(qAbs(infoPanel->height() - contentSplitView->height()) <= 1.0);
 
     thumbnailPanelAction->trigger();
@@ -474,7 +504,76 @@ void TestMainWindowToolBar::panelActionsToggleResizablePanels()
     infoPanelAction->trigger();
     thumbnailPanelAction->trigger();
     QTRY_VERIFY(!infoPanel->isVisible());
+    QTRY_VERIFY(!infoPanelOverlay->isVisible());
     QTRY_VERIFY(!thumbnailPanel->isVisible());
+}
+
+void TestMainWindowToolBar::infoPanelUsesOverlayDrawerOnNarrowWindows()
+{
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    resizeWindow(fixture, QSize(520, 420));
+
+    KiriViewApplication *application = findApplication(fixture.window);
+    QVERIFY(application != nullptr);
+    QAction *infoPanelAction
+        = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
+    QVERIFY(infoPanelAction != nullptr);
+
+    QQuickItem *mediaViewportSlot
+        = findQuickItem(fixture.window, QStringLiteral("mediaViewportSlot"));
+    QQuickItem *inlineInfoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem *overlayInfoPanel
+        = findQuickItem(fixture.window, QStringLiteral("infoPanelOverlayContent"));
+    QObject *overlayDrawer = findObject(fixture.window, QStringLiteral("infoPanelOverlayDrawer"));
+    QVERIFY(mediaViewportSlot != nullptr);
+    QVERIFY(inlineInfoPanel != nullptr);
+    QVERIFY(overlayInfoPanel != nullptr);
+    QVERIFY(overlayDrawer != nullptr);
+    const qreal viewportWidthBeforeOpen = mediaViewportSlot->width();
+
+    infoPanelAction->trigger();
+
+    QTRY_VERIFY(!inlineInfoPanel->isVisible());
+    QTRY_VERIFY(overlayInfoPanel->isVisible());
+    QVERIFY(overlayDrawer->property("drawerOpen").toBool());
+    QVERIFY(qAbs(mediaViewportSlot->width() - viewportWidthBeforeOpen) <= 1.0);
+
+    const QList<QQuickItem *> closeButtons
+        = visibleItemsByObjectName(fixture.window, QStringLiteral("infoPanelCloseButton"));
+    QCOMPARE(closeButtons.size(), 1);
+    QTRY_VERIFY(itemCenter(closeButtons.constFirst()).x() < fixture.window->width());
+    clickItem(fixture.window, closeButtons.constFirst(), Qt::LeftButton);
+    QTRY_VERIFY(!overlayInfoPanel->isVisible());
+    QVERIFY(!overlayDrawer->property("drawerOpen").toBool());
+}
+
+void TestMainWindowToolBar::escapeClosesInfoPanelBeforeLeavingFullscreen()
+{
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    resizeWindow(fixture, QSize(1200, 800));
+
+    KiriViewApplication *application = findApplication(fixture.window);
+    QVERIFY(application != nullptr);
+    QAction *infoPanelAction
+        = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
+    QVERIFY(infoPanelAction != nullptr);
+
+    fixture.window->setVisibility(QWindow::FullScreen);
+    QTRY_COMPARE(fixture.window->visibility(), QWindow::FullScreen);
+
+    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QVERIFY(infoPanel != nullptr);
+    infoPanelAction->trigger();
+    QTRY_VERIFY(infoPanel->isVisible());
+
+    QTest::keyClick(fixture.window, Qt::Key_Escape);
+    QTRY_VERIFY(!infoPanel->isVisible());
+    QCOMPARE(fixture.window->visibility(), QWindow::FullScreen);
+
+    QTest::keyClick(fixture.window, Qt::Key_Escape);
+    QTRY_COMPARE(fixture.window->visibility(), QWindow::Windowed);
 }
 
 void TestMainWindowToolBar::panelShortcutsToggleResizablePanels()
@@ -488,6 +587,7 @@ void TestMainWindowToolBar::panelShortcutsToggleResizablePanels()
 
     MainWindowFixture fixture = createMainWindowFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    resizeWindow(fixture, QSize(1200, 800));
 
     openSourceUrl(fixture, imageSourcePath);
     QTRY_VERIFY(findQuickItem(fixture.window, QStringLiteral("imageViewport")) != nullptr);
@@ -568,6 +668,7 @@ void TestMainWindowToolBar::viewerRightClickOpensContextMenuOnlyFromMediaViewpor
 
     MainWindowFixture fixture = createMainWindowFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    resizeWindow(fixture, QSize(1200, 800));
     openSourceUrl(fixture, imageSourcePath);
     compareToolbarPageReadout(fixture, QStringLiteral("3"), QStringLiteral("3"), true);
 
@@ -612,6 +713,12 @@ void TestMainWindowToolBar::viewerRightClickOpensContextMenuOnlyFromMediaViewpor
     clickItem(fixture.window, thumbnailPanel, Qt::RightButton);
     QTRY_VERIFY(!popupOpen(contextMenu));
 
+    infoPanelAction->trigger();
+    thumbnailPanelAction->trigger();
+    QTRY_VERIFY(!infoPanel->isVisible());
+    QTRY_VERIFY(!thumbnailPanel->isVisible());
+
+    resizeWindow(fixture, QSize(520, 420));
     fixture.window->setVisibility(QWindow::FullScreen);
     QTRY_COMPARE(fixture.window->visibility(), QWindow::FullScreen);
     clickItem(fixture.window, mediaViewportSlot, Qt::RightButton);

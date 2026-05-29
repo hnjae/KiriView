@@ -5,6 +5,7 @@
 #include "facade/imageshortcutnavigationpolicy.h"
 #include "facade/kiridocumentsession.h"
 #include "facade/kiriimagedocument.h"
+#include "facade/kirimediainformation.h"
 #include "facade/kirivideodocument.h"
 #include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
@@ -78,8 +79,10 @@ void registerKiriViewQmlTypes()
         return;
     }
 
+    KiriView::initializeLocalization();
     qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
     qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
+    qmlRegisterType<KiriMediaInformation>("io.github.hnjae.kiriview", 1, 0, "KiriMediaInformation");
     qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
     qmlRegisterType<ImageActionAvailability>(
         "io.github.hnjae.kiriview", 1, 0, "ImageActionAvailability");

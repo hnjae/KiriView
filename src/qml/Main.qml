@@ -131,7 +131,15 @@ StatefulApp.StatefulWindow {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.fullscreen && !root.helpDialogOpen && !root.toolbarTextInputFocused()
+        enabled: mediaWorkspaceHost.infoPanelVisible && !root.helpDialogOpen && !root.toolbarTextInputFocused()
+        sequence: "Esc"
+
+        onActivated: mediaWorkspaceHost.closeInfoPanel()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.fullscreen && !root.helpDialogOpen && !root.toolbarTextInputFocused() && !mediaWorkspaceHost.infoPanelVisible
         sequence: "Esc"
 
         onActivated: root.toggleFullScreen()

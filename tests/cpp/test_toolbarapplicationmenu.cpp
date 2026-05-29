@@ -4,6 +4,7 @@
 #include "facade/imageactionavailability.h"
 #include "facade/kiridocumentsession.h"
 #include "facade/kiriimagedocument.h"
+#include "facade/kirimediainformation.h"
 #include "facade/kirivideodocument.h"
 #include "facade/kiriviewapplication.h"
 #include "facade/menuaccesskeyrouter.h"
@@ -94,6 +95,7 @@ void registerKiriViewQmlTypes()
         "io.github.hnjae.kiriview", 1, 0, "ImageActionAvailability");
     qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
     qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
+    qmlRegisterType<KiriMediaInformation>("io.github.hnjae.kiriview", 1, 0, "KiriMediaInformation");
     qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
     qmlRegisterType<MenuAccessKeyRouter>("io.github.hnjae.kiriview", 1, 0, "MenuAccessKeyRouter");
     registered = true;

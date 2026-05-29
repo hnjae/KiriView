@@ -20,6 +20,7 @@ private Q_SLOTS:
     void videoModeExposesReadOnlyZoomReadout();
     void toolbarPageNavigationUsesSessionActiveProjection();
     void thumbnailPanelUsesSessionThumbnailModel();
+    void infoPanelUsesSessionMediaInformationAndResponsiveLayouts();
     void activeNavigationActionsUseSessionSnapshotAndBoundaryScope();
     void shortcutsRouteSharedActiveNavigationThroughSessionRequests();
     void imageActionAvailabilityDoesNotDriveSharedActiveNavigation();
@@ -326,6 +327,54 @@ void TestMainWindowVideoIntegration::thumbnailPanelUsesSessionThumbnailModel()
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("imageDocument.openImageAtPage")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("openNextMedia")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("openPreviousMedia")));
+}
+
+void TestMainWindowVideoIntegration::infoPanelUsesSessionMediaInformationAndResponsiveLayouts()
+{
+    const QString mainQml = readSource(QStringLiteral("src/qml/Main.qml"));
+    const QString mediaWorkspaceHostQml
+        = readSource(QStringLiteral("src/qml/MediaWorkspaceHost.qml"));
+    const QString infoPanelQml = readSource(QStringLiteral("src/qml/InfoPanel.qml"));
+    QVERIFY2(!mainQml.isEmpty(), "Main.qml should be readable");
+    QVERIFY2(!mediaWorkspaceHostQml.isEmpty(), "MediaWorkspaceHost.qml should be readable");
+    QVERIFY2(!infoPanelQml.isEmpty(), "InfoPanel.qml should be readable");
+
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("property bool infoPanelOpen")));
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("readonly property real infoPanelWideBreakpoint")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("Kirigami.Units.gridUnit * 42")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("Kirigami.Units.gridUnit * 16")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("Kirigami.Units.gridUnit * 18")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("Kirigami.Units.gridUnit * 20")));
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("root.infoPanelOpen && root.infoPanelInlineMode")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("Kirigami.OverlayDrawer")));
+    QVERIFY(
+        mediaWorkspaceHostQml.contains(QStringLiteral("objectName: \"infoPanelOverlayDrawer\"")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("edge: Qt.RightEdge")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("Controls.Popup.CloseOnEscape")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("Controls.Popup.CloseOnReleaseOutside")));
+    QVERIFY(
+        mediaWorkspaceHostQml.contains(QStringLiteral("documentSession: root.documentSession")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("function closeInfoPanel()")));
+
+    QVERIFY(infoPanelQml.contains(QStringLiteral(
+        "readonly property var mediaInformation: documentSession.mediaInformation")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("Controls.ScrollView")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("objectName: \"infoPanelScrollView\"")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("model: sectionRoot.rowModel")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.generalRows")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.mediaRows")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.cameraRows")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.copyFilePath()")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.openContainingFolder()")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("elide: Text.ElideRight")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("elide: Text.ElideMiddle")));
+    QVERIFY(!infoPanelQml.contains(QStringLiteral("#")));
+    QVERIFY(!infoPanelQml.contains(QStringLiteral("Qt.rgba")));
+
+    QVERIFY(mainQml.contains(QStringLiteral("mediaWorkspaceHost.closeInfoPanel()")));
+    QVERIFY(mainQml.contains(QStringLiteral("!mediaWorkspaceHost.infoPanelVisible")));
 }
 
 void TestMainWindowVideoIntegration::activeNavigationActionsUseSessionSnapshotAndBoundaryScope()
