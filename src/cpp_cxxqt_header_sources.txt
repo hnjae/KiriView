@@ -7,6 +7,7 @@ src/facade/imageshortcutnavigationpolicy.h
 src/facade/kiridocumentsession.h
 src/facade/kiriimagedocument.h
 src/facade/kiriimageview.h
+src/facade/kirimediainformation.h
 src/facade/kirivideodocument.h
 src/facade/kiriviewapplication.h
 src/system/powerprofilemonitor.h

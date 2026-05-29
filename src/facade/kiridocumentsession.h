@@ -5,6 +5,7 @@
 #define KIRIVIEW_KIRIDOCUMENTSESSION_H
 
 #include "facade/kiriimagedocument.h"
+#include "facade/kirimediainformation.h"
 #include "facade/kirivideodocument.h"
 #include "session/documentsessionruntime.h"
 
@@ -66,6 +67,7 @@ class KiriDocumentSession : public QObject
             activeNavigationBoundaryScope NOTIFY activeNavigationChanged)
     Q_PROPERTY(QAbstractListModel *activeNavigationThumbnailModel READ
             activeNavigationThumbnailModel CONSTANT)
+    Q_PROPERTY(KiriMediaInformation *mediaInformation READ mediaInformation CONSTANT)
     Q_PROPERTY(KiriImageDocument *imageDocument READ imageDocument CONSTANT)
     Q_PROPERTY(KiriVideoDocument *videoDocument READ videoDocument CONSTANT)
 
@@ -127,6 +129,7 @@ public:
     bool atKnownLastActiveNavigation() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     QAbstractListModel *activeNavigationThumbnailModel() const;
+    KiriMediaInformation *mediaInformation() const;
     KiriImageDocument *imageDocument() const;
     KiriVideoDocument *videoDocument() const;
 
@@ -167,6 +170,7 @@ private:
     std::unique_ptr<KiriImageDocument> m_imageDocument;
     std::unique_ptr<KiriVideoDocument> m_videoDocument;
     std::unique_ptr<KiriView::DocumentSessionRuntime> m_runtime;
+    std::unique_ptr<KiriMediaInformation> m_mediaInformation;
 };
 
 #endif

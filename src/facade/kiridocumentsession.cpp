@@ -269,6 +269,7 @@ KiriDocumentSession::KiriDocumentSession(KiriView::KiriDocumentSessionDependenci
             handleSessionChanges(changes);
         },
         std::move(dependencies.sessionRuntime));
+    m_mediaInformation = std::make_unique<KiriMediaInformation>(*this, this);
 }
 
 KiriDocumentSession::~KiriDocumentSession() = default;
@@ -377,6 +378,11 @@ KiriDocumentSession::activeNavigationBoundaryScope() const
 QAbstractListModel *KiriDocumentSession::activeNavigationThumbnailModel() const
 {
     return m_runtime->activeNavigationThumbnailModel();
+}
+
+KiriMediaInformation *KiriDocumentSession::mediaInformation() const
+{
+    return m_mediaInformation.get();
 }
 
 KiriImageDocument *KiriDocumentSession::imageDocument() const { return m_imageDocument.get(); }

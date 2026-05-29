@@ -5,6 +5,7 @@
 
 #include "candidate_test_support.h"
 #include "facade/kiriimagedocument.h"
+#include "facade/kirimediainformation.h"
 #include "facade/kirivideodocument.h"
 #include "image_async_test_support.h"
 #include "image_test_support.h"
@@ -40,6 +41,40 @@ QVariant thumbnailData(const KiriDocumentSession &session, int row, int role)
 {
     QAbstractItemModel *model = session.activeNavigationThumbnailModel();
     return model->data(model->index(row, 0), role);
+}
+
+int roleForName(const QAbstractItemModel &model, const QByteArray &name)
+{
+    const QHash<int, QByteArray> roles = model.roleNames();
+    for (auto iterator = roles.cbegin(); iterator != roles.cend(); ++iterator) {
+        if (iterator.value() == name) {
+            return iterator.key();
+        }
+    }
+
+    return -1;
+}
+
+QVariant mediaInformationRowData(
+    const QAbstractItemModel &model, int row, const QByteArray &roleName)
+{
+    const int role = roleForName(model, roleName);
+    if (role < 0) {
+        return {};
+    }
+
+    return model.data(model.index(row, 0), role);
+}
+
+QString mediaInformationValueForLabel(const QAbstractItemModel &model, const QString &label)
+{
+    for (int row = 0; row < model.rowCount(); ++row) {
+        if (mediaInformationRowData(model, row, QByteArrayLiteral("label")).toString() == label) {
+            return mediaInformationRowData(model, row, QByteArrayLiteral("value")).toString();
+        }
+    }
+
+    return {};
 }
 
 void compareThumbnailRow(const KiriDocumentSession &session, int row, int number, const QUrl &url,
@@ -247,6 +282,11 @@ class TestKiriDocumentSession : public QObject
 
 private Q_SLOTS:
     void emptySessionProjectsUnavailableActiveNavigation();
+    void emptySessionProjectsUnavailableMediaInformation();
+    void imageMediaInformationUsesDummyRowsAndKnownDimensions();
+    void videoMediaInformationUsesVideoSectionAndNoCameraRows();
+    void mediaInformationDerivesFilenameAndPathFromTargetUrl();
+    void mediaInformationRowModelsExposeLabelAndValueRoles();
     void directVideoRoutesToVideoDocumentWithOriginalSource();
     void activeZoomReadoutFollowsSessionDocumentKind();
     void archiveAndDirectoryInputsRouteToImageDocument();
@@ -302,6 +342,147 @@ void TestKiriDocumentSession::emptySessionProjectsUnavailableActiveNavigation()
     std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     compareUnavailableActiveNavigation(*session);
+}
+
+void TestKiriDocumentSession::emptySessionProjectsUnavailableMediaInformation()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+
+    KiriMediaInformation *mediaInformation = session->mediaInformation();
+    QVERIFY(mediaInformation != nullptr);
+    QVERIFY(!mediaInformation->available());
+    QVERIFY(!mediaInformation->canCopyFilePath());
+    QVERIFY(!mediaInformation->canOpenContainingFolder());
+    QCOMPARE(mediaInformation->title(), QString());
+    QCOMPARE(mediaInformation->summary(), QStringLiteral("No media selected"));
+    QCOMPARE(mediaInformation->mediaSectionTitle(), QStringLiteral("Media"));
+    QVERIFY(!mediaInformation->hasCameraSection());
+    QCOMPARE(mediaInformation->generalRows()->rowCount(), 0);
+    QCOMPARE(mediaInformation->mediaRows()->rowCount(), 0);
+    QCOMPARE(mediaInformation->cameraRows()->rowCount(), 0);
+}
+
+void TestKiriDocumentSession::imageMediaInformationUsesDummyRowsAndKnownDimensions()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString imagePath = directory.filePath(QStringLiteral("photo.png"));
+    QVERIFY(writeTestImage(imagePath));
+
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl imageUrl = localUrl(imagePath);
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(imageUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+
+    session->setSourceUrl(imageUrl);
+
+    QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    KiriMediaInformation *mediaInformation = session->mediaInformation();
+    QVERIFY(mediaInformation->available());
+    QCOMPARE(mediaInformation->title(), QStringLiteral("photo.png"));
+    QCOMPARE(mediaInformation->summary(), QStringLiteral("Image, 2×2 px"));
+    QCOMPARE(mediaInformation->mediaSectionTitle(), QStringLiteral("Image"));
+    QVERIFY(mediaInformation->hasCameraSection());
+    QVERIFY(mediaInformation->canCopyFilePath());
+    QVERIFY(mediaInformation->canOpenContainingFolder());
+    QCOMPARE(mediaInformation->generalRows()->rowCount(), 4);
+    QCOMPARE(mediaInformation->mediaRows()->rowCount(), 3);
+    QCOMPARE(mediaInformation->cameraRows()->rowCount(), 3);
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->generalRows(), QStringLiteral("Type")),
+        QStringLiteral("Image file (placeholder)"));
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->generalRows(), QStringLiteral("Path")),
+        imagePath);
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->mediaRows(), QStringLiteral("Dimensions")),
+        QStringLiteral("2×2 px"));
+    QCOMPARE(mediaInformationValueForLabel(
+                 *mediaInformation->mediaRows(), QStringLiteral("Color Space")),
+        QStringLiteral("sRGB (placeholder)"));
+    QVERIFY(
+        !mediaInformationValueForLabel(*mediaInformation->cameraRows(), QStringLiteral("Camera"))
+            .isEmpty());
+}
+
+void TestKiriDocumentSession::videoMediaInformationUsesVideoSectionAndNoCameraRows()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl clip = localUrl(QStringLiteral("/media/clip.mp4"));
+    directMediaNavigationProvider.setMedia(
+        localUrl(QStringLiteral("/media/")), { directMediaNavigationCandidate(clip) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+
+    session->setSourceUrl(clip);
+
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    KiriMediaInformation *mediaInformation = session->mediaInformation();
+    QVERIFY(mediaInformation->available());
+    QCOMPARE(mediaInformation->title(), QStringLiteral("clip.mp4"));
+    QCOMPARE(mediaInformation->summary(), QStringLiteral("Video metadata placeholder"));
+    QCOMPARE(mediaInformation->mediaSectionTitle(), QStringLiteral("Video"));
+    QVERIFY(!mediaInformation->hasCameraSection());
+    QCOMPARE(mediaInformation->cameraRows()->rowCount(), 0);
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->generalRows(), QStringLiteral("Type")),
+        QStringLiteral("Video file (placeholder)"));
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->mediaRows(), QStringLiteral("Frame Size")),
+        QStringLiteral("Unknown dimensions (placeholder)"));
+}
+
+void TestKiriDocumentSession::mediaInformationDerivesFilenameAndPathFromTargetUrl()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl clip(QStringLiteral("zip:///books/book.zip!/chapter/clip.mp4"));
+    directMediaNavigationProvider.setMedia(QUrl(QStringLiteral("zip:///books/book.zip!/chapter/")),
+        { directMediaNavigationCandidate(clip) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+
+    session->setSourceUrl(clip);
+
+    KiriMediaInformation *mediaInformation = session->mediaInformation();
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QVERIFY(mediaInformation->available());
+    QCOMPARE(mediaInformation->title(), QStringLiteral("clip.mp4"));
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->generalRows(), QStringLiteral("Path")),
+        QStringLiteral("zip:///books/book.zip!/chapter/clip.mp4"));
+    QVERIFY(mediaInformation->canCopyFilePath());
+    QVERIFY(mediaInformation->canOpenContainingFolder());
+}
+
+void TestKiriDocumentSession::mediaInformationRowModelsExposeLabelAndValueRoles()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString imagePath = directory.filePath(QStringLiteral("roles.png"));
+    QVERIFY(writeTestImage(imagePath));
+
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl imageUrl = localUrl(imagePath);
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(imageUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+
+    session->setSourceUrl(imageUrl);
+
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QAbstractItemModel *model = session->mediaInformation()->generalRows();
+    QVERIFY(model != nullptr);
+    QCOMPARE(roleForName(*model, QByteArrayLiteral("label")),
+        static_cast<int>(KiriMediaInformationRowModel::LabelRole));
+    QCOMPARE(roleForName(*model, QByteArrayLiteral("value")),
+        static_cast<int>(KiriMediaInformationRowModel::ValueRole));
+    QCOMPARE(mediaInformationRowData(*model, 0, QByteArrayLiteral("label")).toString(),
+        QStringLiteral("Type"));
+    QCOMPARE(mediaInformationRowData(*model, 0, QByteArrayLiteral("value")).toString(),
+        QStringLiteral("Image file (placeholder)"));
 }
 
 void TestKiriDocumentSession::directVideoRoutesToVideoDocumentWithOriginalSource()
