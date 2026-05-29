@@ -31,6 +31,7 @@
 #include <QUrl>
 #include <QWheelEvent>
 #include <QtQml/qqml.h>
+#include <cmath>
 #include <memory>
 
 class TestMainWindowToolBar : public QObject
@@ -50,6 +51,7 @@ private Q_SLOTS:
     void panelShortcutsToggleResizablePanels();
     void commandFixedShortcutsUseApplicationActions();
     void viewerRightClickOpensContextMenuOnlyFromMediaViewport();
+    void toolbarZoomWheelAppliesFineManualStep();
     void rightButtonWheelSuppressesContextMenuTap();
     void fullscreenReusesSingleToolbarAndHidesApplicationMenuButton();
 };
@@ -316,6 +318,18 @@ void clickItem(QQuickWindow *window, QQuickItem *item, Qt::MouseButton button)
     QCoreApplication::processEvents();
 }
 
+void wheelItem(QQuickWindow *window, QQuickItem *item, int angleDeltaY)
+{
+    const QPoint point = itemCenter(item);
+    QVERIFY(point.x() >= 0);
+    QVERIFY(point.y() >= 0);
+
+    QWheelEvent event(QPointF(point), window->mapToGlobal(point), QPoint(), QPoint(0, angleDeltaY),
+        Qt::NoButton, Qt::NoModifier, Qt::ScrollUpdate, false);
+    QCoreApplication::sendEvent(window, &event);
+    QCoreApplication::processEvents();
+}
+
 void rightButtonWheelItem(QQuickWindow *window, QQuickItem *item, int angleDeltaY)
 {
     const QPoint point = itemCenter(item);
@@ -335,6 +349,8 @@ void closePopup(QObject *popup)
     popup->setProperty("visible", false);
     QCoreApplication::processEvents();
 }
+
+bool zoomApproximatelyEqual(double left, double right) { return std::abs(left - right) < 0.001; }
 }
 
 void TestMainWindowToolBar::initTestCase()
@@ -723,6 +739,40 @@ void TestMainWindowToolBar::viewerRightClickOpensContextMenuOnlyFromMediaViewpor
     QTRY_COMPARE(fixture.window->visibility(), QWindow::FullScreen);
     clickItem(fixture.window, mediaViewportSlot, Qt::RightButton);
     QTRY_VERIFY(popupOpen(contextMenu));
+}
+
+void TestMainWindowToolBar::toolbarZoomWheelAppliesFineManualStep()
+{
+    QString imageSourcePath;
+    QString videoSourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> mediaDirectory
+        = createMediaDirectory(&imageSourcePath, &videoSourcePath, &errorString);
+    QVERIFY2(mediaDirectory != nullptr, qPrintable(errorString));
+
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    openSourceUrl(fixture, imageSourcePath);
+
+    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    QVERIFY(documentSession != nullptr);
+    KiriImageDocument *imageDocument = documentSession->imageDocument();
+    QVERIFY(imageDocument != nullptr);
+    QTRY_COMPARE(imageDocument->status(), KiriImageDocument::Status::Ready);
+
+    QQuickItem *zoomSpinBox = findQuickItem(fixture.window, QStringLiteral("zoomSpinBox"));
+    QVERIFY(zoomSpinBox != nullptr);
+    QTRY_VERIFY(zoomSpinBox->isEnabled());
+
+    imageDocument->setZoomPercent(100.0);
+    QTRY_VERIFY(zoomApproximatelyEqual(imageDocument->zoomPercent(), 100.0));
+    const double zoomedInPercent = imageDocument->steppedManualZoomPercent(0.5);
+
+    wheelItem(fixture.window, zoomSpinBox, 120);
+    QTRY_VERIFY(zoomApproximatelyEqual(imageDocument->zoomPercent(), zoomedInPercent));
+
+    wheelItem(fixture.window, zoomSpinBox, -120);
+    QTRY_VERIFY(zoomApproximatelyEqual(imageDocument->zoomPercent(), 100.0));
 }
 
 void TestMainWindowToolBar::rightButtonWheelSuppressesContextMenuTap()
