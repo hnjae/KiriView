@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIME_H
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIME_H
 
-#include "filedeletion.h"
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentstate.h"
 #include "imagedocumenttypes.h"
@@ -13,6 +12,7 @@
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
+#include "system/filedeletion.h"
 
 #include <QPointF>
 #include <QRectF>

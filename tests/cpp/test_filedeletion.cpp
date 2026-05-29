@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "document/filedeletion.h"
+#include "system/filedeletion.h"
 
 #include <QObject>
 #include <QTest>
@@ -18,7 +18,8 @@ void TestFileDeletion::completionActionRoutesDeletionResults()
 {
     QCOMPARE(static_cast<int>(
                  KiriView::fileDeletionCompletionAction(KiriView::FileDeletionResult::Succeeded)),
-        static_cast<int>(KiriView::FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback));
+        static_cast<int>(
+            KiriView::FileDeletionCompletionAction::ClearDeletedTargetAndOpenFallback));
     QCOMPARE(static_cast<int>(
                  KiriView::fileDeletionCompletionAction(KiriView::FileDeletionResult::Canceled)),
         static_cast<int>(KiriView::FileDeletionCompletionAction::Ignore));

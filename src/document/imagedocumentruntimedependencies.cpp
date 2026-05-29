@@ -52,8 +52,8 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     overrides.candidateProvider = imageDocumentPageNavigationCandidateProviderWithDefaults(
         std::move(overrides.candidateProvider));
     overrides.imageDecode = imageDecodeDependenciesWithDefaults(std::move(overrides.imageDecode));
-    overrides.fileOperations
-        = fileOperationProviderWithDefault(std::move(overrides.fileOperations));
+    overrides.fileDeletionProvider
+        = fileDeletionProviderWithDefault(std::move(overrides.fileDeletionProvider));
     overrides.powerSaver = powerSaverProviderWithDefault(std::move(overrides.powerSaver));
     const ImageCacheBudgets cacheBudgets
         = resolveImageDocumentCacheBudgets(overrides.cacheBudgetRequest);
@@ -71,7 +71,7 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     return ImageDocumentRuntimeDependencies {
         std::move(overrides.candidateProvider),
         std::move(overrides.imageDecode),
-        std::move(overrides.fileOperations),
+        std::move(overrides.fileDeletionProvider),
         std::move(overrides.powerSaver),
         cacheBudgets,
         std::move(mediaEntrySourceStore),

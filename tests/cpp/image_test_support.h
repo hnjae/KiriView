@@ -151,12 +151,12 @@ inline ImageDecodeDependencies imageDecodeDependenciesFor(
 
 inline ImageDocumentRuntimeDependencyOverrides imageDocumentRuntimeDependencyOverridesFor(
     FakeImageDocumentPageCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
-    ImageDataDecoder dataDecoder, FileOperationProvider fileOperations = {})
+    ImageDataDecoder dataDecoder, FileDeletionProvider fileDeletionProvider = {})
 {
     return ImageDocumentRuntimeDependencyOverrides {
         candidateProvider.provider(),
         imageDecodeDependenciesFor(dataLoader, std::move(dataDecoder)),
-        std::move(fileOperations),
+        std::move(fileDeletionProvider),
     };
 }
 

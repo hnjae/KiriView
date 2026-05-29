@@ -6,10 +6,10 @@
 
 #include "async/imageasyncoperationstate.h"
 #include "async/imageiojob.h"
-#include "document/filedeletion.h"
 #include "navigation/directmedianavigationmodel.h"
 #include "session/documentsessionmediadeletionplan.h"
 #include "session/documentsessiontypes.h"
+#include "system/filedeletion.h"
 
 #include <QString>
 #include <QUrl>
@@ -29,7 +29,7 @@ class DocumentSessionMediaDeletionRuntime final
 public:
     using CompletionCallback = std::function<void(DocumentSessionMediaDeletionCompletion)>;
 
-    explicit DocumentSessionMediaDeletionRuntime(FileOperationProvider fileOperationProvider = {});
+    explicit DocumentSessionMediaDeletionRuntime(FileDeletionProvider fileDeletionProvider = {});
     ~DocumentSessionMediaDeletionRuntime();
 
     DocumentSessionMediaDeletionStartPlan start(QObject *receiver, FileDeletionMode mode,
@@ -43,7 +43,7 @@ private:
         const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan, FileDeletionResult result,
         const QString &errorString, const CompletionCallback &callback);
 
-    FileOperationProvider m_fileOperationProvider;
+    FileDeletionProvider m_fileDeletionProvider;
     ImageIoJob m_job;
     ImageAsyncOperationState m_operation;
 };

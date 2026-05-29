@@ -20,13 +20,13 @@ QString genericFileDeletionErrorMessage()
 namespace KiriView {
 ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent,
     ImageDocumentState &state, ImagePresentationController &presentationController,
-    ImageDocumentPageCandidateProvider candidateProvider,
-    FileOperationProvider fileOperationProvider, Callbacks callbacks)
+    ImageDocumentPageCandidateProvider candidateProvider, FileDeletionProvider fileDeletionProvider,
+    Callbacks callbacks)
     : m_parent(parent)
     , m_state(state)
     , m_presentationController(presentationController)
     , m_callbacks(std::move(callbacks))
-    , m_fileOperationProvider(fileOperationProviderWithDefault(std::move(fileOperationProvider)))
+    , m_fileDeletionProvider(fileDeletionProviderWithDefault(std::move(fileDeletionProvider)))
     , m_deletionState()
     , m_fallbackController(m_parent, std::move(candidateProvider),
           [this](ImageDocumentRuntimePlan plan) { reportRuntimePlan(std::move(plan)); })
@@ -54,7 +54,7 @@ void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
     const ImageDocumentDeletionFileOperationStart operation = m_deletionState.startFileDeletion();
     notifyInProgressChangedIf(operation.inProgressChanged);
     m_fileDeletionJob
-        = m_fileOperationProvider(m_parent, FileDeletionRequest { removalPlan.targetUrl, mode },
+        = m_fileDeletionProvider(m_parent, FileDeletionRequest { removalPlan.targetUrl, mode },
             [this, operationId = operation.operationId, fallbackPlan = removalPlan.fallbackPlan](
                 FileDeletionResult result, const QString &errorString) {
                 finishFileDeletion(operationId, fallbackPlan, result, errorString);
@@ -74,7 +74,7 @@ void ImageDocumentDeletionController::finishFileDeletion(quint64 operationId,
     notifyInProgressChangedIf(operation.inProgressChanged);
 
     switch (fileDeletionCompletionAction(result)) {
-    case FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback:
+    case FileDeletionCompletionAction::ClearDeletedTargetAndOpenFallback:
         reportRuntimePlan(imageDocumentClearDeletedImagePlan());
         m_fallbackController.open(fallbackPlan);
         return;

@@ -4,12 +4,12 @@
 #ifndef KIRIVIEW_DOCUMENTSESSIONDOCUMENTPORTS_H
 #define KIRIVIEW_DOCUMENTSESSIONDOCUMENTPORTS_H
 
-#include "document/filedeletion.h"
 #include "location/imagelocation.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
 #include "rendering/staticimage.h"
 #include "session/activenavigationprojection.h"
+#include "system/filedeletion.h"
 
 #include <QMetaObject>
 #include <QSize>

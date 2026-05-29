@@ -4,10 +4,10 @@
 #include "facade/kiriimagedocument.h"
 
 #include "decoding/imageformatregistry.h"
-#include "document/filedeletion.h"
 #include "document/imagedocumentruntime.h"
 #include "facade/imagedocumentpublicsignals.h"
 #include "location/imagelocation.h"
+#include "system/filedeletion.h"
 
 #include <memory>
 #include <utility>

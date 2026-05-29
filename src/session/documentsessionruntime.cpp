@@ -83,7 +83,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_state(std::move(changeCallback))
     , m_activeNavigationThumbnailModel(std::make_unique<ActiveNavigationThumbnailModel>(owner))
     , m_directMediaNavigationRuntime(std::move(dependencies.directMediaNavigationCandidateProvider))
-    , m_mediaDeletionRuntime(std::move(dependencies.fileOperationProvider))
+    , m_mediaDeletionRuntime(std::move(dependencies.fileDeletionProvider))
     , m_mediaOpenWithProvider(
           mediaOpenWithProviderWithDefault(std::move(dependencies.mediaOpenWithProvider)))
     , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,

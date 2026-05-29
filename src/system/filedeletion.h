@@ -25,7 +25,7 @@ enum class FileDeletionResult {
 };
 
 enum class FileDeletionCompletionAction {
-    ClearDeletedImageAndOpenFallback,
+    ClearDeletedTargetAndOpenFallback,
     Ignore,
     ReportFailure,
 };
@@ -36,12 +36,12 @@ struct FileDeletionRequest {
 };
 
 using FileDeletionCallback = std::function<void(FileDeletionResult, const QString &)>;
-using FileOperationProvider
+using FileDeletionProvider
     = std::function<ImageIoJob(QObject *, FileDeletionRequest, FileDeletionCallback)>;
 
 FileDeletionCompletionAction fileDeletionCompletionAction(FileDeletionResult result);
-FileOperationProvider defaultFileOperationProvider();
-FileOperationProvider fileOperationProviderWithDefault(FileOperationProvider provider);
+FileDeletionProvider defaultFileDeletionProvider();
+FileDeletionProvider fileDeletionProviderWithDefault(FileDeletionProvider provider);
 }
 
 #endif

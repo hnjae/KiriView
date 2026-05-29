@@ -6,7 +6,7 @@
 
 #include "async/imageiojob.h"
 #include "decoding/imagedecodedependencies.h"
-#include "document/filedeletion.h"
+#include "system/filedeletion.h"
 #include "system/powersaverprovider.h"
 
 #include <QByteArray>
@@ -225,7 +225,7 @@ inline PowerSaverProvider powerSaverProviderFor(
     };
 }
 
-struct ManualFileOperation {
+struct ManualFileDeletionOperation {
     QObject *object = nullptr;
     FileDeletionRequest request;
     FileDeletionCallback callback;
@@ -233,12 +233,12 @@ struct ManualFileOperation {
     bool canceled = false;
 };
 
-class ManualFileOperationProvider
+class ManualFileDeletionProvider
 {
 public:
     ImageIoJob start(QObject *receiver, FileDeletionRequest request, FileDeletionCallback callback)
     {
-        auto operation = std::make_shared<ManualFileOperation>();
+        auto operation = std::make_shared<ManualFileDeletionOperation>();
         operation->request = std::move(request);
         operation->callback = std::move(callback);
 
@@ -249,13 +249,13 @@ public:
 
     std::size_t operationCount() const { return m_operations.size(); }
 
-    ManualFileOperation &backOperation() { return *m_operations.back(); }
+    ManualFileDeletionOperation &backOperation() { return *m_operations.back(); }
 
-    const ManualFileOperation &backOperation() const { return *m_operations.back(); }
+    const ManualFileDeletionOperation &backOperation() const { return *m_operations.back(); }
 
-    ManualFileOperation &operationAt(std::size_t index) { return *m_operations.at(index); }
+    ManualFileDeletionOperation &operationAt(std::size_t index) { return *m_operations.at(index); }
 
-    const ManualFileOperation &operationAt(std::size_t index) const
+    const ManualFileDeletionOperation &operationAt(std::size_t index) const
     {
         return *m_operations.at(index);
     }
@@ -274,23 +274,23 @@ public:
     }
 
 private:
-    static void finishOperation(const std::shared_ptr<ManualFileOperation> &operation,
+    static void finishOperation(const std::shared_ptr<ManualFileDeletionOperation> &operation,
         FileDeletionResult result, const QString &errorString)
     {
-        Detail::finishManualIoJob(operation, [&](ManualFileOperation &operation) {
+        Detail::finishManualIoJob(operation, [&](ManualFileDeletionOperation &operation) {
             if (operation.callback) {
                 operation.callback(result, errorString);
             }
         });
     }
 
-    std::vector<std::shared_ptr<ManualFileOperation>> m_operations;
+    std::vector<std::shared_ptr<ManualFileDeletionOperation>> m_operations;
 };
 
-class ManualFileOperationProviderAdapter
+class ManualFileDeletionProviderAdapter
 {
 public:
-    explicit ManualFileOperationProviderAdapter(ManualFileOperationProvider &provider)
+    explicit ManualFileDeletionProviderAdapter(ManualFileDeletionProvider &provider)
         : m_provider(&provider)
     {
     }
@@ -302,12 +302,12 @@ public:
     }
 
 private:
-    ManualFileOperationProvider *m_provider = nullptr;
+    ManualFileDeletionProvider *m_provider = nullptr;
 };
 
-inline FileOperationProvider fileOperationProviderFor(ManualFileOperationProvider &provider)
+inline FileDeletionProvider fileDeletionProviderFor(ManualFileDeletionProvider &provider)
 {
-    return ManualFileOperationProviderAdapter(provider);
+    return ManualFileDeletionProviderAdapter(provider);
 }
 }
 

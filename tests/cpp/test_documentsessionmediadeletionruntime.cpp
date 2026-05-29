@@ -44,9 +44,9 @@ const Operation *operationAt(
 
 struct RuntimeFixture {
     QObject receiver;
-    KiriView::TestSupport::ManualFileOperationProvider fileOperations;
+    KiriView::TestSupport::ManualFileDeletionProvider fileDeletionProvider;
     KiriView::DocumentSessionMediaDeletionRuntime runtime {
-        KiriView::TestSupport::fileOperationProviderFor(fileOperations)
+        KiriView::TestSupport::fileDeletionProviderFor(fileDeletionProvider)
     };
     int completionCount = 0;
     KiriView::DocumentSessionMediaDeletionCompletion completion;
@@ -72,7 +72,7 @@ void TestDocumentSessionMediaDeletionRuntime::emptyTargetDoesNotStartFileOperati
         KiriView::FileDeletionMode::MoveToTrash, {}, QUrl(), KiriView::DocumentSessionKind::Video);
 
     QVERIFY(!plan.shouldStartDeletion);
-    QCOMPARE(fixture.fileOperations.operationCount(), std::size_t(0));
+    QCOMPARE(fixture.fileDeletionProvider.operationCount(), std::size_t(0));
     QVERIFY(!fixture.runtime.active());
     QCOMPARE(fixture.completionCount, 0);
 }
@@ -91,14 +91,14 @@ void TestDocumentSessionMediaDeletionRuntime::startRunsFileOperationAndPublishes
         currentUrl);
 
     QVERIFY(startPlan.shouldStartDeletion);
-    QCOMPARE(fixture.fileOperations.operationCount(), std::size_t(1));
-    QCOMPARE(fixture.fileOperations.backOperation().request.targetUrl, currentUrl);
-    QCOMPARE(fixture.fileOperations.backOperation().request.mode,
+    QCOMPARE(fixture.fileDeletionProvider.operationCount(), std::size_t(1));
+    QCOMPARE(fixture.fileDeletionProvider.backOperation().request.targetUrl, currentUrl);
+    QCOMPARE(fixture.fileDeletionProvider.backOperation().request.mode,
         KiriView::FileDeletionMode::DeletePermanently);
     QVERIFY(fixture.runtime.active());
     QCOMPARE(startPlan.fallbackPlan.preferredFallbackUrl.value(), nextUrl);
 
-    fixture.fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    fixture.fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
 
     QCOMPARE(fixture.completionCount, 1);
     QVERIFY(!fixture.runtime.active());
@@ -119,10 +119,10 @@ void TestDocumentSessionMediaDeletionRuntime::cancelRejectsLateCompletion()
     fixture.start(KiriView::FileDeletionMode::MoveToTrash,
         { directMediaNavigationCandidate(currentUrl) }, currentUrl);
     fixture.runtime.cancel();
-    QVERIFY(fixture.fileOperations.backOperation().canceled);
+    QVERIFY(fixture.fileDeletionProvider.backOperation().canceled);
     QVERIFY(!fixture.runtime.active());
 
-    fixture.fileOperations.deliverOperationAtIgnoringCancellation(
+    fixture.fileDeletionProvider.deliverOperationAtIgnoringCancellation(
         0, KiriView::FileDeletionResult::Succeeded);
 
     QCOMPARE(fixture.completionCount, 0);
@@ -145,14 +145,14 @@ void TestDocumentSessionMediaDeletionRuntime::replacementStartRejectsStaleComple
             directMediaNavigationCandidate(secondFallbackUrl) },
         secondUrl);
 
-    QCOMPARE(fixture.fileOperations.operationCount(), std::size_t(2));
-    QVERIFY(fixture.fileOperations.operationAt(0).canceled);
+    QCOMPARE(fixture.fileDeletionProvider.operationCount(), std::size_t(2));
+    QVERIFY(fixture.fileDeletionProvider.operationAt(0).canceled);
 
-    fixture.fileOperations.deliverOperationAtIgnoringCancellation(
+    fixture.fileDeletionProvider.deliverOperationAtIgnoringCancellation(
         0, KiriView::FileDeletionResult::Succeeded);
     QCOMPARE(fixture.completionCount, 0);
 
-    fixture.fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    fixture.fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
     QCOMPARE(fixture.completionCount, 1);
     QCOMPARE(fixture.completion.plan.routePlan.sourceUrl, secondFallbackUrl);
 }
@@ -165,7 +165,7 @@ void TestDocumentSessionMediaDeletionRuntime::failedCompletionReportsFailureWith
     fixture.start(KiriView::FileDeletionMode::MoveToTrash,
         { directMediaNavigationCandidate(currentUrl) }, currentUrl,
         KiriView::DocumentSessionKind::Image);
-    fixture.fileOperations.finishBackOperation(
+    fixture.fileDeletionProvider.finishBackOperation(
         KiriView::FileDeletionResult::Failed, QStringLiteral("delete failed"));
 
     QCOMPARE(fixture.completionCount, 1);

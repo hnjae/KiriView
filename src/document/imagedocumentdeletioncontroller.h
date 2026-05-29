@@ -5,12 +5,12 @@
 #define KIRIVIEW_IMAGEDOCUMENTDELETIONCONTROLLER_H
 
 #include "async/imageiojob.h"
-#include "filedeletion.h"
 #include "imagedocumentdeletionfallbackcontroller.h"
 #include "imagedocumentdeletionstate.h"
 #include "imagedocumentruntimeplan.h"
 #include "imageremovalfallback.h"
 #include "navigation/imagedocumentpagecandidaterepository.h"
+#include "system/filedeletion.h"
 
 #include <QString>
 #include <QtGlobal>
@@ -38,7 +38,7 @@ public:
     ImageDocumentDeletionController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController,
         ImageDocumentPageCandidateProvider candidateProvider,
-        FileOperationProvider fileOperationProvider, Callbacks callbacks);
+        FileDeletionProvider fileDeletionProvider, Callbacks callbacks);
     ~ImageDocumentDeletionController();
 
     bool inProgress() const;
@@ -57,7 +57,7 @@ private:
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
     Callbacks m_callbacks;
-    FileOperationProvider m_fileOperationProvider;
+    FileDeletionProvider m_fileDeletionProvider;
     ImageIoJob m_fileDeletionJob;
     ImageDocumentDeletionState m_deletionState;
     ImageDocumentDeletionFallbackController m_fallbackController;

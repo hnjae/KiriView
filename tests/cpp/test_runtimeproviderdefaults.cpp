@@ -3,8 +3,8 @@
 
 #include "async/imageiojob.h"
 #include "decoding/imagedecodedependencies.h"
-#include "document/filedeletion.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
+#include "system/filedeletion.h"
 #include "system/powersaverprovider.h"
 
 #include <QByteArray>
@@ -21,7 +21,7 @@ class TestRuntimeProviderDefaults : public QObject
 private Q_SLOTS:
     void candidateProviderDefaultsFillMissingLoadersAndPreserveOverrides();
     void decodeDependencyDefaultsFillMissingFunctionsAndPreserveOverrides();
-    void fileOperationDefaultFillsMissingProviderAndPreservesOverride();
+    void fileDeletionDefaultFillsMissingProviderAndPreservesOverride();
     void powerSaverDefaultFillsMissingProviderAndPreservesOverride();
 };
 
@@ -77,23 +77,23 @@ void TestRuntimeProviderDefaults::decodeDependencyDefaultsFillMissingFunctionsAn
     QCOMPARE(dataLoadCount, 1);
 }
 
-void TestRuntimeProviderDefaults::fileOperationDefaultFillsMissingProviderAndPreservesOverride()
+void TestRuntimeProviderDefaults::fileDeletionDefaultFillsMissingProviderAndPreservesOverride()
 {
-    int fileOperationCount = 0;
-    KiriView::FileOperationProvider fileOperations
-        = [&fileOperationCount](
+    int fileDeletionCount = 0;
+    KiriView::FileDeletionProvider fileDeletionProvider
+        = [&fileDeletionCount](
               QObject *, KiriView::FileDeletionRequest, KiriView::FileDeletionCallback) {
-              ++fileOperationCount;
+              ++fileDeletionCount;
               return KiriView::ImageIoJob();
           };
 
-    KiriView::FileOperationProvider resolved
-        = KiriView::fileOperationProviderWithDefault(std::move(fileOperations));
+    KiriView::FileDeletionProvider resolved
+        = KiriView::fileDeletionProviderWithDefault(std::move(fileDeletionProvider));
     QVERIFY(resolved);
     resolved(nullptr, KiriView::FileDeletionRequest(), {});
-    QCOMPARE(fileOperationCount, 1);
+    QCOMPARE(fileDeletionCount, 1);
 
-    QVERIFY(KiriView::fileOperationProviderWithDefault({}));
+    QVERIFY(KiriView::fileDeletionProviderWithDefault({}));
 }
 
 void TestRuntimeProviderDefaults::powerSaverDefaultFillsMissingProviderAndPreservesOverride()

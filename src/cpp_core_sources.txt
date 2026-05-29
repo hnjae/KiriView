@@ -35,7 +35,6 @@ src/bridge/imagezoomstateconversion.cpp
 src/bridge/predecodepolicyconversion.cpp
 src/bridge/videodocumentpolicyconversion.cpp
 src/rendering/displayedimagesurfacestate.cpp
-src/document/filedeletion.cpp
 src/session/mediaopenwith.cpp
 src/document/imageremovalfallback.cpp
 src/rendering/imagerendernodestate.cpp
@@ -160,6 +159,7 @@ src/presentation/imagezoomstate.cpp
 src/presentation/imagezoomworkflowstate.cpp
 src/application/applicationshortcutpolicy.cpp
 src/application/kiriviewapplicationactions.cpp
+src/system/filedeletion.cpp
 src/system/powerprofilemonitorstate.cpp
 src/system/powerprofileportalevents.cpp
 src/system/powerprofilemonitor.cpp

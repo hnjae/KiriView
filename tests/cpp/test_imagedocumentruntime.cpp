@@ -22,11 +22,11 @@
 namespace {
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::comicBookContainerCandidate;
-using KiriView::TestSupport::fileOperationProviderFor;
+using KiriView::TestSupport::fileDeletionProviderFor;
 using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::imageDocumentRuntimeDependencyOverridesFor;
 using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::ManualFileOperationProvider;
+using KiriView::TestSupport::ManualFileDeletionProvider;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
@@ -125,7 +125,7 @@ RuntimeHandle createRuntime(QObject *parent, FakeCandidateProvider &candidatePro
     ManualImageDataLoader &dataLoader,
     KiriView::ImageDataDecoder dataDecoder = staticImageDataDecoder(testImage(2)),
     int maximumTextureSize = KiriView::fallbackTextureSizeMax, qreal devicePixelRatio = 1.0,
-    KiriView::FileOperationProvider fileOperations = {},
+    KiriView::FileDeletionProvider fileDeletionProvider = {},
     KiriView::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
 {
     return RuntimeHandle(
@@ -138,7 +138,7 @@ RuntimeHandle createRuntime(QObject *parent, FakeCandidateProvider &candidatePro
         },
         KiriView::ImageDocumentRuntime::ChangeCallback {},
         imageDocumentRuntimeDependencyOverridesFor(
-            candidateProvider, dataLoader, std::move(dataDecoder), std::move(fileOperations)),
+            candidateProvider, dataLoader, std::move(dataDecoder), std::move(fileDeletionProvider)),
         std::move(fileDeletionFailedCallback));
 }
 
@@ -1245,15 +1245,15 @@ void TestImageDocumentRuntime::deletingWithoutDisplayedImageDoesNotStartFileOper
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    ManualFileOperationProvider fileOperations;
+    ManualFileDeletionProvider fileDeletionProvider;
 
     RuntimeHandle runtime
         = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-            KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
+            KiriView::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
 
     runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
 
-    QCOMPARE(fileOperations.operationCount(), std::size_t(0));
+    QCOMPARE(fileDeletionProvider.operationCount(), std::size_t(0));
     QVERIFY(!runtime->fileDeletionInProgress());
 }
 
@@ -1261,7 +1261,7 @@ void TestImageDocumentRuntime::fileDeletionFailureKeepsDisplayedImageAndReportsE
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    ManualFileOperationProvider fileOperations;
+    ManualFileDeletionProvider fileDeletionProvider;
     std::vector<QString> deletionErrors;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
@@ -1271,7 +1271,7 @@ void TestImageDocumentRuntime::fileDeletionFailureKeepsDisplayedImageAndReportsE
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
         staticImageDataDecoder(testImage(2)), KiriView::fallbackTextureSizeMax, 1.0,
-        fileOperationProviderFor(fileOperations),
+        fileDeletionProviderFor(fileDeletionProvider),
         [&deletionErrors](const QString &errorString) { deletionErrors.push_back(errorString); });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
@@ -1280,12 +1280,13 @@ void TestImageDocumentRuntime::fileDeletionFailureKeepsDisplayedImageAndReportsE
 
     runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
 
-    QCOMPARE(fileOperations.operationCount(), std::size_t(1));
-    QCOMPARE(fileOperations.backOperation().request.targetUrl, imageUrl);
-    QCOMPARE(fileOperations.backOperation().request.mode, KiriView::FileDeletionMode::MoveToTrash);
+    QCOMPARE(fileDeletionProvider.operationCount(), std::size_t(1));
+    QCOMPARE(fileDeletionProvider.backOperation().request.targetUrl, imageUrl);
+    QCOMPARE(
+        fileDeletionProvider.backOperation().request.mode, KiriView::FileDeletionMode::MoveToTrash);
     QVERIFY(runtime->fileDeletionInProgress());
 
-    fileOperations.finishBackOperation(
+    fileDeletionProvider.finishBackOperation(
         KiriView::FileDeletionResult::Failed, QStringLiteral("permission denied"));
 
     QVERIFY(!runtime->fileDeletionInProgress());
@@ -1301,7 +1302,7 @@ void TestImageDocumentRuntime::fileDeletionCancelKeepsDisplayedImageWithoutError
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    ManualFileOperationProvider fileOperations;
+    ManualFileDeletionProvider fileDeletionProvider;
     std::vector<QString> deletionErrors;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
@@ -1311,7 +1312,7 @@ void TestImageDocumentRuntime::fileDeletionCancelKeepsDisplayedImageWithoutError
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
         staticImageDataDecoder(testImage(2)), KiriView::fallbackTextureSizeMax, 1.0,
-        fileOperationProviderFor(fileOperations),
+        fileDeletionProviderFor(fileDeletionProvider),
         [&deletionErrors](const QString &errorString) { deletionErrors.push_back(errorString); });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
@@ -1320,12 +1321,12 @@ void TestImageDocumentRuntime::fileDeletionCancelKeepsDisplayedImageWithoutError
 
     runtime->deleteDisplayedFile(KiriView::FileDeletionMode::DeletePermanently);
 
-    QCOMPARE(fileOperations.operationCount(), std::size_t(1));
-    QCOMPARE(fileOperations.backOperation().request.targetUrl, imageUrl);
-    QCOMPARE(
-        fileOperations.backOperation().request.mode, KiriView::FileDeletionMode::DeletePermanently);
+    QCOMPARE(fileDeletionProvider.operationCount(), std::size_t(1));
+    QCOMPARE(fileDeletionProvider.backOperation().request.targetUrl, imageUrl);
+    QCOMPARE(fileDeletionProvider.backOperation().request.mode,
+        KiriView::FileDeletionMode::DeletePermanently);
 
-    fileOperations.finishBackOperation(KiriView::FileDeletionResult::Canceled);
+    fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Canceled);
 
     QVERIFY(!runtime->fileDeletionInProgress());
     QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
@@ -1339,7 +1340,7 @@ void TestImageDocumentRuntime::successfulFileDeletionOpensNextImageFallback()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    ManualFileOperationProvider fileOperations;
+    ManualFileDeletionProvider fileDeletionProvider;
     const QUrl previousUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl currentUrl = localUrl(QStringLiteral("/images/02.png"));
     const QUrl nextUrl = localUrl(QStringLiteral("/images/03.png"));
@@ -1351,14 +1352,14 @@ void TestImageDocumentRuntime::successfulFileDeletionOpensNextImageFallback()
 
     RuntimeHandle runtime
         = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-            KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
+            KiriView::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(currentUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
     runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
-    fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
 
     QCOMPARE(runtime->sourceUrl(), nextUrl);
     QCOMPARE(runtime->displayedUrl(), QUrl());
@@ -1373,7 +1374,7 @@ void TestImageDocumentRuntime::successfulFileDeletionOpensPreviousImageFallback(
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    ManualFileOperationProvider fileOperations;
+    ManualFileDeletionProvider fileDeletionProvider;
     const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl previousUrl = localUrl(QStringLiteral("/images/02.png"));
     const QUrl currentUrl = localUrl(QStringLiteral("/images/03.png"));
@@ -1385,14 +1386,14 @@ void TestImageDocumentRuntime::successfulFileDeletionOpensPreviousImageFallback(
 
     RuntimeHandle runtime
         = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-            KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
+            KiriView::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(currentUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
     runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
-    fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
 
     QCOMPARE(runtime->sourceUrl(), previousUrl);
     QCOMPARE(dataLoader.backLoad().url, previousUrl);
@@ -1406,20 +1407,20 @@ void TestImageDocumentRuntime::successfulFileDeletionWithoutFallbackClearsDocume
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    ManualFileOperationProvider fileOperations;
+    ManualFileDeletionProvider fileDeletionProvider;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")), {});
 
     RuntimeHandle runtime
         = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-            KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
+            KiriView::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
     runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
-    fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
 
     QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Null);
     QCOMPARE(runtime->sourceUrl(), QUrl());
@@ -1432,7 +1433,7 @@ void TestImageDocumentRuntime::successfulComicBookDeletionOpensNextSiblingArchiv
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    ManualFileOperationProvider fileOperations;
+    ManualFileDeletionProvider fileDeletionProvider;
     const QUrl currentArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl nextArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> currentArchiveCollection
@@ -1460,7 +1461,7 @@ void TestImageDocumentRuntime::successfulComicBookDeletionOpensNextSiblingArchiv
 
     RuntimeHandle runtime
         = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-            KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
+            KiriView::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(currentArchiveUrl);
     finishLoad(dataLoader);
@@ -1468,9 +1469,9 @@ void TestImageDocumentRuntime::successfulComicBookDeletionOpensNextSiblingArchiv
 
     runtime->deleteDisplayedFile(KiriView::FileDeletionMode::DeletePermanently);
 
-    QCOMPARE(fileOperations.operationCount(), std::size_t(1));
-    QCOMPARE(fileOperations.backOperation().request.targetUrl, currentArchiveUrl);
-    fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    QCOMPARE(fileDeletionProvider.operationCount(), std::size_t(1));
+    QCOMPARE(fileDeletionProvider.backOperation().request.targetUrl, currentArchiveUrl);
+    fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
 
     QCOMPARE(runtime->sourceUrl(), nextImageUrl);
     QCOMPARE(dataLoader.backLoad().url, nextImageUrl);

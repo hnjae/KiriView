@@ -115,7 +115,7 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
     KiriView::ImageDocumentState state;
     KiriView::ImagePresentationController presentation(
         &parent, []() { return KiriView::ImageDocumentRenderContext {}; }, {}, testCacheBudgets());
-    KiriView::TestSupport::ManualFileOperationProvider fileOperations;
+    KiriView::TestSupport::ManualFileDeletionProvider fileDeletionProvider;
     ManualDeletionCandidateProvider candidateProvider;
     std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
     std::vector<QString> failures;
@@ -126,7 +126,7 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
 
     KiriView::ImageDocumentDeletionController controller(&parent, state, presentation,
         candidateProvider.provider(),
-        KiriView::TestSupport::fileOperationProviderFor(fileOperations),
+        KiriView::TestSupport::fileDeletionProviderFor(fileDeletionProvider),
         KiriView::ImageDocumentDeletionController::Callbacks {
             [&inProgressChangeCount]() { ++inProgressChangeCount; },
             [&runtimePlans](KiriView::ImageDocumentRuntimePlan plan) {
@@ -136,14 +136,15 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
         });
 
     controller.deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
-    QCOMPARE(fileOperations.operationCount(), std::size_t(1));
+    QCOMPARE(fileDeletionProvider.operationCount(), std::size_t(1));
     QVERIFY(controller.inProgress());
 
     controller.cancel();
     QVERIFY(!controller.inProgress());
-    QVERIFY(fileOperations.backOperation().canceled);
+    QVERIFY(fileDeletionProvider.backOperation().canceled);
 
-    fileOperations.backOperation().callback(KiriView::FileDeletionResult::Succeeded, QString());
+    fileDeletionProvider.backOperation().callback(
+        KiriView::FileDeletionResult::Succeeded, QString());
 
     QVERIFY(runtimePlans.empty());
     QVERIFY(failures.empty());
@@ -156,7 +157,7 @@ void TestImageDocumentDeletionController::canceledFallbackCandidateCompletionIsI
     KiriView::ImageDocumentState state;
     KiriView::ImagePresentationController presentation(
         &parent, []() { return KiriView::ImageDocumentRenderContext {}; }, {}, testCacheBudgets());
-    KiriView::TestSupport::ManualFileOperationProvider fileOperations;
+    KiriView::TestSupport::ManualFileDeletionProvider fileDeletionProvider;
     ManualDeletionCandidateProvider candidateProvider;
     std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
     std::vector<QString> failures;
@@ -167,7 +168,7 @@ void TestImageDocumentDeletionController::canceledFallbackCandidateCompletionIsI
 
     KiriView::ImageDocumentDeletionController controller(&parent, state, presentation,
         candidateProvider.provider(),
-        KiriView::TestSupport::fileOperationProviderFor(fileOperations),
+        KiriView::TestSupport::fileDeletionProviderFor(fileDeletionProvider),
         KiriView::ImageDocumentDeletionController::Callbacks {
             {},
             [&runtimePlans](KiriView::ImageDocumentRuntimePlan plan) {
@@ -177,7 +178,7 @@ void TestImageDocumentDeletionController::canceledFallbackCandidateCompletionIsI
         });
 
     controller.deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
-    fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
     QCOMPARE(candidateProvider.imageLoadCount(), std::size_t(1));
     QCOMPARE(runtimePlans.size(), std::size_t(1));
     QVERIFY(

@@ -10,8 +10,8 @@
 
 namespace KiriView {
 DocumentSessionMediaDeletionRuntime::DocumentSessionMediaDeletionRuntime(
-    FileOperationProvider fileOperationProvider)
-    : m_fileOperationProvider(fileOperationProviderWithDefault(std::move(fileOperationProvider)))
+    FileDeletionProvider fileDeletionProvider)
+    : m_fileDeletionProvider(fileDeletionProviderWithDefault(std::move(fileDeletionProvider)))
 {
 }
 
@@ -30,7 +30,7 @@ DocumentSessionMediaDeletionStartPlan DocumentSessionMediaDeletionRuntime::start
     m_job.cancel();
     const quint64 operationId = m_operation.start();
     auto sharedCallback = std::make_shared<CompletionCallback>(std::move(callback));
-    m_job = m_fileOperationProvider(receiver, plan.request,
+    m_job = m_fileDeletionProvider(receiver, plan.request,
         [this, operationId, documentKind, fallbackPlan = plan.fallbackPlan, sharedCallback](
             FileDeletionResult result, const QString &errorString) {
             finish(operationId, documentKind, fallbackPlan, result, errorString, *sharedCallback);

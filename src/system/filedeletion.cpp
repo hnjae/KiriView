@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "filedeletion.h"
+#include "system/filedeletion.h"
 
 #include "async/imagecallback.h"
 
@@ -84,7 +84,7 @@ FileDeletionCompletionAction fileDeletionCompletionAction(FileDeletionResult res
 {
     switch (result) {
     case FileDeletionResult::Succeeded:
-        return FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback;
+        return FileDeletionCompletionAction::ClearDeletedTargetAndOpenFallback;
     case FileDeletionResult::Canceled:
         return FileDeletionCompletionAction::Ignore;
     case FileDeletionResult::Failed:
@@ -94,15 +94,15 @@ FileDeletionCompletionAction fileDeletionCompletionAction(FileDeletionResult res
     return FileDeletionCompletionAction::ReportFailure;
 }
 
-FileOperationProvider defaultFileOperationProvider()
+FileDeletionProvider defaultFileDeletionProvider()
 {
     return [](QObject *receiver, FileDeletionRequest request, FileDeletionCallback callback) {
         return startKioFileDeletion(receiver, std::move(request), std::move(callback));
     };
 }
 
-FileOperationProvider fileOperationProviderWithDefault(FileOperationProvider provider)
+FileDeletionProvider fileDeletionProviderWithDefault(FileDeletionProvider provider)
 {
-    return provider ? std::move(provider) : defaultFileOperationProvider();
+    return provider ? std::move(provider) : defaultFileDeletionProvider();
 }
 }

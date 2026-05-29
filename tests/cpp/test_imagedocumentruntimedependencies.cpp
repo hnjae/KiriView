@@ -53,7 +53,7 @@ void TestImageDocumentRuntimeDependencies::defaultDependenciesUseMediaEntrySourc
     QVERIFY(resolved.candidateProvider.directoryImageDocumentPageChanges);
     QVERIFY(resolved.imageDecode.dataLoader);
     QVERIFY(resolved.imageDecode.dataDecoder);
-    QVERIFY(resolved.fileOperations);
+    QVERIFY(resolved.fileDeletionProvider);
     QVERIFY(resolved.powerSaver.monitor);
     QVERIFY(resolved.cacheBudgets.predecodeCacheByteBudget > 0);
     QVERIFY(resolved.cacheBudgets.predecodeCacheByteBudget
@@ -128,7 +128,7 @@ void TestImageDocumentRuntimeDependencies::
 {
     int openedCollectionLoadCount = 0;
     int dataLoadCount = 0;
-    int fileOperationCount = 0;
+    int fileDeletionCount = 0;
     int powerSaverMonitorCount = 0;
 
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
@@ -146,11 +146,12 @@ void TestImageDocumentRuntimeDependencies::
               callback(QByteArrayLiteral("custom image data"));
               return KiriView::ImageIoJob();
           };
-    dependencies.fileOperations = [&fileOperationCount](QObject *, KiriView::FileDeletionRequest,
-                                      KiriView::FileDeletionCallback) {
-        ++fileOperationCount;
-        return KiriView::ImageIoJob();
-    };
+    dependencies.fileDeletionProvider
+        = [&fileDeletionCount](
+              QObject *, KiriView::FileDeletionRequest, KiriView::FileDeletionCallback) {
+              ++fileDeletionCount;
+              return KiriView::ImageIoJob();
+          };
     dependencies.powerSaver.monitor
         = [&powerSaverMonitorCount](QObject *, KiriView::PowerSaverChangedCallback) {
               ++powerSaverMonitorCount;
@@ -169,7 +170,7 @@ void TestImageDocumentRuntimeDependencies::
     QVERIFY(resolved.candidateProvider.directoryImageDocumentPageChanges);
     QVERIFY(resolved.imageDecode.dataLoader);
     QVERIFY(resolved.imageDecode.dataDecoder);
-    QVERIFY(resolved.fileOperations);
+    QVERIFY(resolved.fileDeletionProvider);
     QVERIFY(resolved.powerSaver.monitor);
     QCOMPARE(resolved.cacheBudgets.predecodeCacheByteBudget, qsizetype(4096));
     QCOMPARE(resolved.cacheBudgets.staticTileCacheByteBudget, qsizetype(8192));
@@ -182,7 +183,7 @@ void TestImageDocumentRuntimeDependencies::
         {});
     resolved.imageDecode.dataLoader(nullptr, KiriView::ImageDecodeRequest(),
         [&loadedData](QByteArray data) { loadedData = std::move(data); }, {});
-    resolved.fileOperations(nullptr, KiriView::FileDeletionRequest(), {});
+    resolved.fileDeletionProvider(nullptr, KiriView::FileDeletionRequest(), {});
     std::unique_ptr<KiriView::PowerSaverStateMonitor> monitor
         = resolved.powerSaver.monitor(nullptr, {});
 
@@ -190,7 +191,7 @@ void TestImageDocumentRuntimeDependencies::
     QVERIFY(candidatesReported);
     QCOMPARE(dataLoadCount, 1);
     QCOMPARE(loadedData, QByteArrayLiteral("custom image data"));
-    QCOMPARE(fileOperationCount, 1);
+    QCOMPARE(fileDeletionCount, 1);
     QCOMPARE(powerSaverMonitorCount, 1);
     QVERIFY(monitor);
     QVERIFY(monitor->powerSaverEnabled());

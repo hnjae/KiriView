@@ -67,7 +67,7 @@ DocumentSessionMediaDeletionCompletionPlan documentSessionMediaDeletionCompletio
     FileDeletionResult result)
 {
     switch (fileDeletionCompletionAction(result)) {
-    case FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback: {
+    case FileDeletionCompletionAction::ClearDeletedTargetAndOpenFallback: {
         return DocumentSessionMediaDeletionCompletionPlan {
             documentSessionRoutePlanAfterMediaDeletion(
                 currentKind, preferredMediaDeletionFallback(fallbackPlan)),

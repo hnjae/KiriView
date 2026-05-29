@@ -4,10 +4,10 @@
 #ifndef KIRIVIEW_DOCUMENTSESSIONMEDIADELETIONPLAN_H
 #define KIRIVIEW_DOCUMENTSESSIONMEDIADELETIONPLAN_H
 
-#include "document/filedeletion.h"
 #include "navigation/directmedianavigationmodel.h"
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessiontypes.h"
+#include "system/filedeletion.h"
 
 #include <QUrl>
 #include <optional>

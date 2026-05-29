@@ -54,7 +54,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         runtimeDependencies.cacheBudgets);
     m_deletionController = std::make_unique<ImageDocumentDeletionController>(documentObject, state,
         *m_presentationController, runtimeDependencies.candidateProvider,
-        std::move(runtimeDependencies.fileOperations),
+        std::move(runtimeDependencies.fileDeletionProvider),
         ImageDocumentDeletionController::Callbacks {
             [this]() {
                 invokeIfSet(m_callbacks.notify, ImageDocumentChange::FileDeletionInProgress);

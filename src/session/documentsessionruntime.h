@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_DOCUMENTSESSIONRUNTIME_H
 #define KIRIVIEW_DOCUMENTSESSIONRUNTIME_H
 
-#include "document/filedeletion.h"
 #include "navigation/directmedianavigationcandidateprovider.h"
 #include "navigation/directmedianavigationmodel.h"
 #include "predecode/mediapredecodedependencies.h"
@@ -17,6 +16,7 @@
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
 #include "session/mediaopenwith.h"
+#include "system/filedeletion.h"
 
 #include <QMetaObject>
 #include <QSize>
@@ -37,7 +37,7 @@ class MediaPredecodeCoordinator;
 
 struct DocumentSessionRuntimeDependencies {
     DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProvider;
-    FileOperationProvider fileOperationProvider;
+    FileDeletionProvider fileDeletionProvider;
     MediaOpenWithProvider mediaOpenWithProvider;
     MediaPredecodeDependencyOverrides directMediaPredecodeDependencies;
 };
