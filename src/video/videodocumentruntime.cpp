@@ -47,6 +47,7 @@ VideoMediaBackend *VideoDocumentRuntime::ensureMediaBackend()
     if (m_mediaBackend == nullptr) {
         m_mediaBackend = m_mediaBackendFactory(m_documentObject);
         installMediaBackendCallbacks();
+        m_mediaBackend->setMuted(m_state.muted());
         if (m_outputRuntime.videoOutput() != nullptr) {
             m_mediaBackend->setVideoOutput(m_outputRuntime.videoOutput());
         }
@@ -70,6 +71,7 @@ void VideoDocumentRuntime::installMediaBackendCallbacks()
         },
         [this]() { m_state.setHasAudio(m_mediaBackend->hasAudio()); },
         [this]() { m_state.setVideoSize(m_mediaBackend->videoSize()); },
+        [this]() { m_state.setMuted(m_mediaBackend->muted()); },
         {},
     });
 }
@@ -124,6 +126,16 @@ bool VideoDocumentRuntime::zoomPercentKnown() const { return m_state.zoomPercent
 
 int VideoDocumentRuntime::zoomPercent() const { return m_state.zoomPercent(); }
 
+bool VideoDocumentRuntime::muted() const { return m_state.muted(); }
+
+void VideoDocumentRuntime::setMuted(bool muted)
+{
+    m_state.setMuted(muted);
+    if (m_mediaBackend != nullptr) {
+        m_mediaBackend->setMuted(m_state.muted());
+    }
+}
+
 QObject *VideoDocumentRuntime::videoOutput() const { return m_outputRuntime.videoOutput(); }
 
 void VideoDocumentRuntime::setVideoOutput(QObject *videoOutput)
@@ -156,6 +168,8 @@ void VideoDocumentRuntime::togglePlayback()
 {
     executePlaybackControlPlan(videoPlaybackTogglePlan(playbackControlSnapshot()));
 }
+
+void VideoDocumentRuntime::toggleMuted() { setMuted(!m_state.muted()); }
 
 void VideoDocumentRuntime::seekBy(qint64 deltaMilliseconds)
 {

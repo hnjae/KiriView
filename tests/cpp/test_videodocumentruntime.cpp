@@ -26,6 +26,7 @@ private Q_SLOTS:
     void staleResolverCompletionsAreIgnored();
     void resolverCleanupRunsOnSourceChangeAndDestruction();
     void videoSizeFollowsBackendMetadata();
+    void mutedStateDispatchesBackendAndPersistsAcrossSourceChanges();
     void playbackControlsDispatchBackendOperations();
     void naturalPlaybackEndKeepsPresentationReadyWithoutBackendStop();
     void playAfterEndOfMediaRestartsFromBeginningWhenSeekable();
@@ -77,6 +78,13 @@ public:
         callbacks.positionChanged();
     }
 
+    void setMuted(bool nextMuted) override
+    {
+        isMuted = nextMuted;
+        ++setMutedCount;
+        callbacks.mutedChanged();
+    }
+
     void setVideoOutput(QObject *nextVideoOutput) override
     {
         output = nextVideoOutput;
@@ -93,6 +101,7 @@ public:
     bool hasVideo() const override { return videoAvailable; }
     bool hasAudio() const override { return audioAvailable; }
     QSize videoSize() const override { return currentVideoSize; }
+    bool muted() const override { return isMuted; }
 
     void emitStatus(KiriView::VideoMediaStatus status)
     {
@@ -133,11 +142,13 @@ public:
     qint64 currentPosition = 0;
     bool isPlaying = false;
     bool isSeekable = false;
+    bool isMuted = false;
     bool videoAvailable = false;
     bool audioAvailable = false;
     QSize currentVideoSize;
     int setSourceCount = 0;
     int setPositionCount = 0;
+    int setMutedCount = 0;
     int setVideoOutputCount = 0;
     int playCount = 0;
     int pauseCount = 0;
@@ -232,6 +243,7 @@ void TestVideoDocumentRuntime::initialStateIsNull()
     QVERIFY(!fixture.runtime->hasVideo());
     QVERIFY(!fixture.runtime->hasAudio());
     QCOMPARE(fixture.runtime->videoSize(), QSize());
+    QVERIFY(!fixture.runtime->muted());
     QCOMPARE(fixture.runtime->videoOutput(), nullptr);
 }
 
@@ -257,6 +269,9 @@ void TestVideoDocumentRuntime::mediaBackendFactoryIsLazyUntilPlaybackUrlResoluti
     QCOMPARE(factoryCallCount, 0);
     runtime.setVideoOutput(&output);
     QCOMPARE(factoryCallCount, 0);
+    runtime.setMuted(true);
+    QVERIFY(runtime.muted());
+    QCOMPARE(factoryCallCount, 0);
 
     runtime.setSourceUrl(sourceUrl);
     QCOMPARE(factoryCallCount, 0);
@@ -274,6 +289,8 @@ void TestVideoDocumentRuntime::mediaBackendFactoryIsLazyUntilPlaybackUrlResoluti
     QCOMPARE(factoryParent, &documentObject);
     QVERIFY(backend != nullptr);
     QCOMPARE(backend->sourceUrl, sourceUrl);
+    QVERIFY(backend->isMuted);
+    QCOMPARE(backend->setMutedCount, 1);
     QCOMPARE(backend->videoOutput(), &output);
 }
 
@@ -413,6 +430,37 @@ void TestVideoDocumentRuntime::videoSizeFollowsBackendMetadata()
 
     fixture.backend->emitVideoSize(QSize());
     QCOMPARE(fixture.runtime->videoSize(), QSize());
+}
+
+void TestVideoDocumentRuntime::mutedStateDispatchesBackendAndPersistsAcrossSourceChanges()
+{
+    RuntimeFixture fixture;
+    const QUrl firstSourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/first.mp4"));
+    const QUrl secondSourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/second.mp4"));
+
+    QVERIFY(!fixture.runtime->muted());
+    QVERIFY(!fixture.backend->isMuted);
+
+    fixture.runtime->setMuted(true);
+    QVERIFY(fixture.runtime->muted());
+    QVERIFY(fixture.backend->isMuted);
+    QCOMPARE(fixture.backend->setMutedCount, 1);
+
+    fixture.runtime->toggleMuted();
+    QVERIFY(!fixture.runtime->muted());
+    QVERIFY(!fixture.backend->isMuted);
+    QCOMPARE(fixture.backend->setMutedCount, 2);
+
+    fixture.runtime->setMuted(true);
+    fixture.runtime->setSourceUrl(firstSourceUrl);
+    fixture.resolveLatest(firstSourceUrl);
+    fixture.runtime->setSourceUrl(QUrl());
+    fixture.runtime->setSourceUrl(secondSourceUrl);
+    fixture.resolveLatest(secondSourceUrl);
+
+    QVERIFY(fixture.runtime->muted());
+    QVERIFY(fixture.backend->isMuted);
+    QCOMPARE(fixture.backend->sourceUrl, secondSourceUrl);
 }
 
 void TestVideoDocumentRuntime::playbackControlsDispatchBackendOperations()

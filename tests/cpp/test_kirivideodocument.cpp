@@ -13,6 +13,7 @@ class TestKiriVideoDocument : public QObject
 
 private Q_SLOTS:
     void initialStateIsNull();
+    void mutedPropertyNotifiesAndToggles();
     void sourceUrlAndTitleNotifyOnSetAndClear();
     void videoOutputCanDetachAndToleratesDestroyedOutput();
 };
@@ -34,7 +35,25 @@ void TestKiriVideoDocument::initialStateIsNull()
     QCOMPARE(document.videoSize(), QSize());
     QVERIFY(!document.zoomPercentKnown());
     QCOMPARE(document.zoomPercent(), 0);
+    QVERIFY(!document.muted());
     QCOMPARE(document.videoOutput(), nullptr);
+}
+
+void TestKiriVideoDocument::mutedPropertyNotifiesAndToggles()
+{
+    KiriVideoDocument document;
+    QSignalSpy mutedSpy(&document, &KiriVideoDocument::mutedChanged);
+
+    document.setMuted(true);
+    QVERIFY(document.muted());
+    QCOMPARE(mutedSpy.count(), 1);
+
+    document.setMuted(true);
+    QCOMPARE(mutedSpy.count(), 1);
+
+    document.toggleMuted();
+    QVERIFY(!document.muted());
+    QCOMPARE(mutedSpy.count(), 2);
 }
 
 void TestKiriVideoDocument::sourceUrlAndTitleNotifyOnSetAndClear()

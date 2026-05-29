@@ -72,6 +72,9 @@ void VideoDocumentPublicSignalEmitter::emitSignal(VideoDocumentPublicSignal sign
     case VideoDocumentPublicSignal::ZoomPercent:
         run(m_operations.zoomPercentChanged);
         return;
+    case VideoDocumentPublicSignal::Muted:
+        run(m_operations.mutedChanged);
+        return;
     case VideoDocumentPublicSignal::VideoOutput:
         run(m_operations.videoOutputChanged);
         return;
@@ -107,6 +110,8 @@ std::vector<VideoDocumentPublicSignal> videoDocumentPublicSignals(VideoDocumentC
         return { VideoDocumentPublicSignal::ZoomPercentKnown };
     case VideoDocumentChange::ZoomPercent:
         return { VideoDocumentPublicSignal::ZoomPercent };
+    case VideoDocumentChange::Muted:
+        return { VideoDocumentPublicSignal::Muted };
     case VideoDocumentChange::VideoOutput:
         return { VideoDocumentPublicSignal::VideoOutput };
     }

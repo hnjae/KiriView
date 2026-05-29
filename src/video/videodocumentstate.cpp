@@ -56,6 +56,8 @@ bool VideoDocumentState::zoomPercentKnown() const { return m_zoomPercentKnown; }
 
 int VideoDocumentState::zoomPercent() const { return m_zoomPercent; }
 
+bool VideoDocumentState::muted() const { return m_muted; }
+
 bool VideoDocumentState::mediaEnded() const { return m_mediaEnded; }
 
 void VideoDocumentState::resetForClearedSource()
@@ -177,6 +179,13 @@ void VideoDocumentState::setZoomPercent(std::optional<int> zoomPercent)
         appendIfZoomPercentKnownChanged(changes, false);
         appendIfZoomPercentChanged(changes, 0);
     }
+    publish(std::move(changes));
+}
+
+void VideoDocumentState::setMuted(bool muted)
+{
+    std::vector<VideoDocumentChange> changes;
+    appendIfMutedChanged(changes, muted);
     publish(std::move(changes));
 }
 
@@ -350,5 +359,15 @@ void VideoDocumentState::appendIfZoomPercentChanged(
 
     m_zoomPercent = normalizedZoomPercent;
     changes.push_back(VideoDocumentChange::ZoomPercent);
+}
+
+void VideoDocumentState::appendIfMutedChanged(std::vector<VideoDocumentChange> &changes, bool muted)
+{
+    if (m_muted == muted) {
+        return;
+    }
+
+    m_muted = muted;
+    changes.push_back(VideoDocumentChange::Muted);
 }
 }

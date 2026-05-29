@@ -24,6 +24,7 @@ enum class VideoDocumentPublicSignal {
     VideoSize,
     ZoomPercentKnown,
     ZoomPercent,
+    Muted,
     VideoOutput,
 };
 
@@ -41,6 +42,7 @@ struct VideoDocumentPublicSignalOperations {
     std::function<void()> videoSizeChanged;
     std::function<void()> zoomPercentKnownChanged;
     std::function<void()> zoomPercentChanged;
+    std::function<void()> mutedChanged;
     std::function<void()> videoOutputChanged;
 };
 

@@ -7,6 +7,7 @@
 #include <QSize>
 #include <QTest>
 #include <QUrl>
+#include <algorithm>
 #include <optional>
 #include <vector>
 
@@ -19,6 +20,7 @@ private Q_SLOTS:
     void clearedSourceResetsPublicStateInOrder();
     void scalarSettersOnlyNotifyOnChangedValues();
     void zoomPercentStatePublishesKnownValuePair();
+    void mutedStatePersistsAcrossSourceResets();
     void setPlayingClearsEndedState();
     void publishDeduplicatesChangesInOrder();
 };
@@ -63,6 +65,7 @@ void TestVideoDocumentState::sourceLoadResetsPublicPlaybackStateInOrder()
     state.setHasAudio(true);
     state.setVideoSize(QSize(1920, 1080));
     state.setZoomPercent(std::optional<int>(125));
+    state.setMuted(true);
     batches.clear();
 
     state.resetForSourceLoad(sourceUrl);
@@ -80,6 +83,7 @@ void TestVideoDocumentState::sourceLoadResetsPublicPlaybackStateInOrder()
     QCOMPARE(state.videoSize(), QSize());
     QVERIFY(!state.zoomPercentKnown());
     QCOMPARE(state.zoomPercent(), 0);
+    QVERIFY(state.muted());
     compareChanges(batches.front(),
         { Change::SourceUrl, Change::WindowTitleFileName, Change::ErrorString, Change::Status,
             Change::Duration, Change::Position, Change::Playing, Change::Seekable, Change::HasVideo,
@@ -103,6 +107,7 @@ void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
     state.setHasAudio(true);
     state.setVideoSize(QSize(1920, 1080));
     state.setZoomPercent(std::optional<int>(125));
+    state.setMuted(true);
     batches.clear();
 
     state.resetForClearedSource();
@@ -120,6 +125,7 @@ void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
     QCOMPARE(state.videoSize(), QSize());
     QVERIFY(!state.zoomPercentKnown());
     QCOMPARE(state.zoomPercent(), 0);
+    QVERIFY(state.muted());
     compareChanges(batches.front(),
         { Change::SourceUrl, Change::Status, Change::ErrorString, Change::WindowTitleFileName,
             Change::Duration, Change::Position, Change::Playing, Change::Seekable, Change::HasVideo,
@@ -149,6 +155,8 @@ void TestVideoDocumentState::scalarSettersOnlyNotifyOnChangedValues()
     state.setHasAudio(true);
     state.setVideoSize(QSize(1920, 1080));
     state.setVideoSize(QSize(1920, 1080));
+    state.setMuted(true);
+    state.setMuted(true);
 
     QCOMPARE(state.duration(), 5000);
     QCOMPARE(state.position(), 2500);
@@ -156,9 +164,10 @@ void TestVideoDocumentState::scalarSettersOnlyNotifyOnChangedValues()
     QVERIFY(state.hasVideo());
     QVERIFY(state.hasAudio());
     QCOMPARE(state.videoSize(), QSize(1920, 1080));
+    QVERIFY(state.muted());
     compareChanges(flatten(batches),
         { Change::Duration, Change::Position, Change::Seekable, Change::HasVideo, Change::HasAudio,
-            Change::VideoSize });
+            Change::VideoSize, Change::Muted });
 }
 
 void TestVideoDocumentState::zoomPercentStatePublishesKnownValuePair()
@@ -182,6 +191,29 @@ void TestVideoDocumentState::zoomPercentStatePublishesKnownValuePair()
     QVERIFY(!state.zoomPercentKnown());
     QCOMPARE(state.zoomPercent(), 0);
     compareChanges(batches.front(), { Change::ZoomPercentKnown, Change::ZoomPercent });
+}
+
+void TestVideoDocumentState::mutedStatePersistsAcrossSourceResets()
+{
+    std::vector<std::vector<Change>> batches;
+    KiriView::VideoDocumentState state(
+        [&batches](const std::vector<Change> &changes) { batches.push_back(changes); });
+
+    state.setMuted(true);
+    QCOMPARE(batches.size(), std::size_t(1));
+    compareChanges(batches.front(), { Change::Muted });
+
+    batches.clear();
+    state.resetForSourceLoad(QUrl::fromLocalFile(QStringLiteral("/videos/clip.mp4")));
+    QVERIFY(state.muted());
+    QVERIFY(std::find(batches.front().cbegin(), batches.front().cend(), Change::Muted)
+        == batches.front().cend());
+
+    batches.clear();
+    state.resetForClearedSource();
+    QVERIFY(state.muted());
+    QVERIFY(std::find(batches.front().cbegin(), batches.front().cend(), Change::Muted)
+        == batches.front().cend());
 }
 
 void TestVideoDocumentState::setPlayingClearsEndedState()

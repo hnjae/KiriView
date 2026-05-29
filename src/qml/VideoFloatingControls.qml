@@ -9,24 +9,28 @@ import QtQuick.Layouts
 import io.github.hnjae.kiriview
 import org.kde.ki18n
 import org.kde.kirigami as Kirigami
-import org.kde.kirigamiaddons.components as KirigamiAddons
 
-KirigamiAddons.FloatingToolBar {
+Controls.Control {
     id: root
 
+    objectName: "videoPlaybackControls"
+
     required property KiriVideoDocument videoDocument
+    property bool fixedMode: false
     property real durationMs: 0
     property real positionMs: 0
+    property bool explicitlyRevealed: true
     readonly property bool validDuration: durationMs > 0
     readonly property bool timelineInteractive: videoDocument.seekable && validDuration
     readonly property string positionText: formatTimestamp(timelineSlider.pressed ? timelineSlider.sliderPosition : positionMs)
     readonly property string durationText: validDuration ? formatTimestamp(durationMs) : "--:--"
-    readonly property bool interactionActive: controlsHoverHandler.hovered || activeFocus
+    readonly property bool interactionActive: controlsHoverHandler.hovered || playPauseButton.pressed || playPauseButton.activeFocus || timelineSlider.pressed || timelineSlider.activeFocus || muteButton.pressed || muteButton.activeFocus
+    readonly property bool autoHideEligible: !fixedMode && videoDocument.playing
+    readonly property bool controlsShown: fixedMode || !videoDocument.playing || interactionActive || explicitlyRevealed
     readonly property real horizontalViewportMargin: Kirigami.Units.largeSpacing * 2
     readonly property real availableResponsiveWidth: parent ? Math.max(0, parent.width - horizontalViewportMargin) : implicitWidth
-    readonly property real minimumResponsiveWidth: Math.max(implicitWidth, Kirigami.Units.gridUnit * 24)
-    readonly property real preferredResponsiveWidth: parent ? parent.width * 0.65 : implicitWidth
-    readonly property real maximumResponsiveWidth: Kirigami.Units.gridUnit * 44
+    readonly property real preferredResponsiveWidth: parent ? parent.width * 0.75 : implicitWidth
+    readonly property real floatingWidth: parent ? Math.min(availableResponsiveWidth, Math.max(implicitWidth, preferredResponsiveWidth)) : implicitWidth
 
     function documentMilliseconds(propertyName) {
         const value = Number(root.videoDocument[propertyName]);
@@ -88,18 +92,69 @@ KirigamiAddons.FloatingToolBar {
         root.videoDocument.setPosition(nextPosition);
     }
 
+    function scheduleAutoHide() {
+        if (root.autoHideEligible && !root.interactionActive) {
+            hideTimer.restart();
+            return;
+        }
+        hideTimer.stop();
+    }
+
+    function revealControls() {
+        if (!root.visible) {
+            return;
+        }
+
+        root.explicitlyRevealed = true;
+        scheduleAutoHide();
+    }
+
     leftPadding: Kirigami.Units.smallSpacing
     rightPadding: Kirigami.Units.smallSpacing
     topPadding: Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2))
     bottomPadding: Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2))
-    width: parent ? Math.min(availableResponsiveWidth, Math.max(minimumResponsiveWidth, Math.min(preferredResponsiveWidth, maximumResponsiveWidth))) : implicitWidth
+    enabled: controlsShown
+    opacity: controlsShown ? 1 : 0
+    width: fixedMode && parent ? parent.width : floatingWidth
 
     onPositionMsChanged: syncTimelineToDocument()
     onTimelineInteractiveChanged: syncTimelineToDocument()
     onDurationMsChanged: syncTimelineToDocument()
     onVideoDocumentChanged: syncDocumentTiming()
+    onAutoHideEligibleChanged: {
+        explicitlyRevealed = true;
+        scheduleAutoHide();
+    }
+    onFixedModeChanged: {
+        explicitlyRevealed = true;
+        scheduleAutoHide();
+    }
+    onInteractionActiveChanged: {
+        if (interactionActive) {
+            revealControls();
+            return;
+        }
+        scheduleAutoHide();
+    }
+    onVisibleChanged: {
+        if (visible) {
+            revealControls();
+        }
+    }
 
-    Component.onCompleted: syncDocumentTiming()
+    Behavior on opacity {
+        enabled: !root.fixedMode
+
+        NumberAnimation {
+            duration: Kirigami.Units.shortDuration
+            easing.type: Easing.InOutQuad
+        }
+    }
+
+    Component.onCompleted: {
+        syncDocumentTiming();
+        scheduleAutoHide();
+    }
 
     Connections {
         target: root.videoDocument
@@ -111,10 +166,41 @@ KirigamiAddons.FloatingToolBar {
         function onPositionChanged() {
             root.syncDocumentPosition();
         }
+
+        function onPlayingChanged() {
+            root.revealControls();
+        }
     }
 
     HoverHandler {
         id: controlsHoverHandler
+    }
+
+    Timer {
+        id: hideTimer
+
+        interval: Kirigami.Units.humanMoment
+        repeat: false
+
+        onTriggered: {
+            if (root.autoHideEligible && !root.interactionActive) {
+                root.explicitlyRevealed = false;
+            }
+        }
+    }
+
+    background: Kirigami.ShadowedRectangle {
+        color: Kirigami.Theme.backgroundColor
+        opacity: root.fixedMode ? 0.96 : 0.84
+        radius: root.fixedMode ? 0 : Kirigami.Units.cornerRadius
+
+        border.color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.backgroundColor, Kirigami.Theme.textColor, Kirigami.Theme.frameContrast)
+        border.width: 1
+
+        shadow.color: Qt.rgba(0, 0, 0, root.fixedMode ? 0 : 0.18)
+        shadow.size: root.fixedMode ? 0 : Kirigami.Units.smallSpacing
+        shadow.xOffset: 0
+        shadow.yOffset: root.fixedMode ? 0 : Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2))
     }
 
     contentItem: RowLayout {
@@ -122,6 +208,8 @@ KirigamiAddons.FloatingToolBar {
 
         Controls.ToolButton {
             id: playPauseButton
+
+            objectName: "videoPlaybackPlayPauseButton"
 
             Accessible.name: text
             Accessible.role: Accessible.Button
@@ -132,11 +220,35 @@ KirigamiAddons.FloatingToolBar {
             Controls.ToolTip.text: text
             Controls.ToolTip.visible: hovered && Controls.ToolTip.text.length > 0 && !Kirigami.Settings.hasTransientTouchInput
 
+            onPressedChanged: {
+                if (pressed) {
+                    root.revealControls();
+                }
+            }
             onClicked: root.videoDocument.togglePlayback()
+        }
+
+        Controls.Label {
+            id: currentTimeLabel
+
+            objectName: "videoPlaybackCurrentTimeLabel"
+
+            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 4
+            color: Kirigami.Theme.textColor
+            elide: Text.ElideRight
+            font: Kirigami.Theme.fixedWidthFont
+            fontSizeMode: Text.HorizontalFit
+            horizontalAlignment: Text.AlignRight
+            maximumLineCount: 1
+            minimumPixelSize: Math.max(8, Kirigami.Theme.smallFont.pixelSize - 3)
+            text: root.positionText
         }
 
         Controls.Slider {
             id: timelineSlider
+
+            objectName: "videoPlaybackSlider"
 
             property real sliderPosition: 0
 
@@ -153,10 +265,12 @@ KirigamiAddons.FloatingToolBar {
             onMoved: sliderPosition = root.clampedPosition(value)
             onPressedChanged: {
                 if (pressed) {
+                    root.revealControls();
                     sliderPosition = root.positionMs;
                     return;
                 }
                 root.commitTimelineSeek();
+                root.scheduleAutoHide();
             }
 
             Keys.priority: Keys.AfterItem
@@ -179,16 +293,42 @@ KirigamiAddons.FloatingToolBar {
         }
 
         Controls.Label {
+            id: durationTimeLabel
+
+            objectName: "videoPlaybackDurationLabel"
+
             Layout.alignment: Qt.AlignVCenter
-            Layout.preferredWidth: Kirigami.Units.gridUnit * 5
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 4
             color: Kirigami.Theme.textColor
             elide: Text.ElideRight
-            font: Kirigami.Theme.smallFont
+            font: Kirigami.Theme.fixedWidthFont
             fontSizeMode: Text.HorizontalFit
-            horizontalAlignment: Text.AlignRight
+            horizontalAlignment: Text.AlignLeft
             maximumLineCount: 1
             minimumPixelSize: Math.max(8, Kirigami.Theme.smallFont.pixelSize - 3)
-            text: root.positionText + " / " + root.durationText
+            text: root.durationText
+        }
+
+        Controls.ToolButton {
+            id: muteButton
+
+            objectName: "videoPlaybackMuteButton"
+
+            Accessible.name: text
+            Accessible.role: Accessible.Button
+            display: Controls.AbstractButton.IconOnly
+            icon.name: root.videoDocument.muted ? "audio-volume-muted-symbolic" : "audio-volume-high-symbolic"
+            text: root.videoDocument.muted ? KI18n.i18nc("@action:button", "Unmute") : KI18n.i18nc("@action:button", "Mute")
+
+            Controls.ToolTip.text: text
+            Controls.ToolTip.visible: hovered && Controls.ToolTip.text.length > 0 && !Kirigami.Settings.hasTransientTouchInput
+
+            onPressedChanged: {
+                if (pressed) {
+                    root.revealControls();
+                }
+            }
+            onClicked: root.videoDocument.toggleMuted()
         }
     }
 }

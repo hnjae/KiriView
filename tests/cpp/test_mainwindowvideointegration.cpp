@@ -27,7 +27,7 @@ private Q_SLOTS:
     void pageNavigationComponentDoesNotChooseBetweenRawNavigationSources();
     void documentSessionFacadeDoesNotExposeRawDirectMediaNavigation();
     void documentSessionRuntimePublicApiDoesNotExposeRawDirectMediaNavigation();
-    void videoFloatingControlsUsesViewportResponsiveWidth();
+    void videoPlaybackControlsUseResponsiveFloatingAndFixedModes();
 };
 
 namespace {
@@ -642,20 +642,53 @@ void TestMainWindowVideoIntegration::videoModeExposesReadOnlyZoomReadout()
     QVERIFY(!mainQml.contains(QStringLiteral("videoZoomReady:")));
 }
 
-void TestMainWindowVideoIntegration::videoFloatingControlsUsesViewportResponsiveWidth()
+void TestMainWindowVideoIntegration::videoPlaybackControlsUseResponsiveFloatingAndFixedModes()
 {
     const QString videoControlsQml
         = readSource(QStringLiteral("src/qml/VideoFloatingControls.qml"));
+    const QString videoViewportQml = readSource(QStringLiteral("src/qml/VideoViewport.qml"));
     QVERIFY2(!videoControlsQml.isEmpty(), "VideoFloatingControls.qml should be readable");
+    QVERIFY2(!videoViewportQml.isEmpty(), "VideoViewport.qml should be readable");
 
-    QVERIFY(videoControlsQml.contains(QStringLiteral("parent.width * 0.65")));
-    QVERIFY(videoControlsQml.contains(QStringLiteral("Kirigami.Units.gridUnit * 24")));
-    QVERIFY(videoControlsQml.contains(QStringLiteral("Kirigami.Units.gridUnit * 44")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("objectName: \"videoPlaybackControls\"")));
+    QVERIFY(
+        videoControlsQml.contains(QStringLiteral("objectName: \"videoPlaybackPlayPauseButton\"")));
+    QVERIFY(
+        videoControlsQml.contains(QStringLiteral("objectName: \"videoPlaybackCurrentTimeLabel\"")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("objectName: \"videoPlaybackSlider\"")));
+    QVERIFY(
+        videoControlsQml.contains(QStringLiteral("objectName: \"videoPlaybackDurationLabel\"")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("objectName: \"videoPlaybackMuteButton\"")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("root.videoDocument.toggleMuted()")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("font: Kirigami.Theme.fixedWidthFont")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("display: Controls.AbstractButton.IconOnly")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("parent.width * 0.75")));
     QVERIFY(videoControlsQml.contains(QStringLiteral("parent.width - horizontalViewportMargin")));
-    QVERIFY(videoControlsQml.contains(
-        QStringLiteral("Math.min(availableResponsiveWidth, Math.max(minimumResponsiveWidth")));
+    QVERIFY(
+        videoControlsQml.contains(QStringLiteral("Math.min(availableResponsiveWidth, Math.max")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("Kirigami.ShadowedRectangle")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("Kirigami.Theme.backgroundColor")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("Kirigami.Units.cornerRadius")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("shadow.size: root.fixedMode ? 0")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("interval: Kirigami.Units.humanMoment")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("duration: Kirigami.Units.shortDuration")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral(
+        "readonly property bool autoHideEligible: !fixedMode && videoDocument.playing")));
     QVERIFY(!videoControlsQml.contains(
         QStringLiteral("Math.min(parent.width - Kirigami.Units.largeSpacing * 2, implicitWidth)")));
+
+    QVERIFY(videoViewportQml.contains(QStringLiteral("readonly property bool fixedControlsMode")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral("Kirigami.Settings.isMobile")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral("Kirigami.Settings.hasTransientTouchInput")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral("Kirigami.Units.longDuration <= 0")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral("width < Kirigami.Units.gridUnit * 32")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral("height < Kirigami.Units.gridUnit * 16")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral(
+        "anchors.bottom: root.controlsReserveSpace ? floatingControls.top : parent.bottom")));
+    QVERIFY(videoViewportQml.contains(
+        QStringLiteral("anchors.bottomMargin: root.fixedControlsMode ? 0")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral("visible: root.videoControlsReady")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral("floatingControls.revealControls()")));
 }
 
 QTEST_GUILESS_MAIN(TestMainWindowVideoIntegration)

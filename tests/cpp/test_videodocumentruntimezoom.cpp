@@ -52,6 +52,11 @@ public:
         currentPosition = nextPosition;
         callbacks.positionChanged();
     }
+    void setMuted(bool nextMuted) override
+    {
+        isMuted = nextMuted;
+        callbacks.mutedChanged();
+    }
     void setVideoOutput(QObject *nextVideoOutput) override { output = nextVideoOutput; }
     QObject *videoOutput() const override { return output.data(); }
     KiriView::VideoMediaStatus mediaStatus() const override { return currentStatus; }
@@ -63,6 +68,7 @@ public:
     bool hasVideo() const override { return videoAvailable; }
     bool hasAudio() const override { return false; }
     QSize videoSize() const override { return {}; }
+    bool muted() const override { return isMuted; }
 
     void emitStatus(KiriView::VideoMediaStatus status)
     {
@@ -82,6 +88,7 @@ public:
     KiriView::VideoMediaStatus currentStatus = KiriView::VideoMediaStatus::Null;
     qint64 currentPosition = 0;
     bool isPlaying = false;
+    bool isMuted = false;
     bool videoAvailable = false;
 };
 

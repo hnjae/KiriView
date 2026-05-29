@@ -26,6 +26,7 @@ enum class VideoDocumentChange {
     VideoSize,
     ZoomPercentKnown,
     ZoomPercent,
+    Muted,
     VideoOutput,
 };
 }

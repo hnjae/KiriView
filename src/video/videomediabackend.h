@@ -34,6 +34,7 @@ struct VideoMediaBackendCallbacks {
     std::function<void()> hasVideoChanged;
     std::function<void()> hasAudioChanged;
     std::function<void()> videoSizeChanged;
+    std::function<void()> mutedChanged;
     std::function<void()> videoOutputChanged;
 };
 
@@ -48,6 +49,7 @@ public:
     virtual void pause() = 0;
     virtual void stop() = 0;
     virtual void setPosition(qint64 position) = 0;
+    virtual void setMuted(bool muted) = 0;
     virtual void setVideoOutput(QObject *videoOutput) = 0;
     virtual QObject *videoOutput() const = 0;
     virtual VideoMediaStatus mediaStatus() const = 0;
@@ -59,6 +61,7 @@ public:
     virtual bool hasVideo() const = 0;
     virtual bool hasAudio() const = 0;
     virtual QSize videoSize() const = 0;
+    virtual bool muted() const = 0;
 };
 
 std::unique_ptr<VideoMediaBackend> createDefaultVideoMediaBackend(QObject *parent);

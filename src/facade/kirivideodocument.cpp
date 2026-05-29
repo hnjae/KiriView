@@ -43,6 +43,7 @@ KiriView::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDo
     operations.zoomPercentKnownChanged
         = [&document]() { Q_EMIT document.zoomPercentKnownChanged(); };
     operations.zoomPercentChanged = [&document]() { Q_EMIT document.zoomPercentChanged(); };
+    operations.mutedChanged = [&document]() { Q_EMIT document.mutedChanged(); };
     operations.videoOutputChanged = [&document]() { Q_EMIT document.videoOutputChanged(); };
     return operations;
 }
@@ -90,6 +91,8 @@ bool KiriVideoDocument::zoomPercentKnown() const { return m_runtime->zoomPercent
 
 int KiriVideoDocument::zoomPercent() const { return m_runtime->zoomPercent(); }
 
+bool KiriVideoDocument::muted() const { return m_runtime->muted(); }
+
 QObject *KiriVideoDocument::videoOutput() const { return m_runtime->videoOutput(); }
 
 void KiriVideoDocument::setVideoOutput(QObject *videoOutput)
@@ -104,6 +107,10 @@ void KiriVideoDocument::pause() { m_runtime->pause(); }
 void KiriVideoDocument::stop() { m_runtime->stop(); }
 
 void KiriVideoDocument::togglePlayback() { m_runtime->togglePlayback(); }
+
+void KiriVideoDocument::setMuted(bool muted) { m_runtime->setMuted(muted); }
+
+void KiriVideoDocument::toggleMuted() { m_runtime->toggleMuted(); }
 
 void KiriVideoDocument::setPosition(qint64 position) { m_runtime->setPosition(position); }
 

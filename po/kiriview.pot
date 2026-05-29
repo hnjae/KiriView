@@ -253,6 +253,192 @@ msgid ""
 "yet."
 msgstr ""
 
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "Unknown dimensions (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "Image file (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "Video file (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "Unknown type (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Type"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "File Size"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "Unknown size (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Modified"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "Unknown date (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Path"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Dimensions"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Color Space"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "sRGB (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Bit Depth"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "8-bit (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Frame Size"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "BT.709 (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Camera"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "KiriView Sample Camera (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Lens"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "35 mm (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Exposure"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata placeholder value"
+msgid "1/125 s at f/5.6 (placeholder)"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata unavailable"
+msgid "No media selected"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@title:group"
+msgid "Media"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@title:group"
+msgid "Image"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata summary"
+msgid "Image, %1"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata summary"
+msgid "Image metadata placeholder"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@title:group"
+msgid "Video"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata summary"
+msgid "Video, %1"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@info:metadata summary"
+msgid "Video metadata placeholder"
+msgstr ""
+
 #: src/localization/activenavigationboundarytext.cpp
 #, kde-format
 msgctxt "@info:status"
@@ -839,8 +1025,33 @@ msgid "Video zoom unavailable"
 msgstr ""
 
 #: src/qml/InfoPanel.qml
+msgctxt "@title:window"
+msgid "Information"
+msgstr ""
+
+#: src/qml/InfoPanel.qml
+msgctxt "@action:button"
+msgid "Close Information Panel"
+msgstr ""
+
+#: src/qml/InfoPanel.qml
+msgctxt "@action:button"
+msgid "Copy File Path"
+msgstr ""
+
+#: src/qml/InfoPanel.qml
+msgctxt "@action:button"
+msgid "Open Containing Folder"
+msgstr ""
+
+#: src/qml/InfoPanel.qml
 msgctxt "@title:group"
-msgid "Info"
+msgid "General"
+msgstr ""
+
+#: src/qml/InfoPanel.qml
+msgctxt "@title:group"
+msgid "Camera"
 msgstr ""
 
 #: src/qml/Main.qml
@@ -891,6 +1102,16 @@ msgstr ""
 #: src/qml/VideoFloatingControls.qml
 msgctxt "@label:slider"
 msgid "Position"
+msgstr ""
+
+#: src/qml/VideoFloatingControls.qml
+msgctxt "@action:button"
+msgid "Unmute"
+msgstr ""
+
+#: src/qml/VideoFloatingControls.qml
+msgctxt "@action:button"
+msgid "Mute"
 msgstr ""
 
 #: src/qml/VideoViewport.qml

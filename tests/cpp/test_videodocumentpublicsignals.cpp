@@ -46,6 +46,7 @@ KiriView::VideoDocumentPublicSignalOperations recordingOperations(QStringList &e
     operations.zoomPercentKnownChanged
         = [&events]() { events.append(QStringLiteral("zoomPercentKnown")); };
     operations.zoomPercentChanged = [&events]() { events.append(QStringLiteral("zoomPercent")); };
+    operations.mutedChanged = [&events]() { events.append(QStringLiteral("muted")); };
     operations.videoOutputChanged = [&events]() { events.append(QStringLiteral("videoOutput")); };
     return operations;
 }
@@ -81,6 +82,7 @@ void TestVideoDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
         { Signal::ZoomPercentKnown });
     comparePublicSignals(
         KiriView::videoDocumentPublicSignals(Change::ZoomPercent), { Signal::ZoomPercent });
+    comparePublicSignals(KiriView::videoDocumentPublicSignals(Change::Muted), { Signal::Muted });
     comparePublicSignals(
         KiriView::videoDocumentPublicSignals(Change::VideoOutput), { Signal::VideoOutput });
 }
@@ -100,8 +102,9 @@ void TestVideoDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionO
     QStringList events;
     const KiriView::VideoDocumentPublicSignalEmitter emitter(recordingOperations(events));
 
-    emitter.emitChanges({ KiriView::VideoDocumentChange::Position,
-        KiriView::VideoDocumentChange::HasVideo, KiriView::VideoDocumentChange::ZoomPercent });
+    emitter.emitChanges(
+        { KiriView::VideoDocumentChange::Position, KiriView::VideoDocumentChange::HasVideo,
+            KiriView::VideoDocumentChange::ZoomPercent, KiriView::VideoDocumentChange::Muted });
     emitter.emitSignal(KiriView::VideoDocumentPublicSignal::VideoOutput);
 
     QCOMPARE(events,
@@ -109,6 +112,7 @@ void TestVideoDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionO
             QStringLiteral("position"),
             QStringLiteral("hasVideo"),
             QStringLiteral("zoomPercent"),
+            QStringLiteral("muted"),
             QStringLiteral("videoOutput"),
         }));
 }

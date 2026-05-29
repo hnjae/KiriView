@@ -16,6 +16,10 @@ MediaViewportDelegate {
     property alias videoOutput: videoOutput
     readonly property var videoDocument: root.documentSession.videoDocument
     readonly property bool videoReady: videoDocument.status === KiriVideoDocument.Ready
+    readonly property bool videoControlsReady: root.videoReady && root.videoDocument.hasVideo
+    readonly property bool fixedControlsMode: Kirigami.Settings.isMobile || Kirigami.Settings.hasTransientTouchInput || Kirigami.Units.longDuration <= 0 || width < Kirigami.Units.gridUnit * 32 || height < Kirigami.Units.gridUnit * 16
+    readonly property bool controlsReserveSpace: floatingControls.visible && root.fixedControlsMode
+    readonly property bool controlsEffectivelyShown: floatingControls.visible && floatingControls.opacity > 0
     property KiriVideoDocument attachedVideoDocument: null
 
     function shouldAttachVideoOutput() {
@@ -98,7 +102,12 @@ MediaViewportDelegate {
     }
 
     Rectangle {
-        anchors.fill: parent
+        id: videoSurface
+
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: root.controlsReserveSpace ? floatingControls.top : parent.bottom
         color: "black"
 
         VideoOutput {
@@ -114,10 +123,20 @@ MediaViewportDelegate {
         }
     }
 
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton
+        hoverEnabled: true
+        z: 1
+
+        onPositionChanged: floatingControls.revealControls()
+    }
+
     TapHandler {
         acceptedButtons: Qt.LeftButton
 
         onTapped: {
+            floatingControls.revealControls();
             root.requestViewportFocus();
             root.viewerClicked();
         }
@@ -158,16 +177,16 @@ MediaViewportDelegate {
         id: floatingControls
 
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: Kirigami.Units.largeSpacing
+        anchors.bottomMargin: root.fixedControlsMode ? 0 : Kirigami.Units.largeSpacing
         anchors.horizontalCenter: parent.horizontalCenter
-        enabled: visible
+        fixedMode: root.fixedControlsMode
         videoDocument: root.videoDocument
-        visible: root.videoReady
+        visible: root.videoControlsReady
         z: 10
     }
 
     Kirigami.InlineMessage {
-        anchors.bottom: floatingControls.visible ? floatingControls.top : parent.bottom
+        anchors.bottom: root.controlsEffectivelyShown ? floatingControls.top : parent.bottom
         anchors.bottomMargin: Kirigami.Units.largeSpacing
         anchors.left: parent.left
         anchors.leftMargin: Kirigami.Units.largeSpacing

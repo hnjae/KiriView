@@ -40,6 +40,8 @@ public:
             [this]() { KiriView::invokeIfSet(m_callbacks.hasAudioChanged); });
         QObject::connect(&m_player, &QMediaPlayer::metaDataChanged, this,
             [this]() { KiriView::invokeIfSet(m_callbacks.videoSizeChanged); });
+        QObject::connect(&m_audioOutput, &QAudioOutput::mutedChanged, this,
+            [this]() { KiriView::invokeIfSet(m_callbacks.mutedChanged); });
         QObject::connect(&m_player, &QMediaPlayer::videoOutputChanged, this,
             [this]() { KiriView::invokeIfSet(m_callbacks.videoOutputChanged); });
     }
@@ -54,6 +56,7 @@ public:
     void pause() override { m_player.pause(); }
     void stop() override { m_player.stop(); }
     void setPosition(qint64 position) override { m_player.setPosition(position); }
+    void setMuted(bool muted) override { m_audioOutput.setMuted(muted); }
     void setVideoOutput(QObject *videoOutput) override { m_player.setVideoOutput(videoOutput); }
     QObject *videoOutput() const override { return m_player.videoOutput(); }
 
@@ -92,6 +95,7 @@ public:
     {
         return m_player.metaData().value(QMediaMetaData::Resolution).toSize();
     }
+    bool muted() const override { return m_audioOutput.isMuted(); }
 
 private:
     QMediaPlayer m_player;

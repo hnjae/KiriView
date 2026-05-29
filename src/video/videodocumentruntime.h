@@ -49,6 +49,8 @@ public:
     QSize videoSize() const;
     bool zoomPercentKnown() const;
     int zoomPercent() const;
+    bool muted() const;
+    void setMuted(bool muted);
     QObject *videoOutput() const;
     void setVideoOutput(QObject *videoOutput);
     void setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect);
@@ -57,6 +59,7 @@ public:
     void pause();
     void stop();
     void togglePlayback();
+    void toggleMuted();
     void seekBy(qint64 deltaMilliseconds);
 
     static qint64 clampedSeekPosition(

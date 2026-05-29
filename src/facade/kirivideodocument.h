@@ -38,6 +38,7 @@ class KiriVideoDocument : public QObject
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
     Q_PROPERTY(bool zoomPercentKnown READ zoomPercentKnown NOTIFY zoomPercentKnownChanged)
     Q_PROPERTY(int zoomPercent READ zoomPercent NOTIFY zoomPercentChanged)
+    Q_PROPERTY(bool muted READ muted WRITE setMuted NOTIFY mutedChanged)
     Q_PROPERTY(QObject *videoOutput READ videoOutput WRITE setVideoOutput NOTIFY videoOutputChanged)
 
 public:
@@ -66,6 +67,7 @@ public:
     QSize videoSize() const;
     bool zoomPercentKnown() const;
     int zoomPercent() const;
+    bool muted() const;
     QObject *videoOutput() const;
     // QML assigns a QtMultimedia VideoOutput object here. KiriVideoDocument does not own it,
     // tracks its destruction, and detaches from the media player when this is set to null.
@@ -75,6 +77,8 @@ public:
     Q_INVOKABLE void pause();
     Q_INVOKABLE void stop();
     Q_INVOKABLE void togglePlayback();
+    Q_INVOKABLE void setMuted(bool muted);
+    Q_INVOKABLE void toggleMuted();
     Q_INVOKABLE void setPosition(qint64 position);
     Q_INVOKABLE void seekBy(qint64 deltaMilliseconds);
     Q_INVOKABLE void setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect);
@@ -93,6 +97,7 @@ Q_SIGNALS:
     void videoSizeChanged();
     void zoomPercentKnownChanged();
     void zoomPercentChanged();
+    void mutedChanged();
     void videoOutputChanged();
 
 private:
