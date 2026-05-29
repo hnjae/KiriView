@@ -25,6 +25,7 @@ RowLayout {
     property bool zoomEditable: !readOnlyDisplayMode && imageReady
     property real pendingZoomStepCount: 0
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
+    readonly property int wheelAngleDeltaPerStep: 120
     readonly property bool textInputActive: textInputFocused()
 
     signal editingCompleted(bool returnViewerFocus)
@@ -53,6 +54,22 @@ RowLayout {
 
     function multiplicativeStepSize(stepCount) {
         return Math.max(1, Math.abs(root.steppedZoomValue(stepCount) - zoomSpinBox.value));
+    }
+
+    function wheelZoomStepCount(wheel) {
+        const verticalDelta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y;
+        return verticalDelta / wheelAngleDeltaPerStep;
+    }
+
+    function handleZoomWheel(wheel) {
+        const stepCount = root.wheelZoomStepCount(wheel);
+        if (stepCount === 0) {
+            wheel.accepted = false;
+            return;
+        }
+
+        root.imageDocument.zoomPercent = root.imageDocument.steppedManualZoomPercent(stepCount * 0.5);
+        wheel.accepted = true;
     }
 
     Controls.SpinBox {
@@ -89,6 +106,18 @@ RowLayout {
         to: root.zoomEditable ? Math.max(root.maximumManualZoomPercent, Math.ceil(numericZoomPercent)) : Math.max(0, Math.round(numericZoomPercent))
         value: zoomValueAvailable && zoomValueKnown ? Math.max(0, Math.round(numericZoomPercent)) : 0
         wheelEnabled: false
+
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            acceptedModifiers: Qt.NoModifier
+            blocking: true
+            enabled: root.zoomEditable && !root.textInputActive
+            target: null
+
+            onWheel: wheel => {
+                root.handleZoomWheel(wheel);
+            }
+        }
 
         textFromValue: function (value, locale) {
             return plainZoomText(value);
