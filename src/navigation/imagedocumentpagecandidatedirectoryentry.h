@@ -9,6 +9,8 @@
 #include "imagedocumentpagecandidatestoreentrystate.h"
 #include "imagedocumentpagenavigationtypes.h"
 
+#include <KFileItem>
+#include <QList>
 #include <QString>
 #include <QUrl>
 #include <functional>
@@ -33,6 +35,8 @@ public:
     bool open();
     void handleCompleted();
     void handleChanged();
+    void handleDeleted(const KFileItemList &items);
+    void handleDeleted(const QList<QUrl> &urls);
     void handleError(const QString &errorString);
 
     ImageIoJob addPendingLoad(ImageDocumentPageCandidatesCallback callback,

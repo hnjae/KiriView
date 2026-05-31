@@ -5,10 +5,12 @@
 
 #include "async/imagecallback.h"
 #include "imagedocumentpagecandidateitems.h"
+#include "location/imageurl.h"
 
 #include <KCoreDirLister>
 #include <KIO/Job>
 #include <QTimer>
+#include <algorithm>
 #include <memory>
 #include <utility>
 
@@ -28,6 +30,34 @@ std::vector<KiriView::ImageDocumentPageCandidate> imageDocumentPageCandidatesFor
 {
     return KiriView::imageDocumentPageNavigationCandidates(
         lister->itemsForDir(directoryUrl, KCoreDirLister::AllItems));
+}
+
+QList<QUrl> urlsForItems(const KFileItemList &items)
+{
+    QList<QUrl> urls;
+    urls.reserve(items.size());
+    for (const KFileItem &item : items) {
+        urls.push_back(item.url());
+    }
+    return urls;
+}
+
+std::vector<KiriView::ImageDocumentPageCandidate> imageDocumentPageCandidatesWithoutDeletedUrls(
+    const std::vector<KiriView::ImageDocumentPageCandidate> &candidates,
+    const QList<QUrl> &deletedUrls)
+{
+    std::vector<KiriView::ImageDocumentPageCandidate> filteredCandidates;
+    filteredCandidates.reserve(candidates.size());
+    for (const KiriView::ImageDocumentPageCandidate &candidate : candidates) {
+        const bool removed
+            = std::any_of(deletedUrls.cbegin(), deletedUrls.cend(), [&candidate](const QUrl &url) {
+                  return KiriView::sameNormalizedUrl(candidate.url, url);
+              });
+        if (!removed) {
+            filteredCandidates.push_back(candidate);
+        }
+    }
+    return filteredCandidates;
 }
 
 QObject *createEntryJobToken(QObject *receiver, QObject *fallbackParent)
@@ -121,6 +151,17 @@ void ImageDocumentPageCandidateDirectoryEntry::handleChanged()
         imageDocumentPageCandidatesForLister(m_lister.get(), m_directoryUrl)));
 }
 
+void ImageDocumentPageCandidateDirectoryEntry::handleDeleted(const KFileItemList &items)
+{
+    handleDeleted(urlsForItems(items));
+}
+
+void ImageDocumentPageCandidateDirectoryEntry::handleDeleted(const QList<QUrl> &urls)
+{
+    applyEntryNotificationPlan(
+        m_state.updateListing(imageDocumentPageCandidatesWithoutDeletedUrls(candidates(), urls)));
+}
+
 void ImageDocumentPageCandidateDirectoryEntry::handleError(const QString &errorString)
 {
     applyEntryNotificationPlan(m_state.failListing(errorString));
@@ -165,7 +206,7 @@ void ImageDocumentPageCandidateDirectoryEntry::connectSignals(QObject *signalCon
     QObject::connect(m_lister.get(), &KCoreDirLister::itemsAdded, context,
         [this, context](const QUrl &, const KFileItemList &) { notifyChanged(context, this); });
     QObject::connect(m_lister.get(), &KCoreDirLister::itemsDeleted, context,
-        [this, context](const KFileItemList &) { notifyChanged(context, this); });
+        [this](const KFileItemList &items) { handleDeleted(items); });
     QObject::connect(m_lister.get(), &KCoreDirLister::refreshItems, context,
         [this, context](
             const QList<QPair<KFileItem, KFileItem>> &) { notifyChanged(context, this); });

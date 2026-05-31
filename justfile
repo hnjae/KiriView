@@ -147,6 +147,7 @@ _flatpak-builder mode:
         --user \
         --install-deps-from=flathub \
         --jobs="$flatpak_jobs" \
+        --disable-rofiles-fuse \
         --ccache \
 
     case "$mode" in

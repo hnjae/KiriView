@@ -120,10 +120,9 @@ void TestImageDocumentPageCandidateDirectoryEntry::listerChangesPublishSubscribe
     QCOMPARE(changeCount, 1);
 
     QVERIFY(QFile::remove(directory.filePath(QStringLiteral("01.png"))));
-    OrgKdeKDirNotifyInterface::emitFilesRemoved(
-        QList<QUrl> { fileUrl(directory, QStringLiteral("01.png")) });
+    entry.handleDeleted(QList<QUrl> { fileUrl(directory, QStringLiteral("01.png")) });
     const std::vector<QUrl> expectedDeletedUrls { fileUrl(directory, QStringLiteral("02.png")) };
-    QTRY_VERIFY_WITH_TIMEOUT(candidateUrls(changedCandidates) == expectedDeletedUrls, 10000);
+    QCOMPARE(candidateUrls(changedCandidates), expectedDeletedUrls);
     QCOMPARE(changeCount, 2);
 }
 
