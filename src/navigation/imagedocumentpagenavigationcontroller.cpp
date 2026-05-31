@@ -73,10 +73,17 @@ void ImageDocumentPageNavigationController::openAdjacentPage(
         return;
     }
 
+    const quint64 operationId = m_nextNavigationOperationId++;
+    m_activeNavigationOperationId = operationId;
     m_navigationListerJob = m_candidateRepository.loadImages(
         this, *context,
-        [this, direction, currentUrl = context->currentUrl(), candidateSource = context->source()](
+        [this, operationId, direction, currentUrl = context->currentUrl(),
+            candidateSource = context->source()](
             std::vector<ImageDocumentPageCandidate> candidates) mutable {
+            if (operationId != m_activeNavigationOperationId) {
+                return;
+            }
+            m_activeNavigationOperationId = 0;
             finishNavigation(
                 std::move(candidates), direction, currentUrl, std::move(candidateSource));
         },
@@ -113,7 +120,11 @@ void ImageDocumentPageNavigationController::update(
         [](const QString &) {});
 }
 
-void ImageDocumentPageNavigationController::cancelNavigation() { m_navigationListerJob.cancel(); }
+void ImageDocumentPageNavigationController::cancelNavigation()
+{
+    m_navigationListerJob.cancel();
+    m_activeNavigationOperationId = 0;
+}
 
 void ImageDocumentPageNavigationController::cancelUpdate()
 {

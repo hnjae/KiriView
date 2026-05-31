@@ -185,6 +185,23 @@ std::optional<PredecodedImage> PredecodeCache::findImage(const QUrl &url) const
     return PredecodedImage { cached->staticImage, location };
 }
 
+std::optional<PredecodedImage> PredecodeCache::findImage(
+    const DisplayedImageLocation &location) const
+{
+    const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(location.imageUrl());
+    if (!normalizedUrl.has_value()) {
+        return std::nullopt;
+    }
+
+    const auto cached = findCachedImage(*normalizedUrl, location.openedCollectionScope());
+    if (cached == m_images.cend()) {
+        return std::nullopt;
+    }
+
+    return PredecodedImage { cached->staticImage,
+        DisplayedImageLocation::fromUrl(cached->url, cached->openedCollectionScope) };
+}
+
 void PredecodeCache::cacheImage(const QUrl &url,
     const OpenedCollectionScopeLocation &openedCollectionScope, StaticImagePayload staticImage)
 {
@@ -209,7 +226,7 @@ void PredecodeCache::cacheImage(const QUrl &url,
         return;
     }
 
-    removeCachedImage(*normalizedUrl);
+    removeCachedImage(*normalizedUrl, openedCollectionScope);
     m_images.push_back(
         CachedImage { *normalizedUrl, openedCollectionScope, std::move(staticImage), *byteCost });
     qCDebug(kiriviewPredecodeLog) << "predecode cache stored"
@@ -250,9 +267,32 @@ PredecodeCache::ConstCachedImageIterator PredecodeCache::findCachedImage(
         [&normalizedUrl](const CachedImage &entry) { return entry.url == normalizedUrl; });
 }
 
-void PredecodeCache::removeCachedImage(const QUrl &normalizedUrl)
+PredecodeCache::CachedImageIterator PredecodeCache::findCachedImage(
+    const QUrl &normalizedUrl, const OpenedCollectionScopeLocation &openedCollectionScope)
 {
-    const auto cached = findCachedImage(normalizedUrl);
+    return std::find_if(m_images.begin(), m_images.end(),
+        [&normalizedUrl, &openedCollectionScope](const CachedImage &entry) {
+            return entry.url == normalizedUrl
+                && sameOpenedCollectionScopeLocation(
+                    entry.openedCollectionScope, openedCollectionScope);
+        });
+}
+
+PredecodeCache::ConstCachedImageIterator PredecodeCache::findCachedImage(
+    const QUrl &normalizedUrl, const OpenedCollectionScopeLocation &openedCollectionScope) const
+{
+    return std::find_if(m_images.cbegin(), m_images.cend(),
+        [&normalizedUrl, &openedCollectionScope](const CachedImage &entry) {
+            return entry.url == normalizedUrl
+                && sameOpenedCollectionScopeLocation(
+                    entry.openedCollectionScope, openedCollectionScope);
+        });
+}
+
+void PredecodeCache::removeCachedImage(
+    const QUrl &normalizedUrl, const OpenedCollectionScopeLocation &openedCollectionScope)
+{
+    const auto cached = findCachedImage(normalizedUrl, openedCollectionScope);
     if (cached != m_images.end()) {
         m_images.erase(cached);
     }

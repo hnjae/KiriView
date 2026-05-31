@@ -82,7 +82,9 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_videoDocument(std::move(videoDocument))
     , m_state(std::move(changeCallback))
     , m_activeNavigationThumbnailModel(std::make_unique<ActiveNavigationThumbnailModel>(owner))
-    , m_directMediaNavigationRuntime(std::move(dependencies.directMediaNavigationCandidateProvider))
+    , m_directMediaNavigationRuntime(dependencies.directMediaNavigationCandidateProvider)
+    , m_directMediaDeletionCandidateRuntime(
+          std::move(dependencies.directMediaNavigationCandidateProvider))
     , m_mediaDeletionRuntime(std::move(dependencies.fileDeletionProvider))
     , m_mediaOpenWithProvider(
           mediaOpenWithProviderWithDefault(std::move(dependencies.mediaOpenWithProvider)))
@@ -99,6 +101,7 @@ DocumentSessionRuntime::~DocumentSessionRuntime()
         QObject::disconnect(connection);
     }
     m_directMediaNavigationRuntime.cancel();
+    m_directMediaDeletionCandidateRuntime.cancel();
     m_mediaDeletionRuntime.cancel();
     m_mediaOpenWithJob.cancel();
 }
@@ -705,7 +708,7 @@ void DocumentSessionRuntime::refreshDirectMediaNavigation()
 void DocumentSessionRuntime::loadDirectMediaNavigationCandidates(
     DocumentSessionDirectMediaNavigationRuntime::CandidatesCallback callback)
 {
-    m_directMediaNavigationRuntime.loadCandidates(
+    m_directMediaDeletionCandidateRuntime.loadCandidates(
         m_owner, directMediaNavigationLoadScope(),
         [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
         std::move(callback));
@@ -821,6 +824,7 @@ void DocumentSessionRuntime::cancelMediaDeletion()
     }
 
     m_mediaDeletionRuntime.cancel();
+    m_directMediaDeletionCandidateRuntime.cancel();
     m_state.setFileDeletionInProgress(false);
     recomputePublicProjection();
 }

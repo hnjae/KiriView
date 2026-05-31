@@ -61,16 +61,43 @@ void VideoDocumentRuntime::installMediaBackendCallbacks()
     m_mediaBackend->setCallbacks(VideoMediaBackendCallbacks {
         [this]() { updateStatusFromBackend(); },
         [this]() { updateErrorFromBackend(); },
-        [this]() { m_state.setDuration(m_mediaBackend->duration()); },
-        [this]() { m_state.setPosition(m_mediaBackend->position()); },
-        [this]() { m_state.setPlaying(m_mediaBackend->playing()); },
-        [this]() { m_state.setSeekable(m_mediaBackend->seekable()); },
         [this]() {
+            if (playbackCallbacksAccepted()) {
+                m_state.setDuration(m_mediaBackend->duration());
+            }
+        },
+        [this]() {
+            if (playbackCallbacksAccepted()) {
+                m_state.setPosition(m_mediaBackend->position());
+            }
+        },
+        [this]() {
+            if (playbackCallbacksAccepted()) {
+                m_state.setPlaying(m_mediaBackend->playing());
+            }
+        },
+        [this]() {
+            if (playbackCallbacksAccepted()) {
+                m_state.setSeekable(m_mediaBackend->seekable());
+            }
+        },
+        [this]() {
+            if (!playbackCallbacksAccepted()) {
+                return;
+            }
             m_state.setHasVideo(m_mediaBackend->hasVideo());
             updateZoomPercent();
         },
-        [this]() { m_state.setHasAudio(m_mediaBackend->hasAudio()); },
-        [this]() { m_state.setVideoSize(m_mediaBackend->videoSize()); },
+        [this]() {
+            if (playbackCallbacksAccepted()) {
+                m_state.setHasAudio(m_mediaBackend->hasAudio());
+            }
+        },
+        [this]() {
+            if (playbackCallbacksAccepted()) {
+                m_state.setVideoSize(m_mediaBackend->videoSize());
+            }
+        },
         [this]() { m_state.setMuted(m_mediaBackend->muted()); },
         {},
     });
@@ -282,6 +309,7 @@ void VideoDocumentRuntime::executeSourceLoadOperation(const VideoSourceLoadOpera
 
 void VideoDocumentRuntime::executeSourceLoadOperation(const ClearVideoPlaybackSourceOperation &)
 {
+    invalidatePlaybackCallbacks();
     clearPlaybackSource();
 }
 
@@ -293,6 +321,7 @@ void VideoDocumentRuntime::executeSourceLoadOperation(const ResetClearedVideoSou
 void VideoDocumentRuntime::executeSourceLoadOperation(
     const ResetVideoSourceLoadOperation &operation)
 {
+    invalidatePlaybackCallbacks();
     m_state.resetForSourceLoad(operation.sourceUrl);
 }
 
@@ -311,6 +340,7 @@ void VideoDocumentRuntime::executeSourceLoadOperation(
 void VideoDocumentRuntime::applyResolvedPlaybackUrl(const QUrl &playbackUrl)
 {
     VideoMediaBackend *mediaBackend = ensureMediaBackend();
+    acceptPlaybackCallbacks();
     mediaBackend->setSource(playbackUrl);
     m_state.setVideoSize(mediaBackend->videoSize());
     updateStatusFromBackend();
@@ -319,13 +349,39 @@ void VideoDocumentRuntime::applyResolvedPlaybackUrl(const QUrl &playbackUrl)
 
 void VideoDocumentRuntime::publishSourceLoadFailure(const QUrl &, const QString &errorString)
 {
+    invalidatePlaybackCallbacks();
     m_state.setErrorString(errorString);
     m_state.setStatus(VideoDocumentStatus::Error);
     updateZoomPercent();
 }
 
+void VideoDocumentRuntime::invalidatePlaybackCallbacks()
+{
+    ++m_playbackGeneration;
+    m_acceptedPlaybackGeneration = 0;
+}
+
+void VideoDocumentRuntime::acceptPlaybackCallbacks()
+{
+    if (m_playbackGeneration == 0) {
+        m_playbackGeneration = 1;
+    }
+    m_acceptedPlaybackGeneration = m_playbackGeneration;
+}
+
+bool VideoDocumentRuntime::playbackCallbacksAccepted() const
+{
+    return m_playbackGeneration == 0
+        || (m_acceptedPlaybackGeneration != 0
+            && m_acceptedPlaybackGeneration == m_playbackGeneration);
+}
+
 void VideoDocumentRuntime::updateStatusFromBackend()
 {
+    if (!playbackCallbacksAccepted()) {
+        return;
+    }
+
     const VideoDocumentStatusPlan plan = videoDocumentStatusPlan(VideoDocumentStatusSnapshot {
         m_state.sourceUrl().isEmpty(),
         m_sourceLoadRuntime.active(),
@@ -342,7 +398,7 @@ void VideoDocumentRuntime::updateStatusFromBackend()
 
 void VideoDocumentRuntime::updateErrorFromBackend()
 {
-    if (m_mediaBackend == nullptr) {
+    if (m_mediaBackend == nullptr || !playbackCallbacksAccepted()) {
         return;
     }
 

@@ -26,6 +26,7 @@ private Q_SLOTS:
     void staleResolverCompletionsAreIgnored();
     void resolverCleanupRunsOnSourceChangeAndDestruction();
     void videoSizeFollowsBackendMetadata();
+    void staleBackendCallbacksAfterSourceChangeAreIgnored();
     void mutedStateDispatchesBackendAndPersistsAcrossSourceChanges();
     void playbackControlsDispatchBackendOperations();
     void naturalPlaybackEndKeepsPresentationReadyWithoutBackendStop();
@@ -430,6 +431,41 @@ void TestVideoDocumentRuntime::videoSizeFollowsBackendMetadata()
 
     fixture.backend->emitVideoSize(QSize());
     QCOMPARE(fixture.runtime->videoSize(), QSize());
+}
+
+void TestVideoDocumentRuntime::staleBackendCallbacksAfterSourceChangeAreIgnored()
+{
+    RuntimeFixture fixture;
+    const QUrl firstSourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/first.mp4"));
+    const QUrl secondSourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/second.mp4"));
+
+    fixture.runtime->setSourceUrl(firstSourceUrl);
+    fixture.resolveLatest(firstSourceUrl);
+    fixture.backend->emitStatus(KiriView::VideoMediaStatus::Buffered);
+    fixture.backend->emitDuration(10000);
+    fixture.backend->emitVideoSize(QSize(1920, 1080));
+
+    QCOMPARE(fixture.runtime->status(), KiriView::VideoDocumentStatus::Ready);
+    QCOMPARE(fixture.runtime->duration(), 10000);
+    QCOMPARE(fixture.runtime->videoSize(), QSize(1920, 1080));
+
+    fixture.runtime->setSourceUrl(secondSourceUrl);
+    QCOMPARE(fixture.runtime->status(), KiriView::VideoDocumentStatus::Loading);
+    QCOMPARE(fixture.runtime->duration(), 0);
+    QCOMPARE(fixture.runtime->videoSize(), QSize());
+
+    fixture.backend->emitStatus(KiriView::VideoMediaStatus::Buffered);
+    fixture.backend->emitDuration(50000);
+    fixture.backend->emitVideoSize(QSize(3840, 2160));
+
+    QCOMPARE(fixture.runtime->sourceUrl(), secondSourceUrl);
+    QCOMPARE(fixture.runtime->status(), KiriView::VideoDocumentStatus::Loading);
+    QCOMPARE(fixture.runtime->duration(), 0);
+    QCOMPARE(fixture.runtime->videoSize(), QSize());
+
+    fixture.resolveLatest(secondSourceUrl);
+    fixture.backend->emitStatus(KiriView::VideoMediaStatus::Buffered);
+    QCOMPARE(fixture.runtime->status(), KiriView::VideoDocumentStatus::Ready);
 }
 
 void TestVideoDocumentRuntime::mutedStateDispatchesBackendAndPersistsAcrossSourceChanges()

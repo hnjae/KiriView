@@ -42,6 +42,7 @@ public:
     bool hasImage(const QUrl &url) const;
     bool isInFlight(const QUrl &url, const PredecodeActiveLoads &activeLoads) const;
     std::optional<PredecodedImage> findImage(const QUrl &url) const;
+    std::optional<PredecodedImage> findImage(const DisplayedImageLocation &location) const;
     void cacheImage(const QUrl &url, const OpenedCollectionScopeLocation &openedCollectionScope,
         StaticImagePayload staticImage);
     void cacheDisplayedImage(bool cacheable, const QUrl &url,
@@ -60,7 +61,12 @@ private:
     static bool containsUrl(const std::vector<QUrl> &urls, const QUrl &url);
     CachedImageIterator findCachedImage(const QUrl &normalizedUrl);
     ConstCachedImageIterator findCachedImage(const QUrl &normalizedUrl) const;
-    void removeCachedImage(const QUrl &normalizedUrl);
+    CachedImageIterator findCachedImage(
+        const QUrl &normalizedUrl, const OpenedCollectionScopeLocation &openedCollectionScope);
+    ConstCachedImageIterator findCachedImage(const QUrl &normalizedUrl,
+        const OpenedCollectionScopeLocation &openedCollectionScope) const;
+    void removeCachedImage(
+        const QUrl &normalizedUrl, const OpenedCollectionScopeLocation &openedCollectionScope);
     std::size_t windowPriority(const QUrl &normalizedUrl) const;
     void trimImagesToWindow();
 

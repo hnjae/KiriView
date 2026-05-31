@@ -87,6 +87,9 @@ private:
     void clearPlaybackSource();
     void applyResolvedPlaybackUrl(const QUrl &playbackUrl);
     void publishSourceLoadFailure(const QUrl &sourceUrl, const QString &errorString);
+    void invalidatePlaybackCallbacks();
+    void acceptPlaybackCallbacks();
+    bool playbackCallbacksAccepted() const;
     void updateStatusFromBackend();
     void updateErrorFromBackend();
     void updateZoomPercent();
@@ -98,6 +101,8 @@ private:
     MediaBackendFactory m_mediaBackendFactory;
     VideoSourceLoadRuntime m_sourceLoadRuntime;
     VideoOutputRuntime m_outputRuntime;
+    quint64 m_playbackGeneration = 0;
+    quint64 m_acceptedPlaybackGeneration = 0;
 };
 }
 

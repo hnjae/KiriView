@@ -182,6 +182,9 @@ bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
     if (!predecoded.has_value()) {
         return false;
     }
+    if (predecoded->location != session.location()) {
+        return false;
+    }
 
     std::optional<ImageLoadSession> predecodedSession
         = m_sessionTracker.claimPredecodedImage(session, predecoded->location);

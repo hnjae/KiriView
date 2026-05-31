@@ -144,6 +144,7 @@ private:
     DocumentSessionState m_state;
     std::unique_ptr<ActiveNavigationThumbnailModel> m_activeNavigationThumbnailModel;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
+    DocumentSessionDirectMediaNavigationRuntime m_directMediaDeletionCandidateRuntime;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
     MediaOpenWithProvider m_mediaOpenWithProvider;
     ImageIoJob m_mediaOpenWithJob;

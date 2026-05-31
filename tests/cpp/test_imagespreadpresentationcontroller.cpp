@@ -40,7 +40,7 @@ KiriView::ImageCacheBudgets testCacheBudgets()
 KiriView::OpenedCollectionScopeLocation openedCollectionScope()
 {
     return KiriView::OpenedCollectionScopeLocation::fromUrls(
-        localUrl(QStringLiteral("/books/book.cbz")), localUrl(QStringLiteral("/books/book.cbz/")),
+        localUrl(QStringLiteral("/books/book.cbz")), localUrl(QStringLiteral("/books/")),
         KiriView::OpenedCollectionScopeKind::ComicBookArchive);
 }
 

@@ -61,6 +61,7 @@ private Q_SLOTS:
     void takeNextRequestDiscardsSkippedQueuePrefix();
     void cacheEligibilityUsesByteBudgetPolicy();
     void cacheStoresAndFindsWindowImages();
+    void cacheFindsImagesByUrlAndOpenedCollectionScope();
     void cacheRetainsDisplayedImagesBeforeAdjacentImages();
     void cacheRetainsRecentDisplayedImagesBeforeAdjacentImages();
     void cacheKeepsOnlyFourRecentDisplayedImages();
@@ -171,6 +172,35 @@ void TestPredecodeCache::cacheStoresAndFindsWindowImages()
     QCOMPARE(found->location.imageUrl(), url);
     QCOMPARE(found->location.openedCollectionScopeRootUrl(), openedCollectionScope.rootUrl());
     QCOMPARE(found->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
+}
+
+void TestPredecodeCache::cacheFindsImagesByUrlAndOpenedCollectionScope()
+{
+    KiriView::PredecodeCache cache(160);
+    const QUrl url = indexedImageUrl(0);
+    const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+        = comicBookArchiveCollection();
+    const KiriView::DisplayedImageLocation directLocation
+        = KiriView::DisplayedImageLocation::fromUrl(url);
+    const KiriView::DisplayedImageLocation openedCollectionLocation
+        = KiriView::DisplayedImageLocation::fromOpenedCollectionScope(url, openedCollectionScope);
+
+    cache.setWindowUrls({ url });
+    cache.cacheImage(url, KiriView::OpenedCollectionScopeLocation::none(),
+        staticTestImagePayload(cacheImage(), KiriView::StaticImageDisplayHints { 0.25 }));
+    cache.cacheImage(url, openedCollectionScope,
+        staticTestImagePayload(cacheImage(), KiriView::StaticImageDisplayHints { 0.75 }));
+
+    const std::optional<KiriView::PredecodedImage> direct = cache.findImage(directLocation);
+    QVERIFY(direct.has_value());
+    QVERIFY(direct->location == directLocation);
+    QCOMPARE(direct->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.25);
+
+    const std::optional<KiriView::PredecodedImage> openedCollection
+        = cache.findImage(openedCollectionLocation);
+    QVERIFY(openedCollection.has_value());
+    QVERIFY(openedCollection->location == openedCollectionLocation);
+    QCOMPARE(openedCollection->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.75);
 }
 
 void TestPredecodeCache::cacheRetainsDisplayedImagesBeforeAdjacentImages()

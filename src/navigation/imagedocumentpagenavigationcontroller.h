@@ -66,6 +66,8 @@ private:
     ImageIoJob m_navigationListerJob;
     ImageIoJob m_refreshListerJob;
     ImageIoJob m_changesJob;
+    quint64 m_nextNavigationOperationId = 1;
+    quint64 m_activeNavigationOperationId = 0;
 };
 }
 
