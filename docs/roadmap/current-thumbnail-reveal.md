@@ -15,9 +15,9 @@ This roadmap tracks the thumbnail panel behavior for keeping the current media d
 
 - [x] Main media selection changes when users activate an item from the thumbnail panel.
 - [x] Thumbnail selection changes when the current media changes in the main media view.
-- [ ] Document the first user-visible reveal behavior in `docs/spec/navigation.md` before implementation.
-- [ ] Add focused regression coverage for basic reveal behavior.
-- [ ] Implement basic current-thumbnail reveal.
+- [x] Document the first user-visible reveal behavior in `docs/spec/navigation.md` before implementation.
+- [x] Add focused regression coverage for basic reveal behavior.
+- [x] Implement basic current-thumbnail reveal.
 - [ ] Track the origin of current-media changes.
 - [ ] Add safe-zone based thumbnail following.
 - [ ] Add direction-aware positioning.
