@@ -87,6 +87,27 @@ KiriDocumentSession::ActiveNavigationRequestResult fromRuntimeRequestOutcome(
     return KiriDocumentSession::ActiveNavigationRequestResult::NoActiveNavigationRequestResult;
 }
 
+KiriDocumentSession::ActiveNavigationRevealIntent fromRuntimeRevealIntent(
+    KiriView::ActiveNavigationRevealIntent intent)
+{
+    switch (intent) {
+    case KiriView::ActiveNavigationRevealIntent::None:
+        return KiriDocumentSession::ActiveNavigationRevealIntent::None;
+    case KiriView::ActiveNavigationRevealIntent::ThumbnailActivation:
+        return KiriDocumentSession::ActiveNavigationRevealIntent::ThumbnailActivation;
+    case KiriView::ActiveNavigationRevealIntent::AdjacentNavigation:
+        return KiriDocumentSession::ActiveNavigationRevealIntent::AdjacentNavigation;
+    case KiriView::ActiveNavigationRevealIntent::LargeJump:
+        return KiriDocumentSession::ActiveNavigationRevealIntent::LargeJump;
+    case KiriView::ActiveNavigationRevealIntent::LoadOrOpen:
+        return KiriDocumentSession::ActiveNavigationRevealIntent::LoadOrOpen;
+    case KiriView::ActiveNavigationRevealIntent::ProgrammaticSync:
+        return KiriDocumentSession::ActiveNavigationRevealIntent::ProgrammaticSync;
+    }
+
+    return KiriDocumentSession::ActiveNavigationRevealIntent::None;
+}
+
 template <typename Document, typename Signal>
 KiriView::DocumentSessionDocumentSignalConnector documentSignalConnector(
     Document &document, Signal signal)
@@ -235,6 +256,8 @@ KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
     operations.activeZoomReadoutChanged
         = [&session]() { Q_EMIT session.activeZoomReadoutChanged(); };
     operations.activeNavigationChanged = [&session]() { Q_EMIT session.activeNavigationChanged(); };
+    operations.activeNavigationRevealIntentChanged
+        = [&session]() { Q_EMIT session.activeNavigationRevealIntentChanged(); };
     return operations;
 }
 }
@@ -375,6 +398,12 @@ KiriDocumentSession::activeNavigationBoundaryScope() const
     return fromRuntimeBoundaryScope(m_runtime->activeNavigationBoundaryScope());
 }
 
+KiriDocumentSession::ActiveNavigationRevealIntent
+KiriDocumentSession::activeNavigationRevealIntent() const
+{
+    return fromRuntimeRevealIntent(m_runtime->activeNavigationRevealIntent());
+}
+
 QAbstractListModel *KiriDocumentSession::activeNavigationThumbnailModel() const
 {
     return m_runtime->activeNavigationThumbnailModel();
@@ -403,6 +432,11 @@ void KiriDocumentSession::openLastActiveNavigation() { m_runtime->openLastActive
 void KiriDocumentSession::openActiveNavigationAtNumber(int number)
 {
     m_runtime->openActiveNavigationAtNumber(number);
+}
+
+void KiriDocumentSession::openActiveNavigationThumbnailAtNumber(int number)
+{
+    m_runtime->openActiveNavigationThumbnailAtNumber(number);
 }
 
 KiriDocumentSession::ActiveNavigationRequestResult

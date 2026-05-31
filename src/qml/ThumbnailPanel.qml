@@ -76,6 +76,19 @@ Controls.Pane {
                 positionViewAtIndex(currentIndex, ListView.Contain);
             }
 
+            function containCurrentItemForNavigationIntent(forceImmediate) {
+                switch (root.documentSession.activeNavigationRevealIntent) {
+                case KiriDocumentSession.AdjacentNavigation:
+                case KiriDocumentSession.LargeJump:
+                case KiriDocumentSession.LoadOrOpen:
+                    containCurrentItem(forceImmediate);
+                    return;
+                default:
+                    automaticScrollAnimationEnabled = false;
+                    return;
+                }
+            }
+
             function containmentDeltaForCurrentItem() {
                 if (width <= 0 || contentWidth <= 0 || delegateWidth <= 0) {
                     return 0;
@@ -124,7 +137,7 @@ Controls.Pane {
             }
 
             onCountChanged: containCurrentItem(true)
-            onCurrentIndexChanged: containCurrentItem(currentIndexChangedRapidly())
+            onCurrentIndexChanged: containCurrentItemForNavigationIntent(currentIndexChangedRapidly())
             onWidthChanged: containCurrentItem(true)
 
             Behavior on contentX {
@@ -222,7 +235,7 @@ Controls.Pane {
                     }
                 }
 
-                onClicked: root.documentSession.openActiveNavigationAtNumber(number)
+                onClicked: root.documentSession.openActiveNavigationThumbnailAtNumber(number)
             }
         }
 

@@ -65,6 +65,8 @@ class KiriDocumentSession : public QObject
             activeNavigationChanged)
     Q_PROPERTY(ActiveNavigationBoundaryScope activeNavigationBoundaryScope READ
             activeNavigationBoundaryScope NOTIFY activeNavigationChanged)
+    Q_PROPERTY(ActiveNavigationRevealIntent activeNavigationRevealIntent READ
+            activeNavigationRevealIntent NOTIFY activeNavigationRevealIntentChanged)
     Q_PROPERTY(QAbstractListModel *activeNavigationThumbnailModel READ
             activeNavigationThumbnailModel CONSTANT)
     Q_PROPERTY(KiriMediaInformation *mediaInformation READ mediaInformation CONSTANT)
@@ -100,6 +102,16 @@ public:
     };
     Q_ENUM(ActiveNavigationRequestResult)
 
+    enum class ActiveNavigationRevealIntent {
+        None,
+        ThumbnailActivation,
+        AdjacentNavigation,
+        LargeJump,
+        LoadOrOpen,
+        ProgrammaticSync,
+    };
+    Q_ENUM(ActiveNavigationRevealIntent)
+
     explicit KiriDocumentSession(QObject *parent = nullptr);
     explicit KiriDocumentSession(
         KiriView::KiriDocumentSessionDependencies dependencies, QObject *parent = nullptr);
@@ -128,6 +140,7 @@ public:
     bool atKnownFirstActiveNavigation() const;
     bool atKnownLastActiveNavigation() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
+    ActiveNavigationRevealIntent activeNavigationRevealIntent() const;
     QAbstractListModel *activeNavigationThumbnailModel() const;
     KiriMediaInformation *mediaInformation() const;
     KiriImageDocument *imageDocument() const;
@@ -138,6 +151,7 @@ public:
     Q_INVOKABLE void openFirstActiveNavigation();
     Q_INVOKABLE void openLastActiveNavigation();
     Q_INVOKABLE void openActiveNavigationAtNumber(int number);
+    Q_INVOKABLE void openActiveNavigationThumbnailAtNumber(int number);
     Q_INVOKABLE KiriDocumentSession::ActiveNavigationRequestResult
     requestPreviousActiveNavigation();
     Q_INVOKABLE KiriDocumentSession::ActiveNavigationRequestResult requestNextActiveNavigation();
@@ -156,6 +170,7 @@ Q_SIGNALS:
     void fileDeletionInProgressChanged();
     void activeZoomReadoutChanged();
     void activeNavigationChanged();
+    void activeNavigationRevealIntentChanged();
     void openWithFailed(const QString &errorString);
 
 private:

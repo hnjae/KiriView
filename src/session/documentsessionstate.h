@@ -32,6 +32,7 @@ public:
     bool directMediaNavigationKnown() const;
     const std::vector<DirectMediaNavigationCandidate> &directMediaNavigationCandidates() const;
     const ActiveNavigationSnapshot &activeNavigationSnapshot() const;
+    ActiveNavigationRevealIntent activeNavigationRevealIntent() const;
     ActiveNavigationSourceKind activeNavigationSourceKind() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     bool displayedMediaOpenWithAvailable() const;
@@ -47,6 +48,7 @@ public:
         DocumentSessionKind kind, ActiveZoomSnapshot activeZoomSnapshot);
     void setFileDeletionInProgress(bool inProgress);
     void setActiveZoomSnapshot(ActiveZoomSnapshot snapshot);
+    void setActiveNavigationRevealIntent(ActiveNavigationRevealIntent intent);
     void setDirectMediaNavigation(DirectMediaNavigationBoundaryState state, bool known,
         std::vector<DirectMediaNavigationCandidate> candidates);
     bool updatePublicProjection(DocumentSessionPublicProjectionInput input);
@@ -73,6 +75,8 @@ private:
     std::vector<DirectMediaNavigationCandidate> m_directMediaNavigationCandidates;
     DocumentSessionPublicProjection m_publicProjection;
     ActiveZoomSnapshot m_activeZoomSnapshot;
+    ActiveNavigationRevealIntent m_activeNavigationRevealIntent
+        = ActiveNavigationRevealIntent::None;
     bool m_directMediaNavigationKnown = false;
     bool m_fileDeletionInProgress = false;
     QString m_sourceErrorString;

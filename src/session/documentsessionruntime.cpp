@@ -224,6 +224,11 @@ ActiveNavigationBoundaryScope DocumentSessionRuntime::activeNavigationBoundarySc
     return m_state.activeNavigationBoundaryScope();
 }
 
+ActiveNavigationRevealIntent DocumentSessionRuntime::activeNavigationRevealIntent() const
+{
+    return m_state.activeNavigationRevealIntent();
+}
+
 QAbstractListModel *DocumentSessionRuntime::activeNavigationThumbnailModel() const
 {
     return m_activeNavigationThumbnailModel.get();
@@ -268,36 +273,84 @@ void DocumentSessionRuntime::openNextActiveNavigation() { requestNextActiveNavig
 
 void DocumentSessionRuntime::openFirstActiveNavigation()
 {
-    executeActiveNavigationDispatchRequest(firstActiveNavigationDispatchRequest());
+    executeActiveNavigationDispatchRequest(
+        firstActiveNavigationDispatchRequest(), ActiveNavigationRevealIntent::LargeJump);
 }
 
 void DocumentSessionRuntime::openLastActiveNavigation()
 {
-    executeActiveNavigationDispatchRequest(lastActiveNavigationDispatchRequest());
+    executeActiveNavigationDispatchRequest(
+        lastActiveNavigationDispatchRequest(), ActiveNavigationRevealIntent::LargeJump);
 }
 
 void DocumentSessionRuntime::openActiveNavigationAtNumber(int number)
 {
-    executeActiveNavigationDispatchRequest(numberedActiveNavigationDispatchRequest(number));
+    executeActiveNavigationDispatchRequest(
+        numberedActiveNavigationDispatchRequest(number), ActiveNavigationRevealIntent::LargeJump);
+}
+
+void DocumentSessionRuntime::openActiveNavigationThumbnailAtNumber(int number)
+{
+    executeActiveNavigationDispatchRequest(numberedActiveNavigationDispatchRequest(number),
+        ActiveNavigationRevealIntent::ThumbnailActivation);
 }
 
 ActiveNavigationDispatchOutcome DocumentSessionRuntime::requestPreviousActiveNavigation()
 {
-    return executeActiveNavigationDispatchRequest(previousActiveNavigationDispatchRequest());
+    return executeActiveNavigationDispatchRequest(previousActiveNavigationDispatchRequest(),
+        ActiveNavigationRevealIntent::AdjacentNavigation);
 }
 
 ActiveNavigationDispatchOutcome DocumentSessionRuntime::requestNextActiveNavigation()
 {
-    return executeActiveNavigationDispatchRequest(nextActiveNavigationDispatchRequest());
+    return executeActiveNavigationDispatchRequest(
+        nextActiveNavigationDispatchRequest(), ActiveNavigationRevealIntent::AdjacentNavigation);
 }
 
 ActiveNavigationDispatchOutcome DocumentSessionRuntime::executeActiveNavigationDispatchRequest(
-    ActiveNavigationDispatchRequest request)
+    ActiveNavigationDispatchRequest request, ActiveNavigationRevealIntent intent)
 {
     const ActiveNavigationDispatchPlan plan = activeNavigationDispatchPlan(
         m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(), request);
+    if (plan.shouldDispatch()) {
+        setPendingActiveNavigationRevealIntent(intent);
+    } else {
+        m_pendingActiveNavigationRevealIntent = ActiveNavigationRevealIntent::None;
+        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::None);
+    }
     executeActiveNavigationDispatchPlan(plan);
     return plan.outcome;
+}
+
+void DocumentSessionRuntime::setPendingActiveNavigationRevealIntent(
+    ActiveNavigationRevealIntent intent)
+{
+    m_pendingActiveNavigationRevealIntent = intent;
+    setActiveNavigationRevealIntent(intent);
+}
+
+ActiveNavigationRevealIntent DocumentSessionRuntime::takePendingActiveNavigationRevealIntent(
+    ActiveNavigationRevealIntent fallback)
+{
+    const ActiveNavigationRevealIntent intent
+        = m_pendingActiveNavigationRevealIntent == ActiveNavigationRevealIntent::None
+        ? fallback
+        : m_pendingActiveNavigationRevealIntent;
+    m_pendingActiveNavigationRevealIntent = ActiveNavigationRevealIntent::None;
+    return intent;
+}
+
+void DocumentSessionRuntime::setActiveNavigationRevealIntent(ActiveNavigationRevealIntent intent)
+{
+    m_state.setActiveNavigationRevealIntent(intent);
+}
+
+void DocumentSessionRuntime::clearActiveNavigationRevealIntentIfUnavailable()
+{
+    const ActiveNavigationSnapshot &snapshot = m_state.activeNavigationSnapshot();
+    if (!snapshot.available || !snapshot.known) {
+        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::None);
+    }
 }
 
 void DocumentSessionRuntime::executeActiveNavigationDispatchPlan(
@@ -388,6 +441,7 @@ void DocumentSessionRuntime::connectDocuments()
             if (directMediaScopeChanged || !directMediaNavigationActive()) {
                 refreshDirectMediaNavigation();
             }
+            setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::ProgrammaticSync);
             recomputePublicProjection();
         });
     appendConnection(m_documentConnections,
@@ -451,16 +505,20 @@ void DocumentSessionRuntime::recomputeActiveZoomReadoutForKind(DocumentSessionKi
 
 void DocumentSessionRuntime::publishActiveNavigationForImagePages()
 {
+    setActiveNavigationRevealIntent(
+        takePendingActiveNavigationRevealIntent(ActiveNavigationRevealIntent::ProgrammaticSync));
     if (m_state.updatePublicProjectionForSourceKind(
             publicProjectionInput(), ActiveNavigationSourceKind::ImageDocumentPages)) {
         syncActiveNavigationThumbnailRows();
     }
+    clearActiveNavigationRevealIntentIfUnavailable();
 }
 
 void DocumentSessionRuntime::recomputePublicProjection()
 {
     m_state.updatePublicProjection(publicProjectionInput());
     syncActiveNavigationThumbnailRows();
+    clearActiveNavigationRevealIntentIfUnavailable();
 }
 
 void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
@@ -482,6 +540,7 @@ void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
 {
+    setPendingActiveNavigationRevealIntent(ActiveNavigationRevealIntent::LoadOrOpen);
     const DocumentSessionRoutePlan plan
         = documentSessionRoutePlanForSourceUrl(sourceUrl, m_state.documentKind());
     qCDebug(kiriviewNavigationLog)
@@ -620,6 +679,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
         << "activeNavigationKnown" << m_state.activeNavigationSnapshot().known
         << "activeNavigationCurrent" << m_state.activeNavigationSnapshot().currentNumber
         << "activeNavigationCount" << m_state.activeNavigationSnapshot().count;
+    clearActiveNavigationRevealIntentIfUnavailable();
 }
 
 void DocumentSessionRuntime::leaveVideoMode()
@@ -688,6 +748,7 @@ void DocumentSessionRuntime::refreshDirectMediaNavigation()
                                        << "documentKind" << documentKindName(m_state.documentKind())
                                        << "cursorUrl" << activeDirectMediaCursorUrl();
         m_state.setDirectMediaNavigation({}, false, {});
+        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::ProgrammaticSync);
         recomputePublicProjection();
         if (!directImageLoadMayUseImageDocumentSourceScope()) {
             m_mediaPredecodeCoordinator->clear();
@@ -721,6 +782,7 @@ void DocumentSessionRuntime::finishDirectMediaNavigation(
         qCDebug(kiriviewNavigationLog) << "direct media navigation open failed"
                                        << "error" << result.errorString;
         m_state.setDirectMediaNavigation({}, false, {});
+        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::ProgrammaticSync);
         recomputePublicProjection();
         return;
     }
@@ -731,6 +793,17 @@ void DocumentSessionRuntime::finishDirectMediaNavigation(
         << "candidates" << result.candidates.size() << "currentNumber"
         << result.plan.boundaryState.currentNumber << "count" << result.plan.boundaryState.count
         << "targetUrl" << result.plan.targetUrl.value_or(QUrl());
+    const bool targetChangesMedia = result.plan.targetUrl.has_value()
+        && !sameNormalizedUrl(*result.plan.targetUrl, activeDirectMediaCursorUrl());
+    if (targetChangesMedia) {
+        const ActiveNavigationRevealIntent intent = takePendingActiveNavigationRevealIntent(
+            ActiveNavigationRevealIntent::ProgrammaticSync);
+        setActiveNavigationRevealIntent(intent);
+        m_pendingActiveNavigationRevealIntent = intent;
+    } else {
+        m_pendingActiveNavigationRevealIntent = ActiveNavigationRevealIntent::None;
+        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::None);
+    }
     recomputePublicProjection();
     scheduleMediaPredecode(result.candidates);
     if (result.plan.targetUrl.has_value()) {
@@ -745,10 +818,17 @@ void DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState(
         qCDebug(kiriviewNavigationLog) << "direct media navigation refresh failed"
                                        << "error" << result.errorString;
         m_state.setDirectMediaNavigation({}, false, {});
+        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::ProgrammaticSync);
         recomputePublicProjection();
         return;
     }
 
+    const ActiveNavigationSnapshot previousSnapshot = m_state.activeNavigationSnapshot();
+    const bool selectionChanged
+        = m_state.activeNavigationSourceKind() != ActiveNavigationSourceKind::OrdinaryDirectMedia
+        || !previousSnapshot.known
+        || previousSnapshot.currentNumber != result.boundaryState.currentNumber
+        || previousSnapshot.count != result.boundaryState.count;
     m_state.setDirectMediaNavigation(result.boundaryState, true, result.candidates);
     qCDebug(kiriviewNavigationLog)
         << "direct media navigation refresh finished"
@@ -756,6 +836,10 @@ void DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState(
         << result.boundaryState.currentNumber << "count" << result.boundaryState.count
         << "canPrevious" << result.boundaryState.canOpenPrevious << "canNext"
         << result.boundaryState.canOpenNext;
+    if (selectionChanged) {
+        setActiveNavigationRevealIntent(takePendingActiveNavigationRevealIntent(
+            ActiveNavigationRevealIntent::ProgrammaticSync));
+    }
     recomputePublicProjection();
     scheduleMediaPredecode(result.candidates);
 }

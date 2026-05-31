@@ -109,6 +109,11 @@ const ActiveNavigationSnapshot &DocumentSessionState::activeNavigationSnapshot()
     return m_publicProjection.activeNavigation;
 }
 
+ActiveNavigationRevealIntent DocumentSessionState::activeNavigationRevealIntent() const
+{
+    return m_activeNavigationRevealIntent;
+}
+
 ActiveNavigationSourceKind DocumentSessionState::activeNavigationSourceKind() const
 {
     return m_publicProjection.sourceKind;
@@ -198,6 +203,15 @@ void DocumentSessionState::setActiveZoomSnapshot(ActiveZoomSnapshot snapshot)
 
     m_activeZoomSnapshot = snapshot;
     publish(DocumentSessionChange::ActiveZoomReadout);
+}
+
+void DocumentSessionState::setActiveNavigationRevealIntent(ActiveNavigationRevealIntent intent)
+{
+    if (!replaceIfChanged(m_activeNavigationRevealIntent, intent)) {
+        return;
+    }
+
+    publish(DocumentSessionChange::ActiveNavigationRevealIntent);
 }
 
 void DocumentSessionState::setDirectMediaNavigation(DirectMediaNavigationBoundaryState state,

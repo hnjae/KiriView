@@ -74,6 +74,7 @@ public:
     bool atKnownFirstActiveNavigation() const;
     bool atKnownLastActiveNavigation() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
+    ActiveNavigationRevealIntent activeNavigationRevealIntent() const;
     QAbstractListModel *activeNavigationThumbnailModel() const;
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
@@ -82,6 +83,7 @@ public:
     void openFirstActiveNavigation();
     void openLastActiveNavigation();
     void openActiveNavigationAtNumber(int number);
+    void openActiveNavigationThumbnailAtNumber(int number);
     ActiveNavigationDispatchOutcome requestPreviousActiveNavigation();
     ActiveNavigationDispatchOutcome requestNextActiveNavigation();
     void deleteDisplayedFile(FileDeletionMode mode);
@@ -89,8 +91,13 @@ public:
 
 private:
     ActiveNavigationDispatchOutcome executeActiveNavigationDispatchRequest(
-        ActiveNavigationDispatchRequest request);
+        ActiveNavigationDispatchRequest request, ActiveNavigationRevealIntent intent);
     void executeActiveNavigationDispatchPlan(const ActiveNavigationDispatchPlan &plan);
+    void setPendingActiveNavigationRevealIntent(ActiveNavigationRevealIntent intent);
+    ActiveNavigationRevealIntent takePendingActiveNavigationRevealIntent(
+        ActiveNavigationRevealIntent fallback);
+    void setActiveNavigationRevealIntent(ActiveNavigationRevealIntent intent);
+    void clearActiveNavigationRevealIntentIfUnavailable();
     void connectDocuments();
     void syncImageDocumentFileDeletionProgress();
     void setDocumentKind(DocumentSessionKind kind);
@@ -150,6 +157,8 @@ private:
     ImageIoJob m_mediaOpenWithJob;
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
     std::vector<QMetaObject::Connection> m_documentConnections;
+    ActiveNavigationRevealIntent m_pendingActiveNavigationRevealIntent
+        = ActiveNavigationRevealIntent::None;
     bool m_routingSource = false;
 };
 }

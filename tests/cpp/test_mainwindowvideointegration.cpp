@@ -336,7 +336,13 @@ void TestMainWindowVideoIntegration::thumbnailPanelUsesSessionThumbnailModel()
         QStringLiteral("positionViewAtIndex(currentIndex, ListView.Contain)")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("onCountChanged: containCurrentItem(true)")));
     QVERIFY(thumbnailPanelQml.contains(
-        QStringLiteral("onCurrentIndexChanged: containCurrentItem(currentIndexChangedRapidly())")));
+        QStringLiteral("onCurrentIndexChanged: "
+                       "containCurrentItemForNavigationIntent(currentIndexChangedRapidly())")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("root.documentSession.activeNavigationRevealIntent")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("KiriDocumentSession.AdjacentNavigation")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("KiriDocumentSession.LargeJump")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("KiriDocumentSession.LoadOrOpen")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("onVisibleChanged:")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("Behavior on contentX")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("NumberAnimation")));
@@ -368,7 +374,7 @@ void TestMainWindowVideoIntegration::thumbnailPanelUsesSessionThumbnailModel()
     QVERIFY(thumbnailPanelQml.contains(
         QStringLiteral("border.width: thumbnailDelegate.current ? 2 : 0")));
     QVERIFY(thumbnailPanelQml.contains(
-        QStringLiteral("root.documentSession.openActiveNavigationAtNumber(number)")));
+        QStringLiteral("root.documentSession.openActiveNavigationThumbnailAtNumber(number)")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("imageDocument.openImageAtPage")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("openNextMedia")));
     QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("openPreviousMedia")));

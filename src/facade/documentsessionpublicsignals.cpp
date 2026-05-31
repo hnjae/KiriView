@@ -60,6 +60,9 @@ void DocumentSessionPublicSignalEmitter::emitSignal(DocumentSessionPublicSignal 
     case DocumentSessionPublicSignal::ActiveNavigation:
         run(m_operations.activeNavigationChanged);
         return;
+    case DocumentSessionPublicSignal::ActiveNavigationRevealIntent:
+        run(m_operations.activeNavigationRevealIntentChanged);
+        return;
     }
 }
 
@@ -84,6 +87,8 @@ std::vector<DocumentSessionPublicSignal> documentSessionPublicSignals(DocumentSe
         return { DocumentSessionPublicSignal::FileDeletionInProgress };
     case DocumentSessionChange::ActiveNavigation:
         return { DocumentSessionPublicSignal::ActiveNavigation };
+    case DocumentSessionChange::ActiveNavigationRevealIntent:
+        return { DocumentSessionPublicSignal::ActiveNavigationRevealIntent };
     }
 
     return {};

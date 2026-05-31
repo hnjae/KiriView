@@ -26,6 +26,16 @@ enum class DocumentSessionChange {
     FileDeletionAvailability,
     FileDeletionInProgress,
     ActiveNavigation,
+    ActiveNavigationRevealIntent,
+};
+
+enum class ActiveNavigationRevealIntent {
+    None,
+    ThumbnailActivation,
+    AdjacentNavigation,
+    LargeJump,
+    LoadOrOpen,
+    ProgrammaticSync,
 };
 
 struct ActiveZoomSnapshot {
