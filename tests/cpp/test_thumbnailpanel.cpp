@@ -39,6 +39,8 @@ private Q_SLOTS:
     void adjacentMainNavigationFollowsLeadingSafeZone();
     void adjacentNextNavigationUsesPreferredZoneLeadingAnchor();
     void adjacentPreviousNavigationUsesPreferredZoneTrailingAnchor();
+    void rapidAdjacentNavigationUsesLatestRevealTarget();
+    void userThumbnailBrowsingSuppressesAdjacentPreferredZoneFollow();
     void largeJumpNavigationRevealsSelectedThumbnail();
     void visibleThumbnailClickDispatchesWithoutScrollMovement();
     void scrolledThumbnailClickDispatchesWithoutScrollMovement();
@@ -313,6 +315,12 @@ QQuickItem *thumbnailDelegateForNumber(QQuickItem &item, int number)
 
     return nullptr;
 }
+
+void noteUserThumbnailScroll(QQuickItem &thumbnailStrip)
+{
+    QVERIFY(QMetaObject::invokeMethod(
+        &thumbnailStrip, "noteUserThumbnailScroll", Qt::DirectConnection));
+}
 }
 
 void TestThumbnailPanel::initTestCase()
@@ -549,6 +557,74 @@ void TestThumbnailPanel::adjacentPreviousNavigationUsesPreferredZoneTrailingAnch
         qPrintable(QStringLiteral("selected thumbnail start is %1, trailing snap is %2")
                 .arg(currentThumbnailStartInViewport(*fixture.thumbnailStrip))
                 .arg(trailingSnap)));
+}
+
+void TestThumbnailPanel::rapidAdjacentNavigationUsesLatestRevealTarget()
+{
+    ThumbnailPanelFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 1, testImageCount),
+        "active navigation did not become ready");
+
+    fixture.documentSession->openActiveNavigationAtNumber(5);
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 5, testImageCount),
+        "large jump did not select the setup item");
+    QTRY_VERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+
+    const double setupPosition = itemStart(*fixture.thumbnailStrip, 4);
+    setContentX(*fixture.thumbnailStrip, setupPosition);
+    QVERIFY2(waitForContentX(*fixture.thumbnailStrip, setupPosition),
+        "thumbnail strip did not accept the setup scroll position");
+
+    QTest::qWait(220);
+    fixture.documentSession->openNextActiveNavigation();
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 6, testImageCount),
+        "first adjacent navigation did not select the next item");
+    fixture.documentSession->openNextActiveNavigation();
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 7, testImageCount),
+        "second adjacent navigation did not select the latest item");
+
+    const double expected = clampedContentXForSnapPosition(
+        *fixture.thumbnailStrip, 7, realProperty(*fixture.thumbnailStrip, "preferredZoneStart"));
+    QTRY_VERIFY2(waitForContentX(*fixture.thumbnailStrip, expected),
+        qPrintable(QStringLiteral("contentX is %1, expected latest target %2")
+                .arg(contentX(*fixture.thumbnailStrip))
+                .arg(expected)));
+    QVERIFY2(nearlyEqual(currentThumbnailStartInViewport(*fixture.thumbnailStrip),
+                 realProperty(*fixture.thumbnailStrip, "preferredZoneStart")),
+        qPrintable(QStringLiteral("selected thumbnail start is %1, preferred start is %2")
+                .arg(currentThumbnailStartInViewport(*fixture.thumbnailStrip))
+                .arg(realProperty(*fixture.thumbnailStrip, "preferredZoneStart"))));
+}
+
+void TestThumbnailPanel::userThumbnailBrowsingSuppressesAdjacentPreferredZoneFollow()
+{
+    ThumbnailPanelFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 1, testImageCount),
+        "active navigation did not become ready");
+
+    fixture.documentSession->openActiveNavigationAtNumber(5);
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 5, testImageCount),
+        "large jump did not select the setup item");
+    QTRY_VERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+
+    const double userBrowsePosition = itemStart(*fixture.thumbnailStrip, 4);
+    setContentX(*fixture.thumbnailStrip, userBrowsePosition);
+    QVERIFY2(waitForContentX(*fixture.thumbnailStrip, userBrowsePosition),
+        "thumbnail strip did not accept the user scroll position");
+    noteUserThumbnailScroll(*fixture.thumbnailStrip);
+
+    fixture.documentSession->openNextActiveNavigation();
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 6, testImageCount),
+        "adjacent navigation did not select the next item");
+    QTest::qWait(220);
+
+    QVERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+    QVERIFY2(nearlyEqual(contentX(*fixture.thumbnailStrip), userBrowsePosition),
+        qPrintable(QStringLiteral("contentX moved from %1 to %2")
+                .arg(userBrowsePosition)
+                .arg(contentX(*fixture.thumbnailStrip))));
 }
 
 void TestThumbnailPanel::largeJumpNavigationRevealsSelectedThumbnail()
