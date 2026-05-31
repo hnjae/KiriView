@@ -18,7 +18,7 @@ Video files do not participate in video-frame predecode, video-frame image cache
 
 In ordinary direct media URL scopes, showing a video must not clear or stop the background predecode/cache lifecycle for nearby supported image files. KiriView may keep and continue predecoding adjacent still images around the current video cursor, but it must not attempt to predecode the video itself.
 
-Archive-collection-internal video playback, directly opened directory-collection video playback, playlists, subtitles, track selection, metadata panels, frame stepping, and timeline preview thumbnails are out of scope.
+Archive-collection-internal video playback, directly opened directory-collection video playback, collection-internal video metadata, playlists, subtitles, track selection, frame stepping, and timeline preview thumbnails are out of scope.
 
 KiriView advertises direct video support through the desktop file for the MIME types that cover the MVP MP4, M4V, and MOV format list: `video/mp4` and `video/quicktime`.
 
@@ -29,6 +29,8 @@ KiriView may internally resolve a KIO-backed direct video URL to a local playbac
 Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent direct media navigation, deletion target, error context, and direct-media versus opened-collection routing decisions remain based on the original direct media URL.
 
 Resolver-local playback URLs are video-only. Opening a direct image after a direct video must route the image through the image document with the original image URL, not through the previous video playback URL or another KIOFuse local playback URL.
+
+Direct video embedded metadata is parsed from the resolved playback URL when it is local and from the original direct local URL otherwise. Parsed metadata may populate the Info Panel while keeping the original direct media URL as the user-facing source identity.
 
 Opening a video after an image must not route the video through `KiriImageDocument`.
 

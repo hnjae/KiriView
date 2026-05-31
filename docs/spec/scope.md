@@ -8,4 +8,4 @@ KiriView does not expose a general Settings page in the current scope.
 
 ## Out of Scope
 
-Editing, populated metadata panels, archive-collection video playback, directory-collection video playback, recursive directory video playback, playlists, subtitles, track selection, frame stepping, generated timeline thumbnails, and generated image or video preview thumbnails are out of scope for the current version.
+Editing, filesystem indexer metadata, reverse geocoding, map lookup, archive-collection video playback, directory-collection video playback, collection-internal video metadata, recursive directory video playback, playlists, subtitles, track selection, frame stepping, generated timeline thumbnails, and generated image or video preview thumbnails are out of scope for the current version.

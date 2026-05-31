@@ -192,15 +192,21 @@ The Info Panel header shows an information icon, the title `Information`, and a 
 
 When no media item is available, the Info Panel shows an unavailable state rather than stale media details.
 
-When a media item is available, the Info Panel shows the current file name, a summary line, General and media-specific metadata sections, and a Camera section only when camera metadata rows are available.
+When a media item is available, the Info Panel shows the current file name, a summary line, General and media-specific metadata sections, a Camera section only when camera metadata rows are available, and an Advanced Metadata section only when additional parsed metadata rows are available.
 
-The General section includes dummy placeholder metadata for type, file size, modified date, and path until real metadata extraction is implemented.
+The General section shows available non-placeholder file identity rows such as type and path.
 
-The Image section uses the current image dimensions when they are known and otherwise shows placeholder image metadata including color space and bit depth.
+The Image section uses the current image dimensions when they are known and omits unavailable rows.
 
-The Video section uses the current video frame dimensions when they are known and otherwise shows placeholder video metadata including color space and bit depth.
+The Video section uses the current video frame dimensions when they are known. It may also show embedded video metadata such as duration and frame size when available, and omits unavailable rows.
 
-The Camera section shows sample EXIF placeholder rows while dummy metadata is active.
+For images, embedded metadata is parsed from the same backend-provided bytes used for image decoding, so direct files, directory collections, and archive collections follow their owning source backend.
+
+For direct videos, embedded metadata is parsed from the resolved playback or local file path. Collection-internal video metadata is not shown while those videos remain unsupported placeholders.
+
+The Camera section shows curated embedded metadata rows only when the values are available: Camera, Taken, Location, Lens, Exposure, ISO, Focal Length, and Software. Camera combines make and model when both exist. Location is shown as coordinates only.
+
+The Advanced Metadata section is collapsed by default and contains parsed embedded tags not already consumed by curated rows, excluding empty, binary, and unprintable values.
 
 The Info Panel provides icon buttons to copy the current file path and open the containing folder when those operations have a valid target for the current media item.
 
