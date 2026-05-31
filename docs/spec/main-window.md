@@ -20,7 +20,7 @@ When a video is displayed, image-only toolbar controls such as editable zoom and
 
 The trailing action toolbar shows as many trailing controls as fit and moves the rest into an overflow menu. When it runs out of horizontal space, KiriView keeps the zoom percentage visible the longest, then the Fit split button. The Fit split button shows its selected fit label when there is enough toolbar space and collapses to icon-only when space is constrained.
 
-Visible trailing toolbar controls align to a common vertical center and use consistent outer spacing between adjacent top-level controls. The Fit split button's primary button and menu button are rendered as one toolbar control with matching height and bottom edge.
+Visible trailing toolbar controls align to a common vertical center and use consistent outer spacing between adjacent top-level controls. The Fit split button's primary button and menu button are rendered as one toolbar control with matching height and bottom edge, with a slimmer menu affordance and a smaller internal gap than the gap between top-level toolbar controls.
 
 When full trailing toolbar controls fit and Right-to-Left Reading and Two-Page Spread are visible, they are text-beside-icon buttons with the toolbar labels `Right-to-Left` and `Two-Page Spread`. If the toolbar cannot fit the text-bearing controls, KiriView may collapse them to icon-only controls or move them into overflow according to Kirigami toolbar layout behavior.
 
