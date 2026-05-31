@@ -8,6 +8,8 @@ The document session owns the active navigation projection used by the toolbar r
 
 The document session also owns the active navigation thumbnail-strip projection. When the active navigation list is known, the strip exposes one item per supported active navigation item with the same ordering and 1-based numbering as the toolbar readout and page-number entry.
 
+The active navigation thumbnail strip keeps the active item visually selected. When main-view navigation changes the active item, the strip reveals the selected thumbnail if it would otherwise be outside the visible strip. If the selected thumbnail is already visible, the strip keeps its scroll position unchanged. Activating a visible thumbnail directly does not force the strip to recenter. KiriView does not promise exact thumbnail pixel offsets or centered positioning.
+
 For ordinary direct media URL scopes, including direct image files, direct video files, and KDE archive-entry media URLs opened as individual media items, the document session's direct media navigation is the only active page-control navigation source. The image document must not keep a competing ordinary direct media page-navigation list for those scopes.
 
 Image-document page navigation is active only for image-document page scopes such as directly opened archive collections and directly opened directory collections.
