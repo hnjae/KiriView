@@ -61,10 +61,17 @@ Controls.Pane {
 
             readonly property real delegateWidth: Kirigami.Units.gridUnit * 6
             readonly property real itemPitch: delegateWidth + spacing
+            readonly property real preferredZoneInset: Math.min(itemPitch, Math.max(0, (width - delegateWidth) / 2), Math.max(0, width * 0.25))
+            readonly property real preferredZoneStart: preferredZoneInset
+            readonly property real preferredZoneEnd: Math.max(preferredZoneStart + Math.min(delegateWidth, width), width - preferredZoneInset)
             readonly property int rapidCurrentIndexIntervalMs: 180
             property bool automaticScrollAnimationEnabled: false
             property bool automaticScrollAnimationRunning: false
             property double lastCurrentIndexChangeTimestamp: 0
+            property real preferredZoneSnapPosition: 0
+
+            preferredHighlightBegin: preferredZoneSnapPosition
+            preferredHighlightEnd: preferredZoneSnapPosition + delegateWidth
 
             function containCurrentItem(forceImmediate) {
                 if (currentIndex < 0 || currentIndex >= count) {
@@ -76,9 +83,36 @@ Controls.Pane {
                 positionViewAtIndex(currentIndex, ListView.Contain);
             }
 
+            function followCurrentItemInPreferredZone(forceImmediate) {
+                if (currentIndex < 0 || currentIndex >= count) {
+                    automaticScrollAnimationEnabled = false;
+                    return;
+                }
+
+                const delta = preferredZoneDeltaForCurrentItem();
+                if (delta === 0) {
+                    automaticScrollAnimationEnabled = false;
+                    return;
+                }
+
+                const itemStart = currentIndex * itemPitch;
+                const viewportStart = contentX;
+                const itemStartInViewport = itemStart - viewportStart;
+                if (itemStartInViewport < preferredZoneStart) {
+                    preferredZoneSnapPosition = preferredZoneStart;
+                } else {
+                    preferredZoneSnapPosition = Math.max(preferredZoneStart, preferredZoneEnd - delegateWidth);
+                }
+
+                automaticScrollAnimationEnabled = shouldAnimateReveal(delta, forceImmediate !== true);
+                positionViewAtIndex(currentIndex, ListView.SnapPosition);
+            }
+
             function containCurrentItemForNavigationIntent(forceImmediate) {
                 switch (root.documentSession.activeNavigationRevealIntent) {
                 case KiriDocumentSession.AdjacentNavigation:
+                    followCurrentItemInPreferredZone(forceImmediate);
+                    return;
                 case KiriDocumentSession.LargeJump:
                 case KiriDocumentSession.LoadOrOpen:
                     containCurrentItem(forceImmediate);
@@ -115,6 +149,33 @@ Controls.Pane {
                 return targetViewportStart - viewportStart;
             }
 
+            function preferredZoneDeltaForCurrentItem() {
+                if (width <= 0 || contentWidth <= 0 || delegateWidth <= 0) {
+                    return 0;
+                }
+
+                const itemStart = currentIndex * itemPitch;
+                const itemEnd = itemStart + delegateWidth;
+                const viewportStart = contentX;
+                const itemStartInViewport = itemStart - viewportStart;
+                const itemEndInViewport = itemEnd - viewportStart;
+                let delta = 0;
+
+                if (itemStartInViewport < preferredZoneStart) {
+                    delta = itemStartInViewport - preferredZoneStart;
+                } else if (itemEndInViewport > preferredZoneEnd) {
+                    delta = itemEndInViewport - preferredZoneEnd;
+                }
+
+                if (delta === 0) {
+                    return 0;
+                }
+
+                const maxViewportStart = Math.max(0, contentWidth - width);
+                const targetViewportStart = Math.max(0, Math.min(maxViewportStart, viewportStart + delta));
+                return targetViewportStart - viewportStart;
+            }
+
             function currentIndexChangedRapidly() {
                 const now = Date.now();
                 const rapid = lastCurrentIndexChangeTimestamp > 0 && now - lastCurrentIndexChangeTimestamp < rapidCurrentIndexIntervalMs;
@@ -123,11 +184,14 @@ Controls.Pane {
             }
 
             function shouldAnimateContainment(allowAnimation) {
+                return shouldAnimateReveal(containmentDeltaForCurrentItem(), allowAnimation);
+            }
+
+            function shouldAnimateReveal(delta, allowAnimation) {
                 if (!allowAnimation || !root.visible || width <= 0 || automaticScrollAnimationRunning) {
                     return false;
                 }
 
-                const delta = containmentDeltaForCurrentItem();
                 if (delta === 0) {
                     return false;
                 }
