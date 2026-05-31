@@ -307,12 +307,18 @@ std::optional<DisplayedPredecodeImage> ImageDocumentRuntime::primaryDisplayedPre
         state.displayedImageLocation(),
         controllers->presentationController().isPredecodeCacheable(),
         std::move(staticImage),
+        state.embeddedMetadata(),
     };
 }
 
 ImageFirstDisplayDecodeContext ImageDocumentRuntime::firstDisplayDecodeContext() const
 {
     return controllers->presentationController().firstDisplayDecodeContext();
+}
+
+const EmbeddedMetadata &ImageDocumentRuntime::embeddedMetadata() const
+{
+    return state.embeddedMetadata();
 }
 
 DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageRole role) const

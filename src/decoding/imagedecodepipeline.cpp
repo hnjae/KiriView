@@ -8,6 +8,7 @@
 #include "heifdecoder.h"
 #include "kiriview/src/policy/avifcompat.cxx.h"
 #include "localization/imageerrortext.h"
+#include "metadata/embeddedmetadata.h"
 #include "qimagereaderdecoder.h"
 #include "rawdecoder.h"
 #include "rendering/svgtilesource.h"
@@ -186,6 +187,7 @@ KiriView::DecodedImageResult decodeApngImageData(const KiriView::ImageDecodeRout
     return KiriView::successfulDecodedImageResult(KiriView::ApngAnimationImage {
         std::move(apngResult.firstFrame),
         input.data,
+        {},
     });
 }
 
@@ -370,7 +372,15 @@ DecodedImageResult ImageDecodeRouter::decode(
                                << "dataSource" << imageDecodeDataSourceName(route.dataSource)
                                << "qtFormat" << qtRasterFormatName(route.qtRasterFormat) << "bytes"
                                << data.size();
-    return m_runtime.execute(route, data, request);
+    DecodedImageResult result = m_runtime.execute(route, data, request);
+    DecodedImage *image = decodedImageResultImage(result);
+    if (image != nullptr) {
+        EmbeddedMetadata metadata = parseImageEmbeddedMetadata(data);
+        if (!metadata.isEmpty()) {
+            setDecodedImageEmbeddedMetadata(*image, std::move(metadata));
+        }
+    }
+    return result;
 }
 
 DecodedImageResult decodeImageDataWithDefaultRouter(

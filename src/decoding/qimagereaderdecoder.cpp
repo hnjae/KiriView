@@ -58,6 +58,7 @@ DecodedImageResult decodeQImageReaderImageData(
             std::move(firstFrame),
             data,
             animationFormat,
+            {},
         });
     }
     return openedStaticImageResult(data, request, readerFormat);

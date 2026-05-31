@@ -256,7 +256,7 @@ bool writeTinyMetadataMp4(const QString &path)
     ftypPayload.append(4, '\0');
     ftypPayload.append("isomiso2mp41", 12);
 
-    QByteArray mvhdPayload(20, '\0');
+    QByteArray mvhdPayload(12, '\0');
     appendU32(mvhdPayload, 1000);
     appendU32(mvhdPayload, 1234);
     mvhdPayload.append(80, '\0');
@@ -274,6 +274,13 @@ bool writeTinyMetadataMp4(const QString &path)
 
     QByteArray trakPayload;
     appendBox(trakPayload, "tkhd", tkhdPayload);
+    QByteArray hdlrPayload;
+    hdlrPayload.append(8, '\0');
+    hdlrPayload.append("vide", 4);
+    hdlrPayload.append(12, '\0');
+    QByteArray mdiaPayload;
+    appendBox(mdiaPayload, "hdlr", hdlrPayload);
+    appendBox(trakPayload, "mdia", mdiaPayload);
 
     QByteArray moovPayload;
     appendBox(moovPayload, "mvhd", mvhdPayload);

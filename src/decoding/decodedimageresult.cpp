@@ -28,6 +28,8 @@ const DecodedImage *DecodedImageResult::image() const
     return std::get_if<DecodedImage>(&m_payload);
 }
 
+DecodedImage *DecodedImageResult::image() { return std::get_if<DecodedImage>(&m_payload); }
+
 std::optional<DecodedImage> DecodedImageResult::takeImage() &&
 {
     auto *image = std::get_if<DecodedImage>(&m_payload);
@@ -56,5 +58,19 @@ const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &r
 const DecodedImage *decodedImageResultImage(const DecodedImageResult &result)
 {
     return result.image();
+}
+
+DecodedImage *decodedImageResultImage(DecodedImageResult &result) { return result.image(); }
+
+const EmbeddedMetadata &decodedImageEmbeddedMetadata(const DecodedImage &image)
+{
+    return std::visit(
+        [](const auto &decoded) -> const EmbeddedMetadata & { return decoded.embeddedMetadata; },
+        image);
+}
+
+void setDecodedImageEmbeddedMetadata(DecodedImage &image, EmbeddedMetadata metadata)
+{
+    std::visit([&metadata](auto &decoded) { decoded.embeddedMetadata = metadata; }, image);
 }
 }

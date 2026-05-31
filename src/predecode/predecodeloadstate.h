@@ -41,6 +41,8 @@ public:
     void startWindow(PredecodeLoadWindow window);
     std::optional<PredecodeLoadStart> takeNextLoad(const PredecodeActiveLoads &activeLoads);
     void cacheDecodedImage(const ImageDecodeRequest &request, StaticImagePayload staticImage);
+    void cacheDecodedImage(const ImageDecodeRequest &request, StaticImagePayload staticImage,
+        EmbeddedMetadata metadata);
     void cancelBackgroundWork();
     void clear();
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;

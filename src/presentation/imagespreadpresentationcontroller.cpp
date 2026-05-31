@@ -350,6 +350,7 @@ ImageSpreadPresentationController::secondaryDisplayedPredecodeImage() const
         m_secondaryPageController->displayedImageLocation(),
         presentation.isPredecodeCacheable(),
         presentation.staticImage(),
+        {},
     };
 }
 

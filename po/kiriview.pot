@@ -255,56 +255,20 @@ msgstr ""
 
 #: src/facade/kirimediainformation.cpp
 #, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "Unknown dimensions (placeholder)"
+msgctxt "@info:metadata value"
+msgid "Image"
 msgstr ""
 
 #: src/facade/kirimediainformation.cpp
 #, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "Image file (placeholder)"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "Video file (placeholder)"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "Unknown type (placeholder)"
+msgctxt "@info:metadata value"
+msgid "Video"
 msgstr ""
 
 #: src/facade/kirimediainformation.cpp
 #, kde-format
 msgctxt "@label:metadata"
 msgid "Type"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "File Size"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "Unknown size (placeholder)"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Modified"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "Unknown date (placeholder)"
 msgstr ""
 
 #: src/facade/kirimediainformation.cpp
@@ -322,25 +286,7 @@ msgstr ""
 #: src/facade/kirimediainformation.cpp
 #, kde-format
 msgctxt "@label:metadata"
-msgid "Color Space"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "sRGB (placeholder)"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Bit Depth"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "8-bit (placeholder)"
+msgid "Duration"
 msgstr ""
 
 #: src/facade/kirimediainformation.cpp
@@ -351,20 +297,20 @@ msgstr ""
 
 #: src/facade/kirimediainformation.cpp
 #, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "BT.709 (placeholder)"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
 msgctxt "@label:metadata"
 msgid "Camera"
 msgstr ""
 
 #: src/facade/kirimediainformation.cpp
 #, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "KiriView Sample Camera (placeholder)"
+msgctxt "@label:metadata"
+msgid "Taken"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Location"
 msgstr ""
 
 #: src/facade/kirimediainformation.cpp
@@ -375,20 +321,26 @@ msgstr ""
 
 #: src/facade/kirimediainformation.cpp
 #, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "35 mm (placeholder)"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
 msgctxt "@label:metadata"
 msgid "Exposure"
 msgstr ""
 
 #: src/facade/kirimediainformation.cpp
 #, kde-format
-msgctxt "@info:metadata placeholder value"
-msgid "1/125 s at f/5.6 (placeholder)"
+msgctxt "@label:metadata"
+msgid "ISO"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Focal Length"
+msgstr ""
+
+#: src/facade/kirimediainformation.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Software"
 msgstr ""
 
 #: src/facade/kirimediainformation.cpp
@@ -418,7 +370,7 @@ msgstr ""
 #: src/facade/kirimediainformation.cpp
 #, kde-format
 msgctxt "@info:metadata summary"
-msgid "Image metadata placeholder"
+msgid "Image"
 msgstr ""
 
 #: src/facade/kirimediainformation.cpp
@@ -436,7 +388,7 @@ msgstr ""
 #: src/facade/kirimediainformation.cpp
 #, kde-format
 msgctxt "@info:metadata summary"
-msgid "Video metadata placeholder"
+msgid "Video"
 msgstr ""
 
 #: src/localization/activenavigationboundarytext.cpp
@@ -1052,6 +1004,11 @@ msgstr ""
 #: src/qml/InfoPanel.qml
 msgctxt "@title:group"
 msgid "Camera"
+msgstr ""
+
+#: src/qml/InfoPanel.qml
+msgctxt "@title:group"
+msgid "Advanced Metadata"
 msgstr ""
 
 #: src/qml/Main.qml

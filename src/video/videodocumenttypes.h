@@ -28,6 +28,7 @@ enum class VideoDocumentChange {
     ZoomPercent,
     Muted,
     VideoOutput,
+    EmbeddedMetadata,
 };
 }
 

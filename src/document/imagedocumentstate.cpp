@@ -81,6 +81,8 @@ bool ImageDocumentState::unsupportedOpenedCollectionVideo() const
     return m_unsupportedOpenedCollectionVideo;
 }
 
+const EmbeddedMetadata &ImageDocumentState::embeddedMetadata() const { return m_embeddedMetadata; }
+
 void ImageDocumentState::setSourceUrl(const QUrl &sourceUrl)
 {
     if (replaceIfChanged(m_sourceUrl, sourceUrl)) {
@@ -158,6 +160,12 @@ void ImageDocumentState::setUnsupportedOpenedCollectionVideo(bool unsupported)
     if (replaceIfChanged(m_unsupportedOpenedCollectionVideo, unsupported)) {
         notify(ImageDocumentChange::UnsupportedOpenedCollectionVideo);
     }
+}
+
+void ImageDocumentState::setEmbeddedMetadata(EmbeddedMetadata metadata)
+{
+    m_embeddedMetadata = std::move(metadata);
+    notify(ImageDocumentChange::EmbeddedMetadata);
 }
 
 void ImageDocumentState::notify(ImageDocumentChange change) { m_changes->notify(change); }

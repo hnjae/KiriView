@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_KIRIVIDEODOCUMENT_H
 #define KIRIVIEW_KIRIVIDEODOCUMENT_H
 
+#include "metadata/embeddedmetadata.h"
+
 #include <QObject>
 #include <QRectF>
 #include <QSize>
@@ -69,6 +71,7 @@ public:
     int zoomPercent() const;
     bool muted() const;
     QObject *videoOutput() const;
+    const KiriView::EmbeddedMetadata &embeddedMetadata() const;
     // QML assigns a QtMultimedia VideoOutput object here. KiriVideoDocument does not own it,
     // tracks its destruction, and detaches from the media player when this is set to null.
     void setVideoOutput(QObject *videoOutput);
@@ -99,6 +102,7 @@ Q_SIGNALS:
     void zoomPercentChanged();
     void mutedChanged();
     void videoOutputChanged();
+    void embeddedMetadataChanged();
 
 private:
     void handleDocumentChanges(const std::vector<KiriView::VideoDocumentChange> &changes);

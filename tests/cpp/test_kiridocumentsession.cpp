@@ -422,11 +422,13 @@ void TestKiriDocumentSession::imageMediaInformationUsesEmbeddedMetadataAndKnownD
     const QUrl imageUrl = localUrl(imagePath);
     directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
         { directMediaNavigationCandidate(imageUrl) });
+    KiriView::TestSupport::ManualImageDataLoader dataLoader;
     std::unique_ptr<KiriDocumentSession> session
-        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, nullptr, {},
-            staticImageDataDecoderWithMetadata(testCameraMetadata()));
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, &dataLoader,
+            {}, staticImageDataDecoderWithMetadata(testCameraMetadata()));
 
     session->setSourceUrl(imageUrl);
+    QVERIFY(dataLoader.finishOldestActiveLoadForUrl(imageUrl, QByteArrayLiteral("image bytes")));
 
     QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);

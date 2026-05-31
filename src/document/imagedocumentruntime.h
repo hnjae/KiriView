@@ -102,6 +102,7 @@ public:
     bool unsupportedOpenedCollectionVideo() const;
     std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
+    const EmbeddedMetadata &embeddedMetadata() const;
     DisplayedImageRenderSnapshot renderSnapshot(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
 

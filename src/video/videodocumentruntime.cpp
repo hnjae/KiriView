@@ -3,6 +3,7 @@
 
 #include "video/videodocumentruntime.h"
 
+#include "metadata/embeddedmetadata.h"
 #include "video/videodocumentstatusplan.h"
 
 #include <QObject>
@@ -164,6 +165,11 @@ void VideoDocumentRuntime::setMuted(bool muted)
 }
 
 QObject *VideoDocumentRuntime::videoOutput() const { return m_outputRuntime.videoOutput(); }
+
+const EmbeddedMetadata &VideoDocumentRuntime::embeddedMetadata() const
+{
+    return m_state.embeddedMetadata();
+}
 
 void VideoDocumentRuntime::setVideoOutput(QObject *videoOutput)
 {
@@ -342,6 +348,9 @@ void VideoDocumentRuntime::applyResolvedPlaybackUrl(const QUrl &playbackUrl)
     VideoMediaBackend *mediaBackend = ensureMediaBackend();
     acceptPlaybackCallbacks();
     mediaBackend->setSource(playbackUrl);
+    m_state.setEmbeddedMetadata(playbackUrl.isLocalFile()
+            ? parsePathEmbeddedMetadata(playbackUrl.toLocalFile())
+            : EmbeddedMetadata {});
     m_state.setVideoSize(mediaBackend->videoSize());
     updateStatusFromBackend();
     play();
@@ -350,6 +359,7 @@ void VideoDocumentRuntime::applyResolvedPlaybackUrl(const QUrl &playbackUrl)
 void VideoDocumentRuntime::publishSourceLoadFailure(const QUrl &, const QString &errorString)
 {
     invalidatePlaybackCallbacks();
+    m_state.setEmbeddedMetadata({});
     m_state.setErrorString(errorString);
     m_state.setStatus(VideoDocumentStatus::Error);
     updateZoomPercent();

@@ -78,6 +78,9 @@ void VideoDocumentPublicSignalEmitter::emitSignal(VideoDocumentPublicSignal sign
     case VideoDocumentPublicSignal::VideoOutput:
         run(m_operations.videoOutputChanged);
         return;
+    case VideoDocumentPublicSignal::EmbeddedMetadata:
+        run(m_operations.embeddedMetadataChanged);
+        return;
     }
 }
 
@@ -114,6 +117,8 @@ std::vector<VideoDocumentPublicSignal> videoDocumentPublicSignals(VideoDocumentC
         return { VideoDocumentPublicSignal::Muted };
     case VideoDocumentChange::VideoOutput:
         return { VideoDocumentPublicSignal::VideoOutput };
+    case VideoDocumentChange::EmbeddedMetadata:
+        return { VideoDocumentPublicSignal::EmbeddedMetadata };
     }
 
     return {};

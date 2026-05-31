@@ -31,6 +31,7 @@ DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> sou
         return successfulDecodedImageResult(StaticDecodedImage {
             StaticImagePayload { std::move(source), std::move(firstDisplayResult.image),
                 StaticImageDisplayHints { firstDisplayResult.displayPixelsPerSourcePixel } },
+            {},
         });
     case FirstDisplayImageDecodeStatus::NotImplemented:
         break;
@@ -46,6 +47,7 @@ DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> sou
 
     return successfulDecodedImageResult(StaticDecodedImage {
         StaticImagePayload { std::move(source), std::move(preview), {} },
+        {},
     });
 }
 }

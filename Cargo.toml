@@ -12,6 +12,7 @@ crate-type = ["rlib", "staticlib"]
 cxx = "1.0.192"
 cxx-qt = "0.8.1"
 cxx-qt-lib = { version = "0.8.1", features = ["qt_full"] }
+nom-exif = { version = "3.6.0", default-features = false }
 resvg = "0.47.0"
 
 [build-dependencies]

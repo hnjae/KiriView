@@ -53,9 +53,11 @@ class KiriMediaInformation : public QObject
     Q_PROPERTY(QString summary READ summary NOTIFY changed)
     Q_PROPERTY(QString mediaSectionTitle READ mediaSectionTitle NOTIFY changed)
     Q_PROPERTY(bool hasCameraSection READ hasCameraSection NOTIFY changed)
+    Q_PROPERTY(bool hasAdvancedSection READ hasAdvancedSection NOTIFY changed)
     Q_PROPERTY(QAbstractListModel *generalRows READ generalRows CONSTANT)
     Q_PROPERTY(QAbstractListModel *mediaRows READ mediaRows CONSTANT)
     Q_PROPERTY(QAbstractListModel *cameraRows READ cameraRows CONSTANT)
+    Q_PROPERTY(QAbstractListModel *advancedRows READ advancedRows CONSTANT)
     Q_PROPERTY(bool canCopyFilePath READ canCopyFilePath NOTIFY changed)
     Q_PROPERTY(bool canOpenContainingFolder READ canOpenContainingFolder NOTIFY changed)
 
@@ -73,9 +75,11 @@ public:
     QString summary() const;
     QString mediaSectionTitle() const;
     bool hasCameraSection() const;
+    bool hasAdvancedSection() const;
     QAbstractListModel *generalRows();
     QAbstractListModel *mediaRows();
     QAbstractListModel *cameraRows();
+    QAbstractListModel *advancedRows();
     bool canCopyFilePath() const;
     bool canOpenContainingFolder() const;
 
@@ -96,6 +100,7 @@ private:
         std::vector<KiriMediaInformationRowModel::Row> generalRows;
         std::vector<KiriMediaInformationRowModel::Row> mediaRows;
         std::vector<KiriMediaInformationRowModel::Row> cameraRows;
+        std::vector<KiriMediaInformationRowModel::Row> advancedRows;
     };
 
     void refresh();
@@ -107,6 +112,7 @@ private:
     KiriMediaInformationRowModel m_generalRows;
     KiriMediaInformationRowModel m_mediaRows;
     KiriMediaInformationRowModel m_cameraRows;
+    KiriMediaInformationRowModel m_advancedRows;
     bool m_available = false;
     QUrl m_targetUrl;
     QString m_title;

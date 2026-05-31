@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_VIDEODOCUMENTRUNTIME_H
 #define KIRIVIEW_VIDEODOCUMENTRUNTIME_H
 
+#include "metadata/embeddedmetadata.h"
 #include "video/videodocumentstate.h"
 #include "video/videomediabackend.h"
 #include "video/videooutputruntime.h"
@@ -52,6 +53,7 @@ public:
     bool muted() const;
     void setMuted(bool muted);
     QObject *videoOutput() const;
+    const EmbeddedMetadata &embeddedMetadata() const;
     void setVideoOutput(QObject *videoOutput);
     void setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect);
 

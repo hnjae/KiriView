@@ -5,6 +5,7 @@
 
 #include "archive/archiveformat.h"
 #include "facade/kiridocumentsession.h"
+#include "metadata/embeddedmetadata.h"
 
 #include <KIO/OpenFileManagerWindowJob>
 #include <KLocalizedString>
@@ -40,10 +41,18 @@ bool hasValidDimensions(const QSize &size) { return size.width() > 0 && size.hei
 QString dimensionsText(const QSize &size)
 {
     if (!hasValidDimensions(size)) {
-        return i18nc("@info:metadata placeholder value", "Unknown dimensions (placeholder)");
+        return {};
     }
 
     return QStringLiteral("%1×%2 px").arg(size.width()).arg(size.height());
+}
+
+void appendRowIfValue(
+    std::vector<KiriMediaInformationRowModel::Row> &rows, QString label, const QString &value)
+{
+    if (!value.isEmpty()) {
+        rows.push_back({ std::move(label), value });
+    }
 }
 
 bool openedCollectionScopeInformationAvailable(const KiriView::OpenedCollectionScopeLocation &scope)
@@ -102,58 +111,73 @@ std::vector<KiriMediaInformationRowModel::Row> generalRows(
     QString typeValue;
     switch (kind) {
     case KiriMediaInformation::MediaKind::Image:
-        typeValue = i18nc("@info:metadata placeholder value", "Image file (placeholder)");
+        typeValue = i18nc("@info:metadata value", "Image");
         break;
     case KiriMediaInformation::MediaKind::Video:
-        typeValue = i18nc("@info:metadata placeholder value", "Video file (placeholder)");
+        typeValue = i18nc("@info:metadata value", "Video");
         break;
     case KiriMediaInformation::MediaKind::Empty:
-        typeValue = i18nc("@info:metadata placeholder value", "Unknown type (placeholder)");
         break;
     }
 
-    return {
-        { i18nc("@label:metadata", "Type"), typeValue },
-        { i18nc("@label:metadata", "File Size"),
-            i18nc("@info:metadata placeholder value", "Unknown size (placeholder)") },
-        { i18nc("@label:metadata", "Modified"),
-            i18nc("@info:metadata placeholder value", "Unknown date (placeholder)") },
-        { i18nc("@label:metadata", "Path"), displayPathForUrl(targetUrl) },
-    };
+    std::vector<KiriMediaInformationRowModel::Row> rows;
+    appendRowIfValue(rows, i18nc("@label:metadata", "Type"), typeValue);
+    appendRowIfValue(rows, i18nc("@label:metadata", "Path"), displayPathForUrl(targetUrl));
+    return rows;
 }
 
 std::vector<KiriMediaInformationRowModel::Row> imageRows(const QSize &size)
 {
-    return {
-        { i18nc("@label:metadata", "Dimensions"), dimensionsText(size) },
-        { i18nc("@label:metadata", "Color Space"),
-            i18nc("@info:metadata placeholder value", "sRGB (placeholder)") },
-        { i18nc("@label:metadata", "Bit Depth"),
-            i18nc("@info:metadata placeholder value", "8-bit (placeholder)") },
-    };
+    std::vector<KiriMediaInformationRowModel::Row> rows;
+    appendRowIfValue(rows, i18nc("@label:metadata", "Dimensions"), dimensionsText(size));
+    return rows;
 }
 
-std::vector<KiriMediaInformationRowModel::Row> videoRows(const QSize &size)
+std::vector<KiriMediaInformationRowModel::Row> videoRows(
+    const QSize &size, const KiriView::EmbeddedMetadata &metadata)
 {
-    return {
-        { i18nc("@label:metadata", "Frame Size"), dimensionsText(size) },
-        { i18nc("@label:metadata", "Color Space"),
-            i18nc("@info:metadata placeholder value", "BT.709 (placeholder)") },
-        { i18nc("@label:metadata", "Bit Depth"),
-            i18nc("@info:metadata placeholder value", "8-bit (placeholder)") },
-    };
+    std::vector<KiriMediaInformationRowModel::Row> rows;
+    appendRowIfValue(rows, i18nc("@label:metadata", "Duration"), metadata.duration);
+    appendRowIfValue(rows, i18nc("@label:metadata", "Frame Size"),
+        !metadata.frameSize.isEmpty() ? metadata.frameSize : dimensionsText(size));
+    return rows;
 }
 
-std::vector<KiriMediaInformationRowModel::Row> cameraRows()
+QString cameraText(const KiriView::EmbeddedMetadata &metadata)
 {
-    return {
-        { i18nc("@label:metadata", "Camera"),
-            i18nc("@info:metadata placeholder value", "KiriView Sample Camera (placeholder)") },
-        { i18nc("@label:metadata", "Lens"),
-            i18nc("@info:metadata placeholder value", "35 mm (placeholder)") },
-        { i18nc("@label:metadata", "Exposure"),
-            i18nc("@info:metadata placeholder value", "1/125 s at f/5.6 (placeholder)") },
-    };
+    if (!metadata.cameraMake.isEmpty() && !metadata.cameraModel.isEmpty()) {
+        return QStringLiteral("%1 %2").arg(metadata.cameraMake, metadata.cameraModel);
+    }
+    if (!metadata.cameraMake.isEmpty()) {
+        return metadata.cameraMake;
+    }
+    return metadata.cameraModel;
+}
+
+std::vector<KiriMediaInformationRowModel::Row> cameraRows(
+    const KiriView::EmbeddedMetadata &metadata)
+{
+    std::vector<KiriMediaInformationRowModel::Row> rows;
+    appendRowIfValue(rows, i18nc("@label:metadata", "Camera"), cameraText(metadata));
+    appendRowIfValue(rows, i18nc("@label:metadata", "Taken"), metadata.taken);
+    appendRowIfValue(rows, i18nc("@label:metadata", "Location"), metadata.location);
+    appendRowIfValue(rows, i18nc("@label:metadata", "Lens"), metadata.lens);
+    appendRowIfValue(rows, i18nc("@label:metadata", "Exposure"), metadata.exposure);
+    appendRowIfValue(rows, i18nc("@label:metadata", "ISO"), metadata.iso);
+    appendRowIfValue(rows, i18nc("@label:metadata", "Focal Length"), metadata.focalLength);
+    appendRowIfValue(rows, i18nc("@label:metadata", "Software"), metadata.software);
+    return rows;
+}
+
+std::vector<KiriMediaInformationRowModel::Row> advancedRows(
+    const KiriView::EmbeddedMetadata &metadata)
+{
+    std::vector<KiriMediaInformationRowModel::Row> rows;
+    rows.reserve(metadata.advancedRows.size());
+    for (const KiriView::EmbeddedMetadataRow &row : metadata.advancedRows) {
+        appendRowIfValue(rows, row.label, row.value);
+    }
+    return rows;
 }
 }
 
@@ -212,6 +236,7 @@ KiriMediaInformation::KiriMediaInformation(KiriDocumentSession &session, QObject
     , m_generalRows(this)
     , m_mediaRows(this)
     , m_cameraRows(this)
+    , m_advancedRows(this)
 {
     connect(
         &m_session, &KiriDocumentSession::sourceUrlChanged, this, &KiriMediaInformation::refresh);
@@ -227,11 +252,15 @@ KiriMediaInformation::KiriMediaInformation(KiriDocumentSession &session, QObject
         &KiriMediaInformation::refresh);
     connect(m_session.imageDocument(), &KiriImageDocument::imageDocumentSourceScopeChanged, this,
         &KiriMediaInformation::refresh);
+    connect(m_session.imageDocument(), &KiriImageDocument::embeddedMetadataChanged, this,
+        &KiriMediaInformation::refresh);
     connect(m_session.videoDocument(), &KiriVideoDocument::sourceUrlChanged, this,
         &KiriMediaInformation::refresh);
     connect(m_session.videoDocument(), &KiriVideoDocument::videoSizeChanged, this,
         &KiriMediaInformation::refresh);
     connect(m_session.videoDocument(), &KiriVideoDocument::statusChanged, this,
+        &KiriMediaInformation::refresh);
+    connect(m_session.videoDocument(), &KiriVideoDocument::embeddedMetadataChanged, this,
         &KiriMediaInformation::refresh);
 
     refresh();
@@ -247,11 +276,15 @@ QString KiriMediaInformation::mediaSectionTitle() const { return m_mediaSectionT
 
 bool KiriMediaInformation::hasCameraSection() const { return m_cameraRows.rowCount() > 0; }
 
+bool KiriMediaInformation::hasAdvancedSection() const { return m_advancedRows.rowCount() > 0; }
+
 QAbstractListModel *KiriMediaInformation::generalRows() { return &m_generalRows; }
 
 QAbstractListModel *KiriMediaInformation::mediaRows() { return &m_mediaRows; }
 
 QAbstractListModel *KiriMediaInformation::cameraRows() { return &m_cameraRows; }
+
+QAbstractListModel *KiriMediaInformation::advancedRows() { return &m_advancedRows; }
 
 bool KiriMediaInformation::canCopyFilePath() const { return !m_targetUrl.isEmpty(); }
 
@@ -299,6 +332,7 @@ void KiriMediaInformation::refresh()
     m_generalRows.setRows(snapshot.generalRows);
     m_mediaRows.setRows(snapshot.mediaRows);
     m_cameraRows.setRows(snapshot.cameraRows);
+    m_advancedRows.setRows(snapshot.advancedRows);
 
     Q_EMIT changed();
 }
@@ -324,21 +358,26 @@ KiriMediaInformation::Snapshot KiriMediaInformation::buildSnapshot() const
         snapshot.mediaSectionTitle = i18nc("@title:group", "Image");
         snapshot.summary = hasValidDimensions(imageSize)
             ? i18nc("@info:metadata summary", "Image, %1", dimensionsText(imageSize))
-            : i18nc("@info:metadata summary", "Image metadata placeholder");
+            : i18nc("@info:metadata summary", "Image");
         snapshot.generalRows = ::generalRows(snapshot.kind, snapshot.targetUrl);
         snapshot.mediaRows = imageRows(imageSize);
-        snapshot.cameraRows = ::cameraRows();
+        const KiriView::EmbeddedMetadata &metadata = m_session.imageDocument()->embeddedMetadata();
+        snapshot.cameraRows = ::cameraRows(metadata);
+        snapshot.advancedRows = ::advancedRows(metadata);
         break;
     }
     case KiriDocumentSession::DocumentKind::Video: {
         const QSize videoSize = m_session.videoDocument()->videoSize();
+        const KiriView::EmbeddedMetadata &metadata = m_session.videoDocument()->embeddedMetadata();
         snapshot.kind = MediaKind::Video;
         snapshot.mediaSectionTitle = i18nc("@title:group", "Video");
         snapshot.summary = hasValidDimensions(videoSize)
             ? i18nc("@info:metadata summary", "Video, %1", dimensionsText(videoSize))
-            : i18nc("@info:metadata summary", "Video metadata placeholder");
+            : i18nc("@info:metadata summary", "Video");
         snapshot.generalRows = ::generalRows(snapshot.kind, snapshot.targetUrl);
-        snapshot.mediaRows = videoRows(videoSize);
+        snapshot.mediaRows = videoRows(videoSize, metadata);
+        snapshot.cameraRows = ::cameraRows(metadata);
+        snapshot.advancedRows = ::advancedRows(metadata);
         break;
     }
     case KiriDocumentSession::DocumentKind::Empty:

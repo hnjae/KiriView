@@ -6,6 +6,7 @@
 
 #include "document/imagedocumentruntimedependencies.h"
 #include "document/imagedocumenttypes.h"
+#include "metadata/embeddedmetadata.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
 #include "rendering/imagerendercontext.h"
@@ -176,6 +177,7 @@ public:
     bool unsupportedOpenedCollectionVideo() const;
     std::optional<KiriView::DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     KiriView::ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
+    const KiriView::EmbeddedMetadata &embeddedMetadata() const;
     KiriView::DisplayedImageRenderSnapshot renderSnapshot(
         KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
 
@@ -223,6 +225,7 @@ Q_SIGNALS:
     void fileDeletionFailed(const QString &errorString);
     void repaintRequested();
     void unsupportedOpenedCollectionVideoChanged();
+    void embeddedMetadataChanged();
     void unsupportedOpenedCollectionVideoEntered(const QString &message);
     void containerNavigationBoundaryReached(const QString &message);
 

@@ -107,6 +107,9 @@ void ImageDocumentPublicSignalEmitter::emitSignal(ImageDocumentPublicSignal sign
     case ImageDocumentPublicSignal::UnsupportedOpenedCollectionVideo:
         run(m_operations.unsupportedOpenedCollectionVideoChanged);
         return;
+    case ImageDocumentPublicSignal::EmbeddedMetadata:
+        run(m_operations.embeddedMetadataChanged);
+        return;
     case ImageDocumentPublicSignal::Repaint:
         run(m_operations.repaintRequested);
         return;
@@ -162,6 +165,8 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentC
     case ImageDocumentChange::UnsupportedOpenedCollectionVideo:
         return { ImageDocumentPublicSignal::UnsupportedOpenedCollectionVideo,
             ImageDocumentPublicSignal::ZoomPercentKnown };
+    case ImageDocumentChange::EmbeddedMetadata:
+        return { ImageDocumentPublicSignal::EmbeddedMetadata };
     case ImageDocumentChange::RenderFrame:
         return { ImageDocumentPublicSignal::Repaint };
     case ImageDocumentChange::Repaint:

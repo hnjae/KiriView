@@ -44,15 +44,17 @@ public:
     std::optional<PredecodedImage> findImage(const QUrl &url) const;
     std::optional<PredecodedImage> findImage(const DisplayedImageLocation &location) const;
     void cacheImage(const QUrl &url, const OpenedCollectionScopeLocation &openedCollectionScope,
-        StaticImagePayload staticImage);
+        StaticImagePayload staticImage, EmbeddedMetadata metadata = {});
     void cacheDisplayedImage(bool cacheable, const QUrl &url,
-        const OpenedCollectionScopeLocation &openedCollectionScope, StaticImagePayload staticImage);
+        const OpenedCollectionScopeLocation &openedCollectionScope, StaticImagePayload staticImage,
+        EmbeddedMetadata metadata = {});
 
 private:
     struct CachedImage {
         QUrl url;
         OpenedCollectionScopeLocation openedCollectionScope;
         StaticImagePayload staticImage;
+        EmbeddedMetadata embeddedMetadata;
         qsizetype byteCost = 0;
     };
     using CachedImageIterator = std::vector<CachedImage>::iterator;

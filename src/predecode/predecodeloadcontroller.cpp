@@ -138,7 +138,8 @@ void PredecodeLoadController::finishDecode(
             << "predecode decode finished"
             << "generation" << activeRequest->id() << "url" << activeRequest->imageUrl()
             << "imageSize" << imageSize << "byteCost" << staticImage->staticImage.byteCost();
-        m_loadState.cacheDecodedImage(*activeRequest, staticImage->staticImage);
+        m_loadState.cacheDecodedImage(
+            *activeRequest, staticImage->staticImage, staticImage->embeddedMetadata);
     } else {
         qCDebug(kiriviewPredecodeLog)
             << "predecode decoded non-static image ignored"

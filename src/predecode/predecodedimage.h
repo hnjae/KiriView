@@ -5,6 +5,7 @@
 #define KIRIVIEW_PREDECODEDIMAGE_H
 
 #include "location/imagelocation.h"
+#include "metadata/embeddedmetadata.h"
 #include "rendering/staticimage.h"
 
 #include <optional>
@@ -13,12 +14,14 @@ namespace KiriView {
 struct PredecodedImage {
     StaticImagePayload staticImage;
     DisplayedImageLocation location;
+    EmbeddedMetadata embeddedMetadata;
 };
 
 struct DisplayedPredecodeImage {
     DisplayedImageLocation location;
     bool cacheable = false;
     std::optional<StaticImagePayload> staticImage;
+    EmbeddedMetadata embeddedMetadata;
 
     bool hasLocation() const { return !location.isEmpty(); }
 

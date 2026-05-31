@@ -7,6 +7,7 @@ src/policy/archiveformat.rs
 src/policy/archivepath.rs
 src/policy/avifcompat.rs
 src/policy/cachebudget.rs
+src/policy/embeddedmetadata.rs
 src/policy/heifcontainer.rs
 src/policy/heiftiling.rs
 src/policy/imageactionavailability.rs

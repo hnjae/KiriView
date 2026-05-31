@@ -34,6 +34,7 @@ enum class ImageDocumentChange {
     RightToLeftReading,
     Rotation,
     UnsupportedOpenedCollectionVideo,
+    EmbeddedMetadata,
     RenderFrame,
     Repaint,
 };

@@ -6,6 +6,8 @@
 
 #include "video/videodocumenttypes.h"
 
+#include "metadata/embeddedmetadata.h"
+
 #include <QSize>
 #include <QString>
 #include <QUrl>
@@ -37,6 +39,7 @@ public:
     int zoomPercent() const;
     bool muted() const;
     bool mediaEnded() const;
+    const EmbeddedMetadata &embeddedMetadata() const;
 
     void resetForClearedSource();
     void resetForSourceLoad(const QUrl &sourceUrl);
@@ -52,6 +55,7 @@ public:
     void setZoomPercent(std::optional<int> zoomPercent);
     void setMuted(bool muted);
     void setMediaEnded(bool mediaEnded);
+    void setEmbeddedMetadata(EmbeddedMetadata metadata);
 
     void publish(VideoDocumentChange change);
     void publish(std::vector<VideoDocumentChange> changes);
@@ -91,6 +95,7 @@ private:
     int m_zoomPercent = 0;
     bool m_muted = false;
     bool m_mediaEnded = false;
+    EmbeddedMetadata m_embeddedMetadata;
 };
 }
 

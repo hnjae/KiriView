@@ -45,6 +45,8 @@ KiriView::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDo
     operations.zoomPercentChanged = [&document]() { Q_EMIT document.zoomPercentChanged(); };
     operations.mutedChanged = [&document]() { Q_EMIT document.mutedChanged(); };
     operations.videoOutputChanged = [&document]() { Q_EMIT document.videoOutputChanged(); };
+    operations.embeddedMetadataChanged
+        = [&document]() { Q_EMIT document.embeddedMetadataChanged(); };
     return operations;
 }
 }
@@ -94,6 +96,11 @@ int KiriVideoDocument::zoomPercent() const { return m_runtime->zoomPercent(); }
 bool KiriVideoDocument::muted() const { return m_runtime->muted(); }
 
 QObject *KiriVideoDocument::videoOutput() const { return m_runtime->videoOutput(); }
+
+const KiriView::EmbeddedMetadata &KiriVideoDocument::embeddedMetadata() const
+{
+    return m_runtime->embeddedMetadata();
+}
 
 void KiriVideoDocument::setVideoOutput(QObject *videoOutput)
 {

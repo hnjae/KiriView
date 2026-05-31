@@ -87,7 +87,8 @@ void TestVideoDocumentState::sourceLoadResetsPublicPlaybackStateInOrder()
     compareChanges(batches.front(),
         { Change::SourceUrl, Change::WindowTitleFileName, Change::ErrorString, Change::Status,
             Change::Duration, Change::Position, Change::Playing, Change::Seekable, Change::HasVideo,
-            Change::HasAudio, Change::VideoSize, Change::ZoomPercentKnown, Change::ZoomPercent });
+            Change::HasAudio, Change::VideoSize, Change::ZoomPercentKnown, Change::ZoomPercent,
+            Change::EmbeddedMetadata });
 }
 
 void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
@@ -129,7 +130,8 @@ void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
     compareChanges(batches.front(),
         { Change::SourceUrl, Change::Status, Change::ErrorString, Change::WindowTitleFileName,
             Change::Duration, Change::Position, Change::Playing, Change::Seekable, Change::HasVideo,
-            Change::HasAudio, Change::VideoSize, Change::ZoomPercentKnown, Change::ZoomPercent });
+            Change::HasAudio, Change::VideoSize, Change::ZoomPercentKnown, Change::ZoomPercent,
+            Change::EmbeddedMetadata });
 }
 
 void TestVideoDocumentState::scalarSettersOnlyNotifyOnChangedValues()

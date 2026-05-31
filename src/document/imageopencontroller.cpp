@@ -116,6 +116,7 @@ void ImageOpenController::finishAnimationLoadWithError(const QString &errorStrin
 void ImageOpenController::finishEmptySourceLoad()
 {
     m_state.setUnsupportedOpenedCollectionVideo(false);
+    m_state.setEmbeddedMetadata({});
     reportRuntimePlan(
         applyImageOpenApplicationPlan(m_state, ImageOpenWorkflow::finishEmptySourceLoadPlan()));
 }
@@ -123,6 +124,7 @@ void ImageOpenController::finishEmptySourceLoad()
 void ImageOpenController::beginSourceLoad()
 {
     m_state.setUnsupportedOpenedCollectionVideo(false);
+    m_state.setEmbeddedMetadata({});
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot {
             m_presentationController.hasImage(),
@@ -164,6 +166,7 @@ void ImageOpenController::finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSe
         m_state.setDisplayedImageLocation(session.location());
         m_state.setContainerNavigationUrl(containerNavigationUrlForLocation(session.location()));
         m_state.setErrorString(QString());
+        m_state.setEmbeddedMetadata({});
         m_state.clearLoadingContainerNavigationUrl();
         m_state.setLoading(false);
         m_state.setStatus(ImageDocumentStatus::Ready);
@@ -179,19 +182,23 @@ void ImageOpenController::finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSe
 
 void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image)
 {
-    finishPresentedImageLoad(
-        session, presentPredecodedImageLoad(m_presentationController, session, std::move(image)));
+    EmbeddedMetadata metadata = image.embeddedMetadata;
+    finishPresentedImageLoad(session,
+        presentPredecodedImageLoad(m_presentationController, session, std::move(image)),
+        std::move(metadata));
 }
 
 void ImageOpenController::finishDecodedImageLoad(ImageLoadSession session, DecodedImage image)
 {
+    EmbeddedMetadata metadata = decodedImageEmbeddedMetadata(image);
     finishPresentedImageLoad(session,
         presentDecodedImageLoad(m_presentationController, session, std::move(image),
-            ImagePresentationAnimationHandling::StartAnimation));
+            ImagePresentationAnimationHandling::StartAnimation),
+        std::move(metadata));
 }
 
-void ImageOpenController::finishPresentedImageLoad(
-    const ImageLoadSession &session, const ImagePresentationLoadResult &result)
+void ImageOpenController::finishPresentedImageLoad(const ImageLoadSession &session,
+    const ImagePresentationLoadResult &result, EmbeddedMetadata metadata)
 {
     if (!result.presented) {
         finishLoadWithError(session, ImageLoadError::Generic,
@@ -199,6 +206,7 @@ void ImageOpenController::finishPresentedImageLoad(
         return;
     }
 
+    m_state.setEmbeddedMetadata(std::move(metadata));
     finishSuccessfulImageLoad(session);
 }
 
@@ -217,6 +225,7 @@ void ImageOpenController::finishLoadWithError(
             session, displayedUrl, message)));
     if (m_state.status() == ImageDocumentStatus::Error) {
         m_state.setUnsupportedOpenedCollectionVideo(false);
+        m_state.setEmbeddedMetadata({});
     }
 }
 

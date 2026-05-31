@@ -26,6 +26,7 @@ enum class VideoDocumentPublicSignal {
     ZoomPercent,
     Muted,
     VideoOutput,
+    EmbeddedMetadata,
 };
 
 struct VideoDocumentPublicSignalOperations {
@@ -44,6 +45,7 @@ struct VideoDocumentPublicSignalOperations {
     std::function<void()> zoomPercentChanged;
     std::function<void()> mutedChanged;
     std::function<void()> videoOutputChanged;
+    std::function<void()> embeddedMetadataChanged;
 };
 
 class VideoDocumentPublicSignalEmitter final

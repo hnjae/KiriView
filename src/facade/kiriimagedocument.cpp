@@ -111,6 +111,8 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
         = [&document]() { Q_EMIT document.imageDocumentSourceScopeChanged(); };
     operations.unsupportedOpenedCollectionVideoChanged
         = [&document]() { Q_EMIT document.unsupportedOpenedCollectionVideoChanged(); };
+    operations.embeddedMetadataChanged
+        = [&document]() { Q_EMIT document.embeddedMetadataChanged(); };
     operations.repaintRequested = [&document]() { Q_EMIT document.repaintRequested(); };
     return operations;
 }
@@ -324,6 +326,11 @@ KiriImageDocument::primaryDisplayedPredecodeImage() const
 KiriView::ImageFirstDisplayDecodeContext KiriImageDocument::firstDisplayDecodeContext() const
 {
     return m_runtime->firstDisplayDecodeContext();
+}
+
+const KiriView::EmbeddedMetadata &KiriImageDocument::embeddedMetadata() const
+{
+    return m_runtime->embeddedMetadata();
 }
 
 KiriView::DisplayedImageRenderSnapshot KiriImageDocument::renderSnapshot(

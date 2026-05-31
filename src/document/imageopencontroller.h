@@ -7,6 +7,7 @@
 #include "decoding/imagedecodedependencies.h"
 #include "imagedocumentruntimeplan.h"
 #include "imageloadtypes.h"
+#include "metadata/embeddedmetadata.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
 #include "presentation/imagepresentationload.h"
@@ -57,8 +58,8 @@ private:
     void finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSession session);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
-    void finishPresentedImageLoad(
-        const ImageLoadSession &session, const ImagePresentationLoadResult &result);
+    void finishPresentedImageLoad(const ImageLoadSession &session,
+        const ImagePresentationLoadResult &result, EmbeddedMetadata metadata);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
     void finishSuccessfulImageLoad(const ImageLoadSession &session);

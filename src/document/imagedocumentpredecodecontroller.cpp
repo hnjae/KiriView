@@ -51,6 +51,7 @@ void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
         m_state.displayedImageLocation(),
         m_presentationController.isPredecodeCacheable(),
         std::move(staticImage),
+        m_state.embeddedMetadata(),
     };
     const DisplayedImageLocation currentLocation = primaryImage.location;
     std::vector<DisplayedPredecodeImage> displayedImages;

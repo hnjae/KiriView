@@ -34,6 +34,7 @@ enum class ImageDocumentPublicSignal {
     RotationDegrees,
     ImageDocumentSourceScope,
     UnsupportedOpenedCollectionVideo,
+    EmbeddedMetadata,
     Repaint,
 };
 
@@ -61,6 +62,7 @@ struct ImageDocumentPublicSignalOperations {
     std::function<void()> rotationDegreesChanged;
     std::function<void()> imageDocumentSourceScopeChanged;
     std::function<void()> unsupportedOpenedCollectionVideoChanged;
+    std::function<void()> embeddedMetadataChanged;
     std::function<void()> repaintRequested;
 };
 

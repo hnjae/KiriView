@@ -29,19 +29,35 @@ Controls.Pane {
 
         required property var rowModel
         required property string title
+        property bool collapsible: false
+        property bool initiallyExpanded: true
+        property bool expanded: initiallyExpanded
         property bool sectionVisible: true
 
         visible: sectionVisible
         spacing: Kirigami.Units.smallSpacing
 
-        Controls.Label {
+        RowLayout {
             Layout.fillWidth: true
-            color: Kirigami.Theme.textColor
-            elide: Text.ElideRight
-            font.bold: true
-            maximumLineCount: 1
-            text: sectionRoot.title
-            textFormat: Text.PlainText
+
+            Controls.Label {
+                Layout.fillWidth: true
+                color: Kirigami.Theme.textColor
+                elide: Text.ElideRight
+                font.bold: true
+                maximumLineCount: 1
+                text: sectionRoot.title
+                textFormat: Text.PlainText
+            }
+
+            Controls.ToolButton {
+                Accessible.name: sectionRoot.title
+                display: Controls.AbstractButton.IconOnly
+                icon.name: sectionRoot.expanded ? "go-up-symbolic" : "go-down-symbolic"
+                visible: sectionRoot.collapsible
+
+                onClicked: sectionRoot.expanded = !sectionRoot.expanded
+            }
         }
 
         Rectangle {
@@ -53,6 +69,7 @@ Controls.Pane {
 
         Repeater {
             model: sectionRoot.rowModel
+            visible: sectionRoot.expanded
 
             delegate: RowLayout {
                 id: rowDelegate
@@ -238,6 +255,15 @@ Controls.Pane {
                 rowModel: root.mediaInformation.cameraRows
                 sectionVisible: root.mediaInformation.hasCameraSection
                 title: KI18n.i18nc("@title:group", "Camera")
+            }
+
+            MetadataSection {
+                Layout.fillWidth: true
+                collapsible: true
+                initiallyExpanded: false
+                rowModel: root.mediaInformation.advancedRows
+                sectionVisible: root.mediaInformation.hasAdvancedSection
+                title: KI18n.i18nc("@title:group", "Advanced Metadata")
             }
 
             Item {

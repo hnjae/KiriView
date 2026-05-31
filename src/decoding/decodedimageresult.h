@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_DECODEDIMAGERESULT_H
 #define KIRIVIEW_DECODEDIMAGERESULT_H
 
+#include "metadata/embeddedmetadata.h"
 #include "rendering/staticimage.h"
 
 #include <QByteArray>
@@ -21,22 +22,26 @@ struct DecodedImageFailure {
 
 struct StaticDecodedImage {
     StaticImagePayload staticImage;
+    EmbeddedMetadata embeddedMetadata;
 };
 
 struct ApngAnimationImage {
     QImage firstFrame;
     QByteArray data;
+    EmbeddedMetadata embeddedMetadata;
 };
 
 struct ReaderAnimationImage {
     QImage firstFrame;
     QByteArray data;
     QByteArray format;
+    EmbeddedMetadata embeddedMetadata;
 };
 
 struct HeifSequenceAnimationImage {
     QImage firstFrame;
     QByteArray data;
+    EmbeddedMetadata embeddedMetadata;
 };
 
 using DecodedImage = std::variant<StaticDecodedImage, ApngAnimationImage, ReaderAnimationImage,
@@ -50,6 +55,7 @@ public:
 
     const DecodedImageFailure *failure() const;
     const DecodedImage *image() const;
+    DecodedImage *image();
     std::optional<DecodedImage> takeImage() &&;
 
 private:
@@ -66,6 +72,9 @@ template <typename Image> DecodedImageResult successfulDecodedImageResult(Image 
 }
 const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result);
 const DecodedImage *decodedImageResultImage(const DecodedImageResult &result);
+DecodedImage *decodedImageResultImage(DecodedImageResult &result);
+const EmbeddedMetadata &decodedImageEmbeddedMetadata(const DecodedImage &image);
+void setDecodedImageEmbeddedMetadata(DecodedImage &image, EmbeddedMetadata metadata);
 template <typename Image> const Image *decodedImageResultImageAs(const DecodedImageResult &result)
 {
     const DecodedImage *image = decodedImageResultImage(result);

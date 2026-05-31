@@ -45,7 +45,7 @@ void PredecodeLoadState::cacheDisplayedImages(const std::vector<DisplayedPredeco
         }
 
         m_cache.cacheDisplayedImage(true, image.location.imageUrl(),
-            image.location.openedCollectionScope(), *image.staticImage);
+            image.location.openedCollectionScope(), *image.staticImage, image.embeddedMetadata);
     }
 }
 
@@ -103,9 +103,16 @@ std::optional<PredecodeLoadStart> PredecodeLoadState::takeNextLoad(
 void PredecodeLoadState::cacheDecodedImage(
     const ImageDecodeRequest &request, StaticImagePayload staticImage)
 {
+    cacheDecodedImage(request, std::move(staticImage), {});
+}
+
+void PredecodeLoadState::cacheDecodedImage(
+    const ImageDecodeRequest &request, StaticImagePayload staticImage, EmbeddedMetadata metadata)
+{
     qCDebug(kiriviewPredecodeLog) << "cache decoded predecode image"
                                   << "generation" << request.id() << "url" << request.imageUrl();
-    m_cache.cacheImage(request.imageUrl(), request.openedCollectionScope(), std::move(staticImage));
+    m_cache.cacheImage(request.imageUrl(), request.openedCollectionScope(), std::move(staticImage),
+        std::move(metadata));
 }
 
 void PredecodeLoadState::cancelBackgroundWork()

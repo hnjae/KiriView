@@ -7,6 +7,7 @@
 #include "imagedocumentchangebatcher.h"
 #include "imagedocumenttypes.h"
 #include "location/imagelocation.h"
+#include "metadata/embeddedmetadata.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 
 #include <QString>
@@ -38,6 +39,7 @@ public:
     const QUrl &loadingContainerNavigationUrl() const;
     bool containerNavigationAvailable() const;
     bool unsupportedOpenedCollectionVideo() const;
+    const EmbeddedMetadata &embeddedMetadata() const;
 
     void setSourceUrl(const QUrl &sourceUrl);
     void setSourceKind(ImageDocumentPageKind sourceKind);
@@ -50,6 +52,7 @@ public:
     void setLoadingContainerNavigationUrl(const QUrl &containerUrl);
     void clearLoadingContainerNavigationUrl();
     void setUnsupportedOpenedCollectionVideo(bool unsupported);
+    void setEmbeddedMetadata(EmbeddedMetadata metadata);
 
 private:
     void replaceDisplayedImageLocation(DisplayedImageLocation location);
@@ -63,6 +66,7 @@ private:
     ImageDocumentStatus m_status = ImageDocumentStatus::Null;
     bool m_loading = false;
     bool m_unsupportedOpenedCollectionVideo = false;
+    EmbeddedMetadata m_embeddedMetadata;
     QString m_errorString;
     QUrl m_containerNavigationUrl;
     QUrl m_loadingContainerNavigationUrl;

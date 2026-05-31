@@ -60,6 +60,8 @@ bool VideoDocumentState::muted() const { return m_muted; }
 
 bool VideoDocumentState::mediaEnded() const { return m_mediaEnded; }
 
+const EmbeddedMetadata &VideoDocumentState::embeddedMetadata() const { return m_embeddedMetadata; }
+
 void VideoDocumentState::resetForClearedSource()
 {
     m_mediaEnded = false;
@@ -78,6 +80,8 @@ void VideoDocumentState::resetForClearedSource()
     appendIfVideoSizeChanged(changes, {});
     appendIfZoomPercentKnownChanged(changes, false);
     appendIfZoomPercentChanged(changes, 0);
+    m_embeddedMetadata = {};
+    changes.push_back(VideoDocumentChange::EmbeddedMetadata);
     publish(std::move(changes));
 }
 
@@ -99,6 +103,8 @@ void VideoDocumentState::resetForSourceLoad(const QUrl &sourceUrl)
     appendIfVideoSizeChanged(changes, {});
     appendIfZoomPercentKnownChanged(changes, false);
     appendIfZoomPercentChanged(changes, 0);
+    m_embeddedMetadata = {};
+    changes.push_back(VideoDocumentChange::EmbeddedMetadata);
     publish(std::move(changes));
 }
 
@@ -190,6 +196,12 @@ void VideoDocumentState::setMuted(bool muted)
 }
 
 void VideoDocumentState::setMediaEnded(bool mediaEnded) { m_mediaEnded = mediaEnded; }
+
+void VideoDocumentState::setEmbeddedMetadata(EmbeddedMetadata metadata)
+{
+    m_embeddedMetadata = std::move(metadata);
+    publish(VideoDocumentChange::EmbeddedMetadata);
+}
 
 void VideoDocumentState::publish(VideoDocumentChange change)
 {
