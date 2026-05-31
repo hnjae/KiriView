@@ -1166,7 +1166,10 @@ void TestToolBarApplicationMenu::trailingToolbarControlsShareSpacingAndVerticalA
 
     QVERIFY(readingControlsGap > 0.0);
     QVERIFY(closeEnough(fitGap, readingControlsGap));
-    QVERIFY(closeEnough(fitButtonGap, readingControlsGap));
+    QVERIFY(fitButtonGap > 0.0);
+    QVERIFY(fitButtonGap < readingControlsGap);
+    QVERIFY(
+        numeric(fitMenu, QStringLiteral("width")) < numeric(fitPrimary, QStringLiteral("width")));
     QVERIFY(closeEnough(zoomGap, readingControlsGap));
 }
 
