@@ -3,9 +3,14 @@
 
 #include "video/videodocumentruntime.h"
 
+#include "metadata/embeddedmetadata.h"
+
+#include <QByteArray>
+#include <QFile>
 #include <QObject>
 #include <QPointer>
 #include <QSize>
+#include <QTemporaryDir>
 #include <QTest>
 #include <memory>
 #include <utility>
@@ -22,6 +27,7 @@ private Q_SLOTS:
     void localResolverCompletionUsesOriginalPlaybackUrl();
     void settingAndClearingSourcePreservesUserFacingUrlAndTitle();
     void resolverCanReturnSeparatePlaybackUrl();
+    void resolvedPlaybackPathPublishesEmbeddedMetadata();
     void resolverFailureSurfacesErrorWithoutChangingSourceUrl();
     void staleResolverCompletionsAreIgnored();
     void resolverCleanupRunsOnSourceChangeAndDestruction();
@@ -227,6 +233,62 @@ struct RuntimeFixture {
         request.failedCallback(request.operationId, request.sourceUrl, errorString);
     }
 };
+
+void appendU32(QByteArray &data, quint32 value)
+{
+    data.append(static_cast<char>((value >> 24) & 0xff));
+    data.append(static_cast<char>((value >> 16) & 0xff));
+    data.append(static_cast<char>((value >> 8) & 0xff));
+    data.append(static_cast<char>(value & 0xff));
+}
+
+void appendBox(QByteArray &data, const char *kind, const QByteArray &payload)
+{
+    appendU32(data, static_cast<quint32>(payload.size() + 8));
+    data.append(kind, 4);
+    data.append(payload);
+}
+
+bool writeTinyMetadataMp4(const QString &path)
+{
+    QByteArray ftypPayload;
+    ftypPayload.append("isom", 4);
+    ftypPayload.append(4, '\0');
+    ftypPayload.append("isomiso2mp41", 12);
+
+    QByteArray mvhdPayload(20, '\0');
+    appendU32(mvhdPayload, 1000);
+    appendU32(mvhdPayload, 1234);
+    mvhdPayload.append(80, '\0');
+
+    QByteArray tkhdPayload;
+    tkhdPayload.append('\0');
+    tkhdPayload.append('\0');
+    tkhdPayload.append('\0');
+    tkhdPayload.append('\7');
+    tkhdPayload.append(16, '\0');
+    appendU32(tkhdPayload, 1234);
+    tkhdPayload.append(52, '\0');
+    appendU32(tkhdPayload, 640 << 16);
+    appendU32(tkhdPayload, 360 << 16);
+
+    QByteArray trakPayload;
+    appendBox(trakPayload, "tkhd", tkhdPayload);
+
+    QByteArray moovPayload;
+    appendBox(moovPayload, "mvhd", mvhdPayload);
+    appendBox(moovPayload, "trak", trakPayload);
+
+    QByteArray data;
+    appendBox(data, "ftyp", ftypPayload);
+    appendBox(data, "moov", moovPayload);
+
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly)) {
+        return false;
+    }
+    return file.write(data) == data.size();
+}
 }
 
 void TestVideoDocumentRuntime::initialStateIsNull()
@@ -358,6 +420,25 @@ void TestVideoDocumentRuntime::resolverCanReturnSeparatePlaybackUrl()
 
     QCOMPARE(fixture.runtime->sourceUrl(), sourceUrl);
     QCOMPARE(fixture.backend->sourceUrl, playbackUrl);
+}
+
+void TestVideoDocumentRuntime::resolvedPlaybackPathPublishesEmbeddedMetadata()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString playbackPath = directory.filePath(QStringLiteral("resolved.mp4"));
+    QVERIFY(writeTinyMetadataMp4(playbackPath));
+
+    RuntimeFixture fixture;
+    const QUrl sourceUrl(QStringLiteral("zip:///books/book.zip!/clip.mp4"));
+    const QUrl playbackUrl = QUrl::fromLocalFile(playbackPath);
+
+    fixture.runtime->setSourceUrl(sourceUrl);
+    fixture.resolveLatest(playbackUrl);
+
+    const KiriView::EmbeddedMetadata metadata = fixture.runtime->embeddedMetadata();
+    QCOMPARE(metadata.duration, QStringLiteral("00:00:01.234"));
+    QCOMPARE(metadata.frameSize, QStringLiteral("640×360 px"));
 }
 
 void TestVideoDocumentRuntime::resolverFailureSurfacesErrorWithoutChangingSourceUrl()

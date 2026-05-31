@@ -10,6 +10,7 @@
 #include "image_async_test_support.h"
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
+#include "metadata/embeddedmetadata.h"
 #include "navigation/directmedianavigationmodel.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "session/activenavigationthumbnailmodel.h"
@@ -274,6 +275,51 @@ bool writeEmptyFile(const QString &path)
     QFile file(path);
     return file.open(QIODevice::WriteOnly);
 }
+
+KiriView::EmbeddedMetadata testCameraMetadata()
+{
+    KiriView::EmbeddedMetadata metadata;
+    metadata.cameraMake = QStringLiteral("Kiri Camera Co.");
+    metadata.cameraModel = QStringLiteral("KiriCam 1");
+    metadata.taken = QStringLiteral("2026-05-31 12:34:56");
+    metadata.location = QStringLiteral("37.7749, -122.4194");
+    metadata.lens = QStringLiteral("Kiri Prime 35mm");
+    metadata.exposure = QStringLiteral("1/125 s at f/5.6");
+    metadata.iso = QStringLiteral("400");
+    metadata.focalLength = QStringLiteral("35 mm");
+    metadata.software = QStringLiteral("KiriOS Camera");
+    metadata.advancedRows = {
+        KiriView::EmbeddedMetadataRow {
+            QStringLiteral("Artist"),
+            QStringLiteral("Kiri Tester"),
+        },
+    };
+    return metadata;
+}
+
+KiriView::ImageDataDecoder staticImageDataDecoderWithMetadata(
+    KiriView::EmbeddedMetadata metadata, QImage image = KiriView::TestSupport::testImage(2, 2))
+{
+    return [metadata = std::move(metadata), image = std::move(image)](
+               const QByteArray &, const KiriView::ImageDecodeRequest &) mutable {
+        KiriView::StaticDecodedImage decoded = KiriView::TestSupport::staticDecodedTestImage(image);
+        decoded.embeddedMetadata = metadata;
+        return KiriView::successfulDecodedImageResult(std::move(decoded));
+    };
+}
+
+bool modelValuesContainCaseInsensitive(const QAbstractItemModel &model, const QString &needle)
+{
+    for (int row = 0; row < model.rowCount(); ++row) {
+        const QString value
+            = mediaInformationRowData(model, row, QByteArrayLiteral("value")).toString();
+        if (value.contains(needle, Qt::CaseInsensitive)) {
+            return true;
+        }
+    }
+
+    return false;
+}
 }
 
 class TestKiriDocumentSession : public QObject
@@ -283,7 +329,8 @@ class TestKiriDocumentSession : public QObject
 private Q_SLOTS:
     void emptySessionProjectsUnavailableActiveNavigation();
     void emptySessionProjectsUnavailableMediaInformation();
-    void imageMediaInformationUsesDummyRowsAndKnownDimensions();
+    void imageMediaInformationUsesEmbeddedMetadataAndKnownDimensions();
+    void imageMediaInformationClearsStaleEmbeddedMetadataOnReplacement();
     void videoMediaInformationUsesVideoSectionAndNoCameraRows();
     void mediaInformationDerivesFilenameAndPathFromTargetUrl();
     void mediaInformationRowModelsExposeLabelAndValueRoles();
@@ -363,7 +410,7 @@ void TestKiriDocumentSession::emptySessionProjectsUnavailableMediaInformation()
     QCOMPARE(mediaInformation->cameraRows()->rowCount(), 0);
 }
 
-void TestKiriDocumentSession::imageMediaInformationUsesDummyRowsAndKnownDimensions()
+void TestKiriDocumentSession::imageMediaInformationUsesEmbeddedMetadataAndKnownDimensions()
 {
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
@@ -375,7 +422,9 @@ void TestKiriDocumentSession::imageMediaInformationUsesDummyRowsAndKnownDimensio
     const QUrl imageUrl = localUrl(imagePath);
     directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
         { directMediaNavigationCandidate(imageUrl) });
-    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, nullptr, {},
+            staticImageDataDecoderWithMetadata(testCameraMetadata()));
 
     session->setSourceUrl(imageUrl);
 
@@ -387,26 +436,82 @@ void TestKiriDocumentSession::imageMediaInformationUsesDummyRowsAndKnownDimensio
     QCOMPARE(mediaInformation->summary(), QStringLiteral("Image, 2×2 px"));
     QCOMPARE(mediaInformation->mediaSectionTitle(), QStringLiteral("Image"));
     QVERIFY(mediaInformation->hasCameraSection());
+    QVERIFY(mediaInformation->hasAdvancedSection());
     QVERIFY(mediaInformation->canCopyFilePath());
     QVERIFY(mediaInformation->canOpenContainingFolder());
-    QCOMPARE(mediaInformation->generalRows()->rowCount(), 4);
-    QCOMPARE(mediaInformation->mediaRows()->rowCount(), 3);
-    QCOMPARE(mediaInformation->cameraRows()->rowCount(), 3);
+    QCOMPARE(mediaInformation->generalRows()->rowCount(), 2);
+    QCOMPARE(mediaInformation->mediaRows()->rowCount(), 1);
+    QCOMPARE(mediaInformation->cameraRows()->rowCount(), 8);
+    QCOMPARE(mediaInformation->advancedRows()->rowCount(), 1);
     QCOMPARE(
         mediaInformationValueForLabel(*mediaInformation->generalRows(), QStringLiteral("Type")),
-        QStringLiteral("Image file (placeholder)"));
+        QStringLiteral("Image"));
     QCOMPARE(
         mediaInformationValueForLabel(*mediaInformation->generalRows(), QStringLiteral("Path")),
         imagePath);
     QCOMPARE(
         mediaInformationValueForLabel(*mediaInformation->mediaRows(), QStringLiteral("Dimensions")),
         QStringLiteral("2×2 px"));
-    QCOMPARE(mediaInformationValueForLabel(
-                 *mediaInformation->mediaRows(), QStringLiteral("Color Space")),
-        QStringLiteral("sRGB (placeholder)"));
-    QVERIFY(
-        !mediaInformationValueForLabel(*mediaInformation->cameraRows(), QStringLiteral("Camera"))
-            .isEmpty());
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->cameraRows(), QStringLiteral("Camera")),
+        QStringLiteral("Kiri Camera Co. KiriCam 1"));
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->cameraRows(), QStringLiteral("Taken")),
+        QStringLiteral("2026-05-31 12:34:56"));
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->cameraRows(), QStringLiteral("Location")),
+        QStringLiteral("37.7749, -122.4194"));
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->advancedRows(), QStringLiteral("Artist")),
+        QStringLiteral("Kiri Tester"));
+    QVERIFY(!modelValuesContainCaseInsensitive(
+        *mediaInformation->generalRows(), QStringLiteral("placeholder")));
+    QVERIFY(!modelValuesContainCaseInsensitive(
+        *mediaInformation->mediaRows(), QStringLiteral("placeholder")));
+    QVERIFY(!modelValuesContainCaseInsensitive(
+        *mediaInformation->cameraRows(), QStringLiteral("placeholder")));
+}
+
+void TestKiriDocumentSession::imageMediaInformationClearsStaleEmbeddedMetadataOnReplacement()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString firstPath = directory.filePath(QStringLiteral("first.png"));
+    const QString secondPath = directory.filePath(QStringLiteral("second.png"));
+    QVERIFY(writeTestImage(firstPath));
+    QVERIFY(writeTestImage(secondPath));
+
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl firstUrl = localUrl(firstPath);
+    const QUrl secondUrl = localUrl(secondPath);
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(firstUrl), directMediaNavigationCandidate(secondUrl) });
+    KiriView::EmbeddedMetadata metadata = testCameraMetadata();
+    KiriView::ImageDataDecoder decoder = [metadata = std::move(metadata)](const QByteArray &data,
+                                             const KiriView::ImageDecodeRequest &request) {
+        KiriView::StaticDecodedImage decoded
+            = KiriView::TestSupport::staticDecodedTestImage(KiriView::TestSupport::testImage(
+                request.imageUrl().fileName() == QStringLiteral("first.png") ? 2 : 3, 2));
+        if (data == QByteArrayLiteral("first")) {
+            decoded.embeddedMetadata = metadata;
+        }
+        return KiriView::successfulDecodedImageResult(std::move(decoded));
+    };
+    KiriView::TestSupport::ManualImageDataLoader dataLoader;
+    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
+        directMediaNavigationProvider.provider(), nullptr, &dataLoader, {}, std::move(decoder));
+
+    session->setSourceUrl(firstUrl);
+    QVERIFY(dataLoader.finishOldestActiveLoadForUrl(firstUrl, QByteArrayLiteral("first")));
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QVERIFY(session->mediaInformation()->hasCameraSection());
+
+    session->setSourceUrl(secondUrl);
+    QVERIFY(dataLoader.finishOldestActiveLoadForUrl(secondUrl, QByteArrayLiteral("second")));
+    QTRY_COMPARE(session->imageDocument()->primaryImageSize(), QSize(3, 2));
+    QVERIFY(!session->mediaInformation()->hasCameraSection());
+    QVERIFY(!session->mediaInformation()->hasAdvancedSection());
 }
 
 void TestKiriDocumentSession::videoMediaInformationUsesVideoSectionAndNoCameraRows()
@@ -423,16 +528,15 @@ void TestKiriDocumentSession::videoMediaInformationUsesVideoSectionAndNoCameraRo
     KiriMediaInformation *mediaInformation = session->mediaInformation();
     QVERIFY(mediaInformation->available());
     QCOMPARE(mediaInformation->title(), QStringLiteral("clip.mp4"));
-    QCOMPARE(mediaInformation->summary(), QStringLiteral("Video metadata placeholder"));
+    QCOMPARE(mediaInformation->summary(), QStringLiteral("Video"));
     QCOMPARE(mediaInformation->mediaSectionTitle(), QStringLiteral("Video"));
     QVERIFY(!mediaInformation->hasCameraSection());
+    QVERIFY(!mediaInformation->hasAdvancedSection());
     QCOMPARE(mediaInformation->cameraRows()->rowCount(), 0);
     QCOMPARE(
         mediaInformationValueForLabel(*mediaInformation->generalRows(), QStringLiteral("Type")),
-        QStringLiteral("Video file (placeholder)"));
-    QCOMPARE(
-        mediaInformationValueForLabel(*mediaInformation->mediaRows(), QStringLiteral("Frame Size")),
-        QStringLiteral("Unknown dimensions (placeholder)"));
+        QStringLiteral("Video"));
+    QCOMPARE(mediaInformation->mediaRows()->rowCount(), 0);
 }
 
 void TestKiriDocumentSession::mediaInformationDerivesFilenameAndPathFromTargetUrl()
@@ -482,7 +586,7 @@ void TestKiriDocumentSession::mediaInformationRowModelsExposeLabelAndValueRoles(
     QCOMPARE(mediaInformationRowData(*model, 0, QByteArrayLiteral("label")).toString(),
         QStringLiteral("Type"));
     QCOMPARE(mediaInformationRowData(*model, 0, QByteArrayLiteral("value")).toString(),
-        QStringLiteral("Image file (placeholder)"));
+        QStringLiteral("Image"));
 }
 
 void TestKiriDocumentSession::directVideoRoutesToVideoDocumentWithOriginalSource()

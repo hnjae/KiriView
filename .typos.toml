@@ -5,3 +5,4 @@ locale = "en"
 
 [default.extend-words]
 INVOKABLE = "INVOKABLE"
+trak = "trak"

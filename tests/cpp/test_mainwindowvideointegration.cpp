@@ -417,8 +417,12 @@ void TestMainWindowVideoIntegration::infoPanelUsesSessionMediaInformationAndResp
     QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.generalRows")));
     QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.mediaRows")));
     QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.cameraRows")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.advancedRows")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.hasAdvancedSection")));
+    QVERIFY(infoPanelQml.contains(QStringLiteral("initiallyExpanded: false")));
     QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.copyFilePath()")));
     QVERIFY(infoPanelQml.contains(QStringLiteral("root.mediaInformation.openContainingFolder()")));
+    QVERIFY(!infoPanelQml.contains(QStringLiteral("placeholder metadata")));
     QVERIFY(infoPanelQml.contains(QStringLiteral("elide: Text.ElideRight")));
     QVERIFY(infoPanelQml.contains(QStringLiteral("elide: Text.ElideMiddle")));
     QVERIFY(!infoPanelQml.contains(QStringLiteral("#")));

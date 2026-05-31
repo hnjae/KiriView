@@ -26,6 +26,8 @@ mod avifcompat;
 mod bmff;
 #[path = "policy/byteio.rs"]
 mod byteio;
+#[path = "policy/embeddedmetadata.rs"]
+mod embeddedmetadata;
 #[path = "policy/heifcontainer.rs"]
 mod heifcontainer;
 #[path = "policy/heiftiling.rs"]
