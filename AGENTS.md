@@ -1,57 +1,58 @@
 # Repository Guidelines
 
-## Project Overview
+KiriView is a Rust + CXX-Qt + KDE Kirigami desktop app.
+Layout: `src/` (app), `tests/cpp/` (C++ tests), `docs/` (docs), `po/` (translations), `flatpak/` (packaging), `nix/` (devenv).
 
-KiriView is a Rust, CXX-Qt, and KDE Kirigami desktop app. Key paths: `src/` app code, `tests/cpp/` C++ tests, `docs/` project documentation, `po/` translations, `flatpak/` packaging patches, and `nix/` devenv support.
+## Policies
 
-## Architecture Guidance
+- **Architecture lives in `docs/architecture/`** (start at `README.md`). Follow it for language boundaries, module ownership, FFI, and workflow structure. Record long-term rules there or in ADRs — never duplicate them here.
+- **Pre-release: no backward compatibility.** Do not preserve compatibility for configs, APIs, or internal formats unless explicitly asked.
 
-For language boundaries, module ownership, FFI design, workflow structure, and other long-term maintainability decisions, follow `docs/architecture/`, starting from `docs/architecture/README.md`. Keep architecture rules in those documents or ADRs instead of duplicating them here.
+## Project conventions
 
-## Compatibility Policy
+- 4-space indentation for Rust, QML, C++, and headers.
+- App ID is always `io.github.hnjae.KiriView`.
+- **Translations:** never author `po/*.po` content yourself. Only update templates or existing files with strings supplied by a translator, upstream tooling, or an explicit request.
+- **Licensing:** AGPL-3.0-or-later with REUSE checks. New source files need SPDX copyright + license headers; cover generated/metadata files in `REUSE.toml` when inline headers are impractical.
 
-KiriView is currently in pre-release. Backward compatibility for configurations, APIs, and internal formats should not be maintained unless explicitly requested.
+## Verification discipline
 
-## Build, Test, and Development Commands
+**Scope verification to the change's blast radius: stay narrow while iterating, go wide before finishing.**
 
-- `devenv shell`: development environment.
-- `just build`: Flatpak build in `build-dir/`, tests disabled.
-- `just build-with-tests`: full Flatpak build with manifest tests.
-- `just run`: launch from `build-dir/`.
-- `devenv tasks run --refresh-eval-cache --refresh-task-cache --mode before kiriview:lint`: host/devenv Rust, QML, and C++ linters.
-- `devenv tasks run --refresh-eval-cache --refresh-task-cache --mode before kiriview:test:host`: host Rust library tests and host C++ subset.
-- `devenv shell -- treefmt`: run treefmt formatters.
-- `devenv shell -- treefmt --ci`: check treefmt formatting in CI mode.
+| Situation                                                                                                       | What to run                                                                                                                                           |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Iterating on code                                                                                               | Smallest relevant focused checks: targeted unit/integration tests, `qmllint` on touched QML, clippy/check on touched Rust crates, scoped C++/Qt lint. |
+| Intent-only commit (spec / architecture / test-only)                                                            | Stay narrow; skip the full suite unless the change is unusually risky.                                                                                |
+| Finishing a code change                                                                                         | `just test` (default, unless the user asks to skip/pause).                                                                                            |
+| Touched lint/i18n, QML structure, generated catalogs/templates, formatting rules, or cross-language integration | `just check`.                                                                                                                                         |
+| Touched Flatpak packaging, runtime deps, or manifest test behavior                                              | `just build-with-tests`.                                                                                                                              |
 
-### Agent Testing Workflow
+Always report any skipped focused or final check in your final response.
 
-During development, run the smallest relevant focused test set first. Before ending a code-change task, run `just test` unless the user explicitly asks to skip or pause. Use `just check` when lint/i18n/check wiring is affected. Use `just build-with-tests` when Flatpak packaging, runtime dependencies, or manifest test behavior is affected. Report any skipped focused or final test in the final response.
+## Commands
 
-For Rust policy changes, prefer a filtered library test before the full suite:
+- `devenv shell` — development environment.
+- `just build` / `just build-with-tests` — Flatpak build in `build-dir/` (tests off / on).
+- `just run` — launch from `build-dir/`.
+- `devenv shell -- treefmt` / `treefmt --ci` — format / CI format check.
+- Lint all languages: `devenv tasks run --refresh-eval-cache --refresh-task-cache --mode before kiriview:lint`
+- Host tests: `devenv tasks run --refresh-eval-cache --refresh-task-cache --mode before kiriview:test:host`
+
+## Targeted test recipes
+
+All recipes assume the devenv lld prefix: `export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-fuse-ld=lld"`.
+
+**Rust (prefer a filtered lib test before the full suite)** — `<filter>` e.g. `imagezoomstate`:
 
 ```sh
-devenv shell -- zsh -lc 'export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-fuse-ld=lld"; CARGO_TARGET_DIR=target cargo test --locked --lib --all-features <filter> -- --test-threads "$(nproc)"'
+devenv shell -- bash -lc 'export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-fuse-ld=lld"; CARGO_TARGET_DIR=target cargo test --locked --lib --all-features <filter> -- --test-threads "$(nproc)"'
 ```
 
-For C++/Qt runtime changes, build the host Rust artifacts and run the matching CTest target:
+**C++/Qt (build host Rust artifacts, then run the matching CTest target)** — `<test_target>` e.g. `test_imagezoomstate`:
 
 ```sh
-devenv shell -- zsh -lc 'export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-fuse-ld=lld"; CARGO_TARGET_DIR=target cargo build --locked --lib --all-features'
+devenv shell -- bash -lc 'export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-fuse-ld=lld"; CARGO_TARGET_DIR=target cargo build --locked --lib --all-features'
 devenv shell -- cmake -S tests/cpp -B target/devenv/cpp-tests -DCMAKE_BUILD_TYPE=Debug -DKIRIVIEW_CARGO_TARGET_DIR="$PWD/target/debug"
 devenv shell -- cmake --build target/devenv/cpp-tests --target <test_target> --parallel "$(nproc)"
 devenv shell -- env LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 ctest --test-dir target/devenv/cpp-tests -R '^<test_target>$' --output-on-failure
 ```
-
-Use `<filter>` for Rust test/module filters such as `imagezoomstate`, and `<test_target>` for CTest targets such as `test_imagezoomstate`.
-
-## Coding Style & Naming Conventions
-
-Rust, QML, C++, and headers use 4-space indentation. Keep app IDs as `io.github.hnjae.KiriView`.
-
-## Translation Policy
-
-Do not personally author translations for individual language files such as `po/*.po`. Only update translation templates or existing translation files when the strings are supplied by a translator, upstream tooling, or an explicit user request.
-
-## Licensing & Configuration
-
-This repository is AGPL-3.0-or-later and uses REUSE checks. New source files should include SPDX copyright and license headers; generated or metadata files should be covered in `REUSE.toml` when inline headers are impractical.
