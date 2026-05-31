@@ -262,6 +262,12 @@ if(TARGET test_imagezoomcontrols)
     )
 endif()
 
+if(TARGET test_thumbnailpanel)
+    set_tests_properties(test_thumbnailpanel PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    )
+endif()
+
 if(TARGET test_toolbarapplicationmenu)
     set_tests_properties(test_toolbarapplicationmenu PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
