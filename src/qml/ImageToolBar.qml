@@ -47,7 +47,7 @@ Controls.ToolBar {
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
     readonly property int edgeMargin: controlSpacing
     property int selectedFitMode: KiriImageDocument.Fit
-    readonly property bool fitSplitButtonTextVisible: width >= Kirigami.Units.gridUnit * 40
+    readonly property bool fitMenuButtonTextVisible: width >= Kirigami.Units.gridUnit * 40
     readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused()
     readonly property int toolbarVerticalPadding: controlSpacing
     readonly property var imageToolbarControls: (root.rightToLeftReadingControlVisible ? [root.actions.rightToLeftReadingAction] : []).concat(root.twoPageModeControlVisible ? [root.actions.twoPageModeAction] : [], [fitMenuAction, zoomLevelAction])
@@ -294,7 +294,7 @@ Controls.ToolBar {
     }
 
     readonly property Kirigami.Action fitMenuAction: Kirigami.Action {
-        displayComponent: FitSplitButton {
+        displayComponent: FitModeMenuButton {
             action: root.fitMenuAction
             fitAction: root.actions.fitAction
             fitHeightAction: root.actions.fitHeightAction
@@ -303,7 +303,7 @@ Controls.ToolBar {
             fitWidthAction: root.actions.fitWidthAction
             fitWidthMode: KiriImageDocument.FitWidth
             selectedFitMode: root.selectedFitMode
-            textVisible: root.fitSplitButtonTextVisible
+            textVisible: root.fitMenuButtonTextVisible
 
             onFitModeTriggered: function (zoomMode) {
                 root.triggerFitMode(zoomMode);
