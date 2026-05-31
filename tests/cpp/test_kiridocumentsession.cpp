@@ -357,6 +357,10 @@ private Q_SLOTS:
     void activeNavigationNumberDispatchRoutesImageDocumentPages();
     void archiveCollectionThumbnailModelUsesPageCandidateNames();
     void activeNavigationRequestReportsDispatchAndBoundaryResults();
+    void activeNavigationAdjacentRequestsSetRevealIntent();
+    void activeNavigationLargeJumpRequestsSetRevealIntent();
+    void activeNavigationThumbnailDispatchSetsRevealIntent();
+    void sourceOpenReplacesStaleRevealIntent();
     void activeNavigationBoundaryTextFollowsSessionSource();
     void activeNavigationNumberDispatchIgnoresUnknownNavigation();
     void activeNavigationClearsWhenSwitchingFromKnownDirectMedia();
@@ -1335,6 +1339,121 @@ void TestKiriDocumentSession::activeNavigationRequestReportsDispatchAndBoundaryR
 
     QCOMPARE(session->requestNextActiveNavigation(),
         KiriDocumentSession::ActiveNavigationRequestResult::LastActiveNavigationBoundary);
+}
+
+void TestKiriDocumentSession::activeNavigationAdjacentRequestsSetRevealIntent()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl first = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl second = localUrl(QStringLiteral("/media/02.mp4"));
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(first), directMediaNavigationCandidate(second) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+
+    session->setSourceUrl(first);
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::LoadOrOpen);
+
+    session->requestNextActiveNavigation();
+
+    QCOMPARE(session->sourceUrl(), second);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::AdjacentNavigation);
+
+    session->openPreviousActiveNavigation();
+
+    QCOMPARE(session->sourceUrl(), first);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::AdjacentNavigation);
+}
+
+void TestKiriDocumentSession::activeNavigationLargeJumpRequestsSetRevealIntent()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl first = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl second = localUrl(QStringLiteral("/media/02.mp4"));
+    const QUrl third = localUrl(QStringLiteral("/media/03.mp4"));
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(first), directMediaNavigationCandidate(second),
+            directMediaNavigationCandidate(third) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+
+    session->setSourceUrl(second);
+    QVERIFY(session->activeNavigationKnown());
+
+    session->openFirstActiveNavigation();
+
+    QCOMPARE(session->sourceUrl(), first);
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::LargeJump);
+
+    session->openLastActiveNavigation();
+
+    QCOMPARE(session->sourceUrl(), third);
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::LargeJump);
+
+    session->openActiveNavigationAtNumber(2);
+
+    QCOMPARE(session->sourceUrl(), second);
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::LargeJump);
+}
+
+void TestKiriDocumentSession::activeNavigationThumbnailDispatchSetsRevealIntent()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl first = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl second = localUrl(QStringLiteral("/media/02.mp4"));
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(first), directMediaNavigationCandidate(second) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+
+    session->setSourceUrl(first);
+    QVERIFY(session->activeNavigationKnown());
+
+    session->openActiveNavigationThumbnailAtNumber(2);
+
+    QCOMPARE(session->sourceUrl(), second);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::ThumbnailActivation);
+}
+
+void TestKiriDocumentSession::sourceOpenReplacesStaleRevealIntent()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl first = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl second = localUrl(QStringLiteral("/media/02.mp4"));
+    const QUrl other = localUrl(QStringLiteral("/other/01.mp4"));
+    directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { directMediaNavigationCandidate(first), directMediaNavigationCandidate(second) });
+    directMediaNavigationProvider.setMedia(
+        localUrl(QStringLiteral("/other/")), { directMediaNavigationCandidate(other) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+
+    session->setSourceUrl(first);
+    QVERIFY(session->activeNavigationKnown());
+
+    session->requestNextActiveNavigation();
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::AdjacentNavigation);
+
+    session->setSourceUrl(other);
+
+    QCOMPARE(session->sourceUrl(), other);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::LoadOrOpen);
+
+    session->openActiveNavigationAtNumber(42);
+
+    QCOMPARE(session->sourceUrl(), other);
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::None);
 }
 
 void TestKiriDocumentSession::activeNavigationBoundaryTextFollowsSessionSource()

@@ -32,7 +32,10 @@ private Q_SLOTS:
     void init();
     void visibleMainNavigationKeepsScrollPosition();
     void offscreenMainNavigationRevealsSelectedThumbnail();
+    void adjacentMainNavigationRevealsSelectedThumbnail();
+    void largeJumpNavigationRevealsSelectedThumbnail();
     void visibleThumbnailClickDispatchesWithoutScrollMovement();
+    void scrolledThumbnailClickDispatchesWithoutScrollMovement();
 };
 
 namespace {
@@ -342,6 +345,51 @@ void TestThumbnailPanel::offscreenMainNavigationRevealsSelectedThumbnail()
     QVERIFY2(waitForContentX(*fixture.thumbnailStrip, 0.0),
         "thumbnail strip did not return to the leading edge");
 
+    fixture.documentSession->openNextActiveNavigation();
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 2, testImageCount),
+        "main-view navigation did not select the adjacent item");
+    QTest::qWait(180);
+
+    QVERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+    QVERIFY2(nearlyEqual(contentX(*fixture.thumbnailStrip), 0.0),
+        qPrintable(QStringLiteral("contentX moved to %1").arg(contentX(*fixture.thumbnailStrip))));
+}
+
+void TestThumbnailPanel::adjacentMainNavigationRevealsSelectedThumbnail()
+{
+    ThumbnailPanelFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 1, testImageCount),
+        "active navigation did not become ready");
+
+    fixture.documentSession->openActiveNavigationAtNumber(10);
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 10, testImageCount),
+        "large jump did not select the setup item");
+    QTRY_VERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+
+    setContentX(*fixture.thumbnailStrip, 0.0);
+    QVERIFY2(waitForContentX(*fixture.thumbnailStrip, 0.0),
+        "thumbnail strip did not return to the leading edge");
+
+    fixture.documentSession->openNextActiveNavigation();
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 11, testImageCount),
+        "adjacent navigation did not select the offscreen item");
+
+    QTRY_VERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+    QVERIFY(contentX(*fixture.thumbnailStrip) > 0.0);
+}
+
+void TestThumbnailPanel::largeJumpNavigationRevealsSelectedThumbnail()
+{
+    ThumbnailPanelFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 1, testImageCount),
+        "active navigation did not become ready");
+
+    setContentX(*fixture.thumbnailStrip, 0.0);
+    QVERIFY2(waitForContentX(*fixture.thumbnailStrip, 0.0),
+        "thumbnail strip did not return to the leading edge");
+
     fixture.documentSession->openActiveNavigationAtNumber(16);
     QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 16, testImageCount),
         "main-view navigation did not select the offscreen item");
@@ -378,6 +426,37 @@ void TestThumbnailPanel::visibleThumbnailClickDispatchesWithoutScrollMovement()
     QVERIFY2(nearlyEqual(contentX(*fixture.thumbnailStrip), visibleScrollPosition),
         qPrintable(QStringLiteral("contentX moved from %1 to %2")
                 .arg(visibleScrollPosition)
+                .arg(contentX(*fixture.thumbnailStrip))));
+}
+
+void TestThumbnailPanel::scrolledThumbnailClickDispatchesWithoutScrollMovement()
+{
+    ThumbnailPanelFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 1, testImageCount),
+        "active navigation did not become ready");
+
+    const int clickedNumber = 16;
+    const double scrolledPosition = itemStart(*fixture.thumbnailStrip, 14);
+    setContentX(*fixture.thumbnailStrip, scrolledPosition);
+    QVERIFY2(waitForContentX(*fixture.thumbnailStrip, scrolledPosition),
+        "thumbnail strip did not accept the user scroll position");
+
+    QQuickItem *delegate = nullptr;
+    QTRY_VERIFY(
+        (delegate = thumbnailDelegateForNumber(*fixture.thumbnailStrip, clickedNumber)) != nullptr);
+    const QPointF clickPosition
+        = delegate->mapToScene(QPointF(delegate->width() / 2.0, delegate->height() / 2.0));
+    QTest::mouseClick(fixture.view.get(), Qt::LeftButton, Qt::NoModifier, clickPosition.toPoint());
+
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, clickedNumber, testImageCount),
+        "thumbnail click did not dispatch selection");
+    QTest::qWait(180);
+
+    QVERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+    QVERIFY2(nearlyEqual(contentX(*fixture.thumbnailStrip), scrolledPosition),
+        qPrintable(QStringLiteral("contentX moved from %1 to %2")
+                .arg(scrolledPosition)
                 .arg(contentX(*fixture.thumbnailStrip))));
 }
 
