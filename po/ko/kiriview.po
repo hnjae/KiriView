@@ -853,27 +853,22 @@ msgctxt "@info:tooltip"
 msgid "Open menu"
 msgstr "열기"
 
-#: src/qml/FitSplitButton.qml
+#: src/qml/FitModeMenuButton.qml
 msgctxt "@info:tooltip"
 msgid "Choose fit mode"
 msgstr ""
 
-#: src/qml/FitSplitButton.qml
-msgctxt "@action"
-msgid "Fit Mode"
-msgstr ""
-
-#: src/qml/FitSplitButton.qml
+#: src/qml/FitModeMenuButton.qml
 msgctxt "@action:inmenu"
 msgid "Fit to Window"
 msgstr ""
 
-#: src/qml/FitSplitButton.qml
+#: src/qml/FitModeMenuButton.qml
 msgctxt "@action:inmenu"
 msgid "Fit Width"
 msgstr ""
 
-#: src/qml/FitSplitButton.qml
+#: src/qml/FitModeMenuButton.qml
 msgctxt "@action:inmenu"
 msgid "Fit Height"
 msgstr ""
