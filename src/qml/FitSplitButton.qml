@@ -21,8 +21,9 @@ Controls.Control {
     required property int fitWidthMode
     required property int selectedFitMode
     property bool textVisible: true
-    property int buttonSpacing: Kirigami.Units.smallSpacing
+    property int buttonSpacing: Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2))
     readonly property real buttonHeight: Math.max(primaryButton.implicitHeight, menuButton.implicitHeight)
+    readonly property real menuButtonWidth: Math.max(Kirigami.Units.gridUnit, Math.round(buttonHeight * 0.75))
 
     property alias display: primaryButton.display
     property alias text: primaryButton.text
@@ -80,6 +81,7 @@ Controls.Control {
 
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredHeight: root.buttonHeight
+            Layout.preferredWidth: root.menuButtonWidth
 
             readonly property string menuTooltip: KI18n.i18nc("@info:tooltip", "Choose fit mode")
 
