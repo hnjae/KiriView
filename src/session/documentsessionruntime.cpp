@@ -229,6 +229,11 @@ ActiveNavigationRevealIntent DocumentSessionRuntime::activeNavigationRevealInten
     return m_state.activeNavigationRevealIntent();
 }
 
+ActiveNavigationRevealDirection DocumentSessionRuntime::activeNavigationRevealDirection() const
+{
+    return m_state.activeNavigationRevealDirection();
+}
+
 QAbstractListModel *DocumentSessionRuntime::activeNavigationThumbnailModel() const
 {
     return m_activeNavigationThumbnailModel.get();
@@ -273,83 +278,86 @@ void DocumentSessionRuntime::openNextActiveNavigation() { requestNextActiveNavig
 
 void DocumentSessionRuntime::openFirstActiveNavigation()
 {
-    executeActiveNavigationDispatchRequest(
-        firstActiveNavigationDispatchRequest(), ActiveNavigationRevealIntent::LargeJump);
+    executeActiveNavigationDispatchRequest(firstActiveNavigationDispatchRequest(),
+        ActiveNavigationRevealContext { ActiveNavigationRevealIntent::LargeJump });
 }
 
 void DocumentSessionRuntime::openLastActiveNavigation()
 {
-    executeActiveNavigationDispatchRequest(
-        lastActiveNavigationDispatchRequest(), ActiveNavigationRevealIntent::LargeJump);
+    executeActiveNavigationDispatchRequest(lastActiveNavigationDispatchRequest(),
+        ActiveNavigationRevealContext { ActiveNavigationRevealIntent::LargeJump });
 }
 
 void DocumentSessionRuntime::openActiveNavigationAtNumber(int number)
 {
-    executeActiveNavigationDispatchRequest(
-        numberedActiveNavigationDispatchRequest(number), ActiveNavigationRevealIntent::LargeJump);
+    executeActiveNavigationDispatchRequest(numberedActiveNavigationDispatchRequest(number),
+        ActiveNavigationRevealContext { ActiveNavigationRevealIntent::LargeJump });
 }
 
 void DocumentSessionRuntime::openActiveNavigationThumbnailAtNumber(int number)
 {
     executeActiveNavigationDispatchRequest(numberedActiveNavigationDispatchRequest(number),
-        ActiveNavigationRevealIntent::ThumbnailActivation);
+        ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ThumbnailActivation });
 }
 
 ActiveNavigationDispatchOutcome DocumentSessionRuntime::requestPreviousActiveNavigation()
 {
     return executeActiveNavigationDispatchRequest(previousActiveNavigationDispatchRequest(),
-        ActiveNavigationRevealIntent::AdjacentNavigation);
+        ActiveNavigationRevealContext { ActiveNavigationRevealIntent::AdjacentNavigation,
+            ActiveNavigationRevealDirection::Previous });
 }
 
 ActiveNavigationDispatchOutcome DocumentSessionRuntime::requestNextActiveNavigation()
 {
-    return executeActiveNavigationDispatchRequest(
-        nextActiveNavigationDispatchRequest(), ActiveNavigationRevealIntent::AdjacentNavigation);
+    return executeActiveNavigationDispatchRequest(nextActiveNavigationDispatchRequest(),
+        ActiveNavigationRevealContext { ActiveNavigationRevealIntent::AdjacentNavigation,
+            ActiveNavigationRevealDirection::Next });
 }
 
 ActiveNavigationDispatchOutcome DocumentSessionRuntime::executeActiveNavigationDispatchRequest(
-    ActiveNavigationDispatchRequest request, ActiveNavigationRevealIntent intent)
+    ActiveNavigationDispatchRequest request, ActiveNavigationRevealContext context)
 {
     const ActiveNavigationDispatchPlan plan = activeNavigationDispatchPlan(
         m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(), request);
     if (plan.shouldDispatch()) {
-        setPendingActiveNavigationRevealIntent(intent);
+        setPendingActiveNavigationRevealContext(context);
     } else {
-        m_pendingActiveNavigationRevealIntent = ActiveNavigationRevealIntent::None;
-        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::None);
+        m_pendingActiveNavigationRevealContext = {};
+        setActiveNavigationRevealContext({});
     }
     executeActiveNavigationDispatchPlan(plan);
     return plan.outcome;
 }
 
-void DocumentSessionRuntime::setPendingActiveNavigationRevealIntent(
-    ActiveNavigationRevealIntent intent)
+void DocumentSessionRuntime::setPendingActiveNavigationRevealContext(
+    ActiveNavigationRevealContext context)
 {
-    m_pendingActiveNavigationRevealIntent = intent;
-    setActiveNavigationRevealIntent(intent);
+    m_pendingActiveNavigationRevealContext = context;
+    setActiveNavigationRevealContext(context);
 }
 
-ActiveNavigationRevealIntent DocumentSessionRuntime::takePendingActiveNavigationRevealIntent(
-    ActiveNavigationRevealIntent fallback)
+ActiveNavigationRevealContext DocumentSessionRuntime::takePendingActiveNavigationRevealContext(
+    ActiveNavigationRevealIntent fallbackIntent)
 {
-    const ActiveNavigationRevealIntent intent
-        = m_pendingActiveNavigationRevealIntent == ActiveNavigationRevealIntent::None
-        ? fallback
-        : m_pendingActiveNavigationRevealIntent;
-    m_pendingActiveNavigationRevealIntent = ActiveNavigationRevealIntent::None;
-    return intent;
+    const ActiveNavigationRevealContext context
+        = m_pendingActiveNavigationRevealContext.intent == ActiveNavigationRevealIntent::None
+        ? ActiveNavigationRevealContext { fallbackIntent }
+        : m_pendingActiveNavigationRevealContext;
+    m_pendingActiveNavigationRevealContext = {};
+    return context;
 }
 
-void DocumentSessionRuntime::setActiveNavigationRevealIntent(ActiveNavigationRevealIntent intent)
+void DocumentSessionRuntime::setActiveNavigationRevealContext(ActiveNavigationRevealContext context)
 {
-    m_state.setActiveNavigationRevealIntent(intent);
+    m_state.setActiveNavigationRevealIntent(context.intent);
+    m_state.setActiveNavigationRevealDirection(context.direction);
 }
 
-void DocumentSessionRuntime::clearActiveNavigationRevealIntentIfUnavailable()
+void DocumentSessionRuntime::clearActiveNavigationRevealContextIfUnavailable()
 {
     const ActiveNavigationSnapshot &snapshot = m_state.activeNavigationSnapshot();
     if (!snapshot.available || !snapshot.known) {
-        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::None);
+        setActiveNavigationRevealContext({});
     }
 }
 
@@ -441,7 +449,8 @@ void DocumentSessionRuntime::connectDocuments()
             if (directMediaScopeChanged || !directMediaNavigationActive()) {
                 refreshDirectMediaNavigation();
             }
-            setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::ProgrammaticSync);
+            setActiveNavigationRevealContext(
+                ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
             recomputePublicProjection();
         });
     appendConnection(m_documentConnections,
@@ -505,20 +514,20 @@ void DocumentSessionRuntime::recomputeActiveZoomReadoutForKind(DocumentSessionKi
 
 void DocumentSessionRuntime::publishActiveNavigationForImagePages()
 {
-    setActiveNavigationRevealIntent(
-        takePendingActiveNavigationRevealIntent(ActiveNavigationRevealIntent::ProgrammaticSync));
+    setActiveNavigationRevealContext(
+        takePendingActiveNavigationRevealContext(ActiveNavigationRevealIntent::ProgrammaticSync));
     if (m_state.updatePublicProjectionForSourceKind(
             publicProjectionInput(), ActiveNavigationSourceKind::ImageDocumentPages)) {
         syncActiveNavigationThumbnailRows();
     }
-    clearActiveNavigationRevealIntentIfUnavailable();
+    clearActiveNavigationRevealContextIfUnavailable();
 }
 
 void DocumentSessionRuntime::recomputePublicProjection()
 {
     m_state.updatePublicProjection(publicProjectionInput());
     syncActiveNavigationThumbnailRows();
-    clearActiveNavigationRevealIntentIfUnavailable();
+    clearActiveNavigationRevealContextIfUnavailable();
 }
 
 void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
@@ -540,7 +549,8 @@ void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
 {
-    setPendingActiveNavigationRevealIntent(ActiveNavigationRevealIntent::LoadOrOpen);
+    setPendingActiveNavigationRevealContext(
+        ActiveNavigationRevealContext { ActiveNavigationRevealIntent::LoadOrOpen });
     const DocumentSessionRoutePlan plan
         = documentSessionRoutePlanForSourceUrl(sourceUrl, m_state.documentKind());
     qCDebug(kiriviewNavigationLog)
@@ -679,7 +689,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
         << "activeNavigationKnown" << m_state.activeNavigationSnapshot().known
         << "activeNavigationCurrent" << m_state.activeNavigationSnapshot().currentNumber
         << "activeNavigationCount" << m_state.activeNavigationSnapshot().count;
-    clearActiveNavigationRevealIntentIfUnavailable();
+    clearActiveNavigationRevealContextIfUnavailable();
 }
 
 void DocumentSessionRuntime::leaveVideoMode()
@@ -748,7 +758,8 @@ void DocumentSessionRuntime::refreshDirectMediaNavigation()
                                        << "documentKind" << documentKindName(m_state.documentKind())
                                        << "cursorUrl" << activeDirectMediaCursorUrl();
         m_state.setDirectMediaNavigation({}, false, {});
-        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::ProgrammaticSync);
+        setActiveNavigationRevealContext(
+            ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
         recomputePublicProjection();
         if (!directImageLoadMayUseImageDocumentSourceScope()) {
             m_mediaPredecodeCoordinator->clear();
@@ -782,7 +793,8 @@ void DocumentSessionRuntime::finishDirectMediaNavigation(
         qCDebug(kiriviewNavigationLog) << "direct media navigation open failed"
                                        << "error" << result.errorString;
         m_state.setDirectMediaNavigation({}, false, {});
-        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::ProgrammaticSync);
+        setActiveNavigationRevealContext(
+            ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
         recomputePublicProjection();
         return;
     }
@@ -796,13 +808,13 @@ void DocumentSessionRuntime::finishDirectMediaNavigation(
     const bool targetChangesMedia = result.plan.targetUrl.has_value()
         && !sameNormalizedUrl(*result.plan.targetUrl, activeDirectMediaCursorUrl());
     if (targetChangesMedia) {
-        const ActiveNavigationRevealIntent intent = takePendingActiveNavigationRevealIntent(
+        const ActiveNavigationRevealContext context = takePendingActiveNavigationRevealContext(
             ActiveNavigationRevealIntent::ProgrammaticSync);
-        setActiveNavigationRevealIntent(intent);
-        m_pendingActiveNavigationRevealIntent = intent;
+        setActiveNavigationRevealContext(context);
+        m_pendingActiveNavigationRevealContext = context;
     } else {
-        m_pendingActiveNavigationRevealIntent = ActiveNavigationRevealIntent::None;
-        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::None);
+        m_pendingActiveNavigationRevealContext = {};
+        setActiveNavigationRevealContext({});
     }
     recomputePublicProjection();
     scheduleMediaPredecode(result.candidates);
@@ -818,7 +830,8 @@ void DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState(
         qCDebug(kiriviewNavigationLog) << "direct media navigation refresh failed"
                                        << "error" << result.errorString;
         m_state.setDirectMediaNavigation({}, false, {});
-        setActiveNavigationRevealIntent(ActiveNavigationRevealIntent::ProgrammaticSync);
+        setActiveNavigationRevealContext(
+            ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
         recomputePublicProjection();
         return;
     }
@@ -837,7 +850,7 @@ void DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState(
         << "canPrevious" << result.boundaryState.canOpenPrevious << "canNext"
         << result.boundaryState.canOpenNext;
     if (selectionChanged) {
-        setActiveNavigationRevealIntent(takePendingActiveNavigationRevealIntent(
+        setActiveNavigationRevealContext(takePendingActiveNavigationRevealContext(
             ActiveNavigationRevealIntent::ProgrammaticSync));
     }
     recomputePublicProjection();

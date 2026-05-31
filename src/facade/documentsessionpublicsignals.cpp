@@ -63,6 +63,9 @@ void DocumentSessionPublicSignalEmitter::emitSignal(DocumentSessionPublicSignal 
     case DocumentSessionPublicSignal::ActiveNavigationRevealIntent:
         run(m_operations.activeNavigationRevealIntentChanged);
         return;
+    case DocumentSessionPublicSignal::ActiveNavigationRevealDirection:
+        run(m_operations.activeNavigationRevealDirectionChanged);
+        return;
     }
 }
 
@@ -89,6 +92,8 @@ std::vector<DocumentSessionPublicSignal> documentSessionPublicSignals(DocumentSe
         return { DocumentSessionPublicSignal::ActiveNavigation };
     case DocumentSessionChange::ActiveNavigationRevealIntent:
         return { DocumentSessionPublicSignal::ActiveNavigationRevealIntent };
+    case DocumentSessionChange::ActiveNavigationRevealDirection:
+        return { DocumentSessionPublicSignal::ActiveNavigationRevealDirection };
     }
 
     return {};

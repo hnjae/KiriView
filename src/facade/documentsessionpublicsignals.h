@@ -21,6 +21,7 @@ enum class DocumentSessionPublicSignal {
     FileDeletionInProgress,
     ActiveNavigation,
     ActiveNavigationRevealIntent,
+    ActiveNavigationRevealDirection,
 };
 
 struct DocumentSessionPublicSignalOperations {
@@ -34,6 +35,7 @@ struct DocumentSessionPublicSignalOperations {
     std::function<void()> fileDeletionInProgressChanged;
     std::function<void()> activeNavigationChanged;
     std::function<void()> activeNavigationRevealIntentChanged;
+    std::function<void()> activeNavigationRevealDirectionChanged;
 };
 
 class DocumentSessionPublicSignalEmitter final

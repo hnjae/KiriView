@@ -95,17 +95,22 @@ Controls.Pane {
                     return;
                 }
 
-                const itemStart = currentIndex * itemPitch;
-                const viewportStart = contentX;
-                const itemStartInViewport = itemStart - viewportStart;
-                if (itemStartInViewport < preferredZoneStart) {
-                    preferredZoneSnapPosition = preferredZoneStart;
-                } else {
-                    preferredZoneSnapPosition = Math.max(preferredZoneStart, preferredZoneEnd - delegateWidth);
-                }
+                preferredZoneSnapPosition = preferredZoneSnapPositionForCurrentReveal(delta);
 
                 automaticScrollAnimationEnabled = shouldAnimateReveal(delta, forceImmediate !== true);
                 positionViewAtIndex(currentIndex, ListView.SnapPosition);
+            }
+
+            function preferredZoneSnapPositionForCurrentReveal(delta) {
+                const trailingSnapPosition = Math.max(preferredZoneStart, preferredZoneEnd - delegateWidth);
+                switch (root.documentSession.activeNavigationRevealDirection) {
+                case KiriDocumentSession.Next:
+                    return preferredZoneStart;
+                case KiriDocumentSession.Previous:
+                    return trailingSnapPosition;
+                default:
+                    return delta < 0 ? preferredZoneStart : trailingSnapPosition;
+                }
             }
 
             function containCurrentItemForNavigationIntent(forceImmediate) {

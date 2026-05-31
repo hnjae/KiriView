@@ -108,6 +108,21 @@ KiriDocumentSession::ActiveNavigationRevealIntent fromRuntimeRevealIntent(
     return KiriDocumentSession::ActiveNavigationRevealIntent::None;
 }
 
+KiriDocumentSession::ActiveNavigationRevealDirection fromRuntimeRevealDirection(
+    KiriView::ActiveNavigationRevealDirection direction)
+{
+    switch (direction) {
+    case KiriView::ActiveNavigationRevealDirection::None:
+        return KiriDocumentSession::ActiveNavigationRevealDirection::None;
+    case KiriView::ActiveNavigationRevealDirection::Previous:
+        return KiriDocumentSession::ActiveNavigationRevealDirection::Previous;
+    case KiriView::ActiveNavigationRevealDirection::Next:
+        return KiriDocumentSession::ActiveNavigationRevealDirection::Next;
+    }
+
+    return KiriDocumentSession::ActiveNavigationRevealDirection::None;
+}
+
 template <typename Document, typename Signal>
 KiriView::DocumentSessionDocumentSignalConnector documentSignalConnector(
     Document &document, Signal signal)
@@ -258,6 +273,8 @@ KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
     operations.activeNavigationChanged = [&session]() { Q_EMIT session.activeNavigationChanged(); };
     operations.activeNavigationRevealIntentChanged
         = [&session]() { Q_EMIT session.activeNavigationRevealIntentChanged(); };
+    operations.activeNavigationRevealDirectionChanged
+        = [&session]() { Q_EMIT session.activeNavigationRevealDirectionChanged(); };
     return operations;
 }
 }
@@ -402,6 +419,12 @@ KiriDocumentSession::ActiveNavigationRevealIntent
 KiriDocumentSession::activeNavigationRevealIntent() const
 {
     return fromRuntimeRevealIntent(m_runtime->activeNavigationRevealIntent());
+}
+
+KiriDocumentSession::ActiveNavigationRevealDirection
+KiriDocumentSession::activeNavigationRevealDirection() const
+{
+    return fromRuntimeRevealDirection(m_runtime->activeNavigationRevealDirection());
 }
 
 QAbstractListModel *KiriDocumentSession::activeNavigationThumbnailModel() const

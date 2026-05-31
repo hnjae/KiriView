@@ -27,6 +27,7 @@ enum class DocumentSessionChange {
     FileDeletionInProgress,
     ActiveNavigation,
     ActiveNavigationRevealIntent,
+    ActiveNavigationRevealDirection,
 };
 
 enum class ActiveNavigationRevealIntent {
@@ -36,6 +37,17 @@ enum class ActiveNavigationRevealIntent {
     LargeJump,
     LoadOrOpen,
     ProgrammaticSync,
+};
+
+enum class ActiveNavigationRevealDirection {
+    None,
+    Previous,
+    Next,
+};
+
+struct ActiveNavigationRevealContext {
+    ActiveNavigationRevealIntent intent = ActiveNavigationRevealIntent::None;
+    ActiveNavigationRevealDirection direction = ActiveNavigationRevealDirection::None;
 };
 
 struct ActiveZoomSnapshot {

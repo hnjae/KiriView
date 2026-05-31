@@ -340,7 +340,11 @@ void TestMainWindowVideoIntegration::thumbnailPanelUsesSessionThumbnailModel()
                        "containCurrentItemForNavigationIntent(currentIndexChangedRapidly())")));
     QVERIFY(thumbnailPanelQml.contains(
         QStringLiteral("root.documentSession.activeNavigationRevealIntent")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("root.documentSession.activeNavigationRevealDirection")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("KiriDocumentSession.AdjacentNavigation")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("KiriDocumentSession.Previous")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("KiriDocumentSession.Next")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("KiriDocumentSession.LargeJump")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("KiriDocumentSession.LoadOrOpen")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("onVisibleChanged:")));

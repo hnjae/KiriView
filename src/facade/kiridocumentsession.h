@@ -67,6 +67,8 @@ class KiriDocumentSession : public QObject
             activeNavigationBoundaryScope NOTIFY activeNavigationChanged)
     Q_PROPERTY(ActiveNavigationRevealIntent activeNavigationRevealIntent READ
             activeNavigationRevealIntent NOTIFY activeNavigationRevealIntentChanged)
+    Q_PROPERTY(ActiveNavigationRevealDirection activeNavigationRevealDirection READ
+            activeNavigationRevealDirection NOTIFY activeNavigationRevealDirectionChanged)
     Q_PROPERTY(QAbstractListModel *activeNavigationThumbnailModel READ
             activeNavigationThumbnailModel CONSTANT)
     Q_PROPERTY(KiriMediaInformation *mediaInformation READ mediaInformation CONSTANT)
@@ -112,6 +114,13 @@ public:
     };
     Q_ENUM(ActiveNavigationRevealIntent)
 
+    enum class ActiveNavigationRevealDirection {
+        None,
+        Previous,
+        Next,
+    };
+    Q_ENUM(ActiveNavigationRevealDirection)
+
     explicit KiriDocumentSession(QObject *parent = nullptr);
     explicit KiriDocumentSession(
         KiriView::KiriDocumentSessionDependencies dependencies, QObject *parent = nullptr);
@@ -141,6 +150,7 @@ public:
     bool atKnownLastActiveNavigation() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     ActiveNavigationRevealIntent activeNavigationRevealIntent() const;
+    ActiveNavigationRevealDirection activeNavigationRevealDirection() const;
     QAbstractListModel *activeNavigationThumbnailModel() const;
     KiriMediaInformation *mediaInformation() const;
     KiriImageDocument *imageDocument() const;
@@ -171,6 +181,7 @@ Q_SIGNALS:
     void activeZoomReadoutChanged();
     void activeNavigationChanged();
     void activeNavigationRevealIntentChanged();
+    void activeNavigationRevealDirectionChanged();
     void openWithFailed(const QString &errorString);
 
 private:

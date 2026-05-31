@@ -114,6 +114,11 @@ ActiveNavigationRevealIntent DocumentSessionState::activeNavigationRevealIntent(
     return m_activeNavigationRevealIntent;
 }
 
+ActiveNavigationRevealDirection DocumentSessionState::activeNavigationRevealDirection() const
+{
+    return m_activeNavigationRevealDirection;
+}
+
 ActiveNavigationSourceKind DocumentSessionState::activeNavigationSourceKind() const
 {
     return m_publicProjection.sourceKind;
@@ -212,6 +217,16 @@ void DocumentSessionState::setActiveNavigationRevealIntent(ActiveNavigationRevea
     }
 
     publish(DocumentSessionChange::ActiveNavigationRevealIntent);
+}
+
+void DocumentSessionState::setActiveNavigationRevealDirection(
+    ActiveNavigationRevealDirection direction)
+{
+    if (!replaceIfChanged(m_activeNavigationRevealDirection, direction)) {
+        return;
+    }
+
+    publish(DocumentSessionChange::ActiveNavigationRevealDirection);
 }
 
 void DocumentSessionState::setDirectMediaNavigation(DirectMediaNavigationBoundaryState state,

@@ -75,6 +75,7 @@ public:
     bool atKnownLastActiveNavigation() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     ActiveNavigationRevealIntent activeNavigationRevealIntent() const;
+    ActiveNavigationRevealDirection activeNavigationRevealDirection() const;
     QAbstractListModel *activeNavigationThumbnailModel() const;
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
@@ -91,13 +92,13 @@ public:
 
 private:
     ActiveNavigationDispatchOutcome executeActiveNavigationDispatchRequest(
-        ActiveNavigationDispatchRequest request, ActiveNavigationRevealIntent intent);
+        ActiveNavigationDispatchRequest request, ActiveNavigationRevealContext context);
     void executeActiveNavigationDispatchPlan(const ActiveNavigationDispatchPlan &plan);
-    void setPendingActiveNavigationRevealIntent(ActiveNavigationRevealIntent intent);
-    ActiveNavigationRevealIntent takePendingActiveNavigationRevealIntent(
-        ActiveNavigationRevealIntent fallback);
-    void setActiveNavigationRevealIntent(ActiveNavigationRevealIntent intent);
-    void clearActiveNavigationRevealIntentIfUnavailable();
+    void setPendingActiveNavigationRevealContext(ActiveNavigationRevealContext context);
+    ActiveNavigationRevealContext takePendingActiveNavigationRevealContext(
+        ActiveNavigationRevealIntent fallbackIntent);
+    void setActiveNavigationRevealContext(ActiveNavigationRevealContext context);
+    void clearActiveNavigationRevealContextIfUnavailable();
     void connectDocuments();
     void syncImageDocumentFileDeletionProgress();
     void setDocumentKind(DocumentSessionKind kind);
@@ -157,8 +158,7 @@ private:
     ImageIoJob m_mediaOpenWithJob;
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
     std::vector<QMetaObject::Connection> m_documentConnections;
-    ActiveNavigationRevealIntent m_pendingActiveNavigationRevealIntent
-        = ActiveNavigationRevealIntent::None;
+    ActiveNavigationRevealContext m_pendingActiveNavigationRevealContext;
     bool m_routingSource = false;
 };
 }
