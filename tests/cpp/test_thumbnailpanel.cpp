@@ -37,10 +37,13 @@ private Q_SLOTS:
     void adjacentMainNavigationInsideSafeZoneKeepsScrollPosition();
     void adjacentMainNavigationFollowsTrailingSafeZone();
     void adjacentMainNavigationFollowsLeadingSafeZone();
+    void resizedPanelContainsSelectedThumbnail();
     void adjacentNextNavigationUsesPreferredZoneLeadingAnchor();
     void adjacentPreviousNavigationUsesPreferredZoneTrailingAnchor();
+    void largeJumpUsesContainmentAfterAdjacentDirection();
     void rapidAdjacentNavigationUsesLatestRevealTarget();
     void userThumbnailBrowsingSuppressesAdjacentPreferredZoneFollow();
+    void userThumbnailBrowsingStillContainsLostCurrentThumbnail();
     void largeJumpNavigationRevealsSelectedThumbnail();
     void visibleThumbnailClickDispatchesWithoutScrollMovement();
     void scrolledThumbnailClickDispatchesWithoutScrollMovement();
@@ -239,6 +242,24 @@ double clampedContentXForSnapPosition(const QQuickItem &thumbnailStrip, int numb
     const double contentWidth = realProperty(thumbnailStrip, "contentWidth");
     const double maxContentX = std::max(0.0, contentWidth - thumbnailStrip.width());
     return std::max(0.0, std::min(maxContentX, itemStart(thumbnailStrip, number) - snap));
+}
+
+double clampedContentXForContainment(const QQuickItem &thumbnailStrip, int number)
+{
+    const double viewportStart = contentX(thumbnailStrip);
+    const double viewportEnd = viewportStart + thumbnailStrip.width();
+    const double itemBegin = itemStart(thumbnailStrip, number);
+    const double itemEnd = itemBegin + realProperty(thumbnailStrip, "delegateWidth");
+    double target = viewportStart;
+    if (itemBegin < viewportStart) {
+        target = itemBegin;
+    } else if (itemEnd > viewportEnd) {
+        target = itemEnd - thumbnailStrip.width();
+    }
+
+    const double contentWidth = realProperty(thumbnailStrip, "contentWidth");
+    const double maxContentX = std::max(0.0, contentWidth - thumbnailStrip.width());
+    return std::max(0.0, std::min(maxContentX, target));
 }
 
 double currentThumbnailStartInViewport(const QQuickItem &thumbnailStrip)
@@ -491,6 +512,35 @@ void TestThumbnailPanel::adjacentMainNavigationFollowsLeadingSafeZone()
                 .arg(leadingEdgePosition)));
 }
 
+void TestThumbnailPanel::resizedPanelContainsSelectedThumbnail()
+{
+    ThumbnailPanelFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 1, testImageCount),
+        "active navigation did not become ready");
+
+    fixture.documentSession->openActiveNavigationAtNumber(9);
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 9, testImageCount),
+        "large jump did not select the setup item");
+    QTRY_VERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+
+    const double widePanelPosition = itemStart(*fixture.thumbnailStrip, 7);
+    setContentX(*fixture.thumbnailStrip, widePanelPosition);
+    QVERIFY2(waitForContentX(*fixture.thumbnailStrip, widePanelPosition),
+        "thumbnail strip did not accept the setup scroll position");
+    QVERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+
+    fixture.view->resize(panelWidth / 2, panelHeight);
+    QCoreApplication::processEvents();
+
+    QTRY_VERIFY(fixture.thumbnailStrip->width() < panelWidth);
+    QTRY_VERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+    QVERIFY2(contentX(*fixture.thumbnailStrip) > widePanelPosition + fuzzyPixel,
+        qPrintable(QStringLiteral("contentX stayed at %1 from %2 after resize")
+                .arg(contentX(*fixture.thumbnailStrip))
+                .arg(widePanelPosition)));
+}
+
 void TestThumbnailPanel::adjacentNextNavigationUsesPreferredZoneLeadingAnchor()
 {
     ThumbnailPanelFixture fixture = createFixture();
@@ -559,6 +609,42 @@ void TestThumbnailPanel::adjacentPreviousNavigationUsesPreferredZoneTrailingAnch
                 .arg(trailingSnap)));
 }
 
+void TestThumbnailPanel::largeJumpUsesContainmentAfterAdjacentDirection()
+{
+    ThumbnailPanelFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 1, testImageCount),
+        "active navigation did not become ready");
+
+    fixture.documentSession->openActiveNavigationAtNumber(5);
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 5, testImageCount),
+        "large jump did not select the setup item");
+    QTRY_VERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+
+    fixture.documentSession->openNextActiveNavigation();
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 6, testImageCount),
+        "adjacent navigation did not select the next item");
+    QTRY_VERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+
+    setContentX(*fixture.thumbnailStrip, 0.0);
+    QVERIFY2(waitForContentX(*fixture.thumbnailStrip, 0.0),
+        "thumbnail strip did not return to the leading edge");
+
+    const double expected = clampedContentXForContainment(*fixture.thumbnailStrip, 16);
+    const double staleDirectionTarget = clampedContentXForSnapPosition(
+        *fixture.thumbnailStrip, 16, realProperty(*fixture.thumbnailStrip, "preferredZoneStart"));
+    QVERIFY(std::abs(expected - staleDirectionTarget) > fuzzyPixel);
+
+    fixture.documentSession->openActiveNavigationAtNumber(16);
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 16, testImageCount),
+        "large jump did not select the requested item");
+
+    QTRY_VERIFY2(waitForContentX(*fixture.thumbnailStrip, expected),
+        qPrintable(QStringLiteral("contentX is %1, expected containment target %2")
+                .arg(contentX(*fixture.thumbnailStrip))
+                .arg(expected)));
+}
+
 void TestThumbnailPanel::rapidAdjacentNavigationUsesLatestRevealTarget()
 {
     ThumbnailPanelFixture fixture = createFixture();
@@ -625,6 +711,35 @@ void TestThumbnailPanel::userThumbnailBrowsingSuppressesAdjacentPreferredZoneFol
         qPrintable(QStringLiteral("contentX moved from %1 to %2")
                 .arg(userBrowsePosition)
                 .arg(contentX(*fixture.thumbnailStrip))));
+}
+
+void TestThumbnailPanel::userThumbnailBrowsingStillContainsLostCurrentThumbnail()
+{
+    ThumbnailPanelFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 1, testImageCount),
+        "active navigation did not become ready");
+
+    fixture.documentSession->openActiveNavigationAtNumber(10);
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 10, testImageCount),
+        "large jump did not select the setup item");
+    QTRY_VERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+
+    setContentX(*fixture.thumbnailStrip, 0.0);
+    QVERIFY2(waitForContentX(*fixture.thumbnailStrip, 0.0),
+        "thumbnail strip did not return to the leading edge");
+    noteUserThumbnailScroll(*fixture.thumbnailStrip);
+
+    const double expected = clampedContentXForContainment(*fixture.thumbnailStrip, 11);
+    fixture.documentSession->openNextActiveNavigation();
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 11, testImageCount),
+        "adjacent navigation did not select the next item");
+
+    QTRY_VERIFY(currentThumbnailFullyVisible(*fixture.thumbnailStrip));
+    QTRY_VERIFY2(waitForContentX(*fixture.thumbnailStrip, expected),
+        qPrintable(QStringLiteral("contentX is %1, expected containment target %2")
+                .arg(contentX(*fixture.thumbnailStrip))
+                .arg(expected)));
 }
 
 void TestThumbnailPanel::largeJumpNavigationRevealsSelectedThumbnail()
