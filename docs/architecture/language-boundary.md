@@ -7,6 +7,7 @@ Prefer Rust for logic that:
 - Can be represented as `State + Event -> StateDelta + Effects`.
 - Is reused by multiple controllers or presentation paths.
 - Is complex enough that Rust unit tests materially improve confidence.
+- Parses media bytes or file paths into owned, Qt-independent metadata values.
 - Would make a C++ controller hard to read if left inline.
 - Avoids direct dependency on `QObject`, `QImage`, `QUrl`, KIO, or rendering APIs.
 
