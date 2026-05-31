@@ -48,6 +48,8 @@ KiriView::DocumentSessionPublicSignalOperations recordingOperations(QStringList 
         = [&events]() { events.append(QStringLiteral("activeNavigation")); };
     operations.activeNavigationRevealIntentChanged
         = [&events]() { events.append(QStringLiteral("activeNavigationRevealIntent")); };
+    operations.activeNavigationRevealDirectionChanged
+        = [&events]() { events.append(QStringLiteral("activeNavigationRevealDirection")); };
     return operations;
 }
 }
@@ -78,6 +80,9 @@ void TestDocumentSessionPublicSignals::publicSignalPlansReturnSignalsInEmissionO
     comparePublicSignals(
         KiriView::documentSessionPublicSignals(Change::ActiveNavigationRevealIntent),
         { Signal::ActiveNavigationRevealIntent });
+    comparePublicSignals(
+        KiriView::documentSessionPublicSignals(Change::ActiveNavigationRevealDirection),
+        { Signal::ActiveNavigationRevealDirection });
 }
 
 void TestDocumentSessionPublicSignals::publicSignalBatchPlansDeduplicateSignalsInEmissionOrder()
@@ -85,11 +90,13 @@ void TestDocumentSessionPublicSignals::publicSignalBatchPlansDeduplicateSignalsI
     using Change = KiriView::DocumentSessionChange;
     using Signal = KiriView::DocumentSessionPublicSignal;
 
-    comparePublicSignals(KiriView::documentSessionPublicSignalsForChanges(
-                             { Change::DocumentKind, Change::ErrorString, Change::DocumentKind,
-                                 Change::ActiveNavigation, Change::ActiveNavigationRevealIntent }),
+    comparePublicSignals(
+        KiriView::documentSessionPublicSignalsForChanges(
+            { Change::DocumentKind, Change::ErrorString, Change::DocumentKind,
+                Change::ActiveNavigation, Change::ActiveNavigationRevealIntent,
+                Change::ActiveNavigationRevealDirection, Change::ActiveNavigationRevealDirection }),
         { Signal::DocumentKind, Signal::ErrorString, Signal::ActiveNavigation,
-            Signal::ActiveNavigationRevealIntent });
+            Signal::ActiveNavigationRevealIntent, Signal::ActiveNavigationRevealDirection });
 }
 
 void TestDocumentSessionPublicSignals::emitterDispatchesChangeSignalsInProjectionOrder()
@@ -100,7 +107,8 @@ void TestDocumentSessionPublicSignals::emitterDispatchesChangeSignalsInProjectio
     emitter.emitChanges({ KiriView::DocumentSessionChange::OpenWithAvailability,
         KiriView::DocumentSessionChange::FileDeletionAvailability,
         KiriView::DocumentSessionChange::FileDeletionInProgress,
-        KiriView::DocumentSessionChange::ActiveNavigationRevealIntent });
+        KiriView::DocumentSessionChange::ActiveNavigationRevealIntent,
+        KiriView::DocumentSessionChange::ActiveNavigationRevealDirection });
     emitter.emitSignal(KiriView::DocumentSessionPublicSignal::SourceUrl);
 
     QCOMPARE(events,
@@ -109,6 +117,7 @@ void TestDocumentSessionPublicSignals::emitterDispatchesChangeSignalsInProjectio
             QStringLiteral("displayedFileDeletionAvailability"),
             QStringLiteral("fileDeletionInProgress"),
             QStringLiteral("activeNavigationRevealIntent"),
+            QStringLiteral("activeNavigationRevealDirection"),
             QStringLiteral("sourceUrl"),
         }));
 }

@@ -361,6 +361,7 @@ private Q_SLOTS:
     void activeNavigationLargeJumpRequestsSetRevealIntent();
     void activeNavigationThumbnailDispatchSetsRevealIntent();
     void sourceOpenReplacesStaleRevealIntent();
+    void unavailableActiveNavigationRequestsClearRevealDirection();
     void activeNavigationBoundaryTextFollowsSessionSource();
     void activeNavigationNumberDispatchIgnoresUnknownNavigation();
     void activeNavigationClearsWhenSwitchingFromKnownDirectMedia();
@@ -1354,6 +1355,8 @@ void TestKiriDocumentSession::activeNavigationAdjacentRequestsSetRevealIntent()
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationRevealIntent(),
         KiriDocumentSession::ActiveNavigationRevealIntent::LoadOrOpen);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::None);
 
     session->requestNextActiveNavigation();
 
@@ -1361,6 +1364,8 @@ void TestKiriDocumentSession::activeNavigationAdjacentRequestsSetRevealIntent()
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
     QCOMPARE(session->activeNavigationRevealIntent(),
         KiriDocumentSession::ActiveNavigationRevealIntent::AdjacentNavigation);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::Next);
 
     session->openPreviousActiveNavigation();
 
@@ -1368,6 +1373,15 @@ void TestKiriDocumentSession::activeNavigationAdjacentRequestsSetRevealIntent()
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
     QCOMPARE(session->activeNavigationRevealIntent(),
         KiriDocumentSession::ActiveNavigationRevealIntent::AdjacentNavigation);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::Previous);
+
+    QCOMPARE(session->requestPreviousActiveNavigation(),
+        KiriDocumentSession::ActiveNavigationRequestResult::FirstActiveNavigationBoundary);
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::None);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::None);
 }
 
 void TestKiriDocumentSession::activeNavigationLargeJumpRequestsSetRevealIntent()
@@ -1389,18 +1403,24 @@ void TestKiriDocumentSession::activeNavigationLargeJumpRequestsSetRevealIntent()
     QCOMPARE(session->sourceUrl(), first);
     QCOMPARE(session->activeNavigationRevealIntent(),
         KiriDocumentSession::ActiveNavigationRevealIntent::LargeJump);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::None);
 
     session->openLastActiveNavigation();
 
     QCOMPARE(session->sourceUrl(), third);
     QCOMPARE(session->activeNavigationRevealIntent(),
         KiriDocumentSession::ActiveNavigationRevealIntent::LargeJump);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::None);
 
     session->openActiveNavigationAtNumber(2);
 
     QCOMPARE(session->sourceUrl(), second);
     QCOMPARE(session->activeNavigationRevealIntent(),
         KiriDocumentSession::ActiveNavigationRevealIntent::LargeJump);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::None);
 }
 
 void TestKiriDocumentSession::activeNavigationThumbnailDispatchSetsRevealIntent()
@@ -1421,6 +1441,8 @@ void TestKiriDocumentSession::activeNavigationThumbnailDispatchSetsRevealIntent(
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
     QCOMPARE(session->activeNavigationRevealIntent(),
         KiriDocumentSession::ActiveNavigationRevealIntent::ThumbnailActivation);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::None);
 }
 
 void TestKiriDocumentSession::sourceOpenReplacesStaleRevealIntent()
@@ -1441,6 +1463,8 @@ void TestKiriDocumentSession::sourceOpenReplacesStaleRevealIntent()
     session->requestNextActiveNavigation();
     QCOMPARE(session->activeNavigationRevealIntent(),
         KiriDocumentSession::ActiveNavigationRevealIntent::AdjacentNavigation);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::Next);
 
     session->setSourceUrl(other);
 
@@ -1448,12 +1472,29 @@ void TestKiriDocumentSession::sourceOpenReplacesStaleRevealIntent()
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
     QCOMPARE(session->activeNavigationRevealIntent(),
         KiriDocumentSession::ActiveNavigationRevealIntent::LoadOrOpen);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::None);
 
     session->openActiveNavigationAtNumber(42);
 
     QCOMPARE(session->sourceUrl(), other);
     QCOMPARE(session->activeNavigationRevealIntent(),
         KiriDocumentSession::ActiveNavigationRevealIntent::None);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::None);
+}
+
+void TestKiriDocumentSession::unavailableActiveNavigationRequestsClearRevealDirection()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+
+    QCOMPARE(session->requestNextActiveNavigation(),
+        KiriDocumentSession::ActiveNavigationRequestResult::NoActiveNavigationRequestResult);
+    QCOMPARE(session->activeNavigationRevealIntent(),
+        KiriDocumentSession::ActiveNavigationRevealIntent::None);
+    QCOMPARE(session->activeNavigationRevealDirection(),
+        KiriDocumentSession::ActiveNavigationRevealDirection::None);
 }
 
 void TestKiriDocumentSession::activeNavigationBoundaryTextFollowsSessionSource()
