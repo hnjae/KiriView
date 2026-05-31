@@ -47,10 +47,10 @@ private Q_SLOTS:
     void toolbarReadingControlsUseTextButtons();
     void toolbarReadingControlMnemonicsTriggerActions();
     void trailingToolbarControlsShareSpacingAndVerticalAlignment();
-    void fitSplitButtonPrimaryTriggersSelectedMode();
-    void fitSplitButtonMenuSelectionUpdatesPrimaryMode();
-    void fitSplitButtonKeepsLastFitSelectionAfterManualZoom();
-    void fitSplitButtonCollapsesLabelWhenConstrained();
+    void fitMenuButtonClickOnlyOpensMenu();
+    void fitMenuButtonMenuSelectionUpdatesSelectedMode();
+    void fitMenuButtonKeepsLastFitSelectionAfterManualZoom();
+    void fitMenuButtonCollapsesLabelWhenConstrained();
     void toolbarActionOrderKeepsReadingDirectionBesideSpread();
     void emptyToolbarHidesReadingControls();
     void directImageToolbarHidesReadingControls();
@@ -338,9 +338,7 @@ Item {
 
     function toolbarLayoutGeometries() {
         return {
-            fit: toolbarItemGeometry(toolbarItemByObjectName("fitSplitButton")),
-            fitMenu: toolbarItemGeometry(toolbarItemByObjectName("fitMenuButton")),
-            fitPrimary: toolbarItemGeometry(toolbarItemByObjectName("fitPrimaryButton")),
+            fit: toolbarItemGeometry(toolbarItemByObjectName("fitModeMenuButton")),
             rightToLeft: toolbarItemGeometry(toolbarButtonForAction(rightToLeftReadingKirigamiAction)),
             twoPage: toolbarItemGeometry(toolbarButtonForAction(twoPageModeKirigamiAction)),
             zoom: toolbarItemGeometry(toolbarItemByObjectName("zoomSpinBox")),
@@ -380,7 +378,7 @@ Item {
             label: button !== null ? sanitizedText(button.text) : "",
             text: button !== null ? button.text : "",
             textBesideIcon: button !== null && button.display === Controls.AbstractButton.TextBesideIcon,
-            tooltip: action.tooltip,
+            tooltip: button !== null ? (button.tooltip ?? action.tooltip) : action.tooltip,
             visible: button !== null && button.visible && button.width > 0 && button.height > 0,
         };
     }
@@ -1091,7 +1089,8 @@ void TestToolBarApplicationMenu::toolbarReadingControlsUseTextButtons()
     QVERIFY(!fitState.value(QStringLiteral("iconOnly")).toBool());
     QVERIFY(fitState.value(QStringLiteral("textBesideIcon")).toBool());
     QCOMPARE(fitState.value(QStringLiteral("label")).toString(), QStringLiteral("Fit to Window"));
-    QCOMPARE(fitState.value(QStringLiteral("tooltip")).toString(), QStringLiteral("Fit to Window"));
+    QCOMPARE(
+        fitState.value(QStringLiteral("tooltip")).toString(), QStringLiteral("Choose fit mode"));
 }
 
 void TestToolBarApplicationMenu::toolbarReadingControlMnemonicsTriggerActions()
@@ -1139,73 +1138,57 @@ void TestToolBarApplicationMenu::trailingToolbarControlsShareSpacingAndVerticalA
     const QVariantMap rightToLeft = itemGeometry(QStringLiteral("rightToLeft"));
     const QVariantMap twoPage = itemGeometry(QStringLiteral("twoPage"));
     const QVariantMap fit = itemGeometry(QStringLiteral("fit"));
-    const QVariantMap fitPrimary = itemGeometry(QStringLiteral("fitPrimary"));
-    const QVariantMap fitMenu = itemGeometry(QStringLiteral("fitMenu"));
     const QVariantMap zoom = itemGeometry(QStringLiteral("zoom"));
 
-    for (const QVariantMap &geometry : { rightToLeft, twoPage, fit, fitPrimary, fitMenu, zoom }) {
+    for (const QVariantMap &geometry : { rightToLeft, twoPage, fit, zoom }) {
         QVERIFY(geometry.value(QStringLiteral("found")).toBool());
     }
 
     const qreal expectedCenterY = numeric(twoPage, QStringLiteral("centerY"));
-    const qreal expectedBottom = numeric(twoPage, QStringLiteral("bottom"));
-    for (const QVariantMap &geometry : { fitPrimary, fitMenu }) {
-        QVERIFY(closeEnough(numeric(geometry, QStringLiteral("centerY")), expectedCenterY));
-        QVERIFY(closeEnough(numeric(geometry, QStringLiteral("bottom")), expectedBottom));
-    }
+    QVERIFY(closeEnough(numeric(fit, QStringLiteral("centerY")), expectedCenterY));
     QVERIFY(closeEnough(numeric(zoom, QStringLiteral("centerY")), expectedCenterY));
 
     const qreal readingControlsGap
         = numeric(twoPage, QStringLiteral("x")) - numeric(rightToLeft, QStringLiteral("right"));
     const qreal fitGap
         = numeric(fit, QStringLiteral("x")) - numeric(twoPage, QStringLiteral("right"));
-    const qreal fitButtonGap
-        = numeric(fitMenu, QStringLiteral("x")) - numeric(fitPrimary, QStringLiteral("right"));
     const qreal zoomGap
         = numeric(zoom, QStringLiteral("x")) - numeric(fit, QStringLiteral("right"));
 
     QVERIFY(readingControlsGap > 0.0);
     QVERIFY(closeEnough(fitGap, readingControlsGap));
-    QVERIFY(fitButtonGap > 0.0);
-    QVERIFY(fitButtonGap < readingControlsGap);
-    QVERIFY(
-        numeric(fitMenu, QStringLiteral("width")) < numeric(fitPrimary, QStringLiteral("width")));
     QVERIFY(closeEnough(zoomGap, readingControlsGap));
 }
 
-void TestToolBarApplicationMenu::fitSplitButtonPrimaryTriggersSelectedMode()
+void TestToolBarApplicationMenu::fitMenuButtonClickOnlyOpensMenu()
 {
     ToolBarMenuFixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    QQuickItem *primaryButton = findQuickItem(fixture.root, QStringLiteral("fitPrimaryButton"));
-    QVERIFY2(primaryButton != nullptr, "fit primary button was not created");
-    QTRY_VERIFY(primaryButton->isEnabled());
+    QQuickItem *fitButton = findQuickItem(fixture.root, QStringLiteral("fitModeMenuButton"));
+    QVERIFY2(fitButton != nullptr, "fit menu button was not created");
+    QTRY_VERIFY(fitButton->isEnabled());
 
-    clickItem(fixture, primaryButton);
-    QCOMPARE(fixture.root->property("fitTriggerCount").toInt(), 1);
+    clickItem(fixture, fitButton);
+    QCOMPARE(fixture.root->property("fitTriggerCount").toInt(), 0);
     QCOMPARE(fixture.root->property("fitWidthTriggerCount").toInt(), 0);
     QCOMPARE(fixture.root->property("fitHeightTriggerCount").toInt(), 0);
 
-    invokeVoid(fixture.root, "setSelectedFitModeToFitWidth");
-    QCoreApplication::processEvents();
-
-    clickItem(fixture, primaryButton);
-    QCOMPARE(fixture.root->property("fitTriggerCount").toInt(), 1);
-    QCOMPARE(fixture.root->property("fitWidthTriggerCount").toInt(), 1);
-    QCOMPARE(fixture.root->property("fitHeightTriggerCount").toInt(), 0);
+    QQuickItem *fitWidthMenuItem = findQuickItem(fixture.root, QStringLiteral("fitWidthMenuItem"));
+    QVERIFY2(fitWidthMenuItem != nullptr, "fit width menu item was not created");
+    QTRY_VERIFY(fitWidthMenuItem->isVisible());
 }
 
-void TestToolBarApplicationMenu::fitSplitButtonMenuSelectionUpdatesPrimaryMode()
+void TestToolBarApplicationMenu::fitMenuButtonMenuSelectionUpdatesSelectedMode()
 {
     ToolBarMenuFixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    QQuickItem *menuButton = findQuickItem(fixture.root, QStringLiteral("fitMenuButton"));
-    QVERIFY2(menuButton != nullptr, "fit menu button was not created");
-    QTRY_VERIFY(menuButton->isEnabled());
+    QQuickItem *fitButton = findQuickItem(fixture.root, QStringLiteral("fitModeMenuButton"));
+    QVERIFY2(fitButton != nullptr, "fit menu button was not created");
+    QTRY_VERIFY(fitButton->isEnabled());
 
-    clickItem(fixture, menuButton);
+    clickItem(fixture, fitButton);
     QQuickItem *fitWidthMenuItem = findQuickItem(fixture.root, QStringLiteral("fitWidthMenuItem"));
     QVERIFY2(fitWidthMenuItem != nullptr, "fit width menu item was not created");
     QTRY_VERIFY(fitWidthMenuItem->isVisible());
@@ -1223,7 +1206,7 @@ void TestToolBarApplicationMenu::fitSplitButtonMenuSelectionUpdatesPrimaryMode()
         fitState.value(QStringLiteral("iconName")).toString(), QStringLiteral("zoom-fit-width"));
 }
 
-void TestToolBarApplicationMenu::fitSplitButtonKeepsLastFitSelectionAfterManualZoom()
+void TestToolBarApplicationMenu::fitMenuButtonKeepsLastFitSelectionAfterManualZoom()
 {
     QString sourcePath;
     QString errorString;
@@ -1251,7 +1234,7 @@ void TestToolBarApplicationMenu::fitSplitButtonKeepsLastFitSelectionAfterManualZ
     QCOMPARE(fitState.value(QStringLiteral("label")).toString(), QStringLiteral("Fit Width"));
 }
 
-void TestToolBarApplicationMenu::fitSplitButtonCollapsesLabelWhenConstrained()
+void TestToolBarApplicationMenu::fitMenuButtonCollapsesLabelWhenConstrained()
 {
     ToolBarMenuFixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
