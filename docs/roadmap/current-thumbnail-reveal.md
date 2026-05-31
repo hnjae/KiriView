@@ -20,7 +20,7 @@ This roadmap tracks the thumbnail panel behavior for keeping the current media d
 - [x] Implement basic current-thumbnail reveal.
 - [x] Track the origin of current-media changes.
 - [x] Add safe-zone based thumbnail following.
-- [ ] Add direction-aware positioning.
+- [x] Add direction-aware positioning.
 - [ ] Add interruptible or coalesced scroll animation.
 - [ ] Add focused regression coverage before each later stage when practical, expanding coverage for origin-aware, safe-zone, direction-aware, and coalesced reveal behavior.
 
