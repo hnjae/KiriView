@@ -65,10 +65,12 @@ Controls.Pane {
             readonly property real preferredZoneStart: preferredZoneInset
             readonly property real preferredZoneEnd: Math.max(preferredZoneStart + Math.min(delegateWidth, width), width - preferredZoneInset)
             readonly property int rapidCurrentIndexIntervalMs: 180
+            readonly property int userScrollSuppressionIntervalMs: 700
             property bool automaticScrollAnimationEnabled: false
             property bool automaticScrollAnimationRunning: false
             property double lastCurrentIndexChangeTimestamp: 0
             property real preferredZoneSnapPosition: 0
+            property double userScrollSuppressionUntilTimestamp: 0
 
             preferredHighlightBegin: preferredZoneSnapPosition
             preferredHighlightEnd: preferredZoneSnapPosition + delegateWidth
@@ -86,6 +88,18 @@ Controls.Pane {
             function followCurrentItemInPreferredZone(forceImmediate) {
                 if (currentIndex < 0 || currentIndex >= count) {
                     automaticScrollAnimationEnabled = false;
+                    return;
+                }
+
+                if (userScrollSuppressionActive()) {
+                    const containmentDelta = containmentDeltaForCurrentItem();
+                    if (containmentDelta === 0) {
+                        automaticScrollAnimationEnabled = false;
+                        return;
+                    }
+
+                    automaticScrollAnimationEnabled = shouldAnimateReveal(containmentDelta, forceImmediate !== true);
+                    positionViewAtIndex(currentIndex, ListView.Contain);
                     return;
                 }
 
@@ -205,8 +219,22 @@ Controls.Pane {
                 return Math.abs(delta) <= nearThreshold;
             }
 
+            function noteUserThumbnailScroll() {
+                automaticScrollAnimationEnabled = false;
+                userScrollSuppressionUntilTimestamp = Date.now() + userScrollSuppressionIntervalMs;
+            }
+
+            function userScrollSuppressionActive() {
+                return Date.now() < userScrollSuppressionUntilTimestamp;
+            }
+
             onCountChanged: containCurrentItem(true)
             onCurrentIndexChanged: containCurrentItemForNavigationIntent(currentIndexChangedRapidly())
+            onDraggingChanged: {
+                if (dragging) {
+                    noteUserThumbnailScroll();
+                }
+            }
             onWidthChanged: containCurrentItem(true)
 
             Behavior on contentX {
