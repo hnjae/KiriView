@@ -18,7 +18,7 @@ This roadmap tracks the thumbnail panel behavior for keeping the current media d
 - [x] Document the first user-visible reveal behavior in `docs/spec/navigation.md` before implementation.
 - [x] Add focused regression coverage for basic reveal behavior.
 - [x] Implement basic current-thumbnail reveal.
-- [ ] Track the origin of current-media changes.
+- [x] Track the origin of current-media changes.
 - [ ] Add safe-zone based thumbnail following.
 - [ ] Add direction-aware positioning.
 - [ ] Add interruptible or coalesced scroll animation.
