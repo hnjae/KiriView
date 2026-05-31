@@ -132,7 +132,7 @@ Editing the zoom input switches to manual zoom.
 
 When an image is ready and the zoom input is not being edited, unmodified wheel or trackpad scrolling over the toolbar zoom percentage control switches to manual zoom and adjusts by half the normal multiplicative zoom step. One wheel detent zooms in by multiplying the current zoom by `sqrt(1.1)`, and one wheel detent zooms out by multiplying by `1 / sqrt(1.1)`. Toolbar wheel zoom uses the same dynamic manual zoom range as the toolbar zoom input and has no effect for read-only zoom readouts such as direct video.
 
-The toolbar fit control is a split button. The primary button applies the currently selected fit mode and starts with Fit to Window selected. Its adjacent menu offers Fit to Window, Fit Width, and Fit Height; selecting a menu item immediately applies that fit mode and updates the primary button's icon, label, and tooltip. Manual zoom does not replace the selected fit mode used by the primary button.
+The toolbar fit control is a menu button that starts with Fit to Window selected. The button displays the currently selected fit mode's icon and label and opens a menu when clicked; clicking the button itself does not apply a fit mode. The menu offers Fit to Window, Fit Width, and Fit Height; selecting a menu item immediately applies that fit mode and updates the button's icon, label, and tooltip. Manual zoom does not replace the selected fit mode displayed by the button.
 
 When an image is ready, Ctrl+= or Ctrl++ zooms in by multiplying the current zoom by 1.1, and Ctrl+- zooms out by multiplying the current zoom by 1/1.1.
 
