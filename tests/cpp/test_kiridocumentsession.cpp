@@ -14,6 +14,7 @@
 #include "navigation/directmedianavigationmodel.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "session/activenavigationthumbnailmodel.h"
+#include "session/thumbnailimagestore.h"
 
 #include <QAbstractItemModel>
 #include <QFile>
@@ -227,18 +228,43 @@ public:
     QString errorString;
 };
 
+class FakeThumbnailLookupProvider
+{
+public:
+    KiriView::ThumbnailCacheLookupProvider provider()
+    {
+        return [this](QObject *, KiriView::ThumbnailCacheLookupRequest request,
+                   KiriView::ThumbnailCacheLookupCallback callback) {
+            requests.push_back(std::move(request));
+            if (callback) {
+                callback(result);
+            }
+            return KiriView::ImageIoJob();
+        };
+    }
+
+    std::vector<KiriView::ThumbnailCacheLookupRequest> requests;
+    KiriView::ThumbnailCacheLookupResult result;
+};
+
 std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
     KiriView::DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProvider,
     KiriView::TestSupport::ManualFileDeletionProvider *fileDeletion = nullptr,
     KiriView::TestSupport::ManualImageDataLoader *imageDataLoader = nullptr,
     KiriView::ImageDocumentPageCandidateProvider imageDocumentPageCandidateProvider = {},
     KiriView::ImageDataDecoder imageDataDecoder = KiriView::TestSupport::staticImageDataDecoder(),
-    KiriView::MediaOpenWithProvider mediaOpenWithProvider = {})
+    KiriView::MediaOpenWithProvider mediaOpenWithProvider = {},
+    KiriView::ThumbnailCacheLookupProvider thumbnailLookupProvider = {},
+    std::shared_ptr<KiriView::ThumbnailImageStore> thumbnailImageStore = {})
 {
     KiriView::KiriDocumentSessionDependencies dependencies;
     dependencies.sessionRuntime.directMediaNavigationCandidateProvider
         = std::move(directMediaNavigationCandidateProvider);
     dependencies.sessionRuntime.mediaOpenWithProvider = std::move(mediaOpenWithProvider);
+    dependencies.sessionRuntime.activeNavigationThumbnailLookupProvider
+        = std::move(thumbnailLookupProvider);
+    dependencies.sessionRuntime.activeNavigationThumbnailImageStore
+        = std::move(thumbnailImageStore);
     dependencies.imageDocument.candidateProvider = std::move(imageDocumentPageCandidateProvider);
     if (fileDeletion != nullptr) {
         dependencies.sessionRuntime.fileDeletionProvider
@@ -359,6 +385,8 @@ private Q_SLOTS:
     void activeNavigationThumbnailModelExposesSourceNeutralResultRoles();
     void activeNavigationThumbnailDemandSurfaceValidatesIdentityAndGeneration();
     void activeNavigationThumbnailDemandProjectsPendingAndUnsupportedResults();
+    void directImageThumbnailDemandProjectsReadyCacheHitSource();
+    void directImageThumbnailDemandKeepsFallbackForFailedLookup();
     void defaultMediaProviderListsLocalDirectImageSiblings();
     void defaultMediaProviderListsLocalDirectVideoSiblings();
     void freshDirectImageReadoutUsesRequestedCursorBeforeDisplayedUrl();
@@ -1018,6 +1046,91 @@ void TestKiriDocumentSession::activeNavigationThumbnailDemandProjectsPendingAndU
         static_cast<int>(KiriDocumentSession::ThumbnailResultStatus::UnsupportedThumbnailResult));
     QCOMPARE(
         thumbnailDataForRoleName(*session, 1, QByteArrayLiteral("thumbnailImageSource")).toUrl(),
+        QUrl());
+}
+
+void TestKiriDocumentSession::directImageThumbnailDemandProjectsReadyCacheHitSource()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString imagePath = directory.filePath(QStringLiteral("01.png"));
+    QVERIFY(writeTestImage(imagePath));
+
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl imageUrl = localUrl(imagePath);
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(imageUrl) });
+    FakeThumbnailLookupProvider thumbnailLookup;
+    QImage thumbnail(QSize(2, 1), QImage::Format_RGBA8888);
+    thumbnail.fill(Qt::blue);
+    thumbnailLookup.result = KiriView::ThumbnailCacheLookupResult {
+        KiriView::ThumbnailCacheLookupStatus::Ready,
+        thumbnail,
+        KiriView::ActiveNavigationThumbnailDemandBucket::Normal,
+        KiriView::ActiveNavigationThumbnailDemandBucket::Normal,
+        QStringLiteral("/cache/thumbnail.png"),
+        {},
+    };
+    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, nullptr, {},
+            KiriView::TestSupport::staticImageDataDecoder(), {}, thumbnailLookup.provider(), store);
+
+    session->setSourceUrl(imageUrl);
+
+    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QVERIFY(model != nullptr);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QCOMPARE(model->rowCount(), 1);
+
+    const quint64 generation = thumbnailData(
+        *session, 0, KiriView::ActiveNavigationThumbnailModel::NavigationGenerationRole)
+                                   .toULongLong();
+    QVERIFY(session->reportActiveNavigationThumbnailDemand(1, imageUrl, 96,
+        KiriDocumentSession::ThumbnailDemandPriority::VisibleThumbnailDemand, generation));
+
+    QCOMPARE(thumbnailLookup.requests.size(), std::size_t(1));
+    QCOMPARE(thumbnailLookup.requests.front().localPathBytes, QFile::encodeName(imagePath));
+    QCOMPARE(thumbnailDataForRoleName(*session, 0, QByteArrayLiteral("thumbnailStatus")).toInt(),
+        static_cast<int>(KiriDocumentSession::ThumbnailResultStatus::ReadyThumbnailResult));
+    const QUrl source
+        = thumbnailDataForRoleName(*session, 0, QByteArrayLiteral("thumbnailImageSource")).toUrl();
+    QVERIFY(source.toString().startsWith(QStringLiteral("image://kiriview-thumbnails/")));
+    QCOMPARE(store->size(), qsizetype(1));
+}
+
+void TestKiriDocumentSession::directImageThumbnailDemandKeepsFallbackForFailedLookup()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString imagePath = directory.filePath(QStringLiteral("01.png"));
+    QVERIFY(writeTestImage(imagePath));
+
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl imageUrl = localUrl(imagePath);
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(imageUrl) });
+    FakeThumbnailLookupProvider thumbnailLookup;
+    thumbnailLookup.result.status = KiriView::ThumbnailCacheLookupStatus::Failed;
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, nullptr, {},
+            KiriView::TestSupport::staticImageDataDecoder(), {}, thumbnailLookup.provider());
+
+    session->setSourceUrl(imageUrl);
+
+    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QVERIFY(model != nullptr);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    const quint64 generation = thumbnailData(
+        *session, 0, KiriView::ActiveNavigationThumbnailModel::NavigationGenerationRole)
+                                   .toULongLong();
+    QVERIFY(session->reportActiveNavigationThumbnailDemand(1, imageUrl, 96,
+        KiriDocumentSession::ThumbnailDemandPriority::VisibleThumbnailDemand, generation));
+
+    QCOMPARE(thumbnailDataForRoleName(*session, 0, QByteArrayLiteral("thumbnailStatus")).toInt(),
+        static_cast<int>(KiriDocumentSession::ThumbnailResultStatus::FailedThumbnailResult));
+    QCOMPARE(
+        thumbnailDataForRoleName(*session, 0, QByteArrayLiteral("thumbnailImageSource")).toUrl(),
         QUrl());
 }
 
