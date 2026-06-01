@@ -8,9 +8,9 @@ Adapters consume the active thumbnail source key and demand bucket. They must no
 
 Thumbnail cache identity is expressed separately from row source identity. Local files use Freedesktop file-original identity derived from the local path. Cacheable non-file originals use an explicit virtual original identity with URI, mtime, byte size, and optional MIME type supplied by the owning adapter or generation path.
 
-Opened-collection entry thumbnails use content-addressed virtual originals when the collection policy allows cache writes. The URI format is `x-kiriview://thumbnail/content/v1/sha256/<lower-hex-digest>/<decimal-uncompressed-size>`, where the digest is SHA-256 of the uncompressed entry bytes. The virtual original mtime is always `0` because freshness is carried by the content-addressed URI. The original byte size is the uncompressed entry byte length.
+Opened-collection entry thumbnails use archive-record virtual originals when the collection policy allows cache writes. The URI format is `x-kiriview://thumbnail/archive-entry/v1/crc32/<8-lower-hex-crc32>/<decimal-uncompressed-size>`, where the checksum and size come from KArchive-provided archive entry metadata for the uncompressed entry stream. The virtual original mtime is always `0` because freshness is carried by the archive-record URI. The original byte size is the archive entry uncompressed byte length.
 
-Archive metadata checksums such as ZIP or 7Z CRC32 values are not content identity for this policy. The thumbnail generation job reads entry bytes, derives the SHA-256 URI, performs the XDG lookup with that virtual original, decodes and renders only on cache miss, then installs the generated thumbnail with the same virtual identity.
+KiriView must not parse archive formats to derive thumbnail cache identity and must not use decoded-byte or entry-byte hashes for opened-collection cache keys. The archive backend may expose cacheable metadata only through public KArchive entry APIs. The thumbnail generation job derives the CRC32 metadata URI before reading entry bytes, performs the XDG lookup with that virtual original, decodes and renders only on cache miss, then installs the generated thumbnail with the same virtual identity. CRC32 collisions are tolerated at the thumbnail-cache layer and may show a wrong preview thumbnail, but they must not affect opened image bytes, navigation, deletion, or source document state.
 
 ## Direct Local Images
 
@@ -30,7 +30,7 @@ Archive-entry thumbnails represent an item inside an archive-backed image-docume
 
 ## Opened Collection Entries
 
-Opened-collection entry thumbnails represent navigation rows inside a directly opened collection whose bytes are owned by a media entry source. The collection module owns the policy that decides whether an entry can be cached. In v1, only image entries inside directly opened comic-book archives backed by `zip` or `sevenz` roots may return a cacheable opened-collection entry plan. This covers CBZ and CB7 scopes.
+Opened-collection entry thumbnails represent navigation rows inside a directly opened collection whose bytes are owned by a media entry source. The collection module owns the policy that decides whether an entry can be cached. In v1, only image entries inside directly opened comic-book archives backed by `zip` or `sevenz` roots may return a cacheable opened-collection entry plan, and only when the KArchive backend exposes a usable CRC32 entry checksum plus uncompressed size. This covers cacheable CBZ and CB7 scopes; directory collections, TAR/CBT, RAR/libarchive, generic ZIP/7Z collections, and video entries remain unsupported for cacheable opened-collection thumbnails.
 
 Directory collections, TAR-backed CBT scopes, RAR-backed CBR scopes, generic ZIP or 7Z archive collections that are not comic-book archive scopes, and collection video entries return unsupported fallback unless a future collection-owned policy defines a cache-safe identity for them.
 
