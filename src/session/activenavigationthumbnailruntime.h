@@ -12,10 +12,12 @@
 #include "session/thumbnailimagestore.h"
 
 #include <QAbstractListModel>
+#include <QByteArray>
 #include <QString>
 #include <QUrl>
 #include <QtGlobal>
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -44,13 +46,38 @@ struct ActiveNavigationThumbnailCompletion {
     ActiveNavigationThumbnailResult result;
 };
 
+enum class ThumbnailSourceAdapterPlanKind {
+    Unsupported,
+    CacheableLocalFile,
+    InMemoryOnly,
+};
+
+struct ThumbnailSourceAdapterRequest {
+    ActiveNavigationThumbnailSourceKey sourceKey;
+    ActiveNavigationThumbnailDemandBucket requestedBucket
+        = ActiveNavigationThumbnailDemandBucket::None;
+    ActiveNavigationThumbnailDemandPriority priority
+        = ActiveNavigationThumbnailDemandPriority::Nearby;
+};
+
+struct ThumbnailSourceAdapterPlan {
+    ThumbnailSourceAdapterPlanKind kind = ThumbnailSourceAdapterPlanKind::Unsupported;
+    QByteArray localPathBytes;
+};
+
+using ThumbnailSourceAdapter
+    = std::function<ThumbnailSourceAdapterPlan(ThumbnailSourceAdapterRequest)>;
+
+ThumbnailSourceAdapter defaultThumbnailSourceAdapter();
+
 class ActiveNavigationThumbnailRuntime final
 {
 public:
     explicit ActiveNavigationThumbnailRuntime(QObject *owner = nullptr,
         ThumbnailCacheLookupProvider lookupProvider = {},
         std::shared_ptr<ThumbnailImageStore> imageStore = {},
-        ThumbnailGenerationProvider generationProvider = {});
+        ThumbnailGenerationProvider generationProvider = {},
+        ThumbnailSourceAdapter sourceAdapter = {});
     ~ActiveNavigationThumbnailRuntime();
 
     QAbstractListModel *model() const;
@@ -77,6 +104,7 @@ private:
         ActiveNavigationThumbnailDemandBucket bucket = ActiveNavigationThumbnailDemandBucket::None;
         ActiveNavigationThumbnailDemandPriority priority
             = ActiveNavigationThumbnailDemandPriority::Nearby;
+        ThumbnailSourceAdapterPlan sourcePlan;
     };
 
     struct ActiveJobSlot {
@@ -100,8 +128,12 @@ private:
         const ActiveNavigationThumbnailRow &left, const ActiveNavigationThumbnailRow &right);
     static bool sameSourceKey(const ActiveNavigationThumbnailSourceKey &left,
         const ActiveNavigationThumbnailSourceKey &right);
+    static bool sameSourceAdapterPlan(
+        const ThumbnailSourceAdapterPlan &left, const ThumbnailSourceAdapterPlan &right);
     static bool sameAcceptedDemand(const AcceptedDemand &left, const AcceptedDemand &right);
-    static bool supportsGeneratedThumbnail(ActiveNavigationThumbnailSourceKind sourceKind);
+    static bool supportsGeneratedThumbnail(const ThumbnailSourceAdapterPlan &plan);
+    static bool usesCacheLookup(const ThumbnailSourceAdapterPlan &plan);
+    static bool enablesCacheInstall(const ThumbnailSourceAdapterPlan &plan);
     static ThumbnailImageRetentionPriority imageRetentionPriority(
         ActiveNavigationThumbnailDemandPriority priority);
     static ThumbnailImageRetentionPriority imageRetentionPriority(
@@ -127,7 +159,12 @@ private:
     void markBackgroundBucketCompleted(
         RowState &state, ActiveNavigationThumbnailDemandBucket bucket);
     void maybeScheduleBackgroundWork();
-    void startBackgroundWork(RowState &state, ActiveNavigationThumbnailDemandBucket bucket);
+    ThumbnailSourceAdapterPlan sourcePlanForDemand(
+        const ActiveNavigationThumbnailSourceKey &sourceKey,
+        ActiveNavigationThumbnailDemandBucket bucket,
+        ActiveNavigationThumbnailDemandPriority priority) const;
+    void startBackgroundWork(RowState &state, ActiveNavigationThumbnailDemandBucket bucket,
+        ThumbnailSourceAdapterPlan sourcePlan);
     void finishLookup(quint64 jobId, const ActiveNavigationThumbnailSourceKey &sourceKey,
         ActiveNavigationThumbnailDemandBucket bucket, ThumbnailCacheLookupResult lookupResult);
     void finishGeneration(quint64 jobId, const ActiveNavigationThumbnailSourceKey &sourceKey,
@@ -139,6 +176,7 @@ private:
     std::unique_ptr<ActiveNavigationThumbnailModel> m_model;
     ThumbnailCacheLookupProvider m_lookupProvider;
     ThumbnailGenerationProvider m_generationProvider;
+    ThumbnailSourceAdapter m_sourceAdapter;
     std::shared_ptr<ThumbnailImageStore> m_imageStore;
     std::vector<RowState> m_rows;
     quint64 m_navigationGeneration = 0;

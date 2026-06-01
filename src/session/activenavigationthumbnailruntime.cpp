@@ -34,15 +34,31 @@ constexpr std::array<Bucket, 4> backgroundFillBuckets()
 }
 
 namespace KiriView {
+ThumbnailSourceAdapter defaultThumbnailSourceAdapter()
+{
+    return [](ThumbnailSourceAdapterRequest request) {
+        if (request.sourceKey.sourceKind != ActiveNavigationThumbnailSourceKind::DirectImage
+            || !request.sourceKey.url.isLocalFile()) {
+            return ThumbnailSourceAdapterPlan {};
+        }
+
+        return ThumbnailSourceAdapterPlan {
+            ThumbnailSourceAdapterPlanKind::CacheableLocalFile,
+            QFile::encodeName(request.sourceKey.url.toLocalFile()),
+        };
+    };
+}
+
 ActiveNavigationThumbnailRuntime::ActiveNavigationThumbnailRuntime(QObject *owner,
     ThumbnailCacheLookupProvider lookupProvider, std::shared_ptr<ThumbnailImageStore> imageStore,
-    ThumbnailGenerationProvider generationProvider)
+    ThumbnailGenerationProvider generationProvider, ThumbnailSourceAdapter sourceAdapter)
     : m_owner(owner)
     , m_model(std::make_unique<ActiveNavigationThumbnailModel>(owner))
     , m_lookupProvider(
           lookupProvider ? std::move(lookupProvider) : defaultThumbnailCacheLookupProvider())
     , m_generationProvider(
           generationProvider ? std::move(generationProvider) : defaultThumbnailGenerationProvider())
+    , m_sourceAdapter(sourceAdapter ? std::move(sourceAdapter) : defaultThumbnailSourceAdapter())
     , m_imageStore(std::move(imageStore))
 {
     if (m_imageStore == nullptr) {
@@ -125,10 +141,13 @@ bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl &url,
     }
 
     RowState &state = m_rows.at(*rowIndex);
+    const ThumbnailSourceAdapterPlan sourcePlan
+        = sourcePlanForDemand(state.sourceKey, bucket, priority);
     const AcceptedDemand demand {
         state.sourceKey,
         bucket,
         priority,
+        sourcePlan,
     };
     if (state.acceptedDemand.has_value() && sameAcceptedDemand(*state.acceptedDemand, demand)) {
         return false;
@@ -155,8 +174,7 @@ bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl &url,
 
     cancelActiveJob(state);
     state.acceptedDemand = demand;
-    if (supportsGeneratedThumbnail(state.sourceKey.sourceKind)
-        && state.sourceKey.url.isLocalFile()) {
+    if (supportsGeneratedThumbnail(sourcePlan)) {
         if (!hasUsableReadyImage(state)) {
             releaseImage(state);
             state.result.status = ActiveNavigationThumbnailResultStatus::Pending;
@@ -168,7 +186,11 @@ bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl &url,
             demand,
             {},
         };
-        startLookupJob(state, demand, ThumbnailWorkKind::Foreground);
+        if (usesCacheLookup(sourcePlan)) {
+            startLookupJob(state, demand, ThumbnailWorkKind::Foreground);
+        } else {
+            startGenerationJob(state, demand, ThumbnailWorkKind::Foreground);
+        }
     } else {
         releaseImage(state);
         state.result.status = ActiveNavigationThumbnailResultStatus::Unsupported;
@@ -253,17 +275,38 @@ bool ActiveNavigationThumbnailRuntime::sameSourceKey(
         && left.navigationGeneration == right.navigationGeneration;
 }
 
+bool ActiveNavigationThumbnailRuntime::sameSourceAdapterPlan(
+    const ThumbnailSourceAdapterPlan &left, const ThumbnailSourceAdapterPlan &right)
+{
+    return left.kind == right.kind && left.localPathBytes == right.localPathBytes;
+}
+
 bool ActiveNavigationThumbnailRuntime::sameAcceptedDemand(
     const AcceptedDemand &left, const AcceptedDemand &right)
 {
     return sameSourceKey(left.sourceKey, right.sourceKey) && left.bucket == right.bucket
-        && left.priority == right.priority;
+        && left.priority == right.priority
+        && sameSourceAdapterPlan(left.sourcePlan, right.sourcePlan);
 }
 
 bool ActiveNavigationThumbnailRuntime::supportsGeneratedThumbnail(
-    ActiveNavigationThumbnailSourceKind sourceKind)
+    const ThumbnailSourceAdapterPlan &plan)
 {
-    return sourceKind == ActiveNavigationThumbnailSourceKind::DirectImage;
+    return plan.kind == ThumbnailSourceAdapterPlanKind::InMemoryOnly
+        || (plan.kind == ThumbnailSourceAdapterPlanKind::CacheableLocalFile
+            && !plan.localPathBytes.isEmpty());
+}
+
+bool ActiveNavigationThumbnailRuntime::usesCacheLookup(const ThumbnailSourceAdapterPlan &plan)
+{
+    return plan.kind == ThumbnailSourceAdapterPlanKind::CacheableLocalFile
+        && !plan.localPathBytes.isEmpty();
+}
+
+bool ActiveNavigationThumbnailRuntime::enablesCacheInstall(const ThumbnailSourceAdapterPlan &plan)
+{
+    return plan.kind == ThumbnailSourceAdapterPlanKind::CacheableLocalFile
+        && !plan.localPathBytes.isEmpty();
 }
 
 ThumbnailImageRetentionPriority ActiveNavigationThumbnailRuntime::imageRetentionPriority(
@@ -385,7 +428,7 @@ void ActiveNavigationThumbnailRuntime::startLookupJob(
     }
 
     ThumbnailCacheLookupRequest request;
-    request.localPathBytes = QFile::encodeName(demand.sourceKey.url.toLocalFile());
+    request.localPathBytes = demand.sourcePlan.localPathBytes;
     request.requestedBucket = demand.bucket;
 
     const quint64 jobId = state.activeJob->id;
@@ -425,8 +468,12 @@ void ActiveNavigationThumbnailRuntime::startGenerationJob(
     }
 
     ThumbnailGenerationRequest request;
-    request.localPathBytes = QFile::encodeName(demand.sourceKey.url.toLocalFile());
+    request.localPathBytes = demand.sourcePlan.localPathBytes;
+    request.sourceUrl = demand.sourceKey.url;
+    request.sourceLabel = demand.sourceKey.label;
+    request.sourceKind = demand.sourceKey.sourceKind;
     request.requestedBucket = demand.bucket;
+    request.cacheInstallEnabled = enablesCacheInstall(demand.sourcePlan);
 
     const quint64 jobId = state.activeJob->id;
     qCDebug(kiriviewThumbnailLog) << "Starting thumbnail generation job" << jobId << "kind"
@@ -489,8 +536,14 @@ void ActiveNavigationThumbnailRuntime::maybeScheduleBackgroundWork()
     for (ActiveNavigationThumbnailDemandBucket bucket : backgroundFillBuckets()) {
         for (RowState &state : m_rows) {
             if (backgroundBucketCompleted(state, bucket)
-                || !supportsGeneratedThumbnail(state.sourceKey.sourceKind)
-                || !state.sourceKey.url.isLocalFile()) {
+                || (state.acceptedDemand.has_value()
+                    && !supportsGeneratedThumbnail(state.acceptedDemand->sourcePlan))) {
+                continue;
+            }
+
+            ThumbnailSourceAdapterPlan sourcePlan = sourcePlanForDemand(
+                state.sourceKey, bucket, ActiveNavigationThumbnailDemandPriority::Nearby);
+            if (!supportsGeneratedThumbnail(sourcePlan)) {
                 continue;
             }
 
@@ -498,19 +551,36 @@ void ActiveNavigationThumbnailRuntime::maybeScheduleBackgroundWork()
                 << "Scheduling background thumbnail fill" << state.sourceKey.number
                 << state.sourceKey.url << "bucket" << static_cast<int>(bucket) << "generation"
                 << m_navigationGeneration;
-            startBackgroundWork(state, bucket);
+            startBackgroundWork(state, bucket, std::move(sourcePlan));
             return;
         }
     }
 }
 
-void ActiveNavigationThumbnailRuntime::startBackgroundWork(
-    RowState &state, ActiveNavigationThumbnailDemandBucket bucket)
+ThumbnailSourceAdapterPlan ActiveNavigationThumbnailRuntime::sourcePlanForDemand(
+    const ActiveNavigationThumbnailSourceKey &sourceKey,
+    ActiveNavigationThumbnailDemandBucket bucket,
+    ActiveNavigationThumbnailDemandPriority priority) const
+{
+    if (!m_sourceAdapter) {
+        return {};
+    }
+
+    return m_sourceAdapter(ThumbnailSourceAdapterRequest {
+        sourceKey,
+        bucket,
+        priority,
+    });
+}
+
+void ActiveNavigationThumbnailRuntime::startBackgroundWork(RowState &state,
+    ActiveNavigationThumbnailDemandBucket bucket, ThumbnailSourceAdapterPlan sourcePlan)
 {
     const AcceptedDemand demand {
         state.sourceKey,
         bucket,
         ActiveNavigationThumbnailDemandPriority::Nearby,
+        std::move(sourcePlan),
     };
     state.activeJob = ActiveJobSlot {
         m_nextJobId++,
@@ -518,7 +588,11 @@ void ActiveNavigationThumbnailRuntime::startBackgroundWork(
         demand,
         {},
     };
-    startLookupJob(state, demand, ThumbnailWorkKind::Background);
+    if (usesCacheLookup(demand.sourcePlan)) {
+        startLookupJob(state, demand, ThumbnailWorkKind::Background);
+    } else {
+        startGenerationJob(state, demand, ThumbnailWorkKind::Background);
+    }
 }
 
 void ActiveNavigationThumbnailRuntime::finishLookup(quint64 jobId,

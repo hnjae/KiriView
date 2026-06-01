@@ -181,6 +181,16 @@ KiriView::ThumbnailGenerationResult generateThumbnail(
     const rust::Slice<const std::uint8_t> pixels(
         reinterpret_cast<const std::uint8_t *>(rgba8.constBits()),
         static_cast<std::size_t>(rgba8.sizeInBytes()));
+    if (!request.cacheInstallEnabled) {
+        return KiriView::ThumbnailGenerationResult {
+            KiriView::ThumbnailGenerationStatus::Ready,
+            std::move(rgba8),
+            request.requestedBucket,
+            {},
+            {},
+        };
+    }
+
     const KiriView::RustThumbnailCacheInstallResult install
         = KiriView::rustInstallDisplayThumbnailRgba8(
             KiriView::Bridge::rustBytes(request.localPathBytes),

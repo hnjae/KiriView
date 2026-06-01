@@ -6,10 +6,12 @@
 
 #include "async/imageiojob.h"
 #include "session/activenavigationthumbnaildemand.h"
+#include "session/activenavigationthumbnailprojection.h"
 
 #include <QByteArray>
 #include <QImage>
 #include <QString>
+#include <QUrl>
 #include <functional>
 
 class QObject;
@@ -22,8 +24,13 @@ enum class ThumbnailGenerationStatus {
 
 struct ThumbnailGenerationRequest {
     QByteArray localPathBytes;
+    QUrl sourceUrl;
+    QString sourceLabel;
+    ActiveNavigationThumbnailSourceKind sourceKind
+        = ActiveNavigationThumbnailSourceKind::DirectImage;
     ActiveNavigationThumbnailDemandBucket requestedBucket
         = ActiveNavigationThumbnailDemandBucket::None;
+    bool cacheInstallEnabled = true;
 };
 
 struct ThumbnailGenerationResult {
