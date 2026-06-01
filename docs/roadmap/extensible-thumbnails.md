@@ -26,7 +26,7 @@ Roadmap items are intentionally sized so one agent can complete one progress ite
 - [x] Add on-demand direct image thumbnail generation and cache installation.
 - [x] Add quality, resize, HiDPI, and memory-pressure behavior.
 - [x] Add best-state background fill scheduling and thumbnail runtime observability.
-- [ ] Prove future adapter readiness for unsupported, video, archive-entry, archive-collection, and directory-collection sources.
+- [x] Prove future adapter readiness for unsupported, video, archive-entry, archive-collection, and directory-collection sources.
 - [ ] Satisfy the acceptance checklist for direct local image thumbnails and source-neutral extension points.
 
 ## Stage 0: Declare Intent
