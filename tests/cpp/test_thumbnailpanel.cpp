@@ -372,8 +372,15 @@ void TestThumbnailPanel::delegateReportsSourceNeutralDemandAndKeepsFallbackIcon(
     QVERIFY(source.contains(QStringLiteral("activeNavigationThumbnailDemandBucket")));
     QVERIFY(source.contains(QStringLiteral("reportActiveNavigationThumbnailDemand")));
     QVERIFY(source.contains(QStringLiteral("navigationGeneration")));
+    QVERIFY(source.contains(QStringLiteral("required property int thumbnailStatus")));
+    QVERIFY(source.contains(QStringLiteral("required property url thumbnailImageSource")));
+    QVERIFY(source.contains(QStringLiteral("KiriDocumentSession.ReadyThumbnailResult")));
+    QVERIFY(source.contains(QStringLiteral("source: thumbnailDelegate.thumbnailImageSource")));
     QVERIFY(source.contains(QStringLiteral("Kirigami.Icon")));
     QVERIFY(source.contains(QStringLiteral("source: thumbnailDelegate.iconName")));
+    QVERIFY(!source.contains(QStringLiteral("DirectImage")));
+    QVERIFY(!source.contains(QStringLiteral("DirectVideo")));
+    QVERIFY(!source.contains(QStringLiteral("ImageDocumentPage")));
 }
 
 void TestThumbnailPanel::visibleMainNavigationKeepsScrollPosition()
