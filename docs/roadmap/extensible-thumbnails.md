@@ -27,7 +27,7 @@ Roadmap items are intentionally sized so one agent can complete one progress ite
 - [x] Add quality, resize, HiDPI, and memory-pressure behavior.
 - [x] Add best-state background fill scheduling and thumbnail runtime observability.
 - [x] Prove future adapter readiness for unsupported, video, archive-entry, archive-collection, and directory-collection sources.
-- [ ] Satisfy the acceptance checklist for direct local image thumbnails and source-neutral extension points.
+- [x] Satisfy the acceptance checklist for direct local image thumbnails and source-neutral extension points.
 
 ## Stage 0: Declare Intent
 
