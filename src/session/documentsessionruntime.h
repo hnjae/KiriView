@@ -8,6 +8,7 @@
 #include "navigation/directmedianavigationmodel.h"
 #include "predecode/mediapredecodedependencies.h"
 #include "session/activenavigationprojection.h"
+#include "session/activenavigationthumbnaildemand.h"
 #include "session/activenavigationthumbnailmodel.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondocumentports.h"
@@ -77,6 +78,10 @@ public:
     ActiveNavigationRevealIntent activeNavigationRevealIntent() const;
     ActiveNavigationRevealDirection activeNavigationRevealDirection() const;
     QAbstractListModel *activeNavigationThumbnailModel() const;
+    ActiveNavigationThumbnailDemandBucket activeNavigationThumbnailDemandBucket(
+        int physicalMaxEdge) const;
+    bool reportActiveNavigationThumbnailDemand(int number, const QUrl &url, int physicalMaxEdge,
+        ActiveNavigationThumbnailDemandPriority priority, quint64 navigationGeneration);
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
     void openPreviousActiveNavigation();
@@ -151,6 +156,7 @@ private:
     DocumentSessionVideoDocumentPort m_videoDocument;
     DocumentSessionState m_state;
     std::unique_ptr<ActiveNavigationThumbnailModel> m_activeNavigationThumbnailModel;
+    ActiveNavigationThumbnailDemandTracker m_activeNavigationThumbnailDemandTracker;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaDeletionCandidateRuntime;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;

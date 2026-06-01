@@ -37,6 +37,8 @@ QVariant ActiveNavigationThumbnailModel::data(const QModelIndex &index, int role
         return iconName(row.kind);
     case CurrentRole:
         return row.current;
+    case NavigationGenerationRole:
+        return QVariant::fromValue(m_navigationGeneration);
     default:
         return {};
     }
@@ -50,6 +52,7 @@ QHash<int, QByteArray> ActiveNavigationThumbnailModel::roleNames() const
         { LabelRole, QByteArrayLiteral("label") },
         { IconNameRole, QByteArrayLiteral("iconName") },
         { CurrentRole, QByteArrayLiteral("current") },
+        { NavigationGenerationRole, QByteArrayLiteral("navigationGeneration") },
     };
 }
 
@@ -61,6 +64,7 @@ void ActiveNavigationThumbnailModel::setRows(std::vector<ActiveNavigationThumbna
 
     if (!sameRowIdentities(m_rows, rows)) {
         beginResetModel();
+        ++m_navigationGeneration;
         m_rows = std::move(rows);
         endResetModel();
         return;
@@ -80,6 +84,22 @@ void ActiveNavigationThumbnailModel::setRows(std::vector<ActiveNavigationThumbna
 }
 
 void ActiveNavigationThumbnailModel::clear() { setRows({}); }
+
+bool ActiveNavigationThumbnailModel::containsRowIdentity(
+    int number, const QUrl &url, quint64 navigationGeneration) const
+{
+    if (navigationGeneration == 0 || navigationGeneration != m_navigationGeneration) {
+        return false;
+    }
+
+    for (const ActiveNavigationThumbnailRow &row : m_rows) {
+        if (row.number == number && row.url == url) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 QString ActiveNavigationThumbnailModel::iconName(ActiveNavigationThumbnailKind kind)
 {

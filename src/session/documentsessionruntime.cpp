@@ -239,6 +239,37 @@ QAbstractListModel *DocumentSessionRuntime::activeNavigationThumbnailModel() con
     return m_activeNavigationThumbnailModel.get();
 }
 
+ActiveNavigationThumbnailDemandBucket DocumentSessionRuntime::activeNavigationThumbnailDemandBucket(
+    int physicalMaxEdge) const
+{
+    return activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(physicalMaxEdge);
+}
+
+bool DocumentSessionRuntime::reportActiveNavigationThumbnailDemand(int number, const QUrl &url,
+    int physicalMaxEdge, ActiveNavigationThumbnailDemandPriority priority,
+    quint64 navigationGeneration)
+{
+    if (m_activeNavigationThumbnailModel == nullptr
+        || !m_activeNavigationThumbnailModel->containsRowIdentity(
+            number, url, navigationGeneration)) {
+        return false;
+    }
+
+    const ActiveNavigationThumbnailDemandBucket bucket
+        = activeNavigationThumbnailDemandBucket(physicalMaxEdge);
+    if (bucket == ActiveNavigationThumbnailDemandBucket::None) {
+        return false;
+    }
+
+    return m_activeNavigationThumbnailDemandTracker.record(ActiveNavigationThumbnailDemand {
+        number,
+        url,
+        bucket,
+        priority,
+        navigationGeneration,
+    });
+}
+
 std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
 {
     return m_mediaPredecodeCoordinator != nullptr

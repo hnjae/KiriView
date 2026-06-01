@@ -123,6 +123,38 @@ KiriDocumentSession::ActiveNavigationRevealDirection fromRuntimeRevealDirection(
     return KiriDocumentSession::ActiveNavigationRevealDirection::None;
 }
 
+KiriDocumentSession::ThumbnailDemandBucket fromRuntimeThumbnailDemandBucket(
+    KiriView::ActiveNavigationThumbnailDemandBucket bucket)
+{
+    switch (bucket) {
+    case KiriView::ActiveNavigationThumbnailDemandBucket::None:
+        return KiriDocumentSession::ThumbnailDemandBucket::NoThumbnailDemandBucket;
+    case KiriView::ActiveNavigationThumbnailDemandBucket::Normal:
+        return KiriDocumentSession::ThumbnailDemandBucket::NormalThumbnailDemandBucket;
+    case KiriView::ActiveNavigationThumbnailDemandBucket::Large:
+        return KiriDocumentSession::ThumbnailDemandBucket::LargeThumbnailDemandBucket;
+    case KiriView::ActiveNavigationThumbnailDemandBucket::XLarge:
+        return KiriDocumentSession::ThumbnailDemandBucket::XLargeThumbnailDemandBucket;
+    case KiriView::ActiveNavigationThumbnailDemandBucket::XXLarge:
+        return KiriDocumentSession::ThumbnailDemandBucket::XXLargeThumbnailDemandBucket;
+    }
+
+    return KiriDocumentSession::ThumbnailDemandBucket::NoThumbnailDemandBucket;
+}
+
+KiriView::ActiveNavigationThumbnailDemandPriority toRuntimeThumbnailDemandPriority(
+    KiriDocumentSession::ThumbnailDemandPriority priority)
+{
+    switch (priority) {
+    case KiriDocumentSession::ThumbnailDemandPriority::VisibleThumbnailDemand:
+        return KiriView::ActiveNavigationThumbnailDemandPriority::Visible;
+    case KiriDocumentSession::ThumbnailDemandPriority::NearbyThumbnailDemand:
+        return KiriView::ActiveNavigationThumbnailDemandPriority::Nearby;
+    }
+
+    return KiriView::ActiveNavigationThumbnailDemandPriority::Nearby;
+}
+
 template <typename Document, typename Signal>
 KiriView::DocumentSessionDocumentSignalConnector documentSignalConnector(
     Document &document, Signal signal)
@@ -484,6 +516,20 @@ QString KiriDocumentSession::requestNextActiveNavigationBoundaryText()
 {
     return KiriView::activeNavigationBoundaryFeedbackText(
         m_runtime->activeNavigationBoundaryScope(), m_runtime->requestNextActiveNavigation());
+}
+
+KiriDocumentSession::ThumbnailDemandBucket
+KiriDocumentSession::activeNavigationThumbnailDemandBucket(int physicalMaxEdge) const
+{
+    return fromRuntimeThumbnailDemandBucket(
+        m_runtime->activeNavigationThumbnailDemandBucket(physicalMaxEdge));
+}
+
+bool KiriDocumentSession::reportActiveNavigationThumbnailDemand(int number, QUrl url,
+    int physicalMaxEdge, ThumbnailDemandPriority priority, quint64 navigationGeneration)
+{
+    return m_runtime->reportActiveNavigationThumbnailDemand(number, url, physicalMaxEdge,
+        toRuntimeThumbnailDemandPriority(priority), navigationGeneration);
 }
 
 void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)

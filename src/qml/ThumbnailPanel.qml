@@ -6,6 +6,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
+import QtQuick.Window
 import io.github.hnjae.kiriview
 import org.kde.kirigami as Kirigami
 
@@ -273,7 +274,9 @@ Controls.Pane {
                 required property bool current
                 required property string iconName
                 required property string label
+                required property var navigationGeneration
                 required property int number
+                required property url url
 
                 objectName: "thumbnailStripItem"
 
@@ -290,6 +293,43 @@ Controls.Pane {
 
                 Controls.ToolTip.text: label
                 Controls.ToolTip.visible: hovered && label.length > 0 && !Kirigami.Settings.hasTransientTouchInput
+
+                // qmllint disable missing-property
+                readonly property real thumbnailDevicePixelRatio: Window.window && Window.window.effectiveDevicePixelRatio > 0 ? Window.window.effectiveDevicePixelRatio : 1.0
+                // qmllint enable missing-property
+
+                function previewBoxIntersectsViewport() {
+                    if (thumbnailPreviewBox.width <= 0 || thumbnailPreviewBox.height <= 0 || thumbnailStrip.width <= 0 || thumbnailStrip.height <= 0) {
+                        return false;
+                    }
+
+                    const previewPosition = thumbnailPreviewBox.mapToItem(thumbnailStrip.contentItem, 0, 0);
+                    const previewLeft = previewPosition.x;
+                    const previewRight = previewLeft + thumbnailPreviewBox.width;
+                    const previewTop = previewPosition.y;
+                    const previewBottom = previewTop + thumbnailPreviewBox.height;
+                    const viewportLeft = thumbnailStrip.contentX;
+                    const viewportRight = viewportLeft + thumbnailStrip.width;
+                    const viewportTop = thumbnailStrip.contentY;
+                    const viewportBottom = viewportTop + thumbnailStrip.height;
+                    return previewRight > viewportLeft && previewLeft < viewportRight && previewBottom > viewportTop && previewTop < viewportBottom;
+                }
+
+                function reportThumbnailDemand() {
+                    const physicalMaxEdge = Math.ceil(Math.max(thumbnailPreviewBox.width, thumbnailPreviewBox.height) * thumbnailDevicePixelRatio);
+                    const bucket = root.documentSession.activeNavigationThumbnailDemandBucket(physicalMaxEdge);
+                    if (bucket === KiriDocumentSession.NoThumbnailDemandBucket) {
+                        return;
+                    }
+
+                    const priority = previewBoxIntersectsViewport() ? KiriDocumentSession.VisibleThumbnailDemand : KiriDocumentSession.NearbyThumbnailDemand;
+                    root.documentSession.reportActiveNavigationThumbnailDemand(number, url, physicalMaxEdge, priority, navigationGeneration);
+                }
+
+                Component.onCompleted: reportThumbnailDemand()
+                onNavigationGenerationChanged: reportThumbnailDemand()
+                onThumbnailDevicePixelRatioChanged: reportThumbnailDemand()
+                onXChanged: reportThumbnailDemand()
 
                 background: Item {
                     Rectangle {
@@ -311,12 +351,25 @@ Controls.Pane {
                 contentItem: ColumnLayout {
                     spacing: Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2))
 
-                    Kirigami.Icon {
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredHeight: Kirigami.Units.iconSizes.large
-                        Layout.preferredWidth: Kirigami.Units.iconSizes.large
-                        color: root.viewerForegroundColor
-                        source: thumbnailDelegate.iconName
+                    Item {
+                        id: thumbnailPreviewBox
+
+                        objectName: "thumbnailPreviewBox"
+
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        Layout.minimumHeight: Kirigami.Units.iconSizes.large
+
+                        onHeightChanged: thumbnailDelegate.reportThumbnailDemand()
+                        onWidthChanged: thumbnailDelegate.reportThumbnailDemand()
+
+                        Kirigami.Icon {
+                            anchors.centerIn: parent
+                            color: root.viewerForegroundColor
+                            height: Math.min(parent.height, Kirigami.Units.iconSizes.large)
+                            source: thumbnailDelegate.iconName
+                            width: Math.min(parent.width, Kirigami.Units.iconSizes.large)
+                        }
                     }
 
                     Controls.Label {
@@ -333,6 +386,26 @@ Controls.Pane {
                 }
 
                 onClicked: root.documentSession.openActiveNavigationThumbnailAtNumber(number)
+
+                Connections {
+                    target: thumbnailStrip
+
+                    function onContentXChanged() {
+                        thumbnailDelegate.reportThumbnailDemand();
+                    }
+
+                    function onContentYChanged() {
+                        thumbnailDelegate.reportThumbnailDemand();
+                    }
+
+                    function onHeightChanged() {
+                        thumbnailDelegate.reportThumbnailDemand();
+                    }
+
+                    function onWidthChanged() {
+                        thumbnailDelegate.reportThumbnailDemand();
+                    }
+                }
             }
         }
 

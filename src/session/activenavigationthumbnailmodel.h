@@ -23,6 +23,7 @@ public:
         LabelRole,
         IconNameRole,
         CurrentRole,
+        NavigationGenerationRole,
     };
 
     explicit ActiveNavigationThumbnailModel(QObject *parent = nullptr);
@@ -33,6 +34,7 @@ public:
 
     void setRows(std::vector<ActiveNavigationThumbnailRow> rows);
     void clear();
+    bool containsRowIdentity(int number, const QUrl &url, quint64 navigationGeneration) const;
 
 private:
     static QString iconName(ActiveNavigationThumbnailKind kind);
@@ -44,6 +46,7 @@ private:
         const std::vector<ActiveNavigationThumbnailRow> &right);
 
     std::vector<ActiveNavigationThumbnailRow> m_rows;
+    quint64 m_navigationGeneration = 0;
 };
 }
 

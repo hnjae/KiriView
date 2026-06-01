@@ -121,6 +121,21 @@ public:
     };
     Q_ENUM(ActiveNavigationRevealDirection)
 
+    enum class ThumbnailDemandBucket {
+        NoThumbnailDemandBucket,
+        NormalThumbnailDemandBucket,
+        LargeThumbnailDemandBucket,
+        XLargeThumbnailDemandBucket,
+        XXLargeThumbnailDemandBucket,
+    };
+    Q_ENUM(ThumbnailDemandBucket)
+
+    enum class ThumbnailDemandPriority {
+        VisibleThumbnailDemand,
+        NearbyThumbnailDemand,
+    };
+    Q_ENUM(ThumbnailDemandPriority)
+
     explicit KiriDocumentSession(QObject *parent = nullptr);
     explicit KiriDocumentSession(
         KiriView::KiriDocumentSessionDependencies dependencies, QObject *parent = nullptr);
@@ -167,6 +182,11 @@ public:
     Q_INVOKABLE KiriDocumentSession::ActiveNavigationRequestResult requestNextActiveNavigation();
     Q_INVOKABLE QString requestPreviousActiveNavigationBoundaryText();
     Q_INVOKABLE QString requestNextActiveNavigationBoundaryText();
+    Q_INVOKABLE KiriDocumentSession::ThumbnailDemandBucket activeNavigationThumbnailDemandBucket(
+        int physicalMaxEdge) const;
+    Q_INVOKABLE bool reportActiveNavigationThumbnailDemand(int number, QUrl url,
+        int physicalMaxEdge, KiriDocumentSession::ThumbnailDemandPriority priority,
+        quint64 navigationGeneration);
     Q_INVOKABLE void deleteDisplayedFile(KiriDocumentSession::DeletionMode mode);
     Q_INVOKABLE void openCurrentMediaWith();
 
