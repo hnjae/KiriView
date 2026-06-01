@@ -45,6 +45,9 @@ ThumbnailSourceAdapter defaultThumbnailSourceAdapter()
         return ThumbnailSourceAdapterPlan {
             ThumbnailSourceAdapterPlanKind::CacheableLocalFile,
             QFile::encodeName(request.sourceKey.url.toLocalFile()),
+            ThumbnailOriginalIdentity::fromLocalPathBytes(
+                QFile::encodeName(request.sourceKey.url.toLocalFile())),
+            {},
         };
     };
 }
@@ -278,7 +281,15 @@ bool ActiveNavigationThumbnailRuntime::sameSourceKey(
 bool ActiveNavigationThumbnailRuntime::sameSourceAdapterPlan(
     const ThumbnailSourceAdapterPlan &left, const ThumbnailSourceAdapterPlan &right)
 {
-    return left.kind == right.kind && left.localPathBytes == right.localPathBytes;
+    return left.kind == right.kind && left.localPathBytes == right.localPathBytes
+        && left.originalIdentity.mode == right.originalIdentity.mode
+        && left.originalIdentity.localPathBytes == right.originalIdentity.localPathBytes
+        && left.originalIdentity.uri == right.originalIdentity.uri
+        && left.originalIdentity.mtimeSeconds == right.originalIdentity.mtimeSeconds
+        && left.originalIdentity.originalByteSize == right.originalIdentity.originalByteSize
+        && left.originalIdentity.mimeType == right.originalIdentity.mimeType
+        && sameOpenedCollectionScopeLocation(
+            left.openedCollectionScope, right.openedCollectionScope);
 }
 
 bool ActiveNavigationThumbnailRuntime::sameAcceptedDemand(
@@ -294,7 +305,9 @@ bool ActiveNavigationThumbnailRuntime::supportsGeneratedThumbnail(
 {
     return plan.kind == ThumbnailSourceAdapterPlanKind::InMemoryOnly
         || (plan.kind == ThumbnailSourceAdapterPlanKind::CacheableLocalFile
-            && !plan.localPathBytes.isEmpty());
+            && !plan.localPathBytes.isEmpty())
+        || (plan.kind == ThumbnailSourceAdapterPlanKind::CacheableOpenedCollectionEntry
+            && !plan.openedCollectionScope.isEmpty());
 }
 
 bool ActiveNavigationThumbnailRuntime::usesCacheLookup(const ThumbnailSourceAdapterPlan &plan)
@@ -305,8 +318,10 @@ bool ActiveNavigationThumbnailRuntime::usesCacheLookup(const ThumbnailSourceAdap
 
 bool ActiveNavigationThumbnailRuntime::enablesCacheInstall(const ThumbnailSourceAdapterPlan &plan)
 {
-    return plan.kind == ThumbnailSourceAdapterPlanKind::CacheableLocalFile
-        && !plan.localPathBytes.isEmpty();
+    return (plan.kind == ThumbnailSourceAdapterPlanKind::CacheableLocalFile
+               && !plan.localPathBytes.isEmpty())
+        || (plan.kind == ThumbnailSourceAdapterPlanKind::CacheableOpenedCollectionEntry
+            && !plan.openedCollectionScope.isEmpty());
 }
 
 ThumbnailImageRetentionPriority ActiveNavigationThumbnailRuntime::imageRetentionPriority(
@@ -429,6 +444,7 @@ void ActiveNavigationThumbnailRuntime::startLookupJob(
 
     ThumbnailCacheLookupRequest request;
     request.localPathBytes = demand.sourcePlan.localPathBytes;
+    request.originalIdentity = demand.sourcePlan.originalIdentity;
     request.requestedBucket = demand.bucket;
 
     const quint64 jobId = state.activeJob->id;
@@ -469,6 +485,8 @@ void ActiveNavigationThumbnailRuntime::startGenerationJob(
 
     ThumbnailGenerationRequest request;
     request.localPathBytes = demand.sourcePlan.localPathBytes;
+    request.originalIdentity = demand.sourcePlan.originalIdentity;
+    request.openedCollectionScope = demand.sourcePlan.openedCollectionScope;
     request.sourceUrl = demand.sourceKey.url;
     request.sourceLabel = demand.sourceKey.label;
     request.sourceKind = demand.sourceKey.sourceKind;

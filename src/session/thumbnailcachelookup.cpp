@@ -70,10 +70,21 @@ KiriView::ThumbnailCacheLookupStatus thumbnailStatus(
 KiriView::ThumbnailCacheLookupResult lookupThumbnailCache(
     const KiriView::ThumbnailCacheLookupRequest &request)
 {
-    const KiriView::RustThumbnailCacheLookupResult rustResult
-        = KiriView::rustLookupDisplayThumbnailRgba8(
-            KiriView::Bridge::rustBytes(request.localPathBytes),
-            rustBucket(request.requestedBucket));
+    KiriView::RustThumbnailCacheLookupResult rustResult;
+    if (request.originalIdentity.isNonFileUri()) {
+        const QByteArray uri = request.originalIdentity.uri.toUtf8();
+        const QByteArray mimeType = request.originalIdentity.mimeType.toUtf8();
+        rustResult
+            = KiriView::rustLookupDisplayThumbnailNonFileUriRgba8(KiriView::Bridge::rustStr(uri),
+                request.originalIdentity.mtimeSeconds, request.originalIdentity.originalByteSize,
+                KiriView::Bridge::rustStr(mimeType), rustBucket(request.requestedBucket));
+    } else {
+        const QByteArray localPathBytes = request.originalIdentity.localPathBytes.isEmpty()
+            ? request.localPathBytes
+            : request.originalIdentity.localPathBytes;
+        rustResult = KiriView::rustLookupDisplayThumbnailRgba8(
+            KiriView::Bridge::rustBytes(localPathBytes), rustBucket(request.requestedBucket));
+    }
 
     KiriView::ThumbnailCacheLookupResult result;
     result.status = thumbnailStatus(rustResult.status);

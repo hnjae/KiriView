@@ -20,6 +20,22 @@ mod ffi {
         XxLarge = 4,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustThumbnailOriginalIdentityMode {
+        LocalPath = 0,
+        NonFileUri = 1,
+    }
+
+    #[derive(Debug, PartialEq, Eq)]
+    struct RustThumbnailOriginalIdentity {
+        mode: RustThumbnailOriginalIdentityMode,
+        local_path_bytes: Vec<u8>,
+        uri: String,
+        mtime_seconds: i64,
+        original_byte_size: i64,
+        mime_type: String,
+    }
+
     #[derive(Debug, PartialEq, Eq)]
     struct RustThumbnailCacheLookupResult {
         status: RustThumbnailCacheLookupStatus,
@@ -48,6 +64,21 @@ mod ffi {
             requested_bucket: RustThumbnailCacheBucket,
         ) -> RustThumbnailCacheLookupResult;
 
+        #[cxx_name = "rustLookupDisplayThumbnailOriginalRgba8"]
+        fn rust_lookup_display_thumbnail_original_rgba8(
+            identity: &RustThumbnailOriginalIdentity,
+            requested_bucket: RustThumbnailCacheBucket,
+        ) -> RustThumbnailCacheLookupResult;
+
+        #[cxx_name = "rustLookupDisplayThumbnailNonFileUriRgba8"]
+        fn rust_lookup_display_thumbnail_non_file_uri_rgba8(
+            uri: &str,
+            mtime_seconds: i64,
+            original_byte_size: i64,
+            mime_type: &str,
+            requested_bucket: RustThumbnailCacheBucket,
+        ) -> RustThumbnailCacheLookupResult;
+
         #[cxx_name = "rustInstallDisplayThumbnailRgba8"]
         fn rust_install_display_thumbnail_rgba8(
             local_path_bytes: &[u8],
@@ -57,6 +88,33 @@ mod ffi {
             stride: i32,
             rgba8_pixels: &[u8],
         ) -> RustThumbnailCacheInstallResult;
+
+        #[cxx_name = "rustInstallDisplayThumbnailOriginalRgba8"]
+        fn rust_install_display_thumbnail_original_rgba8(
+            identity: &RustThumbnailOriginalIdentity,
+            requested_bucket: RustThumbnailCacheBucket,
+            width: i32,
+            height: i32,
+            stride: i32,
+            rgba8_pixels: &[u8],
+        ) -> RustThumbnailCacheInstallResult;
+
+        #[cxx_name = "rustInstallDisplayThumbnailNonFileUriRgba8"]
+        #[allow(clippy::too_many_arguments)]
+        fn rust_install_display_thumbnail_non_file_uri_rgba8(
+            uri: &str,
+            mtime_seconds: i64,
+            original_byte_size: i64,
+            mime_type: &str,
+            requested_bucket: RustThumbnailCacheBucket,
+            width: i32,
+            height: i32,
+            stride: i32,
+            rgba8_pixels: &[u8],
+        ) -> RustThumbnailCacheInstallResult;
+
+        #[cxx_name = "rustVirtualThumbnailContentUri"]
+        fn virtual_content_uri(bytes: &[u8], uncompressed_size: u64) -> String;
     }
 }
 
@@ -67,13 +125,46 @@ use std::os::unix::ffi::OsStrExt;
 
 use ffi::{
     RustThumbnailCacheBucket, RustThumbnailCacheInstallResult, RustThumbnailCacheLookupResult,
-    RustThumbnailCacheLookupStatus,
+    RustThumbnailCacheLookupStatus, RustThumbnailOriginalIdentity,
+    RustThumbnailOriginalIdentityMode,
 };
+use sha2::{Digest, Sha256};
 use xdg_thumbnail::{
     DisplayThumbnailRgba8LookupEntryParts, OwnedRawThumbnailImage, PersonalCacheRoot,
-    PersonalThumbnailLookup, PersonalThumbnailRawInstallRequest, RawThumbnailPixelFormat,
-    ReadablePersonalOriginalIdentity, ThumbnailSize,
+    PersonalOriginalIdentity, PersonalOriginalUri, PersonalThumbnailLookup,
+    PersonalThumbnailRawInstallRequest, RawThumbnailPixelFormat, ReadablePersonalOriginalIdentity,
+    ThumbnailSize, UnixMtimeSeconds,
 };
+
+impl RustThumbnailOriginalIdentity {
+    fn local_path(local_path_bytes: &[u8]) -> Self {
+        Self {
+            mode: RustThumbnailOriginalIdentityMode::LocalPath,
+            local_path_bytes: local_path_bytes.to_vec(),
+            uri: String::new(),
+            mtime_seconds: 0,
+            original_byte_size: -1,
+            mime_type: String::new(),
+        }
+    }
+
+    #[cfg(test)]
+    fn non_file_uri(
+        uri: impl Into<String>,
+        mtime_seconds: i64,
+        original_byte_size: u64,
+        mime_type: impl Into<String>,
+    ) -> Self {
+        Self {
+            mode: RustThumbnailOriginalIdentityMode::NonFileUri,
+            local_path_bytes: Vec::new(),
+            uri: uri.into(),
+            mtime_seconds,
+            original_byte_size: i64::try_from(original_byte_size).unwrap_or(i64::MAX),
+            mime_type: mime_type.into(),
+        }
+    }
+}
 
 fn rust_lookup_display_thumbnail_rgba8(
     local_path_bytes: &[u8],
@@ -90,17 +181,58 @@ fn rust_lookup_display_thumbnail_rgba8(
         Ok(root) => root,
         Err(error) => return failed_result(requested_bucket, error),
     };
-    lookup_display_thumbnail_rgba8_at_root(root, local_path_bytes, requested_size)
+    lookup_display_thumbnail_rgba8_at_root(
+        root,
+        &RustThumbnailOriginalIdentity::local_path(local_path_bytes),
+        requested_size,
+    )
+}
+
+fn rust_lookup_display_thumbnail_original_rgba8(
+    identity: &RustThumbnailOriginalIdentity,
+    requested_bucket: RustThumbnailCacheBucket,
+) -> RustThumbnailCacheLookupResult {
+    let Some(requested_size) = thumbnail_size_from_bucket(requested_bucket) else {
+        return failed_result(
+            requested_bucket,
+            "thumbnail cache lookup requires a concrete size bucket",
+        );
+    };
+
+    let root = match PersonalCacheRoot::resolve_from_env() {
+        Ok(root) => root,
+        Err(error) => return failed_result(requested_bucket, error),
+    };
+    lookup_display_thumbnail_rgba8_at_root(root, identity, requested_size)
+}
+
+fn rust_lookup_display_thumbnail_non_file_uri_rgba8(
+    uri: &str,
+    mtime_seconds: i64,
+    original_byte_size: i64,
+    mime_type: &str,
+    requested_bucket: RustThumbnailCacheBucket,
+) -> RustThumbnailCacheLookupResult {
+    rust_lookup_display_thumbnail_original_rgba8(
+        &RustThumbnailOriginalIdentity {
+            mode: RustThumbnailOriginalIdentityMode::NonFileUri,
+            local_path_bytes: Vec::new(),
+            uri: uri.to_owned(),
+            mtime_seconds,
+            original_byte_size,
+            mime_type: mime_type.to_owned(),
+        },
+        requested_bucket,
+    )
 }
 
 fn lookup_display_thumbnail_rgba8_at_root(
     root: PersonalCacheRoot,
-    local_path_bytes: &[u8],
+    identity: &RustThumbnailOriginalIdentity,
     requested_size: ThumbnailSize,
 ) -> RustThumbnailCacheLookupResult {
     let requested_bucket = bucket_from_thumbnail_size(requested_size);
-    let local_path = PathBuf::from(OsStr::from_bytes(local_path_bytes));
-    let original = match ReadablePersonalOriginalIdentity::from_local_path(&local_path) {
+    let original = match readable_original_identity(identity) {
         Ok(original) => original,
         Err(error) => return failed_result(requested_bucket, error),
     };
@@ -137,8 +269,67 @@ fn rust_install_display_thumbnail_rgba8(
     };
     install_display_thumbnail_rgba8_at_root(
         root,
-        local_path_bytes,
+        &RustThumbnailOriginalIdentity::local_path(local_path_bytes),
         requested_size,
+        width,
+        height,
+        stride,
+        rgba8_pixels,
+    )
+}
+
+fn rust_install_display_thumbnail_original_rgba8(
+    identity: &RustThumbnailOriginalIdentity,
+    requested_bucket: RustThumbnailCacheBucket,
+    width: i32,
+    height: i32,
+    stride: i32,
+    rgba8_pixels: &[u8],
+) -> RustThumbnailCacheInstallResult {
+    let Some(requested_size) = thumbnail_size_from_bucket(requested_bucket) else {
+        return install_failed_result(
+            requested_bucket,
+            "thumbnail cache install requires a concrete size bucket",
+        );
+    };
+
+    let root = match PersonalCacheRoot::resolve_from_env() {
+        Ok(root) => root,
+        Err(error) => return install_failed_result(requested_bucket, error),
+    };
+    install_display_thumbnail_rgba8_at_root(
+        root,
+        identity,
+        requested_size,
+        width,
+        height,
+        stride,
+        rgba8_pixels,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn rust_install_display_thumbnail_non_file_uri_rgba8(
+    uri: &str,
+    mtime_seconds: i64,
+    original_byte_size: i64,
+    mime_type: &str,
+    requested_bucket: RustThumbnailCacheBucket,
+    width: i32,
+    height: i32,
+    stride: i32,
+    rgba8_pixels: &[u8],
+) -> RustThumbnailCacheInstallResult {
+    rust_install_display_thumbnail_original_rgba8(
+        &RustThumbnailOriginalIdentity {
+            mode: RustThumbnailOriginalIdentityMode::NonFileUri,
+            local_path_bytes: Vec::new(),
+            uri: uri.to_owned(),
+            mtime_seconds,
+            original_byte_size,
+            mime_type: mime_type.to_owned(),
+        },
+        requested_bucket,
         width,
         height,
         stride,
@@ -148,7 +339,7 @@ fn rust_install_display_thumbnail_rgba8(
 
 fn install_display_thumbnail_rgba8_at_root(
     root: PersonalCacheRoot,
-    local_path_bytes: &[u8],
+    identity: &RustThumbnailOriginalIdentity,
     requested_size: ThumbnailSize,
     width: i32,
     height: i32,
@@ -156,8 +347,7 @@ fn install_display_thumbnail_rgba8_at_root(
     rgba8_pixels: &[u8],
 ) -> RustThumbnailCacheInstallResult {
     let requested_bucket = bucket_from_thumbnail_size(requested_size);
-    let local_path = PathBuf::from(OsStr::from_bytes(local_path_bytes));
-    let original = match ReadablePersonalOriginalIdentity::from_local_path(&local_path) {
+    let original = match readable_original_identity(identity) {
         Ok(original) => original,
         Err(error) => return install_failed_result(requested_bucket, error),
     };
@@ -193,6 +383,35 @@ fn install_display_thumbnail_rgba8_at_root(
         },
         Err(error) => install_failed_result(requested_bucket, error),
     }
+}
+
+fn readable_original_identity(
+    identity: &RustThumbnailOriginalIdentity,
+) -> xdg_thumbnail::Result<ReadablePersonalOriginalIdentity> {
+    match identity.mode {
+        RustThumbnailOriginalIdentityMode::LocalPath => {
+            let local_path = PathBuf::from(OsStr::from_bytes(&identity.local_path_bytes));
+            ReadablePersonalOriginalIdentity::from_local_path(&local_path)
+        }
+        RustThumbnailOriginalIdentityMode::NonFileUri => {
+            let uri = PersonalOriginalUri::from_non_file_uri(&identity.uri)?;
+            let mtime = UnixMtimeSeconds::try_from_i64(identity.mtime_seconds)?;
+            let mut original = PersonalOriginalIdentity::new(uri, mtime);
+            if identity.original_byte_size >= 0 {
+                original = original.with_original_byte_size(identity.original_byte_size as u64);
+            }
+            if !identity.mime_type.is_empty() {
+                original = original.with_mime_type(identity.mime_type.clone())?;
+            }
+            Ok(ReadablePersonalOriginalIdentity::assume_readable(original))
+        }
+        _ => unreachable!("unknown thumbnail original identity mode"),
+    }
+}
+
+fn virtual_content_uri(bytes: &[u8], uncompressed_size: u64) -> String {
+    let digest = Sha256::digest(bytes);
+    format!("x-kiriview://thumbnail/content/v1/sha256/{digest:x}/{uncompressed_size}")
 }
 
 fn ready_result(parts: DisplayThumbnailRgba8LookupEntryParts) -> RustThumbnailCacheLookupResult {

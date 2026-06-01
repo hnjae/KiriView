@@ -3,12 +3,14 @@
 
 #include "thumbnailgeneration.h"
 
+#include "archive/mediaentrysourcebackend.h"
 #include "async/imageioworkerjob.h"
 #include "bridge/rustqtconversion.h"
 #include "decoding/decodedimageresult.h"
 #include "decoding/kiriimagedecoder.h"
 #include "kiriview/src/policy/thumbnailcache.cxx.h"
 #include "rendering/staticimage.h"
+#include "session/thumbnailcachelookup.h"
 
 #include <QFile>
 #include <QImage>
@@ -89,6 +91,63 @@ KiriView::ThumbnailGenerationResult failedResult(
     };
 }
 
+KiriView::ThumbnailCacheLookupStatus thumbnailCacheStatus(
+    KiriView::RustThumbnailCacheLookupStatus status)
+{
+    switch (status) {
+    case KiriView::RustThumbnailCacheLookupStatus::Ready:
+        return KiriView::ThumbnailCacheLookupStatus::Ready;
+    case KiriView::RustThumbnailCacheLookupStatus::Missing:
+        return KiriView::ThumbnailCacheLookupStatus::Missing;
+    case KiriView::RustThumbnailCacheLookupStatus::Invalid:
+        return KiriView::ThumbnailCacheLookupStatus::Invalid;
+    case KiriView::RustThumbnailCacheLookupStatus::Failed:
+        return KiriView::ThumbnailCacheLookupStatus::Failed;
+    }
+
+    return KiriView::ThumbnailCacheLookupStatus::Failed;
+}
+
+KiriView::ThumbnailCacheLookupResult lookupResultFromRust(
+    const KiriView::RustThumbnailCacheLookupResult &rustResult)
+{
+    KiriView::ThumbnailCacheLookupResult result;
+    result.status = thumbnailCacheStatus(rustResult.status);
+    result.requestedBucket = thumbnailBucket(rustResult.requested_bucket);
+    result.sourceBucket = thumbnailBucket(rustResult.source_bucket);
+    result.sourceCachePath = KiriView::Bridge::qtString(rustResult.source_cache_path);
+    result.errorString = KiriView::Bridge::qtString(rustResult.error);
+
+    if (result.status != KiriView::ThumbnailCacheLookupStatus::Ready || rustResult.width <= 0
+        || rustResult.height <= 0 || rustResult.stride <= 0) {
+        return result;
+    }
+
+    const QByteArray pixels = KiriView::Bridge::qtByteArray(rustResult.pixels);
+    const QImage image(reinterpret_cast<const uchar *>(pixels.constData()), rustResult.width,
+        rustResult.height, rustResult.stride, QImage::Format_RGBA8888);
+    if (image.isNull()) {
+        result.status = KiriView::ThumbnailCacheLookupStatus::Failed;
+        result.errorString = QStringLiteral("thumbnail cache RGBA8 result could not form a QImage");
+        return result;
+    }
+
+    result.image = image.copy();
+    return result;
+}
+
+KiriView::ThumbnailGenerationResult readyResultFromCache(
+    const KiriView::ThumbnailCacheLookupResult &lookup)
+{
+    return KiriView::ThumbnailGenerationResult {
+        KiriView::ThumbnailGenerationStatus::Ready,
+        lookup.image,
+        lookup.requestedBucket,
+        lookup.sourceCachePath,
+        {},
+    };
+}
+
 QSize boundedSize(const QSize &size, int maximumLongEdge)
 {
     if (size.isEmpty() || maximumLongEdge <= 0) {
@@ -139,6 +198,98 @@ QImage renderedThumbnailImage(
         decoded);
 }
 
+KiriView::MediaEntrySourceImageDataResult loadOpenedCollectionThumbnailBytes(
+    const KiriView::ThumbnailGenerationRequest &request)
+{
+    return KiriView::loadMediaEntrySourceImageData(
+        request.openedCollectionScope, request.sourceUrl);
+}
+
+QByteArray loadThumbnailBytes(
+    const KiriView::ThumbnailGenerationRequest &request, QString *errorString)
+{
+    if (!request.openedCollectionScope.isEmpty()) {
+        KiriView::MediaEntrySourceImageDataResult dataResult
+            = loadOpenedCollectionThumbnailBytes(request);
+        if (const auto *error = std::get_if<KiriView::MediaEntrySourceError>(&dataResult)) {
+            if (errorString != nullptr) {
+                *errorString = error->errorString;
+            }
+            return {};
+        }
+        if (auto *data = std::get_if<KiriView::MediaEntrySourceImageData>(&dataResult)) {
+            return std::move(data->data);
+        }
+        if (errorString != nullptr) {
+            *errorString = QStringLiteral("collection thumbnail bytes are unavailable");
+        }
+        return {};
+    }
+
+    QFile file(QFile::decodeName(request.localPathBytes));
+    if (!file.open(QIODevice::ReadOnly)) {
+        if (errorString != nullptr) {
+            *errorString = file.errorString();
+        }
+        return {};
+    }
+
+    return file.readAll();
+}
+
+std::optional<KiriView::ThumbnailOriginalIdentity> openedCollectionVirtualOriginalIdentity(
+    const QByteArray &bytes)
+{
+    if (bytes.isEmpty()) {
+        return std::nullopt;
+    }
+
+    const rust::Slice<const std::uint8_t> byteSlice(
+        reinterpret_cast<const std::uint8_t *>(bytes.constData()),
+        static_cast<std::size_t>(bytes.size()));
+    const QString uri = KiriView::Bridge::qtString(KiriView::rustVirtualThumbnailContentUri(
+        byteSlice, static_cast<std::uint64_t>(bytes.size())));
+    if (uri.isEmpty()) {
+        return std::nullopt;
+    }
+
+    return KiriView::ThumbnailOriginalIdentity::fromNonFileUri(uri, 0, bytes.size(), QString());
+}
+
+std::optional<KiriView::ThumbnailCacheLookupResult> lookupOpenedCollectionThumbnail(
+    const KiriView::ThumbnailOriginalIdentity &identity,
+    KiriView::ActiveNavigationThumbnailDemandBucket requestedBucket)
+{
+    const QByteArray uri = identity.uri.toUtf8();
+    const QByteArray mimeType = identity.mimeType.toUtf8();
+    const KiriView::RustThumbnailCacheLookupResult rustResult
+        = KiriView::rustLookupDisplayThumbnailNonFileUriRgba8(KiriView::Bridge::rustStr(uri),
+            identity.mtimeSeconds, identity.originalByteSize, KiriView::Bridge::rustStr(mimeType),
+            rustBucket(requestedBucket));
+    return lookupResultFromRust(rustResult);
+}
+
+KiriView::RustThumbnailCacheInstallResult installThumbnail(
+    const KiriView::ThumbnailOriginalIdentity &identity,
+    KiriView::ActiveNavigationThumbnailDemandBucket requestedBucket, const QImage &rgba8)
+{
+    const rust::Slice<const std::uint8_t> pixels(
+        reinterpret_cast<const std::uint8_t *>(rgba8.constBits()),
+        static_cast<std::size_t>(rgba8.sizeInBytes()));
+    if (identity.isNonFileUri()) {
+        const QByteArray uri = identity.uri.toUtf8();
+        const QByteArray mimeType = identity.mimeType.toUtf8();
+        return KiriView::rustInstallDisplayThumbnailNonFileUriRgba8(KiriView::Bridge::rustStr(uri),
+            identity.mtimeSeconds, identity.originalByteSize, KiriView::Bridge::rustStr(mimeType),
+            rustBucket(requestedBucket), rgba8.width(), rgba8.height(), rgba8.bytesPerLine(),
+            pixels);
+    }
+
+    return KiriView::rustInstallDisplayThumbnailRgba8(
+        KiriView::Bridge::rustBytes(identity.localPathBytes), rustBucket(requestedBucket),
+        rgba8.width(), rgba8.height(), rgba8.bytesPerLine(), pixels);
+}
+
 KiriView::ThumbnailGenerationResult generateThumbnail(
     const KiriView::ThumbnailGenerationRequest &request)
 {
@@ -148,12 +299,39 @@ KiriView::ThumbnailGenerationResult generateThumbnail(
             request.requestedBucket, QStringLiteral("thumbnail generation requires a size bucket"));
     }
 
-    QFile file(QFile::decodeName(request.localPathBytes));
-    if (!file.open(QIODevice::ReadOnly)) {
-        return failedResult(request.requestedBucket, file.errorString());
+    QString loadError;
+    QByteArray bytes = loadThumbnailBytes(request, &loadError);
+    if (bytes.isEmpty() && !loadError.isEmpty()) {
+        return failedResult(request.requestedBucket, std::move(loadError));
     }
 
-    KiriView::DecodedImageResult decodeResult = KiriView::decodeImageData(file.readAll());
+    KiriView::ThumbnailOriginalIdentity originalIdentity = request.originalIdentity.isValid()
+        ? request.originalIdentity
+        : KiriView::ThumbnailOriginalIdentity::fromLocalPathBytes(request.localPathBytes);
+    if (!request.openedCollectionScope.isEmpty()) {
+        const std::optional<KiriView::ThumbnailOriginalIdentity> virtualIdentity
+            = openedCollectionVirtualOriginalIdentity(bytes);
+        if (!virtualIdentity.has_value()) {
+            return failedResult(
+                request.requestedBucket, QStringLiteral("collection thumbnail identity failed"));
+        }
+        originalIdentity = *virtualIdentity;
+        if (request.cacheInstallEnabled) {
+            const std::optional<KiriView::ThumbnailCacheLookupResult> lookup
+                = lookupOpenedCollectionThumbnail(originalIdentity, request.requestedBucket);
+            if (lookup.has_value()
+                && lookup->status == KiriView::ThumbnailCacheLookupStatus::Ready) {
+                return readyResultFromCache(*lookup);
+            }
+            if (lookup.has_value()
+                && (lookup->status == KiriView::ThumbnailCacheLookupStatus::Invalid
+                    || lookup->status == KiriView::ThumbnailCacheLookupStatus::Failed)) {
+                return failedResult(request.requestedBucket, lookup->errorString);
+            }
+        }
+    }
+
+    KiriView::DecodedImageResult decodeResult = KiriView::decodeImageData(bytes);
     if (const KiriView::DecodedImageFailure *failure = decodeResult.failure()) {
         return failedResult(request.requestedBucket, failure->errorString);
     }
@@ -178,9 +356,6 @@ KiriView::ThumbnailGenerationResult generateThumbnail(
             request.requestedBucket, QStringLiteral("thumbnail image conversion failed"));
     }
 
-    const rust::Slice<const std::uint8_t> pixels(
-        reinterpret_cast<const std::uint8_t *>(rgba8.constBits()),
-        static_cast<std::size_t>(rgba8.sizeInBytes()));
     if (!request.cacheInstallEnabled) {
         return KiriView::ThumbnailGenerationResult {
             KiriView::ThumbnailGenerationStatus::Ready,
@@ -192,10 +367,7 @@ KiriView::ThumbnailGenerationResult generateThumbnail(
     }
 
     const KiriView::RustThumbnailCacheInstallResult install
-        = KiriView::rustInstallDisplayThumbnailRgba8(
-            KiriView::Bridge::rustBytes(request.localPathBytes),
-            rustBucket(request.requestedBucket), rgba8.width(), rgba8.height(),
-            rgba8.bytesPerLine(), pixels);
+        = installThumbnail(originalIdentity, request.requestedBucket, rgba8);
     if (!install.success) {
         return failedResult(
             thumbnailBucket(install.requested_bucket), KiriView::Bridge::qtString(install.error));

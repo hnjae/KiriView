@@ -10,6 +10,7 @@
 #include "session/thumbnailcachelookup.h"
 #include "session/thumbnailgeneration.h"
 #include "session/thumbnailimagestore.h"
+#include "session/thumbnailoriginalidentity.h"
 
 #include <QAbstractListModel>
 #include <QByteArray>
@@ -49,6 +50,7 @@ struct ActiveNavigationThumbnailCompletion {
 enum class ThumbnailSourceAdapterPlanKind {
     Unsupported,
     CacheableLocalFile,
+    CacheableOpenedCollectionEntry,
     InMemoryOnly,
 };
 
@@ -63,6 +65,8 @@ struct ThumbnailSourceAdapterRequest {
 struct ThumbnailSourceAdapterPlan {
     ThumbnailSourceAdapterPlanKind kind = ThumbnailSourceAdapterPlanKind::Unsupported;
     QByteArray localPathBytes;
+    ThumbnailOriginalIdentity originalIdentity;
+    OpenedCollectionScopeLocation openedCollectionScope;
 };
 
 using ThumbnailSourceAdapter

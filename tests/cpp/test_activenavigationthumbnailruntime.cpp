@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "image_async_test_support.h"
+#include "image_test_support.h"
 #include "session/activenavigationthumbnailruntime.h"
 
 #include <QAbstractItemModel>
@@ -15,7 +16,8 @@
 #include <vector>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+using KiriView::TestSupport::archivePageUrl;
+using KiriView::TestSupport::localUrl;
 
 KiriView::ActiveNavigationThumbnailRow thumbnailRow(int number, const QUrl &url,
     const QString &label, KiriView::ActiveNavigationThumbnailSourceKind sourceKind,
@@ -258,6 +260,7 @@ private Q_SLOTS:
     void injectedUnsupportedAdapterSkipsLookupAndGeneration();
     void injectedDirectVideoAdapterUsesGeneratedResultPath();
     void injectedCollectionAdapterUsesGeneratedResultPath();
+    void openedCollectionEntryAdapterStartsGenerationWithoutPrelookup();
     void inMemoryOnlyAdapterSkipsLookupAndDisablesCacheInstall();
     void defaultDirectLocalImageBehaviorStillUsesLookup();
 };
@@ -1267,6 +1270,49 @@ void TestActiveNavigationThumbnailRuntime::injectedCollectionAdapterUsesGenerate
         QByteArrayLiteral("/archive/pages/001.png"));
     QCOMPARE(generationProvider.generationAt(0).request.sourceKind,
         KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage);
+    QCOMPARE(runtime.resultAt(0).status, Status::Ready);
+    QCOMPARE(store->size(), qsizetype(1));
+}
+
+void TestActiveNavigationThumbnailRuntime::
+    openedCollectionEntryAdapterStartsGenerationWithoutPrelookup()
+{
+    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
+    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+
+    QObject owner;
+    ManualThumbnailLookupProvider lookupProvider;
+    ManualThumbnailGenerationProvider generationProvider;
+    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
+    const KiriView::OpenedCollectionScopeLocation cbzScope
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(
+            localUrl(QStringLiteral("/books/book.cbz")),
+            QUrl(QStringLiteral("zip:///books/book.cbz/")),
+            KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+    RecordingThumbnailSourceAdapter sourceAdapter;
+    sourceAdapter.plan.kind
+        = KiriView::ThumbnailSourceAdapterPlanKind::CacheableOpenedCollectionEntry;
+    sourceAdapter.plan.openedCollectionScope = cbzScope;
+    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), store,
+        generationProvider.provider(), sourceAdapter.adapter());
+    const QUrl pageUrl = archivePageUrl(cbzScope.rootUrl(), QStringLiteral("pages/001.png"));
+    runtime.setRows({
+        thumbnailRow(1, pageUrl, QStringLiteral("pages/001.png"),
+            KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage, true),
+    });
+
+    QVERIFY(runtime.reportDemand(
+        1, pageUrl, Bucket::Large, Priority::Visible, runtime.navigationGeneration()));
+
+    QCOMPARE(lookupProvider.lookupCount(), std::size_t(0));
+    QCOMPARE(generationProvider.generationCount(), std::size_t(1));
+    QCOMPARE(generationProvider.generationAt(0).request.openedCollectionScope, cbzScope);
+    QCOMPARE(generationProvider.generationAt(0).request.cacheInstallEnabled, true);
+    generationProvider.finish(0,
+        generationResult(KiriView::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::cyan),
+            Bucket::Large));
+
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QCOMPARE(store->size(), qsizetype(1));
 }

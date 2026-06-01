@@ -5,8 +5,10 @@
 #define KIRIVIEW_THUMBNAILGENERATION_H
 
 #include "async/imageiojob.h"
+#include "location/imagelocation.h"
 #include "session/activenavigationthumbnaildemand.h"
 #include "session/activenavigationthumbnailprojection.h"
+#include "session/thumbnailoriginalidentity.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -24,6 +26,8 @@ enum class ThumbnailGenerationStatus {
 
 struct ThumbnailGenerationRequest {
     QByteArray localPathBytes;
+    ThumbnailOriginalIdentity originalIdentity;
+    OpenedCollectionScopeLocation openedCollectionScope;
     QUrl sourceUrl;
     QString sourceLabel;
     ActiveNavigationThumbnailSourceKind sourceKind

@@ -3,6 +3,7 @@
 
 #include "documentsessionruntime.h"
 
+#include "archive/openedcollectionthumbnailpolicy.h"
 #include "localization/imageerrortext.h"
 #include "location/imageurl.h"
 #include "navigation/mediaformatregistry.h"
@@ -70,6 +71,48 @@ void appendConnection(std::vector<QMetaObject::Connection> &connections,
         connections.push_back(connector(owner, std::move(handler)));
     }
 }
+
+KiriView::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
+    KiriView::DocumentSessionImageDocumentPort *imageDocument,
+    KiriView::ThumbnailSourceAdapter injectedAdapter)
+{
+    return [imageDocument, injectedAdapter = std::move(injectedAdapter),
+               directAdapter = KiriView::defaultThumbnailSourceAdapter()](
+               KiriView::ThumbnailSourceAdapterRequest request) mutable {
+        if (injectedAdapter) {
+            KiriView::ThumbnailSourceAdapterPlan plan = injectedAdapter(request);
+            if (plan.kind != KiriView::ThumbnailSourceAdapterPlanKind::Unsupported) {
+                return plan;
+            }
+        }
+
+        KiriView::ThumbnailSourceAdapterPlan directPlan = directAdapter(request);
+        if (directPlan.kind != KiriView::ThumbnailSourceAdapterPlanKind::Unsupported) {
+            return directPlan;
+        }
+
+        if (imageDocument == nullptr || !imageDocument->displayedOpenedCollectionScope
+            || request.sourceKey.sourceKind
+                != KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage) {
+            return KiriView::ThumbnailSourceAdapterPlan {};
+        }
+
+        const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+            = imageDocument->displayedOpenedCollectionScope();
+        const KiriView::OpenedCollectionThumbnailSourcePlan collectionPlan
+            = KiriView::openedCollectionThumbnailSourcePlan(openedCollectionScope,
+                request.sourceKey.url, KiriView::ImageDocumentPageKind::Image);
+        if (collectionPlan.kind
+            != KiriView::OpenedCollectionThumbnailSourcePlanKind::CacheableOpenedCollectionEntry) {
+            return KiriView::ThumbnailSourceAdapterPlan {};
+        }
+
+        KiriView::ThumbnailSourceAdapterPlan plan;
+        plan.kind = KiriView::ThumbnailSourceAdapterPlanKind::CacheableOpenedCollectionEntry;
+        plan.openedCollectionScope = collectionPlan.openedCollectionScope;
+        return plan;
+    };
+}
 }
 
 namespace KiriView {
@@ -83,7 +126,9 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_activeNavigationThumbnailRuntime(std::make_unique<ActiveNavigationThumbnailRuntime>(owner,
           std::move(dependencies.activeNavigationThumbnailLookupProvider),
           std::move(dependencies.activeNavigationThumbnailImageStore),
-          std::move(dependencies.activeNavigationThumbnailGenerationProvider)))
+          std::move(dependencies.activeNavigationThumbnailGenerationProvider),
+          documentSessionThumbnailSourceAdapter(
+              &m_imageDocument, std::move(dependencies.activeNavigationThumbnailSourceAdapter))))
     , m_directMediaNavigationRuntime(dependencies.directMediaNavigationCandidateProvider)
     , m_directMediaDeletionCandidateRuntime(
           std::move(dependencies.directMediaNavigationCandidateProvider))

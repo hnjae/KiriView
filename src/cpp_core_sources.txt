@@ -18,6 +18,7 @@ src/archive/mediaentrysourcebackend.cpp
 src/archive/mediaentrysourcebackend_directory.cpp
 src/archive/mediaentrysourcebackend_karchive.cpp
 src/archive/mediaentrysourcebackend_libarchive.cpp
+src/archive/openedcollectionthumbnailpolicy.cpp
 src/archive/mediaentrysourcecandidateloadstate.cpp
 src/archive/mediaentrysourcestore.cpp
 src/archive/mediaentrysourceruntime.cpp

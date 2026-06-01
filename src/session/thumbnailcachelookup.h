@@ -6,6 +6,7 @@
 
 #include "async/imageiojob.h"
 #include "session/activenavigationthumbnaildemand.h"
+#include "session/thumbnailoriginalidentity.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -24,6 +25,7 @@ enum class ThumbnailCacheLookupStatus {
 
 struct ThumbnailCacheLookupRequest {
     QByteArray localPathBytes;
+    ThumbnailOriginalIdentity originalIdentity;
     ActiveNavigationThumbnailDemandBucket requestedBucket
         = ActiveNavigationThumbnailDemandBucket::None;
 };
