@@ -375,7 +375,7 @@ mod tests {
 
         let result = lookup_display_thumbnail_rgba8_at_root(
             root,
-            missing.as_os_str().as_bytes(),
+            &RustThumbnailOriginalIdentity::local_path(missing.as_os_str().as_bytes()),
             ThumbnailSize::Normal,
         );
 
@@ -408,7 +408,9 @@ mod tests {
 
         let install = install_display_thumbnail_rgba8_at_root(
             fixture.root.clone(),
-            fixture.original_path.as_os_str().as_bytes(),
+            &RustThumbnailOriginalIdentity::local_path(
+                fixture.original_path.as_os_str().as_bytes(),
+            ),
             ThumbnailSize::Normal,
             1,
             1,
@@ -453,7 +455,7 @@ mod tests {
 
         let missing_result = install_display_thumbnail_rgba8_at_root(
             root.clone(),
-            missing.as_os_str().as_bytes(),
+            &RustThumbnailOriginalIdentity::local_path(missing.as_os_str().as_bytes()),
             ThumbnailSize::Normal,
             1,
             1,
@@ -470,7 +472,7 @@ mod tests {
 
         let unreadable_result = install_display_thumbnail_rgba8_at_root(
             root,
-            unreadable.as_os_str().as_bytes(),
+            &RustThumbnailOriginalIdentity::local_path(unreadable.as_os_str().as_bytes()),
             ThumbnailSize::Normal,
             1,
             1,
@@ -478,6 +480,46 @@ mod tests {
             &[1, 2, 3, 255],
         );
         assert!(!unreadable_result.success);
+    }
+
+    #[test]
+    fn explicit_non_file_uri_install_is_lookup_readable() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let root = PersonalCacheRoot::new(temp.path().join("thumbnails")).unwrap();
+        let original = virtual_original(
+            "x-kiriview://thumbnail/content/v1/sha256/3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7/4",
+            4,
+        );
+        let pixels = [1, 2, 3, 255];
+
+        let install = install_display_thumbnail_rgba8_at_root(
+            root.clone(),
+            &original,
+            ThumbnailSize::Normal,
+            1,
+            1,
+            4,
+            &pixels,
+        );
+        assert!(install.success);
+
+        let lookup = lookup_display_thumbnail_rgba8_at_root(root, &original, ThumbnailSize::Normal);
+        assert_eq!(lookup.status, RustThumbnailCacheLookupStatus::Ready);
+        assert_eq!(lookup.pixels, pixels);
+    }
+
+    #[test]
+    fn content_virtual_uri_depends_only_on_bytes_and_size() {
+        let first = virtual_content_uri(b"same image bytes", 16);
+        let second = virtual_content_uri(b"same image bytes", 16);
+        let different_size = virtual_content_uri(b"same image bytes", 17);
+        let different_bytes = virtual_content_uri(b"other image bytes", 16);
+
+        assert_eq!(first, second);
+        assert_ne!(first, different_size);
+        assert_ne!(first, different_bytes);
+        assert!(first.starts_with("x-kiriview://thumbnail/content/v1/sha256/"));
+        assert!(first.ends_with("/16"));
     }
 
     struct Fixture {
@@ -521,7 +563,9 @@ mod tests {
             let _keep_temp_alive = self.temp.path();
             lookup_display_thumbnail_rgba8_at_root(
                 self.root.clone(),
-                self.original_path.as_os_str().as_bytes(),
+                &RustThumbnailOriginalIdentity::local_path(
+                    self.original_path.as_os_str().as_bytes(),
+                ),
                 size,
             )
         }
@@ -537,7 +581,9 @@ mod tests {
             let _keep_temp_alive = self.temp.path();
             install_display_thumbnail_rgba8_at_root(
                 self.root.clone(),
-                self.original_path.as_os_str().as_bytes(),
+                &RustThumbnailOriginalIdentity::local_path(
+                    self.original_path.as_os_str().as_bytes(),
+                ),
                 size,
                 width,
                 height,
@@ -545,5 +591,9 @@ mod tests {
                 pixels,
             )
         }
+    }
+
+    fn virtual_original(uri: &str, byte_size: u64) -> RustThumbnailOriginalIdentity {
+        RustThumbnailOriginalIdentity::non_file_uri(uri, 0, byte_size, "image/png")
     }
 }

@@ -4,6 +4,7 @@
 #include "archive/mediaentrysourcebackend.h"
 
 #include "archive/mediaentrysourcebackend_p.h"
+#include "archive/openedcollectionthumbnailpolicy.h"
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
 
@@ -137,6 +138,7 @@ private Q_SLOTS:
     void directoryCollectionMediaEntrySourceListsAndReadsEntries();
     void libArchiveMediaEntrySourceScansOnceAndServesRandomReads();
     void libArchiveMediaEntrySourceReadsFromHeldFileDescriptorAfterPathRemoval();
+    void openedCollectionThumbnailPolicyAllowsCbzAndCb7ImagesOnly();
     void readingUrlOutsideArchiveReturnsNotFound();
     void missingEmptyAndInvalidArchivesReportExpectedResults();
 };
@@ -563,6 +565,76 @@ void TestMediaEntrySourceBackend::
         = mediaEntrySourceDataError(standaloneResult);
     QVERIFY(standaloneError != nullptr);
     QVERIFY(!standaloneError->errorString.isEmpty());
+}
+
+void TestMediaEntrySourceBackend::openedCollectionThumbnailPolicyAllowsCbzAndCb7ImagesOnly()
+{
+    using Kind = KiriView::OpenedCollectionThumbnailSourcePlanKind;
+
+    const KiriView::OpenedCollectionScopeLocation cbzScope
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(
+            localUrl(QStringLiteral("/books/book.cbz")),
+            QUrl(QStringLiteral("zip:///books/book.cbz/")),
+            KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+    const QUrl cbzPage = archivePageUrl(cbzScope.rootUrl(), QStringLiteral("pages/001.png"));
+    QCOMPARE(KiriView::openedCollectionThumbnailSourcePlan(
+                 cbzScope, cbzPage, KiriView::ImageDocumentPageKind::Image)
+                 .kind,
+        Kind::CacheableOpenedCollectionEntry);
+    QCOMPARE(KiriView::openedCollectionThumbnailSourcePlan(
+                 cbzScope, cbzPage, KiriView::ImageDocumentPageKind::Video)
+                 .kind,
+        Kind::Unsupported);
+
+    const KiriView::OpenedCollectionScopeLocation cb7Scope
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(
+            localUrl(QStringLiteral("/books/book.cb7")),
+            QUrl(QStringLiteral("sevenz:///books/book.cb7/")),
+            KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+    QCOMPARE(KiriView::openedCollectionThumbnailSourcePlan(cb7Scope,
+                 archivePageUrl(cb7Scope.rootUrl(), QStringLiteral("pages/001.jpg")),
+                 KiriView::ImageDocumentPageKind::Image)
+                 .kind,
+        Kind::CacheableOpenedCollectionEntry);
+
+    const KiriView::OpenedCollectionScopeLocation cbtScope
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(
+            localUrl(QStringLiteral("/books/book.cbt")),
+            QUrl(QStringLiteral("tar:///books/book.cbt/")),
+            KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+    QCOMPARE(KiriView::openedCollectionThumbnailSourcePlan(cbtScope,
+                 archivePageUrl(cbtScope.rootUrl(), QStringLiteral("pages/001.png")),
+                 KiriView::ImageDocumentPageKind::Image)
+                 .kind,
+        Kind::Unsupported);
+
+    const KiriView::OpenedCollectionScopeLocation genericZipScope
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(
+            localUrl(QStringLiteral("/books/book.zip")),
+            QUrl(QStringLiteral("zip:///books/book.zip/")),
+            KiriView::OpenedCollectionScopeKind::GeneralArchive);
+    QCOMPARE(KiriView::openedCollectionThumbnailSourcePlan(genericZipScope,
+                 archivePageUrl(genericZipScope.rootUrl(), QStringLiteral("pages/001.png")),
+                 KiriView::ImageDocumentPageKind::Image)
+                 .kind,
+        Kind::Unsupported);
+
+    const KiriView::OpenedCollectionScopeLocation directoryScope
+        = KiriView::OpenedCollectionScopeLocation::fromUrls(localUrl(QStringLiteral("/books/dir")),
+            localUrl(QStringLiteral("/books/dir/")),
+            KiriView::OpenedCollectionScopeKind::Directory);
+    QCOMPARE(KiriView::openedCollectionThumbnailSourcePlan(directoryScope,
+                 archivePageUrl(directoryScope.rootUrl(), QStringLiteral("pages/001.png")),
+                 KiriView::ImageDocumentPageKind::Image)
+                 .kind,
+        Kind::Unsupported);
+
+    QCOMPARE(KiriView::openedCollectionThumbnailSourcePlan(cbzScope,
+                 archivePageUrl(QUrl(QStringLiteral("zip:///books/other.cbz/")),
+                     QStringLiteral("pages/001.png")),
+                 KiriView::ImageDocumentPageKind::Image)
+                 .kind,
+        Kind::Unsupported);
 }
 
 void TestMediaEntrySourceBackend::readingUrlOutsideArchiveReturnsNotFound()
