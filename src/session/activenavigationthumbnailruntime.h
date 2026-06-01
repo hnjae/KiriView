@@ -7,8 +7,11 @@
 #include "session/activenavigationthumbnaildemand.h"
 #include "session/activenavigationthumbnailmodel.h"
 #include "session/activenavigationthumbnailprojection.h"
+#include "session/thumbnailcachelookup.h"
+#include "session/thumbnailimagestore.h"
 
 #include <QAbstractListModel>
+#include <QString>
 #include <QUrl>
 #include <QtGlobal>
 #include <cstddef>
@@ -43,7 +46,10 @@ struct ActiveNavigationThumbnailCompletion {
 class ActiveNavigationThumbnailRuntime final
 {
 public:
-    explicit ActiveNavigationThumbnailRuntime(QObject *owner = nullptr);
+    explicit ActiveNavigationThumbnailRuntime(QObject *owner = nullptr,
+        ThumbnailCacheLookupProvider lookupProvider = {},
+        std::shared_ptr<ThumbnailImageStore> imageStore = {});
+    ~ActiveNavigationThumbnailRuntime();
 
     QAbstractListModel *model() const;
     quint64 navigationGeneration() const;
@@ -69,12 +75,14 @@ private:
     struct ActiveJobSlot {
         quint64 id = 0;
         AcceptedDemand demand;
+        ImageIoJob job;
     };
 
     struct RowState {
         ActiveNavigationThumbnailRow row;
         ActiveNavigationThumbnailSourceKey sourceKey;
         ActiveNavigationThumbnailResult result;
+        QString imageStoreId;
         std::optional<AcceptedDemand> acceptedDemand;
         std::optional<ActiveJobSlot> activeJob;
     };
@@ -92,10 +100,18 @@ private:
         const ActiveNavigationThumbnailSourceKey &sourceKey) const;
     void cancelActiveJob(RowState &state);
     void cancelAllActiveJobs();
+    void releaseImage(RowState &state);
+    void releaseAllImages();
+    void startLookupJob(RowState &state, const AcceptedDemand &demand);
+    void finishLookup(const ActiveNavigationThumbnailSourceKey &sourceKey,
+        ActiveNavigationThumbnailDemandBucket bucket, ThumbnailCacheLookupResult lookupResult);
     void publishRows();
     void publishResultAt(std::size_t row);
 
+    QObject *m_owner = nullptr;
     std::unique_ptr<ActiveNavigationThumbnailModel> m_model;
+    ThumbnailCacheLookupProvider m_lookupProvider;
+    std::shared_ptr<ThumbnailImageStore> m_imageStore;
     std::vector<RowState> m_rows;
     quint64 m_navigationGeneration = 0;
     quint64 m_nextJobId = 1;

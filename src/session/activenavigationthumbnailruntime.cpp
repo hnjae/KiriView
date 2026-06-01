@@ -3,6 +3,7 @@
 
 #include "activenavigationthumbnailruntime.h"
 
+#include <QFile>
 #include <utility>
 
 namespace {
@@ -21,9 +22,23 @@ KiriView::ActiveNavigationThumbnailSourceKey sourceKeyForRow(
 }
 
 namespace KiriView {
-ActiveNavigationThumbnailRuntime::ActiveNavigationThumbnailRuntime(QObject *owner)
-    : m_model(std::make_unique<ActiveNavigationThumbnailModel>(owner))
+ActiveNavigationThumbnailRuntime::ActiveNavigationThumbnailRuntime(QObject *owner,
+    ThumbnailCacheLookupProvider lookupProvider, std::shared_ptr<ThumbnailImageStore> imageStore)
+    : m_owner(owner)
+    , m_model(std::make_unique<ActiveNavigationThumbnailModel>(owner))
+    , m_lookupProvider(
+          lookupProvider ? std::move(lookupProvider) : defaultThumbnailCacheLookupProvider())
+    , m_imageStore(std::move(imageStore))
 {
+    if (m_imageStore == nullptr) {
+        m_imageStore = sharedThumbnailImageStore();
+    }
+}
+
+ActiveNavigationThumbnailRuntime::~ActiveNavigationThumbnailRuntime()
+{
+    cancelAllActiveJobs();
+    releaseAllImages();
 }
 
 QAbstractListModel *ActiveNavigationThumbnailRuntime::model() const { return m_model.get(); }
@@ -54,6 +69,7 @@ void ActiveNavigationThumbnailRuntime::setRows(std::vector<ActiveNavigationThumb
     }
 
     cancelAllActiveJobs();
+    releaseAllImages();
     ++m_navigationGeneration;
     m_rows.clear();
     m_rows.reserve(rows.size());
@@ -93,13 +109,17 @@ bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl &url,
 
     cancelActiveJob(state);
     state.acceptedDemand = demand;
+    releaseImage(state);
     state.result.imageSource = QUrl();
-    if (supportsGeneratedThumbnail(state.sourceKey.sourceKind)) {
+    if (supportsGeneratedThumbnail(state.sourceKey.sourceKind)
+        && state.sourceKey.url.isLocalFile()) {
         state.result.status = ActiveNavigationThumbnailResultStatus::Pending;
         state.activeJob = ActiveJobSlot {
             m_nextJobId++,
             demand,
+            {},
         };
+        startLookupJob(state, demand);
     } else {
         state.result.status = ActiveNavigationThumbnailResultStatus::Unsupported;
         state.activeJob.reset();
@@ -124,6 +144,7 @@ bool ActiveNavigationThumbnailRuntime::applyCompletion(
     }
 
     state.activeJob.reset();
+    releaseImage(state);
     state.result = completion.result;
     publishResultAt(*rowIndex);
     return true;
@@ -217,6 +238,7 @@ void ActiveNavigationThumbnailRuntime::cancelActiveJob(RowState &state)
     }
 
     m_canceledJobIds.push_back(state.activeJob->id);
+    state.activeJob->job.cancel();
     state.activeJob.reset();
 }
 
@@ -225,6 +247,88 @@ void ActiveNavigationThumbnailRuntime::cancelAllActiveJobs()
     for (RowState &state : m_rows) {
         cancelActiveJob(state);
     }
+}
+
+void ActiveNavigationThumbnailRuntime::releaseImage(RowState &state)
+{
+    if (m_imageStore != nullptr && !state.imageStoreId.isEmpty()) {
+        m_imageStore->release(state.imageStoreId);
+    }
+    state.imageStoreId.clear();
+}
+
+void ActiveNavigationThumbnailRuntime::releaseAllImages()
+{
+    for (RowState &state : m_rows) {
+        releaseImage(state);
+    }
+}
+
+void ActiveNavigationThumbnailRuntime::startLookupJob(RowState &state, const AcceptedDemand &demand)
+{
+    if (state.activeJob == std::nullopt || !m_lookupProvider) {
+        return;
+    }
+
+    ThumbnailCacheLookupRequest request;
+    request.localPathBytes = QFile::encodeName(demand.sourceKey.url.toLocalFile());
+    request.requestedBucket = demand.bucket;
+
+    ImageIoJob job = m_lookupProvider(m_owner, std::move(request),
+        [this, sourceKey = demand.sourceKey, bucket = demand.bucket](
+            ThumbnailCacheLookupResult result) mutable {
+            finishLookup(sourceKey, bucket, std::move(result));
+        });
+    const std::optional<std::size_t> rowIndex = rowIndexForSourceKey(demand.sourceKey);
+    if (!rowIndex.has_value() || !m_rows.at(*rowIndex).activeJob.has_value()
+        || !sameAcceptedDemand(m_rows.at(*rowIndex).activeJob->demand, demand)) {
+        job.cancel();
+        return;
+    }
+    m_rows.at(*rowIndex).activeJob->job = std::move(job);
+}
+
+void ActiveNavigationThumbnailRuntime::finishLookup(
+    const ActiveNavigationThumbnailSourceKey &sourceKey,
+    ActiveNavigationThumbnailDemandBucket bucket, ThumbnailCacheLookupResult lookupResult)
+{
+    const std::optional<std::size_t> rowIndex = rowIndexForSourceKey(sourceKey);
+    if (!rowIndex.has_value()) {
+        return;
+    }
+
+    RowState &state = m_rows.at(*rowIndex);
+    if (!state.acceptedDemand.has_value()
+        || !sameSourceKey(state.acceptedDemand->sourceKey, sourceKey)
+        || state.acceptedDemand->bucket != bucket) {
+        return;
+    }
+
+    releaseImage(state);
+    state.activeJob.reset();
+    state.result.imageSource = QUrl();
+    switch (lookupResult.status) {
+    case ThumbnailCacheLookupStatus::Ready: {
+        const QString imageId
+            = m_imageStore == nullptr ? QString() : m_imageStore->insert(lookupResult.image);
+        if (imageId.isEmpty()) {
+            state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
+            break;
+        }
+        state.imageStoreId = imageId;
+        state.result.status = ActiveNavigationThumbnailResultStatus::Ready;
+        state.result.imageSource = thumbnailImageSourceForId(imageId);
+        break;
+    }
+    case ThumbnailCacheLookupStatus::Missing:
+        state.result.status = ActiveNavigationThumbnailResultStatus::NoResult;
+        break;
+    case ThumbnailCacheLookupStatus::Invalid:
+    case ThumbnailCacheLookupStatus::Failed:
+        state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
+        break;
+    }
+    publishResultAt(*rowIndex);
 }
 
 void ActiveNavigationThumbnailRuntime::publishRows()

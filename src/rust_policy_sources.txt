@@ -10,6 +10,7 @@ src/policy/avifcompat/tests.rs
 src/policy/bmff.rs
 src/policy/byteio.rs
 src/policy/cachebudget.rs
+src/policy/thumbnailcache.rs
 src/policy/embeddedmetadata.rs
 src/policy/heifcontainer.rs
 src/policy/heiftiling.rs

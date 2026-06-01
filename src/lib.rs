@@ -18,6 +18,8 @@ mod archivepath;
 // Cache policy.
 #[path = "policy/cachebudget.rs"]
 mod cachebudget;
+#[path = "policy/thumbnailcache.rs"]
+mod thumbnailcache;
 
 // Decoding and format policy.
 #[path = "policy/avifcompat.rs"]

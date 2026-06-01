@@ -186,6 +186,8 @@ src/session/activenavigationthumbnaildemand.cpp
 src/session/activenavigationthumbnailmodel.cpp
 src/session/activenavigationthumbnailprojection.cpp
 src/session/activenavigationthumbnailruntime.cpp
+src/session/thumbnailcachelookup.cpp
+src/session/thumbnailimagestore.cpp
 src/session/directmediacursor.cpp
 src/session/documentsessiondirectmedianavigationloadstate.cpp
 src/session/documentsessiondirectmedianavigationruntime.cpp

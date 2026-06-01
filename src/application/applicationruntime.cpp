@@ -5,6 +5,7 @@
 
 #include "applicationstartupsource.h"
 #include "localization/localization.h"
+#include "session/thumbnailimagestore.h"
 
 #include <QApplication>
 #include <QGuiApplication>
@@ -42,6 +43,8 @@ void loadApplicationMainQml(
     QQmlApplicationEngine &engine, const ApplicationStartupSource &startupSource)
 {
     setupLocalizedContext(engine);
+    engine.addImageProvider(QStringLiteral("kiriview-thumbnails"),
+        new ThumbnailImageProvider(sharedThumbnailImageStore()));
 
     const QUrl initialSourceUrl = initialSourceUrlFromStartupSource(startupSource);
     if (!initialSourceUrl.isEmpty()) {
