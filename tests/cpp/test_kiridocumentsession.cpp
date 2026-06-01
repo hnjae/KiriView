@@ -1113,7 +1113,7 @@ void TestKiriDocumentSession::directImageThumbnailDemandProjectsReadyCacheHitSou
     QVERIFY(session->reportActiveNavigationThumbnailDemand(1, imageUrl, 96,
         KiriDocumentSession::ThumbnailDemandPriority::VisibleThumbnailDemand, generation));
 
-    QCOMPARE(thumbnailLookup.requests.size(), std::size_t(1));
+    QCOMPARE(thumbnailLookup.requests.size(), std::size_t(4));
     QCOMPARE(thumbnailLookup.requests.front().localPathBytes, QFile::encodeName(imagePath));
     QCOMPARE(thumbnailDataForRoleName(*session, 0, QByteArrayLiteral("thumbnailStatus")).toInt(),
         static_cast<int>(KiriDocumentSession::ThumbnailResultStatus::ReadyThumbnailResult));
@@ -1163,8 +1163,8 @@ void TestKiriDocumentSession::directImageThumbnailDemandProjectsReadyGeneratedSo
     QVERIFY(session->reportActiveNavigationThumbnailDemand(1, imageUrl, 96,
         KiriDocumentSession::ThumbnailDemandPriority::VisibleThumbnailDemand, generation));
 
-    QCOMPARE(thumbnailLookup.requests.size(), std::size_t(1));
-    QCOMPARE(thumbnailGeneration.requests.size(), std::size_t(1));
+    QCOMPARE(thumbnailLookup.requests.size(), std::size_t(4));
+    QCOMPARE(thumbnailGeneration.requests.size(), std::size_t(4));
     QCOMPARE(thumbnailGeneration.requests.front().localPathBytes, QFile::encodeName(imagePath));
     QCOMPARE(thumbnailDataForRoleName(*session, 0, QByteArrayLiteral("thumbnailStatus")).toInt(),
         static_cast<int>(KiriDocumentSession::ThumbnailResultStatus::ReadyThumbnailResult));
@@ -1240,8 +1240,8 @@ void TestKiriDocumentSession::directImageThumbnailDemandKeepsFallbackForFailedGe
     QVERIFY(session->reportActiveNavigationThumbnailDemand(1, imageUrl, 96,
         KiriDocumentSession::ThumbnailDemandPriority::VisibleThumbnailDemand, generation));
 
-    QCOMPARE(thumbnailLookup.requests.size(), std::size_t(1));
-    QCOMPARE(thumbnailGeneration.requests.size(), std::size_t(1));
+    QCOMPARE(thumbnailLookup.requests.size(), std::size_t(4));
+    QCOMPARE(thumbnailGeneration.requests.size(), std::size_t(4));
     QCOMPARE(thumbnailDataForRoleName(*session, 0, QByteArrayLiteral("thumbnailStatus")).toInt(),
         static_cast<int>(KiriDocumentSession::ThumbnailResultStatus::FailedThumbnailResult));
     QCOMPARE(

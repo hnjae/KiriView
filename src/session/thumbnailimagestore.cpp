@@ -6,8 +6,10 @@
 #include "cache/imagebyteaccounting.h"
 #include "cache/imagebytecost.h"
 #include "cache/imagecachepolicy.h"
+#include "session/thumbnaillogging.h"
 #include "system/systemmemory.h"
 
+#include <QDebug>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QString>
@@ -22,10 +24,12 @@ namespace {
     int priorityRank(ThumbnailImageRetentionPriority priority)
     {
         switch (priority) {
-        case ThumbnailImageRetentionPriority::Nearby:
+        case ThumbnailImageRetentionPriority::Background:
             return 0;
-        case ThumbnailImageRetentionPriority::Visible:
+        case ThumbnailImageRetentionPriority::Nearby:
             return 1;
+        case ThumbnailImageRetentionPriority::Visible:
+            return 2;
         }
 
         return 0;
@@ -84,6 +88,9 @@ public:
                 return;
             }
 
+            qCDebug(kiriviewThumbnailLog)
+                << "Evicting thumbnail image from store" << removable->id << "priority"
+                << priorityRank(removable->priority) << "bytes" << removable->byteCost;
             byteCost -= removable->byteCost;
             images.erase(removable);
         }

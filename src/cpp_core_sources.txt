@@ -186,6 +186,7 @@ src/session/activenavigationthumbnaildemand.cpp
 src/session/activenavigationthumbnailmodel.cpp
 src/session/activenavigationthumbnailprojection.cpp
 src/session/activenavigationthumbnailruntime.cpp
+src/session/thumbnaillogging.cpp
 src/session/thumbnailcachelookup.cpp
 src/session/thumbnailgeneration.cpp
 src/session/thumbnailimagestore.cpp

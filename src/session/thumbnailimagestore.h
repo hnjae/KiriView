@@ -12,6 +12,7 @@
 
 namespace KiriView {
 enum class ThumbnailImageRetentionPriority {
+    Background,
     Nearby,
     Visible,
 };

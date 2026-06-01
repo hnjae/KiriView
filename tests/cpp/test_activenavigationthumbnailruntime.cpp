@@ -650,8 +650,10 @@ void TestActiveNavigationThumbnailRuntime::
     const QString previousId = thumbnailImageStoreId(previousSource);
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Visible, generation));
+    QCOMPARE(provider.lookupAt(1).canceled, true);
+    QCOMPARE(provider.lookupCount(), std::size_t(3));
     provider.finish(
-        1, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::blue)));
+        2, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::blue)));
 
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QVERIFY(runtime.resultAt(0).imageSource != previousSource);
@@ -686,12 +688,16 @@ void TestActiveNavigationThumbnailRuntime::lookupOrGenerationFailureKeepsExistin
     const QUrl previousSource = runtime.resultAt(0).imageSource;
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Visible, generation));
-    provider.finish(1, lookupResult(KiriView::ThumbnailCacheLookupStatus::Failed));
+    QCOMPARE(provider.lookupAt(1).canceled, true);
+    QCOMPARE(provider.lookupCount(), std::size_t(3));
+    provider.finish(2, lookupResult(KiriView::ThumbnailCacheLookupStatus::Failed));
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QCOMPARE(runtime.resultAt(0).imageSource, previousSource);
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::XLarge, Priority::Visible, generation));
-    provider.finish(2, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
+    QCOMPARE(provider.lookupAt(3).canceled, true);
+    QCOMPARE(provider.lookupCount(), std::size_t(5));
+    provider.finish(4, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
     generationProvider.finish(0, generationResult(KiriView::ThumbnailGenerationStatus::Failed));
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QCOMPARE(runtime.resultAt(0).imageSource, previousSource);
@@ -724,7 +730,9 @@ void TestActiveNavigationThumbnailRuntime::
     QCOMPARE(runtime.resultAt(0).imageSource, QUrl());
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::XLarge, Priority::Visible, generation));
-    provider.finish(1, lookupResult(KiriView::ThumbnailCacheLookupStatus::Failed));
+    QCOMPARE(provider.lookupAt(1).canceled, true);
+    QCOMPARE(provider.lookupCount(), std::size_t(3));
+    provider.finish(2, lookupResult(KiriView::ThumbnailCacheLookupStatus::Failed));
     QCOMPARE(runtime.resultAt(0).status, Status::Failed);
     QCOMPARE(runtime.resultAt(0).imageSource, QUrl());
     QCOMPARE(store->size(), qsizetype(0));
@@ -1025,7 +1033,9 @@ void TestActiveNavigationThumbnailRuntime::backgroundFillSkipsUnsupportedAndNonL
     provider.finish(
         0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
 
-    QCOMPARE(provider.lookupCount(), std::size_t(1));
+    QCOMPARE(provider.lookupCount(), std::size_t(2));
+    QCOMPARE(provider.lookupAt(1).request.localPathBytes, QByteArrayLiteral("/media/01.png"));
+    QCOMPARE(provider.lookupAt(1).request.requestedBucket, Bucket::Large);
 }
 
 void TestActiveNavigationThumbnailRuntime::staleCanceledBackgroundCompletionsAreRejected()

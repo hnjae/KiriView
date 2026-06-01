@@ -67,6 +67,11 @@ public:
     qsizetype canceledJobCount() const;
 
 private:
+    enum class ThumbnailWorkKind {
+        Foreground,
+        Background,
+    };
+
     struct AcceptedDemand {
         ActiveNavigationThumbnailSourceKey sourceKey;
         ActiveNavigationThumbnailDemandBucket bucket = ActiveNavigationThumbnailDemandBucket::None;
@@ -76,6 +81,7 @@ private:
 
     struct ActiveJobSlot {
         quint64 id = 0;
+        ThumbnailWorkKind kind = ThumbnailWorkKind::Foreground;
         AcceptedDemand demand;
         ImageIoJob job;
     };
@@ -87,6 +93,7 @@ private:
         QString imageStoreId;
         std::optional<AcceptedDemand> acceptedDemand;
         std::optional<ActiveJobSlot> activeJob;
+        std::vector<ActiveNavigationThumbnailDemandBucket> completedBackgroundBuckets;
     };
 
     static bool sameRowIdentity(
@@ -97,19 +104,30 @@ private:
     static bool supportsGeneratedThumbnail(ActiveNavigationThumbnailSourceKind sourceKind);
     static ThumbnailImageRetentionPriority imageRetentionPriority(
         ActiveNavigationThumbnailDemandPriority priority);
+    static ThumbnailImageRetentionPriority imageRetentionPriority(
+        ThumbnailWorkKind kind, ActiveNavigationThumbnailDemandPriority priority);
 
     std::optional<std::size_t> rowIndexForIdentity(
         int number, const QUrl &url, quint64 navigationGeneration) const;
     std::optional<std::size_t> rowIndexForSourceKey(
         const ActiveNavigationThumbnailSourceKey &sourceKey) const;
     void cancelActiveJob(RowState &state);
+    void cancelActiveBackgroundJob();
     void cancelAllActiveJobs();
+    bool hasActiveForegroundJob() const;
     bool hasUsableReadyImage(const RowState &state) const;
     void releaseImage(RowState &state);
     void releaseAllImages();
-    void startLookupJob(RowState &state, const AcceptedDemand &demand);
-    void startGenerationJob(RowState &state, const AcceptedDemand &demand);
-    bool activeJobMatches(const RowState &state, quint64 jobId, const AcceptedDemand &demand) const;
+    void startLookupJob(RowState &state, const AcceptedDemand &demand, ThumbnailWorkKind kind);
+    void startGenerationJob(RowState &state, const AcceptedDemand &demand, ThumbnailWorkKind kind);
+    bool activeJobMatches(const RowState &state, quint64 jobId, const AcceptedDemand &demand,
+        ThumbnailWorkKind kind) const;
+    bool backgroundBucketCompleted(
+        const RowState &state, ActiveNavigationThumbnailDemandBucket bucket) const;
+    void markBackgroundBucketCompleted(
+        RowState &state, ActiveNavigationThumbnailDemandBucket bucket);
+    void maybeScheduleBackgroundWork();
+    void startBackgroundWork(RowState &state, ActiveNavigationThumbnailDemandBucket bucket);
     void finishLookup(quint64 jobId, const ActiveNavigationThumbnailSourceKey &sourceKey,
         ActiveNavigationThumbnailDemandBucket bucket, ThumbnailCacheLookupResult lookupResult);
     void finishGeneration(quint64 jobId, const ActiveNavigationThumbnailSourceKey &sourceKey,
@@ -126,6 +144,7 @@ private:
     quint64 m_navigationGeneration = 0;
     quint64 m_nextJobId = 1;
     std::vector<quint64> m_canceledJobIds;
+    bool m_backgroundArmed = false;
 };
 }
 
