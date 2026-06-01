@@ -14,6 +14,7 @@ in
     ./nix/devenv/modules/check-tasks.nix
     ./nix/devenv/modules/git-hooks.nix
     ./nix/devenv/modules/i18n.nix
+    ./nix/devenv/modules/rust-host-toolchain.nix
     ./nix/devenv/modules/treefmt.nix
   ];
 
@@ -68,7 +69,6 @@ in
     libraw.dev
     libraw.lib
     libpng
-    lld
     ninja
     pipewire
     pkg-config

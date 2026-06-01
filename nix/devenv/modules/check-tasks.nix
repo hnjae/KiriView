@@ -50,11 +50,6 @@ let
     done
     export LD_LIBRARY_PATH="$host_runtime_library_path''${nix_runtime_library_path:+:$nix_runtime_library_path}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
   '';
-  rustHostLinkerPrelude = ''
-    # rustc warns when the host toolchain links through deprecated GNU gold.
-    # Force LLD while preserving any caller-provided Rust flags.
-    export RUSTFLAGS="''${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-fuse-ld=lld"
-  '';
   testJobsPrelude = ''
     test_jobs="''${KIRIVIEW_TEST_JOBS:-$(nproc)}"
     if ! [[ $test_jobs =~ ^[0-9]+$ ]] || ((test_jobs < 1)); then
@@ -265,12 +260,13 @@ in
       description = "Run host Rust library tests";
       exec = ''
         ${hostTaskPrelude}
-        ${rustHostLinkerPrelude}
         ${testJobsPrelude}
 
         printf 'Running host Rust tests with %d jobs...\n' "$test_jobs"
         CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
-            cargo test \
+            kiriview-rust-host-env \
+            cargo \
+                test \
                 --locked \
                 --lib \
                 --all-features \
@@ -278,7 +274,9 @@ in
                 -- \
                 --test-threads "$test_jobs"
         CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
-            cargo build \
+            kiriview-rust-host-env \
+            cargo \
+                build \
                 --locked \
                 --lib \
                 --all-features \
@@ -322,14 +320,15 @@ in
         ${hostTaskPrelude}
         unset LD_LIBRARY_PATH
         unset QT_PLUGIN_PATH
-        ${rustHostLinkerPrelude}
         ${lintJobsPrelude}
 
-        cargo clippy \
-            --locked \
-            --all-targets \
-            --all-features \
-            --jobs "$lint_jobs" \
+        kiriview-rust-host-env \
+            cargo \
+                clippy \
+                --locked \
+                --all-targets \
+                --all-features \
+                --jobs "$lint_jobs" \
             -- \
             -D warnings \
             2>&1 \

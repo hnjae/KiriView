@@ -40,18 +40,18 @@ Always report any skipped focused or final check in your final response.
 
 ## Targeted test recipes
 
-All recipes assume the devenv lld prefix: `export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-fuse-ld=lld"`.
+All Rust host recipes run through `kiriview-rust-host-env`, which owns the host linker configuration.
 
 **Rust (prefer a filtered lib test before the full suite)** — `<filter>` e.g. `imagezoomstate`:
 
 ```sh
-devenv shell -- bash -lc 'export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-fuse-ld=lld"; CARGO_TARGET_DIR=target cargo test --locked --lib --all-features <filter> -- --test-threads "$(nproc)"'
+devenv shell -- env CARGO_TARGET_DIR=target kiriview-rust-host-env cargo test --locked --lib --all-features <filter> -- --test-threads "$(nproc)"
 ```
 
 **C++/Qt (build host Rust artifacts, then run the matching CTest target)** — `<test_target>` e.g. `test_imagezoomstate`:
 
 ```sh
-devenv shell -- bash -lc 'export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-fuse-ld=lld"; CARGO_TARGET_DIR=target cargo build --locked --lib --all-features'
+devenv shell -- env CARGO_TARGET_DIR=target kiriview-rust-host-env cargo build --locked --lib --all-features
 devenv shell -- cmake -S tests/cpp -B target/devenv/cpp-tests -DCMAKE_BUILD_TYPE=Debug -DKIRIVIEW_CARGO_TARGET_DIR="$PWD/target/debug"
 devenv shell -- cmake --build target/devenv/cpp-tests --target <test_target> --parallel "$(nproc)"
 devenv shell -- env LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 ctest --test-dir target/devenv/cpp-tests -R '^<test_target>$' --output-on-failure
