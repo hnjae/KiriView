@@ -28,11 +28,16 @@ void TestActiveNavigationThumbnailDemand::bucketPolicyMapsPhysicalEdge()
     QCOMPARE(KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(0), Bucket::None);
     QCOMPARE(KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(1), Bucket::Normal);
     QCOMPARE(
+        KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(127), Bucket::Normal);
+    QCOMPARE(
         KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(128), Bucket::Normal);
     QCOMPARE(KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(129), Bucket::Large);
+    QCOMPARE(KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(255), Bucket::Large);
     QCOMPARE(KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(256), Bucket::Large);
     QCOMPARE(
         KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(257), Bucket::XLarge);
+    QCOMPARE(
+        KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(511), Bucket::XLarge);
     QCOMPARE(
         KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(512), Bucket::XLarge);
     QCOMPARE(

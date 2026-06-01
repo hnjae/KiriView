@@ -369,6 +369,9 @@ void TestThumbnailPanel::delegateReportsSourceNeutralDemandAndKeepsFallbackIcon(
     const QString source = QString::fromUtf8(thumbnailPanelFile.readAll());
     QVERIFY(source.contains(QStringLiteral("objectName: \"thumbnailPreviewBox\"")));
     QVERIFY(source.contains(QStringLiteral("effectiveDevicePixelRatio")));
+    QVERIFY(source.contains(
+        QStringLiteral("Math.ceil(Math.max(thumbnailPreviewBox.width, thumbnailPreviewBox.height) "
+                       "* thumbnailDevicePixelRatio)")));
     QVERIFY(source.contains(QStringLiteral("activeNavigationThumbnailDemandBucket")));
     QVERIFY(source.contains(QStringLiteral("reportActiveNavigationThumbnailDemand")));
     QVERIFY(source.contains(QStringLiteral("navigationGeneration")));

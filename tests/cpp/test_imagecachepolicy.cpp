@@ -18,6 +18,7 @@ private Q_SLOTS:
     void reportsRetainedByteCosts();
     void staticTileCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap();
     void predecodeCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap();
+    void thumbnailCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap();
     void resolvedCacheBudgetsUseSnapshotAndPreserveOverrides();
 };
 
@@ -92,30 +93,47 @@ void TestImageCachePolicy::predecodeCacheByteBudgetUsesPreferredLimitAndSystemMe
         preferredByteBudget);
 }
 
+void TestImageCachePolicy::thumbnailCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap()
+{
+    constexpr qsizetype preferredByteBudget = 64 * 1024 * 1024;
+
+    QCOMPARE(KiriView::thumbnailCachePreferredByteBudget(), preferredByteBudget);
+    QCOMPARE(KiriView::thumbnailCacheByteBudgetForSystemMemory(0), preferredByteBudget);
+    QCOMPARE(KiriView::thumbnailCacheByteBudgetForSystemMemory(preferredByteBudget),
+        preferredByteBudget / 64);
+    QCOMPARE(KiriView::thumbnailCacheByteBudgetForSystemMemory(preferredByteBudget * 128),
+        preferredByteBudget);
+}
+
 void TestImageCachePolicy::resolvedCacheBudgetsUseSnapshotAndPreserveOverrides()
 {
     constexpr qsizetype staticTilePreferredByteBudget = 512 * 1024 * 1024;
     constexpr qsizetype predecodePreferredByteBudget = 1024 * 1024 * 1024;
+    constexpr qsizetype thumbnailPreferredByteBudget = 64 * 1024 * 1024;
 
     const KiriView::ImageCacheBudgets defaultBudgets = KiriView::resolvedImageCacheBudgets(
         KiriView::ImageCacheBudgetRequest {
             0,
             0,
             staticTilePreferredByteBudget,
+            0,
         },
         KiriView::SystemMemorySnapshot { predecodePreferredByteBudget });
     QCOMPARE(defaultBudgets.predecodeCacheByteBudget, predecodePreferredByteBudget / 8);
     QCOMPARE(defaultBudgets.staticTileCacheByteBudget, staticTilePreferredByteBudget / 8);
+    QCOMPARE(defaultBudgets.thumbnailCacheByteBudget, thumbnailPreferredByteBudget / 16);
 
     const KiriView::ImageCacheBudgets explicitBudgets = KiriView::resolvedImageCacheBudgets(
         KiriView::ImageCacheBudgetRequest {
             4096,
             8192,
             staticTilePreferredByteBudget,
+            16384,
         },
         KiriView::SystemMemorySnapshot { predecodePreferredByteBudget });
     QCOMPARE(explicitBudgets.predecodeCacheByteBudget, qsizetype(4096));
     QCOMPARE(explicitBudgets.staticTileCacheByteBudget, qsizetype(8192));
+    QCOMPARE(explicitBudgets.thumbnailCacheByteBudget, qsizetype(16384));
 }
 
 QTEST_GUILESS_MAIN(TestImageCachePolicy)
