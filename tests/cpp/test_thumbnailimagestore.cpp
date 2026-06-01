@@ -18,6 +18,7 @@ private Q_SLOTS:
     void evictsLeastRecentlyUsedImagesByByteBudget();
     void imageAccessRefreshesLruOrder();
     void visiblePriorityOutlivesNearbyWhenBudgetIsTight();
+    void evictsBackgroundBeforeNearbyBeforeVisible();
     void explicitReleaseRemovesImageAndByteCost();
 };
 
@@ -78,6 +79,37 @@ void TestThumbnailImageStore::visiblePriorityOutlivesNearbyWhenBudgetIsTight()
     QVERIFY(!store.image(visible).isNull());
     QVERIFY(store.image(nearby).isNull());
     QVERIFY(!store.image(newerNearby).isNull());
+}
+
+void TestThumbnailImageStore::evictsBackgroundBeforeNearbyBeforeVisible()
+{
+    KiriView::ThumbnailImageStore store(128);
+
+    const QString background
+        = store.insert(testImage(Qt::red), KiriView::ThumbnailImageRetentionPriority::Background);
+    const QString nearby
+        = store.insert(testImage(Qt::green), KiriView::ThumbnailImageRetentionPriority::Nearby);
+    const QString visible
+        = store.insert(testImage(Qt::blue), KiriView::ThumbnailImageRetentionPriority::Visible);
+
+    QCOMPARE(store.size(), qsizetype(2));
+    QVERIFY(store.image(background).isNull());
+    QVERIFY(!store.image(nearby).isNull());
+    QVERIFY(!store.image(visible).isNull());
+
+    const QString secondBackground
+        = store.insert(testImage(Qt::cyan), KiriView::ThumbnailImageRetentionPriority::Background);
+    QCOMPARE(store.size(), qsizetype(2));
+    QVERIFY(store.image(secondBackground).isNull());
+    QVERIFY(!store.image(nearby).isNull());
+    QVERIFY(!store.image(visible).isNull());
+
+    const QString newerNearby
+        = store.insert(testImage(Qt::magenta), KiriView::ThumbnailImageRetentionPriority::Nearby);
+    QCOMPARE(store.size(), qsizetype(2));
+    QVERIFY(store.image(nearby).isNull());
+    QVERIFY(!store.image(newerNearby).isNull());
+    QVERIFY(!store.image(visible).isNull());
 }
 
 void TestThumbnailImageStore::explicitReleaseRemovesImageAndByteCost()
