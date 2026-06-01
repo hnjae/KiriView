@@ -115,6 +115,9 @@ mod ffi {
 
         #[cxx_name = "rustVirtualThumbnailContentUri"]
         fn virtual_content_uri(bytes: &[u8], uncompressed_size: u64) -> String;
+
+        #[cxx_name = "rustVirtualThumbnailArchiveEntryCrc32Uri"]
+        fn virtual_archive_entry_crc32_uri(crc32: u32, uncompressed_size: u64) -> String;
     }
 }
 
@@ -739,6 +742,18 @@ mod tests {
         assert_ne!(first, different_bytes);
         assert!(first.starts_with("x-kiriview://thumbnail/content/v1/sha256/"));
         assert!(first.ends_with("/16"));
+    }
+
+    #[test]
+    fn archive_entry_crc32_virtual_uri_uses_fixed_lower_hex_and_size() {
+        assert_eq!(
+            virtual_archive_entry_crc32_uri(0x0000000a, 16),
+            "x-kiriview://thumbnail/archive-entry/v1/crc32/0000000a/16"
+        );
+        assert_eq!(
+            virtual_archive_entry_crc32_uri(0x7a6c86f1, 3),
+            "x-kiriview://thumbnail/archive-entry/v1/crc32/7a6c86f1/3"
+        );
     }
 
     struct Fixture {
