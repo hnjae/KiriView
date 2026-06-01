@@ -22,7 +22,7 @@ Roadmap items are intentionally sized so one agent can complete one progress ite
 - [x] Declare generated preview thumbnail scope and architecture intent before implementation.
 - [x] Add source-neutral thumbnail demand reporting from QML delegates.
 - [x] Add common runtime state, source keys, result projection, and stale completion rejection.
-- [ ] Add XDG cache lookup for direct local images.
+- [x] Add XDG cache lookup for direct local images.
 - [ ] Add on-demand direct image thumbnail generation and cache installation.
 - [ ] Add quality, resize, HiDPI, and memory-pressure behavior.
 - [ ] Add best-state background fill scheduling and thumbnail runtime observability.
