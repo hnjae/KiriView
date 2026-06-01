@@ -20,7 +20,7 @@ Roadmap items are intentionally sized so one agent can complete one progress ite
 - [x] The thumbnail panel keeps the current item selected and implements intent-aware reveal behavior without generated preview thumbnails.
 - [x] Focused C++ and QML integration coverage exists for the current thumbnail strip model, activation path, selection, and reveal behavior.
 - [x] Declare generated preview thumbnail scope and architecture intent before implementation.
-- [ ] Add source-neutral thumbnail demand reporting from QML delegates.
+- [x] Add source-neutral thumbnail demand reporting from QML delegates.
 - [ ] Add common runtime state, source keys, result projection, and stale completion rejection.
 - [ ] Add XDG cache lookup for direct local images.
 - [ ] Add on-demand direct image thumbnail generation and cache installation.
