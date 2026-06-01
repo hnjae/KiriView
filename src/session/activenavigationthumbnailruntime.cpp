@@ -110,13 +110,30 @@ bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl &url,
         return false;
     }
 
+    if (state.acceptedDemand.has_value()
+        && sameSourceKey(state.acceptedDemand->sourceKey, demand.sourceKey)
+        && state.acceptedDemand->bucket == demand.bucket
+        && state.acceptedDemand->priority != demand.priority) {
+        state.acceptedDemand = demand;
+        if (m_imageStore != nullptr && !state.imageStoreId.isEmpty()) {
+            m_imageStore->updatePriority(
+                state.imageStoreId, imageRetentionPriority(demand.priority));
+        }
+        if (state.activeJob.has_value()) {
+            state.activeJob->demand = demand;
+        }
+        return true;
+    }
+
     cancelActiveJob(state);
     state.acceptedDemand = demand;
-    releaseImage(state);
-    state.result.imageSource = QUrl();
     if (supportsGeneratedThumbnail(state.sourceKey.sourceKind)
         && state.sourceKey.url.isLocalFile()) {
-        state.result.status = ActiveNavigationThumbnailResultStatus::Pending;
+        if (!hasUsableReadyImage(state)) {
+            releaseImage(state);
+            state.result.status = ActiveNavigationThumbnailResultStatus::Pending;
+            state.result.imageSource = QUrl();
+        }
         state.activeJob = ActiveJobSlot {
             m_nextJobId++,
             demand,
@@ -124,7 +141,9 @@ bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl &url,
         };
         startLookupJob(state, demand);
     } else {
+        releaseImage(state);
         state.result.status = ActiveNavigationThumbnailResultStatus::Unsupported;
+        state.result.imageSource = QUrl();
         state.activeJob.reset();
     }
     publishResultAt(*rowIndex);
@@ -147,8 +166,16 @@ bool ActiveNavigationThumbnailRuntime::applyCompletion(
     }
 
     state.activeJob.reset();
-    releaseImage(state);
-    state.result = completion.result;
+    if (completion.result.status == ActiveNavigationThumbnailResultStatus::Ready) {
+        releaseImage(state);
+        state.result = completion.result;
+    } else if (hasUsableReadyImage(state)) {
+        state.result.status = ActiveNavigationThumbnailResultStatus::Ready;
+        state.result.imageSource = thumbnailImageSourceForId(state.imageStoreId);
+    } else {
+        releaseImage(state);
+        state.result = completion.result;
+    }
     publishResultAt(*rowIndex);
     return true;
 }
@@ -208,6 +235,19 @@ bool ActiveNavigationThumbnailRuntime::supportsGeneratedThumbnail(
     return sourceKind == ActiveNavigationThumbnailSourceKind::DirectImage;
 }
 
+ThumbnailImageRetentionPriority ActiveNavigationThumbnailRuntime::imageRetentionPriority(
+    ActiveNavigationThumbnailDemandPriority priority)
+{
+    switch (priority) {
+    case ActiveNavigationThumbnailDemandPriority::Visible:
+        return ThumbnailImageRetentionPriority::Visible;
+    case ActiveNavigationThumbnailDemandPriority::Nearby:
+        return ThumbnailImageRetentionPriority::Nearby;
+    }
+
+    return ThumbnailImageRetentionPriority::Nearby;
+}
+
 std::optional<std::size_t> ActiveNavigationThumbnailRuntime::rowIndexForIdentity(
     int number, const QUrl &url, quint64 navigationGeneration) const
 {
@@ -250,6 +290,13 @@ void ActiveNavigationThumbnailRuntime::cancelAllActiveJobs()
     for (RowState &state : m_rows) {
         cancelActiveJob(state);
     }
+}
+
+bool ActiveNavigationThumbnailRuntime::hasUsableReadyImage(const RowState &state) const
+{
+    return state.result.status == ActiveNavigationThumbnailResultStatus::Ready
+        && !state.imageStoreId.isEmpty() && m_imageStore != nullptr
+        && !m_imageStore->image(state.imageStoreId).isNull();
 }
 
 void ActiveNavigationThumbnailRuntime::releaseImage(RowState &state)
@@ -296,8 +343,14 @@ void ActiveNavigationThumbnailRuntime::startGenerationJob(
 {
     if (state.activeJob == std::nullopt || !m_generationProvider) {
         state.activeJob.reset();
-        state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
-        state.result.imageSource = QUrl();
+        if (hasUsableReadyImage(state)) {
+            state.result.status = ActiveNavigationThumbnailResultStatus::Ready;
+            state.result.imageSource = thumbnailImageSourceForId(state.imageStoreId);
+        } else {
+            releaseImage(state);
+            state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
+            state.result.imageSource = QUrl();
+        }
         return;
     }
 
@@ -343,24 +396,33 @@ void ActiveNavigationThumbnailRuntime::finishLookup(quint64 jobId,
         return;
     }
 
-    releaseImage(state);
-    state.result.imageSource = QUrl();
     switch (lookupResult.status) {
     case ThumbnailCacheLookupStatus::Ready: {
         state.activeJob.reset();
-        const QString imageId
-            = m_imageStore == nullptr ? QString() : m_imageStore->insert(lookupResult.image);
+        const QString imageId = m_imageStore == nullptr
+            ? QString()
+            : m_imageStore->insert(
+                  lookupResult.image, imageRetentionPriority(state.acceptedDemand->priority));
         if (imageId.isEmpty()) {
-            state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
+            if (!hasUsableReadyImage(state)) {
+                releaseImage(state);
+                state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
+                state.result.imageSource = QUrl();
+            }
             break;
         }
+        releaseImage(state);
         state.imageStoreId = imageId;
         state.result.status = ActiveNavigationThumbnailResultStatus::Ready;
         state.result.imageSource = thumbnailImageSourceForId(imageId);
         break;
     }
     case ThumbnailCacheLookupStatus::Missing:
-        state.result.status = ActiveNavigationThumbnailResultStatus::Pending;
+        if (!hasUsableReadyImage(state)) {
+            releaseImage(state);
+            state.result.status = ActiveNavigationThumbnailResultStatus::Pending;
+            state.result.imageSource = QUrl();
+        }
         state.activeJob = ActiveJobSlot {
             m_nextJobId++,
             *state.acceptedDemand,
@@ -371,7 +433,14 @@ void ActiveNavigationThumbnailRuntime::finishLookup(quint64 jobId,
     case ThumbnailCacheLookupStatus::Invalid:
     case ThumbnailCacheLookupStatus::Failed:
         state.activeJob.reset();
-        state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
+        if (hasUsableReadyImage(state)) {
+            state.result.status = ActiveNavigationThumbnailResultStatus::Ready;
+            state.result.imageSource = thumbnailImageSourceForId(state.imageStoreId);
+        } else {
+            releaseImage(state);
+            state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
+            state.result.imageSource = QUrl();
+        }
         break;
     }
     publishResultAt(*rowIndex);
@@ -394,24 +463,36 @@ void ActiveNavigationThumbnailRuntime::finishGeneration(quint64 jobId,
         return;
     }
 
-    releaseImage(state);
     state.activeJob.reset();
-    state.result.imageSource = QUrl();
     switch (generationResult.status) {
     case ThumbnailGenerationStatus::Ready: {
-        const QString imageId
-            = m_imageStore == nullptr ? QString() : m_imageStore->insert(generationResult.image);
+        const QString imageId = m_imageStore == nullptr
+            ? QString()
+            : m_imageStore->insert(
+                  generationResult.image, imageRetentionPriority(state.acceptedDemand->priority));
         if (imageId.isEmpty()) {
-            state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
+            if (!hasUsableReadyImage(state)) {
+                releaseImage(state);
+                state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
+                state.result.imageSource = QUrl();
+            }
             break;
         }
+        releaseImage(state);
         state.imageStoreId = imageId;
         state.result.status = ActiveNavigationThumbnailResultStatus::Ready;
         state.result.imageSource = thumbnailImageSourceForId(imageId);
         break;
     }
     case ThumbnailGenerationStatus::Failed:
-        state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
+        if (hasUsableReadyImage(state)) {
+            state.result.status = ActiveNavigationThumbnailResultStatus::Ready;
+            state.result.imageSource = thumbnailImageSourceForId(state.imageStoreId);
+        } else {
+            releaseImage(state);
+            state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
+            state.result.imageSource = QUrl();
+        }
         break;
     }
     publishResultAt(*rowIndex);

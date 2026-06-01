@@ -25,17 +25,21 @@ struct ImageCacheBudgetRequest {
     qsizetype predecodeCacheByteBudget = 0;
     qsizetype staticTileCacheByteBudget = 0;
     qsizetype staticTileCachePreferredByteBudget = 0;
+    qsizetype thumbnailCacheByteBudget = 0;
 };
 
 struct ImageCacheBudgets {
     qsizetype predecodeCacheByteBudget = 0;
     qsizetype staticTileCacheByteBudget = 0;
+    qsizetype thumbnailCacheByteBudget = 0;
 };
 
 std::vector<ImageCacheRetainedEntry> lruCacheRetentionPlan(
     const std::vector<ImageCacheRetentionEntry> &entries, qsizetype byteBudget);
 qsizetype predecodeCachePreferredByteBudget();
 qsizetype predecodeCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
+qsizetype thumbnailCachePreferredByteBudget();
+qsizetype thumbnailCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
 qsizetype staticTileCacheByteBudgetForSystemMemory(
     qsizetype systemMemoryByteSize, qsizetype preferredByteBudget);
 ImageCacheBudgets resolvedImageCacheBudgets(

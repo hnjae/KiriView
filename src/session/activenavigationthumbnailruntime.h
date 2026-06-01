@@ -95,6 +95,8 @@ private:
         const ActiveNavigationThumbnailSourceKey &right);
     static bool sameAcceptedDemand(const AcceptedDemand &left, const AcceptedDemand &right);
     static bool supportsGeneratedThumbnail(ActiveNavigationThumbnailSourceKind sourceKind);
+    static ThumbnailImageRetentionPriority imageRetentionPriority(
+        ActiveNavigationThumbnailDemandPriority priority);
 
     std::optional<std::size_t> rowIndexForIdentity(
         int number, const QUrl &url, quint64 navigationGeneration) const;
@@ -102,6 +104,7 @@ private:
         const ActiveNavigationThumbnailSourceKey &sourceKey) const;
     void cancelActiveJob(RowState &state);
     void cancelAllActiveJobs();
+    bool hasUsableReadyImage(const RowState &state) const;
     void releaseImage(RowState &state);
     void releaseAllImages();
     void startLookupJob(RowState &state, const AcceptedDemand &demand);

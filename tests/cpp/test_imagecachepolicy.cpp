@@ -121,7 +121,7 @@ void TestImageCachePolicy::resolvedCacheBudgetsUseSnapshotAndPreserveOverrides()
         KiriView::SystemMemorySnapshot { predecodePreferredByteBudget });
     QCOMPARE(defaultBudgets.predecodeCacheByteBudget, predecodePreferredByteBudget / 8);
     QCOMPARE(defaultBudgets.staticTileCacheByteBudget, staticTilePreferredByteBudget / 8);
-    QCOMPARE(defaultBudgets.thumbnailCacheByteBudget, thumbnailPreferredByteBudget / 16);
+    QCOMPARE(defaultBudgets.thumbnailCacheByteBudget, predecodePreferredByteBudget / 64);
 
     const KiriView::ImageCacheBudgets explicitBudgets = KiriView::resolvedImageCacheBudgets(
         KiriView::ImageCacheBudgetRequest {

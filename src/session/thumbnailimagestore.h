@@ -11,16 +11,25 @@
 #include <memory>
 
 namespace KiriView {
+enum class ThumbnailImageRetentionPriority {
+    Nearby,
+    Visible,
+};
+
 class ThumbnailImageStore final
 {
 public:
-    ThumbnailImageStore();
+    explicit ThumbnailImageStore(qsizetype byteBudget = 0);
     ~ThumbnailImageStore();
 
-    QString insert(QImage image);
+    QString insert(QImage image,
+        ThumbnailImageRetentionPriority priority = ThumbnailImageRetentionPriority::Nearby);
+    void updatePriority(const QString &id, ThumbnailImageRetentionPriority priority);
     void release(const QString &id);
     void clear();
     QImage image(const QString &id) const;
+    qsizetype byteBudget() const;
+    qsizetype byteCost() const;
     qsizetype size() const;
 
 private:

@@ -33,12 +33,20 @@ mod ffi {
 
         #[cxx_name = "rustPredecodeCacheByteBudgetForSystemMemory"]
         fn rust_predecode_cache_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64;
+
+        #[cxx_name = "rustThumbnailCachePreferredByteBudget"]
+        fn rust_thumbnail_cache_preferred_byte_budget() -> i64;
+
+        #[cxx_name = "rustThumbnailCacheByteBudgetForSystemMemory"]
+        fn rust_thumbnail_cache_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64;
     }
 }
 
 const STATIC_TILE_CACHE_SYSTEM_MEMORY_DIVISOR: i64 = 16;
 const PREDECODE_CACHE_PREFERRED_BYTE_BUDGET: i64 = 1024 * 1024 * 1024;
 const PREDECODE_CACHE_SYSTEM_MEMORY_DIVISOR: i64 = 8;
+const THUMBNAIL_CACHE_PREFERRED_BYTE_BUDGET: i64 = 64 * 1024 * 1024;
+const THUMBNAIL_CACHE_SYSTEM_MEMORY_DIVISOR: i64 = 64;
 
 #[derive(Clone, Copy)]
 struct IndexedLruCacheRetentionEntry {
@@ -84,6 +92,14 @@ fn rust_predecode_cache_preferred_byte_budget() -> i64 {
 
 fn rust_predecode_cache_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64 {
     predecode_cache_byte_budget_for_system_memory(system_memory_byte_size)
+}
+
+fn rust_thumbnail_cache_preferred_byte_budget() -> i64 {
+    thumbnail_cache_preferred_byte_budget()
+}
+
+fn rust_thumbnail_cache_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64 {
+    thumbnail_cache_byte_budget_for_system_memory(system_memory_byte_size)
 }
 
 pub(crate) fn lru_cache_retention_plan(
@@ -155,6 +171,18 @@ pub(crate) fn predecode_cache_byte_budget_for_system_memory(system_memory_byte_s
         predecode_cache_preferred_byte_budget(),
         system_memory_byte_size,
         PREDECODE_CACHE_SYSTEM_MEMORY_DIVISOR,
+    )
+}
+
+pub(crate) fn thumbnail_cache_preferred_byte_budget() -> i64 {
+    THUMBNAIL_CACHE_PREFERRED_BYTE_BUDGET
+}
+
+pub(crate) fn thumbnail_cache_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64 {
+    system_memory_capped_byte_budget(
+        thumbnail_cache_preferred_byte_budget(),
+        system_memory_byte_size,
+        THUMBNAIL_CACHE_SYSTEM_MEMORY_DIVISOR,
     )
 }
 
@@ -252,6 +280,21 @@ mod tests {
         );
         assert_eq!(
             predecode_cache_byte_budget_for_system_memory(preferred * 16),
+            preferred
+        );
+    }
+
+    #[test]
+    fn thumbnail_cache_byte_budget_uses_preferred_limit_and_system_memory_cap() {
+        let preferred = thumbnail_cache_preferred_byte_budget();
+
+        assert_eq!(thumbnail_cache_byte_budget_for_system_memory(0), preferred);
+        assert_eq!(
+            thumbnail_cache_byte_budget_for_system_memory(preferred),
+            preferred / THUMBNAIL_CACHE_SYSTEM_MEMORY_DIVISOR
+        );
+        assert_eq!(
+            thumbnail_cache_byte_budget_for_system_memory(preferred * 128),
             preferred
         );
     }

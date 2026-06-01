@@ -70,6 +70,17 @@ qsizetype predecodeCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize
         rustPredecodeCacheByteBudgetForSystemMemory(Bridge::rustByteSize(systemMemoryByteSize)));
 }
 
+qsizetype thumbnailCachePreferredByteBudget()
+{
+    return Bridge::qtByteSize(rustThumbnailCachePreferredByteBudget());
+}
+
+qsizetype thumbnailCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
+{
+    return Bridge::qtByteSize(
+        rustThumbnailCacheByteBudgetForSystemMemory(Bridge::rustByteSize(systemMemoryByteSize)));
+}
+
 ImageCacheBudgets resolvedImageCacheBudgets(
     ImageCacheBudgetRequest request, SystemMemorySnapshot systemMemory)
 {
@@ -80,9 +91,13 @@ ImageCacheBudgets resolvedImageCacheBudgets(
         ? request.staticTileCacheByteBudget
         : staticTileCacheByteBudgetForSystemMemory(
               systemMemory.physicalByteSize, request.staticTileCachePreferredByteBudget);
+    const qsizetype thumbnailCacheByteBudget = request.thumbnailCacheByteBudget > 0
+        ? request.thumbnailCacheByteBudget
+        : thumbnailCacheByteBudgetForSystemMemory(systemMemory.physicalByteSize);
     return ImageCacheBudgets {
         predecodeCacheByteBudget,
         staticTileCacheByteBudget,
+        thumbnailCacheByteBudget,
     };
 }
 }
