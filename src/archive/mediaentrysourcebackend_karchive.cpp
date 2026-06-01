@@ -4,6 +4,7 @@
 #include "mediaentrysourcebackend_p.h"
 
 #include "archiveformat.h"
+#include "decoding/imageformatregistry.h"
 
 #include <K7Zip>
 #include <KArchive>
@@ -20,6 +21,11 @@
 
 namespace {
 namespace Backend = KiriView::MediaEntrySourceBackendDetail;
+
+bool rootSchemeSupportsThumbnailMetadata(const QString &scheme)
+{
+    return scheme == QStringLiteral("zip") || scheme == QStringLiteral("sevenz");
+}
 
 class ScopedKArchive final
 {
@@ -178,6 +184,24 @@ KiriView::MediaEntrySourceImageDataResult readKArchiveFileData(const KArchiveFil
     return Backend::mediaEntrySourceImageDataResult(std::move(data));
 }
 
+std::optional<KiriView::MediaEntrySourceThumbnailMetadata> thumbnailMetadataForKArchiveFile(
+    const KArchiveFile &file)
+{
+    const std::optional<KArchiveFileContentChecksum> checksum = file.contentChecksum();
+    if (!checksum.has_value() || checksum->algorithm != KArchiveFileContentChecksumAlgorithm::Crc32
+        || file.size() < 0) {
+        return std::nullopt;
+    }
+
+    return KiriView::MediaEntrySourceThumbnailMetadata {
+        KiriView::MediaEntryContentChecksum {
+            KiriView::MediaEntryContentChecksumAlgorithm::Crc32,
+            checksum->value,
+        },
+        file.size(),
+    };
+}
+
 class KArchiveMediaEntrySource final : public Backend::MediaEntrySourceWithCandidateSnapshot
 {
 public:
@@ -206,6 +230,44 @@ public:
         }
 
         return readKArchiveFileData(*file);
+    }
+
+    KiriView::MediaEntrySourceThumbnailMetadataResult loadThumbnailMetadata(
+        const QUrl &imageUrl) override
+    {
+        const std::optional<QString> entryPath
+            = Backend::openedCollectionImageEntryPathForRead(m_openedCollectionScope, imageUrl);
+        if (!entryPath.has_value()) {
+            return Backend::mediaEntrySourceErrorResult<
+                KiriView::MediaEntrySourceThumbnailMetadataResult>(
+                Backend::openedCollectionImageNotFoundError());
+        }
+
+        if (!m_openedCollectionScope.isComicBook()
+            || !rootSchemeSupportsThumbnailMetadata(m_openedCollectionScope.rootUrl().scheme())
+            || !KiriView::isSupportedImageFileName(*entryPath)) {
+            return Backend::mediaEntrySourceErrorResult<
+                KiriView::MediaEntrySourceThumbnailMetadataResult>(
+                Backend::openedCollectionThumbnailMetadataUnsupportedError());
+        }
+
+        const KArchiveDirectory *directory = m_archive.directory();
+        const KArchiveFile *file = directory == nullptr ? nullptr : directory->file(*entryPath);
+        if (file == nullptr) {
+            return Backend::mediaEntrySourceErrorResult<
+                KiriView::MediaEntrySourceThumbnailMetadataResult>(
+                Backend::openedCollectionImageNotFoundError());
+        }
+
+        const std::optional<KiriView::MediaEntrySourceThumbnailMetadata> metadata
+            = thumbnailMetadataForKArchiveFile(*file);
+        if (!metadata.has_value()) {
+            return Backend::mediaEntrySourceErrorResult<
+                KiriView::MediaEntrySourceThumbnailMetadataResult>(
+                Backend::openedCollectionThumbnailMetadataUnsupportedError());
+        }
+
+        return Backend::mediaEntrySourceThumbnailMetadataResult(*metadata);
     }
 
 private:

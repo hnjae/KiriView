@@ -225,6 +225,12 @@ msgctxt "@info:status"
 msgid "Could not read the selected collection image."
 msgstr ""
 
+#: src/archive/mediaentrysourcebackend.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Could not cache a preview thumbnail for this collection item."
+msgstr ""
+
 #: src/decoding/imageformatregistry.cpp
 #, kde-format
 msgctxt "@item:inlistbox"

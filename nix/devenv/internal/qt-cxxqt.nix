@@ -4,12 +4,15 @@
   config,
   pkgs,
   lib,
+  karchivePackage ? pkgs.kdePackages.karchive,
 }:
 let
   qtToolPrefix = pkgs.symlinkJoin {
     name = "kiriview-qt-tools";
-    paths = with pkgs.kdePackages; [
-      karchive
+    paths = [
+      karchivePackage
+    ]
+    ++ (with pkgs.kdePackages; [
       kconfig
       kimageformats
       ki18n
@@ -22,7 +25,7 @@ let
       qtmultimedia
       (qtmultimedia.dev or qtmultimedia)
       qtsvg
-    ];
+    ]);
   };
   qmake = pkgs.writeShellScriptBin "qmake6" ''
     if [ "$#" -eq 2 ] && [ "$1" = "-query" ]; then
@@ -63,7 +66,7 @@ let
   cxxCompiler = pkgs.stdenv.cc.cc;
   cxxStandardLibraryVersion = lib.getVersion cxxCompiler;
   cxxTarget = pkgs.stdenv.hostPlatform.config;
-  karchiveDev = pkgs.kdePackages.karchive.dev or pkgs.kdePackages.karchive;
+  karchiveDev = karchivePackage.dev or karchivePackage;
   kconfigDev = pkgs.kdePackages.kconfig.dev or pkgs.kdePackages.kconfig;
   kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
   ki18nDev = pkgs.kdePackages.ki18n.dev or pkgs.kdePackages.ki18n;
@@ -259,6 +262,7 @@ let
     exit 1
   '';
   runtimeEnvironment = ''
+    export CMAKE_PREFIX_PATH=${lib.escapeShellArg "${config.devenv.root}/.devenv/profile"}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}
     export QT_PLUGIN_PATH=${lib.escapeShellArg qtPluginPath}
   '';
 in

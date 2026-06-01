@@ -18,6 +18,7 @@
 #include <Qt>
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <utility>
 #include <variant>
@@ -205,6 +206,13 @@ KiriView::MediaEntrySourceImageDataResult loadOpenedCollectionThumbnailBytes(
         request.openedCollectionScope, request.sourceUrl);
 }
 
+KiriView::MediaEntrySourceThumbnailMetadataResult loadOpenedCollectionThumbnailMetadata(
+    const KiriView::ThumbnailGenerationRequest &request)
+{
+    return KiriView::loadMediaEntrySourceThumbnailMetadata(
+        request.openedCollectionScope, request.sourceUrl);
+}
+
 QByteArray loadThumbnailBytes(
     const KiriView::ThumbnailGenerationRequest &request, QString *errorString)
 {
@@ -238,22 +246,24 @@ QByteArray loadThumbnailBytes(
 }
 
 std::optional<KiriView::ThumbnailOriginalIdentity> openedCollectionVirtualOriginalIdentity(
-    const QByteArray &bytes)
+    const KiriView::MediaEntrySourceThumbnailMetadata &metadata)
 {
-    if (bytes.isEmpty()) {
+    if (metadata.checksum.algorithm != KiriView::MediaEntryContentChecksumAlgorithm::Crc32
+        || metadata.checksum.value > std::numeric_limits<std::uint32_t>::max()
+        || metadata.uncompressedSize < 0) {
         return std::nullopt;
     }
 
-    const rust::Slice<const std::uint8_t> byteSlice(
-        reinterpret_cast<const std::uint8_t *>(bytes.constData()),
-        static_cast<std::size_t>(bytes.size()));
-    const QString uri = KiriView::Bridge::qtString(KiriView::rustVirtualThumbnailContentUri(
-        byteSlice, static_cast<std::uint64_t>(bytes.size())));
+    const QString uri
+        = KiriView::Bridge::qtString(KiriView::rustVirtualThumbnailArchiveEntryCrc32Uri(
+            static_cast<std::uint32_t>(metadata.checksum.value),
+            static_cast<std::uint64_t>(metadata.uncompressedSize)));
     if (uri.isEmpty()) {
         return std::nullopt;
     }
 
-    return KiriView::ThumbnailOriginalIdentity::fromNonFileUri(uri, 0, bytes.size(), QString());
+    return KiriView::ThumbnailOriginalIdentity::fromNonFileUri(
+        uri, 0, metadata.uncompressedSize, QString());
 }
 
 std::optional<KiriView::ThumbnailCacheLookupResult> lookupOpenedCollectionThumbnail(
@@ -299,18 +309,24 @@ KiriView::ThumbnailGenerationResult generateThumbnail(
             request.requestedBucket, QStringLiteral("thumbnail generation requires a size bucket"));
     }
 
-    QString loadError;
-    QByteArray bytes = loadThumbnailBytes(request, &loadError);
-    if (bytes.isEmpty() && !loadError.isEmpty()) {
-        return failedResult(request.requestedBucket, std::move(loadError));
-    }
-
     KiriView::ThumbnailOriginalIdentity originalIdentity = request.originalIdentity.isValid()
         ? request.originalIdentity
         : KiriView::ThumbnailOriginalIdentity::fromLocalPathBytes(request.localPathBytes);
     if (!request.openedCollectionScope.isEmpty()) {
+        KiriView::MediaEntrySourceThumbnailMetadataResult metadataResult
+            = loadOpenedCollectionThumbnailMetadata(request);
+        if (const auto *error = std::get_if<KiriView::MediaEntrySourceError>(&metadataResult)) {
+            return failedResult(request.requestedBucket, error->errorString);
+        }
+        const auto *metadata
+            = std::get_if<KiriView::MediaEntrySourceThumbnailMetadata>(&metadataResult);
+        if (metadata == nullptr) {
+            return failedResult(
+                request.requestedBucket, QStringLiteral("collection thumbnail metadata failed"));
+        }
+
         const std::optional<KiriView::ThumbnailOriginalIdentity> virtualIdentity
-            = openedCollectionVirtualOriginalIdentity(bytes);
+            = openedCollectionVirtualOriginalIdentity(*metadata);
         if (!virtualIdentity.has_value()) {
             return failedResult(
                 request.requestedBucket, QStringLiteral("collection thumbnail identity failed"));
@@ -329,6 +345,12 @@ KiriView::ThumbnailGenerationResult generateThumbnail(
                 return failedResult(request.requestedBucket, lookup->errorString);
             }
         }
+    }
+
+    QString loadError;
+    QByteArray bytes = loadThumbnailBytes(request, &loadError);
+    if (bytes.isEmpty() && !loadError.isEmpty()) {
+        return failedResult(request.requestedBucket, std::move(loadError));
     }
 
     KiriView::DecodedImageResult decodeResult = KiriView::decodeImageData(bytes);

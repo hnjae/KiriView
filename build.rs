@@ -24,8 +24,8 @@ const RUST_BRIDGE_SOURCES_FILE: &str = "src/rust_bridge_sources.txt";
 const KCONFIG_SCHEMA_FILE: &str = "src/kiriviewstate.kcfg";
 const KCONFIG_COMPILER_FILE: &str = "src/kiriviewstate.kcfgc";
 const QML_SOURCE_DIR: &str = "src/qml";
-const DEFAULT_INCLUDE_ROOTS: &[&str] = &["/usr/include"];
-const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"];
+const DEFAULT_INCLUDE_ROOTS: &[&str] = &["/app/include", "/usr/include"];
+const DEFAULT_LIBRARY_DIRS: &[&str] = &["/app/lib", "/usr/lib/x86_64-linux-gnu", "/usr/lib"];
 const QT_MODULES: &[&str] = &[
     "Gui",
     "Multimedia",

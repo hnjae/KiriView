@@ -27,9 +27,25 @@ struct MediaEntrySourceImageData {
     QByteArray data;
 };
 
+enum class MediaEntryContentChecksumAlgorithm {
+    Crc32,
+};
+
+struct MediaEntryContentChecksum {
+    MediaEntryContentChecksumAlgorithm algorithm = MediaEntryContentChecksumAlgorithm::Crc32;
+    quint64 value = 0;
+};
+
+struct MediaEntrySourceThumbnailMetadata {
+    MediaEntryContentChecksum checksum;
+    qint64 uncompressedSize = -1;
+};
+
 template <typename Value> using MediaEntrySourceResult = std::variant<Value, MediaEntrySourceError>;
 using MediaEntrySourceCandidatesResult = MediaEntrySourceResult<MediaEntrySourceCandidates>;
 using MediaEntrySourceImageDataResult = MediaEntrySourceResult<MediaEntrySourceImageData>;
+using MediaEntrySourceThumbnailMetadataResult
+    = MediaEntrySourceResult<MediaEntrySourceThumbnailMetadata>;
 
 class MediaEntrySource
 {
@@ -38,6 +54,7 @@ public:
 
     virtual MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates() = 0;
     virtual MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) = 0;
+    virtual MediaEntrySourceThumbnailMetadataResult loadThumbnailMetadata(const QUrl &imageUrl);
 };
 
 using MediaEntrySourcePtr = std::shared_ptr<MediaEntrySource>;
@@ -48,6 +65,8 @@ using MediaEntrySourceFactory
 MediaEntrySourceCandidatesResult loadMediaEntrySourceCandidates(
     const OpenedCollectionScopeLocation &openedCollectionScope);
 MediaEntrySourceImageDataResult loadMediaEntrySourceImageData(
+    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl);
+MediaEntrySourceThumbnailMetadataResult loadMediaEntrySourceThumbnailMetadata(
     const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl);
 MediaEntrySourceOpenResult openMediaEntrySource(
     const OpenedCollectionScopeLocation &openedCollectionScope);

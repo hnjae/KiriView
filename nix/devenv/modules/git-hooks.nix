@@ -55,7 +55,11 @@
 
   tasks."kiriview:git-hooks" = {
     exec = "${lib.getExe config.git-hooks.package} run --all-files";
-    after = [ "devenv:files" ];
+    after = [
+      "devenv:files"
+      "kiriview:lint:clippy"
+      "kiriview:test:rust-host"
+    ];
     before = [ "kiriview:check" ];
   };
 }

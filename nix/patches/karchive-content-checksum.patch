@@ -1,0 +1,219 @@
+# SPDX-FileCopyrightText: 2026 KIM Hyunjae
+# SPDX-License-Identifier: LGPL-2.0-or-later
+#
+# Downstream KiriView development patch for KArchive 6.26.0.
+# Exposes archive-record per-file content checksums so consumers can build
+# identities from archive metadata without parsing archive formats themselves.
+
+diff --git a/src/k7zip.cpp b/src/k7zip.cpp
+index b1de7db..6db7b80 100644
+--- a/src/k7zip.cpp
++++ b/src/k7zip.cpp
+@@ -25,6 +25,7 @@
+ #include "zlib.h"
+ #include <ctime> // time()
+ #include <memory>
++#include <optional>
+ 
+ #if HAVE_OPENSSL_SUPPORT
+ #include <openssl/evp.h>
+@@ -187,7 +188,9 @@ public:
+                    const QString &symlink,
+                    qint64 pos,
+                    qint64 size,
+-                   const QByteArray &data);
++                   const QByteArray &data,
++                   bool crcDefined = false,
++                   quint32 crc = 0);
+ 
+     ~K7ZipFileEntry() override;
+ 
+@@ -208,10 +211,13 @@ public:
+      * Returns the QIODevice of the file
+      */
+     [[nodiscard]] QIODevice *createDevice() const override;
++    std::optional<KArchiveFileContentChecksum> contentChecksum() const override;
+ 
+ private:
+     const QByteArray m_data;
+     QBuffer *m_buffer;
++    bool m_crcDefined = false;
++    quint32 m_crc = 0;
+ };
+ 
+ K7ZipFileEntry::K7ZipFileEntry(K7Zip *zip,
+@@ -223,10 +229,14 @@ K7ZipFileEntry::K7ZipFileEntry(K7Zip *zip,
+                                const QString &symlink,
+                                qint64 pos,
+                                qint64 size,
+-                               const QByteArray &data)
++                               const QByteArray &data,
++                               bool crcDefined,
++                               quint32 crc)
+     : KArchiveFile(zip, name, access, date, user, group, symlink, pos, size)
+     , m_data(data)
+     , m_buffer(new QBuffer)
++    , m_crcDefined(crcDefined)
++    , m_crc(crc)
+ {
+     m_buffer->setData(m_data);
+     m_buffer->open(QIODevice::ReadOnly);
+@@ -247,6 +257,15 @@ QIODevice *K7ZipFileEntry::createDevice() const
+     return new KLimitedIODevice(m_buffer, position(), size());
+ }
+ 
++std::optional<KArchiveFileContentChecksum> K7ZipFileEntry::contentChecksum() const
++{
++    if (!m_crcDefined) {
++        return std::nullopt;
++    }
++
++    return KArchiveFileContentChecksum{KArchiveFileContentChecksumAlgorithm::Crc32, m_crc};
++}
++
+ class FileInfo
+ {
+ public:
+@@ -1101,9 +1120,22 @@ bool K7Zip::K7ZipPrivate::readSubStreamsInfo()
+             }
+         } else if (type == kEnd || type == -1) {
+             if (digestsDefined.isEmpty()) {
+-                digestsDefined.resize(numDigestsTotal, false);
+-                digests.resize(numDigestsTotal, 0);
++                digestsDefined.reserve(numDigestsTotal);
++                digests.reserve(numDigestsTotal);
++                for (int i = 0; i < folders.size(); i++) {
++                    const quint64 numSubstreams = numUnpackStreamsInFolders.at(i);
++                    const Folder *folder = folders.at(i);
++                    if (numSubstreams == 1 && folder->unpackCRCDefined) {
++                        digestsDefined.append(true);
++                        digests.append(folder->unpackCRC);
++                    } else {
++                        for (quint64 j = 0; j < numSubstreams; j++) {
++                            digestsDefined.append(false);
++                            digests.append(0);
++                        }
++                    }
++                }
+             }
+ 
+             break;
+         } else {
+@@ -1963,11 +1984,14 @@ void K7Zip::K7ZipPrivate::createItemsFromEntities(const KArchiveDirectory *dir,
+             QString symLink = fileEntry->symLinkTarget();
+             if (fileInfo->size > 0) {
+                 fileInfo->hasStream = true;
+-                data.append(outData.mid(fileEntry->position(), fileEntry->size()));
++                const QByteArray fileData = outData.mid(fileEntry->position(), fileEntry->size());
++                data.append(fileData);
+                 unpackSizes.append(fileInfo->size);
++                fileInfo->crcDefined = true;
++                fileInfo->crc = crc32(0, reinterpret_cast<const Bytef *>(fileData.constData()), fileData.size());
+             } else if (!symLink.isEmpty()) {
+                 fileInfo->hasStream = true;
+                 data.append(symLink.toUtf8());
+                 unpackSizes.append(symLink.size());
+             }
+             fileInfos.append(fileInfo);
+@@ -2982,7 +3001,9 @@ bool K7Zip::openArchive(QIODevice::OpenMode mode)
+                                        QString() /*symlink*/,
+                                        pos,
+                                        fileInfo->size,
+-                                       d->outData);
++                                       d->outData,
++                                       fileInfo->crcDefined,
++                                       fileInfo->crc);
+             } else {
+                 QString target = QFile::decodeName(d->outData.mid(pos, fileInfo->size));
+                 e = new K7ZipFileEntry(this, entryName, access, mTime, rootDir()->user(), rootDir()->group(), target, 0, 0, nullptr);
+diff --git a/src/karchive.cpp b/src/karchive.cpp
+index ae66632..45ec6fb 100644
+--- a/src/karchive.cpp
++++ b/src/karchive.cpp
+@@ -858,6 +858,11 @@ bool KArchiveFile::isFile() const
+     return true;
+ }
+ 
++std::optional<KArchiveFileContentChecksum> KArchiveFile::contentChecksum() const
++{
++    return std::nullopt;
++}
++
+ static QFileDevice::Permissions withExecutablePerms(QFileDevice::Permissions filePerms, mode_t perms)
+ {
+     if (perms & 01) {
+diff --git a/src/karchivefile.h b/src/karchivefile.h
+index bfa2a0f..00aa721 100644
+--- a/src/karchivefile.h
++++ b/src/karchivefile.h
+@@ -11,7 +11,24 @@
+ 
+ #include <karchiveentry.h>
+ 
++#include <optional>
++
+ class KArchiveFilePrivate;
++
++/*!
++ * \enum KArchiveFileContentChecksumAlgorithm
++ * \inmodule KArchive
++ *
++ * \brief Content checksum algorithm recorded for an archive file entry.
++ */
++enum class KArchiveFileContentChecksumAlgorithm {
++    Crc32,
++};
++
++struct KArchiveFileContentChecksum {
++    KArchiveFileContentChecksumAlgorithm algorithm = KArchiveFileContentChecksumAlgorithm::Crc32;
++    quint64 value = 0;
++};
+ /*!
+  * \class KArchiveFile
+  * \inmodule KArchive
+@@ -95,6 +112,13 @@ public:
+      */
+     bool isFile() const override;
+ 
++    /*!
++     * Returns the content checksum recorded in the archive entry metadata, if any.
++     *
++     * The returned value is the archive-record checksum for the uncompressed file content.
++     */
++    virtual std::optional<KArchiveFileContentChecksum> contentChecksum() const;
++
+     /*!
+      * Extracts the file to the directory \a dest
+      * \a dest the directory to extract to
+diff --git a/src/kzip.cpp b/src/kzip.cpp
+index ffd9bf1..3ba6048 100644
+--- a/src/kzip.cpp
++++ b/src/kzip.cpp
+@@ -1457,6 +1457,11 @@ unsigned long KZipFileEntry::crc32() const
+     return d->crc;
+ }
+ 
++std::optional<KArchiveFileContentChecksum> KZipFileEntry::contentChecksum() const
++{
++    return KArchiveFileContentChecksum{KArchiveFileContentChecksumAlgorithm::Crc32, d->crc};
++}
++
+ void KZipFileEntry::setCRC32(unsigned long crc32)
+ {
+     d->crc = crc32;
+diff --git a/src/kzipfileentry.h b/src/kzipfileentry.h
+index f42db1f..71acf32 100644
+--- a/src/kzipfileentry.h
++++ b/src/kzipfileentry.h
+@@ -66,6 +66,11 @@ public:
+      */
+     unsigned long crc32() const;
+ 
++    /*!
++     * Returns the ZIP central directory CRC32 for this file entry.
++     */
++    std::optional<KArchiveFileContentChecksum> contentChecksum() const override;
++
+     /*!
+      * CRC: only used when writing
+      */

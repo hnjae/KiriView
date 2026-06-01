@@ -113,9 +113,6 @@ mod ffi {
             rgba8_pixels: &[u8],
         ) -> RustThumbnailCacheInstallResult;
 
-        #[cxx_name = "rustVirtualThumbnailContentUri"]
-        fn virtual_content_uri(bytes: &[u8], uncompressed_size: u64) -> String;
-
         #[cxx_name = "rustVirtualThumbnailArchiveEntryCrc32Uri"]
         fn virtual_archive_entry_crc32_uri(crc32: u32, uncompressed_size: u64) -> String;
     }
@@ -131,7 +128,6 @@ use ffi::{
     RustThumbnailCacheLookupStatus, RustThumbnailOriginalIdentity,
     RustThumbnailOriginalIdentityMode,
 };
-use sha2::{Digest, Sha256};
 use xdg_thumbnail::{
     DisplayThumbnailRgba8LookupEntryParts, OwnedRawThumbnailImage, PersonalCacheRoot,
     PersonalOriginalIdentity, PersonalOriginalUri, PersonalThumbnailLookup,
@@ -412,9 +408,8 @@ fn readable_original_identity(
     }
 }
 
-fn virtual_content_uri(bytes: &[u8], uncompressed_size: u64) -> String {
-    let digest = Sha256::digest(bytes);
-    format!("x-kiriview://thumbnail/content/v1/sha256/{digest:x}/{uncompressed_size}")
+fn virtual_archive_entry_crc32_uri(crc32: u32, uncompressed_size: u64) -> String {
+    format!("x-kiriview://thumbnail/archive-entry/v1/crc32/{crc32:08x}/{uncompressed_size}")
 }
 
 fn ready_result(parts: DisplayThumbnailRgba8LookupEntryParts) -> RustThumbnailCacheLookupResult {
@@ -709,7 +704,7 @@ mod tests {
         let temp = tempfile::TempDir::new().unwrap();
         let root = PersonalCacheRoot::new(temp.path().join("thumbnails")).unwrap();
         let original = virtual_original(
-            "x-kiriview://thumbnail/content/v1/sha256/3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7/4",
+            "x-kiriview://thumbnail/archive-entry/v1/crc32/7a6c86f1/4",
             4,
         );
         let pixels = [1, 2, 3, 255];
@@ -728,20 +723,6 @@ mod tests {
         let lookup = lookup_display_thumbnail_rgba8_at_root(root, &original, ThumbnailSize::Normal);
         assert_eq!(lookup.status, RustThumbnailCacheLookupStatus::Ready);
         assert_eq!(lookup.pixels, pixels);
-    }
-
-    #[test]
-    fn content_virtual_uri_depends_only_on_bytes_and_size() {
-        let first = virtual_content_uri(b"same image bytes", 16);
-        let second = virtual_content_uri(b"same image bytes", 16);
-        let different_size = virtual_content_uri(b"same image bytes", 17);
-        let different_bytes = virtual_content_uri(b"other image bytes", 16);
-
-        assert_eq!(first, second);
-        assert_ne!(first, different_size);
-        assert_ne!(first, different_bytes);
-        assert!(first.starts_with("x-kiriview://thumbnail/content/v1/sha256/"));
-        assert!(first.ends_with("/16"));
     }
 
     #[test]

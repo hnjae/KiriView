@@ -45,6 +45,7 @@ QString fallbackMediaEntrySourceOpenError(
     const OpenedCollectionScopeLocation &openedCollectionScope);
 QString openedCollectionImageNotFoundError();
 QString openedCollectionImageReadError();
+QString openedCollectionThumbnailMetadataUnsupportedError();
 
 template <typename Result> Result mediaEntrySourceErrorResult(QString errorString)
 {
@@ -54,6 +55,8 @@ template <typename Result> Result mediaEntrySourceErrorResult(QString errorStrin
 MediaEntrySourceCandidatesResult mediaEntrySourceCandidatesResult(
     std::vector<ImageDocumentPageCandidate> candidates);
 MediaEntrySourceImageDataResult mediaEntrySourceImageDataResult(QByteArray data);
+MediaEntrySourceThumbnailMetadataResult mediaEntrySourceThumbnailMetadataResult(
+    MediaEntrySourceThumbnailMetadata metadata);
 
 const MediaEntrySourceBackendOperations *kArchiveMediaEntrySourceBackendOperations();
 const MediaEntrySourceBackendOperations *libArchiveMediaEntrySourceBackendOperations();

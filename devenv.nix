@@ -7,7 +7,14 @@
   ...
 }:
 let
-  qtCxxqt = import ./nix/devenv/internal/qt-cxxqt.nix { inherit config pkgs lib; };
+  karchiveContentChecksumPatch = ./nix/patches/karchive-content-checksum.patch;
+  patchedKArchive = pkgs.kdePackages.karchive.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [ karchiveContentChecksumPatch ];
+  });
+  qtCxxqt = import ./nix/devenv/internal/qt-cxxqt.nix {
+    inherit config lib pkgs;
+    karchivePackage = patchedKArchive;
+  };
 in
 {
   imports = [
@@ -33,6 +40,7 @@ in
 
   packages = [
     qtCxxqt.qmake
+    patchedKArchive
   ]
   ++ (with pkgs; [
     # Flatpak
@@ -43,7 +51,6 @@ in
     clazy
     cmake
     kdePackages.extra-cmake-modules
-    kdePackages.karchive
     kdePackages.kconfig
     kdePackages.kimageformats
     kdePackages.ki18n

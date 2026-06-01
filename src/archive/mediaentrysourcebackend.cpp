@@ -55,6 +55,17 @@ KiriView::MediaEntrySourceOpenResult openWithMediaEntrySourceBackend(
 }
 }
 
+namespace KiriView {
+MediaEntrySourceThumbnailMetadataResult MediaEntrySource::loadThumbnailMetadata(
+    const QUrl &imageUrl)
+{
+    Q_UNUSED(imageUrl)
+    return MediaEntrySourceBackendDetail::mediaEntrySourceErrorResult<
+        MediaEntrySourceThumbnailMetadataResult>(
+        MediaEntrySourceBackendDetail::openedCollectionThumbnailMetadataUnsupportedError());
+}
+}
+
 namespace KiriView::MediaEntrySourceBackendDetail {
 MediaEntrySourceWithCandidateSnapshot::MediaEntrySourceWithCandidateSnapshot(
     std::vector<ImageDocumentPageCandidate> candidates)
@@ -125,6 +136,11 @@ QString openedCollectionImageReadError()
     return i18nc("@info:status", "Could not read the selected collection image.");
 }
 
+QString openedCollectionThumbnailMetadataUnsupportedError()
+{
+    return i18nc("@info:status", "Could not cache a preview thumbnail for this collection item.");
+}
+
 MediaEntrySourceCandidatesResult mediaEntrySourceCandidatesResult(
     std::vector<ImageDocumentPageCandidate> candidates)
 {
@@ -135,6 +151,12 @@ MediaEntrySourceCandidatesResult mediaEntrySourceCandidatesResult(
 MediaEntrySourceImageDataResult mediaEntrySourceImageDataResult(QByteArray data)
 {
     return MediaEntrySourceImageData { std::move(data) };
+}
+
+MediaEntrySourceThumbnailMetadataResult mediaEntrySourceThumbnailMetadataResult(
+    MediaEntrySourceThumbnailMetadata metadata)
+{
+    return metadata;
 }
 }
 
@@ -173,6 +195,24 @@ MediaEntrySourceImageDataResult loadMediaEntrySourceImageData(
     }
 
     return (*source)->loadImageData(imageUrl);
+}
+
+MediaEntrySourceThumbnailMetadataResult loadMediaEntrySourceThumbnailMetadata(
+    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl)
+{
+    MediaEntrySourceOpenResult opened = openMediaEntrySource(openedCollectionScope);
+    if (const auto *error = std::get_if<MediaEntrySourceError>(&opened)) {
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceThumbnailMetadataResult>(
+            error->errorString);
+    }
+
+    const auto *source = std::get_if<MediaEntrySourcePtr>(&opened);
+    if (source == nullptr || *source == nullptr) {
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceThumbnailMetadataResult>(
+            Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope));
+    }
+
+    return (*source)->loadThumbnailMetadata(imageUrl);
 }
 
 MediaEntrySourceOpenResult openMediaEntrySource(
