@@ -10,6 +10,7 @@
 #include <QByteArray>
 #include <QHash>
 #include <QString>
+#include <QUrl>
 #include <QVariant>
 #include <vector>
 
@@ -24,6 +25,8 @@ public:
         IconNameRole,
         CurrentRole,
         NavigationGenerationRole,
+        ThumbnailStatusRole,
+        ThumbnailImageSourceRole,
     };
 
     explicit ActiveNavigationThumbnailModel(QObject *parent = nullptr);
@@ -32,11 +35,19 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    void setRows(std::vector<ActiveNavigationThumbnailRow> rows);
+    void setRows(std::vector<ActiveNavigationThumbnailRow> rows, quint64 navigationGeneration);
     void clear();
     bool containsRowIdentity(int number, const QUrl &url, quint64 navigationGeneration) const;
+    void setThumbnailResultAt(
+        int row, ActiveNavigationThumbnailResultStatus status, const QUrl &imageSource = {});
 
 private:
+    struct ThumbnailResultProjection {
+        ActiveNavigationThumbnailResultStatus status
+            = ActiveNavigationThumbnailResultStatus::NoResult;
+        QUrl imageSource;
+    };
+
     static QString iconName(ActiveNavigationThumbnailKind kind);
     static bool sameRowIdentity(
         const ActiveNavigationThumbnailRow &left, const ActiveNavigationThumbnailRow &right);
@@ -46,6 +57,7 @@ private:
         const std::vector<ActiveNavigationThumbnailRow> &right);
 
     std::vector<ActiveNavigationThumbnailRow> m_rows;
+    std::vector<ThumbnailResultProjection> m_results;
     quint64 m_navigationGeneration = 0;
 };
 }

@@ -39,6 +39,10 @@ QVariant ActiveNavigationThumbnailModel::data(const QModelIndex &index, int role
         return row.current;
     case NavigationGenerationRole:
         return QVariant::fromValue(m_navigationGeneration);
+    case ThumbnailStatusRole:
+        return static_cast<int>(m_results.at(static_cast<std::size_t>(index.row())).status);
+    case ThumbnailImageSourceRole:
+        return m_results.at(static_cast<std::size_t>(index.row())).imageSource;
     default:
         return {};
     }
@@ -53,10 +57,13 @@ QHash<int, QByteArray> ActiveNavigationThumbnailModel::roleNames() const
         { IconNameRole, QByteArrayLiteral("iconName") },
         { CurrentRole, QByteArrayLiteral("current") },
         { NavigationGenerationRole, QByteArrayLiteral("navigationGeneration") },
+        { ThumbnailStatusRole, QByteArrayLiteral("thumbnailStatus") },
+        { ThumbnailImageSourceRole, QByteArrayLiteral("thumbnailImageSource") },
     };
 }
 
-void ActiveNavigationThumbnailModel::setRows(std::vector<ActiveNavigationThumbnailRow> rows)
+void ActiveNavigationThumbnailModel::setRows(
+    std::vector<ActiveNavigationThumbnailRow> rows, quint64 navigationGeneration)
 {
     if (sameRows(m_rows, rows)) {
         return;
@@ -64,8 +71,9 @@ void ActiveNavigationThumbnailModel::setRows(std::vector<ActiveNavigationThumbna
 
     if (!sameRowIdentities(m_rows, rows)) {
         beginResetModel();
-        ++m_navigationGeneration;
+        m_navigationGeneration = navigationGeneration;
         m_rows = std::move(rows);
+        m_results.assign(m_rows.size(), {});
         endResetModel();
         return;
     }
@@ -83,7 +91,7 @@ void ActiveNavigationThumbnailModel::setRows(std::vector<ActiveNavigationThumbna
     }
 }
 
-void ActiveNavigationThumbnailModel::clear() { setRows({}); }
+void ActiveNavigationThumbnailModel::clear() { setRows({}, m_navigationGeneration); }
 
 bool ActiveNavigationThumbnailModel::containsRowIdentity(
     int number, const QUrl &url, quint64 navigationGeneration) const
@@ -99,6 +107,24 @@ bool ActiveNavigationThumbnailModel::containsRowIdentity(
     }
 
     return false;
+}
+
+void ActiveNavigationThumbnailModel::setThumbnailResultAt(
+    int row, ActiveNavigationThumbnailResultStatus status, const QUrl &imageSource)
+{
+    if (row < 0 || static_cast<std::size_t>(row) >= m_results.size()) {
+        return;
+    }
+
+    ThumbnailResultProjection &result = m_results.at(static_cast<std::size_t>(row));
+    if (result.status == status && result.imageSource == imageSource) {
+        return;
+    }
+
+    result.status = status;
+    result.imageSource = imageSource;
+    Q_EMIT dataChanged(
+        index(row, 0), index(row, 0), { ThumbnailStatusRole, ThumbnailImageSourceRole });
 }
 
 QString ActiveNavigationThumbnailModel::iconName(ActiveNavigationThumbnailKind kind)
@@ -117,7 +143,7 @@ bool ActiveNavigationThumbnailModel::sameRowIdentity(
     const ActiveNavigationThumbnailRow &left, const ActiveNavigationThumbnailRow &right)
 {
     return left.number == right.number && left.url == right.url && left.label == right.label
-        && left.kind == right.kind;
+        && left.kind == right.kind && left.sourceKind == right.sourceKind;
 }
 
 bool ActiveNavigationThumbnailModel::sameRows(const std::vector<ActiveNavigationThumbnailRow> &left,

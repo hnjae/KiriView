@@ -8,7 +8,6 @@
 #include "navigation/mediaformatregistry.h"
 #include "navigation/navigationlogging.h"
 #include "predecode/mediapredecodecoordinator.h"
-#include "session/activenavigationthumbnailprojection.h"
 
 #include <QAbstractListModel>
 #include <QDebug>
@@ -81,7 +80,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_imageDocument(std::move(imageDocument))
     , m_videoDocument(std::move(videoDocument))
     , m_state(std::move(changeCallback))
-    , m_activeNavigationThumbnailModel(std::make_unique<ActiveNavigationThumbnailModel>(owner))
+    , m_activeNavigationThumbnailRuntime(std::make_unique<ActiveNavigationThumbnailRuntime>(owner))
     , m_directMediaNavigationRuntime(dependencies.directMediaNavigationCandidateProvider)
     , m_directMediaDeletionCandidateRuntime(
           std::move(dependencies.directMediaNavigationCandidateProvider))
@@ -236,7 +235,9 @@ ActiveNavigationRevealDirection DocumentSessionRuntime::activeNavigationRevealDi
 
 QAbstractListModel *DocumentSessionRuntime::activeNavigationThumbnailModel() const
 {
-    return m_activeNavigationThumbnailModel.get();
+    return m_activeNavigationThumbnailRuntime != nullptr
+        ? m_activeNavigationThumbnailRuntime->model()
+        : nullptr;
 }
 
 ActiveNavigationThumbnailDemandBucket DocumentSessionRuntime::activeNavigationThumbnailDemandBucket(
@@ -249,25 +250,15 @@ bool DocumentSessionRuntime::reportActiveNavigationThumbnailDemand(int number, c
     int physicalMaxEdge, ActiveNavigationThumbnailDemandPriority priority,
     quint64 navigationGeneration)
 {
-    if (m_activeNavigationThumbnailModel == nullptr
-        || !m_activeNavigationThumbnailModel->containsRowIdentity(
-            number, url, navigationGeneration)) {
-        return false;
-    }
-
     const ActiveNavigationThumbnailDemandBucket bucket
         = activeNavigationThumbnailDemandBucket(physicalMaxEdge);
-    if (bucket == ActiveNavigationThumbnailDemandBucket::None) {
+    if (m_activeNavigationThumbnailRuntime == nullptr
+        || bucket == ActiveNavigationThumbnailDemandBucket::None) {
         return false;
     }
 
-    return m_activeNavigationThumbnailDemandTracker.record(ActiveNavigationThumbnailDemand {
-        number,
-        url,
-        bucket,
-        priority,
-        navigationGeneration,
-    });
+    return m_activeNavigationThumbnailRuntime->reportDemand(
+        number, url, bucket, priority, navigationGeneration);
 }
 
 std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
@@ -563,7 +554,7 @@ void DocumentSessionRuntime::recomputePublicProjection()
 
 void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
 {
-    if (m_activeNavigationThumbnailModel == nullptr) {
+    if (m_activeNavigationThumbnailRuntime == nullptr) {
         return;
     }
 
@@ -571,11 +562,11 @@ void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
         m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(),
         m_state.directMediaNavigationCandidates(), m_imageDocument.pageNavigationSnapshot());
     if (rows.empty()) {
-        m_activeNavigationThumbnailModel->clear();
+        m_activeNavigationThumbnailRuntime->setRows({});
         return;
     }
 
-    m_activeNavigationThumbnailModel->setRows(std::move(rows));
+    m_activeNavigationThumbnailRuntime->setRows(std::move(rows));
 }
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)

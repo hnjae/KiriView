@@ -18,11 +18,28 @@ enum class ActiveNavigationThumbnailKind {
     Video,
 };
 
+enum class ActiveNavigationThumbnailSourceKind {
+    DirectImage,
+    DirectVideo,
+    ImageDocumentPageImage,
+    ImageDocumentPageVideo,
+};
+
+enum class ActiveNavigationThumbnailResultStatus {
+    NoResult,
+    Pending,
+    Ready,
+    Unsupported,
+    Failed,
+};
+
 struct ActiveNavigationThumbnailRow {
     int number = 0;
     QUrl url;
     QString label;
     ActiveNavigationThumbnailKind kind = ActiveNavigationThumbnailKind::Image;
+    ActiveNavigationThumbnailSourceKind sourceKind
+        = ActiveNavigationThumbnailSourceKind::DirectImage;
     bool current = false;
 };
 

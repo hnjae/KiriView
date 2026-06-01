@@ -136,6 +136,15 @@ public:
     };
     Q_ENUM(ThumbnailDemandPriority)
 
+    enum class ThumbnailResultStatus {
+        NoThumbnailResult,
+        PendingThumbnailResult,
+        ReadyThumbnailResult,
+        UnsupportedThumbnailResult,
+        FailedThumbnailResult,
+    };
+    Q_ENUM(ThumbnailResultStatus)
+
     explicit KiriDocumentSession(QObject *parent = nullptr);
     explicit KiriDocumentSession(
         KiriView::KiriDocumentSessionDependencies dependencies, QObject *parent = nullptr);

@@ -9,7 +9,7 @@
 #include "predecode/mediapredecodedependencies.h"
 #include "session/activenavigationprojection.h"
 #include "session/activenavigationthumbnaildemand.h"
-#include "session/activenavigationthumbnailmodel.h"
+#include "session/activenavigationthumbnailruntime.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondocumentports.h"
 #include "session/documentsessionmediadeletionruntime.h"
@@ -155,8 +155,7 @@ private:
     DocumentSessionImageDocumentPort m_imageDocument;
     DocumentSessionVideoDocumentPort m_videoDocument;
     DocumentSessionState m_state;
-    std::unique_ptr<ActiveNavigationThumbnailModel> m_activeNavigationThumbnailModel;
-    ActiveNavigationThumbnailDemandTracker m_activeNavigationThumbnailDemandTracker;
+    std::unique_ptr<ActiveNavigationThumbnailRuntime> m_activeNavigationThumbnailRuntime;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaDeletionCandidateRuntime;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;

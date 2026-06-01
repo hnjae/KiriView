@@ -276,6 +276,8 @@ Controls.Pane {
                 required property string label
                 required property var navigationGeneration
                 required property int number
+                required property url thumbnailImageSource
+                required property int thumbnailStatus
                 required property url url
 
                 objectName: "thumbnailStripItem"
@@ -297,6 +299,7 @@ Controls.Pane {
                 // qmllint disable missing-property
                 readonly property real thumbnailDevicePixelRatio: Window.window && Window.window.effectiveDevicePixelRatio > 0 ? Window.window.effectiveDevicePixelRatio : 1.0
                 // qmllint enable missing-property
+                readonly property bool thumbnailImageReady: thumbnailStatus === KiriDocumentSession.ReadyThumbnailResult && thumbnailImageSource.toString().length > 0
 
                 function previewBoxIntersectsViewport() {
                     if (thumbnailPreviewBox.width <= 0 || thumbnailPreviewBox.height <= 0 || thumbnailStrip.width <= 0 || thumbnailStrip.height <= 0) {
@@ -363,11 +366,22 @@ Controls.Pane {
                         onHeightChanged: thumbnailDelegate.reportThumbnailDemand()
                         onWidthChanged: thumbnailDelegate.reportThumbnailDemand()
 
+                        Image {
+                            anchors.fill: parent
+                            asynchronous: true
+                            fillMode: Image.PreserveAspectFit
+                            mipmap: true
+                            smooth: true
+                            source: thumbnailDelegate.thumbnailImageSource
+                            visible: thumbnailDelegate.thumbnailImageReady
+                        }
+
                         Kirigami.Icon {
                             anchors.centerIn: parent
                             color: root.viewerForegroundColor
                             height: Math.min(parent.height, Kirigami.Units.iconSizes.large)
                             source: thumbnailDelegate.iconName
+                            visible: !thumbnailDelegate.thumbnailImageReady
                             width: Math.min(parent.width, Kirigami.Units.iconSizes.large)
                         }
                     }
