@@ -128,7 +128,7 @@ When a direct video file is displayed and its intrinsic video frame size is unkn
 
 When a CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive collection opened by KiriView is displayed and the active page position is known, the title is the archive file name, a spaced en dash, the current primary page number, `/`, the total supported item count, a spaced em dash, and `KiriView`.
 
-When a supported image page inside a directly opened CBZ or CB7 archive collection appears in the thumbnail strip, KiriView may show a generated preview thumbnail for that page. Other directly opened archive-collection formats, directly opened directory collections, collection-internal video placeholders, direct videos, and direct archive-entry media URLs keep their normal placeholder thumbnail icons.
+When a supported image page inside a directly opened CBZ or CB7 archive collection appears in the thumbnail strip and its archive entry provides recorded content checksum metadata, KiriView may show a generated preview thumbnail for that page. Other directly opened archive-collection formats, CBZ or CB7 entries without usable checksum metadata, directly opened directory collections, collection-internal video placeholders, direct videos, and direct archive-entry media URLs keep their normal placeholder thumbnail icons.
 
 When a directly opened local directory collection is displayed and the active page position is known, the title is the directory name, a spaced en dash, the current primary page number, `/`, the total supported item count, a spaced em dash, and `KiriView`.
 

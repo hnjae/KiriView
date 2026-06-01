@@ -6,7 +6,7 @@ When an installed `kiriview` translation catalog is available, KiriView's UI tex
 
 KiriView does not expose a general Settings page in the current scope.
 
-The active navigation thumbnail strip may generate preview thumbnails only for supported direct local image items and supported image pages inside directly opened CBZ or CB7 archive collections.
+The active navigation thumbnail strip may generate preview thumbnails only for supported direct local image items and supported image pages inside directly opened CBZ or CB7 archive collections when the archive entry exposes recorded content checksum metadata.
 
 ## Out of Scope
 
