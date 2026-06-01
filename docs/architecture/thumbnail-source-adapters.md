@@ -2,7 +2,15 @@
 
 Active navigation thumbnails use source adapters to keep thumbnail scheduling and result projection independent from the kind of navigation row being displayed. The C++ document-session thumbnail runtime owns demand, async job lifetime, stale-completion rejection, foreground and background priority, and the image-provider store; adapters answer whether a row can produce a thumbnail and which cache or generation contract applies.
 
-Adapters consume the active thumbnail source key and demand bucket. They must not mutate QML-facing model state, schedule jobs independently, install cache entries directly, or bypass runtime stale-completion identity. Adapter outputs are plans: unsupported fallback, cacheable local-file generation, or in-memory-only generation.
+Adapters consume the active thumbnail source key and demand bucket. They must not mutate QML-facing model state, schedule jobs independently, install cache entries directly, or bypass runtime stale-completion identity. Adapter outputs are plans: unsupported fallback, cacheable local-file generation, cacheable opened-collection entry generation, or in-memory-only generation.
+
+## Original Identity
+
+Thumbnail cache identity is expressed separately from row source identity. Local files use Freedesktop file-original identity derived from the local path. Cacheable non-file originals use an explicit virtual original identity with URI, mtime, byte size, and optional MIME type supplied by the owning adapter or generation path.
+
+Opened-collection entry thumbnails use content-addressed virtual originals when the collection policy allows cache writes. The URI format is `x-kiriview://thumbnail/content/v1/sha256/<lower-hex-digest>/<decimal-uncompressed-size>`, where the digest is SHA-256 of the uncompressed entry bytes. The virtual original mtime is always `0` because freshness is carried by the content-addressed URI. The original byte size is the uncompressed entry byte length.
+
+Archive metadata checksums such as ZIP or 7Z CRC32 values are not content identity for this policy. The thumbnail generation job reads entry bytes, derives the SHA-256 URI, performs the XDG lookup with that virtual original, decodes and renders only on cache miss, then installs the generated thumbnail with the same virtual identity.
 
 ## Direct Local Images
 
@@ -20,7 +28,13 @@ If representative-frame extraction can render an image but cannot provide cache-
 
 Archive-entry thumbnails represent an item inside an archive-backed image-document scope. The adapter should identify the entry relative to the archive scope, include backing archive freshness and entry identity when available, and render through the runtime generation provider. Cache writes are allowed only after the Freedesktop cache identity and freshness model is revisited for archive-internal sources; until then, archive-entry thumbnails should use in-memory-only generation.
 
-## Archive Collections
+## Opened Collection Entries
+
+Opened-collection entry thumbnails represent navigation rows inside a directly opened collection whose bytes are owned by a media entry source. The collection module owns the policy that decides whether an entry can be cached. In v1, only image entries inside directly opened comic-book archives backed by `zip` or `sevenz` roots may return a cacheable opened-collection entry plan. This covers CBZ and CB7 scopes.
+
+Directory collections, TAR-backed CBT scopes, RAR-backed CBR scopes, generic ZIP or 7Z archive collections that are not comic-book archive scopes, and collection video entries return unsupported fallback unless a future collection-owned policy defines a cache-safe identity for them.
+
+## Archive Collection Rows
 
 Archive-collection thumbnails represent a collection row rather than one directly opened file. The adapter should choose a deterministic representative item or composed preview from the collection scope and keep that representative choice part of the adapter-owned source identity. Cache writes require a stable collection identity and freshness facts for the backing archive plus the selected representative inputs; otherwise the plan must be in-memory-only.
 
