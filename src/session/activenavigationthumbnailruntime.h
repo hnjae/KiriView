@@ -8,6 +8,7 @@
 #include "session/activenavigationthumbnailmodel.h"
 #include "session/activenavigationthumbnailprojection.h"
 #include "session/thumbnailcachelookup.h"
+#include "session/thumbnailgeneration.h"
 #include "session/thumbnailimagestore.h"
 
 #include <QAbstractListModel>
@@ -48,7 +49,8 @@ class ActiveNavigationThumbnailRuntime final
 public:
     explicit ActiveNavigationThumbnailRuntime(QObject *owner = nullptr,
         ThumbnailCacheLookupProvider lookupProvider = {},
-        std::shared_ptr<ThumbnailImageStore> imageStore = {});
+        std::shared_ptr<ThumbnailImageStore> imageStore = {},
+        ThumbnailGenerationProvider generationProvider = {});
     ~ActiveNavigationThumbnailRuntime();
 
     QAbstractListModel *model() const;
@@ -103,14 +105,19 @@ private:
     void releaseImage(RowState &state);
     void releaseAllImages();
     void startLookupJob(RowState &state, const AcceptedDemand &demand);
-    void finishLookup(const ActiveNavigationThumbnailSourceKey &sourceKey,
+    void startGenerationJob(RowState &state, const AcceptedDemand &demand);
+    bool activeJobMatches(const RowState &state, quint64 jobId, const AcceptedDemand &demand) const;
+    void finishLookup(quint64 jobId, const ActiveNavigationThumbnailSourceKey &sourceKey,
         ActiveNavigationThumbnailDemandBucket bucket, ThumbnailCacheLookupResult lookupResult);
+    void finishGeneration(quint64 jobId, const ActiveNavigationThumbnailSourceKey &sourceKey,
+        ActiveNavigationThumbnailDemandBucket bucket, ThumbnailGenerationResult generationResult);
     void publishRows();
     void publishResultAt(std::size_t row);
 
     QObject *m_owner = nullptr;
     std::unique_ptr<ActiveNavigationThumbnailModel> m_model;
     ThumbnailCacheLookupProvider m_lookupProvider;
+    ThumbnailGenerationProvider m_generationProvider;
     std::shared_ptr<ThumbnailImageStore> m_imageStore;
     std::vector<RowState> m_rows;
     quint64 m_navigationGeneration = 0;

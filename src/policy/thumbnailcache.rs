@@ -33,12 +33,30 @@ mod ffi {
         error: String,
     }
 
+    #[derive(Debug, PartialEq, Eq)]
+    struct RustThumbnailCacheInstallResult {
+        success: bool,
+        requested_bucket: RustThumbnailCacheBucket,
+        installed_cache_path: String,
+        error: String,
+    }
+
     extern "Rust" {
         #[cxx_name = "rustLookupDisplayThumbnailRgba8"]
         fn rust_lookup_display_thumbnail_rgba8(
             local_path_bytes: &[u8],
             requested_bucket: RustThumbnailCacheBucket,
         ) -> RustThumbnailCacheLookupResult;
+
+        #[cxx_name = "rustInstallDisplayThumbnailRgba8"]
+        fn rust_install_display_thumbnail_rgba8(
+            local_path_bytes: &[u8],
+            requested_bucket: RustThumbnailCacheBucket,
+            width: i32,
+            height: i32,
+            stride: i32,
+            rgba8_pixels: &[u8],
+        ) -> RustThumbnailCacheInstallResult;
     }
 }
 
@@ -48,10 +66,12 @@ use std::path::PathBuf;
 use std::os::unix::ffi::OsStrExt;
 
 use ffi::{
-    RustThumbnailCacheBucket, RustThumbnailCacheLookupResult, RustThumbnailCacheLookupStatus,
+    RustThumbnailCacheBucket, RustThumbnailCacheInstallResult, RustThumbnailCacheLookupResult,
+    RustThumbnailCacheLookupStatus,
 };
 use xdg_thumbnail::{
-    DisplayThumbnailRgba8LookupEntryParts, PersonalCacheRoot, PersonalThumbnailLookup,
+    DisplayThumbnailRgba8LookupEntryParts, OwnedRawThumbnailImage, PersonalCacheRoot,
+    PersonalThumbnailLookup, PersonalThumbnailRawInstallRequest, RawThumbnailPixelFormat,
     ReadablePersonalOriginalIdentity, ThumbnailSize,
 };
 
@@ -93,6 +113,85 @@ fn lookup_display_thumbnail_rgba8_at_root(
             format!("invalid thumbnail cache entry: {problems:?}"),
         ),
         Err(error) => failed_result(requested_bucket, error),
+    }
+}
+
+fn rust_install_display_thumbnail_rgba8(
+    local_path_bytes: &[u8],
+    requested_bucket: RustThumbnailCacheBucket,
+    width: i32,
+    height: i32,
+    stride: i32,
+    rgba8_pixels: &[u8],
+) -> RustThumbnailCacheInstallResult {
+    let Some(requested_size) = thumbnail_size_from_bucket(requested_bucket) else {
+        return install_failed_result(
+            requested_bucket,
+            "thumbnail cache install requires a concrete size bucket",
+        );
+    };
+
+    let root = match PersonalCacheRoot::resolve_from_env() {
+        Ok(root) => root,
+        Err(error) => return install_failed_result(requested_bucket, error),
+    };
+    install_display_thumbnail_rgba8_at_root(
+        root,
+        local_path_bytes,
+        requested_size,
+        width,
+        height,
+        stride,
+        rgba8_pixels,
+    )
+}
+
+fn install_display_thumbnail_rgba8_at_root(
+    root: PersonalCacheRoot,
+    local_path_bytes: &[u8],
+    requested_size: ThumbnailSize,
+    width: i32,
+    height: i32,
+    stride: i32,
+    rgba8_pixels: &[u8],
+) -> RustThumbnailCacheInstallResult {
+    let requested_bucket = bucket_from_thumbnail_size(requested_size);
+    let local_path = PathBuf::from(OsStr::from_bytes(local_path_bytes));
+    let original = match ReadablePersonalOriginalIdentity::from_local_path(&local_path) {
+        Ok(original) => original,
+        Err(error) => return install_failed_result(requested_bucket, error),
+    };
+    let width = match u32::try_from(width) {
+        Ok(width) => width,
+        Err(error) => return install_failed_result(requested_bucket, error),
+    };
+    let height = match u32::try_from(height) {
+        Ok(height) => height,
+        Err(error) => return install_failed_result(requested_bucket, error),
+    };
+    let stride = match usize::try_from(stride) {
+        Ok(stride) => stride,
+        Err(error) => return install_failed_result(requested_bucket, error),
+    };
+    let image = match OwnedRawThumbnailImage::new(
+        width,
+        height,
+        stride,
+        RawThumbnailPixelFormat::Rgba8,
+        rgba8_pixels.to_vec(),
+    ) {
+        Ok(image) => image,
+        Err(error) => return install_failed_result(requested_bucket, error),
+    };
+    let request = PersonalThumbnailRawInstallRequest::new(root, original, requested_size, image);
+    match request.install_path() {
+        Ok(installed) => RustThumbnailCacheInstallResult {
+            success: true,
+            requested_bucket,
+            installed_cache_path: installed.path().to_string_lossy().into_owned(),
+            error: String::new(),
+        },
+        Err(error) => install_failed_result(requested_bucket, error),
     }
 }
 
@@ -146,6 +245,18 @@ fn failed_result(
     }
 }
 
+fn install_failed_result(
+    requested_bucket: RustThumbnailCacheBucket,
+    error: impl ToString,
+) -> RustThumbnailCacheInstallResult {
+    RustThumbnailCacheInstallResult {
+        success: false,
+        requested_bucket,
+        installed_cache_path: String::new(),
+        error: error.to_string(),
+    }
+}
+
 fn thumbnail_size_from_bucket(bucket: RustThumbnailCacheBucket) -> Option<ThumbnailSize> {
     match bucket {
         RustThumbnailCacheBucket::None => None,
@@ -171,8 +282,9 @@ fn bucket_from_thumbnail_size(size: ThumbnailSize) -> RustThumbnailCacheBucket {
 mod tests {
     use super::*;
     use std::fs;
+    use std::os::unix::fs::PermissionsExt;
 
-    use xdg_thumbnail::{RawThumbnailImage, RawThumbnailPixelFormat};
+    use xdg_thumbnail::RawThumbnailImage;
 
     #[test]
     fn bucket_mapping_matches_freedesktop_sizes() {
@@ -271,6 +383,103 @@ mod tests {
         assert!(!result.error.is_empty());
     }
 
+    #[test]
+    fn raw_install_success_creates_lookup_readable_cache_entry() {
+        let fixture = Fixture::new();
+        let pixels = [50, 60, 70, 255, 80, 90, 100, 255];
+
+        let install = fixture.install_via_bridge(ThumbnailSize::Normal, 2, 1, 8, &pixels);
+
+        assert!(install.success);
+        assert_eq!(install.requested_bucket, RustThumbnailCacheBucket::Normal);
+        assert!(install.installed_cache_path.contains("/normal/"));
+
+        let lookup = fixture.lookup(ThumbnailSize::Normal);
+        assert_eq!(lookup.status, RustThumbnailCacheLookupStatus::Ready);
+        assert_eq!(lookup.width, 2);
+        assert_eq!(lookup.height, 1);
+        assert_eq!(lookup.stride, 8);
+        assert_eq!(lookup.pixels, pixels);
+    }
+
+    #[test]
+    fn raw_install_rejects_invalid_bucket() {
+        let fixture = Fixture::new();
+
+        let install = install_display_thumbnail_rgba8_at_root(
+            fixture.root.clone(),
+            fixture.original_path.as_os_str().as_bytes(),
+            ThumbnailSize::Normal,
+            1,
+            1,
+            4,
+            &[1, 2, 3, 255],
+        );
+        assert!(install.success);
+
+        let failed = rust_install_display_thumbnail_rgba8(
+            fixture.original_path.as_os_str().as_bytes(),
+            RustThumbnailCacheBucket::None,
+            1,
+            1,
+            4,
+            &[1, 2, 3, 255],
+        );
+        assert!(!failed.success);
+        assert!(!failed.error.is_empty());
+    }
+
+    #[test]
+    fn raw_install_rejects_invalid_dimensions_stride_and_buffer() {
+        let fixture = Fixture::new();
+
+        let zero_width = fixture.install_via_bridge(ThumbnailSize::Normal, 0, 1, 4, &[0, 0, 0, 0]);
+        assert!(!zero_width.success);
+
+        let short_stride =
+            fixture.install_via_bridge(ThumbnailSize::Normal, 2, 1, 4, &[0, 0, 0, 0]);
+        assert!(!short_stride.success);
+
+        let short_buffer =
+            fixture.install_via_bridge(ThumbnailSize::Normal, 2, 2, 8, &[0, 0, 0, 0]);
+        assert!(!short_buffer.success);
+    }
+
+    #[test]
+    fn raw_install_rejects_unreadable_or_nonexistent_original() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let root = PersonalCacheRoot::new(temp.path().join("thumbnails")).unwrap();
+        let missing = temp.path().join("missing.png");
+
+        let missing_result = install_display_thumbnail_rgba8_at_root(
+            root.clone(),
+            missing.as_os_str().as_bytes(),
+            ThumbnailSize::Normal,
+            1,
+            1,
+            4,
+            &[1, 2, 3, 255],
+        );
+        assert!(!missing_result.success);
+
+        let unreadable = temp.path().join("unreadable.png");
+        fs::write(&unreadable, b"source").unwrap();
+        let mut permissions = fs::metadata(&unreadable).unwrap().permissions();
+        permissions.set_mode(0);
+        fs::set_permissions(&unreadable, permissions).unwrap();
+
+        let unreadable_result = install_display_thumbnail_rgba8_at_root(
+            root,
+            unreadable.as_os_str().as_bytes(),
+            ThumbnailSize::Normal,
+            1,
+            1,
+            4,
+            &[1, 2, 3, 255],
+        );
+        assert!(!unreadable_result.success);
+    }
+
     struct Fixture {
         temp: tempfile::TempDir,
         root: PersonalCacheRoot,
@@ -314,6 +523,26 @@ mod tests {
                 self.root.clone(),
                 self.original_path.as_os_str().as_bytes(),
                 size,
+            )
+        }
+
+        fn install_via_bridge(
+            &self,
+            size: ThumbnailSize,
+            width: i32,
+            height: i32,
+            stride: i32,
+            pixels: &[u8],
+        ) -> RustThumbnailCacheInstallResult {
+            let _keep_temp_alive = self.temp.path();
+            install_display_thumbnail_rgba8_at_root(
+                self.root.clone(),
+                self.original_path.as_os_str().as_bytes(),
+                size,
+                width,
+                height,
+                stride,
+                pixels,
             )
         }
     }

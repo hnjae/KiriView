@@ -82,7 +82,8 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_state(std::move(changeCallback))
     , m_activeNavigationThumbnailRuntime(std::make_unique<ActiveNavigationThumbnailRuntime>(owner,
           std::move(dependencies.activeNavigationThumbnailLookupProvider),
-          std::move(dependencies.activeNavigationThumbnailImageStore)))
+          std::move(dependencies.activeNavigationThumbnailImageStore),
+          std::move(dependencies.activeNavigationThumbnailGenerationProvider)))
     , m_directMediaNavigationRuntime(dependencies.directMediaNavigationCandidateProvider)
     , m_directMediaDeletionCandidateRuntime(
           std::move(dependencies.directMediaNavigationCandidateProvider))
