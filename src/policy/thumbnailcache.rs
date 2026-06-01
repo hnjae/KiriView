@@ -465,7 +465,7 @@ mod tests {
         let unreadable = temp.path().join("unreadable.png");
         fs::write(&unreadable, b"source").unwrap();
         let mut permissions = fs::metadata(&unreadable).unwrap().permissions();
-        permissions.set_mode(0);
+        permissions.set_mode(0o0);
         fs::set_permissions(&unreadable, permissions).unwrap();
 
         let unreadable_result = install_display_thumbnail_rgba8_at_root(
