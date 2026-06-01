@@ -7,6 +7,7 @@
 #include <KLocalizedQmlContext>
 #include <QDir>
 #include <QElapsedTimer>
+#include <QFile>
 #include <QImage>
 #include <QObject>
 #include <QQmlComponent>
@@ -47,6 +48,7 @@ private Q_SLOTS:
     void largeJumpNavigationRevealsSelectedThumbnail();
     void visibleThumbnailClickDispatchesWithoutScrollMovement();
     void scrolledThumbnailClickDispatchesWithoutScrollMovement();
+    void delegateReportsSourceNeutralDemandAndKeepsFallbackIcon();
 };
 
 namespace {
@@ -356,6 +358,22 @@ void TestThumbnailPanel::init()
 {
     QTest::failOnWarning(QRegularExpression(
         QStringLiteral(".*Created graphical object was not placed in the graphics scene.*")));
+}
+
+void TestThumbnailPanel::delegateReportsSourceNeutralDemandAndKeepsFallbackIcon()
+{
+    QFile thumbnailPanelFile(QDir(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR))
+            .absoluteFilePath(QStringLiteral("../../src/qml/ThumbnailPanel.qml")));
+    QVERIFY(thumbnailPanelFile.open(QIODevice::ReadOnly | QIODevice::Text));
+
+    const QString source = QString::fromUtf8(thumbnailPanelFile.readAll());
+    QVERIFY(source.contains(QStringLiteral("objectName: \"thumbnailPreviewBox\"")));
+    QVERIFY(source.contains(QStringLiteral("effectiveDevicePixelRatio")));
+    QVERIFY(source.contains(QStringLiteral("activeNavigationThumbnailDemandBucket")));
+    QVERIFY(source.contains(QStringLiteral("reportActiveNavigationThumbnailDemand")));
+    QVERIFY(source.contains(QStringLiteral("navigationGeneration")));
+    QVERIFY(source.contains(QStringLiteral("Kirigami.Icon")));
+    QVERIFY(source.contains(QStringLiteral("source: thumbnailDelegate.iconName")));
 }
 
 void TestThumbnailPanel::visibleMainNavigationKeepsScrollPosition()
