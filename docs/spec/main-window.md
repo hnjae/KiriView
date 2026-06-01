@@ -220,7 +220,7 @@ The Info Panel uses the same width bounds in inline and overlay modes: minimum 1
 
 The Thumbnail Panel is a compact, layout-reserving bottom filmstrip in the remaining media area to the left of the Info Panel. It uses the same dark viewer surface and matching foreground colors as the media viewport rather than a light page-panel surface.
 
-The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a media-type icon, not a generated image or video preview thumbnail, above the existing active-navigation candidate name. The candidate name is rendered in a fixed-width font on one elided line. The horizontal scrollbar occupies a dedicated lane below the strip items and must not overlap or obscure candidate names.
+The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a generated preview thumbnail when the item is a supported direct local image with a ready thumbnail result, and otherwise shows a placeholder media-type icon above the existing active-navigation candidate name. The candidate name is rendered in a fixed-width font on one elided line. The horizontal scrollbar occupies a dedicated lane below the strip items and must not overlap or obscure candidate names.
 
 The Thumbnail Panel highlights the selected active-navigation item immediately when the active navigation position changes.
 

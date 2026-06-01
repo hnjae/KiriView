@@ -6,6 +6,8 @@ When an installed `kiriview` translation catalog is available, KiriView's UI tex
 
 KiriView does not expose a general Settings page in the current scope.
 
+The active navigation thumbnail strip may generate preview thumbnails only for supported direct local image items.
+
 ## Out of Scope
 
-Editing, filesystem indexer metadata, reverse geocoding, map lookup, archive-collection video playback, directory-collection video playback, collection-internal video metadata, recursive directory video playback, playlists, subtitles, track selection, frame stepping, generated timeline thumbnails, and generated image or video preview thumbnails are out of scope for the current version.
+Editing, filesystem indexer metadata, reverse geocoding, map lookup, archive-collection video playback, directory-collection video playback, collection-internal video metadata, recursive directory video playback, playlists, subtitles, track selection, frame stepping, generated timeline thumbnails, generated video preview thumbnails, archive-entry media preview thumbnails, archive-collection preview thumbnails, and directory-collection preview thumbnails are out of scope for the current version.
