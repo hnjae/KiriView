@@ -48,7 +48,7 @@ Extension points are adapter contracts, not state backdoors. New decoders, opene
 - [x] Direct-media predecode has a session-owned still-image-only coordinator separate from image-document predecode.
 - [x] Define the minimum source key contract needed for route sealing, route equality, route freshness, session snapshots, and direct-media scope identity, including top-level URL and local-file normalization.
 - [x] Seal top-level source routing so QML can request media only through the session route owner.
-- [ ] Move `QAction` enabled, checked, label, and trigger state out of QML and into the application action runtime.
+- [x] Move `QAction` enabled, checked, label, and trigger state out of QML and into the application action runtime.
 - [ ] Replace viewport scroll/frame synchronization with a revisioned presentation command and projection contract that separates canonical logical state from QML-owned physical item state.
 - [ ] Collapse spread zoom, per-page zoom, and spread transition state into one active presentation owner with restoration snapshots.
 - [ ] Convert session public projection updates into revisioned snapshot transactions sourced from leaf document snapshots.
