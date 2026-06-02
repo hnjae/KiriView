@@ -34,6 +34,20 @@ These defaults apply until this document or an ADR explicitly changes the owner.
 - HEIF tiled rendering: C++ owns libheif context and image handles, QImage allocation, tile decoding, and painting into source-rect images. Rust owns tile-grid validation and source-rect tile-region planning from plain numeric tiling metadata.
 - System runtime state: C++ owns desktop-environment observer lifetime and platform probes, including power-saver portal subscription state and physical-memory discovery. Memory-sensitive runtime owners should consume a C++ system-memory snapshot instead of probing physical memory independently. Rust may compute cache or scheduling policy from plain snapshots derived from those observers.
 
+## Minimum Source Key Contract
+
+The C++ location and session domains own source identity keys for route sealing, route equality, route freshness, session snapshots, and direct-media scope identity.
+
+Top-level route keys normalize `QUrl` path segments, preserve query and fragment components, and compare fully encoded identity strings. They do not case-fold and do not resolve symlinks, aliases, shortcuts, or platform filesystem equivalences.
+
+Local file keys additionally clean local path syntax and make relative local paths absolute for identity only. The public `sourceUrl` remains the requested URL rather than the identity URL.
+
+Direct-media scope identity is `{ current key, parent key, generation }`. The current and parent keys use the existing navigation-source rules, including document-portal host paths and KIOFuse archive restoration, before applying source-key normalization.
+
+Direct-media freshness changes only when the effective current key or parent scope key changes. Resolving pending direct-image confirmation to an equivalent displayed URL is a phase change within the same freshness generation.
+
+Archive-entry key families, render and cache keys, and sandbox-specific freshness beyond the existing navigation-source handling are deferred to the Stage 8 extension contracts.
+
 ## Derived Public State
 
 QML-facing values may be derived from multiple C++ runtime states. For example, a public loading or status property may combine document state with an active presentation transition. The derived value must not become a second mutable source of truth. Keep the canonical owners explicit, and make notification dependencies follow the derived value.
