@@ -118,6 +118,9 @@ public:
     Q_INVOKABLE QString menuShortcutText(const QString &actionName) const;
     Q_INVOKABLE QString menuShortcutTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool actionPlacementEnabled(KiriViewApplication::ActionId actionId) const;
+    Q_INVOKABLE QString actionMenuTextForId(KiriViewApplication::ActionId actionId) const;
+    Q_INVOKABLE QString actionToolbarTextForId(KiriViewApplication::ActionId actionId) const;
+    Q_INVOKABLE QString actionToolbarTooltipTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE void updateActionState(bool helpActionsEnabled, bool readyActionsEnabled,
         bool rotateActionsEnabled, bool twoPageModeActionsEnabled,
         bool rightToLeftReadingActionsEnabled, bool containerNavigationActionsEnabled,
@@ -127,7 +130,8 @@ public:
         bool canOpenNextActiveNavigation, bool fitModeSelected, bool fitHeightModeSelected,
         bool fitWidthModeSelected, bool twoPageModeActive, bool rightToLeftReadingActive,
         bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
-        bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled);
+        bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled,
+        bool directMediaNavigationBoundaryActive);
     Q_INVOKABLE bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool mediaHorizontalArrowShortcutsEnabled(bool videoMode,
         bool imageReadyViewerShortcutsEnabled, bool videoViewerShortcutsEnabled,
@@ -137,6 +141,7 @@ Q_SIGNALS:
     void menuPresentationChanged();
     void shortcutRevisionChanged();
     void actionStateRevisionChanged();
+    void actionTriggered(KiriViewApplication::ActionId actionId);
 
 protected:
     void setupActions() override;

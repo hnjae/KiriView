@@ -35,6 +35,7 @@ ApplicationActionRuntime::ApplicationActionRuntime(ApplicationActionHost &host, 
     , m_shortcutRuntime(std::make_unique<ApplicationShortcutRuntime>(
           m_host, m_actionRegistry, std::move(callbacks.shortcutRevisionChanged)))
     , m_actionStateChanged(std::move(callbacks.actionStateChanged))
+    , m_actionTriggered(std::move(callbacks.actionTriggered))
 {
 }
 
@@ -97,6 +98,21 @@ int ApplicationActionRuntime::actionStateRevision() const { return m_actionState
 bool ApplicationActionRuntime::actionPlacementEnabled(ActionId actionId) const
 {
     return applicationActionState(actionId, m_actionStateInput).placementEnabled;
+}
+
+QString ApplicationActionRuntime::actionMenuText(ActionId actionId) const
+{
+    return applicationActionMenuText(actionId, m_actionStateInput);
+}
+
+QString ApplicationActionRuntime::actionToolbarText(ActionId actionId) const
+{
+    return applicationActionToolbarText(actionId);
+}
+
+QString ApplicationActionRuntime::actionToolbarTooltipText(ActionId actionId) const
+{
+    return applicationActionToolbarTooltipText(actionId);
 }
 
 bool ApplicationActionRuntime::videoActionUnsupported(ActionId actionId) const
@@ -164,6 +180,12 @@ void ApplicationActionRuntime::setupActions()
             KirigamiActionCollection::setShortcutsConfigurable(registeredAction, false);
         }
         m_actionRegistry.registerAction(definition, registeredAction);
+        if (registeredAction != nullptr) {
+            QObject::connect(registeredAction, &QAction::triggered, m_host.actionContext(),
+                [this, actionId = definition.actionId, registeredAction]() {
+                    handleActionTriggered(actionId, registeredAction);
+                });
+        }
     };
 
     for (const Actions::ActionDefinition &definition : Actions::definitions()) {
@@ -217,6 +239,16 @@ void ApplicationActionRuntime::handleActionChanged(QAction *changedAction)
         return;
     }
     m_shortcutRuntime->handleActionChanged(changedAction);
+}
+
+void ApplicationActionRuntime::handleActionTriggered(ActionId actionId, QAction *triggeredAction)
+{
+    if (triggeredAction == nullptr || !triggeredAction->isEnabled()) {
+        return;
+    }
+    if (m_actionTriggered) {
+        m_actionTriggered(actionId);
+    }
 }
 
 void ApplicationActionRuntime::applyActionState()

@@ -15,9 +15,6 @@ Item {
     property bool proxyChecked: sourceAction !== null && sourceAction !== undefined && sourceAction.checked
     property int displayHint: 0
     property string fixedShortcutText: ""
-    property string menuText: ""
-    property string toolbarText: ""
-    property var toolbarTooltip
     readonly property int shortcutRevision: application.shortcutRevision
     readonly property int actionStateRevision: application.actionStateRevision
     readonly property bool runtimePlacementEnabled: {
@@ -28,20 +25,25 @@ Item {
         root.shortcutRevision;
         return root.application.menuShortcutTextForId(root.actionId);
     }
-    readonly property string menuDisplayText: {
-        return root.menuText.length > 0 ? root.menuText : root.sourceAction?.text ?? "";
-    }
     readonly property string menuDisplayShortcutText: {
         return root.fixedShortcutText.length > 0 ? root.fixedShortcutText : root.menuShortcutText;
     }
+    readonly property string toolbarDisplayText: {
+        root.actionStateRevision;
+        return root.application.actionToolbarTextForId(root.actionId);
+    }
     readonly property var toolbarDisplayTooltip: {
-        if (root.toolbarTooltip !== undefined) {
-            return root.toolbarTooltip;
-        }
-        if (root.toolbarText.length > 0) {
-            return root.sourceAction?.text ?? "";
+        root.actionStateRevision;
+        const tooltip = root.application.actionToolbarTooltipTextForId(root.actionId);
+        if (tooltip.length > 0) {
+            return tooltip;
         }
         return undefined;
+    }
+    readonly property string menuDisplayText: {
+        root.actionStateRevision;
+        const text = root.application.actionMenuTextForId(root.actionId);
+        return text.length > 0 ? text : root.sourceAction?.text ?? "";
     }
     readonly property var sourceAction: application.actionForId(actionId)
     readonly property ActionProxy proxy: ActionProxy {
@@ -51,7 +53,7 @@ Item {
         displayShortcutText: root.fixedShortcutText
         enabledOverride: root.proxyEnabled
         sourceAction: root.sourceAction
-        textOverride: root.toolbarText
+        textOverride: root.toolbarDisplayText
         tooltipOverride: root.toolbarDisplayTooltip
     }
     readonly property ActionProxy menuProxy: ActionProxy {
@@ -63,15 +65,5 @@ Item {
         sourceAction: root.sourceAction
         textOverride: root.menuDisplayText
         tooltipOverride: ""
-    }
-
-    signal triggered
-
-    Connections {
-        target: root.sourceAction
-
-        function onTriggered() {
-            root.triggered();
-        }
     }
 }

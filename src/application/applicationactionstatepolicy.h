@@ -6,6 +6,8 @@
 
 #include "application/applicationtypes.h"
 
+#include <QString>
+
 namespace KiriView::ApplicationActions {
 struct ApplicationActionStateInput {
     bool helpActionsEnabled = false;
@@ -32,6 +34,7 @@ struct ApplicationActionStateInput {
     bool fullscreen = false;
     bool applicationMenuShortcutEnabled = false;
     bool showMenubarActionEnabled = true;
+    bool directMediaNavigationBoundaryActive = false;
 };
 
 struct ApplicationActionState {
@@ -43,6 +46,9 @@ struct ApplicationActionState {
 
 ApplicationActionState applicationActionState(
     ActionId actionId, const ApplicationActionStateInput &input);
+QString applicationActionMenuText(ActionId actionId, const ApplicationActionStateInput &input);
+QString applicationActionToolbarText(ActionId actionId);
+QString applicationActionToolbarTooltipText(ActionId actionId);
 }
 
 #endif

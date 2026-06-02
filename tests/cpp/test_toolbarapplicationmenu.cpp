@@ -692,8 +692,6 @@ Item {
         id: menuBar
 
         actions: menuActions
-        fullscreen: false
-        imageDocument: root.sessionImageDocument
         rightToLeftReadingActive: root.rightToLeftReadingActive
     }
 }

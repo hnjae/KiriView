@@ -14,13 +14,9 @@ Controls.MenuBar {
     property bool rightToLeftReadingActive: false
 
     readonly property var leadingArchiveMenuAction: root.rightToLeftReadingActive ? root.actions.nextContainerMenuAction : root.actions.previousContainerMenuAction
-    readonly property string leadingArchiveMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "Nex&t Archive") : KI18n.i18nc("@action:inmenu", "Previous A&rchive")
     readonly property var leadingImageMenuAction: root.rightToLeftReadingActive ? root.actions.nextImageMenuAction : root.actions.previousImageMenuAction
-    readonly property string leadingImageMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "&Next") : KI18n.i18nc("@action:inmenu", "&Previous")
     readonly property var trailingArchiveMenuAction: root.rightToLeftReadingActive ? root.actions.previousContainerMenuAction : root.actions.nextContainerMenuAction
-    readonly property string trailingArchiveMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "Previous A&rchive") : KI18n.i18nc("@action:inmenu", "Nex&t Archive")
     readonly property var trailingImageMenuAction: root.rightToLeftReadingActive ? root.actions.previousImageMenuAction : root.actions.nextImageMenuAction
-    readonly property string trailingImageMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "&Previous") : KI18n.i18nc("@action:inmenu", "&Next")
     readonly property string leadingArchiveMenuIconName: root.actions.previousContainerMenuAction?.icon.name ?? ""
     readonly property string leadingImageMenuIconName: root.actions.previousImageMenuAction?.icon.name ?? ""
     readonly property string firstImageMenuIconName: root.rightToLeftReadingActive ? (root.actions.lastImageMenuAction?.icon.name ?? "") : (root.actions.firstImageMenuAction?.icon.name ?? "")
@@ -39,31 +35,26 @@ Controls.MenuBar {
 
         MenuActionItem {
             action: root.actions.openMenuAction
-            text: KI18n.i18nc("@action:inmenu", "&Open")
         }
 
         MenuActionItem {
             action: root.actions.openWithMenuAction
-            text: KI18n.i18nc("@action:inmenu", "Open &With...")
         }
 
         Controls.MenuSeparator {}
 
         MenuActionItem {
             action: root.actions.moveToTrashMenuAction
-            text: KI18n.i18nc("@action:inmenu", "Move to &Trash")
         }
 
         MenuActionItem {
             action: root.actions.deleteFileMenuAction
-            text: KI18n.i18nc("@action:inmenu", "Delete &Permanently")
         }
 
         Controls.MenuSeparator {}
 
         MenuActionItem {
             action: root.actions.quitMenuAction
-            text: KI18n.i18nc("@action:inmenu", "&Quit")
         }
     }
 
@@ -79,26 +70,22 @@ Controls.MenuBar {
         MenuActionItem {
             action: root.leadingImageMenuAction
             icon.name: root.leadingImageMenuIconName
-            text: root.leadingImageMenuText
         }
 
         MenuActionItem {
             action: root.trailingImageMenuAction
             icon.name: root.trailingImageMenuIconName
-            text: root.trailingImageMenuText
         }
 
         MenuActionItem {
             action: root.actions.firstImageMenuAction
             icon.name: root.firstImageMenuIconName
-            text: root.imageMode ? KI18n.i18nc("@action:inmenu", "&First Image") : KI18n.i18nc("@action:inmenu", "&First Media Item")
             visible: root.mediaMode
         }
 
         MenuActionItem {
             action: root.actions.lastImageMenuAction
             icon.name: root.lastImageMenuIconName
-            text: root.imageMode ? KI18n.i18nc("@action:inmenu", "&Last Image") : KI18n.i18nc("@action:inmenu", "&Last Media Item")
             visible: root.mediaMode
         }
 
@@ -109,14 +96,12 @@ Controls.MenuBar {
         MenuActionItem {
             action: root.leadingArchiveMenuAction
             icon.name: root.leadingArchiveMenuIconName
-            text: root.leadingArchiveMenuText
             visible: root.imageMode
         }
 
         MenuActionItem {
             action: root.trailingArchiveMenuAction
             icon.name: root.trailingArchiveMenuIconName
-            text: root.trailingArchiveMenuText
             visible: root.imageMode
         }
     }
@@ -132,13 +117,11 @@ Controls.MenuBar {
 
         MenuActionItem {
             action: root.actions.zoomInMenuAction
-            text: KI18n.i18nc("@action:inmenu", "&Zoom In")
             visible: root.imageMode
         }
 
         MenuActionItem {
             action: root.actions.zoomOutMenuAction
-            text: KI18n.i18nc("@action:inmenu", "Zoom &Out")
             visible: root.imageMode
         }
 
@@ -156,27 +139,23 @@ Controls.MenuBar {
                 action: root.actions.fitMenuAction
                 checkable: true
                 checked: root.actions.fitMenuAction?.checked ?? false
-                text: KI18n.i18nc("@action:inmenu", "&Fit")
             }
 
             MenuActionItem {
                 action: root.actions.fitHeightMenuAction
                 checkable: true
                 checked: root.actions.fitHeightMenuAction?.checked ?? false
-                text: KI18n.i18nc("@action:inmenu", "Fit &Height")
             }
 
             MenuActionItem {
                 action: root.actions.fitWidthMenuAction
                 checkable: true
                 checked: root.actions.fitWidthMenuAction?.checked ?? false
-                text: KI18n.i18nc("@action:inmenu", "Fit &Width")
             }
         }
 
         MenuActionItem {
             action: root.actions.actualSizeMenuAction
-            text: KI18n.i18nc("@action:inmenu", "&Actual Size")
             visible: root.imageMode
         }
 
@@ -186,13 +165,11 @@ Controls.MenuBar {
 
         MenuActionItem {
             action: root.actions.rotateClockwiseMenuAction
-            text: KI18n.i18nc("@action:inmenu", "Rotate &Clockwise")
             visible: root.imageMode
         }
 
         MenuActionItem {
             action: root.actions.rotateCounterclockwiseMenuAction
-            text: KI18n.i18nc("@action:inmenu", "Rotate C&ounterclockwise")
             visible: root.imageMode
         }
 
@@ -204,7 +181,6 @@ Controls.MenuBar {
             action: root.actions.twoPageModeMenuAction
             checkable: true
             checked: root.actions.twoPageModeMenuAction?.checked ?? false
-            text: KI18n.i18nc("@action:inmenu", "Two-Page &Spread")
             visible: root.imageMode
         }
 
@@ -212,7 +188,6 @@ Controls.MenuBar {
             action: root.actions.rightToLeftReadingMenuAction
             checkable: true
             checked: root.actions.rightToLeftReadingMenuAction?.checked ?? false
-            text: KI18n.i18nc("@action:inmenu", "&Right-to-Left Reading")
             visible: root.imageMode
         }
 
@@ -224,7 +199,6 @@ Controls.MenuBar {
             action: root.actions.infoPanelMenuAction ?? null
             checkable: true
             checked: root.actions.infoPanelMenuAction?.checked ?? false
-            text: KI18n.i18nc("@action:inmenu", "Show &Info Panel")
             visible: root.actions.infoPanelMenuAction !== undefined
         }
 
@@ -232,7 +206,6 @@ Controls.MenuBar {
             action: root.actions.thumbnailPanelMenuAction ?? null
             checkable: true
             checked: root.actions.thumbnailPanelMenuAction?.checked ?? false
-            text: KI18n.i18nc("@action:inmenu", "Show &Thumbnail Panel")
             visible: root.actions.thumbnailPanelMenuAction !== undefined
         }
 
@@ -244,7 +217,6 @@ Controls.MenuBar {
             action: root.actions.fullscreenMenuAction
             checkable: true
             checked: root.actions.fullscreenMenuAction?.checked ?? false
-            text: KI18n.i18nc("@action:inmenu", "Full&screen")
         }
     }
 
@@ -259,14 +231,12 @@ Controls.MenuBar {
 
         MenuActionItem {
             action: root.actions.showMenubarMenuAction
-            text: KI18n.i18nc("@action:inmenu", "Show &Menubar")
         }
 
         Controls.MenuSeparator {}
 
         MenuActionItem {
             action: root.actions.configureShortcutsMenuAction
-            text: KI18n.i18nc("@action:inmenu", "Configure &Shortcuts...")
         }
     }
 
@@ -281,7 +251,6 @@ Controls.MenuBar {
 
         MenuActionItem {
             action: root.actions.shortcutHelpMenuAction
-            text: KI18n.i18nc("@action:inmenu", "&Keyboard Shortcuts")
         }
     }
 }

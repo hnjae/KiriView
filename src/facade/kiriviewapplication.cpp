@@ -50,6 +50,8 @@ KiriViewApplication::KiriViewApplication(QObject *parent)
               [this]() { Q_EMIT menuPresentationChanged(); },
               [this]() { Q_EMIT shortcutRevisionChanged(); },
               [this]() { Q_EMIT actionStateRevisionChanged(); },
+              [this](
+                  Actions::ActionId actionId) { Q_EMIT actionTriggered(facadeActionId(actionId)); },
           }))
 {
     KiriViewApplication::setupActions();
@@ -208,6 +210,21 @@ bool KiriViewApplication::actionPlacementEnabled(ActionId actionId) const
     return m_actionRuntime->actionPlacementEnabled(domainActionId(actionId));
 }
 
+QString KiriViewApplication::actionMenuTextForId(ActionId actionId) const
+{
+    return m_actionRuntime->actionMenuText(domainActionId(actionId));
+}
+
+QString KiriViewApplication::actionToolbarTextForId(ActionId actionId) const
+{
+    return m_actionRuntime->actionToolbarText(domainActionId(actionId));
+}
+
+QString KiriViewApplication::actionToolbarTooltipTextForId(ActionId actionId) const
+{
+    return m_actionRuntime->actionToolbarTooltipText(domainActionId(actionId));
+}
+
 void KiriViewApplication::updateActionState(bool helpActionsEnabled, bool readyActionsEnabled,
     bool rotateActionsEnabled, bool twoPageModeActionsEnabled,
     bool rightToLeftReadingActionsEnabled, bool containerNavigationActionsEnabled,
@@ -217,7 +234,8 @@ void KiriViewApplication::updateActionState(bool helpActionsEnabled, bool readyA
     bool canOpenNextActiveNavigation, bool fitModeSelected, bool fitHeightModeSelected,
     bool fitWidthModeSelected, bool twoPageModeActive, bool rightToLeftReadingActive,
     bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
-    bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled)
+    bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled,
+    bool directMediaNavigationBoundaryActive)
 {
     Actions::ApplicationActionStateInput input;
     input.helpActionsEnabled = helpActionsEnabled;
@@ -244,6 +262,7 @@ void KiriViewApplication::updateActionState(bool helpActionsEnabled, bool readyA
     input.fullscreen = fullscreen;
     input.applicationMenuShortcutEnabled = applicationMenuShortcutEnabled;
     input.showMenubarActionEnabled = showMenubarActionEnabled;
+    input.directMediaNavigationBoundaryActive = directMediaNavigationBoundaryActive;
     m_actionRuntime->setActionStateInput(input);
 }
 
