@@ -36,26 +36,26 @@ void TestImageSpreadModePolicy::twoPageModeChangePlansToggleSideEffects()
     const KiriView::ImageSpreadTwoPageModeChange enable
         = KiriView::imageSpreadTwoPageModeChange(false, true, false);
     QVERIFY(enable.changed);
-    QVERIFY(enable.resetSpreadZoom);
     QVERIFY(!enable.finishTransition);
     QVERIFY(!enable.clearSecondaryPage);
-    QVERIFY(!enable.restorePrimaryZoom);
     QVERIFY(enable.refreshSecondaryPage);
     QVERIFY(enable.notifyTwoPageMode);
 
     const KiriView::ImageSpreadTwoPageModeChange disableHidden
         = KiriView::imageSpreadTwoPageModeChange(true, false, false);
     QVERIFY(disableHidden.changed);
-    QVERIFY(!disableHidden.resetSpreadZoom);
     QVERIFY(disableHidden.finishTransition);
     QVERIFY(disableHidden.clearSecondaryPage);
-    QVERIFY(!disableHidden.restorePrimaryZoom);
     QVERIFY(disableHidden.refreshSecondaryPage);
     QVERIFY(disableHidden.notifyTwoPageMode);
 
     const KiriView::ImageSpreadTwoPageModeChange disableVisible
         = KiriView::imageSpreadTwoPageModeChange(true, false, true);
-    QVERIFY(disableVisible.restorePrimaryZoom);
+    QVERIFY(disableVisible.changed);
+    QVERIFY(disableVisible.finishTransition);
+    QVERIFY(disableVisible.clearSecondaryPage);
+    QVERIFY(disableVisible.refreshSecondaryPage);
+    QVERIFY(disableVisible.notifyTwoPageMode);
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadModePolicy)

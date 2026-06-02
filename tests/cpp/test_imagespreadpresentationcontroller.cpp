@@ -124,6 +124,7 @@ private Q_SLOTS:
     void pageWidthCacheBelongsToSpreadNavigationOwner();
     void spreadVisibleRectOwnsPageVisibleRectProjection();
     void spreadZoomDoesNotMutatePageZoomOwners();
+    void spreadZoomRestoresToSinglePageWithoutMutatingPageZoomOwner();
     void transitionPhaseUsesPlaceholderUntilTargetSpreadCommits();
 };
 
@@ -193,6 +194,26 @@ void TestImageSpreadPresentationController::spreadZoomDoesNotMutatePageZoomOwner
 
     QCOMPARE(fixture.controller.zoomMode(), KiriView::ImageZoomMode::Manual);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.controller.zoomPercent(), 125.0));
+    QCOMPARE(fixture.primaryPresentation.zoomMode(), KiriView::ImageZoomMode::Fit);
+}
+
+void TestImageSpreadPresentationController::
+    spreadZoomRestoresToSinglePageWithoutMutatingPageZoomOwner()
+{
+    SpreadPresentationFixture fixture;
+
+    fixture.displayPrimaryPage(fixture.pageUrls.at(4), QSize(800, 1200), 5);
+    fixture.predecodedImageSizes[fixture.pageUrls.at(5)] = QSize(800, 1200);
+    fixture.controller.setTwoPageModeEnabled(true);
+    fixture.controller.refreshSecondaryPage();
+    QVERIFY(fixture.controller.secondaryPageVisible());
+
+    fixture.controller.setZoomPercent(150.0);
+    fixture.controller.setTwoPageModeEnabled(false);
+
+    QVERIFY(!fixture.controller.twoPageModeActive());
+    QCOMPARE(fixture.controller.zoomMode(), KiriView::ImageZoomMode::Manual);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.controller.zoomPercent(), 150.0));
     QCOMPARE(fixture.primaryPresentation.zoomMode(), KiriView::ImageZoomMode::Fit);
 }
 

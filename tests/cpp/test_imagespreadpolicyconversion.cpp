@@ -32,14 +32,11 @@ void TestImageSpreadPolicyConversion::twoPageModeChangeMapsFields()
 {
     const KiriView::ImageSpreadTwoPageModeChange change
         = KiriView::Bridge::imageSpreadTwoPageModeChangeFromRust(
-            KiriView::RustImageSpreadTwoPageModeChange {
-                true, false, true, false, true, false, true });
+            KiriView::RustImageSpreadTwoPageModeChange { true, true, false, false, true });
 
     QVERIFY(change.changed);
-    QVERIFY(!change.resetSpreadZoom);
     QVERIFY(change.finishTransition);
     QVERIFY(!change.clearSecondaryPage);
-    QVERIFY(change.restorePrimaryZoom);
     QVERIFY(!change.refreshSecondaryPage);
     QVERIFY(change.notifyTwoPageMode);
 }
