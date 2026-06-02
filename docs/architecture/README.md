@@ -12,6 +12,7 @@ Use these documents when changing module ownership, crossing the Rust/C++/QML bo
 - [Thumbnail Source Adapters](thumbnail-source-adapters.md)
 - [FFI Design](ffi-design.md)
 - [Workflow Shape](workflow-shape.md)
+- [Async Lifecycle](async-lifecycle.md)
 - [Target Direction](target-direction.md)
 - [Testing Strategy](testing-strategy.md)
 - [Evolution Rules](evolution-rules.md)
