@@ -61,6 +61,31 @@ KiriView::FileDeletionMode toFileDeletionMode(KiriImageDocument::DeletionMode de
     return KiriView::FileDeletionMode::MoveToTrash;
 }
 
+KiriView::ImageViewportObservationOrigin toImageViewportObservationOrigin(
+    KiriImageDocument::ViewportObservationOrigin origin)
+{
+    switch (origin) {
+    case KiriImageDocument::ViewportObservationOrigin::Command:
+        return KiriView::ImageViewportObservationOrigin::Command;
+    case KiriImageDocument::ViewportObservationOrigin::User:
+        return KiriView::ImageViewportObservationOrigin::User;
+    case KiriImageDocument::ViewportObservationOrigin::Inertia:
+        return KiriView::ImageViewportObservationOrigin::Inertia;
+    case KiriImageDocument::ViewportObservationOrigin::Overshoot:
+        return KiriView::ImageViewportObservationOrigin::Overshoot;
+    case KiriImageDocument::ViewportObservationOrigin::Resize:
+        return KiriView::ImageViewportObservationOrigin::Resize;
+    case KiriImageDocument::ViewportObservationOrigin::Rotation:
+        return KiriView::ImageViewportObservationOrigin::Rotation;
+    case KiriImageDocument::ViewportObservationOrigin::DevicePixelRatio:
+        return KiriView::ImageViewportObservationOrigin::DevicePixelRatio;
+    case KiriImageDocument::ViewportObservationOrigin::System:
+        return KiriView::ImageViewportObservationOrigin::System;
+    }
+
+    return KiriView::ImageViewportObservationOrigin::System;
+}
+
 KiriImageDocument::Status fromImageDocumentStatus(ImageDocumentStatus status)
 {
     switch (status) {
@@ -181,6 +206,26 @@ QPointF KiriImageDocument::viewportContentPosition() const
 void KiriImageDocument::setViewportContentPosition(const QPointF &viewportContentPosition)
 {
     m_runtime->setViewportContentPosition(viewportContentPosition);
+}
+
+quint64 KiriImageDocument::viewportCommandRevision() const
+{
+    return m_runtime->viewportCommandRevision();
+}
+
+quint64 KiriImageDocument::viewportAppliedCommandRevision() const
+{
+    return m_runtime->viewportAppliedCommandRevision();
+}
+
+quint64 KiriImageDocument::viewportObservationRevision() const
+{
+    return m_runtime->viewportObservationRevision();
+}
+
+int KiriImageDocument::viewportCommandStatus() const
+{
+    return static_cast<int>(m_runtime->viewportCommandStatus());
 }
 
 QSizeF KiriImageDocument::viewportContentSize() const { return m_runtime->viewportContentSize(); }
@@ -385,6 +430,24 @@ double KiriImageDocument::steppedManualZoomPercent(double stepCount) const
 }
 
 void KiriImageDocument::updateRenderContext() { m_runtime->updateRenderContext(); }
+
+quint64 KiriImageDocument::requestViewportContentPosition(const QPointF &viewportContentPosition)
+{
+    return m_runtime->requestViewportContentPosition(viewportContentPosition);
+}
+
+bool KiriImageDocument::acknowledgeViewportCommand(
+    quint64 commandRevision, const QPointF &actualContentPosition)
+{
+    return m_runtime->acknowledgeViewportCommand(commandRevision, actualContentPosition);
+}
+
+bool KiriImageDocument::observeViewportContentPosition(
+    const QPointF &contentPosition, KiriImageDocument::ViewportObservationOrigin origin)
+{
+    return m_runtime->observeViewportContentPosition(
+        contentPosition, toImageViewportObservationOrigin(origin));
+}
 
 void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
 {

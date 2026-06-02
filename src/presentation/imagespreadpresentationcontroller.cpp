@@ -122,7 +122,7 @@ QSizeF ImageSpreadPresentationController::secondaryDisplaySize() const
 
 QPointF ImageSpreadPresentationController::viewportContentPosition() const
 {
-    return m_viewportFrame.contentPosition;
+    return viewportFrame().contentPosition;
 }
 
 void ImageSpreadPresentationController::setViewportContentPosition(
@@ -131,41 +131,101 @@ void ImageSpreadPresentationController::setViewportContentPosition(
     refreshViewportFrameForContentPosition(viewportContentPosition);
 }
 
+ImageViewportCommand ImageSpreadPresentationController::requestViewportContentPosition(
+    const QPointF &viewportContentPosition)
+{
+    const ImageViewportCommand command
+        = m_viewportCommands.requestContentPosition(viewportContentPosition);
+    applyViewportFrameVisibleItemRect(true);
+    notify(ImageDocumentChange::ViewportFrame);
+    return command;
+}
+
+bool ImageSpreadPresentationController::acknowledgeViewportCommand(
+    quint64 commandRevision, const QPointF &actualContentPosition)
+{
+    if (!m_viewportCommands.acknowledgeCommand(commandRevision, actualContentPosition)) {
+        notify(ImageDocumentChange::ViewportFrame);
+        return false;
+    }
+
+    applyViewportFrameVisibleItemRect(true);
+    notify(ImageDocumentChange::ViewportFrame);
+    return true;
+}
+
+bool ImageSpreadPresentationController::observeViewportContentPosition(
+    const QPointF &contentPosition, ImageViewportObservationOrigin origin)
+{
+    if (!m_viewportCommands.observeContentPosition(contentPosition, origin)) {
+        return false;
+    }
+
+    applyViewportFrameVisibleItemRect(true);
+    notify(ImageDocumentChange::ViewportFrame);
+    return true;
+}
+
+quint64 ImageSpreadPresentationController::viewportCommandRevision() const
+{
+    return m_viewportCommands.projection().commandRevision;
+}
+
+quint64 ImageSpreadPresentationController::viewportAppliedCommandRevision() const
+{
+    return m_viewportCommands.projection().appliedCommandRevision;
+}
+
+quint64 ImageSpreadPresentationController::viewportObservationRevision() const
+{
+    return m_viewportCommands.projection().observationRevision;
+}
+
+ImageViewportCommandStatus ImageSpreadPresentationController::viewportCommandStatus() const
+{
+    return m_viewportCommands.projection().status;
+}
+
+ImageViewportObservationOrigin ImageSpreadPresentationController::viewportObservationOrigin() const
+{
+    return m_viewportCommands.projection().observationOrigin;
+}
+
 QSizeF ImageSpreadPresentationController::viewportContentSize() const
 {
-    return m_viewportFrame.contentSize;
+    return viewportFrame().contentSize;
 }
 
 QRectF ImageSpreadPresentationController::viewportImageRect() const
 {
-    return m_viewportFrame.imageRect;
+    return viewportFrame().imageRect;
 }
 
 bool ImageSpreadPresentationController::viewportHorizontallyPannable() const
 {
-    return m_viewportFrame.horizontalPannable;
+    return viewportFrame().horizontalPannable;
 }
 
 bool ImageSpreadPresentationController::viewportVerticallyPannable() const
 {
-    return m_viewportFrame.verticalPannable;
+    return viewportFrame().verticalPannable;
 }
 
 bool ImageSpreadPresentationController::viewportPannable() const
 {
-    return m_viewportFrame.pannable;
+    return viewportFrame().pannable;
 }
 
 QRectF ImageSpreadPresentationController::visibleItemRect() const
 {
-    return m_viewportFrame.visibleItemRect;
+    return viewportFrame().visibleItemRect;
 }
 
 void ImageSpreadPresentationController::setVisibleItemRect(const QRectF &visibleItemRect)
 {
     refreshViewportFrameForContentPosition(
-        QPointF(visibleItemRect.x() + m_viewportFrame.imageRect.x(),
-            visibleItemRect.y() + m_viewportFrame.imageRect.y()),
+        QPointF(visibleItemRect.x() + viewportFrame().imageRect.x(),
+            visibleItemRect.y() + viewportFrame().imageRect.y()),
         true);
 }
 
@@ -638,7 +698,7 @@ void ImageSpreadPresentationController::applySpreadZoomChanges(
             refreshViewportFrame();
         }
         m_zoomController->applyZoomStateToPages(
-            m_viewportFrame.visibleItemRect, rightToLeftReadingActive());
+            viewportFrame().visibleItemRect, rightToLeftReadingActive());
     }
 
     if (notifyPublicChanges) {
@@ -653,24 +713,36 @@ void ImageSpreadPresentationController::notifySpreadZoomChanged(const ImageZoomC
 
 bool ImageSpreadPresentationController::refreshViewportFrame(bool forceApplyVisibleItemRect)
 {
-    return refreshViewportFrameForContentPosition(
-        m_viewportFrame.contentPosition, forceApplyVisibleItemRect);
+    const QRectF previousVisibleItemRect = viewportFrame().visibleItemRect;
+    const ImageViewportFrame previousFrame = viewportFrame();
+    m_viewportCommands.setGeometry(m_primaryPresentation.viewportSize(), displaySize());
+    const bool frameChanged = viewportFrame() != previousFrame;
+    if (!frameChanged && !forceApplyVisibleItemRect) {
+        return false;
+    }
+
+    applyViewportFrameVisibleItemRect(
+        forceApplyVisibleItemRect || previousVisibleItemRect != viewportFrame().visibleItemRect);
+    if (frameChanged) {
+        notify(ImageDocumentChange::ViewportFrame);
+    }
+    return frameChanged;
 }
 
 bool ImageSpreadPresentationController::refreshViewportFrameForContentPosition(
     const QPointF &contentPosition, bool forceApplyVisibleItemRect)
 {
-    const QRectF previousVisibleItemRect = m_viewportFrame.visibleItemRect;
-    const ImageViewportFrame nextFrame = projectImageViewportFrame(
-        m_primaryPresentation.viewportSize(), displaySize(), contentPosition);
-    if (nextFrame == m_viewportFrame && !forceApplyVisibleItemRect) {
+    const QRectF previousVisibleItemRect = viewportFrame().visibleItemRect;
+    const ImageViewportFrame previousFrame = viewportFrame();
+    m_viewportCommands.setGeometry(m_primaryPresentation.viewportSize(), displaySize());
+    m_viewportCommands.requestContentPosition(contentPosition);
+    const bool frameChanged = viewportFrame() != previousFrame;
+    if (!frameChanged && !forceApplyVisibleItemRect) {
         return false;
     }
 
-    const bool frameChanged = nextFrame != m_viewportFrame;
-    m_viewportFrame = nextFrame;
     applyViewportFrameVisibleItemRect(
-        forceApplyVisibleItemRect || previousVisibleItemRect != m_viewportFrame.visibleItemRect);
+        forceApplyVisibleItemRect || previousVisibleItemRect != viewportFrame().visibleItemRect);
     if (frameChanged) {
         notify(ImageDocumentChange::ViewportFrame);
     }
@@ -685,12 +757,17 @@ void ImageSpreadPresentationController::applyViewportFrameVisibleItemRect(bool f
 
     if (secondaryPageVisible()) {
         m_zoomController->applyVisibleItemRects(
-            m_viewportFrame.visibleItemRect, rightToLeftReadingActive());
+            viewportFrame().visibleItemRect, rightToLeftReadingActive());
         notify(ImageDocumentChange::VisibleItemRect);
         return;
     }
 
-    m_primaryPresentation.setVisibleItemRect(m_viewportFrame.visibleItemRect);
+    m_primaryPresentation.setVisibleItemRect(viewportFrame().visibleItemRect);
+}
+
+const ImageViewportFrame &ImageSpreadPresentationController::viewportFrame() const
+{
+    return m_viewportCommands.projection().frame;
 }
 
 void ImageSpreadPresentationController::notifyChanges(

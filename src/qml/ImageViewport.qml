@@ -11,9 +11,9 @@ MediaViewportDelegate {
 
     property alias imageView: primaryImageView
     property alias flickable: imageFlickable
-    property bool applyingViewportFrameContentPosition: false
-    property bool publishingViewportContentPosition: false
-    property int viewportFrameApplyGeneration: 0
+    property bool applyingViewportProjection: false
+    property int appliedViewportCommandRevision: 0
+    property int appliedViewportObservationRevision: 0
     readonly property var imageDocument: root.documentSession.imageDocument
     property bool imageReady: root.presentationActive && root.imageDocument.status === KiriImageDocument.Ready && !root.imageDocument.unsupportedOpenedCollectionVideo
     readonly property int minimumManualZoomPercent: root.imageDocument.minimumManualZoomPercent
@@ -79,43 +79,53 @@ MediaViewportDelegate {
         imageFlickable.contentY = contentPosition.y;
     }
 
-    function moveContentPosition(contentPosition) {
+    function applyPhysicalContentPosition(contentPosition) {
         const moved = contentPositionChanged(contentPosition);
         setContentPosition(contentPosition);
         return moved;
     }
 
-    function publishViewportContentPosition() {
-        if (!root.presentationActive || root.imageDocument === null || root.applyingViewportFrameContentPosition) {
-            return;
+    function moveContentPosition(contentPosition) {
+        if (!root.presentationActive || root.imageDocument === null) {
+            return false;
         }
 
-        root.viewportFrameApplyGeneration += 1;
-        root.publishingViewportContentPosition = true;
-        root.imageDocument.viewportContentPosition = Qt.point(imageFlickable.contentX, imageFlickable.contentY);
-        root.publishingViewportContentPosition = false;
+        const previousContentPosition = currentContentPosition();
+        const commandRevision = root.imageDocument.requestViewportContentPosition(contentPosition);
+        root.applyViewportProjection();
+        return previousContentPosition.x !== imageFlickable.contentX || previousContentPosition.y !== imageFlickable.contentY || commandRevision > root.appliedViewportCommandRevision;
     }
 
-    function scheduleViewportFrameContentPositionApply() {
-        if (root.publishingViewportContentPosition) {
+    function applyViewportProjection() {
+        if (!root.presentationActive || root.imageDocument === null || root.applyingViewportProjection) {
             return;
         }
 
-        const generation = root.viewportFrameApplyGeneration + 1;
-        root.viewportFrameApplyGeneration = generation;
-        Qt.callLater(function () {
-            root.applyViewportFrameContentPosition(generation);
-        });
+        const commandRevision = root.imageDocument.viewportCommandRevision;
+        const observationRevision = root.imageDocument.viewportObservationRevision;
+        if (commandRevision < root.appliedViewportCommandRevision) {
+            return;
+        }
+        if (commandRevision === root.appliedViewportCommandRevision && observationRevision <= root.appliedViewportObservationRevision) {
+            return;
+        }
+
+        root.applyingViewportProjection = true;
+        applyPhysicalContentPosition(root.imageDocument.viewportContentPosition);
+        if (commandRevision > root.appliedViewportCommandRevision) {
+            root.appliedViewportCommandRevision = commandRevision;
+            root.imageDocument.acknowledgeViewportCommand(commandRevision, currentContentPosition());
+        }
+        root.appliedViewportObservationRevision = Math.max(root.appliedViewportObservationRevision, observationRevision);
+        root.applyingViewportProjection = false;
     }
 
-    function applyViewportFrameContentPosition(generation) {
-        if (generation !== root.viewportFrameApplyGeneration || !root.presentationActive || root.imageDocument === null) {
-            return;
+    function observeViewportContentPosition(origin) {
+        if (!root.presentationActive || root.imageDocument === null || root.applyingViewportProjection) {
+            return false;
         }
 
-        root.applyingViewportFrameContentPosition = true;
-        setContentPosition(root.imageDocument.viewportContentPosition);
-        root.applyingViewportFrameContentPosition = false;
+        return root.imageDocument.observeViewportContentPosition(currentContentPosition(), origin);
     }
 
     function setNextDisplayedImageStartToFinalScanPosition() {
@@ -123,7 +133,7 @@ MediaViewportDelegate {
     }
 
     function applyDisplayedImageInitialContentPosition() {
-        setContentPosition(imageView.displayedImageInitialContentPosition());
+        moveContentPosition(imageView.displayedImageInitialContentPosition());
     }
 
     function panBy(deltaX, deltaY) {
@@ -267,7 +277,7 @@ MediaViewportDelegate {
         target: root.presentationActive ? root.imageDocument : null
 
         function onViewportFrameChanged() {
-            root.scheduleViewportFrameContentPositionApply();
+            root.applyViewportProjection();
         }
     }
 
@@ -281,8 +291,7 @@ MediaViewportDelegate {
         contentWidth: root.presentationActive ? root.imageDocument.viewportContentSize.width : width
         interactive: root.imageDocument.status === KiriImageDocument.Ready && root.imagePannable
 
-        onContentXChanged: root.publishViewportContentPosition()
-        onContentYChanged: root.publishViewportContentPosition()
+        onMovementEnded: root.observeViewportContentPosition(KiriImageDocument.Inertia)
 
         Controls.ScrollBar.horizontal: Controls.ScrollBar {
             policy: root.imageHorizontallyPannable ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
@@ -345,7 +354,7 @@ MediaViewportDelegate {
                 x: root.presentationActive && root.imageDocument.secondaryPageVisible && root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable ? secondaryImageView.width : 0
                 y: Math.max(0, (spreadItem.height - height) / 2)
 
-                onDisplayedImageInitialContentPositionRequested: Qt.callLater(root.applyDisplayedImageInitialContentPosition)
+                onDisplayedImageInitialContentPositionRequested: root.applyDisplayedImageInitialContentPosition()
             }
 
             KiriImageView {

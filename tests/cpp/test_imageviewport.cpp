@@ -55,6 +55,13 @@ class FakeKiriImageDocument : public QObject
         QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
     Q_PROPERTY(QPointF viewportContentPosition READ viewportContentPosition WRITE
             setViewportContentPosition NOTIFY viewportFrameChanged)
+    Q_PROPERTY(
+        quint64 viewportCommandRevision READ viewportCommandRevision NOTIFY viewportFrameChanged)
+    Q_PROPERTY(quint64 viewportAppliedCommandRevision READ viewportAppliedCommandRevision NOTIFY
+            viewportFrameChanged)
+    Q_PROPERTY(quint64 viewportObservationRevision READ viewportObservationRevision NOTIFY
+            viewportFrameChanged)
+    Q_PROPERTY(int viewportCommandStatus READ viewportCommandStatus NOTIFY viewportFrameChanged)
     Q_PROPERTY(QSizeF viewportContentSize READ viewportContentSize NOTIFY viewportFrameChanged)
     Q_PROPERTY(QRectF viewportImageRect READ viewportImageRect NOTIFY viewportFrameChanged)
     Q_PROPERTY(bool viewportHorizontallyPannable READ viewportHorizontallyPannable NOTIFY
@@ -91,6 +98,18 @@ public:
         Manual,
     };
     Q_ENUM(ZoomMode)
+
+    enum class ViewportObservationOrigin {
+        Command,
+        User,
+        Inertia,
+        Overshoot,
+        Resize,
+        Rotation,
+        DevicePixelRatio,
+        System,
+    };
+    Q_ENUM(ViewportObservationOrigin)
 
     explicit FakeKiriImageDocument(QObject *parent = nullptr)
         : QObject(parent)
@@ -134,6 +153,10 @@ public:
         }
     }
 
+    quint64 viewportCommandRevision() const { return m_viewportCommandRevision; }
+    quint64 viewportAppliedCommandRevision() const { return m_viewportAppliedCommandRevision; }
+    quint64 viewportObservationRevision() const { return m_viewportObservationRevision; }
+    int viewportCommandStatus() const { return m_viewportCommandStatus; }
     QSizeF viewportContentSize() const { return viewportFrame().contentSize; }
     QRectF viewportImageRect() const { return viewportFrame().imageRect; }
     bool viewportHorizontallyPannable() const { return viewportFrame().horizontalPannable; }
@@ -226,6 +249,45 @@ public:
         Q_EMIT viewportFrameChanged();
     }
 
+    Q_INVOKABLE quint64 requestViewportContentPosition(const QPointF &viewportContentPosition)
+    {
+        const KiriView::ImageViewportFrame previousFrame = viewportFrame();
+        m_viewportContentPosition = viewportContentPosition;
+        const KiriView::ImageViewportFrame nextFrame = viewportFrame();
+        m_viewportContentPosition = nextFrame.contentPosition;
+        ++m_viewportCommandRevision;
+        m_viewportCommandStatus = 0;
+        if (previousFrame != nextFrame) {
+            Q_EMIT viewportFrameChanged();
+        }
+        return m_viewportCommandRevision;
+    }
+
+    Q_INVOKABLE bool acknowledgeViewportCommand(
+        quint64 commandRevision, const QPointF &actualContentPosition)
+    {
+        if (commandRevision != m_viewportCommandRevision) {
+            m_viewportCommandStatus = commandRevision < m_viewportCommandRevision ? 5 : 6;
+            Q_EMIT viewportFrameChanged();
+            return false;
+        }
+
+        m_viewportAppliedCommandRevision = commandRevision;
+        ++m_viewportObservationRevision;
+        m_viewportCommandStatus = 3;
+        setViewportContentPosition(actualContentPosition);
+        return true;
+    }
+
+    Q_INVOKABLE bool observeViewportContentPosition(
+        const QPointF &contentPosition, ViewportObservationOrigin)
+    {
+        ++m_viewportObservationRevision;
+        m_viewportCommandStatus = 4;
+        setViewportContentPosition(contentPosition);
+        return true;
+    }
+
     static QSize imageSize() { return QSize(1000, 1000); }
 
 Q_SIGNALS:
@@ -269,6 +331,10 @@ private:
     QUrl m_sourceUrl;
     QSizeF m_viewportSize;
     QPointF m_viewportContentPosition;
+    quint64 m_viewportCommandRevision = 0;
+    quint64 m_viewportAppliedCommandRevision = 0;
+    quint64 m_viewportObservationRevision = 0;
+    int m_viewportCommandStatus = 4;
     QRectF m_visibleItemRect;
     double m_zoomPercent = 100.0;
     ZoomMode m_zoomMode = ZoomMode::Manual;

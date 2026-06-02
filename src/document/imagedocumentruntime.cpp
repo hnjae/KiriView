@@ -118,6 +118,46 @@ void ImageDocumentRuntime::setViewportContentPosition(const QPointF &viewportCon
     controllers->spreadController().setViewportContentPosition(viewportContentPosition);
 }
 
+quint64 ImageDocumentRuntime::requestViewportContentPosition(const QPointF &viewportContentPosition)
+{
+    return controllers->spreadController()
+        .requestViewportContentPosition(viewportContentPosition)
+        .revision;
+}
+
+bool ImageDocumentRuntime::acknowledgeViewportCommand(
+    quint64 commandRevision, const QPointF &actualContentPosition)
+{
+    return controllers->spreadController().acknowledgeViewportCommand(
+        commandRevision, actualContentPosition);
+}
+
+bool ImageDocumentRuntime::observeViewportContentPosition(
+    const QPointF &contentPosition, ImageViewportObservationOrigin origin)
+{
+    return controllers->spreadController().observeViewportContentPosition(contentPosition, origin);
+}
+
+quint64 ImageDocumentRuntime::viewportCommandRevision() const
+{
+    return controllers->spreadController().viewportCommandRevision();
+}
+
+quint64 ImageDocumentRuntime::viewportAppliedCommandRevision() const
+{
+    return controllers->spreadController().viewportAppliedCommandRevision();
+}
+
+quint64 ImageDocumentRuntime::viewportObservationRevision() const
+{
+    return controllers->spreadController().viewportObservationRevision();
+}
+
+ImageViewportCommandStatus ImageDocumentRuntime::viewportCommandStatus() const
+{
+    return controllers->spreadController().viewportCommandStatus();
+}
+
 QSizeF ImageDocumentRuntime::viewportContentSize() const
 {
     return controllers->spreadController().viewportContentSize();

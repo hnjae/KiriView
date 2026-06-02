@@ -9,6 +9,7 @@
 #include "metadata/embeddedmetadata.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
+#include "presentation/imageviewportcommandstate.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
 
@@ -52,6 +53,13 @@ class KiriImageDocument : public QObject
         QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
     Q_PROPERTY(QPointF viewportContentPosition READ viewportContentPosition WRITE
             setViewportContentPosition NOTIFY viewportFrameChanged)
+    Q_PROPERTY(
+        quint64 viewportCommandRevision READ viewportCommandRevision NOTIFY viewportFrameChanged)
+    Q_PROPERTY(quint64 viewportAppliedCommandRevision READ viewportAppliedCommandRevision NOTIFY
+            viewportFrameChanged)
+    Q_PROPERTY(quint64 viewportObservationRevision READ viewportObservationRevision NOTIFY
+            viewportFrameChanged)
+    Q_PROPERTY(int viewportCommandStatus READ viewportCommandStatus NOTIFY viewportFrameChanged)
     Q_PROPERTY(QSizeF viewportContentSize READ viewportContentSize NOTIFY viewportFrameChanged)
     Q_PROPERTY(QRectF viewportImageRect READ viewportImageRect NOTIFY viewportFrameChanged)
     Q_PROPERTY(bool viewportHorizontallyPannable READ viewportHorizontallyPannable NOTIFY
@@ -120,6 +128,18 @@ public:
     };
     Q_ENUM(DeletionMode)
 
+    enum class ViewportObservationOrigin {
+        Command,
+        User,
+        Inertia,
+        Overshoot,
+        Resize,
+        Rotation,
+        DevicePixelRatio,
+        System,
+    };
+    Q_ENUM(ViewportObservationOrigin)
+
     explicit KiriImageDocument(QObject *parent = nullptr);
     explicit KiriImageDocument(
         KiriView::ImageDocumentRuntimeDependencyOverrides dependencies, QObject *parent = nullptr);
@@ -140,6 +160,10 @@ public:
     void setViewportSize(const QSizeF &viewportSize);
     QPointF viewportContentPosition() const;
     void setViewportContentPosition(const QPointF &viewportContentPosition);
+    quint64 viewportCommandRevision() const;
+    quint64 viewportAppliedCommandRevision() const;
+    quint64 viewportObservationRevision() const;
+    int viewportCommandStatus() const;
     QSizeF viewportContentSize() const;
     QRectF viewportImageRect() const;
     bool viewportHorizontallyPannable() const;
@@ -199,6 +223,11 @@ public:
     Q_INVOKABLE double clampedManualZoomPercent(double zoomPercent) const;
     Q_INVOKABLE double steppedManualZoomPercent(double stepCount) const;
     Q_INVOKABLE void updateRenderContext();
+    Q_INVOKABLE quint64 requestViewportContentPosition(const QPointF &viewportContentPosition);
+    Q_INVOKABLE bool acknowledgeViewportCommand(
+        quint64 commandRevision, const QPointF &actualContentPosition);
+    Q_INVOKABLE bool observeViewportContentPosition(
+        const QPointF &contentPosition, KiriImageDocument::ViewportObservationOrigin origin);
 
 Q_SIGNALS:
     void sourceUrlChanged();

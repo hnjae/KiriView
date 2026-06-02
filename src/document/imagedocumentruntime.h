@@ -9,6 +9,7 @@
 #include "imagedocumenttypes.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
+#include "presentation/imageviewportcommandstate.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
@@ -65,6 +66,14 @@ public:
     void setViewportSize(const QSizeF &viewportSize);
     QPointF viewportContentPosition() const;
     void setViewportContentPosition(const QPointF &viewportContentPosition);
+    quint64 requestViewportContentPosition(const QPointF &viewportContentPosition);
+    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF &actualContentPosition);
+    bool observeViewportContentPosition(
+        const QPointF &contentPosition, ImageViewportObservationOrigin origin);
+    quint64 viewportCommandRevision() const;
+    quint64 viewportAppliedCommandRevision() const;
+    quint64 viewportObservationRevision() const;
+    ImageViewportCommandStatus viewportCommandStatus() const;
     QSizeF viewportContentSize() const;
     QRectF viewportImageRect() const;
     bool viewportHorizontallyPannable() const;
