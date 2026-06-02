@@ -24,7 +24,7 @@ For ordinary direct media URL scopes, archive collection scopes, and directly op
 
 First and Last are page navigation actions available through their configured shortcuts and menus. They open the first or last known page or media item in the current scope.
 
-The Previous action is disabled on the first item, and the Next action is disabled on the last item.
+The Previous action placement is disabled on the first item, and the Next action placement is disabled on the last item.
 
 Page numbers are shown to users starting at 1.
 
@@ -103,6 +103,8 @@ For ordinary direct media navigation, the candidate name is the file name.
 For archive and directory collections opened directly by KiriView, candidate names are collection-relative paths such as `foo/a.jpg` and `bar/a.jpg`.
 
 Navigation does not wrap. Pressing Page Up on the first candidate or Page Down on the last candidate keeps the current item open and notifies the user that it is the first or last media item in ordinary direct media scopes and the first or last item in archive collection or directory collection scopes.
+
+Boundary feedback may be requested by configured shortcuts and fixed viewer navigation paths even when visible Previous or Next menu and toolbar placements are disabled at the boundary.
 
 KiriView shows those first-item and last-item notifications only when the current supported list is known and the current item is at a known boundary.
 
