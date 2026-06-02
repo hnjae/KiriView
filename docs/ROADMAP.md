@@ -51,7 +51,7 @@ Extension points are adapter contracts, not state backdoors. New decoders, opene
 - [x] Move `QAction` enabled, checked, label, and trigger state out of QML and into the application action runtime.
 - [x] Replace viewport scroll/frame synchronization with a revisioned presentation command and projection contract that separates canonical logical state from QML-owned physical item state.
 - [x] Collapse spread zoom, per-page zoom, and spread transition state into one active presentation owner with restoration snapshots.
-- [ ] Convert session public projection updates into revisioned snapshot transactions sourced from leaf document snapshots.
+- [x] Convert session public projection updates into revisioned snapshot transactions sourced from leaf document snapshots.
 - [ ] Normalize remaining async workflows onto one operation/demand/completion vocabulary with explicit disconnect and cancellation semantics, and remove ad hoc delayed UI reconciliation.
 - [ ] Consolidate media information, action availability, active zoom, title, deletion, open-with, and active navigation as named projection owners.
 - [ ] Publish stable extension contracts for media sources, thumbnails, predecode, decoders, and render sources, including key-family equality and freshness rules.
