@@ -3,6 +3,7 @@
 
 #include "facade/kiriimagedocument.h"
 
+#include "facade/kiridocumentsession.h"
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
 
@@ -35,23 +36,24 @@ using KiriView::TestSupport::staticImageDataDecoder;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
 
-std::unique_ptr<KiriImageDocument> createDocument(
+std::unique_ptr<KiriDocumentSession> createSession(
     QObject *parent, FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
 {
-    auto document = std::make_unique<KiriImageDocument>(
-        imageDocumentRuntimeDependencyOverridesFor(
-            candidateProvider, dataLoader, staticImageDataDecoder()),
-        parent);
-    document->setViewportSize(QSizeF(400.0, 300.0));
-    return document;
+    KiriView::KiriDocumentSessionDependencies dependencies;
+    dependencies.imageDocument = imageDocumentRuntimeDependencyOverridesFor(
+        candidateProvider, dataLoader, staticImageDataDecoder());
+    auto session = std::make_unique<KiriDocumentSession>(std::move(dependencies), parent);
+    session->imageDocument()->setViewportSize(QSizeF(400.0, 300.0));
+    return session;
 }
 
-void loadReady(KiriImageDocument &document, ManualImageDataLoader &dataLoader,
+void loadReady(KiriDocumentSession &session, ManualImageDataLoader &dataLoader,
     const QUrl &sourceUrl, const QUrl &loadUrl)
 {
+    KiriImageDocument &document = *session.imageDocument();
     QSignalSpy scopeSpy(&document, &KiriImageDocument::imageDocumentSourceScopeChanged);
 
-    document.setSourceUrl(sourceUrl);
+    session.setSourceUrl(sourceUrl);
     QVERIFY(dataLoader.finishOldestActiveLoadForUrl(loadUrl, QByteArrayLiteral("ok")));
 
     QTRY_COMPARE(document.status(), KiriImageDocument::Status::Ready);
@@ -78,12 +80,12 @@ void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation(
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     candidateProvider.setDirectoryImages(
         localUrl(QStringLiteral("/images/")), { imageDocumentPageCandidate(imageUrl) });
-    std::unique_ptr<KiriImageDocument> directImageDocument
-        = createDocument(this, candidateProvider, dataLoader);
+    std::unique_ptr<KiriDocumentSession> directImageSession
+        = createSession(this, candidateProvider, dataLoader);
 
-    QVERIFY(!directImageDocument->openedCollectionScopeActive());
-    loadReady(*directImageDocument, dataLoader, imageUrl, imageUrl);
-    QVERIFY(!directImageDocument->openedCollectionScopeActive());
+    QVERIFY(!directImageSession->imageDocument()->openedCollectionScopeActive());
+    loadReady(*directImageSession, dataLoader, imageUrl, imageUrl);
+    QVERIFY(!directImageSession->imageDocument()->openedCollectionScopeActive());
 
     const QUrl comicArchiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> comicArchiveCollection
@@ -93,11 +95,11 @@ void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation(
         = archivePageUrl(comicArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(
         comicArchiveCollection->rootUrl(), { imageDocumentPageCandidate(comicArchivePage) });
-    std::unique_ptr<KiriImageDocument> comicDocument
-        = createDocument(this, candidateProvider, dataLoader);
+    std::unique_ptr<KiriDocumentSession> comicSession
+        = createSession(this, candidateProvider, dataLoader);
 
-    loadReady(*comicDocument, dataLoader, comicArchiveUrl, comicArchivePage);
-    QVERIFY(comicDocument->openedCollectionScopeActive());
+    loadReady(*comicSession, dataLoader, comicArchiveUrl, comicArchivePage);
+    QVERIFY(comicSession->imageDocument()->openedCollectionScopeActive());
 
     const QUrl generalArchiveUrl = localUrl(QStringLiteral("/books/book.zip"));
     const std::optional<KiriView::OpenedCollectionScopeLocation> generalArchiveCollection
@@ -107,11 +109,11 @@ void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation(
         = archivePageUrl(generalArchiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(
         generalArchiveCollection->rootUrl(), { imageDocumentPageCandidate(generalArchivePage) });
-    std::unique_ptr<KiriImageDocument> generalDocument
-        = createDocument(this, candidateProvider, dataLoader);
+    std::unique_ptr<KiriDocumentSession> generalSession
+        = createSession(this, candidateProvider, dataLoader);
 
-    loadReady(*generalDocument, dataLoader, generalArchiveUrl, generalArchivePage);
-    QVERIFY(generalDocument->openedCollectionScopeActive());
+    loadReady(*generalSession, dataLoader, generalArchiveUrl, generalArchivePage);
+    QVERIFY(generalSession->imageDocument()->openedCollectionScopeActive());
 
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
@@ -123,21 +125,20 @@ void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation(
         = archivePageUrl(directoryCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setOpenedCollectionCandidates(
         directoryCollection->rootUrl(), { imageDocumentPageCandidate(directoryPage) });
-    std::unique_ptr<KiriImageDocument> openedDirectoryCollection
-        = createDocument(this, candidateProvider, dataLoader);
+    std::unique_ptr<KiriDocumentSession> openedDirectoryCollection
+        = createSession(this, candidateProvider, dataLoader);
 
     loadReady(*openedDirectoryCollection, dataLoader, directoryUrl, directoryPage);
-    QVERIFY(openedDirectoryCollection->openedCollectionScopeActive());
+    QVERIFY(openedDirectoryCollection->imageDocument()->openedCollectionScopeActive());
 
     const QUrl openedCollectionEntryUrl(QStringLiteral("zip:///books/book.zip!/page.png"));
     candidateProvider.setDirectoryImages(QUrl(QStringLiteral("zip:///books/book.zip!/")),
         { imageDocumentPageCandidate(openedCollectionEntryUrl) });
-    std::unique_ptr<KiriImageDocument> archiveEntryDocument
-        = createDocument(this, candidateProvider, dataLoader);
+    std::unique_ptr<KiriDocumentSession> archiveEntrySession
+        = createSession(this, candidateProvider, dataLoader);
 
-    loadReady(
-        *archiveEntryDocument, dataLoader, openedCollectionEntryUrl, openedCollectionEntryUrl);
-    QVERIFY(!archiveEntryDocument->openedCollectionScopeActive());
+    loadReady(*archiveEntrySession, dataLoader, openedCollectionEntryUrl, openedCollectionEntryUrl);
+    QVERIFY(!archiveEntrySession->imageDocument()->openedCollectionScopeActive());
 }
 
 QTEST_GUILESS_MAIN(TestKiriImageDocument)

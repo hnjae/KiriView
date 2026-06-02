@@ -217,6 +217,11 @@ private:
     struct ResolvedDependenciesTag {
     };
 
+    static KiriView::DocumentSessionImageDocumentPort imageDocumentPort(
+        KiriImageDocument &document);
+    static KiriView::DocumentSessionVideoDocumentPort videoDocumentPort(
+        KiriVideoDocument &document);
+
     KiriDocumentSession(KiriView::KiriDocumentSessionDependencies dependencies,
         ResolvedDependenciesTag, QObject *parent = nullptr);
 

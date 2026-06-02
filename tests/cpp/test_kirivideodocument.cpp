@@ -3,6 +3,7 @@
 
 #include "facade/kirivideodocument.h"
 
+#include "facade/kiridocumentsession.h"
 #include <QMetaProperty>
 #include <QObject>
 #include <QSignalSpy>
@@ -71,13 +72,14 @@ void TestKiriVideoDocument::mutedPropertyNotifiesAndToggles()
 
 void TestKiriVideoDocument::sourceUrlAndTitleNotifyOnSetAndClear()
 {
-    KiriVideoDocument document;
+    KiriDocumentSession session;
+    KiriVideoDocument &document = *session.videoDocument();
     QSignalSpy sourceUrlSpy(&document, &KiriVideoDocument::sourceUrlChanged);
     QSignalSpy titleSpy(&document, &KiriVideoDocument::windowTitleFileNameChanged);
     QSignalSpy statusSpy(&document, &KiriVideoDocument::statusChanged);
     const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/tmp/clip.mp4"));
 
-    document.setSourceUrl(sourceUrl);
+    session.setSourceUrl(sourceUrl);
     QCOMPARE(document.sourceUrl(), sourceUrl);
     QCOMPARE(document.windowTitleFileName(), QStringLiteral("clip.mp4"));
     QCOMPARE(document.status(), KiriVideoDocument::Status::Loading);
@@ -85,7 +87,7 @@ void TestKiriVideoDocument::sourceUrlAndTitleNotifyOnSetAndClear()
     QCOMPARE(titleSpy.count(), 1);
     QVERIFY(statusSpy.count() >= 1);
 
-    document.setSourceUrl(QUrl());
+    session.setSourceUrl(QUrl());
     QCOMPARE(document.sourceUrl(), QUrl());
     QCOMPARE(document.windowTitleFileName(), QString());
     QCOMPARE(document.status(), KiriVideoDocument::Status::Null);

@@ -254,7 +254,7 @@ Item {
     readonly property bool readingControlsVisible: %4
 
     function documentReady() {
-        return imageDocument.status === KiriImageDocument.Ready;
+        return sessionImageDocument.status === KiriImageDocument.Ready;
     }
 
     function applicationMenuButton() {
@@ -404,11 +404,11 @@ Item {
     }
 
     function setImageFitWidth() {
-        imageDocument.setFitMode(KiriImageDocument.FitWidth);
+        sessionImageDocument.setFitMode(KiriImageDocument.FitWidth);
     }
 
     function setImageManualZoom() {
-        imageDocument.zoomPercent = 125;
+        sessionImageDocument.zoomPercent = 125;
     }
 
     function setToolbarWidth(width) {
@@ -421,9 +421,10 @@ Item {
         nextTriggerCount = 0;
     }
 
-    KiriImageDocument {
-        id: imageDocument
+    readonly property KiriImageDocument sessionImageDocument: documentSession.imageDocument
 
+    KiriDocumentSession {
+        id: documentSession
         sourceUrl: "%2"
     }
 
@@ -536,27 +537,27 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         actions: toolbarActions
-        activeNavigationAvailable: imageDocument.pageCount > 0
-        activeNavigationCount: imageDocument.pageCount
-        activeNavigationCurrentNumber: imageDocument.currentPageNumber
-        activeNavigationEditable: imageDocument.pageCount > 0
-        activeNavigationKnown: imageDocument.currentPageNumber > 0 && imageDocument.pageCount > 0
+        activeNavigationAvailable: root.sessionImageDocument.pageCount > 0
+        activeNavigationCount: root.sessionImageDocument.pageCount
+        activeNavigationCurrentNumber: root.sessionImageDocument.currentPageNumber
+        activeNavigationEditable: root.sessionImageDocument.pageCount > 0
+        activeNavigationKnown: root.sessionImageDocument.currentPageNumber > 0 && root.sessionImageDocument.pageCount > 0
         applicationMenuActions: [openMenuAction, separatorAction, quitMenuAction]
         compact: true
-        imageDocument: imageDocument
-        imageReady: !root.videoMode && imageDocument.status === KiriImageDocument.Ready
-        maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
-        minimumManualZoomPercent: imageDocument.minimumManualZoomPercent
+        imageDocument: root.sessionImageDocument
+        imageReady: !root.videoMode && root.sessionImageDocument.status === KiriImageDocument.Ready
+        maximumManualZoomPercent: root.sessionImageDocument.maximumManualZoomPercent
+        minimumManualZoomPercent: root.sessionImageDocument.minimumManualZoomPercent
         rightToLeftReadingActive: root.rightToLeftReadingActive
         rightToLeftReadingControlVisible: root.readingControlsVisible
         showApplicationMenuActions: true
         twoPageModeControlVisible: root.readingControlsVisible
         videoMode: root.videoMode
-        zoomEditable: !root.videoMode && imageDocument.zoomPercentKnown
-        zoomPercent: root.videoMode ? 67 : (imageDocument.zoomPercentKnown ? imageDocument.zoomPercent : 0)
-        zoomPercentAvailable: root.videoMode || imageDocument.zoomPercentKnown
-        zoomPercentKnown: root.videoMode ? true : imageDocument.zoomPercentKnown
-        zoomStepFactor: imageDocument.zoomStepFactor
+        zoomEditable: !root.videoMode && root.sessionImageDocument.zoomPercentKnown
+        zoomPercent: root.videoMode ? 67 : (root.sessionImageDocument.zoomPercentKnown ? root.sessionImageDocument.zoomPercent : 0)
+        zoomPercentAvailable: root.videoMode || root.sessionImageDocument.zoomPercentKnown
+        zoomPercentKnown: root.videoMode ? true : root.sessionImageDocument.zoomPercentKnown
+        zoomStepFactor: root.sessionImageDocument.zoomStepFactor
     }
 }
 )")
@@ -569,8 +570,8 @@ QString openedCollectionScopeFixtureQml(
     const QString &sourceUrl = QString(), bool navigationActionsEnabled = false)
 {
     return fixtureQml(sourceUrl, navigationActionsEnabled,
-        QStringLiteral("!root.videoMode && imageDocument.openedCollectionScopeActive"),
-        QStringLiteral("!root.videoMode && imageDocument.rightToLeftReadingAvailable"));
+        QStringLiteral("!root.videoMode && root.sessionImageDocument.openedCollectionScopeActive"),
+        QStringLiteral("!root.videoMode && root.sessionImageDocument.rightToLeftReadingAvailable"));
 }
 
 QString menuBarFixtureQml()
@@ -625,8 +626,10 @@ Item {
         return menuActionIconNames(menuBar.menuAt(1));
     }
 
-    KiriImageDocument {
-        id: imageDocument
+    readonly property KiriImageDocument sessionImageDocument: documentSession.imageDocument
+
+    KiriDocumentSession {
+        id: documentSession
     }
 
     Kirigami.Action { id: stubOpenMenuAction; text: "Open" }
@@ -690,7 +693,7 @@ Item {
 
         actions: menuActions
         fullscreen: false
-        imageDocument: imageDocument
+        imageDocument: root.sessionImageDocument
         rightToLeftReadingActive: root.rightToLeftReadingActive
     }
 }
@@ -711,12 +714,12 @@ Item {
     width: 720
     height: 420
 
-    readonly property var imageDocument: documentSession.imageDocument
-    property bool rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
+    readonly property var sessionImageDocument: documentSession.imageDocument
+    property bool rightToLeftReadingEnabled: sessionImageDocument.rightToLeftReadingEnabled
 
     onRightToLeftReadingEnabledChanged: {
-        if (imageDocument.rightToLeftReadingEnabled !== rightToLeftReadingEnabled) {
-            imageDocument.rightToLeftReadingEnabled = rightToLeftReadingEnabled;
+        if (sessionImageDocument.rightToLeftReadingEnabled !== rightToLeftReadingEnabled) {
+            sessionImageDocument.rightToLeftReadingEnabled = rightToLeftReadingEnabled;
         }
     }
 
@@ -731,7 +734,7 @@ Item {
     }
 
     function documentReady() {
-        return imageDocument.status === KiriImageDocument.Ready;
+        return sessionImageDocument.status === KiriImageDocument.Ready;
     }
 
     function rightToLeftReadingActive() {
@@ -739,7 +742,7 @@ Item {
     }
 
     function rightToLeftReadingAvailable() {
-        return imageDocument.rightToLeftReadingAvailable;
+        return sessionImageDocument.rightToLeftReadingAvailable;
     }
 
     KiriViewApplication {
@@ -755,14 +758,14 @@ Item {
     ImageActionAvailability {
         id: actionAvailability
 
-        containerNavigationAvailable: imageDocument.containerNavigationAvailable
-        fileDeletionInProgress: imageDocument.fileDeletionInProgress
+        containerNavigationAvailable: root.sessionImageDocument.containerNavigationAvailable
+        fileDeletionInProgress: root.sessionImageDocument.fileDeletionInProgress
         helpDialogOpen: false
-        imageReady: imageDocument.status === KiriImageDocument.Ready
-        rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
-        rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
-        twoPageModeAvailable: imageDocument.twoPageModeAvailable
-        twoPageModeEnabled: imageDocument.twoPageModeEnabled
+        imageReady: root.sessionImageDocument.status === KiriImageDocument.Ready
+        rightToLeftReadingAvailable: root.sessionImageDocument.rightToLeftReadingAvailable
+        rightToLeftReadingEnabled: root.sessionImageDocument.rightToLeftReadingEnabled
+        twoPageModeAvailable: root.sessionImageDocument.twoPageModeAvailable
+        twoPageModeEnabled: root.sessionImageDocument.twoPageModeEnabled
     }
 
     KiriViewQml.ImageActions {
@@ -772,7 +775,7 @@ Item {
         actionAvailability: actionAvailability
         documentSession: documentSession
         fullscreen: false
-        imageDocument: imageDocument
+        imageDocument: root.sessionImageDocument
     }
 }
 )")

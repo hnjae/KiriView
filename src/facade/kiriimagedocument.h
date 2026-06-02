@@ -31,12 +31,14 @@ class OpenedCollectionScopeLocation;
 class ImageDocumentRuntime;
 }
 
+class KiriDocumentSession;
+
 class KiriImageDocument : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(QUrl sourceUrl READ sourceUrl WRITE setSourceUrl NOTIFY sourceUrlChanged)
+    Q_PROPERTY(QUrl sourceUrl READ sourceUrl NOTIFY sourceUrlChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
@@ -124,7 +126,6 @@ public:
     ~KiriImageDocument() override;
 
     QUrl sourceUrl() const;
-    void setSourceUrl(const QUrl &sourceUrl);
 
     Status status() const;
     bool loading() const;
@@ -230,6 +231,9 @@ Q_SIGNALS:
     void containerNavigationBoundaryReached(const QString &message);
 
 private:
+    friend class KiriDocumentSession;
+
+    void setSourceUrl(const QUrl &sourceUrl);
     void handleDocumentChanges(const std::vector<KiriView::ImageDocumentChange> &changes);
 
     std::unique_ptr<KiriView::ImageDocumentRuntime> m_runtime;

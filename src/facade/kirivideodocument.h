@@ -21,12 +21,14 @@ class VideoDocumentRuntime;
 enum class VideoDocumentChange;
 }
 
+class KiriDocumentSession;
+
 class KiriVideoDocument : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(QUrl sourceUrl READ sourceUrl WRITE setSourceUrl NOTIFY sourceUrlChanged)
+    Q_PROPERTY(QUrl sourceUrl READ sourceUrl NOTIFY sourceUrlChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
     Q_PROPERTY(
@@ -56,7 +58,6 @@ public:
     ~KiriVideoDocument() override;
 
     QUrl sourceUrl() const;
-    void setSourceUrl(const QUrl &sourceUrl);
     Status status() const;
     QString errorString() const;
     QString windowTitleFileName() const;
@@ -105,6 +106,9 @@ Q_SIGNALS:
     void embeddedMetadataChanged();
 
 private:
+    friend class KiriDocumentSession;
+
+    void setSourceUrl(const QUrl &sourceUrl);
     void handleDocumentChanges(const std::vector<KiriView::VideoDocumentChange> &changes);
 
     std::unique_ptr<KiriView::VideoDocumentRuntime> m_runtime;

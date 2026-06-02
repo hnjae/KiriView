@@ -202,22 +202,35 @@ Item {
     property alias activeNavigationKnown: documentSession.activeNavigationKnown
     property real lastPanX: 0
     property real lastPanY: 0
-    property alias currentPageNumber: imageDocument.currentPageNumber
-    property alias currentLastPageNumber: imageDocument.currentLastPageNumber
-    property alias pageCount: imageDocument.pageCount
-    property alias rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
-    property alias rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
-    property alias secondaryPageVisible: imageDocument.secondaryPageVisible
-    property KiriImageDocument testImageDocument: imageDocument
-    property alias twoPageModeAvailable: imageDocument.twoPageModeAvailable
-    property alias twoPageModeEnabled: imageDocument.twoPageModeEnabled
+    readonly property KiriImageDocument sessionImageDocument: documentSession.imageDocument
+    readonly property int currentPageNumber: sessionImageDocument.currentPageNumber
+    readonly property int currentLastPageNumber: sessionImageDocument.currentLastPageNumber
+    readonly property int pageCount: sessionImageDocument.pageCount
+    readonly property bool rightToLeftReadingAvailable: sessionImageDocument.rightToLeftReadingAvailable
+    property bool rightToLeftReadingEnabled: sessionImageDocument.rightToLeftReadingEnabled
+    readonly property bool secondaryPageVisible: sessionImageDocument.secondaryPageVisible
+    property KiriImageDocument testImageDocument: sessionImageDocument
+    readonly property bool twoPageModeAvailable: sessionImageDocument.twoPageModeAvailable
+    property bool twoPageModeEnabled: sessionImageDocument.twoPageModeEnabled
+
+    onRightToLeftReadingEnabledChanged: {
+        if (sessionImageDocument.rightToLeftReadingEnabled !== rightToLeftReadingEnabled) {
+            sessionImageDocument.rightToLeftReadingEnabled = rightToLeftReadingEnabled;
+        }
+    }
+
+    onTwoPageModeEnabledChanged: {
+        if (sessionImageDocument.twoPageModeEnabled !== twoPageModeEnabled) {
+            sessionImageDocument.twoPageModeEnabled = twoPageModeEnabled;
+        }
+    }
 
     function openImageAtPage(pageNumber) {
-        imageDocument.openImageAtPage(pageNumber);
+        sessionImageDocument.openImageAtPage(pageNumber);
     }
 
     function documentReady() {
-        return imageDocument.status === KiriImageDocument.Ready;
+        return sessionImageDocument.status === KiriImageDocument.Ready;
     }
 
     function resetPanLog() {
@@ -226,7 +239,17 @@ Item {
         lastPanY = 0;
     }
 
-    Component.onCompleted: forceActiveFocus()
+    function refreshDerivedDocumentState() {
+        actionAvailability.twoPageModeAvailable = sessionImageDocument.twoPageModeAvailable;
+        actionAvailability.twoPageModeEnabled = sessionImageDocument.twoPageModeEnabled;
+        actionAvailability.rightToLeftReadingAvailable = sessionImageDocument.rightToLeftReadingAvailable;
+        actionAvailability.rightToLeftReadingEnabled = sessionImageDocument.rightToLeftReadingEnabled;
+    }
+
+    Component.onCompleted: {
+        sessionImageDocument.viewportSize = Qt.size(width, height);
+        forceActiveFocus();
+    }
 
     KiriViewApplication {
         id: application
@@ -236,12 +259,6 @@ Item {
 
     KiriDocumentSession {
         id: documentSession
-
-        sourceUrl: "%2"
-    }
-
-    KiriImageDocument {
-        id: imageDocument
 
         sourceUrl: "%2"
     }
@@ -300,16 +317,16 @@ Item {
     ImageActionAvailability {
         id: actionAvailability
 
-        containerNavigationAvailable: imageDocument.containerNavigationAvailable
-        fileDeletionInProgress: imageDocument.fileDeletionInProgress
+        containerNavigationAvailable: root.sessionImageDocument.containerNavigationAvailable
+        fileDeletionInProgress: root.sessionImageDocument.fileDeletionInProgress
         helpDialogOpen: root.helpDialogOpen
         imagePannable: imageInteractionSurface.imagePannable
-        imageReady: imageDocument.status === KiriImageDocument.Ready
-        rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
-        rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
+        imageReady: root.sessionImageDocument.status === KiriImageDocument.Ready
+        rightToLeftReadingAvailable: root.sessionImageDocument.rightToLeftReadingAvailable
+        rightToLeftReadingEnabled: root.sessionImageDocument.rightToLeftReadingEnabled
         textInputFocused: imageToolBar.textInputFocused()
-        twoPageModeAvailable: imageDocument.twoPageModeAvailable
-        twoPageModeEnabled: imageDocument.twoPageModeEnabled
+        twoPageModeAvailable: root.sessionImageDocument.twoPageModeAvailable
+        twoPageModeEnabled: root.sessionImageDocument.twoPageModeEnabled
     }
 
     KiriViewQml.ImageShortcuts {
@@ -438,14 +455,23 @@ bool openImageAtPage(QObject *root, int pageNumber)
         root, "openImageAtPage", Qt::DirectConnection, Q_ARG(QVariant, QVariant(pageNumber)));
 }
 
+bool refreshDerivedDocumentState(QObject *root)
+{
+    return QMetaObject::invokeMethod(root, "refreshDerivedDocumentState", Qt::DirectConnection);
+}
+
 void prepareTwoPageSpread(ImageShortcutsFixture &fixture)
 {
     QVERIFY(fixture.isValid());
     QTRY_VERIFY(documentReady(fixture.root));
     QTRY_COMPARE(fixture.root->property("pageCount").toInt(), 4);
-    QTRY_VERIFY(fixture.root->property("twoPageModeAvailable").toBool());
-    QTRY_VERIFY(fixture.root->property("rightToLeftReadingAvailable").toBool());
+    QObject *document = fixture.root->property("testImageDocument").value<QObject *>();
+    QVERIFY(document != nullptr);
+    QTRY_VERIFY(document->property("twoPageModeAvailable").toBool());
+    QTRY_VERIFY(document->property("rightToLeftReadingAvailable").toBool());
+    QVERIFY(refreshDerivedDocumentState(fixture.root));
     QVERIFY(fixture.root->setProperty("twoPageModeEnabled", true));
+    QVERIFY(refreshDerivedDocumentState(fixture.root));
     QVERIFY(openImageAtPage(fixture.root, 2));
     QTRY_COMPARE(fixture.root->property("currentPageNumber").toInt(), 2);
     QTRY_COMPARE(fixture.root->property("currentLastPageNumber").toInt(), 3);
@@ -551,6 +577,7 @@ void TestImageShortcuts::shiftArrowsMoveOnePageInTwoPageModeRightToLeft()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     prepareTwoPageSpread(fixture);
     QVERIFY(fixture.root->setProperty("rightToLeftReadingEnabled", true));
+    QVERIFY(refreshDerivedDocumentState(fixture.root));
 
     pressKey(fixture.view.get(), Qt::Key_Left, Qt::ShiftModifier);
     QTRY_COMPARE(fixture.root->property("currentPageNumber").toInt(), 3);
