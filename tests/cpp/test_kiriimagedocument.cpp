@@ -7,6 +7,7 @@
 #include "location/imagedocumentlocation.h"
 
 #include <QByteArray>
+#include <QMetaProperty>
 #include <QObject>
 #include <QSignalSpy>
 #include <QSizeF>
@@ -20,6 +21,7 @@ class TestKiriImageDocument : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void sourceUrlPropertyIsReadOnlyObservation();
     void openedCollectionScopeActiveFollowsDisplayedLocation();
 };
 
@@ -55,6 +57,17 @@ void loadReady(KiriImageDocument &document, ManualImageDataLoader &dataLoader,
     QTRY_COMPARE(document.status(), KiriImageDocument::Status::Ready);
     QVERIFY(scopeSpy.count() > 0);
 }
+}
+
+void TestKiriImageDocument::sourceUrlPropertyIsReadOnlyObservation()
+{
+    const QMetaObject &metaObject = KiriImageDocument::staticMetaObject;
+    const int sourceUrlIndex = metaObject.indexOfProperty("sourceUrl");
+    QVERIFY(sourceUrlIndex >= 0);
+
+    const QMetaProperty sourceUrlProperty = metaObject.property(sourceUrlIndex);
+    QVERIFY(sourceUrlProperty.hasNotifySignal());
+    QVERIFY(!sourceUrlProperty.isWritable());
 }
 
 void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation()

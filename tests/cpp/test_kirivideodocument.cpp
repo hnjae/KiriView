@@ -3,6 +3,7 @@
 
 #include "facade/kirivideodocument.h"
 
+#include <QMetaProperty>
 #include <QObject>
 #include <QSignalSpy>
 #include <QTest>
@@ -13,6 +14,7 @@ class TestKiriVideoDocument : public QObject
 
 private Q_SLOTS:
     void initialStateIsNull();
+    void sourceUrlPropertyIsReadOnlyObservation();
     void mutedPropertyNotifiesAndToggles();
     void sourceUrlAndTitleNotifyOnSetAndClear();
     void videoOutputCanDetachAndToleratesDestroyedOutput();
@@ -37,6 +39,17 @@ void TestKiriVideoDocument::initialStateIsNull()
     QCOMPARE(document.zoomPercent(), 0);
     QVERIFY(!document.muted());
     QCOMPARE(document.videoOutput(), nullptr);
+}
+
+void TestKiriVideoDocument::sourceUrlPropertyIsReadOnlyObservation()
+{
+    const QMetaObject &metaObject = KiriVideoDocument::staticMetaObject;
+    const int sourceUrlIndex = metaObject.indexOfProperty("sourceUrl");
+    QVERIFY(sourceUrlIndex >= 0);
+
+    const QMetaProperty sourceUrlProperty = metaObject.property(sourceUrlIndex);
+    QVERIFY(sourceUrlProperty.hasNotifySignal());
+    QVERIFY(!sourceUrlProperty.isWritable());
 }
 
 void TestKiriVideoDocument::mutedPropertyNotifiesAndToggles()
