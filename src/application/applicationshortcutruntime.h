@@ -6,16 +6,21 @@
 
 #include "applicationactionhost.h"
 #include "applicationactionregistry.h"
+#include "applicationactionstatepolicy.h"
 #include "applicationshortcutpolicy.h"
 
 #include <QAbstractListModel>
 #include <QAction>
 #include <QKeySequence>
 #include <QList>
+#include <QPointer>
 #include <QString>
 #include <QStringList>
+#include <QWindow>
 #include <functional>
 #include <memory>
+#include <optional>
+#include <vector>
 
 namespace KiriView::ApplicationActions {
 class ShortcutRouteModel;
@@ -26,13 +31,19 @@ class ApplicationShortcutRuntime final
 {
 public:
     using ChangeCallback = std::function<void()>;
+    struct TriggerCallbacks {
+        std::function<void(ActionId)> unsupportedVideoActionTriggered;
+    };
 
     ApplicationShortcutRuntime(ApplicationActionHost &host,
-        const ApplicationActionRegistry &actionRegistry, ChangeCallback changeCallback = {});
+        const ApplicationActionRegistry &actionRegistry, ChangeCallback changeCallback = {},
+        TriggerCallbacks triggerCallbacks = {});
     ~ApplicationShortcutRuntime();
 
     void setup();
     void handleActionChanged(QAction *changedAction);
+    void setActionStateInput(const ApplicationActionStateInput &input);
+    void setShortcutHost(QObject *host);
 
     int shortcutRevision() const;
     QAbstractListModel *shortcutHelpModel() const;
@@ -49,12 +60,36 @@ private:
     static QString shortcutDisplayText(const QAction *action);
     static QStringList shortcutKeyDisplayTexts(const QAction *action);
     QList<ShortcutHelpRow> shortcutHelpRows() const;
+    QList<QKeySequence> routedShortcuts(
+        ActionId actionId, ApplicationShortcutFilter shortcutFilter) const;
+    void clearShortcutRouter();
+    void rebuildShortcutRouter();
+    void addShortcutBinding(ActionId actionId, const QList<QKeySequence> &shortcuts,
+        std::optional<ImageShortcutScope> shortcutScope = std::nullopt);
+    bool handleShortcutEvent(const QKeySequence &shortcut);
+    bool shortcutBindingEnabled(
+        ActionId actionId, std::optional<ImageShortcutScope> shortcutScope) const;
+    void updateShortcutEnabledStates();
+    void handleShortcutActivated(ActionId actionId);
+
+    struct ShortcutBinding {
+        ActionId actionId = ActionId::ActionCount;
+        std::optional<ImageShortcutScope> shortcutScope;
+        QList<QKeySequence> shortcuts;
+        bool enabled = false;
+    };
 
     ApplicationActionHost &m_host;
     const ApplicationActionRegistry &m_actionRegistry;
     ChangeCallback m_changeCallback;
+    TriggerCallbacks m_triggerCallbacks;
     std::unique_ptr<ShortcutHelpModel> m_shortcutHelpModel;
     std::unique_ptr<ShortcutRouteModel> m_shortcutRouteModel;
+    std::unique_ptr<QObject> m_shortcutEventFilter;
+    QPointer<QObject> m_shortcutHost;
+    QPointer<QWindow> m_shortcutWindow;
+    std::vector<ShortcutBinding> m_shortcuts;
+    ApplicationActionStateInput m_actionStateInput;
     int m_shortcutRevision = 0;
     bool m_sanitizingShortcuts = false;
 };

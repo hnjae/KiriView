@@ -14,6 +14,7 @@
 #include <QAbstractListModel>
 #include <QAction>
 #include <QList>
+#include <QObject>
 #include <QString>
 #include <functional>
 #include <memory>
@@ -30,6 +31,7 @@ public:
         std::function<void()> shortcutRevisionChanged;
         std::function<void()> actionStateChanged;
         std::function<void(ActionId)> actionTriggered;
+        std::function<void(ActionId)> unsupportedVideoActionTriggered;
     };
 
     explicit ApplicationActionRuntime(ApplicationActionHost &host, Callbacks callbacks = {});
@@ -56,6 +58,7 @@ public:
         bool videoViewerShortcutsEnabled, bool videoDirectMediaNavigationActive,
         bool videoFileDeletionInProgress) const;
     void setActionStateInput(const ApplicationActionStateInput &input);
+    void setShortcutHost(QObject *host);
 
     void setupActions();
 

@@ -26,8 +26,6 @@ StatefulApp.StatefulWindow {
     readonly property bool fullscreen: visibility === Window.FullScreen
     readonly property bool menuBarMode: kiriApplication.menuPresentation === KiriViewApplication.MenuBar
     readonly property bool applicationMenuShortcutEnabled: !root.menuBarMode && !root.fullscreen && !root.helpDialogOpen
-    readonly property var showMenubarAction: kiriApplication.actionForId(KiriViewApplication.OptionsShowMenubarAction)
-    readonly property var openApplicationMenuAction: kiriApplication.actionForId(KiriViewApplication.OpenApplicationMenuAction)
     property bool fullscreenToolBarRevealed: false
 
     function restoredVisibility(visibility) {
@@ -121,6 +119,8 @@ StatefulApp.StatefulWindow {
         fullscreenToolBarRevealed = false;
     }
 
+    Component.onCompleted: kiriApplication.setShortcutHost(root)
+
     Shortcut {
         context: Qt.WindowShortcut
         enabled: root.toolbarTextInputFocused() && !root.helpDialogOpen
@@ -145,23 +145,14 @@ StatefulApp.StatefulWindow {
         onActivated: root.toggleFullScreen()
     }
 
-    ConfiguredActionShortcut {
-        actionId: KiriViewApplication.OpenApplicationMenuAction
-        application: kiriApplication
-        shortcutFilter: ConfiguredActionShortcut.AllShortcuts
-        shortcutsEnabled: root.applicationMenuShortcutEnabled
-    }
+    Connections {
+        target: kiriApplication
 
-    ConfiguredActionShortcut {
-        actionId: KiriViewApplication.OptionsShowMenubarAction
-        application: kiriApplication
-        shortcutFilter: ConfiguredActionShortcut.AllShortcuts
-        shortcutsEnabled: !root.helpDialogOpen
-    }
-
-    ActionTrigger {
-        action: root.openApplicationMenuAction
-        handler: () => root.openApplicationMenu()
+        function onActionTriggered(actionId) {
+            if (actionId === KiriViewApplication.OpenApplicationMenuAction) {
+                root.openApplicationMenu();
+            }
+        }
     }
 
     Timer {
@@ -295,6 +286,8 @@ StatefulApp.StatefulWindow {
             infoPanelVisible: mediaWorkspaceHost.infoPanelVisible
             showMenubarActionEnabled: !root.helpDialogOpen
             thumbnailPanelVisible: mediaWorkspaceHost.thumbnailPanelVisible
+            videoFileDeletionInProgress: documentSession.fileDeletionInProgress
+            videoMode: page.videoMode
 
             onImageBoundaryReached: function (message) {
                 toastNotification.show(message, "image-boundary");

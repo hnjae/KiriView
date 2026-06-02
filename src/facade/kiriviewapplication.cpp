@@ -52,6 +52,9 @@ KiriViewApplication::KiriViewApplication(QObject *parent)
               [this]() { Q_EMIT actionStateRevisionChanged(); },
               [this](
                   Actions::ActionId actionId) { Q_EMIT actionTriggered(facadeActionId(actionId)); },
+              [this](Actions::ActionId actionId) {
+                  Q_EMIT unsupportedVideoActionTriggered(facadeActionId(actionId));
+              },
           }))
 {
     KiriViewApplication::setupActions();
@@ -235,7 +238,13 @@ void KiriViewApplication::updateActionState(bool helpActionsEnabled, bool readyA
     bool fitWidthModeSelected, bool twoPageModeActive, bool rightToLeftReadingActive,
     bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
     bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled,
-    bool directMediaNavigationBoundaryActive)
+    bool directMediaNavigationBoundaryActive, bool viewerShortcutsEnabled,
+    bool readyShortcutsEnabled, bool readyViewerShortcutsEnabled,
+    bool twoPageViewerShortcutsEnabled, bool rightToLeftReadingShortcutsEnabled,
+    bool rightToLeftReadingViewerShortcutsEnabled, bool rotateShortcutsEnabled,
+    bool rotateViewerShortcutsEnabled, bool pannableShortcutsEnabled,
+    bool pannableViewerShortcutsEnabled, bool containerViewerShortcutsEnabled,
+    bool activeNavigationActionsAvailable, bool videoMode, bool videoFileDeletionInProgress)
 {
     Actions::ApplicationActionStateInput input;
     input.helpActionsEnabled = helpActionsEnabled;
@@ -263,8 +272,24 @@ void KiriViewApplication::updateActionState(bool helpActionsEnabled, bool readyA
     input.applicationMenuShortcutEnabled = applicationMenuShortcutEnabled;
     input.showMenubarActionEnabled = showMenubarActionEnabled;
     input.directMediaNavigationBoundaryActive = directMediaNavigationBoundaryActive;
+    input.viewerShortcutsEnabled = viewerShortcutsEnabled;
+    input.readyShortcutsEnabled = readyShortcutsEnabled;
+    input.readyViewerShortcutsEnabled = readyViewerShortcutsEnabled;
+    input.twoPageViewerShortcutsEnabled = twoPageViewerShortcutsEnabled;
+    input.rightToLeftReadingShortcutsEnabled = rightToLeftReadingShortcutsEnabled;
+    input.rightToLeftReadingViewerShortcutsEnabled = rightToLeftReadingViewerShortcutsEnabled;
+    input.rotateShortcutsEnabled = rotateShortcutsEnabled;
+    input.rotateViewerShortcutsEnabled = rotateViewerShortcutsEnabled;
+    input.pannableShortcutsEnabled = pannableShortcutsEnabled;
+    input.pannableViewerShortcutsEnabled = pannableViewerShortcutsEnabled;
+    input.containerViewerShortcutsEnabled = containerViewerShortcutsEnabled;
+    input.activeNavigationActionsAvailable = activeNavigationActionsAvailable;
+    input.videoMode = videoMode;
+    input.videoFileDeletionInProgress = videoFileDeletionInProgress;
     m_actionRuntime->setActionStateInput(input);
 }
+
+void KiriViewApplication::setShortcutHost(QObject *host) { m_actionRuntime->setShortcutHost(host); }
 
 bool KiriViewApplication::videoActionUnsupported(ActionId actionId) const
 {

@@ -11,6 +11,206 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: src/application/applicationactionstatepolicy.cpp
+#, fuzzy, kde-format
+msgctxt "@action:inmenu"
+msgid "&Open"
+msgstr "열기"
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Open &With..."
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Move to &Trash"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Delete Permanently"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Previous Archive"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Next Archive"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Previous"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Next"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&First Media Item"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&First Image"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Last Media Item"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Last Image"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Zoom In"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Zoom &Out"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Fit"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Fit &Height"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Fit &Width"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Actual Size"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Rotate &Clockwise"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Rotate C&ounterclockwise"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Two-Page &Spread"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Right-to-Left Reading"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Show &Info Panel"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Show &Thumbnail Panel"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Fullscreen"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Keyboard Shortcuts"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Configure Shortcuts..."
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Show Menubar"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "&Quit"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:button"
+msgid "Two-Page &Spread"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:button"
+msgid "&Right-to-Left"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#: src/application/kiriviewapplicationactions.cpp
+#, kde-format
+msgctxt "@action"
+msgid "Two-Page Spread"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#: src/application/kiriviewapplicationactions.cpp
+#, kde-format
+msgctxt "@action"
+msgid "Right-to-Left Reading"
+msgstr ""
+
 #: src/application/applicationshortcutruntime.cpp
 #, kde-format
 msgctxt "@info:keyboard shortcut"
@@ -139,16 +339,6 @@ msgstr ""
 #: src/application/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Rotate Counterclockwise"
-msgstr ""
-
-#: src/application/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Two-Page Spread"
-msgstr ""
-
-#: src/application/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Right-to-Left Reading"
 msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp
@@ -673,54 +863,8 @@ msgid "Image, video, and comic book files (%1)"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Nex&t Archive"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Previous A&rchive"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "&Next"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "&Previous"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
 msgctxt "@title:menu"
 msgid "&File"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-#, fuzzy
-msgctxt "@action:inmenu"
-msgid "&Open"
-msgstr "열기"
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "Open &With..."
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "Move to &Trash"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Delete &Permanently"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "&Quit"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
@@ -729,98 +873,13 @@ msgid "&Go"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "&First Image"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "&First Media Item"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "&Last Image"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "&Last Media Item"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
 msgctxt "@title:menu"
 msgid "&View"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "&Zoom In"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Zoom &Out"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
 msgctxt "@title:menu"
 msgid "&Fit"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "&Fit"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Fit &Height"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Fit &Width"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "&Actual Size"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "Rotate &Clockwise"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "Rotate C&ounterclockwise"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "Two-Page &Spread"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "&Right-to-Left Reading"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "Show &Info Panel"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "Show &Thumbnail Panel"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Full&screen"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
@@ -829,23 +888,8 @@ msgid "&Settings"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Show &Menubar"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Configure &Shortcuts..."
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
 msgctxt "@title:menu"
 msgid "&Help"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "&Keyboard Shortcuts"
 msgstr ""
 
 #: src/qml/ApplicationMenuHost.qml src/qml/ImageToolBar.qml
@@ -877,46 +921,6 @@ msgstr ""
 #: src/qml/FitModeMenuButton.qml
 msgctxt "@action:inmenu"
 msgid "Fit Height"
-msgstr ""
-
-#: src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "&Delete Permanently"
-msgstr ""
-
-#: src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "&Previous Archive"
-msgstr ""
-
-#: src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "&Next Archive"
-msgstr ""
-
-#: src/qml/ImageActions.qml
-msgctxt "@action:button"
-msgid "Two-Page &Spread"
-msgstr ""
-
-#: src/qml/ImageActions.qml
-msgctxt "@action:button"
-msgid "&Right-to-Left"
-msgstr ""
-
-#: src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "&Fullscreen"
-msgstr ""
-
-#: src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "&Configure Shortcuts..."
-msgstr ""
-
-#: src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "&Show Menubar"
 msgstr ""
 
 #: src/qml/ImageDocumentPageNavigation.qml

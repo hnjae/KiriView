@@ -18,6 +18,8 @@ Item {
     property bool infoPanelVisible: false
     property bool showMenubarActionEnabled: true
     property bool thumbnailPanelVisible: false
+    property bool videoFileDeletionInProgress: false
+    property bool videoMode: false
 
     readonly property var openAction: openManagedAction.proxy
     readonly property var openWithAction: openWithManagedAction.proxy
@@ -76,7 +78,8 @@ Item {
     readonly property var showMenubarMenuAction: showMenubarManagedAction.menuProxy
     readonly property var quitMenuAction: quitManagedAction.menuProxy
     readonly property bool imageMode: root.documentSession.documentKind === KiriDocumentSession.Image
-    readonly property bool videoMode: root.documentSession.documentKind === KiriDocumentSession.Video
+    readonly property bool activeNavigationActionsAvailable: root.documentSession.activeNavigationAvailable && root.documentSession.activeNavigationKnown && !root.documentSession.fileDeletionInProgress && root.actionAvailability.helpShortcutsEnabled
+    readonly property bool mediaMode: root.imageMode || root.videoMode
     readonly property bool rightToLeftReadingActive: root.actionAvailability.rightToLeftReadingActive
     readonly property var applicationMenuNavigationActions: root.rightToLeftReadingActive ? [nextContainerManagedAction.menuProxy, previousContainerManagedAction.menuProxy] : [previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy]
     readonly property var applicationMenuDocumentActions: root.imageMode || root.videoMode ? [applicationMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy] : []
@@ -93,7 +96,7 @@ Item {
 
     function publishActionState() {
         const zoomMode = root.imageDocument !== null && root.imageDocument !== undefined ? root.imageDocument.zoomMode : -1;
-        root.application.updateActionState(root.actionAvailability.helpShortcutsEnabled, root.actionAvailability.canUseReadyActions, root.actionAvailability.canUseRotateActions, root.actionAvailability.canUseTwoPageModeActions, root.actionAvailability.canUseRightToLeftReadingActions, root.actionAvailability.containerShortcutsEnabled, root.documentSession.displayedMediaOpenWithAvailable, root.documentSession.displayedFileDeletionAvailable, root.documentSession.fileDeletionInProgress, root.documentSession.activeNavigationAvailable, root.documentSession.activeNavigationKnown, root.documentSession.activeNavigationCount > 0, root.documentSession.canOpenPreviousActiveNavigation, root.documentSession.canOpenNextActiveNavigation, root.imageMode && zoomMode === KiriImageDocument.Fit, root.imageMode && zoomMode === KiriImageDocument.FitHeight, root.imageMode && zoomMode === KiriImageDocument.FitWidth, root.actionAvailability.twoPageModeActive, root.actionAvailability.rightToLeftReadingActive, root.infoPanelVisible, root.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, root.showMenubarActionEnabled, root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.DirectMediaNavigationBoundary);
+        root.application.updateActionState(root.actionAvailability.helpShortcutsEnabled, root.actionAvailability.canUseReadyActions, root.actionAvailability.canUseRotateActions, root.actionAvailability.canUseTwoPageModeActions, root.actionAvailability.canUseRightToLeftReadingActions, root.actionAvailability.containerShortcutsEnabled, root.documentSession.displayedMediaOpenWithAvailable, root.documentSession.displayedFileDeletionAvailable, root.documentSession.fileDeletionInProgress, root.documentSession.activeNavigationAvailable, root.documentSession.activeNavigationKnown, root.documentSession.activeNavigationCount > 0, root.documentSession.canOpenPreviousActiveNavigation, root.documentSession.canOpenNextActiveNavigation, root.imageMode && zoomMode === KiriImageDocument.Fit, root.imageMode && zoomMode === KiriImageDocument.FitHeight, root.imageMode && zoomMode === KiriImageDocument.FitWidth, root.actionAvailability.twoPageModeActive, root.actionAvailability.rightToLeftReadingActive, root.infoPanelVisible, root.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, root.showMenubarActionEnabled, root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.DirectMediaNavigationBoundary, root.actionAvailability.viewerShortcutsEnabled, root.actionAvailability.readyShortcutsEnabled, root.actionAvailability.readyViewerShortcutsEnabled, root.actionAvailability.twoPageViewerShortcutsEnabled, root.actionAvailability.rightToLeftReadingShortcutsEnabled, root.actionAvailability.rightToLeftReadingViewerShortcutsEnabled, root.actionAvailability.rotateShortcutsEnabled, root.actionAvailability.rotateViewerShortcutsEnabled, root.actionAvailability.pannableShortcutsEnabled, root.actionAvailability.pannableViewerShortcutsEnabled, root.actionAvailability.containerViewerShortcutsEnabled, root.activeNavigationActionsAvailable, root.videoMode, root.videoFileDeletionInProgress);
     }
 
     function openFirstImage() {
@@ -196,6 +199,8 @@ Item {
     onInfoPanelVisibleChanged: root.publishActionState()
     onShowMenubarActionEnabledChanged: root.publishActionState()
     onThumbnailPanelVisibleChanged: root.publishActionState()
+    onVideoFileDeletionInProgressChanged: root.publishActionState()
+    onVideoModeChanged: root.publishActionState()
 
     Connections {
         target: root.actionAvailability

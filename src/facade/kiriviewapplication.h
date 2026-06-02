@@ -131,7 +131,14 @@ public:
         bool fitWidthModeSelected, bool twoPageModeActive, bool rightToLeftReadingActive,
         bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
         bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled,
-        bool directMediaNavigationBoundaryActive);
+        bool directMediaNavigationBoundaryActive, bool viewerShortcutsEnabled,
+        bool readyShortcutsEnabled, bool readyViewerShortcutsEnabled,
+        bool twoPageViewerShortcutsEnabled, bool rightToLeftReadingShortcutsEnabled,
+        bool rightToLeftReadingViewerShortcutsEnabled, bool rotateShortcutsEnabled,
+        bool rotateViewerShortcutsEnabled, bool pannableShortcutsEnabled,
+        bool pannableViewerShortcutsEnabled, bool containerViewerShortcutsEnabled,
+        bool activeNavigationActionsAvailable, bool videoMode, bool videoFileDeletionInProgress);
+    Q_INVOKABLE void setShortcutHost(QObject *host);
     Q_INVOKABLE bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool mediaHorizontalArrowShortcutsEnabled(bool videoMode,
         bool imageReadyViewerShortcutsEnabled, bool videoViewerShortcutsEnabled,
@@ -142,6 +149,7 @@ Q_SIGNALS:
     void shortcutRevisionChanged();
     void actionStateRevisionChanged();
     void actionTriggered(KiriViewApplication::ActionId actionId);
+    void unsupportedVideoActionTriggered(KiriViewApplication::ActionId actionId);
 
 protected:
     void setupActions() override;

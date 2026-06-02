@@ -35,6 +35,20 @@ struct ApplicationActionStateInput {
     bool applicationMenuShortcutEnabled = false;
     bool showMenubarActionEnabled = true;
     bool directMediaNavigationBoundaryActive = false;
+    bool viewerShortcutsEnabled = false;
+    bool readyShortcutsEnabled = false;
+    bool readyViewerShortcutsEnabled = false;
+    bool twoPageViewerShortcutsEnabled = false;
+    bool rightToLeftReadingShortcutsEnabled = false;
+    bool rightToLeftReadingViewerShortcutsEnabled = false;
+    bool rotateShortcutsEnabled = false;
+    bool rotateViewerShortcutsEnabled = false;
+    bool pannableShortcutsEnabled = false;
+    bool pannableViewerShortcutsEnabled = false;
+    bool containerViewerShortcutsEnabled = false;
+    bool activeNavigationActionsAvailable = false;
+    bool videoMode = false;
+    bool videoFileDeletionInProgress = false;
 };
 
 struct ApplicationActionState {
@@ -49,6 +63,8 @@ ApplicationActionState applicationActionState(
 QString applicationActionMenuText(ActionId actionId, const ApplicationActionStateInput &input);
 QString applicationActionToolbarText(ActionId actionId);
 QString applicationActionToolbarTooltipText(ActionId actionId);
+bool applicationShortcutsEnabledForScope(
+    const ApplicationActionStateInput &input, ImageShortcutScope scope);
 }
 
 #endif

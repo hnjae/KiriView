@@ -8,6 +8,11 @@
 
 #include <KLocalizedString>
 #include <KirigamiActionCollection>
+#include <QCoreApplication>
+#include <QGuiApplication>
+#include <QKeyEvent>
+#include <QQuickItem>
+#include <QQuickWindow>
 #include <algorithm>
 #include <utility>
 
@@ -29,19 +34,71 @@ int shortcutHelpCategoryOrderForAction(ActionId actionId)
 {
     return KiriView::ApplicationActions::shortcutHelpCategoryOrder(shortcutHelpCategory(actionId));
 }
+
+QWindow *shortcutWindow(QObject *host)
+{
+    auto *window = qobject_cast<QWindow *>(host);
+    if (window != nullptr) {
+        return window;
+    }
+
+    auto *quickItem = qobject_cast<QQuickItem *>(host);
+    if (quickItem != nullptr) {
+        return quickItem->window();
+    }
+
+    return nullptr;
+}
+
+class ShortcutEventFilter final : public QObject
+{
+public:
+    using Handler = std::function<bool(const QKeySequence &)>;
+
+    explicit ShortcutEventFilter(Handler handler)
+        : m_handler(std::move(handler))
+    {
+    }
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        Q_UNUSED(watched)
+
+        if (event->type() != QEvent::KeyPress) {
+            return false;
+        }
+
+        auto *keyEvent = static_cast<QKeyEvent *>(event);
+        if (keyEvent->key() == Qt::Key_unknown) {
+            return false;
+        }
+
+        if (m_handler(QKeySequence(keyEvent->keyCombination()))) {
+            keyEvent->accept();
+            return true;
+        }
+        return false;
+    }
+
+private:
+    Handler m_handler;
+};
 }
 
 namespace KiriView::ApplicationActions {
 ApplicationShortcutRuntime::ApplicationShortcutRuntime(ApplicationActionHost &host,
-    const ApplicationActionRegistry &actionRegistry, ChangeCallback changeCallback)
+    const ApplicationActionRegistry &actionRegistry, ChangeCallback changeCallback,
+    TriggerCallbacks triggerCallbacks)
     : m_host(host)
     , m_actionRegistry(actionRegistry)
     , m_changeCallback(std::move(changeCallback))
+    , m_triggerCallbacks(std::move(triggerCallbacks))
     , m_shortcutRouteModel(std::make_unique<ShortcutRouteModel>(m_host.actionContext()))
 {
 }
 
-ApplicationShortcutRuntime::~ApplicationShortcutRuntime() = default;
+ApplicationShortcutRuntime::~ApplicationShortcutRuntime() { clearShortcutRouter(); }
 
 void ApplicationShortcutRuntime::setup()
 {
@@ -64,9 +121,28 @@ void ApplicationShortcutRuntime::handleActionChanged(QAction *changedAction)
         m_shortcutHelpModel->handleRowsChanged();
     }
     ++m_shortcutRevision;
+    rebuildShortcutRouter();
     if (m_changeCallback) {
         m_changeCallback();
     }
+}
+
+void ApplicationShortcutRuntime::setActionStateInput(const ApplicationActionStateInput &input)
+{
+    m_actionStateInput = input;
+    updateShortcutEnabledStates();
+}
+
+void ApplicationShortcutRuntime::setShortcutHost(QObject *host)
+{
+    if (m_shortcutHost == host) {
+        return;
+    }
+
+    clearShortcutRouter();
+    m_shortcutHost = host;
+    m_shortcutWindow = shortcutWindow(host);
+    rebuildShortcutRouter();
 }
 
 int ApplicationShortcutRuntime::shortcutRevision() const { return m_shortcutRevision; }
@@ -129,6 +205,154 @@ ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjectionForI
     return shortcutProjectionForAction(m_actionRegistry.actionForId(actionId),
         definition == nullptr ? ShortcutAliasPolicy::DeriveViewerAlias
                               : definition->shortcutAliasPolicy);
+}
+
+QList<QKeySequence> ApplicationShortcutRuntime::routedShortcuts(
+    ActionId actionId, ApplicationShortcutFilter shortcutFilter) const
+{
+    const ApplicationShortcutProjection projection = shortcutProjectionForId(actionId);
+    switch (shortcutFilter) {
+    case ApplicationShortcutFilter::WithCommandModifier:
+        return projection.shortcutsWithCommandModifier;
+    case ApplicationShortcutFilter::WithoutCommandModifier:
+        return projection.shortcutsWithoutCommandModifier;
+    case ApplicationShortcutFilter::ShortcutAliases:
+        return projection.shortcutAliases;
+    case ApplicationShortcutFilter::AllShortcuts:
+        return projection.shortcuts;
+    }
+
+    return {};
+}
+
+void ApplicationShortcutRuntime::clearShortcutRouter()
+{
+    if (m_shortcutEventFilter != nullptr) {
+        if (QCoreApplication::instance() != nullptr) {
+            QCoreApplication::instance()->removeEventFilter(m_shortcutEventFilter.get());
+        }
+        if (m_shortcutHost != nullptr) {
+            m_shortcutHost->removeEventFilter(m_shortcutEventFilter.get());
+        }
+        if (m_shortcutWindow != nullptr && m_shortcutWindow != m_shortcutHost) {
+            m_shortcutWindow->removeEventFilter(m_shortcutEventFilter.get());
+        }
+    }
+    m_shortcutEventFilter.reset();
+    m_shortcuts.clear();
+}
+
+void ApplicationShortcutRuntime::rebuildShortcutRouter()
+{
+    m_shortcuts.clear();
+    if (m_shortcutHost == nullptr) {
+        return;
+    }
+
+    if (m_shortcutEventFilter == nullptr) {
+        m_shortcutEventFilter = std::make_unique<ShortcutEventFilter>(
+            [this](const QKeySequence &shortcut) { return handleShortcutEvent(shortcut); });
+        if (QCoreApplication::instance() != nullptr) {
+            QCoreApplication::instance()->installEventFilter(m_shortcutEventFilter.get());
+        }
+        m_shortcutHost->installEventFilter(m_shortcutEventFilter.get());
+        if (m_shortcutWindow != nullptr && m_shortcutWindow != m_shortcutHost) {
+            m_shortcutWindow->installEventFilter(m_shortcutEventFilter.get());
+        }
+    }
+
+    for (const ApplicationShortcutRoute &route : shortcutRoutes()) {
+        for (ActionId actionId : route.actionIds) {
+            addShortcutBinding(
+                actionId, routedShortcuts(actionId, route.shortcutFilter), route.shortcutScope);
+        }
+    }
+
+    addShortcutBinding(ActionId::OpenApplicationMenuAction,
+        routedShortcuts(
+            ActionId::OpenApplicationMenuAction, ApplicationShortcutFilter::AllShortcuts));
+    addShortcutBinding(ActionId::OptionsShowMenubarAction,
+        routedShortcuts(
+            ActionId::OptionsShowMenubarAction, ApplicationShortcutFilter::AllShortcuts));
+    updateShortcutEnabledStates();
+}
+
+void ApplicationShortcutRuntime::addShortcutBinding(ActionId actionId,
+    const QList<QKeySequence> &shortcuts, std::optional<ImageShortcutScope> shortcutScope)
+{
+    if (shortcuts.isEmpty() || m_shortcutHost == nullptr) {
+        return;
+    }
+
+    m_shortcuts.push_back(ShortcutBinding { actionId, shortcutScope, shortcuts, false });
+}
+
+bool ApplicationShortcutRuntime::handleShortcutEvent(const QKeySequence &shortcut)
+{
+    if (shortcut.isEmpty()) {
+        return false;
+    }
+
+    if (m_shortcutWindow != nullptr && QGuiApplication::focusWindow() != m_shortcutWindow) {
+        return false;
+    }
+
+    for (const ShortcutBinding &binding : m_shortcuts) {
+        if (!binding.enabled || !binding.shortcuts.contains(shortcut)) {
+            continue;
+        }
+
+        handleShortcutActivated(binding.actionId);
+        return true;
+    }
+
+    return false;
+}
+
+bool ApplicationShortcutRuntime::shortcutBindingEnabled(
+    ActionId actionId, std::optional<ImageShortcutScope> shortcutScope) const
+{
+    const QAction *action = m_actionRegistry.actionForId(actionId);
+    const bool actionEnabled = action != nullptr && action->isEnabled();
+    const bool unsupportedVideoIntercept
+        = m_actionStateInput.videoMode && videoActionUnsupported(actionId);
+
+    if (shortcutScope.has_value()) {
+        return applicationShortcutsEnabledForScope(m_actionStateInput, *shortcutScope)
+            && (actionEnabled || unsupportedVideoIntercept);
+    }
+
+    switch (actionId) {
+    case ActionId::OpenApplicationMenuAction:
+        return m_actionStateInput.applicationMenuShortcutEnabled && actionEnabled;
+    case ActionId::OptionsShowMenubarAction:
+        return m_actionStateInput.showMenubarActionEnabled && actionEnabled;
+    default:
+        return actionEnabled;
+    }
+}
+
+void ApplicationShortcutRuntime::updateShortcutEnabledStates()
+{
+    for (ShortcutBinding &binding : m_shortcuts) {
+        binding.enabled = shortcutBindingEnabled(binding.actionId, binding.shortcutScope);
+    }
+}
+
+void ApplicationShortcutRuntime::handleShortcutActivated(ActionId actionId)
+{
+    if (m_actionStateInput.videoMode && videoActionUnsupported(actionId)) {
+        if (m_triggerCallbacks.unsupportedVideoActionTriggered) {
+            m_triggerCallbacks.unsupportedVideoActionTriggered(actionId);
+        }
+        return;
+    }
+
+    QAction *action = m_actionRegistry.actionForId(actionId);
+    if (action == nullptr || !action->isEnabled()) {
+        return;
+    }
+    action->trigger();
 }
 
 QString ApplicationShortcutRuntime::actionDisplayText(const QAction *action)

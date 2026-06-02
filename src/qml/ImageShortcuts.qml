@@ -10,12 +10,14 @@ import org.kde.ki18n
 Item {
     id: root
 
+    objectName: "imageShortcuts"
+
     required property KiriViewApplication application
     required property ImageActionAvailability actionAvailability
     required property KiriDocumentSession documentSession
     required property KiriImageDocument imageDocument
     required property ImageViewportInteractionSurface imageInteractionSurface
-    property bool applicationMenuShortcutEnabled: false
+    property bool applicationMenuShortcutEnabled: true
     property bool fullscreen: false
     property bool infoPanelVisible: false
     property bool showMenubarActionEnabled: true
@@ -28,29 +30,12 @@ Item {
     readonly property bool horizontalArrowShortcutsEnabled: root.application.mediaHorizontalArrowShortcutsEnabled(root.videoMode, root.actionAvailability.readyViewerShortcutsEnabled, root.actionAvailability.viewerShortcutsEnabled, root.activeNavigationActionsAvailable, root.videoFileDeletionInProgress)
     readonly property bool imageMode: root.documentSession.documentKind === KiriDocumentSession.Image
 
-    readonly property var zoomInQAction: root.application.actionForId(KiriViewApplication.ViewZoomInAction)
-    readonly property var zoomOutQAction: root.application.actionForId(KiriViewApplication.ViewZoomOutAction)
-    readonly property var panTopLeftQAction: root.application.actionForId(KiriViewApplication.ViewPanTopLeftAction)
-    readonly property var panBottomRightQAction: root.application.actionForId(KiriViewApplication.ViewPanBottomRightAction)
-    readonly property var scanForwardQAction: root.application.actionForId(KiriViewApplication.ViewScanForwardAction)
-    readonly property var scanBackwardQAction: root.application.actionForId(KiriViewApplication.ViewScanBackwardAction)
     signal imageBoundaryReached(string message)
     signal unsupportedVideoActionRequested
 
-    function shortcutsEnabledForScope(shortcutScope, availabilityRevision) {
-        if (availabilityRevision < 0) {
-            return false;
-        }
-        return root.actionAvailability.mediaShortcutsEnabledForScope(shortcutScope, root.videoMode, root.activeNavigationActionsAvailable, root.videoFileDeletionInProgress);
-    }
-
-    function unsupportedVideoAction(actionId) {
-        return root.application.videoActionUnsupported(actionId);
-    }
-
     function publishActionState() {
         const zoomMode = root.imageDocument !== null && root.imageDocument !== undefined ? root.imageDocument.zoomMode : -1;
-        root.application.updateActionState(root.actionAvailability.helpShortcutsEnabled, root.actionAvailability.canUseReadyActions, root.actionAvailability.canUseRotateActions, root.actionAvailability.canUseTwoPageModeActions, root.actionAvailability.canUseRightToLeftReadingActions, root.actionAvailability.containerShortcutsEnabled, root.documentSession.displayedMediaOpenWithAvailable, root.documentSession.displayedFileDeletionAvailable, root.documentSession.fileDeletionInProgress, root.documentSession.activeNavigationAvailable, root.documentSession.activeNavigationKnown, root.documentSession.activeNavigationCount > 0, root.documentSession.canOpenPreviousActiveNavigation, root.documentSession.canOpenNextActiveNavigation, root.imageMode && zoomMode === KiriImageDocument.Fit, root.imageMode && zoomMode === KiriImageDocument.FitHeight, root.imageMode && zoomMode === KiriImageDocument.FitWidth, root.actionAvailability.twoPageModeActive, root.actionAvailability.rightToLeftReadingActive, root.infoPanelVisible, root.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, root.showMenubarActionEnabled, root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.DirectMediaNavigationBoundary);
+        root.application.updateActionState(root.actionAvailability.helpShortcutsEnabled, root.actionAvailability.canUseReadyActions, root.actionAvailability.canUseRotateActions, root.actionAvailability.canUseTwoPageModeActions, root.actionAvailability.canUseRightToLeftReadingActions, root.actionAvailability.containerShortcutsEnabled, root.documentSession.displayedMediaOpenWithAvailable, root.documentSession.displayedFileDeletionAvailable, root.documentSession.fileDeletionInProgress, root.documentSession.activeNavigationAvailable, root.documentSession.activeNavigationKnown, root.documentSession.activeNavigationCount > 0, root.documentSession.canOpenPreviousActiveNavigation, root.documentSession.canOpenNextActiveNavigation, root.imageMode && zoomMode === KiriImageDocument.Fit, root.imageMode && zoomMode === KiriImageDocument.FitHeight, root.imageMode && zoomMode === KiriImageDocument.FitWidth, root.actionAvailability.twoPageModeActive, root.actionAvailability.rightToLeftReadingActive, root.infoPanelVisible, root.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, root.showMenubarActionEnabled, root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.DirectMediaNavigationBoundary, root.actionAvailability.viewerShortcutsEnabled, root.actionAvailability.readyShortcutsEnabled, root.actionAvailability.readyViewerShortcutsEnabled, root.actionAvailability.twoPageViewerShortcutsEnabled, root.actionAvailability.rightToLeftReadingShortcutsEnabled, root.actionAvailability.rightToLeftReadingViewerShortcutsEnabled, root.actionAvailability.rotateShortcutsEnabled, root.actionAvailability.rotateViewerShortcutsEnabled, root.actionAvailability.pannableShortcutsEnabled, root.actionAvailability.pannableViewerShortcutsEnabled, root.actionAvailability.containerViewerShortcutsEnabled, root.activeNavigationActionsAvailable, root.videoMode, root.videoFileDeletionInProgress);
     }
 
     function panBy(deltaX, deltaY) {
@@ -170,17 +155,44 @@ Item {
         return root.imageInteractionSurface.zoomByStepAtCenter(stepCount);
     }
 
+    function dispatchAction(actionId) {
+        switch (actionId) {
+        case KiriViewApplication.ViewZoomInAction:
+            root.zoomByStepAtCenter(1);
+            return;
+        case KiriViewApplication.ViewZoomOutAction:
+            root.zoomByStepAtCenter(-1);
+            return;
+        case KiriViewApplication.ViewPanTopLeftAction:
+            root.panToTopLeft();
+            return;
+        case KiriViewApplication.ViewPanBottomRightAction:
+            root.panToBottomRight();
+            return;
+        case KiriViewApplication.ViewScanForwardAction:
+            root.scanForward();
+            return;
+        case KiriViewApplication.ViewScanBackwardAction:
+            root.scanBackward();
+            return;
+        }
+    }
+
     ImageShortcutNavigationPolicy {
         id: navigationPolicy
     }
 
-    Component.onCompleted: root.publishActionState()
+    Component.onCompleted: {
+        root.application.setShortcutHost(root.Window.window ? root.Window.window : root);
+        root.publishActionState();
+    }
 
     onApplicationMenuShortcutEnabledChanged: root.publishActionState()
     onFullscreenChanged: root.publishActionState()
     onInfoPanelVisibleChanged: root.publishActionState()
     onShowMenubarActionEnabledChanged: root.publishActionState()
     onThumbnailPanelVisibleChanged: root.publishActionState()
+    onVideoFileDeletionInProgressChanged: root.publishActionState()
     onVideoModeChanged: root.publishActionState()
 
     Connections {
@@ -223,17 +235,15 @@ Item {
         }
     }
 
-    Repeater {
-        model: root.application.shortcutRouteModel
+    Connections {
+        target: root.application
 
-        ActionShortcutGroup {
-            required property int shortcutScope
+        function onActionTriggered(actionId) {
+            root.dispatchAction(actionId);
+        }
 
-            application: root.application
-            interceptShortcut: actionId => root.videoMode && root.unsupportedVideoAction(actionId)
-            shortcutsEnabled: root.shortcutsEnabledForScope(shortcutScope, root.actionAvailability.availabilityRevision)
-
-            onShortcutIntercepted: root.unsupportedVideoActionRequested()
+        function onUnsupportedVideoActionTriggered(actionId) {
+            root.unsupportedVideoActionRequested();
         }
     }
 
@@ -283,35 +293,5 @@ Item {
         sequence: "Down"
 
         onActivated: root.panBy(0, root.keyboardPanDistance)
-    }
-
-    ActionTrigger {
-        action: root.zoomInQAction
-        handler: () => root.zoomByStepAtCenter(1)
-    }
-
-    ActionTrigger {
-        action: root.zoomOutQAction
-        handler: () => root.zoomByStepAtCenter(-1)
-    }
-
-    ActionTrigger {
-        action: root.panTopLeftQAction
-        handler: () => root.panToTopLeft()
-    }
-
-    ActionTrigger {
-        action: root.panBottomRightQAction
-        handler: () => root.panToBottomRight()
-    }
-
-    ActionTrigger {
-        action: root.scanForwardQAction
-        handler: () => root.scanForward()
-    }
-
-    ActionTrigger {
-        action: root.scanBackwardQAction
-        handler: () => root.scanBackward()
     }
 }

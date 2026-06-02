@@ -32,8 +32,11 @@ ApplicationActionRuntime::ApplicationActionRuntime(ApplicationActionHost &host, 
     : m_host(host)
     , m_actionRegistry(host)
     , m_menuPresentationRuntime(host, std::move(callbacks.menuPresentationChanged))
-    , m_shortcutRuntime(std::make_unique<ApplicationShortcutRuntime>(
-          m_host, m_actionRegistry, std::move(callbacks.shortcutRevisionChanged)))
+    , m_shortcutRuntime(std::make_unique<ApplicationShortcutRuntime>(m_host, m_actionRegistry,
+          std::move(callbacks.shortcutRevisionChanged),
+          ApplicationShortcutRuntime::TriggerCallbacks {
+              std::move(callbacks.unsupportedVideoActionTriggered),
+          }))
     , m_actionStateChanged(std::move(callbacks.actionStateChanged))
     , m_actionTriggered(std::move(callbacks.actionTriggered))
 {
@@ -134,10 +137,16 @@ void ApplicationActionRuntime::setActionStateInput(const ApplicationActionStateI
 {
     m_actionStateInput = input;
     applyActionState();
+    m_shortcutRuntime->setActionStateInput(m_actionStateInput);
     ++m_actionStateRevision;
     if (m_actionStateChanged) {
         m_actionStateChanged();
     }
+}
+
+void ApplicationActionRuntime::setShortcutHost(QObject *host)
+{
+    m_shortcutRuntime->setShortcutHost(host);
 }
 
 void ApplicationActionRuntime::setupActions()
@@ -196,6 +205,7 @@ void ApplicationActionRuntime::setupActions()
     m_menuPresentationRuntime.syncFromSettings();
     m_shortcutRuntime->setup();
     applyActionState();
+    m_shortcutRuntime->setActionStateInput(m_actionStateInput);
 }
 
 QAction *ApplicationActionRuntime::addRegisteredAction(const QString &name, const QString &text,

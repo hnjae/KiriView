@@ -3,6 +3,8 @@
 
 #include "applicationactionstatepolicy.h"
 
+#include "imageactionavailabilitypolicy.h"
+
 #include <KLocalizedString>
 
 namespace {
@@ -197,5 +199,40 @@ QString applicationActionToolbarTooltipText(ActionId actionId)
     default:
         return emptyText();
     }
+}
+
+bool applicationShortcutsEnabledForScope(
+    const ApplicationActionStateInput &input, ImageShortcutScope scope)
+{
+    const ImageActionAvailabilityProjection projection {
+        input.readyActionsEnabled,
+        input.rotateActionsEnabled,
+        input.twoPageModeActionsEnabled,
+        input.rightToLeftReadingActionsEnabled,
+        input.rightToLeftReadingActive,
+        input.twoPageModeActive,
+        input.helpActionsEnabled,
+        input.viewerShortcutsEnabled,
+        input.readyShortcutsEnabled,
+        input.readyViewerShortcutsEnabled,
+        input.twoPageViewerShortcutsEnabled,
+        input.rightToLeftReadingShortcutsEnabled,
+        input.rightToLeftReadingViewerShortcutsEnabled,
+        input.rotateShortcutsEnabled,
+        input.rotateViewerShortcutsEnabled,
+        input.pannableShortcutsEnabled,
+        input.pannableViewerShortcutsEnabled,
+        input.containerNavigationActionsEnabled,
+        input.containerViewerShortcutsEnabled,
+    };
+
+    return activeMediaShortcutsEnabledForScope(
+        ActiveMediaShortcutAvailabilityInput {
+            projection,
+            input.videoMode,
+            input.activeNavigationActionsAvailable,
+            input.videoFileDeletionInProgress,
+        },
+        scope);
 }
 }
