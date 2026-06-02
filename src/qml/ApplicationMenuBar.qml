@@ -9,8 +9,6 @@ Controls.MenuBar {
     id: root
 
     required property var actions
-    required property KiriImageDocument imageDocument
-    required property bool fullscreen
     property bool imageMode: true
     property bool mediaMode: imageMode
     property bool rightToLeftReadingActive: false
@@ -157,21 +155,21 @@ Controls.MenuBar {
             MenuActionItem {
                 action: root.actions.fitMenuAction
                 checkable: true
-                checked: root.imageMode && root.imageDocument.zoomMode === KiriImageDocument.Fit
+                checked: root.actions.fitMenuAction?.checked ?? false
                 text: KI18n.i18nc("@action:inmenu", "&Fit")
             }
 
             MenuActionItem {
                 action: root.actions.fitHeightMenuAction
                 checkable: true
-                checked: root.imageMode && root.imageDocument.zoomMode === KiriImageDocument.FitHeight
+                checked: root.actions.fitHeightMenuAction?.checked ?? false
                 text: KI18n.i18nc("@action:inmenu", "Fit &Height")
             }
 
             MenuActionItem {
                 action: root.actions.fitWidthMenuAction
                 checkable: true
-                checked: root.imageMode && root.imageDocument.zoomMode === KiriImageDocument.FitWidth
+                checked: root.actions.fitWidthMenuAction?.checked ?? false
                 text: KI18n.i18nc("@action:inmenu", "Fit &Width")
             }
         }
@@ -205,7 +203,7 @@ Controls.MenuBar {
         MenuActionItem {
             action: root.actions.twoPageModeMenuAction
             checkable: true
-            checked: root.imageMode && root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
+            checked: root.actions.twoPageModeMenuAction?.checked ?? false
             text: KI18n.i18nc("@action:inmenu", "Two-Page &Spread")
             visible: root.imageMode
         }
@@ -213,7 +211,7 @@ Controls.MenuBar {
         MenuActionItem {
             action: root.actions.rightToLeftReadingMenuAction
             checkable: true
-            checked: root.imageMode && root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
+            checked: root.actions.rightToLeftReadingMenuAction?.checked ?? false
             text: KI18n.i18nc("@action:inmenu", "&Right-to-Left Reading")
             visible: root.imageMode
         }
@@ -245,7 +243,7 @@ Controls.MenuBar {
         MenuActionItem {
             action: root.actions.fullscreenMenuAction
             checkable: true
-            checked: root.fullscreen
+            checked: root.actions.fullscreenMenuAction?.checked ?? false
             text: KI18n.i18nc("@action:inmenu", "Full&screen")
         }
     }

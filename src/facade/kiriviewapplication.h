@@ -29,6 +29,7 @@ class KiriViewApplication : public AbstractKirigamiApplication
     Q_PROPERTY(MenuPresentation menuPresentation READ menuPresentation WRITE setMenuPresentation
             NOTIFY menuPresentationChanged)
     Q_PROPERTY(int shortcutRevision READ shortcutRevision NOTIFY shortcutRevisionChanged)
+    Q_PROPERTY(int actionStateRevision READ actionStateRevision NOTIFY actionStateRevisionChanged)
     Q_PROPERTY(QAbstractListModel *shortcutHelpModel READ shortcutHelpModel CONSTANT)
     Q_PROPERTY(QAbstractListModel *shortcutRouteModel READ shortcutRouteModel CONSTANT)
 
@@ -82,6 +83,7 @@ public:
     MenuPresentation menuPresentation() const;
     void setMenuPresentation(MenuPresentation presentation);
     int shortcutRevision() const;
+    int actionStateRevision() const;
     QAbstractListModel *shortcutHelpModel() const;
     QAbstractListModel *shortcutRouteModel() const;
 
@@ -115,6 +117,17 @@ public:
     Q_INVOKABLE QKeySequence menuShortcutForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString menuShortcutText(const QString &actionName) const;
     Q_INVOKABLE QString menuShortcutTextForId(KiriViewApplication::ActionId actionId) const;
+    Q_INVOKABLE bool actionPlacementEnabled(KiriViewApplication::ActionId actionId) const;
+    Q_INVOKABLE void updateActionState(bool helpActionsEnabled, bool readyActionsEnabled,
+        bool rotateActionsEnabled, bool twoPageModeActionsEnabled,
+        bool rightToLeftReadingActionsEnabled, bool containerNavigationActionsEnabled,
+        bool displayedMediaOpenWithAvailable, bool displayedFileDeletionAvailable,
+        bool fileDeletionInProgress, bool activeNavigationAvailable, bool activeNavigationKnown,
+        bool activeNavigationHasTargets, bool canOpenPreviousActiveNavigation,
+        bool canOpenNextActiveNavigation, bool fitModeSelected, bool fitHeightModeSelected,
+        bool fitWidthModeSelected, bool twoPageModeActive, bool rightToLeftReadingActive,
+        bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
+        bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled);
     Q_INVOKABLE bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool mediaHorizontalArrowShortcutsEnabled(bool videoMode,
         bool imageReadyViewerShortcutsEnabled, bool videoViewerShortcutsEnabled,
@@ -123,6 +136,7 @@ public:
 Q_SIGNALS:
     void menuPresentationChanged();
     void shortcutRevisionChanged();
+    void actionStateRevisionChanged();
 
 protected:
     void setupActions() override;

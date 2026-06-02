@@ -6,6 +6,7 @@
 
 #include "applicationactionhost.h"
 #include "applicationactionregistry.h"
+#include "applicationactionstatepolicy.h"
 #include "applicationmenupresentationruntime.h"
 #include "applicationshortcutpolicy.h"
 
@@ -27,6 +28,7 @@ public:
     struct Callbacks {
         std::function<void()> menuPresentationChanged;
         std::function<void()> shortcutRevisionChanged;
+        std::function<void()> actionStateChanged;
     };
 
     explicit ApplicationActionRuntime(ApplicationActionHost &host, Callbacks callbacks = {});
@@ -43,10 +45,13 @@ public:
     QString actionName(ActionId actionId) const;
     ApplicationShortcutProjection shortcutProjection(const QString &actionName) const;
     ApplicationShortcutProjection shortcutProjectionForId(ActionId actionId) const;
+    int actionStateRevision() const;
+    bool actionPlacementEnabled(ActionId actionId) const;
     bool videoActionUnsupported(ActionId actionId) const;
     bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
         bool videoViewerShortcutsEnabled, bool videoDirectMediaNavigationActive,
         bool videoFileDeletionInProgress) const;
+    void setActionStateInput(const ApplicationActionStateInput &input);
 
     void setupActions();
 
@@ -57,12 +62,17 @@ private:
         const QString &text, const QList<QKeySequence> &defaultShortcuts);
     QAction *finishRegisteredAction(QAction *registeredAction, const QString &text,
         const QList<QKeySequence> &defaultShortcuts);
+    void applyActionState();
     void handleActionChanged(QAction *changedAction);
 
     ApplicationActionHost &m_host;
     ApplicationActionRegistry m_actionRegistry;
     ApplicationMenuPresentationRuntime m_menuPresentationRuntime;
     std::unique_ptr<ApplicationShortcutRuntime> m_shortcutRuntime;
+    ApplicationActionStateInput m_actionStateInput;
+    int m_actionStateRevision = 0;
+    bool m_applyingActionState = false;
+    std::function<void()> m_actionStateChanged;
 };
 }
 

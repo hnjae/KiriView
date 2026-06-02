@@ -9,6 +9,7 @@ src/decoding/decodedimageresult.cpp
 src/rendering/decodedtilecache.cpp
 src/application/applicationactionregistry.cpp
 src/application/applicationactionruntime.cpp
+src/application/applicationactionstatepolicy.cpp
 src/application/applicationmenupresentationruntime.cpp
 src/application/applicationmenupresentationstate.cpp
 src/application/applicationshortcutruntime.cpp

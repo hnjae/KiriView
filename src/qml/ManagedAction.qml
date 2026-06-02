@@ -10,11 +10,7 @@ Item {
 
     required property KiriViewApplication application
     required property int actionId
-    property bool bindEnabled: false
-    property bool bindChecked: false
-    property bool actionEnabled: sourceAction !== null && sourceAction !== undefined && sourceAction.enabled
-    property bool actionChecked: sourceAction !== null && sourceAction !== undefined && sourceAction.checked
-    property bool proxyEnabled: sourceAction !== null && sourceAction !== undefined && sourceAction.enabled
+    property bool proxyEnabled: runtimePlacementEnabled
     property bool proxyCheckable: sourceAction !== null && sourceAction !== undefined && sourceAction.checkable
     property bool proxyChecked: sourceAction !== null && sourceAction !== undefined && sourceAction.checked
     property int displayHint: 0
@@ -23,6 +19,11 @@ Item {
     property string toolbarText: ""
     property var toolbarTooltip
     readonly property int shortcutRevision: application.shortcutRevision
+    readonly property int actionStateRevision: application.actionStateRevision
+    readonly property bool runtimePlacementEnabled: {
+        root.actionStateRevision;
+        return root.application.actionPlacementEnabled(root.actionId);
+    }
     readonly property string menuShortcutText: {
         root.shortcutRevision;
         return root.application.menuShortcutTextForId(root.actionId);
@@ -65,20 +66,6 @@ Item {
     }
 
     signal triggered
-
-    Binding {
-        property: "enabled"
-        target: root.sourceAction
-        value: root.actionEnabled
-        when: root.bindEnabled && root.sourceAction !== null && root.sourceAction !== undefined
-    }
-
-    Binding {
-        property: "checked"
-        target: root.sourceAction
-        value: root.actionChecked
-        when: root.bindChecked && root.sourceAction !== null && root.sourceAction !== undefined
-    }
 
     Connections {
         target: root.sourceAction

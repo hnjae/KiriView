@@ -34,6 +34,7 @@ ApplicationActionRuntime::ApplicationActionRuntime(ApplicationActionHost &host, 
     , m_menuPresentationRuntime(host, std::move(callbacks.menuPresentationChanged))
     , m_shortcutRuntime(std::make_unique<ApplicationShortcutRuntime>(
           m_host, m_actionRegistry, std::move(callbacks.shortcutRevisionChanged)))
+    , m_actionStateChanged(std::move(callbacks.actionStateChanged))
 {
 }
 
@@ -91,6 +92,13 @@ ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForId(
     return m_shortcutRuntime->shortcutProjectionForId(actionId);
 }
 
+int ApplicationActionRuntime::actionStateRevision() const { return m_actionStateRevision; }
+
+bool ApplicationActionRuntime::actionPlacementEnabled(ActionId actionId) const
+{
+    return applicationActionState(actionId, m_actionStateInput).placementEnabled;
+}
+
 bool ApplicationActionRuntime::videoActionUnsupported(ActionId actionId) const
 {
     return ApplicationActions::videoActionUnsupported(actionId);
@@ -104,6 +112,16 @@ bool ApplicationActionRuntime::mediaHorizontalArrowShortcutsEnabled(bool videoMo
         imageReadyViewerShortcutsEnabled,
         videoShortcutInput(false, videoViewerShortcutsEnabled, videoFileDeletionInProgress,
             videoDirectMediaNavigationActive));
+}
+
+void ApplicationActionRuntime::setActionStateInput(const ApplicationActionStateInput &input)
+{
+    m_actionStateInput = input;
+    applyActionState();
+    ++m_actionStateRevision;
+    if (m_actionStateChanged) {
+        m_actionStateChanged();
+    }
 }
 
 void ApplicationActionRuntime::setupActions()
@@ -155,6 +173,7 @@ void ApplicationActionRuntime::setupActions()
     m_host.readActionSettings();
     m_menuPresentationRuntime.syncFromSettings();
     m_shortcutRuntime->setup();
+    applyActionState();
 }
 
 QAction *ApplicationActionRuntime::addRegisteredAction(const QString &name, const QString &text,
@@ -194,7 +213,30 @@ QAction *ApplicationActionRuntime::finishRegisteredAction(
 
 void ApplicationActionRuntime::handleActionChanged(QAction *changedAction)
 {
+    if (m_applyingActionState) {
+        return;
+    }
     m_shortcutRuntime->handleActionChanged(changedAction);
+}
+
+void ApplicationActionRuntime::applyActionState()
+{
+    m_applyingActionState = true;
+    for (const RegisteredApplicationAction &registeredAction :
+        m_actionRegistry.registeredActions()) {
+        QAction *action = registeredAction.action;
+        const ApplicationActionState state
+            = applicationActionState(registeredAction.actionId, m_actionStateInput);
+        action->setEnabled(state.actionEnabled);
+        if (registeredAction.actionId == ActionId::OptionsShowMenubarAction) {
+            continue;
+        }
+        action->setCheckable(state.checkable);
+        if (state.checkable) {
+            action->setChecked(state.checked);
+        }
+    }
+    m_applyingActionState = false;
 }
 
 }

@@ -145,20 +145,6 @@ StatefulApp.StatefulWindow {
         onActivated: root.toggleFullScreen()
     }
 
-    Binding {
-        property: "enabled"
-        target: root.openApplicationMenuAction
-        value: root.applicationMenuShortcutEnabled
-        when: root.openApplicationMenuAction !== null && root.openApplicationMenuAction !== undefined
-    }
-
-    Binding {
-        property: "enabled"
-        target: root.showMenubarAction
-        value: !root.helpDialogOpen
-        when: root.showMenubarAction !== null && root.showMenubarAction !== undefined
-    }
-
     ConfiguredActionShortcut {
         actionId: KiriViewApplication.OpenApplicationMenuAction
         application: kiriApplication
@@ -302,10 +288,12 @@ StatefulApp.StatefulWindow {
 
             application: kiriApplication
             actionAvailability: actionAvailability
+            applicationMenuShortcutEnabled: root.applicationMenuShortcutEnabled
             documentSession: documentSession
             fullscreen: root.fullscreen
             imageDocument: page.imageDocument
             infoPanelVisible: mediaWorkspaceHost.infoPanelVisible
+            showMenubarActionEnabled: !root.helpDialogOpen
             thumbnailPanelVisible: mediaWorkspaceHost.thumbnailPanelVisible
 
             onImageBoundaryReached: function (message) {
@@ -395,9 +383,14 @@ StatefulApp.StatefulWindow {
             sourceComponent: ImageShortcuts {
                 application: kiriApplication
                 actionAvailability: actionAvailability
+                applicationMenuShortcutEnabled: root.applicationMenuShortcutEnabled
                 documentSession: documentSession
+                fullscreen: root.fullscreen
                 imageDocument: page.imageDocument
                 imageInteractionSurface: mediaWorkspaceHost.imageInteractionSurface
+                infoPanelVisible: mediaWorkspaceHost.infoPanelVisible
+                showMenubarActionEnabled: !root.helpDialogOpen
+                thumbnailPanelVisible: mediaWorkspaceHost.thumbnailPanelVisible
                 videoFileDeletionInProgress: documentSession.fileDeletionInProgress
                 videoMode: page.videoMode
 
@@ -486,8 +479,6 @@ StatefulApp.StatefulWindow {
 
     menuBar: ApplicationMenuBar {
         actions: imageActions
-        fullscreen: root.fullscreen
-        imageDocument: page.imageDocument
         imageMode: page.imageMode
         mediaMode: page.imageMode || page.videoMode
         rightToLeftReadingActive: imageActions.rightToLeftReadingActive

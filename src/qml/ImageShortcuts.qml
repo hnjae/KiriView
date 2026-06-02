@@ -15,12 +15,18 @@ Item {
     required property KiriDocumentSession documentSession
     required property KiriImageDocument imageDocument
     required property ImageViewportInteractionSurface imageInteractionSurface
+    property bool applicationMenuShortcutEnabled: false
+    property bool fullscreen: false
+    property bool infoPanelVisible: false
+    property bool showMenubarActionEnabled: true
+    property bool thumbnailPanelVisible: false
     property bool videoFileDeletionInProgress: false
     property bool videoMode: false
 
     readonly property int keyboardPanDistance: 64
     readonly property bool activeNavigationActionsAvailable: root.documentSession.activeNavigationAvailable && root.documentSession.activeNavigationKnown && !root.documentSession.fileDeletionInProgress && root.actionAvailability.helpShortcutsEnabled
     readonly property bool horizontalArrowShortcutsEnabled: root.application.mediaHorizontalArrowShortcutsEnabled(root.videoMode, root.actionAvailability.readyViewerShortcutsEnabled, root.actionAvailability.viewerShortcutsEnabled, root.activeNavigationActionsAvailable, root.videoFileDeletionInProgress)
+    readonly property bool imageMode: root.documentSession.documentKind === KiriDocumentSession.Image
 
     readonly property var zoomInQAction: root.application.actionForId(KiriViewApplication.ViewZoomInAction)
     readonly property var zoomOutQAction: root.application.actionForId(KiriViewApplication.ViewZoomOutAction)
@@ -40,6 +46,11 @@ Item {
 
     function unsupportedVideoAction(actionId) {
         return root.application.videoActionUnsupported(actionId);
+    }
+
+    function publishActionState() {
+        const zoomMode = root.imageDocument !== null && root.imageDocument !== undefined ? root.imageDocument.zoomMode : -1;
+        root.application.updateActionState(root.actionAvailability.helpShortcutsEnabled, root.actionAvailability.canUseReadyActions, root.actionAvailability.canUseRotateActions, root.actionAvailability.canUseTwoPageModeActions, root.actionAvailability.canUseRightToLeftReadingActions, root.actionAvailability.containerShortcutsEnabled, root.documentSession.displayedMediaOpenWithAvailable, root.documentSession.displayedFileDeletionAvailable, root.documentSession.fileDeletionInProgress, root.documentSession.activeNavigationAvailable, root.documentSession.activeNavigationKnown, root.documentSession.activeNavigationCount > 0, root.documentSession.canOpenPreviousActiveNavigation, root.documentSession.canOpenNextActiveNavigation, root.imageMode && zoomMode === KiriImageDocument.Fit, root.imageMode && zoomMode === KiriImageDocument.FitHeight, root.imageMode && zoomMode === KiriImageDocument.FitWidth, root.actionAvailability.twoPageModeActive, root.actionAvailability.rightToLeftReadingActive, root.infoPanelVisible, root.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, root.showMenubarActionEnabled);
     }
 
     function panBy(deltaX, deltaY) {
@@ -161,6 +172,55 @@ Item {
 
     ImageShortcutNavigationPolicy {
         id: navigationPolicy
+    }
+
+    Component.onCompleted: root.publishActionState()
+
+    onApplicationMenuShortcutEnabledChanged: root.publishActionState()
+    onFullscreenChanged: root.publishActionState()
+    onInfoPanelVisibleChanged: root.publishActionState()
+    onShowMenubarActionEnabledChanged: root.publishActionState()
+    onThumbnailPanelVisibleChanged: root.publishActionState()
+    onVideoModeChanged: root.publishActionState()
+
+    Connections {
+        target: root.actionAvailability
+
+        function onAvailabilityChanged() {
+            root.publishActionState();
+        }
+    }
+
+    Connections {
+        target: root.documentSession
+
+        function onActiveNavigationChanged() {
+            root.publishActionState();
+        }
+
+        function onDisplayedFileDeletionAvailabilityChanged() {
+            root.publishActionState();
+        }
+
+        function onDisplayedMediaOpenWithAvailabilityChanged() {
+            root.publishActionState();
+        }
+
+        function onDocumentKindChanged() {
+            root.publishActionState();
+        }
+
+        function onFileDeletionInProgressChanged() {
+            root.publishActionState();
+        }
+    }
+
+    Connections {
+        target: root.imageDocument
+
+        function onZoomModeChanged() {
+            root.publishActionState();
+        }
     }
 
     Repeater {

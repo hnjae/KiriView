@@ -49,6 +49,7 @@ KiriViewApplication::KiriViewApplication(QObject *parent)
           Actions::ApplicationActionRuntime::Callbacks {
               [this]() { Q_EMIT menuPresentationChanged(); },
               [this]() { Q_EMIT shortcutRevisionChanged(); },
+              [this]() { Q_EMIT actionStateRevisionChanged(); },
           }))
 {
     KiriViewApplication::setupActions();
@@ -67,6 +68,11 @@ void KiriViewApplication::setMenuPresentation(MenuPresentation presentation)
 }
 
 int KiriViewApplication::shortcutRevision() const { return m_actionRuntime->shortcutRevision(); }
+
+int KiriViewApplication::actionStateRevision() const
+{
+    return m_actionRuntime->actionStateRevision();
+}
 
 QAbstractListModel *KiriViewApplication::shortcutHelpModel() const
 {
@@ -195,6 +201,50 @@ QString KiriViewApplication::menuShortcutText(const QString &actionName) const
 QString KiriViewApplication::menuShortcutTextForId(ActionId actionId) const
 {
     return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).menuShortcutText;
+}
+
+bool KiriViewApplication::actionPlacementEnabled(ActionId actionId) const
+{
+    return m_actionRuntime->actionPlacementEnabled(domainActionId(actionId));
+}
+
+void KiriViewApplication::updateActionState(bool helpActionsEnabled, bool readyActionsEnabled,
+    bool rotateActionsEnabled, bool twoPageModeActionsEnabled,
+    bool rightToLeftReadingActionsEnabled, bool containerNavigationActionsEnabled,
+    bool displayedMediaOpenWithAvailable, bool displayedFileDeletionAvailable,
+    bool fileDeletionInProgress, bool activeNavigationAvailable, bool activeNavigationKnown,
+    bool activeNavigationHasTargets, bool canOpenPreviousActiveNavigation,
+    bool canOpenNextActiveNavigation, bool fitModeSelected, bool fitHeightModeSelected,
+    bool fitWidthModeSelected, bool twoPageModeActive, bool rightToLeftReadingActive,
+    bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
+    bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled)
+{
+    Actions::ApplicationActionStateInput input;
+    input.helpActionsEnabled = helpActionsEnabled;
+    input.readyActionsEnabled = readyActionsEnabled;
+    input.rotateActionsEnabled = rotateActionsEnabled;
+    input.twoPageModeActionsEnabled = twoPageModeActionsEnabled;
+    input.rightToLeftReadingActionsEnabled = rightToLeftReadingActionsEnabled;
+    input.containerNavigationActionsEnabled = containerNavigationActionsEnabled;
+    input.displayedMediaOpenWithAvailable = displayedMediaOpenWithAvailable;
+    input.displayedFileDeletionAvailable = displayedFileDeletionAvailable;
+    input.fileDeletionInProgress = fileDeletionInProgress;
+    input.activeNavigationAvailable = activeNavigationAvailable;
+    input.activeNavigationKnown = activeNavigationKnown;
+    input.activeNavigationHasTargets = activeNavigationHasTargets;
+    input.canOpenPreviousActiveNavigation = canOpenPreviousActiveNavigation;
+    input.canOpenNextActiveNavigation = canOpenNextActiveNavigation;
+    input.fitModeSelected = fitModeSelected;
+    input.fitHeightModeSelected = fitHeightModeSelected;
+    input.fitWidthModeSelected = fitWidthModeSelected;
+    input.twoPageModeActive = twoPageModeActive;
+    input.rightToLeftReadingActive = rightToLeftReadingActive;
+    input.infoPanelVisible = infoPanelVisible;
+    input.thumbnailPanelVisible = thumbnailPanelVisible;
+    input.fullscreen = fullscreen;
+    input.applicationMenuShortcutEnabled = applicationMenuShortcutEnabled;
+    input.showMenubarActionEnabled = showMenubarActionEnabled;
+    m_actionRuntime->setActionStateInput(input);
 }
 
 bool KiriViewApplication::videoActionUnsupported(ActionId actionId) const
