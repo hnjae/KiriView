@@ -10,12 +10,12 @@
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
+#include "presentation/imagepresentationactivestate.h"
 #include "presentation/imagepresentationstate.h"
 #include "presentation/imagespreadgeometry.h"
 #include "presentation/imagespreadmodepolicy.h"
 #include "presentation/imagespreadnavigation.h"
 #include "presentation/imagespreadsecondarypagerefresh.h"
-#include "presentation/imageviewportcommandstate.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
@@ -37,7 +37,6 @@ namespace KiriView {
 class ImagePresentationController;
 class ImageSecondaryPageController;
 class ImageSpreadModeController;
-class ImageSpreadZoomController;
 enum class ImageSecondaryPageLoadResult;
 
 class ImageSpreadPresentationController final
@@ -68,6 +67,7 @@ public:
     bool loading(bool documentLoading) const;
 
     QSize imageSize() const;
+    QSize primaryImageSize() const;
     QSize secondaryImageSize() const;
     QSizeF displaySize() const;
     QSizeF primaryDisplaySize() const;
@@ -147,8 +147,9 @@ private:
     void scheduleAdjacentPredecode();
     ImageDocumentPageNavigationSnapshot pageNavigationSnapshot() const;
     void notifyTwoPageModeChanged();
-    void applySpreadZoomChanges(const ImageZoomChangeSet &changes, bool notifyPublicChanges = true);
-    void notifySpreadZoomChanged(const ImageZoomChangeSet &changes);
+    void applyActivePresentationChanges(
+        const ImageZoomChangeSet &changes, bool notifyPublicChanges = true);
+    void notifyActivePresentationZoomChanged(const ImageZoomChangeSet &changes);
     bool refreshViewportFrame(bool forceApplyVisibleItemRect = false);
     bool refreshViewportFrameForContentPosition(
         const QPointF &contentPosition, bool forceApplyVisibleItemRect = false);
@@ -162,9 +163,9 @@ private:
     Callbacks m_callbacks;
     std::unique_ptr<ImageSecondaryPageController> m_secondaryPageController;
     std::unique_ptr<ImageSpreadModeController> m_modeController;
-    std::unique_ptr<ImageSpreadZoomController> m_zoomController;
+    std::unique_ptr<ImagePresentationActiveState> m_activePresentation;
     ImageSpreadSecondaryPageRefresh m_secondaryPageRefresh;
-    ImageViewportCommandState m_viewportCommands;
+    QUrl m_activeZoomScopeRootUrl;
 };
 }
 

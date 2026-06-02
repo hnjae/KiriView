@@ -13,10 +13,8 @@ struct ImageSpreadReadingAvailability {
 
 struct ImageSpreadTwoPageModeChange {
     bool changed = false;
-    bool resetSpreadZoom = false;
     bool finishTransition = false;
     bool clearSecondaryPage = false;
-    bool restorePrimaryZoom = false;
     bool refreshSecondaryPage = false;
     bool notifyTwoPageMode = false;
 };

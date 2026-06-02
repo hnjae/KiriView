@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_IMAGESPREADMODECONTROLLER_H
 #define KIRIVIEW_IMAGESPREADMODECONTROLLER_H
 
-#include "presentation/imagepresentationstate.h"
 #include "presentation/imagespreadmodepolicy.h"
 
 namespace KiriView {
@@ -22,15 +21,9 @@ public:
     bool rightToLeftReadingActive(const ImageSpreadReadingAvailability &availability) const;
     void resetRightToLeftReading();
 
-    bool spreadTransitionInProgress() const;
-    ImagePresentationTransitionState presentationTransitionState() const;
-    bool beginSpreadTransition();
-    bool finishSpreadTransition();
-
 private:
     bool m_twoPageModeEnabled = false;
     bool m_rightToLeftReadingEnabled = false;
-    bool m_spreadTransitionInProgress = false;
 };
 }
 

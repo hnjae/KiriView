@@ -136,6 +136,7 @@ src/predecode/mediapredecodeeligibility.cpp
 src/predecode/mediapredecodescheduleplan.cpp
 src/predecode/mediapredecodewindowplan.cpp
 src/presentation/imagepresentationcontroller.cpp
+src/presentation/imagepresentationactivestate.cpp
 src/presentation/imagepresentationload.cpp
 src/presentation/imagepresentationviewportcontroller.cpp
 src/presentation/imagepresentationviewportstate.cpp
@@ -150,7 +151,6 @@ src/presentation/imagespreadpagecache.cpp
 src/presentation/imagespreadpresentationcontroller.cpp
 src/presentation/imagespreadsecondarypagerefresh.cpp
 src/presentation/imagespreadsecondarypagerefreshpolicy.cpp
-src/presentation/imagespreadzoomcontroller.cpp
 src/navigation/imageshortcutnavigationpolicy.cpp
 src/location/imageurl.cpp
 src/presentation/imageviewportgeometry.cpp

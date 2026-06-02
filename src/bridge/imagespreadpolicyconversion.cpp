@@ -14,9 +14,8 @@ RustImageSpreadReadingAvailability rustImageSpreadReadingAvailability(
 ImageSpreadTwoPageModeChange imageSpreadTwoPageModeChangeFromRust(
     const RustImageSpreadTwoPageModeChange &change)
 {
-    return ImageSpreadTwoPageModeChange { change.changed, change.reset_spread_zoom,
-        change.finish_transition, change.clear_secondary_page, change.restore_primary_zoom,
-        change.refresh_secondary_page, change.notify_two_page_mode };
+    return ImageSpreadTwoPageModeChange { change.changed, change.finish_transition,
+        change.clear_secondary_page, change.refresh_secondary_page, change.notify_two_page_mode };
 }
 
 RustImageSpreadSecondaryPageRefreshState rustImageSpreadSecondaryPageRefreshState(

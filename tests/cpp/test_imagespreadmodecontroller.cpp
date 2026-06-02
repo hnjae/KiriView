@@ -13,8 +13,6 @@ class TestImageSpreadModeController : public QObject
 private Q_SLOTS:
     void twoPageModeRequiresDisplayedComicArchiveImage();
     void resetRightToLeftReadingClearsCurrentModeState();
-    void spreadTransitionReportsStateChanges();
-    void spreadTransitionPublishesPresentationPhase();
 };
 
 namespace {
@@ -60,33 +58,6 @@ void TestImageSpreadModeController::resetRightToLeftReadingClearsCurrentModeStat
     controller.resetRightToLeftReading();
     QVERIFY(!controller.rightToLeftReadingEnabled());
     QVERIFY(!controller.rightToLeftReadingActive(readingAvailability(true, true, true)));
-}
-
-void TestImageSpreadModeController::spreadTransitionReportsStateChanges()
-{
-    KiriView::ImageSpreadModeController controller;
-
-    QVERIFY(!controller.spreadTransitionInProgress());
-    QVERIFY(controller.beginSpreadTransition());
-    QVERIFY(controller.spreadTransitionInProgress());
-    QVERIFY(!controller.beginSpreadTransition());
-    QVERIFY(controller.finishSpreadTransition());
-    QVERIFY(!controller.spreadTransitionInProgress());
-    QVERIFY(!controller.finishSpreadTransition());
-}
-
-void TestImageSpreadModeController::spreadTransitionPublishesPresentationPhase()
-{
-    KiriView::ImageSpreadModeController controller;
-
-    QCOMPARE(controller.presentationTransitionState(),
-        KiriView::ImagePresentationTransitionState::CommittedActive);
-    QVERIFY(controller.beginSpreadTransition());
-    QCOMPARE(controller.presentationTransitionState(),
-        KiriView::ImagePresentationTransitionState::TransitioningPlaceholder);
-    QVERIFY(controller.finishSpreadTransition());
-    QCOMPARE(controller.presentationTransitionState(),
-        KiriView::ImagePresentationTransitionState::CommittedActive);
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadModeController)

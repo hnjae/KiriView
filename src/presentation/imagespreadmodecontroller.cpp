@@ -58,35 +58,4 @@ bool ImageSpreadModeController::rightToLeftReadingActive(
 }
 
 void ImageSpreadModeController::resetRightToLeftReading() { m_rightToLeftReadingEnabled = false; }
-
-bool ImageSpreadModeController::spreadTransitionInProgress() const
-{
-    return m_spreadTransitionInProgress;
-}
-
-ImagePresentationTransitionState ImageSpreadModeController::presentationTransitionState() const
-{
-    return m_spreadTransitionInProgress ? ImagePresentationTransitionState::TransitioningPlaceholder
-                                        : ImagePresentationTransitionState::CommittedActive;
-}
-
-bool ImageSpreadModeController::beginSpreadTransition()
-{
-    if (m_spreadTransitionInProgress) {
-        return false;
-    }
-
-    m_spreadTransitionInProgress = true;
-    return true;
-}
-
-bool ImageSpreadModeController::finishSpreadTransition()
-{
-    if (!m_spreadTransitionInProgress) {
-        return false;
-    }
-
-    m_spreadTransitionInProgress = false;
-    return true;
-}
 }

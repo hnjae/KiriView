@@ -90,7 +90,7 @@ QSize ImageDocumentRuntime::imageSize() const
 
 QSize ImageDocumentRuntime::primaryImageSize() const
 {
-    return controllers->presentationController().imageSize();
+    return controllers->spreadController().primaryImageSize();
 }
 
 QSize ImageDocumentRuntime::secondaryImageSize() const

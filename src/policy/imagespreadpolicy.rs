@@ -37,10 +37,8 @@ mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageSpreadTwoPageModeChange {
         changed: bool,
-        reset_spread_zoom: bool,
         finish_transition: bool,
         clear_secondary_page: bool,
-        restore_primary_zoom: bool,
         refresh_secondary_page: bool,
         notify_two_page_mode: bool,
     }
@@ -112,39 +110,27 @@ fn rust_image_spread_reading_controls_available(
 fn rust_image_spread_two_page_mode_change(
     current_enabled: bool,
     next_enabled: bool,
-    secondary_page_visible: bool,
+    _secondary_page_visible: bool,
 ) -> RustImageSpreadTwoPageModeChange {
     if current_enabled == next_enabled {
-        return two_page_mode_change(false, false, false, false, false, false, false);
+        return two_page_mode_change(false, false, false, false, false);
     }
 
     let disabling = !next_enabled;
-    two_page_mode_change(
-        true,
-        next_enabled,
-        disabling,
-        disabling,
-        disabling && secondary_page_visible,
-        true,
-        true,
-    )
+    two_page_mode_change(true, disabling, disabling, true, true)
 }
 
 fn two_page_mode_change(
     changed: bool,
-    reset_spread_zoom: bool,
     finish_transition: bool,
     clear_secondary_page: bool,
-    restore_primary_zoom: bool,
     refresh_secondary_page: bool,
     notify_two_page_mode: bool,
 ) -> RustImageSpreadTwoPageModeChange {
     RustImageSpreadTwoPageModeChange {
         changed,
-        reset_spread_zoom,
         finish_transition,
         clear_secondary_page,
-        restore_primary_zoom,
         refresh_secondary_page,
         notify_two_page_mode,
     }
@@ -253,19 +239,19 @@ mod tests {
     fn two_page_mode_change_plans_enable_disable_side_effects() {
         assert_eq!(
             rust_image_spread_two_page_mode_change(false, false, true),
-            two_page_mode_change(false, false, false, false, false, false, false)
+            two_page_mode_change(false, false, false, false, false)
         );
         assert_eq!(
             rust_image_spread_two_page_mode_change(false, true, false),
-            two_page_mode_change(true, true, false, false, false, true, true)
+            two_page_mode_change(true, false, false, true, true)
         );
         assert_eq!(
             rust_image_spread_two_page_mode_change(true, false, false),
-            two_page_mode_change(true, false, true, true, false, true, true)
+            two_page_mode_change(true, true, true, true, true)
         );
         assert_eq!(
             rust_image_spread_two_page_mode_change(true, false, true),
-            two_page_mode_change(true, false, true, true, true, true, true)
+            two_page_mode_change(true, true, true, true, true)
         );
     }
 }
