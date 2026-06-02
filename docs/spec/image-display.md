@@ -88,6 +88,8 @@ Fit Width mode scales the image width to the viewport width while preserving asp
 
 Within the same directly opened archive or directory collection, KiriView preserves the current zoom state while users move between pages with Previous, Next, or page number navigation.
 
+Switching between single-page display and Two-Page Spread preserves the user's active zoom choice. When returning from a visible two-page spread to single-page display, the current spread zoom becomes the single-page zoom.
+
 If the user has selected Fit, Fit Height, or Fit Width, that fit mode remains selected and recalculates for each page and viewport size.
 
 If the user has entered a manual zoom value, that exact percentage remains active.

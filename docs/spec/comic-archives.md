@@ -44,6 +44,8 @@ The target spread appears only after both pages are ready.
 
 If the target page is the cover, wide, last page, or cannot be paired with an eligible next page, KiriView displays the target page alone once that page is ready.
 
+While a Two-Page Spread transition is loading, the previously displayed page or spread remains the last committed image presentation. KiriView must not expose a partially prepared target spread as the active image presentation.
+
 ## Two-Page Spread Navigation
 
 When Two-Page Spread is enabled for a directly opened comic book archive, ordinary Previous and Next image navigation move by the currently displayed spread rather than always by one page.
