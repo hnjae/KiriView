@@ -46,7 +46,7 @@ Extension points are adapter contracts, not state backdoors. New decoders, opene
 - [x] Core async flows have operation ids or generations for image decode, image load sessions, direct-media navigation, predecode, thumbnails, video source resolution, and tile decode scheduling.
 - [x] Thumbnail rows, foreground demand, background fill, cache lookup, generation, and image retention are owned by the session thumbnail runtime.
 - [x] Direct-media predecode has a session-owned still-image-only coordinator separate from image-document predecode.
-- [ ] Define the minimum source key contract needed for route sealing, route equality, route freshness, session snapshots, and direct-media scope identity, including top-level URL and local-file normalization.
+- [x] Define the minimum source key contract needed for route sealing, route equality, route freshness, session snapshots, and direct-media scope identity, including top-level URL and local-file normalization.
 - [ ] Seal top-level source routing so QML can request media only through the session route owner.
 - [ ] Move `QAction` enabled, checked, label, and trigger state out of QML and into the application action runtime.
 - [ ] Replace viewport scroll/frame synchronization with a revisioned presentation command and projection contract that separates canonical logical state from QML-owned physical item state.
