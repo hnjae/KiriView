@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_DIRECTMEDIACURSOR_H
 #define KIRIVIEW_DIRECTMEDIACURSOR_H
 
+#include "location/sourcekey.h"
+
 #include <QUrl>
 #include <QtGlobal>
 
@@ -21,7 +23,10 @@ struct DirectMediaScope {
 
     friend bool operator==(const DirectMediaScope &left, const DirectMediaScope &right)
     {
-        return left.currentUrl == right.currentUrl && left.parentUrl == right.parentUrl
+        return sameSourceKey(sourceKeyForDirectMediaCurrentUrl(left.currentUrl),
+                   sourceKeyForDirectMediaCurrentUrl(right.currentUrl))
+            && sameSourceKey(sourceKeyForDirectMediaParentUrl(left.parentUrl),
+                sourceKeyForDirectMediaParentUrl(right.parentUrl))
             && left.generation == right.generation;
     }
 };

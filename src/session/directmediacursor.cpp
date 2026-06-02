@@ -3,7 +3,6 @@
 
 #include "directmediacursor.h"
 
-#include "location/imageurl.h"
 #include "navigation/directmedianavigationmodel.h"
 #include "navigation/navigationlogging.h"
 
@@ -11,11 +10,33 @@
 #include <utility>
 
 namespace {
+bool sameDirectMediaCurrentUrlKeyOrEmpty(const QUrl &left, const QUrl &right)
+{
+    if (left.isEmpty() || right.isEmpty()) {
+        return left.isEmpty() && right.isEmpty();
+    }
+
+    return KiriView::sameSourceKey(KiriView::sourceKeyForDirectMediaCurrentUrl(left),
+        KiriView::sourceKeyForDirectMediaCurrentUrl(right));
+}
+
+bool sameDirectMediaParentUrlKeyOrEmpty(const QUrl &left, const QUrl &right)
+{
+    if (left.isEmpty() || right.isEmpty()) {
+        return left.isEmpty() && right.isEmpty();
+    }
+
+    return KiriView::sameSourceKey(KiriView::sourceKeyForDirectMediaParentUrl(left),
+        KiriView::sourceKeyForDirectMediaParentUrl(right));
+}
+
 bool sameEffectiveDirectMediaCursorUrl(
     const KiriView::DirectMediaCursor &left, const KiriView::DirectMediaCursor &right)
 {
-    return KiriView::sameNormalizedUrlOrEmpty(KiriView::effectiveDirectMediaCursorUrl(left),
-        KiriView::effectiveDirectMediaCursorUrl(right));
+    const KiriView::DirectMediaScope leftScope = KiriView::directMediaScopeForCursor(left);
+    const KiriView::DirectMediaScope rightScope = KiriView::directMediaScopeForCursor(right);
+    return sameDirectMediaCurrentUrlKeyOrEmpty(leftScope.currentUrl, rightScope.currentUrl)
+        && sameDirectMediaParentUrlKeyOrEmpty(leftScope.parentUrl, rightScope.parentUrl);
 }
 
 bool replaceDirectMediaCursor(
@@ -62,9 +83,7 @@ DirectMediaScope directMediaScopeForCursor(const DirectMediaCursor &cursor)
 bool directMediaScopeMatchesCursor(const DirectMediaCursor &cursor, const DirectMediaScope &scope)
 {
     const DirectMediaScope currentScope = directMediaScopeForCursor(cursor);
-    return sameNormalizedUrl(currentScope.currentUrl, scope.currentUrl)
-        && sameNormalizedUrl(currentScope.parentUrl, scope.parentUrl)
-        && currentScope.generation == scope.generation;
+    return currentScope == scope;
 }
 
 bool clearDirectMediaCursor(DirectMediaCursor &cursor)

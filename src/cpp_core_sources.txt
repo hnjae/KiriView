@@ -97,6 +97,7 @@ src/navigation/imagecontaineropenplan.cpp
 src/async/imageiojob.cpp
 src/async/imageiojobs.cpp
 src/location/imagelocation.cpp
+src/location/sourcekey.cpp
 src/presentation/imagerectmapping.cpp
 src/rendering/imagetile.cpp
 src/rendering/imagetiledecoderuntime.cpp
