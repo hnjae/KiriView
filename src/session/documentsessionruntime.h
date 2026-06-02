@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_DOCUMENTSESSIONRUNTIME_H
 #define KIRIVIEW_DOCUMENTSESSIONRUNTIME_H
 
+#include "async/imageasyncoperationstate.h"
 #include "navigation/directmedianavigationcandidateprovider.h"
 #include "navigation/directmedianavigationmodel.h"
 #include "predecode/mediapredecodedependencies.h"
@@ -142,6 +143,7 @@ private:
     void startMediaDeletion(
         FileDeletionMode mode, std::vector<DirectMediaNavigationCandidate> candidates = {});
     MediaOpenWithPlan currentMediaOpenWithPlan() const;
+    void cancelMediaOpenWith();
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
     void executeMediaDeletionCompletionPlan(
         const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString);
@@ -167,6 +169,9 @@ private:
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
     MediaOpenWithProvider m_mediaOpenWithProvider;
     ImageIoJob m_mediaOpenWithJob;
+    std::shared_ptr<ImageAsyncOperationState> m_mediaOpenWithOperation {
+        std::make_shared<ImageAsyncOperationState>()
+    };
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
     std::vector<QMetaObject::Connection> m_documentConnections;
     ActiveNavigationRevealContext m_pendingActiveNavigationRevealContext;

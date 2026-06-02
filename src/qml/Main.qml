@@ -354,11 +354,9 @@ StatefulApp.StatefulWindow {
                     return;
                 }
 
-                Qt.callLater(function () {
-                    if (!documentSession.fileDeletionInProgress && documentSession.errorString.length <= 0) {
-                        page.documentDeletionWasInProgress = false;
-                    }
-                });
+                if (documentSession.errorString.length <= 0) {
+                    page.documentDeletionWasInProgress = false;
+                }
             }
 
             function onOpenWithFailed(errorString) {

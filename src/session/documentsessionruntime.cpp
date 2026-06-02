@@ -4,6 +4,7 @@
 #include "documentsessionruntime.h"
 
 #include "archive/openedcollectionthumbnailpolicy.h"
+#include "async/imagecallback.h"
 #include "localization/imageerrortext.h"
 #include "location/imageurl.h"
 #include "navigation/mediaformatregistry.h"
@@ -150,7 +151,7 @@ DocumentSessionRuntime::~DocumentSessionRuntime()
     m_directMediaNavigationRuntime.cancel();
     m_directMediaDeletionCandidateRuntime.cancel();
     m_mediaDeletionRuntime.cancel();
-    m_mediaOpenWithJob.cancel();
+    cancelMediaOpenWith();
 }
 
 QUrl DocumentSessionRuntime::sourceUrl() const { return m_state.publicSnapshot().sourceUrl; }
@@ -486,7 +487,19 @@ void DocumentSessionRuntime::openCurrentMediaWith(MediaOpenWithCallback callback
         return;
     }
 
-    m_mediaOpenWithJob = m_mediaOpenWithProvider(m_owner, *plan.request, std::move(callback));
+    cancelMediaOpenWith();
+    const std::shared_ptr<ImageAsyncOperationState> operationState = m_mediaOpenWithOperation;
+    const quint64 operationId = operationState->start();
+    auto sharedCallback = std::make_shared<MediaOpenWithCallback>(std::move(callback));
+    m_mediaOpenWithJob = m_mediaOpenWithProvider(m_owner, *plan.request,
+        [operationState, operationId, sharedCallback](
+            MediaOpenWithResult result, const QString &errorString) {
+            if (!operationState->finish(operationId)) {
+                return;
+            }
+
+            invokeIfSet(*sharedCallback, result, errorString);
+        });
 }
 
 void DocumentSessionRuntime::connectDocuments()
@@ -648,6 +661,8 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
         QScopedValueRollback<bool> routingSource(m_routingSource, true);
         mutation();
     };
+
+    cancelMediaOpenWith();
 
     for (const DocumentSessionRouteOperation &operation : plan.operations) {
         std::visit(
@@ -1011,20 +1026,32 @@ MediaOpenWithPlan DocumentSessionRuntime::currentMediaOpenWithPlan() const
     });
 }
 
+void DocumentSessionRuntime::cancelMediaOpenWith()
+{
+    m_mediaOpenWithJob.cancel();
+    m_mediaOpenWithOperation->cancel();
+}
+
 void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion)
 {
     m_state.setFileDeletionInProgress(false);
+    if (completion.plan.reportFailure) {
+        m_state.setSessionErrorString(completion.errorString.isEmpty()
+                ? genericFileDeletionErrorMessage()
+                : completion.errorString);
+        recomputePublicProjection();
+        return;
+    }
+
     recomputePublicProjection();
 
     executeMediaDeletionCompletionPlan(completion.plan, completion.errorString);
 }
 
 void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
-    const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString)
+    const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &)
 {
     if (plan.reportFailure) {
-        m_state.setSessionErrorString(
-            errorString.isEmpty() ? genericFileDeletionErrorMessage() : errorString);
         return;
     }
 
