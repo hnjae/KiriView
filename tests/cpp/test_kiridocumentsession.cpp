@@ -228,6 +228,60 @@ public:
     QString errorString;
 };
 
+struct ManualMediaOpenWithOperation {
+    QObject *object = nullptr;
+    KiriView::MediaOpenWithRequest request;
+    KiriView::MediaOpenWithCallback callback;
+    KiriView::ImageIoJobCompletion completion;
+    bool canceled = false;
+};
+
+class ManualMediaOpenWithProvider
+{
+public:
+    KiriView::MediaOpenWithProvider provider()
+    {
+        return [this](QObject *receiver, KiriView::MediaOpenWithRequest request,
+                   KiriView::MediaOpenWithCallback callback) {
+            auto operation = std::make_shared<ManualMediaOpenWithOperation>();
+            operation->request = std::move(request);
+            operation->callback = std::move(callback);
+
+            KiriView::ImageIoJob job
+                = KiriView::TestSupport::Detail::startManualIoJob(receiver, operation);
+            m_operations.push_back(operation);
+            return job;
+        };
+    }
+
+    std::size_t operationCount() const { return m_operations.size(); }
+
+    ManualMediaOpenWithOperation &operationAt(std::size_t index) { return *m_operations.at(index); }
+
+    void finishOperationAt(
+        std::size_t index, KiriView::MediaOpenWithResult result, const QString &errorString = {})
+    {
+        KiriView::TestSupport::Detail::finishManualIoJob(
+            m_operations.at(index), [result, errorString](ManualMediaOpenWithOperation &operation) {
+                if (operation.callback) {
+                    operation.callback(result, errorString);
+                }
+            });
+    }
+
+    void deliverOperationAtIgnoringCancellation(
+        std::size_t index, KiriView::MediaOpenWithResult result, const QString &errorString = {})
+    {
+        ManualMediaOpenWithOperation &operation = operationAt(index);
+        if (operation.callback) {
+            operation.callback(result, errorString);
+        }
+    }
+
+private:
+    std::vector<std::shared_ptr<ManualMediaOpenWithOperation>> m_operations;
+};
+
 class FakeThumbnailLookupProvider
 {
 public:
@@ -438,6 +492,8 @@ private Q_SLOTS:
     void openWithIsUnavailableInEmptySession();
     void openWithUsesCurrentDirectImageUrl();
     void openWithFailureEmitsToastSignal();
+    void staleOpenWithFailureAfterReplacementIsIgnored();
+    void staleOpenWithFailureAfterSessionDestructionIsIgnored();
     void twoPageSpreadLastBoundaryProjectsThroughActiveNavigation();
     void videoNavigationKeepsStillImagePredecodeCache();
     void videoActiveNavigationExposesCurrentNumberAndCount();
@@ -453,6 +509,7 @@ private Q_SLOTS:
     void pendingDirectMediaDeletionCandidateLoadIsCanceledBySourceChange();
     void videoDeletionUsesOriginalUrlAndOpensMediaFallback();
     void canceledVideoDeletionKeepsCurrentVideo();
+    void failedVideoDeletionPublishesErrorWithProgressCompletion();
     void staleVideoDeletionCompletionAfterSourceChangeIsIgnored();
 };
 
@@ -2174,6 +2231,76 @@ void TestKiriDocumentSession::openWithFailureEmitsToastSignal()
     QCOMPARE(failureSpy.at(0).at(0).toString(), QStringLiteral("launcher failed"));
 }
 
+void TestKiriDocumentSession::staleOpenWithFailureAfterReplacementIsIgnored()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString firstPath = directory.filePath(QStringLiteral("01.png"));
+    const QString secondPath = directory.filePath(QStringLiteral("02.png"));
+    QVERIFY(writeTestImage(firstPath));
+    QVERIFY(writeTestImage(secondPath));
+    const QUrl firstUrl = localUrl(firstPath);
+    const QUrl secondUrl = localUrl(secondPath);
+
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(firstUrl), directMediaNavigationCandidate(secondUrl) });
+    ManualMediaOpenWithProvider openWithProvider;
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, nullptr, {},
+            KiriView::TestSupport::staticImageDataDecoder(), openWithProvider.provider());
+    QSignalSpy failureSpy(session.get(), &KiriDocumentSession::openWithFailed);
+
+    session->setSourceUrl(firstUrl);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    session->openCurrentMediaWith();
+    QCOMPARE(openWithProvider.operationCount(), std::size_t(1));
+
+    session->setSourceUrl(secondUrl);
+    QTRY_COMPARE(session->imageDocument()->displayedUrl(), secondUrl);
+
+    openWithProvider.deliverOperationAtIgnoringCancellation(
+        0, KiriView::MediaOpenWithResult::Failed, QStringLiteral("stale launcher failed"));
+
+    QCOMPARE(failureSpy.count(), 0);
+}
+
+void TestKiriDocumentSession::staleOpenWithFailureAfterSessionDestructionIsIgnored()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString imagePath = directory.filePath(QStringLiteral("01.png"));
+    QVERIFY(writeTestImage(imagePath));
+    const QUrl imageUrl = localUrl(imagePath);
+
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { directMediaNavigationCandidate(imageUrl) });
+    ManualMediaOpenWithProvider openWithProvider;
+    int failureCount = 0;
+
+    {
+        std::unique_ptr<KiriDocumentSession> session
+            = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, nullptr,
+                {}, KiriView::TestSupport::staticImageDataDecoder(), openWithProvider.provider());
+        QObject::connect(session.get(), &KiriDocumentSession::openWithFailed, session.get(),
+            [&failureCount]() { ++failureCount; });
+
+        session->setSourceUrl(imageUrl);
+        QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+        session->openCurrentMediaWith();
+        QCOMPARE(openWithProvider.operationCount(), std::size_t(1));
+    }
+
+    QVERIFY(openWithProvider.operationAt(0).canceled);
+    openWithProvider.deliverOperationAtIgnoringCancellation(
+        0, KiriView::MediaOpenWithResult::Failed, QStringLiteral("destroyed launcher failed"));
+
+    QCOMPARE(failureCount, 0);
+}
+
 void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavigation()
 {
     FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
@@ -2693,6 +2820,36 @@ void TestKiriDocumentSession::canceledVideoDeletionKeepsCurrentVideo()
     QCOMPARE(session->sourceUrl(), clip);
     QCOMPARE(session->videoDocument()->sourceUrl(), clip);
     QCOMPARE(session->errorString(), QString());
+}
+
+void TestKiriDocumentSession::failedVideoDeletionPublishesErrorWithProgressCompletion()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    KiriView::TestSupport::ManualFileDeletionProvider fileDeletionProvider;
+    const QUrl clip = localUrl(QStringLiteral("/media/01.mov"));
+    directMediaNavigationProvider.setMedia(
+        localUrl(QStringLiteral("/media/")), { directMediaNavigationCandidate(clip) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSession(directMediaNavigationProvider, &fileDeletionProvider);
+    session->setSourceUrl(clip);
+
+    QSignalSpy progressSpy(session.get(), &KiriDocumentSession::fileDeletionInProgressChanged);
+    QString errorDuringCompletion;
+    QObject::connect(
+        session.get(), &KiriDocumentSession::fileDeletionInProgressChanged, session.get(), [&]() {
+            if (!session->fileDeletionInProgress()) {
+                errorDuringCompletion = session->errorString();
+            }
+        });
+
+    session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
+    fileDeletionProvider.finishBackOperation(
+        KiriView::FileDeletionResult::Failed, QStringLiteral("delete failed"));
+
+    QCOMPARE(progressSpy.count(), 2);
+    QVERIFY(!session->fileDeletionInProgress());
+    QCOMPARE(session->errorString(), QStringLiteral("delete failed"));
+    QCOMPARE(errorDuringCompletion, QStringLiteral("delete failed"));
 }
 
 void TestKiriDocumentSession::staleVideoDeletionCompletionAfterSourceChangeIsIgnored()
