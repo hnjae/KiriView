@@ -10,6 +10,7 @@ Use these documents when changing module ownership, crossing the Rust/C++/QML bo
 - [Language Boundary](language-boundary.md)
 - [State Ownership](state-ownership.md)
 - [Thumbnail Source Adapters](thumbnail-source-adapters.md)
+- [Extension Contracts](extension-contracts.md)
 - [FFI Design](ffi-design.md)
 - [Workflow Shape](workflow-shape.md)
 - [Async Lifecycle](async-lifecycle.md)

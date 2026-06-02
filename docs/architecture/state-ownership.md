@@ -48,7 +48,7 @@ Direct-media scope identity is `{ current key, parent key, generation }`. The cu
 
 Direct-media freshness changes only when the effective current key or parent scope key changes. Resolving pending direct-image confirmation to an equivalent displayed URL is a phase change within the same freshness generation.
 
-Archive-entry key families, render and cache keys, and sandbox-specific freshness beyond the existing navigation-source handling are deferred to the Stage 8 extension contracts.
+Archive-entry key families, render keys, thumbnail cache keys, predecode candidate keys, and sandbox-specific freshness beyond the existing navigation-source handling are defined by the extension contracts.
 
 ## Derived Public State
 
