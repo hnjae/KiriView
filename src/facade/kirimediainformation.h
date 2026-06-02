@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_KIRIMEDIAINFORMATION_H
 #define KIRIVIEW_KIRIMEDIAINFORMATION_H
 
+#include "session/mediainformationprojection.h"
+
 #include <QAbstractListModel>
 #include <QObject>
 #include <QSize>
@@ -26,10 +28,7 @@ public:
     };
     Q_ENUM(Role)
 
-    struct Row {
-        QString label;
-        QString value;
-    };
+    using Row = KiriView::MediaInformationProjectionRow;
 
     explicit KiriMediaInformationRowModel(QObject *parent = nullptr);
 
@@ -62,12 +61,6 @@ class KiriMediaInformation : public QObject
     Q_PROPERTY(bool canOpenContainingFolder READ canOpenContainingFolder NOTIFY changed)
 
 public:
-    enum class MediaKind {
-        Empty,
-        Image,
-        Video,
-    };
-
     explicit KiriMediaInformation(KiriDocumentSession &session, QObject *parent = nullptr);
 
     bool available() const;
@@ -90,21 +83,7 @@ Q_SIGNALS:
     void changed();
 
 private:
-    struct Snapshot {
-        bool available = false;
-        MediaKind kind = MediaKind::Empty;
-        QUrl targetUrl;
-        QString title;
-        QString summary;
-        QString mediaSectionTitle;
-        std::vector<KiriMediaInformationRowModel::Row> generalRows;
-        std::vector<KiriMediaInformationRowModel::Row> mediaRows;
-        std::vector<KiriMediaInformationRowModel::Row> cameraRows;
-        std::vector<KiriMediaInformationRowModel::Row> advancedRows;
-    };
-
     void refresh();
-    Snapshot buildSnapshot() const;
     QUrl targetUrl() const;
     QString copiedFilePath() const;
 
@@ -114,6 +93,8 @@ private:
     KiriMediaInformationRowModel m_cameraRows;
     KiriMediaInformationRowModel m_advancedRows;
     bool m_available = false;
+    bool m_canCopyFilePath = false;
+    bool m_canOpenContainingFolder = false;
     QUrl m_targetUrl;
     QString m_title;
     QString m_summary;

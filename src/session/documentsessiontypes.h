@@ -5,6 +5,7 @@
 #define KIRIVIEW_DOCUMENTSESSIONTYPES_H
 
 #include "session/activenavigationprojection.h"
+#include "session/mediainformationprojection.h"
 
 #include <QString>
 #include <QUrl>
@@ -77,6 +78,7 @@ struct DocumentSessionPublicSnapshot {
     bool fileDeletionInProgress = false;
     ActiveZoomSnapshot activeZoom;
     DocumentSessionPublicProjection projection;
+    MediaInformationProjectionSnapshot mediaInformation;
     ActiveNavigationRevealIntent activeNavigationRevealIntent = ActiveNavigationRevealIntent::None;
     ActiveNavigationRevealDirection activeNavigationRevealDirection
         = ActiveNavigationRevealDirection::None;

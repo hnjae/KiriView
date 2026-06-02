@@ -55,6 +55,10 @@ class KiriDocumentSession : public QObject
     Q_PROPERTY(bool activeNavigationKnown READ activeNavigationKnown NOTIFY activeNavigationChanged)
     Q_PROPERTY(
         bool activeNavigationEditable READ activeNavigationEditable NOTIFY activeNavigationChanged)
+    Q_PROPERTY(bool activeNavigationHasTargets READ activeNavigationHasTargets NOTIFY
+            activeNavigationChanged)
+    Q_PROPERTY(bool activeNavigationDispatchAvailable READ activeNavigationDispatchAvailable NOTIFY
+            activeNavigationChanged)
     Q_PROPERTY(int activeNavigationCurrentNumber READ activeNavigationCurrentNumber NOTIFY
             activeNavigationChanged)
     Q_PROPERTY(int activeNavigationCount READ activeNavigationCount NOTIFY activeNavigationChanged)
@@ -66,6 +70,8 @@ class KiriDocumentSession : public QObject
             activeNavigationChanged)
     Q_PROPERTY(bool atKnownLastActiveNavigation READ atKnownLastActiveNavigation NOTIFY
             activeNavigationChanged)
+    Q_PROPERTY(bool directMediaNavigationBoundaryActive READ directMediaNavigationBoundaryActive
+            NOTIFY activeNavigationChanged)
     Q_PROPERTY(ActiveNavigationBoundaryScope activeNavigationBoundaryScope READ
             activeNavigationBoundaryScope NOTIFY activeNavigationChanged)
     Q_PROPERTY(ActiveNavigationRevealIntent activeNavigationRevealIntent READ
@@ -170,17 +176,21 @@ public:
     bool activeNavigationAvailable() const;
     bool activeNavigationKnown() const;
     bool activeNavigationEditable() const;
+    bool activeNavigationHasTargets() const;
+    bool activeNavigationDispatchAvailable() const;
     int activeNavigationCurrentNumber() const;
     int activeNavigationCount() const;
     bool canOpenPreviousActiveNavigation() const;
     bool canOpenNextActiveNavigation() const;
     bool atKnownFirstActiveNavigation() const;
     bool atKnownLastActiveNavigation() const;
+    bool directMediaNavigationBoundaryActive() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     ActiveNavigationRevealIntent activeNavigationRevealIntent() const;
     ActiveNavigationRevealDirection activeNavigationRevealDirection() const;
     QAbstractListModel *activeNavigationThumbnailModel() const;
     KiriMediaInformation *mediaInformation() const;
+    const KiriView::MediaInformationProjectionSnapshot &mediaInformationSnapshot() const;
     KiriImageDocument *imageDocument() const;
     KiriVideoDocument *videoDocument() const;
 

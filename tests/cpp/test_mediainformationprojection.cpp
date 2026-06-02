@@ -3,6 +3,8 @@
 
 #include "session/mediainformationprojection.h"
 
+#include "session/documentsessiontypes.h"
+
 #include <QObject>
 #include <QSize>
 #include <QTest>

@@ -187,6 +187,11 @@ bool DocumentSessionRuntime::fileDeletionInProgress() const
     return m_state.publicSnapshot().fileDeletionInProgress;
 }
 
+const MediaInformationProjectionSnapshot &DocumentSessionRuntime::mediaInformationSnapshot() const
+{
+    return m_state.mediaInformationSnapshot();
+}
+
 bool DocumentSessionRuntime::activeZoomPercentAvailable() const
 {
     return m_state.publicSnapshot().activeZoom.available;
@@ -229,6 +234,18 @@ bool DocumentSessionRuntime::activeNavigationEditable() const
     return m_state.activeNavigationSnapshot().editable;
 }
 
+bool DocumentSessionRuntime::activeNavigationHasTargets() const
+{
+    return m_state.activeNavigationSnapshot().count > 0;
+}
+
+bool DocumentSessionRuntime::activeNavigationDispatchAvailable() const
+{
+    const ActiveNavigationSnapshot &snapshot = m_state.activeNavigationSnapshot();
+    return snapshot.available && snapshot.known && snapshot.count > 0
+        && !m_state.fileDeletionInProgress();
+}
+
 int DocumentSessionRuntime::activeNavigationCurrentNumber() const
 {
     return m_state.activeNavigationSnapshot().currentNumber;
@@ -257,6 +274,11 @@ bool DocumentSessionRuntime::atKnownFirstActiveNavigation() const
 bool DocumentSessionRuntime::atKnownLastActiveNavigation() const
 {
     return m_state.activeNavigationSnapshot().atKnownLast;
+}
+
+bool DocumentSessionRuntime::directMediaNavigationBoundaryActive() const
+{
+    return m_state.activeNavigationBoundaryScope() == ActiveNavigationBoundaryScope::DirectMedia;
 }
 
 ActiveNavigationBoundaryScope DocumentSessionRuntime::activeNavigationBoundaryScope() const
@@ -538,6 +560,8 @@ void DocumentSessionRuntime::connectDocuments()
         m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); });
     appendConnection(m_documentConnections, m_imageDocument.notifications.pageNavigationChanged,
         m_owner, [this]() { publishActiveNavigationForImagePages(); });
+    appendConnection(m_documentConnections, m_imageDocument.notifications.embeddedMetadataChanged,
+        m_owner, [this]() { recomputePublicProjection(); });
 
     appendConnection(m_documentConnections, m_videoDocument.notifications.sourceUrlChanged, m_owner,
         [this]() { syncFromVideoDocument(); });
@@ -554,6 +578,8 @@ void DocumentSessionRuntime::connectDocuments()
         m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); });
     appendConnection(m_documentConnections, m_videoDocument.notifications.zoomPercentChanged,
         m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); });
+    appendConnection(m_documentConnections, m_videoDocument.notifications.embeddedMetadataChanged,
+        m_owner, [this]() { recomputePublicProjection(); });
 }
 
 void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
@@ -1182,16 +1208,22 @@ DocumentSessionPublicSnapshotInput DocumentSessionRuntime::publicSnapshotInput(
     input.image.sourceMayRepresentDocument = !m_imageDocument.sourceUrl().isEmpty()
         && !isSupportedDirectImageUrl(m_imageDocument.sourceUrl());
     input.image.pageNavigation = imageDocumentPageActiveNavigationSnapshot();
+    input.image.displayedUrl = m_imageDocument.displayedUrl();
+    input.image.displayedOpenedCollectionScope = m_imageDocument.displayedOpenedCollectionScope();
     input.image.windowTitleFileName = m_imageDocument.windowTitleFileName();
     input.image.directMediaSize = m_imageDocument.primaryImageSize();
+    input.image.embeddedMetadata = m_imageDocument.embeddedMetadata();
     input.image.readyForDeletion = m_imageDocument.ready();
+    input.image.readyForInformation = m_imageDocument.ready();
     input.image.directImageReplacementPending = !m_state.directMediaCursor().pendingUrl.isEmpty();
     input.image.zoomPercentKnown = m_imageDocument.zoomPercentKnown();
     input.image.zoomPercent = m_imageDocument.zoomPercent();
     input.image.errorString = m_imageDocument.errorString();
 
+    input.video.sourceUrl = m_videoDocument.sourceUrl();
     input.video.windowTitleFileName = m_videoDocument.windowTitleFileName();
     input.video.directMediaSize = m_videoDocument.videoSize();
+    input.video.embeddedMetadata = m_videoDocument.embeddedMetadata();
     input.video.sourcePresent = !m_videoDocument.sourceUrl().isEmpty();
     input.video.error = m_videoDocument.error();
     input.video.zoomPercentKnown = m_videoDocument.zoomPercentKnown();

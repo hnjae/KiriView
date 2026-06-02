@@ -151,6 +151,28 @@ KiriView::DocumentSessionPublicProjectionInput projectionInputForSnapshotInput(
         input.operations.displayedMediaOpenWithAvailable,
     };
 }
+
+KiriView::MediaInformationProjectionInput mediaInformationInputForSnapshotInput(
+    const KiriView::DocumentSessionPublicSnapshotInput &input)
+{
+    if (input.mediaInformation.inputRevision != 0) {
+        return input.mediaInformation;
+    }
+
+    KiriView::MediaInformationProjectionInput mediaInformationInput;
+    mediaInformationInput.inputRevision = input.inputRevision;
+    mediaInformationInput.documentKind = input.session.documentKind;
+    mediaInformationInput.imageReady = input.image.readyForInformation;
+    mediaInformationInput.imageDisplayedUrl = input.image.displayedUrl;
+    mediaInformationInput.imageDisplayedOpenedCollectionScope
+        = input.image.displayedOpenedCollectionScope;
+    mediaInformationInput.imageSize = input.image.directMediaSize;
+    mediaInformationInput.imageEmbeddedMetadata = input.image.embeddedMetadata;
+    mediaInformationInput.videoSourceUrl = input.video.sourceUrl;
+    mediaInformationInput.videoSize = input.video.directMediaSize;
+    mediaInformationInput.videoEmbeddedMetadata = input.video.embeddedMetadata;
+    return mediaInformationInput;
+}
 }
 
 namespace KiriView {
@@ -186,6 +208,8 @@ DocumentSessionPublicSnapshot projectDocumentSessionPublicSnapshot(
     snapshot.fileDeletionInProgress = input.session.fileDeletionInProgress;
     snapshot.activeZoom = activeZoomForInput(input);
     snapshot.projection = projectDocumentSessionPublicState(projectionInputForSnapshotInput(input));
+    snapshot.mediaInformation
+        = projectMediaInformation(mediaInformationInputForSnapshotInput(input), revision);
     snapshot.activeNavigationRevealIntent = input.session.activeNavigationRevealIntent;
     snapshot.activeNavigationRevealDirection = input.session.activeNavigationRevealDirection;
     return snapshot;

@@ -38,6 +38,7 @@ public:
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     bool displayedMediaOpenWithAvailable() const;
     bool displayedFileDeletionAvailable() const;
+    const MediaInformationProjectionSnapshot &mediaInformationSnapshot() const;
     const DocumentSessionPublicProjection &publicProjection() const;
     const DocumentSessionPublicSnapshot &publicSnapshot() const;
     const DirectMediaCursor &directMediaCursor() const;

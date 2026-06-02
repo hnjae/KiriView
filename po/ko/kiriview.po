@@ -441,144 +441,6 @@ msgid ""
 "yet."
 msgstr ""
 
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata value"
-msgid "Image"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata value"
-msgid "Video"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Type"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Path"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Dimensions"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Duration"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Frame Size"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Camera"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Taken"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Location"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Lens"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Exposure"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "ISO"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Focal Length"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@label:metadata"
-msgid "Software"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata unavailable"
-msgid "No media selected"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@title:group"
-msgid "Media"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@title:group"
-msgid "Image"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata summary"
-msgid "Image, %1"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata summary"
-msgid "Image"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@title:group"
-msgid "Video"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata summary"
-msgid "Video, %1"
-msgstr ""
-
-#: src/facade/kirimediainformation.cpp
-#, kde-format
-msgctxt "@info:metadata summary"
-msgid "Video"
-msgstr ""
-
 #: src/localization/activenavigationboundarytext.cpp
 #, kde-format
 msgctxt "@info:status"
@@ -860,6 +722,144 @@ msgstr ""
 #, kde-format
 msgctxt "@item:inlistbox"
 msgid "Image, video, and comic book files (%1)"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@info:metadata value"
+msgid "Image"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@info:metadata value"
+msgid "Video"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Type"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Path"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Dimensions"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Duration"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Frame Size"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Camera"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Taken"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Location"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Lens"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Exposure"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "ISO"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Focal Length"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@label:metadata"
+msgid "Software"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@info:metadata unavailable"
+msgid "No media selected"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@title:group"
+msgid "Media"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@title:group"
+msgid "Image"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@info:metadata summary"
+msgid "Image, %1"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@info:metadata summary"
+msgid "Image"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@title:group"
+msgid "Video"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@info:metadata summary"
+msgid "Video, %1"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@info:metadata summary"
+msgid "Video"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml

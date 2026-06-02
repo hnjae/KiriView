@@ -264,6 +264,7 @@ KiriView::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
         [&document]() { return document.ordinaryDirectMediaScopeActive(); },
         [&document]() { return document.zoomPercentKnown(); },
         [&document]() { return document.zoomPercent(); },
+        [&document]() { return document.embeddedMetadata(); },
         [&document]() { return document.pageNavigationSnapshot(); },
         [&document]() { return document.activeNavigationSnapshot(); },
         [&document]() { return document.primaryDisplayedPredecodeImage(); },
@@ -285,6 +286,7 @@ KiriView::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
             documentSignalConnector(document, &KiriImageDocument::zoomPercentKnownChanged),
             documentSignalConnector(document, &KiriImageDocument::zoomPercentChanged),
             documentSignalConnector(document, &KiriImageDocument::pageNavigationChanged),
+            documentSignalConnector(document, &KiriImageDocument::embeddedMetadataChanged),
         },
     };
 }
@@ -302,6 +304,7 @@ KiriView::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPor
         [&document]() { return document.status() == KiriVideoDocument::Status::Error; },
         [&document]() { return document.zoomPercentKnown(); },
         [&document]() { return document.zoomPercent(); },
+        [&document]() { return document.embeddedMetadata(); },
         [&document]() { return document.videoOutput(); },
         [&document]() { document.stop(); },
         [&document](QObject *videoOutput) { document.setVideoOutput(videoOutput); },
@@ -313,6 +316,7 @@ KiriView::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPor
             documentSignalConnector(document, &KiriVideoDocument::errorStringChanged),
             documentSignalConnector(document, &KiriVideoDocument::zoomPercentKnownChanged),
             documentSignalConnector(document, &KiriVideoDocument::zoomPercentChanged),
+            documentSignalConnector(document, &KiriVideoDocument::embeddedMetadataChanged),
         },
     };
 }
@@ -422,6 +426,16 @@ bool KiriDocumentSession::activeNavigationEditable() const
     return m_runtime->activeNavigationEditable();
 }
 
+bool KiriDocumentSession::activeNavigationHasTargets() const
+{
+    return m_runtime->activeNavigationHasTargets();
+}
+
+bool KiriDocumentSession::activeNavigationDispatchAvailable() const
+{
+    return m_runtime->activeNavigationDispatchAvailable();
+}
+
 int KiriDocumentSession::activeNavigationCurrentNumber() const
 {
     return m_runtime->activeNavigationCurrentNumber();
@@ -452,6 +466,11 @@ bool KiriDocumentSession::atKnownLastActiveNavigation() const
     return m_runtime->atKnownLastActiveNavigation();
 }
 
+bool KiriDocumentSession::directMediaNavigationBoundaryActive() const
+{
+    return m_runtime->directMediaNavigationBoundaryActive();
+}
+
 KiriDocumentSession::ActiveNavigationBoundaryScope
 KiriDocumentSession::activeNavigationBoundaryScope() const
 {
@@ -478,6 +497,12 @@ QAbstractListModel *KiriDocumentSession::activeNavigationThumbnailModel() const
 KiriMediaInformation *KiriDocumentSession::mediaInformation() const
 {
     return m_mediaInformation.get();
+}
+
+const KiriView::MediaInformationProjectionSnapshot &
+KiriDocumentSession::mediaInformationSnapshot() const
+{
+    return m_runtime->mediaInformationSnapshot();
 }
 
 KiriImageDocument *KiriDocumentSession::imageDocument() const { return m_imageDocument.get(); }

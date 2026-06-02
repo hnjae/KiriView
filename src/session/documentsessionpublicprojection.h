@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_DOCUMENTSESSIONPUBLICPROJECTION_H
 #define KIRIVIEW_DOCUMENTSESSIONPUBLICPROJECTION_H
 
+#include "metadata/embeddedmetadata.h"
 #include "session/activenavigationprojection.h"
 #include "session/documentsessiontypes.h"
 
@@ -45,9 +46,13 @@ struct DocumentSessionPublicSessionLeafSnapshot {
 struct DocumentSessionPublicImageLeafSnapshot {
     bool sourceMayRepresentDocument = false;
     ImageDocumentPageActiveNavigationSnapshot pageNavigation;
+    QUrl displayedUrl;
+    OpenedCollectionScopeLocation displayedOpenedCollectionScope;
     QString windowTitleFileName;
     QSize directMediaSize;
+    EmbeddedMetadata embeddedMetadata;
     bool readyForDeletion = false;
+    bool readyForInformation = false;
     bool directImageReplacementPending = false;
     bool zoomPercentKnown = false;
     qreal zoomPercent = 0.0;
@@ -55,8 +60,10 @@ struct DocumentSessionPublicImageLeafSnapshot {
 };
 
 struct DocumentSessionPublicVideoLeafSnapshot {
+    QUrl sourceUrl;
     QString windowTitleFileName;
     QSize directMediaSize;
+    EmbeddedMetadata embeddedMetadata;
     bool sourcePresent = false;
     bool error = false;
     bool zoomPercentKnown = false;
@@ -74,6 +81,7 @@ struct DocumentSessionPublicSnapshotInput {
     DocumentSessionPublicImageLeafSnapshot image;
     DocumentSessionPublicVideoLeafSnapshot video;
     DocumentSessionPublicOperationAvailabilitySnapshot operations;
+    MediaInformationProjectionInput mediaInformation;
 };
 
 DocumentSessionPublicProjection projectDocumentSessionPublicState(

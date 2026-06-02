@@ -67,6 +67,7 @@ public:
     bool displayedFileDeletionAvailable() const;
     bool displayedMediaOpenWithAvailable() const;
     bool fileDeletionInProgress() const;
+    const MediaInformationProjectionSnapshot &mediaInformationSnapshot() const;
     bool activeZoomPercentAvailable() const;
     bool activeZoomPercentKnown() const;
     qreal activeZoomPercent() const;
@@ -74,12 +75,15 @@ public:
     bool activeNavigationAvailable() const;
     bool activeNavigationKnown() const;
     bool activeNavigationEditable() const;
+    bool activeNavigationHasTargets() const;
+    bool activeNavigationDispatchAvailable() const;
     int activeNavigationCurrentNumber() const;
     int activeNavigationCount() const;
     bool canOpenPreviousActiveNavigation() const;
     bool canOpenNextActiveNavigation() const;
     bool atKnownFirstActiveNavigation() const;
     bool atKnownLastActiveNavigation() const;
+    bool directMediaNavigationBoundaryActive() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     ActiveNavigationRevealIntent activeNavigationRevealIntent() const;
     ActiveNavigationRevealDirection activeNavigationRevealDirection() const;

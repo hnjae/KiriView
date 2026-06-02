@@ -5,6 +5,7 @@
 #define KIRIVIEW_DOCUMENTSESSIONDOCUMENTPORTS_H
 
 #include "location/imagelocation.h"
+#include "metadata/embeddedmetadata.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
 #include "rendering/staticimage.h"
@@ -37,6 +38,7 @@ struct DocumentSessionImageDocumentSignals {
     DocumentSessionDocumentSignalConnector zoomPercentKnownChanged;
     DocumentSessionDocumentSignalConnector zoomPercentChanged;
     DocumentSessionDocumentSignalConnector pageNavigationChanged;
+    DocumentSessionDocumentSignalConnector embeddedMetadataChanged;
 };
 
 struct DocumentSessionImageDocumentPort {
@@ -53,6 +55,7 @@ struct DocumentSessionImageDocumentPort {
     std::function<bool()> ordinaryDirectMediaScopeActive;
     std::function<bool()> zoomPercentKnown;
     std::function<qreal()> zoomPercent;
+    std::function<EmbeddedMetadata()> embeddedMetadata;
     std::function<ImageDocumentPageNavigationSnapshot()> pageNavigationSnapshot;
     std::function<ImageDocumentPageActiveNavigationSnapshot()> activeNavigationSnapshot;
     std::function<std::optional<DisplayedPredecodeImage>()> primaryDisplayedPredecodeImage;
@@ -72,6 +75,7 @@ struct DocumentSessionVideoDocumentSignals {
     DocumentSessionDocumentSignalConnector errorStringChanged;
     DocumentSessionDocumentSignalConnector zoomPercentKnownChanged;
     DocumentSessionDocumentSignalConnector zoomPercentChanged;
+    DocumentSessionDocumentSignalConnector embeddedMetadataChanged;
 };
 
 struct DocumentSessionVideoDocumentPort {
@@ -84,6 +88,7 @@ struct DocumentSessionVideoDocumentPort {
     std::function<bool()> error;
     std::function<bool()> zoomPercentKnown;
     std::function<int()> zoomPercent;
+    std::function<EmbeddedMetadata()> embeddedMetadata;
     std::function<QObject *()> videoOutput;
     std::function<void()> stop;
     std::function<void(QObject *)> setVideoOutput;

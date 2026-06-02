@@ -80,6 +80,8 @@ bool samePublicSnapshot(const KiriView::DocumentSessionPublicSnapshot &left,
         && left.fileDeletionInProgress == right.fileDeletionInProgress
         && sameActiveZoomSnapshot(left.activeZoom, right.activeZoom)
         && samePublicProjection(left.projection, right.projection)
+        && KiriView::sameMediaInformationProjectionSnapshot(
+            left.mediaInformation, right.mediaInformation)
         && left.activeNavigationRevealIntent == right.activeNavigationRevealIntent
         && left.activeNavigationRevealDirection == right.activeNavigationRevealDirection;
 }
@@ -90,6 +92,7 @@ namespace KiriView {
 DocumentSessionState::DocumentSessionState(ChangeCallback changeCallback)
     : m_changeCallback(std::move(changeCallback))
 {
+    m_publicSnapshot.mediaInformation = projectMediaInformation({}, 0);
 }
 
 const QUrl &DocumentSessionState::sourceUrl() const { return m_sourceUrl; }
@@ -159,6 +162,11 @@ bool DocumentSessionState::displayedFileDeletionAvailable() const
 bool DocumentSessionState::displayedMediaOpenWithAvailable() const
 {
     return m_publicSnapshot.projection.displayedMediaOpenWithAvailable;
+}
+
+const MediaInformationProjectionSnapshot &DocumentSessionState::mediaInformationSnapshot() const
+{
+    return m_publicSnapshot.mediaInformation;
 }
 
 const DocumentSessionPublicProjection &DocumentSessionState::publicProjection() const

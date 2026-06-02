@@ -199,6 +199,7 @@ src/session/documentsessiondirectmedianavigationloadstate.cpp
 src/session/documentsessiondirectmedianavigationruntime.cpp
 src/session/documentsessionmediadeletionplan.cpp
 src/session/documentsessionmediadeletionruntime.cpp
+src/session/mediainformationprojection.cpp
 src/session/documentsessionpublicprojection.cpp
 src/session/documentsessionrouteplan.cpp
 src/session/documentsessionruntime.cpp
