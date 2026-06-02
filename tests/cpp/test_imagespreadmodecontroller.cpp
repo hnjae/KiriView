@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "presentation/imagepresentationstate.h"
 #include "presentation/imagespreadmodecontroller.h"
 
 #include <QTest>
@@ -13,6 +14,7 @@ private Q_SLOTS:
     void twoPageModeRequiresDisplayedComicArchiveImage();
     void resetRightToLeftReadingClearsCurrentModeState();
     void spreadTransitionReportsStateChanges();
+    void spreadTransitionPublishesPresentationPhase();
 };
 
 namespace {
@@ -71,6 +73,20 @@ void TestImageSpreadModeController::spreadTransitionReportsStateChanges()
     QVERIFY(controller.finishSpreadTransition());
     QVERIFY(!controller.spreadTransitionInProgress());
     QVERIFY(!controller.finishSpreadTransition());
+}
+
+void TestImageSpreadModeController::spreadTransitionPublishesPresentationPhase()
+{
+    KiriView::ImageSpreadModeController controller;
+
+    QCOMPARE(controller.presentationTransitionState(),
+        KiriView::ImagePresentationTransitionState::CommittedActive);
+    QVERIFY(controller.beginSpreadTransition());
+    QCOMPARE(controller.presentationTransitionState(),
+        KiriView::ImagePresentationTransitionState::TransitioningPlaceholder);
+    QVERIFY(controller.finishSpreadTransition());
+    QCOMPARE(controller.presentationTransitionState(),
+        KiriView::ImagePresentationTransitionState::CommittedActive);
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadModeController)

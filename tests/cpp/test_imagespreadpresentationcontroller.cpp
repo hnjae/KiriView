@@ -5,6 +5,7 @@
 
 #include "image_test_support.h"
 #include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepresentationstate.h"
 #include "rendering/imagerendering.h"
 
 #include <QObject>
@@ -122,6 +123,8 @@ class TestImageSpreadPresentationController : public QObject
 private Q_SLOTS:
     void pageWidthCacheBelongsToSpreadNavigationOwner();
     void spreadVisibleRectOwnsPageVisibleRectProjection();
+    void spreadZoomDoesNotMutatePageZoomOwners();
+    void transitionPhaseUsesPlaceholderUntilTargetSpreadCommits();
 };
 
 void TestImageSpreadPresentationController::pageWidthCacheBelongsToSpreadNavigationOwner()
@@ -174,6 +177,45 @@ void TestImageSpreadPresentationController::spreadVisibleRectOwnsPageVisibleRect
         QRectF(0.0, 0.0, 800.0, 600.0));
     QVERIFY(fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary)
             .visibleItemRect.isEmpty());
+}
+
+void TestImageSpreadPresentationController::spreadZoomDoesNotMutatePageZoomOwners()
+{
+    SpreadPresentationFixture fixture;
+
+    fixture.displayPrimaryPage(fixture.pageUrls.at(4), QSize(800, 1200), 5);
+    fixture.predecodedImageSizes[fixture.pageUrls.at(5)] = QSize(800, 1200);
+    fixture.controller.setTwoPageModeEnabled(true);
+    fixture.controller.refreshSecondaryPage();
+    QVERIFY(fixture.controller.secondaryPageVisible());
+
+    fixture.controller.setZoomPercent(125.0);
+
+    QCOMPARE(fixture.controller.zoomMode(), KiriView::ImageZoomMode::Manual);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.controller.zoomPercent(), 125.0));
+    QCOMPARE(fixture.primaryPresentation.zoomMode(), KiriView::ImageZoomMode::Fit);
+}
+
+void TestImageSpreadPresentationController::transitionPhaseUsesPlaceholderUntilTargetSpreadCommits()
+{
+    SpreadPresentationFixture fixture;
+
+    fixture.displayPrimaryPage(fixture.pageUrls.at(1), QSize(800, 1200), 2);
+    fixture.predecodedImageSizes[fixture.pageUrls.at(2)] = QSize(800, 1200);
+    fixture.controller.setTwoPageModeEnabled(true);
+    fixture.controller.refreshSecondaryPage();
+    QVERIFY(fixture.controller.secondaryPageVisible());
+    QCOMPARE(fixture.controller.presentationTransitionState(),
+        KiriView::ImagePresentationTransitionState::CommittedActive);
+
+    fixture.controller.beginTransition();
+
+    QCOMPARE(fixture.controller.presentationTransitionState(),
+        KiriView::ImagePresentationTransitionState::TransitioningPlaceholder);
+    QVERIFY(
+        !fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary).isRenderable());
+    QVERIFY(
+        !fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary).isRenderable());
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadPresentationController)
