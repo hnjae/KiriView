@@ -49,6 +49,7 @@ private Q_SLOTS:
     void shiftArrowsMoveOnePageInTwoPageModeRightToLeft();
     void shiftArrowsAreIgnoredWhileViewerShortcutsAreSuppressed();
     void configuredActionShortcutsTriggerActions();
+    void windowCommandShortcutsWorkWithoutQmlShortcutInstallers();
     void videoViewerAliasTriggersFullscreenAction();
     void videoImageOnlyShortcutsShowUnsupportedToast();
 };
@@ -198,6 +199,7 @@ Item {
     property bool videoMode: false
     property int panCount: 0
     property int unsupportedVideoActionCount: 0
+    property int openApplicationMenuCount: 0
     property string lastBoundaryMessage: ""
     property alias activeNavigationKnown: documentSession.activeNavigationKnown
     property real lastPanX: 0
@@ -248,6 +250,7 @@ Item {
 
     Component.onCompleted: {
         sessionImageDocument.viewportSize = Qt.size(width, height);
+        application.setShortcutHost(root.Window.window);
         forceActiveFocus();
     }
 
@@ -330,6 +333,8 @@ Item {
     }
 
     KiriViewQml.ImageShortcuts {
+        id: imageShortcuts
+
         application: application
         actionAvailability: actionAvailability
         documentSession: documentSession
@@ -343,6 +348,16 @@ Item {
         }
 
         onUnsupportedVideoActionRequested: root.unsupportedVideoActionCount += 1
+    }
+
+    Connections {
+        target: application
+
+        function onActionTriggered(actionId) {
+            if (actionId === KiriViewApplication.OpenApplicationMenuAction) {
+                root.openApplicationMenuCount += 1;
+            }
+        }
     }
 }
 )")
@@ -626,6 +641,42 @@ void TestImageShortcuts::configuredActionShortcutsTriggerActions()
 
     pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
     QTRY_COMPARE(triggeredSpy.count(), 3);
+}
+
+void TestImageShortcuts::windowCommandShortcutsWorkWithoutQmlShortcutInstallers()
+{
+    ImageShortcutsFixture fixture = createReadyFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(documentReady(fixture.root));
+
+    QAction *rotateAction = fixture.application->action(QStringLiteral("view_rotate_clockwise"));
+    QAction *showMenubarAction
+        = fixture.application->action(QStringLiteral("options_show_menubar"));
+    QVERIFY(rotateAction != nullptr);
+    QVERIFY(showMenubarAction != nullptr);
+    QSignalSpy rotateSpy(rotateAction, &QAction::triggered);
+    QSignalSpy showMenubarSpy(showMenubarAction, &QAction::triggered);
+
+    QObject *imageShortcuts = fixture.root->findChild<QObject *>(QStringLiteral("imageShortcuts"));
+    QVERIFY(imageShortcuts != nullptr);
+    imageShortcuts->setProperty("visible", false);
+
+    pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
+    QTRY_COMPARE(rotateSpy.count(), 1);
+
+    pressKey(fixture.view.get(), Qt::Key_R);
+    QTRY_COMPARE(rotateSpy.count(), 2);
+
+    fixture.root->setProperty("toolbarTextInputFocused", true);
+    pressKey(fixture.view.get(), Qt::Key_R);
+    QCOMPARE(rotateSpy.count(), 2);
+
+    fixture.root->setProperty("toolbarTextInputFocused", false);
+    pressKey(fixture.view.get(), Qt::Key_F10);
+    QTRY_COMPARE(fixture.root->property("openApplicationMenuCount").toInt(), 1);
+
+    pressKey(fixture.view.get(), Qt::Key_M, Qt::ControlModifier);
+    QTRY_COMPARE(showMenubarSpy.count(), 1);
 }
 
 void TestImageShortcuts::videoViewerAliasTriggersFullscreenAction()
