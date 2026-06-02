@@ -9,6 +9,7 @@
 #include "imagedocumenttypes.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
+#include "presentation/imagepresentationstate.h"
 #include "presentation/imageviewportcommandstate.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagerendercontext.h"
@@ -108,6 +109,7 @@ public:
     void setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
+    ImagePresentationTransitionState presentationTransitionState() const;
     bool unsupportedOpenedCollectionVideo() const;
     std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;

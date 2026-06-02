@@ -98,8 +98,8 @@ void TestImageSpreadZoomController::updateFromPrimaryOwnsSpreadZoomState()
         fixture.controller.secondaryDisplaySize(), QSizeF(400.0, 600.0)));
 
     fixture.controller.applyZoomStateToPages(QRectF(), false);
-    QCOMPARE(fixture.primary.zoomMode(), KiriView::ImageZoomMode::Manual);
-    QCOMPARE(fixture.secondary.zoomMode(), KiriView::ImageZoomMode::Manual);
+    QCOMPARE(fixture.primary.zoomMode(), KiriView::ImageZoomMode::Fit);
+    QCOMPARE(fixture.secondary.zoomMode(), KiriView::ImageZoomMode::Fit);
 }
 
 void TestImageSpreadZoomController::manualZoomReportsOnlyActualSpreadZoomChanges()
@@ -118,8 +118,8 @@ void TestImageSpreadZoomController::manualZoomReportsOnlyActualSpreadZoomChanges
     QVERIFY(changes.scheduleVisibleTileDecode);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.controller.zoomPercent(), 125.0));
     fixture.controller.applyZoomStateToPages(QRectF(), false);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.primary.zoomPercent(), 125.0));
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.secondary.zoomPercent(), 125.0));
+    QCOMPARE(fixture.primary.zoomMode(), KiriView::ImageZoomMode::Fit);
+    QCOMPARE(fixture.secondary.zoomMode(), KiriView::ImageZoomMode::Fit);
 
     const KiriView::ImageZoomChangeSet invalidChanges
         = fixture.controller.setZoomPercent(std::numeric_limits<qreal>::quiet_NaN());

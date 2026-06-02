@@ -78,6 +78,8 @@ public:
     void setImage(const QImage &image, bool predecodeCacheable);
     void setStaticImage(StaticImagePayload staticImage, bool predecodeCacheable);
     void discardDecodedTiles();
+    void scheduleProjectedVisibleTileDecode(
+        const QSizeF &displaySize, const QRectF &visibleItemRect, int rotationDegrees);
     void clearImage();
 
     void startAnimation(ImageAnimationPlaybackRequest request);

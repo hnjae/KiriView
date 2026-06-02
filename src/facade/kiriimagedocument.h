@@ -9,6 +9,7 @@
 #include "metadata/embeddedmetadata.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
+#include "presentation/imagepresentationstate.h"
 #include "presentation/imageviewportcommandstate.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
@@ -100,6 +101,8 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(bool rightToLeftReadingAvailable READ rightToLeftReadingAvailable NOTIFY
             rightToLeftReadingChanged)
     Q_PROPERTY(bool secondaryPageVisible READ secondaryPageVisible NOTIFY twoPageModeChanged)
+    Q_PROPERTY(PresentationTransitionState presentationTransitionState READ
+            presentationTransitionState NOTIFY presentationTransitionStateChanged)
     Q_PROPERTY(bool unsupportedOpenedCollectionVideo READ unsupportedOpenedCollectionVideo NOTIFY
             unsupportedOpenedCollectionVideoChanged)
 
@@ -139,6 +142,13 @@ public:
         System,
     };
     Q_ENUM(ViewportObservationOrigin)
+
+    enum class PresentationTransitionState {
+        PreviousActive,
+        TransitioningPlaceholder,
+        CommittedActive,
+    };
+    Q_ENUM(PresentationTransitionState)
 
     explicit KiriImageDocument(QObject *parent = nullptr);
     explicit KiriImageDocument(
@@ -199,6 +209,7 @@ public:
     void setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
+    PresentationTransitionState presentationTransitionState() const;
     bool unsupportedOpenedCollectionVideo() const;
     std::optional<KiriView::DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     KiriView::ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
@@ -252,6 +263,7 @@ Q_SIGNALS:
     void fileDeletionInProgressChanged();
     void twoPageModeChanged();
     void rightToLeftReadingChanged();
+    void presentationTransitionStateChanged();
     void fileDeletionFailed(const QString &errorString);
     void repaintRequested();
     void unsupportedOpenedCollectionVideoChanged();

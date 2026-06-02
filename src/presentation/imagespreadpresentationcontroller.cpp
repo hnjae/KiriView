@@ -72,6 +72,12 @@ bool ImageSpreadPresentationController::transitionInProgress() const
     return m_modeController->spreadTransitionInProgress();
 }
 
+ImagePresentationTransitionState
+ImageSpreadPresentationController::presentationTransitionState() const
+{
+    return m_modeController->presentationTransitionState();
+}
+
 ImageDocumentStatus ImageSpreadPresentationController::status(
     ImageDocumentStatus documentStatus) const
 {
@@ -423,12 +429,25 @@ DisplayedImageRenderSnapshot ImageSpreadPresentationController::renderSnapshot(
 
     if (role == DisplayedPageRole::Secondary) {
         DisplayedImageRenderSnapshot snapshot = m_secondaryPageController->renderSnapshot();
+        snapshot.displaySize = secondaryDisplaySize();
+        snapshot.visibleItemRect = secondaryPageVisible()
+            ? imageSpreadVisiblePageRect(viewportFrame().visibleItemRect,
+                  imageSpreadSecondaryPageRect(primaryDisplaySize(), secondaryDisplaySize(),
+                      displaySize(), rightToLeftReadingActive()))
+            : QRectF();
         snapshot.rotationDegrees = 0;
         snapshot.pageRole = DisplayedPageRole::Secondary;
         return snapshot;
     }
 
     DisplayedImageRenderSnapshot snapshot = m_primaryPresentation.renderSnapshot();
+    if (secondaryPageVisible()) {
+        snapshot.displaySize = primaryDisplaySize();
+        snapshot.visibleItemRect = imageSpreadVisiblePageRect(viewportFrame().visibleItemRect,
+            imageSpreadPrimaryPageRect(primaryDisplaySize(), secondaryDisplaySize(), displaySize(),
+                rightToLeftReadingActive()));
+        snapshot.rotationDegrees = 0;
+    }
     snapshot.pageRole = DisplayedPageRole::Primary;
     return snapshot;
 }

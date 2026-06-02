@@ -98,6 +98,9 @@ void ImageDocumentPublicSignalEmitter::emitSignal(ImageDocumentPublicSignal sign
     case ImageDocumentPublicSignal::RightToLeftReading:
         run(m_operations.rightToLeftReadingChanged);
         return;
+    case ImageDocumentPublicSignal::PresentationTransitionState:
+        run(m_operations.presentationTransitionStateChanged);
+        return;
     case ImageDocumentPublicSignal::RotationDegrees:
         run(m_operations.rotationDegreesChanged);
         return;
@@ -160,6 +163,8 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentC
             ImageDocumentPublicSignal::PageNavigation };
     case ImageDocumentChange::RightToLeftReading:
         return { ImageDocumentPublicSignal::RightToLeftReading };
+    case ImageDocumentChange::PresentationTransitionState:
+        return { ImageDocumentPublicSignal::PresentationTransitionState };
     case ImageDocumentChange::Rotation:
         return { ImageDocumentPublicSignal::RotationDegrees };
     case ImageDocumentChange::UnsupportedOpenedCollectionVideo:

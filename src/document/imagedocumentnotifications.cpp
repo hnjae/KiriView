@@ -8,8 +8,8 @@
 namespace KiriView {
 std::vector<ImageDocumentChange> imageDocumentSpreadTransitionNotifications()
 {
-    return { ImageDocumentChange::Status, ImageDocumentChange::Loading,
-        ImageDocumentChange::Repaint };
+    return { ImageDocumentChange::PresentationTransitionState, ImageDocumentChange::Status,
+        ImageDocumentChange::Loading, ImageDocumentChange::Repaint };
 }
 
 std::vector<ImageDocumentChange> imageDocumentDisplayedLocationNotifications(

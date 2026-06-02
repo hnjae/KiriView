@@ -329,6 +329,11 @@ bool ImageDocumentRuntime::secondaryPageVisible() const
     return controllers->spreadController().secondaryPageVisible();
 }
 
+ImagePresentationTransitionState ImageDocumentRuntime::presentationTransitionState() const
+{
+    return controllers->spreadController().presentationTransitionState();
+}
+
 bool ImageDocumentRuntime::unsupportedOpenedCollectionVideo() const
 {
     return state.unsupportedOpenedCollectionVideo();

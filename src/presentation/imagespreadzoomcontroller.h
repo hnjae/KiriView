@@ -50,7 +50,6 @@ private:
 
     QRectF primaryPageRect(bool rightToLeftReading) const;
     QRectF secondaryPageRect(bool rightToLeftReading) const;
-    void applyZoomPercentToPages();
     ImageZoomChangeSet mutateZoomState(const ZoomStateMutation &mutation);
     qreal devicePixelRatio() const;
 

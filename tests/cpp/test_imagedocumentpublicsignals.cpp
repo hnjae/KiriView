@@ -60,6 +60,8 @@ KiriView::ImageDocumentPublicSignalOperations recordingOperations(QStringList &e
     operations.twoPageModeChanged = [&events]() { events.append(QStringLiteral("twoPageMode")); };
     operations.rightToLeftReadingChanged
         = [&events]() { events.append(QStringLiteral("rightToLeftReading")); };
+    operations.presentationTransitionStateChanged
+        = [&events]() { events.append(QStringLiteral("presentationTransitionState")); };
     operations.rotationDegreesChanged
         = [&events]() { events.append(QStringLiteral("rotationDegrees")); };
     operations.imageDocumentSourceScopeChanged
@@ -114,6 +116,8 @@ void TestImageDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
         { Signal::TwoPageMode, Signal::PageNavigation });
     comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::RightToLeftReading),
         { Signal::RightToLeftReading });
+    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::PresentationTransitionState),
+        { Signal::PresentationTransitionState });
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::Rotation), { Signal::RotationDegrees });
     comparePublicSignals(

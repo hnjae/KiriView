@@ -224,6 +224,13 @@ void ImagePresentationController::discardDecodedTiles()
     }
 }
 
+void ImagePresentationController::scheduleProjectedVisibleTileDecode(
+    const QSizeF &displaySize, const QRectF &visibleItemRect, int rotationDegrees)
+{
+    m_viewportController->scheduleProjectedVisibleTileDecode(
+        displaySize, visibleItemRect, rotationDegrees);
+}
+
 void ImagePresentationController::clearImage()
 {
     stopAnimation();

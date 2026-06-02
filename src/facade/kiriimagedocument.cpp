@@ -86,6 +86,21 @@ KiriView::ImageViewportObservationOrigin toImageViewportObservationOrigin(
     return KiriView::ImageViewportObservationOrigin::System;
 }
 
+KiriImageDocument::PresentationTransitionState fromImagePresentationTransitionState(
+    KiriView::ImagePresentationTransitionState state)
+{
+    switch (state) {
+    case KiriView::ImagePresentationTransitionState::PreviousActive:
+        return KiriImageDocument::PresentationTransitionState::PreviousActive;
+    case KiriView::ImagePresentationTransitionState::TransitioningPlaceholder:
+        return KiriImageDocument::PresentationTransitionState::TransitioningPlaceholder;
+    case KiriView::ImagePresentationTransitionState::CommittedActive:
+        return KiriImageDocument::PresentationTransitionState::CommittedActive;
+    }
+
+    return KiriImageDocument::PresentationTransitionState::CommittedActive;
+}
+
 KiriImageDocument::Status fromImageDocumentStatus(ImageDocumentStatus status)
 {
     switch (status) {
@@ -131,6 +146,8 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
     operations.twoPageModeChanged = [&document]() { Q_EMIT document.twoPageModeChanged(); };
     operations.rightToLeftReadingChanged
         = [&document]() { Q_EMIT document.rightToLeftReadingChanged(); };
+    operations.presentationTransitionStateChanged
+        = [&document]() { Q_EMIT document.presentationTransitionStateChanged(); };
     operations.rotationDegreesChanged = [&document]() { Q_EMIT document.rotationDegreesChanged(); };
     operations.imageDocumentSourceScopeChanged
         = [&document]() { Q_EMIT document.imageDocumentSourceScopeChanged(); };
@@ -356,6 +373,12 @@ bool KiriImageDocument::rightToLeftReadingAvailable() const
 }
 
 bool KiriImageDocument::secondaryPageVisible() const { return m_runtime->secondaryPageVisible(); }
+
+KiriImageDocument::PresentationTransitionState
+KiriImageDocument::presentationTransitionState() const
+{
+    return fromImagePresentationTransitionState(m_runtime->presentationTransitionState());
+}
 
 bool KiriImageDocument::unsupportedOpenedCollectionVideo() const
 {

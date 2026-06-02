@@ -143,6 +143,13 @@ void ImagePresentationViewportController::scheduleVisibleTileDecode()
         imageSurface(), displaySize(), visibleItemRect(), renderContext(), rotationDegrees());
 }
 
+void ImagePresentationViewportController::scheduleProjectedVisibleTileDecode(
+    const QSizeF &displaySize, const QRectF &visibleItemRect, int rotationDegrees)
+{
+    m_tileDecodeScheduler->schedule(
+        imageSurface(), displaySize, visibleItemRect, renderContext(), rotationDegrees);
+}
+
 void ImagePresentationViewportController::applyPlan(const ImagePresentationViewportPlan &plan)
 {
     for (ImageDocumentChange change : plan.changes) {

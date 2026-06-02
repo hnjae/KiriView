@@ -10,6 +10,7 @@
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
+#include "presentation/imagepresentationstate.h"
 #include "presentation/imagespreadgeometry.h"
 #include "presentation/imagespreadmodepolicy.h"
 #include "presentation/imagespreadnavigation.h"
@@ -62,6 +63,7 @@ public:
     ~ImageSpreadPresentationController();
 
     bool transitionInProgress() const;
+    ImagePresentationTransitionState presentationTransitionState() const;
     ImageDocumentStatus status(ImageDocumentStatus documentStatus) const;
     bool loading(bool documentLoading) const;
 

@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGESPREADMODECONTROLLER_H
 #define KIRIVIEW_IMAGESPREADMODECONTROLLER_H
 
+#include "presentation/imagepresentationstate.h"
 #include "presentation/imagespreadmodepolicy.h"
 
 namespace KiriView {
@@ -22,6 +23,7 @@ public:
     void resetRightToLeftReading();
 
     bool spreadTransitionInProgress() const;
+    ImagePresentationTransitionState presentationTransitionState() const;
     bool beginSpreadTransition();
     bool finishSpreadTransition();
 

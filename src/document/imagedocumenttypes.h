@@ -32,6 +32,7 @@ enum class ImageDocumentChange {
     FileDeletionInProgress,
     TwoPageMode,
     RightToLeftReading,
+    PresentationTransitionState,
     Rotation,
     UnsupportedOpenedCollectionVideo,
     EmbeddedMetadata,

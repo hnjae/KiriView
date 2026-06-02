@@ -31,7 +31,8 @@ void compareChanges(const std::vector<KiriView::ImageDocumentChange> &actual,
 void TestImageDocumentNotifications::notificationPlansReturnChangesInEmissionOrder()
 {
     compareChanges(KiriView::imageDocumentSpreadTransitionNotifications(),
-        { KiriView::ImageDocumentChange::Status, KiriView::ImageDocumentChange::Loading,
+        { KiriView::ImageDocumentChange::PresentationTransitionState,
+            KiriView::ImageDocumentChange::Status, KiriView::ImageDocumentChange::Loading,
             KiriView::ImageDocumentChange::Repaint });
     compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(true, true),
         { KiriView::ImageDocumentChange::DisplayedUrl,

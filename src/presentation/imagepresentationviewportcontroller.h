@@ -64,6 +64,8 @@ public:
     void setDisplayedImageSize(const QSize &imageSize);
     void invalidateTiles();
     void scheduleVisibleTileDecode();
+    void scheduleProjectedVisibleTileDecode(
+        const QSizeF &displaySize, const QRectF &visibleItemRect, int rotationDegrees);
 
 private:
     void applyPlan(const ImagePresentationViewportPlan &plan);

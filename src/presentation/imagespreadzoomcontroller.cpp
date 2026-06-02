@@ -9,13 +9,16 @@
 #include <utility>
 
 namespace {
-void applyPageVisibleItemRect(
-    KiriView::ImagePresentationController &presentation, const QRectF &visibleItemRect)
+void applyPageVisibleItemRect(KiriView::ImagePresentationController &presentation,
+    const QSizeF &displaySize, const QRectF &visibleItemRect)
 {
     presentation.setVisibleItemRect(visibleItemRect);
     if (visibleItemRect.isEmpty()) {
         presentation.discardDecodedTiles();
+        return;
     }
+
+    presentation.scheduleProjectedVisibleTileDecode(displaySize, visibleItemRect, 0);
 }
 }
 
@@ -139,7 +142,6 @@ void ImageSpreadZoomController::applyZoomStateToPages(
     const QRectF &visibleItemRect, bool rightToLeftReading)
 {
     applyVisibleItemRects(visibleItemRect, rightToLeftReading);
-    applyZoomPercentToPages();
 }
 
 void ImageSpreadZoomController::applyVisibleItemRects(
@@ -147,10 +149,10 @@ void ImageSpreadZoomController::applyVisibleItemRects(
 {
     const QRectF primaryRect = primaryPageRect(rightToLeftReading);
     const QRectF secondaryRect = secondaryPageRect(rightToLeftReading);
-    applyPageVisibleItemRect(
-        m_primaryPresentation, imageSpreadVisiblePageRect(visibleItemRect, primaryRect));
-    applyPageVisibleItemRect(
-        m_secondaryPresentation, imageSpreadVisiblePageRect(visibleItemRect, secondaryRect));
+    applyPageVisibleItemRect(m_primaryPresentation, primaryDisplaySize(),
+        imageSpreadVisiblePageRect(visibleItemRect, primaryRect));
+    applyPageVisibleItemRect(m_secondaryPresentation, secondaryDisplaySize(),
+        imageSpreadVisiblePageRect(visibleItemRect, secondaryRect));
 }
 
 void ImageSpreadZoomController::applyZoomToPrimaryPage(ImageZoomMode zoomMode, qreal zoomPercent)
@@ -184,13 +186,6 @@ QRectF ImageSpreadZoomController::secondaryPageRect(bool rightToLeftReading) con
 {
     return imageSpreadSecondaryPageRect(
         primaryDisplaySize(), secondaryDisplaySize(), displaySize(), rightToLeftReading);
-}
-
-void ImageSpreadZoomController::applyZoomPercentToPages()
-{
-    const qreal nextZoomPercent = m_zoomWorkflowState.zoomState().zoomPercent();
-    m_primaryPresentation.setZoomPercent(nextZoomPercent);
-    m_secondaryPresentation.setZoomPercent(nextZoomPercent);
 }
 
 ImageZoomChangeSet ImageSpreadZoomController::mutateZoomState(const ZoomStateMutation &mutation)
