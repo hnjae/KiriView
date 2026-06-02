@@ -39,6 +39,7 @@ public:
     bool displayedMediaOpenWithAvailable() const;
     bool displayedFileDeletionAvailable() const;
     const DocumentSessionPublicProjection &publicProjection() const;
+    const DocumentSessionPublicSnapshot &publicSnapshot() const;
     const DirectMediaCursor &directMediaCursor() const;
     QUrl directMediaCursorUrl() const;
     DirectMediaScope directMediaScope() const;
@@ -53,6 +54,9 @@ public:
     void setActiveNavigationRevealDirection(ActiveNavigationRevealDirection direction);
     void setDirectMediaNavigation(DirectMediaNavigationBoundaryState state, bool known,
         std::vector<DirectMediaNavigationCandidate> candidates);
+    bool updatePublicSnapshot(const DocumentSessionPublicSnapshotInput &input);
+    bool updatePublicSnapshotForSourceKind(
+        const DocumentSessionPublicSnapshotInput &input, ActiveNavigationSourceKind sourceKind);
     bool updatePublicProjection(DocumentSessionPublicProjectionInput input);
     bool updatePublicProjectionForSourceKind(
         DocumentSessionPublicProjectionInput input, ActiveNavigationSourceKind sourceKind);
@@ -68,6 +72,7 @@ public:
 
 private:
     bool applyPublicProjection(DocumentSessionPublicProjection projection);
+    bool applyPublicSnapshot(DocumentSessionPublicSnapshot snapshot);
 
     ChangeCallback m_changeCallback;
     QUrl m_sourceUrl;
@@ -76,6 +81,7 @@ private:
     DirectMediaNavigationBoundaryState m_directMediaNavigationState;
     std::vector<DirectMediaNavigationCandidate> m_directMediaNavigationCandidates;
     DocumentSessionPublicProjection m_publicProjection;
+    DocumentSessionPublicSnapshot m_publicSnapshot;
     ActiveZoomSnapshot m_activeZoomSnapshot;
     ActiveNavigationRevealIntent m_activeNavigationRevealIntent
         = ActiveNavigationRevealIntent::None;

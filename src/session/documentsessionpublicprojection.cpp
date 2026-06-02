@@ -88,6 +88,69 @@ bool displayedFileDeletionAvailableForInput(
 
     return false;
 }
+
+KiriView::ActiveZoomSnapshot activeZoomForInput(
+    const KiriView::DocumentSessionPublicSnapshotInput &input)
+{
+    switch (input.session.documentKind) {
+    case KiriView::DocumentSessionKind::Image:
+        if (!input.image.zoomPercentKnown) {
+            return {};
+        }
+        return KiriView::ActiveZoomSnapshot { true, true, input.image.zoomPercent, true };
+    case KiriView::DocumentSessionKind::Video:
+        return KiriView::ActiveZoomSnapshot {
+            true,
+            input.video.zoomPercentKnown,
+            input.video.zoomPercentKnown ? qreal(input.video.zoomPercent) : 0.0,
+            false,
+        };
+    case KiriView::DocumentSessionKind::Empty:
+        return {};
+    }
+
+    return {};
+}
+
+QString errorStringForInput(const KiriView::DocumentSessionPublicSnapshotInput &input)
+{
+    if (!input.session.sessionErrorString.isEmpty()) {
+        return input.session.sessionErrorString;
+    }
+
+    switch (input.session.documentKind) {
+    case KiriView::DocumentSessionKind::Image:
+        return input.image.errorString;
+    case KiriView::DocumentSessionKind::Video:
+        return input.video.errorString;
+    case KiriView::DocumentSessionKind::Empty:
+        return {};
+    }
+
+    return {};
+}
+
+KiriView::DocumentSessionPublicProjectionInput projectionInputForSnapshotInput(
+    const KiriView::DocumentSessionPublicSnapshotInput &input)
+{
+    return KiriView::DocumentSessionPublicProjectionInput {
+        input.session.documentKind,
+        input.session.directImageLoadMayUseImageDocumentSourceScope,
+        input.image.sourceMayRepresentDocument,
+        input.session.fileDeletionInProgress,
+        input.session.directMediaNavigation,
+        input.image.pageNavigation,
+        input.image.windowTitleFileName,
+        input.image.directMediaSize,
+        input.video.windowTitleFileName,
+        input.video.directMediaSize,
+        input.image.readyForDeletion,
+        input.image.directImageReplacementPending,
+        input.video.sourcePresent,
+        input.video.error,
+        input.operations.displayedMediaOpenWithAvailable,
+    };
+}
 }
 
 namespace KiriView {
@@ -109,5 +172,22 @@ DocumentSessionPublicProjection projectDocumentSessionPublicState(
     projection.displayedMediaOpenWithAvailable = input.displayedMediaOpenWithAvailable;
     projection.displayedFileDeletionAvailable = displayedFileDeletionAvailableForInput(input);
     return projection;
+}
+
+DocumentSessionPublicSnapshot projectDocumentSessionPublicSnapshot(
+    const DocumentSessionPublicSnapshotInput &input, quint64 revision)
+{
+    DocumentSessionPublicSnapshot snapshot;
+    snapshot.revision = revision;
+    snapshot.inputRevision = input.inputRevision;
+    snapshot.sourceUrl = input.session.sourceUrl;
+    snapshot.documentKind = input.session.documentKind;
+    snapshot.errorString = errorStringForInput(input);
+    snapshot.fileDeletionInProgress = input.session.fileDeletionInProgress;
+    snapshot.activeZoom = activeZoomForInput(input);
+    snapshot.projection = projectDocumentSessionPublicState(projectionInputForSnapshotInput(input));
+    snapshot.activeNavigationRevealIntent = input.session.activeNavigationRevealIntent;
+    snapshot.activeNavigationRevealDirection = input.session.activeNavigationRevealDirection;
+    return snapshot;
 }
 }

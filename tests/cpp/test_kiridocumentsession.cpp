@@ -698,14 +698,16 @@ void TestKiriDocumentSession::publicProjectionRevisionCommitsBeforeScalarSignals
         localUrl(QStringLiteral("/media/")), { directMediaNavigationCandidate(clip) });
     std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
     QStringList events;
+    const QString committedRevisionEvent = QStringLiteral("revision:%1").arg(clip.toString());
 
     connect(session.get(), &KiriDocumentSession::publicProjectionRevisionChanged, session.get(),
         [&session, &events, &clip]() {
-            events.append(QStringLiteral("revision"));
-            QCOMPARE(session->sourceUrl(), clip);
-            QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
-            QVERIFY(session->activeZoomPercentAvailable());
-            QCOMPARE(session->windowTitleSubject(), QStringLiteral("clip.mp4"));
+            events.append(QStringLiteral("revision:%1").arg(session->sourceUrl().toString()));
+            if (session->sourceUrl() == clip) {
+                QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+                QVERIFY(session->activeZoomPercentAvailable());
+                QCOMPARE(session->windowTitleSubject(), QStringLiteral("clip.mp4"));
+            }
         });
     connect(session.get(), &KiriDocumentSession::sourceUrlChanged, session.get(),
         [&events]() { events.append(QStringLiteral("source")); });
@@ -717,8 +719,11 @@ void TestKiriDocumentSession::publicProjectionRevisionCommitsBeforeScalarSignals
     session->setSourceUrl(clip);
 
     QVERIFY(session->publicProjectionRevision() > 0);
-    QVERIFY(!events.isEmpty());
-    QCOMPARE(events.first(), QStringLiteral("revision"));
+    const int revisionIndex = events.indexOf(committedRevisionEvent);
+    const int sourceIndex = events.indexOf(QStringLiteral("source"));
+    QVERIFY(revisionIndex >= 0);
+    QVERIFY(sourceIndex >= 0);
+    QVERIFY(revisionIndex < sourceIndex);
 }
 
 void TestKiriDocumentSession::activeZoomReadoutFollowsSessionDocumentKind()

@@ -33,6 +33,9 @@ void DocumentSessionPublicSignalEmitter::emitChanges(
 void DocumentSessionPublicSignalEmitter::emitSignal(DocumentSessionPublicSignal signal) const
 {
     switch (signal) {
+    case DocumentSessionPublicSignal::PublicProjectionRevision:
+        run(m_operations.publicProjectionRevisionChanged);
+        return;
     case DocumentSessionPublicSignal::SourceUrl:
         run(m_operations.sourceUrlChanged);
         return;
@@ -72,6 +75,8 @@ void DocumentSessionPublicSignalEmitter::emitSignal(DocumentSessionPublicSignal 
 std::vector<DocumentSessionPublicSignal> documentSessionPublicSignals(DocumentSessionChange change)
 {
     switch (change) {
+    case DocumentSessionChange::PublicProjectionRevision:
+        return { DocumentSessionPublicSignal::PublicProjectionRevision };
     case DocumentSessionChange::SourceUrl:
         return { DocumentSessionPublicSignal::SourceUrl };
     case DocumentSessionChange::DocumentKind:

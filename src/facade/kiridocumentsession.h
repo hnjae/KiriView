@@ -14,6 +14,7 @@
 #include <QString>
 #include <QStringList>
 #include <QUrl>
+#include <QtGlobal>
 #include <QtQml/qqmlregistration.h>
 #include <memory>
 #include <vector>
@@ -31,6 +32,8 @@ class KiriDocumentSession : public QObject
     QML_ELEMENT
 
     Q_PROPERTY(QUrl sourceUrl READ sourceUrl WRITE setSourceUrl NOTIFY sourceUrlChanged)
+    Q_PROPERTY(quint64 publicProjectionRevision READ publicProjectionRevision NOTIFY
+            publicProjectionRevisionChanged)
     Q_PROPERTY(DocumentKind documentKind READ documentKind NOTIFY documentKindChanged)
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
     Q_PROPERTY(QString windowTitleSubject READ windowTitleSubject NOTIFY windowTitleSubjectChanged)
@@ -152,6 +155,7 @@ public:
 
     QUrl sourceUrl() const;
     void setSourceUrl(const QUrl &sourceUrl);
+    quint64 publicProjectionRevision() const;
     DocumentKind documentKind() const;
     QString errorString() const;
     QString windowTitleSubject() const;
@@ -200,6 +204,7 @@ public:
     Q_INVOKABLE void openCurrentMediaWith();
 
 Q_SIGNALS:
+    void publicProjectionRevisionChanged();
     void sourceUrlChanged();
     void documentKindChanged();
     void errorStringChanged();

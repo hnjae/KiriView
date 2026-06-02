@@ -60,6 +60,7 @@ public:
     QUrl sourceUrl() const;
     void setSourceUrl(const QUrl &sourceUrl);
     DocumentSessionKind documentKind() const;
+    quint64 publicProjectionRevision() const;
     QString errorString() const;
     QString windowTitleSubject() const;
     bool displayedFileDeletionAvailable() const;
@@ -152,6 +153,7 @@ private:
     bool syncDirectImageCursorFromDocument();
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
     DocumentSessionPublicProjectionInput publicProjectionInput() const;
+    DocumentSessionPublicSnapshotInput publicSnapshotInput(quint64 inputRevision) const;
     DirectMediaActiveNavigationInput directMediaActiveNavigationInput() const;
     ImageDocumentPageActiveNavigationSnapshot imageDocumentPageActiveNavigationSnapshot() const;
 
@@ -168,6 +170,7 @@ private:
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
     std::vector<QMetaObject::Connection> m_documentConnections;
     ActiveNavigationRevealContext m_pendingActiveNavigationRevealContext;
+    quint64 m_publicSnapshotInputRevision = 0;
     bool m_routingSource = false;
 };
 }

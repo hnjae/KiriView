@@ -153,65 +153,57 @@ DocumentSessionRuntime::~DocumentSessionRuntime()
     m_mediaOpenWithJob.cancel();
 }
 
-QUrl DocumentSessionRuntime::sourceUrl() const { return m_state.sourceUrl(); }
+QUrl DocumentSessionRuntime::sourceUrl() const { return m_state.publicSnapshot().sourceUrl; }
 
 void DocumentSessionRuntime::setSourceUrl(const QUrl &sourceUrl) { routeSourceUrl(sourceUrl); }
 
-DocumentSessionKind DocumentSessionRuntime::documentKind() const { return m_state.documentKind(); }
-
-QString DocumentSessionRuntime::errorString() const
+DocumentSessionKind DocumentSessionRuntime::documentKind() const
 {
-    if (!m_state.sessionErrorString().isEmpty()) {
-        return m_state.sessionErrorString();
-    }
-
-    switch (m_state.documentKind()) {
-    case DocumentSessionKind::Image:
-        return m_imageDocument.errorString();
-    case DocumentSessionKind::Video:
-        return m_videoDocument.errorString();
-    case DocumentSessionKind::Empty:
-        return QString();
-    }
-
-    return QString();
+    return m_state.publicSnapshot().documentKind;
 }
+
+quint64 DocumentSessionRuntime::publicProjectionRevision() const
+{
+    return m_state.publicSnapshot().revision;
+}
+
+QString DocumentSessionRuntime::errorString() const { return m_state.publicSnapshot().errorString; }
 
 QString DocumentSessionRuntime::windowTitleSubject() const { return m_state.windowTitleSubject(); }
 
 bool DocumentSessionRuntime::displayedFileDeletionAvailable() const
 {
-    return m_state.displayedFileDeletionAvailable();
+    return m_state.publicSnapshot().projection.displayedFileDeletionAvailable;
 }
 
 bool DocumentSessionRuntime::displayedMediaOpenWithAvailable() const
 {
-    return m_state.displayedMediaOpenWithAvailable();
+    return m_state.publicSnapshot().projection.displayedMediaOpenWithAvailable;
 }
 
 bool DocumentSessionRuntime::fileDeletionInProgress() const
 {
-    return m_state.fileDeletionInProgress();
+    return m_state.publicSnapshot().fileDeletionInProgress;
 }
 
 bool DocumentSessionRuntime::activeZoomPercentAvailable() const
 {
-    return m_state.activeZoomSnapshot().available;
+    return m_state.publicSnapshot().activeZoom.available;
 }
 
 bool DocumentSessionRuntime::activeZoomPercentKnown() const
 {
-    return m_state.activeZoomSnapshot().known;
+    return m_state.publicSnapshot().activeZoom.known;
 }
 
 qreal DocumentSessionRuntime::activeZoomPercent() const
 {
-    return m_state.activeZoomSnapshot().percent;
+    return m_state.publicSnapshot().activeZoom.percent;
 }
 
 bool DocumentSessionRuntime::activeZoomEditable() const
 {
-    return m_state.activeZoomSnapshot().editable;
+    return m_state.publicSnapshot().activeZoom.editable;
 }
 
 bool DocumentSessionRuntime::directMediaNavigationActive() const
@@ -273,12 +265,12 @@ ActiveNavigationBoundaryScope DocumentSessionRuntime::activeNavigationBoundarySc
 
 ActiveNavigationRevealIntent DocumentSessionRuntime::activeNavigationRevealIntent() const
 {
-    return m_state.activeNavigationRevealIntent();
+    return m_state.publicSnapshot().activeNavigationRevealIntent;
 }
 
 ActiveNavigationRevealDirection DocumentSessionRuntime::activeNavigationRevealDirection() const
 {
-    return m_state.activeNavigationRevealDirection();
+    return m_state.publicSnapshot().activeNavigationRevealDirection;
 }
 
 QAbstractListModel *DocumentSessionRuntime::activeNavigationThumbnailModel() const
@@ -394,6 +386,7 @@ ActiveNavigationDispatchOutcome DocumentSessionRuntime::executeActiveNavigationD
     } else {
         m_pendingActiveNavigationRevealContext = {};
         setActiveNavigationRevealContext({});
+        recomputePublicProjection();
     }
     executeActiveNavigationDispatchPlan(plan);
     return plan.outcome;
@@ -508,7 +501,7 @@ void DocumentSessionRuntime::connectDocuments()
     appendConnection(m_documentConnections, m_imageDocument.notifications.imageSizeChanged, m_owner,
         [this]() { recomputePublicProjection(); });
     appendConnection(m_documentConnections, m_imageDocument.notifications.errorStringChanged,
-        m_owner, [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
+        m_owner, [this]() { recomputePublicProjection(); });
     appendConnection(m_documentConnections,
         m_imageDocument.notifications.imageDocumentSourceScopeChanged, m_owner, [this]() {
             if (m_routingSource) {
@@ -543,7 +536,7 @@ void DocumentSessionRuntime::connectDocuments()
     appendConnection(m_documentConnections, m_videoDocument.notifications.videoSizeChanged, m_owner,
         [this]() { recomputePublicProjection(); });
     appendConnection(m_documentConnections, m_videoDocument.notifications.errorStringChanged,
-        m_owner, [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
+        m_owner, [this]() { recomputePublicProjection(); });
     appendConnection(m_documentConnections, m_videoDocument.notifications.zoomPercentKnownChanged,
         m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); });
     appendConnection(m_documentConnections, m_videoDocument.notifications.zoomPercentChanged,
@@ -566,10 +559,7 @@ void DocumentSessionRuntime::setDocumentKind(DocumentSessionKind kind)
     m_state.setDocumentKindAndActiveZoomSnapshot(kind, activeZoomSnapshotForKind(kind));
 }
 
-void DocumentSessionRuntime::recomputeActiveZoomReadout()
-{
-    m_state.setActiveZoomSnapshot(activeZoomSnapshotForKind(m_state.documentKind()));
-}
+void DocumentSessionRuntime::recomputeActiveZoomReadout() { recomputePublicProjection(); }
 
 void DocumentSessionRuntime::recomputeActiveZoomReadoutForKind(DocumentSessionKind kind)
 {
@@ -578,7 +568,7 @@ void DocumentSessionRuntime::recomputeActiveZoomReadoutForKind(DocumentSessionKi
     }
 
     if (m_state.documentKind() == kind) {
-        recomputeActiveZoomReadout();
+        recomputePublicProjection();
     }
 }
 
@@ -586,8 +576,9 @@ void DocumentSessionRuntime::publishActiveNavigationForImagePages()
 {
     setActiveNavigationRevealContext(
         takePendingActiveNavigationRevealContext(ActiveNavigationRevealIntent::ProgrammaticSync));
-    if (m_state.updatePublicProjectionForSourceKind(
-            publicProjectionInput(), ActiveNavigationSourceKind::ImageDocumentPages)) {
+    if (m_state.updatePublicSnapshotForSourceKind(
+            publicSnapshotInput(++m_publicSnapshotInputRevision),
+            ActiveNavigationSourceKind::ImageDocumentPages)) {
         syncActiveNavigationThumbnailRows();
     }
     clearActiveNavigationRevealContextIfUnavailable();
@@ -595,7 +586,7 @@ void DocumentSessionRuntime::publishActiveNavigationForImagePages()
 
 void DocumentSessionRuntime::recomputePublicProjection()
 {
-    m_state.updatePublicProjection(publicProjectionInput());
+    m_state.updatePublicSnapshot(publicSnapshotInput(++m_publicSnapshotInputRevision));
     syncActiveNavigationThumbnailRows();
     clearActiveNavigationRevealContextIfUnavailable();
 }
@@ -783,7 +774,6 @@ void DocumentSessionRuntime::syncFromImageDocument()
     m_state.setSourceIdentity(m_imageDocument.sourceUrl());
     recomputeActiveZoomReadout();
     recomputePublicProjection();
-    m_state.publish(DocumentSessionChange::ErrorString);
     if (directMediaScopeChanged) {
         refreshDirectMediaNavigation();
     } else if (m_state.directMediaNavigationKnown()) {
@@ -816,7 +806,6 @@ void DocumentSessionRuntime::syncFromVideoDocument()
 
     recomputePublicProjection();
     recomputeActiveZoomReadout();
-    m_state.publish(DocumentSessionChange::ErrorString);
 }
 
 void DocumentSessionRuntime::refreshDirectMediaNavigation()
@@ -1146,6 +1135,44 @@ DocumentSessionPublicProjectionInput DocumentSessionRuntime::publicProjectionInp
         m_videoDocument.error(),
         currentMediaOpenWithPlan().hasRequest(),
     };
+}
+
+DocumentSessionPublicSnapshotInput DocumentSessionRuntime::publicSnapshotInput(
+    quint64 inputRevision) const
+{
+    DocumentSessionPublicSnapshotInput input;
+    input.inputRevision = inputRevision;
+    input.session.sourceUrl = m_state.sourceUrl();
+    input.session.documentKind = m_state.documentKind();
+    input.session.sessionErrorString = m_state.sessionErrorString();
+    input.session.fileDeletionInProgress = m_state.fileDeletionInProgress();
+    input.session.directImageLoadMayUseImageDocumentSourceScope
+        = directImageLoadMayUseImageDocumentSourceScope();
+    input.session.directMediaNavigation = directMediaActiveNavigationInput();
+    input.session.activeNavigationRevealIntent = m_state.activeNavigationRevealIntent();
+    input.session.activeNavigationRevealDirection = m_state.activeNavigationRevealDirection();
+
+    input.image.sourceMayRepresentDocument = !m_imageDocument.sourceUrl().isEmpty()
+        && !isSupportedDirectImageUrl(m_imageDocument.sourceUrl());
+    input.image.pageNavigation = imageDocumentPageActiveNavigationSnapshot();
+    input.image.windowTitleFileName = m_imageDocument.windowTitleFileName();
+    input.image.directMediaSize = m_imageDocument.primaryImageSize();
+    input.image.readyForDeletion = m_imageDocument.ready();
+    input.image.directImageReplacementPending = !m_state.directMediaCursor().pendingUrl.isEmpty();
+    input.image.zoomPercentKnown = m_imageDocument.zoomPercentKnown();
+    input.image.zoomPercent = m_imageDocument.zoomPercent();
+    input.image.errorString = m_imageDocument.errorString();
+
+    input.video.windowTitleFileName = m_videoDocument.windowTitleFileName();
+    input.video.directMediaSize = m_videoDocument.videoSize();
+    input.video.sourcePresent = !m_videoDocument.sourceUrl().isEmpty();
+    input.video.error = m_videoDocument.error();
+    input.video.zoomPercentKnown = m_videoDocument.zoomPercentKnown();
+    input.video.zoomPercent = m_videoDocument.zoomPercent();
+    input.video.errorString = m_videoDocument.errorString();
+
+    input.operations.displayedMediaOpenWithAvailable = currentMediaOpenWithPlan().hasRequest();
+    return input;
 }
 
 DirectMediaActiveNavigationInput DocumentSessionRuntime::directMediaActiveNavigationInput() const

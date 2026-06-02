@@ -21,10 +21,10 @@ class TestDocumentSessionState : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void sourceIdentityOnlyNotifiesWhenChanged();
-    void documentKindPublishesConsistentActiveZoomSnapshot();
-    void activeZoomSnapshotOnlyNotifiesWhenProjectionChanges();
-    void fileDeletionProgressOnlyPublishesProgress();
+    void sourceIdentityUpdatesInternalStateUntilSnapshotCommit();
+    void documentKindUpdatesInternalStateUntilSnapshotCommit();
+    void activeZoomReadoutPublishesThroughSnapshotCommit();
+    void fileDeletionProgressPublishesThroughSnapshotCommit();
     void directMediaNavigationSnapshotOwnsBoundaryAndCandidates();
     void publicProjectionCommitsValuesBeforePublishing();
     void publicProjectionOnlyNotifiesChangedOutputs();
@@ -33,7 +33,7 @@ private Q_SLOTS:
     void publishDeduplicatesChangesInOrder();
 };
 
-void TestDocumentSessionState::sourceIdentityOnlyNotifiesWhenChanged()
+void TestDocumentSessionState::sourceIdentityUpdatesInternalStateUntilSnapshotCommit()
 {
     std::vector<KiriView::DocumentSessionChange> changes;
     KiriView::DocumentSessionState state(
@@ -45,14 +45,13 @@ void TestDocumentSessionState::sourceIdentityOnlyNotifiesWhenChanged()
     state.setSourceIdentity(url);
 
     QCOMPARE(state.sourceUrl(), url);
-    QCOMPARE(changes.size(), std::size_t(1));
-    QCOMPARE(changes.back(), KiriView::DocumentSessionChange::SourceUrl);
+    QCOMPARE(changes.size(), std::size_t(0));
 
     state.setSourceIdentity(url);
-    QCOMPARE(changes.size(), std::size_t(1));
+    QCOMPARE(changes.size(), std::size_t(0));
 }
 
-void TestDocumentSessionState::documentKindPublishesConsistentActiveZoomSnapshot()
+void TestDocumentSessionState::documentKindUpdatesInternalStateUntilSnapshotCommit()
 {
     std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
     KiriView::DocumentSessionState state(
@@ -64,22 +63,14 @@ void TestDocumentSessionState::documentKindPublishesConsistentActiveZoomSnapshot
         KiriView::ActiveZoomSnapshot { true, true, 67, false });
 
     QCOMPARE(state.documentKind(), KiriView::DocumentSessionKind::Video);
-    QCOMPARE(state.activeZoomSnapshot().available, true);
-    QCOMPARE(state.activeZoomSnapshot().known, true);
-    QCOMPARE(state.activeZoomSnapshot().percent, 67.0);
-    QCOMPARE(state.activeZoomSnapshot().editable, false);
-    QCOMPARE(batches.size(), std::size_t(1));
-    QCOMPARE(batches.back().size(), std::size_t(3));
-    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::DocumentKind);
-    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::ActiveZoomReadout);
-    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::ErrorString);
+    QCOMPARE(batches.size(), std::size_t(0));
 
     state.setDocumentKindAndActiveZoomSnapshot(KiriView::DocumentSessionKind::Video,
         KiriView::ActiveZoomSnapshot { true, true, 67, false });
-    QCOMPARE(batches.size(), std::size_t(1));
+    QCOMPARE(batches.size(), std::size_t(0));
 }
 
-void TestDocumentSessionState::activeZoomSnapshotOnlyNotifiesWhenProjectionChanges()
+void TestDocumentSessionState::activeZoomReadoutPublishesThroughSnapshotCommit()
 {
     std::vector<KiriView::DocumentSessionChange> changes;
     KiriView::DocumentSessionState state(
@@ -87,27 +78,30 @@ void TestDocumentSessionState::activeZoomSnapshotOnlyNotifiesWhenProjectionChang
             changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
         });
 
-    KiriView::ActiveZoomSnapshot snapshot { true, false, 0.0, false };
-    state.setActiveZoomSnapshot(snapshot);
+    KiriView::DocumentSessionPublicSnapshotInput input;
+    input.session.documentKind = KiriView::DocumentSessionKind::Image;
+    input.image.zoomPercentKnown = true;
+    input.image.zoomPercent = 125.0;
+    state.updatePublicSnapshot(input);
 
     QVERIFY(state.activeZoomSnapshot().available);
-    QVERIFY(!state.activeZoomSnapshot().known);
-    QCOMPARE(changes.size(), std::size_t(1));
-    QCOMPARE(changes.at(0), KiriView::DocumentSessionChange::ActiveZoomReadout);
-
-    state.setActiveZoomSnapshot(snapshot);
-    QCOMPARE(changes.size(), std::size_t(1));
-
-    snapshot.known = true;
-    snapshot.percent = 125.0;
-    snapshot.editable = true;
-    state.setActiveZoomSnapshot(snapshot);
-    QCOMPARE(changes.size(), std::size_t(2));
+    QVERIFY(state.activeZoomSnapshot().known);
     QCOMPARE(state.activeZoomSnapshot().percent, 125.0);
-    QVERIFY(state.activeZoomSnapshot().editable);
+    QCOMPARE(changes.size(), std::size_t(3));
+    QCOMPARE(changes.at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(changes.at(2), KiriView::DocumentSessionChange::ActiveZoomReadout);
+
+    state.updatePublicSnapshot(input);
+    QCOMPARE(changes.size(), std::size_t(3));
+
+    input.image.zoomPercent = 150.0;
+    state.updatePublicSnapshot(input);
+    QCOMPARE(changes.size(), std::size_t(5));
+    QCOMPARE(changes.at(4), KiriView::DocumentSessionChange::ActiveZoomReadout);
+    QCOMPARE(state.activeZoomSnapshot().percent, 150.0);
 }
 
-void TestDocumentSessionState::fileDeletionProgressOnlyPublishesProgress()
+void TestDocumentSessionState::fileDeletionProgressPublishesThroughSnapshotCommit()
 {
     std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
     KiriView::DocumentSessionState state(
@@ -118,9 +112,15 @@ void TestDocumentSessionState::fileDeletionProgressOnlyPublishesProgress()
     state.setFileDeletionInProgress(true);
 
     QVERIFY(state.fileDeletionInProgress());
+    QCOMPARE(batches.size(), std::size_t(0));
+
+    KiriView::DocumentSessionPublicSnapshotInput input;
+    input.session.fileDeletionInProgress = true;
+    QVERIFY(state.updatePublicSnapshot(input));
     QCOMPARE(batches.size(), std::size_t(1));
-    QCOMPARE(batches.back().size(), std::size_t(1));
-    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::FileDeletionInProgress);
+    QCOMPARE(batches.back().size(), std::size_t(2));
+    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::FileDeletionInProgress);
 
     state.setFileDeletionInProgress(true);
     QCOMPARE(batches.size(), std::size_t(1));

@@ -223,6 +223,8 @@ KiriView::KiriDocumentSessionDependencies documentSessionDependenciesWithCompose
 KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocumentSession &session)
 {
     KiriView::DocumentSessionPublicSignalOperations operations;
+    operations.publicProjectionRevisionChanged
+        = [&session]() { Q_EMIT session.publicProjectionRevisionChanged(); };
     operations.sourceUrlChanged = [&session]() { Q_EMIT session.sourceUrlChanged(); };
     operations.documentKindChanged = [&session]() { Q_EMIT session.documentKindChanged(); };
     operations.errorStringChanged = [&session]() { Q_EMIT session.errorStringChanged(); };
@@ -355,6 +357,11 @@ QUrl KiriDocumentSession::sourceUrl() const { return m_runtime->sourceUrl(); }
 void KiriDocumentSession::setSourceUrl(const QUrl &sourceUrl)
 {
     m_runtime->setSourceUrl(sourceUrl);
+}
+
+quint64 KiriDocumentSession::publicProjectionRevision() const
+{
+    return m_runtime->publicProjectionRevision();
 }
 
 KiriDocumentSession::DocumentKind KiriDocumentSession::documentKind() const

@@ -11,6 +11,7 @@
 
 namespace KiriView {
 enum class DocumentSessionPublicSignal {
+    PublicProjectionRevision,
     SourceUrl,
     DocumentKind,
     ErrorString,
@@ -25,6 +26,7 @@ enum class DocumentSessionPublicSignal {
 };
 
 struct DocumentSessionPublicSignalOperations {
+    std::function<void()> publicProjectionRevisionChanged;
     std::function<void()> sourceUrlChanged;
     std::function<void()> documentKindChanged;
     std::function<void()> errorStringChanged;

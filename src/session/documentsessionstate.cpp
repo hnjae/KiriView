@@ -62,6 +62,28 @@ bool sameActiveZoomSnapshot(
         && qAbs(left.percent - right.percent) < 0.000001 && left.editable == right.editable;
 }
 
+bool samePublicProjection(const KiriView::DocumentSessionPublicProjection &left,
+    const KiriView::DocumentSessionPublicProjection &right)
+{
+    return left.sourceKind == right.sourceKind && left.boundaryScope == right.boundaryScope
+        && sameActiveNavigationSnapshot(left.activeNavigation, right.activeNavigation)
+        && left.windowTitleSubject == right.windowTitleSubject
+        && left.displayedMediaOpenWithAvailable == right.displayedMediaOpenWithAvailable
+        && left.displayedFileDeletionAvailable == right.displayedFileDeletionAvailable;
+}
+
+bool samePublicSnapshot(const KiriView::DocumentSessionPublicSnapshot &left,
+    const KiriView::DocumentSessionPublicSnapshot &right)
+{
+    return left.sourceUrl == right.sourceUrl && left.documentKind == right.documentKind
+        && left.errorString == right.errorString
+        && left.fileDeletionInProgress == right.fileDeletionInProgress
+        && sameActiveZoomSnapshot(left.activeZoom, right.activeZoom)
+        && samePublicProjection(left.projection, right.projection)
+        && left.activeNavigationRevealIntent == right.activeNavigationRevealIntent
+        && left.activeNavigationRevealDirection == right.activeNavigationRevealDirection;
+}
+
 }
 
 namespace KiriView {
@@ -78,14 +100,14 @@ const QString &DocumentSessionState::sessionErrorString() const { return m_sourc
 
 const QString &DocumentSessionState::windowTitleSubject() const
 {
-    return m_publicProjection.windowTitleSubject;
+    return m_publicSnapshot.projection.windowTitleSubject;
 }
 
 bool DocumentSessionState::fileDeletionInProgress() const { return m_fileDeletionInProgress; }
 
 const ActiveZoomSnapshot &DocumentSessionState::activeZoomSnapshot() const
 {
-    return m_activeZoomSnapshot;
+    return m_publicSnapshot.activeZoom;
 }
 
 const DirectMediaNavigationBoundaryState &DocumentSessionState::directMediaNavigationState() const
@@ -106,7 +128,7 @@ DocumentSessionState::directMediaNavigationCandidates() const
 
 const ActiveNavigationSnapshot &DocumentSessionState::activeNavigationSnapshot() const
 {
-    return m_publicProjection.activeNavigation;
+    return m_publicSnapshot.projection.activeNavigation;
 }
 
 ActiveNavigationRevealIntent DocumentSessionState::activeNavigationRevealIntent() const
@@ -121,27 +143,32 @@ ActiveNavigationRevealDirection DocumentSessionState::activeNavigationRevealDire
 
 ActiveNavigationSourceKind DocumentSessionState::activeNavigationSourceKind() const
 {
-    return m_publicProjection.sourceKind;
+    return m_publicSnapshot.projection.sourceKind;
 }
 
 ActiveNavigationBoundaryScope DocumentSessionState::activeNavigationBoundaryScope() const
 {
-    return m_publicProjection.boundaryScope;
+    return m_publicSnapshot.projection.boundaryScope;
 }
 
 bool DocumentSessionState::displayedFileDeletionAvailable() const
 {
-    return m_publicProjection.displayedFileDeletionAvailable;
+    return m_publicSnapshot.projection.displayedFileDeletionAvailable;
 }
 
 bool DocumentSessionState::displayedMediaOpenWithAvailable() const
 {
-    return m_publicProjection.displayedMediaOpenWithAvailable;
+    return m_publicSnapshot.projection.displayedMediaOpenWithAvailable;
 }
 
 const DocumentSessionPublicProjection &DocumentSessionState::publicProjection() const
 {
-    return m_publicProjection;
+    return m_publicSnapshot.projection;
+}
+
+const DocumentSessionPublicSnapshot &DocumentSessionState::publicSnapshot() const
+{
+    return m_publicSnapshot;
 }
 
 const DirectMediaCursor &DocumentSessionState::directMediaCursor() const
@@ -161,9 +188,7 @@ DirectMediaScope DocumentSessionState::directMediaScope() const
 
 void DocumentSessionState::setSourceIdentity(const QUrl &url)
 {
-    if (replaceIfChanged(m_sourceUrl, url)) {
-        publish(DocumentSessionChange::SourceUrl);
-    }
+    replaceIfChanged(m_sourceUrl, url);
 }
 
 void DocumentSessionState::setDocumentKind(DocumentSessionKind kind)
@@ -175,58 +200,32 @@ void DocumentSessionState::setDocumentKindAndActiveZoomSnapshot(
     DocumentSessionKind kind, ActiveZoomSnapshot activeZoomSnapshot)
 {
     if (!replaceIfChanged(m_documentKind, kind)) {
-        setActiveZoomSnapshot(activeZoomSnapshot);
+        m_activeZoomSnapshot = activeZoomSnapshot;
         return;
     }
 
-    const bool activeZoomChanged
-        = !sameActiveZoomSnapshot(m_activeZoomSnapshot, activeZoomSnapshot);
     m_activeZoomSnapshot = activeZoomSnapshot;
-
-    std::vector<DocumentSessionChange> changes { DocumentSessionChange::DocumentKind };
-    if (activeZoomChanged) {
-        changes.push_back(DocumentSessionChange::ActiveZoomReadout);
-    }
-    changes.push_back(DocumentSessionChange::ErrorString);
-    publish(std::move(changes));
 }
 
 void DocumentSessionState::setFileDeletionInProgress(bool inProgress)
 {
-    if (!replaceIfChanged(m_fileDeletionInProgress, inProgress)) {
-        return;
-    }
-
-    publish(DocumentSessionChange::FileDeletionInProgress);
+    replaceIfChanged(m_fileDeletionInProgress, inProgress);
 }
 
 void DocumentSessionState::setActiveZoomSnapshot(ActiveZoomSnapshot snapshot)
 {
-    if (sameActiveZoomSnapshot(m_activeZoomSnapshot, snapshot)) {
-        return;
-    }
-
     m_activeZoomSnapshot = snapshot;
-    publish(DocumentSessionChange::ActiveZoomReadout);
 }
 
 void DocumentSessionState::setActiveNavigationRevealIntent(ActiveNavigationRevealIntent intent)
 {
-    if (!replaceIfChanged(m_activeNavigationRevealIntent, intent)) {
-        return;
-    }
-
-    publish(DocumentSessionChange::ActiveNavigationRevealIntent);
+    replaceIfChanged(m_activeNavigationRevealIntent, intent);
 }
 
 void DocumentSessionState::setActiveNavigationRevealDirection(
     ActiveNavigationRevealDirection direction)
 {
-    if (!replaceIfChanged(m_activeNavigationRevealDirection, direction)) {
-        return;
-    }
-
-    publish(DocumentSessionChange::ActiveNavigationRevealDirection);
+    replaceIfChanged(m_activeNavigationRevealDirection, direction);
 }
 
 void DocumentSessionState::setDirectMediaNavigation(DirectMediaNavigationBoundaryState state,
@@ -246,6 +245,25 @@ void DocumentSessionState::setDirectMediaNavigation(DirectMediaNavigationBoundar
 bool DocumentSessionState::updatePublicProjection(DocumentSessionPublicProjectionInput input)
 {
     return applyPublicProjection(projectDocumentSessionPublicState(std::move(input)));
+}
+
+bool DocumentSessionState::updatePublicSnapshot(const DocumentSessionPublicSnapshotInput &input)
+{
+    return applyPublicSnapshot(
+        projectDocumentSessionPublicSnapshot(input, m_publicSnapshot.revision + 1));
+}
+
+bool DocumentSessionState::updatePublicSnapshotForSourceKind(
+    const DocumentSessionPublicSnapshotInput &input, ActiveNavigationSourceKind sourceKind)
+{
+    DocumentSessionPublicSnapshot snapshot
+        = projectDocumentSessionPublicSnapshot(input, m_publicSnapshot.revision + 1);
+    if (snapshot.projection.sourceKind != sourceKind) {
+        return false;
+    }
+
+    applyPublicSnapshot(std::move(snapshot));
+    return true;
 }
 
 bool DocumentSessionState::updatePublicProjectionForSourceKind(
@@ -284,6 +302,7 @@ bool DocumentSessionState::applyPublicProjection(DocumentSessionPublicProjection
     }
 
     m_publicProjection = std::move(projection);
+    m_publicSnapshot.projection = m_publicProjection;
 
     std::vector<DocumentSessionChange> changes;
     if (activeNavigationChanged) {
@@ -303,11 +322,89 @@ bool DocumentSessionState::applyPublicProjection(DocumentSessionPublicProjection
     return true;
 }
 
+bool DocumentSessionState::applyPublicSnapshot(DocumentSessionPublicSnapshot snapshot)
+{
+    if (samePublicSnapshot(m_publicSnapshot, snapshot)) {
+        return false;
+    }
+
+    const bool sourceUrlChanged = m_publicSnapshot.sourceUrl != snapshot.sourceUrl;
+    const bool documentKindChanged = m_publicSnapshot.documentKind != snapshot.documentKind;
+    const bool errorStringChanged = m_publicSnapshot.errorString != snapshot.errorString;
+    const bool fileDeletionInProgressChanged
+        = m_publicSnapshot.fileDeletionInProgress != snapshot.fileDeletionInProgress;
+    const bool activeZoomChanged
+        = !sameActiveZoomSnapshot(m_publicSnapshot.activeZoom, snapshot.activeZoom);
+    const bool activeNavigationChanged
+        = !sameActiveNavigationSnapshot(
+              m_publicSnapshot.projection.activeNavigation, snapshot.projection.activeNavigation)
+        || m_publicSnapshot.projection.sourceKind != snapshot.projection.sourceKind
+        || m_publicSnapshot.projection.boundaryScope != snapshot.projection.boundaryScope;
+    const bool windowTitleSubjectChanged
+        = m_publicSnapshot.projection.windowTitleSubject != snapshot.projection.windowTitleSubject;
+    const bool displayedFileDeletionAvailabilityChanged
+        = m_publicSnapshot.projection.displayedFileDeletionAvailable
+        != snapshot.projection.displayedFileDeletionAvailable;
+    const bool displayedMediaOpenWithAvailabilityChanged
+        = m_publicSnapshot.projection.displayedMediaOpenWithAvailable
+        != snapshot.projection.displayedMediaOpenWithAvailable;
+    const bool activeNavigationRevealIntentChanged
+        = m_publicSnapshot.activeNavigationRevealIntent != snapshot.activeNavigationRevealIntent;
+    const bool activeNavigationRevealDirectionChanged
+        = m_publicSnapshot.activeNavigationRevealDirection
+        != snapshot.activeNavigationRevealDirection;
+
+    m_sourceUrl = snapshot.sourceUrl;
+    m_documentKind = snapshot.documentKind;
+    m_fileDeletionInProgress = snapshot.fileDeletionInProgress;
+    m_activeZoomSnapshot = snapshot.activeZoom;
+    m_activeNavigationRevealIntent = snapshot.activeNavigationRevealIntent;
+    m_activeNavigationRevealDirection = snapshot.activeNavigationRevealDirection;
+    m_publicProjection = snapshot.projection;
+    m_publicSnapshot = std::move(snapshot);
+
+    std::vector<DocumentSessionChange> changes { DocumentSessionChange::PublicProjectionRevision };
+    if (sourceUrlChanged) {
+        changes.push_back(DocumentSessionChange::SourceUrl);
+    }
+    if (documentKindChanged) {
+        changes.push_back(DocumentSessionChange::DocumentKind);
+    }
+    if (errorStringChanged) {
+        changes.push_back(DocumentSessionChange::ErrorString);
+    }
+    if (fileDeletionInProgressChanged) {
+        changes.push_back(DocumentSessionChange::FileDeletionInProgress);
+    }
+    if (activeZoomChanged) {
+        changes.push_back(DocumentSessionChange::ActiveZoomReadout);
+    }
+    if (activeNavigationChanged) {
+        changes.push_back(DocumentSessionChange::ActiveNavigation);
+    }
+    if (windowTitleSubjectChanged) {
+        changes.push_back(DocumentSessionChange::WindowTitleSubject);
+    }
+    if (displayedFileDeletionAvailabilityChanged) {
+        changes.push_back(DocumentSessionChange::FileDeletionAvailability);
+    }
+    if (displayedMediaOpenWithAvailabilityChanged) {
+        changes.push_back(DocumentSessionChange::OpenWithAvailability);
+    }
+    if (activeNavigationRevealIntentChanged) {
+        changes.push_back(DocumentSessionChange::ActiveNavigationRevealIntent);
+    }
+    if (activeNavigationRevealDirectionChanged) {
+        changes.push_back(DocumentSessionChange::ActiveNavigationRevealDirection);
+    }
+
+    publish(std::move(changes));
+    return true;
+}
+
 void DocumentSessionState::setSessionErrorString(const QString &errorString)
 {
-    if (replaceIfChanged(m_sourceErrorString, errorString)) {
-        publish(DocumentSessionChange::ErrorString);
-    }
+    replaceIfChanged(m_sourceErrorString, errorString);
 }
 
 bool DocumentSessionState::clearDirectMediaCursor()

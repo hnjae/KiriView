@@ -7,6 +7,7 @@
 #include "session/activenavigationprojection.h"
 
 #include <QString>
+#include <QUrl>
 #include <QtGlobal>
 
 namespace KiriView {
@@ -17,6 +18,7 @@ enum class DocumentSessionKind {
 };
 
 enum class DocumentSessionChange {
+    PublicProjectionRevision,
     SourceUrl,
     DocumentKind,
     ErrorString,
@@ -64,6 +66,20 @@ struct DocumentSessionPublicProjection {
     QString windowTitleSubject;
     bool displayedMediaOpenWithAvailable = false;
     bool displayedFileDeletionAvailable = false;
+};
+
+struct DocumentSessionPublicSnapshot {
+    quint64 revision = 0;
+    quint64 inputRevision = 0;
+    QUrl sourceUrl;
+    DocumentSessionKind documentKind = DocumentSessionKind::Empty;
+    QString errorString;
+    bool fileDeletionInProgress = false;
+    ActiveZoomSnapshot activeZoom;
+    DocumentSessionPublicProjection projection;
+    ActiveNavigationRevealIntent activeNavigationRevealIntent = ActiveNavigationRevealIntent::None;
+    ActiveNavigationRevealDirection activeNavigationRevealDirection
+        = ActiveNavigationRevealDirection::None;
 };
 }
 
