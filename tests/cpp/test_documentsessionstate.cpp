@@ -4,6 +4,7 @@
 #include "session/documentsessionstate.h"
 
 #include <QObject>
+#include <QSize>
 #include <QTest>
 #include <QUrl>
 #include <vector>
@@ -27,6 +28,8 @@ private Q_SLOTS:
     void directMediaNavigationSnapshotOwnsBoundaryAndCandidates();
     void publicProjectionCommitsValuesBeforePublishing();
     void publicProjectionOnlyNotifiesChangedOutputs();
+    void publicSnapshotCommitsOneRevisionedBatch();
+    void unchangedPublicSnapshotDoesNotAdvanceRevision();
     void publishDeduplicatesChangesInOrder();
 };
 
@@ -272,6 +275,79 @@ void TestDocumentSessionState::publicProjectionOnlyNotifiesChangedOutputs()
 
     state.updatePublicProjection(input);
     QCOMPARE(batches.size(), std::size_t(4));
+}
+
+void TestDocumentSessionState::publicSnapshotCommitsOneRevisionedBatch()
+{
+    std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
+    KiriView::DocumentSessionState *stateDuringCallback = nullptr;
+    KiriView::DocumentSessionState state(
+        [&batches, &stateDuringCallback](
+            const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
+            batches.push_back(publishedChanges);
+            QVERIFY(stateDuringCallback != nullptr);
+            QCOMPARE(stateDuringCallback->publicSnapshot().revision, quint64(1));
+            QCOMPARE(stateDuringCallback->sourceUrl(),
+                QUrl::fromLocalFile(QStringLiteral("/media/01.png")));
+            QCOMPARE(stateDuringCallback->documentKind(), KiriView::DocumentSessionKind::Image);
+            QCOMPARE(stateDuringCallback->activeZoomSnapshot().percent, 125.0);
+            QCOMPARE(stateDuringCallback->activeNavigationSnapshot().currentNumber, 1);
+            QCOMPARE(stateDuringCallback->windowTitleSubject(), QStringLiteral("01.png – 640×480"));
+            QVERIFY(stateDuringCallback->displayedFileDeletionAvailable());
+            QVERIFY(stateDuringCallback->displayedMediaOpenWithAvailable());
+        });
+    stateDuringCallback = &state;
+
+    KiriView::DocumentSessionPublicSnapshotInput input;
+    input.inputRevision = 12;
+    input.session.sourceUrl = QUrl::fromLocalFile(QStringLiteral("/media/01.png"));
+    input.session.documentKind = KiriView::DocumentSessionKind::Image;
+    input.session.directImageLoadMayUseImageDocumentSourceScope = true;
+    input.session.directMediaNavigation = KiriView::DirectMediaActiveNavigationInput {
+        KiriView::DirectMediaNavigationBoundaryState { false, false, true, true, 1, 1 },
+        true,
+    };
+    input.image.windowTitleFileName = QStringLiteral("01.png");
+    input.image.directMediaSize = QSize(640, 480);
+    input.image.readyForDeletion = true;
+    input.image.zoomPercentKnown = true;
+    input.image.zoomPercent = 125.0;
+    input.operations.displayedMediaOpenWithAvailable = true;
+
+    QVERIFY(state.updatePublicSnapshot(input));
+
+    QCOMPARE(batches.size(), std::size_t(1));
+    QCOMPARE(batches.back().size(), std::size_t(8));
+    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::SourceUrl);
+    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::DocumentKind);
+    QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::ActiveZoomReadout);
+    QCOMPARE(batches.back().at(4), KiriView::DocumentSessionChange::ActiveNavigation);
+    QCOMPARE(batches.back().at(5), KiriView::DocumentSessionChange::WindowTitleSubject);
+    QCOMPARE(batches.back().at(6), KiriView::DocumentSessionChange::FileDeletionAvailability);
+    QCOMPARE(batches.back().at(7), KiriView::DocumentSessionChange::OpenWithAvailability);
+    QCOMPARE(state.publicSnapshot().inputRevision, quint64(12));
+}
+
+void TestDocumentSessionState::unchangedPublicSnapshotDoesNotAdvanceRevision()
+{
+    std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
+    KiriView::DocumentSessionState state(
+        [&batches](const std::vector<KiriView::DocumentSessionChange> &changes) {
+            batches.push_back(changes);
+        });
+
+    KiriView::DocumentSessionPublicSnapshotInput input;
+    input.inputRevision = 3;
+    input.session.sourceUrl = QUrl::fromLocalFile(QStringLiteral("/media/clip.mp4"));
+    input.session.documentKind = KiriView::DocumentSessionKind::Video;
+    input.video.sourcePresent = true;
+
+    QVERIFY(state.updatePublicSnapshot(input));
+    QCOMPARE(state.publicSnapshot().revision, quint64(1));
+    QVERIFY(!state.updatePublicSnapshot(input));
+    QCOMPARE(state.publicSnapshot().revision, quint64(1));
+    QCOMPARE(batches.size(), std::size_t(1));
 }
 
 void TestDocumentSessionState::publishDeduplicatesChangesInOrder()

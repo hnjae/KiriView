@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QSize>
 #include <QTest>
+#include <QUrl>
 
 class TestDocumentSessionPublicProjection : public QObject
 {
@@ -19,6 +20,7 @@ private Q_SLOTS:
     void imageDeletionAvailabilityRequiresReadyImageWithoutPendingReplacement();
     void videoDeletionAvailabilityRequiresSourceWithoutError();
     void deletionProgressSuppressesDeletionAvailability();
+    void publicSnapshotProjectsRevisionedMixedMediaState();
 };
 
 void TestDocumentSessionPublicProjection::emptySessionProjectsUnavailableNavigationAndEmptyTitle()
@@ -189,6 +191,45 @@ void TestDocumentSessionPublicProjection::deletionProgressSuppressesDeletionAvai
     KiriView::DocumentSessionPublicProjection projection
         = KiriView::projectDocumentSessionPublicState(input);
     QVERIFY(!projection.displayedFileDeletionAvailable);
+}
+
+void TestDocumentSessionPublicProjection::publicSnapshotProjectsRevisionedMixedMediaState()
+{
+    KiriView::DocumentSessionPublicSnapshotInput input;
+    input.inputRevision = 7;
+    input.session.sourceUrl = QUrl::fromLocalFile(QStringLiteral("/media/clip.mp4"));
+    input.session.documentKind = KiriView::DocumentSessionKind::Video;
+    input.session.directMediaNavigation = KiriView::DirectMediaActiveNavigationInput {
+        KiriView::DirectMediaNavigationBoundaryState { true, false, false, true, 2, 2 },
+        true,
+    };
+    input.video.windowTitleFileName = QStringLiteral("clip.mp4");
+    input.video.directMediaSize = QSize(1920, 1080);
+    input.video.sourcePresent = true;
+    input.video.zoomPercentKnown = true;
+    input.video.zoomPercent = 75;
+    input.video.errorString = QStringLiteral("decode details");
+    input.operations.displayedMediaOpenWithAvailable = true;
+
+    const KiriView::DocumentSessionPublicSnapshot snapshot
+        = KiriView::projectDocumentSessionPublicSnapshot(input, 3);
+
+    QCOMPARE(snapshot.revision, quint64(3));
+    QCOMPARE(snapshot.inputRevision, quint64(7));
+    QCOMPARE(snapshot.sourceUrl, input.session.sourceUrl);
+    QCOMPARE(snapshot.documentKind, KiriView::DocumentSessionKind::Video);
+    QCOMPARE(snapshot.errorString, QStringLiteral("decode details"));
+    QVERIFY(snapshot.activeZoom.available);
+    QVERIFY(snapshot.activeZoom.known);
+    QCOMPARE(snapshot.activeZoom.percent, 75.0);
+    QVERIFY(!snapshot.activeZoom.editable);
+    QCOMPARE(
+        snapshot.projection.sourceKind, KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia);
+    QCOMPARE(snapshot.projection.activeNavigation.currentNumber, 2);
+    QCOMPARE(snapshot.projection.activeNavigation.count, 2);
+    QCOMPARE(snapshot.projection.windowTitleSubject, QStringLiteral("clip.mp4 – 1920×1080"));
+    QVERIFY(snapshot.projection.displayedFileDeletionAvailable);
+    QVERIFY(snapshot.projection.displayedMediaOpenWithAvailable);
 }
 
 QTEST_GUILESS_MAIN(TestDocumentSessionPublicProjection)

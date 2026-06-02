@@ -395,6 +395,7 @@ private Q_SLOTS:
     void mediaInformationDerivesFilenameAndPathFromTargetUrl();
     void mediaInformationRowModelsExposeLabelAndValueRoles();
     void directVideoRoutesToVideoDocumentWithOriginalSource();
+    void publicProjectionRevisionCommitsBeforeScalarSignals();
     void activeZoomReadoutFollowsSessionDocumentKind();
     void archiveAndDirectoryInputsRouteToImageDocument();
     void directImageAfterVideoRestoresImageDocument();
@@ -687,6 +688,37 @@ void TestKiriDocumentSession::directVideoRoutesToVideoDocumentWithOriginalSource
     QVERIFY(!session->canOpenNextActiveNavigation());
     QVERIFY(session->atKnownFirstActiveNavigation());
     QVERIFY(session->atKnownLastActiveNavigation());
+}
+
+void TestKiriDocumentSession::publicProjectionRevisionCommitsBeforeScalarSignals()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl clip = localUrl(QStringLiteral("/media/clip.mp4"));
+    directMediaNavigationProvider.setMedia(
+        localUrl(QStringLiteral("/media/")), { directMediaNavigationCandidate(clip) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
+    QStringList events;
+
+    connect(session.get(), &KiriDocumentSession::publicProjectionRevisionChanged, session.get(),
+        [&session, &events, &clip]() {
+            events.append(QStringLiteral("revision"));
+            QCOMPARE(session->sourceUrl(), clip);
+            QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+            QVERIFY(session->activeZoomPercentAvailable());
+            QCOMPARE(session->windowTitleSubject(), QStringLiteral("clip.mp4"));
+        });
+    connect(session.get(), &KiriDocumentSession::sourceUrlChanged, session.get(),
+        [&events]() { events.append(QStringLiteral("source")); });
+    connect(session.get(), &KiriDocumentSession::documentKindChanged, session.get(),
+        [&events]() { events.append(QStringLiteral("kind")); });
+
+    QCOMPARE(session->publicProjectionRevision(), quint64(0));
+
+    session->setSourceUrl(clip);
+
+    QVERIFY(session->publicProjectionRevision() > 0);
+    QVERIFY(!events.isEmpty());
+    QCOMPARE(events.first(), QStringLiteral("revision"));
 }
 
 void TestKiriDocumentSession::activeZoomReadoutFollowsSessionDocumentKind()

@@ -32,6 +32,8 @@ KiriView::DocumentSessionPublicSignalOperations recordingOperations(QStringList 
 {
     KiriView::DocumentSessionPublicSignalOperations operations;
     operations.sourceUrlChanged = [&events]() { events.append(QStringLiteral("sourceUrl")); };
+    operations.publicProjectionRevisionChanged
+        = [&events]() { events.append(QStringLiteral("publicProjectionRevision")); };
     operations.documentKindChanged = [&events]() { events.append(QStringLiteral("documentKind")); };
     operations.errorStringChanged = [&events]() { events.append(QStringLiteral("errorString")); };
     operations.windowTitleSubjectChanged
@@ -59,6 +61,8 @@ void TestDocumentSessionPublicSignals::publicSignalPlansReturnSignalsInEmissionO
     using Change = KiriView::DocumentSessionChange;
     using Signal = KiriView::DocumentSessionPublicSignal;
 
+    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::PublicProjectionRevision),
+        { Signal::PublicProjectionRevision });
     comparePublicSignals(
         KiriView::documentSessionPublicSignals(Change::SourceUrl), { Signal::SourceUrl });
     comparePublicSignals(
@@ -91,12 +95,13 @@ void TestDocumentSessionPublicSignals::publicSignalBatchPlansDeduplicateSignalsI
     using Signal = KiriView::DocumentSessionPublicSignal;
 
     comparePublicSignals(
-        KiriView::documentSessionPublicSignalsForChanges(
-            { Change::DocumentKind, Change::ErrorString, Change::DocumentKind,
-                Change::ActiveNavigation, Change::ActiveNavigationRevealIntent,
-                Change::ActiveNavigationRevealDirection, Change::ActiveNavigationRevealDirection }),
-        { Signal::DocumentKind, Signal::ErrorString, Signal::ActiveNavigation,
-            Signal::ActiveNavigationRevealIntent, Signal::ActiveNavigationRevealDirection });
+        KiriView::documentSessionPublicSignalsForChanges({ Change::DocumentKind,
+            Change::ErrorString, Change::DocumentKind, Change::PublicProjectionRevision,
+            Change::ActiveNavigation, Change::ActiveNavigationRevealIntent,
+            Change::ActiveNavigationRevealDirection, Change::ActiveNavigationRevealDirection }),
+        { Signal::DocumentKind, Signal::ErrorString, Signal::PublicProjectionRevision,
+            Signal::ActiveNavigation, Signal::ActiveNavigationRevealIntent,
+            Signal::ActiveNavigationRevealDirection });
 }
 
 void TestDocumentSessionPublicSignals::emitterDispatchesChangeSignalsInProjectionOrder()
@@ -104,7 +109,8 @@ void TestDocumentSessionPublicSignals::emitterDispatchesChangeSignalsInProjectio
     QStringList events;
     const KiriView::DocumentSessionPublicSignalEmitter emitter(recordingOperations(events));
 
-    emitter.emitChanges({ KiriView::DocumentSessionChange::OpenWithAvailability,
+    emitter.emitChanges({ KiriView::DocumentSessionChange::PublicProjectionRevision,
+        KiriView::DocumentSessionChange::OpenWithAvailability,
         KiriView::DocumentSessionChange::FileDeletionAvailability,
         KiriView::DocumentSessionChange::FileDeletionInProgress,
         KiriView::DocumentSessionChange::ActiveNavigationRevealIntent,
@@ -113,6 +119,7 @@ void TestDocumentSessionPublicSignals::emitterDispatchesChangeSignalsInProjectio
 
     QCOMPARE(events,
         QStringList({
+            QStringLiteral("publicProjectionRevision"),
             QStringLiteral("displayedMediaOpenWithAvailability"),
             QStringLiteral("displayedFileDeletionAvailability"),
             QStringLiteral("fileDeletionInProgress"),
