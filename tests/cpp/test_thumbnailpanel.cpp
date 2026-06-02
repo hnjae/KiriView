@@ -5,9 +5,9 @@
 #include "localization/localization.h"
 
 #include <KLocalizedQmlContext>
+#include <QAbstractItemModel>
 #include <QDir>
 #include <QElapsedTimer>
-#include <QFile>
 #include <QImage>
 #include <QObject>
 #include <QQmlComponent>
@@ -48,7 +48,7 @@ private Q_SLOTS:
     void largeJumpNavigationRevealsSelectedThumbnail();
     void visibleThumbnailClickDispatchesWithoutScrollMovement();
     void scrolledThumbnailClickDispatchesWithoutScrollMovement();
-    void delegateReportsSourceNeutralDemandAndKeepsFallbackIcon();
+    void delegateReportsThumbnailDemandThroughSessionModel();
 };
 
 namespace {
@@ -344,6 +344,11 @@ void noteUserThumbnailScroll(QQuickItem &thumbnailStrip)
     QVERIFY(QMetaObject::invokeMethod(
         &thumbnailStrip, "noteUserThumbnailScroll", Qt::DirectConnection));
 }
+
+int roleForName(const QAbstractItemModel &model, const QByteArray &name)
+{
+    return model.roleNames().key(name, -1);
+}
 }
 
 void TestThumbnailPanel::initTestCase()
@@ -360,30 +365,44 @@ void TestThumbnailPanel::init()
         QStringLiteral(".*Created graphical object was not placed in the graphics scene.*")));
 }
 
-void TestThumbnailPanel::delegateReportsSourceNeutralDemandAndKeepsFallbackIcon()
+void TestThumbnailPanel::delegateReportsThumbnailDemandThroughSessionModel()
 {
-    QFile thumbnailPanelFile(QDir(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR))
-            .absoluteFilePath(QStringLiteral("../../src/qml/ThumbnailPanel.qml")));
-    QVERIFY(thumbnailPanelFile.open(QIODevice::ReadOnly | QIODevice::Text));
+    ThumbnailPanelFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 1, testImageCount),
+        "active navigation did not become ready");
 
-    const QString source = QString::fromUtf8(thumbnailPanelFile.readAll());
-    QVERIFY(source.contains(QStringLiteral("objectName: \"thumbnailPreviewBox\"")));
-    QVERIFY(source.contains(QStringLiteral("effectiveDevicePixelRatio")));
-    QVERIFY(source.contains(
-        QStringLiteral("Math.ceil(Math.max(thumbnailPreviewBox.width, thumbnailPreviewBox.height) "
-                       "* thumbnailDevicePixelRatio)")));
-    QVERIFY(source.contains(QStringLiteral("activeNavigationThumbnailDemandBucket")));
-    QVERIFY(source.contains(QStringLiteral("reportActiveNavigationThumbnailDemand")));
-    QVERIFY(source.contains(QStringLiteral("navigationGeneration")));
-    QVERIFY(source.contains(QStringLiteral("required property int thumbnailStatus")));
-    QVERIFY(source.contains(QStringLiteral("required property url thumbnailImageSource")));
-    QVERIFY(source.contains(QStringLiteral("KiriDocumentSession.ReadyThumbnailResult")));
-    QVERIFY(source.contains(QStringLiteral("source: thumbnailDelegate.thumbnailImageSource")));
-    QVERIFY(source.contains(QStringLiteral("Kirigami.Icon")));
-    QVERIFY(source.contains(QStringLiteral("source: thumbnailDelegate.iconName")));
-    QVERIFY(!source.contains(QStringLiteral("DirectImage")));
-    QVERIFY(!source.contains(QStringLiteral("DirectVideo")));
-    QVERIFY(!source.contains(QStringLiteral("ImageDocumentPage")));
+    QAbstractItemModel *model = fixture.documentSession->activeNavigationThumbnailModel();
+    QVERIFY(model != nullptr);
+    QCOMPARE(model->rowCount(), testImageCount);
+    const int statusRole = roleForName(*model, QByteArrayLiteral("thumbnailStatus"));
+    const int imageSourceRole = roleForName(*model, QByteArrayLiteral("thumbnailImageSource"));
+    QVERIFY(statusRole >= 0);
+    QVERIFY(imageSourceRole >= 0);
+
+    const QModelIndex firstIndex = model->index(0, 0);
+    QVERIFY(firstIndex.isValid());
+    QTRY_VERIFY(model->data(firstIndex, statusRole).toInt()
+        != static_cast<int>(KiriDocumentSession::ThumbnailResultStatus::NoThumbnailResult));
+
+    const int firstStatus = model->data(firstIndex, statusRole).toInt();
+    const QUrl firstThumbnailSource = model->data(firstIndex, imageSourceRole).toUrl();
+    if (firstStatus
+        == static_cast<int>(KiriDocumentSession::ThumbnailResultStatus::ReadyThumbnailResult)) {
+        QVERIFY(firstThumbnailSource.toString().startsWith(
+            QStringLiteral("image://kiriview-thumbnails/")));
+    } else {
+        QVERIFY(firstThumbnailSource.isEmpty());
+    }
+
+    QQuickItem *firstDelegate = nullptr;
+    QTRY_VERIFY(
+        (firstDelegate = thumbnailDelegateForNumber(*fixture.thumbnailStrip, 1)) != nullptr);
+    QQuickItem *previewBox
+        = firstDelegate->findChild<QQuickItem *>(QStringLiteral("thumbnailPreviewBox"));
+    QVERIFY(previewBox != nullptr);
+    QVERIFY(previewBox->width() > 0);
+    QVERIFY(previewBox->height() > 0);
 }
 
 void TestThumbnailPanel::visibleMainNavigationKeepsScrollPosition()
