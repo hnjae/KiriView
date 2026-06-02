@@ -14,6 +14,7 @@ class TestDocumentSessionDirectMediaNavigationLoadState : public QObject
 private Q_SLOTS:
     void onlyCurrentLoadCanFinish();
     void cursorScopeMustMatchCurrentLoad();
+    void sourceKeyEquivalentScopeCanFinish();
     void cancelRejectsPendingLoad();
 };
 
@@ -74,6 +75,27 @@ void TestDocumentSessionDirectMediaNavigationLoadState::cursorScopeMustMatchCurr
     QVERIFY(!state.finish(wrongGeneration));
     QVERIFY(state.accepts(second));
     QVERIFY(state.finish(second));
+}
+
+void TestDocumentSessionDirectMediaNavigationLoadState::sourceKeyEquivalentScopeCanFinish()
+{
+    KiriView::DocumentSessionDirectMediaNavigationLoadState state;
+
+    KiriView::DocumentSessionDirectMediaNavigationLoad load
+        = state.start(KiriView::DirectMediaScope {
+            QUrl(QStringLiteral("file:///media/chapter/../01.mp4")),
+            QUrl(QStringLiteral("file:///media/chapter/..")),
+            3,
+        });
+
+    load.scope.currentUrl = QUrl(QStringLiteral("file:///media/01.mp4"));
+    load.scope.parentUrl = QUrl(QStringLiteral("file:///media/"));
+    QVERIFY(state.accepts(load));
+
+    KiriView::DocumentSessionDirectMediaNavigationLoad wrongGeneration = load;
+    wrongGeneration.scope.generation = 4;
+    QVERIFY(!state.accepts(wrongGeneration));
+    QVERIFY(state.finish(load));
 }
 
 void TestDocumentSessionDirectMediaNavigationLoadState::cancelRejectsPendingLoad()
