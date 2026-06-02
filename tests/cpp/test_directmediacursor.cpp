@@ -16,6 +16,7 @@ private Q_SLOTS:
     void generationUsesNormalizedEffectiveIdentity();
     void scopeUsesEffectiveUrlParentAndGeneration();
     void scopeEqualityUsesSourceKeysAndGeneration();
+    void scopeEqualityIncludesParentSourceKey();
     void scopeMatchingAcceptsNormalizedConfirmation();
 };
 
@@ -144,6 +145,22 @@ void TestDirectMediaCursor::scopeEqualityUsesSourceKeysAndGeneration()
     equivalentScope = requestedScope;
     equivalentScope.currentUrl = QUrl(QStringLiteral("file:///media/01.PNG"));
     QVERIFY(!(requestedScope == equivalentScope));
+}
+
+void TestDirectMediaCursor::scopeEqualityIncludesParentSourceKey()
+{
+    const KiriView::DirectMediaScope firstScope {
+        QUrl(QStringLiteral("file:///media/01.png")),
+        QUrl(QStringLiteral("file:///media/")),
+        7,
+    };
+    const KiriView::DirectMediaScope otherParentScope {
+        QUrl(QStringLiteral("file:///media/01.png")),
+        QUrl(QStringLiteral("file:///other/")),
+        7,
+    };
+
+    QVERIFY(!(firstScope == otherParentScope));
 }
 
 void TestDirectMediaCursor::scopeMatchingAcceptsNormalizedConfirmation()

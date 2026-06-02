@@ -125,6 +125,7 @@ class TestImageRenderFrame : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void projectedFrameCarriesSurfaceIdentityRevisionAndPageRole();
     void visibleStaticTilesBecomeMissingDecodeRequests();
     void firstDisplayHintSuppressesUnneededRequests();
     void existingPendingAndFailedTilesAreFiltered();
@@ -134,6 +135,31 @@ private Q_SLOTS:
     void svgHighZoomFrameDoesNotDrawCachedLowBucketTile();
     void devicePixelRatioChangeRecomputesSvgBucket();
 };
+
+void TestImageRenderFrame::projectedFrameCarriesSurfaceIdentityRevisionAndPageRole()
+{
+    const KiriView::DisplayedImageSurface surface(rasterTileSurface(QSize(512, 512)));
+
+    const KiriView::ImageRenderFrame frame
+        = KiriView::projectImageRenderFrame(KiriView::ImageRenderFrameInput {
+            &surface,
+            42,
+            KiriView::ImageSurfaceDrawContext {
+                QRectF(0.0, 0.0, 512.0, 512.0),
+                QSizeF(512.0, 512.0),
+                QRectF(0.0, 0.0, 512.0, 512.0),
+                1.0,
+                0,
+            },
+            KiriView::DisplayedPageRole::Secondary,
+            {},
+        });
+
+    QVERIFY(frame.isRenderable());
+    QCOMPARE(frame.surfaceIdentity, surface.identity());
+    QCOMPARE(frame.surfaceRevision, quint64(42));
+    QCOMPARE(frame.pageRole, KiriView::DisplayedPageRole::Secondary);
+}
 
 void TestImageRenderFrame::visibleStaticTilesBecomeMissingDecodeRequests()
 {

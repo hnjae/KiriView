@@ -248,6 +248,7 @@ private Q_SLOTS:
     void lookupInvalidAndFailedSkipGenerationAndPublishFallbackResults();
     void generationFailurePublishesFallbackResult();
     void nonLocalDirectImageIsUnsupportedWithoutLookup();
+    void defaultDirectVideoIsUnsupportedWithoutAdapter();
     void staleLookupCompletionIsRejectedAndReleasesInsertedImage();
     void staleGenerationCompletionIsRejected();
     void independentRowsDoNotOverwriteGeneratedResults();
@@ -818,6 +819,32 @@ void TestActiveNavigationThumbnailRuntime::nonLocalDirectImageIsUnsupportedWitho
         1, imageUrl, Bucket::Normal, Priority::Visible, runtime.navigationGeneration()));
 
     QCOMPARE(provider.lookupCount(), std::size_t(0));
+    QCOMPARE(runtime.resultAt(0).status, Status::Unsupported);
+    QCOMPARE(runtime.resultAt(0).imageSource, QUrl());
+}
+
+void TestActiveNavigationThumbnailRuntime::defaultDirectVideoIsUnsupportedWithoutAdapter()
+{
+    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
+    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+
+    QObject owner;
+    ManualThumbnailLookupProvider lookupProvider;
+    ManualThumbnailGenerationProvider generationProvider;
+    KiriView::ActiveNavigationThumbnailRuntime runtime(
+        &owner, lookupProvider.provider(), {}, generationProvider.provider());
+    const QUrl videoUrl = localUrl(QStringLiteral("/media/clip.mp4"));
+    runtime.setRows({
+        thumbnailRow(1, videoUrl, QStringLiteral("clip.mp4"),
+            KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo, true),
+    });
+
+    QVERIFY(runtime.reportDemand(
+        1, videoUrl, Bucket::Normal, Priority::Visible, runtime.navigationGeneration()));
+
+    QCOMPARE(lookupProvider.lookupCount(), std::size_t(0));
+    QCOMPARE(generationProvider.generationCount(), std::size_t(0));
     QCOMPARE(runtime.resultAt(0).status, Status::Unsupported);
     QCOMPARE(runtime.resultAt(0).imageSource, QUrl());
 }

@@ -602,6 +602,10 @@ void TestMediaEntrySourceBackend::openedCollectionThumbnailPolicyAllowsCbzAndCb7
                  .kind,
         Kind::CacheableOpenedCollectionEntry);
     QCOMPARE(KiriView::openedCollectionThumbnailSourcePlan(
+                 cbzScope, cbzPage, KiriView::ImageDocumentPageKind::Image)
+                 .openedCollectionScope,
+        cbzScope);
+    QCOMPARE(KiriView::openedCollectionThumbnailSourcePlan(
                  cbzScope, cbzPage, KiriView::ImageDocumentPageKind::Video)
                  .kind,
         Kind::Unsupported);
