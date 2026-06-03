@@ -542,7 +542,7 @@ void TestImageDocumentRuntime::ordinaryDirectImagePageNavigationDoesNotUseSiblin
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    runtime->setZoomPercent(150.0);
+    runtime->requestManualZoomPercent(150.0);
     QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
@@ -580,7 +580,7 @@ void TestImageDocumentRuntime::archiveCollectionPageNavigationPreservesManualZoo
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), firstPageUrl);
-    runtime->setZoomPercent(150.0);
+    runtime->requestManualZoomPercent(150.0);
     QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
@@ -626,7 +626,7 @@ void TestImageDocumentRuntime::rotationChangesLogicalSizeAndPreservesManualZoom(
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    runtime->setZoomPercent(100.0);
+    runtime->requestManualZoomPercent(100.0);
     changes.clear();
 
     runtime->rotateClockwise();
@@ -964,7 +964,7 @@ void TestImageDocumentRuntime::siblingArchiveNavigationResetsManualZoom()
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), firstPageUrl);
-    runtime->setZoomPercent(150.0);
+    runtime->requestManualZoomPercent(150.0);
     QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
@@ -1059,12 +1059,12 @@ void TestImageDocumentRuntime::tiledStaticImageRefinesNewVisibleTilesAfterPan()
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    runtime->setZoomPercent(100.0);
-    runtime->setVisibleItemRect(QRectF(0.0, 0.0, 512.0, 512.0));
+    runtime->requestManualZoomPercent(100.0);
+    runtime->requestViewportContentPosition(QPointF(0.0, 0.0));
     QTRY_VERIFY(staticTileCount(*runtime) > std::size_t(0));
     const std::size_t initialTileCount = staticTileCount(*runtime);
 
-    runtime->setVisibleItemRect(QRectF(1536.0, 0.0, 512.0, 512.0));
+    runtime->requestViewportContentPosition(QPointF(1536.0, 0.0));
 
     QTRY_VERIFY(staticTileCount(*runtime) > initialTileCount);
 }
@@ -1091,11 +1091,11 @@ void TestImageDocumentRuntime::firstDisplayDefersTilesUntilZoomNeedsMoreDetail()
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    runtime->setVisibleItemRect(QRectF(0.0, 0.0, 512.0, 512.0));
+    runtime->requestViewportContentPosition(QPointF(0.0, 0.0));
     QTest::qWait(50);
     QCOMPARE(staticTileCount(*runtime), std::size_t(0));
 
-    runtime->setZoomPercent(100.0);
+    runtime->requestManualZoomPercent(100.0);
 
     QTRY_VERIFY(staticTileCount(*runtime) > std::size_t(0));
 }
@@ -1690,8 +1690,8 @@ void TestImageDocumentRuntime::twoPageModeUsesRightToLeftPageOrder()
     QTRY_VERIFY(runtime->secondaryPageVisible());
     QCOMPARE(runtime->currentPageNumber(), 2);
     QCOMPARE(runtime->currentLastPageNumber(), 3);
-    runtime->setZoomPercent(100.0);
-    runtime->setVisibleItemRect(QRectF(0.0, 0.0, 100.0, 200.0));
+    runtime->requestManualZoomPercent(100.0);
+    runtime->requestViewportContentPosition(QPointF(0.0, 0.0));
 
     QTRY_VERIFY(staticTileCount(*runtime, KiriView::DisplayedPageRole::Secondary) > 0);
     QCOMPARE(staticTileCount(*runtime, KiriView::DisplayedPageRole::Primary), std::size_t(0));

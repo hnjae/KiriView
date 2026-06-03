@@ -32,7 +32,8 @@ public:
 private:
     struct DecodeLifetime;
 
-    void finishTileDecode(quint64 generation, TileKey key, std::optional<DecodedTile> tile);
+    void finishTileDecode(quint64 generation, RenderSurfaceKey surfaceKey, TileKey key,
+        std::optional<DecodedTile> tile);
 
     QObject *m_context = nullptr;
     TileDecodedCallback m_tileDecoded;

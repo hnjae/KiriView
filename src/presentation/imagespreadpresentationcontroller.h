@@ -73,7 +73,6 @@ public:
     QSizeF primaryDisplaySize() const;
     QSizeF secondaryDisplaySize() const;
     QPointF viewportContentPosition() const;
-    void setViewportContentPosition(const QPointF &viewportContentPosition);
     ImageViewportCommand requestViewportContentPosition(const QPointF &viewportContentPosition);
     bool beginViewportCommandApplication(quint64 commandRevision);
     bool completeViewportCommandApplication(
@@ -92,9 +91,8 @@ public:
     bool viewportVerticallyPannable() const;
     bool viewportPannable() const;
     QRectF visibleItemRect() const;
-    void setVisibleItemRect(const QRectF &visibleItemRect);
     qreal zoomPercent() const;
-    void setZoomPercent(qreal zoomPercent);
+    void requestManualZoomPercent(qreal zoomPercent);
     ImageZoomMode zoomMode() const;
     qreal maximumManualZoomPercent() const;
     qreal clampedManualZoomPercent(qreal zoomPercent) const;

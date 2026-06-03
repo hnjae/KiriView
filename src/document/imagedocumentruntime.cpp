@@ -113,11 +113,6 @@ QPointF ImageDocumentRuntime::viewportContentPosition() const
     return controllers->spreadController().viewportContentPosition();
 }
 
-void ImageDocumentRuntime::setViewportContentPosition(const QPointF &viewportContentPosition)
-{
-    controllers->spreadController().setViewportContentPosition(viewportContentPosition);
-}
-
 quint64 ImageDocumentRuntime::requestViewportContentPosition(const QPointF &viewportContentPosition)
 {
     return controllers->spreadController()
@@ -205,11 +200,6 @@ QRectF ImageDocumentRuntime::visibleItemRect() const
     return controllers->spreadController().visibleItemRect();
 }
 
-void ImageDocumentRuntime::setVisibleItemRect(const QRectF &visibleItemRect)
-{
-    controllers->spreadController().setVisibleItemRect(visibleItemRect);
-}
-
 QSizeF ImageDocumentRuntime::displaySize() const
 {
     return controllers->spreadController().displaySize();
@@ -236,9 +226,9 @@ qreal ImageDocumentRuntime::zoomPercent() const
     return controllers->spreadController().zoomPercent();
 }
 
-void ImageDocumentRuntime::setZoomPercent(qreal zoomPercent)
+void ImageDocumentRuntime::requestManualZoomPercent(qreal zoomPercent)
 {
-    controllers->spreadController().setZoomPercent(zoomPercent);
+    controllers->spreadController().requestManualZoomPercent(zoomPercent);
 }
 
 ImageZoomMode ImageDocumentRuntime::zoomMode() const

@@ -88,6 +88,66 @@ DirectMediaScopeKey directMediaScopeKeyForUrls(
     };
 }
 
+ImageDocumentPageSourceKey imageDocumentPageSourceKey(
+    const QUrl &scopeUrl, const QUrl &pageUrl, const QString &pageKind)
+{
+    return ImageDocumentPageSourceKey {
+        sourceKeyForUrl(scopeUrl),
+        sourceKeyForUrl(pageUrl),
+        pageKind,
+    };
+}
+
+OpenedCollectionEntrySourceKey openedCollectionEntrySourceKey(
+    const QUrl &scopeUrl, const QUrl &entryUrl, const QString &collectionKind)
+{
+    return OpenedCollectionEntrySourceKey {
+        sourceKeyForUrl(scopeUrl),
+        sourceKeyForUrl(entryUrl),
+        collectionKind,
+    };
+}
+
+ThumbnailSourceKey thumbnailSourceKey(int rowNumber, const QUrl &url, const QString &label,
+    const QString &pageKind, const QString &sourceKind, quint64 navigationGeneration)
+{
+    const SourceKey urlKey = sourceKeyForUrl(url);
+    const QString rowIdentity = QStringLiteral("%1|%2|%3|%4|%5")
+                                    .arg(rowNumber)
+                                    .arg(sourceKind, urlKey.identity, label, pageKind);
+    return ThumbnailSourceKey {
+        rowNumber,
+        url,
+        label,
+        pageKind,
+        sourceKind,
+        rowIdentity,
+        navigationGeneration,
+    };
+}
+
+PredecodeCandidateKey predecodeCandidateKey(
+    const QUrl &payloadUrl, const QUrl &scopeUrl, quint64 generation)
+{
+    return PredecodeCandidateKey {
+        sourceKeyForUrl(payloadUrl),
+        sourceKeyForUrl(scopeUrl),
+        generation,
+    };
+}
+
+RenderSurfaceKey renderSurfaceKey(const QString &surfaceIdentity, quint64 surfaceGeneration,
+    quint64 renderContextGeneration, const QString &pageRole, const QString &renderSourceFamily)
+{
+    return RenderSurfaceKey {
+        surfaceIdentity,
+        surfaceGeneration,
+        renderContextGeneration,
+        pageRole,
+        renderSourceFamily,
+    };
+}
+
 bool sameSourceKey(const SourceKey &left, const SourceKey &right)
 {
     return left.valid && right.valid && left.identity == right.identity;
@@ -110,6 +170,39 @@ bool sameDirectMediaScopeKey(const DirectMediaScopeKey &left, const DirectMediaS
         && sameSourceKey(left.parent, right.parent);
 }
 
+bool sameImageDocumentPageSourceKey(
+    const ImageDocumentPageSourceKey &left, const ImageDocumentPageSourceKey &right)
+{
+    return sameSourceKey(left.scope, right.scope) && sameSourceKey(left.page, right.page)
+        && left.pageKind == right.pageKind;
+}
+
+bool sameOpenedCollectionEntrySourceKey(
+    const OpenedCollectionEntrySourceKey &left, const OpenedCollectionEntrySourceKey &right)
+{
+    return sameSourceKey(left.scope, right.scope) && sameSourceKey(left.entry, right.entry)
+        && left.collectionKind == right.collectionKind;
+}
+
+bool sameThumbnailSourceKey(const ThumbnailSourceKey &left, const ThumbnailSourceKey &right)
+{
+    return left.rowIdentity == right.rowIdentity;
+}
+
+bool samePredecodeCandidateKey(
+    const PredecodeCandidateKey &left, const PredecodeCandidateKey &right)
+{
+    return sameSourceKey(left.payload, right.payload) && sameSourceKey(left.scope, right.scope);
+}
+
+bool sameRenderSurfaceKey(const RenderSurfaceKey &left, const RenderSurfaceKey &right)
+{
+    return left.surfaceIdentity == right.surfaceIdentity
+        && left.surfaceGeneration == right.surfaceGeneration
+        && left.renderContextGeneration == right.renderContextGeneration
+        && left.pageRole == right.pageRole && left.renderSourceFamily == right.renderSourceFamily;
+}
+
 bool sameSourceUrlKey(const QUrl &left, const QUrl &right)
 {
     return sameSourceKey(sourceKeyForUrl(left), sourceKeyForUrl(right));
@@ -122,5 +215,39 @@ bool sameSourceUrlKeyOrEmpty(const QUrl &left, const QUrl &right)
     }
 
     return sameSourceUrlKey(left, right);
+}
+
+uint qHash(const SourceKey &key, uint seed) { return qHash(key.identity, seed); }
+
+uint qHash(const OrdinaryFileSourceKey &key, uint seed) { return qHash(key.file, seed); }
+
+uint qHash(const DirectMediaSourceKey &key, uint seed) { return qHash(key.media, seed); }
+
+uint qHash(const DirectMediaScopeKey &key, uint seed)
+{
+    return qHashMulti(seed, key.current, key.parent);
+}
+
+uint qHash(const ImageDocumentPageSourceKey &key, uint seed)
+{
+    return qHashMulti(seed, key.scope, key.page, key.pageKind);
+}
+
+uint qHash(const OpenedCollectionEntrySourceKey &key, uint seed)
+{
+    return qHashMulti(seed, key.scope, key.entry, key.collectionKind);
+}
+
+uint qHash(const ThumbnailSourceKey &key, uint seed) { return qHash(key.rowIdentity, seed); }
+
+uint qHash(const PredecodeCandidateKey &key, uint seed)
+{
+    return qHashMulti(seed, key.payload, key.scope);
+}
+
+uint qHash(const RenderSurfaceKey &key, uint seed)
+{
+    return qHashMulti(seed, key.surfaceIdentity, key.surfaceGeneration, key.renderContextGeneration,
+        key.pageRole, key.renderSourceFamily);
 }
 }

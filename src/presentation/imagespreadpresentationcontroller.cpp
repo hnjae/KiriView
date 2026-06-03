@@ -124,12 +124,6 @@ QPointF ImageSpreadPresentationController::viewportContentPosition() const
     return viewportFrame().contentPosition;
 }
 
-void ImageSpreadPresentationController::setViewportContentPosition(
-    const QPointF &viewportContentPosition)
-{
-    refreshViewportFrameForContentPosition(viewportContentPosition);
-}
-
 ImageViewportCommand ImageSpreadPresentationController::requestViewportContentPosition(
     const QPointF &viewportContentPosition)
 {
@@ -245,20 +239,12 @@ QRectF ImageSpreadPresentationController::visibleItemRect() const
     return viewportFrame().visibleItemRect;
 }
 
-void ImageSpreadPresentationController::setVisibleItemRect(const QRectF &visibleItemRect)
-{
-    refreshViewportFrameForContentPosition(
-        QPointF(visibleItemRect.x() + viewportFrame().imageRect.x(),
-            visibleItemRect.y() + viewportFrame().imageRect.y()),
-        true);
-}
-
 qreal ImageSpreadPresentationController::zoomPercent() const
 {
     return m_activePresentation->zoomPercent();
 }
 
-void ImageSpreadPresentationController::setZoomPercent(qreal zoomPercent)
+void ImageSpreadPresentationController::requestManualZoomPercent(qreal zoomPercent)
 {
     applyActivePresentationChanges(updateZoomState(), false);
     applyActivePresentationChanges(m_activePresentation->setZoomPercent(zoomPercent));

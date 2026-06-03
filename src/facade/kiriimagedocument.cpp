@@ -11,6 +11,7 @@
 
 #include <cmath>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace {
@@ -48,6 +49,25 @@ KiriImageDocument::ZoomMode fromImageZoomMode(ImageZoomMode zoomMode)
     }
 
     return KiriImageDocument::ZoomMode::Fit;
+}
+
+QString viewportRevisionToken(quint64 revision) { return QString::number(revision); }
+
+std::optional<quint64> viewportRevisionFromToken(const QString &token)
+{
+    bool ok = false;
+    const quint64 revision = token.toULongLong(&ok);
+    if (!ok) {
+        return std::nullopt;
+    }
+
+    return revision;
+}
+
+bool revisionIsNewerThanToken(quint64 revision, const QString &token)
+{
+    const std::optional<quint64> tokenRevision = viewportRevisionFromToken(token);
+    return !tokenRevision.has_value() || revision > *tokenRevision;
 }
 
 KiriView::FileDeletionMode toFileDeletionMode(KiriImageDocument::DeletionMode deletionMode)
@@ -251,14 +271,14 @@ QPointF KiriImageDocument::viewportContentPosition() const
     return m_runtime->viewportContentPosition();
 }
 
-void KiriImageDocument::setViewportContentPosition(const QPointF &viewportContentPosition)
-{
-    m_runtime->setViewportContentPosition(viewportContentPosition);
-}
-
 quint64 KiriImageDocument::viewportCommandRevision() const
 {
     return m_runtime->viewportCommandRevision();
+}
+
+QString KiriImageDocument::viewportCommandRevisionToken() const
+{
+    return viewportRevisionToken(viewportCommandRevision());
 }
 
 quint64 KiriImageDocument::viewportAppliedCommandRevision() const
@@ -269,6 +289,11 @@ quint64 KiriImageDocument::viewportAppliedCommandRevision() const
 quint64 KiriImageDocument::viewportObservationRevision() const
 {
     return m_runtime->viewportObservationRevision();
+}
+
+QString KiriImageDocument::viewportObservationRevisionToken() const
+{
+    return viewportRevisionToken(viewportObservationRevision());
 }
 
 int KiriImageDocument::viewportCommandStatus() const
@@ -299,11 +324,6 @@ bool KiriImageDocument::viewportPannable() const { return m_runtime->viewportPan
 
 QRectF KiriImageDocument::visibleItemRect() const { return m_runtime->visibleItemRect(); }
 
-void KiriImageDocument::setVisibleItemRect(const QRectF &visibleItemRect)
-{
-    m_runtime->setVisibleItemRect(visibleItemRect);
-}
-
 QSizeF KiriImageDocument::displaySize() const { return m_runtime->displaySize(); }
 
 QSizeF KiriImageDocument::primaryDisplaySize() const { return m_runtime->primaryDisplaySize(); }
@@ -313,11 +333,6 @@ QSizeF KiriImageDocument::secondaryDisplaySize() const { return m_runtime->secon
 bool KiriImageDocument::zoomPercentKnown() const { return m_runtime->zoomPercentKnown(); }
 
 double KiriImageDocument::zoomPercent() const { return m_runtime->zoomPercent(); }
-
-void KiriImageDocument::setZoomPercent(double zoomPercent)
-{
-    m_runtime->setZoomPercent(zoomPercent);
-}
 
 KiriImageDocument::ZoomMode KiriImageDocument::zoomMode() const
 {
@@ -636,14 +651,41 @@ void KiriImageDocument::requestToggleRightToLeftReading()
 
 void KiriImageDocument::updateRenderContext() { m_runtime->updateRenderContext(); }
 
-quint64 KiriImageDocument::requestViewportContentPosition(const QPointF &viewportContentPosition)
+bool KiriImageDocument::requestViewportContentPosition(const QPointF &viewportContentPosition)
 {
-    return m_runtime->requestViewportContentPosition(viewportContentPosition);
+    return m_runtime->requestViewportContentPosition(viewportContentPosition) > 0;
+}
+
+bool KiriImageDocument::viewportCommandRevisionNewerThan(const QString &revisionToken) const
+{
+    return revisionIsNewerThanToken(viewportCommandRevision(), revisionToken);
+}
+
+bool KiriImageDocument::viewportProjectionNewerThan(
+    const QString &commandRevisionToken, const QString &observationRevisionToken) const
+{
+    const std::optional<quint64> commandRevision = viewportRevisionFromToken(commandRevisionToken);
+    const std::optional<quint64> observationRevision
+        = viewportRevisionFromToken(observationRevisionToken);
+    if (!commandRevision.has_value() || !observationRevision.has_value()) {
+        return true;
+    }
+
+    const quint64 currentCommandRevision = viewportCommandRevision();
+    return currentCommandRevision > *commandRevision
+        || (currentCommandRevision == *commandRevision
+            && viewportObservationRevision() > *observationRevision);
 }
 
 bool KiriImageDocument::beginViewportCommandApplication(quint64 commandRevision)
 {
     return m_runtime->beginViewportCommandApplication(commandRevision);
+}
+
+bool KiriImageDocument::beginViewportCommandApplication(const QString &commandRevisionToken)
+{
+    const std::optional<quint64> commandRevision = viewportRevisionFromToken(commandRevisionToken);
+    return commandRevision.has_value() && beginViewportCommandApplication(*commandRevision);
 }
 
 bool KiriImageDocument::completeViewportCommandApplication(
@@ -652,10 +694,26 @@ bool KiriImageDocument::completeViewportCommandApplication(
     return m_runtime->completeViewportCommandApplication(commandRevision, actualContentPosition);
 }
 
+bool KiriImageDocument::completeViewportCommandApplication(
+    const QString &commandRevisionToken, const QPointF &actualContentPosition)
+{
+    const std::optional<quint64> commandRevision = viewportRevisionFromToken(commandRevisionToken);
+    return commandRevision.has_value()
+        && completeViewportCommandApplication(*commandRevision, actualContentPosition);
+}
+
 bool KiriImageDocument::acknowledgeViewportCommand(
     quint64 commandRevision, const QPointF &actualContentPosition)
 {
     return m_runtime->acknowledgeViewportCommand(commandRevision, actualContentPosition);
+}
+
+bool KiriImageDocument::acknowledgeViewportCommand(
+    const QString &commandRevisionToken, const QPointF &actualContentPosition)
+{
+    const std::optional<quint64> commandRevision = viewportRevisionFromToken(commandRevisionToken);
+    return commandRevision.has_value()
+        && acknowledgeViewportCommand(*commandRevision, actualContentPosition);
 }
 
 bool KiriImageDocument::observeViewportContentPosition(
@@ -684,7 +742,7 @@ bool KiriImageDocument::requestViewportInteractionContentPosition(const QPointF 
 
     const QPointF previousContentPosition = viewportContentPosition();
     const quint64 previousCommandRevision = viewportCommandRevision();
-    const quint64 commandRevision = requestViewportContentPosition(contentPosition);
+    const quint64 commandRevision = m_runtime->requestViewportContentPosition(contentPosition);
     return previousContentPosition != viewportContentPosition()
         || commandRevision > previousCommandRevision;
 }
@@ -704,7 +762,7 @@ bool KiriImageDocument::requestAnchoredManualZoom(
     const QPointF nextContentPosition
         = m_viewportInteraction.zoomContentPosition(viewportInteractionSnapshot(),
             viewportContentPosition(), viewportAnchorPoint, nextZoomPercent);
-    setZoomPercent(nextZoomPercent);
+    m_runtime->requestManualZoomPercent(nextZoomPercent);
     requestViewportInteractionContentPosition(nextContentPosition);
     return true;
 }

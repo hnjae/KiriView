@@ -55,11 +55,9 @@ class FakeKiriImageDocument : public QObject
         QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
     Q_PROPERTY(QPointF viewportContentPosition READ viewportContentPosition WRITE
             setViewportContentPosition NOTIFY viewportFrameChanged)
-    Q_PROPERTY(
-        quint64 viewportCommandRevision READ viewportCommandRevision NOTIFY viewportFrameChanged)
-    Q_PROPERTY(quint64 viewportAppliedCommandRevision READ viewportAppliedCommandRevision NOTIFY
+    Q_PROPERTY(QString viewportCommandRevisionToken READ viewportCommandRevisionToken NOTIFY
             viewportFrameChanged)
-    Q_PROPERTY(quint64 viewportObservationRevision READ viewportObservationRevision NOTIFY
+    Q_PROPERTY(QString viewportObservationRevisionToken READ viewportObservationRevisionToken NOTIFY
             viewportFrameChanged)
     Q_PROPERTY(int viewportCommandStatus READ viewportCommandStatus NOTIFY viewportFrameChanged)
     Q_PROPERTY(QSizeF viewportContentSize READ viewportContentSize NOTIFY viewportFrameChanged)
@@ -164,9 +162,14 @@ public:
         }
     }
 
-    quint64 viewportCommandRevision() const { return m_viewportCommandRevision; }
-    quint64 viewportAppliedCommandRevision() const { return m_viewportAppliedCommandRevision; }
-    quint64 viewportObservationRevision() const { return m_viewportObservationRevision; }
+    QString viewportCommandRevisionToken() const
+    {
+        return revisionToken(m_viewportCommandRevision);
+    }
+    QString viewportObservationRevisionToken() const
+    {
+        return revisionToken(m_viewportObservationRevision);
+    }
     int viewportCommandStatus() const { return static_cast<int>(m_viewportCommandStatus); }
     QSizeF viewportContentSize() const { return viewportFrame().contentSize; }
     QRectF viewportImageRect() const { return viewportFrame().imageRect; }
@@ -369,57 +372,52 @@ public:
             KiriView::imageViewportInitialZScanPosition(m_viewportSize, viewportImageRect()));
     }
 
-    Q_INVOKABLE quint64 requestViewportContentPosition(const QPointF &viewportContentPosition)
+    Q_INVOKABLE bool requestViewportContentPosition(const QPointF &viewportContentPosition)
     {
-        const KiriView::ImageViewportFrame previousFrame = viewportFrame();
-        m_viewportContentPosition = viewportContentPosition;
-        const KiriView::ImageViewportFrame nextFrame = viewportFrame();
-        m_viewportContentPosition = nextFrame.contentPosition;
-        ++m_viewportCommandRevision;
-        m_viewportCommandStatus = ViewportCommandStatus::Pending;
-        Q_UNUSED(previousFrame);
-        Q_EMIT viewportFrameChanged();
-        return m_viewportCommandRevision;
+        return issueViewportContentPositionCommand(viewportContentPosition) > 0;
     }
 
-    Q_INVOKABLE bool beginViewportCommandApplication(quint64 commandRevision)
+    Q_INVOKABLE bool viewportCommandRevisionNewerThan(const QString &revisionToken) const
     {
-        if (!acceptCommandRevision(commandRevision)) {
-            return false;
+        return revisionIsNewerThanToken(m_viewportCommandRevision, revisionToken);
+    }
+
+    Q_INVOKABLE bool viewportProjectionNewerThan(
+        const QString &commandRevisionToken, const QString &observationRevisionToken) const
+    {
+        quint64 commandRevision = 0;
+        quint64 observationRevision = 0;
+        if (!revisionFromToken(commandRevisionToken, &commandRevision)
+            || !revisionFromToken(observationRevisionToken, &observationRevision)) {
+            return true;
         }
 
-        m_viewportCommandStatus = ViewportCommandStatus::Applying;
-        Q_EMIT viewportFrameChanged();
-        return true;
+        return m_viewportCommandRevision > commandRevision
+            || (m_viewportCommandRevision == commandRevision
+                && m_viewportObservationRevision > observationRevision);
+    }
+
+    Q_INVOKABLE bool beginViewportCommandApplication(const QString &commandRevisionToken)
+    {
+        quint64 commandRevision = 0;
+        return revisionFromToken(commandRevisionToken, &commandRevision)
+            && beginViewportCommandApplication(commandRevision);
     }
 
     Q_INVOKABLE bool completeViewportCommandApplication(
-        quint64 commandRevision, const QPointF &actualContentPosition)
+        const QString &commandRevisionToken, const QPointF &actualContentPosition)
     {
-        if (!acceptCommandRevision(commandRevision)) {
-            return false;
-        }
-
-        m_viewportAppliedCommandRevision = commandRevision;
-        m_viewportCommandStatus = ViewportCommandStatus::Applied;
-        setViewportContentPosition(actualContentPosition);
-        Q_EMIT viewportFrameChanged();
-        return true;
+        quint64 commandRevision = 0;
+        return revisionFromToken(commandRevisionToken, &commandRevision)
+            && completeViewportCommandApplication(commandRevision, actualContentPosition);
     }
 
     Q_INVOKABLE bool acknowledgeViewportCommand(
-        quint64 commandRevision, const QPointF &actualContentPosition)
+        const QString &commandRevisionToken, const QPointF &actualContentPosition)
     {
-        if (!acceptCommandRevision(commandRevision)) {
-            return false;
-        }
-
-        m_viewportAppliedCommandRevision = commandRevision;
-        ++m_viewportObservationRevision;
-        m_viewportCommandStatus = ViewportCommandStatus::Acknowledged;
-        setViewportContentPosition(actualContentPosition);
-        Q_EMIT viewportFrameChanged();
-        return true;
+        quint64 commandRevision = 0;
+        return revisionFromToken(commandRevisionToken, &commandRevision)
+            && acknowledgeViewportCommand(commandRevision, actualContentPosition);
     }
 
     Q_INVOKABLE bool observeViewportContentPosition(
@@ -449,6 +447,78 @@ private:
         return std::isfinite(point.x()) && std::isfinite(point.y());
     }
 
+    static QString revisionToken(quint64 revision) { return QString::number(revision); }
+
+    static bool revisionFromToken(const QString &revisionToken, quint64 *revision)
+    {
+        bool ok = false;
+        const quint64 parsedRevision = revisionToken.toULongLong(&ok);
+        if (!ok) {
+            return false;
+        }
+
+        *revision = parsedRevision;
+        return true;
+    }
+
+    static bool revisionIsNewerThanToken(quint64 revision, const QString &revisionToken)
+    {
+        quint64 tokenRevision = 0;
+        return !revisionFromToken(revisionToken, &tokenRevision) || revision > tokenRevision;
+    }
+
+    quint64 issueViewportContentPositionCommand(const QPointF &viewportContentPosition)
+    {
+        const KiriView::ImageViewportFrame previousFrame = viewportFrame();
+        m_viewportContentPosition = viewportContentPosition;
+        const KiriView::ImageViewportFrame nextFrame = viewportFrame();
+        m_viewportContentPosition = nextFrame.contentPosition;
+        ++m_viewportCommandRevision;
+        m_viewportCommandStatus = ViewportCommandStatus::Pending;
+        Q_UNUSED(previousFrame);
+        Q_EMIT viewportFrameChanged();
+        return m_viewportCommandRevision;
+    }
+
+    bool beginViewportCommandApplication(quint64 commandRevision)
+    {
+        if (!acceptCommandRevision(commandRevision)) {
+            return false;
+        }
+
+        m_viewportCommandStatus = ViewportCommandStatus::Applying;
+        Q_EMIT viewportFrameChanged();
+        return true;
+    }
+
+    bool completeViewportCommandApplication(
+        quint64 commandRevision, const QPointF &actualContentPosition)
+    {
+        if (!acceptCommandRevision(commandRevision)) {
+            return false;
+        }
+
+        m_viewportAppliedCommandRevision = commandRevision;
+        m_viewportCommandStatus = ViewportCommandStatus::Applied;
+        setViewportContentPosition(actualContentPosition);
+        Q_EMIT viewportFrameChanged();
+        return true;
+    }
+
+    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF &actualContentPosition)
+    {
+        if (!acceptCommandRevision(commandRevision)) {
+            return false;
+        }
+
+        m_viewportAppliedCommandRevision = commandRevision;
+        ++m_viewportObservationRevision;
+        m_viewportCommandStatus = ViewportCommandStatus::Acknowledged;
+        setViewportContentPosition(actualContentPosition);
+        Q_EMIT viewportFrameChanged();
+        return true;
+    }
+
     QPointF nearestImageViewportPoint(const QPointF &viewportAnchorPoint) const
     {
         return KiriView::imageViewportNearestImagePoint(
@@ -463,7 +533,7 @@ private:
 
         const QPointF previousContentPosition = viewportContentPosition();
         const quint64 previousCommandRevision = m_viewportCommandRevision;
-        const quint64 commandRevision = requestViewportContentPosition(contentPosition);
+        const quint64 commandRevision = issueViewportContentPositionCommand(contentPosition);
         return previousContentPosition != viewportContentPosition()
             || commandRevision > previousCommandRevision;
     }

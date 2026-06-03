@@ -56,11 +56,9 @@ class KiriImageDocument : public QObject
         QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
     Q_PROPERTY(
         QPointF viewportContentPosition READ viewportContentPosition NOTIFY viewportFrameChanged)
-    Q_PROPERTY(
-        quint64 viewportCommandRevision READ viewportCommandRevision NOTIFY viewportFrameChanged)
-    Q_PROPERTY(quint64 viewportAppliedCommandRevision READ viewportAppliedCommandRevision NOTIFY
+    Q_PROPERTY(QString viewportCommandRevisionToken READ viewportCommandRevisionToken NOTIFY
             viewportFrameChanged)
-    Q_PROPERTY(quint64 viewportObservationRevision READ viewportObservationRevision NOTIFY
+    Q_PROPERTY(QString viewportObservationRevisionToken READ viewportObservationRevisionToken NOTIFY
             viewportFrameChanged)
     Q_PROPERTY(int viewportCommandStatus READ viewportCommandStatus NOTIFY viewportFrameChanged)
     Q_PROPERTY(ViewportObservationOrigin viewportObservationOrigin READ viewportObservationOrigin
@@ -183,8 +181,10 @@ public:
     void setViewportSize(const QSizeF &viewportSize);
     QPointF viewportContentPosition() const;
     quint64 viewportCommandRevision() const;
+    QString viewportCommandRevisionToken() const;
     quint64 viewportAppliedCommandRevision() const;
     quint64 viewportObservationRevision() const;
+    QString viewportObservationRevisionToken() const;
     int viewportCommandStatus() const;
     ViewportObservationOrigin viewportObservationOrigin() const;
     QSizeF viewportContentSize() const;
@@ -258,12 +258,19 @@ public:
     Q_INVOKABLE void requestToggleTwoPageMode();
     Q_INVOKABLE void requestToggleRightToLeftReading();
     Q_INVOKABLE void updateRenderContext();
-    Q_INVOKABLE quint64 requestViewportContentPosition(const QPointF &viewportContentPosition);
-    Q_INVOKABLE bool beginViewportCommandApplication(quint64 commandRevision);
+    Q_INVOKABLE bool requestViewportContentPosition(const QPointF &viewportContentPosition);
+    Q_INVOKABLE bool viewportCommandRevisionNewerThan(const QString &revisionToken) const;
+    Q_INVOKABLE bool viewportProjectionNewerThan(
+        const QString &commandRevisionToken, const QString &observationRevisionToken) const;
+    bool beginViewportCommandApplication(quint64 commandRevision);
+    Q_INVOKABLE bool beginViewportCommandApplication(const QString &commandRevisionToken);
+    bool completeViewportCommandApplication(
+        quint64 commandRevision, const QPointF &actualContentPosition);
     Q_INVOKABLE bool completeViewportCommandApplication(
-        quint64 commandRevision, const QPointF &actualContentPosition);
+        const QString &commandRevisionToken, const QPointF &actualContentPosition);
+    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF &actualContentPosition);
     Q_INVOKABLE bool acknowledgeViewportCommand(
-        quint64 commandRevision, const QPointF &actualContentPosition);
+        const QString &commandRevisionToken, const QPointF &actualContentPosition);
     Q_INVOKABLE bool observeViewportContentPosition(
         const QPointF &contentPosition, KiriImageDocument::ViewportObservationOrigin origin);
 
@@ -302,9 +309,6 @@ private:
     friend class KiriDocumentSession;
 
     void setSourceUrl(const QUrl &sourceUrl);
-    void setViewportContentPosition(const QPointF &viewportContentPosition);
-    void setVisibleItemRect(const QRectF &visibleItemRect);
-    void setZoomPercent(double zoomPercent);
     void setTwoPageModeEnabled(bool enabled);
     void setRightToLeftReadingEnabled(bool enabled);
     void handleDocumentChanges(const std::vector<KiriView::ImageDocumentChange> &changes);

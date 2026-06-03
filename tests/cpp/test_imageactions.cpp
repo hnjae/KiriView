@@ -137,6 +137,8 @@ Item {
     property bool nextProxyEnabled: imageActions.nextImageAction.enabled
     property bool firstProxyEnabled: imageActions.firstImageAction.enabled
     property bool lastProxyEnabled: imageActions.lastImageAction.enabled
+    property bool previousProxyVisible: imageActions.previousImageAction.visible
+    property bool nextProxyVisible: imageActions.nextImageAction.visible
     property bool previousQActionEnabled: application.actionForId(KiriViewApplication.GoPreviousImageAction).enabled
     property bool nextQActionEnabled: application.actionForId(KiriViewApplication.GoNextImageAction).enabled
     property bool firstQActionEnabled: application.actionForId(KiriViewApplication.GoFirstImageAction).enabled
@@ -262,6 +264,8 @@ void TestImageActions::previousNextAvailabilityFollowsSessionActiveNavigation()
     QVERIFY(!emptyFixture.root->property("nextQActionEnabled").toBool());
     QVERIFY(!emptyFixture.root->property("previousProxyEnabled").toBool());
     QVERIFY(!emptyFixture.root->property("nextProxyEnabled").toBool());
+    QVERIFY(!emptyFixture.root->property("previousProxyVisible").toBool());
+    QVERIFY(!emptyFixture.root->property("nextProxyVisible").toBool());
 
     QString errorString;
     QString archivePath;
@@ -273,8 +277,10 @@ void TestImageActions::previousNextAvailabilityFollowsSessionActiveNavigation()
     QTRY_VERIFY(archiveFixture.documentSession->activeNavigationKnown());
     QVERIFY(archiveFixture.root->property("previousQActionEnabled").toBool());
     QVERIFY(archiveFixture.root->property("nextQActionEnabled").toBool());
-    QVERIFY(!archiveFixture.root->property("previousProxyEnabled").toBool());
+    QVERIFY(archiveFixture.root->property("previousProxyEnabled").toBool());
     QVERIFY(archiveFixture.root->property("nextProxyEnabled").toBool());
+    QVERIFY(!archiveFixture.root->property("previousProxyVisible").toBool());
+    QVERIFY(archiveFixture.root->property("nextProxyVisible").toBool());
 
     archiveFixture.documentSession->openActiveNavigationAtNumber(2);
     QTRY_COMPARE(archiveFixture.documentSession->activeNavigationCurrentNumber(), 2);
@@ -282,6 +288,8 @@ void TestImageActions::previousNextAvailabilityFollowsSessionActiveNavigation()
     QVERIFY(archiveFixture.root->property("nextQActionEnabled").toBool());
     QVERIFY(archiveFixture.root->property("previousProxyEnabled").toBool());
     QVERIFY(archiveFixture.root->property("nextProxyEnabled").toBool());
+    QVERIFY(archiveFixture.root->property("previousProxyVisible").toBool());
+    QVERIFY(archiveFixture.root->property("nextProxyVisible").toBool());
 }
 
 void TestImageActions::firstLastDispatchUsesSessionActiveNavigation()

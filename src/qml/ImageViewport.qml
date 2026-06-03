@@ -12,8 +12,8 @@ MediaViewportDelegate {
     property alias imageView: primaryImageView
     property alias flickable: imageFlickable
     property bool applyingViewportProjection: false
-    property int appliedViewportCommandRevision: 0
-    property int appliedViewportObservationRevision: 0
+    property string appliedViewportCommandRevisionToken: "0"
+    property string appliedViewportObservationRevisionToken: "0"
     readonly property var imageDocument: root.documentSession.imageDocument
     property bool imageReady: root.presentationActive && root.documentSession.activeImageReady
     readonly property int minimumManualZoomPercent: root.imageDocument.minimumManualZoomPercent
@@ -91,9 +91,10 @@ MediaViewportDelegate {
         }
 
         const previousContentPosition = currentContentPosition();
-        const commandRevision = root.imageDocument.requestViewportContentPosition(contentPosition);
+        root.imageDocument.requestViewportContentPosition(contentPosition);
+        const commandAdvanced = root.imageDocument.viewportCommandRevisionNewerThan(root.appliedViewportCommandRevisionToken);
         root.applyViewportProjection();
-        return previousContentPosition.x !== imageFlickable.contentX || previousContentPosition.y !== imageFlickable.contentY || commandRevision > root.appliedViewportCommandRevision;
+        return previousContentPosition.x !== imageFlickable.contentX || previousContentPosition.y !== imageFlickable.contentY || commandAdvanced;
     }
 
     function applyViewportProjection() {
@@ -101,29 +102,25 @@ MediaViewportDelegate {
             return;
         }
 
-        const commandRevision = root.imageDocument.viewportCommandRevision;
-        const observationRevision = root.imageDocument.viewportObservationRevision;
+        const commandRevisionToken = root.imageDocument.viewportCommandRevisionToken;
         if (root.imageDocument.viewportCommandStatus === KiriImageDocument.Rejected) {
             return;
         }
-        if (commandRevision < root.appliedViewportCommandRevision) {
-            return;
-        }
-        if (commandRevision === root.appliedViewportCommandRevision && observationRevision <= root.appliedViewportObservationRevision) {
+        if (!root.imageDocument.viewportProjectionNewerThan(root.appliedViewportCommandRevisionToken, root.appliedViewportObservationRevisionToken)) {
             return;
         }
 
         root.applyingViewportProjection = true;
-        if (commandRevision > root.appliedViewportCommandRevision) {
-            root.imageDocument.beginViewportCommandApplication(commandRevision);
+        if (root.imageDocument.viewportCommandRevisionNewerThan(root.appliedViewportCommandRevisionToken)) {
+            root.imageDocument.beginViewportCommandApplication(commandRevisionToken);
         }
         applyPhysicalContentPosition(root.imageDocument.viewportContentPosition);
-        if (commandRevision > root.appliedViewportCommandRevision) {
-            root.imageDocument.completeViewportCommandApplication(commandRevision, currentContentPosition());
-            root.appliedViewportCommandRevision = commandRevision;
-            root.imageDocument.acknowledgeViewportCommand(commandRevision, currentContentPosition());
+        if (root.imageDocument.viewportCommandRevisionNewerThan(root.appliedViewportCommandRevisionToken)) {
+            root.imageDocument.completeViewportCommandApplication(commandRevisionToken, currentContentPosition());
+            root.appliedViewportCommandRevisionToken = commandRevisionToken;
+            root.imageDocument.acknowledgeViewportCommand(commandRevisionToken, currentContentPosition());
         }
-        root.appliedViewportObservationRevision = Math.max(root.appliedViewportObservationRevision, observationRevision);
+        root.appliedViewportObservationRevisionToken = root.imageDocument.viewportObservationRevisionToken;
         root.applyingViewportProjection = false;
     }
 

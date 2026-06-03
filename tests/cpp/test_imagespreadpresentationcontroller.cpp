@@ -160,8 +160,8 @@ void TestImageSpreadPresentationController::spreadVisibleRectOwnsPageVisibleRect
     fixture.controller.refreshSecondaryPage();
     QVERIFY(fixture.controller.secondaryPageVisible());
 
-    fixture.controller.setZoomPercent(100.0);
-    fixture.controller.setVisibleItemRect(QRectF(800.0, 0.0, 800.0, 600.0));
+    fixture.controller.requestManualZoomPercent(100.0);
+    fixture.controller.requestViewportContentPosition(QPointF(800.0, 0.0));
 
     QCOMPARE(fixture.controller.visibleItemRect(), QRectF(800.0, 0.0, 800.0, 600.0));
     QVERIFY(fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary)
@@ -190,7 +190,7 @@ void TestImageSpreadPresentationController::spreadZoomDoesNotMutatePageZoomOwner
     fixture.controller.refreshSecondaryPage();
     QVERIFY(fixture.controller.secondaryPageVisible());
 
-    fixture.controller.setZoomPercent(125.0);
+    fixture.controller.requestManualZoomPercent(125.0);
 
     QCOMPARE(fixture.controller.zoomMode(), KiriView::ImageZoomMode::Manual);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.controller.zoomPercent(), 125.0));
@@ -208,7 +208,7 @@ void TestImageSpreadPresentationController::
     fixture.controller.refreshSecondaryPage();
     QVERIFY(fixture.controller.secondaryPageVisible());
 
-    fixture.controller.setZoomPercent(150.0);
+    fixture.controller.requestManualZoomPercent(150.0);
     fixture.controller.setTwoPageModeEnabled(false);
 
     QVERIFY(!fixture.controller.twoPageModeActive());

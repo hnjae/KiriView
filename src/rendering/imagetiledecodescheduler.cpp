@@ -40,6 +40,7 @@ void ImageTileDecodeScheduler::schedule(
         // Tile workers can outlive this non-QObject scheduler while the Qt context survives.
         const std::weak_ptr<DecodeLifetime> lifetime = m_decodeLifetime;
         const TileKey key = request.key;
+        const RenderSurfaceKey surfaceKey = plan.surfaceKey;
         std::shared_ptr<ImageTileSource> source = plan.source;
         runAsyncWorker(
             m_context,
@@ -48,21 +49,21 @@ void ImageTileDecodeScheduler::schedule(
                 std::optional<DecodedTile> tile = source->decodeTile(request, &errorString);
                 return tile;
             },
-            [this, lifetime, generation = plan.generation, key](
+            [this, lifetime, generation = plan.generation, surfaceKey, key](
                 std::optional<DecodedTile> tile) mutable {
                 if (lifetime.expired()) {
                     return;
                 }
 
-                finishTileDecode(generation, key, std::move(tile));
+                finishTileDecode(generation, surfaceKey, key, std::move(tile));
             });
     }
 }
 
 void ImageTileDecodeScheduler::finishTileDecode(
-    quint64 generation, TileKey key, std::optional<DecodedTile> tile)
+    quint64 generation, RenderSurfaceKey surfaceKey, TileKey key, std::optional<DecodedTile> tile)
 {
-    if (!m_runtime.acceptFinishedTileDecode(generation, key, tile.has_value())) {
+    if (!m_runtime.acceptFinishedTileDecode(generation, surfaceKey, key, tile.has_value())) {
         return;
     }
 

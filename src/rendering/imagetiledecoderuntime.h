@@ -20,6 +20,7 @@ class ImageTileSource;
 
 struct ImageTileDecodeRuntimePlan {
     quint64 generation = 0;
+    RenderSurfaceKey surfaceKey;
     std::shared_ptr<ImageTileSource> source;
     std::vector<TileRequest> requests;
 
@@ -34,7 +35,8 @@ public:
         const std::shared_ptr<DisplayedImageSurface> &displayedSurface, const QSizeF &displaySize,
         const QRectF &visibleItemRect, const ImageDocumentRenderContext &context,
         int rotationDegrees = 0);
-    bool acceptFinishedTileDecode(quint64 generation, const TileKey &key, bool decoded);
+    bool acceptFinishedTileDecode(
+        quint64 generation, const RenderSurfaceKey &surfaceKey, const TileKey &key, bool decoded);
 
 private:
     ImageTileDecodeState m_decodeState;
