@@ -36,7 +36,7 @@ Opening a video after an image must not route the video through `KiriImageDocume
 
 Opening an image after a video restores image behavior.
 
-The top-level document session owns the active document kind for direct image and video routing. Its public source URL follows the same user-facing identity as the active image or video document: assigning it starts an open request, successful opens expose the original direct media URL, replacement failures keep the previously displayed direct URL, initial failures may keep the failed request as error context, and resolver-local playback URLs are never exposed as the session source.
+The top-level document session owns the active document kind for direct image and video routing. Its public source URL follows the same user-facing identity as the active image or video document: assigning it starts an open request, successful opens expose the original direct media URL, direct image replacement failures keep the failed target as the session source and error context, direct video source-load failures keep the original direct media URL as the public source and error context, and resolver-local playback URLs are never exposed as the session source.
 
 For direct image and direct video URLs in direct media scopes, the document session owns the active navigation projection used by toolbar readouts, shared action availability, and navigation dispatch. Asynchronous sibling discovery uses the requested session-owned direct media URL as the cursor for the eventual readout, not an image-document displayed URL.
 

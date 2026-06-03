@@ -10,15 +10,15 @@ If no media item is selected, the empty state says that no file is selected and 
 
 If the selected image or video cannot be opened while no media item is displayed, the error state explains that the selected file could not be opened, shows the underlying error when available, and offers Open.
 
-If a media item is already displayed, that item remains visible until the newly selected image or video is ready to replace it, with a compact loading indicator shown at the top-left of the viewing area.
+If a media item is already displayed and users select a different image, the new selection owns the image viewport immediately. If the new image is already available from predecode, it replaces the view immediately; otherwise KiriView clears the previous image presentation and shows the normal loading state until the new image is ready.
+
+If a media item is already displayed and users select a video, KiriView leaves image mode immediately and shows the video loading state.
 
 If another file is selected before the previous load finishes, only the most recent selection is displayed.
 
-When a new image is selected while an image is already displayed, any running animation keeps playing until the replacement image is ready.
+When a new image is selected while an image is already displayed and the new image is not already available from predecode, any running animation stops when the previous image presentation is cleared.
 
-If the selected URL cannot be read or the file is not a decodable image or playable video, the current media item remains visible and the app reports the error without disrupting the view.
-
-If no media item is currently displayed, failures show an error state.
+If the selected URL cannot be read or the file is not a decodable image or playable video, KiriView keeps the selected target active and shows the target's error state instead of restoring the previous media item.
 
 If animation playback fails for the displayed image, the UI shows an error state and remains ready for another open action.
 
@@ -54,11 +54,11 @@ When adjacent images are already available, Previous and Next navigation can rep
 
 When ordinary direct media navigation moves from an image to a video and then back to a nearby image, previously prepared still-image data may remain available so returning to that image can avoid a full-page loading state. Direct videos themselves are not decoded into this still-image cache.
 
-If a static image exceeds the supported decode or display size, KiriView reports a decode error without replacing the currently displayed image.
+If a static image exceeds the supported decode or display size, KiriView reports a decode error for the selected target instead of restoring a previously displayed image.
 
 HEIF-family still images, including AVIF still images, are supported when the still image is encoded with AV1, HEVC, AVC/H.264, JPEG, JPEG 2000, or VVC/H.266.
 
-If a recognized HEIF-family still image uses an unsupported compression format or cannot be decoded, KiriView reports the decode error without replacing the currently displayed image.
+If a recognized HEIF-family still image uses an unsupported compression format or cannot be decoded, KiriView reports the decode error for the selected target instead of restoring a previously displayed image.
 
 Camera RAW files open as static images. KiriView processes supported RAW files with LibRaw into display-ready 8-bit sRGB images and does not expose RAW editing controls such as demosaic, white-balance, tone-curve, or embedded-preview selection.
 

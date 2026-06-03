@@ -46,15 +46,17 @@ Pressing Escape while editing the page number cancels the edit, restores the dis
 
 When KiriView has a confirmed supported item list for the current scope, Previous, Next, First, Last, and page number entry remain available while a selected image or video is still loading.
 
-During that loading interval, the page number shown in the UI is the most recent valid page selection requested by the user, not necessarily the item that remains visible until replacement succeeds.
+During that loading interval, the page number shown in the UI is the most recent valid page selection requested by the user.
 
 The displayed image URL or direct video source URL continues to mean the media item actually being shown.
 
+For image selections that are still loading and are not yet displayed from predecode, the displayed image URL is empty even though the source URL and active navigation selection already refer to the selected target.
+
 If users make multiple page selections before loading finishes, only the most recent selection is displayed.
 
-If that replacement load fails, the previously displayed media item remains visible, KiriView reports the error, and page navigation returns to the still-displayed item.
+If that replacement load fails, KiriView reports the selected target's error state and page navigation remains on the selected target when the target belongs to the confirmed active navigation list.
 
-During replacement failures, empty startup, loading intervals without a confirmed same-scope selection, and mode switches, KiriView clears or marks unknown the active navigation projection before exposing any new readout. Values from the previous document are not reused for the current number, total count, editability, dispatch availability, or boundary state.
+During empty startup, loading intervals without a confirmed same-scope selection, and mode switches, KiriView clears or marks unknown the active navigation projection before exposing any new readout. Values from the previous document are not reused for the current number, total count, editability, dispatch availability, or boundary state.
 
 When moving between items in the current scope, the page navigation controls keep their layout stable.
 
