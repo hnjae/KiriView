@@ -34,6 +34,10 @@ Predecode candidate keys identify still-image payloads eligible for adjacent dec
 
 Render surface keys identify the current displayed surface generation, render-context generation, page role, and render source family. Tile keys identify tile level, coordinates, and scale bucket within that surface generation. Render-frame revisions identify projected draw entries and missing tile demands for one GUI-to-render handoff. Window changes, scene-graph invalidation, QRhi replacement, and device-loss-equivalent events advance render-context or surface freshness so stale decode completions and GPU resources are rejected instead of reused.
 
+Key-family types must be operational contracts, not marker structs. Each family that crosses an adapter, cache, predecode, thumbnail, or render boundary must provide construction from its owning snapshot, durable equality, hashing where used in sets or caches, freshness generation access, and explicit result or capability status. The generic top-level `SourceKey` may appear inside family factories as an implementation detail, but boundary APIs must accept and return the family type so unrelated identities cannot be compared accidentally.
+
+Render tile work must carry both the surface key and the coordinate key. Helpers may keep a small coordinate-only value for pyramid math, but scheduler pending sets, decoded-tile admission, failed-tile suppression, render-frame missing demands, and worker completions must use a surface-qualified render tile key or an enclosing demand that includes the render surface key.
+
 ## Adapter Contracts
 
 Media entry source adapters list and read opened-collection entries. They return candidates, image bytes, and optional thumbnail metadata through the media entry source owner. They do not update document source state, page navigation, deletion state, thumbnails, or QML models directly.
