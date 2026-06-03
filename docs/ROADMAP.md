@@ -54,7 +54,7 @@ Extension points are adapter contracts, not state backdoors. New decoders, opene
 - [x] Convert session public projection updates into revisioned snapshot transactions sourced from leaf document snapshots.
 - [x] Normalize remaining async workflows onto one operation/demand/completion vocabulary with explicit disconnect and cancellation semantics, and remove ad hoc delayed UI reconciliation.
 - [x] Consolidate media information, action availability, active zoom, title, deletion, open-with, and active navigation as named projection owners.
-- [ ] Publish stable extension contracts for media sources, thumbnails, predecode, decoders, and render sources, including key-family equality and freshness rules.
+- [x] Publish stable extension contracts for media sources, thumbnails, predecode, decoders, and render sources, including key-family equality and freshness rules.
 - [ ] Final acceptance: no QML writes shared `QAction` state, no public leaf-document route setter bypasses the session, no durable cross-mode state has two mutable owners, Qt Quick physical item state is bridged by revision and acknowledgement rather than mirrored authority, and every out-of-order completion is rejected by an owner-held identity before public mutation.
 
 ## Stage 1: Seal The Session Route Boundary
