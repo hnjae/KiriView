@@ -32,6 +32,12 @@ private Q_SLOTS:
     void imageActionAvailabilityFacadeIsNotWritableQmlBackdoor();
     void fixedViewerShortcutsDoNotBypassRuntimeRouting();
     void sessionPublicProjectionHasNoPartialUpdateBackdoor();
+    void sessionPublicProjectionDoesNotSampleLeafFacadesWhileApplying();
+    void qmlDoesNotWriteSharedVideoOutputAttachment();
+    void videoOutputAttachmentIsNotWritablePublicVideoDocumentState();
+    void qmlDoesNotDeriveSharedControlPolicyFromLeafDocuments();
+    void qmlViewportUsesFullCommandLifecycle();
+    void sourceKeysExposeTypedExtensionFamilies();
     void mediaInformationFacadeExposesSnapshotRevision();
 };
 
@@ -361,6 +367,108 @@ void TestArchitectureBoundaries::sessionPublicProjectionHasNoPartialUpdateBackdo
     QVERIFY(!header.contains(QStringLiteral("updatePublicProjection")));
     QVERIFY(!implementation.contains(QStringLiteral("updatePublicProjection")));
     QVERIFY(!implementation.contains(QStringLiteral("applyPublicProjection")));
+}
+
+void TestArchitectureBoundaries::sessionPublicProjectionDoesNotSampleLeafFacadesWhileApplying()
+{
+    const QString implementation
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.cpp"));
+    const qsizetype functionIndex
+        = implementation.indexOf(QStringLiteral("DocumentSessionRuntime::publicSnapshotInput("));
+    QVERIFY(functionIndex >= 0);
+    const qsizetype nextFunctionIndex = implementation.indexOf(
+        QStringLiteral("\nDirectMediaActiveNavigationInput"), functionIndex);
+    QVERIFY(nextFunctionIndex > functionIndex);
+    const QString body = implementation.mid(functionIndex, nextFunctionIndex - functionIndex);
+
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(\bm_imageDocument\s*\.)")),
+        QRegularExpression(QStringLiteral(R"(\bm_videoDocument\s*\.)")),
+    };
+    QStringList violations;
+    for (const QRegularExpression &pattern : forbiddenPatterns) {
+        QRegularExpressionMatchIterator iterator = pattern.globalMatch(body);
+        while (iterator.hasNext()) {
+            violations.push_back(iterator.next().captured(0));
+        }
+    }
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::qmlDoesNotWriteSharedVideoOutputAttachment()
+{
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(\b\w+\s*\.\s*videoOutput\s*=)")),
+        QRegularExpression(QStringLiteral(R"(\bvideoDocument\s*\.\s*videoOutput\s*=)")),
+        QRegularExpression(
+            QStringLiteral(R"(\bdocumentSession\s*\.\s*videoDocument\s*\.\s*videoOutput\s*=)")),
+    };
+
+    QStringList violations;
+    for (const QString &filePath : productionQmlFiles()) {
+        const QString matches = matchingLines(filePath, forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::videoOutputAttachmentIsNotWritablePublicVideoDocumentState()
+{
+    const QString header = readProjectFile(QStringLiteral("src/facade/kirivideodocument.h"));
+    QVERIFY(!header.contains(QStringLiteral("WRITE setVideoOutput")));
+    QVERIFY(!header.contains(QStringLiteral("Q_INVOKABLE void setVideoOutput")));
+}
+
+void TestArchitectureBoundaries::qmlDoesNotDeriveSharedControlPolicyFromLeafDocuments()
+{
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(
+            QStringLiteral(R"(\bimageDocument\s*\.\s*openedCollectionScopeActive\b)")),
+        QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*rightToLeftReadingEnabled\b)")),
+        QRegularExpression(
+            QStringLiteral(R"(\bimageDocument\s*\.\s*rightToLeftReadingAvailable\b)")),
+        QRegularExpression(QStringLiteral(
+            R"(\bvideoDocument\s*\.\s*status\s*===\s*KiriVideoDocument\s*\.\s*Ready)")),
+    };
+
+    QStringList violations;
+    for (const QString &filePath : productionQmlFiles()) {
+        const QString matches = matchingLines(filePath, forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::qmlViewportUsesFullCommandLifecycle()
+{
+    const QString viewport = readProjectFile(QStringLiteral("src/qml/ImageViewport.qml"));
+    QVERIFY(viewport.contains(QStringLiteral("beginViewportCommandApplication(")));
+    QVERIFY(viewport.contains(QStringLiteral("completeViewportCommandApplication(")));
+    QVERIFY(viewport.contains(QStringLiteral("acknowledgeViewportCommand(")));
+    QVERIFY(!viewport.contains(QStringLiteral("rejectedViewportCommandStatus = 6")));
+}
+
+void TestArchitectureBoundaries::sourceKeysExposeTypedExtensionFamilies()
+{
+    const QString header = readProjectFile(QStringLiteral("src/location/sourcekey.h"));
+    for (const QString &typeName : {
+             QStringLiteral("OrdinaryFileSourceKey"),
+             QStringLiteral("DirectMediaSourceKey"),
+             QStringLiteral("DirectMediaScopeKey"),
+             QStringLiteral("ImageDocumentPageSourceKey"),
+             QStringLiteral("OpenedCollectionEntrySourceKey"),
+             QStringLiteral("ThumbnailSourceKey"),
+             QStringLiteral("PredecodeCandidateKey"),
+             QStringLiteral("RenderSurfaceKey"),
+         }) {
+        QVERIFY2(header.contains(typeName), qPrintable(typeName));
+    }
 }
 
 void TestArchitectureBoundaries::mediaInformationFacadeExposesSnapshotRevision()
