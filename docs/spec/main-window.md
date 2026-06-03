@@ -34,11 +34,15 @@ Controls that require selected, navigable, or ready media are disabled until the
 
 The toolbar zoom control displays the document session's active zoom readout rather than reading image or video document zoom values directly. When the document session is empty, the zoom control remains in place and displays `- %`.
 
+The toolbar does not infer image readiness, video readiness, action availability, page navigation, zoom editability, or title subject by combining raw image-document and video-document properties. It renders the current document-session projections so that related controls change together.
+
 The toolbar page navigation arrow buttons keep their physical affordance. The left arrow button triggers Previous in Left-to-Right Reading mode and Next in Right-to-Left Reading mode. The right arrow button triggers Next in Left-to-Right Reading mode and Previous in Right-to-Left Reading mode. Each button's tooltip and accessible text follow the action that button triggers.
 
 The toolbar page navigation arrow buttons, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts dispatch through the document session's active navigation dispatch. Their enabled state comes from the same active navigation projection.
 
 Configurable application actions and their shortcuts use one shared runtime availability decision. If an action is disabled, activating its menu item, toolbar placement, context-menu placement, or shortcut has no effect.
+
+Toolbar controls, menus, context menus, shortcut help, and shortcut handling use the same current action availability decision. During media replacement, mode switches, deletion, modal dialogs, or focus changes, KiriView must not display or trigger action state derived from an older document, older viewport, or older UI gate observation after a newer state has been accepted.
 
 Open, Open With, Previous Archive, and Next Archive are provided by the application menu and shortcuts rather than fixed toolbar buttons. Previous Archive and Next Archive use visually distinct previous/next-use icons so they are not confused with page Previous and Next navigation.
 

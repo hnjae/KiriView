@@ -74,6 +74,8 @@ The toolbar keeps its normal application styling.
 
 When an image is ready, the image viewing viewport does not add page padding around the image area.
 
+Readiness-dependent controls, overlays, panning affordances, zoom controls, and image-only actions all use the same current media readiness state. Empty, loading, replacement, error, video, and unsupported-placeholder intervals must not expose stale ready-image affordances from the previously displayed image.
+
 ## Fit and Zoom State
 
 KiriView starts in Fit mode.
@@ -147,6 +149,10 @@ Double-clicking the image viewport toggles between Fit mode and 100% manual zoom
 When an image is ready, Ctrl+1 selects Fit mode, Ctrl+2 selects Fit Height mode, Ctrl+3 selects Fit Width mode, and Ctrl+0 switches to 100% manual zoom.
 
 Viewport zoom, fit, panning, and scan results are computed from the current active presentation state. Physical gesture sampling may happen in the Qt Quick viewport, but stale or delayed physical viewport callbacks must not overwrite newer zoom, pan, rotation, resize, or device-pixel-ratio results.
+
+Viewport observations promote physical item state only at explicit commit points: command acknowledgement, user gesture commit, inertia settle, overshoot settle, resize commit, rotation commit, device-pixel-ratio commit, or system projection commit. Earlier physical samples may update the immediate visual position but must not become the canonical viewport frame after a newer presentation command has superseded them.
+
+Switching between single-page display and Two-Page Spread is transactional. During a transition, users may temporarily see the previous committed presentation or a placeholder for the next presentation, but controls, zoom readout, panning availability, and render output must not combine properties from both presentations. If the transition cannot be completed, the previous committed presentation remains authoritative.
 
 ## Animation
 

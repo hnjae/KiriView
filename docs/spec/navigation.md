@@ -130,6 +130,8 @@ While the page number or zoom input is not focused, the plain arrow keys are fix
 
 Fixed viewer-only shortcuts use the same runtime UI gates as configurable application actions. They are inactive while text editing, modal help, or another runtime-suppressed UI state is active.
 
+When UI focus, modal state, active viewport, or transient tool focus changes rapidly, fixed viewer-only shortcuts and configurable shortcuts use the newest observed gate state. Older focus or modal observations must not re-enable or disable a shortcut after a newer observation has already taken effect.
+
 When an image is horizontally pannable at the current zoom, Left and Right pan the image within the available horizontal scroll bounds.
 
 When the current image is not horizontally pannable, Left opens the previous supported media item and Right opens the next supported media item with the same boundary behavior as the Previous and Next actions in an ordinary direct media scope.
