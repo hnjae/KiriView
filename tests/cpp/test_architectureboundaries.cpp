@@ -22,11 +22,13 @@ private Q_SLOTS:
     void leafDocumentRouteSettersStayPrivateToTheSession();
     void qmlCannotSetLeafDocumentRoutes();
     void qmlDoesNotWriteSharedActionState();
+    void qmlActionProxiesDoNotOverrideRuntimeActionState();
     void qmlDoesNotOwnSharedActionPolicy();
     void qmlDoesNotRecomputeSharedMediaReadiness();
     void qmlDoesNotWriteDurablePresentationState();
     void imageDocumentHasNoPublicPresentationBackdoorSetters();
     void qmlViewportUsesRevisionedCommandAcknowledgement();
+    void qmlViewportUsesOpaqueRevisionTokens();
     void leafDocumentsAreNotProductionQmlCreatable();
     void actionUiGatesAreRevisionedSnapshots();
     void imageActionAvailabilityFacadeIsNotWritableQmlBackdoor();
@@ -38,6 +40,8 @@ private Q_SLOTS:
     void qmlDoesNotDeriveSharedControlPolicyFromLeafDocuments();
     void qmlViewportUsesFullCommandLifecycle();
     void sourceKeysExposeTypedExtensionFamilies();
+    void sourceKeysExposeOperationalExtensionContracts();
+    void productionFacadesDoNotExposePresentationBackdoorSetters();
     void mediaInformationFacadeExposesSnapshotRevision();
 };
 
@@ -198,6 +202,27 @@ void TestArchitectureBoundaries::qmlDoesNotWriteSharedActionState()
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
+void TestArchitectureBoundaries::qmlActionProxiesDoNotOverrideRuntimeActionState()
+{
+    const QString managedAction = readProjectFile(QStringLiteral("src/qml/ManagedAction.qml"));
+    const QString actionProxy = readProjectFile(QStringLiteral("src/qml/ActionProxy.qml"));
+    const QString combined = managedAction + QLatin1Char('\n') + actionProxy;
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(\bproxy(?:Enabled|Checked|Checkable)\b)")),
+        QRegularExpression(QStringLiteral(R"(\b(?:enabled|checked|checkable)Override\b)")),
+    };
+
+    QStringList violations;
+    for (const QRegularExpression &pattern : forbiddenPatterns) {
+        QRegularExpressionMatchIterator iterator = pattern.globalMatch(combined);
+        while (iterator.hasNext()) {
+            violations.push_back(iterator.next().captured(0));
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
 void TestArchitectureBoundaries::qmlDoesNotOwnSharedActionPolicy()
 {
     const QList<QRegularExpression> forbiddenPatterns {
@@ -314,6 +339,27 @@ void TestArchitectureBoundaries::qmlViewportUsesRevisionedCommandAcknowledgement
     QVERIFY(!QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*setVisibleItemRect\s*\()"))
             .match(viewport)
             .hasMatch());
+}
+
+void TestArchitectureBoundaries::qmlViewportUsesOpaqueRevisionTokens()
+{
+    const QString viewport = readProjectFile(QStringLiteral("src/qml/ImageViewport.qml"));
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(
+            R"(\bproperty\s+(?:int|real|double|var)\s+appliedViewport(?:Command|Observation)Revision\b)")),
+        QRegularExpression(QStringLiteral(R"(\bviewport(?:Command|Observation)Revision\b)")),
+    };
+    QStringList violations;
+    for (const QRegularExpression &pattern : forbiddenPatterns) {
+        QRegularExpressionMatchIterator iterator = pattern.globalMatch(viewport);
+        while (iterator.hasNext()) {
+            violations.push_back(iterator.next().captured(0));
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+    QVERIFY(viewport.contains(QStringLiteral("viewportCommandRevisionToken")));
+    QVERIFY(viewport.contains(QStringLiteral("viewportObservationRevisionToken")));
 }
 
 void TestArchitectureBoundaries::leafDocumentsAreNotProductionQmlCreatable()
@@ -469,6 +515,52 @@ void TestArchitectureBoundaries::sourceKeysExposeTypedExtensionFamilies()
          }) {
         QVERIFY2(header.contains(typeName), qPrintable(typeName));
     }
+}
+
+void TestArchitectureBoundaries::sourceKeysExposeOperationalExtensionContracts()
+{
+    const QString header = readProjectFile(QStringLiteral("src/location/sourcekey.h"));
+    for (const QString &symbolName : {
+             QStringLiteral("openedCollectionEntrySourceKey"),
+             QStringLiteral("thumbnailSourceKey"),
+             QStringLiteral("predecodeCandidateKey"),
+             QStringLiteral("renderSurfaceKey"),
+             QStringLiteral("sameOpenedCollectionEntrySourceKey"),
+             QStringLiteral("sameThumbnailSourceKey"),
+             QStringLiteral("samePredecodeCandidateKey"),
+             QStringLiteral("sameRenderSurfaceKey"),
+             QStringLiteral("qHash(const RenderSurfaceKey"),
+         }) {
+        QVERIFY2(header.contains(symbolName), qPrintable(symbolName));
+    }
+}
+
+void TestArchitectureBoundaries::productionFacadesDoNotExposePresentationBackdoorSetters()
+{
+    const QList<QString> relativePaths {
+        QStringLiteral("src/facade/kiriimagedocument.h"),
+        QStringLiteral("src/document/imagedocumentruntime.h"),
+        QStringLiteral("src/presentation/imagespreadpresentationcontroller.h"),
+    };
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(\bsetViewportContentPosition\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bsetVisibleItemRect\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bsetZoomPercent\s*\()")),
+    };
+
+    QStringList violations;
+    for (const QString &relativePath : relativePaths) {
+        const QString contents = readProjectFile(relativePath);
+        for (const QRegularExpression &pattern : forbiddenPatterns) {
+            QRegularExpressionMatchIterator iterator = pattern.globalMatch(contents);
+            while (iterator.hasNext()) {
+                violations.push_back(
+                    QStringLiteral("%1: %2").arg(relativePath, iterator.next().captured(0)));
+            }
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
 void TestArchitectureBoundaries::mediaInformationFacadeExposesSnapshotRevision()
