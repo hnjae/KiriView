@@ -14,14 +14,16 @@ let
       (lib.getLib pkgs.stdenv.cc.cc)
     ])
   ];
-  lldAsLd = pkgs.runCommandLocal "kiriview-rust-host-lld-as-ld" { } ''
+  rustHostLldBin = pkgs.runCommandLocal "kiriview-rust-host-lld-bin" { } ''
     mkdir -p "$out/bin"
     ln -s ${lib.getExe' pkgs.lld "ld.lld"} "$out/bin/ld"
+    ln -s ${lib.getExe' pkgs.lld "ld.lld"} "$out/bin/ld.lld"
+    ln -s ${lib.getExe' pkgs.lld "lld"} "$out/bin/lld"
   '';
   rustHostLinker = pkgs.writeShellApplication {
     name = "kiriview-rust-host-linker";
     text = ''
-      exec ${lib.getExe' pkgs.stdenv.cc "cc"} -B${lldAsLd}/bin/ "$@"
+      exec ${lib.getExe' pkgs.stdenv.cc "cc"} -B${rustHostLldBin}/bin/ "$@"
     '';
   };
   rustHostEnv = pkgs.writeShellApplication {
@@ -33,6 +35,7 @@ let
       fi
 
       export RUSTFLAGS="''${RUSTFLAGS:+$RUSTFLAGS }-C linker=${lib.getExe rustHostLinker}"
+      export PATH=${lib.escapeShellArg "${rustHostLldBin}/bin"}:"$PATH"
       runtime_library_path=${lib.escapeShellArg hostRuntimeLibraryPath}
       # shellcheck disable=SC2206
       nix_ldflags=( ''${NIX_LDFLAGS:-} )
@@ -61,6 +64,7 @@ let
 in
 {
   packages = [
+    rustHostLldBin
     rustHostLinker
     rustHostEnv
   ];
