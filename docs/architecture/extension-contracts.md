@@ -32,7 +32,7 @@ Thumbnail source keys identify the projected active-navigation row, its source k
 
 Predecode candidate keys identify still-image payloads eligible for adjacent decode. Direct media predecode is still-image-only; videos may be cursor positions for window planning, but they do not produce cached video frame payloads. Opened-collection predecode candidates carry the opened collection scope so byte access stays behind the media entry source owner.
 
-Render surface keys identify the current displayed surface generation, page role, and render source family. Tile keys identify tile level, coordinates, and scale bucket within that surface generation. Render-frame revisions identify projected draw entries and missing tile demands for one GUI-to-render handoff.
+Render surface keys identify the current displayed surface generation, render-context generation, page role, and render source family. Tile keys identify tile level, coordinates, and scale bucket within that surface generation. Render-frame revisions identify projected draw entries and missing tile demands for one GUI-to-render handoff. Window changes, scene-graph invalidation, QRhi replacement, and device-loss-equivalent events advance render-context or surface freshness so stale decode completions and GPU resources are rejected instead of reused.
 
 ## Adapter Contracts
 
@@ -44,7 +44,7 @@ Predecode planners consume session or image-document snapshots and produce still
 
 Decoder contracts are route based. Rust-owned byte classification selects one decode route from plain bytes and file-name context. C++ executes the selected decoder and treats selected-decoder failure as final for that request. A decoder returns decoded static image, animation reader payload, metadata, unsupported, or failure; it must not route to another decoder or mutate document state.
 
-Render-source contracts produce immutable render entries and missing demands from a presentation-owned surface snapshot. Tile sources decode only requested tile payloads. Scene-graph nodes consume prepared entries, own graphics resources, and follow Qt scene graph lifecycle rules for `updatePaintNode`, `releaseResources`, node destruction, scene-graph invalidation, window changes, device loss, texture creation and destruction thread, and QRhi or `QSGTexture` ownership. They must not read GUI or domain state to recompute source selection, cache policy, tile priority, or fallback behavior.
+Render-source contracts produce immutable render entries and missing demands from a presentation-owned surface snapshot. Tile sources decode only requested tile payloads. Scene-graph nodes consume prepared entries, own graphics resources, and follow Qt scene graph lifecycle rules for `updatePaintNode`, `releaseResources`, node destruction, scene-graph invalidation, window changes, device loss, texture creation and destruction thread, and QRhi or `QSGTexture` ownership. They must not read GUI or domain state to recompute source selection, cache policy, tile priority, or fallback behavior. Resource owners must expose a testable invalidation point for window/RHI/device generation changes.
 
 ## Contract Tests
 
