@@ -193,15 +193,15 @@ private Q_SLOTS:
     void pendingAdjacentNavigationSkipsIntermediateLoad();
     void pendingPageSelectionSupersedesEarlierLoad();
     void pageSelectionStartsTrackedLoadThroughEffectExecutor();
-    void pendingLoadFailureRestoresDisplayedPageNavigation();
+    void pendingLoadFailureKeepsTargetPageNavigation();
     void siblingArchiveNavigationResetsManualZoom();
     void smallStaticImageUsesFullImageSurface();
     void largeStaticImageUsesTiledSurface();
     void tiledStaticImageRefinesNewVisibleTilesAfterPan();
     void firstDisplayDefersTilesUntilZoomNeedsMoreDetail();
     void smallFullImageSurfaceStillSchedulesAdjacentPredecode();
-    void replacementLoadFailureKeepsDisplayedImage();
-    void decodedReplacementFailureSchedulesRecoveryPredecodeOnce();
+    void replacementLoadFailureSelectsTargetError();
+    void decodedReplacementFailureSelectsTargetError();
     void emptyContainerNavigationClearsImageAndSelectsContainer();
     void deletingWithoutDisplayedImageDoesNotStartFileOperation();
     void fileDeletionFailureKeepsDisplayedImageAndReportsError();
@@ -215,7 +215,7 @@ private Q_SLOTS:
     void twoPageModeDisplaysCurrentAndNextComicArchivePages();
     void twoPageModeUsesRightToLeftPageOrder();
     void twoPageModeRightToLeftKeepsSinglePageNavigationSemantic();
-    void twoPageModeKeepsPreviousSpreadRenderableUntilTargetSpreadIsReady();
+    void twoPageModeClearsPreviousSpreadWhileTargetSpreadLoads();
     void twoPageModeLoadingNavigationUsesPendingPrimaryPage();
 };
 
@@ -888,7 +888,7 @@ void TestImageDocumentRuntime::pageSelectionStartsTrackedLoadThroughEffectExecut
     QCOMPARE(runtime->currentPageNumber(), 2);
 }
 
-void TestImageDocumentRuntime::pendingLoadFailureRestoresDisplayedPageNavigation()
+void TestImageDocumentRuntime::pendingLoadFailureKeepsTargetPageNavigation()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -915,15 +915,15 @@ void TestImageDocumentRuntime::pendingLoadFailureRestoresDisplayedPageNavigation
     runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
     QCOMPARE(runtime->sourceUrl(), secondImageUrl);
-    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
+    QCOMPARE(runtime->displayedUrl(), QUrl());
     QCOMPARE(runtime->currentPageNumber(), 2);
 
     dataLoader.failBackLoad(QStringLiteral("missing"));
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(runtime->sourceUrl(), firstImageUrl);
-    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
-    QCOMPARE(runtime->currentPageNumber(), 1);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Error);
+    QCOMPARE(runtime->sourceUrl(), secondImageUrl);
+    QCOMPARE(runtime->displayedUrl(), QUrl());
+    QCOMPARE(runtime->currentPageNumber(), 2);
     QCOMPARE(runtime->errorString(), QStringLiteral("missing"));
 }
 
@@ -1130,7 +1130,7 @@ void TestImageDocumentRuntime::smallFullImageSurfaceStillSchedulesAdjacentPredec
     QCOMPARE(dataLoader.backLoad().url, nextImageUrl);
 }
 
-void TestImageDocumentRuntime::replacementLoadFailureKeepsDisplayedImage()
+void TestImageDocumentRuntime::replacementLoadFailureSelectsTargetError()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1153,18 +1153,22 @@ void TestImageDocumentRuntime::replacementLoadFailureKeepsDisplayedImage()
     runtime->setSourceUrl(missingUrl);
     QCOMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 1);
     QCOMPARE(dataLoader.backLoad().url, missingUrl);
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
+    QCOMPARE(runtime->sourceUrl(), missingUrl);
+    QCOMPARE(runtime->displayedUrl(), QUrl());
+    QVERIFY(!runtime->renderSnapshot().isRenderable());
     dataLoader.failBackLoad(QStringLiteral("missing"));
 
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(runtime->sourceUrl(), imageUrl);
-    QCOMPARE(runtime->displayedUrl(), imageUrl);
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Error);
+    QCOMPARE(runtime->sourceUrl(), missingUrl);
+    QCOMPARE(runtime->displayedUrl(), QUrl());
     QCOMPARE(runtime->errorString(), QStringLiteral("missing"));
-    QCOMPARE(runtime->imageSize(), QSize(2, 1));
-    QCOMPARE(runtime->renderSnapshot().revision, displayedRevision);
-    QVERIFY(runtime->renderSnapshot().isRenderable());
+    QVERIFY(runtime->imageSize().isEmpty());
+    QVERIFY(runtime->renderSnapshot().revision > displayedRevision);
+    QVERIFY(!runtime->renderSnapshot().isRenderable());
 }
 
-void TestImageDocumentRuntime::decodedReplacementFailureSchedulesRecoveryPredecodeOnce()
+void TestImageDocumentRuntime::decodedReplacementFailureSelectsTargetError()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1190,13 +1194,15 @@ void TestImageDocumentRuntime::decodedReplacementFailureSchedulesRecoveryPredeco
     runtime->setSourceUrl(badUrl);
     QCOMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 1);
     QCOMPARE(dataLoader.backLoad().url, badUrl);
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
+    QCOMPARE(runtime->displayedUrl(), QUrl());
     dataLoader.finishBackLoad(QByteArrayLiteral("bad"));
 
     QTRY_COMPARE(runtime->errorString(), testImageDecodeFailureString());
-    QCOMPARE(runtime->sourceUrl(), imageUrl);
-    QCOMPARE(runtime->displayedUrl(), imageUrl);
-    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 2);
-    QCOMPARE(dataLoader.backLoad().url, badUrl);
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Error);
+    QCOMPARE(runtime->sourceUrl(), badUrl);
+    QCOMPARE(runtime->displayedUrl(), QUrl());
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 1);
 }
 
 void TestImageDocumentRuntime::emptyContainerNavigationClearsImageAndSelectsContainer()
@@ -1765,7 +1771,7 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
     QTRY_COMPARE(runtime->currentLastPageNumber(), 3);
 }
 
-void TestImageDocumentRuntime::twoPageModeKeepsPreviousSpreadRenderableUntilTargetSpreadIsReady()
+void TestImageDocumentRuntime::twoPageModeClearsPreviousSpreadWhileTargetSpreadLoads()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1819,16 +1825,16 @@ void TestImageDocumentRuntime::twoPageModeKeepsPreviousSpreadRenderableUntilTarg
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
     QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
     QVERIFY(runtime->loading());
-    QVERIFY(hasRenderableSnapshot(*runtime));
-    QVERIFY(hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
+    QVERIFY(!hasRenderableSnapshot(*runtime));
+    QVERIFY(!hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->displayedUrl(), fourthPageUrl);
     QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
     QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
     QVERIFY(runtime->loading());
-    QVERIFY(hasRenderableSnapshot(*runtime));
-    QVERIFY(hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
+    QVERIFY(!hasRenderableSnapshot(*runtime));
+    QVERIFY(!hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
