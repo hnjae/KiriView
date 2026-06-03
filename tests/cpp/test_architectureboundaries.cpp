@@ -22,7 +22,12 @@ private Q_SLOTS:
     void leafDocumentRouteSettersStayPrivateToTheSession();
     void qmlCannotSetLeafDocumentRoutes();
     void qmlDoesNotWriteSharedActionState();
+    void qmlDoesNotOwnSharedActionPolicy();
+    void qmlDoesNotWriteDurablePresentationState();
     void qmlViewportUsesRevisionedCommandAcknowledgement();
+    void leafDocumentsAreNotProductionQmlCreatable();
+    void sessionPublicProjectionHasNoPartialUpdateBackdoor();
+    void mediaInformationFacadeExposesSnapshotRevision();
 };
 
 namespace {
@@ -182,6 +187,56 @@ void TestArchitectureBoundaries::qmlDoesNotWriteSharedActionState()
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
+void TestArchitectureBoundaries::qmlDoesNotOwnSharedActionPolicy()
+{
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(\bupdateActionState\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bfunction\s+dispatchAction\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bonActionTriggered\s*:)")),
+        QRegularExpression(QStringLiteral(R"(\bonActionTriggered\s*\()")),
+        QRegularExpression(QStringLiteral(R"(^\s*Shortcut\s*\{)")),
+    };
+
+    QStringList violations;
+    for (const QString &relativePath : { QStringLiteral("src/qml/ImageActions.qml"),
+             QStringLiteral("src/qml/ImageShortcuts.qml") }) {
+        const QString matches = matchingLines(projectPath(relativePath), forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::qmlDoesNotWriteDurablePresentationState()
+{
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*zoomPercent\s*=)")),
+        QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*setZoomPercent\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*setFitMode\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*resetZoom\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*twoPageModeEnabled\s*=)")),
+        QRegularExpression(
+            QStringLiteral(R"(\bimageDocument\s*\.\s*rightToLeftReadingEnabled\s*=)")),
+        QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*viewportContentPosition\s*=)")),
+        QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*visibleItemRect\s*=)")),
+        QRegularExpression(
+            QStringLiteral(R"(\bimageDocument\s*\.\s*setViewportContentPosition\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*setVisibleItemRect\s*\()")),
+    };
+
+    QStringList violations;
+    for (const QString &filePath : productionQmlFiles()) {
+        const QString matches = matchingLines(filePath, forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
 void TestArchitectureBoundaries::qmlViewportUsesRevisionedCommandAcknowledgement()
 {
     const QString viewport = readProjectFile(QStringLiteral("src/qml/ImageViewport.qml"));
@@ -203,6 +258,33 @@ void TestArchitectureBoundaries::qmlViewportUsesRevisionedCommandAcknowledgement
     QVERIFY(!QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*setVisibleItemRect\s*\()"))
             .match(viewport)
             .hasMatch());
+}
+
+void TestArchitectureBoundaries::leafDocumentsAreNotProductionQmlCreatable()
+{
+    const QString imageHeader = readProjectFile(QStringLiteral("src/facade/kiriimagedocument.h"));
+    const QString videoHeader = readProjectFile(QStringLiteral("src/facade/kirivideodocument.h"));
+    QVERIFY(!imageHeader.contains(QStringLiteral("QML_ELEMENT")));
+    QVERIFY(!videoHeader.contains(QStringLiteral("QML_ELEMENT")));
+    QVERIFY(imageHeader.contains(QStringLiteral("QML_UNCREATABLE")));
+    QVERIFY(videoHeader.contains(QStringLiteral("QML_UNCREATABLE")));
+}
+
+void TestArchitectureBoundaries::sessionPublicProjectionHasNoPartialUpdateBackdoor()
+{
+    const QString header = readProjectFile(QStringLiteral("src/session/documentsessionstate.h"));
+    const QString implementation
+        = readProjectFile(QStringLiteral("src/session/documentsessionstate.cpp"));
+    QVERIFY(!header.contains(QStringLiteral("updatePublicProjection")));
+    QVERIFY(!implementation.contains(QStringLiteral("updatePublicProjection")));
+    QVERIFY(!implementation.contains(QStringLiteral("applyPublicProjection")));
+}
+
+void TestArchitectureBoundaries::mediaInformationFacadeExposesSnapshotRevision()
+{
+    const QString header = readProjectFile(QStringLiteral("src/facade/kirimediainformation.h"));
+    QVERIFY(header.contains(
+        QStringLiteral("Q_PROPERTY(quint64 revision READ revision NOTIFY changed)")));
 }
 
 QTEST_GUILESS_MAIN(TestArchitectureBoundaries)
