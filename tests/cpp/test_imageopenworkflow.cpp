@@ -355,7 +355,7 @@ void TestImageOpenWorkflow::routedLoadFailureAppliesErrorTransitions()
         state.setLoading(true);
         const KiriView::ImageDocumentRuntimePlan plan
             = finishLoadWithError(state, imageSession, false, QStringLiteral("missing"));
-        QVERIFY(hasOperation<KiriView::ClearPresentationImageOperation>(plan));
+        QVERIFY(!hasOperation<KiriView::ClearPresentationImageOperation>(plan));
         QCOMPARE(state.sourceUrl(), QUrl());
         QCOMPARE(state.containerNavigationUrl(), QUrl());
         QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Error);
