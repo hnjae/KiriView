@@ -120,6 +120,7 @@ void TestImageTileDecodeRuntime::schedulePlanCommitsAcceptedRequestsToRuntimeSta
     const KiriView::ImageTileDecodeRuntimePlan initialPlan = scheduleVisibleTiles(runtime, surface);
     QVERIFY(!initialPlan.isEmpty());
     QVERIFY(initialPlan.generation > 0);
+    QVERIFY(!initialPlan.surfaceKey.surfaceIdentity.isEmpty());
     QVERIFY(initialPlan.source != nullptr);
 
     const KiriView::ImageTileDecodeRuntimePlan duplicatePlan
@@ -135,9 +136,12 @@ void TestImageTileDecodeRuntime::completionAcceptanceRequiresCurrentGenerationAn
     QVERIFY(!plan.isEmpty());
 
     const KiriView::TileKey key = plan.requests.front().key;
-    QVERIFY(!runtime.acceptFinishedTileDecode(plan.generation + 1, key, true));
-    QVERIFY(runtime.acceptFinishedTileDecode(plan.generation, key, true));
-    QVERIFY(!runtime.acceptFinishedTileDecode(plan.generation, key, true));
+    KiriView::RenderSurfaceKey wrongSurfaceKey = plan.surfaceKey;
+    wrongSurfaceKey.pageRole = QStringLiteral("secondary");
+    QVERIFY(!runtime.acceptFinishedTileDecode(plan.generation + 1, plan.surfaceKey, key, true));
+    QVERIFY(!runtime.acceptFinishedTileDecode(plan.generation, wrongSurfaceKey, key, true));
+    QVERIFY(runtime.acceptFinishedTileDecode(plan.generation, plan.surfaceKey, key, true));
+    QVERIFY(!runtime.acceptFinishedTileDecode(plan.generation, plan.surfaceKey, key, true));
 }
 
 void TestImageTileDecodeRuntime::failedTileKeysAreScopedToCurrentSurface()
@@ -151,8 +155,10 @@ void TestImageTileDecodeRuntime::failedTileKeysAreScopedToCurrentSurface()
     QVERIFY(firstPlan.requests.size() >= std::size_t(2));
     const KiriView::TileKey failedKey = firstPlan.requests.front().key;
     const KiriView::TileKey pendingKey = firstPlan.requests.at(1).key;
-    QVERIFY(runtime.acceptFinishedTileDecode(firstPlan.generation, failedKey, false));
-    QVERIFY(runtime.acceptFinishedTileDecode(firstPlan.generation, pendingKey, true));
+    QVERIFY(runtime.acceptFinishedTileDecode(
+        firstPlan.generation, firstPlan.surfaceKey, failedKey, false));
+    QVERIFY(runtime.acceptFinishedTileDecode(
+        firstPlan.generation, firstPlan.surfaceKey, pendingKey, true));
 
     const KiriView::ImageTileDecodeRuntimePlan sameSurfacePlan
         = scheduleVisibleTiles(runtime, firstSurface);
@@ -173,7 +179,7 @@ void TestImageTileDecodeRuntime::invalidateRejectsPendingRequestsAndAllowsResche
     const KiriView::TileKey key = plan.requests.front().key;
     runtime.invalidate();
 
-    QVERIFY(!runtime.acceptFinishedTileDecode(plan.generation, key, true));
+    QVERIFY(!runtime.acceptFinishedTileDecode(plan.generation, plan.surfaceKey, key, true));
 
     const KiriView::ImageTileDecodeRuntimePlan refreshedPlan
         = scheduleVisibleTiles(runtime, surface);
@@ -197,8 +203,10 @@ void TestImageTileDecodeRuntime::staleSvgLowBucketCompletionRemainsCachedButNotD
     const KiriView::TileRequest highRequest = highPlan.requests.front();
     QVERIFY(lowRequest.key.scaleBucket < highRequest.key.scaleBucket);
 
-    QVERIFY(runtime.acceptFinishedTileDecode(lowPlan.generation, lowRequest.key, true));
-    QVERIFY(runtime.acceptFinishedTileDecode(highPlan.generation, highRequest.key, true));
+    QVERIFY(runtime.acceptFinishedTileDecode(
+        lowPlan.generation, lowPlan.surfaceKey, lowRequest.key, true));
+    QVERIFY(runtime.acceptFinishedTileDecode(
+        highPlan.generation, highPlan.surfaceKey, highRequest.key, true));
 
     KiriView::StaticTileSurface *staticSurface = surface->staticTileSurface();
     QVERIFY(staticSurface != nullptr);
