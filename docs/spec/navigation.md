@@ -128,6 +128,8 @@ KiriView derives scrollbar visibility, drag-panning availability, scan availabil
 
 While the page number or zoom input is not focused, the plain arrow keys are fixed viewer-only shortcuts for keyboard panning and physical adjacent navigation. They are not user-configurable actions and are not listed in Keyboard Shortcuts configuration, shortcut help, or menus.
 
+Fixed viewer-only shortcuts use the same runtime UI gates as configurable application actions. They are inactive while text editing, modal help, or another runtime-suppressed UI state is active.
+
 When an image is horizontally pannable at the current zoom, Left and Right pan the image within the available horizontal scroll bounds.
 
 When the current image is not horizontally pannable, Left opens the previous supported media item and Right opens the next supported media item with the same boundary behavior as the Previous and Next actions in an ordinary direct media scope.

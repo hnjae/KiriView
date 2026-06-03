@@ -100,6 +100,8 @@ Video mode supports the shared configurable shortcuts for Open, Move to Trash, D
 
 When an image-only configurable shortcut is pressed in video mode, KiriView does not trigger the image action and shows the in-app toast `This action is not available for videos`. Repeated unsupported video shortcut presses update the same toast instance.
 
+Disabled image-only action placements in video mode do not route through image-document commands. Only the unsupported-video shortcut interception produces the unavailable-action toast.
+
 Timeline dragging and scrubbing is the primary way to seek within the current video.
 
 If keyboard focus is inside the timeline control, that control may handle its own keyboard interaction.

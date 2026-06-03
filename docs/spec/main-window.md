@@ -38,6 +38,8 @@ The toolbar page navigation arrow buttons keep their physical affordance. The le
 
 The toolbar page navigation arrow buttons, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts dispatch through the document session's active navigation dispatch. Their enabled state comes from the same active navigation projection.
 
+Configurable application actions and their shortcuts use one shared runtime availability decision. If an action is disabled, activating its menu item, toolbar placement, context-menu placement, or shortcut has no effect.
+
 Open, Open With, Previous Archive, and Next Archive are provided by the application menu and shortcuts rather than fixed toolbar buttons. Previous Archive and Next Archive use visually distinct previous/next-use icons so they are not confused with page Previous and Next navigation.
 
 ## Application Menu and Menubar

@@ -146,6 +146,8 @@ Double-clicking the image viewport toggles between Fit mode and 100% manual zoom
 
 When an image is ready, Ctrl+1 selects Fit mode, Ctrl+2 selects Fit Height mode, Ctrl+3 selects Fit Width mode, and Ctrl+0 switches to 100% manual zoom.
 
+Viewport zoom, fit, panning, and scan results are computed from the current active presentation state. Physical gesture sampling may happen in the Qt Quick viewport, but stale or delayed physical viewport callbacks must not overwrite newer zoom, pan, rotation, resize, or device-pixel-ratio results.
+
 ## Animation
 
 Animated image files, including GIF, APNG, and HEIF-family image sequences such as `.heics` and `.avifs`, play when animation frames are available.
