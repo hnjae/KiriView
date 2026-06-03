@@ -250,11 +250,6 @@ void DocumentSessionState::setDirectMediaNavigation(DirectMediaNavigationBoundar
     m_directMediaNavigationCandidates = std::move(candidates);
 }
 
-bool DocumentSessionState::updatePublicProjection(DocumentSessionPublicProjectionInput input)
-{
-    return applyPublicProjection(projectDocumentSessionPublicState(std::move(input)));
-}
-
 bool DocumentSessionState::updatePublicSnapshot(const DocumentSessionPublicSnapshotInput &input)
 {
     return applyPublicSnapshot(
@@ -271,62 +266,6 @@ bool DocumentSessionState::updatePublicSnapshotForSourceKind(
     }
 
     applyPublicSnapshot(std::move(snapshot));
-    return true;
-}
-
-bool DocumentSessionState::updatePublicProjectionForSourceKind(
-    DocumentSessionPublicProjectionInput input, ActiveNavigationSourceKind sourceKind)
-{
-    DocumentSessionPublicProjection projection
-        = projectDocumentSessionPublicState(std::move(input));
-    if (projection.sourceKind != sourceKind) {
-        return false;
-    }
-
-    applyPublicProjection(std::move(projection));
-    return true;
-}
-
-bool DocumentSessionState::applyPublicProjection(DocumentSessionPublicProjection projection)
-{
-    const bool activeNavigationChanged
-        = !sameActiveNavigationSnapshot(
-              m_publicProjection.activeNavigation, projection.activeNavigation)
-        || m_publicProjection.sourceKind != projection.sourceKind
-        || m_publicProjection.boundaryScope != projection.boundaryScope;
-    const bool windowTitleSubjectChanged
-        = m_publicProjection.windowTitleSubject != projection.windowTitleSubject;
-    const bool displayedFileDeletionAvailabilityChanged
-        = m_publicProjection.displayedFileDeletionAvailable
-        != projection.displayedFileDeletionAvailable;
-    const bool displayedMediaOpenWithAvailabilityChanged
-        = m_publicProjection.displayedMediaOpenWithAvailable
-        != projection.displayedMediaOpenWithAvailable;
-
-    if (!activeNavigationChanged && !windowTitleSubjectChanged
-        && !displayedFileDeletionAvailabilityChanged
-        && !displayedMediaOpenWithAvailabilityChanged) {
-        return false;
-    }
-
-    m_publicProjection = std::move(projection);
-    m_publicSnapshot.projection = m_publicProjection;
-
-    std::vector<DocumentSessionChange> changes;
-    if (activeNavigationChanged) {
-        changes.push_back(DocumentSessionChange::ActiveNavigation);
-    }
-    if (windowTitleSubjectChanged) {
-        changes.push_back(DocumentSessionChange::WindowTitleSubject);
-    }
-    if (displayedFileDeletionAvailabilityChanged) {
-        changes.push_back(DocumentSessionChange::FileDeletionAvailability);
-    }
-    if (displayedMediaOpenWithAvailabilityChanged) {
-        changes.push_back(DocumentSessionChange::OpenWithAvailability);
-    }
-
-    publish(std::move(changes));
     return true;
 }
 
@@ -368,7 +307,6 @@ bool DocumentSessionState::applyPublicSnapshot(DocumentSessionPublicSnapshot sna
     m_activeZoomSnapshot = snapshot.activeZoom;
     m_activeNavigationRevealIntent = snapshot.activeNavigationRevealIntent;
     m_activeNavigationRevealDirection = snapshot.activeNavigationRevealDirection;
-    m_publicProjection = snapshot.projection;
     m_publicSnapshot = std::move(snapshot);
 
     std::vector<DocumentSessionChange> changes { DocumentSessionChange::PublicProjectionRevision };

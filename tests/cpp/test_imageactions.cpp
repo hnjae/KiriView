@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "facade/imageactionavailability.h"
 #include "facade/kiridocumentsession.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kirimediainformation.h"
@@ -73,8 +72,6 @@ void registerKiriViewQmlTypes()
 
     KiriView::initializeLocalization();
     qmlRegisterType<KiriViewApplication>("io.github.hnjae.kiriview", 1, 0, "KiriViewApplication");
-    qmlRegisterType<ImageActionAvailability>(
-        "io.github.hnjae.kiriview", 1, 0, "ImageActionAvailability");
     qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
     qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
     qmlRegisterType<KiriMediaInformation>("io.github.hnjae.kiriview", 1, 0, "KiriMediaInformation");
@@ -163,6 +160,15 @@ Item {
         application.actionForId(KiriViewApplication.GoLastImageAction).trigger();
     }
 
+    function publishActionUiState() {
+        application.updateActionUiState(false, false, false, false, false, false, true, true);
+    }
+
+    Component.onCompleted: {
+        application.setDocumentSession(documentSession);
+        publishActionUiState();
+    }
+
     KiriViewApplication {
         id: application
         objectName: "application"
@@ -174,24 +180,18 @@ Item {
         sourceUrl: "%2"
     }
 
-    ImageActionAvailability {
-        id: actionAvailability
-
-        containerNavigationAvailable: documentSession.documentKind === KiriDocumentSession.Image && documentSession.imageDocument.containerNavigationAvailable
-        fileDeletionInProgress: documentSession.fileDeletionInProgress
-        imageReady: documentSession.documentKind === KiriDocumentSession.Image && documentSession.imageDocument.status === KiriImageDocument.Ready
-    }
-
     KiriViewQml.ImageActions {
         id: imageActions
 
-        actionAvailability: actionAvailability
         application: application
         documentSession: documentSession
-        fullscreen: false
         imageDocument: documentSession.imageDocument
+    }
 
-        onImageBoundaryReached: function (message) {
+    Connections {
+        target: application
+
+        function onImageBoundaryReached(message) {
             root.lastBoundaryMessage = message;
         }
     }

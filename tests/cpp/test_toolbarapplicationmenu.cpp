@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "facade/imageactionavailability.h"
 #include "facade/kiridocumentsession.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kirimediainformation.h"
@@ -91,8 +90,6 @@ void registerKiriViewQmlTypes()
 
     KiriView::initializeLocalization();
     qmlRegisterType<KiriViewApplication>("io.github.hnjae.kiriview", 1, 0, "KiriViewApplication");
-    qmlRegisterType<ImageActionAvailability>(
-        "io.github.hnjae.kiriview", 1, 0, "ImageActionAvailability");
     qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
     qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
     qmlRegisterType<KiriMediaInformation>("io.github.hnjae.kiriview", 1, 0, "KiriMediaInformation");
@@ -404,11 +401,11 @@ Item {
     }
 
     function setImageFitWidth() {
-        sessionImageDocument.setFitMode(KiriImageDocument.FitWidth);
+        sessionImageDocument.requestFitMode(KiriImageDocument.FitWidth);
     }
 
     function setImageManualZoom() {
-        sessionImageDocument.zoomPercent = 125;
+        sessionImageDocument.requestManualZoomPercent(125);
     }
 
     function setToolbarWidth(width) {
@@ -717,7 +714,7 @@ Item {
 
     onRightToLeftReadingEnabledChanged: {
         if (sessionImageDocument.rightToLeftReadingEnabled !== rightToLeftReadingEnabled) {
-            sessionImageDocument.rightToLeftReadingEnabled = rightToLeftReadingEnabled;
+            sessionImageDocument.requestToggleRightToLeftReading();
         }
     }
 
@@ -743,6 +740,15 @@ Item {
         return sessionImageDocument.rightToLeftReadingAvailable;
     }
 
+    function publishActionUiState() {
+        application.updateActionUiState(false, false, false, false, false, false, true, true);
+    }
+
+    Component.onCompleted: {
+        application.setDocumentSession(documentSession);
+        publishActionUiState();
+    }
+
     KiriViewApplication {
         id: application
     }
@@ -753,26 +759,11 @@ Item {
         sourceUrl: "%2"
     }
 
-    ImageActionAvailability {
-        id: actionAvailability
-
-        containerNavigationAvailable: root.sessionImageDocument.containerNavigationAvailable
-        fileDeletionInProgress: root.sessionImageDocument.fileDeletionInProgress
-        helpDialogOpen: false
-        imageReady: root.sessionImageDocument.status === KiriImageDocument.Ready
-        rightToLeftReadingAvailable: root.sessionImageDocument.rightToLeftReadingAvailable
-        rightToLeftReadingEnabled: root.sessionImageDocument.rightToLeftReadingEnabled
-        twoPageModeAvailable: root.sessionImageDocument.twoPageModeAvailable
-        twoPageModeEnabled: root.sessionImageDocument.twoPageModeEnabled
-    }
-
     KiriViewQml.ImageActions {
         id: imageActions
 
         application: application
-        actionAvailability: actionAvailability
         documentSession: documentSession
-        fullscreen: false
         imageDocument: root.sessionImageDocument
     }
 }

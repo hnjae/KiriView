@@ -4,22 +4,32 @@
 #ifndef KIRIVIEW_KIRIVIEWAPPLICATION_H
 #define KIRIVIEW_KIRIVIEWAPPLICATION_H
 
+#include "application/applicationactionstatepolicy.h"
 #include "application/applicationtypes.h"
+#include "application/imageactionavailabilitypolicy.h"
+#include "navigation/imageshortcutnavigationpolicy.h"
 
 #include <AbstractKirigamiApplication>
 #include <QAbstractListModel>
 #include <QAction>
 #include <QKeySequence>
 #include <QList>
+#include <QMetaObject>
+#include <QPointer>
 #include <QString>
 #include <QtQml/qqmlregistration.h>
 #include <memory>
+#include <vector>
 
 namespace KiriView::ApplicationActions {
 class KiriViewApplicationActionHost;
 class ApplicationActionRuntime;
 class ApplicationShortcutRuntime;
 }
+
+class KiriDocumentSession;
+class KiriImageDocument;
+class QWindow;
 
 class KiriViewApplication : public AbstractKirigamiApplication
 {
@@ -121,23 +131,10 @@ public:
     Q_INVOKABLE QString actionMenuTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString actionToolbarTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString actionToolbarTooltipTextForId(KiriViewApplication::ActionId actionId) const;
-    Q_INVOKABLE void updateActionState(bool helpActionsEnabled, bool readyActionsEnabled,
-        bool rotateActionsEnabled, bool twoPageModeActionsEnabled,
-        bool rightToLeftReadingActionsEnabled, bool containerNavigationActionsEnabled,
-        bool displayedMediaOpenWithAvailable, bool displayedFileDeletionAvailable,
-        bool fileDeletionInProgress, bool activeNavigationAvailable, bool activeNavigationKnown,
-        bool activeNavigationHasTargets, bool canOpenPreviousActiveNavigation,
-        bool canOpenNextActiveNavigation, bool fitModeSelected, bool fitHeightModeSelected,
-        bool fitWidthModeSelected, bool twoPageModeActive, bool rightToLeftReadingActive,
-        bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
-        bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled,
-        bool directMediaNavigationBoundaryActive, bool viewerShortcutsEnabled,
-        bool readyShortcutsEnabled, bool readyViewerShortcutsEnabled,
-        bool twoPageViewerShortcutsEnabled, bool rightToLeftReadingShortcutsEnabled,
-        bool rightToLeftReadingViewerShortcutsEnabled, bool rotateShortcutsEnabled,
-        bool rotateViewerShortcutsEnabled, bool pannableShortcutsEnabled,
-        bool pannableViewerShortcutsEnabled, bool containerViewerShortcutsEnabled,
-        bool activeNavigationActionsAvailable, bool videoMode, bool videoFileDeletionInProgress);
+    Q_INVOKABLE void setDocumentSession(QObject *session);
+    Q_INVOKABLE void updateActionUiState(bool helpDialogOpen, bool textInputFocused,
+        bool imagePannable, bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
+        bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled);
     Q_INVOKABLE void setShortcutHost(QObject *host);
     Q_INVOKABLE bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool mediaHorizontalArrowShortcutsEnabled(bool videoMode,
@@ -148,7 +145,13 @@ Q_SIGNALS:
     void menuPresentationChanged();
     void shortcutRevisionChanged();
     void actionStateRevisionChanged();
-    void actionTriggered(KiriViewApplication::ActionId actionId);
+    void openDialogRequested();
+    void openApplicationMenuRequested();
+    void shortcutHelpRequested();
+    void toggleFullScreenRequested();
+    void toggleInfoPanelRequested();
+    void toggleThumbnailPanelRequested();
+    void imageBoundaryReached(const QString &message);
     void unsupportedVideoActionTriggered(KiriViewApplication::ActionId actionId);
 
 protected:
@@ -160,9 +163,45 @@ private:
     KirigamiActionCollection *applicationMainActionCollection();
     QAction *inheritedApplicationAction(const QString &actionName);
     void readApplicationActionSettings();
+    void rebuildActionState();
+    void connectActionStateSources();
+    void disconnectActionStateSources();
+    KiriImageDocument *imageDocument() const;
+    bool imageMode() const;
+    bool videoMode() const;
+    ImageActionAvailabilityInput imageActionAvailabilityInput() const;
+    KiriView::ApplicationActions::ApplicationActionStateInput actionStateInput() const;
+    void handleRuntimeActionTriggered(KiriView::ApplicationActions::ActionId actionId);
+    void emitBoundaryText(const QString &message);
+    void requestPreviousActiveNavigationWithBoundary();
+    void requestNextActiveNavigationWithBoundary();
+    void handleScanForwardAction();
+    void handleScanBackwardAction();
+    void setFixedShortcutHost(QObject *host);
+    void clearFixedShortcutRouter();
+    bool handleFixedShortcutEvent(const QKeySequence &shortcut);
+    bool handleHorizontalArrowShortcut(bool leftArrow);
+    bool handleSinglePageArrowShortcut(bool leftArrow);
+    bool handleVerticalPanShortcut(bool up);
 
     std::unique_ptr<KiriView::ApplicationActions::KiriViewApplicationActionHost> m_actionHost;
     std::unique_ptr<KiriView::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;
+    std::unique_ptr<QObject> m_fixedShortcutEventFilter;
+    QPointer<KiriDocumentSession> m_documentSession;
+    QPointer<QObject> m_shortcutHost;
+    QPointer<QWindow> m_shortcutWindow;
+    std::vector<QMetaObject::Connection> m_actionStateConnections;
+    KiriView::ImageShortcutNavigationPolicy m_navigationPolicy;
+    ImageActionAvailabilityProjection m_imageActionProjection;
+    KiriView::ApplicationActions::ApplicationActionStateInput m_actionStateInput;
+    bool m_helpDialogOpen = false;
+    bool m_textInputFocused = false;
+    bool m_imagePannable = false;
+    bool m_infoPanelVisible = false;
+    bool m_thumbnailPanelVisible = false;
+    bool m_fullscreen = false;
+    bool m_applicationMenuShortcutEnabled = false;
+    bool m_showMenubarActionEnabled = true;
 };
 
 #endif

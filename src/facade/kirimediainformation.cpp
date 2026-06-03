@@ -77,6 +77,8 @@ KiriMediaInformation::KiriMediaInformation(KiriDocumentSession &session, QObject
 
 bool KiriMediaInformation::available() const { return m_available; }
 
+quint64 KiriMediaInformation::revision() const { return m_revision; }
+
 QString KiriMediaInformation::title() const { return m_title; }
 
 QString KiriMediaInformation::summary() const { return m_summary; }
@@ -131,6 +133,7 @@ void KiriMediaInformation::refresh()
 {
     const KiriView::MediaInformationProjectionSnapshot &snapshot
         = m_session.mediaInformationSnapshot();
+    m_revision = snapshot.revision;
     m_available = snapshot.available;
     m_targetUrl = snapshot.targetUrl;
     m_title = snapshot.title;

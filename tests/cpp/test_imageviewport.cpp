@@ -249,6 +249,115 @@ public:
         Q_EMIT viewportFrameChanged();
     }
 
+    Q_INVOKABLE bool requestManualZoomPercent(double zoomPercent)
+    {
+        return requestAnchoredManualZoom(clampedManualZoomPercent(zoomPercent),
+            QPointF(m_viewportSize.width() / 2.0, m_viewportSize.height() / 2.0));
+    }
+
+    Q_INVOKABLE bool requestZoomByStep(double stepCount, const QPointF &viewportAnchorPoint)
+    {
+        if (!pointIsFinite(viewportAnchorPoint)) {
+            return false;
+        }
+
+        const QPointF anchorPoint = nearestImageViewportPoint(viewportAnchorPoint);
+        if (!pointIsFinite(anchorPoint)) {
+            return false;
+        }
+
+        return requestAnchoredManualZoom(steppedManualZoomPercent(stepCount), anchorPoint);
+    }
+
+    Q_INVOKABLE bool requestFitMode(ZoomMode zoomMode)
+    {
+        if (zoomMode == ZoomMode::Manual) {
+            return false;
+        }
+
+        setFitMode(zoomMode);
+        return true;
+    }
+
+    Q_INVOKABLE bool requestToggleFitOrActualSize(const QPointF &viewportPoint)
+    {
+        if (!pointIsFinite(viewportPoint)) {
+            return false;
+        }
+
+        if (m_zoomMode != ZoomMode::Fit) {
+            setFitMode(ZoomMode::Fit);
+            return true;
+        }
+
+        const QPointF anchorPoint = nearestImageViewportPoint(viewportPoint);
+        if (!pointIsFinite(anchorPoint)) {
+            return false;
+        }
+
+        return requestAnchoredManualZoom(clampedManualZoomPercent(100.0), anchorPoint);
+    }
+
+    Q_INVOKABLE bool requestViewportPanBy(double deltaX, double deltaY)
+    {
+        if (!viewportPannable()) {
+            return false;
+        }
+
+        return requestViewportInteractionContentPosition(
+            KiriView::imageViewportPanPosition(m_viewportSize, viewportImageRect(),
+                viewportContentPosition(), QPointF(deltaX, deltaY)));
+    }
+
+    Q_INVOKABLE bool requestViewportPanToInitialScanPosition()
+    {
+        if (!viewportPannable()) {
+            return false;
+        }
+
+        return requestViewportInteractionContentPosition(
+            KiriView::imageViewportInitialZScanPosition(m_viewportSize, viewportImageRect()));
+    }
+
+    Q_INVOKABLE bool requestViewportPanToFinalScanPosition()
+    {
+        if (!viewportPannable()) {
+            return false;
+        }
+
+        return requestViewportInteractionContentPosition(
+            KiriView::imageViewportFinalZScanPosition(m_viewportSize, viewportImageRect()));
+    }
+
+    Q_INVOKABLE bool requestViewportScanForward()
+    {
+        if (!viewportPannable()) {
+            return false;
+        }
+
+        return requestViewportInteractionContentPosition(KiriView::imageViewportNextZScanPosition(
+            m_viewportSize, viewportImageRect(), viewportContentPosition()));
+    }
+
+    Q_INVOKABLE bool requestViewportScanBackward()
+    {
+        if (!viewportPannable()) {
+            return false;
+        }
+
+        return requestViewportInteractionContentPosition(
+            KiriView::imageViewportPreviousZScanPosition(
+                m_viewportSize, viewportImageRect(), viewportContentPosition()));
+    }
+
+    Q_INVOKABLE void requestNextDisplayedImageStartToFinalScanPosition() { }
+
+    Q_INVOKABLE bool requestDisplayedImageInitialContentPosition()
+    {
+        return requestViewportInteractionContentPosition(
+            KiriView::imageViewportInitialZScanPosition(m_viewportSize, viewportImageRect()));
+    }
+
     Q_INVOKABLE quint64 requestViewportContentPosition(const QPointF &viewportContentPosition)
     {
         const KiriView::ImageViewportFrame previousFrame = viewportFrame();
@@ -301,6 +410,51 @@ Q_SIGNALS:
     void zoomModeChanged();
 
 private:
+    static bool pointIsFinite(const QPointF &point)
+    {
+        return std::isfinite(point.x()) && std::isfinite(point.y());
+    }
+
+    QPointF nearestImageViewportPoint(const QPointF &viewportAnchorPoint) const
+    {
+        return KiriView::imageViewportNearestImagePoint(
+            viewportContentPosition(), viewportAnchorPoint, viewportImageRect());
+    }
+
+    bool requestViewportInteractionContentPosition(const QPointF &contentPosition)
+    {
+        if (!pointIsFinite(contentPosition)) {
+            return false;
+        }
+
+        const QPointF previousContentPosition = viewportContentPosition();
+        const quint64 previousCommandRevision = m_viewportCommandRevision;
+        const quint64 commandRevision = requestViewportContentPosition(contentPosition);
+        return previousContentPosition != viewportContentPosition()
+            || commandRevision > previousCommandRevision;
+    }
+
+    bool requestAnchoredManualZoom(double zoomPercent, const QPointF &viewportAnchorPoint)
+    {
+        if (!pointIsFinite(viewportAnchorPoint)) {
+            return false;
+        }
+
+        const double nextZoomPercent = clampedManualZoomPercent(zoomPercent);
+        if (std::abs(m_zoomPercent - nextZoomPercent) < 0.001) {
+            return false;
+        }
+
+        const QSizeF nextDisplaySize
+            = KiriView::imageViewportDisplaySizeForZoom(imageSize(), nextZoomPercent, 1.0);
+        const QPointF nextContentPosition
+            = KiriView::imageViewportContentPositionForZoom(m_viewportSize, displaySize(),
+                nextDisplaySize, viewportContentPosition(), viewportAnchorPoint);
+        setZoomPercent(nextZoomPercent);
+        requestViewportInteractionContentPosition(nextContentPosition);
+        return true;
+    }
+
     double fitZoomPercent(ZoomMode zoomMode) const
     {
         if (m_viewportSize.isEmpty()) {
@@ -546,15 +700,15 @@ Item {
     }
 
     function setManualZoom(zoomPercent) {
-        imageViewport.imageDocument.zoomPercent = zoomPercent;
+        imageViewport.imageDocument.requestManualZoomPercent(zoomPercent);
     }
 
     function setFitZoom() {
-        imageViewport.imageDocument.setFitMode(KiriImageDocument.Fit);
+        imageViewport.imageDocument.requestFitMode(KiriImageDocument.Fit);
     }
 
     function setFitHeightZoom() {
-        imageViewport.imageDocument.setFitMode(KiriImageDocument.FitHeight);
+        imageViewport.imageDocument.requestFitMode(KiriImageDocument.FitHeight);
     }
 
     function zoomMode() {

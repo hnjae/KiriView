@@ -441,16 +441,17 @@ msgid ""
 "yet."
 msgstr ""
 
+#: src/facade/kiriviewapplication.cpp
+#: src/localization/activenavigationboundarytext.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "First image"
+msgstr ""
+
 #: src/localization/activenavigationboundarytext.cpp
 #, kde-format
 msgctxt "@info:status"
 msgid "First media item"
-msgstr ""
-
-#: src/localization/activenavigationboundarytext.cpp src/qml/ImageShortcuts.qml
-#, kde-format
-msgctxt "@info:status"
-msgid "First image"
 msgstr ""
 
 #: src/localization/activenavigationboundarytext.cpp
@@ -1017,12 +1018,12 @@ msgstr ""
 
 #: src/qml/Main.qml
 msgctxt "@info:status"
-msgid "Could not open media with another application"
+msgid "This action is not available for videos"
 msgstr ""
 
 #: src/qml/Main.qml
 msgctxt "@info:status"
-msgid "This action is not available for videos"
+msgid "Could not open media with another application"
 msgstr ""
 
 #: src/qml/Main.qml

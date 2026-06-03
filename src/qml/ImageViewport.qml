@@ -129,55 +129,42 @@ MediaViewportDelegate {
     }
 
     function setNextDisplayedImageStartToFinalScanPosition() {
-        imageView.setNextDisplayedImageStartToFinalScanPosition();
+        root.imageDocument.requestNextDisplayedImageStartToFinalScanPosition();
     }
 
     function applyDisplayedImageInitialContentPosition() {
-        moveContentPosition(imageView.displayedImageInitialContentPosition());
+        root.imageDocument.requestDisplayedImageInitialContentPosition();
+        root.applyViewportProjection();
     }
 
     function panBy(deltaX, deltaY) {
-        if (!imagePannable) {
-            return false;
-        }
-
-        const nextContentPosition = imageView.panContentPosition(currentContentPosition(), Qt.point(deltaX, deltaY));
-        return moveContentPosition(nextContentPosition);
+        const moved = root.imageDocument.requestViewportPanBy(deltaX, deltaY);
+        root.applyViewportProjection();
+        return moved;
     }
 
     function panToBottomRight() {
-        if (!imagePannable) {
-            return false;
-        }
-
-        const nextContentPosition = imageView.finalScanContentPosition();
-        return moveContentPosition(nextContentPosition);
+        const moved = root.imageDocument.requestViewportPanToFinalScanPosition();
+        root.applyViewportProjection();
+        return moved;
     }
 
     function panToTopLeft() {
-        if (!imagePannable) {
-            return false;
-        }
-
-        return moveContentPosition(imageView.initialScanContentPosition());
+        const moved = root.imageDocument.requestViewportPanToInitialScanPosition();
+        root.applyViewportProjection();
+        return moved;
     }
 
     function scanForward() {
-        if (!imagePannable) {
-            return false;
-        }
-
-        const nextContentPosition = imageView.nextScanContentPosition(currentContentPosition());
-        return moveContentPosition(nextContentPosition);
+        const moved = root.imageDocument.requestViewportScanForward();
+        root.applyViewportProjection();
+        return moved;
     }
 
     function scanBackward() {
-        if (!imagePannable) {
-            return false;
-        }
-
-        const nextContentPosition = imageView.previousScanContentPosition(currentContentPosition());
-        return moveContentPosition(nextContentPosition);
+        const moved = root.imageDocument.requestViewportScanBackward();
+        root.applyViewportProjection();
+        return moved;
     }
 
     function viewportPointInsideImage(viewportX, viewportY) {
@@ -202,15 +189,9 @@ MediaViewportDelegate {
             return false;
         }
 
-        const nextZoomPercent = root.imageDocument.steppedManualZoomPercent(stepCount);
-        if (Math.abs(nextZoomPercent - root.imageDocument.zoomPercent) < 0.001) {
-            return false;
-        }
-
-        const nextContentPosition = imageView.zoomContentPosition(currentContentPosition(), Qt.point(viewportX, viewportY), nextZoomPercent);
-        root.imageDocument.zoomPercent = nextZoomPercent;
-        setContentPosition(nextContentPosition);
-        return true;
+        const zoomed = root.imageDocument.requestZoomByStep(stepCount, Qt.point(viewportX, viewportY));
+        root.applyViewportProjection();
+        return zoomed;
     }
 
     function toggleFitOrActualSize(viewportX, viewportY) {
@@ -218,21 +199,9 @@ MediaViewportDelegate {
             return false;
         }
 
-        if (root.imageDocument.zoomMode !== KiriImageDocument.Fit) {
-            root.imageDocument.setFitMode(KiriImageDocument.Fit);
-            return true;
-        }
-
-        const anchorPoint = root.nearestImageViewportPoint(viewportX, viewportY);
-        if (anchorPoint === null) {
-            return false;
-        }
-
-        const nextZoomPercent = root.imageDocument.clampedManualZoomPercent(100);
-        const nextContentPosition = imageView.zoomContentPosition(currentContentPosition(), anchorPoint, nextZoomPercent);
-        root.imageDocument.zoomPercent = nextZoomPercent;
-        setContentPosition(nextContentPosition);
-        return true;
+        const toggled = root.imageDocument.requestToggleFitOrActualSize(Qt.point(viewportX, viewportY));
+        root.applyViewportProjection();
+        return toggled;
     }
 
     function wheelZoomStepCount(wheel) {

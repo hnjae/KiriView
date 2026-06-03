@@ -9,6 +9,7 @@
 #include "location/imagelocation.h"
 #include "system/filedeletion.h"
 
+#include <cmath>
 #include <memory>
 #include <utility>
 
@@ -84,6 +85,11 @@ KiriView::ImageViewportObservationOrigin toImageViewportObservationOrigin(
     }
 
     return KiriView::ImageViewportObservationOrigin::System;
+}
+
+bool pointIsFinite(const QPointF &point)
+{
+    return std::isfinite(point.x()) && std::isfinite(point.y());
 }
 
 KiriImageDocument::PresentationTransitionState fromImagePresentationTransitionState(
@@ -452,6 +458,152 @@ double KiriImageDocument::steppedManualZoomPercent(double stepCount) const
     return m_runtime->steppedManualZoomPercent(stepCount);
 }
 
+bool KiriImageDocument::requestManualZoomPercent(double zoomPercent)
+{
+    if (status() != Status::Ready) {
+        return false;
+    }
+
+    return requestAnchoredManualZoom(clampedManualZoomPercent(zoomPercent),
+        QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
+}
+
+bool KiriImageDocument::requestZoomByStep(double stepCount, const QPointF &viewportAnchorPoint)
+{
+    if (status() != Status::Ready || !pointIsFinite(viewportAnchorPoint)) {
+        return false;
+    }
+
+    const QPointF anchorPoint = m_viewportInteraction.nearestImageViewportPoint(
+        viewportInteractionSnapshot(), viewportContentPosition(), viewportAnchorPoint);
+    if (!pointIsFinite(anchorPoint)) {
+        return false;
+    }
+
+    return requestAnchoredManualZoom(steppedManualZoomPercent(stepCount), anchorPoint);
+}
+
+bool KiriImageDocument::requestZoomByStepAtCenter(double stepCount)
+{
+    return requestZoomByStep(
+        stepCount, QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
+}
+
+bool KiriImageDocument::requestActualSizeAtCenter()
+{
+    if (status() != Status::Ready) {
+        return false;
+    }
+
+    return requestAnchoredManualZoom(clampedManualZoomPercent(100.0),
+        QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
+}
+
+bool KiriImageDocument::requestFitMode(ZoomMode zoomMode)
+{
+    if (status() != Status::Ready) {
+        return false;
+    }
+
+    if (zoomMode == ZoomMode::Fit) {
+        resetZoom();
+        return true;
+    }
+
+    setFitMode(zoomMode);
+    return true;
+}
+
+bool KiriImageDocument::requestToggleFitOrActualSize(const QPointF &viewportPoint)
+{
+    if (status() != Status::Ready || !pointIsFinite(viewportPoint)) {
+        return false;
+    }
+
+    if (zoomMode() != ZoomMode::Fit) {
+        setFitMode(ZoomMode::Fit);
+        return true;
+    }
+
+    const QPointF anchorPoint = m_viewportInteraction.nearestImageViewportPoint(
+        viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
+    if (!pointIsFinite(anchorPoint)) {
+        return false;
+    }
+
+    return requestAnchoredManualZoom(clampedManualZoomPercent(100.0), anchorPoint);
+}
+
+bool KiriImageDocument::requestViewportPanBy(double deltaX, double deltaY)
+{
+    if (!viewportPannable()) {
+        return false;
+    }
+
+    const QPointF nextContentPosition = m_viewportInteraction.panContentPosition(
+        viewportInteractionSnapshot(), viewportContentPosition(), QPointF(deltaX, deltaY));
+    return requestViewportInteractionContentPosition(nextContentPosition);
+}
+
+bool KiriImageDocument::requestViewportPanToInitialScanPosition()
+{
+    if (!viewportPannable()) {
+        return false;
+    }
+
+    return requestViewportInteractionContentPosition(
+        m_viewportInteraction.initialScanContentPosition(viewportInteractionSnapshot()));
+}
+
+bool KiriImageDocument::requestViewportPanToFinalScanPosition()
+{
+    if (!viewportPannable()) {
+        return false;
+    }
+
+    return requestViewportInteractionContentPosition(
+        m_viewportInteraction.finalScanContentPosition(viewportInteractionSnapshot()));
+}
+
+bool KiriImageDocument::requestViewportScanForward()
+{
+    if (!viewportPannable()) {
+        return false;
+    }
+
+    return requestViewportInteractionContentPosition(m_viewportInteraction.nextScanContentPosition(
+        viewportInteractionSnapshot(), viewportContentPosition()));
+}
+
+bool KiriImageDocument::requestViewportScanBackward()
+{
+    if (!viewportPannable()) {
+        return false;
+    }
+
+    return requestViewportInteractionContentPosition(
+        m_viewportInteraction.previousScanContentPosition(
+            viewportInteractionSnapshot(), viewportContentPosition()));
+}
+
+void KiriImageDocument::requestNextDisplayedImageStartToFinalScanPosition()
+{
+    m_viewportInteraction.requestNextDisplayedImageFinalScanStart();
+}
+
+bool KiriImageDocument::requestDisplayedImageInitialContentPosition()
+{
+    return requestViewportInteractionContentPosition(
+        m_viewportInteraction.displayedImageInitialContentPosition(viewportInteractionSnapshot()));
+}
+
+void KiriImageDocument::requestToggleTwoPageMode() { setTwoPageModeEnabled(!twoPageModeEnabled()); }
+
+void KiriImageDocument::requestToggleRightToLeftReading()
+{
+    setRightToLeftReadingEnabled(!rightToLeftReadingEnabled());
+}
+
 void KiriImageDocument::updateRenderContext() { m_runtime->updateRenderContext(); }
 
 quint64 KiriImageDocument::requestViewportContentPosition(const QPointF &viewportContentPosition)
@@ -470,6 +622,50 @@ bool KiriImageDocument::observeViewportContentPosition(
 {
     return m_runtime->observeViewportContentPosition(
         contentPosition, toImageViewportObservationOrigin(origin));
+}
+
+KiriView::ImageViewportInteractionSnapshot KiriImageDocument::viewportInteractionSnapshot() const
+{
+    return KiriView::ImageViewportInteractionSnapshot {
+        imageSize(),
+        viewportSize(),
+        displaySize(),
+        renderSnapshot().devicePixelRatio,
+        rightToLeftReadingEnabled() && rightToLeftReadingAvailable(),
+    };
+}
+
+bool KiriImageDocument::requestViewportInteractionContentPosition(const QPointF &contentPosition)
+{
+    if (!pointIsFinite(contentPosition)) {
+        return false;
+    }
+
+    const QPointF previousContentPosition = viewportContentPosition();
+    const quint64 previousCommandRevision = viewportCommandRevision();
+    const quint64 commandRevision = requestViewportContentPosition(contentPosition);
+    return previousContentPosition != viewportContentPosition()
+        || commandRevision > previousCommandRevision;
+}
+
+bool KiriImageDocument::requestAnchoredManualZoom(
+    double zoomPercent, const QPointF &viewportAnchorPoint)
+{
+    if (!pointIsFinite(viewportAnchorPoint)) {
+        return false;
+    }
+
+    const double nextZoomPercent = clampedManualZoomPercent(zoomPercent);
+    if (std::abs(nextZoomPercent - this->zoomPercent()) < 0.001) {
+        return false;
+    }
+
+    const QPointF nextContentPosition
+        = m_viewportInteraction.zoomContentPosition(viewportInteractionSnapshot(),
+            viewportContentPosition(), viewportAnchorPoint, nextZoomPercent);
+    setZoomPercent(nextZoomPercent);
+    requestViewportInteractionContentPosition(nextContentPosition);
+    return true;
 }
 
 void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)

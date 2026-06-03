@@ -26,7 +26,8 @@ class KiriDocumentSession;
 class KiriVideoDocument : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    QML_NAMED_ELEMENT(KiriVideoDocument)
+    QML_UNCREATABLE("KiriVideoDocument is owned by KiriDocumentSession")
 
     Q_PROPERTY(QUrl sourceUrl READ sourceUrl NOTIFY sourceUrlChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)

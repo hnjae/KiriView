@@ -58,9 +58,6 @@ public:
     bool updatePublicSnapshot(const DocumentSessionPublicSnapshotInput &input);
     bool updatePublicSnapshotForSourceKind(
         const DocumentSessionPublicSnapshotInput &input, ActiveNavigationSourceKind sourceKind);
-    bool updatePublicProjection(DocumentSessionPublicProjectionInput input);
-    bool updatePublicProjectionForSourceKind(
-        DocumentSessionPublicProjectionInput input, ActiveNavigationSourceKind sourceKind);
     void setSessionErrorString(const QString &errorString);
     bool clearDirectMediaCursor();
     bool requestDirectImageCursor(const QUrl &url);
@@ -72,7 +69,6 @@ public:
     void publish(std::vector<DocumentSessionChange> changes);
 
 private:
-    bool applyPublicProjection(DocumentSessionPublicProjection projection);
     bool applyPublicSnapshot(DocumentSessionPublicSnapshot snapshot);
 
     ChangeCallback m_changeCallback;
@@ -81,7 +77,6 @@ private:
     DirectMediaCursor m_directMediaCursor;
     DirectMediaNavigationBoundaryState m_directMediaNavigationState;
     std::vector<DirectMediaNavigationCandidate> m_directMediaNavigationCandidates;
-    DocumentSessionPublicProjection m_publicProjection;
     DocumentSessionPublicSnapshot m_publicSnapshot;
     ActiveZoomSnapshot m_activeZoomSnapshot;
     ActiveNavigationRevealIntent m_activeNavigationRevealIntent

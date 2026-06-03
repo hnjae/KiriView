@@ -68,7 +68,7 @@ RowLayout {
             return;
         }
 
-        root.imageDocument.zoomPercent = root.imageDocument.steppedManualZoomPercent(stepCount * 0.5);
+        root.imageDocument.requestZoomByStepAtCenter(stepCount * 0.5);
         wheel.accepted = true;
     }
 
@@ -249,7 +249,7 @@ RowLayout {
             const zoomPercent = parsedZoomText();
             if (Number.isFinite(zoomPercent)) {
                 root.pendingZoomStepCount = 0;
-                root.imageDocument.zoomPercent = root.imageDocument.clampedManualZoomPercent(Math.round(zoomPercent));
+                root.imageDocument.requestManualZoomPercent(Math.round(zoomPercent));
             }
             restoreZoomText();
         }
@@ -279,7 +279,11 @@ RowLayout {
 
             const stepCount = zoomSpinBox.up.pressed ? 1 : (zoomSpinBox.down.pressed ? -1 : root.pendingZoomStepCount);
             root.pendingZoomStepCount = 0;
-            root.imageDocument.zoomPercent = stepCount === 0 ? root.imageDocument.clampedManualZoomPercent(value) : root.imageDocument.steppedManualZoomPercent(stepCount);
+            if (stepCount === 0) {
+                root.imageDocument.requestManualZoomPercent(value);
+                return;
+            }
+            root.imageDocument.requestZoomByStepAtCenter(stepCount);
         }
 
         Connections {

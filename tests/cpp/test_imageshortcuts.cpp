@@ -19,8 +19,10 @@
 #include <QBuffer>
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QImage>
 #include <QObject>
+#include <QPointF>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQuickView>
@@ -116,7 +118,7 @@ QString qmlSourceImport()
 
 bool writeTestPng(const QString &path)
 {
-    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
+    QImage image(QSize(800, 800), QImage::Format_RGBA8888);
     image.fill(Qt::red);
     return image.save(path, "PNG");
 }
@@ -177,6 +179,26 @@ std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QStri
     return directory;
 }
 
+std::unique_ptr<QTemporaryDir> createVideoFile(QString *sourcePath, QString *errorString)
+{
+    auto directory = std::make_unique<QTemporaryDir>();
+    if (!directory->isValid()) {
+        *errorString = QStringLiteral("temporary video directory was not created");
+        return nullptr;
+    }
+
+    const QString videoPath = directory->filePath(QStringLiteral("clip.mp4"));
+    QFile file(videoPath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        *errorString = QStringLiteral("failed to create test video file");
+        return nullptr;
+    }
+    file.close();
+
+    *sourcePath = videoPath;
+    return directory;
+}
+
 QString fixtureQml(const QString &sourceUrl = QString())
 {
     return QStringLiteral(R"(
@@ -202,11 +224,10 @@ Item {
     property int openApplicationMenuCount: 0
     property string lastBoundaryMessage: ""
     property alias activeNavigationKnown: documentSession.activeNavigationKnown
-    property real lastPanX: 0
-    property real lastPanY: 0
     readonly property KiriImageDocument sessionImageDocument: documentSession.imageDocument
     readonly property int currentPageNumber: sessionImageDocument.currentPageNumber
     readonly property int currentLastPageNumber: sessionImageDocument.currentLastPageNumber
+    readonly property int documentKind: documentSession.documentKind
     readonly property int pageCount: sessionImageDocument.pageCount
     readonly property bool rightToLeftReadingAvailable: sessionImageDocument.rightToLeftReadingAvailable
     property bool rightToLeftReadingEnabled: sessionImageDocument.rightToLeftReadingEnabled
@@ -214,18 +235,24 @@ Item {
     property KiriImageDocument testImageDocument: sessionImageDocument
     readonly property bool twoPageModeAvailable: sessionImageDocument.twoPageModeAvailable
     property bool twoPageModeEnabled: sessionImageDocument.twoPageModeEnabled
+    readonly property point viewportContentPosition: sessionImageDocument.viewportContentPosition
+    readonly property bool viewportPannable: sessionImageDocument.viewportPannable
 
     onRightToLeftReadingEnabledChanged: {
         if (sessionImageDocument.rightToLeftReadingEnabled !== rightToLeftReadingEnabled) {
-            sessionImageDocument.rightToLeftReadingEnabled = rightToLeftReadingEnabled;
+            sessionImageDocument.requestToggleRightToLeftReading();
         }
     }
 
     onTwoPageModeEnabledChanged: {
         if (sessionImageDocument.twoPageModeEnabled !== twoPageModeEnabled) {
-            sessionImageDocument.twoPageModeEnabled = twoPageModeEnabled;
+            sessionImageDocument.requestToggleTwoPageMode();
         }
     }
+
+    onHelpDialogOpenChanged: publishActionUiState()
+    onImagePannableChanged: publishActionUiState()
+    onToolbarTextInputFocusedChanged: publishActionUiState()
 
     function openImageAtPage(pageNumber) {
         sessionImageDocument.openImageAtPage(pageNumber);
@@ -237,20 +264,25 @@ Item {
 
     function resetPanLog() {
         panCount = 0;
-        lastPanX = 0;
-        lastPanY = 0;
+    }
+
+    function publishActionUiState() {
+        application.updateActionUiState(helpDialogOpen, toolbarTextInputFocused, imagePannable, false, false, false, true, true);
     }
 
     function refreshDerivedDocumentState() {
-        actionAvailability.twoPageModeAvailable = sessionImageDocument.twoPageModeAvailable;
-        actionAvailability.twoPageModeEnabled = sessionImageDocument.twoPageModeEnabled;
-        actionAvailability.rightToLeftReadingAvailable = sessionImageDocument.rightToLeftReadingAvailable;
-        actionAvailability.rightToLeftReadingEnabled = sessionImageDocument.rightToLeftReadingEnabled;
+        publishActionUiState();
+    }
+
+    function zoomToActualSize() {
+        return sessionImageDocument.requestManualZoomPercent(100);
     }
 
     Component.onCompleted: {
         sessionImageDocument.viewportSize = Qt.size(width, height);
-        application.setShortcutHost(root.Window.window);
+        application.setDocumentSession(documentSession);
+        application.setShortcutHost(root);
+        publishActionUiState();
         forceActiveFocus();
     }
 
@@ -266,97 +298,23 @@ Item {
         sourceUrl: "%2"
     }
 
-    KiriViewQml.ImageViewportInteractionSurface {
-        id: imageInteractionSurface
-
-        imageHorizontallyPannable: root.imageHorizontallyPannable
-        imagePannable: root.imagePannable
-        viewportHeight: 100
-        viewportWidth: 100
-
-        function panBy(deltaX, deltaY) {
-            root.panCount += 1;
-            root.lastPanX = deltaX;
-            root.lastPanY = deltaY;
-            return true;
-        }
-
-        function panToBottomRight() {
-            return false;
-        }
-
-        function panToTopLeft() {
-            return false;
-        }
-
-        function scanBackward() {
-            return false;
-        }
-
-        function scanForward() {
-            return false;
-        }
-
-        function setNextDisplayedImageStartToFinalScanPosition() {
-        }
-
-        function zoomByStep(stepCount, viewportX, viewportY) {
-            return false;
-        }
-
-        function zoomByStepAtCenter(stepCount) {
-            return zoomByStep(stepCount, viewportWidth / 2, viewportHeight / 2);
-        }
-    }
-
-    QtObject {
-        id: imageToolBar
-
-        function textInputFocused() {
-            return root.toolbarTextInputFocused;
-        }
-    }
-
-    ImageActionAvailability {
-        id: actionAvailability
-
-        containerNavigationAvailable: root.sessionImageDocument.containerNavigationAvailable
-        fileDeletionInProgress: root.sessionImageDocument.fileDeletionInProgress
-        helpDialogOpen: root.helpDialogOpen
-        imagePannable: imageInteractionSurface.imagePannable
-        imageReady: root.sessionImageDocument.status === KiriImageDocument.Ready
-        rightToLeftReadingAvailable: root.sessionImageDocument.rightToLeftReadingAvailable
-        rightToLeftReadingEnabled: root.sessionImageDocument.rightToLeftReadingEnabled
-        textInputFocused: imageToolBar.textInputFocused()
-        twoPageModeAvailable: root.sessionImageDocument.twoPageModeAvailable
-        twoPageModeEnabled: root.sessionImageDocument.twoPageModeEnabled
-    }
-
     KiriViewQml.ImageShortcuts {
         id: imageShortcuts
-
-        application: application
-        actionAvailability: actionAvailability
-        documentSession: documentSession
-        imageDocument: root.testImageDocument
-        imageInteractionSurface: imageInteractionSurface
-        videoFileDeletionInProgress: root.videoFileDeletionInProgress
-        videoMode: root.videoMode
-
-        onImageBoundaryReached: function (message) {
-            root.lastBoundaryMessage = message;
-        }
-
-        onUnsupportedVideoActionRequested: root.unsupportedVideoActionCount += 1
     }
 
     Connections {
         target: application
 
-        function onActionTriggered(actionId) {
-            if (actionId === KiriViewApplication.OpenApplicationMenuAction) {
-                root.openApplicationMenuCount += 1;
-            }
+        function onImageBoundaryReached(message) {
+            root.lastBoundaryMessage = message;
+        }
+
+        function onOpenApplicationMenuRequested() {
+            root.openApplicationMenuCount += 1;
+        }
+
+        function onUnsupportedVideoActionTriggered(actionId) {
+            root.unsupportedVideoActionCount += 1;
         }
     }
 }
@@ -444,6 +402,22 @@ ImageShortcutsFixture createComicBookFixture()
     return fixture;
 }
 
+ImageShortcutsFixture createVideoFixture()
+{
+    QString sourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> directory = createVideoFile(&sourcePath, &errorString);
+    if (directory == nullptr) {
+        ImageShortcutsFixture fixture;
+        fixture.errorString = errorString;
+        return fixture;
+    }
+
+    ImageShortcutsFixture fixture = createFixture(QUrl::fromLocalFile(sourcePath).toString());
+    fixture.temporaryDirectory = std::move(directory);
+    return fixture;
+}
+
 bool documentReady(QObject *root)
 {
     QVariant result;
@@ -473,6 +447,19 @@ bool openImageAtPage(QObject *root, int pageNumber)
 bool refreshDerivedDocumentState(QObject *root)
 {
     return QMetaObject::invokeMethod(root, "refreshDerivedDocumentState", Qt::DirectConnection);
+}
+
+bool zoomToActualSize(QObject *root)
+{
+    QVariant result;
+    return QMetaObject::invokeMethod(
+               root, "zoomToActualSize", Qt::DirectConnection, Q_RETURN_ARG(QVariant, result))
+        && result.toBool();
+}
+
+QPointF viewportContentPosition(QObject *root)
+{
+    return root->property("viewportContentPosition").toPointF();
 }
 
 void prepareTwoPageSpread(ImageShortcutsFixture &fixture)
@@ -510,28 +497,25 @@ void TestImageShortcuts::arrowKeysPanAsFixedViewerShortcuts()
     ImageShortcutsFixture fixture = createReadyFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(documentReady(fixture.root));
+    QVERIFY(zoomToActualSize(fixture.root));
+    QTRY_VERIFY(fixture.root->property("viewportPannable").toBool());
+    QVERIFY(fixture.root->setProperty("imagePannable", true));
 
-    fixture.root->setProperty("imageHorizontallyPannable", true);
-    pressKey(fixture.view.get(), Qt::Key_Left);
-    QCOMPARE(fixture.root->property("panCount").toInt(), 1);
-    QCOMPARE(fixture.root->property("lastPanX").toReal(), -64.0);
-    QCOMPARE(fixture.root->property("lastPanY").toReal(), 0.0);
-
+    const QPointF initialPosition = viewportContentPosition(fixture.root);
     pressKey(fixture.view.get(), Qt::Key_Right);
-    QCOMPARE(fixture.root->property("panCount").toInt(), 2);
-    QCOMPARE(fixture.root->property("lastPanX").toReal(), 64.0);
-    QCOMPARE(fixture.root->property("lastPanY").toReal(), 0.0);
+    QTRY_VERIFY(viewportContentPosition(fixture.root).x() > initialPosition.x());
 
-    fixture.root->setProperty("imagePannable", true);
-    pressKey(fixture.view.get(), Qt::Key_Up);
-    QCOMPARE(fixture.root->property("panCount").toInt(), 3);
-    QCOMPARE(fixture.root->property("lastPanX").toReal(), 0.0);
-    QCOMPARE(fixture.root->property("lastPanY").toReal(), -64.0);
+    const QPointF rightPosition = viewportContentPosition(fixture.root);
+    pressKey(fixture.view.get(), Qt::Key_Left);
+    QTRY_VERIFY(viewportContentPosition(fixture.root).x() < rightPosition.x());
 
+    const QPointF horizontalReturnPosition = viewportContentPosition(fixture.root);
     pressKey(fixture.view.get(), Qt::Key_Down);
-    QCOMPARE(fixture.root->property("panCount").toInt(), 4);
-    QCOMPARE(fixture.root->property("lastPanX").toReal(), 0.0);
-    QCOMPARE(fixture.root->property("lastPanY").toReal(), 64.0);
+    QTRY_VERIFY(viewportContentPosition(fixture.root).y() > horizontalReturnPosition.y());
+
+    const QPointF downPosition = viewportContentPosition(fixture.root);
+    pressKey(fixture.view.get(), Qt::Key_Up);
+    QTRY_VERIFY(viewportContentPosition(fixture.root).y() < downPosition.y());
 }
 
 void TestImageShortcuts::leftAndRightArrowKeysUseNavigationFallback()
@@ -556,19 +540,21 @@ void TestImageShortcuts::arrowKeysAreIgnoredWhileViewerShortcutsAreSuppressed()
     ImageShortcutsFixture fixture = createReadyFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(documentReady(fixture.root));
-    fixture.root->setProperty("imageHorizontallyPannable", true);
-    fixture.root->setProperty("imagePannable", true);
+    QVERIFY(zoomToActualSize(fixture.root));
+    QTRY_VERIFY(fixture.root->property("viewportPannable").toBool());
+    QVERIFY(fixture.root->setProperty("imagePannable", true));
+    const QPointF initialPosition = viewportContentPosition(fixture.root);
 
     fixture.root->setProperty("toolbarTextInputFocused", true);
     pressKey(fixture.view.get(), Qt::Key_Left);
     pressKey(fixture.view.get(), Qt::Key_Up);
-    QCOMPARE(fixture.root->property("panCount").toInt(), 0);
+    QCOMPARE(viewportContentPosition(fixture.root), initialPosition);
 
     fixture.root->setProperty("toolbarTextInputFocused", false);
     fixture.root->setProperty("helpDialogOpen", true);
     pressKey(fixture.view.get(), Qt::Key_Right);
     pressKey(fixture.view.get(), Qt::Key_Down);
-    QCOMPARE(fixture.root->property("panCount").toInt(), 0);
+    QCOMPARE(viewportContentPosition(fixture.root), initialPosition);
 }
 
 void TestImageShortcuts::shiftArrowsMoveOnePageInTwoPageModeLeftToRight()
@@ -681,9 +667,10 @@ void TestImageShortcuts::windowCommandShortcutsWorkWithoutQmlShortcutInstallers(
 
 void TestImageShortcuts::videoViewerAliasTriggersFullscreenAction()
 {
-    ImageShortcutsFixture fixture = createFixture();
+    ImageShortcutsFixture fixture = createVideoFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-    QVERIFY(fixture.root->setProperty("videoMode", true));
+    QTRY_COMPARE(fixture.root->property("documentKind").toInt(),
+        static_cast<int>(KiriDocumentSession::DocumentKind::Video));
 
     QAction *fullscreenAction = fixture.application->action(QStringLiteral("window_fullscreen"));
     QVERIFY(fullscreenAction != nullptr);
@@ -697,9 +684,10 @@ void TestImageShortcuts::videoViewerAliasTriggersFullscreenAction()
 
 void TestImageShortcuts::videoImageOnlyShortcutsShowUnsupportedToast()
 {
-    ImageShortcutsFixture fixture = createFixture();
+    ImageShortcutsFixture fixture = createVideoFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-    QVERIFY(fixture.root->setProperty("videoMode", true));
+    QTRY_COMPARE(fixture.root->property("documentKind").toInt(),
+        static_cast<int>(KiriDocumentSession::DocumentKind::Video));
 
     QAction *rotateAction = fixture.application->action(QStringLiteral("view_rotate_clockwise"));
     QAction *zoomInAction = fixture.application->action(QStringLiteral("view_zoom_in"));

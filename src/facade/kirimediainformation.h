@@ -11,6 +11,7 @@
 #include <QSize>
 #include <QString>
 #include <QUrl>
+#include <QtGlobal>
 #include <QtQml/qqmlregistration.h>
 #include <vector>
 
@@ -48,6 +49,7 @@ class KiriMediaInformation : public QObject
     QML_ELEMENT
 
     Q_PROPERTY(bool available READ available NOTIFY changed)
+    Q_PROPERTY(quint64 revision READ revision NOTIFY changed)
     Q_PROPERTY(QString title READ title NOTIFY changed)
     Q_PROPERTY(QString summary READ summary NOTIFY changed)
     Q_PROPERTY(QString mediaSectionTitle READ mediaSectionTitle NOTIFY changed)
@@ -64,6 +66,7 @@ public:
     explicit KiriMediaInformation(KiriDocumentSession &session, QObject *parent = nullptr);
 
     bool available() const;
+    quint64 revision() const;
     QString title() const;
     QString summary() const;
     QString mediaSectionTitle() const;
@@ -92,6 +95,7 @@ private:
     KiriMediaInformationRowModel m_mediaRows;
     KiriMediaInformationRowModel m_cameraRows;
     KiriMediaInformationRowModel m_advancedRows;
+    quint64 m_revision = 0;
     bool m_available = false;
     bool m_canCopyFilePath = false;
     bool m_canOpenContainingFolder = false;

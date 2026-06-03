@@ -7,12 +7,37 @@
 #include <QSize>
 #include <QTest>
 #include <QUrl>
+#include <algorithm>
 #include <vector>
 
 namespace {
 KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
     return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+}
+
+KiriView::DocumentSessionPublicSnapshotInput snapshotInputForProjection(
+    const KiriView::DocumentSessionPublicProjectionInput &input)
+{
+    KiriView::DocumentSessionPublicSnapshotInput snapshotInput;
+    snapshotInput.session.documentKind = input.documentKind;
+    snapshotInput.session.directImageLoadMayUseImageDocumentSourceScope
+        = input.directImageLoadMayUseImageDocumentSourceScope;
+    snapshotInput.session.fileDeletionInProgress = input.fileDeletionInProgress;
+    snapshotInput.session.directMediaNavigation = input.directMediaNavigation;
+    snapshotInput.image.sourceMayRepresentDocument = input.imageSourceMayRepresentDocument;
+    snapshotInput.image.pageNavigation = input.imageDocumentPageNavigation;
+    snapshotInput.image.windowTitleFileName = input.imageWindowTitleFileName;
+    snapshotInput.image.directMediaSize = input.imageDirectMediaSize;
+    snapshotInput.image.readyForDeletion = input.imageReadyForDeletion;
+    snapshotInput.image.directImageReplacementPending = input.directImageReplacementPending;
+    snapshotInput.video.windowTitleFileName = input.videoWindowTitleFileName;
+    snapshotInput.video.directMediaSize = input.videoDirectMediaSize;
+    snapshotInput.video.sourcePresent = input.videoSourcePresent;
+    snapshotInput.video.error = input.videoError;
+    snapshotInput.operations.displayedMediaOpenWithAvailable
+        = input.displayedMediaOpenWithAvailable;
+    return snapshotInput;
 }
 }
 
@@ -26,8 +51,8 @@ private Q_SLOTS:
     void activeZoomReadoutPublishesThroughSnapshotCommit();
     void fileDeletionProgressPublishesThroughSnapshotCommit();
     void directMediaNavigationSnapshotOwnsBoundaryAndCandidates();
-    void publicProjectionCommitsValuesBeforePublishing();
-    void publicProjectionOnlyNotifiesChangedOutputs();
+    void publicSnapshotCommitsProjectionValuesBeforePublishing();
+    void publicSnapshotOnlyNotifiesChangedProjectionOutputs();
     void publicSnapshotCommitsOneRevisionedBatch();
     void unchangedPublicSnapshotDoesNotAdvanceRevision();
     void publishDeduplicatesChangesInOrder();
@@ -179,7 +204,7 @@ void TestDocumentSessionState::directMediaNavigationSnapshotOwnsBoundaryAndCandi
     QVERIFY(state.directMediaNavigationCandidates().empty());
 }
 
-void TestDocumentSessionState::publicProjectionCommitsValuesBeforePublishing()
+void TestDocumentSessionState::publicSnapshotCommitsProjectionValuesBeforePublishing()
 {
     std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
     KiriView::DocumentSessionState *stateDuringCallback = nullptr;
@@ -209,20 +234,22 @@ void TestDocumentSessionState::publicProjectionCommitsValuesBeforePublishing()
     input.imageReadyForDeletion = true;
     input.displayedMediaOpenWithAvailable = true;
 
-    state.updatePublicProjection(input);
+    state.updatePublicSnapshot(snapshotInputForProjection(input));
 
     QCOMPARE(batches.size(), std::size_t(1));
-    QCOMPARE(batches.back().size(), std::size_t(4));
-    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::ActiveNavigation);
-    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::WindowTitleSubject);
-    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::FileDeletionAvailability);
-    QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::OpenWithAvailability);
+    QCOMPARE(batches.back().size(), std::size_t(6));
+    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::DocumentKind);
+    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::ActiveNavigation);
+    QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::WindowTitleSubject);
+    QCOMPARE(batches.back().at(4), KiriView::DocumentSessionChange::FileDeletionAvailability);
+    QCOMPARE(batches.back().at(5), KiriView::DocumentSessionChange::OpenWithAvailability);
 
-    state.updatePublicProjection(input);
+    state.updatePublicSnapshot(snapshotInputForProjection(input));
     QCOMPARE(batches.size(), std::size_t(1));
 }
 
-void TestDocumentSessionState::publicProjectionOnlyNotifiesChangedOutputs()
+void TestDocumentSessionState::publicSnapshotOnlyNotifiesChangedProjectionOutputs()
 {
     std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
     KiriView::DocumentSessionState state(
@@ -239,7 +266,7 @@ void TestDocumentSessionState::publicProjectionOnlyNotifiesChangedOutputs()
     input.videoSourcePresent = true;
     input.displayedMediaOpenWithAvailable = true;
 
-    state.updatePublicProjection(input);
+    state.updatePublicSnapshot(snapshotInputForProjection(input));
     QCOMPARE(batches.size(), std::size_t(1));
 
     input.documentKind = KiriView::DocumentSessionKind::Image;
@@ -249,31 +276,40 @@ void TestDocumentSessionState::publicProjectionOnlyNotifiesChangedOutputs()
         false, false, true, true, 1, 1 };
     input.imageReadyForDeletion = true;
     input.videoSourcePresent = false;
-    state.updatePublicProjection(input);
+    state.updatePublicSnapshot(snapshotInputForProjection(input));
 
     QCOMPARE(batches.size(), std::size_t(2));
-    QCOMPARE(batches.back().size(), std::size_t(1));
-    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::ActiveNavigation);
+    QVERIFY(std::find(batches.back().cbegin(), batches.back().cend(),
+                KiriView::DocumentSessionChange::PublicProjectionRevision)
+        != batches.back().cend());
+    QVERIFY(std::find(batches.back().cbegin(), batches.back().cend(),
+                KiriView::DocumentSessionChange::DocumentKind)
+        != batches.back().cend());
+    QVERIFY(std::find(batches.back().cbegin(), batches.back().cend(),
+                KiriView::DocumentSessionChange::ActiveNavigation)
+        != batches.back().cend());
     QCOMPARE(state.activeNavigationBoundaryScope(),
         KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage);
 
     input.imageReadyForDeletion = false;
-    state.updatePublicProjection(input);
+    state.updatePublicSnapshot(snapshotInputForProjection(input));
 
     QCOMPARE(batches.size(), std::size_t(3));
-    QCOMPARE(batches.back().size(), std::size_t(1));
-    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::FileDeletionAvailability);
+    QCOMPARE(batches.back().size(), std::size_t(2));
+    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::FileDeletionAvailability);
     QVERIFY(!state.displayedFileDeletionAvailable());
 
     input.displayedMediaOpenWithAvailable = false;
-    state.updatePublicProjection(input);
+    state.updatePublicSnapshot(snapshotInputForProjection(input));
 
     QCOMPARE(batches.size(), std::size_t(4));
-    QCOMPARE(batches.back().size(), std::size_t(1));
-    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::OpenWithAvailability);
+    QCOMPARE(batches.back().size(), std::size_t(2));
+    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::OpenWithAvailability);
     QVERIFY(!state.displayedMediaOpenWithAvailable());
 
-    state.updatePublicProjection(input);
+    state.updatePublicSnapshot(snapshotInputForProjection(input));
     QCOMPARE(batches.size(), std::size_t(4));
 }
 

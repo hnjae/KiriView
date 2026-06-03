@@ -104,6 +104,10 @@ StatefulApp.StatefulWindow {
         return activeImageToolBar().textInputFocused();
     }
 
+    function publishActionUiState() {
+        kiriApplication.updateActionUiState(root.helpDialogOpen, root.toolbarTextInputFocused(), page.imageMode && mediaWorkspaceHost.imageInteractionSurface.imagePannable, mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, !root.helpDialogOpen);
+    }
+
     minimumWidth: Kirigami.Units.gridUnit * 14
     minimumHeight: Kirigami.Units.gridUnit * 12
     width: Kirigami.Units.gridUnit * 24
@@ -119,7 +123,11 @@ StatefulApp.StatefulWindow {
         fullscreenToolBarRevealed = false;
     }
 
-    Component.onCompleted: kiriApplication.setShortcutHost(root)
+    Component.onCompleted: {
+        kiriApplication.setDocumentSession(documentSession);
+        kiriApplication.setShortcutHost(root);
+        root.publishActionUiState();
+    }
 
     Shortcut {
         context: Qt.WindowShortcut
@@ -148,10 +156,36 @@ StatefulApp.StatefulWindow {
     Connections {
         target: kiriApplication
 
-        function onActionTriggered(actionId) {
-            if (actionId === KiriViewApplication.OpenApplicationMenuAction) {
-                root.openApplicationMenu();
-            }
+        function onImageBoundaryReached(message) {
+            toastNotification.show(message, "image-boundary");
+        }
+
+        function onOpenApplicationMenuRequested() {
+            root.openApplicationMenu();
+        }
+
+        function onOpenDialogRequested() {
+            fileDialog.open();
+        }
+
+        function onShortcutHelpRequested() {
+            shortcutHelpDialog.open();
+        }
+
+        function onToggleFullScreenRequested() {
+            root.toggleFullScreen();
+        }
+
+        function onToggleInfoPanelRequested() {
+            mediaWorkspaceHost.toggleInfoPanel();
+        }
+
+        function onToggleThumbnailPanelRequested() {
+            mediaWorkspaceHost.toggleThumbnailPanel();
+        }
+
+        function onUnsupportedVideoActionTriggered(actionId) {
+            toastNotification.show(KI18n.i18nc("@info:status", "This action is not available for videos"), "unsupported-video-action");
         }
     }
 
@@ -211,6 +245,7 @@ StatefulApp.StatefulWindow {
         readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
         readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready && !imageDocument.unsupportedOpenedCollectionVideo
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
+        readonly property string actionUiStateRevision: [root.helpDialogOpen, root.fullscreen, root.applicationMenuShortcutEnabled, root.toolbarTextInputFocused(), mediaWorkspaceHost.imageInteractionSurface.imagePannable, mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible].join("|")
         property bool documentDeletionWasInProgress: false
 
         background: Rectangle {
@@ -260,44 +295,16 @@ StatefulApp.StatefulWindow {
             }
         }
 
-        ImageActionAvailability {
-            id: actionAvailability
-
-            containerNavigationAvailable: page.imageMode && page.imageDocument.containerNavigationAvailable
-            fileDeletionInProgress: documentSession.fileDeletionInProgress
-            helpDialogOpen: root.helpDialogOpen
-            imagePannable: page.imageMode && mediaWorkspaceHost.imageInteractionSurface.imagePannable
-            imageReady: page.imageReady
-            rightToLeftReadingAvailable: page.imageMode && page.imageDocument.rightToLeftReadingAvailable
-            rightToLeftReadingEnabled: page.imageMode && page.imageDocument.rightToLeftReadingEnabled
-            twoPageModeAvailable: page.imageMode && page.imageDocument.twoPageModeAvailable
-            twoPageModeEnabled: page.imageMode && page.imageDocument.twoPageModeEnabled
-        }
-
         ImageActions {
             id: imageActions
 
             application: kiriApplication
-            actionAvailability: actionAvailability
-            applicationMenuShortcutEnabled: root.applicationMenuShortcutEnabled
             documentSession: documentSession
-            fullscreen: root.fullscreen
             imageDocument: page.imageDocument
-            infoPanelVisible: mediaWorkspaceHost.infoPanelVisible
-            showMenubarActionEnabled: !root.helpDialogOpen
-            thumbnailPanelVisible: mediaWorkspaceHost.thumbnailPanelVisible
-            videoFileDeletionInProgress: documentSession.fileDeletionInProgress
             videoMode: page.videoMode
-
-            onImageBoundaryReached: function (message) {
-                toastNotification.show(message, "image-boundary");
-            }
-            onOpenDialogRequested: fileDialog.open()
-            onShortcutHelpRequested: shortcutHelpDialog.open()
-            onToggleFullScreenRequested: root.toggleFullScreen()
-            onToggleInfoPanelRequested: mediaWorkspaceHost.toggleInfoPanel()
-            onToggleThumbnailPanelRequested: mediaWorkspaceHost.toggleThumbnailPanel()
         }
+
+        onActionUiStateRevisionChanged: root.publishActionUiState()
 
         onFullscreenPointerPositionChanged: {
             if (root.fullscreen && fullscreenRevealHandler.hovered) {
@@ -369,32 +376,6 @@ StatefulApp.StatefulWindow {
             }
         }
 
-        Loader {
-            active: page.imageMode || page.videoMode
-            sourceComponent: ImageShortcuts {
-                application: kiriApplication
-                actionAvailability: actionAvailability
-                applicationMenuShortcutEnabled: root.applicationMenuShortcutEnabled
-                documentSession: documentSession
-                fullscreen: root.fullscreen
-                imageDocument: page.imageDocument
-                imageInteractionSurface: mediaWorkspaceHost.imageInteractionSurface
-                infoPanelVisible: mediaWorkspaceHost.infoPanelVisible
-                showMenubarActionEnabled: !root.helpDialogOpen
-                thumbnailPanelVisible: mediaWorkspaceHost.thumbnailPanelVisible
-                videoFileDeletionInProgress: documentSession.fileDeletionInProgress
-                videoMode: page.videoMode
-
-                onImageBoundaryReached: function (message) {
-                    toastNotification.show(message, "image-boundary");
-                }
-
-                onUnsupportedVideoActionRequested: {
-                    toastNotification.show(KI18n.i18nc("@info:status", "This action is not available for videos"), "unsupported-video-action");
-                }
-            }
-        }
-
         ToastNotification {
             id: toastNotification
 
@@ -459,12 +440,6 @@ StatefulApp.StatefulWindow {
 
                 root.scheduleFullscreenToolBarHide();
             }
-        }
-
-        Binding {
-            target: actionAvailability
-            property: "textInputFocused"
-            value: root.toolbarTextInputFocused()
         }
     }
 

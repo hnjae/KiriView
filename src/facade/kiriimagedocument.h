@@ -11,6 +11,7 @@
 #include "predecode/predecodedimage.h"
 #include "presentation/imagepresentationstate.h"
 #include "presentation/imageviewportcommandstate.h"
+#include "presentation/imageviewportinteraction.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
 
@@ -38,7 +39,8 @@ class KiriDocumentSession;
 class KiriImageDocument : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    QML_NAMED_ELEMENT(KiriImageDocument)
+    QML_UNCREATABLE("KiriImageDocument is owned by KiriDocumentSession")
 
     Q_PROPERTY(QUrl sourceUrl READ sourceUrl NOTIFY sourceUrlChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
@@ -52,8 +54,8 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(QSize secondaryImageSize READ secondaryImageSize NOTIFY twoPageModeChanged)
     Q_PROPERTY(
         QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
-    Q_PROPERTY(QPointF viewportContentPosition READ viewportContentPosition WRITE
-            setViewportContentPosition NOTIFY viewportFrameChanged)
+    Q_PROPERTY(
+        QPointF viewportContentPosition READ viewportContentPosition NOTIFY viewportFrameChanged)
     Q_PROPERTY(
         quint64 viewportCommandRevision READ viewportCommandRevision NOTIFY viewportFrameChanged)
     Q_PROPERTY(quint64 viewportAppliedCommandRevision READ viewportAppliedCommandRevision NOTIFY
@@ -68,13 +70,12 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(
         bool viewportVerticallyPannable READ viewportVerticallyPannable NOTIFY viewportFrameChanged)
     Q_PROPERTY(bool viewportPannable READ viewportPannable NOTIFY viewportFrameChanged)
-    Q_PROPERTY(QRectF visibleItemRect READ visibleItemRect WRITE setVisibleItemRect NOTIFY
-            visibleItemRectChanged)
+    Q_PROPERTY(QRectF visibleItemRect READ visibleItemRect NOTIFY visibleItemRectChanged)
     Q_PROPERTY(QSizeF displaySize READ displaySize NOTIFY displaySizeChanged)
     Q_PROPERTY(QSizeF primaryDisplaySize READ primaryDisplaySize NOTIFY displaySizeChanged)
     Q_PROPERTY(QSizeF secondaryDisplaySize READ secondaryDisplaySize NOTIFY twoPageModeChanged)
     Q_PROPERTY(bool zoomPercentKnown READ zoomPercentKnown NOTIFY zoomPercentKnownChanged)
-    Q_PROPERTY(double zoomPercent READ zoomPercent WRITE setZoomPercent NOTIFY zoomPercentChanged)
+    Q_PROPERTY(double zoomPercent READ zoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
     Q_PROPERTY(int rotationDegrees READ rotationDegrees NOTIFY rotationDegreesChanged)
     Q_PROPERTY(int minimumManualZoomPercent READ minimumManualZoomPercent CONSTANT)
@@ -93,11 +94,10 @@ class KiriImageDocument : public QObject
             imageDocumentSourceScopeChanged)
     Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress NOTIFY
             fileDeletionInProgressChanged)
-    Q_PROPERTY(bool twoPageModeEnabled READ twoPageModeEnabled WRITE setTwoPageModeEnabled NOTIFY
-            twoPageModeChanged)
+    Q_PROPERTY(bool twoPageModeEnabled READ twoPageModeEnabled NOTIFY twoPageModeChanged)
     Q_PROPERTY(bool twoPageModeAvailable READ twoPageModeAvailable NOTIFY twoPageModeChanged)
-    Q_PROPERTY(bool rightToLeftReadingEnabled READ rightToLeftReadingEnabled WRITE
-            setRightToLeftReadingEnabled NOTIFY rightToLeftReadingChanged)
+    Q_PROPERTY(bool rightToLeftReadingEnabled READ rightToLeftReadingEnabled NOTIFY
+            rightToLeftReadingChanged)
     Q_PROPERTY(bool rightToLeftReadingAvailable READ rightToLeftReadingAvailable NOTIFY
             rightToLeftReadingChanged)
     Q_PROPERTY(bool secondaryPageVisible READ secondaryPageVisible NOTIFY twoPageModeChanged)
@@ -233,6 +233,21 @@ public:
     Q_INVOKABLE void rotateCounterclockwise();
     Q_INVOKABLE double clampedManualZoomPercent(double zoomPercent) const;
     Q_INVOKABLE double steppedManualZoomPercent(double stepCount) const;
+    Q_INVOKABLE bool requestManualZoomPercent(double zoomPercent);
+    Q_INVOKABLE bool requestZoomByStep(double stepCount, const QPointF &viewportAnchorPoint);
+    Q_INVOKABLE bool requestZoomByStepAtCenter(double stepCount);
+    Q_INVOKABLE bool requestActualSizeAtCenter();
+    Q_INVOKABLE bool requestFitMode(KiriImageDocument::ZoomMode zoomMode);
+    Q_INVOKABLE bool requestToggleFitOrActualSize(const QPointF &viewportPoint);
+    Q_INVOKABLE bool requestViewportPanBy(double deltaX, double deltaY);
+    Q_INVOKABLE bool requestViewportPanToInitialScanPosition();
+    Q_INVOKABLE bool requestViewportPanToFinalScanPosition();
+    Q_INVOKABLE bool requestViewportScanForward();
+    Q_INVOKABLE bool requestViewportScanBackward();
+    Q_INVOKABLE void requestNextDisplayedImageStartToFinalScanPosition();
+    Q_INVOKABLE bool requestDisplayedImageInitialContentPosition();
+    Q_INVOKABLE void requestToggleTwoPageMode();
+    Q_INVOKABLE void requestToggleRightToLeftReading();
     Q_INVOKABLE void updateRenderContext();
     Q_INVOKABLE quint64 requestViewportContentPosition(const QPointF &viewportContentPosition);
     Q_INVOKABLE bool acknowledgeViewportCommand(
@@ -276,8 +291,12 @@ private:
 
     void setSourceUrl(const QUrl &sourceUrl);
     void handleDocumentChanges(const std::vector<KiriView::ImageDocumentChange> &changes);
+    KiriView::ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
+    bool requestViewportInteractionContentPosition(const QPointF &contentPosition);
+    bool requestAnchoredManualZoom(double zoomPercent, const QPointF &viewportAnchorPoint);
 
     std::unique_ptr<KiriView::ImageDocumentRuntime> m_runtime;
+    KiriView::ImageViewportInteraction m_viewportInteraction;
 };
 
 #endif
