@@ -4,10 +4,10 @@
   config,
   pkgs,
   lib,
+  qtCxxqt,
   ...
 }:
 let
-  qtCxxqt = import ../internal/qt-cxxqt.nix { inherit config pkgs lib; };
   repoRoot = lib.escapeShellArg config.devenv.root;
   hostRuntimeLibraryPath = lib.concatStringsSep ":" [
     "${config.devenv.root}/.devenv/profile/lib"
