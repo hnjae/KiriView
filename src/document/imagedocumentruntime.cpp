@@ -76,7 +76,14 @@ QString ImageDocumentRuntime::errorString() const { return state.errorString(); 
 
 QString ImageDocumentRuntime::windowTitleFileName() const { return state.windowTitleFileName(); }
 
-QUrl ImageDocumentRuntime::displayedUrl() const { return state.displayedUrl(); }
+QUrl ImageDocumentRuntime::displayedUrl() const
+{
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
+    return state.displayedUrl();
+}
 
 OpenedCollectionScopeLocation ImageDocumentRuntime::displayedOpenedCollectionScope() const
 {
@@ -85,16 +92,28 @@ OpenedCollectionScopeLocation ImageDocumentRuntime::displayedOpenedCollectionSco
 
 QSize ImageDocumentRuntime::imageSize() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
     return controllers->spreadController().imageSize();
 }
 
 QSize ImageDocumentRuntime::primaryImageSize() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
     return controllers->spreadController().primaryImageSize();
 }
 
 QSize ImageDocumentRuntime::secondaryImageSize() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
     return controllers->spreadController().secondaryImageSize();
 }
 
@@ -110,6 +129,10 @@ void ImageDocumentRuntime::setViewportSize(const QSizeF &viewportSize)
 
 QPointF ImageDocumentRuntime::viewportContentPosition() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
     return controllers->spreadController().viewportContentPosition();
 }
 
@@ -172,46 +195,82 @@ ImageViewportObservationOrigin ImageDocumentRuntime::viewportObservationOrigin()
 
 QSizeF ImageDocumentRuntime::viewportContentSize() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
     return controllers->spreadController().viewportContentSize();
 }
 
 QRectF ImageDocumentRuntime::viewportImageRect() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
     return controllers->spreadController().viewportImageRect();
 }
 
 bool ImageDocumentRuntime::viewportHorizontallyPannable() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return false;
+    }
+
     return controllers->spreadController().viewportHorizontallyPannable();
 }
 
 bool ImageDocumentRuntime::viewportVerticallyPannable() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return false;
+    }
+
     return controllers->spreadController().viewportVerticallyPannable();
 }
 
 bool ImageDocumentRuntime::viewportPannable() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return false;
+    }
+
     return controllers->spreadController().viewportPannable();
 }
 
 QRectF ImageDocumentRuntime::visibleItemRect() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
     return controllers->spreadController().visibleItemRect();
 }
 
 QSizeF ImageDocumentRuntime::displaySize() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
     return controllers->spreadController().displaySize();
 }
 
 QSizeF ImageDocumentRuntime::primaryDisplaySize() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
     return controllers->spreadController().primaryDisplaySize();
 }
 
 QSizeF ImageDocumentRuntime::secondaryDisplaySize() const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
     return controllers->spreadController().secondaryDisplaySize();
 }
 
@@ -375,6 +434,10 @@ const EmbeddedMetadata &ImageDocumentRuntime::embeddedMetadata() const
 
 DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageRole role) const
 {
+    if (status() != ImageDocumentStatus::Ready) {
+        return {};
+    }
+
     return controllers->spreadController().renderSnapshot(role);
 }
 

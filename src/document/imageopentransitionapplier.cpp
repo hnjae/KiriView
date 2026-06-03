@@ -84,6 +84,13 @@ void appendRuntimeOperationsForOpenEffect(KiriView::ImageDocumentRuntimePlan &pl
             std::make_move_iterator(clearPlan.end()));
         return;
     }
+    case KiriView::ImageOpenEffect::ClearLoadingPresentation: {
+        KiriView::ImageDocumentRuntimePlan clearPlan
+            = KiriView::imageDocumentClearLoadingPresentationPlan();
+        plan.insert(plan.end(), std::make_move_iterator(clearPlan.begin()),
+            std::make_move_iterator(clearPlan.end()));
+        return;
+    }
     case KiriView::ImageOpenEffect::ResetZoom:
         plan.push_back(KiriView::ResetZoomOperation {});
         return;

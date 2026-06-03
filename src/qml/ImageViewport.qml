@@ -304,9 +304,8 @@ MediaViewportDelegate {
                     return;
                 }
 
-                if (root.handleWheelZoom(wheel, "right-button")) {
-                    root.markContextMenuTapSuppressed();
-                }
+                root.markContextMenuTapSuppressed();
+                root.handleWheelZoom(wheel, "right-button");
             }
         }
 

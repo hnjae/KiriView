@@ -1302,9 +1302,15 @@ bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
             return m_state.confirmDirectImageCursor(displayedUrl);
         }
 
-        if (m_imagePublicSnapshot.error
-            || (!m_imagePublicSnapshot.sourceUrl.isEmpty()
-                && m_imagePublicSnapshot.sourceUrl != pendingUrl)) {
+        if (m_imagePublicSnapshot.error) {
+            if (sameNormalizedUrl(m_imagePublicSnapshot.sourceUrl, pendingUrl)) {
+                return m_state.confirmDirectImageCursor(pendingUrl);
+            }
+            return m_state.restoreDirectImageCursorAfterFailure();
+        }
+
+        if (!m_imagePublicSnapshot.sourceUrl.isEmpty()
+            && m_imagePublicSnapshot.sourceUrl != pendingUrl) {
             return m_state.restoreDirectImageCursorAfterFailure();
         }
         return false;

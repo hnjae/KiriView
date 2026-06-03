@@ -48,6 +48,7 @@ enum class ImageOpenEffect {
     UpdatePageNavigation = 2,
     ScheduleAdjacentImagePredecode = 3,
     PrepareFailedContainer = 4,
+    ClearLoadingPresentation = 5,
 };
 
 struct ImageOpenStateDelta {

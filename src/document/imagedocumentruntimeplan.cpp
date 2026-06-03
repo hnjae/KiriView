@@ -19,6 +19,13 @@ ImageDocumentRuntimePlan imageDocumentClearImagePlan()
     };
 }
 
+ImageDocumentRuntimePlan imageDocumentClearLoadingPresentationPlan()
+{
+    return {
+        NotifyRightToLeftReadingChangedOperation {},
+    };
+}
+
 ImageDocumentRuntimePlan imageDocumentClearDeletedImagePlan()
 {
     return {

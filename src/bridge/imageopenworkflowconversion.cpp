@@ -149,6 +149,8 @@ KiriView::ImageOpenEffect imageOpenEffect(KiriView::RustImageOpenEffect effect)
         return KiriView::ImageOpenEffect::ScheduleAdjacentImagePredecode;
     case KiriView::RustImageOpenEffect::PrepareFailedContainer:
         return KiriView::ImageOpenEffect::PrepareFailedContainer;
+    case KiriView::RustImageOpenEffect::ClearLoadingPresentation:
+        return KiriView::ImageOpenEffect::ClearLoadingPresentation;
     }
 
     return KiriView::ImageOpenEffect::ClearImage;
