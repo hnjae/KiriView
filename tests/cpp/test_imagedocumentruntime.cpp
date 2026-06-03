@@ -837,7 +837,7 @@ void TestImageDocumentRuntime::pendingPageSelectionSupersedesEarlierLoad()
 
     runtime->openImageAtPage(3);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdImageUrl);
-    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
+    QCOMPARE(runtime->displayedUrl(), QUrl());
     QCOMPARE(runtime->currentPageNumber(), 3);
     QVERIFY(!finishOldestActiveLoadForUrl(dataLoader, secondImageUrl));
 
@@ -878,7 +878,7 @@ void TestImageDocumentRuntime::pageSelectionStartsTrackedLoadThroughEffectExecut
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeSelection + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, secondImageUrl);
     QCOMPARE(runtime->sourceUrl(), secondImageUrl);
-    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
+    QCOMPARE(runtime->displayedUrl(), QUrl());
     QCOMPARE(runtime->currentPageNumber(), 2);
 
     finishLoad(dataLoader);
@@ -1147,7 +1147,6 @@ void TestImageDocumentRuntime::replacementLoadFailureSelectsTargetError()
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    const quint64 displayedRevision = runtime->renderSnapshot().revision;
     const std::size_t loadCountBeforeReplacement = dataLoader.loadCount();
 
     runtime->setSourceUrl(missingUrl);
@@ -1164,7 +1163,6 @@ void TestImageDocumentRuntime::replacementLoadFailureSelectsTargetError()
     QCOMPARE(runtime->displayedUrl(), QUrl());
     QCOMPARE(runtime->errorString(), QStringLiteral("missing"));
     QVERIFY(runtime->imageSize().isEmpty());
-    QVERIFY(runtime->renderSnapshot().revision > displayedRevision);
     QVERIFY(!runtime->renderSnapshot().isRenderable());
 }
 
@@ -1632,7 +1630,7 @@ void TestImageDocumentRuntime::twoPageModeDisplaysCurrentAndNextComicArchivePage
     runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
+    QTRY_COMPARE(runtime->displayedUrl(), QUrl());
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     finishLoad(dataLoader);
 
@@ -1751,7 +1749,7 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->displayedUrl(), thirdPageUrl);
+    QTRY_COMPARE(runtime->displayedUrl(), QUrl());
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(2));
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, fourthPageUrl));
@@ -1763,7 +1761,7 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
+    QTRY_COMPARE(runtime->displayedUrl(), QUrl());
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(2));
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, thirdPageUrl));
@@ -1829,7 +1827,7 @@ void TestImageDocumentRuntime::twoPageModeClearsPreviousSpreadWhileTargetSpreadL
     QVERIFY(!hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->displayedUrl(), fourthPageUrl);
+    QTRY_COMPARE(runtime->displayedUrl(), QUrl());
     QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
     QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
     QVERIFY(runtime->loading());

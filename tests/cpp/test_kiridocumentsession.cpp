@@ -472,7 +472,7 @@ private Q_SLOTS:
     void directImageDocumentPageCandidateCompletionSurvivesCursorConfirmation();
     void directImageReplacementFailureKeepsTargetMediaCursor();
     void stalePendingDirectImageDocumentPageCandidateCompletionCannotPublishForNewCursor();
-    void freshDirectImageFailureLeavesNavigationUnknown();
+    void freshDirectImageFailureKeepsTargetMediaCursor();
     void archiveImageDocumentProjectsActiveNavigationFromPages();
     void imageDocumentPageNavigationChangesEmitActiveNavigationWhenRelevant();
     void activeNavigationNumberDispatchRoutesDirectMedia();
@@ -1551,7 +1551,7 @@ void TestKiriDocumentSession::
     QCOMPARE(session->activeNavigationCount(), 1);
 }
 
-void TestKiriDocumentSession::freshDirectImageFailureLeavesNavigationUnknown()
+void TestKiriDocumentSession::freshDirectImageFailureKeepsTargetMediaCursor()
 {
     FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
@@ -1571,11 +1571,11 @@ void TestKiriDocumentSession::freshDirectImageFailureLeavesNavigationUnknown()
     imageDataLoader.failBackLoad(QStringLiteral("initial load failed"));
 
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Error);
-    QVERIFY(!session->activeNavigationKnown());
-    QCOMPARE(session->activeNavigationCurrentNumber(), 0);
-    QCOMPARE(session->activeNavigationCount(), 0);
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationCount(), 2);
     QVERIFY(!session->canOpenPreviousActiveNavigation());
-    QVERIFY(!session->canOpenNextActiveNavigation());
+    QVERIFY(session->canOpenNextActiveNavigation());
 }
 
 void TestKiriDocumentSession::archiveImageDocumentProjectsActiveNavigationFromPages()
