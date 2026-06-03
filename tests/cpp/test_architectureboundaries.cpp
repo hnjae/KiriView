@@ -344,14 +344,30 @@ void TestArchitectureBoundaries::qmlViewportUsesRevisionedCommandAcknowledgement
 void TestArchitectureBoundaries::qmlViewportUsesOpaqueRevisionTokens()
 {
     const QString viewport = readProjectFile(QStringLiteral("src/qml/ImageViewport.qml"));
-    const QList<QRegularExpression> forbiddenPatterns {
+    const QString imageDocumentHeader
+        = readProjectFile(QStringLiteral("src/facade/kiriimagedocument.h"));
+    const QList<QRegularExpression> qmlForbiddenPatterns {
         QRegularExpression(QStringLiteral(
             R"(\bproperty\s+(?:int|real|double|var)\s+appliedViewport(?:Command|Observation)Revision\b)")),
         QRegularExpression(QStringLiteral(R"(\bviewport(?:Command|Observation)Revision\b)")),
     };
+    const QList<QRegularExpression> headerForbiddenPatterns {
+        QRegularExpression(QStringLiteral(
+            R"(Q_PROPERTY\s*\(\s*quint64\s+viewport(?:Command|AppliedCommand|Observation)Revision\b)")),
+        QRegularExpression(
+            QStringLiteral(R"(Q_INVOKABLE\s+quint64\s+requestViewportContentPosition\s*\()")),
+        QRegularExpression(QStringLiteral(
+            R"(Q_INVOKABLE\s+bool\s+(?:beginViewportCommandApplication|completeViewportCommandApplication|acknowledgeViewportCommand)\s*\(\s*quint64\b)")),
+    };
     QStringList violations;
-    for (const QRegularExpression &pattern : forbiddenPatterns) {
+    for (const QRegularExpression &pattern : qmlForbiddenPatterns) {
         QRegularExpressionMatchIterator iterator = pattern.globalMatch(viewport);
+        while (iterator.hasNext()) {
+            violations.push_back(iterator.next().captured(0));
+        }
+    }
+    for (const QRegularExpression &pattern : headerForbiddenPatterns) {
+        QRegularExpressionMatchIterator iterator = pattern.globalMatch(imageDocumentHeader);
         while (iterator.hasNext()) {
             violations.push_back(iterator.next().captured(0));
         }
@@ -360,6 +376,8 @@ void TestArchitectureBoundaries::qmlViewportUsesOpaqueRevisionTokens()
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
     QVERIFY(viewport.contains(QStringLiteral("viewportCommandRevisionToken")));
     QVERIFY(viewport.contains(QStringLiteral("viewportObservationRevisionToken")));
+    QVERIFY(imageDocumentHeader.contains(QStringLiteral("viewportCommandRevisionToken")));
+    QVERIFY(imageDocumentHeader.contains(QStringLiteral("viewportObservationRevisionToken")));
 }
 
 void TestArchitectureBoundaries::leafDocumentsAreNotProductionQmlCreatable()
