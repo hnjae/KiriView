@@ -68,9 +68,46 @@ SourceKey sourceKeyForDirectMediaParentUrl(const QUrl &url)
     return sourceKeyForUrl(navigationSourceUrl(url));
 }
 
+OrdinaryFileSourceKey ordinaryFileSourceKeyForUrl(const QUrl &url)
+{
+    return OrdinaryFileSourceKey { sourceKeyForUrl(url) };
+}
+
+DirectMediaSourceKey directMediaSourceKeyForUrl(const QUrl &url)
+{
+    return DirectMediaSourceKey { sourceKeyForDirectMediaCurrentUrl(url) };
+}
+
+DirectMediaScopeKey directMediaScopeKeyForUrls(
+    const QUrl &currentUrl, const QUrl &parentUrl, quint64 generation)
+{
+    return DirectMediaScopeKey {
+        directMediaSourceKeyForUrl(currentUrl),
+        sourceKeyForDirectMediaParentUrl(parentUrl),
+        generation,
+    };
+}
+
 bool sameSourceKey(const SourceKey &left, const SourceKey &right)
 {
     return left.valid && right.valid && left.identity == right.identity;
+}
+
+bool sameOrdinaryFileSourceKey(
+    const OrdinaryFileSourceKey &left, const OrdinaryFileSourceKey &right)
+{
+    return sameSourceKey(left.file, right.file);
+}
+
+bool sameDirectMediaSourceKey(const DirectMediaSourceKey &left, const DirectMediaSourceKey &right)
+{
+    return sameSourceKey(left.media, right.media);
+}
+
+bool sameDirectMediaScopeKey(const DirectMediaScopeKey &left, const DirectMediaScopeKey &right)
+{
+    return sameDirectMediaSourceKey(left.current, right.current)
+        && sameSourceKey(left.parent, right.parent);
 }
 
 bool sameSourceUrlKey(const QUrl &left, const QUrl &right)

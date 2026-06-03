@@ -92,6 +92,10 @@ struct DocumentSessionPublicSnapshot {
     ActiveZoomSnapshot activeZoom;
     bool activeImageReady = false;
     bool activeImageUnsupportedOpenedCollectionVideo = false;
+    bool activeImageOpenedCollectionScopeActive = false;
+    bool activeImageRightToLeftReadingActive = false;
+    bool activeVideoReady = false;
+    bool activeVideoControlsReady = false;
     DocumentSessionActionAvailabilityFacts actionAvailability;
     DocumentSessionPublicProjection projection;
     MediaInformationProjectionSnapshot mediaInformation;

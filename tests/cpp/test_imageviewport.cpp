@@ -111,6 +111,17 @@ public:
     };
     Q_ENUM(ViewportObservationOrigin)
 
+    enum class ViewportCommandStatus {
+        Pending,
+        Applying,
+        Applied,
+        Acknowledged,
+        Settled,
+        Superseded,
+        Rejected,
+    };
+    Q_ENUM(ViewportCommandStatus)
+
     explicit FakeKiriImageDocument(QObject *parent = nullptr)
         : QObject(parent)
     {
@@ -156,7 +167,7 @@ public:
     quint64 viewportCommandRevision() const { return m_viewportCommandRevision; }
     quint64 viewportAppliedCommandRevision() const { return m_viewportAppliedCommandRevision; }
     quint64 viewportObservationRevision() const { return m_viewportObservationRevision; }
-    int viewportCommandStatus() const { return m_viewportCommandStatus; }
+    int viewportCommandStatus() const { return static_cast<int>(m_viewportCommandStatus); }
     QSizeF viewportContentSize() const { return viewportFrame().contentSize; }
     QRectF viewportImageRect() const { return viewportFrame().imageRect; }
     bool viewportHorizontallyPannable() const { return viewportFrame().horizontalPannable; }
@@ -365,26 +376,49 @@ public:
         const KiriView::ImageViewportFrame nextFrame = viewportFrame();
         m_viewportContentPosition = nextFrame.contentPosition;
         ++m_viewportCommandRevision;
-        m_viewportCommandStatus = 0;
-        if (previousFrame != nextFrame) {
-            Q_EMIT viewportFrameChanged();
-        }
+        m_viewportCommandStatus = ViewportCommandStatus::Pending;
+        Q_UNUSED(previousFrame);
+        Q_EMIT viewportFrameChanged();
         return m_viewportCommandRevision;
+    }
+
+    Q_INVOKABLE bool beginViewportCommandApplication(quint64 commandRevision)
+    {
+        if (!acceptCommandRevision(commandRevision)) {
+            return false;
+        }
+
+        m_viewportCommandStatus = ViewportCommandStatus::Applying;
+        Q_EMIT viewportFrameChanged();
+        return true;
+    }
+
+    Q_INVOKABLE bool completeViewportCommandApplication(
+        quint64 commandRevision, const QPointF &actualContentPosition)
+    {
+        if (!acceptCommandRevision(commandRevision)) {
+            return false;
+        }
+
+        m_viewportAppliedCommandRevision = commandRevision;
+        m_viewportCommandStatus = ViewportCommandStatus::Applied;
+        setViewportContentPosition(actualContentPosition);
+        Q_EMIT viewportFrameChanged();
+        return true;
     }
 
     Q_INVOKABLE bool acknowledgeViewportCommand(
         quint64 commandRevision, const QPointF &actualContentPosition)
     {
-        if (commandRevision != m_viewportCommandRevision) {
-            m_viewportCommandStatus = commandRevision < m_viewportCommandRevision ? 5 : 6;
-            Q_EMIT viewportFrameChanged();
+        if (!acceptCommandRevision(commandRevision)) {
             return false;
         }
 
         m_viewportAppliedCommandRevision = commandRevision;
         ++m_viewportObservationRevision;
-        m_viewportCommandStatus = 3;
+        m_viewportCommandStatus = ViewportCommandStatus::Acknowledged;
         setViewportContentPosition(actualContentPosition);
+        Q_EMIT viewportFrameChanged();
         return true;
     }
 
@@ -392,7 +426,7 @@ public:
         const QPointF &contentPosition, ViewportObservationOrigin)
     {
         ++m_viewportObservationRevision;
-        m_viewportCommandStatus = 4;
+        m_viewportCommandStatus = ViewportCommandStatus::Settled;
         setViewportContentPosition(contentPosition);
         return true;
     }
@@ -432,6 +466,19 @@ private:
         const quint64 commandRevision = requestViewportContentPosition(contentPosition);
         return previousContentPosition != viewportContentPosition()
             || commandRevision > previousCommandRevision;
+    }
+
+    bool acceptCommandRevision(quint64 commandRevision)
+    {
+        if (commandRevision == m_viewportCommandRevision) {
+            return true;
+        }
+
+        m_viewportCommandStatus = commandRevision < m_viewportCommandRevision
+            ? ViewportCommandStatus::Superseded
+            : ViewportCommandStatus::Rejected;
+        Q_EMIT viewportFrameChanged();
+        return false;
     }
 
     bool requestAnchoredManualZoom(double zoomPercent, const QPointF &viewportAnchorPoint)
@@ -488,7 +535,7 @@ private:
     quint64 m_viewportCommandRevision = 0;
     quint64 m_viewportAppliedCommandRevision = 0;
     quint64 m_viewportObservationRevision = 0;
-    int m_viewportCommandStatus = 4;
+    ViewportCommandStatus m_viewportCommandStatus = ViewportCommandStatus::Settled;
     QRectF m_visibleItemRect;
     double m_zoomPercent = 100.0;
     ZoomMode m_zoomMode = ZoomMode::Manual;

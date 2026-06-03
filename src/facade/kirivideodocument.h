@@ -44,7 +44,7 @@ class KiriVideoDocument : public QObject
     Q_PROPERTY(bool zoomPercentKnown READ zoomPercentKnown NOTIFY zoomPercentKnownChanged)
     Q_PROPERTY(int zoomPercent READ zoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(bool muted READ muted WRITE setMuted NOTIFY mutedChanged)
-    Q_PROPERTY(QObject *videoOutput READ videoOutput WRITE setVideoOutput NOTIFY videoOutputChanged)
+    Q_PROPERTY(QObject *videoOutput READ videoOutput NOTIFY videoOutputChanged)
 
 public:
     enum class Status {
@@ -74,10 +74,6 @@ public:
     bool muted() const;
     QObject *videoOutput() const;
     const KiriView::EmbeddedMetadata &embeddedMetadata() const;
-    // QML assigns a QtMultimedia VideoOutput object here. KiriVideoDocument does not own it,
-    // tracks its destruction, and detaches from the media player when this is set to null.
-    void setVideoOutput(QObject *videoOutput);
-
     Q_INVOKABLE void play();
     Q_INVOKABLE void pause();
     Q_INVOKABLE void stop();
@@ -86,7 +82,6 @@ public:
     Q_INVOKABLE void toggleMuted();
     Q_INVOKABLE void setPosition(qint64 position);
     Q_INVOKABLE void seekBy(qint64 deltaMilliseconds);
-    Q_INVOKABLE void setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect);
 
 Q_SIGNALS:
     void sourceUrlChanged();
@@ -110,6 +105,8 @@ private:
     friend class KiriDocumentSession;
 
     void setSourceUrl(const QUrl &sourceUrl);
+    void setVideoOutput(QObject *videoOutput);
+    void setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect);
     void handleDocumentChanges(const std::vector<KiriView::VideoDocumentChange> &changes);
 
     std::unique_ptr<KiriView::VideoDocumentRuntime> m_runtime;

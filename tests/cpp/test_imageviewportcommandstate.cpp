@@ -16,6 +16,7 @@ class TestImageViewportCommandState : public QObject
 private Q_SLOTS:
     void commandsPublishMonotonicRevisions();
     void newerCommandSupersedesOlderAcknowledgement();
+    void commandApplicationPublishesApplyingAppliedAndAcknowledgedStates();
     void userObservationPromotesCanonicalFrame();
     void commandAcknowledgementRejectsImpossibleRevision();
 };
@@ -47,6 +48,33 @@ void TestImageViewportCommandState::newerCommandSupersedesOlderAcknowledgement()
     QCOMPARE(state.projection().status, KiriView::ImageViewportCommandStatus::Superseded);
     QCOMPARE(state.projection().commandRevision, latest.revision);
     QCOMPARE(state.projection().frame.contentPosition, QPointF(30.0, 40.0));
+}
+
+void TestImageViewportCommandState::
+    commandApplicationPublishesApplyingAppliedAndAcknowledgedStates()
+{
+    KiriView::ImageViewportCommandState state;
+    state.setGeometry(QSizeF(200.0, 160.0), QSizeF(1000.0, 800.0));
+
+    const KiriView::ImageViewportCommand command
+        = state.requestContentPosition(QPointF(30.0, 40.0));
+
+    QVERIFY(state.markCommandApplying(command.revision));
+    QCOMPARE(state.projection().status, KiriView::ImageViewportCommandStatus::Applying);
+    QCOMPARE(state.projection().appliedCommandRevision, quint64(0));
+
+    QVERIFY(state.completeCommandApplication(command.revision, QPointF(70.0, 80.0)));
+    QCOMPARE(state.projection().status, KiriView::ImageViewportCommandStatus::Applied);
+    QCOMPARE(state.projection().appliedCommandRevision, command.revision);
+    QCOMPARE(
+        state.projection().observationOrigin, KiriView::ImageViewportObservationOrigin::Command);
+    QCOMPARE(state.projection().frame.contentPosition, QPointF(70.0, 80.0));
+    QCOMPARE(state.projection().frame.visibleItemRect, QRectF(70.0, 80.0, 200.0, 160.0));
+
+    QVERIFY(state.acknowledgeCommand(command.revision));
+    QCOMPARE(state.projection().status, KiriView::ImageViewportCommandStatus::Acknowledged);
+    QCOMPARE(state.projection().observationRevision, quint64(1));
+    QCOMPARE(state.projection().frame.contentPosition, QPointF(70.0, 80.0));
 }
 
 void TestImageViewportCommandState::userObservationPromotesCanonicalFrame()

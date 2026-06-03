@@ -71,7 +71,7 @@ Item {
     readonly property var quitMenuAction: quitManagedAction.menuProxy
     readonly property bool imageMode: root.documentSession.documentKind === KiriDocumentSession.Image
     readonly property bool mediaMode: root.imageMode || root.videoMode
-    readonly property bool rightToLeftReadingActive: root.imageMode && root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
+    readonly property bool rightToLeftReadingActive: root.documentSession.activeImageRightToLeftReadingActive
     readonly property var applicationMenuNavigationActions: root.rightToLeftReadingActive ? [nextContainerManagedAction.menuProxy, previousContainerManagedAction.menuProxy] : [previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy]
     readonly property var applicationMenuDocumentActions: root.imageMode || root.videoMode ? [applicationMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy] : []
     readonly property var applicationMenuImageActions: root.imageMode ? root.applicationMenuNavigationActions.concat([rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy]) : []

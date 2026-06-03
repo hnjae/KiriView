@@ -58,11 +58,13 @@ public:
     bool setGeometry(const QSizeF &viewportSize, const QSizeF &displaySize,
         ImageViewportObservationOrigin origin = ImageViewportObservationOrigin::Resize);
     ImageViewportCommand requestContentPosition(const QPointF &contentPosition);
+    bool acknowledgeCommand(quint64 commandRevision);
     bool acknowledgeCommand(quint64 commandRevision, const QPointF &actualContentPosition);
     bool observeContentPosition(
         const QPointF &contentPosition, ImageViewportObservationOrigin origin);
     bool markCommandApplying(quint64 commandRevision);
     bool markCommandApplied(quint64 commandRevision);
+    bool completeCommandApplication(quint64 commandRevision, const QPointF &actualContentPosition);
 
 private:
     ImageViewportFrame project(const QPointF &contentPosition) const;

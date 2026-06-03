@@ -125,6 +125,18 @@ quint64 ImageDocumentRuntime::requestViewportContentPosition(const QPointF &view
         .revision;
 }
 
+bool ImageDocumentRuntime::beginViewportCommandApplication(quint64 commandRevision)
+{
+    return controllers->spreadController().beginViewportCommandApplication(commandRevision);
+}
+
+bool ImageDocumentRuntime::completeViewportCommandApplication(
+    quint64 commandRevision, const QPointF &actualContentPosition)
+{
+    return controllers->spreadController().completeViewportCommandApplication(
+        commandRevision, actualContentPosition);
+}
+
 bool ImageDocumentRuntime::acknowledgeViewportCommand(
     quint64 commandRevision, const QPointF &actualContentPosition)
 {

@@ -13,6 +13,7 @@
 #include "system/filedeletion.h"
 
 #include <QMetaObject>
+#include <QRectF>
 #include <QSize>
 #include <QString>
 #include <QUrl>
@@ -58,6 +59,7 @@ struct DocumentSessionImageDocumentPort {
     std::function<bool()> error;
     std::function<bool()> unsupportedOpenedCollectionVideo;
     std::function<bool()> fileDeletionInProgress;
+    std::function<bool()> openedCollectionScopeActive;
     std::function<bool()> ordinaryDirectMediaScopeActive;
     std::function<bool()> containerNavigationAvailable;
     std::function<bool()> twoPageModeEnabled;
@@ -84,6 +86,7 @@ struct DocumentSessionImageDocumentPort {
 struct DocumentSessionVideoDocumentSignals {
     DocumentSessionDocumentSignalConnector sourceUrlChanged;
     DocumentSessionDocumentSignalConnector statusChanged;
+    DocumentSessionDocumentSignalConnector hasVideoChanged;
     DocumentSessionDocumentSignalConnector windowTitleFileNameChanged;
     DocumentSessionDocumentSignalConnector videoSizeChanged;
     DocumentSessionDocumentSignalConnector errorStringChanged;
@@ -100,12 +103,14 @@ struct DocumentSessionVideoDocumentPort {
     std::function<QSize()> videoSize;
     std::function<bool()> ready;
     std::function<bool()> error;
+    std::function<bool()> hasVideo;
     std::function<bool()> zoomPercentKnown;
     std::function<int()> zoomPercent;
     std::function<EmbeddedMetadata()> embeddedMetadata;
     std::function<QObject *()> videoOutput;
     std::function<void()> stop;
     std::function<void(QObject *)> setVideoOutput;
+    std::function<void(const QRectF &, const QRectF &)> setVideoOutputGeometry;
     DocumentSessionVideoDocumentSignals notifications;
 };
 }

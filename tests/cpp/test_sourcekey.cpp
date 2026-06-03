@@ -24,6 +24,7 @@ private Q_SLOTS:
     void pathIdentityIsCaseSensitive();
     void localFileKeysDoNotResolveSymlinks();
     void directMediaKeysUseNavigationSourceIdentity();
+    void typedSourceKeyFamiliesKeepIdentityAndFreshnessSeparate();
 };
 
 void TestSourceKey::emptyAndInvalidUrlsHaveInvalidKeys()
@@ -137,6 +138,29 @@ void TestSourceKey::directMediaKeysUseNavigationSourceIdentity()
         currentKey, KiriView::sourceKeyForUrl(QUrl(QStringLiteral("file:///media/01.png")))));
     QVERIFY(KiriView::sameSourceKey(
         parentKey, KiriView::sourceKeyForUrl(QUrl(QStringLiteral("file:///media")))));
+}
+
+void TestSourceKey::typedSourceKeyFamiliesKeepIdentityAndFreshnessSeparate()
+{
+    const QUrl current(QStringLiteral("file:///media/chapter/../01.png"));
+    const QUrl parent(QStringLiteral("file:///media/chapter/.."));
+
+    const KiriView::OrdinaryFileSourceKey ordinary = KiriView::ordinaryFileSourceKeyForUrl(current);
+    const KiriView::DirectMediaSourceKey direct = KiriView::directMediaSourceKeyForUrl(current);
+    const KiriView::DirectMediaScopeKey firstScope
+        = KiriView::directMediaScopeKeyForUrls(current, parent, 1);
+    const KiriView::DirectMediaScopeKey refreshedScope
+        = KiriView::directMediaScopeKeyForUrls(current, parent, 2);
+
+    QVERIFY(KiriView::sameOrdinaryFileSourceKey(ordinary,
+        KiriView::ordinaryFileSourceKeyForUrl(QUrl(QStringLiteral("file:///media/01.png")))));
+    QVERIFY(KiriView::sameDirectMediaSourceKey(direct,
+        KiriView::directMediaSourceKeyForUrl(QUrl(QStringLiteral("file:///media/01.png")))));
+    QVERIFY(KiriView::sameDirectMediaScopeKey(firstScope, refreshedScope));
+    QCOMPARE(firstScope.generation, quint64(1));
+    QCOMPARE(refreshedScope.generation, quint64(2));
+    QVERIFY(!KiriView::sameDirectMediaScopeKey(firstScope,
+        KiriView::directMediaScopeKeyForUrls(current, QUrl(QStringLiteral("file:///other")), 1)));
 }
 
 QTEST_GUILESS_MAIN(TestSourceKey)

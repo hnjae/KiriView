@@ -11,6 +11,7 @@
 
 #include <QAbstractListModel>
 #include <QObject>
+#include <QRectF>
 #include <QString>
 #include <QStringList>
 #include <QUrl>
@@ -53,6 +54,13 @@ class KiriDocumentSession : public QObject
     Q_PROPERTY(bool activeImageReady READ activeImageReady NOTIFY activeMediaReadinessChanged)
     Q_PROPERTY(bool activeImageUnsupportedOpenedCollectionVideo READ
             activeImageUnsupportedOpenedCollectionVideo NOTIFY activeMediaReadinessChanged)
+    Q_PROPERTY(bool activeImageOpenedCollectionScopeActive READ
+            activeImageOpenedCollectionScopeActive NOTIFY publicProjectionRevisionChanged)
+    Q_PROPERTY(bool activeImageRightToLeftReadingActive READ activeImageRightToLeftReadingActive
+            NOTIFY publicProjectionRevisionChanged)
+    Q_PROPERTY(bool activeVideoReady READ activeVideoReady NOTIFY publicProjectionRevisionChanged)
+    Q_PROPERTY(bool activeVideoControlsReady READ activeVideoControlsReady NOTIFY
+            publicProjectionRevisionChanged)
     Q_PROPERTY(bool activeNavigationAvailable READ activeNavigationAvailable NOTIFY
             activeNavigationChanged)
     Q_PROPERTY(bool activeNavigationKnown READ activeNavigationKnown NOTIFY activeNavigationChanged)
@@ -178,6 +186,10 @@ public:
     bool activeZoomEditable() const;
     bool activeImageReady() const;
     bool activeImageUnsupportedOpenedCollectionVideo() const;
+    bool activeImageOpenedCollectionScopeActive() const;
+    bool activeImageRightToLeftReadingActive() const;
+    bool activeVideoReady() const;
+    bool activeVideoControlsReady() const;
     bool activeNavigationAvailable() const;
     bool activeNavigationKnown() const;
     bool activeNavigationEditable() const;
@@ -216,6 +228,9 @@ public:
     Q_INVOKABLE bool reportActiveNavigationThumbnailDemand(int number, QUrl url,
         int physicalMaxEdge, KiriDocumentSession::ThumbnailDemandPriority priority,
         quint64 navigationGeneration);
+    Q_INVOKABLE bool reportVideoOutputSurfaceClaim(quint64 claimRevision,
+        quint64 projectionRevision, QObject *surfaceOwner, QObject *videoOutput, bool active,
+        QRectF contentRect, QRectF sourceRect);
     Q_INVOKABLE void deleteDisplayedFile(KiriDocumentSession::DeletionMode mode);
     Q_INVOKABLE void openCurrentMediaWith();
 

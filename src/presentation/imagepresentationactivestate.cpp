@@ -178,6 +178,17 @@ ImageViewportCommand ImagePresentationActiveState::requestViewportContentPositio
     return m_viewportCommands.requestContentPosition(contentPosition);
 }
 
+bool ImagePresentationActiveState::beginViewportCommandApplication(quint64 commandRevision)
+{
+    return m_viewportCommands.markCommandApplying(commandRevision);
+}
+
+bool ImagePresentationActiveState::completeViewportCommandApplication(
+    quint64 commandRevision, const QPointF &actualContentPosition)
+{
+    return m_viewportCommands.completeCommandApplication(commandRevision, actualContentPosition);
+}
+
 bool ImagePresentationActiveState::acknowledgeViewportCommand(
     quint64 commandRevision, const QPointF &actualContentPosition)
 {

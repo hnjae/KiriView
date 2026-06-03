@@ -63,6 +63,9 @@ public:
     const ImageViewportFrame &viewportFrame() const;
     const ImageViewportProjection &viewportProjection() const;
     ImageViewportCommand requestViewportContentPosition(const QPointF &contentPosition);
+    bool beginViewportCommandApplication(quint64 commandRevision);
+    bool completeViewportCommandApplication(
+        quint64 commandRevision, const QPointF &actualContentPosition);
     bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF &actualContentPosition);
     bool observeViewportContentPosition(
         const QPointF &contentPosition, ImageViewportObservationOrigin origin);

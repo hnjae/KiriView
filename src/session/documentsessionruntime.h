@@ -21,6 +21,8 @@
 #include "system/filedeletion.h"
 
 #include <QMetaObject>
+#include <QPointer>
+#include <QRectF>
 #include <QSize>
 #include <QString>
 #include <QUrl>
@@ -74,6 +76,10 @@ public:
     bool activeZoomEditable() const;
     bool activeImageReady() const;
     bool activeImageUnsupportedOpenedCollectionVideo() const;
+    bool activeImageOpenedCollectionScopeActive() const;
+    bool activeImageRightToLeftReadingActive() const;
+    bool activeVideoReady() const;
+    bool activeVideoControlsReady() const;
     const DocumentSessionActionAvailabilityFacts &actionAvailabilityFacts() const;
     bool activeNavigationAvailable() const;
     bool activeNavigationKnown() const;
@@ -95,6 +101,9 @@ public:
         int physicalMaxEdge) const;
     bool reportActiveNavigationThumbnailDemand(int number, const QUrl &url, int physicalMaxEdge,
         ActiveNavigationThumbnailDemandPriority priority, quint64 navigationGeneration);
+    bool reportVideoOutputSurfaceClaim(quint64 claimRevision, quint64 projectionRevision,
+        QObject *surfaceOwner, QObject *videoOutput, bool active, const QRectF &contentRect,
+        const QRectF &sourceRect);
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
     void openPreviousActiveNavigation();
@@ -118,6 +127,9 @@ private:
     void setActiveNavigationRevealContext(ActiveNavigationRevealContext context);
     void clearActiveNavigationRevealContextIfUnavailable();
     void connectDocuments();
+    void refreshImagePublicSnapshot();
+    void refreshVideoPublicSnapshot();
+    void refreshLeafPublicSnapshots();
     void syncImageDocumentFileDeletionProgress();
     void setDocumentKind(DocumentSessionKind kind);
     void recomputeActiveZoomReadout();
@@ -134,6 +146,7 @@ private:
     void openMedia(DirectMediaNavigationOpenRequest request);
     void executeRoutePlan(const DocumentSessionRoutePlan &plan);
     void leaveVideoMode();
+    void clearVideoOutputSurfaceClaim();
     void syncFromImageDocument();
     void syncFromVideoDocument();
     void refreshDirectMediaNavigation();
@@ -161,10 +174,9 @@ private:
     bool directImageLoadMayUseImageDocumentSourceScope() const;
     bool syncDirectImageCursorFromDocument();
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
-    DocumentSessionPublicProjectionInput publicProjectionInput() const;
     DocumentSessionPublicSnapshotInput publicSnapshotInput(quint64 inputRevision) const;
+    DocumentSessionPublicOperationAvailabilitySnapshot operationAvailabilitySnapshot() const;
     DirectMediaActiveNavigationInput directMediaActiveNavigationInput() const;
-    ImageDocumentPageActiveNavigationSnapshot imageDocumentPageActiveNavigationSnapshot() const;
 
     QObject *m_owner = nullptr;
     DocumentSessionImageDocumentPort m_imageDocument;
@@ -182,6 +194,10 @@ private:
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
     std::vector<QMetaObject::Connection> m_documentConnections;
     ActiveNavigationRevealContext m_pendingActiveNavigationRevealContext;
+    DocumentSessionPublicImageLeafSnapshot m_imagePublicSnapshot;
+    DocumentSessionPublicVideoLeafSnapshot m_videoPublicSnapshot;
+    QPointer<QObject> m_videoOutputSurfaceClaimOwner;
+    quint64 m_videoOutputSurfaceClaimRevision = 0;
     quint64 m_publicSnapshotInputRevision = 0;
     bool m_routingSource = false;
 };

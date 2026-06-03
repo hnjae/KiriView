@@ -6,6 +6,7 @@
 #include "facade/kiridocumentsession.h"
 #include <QMetaProperty>
 #include <QObject>
+#include <QRectF>
 #include <QSignalSpy>
 #include <QTest>
 
@@ -15,7 +16,7 @@ class TestKiriVideoDocument : public QObject
 
 private Q_SLOTS:
     void initialStateIsNull();
-    void sourceUrlPropertyIsReadOnlyObservation();
+    void sourceUrlAndVideoOutputPropertiesAreReadOnlyObservations();
     void mutedPropertyNotifiesAndToggles();
     void sourceUrlAndTitleNotifyOnSetAndClear();
     void videoOutputCanDetachAndToleratesDestroyedOutput();
@@ -42,7 +43,7 @@ void TestKiriVideoDocument::initialStateIsNull()
     QCOMPARE(document.videoOutput(), nullptr);
 }
 
-void TestKiriVideoDocument::sourceUrlPropertyIsReadOnlyObservation()
+void TestKiriVideoDocument::sourceUrlAndVideoOutputPropertiesAreReadOnlyObservations()
 {
     const QMetaObject &metaObject = KiriVideoDocument::staticMetaObject;
     const int sourceUrlIndex = metaObject.indexOfProperty("sourceUrl");
@@ -51,6 +52,13 @@ void TestKiriVideoDocument::sourceUrlPropertyIsReadOnlyObservation()
     const QMetaProperty sourceUrlProperty = metaObject.property(sourceUrlIndex);
     QVERIFY(sourceUrlProperty.hasNotifySignal());
     QVERIFY(!sourceUrlProperty.isWritable());
+
+    const int videoOutputIndex = metaObject.indexOfProperty("videoOutput");
+    QVERIFY(videoOutputIndex >= 0);
+
+    const QMetaProperty videoOutputProperty = metaObject.property(videoOutputIndex);
+    QVERIFY(videoOutputProperty.hasNotifySignal());
+    QVERIFY(!videoOutputProperty.isWritable());
 }
 
 void TestKiriVideoDocument::mutedPropertyNotifiesAndToggles()
@@ -97,20 +105,51 @@ void TestKiriVideoDocument::sourceUrlAndTitleNotifyOnSetAndClear()
 
 void TestKiriVideoDocument::videoOutputCanDetachAndToleratesDestroyedOutput()
 {
-    KiriVideoDocument document;
+    KiriDocumentSession session;
+    KiriVideoDocument &document = *session.videoDocument();
     QSignalSpy videoOutputSpy(&document, &KiriVideoDocument::videoOutputChanged);
     auto *output = new QObject();
+    QObject surfaceOwner;
+    QObject staleSurfaceOwner;
+    const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/tmp/clip.mp4"));
+    const QUrl replacementSourceUrl = QUrl::fromLocalFile(QStringLiteral("/tmp/replacement.mp4"));
 
-    document.setVideoOutput(output);
+    session.setSourceUrl(sourceUrl);
+    QCOMPARE(session.documentKind(), KiriDocumentSession::DocumentKind::Video);
+    const quint64 staleProjectionRevision = session.publicProjectionRevision();
+
+    session.setSourceUrl(replacementSourceUrl);
+    QVERIFY(session.publicProjectionRevision() > staleProjectionRevision);
+    QVERIFY(!session.reportVideoOutputSurfaceClaim(
+        1, staleProjectionRevision, &staleSurfaceOwner, output, true, QRectF(), QRectF()));
+    QCOMPARE(document.videoOutput(), nullptr);
+    QCOMPARE(videoOutputSpy.count(), 0);
+
+    QVERIFY(!session.reportVideoOutputSurfaceClaim(
+        1, session.publicProjectionRevision(), nullptr, output, true, QRectF(), QRectF()));
+    QCOMPARE(document.videoOutput(), nullptr);
+    QCOMPARE(videoOutputSpy.count(), 0);
+
+    QVERIFY(session.reportVideoOutputSurfaceClaim(
+        2, session.publicProjectionRevision(), &surfaceOwner, output, true, QRectF(), QRectF()));
+    session.reportVideoOutputSurfaceClaim(1, session.publicProjectionRevision(), &staleSurfaceOwner,
+        nullptr, false, QRectF(), QRectF());
     QCOMPARE(document.videoOutput(), output);
     QCOMPARE(videoOutputSpy.count(), 1);
 
-    document.setVideoOutput(nullptr);
+    QVERIFY(!session.reportVideoOutputSurfaceClaim(
+        1, session.publicProjectionRevision(), &surfaceOwner, nullptr, false, QRectF(), QRectF()));
+    QCOMPARE(document.videoOutput(), output);
+    QCOMPARE(videoOutputSpy.count(), 1);
+
+    QVERIFY(session.reportVideoOutputSurfaceClaim(
+        3, session.publicProjectionRevision(), &surfaceOwner, nullptr, false, QRectF(), QRectF()));
     QCOMPARE(document.videoOutput(), nullptr);
     QCOMPARE(videoOutputSpy.count(), 2);
 
     output = new QObject();
-    document.setVideoOutput(output);
+    QVERIFY(session.reportVideoOutputSurfaceClaim(
+        4, session.publicProjectionRevision(), &surfaceOwner, output, true, QRectF(), QRectF()));
     QCOMPARE(document.videoOutput(), output);
     delete output;
     QCOMPARE(document.videoOutput(), nullptr);

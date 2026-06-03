@@ -145,6 +145,17 @@ public:
     };
     Q_ENUM(ViewportObservationOrigin)
 
+    enum class ViewportCommandStatus {
+        Pending,
+        Applying,
+        Applied,
+        Acknowledged,
+        Settled,
+        Superseded,
+        Rejected,
+    };
+    Q_ENUM(ViewportCommandStatus)
+
     enum class PresentationTransitionState {
         PreviousActive,
         TransitioningPlaceholder,
@@ -248,6 +259,9 @@ public:
     Q_INVOKABLE void requestToggleRightToLeftReading();
     Q_INVOKABLE void updateRenderContext();
     Q_INVOKABLE quint64 requestViewportContentPosition(const QPointF &viewportContentPosition);
+    Q_INVOKABLE bool beginViewportCommandApplication(quint64 commandRevision);
+    Q_INVOKABLE bool completeViewportCommandApplication(
+        quint64 commandRevision, const QPointF &actualContentPosition);
     Q_INVOKABLE bool acknowledgeViewportCommand(
         quint64 commandRevision, const QPointF &actualContentPosition);
     Q_INVOKABLE bool observeViewportContentPosition(

@@ -44,8 +44,10 @@ struct DocumentSessionPublicSessionLeafSnapshot {
 };
 
 struct DocumentSessionPublicImageLeafSnapshot {
+    QUrl sourceUrl;
     bool sourceMayRepresentDocument = false;
     ImageDocumentPageActiveNavigationSnapshot pageNavigation;
+    ImageDocumentPageNavigationSnapshot pageNavigationRows;
     QUrl displayedUrl;
     OpenedCollectionScopeLocation displayedOpenedCollectionScope;
     QString windowTitleFileName;
@@ -53,6 +55,10 @@ struct DocumentSessionPublicImageLeafSnapshot {
     EmbeddedMetadata embeddedMetadata;
     bool readyForDeletion = false;
     bool readyForInformation = false;
+    bool error = false;
+    bool fileDeletionInProgress = false;
+    bool openedCollectionScopeActive = false;
+    bool ordinaryDirectMediaScopeActive = false;
     bool unsupportedOpenedCollectionVideo = false;
     bool directImageReplacementPending = false;
     bool containerNavigationAvailable = false;
@@ -73,6 +79,8 @@ struct DocumentSessionPublicVideoLeafSnapshot {
     QString windowTitleFileName;
     QSize directMediaSize;
     EmbeddedMetadata embeddedMetadata;
+    bool ready = false;
+    bool hasVideo = false;
     bool sourcePresent = false;
     bool error = false;
     bool zoomPercentKnown = false;

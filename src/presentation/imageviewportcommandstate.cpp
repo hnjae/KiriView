@@ -47,8 +47,7 @@ ImageViewportCommand ImageViewportCommandState::requestContentPosition(
     };
 }
 
-bool ImageViewportCommandState::acknowledgeCommand(
-    quint64 commandRevision, const QPointF &actualContentPosition)
+bool ImageViewportCommandState::acknowledgeCommand(quint64 commandRevision)
 {
     if (commandRevision != m_projection.commandRevision) {
         m_projection.status = commandRevision < m_projection.commandRevision
@@ -61,9 +60,14 @@ bool ImageViewportCommandState::acknowledgeCommand(
     ++m_projection.observationRevision;
     m_projection.observationOrigin = ImageViewportObservationOrigin::Command;
     m_projection.status = ImageViewportCommandStatus::Acknowledged;
-    setFrame(project(actualContentPosition));
-    m_projection.requestedContentPosition = m_projection.frame.contentPosition;
     return true;
+}
+
+bool ImageViewportCommandState::acknowledgeCommand(
+    quint64 commandRevision, const QPointF &actualContentPosition)
+{
+    return completeCommandApplication(commandRevision, actualContentPosition)
+        && acknowledgeCommand(commandRevision);
 }
 
 bool ImageViewportCommandState::observeContentPosition(
@@ -107,6 +111,21 @@ bool ImageViewportCommandState::markCommandApplied(quint64 commandRevision)
     }
 
     m_projection.appliedCommandRevision = commandRevision;
+    m_projection.status = ImageViewportCommandStatus::Applied;
+    return true;
+}
+
+bool ImageViewportCommandState::completeCommandApplication(
+    quint64 commandRevision, const QPointF &actualContentPosition)
+{
+    if (!markCommandApplied(commandRevision)) {
+        return false;
+    }
+
+    const ImageViewportFrame frame = project(actualContentPosition);
+    setFrame(frame);
+    m_projection.requestedContentPosition = m_projection.frame.contentPosition;
+    m_projection.observationOrigin = ImageViewportObservationOrigin::Command;
     m_projection.status = ImageViewportCommandStatus::Applied;
     return true;
 }

@@ -103,8 +103,7 @@ MediaViewportDelegate {
 
         const commandRevision = root.imageDocument.viewportCommandRevision;
         const observationRevision = root.imageDocument.viewportObservationRevision;
-        const rejectedViewportCommandStatus = 6;
-        if (root.imageDocument.viewportCommandStatus === rejectedViewportCommandStatus) {
+        if (root.imageDocument.viewportCommandStatus === KiriImageDocument.Rejected) {
             return;
         }
         if (commandRevision < root.appliedViewportCommandRevision) {
@@ -115,8 +114,12 @@ MediaViewportDelegate {
         }
 
         root.applyingViewportProjection = true;
+        if (commandRevision > root.appliedViewportCommandRevision) {
+            root.imageDocument.beginViewportCommandApplication(commandRevision);
+        }
         applyPhysicalContentPosition(root.imageDocument.viewportContentPosition);
         if (commandRevision > root.appliedViewportCommandRevision) {
+            root.imageDocument.completeViewportCommandApplication(commandRevision, currentContentPosition());
             root.appliedViewportCommandRevision = commandRevision;
             root.imageDocument.acknowledgeViewportCommand(commandRevision, currentContentPosition());
         }
@@ -324,7 +327,7 @@ MediaViewportDelegate {
                 document: root.presentationActive ? root.imageDocument : null
                 height: root.presentationActive ? root.imageDocument.primaryDisplaySize.height : 0
                 width: root.presentationActive ? root.imageDocument.primaryDisplaySize.width : 0
-                x: root.presentationActive && root.imageDocument.secondaryPageVisible && root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable ? secondaryImageView.width : 0
+                x: root.presentationActive && root.imageDocument.secondaryPageVisible && root.documentSession.activeImageRightToLeftReadingActive ? secondaryImageView.width : 0
                 y: Math.max(0, (spreadItem.height - height) / 2)
 
                 onDisplayedImageInitialContentPositionRequested: root.applyDisplayedImageInitialContentPosition()
@@ -338,7 +341,7 @@ MediaViewportDelegate {
                 secondaryPage: true
                 visible: root.presentationActive && root.imageDocument.secondaryPageVisible
                 width: root.presentationActive ? root.imageDocument.secondaryDisplaySize.width : 0
-                x: root.presentationActive && root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable ? 0 : primaryImageView.width
+                x: root.presentationActive && root.documentSession.activeImageRightToLeftReadingActive ? 0 : primaryImageView.width
                 y: Math.max(0, (spreadItem.height - height) / 2)
             }
         }

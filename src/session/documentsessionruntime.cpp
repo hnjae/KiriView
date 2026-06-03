@@ -140,6 +140,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           resolveMediaPredecodeDependencies(
               std::move(dependencies.directMediaPredecodeDependencies))))
 {
+    refreshLeafPublicSnapshots();
     connectDocuments();
 }
 
@@ -220,6 +221,26 @@ bool DocumentSessionRuntime::activeImageReady() const
 bool DocumentSessionRuntime::activeImageUnsupportedOpenedCollectionVideo() const
 {
     return m_state.publicSnapshot().activeImageUnsupportedOpenedCollectionVideo;
+}
+
+bool DocumentSessionRuntime::activeImageOpenedCollectionScopeActive() const
+{
+    return m_state.publicSnapshot().activeImageOpenedCollectionScopeActive;
+}
+
+bool DocumentSessionRuntime::activeImageRightToLeftReadingActive() const
+{
+    return m_state.publicSnapshot().activeImageRightToLeftReadingActive;
+}
+
+bool DocumentSessionRuntime::activeVideoReady() const
+{
+    return m_state.publicSnapshot().activeVideoReady;
+}
+
+bool DocumentSessionRuntime::activeVideoControlsReady() const
+{
+    return m_state.publicSnapshot().activeVideoControlsReady;
 }
 
 const DocumentSessionActionAvailabilityFacts &
@@ -338,6 +359,39 @@ bool DocumentSessionRuntime::reportActiveNavigationThumbnailDemand(int number, c
 
     return m_activeNavigationThumbnailRuntime->reportDemand(
         number, url, bucket, priority, navigationGeneration);
+}
+
+bool DocumentSessionRuntime::reportVideoOutputSurfaceClaim(quint64 claimRevision,
+    quint64 projectionRevision, QObject *surfaceOwner, QObject *videoOutput, bool active,
+    const QRectF &contentRect, const QRectF &sourceRect)
+{
+    const bool currentProjection = projectionRevision == m_state.publicSnapshot().revision;
+    if (!currentProjection || surfaceOwner == nullptr) {
+        return false;
+    }
+
+    const bool sameOwner = m_videoOutputSurfaceClaimOwner == surfaceOwner;
+    if (sameOwner && claimRevision < m_videoOutputSurfaceClaimRevision) {
+        return false;
+    }
+
+    const bool attach = active
+        && m_state.publicSnapshot().documentKind == DocumentSessionKind::Video
+        && videoOutput != nullptr;
+    if (!attach) {
+        if (!sameOwner) {
+            return false;
+        }
+        clearVideoOutputSurfaceClaim();
+        m_videoDocument.setVideoOutput(nullptr);
+        return true;
+    }
+
+    m_videoOutputSurfaceClaimOwner = surfaceOwner;
+    m_videoOutputSurfaceClaimRevision = claimRevision;
+    m_videoDocument.setVideoOutput(videoOutput);
+    m_videoDocument.setVideoOutputGeometry(contentRect, sourceRect);
+    return true;
 }
 
 std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
@@ -542,19 +596,33 @@ void DocumentSessionRuntime::openCurrentMediaWith(MediaOpenWithCallback callback
 
 void DocumentSessionRuntime::connectDocuments()
 {
+    const auto imageHandler = [this](DocumentSessionDocumentChangeHandler handler) {
+        return [this, handler = std::move(handler)]() {
+            refreshImagePublicSnapshot();
+            handler();
+        };
+    };
+    const auto videoHandler = [this](DocumentSessionDocumentChangeHandler handler) {
+        return [this, handler = std::move(handler)]() {
+            refreshVideoPublicSnapshot();
+            handler();
+        };
+    };
+
     appendConnection(m_documentConnections, m_imageDocument.notifications.sourceUrlChanged, m_owner,
-        [this]() { syncFromImageDocument(); });
+        imageHandler([this]() { syncFromImageDocument(); }));
     appendConnection(m_documentConnections, m_imageDocument.notifications.statusChanged, m_owner,
-        [this]() { syncFromImageDocument(); });
+        imageHandler([this]() { syncFromImageDocument(); }));
     appendConnection(m_documentConnections,
         m_imageDocument.notifications.windowTitleFileNameChanged, m_owner,
-        [this]() { recomputePublicProjection(); });
+        imageHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections, m_imageDocument.notifications.imageSizeChanged, m_owner,
-        [this]() { recomputePublicProjection(); });
+        imageHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections, m_imageDocument.notifications.errorStringChanged,
-        m_owner, [this]() { recomputePublicProjection(); });
+        m_owner, imageHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections,
-        m_imageDocument.notifications.imageDocumentSourceScopeChanged, m_owner, [this]() {
+        m_imageDocument.notifications.imageDocumentSourceScopeChanged, m_owner,
+        imageHandler([this]() {
             if (m_routingSource) {
                 return;
             }
@@ -566,48 +634,113 @@ void DocumentSessionRuntime::connectDocuments()
             setActiveNavigationRevealContext(
                 ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
             recomputePublicProjection();
-        });
+        }));
     appendConnection(m_documentConnections,
         m_imageDocument.notifications.unsupportedOpenedCollectionVideoChanged, m_owner,
-        [this]() { recomputePublicProjection(); });
+        imageHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections,
         m_imageDocument.notifications.fileDeletionInProgressChanged, m_owner,
-        [this]() { syncImageDocumentFileDeletionProgress(); });
+        imageHandler([this]() { syncImageDocumentFileDeletionProgress(); }));
     appendConnection(m_documentConnections, m_imageDocument.notifications.zoomPercentKnownChanged,
-        m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); });
+        m_owner,
+        imageHandler([this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); }));
     appendConnection(m_documentConnections, m_imageDocument.notifications.zoomPercentChanged,
-        m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); });
+        m_owner,
+        imageHandler([this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); }));
     appendConnection(m_documentConnections, m_imageDocument.notifications.zoomModeChanged, m_owner,
-        [this]() { recomputePublicProjection(); });
+        imageHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections, m_imageDocument.notifications.pageNavigationChanged,
-        m_owner, [this]() { publishActiveNavigationForImagePages(); });
+        m_owner, imageHandler([this]() { publishActiveNavigationForImagePages(); }));
     appendConnection(m_documentConnections,
         m_imageDocument.notifications.containerNavigationChanged, m_owner,
-        [this]() { recomputePublicProjection(); });
+        imageHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections, m_imageDocument.notifications.twoPageModeChanged,
-        m_owner, [this]() { recomputePublicProjection(); });
+        m_owner, imageHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections, m_imageDocument.notifications.rightToLeftReadingChanged,
-        m_owner, [this]() { recomputePublicProjection(); });
+        m_owner, imageHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections, m_imageDocument.notifications.embeddedMetadataChanged,
-        m_owner, [this]() { recomputePublicProjection(); });
+        m_owner, imageHandler([this]() { recomputePublicProjection(); }));
 
     appendConnection(m_documentConnections, m_videoDocument.notifications.sourceUrlChanged, m_owner,
-        [this]() { syncFromVideoDocument(); });
+        videoHandler([this]() { syncFromVideoDocument(); }));
     appendConnection(m_documentConnections, m_videoDocument.notifications.statusChanged, m_owner,
-        [this]() { syncFromVideoDocument(); });
+        videoHandler([this]() { syncFromVideoDocument(); }));
+    appendConnection(m_documentConnections, m_videoDocument.notifications.hasVideoChanged, m_owner,
+        videoHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections,
         m_videoDocument.notifications.windowTitleFileNameChanged, m_owner,
-        [this]() { recomputePublicProjection(); });
+        videoHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections, m_videoDocument.notifications.videoSizeChanged, m_owner,
-        [this]() { recomputePublicProjection(); });
+        videoHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections, m_videoDocument.notifications.errorStringChanged,
-        m_owner, [this]() { recomputePublicProjection(); });
+        m_owner, videoHandler([this]() { recomputePublicProjection(); }));
     appendConnection(m_documentConnections, m_videoDocument.notifications.zoomPercentKnownChanged,
-        m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); });
+        m_owner,
+        videoHandler([this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); }));
     appendConnection(m_documentConnections, m_videoDocument.notifications.zoomPercentChanged,
-        m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); });
+        m_owner,
+        videoHandler([this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); }));
     appendConnection(m_documentConnections, m_videoDocument.notifications.embeddedMetadataChanged,
-        m_owner, [this]() { recomputePublicProjection(); });
+        m_owner, videoHandler([this]() { recomputePublicProjection(); }));
+}
+
+void DocumentSessionRuntime::refreshImagePublicSnapshot()
+{
+    DocumentSessionPublicImageLeafSnapshot snapshot;
+    const QUrl sourceUrl = m_imageDocument.sourceUrl();
+    snapshot.sourceUrl = sourceUrl;
+    snapshot.sourceMayRepresentDocument
+        = !sourceUrl.isEmpty() && !isSupportedDirectImageUrl(sourceUrl);
+    snapshot.pageNavigation = m_imageDocument.activeNavigationSnapshot();
+    snapshot.pageNavigationRows = m_imageDocument.pageNavigationSnapshot();
+    snapshot.displayedUrl = m_imageDocument.displayedUrl();
+    snapshot.displayedOpenedCollectionScope = m_imageDocument.displayedOpenedCollectionScope();
+    snapshot.windowTitleFileName = m_imageDocument.windowTitleFileName();
+    snapshot.directMediaSize = m_imageDocument.primaryImageSize();
+    snapshot.embeddedMetadata = m_imageDocument.embeddedMetadata();
+    snapshot.readyForDeletion = m_imageDocument.ready();
+    snapshot.readyForInformation = m_imageDocument.ready();
+    snapshot.error = m_imageDocument.error();
+    snapshot.fileDeletionInProgress = m_imageDocument.fileDeletionInProgress();
+    snapshot.openedCollectionScopeActive = m_imageDocument.openedCollectionScopeActive();
+    snapshot.ordinaryDirectMediaScopeActive = m_imageDocument.ordinaryDirectMediaScopeActive();
+    snapshot.unsupportedOpenedCollectionVideo = m_imageDocument.unsupportedOpenedCollectionVideo();
+    snapshot.directImageReplacementPending = !m_state.directMediaCursor().pendingUrl.isEmpty();
+    snapshot.containerNavigationAvailable = m_imageDocument.containerNavigationAvailable();
+    snapshot.twoPageModeEnabled = m_imageDocument.twoPageModeEnabled();
+    snapshot.twoPageModeAvailable = m_imageDocument.twoPageModeAvailable();
+    snapshot.rightToLeftReadingEnabled = m_imageDocument.rightToLeftReadingEnabled();
+    snapshot.rightToLeftReadingAvailable = m_imageDocument.rightToLeftReadingAvailable();
+    snapshot.fitModeSelected = m_imageDocument.fitModeSelected();
+    snapshot.fitHeightModeSelected = m_imageDocument.fitHeightModeSelected();
+    snapshot.fitWidthModeSelected = m_imageDocument.fitWidthModeSelected();
+    snapshot.zoomPercentKnown = m_imageDocument.zoomPercentKnown();
+    snapshot.zoomPercent = m_imageDocument.zoomPercent();
+    snapshot.errorString = m_imageDocument.errorString();
+    m_imagePublicSnapshot = std::move(snapshot);
+}
+
+void DocumentSessionRuntime::refreshVideoPublicSnapshot()
+{
+    DocumentSessionPublicVideoLeafSnapshot snapshot;
+    snapshot.sourceUrl = m_videoDocument.sourceUrl();
+    snapshot.windowTitleFileName = m_videoDocument.windowTitleFileName();
+    snapshot.directMediaSize = m_videoDocument.videoSize();
+    snapshot.embeddedMetadata = m_videoDocument.embeddedMetadata();
+    snapshot.ready = m_videoDocument.ready();
+    snapshot.hasVideo = m_videoDocument.hasVideo();
+    snapshot.sourcePresent = !snapshot.sourceUrl.isEmpty();
+    snapshot.error = m_videoDocument.error();
+    snapshot.zoomPercentKnown = m_videoDocument.zoomPercentKnown();
+    snapshot.zoomPercent = m_videoDocument.zoomPercent();
+    snapshot.errorString = m_videoDocument.errorString();
+    m_videoPublicSnapshot = std::move(snapshot);
+}
+
+void DocumentSessionRuntime::refreshLeafPublicSnapshots()
+{
+    refreshImagePublicSnapshot();
+    refreshVideoPublicSnapshot();
 }
 
 void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
@@ -617,7 +750,7 @@ void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
         return;
     }
 
-    m_state.setFileDeletionInProgress(m_imageDocument.fileDeletionInProgress());
+    m_state.setFileDeletionInProgress(m_imagePublicSnapshot.fileDeletionInProgress);
     recomputePublicProjection();
 }
 
@@ -666,7 +799,7 @@ void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
 
     std::vector<ActiveNavigationThumbnailRow> rows = projectActiveNavigationThumbnailRows(
         m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(),
-        m_state.directMediaNavigationCandidates(), m_imageDocument.pageNavigationSnapshot());
+        m_state.directMediaNavigationCandidates(), m_imagePublicSnapshot.pageNavigationRows);
     if (rows.empty()) {
         m_activeNavigationThumbnailRuntime->setRows({});
         return;
@@ -759,21 +892,28 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
                     logDirectMediaScope(
                         "direct image cursor cleared and requested", m_state.directMediaScope());
                 } else if constexpr (std::is_same_v<Operation, ClearImageDocumentRouteOperation>) {
-                    executeWithRoutingSuppressed(
-                        [this]() { m_imageDocument.setSourceUrl(QUrl()); });
+                    executeWithRoutingSuppressed([this]() {
+                        m_imageDocument.setSourceUrl(QUrl());
+                        refreshImagePublicSnapshot();
+                    });
                 } else if constexpr (std::is_same_v<Operation, LeaveVideoModeRouteOperation>) {
-                    executeWithRoutingSuppressed([this]() { leaveVideoMode(); });
+                    executeWithRoutingSuppressed([this]() {
+                        leaveVideoMode();
+                        refreshVideoPublicSnapshot();
+                    });
                 } else if constexpr (std::is_same_v<Operation, EnterEmptyDocumentRouteOperation>) {
                     executeWithRoutingSuppressed(
                         [this]() { setDocumentKind(DocumentSessionKind::Empty); });
                 } else if constexpr (std::is_same_v<Operation, EnterImageDocumentRouteOperation>) {
                     executeWithRoutingSuppressed([this, &payload]() {
                         m_imageDocument.setSourceUrl(payload.url);
+                        refreshImagePublicSnapshot();
                         setDocumentKind(DocumentSessionKind::Image);
                     });
                 } else if constexpr (std::is_same_v<Operation, EnterVideoDocumentRouteOperation>) {
                     executeWithRoutingSuppressed([this, &payload]() {
                         m_videoDocument.setSourceUrl(payload.url);
+                        refreshVideoPublicSnapshot();
                         setDocumentKind(DocumentSessionKind::Video);
                     });
                 } else if constexpr (std::is_same_v<Operation,
@@ -789,7 +929,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
                     m_state.setSourceIdentity(payload.url);
                 } else if constexpr (std::is_same_v<Operation,
                                          UseImageDocumentSourceIdentityRouteOperation>) {
-                    m_state.setSourceIdentity(m_imageDocument.sourceUrl());
+                    m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl);
                 } else if constexpr (std::is_same_v<Operation,
                                          RecomputePublicProjectionRouteOperation>) {
                     recomputePublicProjection();
@@ -828,9 +968,16 @@ void DocumentSessionRuntime::leaveVideoMode()
         return;
     }
 
+    clearVideoOutputSurfaceClaim();
     m_videoDocument.stop();
     m_videoDocument.setVideoOutput(nullptr);
     m_videoDocument.setSourceUrl(QUrl());
+}
+
+void DocumentSessionRuntime::clearVideoOutputSurfaceClaim()
+{
+    m_videoOutputSurfaceClaimOwner.clear();
+    m_videoOutputSurfaceClaimRevision = 0;
 }
 
 void DocumentSessionRuntime::syncFromImageDocument()
@@ -840,7 +987,7 @@ void DocumentSessionRuntime::syncFromImageDocument()
     }
 
     const bool directMediaScopeChanged = syncDirectImageCursorFromDocument();
-    m_state.setSourceIdentity(m_imageDocument.sourceUrl());
+    m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl);
     recomputeActiveZoomReadout();
     recomputePublicProjection();
     if (directMediaScopeChanged) {
@@ -856,7 +1003,7 @@ void DocumentSessionRuntime::syncFromVideoDocument()
         return;
     }
 
-    if (m_videoDocument.sourceUrl().isEmpty()) {
+    if (m_videoPublicSnapshot.sourceUrl.isEmpty()) {
         qCDebug(kiriviewNavigationLog) << "sync from video document"
                                        << "state" << "empty-source";
         m_state.clearDirectMediaCursor();
@@ -865,9 +1012,9 @@ void DocumentSessionRuntime::syncFromVideoDocument()
         m_state.setDirectMediaNavigation({}, false, {});
     } else {
         const bool directMediaScopeChanged
-            = m_state.setDirectVideoCursor(m_videoDocument.sourceUrl());
+            = m_state.setDirectVideoCursor(m_videoPublicSnapshot.sourceUrl);
         logDirectMediaScope("sync from video document", m_state.directMediaScope());
-        m_state.setSourceIdentity(m_videoDocument.sourceUrl());
+        m_state.setSourceIdentity(m_videoPublicSnapshot.sourceUrl);
         if (directMediaScopeChanged) {
             refreshDirectMediaNavigation();
         }
@@ -1072,11 +1219,11 @@ MediaOpenWithPlan DocumentSessionRuntime::currentMediaOpenWithPlan() const
 {
     return mediaOpenWithPlan(MediaOpenWithPlanInput {
         m_state.documentKind(),
-        m_imageDocument.ready(),
-        m_imageDocument.displayedUrl(),
-        m_imageDocument.displayedOpenedCollectionScope(),
-        m_videoDocument.ready(),
-        m_videoDocument.sourceUrl(),
+        m_imagePublicSnapshot.readyForInformation,
+        m_imagePublicSnapshot.displayedUrl,
+        m_imagePublicSnapshot.displayedOpenedCollectionScope,
+        m_videoPublicSnapshot.ready,
+        m_videoPublicSnapshot.sourceUrl,
     });
 }
 
@@ -1132,7 +1279,7 @@ bool DocumentSessionRuntime::directMediaCursorMatches(const DirectMediaScope &sc
 
 bool DocumentSessionRuntime::activeImageUsesImageDocumentSourceScope() const
 {
-    return m_imageDocument.ordinaryDirectMediaScopeActive();
+    return m_imagePublicSnapshot.ordinaryDirectMediaScopeActive;
 }
 
 bool DocumentSessionRuntime::directImageLoadMayUseImageDocumentSourceScope() const
@@ -1148,16 +1295,16 @@ bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
     }
 
     const QUrl pendingUrl = m_state.directMediaCursor().pendingUrl;
-    const QUrl displayedUrl = m_imageDocument.displayedUrl();
+    const QUrl displayedUrl = m_imagePublicSnapshot.displayedUrl;
     if (!pendingUrl.isEmpty()) {
         if (activeImageUsesImageDocumentSourceScope()
             && sameNormalizedUrl(displayedUrl, pendingUrl)) {
             return m_state.confirmDirectImageCursor(displayedUrl);
         }
 
-        if (m_imageDocument.error()
-            || (!m_imageDocument.sourceUrl().isEmpty()
-                && m_imageDocument.sourceUrl() != pendingUrl)) {
+        if (m_imagePublicSnapshot.error
+            || (!m_imagePublicSnapshot.sourceUrl.isEmpty()
+                && m_imagePublicSnapshot.sourceUrl != pendingUrl)) {
             return m_state.restoreDirectImageCursorAfterFailure();
         }
         return false;
@@ -1167,7 +1314,7 @@ bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
         return m_state.confirmDirectImageCursor(displayedUrl);
     }
 
-    if (m_imageDocument.error()) {
+    if (m_imagePublicSnapshot.error) {
         return m_state.restoreDirectImageCursorAfterFailure();
     }
 
@@ -1178,15 +1325,15 @@ ActiveZoomSnapshot DocumentSessionRuntime::activeZoomSnapshotForKind(DocumentSes
 {
     switch (kind) {
     case DocumentSessionKind::Image:
-        if (!m_imageDocument.zoomPercentKnown()) {
+        if (!m_imagePublicSnapshot.zoomPercentKnown) {
             return {};
         }
-        return ActiveZoomSnapshot { true, true, m_imageDocument.zoomPercent(), true };
+        return ActiveZoomSnapshot { true, true, m_imagePublicSnapshot.zoomPercent, true };
     case DocumentSessionKind::Video:
         return ActiveZoomSnapshot {
             true,
-            m_videoDocument.zoomPercentKnown(),
-            m_videoDocument.zoomPercentKnown() ? qreal(m_videoDocument.zoomPercent()) : 0.0,
+            m_videoPublicSnapshot.zoomPercentKnown,
+            m_videoPublicSnapshot.zoomPercentKnown ? qreal(m_videoPublicSnapshot.zoomPercent) : 0.0,
             false,
         };
     case DocumentSessionKind::Empty:
@@ -1194,28 +1341,6 @@ ActiveZoomSnapshot DocumentSessionRuntime::activeZoomSnapshotForKind(DocumentSes
     }
 
     return {};
-}
-
-DocumentSessionPublicProjectionInput DocumentSessionRuntime::publicProjectionInput() const
-{
-    return DocumentSessionPublicProjectionInput {
-        m_state.documentKind(),
-        directImageLoadMayUseImageDocumentSourceScope(),
-        !m_imageDocument.sourceUrl().isEmpty()
-            && !isSupportedDirectImageUrl(m_imageDocument.sourceUrl()),
-        m_state.fileDeletionInProgress(),
-        directMediaActiveNavigationInput(),
-        imageDocumentPageActiveNavigationSnapshot(),
-        m_imageDocument.windowTitleFileName(),
-        m_imageDocument.primaryImageSize(),
-        m_videoDocument.windowTitleFileName(),
-        m_videoDocument.videoSize(),
-        m_imageDocument.ready(),
-        !m_state.directMediaCursor().pendingUrl.isEmpty(),
-        !m_videoDocument.sourceUrl().isEmpty(),
-        m_videoDocument.error(),
-        currentMediaOpenWithPlan().hasRequest(),
-    };
 }
 
 DocumentSessionPublicSnapshotInput DocumentSessionRuntime::publicSnapshotInput(
@@ -1233,42 +1358,10 @@ DocumentSessionPublicSnapshotInput DocumentSessionRuntime::publicSnapshotInput(
     input.session.activeNavigationRevealIntent = m_state.activeNavigationRevealIntent();
     input.session.activeNavigationRevealDirection = m_state.activeNavigationRevealDirection();
 
-    input.image.sourceMayRepresentDocument = !m_imageDocument.sourceUrl().isEmpty()
-        && !isSupportedDirectImageUrl(m_imageDocument.sourceUrl());
-    input.image.pageNavigation = imageDocumentPageActiveNavigationSnapshot();
-    input.image.displayedUrl = m_imageDocument.displayedUrl();
-    input.image.displayedOpenedCollectionScope = m_imageDocument.displayedOpenedCollectionScope();
-    input.image.windowTitleFileName = m_imageDocument.windowTitleFileName();
-    input.image.directMediaSize = m_imageDocument.primaryImageSize();
-    input.image.embeddedMetadata = m_imageDocument.embeddedMetadata();
-    input.image.readyForDeletion = m_imageDocument.ready();
-    input.image.readyForInformation = m_imageDocument.ready();
-    input.image.unsupportedOpenedCollectionVideo
-        = m_imageDocument.unsupportedOpenedCollectionVideo();
+    input.image = m_imagePublicSnapshot;
     input.image.directImageReplacementPending = !m_state.directMediaCursor().pendingUrl.isEmpty();
-    input.image.containerNavigationAvailable = m_imageDocument.containerNavigationAvailable();
-    input.image.twoPageModeEnabled = m_imageDocument.twoPageModeEnabled();
-    input.image.twoPageModeAvailable = m_imageDocument.twoPageModeAvailable();
-    input.image.rightToLeftReadingEnabled = m_imageDocument.rightToLeftReadingEnabled();
-    input.image.rightToLeftReadingAvailable = m_imageDocument.rightToLeftReadingAvailable();
-    input.image.fitModeSelected = m_imageDocument.fitModeSelected();
-    input.image.fitHeightModeSelected = m_imageDocument.fitHeightModeSelected();
-    input.image.fitWidthModeSelected = m_imageDocument.fitWidthModeSelected();
-    input.image.zoomPercentKnown = m_imageDocument.zoomPercentKnown();
-    input.image.zoomPercent = m_imageDocument.zoomPercent();
-    input.image.errorString = m_imageDocument.errorString();
-
-    input.video.sourceUrl = m_videoDocument.sourceUrl();
-    input.video.windowTitleFileName = m_videoDocument.windowTitleFileName();
-    input.video.directMediaSize = m_videoDocument.videoSize();
-    input.video.embeddedMetadata = m_videoDocument.embeddedMetadata();
-    input.video.sourcePresent = !m_videoDocument.sourceUrl().isEmpty();
-    input.video.error = m_videoDocument.error();
-    input.video.zoomPercentKnown = m_videoDocument.zoomPercentKnown();
-    input.video.zoomPercent = m_videoDocument.zoomPercent();
-    input.video.errorString = m_videoDocument.errorString();
-
-    input.operations.displayedMediaOpenWithAvailable = currentMediaOpenWithPlan().hasRequest();
+    input.video = m_videoPublicSnapshot;
+    input.operations = operationAvailabilitySnapshot();
     return input;
 }
 
@@ -1278,9 +1371,11 @@ DirectMediaActiveNavigationInput DocumentSessionRuntime::directMediaActiveNaviga
         m_state.directMediaNavigationKnown() };
 }
 
-ImageDocumentPageActiveNavigationSnapshot
-DocumentSessionRuntime::imageDocumentPageActiveNavigationSnapshot() const
+DocumentSessionPublicOperationAvailabilitySnapshot
+DocumentSessionRuntime::operationAvailabilitySnapshot() const
 {
-    return m_imageDocument.activeNavigationSnapshot();
+    return DocumentSessionPublicOperationAvailabilitySnapshot {
+        currentMediaOpenWithPlan().hasRequest(),
+    };
 }
 }

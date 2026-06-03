@@ -15,42 +15,29 @@ MediaViewportDelegate {
     property alias controls: floatingControls
     property alias videoOutput: videoOutput
     readonly property var videoDocument: root.documentSession.videoDocument
-    readonly property bool videoReady: videoDocument.status === KiriVideoDocument.Ready
-    readonly property bool videoControlsReady: root.videoReady && root.videoDocument.hasVideo
+    readonly property bool videoReady: root.documentSession.activeVideoReady
+    readonly property bool videoControlsReady: root.documentSession.activeVideoControlsReady
     readonly property bool fixedControlsMode: Kirigami.Settings.isMobile || Kirigami.Settings.hasTransientTouchInput || Kirigami.Units.longDuration <= 0 || width < Kirigami.Units.gridUnit * 32 || height < Kirigami.Units.gridUnit * 16
     readonly property bool controlsReserveSpace: floatingControls.visible && root.fixedControlsMode
     readonly property bool controlsEffectivelyShown: floatingControls.visible && floatingControls.opacity > 0
-    property KiriVideoDocument attachedVideoDocument: null
+    property int videoOutputClaimRevision: 0
 
     function shouldAttachVideoOutput() {
         return root.presentationActive && root.visible && root.videoDocument !== null;
     }
 
-    function detachVideoOutput(document) {
-        if (document !== null && document.videoOutput === videoOutput) {
-            document.videoOutput = null;
-        }
+    function nextVideoOutputClaimRevision() {
+        root.videoOutputClaimRevision += 1;
+        return root.videoOutputClaimRevision;
     }
 
     function updateVideoOutputAttachment() {
-        const nextDocument = shouldAttachVideoOutput() ? root.videoDocument : null;
-
-        if (root.attachedVideoDocument !== null && root.attachedVideoDocument !== nextDocument) {
-            detachVideoOutput(root.attachedVideoDocument);
-        }
-
-        root.attachedVideoDocument = nextDocument;
-
-        if (nextDocument !== null && nextDocument.videoOutput !== videoOutput) {
-            nextDocument.videoOutput = videoOutput;
-        }
-        reportVideoOutputGeometry();
+        const attach = shouldAttachVideoOutput();
+        root.documentSession.reportVideoOutputSurfaceClaim(root.nextVideoOutputClaimRevision(), root.documentSession.publicProjectionRevision, root, attach ? videoOutput : null, attach, videoOutput.contentRect, videoOutput.sourceRect);
     }
 
     function reportVideoOutputGeometry() {
-        if (root.videoDocument !== null) {
-            root.videoDocument.setVideoOutputGeometry(videoOutput.contentRect, videoOutput.sourceRect);
-        }
+        root.updateVideoOutputAttachment();
     }
 
     function seekByShortcut(deltaMilliseconds) {
@@ -86,13 +73,20 @@ MediaViewportDelegate {
     onVideoDocumentChanged: updateVideoOutputAttachment()
     onVisibleChanged: updateVideoOutputAttachment()
 
+    Connections {
+        target: root.documentSession
+
+        function onPublicProjectionRevisionChanged() {
+            root.updateVideoOutputAttachment();
+        }
+    }
+
     Component.onCompleted: {
         updateVideoOutputAttachment();
         reportVideoOutputGeometry();
     }
     Component.onDestruction: {
-        detachVideoOutput(root.attachedVideoDocument);
-        root.attachedVideoDocument = null;
+        root.documentSession.reportVideoOutputSurfaceClaim(root.nextVideoOutputClaimRevision(), root.documentSession.publicProjectionRevision, root, null, false, Qt.rect(0, 0, 0, 0), Qt.rect(0, 0, 0, 0));
     }
 
     Keys.onPressed: event => {

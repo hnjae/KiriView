@@ -140,6 +140,31 @@ ImageViewportCommand ImageSpreadPresentationController::requestViewportContentPo
     return command;
 }
 
+bool ImageSpreadPresentationController::beginViewportCommandApplication(quint64 commandRevision)
+{
+    if (!m_activePresentation->beginViewportCommandApplication(commandRevision)) {
+        notify(ImageDocumentChange::ViewportFrame);
+        return false;
+    }
+
+    notify(ImageDocumentChange::ViewportFrame);
+    return true;
+}
+
+bool ImageSpreadPresentationController::completeViewportCommandApplication(
+    quint64 commandRevision, const QPointF &actualContentPosition)
+{
+    if (!m_activePresentation->completeViewportCommandApplication(
+            commandRevision, actualContentPosition)) {
+        notify(ImageDocumentChange::ViewportFrame);
+        return false;
+    }
+
+    applyViewportFrameVisibleItemRect(true);
+    notify(ImageDocumentChange::ViewportFrame);
+    return true;
+}
+
 bool ImageSpreadPresentationController::acknowledgeViewportCommand(
     quint64 commandRevision, const QPointF &actualContentPosition)
 {

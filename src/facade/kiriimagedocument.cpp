@@ -641,6 +641,17 @@ quint64 KiriImageDocument::requestViewportContentPosition(const QPointF &viewpor
     return m_runtime->requestViewportContentPosition(viewportContentPosition);
 }
 
+bool KiriImageDocument::beginViewportCommandApplication(quint64 commandRevision)
+{
+    return m_runtime->beginViewportCommandApplication(commandRevision);
+}
+
+bool KiriImageDocument::completeViewportCommandApplication(
+    quint64 commandRevision, const QPointF &actualContentPosition)
+{
+    return m_runtime->completeViewportCommandApplication(commandRevision, actualContentPosition);
+}
+
 bool KiriImageDocument::acknowledgeViewportCommand(
     quint64 commandRevision, const QPointF &actualContentPosition)
 {

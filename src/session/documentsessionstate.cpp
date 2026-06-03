@@ -96,6 +96,11 @@ bool samePublicSnapshot(const KiriView::DocumentSessionPublicSnapshot &left,
         && left.activeImageReady == right.activeImageReady
         && left.activeImageUnsupportedOpenedCollectionVideo
         == right.activeImageUnsupportedOpenedCollectionVideo
+        && left.activeImageOpenedCollectionScopeActive
+        == right.activeImageOpenedCollectionScopeActive
+        && left.activeImageRightToLeftReadingActive == right.activeImageRightToLeftReadingActive
+        && left.activeVideoReady == right.activeVideoReady
+        && left.activeVideoControlsReady == right.activeVideoControlsReady
         && sameActionAvailabilityFacts(left.actionAvailability, right.actionAvailability)
         && samePublicProjection(left.projection, right.projection)
         && KiriView::sameMediaInformationProjectionSnapshot(

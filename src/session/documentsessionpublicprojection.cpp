@@ -118,6 +118,30 @@ bool activeImageReadyForInput(const KiriView::DocumentSessionPublicSnapshotInput
         && input.image.readyForInformation && !input.image.unsupportedOpenedCollectionVideo;
 }
 
+bool activeImageOpenedCollectionScopeActiveForInput(
+    const KiriView::DocumentSessionPublicSnapshotInput &input)
+{
+    return input.session.documentKind == KiriView::DocumentSessionKind::Image
+        && input.image.openedCollectionScopeActive;
+}
+
+bool activeImageRightToLeftReadingActiveForInput(
+    const KiriView::DocumentSessionPublicSnapshotInput &input)
+{
+    return input.session.documentKind == KiriView::DocumentSessionKind::Image
+        && input.image.rightToLeftReadingEnabled && input.image.rightToLeftReadingAvailable;
+}
+
+bool activeVideoReadyForInput(const KiriView::DocumentSessionPublicSnapshotInput &input)
+{
+    return input.session.documentKind == KiriView::DocumentSessionKind::Video && input.video.ready;
+}
+
+bool activeVideoControlsReadyForInput(const KiriView::DocumentSessionPublicSnapshotInput &input)
+{
+    return activeVideoReadyForInput(input) && input.video.hasVideo;
+}
+
 KiriView::DocumentSessionActionAvailabilityFacts actionAvailabilityFactsForInput(
     const KiriView::DocumentSessionPublicSnapshotInput &input)
 {
@@ -237,6 +261,12 @@ DocumentSessionPublicSnapshot projectDocumentSessionPublicSnapshot(
     snapshot.activeImageUnsupportedOpenedCollectionVideo
         = input.session.documentKind == DocumentSessionKind::Image
         && input.image.unsupportedOpenedCollectionVideo;
+    snapshot.activeImageOpenedCollectionScopeActive
+        = activeImageOpenedCollectionScopeActiveForInput(input);
+    snapshot.activeImageRightToLeftReadingActive
+        = activeImageRightToLeftReadingActiveForInput(input);
+    snapshot.activeVideoReady = activeVideoReadyForInput(input);
+    snapshot.activeVideoControlsReady = activeVideoControlsReadyForInput(input);
     snapshot.actionAvailability = actionAvailabilityFactsForInput(input);
     snapshot.projection = projectDocumentSessionPublicState(projectionInputForSnapshotInput(input));
     snapshot.mediaInformation

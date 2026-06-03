@@ -264,6 +264,7 @@ KiriView::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
         [&document]() { return document.status() == KiriImageDocument::Status::Error; },
         [&document]() { return document.unsupportedOpenedCollectionVideo(); },
         [&document]() { return document.fileDeletionInProgress(); },
+        [&document]() { return document.openedCollectionScopeActive(); },
         [&document]() { return document.ordinaryDirectMediaScopeActive(); },
         [&document]() { return document.containerNavigationAvailable(); },
         [&document]() { return document.twoPageModeEnabled(); },
@@ -319,15 +320,20 @@ KiriView::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPor
         [&document]() { return document.videoSize(); },
         [&document]() { return document.status() == KiriVideoDocument::Status::Ready; },
         [&document]() { return document.status() == KiriVideoDocument::Status::Error; },
+        [&document]() { return document.hasVideo(); },
         [&document]() { return document.zoomPercentKnown(); },
         [&document]() { return document.zoomPercent(); },
         [&document]() { return document.embeddedMetadata(); },
         [&document]() { return document.videoOutput(); },
         [&document]() { document.stop(); },
         [&document](QObject *videoOutput) { document.setVideoOutput(videoOutput); },
+        [&document](const QRectF &contentRect, const QRectF &sourceRect) {
+            document.setVideoOutputGeometry(contentRect, sourceRect);
+        },
         KiriView::DocumentSessionVideoDocumentSignals {
             documentSignalConnector(document, &KiriVideoDocument::sourceUrlChanged),
             documentSignalConnector(document, &KiriVideoDocument::statusChanged),
+            documentSignalConnector(document, &KiriVideoDocument::hasVideoChanged),
             documentSignalConnector(document, &KiriVideoDocument::windowTitleFileNameChanged),
             documentSignalConnector(document, &KiriVideoDocument::videoSizeChanged),
             documentSignalConnector(document, &KiriVideoDocument::errorStringChanged),
@@ -433,6 +439,23 @@ bool KiriDocumentSession::activeImageReady() const { return m_runtime->activeIma
 bool KiriDocumentSession::activeImageUnsupportedOpenedCollectionVideo() const
 {
     return m_runtime->activeImageUnsupportedOpenedCollectionVideo();
+}
+
+bool KiriDocumentSession::activeImageOpenedCollectionScopeActive() const
+{
+    return m_runtime->activeImageOpenedCollectionScopeActive();
+}
+
+bool KiriDocumentSession::activeImageRightToLeftReadingActive() const
+{
+    return m_runtime->activeImageRightToLeftReadingActive();
+}
+
+bool KiriDocumentSession::activeVideoReady() const { return m_runtime->activeVideoReady(); }
+
+bool KiriDocumentSession::activeVideoControlsReady() const
+{
+    return m_runtime->activeVideoControlsReady();
 }
 
 bool KiriDocumentSession::activeNavigationAvailable() const
@@ -596,6 +619,14 @@ bool KiriDocumentSession::reportActiveNavigationThumbnailDemand(int number, QUrl
 {
     return m_runtime->reportActiveNavigationThumbnailDemand(number, url, physicalMaxEdge,
         toRuntimeThumbnailDemandPriority(priority), navigationGeneration);
+}
+
+bool KiriDocumentSession::reportVideoOutputSurfaceClaim(quint64 claimRevision,
+    quint64 projectionRevision, QObject *surfaceOwner, QObject *videoOutput, bool active,
+    QRectF contentRect, QRectF sourceRect)
+{
+    return m_runtime->reportVideoOutputSurfaceClaim(claimRevision, projectionRevision, surfaceOwner,
+        videoOutput, active, contentRect, sourceRect);
 }
 
 void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)
