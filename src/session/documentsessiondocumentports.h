@@ -34,10 +34,15 @@ struct DocumentSessionImageDocumentSignals {
     DocumentSessionDocumentSignalConnector imageSizeChanged;
     DocumentSessionDocumentSignalConnector errorStringChanged;
     DocumentSessionDocumentSignalConnector imageDocumentSourceScopeChanged;
+    DocumentSessionDocumentSignalConnector unsupportedOpenedCollectionVideoChanged;
     DocumentSessionDocumentSignalConnector fileDeletionInProgressChanged;
     DocumentSessionDocumentSignalConnector zoomPercentKnownChanged;
     DocumentSessionDocumentSignalConnector zoomPercentChanged;
+    DocumentSessionDocumentSignalConnector zoomModeChanged;
     DocumentSessionDocumentSignalConnector pageNavigationChanged;
+    DocumentSessionDocumentSignalConnector containerNavigationChanged;
+    DocumentSessionDocumentSignalConnector twoPageModeChanged;
+    DocumentSessionDocumentSignalConnector rightToLeftReadingChanged;
     DocumentSessionDocumentSignalConnector embeddedMetadataChanged;
 };
 
@@ -51,8 +56,17 @@ struct DocumentSessionImageDocumentPort {
     std::function<QSize()> primaryImageSize;
     std::function<bool()> ready;
     std::function<bool()> error;
+    std::function<bool()> unsupportedOpenedCollectionVideo;
     std::function<bool()> fileDeletionInProgress;
     std::function<bool()> ordinaryDirectMediaScopeActive;
+    std::function<bool()> containerNavigationAvailable;
+    std::function<bool()> twoPageModeEnabled;
+    std::function<bool()> twoPageModeAvailable;
+    std::function<bool()> rightToLeftReadingEnabled;
+    std::function<bool()> rightToLeftReadingAvailable;
+    std::function<bool()> fitModeSelected;
+    std::function<bool()> fitHeightModeSelected;
+    std::function<bool()> fitWidthModeSelected;
     std::function<bool()> zoomPercentKnown;
     std::function<qreal()> zoomPercent;
     std::function<EmbeddedMetadata()> embeddedMetadata;

@@ -31,6 +31,7 @@ private Q_SLOTS:
     void redundantSourceAndRotationUpdatesReturnEmptyPlans();
     void visibleRectPlansTileRefreshWithoutDuplicatingState();
     void renderContextRefreshPlansForcedTileRefresh();
+    void renderContextGenerationRefreshInvalidatesTileLifecycle();
 };
 
 void TestImagePresentationViewportState::displayedImageSizeUpdatesZoomAndTilePlan()
@@ -144,6 +145,29 @@ void TestImagePresentationViewportState::renderContextRefreshPlansForcedTileRefr
     const KiriView::ImagePresentationViewportPlan plan = state.updateRenderContext();
 
     QCOMPARE(state.renderContext().devicePixelRatio, 2.0);
+    QVERIFY(containsChange(plan.changes, KiriView::ImageDocumentChange::RenderFrame));
+    QVERIFY(!plan.invalidateTiles);
+    QVERIFY(plan.scheduleVisibleTileDecode);
+}
+
+void TestImagePresentationViewportState::renderContextGenerationRefreshInvalidatesTileLifecycle()
+{
+    quint64 generation = 1;
+    KiriView::ImagePresentationViewportState state([&generation]() {
+        return KiriView::ImageDocumentRenderContext {
+            1.0,
+            KiriView::fallbackTextureSizeMax,
+            generation,
+        };
+    });
+    state.setViewportSize(QSizeF(128.0, 128.0));
+    state.setDisplayedImageSize(QSize(256, 256));
+
+    generation = 2;
+    const KiriView::ImagePresentationViewportPlan plan = state.updateRenderContext();
+
+    QCOMPARE(state.renderContext().generation, quint64(2));
+    QVERIFY(plan.invalidateTiles);
     QVERIFY(containsChange(plan.changes, KiriView::ImageDocumentChange::RenderFrame));
     QVERIFY(plan.scheduleVisibleTileDecode);
 }

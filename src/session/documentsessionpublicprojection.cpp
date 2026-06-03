@@ -112,6 +112,32 @@ KiriView::ActiveZoomSnapshot activeZoomForInput(
     return {};
 }
 
+bool activeImageReadyForInput(const KiriView::DocumentSessionPublicSnapshotInput &input)
+{
+    return input.session.documentKind == KiriView::DocumentSessionKind::Image
+        && input.image.readyForInformation && !input.image.unsupportedOpenedCollectionVideo;
+}
+
+KiriView::DocumentSessionActionAvailabilityFacts actionAvailabilityFactsForInput(
+    const KiriView::DocumentSessionPublicSnapshotInput &input)
+{
+    if (input.session.documentKind != KiriView::DocumentSessionKind::Image) {
+        return {};
+    }
+
+    return KiriView::DocumentSessionActionAvailabilityFacts {
+        activeImageReadyForInput(input),
+        input.image.containerNavigationAvailable,
+        input.image.twoPageModeEnabled,
+        input.image.twoPageModeAvailable,
+        input.image.rightToLeftReadingEnabled,
+        input.image.rightToLeftReadingAvailable,
+        input.image.fitModeSelected,
+        input.image.fitHeightModeSelected,
+        input.image.fitWidthModeSelected,
+    };
+}
+
 QString errorStringForInput(const KiriView::DocumentSessionPublicSnapshotInput &input)
 {
     if (!input.session.sessionErrorString.isEmpty()) {
@@ -207,6 +233,11 @@ DocumentSessionPublicSnapshot projectDocumentSessionPublicSnapshot(
     snapshot.errorString = errorStringForInput(input);
     snapshot.fileDeletionInProgress = input.session.fileDeletionInProgress;
     snapshot.activeZoom = activeZoomForInput(input);
+    snapshot.activeImageReady = activeImageReadyForInput(input);
+    snapshot.activeImageUnsupportedOpenedCollectionVideo
+        = input.session.documentKind == DocumentSessionKind::Image
+        && input.image.unsupportedOpenedCollectionVideo;
+    snapshot.actionAvailability = actionAvailabilityFactsForInput(input);
     snapshot.projection = projectDocumentSessionPublicState(projectionInputForSnapshotInput(input));
     snapshot.mediaInformation
         = projectMediaInformation(mediaInformationInputForSnapshotInput(input), revision);

@@ -238,8 +238,9 @@ fn replacement_source_load_plan(
         RustImageDocumentSourceLoadOperation::FinishSpreadTransition,
     );
     apply_right_to_left_reading_transition(&mut plan, input, true);
-    push_source_load_operation(
+    push_source_load_if(
         &mut plan,
+        !input.preserve_two_page_spread_transition,
         RustImageDocumentSourceLoadOperation::ClearSecondaryPage,
     );
     push_source_load_operation(
@@ -914,7 +915,6 @@ mod tests {
                     RustImageDocumentSourceLoadOperation::CancelFileDeletion,
                     RustImageDocumentSourceLoadOperation::CancelAllNavigation,
                     RustImageDocumentSourceLoadOperation::CancelPredecode,
-                    RustImageDocumentSourceLoadOperation::ClearSecondaryPage,
                     RustImageDocumentSourceLoadOperation::SetLoadingContainerNavigationUrlToRequested,
                     RustImageDocumentSourceLoadOperation::PrepareSourceLoad,
                     RustImageDocumentSourceLoadOperation::SetSourceUrlToRequested,
@@ -980,7 +980,6 @@ mod tests {
                 RustImageDocumentSourceLoadOperation::CancelAllNavigation,
                 RustImageDocumentSourceLoadOperation::CancelPredecode,
                 RustImageDocumentSourceLoadOperation::ResetRightToLeftReading,
-                RustImageDocumentSourceLoadOperation::ClearSecondaryPage,
                 RustImageDocumentSourceLoadOperation::SetLoadingContainerNavigationUrlToRequested,
                 RustImageDocumentSourceLoadOperation::PrepareSourceLoad,
                 RustImageDocumentSourceLoadOperation::SetSourceUrlToRequested,
@@ -1002,7 +1001,6 @@ mod tests {
                 RustImageDocumentSourceLoadOperation::CancelFileDeletion,
                 RustImageDocumentSourceLoadOperation::CancelAllNavigation,
                 RustImageDocumentSourceLoadOperation::CancelPredecode,
-                RustImageDocumentSourceLoadOperation::ClearSecondaryPage,
                 RustImageDocumentSourceLoadOperation::SetLoadingContainerNavigationUrlToRequested,
                 RustImageDocumentSourceLoadOperation::PrepareSourceLoad,
                 RustImageDocumentSourceLoadOperation::SetSourceUrlToRequested,
@@ -1023,7 +1021,6 @@ mod tests {
                 RustImageDocumentSourceLoadOperation::CancelFileDeletion,
                 RustImageDocumentSourceLoadOperation::CancelAllNavigation,
                 RustImageDocumentSourceLoadOperation::CancelPredecode,
-                RustImageDocumentSourceLoadOperation::ClearSecondaryPage,
                 RustImageDocumentSourceLoadOperation::SetLoadingContainerNavigationUrlToRequested,
                 RustImageDocumentSourceLoadOperation::PrepareSourceLoad,
                 RustImageDocumentSourceLoadOperation::SetSourceUrlToRequested,

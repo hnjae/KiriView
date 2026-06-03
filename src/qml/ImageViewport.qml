@@ -15,7 +15,7 @@ MediaViewportDelegate {
     property int appliedViewportCommandRevision: 0
     property int appliedViewportObservationRevision: 0
     readonly property var imageDocument: root.documentSession.imageDocument
-    property bool imageReady: root.presentationActive && root.imageDocument.status === KiriImageDocument.Ready && !root.imageDocument.unsupportedOpenedCollectionVideo
+    property bool imageReady: root.presentationActive && root.documentSession.activeImageReady
     readonly property int minimumManualZoomPercent: root.imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: root.imageDocument.maximumManualZoomPercent
     readonly property int wheelAngleDeltaPerStep: 120
@@ -103,6 +103,10 @@ MediaViewportDelegate {
 
         const commandRevision = root.imageDocument.viewportCommandRevision;
         const observationRevision = root.imageDocument.viewportObservationRevision;
+        const rejectedViewportCommandStatus = 6;
+        if (root.imageDocument.viewportCommandStatus === rejectedViewportCommandStatus) {
+            return;
+        }
         if (commandRevision < root.appliedViewportCommandRevision) {
             return;
         }
@@ -258,7 +262,7 @@ MediaViewportDelegate {
         clip: true
         contentHeight: root.presentationActive ? root.imageDocument.viewportContentSize.height : height
         contentWidth: root.presentationActive ? root.imageDocument.viewportContentSize.width : width
-        interactive: root.imageDocument.status === KiriImageDocument.Ready && root.imagePannable
+        interactive: root.imageReady && root.imagePannable
 
         onMovementEnded: root.observeViewportContentPosition(KiriImageDocument.Inertia)
 

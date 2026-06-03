@@ -90,6 +90,7 @@ ImagePresentationViewportPlan ImagePresentationViewportState::setVisibleItemRect
     m_visibleItemRect = visibleItemRect;
     return ImagePresentationViewportPlan {
         { ImageDocumentChange::VisibleItemRect, ImageDocumentChange::RenderFrame },
+        false,
         true,
     };
 }
@@ -256,8 +257,11 @@ ImagePresentationViewportPlan ImagePresentationViewportState::mutateZoomState(
     if (result.changes.scheduleVisibleTileDecode) {
         changes.push_back(ImageDocumentChange::RenderFrame);
     }
+    const bool renderContextGenerationChanged = result.renderContextChange.previous.generation
+        != result.renderContextChange.current.generation;
     return ImagePresentationViewportPlan {
         std::move(changes),
+        renderContextGenerationChanged,
         result.changes.scheduleVisibleTileDecode,
     };
 }

@@ -105,7 +105,7 @@ StatefulApp.StatefulWindow {
     }
 
     function publishActionUiState() {
-        kiriApplication.updateActionUiState(root.helpDialogOpen, root.toolbarTextInputFocused(), page.imageMode && mediaWorkspaceHost.imageInteractionSurface.imagePannable, mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, !root.helpDialogOpen);
+        kiriApplication.updateActionUiGateSnapshot(page.actionUiGateRevision, root.helpDialogOpen, root.toolbarTextInputFocused(), page.imageMode && mediaWorkspaceHost.imageInteractionSurface.imagePannable, mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, !root.helpDialogOpen);
     }
 
     minimumWidth: Kirigami.Units.gridUnit * 14
@@ -243,9 +243,10 @@ StatefulApp.StatefulWindow {
         readonly property var videoDocument: documentSession.videoDocument
         readonly property bool imageMode: documentSession.documentKind === KiriDocumentSession.Image
         readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
-        readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready && !imageDocument.unsupportedOpenedCollectionVideo
+        readonly property bool imageReady: documentSession.activeImageReady
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
-        readonly property string actionUiStateRevision: [root.helpDialogOpen, root.fullscreen, root.applicationMenuShortcutEnabled, root.toolbarTextInputFocused(), mediaWorkspaceHost.imageInteractionSurface.imagePannable, mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible].join("|")
+        property int actionUiGateRevision: 0
+        readonly property string actionUiGateFingerprint: [root.helpDialogOpen, root.fullscreen, root.applicationMenuShortcutEnabled, root.toolbarTextInputFocused(), mediaWorkspaceHost.imageInteractionSurface.imagePannable, mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible].join("|")
         property bool documentDeletionWasInProgress: false
 
         background: Rectangle {
@@ -304,7 +305,10 @@ StatefulApp.StatefulWindow {
             videoMode: page.videoMode
         }
 
-        onActionUiStateRevisionChanged: root.publishActionUiState()
+        onActionUiGateFingerprintChanged: {
+            actionUiGateRevision += 1;
+            root.publishActionUiState();
+        }
 
         onFullscreenPointerPositionChanged: {
             if (root.fullscreen && fullscreenRevealHandler.hovered) {

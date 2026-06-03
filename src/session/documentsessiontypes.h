@@ -25,6 +25,7 @@ enum class DocumentSessionChange {
     ErrorString,
     WindowTitleSubject,
     ActiveZoomReadout,
+    ActiveMediaReadiness,
     OpenWithAvailability,
     FileDeletionAvailability,
     FileDeletionInProgress,
@@ -60,6 +61,18 @@ struct ActiveZoomSnapshot {
     bool editable = false;
 };
 
+struct DocumentSessionActionAvailabilityFacts {
+    bool imageReady = false;
+    bool containerNavigationAvailable = false;
+    bool twoPageModeActive = false;
+    bool twoPageModeAvailable = false;
+    bool rightToLeftReadingActive = false;
+    bool rightToLeftReadingAvailable = false;
+    bool fitModeSelected = false;
+    bool fitHeightModeSelected = false;
+    bool fitWidthModeSelected = false;
+};
+
 struct DocumentSessionPublicProjection {
     ActiveNavigationSourceKind sourceKind = ActiveNavigationSourceKind::None;
     ActiveNavigationBoundaryScope boundaryScope = ActiveNavigationBoundaryScope::None;
@@ -77,6 +90,9 @@ struct DocumentSessionPublicSnapshot {
     QString errorString;
     bool fileDeletionInProgress = false;
     ActiveZoomSnapshot activeZoom;
+    bool activeImageReady = false;
+    bool activeImageUnsupportedOpenedCollectionVideo = false;
+    DocumentSessionActionAvailabilityFacts actionAvailability;
     DocumentSessionPublicProjection projection;
     MediaInformationProjectionSnapshot mediaInformation;
     ActiveNavigationRevealIntent activeNavigationRevealIntent = ActiveNavigationRevealIntent::None;

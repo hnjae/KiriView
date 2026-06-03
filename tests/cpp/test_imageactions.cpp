@@ -161,7 +161,7 @@ Item {
     }
 
     function publishActionUiState() {
-        application.updateActionUiState(false, false, false, false, false, false, true, true);
+        application.updateActionUiGateSnapshot(1, false, false, false, false, false, false, true, true);
     }
 
     Component.onCompleted: {

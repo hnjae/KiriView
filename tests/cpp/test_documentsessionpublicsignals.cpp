@@ -40,6 +40,8 @@ KiriView::DocumentSessionPublicSignalOperations recordingOperations(QStringList 
         = [&events]() { events.append(QStringLiteral("windowTitleSubject")); };
     operations.activeZoomReadoutChanged
         = [&events]() { events.append(QStringLiteral("activeZoomReadout")); };
+    operations.activeMediaReadinessChanged
+        = [&events]() { events.append(QStringLiteral("activeMediaReadiness")); };
     operations.displayedMediaOpenWithAvailabilityChanged
         = [&events]() { events.append(QStringLiteral("displayedMediaOpenWithAvailability")); };
     operations.displayedFileDeletionAvailabilityChanged
@@ -73,6 +75,8 @@ void TestDocumentSessionPublicSignals::publicSignalPlansReturnSignalsInEmissionO
         { Signal::WindowTitleSubject });
     comparePublicSignals(KiriView::documentSessionPublicSignals(Change::ActiveZoomReadout),
         { Signal::ActiveZoomReadout });
+    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::ActiveMediaReadiness),
+        { Signal::ActiveMediaReadiness });
     comparePublicSignals(KiriView::documentSessionPublicSignals(Change::OpenWithAvailability),
         { Signal::DisplayedMediaOpenWithAvailability });
     comparePublicSignals(KiriView::documentSessionPublicSignals(Change::FileDeletionAvailability),

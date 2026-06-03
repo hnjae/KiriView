@@ -81,7 +81,6 @@ void TestImageOpenSourceLoadWorkflow::displayedComicBookScopeSuppressesRightToLe
     QVERIFY(hasOperationTypes(plan,
         operationTypes<KiriView::CancelFileDeletionOperation,
             KiriView::CancelAllNavigationOperation, KiriView::CancelPredecodeOperation,
-            KiriView::ClearSecondaryPageOperation,
             KiriView::SetLoadingContainerNavigationUrlOperation,
             KiriView::PrepareSourceLoadOperation, KiriView::SetSourceUrlOperation,
             KiriView::BeginOpenOperation>()));
@@ -112,7 +111,7 @@ void TestImageOpenSourceLoadWorkflow::replacementSourceLoadStartsFreshRuntimeWor
     QVERIFY(hasOperationTypes(plan,
         operationTypes<KiriView::CancelFileDeletionOperation,
             KiriView::CancelAllNavigationOperation, KiriView::CancelPredecodeOperation,
-            KiriView::ResetRightToLeftReadingOperation, KiriView::ClearSecondaryPageOperation,
+            KiriView::ResetRightToLeftReadingOperation,
             KiriView::SetLoadingContainerNavigationUrlOperation,
             KiriView::PrepareSourceLoadOperation, KiriView::SetSourceUrlOperation,
             KiriView::BeginOpenOperation, KiriView::NotifyRightToLeftReadingChangedOperation>()));

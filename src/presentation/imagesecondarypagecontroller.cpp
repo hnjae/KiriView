@@ -104,7 +104,8 @@ void ImageSecondaryPageController::startLoad(const QUrl &url,
     const OpenedCollectionScopeLocation &displayedOpenedCollectionScope,
     const ImageFirstDisplayDecodeContext &firstDisplayContext)
 {
-    clear();
+    cancel();
+    stopAnimation();
     m_imageLoader->start(
         ImageLoadRequest::fromLocation(url, displayedOpenedCollectionScope), firstDisplayContext);
 }

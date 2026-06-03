@@ -72,6 +72,9 @@ public:
     bool activeZoomPercentKnown() const;
     qreal activeZoomPercent() const;
     bool activeZoomEditable() const;
+    bool activeImageReady() const;
+    bool activeImageUnsupportedOpenedCollectionVideo() const;
+    const DocumentSessionActionAvailabilityFacts &actionAvailabilityFacts() const;
     bool activeNavigationAvailable() const;
     bool activeNavigationKnown() const;
     bool activeNavigationEditable() const;

@@ -28,6 +28,8 @@ public:
     const QString &windowTitleSubject() const;
     bool fileDeletionInProgress() const;
     const ActiveZoomSnapshot &activeZoomSnapshot() const;
+    bool activeImageReady() const;
+    bool activeImageUnsupportedOpenedCollectionVideo() const;
     const DirectMediaNavigationBoundaryState &directMediaNavigationState() const;
     bool directMediaNavigationKnown() const;
     const std::vector<DirectMediaNavigationCandidate> &directMediaNavigationCandidates() const;

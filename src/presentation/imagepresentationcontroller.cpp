@@ -109,13 +109,15 @@ std::shared_ptr<DisplayedImageSurface> ImagePresentationController::imageSurface
 
 DisplayedImageRenderSnapshot ImagePresentationController::renderSnapshot() const
 {
+    const ImageDocumentRenderContext context = m_viewportController->renderContext();
     return DisplayedImageRenderSnapshot {
         imageSurface(),
         imageRevision(),
         imageSize(),
         displaySize(),
         visibleItemRect(),
-        m_viewportController->renderContext().devicePixelRatio,
+        context.devicePixelRatio,
+        context.generation,
         rotationDegrees(),
     };
 }

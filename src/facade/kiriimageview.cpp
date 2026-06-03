@@ -139,6 +139,7 @@ QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
         = KiriView::projectImageRenderFrame(KiriView::ImageRenderFrameInput {
             snapshot.surface.get(),
             snapshot.revision,
+            snapshot.renderContextGeneration,
             KiriView::ImageSurfaceDrawContext {
                 targetRect,
                 snapshot.displaySize.isEmpty() ? targetRect.size() : snapshot.displaySize,
@@ -159,10 +160,15 @@ void KiriImageView::itemChange(ItemChange change, const ItemChangeData &value)
 {
     QQuickItem::itemChange(change, value);
 
-    if (m_document != nullptr
-        && (change == ItemSceneChange || change == ItemDevicePixelRatioHasChanged)) {
-        m_document->updateRenderContext();
+    if (change == ItemSceneChange || change == ItemDevicePixelRatioHasChanged) {
+        invalidateRenderContext();
     }
+}
+
+void KiriImageView::releaseResources()
+{
+    QQuickItem::releaseResources();
+    invalidateRenderContext();
 }
 
 void KiriImageView::classBegin()
@@ -297,6 +303,14 @@ void KiriImageView::applyRenderContextBinding(
     }
 }
 
+void KiriImageView::invalidateRenderContext()
+{
+    ++m_renderContextGeneration;
+    if (m_document != nullptr) {
+        m_document->updateRenderContext();
+    }
+}
+
 void KiriImageView::handleDisplayedUrlChanged()
 {
     m_viewportInteraction.beginDisplayedImage();
@@ -312,7 +326,11 @@ void KiriImageView::handleLoadingChanged()
 
 KiriView::ImageDocumentRenderContext KiriImageView::renderContext() const
 {
-    return KiriView::ImageDocumentRenderContext { displayDevicePixelRatio(), maximumTextureSize() };
+    return KiriView::ImageDocumentRenderContext {
+        displayDevicePixelRatio(),
+        maximumTextureSize(),
+        m_renderContextGeneration,
+    };
 }
 
 qreal KiriImageView::displayDevicePixelRatio() const

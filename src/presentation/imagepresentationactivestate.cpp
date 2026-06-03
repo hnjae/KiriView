@@ -50,7 +50,7 @@ void ImagePresentationActiveState::setMode(ImagePresentationActiveMode mode)
 
 bool ImagePresentationActiveState::transitionInProgress() const
 {
-    return m_transitionState == ImagePresentationTransitionState::TransitioningPlaceholder;
+    return m_transitionState != ImagePresentationTransitionState::CommittedActive;
 }
 
 ImagePresentationTransitionState ImagePresentationActiveState::transitionState() const
@@ -64,11 +64,31 @@ bool ImagePresentationActiveState::beginTransition()
         return false;
     }
 
+    m_transitionState = ImagePresentationTransitionState::PreviousActive;
+    return true;
+}
+
+bool ImagePresentationActiveState::showTransitionPlaceholder()
+{
+    if (!transitionInProgress()) {
+        return false;
+    }
+
     m_transitionState = ImagePresentationTransitionState::TransitioningPlaceholder;
     return true;
 }
 
 bool ImagePresentationActiveState::finishTransition()
+{
+    if (!transitionInProgress()) {
+        return false;
+    }
+
+    m_transitionState = ImagePresentationTransitionState::CommittedActive;
+    return true;
+}
+
+bool ImagePresentationActiveState::abortTransition()
 {
     if (!transitionInProgress()) {
         return false;

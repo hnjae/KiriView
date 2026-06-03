@@ -267,7 +267,7 @@ Item {
     }
 
     function publishActionUiState() {
-        application.updateActionUiState(helpDialogOpen, toolbarTextInputFocused, imagePannable, false, false, false, true, true);
+        application.updateActionUiGateSnapshot(1, helpDialogOpen, toolbarTextInputFocused, imagePannable, false, false, false, true, true);
     }
 
     function refreshDerivedDocumentState() {

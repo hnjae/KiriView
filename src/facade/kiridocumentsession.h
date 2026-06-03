@@ -50,6 +50,9 @@ class KiriDocumentSession : public QObject
         bool activeZoomPercentKnown READ activeZoomPercentKnown NOTIFY activeZoomReadoutChanged)
     Q_PROPERTY(double activeZoomPercent READ activeZoomPercent NOTIFY activeZoomReadoutChanged)
     Q_PROPERTY(bool activeZoomEditable READ activeZoomEditable NOTIFY activeZoomReadoutChanged)
+    Q_PROPERTY(bool activeImageReady READ activeImageReady NOTIFY activeMediaReadinessChanged)
+    Q_PROPERTY(bool activeImageUnsupportedOpenedCollectionVideo READ
+            activeImageUnsupportedOpenedCollectionVideo NOTIFY activeMediaReadinessChanged)
     Q_PROPERTY(bool activeNavigationAvailable READ activeNavigationAvailable NOTIFY
             activeNavigationChanged)
     Q_PROPERTY(bool activeNavigationKnown READ activeNavigationKnown NOTIFY activeNavigationChanged)
@@ -173,6 +176,8 @@ public:
     bool activeZoomPercentKnown() const;
     double activeZoomPercent() const;
     bool activeZoomEditable() const;
+    bool activeImageReady() const;
+    bool activeImageUnsupportedOpenedCollectionVideo() const;
     bool activeNavigationAvailable() const;
     bool activeNavigationKnown() const;
     bool activeNavigationEditable() const;
@@ -191,6 +196,7 @@ public:
     QAbstractListModel *activeNavigationThumbnailModel() const;
     KiriMediaInformation *mediaInformation() const;
     const KiriView::MediaInformationProjectionSnapshot &mediaInformationSnapshot() const;
+    const KiriView::DocumentSessionActionAvailabilityFacts &actionAvailabilityFacts() const;
     KiriImageDocument *imageDocument() const;
     KiriVideoDocument *videoDocument() const;
 
@@ -223,6 +229,7 @@ Q_SIGNALS:
     void displayedMediaOpenWithAvailabilityChanged();
     void fileDeletionInProgressChanged();
     void activeZoomReadoutChanged();
+    void activeMediaReadinessChanged();
     void activeNavigationChanged();
     void activeNavigationRevealIntentChanged();
     void activeNavigationRevealDirectionChanged();

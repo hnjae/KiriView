@@ -125,7 +125,7 @@ private Q_SLOTS:
     void spreadVisibleRectOwnsPageVisibleRectProjection();
     void spreadZoomDoesNotMutatePageZoomOwners();
     void spreadZoomRestoresToSinglePageWithoutMutatingPageZoomOwner();
-    void transitionPhaseUsesPlaceholderUntilTargetSpreadCommits();
+    void transitionPhaseKeepsPreviousActiveUntilPlaceholder();
 };
 
 void TestImageSpreadPresentationController::pageWidthCacheBelongsToSpreadNavigationOwner()
@@ -217,7 +217,7 @@ void TestImageSpreadPresentationController::
     QCOMPARE(fixture.primaryPresentation.zoomMode(), KiriView::ImageZoomMode::Fit);
 }
 
-void TestImageSpreadPresentationController::transitionPhaseUsesPlaceholderUntilTargetSpreadCommits()
+void TestImageSpreadPresentationController::transitionPhaseKeepsPreviousActiveUntilPlaceholder()
 {
     SpreadPresentationFixture fixture;
 
@@ -232,11 +232,30 @@ void TestImageSpreadPresentationController::transitionPhaseUsesPlaceholderUntilT
     fixture.controller.beginTransition();
 
     QCOMPARE(fixture.controller.presentationTransitionState(),
+        KiriView::ImagePresentationTransitionState::PreviousActive);
+    QVERIFY(fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary).isRenderable());
+    QVERIFY(
+        fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary).isRenderable());
+
+    fixture.controller.clearSecondaryPage();
+
+    QVERIFY(
+        fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary).isRenderable());
+
+    fixture.controller.showTransitionPlaceholder();
+
+    QCOMPARE(fixture.controller.presentationTransitionState(),
         KiriView::ImagePresentationTransitionState::TransitioningPlaceholder);
     QVERIFY(
         !fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary).isRenderable());
     QVERIFY(
         !fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary).isRenderable());
+
+    fixture.controller.abortTransition();
+
+    QCOMPARE(fixture.controller.presentationTransitionState(),
+        KiriView::ImagePresentationTransitionState::CommittedActive);
+    QVERIFY(fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary).isRenderable());
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadPresentationController)

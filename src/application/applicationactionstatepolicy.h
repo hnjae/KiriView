@@ -7,9 +7,11 @@
 #include "application/applicationtypes.h"
 
 #include <QString>
+#include <QtGlobal>
 
 namespace KiriView::ApplicationActions {
 struct ApplicationActionStateInput {
+    quint64 uiGateRevision = 0;
     bool helpActionsEnabled = false;
     bool readyActionsEnabled = false;
     bool rotateActionsEnabled = false;

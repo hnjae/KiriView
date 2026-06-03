@@ -215,7 +215,7 @@ private Q_SLOTS:
     void twoPageModeDisplaysCurrentAndNextComicArchivePages();
     void twoPageModeUsesRightToLeftPageOrder();
     void twoPageModeRightToLeftKeepsSinglePageNavigationSemantic();
-    void twoPageModeWaitsForTargetSpreadBeforeRenderingNavigation();
+    void twoPageModeKeepsPreviousSpreadRenderableUntilTargetSpreadIsReady();
     void twoPageModeLoadingNavigationUsesPendingPrimaryPage();
 };
 
@@ -1765,7 +1765,7 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
     QTRY_COMPARE(runtime->currentLastPageNumber(), 3);
 }
 
-void TestImageDocumentRuntime::twoPageModeWaitsForTargetSpreadBeforeRenderingNavigation()
+void TestImageDocumentRuntime::twoPageModeKeepsPreviousSpreadRenderableUntilTargetSpreadIsReady()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1819,16 +1819,16 @@ void TestImageDocumentRuntime::twoPageModeWaitsForTargetSpreadBeforeRenderingNav
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
     QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
     QVERIFY(runtime->loading());
-    QVERIFY(!hasRenderableSnapshot(*runtime));
-    QVERIFY(!hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
+    QVERIFY(hasRenderableSnapshot(*runtime));
+    QVERIFY(hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->displayedUrl(), fourthPageUrl);
     QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
     QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
     QVERIFY(runtime->loading());
-    QVERIFY(!hasRenderableSnapshot(*runtime));
-    QVERIFY(!hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
+    QVERIFY(hasRenderableSnapshot(*runtime));
+    QVERIFY(hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);

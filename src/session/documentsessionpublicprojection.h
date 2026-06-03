@@ -53,7 +53,16 @@ struct DocumentSessionPublicImageLeafSnapshot {
     EmbeddedMetadata embeddedMetadata;
     bool readyForDeletion = false;
     bool readyForInformation = false;
+    bool unsupportedOpenedCollectionVideo = false;
     bool directImageReplacementPending = false;
+    bool containerNavigationAvailable = false;
+    bool twoPageModeEnabled = false;
+    bool twoPageModeAvailable = false;
+    bool rightToLeftReadingEnabled = false;
+    bool rightToLeftReadingAvailable = false;
+    bool fitModeSelected = false;
+    bool fitHeightModeSelected = false;
+    bool fitWidthModeSelected = false;
     bool zoomPercentKnown = false;
     qreal zoomPercent = 0.0;
     QString errorString;

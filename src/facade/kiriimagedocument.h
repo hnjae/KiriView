@@ -63,6 +63,8 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(quint64 viewportObservationRevision READ viewportObservationRevision NOTIFY
             viewportFrameChanged)
     Q_PROPERTY(int viewportCommandStatus READ viewportCommandStatus NOTIFY viewportFrameChanged)
+    Q_PROPERTY(ViewportObservationOrigin viewportObservationOrigin READ viewportObservationOrigin
+            NOTIFY viewportFrameChanged)
     Q_PROPERTY(QSizeF viewportContentSize READ viewportContentSize NOTIFY viewportFrameChanged)
     Q_PROPERTY(QRectF viewportImageRect READ viewportImageRect NOTIFY viewportFrameChanged)
     Q_PROPERTY(bool viewportHorizontallyPannable READ viewportHorizontallyPannable NOTIFY
@@ -169,24 +171,22 @@ public:
     QSizeF viewportSize() const;
     void setViewportSize(const QSizeF &viewportSize);
     QPointF viewportContentPosition() const;
-    void setViewportContentPosition(const QPointF &viewportContentPosition);
     quint64 viewportCommandRevision() const;
     quint64 viewportAppliedCommandRevision() const;
     quint64 viewportObservationRevision() const;
     int viewportCommandStatus() const;
+    ViewportObservationOrigin viewportObservationOrigin() const;
     QSizeF viewportContentSize() const;
     QRectF viewportImageRect() const;
     bool viewportHorizontallyPannable() const;
     bool viewportVerticallyPannable() const;
     bool viewportPannable() const;
     QRectF visibleItemRect() const;
-    void setVisibleItemRect(const QRectF &visibleItemRect);
     QSizeF displaySize() const;
     QSizeF primaryDisplaySize() const;
     QSizeF secondaryDisplaySize() const;
     bool zoomPercentKnown() const;
     double zoomPercent() const;
-    void setZoomPercent(double zoomPercent);
     ZoomMode zoomMode() const;
     int rotationDegrees() const;
     int minimumManualZoomPercent() const;
@@ -203,10 +203,8 @@ public:
     bool openedCollectionScopeActive() const;
     bool fileDeletionInProgress() const;
     bool twoPageModeEnabled() const;
-    void setTwoPageModeEnabled(bool enabled);
     bool twoPageModeAvailable() const;
     bool rightToLeftReadingEnabled() const;
-    void setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
     PresentationTransitionState presentationTransitionState() const;
@@ -290,6 +288,11 @@ private:
     friend class KiriDocumentSession;
 
     void setSourceUrl(const QUrl &sourceUrl);
+    void setViewportContentPosition(const QPointF &viewportContentPosition);
+    void setVisibleItemRect(const QRectF &visibleItemRect);
+    void setZoomPercent(double zoomPercent);
+    void setTwoPageModeEnabled(bool enabled);
+    void setRightToLeftReadingEnabled(bool enabled);
     void handleDocumentChanges(const std::vector<KiriView::ImageDocumentChange> &changes);
     KiriView::ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
     bool requestViewportInteractionContentPosition(const QPointF &contentPosition);

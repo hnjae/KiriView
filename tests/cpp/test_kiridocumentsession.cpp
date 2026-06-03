@@ -2332,7 +2332,7 @@ void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavi
     dataLoader.finishBackLoad(QByteArrayLiteral("first"));
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
 
-    session->imageDocument()->setTwoPageModeEnabled(true);
+    session->imageDocument()->requestToggleTwoPageMode();
     session->imageDocument()->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPage);
     dataLoader.finishBackLoad(QByteArrayLiteral("second"));

@@ -238,6 +238,8 @@ KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
         = [&session]() { Q_EMIT session.fileDeletionInProgressChanged(); };
     operations.activeZoomReadoutChanged
         = [&session]() { Q_EMIT session.activeZoomReadoutChanged(); };
+    operations.activeMediaReadinessChanged
+        = [&session]() { Q_EMIT session.activeMediaReadinessChanged(); };
     operations.activeNavigationChanged = [&session]() { Q_EMIT session.activeNavigationChanged(); };
     operations.activeNavigationRevealIntentChanged
         = [&session]() { Q_EMIT session.activeNavigationRevealIntentChanged(); };
@@ -260,8 +262,17 @@ KiriView::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
         [&document]() { return document.primaryImageSize(); },
         [&document]() { return document.status() == KiriImageDocument::Status::Ready; },
         [&document]() { return document.status() == KiriImageDocument::Status::Error; },
+        [&document]() { return document.unsupportedOpenedCollectionVideo(); },
         [&document]() { return document.fileDeletionInProgress(); },
         [&document]() { return document.ordinaryDirectMediaScopeActive(); },
+        [&document]() { return document.containerNavigationAvailable(); },
+        [&document]() { return document.twoPageModeEnabled(); },
+        [&document]() { return document.twoPageModeAvailable(); },
+        [&document]() { return document.rightToLeftReadingEnabled(); },
+        [&document]() { return document.rightToLeftReadingAvailable(); },
+        [&document]() { return document.zoomMode() == KiriImageDocument::ZoomMode::Fit; },
+        [&document]() { return document.zoomMode() == KiriImageDocument::ZoomMode::FitHeight; },
+        [&document]() { return document.zoomMode() == KiriImageDocument::ZoomMode::FitWidth; },
         [&document]() { return document.zoomPercentKnown(); },
         [&document]() { return document.zoomPercent(); },
         [&document]() { return document.embeddedMetadata(); },
@@ -282,10 +293,16 @@ KiriView::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
             documentSignalConnector(document, &KiriImageDocument::imageSizeChanged),
             documentSignalConnector(document, &KiriImageDocument::errorStringChanged),
             documentSignalConnector(document, &KiriImageDocument::imageDocumentSourceScopeChanged),
+            documentSignalConnector(
+                document, &KiriImageDocument::unsupportedOpenedCollectionVideoChanged),
             documentSignalConnector(document, &KiriImageDocument::fileDeletionInProgressChanged),
             documentSignalConnector(document, &KiriImageDocument::zoomPercentKnownChanged),
             documentSignalConnector(document, &KiriImageDocument::zoomPercentChanged),
+            documentSignalConnector(document, &KiriImageDocument::zoomModeChanged),
             documentSignalConnector(document, &KiriImageDocument::pageNavigationChanged),
+            documentSignalConnector(document, &KiriImageDocument::containerNavigationChanged),
+            documentSignalConnector(document, &KiriImageDocument::twoPageModeChanged),
+            documentSignalConnector(document, &KiriImageDocument::rightToLeftReadingChanged),
             documentSignalConnector(document, &KiriImageDocument::embeddedMetadataChanged),
         },
     };
@@ -411,6 +428,13 @@ double KiriDocumentSession::activeZoomPercent() const { return m_runtime->active
 
 bool KiriDocumentSession::activeZoomEditable() const { return m_runtime->activeZoomEditable(); }
 
+bool KiriDocumentSession::activeImageReady() const { return m_runtime->activeImageReady(); }
+
+bool KiriDocumentSession::activeImageUnsupportedOpenedCollectionVideo() const
+{
+    return m_runtime->activeImageUnsupportedOpenedCollectionVideo();
+}
+
 bool KiriDocumentSession::activeNavigationAvailable() const
 {
     return m_runtime->activeNavigationAvailable();
@@ -503,6 +527,12 @@ const KiriView::MediaInformationProjectionSnapshot &
 KiriDocumentSession::mediaInformationSnapshot() const
 {
     return m_runtime->mediaInformationSnapshot();
+}
+
+const KiriView::DocumentSessionActionAvailabilityFacts &
+KiriDocumentSession::actionAvailabilityFacts() const
+{
+    return m_runtime->actionAvailabilityFacts();
 }
 
 KiriImageDocument *KiriDocumentSession::imageDocument() const { return m_imageDocument.get(); }

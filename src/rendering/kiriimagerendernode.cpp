@@ -148,7 +148,8 @@ void KiriImageRenderNode::setRhi(QRhi *rhi)
 void KiriImageRenderNode::setFrame(ImageRenderFrame frame)
 {
     const bool sameSurface = m_frame.surfaceIdentity == frame.surfaceIdentity;
-    m_state.setFrame(sameSurface, frame.surfaceRevision, frame.drawContext);
+    m_state.setFrame(
+        sameSurface, frame.surfaceRevision, frame.renderContextGeneration, frame.drawContext);
     m_frame = std::move(frame);
 }
 

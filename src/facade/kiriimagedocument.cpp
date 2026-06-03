@@ -87,6 +87,31 @@ KiriView::ImageViewportObservationOrigin toImageViewportObservationOrigin(
     return KiriView::ImageViewportObservationOrigin::System;
 }
 
+KiriImageDocument::ViewportObservationOrigin fromImageViewportObservationOrigin(
+    KiriView::ImageViewportObservationOrigin origin)
+{
+    switch (origin) {
+    case KiriView::ImageViewportObservationOrigin::Command:
+        return KiriImageDocument::ViewportObservationOrigin::Command;
+    case KiriView::ImageViewportObservationOrigin::User:
+        return KiriImageDocument::ViewportObservationOrigin::User;
+    case KiriView::ImageViewportObservationOrigin::Inertia:
+        return KiriImageDocument::ViewportObservationOrigin::Inertia;
+    case KiriView::ImageViewportObservationOrigin::Overshoot:
+        return KiriImageDocument::ViewportObservationOrigin::Overshoot;
+    case KiriView::ImageViewportObservationOrigin::Resize:
+        return KiriImageDocument::ViewportObservationOrigin::Resize;
+    case KiriView::ImageViewportObservationOrigin::Rotation:
+        return KiriImageDocument::ViewportObservationOrigin::Rotation;
+    case KiriView::ImageViewportObservationOrigin::DevicePixelRatio:
+        return KiriImageDocument::ViewportObservationOrigin::DevicePixelRatio;
+    case KiriView::ImageViewportObservationOrigin::System:
+        return KiriImageDocument::ViewportObservationOrigin::System;
+    }
+
+    return KiriImageDocument::ViewportObservationOrigin::System;
+}
+
 bool pointIsFinite(const QPointF &point)
 {
     return std::isfinite(point.x()) && std::isfinite(point.y());
@@ -249,6 +274,11 @@ quint64 KiriImageDocument::viewportObservationRevision() const
 int KiriImageDocument::viewportCommandStatus() const
 {
     return static_cast<int>(m_runtime->viewportCommandStatus());
+}
+
+KiriImageDocument::ViewportObservationOrigin KiriImageDocument::viewportObservationOrigin() const
+{
+    return fromImageViewportObservationOrigin(m_runtime->viewportObservationOrigin());
 }
 
 QSizeF KiriImageDocument::viewportContentSize() const { return m_runtime->viewportContentSize(); }

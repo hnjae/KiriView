@@ -362,6 +362,11 @@ bool ImageSpreadPresentationController::rightToLeftReadingActive() const
 
 bool ImageSpreadPresentationController::secondaryPageVisible() const
 {
+    if (presentationTransitionState() == ImagePresentationTransitionState::PreviousActive) {
+        return m_activePresentation->mode() == ImagePresentationActiveMode::TwoPageSpread
+            && m_secondaryPageController->visible();
+    }
+
     return twoPageModeActive() && m_secondaryPageController->visible();
 }
 
@@ -385,7 +390,8 @@ ImageSpreadPresentationController::secondaryDisplayedPredecodeImage() const
 DisplayedImageRenderSnapshot ImageSpreadPresentationController::renderSnapshot(
     DisplayedPageRole role) const
 {
-    if (transitionInProgress()) {
+    if (presentationTransitionState()
+        == ImagePresentationTransitionState::TransitioningPlaceholder) {
         return {};
     }
 
@@ -474,7 +480,7 @@ void ImageSpreadPresentationController::refreshSecondaryPage()
     auto finishWithPrimaryPage = [this]() {
         const bool wasVisible = secondaryPageVisible();
         m_activePresentation->setMode(ImagePresentationActiveMode::SinglePage);
-        clearSecondaryPage();
+        discardSecondaryPage();
         applyActivePresentationChanges(updateZoomState(), false);
         if (wasVisible) {
             notifyTwoPageModeChanged();
@@ -545,6 +551,15 @@ void ImageSpreadPresentationController::beginTransition()
     notifyTransitionChanged();
 }
 
+void ImageSpreadPresentationController::showTransitionPlaceholder()
+{
+    if (!m_activePresentation->showTransitionPlaceholder()) {
+        return;
+    }
+
+    notifyTransitionChanged();
+}
+
 void ImageSpreadPresentationController::finishTransition()
 {
     if (!m_activePresentation->finishTransition()) {
@@ -554,7 +569,28 @@ void ImageSpreadPresentationController::finishTransition()
     notifyTransitionChanged();
 }
 
-void ImageSpreadPresentationController::clearSecondaryPage() { m_secondaryPageController->clear(); }
+void ImageSpreadPresentationController::abortTransition()
+{
+    if (!m_activePresentation->abortTransition()) {
+        return;
+    }
+
+    notifyTransitionChanged();
+}
+
+void ImageSpreadPresentationController::clearSecondaryPage()
+{
+    if (presentationTransitionState() == ImagePresentationTransitionState::PreviousActive) {
+        return;
+    }
+
+    discardSecondaryPage();
+}
+
+void ImageSpreadPresentationController::discardSecondaryPage()
+{
+    m_secondaryPageController->clear();
+}
 
 void ImageSpreadPresentationController::shutdown()
 {
@@ -601,7 +637,7 @@ void ImageSpreadPresentationController::handleSecondaryPageLoadFinished(
 
 void ImageSpreadPresentationController::finishSecondaryPageAsPrimaryOnly()
 {
-    clearSecondaryPage();
+    discardSecondaryPage();
     m_activePresentation->setMode(ImagePresentationActiveMode::SinglePage);
     applyActivePresentationChanges(updateZoomState(), false);
     finishTransition();
@@ -648,6 +684,15 @@ ImageSpreadReadingAvailability ImageSpreadPresentationController::readingAvailab
         location.openedCollectionScope().isComicBook() };
 }
 
+bool ImageSpreadPresentationController::secondaryPageVisibleForNavigation() const
+{
+    if (presentationTransitionState() == ImagePresentationTransitionState::PreviousActive) {
+        return false;
+    }
+
+    return secondaryPageVisible();
+}
+
 void ImageSpreadPresentationController::scheduleAdjacentPredecode()
 {
     invokeIfSet(m_callbacks.scheduleAdjacentPredecode);
@@ -655,8 +700,8 @@ void ImageSpreadPresentationController::scheduleAdjacentPredecode()
 
 ImageSpreadPageNavigationContext ImageSpreadPresentationController::pageNavigationContext() const
 {
-    return ImageSpreadPageNavigationContext { twoPageModeActive(), secondaryPageVisible(),
-        pageNavigationSnapshot() };
+    return ImageSpreadPageNavigationContext { twoPageModeActive(),
+        secondaryPageVisibleForNavigation(), pageNavigationSnapshot() };
 }
 
 ImageDocumentPageNavigationSnapshot

@@ -8,12 +8,6 @@
 #include "facade/kiridocumentsession.h"
 
 #include <KLocalizedString>
-#include <QCoreApplication>
-#include <QGuiApplication>
-#include <QKeyEvent>
-#include <QQuickItem>
-#include <QQuickWindow>
-#include <QWindow>
 
 #include <utility>
 
@@ -21,63 +15,6 @@ namespace Actions = KiriView::ApplicationActions;
 
 namespace {
 constexpr double keyboardPanDistance = 64.0;
-
-QWindow *shortcutWindow(QObject *host)
-{
-    auto *window = qobject_cast<QWindow *>(host);
-    if (window != nullptr) {
-        return window;
-    }
-
-    auto *quickItem = qobject_cast<QQuickItem *>(host);
-    if (quickItem != nullptr) {
-        return quickItem->window();
-    }
-
-    return nullptr;
-}
-
-class FixedShortcutEventFilter final : public QObject
-{
-public:
-    using Handler = std::function<bool(const QKeySequence &)>;
-
-    explicit FixedShortcutEventFilter(Handler handler)
-        : m_handler(std::move(handler))
-    {
-    }
-
-protected:
-    bool eventFilter(QObject *watched, QEvent *event) override
-    {
-        Q_UNUSED(watched)
-
-        if (event->type() != QEvent::KeyPress) {
-            return false;
-        }
-
-        auto *keyEvent = static_cast<QKeyEvent *>(event);
-        if (keyEvent->key() == Qt::Key_unknown) {
-            return false;
-        }
-
-        if (m_handler(QKeySequence(keyEvent->keyCombination()))) {
-            keyEvent->accept();
-            return true;
-        }
-        return false;
-    }
-
-private:
-    Handler m_handler;
-};
-
-bool exactShortcut(const QKeySequence &shortcut, const char *portableText)
-{
-    return shortcut.matches(QKeySequence::fromString(
-               QString::fromLatin1(portableText), QKeySequence::PortableText))
-        == QKeySequence::ExactMatch;
-}
 }
 
 namespace KiriView::ApplicationActions {
@@ -126,17 +63,16 @@ KiriViewApplication::KiriViewApplication(QObject *parent)
               [this](Actions::ActionId actionId) {
                   Q_EMIT unsupportedVideoActionTriggered(facadeActionId(actionId));
               },
+              [this](bool leftArrow) { return executeHorizontalArrowShortcut(leftArrow); },
+              [this](bool leftArrow) { return executeSinglePageArrowShortcut(leftArrow); },
+              [this](bool up) { return executeVerticalPanShortcut(up); },
           }))
 {
     KiriViewApplication::setupActions();
     rebuildActionState();
 }
 
-KiriViewApplication::~KiriViewApplication()
-{
-    clearFixedShortcutRouter();
-    disconnectActionStateSources();
-}
+KiriViewApplication::~KiriViewApplication() { disconnectActionStateSources(); }
 
 KiriViewApplication::MenuPresentation KiriViewApplication::menuPresentation() const
 {
@@ -317,26 +253,47 @@ void KiriViewApplication::setDocumentSession(QObject *session)
     rebuildActionState();
 }
 
-void KiriViewApplication::updateActionUiState(bool helpDialogOpen, bool textInputFocused,
-    bool imagePannable, bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
-    bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled)
+void KiriViewApplication::updateActionUiGateSnapshot(quint64 revision, bool helpDialogOpen,
+    bool textInputFocused, bool imagePannable, bool infoPanelVisible, bool thumbnailPanelVisible,
+    bool fullscreen, bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled)
 {
-    m_helpDialogOpen = helpDialogOpen;
-    m_textInputFocused = textInputFocused;
-    m_imagePannable = imagePannable;
-    m_infoPanelVisible = infoPanelVisible;
-    m_thumbnailPanelVisible = thumbnailPanelVisible;
-    m_fullscreen = fullscreen;
-    m_applicationMenuShortcutEnabled = applicationMenuShortcutEnabled;
-    m_showMenubarActionEnabled = showMenubarActionEnabled;
+    updateActionUiGateSnapshot(ActionUiGateSnapshot {
+        revision,
+        helpDialogOpen,
+        textInputFocused,
+        imagePannable,
+        infoPanelVisible,
+        thumbnailPanelVisible,
+        fullscreen,
+        applicationMenuShortcutEnabled,
+        showMenubarActionEnabled,
+    });
+}
+
+void KiriViewApplication::updateActionUiGateSnapshot(ActionUiGateSnapshot snapshot)
+{
+    if (snapshot.revision < m_actionUiGateRevision) {
+        return;
+    }
+
+    applyActionUiGateSnapshot(snapshot);
+}
+
+void KiriViewApplication::applyActionUiGateSnapshot(const ActionUiGateSnapshot &snapshot)
+{
+    m_actionUiGateRevision = snapshot.revision;
+    m_helpDialogOpen = snapshot.helpDialogOpen;
+    m_textInputFocused = snapshot.textInputFocused;
+    m_imagePannable = snapshot.imagePannable;
+    m_infoPanelVisible = snapshot.infoPanelVisible;
+    m_thumbnailPanelVisible = snapshot.thumbnailPanelVisible;
+    m_fullscreen = snapshot.fullscreen;
+    m_applicationMenuShortcutEnabled = snapshot.applicationMenuShortcutEnabled;
+    m_showMenubarActionEnabled = snapshot.showMenubarActionEnabled;
     rebuildActionState();
 }
 
-void KiriViewApplication::setShortcutHost(QObject *host)
-{
-    m_actionRuntime->setShortcutHost(host);
-    setFixedShortcutHost(host);
-}
+void KiriViewApplication::setShortcutHost(QObject *host) { m_actionRuntime->setShortcutHost(host); }
 
 bool KiriViewApplication::videoActionUnsupported(ActionId actionId) const
 {
@@ -398,20 +355,8 @@ void KiriViewApplication::connectActionStateSources()
     connectRebuild(session, &KiriDocumentSession::displayedFileDeletionAvailabilityChanged);
     connectRebuild(session, &KiriDocumentSession::displayedMediaOpenWithAvailabilityChanged);
     connectRebuild(session, &KiriDocumentSession::fileDeletionInProgressChanged);
+    connectRebuild(session, &KiriDocumentSession::activeMediaReadinessChanged);
     connectRebuild(session, &KiriDocumentSession::activeNavigationChanged);
-
-    KiriImageDocument *image = imageDocument();
-    if (image == nullptr) {
-        return;
-    }
-
-    connectRebuild(image, &KiriImageDocument::statusChanged);
-    connectRebuild(image, &KiriImageDocument::zoomModeChanged);
-    connectRebuild(image, &KiriImageDocument::twoPageModeChanged);
-    connectRebuild(image, &KiriImageDocument::rightToLeftReadingChanged);
-    connectRebuild(image, &KiriImageDocument::containerNavigationChanged);
-    connectRebuild(image, &KiriImageDocument::viewportFrameChanged);
-    connectRebuild(image, &KiriImageDocument::unsupportedOpenedCollectionVideoChanged);
 }
 
 void KiriViewApplication::disconnectActionStateSources()
@@ -441,34 +386,36 @@ bool KiriViewApplication::videoMode() const
 
 ImageActionAvailabilityInput KiriViewApplication::imageActionAvailabilityInput() const
 {
-    KiriImageDocument *image = imageDocument();
-    const bool activeImageMode = imageMode() && image != nullptr;
+    const KiriView::DocumentSessionActionAvailabilityFacts facts = m_documentSession == nullptr
+        ? KiriView::DocumentSessionActionAvailabilityFacts {}
+        : m_documentSession->actionAvailabilityFacts();
 
     return ImageActionAvailabilityInput {
-        activeImageMode && image->status() == KiriImageDocument::Status::Ready
-            && !image->unsupportedOpenedCollectionVideo(),
+        facts.imageReady,
         m_documentSession != nullptr && m_documentSession->fileDeletionInProgress(),
         m_helpDialogOpen,
         m_textInputFocused,
-        activeImageMode && m_imagePannable,
-        activeImageMode && image->containerNavigationAvailable(),
-        activeImageMode && image->twoPageModeEnabled(),
-        activeImageMode && image->twoPageModeAvailable(),
-        activeImageMode && image->rightToLeftReadingEnabled(),
-        activeImageMode && image->rightToLeftReadingAvailable(),
+        facts.imageReady && m_imagePannable,
+        facts.containerNavigationAvailable,
+        facts.twoPageModeActive,
+        facts.twoPageModeAvailable,
+        facts.rightToLeftReadingActive,
+        facts.rightToLeftReadingAvailable,
     };
 }
 
 Actions::ApplicationActionStateInput KiriViewApplication::actionStateInput() const
 {
     Actions::ApplicationActionStateInput input;
-    KiriImageDocument *image = imageDocument();
-    const bool activeImageMode = imageMode() && image != nullptr;
+    const KiriView::DocumentSessionActionAvailabilityFacts facts = m_documentSession == nullptr
+        ? KiriView::DocumentSessionActionAvailabilityFacts {}
+        : m_documentSession->actionAvailabilityFacts();
     const bool activeVideoMode = videoMode();
     const bool activeNavigationActionsAvailable = m_documentSession != nullptr
         && m_documentSession->activeNavigationDispatchAvailable()
         && m_imageActionProjection.helpShortcutsEnabled;
 
+    input.uiGateRevision = m_actionUiGateRevision;
     input.helpActionsEnabled = m_imageActionProjection.helpShortcutsEnabled;
     input.readyActionsEnabled = m_imageActionProjection.canUseReadyActions;
     input.rotateActionsEnabled = m_imageActionProjection.canUseRotateActions;
@@ -492,12 +439,9 @@ Actions::ApplicationActionStateInput KiriViewApplication::actionStateInput() con
         = m_documentSession != nullptr && m_documentSession->canOpenPreviousActiveNavigation();
     input.canOpenNextActiveNavigation
         = m_documentSession != nullptr && m_documentSession->canOpenNextActiveNavigation();
-    input.fitModeSelected
-        = activeImageMode && image->zoomMode() == KiriImageDocument::ZoomMode::Fit;
-    input.fitHeightModeSelected
-        = activeImageMode && image->zoomMode() == KiriImageDocument::ZoomMode::FitHeight;
-    input.fitWidthModeSelected
-        = activeImageMode && image->zoomMode() == KiriImageDocument::ZoomMode::FitWidth;
+    input.fitModeSelected = facts.fitModeSelected;
+    input.fitHeightModeSelected = facts.fitHeightModeSelected;
+    input.fitWidthModeSelected = facts.fitWidthModeSelected;
     input.twoPageModeActive = m_imageActionProjection.twoPageModeActive;
     input.rightToLeftReadingActive = m_imageActionProjection.rightToLeftReadingActive;
     input.infoPanelVisible = m_infoPanelVisible;
@@ -730,92 +674,8 @@ void KiriViewApplication::handleScanBackwardAction()
     }
 }
 
-void KiriViewApplication::setFixedShortcutHost(QObject *host)
+bool KiriViewApplication::executeHorizontalArrowShortcut(bool leftArrow)
 {
-    if (m_shortcutHost == host) {
-        return;
-    }
-
-    clearFixedShortcutRouter();
-    m_shortcutHost = host;
-    m_shortcutWindow = shortcutWindow(host);
-    if (m_shortcutHost == nullptr) {
-        return;
-    }
-
-    m_fixedShortcutEventFilter = std::make_unique<FixedShortcutEventFilter>(
-        [this](const QKeySequence &shortcut) { return handleFixedShortcutEvent(shortcut); });
-    if (QCoreApplication::instance() != nullptr) {
-        QCoreApplication::instance()->installEventFilter(m_fixedShortcutEventFilter.get());
-    }
-    m_shortcutHost->installEventFilter(m_fixedShortcutEventFilter.get());
-    if (m_shortcutWindow != nullptr && m_shortcutWindow != m_shortcutHost) {
-        m_shortcutWindow->installEventFilter(m_fixedShortcutEventFilter.get());
-    }
-}
-
-void KiriViewApplication::clearFixedShortcutRouter()
-{
-    if (m_fixedShortcutEventFilter != nullptr) {
-        if (QCoreApplication::instance() != nullptr) {
-            QCoreApplication::instance()->removeEventFilter(m_fixedShortcutEventFilter.get());
-        }
-        if (m_shortcutHost != nullptr) {
-            m_shortcutHost->removeEventFilter(m_fixedShortcutEventFilter.get());
-        }
-        if (m_shortcutWindow != nullptr && m_shortcutWindow != m_shortcutHost) {
-            m_shortcutWindow->removeEventFilter(m_fixedShortcutEventFilter.get());
-        }
-    }
-    m_fixedShortcutEventFilter.reset();
-}
-
-bool KiriViewApplication::handleFixedShortcutEvent(const QKeySequence &shortcut)
-{
-    if (shortcut.isEmpty()) {
-        return false;
-    }
-
-    if (m_shortcutWindow != nullptr && QGuiApplication::focusWindow() != m_shortcutWindow) {
-        return false;
-    }
-
-    if (exactShortcut(shortcut, "Left")) {
-        return handleHorizontalArrowShortcut(true);
-    }
-    if (exactShortcut(shortcut, "Right")) {
-        return handleHorizontalArrowShortcut(false);
-    }
-    if (exactShortcut(shortcut, "Shift+Left")) {
-        return handleSinglePageArrowShortcut(true);
-    }
-    if (exactShortcut(shortcut, "Shift+Right")) {
-        return handleSinglePageArrowShortcut(false);
-    }
-    if (exactShortcut(shortcut, "Up")) {
-        return handleVerticalPanShortcut(true);
-    }
-    if (exactShortcut(shortcut, "Down")) {
-        return handleVerticalPanShortcut(false);
-    }
-
-    return false;
-}
-
-bool KiriViewApplication::handleHorizontalArrowShortcut(bool leftArrow)
-{
-    const bool enabled = Actions::mediaHorizontalArrowShortcutsEnabled(videoMode(),
-        m_imageActionProjection.readyViewerShortcutsEnabled,
-        Actions::VideoShortcutAvailabilityInput {
-            m_imageActionProjection.helpShortcutsEnabled,
-            m_imageActionProjection.viewerShortcutsEnabled,
-            m_documentSession != nullptr && m_documentSession->fileDeletionInProgress(),
-            m_actionStateInput.activeNavigationActionsAvailable,
-        });
-    if (!enabled) {
-        return false;
-    }
-
     if (videoMode()) {
         if (leftArrow) {
             requestPreviousActiveNavigationWithBoundary();
@@ -853,12 +713,8 @@ bool KiriViewApplication::handleHorizontalArrowShortcut(bool leftArrow)
     return false;
 }
 
-bool KiriViewApplication::handleSinglePageArrowShortcut(bool leftArrow)
+bool KiriViewApplication::executeSinglePageArrowShortcut(bool leftArrow)
 {
-    if (!m_imageActionProjection.twoPageViewerShortcutsEnabled) {
-        return false;
-    }
-
     KiriImageDocument *image = imageDocument();
     if (image == nullptr) {
         return false;
@@ -879,12 +735,8 @@ bool KiriViewApplication::handleSinglePageArrowShortcut(bool leftArrow)
     return false;
 }
 
-bool KiriViewApplication::handleVerticalPanShortcut(bool up)
+bool KiriViewApplication::executeVerticalPanShortcut(bool up)
 {
-    if (!m_imageActionProjection.pannableViewerShortcutsEnabled) {
-        return false;
-    }
-
     KiriImageDocument *image = imageDocument();
     if (image == nullptr) {
         return false;

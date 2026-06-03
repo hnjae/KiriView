@@ -7,32 +7,24 @@
 #include "application/imageactionavailabilityruntime.h"
 
 #include <QObject>
-#include <QtQml/qqmlregistration.h>
 
 class ImageActionAvailability : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
 
-    Q_PROPERTY(bool imageReady READ imageReady WRITE setImageReady NOTIFY availabilityChanged)
-    Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress WRITE
-            setFileDeletionInProgress NOTIFY availabilityChanged)
-    Q_PROPERTY(
-        bool helpDialogOpen READ helpDialogOpen WRITE setHelpDialogOpen NOTIFY availabilityChanged)
-    Q_PROPERTY(bool textInputFocused READ textInputFocused WRITE setTextInputFocused NOTIFY
+    Q_PROPERTY(bool imageReady READ imageReady NOTIFY availabilityChanged)
+    Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress NOTIFY availabilityChanged)
+    Q_PROPERTY(bool helpDialogOpen READ helpDialogOpen NOTIFY availabilityChanged)
+    Q_PROPERTY(bool textInputFocused READ textInputFocused NOTIFY availabilityChanged)
+    Q_PROPERTY(bool imagePannable READ imagePannable NOTIFY availabilityChanged)
+    Q_PROPERTY(bool containerNavigationAvailable READ containerNavigationAvailable NOTIFY
             availabilityChanged)
+    Q_PROPERTY(bool twoPageModeEnabled READ twoPageModeEnabled NOTIFY availabilityChanged)
+    Q_PROPERTY(bool twoPageModeAvailable READ twoPageModeAvailable NOTIFY availabilityChanged)
     Q_PROPERTY(
-        bool imagePannable READ imagePannable WRITE setImagePannable NOTIFY availabilityChanged)
-    Q_PROPERTY(bool containerNavigationAvailable READ containerNavigationAvailable WRITE
-            setContainerNavigationAvailable NOTIFY availabilityChanged)
-    Q_PROPERTY(bool twoPageModeEnabled READ twoPageModeEnabled WRITE setTwoPageModeEnabled NOTIFY
+        bool rightToLeftReadingEnabled READ rightToLeftReadingEnabled NOTIFY availabilityChanged)
+    Q_PROPERTY(bool rightToLeftReadingAvailable READ rightToLeftReadingAvailable NOTIFY
             availabilityChanged)
-    Q_PROPERTY(bool twoPageModeAvailable READ twoPageModeAvailable WRITE setTwoPageModeAvailable
-            NOTIFY availabilityChanged)
-    Q_PROPERTY(bool rightToLeftReadingEnabled READ rightToLeftReadingEnabled WRITE
-            setRightToLeftReadingEnabled NOTIFY availabilityChanged)
-    Q_PROPERTY(bool rightToLeftReadingAvailable READ rightToLeftReadingAvailable WRITE
-            setRightToLeftReadingAvailable NOTIFY availabilityChanged)
 
     Q_PROPERTY(bool canUseReadyActions READ canUseReadyActions NOTIFY availabilityChanged)
     Q_PROPERTY(bool canUseRotateActions READ canUseRotateActions NOTIFY availabilityChanged)

@@ -764,7 +764,7 @@ void TestMainWindowToolBar::toolbarZoomWheelAppliesFineManualStep()
     QVERIFY(zoomSpinBox != nullptr);
     QTRY_VERIFY(zoomSpinBox->isEnabled());
 
-    imageDocument->setZoomPercent(100.0);
+    QVERIFY(imageDocument->requestManualZoomPercent(100.0));
     QTRY_VERIFY(zoomApproximatelyEqual(imageDocument->zoomPercent(), 100.0));
     const double zoomedInPercent = imageDocument->steppedManualZoomPercent(0.5);
 

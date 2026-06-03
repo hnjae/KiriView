@@ -62,6 +62,20 @@ bool sameActiveZoomSnapshot(
         && qAbs(left.percent - right.percent) < 0.000001 && left.editable == right.editable;
 }
 
+bool sameActionAvailabilityFacts(const KiriView::DocumentSessionActionAvailabilityFacts &left,
+    const KiriView::DocumentSessionActionAvailabilityFacts &right)
+{
+    return left.imageReady == right.imageReady
+        && left.containerNavigationAvailable == right.containerNavigationAvailable
+        && left.twoPageModeActive == right.twoPageModeActive
+        && left.twoPageModeAvailable == right.twoPageModeAvailable
+        && left.rightToLeftReadingActive == right.rightToLeftReadingActive
+        && left.rightToLeftReadingAvailable == right.rightToLeftReadingAvailable
+        && left.fitModeSelected == right.fitModeSelected
+        && left.fitHeightModeSelected == right.fitHeightModeSelected
+        && left.fitWidthModeSelected == right.fitWidthModeSelected;
+}
+
 bool samePublicProjection(const KiriView::DocumentSessionPublicProjection &left,
     const KiriView::DocumentSessionPublicProjection &right)
 {
@@ -79,6 +93,10 @@ bool samePublicSnapshot(const KiriView::DocumentSessionPublicSnapshot &left,
         && left.errorString == right.errorString
         && left.fileDeletionInProgress == right.fileDeletionInProgress
         && sameActiveZoomSnapshot(left.activeZoom, right.activeZoom)
+        && left.activeImageReady == right.activeImageReady
+        && left.activeImageUnsupportedOpenedCollectionVideo
+        == right.activeImageUnsupportedOpenedCollectionVideo
+        && sameActionAvailabilityFacts(left.actionAvailability, right.actionAvailability)
         && samePublicProjection(left.projection, right.projection)
         && KiriView::sameMediaInformationProjectionSnapshot(
             left.mediaInformation, right.mediaInformation)
@@ -111,6 +129,13 @@ bool DocumentSessionState::fileDeletionInProgress() const { return m_fileDeletio
 const ActiveZoomSnapshot &DocumentSessionState::activeZoomSnapshot() const
 {
     return m_publicSnapshot.activeZoom;
+}
+
+bool DocumentSessionState::activeImageReady() const { return m_publicSnapshot.activeImageReady; }
+
+bool DocumentSessionState::activeImageUnsupportedOpenedCollectionVideo() const
+{
+    return m_publicSnapshot.activeImageUnsupportedOpenedCollectionVideo;
 }
 
 const DirectMediaNavigationBoundaryState &DocumentSessionState::directMediaNavigationState() const
@@ -282,6 +307,12 @@ bool DocumentSessionState::applyPublicSnapshot(DocumentSessionPublicSnapshot sna
         = m_publicSnapshot.fileDeletionInProgress != snapshot.fileDeletionInProgress;
     const bool activeZoomChanged
         = !sameActiveZoomSnapshot(m_publicSnapshot.activeZoom, snapshot.activeZoom);
+    const bool activeMediaReadinessChanged
+        = m_publicSnapshot.activeImageReady != snapshot.activeImageReady
+        || m_publicSnapshot.activeImageUnsupportedOpenedCollectionVideo
+            != snapshot.activeImageUnsupportedOpenedCollectionVideo;
+    const bool actionAvailabilityChanged = !sameActionAvailabilityFacts(
+        m_publicSnapshot.actionAvailability, snapshot.actionAvailability);
     const bool activeNavigationChanged
         = !sameActiveNavigationSnapshot(
               m_publicSnapshot.projection.activeNavigation, snapshot.projection.activeNavigation)
@@ -324,6 +355,12 @@ bool DocumentSessionState::applyPublicSnapshot(DocumentSessionPublicSnapshot sna
     }
     if (activeZoomChanged) {
         changes.push_back(DocumentSessionChange::ActiveZoomReadout);
+    }
+    if (activeMediaReadinessChanged) {
+        changes.push_back(DocumentSessionChange::ActiveMediaReadiness);
+    }
+    if (actionAvailabilityChanged && !activeMediaReadinessChanged) {
+        changes.push_back(DocumentSessionChange::ActiveMediaReadiness);
     }
     if (activeNavigationChanged) {
         changes.push_back(DocumentSessionChange::ActiveNavigation);

@@ -730,6 +730,7 @@ Item {
     QtObject {
         id: documentSession
 
+        readonly property bool activeImageReady: root.testImageDocument.status === KiriImageDocument.Ready
         property var imageDocument: root.testImageDocument
         property int scopeKind: 0
     }

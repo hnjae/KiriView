@@ -14,21 +14,23 @@ const QRectF &ImageRenderNodeState::targetRect() const { return m_drawContext.ta
 
 int ImageRenderNodeState::rotationDegrees() const { return m_drawContext.rotationDegrees; }
 
-void ImageRenderNodeState::setFrame(
-    bool sameSurface, quint64 revision, const ImageSurfaceDrawContext &context)
+void ImageRenderNodeState::setFrame(bool sameSurface, quint64 revision,
+    quint64 renderContextGeneration, const ImageSurfaceDrawContext &context)
 {
-    setSurface(sameSurface, revision);
+    setSurface(sameSurface, revision, renderContextGeneration);
     setDrawContext(context);
 }
 
-ImageRenderNodeSurfaceUpdate ImageRenderNodeState::setSurface(bool sameSurface, quint64 revision)
+ImageRenderNodeSurfaceUpdate ImageRenderNodeState::setSurface(
+    bool sameSurface, quint64 revision, quint64 renderContextGeneration)
 {
     const bool revisionChanged = setSurfaceRevision(revision);
-    if (sameSurface && !revisionChanged) {
+    const bool renderContextGenerationChanged = setRenderContextGeneration(renderContextGeneration);
+    if (sameSurface && !revisionChanged && !renderContextGenerationChanged) {
         return {};
     }
 
-    if (!revisionChanged) {
+    if (!revisionChanged && !renderContextGenerationChanged) {
         markSurfaceChanged();
     }
     return ImageRenderNodeSurfaceUpdate { true };
@@ -41,6 +43,17 @@ bool ImageRenderNodeState::setSurfaceRevision(quint64 revision)
     }
 
     m_surfaceRevision = revision;
+    markSurfaceChanged();
+    return true;
+}
+
+bool ImageRenderNodeState::setRenderContextGeneration(quint64 renderContextGeneration)
+{
+    if (m_renderContextGeneration == renderContextGeneration) {
+        return false;
+    }
+
+    m_renderContextGeneration = renderContextGeneration;
     markSurfaceChanged();
     return true;
 }
@@ -89,7 +102,8 @@ bool ImageRenderNodeState::setRotationDegrees(int rotationDegrees)
 
 bool ImageRenderNodeState::uploadedTexturesAreCurrent() const
 {
-    return !m_texturesDirty && m_uploadedSurfaceRevision == m_surfaceRevision;
+    return !m_texturesDirty && m_uploadedSurfaceRevision == m_surfaceRevision
+        && m_uploadedRenderContextGeneration == m_renderContextGeneration;
 }
 
 ImageRenderNodeTextureUpdatePlan ImageRenderNodeState::textureUpdatePlan() const
@@ -123,6 +137,7 @@ void ImageRenderNodeState::applyDrawGeometrySyncResult(bool synchronized)
 void ImageRenderNodeState::markTexturesUploaded(std::vector<ImageSurfaceDrawIdentity> identities)
 {
     m_uploadedSurfaceRevision = m_surfaceRevision;
+    m_uploadedRenderContextGeneration = m_renderContextGeneration;
     m_uploadedDrawIdentities = std::move(identities);
     m_texturesDirty = false;
     m_drawGeometryDirty = false;
@@ -131,6 +146,7 @@ void ImageRenderNodeState::markTexturesUploaded(std::vector<ImageSurfaceDrawIden
 void ImageRenderNodeState::resetUploadedResources()
 {
     m_uploadedSurfaceRevision = 0;
+    m_uploadedRenderContextGeneration = 0;
     m_uploadedDrawIdentities.clear();
     m_texturesDirty = true;
     m_drawGeometryDirty = true;

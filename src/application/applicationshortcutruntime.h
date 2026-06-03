@@ -33,6 +33,9 @@ public:
     using ChangeCallback = std::function<void()>;
     struct TriggerCallbacks {
         std::function<void(ActionId)> unsupportedVideoActionTriggered;
+        std::function<bool(bool)> horizontalArrowShortcutTriggered;
+        std::function<bool(bool)> singlePageArrowShortcutTriggered;
+        std::function<bool(bool)> verticalPanShortcutTriggered;
     };
 
     ApplicationShortcutRuntime(ApplicationActionHost &host,
@@ -67,6 +70,7 @@ private:
     void addShortcutBinding(ActionId actionId, const QList<QKeySequence> &shortcuts,
         std::optional<ImageShortcutScope> shortcutScope = std::nullopt);
     bool handleShortcutEvent(const QKeySequence &shortcut);
+    bool handleFixedShortcutEvent(const QKeySequence &shortcut);
     bool shortcutBindingEnabled(
         ActionId actionId, std::optional<ImageShortcutScope> shortcutScope) const;
     void updateShortcutEnabledStates();

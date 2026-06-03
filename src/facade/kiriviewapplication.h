@@ -29,7 +29,6 @@ class ApplicationShortcutRuntime;
 
 class KiriDocumentSession;
 class KiriImageDocument;
-class QWindow;
 
 class KiriViewApplication : public AbstractKirigamiApplication
 {
@@ -132,9 +131,10 @@ public:
     Q_INVOKABLE QString actionToolbarTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString actionToolbarTooltipTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE void setDocumentSession(QObject *session);
-    Q_INVOKABLE void updateActionUiState(bool helpDialogOpen, bool textInputFocused,
-        bool imagePannable, bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
-        bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled);
+    Q_INVOKABLE void updateActionUiGateSnapshot(quint64 revision, bool helpDialogOpen,
+        bool textInputFocused, bool imagePannable, bool infoPanelVisible,
+        bool thumbnailPanelVisible, bool fullscreen, bool applicationMenuShortcutEnabled,
+        bool showMenubarActionEnabled);
     Q_INVOKABLE void setShortcutHost(QObject *host);
     Q_INVOKABLE bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool mediaHorizontalArrowShortcutsEnabled(bool videoMode,
@@ -160,6 +160,18 @@ protected:
 private:
     friend class KiriView::ApplicationActions::KiriViewApplicationActionHost;
 
+    struct ActionUiGateSnapshot {
+        quint64 revision = 0;
+        bool helpDialogOpen = false;
+        bool textInputFocused = false;
+        bool imagePannable = false;
+        bool infoPanelVisible = false;
+        bool thumbnailPanelVisible = false;
+        bool fullscreen = false;
+        bool applicationMenuShortcutEnabled = false;
+        bool showMenubarActionEnabled = true;
+    };
+
     KirigamiActionCollection *applicationMainActionCollection();
     QAction *inheritedApplicationAction(const QString &actionName);
     void readApplicationActionSettings();
@@ -177,23 +189,20 @@ private:
     void requestNextActiveNavigationWithBoundary();
     void handleScanForwardAction();
     void handleScanBackwardAction();
-    void setFixedShortcutHost(QObject *host);
-    void clearFixedShortcutRouter();
-    bool handleFixedShortcutEvent(const QKeySequence &shortcut);
-    bool handleHorizontalArrowShortcut(bool leftArrow);
-    bool handleSinglePageArrowShortcut(bool leftArrow);
-    bool handleVerticalPanShortcut(bool up);
+    void updateActionUiGateSnapshot(ActionUiGateSnapshot snapshot);
+    void applyActionUiGateSnapshot(const ActionUiGateSnapshot &snapshot);
+    bool executeHorizontalArrowShortcut(bool leftArrow);
+    bool executeSinglePageArrowShortcut(bool leftArrow);
+    bool executeVerticalPanShortcut(bool up);
 
     std::unique_ptr<KiriView::ApplicationActions::KiriViewApplicationActionHost> m_actionHost;
     std::unique_ptr<KiriView::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;
-    std::unique_ptr<QObject> m_fixedShortcutEventFilter;
     QPointer<KiriDocumentSession> m_documentSession;
-    QPointer<QObject> m_shortcutHost;
-    QPointer<QWindow> m_shortcutWindow;
     std::vector<QMetaObject::Connection> m_actionStateConnections;
     KiriView::ImageShortcutNavigationPolicy m_navigationPolicy;
     ImageActionAvailabilityProjection m_imageActionProjection;
     KiriView::ApplicationActions::ApplicationActionStateInput m_actionStateInput;
+    quint64 m_actionUiGateRevision = 0;
     bool m_helpDialogOpen = false;
     bool m_textInputFocused = false;
     bool m_imagePannable = false;

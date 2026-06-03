@@ -125,7 +125,9 @@ public:
     void handleDocumentChange(ImageDocumentChange change);
     bool shouldBeginTransition(int targetPageNumber) const;
     void beginTransition();
+    void showTransitionPlaceholder();
     void finishTransition();
+    void abortTransition();
     void clearSecondaryPage();
     void shutdown();
 
@@ -136,6 +138,7 @@ private:
     void startSecondaryPageLoad(const QUrl &url);
     void handleSecondaryPageLoadFinished(ImageSecondaryPageLoadResult result,
         const DisplayedImageLocation &location, const QSize &imageSize);
+    void discardSecondaryPage();
     void finishSecondaryPageAsPrimaryOnly();
     void finishSecondaryPageVisible();
     void notifyTransitionChanged();
@@ -143,6 +146,7 @@ private:
     QSize spreadImageSize() const;
     bool primaryPageIsWide() const;
     ImageSpreadReadingAvailability readingAvailability() const;
+    bool secondaryPageVisibleForNavigation() const;
     ImageSpreadPageNavigationContext pageNavigationContext() const;
     void scheduleAdjacentPredecode();
     ImageDocumentPageNavigationSnapshot pageNavigationSnapshot() const;

@@ -41,7 +41,7 @@ std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
     const DisplayedImageSurface &surface, const ImageSurfaceDrawContext &context)
 {
     return projectImageRenderFrame(
-        ImageRenderFrameInput { &surface, 0, context, DisplayedPageRole::Primary, {} })
+        ImageRenderFrameInput { &surface, 0, 0, context, DisplayedPageRole::Primary, {} })
         .drawEntries;
 }
 
@@ -85,6 +85,7 @@ ImageDocumentRenderContext normalizedImageDocumentRenderContext(ImageDocumentRen
     return ImageDocumentRenderContext {
         normalized.device_pixel_ratio,
         normalized.maximum_texture_size,
+        context.generation,
     };
 }
 

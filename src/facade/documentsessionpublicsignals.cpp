@@ -51,6 +51,9 @@ void DocumentSessionPublicSignalEmitter::emitSignal(DocumentSessionPublicSignal 
     case DocumentSessionPublicSignal::ActiveZoomReadout:
         run(m_operations.activeZoomReadoutChanged);
         return;
+    case DocumentSessionPublicSignal::ActiveMediaReadiness:
+        run(m_operations.activeMediaReadinessChanged);
+        return;
     case DocumentSessionPublicSignal::DisplayedMediaOpenWithAvailability:
         run(m_operations.displayedMediaOpenWithAvailabilityChanged);
         return;
@@ -87,6 +90,8 @@ std::vector<DocumentSessionPublicSignal> documentSessionPublicSignals(DocumentSe
         return { DocumentSessionPublicSignal::WindowTitleSubject };
     case DocumentSessionChange::ActiveZoomReadout:
         return { DocumentSessionPublicSignal::ActiveZoomReadout };
+    case DocumentSessionChange::ActiveMediaReadiness:
+        return { DocumentSessionPublicSignal::ActiveMediaReadiness };
     case DocumentSessionChange::OpenWithAvailability:
         return { DocumentSessionPublicSignal::DisplayedMediaOpenWithAvailability };
     case DocumentSessionChange::FileDeletionAvailability:

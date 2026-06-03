@@ -18,6 +18,7 @@ ImageTileDecodeRuntimePlan ImageTileDecodeRuntime::schedule(
     ImageRenderFrame frame = projectImageRenderFrame(ImageRenderFrameInput {
         displayedSurface.get(),
         schedule.generation,
+        context.generation,
         ImageSurfaceDrawContext {
             QRectF(0.0, 0.0, displaySize.width(), displaySize.height()),
             displaySize,

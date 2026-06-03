@@ -32,6 +32,9 @@ public:
         std::function<void()> actionStateChanged;
         std::function<void(ActionId)> actionTriggered;
         std::function<void(ActionId)> unsupportedVideoActionTriggered;
+        std::function<bool(bool)> horizontalArrowShortcutTriggered;
+        std::function<bool(bool)> singlePageArrowShortcutTriggered;
+        std::function<bool(bool)> verticalPanShortcutTriggered;
     };
 
     explicit ApplicationActionRuntime(ApplicationActionHost &host, Callbacks callbacks = {});

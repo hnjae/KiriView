@@ -83,6 +83,7 @@ struct DisplayedImageRenderSnapshot {
     QSizeF displaySize;
     QRectF visibleItemRect;
     qreal devicePixelRatio = 1.0;
+    quint64 renderContextGeneration = 0;
     int rotationDegrees = 0;
     DisplayedPageRole pageRole = DisplayedPageRole::Primary;
 

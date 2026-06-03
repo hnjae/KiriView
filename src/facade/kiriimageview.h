@@ -53,6 +53,7 @@ public:
 
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
     void itemChange(ItemChange change, const ItemChangeData &value) override;
+    void releaseResources() override;
     void classBegin() override;
     void componentComplete() override;
 
@@ -75,6 +76,7 @@ private:
     void synchronizeRenderContextBinding(KiriImageDocument *document, bool documentAttached);
     void applyRenderContextBinding(
         KiriView::ImageViewRenderContextBindingAction action, KiriImageDocument *document);
+    void invalidateRenderContext();
     void handleDisplayedUrlChanged();
     void handleLoadingChanged();
     KiriView::ImageDocumentRenderContext renderContext() const;
@@ -84,6 +86,7 @@ private:
     KiriImageDocument *m_document = nullptr;
     bool m_secondaryPage = false;
     bool m_componentComplete = true;
+    quint64 m_renderContextGeneration = 1;
     QMetaObject::Connection m_repaintConnection;
     QMetaObject::Connection m_displayedUrlChangedConnection;
     QMetaObject::Connection m_loadingChangedConnection;

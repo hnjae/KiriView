@@ -93,7 +93,8 @@ void ImagePresentationViewportController::setFitMode(ImageZoomMode zoomMode)
 bool ImagePresentationViewportController::resetRotation()
 {
     ImagePresentationViewportPlan plan = m_state.resetRotation();
-    const bool changed = !plan.changes.empty() || plan.scheduleVisibleTileDecode;
+    const bool changed
+        = !plan.changes.empty() || plan.invalidateTiles || plan.scheduleVisibleTileDecode;
     applyPlan(plan);
     return changed;
 }
@@ -152,6 +153,10 @@ void ImagePresentationViewportController::scheduleProjectedVisibleTileDecode(
 
 void ImagePresentationViewportController::applyPlan(const ImagePresentationViewportPlan &plan)
 {
+    if (plan.invalidateTiles) {
+        invalidateTiles();
+    }
+
     for (ImageDocumentChange change : plan.changes) {
         notify(change);
     }

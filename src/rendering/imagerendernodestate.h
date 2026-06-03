@@ -29,8 +29,10 @@ public:
     const QRectF &targetRect() const;
     int rotationDegrees() const;
 
-    void setFrame(bool sameSurface, quint64 revision, const ImageSurfaceDrawContext &context);
-    ImageRenderNodeSurfaceUpdate setSurface(bool sameSurface, quint64 revision);
+    void setFrame(bool sameSurface, quint64 revision, quint64 renderContextGeneration,
+        const ImageSurfaceDrawContext &context);
+    ImageRenderNodeSurfaceUpdate setSurface(
+        bool sameSurface, quint64 revision, quint64 renderContextGeneration);
     bool setDrawContext(const ImageSurfaceDrawContext &context);
     bool setTargetRect(const QRectF &targetRect);
     bool setRotationDegrees(int rotationDegrees);
@@ -43,11 +45,14 @@ public:
 
 private:
     bool setSurfaceRevision(quint64 revision);
+    bool setRenderContextGeneration(quint64 renderContextGeneration);
     void markSurfaceChanged();
     bool uploadedTexturesAreCurrent() const;
 
     quint64 m_surfaceRevision = 0;
+    quint64 m_renderContextGeneration = 0;
     quint64 m_uploadedSurfaceRevision = 0;
+    quint64 m_uploadedRenderContextGeneration = 0;
     ImageSurfaceDrawContext m_drawContext;
     std::vector<ImageSurfaceDrawIdentity> m_uploadedDrawIdentities;
     bool m_texturesDirty = true;

@@ -16,6 +16,7 @@ class ImageTileSource;
 struct ImageRenderFrameInput {
     const DisplayedImageSurface *surface = nullptr;
     quint64 surfaceRevision = 0;
+    quint64 renderContextGeneration = 0;
     ImageSurfaceDrawContext drawContext;
     DisplayedPageRole pageRole = DisplayedPageRole::Primary;
     ImageTileDecodeExclusions tileDecodeExclusions;
@@ -24,6 +25,7 @@ struct ImageRenderFrameInput {
 struct ImageRenderFrame {
     quint64 surfaceIdentity = 0;
     quint64 surfaceRevision = 0;
+    quint64 renderContextGeneration = 0;
     ImageSurfaceDrawContext drawContext;
     DisplayedPageRole pageRole = DisplayedPageRole::Primary;
     ActiveTileLayer activeTileLayer;

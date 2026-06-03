@@ -212,6 +212,22 @@ bool DocumentSessionRuntime::activeZoomEditable() const
     return m_state.publicSnapshot().activeZoom.editable;
 }
 
+bool DocumentSessionRuntime::activeImageReady() const
+{
+    return m_state.publicSnapshot().activeImageReady;
+}
+
+bool DocumentSessionRuntime::activeImageUnsupportedOpenedCollectionVideo() const
+{
+    return m_state.publicSnapshot().activeImageUnsupportedOpenedCollectionVideo;
+}
+
+const DocumentSessionActionAvailabilityFacts &
+DocumentSessionRuntime::actionAvailabilityFacts() const
+{
+    return m_state.publicSnapshot().actionAvailability;
+}
+
 bool DocumentSessionRuntime::directMediaNavigationActive() const
 {
     return m_state.documentKind() == DocumentSessionKind::Video
@@ -552,14 +568,26 @@ void DocumentSessionRuntime::connectDocuments()
             recomputePublicProjection();
         });
     appendConnection(m_documentConnections,
+        m_imageDocument.notifications.unsupportedOpenedCollectionVideoChanged, m_owner,
+        [this]() { recomputePublicProjection(); });
+    appendConnection(m_documentConnections,
         m_imageDocument.notifications.fileDeletionInProgressChanged, m_owner,
         [this]() { syncImageDocumentFileDeletionProgress(); });
     appendConnection(m_documentConnections, m_imageDocument.notifications.zoomPercentKnownChanged,
         m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); });
     appendConnection(m_documentConnections, m_imageDocument.notifications.zoomPercentChanged,
         m_owner, [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); });
+    appendConnection(m_documentConnections, m_imageDocument.notifications.zoomModeChanged, m_owner,
+        [this]() { recomputePublicProjection(); });
     appendConnection(m_documentConnections, m_imageDocument.notifications.pageNavigationChanged,
         m_owner, [this]() { publishActiveNavigationForImagePages(); });
+    appendConnection(m_documentConnections,
+        m_imageDocument.notifications.containerNavigationChanged, m_owner,
+        [this]() { recomputePublicProjection(); });
+    appendConnection(m_documentConnections, m_imageDocument.notifications.twoPageModeChanged,
+        m_owner, [this]() { recomputePublicProjection(); });
+    appendConnection(m_documentConnections, m_imageDocument.notifications.rightToLeftReadingChanged,
+        m_owner, [this]() { recomputePublicProjection(); });
     appendConnection(m_documentConnections, m_imageDocument.notifications.embeddedMetadataChanged,
         m_owner, [this]() { recomputePublicProjection(); });
 
@@ -1215,7 +1243,17 @@ DocumentSessionPublicSnapshotInput DocumentSessionRuntime::publicSnapshotInput(
     input.image.embeddedMetadata = m_imageDocument.embeddedMetadata();
     input.image.readyForDeletion = m_imageDocument.ready();
     input.image.readyForInformation = m_imageDocument.ready();
+    input.image.unsupportedOpenedCollectionVideo
+        = m_imageDocument.unsupportedOpenedCollectionVideo();
     input.image.directImageReplacementPending = !m_state.directMediaCursor().pendingUrl.isEmpty();
+    input.image.containerNavigationAvailable = m_imageDocument.containerNavigationAvailable();
+    input.image.twoPageModeEnabled = m_imageDocument.twoPageModeEnabled();
+    input.image.twoPageModeAvailable = m_imageDocument.twoPageModeAvailable();
+    input.image.rightToLeftReadingEnabled = m_imageDocument.rightToLeftReadingEnabled();
+    input.image.rightToLeftReadingAvailable = m_imageDocument.rightToLeftReadingAvailable();
+    input.image.fitModeSelected = m_imageDocument.fitModeSelected();
+    input.image.fitHeightModeSelected = m_imageDocument.fitHeightModeSelected();
+    input.image.fitWidthModeSelected = m_imageDocument.fitWidthModeSelected();
     input.image.zoomPercentKnown = m_imageDocument.zoomPercentKnown();
     input.image.zoomPercent = m_imageDocument.zoomPercent();
     input.image.errorString = m_imageDocument.errorString();

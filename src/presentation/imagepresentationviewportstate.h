@@ -19,6 +19,7 @@
 namespace KiriView {
 struct ImagePresentationViewportPlan {
     std::vector<ImageDocumentChange> changes;
+    bool invalidateTiles = false;
     bool scheduleVisibleTileDecode = false;
 };
 

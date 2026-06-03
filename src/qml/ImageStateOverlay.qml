@@ -13,6 +13,7 @@ Item {
     required property KiriImageDocument imageDocument
     required property bool imageReady
     required property var openAction
+    required property bool unsupportedOpenedCollectionVideo
 
     Kirigami.LoadingPlaceholder {
         anchors.centerIn: parent
@@ -51,7 +52,7 @@ Item {
         anchors.centerIn: parent
         icon.name: "video-x-generic-symbolic"
         text: KI18n.i18nc("@info:placeholder", "KiriView can’t play videos inside directly opened archives or directories yet.")
-        visible: root.imageDocument.unsupportedOpenedCollectionVideo
+        visible: root.unsupportedOpenedCollectionVideo
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 24)
     }
 
@@ -60,7 +61,7 @@ Item {
         helpfulAction: root.openAction
         icon.name: "image-x-generic-symbolic"
         text: KI18n.i18nc("@info:placeholder", "No image selected")
-        visible: root.imageDocument.status === KiriImageDocument.Null && !root.imageDocument.unsupportedOpenedCollectionVideo
+        visible: root.imageDocument.status === KiriImageDocument.Null && !root.unsupportedOpenedCollectionVideo
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 18)
     }
 
@@ -70,7 +71,7 @@ Item {
         helpfulAction: root.openAction
         icon.name: "dialog-error-symbolic"
         text: KI18n.i18nc("@info:placeholder", "Unable to open image")
-        visible: root.imageDocument.status === KiriImageDocument.Error && !root.imageDocument.unsupportedOpenedCollectionVideo
+        visible: root.imageDocument.status === KiriImageDocument.Error && !root.unsupportedOpenedCollectionVideo
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 24)
     }
 }

@@ -84,6 +84,7 @@ KiriView::ImageRenderFrame projectFrame(const KiriView::DisplayedImageSurface &s
     return KiriView::projectImageRenderFrame(KiriView::ImageRenderFrameInput {
         &surface,
         1,
+        0,
         KiriView::ImageSurfaceDrawContext {
             QRectF(0.0, 0.0, displaySize.width(), displaySize.height()),
             displaySize,
@@ -144,6 +145,7 @@ void TestImageRenderFrame::projectedFrameCarriesSurfaceIdentityRevisionAndPageRo
         = KiriView::projectImageRenderFrame(KiriView::ImageRenderFrameInput {
             &surface,
             42,
+            7,
             KiriView::ImageSurfaceDrawContext {
                 QRectF(0.0, 0.0, 512.0, 512.0),
                 QSizeF(512.0, 512.0),
@@ -158,6 +160,7 @@ void TestImageRenderFrame::projectedFrameCarriesSurfaceIdentityRevisionAndPageRo
     QVERIFY(frame.isRenderable());
     QCOMPARE(frame.surfaceIdentity, surface.identity());
     QCOMPARE(frame.surfaceRevision, quint64(42));
+    QCOMPARE(frame.renderContextGeneration, quint64(7));
     QCOMPARE(frame.pageRole, KiriView::DisplayedPageRole::Secondary);
 }
 

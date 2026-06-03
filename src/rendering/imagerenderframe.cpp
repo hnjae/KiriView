@@ -172,6 +172,7 @@ ImageRenderFrame projectImageRenderFrame(const ImageRenderFrameInput &input)
     ImageRenderFrame frame;
     frame.surfaceIdentity = input.surface == nullptr ? 0 : input.surface->identity();
     frame.surfaceRevision = input.surfaceRevision;
+    frame.renderContextGeneration = input.renderContextGeneration;
     frame.drawContext = input.drawContext;
     frame.pageRole = input.pageRole;
 

@@ -158,6 +158,11 @@ ImageViewportCommandStatus ImageDocumentRuntime::viewportCommandStatus() const
     return controllers->spreadController().viewportCommandStatus();
 }
 
+ImageViewportObservationOrigin ImageDocumentRuntime::viewportObservationOrigin() const
+{
+    return controllers->spreadController().viewportObservationOrigin();
+}
+
 QSizeF ImageDocumentRuntime::viewportContentSize() const
 {
     return controllers->spreadController().viewportContentSize();

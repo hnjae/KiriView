@@ -3,6 +3,7 @@
 
 #include "applicationshortcutruntime.h"
 
+#include "imageactionavailabilitypolicy.h"
 #include "shortcuthelpmodel.h"
 #include "shortcutroutemodel.h"
 
@@ -48,6 +49,13 @@ QWindow *shortcutWindow(QObject *host)
     }
 
     return nullptr;
+}
+
+bool exactShortcut(const QKeySequence &shortcut, const char *portableText)
+{
+    return shortcut.matches(QKeySequence::fromString(
+               QString::fromLatin1(portableText), QKeySequence::PortableText))
+        == QKeySequence::ExactMatch;
 }
 
 class ShortcutEventFilter final : public QObject
@@ -297,6 +305,10 @@ bool ApplicationShortcutRuntime::handleShortcutEvent(const QKeySequence &shortcu
         return false;
     }
 
+    if (handleFixedShortcutEvent(shortcut)) {
+        return true;
+    }
+
     for (const ShortcutBinding &binding : m_shortcuts) {
         if (!binding.enabled || !binding.shortcuts.contains(shortcut)) {
             continue;
@@ -304,6 +316,47 @@ bool ApplicationShortcutRuntime::handleShortcutEvent(const QKeySequence &shortcu
 
         handleShortcutActivated(binding.actionId);
         return true;
+    }
+
+    return false;
+}
+
+bool ApplicationShortcutRuntime::handleFixedShortcutEvent(const QKeySequence &shortcut)
+{
+    const VideoShortcutAvailabilityInput videoShortcutInput {
+        m_actionStateInput.helpActionsEnabled,
+        m_actionStateInput.viewerShortcutsEnabled,
+        m_actionStateInput.videoFileDeletionInProgress,
+        m_actionStateInput.activeNavigationActionsAvailable,
+    };
+    const bool horizontalArrowEnabled
+        = mediaHorizontalArrowShortcutsEnabled(m_actionStateInput.videoMode,
+            m_actionStateInput.readyViewerShortcutsEnabled, videoShortcutInput);
+
+    if (horizontalArrowEnabled && exactShortcut(shortcut, "Left")) {
+        return m_triggerCallbacks.horizontalArrowShortcutTriggered
+            && m_triggerCallbacks.horizontalArrowShortcutTriggered(true);
+    }
+    if (horizontalArrowEnabled && exactShortcut(shortcut, "Right")) {
+        return m_triggerCallbacks.horizontalArrowShortcutTriggered
+            && m_triggerCallbacks.horizontalArrowShortcutTriggered(false);
+    }
+    if (m_actionStateInput.twoPageViewerShortcutsEnabled && exactShortcut(shortcut, "Shift+Left")) {
+        return m_triggerCallbacks.singlePageArrowShortcutTriggered
+            && m_triggerCallbacks.singlePageArrowShortcutTriggered(true);
+    }
+    if (m_actionStateInput.twoPageViewerShortcutsEnabled
+        && exactShortcut(shortcut, "Shift+Right")) {
+        return m_triggerCallbacks.singlePageArrowShortcutTriggered
+            && m_triggerCallbacks.singlePageArrowShortcutTriggered(false);
+    }
+    if (m_actionStateInput.pannableViewerShortcutsEnabled && exactShortcut(shortcut, "Up")) {
+        return m_triggerCallbacks.verticalPanShortcutTriggered
+            && m_triggerCallbacks.verticalPanShortcutTriggered(true);
+    }
+    if (m_actionStateInput.pannableViewerShortcutsEnabled && exactShortcut(shortcut, "Down")) {
+        return m_triggerCallbacks.verticalPanShortcutTriggered
+            && m_triggerCallbacks.verticalPanShortcutTriggered(false);
     }
 
     return false;

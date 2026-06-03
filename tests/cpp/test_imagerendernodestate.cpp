@@ -18,6 +18,7 @@ private Q_SLOTS:
     void drawGeometrySyncFailurePromotesTextureRebuild();
     void changedDrawEntryIdentityPromotesTextureRebuild();
     void frameUpdateCombinesSurfaceRevisionAndDrawContext();
+    void renderContextGenerationChangePromotesTextureRebuild();
     void rotationIsNormalizedBeforeComparison();
     void resetUploadedResourcesKeepsPublicInputs();
 };
@@ -34,25 +35,25 @@ void TestImageRenderNodeState::surfaceUpdateOwnsRevisionAndPointerInvalidation()
 {
     KiriView::ImageRenderNodeState state;
 
-    KiriView::ImageRenderNodeSurfaceUpdate update = state.setSurface(false, 10);
+    KiriView::ImageRenderNodeSurfaceUpdate update = state.setSurface(false, 10, 1);
     QVERIFY(update.acceptSurface);
     expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
 
     state.markTexturesUploaded();
     expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
 
-    update = state.setSurface(true, 10);
+    update = state.setSurface(true, 10, 1);
     QVERIFY(!update.acceptSurface);
     expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
 
-    update = state.setSurface(true, 11);
+    update = state.setSurface(true, 11, 1);
     QVERIFY(update.acceptSurface);
     expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
 
     state.markTexturesUploaded();
     expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
 
-    update = state.setSurface(false, 11);
+    update = state.setSurface(false, 11, 1);
     QVERIFY(update.acceptSurface);
     expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
 }
@@ -60,7 +61,7 @@ void TestImageRenderNodeState::surfaceUpdateOwnsRevisionAndPointerInvalidation()
 void TestImageRenderNodeState::targetGeometryOnlyRequestsDrawGeometrySync()
 {
     KiriView::ImageRenderNodeState state;
-    state.setSurface(false, 7);
+    state.setSurface(false, 7, 1);
     state.markTexturesUploaded();
 
     QVERIFY(state.setTargetRect(QRectF(10.0, 20.0, 30.0, 40.0)));
@@ -77,7 +78,7 @@ void TestImageRenderNodeState::targetGeometryOnlyRequestsDrawGeometrySync()
 void TestImageRenderNodeState::drawGeometrySyncFailurePromotesTextureRebuild()
 {
     KiriView::ImageRenderNodeState state;
-    state.setSurface(false, 7);
+    state.setSurface(false, 7, 1);
     state.markTexturesUploaded();
     state.setTargetRect(QRectF(10.0, 20.0, 30.0, 40.0));
 
@@ -89,7 +90,7 @@ void TestImageRenderNodeState::drawGeometrySyncFailurePromotesTextureRebuild()
 void TestImageRenderNodeState::changedDrawEntryIdentityPromotesTextureRebuild()
 {
     KiriView::ImageRenderNodeState state;
-    state.setSurface(false, 7);
+    state.setSurface(false, 7, 1);
     state.markTexturesUploaded({
         KiriView::ImageSurfaceDrawIdentity {
             KiriView::ImageSurfaceDrawIdentityKind::Preview,
@@ -176,7 +177,7 @@ void TestImageRenderNodeState::frameUpdateCombinesSurfaceRevisionAndDrawContext(
         0,
     };
 
-    state.setFrame(false, 1, initialContext);
+    state.setFrame(false, 1, 1, initialContext);
     expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
     state.markTexturesUploaded({
         KiriView::ImageSurfaceDrawIdentity {
@@ -187,19 +188,39 @@ void TestImageRenderNodeState::frameUpdateCombinesSurfaceRevisionAndDrawContext(
     });
     expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
 
-    state.setFrame(true, 1, pannedContext);
+    state.setFrame(true, 1, 1, pannedContext);
     expectTextureUpdatePlan(
         state, KiriView::ImageRenderNodeTextureUpdatePlan::SynchronizeDrawGeometry);
     state.applyDrawGeometrySyncResult(true);
 
-    state.setFrame(true, 2, pannedContext);
+    state.setFrame(true, 2, 1, pannedContext);
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
+}
+
+void TestImageRenderNodeState::renderContextGenerationChangePromotesTextureRebuild()
+{
+    KiriView::ImageRenderNodeState state;
+    const KiriView::ImageSurfaceDrawContext context {
+        QRectF(0.0, 0.0, 100.0, 100.0),
+        QSizeF(100.0, 100.0),
+        QRectF(0.0, 0.0, 100.0, 100.0),
+        1.0,
+        0,
+    };
+
+    state.setFrame(false, 1, 10, context);
+    state.markTexturesUploaded();
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
+
+    state.setFrame(true, 1, 11, context);
+
     expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
 }
 
 void TestImageRenderNodeState::rotationIsNormalizedBeforeComparison()
 {
     KiriView::ImageRenderNodeState state;
-    state.setSurface(false, 1);
+    state.setSurface(false, 1, 1);
     state.markTexturesUploaded();
 
     QVERIFY(state.setRotationDegrees(450));
@@ -220,7 +241,7 @@ void TestImageRenderNodeState::rotationIsNormalizedBeforeComparison()
 void TestImageRenderNodeState::resetUploadedResourcesKeepsPublicInputs()
 {
     KiriView::ImageRenderNodeState state;
-    state.setSurface(false, 3);
+    state.setSurface(false, 3, 1);
     QVERIFY(state.setTargetRect(QRectF(1.0, 2.0, 3.0, 4.0)));
     QVERIFY(state.setRotationDegrees(180));
     state.markTexturesUploaded();

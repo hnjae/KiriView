@@ -75,6 +75,7 @@ public:
     quint64 viewportAppliedCommandRevision() const;
     quint64 viewportObservationRevision() const;
     ImageViewportCommandStatus viewportCommandStatus() const;
+    ImageViewportObservationOrigin viewportObservationOrigin() const;
     QSizeF viewportContentSize() const;
     QRectF viewportImageRect() const;
     bool viewportHorizontallyPannable() const;

@@ -175,6 +175,7 @@ void ImageOpenController::finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSe
 
     invokeIfSet(m_callbacks.unsupportedOpenedCollectionVideoEntered, message);
     reportRuntimePlan(ImageDocumentRuntimePlan {
+        FinishSpreadTransitionOperation {},
         ClearSecondaryPageOperation {},
         UpdatePageNavigationOperation {},
     });

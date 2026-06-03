@@ -44,7 +44,9 @@ public:
     bool transitionInProgress() const;
     ImagePresentationTransitionState transitionState() const;
     bool beginTransition();
+    bool showTransitionPlaceholder();
     bool finishTransition();
+    bool abortTransition();
 
     QSize imageSize() const;
     QSize spreadImageSize() const;
