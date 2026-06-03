@@ -688,6 +688,13 @@ void TestMainWindowToolBar::viewerRightClickOpensContextMenuOnlyFromMediaViewpor
     openSourceUrl(fixture, imageSourcePath);
     compareToolbarPageReadout(fixture, QStringLiteral("3"), QStringLiteral("3"), true);
 
+    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    QVERIFY(documentSession != nullptr);
+    KiriImageDocument *imageDocument = documentSession->imageDocument();
+    QVERIFY(imageDocument != nullptr);
+    QTRY_COMPARE(imageDocument->status(), KiriImageDocument::Status::Ready);
+    QTRY_VERIFY(documentSession->activeImageReady());
+
     QObject *contextMenu = findObject(fixture.window, QStringLiteral("viewerContextMenu"));
     QQuickItem *mediaViewportSlot
         = findQuickItem(fixture.window, QStringLiteral("mediaViewportSlot"));
