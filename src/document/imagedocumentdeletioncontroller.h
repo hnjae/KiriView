@@ -20,7 +20,7 @@ class QObject;
 
 namespace KiriView {
 class ImageDocumentState;
-class ImagePresentationController;
+class ImagePageSurfaceController;
 
 class ImageDocumentDeletionController final
 {
@@ -36,7 +36,7 @@ public:
     };
 
     ImageDocumentDeletionController(QObject *parent, ImageDocumentState &state,
-        ImagePresentationController &presentationController,
+        ImagePageSurfaceController &pageSurfaceController,
         ImageDocumentPageCandidateProvider candidateProvider,
         FileDeletionProvider fileDeletionProvider, Callbacks callbacks);
     ~ImageDocumentDeletionController();
@@ -55,7 +55,7 @@ private:
 
     QObject *m_parent = nullptr;
     ImageDocumentState &m_state;
-    ImagePresentationController &m_presentationController;
+    ImagePageSurfaceController &m_pageSurfaceController;
     Callbacks m_callbacks;
     FileDeletionProvider m_fileDeletionProvider;
     ImageIoJob m_fileDeletionJob;

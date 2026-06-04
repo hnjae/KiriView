@@ -12,6 +12,7 @@
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
 #include "presentation/imagepresentationload.h"
+#include "presentation/imagepresentationruntime.h"
 #include "presentation/imagesecondarypagestate.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
@@ -29,7 +30,7 @@ class QObject;
 
 namespace KiriView {
 class ImageLoader;
-class ImagePresentationController;
+class ImagePageSurfaceController;
 
 class ImageSecondaryPageController final
 {
@@ -53,15 +54,13 @@ public:
         ImageDecodeDependencies decodeDependencies, ImageCacheBudgets cacheBudgets);
     ~ImageSecondaryPageController();
 
-    ImagePresentationController &presentationController();
-    const ImagePresentationController &presentationController() const;
+    ImagePageSurfaceController &pageSurfaceController();
+    const ImagePageSurfaceController &pageSurfaceController() const;
     bool visible() const;
     DisplayedImageLocation displayedImageLocation() const;
     QSize imageSize() const;
-    DisplayedImageRenderSnapshot renderSnapshot() const;
+    ImagePresentationPageSlotSnapshot pageSlotSnapshot() const;
 
-    void setViewportSize(const QSizeF &viewportSize);
-    void updateRenderContext();
     void startLoad(const QUrl &url,
         const OpenedCollectionScopeLocation &displayedOpenedCollectionScope,
         const ImageFirstDisplayDecodeContext &firstDisplayContext);
@@ -76,10 +75,12 @@ private:
         const ImageLoadSession &session, const ImagePresentationLoadResult &result);
     void finishLoadWithError(const ImageLoadSession &session);
     void applyLoadCompletion(const ImageSecondaryPageLoadCompletion &completion);
+    ImageDocumentRenderContext renderContext() const;
     void notify(ImageDocumentChange change);
 
     Callbacks m_callbacks;
-    std::unique_ptr<ImagePresentationController> m_presentationController;
+    RenderContextProvider m_renderContextProvider;
+    std::unique_ptr<ImagePageSurfaceController> m_pageSurfaceController;
     std::unique_ptr<ImageLoader> m_imageLoader;
     ImageSecondaryPageState m_displayState;
 };

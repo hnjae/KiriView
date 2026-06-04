@@ -10,7 +10,7 @@
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
-#include "presentation/imagepresentationactivestate.h"
+#include "presentation/imagepresentationruntime.h"
 #include "presentation/imagepresentationstate.h"
 #include "presentation/imagespreadgeometry.h"
 #include "presentation/imagespreadmodepolicy.h"
@@ -34,9 +34,9 @@
 class QObject;
 
 namespace KiriView {
-class ImagePresentationController;
+class ImagePageSurfaceController;
+class ImagePresentationRuntime;
 class ImageSecondaryPageController;
-class ImageSpreadModeController;
 enum class ImageSecondaryPageLoadResult;
 
 class ImageSpreadPresentationController final
@@ -56,8 +56,9 @@ public:
     };
 
     ImageSpreadPresentationController(QObject *parent, RenderContextProvider renderContextProvider,
-        ImageDocumentState &state, ImagePresentationController &primaryPresentation,
-        Callbacks callbacks, ImageDocumentPageCandidateProvider candidateProvider,
+        ImageDocumentState &state, ImagePageSurfaceController &primaryPageSurface,
+        ImagePresentationRuntime &presentationRuntime, Callbacks callbacks,
+        ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, ImageCacheBudgets cacheBudgets);
     ~ImageSpreadPresentationController();
 
@@ -116,6 +117,8 @@ public:
     std::optional<DisplayedPredecodeImage> secondaryDisplayedPredecodeImage() const;
     DisplayedImageRenderSnapshot renderSnapshot(DisplayedPageRole role) const;
 
+    void commitPrimaryPageSlot(const DisplayedImageLocation &location);
+    void clearPrimaryPageSlot();
     void setViewportSize(const QSizeF &viewportSize);
     void resetZoom();
     void setFitMode(ImageZoomMode zoomMode);
@@ -143,7 +146,6 @@ private:
     void finishSecondaryPageAsPrimaryOnly();
     void finishSecondaryPageVisible();
     void notifyTransitionChanged();
-    ImageZoomChangeSet updateZoomState();
     QSize spreadImageSize() const;
     bool primaryPageIsWide() const;
     ImageSpreadReadingAvailability readingAvailability() const;
@@ -155,22 +157,17 @@ private:
     void applyActivePresentationChanges(
         const ImageZoomChangeSet &changes, bool notifyPublicChanges = true);
     void notifyActivePresentationZoomChanged(const ImageZoomChangeSet &changes);
-    bool refreshViewportFrame(bool forceApplyVisibleItemRect = false);
-    bool refreshViewportFrameForContentPosition(
-        const QPointF &contentPosition, bool forceApplyVisibleItemRect = false);
-    void applyViewportFrameVisibleItemRect(bool force = false);
+    void scheduleVisibleTileDecode();
     const ImageViewportFrame &viewportFrame() const;
     void notifyChanges(const std::vector<ImageDocumentChange> &changes);
     void notify(ImageDocumentChange change);
 
     ImageDocumentState &m_state;
-    ImagePresentationController &m_primaryPresentation;
+    ImagePageSurfaceController &m_primaryPageSurface;
+    ImagePresentationRuntime &m_presentationRuntime;
     Callbacks m_callbacks;
     std::unique_ptr<ImageSecondaryPageController> m_secondaryPageController;
-    std::unique_ptr<ImageSpreadModeController> m_modeController;
-    std::unique_ptr<ImagePresentationActiveState> m_activePresentation;
     ImageSpreadSecondaryPageRefresh m_secondaryPageRefresh;
-    QUrl m_activeZoomScopeRootUrl;
 };
 }
 

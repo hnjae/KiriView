@@ -1,22 +1,19 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
-#define KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
+#ifndef KIRIVIEW_IMAGEPAGESURFACECONTROLLER_H
+#define KIRIVIEW_IMAGEPAGESURFACECONTROLLER_H
 
 #include "cache/imagecachepolicy.h"
 #include "document/imagedocumenttypes.h"
 #include "presentation/imageanimationplaybacksource.h"
-#include "presentation/imagezoomstate.h"
+#include "presentation/imagepresentationruntime.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
 
 #include <QImage>
-#include <QRectF>
 #include <QSize>
-#include <QSizeF>
 #include <QString>
-#include <QUrl>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -27,12 +24,11 @@ namespace KiriView {
 class DisplayedImageSurfaceState;
 struct DisplayedImageSurfaceStateChange;
 class ImageAnimationPlayer;
-class ImagePresentationViewportController;
+class ImageTileDecodeScheduler;
 
-class ImagePresentationController final
+class ImagePageSurfaceController final
 {
 public:
-    using RenderContextProvider = std::function<ImageDocumentRenderContext()>;
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
     using AnimationErrorCallback = std::function<void(const QString &)>;
 
@@ -41,45 +37,24 @@ public:
         AnimationErrorCallback animationError;
     };
 
-    ImagePresentationController(QObject *context, RenderContextProvider renderContextProvider,
-        Callbacks callbacks, ImageCacheBudgets cacheBudgets);
-    ~ImagePresentationController();
+    ImagePageSurfaceController(
+        QObject *context, Callbacks callbacks, ImageCacheBudgets cacheBudgets);
+    ~ImagePageSurfaceController();
 
     QSize imageSize() const;
-    QSizeF viewportSize() const;
-    void setViewportSize(const QSizeF &viewportSize);
-    QSizeF displaySize() const;
-    QRectF visibleItemRect() const;
-    void setVisibleItemRect(const QRectF &visibleItemRect);
-    qreal zoomPercent() const;
-    void setZoomPercent(qreal zoomPercent);
-    ImageZoomMode zoomMode() const;
-    qreal maximumManualZoomPercent() const;
-    qreal clampedManualZoomPercent(qreal zoomPercent) const;
-    qreal steppedManualZoomPercent(qreal stepCount) const;
-    int rotationDegrees() const;
     std::shared_ptr<DisplayedImageSurface> imageSurface() const;
-    DisplayedImageRenderSnapshot renderSnapshot() const;
     quint64 imageRevision() const;
     bool hasImage() const;
     bool isPredecodeCacheable() const;
     qsizetype predecodeCacheByteBudget() const;
     std::optional<StaticImagePayload> staticImage() const;
-    ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
+    ImagePresentationPageSlotSnapshot snapshot() const;
 
-    void resetZoom();
-    void setFitMode(ImageZoomMode zoomMode);
-    void rotateClockwise();
-    void rotateCounterclockwise();
-    bool resetRotation();
-    void updateRenderContext();
-    void prepareImageContainer(const QUrl &containerUrl);
-    void prepareFailedContainer(const QUrl &containerUrl);
     void setImage(const QImage &image, bool predecodeCacheable);
-    void setStaticImage(StaticImagePayload staticImage, bool predecodeCacheable);
+    void setStaticImage(StaticImagePayload staticImage, bool predecodeCacheable,
+        const ImageDocumentRenderContext &renderContext);
     void discardDecodedTiles();
-    void scheduleProjectedVisibleTileDecode(
-        const QSizeF &displaySize, const QRectF &visibleItemRect, int rotationDegrees);
+    void scheduleVisibleTileDecode(const ImagePresentationRenderProjection &projection);
     void clearImage();
 
     void startAnimation(ImageAnimationPlaybackRequest request);
@@ -88,14 +63,13 @@ public:
 private:
     void applyDisplayedImageChange(const DisplayedImageSurfaceStateChange &change);
     void applyDisplayedImageTileChange(const DisplayedImageSurfaceStateChange &change);
-    void resetRotationForNewImage();
     void notify(ImageDocumentChange change);
 
     Callbacks m_callbacks;
     qsizetype m_predecodeCacheByteBudget = 0;
     qsizetype m_staticTileCacheByteBudget = 0;
     std::unique_ptr<DisplayedImageSurfaceState> m_displayedSurfaceState;
-    std::unique_ptr<ImagePresentationViewportController> m_viewportController;
+    std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
     std::unique_ptr<ImageAnimationPlayer> m_animationPlayer;
 };
 }

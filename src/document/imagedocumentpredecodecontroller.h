@@ -20,7 +20,8 @@ class QObject;
 namespace KiriView {
 class ImageDocumentState;
 class ImagePredecodeCoordinator;
-class ImagePresentationController;
+class ImagePageSurfaceController;
+class ImagePresentationRuntime;
 
 class ImageDocumentPredecodeController final
 {
@@ -28,7 +29,8 @@ public:
     using CurrentPageNumberCallback = std::function<int()>;
 
     ImageDocumentPredecodeController(QObject *parent, ImageDocumentState &state,
-        ImagePresentationController &presentationController,
+        ImagePageSurfaceController &pageSurfaceController,
+        ImagePresentationRuntime &presentationRuntime,
         ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
         CurrentPageNumberCallback currentPageNumber = {},
@@ -44,7 +46,8 @@ public:
 
 private:
     ImageDocumentState &m_state;
-    ImagePresentationController &m_presentationController;
+    ImagePageSurfaceController &m_pageSurfaceController;
+    ImagePresentationRuntime &m_presentationRuntime;
     std::unique_ptr<ImagePredecodeCoordinator> m_coordinator;
     CurrentPageNumberCallback m_currentPageNumber;
     bool m_ordinaryDirectMediaPredecodeEnabled = true;

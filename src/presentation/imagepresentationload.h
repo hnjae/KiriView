@@ -8,6 +8,7 @@
 #include "document/imageloadtypes.h"
 #include "predecode/predecodedimage.h"
 #include "presentation/imageanimationplaybacksource.h"
+#include "rendering/imagerendercontext.h"
 
 #include <QImage>
 #include <QSize>
@@ -15,7 +16,7 @@
 #include <variant>
 
 namespace KiriView {
-class ImagePresentationController;
+class ImagePageSurfaceController;
 
 enum class ImagePresentationAnimationHandling {
     FirstFrameOnly,
@@ -54,13 +55,13 @@ ImagePresentationLoadPlan planPredecodedImagePresentationLoad(PredecodedImage im
 ImagePresentationLoadPlan planDecodedImagePresentationLoad(DecodedImage image,
     ImagePresentationAnimationHandling animationHandling, qsizetype predecodeCacheByteBudget);
 ImagePresentationLoadResult executeImagePresentationLoadPlan(
-    ImagePresentationController &presentation, const ImageLoadSession &session,
-    ImagePresentationLoadPlan plan);
-ImagePresentationLoadResult presentPredecodedImageLoad(ImagePresentationController &presentation,
-    const ImageLoadSession &session, PredecodedImage image);
-ImagePresentationLoadResult presentDecodedImageLoad(ImagePresentationController &presentation,
-    const ImageLoadSession &session, DecodedImage image,
-    ImagePresentationAnimationHandling animationHandling);
+    ImagePageSurfaceController &pageSurface, ImagePresentationLoadPlan plan,
+    const ImageDocumentRenderContext &renderContext);
+ImagePresentationLoadResult presentPredecodedImageLoad(ImagePageSurfaceController &pageSurface,
+    PredecodedImage image, const ImageDocumentRenderContext &renderContext);
+ImagePresentationLoadResult presentDecodedImageLoad(ImagePageSurfaceController &pageSurface,
+    DecodedImage image, ImagePresentationAnimationHandling animationHandling,
+    const ImageDocumentRenderContext &renderContext);
 }
 
 #endif

@@ -6,7 +6,7 @@
 #include "async/imagecallback.h"
 #include "imagedocumentstate.h"
 #include "localization/imageerrortext.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
 
 #include <utility>
 
@@ -19,12 +19,12 @@ QString genericFileDeletionErrorMessage()
 
 namespace KiriView {
 ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent,
-    ImageDocumentState &state, ImagePresentationController &presentationController,
+    ImageDocumentState &state, ImagePageSurfaceController &pageSurfaceController,
     ImageDocumentPageCandidateProvider candidateProvider, FileDeletionProvider fileDeletionProvider,
     Callbacks callbacks)
     : m_parent(parent)
     , m_state(state)
-    , m_presentationController(presentationController)
+    , m_pageSurfaceController(pageSurfaceController)
     , m_callbacks(std::move(callbacks))
     , m_fileDeletionProvider(fileDeletionProviderWithDefault(std::move(fileDeletionProvider)))
     , m_deletionState()
@@ -39,7 +39,7 @@ bool ImageDocumentDeletionController::inProgress() const { return m_deletionStat
 
 void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
 {
-    if (!m_presentationController.hasImage()) {
+    if (!m_pageSurfaceController.hasImage()) {
         return;
     }
 

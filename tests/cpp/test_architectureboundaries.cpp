@@ -611,17 +611,11 @@ void TestArchitectureBoundaries::activePresentationDoesNotWritePageSurfacePresen
     const QList<QString> relativePaths {
         QStringLiteral("src/presentation/imagepresentationruntime.cpp"),
         QStringLiteral("src/presentation/imagespreadpresentationcontroller.cpp"),
-        QStringLiteral("src/presentation/imagepresentationactivestate.cpp"),
     };
     const QList<QRegularExpression> forbiddenPatterns {
-        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*setVisibleItemRect\s*\()")),
-        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*setViewportSize\s*\()")),
-        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*setZoomPercent\s*\()")),
-        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*setFitMode\s*\()")),
-        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*resetZoom\s*\()")),
-        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*rotateClockwise\s*\()")),
-        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*rotateCounterclockwise\s*\()")),
-        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*resetRotation\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bsetVisibleItemRect\s*\()")),
+        QRegularExpression(QStringLiteral(
+            R"(\b(?:m_primaryPageSurface|primaryPageSurface|m_secondaryPageController|pageSurfaceController)\b[^\n]*(?:\.|->)\s*(?:setViewportSize|setZoomPercent|setFitMode|resetZoom|rotateClockwise|rotateCounterclockwise|resetRotation)\s*\()")),
     };
 
     QStringList violations;

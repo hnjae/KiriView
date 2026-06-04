@@ -5,7 +5,7 @@
 
 #include "async/imagecallback.h"
 #include "document/imageloader.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
 #include "presentation/imagepresentationload.h"
 #include "presentation/imagespreadgeometry.h"
 
@@ -17,25 +17,25 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, ImageCacheBudgets cacheBudgets)
     : m_callbacks(std::move(callbacks))
+    , m_renderContextProvider(std::move(renderContextProvider))
 {
-    m_presentationController
-        = std::make_unique<ImagePresentationController>(parent, std::move(renderContextProvider),
-            ImagePresentationController::Callbacks {
-                [this](ImageDocumentChange change) {
-                    if (change == ImageDocumentChange::RenderFrame
-                        || change == ImageDocumentChange::Repaint) {
-                        notify(change);
-                    }
-                },
-                [this](const QString &) {
-                    const bool hadDisplayedPage = visible();
-                    clear();
-                    if (hadDisplayedPage) {
-                        invokeIfSet(m_callbacks.visibilityChanged);
-                    }
-                },
+    m_pageSurfaceController = std::make_unique<ImagePageSurfaceController>(parent,
+        ImagePageSurfaceController::Callbacks {
+            [this](ImageDocumentChange change) {
+                if (change == ImageDocumentChange::RenderFrame
+                    || change == ImageDocumentChange::Repaint) {
+                    notify(change);
+                }
             },
-            cacheBudgets);
+            [this](const QString &) {
+                const bool hadDisplayedPage = visible();
+                clear();
+                if (hadDisplayedPage) {
+                    invokeIfSet(m_callbacks.visibilityChanged);
+                }
+            },
+        },
+        cacheBudgets);
     m_imageLoader = std::make_unique<ImageLoader>(parent, std::move(candidateProvider),
         std::move(decodeDependencies),
         ImageLoader::Callbacks {
@@ -66,14 +66,14 @@ ImageSecondaryPageController::~ImageSecondaryPageController()
     stopAnimation();
 }
 
-ImagePresentationController &ImageSecondaryPageController::presentationController()
+ImagePageSurfaceController &ImageSecondaryPageController::pageSurfaceController()
 {
-    return *m_presentationController;
+    return *m_pageSurfaceController;
 }
 
-const ImagePresentationController &ImageSecondaryPageController::presentationController() const
+const ImagePageSurfaceController &ImageSecondaryPageController::pageSurfaceController() const
 {
-    return *m_presentationController;
+    return *m_pageSurfaceController;
 }
 
 bool ImageSecondaryPageController::visible() const { return m_displayState.visible(); }
@@ -85,19 +85,9 @@ DisplayedImageLocation ImageSecondaryPageController::displayedImageLocation() co
 
 QSize ImageSecondaryPageController::imageSize() const { return m_displayState.imageSize(); }
 
-DisplayedImageRenderSnapshot ImageSecondaryPageController::renderSnapshot() const
+ImagePresentationPageSlotSnapshot ImageSecondaryPageController::pageSlotSnapshot() const
 {
-    return visible() ? m_presentationController->renderSnapshot() : DisplayedImageRenderSnapshot {};
-}
-
-void ImageSecondaryPageController::setViewportSize(const QSizeF &viewportSize)
-{
-    m_presentationController->setViewportSize(viewportSize);
-}
-
-void ImageSecondaryPageController::updateRenderContext()
-{
-    m_presentationController->updateRenderContext();
+    return visible() ? m_pageSurfaceController->snapshot() : ImagePresentationPageSlotSnapshot {};
 }
 
 void ImageSecondaryPageController::startLoad(const QUrl &url,
@@ -114,7 +104,7 @@ void ImageSecondaryPageController::clear()
 {
     cancel();
     stopAnimation();
-    m_presentationController->clearImage();
+    m_pageSurfaceController->clearImage();
     m_displayState.clear();
 }
 
@@ -127,24 +117,24 @@ void ImageSecondaryPageController::cancel()
 
 void ImageSecondaryPageController::stopAnimation()
 {
-    if (m_presentationController != nullptr) {
-        m_presentationController->stopAnimation();
+    if (m_pageSurfaceController != nullptr) {
+        m_pageSurfaceController->stopAnimation();
     }
 }
 
 void ImageSecondaryPageController::finishPredecodedImageLoad(
     ImageLoadSession session, PredecodedImage image)
 {
-    finishImagePresentation(
-        session, presentPredecodedImageLoad(*m_presentationController, session, std::move(image)));
+    finishImagePresentation(session,
+        presentPredecodedImageLoad(*m_pageSurfaceController, std::move(image), renderContext()));
 }
 
 void ImageSecondaryPageController::finishDecodedImageLoad(
     ImageLoadSession session, DecodedImage image)
 {
     finishImagePresentation(session,
-        presentDecodedImageLoad(*m_presentationController, session, std::move(image),
-            ImagePresentationAnimationHandling::FirstFrameOnly));
+        presentDecodedImageLoad(*m_pageSurfaceController, std::move(image),
+            ImagePresentationAnimationHandling::FirstFrameOnly, renderContext()));
 }
 
 void ImageSecondaryPageController::finishImagePresentation(
@@ -168,11 +158,16 @@ void ImageSecondaryPageController::applyLoadCompletion(
     const ImageSecondaryPageLoadCompletion &completion)
 {
     if (completion.clearPresentation) {
-        m_presentationController->clearImage();
+        m_pageSurfaceController->clearImage();
     }
 
     invokeIfSet(
         m_callbacks.loadFinished, completion.result, completion.location, completion.imageSize);
+}
+
+ImageDocumentRenderContext ImageSecondaryPageController::renderContext() const
+{
+    return m_renderContextProvider ? m_renderContextProvider() : ImageDocumentRenderContext {};
 }
 
 void ImageSecondaryPageController::notify(ImageDocumentChange change)

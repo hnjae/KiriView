@@ -5,10 +5,11 @@
 
 #include "async/imagecallback.h"
 #include "document/imagedocumentnotifications.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "location/imagedocumentlocation.h"
+#include "presentation/imagepagesurfacecontroller.h"
 #include "presentation/imagesecondarypagecontroller.h"
 #include "presentation/imagespreadgeometry.h"
-#include "presentation/imagespreadmodecontroller.h"
+#include "presentation/imagespreadmodepolicy.h"
 #include "presentation/imagespreadnavigation.h"
 
 #include <utility>
@@ -21,60 +22,81 @@ bool hasSpreadZoomStateChange(const KiriView::ImageZoomChangeSet &changes)
         || changes.maximumManualZoomPercentChanged || changes.scheduleVisibleTileDecode;
 }
 
-bool spreadZoomChangesAffectViewportFrame(const KiriView::ImageZoomChangeSet &changes)
+KiriView::DisplayedImageRenderSnapshot renderSnapshotForProjection(
+    const KiriView::ImagePresentationRenderProjection &projection)
 {
-    return changes.imageSizeChanged || changes.viewportSizeChanged || changes.displaySizeChanged;
+    if (!projection.visible) {
+        return {};
+    }
+
+    return KiriView::DisplayedImageRenderSnapshot {
+        projection.surface,
+        projection.imageRevision,
+        projection.imageSize,
+        projection.displaySize,
+        projection.visibleItemRect,
+        projection.devicePixelRatio,
+        projection.renderContextGeneration,
+        projection.rotationDegrees,
+        projection.pageRole,
+    };
+}
+
+KiriView::ImagePresentationScopeKey presentationScopeKeyForLocation(
+    const KiriView::DisplayedImageLocation &location)
+{
+    const QUrl openedCollectionScopeUrl = KiriView::zoomScopeUrlForLocation(location);
+    if (!openedCollectionScopeUrl.isEmpty()) {
+        return KiriView::ImagePresentationScopeKey::openedCollection(openedCollectionScopeUrl);
+    }
+
+    return KiriView::ImagePresentationScopeKey::directImage(location.imageUrl());
 }
 }
 
 namespace KiriView {
 ImageSpreadPresentationController::ImageSpreadPresentationController(QObject *parent,
     RenderContextProvider renderContextProvider, ImageDocumentState &state,
-    ImagePresentationController &primaryPresentation,
+    ImagePageSurfaceController &primaryPageSurface, ImagePresentationRuntime &presentationRuntime,
     ImageSpreadPresentationController::Callbacks callbacks,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, ImageCacheBudgets cacheBudgets)
     : m_state(state)
-    , m_primaryPresentation(primaryPresentation)
+    , m_primaryPageSurface(primaryPageSurface)
+    , m_presentationRuntime(presentationRuntime)
     , m_callbacks(std::move(callbacks))
 {
-    RenderContextProvider secondaryRenderContextProvider = renderContextProvider;
-    RenderContextProvider activeRenderContextProvider = std::move(renderContextProvider);
-    m_secondaryPageController = std::make_unique<ImageSecondaryPageController>(parent,
-        std::move(secondaryRenderContextProvider),
-        ImageSecondaryPageController::Callbacks {
-            [this](ImageDocumentChange change) { notify(change); },
-            [this](ImageSecondaryPageLoadResult result, const DisplayedImageLocation &location,
-                const QSize &imageSize) {
-                handleSecondaryPageLoadFinished(result, location, imageSize);
-            },
-            [this]() { notifyTwoPageModeChanged(); },
-            [this](const QUrl &url) {
-                if (!m_callbacks.findPredecodedImage) {
-                    return std::optional<PredecodedImage>();
-                }
+    m_secondaryPageController
+        = std::make_unique<ImageSecondaryPageController>(parent, std::move(renderContextProvider),
+            ImageSecondaryPageController::Callbacks {
+                [this](ImageDocumentChange change) { notify(change); },
+                [this](ImageSecondaryPageLoadResult result, const DisplayedImageLocation &location,
+                    const QSize &imageSize) {
+                    handleSecondaryPageLoadFinished(result, location, imageSize);
+                },
+                [this]() { notifyTwoPageModeChanged(); },
+                [this](const QUrl &url) {
+                    if (!m_callbacks.findPredecodedImage) {
+                        return std::optional<PredecodedImage>();
+                    }
 
-                return m_callbacks.findPredecodedImage(url);
+                    return m_callbacks.findPredecodedImage(url);
+                },
             },
-        },
-        std::move(candidateProvider), std::move(decodeDependencies), cacheBudgets);
-    m_modeController = std::make_unique<ImageSpreadModeController>();
-    m_activePresentation
-        = std::make_unique<ImagePresentationActiveState>(std::move(activeRenderContextProvider),
-            m_primaryPresentation, m_secondaryPageController->presentationController());
+            std::move(candidateProvider), std::move(decodeDependencies), cacheBudgets);
 }
 
 ImageSpreadPresentationController::~ImageSpreadPresentationController() { shutdown(); }
 
 bool ImageSpreadPresentationController::transitionInProgress() const
 {
-    return m_activePresentation->transitionInProgress();
+    return m_presentationRuntime.transitionInProgress();
 }
 
 ImagePresentationTransitionState
 ImageSpreadPresentationController::presentationTransitionState() const
 {
-    return m_activePresentation->transitionState();
+    return m_presentationRuntime.transitionState();
 }
 
 ImageDocumentStatus ImageSpreadPresentationController::status(
@@ -90,13 +112,13 @@ bool ImageSpreadPresentationController::loading(bool documentLoading) const
 
 QSize ImageSpreadPresentationController::imageSize() const
 {
-    return m_activePresentation->imageSize();
+    return m_presentationRuntime.imageSize();
 }
 
 QSize ImageSpreadPresentationController::primaryImageSize() const
 {
-    return secondaryPageVisible() ? m_primaryPresentation.imageSize()
-                                  : m_activePresentation->imageSize();
+    return secondaryPageVisible() ? m_primaryPageSurface.imageSize()
+                                  : m_presentationRuntime.imageSize();
 }
 
 QSize ImageSpreadPresentationController::secondaryImageSize() const
@@ -106,17 +128,17 @@ QSize ImageSpreadPresentationController::secondaryImageSize() const
 
 QSizeF ImageSpreadPresentationController::displaySize() const
 {
-    return m_activePresentation->displaySize();
+    return m_presentationRuntime.displaySize();
 }
 
 QSizeF ImageSpreadPresentationController::primaryDisplaySize() const
 {
-    return m_activePresentation->primaryDisplaySize();
+    return m_presentationRuntime.primaryDisplaySize();
 }
 
 QSizeF ImageSpreadPresentationController::secondaryDisplaySize() const
 {
-    return m_activePresentation->secondaryDisplaySize();
+    return m_presentationRuntime.secondaryDisplaySize();
 }
 
 QPointF ImageSpreadPresentationController::viewportContentPosition() const
@@ -128,85 +150,82 @@ ImageViewportCommand ImageSpreadPresentationController::requestViewportContentPo
     const QPointF &viewportContentPosition)
 {
     const ImageViewportCommand command
-        = m_activePresentation->requestViewportContentPosition(viewportContentPosition);
-    applyViewportFrameVisibleItemRect(true);
+        = m_presentationRuntime.requestViewportContentPosition(viewportContentPosition);
+    scheduleVisibleTileDecode();
+    notify(ImageDocumentChange::VisibleItemRect);
     notify(ImageDocumentChange::ViewportFrame);
     return command;
 }
 
 bool ImageSpreadPresentationController::beginViewportCommandApplication(quint64 commandRevision)
 {
-    if (!m_activePresentation->beginViewportCommandApplication(commandRevision)) {
-        notify(ImageDocumentChange::ViewportFrame);
-        return false;
-    }
-
+    const bool changed = m_presentationRuntime.beginViewportCommandApplication(commandRevision);
     notify(ImageDocumentChange::ViewportFrame);
-    return true;
+    return changed;
 }
 
 bool ImageSpreadPresentationController::completeViewportCommandApplication(
     quint64 commandRevision, const QPointF &actualContentPosition)
 {
-    if (!m_activePresentation->completeViewportCommandApplication(
-            commandRevision, actualContentPosition)) {
-        notify(ImageDocumentChange::ViewportFrame);
-        return false;
+    const bool changed = m_presentationRuntime.completeViewportCommandApplication(
+        commandRevision, actualContentPosition);
+    if (changed) {
+        scheduleVisibleTileDecode();
+        notify(ImageDocumentChange::VisibleItemRect);
     }
-
-    applyViewportFrameVisibleItemRect(true);
     notify(ImageDocumentChange::ViewportFrame);
-    return true;
+    return changed;
 }
 
 bool ImageSpreadPresentationController::acknowledgeViewportCommand(
     quint64 commandRevision, const QPointF &actualContentPosition)
 {
-    if (!m_activePresentation->acknowledgeViewportCommand(commandRevision, actualContentPosition)) {
-        notify(ImageDocumentChange::ViewportFrame);
-        return false;
+    const bool changed
+        = m_presentationRuntime.acknowledgeViewportCommand(commandRevision, actualContentPosition);
+    if (changed) {
+        scheduleVisibleTileDecode();
+        notify(ImageDocumentChange::VisibleItemRect);
     }
-
-    applyViewportFrameVisibleItemRect(true);
     notify(ImageDocumentChange::ViewportFrame);
-    return true;
+    return changed;
 }
 
 bool ImageSpreadPresentationController::observeViewportContentPosition(
     const QPointF &contentPosition, ImageViewportObservationOrigin origin)
 {
-    if (!m_activePresentation->observeViewportContentPosition(contentPosition, origin)) {
+    if (!m_presentationRuntime.observeViewportContentPosition(contentPosition, origin)) {
         return false;
     }
 
-    applyViewportFrameVisibleItemRect(true);
+    scheduleVisibleTileDecode();
+    notify(ImageDocumentChange::VisibleItemRect);
     notify(ImageDocumentChange::ViewportFrame);
     return true;
 }
 
 quint64 ImageSpreadPresentationController::viewportCommandRevision() const
 {
-    return m_activePresentation->viewportProjection().commandRevision;
+    return m_presentationRuntime.viewportProjection().commandRevision;
 }
 
 quint64 ImageSpreadPresentationController::viewportAppliedCommandRevision() const
 {
-    return m_activePresentation->viewportProjection().appliedCommandRevision;
+    return m_presentationRuntime.viewportProjection().appliedCommandRevision;
 }
 
 quint64 ImageSpreadPresentationController::viewportObservationRevision() const
 {
-    return m_activePresentation->viewportProjection().observationRevision;
+    return m_presentationRuntime.viewportProjection().observationRevision;
 }
 
 ImageViewportCommandStatus ImageSpreadPresentationController::viewportCommandStatus() const
 {
-    return m_activePresentation->viewportProjection().status;
+    return m_presentationRuntime.viewportProjection().status;
 }
 
 ImageViewportObservationOrigin ImageSpreadPresentationController::viewportObservationOrigin() const
 {
-    return m_activePresentation->viewportProjection().observationOrigin;
+    return m_presentationRuntime.viewportProjection().observationOrigin;
 }
 
 QSizeF ImageSpreadPresentationController::viewportContentSize() const
@@ -241,38 +260,37 @@ QRectF ImageSpreadPresentationController::visibleItemRect() const
 
 qreal ImageSpreadPresentationController::zoomPercent() const
 {
-    return m_activePresentation->zoomPercent();
+    return m_presentationRuntime.zoomPercent();
 }
 
 void ImageSpreadPresentationController::requestManualZoomPercent(qreal zoomPercent)
 {
-    applyActivePresentationChanges(updateZoomState(), false);
-    applyActivePresentationChanges(m_activePresentation->setZoomPercent(zoomPercent));
+    applyActivePresentationChanges(m_presentationRuntime.setZoomPercent(zoomPercent));
 }
 
 ImageZoomMode ImageSpreadPresentationController::zoomMode() const
 {
-    return m_activePresentation->zoomMode();
+    return m_presentationRuntime.zoomMode();
 }
 
 qreal ImageSpreadPresentationController::maximumManualZoomPercent() const
 {
-    return m_activePresentation->maximumManualZoomPercent();
+    return m_presentationRuntime.maximumManualZoomPercent();
 }
 
 qreal ImageSpreadPresentationController::clampedManualZoomPercent(qreal zoomPercent) const
 {
-    return m_activePresentation->clampedManualZoomPercent(zoomPercent);
+    return m_presentationRuntime.clampedManualZoomPercent(zoomPercent);
 }
 
 qreal ImageSpreadPresentationController::steppedManualZoomPercent(qreal stepCount) const
 {
-    return m_activePresentation->steppedManualZoomPercent(stepCount);
+    return m_presentationRuntime.steppedManualZoomPercent(stepCount);
 }
 
 int ImageSpreadPresentationController::rotationDegrees() const
 {
-    return m_activePresentation->rotationDegrees();
+    return m_presentationRuntime.rotationDegrees();
 }
 
 int ImageSpreadPresentationController::currentLastPageNumber() const
@@ -300,25 +318,28 @@ int ImageSpreadPresentationController::relativePageNavigationTarget(int offset) 
 
 bool ImageSpreadPresentationController::twoPageModeEnabled() const
 {
-    return m_modeController->twoPageModeEnabled();
+    return m_presentationRuntime.twoPageModeEnabled();
 }
 
 void ImageSpreadPresentationController::setTwoPageModeEnabled(bool enabled)
 {
     const ImageSpreadTwoPageModeChange change
-        = m_modeController->setTwoPageModeEnabled(enabled, secondaryPageVisible());
+        = imageSpreadTwoPageModeChange(twoPageModeEnabled(), enabled, secondaryPageVisible());
     if (!change.changed) {
         return;
     }
 
+    m_presentationRuntime.setTwoPageModeEnabled(enabled);
     if (enabled) {
-        if (m_activePresentation->resetRotation()) {
-            applyActivePresentationChanges(updateZoomState());
+        const ImagePresentationRotationChange rotation
+            = m_presentationRuntime.resetRotationChange();
+        if (rotation.changed) {
+            applyActivePresentationChanges(rotation.zoomChanges);
             notifyChanges({ ImageDocumentChange::Rotation, ImageDocumentChange::Repaint });
         }
     } else {
-        m_activePresentation->setMode(ImagePresentationActiveMode::SinglePage);
-        applyActivePresentationChanges(updateZoomState(), false);
+        applyActivePresentationChanges(
+            m_presentationRuntime.setMode(ImagePresentationMode::SinglePage), false);
     }
     if (change.finishTransition) {
         finishTransition();
@@ -336,49 +357,44 @@ void ImageSpreadPresentationController::setTwoPageModeEnabled(bool enabled)
 
 bool ImageSpreadPresentationController::twoPageModeAvailable() const
 {
-    return m_modeController->twoPageModeAvailable(readingAvailability());
+    return imageSpreadReadingControlsAvailable(readingAvailability());
 }
 
 bool ImageSpreadPresentationController::twoPageModeActive() const
 {
-    return m_modeController->twoPageModeActive(readingAvailability());
+    return twoPageModeEnabled() && twoPageModeAvailable();
 }
 
 bool ImageSpreadPresentationController::rightToLeftReadingEnabled() const
 {
-    return m_modeController->rightToLeftReadingEnabled();
+    return m_presentationRuntime.rightToLeftReadingEnabled();
 }
 
 void ImageSpreadPresentationController::setRightToLeftReadingEnabled(bool enabled)
 {
-    if (!m_modeController->setRightToLeftReadingEnabled(enabled)) {
+    if (!m_presentationRuntime.setRightToLeftReadingEnabled(enabled)) {
         return;
     }
 
     if (secondaryPageVisible()) {
-        applyViewportFrameVisibleItemRect(true);
+        scheduleVisibleTileDecode();
     }
     notifyRightToLeftReadingChanged();
 }
 
 bool ImageSpreadPresentationController::rightToLeftReadingAvailable() const
 {
-    return m_modeController->rightToLeftReadingAvailable(readingAvailability());
+    return imageSpreadReadingControlsAvailable(readingAvailability());
 }
 
 bool ImageSpreadPresentationController::rightToLeftReadingActive() const
 {
-    return m_modeController->rightToLeftReadingActive(readingAvailability());
+    return rightToLeftReadingEnabled() && rightToLeftReadingAvailable();
 }
 
 bool ImageSpreadPresentationController::secondaryPageVisible() const
 {
-    if (presentationTransitionState() == ImagePresentationTransitionState::PreviousActive) {
-        return m_activePresentation->mode() == ImagePresentationActiveMode::TwoPageSpread
-            && m_secondaryPageController->visible();
-    }
-
-    return twoPageModeActive() && m_secondaryPageController->visible();
+    return m_presentationRuntime.secondaryPageVisible();
 }
 
 std::optional<DisplayedPredecodeImage>
@@ -388,12 +404,12 @@ ImageSpreadPresentationController::secondaryDisplayedPredecodeImage() const
         return std::nullopt;
     }
 
-    const ImagePresentationController &presentation
-        = m_secondaryPageController->presentationController();
+    const ImagePageSurfaceController &pageSurface
+        = m_secondaryPageController->pageSurfaceController();
     return DisplayedPredecodeImage {
         m_secondaryPageController->displayedImageLocation(),
-        presentation.isPredecodeCacheable(),
-        presentation.staticImage(),
+        pageSurface.isPredecodeCacheable(),
+        pageSurface.staticImage(),
         {},
     };
 }
@@ -401,50 +417,47 @@ ImageSpreadPresentationController::secondaryDisplayedPredecodeImage() const
 DisplayedImageRenderSnapshot ImageSpreadPresentationController::renderSnapshot(
     DisplayedPageRole role) const
 {
-    if (presentationTransitionState()
-        == ImagePresentationTransitionState::TransitioningPlaceholder) {
-        return {};
-    }
+    return renderSnapshotForProjection(m_presentationRuntime.renderProjection(role));
+}
 
-    if (role == DisplayedPageRole::Secondary) {
-        DisplayedImageRenderSnapshot snapshot = m_secondaryPageController->renderSnapshot();
-        const ImagePresentationPageProjection projection
-            = m_activePresentation->secondaryProjection(rightToLeftReadingActive());
-        snapshot.displaySize = projection.displaySize;
-        snapshot.visibleItemRect = secondaryPageVisible() ? projection.visibleItemRect : QRectF();
-        snapshot.rotationDegrees = projection.rotationDegrees;
-        snapshot.pageRole = DisplayedPageRole::Secondary;
-        return snapshot;
+void ImageSpreadPresentationController::commitPrimaryPageSlot(
+    const DisplayedImageLocation &location)
+{
+    const ImageZoomChangeSet changes = m_presentationRuntime.commitPrimaryPageSlot(
+        m_primaryPageSurface.snapshot(), presentationScopeKeyForLocation(location));
+    scheduleVisibleTileDecode();
+    std::vector<ImageDocumentChange> notifications
+        = imageDocumentPresentationZoomNotifications(changes);
+    if (changes.scheduleVisibleTileDecode) {
+        notifications.push_back(ImageDocumentChange::RenderFrame);
     }
+    notifications.push_back(ImageDocumentChange::VisibleItemRect);
+    notifications.push_back(ImageDocumentChange::ViewportFrame);
+    notifyChanges(notifications);
+}
 
-    DisplayedImageRenderSnapshot snapshot = m_primaryPresentation.renderSnapshot();
-    const ImagePresentationPageProjection projection
-        = m_activePresentation->primaryProjection(rightToLeftReadingActive());
-    snapshot.imageSize = primaryImageSize();
-    snapshot.displaySize = projection.displaySize;
-    snapshot.visibleItemRect = projection.visibleItemRect;
-    snapshot.rotationDegrees = projection.rotationDegrees;
-    snapshot.pageRole = DisplayedPageRole::Primary;
-    return snapshot;
+void ImageSpreadPresentationController::clearPrimaryPageSlot()
+{
+    m_presentationRuntime.clearPrimaryPageSlot();
+    notifyChanges({ ImageDocumentChange::ImageSize, ImageDocumentChange::DisplaySize,
+        ImageDocumentChange::ZoomPercent, ImageDocumentChange::ZoomMode,
+        ImageDocumentChange::MaximumManualZoomPercent, ImageDocumentChange::VisibleItemRect,
+        ImageDocumentChange::ViewportFrame, ImageDocumentChange::Repaint });
 }
 
 void ImageSpreadPresentationController::setViewportSize(const QSizeF &viewportSize)
 {
-    m_primaryPresentation.setViewportSize(viewportSize);
-    m_secondaryPageController->setViewportSize(viewportSize);
-    applyActivePresentationChanges(updateZoomState());
+    applyActivePresentationChanges(m_presentationRuntime.setViewportSize(viewportSize));
 }
 
 void ImageSpreadPresentationController::resetZoom()
 {
-    applyActivePresentationChanges(updateZoomState(), false);
-    applyActivePresentationChanges(m_activePresentation->resetZoom());
+    applyActivePresentationChanges(m_presentationRuntime.resetZoom());
 }
 
 void ImageSpreadPresentationController::setFitMode(ImageZoomMode zoomMode)
 {
-    applyActivePresentationChanges(updateZoomState(), false);
-    applyActivePresentationChanges(m_activePresentation->setFitMode(zoomMode));
+    applyActivePresentationChanges(m_presentationRuntime.setFitMode(zoomMode));
 }
 
 void ImageSpreadPresentationController::rotateClockwise()
@@ -453,11 +466,12 @@ void ImageSpreadPresentationController::rotateClockwise()
         return;
     }
 
-    if (!m_activePresentation->rotateClockwise()) {
+    const ImagePresentationRotationChange rotation = m_presentationRuntime.rotateClockwiseChange();
+    if (!rotation.changed) {
         return;
     }
 
-    applyActivePresentationChanges(updateZoomState());
+    applyActivePresentationChanges(rotation.zoomChanges);
     notifyChanges({ ImageDocumentChange::Rotation, ImageDocumentChange::ImageSize,
         ImageDocumentChange::Repaint });
 }
@@ -468,31 +482,32 @@ void ImageSpreadPresentationController::rotateCounterclockwise()
         return;
     }
 
-    if (!m_activePresentation->rotateCounterclockwise()) {
+    const ImagePresentationRotationChange rotation
+        = m_presentationRuntime.rotateCounterclockwiseChange();
+    if (!rotation.changed) {
         return;
     }
 
-    applyActivePresentationChanges(updateZoomState());
+    applyActivePresentationChanges(rotation.zoomChanges);
     notifyChanges({ ImageDocumentChange::Rotation, ImageDocumentChange::ImageSize,
         ImageDocumentChange::Repaint });
 }
 
 void ImageSpreadPresentationController::updateRenderContext()
 {
-    m_primaryPresentation.updateRenderContext();
-    m_secondaryPageController->updateRenderContext();
-    applyActivePresentationChanges(m_activePresentation->updateRenderContext());
+    applyActivePresentationChanges(m_presentationRuntime.updateRenderContext());
 }
 
 void ImageSpreadPresentationController::refreshSecondaryPage()
 {
-    m_secondaryPageRefresh.cachePageSize(m_state.displayedUrl(), m_primaryPresentation.imageSize());
+    m_secondaryPageRefresh.cachePageSize(m_state.displayedUrl(), m_primaryPageSurface.imageSize());
 
     auto finishWithPrimaryPage = [this]() {
         const bool wasVisible = secondaryPageVisible();
-        m_activePresentation->setMode(ImagePresentationActiveMode::SinglePage);
+        applyActivePresentationChanges(
+            m_presentationRuntime.setMode(ImagePresentationMode::SinglePage), false);
         discardSecondaryPage();
-        applyActivePresentationChanges(updateZoomState(), false);
+        m_presentationRuntime.clearSecondaryPageSlot();
         if (wasVisible) {
             notifyTwoPageModeChanged();
             scheduleAdjacentPredecode();
@@ -530,13 +545,6 @@ void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange
         finishTransition();
     }
 
-    if (change == ImageDocumentChange::ImageSize || change == ImageDocumentChange::ViewportSize
-        || change == ImageDocumentChange::DisplaySize || change == ImageDocumentChange::Rotation
-        || change == ImageDocumentChange::TwoPageMode) {
-        applyActivePresentationChanges(updateZoomState(), false);
-        refreshViewportFrame(change == ImageDocumentChange::TwoPageMode);
-    }
-
     if (change == ImageDocumentChange::PageNavigation) {
         if (m_secondaryPageRefresh.primarySelectionMatchesDisplayed(
                 pageNavigationSnapshot(), m_state.displayedUrl())) {
@@ -554,7 +562,7 @@ bool ImageSpreadPresentationController::shouldBeginTransition(int targetPageNumb
 
 void ImageSpreadPresentationController::beginTransition()
 {
-    if (!m_activePresentation->beginTransition()) {
+    if (!m_presentationRuntime.beginTransition()) {
         notifyTransitionChanged();
         return;
     }
@@ -564,7 +572,7 @@ void ImageSpreadPresentationController::beginTransition()
 
 void ImageSpreadPresentationController::showTransitionPlaceholder()
 {
-    if (!m_activePresentation->showTransitionPlaceholder()) {
+    if (!m_presentationRuntime.showTransitionPlaceholder()) {
         return;
     }
 
@@ -573,7 +581,7 @@ void ImageSpreadPresentationController::showTransitionPlaceholder()
 
 void ImageSpreadPresentationController::finishTransition()
 {
-    if (!m_activePresentation->finishTransition()) {
+    if (!m_presentationRuntime.finishTransition()) {
         return;
     }
 
@@ -582,7 +590,7 @@ void ImageSpreadPresentationController::finishTransition()
 
 void ImageSpreadPresentationController::abortTransition()
 {
-    if (!m_activePresentation->abortTransition()) {
+    if (!m_presentationRuntime.abortTransition()) {
         return;
     }
 
@@ -596,6 +604,7 @@ void ImageSpreadPresentationController::clearSecondaryPage()
     }
 
     discardSecondaryPage();
+    m_presentationRuntime.clearSecondaryPageSlot();
 }
 
 void ImageSpreadPresentationController::discardSecondaryPage()
@@ -615,7 +624,7 @@ void ImageSpreadPresentationController::shutdown()
 
 void ImageSpreadPresentationController::resetRightToLeftReading()
 {
-    m_modeController->resetRightToLeftReading();
+    m_presentationRuntime.resetRightToLeftReading();
 }
 
 void ImageSpreadPresentationController::notifyRightToLeftReadingChanged()
@@ -626,7 +635,7 @@ void ImageSpreadPresentationController::notifyRightToLeftReadingChanged()
 void ImageSpreadPresentationController::startSecondaryPageLoad(const QUrl &url)
 {
     m_secondaryPageController->startLoad(url, m_state.displayedOpenedCollectionScope(),
-        m_primaryPresentation.firstDisplayDecodeContext());
+        m_presentationRuntime.firstDisplayDecodeContext());
     notifyTwoPageModeChanged();
 }
 
@@ -649,8 +658,9 @@ void ImageSpreadPresentationController::handleSecondaryPageLoadFinished(
 void ImageSpreadPresentationController::finishSecondaryPageAsPrimaryOnly()
 {
     discardSecondaryPage();
-    m_activePresentation->setMode(ImagePresentationActiveMode::SinglePage);
-    applyActivePresentationChanges(updateZoomState(), false);
+    m_presentationRuntime.clearSecondaryPageSlot();
+    applyActivePresentationChanges(
+        m_presentationRuntime.setMode(ImagePresentationMode::SinglePage), false);
     finishTransition();
     notifyTwoPageModeChanged();
     scheduleAdjacentPredecode();
@@ -658,8 +668,12 @@ void ImageSpreadPresentationController::finishSecondaryPageAsPrimaryOnly()
 
 void ImageSpreadPresentationController::finishSecondaryPageVisible()
 {
-    m_activePresentation->setMode(ImagePresentationActiveMode::TwoPageSpread);
-    applyActivePresentationChanges(updateZoomState(), false);
+    m_presentationRuntime.setSecondaryPageVisible(true);
+    applyActivePresentationChanges(m_presentationRuntime.commitSecondaryPageSlot(
+                                       m_secondaryPageController->pageSlotSnapshot()),
+        false);
+    applyActivePresentationChanges(
+        m_presentationRuntime.setMode(ImagePresentationMode::TwoPageSpread), false);
     finishTransition();
     notifyTwoPageModeChanged();
     scheduleAdjacentPredecode();
@@ -670,28 +684,20 @@ void ImageSpreadPresentationController::notifyTransitionChanged()
     notifyChanges(imageDocumentSpreadTransitionNotifications());
 }
 
-ImageZoomChangeSet ImageSpreadPresentationController::updateZoomState()
-{
-    const QUrl scopeRootUrl = m_state.displayedOpenedCollectionScope().rootUrl();
-    const bool activeZoomScopeChanged = m_activeZoomScopeRootUrl != scopeRootUrl;
-    m_activeZoomScopeRootUrl = scopeRootUrl;
-    return m_activePresentation->updateFromPageState(activeZoomScopeChanged);
-}
-
 QSize ImageSpreadPresentationController::spreadImageSize() const
 {
-    return m_activePresentation->spreadImageSize();
+    return m_presentationRuntime.spreadImageSize();
 }
 
 bool ImageSpreadPresentationController::primaryPageIsWide() const
 {
-    return imageSpreadPageIsWide(m_primaryPresentation.imageSize());
+    return imageSpreadPageIsWide(m_primaryPageSurface.imageSize());
 }
 
 ImageSpreadReadingAvailability ImageSpreadPresentationController::readingAvailability() const
 {
     const DisplayedImageLocation &location = m_state.displayedImageLocation();
-    return ImageSpreadReadingAvailability { m_primaryPresentation.hasImage(), !location.isEmpty(),
+    return ImageSpreadReadingAvailability { m_primaryPageSurface.hasImage(), !location.isEmpty(),
         location.openedCollectionScope().isComicBook() };
 }
 
@@ -704,15 +710,15 @@ bool ImageSpreadPresentationController::secondaryPageVisibleForNavigation() cons
     return secondaryPageVisible();
 }
 
-void ImageSpreadPresentationController::scheduleAdjacentPredecode()
-{
-    invokeIfSet(m_callbacks.scheduleAdjacentPredecode);
-}
-
 ImageSpreadPageNavigationContext ImageSpreadPresentationController::pageNavigationContext() const
 {
     return ImageSpreadPageNavigationContext { twoPageModeActive(),
         secondaryPageVisibleForNavigation(), pageNavigationSnapshot() };
+}
+
+void ImageSpreadPresentationController::scheduleAdjacentPredecode()
+{
+    invokeIfSet(m_callbacks.scheduleAdjacentPredecode);
 }
 
 ImageDocumentPageNavigationSnapshot
@@ -731,10 +737,12 @@ void ImageSpreadPresentationController::applyActivePresentationChanges(
     const ImageZoomChangeSet &changes, bool notifyPublicChanges)
 {
     if (hasSpreadZoomStateChange(changes)) {
-        if (spreadZoomChangesAffectViewportFrame(changes)) {
-            refreshViewportFrame();
+        scheduleVisibleTileDecode();
+        if (changes.scheduleVisibleTileDecode) {
+            notify(ImageDocumentChange::RenderFrame);
         }
-        m_activePresentation->applyVisibleItemRects(rightToLeftReadingActive());
+        notify(ImageDocumentChange::VisibleItemRect);
+        notify(ImageDocumentChange::ViewportFrame);
     }
 
     if (notifyPublicChanges) {
@@ -748,57 +756,17 @@ void ImageSpreadPresentationController::notifyActivePresentationZoomChanged(
     notifyChanges(imageDocumentSpreadZoomNotifications(changes));
 }
 
-bool ImageSpreadPresentationController::refreshViewportFrame(bool forceApplyVisibleItemRect)
+void ImageSpreadPresentationController::scheduleVisibleTileDecode()
 {
-    const QRectF previousVisibleItemRect = viewportFrame().visibleItemRect;
-    const ImageViewportFrame previousFrame = viewportFrame();
-    m_activePresentation->setViewportGeometry(m_primaryPresentation.viewportSize(), displaySize());
-    const bool frameChanged = viewportFrame() != previousFrame;
-    if (!frameChanged && !forceApplyVisibleItemRect) {
-        return false;
-    }
-
-    applyViewportFrameVisibleItemRect(
-        forceApplyVisibleItemRect || previousVisibleItemRect != viewportFrame().visibleItemRect);
-    if (frameChanged) {
-        notify(ImageDocumentChange::ViewportFrame);
-    }
-    return frameChanged;
-}
-
-bool ImageSpreadPresentationController::refreshViewportFrameForContentPosition(
-    const QPointF &contentPosition, bool forceApplyVisibleItemRect)
-{
-    const QRectF previousVisibleItemRect = viewportFrame().visibleItemRect;
-    const ImageViewportFrame previousFrame = viewportFrame();
-    m_activePresentation->setViewportGeometry(m_primaryPresentation.viewportSize(), displaySize());
-    m_activePresentation->requestViewportContentPosition(contentPosition);
-    const bool frameChanged = viewportFrame() != previousFrame;
-    if (!frameChanged && !forceApplyVisibleItemRect) {
-        return false;
-    }
-
-    applyViewportFrameVisibleItemRect(
-        forceApplyVisibleItemRect || previousVisibleItemRect != viewportFrame().visibleItemRect);
-    if (frameChanged) {
-        notify(ImageDocumentChange::ViewportFrame);
-    }
-    return frameChanged;
-}
-
-void ImageSpreadPresentationController::applyViewportFrameVisibleItemRect(bool force)
-{
-    if (!force) {
-        return;
-    }
-
-    m_activePresentation->applyVisibleItemRects(rightToLeftReadingActive());
-    notify(ImageDocumentChange::VisibleItemRect);
+    m_primaryPageSurface.scheduleVisibleTileDecode(
+        m_presentationRuntime.renderProjection(DisplayedPageRole::Primary));
+    m_secondaryPageController->pageSurfaceController().scheduleVisibleTileDecode(
+        m_presentationRuntime.renderProjection(DisplayedPageRole::Secondary));
 }
 
 const ImageViewportFrame &ImageSpreadPresentationController::viewportFrame() const
 {
-    return m_activePresentation->viewportFrame();
+    return m_presentationRuntime.viewportFrame();
 }
 
 void ImageSpreadPresentationController::notifyChanges(

@@ -135,11 +135,9 @@ src/predecode/mediapredecodedependencies.cpp
 src/predecode/mediapredecodeeligibility.cpp
 src/predecode/mediapredecodescheduleplan.cpp
 src/predecode/mediapredecodewindowplan.cpp
-src/presentation/imagepresentationcontroller.cpp
-src/presentation/imagepresentationactivestate.cpp
+src/presentation/imagepagesurfacecontroller.cpp
+src/presentation/imagepresentationruntime.cpp
 src/presentation/imagepresentationload.cpp
-src/presentation/imagepresentationviewportcontroller.cpp
-src/presentation/imagepresentationviewportstate.cpp
 src/presentation/imagerendercontextstate.cpp
 src/presentation/imagesecondarypagecontroller.cpp
 src/presentation/imagesecondarypagestate.cpp

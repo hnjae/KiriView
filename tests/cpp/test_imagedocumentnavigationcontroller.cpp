@@ -7,7 +7,8 @@
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
 #include "navigation/imagedocumentpagenavigationservice.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
+#include "presentation/imagepresentationruntime.h"
 #include "presentation/imagespreadpresentationcontroller.h"
 #include "rendering/imagerendering.h"
 
@@ -64,7 +65,8 @@ class DocumentNavigationFixture
 {
 public:
     DocumentNavigationFixture()
-        : presentation(&context, renderContext, {}, testCacheBudgets())
+        : pageSurface(&context, {}, testCacheBudgets())
+        , presentationRuntime(renderContext)
         , navigation(&context, candidateProvider.provider(),
               KiriView::ImageDocumentPageNavigationService::Callbacks {
                   [this](KiriView::ImageDocumentPageNavigationPlan plan) {
@@ -78,7 +80,7 @@ public:
                   },
                   {},
               })
-        , spread(&context, renderContext, state, presentation,
+        , spread(&context, renderContext, state, pageSurface, presentationRuntime,
               KiriView::ImageSpreadPresentationController::Callbacks {
                   {},
                   {},
@@ -88,7 +90,7 @@ public:
               candidateProvider.provider(),
               imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder(testImage())),
               testCacheBudgets())
-        , controller(state, presentation, navigation, spread,
+        , controller(state, pageSurface, navigation, spread,
               [this](KiriView::ImageDocumentRuntimePlan plan) {
                   runtimePlans.push_back(std::move(plan));
               })
@@ -99,7 +101,8 @@ public:
     {
         state.setSourceUrl(url);
         state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(url));
-        presentation.setStaticImage(staticTestImagePayload(testImage()), false);
+        pageSurface.setStaticImage(staticTestImagePayload(testImage()), false, renderContext());
+        spread.commitPrimaryPageSlot(state.displayedImageLocation());
     }
 
     void displayComicPage(
@@ -108,14 +111,17 @@ public:
         state.setSourceUrl(url);
         state.setDisplayedImageLocation(
             KiriView::DisplayedImageLocation::fromOpenedCollectionScope(url, archiveCollection));
-        presentation.setStaticImage(staticTestImagePayload(testImage(QSize(800, 1200))), false);
+        pageSurface.setStaticImage(
+            staticTestImagePayload(testImage(QSize(800, 1200))), false, renderContext());
+        spread.commitPrimaryPageSlot(state.displayedImageLocation());
     }
 
     QObject context;
     KiriView::ImageDocumentState state;
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    KiriView::ImagePresentationController presentation;
+    KiriView::ImagePageSurfaceController pageSurface;
+    KiriView::ImagePresentationRuntime presentationRuntime;
     KiriView::ImageDocumentPageNavigationService navigation;
     KiriView::ImageSpreadPresentationController spread;
     KiriView::ImageDocumentNavigationController controller;

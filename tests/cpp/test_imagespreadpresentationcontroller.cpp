@@ -4,7 +4,8 @@
 #include "presentation/imagespreadpresentationcontroller.h"
 
 #include "image_test_support.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
+#include "presentation/imagepresentationruntime.h"
 #include "presentation/imagepresentationstate.h"
 #include "rendering/imagerendering.h"
 
@@ -66,8 +67,9 @@ class SpreadPresentationFixture
 {
 public:
     SpreadPresentationFixture()
-        : primaryPresentation(&context, renderContext, {}, testCacheBudgets())
-        , controller(&context, renderContext, state, primaryPresentation,
+        : primaryPageSurface(&context, {}, testCacheBudgets())
+        , presentationRuntime(renderContext)
+        , controller(&context, renderContext, state, primaryPageSurface, presentationRuntime,
               KiriView::ImageSpreadPresentationController::Callbacks {
                   {},
                   [this](const QUrl &url) { return findPredecodedImage(url); },
@@ -76,14 +78,16 @@ public:
               },
               {}, {}, testCacheBudgets())
     {
-        primaryPresentation.setViewportSize(QSizeF(800.0, 600.0));
+        controller.setViewportSize(QSizeF(800.0, 600.0));
     }
 
     void displayPrimaryPage(const QUrl &url, const QSize &imageSize, int pageNumber)
     {
         snapshot = navigationSnapshot(pageUrls, pageNumber);
         state.setDisplayedImageLocation(displayedLocation(url));
-        primaryPresentation.setStaticImage(staticTestImagePayload(testImage(imageSize)), false);
+        primaryPageSurface.setStaticImage(
+            staticTestImagePayload(testImage(imageSize)), false, renderContext());
+        controller.commitPrimaryPageSlot(state.displayedImageLocation());
     }
 
     std::optional<KiriView::PredecodedImage> findPredecodedImage(const QUrl &url) const
@@ -101,7 +105,8 @@ public:
 
     QObject context;
     KiriView::ImageDocumentState state;
-    KiriView::ImagePresentationController primaryPresentation;
+    KiriView::ImagePageSurfaceController primaryPageSurface;
+    KiriView::ImagePresentationRuntime presentationRuntime;
     std::vector<QUrl> pageUrls {
         localUrl(QStringLiteral("/books/001.png")),
         localUrl(QStringLiteral("/books/002.png")),
@@ -194,7 +199,6 @@ void TestImageSpreadPresentationController::spreadZoomDoesNotMutatePageZoomOwner
 
     QCOMPARE(fixture.controller.zoomMode(), KiriView::ImageZoomMode::Manual);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.controller.zoomPercent(), 125.0));
-    QCOMPARE(fixture.primaryPresentation.zoomMode(), KiriView::ImageZoomMode::Fit);
 }
 
 void TestImageSpreadPresentationController::
@@ -214,7 +218,6 @@ void TestImageSpreadPresentationController::
     QVERIFY(!fixture.controller.twoPageModeActive());
     QCOMPARE(fixture.controller.zoomMode(), KiriView::ImageZoomMode::Manual);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.controller.zoomPercent(), 150.0));
-    QCOMPARE(fixture.primaryPresentation.zoomMode(), KiriView::ImageZoomMode::Fit);
 }
 
 void TestImageSpreadPresentationController::transitionPhaseKeepsPreviousActiveUntilPlaceholder()

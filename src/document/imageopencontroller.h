@@ -23,7 +23,8 @@ class QObject;
 namespace KiriView {
 class ImageDocumentState;
 class ImageLoader;
-class ImagePresentationController;
+class ImagePageSurfaceController;
+class ImagePresentationRuntime;
 
 class ImageOpenController final
 {
@@ -31,15 +32,20 @@ public:
     using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
     using RuntimePlanCallback = std::function<void(const ImageDocumentRuntimePlan &)>;
     using UnsupportedOpenedCollectionVideoEnteredCallback = std::function<void(const QString &)>;
+    using CommitPrimaryPageSlotCallback = std::function<void(const DisplayedImageLocation &)>;
+    using ClearPrimaryPageSlotCallback = std::function<void()>;
 
     struct Callbacks {
         FindPredecodedImageCallback findPredecodedImage;
         RuntimePlanCallback runtimePlan;
         UnsupportedOpenedCollectionVideoEnteredCallback unsupportedOpenedCollectionVideoEntered;
+        CommitPrimaryPageSlotCallback commitPrimaryPageSlot;
+        ClearPrimaryPageSlotCallback clearPrimaryPageSlot;
     };
 
     ImageOpenController(QObject *parent, ImageDocumentState &state,
-        ImagePresentationController &presentationController, Callbacks callbacks,
+        ImagePageSurfaceController &pageSurfaceController,
+        ImagePresentationRuntime &presentationRuntime, Callbacks callbacks,
         ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies);
     ~ImageOpenController();
@@ -66,7 +72,8 @@ private:
     void reportRuntimePlan(ImageDocumentRuntimePlan plan);
 
     ImageDocumentState &m_state;
-    ImagePresentationController &m_presentationController;
+    ImagePageSurfaceController &m_pageSurfaceController;
+    ImagePresentationRuntime &m_presentationRuntime;
     Callbacks m_callbacks;
     std::unique_ptr<ImageLoader> m_imageLoader;
 };

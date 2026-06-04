@@ -12,7 +12,7 @@
 namespace KiriView {
 class ImageDocumentState;
 class ImageDocumentPageNavigationService;
-class ImagePresentationController;
+class ImagePageSurfaceController;
 class ImageSpreadPresentationController;
 
 class ImageDocumentNavigationController final
@@ -21,7 +21,7 @@ public:
     using RuntimePlanCallback = std::function<void(ImageDocumentRuntimePlan)>;
 
     ImageDocumentNavigationController(ImageDocumentState &state,
-        ImagePresentationController &presentationController,
+        ImagePageSurfaceController &pageSurfaceController,
         ImageDocumentPageNavigationService &navigationService,
         ImageSpreadPresentationController &spreadController,
         RuntimePlanCallback runtimePlanCallback);
@@ -44,7 +44,7 @@ public:
 
 private:
     ImageDocumentState &m_state;
-    ImagePresentationController &m_presentationController;
+    ImagePageSurfaceController &m_pageSurfaceController;
     ImageDocumentPageNavigationService &m_navigationService;
     ImageSpreadPresentationController &m_spreadController;
     RuntimePlanCallback m_runtimePlanCallback;

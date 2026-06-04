@@ -10,8 +10,9 @@
 #include "imageopenworkflow.h"
 #include "localization/imageerrortext.h"
 #include "location/imagedocumentlocation.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
 #include "presentation/imagepresentationload.h"
+#include "presentation/imagepresentationruntime.h"
 
 #include <KLocalizedString>
 #include <memory>
@@ -53,11 +54,13 @@ QString unsupportedOpenedCollectionVideoMessage()
 
 namespace KiriView {
 ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &state,
-    ImagePresentationController &presentationController, ImageOpenController::Callbacks callbacks,
+    ImagePageSurfaceController &pageSurfaceController,
+    ImagePresentationRuntime &presentationRuntime, ImageOpenController::Callbacks callbacks,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies)
     : m_state(state)
-    , m_presentationController(presentationController)
+    , m_pageSurfaceController(pageSurfaceController)
+    , m_presentationRuntime(presentationRuntime)
     , m_callbacks(std::move(callbacks))
 {
     m_imageLoader = std::make_unique<ImageLoader>(parent, std::move(candidateProvider),
@@ -101,7 +104,7 @@ void ImageOpenController::open()
         ImageDocumentPageTarget { m_state.sourceUrl(), m_state.sourceKind() },
         m_state.displayedOpenedCollectionScope(), m_state.loadingContainerNavigationUrl());
     beginSourceLoad();
-    m_imageLoader->start(request, m_presentationController.firstDisplayDecodeContext());
+    m_imageLoader->start(request, m_presentationRuntime.firstDisplayDecodeContext());
 }
 
 void ImageOpenController::cancel() { m_imageLoader->cancel(); }
@@ -127,7 +130,7 @@ void ImageOpenController::beginSourceLoad()
     m_state.setEmbeddedMetadata({});
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot {
-            m_presentationController.hasImage(),
+            m_pageSurfaceController.hasImage(),
             !m_state.loadingContainerNavigationUrl().isEmpty(),
         })));
 }
@@ -160,7 +163,8 @@ void ImageOpenController::finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSe
     const QString message = unsupportedOpenedCollectionVideoMessage();
     {
         ImageDocumentState::ChangeBatch batch = m_state.beginChangeBatch();
-        m_presentationController.clearImage();
+        m_pageSurfaceController.clearImage();
+        invokeIfSet(m_callbacks.clearPrimaryPageSlot);
         m_state.setSourceKind(session.kind());
         m_state.setSourceUrl(session.imageUrl());
         m_state.setDisplayedImageLocation(session.location());
@@ -185,7 +189,8 @@ void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, Pr
 {
     EmbeddedMetadata metadata = image.embeddedMetadata;
     finishPresentedImageLoad(session,
-        presentPredecodedImageLoad(m_presentationController, session, std::move(image)),
+        presentPredecodedImageLoad(
+            m_pageSurfaceController, std::move(image), m_presentationRuntime.renderContext()),
         std::move(metadata));
 }
 
@@ -193,8 +198,9 @@ void ImageOpenController::finishDecodedImageLoad(ImageLoadSession session, Decod
 {
     EmbeddedMetadata metadata = decodedImageEmbeddedMetadata(image);
     finishPresentedImageLoad(session,
-        presentDecodedImageLoad(m_presentationController, session, std::move(image),
-            ImagePresentationAnimationHandling::StartAnimation),
+        presentDecodedImageLoad(m_pageSurfaceController, std::move(image),
+            ImagePresentationAnimationHandling::StartAnimation,
+            m_presentationRuntime.renderContext()),
         std::move(metadata));
 }
 
@@ -207,6 +213,7 @@ void ImageOpenController::finishPresentedImageLoad(const ImageLoadSession &sessi
         return;
     }
 
+    invokeIfSet(m_callbacks.commitPrimaryPageSlot, session.location());
     m_state.setEmbeddedMetadata(std::move(metadata));
     finishSuccessfulImageLoad(session);
 }
@@ -220,7 +227,7 @@ void ImageOpenController::finishLoadWithError(
         ImageOpenWorkflow::finishLoadWithErrorPlan(
             ImageOpenLoadErrorSnapshot {
                 session.hasContainerNavigationTarget(),
-                m_presentationController.hasImage(),
+                m_pageSurfaceController.hasImage(),
                 !displayedUrl.isEmpty(),
             },
             session, displayedUrl, message)));

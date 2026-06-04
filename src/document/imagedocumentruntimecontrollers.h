@@ -26,7 +26,8 @@ class ImageDocumentState;
 struct ImageDocumentSourceLoadRequest;
 class ImageDocumentPageNavigationService;
 class ImageOpenController;
-class ImagePresentationController;
+class ImagePageSurfaceController;
+class ImagePresentationRuntime;
 class ImageSpreadPresentationController;
 
 struct ImageDocumentRuntimeControllerCallbacks {
@@ -47,7 +48,8 @@ public:
     ~ImageDocumentRuntimeControllers();
 
     ImageDocumentDeletionController &deletionController() const;
-    ImagePresentationController &presentationController() const;
+    ImagePageSurfaceController &pageSurfaceController() const;
+    ImagePresentationRuntime &presentationRuntime() const;
     ImageDocumentNavigationController &navigationController() const;
     ImageSpreadPresentationController &spreadController() const;
 
@@ -60,7 +62,8 @@ private:
     ImageDocumentRuntimeControllerCallbacks m_callbacks;
     std::unique_ptr<MediaEntrySourceStore> m_mediaEntrySourceStore;
     std::unique_ptr<ImageDocumentDeletionController> m_deletionController;
-    std::unique_ptr<ImagePresentationController> m_presentationController;
+    std::unique_ptr<ImagePageSurfaceController> m_pageSurfaceController;
+    std::unique_ptr<ImagePresentationRuntime> m_presentationRuntime;
     std::unique_ptr<ImageOpenController> m_openController;
     std::unique_ptr<ImageDocumentPageNavigationService> m_navigationService;
     std::unique_ptr<ImageDocumentPredecodeController> m_predecodeController;

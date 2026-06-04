@@ -3,48 +3,37 @@
 
 #include "presentation/imagepresentationload.h"
 
-#include "location/imagedocumentlocation.h"
 #include "predecode/predecodecache.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
 
 #include <QImage>
 #include <utility>
 #include <variant>
 
 namespace {
-void prepareImagePresentation(
-    KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session)
-{
-    presentation.prepareImageContainer(KiriView::zoomScopeUrlForLocation(session.location()));
-}
-
 KiriView::ImagePresentationLoadResult finishImagePresentation(
-    KiriView::ImagePresentationController &presentation)
+    const KiriView::ImagePageSurfaceController &pageSurface)
 {
-    presentation.updateRenderContext();
     return KiriView::ImagePresentationLoadResult {
         true,
-        presentation.imageSize(),
+        pageSurface.imageSize(),
     };
 }
 
 KiriView::ImagePresentationLoadResult presentStaticImage(
-    KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
-    KiriView::StaticImagePayload staticImage, bool predecodeCacheable)
+    KiriView::ImagePageSurfaceController &pageSurface, KiriView::StaticImagePayload staticImage,
+    bool predecodeCacheable, const KiriView::ImageDocumentRenderContext &renderContext)
 {
-    prepareImagePresentation(presentation, session);
-    presentation.setStaticImage(std::move(staticImage), predecodeCacheable);
-    return finishImagePresentation(presentation);
+    pageSurface.setStaticImage(std::move(staticImage), predecodeCacheable, renderContext);
+    return finishImagePresentation(pageSurface);
 }
 
 KiriView::ImagePresentationLoadResult presentImageFrame(
-    KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
-    const QImage &image)
+    KiriView::ImagePageSurfaceController &pageSurface, const QImage &image)
 {
-    prepareImagePresentation(presentation, session);
-    presentation.stopAnimation();
-    presentation.setImage(image, false);
-    return finishImagePresentation(presentation);
+    pageSurface.stopAnimation();
+    pageSurface.setImage(image, false);
+    return finishImagePresentation(pageSurface);
 }
 
 KiriView::ImagePresentationLoadPlan staticImagePlan(
@@ -141,42 +130,42 @@ ImagePresentationLoadPlan planDecodedImagePresentationLoad(DecodedImage image,
 }
 
 ImagePresentationLoadResult executeImagePresentationLoadPlan(
-    ImagePresentationController &presentation, const ImageLoadSession &session,
-    ImagePresentationLoadPlan plan)
+    ImagePageSurfaceController &pageSurface, ImagePresentationLoadPlan plan,
+    const ImageDocumentRenderContext &renderContext)
 {
     if (std::holds_alternative<std::monostate>(plan.payload)) {
         return {};
     }
     if (auto *staticImage = std::get_if<ImagePresentationStaticImageLoad>(&plan.payload)) {
-        return presentStaticImage(presentation, session, std::move(staticImage->staticImage),
-            staticImage->predecodeCacheable);
+        return presentStaticImage(pageSurface, std::move(staticImage->staticImage),
+            staticImage->predecodeCacheable, renderContext);
     }
     if (const auto *frame = std::get_if<ImagePresentationFrameLoad>(&plan.payload)) {
-        return presentImageFrame(presentation, session, frame->frame);
+        return presentImageFrame(pageSurface, frame->frame);
     }
     if (auto *animation = std::get_if<ImagePresentationAnimationLoad>(&plan.payload)) {
-        ImagePresentationLoadResult result
-            = presentImageFrame(presentation, session, animation->firstFrame);
-        presentation.startAnimation(std::move(animation->playback));
+        ImagePresentationLoadResult result = presentImageFrame(pageSurface, animation->firstFrame);
+        pageSurface.startAnimation(std::move(animation->playback));
         return result;
     }
 
     return {};
 }
 
-ImagePresentationLoadResult presentPredecodedImageLoad(ImagePresentationController &presentation,
-    const ImageLoadSession &session, PredecodedImage image)
+ImagePresentationLoadResult presentPredecodedImageLoad(ImagePageSurfaceController &pageSurface,
+    PredecodedImage image, const ImageDocumentRenderContext &renderContext)
 {
     return executeImagePresentationLoadPlan(
-        presentation, session, planPredecodedImagePresentationLoad(std::move(image)));
+        pageSurface, planPredecodedImagePresentationLoad(std::move(image)), renderContext);
 }
 
-ImagePresentationLoadResult presentDecodedImageLoad(ImagePresentationController &presentation,
-    const ImageLoadSession &session, DecodedImage image,
-    ImagePresentationAnimationHandling animationHandling)
+ImagePresentationLoadResult presentDecodedImageLoad(ImagePageSurfaceController &pageSurface,
+    DecodedImage image, ImagePresentationAnimationHandling animationHandling,
+    const ImageDocumentRenderContext &renderContext)
 {
-    return executeImagePresentationLoadPlan(presentation, session,
+    return executeImagePresentationLoadPlan(pageSurface,
         planDecodedImagePresentationLoad(
-            std::move(image), animationHandling, presentation.predecodeCacheByteBudget()));
+            std::move(image), animationHandling, pageSurface.predecodeCacheByteBudget()),
+        renderContext);
 }
 }

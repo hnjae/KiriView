@@ -9,7 +9,8 @@
 #include "imagedocumentruntimecontrollers.h"
 #include "imagedocumentsourceloadrequest.h"
 #include "imageopenworkflow.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
+#include "presentation/imagepresentationruntime.h"
 #include "presentation/imagespreadpresentationcontroller.h"
 
 #include <QObject>
@@ -119,7 +120,7 @@ QSize ImageDocumentRuntime::secondaryImageSize() const
 
 QSizeF ImageDocumentRuntime::viewportSize() const
 {
-    return controllers->presentationController().viewportSize();
+    return controllers->presentationRuntime().viewportSize();
 }
 
 void ImageDocumentRuntime::setViewportSize(const QSizeF &viewportSize)
@@ -408,15 +409,15 @@ bool ImageDocumentRuntime::unsupportedOpenedCollectionVideo() const
 std::optional<DisplayedPredecodeImage> ImageDocumentRuntime::primaryDisplayedPredecodeImage() const
 {
     std::optional<StaticImagePayload> staticImage
-        = controllers->presentationController().staticImage();
-    if (!controllers->presentationController().hasImage() || state.displayedUrl().isEmpty()
+        = controllers->pageSurfaceController().staticImage();
+    if (!controllers->pageSurfaceController().hasImage() || state.displayedUrl().isEmpty()
         || !staticImage.has_value()) {
         return std::nullopt;
     }
 
     return DisplayedPredecodeImage {
         state.displayedImageLocation(),
-        controllers->presentationController().isPredecodeCacheable(),
+        controllers->pageSurfaceController().isPredecodeCacheable(),
         std::move(staticImage),
         state.embeddedMetadata(),
     };
@@ -424,7 +425,7 @@ std::optional<DisplayedPredecodeImage> ImageDocumentRuntime::primaryDisplayedPre
 
 ImageFirstDisplayDecodeContext ImageDocumentRuntime::firstDisplayDecodeContext() const
 {
-    return controllers->presentationController().firstDisplayDecodeContext();
+    return controllers->presentationRuntime().firstDisplayDecodeContext();
 }
 
 const EmbeddedMetadata &ImageDocumentRuntime::embeddedMetadata() const

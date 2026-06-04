@@ -16,7 +16,8 @@
 #include "imageopencontroller.h"
 #include "localization/activenavigationboundarytext.h"
 #include "navigation/imagedocumentpagenavigationservice.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
+#include "presentation/imagepresentationruntime.h"
 #include "presentation/imagespreadpresentationcontroller.h"
 
 #include <QObject>
@@ -44,17 +45,18 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
     ExternalPredecodedImageFinder externalPredecodedImageFinder
         = std::move(runtimeDependencies.externalPredecodedImageFinder);
     m_mediaEntrySourceStore = std::move(runtimeDependencies.mediaEntrySourceStore);
-    m_presentationController = std::make_unique<ImagePresentationController>(
-        documentObject, [this]() { return renderContextOrDefault(m_callbacks.renderContext); },
-        ImagePresentationController::Callbacks {
+    m_pageSurfaceController = std::make_unique<ImagePageSurfaceController>(documentObject,
+        ImagePageSurfaceController::Callbacks {
             [this](ImageDocumentChange change) { invokeIfSet(m_callbacks.notify, change); },
             [this](const QString &errorString) {
                 m_openController->finishAnimationLoadWithError(errorString);
             },
         },
         runtimeDependencies.cacheBudgets);
+    m_presentationRuntime = std::make_unique<ImagePresentationRuntime>(
+        [this]() { return renderContextOrDefault(m_callbacks.renderContext); });
     m_deletionController = std::make_unique<ImageDocumentDeletionController>(documentObject, state,
-        *m_presentationController, runtimeDependencies.candidateProvider,
+        *m_pageSurfaceController, runtimeDependencies.candidateProvider,
         std::move(runtimeDependencies.fileDeletionProvider),
         ImageDocumentDeletionController::Callbacks {
             [this]() {
@@ -64,7 +66,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             std::move(m_callbacks.fileDeletionFailed),
         });
     m_openController = std::make_unique<ImageOpenController>(documentObject, state,
-        *m_presentationController,
+        *m_pageSurfaceController, *m_presentationRuntime,
         ImageOpenController::Callbacks {
             [this, externalPredecodedImageFinder = std::move(externalPredecodedImageFinder)](
                 const QUrl &url) {
@@ -79,6 +81,10 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             },
             [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); },
             std::move(m_callbacks.unsupportedOpenedCollectionVideoEntered),
+            [this](const DisplayedImageLocation &location) {
+                m_spreadController->commitPrimaryPageSlot(location);
+            },
+            [this]() { m_spreadController->clearPrimaryPageSlot(); },
         },
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
     m_navigationService = std::make_unique<ImageDocumentPageNavigationService>(documentObject,
@@ -91,14 +97,15 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             [this]() { return m_deletionController->inProgress(); },
         });
     m_predecodeController = std::make_unique<ImageDocumentPredecodeController>(
-        documentObject, state, *m_presentationController, runtimeDependencies.candidateProvider,
-        runtimeDependencies.imageDecode, runtimeDependencies.cacheBudgets.predecodeCacheByteBudget,
+        documentObject, state, *m_pageSurfaceController, *m_presentationRuntime,
+        runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode,
+        runtimeDependencies.cacheBudgets.predecodeCacheByteBudget,
         [this]() { return m_navigationService->currentPageNumber(); },
         std::move(runtimeDependencies.powerSaver),
         runtimeDependencies.ordinaryDirectMediaPredecodeEnabled);
     m_spreadController = std::make_unique<ImageSpreadPresentationController>(
         documentObject, [this]() { return renderContextOrDefault(m_callbacks.renderContext); },
-        state, *m_presentationController,
+        state, *m_pageSurfaceController, *m_presentationRuntime,
         ImageSpreadPresentationController::Callbacks {
             [this](ImageDocumentChange change) { invokeIfSet(m_callbacks.notify, change); },
             [this](const QUrl &url) { return m_predecodeController->findPredecodedImage(url); },
@@ -111,7 +118,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode,
         runtimeDependencies.cacheBudgets);
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(state,
-        *m_presentationController, *m_navigationService, *m_spreadController,
+        *m_pageSurfaceController, *m_navigationService, *m_spreadController,
         [this](ImageDocumentRuntimePlan plan) { dispatchPlan(plan); });
     m_runtimePlanExecutor
         = std::make_unique<ImageDocumentRuntimePlanExecutor>(runtimeOperations(state));
@@ -124,9 +131,14 @@ ImageDocumentDeletionController &ImageDocumentRuntimeControllers::deletionContro
     return *m_deletionController;
 }
 
-ImagePresentationController &ImageDocumentRuntimeControllers::presentationController() const
+ImagePageSurfaceController &ImageDocumentRuntimeControllers::pageSurfaceController() const
 {
-    return *m_presentationController;
+    return *m_pageSurfaceController;
+}
+
+ImagePresentationRuntime &ImageDocumentRuntimeControllers::presentationRuntime() const
+{
+    return *m_presentationRuntime;
 }
 
 ImageDocumentNavigationController &ImageDocumentRuntimeControllers::navigationController() const
@@ -161,7 +173,7 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
     ImageDocumentRuntimeOperations operations;
     operations.lifecycle.cancelFileDeletion = [this]() { m_deletionController->cancel(); };
     operations.lifecycle.stopPresentationAnimation
-        = [this]() { m_presentationController->stopAnimation(); };
+        = [this]() { m_pageSurfaceController->stopAnimation(); };
     operations.lifecycle.shutdownSpread = [this]() { m_spreadController->shutdown(); };
     operations.mediaEntrySource.clear = [this]() {
         if (m_mediaEntrySourceStore != nullptr) {
@@ -182,7 +194,8 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
         = [this]() { m_spreadController->notifyRightToLeftReadingChanged(); };
     operations.spread.resetZoom = [this]() { m_spreadController->resetZoom(); };
     operations.spread.prepareFailedContainer = [this](const QUrl &containerUrl) {
-        m_presentationController->prepareFailedContainer(containerUrl);
+        Q_UNUSED(containerUrl);
+        m_spreadController->resetZoom();
     };
     operations.navigation.cancelPageNavigationUpdate
         = [this]() { m_navigationController->cancelPageNavigationUpdate(); };
@@ -225,7 +238,10 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
     operations.open.cancelOpen = [this]() { m_openController->cancel(); };
     operations.open.clearDisplayedImageLocation
         = [stateOwner]() { stateOwner->clearDisplayedImageLocation(); };
-    operations.open.clearPresentationImage = [this]() { m_presentationController->clearImage(); };
+    operations.open.clearPresentationImage = [this]() {
+        m_pageSurfaceController->clearImage();
+        m_spreadController->clearPrimaryPageSlot();
+    };
     operations.sourceLoad.clearLoadingContainerNavigationUrl
         = [stateOwner]() { stateOwner->clearLoadingContainerNavigationUrl(); };
     operations.sourceLoad.setLoadingContainerNavigationUrl

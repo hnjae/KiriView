@@ -5,7 +5,7 @@
 
 #include "document/imagedocumentstate.h"
 #include "image_test_support.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
 
 #include <QObject>
 #include <QTest>
@@ -113,8 +113,7 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
 {
     QObject parent;
     KiriView::ImageDocumentState state;
-    KiriView::ImagePresentationController presentation(
-        &parent, []() { return KiriView::ImageDocumentRenderContext {}; }, {}, testCacheBudgets());
+    KiriView::ImagePageSurfaceController pageSurface(&parent, {}, testCacheBudgets());
     KiriView::TestSupport::ManualFileDeletionProvider fileDeletionProvider;
     ManualDeletionCandidateProvider candidateProvider;
     std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
@@ -122,9 +121,9 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
     int inProgressChangeCount = 0;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(imageUrl));
-    presentation.setImage(testImage(2, 1), false);
+    pageSurface.setImage(testImage(2, 1), false);
 
-    KiriView::ImageDocumentDeletionController controller(&parent, state, presentation,
+    KiriView::ImageDocumentDeletionController controller(&parent, state, pageSurface,
         candidateProvider.provider(),
         KiriView::TestSupport::fileDeletionProviderFor(fileDeletionProvider),
         KiriView::ImageDocumentDeletionController::Callbacks {
@@ -155,8 +154,7 @@ void TestImageDocumentDeletionController::canceledFallbackCandidateCompletionIsI
 {
     QObject parent;
     KiriView::ImageDocumentState state;
-    KiriView::ImagePresentationController presentation(
-        &parent, []() { return KiriView::ImageDocumentRenderContext {}; }, {}, testCacheBudgets());
+    KiriView::ImagePageSurfaceController pageSurface(&parent, {}, testCacheBudgets());
     KiriView::TestSupport::ManualFileDeletionProvider fileDeletionProvider;
     ManualDeletionCandidateProvider candidateProvider;
     std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
@@ -164,9 +162,9 @@ void TestImageDocumentDeletionController::canceledFallbackCandidateCompletionIsI
     const QUrl currentUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl nextUrl = localUrl(QStringLiteral("/images/02.png"));
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(currentUrl));
-    presentation.setImage(testImage(2, 1), false);
+    pageSurface.setImage(testImage(2, 1), false);
 
-    KiriView::ImageDocumentDeletionController controller(&parent, state, presentation,
+    KiriView::ImageDocumentDeletionController controller(&parent, state, pageSurface,
         candidateProvider.provider(),
         KiriView::TestSupport::fileDeletionProviderFor(fileDeletionProvider),
         KiriView::ImageDocumentDeletionController::Callbacks {

@@ -4,7 +4,7 @@
 #include "presentation/imagepresentationload.h"
 
 #include "image_test_support.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
 #include "rendering/imagerendering.h"
 
 #include <QByteArray>
@@ -30,17 +30,17 @@ KiriView::ImageLoadSession loadSession(const QUrl &url)
         KiriView::DisplayedImageLocation::fromUrl(url));
 }
 
-KiriView::ImagePresentationController presentationController(QObject *parent)
+KiriView::ImageDocumentRenderContext renderContext()
 {
-    return KiriView::ImagePresentationController(
-        parent,
-        []() {
-            return KiriView::ImageDocumentRenderContext {
-                1.0,
-                KiriView::fallbackTextureSizeMax,
-            };
-        },
-        {},
+    return KiriView::ImageDocumentRenderContext {
+        1.0,
+        KiriView::fallbackTextureSizeMax,
+    };
+}
+
+KiriView::ImagePageSurfaceController pageSurfaceController(QObject *parent)
+{
+    return KiriView::ImagePageSurfaceController(parent, {},
         KiriView::ImageCacheBudgets {
             testPredecodeCacheByteBudget,
             testStaticTileCacheByteBudget,
@@ -200,16 +200,15 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
 
 void TestImagePresentationLoad::staticDecodedImagesAreAppliedToPresentation()
 {
-    KiriView::ImagePresentationController controller = presentationController(this);
-    controller.setViewportSize(QSizeF(200.0, 100.0));
+    KiriView::ImagePageSurfaceController controller = pageSurfaceController(this);
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
     const KiriView::ImageLoadSession session = loadSession(imageUrl);
 
     KiriView::DecodedImage decoded
         = KiriView::StaticDecodedImage { staticTestImagePayload(testImage(QSize(12, 8))) };
     const KiriView::ImagePresentationLoadResult result
-        = KiriView::presentDecodedImageLoad(controller, session, std::move(decoded),
-            KiriView::ImagePresentationAnimationHandling::StartAnimation);
+        = KiriView::presentDecodedImageLoad(controller, std::move(decoded),
+            KiriView::ImagePresentationAnimationHandling::StartAnimation, renderContext());
 
     QVERIFY(result.presented);
     QCOMPARE(result.imageSize, QSize(12, 8));
@@ -220,20 +219,19 @@ void TestImagePresentationLoad::staticDecodedImagesAreAppliedToPresentation()
 
 void TestImagePresentationLoad::unpresentableDecodedImagesLeaveExistingPresentationUntouched()
 {
-    KiriView::ImagePresentationController controller = presentationController(this);
-    controller.setViewportSize(QSizeF(200.0, 100.0));
+    KiriView::ImagePageSurfaceController controller = pageSurfaceController(this);
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
     const KiriView::ImageLoadSession session = loadSession(imageUrl);
     KiriView::DecodedImage decoded
         = KiriView::StaticDecodedImage { staticTestImagePayload(testImage(QSize(12, 8))) };
-    QVERIFY(KiriView::presentDecodedImageLoad(controller, session, std::move(decoded),
-        KiriView::ImagePresentationAnimationHandling::StartAnimation)
+    QVERIFY(KiriView::presentDecodedImageLoad(controller, std::move(decoded),
+        KiriView::ImagePresentationAnimationHandling::StartAnimation, renderContext())
             .presented);
 
     KiriView::DecodedImage unpresentable = KiriView::ApngAnimationImage {};
     const KiriView::ImagePresentationLoadResult result
-        = KiriView::presentDecodedImageLoad(controller, session, std::move(unpresentable),
-            KiriView::ImagePresentationAnimationHandling::StartAnimation);
+        = KiriView::presentDecodedImageLoad(controller, std::move(unpresentable),
+            KiriView::ImagePresentationAnimationHandling::StartAnimation, renderContext());
 
     QVERIFY(!result.presented);
     QCOMPARE(controller.imageSize(), QSize(12, 8));
@@ -246,16 +244,15 @@ void TestImagePresentationLoad::streamedAnimationImagesPresentFirstFrames()
     const KiriView::ImageLoadSession session = loadSession(imageUrl);
 
     {
-        KiriView::ImagePresentationController controller = presentationController(this);
-        controller.setViewportSize(QSizeF(200.0, 100.0));
+        KiriView::ImagePageSurfaceController controller = pageSurfaceController(this);
         KiriView::DecodedImage decoded = KiriView::ApngAnimationImage {
             testImage(QSize(13, 7)),
             QByteArrayLiteral("apng-data"),
         };
 
         const KiriView::ImagePresentationLoadResult result
-            = KiriView::presentDecodedImageLoad(controller, session, std::move(decoded),
-                KiriView::ImagePresentationAnimationHandling::FirstFrameOnly);
+            = KiriView::presentDecodedImageLoad(controller, std::move(decoded),
+                KiriView::ImagePresentationAnimationHandling::FirstFrameOnly, renderContext());
 
         QVERIFY(result.presented);
         QCOMPARE(result.imageSize, QSize(13, 7));
@@ -264,16 +261,15 @@ void TestImagePresentationLoad::streamedAnimationImagesPresentFirstFrames()
     }
 
     {
-        KiriView::ImagePresentationController controller = presentationController(this);
-        controller.setViewportSize(QSizeF(200.0, 100.0));
+        KiriView::ImagePageSurfaceController controller = pageSurfaceController(this);
         KiriView::DecodedImage decoded = KiriView::HeifSequenceAnimationImage {
             testImage(QSize(11, 5)),
             QByteArrayLiteral("heif-data"),
         };
 
         const KiriView::ImagePresentationLoadResult result
-            = KiriView::presentDecodedImageLoad(controller, session, std::move(decoded),
-                KiriView::ImagePresentationAnimationHandling::FirstFrameOnly);
+            = KiriView::presentDecodedImageLoad(controller, std::move(decoded),
+                KiriView::ImagePresentationAnimationHandling::FirstFrameOnly, renderContext());
 
         QVERIFY(result.presented);
         QCOMPARE(result.imageSize, QSize(11, 5));
@@ -284,8 +280,7 @@ void TestImagePresentationLoad::streamedAnimationImagesPresentFirstFrames()
 
 void TestImagePresentationLoad::secondaryAnimationModePresentsFirstFrame()
 {
-    KiriView::ImagePresentationController controller = presentationController(this);
-    controller.setViewportSize(QSizeF(200.0, 100.0));
+    KiriView::ImagePageSurfaceController controller = pageSurfaceController(this);
     const QUrl imageUrl = localUrl(QStringLiteral("/images/animated.gif"));
     const KiriView::ImageLoadSession session = loadSession(imageUrl);
 
@@ -295,8 +290,8 @@ void TestImagePresentationLoad::secondaryAnimationModePresentsFirstFrame()
         QByteArrayLiteral("gif"),
     };
     const KiriView::ImagePresentationLoadResult result
-        = KiriView::presentDecodedImageLoad(controller, session, std::move(decoded),
-            KiriView::ImagePresentationAnimationHandling::FirstFrameOnly);
+        = KiriView::presentDecodedImageLoad(controller, std::move(decoded),
+            KiriView::ImagePresentationAnimationHandling::FirstFrameOnly, renderContext());
 
     QVERIFY(result.presented);
     QCOMPARE(result.imageSize, QSize(10, 6));

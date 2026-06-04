@@ -8,7 +8,7 @@
 #include "location/imagedocumentlocation.h"
 #include "navigation/imagedocumentpagecandidatelistsource.h"
 #include "navigation/imagedocumentpagenavigationservice.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
 #include "presentation/imagespreadpresentationcontroller.h"
 
 #include <QUrl>
@@ -30,9 +30,9 @@ bool imageDocumentPageNavigationScopeActive(const KiriView::ImageDocumentState &
 
 std::optional<KiriView::ImageDocumentPageCandidateListContext> navigationCandidateContext(
     const KiriView::ImageDocumentState &state,
-    const KiriView::ImagePresentationController &presentationController)
+    const KiriView::ImagePageSurfaceController &pageSurfaceController)
 {
-    if (!presentationController.hasImage() && !state.unsupportedOpenedCollectionVideo()) {
+    if (!pageSurfaceController.hasImage() && !state.unsupportedOpenedCollectionVideo()) {
         return std::nullopt;
     }
 
@@ -47,11 +47,11 @@ std::optional<KiriView::ImageDocumentPageCandidateListContext> navigationCandida
 
 namespace KiriView {
 ImageDocumentNavigationController::ImageDocumentNavigationController(ImageDocumentState &state,
-    ImagePresentationController &presentationController,
+    ImagePageSurfaceController &pageSurfaceController,
     ImageDocumentPageNavigationService &navigationService,
     ImageSpreadPresentationController &spreadController, RuntimePlanCallback runtimePlanCallback)
     : m_state(state)
-    , m_presentationController(presentationController)
+    , m_pageSurfaceController(pageSurfaceController)
     , m_navigationService(navigationService)
     , m_spreadController(spreadController)
     , m_runtimePlanCallback(std::move(runtimePlanCallback))
@@ -74,7 +74,7 @@ ImageDocumentNavigationController::pageNavigationSnapshot() const
 void ImageDocumentNavigationController::openAdjacentPage(NavigationDirection direction)
 {
     const std::optional<ImageDocumentPageCandidateListContext> context
-        = navigationCandidateContext(m_state, m_presentationController);
+        = navigationCandidateContext(m_state, m_pageSurfaceController);
     if (!context.has_value()) {
         m_navigationService.clearPageNavigation();
         return;
@@ -101,7 +101,7 @@ void ImageDocumentNavigationController::openAdjacentContainer(NavigationDirectio
 
 void ImageDocumentNavigationController::openImageAtPage(int pageNumber)
 {
-    if (!navigationCandidateContext(m_state, m_presentationController).has_value()) {
+    if (!navigationCandidateContext(m_state, m_pageSurfaceController).has_value()) {
         m_navigationService.clearPageNavigation();
         return;
     }
@@ -136,7 +136,7 @@ void ImageDocumentNavigationController::openImageAtRelativePageOffset(int offset
 void ImageDocumentNavigationController::updatePageNavigation()
 {
     m_navigationService.updatePageNavigation(
-        navigationCandidateContext(m_state, m_presentationController));
+        navigationCandidateContext(m_state, m_pageSurfaceController));
 }
 
 void ImageDocumentNavigationController::cancelNavigation()

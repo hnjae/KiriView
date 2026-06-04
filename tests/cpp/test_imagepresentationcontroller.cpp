@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
 
 #include "image_test_support.h"
 #include "rendering/imagerendering.h"
@@ -41,43 +41,42 @@ KiriView::ImageCacheBudgets testCacheBudgets()
         4096,
     };
 }
+
+KiriView::ImageDocumentRenderContext renderContext()
+{
+    return KiriView::ImageDocumentRenderContext {
+        1.0,
+        KiriView::fallbackTextureSizeMax,
+    };
+}
 }
 
-class TestImagePresentationController : public QObject
+class TestImagePageSurfaceController : public QObject
 {
     Q_OBJECT
 
 private Q_SLOTS:
-    void displayedImageChangesSynchronizeViewportThroughController();
+    void displayedImageChangesUpdateSurfaceResources();
     void smallSvgUsesStaticTileSurfaceInsteadOfLegacyFrameSurface();
 };
 
-void TestImagePresentationController::displayedImageChangesSynchronizeViewportThroughController()
+void TestImagePageSurfaceController::displayedImageChangesUpdateSurfaceResources()
 {
     std::vector<KiriView::ImageDocumentChange> changes;
-    KiriView::ImagePresentationController controller(
-        this,
-        []() {
-            return KiriView::ImageDocumentRenderContext {
-                1.0,
-                KiriView::fallbackTextureSizeMax,
-            };
-        },
-        KiriView::ImagePresentationController::Callbacks {
+    KiriView::ImagePageSurfaceController controller(this,
+        KiriView::ImagePageSurfaceController::Callbacks {
             [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); },
             {},
         },
         testCacheBudgets());
-    controller.setViewportSize(QSizeF(200.0, 100.0));
 
     changes.clear();
-    controller.setStaticImage(staticTestImagePayload(testImage(QSize(80, 40))), true);
+    controller.setStaticImage(
+        staticTestImagePayload(testImage(QSize(80, 40))), true, renderContext());
 
     QVERIFY(controller.hasImage());
     QCOMPARE(controller.imageRevision(), quint64(1));
     QCOMPARE(controller.imageSize(), QSize(80, 40));
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::ImageSize));
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::DisplaySize));
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::Repaint));
 
     changes.clear();
@@ -86,8 +85,6 @@ void TestImagePresentationController::displayedImageChangesSynchronizeViewportTh
     QVERIFY(!controller.hasImage());
     QCOMPARE(controller.imageRevision(), quint64(2));
     QCOMPARE(controller.imageSize(), QSize());
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::ImageSize));
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::DisplaySize));
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::Repaint));
 
     changes.clear();
@@ -97,7 +94,7 @@ void TestImagePresentationController::displayedImageChangesSynchronizeViewportTh
     QCOMPARE(controller.imageRevision(), quint64(2));
 }
 
-void TestImagePresentationController::smallSvgUsesStaticTileSurfaceInsteadOfLegacyFrameSurface()
+void TestImagePageSurfaceController::smallSvgUsesStaticTileSurfaceInsteadOfLegacyFrameSurface()
 {
     QString errorString;
     std::shared_ptr<KiriView::SvgTileSource> source
@@ -108,18 +105,9 @@ void TestImagePresentationController::smallSvgUsesStaticTileSurfaceInsteadOfLega
     QVERIFY2(!preview.isNull(), qPrintable(errorString));
     QCOMPARE(preview.size(), source->imageSize());
 
-    KiriView::ImagePresentationController controller(
-        this,
-        []() {
-            return KiriView::ImageDocumentRenderContext {
-                1.0,
-                KiriView::fallbackTextureSizeMax,
-            };
-        },
-        {}, testCacheBudgets());
-    controller.setViewportSize(QSizeF(32.0, 32.0));
+    KiriView::ImagePageSurfaceController controller(this, {}, testCacheBudgets());
     controller.setStaticImage(
-        KiriView::StaticImagePayload { std::move(source), preview, {} }, true);
+        KiriView::StaticImagePayload { std::move(source), preview, {} }, true, renderContext());
 
     const std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller.imageSurface();
     QVERIFY(surface != nullptr);
@@ -128,6 +116,6 @@ void TestImagePresentationController::smallSvgUsesStaticTileSurfaceInsteadOfLega
     QCOMPARE(surface->staticTileSurface()->tileCacheByteBudget(), qsizetype(4096));
 }
 
-QTEST_GUILESS_MAIN(TestImagePresentationController)
+QTEST_GUILESS_MAIN(TestImagePageSurfaceController)
 
 #include "test_imagepresentationcontroller.moc"

@@ -6,7 +6,8 @@
 #include "imagedocumentstate.h"
 #include "location/imagedocumentlocation.h"
 #include "predecode/imagepredecodecoordinator.h"
-#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepagesurfacecontroller.h"
+#include "presentation/imagepresentationruntime.h"
 
 #include <optional>
 #include <utility>
@@ -14,13 +15,15 @@
 
 namespace KiriView {
 ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject *parent,
-    ImageDocumentState &state, ImagePresentationController &presentationController,
+    ImageDocumentState &state, ImagePageSurfaceController &pageSurfaceController,
+    ImagePresentationRuntime &presentationRuntime,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
     CurrentPageNumberCallback currentPageNumber, PowerSaverProvider powerSaverProvider,
     bool ordinaryDirectMediaPredecodeEnabled)
     : m_state(state)
-    , m_presentationController(presentationController)
+    , m_pageSurfaceController(pageSurfaceController)
+    , m_presentationRuntime(presentationRuntime)
     , m_coordinator(
           std::make_unique<ImagePredecodeCoordinator>(parent, std::move(candidateProvider),
               std::move(decodeDependencies), std::move(powerSaverProvider), cacheByteBudget))
@@ -34,8 +37,8 @@ ImageDocumentPredecodeController::~ImageDocumentPredecodeController() = default;
 void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
     std::optional<DisplayedPredecodeImage> secondaryImage)
 {
-    std::optional<StaticImagePayload> staticImage = m_presentationController.staticImage();
-    if (!m_presentationController.hasImage() || m_state.displayedUrl().isEmpty()
+    std::optional<StaticImagePayload> staticImage = m_pageSurfaceController.staticImage();
+    if (!m_pageSurfaceController.hasImage() || m_state.displayedUrl().isEmpty()
         || !staticImage.has_value()) {
         m_coordinator->cancel();
         return;
@@ -49,7 +52,7 @@ void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
 
     DisplayedPredecodeImage primaryImage {
         m_state.displayedImageLocation(),
-        m_presentationController.isPredecodeCacheable(),
+        m_pageSurfaceController.isPredecodeCacheable(),
         std::move(staticImage),
         m_state.embeddedMetadata(),
     };
@@ -63,7 +66,7 @@ void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
     m_coordinator->schedule(ImagePredecodeCoordinator::Context {
         currentLocation,
         std::move(displayedImages),
-        m_presentationController.firstDisplayDecodeContext(),
+        m_presentationRuntime.firstDisplayDecodeContext(),
         m_currentPageNumber ? m_currentPageNumber() - 1 : -1,
         {},
     });
