@@ -20,6 +20,13 @@ Current production code still displays static images through `KiriImageView`, ti
 - QML engine image caching is not a freshness mechanism. The main dynamic display normally disables `Image.cache`; any measured cached path must still use revision-unique provider URLs.
 - `Image.asynchronous`, `sourceSize`, `retainWhileLoading`, and load-acknowledgment policy belong to the accepted presenter contract, not to provider request handling. Slow miss handling, if ever needed, must use an explicit async image-provider contract with provider-owned cancellation rather than ordinary provider side effects.
 
+## Static Display Payloads
+
+- Static decode results are display-payload-first: the decoded result carries source identity, applied image-reader transform metadata, post-transform original image size, the current display-ready `QImage`, display quality, display pixels per source pixel, embedded metadata, and an optional refinement-capable source payload.
+- The current QRhi/tile renderer consumes a compatibility adapter derived from the display payload while the migration is in progress. That adapter may still expose `ImageTileSource`, preview image, and first-display hints, but provider-ready display facts are the authoritative decoded static-image contract.
+- Dedicated first-display decode is a display payload quality, not exact detail. JPEG, SVG, or future decoder-owned first-display payloads must keep their display pixel ratio and refinement capability so later stages can request sharper whole-image buckets without treating the initial preview as final quality.
+- Predecode cache entries remain legacy static payloads until their roadmap stage migrates them to display payloads; Stage 3 must not make predecode promotion invisible or detach it from the compatibility renderer.
+
 ## Display Quality And Replacement
 
 - Initial display may come from predecode promotion, a valid XDG thumbnail preview, RAW embedded preview, a dedicated decoder first-display image, or a bounded decode/refinement result. Thumbnail preview, RAW embedded preview, and decoder first-display are mutually exclusive initial preview tiers for one load.
