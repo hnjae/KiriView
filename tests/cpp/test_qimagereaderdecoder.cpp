@@ -14,6 +14,7 @@
 #include <QTest>
 #include <QUrl>
 #include <Qt>
+#include <utility>
 
 namespace {
 QByteArray encodedImageData(const QImage &image, const QByteArray &format, QString *errorString)

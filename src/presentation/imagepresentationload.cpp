@@ -64,9 +64,10 @@ KiriView::ImagePresentationLoadPlan animationPlan(
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::StaticDecodedImage &decoded,
     KiriView::ImagePresentationAnimationHandling, qsizetype predecodeCacheByteBudget)
 {
+    KiriView::StaticImagePayload staticImage = decoded.compatibilityStaticImage();
     const bool predecodeCacheable
-        = KiriView::PredecodeCache::canCacheImage(decoded.staticImage, predecodeCacheByteBudget);
-    return staticImagePlan(std::move(decoded.staticImage), predecodeCacheable);
+        = KiriView::PredecodeCache::canCacheImage(staticImage, predecodeCacheByteBudget);
+    return staticImagePlan(std::move(staticImage), predecodeCacheable);
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ApngAnimationImage &decoded,

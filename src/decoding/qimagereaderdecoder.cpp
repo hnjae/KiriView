@@ -24,8 +24,7 @@ KiriView::DecodedImageResult openedStaticImageResult(
         return KiriView::failedDecodedImageResult(errorString);
     }
 
-    return KiriView::staticDecodedImageResult(
-        std::move(source), request.firstDisplay(), &errorString);
+    return KiriView::staticDecodedImageResult(std::move(source), request, &errorString);
 }
 }
 

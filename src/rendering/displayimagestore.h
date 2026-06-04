@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_DISPLAYIMAGESTORE_H
 #define KIRIVIEW_DISPLAYIMAGESTORE_H
 
+#include "rendering/displayimagequality.h"
 #include "rendering/imagerendercontext.h"
 
 #include <QImage>
@@ -27,15 +28,6 @@ enum class DisplayImagePinKind {
     StaleRetained,
     PendingLoad,
     FrameRetention,
-};
-
-enum class DisplayImageQuality {
-    Exact,
-    FirstDisplay,
-    ThumbnailPreview,
-    BoundedDetail,
-    Unsupported,
-    Failed,
 };
 
 struct DisplayImageEntry {

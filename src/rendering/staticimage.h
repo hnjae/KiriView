@@ -4,9 +4,12 @@
 #ifndef KIRIVIEW_STATICIMAGE_H
 #define KIRIVIEW_STATICIMAGE_H
 
+#include "displayimagequality.h"
 #include "imagetile.h"
+#include "metadata/embeddedmetadata.h"
 
 #include <QImage>
+#include <QImageIOHandler>
 #include <QSize>
 #include <QString>
 #include <QtGlobal>
@@ -39,6 +42,12 @@ struct StaticImageDisplayHints {
     qreal firstDisplayPixelsPerSourcePixel = 0.0;
 };
 
+struct StaticImageReaderTransform {
+    QImageIOHandler::Transformations transformations = QImageIOHandler::TransformationNone;
+
+    bool hasTransform() const { return transformations != QImageIOHandler::TransformationNone; }
+};
+
 class ImageTileSource
 {
 public:
@@ -53,6 +62,7 @@ public:
     virtual QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const = 0;
     virtual qsizetype byteCost() const = 0;
     virtual bool isResolutionIndependent() const;
+    virtual StaticImageReaderTransform imageReaderTransform() const;
 };
 
 struct StaticImagePayload {
@@ -63,6 +73,22 @@ struct StaticImagePayload {
     bool isValid() const;
     qsizetype byteCost() const;
     std::optional<qsizetype> byteCostWithinBudget(qsizetype byteBudget) const;
+};
+
+struct StaticDisplayImagePayload {
+    QString sourceIdentity;
+    StaticImageReaderTransform imageReaderTransform;
+    QSize originalSize;
+    QImage image;
+    DisplayImageQuality quality = DisplayImageQuality::Exact;
+    qreal displayPixelsPerSourcePixel = 0.0;
+    EmbeddedMetadata embeddedMetadata;
+    std::shared_ptr<ImageTileSource> refinementSource;
+
+    bool isValid() const;
+    qsizetype byteCost() const;
+    std::optional<qsizetype> byteCostWithinBudget(qsizetype byteBudget) const;
+    StaticImagePayload compatibilityStaticImage() const;
 };
 }
 

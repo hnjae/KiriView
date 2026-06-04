@@ -10,6 +10,7 @@
 #include "localization/imageerrortext.h"
 
 #include <QImageIOHandler>
+#include <QTransform>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -18,6 +19,45 @@ namespace {
 QString imageDataReadError()
 {
     return KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData);
+}
+
+QSize transformedImageSize(const QSize &size, QImageIOHandler::Transformations transformations)
+{
+    if (size.isEmpty()) {
+        return {};
+    }
+    if (transformations.toInt() & QImageIOHandler::TransformationRotate90) {
+        return size.transposed();
+    }
+    return size;
+}
+
+QImage transformedImage(QImage image, QImageIOHandler::Transformations transformations)
+{
+    if (image.isNull() || transformations == QImageIOHandler::TransformationNone) {
+        return image;
+    }
+
+    switch (static_cast<QImageIOHandler::Transformation>(transformations.toInt())) {
+    case QImageIOHandler::TransformationNone:
+        return image;
+    case QImageIOHandler::TransformationMirror:
+        return image.flipped(Qt::Horizontal);
+    case QImageIOHandler::TransformationFlip:
+        return image.flipped(Qt::Vertical);
+    case QImageIOHandler::TransformationRotate180:
+        return image.transformed(QTransform().rotate(180));
+    case QImageIOHandler::TransformationRotate90:
+        return image.transformed(QTransform().rotate(90));
+    case QImageIOHandler::TransformationMirrorAndRotate90:
+        return image.flipped(Qt::Horizontal).transformed(QTransform().rotate(90));
+    case QImageIOHandler::TransformationFlipAndRotate90:
+        return image.flipped(Qt::Vertical).transformed(QTransform().rotate(90));
+    case QImageIOHandler::TransformationRotate270:
+        return image.transformed(QTransform().rotate(270));
+    }
+
+    return image;
 }
 
 template <typename ConfigureReader>
@@ -51,22 +91,23 @@ std::shared_ptr<QImageReaderTileSource> QImageReaderTileSource::open(
         return {};
     }
 
-    const QSize imageSize = reader.size();
+    const QImageIOHandler::Transformations transformations = reader.transformation();
+    const QSize imageSize = transformedImageSize(reader.size(), transformations);
     if (imageSize.isEmpty()) {
         setTileSourceError(errorString, reader.errorString());
         return {};
     }
 
-    const bool hasTransform = reader.transformation() != QImageIOHandler::TransformationNone;
-    return std::make_shared<QImageReaderTileSource>(data, format, imageSize, hasTransform);
+    return std::make_shared<QImageReaderTileSource>(
+        data, format, imageSize, StaticImageReaderTransform { transformations });
 }
 
 QImageReaderTileSource::QImageReaderTileSource(
-    QByteArray data, QByteArray format, QSize imageSize, bool hasTransform)
+    QByteArray data, QByteArray format, QSize imageSize, StaticImageReaderTransform transform)
     : m_data(std::move(data))
     , m_format(std::move(format))
     , m_imageSize(std::move(imageSize))
-    , m_hasTransform(hasTransform)
+    , m_transform(transform)
 {
 }
 
@@ -93,7 +134,7 @@ std::optional<DecodedTile> QImageReaderTileSource::decodeTile(
 std::optional<DecodedTile> QImageReaderTileSource::decodeReaderClipTile(
     const TileRequest &request, QString *errorString) const
 {
-    if (m_hasTransform) {
+    if (m_transform.hasTransform()) {
         return std::nullopt;
     }
 
@@ -180,6 +221,11 @@ QImage QImageReaderTileSource::decodeBlockingDisplayImage(
 
 qsizetype QImageReaderTileSource::byteCost() const { return m_data.size(); }
 
+StaticImageReaderTransform QImageReaderTileSource::imageReaderTransform() const
+{
+    return m_transform;
+}
+
 bool QImageReaderTileSource::supportsJpegScaledFirstDisplay() const
 {
     const QByteArray format = m_format.toLower();
@@ -188,14 +234,21 @@ bool QImageReaderTileSource::supportsJpegScaledFirstDisplay() const
 
 QImage QImageReaderTileSource::readScaledImage(const QSize &scaledSize, QString *errorString) const
 {
-    return readBufferedImage(
-        m_data, m_format, true,
-        [&scaledSize](BufferedImageReader &reader) {
-            if (!scaledSize.isEmpty()) {
-                reader.setScaledSize(scaledSize);
+    const bool hasTransform = m_transform.hasTransform();
+    const QSize readerScaledSize
+        = hasTransform ? transformedImageSize(scaledSize, m_transform.transformations) : scaledSize;
+    QImage image = readBufferedImage(
+        m_data, m_format, !hasTransform,
+        [&readerScaledSize](BufferedImageReader &reader) {
+            if (!readerScaledSize.isEmpty()) {
+                reader.setScaledSize(readerScaledSize);
             }
         },
         errorString);
+    if (image.isNull() || !hasTransform) {
+        return image;
+    }
+    return displayReadyImage(transformedImage(std::move(image), m_transform.transformations));
 }
 
 QImage QImageReaderTileSource::readFullImage(QString *errorString) const

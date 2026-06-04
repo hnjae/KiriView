@@ -183,14 +183,14 @@ QImage renderedThumbnailImage(
         [maximumLongEdge, errorString](const auto &image) -> QImage {
             using Image = std::decay_t<decltype(image)>;
             if constexpr (std::is_same_v<Image, KiriView::StaticDecodedImage>) {
-                if (image.staticImage.source == nullptr) {
+                const KiriView::StaticImagePayload staticImage = image.compatibilityStaticImage();
+                if (staticImage.source == nullptr) {
                     if (errorString != nullptr) {
                         *errorString = QStringLiteral("static image source is unavailable");
                     }
                     return {};
                 }
-                return image.staticImage.source->decodeBlockingDisplayImage(
-                    maximumLongEdge, errorString);
+                return staticImage.source->decodeBlockingDisplayImage(maximumLongEdge, errorString);
             } else {
                 Q_UNUSED(errorString)
                 return thumbnailFrame(image.firstFrame, maximumLongEdge);

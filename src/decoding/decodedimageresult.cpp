@@ -4,6 +4,7 @@
 #include "decodedimageresult.h"
 
 #include <optional>
+#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -71,6 +72,13 @@ const EmbeddedMetadata &decodedImageEmbeddedMetadata(const DecodedImage &image)
 
 void setDecodedImageEmbeddedMetadata(DecodedImage &image, EmbeddedMetadata metadata)
 {
-    std::visit([&metadata](auto &decoded) { decoded.embeddedMetadata = metadata; }, image);
+    std::visit(
+        [&metadata](auto &decoded) {
+            decoded.embeddedMetadata = metadata;
+            if constexpr (std::is_same_v<std::decay_t<decltype(decoded)>, StaticDecodedImage>) {
+                decoded.displayImage.embeddedMetadata = metadata;
+            }
+        },
+        image);
 }
 }

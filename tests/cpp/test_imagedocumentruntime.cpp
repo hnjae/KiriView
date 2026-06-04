@@ -28,6 +28,7 @@ using KiriView::TestSupport::imageDocumentRuntimeDependencyOverridesFor;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualFileDeletionProvider;
 using KiriView::TestSupport::ManualImageDataLoader;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
 using KiriView::TestSupport::staticTestImagePayload;
@@ -105,7 +106,9 @@ KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSi
     const QSize &previewSize, KiriView::StaticImageDisplayHints displayHints = {})
 {
     return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
-        staticTestImagePayload(testImage(sourceSize), testImage(previewSize), displayHints),
+        staticDisplayTestImagePayload(testImage(sourceSize), testImage(previewSize), displayHints,
+            sourceSize == previewSize ? KiriView::DisplayImageQuality::Exact
+                                      : KiriView::DisplayImageQuality::FirstDisplay),
     });
 }
 
@@ -113,10 +116,15 @@ KiriView::DecodedImageResult singleFrameDecodedImage(const QSize &size)
 {
     QImage image = testImage(size);
     return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
-        KiriView::StaticImagePayload {
-            std::make_shared<NonCacheableTestImageTileSource>(image),
-            std::move(image),
+        KiriView::StaticDisplayImagePayload {
+            QStringLiteral("test-image"),
             {},
+            image.size(),
+            image,
+            KiriView::DisplayImageQuality::Exact,
+            1.0,
+            {},
+            std::make_shared<NonCacheableTestImageTileSource>(std::move(image)),
         },
     });
 }

@@ -21,8 +21,13 @@ struct DecodedImageFailure {
 };
 
 struct StaticDecodedImage {
-    StaticImagePayload staticImage;
+    StaticDisplayImagePayload displayImage;
     EmbeddedMetadata embeddedMetadata;
+
+    StaticImagePayload compatibilityStaticImage() const
+    {
+        return displayImage.compatibilityStaticImage();
+    }
 };
 
 struct ApngAnimationImage {

@@ -168,8 +168,7 @@ KiriView::DecodedImageResult decodeSvgImageData(const KiriView::ImageDecodeRoute
         return failedImageDataResult(std::move(errorString));
     }
 
-    return KiriView::staticDecodedImageResult(
-        std::move(source), input.request.firstDisplay(), &errorString);
+    return KiriView::staticDecodedImageResult(std::move(source), input.request, &errorString);
 }
 
 KiriView::DecodedImageResult decodeApngImageData(const KiriView::ImageDecodeRouterInput &input)
@@ -194,7 +193,8 @@ KiriView::DecodedImageResult decodeApngImageData(const KiriView::ImageDecodeRout
 KiriView::DecodedImageResult decodeHeifRouterImageData(
     const KiriView::ImageDecodeRouterInput &input)
 {
-    std::optional<KiriView::DecodedImageResult> result = KiriView::decodeHeifImageData(input.data);
+    std::optional<KiriView::DecodedImageResult> result
+        = KiriView::decodeHeifImageData(input.data, input.request);
     if (!result.has_value()) {
         return failedReadImageDataResult();
     }

@@ -265,8 +265,9 @@ void TestImageDecodePipeline::defaultSvgDecodeUsesFirstDisplayContext()
 
     const auto *image = KiriView::decodedImageResultImageAs<KiriView::StaticDecodedImage>(result);
     QVERIFY(image != nullptr);
-    QCOMPARE(image->staticImage.preview.size(), QSize(200, 100));
-    QCOMPARE(image->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 2.5);
+    QCOMPARE(image->displayImage.image.size(), QSize(200, 100));
+    QCOMPARE(image->displayImage.quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(image->displayImage.displayPixelsPerSourcePixel, 2.5);
 }
 
 void TestImageDecodePipeline::unknownClassificationFailsWithoutDecoder()

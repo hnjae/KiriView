@@ -50,8 +50,7 @@ private Q_SLOTS:
 void TestImageSurface::staticImagePayloadReportsByteCostWithinBudget()
 {
     const KiriView::StaticImagePayload image
-        = KiriView::TestSupport::staticDecodedTestImage(KiriView::TestSupport::testImage(2, 1))
-              .staticImage;
+        = KiriView::TestSupport::staticTestImagePayload(KiriView::TestSupport::testImage(2, 1));
     const qsizetype byteCost = image.byteCost();
 
     const std::optional<qsizetype> acceptedByteCost = image.byteCostWithinBudget(byteCost);
@@ -81,8 +80,7 @@ void TestImageSurface::staticImagePayloadByteCostSaturatesOversizedSources()
 void TestImageSurface::staticTileSurfaceUsesExplicitCacheBudget()
 {
     KiriView::StaticImagePayload staticImage
-        = KiriView::TestSupport::staticDecodedTestImage(KiriView::TestSupport::testImage(3, 2))
-              .staticImage;
+        = KiriView::TestSupport::staticTestImagePayload(KiriView::TestSupport::testImage(3, 2));
 
     const KiriView::StaticTileSurface surface(std::move(staticImage), 4096);
 
@@ -116,8 +114,7 @@ void TestImageSurface::displayedImageSurfaceExposesOnlyActivePayload()
     QVERIFY(legacySurface.staticTileSurface() == nullptr);
 
     KiriView::StaticImagePayload staticImage
-        = KiriView::TestSupport::staticDecodedTestImage(KiriView::TestSupport::testImage(3, 2))
-              .staticImage;
+        = KiriView::TestSupport::staticTestImagePayload(KiriView::TestSupport::testImage(3, 2));
     const KiriView::DisplayedImageSurface staticSurface(
         KiriView::StaticTileSurface { std::move(staticImage), testTileCacheByteBudget });
 

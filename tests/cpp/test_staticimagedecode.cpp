@@ -3,6 +3,8 @@
 
 #include "decoding/staticimagedecode.h"
 
+#include "decoding/imagedecoderequest.h"
+
 #include <QImage>
 #include <QObject>
 #include <QTest>

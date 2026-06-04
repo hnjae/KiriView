@@ -45,10 +45,10 @@ void verifyDecodedRawFixture(
         qPrintable(failure != nullptr ? failure->errorString
                                       : QStringLiteral("RAW fixture did not decode.")));
 
-    QVERIFY(decoded->staticImage.source != nullptr);
-    QCOMPARE(decoded->staticImage.source->imageSize(), QSize(32, 32));
-    QVERIFY(!decoded->staticImage.preview.isNull());
-    QVERIFY(!decoded->staticImage.preview.size().isEmpty());
+    QVERIFY(decoded->displayImage.refinementSource != nullptr);
+    QCOMPARE(decoded->displayImage.originalSize, QSize(32, 32));
+    QVERIFY(!decoded->displayImage.image.isNull());
+    QVERIFY(!decoded->displayImage.image.size().isEmpty());
 }
 }
 
