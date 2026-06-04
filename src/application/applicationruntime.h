@@ -5,11 +5,13 @@
 #define KIRIVIEW_APPLICATIONRUNTIME_H
 
 class QQmlApplicationEngine;
+class QQmlEngine;
 
 namespace KiriView {
 struct ApplicationStartupSource;
 
 void initializeApplicationRuntime();
+void registerApplicationImageProviders(QQmlEngine &engine);
 void loadApplicationMainQml(
     QQmlApplicationEngine &engine, const ApplicationStartupSource &startupSource);
 int runApplication(const ApplicationStartupSource &startupSource);

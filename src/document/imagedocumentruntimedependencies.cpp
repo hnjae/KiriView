@@ -33,15 +33,6 @@ ImageCacheBudgetRequest imageDocumentCacheBudgetRequestWithDefaults(ImageCacheBu
 ImageCacheBudgets resolveImageDocumentCacheBudgets(ImageCacheBudgetRequest request)
 {
     request = imageDocumentCacheBudgetRequestWithDefaults(request);
-    if (request.predecodeCacheByteBudget > 0 && request.staticTileCacheByteBudget > 0
-        && request.thumbnailCacheByteBudget > 0) {
-        return ImageCacheBudgets {
-            request.predecodeCacheByteBudget,
-            request.staticTileCacheByteBudget,
-            request.thumbnailCacheByteBudget,
-        };
-    }
-
     return resolvedImageCacheBudgets(request, systemMemorySnapshot());
 }
 

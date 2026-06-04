@@ -94,10 +94,14 @@ ImageCacheBudgets resolvedImageCacheBudgets(
     const qsizetype thumbnailCacheByteBudget = request.thumbnailCacheByteBudget > 0
         ? request.thumbnailCacheByteBudget
         : thumbnailCacheByteBudgetForSystemMemory(systemMemory.physicalByteSize);
+    const qsizetype displayImageCacheByteBudget = request.displayImageCacheByteBudget > 0
+        ? request.displayImageCacheByteBudget
+        : staticTileCacheByteBudget;
     return ImageCacheBudgets {
         predecodeCacheByteBudget,
         staticTileCacheByteBudget,
         thumbnailCacheByteBudget,
+        displayImageCacheByteBudget,
     };
 }
 }

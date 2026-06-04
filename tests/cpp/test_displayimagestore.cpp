@@ -112,7 +112,7 @@ void TestDisplayImageStore::providerReportsOriginalSizeAndMissesReturnEmpty()
 
 void TestDisplayImageStore::providerHandlesRequestedSizeAsDownscaleOnly()
 {
-    auto store = std::make_shared<KiriView::DisplayImageStore>(4096);
+    auto store = std::make_shared<KiriView::DisplayImageStore>(32768);
     const QString id = store->insert(testEntry(QSize(80, 40)));
     KiriView::DisplayImageProvider provider(store);
 

@@ -5,11 +5,13 @@
 
 #include "applicationstartupsource.h"
 #include "localization/localization.h"
+#include "rendering/displayimagestore.h"
 #include "session/thumbnailimagestore.h"
 
 #include <QApplication>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlEngine>
 #include <QQuickStyle>
 #include <QString>
 #include <QUrl>
@@ -39,12 +41,19 @@ void initializeApplicationRuntime()
     setupDefaultQuickStyle();
 }
 
+void registerApplicationImageProviders(QQmlEngine &engine)
+{
+    engine.addImageProvider(QStringLiteral("kiriview-thumbnails"),
+        new ThumbnailImageProvider(sharedThumbnailImageStore()));
+    engine.addImageProvider(
+        QStringLiteral("kiriview-images"), new DisplayImageProvider(sharedDisplayImageStore()));
+}
+
 void loadApplicationMainQml(
     QQmlApplicationEngine &engine, const ApplicationStartupSource &startupSource)
 {
     setupLocalizedContext(engine);
-    engine.addImageProvider(QStringLiteral("kiriview-thumbnails"),
-        new ThumbnailImageProvider(sharedThumbnailImageStore()));
+    registerApplicationImageProviders(engine);
 
     const QUrl initialSourceUrl = initialSourceUrlFromStartupSource(startupSource);
     if (!initialSourceUrl.isEmpty()) {

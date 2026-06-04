@@ -208,12 +208,13 @@ KiriView::KiriDocumentSessionDependencies documentSessionDependenciesWithCompose
         = KiriView::imageDocumentCacheBudgetRequestWithDefaults(
             dependencies.imageDocument.cacheBudgetRequest);
     if (request.predecodeCacheByteBudget <= 0 || request.staticTileCacheByteBudget <= 0
-        || request.thumbnailCacheByteBudget <= 0) {
+        || request.thumbnailCacheByteBudget <= 0 || request.displayImageCacheByteBudget <= 0) {
         const KiriView::ImageCacheBudgets cacheBudgets
             = KiriView::resolvedImageCacheBudgets(request, KiriView::systemMemorySnapshot());
         request.predecodeCacheByteBudget = cacheBudgets.predecodeCacheByteBudget;
         request.staticTileCacheByteBudget = cacheBudgets.staticTileCacheByteBudget;
         request.thumbnailCacheByteBudget = cacheBudgets.thumbnailCacheByteBudget;
+        request.displayImageCacheByteBudget = cacheBudgets.displayImageCacheByteBudget;
     }
     dependencies.imageDocument.cacheBudgetRequest = request;
     inheritMissingDirectMediaPredecodeDependencies(dependencies);
