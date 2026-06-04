@@ -68,6 +68,8 @@ KiriView::ImageDocumentPublicSignalOperations recordingOperations(QStringList &e
         = [&events]() { events.append(QStringLiteral("imageDocumentSourceScope")); };
     operations.unsupportedOpenedCollectionVideoChanged
         = [&events]() { events.append(QStringLiteral("unsupportedOpenedCollectionVideo")); };
+    operations.displaySourceChanged
+        = [&events]() { events.append(QStringLiteral("displaySource")); };
     operations.repaintRequested = [&events]() { events.append(QStringLiteral("repaint")); };
     return operations;
 }
@@ -124,6 +126,8 @@ void TestImageDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
         KiriView::imageDocumentPublicSignals(Change::UnsupportedOpenedCollectionVideo),
         { Signal::UnsupportedOpenedCollectionVideo, Signal::ZoomPercentKnown });
     comparePublicSignals(
+        KiriView::imageDocumentPublicSignals(Change::DisplaySource), { Signal::DisplaySource });
+    comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::RenderFrame), { Signal::Repaint });
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::Repaint), { Signal::Repaint });
@@ -157,6 +161,10 @@ void TestImageDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionO
             QStringLiteral("pageNavigation"),
             QStringLiteral("repaint"),
         }));
+
+    events.clear();
+    emitter.emitChange(KiriView::ImageDocumentChange::DisplaySource);
+    QCOMPARE(events, QStringList({ QStringLiteral("displaySource") }));
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentPublicSignals)

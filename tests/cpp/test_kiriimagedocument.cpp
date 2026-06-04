@@ -4,6 +4,7 @@
 #include "facade/kiriimagedocument.h"
 
 #include "facade/kiridocumentsession.h"
+#include "facade/kiriimagedisplaysource.h"
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
 
@@ -23,6 +24,7 @@ class TestKiriImageDocument : public QObject
 
 private Q_SLOTS:
     void sourceUrlPropertyIsReadOnlyObservation();
+    void displaySourceFacadeObjectsAreStableReadOnlyObservations();
     void openedCollectionScopeActiveFollowsDisplayedLocation();
 };
 
@@ -70,6 +72,51 @@ void TestKiriImageDocument::sourceUrlPropertyIsReadOnlyObservation()
     const QMetaProperty sourceUrlProperty = metaObject.property(sourceUrlIndex);
     QVERIFY(sourceUrlProperty.hasNotifySignal());
     QVERIFY(!sourceUrlProperty.isWritable());
+}
+
+void TestKiriImageDocument::displaySourceFacadeObjectsAreStableReadOnlyObservations()
+{
+    const QMetaObject &metaObject = KiriImageDocument::staticMetaObject;
+    const int primaryIndex = metaObject.indexOfProperty("primaryDisplaySource");
+    const int secondaryIndex = metaObject.indexOfProperty("secondaryDisplaySource");
+    QVERIFY(primaryIndex >= 0);
+    QVERIFY(secondaryIndex >= 0);
+
+    const QMetaProperty primaryProperty = metaObject.property(primaryIndex);
+    QVERIFY(primaryProperty.isConstant());
+    QVERIFY(!primaryProperty.isWritable());
+
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    candidateProvider.setDirectoryImages(
+        localUrl(QStringLiteral("/images/")), { imageDocumentPageCandidate(imageUrl) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSession(this, candidateProvider, dataLoader);
+
+    KiriImageDocument &document = *session->imageDocument();
+    KiriImageDisplaySource *primary = document.primaryDisplaySource();
+    KiriImageDisplaySource *secondary = document.secondaryDisplaySource();
+    QVERIFY(primary != nullptr);
+    QVERIFY(secondary != nullptr);
+    QCOMPARE(primary, document.primaryDisplaySource());
+    QCOMPARE(secondary, document.secondaryDisplaySource());
+    QCOMPARE(primary->status(), KiriImageDisplaySource::Status::Missing);
+    QVERIFY(!primary->visible());
+
+    QSignalSpy displaySourceSpy(&document, &KiriImageDocument::displaySourceChanged);
+    QSignalSpy primarySpy(primary, &KiriImageDisplaySource::changed);
+
+    loadReady(*session, dataLoader, imageUrl, imageUrl);
+
+    QVERIFY(displaySourceSpy.count() > 0);
+    QVERIFY(primarySpy.count() > 0);
+    QVERIFY(primary->visible());
+    QCOMPARE(primary->status(), KiriImageDisplaySource::Status::Missing);
+    QVERIFY(primary->providerUrl().isEmpty());
+    QCOMPARE(primary->originalSize(), QSize(2, 1));
+    QCOMPARE(primary->pageRole(), KiriImageDisplaySource::PageRole::Primary);
+    QCOMPARE(secondary->pageRole(), KiriImageDisplaySource::PageRole::Secondary);
 }
 
 void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation()

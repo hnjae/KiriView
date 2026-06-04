@@ -225,6 +225,7 @@ private Q_SLOTS:
     void twoPageModeRightToLeftKeepsSinglePageNavigationSemantic();
     void twoPageModeClearsPreviousSpreadWhileTargetSpreadLoads();
     void twoPageModeLoadingNavigationUsesPendingPrimaryPage();
+    void displaySourceProjectionIsExposedBeforeProviderPublication();
 };
 
 void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
@@ -256,6 +257,39 @@ void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
     QCOMPARE(runtime->pageCount(), 0);
     QVERIFY(!runtime->containerNavigationAvailable());
     QVERIFY(runtime->renderSnapshot().isRenderable());
+}
+
+void TestImageDocumentRuntime::displaySourceProjectionIsExposedBeforeProviderPublication()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageDocumentPageCandidate(imageUrl),
+        });
+
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+
+    KiriView::ImageDisplaySourceProjection projection
+        = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    QVERIFY(!projection.visible);
+    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Missing);
+
+    runtime->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+
+    projection = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    QVERIFY(projection.visible);
+    QCOMPARE(projection.pageRole, KiriView::DisplayedPageRole::Primary);
+    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Missing);
+    QVERIFY(projection.providerUrl.isEmpty());
+    QCOMPARE(projection.originalSize, QSize(2, 1));
+    QCOMPARE(projection.selectedSourceScope.kind,
+        KiriView::ImagePresentationScopeKey::Kind::DirectImage);
+    QCOMPARE(projection.selectedSourceScope.url, imageUrl);
 }
 
 void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedImageScope()
