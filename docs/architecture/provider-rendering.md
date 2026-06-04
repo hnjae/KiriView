@@ -20,6 +20,12 @@ Current production code still displays static images through `KiriImageView`, ti
 - QML engine image caching is not a freshness mechanism. The main dynamic display normally disables `Image.cache`; any measured cached path must still use revision-unique provider URLs.
 - `Image.asynchronous`, `sourceSize`, `retainWhileLoading`, and load-acknowledgment policy belong to the accepted presenter contract, not to provider request handling. Slow miss handling, if ever needed, must use an explicit async image-provider contract with provider-owned cancellation rather than ordinary provider side effects.
 
+## Shadow Display-Source Publication
+
+During the compatibility phase, `ImagePresentationRuntime` publishes display-source projections for primary and secondary page roles even while QML still renders `KiriImageView` snapshots. A projection is read-only facade state derived from the accepted page slot and presentation geometry; it may expose a provider URL only when a page-surface owner has published a provider-ready display entry, and it must not claim a thumbnail, predecode, animation frame, or stale-retained image is visible unless that same accepted entry is also the current compatibility surface.
+
+`ImagePageSurfaceController` owns provider-entry ids and store leases for its page role. Static display payloads publish immutable entries, superseded or cleared entries are released through `DisplayImageStore`, visible entries are pinned and prioritized from presentation visibility, and pending-load pins remain disabled until the QML provider-image presenter can acknowledge load outcomes. Cross-source replacement clears the previous projection with the legacy presentation; same-source stale retention may keep a previous provider URL only when presentation policy intentionally keeps that same entry visible.
+
 ## Static Display Payloads
 
 - Static decode results are display-payload-first: the decoded result carries source identity, applied image-reader transform metadata, post-transform original image size, the current display-ready `QImage`, display quality, display pixels per source pixel, embedded metadata, and an optional refinement-capable source payload.
