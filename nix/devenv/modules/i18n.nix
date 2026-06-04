@@ -189,12 +189,12 @@ in
   };
 
   tasks = {
-    "kiriview:i18n:check" = {
+    "ci:i18n:check" = {
       description = "Check translation catalog syntax";
       exec = "kiriview-check-translations";
     };
 
-    "kiriview:i18n:pot-check" = {
+    "ci:i18n:pot-check" = {
       description = "Check that po/kiriview.pot matches source strings";
       exec = "kiriview-check-translation-pot";
     };

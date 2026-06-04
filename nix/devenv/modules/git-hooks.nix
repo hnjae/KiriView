@@ -53,13 +53,7 @@
     };
   };
 
-  tasks."kiriview:git-hooks" = {
+  tasks."ci:git-hooks" = {
     exec = "${lib.getExe config.git-hooks.package} run --all-files";
-    after = [
-      "devenv:files"
-      "kiriview:lint:clippy"
-      "kiriview:test:rust-host"
-    ];
-    before = [ "kiriview:check" ];
   };
 }

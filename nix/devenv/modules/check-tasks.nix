@@ -256,7 +256,25 @@ in
   };
 
   tasks = {
-    "kiriview:test:rust-host" = {
+    "ci:build:rust" = {
+      description = "Build host Rust library artifacts";
+      exec = ''
+        ${hostTaskPrelude}
+        ${testJobsPrelude}
+
+        printf 'Building host Rust library artifacts with %d jobs...\n' "$test_jobs"
+        CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
+            kiriview-rust-host-env \
+            cargo \
+                build \
+                --locked \
+                --lib \
+                --all-features \
+                --jobs "$test_jobs"
+      '';
+    };
+
+    "ci:test:rust" = {
       description = "Run host Rust library tests";
       exec = ''
         ${hostTaskPrelude}
@@ -273,20 +291,12 @@ in
                 --jobs "$test_jobs" \
                 -- \
                 --test-threads "$test_jobs"
-        CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
-            kiriview-rust-host-env \
-            cargo \
-                build \
-                --locked \
-                --lib \
-                --all-features \
-                --jobs "$test_jobs"
       '';
     };
 
-    "kiriview:test:cpp-host" = {
+    "ci:test:cpp" = {
       description = "Run host C++ tests against host Rust artifacts";
-      after = [ "kiriview:test:rust-host" ];
+      after = [ "ci:build:rust" ];
       exec = ''
         ${hostTaskPrelude}
         ${testJobsPrelude}
@@ -308,13 +318,7 @@ in
       '';
     };
 
-    "kiriview:test:host" = {
-      description = "Run host Rust and C++ tests";
-      after = [ "kiriview:test:cpp-host" ];
-      exec = "true";
-    };
-
-    "kiriview:lint:clippy" = {
+    "ci:lint:rust" = {
       description = "Run Rust clippy";
       exec = ''
         ${hostTaskPrelude}
@@ -336,9 +340,8 @@ in
       '';
     };
 
-    "kiriview:lint:qmllint" = {
+    "ci:lint:qml" = {
       description = "Run qmllint against QML sources";
-      after = [ "kiriview:lint:clippy" ];
       exec = ''
         set -euo pipefail
 
@@ -358,22 +361,11 @@ in
       '';
     };
 
-    "kiriview:lint:cpp-prepare" = {
-      description = "Prepare C++ lint inputs";
-      after = [
-        "devenv:files"
-        "kiriview:lint:clippy"
-        "kiriview:lint:qmllint"
-      ];
+    "ci:lint:cpp" = {
+      description = "Run clang-tidy and clazy against C++ sources";
       exec = ''
         ${qtCxxqt.cppLintPrelude}
-      '';
-    };
 
-    "kiriview:lint:cpp-clang-tidy" = {
-      description = "Run clang-tidy against C++ sources";
-      after = [ "kiriview:lint:cpp-prepare" ];
-      exec = ''
         ${hostTaskPrelude}
         unset QT_PLUGIN_PATH
         ${lintJobsPrelude}
@@ -384,16 +376,6 @@ in
             -j "$lint_jobs" \
             -quiet \
             ${qtCxxqt.cppSourcesShellArgs}
-      '';
-    };
-
-    "kiriview:lint:cpp-clazy" = {
-      description = "Run clazy against C++ sources";
-      after = [ "kiriview:lint:cpp-prepare" ];
-      exec = ''
-        ${hostTaskPrelude}
-        unset QT_PLUGIN_PATH
-        ${lintJobsPrelude}
 
         run-clazy-parallel \
             --jobs "$lint_jobs" \
@@ -404,36 +386,6 @@ in
             -- \
             ${qtCxxqt.cppSourcesShellArgs}
       '';
-    };
-
-    "kiriview:lint:cpp" = {
-      description = "Run C++ linters";
-      after = [
-        "kiriview:lint:cpp-clang-tidy"
-        "kiriview:lint:cpp-clazy"
-      ];
-      exec = "true";
-    };
-
-    "kiriview:lint" = {
-      description = "Run linters";
-      after = [
-        "kiriview:lint:qmllint"
-        "kiriview:lint:cpp"
-      ];
-      exec = "true";
-    };
-
-    "kiriview:check" = {
-      description = "Run KiriView checks";
-      after = [
-        "devenv:git-hooks:run"
-        "kiriview:i18n:check"
-        "kiriview:i18n:pot-check"
-        "kiriview:lint"
-        "kiriview:test:host"
-      ];
-      exec = "true";
     };
   };
 }

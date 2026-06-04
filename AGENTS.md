@@ -19,13 +19,17 @@ Layout: `src/` (app), `tests/cpp/` (C++ tests), `docs/` (docs), `po/` (translati
 
 **Scope verification to the change's blast radius: stay narrow while iterating, go wide before finishing.**
 
-| Situation                                                                                                       | What to run                                                                                                                                           |
-| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Iterating on code                                                                                               | Smallest relevant focused checks: targeted unit/integration tests, `qmllint` on touched QML, clippy/check on touched Rust crates, scoped C++/Qt lint. |
-| Intent-only commit (spec / architecture / test-only)                                                            | Stay narrow; skip the full suite unless the change is unusually risky.                                                                                |
-| Finishing a code change                                                                                         | `just test` (default, unless the user asks to skip/pause).                                                                                            |
-| Touched lint/i18n, QML structure, generated catalogs/templates, formatting rules, or cross-language integration | `just check`.                                                                                                                                         |
-| Touched Flatpak packaging, runtime deps, or manifest test behavior                                              | `just build-with-tests`.                                                                                                                              |
+| Situation                                                                                                   | What to run                                                                                                                                           |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Iterating on code                                                                                           | Smallest relevant focused checks: targeted unit/integration tests, `qmllint` on touched QML, clippy/check on touched Rust crates, scoped C++/Qt lint. |
+| Intent-only commit (spec / architecture / test-only)                                                        | Stay narrow; skip the full suite unless the change is unusually risky.                                                                                |
+| Finishing a code change                                                                                     | `devenv tasks run ci:test` (default, unless the user asks to skip/pause).                                                                             |
+| Touched QML files or QML structure                                                                          | `devenv tasks run ci:lint:qml` plus the relevant Qt/QML CTest target; use `devenv tasks run ci:test` if no focused target covers the behavior.        |
+| Touched i18n source strings, generated catalog templates, or generated catalogs                             | `devenv tasks run ci:i18n:pot-check`; also run `devenv tasks run ci:i18n:check` when `po/*.po` files changed.                                         |
+| Touched formatter config or formatting rules                                                                | `devenv shell -- treefmt --ci` plus the relevant hook or lint task for the changed file type.                                                         |
+| Touched lint rules or lint task wiring                                                                      | Run the affected lint task; use `devenv tasks run ci:lint` when the affected lint surface is broad.                                                   |
+| Touched cross-language integration, native source manifests, check-task orchestration, or dependency wiring | `devenv tasks run ci`.                                                                                                                                |
+| Touched Flatpak packaging, runtime deps, or manifest test behavior                                          | `just build-with-tests`.                                                                                                                              |
 
 Always report any skipped focused or final check in your final response.
 
@@ -35,8 +39,8 @@ Always report any skipped focused or final check in your final response.
 - `just build` / `just build-with-tests` — Flatpak build in `build-dir/` (tests off / on).
 - `just run` — launch from `build-dir/`.
 - `devenv shell -- treefmt` / `treefmt --ci` — format / CI format check.
-- Lint all languages: `devenv tasks run --refresh-eval-cache --refresh-task-cache --mode before kiriview:lint`
-- Host tests: `devenv tasks run --refresh-eval-cache --refresh-task-cache --mode before kiriview:test:host`
+- Lint all languages: `devenv tasks run ci:lint`
+- Tests: `devenv tasks run ci:test`
 
 ## Targeted test recipes
 

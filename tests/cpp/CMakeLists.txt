@@ -97,7 +97,7 @@ file(GLOB KIRIVIEW_CXXQT_INCLUDE_DIR_CANDIDATES
 kiriview_latest_path(KIRIVIEW_CXXQT_INCLUDE_DIR ${KIRIVIEW_CXXQT_INCLUDE_DIR_CANDIDATES})
 if(NOT KIRIVIEW_RUST_STATICLIB OR NOT EXISTS "${KIRIVIEW_RUST_STATICLIB}"
     OR NOT KIRIVIEW_CXXQT_INCLUDE_DIR OR NOT EXISTS "${KIRIVIEW_CXXQT_INCLUDE_DIR}")
-    message(FATAL_ERROR "Rust bridge artifacts are missing. Run the Cargo test/build step first.")
+    message(FATAL_ERROR "Rust bridge artifacts are missing. Run the host Rust build step first.")
 endif()
 
 kiriview_manifest_sources(KIRIVIEW_CORE_SOURCE_PATHS "../../src/cpp_core_sources.txt")
