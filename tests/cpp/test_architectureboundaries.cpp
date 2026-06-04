@@ -41,6 +41,9 @@ private Q_SLOTS:
     void qmlViewportUsesFullCommandLifecycle();
     void sourceKeysExposeTypedExtensionFamilies();
     void sourceKeysExposeOperationalExtensionContracts();
+    void imagePageSurfaceOwnerTypeExists();
+    void imagePageSurfaceOwnersExposeNoPresentationState();
+    void activePresentationDoesNotWritePageSurfacePresentationState();
     void productionFacadesDoNotExposePresentationBackdoorSetters();
     void mediaInformationFacadeExposesSnapshotRevision();
 };
@@ -551,6 +554,90 @@ void TestArchitectureBoundaries::sourceKeysExposeOperationalExtensionContracts()
          }) {
         QVERIFY2(header.contains(symbolName), qPrintable(symbolName));
     }
+}
+
+void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
+{
+    const QString headerPath
+        = projectPath(QStringLiteral("src/presentation/imagepagesurfacecontroller.h"));
+    QFileInfo header(headerPath);
+
+    QVERIFY2(header.exists(),
+        qPrintable(QStringLiteral("%1 must define the page surface owner")
+                .arg(relativeProjectPath(headerPath))));
+    QVERIFY(readProjectFile(QStringLiteral("src/presentation/imagepagesurfacecontroller.h"))
+            .contains(QStringLiteral("class ImagePageSurfaceController")));
+}
+
+void TestArchitectureBoundaries::imagePageSurfaceOwnersExposeNoPresentationState()
+{
+    const QString relativePath = QStringLiteral("src/presentation/imagepagesurfacecontroller.h");
+    const QString headerPath = projectPath(relativePath);
+    QVERIFY2(QFileInfo::exists(headerPath),
+        qPrintable(QStringLiteral("%1 must define the page surface owner")
+                .arg(relativeProjectPath(headerPath))));
+
+    const QString header = readProjectFile(relativePath);
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(\bsetViewportSize\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bviewportSize\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bsetVisibleItemRect\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bvisibleItemRect\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bsetZoomPercent\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bzoomPercent\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bzoomMode\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bsetFitMode\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bresetZoom\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\brotateClockwise\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\brotateCounterclockwise\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bresetRotation\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\brotationDegrees\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\brenderSnapshot\s*\()")),
+    };
+
+    QStringList violations;
+    for (const QRegularExpression &pattern : forbiddenPatterns) {
+        QRegularExpressionMatchIterator iterator = pattern.globalMatch(header);
+        while (iterator.hasNext()) {
+            violations.push_back(iterator.next().captured(0));
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::activePresentationDoesNotWritePageSurfacePresentationState()
+{
+    const QList<QString> relativePaths {
+        QStringLiteral("src/presentation/imagepresentationruntime.cpp"),
+        QStringLiteral("src/presentation/imagespreadpresentationcontroller.cpp"),
+        QStringLiteral("src/presentation/imagepresentationactivestate.cpp"),
+    };
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*setVisibleItemRect\s*\()")),
+        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*setViewportSize\s*\()")),
+        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*setZoomPercent\s*\()")),
+        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*setFitMode\s*\()")),
+        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*resetZoom\s*\()")),
+        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*rotateClockwise\s*\()")),
+        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*rotateCounterclockwise\s*\()")),
+        QRegularExpression(QStringLiteral(R"((?:\.|->)\s*resetRotation\s*\()")),
+    };
+
+    QStringList violations;
+    for (const QString &relativePath : relativePaths) {
+        const QString path = projectPath(relativePath);
+        if (!QFileInfo::exists(path)) {
+            continue;
+        }
+
+        const QString matches = matchingLines(path, forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
 void TestArchitectureBoundaries::productionFacadesDoNotExposePresentationBackdoorSetters()
