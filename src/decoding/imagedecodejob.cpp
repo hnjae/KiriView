@@ -5,11 +5,23 @@
 
 #include "async/imageasyncworker.h"
 #include "async/imagecallback.h"
+#include "imageinputclassification.h"
+#include "rawthumbnailpreview.h"
 #include "thumbnailpreview.h"
 
 #include <optional>
 #include <utility>
 #include <variant>
+
+namespace {
+bool rawEmbeddedThumbnailPreviewEligible(
+    const QByteArray &data, const KiriView::ImageDecodeRequest &request)
+{
+    const KiriView::ImageInputClassification classification
+        = KiriView::classifyImageInput(data, request.imageUrl().fileName());
+    return classification.kind == KiriView::ImageInputKind::Raw;
+}
+}
 
 namespace KiriView {
 ImageDecodeJob::ImageDecodeJob(QObject *parent)
@@ -99,7 +111,9 @@ void ImageDecodeJob::startDecode(
 void ImageDecodeJob::startThumbnailPreviewLookup(
     const QByteArray &data, ImageDecodeJobTicket ticket, const ImageDecodeRequest &request)
 {
-    if (!m_callbacks.thumbnailPreview || !m_dependencies.thumbnailPreviewLookupProvider) {
+    if (!m_dependencies.thumbnailPreviewLookupProvider
+        || (!m_callbacks.thumbnailPreview
+            && !m_dependencies.rawEmbeddedThumbnailPreviewExtractor)) {
         return;
     }
 
@@ -115,9 +129,13 @@ void ImageDecodeJob::startThumbnailPreviewLookup(
         return;
     }
 
+    const bool rawPreviewEligible = m_dependencies.rawEmbeddedThumbnailPreviewExtractor
+        && rawEmbeddedThumbnailPreviewEligible(data, request);
+    QByteArray rawPreviewData = rawPreviewEligible ? data : QByteArray();
     m_thumbnailPreviewLookupJob = m_dependencies.thumbnailPreviewLookupProvider(this,
         std::move(*lookupRequest),
-        [this, ticket = std::move(ticket), previewRequest = std::move(*previewRequest)](
+        [this, ticket = std::move(ticket), previewRequest = std::move(*previewRequest),
+            rawPreviewEligible, rawPreviewData = std::move(rawPreviewData)](
             ThumbnailCacheLookupResult lookupResult) mutable {
             ImageDecodeJobRuntimePlan plan = m_state.acceptThumbnailPreview(ticket);
             const auto *operation
@@ -128,6 +146,16 @@ void ImageDecodeJob::startThumbnailPreviewLookup(
 
             XdgThumbnailPreviewResult previewResult
                 = xdgThumbnailPreviewResult(previewRequest, std::move(lookupResult));
+            if (previewResult.status == ThumbnailCacheLookupStatus::Missing && rawPreviewEligible) {
+                startRawEmbeddedThumbnailPreviewValidation(
+                    std::move(rawPreviewData), operation->request);
+                return;
+            }
+            if (previewResult.status != ThumbnailCacheLookupStatus::Ready
+                || !m_callbacks.thumbnailPreview) {
+                return;
+            }
+
             std::optional<StaticDisplayImagePayload> payload
                 = xdgThumbnailPreviewDisplayPayload(operation->request, std::move(previewResult));
             if (!payload.has_value()) {
@@ -136,5 +164,24 @@ void ImageDecodeJob::startThumbnailPreviewLookup(
 
             invokeIfSet(m_callbacks.thumbnailPreview, operation->request, std::move(*payload));
         });
+}
+
+void ImageDecodeJob::startRawEmbeddedThumbnailPreviewValidation(
+    QByteArray data, ImageDecodeRequest request)
+{
+    if (!m_dependencies.rawEmbeddedThumbnailPreviewExtractor) {
+        return;
+    }
+
+    const RawEmbeddedThumbnailPreviewExtractor extractor
+        = m_dependencies.rawEmbeddedThumbnailPreviewExtractor;
+    runAsyncWorker(
+        this,
+        [extractor, data = std::move(data), request]() mutable {
+            RawEmbeddedThumbnailPreviewResult result = extractor(data, request);
+            return rawEmbeddedThumbnailPreviewDisplayPayload(request, std::move(result))
+                .has_value();
+        },
+        [](bool) {});
 }
 }

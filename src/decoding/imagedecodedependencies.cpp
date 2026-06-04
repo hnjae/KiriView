@@ -30,6 +30,7 @@ ImageDecodeDependencies defaultImageDecodeDependencies()
         loadImageData,
         decodeImageDataWithDefaults,
         defaultThumbnailCacheLookupProvider(),
+        rawEmbeddedThumbnailPreviewResult,
     };
 }
 
@@ -45,6 +46,10 @@ ImageDecodeDependencies imageDecodeDependenciesWithDefaults(ImageDecodeDependenc
     if (!dependencies.thumbnailPreviewLookupProvider) {
         dependencies.thumbnailPreviewLookupProvider
             = std::move(defaults.thumbnailPreviewLookupProvider);
+    }
+    if (!dependencies.rawEmbeddedThumbnailPreviewExtractor) {
+        dependencies.rawEmbeddedThumbnailPreviewExtractor
+            = std::move(defaults.rawEmbeddedThumbnailPreviewExtractor);
     }
 
     return dependencies;

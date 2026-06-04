@@ -18,6 +18,7 @@
 #include <QTest>
 #include <QUrl>
 #include <atomic>
+#include <mutex>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -128,22 +129,44 @@ public:
     KiriView::RawEmbeddedThumbnailPreviewExtractor extractor()
     {
         return [this](const QByteArray &data, const KiriView::ImageDecodeRequest &request) {
-            ++callCount;
-            requests.push_back(request);
-            dataSizes.push_back(data.size());
+            std::lock_guard lock(m_mutex);
+            ++m_callCount;
+            m_requests.push_back(request);
+            m_dataSizes.push_back(data.size());
             return result;
         };
     }
 
-    int callCount = 0;
-    std::vector<KiriView::ImageDecodeRequest> requests;
-    std::vector<qsizetype> dataSizes;
+    int callCount() const
+    {
+        std::lock_guard lock(m_mutex);
+        return m_callCount;
+    }
+
+    std::vector<KiriView::ImageDecodeRequest> requests() const
+    {
+        std::lock_guard lock(m_mutex);
+        return m_requests;
+    }
+
+    std::vector<qsizetype> dataSizes() const
+    {
+        std::lock_guard lock(m_mutex);
+        return m_dataSizes;
+    }
+
     KiriView::RawEmbeddedThumbnailPreviewResult result {
         KiriView::RawEmbeddedThumbnailPreviewStatus::Ready,
         thumbnailImage(QSize(16, 16)),
         QSize(32, 32),
         {},
     };
+
+private:
+    mutable std::mutex m_mutex;
+    int m_callCount = 0;
+    std::vector<KiriView::ImageDecodeRequest> m_requests;
+    std::vector<qsizetype> m_dataSizes;
 };
 
 KiriView::ImageDecodeDependencies imageDecodeDependenciesForThumbnailPreview(
@@ -174,6 +197,7 @@ private Q_SLOTS:
     void decodeRequestIsPassedToDecoder();
     void xdgThumbnailPreviewIsDeliveredBeforeDecodeCompletes();
     void staleXdgThumbnailPreviewIsIgnored();
+    void nonRawXdgMissDoesNotRunRawEmbeddedPreview();
     void rawEmbeddedPreviewRunsAfterXdgMissWithoutPublication();
     void readyXdgThumbnailPreviewSuppressesRawEmbeddedPreview();
 };
@@ -405,6 +429,43 @@ void TestImageDecodeJob::staleXdgThumbnailPreviewIsIgnored()
     decoderMayFinish.release(decoderCalls.load() + 1);
 }
 
+void TestImageDecodeJob::nonRawXdgMissDoesNotRunRawEmbeddedPreview()
+{
+    const QByteArray data = encodedPngData(QSize(800, 600));
+    QVERIFY(!data.isEmpty());
+
+    ManualImageDataLoader dataLoader;
+    ManualThumbnailLookupProvider thumbnailLookup;
+    ManualRawEmbeddedThumbnailPreviewExtractor rawExtractor;
+    QSemaphore decoderMayFinish;
+    int decodedCount = 0;
+    KiriView::ImageDecodeJob decodeJob(this,
+        imageDecodeDependenciesForThumbnailPreview(
+            dataLoader,
+            [&decoderMayFinish](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+                decoderMayFinish.acquire();
+                return KiriView::successfulDecodedImageResult(
+                    KiriView::TestSupport::staticDecodedTestImage(
+                        KiriView::TestSupport::testImage(800, 600)));
+            },
+            thumbnailLookup, &rawExtractor),
+        decodeJobCallbacks([&decodedCount](KiriView::ImageDecodeRequest,
+                               KiriView::DecodedImageResult) { ++decodedCount; }));
+
+    decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(13, indexedImageUrl(13)));
+    dataLoader.finishFrontLoad(data);
+
+    QTRY_COMPARE(thumbnailLookup.requests.size(), std::size_t(1));
+    thumbnailLookup.finish(0, missingThumbnailLookup());
+
+    QTest::qWait(50);
+    QCOMPARE(rawExtractor.callCount(), 0);
+    QCOMPARE(decodedCount, 0);
+
+    decoderMayFinish.release();
+    QTRY_COMPARE(decodedCount, 1);
+}
+
 void TestImageDecodeJob::rawEmbeddedPreviewRunsAfterXdgMissWithoutPublication()
 {
     const QByteArray data = rawFixtureData();
@@ -437,13 +498,15 @@ void TestImageDecodeJob::rawEmbeddedPreviewRunsAfterXdgMissWithoutPublication()
     dataLoader.finishFrontLoad(data);
 
     QTRY_COMPARE(thumbnailLookup.requests.size(), std::size_t(1));
-    QCOMPARE(rawExtractor.callCount, 0);
+    QCOMPARE(rawExtractor.callCount(), 0);
 
     thumbnailLookup.finish(0, missingThumbnailLookup());
 
-    QCOMPARE(rawExtractor.callCount, 1);
-    QCOMPARE(rawExtractor.requests.front().id(), quint64(11));
-    QCOMPARE(rawExtractor.dataSizes.front(), data.size());
+    QTRY_COMPARE(rawExtractor.callCount(), 1);
+    const std::vector<KiriView::ImageDecodeRequest> rawRequests = rawExtractor.requests();
+    const std::vector<qsizetype> rawDataSizes = rawExtractor.dataSizes();
+    QCOMPARE(rawRequests.front().id(), quint64(11));
+    QCOMPARE(rawDataSizes.front(), data.size());
     QTest::qWait(50);
     QCOMPARE(previewCount, 0);
     QCOMPARE(decodedCount, 0);
@@ -490,7 +553,7 @@ void TestImageDecodeJob::readyXdgThumbnailPreviewSuppressesRawEmbeddedPreview()
 
     QTRY_VERIFY(previewPayload.has_value());
     QCOMPARE(previewPayload->previewOrigin, KiriView::DisplayImagePreviewOrigin::XdgThumbnail);
-    QCOMPARE(rawExtractor.callCount, 0);
+    QCOMPARE(rawExtractor.callCount(), 0);
     QCOMPARE(decodedCount, 0);
 
     decoderMayFinish.release();

@@ -6,6 +6,7 @@
 #include "bufferedimagereader.h"
 #include "imageinputclassification.h"
 #include "location/sourcekey.h"
+#include "rawthumbnailpreview.h"
 #include "rendering/heiftilesource.h"
 #include "rendering/imagerendering.h"
 #include "rendering/svgtilesource.h"
@@ -125,8 +126,9 @@ std::optional<QSize> trustedOriginalSizeForDecodeData(
         return heifTrustedOriginalSize(data);
     case KiriView::ImageInputKind::QtRaster:
         return qtRasterTrustedOriginalSize(data, classification.qtFormat);
-    case KiriView::ImageInputKind::Apng:
     case KiriView::ImageInputKind::Raw:
+        return KiriView::rawEmbeddedThumbnailPreviewTrustedOriginalSize(data, request);
+    case KiriView::ImageInputKind::Apng:
     case KiriView::ImageInputKind::Unknown:
         break;
     }
