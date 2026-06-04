@@ -21,6 +21,7 @@ class TestImagePageSurfaceController : public QObject
 private Q_SLOTS:
     void providerEntriesAreReleasedOnSupersessionAndClear();
     void visibleProjectionPinsAndPrioritizesProviderEntry();
+    void shadowThumbnailPreviewEntryIsReleasedOnDecodedReplacement();
 };
 
 namespace {
@@ -126,6 +127,39 @@ void TestImagePageSurfaceController::visibleProjectionPinsAndPrioritizesProvider
     stored = store->entry(id);
     QVERIFY(stored.has_value());
     QCOMPARE(stored->priority, KiriView::DisplayImageRetentionPriority::Nearby);
+}
+
+void TestImagePageSurfaceController::shadowThumbnailPreviewEntryIsReleasedOnDecodedReplacement()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+    KiriView::StaticDisplayImagePayload preview = displayPayload(QSize(800, 600));
+    preview.image = KiriView::TestSupport::testImage(QSize(400, 300));
+    preview.quality = KiriView::DisplayImageQuality::ThumbnailPreview;
+    preview.previewOrigin = KiriView::DisplayImagePreviewOrigin::XdgThumbnail;
+
+    const QString previewId = controller.publishShadowDisplayImage(std::move(preview));
+
+    QVERIFY(!previewId.isEmpty());
+    QCOMPARE(
+        controller.snapshot().displaySource.status, KiriView::ImageDisplaySourceStatus::Missing);
+    std::optional<KiriView::DisplayImageStoreEntry> storedPreview = store->entry(previewId);
+    QVERIFY(storedPreview.has_value());
+    QCOMPARE(storedPreview->quality, KiriView::DisplayImageQuality::ThumbnailPreview);
+    QCOMPARE(storedPreview->previewOrigin, KiriView::DisplayImagePreviewOrigin::XdgThumbnail);
+    QCOMPARE(storedPreview->originalSize, QSize(800, 600));
+    QCOMPARE(storedPreview->rasterSize, QSize(400, 300));
+
+    controller.setStaticDisplayImage(displayPayload(QSize(800, 600)), false, renderContext());
+
+    QVERIFY(!store->entry(previewId).has_value());
+    const KiriView::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+    QVERIFY(!replacement.providerUrl.isEmpty());
+    std::optional<KiriView::DisplayImageStoreEntry> storedReplacement
+        = store->entry(entryId(replacement));
+    QVERIFY(storedReplacement.has_value());
+    QCOMPARE(storedReplacement->quality, KiriView::DisplayImageQuality::Exact);
+    QCOMPARE(storedReplacement->previewOrigin, KiriView::DisplayImagePreviewOrigin::None);
 }
 
 QTEST_GUILESS_MAIN(TestImagePageSurfaceController)
