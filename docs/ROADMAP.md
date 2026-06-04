@@ -68,7 +68,7 @@ Track completed provider-rendering migration work by stage so code agents do not
 - [x] Stage 1: Declare provider rendering intent.
 - [x] Stage 2: Add the display image provider foundation.
 - [x] Stage 3: Introduce provider-ready display payloads.
-- [ ] Stage 4: Publish display-source projections.
+- [x] Stage 4: Publish display-source projections.
 - [ ] Stage 5: Add thumbnail preview tier.
 - [ ] Stage 6: Move predecode to display `QImage` payloads.
 - [ ] Stage 7: Add raster refinement buckets.
