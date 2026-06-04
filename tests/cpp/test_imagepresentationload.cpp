@@ -18,6 +18,7 @@
 
 namespace {
 using KiriView::TestSupport::localUrl;
+using KiriView::TestSupport::staticDecodedTestImage;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
@@ -89,8 +90,7 @@ void TestImagePresentationLoad::predecodedImagesPlanStaticCacheablePresentation(
 void TestImagePresentationLoad::decodedImagesPlanPresentationActions()
 {
     {
-        KiriView::DecodedImage decoded
-            = KiriView::StaticDecodedImage { staticTestImagePayload(testImage(QSize(12, 8))) };
+        KiriView::DecodedImage decoded = staticDecodedTestImage(testImage(QSize(12, 8)));
         const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
             std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation,
             testPredecodeCacheByteBudget);
@@ -115,8 +115,7 @@ void TestImagePresentationLoad::decodedImagesPlanPresentationActions()
 
 void TestImagePresentationLoad::staticDecodedPredecodeCacheabilityUsesInjectedBudget()
 {
-    KiriView::DecodedImage decoded
-        = KiriView::StaticDecodedImage { staticTestImagePayload(testImage(QSize(12, 8))) };
+    KiriView::DecodedImage decoded = staticDecodedTestImage(testImage(QSize(12, 8)));
     const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
         std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation, 1);
 
@@ -204,8 +203,7 @@ void TestImagePresentationLoad::staticDecodedImagesAreAppliedToPresentation()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
     const KiriView::ImageLoadSession session = loadSession(imageUrl);
 
-    KiriView::DecodedImage decoded
-        = KiriView::StaticDecodedImage { staticTestImagePayload(testImage(QSize(12, 8))) };
+    KiriView::DecodedImage decoded = staticDecodedTestImage(testImage(QSize(12, 8)));
     const KiriView::ImagePresentationLoadResult result
         = KiriView::presentDecodedImageLoad(controller, std::move(decoded),
             KiriView::ImagePresentationAnimationHandling::StartAnimation, renderContext());
@@ -222,8 +220,7 @@ void TestImagePresentationLoad::unpresentableDecodedImagesLeaveExistingPresentat
     KiriView::ImagePageSurfaceController controller = pageSurfaceController(this);
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
     const KiriView::ImageLoadSession session = loadSession(imageUrl);
-    KiriView::DecodedImage decoded
-        = KiriView::StaticDecodedImage { staticTestImagePayload(testImage(QSize(12, 8))) };
+    KiriView::DecodedImage decoded = staticDecodedTestImage(testImage(QSize(12, 8)));
     QVERIFY(KiriView::presentDecodedImageLoad(controller, std::move(decoded),
         KiriView::ImagePresentationAnimationHandling::StartAnimation, renderContext())
             .presented);
