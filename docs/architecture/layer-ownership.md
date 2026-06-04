@@ -18,18 +18,18 @@ These facade classes live under `src/facade/`. Keep QML-facing API shape there a
 C++ Qt/KDE runtime code owns platform integration and side effects:
 
 - `QObject` lifetime, signal delivery, thread affinity, and cancellation.
-- `QUrl`, `QImage`, `QAction`, `QQuickItem`, `QSGRenderNode`, and other Qt objects.
+- `QUrl`, `QImage`, `QAction`, `QQuickItem`, current compatibility `QSGRenderNode` objects, and other Qt objects.
 - OS and desktop-environment observers such as system-memory discovery and power-saver portal state.
 - `QAction` identity, KDE action collections, configured shortcut state, and shortcut persistence.
 - KIO jobs, KDE settings, dialogs, notifications, file operations, and runtime integration.
-- Image presentation, rendering, and async job orchestration.
-- The image presentation runtime as the single owner of active image presentation state: mode, reading direction, transition phase, zoom, rotation, logical viewport frame, visible source rect, render projections, page visibility, restoration snapshots, and tile-decode demand.
-- Image page surface owners as resource owners for decoded surfaces, static payloads, animation playback, image revision, tile caches, predecode facts, and load lifetimes only.
-- View-owned render context discovery, such as device pixel ratio and maximum texture size. A document may consume one render context provider, but page render items must not compete to install independent providers for the same document.
+- Image presentation, provider-backed display publication, compatibility rendering, and async job orchestration.
+- The image presentation runtime as the single owner of active image presentation state: mode, reading direction, transition phase, zoom, rotation, logical viewport frame, visible source rect, display-source projections, compatibility render projections, page visibility, restoration snapshots, and display refinement demand.
+- Image page surface owners as resource owners for decoded surfaces, display entries, animation playback, image revision, display-image pin leases, compatibility tile caches, predecode facts, and load lifetimes only.
+- Render context discovery, such as device pixel ratio and maximum safe display texture size, through one document-owned provider. The provider-rendering target uses a non-rendering bridge and stable public Qt/Qt Quick capability inputs or conservative fallbacks rather than direct QRhi ownership.
 
 Rust owns Qt-independent policy and algorithms:
 
 - State transitions, workflow plans, and reducer-like decisions.
-- Zoom, viewport, tile, spread, navigation, deletion-target, follow-up, and cache decisions when they are computed from plain value snapshots.
+- Zoom, viewport, provider display bucket, compatibility tile, spread, navigation, deletion-target, follow-up, and cache decisions when they are computed from plain value snapshots.
 - Parsing and byte-level format inspection that is independent of Qt objects.
 - Pure calculations where the same input should produce the same output.
