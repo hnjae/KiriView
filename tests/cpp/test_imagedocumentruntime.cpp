@@ -225,7 +225,7 @@ private Q_SLOTS:
     void twoPageModeRightToLeftKeepsSinglePageNavigationSemantic();
     void twoPageModeClearsPreviousSpreadWhileTargetSpreadLoads();
     void twoPageModeLoadingNavigationUsesPendingPrimaryPage();
-    void displaySourceProjectionIsExposedBeforeProviderPublication();
+    void displaySourceProjectionPublishesProviderForStaticDecode();
 };
 
 void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
@@ -259,7 +259,7 @@ void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
     QVERIFY(runtime->renderSnapshot().isRenderable());
 }
 
-void TestImageDocumentRuntime::displaySourceProjectionIsExposedBeforeProviderPublication()
+void TestImageDocumentRuntime::displaySourceProjectionPublishesProviderForStaticDecode()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -284,9 +284,13 @@ void TestImageDocumentRuntime::displaySourceProjectionIsExposedBeforeProviderPub
     projection = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary);
     QVERIFY(projection.visible);
     QCOMPARE(projection.pageRole, KiriView::DisplayedPageRole::Primary);
-    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Missing);
-    QVERIFY(projection.providerUrl.isEmpty());
+    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Ready);
+    QVERIFY(!projection.providerUrl.isEmpty());
+    QCOMPARE(projection.revision, quint64(1));
+    QCOMPARE(projection.revisionToken, QStringLiteral("1"));
+    QCOMPARE(projection.sourceIdentity, QStringLiteral("test-image"));
     QCOMPARE(projection.originalSize, QSize(2, 1));
+    QCOMPARE(projection.rasterSize, QSize(2, 1));
     QCOMPARE(projection.selectedSourceScope.kind,
         KiriView::ImagePresentationScopeKey::Kind::DirectImage);
     QCOMPARE(projection.selectedSourceScope.url, imageUrl);

@@ -112,9 +112,12 @@ void TestKiriImageDocument::displaySourceFacadeObjectsAreStableReadOnlyObservati
     QVERIFY(displaySourceSpy.count() > 0);
     QVERIFY(primarySpy.count() > 0);
     QVERIFY(primary->visible());
-    QCOMPARE(primary->status(), KiriImageDisplaySource::Status::Missing);
-    QVERIFY(primary->providerUrl().isEmpty());
+    QCOMPARE(primary->status(), KiriImageDisplaySource::Status::Ready);
+    QVERIFY(!primary->providerUrl().isEmpty());
+    QCOMPARE(primary->revisionToken(), QStringLiteral("1"));
+    QCOMPARE(primary->sourceIdentity(), QStringLiteral("test-image"));
     QCOMPARE(primary->originalSize(), QSize(1, 1));
+    QCOMPARE(primary->rasterSize(), QSize(1, 1));
     QCOMPARE(primary->pageRole(), KiriImageDisplaySource::PageRole::Primary);
     QCOMPARE(secondary->pageRole(), KiriImageDisplaySource::PageRole::Secondary);
 }
