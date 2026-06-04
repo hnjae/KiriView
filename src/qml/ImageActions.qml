@@ -26,7 +26,9 @@ Item {
     readonly property var fitAction: fitManagedAction.proxy
     readonly property var fitHeightAction: fitHeightManagedAction.proxy
     readonly property var fitWidthAction: fitWidthManagedAction.proxy
-    readonly property var actualSizeAction: actualSizeManagedAction.proxy
+    readonly property var zoom50PercentAction: zoom50PercentManagedAction.proxy
+    readonly property var zoom100PercentAction: zoom100PercentManagedAction.proxy
+    readonly property var zoom200PercentAction: zoom200PercentManagedAction.proxy
     readonly property var rotateClockwiseAction: rotateClockwiseManagedAction.proxy
     readonly property var rotateCounterclockwiseAction: rotateCounterclockwiseManagedAction.proxy
     readonly property var twoPageModeAction: twoPageModeManagedAction.proxy
@@ -55,7 +57,9 @@ Item {
     readonly property var fitMenuAction: fitManagedAction.menuProxy
     readonly property var fitHeightMenuAction: fitHeightManagedAction.menuProxy
     readonly property var fitWidthMenuAction: fitWidthManagedAction.menuProxy
-    readonly property var actualSizeMenuAction: actualSizeManagedAction.menuProxy
+    readonly property var zoom50PercentMenuAction: zoom50PercentManagedAction.menuProxy
+    readonly property var zoom100PercentMenuAction: zoom100PercentManagedAction.menuProxy
+    readonly property var zoom200PercentMenuAction: zoom200PercentManagedAction.menuProxy
     readonly property var rotateClockwiseMenuAction: rotateClockwiseManagedAction.menuProxy
     readonly property var rotateCounterclockwiseMenuAction: rotateCounterclockwiseManagedAction.menuProxy
     readonly property var twoPageModeMenuAction: twoPageModeManagedAction.menuProxy
@@ -76,7 +80,7 @@ Item {
     readonly property var applicationMenuDocumentActions: root.imageMode || root.videoMode ? [applicationMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy] : []
     readonly property var applicationMenuImageActions: root.imageMode ? root.applicationMenuNavigationActions.concat([rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy]) : []
     readonly property var applicationMenuActions: [openManagedAction.menuProxy, openWithManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy].concat(root.applicationMenuDocumentActions, root.applicationMenuImageActions, [applicationMenuViewSeparator, infoPanelManagedAction.menuProxy, thumbnailPanelManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy])
-    readonly property var contextMenuActions: [openManagedAction.menuProxy, openWithManagedAction.menuProxy, contextMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy, contextMenuImageSeparator, rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, zoomInManagedAction.menuProxy, zoomOutManagedAction.menuProxy, fitManagedAction.menuProxy, fitHeightManagedAction.menuProxy, fitWidthManagedAction.menuProxy, actualSizeManagedAction.menuProxy, contextMenuViewSeparator, infoPanelManagedAction.menuProxy, thumbnailPanelManagedAction.menuProxy, fullscreenManagedAction.menuProxy]
+    readonly property var contextMenuActions: [openManagedAction.menuProxy, openWithManagedAction.menuProxy, contextMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy, contextMenuImageSeparator, rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, zoomInManagedAction.menuProxy, zoomOutManagedAction.menuProxy, zoom50PercentManagedAction.menuProxy, zoom100PercentManagedAction.menuProxy, zoom200PercentManagedAction.menuProxy, fitManagedAction.menuProxy, fitHeightManagedAction.menuProxy, fitWidthManagedAction.menuProxy, contextMenuViewSeparator, infoPanelManagedAction.menuProxy, thumbnailPanelManagedAction.menuProxy, fullscreenManagedAction.menuProxy]
 
     property Kirigami.Action applicationMenuFileSeparator: Kirigami.Action {
         displayHint: Kirigami.DisplayHint.AlwaysHide
@@ -221,9 +225,23 @@ Item {
     }
 
     ManagedAction {
-        id: actualSizeManagedAction
+        id: zoom50PercentManagedAction
 
-        actionId: KiriViewApplication.ViewActualSizeAction
+        actionId: KiriViewApplication.ViewZoom50PercentAction
+        application: root.application
+    }
+
+    ManagedAction {
+        id: zoom100PercentManagedAction
+
+        actionId: KiriViewApplication.ViewZoom100PercentAction
+        application: root.application
+    }
+
+    ManagedAction {
+        id: zoom200PercentManagedAction
+
+        actionId: KiriViewApplication.ViewZoom200PercentAction
         application: root.application
     }
 

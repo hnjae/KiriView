@@ -98,7 +98,25 @@ msgstr ""
 #: src/application/applicationactionstatepolicy.cpp
 #, kde-format
 msgctxt "@action:inmenu"
-msgid "&Fit"
+msgid "Zoom to &50%"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Zoom to &100%"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Zoom to &200%"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
+msgid "Fit to &Window"
 msgstr ""
 
 #: src/application/applicationactionstatepolicy.cpp
@@ -111,12 +129,6 @@ msgstr ""
 #, kde-format
 msgctxt "@action:inmenu"
 msgid "Fit &Width"
-msgstr ""
-
-#: src/application/applicationactionstatepolicy.cpp
-#, kde-format
-msgctxt "@action:inmenu"
-msgid "&Actual Size"
 msgstr ""
 
 #: src/application/applicationactionstatepolicy.cpp
@@ -313,7 +325,22 @@ msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp
 msgctxt "@action"
-msgid "Fit"
+msgid "Zoom to 50%"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Zoom to 100%"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Zoom to 200%"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Fit to Window"
 msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp
@@ -324,11 +351,6 @@ msgstr ""
 #: src/application/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Fit Width"
-msgstr ""
-
-#: src/application/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Actual Size"
 msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp

@@ -125,6 +125,21 @@ Controls.MenuBar {
             visible: root.imageMode
         }
 
+        MenuActionItem {
+            action: root.actions.zoom50PercentMenuAction
+            visible: root.imageMode
+        }
+
+        MenuActionItem {
+            action: root.actions.zoom100PercentMenuAction
+            visible: root.imageMode
+        }
+
+        MenuActionItem {
+            action: root.actions.zoom200PercentMenuAction
+            visible: root.imageMode
+        }
+
         Controls.MenuSeparator {
             visible: root.imageMode
         }
@@ -152,11 +167,6 @@ Controls.MenuBar {
                 checkable: true
                 checked: root.actions.fitWidthMenuAction?.checked ?? false
             }
-        }
-
-        MenuActionItem {
-            action: root.actions.actualSizeMenuAction
-            visible: root.imageMode
         }
 
         Controls.MenuSeparator {

@@ -305,6 +305,9 @@ void TestKiriViewApplication::mediaShortcutPolicyApiExposesApplicationPolicy()
     KiriViewApplication application;
 
     QVERIFY(application.videoActionUnsupported(KiriViewApplication::ViewZoomInAction));
+    QVERIFY(application.videoActionUnsupported(KiriViewApplication::ViewZoom50PercentAction));
+    QVERIFY(application.videoActionUnsupported(KiriViewApplication::ViewZoom100PercentAction));
+    QVERIFY(application.videoActionUnsupported(KiriViewApplication::ViewZoom200PercentAction));
     QVERIFY(!application.videoActionUnsupported(KiriViewApplication::WindowFullscreenAction));
 
     QVERIFY(application.mediaHorizontalArrowShortcutsEnabled(false, true, false, false, false));
@@ -600,6 +603,16 @@ void TestKiriViewApplication::shortcutHelpModelListsConfigurableActions()
     QCOMPARE(
         model->data(viewIndex, shortcutHelpCategoryKeyRole).toString(), QStringLiteral("view"));
     QVERIFY(model->data(viewIndex, shortcutHelpCategoryFirstRole).toBool());
+
+    const QModelIndex zoomPresetIndex
+        = shortcutHelpIndexForAction(model, QStringLiteral("view_zoom_100_percent"));
+    QVERIFY(zoomPresetIndex.isValid());
+    QCOMPARE(model->data(zoomPresetIndex, shortcutHelpActionTextRole).toString(),
+        QStringLiteral("Zoom to 100%"));
+    QCOMPARE(model->data(zoomPresetIndex, shortcutHelpShortcutKeyTextsRole).toStringList(),
+        QStringList({ nativeText(shortcut(QStringLiteral("Ctrl+1"))) }));
+    QCOMPARE(model->data(zoomPresetIndex, shortcutHelpCategoryKeyRole).toString(),
+        QStringLiteral("view"));
 
     const QModelIndex panelsIndex
         = shortcutHelpIndexForAction(model, QStringLiteral("view_toggle_info_panel"));

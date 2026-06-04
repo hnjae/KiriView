@@ -530,6 +530,21 @@ void KiriViewApplication::handleRuntimeActionTriggered(Actions::ActionId actionI
             image->requestZoomByStepAtCenter(-1.0);
         }
         return;
+    case Actions::ActionId::ViewZoom50PercentAction:
+        if (image != nullptr) {
+            image->requestManualZoomPercent(50.0);
+        }
+        return;
+    case Actions::ActionId::ViewZoom100PercentAction:
+        if (image != nullptr) {
+            image->requestManualZoomPercent(100.0);
+        }
+        return;
+    case Actions::ActionId::ViewZoom200PercentAction:
+        if (image != nullptr) {
+            image->requestManualZoomPercent(200.0);
+        }
+        return;
     case Actions::ActionId::ViewFitAction:
         if (image != nullptr) {
             image->requestFitMode(KiriImageDocument::ZoomMode::Fit);
@@ -543,11 +558,6 @@ void KiriViewApplication::handleRuntimeActionTriggered(Actions::ActionId actionI
     case Actions::ActionId::ViewFitWidthAction:
         if (image != nullptr) {
             image->requestFitMode(KiriImageDocument::ZoomMode::FitWidth);
-        }
-        return;
-    case Actions::ActionId::ViewActualSizeAction:
-        if (image != nullptr) {
-            image->requestActualSizeAtCenter();
         }
         return;
     case Actions::ActionId::ViewRotateClockwiseAction:

@@ -272,10 +272,12 @@ bool videoActionUnsupported(ActionId actionId)
     case ActionId::GoNextArchiveAction:
     case ActionId::ViewZoomInAction:
     case ActionId::ViewZoomOutAction:
+    case ActionId::ViewZoom50PercentAction:
+    case ActionId::ViewZoom100PercentAction:
+    case ActionId::ViewZoom200PercentAction:
     case ActionId::ViewFitAction:
     case ActionId::ViewFitHeightAction:
     case ActionId::ViewFitWidthAction:
-    case ActionId::ViewActualSizeAction:
     case ActionId::ViewRotateClockwiseAction:
     case ActionId::ViewRotateCounterclockwiseAction:
     case ActionId::ViewToggleTwoPageModeAction:

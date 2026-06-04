@@ -69,7 +69,9 @@ ApplicationActionState applicationActionState(
         return state(activeNavigationActionEnabled(input));
     case ActionId::ViewZoomInAction:
     case ActionId::ViewZoomOutAction:
-    case ActionId::ViewActualSizeAction:
+    case ActionId::ViewZoom50PercentAction:
+    case ActionId::ViewZoom100PercentAction:
+    case ActionId::ViewZoom200PercentAction:
     case ActionId::ViewScanForwardAction:
     case ActionId::ViewScanBackwardAction:
         return state(input.readyActionsEnabled);
@@ -142,14 +144,18 @@ QString applicationActionMenuText(ActionId actionId, const ApplicationActionStat
         return i18nc("@action:inmenu", "&Zoom In");
     case ActionId::ViewZoomOutAction:
         return i18nc("@action:inmenu", "Zoom &Out");
+    case ActionId::ViewZoom50PercentAction:
+        return i18nc("@action:inmenu", "Zoom to &50%");
+    case ActionId::ViewZoom100PercentAction:
+        return i18nc("@action:inmenu", "Zoom to &100%");
+    case ActionId::ViewZoom200PercentAction:
+        return i18nc("@action:inmenu", "Zoom to &200%");
     case ActionId::ViewFitAction:
-        return i18nc("@action:inmenu", "&Fit");
+        return i18nc("@action:inmenu", "Fit to &Window");
     case ActionId::ViewFitHeightAction:
         return i18nc("@action:inmenu", "Fit &Height");
     case ActionId::ViewFitWidthAction:
         return i18nc("@action:inmenu", "Fit &Width");
-    case ActionId::ViewActualSizeAction:
-        return i18nc("@action:inmenu", "&Actual Size");
     case ActionId::ViewRotateClockwiseAction:
         return i18nc("@action:inmenu", "Rotate &Clockwise");
     case ActionId::ViewRotateCounterclockwiseAction:

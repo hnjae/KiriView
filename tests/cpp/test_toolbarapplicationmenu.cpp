@@ -642,10 +642,12 @@ Item {
     Kirigami.Action { id: stubNextContainerMenuAction; icon.name: "go-next-use"; text: "Next Archive" }
     Kirigami.Action { id: stubZoomInMenuAction; text: "Zoom In" }
     Kirigami.Action { id: stubZoomOutMenuAction; text: "Zoom Out" }
-    Kirigami.Action { id: stubFitMenuAction; text: "Fit" }
+    Kirigami.Action { id: stubFitMenuAction; text: "Fit to Window" }
     Kirigami.Action { id: stubFitHeightMenuAction; text: "Fit Height" }
     Kirigami.Action { id: stubFitWidthMenuAction; text: "Fit Width" }
-    Kirigami.Action { id: stubActualSizeMenuAction; text: "Actual Size" }
+    Kirigami.Action { id: stubZoom50PercentMenuAction; text: "Zoom to 50%" }
+    Kirigami.Action { id: stubZoom100PercentMenuAction; text: "Zoom to 100%" }
+    Kirigami.Action { id: stubZoom200PercentMenuAction; text: "Zoom to 200%" }
     Kirigami.Action { id: stubRotateClockwiseMenuAction; text: "Rotate Clockwise" }
     Kirigami.Action { id: stubRotateCounterclockwiseMenuAction; text: "Rotate Counterclockwise" }
     Kirigami.Action { id: stubTwoPageModeMenuAction; text: "Two-Page Spread" }
@@ -674,7 +676,9 @@ Item {
         readonly property var fitMenuAction: stubFitMenuAction
         readonly property var fitHeightMenuAction: stubFitHeightMenuAction
         readonly property var fitWidthMenuAction: stubFitWidthMenuAction
-        readonly property var actualSizeMenuAction: stubActualSizeMenuAction
+        readonly property var zoom50PercentMenuAction: stubZoom50PercentMenuAction
+        readonly property var zoom100PercentMenuAction: stubZoom100PercentMenuAction
+        readonly property var zoom200PercentMenuAction: stubZoom200PercentMenuAction
         readonly property var rotateClockwiseMenuAction: stubRotateClockwiseMenuAction
         readonly property var rotateCounterclockwiseMenuAction: stubRotateCounterclockwiseMenuAction
         readonly property var twoPageModeMenuAction: stubTwoPageModeMenuAction

@@ -295,9 +295,11 @@ void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
     QVERIFY(readyRoute != nullptr);
     QCOMPARE(actionIdVariants(readyRoute->actionIds),
         actionIdVariants({ ActionId::ViewZoomInAction, ActionId::ViewZoomOutAction,
-            ActionId::ViewFitAction, ActionId::ViewFitHeightAction, ActionId::ViewFitWidthAction,
-            ActionId::ViewActualSizeAction, ActionId::ViewToggleTwoPageModeAction,
-            ActionId::ViewScanForwardAction, ActionId::ViewScanBackwardAction }));
+            ActionId::ViewZoom50PercentAction, ActionId::ViewZoom100PercentAction,
+            ActionId::ViewZoom200PercentAction, ActionId::ViewFitAction,
+            ActionId::ViewFitHeightAction, ActionId::ViewFitWidthAction,
+            ActionId::ViewToggleTwoPageModeAction, ActionId::ViewScanForwardAction,
+            ActionId::ViewScanBackwardAction }));
 
     const KiriView::ApplicationActions::ApplicationShortcutRoute *containerRoute
         = routeFor(Filter::ShortcutAliases, Scope::ContainerViewerShortcutScope);
@@ -399,6 +401,12 @@ void TestApplicationShortcutPolicy::videoUnsupportedActionPolicyRejectsImageOnly
     QVERIFY(
         KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewRotateClockwiseAction));
     QVERIFY(KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewZoomInAction));
+    QVERIFY(
+        KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewZoom50PercentAction));
+    QVERIFY(
+        KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewZoom100PercentAction));
+    QVERIFY(
+        KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewZoom200PercentAction));
     QVERIFY(KiriView::ApplicationActions::videoActionUnsupported(
         ActionId::ViewToggleTwoPageModeAction));
     QVERIFY(
