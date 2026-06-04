@@ -123,12 +123,37 @@ public:
     std::vector<KiriView::ThumbnailCacheLookupCallback> callbacks;
 };
 
+class SemaphoreReleaseOnExit
+{
+public:
+    explicit SemaphoreReleaseOnExit(QSemaphore &semaphore)
+        : m_semaphore(&semaphore)
+    {
+    }
+
+    ~SemaphoreReleaseOnExit()
+    {
+        if (m_semaphore != nullptr) {
+            m_semaphore->release();
+        }
+    }
+
+    void dismiss() { m_semaphore = nullptr; }
+
+private:
+    QSemaphore *m_semaphore = nullptr;
+};
+
 class ManualRawEmbeddedThumbnailPreviewExtractor
 {
 public:
     KiriView::RawEmbeddedThumbnailPreviewExtractor extractor()
     {
         return [this](const QByteArray &data, const KiriView::ImageDecodeRequest &request) {
+            if (mayReturn != nullptr) {
+                mayReturn->acquire();
+            }
+
             std::lock_guard lock(m_mutex);
             ++m_callCount;
             m_requests.push_back(request);
@@ -161,6 +186,7 @@ public:
         QSize(32, 32),
         {},
     };
+    QSemaphore *mayReturn = nullptr;
 
 private:
     mutable std::mutex m_mutex;
@@ -198,7 +224,9 @@ private Q_SLOTS:
     void xdgThumbnailPreviewIsDeliveredBeforeDecodeCompletes();
     void staleXdgThumbnailPreviewIsIgnored();
     void nonRawXdgMissDoesNotRunRawEmbeddedPreview();
-    void rawEmbeddedPreviewRunsAfterXdgMissWithoutPublication();
+    void rawEmbeddedPreviewIsDeliveredAfterXdgMiss();
+    void rawEmbeddedPreviewMissDoesNotPublish();
+    void lateRawEmbeddedPreviewAfterDecodeIsIgnored();
     void readyXdgThumbnailPreviewSuppressesRawEmbeddedPreview();
 };
 
@@ -466,7 +494,7 @@ void TestImageDecodeJob::nonRawXdgMissDoesNotRunRawEmbeddedPreview()
     QTRY_COMPARE(decodedCount, 1);
 }
 
-void TestImageDecodeJob::rawEmbeddedPreviewRunsAfterXdgMissWithoutPublication()
+void TestImageDecodeJob::rawEmbeddedPreviewIsDeliveredAfterXdgMiss()
 {
     const QByteArray data = rawFixtureData();
     QVERIFY(!data.isEmpty());
@@ -475,8 +503,68 @@ void TestImageDecodeJob::rawEmbeddedPreviewRunsAfterXdgMissWithoutPublication()
     ManualThumbnailLookupProvider thumbnailLookup;
     ManualRawEmbeddedThumbnailPreviewExtractor rawExtractor;
     QSemaphore decoderMayFinish;
+    SemaphoreReleaseOnExit releaseDecoderOnExit(decoderMayFinish);
+    std::optional<KiriView::StaticDisplayImagePayload> previewPayload;
     int decodedCount = 0;
+    KiriView::ImageDecodeJob decodeJob(this,
+        imageDecodeDependenciesForThumbnailPreview(
+            dataLoader,
+            [&decoderMayFinish](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+                decoderMayFinish.acquire();
+                return KiriView::successfulDecodedImageResult(
+                    KiriView::TestSupport::staticDecodedTestImage(
+                        KiriView::TestSupport::testImage(32, 32)));
+            },
+            thumbnailLookup, &rawExtractor),
+        decodeJobCallbacks([&decodedCount](KiriView::ImageDecodeRequest,
+                               KiriView::DecodedImageResult) { ++decodedCount; },
+            {},
+            [&previewPayload](
+                const KiriView::ImageDecodeRequest &, KiriView::StaticDisplayImagePayload payload) {
+                previewPayload = std::move(payload);
+            }));
+
+    decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(
+        11, QUrl::fromLocalFile(QStringLiteral("/tmp/raw-cfa-smoke.dng"))));
+    dataLoader.finishFrontLoad(data);
+
+    QTRY_COMPARE(thumbnailLookup.requests.size(), std::size_t(1));
+    QCOMPARE(rawExtractor.callCount(), 0);
+
+    thumbnailLookup.finish(0, missingThumbnailLookup());
+
+    QTRY_COMPARE(rawExtractor.callCount(), 1);
+    const std::vector<KiriView::ImageDecodeRequest> rawRequests = rawExtractor.requests();
+    const std::vector<qsizetype> rawDataSizes = rawExtractor.dataSizes();
+    QCOMPARE(rawRequests.front().id(), quint64(11));
+    QCOMPARE(rawDataSizes.front(), data.size());
+    QTRY_VERIFY(previewPayload.has_value());
+    QCOMPARE(previewPayload->quality, KiriView::DisplayImageQuality::ThumbnailPreview);
+    QCOMPARE(
+        previewPayload->previewOrigin, KiriView::DisplayImagePreviewOrigin::RawEmbeddedThumbnail);
+    QCOMPARE(previewPayload->originalSize, QSize(32, 32));
+    QCOMPARE(previewPayload->image.size(), QSize(16, 16));
+    QVERIFY(previewPayload->refinementSource == nullptr);
+    QCOMPARE(decodedCount, 0);
+
+    decoderMayFinish.release();
+    releaseDecoderOnExit.dismiss();
+    QTRY_COMPARE(decodedCount, 1);
+}
+
+void TestImageDecodeJob::rawEmbeddedPreviewMissDoesNotPublish()
+{
+    const QByteArray data = rawFixtureData();
+    QVERIFY(!data.isEmpty());
+
+    ManualImageDataLoader dataLoader;
+    ManualThumbnailLookupProvider thumbnailLookup;
+    ManualRawEmbeddedThumbnailPreviewExtractor rawExtractor;
+    rawExtractor.result.status = KiriView::RawEmbeddedThumbnailPreviewStatus::Missing;
+    rawExtractor.result.image = {};
+    QSemaphore decoderMayFinish;
     int previewCount = 0;
+    int decodedCount = 0;
     KiriView::ImageDecodeJob decodeJob(this,
         imageDecodeDependenciesForThumbnailPreview(
             dataLoader,
@@ -494,25 +582,60 @@ void TestImageDecodeJob::rawEmbeddedPreviewRunsAfterXdgMissWithoutPublication()
                 KiriView::StaticDisplayImagePayload) { ++previewCount; }));
 
     decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(
-        11, QUrl::fromLocalFile(QStringLiteral("/tmp/raw-cfa-smoke.dng"))));
+        14, QUrl::fromLocalFile(QStringLiteral("/tmp/raw-cfa-smoke.dng"))));
     dataLoader.finishFrontLoad(data);
 
     QTRY_COMPARE(thumbnailLookup.requests.size(), std::size_t(1));
-    QCOMPARE(rawExtractor.callCount(), 0);
-
     thumbnailLookup.finish(0, missingThumbnailLookup());
 
     QTRY_COMPARE(rawExtractor.callCount(), 1);
-    const std::vector<KiriView::ImageDecodeRequest> rawRequests = rawExtractor.requests();
-    const std::vector<qsizetype> rawDataSizes = rawExtractor.dataSizes();
-    QCOMPARE(rawRequests.front().id(), quint64(11));
-    QCOMPARE(rawDataSizes.front(), data.size());
     QTest::qWait(50);
     QCOMPARE(previewCount, 0);
     QCOMPARE(decodedCount, 0);
 
     decoderMayFinish.release();
     QTRY_COMPARE(decodedCount, 1);
+}
+
+void TestImageDecodeJob::lateRawEmbeddedPreviewAfterDecodeIsIgnored()
+{
+    const QByteArray data = rawFixtureData();
+    QVERIFY(!data.isEmpty());
+
+    ManualImageDataLoader dataLoader;
+    ManualThumbnailLookupProvider thumbnailLookup;
+    ManualRawEmbeddedThumbnailPreviewExtractor rawExtractor;
+    QSemaphore rawExtractorMayReturn;
+    rawExtractor.mayReturn = &rawExtractorMayReturn;
+    int previewCount = 0;
+    int decodedCount = 0;
+    KiriView::ImageDecodeJob decodeJob(this,
+        imageDecodeDependenciesForThumbnailPreview(
+            dataLoader,
+            [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+                return KiriView::successfulDecodedImageResult(
+                    KiriView::TestSupport::staticDecodedTestImage(
+                        KiriView::TestSupport::testImage(32, 32)));
+            },
+            thumbnailLookup, &rawExtractor),
+        decodeJobCallbacks([&decodedCount](KiriView::ImageDecodeRequest,
+                               KiriView::DecodedImageResult) { ++decodedCount; },
+            {},
+            [&previewCount](const KiriView::ImageDecodeRequest &,
+                KiriView::StaticDisplayImagePayload) { ++previewCount; }));
+
+    decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(
+        15, QUrl::fromLocalFile(QStringLiteral("/tmp/raw-cfa-smoke.dng"))));
+    dataLoader.finishFrontLoad(data);
+
+    QTRY_COMPARE(thumbnailLookup.requests.size(), std::size_t(1));
+    thumbnailLookup.finish(0, missingThumbnailLookup());
+    QTRY_COMPARE(decodedCount, 1);
+
+    rawExtractorMayReturn.release();
+    QTRY_COMPARE(rawExtractor.callCount(), 1);
+    QTest::qWait(50);
+    QCOMPARE(previewCount, 0);
 }
 
 void TestImageDecodeJob::readyXdgThumbnailPreviewSuppressesRawEmbeddedPreview()

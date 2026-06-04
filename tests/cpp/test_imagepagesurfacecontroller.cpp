@@ -22,6 +22,7 @@ private Q_SLOTS:
     void providerEntriesAreReleasedOnSupersessionAndClear();
     void visibleProjectionPinsAndPrioritizesProviderEntry();
     void shadowThumbnailPreviewEntryIsReleasedOnDecodedReplacement();
+    void rawShadowThumbnailPreviewEntryIsReleasedOnDecodedReplacement();
 };
 
 namespace {
@@ -151,6 +152,40 @@ void TestImagePageSurfaceController::shadowThumbnailPreviewEntryIsReleasedOnDeco
     QCOMPARE(storedPreview->rasterSize, QSize(40, 30));
 
     controller.setStaticDisplayImage(displayPayload(QSize(80, 60)), false, renderContext());
+
+    QVERIFY(!store->entry(previewId).has_value());
+    const KiriView::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+    QVERIFY(!replacement.providerUrl.isEmpty());
+    std::optional<KiriView::DisplayImageStoreEntry> storedReplacement
+        = store->entry(entryId(replacement));
+    QVERIFY(storedReplacement.has_value());
+    QCOMPARE(storedReplacement->quality, KiriView::DisplayImageQuality::Exact);
+    QCOMPARE(storedReplacement->previewOrigin, KiriView::DisplayImagePreviewOrigin::None);
+}
+
+void TestImagePageSurfaceController::rawShadowThumbnailPreviewEntryIsReleasedOnDecodedReplacement()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+    KiriView::StaticDisplayImagePayload preview = displayPayload(QSize(32, 32));
+    preview.image = KiriView::TestSupport::testImage(QSize(16, 16));
+    preview.quality = KiriView::DisplayImageQuality::ThumbnailPreview;
+    preview.previewOrigin = KiriView::DisplayImagePreviewOrigin::RawEmbeddedThumbnail;
+
+    const QString previewId = controller.publishShadowDisplayImage(std::move(preview));
+
+    QVERIFY(!previewId.isEmpty());
+    QCOMPARE(
+        controller.snapshot().displaySource.status, KiriView::ImageDisplaySourceStatus::Missing);
+    std::optional<KiriView::DisplayImageStoreEntry> storedPreview = store->entry(previewId);
+    QVERIFY(storedPreview.has_value());
+    QCOMPARE(storedPreview->quality, KiriView::DisplayImageQuality::ThumbnailPreview);
+    QCOMPARE(
+        storedPreview->previewOrigin, KiriView::DisplayImagePreviewOrigin::RawEmbeddedThumbnail);
+    QCOMPARE(storedPreview->originalSize, QSize(32, 32));
+    QCOMPARE(storedPreview->rasterSize, QSize(16, 16));
+
+    controller.setStaticDisplayImage(displayPayload(QSize(32, 32)), false, renderContext());
 
     QVERIFY(!store->entry(previewId).has_value());
     const KiriView::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
