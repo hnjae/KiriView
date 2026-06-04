@@ -28,6 +28,16 @@ bool ImageLoadSessionTracker::isCurrent(const ImageLoadSession &session) const
     return m_session.has_value() && m_session->sameSession(session);
 }
 
+std::optional<ImageLoadSession> ImageLoadSessionTracker::currentForDecodeRequest(
+    const ImageDecodeRequest &request) const
+{
+    if (!m_session.has_value() || !request.matches(m_session->decodeRequest())) {
+        return std::nullopt;
+    }
+
+    return *m_session;
+}
+
 std::optional<ImageLoadSession> ImageLoadSessionTracker::claimCurrentForDecodeRequest(
     const ImageDecodeRequest &request)
 {

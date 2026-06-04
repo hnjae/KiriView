@@ -133,8 +133,8 @@ void TestImagePageSurfaceController::shadowThumbnailPreviewEntryIsReleasedOnDeco
 {
     auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
     KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
-    KiriView::StaticDisplayImagePayload preview = displayPayload(QSize(800, 600));
-    preview.image = KiriView::TestSupport::testImage(QSize(400, 300));
+    KiriView::StaticDisplayImagePayload preview = displayPayload(QSize(80, 60));
+    preview.image = KiriView::TestSupport::testImage(QSize(40, 30));
     preview.quality = KiriView::DisplayImageQuality::ThumbnailPreview;
     preview.previewOrigin = KiriView::DisplayImagePreviewOrigin::XdgThumbnail;
 
@@ -147,10 +147,10 @@ void TestImagePageSurfaceController::shadowThumbnailPreviewEntryIsReleasedOnDeco
     QVERIFY(storedPreview.has_value());
     QCOMPARE(storedPreview->quality, KiriView::DisplayImageQuality::ThumbnailPreview);
     QCOMPARE(storedPreview->previewOrigin, KiriView::DisplayImagePreviewOrigin::XdgThumbnail);
-    QCOMPARE(storedPreview->originalSize, QSize(800, 600));
-    QCOMPARE(storedPreview->rasterSize, QSize(400, 300));
+    QCOMPARE(storedPreview->originalSize, QSize(80, 60));
+    QCOMPARE(storedPreview->rasterSize, QSize(40, 30));
 
-    controller.setStaticDisplayImage(displayPayload(QSize(800, 600)), false, renderContext());
+    controller.setStaticDisplayImage(displayPayload(QSize(80, 60)), false, renderContext());
 
     QVERIFY(!store->entry(previewId).has_value());
     const KiriView::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;

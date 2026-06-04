@@ -57,6 +57,8 @@ public:
         const ImageDocumentRenderContext &renderContext);
     void setStaticImage(StaticImagePayload staticImage, bool predecodeCacheable,
         const ImageDocumentRenderContext &renderContext);
+    QString publishShadowDisplayImage(StaticDisplayImagePayload displayImage);
+    void clearShadowDisplayImage();
     void discardDecodedTiles();
     void scheduleVisibleTileDecode(const ImagePresentationRenderProjection &projection);
     void clearImage();
@@ -70,6 +72,7 @@ private:
     void publishDisplaySource(const StaticDisplayImagePayload &displayImage);
     void clearDisplaySource();
     void releaseCurrentDisplayEntry();
+    void releaseShadowDisplayEntry();
     void updateDisplaySourceVisibility(bool visible);
     void notify(ImageDocumentChange change);
 
@@ -79,6 +82,7 @@ private:
     std::shared_ptr<DisplayImageStore> m_displayImageStore;
     DisplayedPageRole m_pageRole = DisplayedPageRole::Primary;
     QString m_displayEntryId;
+    QString m_shadowDisplayEntryId;
     bool m_displayEntryVisiblePinned = false;
     ImageDisplaySourceSlot m_displaySource;
     quint64 m_displaySourceRevision = 0;

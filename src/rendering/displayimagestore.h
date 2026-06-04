@@ -40,6 +40,7 @@ struct DisplayImageEntry {
     DisplayImageRetentionPriority priority = DisplayImageRetentionPriority::Nearby;
     quint64 generation = 0;
     QString debugLabel;
+    DisplayImagePreviewOrigin previewOrigin = DisplayImagePreviewOrigin::None;
 };
 
 struct DisplayImageStoreEntry {
@@ -54,6 +55,7 @@ struct DisplayImageStoreEntry {
     qsizetype byteCost = 0;
     quint64 generation = 0;
     QString debugLabel;
+    DisplayImagePreviewOrigin previewOrigin = DisplayImagePreviewOrigin::None;
 };
 
 class DisplayImageStore final

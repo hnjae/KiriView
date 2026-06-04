@@ -3,9 +3,19 @@
 
 #include "thumbnailpreview.h"
 
+#include "bufferedimagereader.h"
+#include "imageinputclassification.h"
+#include "location/sourcekey.h"
+#include "rendering/heiftilesource.h"
+#include "rendering/imagerendering.h"
+#include "rendering/svgtilesource.h"
+
 #include <QFile>
+#include <QImageIOHandler>
 #include <algorithm>
 #include <cmath>
+#include <memory>
+#include <optional>
 #include <utility>
 
 namespace {
@@ -53,6 +63,75 @@ bool aspectCompatible(const QSize &thumbnailSize, const QSize &originalSize)
     }
 
     return std::fabsl(left - right) / maximum <= 0.01L;
+}
+
+QSize transformedImageSize(const QSize &size, QImageIOHandler::Transformations transformations)
+{
+    if (size.isEmpty()) {
+        return {};
+    }
+    if (transformations.toInt() & QImageIOHandler::TransformationRotate90) {
+        return size.transposed();
+    }
+    return size;
+}
+
+std::optional<QSize> qtRasterTrustedOriginalSize(
+    const QByteArray &data, KiriView::QtRasterFormat format)
+{
+    KiriView::BufferedImageReader reader(data, KiriView::qtImageReaderFormat(format));
+    if (!reader || reader.supportsAnimation()) {
+        return std::nullopt;
+    }
+
+    const QSize size = transformedImageSize(reader.size(), reader.transformation());
+    if (!validImageSize(size)) {
+        return std::nullopt;
+    }
+    return size;
+}
+
+std::optional<QSize> svgTrustedOriginalSize(const QByteArray &data)
+{
+    QString errorString;
+    const std::shared_ptr<KiriView::SvgTileSource> source
+        = KiriView::SvgTileSource::open(data, &errorString);
+    if (source == nullptr || !validImageSize(source->imageSize())) {
+        return std::nullopt;
+    }
+    return source->imageSize();
+}
+
+std::optional<QSize> heifTrustedOriginalSize(const QByteArray &data)
+{
+    QString errorString;
+    const std::shared_ptr<KiriView::ImageTileSource> source
+        = KiriView::openHeifTileSource(data, &errorString);
+    if (source == nullptr || !validImageSize(source->imageSize())) {
+        return std::nullopt;
+    }
+    return source->imageSize();
+}
+
+std::optional<QSize> trustedOriginalSizeForDecodeData(
+    const QByteArray &data, const KiriView::ImageDecodeRequest &request)
+{
+    const KiriView::ImageInputClassification classification
+        = KiriView::classifyImageInput(data, request.imageUrl().fileName());
+    switch (classification.kind) {
+    case KiriView::ImageInputKind::Svg:
+        return svgTrustedOriginalSize(data);
+    case KiriView::ImageInputKind::HeifFamily:
+        return heifTrustedOriginalSize(data);
+    case KiriView::ImageInputKind::QtRaster:
+        return qtRasterTrustedOriginalSize(data, classification.qtFormat);
+    case KiriView::ImageInputKind::Apng:
+    case KiriView::ImageInputKind::Raw:
+    case KiriView::ImageInputKind::Unknown:
+        break;
+    }
+
+    return std::nullopt;
 }
 
 KiriView::XdgThumbnailPreviewResult baseResult(const KiriView::XdgThumbnailPreviewRequest &request,
@@ -135,5 +214,48 @@ XdgThumbnailPreviewResult xdgThumbnailPreviewResult(
 
     result.image = std::move(lookupResult.image);
     return result;
+}
+
+std::optional<XdgThumbnailPreviewRequest> xdgThumbnailPreviewRequestForDecodeData(
+    const QByteArray &data, const ImageDecodeRequest &request)
+{
+    if (request.isEmpty()) {
+        return std::nullopt;
+    }
+
+    std::optional<QSize> trustedOriginalSize = trustedOriginalSizeForDecodeData(data, request);
+    if (!trustedOriginalSize.has_value()) {
+        return std::nullopt;
+    }
+
+    return XdgThumbnailPreviewRequest {
+        request.imageUrl(),
+        *trustedOriginalSize,
+        ActiveNavigationThumbnailDemandBucket::XXLarge,
+        true,
+    };
+}
+
+std::optional<StaticDisplayImagePayload> xdgThumbnailPreviewDisplayPayload(
+    const ImageDecodeRequest &request, XdgThumbnailPreviewResult result)
+{
+    if (result.status != ThumbnailCacheLookupStatus::Ready || result.image.isNull()
+        || !validImageSize(result.originalSize)) {
+        return std::nullopt;
+    }
+
+    QImage image = displayReadyImage(std::move(result.image));
+    const qreal pixelsPerSourcePixel = imagePixelsPerSourcePixel(result.originalSize, image.size());
+    return StaticDisplayImagePayload {
+        sourceKeyForUrl(request.imageUrl()).identity,
+        {},
+        result.originalSize,
+        std::move(image),
+        DisplayImageQuality::ThumbnailPreview,
+        pixelsPerSourcePixel > 0.0 ? pixelsPerSourcePixel : 0.0,
+        {},
+        nullptr,
+        DisplayImagePreviewOrigin::XdgThumbnail,
+    };
 }
 }

@@ -84,6 +84,7 @@ struct StaticDisplayImagePayload {
     qreal displayPixelsPerSourcePixel = 0.0;
     EmbeddedMetadata embeddedMetadata;
     std::shared_ptr<ImageTileSource> refinementSource;
+    DisplayImagePreviewOrigin previewOrigin = DisplayImagePreviewOrigin::None;
 
     bool isValid() const;
     qsizetype byteCost() const;

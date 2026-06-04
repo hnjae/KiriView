@@ -8,6 +8,7 @@
 #include "async/imageiojob.h"
 #include "decodedimageresult.h"
 #include "imagedecoderequest.h"
+#include "session/thumbnailcachelookup.h"
 
 #include <QByteArray>
 #include <functional>
@@ -23,6 +24,7 @@ using ImageDataDecoder
 struct ImageDecodeDependencies {
     ImageDataLoader dataLoader;
     ImageDataDecoder dataDecoder;
+    ThumbnailCacheLookupProvider thumbnailPreviewLookupProvider;
 };
 
 ImageDecodeDependencies defaultImageDecodeDependencies();

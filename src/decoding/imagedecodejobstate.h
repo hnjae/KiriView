@@ -31,9 +31,13 @@ struct DeliverImageLoadErrorOperation {
 struct DeliverImageDecodeResultOperation {
     ImageDecodeRequest request;
 };
+struct DeliverImageThumbnailPreviewOperation {
+    ImageDecodeRequest request;
+};
 
 using ImageDecodeJobRuntimeOperation = std::variant<NoImageDecodeJobOperation,
-    StartImageDecodeOperation, DeliverImageLoadErrorOperation, DeliverImageDecodeResultOperation>;
+    StartImageDecodeOperation, DeliverImageLoadErrorOperation, DeliverImageDecodeResultOperation,
+    DeliverImageThumbnailPreviewOperation>;
 
 struct ImageDecodeJobRuntimePlan {
     ImageDecodeJobRuntimeOperation operation;
@@ -55,6 +59,7 @@ public:
 
     ImageDecodeJobRuntimePlan acceptLoadedData(const ImageDecodeJobTicket &ticket);
     ImageDecodeJobRuntimePlan acceptLoadError(const ImageDecodeJobTicket &ticket);
+    ImageDecodeJobRuntimePlan acceptThumbnailPreview(const ImageDecodeJobTicket &ticket);
     ImageDecodeJobRuntimePlan acceptDecodeResult(const ImageDecodeJobTicket &ticket);
 
 private:
@@ -66,6 +71,7 @@ private:
     bool accepts(const ImageDecodeJobTicket &ticket) const;
     ImageDecodeJobRuntimePlan noOperation() const;
     ImageDecodeJobRuntimePlan startDecodePlan(const ImageDecodeRequest &request) const;
+    ImageDecodeJobRuntimePlan thumbnailPreviewPlan(const ImageDecodeRequest &request) const;
     template <typename Operation>
     ImageDecodeJobRuntimePlan claim(const ImageDecodeJobTicket &ticket, Phase phase);
 

@@ -71,6 +71,7 @@ bool PredecodeLoadController::startLoad(PredecodeLoadStart load)
             },
             [this](
                 const ImageDecodeRequest &request, const QString &) { finishLoadError(request); },
+            {},
         });
     const ImageDecodeRequest request = load.request;
     if (!m_activeDecodes.add(std::move(load.request), decodeJob)) {

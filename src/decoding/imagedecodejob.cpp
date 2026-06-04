@@ -5,7 +5,9 @@
 
 #include "async/imageasyncworker.h"
 #include "async/imagecallback.h"
+#include "thumbnailpreview.h"
 
+#include <optional>
 #include <utility>
 #include <variant>
 
@@ -67,6 +69,7 @@ void ImageDecodeJob::cancel()
 {
     m_state.cancel();
     m_dataLoadJob.cancel();
+    m_thumbnailPreviewLookupJob.cancel();
 }
 
 bool ImageDecodeJob::hasActiveRequest() const { return m_state.hasActiveRequest(); }
@@ -74,6 +77,8 @@ bool ImageDecodeJob::hasActiveRequest() const { return m_state.hasActiveRequest(
 void ImageDecodeJob::startDecode(
     QByteArray data, ImageDecodeJobTicket ticket, ImageDecodeRequest request)
 {
+    startThumbnailPreviewLookup(data, ticket, request);
+
     const ImageDataDecoder decoder = m_dependencies.dataDecoder;
     runAsyncWorker(
         this,
@@ -88,6 +93,48 @@ void ImageDecodeJob::startDecode(
             }
 
             invokeIfSet(m_callbacks.decoded, std::move(operation->request), std::move(result));
+        });
+}
+
+void ImageDecodeJob::startThumbnailPreviewLookup(
+    const QByteArray &data, ImageDecodeJobTicket ticket, const ImageDecodeRequest &request)
+{
+    if (!m_callbacks.thumbnailPreview || !m_dependencies.thumbnailPreviewLookupProvider) {
+        return;
+    }
+
+    std::optional<XdgThumbnailPreviewRequest> previewRequest
+        = xdgThumbnailPreviewRequestForDecodeData(data, request);
+    if (!previewRequest.has_value()) {
+        return;
+    }
+
+    std::optional<ThumbnailCacheLookupRequest> lookupRequest
+        = xdgThumbnailPreviewCacheLookupRequest(*previewRequest);
+    if (!lookupRequest.has_value()) {
+        return;
+    }
+
+    m_thumbnailPreviewLookupJob = m_dependencies.thumbnailPreviewLookupProvider(this,
+        std::move(*lookupRequest),
+        [this, ticket = std::move(ticket), previewRequest = std::move(*previewRequest)](
+            ThumbnailCacheLookupResult lookupResult) mutable {
+            ImageDecodeJobRuntimePlan plan = m_state.acceptThumbnailPreview(ticket);
+            const auto *operation
+                = std::get_if<DeliverImageThumbnailPreviewOperation>(&plan.operation);
+            if (operation == nullptr) {
+                return;
+            }
+
+            XdgThumbnailPreviewResult previewResult
+                = xdgThumbnailPreviewResult(previewRequest, std::move(lookupResult));
+            std::optional<StaticDisplayImagePayload> payload
+                = xdgThumbnailPreviewDisplayPayload(operation->request, std::move(previewResult));
+            if (!payload.has_value()) {
+                return;
+            }
+
+            invokeIfSet(m_callbacks.thumbnailPreview, operation->request, std::move(*payload));
         });
 }
 }

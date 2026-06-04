@@ -74,6 +74,9 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
             [this](ImageLoadSession session, PredecodedImage image) {
                 finishPredecodedImageLoad(std::move(session), std::move(image));
             },
+            [this](ImageLoadSession session, StaticDisplayImagePayload preview) {
+                finishThumbnailPreviewLoad(std::move(session), std::move(preview));
+            },
             [this](ImageLoadSession session) {
                 finishUnsupportedOpenedCollectionVideoLoad(std::move(session));
             },
@@ -126,6 +129,7 @@ void ImageOpenController::finishEmptySourceLoad()
 
 void ImageOpenController::beginSourceLoad()
 {
+    m_pageSurfaceController.clearShadowDisplayImage();
     m_state.setUnsupportedOpenedCollectionVideo(false);
     m_state.setEmbeddedMetadata({});
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
@@ -185,6 +189,13 @@ void ImageOpenController::finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSe
     });
 }
 
+void ImageOpenController::finishThumbnailPreviewLoad(
+    ImageLoadSession session, StaticDisplayImagePayload preview)
+{
+    Q_UNUSED(session);
+    m_pageSurfaceController.publishShadowDisplayImage(std::move(preview));
+}
+
 void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image)
 {
     EmbeddedMetadata metadata = image.embeddedMetadata;
@@ -221,6 +232,7 @@ void ImageOpenController::finishPresentedImageLoad(const ImageLoadSession &sessi
 void ImageOpenController::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {
+    m_pageSurfaceController.clearShadowDisplayImage();
     const QString message = loadErrorMessage(error, errorString);
     const QUrl displayedUrl = m_state.displayedUrl();
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,

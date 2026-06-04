@@ -38,7 +38,11 @@ ImagePageSurfaceController::ImagePageSurfaceController(QObject *context,
             const QString &errorString) { invokeIfSet(m_callbacks.animationError, errorString); });
 }
 
-ImagePageSurfaceController::~ImagePageSurfaceController() = default;
+ImagePageSurfaceController::~ImagePageSurfaceController()
+{
+    releaseShadowDisplayEntry();
+    releaseCurrentDisplayEntry();
+}
 
 QSize ImagePageSurfaceController::imageSize() const { return m_displayedSurfaceState->imageSize(); }
 
@@ -83,6 +87,7 @@ ImagePresentationPageSlotSnapshot ImagePageSurfaceController::snapshot() const
 void ImagePageSurfaceController::setImage(const QImage &image, bool predecodeCacheable)
 {
     m_tileDecodeScheduler->invalidate();
+    clearShadowDisplayImage();
     clearDisplaySource();
     applyDisplayedImageChange(m_displayedSurfaceState->setImage(image, predecodeCacheable));
 }
@@ -92,6 +97,7 @@ void ImagePageSurfaceController::setStaticDisplayImage(StaticDisplayImagePayload
 {
     stopAnimation();
     m_tileDecodeScheduler->invalidate();
+    clearShadowDisplayImage();
     publishDisplaySource(displayImage);
 
     StaticImagePayload staticImage = displayImage.compatibilityStaticImage();
@@ -108,6 +114,7 @@ void ImagePageSurfaceController::setStaticImage(StaticImagePayload staticImage,
 {
     stopAnimation();
     m_tileDecodeScheduler->invalidate();
+    clearShadowDisplayImage();
     clearDisplaySource();
     const bool useFullImageSurface
         = staticImageFitsFullImageSurface(staticImage, renderContext.maximumTextureSize);
@@ -148,6 +155,7 @@ void ImagePageSurfaceController::clearImage()
 {
     stopAnimation();
     m_tileDecodeScheduler->invalidate();
+    clearShadowDisplayImage();
     clearDisplaySource();
     const std::optional<DisplayedImageSurfaceStateChange> change = m_displayedSurfaceState->clear();
     if (change.has_value()) {
@@ -191,6 +199,7 @@ void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePa
               DisplayImageRetentionPriority::Nearby,
               m_displaySourceRevision,
               QStringLiteral("static-display"),
+              displayImage.previewOrigin,
           });
 
     m_displayEntryId = entryId;
@@ -210,6 +219,33 @@ void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePa
         false,
     };
 }
+
+QString ImagePageSurfaceController::publishShadowDisplayImage(
+    StaticDisplayImagePayload displayImage)
+{
+    releaseShadowDisplayEntry();
+    if (m_displayImageStore == nullptr || !displayImage.isValid()) {
+        return {};
+    }
+
+    const QSize rasterSize = displayImage.image.size();
+    const QString entryId = m_displayImageStore->insert(DisplayImageEntry {
+        displayImage.image,
+        displayImage.originalSize,
+        rasterSize,
+        displayImage.sourceIdentity,
+        m_pageRole,
+        displayImage.quality,
+        DisplayImageRetentionPriority::Nearby,
+        0,
+        QStringLiteral("shadow-display"),
+        displayImage.previewOrigin,
+    });
+    m_shadowDisplayEntryId = entryId;
+    return entryId;
+}
+
+void ImagePageSurfaceController::clearShadowDisplayImage() { releaseShadowDisplayEntry(); }
 
 void ImagePageSurfaceController::clearDisplaySource()
 {
@@ -237,6 +273,17 @@ void ImagePageSurfaceController::releaseCurrentDisplayEntry()
     m_displayImageStore->release(entryId);
     m_displayEntryId.clear();
     m_displayEntryVisiblePinned = false;
+}
+
+void ImagePageSurfaceController::releaseShadowDisplayEntry()
+{
+    if (m_displayImageStore == nullptr || m_shadowDisplayEntryId.isEmpty()) {
+        m_shadowDisplayEntryId.clear();
+        return;
+    }
+
+    m_displayImageStore->release(m_shadowDisplayEntryId);
+    m_shadowDisplayEntryId.clear();
 }
 
 void ImagePageSurfaceController::updateDisplaySourceVisibility(bool visible)

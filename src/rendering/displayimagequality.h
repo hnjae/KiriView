@@ -13,6 +13,12 @@ enum class DisplayImageQuality {
     Unsupported,
     Failed,
 };
+
+enum class DisplayImagePreviewOrigin {
+    None,
+    XdgThumbnail,
+    RawEmbeddedThumbnail,
+};
 }
 
 #endif

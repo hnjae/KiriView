@@ -62,6 +62,7 @@ private:
     void beginSourceLoad();
     void finishSourceResolved(ImageLoadSession session);
     void finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSession session);
+    void finishThumbnailPreviewLoad(ImageLoadSession session, StaticDisplayImagePayload preview);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
     void finishPresentedImageLoad(const ImageLoadSession &session,

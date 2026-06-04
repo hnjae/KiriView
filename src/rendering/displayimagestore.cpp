@@ -127,6 +127,7 @@ public:
         qsizetype byteCost = 0;
         quint64 generation = 0;
         QString debugLabel;
+        DisplayImagePreviewOrigin previewOrigin = DisplayImagePreviewOrigin::None;
         quint64 lastUse = 0;
         bool releaseRequested = false;
         int visiblePins = 0;
@@ -189,6 +190,7 @@ public:
             entry.byteCost,
             entry.generation,
             entry.debugLabel,
+            entry.previewOrigin,
         };
     }
 
@@ -271,6 +273,7 @@ QString DisplayImageStore::insert(DisplayImageEntry entry)
         byteCost,
         entry.generation,
         std::move(entry.debugLabel),
+        entry.previewOrigin,
         ++d->useClock,
     });
     d->byteCost = saturatedQtByteSum(d->byteCost, byteCost);

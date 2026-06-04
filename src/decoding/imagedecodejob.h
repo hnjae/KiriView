@@ -21,10 +21,13 @@ class ImageDecodeJob final : public QObject
 public:
     using DecodedCallback = std::function<void(ImageDecodeRequest, DecodedImageResult)>;
     using LoadErrorCallback = std::function<void(const ImageDecodeRequest &, const QString &)>;
+    using ThumbnailPreviewCallback
+        = std::function<void(const ImageDecodeRequest &, StaticDisplayImagePayload)>;
 
     struct Callbacks {
         DecodedCallback decoded;
         LoadErrorCallback loadError;
+        ThumbnailPreviewCallback thumbnailPreview;
     };
 
     explicit ImageDecodeJob(QObject *parent = nullptr);
@@ -37,11 +40,14 @@ public:
     bool hasActiveRequest() const;
 
 private:
+    void startThumbnailPreviewLookup(
+        const QByteArray &data, ImageDecodeJobTicket ticket, const ImageDecodeRequest &request);
     void startDecode(QByteArray data, ImageDecodeJobTicket ticket, ImageDecodeRequest request);
 
     ImageDecodeDependencies m_dependencies;
     Callbacks m_callbacks;
     ImageIoJob m_dataLoadJob;
+    ImageIoJob m_thumbnailPreviewLookupJob;
     ImageDecodeJobState m_state;
 };
 }

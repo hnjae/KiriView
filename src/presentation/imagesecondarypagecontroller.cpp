@@ -49,6 +49,7 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
                 finishPredecodedImageLoad(std::move(session), std::move(image));
             },
             {},
+            {},
             [this](const QUrl &url) {
                 if (!m_callbacks.findPredecodedImage) {
                     return std::optional<PredecodedImage>();

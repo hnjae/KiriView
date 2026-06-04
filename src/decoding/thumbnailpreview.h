@@ -4,10 +4,13 @@
 #ifndef KIRIVIEW_THUMBNAILPREVIEW_H
 #define KIRIVIEW_THUMBNAILPREVIEW_H
 
+#include "decoding/imagedecoderequest.h"
 #include "rendering/displayimagequality.h"
+#include "rendering/staticimage.h"
 #include "session/activenavigationthumbnaildemand.h"
 #include "session/thumbnailcachelookup.h"
 
+#include <QByteArray>
 #include <QImage>
 #include <QSize>
 #include <QString>
@@ -40,6 +43,10 @@ std::optional<ThumbnailCacheLookupRequest> xdgThumbnailPreviewCacheLookupRequest
     const XdgThumbnailPreviewRequest &request);
 XdgThumbnailPreviewResult xdgThumbnailPreviewResult(
     const XdgThumbnailPreviewRequest &request, ThumbnailCacheLookupResult lookupResult);
+std::optional<XdgThumbnailPreviewRequest> xdgThumbnailPreviewRequestForDecodeData(
+    const QByteArray &data, const ImageDecodeRequest &request);
+std::optional<StaticDisplayImagePayload> xdgThumbnailPreviewDisplayPayload(
+    const ImageDecodeRequest &request, XdgThumbnailPreviewResult result);
 }
 
 #endif
