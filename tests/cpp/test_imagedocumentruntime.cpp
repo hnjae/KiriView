@@ -223,6 +223,7 @@ private Q_SLOTS:
     void twoPageModeDisplaysCurrentAndNextComicArchivePages();
     void twoPageModeUsesRightToLeftPageOrder();
     void twoPageModeRightToLeftKeepsSinglePageNavigationSemantic();
+    void twoPageModePublishesAndClearsSecondaryDisplaySourceProjection();
     void twoPageModeClearsPreviousSpreadWhileTargetSpreadLoads();
     void twoPageModeLoadingNavigationUsesPendingPrimaryPage();
     void displaySourceProjectionPublishesProviderForStaticDecode();
@@ -1193,6 +1194,11 @@ void TestImageDocumentRuntime::replacementLoadFailureSelectsTargetError()
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    KiriView::ImageDisplaySourceProjection projection
+        = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    QVERIFY(projection.visible);
+    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Ready);
+    QVERIFY(!projection.providerUrl.isEmpty());
     const std::size_t loadCountBeforeReplacement = dataLoader.loadCount();
 
     runtime->setSourceUrl(missingUrl);
@@ -1202,6 +1208,10 @@ void TestImageDocumentRuntime::replacementLoadFailureSelectsTargetError()
     QCOMPARE(runtime->sourceUrl(), missingUrl);
     QCOMPARE(runtime->displayedUrl(), QUrl());
     QVERIFY(!runtime->renderSnapshot().isRenderable());
+    projection = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    QVERIFY(!projection.visible);
+    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Missing);
+    QVERIFY(projection.providerUrl.isEmpty());
     dataLoader.failBackLoad(QStringLiteral("missing"));
 
     QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Error);
@@ -1813,6 +1823,85 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, thirdPageUrl));
     QTRY_COMPARE(runtime->currentPageNumber(), 2);
     QTRY_COMPARE(runtime->currentLastPageNumber(), 3);
+}
+
+void TestImageDocumentRuntime::twoPageModePublishesAndClearsSecondaryDisplaySourceProjection()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    std::vector<KiriView::ImageDocumentChange> changes;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("03.png"));
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+        {
+            imageDocumentPageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
+            imageDocumentPageCandidate(thirdPageUrl),
+        });
+
+    auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+        return singleFrameDecodedImage(QSize(100, 200));
+    };
+    RuntimeHandle runtime(
+        this,
+        []() {
+            return KiriView::ImageDocumentRenderContext {
+                1.0,
+                KiriView::fallbackTextureSizeMax,
+            };
+        },
+        [&changes](const std::vector<KiriView::ImageDocumentChange> &publishedChanges) {
+            changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
+        },
+        imageDocumentRuntimeDependencyOverridesFor(
+            candidateProvider, dataLoader, std::move(decoder)));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(archiveUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(runtime->displayedUrl(), firstPageUrl);
+
+    runtime->setTwoPageModeEnabled(true);
+    changes.clear();
+    runtime->openNextPage();
+    QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_VERIFY(runtime->secondaryPageVisible());
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::DisplaySource));
+    const KiriView::ImageDisplaySourceProjection primary
+        = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    const KiriView::ImageDisplaySourceProjection secondary
+        = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Secondary);
+    QVERIFY(primary.visible);
+    QVERIFY(secondary.visible);
+    QCOMPARE(secondary.pageRole, KiriView::DisplayedPageRole::Secondary);
+    QCOMPARE(secondary.status, KiriView::ImageDisplaySourceStatus::Ready);
+    QVERIFY(!secondary.providerUrl.isEmpty());
+    QVERIFY(primary.providerUrl != secondary.providerUrl);
+    QCOMPARE(secondary.revision, quint64(1));
+    QCOMPARE(secondary.sourceIdentity, QStringLiteral("test-image"));
+    QCOMPARE(secondary.selectedSourceScope.kind,
+        KiriView::ImagePresentationScopeKey::Kind::OpenedCollection);
+
+    changes.clear();
+    runtime->setTwoPageModeEnabled(false);
+
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::DisplaySource));
+    const KiriView::ImageDisplaySourceProjection clearedSecondary
+        = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Secondary);
+    QVERIFY(!clearedSecondary.visible);
+    QCOMPARE(clearedSecondary.status, KiriView::ImageDisplaySourceStatus::Missing);
+    QVERIFY(clearedSecondary.providerUrl.isEmpty());
 }
 
 void TestImageDocumentRuntime::twoPageModeClearsPreviousSpreadWhileTargetSpreadLoads()
