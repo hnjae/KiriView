@@ -1,11 +1,14 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "decoding/rawthumbnailpreview.h"
 #include "decoding/thumbnailpreview.h"
 
+#include <QBuffer>
 #include <QColor>
 #include <QFile>
 #include <QImage>
+#include <QImageWriter>
 #include <QObject>
 #include <QSize>
 #include <QString>
@@ -48,6 +51,41 @@ KiriView::ThumbnailCacheLookupResult lookupResult(Status status,
         status == Status::Invalid ? QStringLiteral("invalid metadata") : QString(),
     };
 }
+
+KiriView::RawEmbeddedThumbnailPreviewResult rawReadyResult(
+    QImage image = previewImage(QSize(320, 240)), QSize originalSize = QSize(640, 480))
+{
+    return KiriView::RawEmbeddedThumbnailPreviewResult {
+        KiriView::RawEmbeddedThumbnailPreviewStatus::Ready,
+        std::move(image),
+        originalSize,
+        {},
+    };
+}
+
+QByteArray encodedPngData()
+{
+    QImage image(QSize(4, 3), QImage::Format_RGBA8888);
+    image.fill(QColor(Qt::green));
+
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly);
+    QImageWriter writer(&buffer, QByteArrayLiteral("png"));
+    if (!writer.write(image)) {
+        return {};
+    }
+    return data;
+}
+
+QByteArray rawFixtureData()
+{
+    QFile file(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/raw-cfa-smoke.dng"));
+    if (!file.open(QFile::ReadOnly)) {
+        return {};
+    }
+    return file.readAll();
+}
 }
 
 class TestThumbnailPreview : public QObject
@@ -62,6 +100,10 @@ private Q_SLOTS:
     void acceptsExifRotatedProjectionOnlyWithTrustedDimensions();
     void rejectsMissingInvalidFailedAndNullLookupResults();
     void rejectsMissingMismatchedOrOversizedOriginalSize();
+    void rawEmbeddedPreviewPayloadUsesPreviewQualityAndOrigin();
+    void rawEmbeddedPreviewPayloadRejectsInvalidImageOrOriginalSize();
+    void nonRawDataDoesNotExtractRawEmbeddedPreview();
+    void rawFixtureEmbeddedPreviewReturnsReadyOrMissingWithoutFailure();
 };
 
 void TestThumbnailPreview::buildsLocalStillLookupRequest()
@@ -185,6 +227,70 @@ void TestThumbnailPreview::rejectsMissingMismatchedOrOversizedOriginalSize()
                  previewRequest(), lookupResult(Status::Ready, previewImage(QSize(5000, 3750))))
                  .status,
         Status::Invalid);
+}
+
+void TestThumbnailPreview::rawEmbeddedPreviewPayloadUsesPreviewQualityAndOrigin()
+{
+    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
+        12, QUrl::fromLocalFile(QStringLiteral("/tmp/source.dng")));
+
+    const std::optional<KiriView::StaticDisplayImagePayload> payload
+        = KiriView::rawEmbeddedThumbnailPreviewDisplayPayload(request, rawReadyResult());
+
+    QVERIFY(payload.has_value());
+    QCOMPARE(payload->quality, KiriView::DisplayImageQuality::ThumbnailPreview);
+    QCOMPARE(payload->previewOrigin, KiriView::DisplayImagePreviewOrigin::RawEmbeddedThumbnail);
+    QCOMPARE(payload->originalSize, QSize(640, 480));
+    QCOMPARE(payload->image.size(), QSize(320, 240));
+    QVERIFY(payload->refinementSource == nullptr);
+}
+
+void TestThumbnailPreview::rawEmbeddedPreviewPayloadRejectsInvalidImageOrOriginalSize()
+{
+    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
+        13, QUrl::fromLocalFile(QStringLiteral("/tmp/source.dng")));
+
+    QVERIFY(!KiriView::rawEmbeddedThumbnailPreviewDisplayPayload(
+        request, rawReadyResult(QImage(), QSize(640, 480)))
+            .has_value());
+    QVERIFY(!KiriView::rawEmbeddedThumbnailPreviewDisplayPayload(
+        request, rawReadyResult(previewImage(QSize(320, 240)), QSize()))
+            .has_value());
+    QVERIFY(!KiriView::rawEmbeddedThumbnailPreviewDisplayPayload(
+        request, rawReadyResult(previewImage(QSize(300, 300)), QSize(640, 480)))
+            .has_value());
+}
+
+void TestThumbnailPreview::nonRawDataDoesNotExtractRawEmbeddedPreview()
+{
+    const QByteArray data = encodedPngData();
+    QVERIFY(!data.isEmpty());
+    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
+        14, QUrl::fromLocalFile(QStringLiteral("/tmp/source.png")));
+
+    const KiriView::RawEmbeddedThumbnailPreviewResult result
+        = KiriView::rawEmbeddedThumbnailPreviewResult(data, request);
+
+    QCOMPARE(result.status, KiriView::RawEmbeddedThumbnailPreviewStatus::Missing);
+    QVERIFY(result.image.isNull());
+}
+
+void TestThumbnailPreview::rawFixtureEmbeddedPreviewReturnsReadyOrMissingWithoutFailure()
+{
+    const QByteArray data = rawFixtureData();
+    QVERIFY(!data.isEmpty());
+    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
+        15, QUrl::fromLocalFile(QStringLiteral("/tmp/raw-cfa-smoke.dng")));
+
+    const KiriView::RawEmbeddedThumbnailPreviewResult result
+        = KiriView::rawEmbeddedThumbnailPreviewResult(data, request);
+
+    QVERIFY(result.status == KiriView::RawEmbeddedThumbnailPreviewStatus::Ready
+        || result.status == KiriView::RawEmbeddedThumbnailPreviewStatus::Missing);
+    if (result.status == KiriView::RawEmbeddedThumbnailPreviewStatus::Ready) {
+        QCOMPARE(result.originalSize, QSize(32, 32));
+        QVERIFY(KiriView::rawEmbeddedThumbnailPreviewDisplayPayload(request, result).has_value());
+    }
 }
 
 QTEST_GUILESS_MAIN(TestThumbnailPreview)
