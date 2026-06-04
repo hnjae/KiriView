@@ -146,7 +146,7 @@ Holding Ctrl and using the mouse wheel, or holding the right mouse button and us
 
 Double-clicking the image viewport toggles between Fit mode and 100% manual zoom. If the current zoom mode is Fit, double-clicking switches to 100% manual zoom around the clicked viewport point when it is over the image, or around the nearest displayed image point when the click is inside the viewport outside the image. If the current zoom mode is Manual, Fit Height, or Fit Width, double-clicking switches to Fit mode.
 
-When an image is ready, Ctrl+1 selects Fit mode, Ctrl+2 selects Fit Height mode, Ctrl+3 selects Fit Width mode, and Ctrl+0 switches to 100% manual zoom.
+When an image is ready, Ctrl+` switches to 50% manual zoom, Ctrl+1 switches to 100% manual zoom, Ctrl+2 switches to 200% manual zoom, Ctrl+8 selects Fit Height mode, Ctrl+9 selects Fit Width mode, and Ctrl+0 selects Fit to Window mode.
 
 Viewport zoom, fit, panning, and scan results are computed from the current active presentation state. Physical gesture sampling may happen in the Qt Quick viewport, but stale or delayed physical viewport callbacks must not overwrite newer zoom, pan, rotation, resize, or device-pixel-ratio results.
 
