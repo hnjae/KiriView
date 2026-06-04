@@ -209,6 +209,7 @@ src/session/documentsessionstate.cpp
 src/session/windowtitleprojection.cpp
 src/rendering/staticimage.cpp
 src/decoding/staticimagedecode.cpp
+src/decoding/thumbnailpreview.cpp
 src/system/systemmemory.cpp
 src/rendering/svgtilesource.cpp
 src/video/videooutputrendercontextobserver.cpp
