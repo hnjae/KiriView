@@ -256,24 +256,6 @@ in
   };
 
   tasks = {
-    "ci:build:rust" = {
-      description = "Build host Rust library artifacts";
-      exec = ''
-        ${hostTaskPrelude}
-        ${testJobsPrelude}
-
-        printf 'Building host Rust library artifacts with %d jobs...\n' "$test_jobs"
-        CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
-            kiriview-rust-host-env \
-            cargo \
-                build \
-                --locked \
-                --lib \
-                --all-features \
-                --jobs "$test_jobs"
-      '';
-    };
-
     "ci:test:rust" = {
       description = "Run host Rust library tests";
       exec = ''
@@ -296,10 +278,22 @@ in
 
     "ci:test:cpp" = {
       description = "Run host C++ tests against host Rust artifacts";
-      after = [ "ci:build:rust" ];
+      after = [
+        "ci:test:rust@succeeded"
+      ];
       exec = ''
         ${hostTaskPrelude}
         ${testJobsPrelude}
+
+        printf 'Building host Rust library artifacts with %d jobs...\n' "$test_jobs"
+        CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
+            kiriview-rust-host-env \
+            cargo \
+                build \
+                --locked \
+                --lib \
+                --all-features \
+                --jobs "$test_jobs"
 
         cmake \
             -S tests/cpp \
@@ -320,6 +314,9 @@ in
 
     "ci:lint:rust" = {
       description = "Run Rust clippy";
+      after = [
+        "ci:test:cpp@succeeded"
+      ];
       exec = ''
         ${hostTaskPrelude}
         unset LD_LIBRARY_PATH
@@ -363,6 +360,9 @@ in
 
     "ci:lint:cpp" = {
       description = "Run clang-tidy and clazy against C++ sources";
+      after = [
+        "ci:lint:rust@succeeded"
+      ];
       exec = ''
         ${qtCxxqt.cppLintPrelude}
 
@@ -372,6 +372,8 @@ in
 
         ${lib.getExe' pkgs.llvmPackages.clang-unwrapped "run-clang-tidy"} \
             -clang-tidy-binary ${lib.getExe' pkgs.clang-tools "clang-tidy"} \
+            -header-filter=${lib.escapeShellArg "^${config.devenv.root}/src/"} \
+            -exclude-header-filter=${lib.escapeShellArg "^${config.devenv.root}/(target|build-dir)/"} \
             -p . \
             -j "$lint_jobs" \
             -quiet \
