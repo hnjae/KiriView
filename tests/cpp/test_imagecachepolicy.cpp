@@ -20,6 +20,7 @@ private Q_SLOTS:
     void predecodeCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap();
     void thumbnailCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap();
     void resolvedCacheBudgetsUseSnapshotAndPreserveOverrides();
+    void displayImageCacheByteBudgetMirrorsStaticTileBudgetByDefault();
 };
 
 void TestImageCachePolicy::retainsLeastRecentlyUsedEntriesWithinBudget()
@@ -122,6 +123,7 @@ void TestImageCachePolicy::resolvedCacheBudgetsUseSnapshotAndPreserveOverrides()
     QCOMPARE(defaultBudgets.predecodeCacheByteBudget, predecodePreferredByteBudget / 8);
     QCOMPARE(defaultBudgets.staticTileCacheByteBudget, staticTilePreferredByteBudget / 8);
     QCOMPARE(defaultBudgets.thumbnailCacheByteBudget, predecodePreferredByteBudget / 64);
+    QCOMPARE(defaultBudgets.displayImageCacheByteBudget, defaultBudgets.staticTileCacheByteBudget);
 
     const KiriView::ImageCacheBudgets explicitBudgets = KiriView::resolvedImageCacheBudgets(
         KiriView::ImageCacheBudgetRequest {
@@ -129,11 +131,29 @@ void TestImageCachePolicy::resolvedCacheBudgetsUseSnapshotAndPreserveOverrides()
             8192,
             staticTilePreferredByteBudget,
             16384,
+            32768,
         },
         KiriView::SystemMemorySnapshot { predecodePreferredByteBudget });
     QCOMPARE(explicitBudgets.predecodeCacheByteBudget, qsizetype(4096));
     QCOMPARE(explicitBudgets.staticTileCacheByteBudget, qsizetype(8192));
     QCOMPARE(explicitBudgets.thumbnailCacheByteBudget, qsizetype(16384));
+    QCOMPARE(explicitBudgets.displayImageCacheByteBudget, qsizetype(32768));
+}
+
+void TestImageCachePolicy::displayImageCacheByteBudgetMirrorsStaticTileBudgetByDefault()
+{
+    const KiriView::ImageCacheBudgets budgets = KiriView::resolvedImageCacheBudgets(
+        KiriView::ImageCacheBudgetRequest {
+            0,
+            65536,
+            0,
+            0,
+            0,
+        },
+        KiriView::SystemMemorySnapshot {});
+
+    QCOMPARE(budgets.staticTileCacheByteBudget, qsizetype(65536));
+    QCOMPARE(budgets.displayImageCacheByteBudget, qsizetype(65536));
 }
 
 QTEST_GUILESS_MAIN(TestImageCachePolicy)
