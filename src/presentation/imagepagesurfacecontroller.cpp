@@ -14,10 +14,14 @@
 
 namespace KiriView {
 ImagePageSurfaceController::ImagePageSurfaceController(QObject *context,
-    ImagePageSurfaceController::Callbacks callbacks, ImageCacheBudgets cacheBudgets)
+    ImagePageSurfaceController::Callbacks callbacks, ImageCacheBudgets cacheBudgets,
+    std::shared_ptr<DisplayImageStore> displayImageStore, DisplayedPageRole pageRole)
     : m_callbacks(std::move(callbacks))
     , m_predecodeCacheByteBudget(cacheBudgets.predecodeCacheByteBudget)
     , m_staticTileCacheByteBudget(cacheBudgets.staticTileCacheByteBudget)
+    , m_displayImageStore(
+          displayImageStore == nullptr ? sharedDisplayImageStore() : std::move(displayImageStore))
+    , m_pageRole(pageRole)
 {
     m_displayedSurfaceState = std::make_unique<DisplayedImageSurfaceState>();
     m_tileDecodeScheduler
@@ -72,14 +76,31 @@ ImagePresentationPageSlotSnapshot ImagePageSurfaceController::snapshot() const
         imageRevision(),
         imageSize(),
         hasImage(),
-        {},
+        m_displaySource,
     };
 }
 
 void ImagePageSurfaceController::setImage(const QImage &image, bool predecodeCacheable)
 {
     m_tileDecodeScheduler->invalidate();
+    clearDisplaySource();
     applyDisplayedImageChange(m_displayedSurfaceState->setImage(image, predecodeCacheable));
+}
+
+void ImagePageSurfaceController::setStaticDisplayImage(StaticDisplayImagePayload displayImage,
+    bool predecodeCacheable, const ImageDocumentRenderContext &renderContext)
+{
+    stopAnimation();
+    m_tileDecodeScheduler->invalidate();
+    publishDisplaySource(displayImage);
+
+    StaticImagePayload staticImage = displayImage.compatibilityStaticImage();
+    const bool useFullImageSurface
+        = staticImageFitsFullImageSurface(staticImage, renderContext.maximumTextureSize);
+    const DisplayedImageSurfaceStateChange change
+        = m_displayedSurfaceState->setStaticImage(std::move(staticImage), useFullImageSurface,
+            predecodeCacheable, m_staticTileCacheByteBudget);
+    applyDisplayedImageChange(change);
 }
 
 void ImagePageSurfaceController::setStaticImage(StaticImagePayload staticImage,
@@ -87,6 +108,7 @@ void ImagePageSurfaceController::setStaticImage(StaticImagePayload staticImage,
 {
     stopAnimation();
     m_tileDecodeScheduler->invalidate();
+    clearDisplaySource();
     const bool useFullImageSurface
         = staticImageFitsFullImageSurface(staticImage, renderContext.maximumTextureSize);
     const DisplayedImageSurfaceStateChange change
@@ -124,6 +146,7 @@ void ImagePageSurfaceController::clearImage()
 {
     stopAnimation();
     m_tileDecodeScheduler->invalidate();
+    clearDisplaySource();
     const std::optional<DisplayedImageSurfaceStateChange> change = m_displayedSurfaceState->clear();
     if (change.has_value()) {
         applyDisplayedImageChange(*change);
@@ -146,6 +169,52 @@ void ImagePageSurfaceController::applyDisplayedImageTileChange(
     const DisplayedImageSurfaceStateChange &)
 {
     notify(ImageDocumentChange::Repaint);
+}
+
+void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePayload &displayImage)
+{
+    ++m_displaySourceRevision;
+    const QSize rasterSize = displayImage.image.size();
+    const QString entryId = m_displayImageStore == nullptr
+        ? QString()
+        : m_displayImageStore->insert(DisplayImageEntry {
+              displayImage.image,
+              displayImage.originalSize,
+              rasterSize,
+              displayImage.sourceIdentity,
+              m_pageRole,
+              displayImage.quality,
+              DisplayImageRetentionPriority::Nearby,
+              m_displaySourceRevision,
+              QStringLiteral("static-display"),
+          });
+
+    m_displayEntryId = entryId;
+    m_displaySource = ImageDisplaySourceSlot {
+        displayImageSourceForId(entryId),
+        m_displaySourceRevision,
+        displayImage.sourceIdentity,
+        displayImage.originalSize,
+        rasterSize,
+        rasterSize != displayImage.originalSize ? QSize(rasterSize.width(), 0) : QSize(),
+        displayImage.quality,
+        entryId.isEmpty() ? ImageDisplaySourceStatus::Error : ImageDisplaySourceStatus::Ready,
+        false,
+        false,
+        ImageDisplaySourceRetentionStatus::None,
+        false,
+    };
+}
+
+void ImagePageSurfaceController::clearDisplaySource()
+{
+    if (m_displaySource.providerUrl.isEmpty() && m_displayEntryId.isEmpty()
+        && m_displaySource.status == ImageDisplaySourceStatus::Missing) {
+        return;
+    }
+
+    m_displayEntryId.clear();
+    m_displaySource = {};
 }
 
 void ImagePageSurfaceController::notify(ImageDocumentChange change)

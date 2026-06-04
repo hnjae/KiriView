@@ -18,6 +18,8 @@
 
 namespace KiriView {
 namespace {
+    constexpr qsizetype fallbackDisplayStoreByteBudget = 64 * 1024 * 1024;
+
     int priorityRank(DisplayImageRetentionPriority priority)
     {
         switch (priority) {
@@ -34,8 +36,10 @@ namespace {
 
     qsizetype defaultDisplayStoreByteBudget()
     {
-        return resolvedImageCacheBudgets(ImageCacheBudgetRequest {}, systemMemorySnapshot())
-            .displayImageCacheByteBudget;
+        const qsizetype byteBudget
+            = resolvedImageCacheBudgets(ImageCacheBudgetRequest {}, systemMemorySnapshot())
+                  .displayImageCacheByteBudget;
+        return byteBudget > 0 ? byteBudget : fallbackDisplayStoreByteBudget;
     }
 
     QSize normalizedOriginalSize(const DisplayImageEntry &entry)

@@ -22,6 +22,7 @@
 namespace {
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::staticDecodedTestImage;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
@@ -248,7 +249,9 @@ void TestImagePresentationLoad::
 
     QVERIFY(result.presented);
     QVERIFY(controller.hasImage());
-    QVERIFY(controller.imageSurface()->legacyFrameSurface() != nullptr);
+    QVERIFY(controller.imageSurface() != nullptr);
+    QVERIFY(controller.imageSurface()->legacyFrameSurface() != nullptr
+        || controller.imageSurface()->staticTileSurface() != nullptr);
 
     const KiriView::ImageDisplaySourceSlot displaySource = controller.snapshot().displaySource;
     QCOMPARE(displaySource.status, KiriView::ImageDisplaySourceStatus::Ready);

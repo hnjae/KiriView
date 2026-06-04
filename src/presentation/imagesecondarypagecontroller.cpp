@@ -35,7 +35,7 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
                 }
             },
         },
-        cacheBudgets);
+        cacheBudgets, std::shared_ptr<DisplayImageStore> {}, DisplayedPageRole::Secondary);
     m_imageLoader = std::make_unique<ImageLoader>(parent, std::move(candidateProvider),
         std::move(decodeDependencies),
         ImageLoader::Callbacks {

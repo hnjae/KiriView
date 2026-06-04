@@ -13,6 +13,7 @@
 #include <QImage>
 #include <QSize>
 #include <QtGlobal>
+#include <optional>
 #include <variant>
 
 namespace KiriView {
@@ -30,6 +31,7 @@ struct ImagePresentationLoadResult {
 
 struct ImagePresentationStaticImageLoad {
     StaticImagePayload staticImage;
+    std::optional<StaticDisplayImagePayload> displayImage;
     bool predecodeCacheable = false;
 };
 

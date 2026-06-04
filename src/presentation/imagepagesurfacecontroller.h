@@ -8,6 +8,7 @@
 #include "document/imagedocumenttypes.h"
 #include "presentation/imageanimationplaybacksource.h"
 #include "presentation/imagepresentationruntime.h"
+#include "rendering/displayimagestore.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
 
@@ -37,8 +38,9 @@ public:
         AnimationErrorCallback animationError;
     };
 
-    ImagePageSurfaceController(
-        QObject *context, Callbacks callbacks, ImageCacheBudgets cacheBudgets);
+    ImagePageSurfaceController(QObject *context, Callbacks callbacks,
+        ImageCacheBudgets cacheBudgets, std::shared_ptr<DisplayImageStore> displayImageStore = {},
+        DisplayedPageRole pageRole = DisplayedPageRole::Primary);
     ~ImagePageSurfaceController();
 
     QSize imageSize() const;
@@ -51,6 +53,8 @@ public:
     ImagePresentationPageSlotSnapshot snapshot() const;
 
     void setImage(const QImage &image, bool predecodeCacheable);
+    void setStaticDisplayImage(StaticDisplayImagePayload displayImage, bool predecodeCacheable,
+        const ImageDocumentRenderContext &renderContext);
     void setStaticImage(StaticImagePayload staticImage, bool predecodeCacheable,
         const ImageDocumentRenderContext &renderContext);
     void discardDecodedTiles();
@@ -63,11 +67,18 @@ public:
 private:
     void applyDisplayedImageChange(const DisplayedImageSurfaceStateChange &change);
     void applyDisplayedImageTileChange(const DisplayedImageSurfaceStateChange &change);
+    void publishDisplaySource(const StaticDisplayImagePayload &displayImage);
+    void clearDisplaySource();
     void notify(ImageDocumentChange change);
 
     Callbacks m_callbacks;
     qsizetype m_predecodeCacheByteBudget = 0;
     qsizetype m_staticTileCacheByteBudget = 0;
+    std::shared_ptr<DisplayImageStore> m_displayImageStore;
+    DisplayedPageRole m_pageRole = DisplayedPageRole::Primary;
+    QString m_displayEntryId;
+    ImageDisplaySourceSlot m_displaySource;
+    quint64 m_displaySourceRevision = 0;
     std::unique_ptr<DisplayedImageSurfaceState> m_displayedSurfaceState;
     std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
     std::unique_ptr<ImageAnimationPlayer> m_animationPlayer;

@@ -7,6 +7,7 @@
 #include "presentation/imagepagesurfacecontroller.h"
 
 #include <QImage>
+#include <optional>
 #include <utility>
 #include <variant>
 
@@ -22,9 +23,15 @@ KiriView::ImagePresentationLoadResult finishImagePresentation(
 
 KiriView::ImagePresentationLoadResult presentStaticImage(
     KiriView::ImagePageSurfaceController &pageSurface, KiriView::StaticImagePayload staticImage,
-    bool predecodeCacheable, const KiriView::ImageDocumentRenderContext &renderContext)
+    std::optional<KiriView::StaticDisplayImagePayload> displayImage, bool predecodeCacheable,
+    const KiriView::ImageDocumentRenderContext &renderContext)
 {
-    pageSurface.setStaticImage(std::move(staticImage), predecodeCacheable, renderContext);
+    if (displayImage.has_value()) {
+        pageSurface.setStaticDisplayImage(
+            std::move(*displayImage), predecodeCacheable, renderContext);
+    } else {
+        pageSurface.setStaticImage(std::move(staticImage), predecodeCacheable, renderContext);
+    }
     return finishImagePresentation(pageSurface);
 }
 
@@ -41,6 +48,18 @@ KiriView::ImagePresentationLoadPlan staticImagePlan(
 {
     return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationStaticImageLoad {
         std::move(staticImage),
+        std::nullopt,
+        predecodeCacheable,
+    } };
+}
+
+KiriView::ImagePresentationLoadPlan staticDisplayImagePlan(
+    KiriView::StaticDisplayImagePayload displayImage, bool predecodeCacheable)
+{
+    KiriView::StaticImagePayload staticImage = displayImage.compatibilityStaticImage();
+    return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationStaticImageLoad {
+        std::move(staticImage),
+        std::move(displayImage),
         predecodeCacheable,
     } };
 }
@@ -64,10 +83,11 @@ KiriView::ImagePresentationLoadPlan animationPlan(
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::StaticDecodedImage &decoded,
     KiriView::ImagePresentationAnimationHandling, qsizetype predecodeCacheByteBudget)
 {
-    KiriView::StaticImagePayload staticImage = decoded.compatibilityStaticImage();
+    KiriView::StaticDisplayImagePayload displayImage = std::move(decoded.displayImage);
+    KiriView::StaticImagePayload staticImage = displayImage.compatibilityStaticImage();
     const bool predecodeCacheable
         = KiriView::PredecodeCache::canCacheImage(staticImage, predecodeCacheByteBudget);
-    return staticImagePlan(std::move(staticImage), predecodeCacheable);
+    return staticDisplayImagePlan(std::move(displayImage), predecodeCacheable);
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ApngAnimationImage &decoded,
@@ -139,7 +159,7 @@ ImagePresentationLoadResult executeImagePresentationLoadPlan(
     }
     if (auto *staticImage = std::get_if<ImagePresentationStaticImageLoad>(&plan.payload)) {
         return presentStaticImage(pageSurface, std::move(staticImage->staticImage),
-            staticImage->predecodeCacheable, renderContext);
+            std::move(staticImage->displayImage), staticImage->predecodeCacheable, renderContext);
     }
     if (const auto *frame = std::get_if<ImagePresentationFrameLoad>(&plan.payload)) {
         return presentImageFrame(pageSurface, frame->frame);
