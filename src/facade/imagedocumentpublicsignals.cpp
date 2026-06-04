@@ -113,6 +113,9 @@ void ImageDocumentPublicSignalEmitter::emitSignal(ImageDocumentPublicSignal sign
     case ImageDocumentPublicSignal::EmbeddedMetadata:
         run(m_operations.embeddedMetadataChanged);
         return;
+    case ImageDocumentPublicSignal::DisplaySource:
+        run(m_operations.displaySourceChanged);
+        return;
     case ImageDocumentPublicSignal::Repaint:
         run(m_operations.repaintRequested);
         return;
@@ -172,6 +175,8 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentC
             ImageDocumentPublicSignal::ZoomPercentKnown };
     case ImageDocumentChange::EmbeddedMetadata:
         return { ImageDocumentPublicSignal::EmbeddedMetadata };
+    case ImageDocumentChange::DisplaySource:
+        return { ImageDocumentPublicSignal::DisplaySource };
     case ImageDocumentChange::RenderFrame:
         return { ImageDocumentPublicSignal::Repaint };
     case ImageDocumentChange::Repaint:

@@ -206,6 +206,7 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
         = [&document]() { Q_EMIT document.unsupportedOpenedCollectionVideoChanged(); };
     operations.embeddedMetadataChanged
         = [&document]() { Q_EMIT document.embeddedMetadataChanged(); };
+    operations.displaySourceChanged = [&document]() { Q_EMIT document.displaySourceChanged(); };
     operations.repaintRequested = [&document]() { Q_EMIT document.repaintRequested(); };
     return operations;
 }
@@ -227,6 +228,11 @@ KiriImageDocument::KiriImageDocument(
         [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); },
         [this](const QString &message) { Q_EMIT unsupportedOpenedCollectionVideoEntered(message); },
         [this](const QString &message) { Q_EMIT containerNavigationBoundaryReached(message); });
+    m_primaryDisplaySource
+        = std::make_unique<KiriImageDisplaySource>(KiriView::DisplayedPageRole::Primary, this);
+    m_secondaryDisplaySource
+        = std::make_unique<KiriImageDisplaySource>(KiriView::DisplayedPageRole::Secondary, this);
+    refreshDisplaySources();
 }
 
 KiriImageDocument::~KiriImageDocument() = default;
@@ -434,6 +440,16 @@ KiriImageDocument::presentationTransitionState() const
 bool KiriImageDocument::unsupportedOpenedCollectionVideo() const
 {
     return m_runtime->unsupportedOpenedCollectionVideo();
+}
+
+KiriImageDisplaySource *KiriImageDocument::primaryDisplaySource() const
+{
+    return m_primaryDisplaySource.get();
+}
+
+KiriImageDisplaySource *KiriImageDocument::secondaryDisplaySource() const
+{
+    return m_secondaryDisplaySource.get();
 }
 
 std::optional<KiriView::DisplayedPredecodeImage>
@@ -769,5 +785,19 @@ bool KiriImageDocument::requestAnchoredManualZoom(
 
 void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
 {
+    refreshDisplaySources();
     KiriView::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
+}
+
+void KiriImageDocument::refreshDisplaySources()
+{
+    if (m_runtime == nullptr || m_primaryDisplaySource == nullptr
+        || m_secondaryDisplaySource == nullptr) {
+        return;
+    }
+
+    m_primaryDisplaySource->setProjection(
+        m_runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary));
+    m_secondaryDisplaySource->setProjection(
+        m_runtime->displaySourceProjection(KiriView::DisplayedPageRole::Secondary));
 }

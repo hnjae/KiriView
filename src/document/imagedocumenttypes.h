@@ -36,6 +36,7 @@ enum class ImageDocumentChange {
     Rotation,
     UnsupportedOpenedCollectionVideo,
     EmbeddedMetadata,
+    DisplaySource,
     RenderFrame,
     Repaint,
 };

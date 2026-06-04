@@ -80,7 +80,7 @@ void TestImageDisplaySourceProjection::primaryProjectionCombinesSlotScopeAndGeom
     QCOMPARE(projection.retentionStatus, KiriView::ImageDisplaySourceRetentionStatus::None);
     QVERIFY(!projection.retainWhileLoadingEligible);
     QVERIFY(!projection.displaySize.isEmpty());
-    QCOMPARE(projection.visibleItemRect, QRectF());
+    QVERIFY(!projection.visibleItemRect.isEmpty());
 }
 
 void TestImageDisplaySourceProjection::hiddenSecondaryProjectionKeepsRoleAndStatusOnly()

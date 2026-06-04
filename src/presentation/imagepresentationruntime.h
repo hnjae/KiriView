@@ -5,6 +5,8 @@
 #define KIRIVIEW_IMAGEPRESENTATIONRUNTIME_H
 
 #include "document/imagedocumenttypes.h"
+#include "presentation/imagedisplaysourceprojection.h"
+#include "presentation/imagepresentationscope.h"
 #include "presentation/imagepresentationstate.h"
 #include "presentation/imageviewportcommandstate.h"
 #include "presentation/imagezoomworkflowstate.h"
@@ -30,38 +32,12 @@ enum class ImagePresentationPrimaryChangePolicy {
     PreserveZoomAndClearPan,
 };
 
-struct ImagePresentationScopeKey {
-    enum class Kind {
-        Empty,
-        DirectImage,
-        OpenedCollection,
-    };
-
-    Kind kind = Kind::Empty;
-    QUrl url;
-
-    static ImagePresentationScopeKey directImage(const QUrl &url);
-    static ImagePresentationScopeKey openedCollection(const QUrl &url);
-    bool preservesPageNavigationZoom() const;
-
-    friend bool operator==(
-        const ImagePresentationScopeKey &left, const ImagePresentationScopeKey &right)
-    {
-        return left.kind == right.kind && left.url == right.url;
-    }
-
-    friend bool operator!=(
-        const ImagePresentationScopeKey &left, const ImagePresentationScopeKey &right)
-    {
-        return !(left == right);
-    }
-};
-
 struct ImagePresentationPageSlotSnapshot {
     std::shared_ptr<DisplayedImageSurface> surface;
     quint64 imageRevision = 0;
     QSize imageSize;
     bool hasImage = false;
+    ImageDisplaySourceSlot displaySource;
 };
 
 struct ImagePresentationRenderProjection {
@@ -173,6 +149,7 @@ public:
     ImageDocumentRenderContext renderContext() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     ImagePresentationRenderProjection renderProjection(DisplayedPageRole role) const;
+    ImageDisplaySourceProjection displaySourceProjection(DisplayedPageRole role) const;
 
 private:
     using ZoomStateMutation = ImageZoomWorkflowState::ZoomStateMutation;
@@ -192,6 +169,8 @@ private:
         const ZoomStateMutation &mutation, bool forceTileRefresh = false);
     void refreshViewportFrame(ImageViewportObservationOrigin origin);
     ImagePresentationRenderProjection renderProjection(
+        const ImagePresentationSnapshot &snapshot, DisplayedPageRole role) const;
+    ImageDisplaySourceProjection displaySourceProjection(
         const ImagePresentationSnapshot &snapshot, DisplayedPageRole role) const;
     void restoreSnapshot(const ImagePresentationSnapshot &snapshot);
 

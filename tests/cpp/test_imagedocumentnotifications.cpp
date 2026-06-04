@@ -48,7 +48,7 @@ void TestImageDocumentNotifications::notificationPlansReturnChangesInEmissionOrd
             KiriView::ImageDocumentChange::DisplaySize, KiriView::ImageDocumentChange::ZoomPercent,
             KiriView::ImageDocumentChange::ZoomMode,
             KiriView::ImageDocumentChange::MaximumManualZoomPercent,
-            KiriView::ImageDocumentChange::Repaint });
+            KiriView::ImageDocumentChange::DisplaySource, KiriView::ImageDocumentChange::Repaint });
     KiriView::ImageZoomChangeSet spreadZoomChanges;
     spreadZoomChanges.zoomModeChanged = true;
     spreadZoomChanges.zoomPercentChanged = true;

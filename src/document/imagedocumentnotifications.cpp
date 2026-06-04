@@ -30,7 +30,7 @@ std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications()
     return { ImageDocumentChange::TwoPageMode, ImageDocumentChange::ImageSize,
         ImageDocumentChange::DisplaySize, ImageDocumentChange::ZoomPercent,
         ImageDocumentChange::ZoomMode, ImageDocumentChange::MaximumManualZoomPercent,
-        ImageDocumentChange::Repaint };
+        ImageDocumentChange::DisplaySource, ImageDocumentChange::Repaint };
 }
 
 std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications(

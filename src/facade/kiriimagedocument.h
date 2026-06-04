@@ -6,6 +6,7 @@
 
 #include "document/imagedocumentruntimedependencies.h"
 #include "document/imagedocumenttypes.h"
+#include "facade/kiriimagedisplaysource.h"
 #include "metadata/embeddedmetadata.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
@@ -105,6 +106,8 @@ class KiriImageDocument : public QObject
             presentationTransitionState NOTIFY presentationTransitionStateChanged)
     Q_PROPERTY(bool unsupportedOpenedCollectionVideo READ unsupportedOpenedCollectionVideo NOTIFY
             unsupportedOpenedCollectionVideoChanged)
+    Q_PROPERTY(KiriImageDisplaySource *primaryDisplaySource READ primaryDisplaySource CONSTANT)
+    Q_PROPERTY(KiriImageDisplaySource *secondaryDisplaySource READ secondaryDisplaySource CONSTANT)
 
 public:
     using RenderContextProvider = std::function<KiriView::ImageDocumentRenderContext()>;
@@ -220,6 +223,8 @@ public:
     bool secondaryPageVisible() const;
     PresentationTransitionState presentationTransitionState() const;
     bool unsupportedOpenedCollectionVideo() const;
+    KiriImageDisplaySource *primaryDisplaySource() const;
+    KiriImageDisplaySource *secondaryDisplaySource() const;
     std::optional<KiriView::DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     KiriView::ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     const KiriView::EmbeddedMetadata &embeddedMetadata() const;
@@ -302,6 +307,7 @@ Q_SIGNALS:
     void repaintRequested();
     void unsupportedOpenedCollectionVideoChanged();
     void embeddedMetadataChanged();
+    void displaySourceChanged();
     void unsupportedOpenedCollectionVideoEntered(const QString &message);
     void containerNavigationBoundaryReached(const QString &message);
 
@@ -312,11 +318,14 @@ private:
     void setTwoPageModeEnabled(bool enabled);
     void setRightToLeftReadingEnabled(bool enabled);
     void handleDocumentChanges(const std::vector<KiriView::ImageDocumentChange> &changes);
+    void refreshDisplaySources();
     KiriView::ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
     bool requestViewportInteractionContentPosition(const QPointF &contentPosition);
     bool requestAnchoredManualZoom(double zoomPercent, const QPointF &viewportAnchorPoint);
 
     std::unique_ptr<KiriView::ImageDocumentRuntime> m_runtime;
+    std::unique_ptr<KiriImageDisplaySource> m_primaryDisplaySource;
+    std::unique_ptr<KiriImageDisplaySource> m_secondaryDisplaySource;
     KiriView::ImageViewportInteraction m_viewportInteraction;
 };
 

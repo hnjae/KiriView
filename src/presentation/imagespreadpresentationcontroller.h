@@ -115,6 +115,7 @@ public:
     bool rightToLeftReadingActive() const;
     bool secondaryPageVisible() const;
     std::optional<DisplayedPredecodeImage> secondaryDisplayedPredecodeImage() const;
+    ImageDisplaySourceProjection displaySourceProjection(DisplayedPageRole role) const;
     DisplayedImageRenderSnapshot renderSnapshot(DisplayedPageRole role) const;
 
     void commitPrimaryPageSlot(const DisplayedImageLocation &location);

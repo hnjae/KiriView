@@ -72,6 +72,7 @@ ImagePresentationPageSlotSnapshot ImagePageSurfaceController::snapshot() const
         imageRevision(),
         imageSize(),
         hasImage(),
+        {},
     };
 }
 

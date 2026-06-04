@@ -38,6 +38,7 @@ src/bridge/predecodepolicyconversion.cpp
 src/bridge/videodocumentpolicyconversion.cpp
 src/rendering/displayedimagesurfacestate.cpp
 src/rendering/displayimagestore.cpp
+src/presentation/imagedisplaysourceprojection.cpp
 src/session/mediaopenwith.cpp
 src/document/imageremovalfallback.cpp
 src/rendering/imagerendernodestate.cpp

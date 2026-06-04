@@ -414,6 +414,12 @@ ImageSpreadPresentationController::secondaryDisplayedPredecodeImage() const
     };
 }
 
+ImageDisplaySourceProjection ImageSpreadPresentationController::displaySourceProjection(
+    DisplayedPageRole role) const
+{
+    return m_presentationRuntime.displaySourceProjection(role);
+}
+
 DisplayedImageRenderSnapshot ImageSpreadPresentationController::renderSnapshot(
     DisplayedPageRole role) const
 {
@@ -433,6 +439,7 @@ void ImageSpreadPresentationController::commitPrimaryPageSlot(
     }
     notifications.push_back(ImageDocumentChange::VisibleItemRect);
     notifications.push_back(ImageDocumentChange::ViewportFrame);
+    notifications.push_back(ImageDocumentChange::DisplaySource);
     notifyChanges(notifications);
 }
 
@@ -442,7 +449,8 @@ void ImageSpreadPresentationController::clearPrimaryPageSlot()
     notifyChanges({ ImageDocumentChange::ImageSize, ImageDocumentChange::DisplaySize,
         ImageDocumentChange::ZoomPercent, ImageDocumentChange::ZoomMode,
         ImageDocumentChange::MaximumManualZoomPercent, ImageDocumentChange::VisibleItemRect,
-        ImageDocumentChange::ViewportFrame, ImageDocumentChange::Repaint });
+        ImageDocumentChange::ViewportFrame, ImageDocumentChange::DisplaySource,
+        ImageDocumentChange::Repaint });
 }
 
 void ImageSpreadPresentationController::setViewportSize(const QSizeF &viewportSize)
@@ -473,7 +481,7 @@ void ImageSpreadPresentationController::rotateClockwise()
 
     applyActivePresentationChanges(rotation.zoomChanges);
     notifyChanges({ ImageDocumentChange::Rotation, ImageDocumentChange::ImageSize,
-        ImageDocumentChange::Repaint });
+        ImageDocumentChange::DisplaySource, ImageDocumentChange::Repaint });
 }
 
 void ImageSpreadPresentationController::rotateCounterclockwise()
@@ -490,7 +498,7 @@ void ImageSpreadPresentationController::rotateCounterclockwise()
 
     applyActivePresentationChanges(rotation.zoomChanges);
     notifyChanges({ ImageDocumentChange::Rotation, ImageDocumentChange::ImageSize,
-        ImageDocumentChange::Repaint });
+        ImageDocumentChange::DisplaySource, ImageDocumentChange::Repaint });
 }
 
 void ImageSpreadPresentationController::updateRenderContext()

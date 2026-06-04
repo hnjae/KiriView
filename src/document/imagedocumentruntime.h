@@ -9,6 +9,7 @@
 #include "imagedocumenttypes.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
+#include "presentation/imagedisplaysourceprojection.h"
 #include "presentation/imagepresentationstate.h"
 #include "presentation/imageviewportcommandstate.h"
 #include "presentation/imagezoomstate.h"
@@ -116,6 +117,8 @@ public:
     std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     const EmbeddedMetadata &embeddedMetadata() const;
+    ImageDisplaySourceProjection displaySourceProjection(
+        DisplayedPageRole role = DisplayedPageRole::Primary) const;
     DisplayedImageRenderSnapshot renderSnapshot(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
 

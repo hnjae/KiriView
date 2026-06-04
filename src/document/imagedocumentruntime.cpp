@@ -433,6 +433,12 @@ const EmbeddedMetadata &ImageDocumentRuntime::embeddedMetadata() const
     return state.embeddedMetadata();
 }
 
+ImageDisplaySourceProjection ImageDocumentRuntime::displaySourceProjection(
+    DisplayedPageRole role) const
+{
+    return controllers->spreadController().displaySourceProjection(role);
+}
+
 DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageRole role) const
 {
     if (status() != ImageDocumentStatus::Ready) {

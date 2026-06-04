@@ -114,7 +114,7 @@ void TestKiriImageDocument::displaySourceFacadeObjectsAreStableReadOnlyObservati
     QVERIFY(primary->visible());
     QCOMPARE(primary->status(), KiriImageDisplaySource::Status::Missing);
     QVERIFY(primary->providerUrl().isEmpty());
-    QCOMPARE(primary->originalSize(), QSize(2, 1));
+    QCOMPARE(primary->originalSize(), QSize(1, 1));
     QCOMPARE(primary->pageRole(), KiriImageDisplaySource::PageRole::Primary);
     QCOMPARE(secondary->pageRole(), KiriImageDisplaySource::PageRole::Secondary);
 }
