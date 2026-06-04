@@ -436,6 +436,13 @@ const EmbeddedMetadata &ImageDocumentRuntime::embeddedMetadata() const
 ImageDisplaySourceProjection ImageDocumentRuntime::displaySourceProjection(
     DisplayedPageRole role) const
 {
+    if (displayedUrl().isEmpty()) {
+        ImageDisplaySourceProjection projection;
+        projection.pageRole = role;
+        projection.revisionToken = imageDisplaySourceRevisionToken(projection.revision);
+        return projection;
+    }
+
     return controllers->spreadController().displaySourceProjection(role);
 }
 
