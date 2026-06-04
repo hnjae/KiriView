@@ -145,6 +145,9 @@ void TestStaticImageDecode::staticResultFallsBackToBlockingPreview()
     QCOMPARE(decoded->displayImage.originalSize, QSize(12, 9));
     QCOMPARE(decoded->displayImage.quality, KiriView::DisplayImageQuality::Exact);
     QCOMPARE(decoded->displayImage.displayPixelsPerSourcePixel, 1.0);
+    QCOMPARE(decoded->displayImage.compatibilityStaticImage()
+                 .displayHints.firstDisplayPixelsPerSourcePixel,
+        0.0);
     QCOMPARE(source->firstDisplayDecodeCount, 1);
     QCOMPARE(source->blockingDisplayDecodeCount, 1);
     QCOMPARE(source->blockingDisplayMaximumLongEdge, KiriView::imageBlockingDisplayLongEdgeMax);

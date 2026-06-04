@@ -67,12 +67,15 @@ std::optional<qsizetype> StaticDisplayImagePayload::byteCostWithinBudget(qsizety
 
 StaticImagePayload StaticDisplayImagePayload::compatibilityStaticImage() const
 {
+    StaticImageDisplayHints displayHints;
+    if (quality == DisplayImageQuality::FirstDisplay) {
+        displayHints.firstDisplayPixelsPerSourcePixel = displayPixelsPerSourcePixel;
+    }
+
     return StaticImagePayload {
         refinementSource,
         image,
-        StaticImageDisplayHints {
-            displayPixelsPerSourcePixel,
-        },
+        displayHints,
     };
 }
 }

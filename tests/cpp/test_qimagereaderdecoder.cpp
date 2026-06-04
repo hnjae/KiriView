@@ -149,7 +149,7 @@ void TestQImageReaderDecoder::pngDataDecodesAsStaticTileSource()
     const KiriView::StaticImagePayload compatibility
         = decoded->displayImage.compatibilityStaticImage();
     QCOMPARE(compatibility.preview.size(), QSize(4, 4));
-    QCOMPARE(compatibility.displayHints.firstDisplayPixelsPerSourcePixel, 1.0);
+    QCOMPARE(compatibility.displayHints.firstDisplayPixelsPerSourcePixel, 0.0);
 }
 
 void TestQImageReaderDecoder::jpegDataUsesFirstDisplayRequest()
