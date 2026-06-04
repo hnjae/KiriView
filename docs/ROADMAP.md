@@ -66,7 +66,7 @@ These items already exist in the current codebase before the provider-rendering 
 No provider-rendering migration stage has been implemented yet. Track completed work by stage so code agents do not treat existing foundations as finished migration tasks.
 
 - [x] Stage 1: Declare provider rendering intent.
-- [ ] Stage 2: Add the display image provider foundation.
+- [x] Stage 2: Add the display image provider foundation.
 - [ ] Stage 3: Introduce provider-ready display payloads.
 - [ ] Stage 4: Publish display-source projections.
 - [ ] Stage 5: Add thumbnail preview tier.
