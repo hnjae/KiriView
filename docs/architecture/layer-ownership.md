@@ -23,6 +23,8 @@ C++ Qt/KDE runtime code owns platform integration and side effects:
 - `QAction` identity, KDE action collections, configured shortcut state, and shortcut persistence.
 - KIO jobs, KDE settings, dialogs, notifications, file operations, and runtime integration.
 - Image presentation, rendering, and async job orchestration.
+- The image presentation runtime as the single owner of active image presentation state: mode, reading direction, transition phase, zoom, rotation, logical viewport frame, visible source rect, render projections, page visibility, restoration snapshots, and tile-decode demand.
+- Image page surface owners as resource owners for decoded surfaces, static payloads, animation playback, image revision, tile caches, predecode facts, and load lifetimes only.
 - View-owned render context discovery, such as device pixel ratio and maximum texture size. A document may consume one render context provider, but page render items must not compete to install independent providers for the same document.
 
 Rust owns Qt-independent policy and algorithms:
