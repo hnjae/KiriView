@@ -131,10 +131,12 @@ void ImagePageSurfaceController::scheduleVisibleTileDecode(
     const ImagePresentationRenderProjection &projection)
 {
     if (!projection.visible || projection.visibleItemRect.isEmpty()) {
+        updateDisplaySourceVisibility(false);
         discardDecodedTiles();
         return;
     }
 
+    updateDisplaySourceVisibility(true);
     m_tileDecodeScheduler->schedule(imageSurface(), projection.displaySize,
         projection.visibleItemRect,
         ImageDocumentRenderContext { projection.devicePixelRatio, projection.maximumTextureSize,
@@ -173,6 +175,8 @@ void ImagePageSurfaceController::applyDisplayedImageTileChange(
 
 void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePayload &displayImage)
 {
+    releaseCurrentDisplayEntry();
+
     ++m_displaySourceRevision;
     const QSize rasterSize = displayImage.image.size();
     const QString entryId = m_displayImageStore == nullptr
@@ -190,6 +194,7 @@ void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePa
           });
 
     m_displayEntryId = entryId;
+    m_displayEntryVisiblePinned = false;
     m_displaySource = ImageDisplaySourceSlot {
         displayImageSourceForId(entryId),
         m_displaySourceRevision,
@@ -213,8 +218,49 @@ void ImagePageSurfaceController::clearDisplaySource()
         return;
     }
 
-    m_displayEntryId.clear();
+    releaseCurrentDisplayEntry();
     m_displaySource = {};
+}
+
+void ImagePageSurfaceController::releaseCurrentDisplayEntry()
+{
+    if (m_displayImageStore == nullptr || m_displayEntryId.isEmpty()) {
+        m_displayEntryId.clear();
+        m_displayEntryVisiblePinned = false;
+        return;
+    }
+
+    const QString entryId = m_displayEntryId;
+    if (m_displayEntryVisiblePinned) {
+        m_displayImageStore->releasePinLease(entryId, DisplayImagePinKind::Visible);
+    }
+    m_displayImageStore->release(entryId);
+    m_displayEntryId.clear();
+    m_displayEntryVisiblePinned = false;
+}
+
+void ImagePageSurfaceController::updateDisplaySourceVisibility(bool visible)
+{
+    if (m_displayImageStore == nullptr || m_displayEntryId.isEmpty()) {
+        m_displayEntryVisiblePinned = false;
+        return;
+    }
+
+    if (visible) {
+        if (!m_displayEntryVisiblePinned) {
+            m_displayEntryVisiblePinned = m_displayImageStore->acquirePinLease(
+                m_displayEntryId, DisplayImagePinKind::Visible);
+        }
+        m_displayImageStore->updatePriority(
+            m_displayEntryId, DisplayImageRetentionPriority::Visible);
+        return;
+    }
+
+    if (m_displayEntryVisiblePinned) {
+        m_displayImageStore->releasePinLease(m_displayEntryId, DisplayImagePinKind::Visible);
+        m_displayEntryVisiblePinned = false;
+    }
+    m_displayImageStore->updatePriority(m_displayEntryId, DisplayImageRetentionPriority::Nearby);
 }
 
 void ImagePageSurfaceController::notify(ImageDocumentChange change)

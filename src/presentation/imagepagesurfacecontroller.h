@@ -69,6 +69,8 @@ private:
     void applyDisplayedImageTileChange(const DisplayedImageSurfaceStateChange &change);
     void publishDisplaySource(const StaticDisplayImagePayload &displayImage);
     void clearDisplaySource();
+    void releaseCurrentDisplayEntry();
+    void updateDisplaySourceVisibility(bool visible);
     void notify(ImageDocumentChange change);
 
     Callbacks m_callbacks;
@@ -77,6 +79,7 @@ private:
     std::shared_ptr<DisplayImageStore> m_displayImageStore;
     DisplayedPageRole m_pageRole = DisplayedPageRole::Primary;
     QString m_displayEntryId;
+    bool m_displayEntryVisiblePinned = false;
     ImageDisplaySourceSlot m_displaySource;
     quint64 m_displaySourceRevision = 0;
     std::unique_ptr<DisplayedImageSurfaceState> m_displayedSurfaceState;
