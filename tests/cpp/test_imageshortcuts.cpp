@@ -34,6 +34,7 @@
 #include <QUrl>
 #include <QVariant>
 #include <QtQml/qqml.h>
+#include <cmath>
 #include <memory>
 
 class TestImageShortcuts : public QObject
@@ -50,6 +51,7 @@ private Q_SLOTS:
     void shiftArrowsMoveOnePageInTwoPageModeLeftToRight();
     void shiftArrowsMoveOnePageInTwoPageModeRightToLeft();
     void shiftArrowsAreIgnoredWhileViewerShortcutsAreSuppressed();
+    void zoomPresetAndFitShortcutsUseNewMapping();
     void configuredActionShortcutsTriggerActions();
     void windowCommandShortcutsWorkWithoutQmlShortcutInstallers();
     void videoViewerAliasTriggersFullscreenAction();
@@ -237,6 +239,8 @@ Item {
     property bool twoPageModeEnabled: sessionImageDocument.twoPageModeEnabled
     readonly property point viewportContentPosition: sessionImageDocument.viewportContentPosition
     readonly property bool viewportPannable: sessionImageDocument.viewportPannable
+    readonly property int zoomMode: sessionImageDocument.zoomMode
+    readonly property real zoomPercent: sessionImageDocument.zoomPercent
 
     onRightToLeftReadingEnabledChanged: {
         if (sessionImageDocument.rightToLeftReadingEnabled !== rightToLeftReadingEnabled) {
@@ -462,6 +466,15 @@ QPointF viewportContentPosition(QObject *root)
     return root->property("viewportContentPosition").toPointF();
 }
 
+int imageZoomMode(QObject *root) { return root->property("zoomMode").toInt(); }
+
+double imageZoomPercent(QObject *root) { return root->property("zoomPercent").toDouble(); }
+
+bool zoomPercentApproximately(QObject *root, double expected)
+{
+    return std::abs(imageZoomPercent(root) - expected) < 0.001;
+}
+
 void prepareTwoPageSpread(ImageShortcutsFixture &fixture)
 {
     QVERIFY(fixture.isValid());
@@ -605,6 +618,36 @@ void TestImageShortcuts::shiftArrowsAreIgnoredWhileViewerShortcutsAreSuppressed(
     QCOMPARE(fixture.root->property("currentPageNumber").toInt(), 2);
 }
 
+void TestImageShortcuts::zoomPresetAndFitShortcutsUseNewMapping()
+{
+    ImageShortcutsFixture fixture = createReadyFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(documentReady(fixture.root));
+
+    pressKey(fixture.view.get(), Qt::Key_QuoteLeft, Qt::ControlModifier);
+    QTRY_VERIFY(zoomPercentApproximately(fixture.root, 50.0));
+    QCOMPARE(imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::Manual));
+
+    pressKey(fixture.view.get(), Qt::Key_1, Qt::ControlModifier);
+    QTRY_VERIFY(zoomPercentApproximately(fixture.root, 100.0));
+    QCOMPARE(imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::Manual));
+
+    pressKey(fixture.view.get(), Qt::Key_2, Qt::ControlModifier);
+    QTRY_VERIFY(zoomPercentApproximately(fixture.root, 200.0));
+    QCOMPARE(imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::Manual));
+
+    pressKey(fixture.view.get(), Qt::Key_8, Qt::ControlModifier);
+    QTRY_COMPARE(
+        imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::FitHeight));
+
+    pressKey(fixture.view.get(), Qt::Key_9, Qt::ControlModifier);
+    QTRY_COMPARE(
+        imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::FitWidth));
+
+    pressKey(fixture.view.get(), Qt::Key_0, Qt::ControlModifier);
+    QTRY_COMPARE(imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::Fit));
+}
+
 void TestImageShortcuts::configuredActionShortcutsTriggerActions()
 {
     ImageShortcutsFixture fixture = createReadyFixture();
@@ -691,14 +734,29 @@ void TestImageShortcuts::videoImageOnlyShortcutsShowUnsupportedToast()
 
     QAction *rotateAction = fixture.application->action(QStringLiteral("view_rotate_clockwise"));
     QAction *zoomInAction = fixture.application->action(QStringLiteral("view_zoom_in"));
-    QAction *fitAction = fixture.application->action(QStringLiteral("view_fit"));
+    QAction *zoom50Action = fixture.application->action(QStringLiteral("view_zoom_50_percent"));
+    QAction *zoom100Action = fixture.application->action(QStringLiteral("view_zoom_100_percent"));
+    QAction *zoom200Action = fixture.application->action(QStringLiteral("view_zoom_200_percent"));
+    QAction *fitHeightAction = fixture.application->action(QStringLiteral("view_fit_height"));
+    QAction *fitWidthAction = fixture.application->action(QStringLiteral("view_fit_width"));
+    QAction *fitWindowAction = fixture.application->action(QStringLiteral("view_fit"));
     QVERIFY(rotateAction != nullptr);
     QVERIFY(zoomInAction != nullptr);
-    QVERIFY(fitAction != nullptr);
+    QVERIFY(zoom50Action != nullptr);
+    QVERIFY(zoom100Action != nullptr);
+    QVERIFY(zoom200Action != nullptr);
+    QVERIFY(fitHeightAction != nullptr);
+    QVERIFY(fitWidthAction != nullptr);
+    QVERIFY(fitWindowAction != nullptr);
 
     QSignalSpy rotateSpy(rotateAction, &QAction::triggered);
     QSignalSpy zoomInSpy(zoomInAction, &QAction::triggered);
-    QSignalSpy fitSpy(fitAction, &QAction::triggered);
+    QSignalSpy zoom50Spy(zoom50Action, &QAction::triggered);
+    QSignalSpy zoom100Spy(zoom100Action, &QAction::triggered);
+    QSignalSpy zoom200Spy(zoom200Action, &QAction::triggered);
+    QSignalSpy fitHeightSpy(fitHeightAction, &QAction::triggered);
+    QSignalSpy fitWidthSpy(fitWidthAction, &QAction::triggered);
+    QSignalSpy fitWindowSpy(fitWindowAction, &QAction::triggered);
 
     pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
     QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 1);
@@ -712,9 +770,29 @@ void TestImageShortcuts::videoImageOnlyShortcutsShowUnsupportedToast()
     QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 3);
     QCOMPARE(zoomInSpy.count(), 0);
 
-    pressKey(fixture.view.get(), Qt::Key_1, Qt::ControlModifier);
+    pressKey(fixture.view.get(), Qt::Key_QuoteLeft, Qt::ControlModifier);
     QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 4);
-    QCOMPARE(fitSpy.count(), 0);
+    QCOMPARE(zoom50Spy.count(), 0);
+
+    pressKey(fixture.view.get(), Qt::Key_1, Qt::ControlModifier);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 5);
+    QCOMPARE(zoom100Spy.count(), 0);
+
+    pressKey(fixture.view.get(), Qt::Key_2, Qt::ControlModifier);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 6);
+    QCOMPARE(zoom200Spy.count(), 0);
+
+    pressKey(fixture.view.get(), Qt::Key_8, Qt::ControlModifier);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 7);
+    QCOMPARE(fitHeightSpy.count(), 0);
+
+    pressKey(fixture.view.get(), Qt::Key_9, Qt::ControlModifier);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 8);
+    QCOMPARE(fitWidthSpy.count(), 0);
+
+    pressKey(fixture.view.get(), Qt::Key_0, Qt::ControlModifier);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 9);
+    QCOMPARE(fitWindowSpy.count(), 0);
 }
 
 QTEST_MAIN(TestImageShortcuts)
