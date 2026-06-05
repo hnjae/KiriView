@@ -34,6 +34,7 @@ src/policy/predecodepolicy/config.rs
 src/policy/predecodepolicy/load_queue.rs
 src/policy/predecodepolicy/momentum.rs
 src/policy/predecodepolicy/schedule.rs
+src/policy/rasterdisplaybucketpolicy.rs
 src/policy/startup_arguments.rs
 src/policy/svgrenderer.rs
 src/policy/videodocumentpolicy.rs
