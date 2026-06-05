@@ -74,6 +74,11 @@ During the compatibility phase, `ImagePresentationRuntime` publishes display-sou
 - Failed SVG initial display reports the normal image error. Failed SVG refinement does not replace the current accepted provider image; the page-surface owner may keep the current image visible and cancel only the rejected demand.
 - Provider requests never rasterize SVG data, schedule SVG work, inspect SVG bytes, or mutate document state. Whole-surface SVG render jobs run from decode/refinement ownership and publish immutable display entries through the same page-surface display-source path as raster refinements.
 
+## Viewport Context Bridge
+
+- Stage 10a introduces a non-rendering Qt Quick context bridge before the visible renderer swap. The bridge owns document render-context provider attachment, primary-only provider installation, component-completion deferral, scene or DPR invalidation, and the resolved public-Qt display texture cap used by presentation and refinement. It does not set `ItemHasContents`, implement `updatePaintNode()`, call `QQuickWindow::rhi()`, include QRhi headers, own textures, draw images, schedule decode work, or change visible viewport rendering.
+- During Stage 10a, `KiriImageView` remains the visible compatibility renderer but no longer owns the document render-context provider when the bridge is present. Helper invokables that only compute viewport interaction policy move to `KiriImageDocument` or another non-rendering facade so QML can stop depending on a render item for hit testing, nearest image points, scan starts, or future provider-image commands. The primary bridge may install and clear the document render-context provider; secondary page visuals must not.
+
 ## Compatibility Exit
 
 Tile scheduling, decoded-tile caches, render nodes, custom shaders, direct QRhi resource management, and QRhi probing are temporary compatibility machinery. By the end state, display-store byte budgets replace tile-display cache budgets, render-context discovery uses stable public Qt/Qt Quick capability inputs or conservative fallbacks, and production image display no longer includes, links, probes, or tests QRhi rendering paths.
