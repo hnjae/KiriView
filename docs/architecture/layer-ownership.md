@@ -18,13 +18,13 @@ These facade classes live under `src/facade/`. Keep QML-facing API shape there a
 C++ Qt/KDE runtime code owns platform integration and side effects:
 
 - `QObject` lifetime, signal delivery, thread affinity, and cancellation.
-- `QUrl`, `QImage`, `QAction`, `QQuickItem`, current compatibility `QSGRenderNode` objects, and other Qt objects.
+- `QUrl`, `QImage`, `QAction`, `QQuickItem`, image-provider entries, and other Qt objects.
 - OS and desktop-environment observers such as system-memory discovery and power-saver portal state.
 - `QAction` identity, KDE action collections, configured shortcut state, and shortcut persistence.
 - KIO jobs, KDE settings, dialogs, notifications, file operations, and runtime integration.
-- Image presentation, provider-backed display publication, compatibility rendering, and async job orchestration.
-- The image presentation runtime as the single owner of active image presentation state: mode, reading direction, transition phase, zoom, rotation, logical viewport frame, visible source rect, display-source projections, compatibility render projections, page visibility, restoration snapshots, and display refinement demand.
-- Image page surface owners as resource owners for decoded surfaces, display entries, animation playback, image revision, display-image pin leases, compatibility tile caches, predecode facts, and load lifetimes only.
+- Image presentation, provider-backed display publication, and async job orchestration.
+- The image presentation runtime as the single owner of active image presentation state: mode, reading direction, transition phase, zoom, rotation, logical viewport frame, visible source rect, display-source projections, page visibility, restoration snapshots, and display refinement demand.
+- Image page surface owners as resource owners for display entries, animation playback, image revision, display-image pin leases, previous-frame retention, predecode facts, and load lifetimes only.
 - Render context discovery, such as device pixel ratio and maximum safe display texture size, through one document-owned provider. The provider-rendering target uses a non-rendering bridge and stable public Qt/Qt Quick capability inputs or conservative fallbacks rather than direct QRhi ownership.
 
 Rust owns Qt-independent policy and algorithms:
