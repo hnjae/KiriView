@@ -307,8 +307,7 @@ in
             ctest \
                 --test-dir target/devenv/cpp-tests \
                 --output-on-failure \
-                --parallel "$test_jobs" \
-                -E '^test_kiriimagedecoder$'
+                --parallel "$test_jobs"
       '';
     };
 
