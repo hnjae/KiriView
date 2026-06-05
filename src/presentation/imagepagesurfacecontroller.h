@@ -17,6 +17,7 @@
 #include <QImage>
 #include <QSize>
 #include <QString>
+#include <QUrl>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -69,6 +70,8 @@ public:
 
     void startAnimation(ImageAnimationPlaybackRequest request);
     void stopAnimation();
+    void acknowledgeAnimationFrameDisplayLoad(const QUrl &providerUrl, quint64 revision,
+        const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
 
 private:
     void applyDisplayedImageChange(const DisplayedImageSurfaceStateChange &change);
@@ -78,6 +81,9 @@ private:
     void clearDisplaySource();
     void releaseCurrentDisplayEntry();
     void releaseShadowDisplayEntry();
+    void retainCurrentAnimationFrameEntryForLoad();
+    void releaseRetainedAnimationFrameEntry();
+    void clearAnimationFrameLoadContract();
     void updateDisplaySourceVisibility(bool visible);
     void cancelRasterDisplayRefinement();
     void scheduleRasterDisplayRefinement(const ImagePresentationRenderProjection &projection);
@@ -91,8 +97,14 @@ private:
     DisplayedPageRole m_pageRole = DisplayedPageRole::Primary;
     QString m_displayEntryId;
     QString m_shadowDisplayEntryId;
+    QString m_retainedAnimationFrameEntryId;
     QString m_animationFrameSourceIdentity;
+    QUrl m_pendingAnimationFrameProviderUrl;
+    quint64 m_pendingAnimationFrameRevision = 0;
+    QString m_pendingAnimationFrameSourceIdentity;
     bool m_displayEntryVisiblePinned = false;
+    bool m_currentDisplayEntryIsAnimationFrame = false;
+    bool m_animationFrameDisplayLoadPending = false;
     ImageDisplaySourceSlot m_displaySource;
     quint64 m_displaySourceRevision = 0;
     std::optional<RasterDisplayRefinementDemandKey> m_rasterDisplayRefinementDemand;

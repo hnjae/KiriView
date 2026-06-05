@@ -27,6 +27,12 @@ enum class ImageDisplaySourceRetentionStatus {
     StaleRetained,
 };
 
+enum class ImageDisplayLoadOutcome {
+    Loaded,
+    Error,
+    Missing,
+};
+
 struct ImageDisplaySourceSlot {
     QUrl providerUrl;
     quint64 revision = 0;

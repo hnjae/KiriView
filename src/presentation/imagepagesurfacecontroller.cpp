@@ -119,12 +119,14 @@ ImagePageSurfaceController::ImagePageSurfaceController(QObject *context,
         context,
         [this](const QImage &image) { setAnimationFrame(image, m_animationFrameSourceIdentity); },
         [this](
-            const QString &errorString) { invokeIfSet(m_callbacks.animationError, errorString); });
+            const QString &errorString) { invokeIfSet(m_callbacks.animationError, errorString); },
+        [this]() { releaseRetainedAnimationFrameEntry(); });
 }
 
 ImagePageSurfaceController::~ImagePageSurfaceController()
 {
     releaseShadowDisplayEntry();
+    releaseRetainedAnimationFrameEntry();
     releaseCurrentDisplayEntry();
 }
 
@@ -296,6 +298,8 @@ void ImagePageSurfaceController::applyDisplayedImageTileChange(
 
 void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePayload &displayImage)
 {
+    releaseRetainedAnimationFrameEntry();
+    clearAnimationFrameLoadContract();
     releaseCurrentDisplayEntry();
     m_animationFrameSourceIdentity.clear();
 
@@ -337,7 +341,7 @@ void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePa
 void ImagePageSurfaceController::publishAnimationFrameDisplaySource(
     const QImage &image, const QString &sourceIdentity)
 {
-    releaseCurrentDisplayEntry();
+    retainCurrentAnimationFrameEntryForLoad();
 
     ++m_displaySourceRevision;
     const QSize rasterSize = image.size();
@@ -358,8 +362,15 @@ void ImagePageSurfaceController::publishAnimationFrameDisplaySource(
 
     m_displayEntryId = entryId;
     m_displayEntryVisiblePinned = false;
+    m_currentDisplayEntryIsAnimationFrame = true;
+    const QUrl providerUrl = displayImageSourceForId(entryId);
+    const bool loadAcknowledgmentRequired = !entryId.isEmpty();
+    m_animationFrameDisplayLoadPending = loadAcknowledgmentRequired;
+    m_pendingAnimationFrameProviderUrl = providerUrl;
+    m_pendingAnimationFrameRevision = m_displaySourceRevision;
+    m_pendingAnimationFrameSourceIdentity = sourceIdentity;
     m_displaySource = ImageDisplaySourceSlot {
-        displayImageSourceForId(entryId),
+        providerUrl,
         m_displaySourceRevision,
         sourceIdentity,
         rasterSize,
@@ -368,7 +379,7 @@ void ImagePageSurfaceController::publishAnimationFrameDisplaySource(
         DisplayImageQuality::Exact,
         entryId.isEmpty() ? ImageDisplaySourceStatus::Error : ImageDisplaySourceStatus::Ready,
         false,
-        false,
+        loadAcknowledgmentRequired,
         ImageDisplaySourceRetentionStatus::None,
         false,
     };
@@ -404,10 +415,14 @@ void ImagePageSurfaceController::clearShadowDisplayImage() { releaseShadowDispla
 void ImagePageSurfaceController::clearDisplaySource()
 {
     if (m_displaySource.providerUrl.isEmpty() && m_displayEntryId.isEmpty()
-        && m_displaySource.status == ImageDisplaySourceStatus::Missing) {
+        && m_retainedAnimationFrameEntryId.isEmpty()
+        && m_displaySource.status == ImageDisplaySourceStatus::Missing
+        && !m_animationFrameDisplayLoadPending) {
         return;
     }
 
+    releaseRetainedAnimationFrameEntry();
+    clearAnimationFrameLoadContract();
     releaseCurrentDisplayEntry();
     m_displaySource = {};
 }
@@ -423,6 +438,7 @@ void ImagePageSurfaceController::releaseCurrentDisplayEntry()
     if (m_displayImageStore == nullptr || m_displayEntryId.isEmpty()) {
         m_displayEntryId.clear();
         m_displayEntryVisiblePinned = false;
+        m_currentDisplayEntryIsAnimationFrame = false;
         return;
     }
 
@@ -433,6 +449,7 @@ void ImagePageSurfaceController::releaseCurrentDisplayEntry()
     m_displayImageStore->release(entryId);
     m_displayEntryId.clear();
     m_displayEntryVisiblePinned = false;
+    m_currentDisplayEntryIsAnimationFrame = false;
 }
 
 void ImagePageSurfaceController::releaseShadowDisplayEntry()
@@ -444,6 +461,69 @@ void ImagePageSurfaceController::releaseShadowDisplayEntry()
 
     m_displayImageStore->release(m_shadowDisplayEntryId);
     m_shadowDisplayEntryId.clear();
+}
+
+void ImagePageSurfaceController::retainCurrentAnimationFrameEntryForLoad()
+{
+    releaseRetainedAnimationFrameEntry();
+    clearAnimationFrameLoadContract();
+
+    if (!m_currentDisplayEntryIsAnimationFrame || m_displayEntryId.isEmpty()
+        || m_displayImageStore == nullptr) {
+        releaseCurrentDisplayEntry();
+        return;
+    }
+
+    const QString entryId = m_displayEntryId;
+    if (m_displayEntryVisiblePinned) {
+        m_displayImageStore->releasePinLease(entryId, DisplayImagePinKind::Visible);
+    }
+
+    const bool retained
+        = m_displayImageStore->acquirePinLease(entryId, DisplayImagePinKind::FrameRetention);
+    m_displayImageStore->release(entryId);
+    m_displayEntryId.clear();
+    m_displayEntryVisiblePinned = false;
+    m_currentDisplayEntryIsAnimationFrame = false;
+    if (retained) {
+        m_retainedAnimationFrameEntryId = entryId;
+    }
+}
+
+void ImagePageSurfaceController::releaseRetainedAnimationFrameEntry()
+{
+    if (m_displayImageStore == nullptr || m_retainedAnimationFrameEntryId.isEmpty()) {
+        m_retainedAnimationFrameEntryId.clear();
+        return;
+    }
+
+    m_displayImageStore->releasePinLease(
+        m_retainedAnimationFrameEntryId, DisplayImagePinKind::FrameRetention);
+    m_retainedAnimationFrameEntryId.clear();
+}
+
+void ImagePageSurfaceController::clearAnimationFrameLoadContract()
+{
+    m_animationFrameDisplayLoadPending = false;
+    m_pendingAnimationFrameProviderUrl = QUrl();
+    m_pendingAnimationFrameRevision = 0;
+    m_pendingAnimationFrameSourceIdentity.clear();
+}
+
+void ImagePageSurfaceController::acknowledgeAnimationFrameDisplayLoad(const QUrl &providerUrl,
+    quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome)
+{
+    Q_UNUSED(outcome);
+
+    if (!m_currentDisplayEntryIsAnimationFrame || !m_animationFrameDisplayLoadPending
+        || providerUrl != m_pendingAnimationFrameProviderUrl
+        || revision != m_pendingAnimationFrameRevision
+        || sourceIdentity != m_pendingAnimationFrameSourceIdentity) {
+        return;
+    }
+
+    clearAnimationFrameLoadContract();
+    releaseRetainedAnimationFrameEntry();
 }
 
 void ImagePageSurfaceController::updateDisplaySourceVisibility(bool visible)

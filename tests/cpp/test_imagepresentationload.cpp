@@ -622,7 +622,7 @@ void TestImagePresentationLoad::
     QCOMPARE(displaySource.sourceSizeHint, QSize());
     QCOMPARE(displaySource.quality, KiriView::DisplayImageQuality::Exact);
     QVERIFY(!displaySource.cacheEnabled);
-    QVERIFY(!displaySource.loadAcknowledgmentRequired);
+    QVERIFY(displaySource.loadAcknowledgmentRequired);
 
     const std::optional<KiriView::DisplayImageStoreEntry> stored
         = displayImageStore->entry(entryId(displaySource));
@@ -673,6 +673,7 @@ void TestImagePresentationLoad::
     QCOMPARE(nextDisplay.originalSize, QSize(1, 1));
     QCOMPARE(nextDisplay.rasterSize, QSize(1, 1));
     QCOMPARE(nextDisplay.quality, KiriView::DisplayImageQuality::Exact);
+    QVERIFY(nextDisplay.loadAcknowledgmentRequired);
     QVERIFY(!displayImageStore->entry(entryId(firstDisplay)).has_value());
 
     const std::optional<KiriView::DisplayImageStoreEntry> stored

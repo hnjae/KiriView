@@ -10,10 +10,11 @@
 #include <utility>
 
 namespace KiriView {
-ImageAnimationPlayer::ImageAnimationPlayer(
-    QObject *context, FrameReadyCallback frameReady, ErrorCallback animationError)
+ImageAnimationPlayer::ImageAnimationPlayer(QObject *context, FrameReadyCallback frameReady,
+    ErrorCallback animationError, PlaybackStoppedCallback playbackStopped)
     : m_frameReady(std::move(frameReady))
     , m_animationError(std::move(animationError))
+    , m_playbackStopped(std::move(playbackStopped))
 {
     m_timer.setSingleShot(true);
     QObject::connect(&m_timer, &QTimer::timeout, context, [this]() { advanceFrame(); });
@@ -46,7 +47,7 @@ void ImageAnimationPlayer::start(std::unique_ptr<ImageAnimationPlaybackSource> s
     }
 }
 
-void ImageAnimationPlayer::stop() { clearPlaybackState(); }
+void ImageAnimationPlayer::stop() { notifyStoppedIfActive(); }
 
 void ImageAnimationPlayer::advanceFrame()
 {
@@ -118,9 +119,18 @@ void ImageAnimationPlayer::clearPlaybackState()
     m_playbackState.clear();
 }
 
+void ImageAnimationPlayer::notifyStoppedIfActive()
+{
+    const bool wasActive = m_source != nullptr || m_timer.isActive();
+    clearPlaybackState();
+    if (wasActive) {
+        invokeIfSet(m_playbackStopped);
+    }
+}
+
 void ImageAnimationPlayer::finishWithError(const QString &errorString)
 {
-    clearPlaybackState();
+    notifyStoppedIfActive();
     invokeIfSet(m_animationError, errorString);
 }
 }
