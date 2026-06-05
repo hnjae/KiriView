@@ -4,7 +4,11 @@
 #include "presentation/imagepagesurfacecontroller.h"
 
 #include "image_test_support.h"
+#include "rendering/imagerendering.h"
+#include "rendering/qimagereadertilesource.h"
 
+#include <QBuffer>
+#include <QByteArray>
 #include <QObject>
 #include <QRectF>
 #include <QSize>
@@ -23,6 +27,9 @@ private Q_SLOTS:
     void visibleProjectionPinsAndPrioritizesProviderEntry();
     void shadowThumbnailPreviewEntryIsReleasedOnDecodedReplacement();
     void rawShadowThumbnailPreviewEntryIsReleasedOnDecodedReplacement();
+    void qtRasterFirstDisplayRefinesToProviderBucket();
+    void qtRasterRefinementCompletionIsRejectedAfterSourceReplacement();
+    void exactQtRasterCurrentImageDoesNotRequestRefinement();
 };
 
 namespace {
@@ -46,14 +53,19 @@ KiriView::ImageDocumentRenderContext renderContext()
     };
 }
 
-KiriView::ImagePresentationRenderProjection visibleProjection()
+KiriView::ImagePresentationRenderProjection visibleProjection(const QSizeF &displaySize)
 {
     KiriView::ImagePresentationRenderProjection projection;
     projection.visible = true;
-    projection.displaySize = QSizeF(8.0, 4.0);
-    projection.visibleItemRect = QRectF(0.0, 0.0, 8.0, 4.0);
+    projection.displaySize = displaySize;
+    projection.visibleItemRect = QRectF(0.0, 0.0, displaySize.width(), displaySize.height());
     projection.maximumTextureSize = KiriView::fallbackTextureSizeMax;
     return projection;
+}
+
+KiriView::ImagePresentationRenderProjection visibleProjection()
+{
+    return visibleProjection(QSizeF(8.0, 4.0));
 }
 
 KiriView::StaticDisplayImagePayload displayPayload(const QSize &size)
@@ -65,6 +77,38 @@ KiriView::StaticDisplayImagePayload displayPayload(const QSize &size)
 QString entryId(const KiriView::ImageDisplaySourceSlot &slot)
 {
     return slot.providerUrl.path().mid(1);
+}
+
+QByteArray encodedPng(const QImage &image)
+{
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "PNG");
+    return data;
+}
+
+KiriView::StaticDisplayImagePayload qtRasterPayload(const QSize &originalSize,
+    const QSize &rasterSize, const QString &sourceIdentity,
+    KiriView::DisplayImageQuality quality = KiriView::DisplayImageQuality::FirstDisplay)
+{
+    QString errorString;
+    std::shared_ptr<KiriView::QImageReaderTileSource> source
+        = KiriView::QImageReaderTileSource::open(
+            encodedPng(KiriView::TestSupport::testImage(originalSize)), QByteArrayLiteral("png"),
+            &errorString);
+    Q_ASSERT(source != nullptr);
+
+    return KiriView::StaticDisplayImagePayload {
+        sourceIdentity,
+        source->imageReaderTransform(),
+        originalSize,
+        KiriView::TestSupport::testImage(rasterSize),
+        quality,
+        KiriView::imagePixelsPerSourcePixel(originalSize, rasterSize),
+        {},
+        std::move(source),
+    };
 }
 }
 
@@ -195,6 +239,75 @@ void TestImagePageSurfaceController::rawShadowThumbnailPreviewEntryIsReleasedOnD
     QVERIFY(storedReplacement.has_value());
     QCOMPARE(storedReplacement->quality, KiriView::DisplayImageQuality::Exact);
     QCOMPARE(storedReplacement->previewOrigin, KiriView::DisplayImagePreviewOrigin::None);
+}
+
+void TestImagePageSurfaceController::qtRasterFirstDisplayRefinesToProviderBucket()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+
+    controller.setStaticDisplayImage(
+        qtRasterPayload(QSize(16, 12), QSize(4, 3), QStringLiteral("source-a")), false,
+        renderContext());
+    const KiriView::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    QVERIFY(!first.providerUrl.isEmpty());
+    QCOMPARE(first.rasterSize, QSize(4, 3));
+
+    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(8.0, 6.0)));
+
+    QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
+    const KiriView::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
+    QCOMPARE(refined.sourceIdentity, QStringLiteral("source-a"));
+    QCOMPARE(refined.rasterSize, QSize(8, 6));
+    QCOMPARE(refined.revision, first.revision + 1);
+    QCOMPARE(refined.quality, KiriView::DisplayImageQuality::Exact);
+    QVERIFY(!store->entry(entryId(first)).has_value());
+    QVERIFY(store->entry(entryId(refined)).has_value());
+}
+
+void TestImagePageSurfaceController::qtRasterRefinementCompletionIsRejectedAfterSourceReplacement()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+
+    controller.setStaticDisplayImage(
+        qtRasterPayload(QSize(16, 12), QSize(4, 3), QStringLiteral("source-a")), false,
+        renderContext());
+    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(8.0, 6.0)));
+
+    controller.setStaticDisplayImage(
+        qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
+            KiriView::DisplayImageQuality::Exact),
+        false, renderContext());
+    const KiriView::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+
+    QTest::qWait(100);
+
+    const KiriView::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    QCOMPARE(current.providerUrl, replacement.providerUrl);
+    QCOMPARE(current.sourceIdentity, QStringLiteral("source-b"));
+    QCOMPARE(current.rasterSize, QSize(10, 10));
+    QCOMPARE(current.quality, KiriView::DisplayImageQuality::Exact);
+}
+
+void TestImagePageSurfaceController::exactQtRasterCurrentImageDoesNotRequestRefinement()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+
+    controller.setStaticDisplayImage(
+        qtRasterPayload(QSize(8, 6), QSize(8, 6), QStringLiteral("source-exact"),
+            KiriView::DisplayImageQuality::Exact),
+        false, renderContext());
+    const KiriView::ImageDisplaySourceSlot exact = controller.snapshot().displaySource;
+
+    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(8.0, 6.0)));
+    QTest::qWait(100);
+
+    const KiriView::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    QCOMPARE(current.providerUrl, exact.providerUrl);
+    QCOMPARE(current.revision, exact.revision);
+    QCOMPARE(current.rasterSize, QSize(8, 6));
 }
 
 QTEST_GUILESS_MAIN(TestImagePageSurfaceController)
