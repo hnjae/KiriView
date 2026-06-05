@@ -23,7 +23,6 @@ namespace {
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::staticDecodedTestImage;
 using KiriView::TestSupport::staticDisplayTestImagePayload;
-using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 constexpr qsizetype testPredecodeCacheByteBudget = 1024 * 1024;
@@ -88,7 +87,8 @@ private Q_SLOTS:
 void TestImagePresentationLoad::predecodedImagesPlanStaticCacheablePresentation()
 {
     KiriView::PredecodedImage image {
-        staticTestImagePayload(testImage(QSize(9, 5))),
+        staticDisplayTestImagePayload(testImage(QSize(9, 5)), testImage(QSize(3, 2)),
+            KiriView::StaticImageDisplayHints { 0.5 }, KiriView::DisplayImageQuality::FirstDisplay),
         KiriView::DisplayedImageLocation::fromUrl(localUrl(QStringLiteral("/images/page.png"))),
     };
 
@@ -99,8 +99,15 @@ void TestImagePresentationLoad::predecodedImagesPlanStaticCacheablePresentation(
     const auto *load = planPayload<KiriView::ImagePresentationStaticImageLoad>(plan);
     QVERIFY(load != nullptr);
     QVERIFY(load->predecodeCacheable);
+    QVERIFY(load->displayImage.has_value());
+    QCOMPARE(load->displayImage->sourceIdentity, QStringLiteral("test-image"));
+    QCOMPARE(load->displayImage->originalSize, QSize(9, 5));
+    QCOMPARE(load->displayImage->image.size(), QSize(3, 2));
+    QCOMPARE(load->displayImage->quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(load->displayImage->displayPixelsPerSourcePixel, 0.5);
     QVERIFY(load->staticImage.isValid());
     QCOMPARE(load->staticImage.source->imageSize(), QSize(9, 5));
+    QCOMPARE(load->staticImage.preview.size(), QSize(3, 2));
 }
 
 void TestImagePresentationLoad::decodedImagesPlanPresentationActions()

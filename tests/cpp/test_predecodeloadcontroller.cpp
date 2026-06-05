@@ -16,8 +16,8 @@ namespace {
 using KiriView::TestSupport::imageDecodeDependenciesFor;
 using KiriView::TestSupport::indexedImageUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::staticImageDataDecoder;
-using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 constexpr qsizetype testCacheByteBudget = 1024 * 1024;
@@ -25,10 +25,14 @@ constexpr qsizetype testCacheByteBudget = 1024 * 1024;
 KiriView::DisplayedPredecodeImage displayedImage(
     const QUrl &url, KiriView::StaticImageDisplayHints displayHints = {})
 {
+    const KiriView::DisplayImageQuality quality
+        = displayHints.firstDisplayPixelsPerSourcePixel > 0.0
+        ? KiriView::DisplayImageQuality::FirstDisplay
+        : KiriView::DisplayImageQuality::Exact;
     return KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(url),
         true,
-        staticTestImagePayload(testImage(), displayHints),
+        staticDisplayTestImagePayload(testImage(), testImage(), displayHints, quality),
     };
 }
 
@@ -72,7 +76,8 @@ void TestPredecodeLoadController::windowLoadsCacheDisplayedImageAndPumpQueuedDec
     const std::optional<KiriView::PredecodedImage> displayed
         = controller.findPredecodedImage(displayedUrl);
     QVERIFY(displayed.has_value());
-    QCOMPARE(displayed->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
+    QCOMPARE(displayed->displayImage.quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(displayed->displayImage.displayPixelsPerSourcePixel, 0.5);
 
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
@@ -80,6 +85,11 @@ void TestPredecodeLoadController::windowLoadsCacheDisplayedImageAndPumpQueuedDec
 
     dataLoader.finishFrontLoad(QByteArrayLiteral("next"));
     QTRY_VERIFY(controller.findPredecodedImage(nextUrl).has_value());
+    const std::optional<KiriView::PredecodedImage> next = controller.findPredecodedImage(nextUrl);
+    QCOMPARE(next->displayImage.sourceIdentity, QStringLiteral("test-image"));
+    QCOMPARE(next->displayImage.originalSize, testImage().size());
+    QCOMPARE(next->displayImage.image.size(), testImage().size());
+    QCOMPARE(next->displayImage.quality, KiriView::DisplayImageQuality::Exact);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, previousUrl);
 }
