@@ -334,7 +334,7 @@ void TestImagePageSurfaceController::visibleProjectionPinsAndPrioritizesProvider
     const KiriView::ImageDisplaySourceSlot slot = controller.snapshot().displaySource;
     const QString id = entryId(slot);
     QVERIFY(store->entry(id).has_value());
-    QVERIFY(!slot.loadAcknowledgmentRequired);
+    QVERIFY(slot.loadAcknowledgmentRequired);
 
     controller.scheduleVisibleTileDecode(visibleProjection());
     std::optional<KiriView::DisplayImageStoreEntry> stored = store->entry(id);
