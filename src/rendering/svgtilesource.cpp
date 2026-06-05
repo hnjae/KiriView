@@ -147,6 +147,18 @@ FirstDisplayImageDecodeResult SvgTileSource::decodeFirstDisplayImage(
         displayPixelsPerSourcePixel };
 }
 
+bool SvgTileSource::supportsRasterDisplayRefinement() const { return true; }
+
+QImage SvgTileSource::decodeRasterDisplayImage(const QSize &rasterSize, QString *errorString) const
+{
+    const QImage image = renderSvgImage(m_data, rasterSize);
+    if (image.isNull()) {
+        setTileSourceError(errorString, imageErrorText(ImageErrorTextId::RenderSvgImage));
+        return {};
+    }
+    return image;
+}
+
 QImage SvgTileSource::decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const
 {
     const QSize previewSize = boundedPreviewSize(m_imageSize, maximumLongEdge);

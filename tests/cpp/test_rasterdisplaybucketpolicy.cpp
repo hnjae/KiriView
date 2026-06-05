@@ -21,6 +21,7 @@ private Q_SLOTS:
     void lowerDetailCurrentImageRequestsSafeRefinementBucket();
     void unsafeSharperDemandKeepsCurrentImageAsBoundedDetail();
     void initialDemandWithoutSafeBucketIsUnsupported();
+    void svgBucketsUseCoarseScaleSequence();
     void demandKeysMatchOnlyWhenEveryStaleRejectionFieldMatches();
 };
 
@@ -135,6 +136,43 @@ void TestRasterDisplayBucketPolicy::initialDemandWithoutSafeBucketIsUnsupported(
     QVERIFY(!decision.currentImageRetained);
 }
 
+void TestRasterDisplayBucketPolicy::svgBucketsUseCoarseScaleSequence()
+{
+    KiriView::RasterDisplayBucketPolicyInput input = policyInput();
+    input.originalSize = QSize(80, 40);
+    input.currentRasterSize = QSize(80, 40);
+    input.currentQuality = KiriView::DisplayImageQuality::FirstDisplay;
+    input.displaySize = QSizeF(100.0, 50.0);
+    input.visibleItemRect = QRectF(0.0, 0.0, 100.0, 50.0);
+
+    KiriView::RasterDisplayBucketDecision decision = KiriView::svgDisplayBucketDecision(input);
+
+    QCOMPARE(decision.status, KiriView::RasterDisplayBucketStatus::RefinementNeeded);
+    QCOMPARE(decision.quality, KiriView::DisplayImageQuality::Exact);
+    QCOMPARE(decision.bucketKey.rasterSize, QSize(120, 60));
+    QVERIFY(decision.refinementRequired);
+    QVERIFY(decision.currentImageRetained);
+
+    input.currentRasterSize = QSize(120, 60);
+    input.currentQuality = KiriView::DisplayImageQuality::Exact;
+    input.displaySize = QSizeF(110.0, 55.0);
+    input.visibleItemRect = QRectF(0.0, 0.0, 110.0, 55.0);
+
+    decision = KiriView::svgDisplayBucketDecision(input);
+
+    QCOMPARE(decision.status, KiriView::RasterDisplayBucketStatus::Exact);
+    QCOMPARE(decision.bucketKey.rasterSize, QSize(120, 60));
+    QVERIFY(!decision.refinementRequired);
+
+    input.displaySize = QSizeF(150.0, 75.0);
+    input.visibleItemRect = QRectF(0.0, 0.0, 150.0, 75.0);
+
+    decision = KiriView::svgDisplayBucketDecision(input);
+
+    QCOMPARE(decision.status, KiriView::RasterDisplayBucketStatus::RefinementNeeded);
+    QCOMPARE(decision.bucketKey.rasterSize, QSize(180, 90));
+}
+
 void TestRasterDisplayBucketPolicy::demandKeysMatchOnlyWhenEveryStaleRejectionFieldMatches()
 {
     const KiriView::RasterDisplayBucketKey bucketKey {
@@ -145,6 +183,7 @@ void TestRasterDisplayBucketPolicy::demandKeysMatchOnlyWhenEveryStaleRejectionFi
     };
     const KiriView::RasterDisplayRefinementDemandKey key {
         QStringLiteral("source-a"),
+        QSize(1600, 1200),
         KiriView::DisplayedPageRole::Primary,
         7,
         11,
@@ -152,17 +191,24 @@ void TestRasterDisplayBucketPolicy::demandKeysMatchOnlyWhenEveryStaleRejectionFi
         17,
         19,
         23,
+        29,
         bucketKey,
     };
 
     KiriView::RasterDisplayRefinementDemandKey same = key;
+    KiriView::RasterDisplayRefinementDemandKey staleIntrinsicSize = key;
+    staleIntrinsicSize.originalSize = QSize(1200, 1600);
     KiriView::RasterDisplayRefinementDemandKey staleZoom = key;
     staleZoom.zoomGeneration = 12;
+    KiriView::RasterDisplayRefinementDemandKey staleRenderRevision = key;
+    staleRenderRevision.renderRevision = 30;
     KiriView::RasterDisplayRefinementDemandKey staleBucket = key;
     staleBucket.bucketKey.rasterSize = QSize(1200, 900);
 
     QVERIFY(key == same);
+    QVERIFY(key != staleIntrinsicSize);
     QVERIFY(key != staleZoom);
+    QVERIFY(key != staleRenderRevision);
     QVERIFY(key != staleBucket);
 }
 

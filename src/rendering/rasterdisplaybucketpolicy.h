@@ -64,6 +64,7 @@ struct RasterDisplayBucketDecision {
 
 struct RasterDisplayRefinementDemandKey {
     QString sourceIdentity;
+    QSize originalSize;
     DisplayedPageRole pageRole = DisplayedPageRole::Primary;
     quint64 displaySourceRevision = 0;
     quint64 zoomGeneration = 0;
@@ -71,19 +72,21 @@ struct RasterDisplayRefinementDemandKey {
     quint64 renderContextGeneration = 0;
     quint64 allocationGeneration = 0;
     quint64 rotationGeneration = 0;
+    quint64 renderRevision = 0;
     RasterDisplayBucketKey bucketKey;
 
     friend bool operator==(
         const RasterDisplayRefinementDemandKey &left, const RasterDisplayRefinementDemandKey &right)
     {
-        return left.sourceIdentity == right.sourceIdentity && left.pageRole == right.pageRole
+        return left.sourceIdentity == right.sourceIdentity
+            && left.originalSize == right.originalSize && left.pageRole == right.pageRole
             && left.displaySourceRevision == right.displaySourceRevision
             && left.zoomGeneration == right.zoomGeneration
             && left.devicePixelRatioGeneration == right.devicePixelRatioGeneration
             && left.renderContextGeneration == right.renderContextGeneration
             && left.allocationGeneration == right.allocationGeneration
             && left.rotationGeneration == right.rotationGeneration
-            && left.bucketKey == right.bucketKey;
+            && left.renderRevision == right.renderRevision && left.bucketKey == right.bucketKey;
     }
 
     friend bool operator!=(
@@ -95,6 +98,7 @@ struct RasterDisplayRefinementDemandKey {
 
 RasterDisplayBucketDecision rasterDisplayBucketDecision(
     const RasterDisplayBucketPolicyInput &input);
+RasterDisplayBucketDecision svgDisplayBucketDecision(const RasterDisplayBucketPolicyInput &input);
 }
 
 #endif

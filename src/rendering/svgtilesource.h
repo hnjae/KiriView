@@ -26,6 +26,8 @@ public:
         const TileRequest &request, QString *errorString) const override;
     FirstDisplayImageDecodeResult decodeFirstDisplayImage(
         const ImageFirstDisplayDecodeContext &context, QString *errorString) const override;
+    bool supportsRasterDisplayRefinement() const override;
+    QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *errorString) const override;
     QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const override;
     qsizetype byteCost() const override;
     bool isResolutionIndependent() const override;

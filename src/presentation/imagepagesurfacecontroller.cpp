@@ -37,10 +37,12 @@ namespace {
 
     RasterDisplayRefinementDemandKey rasterDemandKey(const StaticDisplayImagePayload &displayImage,
         const ImagePresentationRenderProjection &projection, quint64 displaySourceRevision,
-        qsizetype displayImageByteBudget, const RasterDisplayBucketKey &bucketKey)
+        qsizetype displayImageByteBudget, quint64 renderRevision,
+        const RasterDisplayBucketKey &bucketKey)
     {
         return RasterDisplayRefinementDemandKey {
             displayImage.sourceIdentity,
+            displayImage.originalSize,
             projection.pageRole,
             displaySourceRevision,
             projection.imageRevision,
@@ -48,6 +50,7 @@ namespace {
             projection.renderContextGeneration,
             static_cast<quint64>(std::max<qsizetype>(0, displayImageByteBudget)),
             static_cast<quint64>(std::max(0, projection.rotationDegrees)),
+            renderRevision,
             bucketKey,
         };
     }
@@ -430,18 +433,20 @@ void ImagePageSurfaceController::scheduleRasterDisplayRefinement(
     const qsizetype displayImageByteBudget = m_displayImageStore == nullptr
         ? m_staticTileCacheByteBudget
         : m_displayImageStore->byteBudget();
-    const RasterDisplayBucketDecision decision
-        = rasterDisplayBucketDecision(RasterDisplayBucketPolicyInput {
-            currentDisplay->originalSize,
-            currentDisplay->image.size(),
-            currentDisplay->quality,
-            projection.displaySize,
-            projection.visibleItemRect,
-            projection.devicePixelRatio,
-            projection.rotationDegrees,
-            projection.maximumTextureSize,
-            displayImageByteBudget,
-        });
+    const RasterDisplayBucketPolicyInput policyInput {
+        currentDisplay->originalSize,
+        currentDisplay->image.size(),
+        currentDisplay->quality,
+        projection.displaySize,
+        projection.visibleItemRect,
+        projection.devicePixelRatio,
+        projection.rotationDegrees,
+        projection.maximumTextureSize,
+        displayImageByteBudget,
+    };
+    const RasterDisplayBucketDecision decision = source->isResolutionIndependent()
+        ? svgDisplayBucketDecision(policyInput)
+        : rasterDisplayBucketDecision(policyInput);
     if (decision.status != RasterDisplayBucketStatus::RefinementNeeded
         || decision.bucketKey.rasterSize == currentDisplay->image.size()) {
         cancelRasterDisplayRefinement();
@@ -449,13 +454,17 @@ void ImagePageSurfaceController::scheduleRasterDisplayRefinement(
     }
 
     RasterDisplayRefinementDemandKey demandKey = rasterDemandKey(*currentDisplay, projection,
-        m_displaySourceRevision, displayImageByteBudget, decision.bucketKey);
-    if (m_rasterDisplayRefinementDemand.has_value()
-        && *m_rasterDisplayRefinementDemand == demandKey) {
-        return;
+        m_displaySourceRevision, displayImageByteBudget, 0, decision.bucketKey);
+    if (m_rasterDisplayRefinementDemand.has_value()) {
+        RasterDisplayRefinementDemandKey pendingDemand = *m_rasterDisplayRefinementDemand;
+        pendingDemand.renderRevision = 0;
+        if (pendingDemand == demandKey) {
+            return;
+        }
     }
 
     const quint64 ticket = m_rasterDisplayRefinementTicket.next();
+    demandKey.renderRevision = ticket;
     m_rasterDisplayRefinementDemand = demandKey;
     runAsyncWorker(
         m_context,
