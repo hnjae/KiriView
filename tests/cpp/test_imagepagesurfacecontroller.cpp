@@ -45,6 +45,9 @@ private Q_SLOTS:
     void rawRefinementCompletionIsRejectedAfterSourceReplacement();
     void svgFirstDisplayRefinesToCoarseProviderBucket();
     void svgRefinementCompletionIsRejectedAfterSourceReplacement();
+    void animationFrameProviderContractRetainsPreviousFrameUntilLoadOutcome();
+    void staleAnimationFrameLoadOutcomesAreRejected();
+    void animationFrameRetentionIsBoundedToPreviousFrame();
 };
 
 namespace {
@@ -655,6 +658,87 @@ void TestImagePageSurfaceController::svgRefinementCompletionIsRejectedAfterSourc
     QCOMPARE(current.sourceIdentity, QStringLiteral("source-b"));
     QCOMPARE(current.rasterSize, QSize(10, 10));
     QCOMPARE(current.quality, KiriView::DisplayImageQuality::Exact);
+}
+
+void TestImagePageSurfaceController::
+    animationFrameProviderContractRetainsPreviousFrameUntilLoadOutcome()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+    const QString sourceIdentity = QStringLiteral("file:///tmp/animated.apng");
+
+    controller.setAnimationFrame(KiriView::TestSupport::testImage(QSize(4, 4)), sourceIdentity);
+    const KiriView::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const QString firstId = entryId(first);
+    QVERIFY(first.loadAcknowledgmentRequired);
+    QVERIFY(store->entry(firstId).has_value());
+
+    controller.setAnimationFrame(KiriView::TestSupport::testImage(QSize(5, 4)), sourceIdentity);
+    const KiriView::ImageDisplaySourceSlot second = controller.snapshot().displaySource;
+    const QString secondId = entryId(second);
+    QVERIFY(second.loadAcknowledgmentRequired);
+    QVERIFY(first.providerUrl != second.providerUrl);
+    QVERIFY(store->entry(firstId).has_value());
+    QVERIFY(store->entry(secondId).has_value());
+
+    controller.acknowledgeAnimationFrameDisplayLoad(second.providerUrl, second.revision,
+        sourceIdentity, KiriView::ImageDisplayLoadOutcome::Loaded);
+
+    QVERIFY(!store->entry(firstId).has_value());
+    QVERIFY(store->entry(secondId).has_value());
+    QCOMPARE(controller.snapshot().displaySource.providerUrl, second.providerUrl);
+}
+
+void TestImagePageSurfaceController::staleAnimationFrameLoadOutcomesAreRejected()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+    const QString sourceIdentity = QStringLiteral("file:///tmp/animated.apng");
+
+    controller.setAnimationFrame(KiriView::TestSupport::testImage(QSize(4, 4)), sourceIdentity);
+    const KiriView::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const QString firstId = entryId(first);
+
+    controller.setAnimationFrame(KiriView::TestSupport::testImage(QSize(5, 4)), sourceIdentity);
+    const KiriView::ImageDisplaySourceSlot second = controller.snapshot().displaySource;
+    QVERIFY(store->entry(firstId).has_value());
+
+    controller.acknowledgeAnimationFrameDisplayLoad(first.providerUrl, first.revision,
+        sourceIdentity, KiriView::ImageDisplayLoadOutcome::Loaded);
+    QVERIFY(store->entry(firstId).has_value());
+
+    controller.acknowledgeAnimationFrameDisplayLoad(second.providerUrl, second.revision,
+        QStringLiteral("file:///tmp/replacement.apng"), KiriView::ImageDisplayLoadOutcome::Loaded);
+    QVERIFY(store->entry(firstId).has_value());
+
+    controller.acknowledgeAnimationFrameDisplayLoad(second.providerUrl, second.revision,
+        sourceIdentity, KiriView::ImageDisplayLoadOutcome::Loaded);
+    QVERIFY(!store->entry(firstId).has_value());
+}
+
+void TestImagePageSurfaceController::animationFrameRetentionIsBoundedToPreviousFrame()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+    const QString sourceIdentity = QStringLiteral("file:///tmp/animated.apng");
+
+    controller.setAnimationFrame(KiriView::TestSupport::testImage(QSize(4, 4)), sourceIdentity);
+    const KiriView::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const QString firstId = entryId(first);
+
+    controller.setAnimationFrame(KiriView::TestSupport::testImage(QSize(5, 4)), sourceIdentity);
+    const KiriView::ImageDisplaySourceSlot second = controller.snapshot().displaySource;
+    const QString secondId = entryId(second);
+    QVERIFY(store->entry(firstId).has_value());
+
+    controller.setAnimationFrame(KiriView::TestSupport::testImage(QSize(6, 4)), sourceIdentity);
+    const KiriView::ImageDisplaySourceSlot third = controller.snapshot().displaySource;
+    const QString thirdId = entryId(third);
+
+    QVERIFY(!store->entry(firstId).has_value());
+    QVERIFY(store->entry(secondId).has_value());
+    QVERIFY(store->entry(thirdId).has_value());
+    QCOMPARE(store->size(), qsizetype(2));
 }
 
 QTEST_GUILESS_MAIN(TestImagePageSurfaceController)
