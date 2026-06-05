@@ -148,7 +148,7 @@ void ImageDecodeJob::startThumbnailPreviewLookup(
                 = xdgThumbnailPreviewResult(previewRequest, std::move(lookupResult));
             if (previewResult.status == ThumbnailCacheLookupStatus::Missing && rawPreviewEligible) {
                 startRawEmbeddedThumbnailPreviewValidation(
-                    std::move(rawPreviewData), operation->request);
+                    std::move(rawPreviewData), ticket, operation->request);
                 return;
             }
             if (previewResult.status != ThumbnailCacheLookupStatus::Ready
@@ -167,7 +167,7 @@ void ImageDecodeJob::startThumbnailPreviewLookup(
 }
 
 void ImageDecodeJob::startRawEmbeddedThumbnailPreviewValidation(
-    QByteArray data, ImageDecodeRequest request)
+    QByteArray data, ImageDecodeJobTicket ticket, ImageDecodeRequest request)
 {
     if (!m_dependencies.rawEmbeddedThumbnailPreviewExtractor) {
         return;
@@ -179,9 +179,22 @@ void ImageDecodeJob::startRawEmbeddedThumbnailPreviewValidation(
         this,
         [extractor, data = std::move(data), request]() mutable {
             RawEmbeddedThumbnailPreviewResult result = extractor(data, request);
-            return rawEmbeddedThumbnailPreviewDisplayPayload(request, std::move(result))
-                .has_value();
+            return rawEmbeddedThumbnailPreviewDisplayPayload(request, std::move(result));
         },
-        [](bool) {});
+        [this, ticket = std::move(ticket)](
+            std::optional<StaticDisplayImagePayload> payload) mutable {
+            if (!payload.has_value() || !m_callbacks.thumbnailPreview) {
+                return;
+            }
+
+            ImageDecodeJobRuntimePlan plan = m_state.acceptThumbnailPreview(ticket);
+            const auto *operation
+                = std::get_if<DeliverImageThumbnailPreviewOperation>(&plan.operation);
+            if (operation == nullptr) {
+                return;
+            }
+
+            invokeIfSet(m_callbacks.thumbnailPreview, operation->request, std::move(*payload));
+        });
 }
 }
