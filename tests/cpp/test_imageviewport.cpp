@@ -41,12 +41,154 @@ private Q_SLOTS:
     void doubleClickTogglesManualZoomToFit();
     void doubleClickTogglesFitHeightToFit();
     void doubleClickFromViewportMarginZoomsAroundNearestImagePoint();
-    void viewportCreatesContextBridgeWithoutReplacingCompatibilityView();
+    void viewportUsesDisplayImagePagesWithContextBridge();
+    void displayImagePageLoadAcknowledgmentReachesDocument();
     void viewportHitTestingUsesDocumentFacade();
     void singleClickStillEmitsViewerClicked();
 };
 
 namespace {
+class FakeKiriImageDisplaySource : public QObject
+{
+    Q_OBJECT
+
+    Q_PROPERTY(bool visible READ visible WRITE setVisible NOTIFY changed)
+    Q_PROPERTY(int pageRole READ pageRole CONSTANT)
+    Q_PROPERTY(QUrl providerUrl READ providerUrl WRITE setProviderUrl NOTIFY changed)
+    Q_PROPERTY(QString revisionToken READ revisionToken WRITE setRevisionToken NOTIFY changed)
+    Q_PROPERTY(QString sourceIdentity READ sourceIdentity WRITE setSourceIdentity NOTIFY changed)
+    Q_PROPERTY(QSize sourceSizeHint READ sourceSizeHint WRITE setSourceSizeHint NOTIFY changed)
+    Q_PROPERTY(bool cacheEnabled READ cacheEnabled WRITE setCacheEnabled NOTIFY changed)
+    Q_PROPERTY(bool loadAcknowledgmentRequired READ loadAcknowledgmentRequired WRITE
+            setLoadAcknowledgmentRequired NOTIFY changed)
+    Q_PROPERTY(int rotationDegrees READ rotationDegrees WRITE setRotationDegrees NOTIFY changed)
+    Q_PROPERTY(bool retainWhileLoadingEligible READ retainWhileLoadingEligible WRITE
+            setRetainWhileLoadingEligible NOTIFY changed)
+
+public:
+    explicit FakeKiriImageDisplaySource(int pageRole, QObject *parent = nullptr)
+        : QObject(parent)
+        , m_pageRole(pageRole)
+    {
+    }
+
+    bool visible() const { return m_visible; }
+    int pageRole() const { return m_pageRole; }
+    QUrl providerUrl() const { return m_providerUrl; }
+    QString revisionToken() const { return m_revisionToken; }
+    QString sourceIdentity() const { return m_sourceIdentity; }
+    QSize sourceSizeHint() const { return m_sourceSizeHint; }
+    bool cacheEnabled() const { return m_cacheEnabled; }
+    bool loadAcknowledgmentRequired() const { return m_loadAcknowledgmentRequired; }
+    int rotationDegrees() const { return m_rotationDegrees; }
+    bool retainWhileLoadingEligible() const { return m_retainWhileLoadingEligible; }
+
+    void setVisible(bool visible)
+    {
+        if (m_visible == visible) {
+            return;
+        }
+
+        m_visible = visible;
+        Q_EMIT changed();
+    }
+
+    void setProviderUrl(const QUrl &providerUrl)
+    {
+        if (m_providerUrl == providerUrl) {
+            return;
+        }
+
+        m_providerUrl = providerUrl;
+        Q_EMIT changed();
+    }
+
+    void setRevisionToken(const QString &revisionToken)
+    {
+        if (m_revisionToken == revisionToken) {
+            return;
+        }
+
+        m_revisionToken = revisionToken;
+        Q_EMIT changed();
+    }
+
+    void setSourceIdentity(const QString &sourceIdentity)
+    {
+        if (m_sourceIdentity == sourceIdentity) {
+            return;
+        }
+
+        m_sourceIdentity = sourceIdentity;
+        Q_EMIT changed();
+    }
+
+    void setSourceSizeHint(const QSize &sourceSizeHint)
+    {
+        if (m_sourceSizeHint == sourceSizeHint) {
+            return;
+        }
+
+        m_sourceSizeHint = sourceSizeHint;
+        Q_EMIT changed();
+    }
+
+    void setCacheEnabled(bool cacheEnabled)
+    {
+        if (m_cacheEnabled == cacheEnabled) {
+            return;
+        }
+
+        m_cacheEnabled = cacheEnabled;
+        Q_EMIT changed();
+    }
+
+    void setLoadAcknowledgmentRequired(bool loadAcknowledgmentRequired)
+    {
+        if (m_loadAcknowledgmentRequired == loadAcknowledgmentRequired) {
+            return;
+        }
+
+        m_loadAcknowledgmentRequired = loadAcknowledgmentRequired;
+        Q_EMIT changed();
+    }
+
+    void setRotationDegrees(int rotationDegrees)
+    {
+        if (m_rotationDegrees == rotationDegrees) {
+            return;
+        }
+
+        m_rotationDegrees = rotationDegrees;
+        Q_EMIT changed();
+    }
+
+    void setRetainWhileLoadingEligible(bool retainWhileLoadingEligible)
+    {
+        if (m_retainWhileLoadingEligible == retainWhileLoadingEligible) {
+            return;
+        }
+
+        m_retainWhileLoadingEligible = retainWhileLoadingEligible;
+        Q_EMIT changed();
+    }
+
+Q_SIGNALS:
+    void changed();
+
+private:
+    int m_pageRole = 0;
+    bool m_visible = true;
+    QUrl m_providerUrl;
+    QString m_revisionToken = QStringLiteral("1");
+    QString m_sourceIdentity = QStringLiteral("source-primary");
+    QSize m_sourceSizeHint;
+    bool m_cacheEnabled = false;
+    bool m_loadAcknowledgmentRequired = false;
+    int m_rotationDegrees = 0;
+    bool m_retainWhileLoadingEligible = false;
+};
+
 class FakeKiriImageDocument : public QObject
 {
     Q_OBJECT
@@ -81,6 +223,8 @@ class FakeKiriImageDocument : public QObject
     Q_PROPERTY(bool secondaryPageVisible READ secondaryPageVisible CONSTANT)
     Q_PROPERTY(bool rightToLeftReadingEnabled READ rightToLeftReadingEnabled CONSTANT)
     Q_PROPERTY(bool rightToLeftReadingAvailable READ rightToLeftReadingAvailable CONSTANT)
+    Q_PROPERTY(QObject *primaryDisplaySource READ primaryDisplaySource CONSTANT)
+    Q_PROPERTY(QObject *secondaryDisplaySource READ secondaryDisplaySource CONSTANT)
 
 public:
     enum class Status {
@@ -124,7 +268,11 @@ public:
 
     explicit FakeKiriImageDocument(QObject *parent = nullptr)
         : QObject(parent)
+        , m_primaryDisplaySource(0, this)
+        , m_secondaryDisplaySource(1, this)
     {
+        m_secondaryDisplaySource.setVisible(false);
+        m_secondaryDisplaySource.setSourceIdentity(QStringLiteral("source-secondary"));
     }
 
     QUrl sourceUrl() const { return m_sourceUrl; }
@@ -226,6 +374,8 @@ public:
     bool secondaryPageVisible() const { return false; }
     bool rightToLeftReadingEnabled() const { return false; }
     bool rightToLeftReadingAvailable() const { return false; }
+    QObject *primaryDisplaySource() { return &m_primaryDisplaySource; }
+    QObject *secondaryDisplaySource() { return &m_secondaryDisplaySource; }
 
     Q_INVOKABLE double steppedManualZoomPercent(double stepCount) const
     {
@@ -399,6 +549,44 @@ public:
     }
 
     Q_INVOKABLE void requestNextDisplayedImageStartToFinalScanPosition() { }
+
+    Q_INVOKABLE void requirePrimaryMissingLoadAcknowledgment()
+    {
+        m_primaryDisplaySource.setProviderUrl(QUrl());
+        m_primaryDisplaySource.setRevisionToken(QStringLiteral("42"));
+        m_primaryDisplaySource.setSourceIdentity(QStringLiteral("source-primary"));
+        m_primaryDisplaySource.setLoadAcknowledgmentRequired(true);
+    }
+
+    Q_INVOKABLE void acknowledgeStillImageDisplayLoad(int pageRole, const QUrl &providerUrl,
+        const QString &revisionToken, const QString &sourceIdentity, int outcome)
+    {
+        m_lastAcknowledgedPageRole = pageRole;
+        m_lastAcknowledgedProviderUrl = providerUrl;
+        m_lastAcknowledgedRevisionToken = revisionToken;
+        m_lastAcknowledgedSourceIdentity = sourceIdentity;
+        m_lastAcknowledgedOutcome = outcome;
+        ++m_stillImageLoadAcknowledgmentCount;
+    }
+
+    Q_INVOKABLE int stillImageLoadAcknowledgmentCount() const
+    {
+        return m_stillImageLoadAcknowledgmentCount;
+    }
+
+    Q_INVOKABLE int lastAcknowledgedPageRole() const { return m_lastAcknowledgedPageRole; }
+
+    Q_INVOKABLE QString lastAcknowledgedRevisionToken() const
+    {
+        return m_lastAcknowledgedRevisionToken;
+    }
+
+    Q_INVOKABLE QString lastAcknowledgedSourceIdentity() const
+    {
+        return m_lastAcknowledgedSourceIdentity;
+    }
+
+    Q_INVOKABLE int lastAcknowledgedOutcome() const { return m_lastAcknowledgedOutcome; }
 
     Q_INVOKABLE bool requestDisplayedImageInitialContentPosition()
     {
@@ -639,6 +827,14 @@ private:
     ZoomMode m_zoomMode = ZoomMode::Manual;
     mutable int m_documentHitTestHelperCallCount = 0;
     mutable int m_legacyViewHitTestHelperCallCount = 0;
+    FakeKiriImageDisplaySource m_primaryDisplaySource;
+    FakeKiriImageDisplaySource m_secondaryDisplaySource;
+    int m_stillImageLoadAcknowledgmentCount = 0;
+    int m_lastAcknowledgedPageRole = -1;
+    QUrl m_lastAcknowledgedProviderUrl;
+    QString m_lastAcknowledgedRevisionToken;
+    QString m_lastAcknowledgedSourceIdentity;
+    int m_lastAcknowledgedOutcome = -1;
 };
 
 class FakeKiriImageView : public QQuickItem
@@ -960,6 +1156,30 @@ Item {
         return point === null ? Number.NaN : point.x;
     }
 
+    function requirePrimaryMissingLoadAcknowledgment() {
+        imageViewport.imageDocument.requirePrimaryMissingLoadAcknowledgment();
+    }
+
+    function stillImageLoadAcknowledgmentCount() {
+        return imageViewport.imageDocument.stillImageLoadAcknowledgmentCount();
+    }
+
+    function lastAcknowledgedPageRole() {
+        return imageViewport.imageDocument.lastAcknowledgedPageRole();
+    }
+
+    function lastAcknowledgedRevisionToken() {
+        return imageViewport.imageDocument.lastAcknowledgedRevisionToken();
+    }
+
+    function lastAcknowledgedSourceIdentity() {
+        return imageViewport.imageDocument.lastAcknowledgedSourceIdentity();
+    }
+
+    function lastAcknowledgedOutcome() {
+        return imageViewport.imageDocument.lastAcknowledgedOutcome();
+    }
+
     KiriImageDocument {
         id: imageDocument
     }
@@ -1049,6 +1269,14 @@ int invokeInt(QObject *object, const char *method)
     const bool invoked = QMetaObject::invokeMethod(
         object, method, Qt::DirectConnection, Q_RETURN_ARG(QVariant, result));
     return invoked ? result.toInt() : std::numeric_limits<int>::min();
+}
+
+QString invokeString(QObject *object, const char *method)
+{
+    QVariant result;
+    const bool invoked = QMetaObject::invokeMethod(
+        object, method, Qt::DirectConnection, Q_RETURN_ARG(QVariant, result));
+    return invoked ? result.toString() : QString();
 }
 
 void invokeVoid(QObject *object, const char *method)
@@ -1261,7 +1489,7 @@ void TestImageViewport::doubleClickFromViewportMarginZoomsAroundNearestImagePoin
     QTRY_VERIFY(invokeReal(fixture.root, "contentY") > 0.0);
 }
 
-void TestImageViewport::viewportCreatesContextBridgeWithoutReplacingCompatibilityView()
+void TestImageViewport::viewportUsesDisplayImagePagesWithContextBridge()
 {
     ImageViewportFixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
@@ -1275,8 +1503,28 @@ void TestImageViewport::viewportCreatesContextBridgeWithoutReplacingCompatibilit
     QVERIFY(secondaryBridge != nullptr);
     QCOMPARE(primaryBridge->property("secondaryPage").toBool(), false);
     QCOMPARE(secondaryBridge->property("secondaryPage").toBool(), true);
-    QVERIFY(fixture.root->findChild<QObject *>(QStringLiteral("primaryImageView")) != nullptr);
-    QVERIFY(fixture.root->findChild<QObject *>(QStringLiteral("secondaryImageView")) != nullptr);
+    QVERIFY(
+        fixture.root->findChild<QObject *>(QStringLiteral("primaryDisplayImagePage")) != nullptr);
+    QVERIFY(
+        fixture.root->findChild<QObject *>(QStringLiteral("secondaryDisplayImagePage")) != nullptr);
+    QVERIFY(fixture.root->findChild<QObject *>(QStringLiteral("primaryImageView")) == nullptr);
+    QVERIFY(fixture.root->findChild<QObject *>(QStringLiteral("secondaryImageView")) == nullptr);
+}
+
+void TestImageViewport::displayImagePageLoadAcknowledgmentReachesDocument()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+
+    invokeVoid(fixture.root, "requirePrimaryMissingLoadAcknowledgment");
+
+    QTRY_COMPARE(invokeInt(fixture.root, "stillImageLoadAcknowledgmentCount"), 1);
+    QCOMPARE(invokeInt(fixture.root, "lastAcknowledgedPageRole"), 0);
+    QCOMPARE(invokeInt(fixture.root, "lastAcknowledgedOutcome"), 2);
+    QCOMPARE(invokeString(fixture.root, "lastAcknowledgedRevisionToken"), QStringLiteral("42"));
+    QCOMPARE(invokeString(fixture.root, "lastAcknowledgedSourceIdentity"),
+        QStringLiteral("source-primary"));
 }
 
 void TestImageViewport::viewportHitTestingUsesDocumentFacade()
