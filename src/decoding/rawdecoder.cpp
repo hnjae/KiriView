@@ -182,6 +182,16 @@ public:
 
     QSize imageSize() const override { return m_image.size(); }
     qsizetype byteCost() const override { return KiriView::imageByteCost(m_image); }
+    bool supportsRasterDisplayRefinement() const override { return true; }
+
+    QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *) const override
+    {
+        if (rasterSize.isEmpty()) {
+            return {};
+        }
+
+        return KiriView::scaledTileImage(m_image, rasterSize);
+    }
 
     QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *) const override
     {
