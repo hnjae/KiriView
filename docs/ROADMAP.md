@@ -76,7 +76,7 @@ Track completed provider-rendering migration work by stage so code agents do not
 - [x] Stage 9: Move animation frames to display-source publication.
 - [x] Stage 10: Swap QML rendering to display presenters.
 - [x] Stage 11: Remove QRhi dependency, tiles, and render nodes.
-- [ ] Stage 12: Enforce the end state.
+- [x] Stage 12: Enforce the end state.
 
 ## Stage 1: Declare Provider Rendering Intent
 
