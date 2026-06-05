@@ -68,13 +68,12 @@ std::vector<KiriView::ImageDocumentPageCandidate> imageDocumentPageCandidates(in
 }
 
 KiriView::StaticDisplayImagePayload displayTestImagePayload(
-    const QImage &image, KiriView::StaticImageDisplayHints displayHints = {})
+    const QImage &image, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
-    const KiriView::DisplayImageQuality quality
-        = displayHints.firstDisplayPixelsPerSourcePixel > 0.0
+    const KiriView::DisplayImageQuality quality = firstDisplayPixelsPerSourcePixel > 0.0
         ? KiriView::DisplayImageQuality::FirstDisplay
         : KiriView::DisplayImageQuality::Exact;
-    return staticDisplayTestImagePayload(image, image, displayHints, quality);
+    return staticDisplayTestImagePayload(image, image, firstDisplayPixelsPerSourcePixel, quality);
 }
 
 KiriView::ImagePredecodeCoordinator::Context predecodeContext(
@@ -139,7 +138,7 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
         KiriView::DisplayedPredecodeImage {
             KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
             true,
-            displayTestImagePayload(displayedImage, KiriView::StaticImageDisplayHints { 0.5 }),
+            displayTestImagePayload(displayedImage, 0.5),
         },
         std::nullopt, KiriView::ImageFirstDisplayDecodeContext { QSize(640, 480) }));
 
@@ -181,12 +180,12 @@ void TestImagePredecodeCoordinator::scheduleCachesVisibleSpreadPagesAndSkipsSeco
         KiriView::DisplayedPredecodeImage {
             KiriView::DisplayedImageLocation::fromUrl(primaryUrl),
             true,
-            displayTestImagePayload(testImage(), KiriView::StaticImageDisplayHints { 0.5 }),
+            displayTestImagePayload(testImage(), 0.5),
         },
         std::make_optional(KiriView::DisplayedPredecodeImage {
             KiriView::DisplayedImageLocation::fromUrl(secondaryUrl),
             true,
-            displayTestImagePayload(testImage(), KiriView::StaticImageDisplayHints { 0.75 }),
+            displayTestImagePayload(testImage(), 0.75),
         })));
 
     const std::optional<KiriView::PredecodedImage> primary

@@ -132,11 +132,6 @@ qsizetype ImagePageSurfaceController::predecodeCacheByteBudget() const
     return m_predecodeCacheByteBudget;
 }
 
-std::optional<StaticImagePayload> ImagePageSurfaceController::staticImage() const
-{
-    return m_staticImage;
-}
-
 std::optional<StaticDisplayImagePayload> ImagePageSurfaceController::displayImage() const
 {
     return m_displayImage;
@@ -158,7 +153,7 @@ void ImagePageSurfaceController::setImage(const QImage &image, bool predecodeCac
     clearShadowDisplayImage();
     clearDisplaySource();
     m_animationFrameSourceIdentity.clear();
-    acceptImageState(image.size(), predecodeCacheable, std::nullopt, std::nullopt);
+    acceptImageState(image.size(), predecodeCacheable, std::nullopt);
 }
 
 void ImagePageSurfaceController::setAnimationFrame(
@@ -170,7 +165,7 @@ void ImagePageSurfaceController::setAnimationFrame(
 
     const QImage displayImage = displayReadyImage(image);
     publishAnimationFrameDisplaySource(displayImage, sourceIdentity);
-    acceptImageState(displayImage.size(), false, std::nullopt, std::nullopt);
+    acceptImageState(displayImage.size(), false, std::nullopt);
     notify(ImageDocumentChange::DisplaySource);
 }
 
@@ -185,25 +180,8 @@ void ImagePageSurfaceController::setStaticDisplayImage(StaticDisplayImagePayload
 
     Q_UNUSED(renderContext);
     StaticDisplayImagePayload storedDisplay = std::move(displayImage);
-    StaticImagePayload staticImage = storedDisplay.compatibilityStaticImage();
     const QSize imageSize = storedDisplay.originalSize;
-    acceptImageState(
-        imageSize, predecodeCacheable, std::move(staticImage), std::move(storedDisplay));
-}
-
-void ImagePageSurfaceController::setStaticImage(StaticImagePayload staticImage,
-    bool predecodeCacheable, const ImageDocumentRenderContext &renderContext)
-{
-    cancelRasterDisplayRefinement();
-    stopAnimation();
-    clearShadowDisplayImage();
-    clearDisplaySource();
-    m_animationFrameSourceIdentity.clear();
-
-    Q_UNUSED(renderContext);
-    const QSize imageSize
-        = staticImage.source == nullptr ? QSize() : staticImage.source->imageSize();
-    acceptImageState(imageSize, predecodeCacheable, std::move(staticImage), std::nullopt);
+    acceptImageState(imageSize, predecodeCacheable, std::move(storedDisplay));
 }
 
 void ImagePageSurfaceController::updateDisplayProjection(
@@ -229,7 +207,6 @@ void ImagePageSurfaceController::clearImage()
     m_imageSize = {};
     m_hasImage = false;
     m_predecodeCacheable = false;
-    m_staticImage = std::nullopt;
     m_displayImage = std::nullopt;
     ++m_imageRevision;
 }
@@ -241,14 +218,12 @@ void ImagePageSurfaceController::startAnimation(ImageAnimationPlaybackRequest re
 
 void ImagePageSurfaceController::stopAnimation() { m_animationPlayer->stop(); }
 
-void ImagePageSurfaceController::acceptImageState(QSize imageSize, bool predecodeCacheable,
-    std::optional<StaticImagePayload> staticImage,
-    std::optional<StaticDisplayImagePayload> displayImage)
+void ImagePageSurfaceController::acceptImageState(
+    QSize imageSize, bool predecodeCacheable, std::optional<StaticDisplayImagePayload> displayImage)
 {
     m_imageSize = imageSize;
     m_hasImage = !imageSize.isEmpty();
     m_predecodeCacheable = predecodeCacheable;
-    m_staticImage = std::move(staticImage);
     m_displayImage = std::move(displayImage);
     ++m_imageRevision;
 }

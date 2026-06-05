@@ -27,8 +27,8 @@ using KiriView::TestSupport::imageDecodeDependenciesFor;
 using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::staticImageDataDecoder;
-using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
@@ -101,7 +101,8 @@ public:
     {
         state.setSourceUrl(url);
         state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(url));
-        pageSurface.setStaticImage(staticTestImagePayload(testImage()), false, renderContext());
+        pageSurface.setStaticDisplayImage(
+            staticDisplayTestImagePayload(testImage()), false, renderContext());
         spread.commitPrimaryPageSlot(state.displayedImageLocation());
     }
 
@@ -111,8 +112,8 @@ public:
         state.setSourceUrl(url);
         state.setDisplayedImageLocation(
             KiriView::DisplayedImageLocation::fromOpenedCollectionScope(url, archiveCollection));
-        pageSurface.setStaticImage(
-            staticTestImagePayload(testImage(QSize(800, 1200))), false, renderContext());
+        pageSurface.setStaticDisplayImage(
+            staticDisplayTestImagePayload(testImage(QSize(800, 1200))), false, renderContext());
         spread.commitPrimaryPageSlot(state.displayedImageLocation());
     }
 

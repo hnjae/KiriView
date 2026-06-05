@@ -23,16 +23,16 @@ using KiriView::TestSupport::testImage;
 constexpr qsizetype testCacheByteBudget = 1024 * 1024;
 
 KiriView::DisplayedPredecodeImage displayedImage(
-    const QUrl &url, KiriView::StaticImageDisplayHints displayHints = {})
+    const QUrl &url, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
-    const KiriView::DisplayImageQuality quality
-        = displayHints.firstDisplayPixelsPerSourcePixel > 0.0
+    const KiriView::DisplayImageQuality quality = firstDisplayPixelsPerSourcePixel > 0.0
         ? KiriView::DisplayImageQuality::FirstDisplay
         : KiriView::DisplayImageQuality::Exact;
     return KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(url),
         true,
-        staticDisplayTestImagePayload(testImage(), testImage(), displayHints, quality),
+        staticDisplayTestImagePayload(
+            testImage(), testImage(), firstDisplayPixelsPerSourcePixel, quality),
     };
 }
 
@@ -43,7 +43,7 @@ KiriView::PredecodeLoadWindow loadWindow(
         displayedUrl,
         KiriView::OpenedCollectionScopeLocation::none(),
         std::move(urls),
-        { displayedImage(displayedUrl, KiriView::StaticImageDisplayHints { 0.5 }) },
+        { displayedImage(displayedUrl, 0.5) },
         KiriView::ImageFirstDisplayDecodeContext { QSize(640, 480) },
         generation,
         1,

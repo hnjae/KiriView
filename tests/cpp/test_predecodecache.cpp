@@ -46,13 +46,12 @@ KiriView::PredecodeActiveLoads activeLoads(std::vector<QUrl> urls)
 }
 
 KiriView::StaticDisplayImagePayload cacheDisplayImage(
-    const QImage &image, KiriView::StaticImageDisplayHints displayHints = {})
+    const QImage &image, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
-    const KiriView::DisplayImageQuality quality
-        = displayHints.firstDisplayPixelsPerSourcePixel > 0.0
+    const KiriView::DisplayImageQuality quality = firstDisplayPixelsPerSourcePixel > 0.0
         ? KiriView::DisplayImageQuality::FirstDisplay
         : KiriView::DisplayImageQuality::Exact;
-    return staticDisplayTestImagePayload(image, image, displayHints, quality);
+    return staticDisplayTestImagePayload(image, image, firstDisplayPixelsPerSourcePixel, quality);
 }
 
 KiriView::PredecodeCache defaultCache()
@@ -174,8 +173,7 @@ void TestPredecodeCache::cacheStoresAndFindsWindowImages()
     const QImage image = cacheImage();
 
     cache.setWindowUrls({ url });
-    KiriView::StaticDisplayImagePayload payload
-        = cacheDisplayImage(image, KiriView::StaticImageDisplayHints { 0.5 });
+    KiriView::StaticDisplayImagePayload payload = cacheDisplayImage(image, 0.5);
     payload.sourceIdentity = QStringLiteral("file:///tmp/predecode-source.jpg");
     payload.imageReaderTransform.transformations = QImageIOHandler::TransformationRotate90;
     payload.embeddedMetadata.cameraMake = QStringLiteral("Kiri Camera");
@@ -211,9 +209,8 @@ void TestPredecodeCache::cacheFindsImagesByUrlAndOpenedCollectionScope()
 
     cache.setWindowUrls({ url });
     cache.cacheImage(url, KiriView::OpenedCollectionScopeLocation::none(),
-        cacheDisplayImage(cacheImage(), KiriView::StaticImageDisplayHints { 0.25 }));
-    cache.cacheImage(url, openedCollectionScope,
-        cacheDisplayImage(cacheImage(), KiriView::StaticImageDisplayHints { 0.75 }));
+        cacheDisplayImage(cacheImage(), 0.25));
+    cache.cacheImage(url, openedCollectionScope, cacheDisplayImage(cacheImage(), 0.75));
 
     const std::optional<KiriView::PredecodedImage> direct = cache.findImage(directLocation);
     QVERIFY(direct.has_value());

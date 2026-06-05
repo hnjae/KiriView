@@ -118,11 +118,7 @@ void TestStaticImageDecode::staticResultUsesReadyFirstDisplayImage()
     QCOMPARE(decoded->displayImage.quality, KiriView::DisplayImageQuality::FirstDisplay);
     QCOMPARE(decoded->displayImage.displayPixelsPerSourcePixel, 0.5);
     QCOMPARE(decoded->displayImage.sourceIdentity, QStringLiteral("file:///tmp/stage3-source.jpg"));
-    const KiriView::StaticImagePayload compatibility
-        = decoded->displayImage.compatibilityStaticImage();
-    QCOMPARE(compatibility.source.get(), source.get());
-    QCOMPARE(compatibility.preview.size(), QSize(8, 4));
-    QCOMPARE(compatibility.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
+    QVERIFY(decoded->displayImage.isValid());
     QCOMPARE(source->firstDisplayDecodeCount, 1);
     QCOMPARE(source->blockingDisplayDecodeCount, 0);
     QVERIFY(errorString.isEmpty());
@@ -145,9 +141,7 @@ void TestStaticImageDecode::staticResultFallsBackToBlockingPreview()
     QCOMPARE(decoded->displayImage.originalSize, QSize(12, 9));
     QCOMPARE(decoded->displayImage.quality, KiriView::DisplayImageQuality::Exact);
     QCOMPARE(decoded->displayImage.displayPixelsPerSourcePixel, 1.0);
-    QCOMPARE(decoded->displayImage.compatibilityStaticImage()
-                 .displayHints.firstDisplayPixelsPerSourcePixel,
-        0.0);
+    QCOMPARE(decoded->displayImage.previewOrigin, KiriView::DisplayImagePreviewOrigin::None);
     QCOMPARE(source->firstDisplayDecodeCount, 1);
     QCOMPARE(source->blockingDisplayDecodeCount, 1);
     QCOMPARE(source->blockingDisplayMaximumLongEdge, KiriView::imageBlockingDisplayLongEdgeMax);

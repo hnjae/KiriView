@@ -31,7 +31,6 @@ using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
-using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::testImageDecodeFailureString;
 using KiriView::TestSupport::videoCandidate;
@@ -102,11 +101,12 @@ private:
     QImage m_image;
 };
 
-KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSize,
-    const QSize &previewSize, KiriView::StaticImageDisplayHints displayHints = {})
+KiriView::DecodedImageResult staticDecodedImageWithPreview(
+    const QSize &sourceSize, const QSize &previewSize, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
     return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
-        staticDisplayTestImagePayload(testImage(sourceSize), testImage(previewSize), displayHints,
+        staticDisplayTestImagePayload(testImage(sourceSize), testImage(previewSize),
+            firstDisplayPixelsPerSourcePixel,
             sourceSize == previewSize ? KiriView::DisplayImageQuality::Exact
                                       : KiriView::DisplayImageQuality::FirstDisplay),
     });

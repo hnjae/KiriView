@@ -48,15 +48,12 @@ public:
     bool hasImage() const;
     bool isPredecodeCacheable() const;
     qsizetype predecodeCacheByteBudget() const;
-    std::optional<StaticImagePayload> staticImage() const;
     std::optional<StaticDisplayImagePayload> displayImage() const;
     ImagePresentationPageSlotSnapshot snapshot() const;
 
     void setImage(const QImage &image, bool predecodeCacheable);
     void setAnimationFrame(const QImage &image, const QString &sourceIdentity);
     void setStaticDisplayImage(StaticDisplayImagePayload displayImage, bool predecodeCacheable,
-        const ImageDocumentRenderContext &renderContext);
-    void setStaticImage(StaticImagePayload staticImage, bool predecodeCacheable,
         const ImageDocumentRenderContext &renderContext);
     QString publishShadowDisplayImage(StaticDisplayImagePayload displayImage);
     void clearShadowDisplayImage();
@@ -74,7 +71,6 @@ public:
 
 private:
     void acceptImageState(QSize imageSize, bool predecodeCacheable,
-        std::optional<StaticImagePayload> staticImage,
         std::optional<StaticDisplayImagePayload> displayImage);
     void publishDisplaySource(const StaticDisplayImagePayload &displayImage);
     void publishAnimationFrameDisplaySource(const QImage &image, const QString &sourceIdentity);
@@ -100,7 +96,6 @@ private:
     quint64 m_imageRevision = 0;
     bool m_hasImage = false;
     bool m_predecodeCacheable = false;
-    std::optional<StaticImagePayload> m_staticImage;
     std::optional<StaticDisplayImagePayload> m_displayImage;
     QString m_displayEntryId;
     QString m_shadowDisplayEntryId;

@@ -146,10 +146,8 @@ void TestQImageReaderDecoder::pngDataDecodesAsStaticDisplayPayload()
     QCOMPARE(decoded->displayImage.image.size(), QSize(4, 4));
     QCOMPARE(decoded->displayImage.quality, KiriView::DisplayImageQuality::Exact);
     QCOMPARE(decoded->displayImage.displayPixelsPerSourcePixel, 1.0);
-    const KiriView::StaticImagePayload compatibility
-        = decoded->displayImage.compatibilityStaticImage();
-    QCOMPARE(compatibility.preview.size(), QSize(4, 4));
-    QCOMPARE(compatibility.displayHints.firstDisplayPixelsPerSourcePixel, 0.0);
+    QCOMPARE(decoded->displayImage.previewOrigin, KiriView::DisplayImagePreviewOrigin::None);
+    QVERIFY(decoded->displayImage.isValid());
 }
 
 void TestQImageReaderDecoder::jpegDataUsesFirstDisplayRequest()

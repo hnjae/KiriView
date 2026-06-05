@@ -290,8 +290,8 @@ private Q_SLOTS:
 void TestImagePresentationLoad::predecodedImagesPlanStaticCacheablePresentation()
 {
     KiriView::PredecodedImage image {
-        staticDisplayTestImagePayload(testImage(QSize(9, 5)), testImage(QSize(3, 2)),
-            KiriView::StaticImageDisplayHints { 0.5 }, KiriView::DisplayImageQuality::FirstDisplay),
+        staticDisplayTestImagePayload(testImage(QSize(9, 5)), testImage(QSize(3, 2)), 0.5,
+            KiriView::DisplayImageQuality::FirstDisplay),
         KiriView::DisplayedImageLocation::fromUrl(localUrl(QStringLiteral("/images/page.png"))),
     };
 
@@ -302,15 +302,13 @@ void TestImagePresentationLoad::predecodedImagesPlanStaticCacheablePresentation(
     const auto *load = planPayload<KiriView::ImagePresentationStaticImageLoad>(plan);
     QVERIFY(load != nullptr);
     QVERIFY(load->predecodeCacheable);
-    QVERIFY(load->displayImage.has_value());
-    QCOMPARE(load->displayImage->sourceIdentity, QStringLiteral("test-image"));
-    QCOMPARE(load->displayImage->originalSize, QSize(9, 5));
-    QCOMPARE(load->displayImage->image.size(), QSize(3, 2));
-    QCOMPARE(load->displayImage->quality, KiriView::DisplayImageQuality::FirstDisplay);
-    QCOMPARE(load->displayImage->displayPixelsPerSourcePixel, 0.5);
-    QVERIFY(load->staticImage.isValid());
-    QCOMPARE(load->staticImage.source->imageSize(), QSize(9, 5));
-    QCOMPARE(load->staticImage.preview.size(), QSize(3, 2));
+    QCOMPARE(load->displayImage.sourceIdentity, QStringLiteral("test-image"));
+    QCOMPARE(load->displayImage.originalSize, QSize(9, 5));
+    QCOMPARE(load->displayImage.image.size(), QSize(3, 2));
+    QCOMPARE(load->displayImage.quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(load->displayImage.displayPixelsPerSourcePixel, 0.5);
+    QVERIFY(load->displayImage.refinementSource != nullptr);
+    QCOMPARE(load->displayImage.refinementSource->imageSize(), QSize(9, 5));
 }
 
 void TestImagePresentationLoad::predecodedImagesPublishProviderSource()
@@ -319,8 +317,8 @@ void TestImagePresentationLoad::predecodedImagesPublishProviderSource()
     KiriView::ImagePageSurfaceController controller
         = pageSurfaceController(this, displayImageStore);
     KiriView::PredecodedImage image {
-        staticDisplayTestImagePayload(testImage(QSize(12, 8)), testImage(QSize(6, 4)),
-            KiriView::StaticImageDisplayHints { 0.5 }, KiriView::DisplayImageQuality::FirstDisplay),
+        staticDisplayTestImagePayload(testImage(QSize(12, 8)), testImage(QSize(6, 4)), 0.5,
+            KiriView::DisplayImageQuality::FirstDisplay),
         KiriView::DisplayedImageLocation::fromUrl(localUrl(QStringLiteral("/images/page.png"))),
     };
 
@@ -362,7 +360,8 @@ void TestImagePresentationLoad::decodedImagesPlanPresentationActions()
         const auto *load = planPayload<KiriView::ImagePresentationStaticImageLoad>(plan);
         QVERIFY(load != nullptr);
         QVERIFY(load->predecodeCacheable);
-        QCOMPARE(load->staticImage.source->imageSize(), QSize(12, 8));
+        QVERIFY(load->displayImage.refinementSource != nullptr);
+        QCOMPARE(load->displayImage.refinementSource->imageSize(), QSize(12, 8));
     }
 
     {

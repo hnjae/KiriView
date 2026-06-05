@@ -38,10 +38,6 @@ struct FirstDisplayImageDecodeResult {
     qreal displayPixelsPerSourcePixel = 0.0;
 };
 
-struct StaticImageDisplayHints {
-    qreal firstDisplayPixelsPerSourcePixel = 0.0;
-};
-
 struct StaticImageReaderTransform {
     QImageIOHandler::Transformations transformations = QImageIOHandler::TransformationNone;
 
@@ -67,16 +63,6 @@ public:
     virtual StaticImageReaderTransform imageReaderTransform() const;
 };
 
-struct StaticImagePayload {
-    std::shared_ptr<ImageTileSource> source;
-    QImage preview;
-    StaticImageDisplayHints displayHints;
-
-    bool isValid() const;
-    qsizetype byteCost() const;
-    std::optional<qsizetype> byteCostWithinBudget(qsizetype byteBudget) const;
-};
-
 struct StaticDisplayImagePayload {
     QString sourceIdentity;
     StaticImageReaderTransform imageReaderTransform;
@@ -91,7 +77,6 @@ struct StaticDisplayImagePayload {
     bool isValid() const;
     qsizetype byteCost() const;
     std::optional<qsizetype> byteCostWithinBudget(qsizetype byteBudget) const;
-    StaticImagePayload compatibilityStaticImage() const;
 };
 }
 

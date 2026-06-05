@@ -29,27 +29,6 @@ bool ImageTileSource::isResolutionIndependent() const { return false; }
 
 StaticImageReaderTransform ImageTileSource::imageReaderTransform() const { return {}; }
 
-bool StaticImagePayload::isValid() const { return source != nullptr && !preview.isNull(); }
-
-qsizetype StaticImagePayload::byteCost() const
-{
-    if (!isValid()) {
-        return 0;
-    }
-
-    return saturatedQtByteSum(source->byteCost(), imageByteCost(preview));
-}
-
-std::optional<qsizetype> StaticImagePayload::byteCostWithinBudget(qsizetype byteBudget) const
-{
-    const qsizetype cost = byteCost();
-    if (cost <= 0 || cost > byteBudget) {
-        return std::nullopt;
-    }
-
-    return cost;
-}
-
 bool StaticDisplayImagePayload::isValid() const
 {
     return !image.isNull() && originalSize.isValid() && !originalSize.isEmpty();
@@ -73,19 +52,5 @@ std::optional<qsizetype> StaticDisplayImagePayload::byteCostWithinBudget(qsizety
     }
 
     return cost;
-}
-
-StaticImagePayload StaticDisplayImagePayload::compatibilityStaticImage() const
-{
-    StaticImageDisplayHints displayHints;
-    if (quality == DisplayImageQuality::FirstDisplay) {
-        displayHints.firstDisplayPixelsPerSourcePixel = displayPixelsPerSourcePixel;
-    }
-
-    return StaticImagePayload {
-        refinementSource,
-        image,
-        displayHints,
-    };
 }
 }

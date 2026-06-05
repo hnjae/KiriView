@@ -93,28 +93,12 @@ private:
     QImage m_image;
 };
 
-inline StaticImagePayload staticTestImagePayload(
-    const QImage &sourceImage, const QImage &preview, StaticImageDisplayHints displayHints = {})
-{
-    return StaticImagePayload {
-        std::make_shared<TestImageTileSource>(sourceImage),
-        preview,
-        displayHints,
-    };
-}
-
-inline StaticImagePayload staticTestImagePayload(
-    const QImage &image = testImage(), StaticImageDisplayHints displayHints = {})
-{
-    return staticTestImagePayload(image, image, displayHints);
-}
-
 inline StaticDisplayImagePayload staticDisplayTestImagePayload(const QImage &sourceImage,
-    const QImage &displayImage, StaticImageDisplayHints displayHints = {},
+    const QImage &displayImage, qreal firstDisplayPixelsPerSourcePixel = 0.0,
     DisplayImageQuality quality = DisplayImageQuality::Exact)
 {
-    const qreal displayPixelsPerSourcePixel = displayHints.firstDisplayPixelsPerSourcePixel > 0.0
-        ? displayHints.firstDisplayPixelsPerSourcePixel
+    const qreal displayPixelsPerSourcePixel = firstDisplayPixelsPerSourcePixel > 0.0
+        ? firstDisplayPixelsPerSourcePixel
         : (sourceImage.size() == displayImage.size() ? 1.0 : 0.0);
     return StaticDisplayImagePayload {
         QStringLiteral("test-image"),
@@ -131,7 +115,7 @@ inline StaticDisplayImagePayload staticDisplayTestImagePayload(const QImage &sou
 inline StaticDisplayImagePayload staticDisplayTestImagePayload(
     const QImage &image = testImage(), DisplayImageQuality quality = DisplayImageQuality::Exact)
 {
-    return staticDisplayTestImagePayload(image, image, {}, quality);
+    return staticDisplayTestImagePayload(image, image, 0.0, quality);
 }
 
 inline StaticDecodedImage staticDecodedTestImage(const QImage &image = testImage())

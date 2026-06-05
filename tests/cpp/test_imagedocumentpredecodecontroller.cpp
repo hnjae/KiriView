@@ -60,13 +60,12 @@ KiriView::ImagePresentationRuntime createPresentationRuntime()
 }
 
 KiriView::StaticDisplayImagePayload displayTestImagePayload(
-    const QImage &image, KiriView::StaticImageDisplayHints displayHints = {})
+    const QImage &image, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
-    const KiriView::DisplayImageQuality quality
-        = displayHints.firstDisplayPixelsPerSourcePixel > 0.0
+    const KiriView::DisplayImageQuality quality = firstDisplayPixelsPerSourcePixel > 0.0
         ? KiriView::DisplayImageQuality::FirstDisplay
         : KiriView::DisplayImageQuality::Exact;
-    return staticDisplayTestImagePayload(image, image, displayHints, quality);
+    return staticDisplayTestImagePayload(image, image, firstDisplayPixelsPerSourcePixel, quality);
 }
 }
 
@@ -102,8 +101,7 @@ void TestImageDocumentPredecodeController::scheduleAdjacentImagePredecodeUsesPre
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
     presentationRuntime.setViewportSize(QSizeF(320.0, 240.0));
     pageSurface.setStaticDisplayImage(
-        displayTestImagePayload(testImage(QSize(10, 8)), KiriView::StaticImageDisplayHints { 0.5 }),
-        true, renderContext());
+        displayTestImagePayload(testImage(QSize(10, 8)), 0.5), true, renderContext());
 
     controller.scheduleAdjacentImagePredecode();
 

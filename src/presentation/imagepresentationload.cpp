@@ -7,7 +7,6 @@
 #include "presentation/imagepagesurfacecontroller.h"
 
 #include <QImage>
-#include <optional>
 #include <utility>
 #include <variant>
 
@@ -22,16 +21,11 @@ KiriView::ImagePresentationLoadResult finishImagePresentation(
 }
 
 KiriView::ImagePresentationLoadResult presentStaticImage(
-    KiriView::ImagePageSurfaceController &pageSurface, KiriView::StaticImagePayload staticImage,
-    std::optional<KiriView::StaticDisplayImagePayload> displayImage, bool predecodeCacheable,
+    KiriView::ImagePageSurfaceController &pageSurface,
+    KiriView::StaticDisplayImagePayload displayImage, bool predecodeCacheable,
     const KiriView::ImageDocumentRenderContext &renderContext)
 {
-    if (displayImage.has_value()) {
-        pageSurface.setStaticDisplayImage(
-            std::move(*displayImage), predecodeCacheable, renderContext);
-    } else {
-        pageSurface.setStaticImage(std::move(staticImage), predecodeCacheable, renderContext);
-    }
+    pageSurface.setStaticDisplayImage(std::move(displayImage), predecodeCacheable, renderContext);
     return finishImagePresentation(pageSurface);
 }
 
@@ -47,9 +41,7 @@ KiriView::ImagePresentationLoadResult presentImageFrame(
 KiriView::ImagePresentationLoadPlan staticDisplayImagePlan(
     KiriView::StaticDisplayImagePayload displayImage, bool predecodeCacheable)
 {
-    KiriView::StaticImagePayload staticImage = displayImage.compatibilityStaticImage();
     return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationStaticImageLoad {
-        std::move(staticImage),
         std::move(displayImage),
         predecodeCacheable,
     } };
@@ -153,8 +145,8 @@ ImagePresentationLoadResult executeImagePresentationLoadPlan(
         return {};
     }
     if (auto *staticImage = std::get_if<ImagePresentationStaticImageLoad>(&plan.payload)) {
-        return presentStaticImage(pageSurface, std::move(staticImage->staticImage),
-            std::move(staticImage->displayImage), staticImage->predecodeCacheable, renderContext);
+        return presentStaticImage(pageSurface, std::move(staticImage->displayImage),
+            staticImage->predecodeCacheable, renderContext);
     }
     if (const auto *frame = std::get_if<ImagePresentationFrameLoad>(&plan.payload)) {
         return presentImageFrame(pageSurface, frame->frame, frame->sourceIdentity);
