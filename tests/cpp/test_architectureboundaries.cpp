@@ -41,6 +41,9 @@ private Q_SLOTS:
     void qmlViewportUsesFullCommandLifecycle();
     void viewportContextBridgeIsNonRenderingPublicQtFacade();
     void qmlViewportUsesContextBridgeForRenderContextDiscovery();
+    void oldImageRendererArtifactsAreAbsent();
+    void oldImageRendererBuildWiringIsAbsent();
+    void productionImageDisplayUsesProviderPathOnly();
     void sourceKeysExposeTypedExtensionFamilies();
     void sourceKeysExposeOperationalExtensionContracts();
     void imagePageSurfaceOwnerTypeExists();
@@ -72,6 +75,20 @@ QStringList productionQmlFiles()
         QStringList { QStringLiteral("*.qml") }, QDir::Files, QDirIterator::Subdirectories);
     while (iterator.hasNext()) {
         files.push_back(iterator.next());
+    }
+    files.sort();
+    return files;
+}
+
+QStringList projectFilesUnder(const QStringList &relativeRoots, const QStringList &nameFilters)
+{
+    QStringList files;
+    for (const QString &relativeRoot : relativeRoots) {
+        QDirIterator iterator(
+            projectPath(relativeRoot), nameFilters, QDir::Files, QDirIterator::Subdirectories);
+        while (iterator.hasNext()) {
+            files.push_back(iterator.next());
+        }
     }
     files.sort();
     return files;
@@ -139,6 +156,17 @@ void verifyPrivateRouteSetter(const QString &relativePath)
     QVERIFY2(setterIndex > friendIndex,
         qPrintable(QStringLiteral("%1 setSourceUrl must stay behind KiriDocumentSession")
                 .arg(relativePath)));
+}
+
+QStringList existingProjectFiles(const QList<QString> &relativePaths)
+{
+    QStringList existing;
+    for (const QString &relativePath : relativePaths) {
+        if (QFileInfo::exists(projectPath(relativePath))) {
+            existing.push_back(relativePath);
+        }
+    }
+    return existing;
 }
 }
 
@@ -590,6 +618,133 @@ void TestArchitectureBoundaries::qmlViewportUsesContextBridgeForRenderContextDis
     QVERIFY(!viewport.contains(QStringLiteral("imageView.viewportPointInsideImage(")));
     QVERIFY(!viewport.contains(QStringLiteral("imageView.nearestImageViewportPoint(")));
     QVERIFY(!viewport.contains(QStringLiteral("onDisplayedImageInitialContentPositionRequested")));
+}
+
+void TestArchitectureBoundaries::oldImageRendererArtifactsAreAbsent()
+{
+    const QList<QString> forbiddenFiles {
+        QStringLiteral("src/facade/kiriimageview.cpp"),
+        QStringLiteral("src/facade/kiriimageview.h"),
+        QStringLiteral("src/rendering/decodedtilecache.cpp"),
+        QStringLiteral("src/rendering/decodedtilecache.h"),
+        QStringLiteral("src/rendering/displayedimagesurfacestate.cpp"),
+        QStringLiteral("src/rendering/displayedimagesurfacestate.h"),
+        QStringLiteral("src/rendering/imagerenderframe.cpp"),
+        QStringLiteral("src/rendering/imagerenderframe.h"),
+        QStringLiteral("src/rendering/imagerendernodestate.cpp"),
+        QStringLiteral("src/rendering/imagerendernodestate.h"),
+        QStringLiteral("src/rendering/imagetiledecoderuntime.cpp"),
+        QStringLiteral("src/rendering/imagetiledecoderuntime.h"),
+        QStringLiteral("src/rendering/imagetiledecodescheduler.cpp"),
+        QStringLiteral("src/rendering/imagetiledecodescheduler.h"),
+        QStringLiteral("src/rendering/imagetiledecodestate.cpp"),
+        QStringLiteral("src/rendering/imagetiledecodestate.h"),
+        QStringLiteral("src/rendering/imagetilerequestplan.cpp"),
+        QStringLiteral("src/rendering/imagetilerequestplan.h"),
+        QStringLiteral("src/rendering/imagesurface.cpp"),
+        QStringLiteral("src/rendering/imagesurface.h"),
+        QStringLiteral("src/rendering/kiriimagerendernode.cpp"),
+        QStringLiteral("src/rendering/kiriimagerendernode.h"),
+        QStringLiteral("src/shaders/kiriimageview.frag"),
+        QStringLiteral("src/shaders/kiriimageview.vert"),
+        QStringLiteral("src/shaders/kiriimageview_shaders.h"),
+    };
+
+    const QStringList existing = existingProjectFiles(forbiddenFiles);
+    QVERIFY2(existing.isEmpty(), qPrintable(existing.join(QLatin1Char('\n'))));
+
+    const QString coreSources = readProjectFile(QStringLiteral("src/cpp_core_sources.txt"));
+    const QString cxxqtSources = readProjectFile(QStringLiteral("src/cpp_cxxqt_sources.txt"));
+    const QString cxxqtHeaders
+        = readProjectFile(QStringLiteral("src/cpp_cxxqt_header_sources.txt"));
+    const QString manifests
+        = coreSources + QLatin1Char('\n') + cxxqtSources + QLatin1Char('\n') + cxxqtHeaders;
+    QStringList manifestViolations;
+    for (const QString &relativePath : forbiddenFiles) {
+        if (manifests.contains(relativePath)) {
+            manifestViolations.push_back(relativePath);
+        }
+    }
+    QVERIFY2(manifestViolations.isEmpty(), qPrintable(manifestViolations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::oldImageRendererBuildWiringIsAbsent()
+{
+    const QString buildScript = readProjectFile(QStringLiteral("build.rs"));
+    const QList<QString> forbiddenBuildTokens {
+        QStringLiteral("QT_RHI"),
+        QStringLiteral("add_qt_rhi_include_dirs"),
+        QStringLiteral("bake_shaders"),
+        QStringLiteral("run_qsb"),
+        QStringLiteral("qsb"),
+        QStringLiteral("qshader"),
+        QStringLiteral("kiriimageview.vert"),
+        QStringLiteral("kiriimageview.frag"),
+        QStringLiteral("kiriimageview_shaders"),
+    };
+
+    QStringList buildViolations;
+    for (const QString &token : forbiddenBuildTokens) {
+        if (buildScript.contains(token)) {
+            buildViolations.push_back(QStringLiteral("build.rs: %1").arg(token));
+        }
+    }
+
+    const QString testCMake = readProjectFile(QStringLiteral("tests/cpp/CMakeLists.txt"));
+    const QList<QString> forbiddenTestCMakeTokens {
+        QStringLiteral("kiriview_qt_rhi_include_dirs"),
+        QStringLiteral("KIRIVIEW_QT_RHI_INCLUDE_DIRS"),
+        QStringLiteral("rhi/qrhi.h"),
+        QStringLiteral("rhi/qshader.h"),
+    };
+    for (const QString &token : forbiddenTestCMakeTokens) {
+        if (testCMake.contains(token)) {
+            buildViolations.push_back(QStringLiteral("tests/cpp/CMakeLists.txt: %1").arg(token));
+        }
+    }
+
+    QVERIFY2(buildViolations.isEmpty(), qPrintable(buildViolations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::productionImageDisplayUsesProviderPathOnly()
+{
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(<rhi/qrhi\.h>)")),
+        QRegularExpression(QStringLiteral(R"(\bQQuickWindow::rhi\b)")),
+        QRegularExpression(QStringLiteral(R"((?:->|\.)rhi\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bQSGRenderNode\b)")),
+        QRegularExpression(QStringLiteral(R"(\bQSGTexture\b)")),
+        QRegularExpression(QStringLiteral(R"(\bQSGTextureProvider\b)")),
+        QRegularExpression(QStringLiteral(R"(\bQQuickFramebufferObject\b)")),
+        QRegularExpression(QStringLiteral(R"(\bupdatePaintNode\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bItemHasContents\b)")),
+        QRegularExpression(QStringLiteral(R"(\bKiriImageView\b)")),
+        QRegularExpression(QStringLiteral(R"(\bKiriImageRenderNode\b)")),
+        QRegularExpression(QStringLiteral(R"(\bImageRenderFrame\b)")),
+        QRegularExpression(QStringLiteral(R"(\bDisplayedImageRenderSnapshot\b)")),
+        QRegularExpression(QStringLiteral(R"(\bDisplayedImageSurface\b)")),
+        QRegularExpression(QStringLiteral(R"(\bStaticTileSurface\b)")),
+        QRegularExpression(QStringLiteral(R"(\bImageTileDecode(?:Scheduler|Runtime|State)\b)")),
+        QRegularExpression(QStringLiteral(R"(\bDecodedTileCache\b)")),
+        QRegularExpression(QStringLiteral(R"(\bscheduleVisibleTileDecode\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bImageDocumentChange::RenderFrame\b)")),
+        QRegularExpression(QStringLiteral(R"(\bImageDocumentChange::Repaint\b)")),
+        QRegularExpression(QStringLiteral(R"(\bImageDocumentPublicSignal::Repaint\b)")),
+        QRegularExpression(QStringLiteral(R"(\brepaintRequested\b)")),
+    };
+
+    QStringList violations;
+    const QStringList files = projectFilesUnder({ QStringLiteral("src") },
+        { QStringLiteral("*.cpp"), QStringLiteral("*.h"), QStringLiteral("*.qml"),
+            QStringLiteral("*.txt") });
+    for (const QString &filePath : files) {
+        const QString matches = matchingLines(filePath, forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
 void TestArchitectureBoundaries::sourceKeysExposeTypedExtensionFamilies()
