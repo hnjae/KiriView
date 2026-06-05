@@ -4,8 +4,11 @@
 #include "presentation/imagepagesurfacecontroller.h"
 
 #include "image_test_support.h"
+#include "rendering/heiftilesource.h"
 #include "rendering/imagerendering.h"
 #include "rendering/qimagereadertilesource.h"
+
+#include <libheif/heif.h>
 
 #include <QBuffer>
 #include <QByteArray>
@@ -15,6 +18,8 @@
 #include <QSizeF>
 #include <QString>
 #include <QTest>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 
@@ -30,6 +35,8 @@ private Q_SLOTS:
     void qtRasterFirstDisplayRefinesToProviderBucket();
     void qtRasterRefinementCompletionIsRejectedAfterSourceReplacement();
     void exactQtRasterCurrentImageDoesNotRequestRefinement();
+    void heifFirstDisplayRefinesToProviderBucket();
+    void heifRefinementCompletionIsRejectedAfterSourceReplacement();
 };
 
 namespace {
@@ -88,6 +95,86 @@ QByteArray encodedPng(const QImage &image)
     return data;
 }
 
+heif_error appendHeifBytes(heif_context *, const void *data, std::size_t size, void *userdata)
+{
+    QByteArray *output = static_cast<QByteArray *>(userdata);
+    output->append(static_cast<const char *>(data), static_cast<qsizetype>(size));
+    return heif_error_success;
+}
+
+bool heifOk(const heif_error &error) { return error.code == heif_error_Ok; }
+
+QByteArray encodedHeifStill(const QSize &size)
+{
+    if (size.isEmpty()) {
+        return {};
+    }
+
+    std::unique_ptr<heif_context, decltype(&heif_context_free)> context(
+        heif_context_alloc(), heif_context_free);
+    if (context == nullptr) {
+        return {};
+    }
+
+    heif_image *rawImage = nullptr;
+    if (!heifOk(heif_image_create(size.width(), size.height(), heif_colorspace_RGB,
+            heif_chroma_interleaved_RGB, &rawImage))) {
+        return {};
+    }
+    std::unique_ptr<heif_image, decltype(&heif_image_release)> image(rawImage, heif_image_release);
+
+    if (!heifOk(heif_image_add_plane(
+            image.get(), heif_channel_interleaved, size.width(), size.height(), 8))) {
+        return {};
+    }
+
+    std::size_t stride = 0;
+    std::uint8_t *pixels = heif_image_get_plane2(image.get(), heif_channel_interleaved, &stride);
+    if (pixels == nullptr) {
+        return {};
+    }
+
+    for (int y = 0; y < size.height(); ++y) {
+        for (int x = 0; x < size.width(); ++x) {
+            std::uint8_t *pixel
+                = pixels + static_cast<std::size_t>(y) * stride + static_cast<std::size_t>(x) * 3;
+            pixel[0] = static_cast<std::uint8_t>((x * 13) % 255);
+            pixel[1] = static_cast<std::uint8_t>((y * 17) % 255);
+            pixel[2] = static_cast<std::uint8_t>(((x + y) * 19) % 255);
+        }
+    }
+
+    heif_encoder *rawEncoder = nullptr;
+    if (!heifOk(heif_context_get_encoder_for_format(
+            context.get(), heif_compression_AV1, &rawEncoder))) {
+        return {};
+    }
+    std::unique_ptr<heif_encoder, decltype(&heif_encoder_release)> encoder(
+        rawEncoder, heif_encoder_release);
+    if (!heifOk(heif_encoder_set_lossy_quality(encoder.get(), 90))) {
+        return {};
+    }
+
+    heif_image_handle *rawHandle = nullptr;
+    if (!heifOk(heif_context_encode_image(
+            context.get(), image.get(), encoder.get(), nullptr, &rawHandle))) {
+        return {};
+    }
+    std::unique_ptr<heif_image_handle, decltype(&heif_image_handle_release)> handle(
+        rawHandle, heif_image_handle_release);
+    heif_context_set_primary_image(context.get(), handle.get());
+
+    QByteArray data;
+    heif_writer writer {};
+    writer.writer_api_version = 1;
+    writer.write = appendHeifBytes;
+    if (!heifOk(heif_context_write(context.get(), &writer, &data))) {
+        return {};
+    }
+
+    return data;
+}
+
 KiriView::StaticDisplayImagePayload qtRasterPayload(const QSize &originalSize,
     const QSize &rasterSize, const QString &sourceIdentity,
     KiriView::DisplayImageQuality quality = KiriView::DisplayImageQuality::FirstDisplay)
@@ -102,6 +189,29 @@ KiriView::StaticDisplayImagePayload qtRasterPayload(const QSize &originalSize,
     return KiriView::StaticDisplayImagePayload {
         sourceIdentity,
         source->imageReaderTransform(),
+        originalSize,
+        KiriView::TestSupport::testImage(rasterSize),
+        quality,
+        KiriView::imagePixelsPerSourcePixel(originalSize, rasterSize),
+        {},
+        std::move(source),
+    };
+}
+
+std::optional<KiriView::StaticDisplayImagePayload> heifPayload(const QSize &originalSize,
+    const QSize &rasterSize, const QString &sourceIdentity,
+    KiriView::DisplayImageQuality quality = KiriView::DisplayImageQuality::FirstDisplay)
+{
+    QString errorString;
+    std::shared_ptr<KiriView::ImageTileSource> source
+        = KiriView::openHeifTileSource(encodedHeifStill(originalSize), &errorString);
+    if (source == nullptr) {
+        return std::nullopt;
+    }
+
+    return KiriView::StaticDisplayImagePayload {
+        sourceIdentity,
+        {},
         originalSize,
         KiriView::TestSupport::testImage(rasterSize),
         quality,
@@ -308,6 +418,57 @@ void TestImagePageSurfaceController::exactQtRasterCurrentImageDoesNotRequestRefi
     QCOMPARE(current.providerUrl, exact.providerUrl);
     QCOMPARE(current.revision, exact.revision);
     QCOMPARE(current.rasterSize, QSize(8, 6));
+}
+
+void TestImagePageSurfaceController::heifFirstDisplayRefinesToProviderBucket()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+
+    std::optional<KiriView::StaticDisplayImagePayload> payload
+        = heifPayload(QSize(16, 12), QSize(4, 3), QStringLiteral("heif-source-a"));
+    QVERIFY2(payload.has_value(), "HEIF still fixture could not be created");
+    controller.setStaticDisplayImage(std::move(*payload), false, renderContext());
+    const KiriView::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    QVERIFY(!first.providerUrl.isEmpty());
+    QCOMPARE(first.rasterSize, QSize(4, 3));
+
+    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(8.0, 6.0)));
+
+    QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
+    const KiriView::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
+    QCOMPARE(refined.sourceIdentity, QStringLiteral("heif-source-a"));
+    QCOMPARE(refined.rasterSize, QSize(8, 6));
+    QCOMPARE(refined.revision, first.revision + 1);
+    QCOMPARE(refined.quality, KiriView::DisplayImageQuality::Exact);
+    QVERIFY(!store->entry(entryId(first)).has_value());
+    QVERIFY(store->entry(entryId(refined)).has_value());
+}
+
+void TestImagePageSurfaceController::heifRefinementCompletionIsRejectedAfterSourceReplacement()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+
+    std::optional<KiriView::StaticDisplayImagePayload> payload
+        = heifPayload(QSize(16, 12), QSize(4, 3), QStringLiteral("heif-source-a"));
+    QVERIFY2(payload.has_value(), "HEIF still fixture could not be created");
+    controller.setStaticDisplayImage(std::move(*payload), false, renderContext());
+    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(8.0, 6.0)));
+
+    controller.setStaticDisplayImage(
+        qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
+            KiriView::DisplayImageQuality::Exact),
+        false, renderContext());
+    const KiriView::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+
+    QTest::qWait(100);
+
+    const KiriView::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    QCOMPARE(current.providerUrl, replacement.providerUrl);
+    QCOMPARE(current.sourceIdentity, QStringLiteral("source-b"));
+    QCOMPARE(current.rasterSize, QSize(10, 10));
+    QCOMPARE(current.quality, KiriView::DisplayImageQuality::Exact);
 }
 
 QTEST_GUILESS_MAIN(TestImagePageSurfaceController)
