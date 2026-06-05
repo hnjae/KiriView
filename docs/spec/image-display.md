@@ -34,27 +34,21 @@ Static SVG rendering applies ordinary static SVG features such as clip paths. SV
 
 Static image files, including bitmap images and SVG files, appear at full resolution when they are small enough to display directly.
 
-Larger JPEG images may first appear quickly at a lower level of detail. The visible area then becomes sharper for the current zoom, pan position, viewport size, and display scale.
+Large static images may first appear quickly from a trusted thumbnail preview, RAW embedded preview, or lower-detail first display. The image then becomes sharper when a matching full-detail or current-detail display is ready.
 
-Newly visible areas may briefly show lower detail until sharper data is ready, but routine panning should avoid blank regions.
+While sharper detail is being prepared for the same image, KiriView may keep the current accepted image visible. Zooming, panning, resizing, rotation, and display scale changes should not expose blank regions while a replacement for the same image is pending.
 
-Panning a tiled static image updates the current render frame as well as tile decode scheduling. Tiles that belonged only to a previous visible area must not remain composited after the viewport position changes.
+When a sharper replacement becomes available for the current image, it replaces the previous lower-detail image without changing the user's selected media target, zoom mode, or pan position except where the existing viewport rules require clamping.
 
-For tiled static images, KiriView composites only the active tile layer for the current display scale. Cached tiles from other raster levels or SVG scale buckets may remain available for reuse, but they are not drawn over the current view.
+SVG preview images are placeholders. KiriView may pre-render an SVG preview capped to the current physical viewport size so adjacent SVG images can appear immediately from the still-image cache. That preview may be visible while current-detail rendering is missing, but stale low-resolution SVG output does not substitute for the current-detail image after zoom, viewport, rotation, pan position, or device-pixel-ratio changes.
 
-For SVG files, the active tile layer is the selected SVG raster scale bucket rather than a bitmap pyramid level.
-
-SVG tile decoding may use integer raster texture rectangles. Display placement preserves the exact fractional intrinsic SVG coverage represented by each bucket tile so adjacent tiles meet without visible gaps or overlaps at high zoom.
-
-SVG preview images are placeholders. KiriView may pre-render an SVG preview capped to the current physical viewport size so adjacent SVG images can appear immediately from the still-image cache. That preview may be visible while current-detail tiles are missing, but stale low-resolution SVG bucket tiles do not substitute for the active bucket after zoom, viewport, rotation, pan position, or device-pixel-ratio changes.
-
-After zooming far out and then back in, the visible SVG area eventually returns to current-detail rendering. Stale lower-detail tiles do not remain composited once KiriView can decide the active layer for the current view.
+After zooming far out and then back in, SVG display eventually returns to current-detail rendering. Stale lower-detail SVG output does not remain visible once KiriView can provide the current-detail image.
 
 When adjacent images are already available, Previous and Next navigation can replace the view immediately.
 
 When ordinary direct media navigation moves from an image to a video and then back to a nearby image, previously prepared still-image data may remain available so returning to that image can avoid a full-page loading state. Direct videos themselves are not decoded into this still-image cache.
 
-If a static image exceeds the supported decode or display size, KiriView reports a decode error for the selected target instead of restoring a previously displayed image.
+If a static image exceeds the supported decode or display size, KiriView reports an error or unsupported state for the selected target instead of restoring a previously displayed image.
 
 HEIF-family still images, including AVIF still images, are supported when the still image is encoded with AV1, HEVC, AVC/H.264, JPEG, JPEG 2000, or VVC/H.266.
 
