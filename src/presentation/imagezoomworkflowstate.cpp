@@ -28,7 +28,7 @@ void ImageZoomWorkflowState::clear() { m_zoomState = ImageZoomState {}; }
 void ImageZoomWorkflowState::clearContainer() { m_zoomState.clearContainer(); }
 
 ImageZoomWorkflowMutationResult ImageZoomWorkflowState::mutate(
-    const ZoomStateMutation &mutation, bool forceTileRefresh)
+    const ZoomStateMutation &mutation, bool forceDisplayProjectionUpdate)
 {
     const ImageZoomSnapshot previous = m_zoomState.snapshot();
     const ImageRenderContextChange renderContextChange = m_renderContextState.refresh();
@@ -37,7 +37,8 @@ ImageZoomWorkflowMutationResult ImageZoomWorkflowState::mutate(
 
     return ImageZoomWorkflowMutationResult {
         ImageZoomState::changeSet(previous, renderContextChange.previous.devicePixelRatio,
-            m_zoomState.snapshot(), renderContextChange.current.devicePixelRatio, forceTileRefresh),
+            m_zoomState.snapshot(), renderContextChange.current.devicePixelRatio,
+            forceDisplayProjectionUpdate),
         renderContextChange,
     };
 }

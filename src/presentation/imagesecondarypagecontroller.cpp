@@ -22,8 +22,7 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
     m_pageSurfaceController = std::make_unique<ImagePageSurfaceController>(parent,
         ImagePageSurfaceController::Callbacks {
             [this](ImageDocumentChange change) {
-                if (change == ImageDocumentChange::RenderFrame
-                    || change == ImageDocumentChange::Repaint) {
+                if (change == ImageDocumentChange::DisplaySource) {
                     notify(change);
                 }
             },

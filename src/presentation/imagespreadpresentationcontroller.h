@@ -18,7 +18,6 @@
 #include "presentation/imagespreadsecondarypagerefresh.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagerendercontext.h"
-#include "rendering/imagesurface.h"
 
 #include <QPointF>
 #include <QRectF>
@@ -120,7 +119,6 @@ public:
         quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
     void acknowledgeStillImageDisplayLoad(DisplayedPageRole role, const QUrl &providerUrl,
         quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
-    DisplayedImageRenderSnapshot renderSnapshot(DisplayedPageRole role) const;
 
     void commitPrimaryPageSlot(const DisplayedImageLocation &location);
     void clearPrimaryPageSlot();
@@ -162,7 +160,7 @@ private:
     void applyActivePresentationChanges(
         const ImageZoomChangeSet &changes, bool notifyPublicChanges = true);
     void notifyActivePresentationZoomChanged(const ImageZoomChangeSet &changes);
-    void scheduleVisibleTileDecode();
+    void updateDisplayProjections();
     const ImageViewportFrame &viewportFrame() const;
     void notifyChanges(const std::vector<ImageDocumentChange> &changes);
     void notify(ImageDocumentChange change);

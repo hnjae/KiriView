@@ -602,9 +602,9 @@ QRectF ImagePresentationRuntime::secondaryPageRect(const ImagePresentationSnapsh
 }
 
 ImageZoomChangeSet ImagePresentationRuntime::mutateZoomState(
-    const ZoomStateMutation &mutation, bool forceTileRefresh)
+    const ZoomStateMutation &mutation, bool forceDisplayProjectionUpdate)
 {
-    return m_zoomWorkflowState.mutate(mutation, forceTileRefresh).changes;
+    return m_zoomWorkflowState.mutate(mutation, forceDisplayProjectionUpdate).changes;
 }
 
 void ImagePresentationRuntime::refreshViewportFrame(ImageViewportObservationOrigin origin)
@@ -631,7 +631,6 @@ ImagePresentationRenderProjection ImagePresentationRuntime::renderProjection(
         return ImagePresentationRenderProjection {
             !secondary,
             role,
-            slot.surface,
             slot.imageRevision,
             logicalSinglePageImageSize(snapshot),
             snapshot.zoom.displaySize,
@@ -652,7 +651,6 @@ ImagePresentationRenderProjection ImagePresentationRuntime::renderProjection(
     return ImagePresentationRenderProjection {
         true,
         role,
-        slot.surface,
         slot.imageRevision,
         slot.imageSize,
         pageDisplaySize,

@@ -15,7 +15,6 @@
 #include "presentation/imagepresentationruntime.h"
 #include "presentation/imagesecondarypagestate.h"
 #include "rendering/imagerendercontext.h"
-#include "rendering/imagesurface.h"
 
 #include <QSize>
 #include <QSizeF>

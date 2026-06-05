@@ -14,7 +14,6 @@
 #include "presentation/imageviewportcommandstate.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagerendercontext.h"
-#include "rendering/imagesurface.h"
 #include "system/filedeletion.h"
 
 #include <QPointF>
@@ -123,8 +122,6 @@ public:
         quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
     void acknowledgeStillImageDisplayLoad(DisplayedPageRole role, const QUrl &providerUrl,
         quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
-    DisplayedImageRenderSnapshot renderSnapshot(
-        DisplayedPageRole role = DisplayedPageRole::Primary) const;
 
     void notify(ImageDocumentChange change);
     void setRenderContextProvider(RenderContextProvider provider);

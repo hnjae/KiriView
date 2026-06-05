@@ -12,14 +12,12 @@
 #include "presentation/imagezoomworkflowstate.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagerendering.h"
-#include "rendering/imagesurface.h"
 
 #include <QPointF>
 #include <QRectF>
 #include <QSize>
 #include <QSizeF>
 #include <QUrl>
-#include <memory>
 
 namespace KiriView {
 enum class ImagePresentationMode {
@@ -33,7 +31,6 @@ enum class ImagePresentationPrimaryChangePolicy {
 };
 
 struct ImagePresentationPageSlotSnapshot {
-    std::shared_ptr<DisplayedImageSurface> surface;
     quint64 imageRevision = 0;
     QSize imageSize;
     bool hasImage = false;
@@ -43,7 +40,6 @@ struct ImagePresentationPageSlotSnapshot {
 struct ImagePresentationRenderProjection {
     bool visible = false;
     DisplayedPageRole pageRole = DisplayedPageRole::Primary;
-    std::shared_ptr<DisplayedImageSurface> surface;
     quint64 imageRevision = 0;
     QSize imageSize;
     QSizeF displaySize;
@@ -166,7 +162,7 @@ private:
     QRectF primaryPageRect(const ImagePresentationSnapshot &snapshot) const;
     QRectF secondaryPageRect(const ImagePresentationSnapshot &snapshot) const;
     ImageZoomChangeSet mutateZoomState(
-        const ZoomStateMutation &mutation, bool forceTileRefresh = false);
+        const ZoomStateMutation &mutation, bool forceDisplayProjectionUpdate = false);
     void refreshViewportFrame(ImageViewportObservationOrigin origin);
     ImagePresentationRenderProjection renderProjection(
         const ImagePresentationSnapshot &snapshot, DisplayedPageRole role) const;

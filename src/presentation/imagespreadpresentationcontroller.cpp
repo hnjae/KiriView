@@ -19,27 +19,7 @@ bool hasSpreadZoomStateChange(const KiriView::ImageZoomChangeSet &changes)
 {
     return changes.imageSizeChanged || changes.viewportSizeChanged || changes.zoomModeChanged
         || changes.zoomPercentChanged || changes.displaySizeChanged
-        || changes.maximumManualZoomPercentChanged || changes.scheduleVisibleTileDecode;
-}
-
-KiriView::DisplayedImageRenderSnapshot renderSnapshotForProjection(
-    const KiriView::ImagePresentationRenderProjection &projection)
-{
-    if (!projection.visible) {
-        return {};
-    }
-
-    return KiriView::DisplayedImageRenderSnapshot {
-        projection.surface,
-        projection.imageRevision,
-        projection.imageSize,
-        projection.displaySize,
-        projection.visibleItemRect,
-        projection.devicePixelRatio,
-        projection.renderContextGeneration,
-        projection.rotationDegrees,
-        projection.pageRole,
-    };
+        || changes.maximumManualZoomPercentChanged || changes.displayProjectionUpdateNeeded;
 }
 
 KiriView::ImagePresentationScopeKey presentationScopeKeyForLocation(
@@ -151,7 +131,7 @@ ImageViewportCommand ImageSpreadPresentationController::requestViewportContentPo
 {
     const ImageViewportCommand command
         = m_presentationRuntime.requestViewportContentPosition(viewportContentPosition);
-    scheduleVisibleTileDecode();
+    updateDisplayProjections();
     notify(ImageDocumentChange::VisibleItemRect);
     notify(ImageDocumentChange::ViewportFrame);
     return command;
@@ -170,7 +150,7 @@ bool ImageSpreadPresentationController::completeViewportCommandApplication(
     const bool changed = m_presentationRuntime.completeViewportCommandApplication(
         commandRevision, actualContentPosition);
     if (changed) {
-        scheduleVisibleTileDecode();
+        updateDisplayProjections();
         notify(ImageDocumentChange::VisibleItemRect);
     }
     notify(ImageDocumentChange::ViewportFrame);
@@ -183,7 +163,7 @@ bool ImageSpreadPresentationController::acknowledgeViewportCommand(
     const bool changed
         = m_presentationRuntime.acknowledgeViewportCommand(commandRevision, actualContentPosition);
     if (changed) {
-        scheduleVisibleTileDecode();
+        updateDisplayProjections();
         notify(ImageDocumentChange::VisibleItemRect);
     }
     notify(ImageDocumentChange::ViewportFrame);
@@ -197,7 +177,7 @@ bool ImageSpreadPresentationController::observeViewportContentPosition(
         return false;
     }
 
-    scheduleVisibleTileDecode();
+    updateDisplayProjections();
     notify(ImageDocumentChange::VisibleItemRect);
     notify(ImageDocumentChange::ViewportFrame);
     return true;
@@ -335,7 +315,7 @@ void ImageSpreadPresentationController::setTwoPageModeEnabled(bool enabled)
             = m_presentationRuntime.resetRotationChange();
         if (rotation.changed) {
             applyActivePresentationChanges(rotation.zoomChanges);
-            notifyChanges({ ImageDocumentChange::Rotation, ImageDocumentChange::Repaint });
+            notifyChanges({ ImageDocumentChange::Rotation, ImageDocumentChange::DisplaySource });
         }
     } else {
         applyActivePresentationChanges(
@@ -377,7 +357,7 @@ void ImageSpreadPresentationController::setRightToLeftReadingEnabled(bool enable
     }
 
     if (secondaryPageVisible()) {
-        scheduleVisibleTileDecode();
+        updateDisplayProjections();
     }
     notifyRightToLeftReadingChanged();
 }
@@ -456,23 +436,14 @@ void ImageSpreadPresentationController::acknowledgeStillImageDisplayLoad(Display
     }
 }
 
-DisplayedImageRenderSnapshot ImageSpreadPresentationController::renderSnapshot(
-    DisplayedPageRole role) const
-{
-    return renderSnapshotForProjection(m_presentationRuntime.renderProjection(role));
-}
-
 void ImageSpreadPresentationController::commitPrimaryPageSlot(
     const DisplayedImageLocation &location)
 {
     const ImageZoomChangeSet changes = m_presentationRuntime.commitPrimaryPageSlot(
         m_primaryPageSurface.snapshot(), presentationScopeKeyForLocation(location));
-    scheduleVisibleTileDecode();
+    updateDisplayProjections();
     std::vector<ImageDocumentChange> notifications
         = imageDocumentPresentationZoomNotifications(changes);
-    if (changes.scheduleVisibleTileDecode) {
-        notifications.push_back(ImageDocumentChange::RenderFrame);
-    }
     notifications.push_back(ImageDocumentChange::VisibleItemRect);
     notifications.push_back(ImageDocumentChange::ViewportFrame);
     notifications.push_back(ImageDocumentChange::DisplaySource);
@@ -485,8 +456,7 @@ void ImageSpreadPresentationController::clearPrimaryPageSlot()
     notifyChanges({ ImageDocumentChange::ImageSize, ImageDocumentChange::DisplaySize,
         ImageDocumentChange::ZoomPercent, ImageDocumentChange::ZoomMode,
         ImageDocumentChange::MaximumManualZoomPercent, ImageDocumentChange::VisibleItemRect,
-        ImageDocumentChange::ViewportFrame, ImageDocumentChange::DisplaySource,
-        ImageDocumentChange::Repaint });
+        ImageDocumentChange::ViewportFrame, ImageDocumentChange::DisplaySource });
 }
 
 void ImageSpreadPresentationController::setViewportSize(const QSizeF &viewportSize)
@@ -517,7 +487,7 @@ void ImageSpreadPresentationController::rotateClockwise()
 
     applyActivePresentationChanges(rotation.zoomChanges);
     notifyChanges({ ImageDocumentChange::Rotation, ImageDocumentChange::ImageSize,
-        ImageDocumentChange::DisplaySource, ImageDocumentChange::Repaint });
+        ImageDocumentChange::DisplaySource });
 }
 
 void ImageSpreadPresentationController::rotateCounterclockwise()
@@ -534,7 +504,7 @@ void ImageSpreadPresentationController::rotateCounterclockwise()
 
     applyActivePresentationChanges(rotation.zoomChanges);
     notifyChanges({ ImageDocumentChange::Rotation, ImageDocumentChange::ImageSize,
-        ImageDocumentChange::DisplaySource, ImageDocumentChange::Repaint });
+        ImageDocumentChange::DisplaySource });
 }
 
 void ImageSpreadPresentationController::updateRenderContext()
@@ -781,10 +751,7 @@ void ImageSpreadPresentationController::applyActivePresentationChanges(
     const ImageZoomChangeSet &changes, bool notifyPublicChanges)
 {
     if (hasSpreadZoomStateChange(changes)) {
-        scheduleVisibleTileDecode();
-        if (changes.scheduleVisibleTileDecode) {
-            notify(ImageDocumentChange::RenderFrame);
-        }
+        updateDisplayProjections();
         notify(ImageDocumentChange::VisibleItemRect);
         notify(ImageDocumentChange::ViewportFrame);
     }
@@ -800,11 +767,11 @@ void ImageSpreadPresentationController::notifyActivePresentationZoomChanged(
     notifyChanges(imageDocumentSpreadZoomNotifications(changes));
 }
 
-void ImageSpreadPresentationController::scheduleVisibleTileDecode()
+void ImageSpreadPresentationController::updateDisplayProjections()
 {
-    m_primaryPageSurface.scheduleVisibleTileDecode(
+    m_primaryPageSurface.updateDisplayProjection(
         m_presentationRuntime.renderProjection(DisplayedPageRole::Primary));
-    m_secondaryPageController->pageSurfaceController().scheduleVisibleTileDecode(
+    m_secondaryPageController->pageSurfaceController().updateDisplayProjection(
         m_presentationRuntime.renderProjection(DisplayedPageRole::Secondary));
 }
 

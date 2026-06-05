@@ -11,8 +11,8 @@
 #include "presentation/imagepresentationruntime.h"
 #include "rendering/displayimagestore.h"
 #include "rendering/imagerendercontext.h"
-#include "rendering/imagesurface.h"
 #include "rendering/rasterdisplaybucketpolicy.h"
+#include "rendering/staticimage.h"
 
 #include <QImage>
 #include <QSize>
@@ -25,10 +25,7 @@
 class QObject;
 
 namespace KiriView {
-class DisplayedImageSurfaceState;
-struct DisplayedImageSurfaceStateChange;
 class ImageAnimationPlayer;
-class ImageTileDecodeScheduler;
 
 class ImagePageSurfaceController final
 {
@@ -47,7 +44,6 @@ public:
     ~ImagePageSurfaceController();
 
     QSize imageSize() const;
-    std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     quint64 imageRevision() const;
     bool hasImage() const;
     bool isPredecodeCacheable() const;
@@ -64,8 +60,7 @@ public:
         const ImageDocumentRenderContext &renderContext);
     QString publishShadowDisplayImage(StaticDisplayImagePayload displayImage);
     void clearShadowDisplayImage();
-    void discardDecodedTiles();
-    void scheduleVisibleTileDecode(const ImagePresentationRenderProjection &projection);
+    void updateDisplayProjection(const ImagePresentationRenderProjection &projection);
     void clearImage();
 
     void startAnimation(ImageAnimationPlaybackRequest request);
@@ -78,8 +73,9 @@ public:
         const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
 
 private:
-    void applyDisplayedImageChange(const DisplayedImageSurfaceStateChange &change);
-    void applyDisplayedImageTileChange(const DisplayedImageSurfaceStateChange &change);
+    void acceptImageState(QSize imageSize, bool predecodeCacheable,
+        std::optional<StaticImagePayload> staticImage,
+        std::optional<StaticDisplayImagePayload> displayImage);
     void publishDisplaySource(const StaticDisplayImagePayload &displayImage);
     void publishAnimationFrameDisplaySource(const QImage &image, const QString &sourceIdentity);
     void clearDisplaySource();
@@ -97,9 +93,15 @@ private:
     Callbacks m_callbacks;
     QObject *m_context = nullptr;
     qsizetype m_predecodeCacheByteBudget = 0;
-    qsizetype m_staticTileCacheByteBudget = 0;
+    qsizetype m_displayImageByteBudget = 0;
     std::shared_ptr<DisplayImageStore> m_displayImageStore;
     DisplayedPageRole m_pageRole = DisplayedPageRole::Primary;
+    QSize m_imageSize;
+    quint64 m_imageRevision = 0;
+    bool m_hasImage = false;
+    bool m_predecodeCacheable = false;
+    std::optional<StaticImagePayload> m_staticImage;
+    std::optional<StaticDisplayImagePayload> m_displayImage;
     QString m_displayEntryId;
     QString m_shadowDisplayEntryId;
     QString m_pendingStillImageEntryId;
@@ -119,8 +121,6 @@ private:
     quint64 m_displaySourceRevision = 0;
     std::optional<RasterDisplayRefinementDemandKey> m_rasterDisplayRefinementDemand;
     ImageAsyncTicket m_rasterDisplayRefinementTicket;
-    std::unique_ptr<DisplayedImageSurfaceState> m_displayedSurfaceState;
-    std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
     std::unique_ptr<ImageAnimationPlayer> m_animationPlayer;
 };
 }

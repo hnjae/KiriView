@@ -37,8 +37,6 @@ enum class ImageDocumentChange {
     UnsupportedOpenedCollectionVideo,
     EmbeddedMetadata,
     DisplaySource,
-    RenderFrame,
-    Repaint,
 };
 }
 

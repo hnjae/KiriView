@@ -6,9 +6,7 @@
 #include "async/imageasyncworker.h"
 #include "async/imagecallback.h"
 #include "presentation/imageanimationplayer.h"
-#include "rendering/displayedimagesurfacestate.h"
 #include "rendering/imagerendering.h"
-#include "rendering/imagetiledecodescheduler.h"
 
 #include <algorithm>
 #include <memory>
@@ -101,20 +99,11 @@ ImagePageSurfaceController::ImagePageSurfaceController(QObject *context,
     : m_callbacks(std::move(callbacks))
     , m_context(context)
     , m_predecodeCacheByteBudget(cacheBudgets.predecodeCacheByteBudget)
-    , m_staticTileCacheByteBudget(cacheBudgets.staticTileCacheByteBudget)
+    , m_displayImageByteBudget(cacheBudgets.displayImageCacheByteBudget)
     , m_displayImageStore(
           displayImageStore == nullptr ? sharedDisplayImageStore() : std::move(displayImageStore))
     , m_pageRole(pageRole)
 {
-    m_displayedSurfaceState = std::make_unique<DisplayedImageSurfaceState>();
-    m_tileDecodeScheduler
-        = std::make_unique<ImageTileDecodeScheduler>(context, [this](DecodedTile tile) {
-              const std::optional<DisplayedImageSurfaceStateChange> change
-                  = m_displayedSurfaceState->insertTile(std::move(tile));
-              if (change.has_value()) {
-                  applyDisplayedImageTileChange(*change);
-              }
-          });
     m_animationPlayer = std::make_unique<ImageAnimationPlayer>(
         context,
         [this](const QImage &image) { setAnimationFrame(image, m_animationFrameSourceIdentity); },
@@ -130,24 +119,13 @@ ImagePageSurfaceController::~ImagePageSurfaceController()
     releaseCurrentDisplayEntry();
 }
 
-QSize ImagePageSurfaceController::imageSize() const { return m_displayedSurfaceState->imageSize(); }
+QSize ImagePageSurfaceController::imageSize() const { return m_imageSize; }
 
-std::shared_ptr<DisplayedImageSurface> ImagePageSurfaceController::imageSurface() const
-{
-    return m_displayedSurfaceState->imageSurface();
-}
+quint64 ImagePageSurfaceController::imageRevision() const { return m_imageRevision; }
 
-quint64 ImagePageSurfaceController::imageRevision() const
-{
-    return m_displayedSurfaceState->revision();
-}
+bool ImagePageSurfaceController::hasImage() const { return m_hasImage; }
 
-bool ImagePageSurfaceController::hasImage() const { return m_displayedSurfaceState->hasImage(); }
-
-bool ImagePageSurfaceController::isPredecodeCacheable() const
-{
-    return m_displayedSurfaceState->isPredecodeCacheable();
-}
+bool ImagePageSurfaceController::isPredecodeCacheable() const { return m_predecodeCacheable; }
 
 qsizetype ImagePageSurfaceController::predecodeCacheByteBudget() const
 {
@@ -156,18 +134,17 @@ qsizetype ImagePageSurfaceController::predecodeCacheByteBudget() const
 
 std::optional<StaticImagePayload> ImagePageSurfaceController::staticImage() const
 {
-    return m_displayedSurfaceState->staticImage();
+    return m_staticImage;
 }
 
 std::optional<StaticDisplayImagePayload> ImagePageSurfaceController::displayImage() const
 {
-    return m_displayedSurfaceState->displayImage();
+    return m_displayImage;
 }
 
 ImagePresentationPageSlotSnapshot ImagePageSurfaceController::snapshot() const
 {
     return ImagePresentationPageSlotSnapshot {
-        imageSurface(),
         imageRevision(),
         imageSize(),
         hasImage(),
@@ -178,24 +155,22 @@ ImagePresentationPageSlotSnapshot ImagePageSurfaceController::snapshot() const
 void ImagePageSurfaceController::setImage(const QImage &image, bool predecodeCacheable)
 {
     cancelRasterDisplayRefinement();
-    m_tileDecodeScheduler->invalidate();
     clearShadowDisplayImage();
     clearDisplaySource();
     m_animationFrameSourceIdentity.clear();
-    applyDisplayedImageChange(m_displayedSurfaceState->setImage(image, predecodeCacheable));
+    acceptImageState(image.size(), predecodeCacheable, std::nullopt, std::nullopt);
 }
 
 void ImagePageSurfaceController::setAnimationFrame(
     const QImage &image, const QString &sourceIdentity)
 {
     cancelRasterDisplayRefinement();
-    m_tileDecodeScheduler->invalidate();
     clearShadowDisplayImage();
     m_animationFrameSourceIdentity = sourceIdentity;
 
     const QImage displayImage = displayReadyImage(image);
     publishAnimationFrameDisplaySource(displayImage, sourceIdentity);
-    applyDisplayedImageChange(m_displayedSurfaceState->setImage(displayImage, false));
+    acceptImageState(displayImage.size(), false, std::nullopt, std::nullopt);
     notify(ImageDocumentChange::DisplaySource);
 }
 
@@ -204,18 +179,16 @@ void ImagePageSurfaceController::setStaticDisplayImage(StaticDisplayImagePayload
 {
     cancelRasterDisplayRefinement();
     stopAnimation();
-    m_tileDecodeScheduler->invalidate();
     clearShadowDisplayImage();
     m_animationFrameSourceIdentity.clear();
     publishDisplaySource(displayImage);
 
-    const StaticImagePayload staticImage = displayImage.compatibilityStaticImage();
-    const bool useFullImageSurface
-        = staticImageFitsFullImageSurface(staticImage, renderContext.maximumTextureSize);
-    const DisplayedImageSurfaceStateChange change
-        = m_displayedSurfaceState->setStaticDisplayImage(std::move(displayImage),
-            useFullImageSurface, predecodeCacheable, m_staticTileCacheByteBudget);
-    applyDisplayedImageChange(change);
+    Q_UNUSED(renderContext);
+    StaticDisplayImagePayload storedDisplay = std::move(displayImage);
+    StaticImagePayload staticImage = storedDisplay.compatibilityStaticImage();
+    const QSize imageSize = storedDisplay.originalSize;
+    acceptImageState(
+        imageSize, predecodeCacheable, std::move(staticImage), std::move(storedDisplay));
 }
 
 void ImagePageSurfaceController::setStaticImage(StaticImagePayload staticImage,
@@ -223,44 +196,26 @@ void ImagePageSurfaceController::setStaticImage(StaticImagePayload staticImage,
 {
     cancelRasterDisplayRefinement();
     stopAnimation();
-    m_tileDecodeScheduler->invalidate();
     clearShadowDisplayImage();
     clearDisplaySource();
     m_animationFrameSourceIdentity.clear();
-    const bool useFullImageSurface
-        = staticImageFitsFullImageSurface(staticImage, renderContext.maximumTextureSize);
-    const DisplayedImageSurfaceStateChange change
-        = m_displayedSurfaceState->setStaticImage(std::move(staticImage), useFullImageSurface,
-            predecodeCacheable, m_staticTileCacheByteBudget);
-    applyDisplayedImageChange(change);
+
+    Q_UNUSED(renderContext);
+    const QSize imageSize
+        = staticImage.source == nullptr ? QSize() : staticImage.source->imageSize();
+    acceptImageState(imageSize, predecodeCacheable, std::move(staticImage), std::nullopt);
 }
 
-void ImagePageSurfaceController::discardDecodedTiles()
-{
-    m_tileDecodeScheduler->invalidate();
-    const std::optional<DisplayedImageSurfaceStateChange> change
-        = m_displayedSurfaceState->clearTiles();
-    if (change.has_value()) {
-        applyDisplayedImageTileChange(*change);
-    }
-}
-
-void ImagePageSurfaceController::scheduleVisibleTileDecode(
+void ImagePageSurfaceController::updateDisplayProjection(
     const ImagePresentationRenderProjection &projection)
 {
     if (!projection.visible || projection.visibleItemRect.isEmpty()) {
         cancelRasterDisplayRefinement();
         updateDisplaySourceVisibility(false);
-        discardDecodedTiles();
         return;
     }
 
     updateDisplaySourceVisibility(true);
-    m_tileDecodeScheduler->schedule(imageSurface(), projection.displaySize,
-        projection.visibleItemRect,
-        ImageDocumentRenderContext { projection.devicePixelRatio, projection.maximumTextureSize,
-            projection.renderContextGeneration },
-        projection.rotationDegrees);
     scheduleRasterDisplayRefinement(projection);
 }
 
@@ -268,14 +223,15 @@ void ImagePageSurfaceController::clearImage()
 {
     cancelRasterDisplayRefinement();
     stopAnimation();
-    m_tileDecodeScheduler->invalidate();
     clearShadowDisplayImage();
     clearDisplaySource();
     m_animationFrameSourceIdentity.clear();
-    const std::optional<DisplayedImageSurfaceStateChange> change = m_displayedSurfaceState->clear();
-    if (change.has_value()) {
-        applyDisplayedImageChange(*change);
-    }
+    m_imageSize = {};
+    m_hasImage = false;
+    m_predecodeCacheable = false;
+    m_staticImage = std::nullopt;
+    m_displayImage = std::nullopt;
+    ++m_imageRevision;
 }
 
 void ImagePageSurfaceController::startAnimation(ImageAnimationPlaybackRequest request)
@@ -285,15 +241,16 @@ void ImagePageSurfaceController::startAnimation(ImageAnimationPlaybackRequest re
 
 void ImagePageSurfaceController::stopAnimation() { m_animationPlayer->stop(); }
 
-void ImagePageSurfaceController::applyDisplayedImageChange(const DisplayedImageSurfaceStateChange &)
+void ImagePageSurfaceController::acceptImageState(QSize imageSize, bool predecodeCacheable,
+    std::optional<StaticImagePayload> staticImage,
+    std::optional<StaticDisplayImagePayload> displayImage)
 {
-    notify(ImageDocumentChange::Repaint);
-}
-
-void ImagePageSurfaceController::applyDisplayedImageTileChange(
-    const DisplayedImageSurfaceStateChange &)
-{
-    notify(ImageDocumentChange::Repaint);
+    m_imageSize = imageSize;
+    m_hasImage = !imageSize.isEmpty();
+    m_predecodeCacheable = predecodeCacheable;
+    m_staticImage = std::move(staticImage);
+    m_displayImage = std::move(displayImage);
+    ++m_imageRevision;
 }
 
 void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePayload &displayImage)
@@ -623,7 +580,7 @@ void ImagePageSurfaceController::scheduleRasterDisplayRefinement(
     }
 
     const qsizetype displayImageByteBudget = m_displayImageStore == nullptr
-        ? m_staticTileCacheByteBudget
+        ? m_displayImageByteBudget
         : m_displayImageStore->byteBudget();
     const RasterDisplayBucketPolicyInput policyInput {
         currentDisplay->originalSize,

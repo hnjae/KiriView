@@ -462,15 +462,6 @@ void ImageDocumentRuntime::acknowledgeDisplayImageLoad(DisplayedPageRole role,
         role, providerUrl, revision, sourceIdentity, outcome);
 }
 
-DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageRole role) const
-{
-    if (status() != ImageDocumentStatus::Ready) {
-        return {};
-    }
-
-    return controllers->spreadController().renderSnapshot(role);
-}
-
 void ImageDocumentRuntime::notify(ImageDocumentChange change) { changeBatcher.notify(change); }
 
 void ImageDocumentRuntime::setRenderContextProvider(RenderContextProvider provider)

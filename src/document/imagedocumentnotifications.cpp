@@ -9,7 +9,7 @@ namespace KiriView {
 std::vector<ImageDocumentChange> imageDocumentSpreadTransitionNotifications()
 {
     return { ImageDocumentChange::PresentationTransitionState, ImageDocumentChange::Status,
-        ImageDocumentChange::Loading, ImageDocumentChange::Repaint };
+        ImageDocumentChange::Loading };
 }
 
 std::vector<ImageDocumentChange> imageDocumentDisplayedLocationNotifications(
@@ -30,14 +30,13 @@ std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications()
     return { ImageDocumentChange::TwoPageMode, ImageDocumentChange::ImageSize,
         ImageDocumentChange::DisplaySize, ImageDocumentChange::ZoomPercent,
         ImageDocumentChange::ZoomMode, ImageDocumentChange::MaximumManualZoomPercent,
-        ImageDocumentChange::DisplaySource, ImageDocumentChange::Repaint };
+        ImageDocumentChange::DisplaySource };
 }
 
 std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications(
     const ImageZoomChangeSet &changes)
 {
     std::vector<ImageDocumentChange> notifications;
-    bool repaint = false;
     bool twoPageMode = false;
 
     if (changes.zoomModeChanged) {
@@ -48,14 +47,10 @@ std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications(
     }
     if (changes.displaySizeChanged) {
         notifications.push_back(ImageDocumentChange::DisplaySize);
-        repaint = true;
         twoPageMode = true;
     }
     if (changes.maximumManualZoomPercentChanged) {
         notifications.push_back(ImageDocumentChange::MaximumManualZoomPercent);
-    }
-    if (repaint) {
-        notifications.push_back(ImageDocumentChange::Repaint);
     }
     if (twoPageMode) {
         notifications.push_back(ImageDocumentChange::TwoPageMode);
@@ -68,7 +63,7 @@ std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(
     bool secondaryPageVisible)
 {
     std::vector<ImageDocumentChange> changes { ImageDocumentChange::RightToLeftReading,
-        ImageDocumentChange::Repaint };
+        ImageDocumentChange::DisplaySource };
     if (secondaryPageVisible) {
         changes.push_back(ImageDocumentChange::TwoPageMode);
     }
@@ -93,7 +88,6 @@ std::vector<ImageDocumentChange> imageDocumentPresentationZoomNotifications(
     }
     if (changes.displaySizeChanged) {
         notifications.push_back(ImageDocumentChange::DisplaySize);
-        notifications.push_back(ImageDocumentChange::Repaint);
     }
     if (changes.maximumManualZoomPercentChanged) {
         notifications.push_back(ImageDocumentChange::MaximumManualZoomPercent);

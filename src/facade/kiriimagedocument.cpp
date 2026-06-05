@@ -232,7 +232,6 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
     operations.embeddedMetadataChanged
         = [&document]() { Q_EMIT document.embeddedMetadataChanged(); };
     operations.displaySourceChanged = [&document]() { Q_EMIT document.displaySourceChanged(); };
-    operations.repaintRequested = [&document]() { Q_EMIT document.repaintRequested(); };
     return operations;
 }
 }
@@ -491,12 +490,6 @@ KiriView::ImageFirstDisplayDecodeContext KiriImageDocument::firstDisplayDecodeCo
 const KiriView::EmbeddedMetadata &KiriImageDocument::embeddedMetadata() const
 {
     return m_runtime->embeddedMetadata();
-}
-
-KiriView::DisplayedImageRenderSnapshot KiriImageDocument::renderSnapshot(
-    KiriView::DisplayedPageRole role) const
-{
-    return m_runtime->renderSnapshot(role);
 }
 
 void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
@@ -812,11 +805,16 @@ bool KiriImageDocument::acknowledgeDisplayImageLoad(int pageRole, const QUrl &pr
 
 KiriView::ImageViewportInteractionSnapshot KiriImageDocument::viewportInteractionSnapshot() const
 {
+    const KiriView::ImageFirstDisplayDecodeContext firstDisplayContext
+        = m_runtime->firstDisplayDecodeContext();
+    const double devicePixelRatio = firstDisplayContext.isValid() && viewportSize().width() > 0.0
+        ? firstDisplayContext.physicalViewportSize.width() / viewportSize().width()
+        : 1.0;
     return KiriView::ImageViewportInteractionSnapshot {
         imageSize(),
         viewportSize(),
         displaySize(),
-        renderSnapshot().devicePixelRatio,
+        devicePixelRatio,
         rightToLeftReadingEnabled() && rightToLeftReadingAvailable(),
     };
 }

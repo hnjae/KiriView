@@ -30,7 +30,7 @@ public:
     void clear();
     void clearContainer();
     ImageZoomWorkflowMutationResult mutate(
-        const ZoomStateMutation &mutation, bool forceTileRefresh = false);
+        const ZoomStateMutation &mutation, bool forceDisplayProjectionUpdate = false);
 
 private:
     ImageRenderContextState m_renderContextState;

@@ -274,16 +274,16 @@ class TestImagePresentationLoad : public QObject
 
 private Q_SLOTS:
     void predecodedImagesPlanStaticCacheablePresentation();
-    void predecodedImagesPublishProviderSourceAndKeepCompatibilitySurface();
+    void predecodedImagesPublishProviderSource();
     void decodedImagesPlanPresentationActions();
     void staticDecodedPredecodeCacheabilityUsesInjectedBudget();
     void animationHandlingControlsPlannedEffects();
     void staticDecodedImagesAreAppliedToPresentation();
-    void staticDecodedImagesPublishProviderSourceAndKeepCompatibilitySurface();
+    void staticDecodedImagesPublishProviderSource();
     void unpresentableDecodedImagesLeaveExistingPresentationUntouched();
     void streamedAnimationImagesPresentFirstFrames();
-    void animationFirstFramesPublishProviderSourceAndKeepCompatibilitySurface();
-    void animationPlaybackFramesPublishProviderSourceAndKeepCompatibilitySurface();
+    void animationFirstFramesPublishProviderSource();
+    void animationPlaybackFramesPublishProviderSource();
     void secondaryAnimationModePresentsFirstFrame();
 };
 
@@ -313,7 +313,7 @@ void TestImagePresentationLoad::predecodedImagesPlanStaticCacheablePresentation(
     QCOMPARE(load->staticImage.preview.size(), QSize(3, 2));
 }
 
-void TestImagePresentationLoad::predecodedImagesPublishProviderSourceAndKeepCompatibilitySurface()
+void TestImagePresentationLoad::predecodedImagesPublishProviderSource()
 {
     auto displayImageStore = std::make_shared<KiriView::DisplayImageStore>(1024 * 1024);
     KiriView::ImagePageSurfaceController controller
@@ -329,9 +329,7 @@ void TestImagePresentationLoad::predecodedImagesPublishProviderSourceAndKeepComp
 
     QVERIFY(result.presented);
     QVERIFY(controller.hasImage());
-    QVERIFY(controller.imageSurface() != nullptr);
-    QVERIFY(controller.imageSurface()->legacyFrameSurface() != nullptr
-        || controller.imageSurface()->staticTileSurface() != nullptr);
+    QCOMPARE(controller.imageSize(), QSize(12, 8));
 
     const KiriView::ImageDisplaySourceSlot displaySource = controller.snapshot().displaySource;
     QCOMPARE(displaySource.status, KiriView::ImageDisplaySourceStatus::Ready);
@@ -480,8 +478,7 @@ void TestImagePresentationLoad::staticDecodedImagesAreAppliedToPresentation()
     QVERIFY(controller.isPredecodeCacheable());
 }
 
-void TestImagePresentationLoad::
-    staticDecodedImagesPublishProviderSourceAndKeepCompatibilitySurface()
+void TestImagePresentationLoad::staticDecodedImagesPublishProviderSource()
 {
     auto displayImageStore = std::make_shared<KiriView::DisplayImageStore>(1024 * 1024);
     KiriView::ImagePageSurfaceController controller
@@ -498,9 +495,7 @@ void TestImagePresentationLoad::
 
     QVERIFY(result.presented);
     QVERIFY(controller.hasImage());
-    QVERIFY(controller.imageSurface() != nullptr);
-    QVERIFY(controller.imageSurface()->legacyFrameSurface() != nullptr
-        || controller.imageSurface()->staticTileSurface() != nullptr);
+    QCOMPARE(controller.imageSize(), QSize(12, 8));
 
     const KiriView::ImageDisplaySourceSlot displaySource = controller.snapshot().displaySource;
     QCOMPARE(displaySource.status, KiriView::ImageDisplaySourceStatus::Ready);
@@ -584,8 +579,7 @@ void TestImagePresentationLoad::streamedAnimationImagesPresentFirstFrames()
     }
 }
 
-void TestImagePresentationLoad::
-    animationFirstFramesPublishProviderSourceAndKeepCompatibilitySurface()
+void TestImagePresentationLoad::animationFirstFramesPublishProviderSource()
 {
     auto displayImageStore = std::make_shared<KiriView::DisplayImageStore>(1024 * 1024);
     KiriView::ImagePageSurfaceController controller
@@ -606,11 +600,7 @@ void TestImagePresentationLoad::
     QVERIFY(result.presented);
     QCOMPARE(result.imageSize, QSize(10, 6));
     QVERIFY(controller.hasImage());
-    QVERIFY(controller.imageSurface() != nullptr);
-    const KiriView::LegacyFrameSurface *legacySurface
-        = controller.imageSurface()->legacyFrameSurface();
-    QVERIFY(legacySurface != nullptr);
-    QCOMPARE(legacySurface->image.size(), QSize(10, 6));
+    QCOMPARE(controller.imageSize(), QSize(10, 6));
 
     const KiriView::ImageDisplaySourceSlot displaySource = controller.snapshot().displaySource;
     QCOMPARE(displaySource.status, KiriView::ImageDisplaySourceStatus::Ready);
@@ -635,8 +625,7 @@ void TestImagePresentationLoad::
     QCOMPARE(stored->previewOrigin, KiriView::DisplayImagePreviewOrigin::None);
 }
 
-void TestImagePresentationLoad::
-    animationPlaybackFramesPublishProviderSourceAndKeepCompatibilitySurface()
+void TestImagePresentationLoad::animationPlaybackFramesPublishProviderSource()
 {
     auto displayImageStore = std::make_shared<KiriView::DisplayImageStore>(1024 * 1024);
     KiriView::ImagePageSurfaceController controller
@@ -681,12 +670,6 @@ void TestImagePresentationLoad::
     QVERIFY(stored.has_value());
     QCOMPARE(stored->debugLabel, QStringLiteral("animation-frame"));
     QCOMPARE(stored->image.pixelColor(0, 0), secondColor);
-
-    QVERIFY(controller.imageSurface() != nullptr);
-    const KiriView::LegacyFrameSurface *legacySurface
-        = controller.imageSurface()->legacyFrameSurface();
-    QVERIFY(legacySurface != nullptr);
-    QCOMPARE(legacySurface->image.pixelColor(0, 0), secondColor);
 }
 
 void TestImagePresentationLoad::secondaryAnimationModePresentsFirstFrame()

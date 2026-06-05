@@ -14,7 +14,6 @@
 #include "presentation/imageviewportcommandstate.h"
 #include "presentation/imageviewportinteraction.h"
 #include "rendering/imagerendercontext.h"
-#include "rendering/imagesurface.h"
 
 #include <QObject>
 #include <QPointF>
@@ -228,8 +227,6 @@ public:
     std::optional<KiriView::DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     KiriView::ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     const KiriView::EmbeddedMetadata &embeddedMetadata() const;
-    KiriView::DisplayedImageRenderSnapshot renderSnapshot(
-        KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
 
     void setRenderContextProvider(RenderContextProvider provider);
 
@@ -310,7 +307,6 @@ Q_SIGNALS:
     void rightToLeftReadingChanged();
     void presentationTransitionStateChanged();
     void fileDeletionFailed(const QString &errorString);
-    void repaintRequested();
     void unsupportedOpenedCollectionVideoChanged();
     void embeddedMetadataChanged();
     void displaySourceChanged();

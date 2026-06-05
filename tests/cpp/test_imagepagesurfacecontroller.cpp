@@ -336,7 +336,7 @@ void TestImagePageSurfaceController::visibleProjectionPinsAndPrioritizesProvider
     QVERIFY(store->entry(id).has_value());
     QVERIFY(slot.loadAcknowledgmentRequired);
 
-    controller.scheduleVisibleTileDecode(visibleProjection());
+    controller.updateDisplayProjection(visibleProjection());
     std::optional<KiriView::DisplayImageStoreEntry> stored = store->entry(id);
     QVERIFY(stored.has_value());
     QCOMPARE(stored->priority, KiriView::DisplayImageRetentionPriority::Visible);
@@ -357,7 +357,7 @@ void TestImagePageSurfaceController::visibleProjectionPinsAndPrioritizesProvider
     QVERIFY(store->entry(id).has_value());
 
     KiriView::ImagePresentationRenderProjection hidden;
-    controller.scheduleVisibleTileDecode(hidden);
+    controller.updateDisplayProjection(hidden);
     stored = store->entry(id);
     QVERIFY(stored.has_value());
     QCOMPARE(stored->priority, KiriView::DisplayImageRetentionPriority::Nearby);
@@ -442,7 +442,7 @@ void TestImagePageSurfaceController::qtRasterFirstDisplayRefinesToProviderBucket
     QVERIFY(!first.providerUrl.isEmpty());
     QCOMPARE(first.rasterSize, QSize(4, 3));
 
-    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(8.0, 6.0)));
+    controller.updateDisplayProjection(visibleProjection(QSizeF(8.0, 6.0)));
 
     QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
     const KiriView::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
@@ -462,7 +462,7 @@ void TestImagePageSurfaceController::qtRasterRefinementCompletionIsRejectedAfter
     controller.setStaticDisplayImage(
         qtRasterPayload(QSize(16, 12), QSize(4, 3), QStringLiteral("source-a")), false,
         renderContext());
-    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(8.0, 6.0)));
+    controller.updateDisplayProjection(visibleProjection(QSizeF(8.0, 6.0)));
 
     controller.setStaticDisplayImage(
         qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
@@ -490,7 +490,7 @@ void TestImagePageSurfaceController::exactQtRasterCurrentImageDoesNotRequestRefi
         false, renderContext());
     const KiriView::ImageDisplaySourceSlot exact = controller.snapshot().displaySource;
 
-    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(8.0, 6.0)));
+    controller.updateDisplayProjection(visibleProjection(QSizeF(8.0, 6.0)));
     QTest::qWait(100);
 
     const KiriView::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
@@ -512,7 +512,7 @@ void TestImagePageSurfaceController::heifFirstDisplayRefinesToProviderBucket()
     QVERIFY(!first.providerUrl.isEmpty());
     QCOMPARE(first.rasterSize, QSize(4, 3));
 
-    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(8.0, 6.0)));
+    controller.updateDisplayProjection(visibleProjection(QSizeF(8.0, 6.0)));
 
     QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
     const KiriView::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
@@ -533,7 +533,7 @@ void TestImagePageSurfaceController::heifRefinementCompletionIsRejectedAfterSour
         = heifPayload(QSize(16, 12), QSize(4, 3), QStringLiteral("heif-source-a"));
     QVERIFY2(payload.has_value(), "HEIF still fixture could not be created");
     controller.setStaticDisplayImage(std::move(*payload), false, renderContext());
-    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(8.0, 6.0)));
+    controller.updateDisplayProjection(visibleProjection(QSizeF(8.0, 6.0)));
 
     controller.setStaticDisplayImage(
         qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
@@ -563,7 +563,7 @@ void TestImagePageSurfaceController::rawFirstDisplayRefinesToProviderBucket()
     QVERIFY(!first.providerUrl.isEmpty());
     QCOMPARE(first.rasterSize, QSize(8, 8));
 
-    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(16.0, 16.0)));
+    controller.updateDisplayProjection(visibleProjection(QSizeF(16.0, 16.0)));
 
     QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
     const KiriView::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
@@ -584,7 +584,7 @@ void TestImagePageSurfaceController::rawRefinementCompletionIsRejectedAfterSourc
         = rawPayload(QSize(8, 8), QStringLiteral("raw-source-a"));
     QVERIFY2(payload.has_value(), "RAW still fixture could not be decoded");
     controller.setStaticDisplayImage(std::move(*payload), false, renderContext());
-    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(16.0, 16.0)));
+    controller.updateDisplayProjection(visibleProjection(QSizeF(16.0, 16.0)));
 
     controller.setStaticDisplayImage(
         qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
@@ -613,7 +613,7 @@ void TestImagePageSurfaceController::svgFirstDisplayRefinesToCoarseProviderBucke
     QVERIFY(!first.providerUrl.isEmpty());
     QCOMPARE(first.rasterSize, QSize(80, 40));
 
-    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(100.0, 50.0)));
+    controller.updateDisplayProjection(visibleProjection(QSizeF(100.0, 50.0)));
 
     QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
     const KiriView::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
@@ -624,11 +624,11 @@ void TestImagePageSurfaceController::svgFirstDisplayRefinesToCoarseProviderBucke
     QVERIFY(!store->entry(entryId(first)).has_value());
     QVERIFY(store->entry(entryId(refined)).has_value());
 
-    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(110.0, 55.0)));
+    controller.updateDisplayProjection(visibleProjection(QSizeF(110.0, 55.0)));
     QTest::qWait(100);
     QCOMPARE(controller.snapshot().displaySource.providerUrl, refined.providerUrl);
 
-    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(150.0, 75.0)));
+    controller.updateDisplayProjection(visibleProjection(QSizeF(150.0, 75.0)));
     QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != refined.providerUrl);
     const KiriView::ImageDisplaySourceSlot sharper = controller.snapshot().displaySource;
     QCOMPARE(sharper.rasterSize, QSize(180, 90));
@@ -643,7 +643,7 @@ void TestImagePageSurfaceController::svgRefinementCompletionIsRejectedAfterSourc
     controller.setStaticDisplayImage(
         svgPayload(QSize(80, 40), QSize(80, 40), QStringLiteral("svg-source-a")), false,
         renderContext());
-    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(100.0, 50.0)));
+    controller.updateDisplayProjection(visibleProjection(QSizeF(100.0, 50.0)));
 
     controller.setStaticDisplayImage(
         qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),

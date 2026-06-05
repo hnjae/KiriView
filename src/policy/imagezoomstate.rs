@@ -55,7 +55,7 @@ mod ffi {
         zoom_percent_changed: bool,
         display_size_changed: bool,
         maximum_manual_zoom_percent_changed: bool,
-        schedule_visible_tile_decode: bool,
+        display_projection_update_needed: bool,
     }
 
     #[derive(Clone, Copy)]
@@ -139,7 +139,7 @@ mod ffi {
             previous_device_pixel_ratio: f64,
             current: RustImageZoomState,
             current_device_pixel_ratio: f64,
-            force_tile_refresh: bool,
+            force_display_projection_update: bool,
         ) -> RustImageZoomChangeSet;
 
         #[cxx_name = "rustImageZoomResetZoom"]
@@ -426,7 +426,7 @@ fn rust_image_zoom_change_set(
     previous_device_pixel_ratio: f64,
     current: RustImageZoomState,
     current_device_pixel_ratio: f64,
-    force_tile_refresh: bool,
+    force_display_projection_update: bool,
 ) -> RustImageZoomChangeSet {
     let image_size_changed = previous.image_width != current.image_width
         || previous.image_height != current.image_height;
@@ -469,7 +469,7 @@ fn rust_image_zoom_change_set(
         zoom_percent_changed,
         display_size_changed,
         maximum_manual_zoom_percent_changed,
-        schedule_visible_tile_decode: zoom_state_changed || force_tile_refresh,
+        display_projection_update_needed: zoom_state_changed || force_display_projection_update,
     }
 }
 
@@ -757,7 +757,7 @@ mod tests {
         assert!(changes.zoom_percent_changed);
         assert!(changes.display_size_changed);
         assert!(changes.maximum_manual_zoom_percent_changed);
-        assert!(changes.schedule_visible_tile_decode);
+        assert!(changes.display_projection_update_needed);
     }
 
     #[test]
@@ -772,7 +772,7 @@ mod tests {
         assert!(!changes.zoom_percent_changed);
         assert!(!changes.display_size_changed);
         assert!(changes.maximum_manual_zoom_percent_changed);
-        assert!(changes.schedule_visible_tile_decode);
+        assert!(changes.display_projection_update_needed);
     }
 
     #[test]
@@ -787,6 +787,6 @@ mod tests {
         assert!(!changes.zoom_percent_changed);
         assert!(!changes.display_size_changed);
         assert!(!changes.maximum_manual_zoom_percent_changed);
-        assert!(changes.schedule_visible_tile_decode);
+        assert!(changes.display_projection_update_needed);
     }
 }
