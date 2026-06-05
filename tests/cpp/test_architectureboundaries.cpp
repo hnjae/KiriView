@@ -724,6 +724,8 @@ void TestArchitectureBoundaries::productionImageDisplayUsesProviderPathOnly()
         QRegularExpression(QStringLiteral(R"(\bDisplayedImageRenderSnapshot\b)")),
         QRegularExpression(QStringLiteral(R"(\bDisplayedImageSurface\b)")),
         QRegularExpression(QStringLiteral(R"(\bStaticTileSurface\b)")),
+        QRegularExpression(QStringLiteral(R"(\bstaticTileCache\w*)")),
+        QRegularExpression(QStringLiteral(R"(\bStaticTileCache\w*)")),
         QRegularExpression(QStringLiteral(R"(\bImageTileDecode(?:Scheduler|Runtime|State)\b)")),
         QRegularExpression(QStringLiteral(R"(\bDecodedTileCache\b)")),
         QRegularExpression(QStringLiteral(R"(\bscheduleVisibleTileDecode\s*\()")),
