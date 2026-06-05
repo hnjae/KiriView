@@ -577,9 +577,14 @@ void TestArchitectureBoundaries::qmlViewportUsesContextBridgeForRenderContextDis
 {
     const QString viewport = readProjectFile(QStringLiteral("src/qml/ImageViewport.qml"));
     QVERIFY(viewport.contains(QStringLiteral("KiriImageViewportContextBridge")));
+    QVERIFY(viewport.contains(QStringLiteral("DisplayImagePage")));
     QVERIFY(viewport.contains(QStringLiteral("objectName: \"primaryContextBridge\"")));
     QVERIFY(viewport.contains(QStringLiteral("objectName: \"secondaryContextBridge\"")));
-    QVERIFY(viewport.contains(QStringLiteral("renderContextProviderEnabled: false")));
+    QVERIFY(viewport.contains(QStringLiteral("acknowledgeStillImageDisplayLoad(")));
+    QVERIFY(!viewport.contains(QStringLiteral("KiriImageView {")));
+    QVERIFY(!viewport.contains(QStringLiteral("primaryImageView")));
+    QVERIFY(!viewport.contains(QStringLiteral("secondaryImageView")));
+    QVERIFY(!viewport.contains(QStringLiteral("renderContextProviderEnabled")));
     QVERIFY(viewport.contains(QStringLiteral("imageDocument.viewportPointInsideImage(")));
     QVERIFY(viewport.contains(QStringLiteral("imageDocument.nearestImageViewportPoint(")));
     QVERIFY(!viewport.contains(QStringLiteral("imageView.viewportPointInsideImage(")));

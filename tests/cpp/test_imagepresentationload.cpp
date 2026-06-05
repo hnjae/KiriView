@@ -512,7 +512,7 @@ void TestImagePresentationLoad::
     QCOMPARE(displaySource.sourceSizeHint, QSize(6, 0));
     QCOMPARE(displaySource.quality, KiriView::DisplayImageQuality::FirstDisplay);
     QVERIFY(!displaySource.cacheEnabled);
-    QVERIFY(!displaySource.loadAcknowledgmentRequired);
+    QVERIFY(displaySource.loadAcknowledgmentRequired);
 
     const QString entryId = displaySource.providerUrl.path().mid(1);
     const std::optional<KiriView::DisplayImageStoreEntry> stored

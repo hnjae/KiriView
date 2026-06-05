@@ -319,11 +319,20 @@ void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePa
               QStringLiteral("static-display"),
               displayImage.previewOrigin,
           });
+    const QUrl providerUrl = displayImageSourceForId(entryId);
+    const bool loadAcknowledgmentRequired = m_displayImageStore != nullptr && !entryId.isEmpty()
+        && m_displayImageStore->acquirePinLease(entryId, DisplayImagePinKind::PendingLoad);
 
     m_displayEntryId = entryId;
     m_displayEntryVisiblePinned = false;
+    m_pendingStillImageEntryId = loadAcknowledgmentRequired ? entryId : QString();
+    m_pendingStillImageProviderUrl = loadAcknowledgmentRequired ? providerUrl : QUrl();
+    m_pendingStillImageRevision = loadAcknowledgmentRequired ? m_displaySourceRevision : 0;
+    m_pendingStillImageSourceIdentity
+        = loadAcknowledgmentRequired ? displayImage.sourceIdentity : QString();
+    m_stillImageDisplayLoadPending = loadAcknowledgmentRequired;
     m_displaySource = ImageDisplaySourceSlot {
-        displayImageSourceForId(entryId),
+        providerUrl,
         m_displaySourceRevision,
         displayImage.sourceIdentity,
         displayImage.originalSize,
@@ -332,7 +341,7 @@ void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePa
         displayImage.quality,
         entryId.isEmpty() ? ImageDisplaySourceStatus::Error : ImageDisplaySourceStatus::Ready,
         false,
-        false,
+        loadAcknowledgmentRequired,
         ImageDisplaySourceRetentionStatus::None,
         false,
     };
@@ -417,10 +426,11 @@ void ImagePageSurfaceController::clearDisplaySource()
     if (m_displaySource.providerUrl.isEmpty() && m_displayEntryId.isEmpty()
         && m_retainedAnimationFrameEntryId.isEmpty()
         && m_displaySource.status == ImageDisplaySourceStatus::Missing
-        && !m_animationFrameDisplayLoadPending) {
+        && !m_stillImageDisplayLoadPending && !m_animationFrameDisplayLoadPending) {
         return;
     }
 
+    clearStillImageLoadContract();
     releaseRetainedAnimationFrameEntry();
     clearAnimationFrameLoadContract();
     releaseCurrentDisplayEntry();
@@ -435,6 +445,8 @@ void ImagePageSurfaceController::cancelRasterDisplayRefinement()
 
 void ImagePageSurfaceController::releaseCurrentDisplayEntry()
 {
+    clearStillImageLoadContract();
+
     if (m_displayImageStore == nullptr || m_displayEntryId.isEmpty()) {
         m_displayEntryId.clear();
         m_displayEntryVisiblePinned = false;
@@ -502,12 +514,41 @@ void ImagePageSurfaceController::releaseRetainedAnimationFrameEntry()
     m_retainedAnimationFrameEntryId.clear();
 }
 
+void ImagePageSurfaceController::clearStillImageLoadContract()
+{
+    if (m_displayImageStore != nullptr && m_stillImageDisplayLoadPending
+        && !m_pendingStillImageEntryId.isEmpty()) {
+        m_displayImageStore->releasePinLease(
+            m_pendingStillImageEntryId, DisplayImagePinKind::PendingLoad);
+    }
+
+    m_stillImageDisplayLoadPending = false;
+    m_pendingStillImageEntryId.clear();
+    m_pendingStillImageProviderUrl = QUrl();
+    m_pendingStillImageRevision = 0;
+    m_pendingStillImageSourceIdentity.clear();
+}
+
 void ImagePageSurfaceController::clearAnimationFrameLoadContract()
 {
     m_animationFrameDisplayLoadPending = false;
     m_pendingAnimationFrameProviderUrl = QUrl();
     m_pendingAnimationFrameRevision = 0;
     m_pendingAnimationFrameSourceIdentity.clear();
+}
+
+void ImagePageSurfaceController::acknowledgeStillImageDisplayLoad(const QUrl &providerUrl,
+    quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome)
+{
+    Q_UNUSED(outcome);
+
+    if (m_currentDisplayEntryIsAnimationFrame || !m_stillImageDisplayLoadPending
+        || providerUrl != m_pendingStillImageProviderUrl || revision != m_pendingStillImageRevision
+        || sourceIdentity != m_pendingStillImageSourceIdentity) {
+        return;
+    }
+
+    clearStillImageLoadContract();
 }
 
 void ImagePageSurfaceController::acknowledgeAnimationFrameDisplayLoad(const QUrl &providerUrl,

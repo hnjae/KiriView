@@ -70,6 +70,8 @@ public:
 
     void startAnimation(ImageAnimationPlaybackRequest request);
     void stopAnimation();
+    void acknowledgeStillImageDisplayLoad(const QUrl &providerUrl, quint64 revision,
+        const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
     void acknowledgeAnimationFrameDisplayLoad(const QUrl &providerUrl, quint64 revision,
         const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
 
@@ -83,6 +85,7 @@ private:
     void releaseShadowDisplayEntry();
     void retainCurrentAnimationFrameEntryForLoad();
     void releaseRetainedAnimationFrameEntry();
+    void clearStillImageLoadContract();
     void clearAnimationFrameLoadContract();
     void updateDisplaySourceVisibility(bool visible);
     void cancelRasterDisplayRefinement();
@@ -97,13 +100,18 @@ private:
     DisplayedPageRole m_pageRole = DisplayedPageRole::Primary;
     QString m_displayEntryId;
     QString m_shadowDisplayEntryId;
+    QString m_pendingStillImageEntryId;
     QString m_retainedAnimationFrameEntryId;
     QString m_animationFrameSourceIdentity;
+    QUrl m_pendingStillImageProviderUrl;
+    quint64 m_pendingStillImageRevision = 0;
+    QString m_pendingStillImageSourceIdentity;
     QUrl m_pendingAnimationFrameProviderUrl;
     quint64 m_pendingAnimationFrameRevision = 0;
     QString m_pendingAnimationFrameSourceIdentity;
     bool m_displayEntryVisiblePinned = false;
     bool m_currentDisplayEntryIsAnimationFrame = false;
+    bool m_stillImageDisplayLoadPending = false;
     bool m_animationFrameDisplayLoadPending = false;
     ImageDisplaySourceSlot m_displaySource;
     quint64 m_displaySourceRevision = 0;

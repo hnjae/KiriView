@@ -280,6 +280,8 @@ public:
         const QString &commandRevisionToken, const QPointF &actualContentPosition);
     Q_INVOKABLE bool observeViewportContentPosition(
         const QPointF &contentPosition, KiriImageDocument::ViewportObservationOrigin origin);
+    Q_INVOKABLE bool acknowledgeStillImageDisplayLoad(int pageRole, const QUrl &providerUrl,
+        const QString &revisionToken, const QString &sourceIdentity, int outcome);
 
 Q_SIGNALS:
     void sourceUrlChanged();

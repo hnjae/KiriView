@@ -82,6 +82,31 @@ KiriView::FileDeletionMode toFileDeletionMode(KiriImageDocument::DeletionMode de
     return KiriView::FileDeletionMode::MoveToTrash;
 }
 
+std::optional<KiriView::DisplayedPageRole> toDisplayedPageRole(int pageRole)
+{
+    if (pageRole == static_cast<int>(KiriImageDisplaySource::PageRole::Primary)) {
+        return KiriView::DisplayedPageRole::Primary;
+    }
+    if (pageRole == static_cast<int>(KiriImageDisplaySource::PageRole::Secondary)) {
+        return KiriView::DisplayedPageRole::Secondary;
+    }
+    return std::nullopt;
+}
+
+std::optional<KiriView::ImageDisplayLoadOutcome> toImageDisplayLoadOutcome(int outcome)
+{
+    switch (outcome) {
+    case static_cast<int>(KiriView::ImageDisplayLoadOutcome::Loaded):
+        return KiriView::ImageDisplayLoadOutcome::Loaded;
+    case static_cast<int>(KiriView::ImageDisplayLoadOutcome::Error):
+        return KiriView::ImageDisplayLoadOutcome::Error;
+    case static_cast<int>(KiriView::ImageDisplayLoadOutcome::Missing):
+        return KiriView::ImageDisplayLoadOutcome::Missing;
+    default:
+        return std::nullopt;
+    }
+}
+
 KiriView::ImageViewportObservationOrigin toImageViewportObservationOrigin(
     KiriImageDocument::ViewportObservationOrigin origin)
 {
@@ -749,6 +774,23 @@ bool KiriImageDocument::observeViewportContentPosition(
 {
     return m_runtime->observeViewportContentPosition(
         contentPosition, toImageViewportObservationOrigin(origin));
+}
+
+bool KiriImageDocument::acknowledgeStillImageDisplayLoad(int pageRole, const QUrl &providerUrl,
+    const QString &revisionToken, const QString &sourceIdentity, int outcome)
+{
+    const std::optional<KiriView::DisplayedPageRole> displayPageRole
+        = toDisplayedPageRole(pageRole);
+    const std::optional<quint64> revision = viewportRevisionFromToken(revisionToken);
+    const std::optional<KiriView::ImageDisplayLoadOutcome> loadOutcome
+        = toImageDisplayLoadOutcome(outcome);
+    if (!displayPageRole.has_value() || !revision.has_value() || !loadOutcome.has_value()) {
+        return false;
+    }
+
+    m_runtime->acknowledgeStillImageDisplayLoad(
+        *displayPageRole, providerUrl, *revision, sourceIdentity, *loadOutcome);
+    return true;
 }
 
 KiriView::ImageViewportInteractionSnapshot KiriImageDocument::viewportInteractionSnapshot() const

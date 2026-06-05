@@ -119,6 +119,8 @@ public:
     const EmbeddedMetadata &embeddedMetadata() const;
     ImageDisplaySourceProjection displaySourceProjection(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
+    void acknowledgeStillImageDisplayLoad(DisplayedPageRole role, const QUrl &providerUrl,
+        quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
     DisplayedImageRenderSnapshot renderSnapshot(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
 

@@ -446,6 +446,14 @@ ImageDisplaySourceProjection ImageDocumentRuntime::displaySourceProjection(
     return controllers->spreadController().displaySourceProjection(role);
 }
 
+void ImageDocumentRuntime::acknowledgeStillImageDisplayLoad(DisplayedPageRole role,
+    const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
+    ImageDisplayLoadOutcome outcome)
+{
+    controllers->spreadController().acknowledgeStillImageDisplayLoad(
+        role, providerUrl, revision, sourceIdentity, outcome);
+}
+
 DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageRole role) const
 {
     if (status() != ImageDocumentStatus::Ready) {
