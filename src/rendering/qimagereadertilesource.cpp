@@ -213,6 +213,8 @@ FirstDisplayImageDecodeResult QImageReaderTileSource::decodeFirstDisplayImage(
     return { FirstDisplayImageDecodeStatus::Ready, std::move(image), displayPixelsPerSourcePixel };
 }
 
+bool QImageReaderTileSource::supportsRasterDisplayRefinement() const { return true; }
+
 QImage QImageReaderTileSource::decodeRasterDisplayImage(
     const QSize &rasterSize, QString *errorString) const
 {

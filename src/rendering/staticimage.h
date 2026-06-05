@@ -59,6 +59,8 @@ public:
         = 0;
     virtual FirstDisplayImageDecodeResult decodeFirstDisplayImage(
         const ImageFirstDisplayDecodeContext &context, QString *errorString) const;
+    virtual bool supportsRasterDisplayRefinement() const;
+    virtual QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *errorString) const;
     virtual QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const = 0;
     virtual qsizetype byteCost() const = 0;
     virtual bool isResolutionIndependent() const;

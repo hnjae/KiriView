@@ -15,6 +15,16 @@ FirstDisplayImageDecodeResult ImageTileSource::decodeFirstDisplayImage(
     return {};
 }
 
+bool ImageTileSource::supportsRasterDisplayRefinement() const { return false; }
+
+QImage ImageTileSource::decodeRasterDisplayImage(
+    const QSize &rasterSize, QString *errorString) const
+{
+    Q_UNUSED(rasterSize);
+    Q_UNUSED(errorString);
+    return {};
+}
+
 bool ImageTileSource::isResolutionIndependent() const { return false; }
 
 StaticImageReaderTransform ImageTileSource::imageReaderTransform() const { return {}; }

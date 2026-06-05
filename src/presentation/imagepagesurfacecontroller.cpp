@@ -9,7 +9,6 @@
 #include "rendering/displayedimagesurfacestate.h"
 #include "rendering/imagerendering.h"
 #include "rendering/imagetiledecodescheduler.h"
-#include "rendering/qimagereadertilesource.h"
 
 #include <algorithm>
 #include <memory>
@@ -18,17 +17,17 @@
 
 namespace KiriView {
 namespace {
-    struct QtRasterRefinementWork {
+    struct RasterDisplayRefinementWork {
         quint64 ticket = 0;
         RasterDisplayRefinementDemandKey demandKey;
         ImageDocumentRenderContext renderContext;
         StaticDisplayImagePayload currentDisplay;
-        std::shared_ptr<QImageReaderTileSource> source;
+        std::shared_ptr<ImageTileSource> source;
         QSize rasterSize;
         DisplayImageQuality quality = DisplayImageQuality::Exact;
     };
 
-    struct QtRasterRefinementResult {
+    struct RasterDisplayRefinementResult {
         quint64 ticket = 0;
         RasterDisplayRefinementDemandKey demandKey;
         ImageDocumentRenderContext renderContext;
@@ -63,7 +62,8 @@ namespace {
         };
     }
 
-    StaticDisplayImagePayload refinedDisplayImagePayload(QtRasterRefinementWork work, QImage image)
+    StaticDisplayImagePayload refinedDisplayImagePayload(
+        RasterDisplayRefinementWork work, QImage image)
     {
         work.currentDisplay.image = displayReadyImage(std::move(image));
         work.currentDisplay.quality = work.quality;
@@ -74,7 +74,7 @@ namespace {
         return std::move(work.currentDisplay);
     }
 
-    QtRasterRefinementResult runQtRasterRefinement(QtRasterRefinementWork work)
+    RasterDisplayRefinementResult runRasterDisplayRefinement(RasterDisplayRefinementWork work)
     {
         if (work.source == nullptr || work.rasterSize.isEmpty()) {
             return { work.ticket, std::move(work.demandKey), work.renderContext, {}, false };
@@ -421,9 +421,8 @@ void ImagePageSurfaceController::scheduleRasterDisplayRefinement(
         return;
     }
 
-    std::shared_ptr<QImageReaderTileSource> source
-        = std::dynamic_pointer_cast<QImageReaderTileSource>(currentDisplay->refinementSource);
-    if (source == nullptr) {
+    std::shared_ptr<ImageTileSource> source = currentDisplay->refinementSource;
+    if (source == nullptr || !source->supportsRasterDisplayRefinement()) {
         cancelRasterDisplayRefinement();
         return;
     }
@@ -460,7 +459,7 @@ void ImagePageSurfaceController::scheduleRasterDisplayRefinement(
     m_rasterDisplayRefinementDemand = demandKey;
     runAsyncWorker(
         m_context,
-        [work = QtRasterRefinementWork {
+        [work = RasterDisplayRefinementWork {
              ticket,
              std::move(demandKey),
              renderContextForProjection(projection),
@@ -468,8 +467,8 @@ void ImagePageSurfaceController::scheduleRasterDisplayRefinement(
              std::move(source),
              decision.bucketKey.rasterSize,
              decision.quality,
-         }]() mutable { return runQtRasterRefinement(std::move(work)); },
-        [this](QtRasterRefinementResult result) mutable {
+         }]() mutable { return runRasterDisplayRefinement(std::move(work)); },
+        [this](RasterDisplayRefinementResult result) mutable {
             if (!m_rasterDisplayRefinementTicket.accepts(result.ticket)
                 || !m_rasterDisplayRefinementDemand.has_value()
                 || *m_rasterDisplayRefinementDemand != result.demandKey) {
