@@ -45,6 +45,15 @@ During the compatibility phase, `ImagePresentationRuntime` publishes display-sou
 - Oversized or unsafe demands that cannot produce one bounded display image become bounded-detail, unsupported, or failed display states. The target path must not rebuild a visual tile fallback for images that exceed provider-display limits.
 - Animated-image timing remains owned by the animation player. Accepted frames publish display entries through the display-source path or through a later documented high-level Qt Quick image/provider composition; animation fallback must not own direct QRhi resources, custom scene graph nodes, custom visual rendering, framebuffer paths, or custom shaders.
 
+## Raster Bucket Policy
+
+- Stage 7a introduces a pure raster bucket policy and vocabulary only; it does not start refinement jobs, change the visible compatibility renderer, or expose bounded-detail and unsupported-too-large states in user-facing specs.
+- The policy consumes post-transform original image size, the current accepted raster size and quality when one exists, target display size, visible viewport, device pixel ratio, rotation, the resolved display texture cap, and the active display-image byte budget.
+- A candidate whole-image bucket is safe only when it is non-empty, each raster axis fits the resolved display texture cap, and its estimated display byte cost fits the active display-image budget. Unsafe demands never fall back to visual tiles in the provider path.
+- The policy classifies the current accepted image as exact, first-display sufficient, refinement-needed, bounded-detail reuse, unsupported-too-large initial display, or failed. `refinement-needed` is only a demand marker until Stage 7b and later decoder-specific substages attach jobs.
+- Bucket keys describe the desired whole-raster target size, exactness, and limiting cap used to choose it. They are stable demand metadata, not provider ids and not QML `sourceSize` churn.
+- A refinement demand key includes source identity, page role, display-source owner revision, zoom generation, device-pixel-ratio generation, render-context or texture-capability generation, memory-budget or allocation-policy generation or resolved caps, rotation generation when rotation affects bucket selection, and the bucket key. Later completions must match the full key before replacing an accepted display entry.
+
 ## Compatibility Exit
 
 Tile scheduling, decoded-tile caches, render nodes, custom shaders, direct QRhi resource management, and QRhi probing are temporary compatibility machinery. By the end state, display-store byte budgets replace tile-display cache budgets, render-context discovery uses stable public Qt/Qt Quick capability inputs or conservative fallbacks, and production image display no longer includes, links, probes, or tests QRhi rendering paths.
