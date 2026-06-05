@@ -57,9 +57,8 @@ KiriView::ImageCacheBudgets cacheBudgets(qsizetype displayImageBudget = testByte
 {
     return KiriView::ImageCacheBudgets {
         testByteBudget,
-        testByteBudget,
-        testByteBudget,
         displayImageBudget,
+        testByteBudget,
     };
 }
 

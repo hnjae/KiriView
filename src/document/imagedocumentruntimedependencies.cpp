@@ -24,8 +24,8 @@ ImageDocumentRuntimeDependencies::~ImageDocumentRuntimeDependencies() = default;
 
 ImageCacheBudgetRequest imageDocumentCacheBudgetRequestWithDefaults(ImageCacheBudgetRequest request)
 {
-    if (request.staticTileCachePreferredByteBudget <= 0) {
-        request.staticTileCachePreferredByteBudget = imageFullDecodeFallbackByteLimit;
+    if (request.displayImageCachePreferredByteBudget <= 0) {
+        request.displayImageCachePreferredByteBudget = imageFullDecodeFallbackByteLimit;
     }
     return request;
 }

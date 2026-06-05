@@ -108,7 +108,7 @@ class TestQImageReaderDecoder : public QObject
 
 private Q_SLOTS:
     void invalidDataReturnsFailure();
-    void pngDataDecodesAsStaticTileSource();
+    void pngDataDecodesAsStaticDisplayPayload();
     void jpegDataUsesFirstDisplayRequest();
     void jpegExifOrientationProducesDisplayOrientedPayload();
 };
@@ -124,7 +124,7 @@ void TestQImageReaderDecoder::invalidDataReturnsFailure()
     QVERIFY(decodedImage<KiriView::StaticDecodedImage>(result) == nullptr);
 }
 
-void TestQImageReaderDecoder::pngDataDecodesAsStaticTileSource()
+void TestQImageReaderDecoder::pngDataDecodesAsStaticDisplayPayload()
 {
     QImage image(4, 4, QImage::Format_RGBA8888);
     image.fill(Qt::red);

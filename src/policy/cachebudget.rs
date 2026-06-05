@@ -22,8 +22,8 @@ mod ffi {
             byte_budget: i64,
         ) -> Vec<RustLruCacheRetainedEntry>;
 
-        #[cxx_name = "rustStaticTileCacheByteBudgetForSystemMemory"]
-        fn rust_static_tile_cache_byte_budget_for_system_memory(
+        #[cxx_name = "rustDisplayImageCacheByteBudgetForSystemMemory"]
+        fn rust_display_image_cache_byte_budget_for_system_memory(
             system_memory_byte_size: i64,
             preferred_byte_budget: i64,
         ) -> i64;
@@ -42,7 +42,7 @@ mod ffi {
     }
 }
 
-const STATIC_TILE_CACHE_SYSTEM_MEMORY_DIVISOR: i64 = 16;
+const DISPLAY_IMAGE_CACHE_SYSTEM_MEMORY_DIVISOR: i64 = 16;
 const PREDECODE_CACHE_PREFERRED_BYTE_BUDGET: i64 = 1024 * 1024 * 1024;
 const PREDECODE_CACHE_SYSTEM_MEMORY_DIVISOR: i64 = 8;
 const THUMBNAIL_CACHE_PREFERRED_BYTE_BUDGET: i64 = 64 * 1024 * 1024;
@@ -79,11 +79,14 @@ fn rust_lru_cache_retention_plan(
     lru_cache_retention_plan(entries, byte_budget)
 }
 
-fn rust_static_tile_cache_byte_budget_for_system_memory(
+fn rust_display_image_cache_byte_budget_for_system_memory(
     system_memory_byte_size: i64,
     preferred_byte_budget: i64,
 ) -> i64 {
-    static_tile_cache_byte_budget_for_system_memory(system_memory_byte_size, preferred_byte_budget)
+    display_image_cache_byte_budget_for_system_memory(
+        system_memory_byte_size,
+        preferred_byte_budget,
+    )
 }
 
 fn rust_predecode_cache_preferred_byte_budget() -> i64 {
@@ -151,14 +154,14 @@ pub(crate) fn lru_cache_retention_plan(
         .collect()
 }
 
-pub(crate) fn static_tile_cache_byte_budget_for_system_memory(
+pub(crate) fn display_image_cache_byte_budget_for_system_memory(
     system_memory_byte_size: i64,
     preferred_byte_budget: i64,
 ) -> i64 {
     system_memory_capped_byte_budget(
         preferred_byte_budget,
         system_memory_byte_size,
-        STATIC_TILE_CACHE_SYSTEM_MEMORY_DIVISOR,
+        DISPLAY_IMAGE_CACHE_SYSTEM_MEMORY_DIVISOR,
     )
 }
 
@@ -248,23 +251,23 @@ mod tests {
     }
 
     #[test]
-    fn static_tile_cache_byte_budget_uses_preferred_limit_and_system_memory_cap() {
+    fn display_image_cache_byte_budget_uses_preferred_limit_and_system_memory_cap() {
         let preferred = 512 * 1024 * 1024;
 
         assert_eq!(
-            static_tile_cache_byte_budget_for_system_memory(0, preferred),
+            display_image_cache_byte_budget_for_system_memory(0, preferred),
             preferred
         );
         assert_eq!(
-            static_tile_cache_byte_budget_for_system_memory(preferred, preferred),
-            preferred / STATIC_TILE_CACHE_SYSTEM_MEMORY_DIVISOR
+            display_image_cache_byte_budget_for_system_memory(preferred, preferred),
+            preferred / DISPLAY_IMAGE_CACHE_SYSTEM_MEMORY_DIVISOR
         );
         assert_eq!(
-            static_tile_cache_byte_budget_for_system_memory(preferred * 32, preferred),
+            display_image_cache_byte_budget_for_system_memory(preferred * 32, preferred),
             preferred
         );
         assert_eq!(
-            static_tile_cache_byte_budget_for_system_memory(preferred, -1),
+            display_image_cache_byte_budget_for_system_memory(preferred, -1),
             0
         );
     }

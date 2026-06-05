@@ -34,7 +34,7 @@ using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 constexpr qsizetype testPredecodeCacheByteBudget = 1024 * 1024;
-constexpr qsizetype testStaticTileCacheByteBudget = 512 * 1024;
+constexpr qsizetype testDisplayImageCacheByteBudget = 512 * 1024;
 constexpr std::array<unsigned char, 8> pngSignature { 0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a };
 
 struct FrameSpec {
@@ -242,7 +242,7 @@ KiriView::ImagePageSurfaceController pageSurfaceController(QObject *parent)
     return KiriView::ImagePageSurfaceController(parent, {},
         KiriView::ImageCacheBudgets {
             testPredecodeCacheByteBudget,
-            testStaticTileCacheByteBudget,
+            testDisplayImageCacheByteBudget,
         });
 }
 
@@ -252,7 +252,7 @@ KiriView::ImagePageSurfaceController pageSurfaceController(
     return KiriView::ImagePageSurfaceController(parent, {},
         KiriView::ImageCacheBudgets {
             testPredecodeCacheByteBudget,
-            testStaticTileCacheByteBudget,
+            testDisplayImageCacheByteBudget,
         },
         std::move(displayImageStore));
 }
