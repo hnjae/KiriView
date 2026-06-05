@@ -561,17 +561,28 @@ public:
     Q_INVOKABLE void acknowledgeStillImageDisplayLoad(int pageRole, const QUrl &providerUrl,
         const QString &revisionToken, const QString &sourceIdentity, int outcome)
     {
+        m_lastStillImageAcknowledgedPageRole = pageRole;
+        m_lastStillImageAcknowledgedProviderUrl = providerUrl;
+        m_lastStillImageAcknowledgedRevisionToken = revisionToken;
+        m_lastStillImageAcknowledgedSourceIdentity = sourceIdentity;
+        m_lastStillImageAcknowledgedOutcome = outcome;
+        ++m_stillImageLoadAcknowledgmentCount;
+    }
+
+    Q_INVOKABLE void acknowledgeDisplayImageLoad(int pageRole, const QUrl &providerUrl,
+        const QString &revisionToken, const QString &sourceIdentity, int outcome)
+    {
         m_lastAcknowledgedPageRole = pageRole;
         m_lastAcknowledgedProviderUrl = providerUrl;
         m_lastAcknowledgedRevisionToken = revisionToken;
         m_lastAcknowledgedSourceIdentity = sourceIdentity;
         m_lastAcknowledgedOutcome = outcome;
-        ++m_stillImageLoadAcknowledgmentCount;
+        ++m_displayLoadAcknowledgmentCount;
     }
 
-    Q_INVOKABLE int stillImageLoadAcknowledgmentCount() const
+    Q_INVOKABLE int displayLoadAcknowledgmentCount() const
     {
-        return m_stillImageLoadAcknowledgmentCount;
+        return m_displayLoadAcknowledgmentCount;
     }
 
     Q_INVOKABLE int lastAcknowledgedPageRole() const { return m_lastAcknowledgedPageRole; }
@@ -830,6 +841,12 @@ private:
     FakeKiriImageDisplaySource m_primaryDisplaySource;
     FakeKiriImageDisplaySource m_secondaryDisplaySource;
     int m_stillImageLoadAcknowledgmentCount = 0;
+    int m_displayLoadAcknowledgmentCount = 0;
+    int m_lastStillImageAcknowledgedPageRole = -1;
+    QUrl m_lastStillImageAcknowledgedProviderUrl;
+    QString m_lastStillImageAcknowledgedRevisionToken;
+    QString m_lastStillImageAcknowledgedSourceIdentity;
+    int m_lastStillImageAcknowledgedOutcome = -1;
     int m_lastAcknowledgedPageRole = -1;
     QUrl m_lastAcknowledgedProviderUrl;
     QString m_lastAcknowledgedRevisionToken;
@@ -1160,8 +1177,8 @@ Item {
         imageViewport.imageDocument.requirePrimaryMissingLoadAcknowledgment();
     }
 
-    function stillImageLoadAcknowledgmentCount() {
-        return imageViewport.imageDocument.stillImageLoadAcknowledgmentCount();
+    function displayLoadAcknowledgmentCount() {
+        return imageViewport.imageDocument.displayLoadAcknowledgmentCount();
     }
 
     function lastAcknowledgedPageRole() {
@@ -1519,7 +1536,7 @@ void TestImageViewport::displayImagePageLoadAcknowledgmentReachesDocument()
 
     invokeVoid(fixture.root, "requirePrimaryMissingLoadAcknowledgment");
 
-    QTRY_COMPARE(invokeInt(fixture.root, "stillImageLoadAcknowledgmentCount"), 1);
+    QTRY_COMPARE(invokeInt(fixture.root, "displayLoadAcknowledgmentCount"), 1);
     QCOMPARE(invokeInt(fixture.root, "lastAcknowledgedPageRole"), 0);
     QCOMPARE(invokeInt(fixture.root, "lastAcknowledgedOutcome"), 2);
     QCOMPARE(invokeString(fixture.root, "lastAcknowledgedRevisionToken"), QStringLiteral("42"));
