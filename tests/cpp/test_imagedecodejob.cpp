@@ -16,6 +16,7 @@
 #include <QSemaphore>
 #include <QSize>
 #include <QTest>
+#include <QThreadPool>
 #include <QUrl>
 #include <atomic>
 #include <mutex>
@@ -142,6 +143,26 @@ public:
 
 private:
     QSemaphore *m_semaphore = nullptr;
+};
+
+class MinimumThreadPoolConcurrency
+{
+public:
+    explicit MinimumThreadPoolConcurrency(int minimumThreadCount)
+        : m_previousThreadCount(QThreadPool::globalInstance()->maxThreadCount())
+    {
+        if (m_previousThreadCount < minimumThreadCount) {
+            QThreadPool::globalInstance()->setMaxThreadCount(minimumThreadCount);
+        }
+    }
+
+    ~MinimumThreadPoolConcurrency()
+    {
+        QThreadPool::globalInstance()->setMaxThreadCount(m_previousThreadCount);
+    }
+
+private:
+    int m_previousThreadCount = 0;
 };
 
 class ManualRawEmbeddedThumbnailPreviewExtractor
@@ -496,6 +517,7 @@ void TestImageDecodeJob::nonRawXdgMissDoesNotRunRawEmbeddedPreview()
 
 void TestImageDecodeJob::rawEmbeddedPreviewIsDeliveredAfterXdgMiss()
 {
+    MinimumThreadPoolConcurrency threadPoolConcurrency(2);
     const QByteArray data = rawFixtureData();
     QVERIFY(!data.isEmpty());
 
@@ -554,6 +576,7 @@ void TestImageDecodeJob::rawEmbeddedPreviewIsDeliveredAfterXdgMiss()
 
 void TestImageDecodeJob::rawEmbeddedPreviewMissDoesNotPublish()
 {
+    MinimumThreadPoolConcurrency threadPoolConcurrency(2);
     const QByteArray data = rawFixtureData();
     QVERIFY(!data.isEmpty());
 
@@ -599,6 +622,7 @@ void TestImageDecodeJob::rawEmbeddedPreviewMissDoesNotPublish()
 
 void TestImageDecodeJob::lateRawEmbeddedPreviewAfterDecodeIsIgnored()
 {
+    MinimumThreadPoolConcurrency threadPoolConcurrency(2);
     const QByteArray data = rawFixtureData();
     QVERIFY(!data.isEmpty());
 
@@ -606,6 +630,7 @@ void TestImageDecodeJob::lateRawEmbeddedPreviewAfterDecodeIsIgnored()
     ManualThumbnailLookupProvider thumbnailLookup;
     ManualRawEmbeddedThumbnailPreviewExtractor rawExtractor;
     QSemaphore rawExtractorMayReturn;
+    SemaphoreReleaseOnExit releaseRawExtractorOnExit(rawExtractorMayReturn);
     rawExtractor.mayReturn = &rawExtractorMayReturn;
     int previewCount = 0;
     int decodedCount = 0;
@@ -633,6 +658,7 @@ void TestImageDecodeJob::lateRawEmbeddedPreviewAfterDecodeIsIgnored()
     QTRY_COMPARE(decodedCount, 1);
 
     rawExtractorMayReturn.release();
+    releaseRawExtractorOnExit.dismiss();
     QTRY_COMPARE(rawExtractor.callCount(), 1);
     QTest::qWait(50);
     QCOMPARE(previewCount, 0);
