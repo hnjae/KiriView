@@ -793,6 +793,23 @@ bool KiriImageDocument::acknowledgeStillImageDisplayLoad(int pageRole, const QUr
     return true;
 }
 
+bool KiriImageDocument::acknowledgeDisplayImageLoad(int pageRole, const QUrl &providerUrl,
+    const QString &revisionToken, const QString &sourceIdentity, int outcome)
+{
+    const std::optional<KiriView::DisplayedPageRole> displayPageRole
+        = toDisplayedPageRole(pageRole);
+    const std::optional<quint64> revision = viewportRevisionFromToken(revisionToken);
+    const std::optional<KiriView::ImageDisplayLoadOutcome> loadOutcome
+        = toImageDisplayLoadOutcome(outcome);
+    if (!displayPageRole.has_value() || !revision.has_value() || !loadOutcome.has_value()) {
+        return false;
+    }
+
+    m_runtime->acknowledgeDisplayImageLoad(
+        *displayPageRole, providerUrl, *revision, sourceIdentity, *loadOutcome);
+    return true;
+}
+
 KiriView::ImageViewportInteractionSnapshot KiriImageDocument::viewportInteractionSnapshot() const
 {
     return KiriView::ImageViewportInteractionSnapshot {

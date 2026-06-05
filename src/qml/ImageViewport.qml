@@ -332,7 +332,7 @@ MediaViewportDelegate {
                 y: Math.max(0, (spreadItem.height - height) / 2)
 
                 onLoadOutcomeAcknowledged: (providerUrl, revisionToken, sourceIdentity, outcome) => {
-                    root.imageDocument.acknowledgeStillImageDisplayLoad(displaySource.pageRole, providerUrl, revisionToken, sourceIdentity, outcome);
+                    root.imageDocument.acknowledgeDisplayImageLoad(displaySource.pageRole, providerUrl, revisionToken, sourceIdentity, outcome);
                 }
             }
 
@@ -347,7 +347,7 @@ MediaViewportDelegate {
                 y: Math.max(0, (spreadItem.height - height) / 2)
 
                 onLoadOutcomeAcknowledged: (providerUrl, revisionToken, sourceIdentity, outcome) => {
-                    root.imageDocument.acknowledgeStillImageDisplayLoad(displaySource.pageRole, providerUrl, revisionToken, sourceIdentity, outcome);
+                    root.imageDocument.acknowledgeDisplayImageLoad(displaySource.pageRole, providerUrl, revisionToken, sourceIdentity, outcome);
                 }
             }
 

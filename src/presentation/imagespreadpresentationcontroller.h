@@ -116,6 +116,8 @@ public:
     bool secondaryPageVisible() const;
     std::optional<DisplayedPredecodeImage> secondaryDisplayedPredecodeImage() const;
     ImageDisplaySourceProjection displaySourceProjection(DisplayedPageRole role) const;
+    void acknowledgeDisplayImageLoad(DisplayedPageRole role, const QUrl &providerUrl,
+        quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
     void acknowledgeStillImageDisplayLoad(DisplayedPageRole role, const QUrl &providerUrl,
         quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
     DisplayedImageRenderSnapshot renderSnapshot(DisplayedPageRole role) const;

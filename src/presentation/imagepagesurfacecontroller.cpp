@@ -537,6 +537,17 @@ void ImagePageSurfaceController::clearAnimationFrameLoadContract()
     m_pendingAnimationFrameSourceIdentity.clear();
 }
 
+void ImagePageSurfaceController::acknowledgeDisplayImageLoad(const QUrl &providerUrl,
+    quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome)
+{
+    if (m_currentDisplayEntryIsAnimationFrame) {
+        acknowledgeAnimationFrameDisplayLoad(providerUrl, revision, sourceIdentity, outcome);
+        return;
+    }
+
+    acknowledgeStillImageDisplayLoad(providerUrl, revision, sourceIdentity, outcome);
+}
+
 void ImagePageSurfaceController::acknowledgeStillImageDisplayLoad(const QUrl &providerUrl,
     quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome)
 {

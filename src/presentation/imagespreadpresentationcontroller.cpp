@@ -420,6 +420,24 @@ ImageDisplaySourceProjection ImageSpreadPresentationController::displaySourcePro
     return m_presentationRuntime.displaySourceProjection(role);
 }
 
+void ImageSpreadPresentationController::acknowledgeDisplayImageLoad(DisplayedPageRole role,
+    const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
+    ImageDisplayLoadOutcome outcome)
+{
+    switch (role) {
+    case DisplayedPageRole::Primary:
+        m_primaryPageSurface.acknowledgeDisplayImageLoad(
+            providerUrl, revision, sourceIdentity, outcome);
+        return;
+    case DisplayedPageRole::Secondary:
+        if (m_secondaryPageController != nullptr) {
+            m_secondaryPageController->pageSurfaceController().acknowledgeDisplayImageLoad(
+                providerUrl, revision, sourceIdentity, outcome);
+        }
+        return;
+    }
+}
+
 void ImageSpreadPresentationController::acknowledgeStillImageDisplayLoad(DisplayedPageRole role,
     const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
     ImageDisplayLoadOutcome outcome)

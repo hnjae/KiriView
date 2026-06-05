@@ -454,6 +454,14 @@ void ImageDocumentRuntime::acknowledgeStillImageDisplayLoad(DisplayedPageRole ro
         role, providerUrl, revision, sourceIdentity, outcome);
 }
 
+void ImageDocumentRuntime::acknowledgeDisplayImageLoad(DisplayedPageRole role,
+    const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
+    ImageDisplayLoadOutcome outcome)
+{
+    controllers->spreadController().acknowledgeDisplayImageLoad(
+        role, providerUrl, revision, sourceIdentity, outcome);
+}
+
 DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageRole role) const
 {
     if (status() != ImageDocumentStatus::Ready) {
