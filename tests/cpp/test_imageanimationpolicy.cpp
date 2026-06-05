@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "presentation/imageanimationpolicy.h"
+#include "presentation/imageanimationpresentergate.h"
 
 #include <QObject>
 #include <QTest>
@@ -19,6 +20,8 @@ private Q_SLOTS:
     void loopAdvanceSaturatesCompletedLoopCount();
     void playbackStateOwnsLoopProgress();
     void playbackStatePlansFrameSchedulingAndStop();
+    void providerRevisionPresenterPassesDocumentedGate();
+    void providerRevisionPresenterRejectsEachGateFailure();
 };
 
 namespace {
@@ -121,6 +124,91 @@ void TestImageAnimationPolicy::playbackStatePlansFrameSchedulingAndStop()
     infiniteState.startLoop(-1);
     plan = infiniteState.planAfterFrame(false);
     QVERIFY(plan.action == KiriView::AnimationFrameAction::ScheduleNextFrame);
+}
+
+void TestImageAnimationPolicy::providerRevisionPresenterPassesDocumentedGate()
+{
+    const KiriView::AnimationProviderChurnGateResult result
+        = KiriView::evaluateAnimationProviderChurnGate(KiriView::AnimationProviderChurnGateSample {
+            10,
+            false,
+            1,
+            2,
+            5,
+            true,
+            2,
+            true,
+            1,
+            true,
+        });
+
+    QVERIFY(result.passed());
+    QCOMPARE(result.presenter, KiriView::AnimationPresenterKind::ProviderImageRevisions);
+    QVERIFY(result.requiresLoadOutcomeAcknowledgment);
+    QVERIFY(result.requiresPreviousFrameRetention);
+    QCOMPARE(result.maximumPinnedFrameEntriesPerPageRole, 2);
+}
+
+void TestImageAnimationPolicy::providerRevisionPresenterRejectsEachGateFailure()
+{
+    const KiriView::AnimationProviderChurnGateSample passingSample {
+        10,
+        false,
+        1,
+        2,
+        5,
+        true,
+        2,
+        true,
+        1,
+        true,
+    };
+
+    {
+        KiriView::AnimationProviderChurnGateSample sample = passingSample;
+        sample.timerWaitsForProviderLoad = true;
+        const KiriView::AnimationProviderChurnGateResult result
+            = KiriView::evaluateAnimationProviderChurnGate(sample);
+        QVERIFY(!result.passed());
+        QCOMPARE(result.failure, KiriView::AnimationProviderChurnGateFailure::FramePacing);
+    }
+
+    {
+        KiriView::AnimationProviderChurnGateSample sample = passingSample;
+        sample.providerRequestLatencyP95Ms = 3;
+        const KiriView::AnimationProviderChurnGateResult result
+            = KiriView::evaluateAnimationProviderChurnGate(sample);
+        QVERIFY(!result.passed());
+        QCOMPARE(
+            result.failure, KiriView::AnimationProviderChurnGateFailure::ProviderRequestLatency);
+    }
+
+    {
+        KiriView::AnimationProviderChurnGateSample sample = passingSample;
+        sample.staleLoadOutcomeRejected = false;
+        const KiriView::AnimationProviderChurnGateResult result
+            = KiriView::evaluateAnimationProviderChurnGate(sample);
+        QVERIFY(!result.passed());
+        QCOMPARE(result.failure, KiriView::AnimationProviderChurnGateFailure::StaleFrameRejection);
+    }
+
+    {
+        KiriView::AnimationProviderChurnGateSample sample = passingSample;
+        sample.retainedFrameEntriesPerPageRole = 3;
+        const KiriView::AnimationProviderChurnGateResult result
+            = KiriView::evaluateAnimationProviderChurnGate(sample);
+        QVERIFY(!result.passed());
+        QCOMPARE(result.failure, KiriView::AnimationProviderChurnGateFailure::MemoryRetention);
+    }
+
+    {
+        KiriView::AnimationProviderChurnGateSample sample = passingSample;
+        sample.providerUrlsPerAcceptedFrame = 2;
+        const KiriView::AnimationProviderChurnGateResult result
+            = KiriView::evaluateAnimationProviderChurnGate(sample);
+        QVERIFY(!result.passed());
+        QCOMPARE(result.failure, KiriView::AnimationProviderChurnGateFailure::UrlChurn);
+    }
 }
 
 QTEST_GUILESS_MAIN(TestImageAnimationPolicy)
