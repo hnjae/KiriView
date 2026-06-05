@@ -260,6 +260,8 @@ public:
     Q_INVOKABLE bool requestViewportScanBackward();
     Q_INVOKABLE void requestNextDisplayedImageStartToFinalScanPosition();
     Q_INVOKABLE bool requestDisplayedImageInitialContentPosition();
+    Q_INVOKABLE bool viewportPointInsideImage(const QPointF &viewportPoint) const;
+    Q_INVOKABLE QPointF nearestImageViewportPoint(const QPointF &viewportPoint) const;
     Q_INVOKABLE void requestToggleTwoPageMode();
     Q_INVOKABLE void requestToggleRightToLeftReading();
     Q_INVOKABLE void updateRenderContext();

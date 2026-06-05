@@ -658,6 +658,18 @@ bool KiriImageDocument::requestDisplayedImageInitialContentPosition()
         m_viewportInteraction.displayedImageInitialContentPosition(viewportInteractionSnapshot()));
 }
 
+bool KiriImageDocument::viewportPointInsideImage(const QPointF &viewportPoint) const
+{
+    return m_viewportInteraction.viewportPointInsideImage(
+        viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
+}
+
+QPointF KiriImageDocument::nearestImageViewportPoint(const QPointF &viewportPoint) const
+{
+    return m_viewportInteraction.nearestImageViewportPoint(
+        viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
+}
+
 void KiriImageDocument::requestToggleTwoPageMode() { setTwoPageModeEnabled(!twoPageModeEnabled()); }
 
 void KiriImageDocument::requestToggleRightToLeftReading()
@@ -786,6 +798,21 @@ bool KiriImageDocument::requestAnchoredManualZoom(
 void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
 {
     refreshDisplaySources();
+    for (KiriView::ImageDocumentPublicSignal signal :
+        KiriView::imageDocumentPublicSignalsForChanges(changes)) {
+        switch (signal) {
+        case KiriView::ImageDocumentPublicSignal::Loading:
+            if (!loading()) {
+                m_viewportInteraction.cancelPendingDisplayedImageStart();
+            }
+            break;
+        case KiriView::ImageDocumentPublicSignal::DisplayedUrl:
+            m_viewportInteraction.beginDisplayedImage();
+            break;
+        default:
+            break;
+        }
+    }
     KiriView::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
 }
 

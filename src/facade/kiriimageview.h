@@ -26,6 +26,8 @@ class KiriImageView : public QQuickItem
     Q_PROPERTY(KiriImageDocument *document READ document WRITE setDocument NOTIFY documentChanged)
     Q_PROPERTY(
         bool secondaryPage READ secondaryPage WRITE setSecondaryPage NOTIFY secondaryPageChanged)
+    Q_PROPERTY(bool renderContextProviderEnabled READ renderContextProviderEnabled WRITE
+            setRenderContextProviderEnabled NOTIFY renderContextProviderEnabledChanged)
 
 public:
     explicit KiriImageView(QQuickItem *parent = nullptr);
@@ -35,6 +37,8 @@ public:
     void setDocument(KiriImageDocument *document);
     bool secondaryPage() const;
     void setSecondaryPage(bool secondaryPage);
+    bool renderContextProviderEnabled() const;
+    void setRenderContextProviderEnabled(bool enabled);
 
     Q_INVOKABLE QPointF panContentPosition(
         const QPointF &contentPosition, const QPointF &delta) const;
@@ -60,6 +64,7 @@ public:
 Q_SIGNALS:
     void documentChanged();
     void secondaryPageChanged();
+    void renderContextProviderEnabledChanged();
     void displayedImageInitialContentPositionRequested();
 
 private:
@@ -85,6 +90,7 @@ private:
 
     KiriImageDocument *m_document = nullptr;
     bool m_secondaryPage = false;
+    bool m_renderContextProviderEnabled = true;
     bool m_componentComplete = true;
     quint64 m_renderContextGeneration = 1;
     QMetaObject::Connection m_repaintConnection;

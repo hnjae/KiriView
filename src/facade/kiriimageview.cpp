@@ -49,6 +49,19 @@ void KiriImageView::setSecondaryPage(bool secondaryPage)
     update();
 }
 
+bool KiriImageView::renderContextProviderEnabled() const { return m_renderContextProviderEnabled; }
+
+void KiriImageView::setRenderContextProviderEnabled(bool enabled)
+{
+    if (m_renderContextProviderEnabled == enabled) {
+        return;
+    }
+
+    m_renderContextProviderEnabled = enabled;
+    synchronizeRenderContextBinding(m_document, m_document != nullptr);
+    Q_EMIT renderContextProviderEnabledChanged();
+}
+
 QPointF KiriImageView::panContentPosition(
     const QPointF &contentPosition, const QPointF &delta) const
 {
@@ -195,7 +208,7 @@ KiriView::ImageViewRenderContextBindingInput KiriImageView::renderContextBinding
     bool documentAttached) const
 {
     return KiriView::ImageViewRenderContextBindingInput {
-        documentAttached,
+        documentAttached && m_renderContextProviderEnabled,
         m_secondaryPage,
         m_componentComplete,
     };
