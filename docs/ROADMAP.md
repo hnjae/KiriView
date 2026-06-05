@@ -70,7 +70,7 @@ Track completed provider-rendering migration work by stage so code agents do not
 - [x] Stage 3: Introduce provider-ready display payloads.
 - [x] Stage 4: Publish display-source projections.
 - [x] Stage 5: Add thumbnail preview tier.
-- [ ] Stage 6: Move predecode to display `QImage` payloads.
+- [x] Stage 6: Move predecode to display `QImage` payloads.
 - [ ] Stage 7: Add raster refinement buckets.
 - [ ] Stage 8: Rework SVG as provider buckets.
 - [ ] Stage 9: Move animation frames to display-source publication.
