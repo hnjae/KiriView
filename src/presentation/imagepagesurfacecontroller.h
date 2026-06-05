@@ -56,6 +56,7 @@ public:
     ImagePresentationPageSlotSnapshot snapshot() const;
 
     void setImage(const QImage &image, bool predecodeCacheable);
+    void setAnimationFrame(const QImage &image, const QString &sourceIdentity);
     void setStaticDisplayImage(StaticDisplayImagePayload displayImage, bool predecodeCacheable,
         const ImageDocumentRenderContext &renderContext);
     void setStaticImage(StaticImagePayload staticImage, bool predecodeCacheable,
@@ -73,6 +74,7 @@ private:
     void applyDisplayedImageChange(const DisplayedImageSurfaceStateChange &change);
     void applyDisplayedImageTileChange(const DisplayedImageSurfaceStateChange &change);
     void publishDisplaySource(const StaticDisplayImagePayload &displayImage);
+    void publishAnimationFrameDisplaySource(const QImage &image, const QString &sourceIdentity);
     void clearDisplaySource();
     void releaseCurrentDisplayEntry();
     void releaseShadowDisplayEntry();
@@ -89,6 +91,7 @@ private:
     DisplayedPageRole m_pageRole = DisplayedPageRole::Primary;
     QString m_displayEntryId;
     QString m_shadowDisplayEntryId;
+    QString m_animationFrameSourceIdentity;
     bool m_displayEntryVisiblePinned = false;
     ImageDisplaySourceSlot m_displaySource;
     quint64 m_displaySourceRevision = 0;

@@ -5,6 +5,7 @@
 
 #include "bufferedimagereader.h"
 #include "localization/imageerrortext.h"
+#include "location/sourcekey.h"
 #include "rendering/imagerendering.h"
 #include "rendering/qimagereadertilesource.h"
 #include "staticimagedecode.h"
@@ -25,6 +26,11 @@ KiriView::DecodedImageResult openedStaticImageResult(
     }
 
     return KiriView::staticDecodedImageResult(std::move(source), request, &errorString);
+}
+
+QString sourceIdentityForRequest(const KiriView::ImageDecodeRequest &request)
+{
+    return KiriView::sourceKeyForUrl(request.imageUrl()).identity;
 }
 }
 
@@ -58,6 +64,7 @@ DecodedImageResult decodeQImageReaderImageData(
             data,
             animationFormat,
             {},
+            sourceIdentityForRequest(request),
         });
     }
     return openedStaticImageResult(data, request, readerFormat);

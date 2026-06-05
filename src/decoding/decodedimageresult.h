@@ -34,6 +34,7 @@ struct ApngAnimationImage {
     QImage firstFrame;
     QByteArray data;
     EmbeddedMetadata embeddedMetadata;
+    QString sourceIdentity;
 };
 
 struct ReaderAnimationImage {
@@ -41,12 +42,14 @@ struct ReaderAnimationImage {
     QByteArray data;
     QByteArray format;
     EmbeddedMetadata embeddedMetadata;
+    QString sourceIdentity;
 };
 
 struct HeifSequenceAnimationImage {
     QImage firstFrame;
     QByteArray data;
     EmbeddedMetadata embeddedMetadata;
+    QString sourceIdentity;
 };
 
 using DecodedImage = std::variant<StaticDecodedImage, ApngAnimationImage, ReaderAnimationImage,

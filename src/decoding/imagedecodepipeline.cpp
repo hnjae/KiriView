@@ -8,6 +8,7 @@
 #include "heifdecoder.h"
 #include "kiriview/src/policy/avifcompat.cxx.h"
 #include "localization/imageerrortext.h"
+#include "location/sourcekey.h"
 #include "metadata/embeddedmetadata.h"
 #include "qimagereaderdecoder.h"
 #include "rawdecoder.h"
@@ -159,6 +160,11 @@ KiriView::DecodedImageResult failedImageDataResult(QString errorString)
     return KiriView::failedDecodedImageResult(std::move(errorString));
 }
 
+QString sourceIdentityForRequest(const KiriView::ImageDecodeRequest &request)
+{
+    return KiriView::sourceKeyForUrl(request.imageUrl()).identity;
+}
+
 KiriView::DecodedImageResult decodeSvgImageData(const KiriView::ImageDecodeRouterInput &input)
 {
     QString errorString;
@@ -187,6 +193,7 @@ KiriView::DecodedImageResult decodeApngImageData(const KiriView::ImageDecodeRout
         std::move(apngResult.firstFrame),
         input.data,
         {},
+        sourceIdentityForRequest(input.request),
     });
 }
 

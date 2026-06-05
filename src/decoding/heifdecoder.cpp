@@ -17,6 +17,7 @@
 #include "heifsequencereader.h"
 #include "heifsupport.h"
 #include "imagedecoderequest.h"
+#include "location/sourcekey.h"
 #include "rendering/heiftilesource.h"
 #include "staticimagedecode.h"
 
@@ -43,7 +44,8 @@ std::optional<KiriView::DecodedImageResult> decodeHeifStillImageDataForInfo(cons
 }
 
 std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
-    const QByteArray &data, const KiriView::HeifContainerInfo &info)
+    const QByteArray &data, const KiriView::HeifContainerInfo &info,
+    const KiriView::ImageDecodeRequest &request)
 {
     if (!info.imageSequence) {
         return std::nullopt;
@@ -72,6 +74,7 @@ std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
         std::move(firstFrame->image),
         data,
         {},
+        KiriView::sourceKeyForUrl(request.imageUrl()).identity,
     });
 }
 }
@@ -90,7 +93,7 @@ std::optional<DecodedImageResult> decodeHeifStillImageData(
 
 std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data)
 {
-    return decodeHeifSequenceImageDataForInfo(data, heifContainerInfo(data));
+    return decodeHeifSequenceImageDataForInfo(data, heifContainerInfo(data), {});
 }
 
 std::optional<DecodedImageResult> decodeHeifImageData(const QByteArray &data)
@@ -103,7 +106,7 @@ std::optional<DecodedImageResult> decodeHeifImageData(
 {
     const HeifContainerInfo info = heifContainerInfo(data);
     if (std::optional<DecodedImageResult> sequenceResult
-        = decodeHeifSequenceImageDataForInfo(data, info)) {
+        = decodeHeifSequenceImageDataForInfo(data, info, request)) {
         return sequenceResult;
     }
 

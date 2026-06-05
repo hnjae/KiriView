@@ -12,6 +12,7 @@
 
 #include <QImage>
 #include <QSize>
+#include <QString>
 #include <QtGlobal>
 #include <optional>
 #include <variant>
@@ -37,11 +38,13 @@ struct ImagePresentationStaticImageLoad {
 
 struct ImagePresentationFrameLoad {
     QImage frame;
+    QString sourceIdentity;
 };
 
 struct ImagePresentationAnimationLoad {
     QImage firstFrame;
     ImageAnimationPlaybackRequest playback;
+    QString sourceIdentity;
 };
 
 struct ImagePresentationLoadPlan {

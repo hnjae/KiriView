@@ -116,7 +116,8 @@ ImagePageSurfaceController::ImagePageSurfaceController(QObject *context,
               }
           });
     m_animationPlayer = std::make_unique<ImageAnimationPlayer>(
-        context, [this](const QImage &image) { setImage(image, false); },
+        context,
+        [this](const QImage &image) { setAnimationFrame(image, m_animationFrameSourceIdentity); },
         [this](
             const QString &errorString) { invokeIfSet(m_callbacks.animationError, errorString); });
 }
@@ -178,7 +179,22 @@ void ImagePageSurfaceController::setImage(const QImage &image, bool predecodeCac
     m_tileDecodeScheduler->invalidate();
     clearShadowDisplayImage();
     clearDisplaySource();
+    m_animationFrameSourceIdentity.clear();
     applyDisplayedImageChange(m_displayedSurfaceState->setImage(image, predecodeCacheable));
+}
+
+void ImagePageSurfaceController::setAnimationFrame(
+    const QImage &image, const QString &sourceIdentity)
+{
+    cancelRasterDisplayRefinement();
+    m_tileDecodeScheduler->invalidate();
+    clearShadowDisplayImage();
+    m_animationFrameSourceIdentity = sourceIdentity;
+
+    const QImage displayImage = displayReadyImage(image);
+    publishAnimationFrameDisplaySource(displayImage, sourceIdentity);
+    applyDisplayedImageChange(m_displayedSurfaceState->setImage(displayImage, false));
+    notify(ImageDocumentChange::DisplaySource);
 }
 
 void ImagePageSurfaceController::setStaticDisplayImage(StaticDisplayImagePayload displayImage,
@@ -188,6 +204,7 @@ void ImagePageSurfaceController::setStaticDisplayImage(StaticDisplayImagePayload
     stopAnimation();
     m_tileDecodeScheduler->invalidate();
     clearShadowDisplayImage();
+    m_animationFrameSourceIdentity.clear();
     publishDisplaySource(displayImage);
 
     const StaticImagePayload staticImage = displayImage.compatibilityStaticImage();
@@ -207,6 +224,7 @@ void ImagePageSurfaceController::setStaticImage(StaticImagePayload staticImage,
     m_tileDecodeScheduler->invalidate();
     clearShadowDisplayImage();
     clearDisplaySource();
+    m_animationFrameSourceIdentity.clear();
     const bool useFullImageSurface
         = staticImageFitsFullImageSurface(staticImage, renderContext.maximumTextureSize);
     const DisplayedImageSurfaceStateChange change
@@ -251,6 +269,7 @@ void ImagePageSurfaceController::clearImage()
     m_tileDecodeScheduler->invalidate();
     clearShadowDisplayImage();
     clearDisplaySource();
+    m_animationFrameSourceIdentity.clear();
     const std::optional<DisplayedImageSurfaceStateChange> change = m_displayedSurfaceState->clear();
     if (change.has_value()) {
         applyDisplayedImageChange(*change);
@@ -278,6 +297,7 @@ void ImagePageSurfaceController::applyDisplayedImageTileChange(
 void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePayload &displayImage)
 {
     releaseCurrentDisplayEntry();
+    m_animationFrameSourceIdentity.clear();
 
     ++m_displaySourceRevision;
     const QSize rasterSize = displayImage.image.size();
@@ -306,6 +326,46 @@ void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePa
         rasterSize,
         rasterSize != displayImage.originalSize ? QSize(rasterSize.width(), 0) : QSize(),
         displayImage.quality,
+        entryId.isEmpty() ? ImageDisplaySourceStatus::Error : ImageDisplaySourceStatus::Ready,
+        false,
+        false,
+        ImageDisplaySourceRetentionStatus::None,
+        false,
+    };
+}
+
+void ImagePageSurfaceController::publishAnimationFrameDisplaySource(
+    const QImage &image, const QString &sourceIdentity)
+{
+    releaseCurrentDisplayEntry();
+
+    ++m_displaySourceRevision;
+    const QSize rasterSize = image.size();
+    const QString entryId = m_displayImageStore == nullptr
+        ? QString()
+        : m_displayImageStore->insert(DisplayImageEntry {
+              image,
+              rasterSize,
+              rasterSize,
+              sourceIdentity,
+              m_pageRole,
+              DisplayImageQuality::Exact,
+              DisplayImageRetentionPriority::Nearby,
+              m_displaySourceRevision,
+              QStringLiteral("animation-frame"),
+              DisplayImagePreviewOrigin::None,
+          });
+
+    m_displayEntryId = entryId;
+    m_displayEntryVisiblePinned = false;
+    m_displaySource = ImageDisplaySourceSlot {
+        displayImageSourceForId(entryId),
+        m_displaySourceRevision,
+        sourceIdentity,
+        rasterSize,
+        rasterSize,
+        {},
+        DisplayImageQuality::Exact,
         entryId.isEmpty() ? ImageDisplaySourceStatus::Error : ImageDisplaySourceStatus::Ready,
         false,
         false,
