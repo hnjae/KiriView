@@ -39,6 +39,8 @@ private Q_SLOTS:
     void videoOutputAttachmentIsNotWritablePublicVideoDocumentState();
     void qmlDoesNotDeriveSharedControlPolicyFromLeafDocuments();
     void qmlViewportUsesFullCommandLifecycle();
+    void viewportContextBridgeIsNonRenderingPublicQtFacade();
+    void qmlViewportUsesContextBridgeForRenderContextDiscovery();
     void sourceKeysExposeTypedExtensionFamilies();
     void sourceKeysExposeOperationalExtensionContracts();
     void imagePageSurfaceOwnerTypeExists();
@@ -519,6 +521,70 @@ void TestArchitectureBoundaries::qmlViewportUsesFullCommandLifecycle()
     QVERIFY(viewport.contains(QStringLiteral("completeViewportCommandApplication(")));
     QVERIFY(viewport.contains(QStringLiteral("acknowledgeViewportCommand(")));
     QVERIFY(!viewport.contains(QStringLiteral("rejectedViewportCommandStatus = 6")));
+}
+
+void TestArchitectureBoundaries::viewportContextBridgeIsNonRenderingPublicQtFacade()
+{
+    const QString headerPath
+        = projectPath(QStringLiteral("src/facade/kiriimageviewportcontextbridge.h"));
+    const QString implementationPath
+        = projectPath(QStringLiteral("src/facade/kiriimageviewportcontextbridge.cpp"));
+    QVERIFY2(QFileInfo::exists(headerPath),
+        qPrintable(QStringLiteral("%1 must define the non-rendering viewport context bridge")
+                .arg(relativeProjectPath(headerPath))));
+    QVERIFY2(QFileInfo::exists(implementationPath),
+        qPrintable(QStringLiteral("%1 must implement the non-rendering viewport context bridge")
+                .arg(relativeProjectPath(implementationPath))));
+
+    const QString header
+        = readProjectFile(QStringLiteral("src/facade/kiriimageviewportcontextbridge.h"));
+    const QString implementation
+        = readProjectFile(QStringLiteral("src/facade/kiriimageviewportcontextbridge.cpp"));
+    const QString combined = header + QLatin1Char('\n') + implementation;
+    QVERIFY(header.contains(QStringLiteral("class KiriImageViewportContextBridge")));
+    QVERIFY(header.contains(QStringLiteral("QML_ELEMENT")));
+    QVERIFY(header.contains(QStringLiteral("public QQuickItem")));
+    QVERIFY(header.contains(QStringLiteral("KiriImageDocument *document")));
+    QVERIFY(header.contains(QStringLiteral("bool secondaryPage")));
+    QVERIFY(header.contains(QStringLiteral("renderContextProviderInstalled")));
+
+    const QList<QString> forbiddenTokens {
+        QStringLiteral("ItemHasContents"),
+        QStringLiteral("updatePaintNode"),
+        QStringLiteral("QSGNode"),
+        QStringLiteral("QSGTexture"),
+        QStringLiteral("QRhi"),
+        QStringLiteral("<rhi/qrhi.h>"),
+        QStringLiteral("->rhi("),
+        QStringLiteral(".rhi("),
+    };
+    QStringList violations;
+    for (const QString &token : forbiddenTokens) {
+        if (combined.contains(token)) {
+            violations.push_back(token);
+        }
+    }
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+
+    const QString cxxqtSources = readProjectFile(QStringLiteral("src/cpp_cxxqt_sources.txt"));
+    const QString cxxqtHeaders
+        = readProjectFile(QStringLiteral("src/cpp_cxxqt_header_sources.txt"));
+    QVERIFY(cxxqtSources.contains(QStringLiteral("src/facade/kiriimageviewportcontextbridge.cpp")));
+    QVERIFY(cxxqtHeaders.contains(QStringLiteral("src/facade/kiriimageviewportcontextbridge.h")));
+}
+
+void TestArchitectureBoundaries::qmlViewportUsesContextBridgeForRenderContextDiscovery()
+{
+    const QString viewport = readProjectFile(QStringLiteral("src/qml/ImageViewport.qml"));
+    QVERIFY(viewport.contains(QStringLiteral("KiriImageViewportContextBridge")));
+    QVERIFY(viewport.contains(QStringLiteral("objectName: \"primaryContextBridge\"")));
+    QVERIFY(viewport.contains(QStringLiteral("objectName: \"secondaryContextBridge\"")));
+    QVERIFY(viewport.contains(QStringLiteral("renderContextProviderEnabled: false")));
+    QVERIFY(viewport.contains(QStringLiteral("imageDocument.viewportPointInsideImage(")));
+    QVERIFY(viewport.contains(QStringLiteral("imageDocument.nearestImageViewportPoint(")));
+    QVERIFY(!viewport.contains(QStringLiteral("imageView.viewportPointInsideImage(")));
+    QVERIFY(!viewport.contains(QStringLiteral("imageView.nearestImageViewportPoint(")));
+    QVERIFY(!viewport.contains(QStringLiteral("onDisplayedImageInitialContentPositionRequested")));
 }
 
 void TestArchitectureBoundaries::sourceKeysExposeTypedExtensionFamilies()

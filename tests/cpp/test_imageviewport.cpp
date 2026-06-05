@@ -41,6 +41,8 @@ private Q_SLOTS:
     void doubleClickTogglesManualZoomToFit();
     void doubleClickTogglesFitHeightToFit();
     void doubleClickFromViewportMarginZoomsAroundNearestImagePoint();
+    void viewportCreatesContextBridgeWithoutReplacingCompatibilityView();
+    void viewportHitTestingUsesDocumentFacade();
     void singleClickStillEmitsViewerClicked();
 };
 
@@ -312,6 +314,38 @@ public:
         return requestAnchoredManualZoom(clampedManualZoomPercent(100.0), anchorPoint);
     }
 
+    Q_INVOKABLE bool viewportPointInsideImage(const QPointF &viewportPoint) const
+    {
+        ++m_documentHitTestHelperCallCount;
+        return KiriView::imageViewportPointInsideImage(
+            viewportContentPosition(), viewportPoint, viewportImageRect());
+    }
+
+    Q_INVOKABLE QPointF nearestImageViewportPoint(const QPointF &viewportAnchorPoint) const
+    {
+        ++m_documentHitTestHelperCallCount;
+        return KiriView::imageViewportNearestImagePoint(
+            viewportContentPosition(), viewportAnchorPoint, viewportImageRect());
+    }
+
+    Q_INVOKABLE void resetHitTestHelperCallCounts() const
+    {
+        m_documentHitTestHelperCallCount = 0;
+        m_legacyViewHitTestHelperCallCount = 0;
+    }
+
+    Q_INVOKABLE int documentHitTestHelperCallCount() const
+    {
+        return m_documentHitTestHelperCallCount;
+    }
+
+    Q_INVOKABLE int legacyViewHitTestHelperCallCount() const
+    {
+        return m_legacyViewHitTestHelperCallCount;
+    }
+
+    void noteLegacyViewHitTestHelperCall() const { ++m_legacyViewHitTestHelperCallCount; }
+
     Q_INVOKABLE bool requestViewportPanBy(double deltaX, double deltaY)
     {
         if (!viewportPannable()) {
@@ -519,12 +553,6 @@ private:
         return true;
     }
 
-    QPointF nearestImageViewportPoint(const QPointF &viewportAnchorPoint) const
-    {
-        return KiriView::imageViewportNearestImagePoint(
-            viewportContentPosition(), viewportAnchorPoint, viewportImageRect());
-    }
-
     bool requestViewportInteractionContentPosition(const QPointF &contentPosition)
     {
         if (!pointIsFinite(contentPosition)) {
@@ -609,6 +637,8 @@ private:
     QRectF m_visibleItemRect;
     double m_zoomPercent = 100.0;
     ZoomMode m_zoomMode = ZoomMode::Manual;
+    mutable int m_documentHitTestHelperCallCount = 0;
+    mutable int m_legacyViewHitTestHelperCallCount = 0;
 };
 
 class FakeKiriImageView : public QQuickItem
@@ -619,6 +649,8 @@ class FakeKiriImageView : public QQuickItem
         FakeKiriImageDocument *document READ document WRITE setDocument NOTIFY documentChanged)
     Q_PROPERTY(
         bool secondaryPage READ secondaryPage WRITE setSecondaryPage NOTIFY secondaryPageChanged)
+    Q_PROPERTY(bool renderContextProviderEnabled READ renderContextProviderEnabled WRITE
+            setRenderContextProviderEnabled NOTIFY renderContextProviderEnabledChanged)
 
 public:
     explicit FakeKiriImageView(QQuickItem *parent = nullptr)
@@ -646,6 +678,17 @@ public:
 
         m_secondaryPage = secondaryPage;
         Q_EMIT secondaryPageChanged();
+    }
+
+    bool renderContextProviderEnabled() const { return m_renderContextProviderEnabled; }
+    void setRenderContextProviderEnabled(bool enabled)
+    {
+        if (m_renderContextProviderEnabled == enabled) {
+            return;
+        }
+
+        m_renderContextProviderEnabled = enabled;
+        Q_EMIT renderContextProviderEnabledChanged();
     }
 
     Q_INVOKABLE QPointF panContentPosition(
@@ -687,6 +730,9 @@ public:
     Q_INVOKABLE bool viewportPointInsideImage(
         const QPointF &contentPosition, const QPointF &viewportPoint) const
     {
+        if (m_document != nullptr) {
+            m_document->noteLegacyViewHitTestHelperCall();
+        }
         return KiriView::imageViewportPointInsideImage(
             contentPosition, viewportPoint, viewportImageRect());
     }
@@ -694,6 +740,9 @@ public:
     Q_INVOKABLE QPointF nearestImageViewportPoint(
         const QPointF &contentPosition, const QPointF &viewportPoint) const
     {
+        if (m_document != nullptr) {
+            m_document->noteLegacyViewHitTestHelperCall();
+        }
         return KiriView::imageViewportNearestImagePoint(
             contentPosition, viewportPoint, viewportImageRect());
     }
@@ -710,6 +759,7 @@ public:
 Q_SIGNALS:
     void documentChanged();
     void secondaryPageChanged();
+    void renderContextProviderEnabledChanged();
     void displayedImageInitialContentPositionRequested();
 
 private:
@@ -728,6 +778,53 @@ private:
         return KiriView::imageViewportImageRect(viewportSize(), displaySize());
     }
 
+    FakeKiriImageDocument *m_document = nullptr;
+    bool m_secondaryPage = false;
+    bool m_renderContextProviderEnabled = true;
+};
+
+class FakeKiriImageViewportContextBridge : public QQuickItem
+{
+    Q_OBJECT
+
+    Q_PROPERTY(
+        FakeKiriImageDocument *document READ document WRITE setDocument NOTIFY documentChanged)
+    Q_PROPERTY(
+        bool secondaryPage READ secondaryPage WRITE setSecondaryPage NOTIFY secondaryPageChanged)
+
+public:
+    explicit FakeKiriImageViewportContextBridge(QQuickItem *parent = nullptr)
+        : QQuickItem(parent)
+    {
+    }
+
+    FakeKiriImageDocument *document() const { return m_document; }
+    void setDocument(FakeKiriImageDocument *document)
+    {
+        if (m_document == document) {
+            return;
+        }
+
+        m_document = document;
+        Q_EMIT documentChanged();
+    }
+
+    bool secondaryPage() const { return m_secondaryPage; }
+    void setSecondaryPage(bool secondaryPage)
+    {
+        if (m_secondaryPage == secondaryPage) {
+            return;
+        }
+
+        m_secondaryPage = secondaryPage;
+        Q_EMIT secondaryPageChanged();
+    }
+
+Q_SIGNALS:
+    void documentChanged();
+    void secondaryPageChanged();
+
+private:
     FakeKiriImageDocument *m_document = nullptr;
     bool m_secondaryPage = false;
 };
@@ -757,6 +854,8 @@ void registerKiriViewQmlTypes()
 
     qmlRegisterType<FakeKiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
     qmlRegisterType<FakeKiriImageView>("io.github.hnjae.kiriview", 1, 0, "KiriImageView");
+    qmlRegisterType<FakeKiriImageViewportContextBridge>(
+        "io.github.hnjae.kiriview", 1, 0, "KiriImageViewportContextBridge");
     registered = true;
 }
 
@@ -838,6 +937,27 @@ Item {
 
     function resetViewerClickCount() {
         root.viewerClickCount = 0;
+    }
+
+    function resetHitTestHelperCallCounts() {
+        imageViewport.imageDocument.resetHitTestHelperCallCounts();
+    }
+
+    function documentHitTestHelperCallCount() {
+        return imageViewport.imageDocument.documentHitTestHelperCallCount();
+    }
+
+    function legacyViewHitTestHelperCallCount() {
+        return imageViewport.imageDocument.legacyViewHitTestHelperCallCount();
+    }
+
+    function viewportCenterInsideImage() {
+        return imageViewport.viewportPointInsideImage(100, 80);
+    }
+
+    function nearestMarginImageViewportPointX() {
+        const point = imageViewport.nearestImageViewportPoint(10, 10);
+        return point === null ? Number.NaN : point.x;
     }
 
     KiriImageDocument {
@@ -1139,6 +1259,38 @@ void TestImageViewport::doubleClickFromViewportMarginZoomsAroundNearestImagePoin
     QCOMPARE(invokeReal(fixture.root, "zoomPercent"), 100.0);
     QCOMPARE(invokeReal(fixture.root, "contentX"), 0.0);
     QTRY_VERIFY(invokeReal(fixture.root, "contentY") > 0.0);
+}
+
+void TestImageViewport::viewportCreatesContextBridgeWithoutReplacingCompatibilityView()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+
+    QObject *primaryBridge
+        = fixture.root->findChild<QObject *>(QStringLiteral("primaryContextBridge"));
+    QObject *secondaryBridge
+        = fixture.root->findChild<QObject *>(QStringLiteral("secondaryContextBridge"));
+    QVERIFY(primaryBridge != nullptr);
+    QVERIFY(secondaryBridge != nullptr);
+    QCOMPARE(primaryBridge->property("secondaryPage").toBool(), false);
+    QCOMPARE(secondaryBridge->property("secondaryPage").toBool(), true);
+    QVERIFY(fixture.root->findChild<QObject *>(QStringLiteral("primaryImageView")) != nullptr);
+    QVERIFY(fixture.root->findChild<QObject *>(QStringLiteral("secondaryImageView")) != nullptr);
+}
+
+void TestImageViewport::viewportHitTestingUsesDocumentFacade()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+    invokeVoid(fixture.root, "resetHitTestHelperCallCounts");
+
+    QVERIFY(invokeBool(fixture.root, "viewportCenterInsideImage"));
+    QVERIFY(std::isfinite(invokeReal(fixture.root, "nearestMarginImageViewportPointX")));
+
+    QCOMPARE(invokeInt(fixture.root, "legacyViewHitTestHelperCallCount"), 0);
+    QVERIFY(invokeInt(fixture.root, "documentHitTestHelperCallCount") >= 2);
 }
 
 void TestImageViewport::singleClickStillEmitsViewerClicked()
