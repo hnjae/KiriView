@@ -63,6 +63,14 @@ During the compatibility phase, `ImagePresentationRuntime` publishes display-sou
 - A RAW refinement job returns one complete display-oriented `QImage` bucket derived from the decoded RAW image retained by the source. It may resample that decoded RAW image to the requested bucket under the same memory, texture-cap, rotation, and stale-demand rules as other raster refinement jobs, but it must not extract generic embedded thumbnails, publish visual tiles, mutate provider state from provider requests, or handle SVG or animation refinement.
 - Accepted RAW buckets publish fresh display entries and provider URLs through the existing page-surface display-source path. The legacy RAW tile renderer remains a compatibility consumer only until the QML provider-image swap.
 
+## SVG Provider Buckets
+
+- Stage 8 keeps SVG parsing and rasterization in Rust through `resvg`, but changes the provider path from SVG visual tile composition to whole-surface display buckets. `SvgTileSource` remains only as the compatibility tile source and durable refinement source while `KiriImageView` is still visible.
+- Initial SVG display uses the first-display viewport context to publish one provider-ready raster capped by viewport, device pixel ratio, display-image memory budget, and resolved texture cap when no thumbnail preview already satisfied the load. The compatibility renderer may still derive its legacy surface from that same display payload until Stage 10.
+- SVG refinement buckets use a coarse geometric scale sequence keyed by source identity, intrinsic size, page role, display-source revision, zoom generation, rotation generation when relevant, device-pixel-ratio generation, render-context or texture-capability generation, allocation cap, target bucket, and render revision. Small zoom changes reuse the current provider image; larger zoom or DPR changes publish a fresh provider URL only after the matching render completion is accepted.
+- Failed SVG initial display reports the normal image error. Failed SVG refinement does not replace the current accepted provider image; the page-surface owner may keep the current image visible and cancel only the rejected demand.
+- Provider requests never rasterize SVG data, schedule SVG work, inspect SVG bytes, or mutate document state. Whole-surface SVG render jobs run from decode/refinement ownership and publish immutable display entries through the same page-surface display-source path as raster refinements.
+
 ## Compatibility Exit
 
 Tile scheduling, decoded-tile caches, render nodes, custom shaders, direct QRhi resource management, and QRhi probing are temporary compatibility machinery. By the end state, display-store byte budgets replace tile-display cache budgets, render-context discovery uses stable public Qt/Qt Quick capability inputs or conservative fallbacks, and production image display no longer includes, links, probes, or tests QRhi rendering paths.
