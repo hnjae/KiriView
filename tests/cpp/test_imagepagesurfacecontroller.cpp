@@ -8,6 +8,7 @@
 #include "rendering/heiftilesource.h"
 #include "rendering/imagerendering.h"
 #include "rendering/qimagereadertilesource.h"
+#include "rendering/svgtilesource.h"
 
 #include <libheif/heif.h>
 
@@ -42,6 +43,8 @@ private Q_SLOTS:
     void heifRefinementCompletionIsRejectedAfterSourceReplacement();
     void rawFirstDisplayRefinesToProviderBucket();
     void rawRefinementCompletionIsRejectedAfterSourceReplacement();
+    void svgFirstDisplayRefinesToCoarseProviderBucket();
+    void svgRefinementCompletionIsRejectedAfterSourceReplacement();
 };
 
 namespace {
@@ -98,6 +101,14 @@ QByteArray encodedPng(const QImage &image)
     buffer.open(QIODevice::WriteOnly);
     image.save(&buffer, "PNG");
     return data;
+}
+
+QByteArray svgData(const QSize &size)
+{
+    return QByteArray("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"")
+        + QByteArray::number(size.width()) + "\" height=\"" + QByteArray::number(size.height())
+        + "\"><rect width=\"" + QByteArray::number(size.width()) + "\" height=\""
+        + QByteArray::number(size.height()) + "\" fill=\"red\"/></svg>";
 }
 
 heif_error appendHeifBytes(heif_context *, const void *data, std::size_t size, void *userdata)
@@ -194,6 +205,27 @@ KiriView::StaticDisplayImagePayload qtRasterPayload(const QSize &originalSize,
     return KiriView::StaticDisplayImagePayload {
         sourceIdentity,
         source->imageReaderTransform(),
+        originalSize,
+        KiriView::TestSupport::testImage(rasterSize),
+        quality,
+        KiriView::imagePixelsPerSourcePixel(originalSize, rasterSize),
+        {},
+        std::move(source),
+    };
+}
+
+KiriView::StaticDisplayImagePayload svgPayload(const QSize &originalSize, const QSize &rasterSize,
+    const QString &sourceIdentity,
+    KiriView::DisplayImageQuality quality = KiriView::DisplayImageQuality::FirstDisplay)
+{
+    QString errorString;
+    std::shared_ptr<KiriView::SvgTileSource> source
+        = KiriView::SvgTileSource::open(svgData(originalSize), &errorString);
+    Q_ASSERT(source != nullptr);
+
+    return KiriView::StaticDisplayImagePayload {
+        sourceIdentity,
+        {},
         originalSize,
         KiriView::TestSupport::testImage(rasterSize),
         quality,
@@ -550,6 +582,65 @@ void TestImagePageSurfaceController::rawRefinementCompletionIsRejectedAfterSourc
     QVERIFY2(payload.has_value(), "RAW still fixture could not be decoded");
     controller.setStaticDisplayImage(std::move(*payload), false, renderContext());
     controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(16.0, 16.0)));
+
+    controller.setStaticDisplayImage(
+        qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
+            KiriView::DisplayImageQuality::Exact),
+        false, renderContext());
+    const KiriView::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+
+    QTest::qWait(100);
+
+    const KiriView::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    QCOMPARE(current.providerUrl, replacement.providerUrl);
+    QCOMPARE(current.sourceIdentity, QStringLiteral("source-b"));
+    QCOMPARE(current.rasterSize, QSize(10, 10));
+    QCOMPARE(current.quality, KiriView::DisplayImageQuality::Exact);
+}
+
+void TestImagePageSurfaceController::svgFirstDisplayRefinesToCoarseProviderBucket()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+
+    controller.setStaticDisplayImage(
+        svgPayload(QSize(80, 40), QSize(80, 40), QStringLiteral("svg-source-a")), false,
+        renderContext());
+    const KiriView::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    QVERIFY(!first.providerUrl.isEmpty());
+    QCOMPARE(first.rasterSize, QSize(80, 40));
+
+    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(100.0, 50.0)));
+
+    QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
+    const KiriView::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
+    QCOMPARE(refined.sourceIdentity, QStringLiteral("svg-source-a"));
+    QCOMPARE(refined.rasterSize, QSize(120, 60));
+    QCOMPARE(refined.revision, first.revision + 1);
+    QCOMPARE(refined.quality, KiriView::DisplayImageQuality::Exact);
+    QVERIFY(!store->entry(entryId(first)).has_value());
+    QVERIFY(store->entry(entryId(refined)).has_value());
+
+    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(110.0, 55.0)));
+    QTest::qWait(100);
+    QCOMPARE(controller.snapshot().displaySource.providerUrl, refined.providerUrl);
+
+    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(150.0, 75.0)));
+    QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != refined.providerUrl);
+    const KiriView::ImageDisplaySourceSlot sharper = controller.snapshot().displaySource;
+    QCOMPARE(sharper.rasterSize, QSize(180, 90));
+    QCOMPARE(sharper.revision, refined.revision + 1);
+}
+
+void TestImagePageSurfaceController::svgRefinementCompletionIsRejectedAfterSourceReplacement()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+
+    controller.setStaticDisplayImage(
+        svgPayload(QSize(80, 40), QSize(80, 40), QStringLiteral("svg-source-a")), false,
+        renderContext());
+    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(100.0, 50.0)));
 
     controller.setStaticDisplayImage(
         qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
