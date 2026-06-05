@@ -73,6 +73,11 @@ std::optional<StaticImagePayload> ImagePageSurfaceController::staticImage() cons
     return m_displayedSurfaceState->staticImage();
 }
 
+std::optional<StaticDisplayImagePayload> ImagePageSurfaceController::displayImage() const
+{
+    return m_displayedSurfaceState->displayImage();
+}
+
 ImagePresentationPageSlotSnapshot ImagePageSurfaceController::snapshot() const
 {
     return ImagePresentationPageSlotSnapshot {
@@ -100,12 +105,12 @@ void ImagePageSurfaceController::setStaticDisplayImage(StaticDisplayImagePayload
     clearShadowDisplayImage();
     publishDisplaySource(displayImage);
 
-    StaticImagePayload staticImage = displayImage.compatibilityStaticImage();
+    const StaticImagePayload staticImage = displayImage.compatibilityStaticImage();
     const bool useFullImageSurface
         = staticImageFitsFullImageSurface(staticImage, renderContext.maximumTextureSize);
     const DisplayedImageSurfaceStateChange change
-        = m_displayedSurfaceState->setStaticImage(std::move(staticImage), useFullImageSurface,
-            predecodeCacheable, m_staticTileCacheByteBudget);
+        = m_displayedSurfaceState->setStaticDisplayImage(std::move(displayImage),
+            useFullImageSurface, predecodeCacheable, m_staticTileCacheByteBudget);
     applyDisplayedImageChange(change);
 }
 

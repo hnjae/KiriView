@@ -27,8 +27,11 @@ public:
     quint64 revision() const;
     bool isPredecodeCacheable() const;
     std::optional<StaticImagePayload> staticImage() const;
+    std::optional<StaticDisplayImagePayload> displayImage() const;
 
     DisplayedImageSurfaceStateChange setImage(const QImage &image, bool predecodeCacheable);
+    DisplayedImageSurfaceStateChange setStaticDisplayImage(StaticDisplayImagePayload displayImage,
+        bool useFullImageSurface, bool predecodeCacheable, qsizetype tileCacheByteBudget);
     DisplayedImageSurfaceStateChange setStaticImage(StaticImagePayload staticImage,
         bool useFullImageSurface, bool predecodeCacheable, qsizetype tileCacheByteBudget);
     std::optional<DisplayedImageSurfaceStateChange> insertTile(DecodedTile tile);
@@ -38,11 +41,13 @@ public:
 private:
     DisplayedImageSurfaceStateChange replaceDisplayedImage(
         std::shared_ptr<DisplayedImageSurface> surface,
-        std::optional<StaticImagePayload> staticImage, bool predecodeCacheable);
+        std::optional<StaticImagePayload> staticImage,
+        std::optional<StaticDisplayImagePayload> displayImage, bool predecodeCacheable);
     DisplayedImageSurfaceStateChange finishImageChange();
 
     std::shared_ptr<DisplayedImageSurface> m_surface;
     std::optional<StaticImagePayload> m_staticImage;
+    std::optional<StaticDisplayImagePayload> m_displayImage;
     bool m_imageIsPredecodeCacheable = false;
     quint64 m_imageRevision = 0;
 };

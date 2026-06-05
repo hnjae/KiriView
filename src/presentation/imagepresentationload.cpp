@@ -43,16 +43,6 @@ KiriView::ImagePresentationLoadResult presentImageFrame(
     return finishImagePresentation(pageSurface);
 }
 
-KiriView::ImagePresentationLoadPlan staticImagePlan(
-    KiriView::StaticImagePayload staticImage, bool predecodeCacheable)
-{
-    return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationStaticImageLoad {
-        std::move(staticImage),
-        std::nullopt,
-        predecodeCacheable,
-    } };
-}
-
 KiriView::ImagePresentationLoadPlan staticDisplayImagePlan(
     KiriView::StaticDisplayImagePayload displayImage, bool predecodeCacheable)
 {
@@ -84,9 +74,8 @@ KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::StaticDecodedImag
     KiriView::ImagePresentationAnimationHandling, qsizetype predecodeCacheByteBudget)
 {
     KiriView::StaticDisplayImagePayload displayImage = std::move(decoded.displayImage);
-    KiriView::StaticImagePayload staticImage = displayImage.compatibilityStaticImage();
     const bool predecodeCacheable
-        = KiriView::PredecodeCache::canCacheImage(staticImage, predecodeCacheByteBudget);
+        = KiriView::PredecodeCache::canCacheImage(displayImage, predecodeCacheByteBudget);
     return staticDisplayImagePlan(std::move(displayImage), predecodeCacheable);
 }
 
@@ -137,7 +126,7 @@ bool ImagePresentationLoadPlan::hasPresentation() const
 
 ImagePresentationLoadPlan planPredecodedImagePresentationLoad(PredecodedImage image)
 {
-    return staticImagePlan(std::move(image.staticImage), true);
+    return staticDisplayImagePlan(std::move(image.displayImage), true);
 }
 
 ImagePresentationLoadPlan planDecodedImagePresentationLoad(DecodedImage image,

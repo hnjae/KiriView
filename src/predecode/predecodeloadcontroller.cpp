@@ -132,16 +132,14 @@ void PredecodeLoadController::finishDecode(
 
     const auto *staticImage = decodedImageResultImageAs<StaticDecodedImage>(result);
     if (staticImage != nullptr) {
-        StaticImagePayload compatibilityImage = staticImage->compatibilityStaticImage();
-        const QSize imageSize = compatibilityImage.source != nullptr
-            ? compatibilityImage.source->imageSize()
-            : QSize {};
+        StaticDisplayImagePayload displayImage = staticImage->displayImage;
         qCDebug(kiriviewPredecodeLog)
             << "predecode decode finished"
             << "generation" << activeRequest->id() << "url" << activeRequest->imageUrl()
-            << "imageSize" << imageSize << "byteCost" << compatibilityImage.byteCost();
+            << "originalSize" << displayImage.originalSize << "rasterSize"
+            << displayImage.image.size() << "byteCost" << displayImage.byteCost();
         m_loadState.cacheDecodedImage(
-            *activeRequest, std::move(compatibilityImage), staticImage->embeddedMetadata);
+            *activeRequest, std::move(displayImage), staticImage->embeddedMetadata);
     } else {
         qCDebug(kiriviewPredecodeLog)
             << "predecode decoded non-static image ignored"

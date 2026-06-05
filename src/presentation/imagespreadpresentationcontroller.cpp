@@ -409,7 +409,7 @@ ImageSpreadPresentationController::secondaryDisplayedPredecodeImage() const
     return DisplayedPredecodeImage {
         m_secondaryPageController->displayedImageLocation(),
         pageSurface.isPredecodeCacheable(),
-        pageSurface.staticImage(),
+        pageSurface.displayImage(),
         {},
     };
 }

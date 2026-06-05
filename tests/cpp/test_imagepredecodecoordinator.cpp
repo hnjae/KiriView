@@ -25,8 +25,8 @@ using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::ManualPowerSaverMonitor;
 using KiriView::TestSupport::powerSaverProviderFor;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::staticImageDataDecoder;
-using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
@@ -65,6 +65,16 @@ std::vector<KiriView::ImageDocumentPageCandidate> imageDocumentPageCandidates(in
         candidates.push_back(imageDocumentPageCandidate(indexedImageUrl(index)));
     }
     return candidates;
+}
+
+KiriView::StaticDisplayImagePayload displayTestImagePayload(
+    const QImage &image, KiriView::StaticImageDisplayHints displayHints = {})
+{
+    const KiriView::DisplayImageQuality quality
+        = displayHints.firstDisplayPixelsPerSourcePixel > 0.0
+        ? KiriView::DisplayImageQuality::FirstDisplay
+        : KiriView::DisplayImageQuality::Exact;
+    return staticDisplayTestImagePayload(image, image, displayHints, quality);
 }
 
 KiriView::ImagePredecodeCoordinator::Context predecodeContext(
@@ -129,7 +139,7 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
         KiriView::DisplayedPredecodeImage {
             KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
             true,
-            staticTestImagePayload(displayedImage, KiriView::StaticImageDisplayHints { 0.5 }),
+            displayTestImagePayload(displayedImage, KiriView::StaticImageDisplayHints { 0.5 }),
         },
         std::nullopt, KiriView::ImageFirstDisplayDecodeContext { QSize(640, 480) }));
 
@@ -137,7 +147,8 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
         = coordinator.findPredecodedImage(displayedUrl);
     QVERIFY(displayed.has_value());
     QCOMPARE(displayed->location.imageUrl(), displayedUrl);
-    QCOMPARE(displayed->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
+    QCOMPARE(displayed->displayImage.quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(displayed->displayImage.displayPixelsPerSourcePixel, 0.5);
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
@@ -170,23 +181,23 @@ void TestImagePredecodeCoordinator::scheduleCachesVisibleSpreadPagesAndSkipsSeco
         KiriView::DisplayedPredecodeImage {
             KiriView::DisplayedImageLocation::fromUrl(primaryUrl),
             true,
-            staticTestImagePayload(testImage(), KiriView::StaticImageDisplayHints { 0.5 }),
+            displayTestImagePayload(testImage(), KiriView::StaticImageDisplayHints { 0.5 }),
         },
         std::make_optional(KiriView::DisplayedPredecodeImage {
             KiriView::DisplayedImageLocation::fromUrl(secondaryUrl),
             true,
-            staticTestImagePayload(testImage(), KiriView::StaticImageDisplayHints { 0.75 }),
+            displayTestImagePayload(testImage(), KiriView::StaticImageDisplayHints { 0.75 }),
         })));
 
     const std::optional<KiriView::PredecodedImage> primary
         = coordinator.findPredecodedImage(primaryUrl);
     QVERIFY(primary.has_value());
-    QCOMPARE(primary->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
+    QCOMPARE(primary->displayImage.displayPixelsPerSourcePixel, 0.5);
 
     const std::optional<KiriView::PredecodedImage> secondary
         = coordinator.findPredecodedImage(secondaryUrl);
     QVERIFY(secondary.has_value());
-    QCOMPARE(secondary->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.75);
+    QCOMPARE(secondary->displayImage.displayPixelsPerSourcePixel, 0.75);
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
@@ -228,7 +239,7 @@ void TestImagePredecodeCoordinator::archivePredecodeKeepsOpenedCollectionScopeCo
         KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
             displayedUrl, *openedCollectionScope),
         false,
-        staticTestImagePayload(testImage()),
+        displayTestImagePayload(testImage()),
     }));
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
@@ -257,7 +268,7 @@ void TestImagePredecodeCoordinator::regularPredecodeWindowKeepsOnePreviousAndTwo
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         false,
-        staticTestImagePayload(testImage()),
+        displayTestImagePayload(testImage()),
     }));
 
     const std::vector<QUrl> expectedLoadOrder {
@@ -296,7 +307,7 @@ void TestImagePredecodeCoordinator::directoryCollectionStartsTwoBackgroundDecode
         KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
             displayedUrl, directoryCollection),
         false,
-        staticTestImagePayload(testImage()),
+        displayTestImagePayload(testImage()),
     }));
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
@@ -318,7 +329,7 @@ void TestImagePredecodeCoordinator::candidateListingFailureStartsEmptyFallbackWi
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         true,
-        staticTestImagePayload(testImage()),
+        displayTestImagePayload(testImage()),
     }));
 
     QTest::qWait(250);
@@ -338,7 +349,7 @@ void TestImagePredecodeCoordinator::staleGenerationDecodeIsIgnored()
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(0)),
         false,
-        staticTestImagePayload(testImage()),
+        displayTestImagePayload(testImage()),
     }));
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, indexedImageUrl(1));
@@ -346,7 +357,7 @@ void TestImagePredecodeCoordinator::staleGenerationDecodeIsIgnored()
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(2)),
         false,
-        staticTestImagePayload(testImage()),
+        displayTestImagePayload(testImage()),
     }));
 
     dataLoader.deliverFrontLoadDataIgnoringCancellation(QByteArrayLiteral("stale"));
@@ -368,7 +379,7 @@ void TestImagePredecodeCoordinator::rapidNavigationDebouncesSkippedPagePredecode
             KiriView::DisplayedPredecodeImage {
                 KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(pageIndex)),
                 false,
-                staticTestImagePayload(testImage()),
+                displayTestImagePayload(testImage()),
             },
             std::nullopt, {}, pageIndex));
     };
@@ -407,7 +418,7 @@ void TestImagePredecodeCoordinator::powerSaverMonitorSuppressesAndReschedulesPre
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         true,
-        staticTestImagePayload(testImage()),
+        displayTestImagePayload(testImage()),
     }));
 
     QVERIFY(coordinator.findPredecodedImage(displayedUrl).has_value());
@@ -447,7 +458,7 @@ void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         false,
-        staticTestImagePayload(displayedImage),
+        displayTestImagePayload(displayedImage),
     }));
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));

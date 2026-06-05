@@ -160,7 +160,8 @@ void TestPredecodeCache::cacheEligibilityUsesByteBudgetPolicy()
         image, KiriView::predecodeCachePreferredByteBudget()));
     QVERIFY(KiriView::PredecodeCache::canCacheImage(image, byteCost));
     QVERIFY(!KiriView::PredecodeCache::canCacheImage(image, byteCost - 1));
-    QVERIFY(!KiriView::PredecodeCache::canCacheImage(KiriView::StaticImagePayload {}, byteCost));
+    QVERIFY(
+        !KiriView::PredecodeCache::canCacheImage(KiriView::StaticDisplayImagePayload {}, byteCost));
     QVERIFY(!KiriView::PredecodeCache::canCacheImage(image, 0));
 }
 

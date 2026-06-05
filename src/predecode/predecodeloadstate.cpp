@@ -45,7 +45,7 @@ void PredecodeLoadState::cacheDisplayedImages(const std::vector<DisplayedPredeco
         }
 
         m_cache.cacheDisplayedImage(true, image.location.imageUrl(),
-            image.location.openedCollectionScope(), *image.staticImage, image.embeddedMetadata);
+            image.location.openedCollectionScope(), *image.displayImage, image.embeddedMetadata);
     }
 }
 
@@ -101,17 +101,17 @@ std::optional<PredecodeLoadStart> PredecodeLoadState::takeNextLoad(
 }
 
 void PredecodeLoadState::cacheDecodedImage(
-    const ImageDecodeRequest &request, StaticImagePayload staticImage)
+    const ImageDecodeRequest &request, StaticDisplayImagePayload displayImage)
 {
-    cacheDecodedImage(request, std::move(staticImage), {});
+    cacheDecodedImage(request, std::move(displayImage), {});
 }
 
-void PredecodeLoadState::cacheDecodedImage(
-    const ImageDecodeRequest &request, StaticImagePayload staticImage, EmbeddedMetadata metadata)
+void PredecodeLoadState::cacheDecodedImage(const ImageDecodeRequest &request,
+    StaticDisplayImagePayload displayImage, EmbeddedMetadata metadata)
 {
     qCDebug(kiriviewPredecodeLog) << "cache decoded predecode image"
                                   << "generation" << request.id() << "url" << request.imageUrl();
-    m_cache.cacheImage(request.imageUrl(), request.openedCollectionScope(), std::move(staticImage),
+    m_cache.cacheImage(request.imageUrl(), request.openedCollectionScope(), std::move(displayImage),
         std::move(metadata));
 }
 

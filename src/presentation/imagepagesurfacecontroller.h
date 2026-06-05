@@ -50,6 +50,7 @@ public:
     bool isPredecodeCacheable() const;
     qsizetype predecodeCacheByteBudget() const;
     std::optional<StaticImagePayload> staticImage() const;
+    std::optional<StaticDisplayImagePayload> displayImage() const;
     ImagePresentationPageSlotSnapshot snapshot() const;
 
     void setImage(const QImage &image, bool predecodeCacheable);

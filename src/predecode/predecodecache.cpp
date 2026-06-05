@@ -15,9 +15,10 @@
 #include <utility>
 
 namespace KiriView {
-bool PredecodeCache::canCacheImage(const StaticImagePayload &staticImage, qsizetype byteBudget)
+bool PredecodeCache::canCacheImage(
+    const StaticDisplayImagePayload &displayImage, qsizetype byteBudget)
 {
-    return staticImage.byteCostWithinBudget(byteBudget).has_value();
+    return displayImage.byteCostWithinBudget(byteBudget).has_value();
 }
 
 PredecodeCache::PredecodeCache(qsizetype byteBudget)
@@ -182,7 +183,8 @@ std::optional<PredecodedImage> PredecodeCache::findImage(const QUrl &url) const
 
     const DisplayedImageLocation location
         = DisplayedImageLocation::fromUrl(cached->url, cached->openedCollectionScope);
-    return PredecodedImage { cached->staticImage, location, cached->embeddedMetadata };
+    return PredecodedImage { cached->displayImage, location,
+        cached->displayImage.embeddedMetadata };
 }
 
 std::optional<PredecodedImage> PredecodeCache::findImage(
@@ -198,22 +200,26 @@ std::optional<PredecodedImage> PredecodeCache::findImage(
         return std::nullopt;
     }
 
-    return PredecodedImage { cached->staticImage,
+    return PredecodedImage { cached->displayImage,
         DisplayedImageLocation::fromUrl(cached->url, cached->openedCollectionScope),
-        cached->embeddedMetadata };
+        cached->displayImage.embeddedMetadata };
 }
 
 void PredecodeCache::cacheImage(const QUrl &url,
-    const OpenedCollectionScopeLocation &openedCollectionScope, StaticImagePayload staticImage,
-    EmbeddedMetadata metadata)
+    const OpenedCollectionScopeLocation &openedCollectionScope,
+    StaticDisplayImagePayload displayImage, EmbeddedMetadata metadata)
 {
-    const std::optional<qsizetype> byteCost = staticImage.byteCostWithinBudget(m_byteBudget);
+    if (!metadata.isEmpty()) {
+        displayImage.embeddedMetadata = std::move(metadata);
+    }
+
+    const std::optional<qsizetype> byteCost = displayImage.byteCostWithinBudget(m_byteBudget);
     if (!byteCost.has_value()) {
         qCDebug(kiriviewPredecodeLog)
             << "predecode cache store skipped"
             << "reason"
             << "byte-budget"
-            << "url" << url << "byteCost" << staticImage.byteCost() << "budget" << m_byteBudget;
+            << "url" << url << "byteCost" << displayImage.byteCost() << "budget" << m_byteBudget;
         return;
     }
 
@@ -229,8 +235,8 @@ void PredecodeCache::cacheImage(const QUrl &url,
     }
 
     removeCachedImage(*normalizedUrl, openedCollectionScope);
-    m_images.push_back(CachedImage { *normalizedUrl, openedCollectionScope, std::move(staticImage),
-        std::move(metadata), *byteCost });
+    m_images.push_back(
+        CachedImage { *normalizedUrl, openedCollectionScope, std::move(displayImage), *byteCost });
     qCDebug(kiriviewPredecodeLog) << "predecode cache stored"
                                   << "url" << *normalizedUrl << "byteCost" << *byteCost
                                   << "cachedImages" << m_images.size();
@@ -239,8 +245,8 @@ void PredecodeCache::cacheImage(const QUrl &url,
 }
 
 void PredecodeCache::cacheDisplayedImage(bool cacheable, const QUrl &url,
-    const OpenedCollectionScopeLocation &openedCollectionScope, StaticImagePayload staticImage,
-    EmbeddedMetadata metadata)
+    const OpenedCollectionScopeLocation &openedCollectionScope,
+    StaticDisplayImagePayload displayImage, EmbeddedMetadata metadata)
 {
     if (!cacheable || url.isEmpty()) {
         qCDebug(kiriviewPredecodeLog)
@@ -249,7 +255,7 @@ void PredecodeCache::cacheDisplayedImage(bool cacheable, const QUrl &url,
         return;
     }
 
-    cacheImage(url, openedCollectionScope, std::move(staticImage), std::move(metadata));
+    cacheImage(url, openedCollectionScope, std::move(displayImage), std::move(metadata));
 }
 
 bool PredecodeCache::containsUrl(const std::vector<QUrl> &urls, const QUrl &url)

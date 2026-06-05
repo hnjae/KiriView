@@ -20,6 +20,7 @@
 
 namespace {
 using KiriView::TestSupport::localUrl;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
@@ -98,7 +99,7 @@ public:
         }
 
         return KiriView::PredecodedImage {
-            staticTestImagePayload(testImage(imageSize->second)),
+            staticDisplayTestImagePayload(testImage(imageSize->second)),
             displayedLocation(url),
         };
     }

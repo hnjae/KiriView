@@ -30,7 +30,7 @@ KiriView::PredecodeScheduleContext scheduleContext(const QUrl &url, int pageInde
     KiriView::DisplayedPredecodeImage displayedImage {
         KiriView::DisplayedImageLocation::fromUrl(url),
         false,
-        KiriView::TestSupport::staticTestImagePayload(KiriView::TestSupport::testImage()),
+        KiriView::TestSupport::staticDisplayTestImagePayload(KiriView::TestSupport::testImage()),
     };
     return KiriView::PredecodeScheduleContext {
         displayedImage.location,

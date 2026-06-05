@@ -12,7 +12,7 @@
 
 namespace KiriView {
 struct PredecodedImage {
-    StaticImagePayload staticImage;
+    StaticDisplayImagePayload displayImage;
     DisplayedImageLocation location;
     EmbeddedMetadata embeddedMetadata;
 };
@@ -20,14 +20,14 @@ struct PredecodedImage {
 struct DisplayedPredecodeImage {
     DisplayedImageLocation location;
     bool cacheable = false;
-    std::optional<StaticImagePayload> staticImage;
+    std::optional<StaticDisplayImagePayload> displayImage;
     EmbeddedMetadata embeddedMetadata;
 
     bool hasLocation() const { return !location.isEmpty(); }
 
-    bool hasStaticImage() const { return staticImage.has_value() && staticImage->isValid(); }
+    bool hasDisplayImage() const { return displayImage.has_value() && displayImage->isValid(); }
 
-    bool isCacheable() const { return cacheable && hasStaticImage(); }
+    bool isCacheable() const { return cacheable && hasDisplayImage(); }
 };
 }
 

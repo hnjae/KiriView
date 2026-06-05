@@ -45,13 +45,44 @@ std::optional<StaticImagePayload> DisplayedImageSurfaceState::staticImage() cons
     return m_staticImage;
 }
 
+std::optional<StaticDisplayImagePayload> DisplayedImageSurfaceState::displayImage() const
+{
+    if (!m_displayImage.has_value() || !m_displayImage->isValid()) {
+        return std::nullopt;
+    }
+
+    return m_displayImage;
+}
+
 DisplayedImageSurfaceStateChange DisplayedImageSurfaceState::setImage(
     const QImage &image, bool predecodeCacheable)
 {
     QImage displayImage = displayReadyImage(image);
     return replaceDisplayedImage(
         std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { std::move(displayImage) }),
-        std::nullopt, predecodeCacheable);
+        std::nullopt, std::nullopt, predecodeCacheable);
+}
+
+DisplayedImageSurfaceStateChange DisplayedImageSurfaceState::setStaticDisplayImage(
+    StaticDisplayImagePayload displayImage, bool useFullImageSurface, bool predecodeCacheable,
+    qsizetype tileCacheByteBudget)
+{
+    displayImage.image = displayReadyImage(displayImage.image);
+    StaticImagePayload staticImage = displayImage.compatibilityStaticImage();
+
+    std::optional<StaticImagePayload> storedStaticImage(std::move(staticImage));
+    std::optional<StaticDisplayImagePayload> storedDisplayImage(std::move(displayImage));
+    std::shared_ptr<DisplayedImageSurface> surface;
+    if (useFullImageSurface) {
+        surface = std::make_shared<DisplayedImageSurface>(
+            LegacyFrameSurface { storedDisplayImage->image });
+    } else {
+        surface = std::make_shared<DisplayedImageSurface>(
+            StaticTileSurface { *storedStaticImage, tileCacheByteBudget });
+    }
+
+    return replaceDisplayedImage(std::move(surface), std::move(storedStaticImage),
+        std::move(storedDisplayImage), predecodeCacheable);
 }
 
 DisplayedImageSurfaceStateChange DisplayedImageSurfaceState::setStaticImage(
@@ -71,7 +102,7 @@ DisplayedImageSurfaceStateChange DisplayedImageSurfaceState::setStaticImage(
     }
 
     return replaceDisplayedImage(
-        std::move(surface), std::move(storedStaticImage), predecodeCacheable);
+        std::move(surface), std::move(storedStaticImage), std::nullopt, predecodeCacheable);
 }
 
 std::optional<DisplayedImageSurfaceStateChange> DisplayedImageSurfaceState::insertTile(
@@ -113,15 +144,16 @@ std::optional<DisplayedImageSurfaceStateChange> DisplayedImageSurfaceState::clea
         return std::nullopt;
     }
 
-    return replaceDisplayedImage(nullptr, std::nullopt, false);
+    return replaceDisplayedImage(nullptr, std::nullopt, std::nullopt, false);
 }
 
 DisplayedImageSurfaceStateChange DisplayedImageSurfaceState::replaceDisplayedImage(
     std::shared_ptr<DisplayedImageSurface> surface, std::optional<StaticImagePayload> staticImage,
-    bool predecodeCacheable)
+    std::optional<StaticDisplayImagePayload> displayImage, bool predecodeCacheable)
 {
     m_surface = std::move(surface);
     m_staticImage = std::move(staticImage);
+    m_displayImage = std::move(displayImage);
     m_imageIsPredecodeCacheable = predecodeCacheable;
     return finishImageChange();
 }

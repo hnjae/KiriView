@@ -74,6 +74,7 @@ class TestImagePresentationLoad : public QObject
 
 private Q_SLOTS:
     void predecodedImagesPlanStaticCacheablePresentation();
+    void predecodedImagesPublishProviderSourceAndKeepCompatibilitySurface();
     void decodedImagesPlanPresentationActions();
     void staticDecodedPredecodeCacheabilityUsesInjectedBudget();
     void animationHandlingControlsPlannedEffects();
@@ -108,6 +109,45 @@ void TestImagePresentationLoad::predecodedImagesPlanStaticCacheablePresentation(
     QVERIFY(load->staticImage.isValid());
     QCOMPARE(load->staticImage.source->imageSize(), QSize(9, 5));
     QCOMPARE(load->staticImage.preview.size(), QSize(3, 2));
+}
+
+void TestImagePresentationLoad::predecodedImagesPublishProviderSourceAndKeepCompatibilitySurface()
+{
+    auto displayImageStore = std::make_shared<KiriView::DisplayImageStore>(1024 * 1024);
+    KiriView::ImagePageSurfaceController controller
+        = pageSurfaceController(this, displayImageStore);
+    KiriView::PredecodedImage image {
+        staticDisplayTestImagePayload(testImage(QSize(12, 8)), testImage(QSize(6, 4)),
+            KiriView::StaticImageDisplayHints { 0.5 }, KiriView::DisplayImageQuality::FirstDisplay),
+        KiriView::DisplayedImageLocation::fromUrl(localUrl(QStringLiteral("/images/page.png"))),
+    };
+
+    const KiriView::ImagePresentationLoadResult result
+        = KiriView::presentPredecodedImageLoad(controller, std::move(image), renderContext());
+
+    QVERIFY(result.presented);
+    QVERIFY(controller.hasImage());
+    QVERIFY(controller.imageSurface() != nullptr);
+    QVERIFY(controller.imageSurface()->legacyFrameSurface() != nullptr
+        || controller.imageSurface()->staticTileSurface() != nullptr);
+
+    const KiriView::ImageDisplaySourceSlot displaySource = controller.snapshot().displaySource;
+    QCOMPARE(displaySource.status, KiriView::ImageDisplaySourceStatus::Ready);
+    QVERIFY(!displaySource.providerUrl.isEmpty());
+    QCOMPARE(displaySource.sourceIdentity, QStringLiteral("test-image"));
+    QCOMPARE(displaySource.originalSize, QSize(12, 8));
+    QCOMPARE(displaySource.rasterSize, QSize(6, 4));
+    QCOMPARE(displaySource.sourceSizeHint, QSize(6, 0));
+    QCOMPARE(displaySource.quality, KiriView::DisplayImageQuality::FirstDisplay);
+
+    const QString entryId = displaySource.providerUrl.path().mid(1);
+    const std::optional<KiriView::DisplayImageStoreEntry> stored
+        = displayImageStore->entry(entryId);
+    QVERIFY(stored.has_value());
+    QCOMPARE(stored->originalSize, QSize(12, 8));
+    QCOMPARE(stored->rasterSize, QSize(6, 4));
+    QCOMPARE(stored->quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(stored->sourceIdentity, QStringLiteral("test-image"));
 }
 
 void TestImagePresentationLoad::decodedImagesPlanPresentationActions()

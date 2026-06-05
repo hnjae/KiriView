@@ -408,17 +408,17 @@ bool ImageDocumentRuntime::unsupportedOpenedCollectionVideo() const
 
 std::optional<DisplayedPredecodeImage> ImageDocumentRuntime::primaryDisplayedPredecodeImage() const
 {
-    std::optional<StaticImagePayload> staticImage
-        = controllers->pageSurfaceController().staticImage();
+    std::optional<StaticDisplayImagePayload> displayImage
+        = controllers->pageSurfaceController().displayImage();
     if (!controllers->pageSurfaceController().hasImage() || state.displayedUrl().isEmpty()
-        || !staticImage.has_value()) {
+        || !displayImage.has_value()) {
         return std::nullopt;
     }
 
     return DisplayedPredecodeImage {
         state.displayedImageLocation(),
         controllers->pageSurfaceController().isPredecodeCacheable(),
-        std::move(staticImage),
+        std::move(displayImage),
         state.embeddedMetadata(),
     };
 }

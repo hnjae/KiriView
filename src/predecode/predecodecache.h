@@ -26,7 +26,7 @@ struct PredecodeRequest {
 class PredecodeCache
 {
 public:
-    static bool canCacheImage(const StaticImagePayload &staticImage, qsizetype byteBudget);
+    static bool canCacheImage(const StaticDisplayImagePayload &displayImage, qsizetype byteBudget);
 
     explicit PredecodeCache(qsizetype byteBudget);
 
@@ -44,17 +44,16 @@ public:
     std::optional<PredecodedImage> findImage(const QUrl &url) const;
     std::optional<PredecodedImage> findImage(const DisplayedImageLocation &location) const;
     void cacheImage(const QUrl &url, const OpenedCollectionScopeLocation &openedCollectionScope,
-        StaticImagePayload staticImage, EmbeddedMetadata metadata = {});
+        StaticDisplayImagePayload displayImage, EmbeddedMetadata metadata = {});
     void cacheDisplayedImage(bool cacheable, const QUrl &url,
-        const OpenedCollectionScopeLocation &openedCollectionScope, StaticImagePayload staticImage,
-        EmbeddedMetadata metadata = {});
+        const OpenedCollectionScopeLocation &openedCollectionScope,
+        StaticDisplayImagePayload displayImage, EmbeddedMetadata metadata = {});
 
 private:
     struct CachedImage {
         QUrl url;
         OpenedCollectionScopeLocation openedCollectionScope;
-        StaticImagePayload staticImage;
-        EmbeddedMetadata embeddedMetadata;
+        StaticDisplayImagePayload displayImage;
         qsizetype byteCost = 0;
     };
     using CachedImageIterator = std::vector<CachedImage>::iterator;

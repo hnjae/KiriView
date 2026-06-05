@@ -25,8 +25,8 @@ using KiriView::TestSupport::indexedImageUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::ManualPowerSaverMonitor;
 using KiriView::TestSupport::powerSaverProviderFor;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::staticImageDataDecoder;
-using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
@@ -57,6 +57,16 @@ KiriView::ImagePageSurfaceController createPageSurfaceController(QObject *parent
 KiriView::ImagePresentationRuntime createPresentationRuntime()
 {
     return KiriView::ImagePresentationRuntime(renderContext);
+}
+
+KiriView::StaticDisplayImagePayload displayTestImagePayload(
+    const QImage &image, KiriView::StaticImageDisplayHints displayHints = {})
+{
+    const KiriView::DisplayImageQuality quality
+        = displayHints.firstDisplayPixelsPerSourcePixel > 0.0
+        ? KiriView::DisplayImageQuality::FirstDisplay
+        : KiriView::DisplayImageQuality::Exact;
+    return staticDisplayTestImagePayload(image, image, displayHints, quality);
 }
 }
 
@@ -91,8 +101,8 @@ void TestImageDocumentPredecodeController::scheduleAdjacentImagePredecodeUsesPre
 
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
     presentationRuntime.setViewportSize(QSizeF(320.0, 240.0));
-    pageSurface.setStaticImage(
-        staticTestImagePayload(testImage(QSize(10, 8)), KiriView::StaticImageDisplayHints { 0.5 }),
+    pageSurface.setStaticDisplayImage(
+        displayTestImagePayload(testImage(QSize(10, 8)), KiriView::StaticImageDisplayHints { 0.5 }),
         true, renderContext());
 
     controller.scheduleAdjacentImagePredecode();
@@ -100,7 +110,8 @@ void TestImageDocumentPredecodeController::scheduleAdjacentImagePredecodeUsesPre
     const std::optional<KiriView::PredecodedImage> displayed
         = controller.findPredecodedImage(displayedUrl);
     QVERIFY(displayed.has_value());
-    QCOMPARE(displayed->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
+    QCOMPARE(displayed->displayImage.quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(displayed->displayImage.displayPixelsPerSourcePixel, 0.5);
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
@@ -128,7 +139,7 @@ void TestImageDocumentPredecodeController::
         });
 
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
-    pageSurface.setStaticImage(staticTestImagePayload(testImage()), false, renderContext());
+    pageSurface.setStaticDisplayImage(displayTestImagePayload(testImage()), false, renderContext());
     controller.scheduleAdjacentImagePredecode();
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
 
@@ -164,7 +175,7 @@ void TestImageDocumentPredecodeController::
         });
 
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
-    pageSurface.setStaticImage(staticTestImagePayload(testImage()), true, renderContext());
+    pageSurface.setStaticDisplayImage(displayTestImagePayload(testImage()), true, renderContext());
 
     controller.scheduleAdjacentImagePredecode();
 
