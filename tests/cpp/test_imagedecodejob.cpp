@@ -475,7 +475,7 @@ void TestImageDecodeJob::staleXdgThumbnailPreviewIsIgnored()
 
     QTest::qWait(50);
     QCOMPARE(previewCount, 0);
-    decoderMayFinish.release(decoderCalls.load() + 1);
+    decoderMayFinish.release(2);
 }
 
 void TestImageDecodeJob::nonRawXdgMissDoesNotRunRawEmbeddedPreview()
