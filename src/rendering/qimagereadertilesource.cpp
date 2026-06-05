@@ -213,6 +213,16 @@ FirstDisplayImageDecodeResult QImageReaderTileSource::decodeFirstDisplayImage(
     return { FirstDisplayImageDecodeStatus::Ready, std::move(image), displayPixelsPerSourcePixel };
 }
 
+QImage QImageReaderTileSource::decodeRasterDisplayImage(
+    const QSize &rasterSize, QString *errorString) const
+{
+    if (rasterSize.isEmpty()) {
+        return {};
+    }
+
+    return readScaledImage(rasterSize, errorString);
+}
+
 QImage QImageReaderTileSource::decodeBlockingDisplayImage(
     int maximumLongEdge, QString *errorString) const
 {

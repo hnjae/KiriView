@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPAGESURFACECONTROLLER_H
 #define KIRIVIEW_IMAGEPAGESURFACECONTROLLER_H
 
+#include "async/imageasyncticket.h"
 #include "cache/imagecachepolicy.h"
 #include "document/imagedocumenttypes.h"
 #include "presentation/imageanimationplaybacksource.h"
@@ -11,6 +12,7 @@
 #include "rendering/displayimagestore.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
+#include "rendering/rasterdisplaybucketpolicy.h"
 
 #include <QImage>
 #include <QSize>
@@ -75,9 +77,12 @@ private:
     void releaseCurrentDisplayEntry();
     void releaseShadowDisplayEntry();
     void updateDisplaySourceVisibility(bool visible);
+    void cancelRasterDisplayRefinement();
+    void scheduleRasterDisplayRefinement(const ImagePresentationRenderProjection &projection);
     void notify(ImageDocumentChange change);
 
     Callbacks m_callbacks;
+    QObject *m_context = nullptr;
     qsizetype m_predecodeCacheByteBudget = 0;
     qsizetype m_staticTileCacheByteBudget = 0;
     std::shared_ptr<DisplayImageStore> m_displayImageStore;
@@ -87,6 +92,8 @@ private:
     bool m_displayEntryVisiblePinned = false;
     ImageDisplaySourceSlot m_displaySource;
     quint64 m_displaySourceRevision = 0;
+    std::optional<RasterDisplayRefinementDemandKey> m_rasterDisplayRefinementDemand;
+    ImageAsyncTicket m_rasterDisplayRefinementTicket;
     std::unique_ptr<DisplayedImageSurfaceState> m_displayedSurfaceState;
     std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
     std::unique_ptr<ImageAnimationPlayer> m_animationPlayer;
