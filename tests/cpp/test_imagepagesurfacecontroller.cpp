@@ -3,6 +3,7 @@
 
 #include "presentation/imagepagesurfacecontroller.h"
 
+#include "decoding/kiriimagedecoder.h"
 #include "image_test_support.h"
 #include "rendering/heiftilesource.h"
 #include "rendering/imagerendering.h"
@@ -12,12 +13,14 @@
 
 #include <QBuffer>
 #include <QByteArray>
+#include <QFile>
 #include <QObject>
 #include <QRectF>
 #include <QSize>
 #include <QSizeF>
 #include <QString>
 #include <QTest>
+#include <QUrl>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -37,6 +40,8 @@ private Q_SLOTS:
     void exactQtRasterCurrentImageDoesNotRequestRefinement();
     void heifFirstDisplayRefinesToProviderBucket();
     void heifRefinementCompletionIsRejectedAfterSourceReplacement();
+    void rawFirstDisplayRefinesToProviderBucket();
+    void rawRefinementCompletionIsRejectedAfterSourceReplacement();
 };
 
 namespace {
@@ -219,6 +224,45 @@ std::optional<KiriView::StaticDisplayImagePayload> heifPayload(const QSize &orig
         {},
         std::move(source),
     };
+}
+
+QByteArray rawFixtureData()
+{
+    QFile file(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/raw-cfa-smoke.dng"));
+    if (!file.open(QIODevice::ReadOnly)) {
+        return {};
+    }
+
+    return file.readAll();
+}
+
+std::optional<KiriView::StaticDisplayImagePayload> rawPayload(const QSize &rasterSize,
+    const QString &sourceIdentity,
+    KiriView::DisplayImageQuality quality = KiriView::DisplayImageQuality::FirstDisplay)
+{
+    const QByteArray data = rawFixtureData();
+    if (data.isEmpty()) {
+        return std::nullopt;
+    }
+
+    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(71,
+        QUrl::fromLocalFile(
+            QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/raw-cfa-smoke.dng")));
+    const KiriView::DecodedImageResult result = KiriView::decodeImageData(data, request);
+    const auto *decoded = KiriView::decodedImageResultImageAs<KiriView::StaticDecodedImage>(result);
+    if (decoded == nullptr || decoded->displayImage.refinementSource == nullptr) {
+        return std::nullopt;
+    }
+
+    KiriView::StaticDisplayImagePayload payload = decoded->displayImage;
+    payload.sourceIdentity = sourceIdentity;
+    payload.image = KiriView::displayReadyImage(
+        payload.image.scaled(rasterSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+    payload.quality = quality;
+    payload.displayPixelsPerSourcePixel
+        = KiriView::imagePixelsPerSourcePixel(payload.originalSize, payload.image.size());
+    payload.previewOrigin = KiriView::DisplayImagePreviewOrigin::None;
+    return payload;
 }
 }
 
@@ -455,6 +499,57 @@ void TestImagePageSurfaceController::heifRefinementCompletionIsRejectedAfterSour
     QVERIFY2(payload.has_value(), "HEIF still fixture could not be created");
     controller.setStaticDisplayImage(std::move(*payload), false, renderContext());
     controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(8.0, 6.0)));
+
+    controller.setStaticDisplayImage(
+        qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
+            KiriView::DisplayImageQuality::Exact),
+        false, renderContext());
+    const KiriView::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+
+    QTest::qWait(100);
+
+    const KiriView::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    QCOMPARE(current.providerUrl, replacement.providerUrl);
+    QCOMPARE(current.sourceIdentity, QStringLiteral("source-b"));
+    QCOMPARE(current.rasterSize, QSize(10, 10));
+    QCOMPARE(current.quality, KiriView::DisplayImageQuality::Exact);
+}
+
+void TestImagePageSurfaceController::rawFirstDisplayRefinesToProviderBucket()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+
+    std::optional<KiriView::StaticDisplayImagePayload> payload
+        = rawPayload(QSize(8, 8), QStringLiteral("raw-source-a"));
+    QVERIFY2(payload.has_value(), "RAW still fixture could not be decoded");
+    controller.setStaticDisplayImage(std::move(*payload), false, renderContext());
+    const KiriView::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    QVERIFY(!first.providerUrl.isEmpty());
+    QCOMPARE(first.rasterSize, QSize(8, 8));
+
+    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(16.0, 16.0)));
+
+    QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
+    const KiriView::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
+    QCOMPARE(refined.sourceIdentity, QStringLiteral("raw-source-a"));
+    QCOMPARE(refined.rasterSize, QSize(16, 16));
+    QCOMPARE(refined.revision, first.revision + 1);
+    QCOMPARE(refined.quality, KiriView::DisplayImageQuality::Exact);
+    QVERIFY(!store->entry(entryId(first)).has_value());
+    QVERIFY(store->entry(entryId(refined)).has_value());
+}
+
+void TestImagePageSurfaceController::rawRefinementCompletionIsRejectedAfterSourceReplacement()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+
+    std::optional<KiriView::StaticDisplayImagePayload> payload
+        = rawPayload(QSize(8, 8), QStringLiteral("raw-source-a"));
+    QVERIFY2(payload.has_value(), "RAW still fixture could not be decoded");
+    controller.setStaticDisplayImage(std::move(*payload), false, renderContext());
+    controller.scheduleVisibleTileDecode(visibleProjection(QSizeF(16.0, 16.0)));
 
     controller.setStaticDisplayImage(
         qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
