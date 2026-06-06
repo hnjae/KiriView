@@ -21,6 +21,10 @@ struct RecordedRuntimeOperations {
     QUrl secondaryUrl;
     KiriView::ImageDocumentPageKind kind = KiriView::ImageDocumentPageKind::Image;
     KiriView::NavigationDirection direction = KiriView::NavigationDirection::Next;
+    KiriView::ContainerNavigationListFailureKind listFailureKind
+        = KiriView::ContainerNavigationListFailureKind::DirectoryListing;
+    KiriView::ContainerNavigationListFailureSeverity listFailureSeverity
+        = KiriView::ContainerNavigationListFailureSeverity::Diagnostic;
     QString errorString;
     bool flag = false;
 
@@ -92,6 +96,16 @@ struct RecordedRuntimeOperations {
                   direction = boundaryDirection;
                   record(QStringLiteral("reportContainerNavigationBoundary"));
               };
+        operations.navigation.reportContainerNavigationListFailure
+            = [this](const KiriView::ContainerNavigationListFailure &failure) {
+                  url = failure.currentContainerUrl;
+                  secondaryUrl = failure.parentUrl;
+                  direction = failure.direction;
+                  listFailureKind = failure.kind;
+                  listFailureSeverity = failure.severity;
+                  errorString = failure.diagnosticDetail;
+                  record(QStringLiteral("reportContainerNavigationListFailure"));
+              };
         operations.navigation.loadPageNavigationUrl
             = [this](const KiriView::ImageDocumentPageTarget &target, bool preserveTransition) {
                   url = target.url;
@@ -142,6 +156,8 @@ struct RecordedRuntimeOperations {
         secondaryUrl = QUrl();
         kind = KiriView::ImageDocumentPageKind::Image;
         direction = KiriView::NavigationDirection::Next;
+        listFailureKind = KiriView::ContainerNavigationListFailureKind::DirectoryListing;
+        listFailureSeverity = KiriView::ContainerNavigationListFailureSeverity::Diagnostic;
         errorString.clear();
         flag = false;
     }
@@ -283,6 +299,29 @@ void TestImageDocumentRuntimePlanExecutor::payloadRuntimePlansDispatchToOperatio
     QCOMPARE(recorded.direction, KiriView::NavigationDirection::Previous);
 
     recorded.clear();
+    executor.dispatchPlan(
+        ImageDocumentRuntimePlan { KiriView::ReportContainerNavigationListFailureOperation {
+            KiriView::ContainerNavigationListFailure {
+                localUrl(QStringLiteral("/books/a/")),
+                localUrl(QStringLiteral("/books/")),
+                KiriView::NavigationDirection::Next,
+                KiriView::ContainerNavigationListFailureKind::DirectoryListing,
+                QStringLiteral("provider failure"),
+                KiriView::ContainerNavigationListFailureSeverity::Diagnostic,
+            },
+        } });
+    QCOMPARE(
+        recorded.events, QStringList({ QStringLiteral("reportContainerNavigationListFailure") }));
+    QCOMPARE(recorded.url, localUrl(QStringLiteral("/books/a/")));
+    QCOMPARE(recorded.secondaryUrl, localUrl(QStringLiteral("/books/")));
+    QCOMPARE(recorded.direction, KiriView::NavigationDirection::Next);
+    QCOMPARE(
+        recorded.listFailureKind, KiriView::ContainerNavigationListFailureKind::DirectoryListing);
+    QCOMPARE(recorded.errorString, QStringLiteral("provider failure"));
+    QCOMPARE(
+        recorded.listFailureSeverity, KiriView::ContainerNavigationListFailureSeverity::Diagnostic);
+
+    recorded.clear();
     executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::LoadPageNavigationUrlOperation {
         KiriView::ImageDocumentPageTarget {
             localUrl(QStringLiteral("/next.png")),
@@ -412,6 +451,16 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
         KiriView::ReportContainerNavigationBoundaryOperation {
             KiriView::NavigationDirection::Next,
         },
+        KiriView::ReportContainerNavigationListFailureOperation {
+            KiriView::ContainerNavigationListFailure {
+                sourceUrl,
+                containerUrl,
+                KiriView::NavigationDirection::Next,
+                KiriView::ContainerNavigationListFailureKind::DirectoryListing,
+                QStringLiteral("provider failure"),
+                KiriView::ContainerNavigationListFailureSeverity::Diagnostic,
+            },
+        },
         KiriView::LoadPageNavigationUrlOperation {
             KiriView::ImageDocumentPageTarget {
                 sourceUrl,
@@ -465,6 +514,7 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
             QStringLiteral("finishEmptyContainerNavigation"),
             QStringLiteral("finishContainerNavigationLoadWithError"),
             QStringLiteral("reportContainerNavigationBoundary"),
+            QStringLiteral("reportContainerNavigationListFailure"),
             QStringLiteral("loadPageNavigationUrl"),
             QStringLiteral("cancelOpen"),
             QStringLiteral("clearDisplayedImageLocation"),

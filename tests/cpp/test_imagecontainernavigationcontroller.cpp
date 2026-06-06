@@ -155,15 +155,15 @@ KiriView::ImageContainerNavigationController::Callbacks controllerCallbacks(
         containerNavigationError
     = {},
     std::function<void(KiriView::NavigationDirection)> containerNavigationBoundary = {},
-    std::function<void(const QUrl &, const QUrl &, KiriView::NavigationDirection, const QString &)>
-        containerNavigationListError
+    std::function<void(const KiriView::ContainerNavigationListFailure &)>
+        containerNavigationListFailure
     = {})
 {
     return KiriView::ImageContainerNavigationController::Callbacks {
         [openContainerImage = std::move(openContainerImage),
             containerNavigationError = std::move(containerNavigationError),
             containerNavigationBoundary = std::move(containerNavigationBoundary),
-            containerNavigationListError = std::move(containerNavigationListError)](
+            containerNavigationListFailure = std::move(containerNavigationListFailure)](
             KiriView::ImageDocumentPageNavigationPlan plan) mutable {
             for (const KiriView::ImageDocumentPageNavigationEffect &effect : plan) {
                 if (const auto *openEffect
@@ -180,9 +180,7 @@ KiriView::ImageContainerNavigationController::Callbacks controllerCallbacks(
                     KiriView::invokeIfSet(containerNavigationBoundary, boundaryEffect->direction);
                 } else if (const auto *listErrorEffect
                     = std::get_if<KiriView::ReportContainerNavigationListErrorEffect>(&effect)) {
-                    KiriView::invokeIfSet(containerNavigationListError,
-                        listErrorEffect->currentContainerUrl, listErrorEffect->parentUrl,
-                        listErrorEffect->direction, listErrorEffect->errorString);
+                    KiriView::invokeIfSet(containerNavigationListFailure, listErrorEffect->failure);
                 }
             }
         },
@@ -377,12 +375,15 @@ void TestImageContainerNavigationController::forwardsAdjacentContainerListingErr
                 const QUrl &, ImageContainerOpenError, const QString &) { ++openErrorCount; },
             {},
             [&reportedCurrentContainerUrl, &reportedParentUrl, &reportedDirection, &diagnostic](
-                const QUrl &currentContainer, const QUrl &parent, NavigationDirection direction,
-                const QString &message) {
-                reportedCurrentContainerUrl = currentContainer;
-                reportedParentUrl = parent;
-                reportedDirection = direction;
-                diagnostic = message;
+                const KiriView::ContainerNavigationListFailure &failure) {
+                reportedCurrentContainerUrl = failure.currentContainerUrl;
+                reportedParentUrl = failure.parentUrl;
+                reportedDirection = failure.direction;
+                diagnostic = failure.diagnosticDetail;
+                QCOMPARE(
+                    failure.kind, KiriView::ContainerNavigationListFailureKind::DirectoryListing);
+                QCOMPARE(
+                    failure.severity, KiriView::ContainerNavigationListFailureSeverity::Diagnostic);
             }));
 
     controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);

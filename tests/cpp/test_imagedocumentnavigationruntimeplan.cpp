@@ -151,16 +151,32 @@ void TestImageDocumentNavigationRuntimePlan::containerBoundaryMapsToBoundaryOper
 
 void TestImageDocumentNavigationRuntimePlan::containerListErrorIsDiagnosticOnly()
 {
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
+    const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
+    const QString diagnostic = QStringLiteral("provider failure");
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
         KiriView::ReportContainerNavigationListErrorEffect {
-            localUrl(QStringLiteral("/books/a/")),
-            localUrl(QStringLiteral("/books/")),
-            KiriView::NavigationDirection::Next,
-            QStringLiteral("provider failure"),
+            KiriView::ContainerNavigationListFailure {
+                currentContainerUrl,
+                parentUrl,
+                KiriView::NavigationDirection::Next,
+                KiriView::ContainerNavigationListFailureKind::DirectoryListing,
+                diagnostic,
+                KiriView::ContainerNavigationListFailureSeverity::Diagnostic,
+            },
         },
     });
 
-    QVERIFY(plan.empty());
+    QVERIFY(hasOperationTypes(
+        plan, operationTypes<KiriView::ReportContainerNavigationListFailureOperation>()));
+    const KiriView::ContainerNavigationListFailure &failure
+        = operationAt<KiriView::ReportContainerNavigationListFailureOperation>(plan, 0).failure;
+    QCOMPARE(failure.currentContainerUrl, currentContainerUrl);
+    QCOMPARE(failure.parentUrl, parentUrl);
+    QCOMPARE(failure.direction, KiriView::NavigationDirection::Next);
+    QCOMPARE(failure.kind, KiriView::ContainerNavigationListFailureKind::DirectoryListing);
+    QCOMPARE(failure.diagnosticDetail, diagnostic);
+    QCOMPARE(failure.severity, KiriView::ContainerNavigationListFailureSeverity::Diagnostic);
 }
 
 void TestImageDocumentNavigationRuntimePlan::
