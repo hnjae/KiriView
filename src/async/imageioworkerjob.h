@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGEIOWORKERJOB_H
 #define KIRIVIEW_IMAGEIOWORKERJOB_H
 
-#include "async/imageasyncworker.h"
 #include "async/imageiojob.h"
+#include "async/imageworkerscheduler.h"
 
 #include <QObject>
 #include <utility>
@@ -21,7 +21,8 @@ namespace Detail {
 }
 
 template <typename Work, typename Finish>
-ImageIoJob startImageIoWorkerJob(QObject *context, QObject *receiver, Work work, Finish finish)
+ImageIoJob startImageIoWorkerJob(QObject *context, QObject *receiver,
+    const ImageWorkerScheduler &workerScheduler, Work work, Finish finish)
 {
     if (context == nullptr || receiver == nullptr) {
         std::forward<Finish>(finish)(std::forward<Work>(work)());
@@ -32,11 +33,26 @@ ImageIoJob startImageIoWorkerJob(QObject *context, QObject *receiver, Work work,
     ImageIoJob ioJob(token, Detail::cancelImageIoWorkerToken);
     const ImageIoJobCompletion completion = ioJob.completion();
 
-    runAsyncWorker(context, std::forward<Work>(work),
+    workerScheduler.run(context, std::forward<Work>(work),
         [completion, finish = std::forward<Finish>(finish)](auto result) mutable {
             completion.claimAndDelete([&]() mutable { finish(std::move(result)); });
         });
     return ioJob;
+}
+
+template <typename Work, typename Finish>
+ImageIoJob startImageIoWorkerJob(QObject *context, QObject *receiver, Work work, Finish finish)
+{
+    return startImageIoWorkerJob(context, receiver, ImageWorkerScheduler(),
+        std::forward<Work>(work), std::forward<Finish>(finish));
+}
+
+template <typename Work, typename Finish>
+ImageIoJob startImageIoWorkerJob(
+    QObject *receiver, const ImageWorkerScheduler &workerScheduler, Work work, Finish finish)
+{
+    return startImageIoWorkerJob(receiver, receiver, workerScheduler, std::forward<Work>(work),
+        std::forward<Finish>(finish));
 }
 
 template <typename Work, typename Finish>

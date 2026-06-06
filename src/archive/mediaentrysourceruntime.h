@@ -6,6 +6,7 @@
 
 #include "async/imageasyncticket.h"
 #include "async/imageiojob.h"
+#include "async/imageworkerscheduler.h"
 #include "decoding/imagedecodedependencies.h"
 #include "mediaentrysourcebackend.h"
 #include "mediaentrysourcecandidateloadstate.h"
@@ -20,7 +21,8 @@ class MediaEntrySourceRunner;
 class MediaEntrySourceRuntime final
 {
 public:
-    explicit MediaEntrySourceRuntime(QObject *context, MediaEntrySourceFactory sourceFactory = {});
+    explicit MediaEntrySourceRuntime(QObject *context, MediaEntrySourceFactory sourceFactory = {},
+        ImageWorkerScheduler workerScheduler = {});
     ~MediaEntrySourceRuntime();
 
     void clear();
@@ -44,6 +46,7 @@ private:
 
     QObject *m_context = nullptr;
     MediaEntrySourceFactory m_sourceFactory;
+    ImageWorkerScheduler m_workerScheduler;
     std::shared_ptr<MediaEntrySourceRunner> m_runner;
     MediaEntrySourceCandidateLoadState m_candidateLoadState;
     ImageAsyncTicket m_sourceGeneration;

@@ -48,9 +48,10 @@ void finishMediaEntrySourceDataResult(KiriView::MediaEntrySourceImageDataResult 
 
 namespace KiriView {
 MediaEntrySourceRuntime::MediaEntrySourceRuntime(
-    QObject *context, MediaEntrySourceFactory sourceFactory)
+    QObject *context, MediaEntrySourceFactory sourceFactory, ImageWorkerScheduler workerScheduler)
     : m_context(context)
     , m_sourceFactory(std::move(sourceFactory))
+    , m_workerScheduler(std::move(workerScheduler))
 {
 }
 
@@ -155,7 +156,7 @@ ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionImageData(QObject *recei
     std::shared_ptr<MediaEntrySourceRunner> runner = m_runner;
 
     return startImageIoWorkerJob(
-        m_context, receiver,
+        m_context, receiver, m_workerScheduler,
         [runner = std::move(runner), imageUrl]() { return runner->loadImageData(imageUrl); },
         [generation, this, callback = std::move(callback),
             errorCallback = std::move(errorCallback)](
@@ -176,7 +177,7 @@ void MediaEntrySourceRuntime::startCandidateLoad(MediaEntrySourceCandidateLoadBa
     }
 
     std::shared_ptr<MediaEntrySourceRunner> runner = m_runner;
-    runAsyncWorker(
+    m_workerScheduler.run(
         m_context,
         [runner = std::move(runner)]() { return runner->loadImageDocumentPageCandidates(); },
         [this, batch](MediaEntrySourceCandidatesResult result) mutable {
