@@ -99,6 +99,9 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
             } else if constexpr (std::is_same_v<Operation,
                                      ReportContainerNavigationBoundaryOperation>) {
                 run(m_operations.navigation.reportContainerNavigationBoundary, payload.direction);
+            } else if constexpr (std::is_same_v<Operation,
+                                     ReportContainerNavigationListFailureOperation>) {
+                run(m_operations.navigation.reportContainerNavigationListFailure, payload.failure);
             } else if constexpr (std::is_same_v<Operation, LoadPageNavigationUrlOperation>) {
                 run(m_operations.navigation.loadPageNavigationUrl, payload.target,
                     payload.preserveTwoPageSpreadTransition);

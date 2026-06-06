@@ -16,10 +16,12 @@
 #include "imageopencontroller.h"
 #include "localization/activenavigationboundarytext.h"
 #include "navigation/imagedocumentpagenavigationservice.h"
+#include "navigation/navigationlogging.h"
 #include "presentation/imagepagesurfacecontroller.h"
 #include "presentation/imagepresentationruntime.h"
 #include "presentation/imagespreadpresentationcontroller.h"
 
+#include <QDebug>
 #include <QObject>
 #include <QUrl>
 #include <optional>
@@ -228,6 +230,15 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
         = [this](NavigationDirection direction) {
               invokeIfSet(m_callbacks.containerNavigationBoundaryReached,
                   containerNavigationBoundaryFeedbackText(direction));
+          };
+    operations.navigation.reportContainerNavigationListFailure
+        = [](const ContainerNavigationListFailure &failure) {
+              qCDebug(kiriviewNavigationLog)
+                  << "container navigation listing failed"
+                  << "currentContainerUrl" << failure.currentContainerUrl << "parentUrl"
+                  << failure.parentUrl << "direction" << static_cast<int>(failure.direction)
+                  << "kind" << static_cast<int>(failure.kind) << "detail"
+                  << failure.diagnosticDetail;
           };
     operations.navigation.loadPageNavigationUrl
         = [this](const ImageDocumentPageTarget &target, bool preserveTwoPageSpreadTransition) {

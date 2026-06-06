@@ -69,6 +69,9 @@ struct FinishContainerNavigationLoadWithErrorOperation {
 struct ReportContainerNavigationBoundaryOperation {
     NavigationDirection direction = NavigationDirection::Next;
 };
+struct ReportContainerNavigationListFailureOperation {
+    ContainerNavigationListFailure failure;
+};
 struct LoadPageNavigationUrlOperation {
     ImageDocumentPageTarget target;
     bool preserveTwoPageSpreadTransition = false;
@@ -110,11 +113,12 @@ using ImageDocumentRuntimeOperation = std::variant<CancelFileDeletionOperation,
     CancelContainerNavigationOperation, CancelAllNavigationOperation, ClearPageNavigationOperation,
     UpdatePageNavigationOperation, LoadUrlOperation, LoadContainerImageOperation,
     FinishEmptyContainerNavigationOperation, FinishContainerNavigationLoadWithErrorOperation,
-    ReportContainerNavigationBoundaryOperation, LoadPageNavigationUrlOperation, CancelOpenOperation,
-    ClearDisplayedImageLocationOperation, ClearPresentationImageOperation,
-    ClearLoadingContainerNavigationUrlOperation, SetLoadingContainerNavigationUrlOperation,
-    SetContainerNavigationUrlOperation, PrepareSourceLoadOperation, SetSourceUrlOperation,
-    BeginOpenOperation, SetErrorStringOperation, FinishEmptySourceLoadOperation>;
+    ReportContainerNavigationBoundaryOperation, ReportContainerNavigationListFailureOperation,
+    LoadPageNavigationUrlOperation, CancelOpenOperation, ClearDisplayedImageLocationOperation,
+    ClearPresentationImageOperation, ClearLoadingContainerNavigationUrlOperation,
+    SetLoadingContainerNavigationUrlOperation, SetContainerNavigationUrlOperation,
+    PrepareSourceLoadOperation, SetSourceUrlOperation, BeginOpenOperation, SetErrorStringOperation,
+    FinishEmptySourceLoadOperation>;
 
 using ImageDocumentRuntimePlan = std::vector<ImageDocumentRuntimeOperation>;
 

@@ -104,10 +104,14 @@ void ImageContainerNavigationController::finishContainerNavigationListWithError(
 
     reportNavigationPlan(ImageDocumentPageNavigationPlan {
         ReportContainerNavigationListErrorEffect {
-            currentContainerUrl,
-            parentUrl,
-            direction,
-            errorString,
+            ContainerNavigationListFailure {
+                currentContainerUrl,
+                parentUrl,
+                direction,
+                ContainerNavigationListFailureKind::DirectoryListing,
+                errorString,
+                ContainerNavigationListFailureSeverity::Diagnostic,
+            },
         },
     });
 }

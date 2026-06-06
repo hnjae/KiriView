@@ -53,8 +53,9 @@ void appendNavigationEffectRuntimeOperation(KiriView::ImageDocumentRuntimePlan &
                 });
             } else if constexpr (std::is_same_v<Effect,
                                      KiriView::ReportContainerNavigationListErrorEffect>) {
-                static_cast<void>(payload);
-                return;
+                plan.push_back(KiriView::ReportContainerNavigationListFailureOperation {
+                    payload.failure,
+                });
             } else if constexpr (std::is_same_v<Effect,
                                      KiriView::ClearCurrentImageDocumentPageNavigationEffect>) {
                 KiriView::ImageDocumentRuntimePlan clearPlan

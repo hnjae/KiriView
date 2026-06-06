@@ -35,10 +35,7 @@ struct ReportContainerNavigationBoundaryEffect {
 };
 
 struct ReportContainerNavigationListErrorEffect {
-    QUrl currentContainerUrl;
-    QUrl parentUrl;
-    NavigationDirection direction = NavigationDirection::Next;
-    QString errorString;
+    ContainerNavigationListFailure failure;
 };
 
 struct ClearCurrentImageDocumentPageNavigationEffect {
