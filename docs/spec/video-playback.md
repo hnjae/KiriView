@@ -62,6 +62,8 @@ The top-level document session dispatches adjacent Previous and Next through dir
 
 Opening a video starts playback automatically.
 
+When a video load or backend error is superseded by a later accepted non-error playback state for the same video, KiriView clears the public video error text. Public video states such as Loading, Ready, or Null must not expose stale error text from an earlier failed backend state.
+
 Video mode shows a video viewport and a Breeze-style playback control panel at the bottom edge of the video viewport.
 
 The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, the total supported media item count for the ordinary direct media URL scope when that list is known, and the same trailing control order as image mode, all from the document session's active navigation projection.
