@@ -5,6 +5,7 @@
 #define KIRIVIEW_THUMBNAILGENERATION_H
 
 #include "async/imageiojob.h"
+#include "async/imageworkerscheduler.h"
 #include "location/imagelocation.h"
 #include "session/activenavigationthumbnaildemand.h"
 #include "session/activenavigationthumbnailprojection.h"
@@ -50,7 +51,8 @@ using ThumbnailGenerationCallback = std::function<void(ThumbnailGenerationResult
 using ThumbnailGenerationProvider
     = std::function<ImageIoJob(QObject *, ThumbnailGenerationRequest, ThumbnailGenerationCallback)>;
 
-ThumbnailGenerationProvider defaultThumbnailGenerationProvider();
+ThumbnailGenerationProvider defaultThumbnailGenerationProvider(
+    ImageWorkerScheduler workerScheduler = {});
 }
 
 #endif

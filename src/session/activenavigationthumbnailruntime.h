@@ -81,7 +81,7 @@ public:
         ThumbnailCacheLookupProvider lookupProvider = {},
         std::shared_ptr<ThumbnailImageStore> imageStore = {},
         ThumbnailGenerationProvider generationProvider = {},
-        ThumbnailSourceAdapter sourceAdapter = {});
+        ThumbnailSourceAdapter sourceAdapter = {}, ImageWorkerScheduler workerScheduler = {});
     ~ActiveNavigationThumbnailRuntime();
 
     QAbstractListModel *model() const;

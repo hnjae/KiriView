@@ -406,12 +406,13 @@ KiriView::ThumbnailGenerationResult generateThumbnail(
 }
 
 namespace KiriView {
-ThumbnailGenerationProvider defaultThumbnailGenerationProvider()
+ThumbnailGenerationProvider defaultThumbnailGenerationProvider(ImageWorkerScheduler workerScheduler)
 {
-    return [](QObject *receiver, ThumbnailGenerationRequest request,
-               ThumbnailGenerationCallback callback) {
+    return [workerScheduler = std::move(workerScheduler)](QObject *receiver,
+               ThumbnailGenerationRequest request, ThumbnailGenerationCallback callback) {
         return startImageIoWorkerJob(
-            receiver, [request = std::move(request)]() { return generateThumbnail(request); },
+            receiver, workerScheduler,
+            [request = std::move(request)]() { return generateThumbnail(request); },
             [callback = std::move(callback)](ThumbnailGenerationResult result) mutable {
                 if (callback) {
                     callback(std::move(result));

@@ -54,13 +54,14 @@ ThumbnailSourceAdapter defaultThumbnailSourceAdapter()
 
 ActiveNavigationThumbnailRuntime::ActiveNavigationThumbnailRuntime(QObject *owner,
     ThumbnailCacheLookupProvider lookupProvider, std::shared_ptr<ThumbnailImageStore> imageStore,
-    ThumbnailGenerationProvider generationProvider, ThumbnailSourceAdapter sourceAdapter)
+    ThumbnailGenerationProvider generationProvider, ThumbnailSourceAdapter sourceAdapter,
+    ImageWorkerScheduler workerScheduler)
     : m_owner(owner)
     , m_model(std::make_unique<ActiveNavigationThumbnailModel>(owner))
-    , m_lookupProvider(
-          lookupProvider ? std::move(lookupProvider) : defaultThumbnailCacheLookupProvider())
-    , m_generationProvider(
-          generationProvider ? std::move(generationProvider) : defaultThumbnailGenerationProvider())
+    , m_lookupProvider(lookupProvider ? std::move(lookupProvider)
+                                      : defaultThumbnailCacheLookupProvider(workerScheduler))
+    , m_generationProvider(generationProvider ? std::move(generationProvider)
+                                              : defaultThumbnailGenerationProvider(workerScheduler))
     , m_sourceAdapter(sourceAdapter ? std::move(sourceAdapter) : defaultThumbnailSourceAdapter())
     , m_imageStore(std::move(imageStore))
 {

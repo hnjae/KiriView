@@ -142,7 +142,8 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           std::move(dependencies.activeNavigationThumbnailImageStore),
           std::move(dependencies.activeNavigationThumbnailGenerationProvider),
           documentSessionThumbnailSourceAdapter(
-              &m_imageDocument, std::move(dependencies.activeNavigationThumbnailSourceAdapter))))
+              &m_imageDocument, std::move(dependencies.activeNavigationThumbnailSourceAdapter)),
+          std::move(dependencies.activeNavigationThumbnailWorkerScheduler)))
     , m_directMediaNavigationRuntime(dependencies.directMediaNavigationCandidateProvider)
     , m_directMediaDeletionCandidateRuntime(
           std::move(dependencies.directMediaNavigationCandidateProvider))
