@@ -5,6 +5,7 @@
 #include "async/imageworkerscheduler.h"
 #include "candidate_test_support.h"
 #include "decoding/imagedecodedependencies.h"
+#include "document/imagedocumentruntimedependencies.h"
 #include "location/imagedocumentlocation.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "system/filedeletion.h"
@@ -67,6 +68,8 @@ class TestRuntimeProviderDefaults : public QObject
 
 private Q_SLOTS:
     void candidateProviderDefaultsFillMissingLoadersAndPreserveOverrides();
+    void candidateProviderDefaultsBindOpenedCollectionLoaderToWorkerScheduler();
+    void imageDocumentRuntimeDependenciesBindMediaEntryStoreToWorkerScheduler();
     void decodeDependencyDefaultsFillMissingFunctionsAndPreserveOverrides();
     void decodeDependencyDefaultsBindDataLoaderToWorkerScheduler();
     void decodeDependencyDefaultsBindThumbnailLookupToWorkerScheduler();
@@ -104,6 +107,78 @@ void TestRuntimeProviderDefaults::candidateProviderDefaultsFillMissingLoadersAnd
     resolved.directoryImageDocumentPageChanges(nullptr, QUrl(), {}, {});
     QCOMPARE(directoryLoadCount, 1);
     QCOMPARE(directoryChangeSubscriptionCount, 1);
+}
+
+void TestRuntimeProviderDefaults::
+    candidateProviderDefaultsBindOpenedCollectionLoaderToWorkerScheduler()
+{
+    ManualImageWorkerScheduler workerScheduler;
+    KiriView::ImageDocumentPageCandidateProvider resolved
+        = KiriView::imageDocumentPageNavigationCandidateProviderWithDefaults(
+            KiriView::ImageDocumentPageCandidateProvider {}, workerScheduler.scheduler());
+    QVERIFY(resolved.openedCollectionCandidates);
+
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(
+            localUrl(QStringLiteral("/books/book.cbz")));
+    QVERIFY(archiveCollection.has_value());
+
+    int callbackCount = 0;
+    int errorCallbackCount = 0;
+    KiriView::ImageIoJob job = resolved.openedCollectionCandidates(
+        this, *archiveCollection,
+        [&callbackCount](std::vector<KiriView::ImageDocumentPageCandidate>) { ++callbackCount; },
+        [&errorCallbackCount](QString) { ++errorCallbackCount; });
+
+    QCOMPARE(workerScheduler.scheduleCount(), std::size_t(1));
+    QCOMPARE(callbackCount, 0);
+    QCOMPARE(errorCallbackCount, 0);
+    QVERIFY(job.isActive());
+
+    job.cancel();
+    workerScheduler.runWork(0);
+    workerScheduler.finish(0);
+
+    QVERIFY(!job.isActive());
+    QCOMPARE(callbackCount, 0);
+    QCOMPARE(errorCallbackCount, 0);
+}
+
+void TestRuntimeProviderDefaults::
+    imageDocumentRuntimeDependenciesBindMediaEntryStoreToWorkerScheduler()
+{
+    ManualImageWorkerScheduler workerScheduler;
+    KiriView::ImageDocumentRuntimeDependencyOverrides overrides;
+    overrides.imageDecode.workerScheduler = workerScheduler.scheduler();
+
+    KiriView::ImageDocumentRuntimeDependencies resolved
+        = KiriView::resolveImageDocumentRuntimeDependencies(std::move(overrides), this);
+    QVERIFY(resolved.candidateProvider.openedCollectionCandidates);
+
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(
+            localUrl(QStringLiteral("/books/book.cbz")));
+    QVERIFY(archiveCollection.has_value());
+
+    int callbackCount = 0;
+    int errorCallbackCount = 0;
+    KiriView::ImageIoJob job = resolved.candidateProvider.openedCollectionCandidates(
+        this, *archiveCollection,
+        [&callbackCount](std::vector<KiriView::ImageDocumentPageCandidate>) { ++callbackCount; },
+        [&errorCallbackCount](QString) { ++errorCallbackCount; });
+
+    QCOMPARE(workerScheduler.scheduleCount(), std::size_t(1));
+    QCOMPARE(callbackCount, 0);
+    QCOMPARE(errorCallbackCount, 0);
+    QVERIFY(job.isActive());
+
+    job.cancel();
+    workerScheduler.runWork(0);
+    workerScheduler.finish(0);
+
+    QVERIFY(!job.isActive());
+    QCOMPARE(callbackCount, 0);
+    QCOMPARE(errorCallbackCount, 0);
 }
 
 void TestRuntimeProviderDefaults::decodeDependencyDefaultsFillMissingFunctionsAndPreserveOverrides()
