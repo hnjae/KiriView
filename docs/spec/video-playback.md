@@ -26,6 +26,8 @@ KiriView advertises direct video support through the desktop file for the MIME t
 
 KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend, such as through KIOFuse or another KIO-backed resolver. Resolution succeeds only when the resolved playback URL can be consumed by the video backend; otherwise the video load fails while keeping the original direct media URL as the public source and error context.
 
+When direct video playback URL resolution fails, the user-facing error text is a stable KiriView message that the selected video could not be opened. Backend, DBus, KIO, and Qt resolver messages are internal diagnostics and are not displayed as the primary error text.
+
 Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent direct media navigation, deletion target, error context, and direct-media versus opened-collection routing decisions remain based on the original direct media URL.
 
 Resolver-local playback URLs are video-only. Opening a direct image after a direct video must route the image through the image document with the original image URL, not through the previous video playback URL or another KIOFuse local playback URL.
