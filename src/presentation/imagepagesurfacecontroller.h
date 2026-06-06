@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEPAGESURFACECONTROLLER_H
 
 #include "async/imageasyncticket.h"
+#include "async/imageworkerscheduler.h"
 #include "cache/imagecachepolicy.h"
 #include "document/imagedocumenttypes.h"
 #include "presentation/imageanimationplaybacksource.h"
@@ -40,7 +41,8 @@ public:
 
     ImagePageSurfaceController(QObject *context, Callbacks callbacks,
         ImageCacheBudgets cacheBudgets, std::shared_ptr<DisplayImageStore> displayImageStore = {},
-        DisplayedPageRole pageRole = DisplayedPageRole::Primary);
+        DisplayedPageRole pageRole = DisplayedPageRole::Primary,
+        ImageWorkerScheduler workerScheduler = {});
     ~ImagePageSurfaceController();
 
     QSize imageSize() const;
@@ -92,6 +94,7 @@ private:
     qsizetype m_displayImageByteBudget = 0;
     std::shared_ptr<DisplayImageStore> m_displayImageStore;
     DisplayedPageRole m_pageRole = DisplayedPageRole::Primary;
+    ImageWorkerScheduler m_workerScheduler;
     QSize m_imageSize;
     quint64 m_imageRevision = 0;
     bool m_hasImage = false;

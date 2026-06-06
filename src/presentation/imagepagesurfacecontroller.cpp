@@ -3,7 +3,6 @@
 
 #include "presentation/imagepagesurfacecontroller.h"
 
-#include "async/imageasyncworker.h"
 #include "async/imagecallback.h"
 #include "presentation/imageanimationplayer.h"
 #include "rendering/imagerendering.h"
@@ -95,7 +94,8 @@ namespace {
 
 ImagePageSurfaceController::ImagePageSurfaceController(QObject *context,
     ImagePageSurfaceController::Callbacks callbacks, ImageCacheBudgets cacheBudgets,
-    std::shared_ptr<DisplayImageStore> displayImageStore, DisplayedPageRole pageRole)
+    std::shared_ptr<DisplayImageStore> displayImageStore, DisplayedPageRole pageRole,
+    ImageWorkerScheduler workerScheduler)
     : m_callbacks(std::move(callbacks))
     , m_context(context)
     , m_predecodeCacheByteBudget(cacheBudgets.predecodeCacheByteBudget)
@@ -103,6 +103,7 @@ ImagePageSurfaceController::ImagePageSurfaceController(QObject *context,
     , m_displayImageStore(
           displayImageStore == nullptr ? sharedDisplayImageStore() : std::move(displayImageStore))
     , m_pageRole(pageRole)
+    , m_workerScheduler(std::move(workerScheduler))
 {
     m_animationPlayer = std::make_unique<ImageAnimationPlayer>(
         context,
@@ -588,7 +589,7 @@ void ImagePageSurfaceController::scheduleRasterDisplayRefinement(
     const quint64 ticket = m_rasterDisplayRefinementTicket.next();
     demandKey.renderRevision = ticket;
     m_rasterDisplayRefinementDemand = demandKey;
-    runAsyncWorker(
+    m_workerScheduler.run(
         m_context,
         [work = RasterDisplayRefinementWork {
              ticket,
