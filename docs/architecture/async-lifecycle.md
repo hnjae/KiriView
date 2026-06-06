@@ -14,6 +14,8 @@ Worker-thread and Rust async work return plain payloads only. Payloads crossing 
 
 Worker-backed owners must receive scheduling through an injectable dependency port when tests need deterministic lifecycle control. Production adapters may use the global Qt thread pool, but runtime owners such as image decode jobs and opened-collection media entry runtimes should depend on a scheduler contract that preserves QObject-guarded queued delivery and stale-completion acceptance instead of calling global worker primitives directly.
 
+Default worker-backed providers filled from a dependency struct must capture that struct's resolved scheduler when one is present. Resolving a default data loader, thumbnail cache lookup, or thumbnail generation provider must not silently bypass the scheduler dependency carried by the consuming runtime.
+
 Timer-backed owners must receive monotonic time and timer firing through dependency ports when behavior depends on elapsed time. Production adapters may use `QElapsedTimer` and `QTimer`, but runtime state should consume plain timestamps and scheduled callback events so tests can advance time or fire callbacks without waiting on wall-clock delays.
 
 QML may own UI-local timers and physical item transients, but it must not use delayed callbacks to reconcile durable domain state. If a delayed UI callback observes public session state, the C++ owner must already have published a coherent snapshot for that state.
