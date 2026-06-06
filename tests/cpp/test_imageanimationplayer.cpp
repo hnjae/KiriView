@@ -49,6 +49,11 @@ public:
     }
 
     void start() override { m_state->active = true; }
+    void start(int intervalMsec) override
+    {
+        m_state->intervalMsec = intervalMsec;
+        start();
+    }
     void stop() override { m_state->active = false; }
 
 private:
@@ -290,9 +295,10 @@ void TestImageAnimationPlayer::restartableSourcesEmitFirstFrameOnLoopRestart()
     player.start(std::make_unique<FakePlaybackSource>(
         QSize(1, 1), std::vector<QSize> { QSize(2, 1) }, 1, true, stats));
 
+    QCOMPARE(timerScheduler.timerCount(), std::size_t(1));
     timerScheduler.fireAt(0);
-    timerScheduler.fireAt(1);
-    timerScheduler.fireAt(2);
+    timerScheduler.fireAt(0);
+    timerScheduler.fireAt(0);
 
     QCOMPARE(stats->openCount, 2);
     QCOMPARE(emittedFrameSizes.at(0), QSize(2, 1));
@@ -313,8 +319,9 @@ void TestImageAnimationPlayer::nonRestartableSourcesDoNotReopenAtSequenceEnd()
     player.start(std::make_unique<FakePlaybackSource>(
         QSize(1, 1), std::vector<QSize> { QSize(2, 1) }, -1, false, stats));
 
+    QCOMPARE(timerScheduler.timerCount(), std::size_t(1));
     timerScheduler.fireAt(0);
-    timerScheduler.fireAt(1);
+    timerScheduler.fireAt(0);
 
     QCOMPARE(stats->openCount, 1);
     QCOMPARE(emittedFrameSizes.size(), std::size_t(1));
@@ -413,8 +420,9 @@ void TestImageAnimationPlayer::restartOpenErrorsAreReported()
         },
         true, stats));
 
+    QCOMPARE(timerScheduler.timerCount(), std::size_t(1));
     timerScheduler.fireAt(0);
-    timerScheduler.fireAt(1);
+    timerScheduler.fireAt(0);
 
     QCOMPARE(errorString, QStringLiteral("restart failed"));
     QCOMPARE(stats->openCount, 2);

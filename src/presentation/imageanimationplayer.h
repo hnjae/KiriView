@@ -4,11 +4,11 @@
 #ifndef KIRIVIEW_IMAGEANIMATIONPLAYER_H
 #define KIRIVIEW_IMAGEANIMATIONPLAYER_H
 
+#include "async/timerscheduler.h"
 #include "presentation/imageanimationplaybacksource.h"
 #include "presentation/imageanimationpolicy.h"
 
 #include <QImage>
-#include <QTimer>
 #include <functional>
 #include <memory>
 
@@ -24,7 +24,8 @@ public:
     using PlaybackStoppedCallback = std::function<void()>;
 
     ImageAnimationPlayer(QObject *context, FrameReadyCallback frameReady,
-        ErrorCallback animationError, PlaybackStoppedCallback playbackStopped = {});
+        ErrorCallback animationError, PlaybackStoppedCallback playbackStopped = {},
+        TimerScheduler timerScheduler = {});
     ~ImageAnimationPlayer();
 
     void start(ImageAnimationPlaybackRequest request);
@@ -43,8 +44,11 @@ private:
     FrameReadyCallback m_frameReady;
     ErrorCallback m_animationError;
     PlaybackStoppedCallback m_playbackStopped;
+    QObject *m_context = nullptr;
+    TimerScheduler m_timerScheduler;
+    std::unique_ptr<RuntimeTimerHandle> m_frameTimer;
     std::unique_ptr<ImageAnimationPlaybackSource> m_source;
-    QTimer m_timer;
+    bool m_frameScheduled = false;
     AnimationPlaybackState m_playbackState;
 };
 }

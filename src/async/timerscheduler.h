@@ -19,6 +19,11 @@ public:
     virtual ~RuntimeTimerHandle() = default;
 
     virtual void start() = 0;
+    virtual void start(int intervalMsec)
+    {
+        Q_UNUSED(intervalMsec);
+        start();
+    }
     virtual void stop() = 0;
 };
 
@@ -51,6 +56,7 @@ namespace Detail {
         }
 
         void start() override { m_timer.start(); }
+        void start(int intervalMsec) override { m_timer.start(intervalMsec); }
         void stop() override { m_timer.stop(); }
 
     private:

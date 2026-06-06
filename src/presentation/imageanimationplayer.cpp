@@ -11,13 +11,18 @@
 
 namespace KiriView {
 ImageAnimationPlayer::ImageAnimationPlayer(QObject *context, FrameReadyCallback frameReady,
-    ErrorCallback animationError, PlaybackStoppedCallback playbackStopped)
+    ErrorCallback animationError, PlaybackStoppedCallback playbackStopped,
+    TimerScheduler timerScheduler)
     : m_frameReady(std::move(frameReady))
     , m_animationError(std::move(animationError))
     , m_playbackStopped(std::move(playbackStopped))
+    , m_context(context)
+    , m_timerScheduler(timerSchedulerWithDefaults(std::move(timerScheduler)))
 {
-    m_timer.setSingleShot(true);
-    QObject::connect(&m_timer, &QTimer::timeout, context, [this]() { advanceFrame(); });
+    m_frameTimer = m_timerScheduler.singleShotTimer(m_context, 0, [this]() {
+        m_frameScheduled = false;
+        advanceFrame();
+    });
 }
 
 ImageAnimationPlayer::~ImageAnimationPlayer() { stop(); }
@@ -73,7 +78,14 @@ void ImageAnimationPlayer::advanceFrame()
 
 void ImageAnimationPlayer::scheduleNextFrame(int delay)
 {
-    m_timer.start(normalizedAnimationFrameDelay(delay));
+    if (m_frameTimer == nullptr) {
+        m_frameTimer = m_timerScheduler.singleShotTimer(m_context, 0, [this]() {
+            m_frameScheduled = false;
+            advanceFrame();
+        });
+    }
+    m_frameScheduled = true;
+    m_frameTimer->start(normalizedAnimationFrameDelay(delay));
 }
 
 void ImageAnimationPlayer::applyFramePlan(AnimationFramePlan plan, int delay)
@@ -114,14 +126,17 @@ void ImageAnimationPlayer::handleSequenceEnd()
 
 void ImageAnimationPlayer::clearPlaybackState()
 {
-    m_timer.stop();
+    if (m_frameTimer != nullptr) {
+        m_frameTimer->stop();
+    }
+    m_frameScheduled = false;
     m_source.reset();
     m_playbackState.clear();
 }
 
 void ImageAnimationPlayer::notifyStoppedIfActive()
 {
-    const bool wasActive = m_source != nullptr || m_timer.isActive();
+    const bool wasActive = m_source != nullptr || m_frameScheduled;
     clearPlaybackState();
     if (wasActive) {
         invokeIfSet(m_playbackStopped);
