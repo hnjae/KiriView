@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::byteio::read_be_u32;
+use crate::fileextension::extension_for_file_name;
 
 pub(crate) const RAW_IMAGE_EXTENSIONS: &[&str] = &[
     "3fr", "arw", "bay", "bmq", "cr2", "cr3", "crw", "cs1", "cs2", "dcr", "dng", "erf", "fff",
@@ -433,15 +434,6 @@ fn file_name_has_svg_extension(name: &str) -> bool {
 fn file_name_has_raw_extension(name: &str) -> bool {
     extension_for_file_name(name)
         .is_some_and(|extension| RAW_IMAGE_EXTENSIONS.contains(&extension.as_str()))
-}
-
-pub(crate) fn extension_for_file_name(name: &str) -> Option<String> {
-    let dot_index = name.rfind('.')?;
-    if dot_index == 0 || dot_index == name.len() - 1 {
-        return None;
-    }
-
-    Some(name[dot_index + 1..].to_ascii_lowercase())
 }
 
 #[cfg(test)]

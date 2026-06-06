@@ -12,6 +12,7 @@ src/policy/byteio.rs
 src/policy/cachebudget.rs
 src/policy/thumbnailcache.rs
 src/policy/embeddedmetadata.rs
+src/policy/fileextension.rs
 src/policy/heifcontainer.rs
 src/policy/heiftiling.rs
 src/policy/imageactionavailability.rs

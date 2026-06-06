@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+use crate::fileextension::extension_for_file_name;
+
 struct ArchiveOpenProfile {
     extension: &'static str,
     mime_types: &'static [&'static str],
@@ -301,15 +303,6 @@ fn unique_sorted_strings(values: impl IntoIterator<Item = &'static str>) -> Vec<
     strings.sort();
     strings.dedup();
     strings
-}
-
-fn extension_for_file_name(name: &str) -> Option<String> {
-    let dot_index = name.rfind('.')?;
-    if dot_index == 0 || dot_index == name.len() - 1 {
-        return None;
-    }
-
-    Some(name[dot_index + 1..].to_ascii_lowercase())
 }
 
 #[cfg(test)]

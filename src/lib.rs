@@ -30,6 +30,8 @@ mod bmff;
 mod byteio;
 #[path = "policy/embeddedmetadata.rs"]
 mod embeddedmetadata;
+#[path = "policy/fileextension.rs"]
+mod fileextension;
 #[path = "policy/heifcontainer.rs"]
 mod heifcontainer;
 #[path = "policy/heiftiling.rs"]

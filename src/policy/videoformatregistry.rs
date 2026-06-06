@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use crate::imageinputclassification::extension_for_file_name;
+use crate::fileextension::extension_for_file_name;
 
 struct VideoFormat {
     extensions: &'static [&'static str],

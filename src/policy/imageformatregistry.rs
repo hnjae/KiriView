@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::archiveformat::supported_comic_book_archive_extensions;
-use crate::imageinputclassification::{RAW_IMAGE_EXTENSIONS, extension_for_file_name};
+use crate::fileextension::extension_for_file_name;
+use crate::imageinputclassification::RAW_IMAGE_EXTENSIONS;
 
 struct ImageFormat {
     extensions: &'static [&'static str],
