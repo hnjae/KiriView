@@ -15,6 +15,12 @@ namespace Actions = KiriView::ApplicationActions;
 
 namespace {
 constexpr double keyboardPanDistance = 64.0;
+
+bool sharedImagePannabilityActionGate(
+    const KiriView::DocumentSessionActionAvailabilityFacts &facts, bool viewportLocalPannable)
+{
+    return facts.imageReady && viewportLocalPannable;
+}
 }
 
 namespace KiriView::ApplicationActions {
@@ -390,7 +396,7 @@ ImageActionAvailabilityInput KiriViewApplication::imageActionAvailabilityInput()
         m_documentSession != nullptr && m_documentSession->fileDeletionInProgress(),
         m_helpDialogOpen,
         m_textInputFocused,
-        facts.imageReady && m_imagePannable,
+        sharedImagePannabilityActionGate(facts, m_imagePannable),
         facts.containerNavigationAvailable,
         facts.twoPageModeActive,
         facts.twoPageModeAvailable,

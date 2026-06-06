@@ -105,7 +105,7 @@ StatefulApp.StatefulWindow {
     }
 
     function publishActionUiState() {
-        kiriApplication.updateActionUiGateSnapshot(root.helpDialogOpen, root.toolbarTextInputFocused(), page.imageMode && mediaWorkspaceHost.imageInteractionSurface.imagePannable, mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, !root.helpDialogOpen);
+        kiriApplication.updateActionUiGateSnapshot(root.helpDialogOpen, root.toolbarTextInputFocused(), mediaWorkspaceHost.imageInteractionSurface.imagePannable, mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, !root.helpDialogOpen);
     }
 
     minimumWidth: Kirigami.Units.gridUnit * 14
