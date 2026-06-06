@@ -18,6 +18,8 @@ Default worker-backed providers filled from a dependency struct must capture tha
 
 Session runtime dependencies own active-navigation thumbnail worker scheduling. If the session resolves default thumbnail lookup or generation providers, it must bind them to the session's thumbnail worker scheduler before constructing the thumbnail runtime.
 
+Image page-surface owners must schedule raster display refinement through an injected worker scheduler. Refinement completions carry the display-source demand key back to the page-surface owner, which accepts or rejects them before publishing a new provider entry.
+
 Timer-backed owners must receive monotonic time and timer firing through dependency ports when behavior depends on elapsed time. Production adapters may use `QElapsedTimer` and `QTimer`, but runtime state should consume plain timestamps and scheduled callback events so tests can advance time or fire callbacks without waiting on wall-clock delays.
 
 QML may own UI-local timers and physical item transients, but it must not use delayed callbacks to reconcile durable domain state. If a delayed UI callback observes public session state, the C++ owner must already have published a coherent snapshot for that state.
