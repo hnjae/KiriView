@@ -117,39 +117,47 @@ void TestKiriVideoDocument::videoOutputCanDetachAndToleratesDestroyedOutput()
     session.setSourceUrl(sourceUrl);
     QCOMPARE(session.documentKind(), KiriDocumentSession::DocumentKind::Video);
     const quint64 staleProjectionRevision = session.publicProjectionRevision();
+    const QString staleProjectionClaimToken = session.nextVideoOutputSurfaceClaimToken();
 
     session.setSourceUrl(replacementSourceUrl);
     QVERIFY(session.publicProjectionRevision() > staleProjectionRevision);
-    QVERIFY(!session.reportVideoOutputSurfaceClaim(
-        1, staleProjectionRevision, &staleSurfaceOwner, output, true, QRectF(), QRectF()));
+    QVERIFY(!session.reportVideoOutputSurfaceClaim(staleProjectionClaimToken,
+        staleProjectionRevision, &staleSurfaceOwner, output, true, QRectF(), QRectF()));
     QCOMPARE(document.videoOutput(), nullptr);
     QCOMPARE(videoOutputSpy.count(), 0);
 
-    QVERIFY(!session.reportVideoOutputSurfaceClaim(
-        1, session.publicProjectionRevision(), nullptr, output, true, QRectF(), QRectF()));
+    QVERIFY(!session.reportVideoOutputSurfaceClaim(session.nextVideoOutputSurfaceClaimToken(),
+        session.publicProjectionRevision(), nullptr, output, true, QRectF(), QRectF()));
     QCOMPARE(document.videoOutput(), nullptr);
     QCOMPARE(videoOutputSpy.count(), 0);
 
-    QVERIFY(session.reportVideoOutputSurfaceClaim(
-        2, session.publicProjectionRevision(), &surfaceOwner, output, true, QRectF(), QRectF()));
-    session.reportVideoOutputSurfaceClaim(1, session.publicProjectionRevision(), &staleSurfaceOwner,
-        nullptr, false, QRectF(), QRectF());
+    QVERIFY(!session.reportVideoOutputSurfaceClaim(QStringLiteral("not-a-claim-token"),
+        session.publicProjectionRevision(), &surfaceOwner, output, true, QRectF(), QRectF()));
+    QCOMPARE(document.videoOutput(), nullptr);
+    QCOMPARE(videoOutputSpy.count(), 0);
+
+    const QString staleSameOwnerDetachToken = session.nextVideoOutputSurfaceClaimToken();
+    const QString activeAttachToken = session.nextVideoOutputSurfaceClaimToken();
+    QVERIFY(session.reportVideoOutputSurfaceClaim(activeAttachToken,
+        session.publicProjectionRevision(), &surfaceOwner, output, true, QRectF(), QRectF()));
+    session.reportVideoOutputSurfaceClaim(session.nextVideoOutputSurfaceClaimToken(),
+        session.publicProjectionRevision(), &staleSurfaceOwner, nullptr, false, QRectF(), QRectF());
     QCOMPARE(document.videoOutput(), output);
     QCOMPARE(videoOutputSpy.count(), 1);
 
-    QVERIFY(!session.reportVideoOutputSurfaceClaim(
-        1, session.publicProjectionRevision(), &surfaceOwner, nullptr, false, QRectF(), QRectF()));
+    QVERIFY(!session.reportVideoOutputSurfaceClaim(staleSameOwnerDetachToken,
+        session.publicProjectionRevision(), &surfaceOwner, nullptr, false, QRectF(), QRectF()));
     QCOMPARE(document.videoOutput(), output);
     QCOMPARE(videoOutputSpy.count(), 1);
 
-    QVERIFY(session.reportVideoOutputSurfaceClaim(
-        3, session.publicProjectionRevision(), &surfaceOwner, nullptr, false, QRectF(), QRectF()));
+    QVERIFY(session.reportVideoOutputSurfaceClaim(session.nextVideoOutputSurfaceClaimToken(),
+        session.publicProjectionRevision(), &surfaceOwner, nullptr, false, QRectF(), QRectF()));
     QCOMPARE(document.videoOutput(), nullptr);
     QCOMPARE(videoOutputSpy.count(), 2);
 
     output = new QObject();
-    QVERIFY(session.reportVideoOutputSurfaceClaim(
-        4, session.publicProjectionRevision(), &surfaceOwner, output, true, QRectF(), QRectF()));
+    QVERIFY(session.reportVideoOutputSurfaceClaim(session.nextVideoOutputSurfaceClaimToken(),
+        session.publicProjectionRevision(), &surfaceOwner, output, true, QRectF(), QRectF()));
     QCOMPARE(document.videoOutput(), output);
     delete output;
     QCOMPARE(document.videoOutput(), nullptr);

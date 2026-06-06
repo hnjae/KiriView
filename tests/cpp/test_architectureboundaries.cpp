@@ -31,6 +31,7 @@ private Q_SLOTS:
     void qmlViewportUsesOpaqueRevisionTokens();
     void leafDocumentsAreNotProductionQmlCreatable();
     void actionUiGatesAreRevisionedSnapshots();
+    void qmlDoesNotManufactureStaleSensitiveRevisions();
     void imageActionAvailabilityFacadeIsNotWritableQmlBackdoor();
     void fixedViewerShortcutsDoNotBypassRuntimeRouting();
     void sessionPublicProjectionHasNoPartialUpdateBackdoor();
@@ -434,6 +435,44 @@ void TestArchitectureBoundaries::actionUiGatesAreRevisionedSnapshots()
     QVERIFY(header.contains(QStringLiteral("updateActionUiGateSnapshot")));
     QVERIFY(!header.contains(QStringLiteral("updateActionUiState(bool")));
     QVERIFY(!implementation.contains(QStringLiteral("updateActionUiState(bool")));
+}
+
+void TestArchitectureBoundaries::qmlDoesNotManufactureStaleSensitiveRevisions()
+{
+    const QString mainQml = readProjectFile(QStringLiteral("src/qml/Main.qml"));
+    const QString videoViewport = readProjectFile(QStringLiteral("src/qml/VideoViewport.qml"));
+    const QString applicationHeader
+        = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.h"));
+    const QString sessionHeader
+        = readProjectFile(QStringLiteral("src/facade/kiridocumentsession.h"));
+    const QString sessionRuntimeHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.h"));
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(
+            QStringLiteral(R"(\bproperty\s+(?:int|real|double|var)\s+\w*Revision\b)")),
+        QRegularExpression(QStringLiteral(R"(\b\w+Revision\s*\+=)")),
+        QRegularExpression(QStringLiteral(R"(\bnext\w*Revision\s*\()")),
+        QRegularExpression(QStringLiteral(
+            R"(Q_INVOKABLE\s+void\s+updateActionUiGateSnapshot\s*\(\s*quint64\s+revision\b)")),
+        QRegularExpression(
+            QStringLiteral(R"(reportVideoOutputSurfaceClaim\s*\(\s*quint64\s+claimRevision\b)")),
+    };
+    QStringList violations;
+    for (const QString &source :
+        { mainQml, videoViewport, applicationHeader, sessionHeader, sessionRuntimeHeader }) {
+        for (const QRegularExpression &pattern : forbiddenPatterns) {
+            QRegularExpressionMatchIterator iterator = pattern.globalMatch(source);
+            while (iterator.hasNext()) {
+                violations.push_back(iterator.next().captured(0));
+            }
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+    QVERIFY(videoViewport.contains(QStringLiteral("nextVideoOutputSurfaceClaimToken")));
+    QVERIFY(sessionHeader.contains(QStringLiteral("nextVideoOutputSurfaceClaimToken")));
+    QVERIFY(sessionRuntimeHeader.contains(QStringLiteral("nextVideoOutputSurfaceClaimToken")));
+    QVERIFY(applicationHeader.contains(QStringLiteral("updateActionUiGateSnapshot(bool")));
 }
 
 void TestArchitectureBoundaries::imageActionAvailabilityFacadeIsNotWritableQmlBackdoor()
