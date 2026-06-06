@@ -5,7 +5,6 @@
 
 #include "cache/imagecachepolicy.h"
 #include "rendering/displayimagestore.h"
-#include "rendering/staticimage.h"
 
 #include <QByteArray>
 #include <QObject>
@@ -62,7 +61,7 @@ void TestImageDocumentRuntimeDependencies::defaultDependenciesUseMediaEntrySourc
         <= KiriView::predecodeCachePreferredByteBudget());
     QVERIFY(resolved.cacheBudgets.displayImageCacheByteBudget > 0);
     QVERIFY(resolved.cacheBudgets.displayImageCacheByteBudget
-        <= KiriView::imageFullDecodeFallbackByteLimit);
+        <= KiriView::displayImageCachePreferredByteBudget());
 }
 
 void TestImageDocumentRuntimeDependencies::

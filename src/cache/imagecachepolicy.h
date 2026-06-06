@@ -40,6 +40,7 @@ qsizetype predecodeCachePreferredByteBudget();
 qsizetype predecodeCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
 qsizetype thumbnailCachePreferredByteBudget();
 qsizetype thumbnailCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
+qsizetype displayImageCachePreferredByteBudget();
 qsizetype displayImageCacheByteBudgetForSystemMemory(
     qsizetype systemMemoryByteSize, qsizetype preferredByteBudget);
 ImageCacheBudgets resolvedImageCacheBudgets(

@@ -59,6 +59,11 @@ qsizetype displayImageCacheByteBudgetForSystemMemory(
         Bridge::rustByteSize(systemMemoryByteSize), Bridge::rustByteSize(preferredByteBudget)));
 }
 
+qsizetype displayImageCachePreferredByteBudget()
+{
+    return Bridge::qtByteSize(rustDisplayImageCachePreferredByteBudget());
+}
+
 qsizetype predecodeCachePreferredByteBudget()
 {
     return Bridge::qtByteSize(rustPredecodeCachePreferredByteBudget());
@@ -84,13 +89,17 @@ qsizetype thumbnailCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize
 ImageCacheBudgets resolvedImageCacheBudgets(
     ImageCacheBudgetRequest request, SystemMemorySnapshot systemMemory)
 {
+    const qsizetype displayImagePreferredByteBudget
+        = request.displayImageCachePreferredByteBudget > 0
+        ? request.displayImageCachePreferredByteBudget
+        : displayImageCachePreferredByteBudget();
     const qsizetype predecodeCacheByteBudget = request.predecodeCacheByteBudget > 0
         ? request.predecodeCacheByteBudget
         : predecodeCacheByteBudgetForSystemMemory(systemMemory.physicalByteSize);
     const qsizetype displayImageCacheByteBudget = request.displayImageCacheByteBudget > 0
         ? request.displayImageCacheByteBudget
         : displayImageCacheByteBudgetForSystemMemory(
-              systemMemory.physicalByteSize, request.displayImageCachePreferredByteBudget);
+              systemMemory.physicalByteSize, displayImagePreferredByteBudget);
     const qsizetype thumbnailCacheByteBudget = request.thumbnailCacheByteBudget > 0
         ? request.thumbnailCacheByteBudget
         : thumbnailCacheByteBudgetForSystemMemory(systemMemory.physicalByteSize);

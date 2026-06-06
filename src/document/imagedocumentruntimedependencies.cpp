@@ -4,7 +4,6 @@
 #include "imagedocumentruntimedependencies.h"
 
 #include "archive/mediaentrysourcestore.h"
-#include "rendering/staticimage.h"
 
 #include <utility>
 
@@ -25,7 +24,7 @@ ImageDocumentRuntimeDependencies::~ImageDocumentRuntimeDependencies() = default;
 ImageCacheBudgetRequest imageDocumentCacheBudgetRequestWithDefaults(ImageCacheBudgetRequest request)
 {
     if (request.displayImageCachePreferredByteBudget <= 0) {
-        request.displayImageCachePreferredByteBudget = imageFullDecodeFallbackByteLimit;
+        request.displayImageCachePreferredByteBudget = displayImageCachePreferredByteBudget();
     }
     return request;
 }
