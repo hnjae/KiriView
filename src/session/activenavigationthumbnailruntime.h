@@ -7,10 +7,10 @@
 #include "session/activenavigationthumbnaildemand.h"
 #include "session/activenavigationthumbnailmodel.h"
 #include "session/activenavigationthumbnailprojection.h"
-#include "session/thumbnailcachelookup.h"
 #include "session/thumbnailgeneration.h"
 #include "session/thumbnailimagestore.h"
-#include "session/thumbnailoriginalidentity.h"
+#include "thumbnail/thumbnailcachelookup.h"
+#include "thumbnail/thumbnailoriginalidentity.h"
 
 #include <QAbstractListModel>
 #include <QByteArray>

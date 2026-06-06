@@ -4,7 +4,7 @@
 #include "decoding/imagedecodejob.h"
 #include "decoding/rawthumbnailpreview.h"
 #include "image_test_support.h"
-#include "session/thumbnailcachelookup.h"
+#include "thumbnail/thumbnailcachelookup.h"
 
 #include <QBuffer>
 #include <QByteArray>

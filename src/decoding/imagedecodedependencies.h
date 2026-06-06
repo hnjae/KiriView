@@ -10,7 +10,7 @@
 #include "decodedimageresult.h"
 #include "imagedecoderequest.h"
 #include "rawthumbnailpreview.h"
-#include "session/thumbnailcachelookup.h"
+#include "thumbnail/thumbnailcachelookup.h"
 
 #include <QByteArray>
 #include <functional>

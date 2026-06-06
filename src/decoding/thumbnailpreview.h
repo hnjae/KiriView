@@ -7,8 +7,8 @@
 #include "decoding/imagedecoderequest.h"
 #include "rendering/displayimagequality.h"
 #include "rendering/staticimage.h"
-#include "session/activenavigationthumbnaildemand.h"
-#include "session/thumbnailcachelookup.h"
+#include "thumbnail/thumbnailbucket.h"
+#include "thumbnail/thumbnailcachelookup.h"
 
 #include <QByteArray>
 #include <QImage>

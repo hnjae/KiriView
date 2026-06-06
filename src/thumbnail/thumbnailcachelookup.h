@@ -6,8 +6,8 @@
 
 #include "async/imageiojob.h"
 #include "async/imageworkerscheduler.h"
-#include "session/activenavigationthumbnaildemand.h"
-#include "session/thumbnailoriginalidentity.h"
+#include "thumbnail/thumbnailbucket.h"
+#include "thumbnail/thumbnailoriginalidentity.h"
 
 #include <QByteArray>
 #include <QImage>

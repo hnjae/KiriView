@@ -10,7 +10,7 @@
 #include "decoding/kiriimagedecoder.h"
 #include "kiriview/src/policy/thumbnailcache.cxx.h"
 #include "rendering/staticimage.h"
-#include "session/thumbnailcachelookup.h"
+#include "thumbnail/thumbnailcachelookup.h"
 
 #include <QFile>
 #include <QImage>

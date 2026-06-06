@@ -4,19 +4,13 @@
 #ifndef KIRIVIEW_ACTIVENAVIGATIONTHUMBNAILDEMAND_H
 #define KIRIVIEW_ACTIVENAVIGATIONTHUMBNAILDEMAND_H
 
+#include "thumbnail/thumbnailbucket.h"
+
 #include <QUrl>
 #include <QtGlobal>
 #include <optional>
 
 namespace KiriView {
-enum class ActiveNavigationThumbnailDemandBucket {
-    None,
-    Normal,
-    Large,
-    XLarge,
-    XXLarge,
-};
-
 enum class ActiveNavigationThumbnailDemandPriority {
     Visible,
     Nearby,

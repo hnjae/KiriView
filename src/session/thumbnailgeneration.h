@@ -7,9 +7,9 @@
 #include "async/imageiojob.h"
 #include "async/imageworkerscheduler.h"
 #include "location/imagelocation.h"
-#include "session/activenavigationthumbnaildemand.h"
 #include "session/activenavigationthumbnailprojection.h"
-#include "session/thumbnailoriginalidentity.h"
+#include "thumbnail/thumbnailbucket.h"
+#include "thumbnail/thumbnailoriginalidentity.h"
 
 #include <QByteArray>
 #include <QImage>
