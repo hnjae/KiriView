@@ -41,29 +41,58 @@ void finishDirectoryItemListWithError(KiriView::ImageIoJobCompletion completion,
 }
 
 namespace KiriView {
+namespace {
+    ImageIoJob startKCoreDirectoryItemList(QObject *receiver, QUrl directoryUrl,
+        DirectoryItemListCallback callback, ErrorCallback errorCallback)
+    {
+        auto *lister = createDirectoryItemLister(receiver);
+        ImageIoJob ioJob(lister, cancelDirLister);
+        const ImageIoJobCompletion completion = ioJob.completion();
+
+        QObject::connect(lister, &KCoreDirLister::completed, receiver,
+            [completion, lister, callback = std::move(callback)]() mutable {
+                completion.claimAndDelete([&]() {
+                    KiriView::invokeIfSet(callback, lister->items(KCoreDirLister::AllItems));
+                });
+            });
+        QObject::connect(lister, &KCoreDirLister::jobError, receiver,
+            [completion, errorCallback](KIO::Job *job) {
+                const QString errorString = job == nullptr ? QString() : job->errorString();
+                finishDirectoryItemListWithError(completion, errorString, errorCallback);
+            });
+
+        if (!lister->openUrl(directoryUrl, KCoreDirLister::Reload)) {
+            finishDirectoryItemListWithError(completion, QString(), errorCallback);
+        }
+
+        return ioJob;
+    }
+}
+
 ImageIoJob startDirectoryItemList(QObject *receiver, QUrl directoryUrl,
     DirectoryItemListCallback callback, ErrorCallback errorCallback)
 {
-    auto *lister = createDirectoryItemLister(receiver);
-    ImageIoJob ioJob(lister, cancelDirLister);
-    const ImageIoJobCompletion completion = ioJob.completion();
+    return startDirectoryItemList(receiver, std::move(directoryUrl), std::move(callback),
+        std::move(errorCallback), defaultDirectoryItemListProvider());
+}
 
-    QObject::connect(lister, &KCoreDirLister::completed, receiver,
-        [completion, lister, callback = std::move(callback)]() mutable {
-            completion.claimAndDelete([&]() {
-                KiriView::invokeIfSet(callback, lister->items(KCoreDirLister::AllItems));
-            });
-        });
-    QObject::connect(
-        lister, &KCoreDirLister::jobError, receiver, [completion, errorCallback](KIO::Job *job) {
-            const QString errorString = job == nullptr ? QString() : job->errorString();
-            finishDirectoryItemListWithError(completion, errorString, errorCallback);
-        });
-
-    if (!lister->openUrl(directoryUrl, KCoreDirLister::Reload)) {
-        finishDirectoryItemListWithError(completion, QString(), errorCallback);
+ImageIoJob startDirectoryItemList(QObject *receiver, QUrl directoryUrl,
+    DirectoryItemListCallback callback, ErrorCallback errorCallback,
+    DirectoryItemListProvider provider)
+{
+    if (!provider) {
+        provider = defaultDirectoryItemListProvider();
     }
+    return provider(
+        receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));
+}
 
-    return ioJob;
+DirectoryItemListProvider defaultDirectoryItemListProvider()
+{
+    return [](QObject *receiver, QUrl directoryUrl, DirectoryItemListCallback callback,
+               ErrorCallback errorCallback) {
+        return startKCoreDirectoryItemList(
+            receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));
+    };
 }
 }
