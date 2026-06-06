@@ -520,6 +520,8 @@ ImageDisplaySourceProjection ImagePresentationRuntime::displaySourceProjection(
 
 ImagePresentationSnapshot ImagePresentationRuntime::currentSnapshot() const
 {
+    const bool normalizedSecondaryPageVisible
+        = m_secondaryPageVisible && m_mode == ImagePresentationMode::TwoPageSpread;
     return ImagePresentationSnapshot {
         m_mode,
         m_rightToLeftReadingEnabled,
@@ -528,7 +530,7 @@ ImagePresentationSnapshot ImagePresentationRuntime::currentSnapshot() const
         m_primarySlot,
         m_secondarySlot,
         m_twoPageModeEnabled,
-        m_secondaryPageVisible,
+        normalizedSecondaryPageVisible,
         m_zoomWorkflowState.zoomState().snapshot(),
         m_viewportCommands.projection(),
         m_rotationDegrees,
