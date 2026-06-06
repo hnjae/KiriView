@@ -24,8 +24,8 @@ RowLayout {
     readonly property string unknownNavigationText: "–"
     property int pageNumberDigitCapacity: 1
     property bool rightToLeftReadingActive: false
-    readonly property var leftNavigationAction: root.rightToLeftReadingActive ? root.actions.nextImageAction : root.actions.previousImageAction
-    readonly property var rightNavigationAction: root.rightToLeftReadingActive ? root.actions.previousImageAction : root.actions.nextImageAction
+    readonly property var leftNavigationAction: navigationPresentationOrder.leadingImageAction
+    readonly property var rightNavigationAction: navigationPresentationOrder.trailingImageAction
     readonly property bool textInputActive: pageNumberField.activeFocus
     readonly property bool pageNavigationAvailable: activeNavigationAvailable && activeNavigationKnown
 
@@ -33,6 +33,13 @@ RowLayout {
 
     enabled: pageNavigationAvailable && activeNavigationEditable
     spacing: controlSpacing
+
+    NavigationPresentationOrder {
+        id: navigationPresentationOrder
+
+        actions: root.actions
+        rightToLeftReadingActive: root.rightToLeftReadingActive
+    }
 
     function cancelEditing(returnViewerFocus) {
         if (pageNumberField.activeFocus) {
@@ -81,7 +88,7 @@ RowLayout {
         Accessible.role: Accessible.Button
         display: Controls.AbstractButton.IconOnly
         enabled: navigationAction !== null && navigationAction !== undefined && navigationAction.enabled
-        icon.name: root.actions.previousImageAction?.icon.name ?? ""
+        icon.name: navigationPresentationOrder.leadingImageIconName
         text: navigationText
 
         Controls.ToolTip.text: toolTipText
@@ -229,7 +236,7 @@ RowLayout {
         Accessible.role: Accessible.Button
         display: Controls.AbstractButton.IconOnly
         enabled: navigationAction !== null && navigationAction !== undefined && navigationAction.enabled
-        icon.name: root.actions.nextImageAction?.icon.name ?? ""
+        icon.name: navigationPresentationOrder.trailingImageIconName
         text: navigationText
 
         Controls.ToolTip.text: toolTipText

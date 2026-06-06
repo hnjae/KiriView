@@ -13,16 +13,23 @@ Controls.MenuBar {
     property bool mediaMode: imageMode
     property bool rightToLeftReadingActive: false
 
-    readonly property var leadingArchiveMenuAction: root.rightToLeftReadingActive ? root.actions.nextContainerMenuAction : root.actions.previousContainerMenuAction
-    readonly property var leadingImageMenuAction: root.rightToLeftReadingActive ? root.actions.nextImageMenuAction : root.actions.previousImageMenuAction
-    readonly property var trailingArchiveMenuAction: root.rightToLeftReadingActive ? root.actions.previousContainerMenuAction : root.actions.nextContainerMenuAction
-    readonly property var trailingImageMenuAction: root.rightToLeftReadingActive ? root.actions.previousImageMenuAction : root.actions.nextImageMenuAction
-    readonly property string leadingArchiveMenuIconName: root.actions.previousContainerMenuAction?.icon.name ?? ""
-    readonly property string leadingImageMenuIconName: root.actions.previousImageMenuAction?.icon.name ?? ""
-    readonly property string firstImageMenuIconName: root.rightToLeftReadingActive ? (root.actions.lastImageMenuAction?.icon.name ?? "") : (root.actions.firstImageMenuAction?.icon.name ?? "")
-    readonly property string lastImageMenuIconName: root.rightToLeftReadingActive ? (root.actions.firstImageMenuAction?.icon.name ?? "") : (root.actions.lastImageMenuAction?.icon.name ?? "")
-    readonly property string trailingArchiveMenuIconName: root.actions.nextContainerMenuAction?.icon.name ?? ""
-    readonly property string trailingImageMenuIconName: root.actions.nextImageMenuAction?.icon.name ?? ""
+    readonly property var leadingArchiveMenuAction: navigationPresentationOrder.leadingArchiveMenuAction
+    readonly property var leadingImageMenuAction: navigationPresentationOrder.leadingImageMenuAction
+    readonly property var trailingArchiveMenuAction: navigationPresentationOrder.trailingArchiveMenuAction
+    readonly property var trailingImageMenuAction: navigationPresentationOrder.trailingImageMenuAction
+    readonly property string leadingArchiveMenuIconName: navigationPresentationOrder.leadingArchiveMenuIconName
+    readonly property string leadingImageMenuIconName: navigationPresentationOrder.leadingImageMenuIconName
+    readonly property string firstImageMenuIconName: navigationPresentationOrder.firstImageMenuIconName
+    readonly property string lastImageMenuIconName: navigationPresentationOrder.lastImageMenuIconName
+    readonly property string trailingArchiveMenuIconName: navigationPresentationOrder.trailingArchiveMenuIconName
+    readonly property string trailingImageMenuIconName: navigationPresentationOrder.trailingImageMenuIconName
+
+    NavigationPresentationOrder {
+        id: navigationPresentationOrder
+
+        actions: root.actions
+        rightToLeftReadingActive: root.rightToLeftReadingActive
+    }
 
     Controls.Menu {
         id: fileMenu
@@ -78,13 +85,13 @@ Controls.MenuBar {
         }
 
         MenuActionItem {
-            action: root.actions.firstImageMenuAction
+            action: navigationPresentationOrder.firstImageMenuAction
             icon.name: root.firstImageMenuIconName
             visible: root.mediaMode
         }
 
         MenuActionItem {
-            action: root.actions.lastImageMenuAction
+            action: navigationPresentationOrder.lastImageMenuAction
             icon.name: root.lastImageMenuIconName
             visible: root.mediaMode
         }
