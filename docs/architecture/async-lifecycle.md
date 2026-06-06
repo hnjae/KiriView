@@ -12,6 +12,8 @@ QObject-backed work must use a live owner token or weak Qt reference before queu
 
 Worker-thread and Rust async work return plain payloads only. Payloads crossing a worker boundary must be safe to move to the GUI acceptance path, must not contain QObject pointers, and must not carry an alternate authoritative URL, page, frame, or status beside the owner's current identity.
 
+Worker-backed owners must receive scheduling through an injectable dependency port when tests need deterministic lifecycle control. Production adapters may use the global Qt thread pool, but runtime owners such as image decode jobs should depend on a scheduler contract that preserves QObject-guarded queued delivery and stale-completion acceptance instead of calling global worker primitives directly.
+
 QML may own UI-local timers and physical item transients, but it must not use delayed callbacks to reconcile durable domain state. If a delayed UI callback observes public session state, the C++ owner must already have published a coherent snapshot for that state.
 
 Use the existing support vocabulary where it fits: `ImageAsyncTicket` for generation acceptance, `ImageAsyncOperationState` for single operation ownership, `ImageAsyncScopedOperationState` for operation plus scope ownership, and `ImageIoJob` for cancelable QObject/job lifetime. Do not introduce a shared base state machine unless several owners need the same behavior and the abstraction removes real duplicated lifecycle logic.
