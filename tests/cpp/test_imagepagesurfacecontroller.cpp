@@ -37,6 +37,7 @@ private Q_SLOTS:
     void shadowThumbnailPreviewEntryIsReleasedOnDecodedReplacement();
     void rawShadowThumbnailPreviewEntryIsReleasedOnDecodedReplacement();
     void qtRasterFirstDisplayRefinesToProviderBucket();
+    void refinementPolicyUsesResolvedCacheBudgetWhenStoreBudgetDiffers();
     void qtRasterRefinementCompletionIsRejectedAfterSourceReplacement();
     void exactQtRasterCurrentImageDoesNotRequestRefinement();
     void heifFirstDisplayRefinesToProviderBucket();
@@ -451,6 +452,27 @@ void TestImagePageSurfaceController::qtRasterFirstDisplayRefinesToProviderBucket
     QCOMPARE(refined.quality, KiriView::DisplayImageQuality::Exact);
     QVERIFY(!store->entry(entryId(first)).has_value());
     QVERIFY(store->entry(entryId(refined)).has_value());
+}
+
+void TestImagePageSurfaceController::refinementPolicyUsesResolvedCacheBudgetWhenStoreBudgetDiffers()
+{
+    auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(1), store);
+
+    controller.setStaticDisplayImage(
+        qtRasterPayload(QSize(16, 12), QSize(4, 3), QStringLiteral("source-a")), false,
+        renderContext());
+    const KiriView::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    QVERIFY(!first.providerUrl.isEmpty());
+    QCOMPARE(first.rasterSize, QSize(4, 3));
+
+    controller.updateDisplayProjection(visibleProjection(QSizeF(8.0, 6.0)));
+    QTest::qWait(100);
+
+    const KiriView::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    QCOMPARE(current.providerUrl, first.providerUrl);
+    QCOMPARE(current.rasterSize, QSize(4, 3));
+    QVERIFY(store->entry(entryId(first)).has_value());
 }
 
 void TestImagePageSurfaceController::qtRasterRefinementCompletionIsRejectedAfterSourceReplacement()
