@@ -345,3 +345,56 @@ fn empty_bucket_key(input: RustRasterDisplayBucketInput) -> RustRasterDisplayBuc
         display_image_byte_budget: input.display_image_byte_budget,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const DISPLAY_IMAGE_QUALITY_FIRST_DISPLAY: i32 = 1;
+
+    fn bucket_input(rotation_degrees: i32) -> RustRasterDisplayBucketInput {
+        RustRasterDisplayBucketInput {
+            original_width: 1000,
+            original_height: 500,
+            current_raster_width: 100,
+            current_raster_height: 50,
+            current_quality: DISPLAY_IMAGE_QUALITY_FIRST_DISPLAY,
+            display_width: 300.0,
+            display_height: 600.0,
+            visible_x: 0.0,
+            visible_y: 0.0,
+            visible_width: 300.0,
+            visible_height: 600.0,
+            device_pixel_ratio: 1.0,
+            rotation_degrees,
+            maximum_texture_size: 4096,
+            display_image_byte_budget: 64 * 1024 * 1024,
+        }
+    }
+
+    fn assert_refines_to(rotation_degrees: i32, width: i32, height: i32) {
+        let decision = rust_raster_display_bucket_decision(bucket_input(rotation_degrees));
+
+        assert!(matches!(
+            decision.status,
+            RustRasterDisplayBucketStatus::RefinementNeeded
+        ));
+        assert_eq!(decision.quality, DISPLAY_IMAGE_QUALITY_EXACT);
+        assert_eq!(decision.bucket_key.raster_width, width);
+        assert_eq!(decision.bucket_key.raster_height, height);
+        assert!(decision.refinement_required);
+        assert!(decision.current_image_retained);
+    }
+
+    #[test]
+    fn quarter_turn_rotation_swaps_axes_before_selecting_bucket_size() {
+        assert_refines_to(90, 600, 300);
+        assert_refines_to(450, 600, 300);
+        assert_refines_to(-90, 600, 300);
+    }
+
+    #[test]
+    fn non_quarter_turn_rotation_does_not_swap_bucket_axes() {
+        assert_refines_to(45, 1000, 500);
+    }
+}
