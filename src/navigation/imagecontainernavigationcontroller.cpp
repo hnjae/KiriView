@@ -54,8 +54,10 @@ void ImageContainerNavigationController::openAdjacentContainer(
             finishContainerNavigation(
                 operationId, std::move(candidates), direction, currentContainerUrl);
         },
-        [this, operationId](
-            const QString &) { finishContainerNavigationListWithError(operationId); });
+        [this, operationId, currentContainerUrl, parentUrl, direction](const QString &errorString) {
+            finishContainerNavigationListWithError(
+                operationId, currentContainerUrl, parentUrl, direction, errorString);
+        });
 }
 
 void ImageContainerNavigationController::cancel()
@@ -92,9 +94,22 @@ void ImageContainerNavigationController::finishContainerNavigation(quint64 opera
     loadFirstImageFromContainerNavigation(operationId, *target);
 }
 
-void ImageContainerNavigationController::finishContainerNavigationListWithError(quint64 operationId)
+void ImageContainerNavigationController::finishContainerNavigationListWithError(quint64 operationId,
+    const QUrl &currentContainerUrl, const QUrl &parentUrl, NavigationDirection direction,
+    const QString &errorString)
 {
-    m_navigationState.finishNavigation(operationId);
+    if (!m_navigationState.finishNavigation(operationId)) {
+        return;
+    }
+
+    reportNavigationPlan(ImageDocumentPageNavigationPlan {
+        ReportContainerNavigationListErrorEffect {
+            currentContainerUrl,
+            parentUrl,
+            direction,
+            errorString,
+        },
+    });
 }
 
 void ImageContainerNavigationController::loadFirstImageFromContainerNavigation(
