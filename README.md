@@ -10,7 +10,6 @@ KiriView is a desktop image viewer built with KDE Kirigami.
 - Supports common image formats through Qt and KDE image plugins.
 - Adds dedicated support for APNG, RAW images, AVIF images with alpha channels, and HEIF images using non-HEVC codecs, including HEIF sequences, where Qt/KDE support is limited.
 - Opens comic book archives: `.cbz`, `.cbr`, `.cb7`, `.cbt`.
-- Smoothly zooms and pans large static images with GPU-backed tiled rendering.
 - Preloads adjacent images for faster previous/next navigation, while respecting the system Power Saver mode.
 
 ## Limitations
