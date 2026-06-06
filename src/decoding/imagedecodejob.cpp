@@ -3,7 +3,6 @@
 
 #include "imagedecodejob.h"
 
-#include "async/imageasyncworker.h"
 #include "async/imagecallback.h"
 #include "imageinputclassification.h"
 #include "rawthumbnailpreview.h"
@@ -92,7 +91,7 @@ void ImageDecodeJob::startDecode(
     startThumbnailPreviewLookup(data, ticket, request);
 
     const ImageDataDecoder decoder = m_dependencies.dataDecoder;
-    runAsyncWorker(
+    m_dependencies.workerScheduler.run(
         this,
         [decoder, data = std::move(data), request = std::move(request)]() mutable {
             return decoder(data, request);
@@ -175,7 +174,7 @@ void ImageDecodeJob::startRawEmbeddedThumbnailPreviewValidation(
 
     const RawEmbeddedThumbnailPreviewExtractor extractor
         = m_dependencies.rawEmbeddedThumbnailPreviewExtractor;
-    runAsyncWorker(
+    m_dependencies.workerScheduler.run(
         this,
         [extractor, data = std::move(data), request]() mutable {
             RawEmbeddedThumbnailPreviewResult result = extractor(data, request);

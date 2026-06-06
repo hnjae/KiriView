@@ -6,6 +6,7 @@
 
 #include "async/imageasynccallbacks.h"
 #include "async/imageiojob.h"
+#include "async/imageworkerscheduler.h"
 #include "decodedimageresult.h"
 #include "imagedecoderequest.h"
 #include "rawthumbnailpreview.h"
@@ -27,6 +28,7 @@ struct ImageDecodeDependencies {
     ImageDataDecoder dataDecoder;
     ThumbnailCacheLookupProvider thumbnailPreviewLookupProvider;
     RawEmbeddedThumbnailPreviewExtractor rawEmbeddedThumbnailPreviewExtractor;
+    ImageWorkerScheduler workerScheduler;
 };
 
 ImageDecodeDependencies defaultImageDecodeDependencies();
