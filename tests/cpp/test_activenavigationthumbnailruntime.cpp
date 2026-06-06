@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "async/imageworkerscheduler.h"
 #include "image_async_test_support.h"
 #include "image_test_support.h"
 #include "session/activenavigationthumbnailruntime.h"
@@ -18,6 +19,43 @@
 namespace {
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::localUrl;
+
+struct ManualImageWorkerSchedule {
+    KiriView::ImageWorkerOperation work;
+    KiriView::ImageWorkerCompletion completion;
+};
+
+class ManualImageWorkerScheduler
+{
+public:
+    KiriView::ImageWorkerScheduler scheduler()
+    {
+        return KiriView::ImageWorkerScheduler([this](QObject *, KiriView::ImageWorkerOperation work,
+                                                  KiriView::ImageWorkerCompletion completion) {
+            m_schedules.push_back(
+                ManualImageWorkerSchedule { std::move(work), std::move(completion) });
+        });
+    }
+
+    std::size_t scheduleCount() const { return m_schedules.size(); }
+
+    void runWork(std::size_t index)
+    {
+        if (m_schedules.at(index).work) {
+            m_schedules.at(index).work();
+        }
+    }
+
+    void finish(std::size_t index)
+    {
+        if (m_schedules.at(index).completion) {
+            m_schedules.at(index).completion();
+        }
+    }
+
+private:
+    std::vector<ManualImageWorkerSchedule> m_schedules;
+};
 
 KiriView::ActiveNavigationThumbnailRow thumbnailRow(int number, const QUrl &url,
     const QString &label, KiriView::ActiveNavigationThumbnailSourceKind sourceKind,
@@ -263,6 +301,7 @@ private Q_SLOTS:
     void injectedCollectionAdapterUsesGeneratedResultPath();
     void openedCollectionEntryAdapterStartsGenerationWithoutPrelookup();
     void inMemoryOnlyAdapterSkipsLookupAndDisablesCacheInstall();
+    void defaultGenerationProviderUsesWorkerScheduler();
     void defaultDirectLocalImageBehaviorStillUsesLookup();
 };
 
@@ -1403,6 +1442,36 @@ void TestActiveNavigationThumbnailRuntime::defaultDirectLocalImageBehaviorStillU
     QCOMPARE(lookupProvider.lookupCount(), std::size_t(1));
     QCOMPARE(lookupProvider.lookupAt(0).request.localPathBytes, QByteArrayLiteral("/media/01.png"));
     QCOMPARE(generationProvider.generationCount(), std::size_t(0));
+}
+
+void TestActiveNavigationThumbnailRuntime::defaultGenerationProviderUsesWorkerScheduler()
+{
+    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
+    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+
+    QObject owner;
+    ManualImageWorkerScheduler workerScheduler;
+    RecordingThumbnailSourceAdapter sourceAdapter;
+    sourceAdapter.plan = sourceAdapterPlan(KiriView::ThumbnailSourceAdapterPlanKind::InMemoryOnly);
+    KiriView::ActiveNavigationThumbnailRuntime runtime(
+        &owner, {}, {}, {}, sourceAdapter.adapter(), workerScheduler.scheduler());
+    const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
+    runtime.setRows({
+        thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
+            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+    });
+
+    QVERIFY(runtime.reportDemand(
+        1, imageUrl, Bucket::Normal, Priority::Visible, runtime.navigationGeneration()));
+
+    QCOMPARE(workerScheduler.scheduleCount(), std::size_t(1));
+    QCOMPARE(runtime.activeJobCount(), qsizetype(1));
+
+    runtime.setRows({});
+    workerScheduler.runWork(0);
+    workerScheduler.finish(0);
+
+    QCOMPARE(runtime.activeJobCount(), qsizetype(0));
 }
 
 QTEST_GUILESS_MAIN(TestActiveNavigationThumbnailRuntime)
