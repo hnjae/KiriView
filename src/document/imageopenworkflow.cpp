@@ -7,6 +7,8 @@
 #include "imageopentransitionapplier.h"
 #include "location/imagedocumentlocation.h"
 
+#include <utility>
+
 namespace {
 KiriView::Bridge::ImageDocumentSourceLoadKind sourceLoadKind(
     const KiriView::ImageDocumentSourceLoadSnapshot &snapshot,
@@ -148,6 +150,16 @@ ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
 {
     return imageOpenApplicationPlan(finishSuccessfulImageLoadTransition(snapshot),
         ImageOpenTransitionContext::successfulImageLoad(session));
+}
+
+ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
+    ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession &session,
+    EmbeddedMetadata metadata)
+{
+    ImageOpenTransition transition = finishSuccessfulImageLoadTransition(snapshot);
+    transition.stateDelta.embeddedMetadata = ImageOpenEmbeddedMetadataTarget::Provided;
+    return imageOpenApplicationPlan(
+        transition, ImageOpenTransitionContext::successfulImageLoad(session, std::move(metadata)));
 }
 
 ImageOpenApplicationPlan finishLoadWithErrorPlan(ImageOpenLoadErrorSnapshot snapshot,

@@ -202,8 +202,7 @@ void ImageOpenController::finishPresentedImageLoad(const ImageLoadSession &sessi
     }
 
     invokeIfSet(m_callbacks.commitPrimaryPageSlot, session.location());
-    m_state.setEmbeddedMetadata(std::move(metadata));
-    finishSuccessfulImageLoad(session);
+    finishSuccessfulImageLoad(session, std::move(metadata));
 }
 
 void ImageOpenController::finishLoadWithError(
@@ -222,14 +221,15 @@ void ImageOpenController::finishLoadWithError(
             session, displayedUrl, message)));
 }
 
-void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)
+void ImageOpenController::finishSuccessfulImageLoad(
+    const ImageLoadSession &session, EmbeddedMetadata metadata)
 {
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::finishSuccessfulImageLoadPlan(
             ImageOpenSuccessfulImageLoadSnapshot {
                 session.hasContainerNavigationTarget(),
             },
-            session)));
+            session, std::move(metadata))));
 }
 
 void ImageOpenController::reportRuntimePlan(ImageDocumentRuntimePlan plan)

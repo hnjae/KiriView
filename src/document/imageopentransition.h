@@ -27,6 +27,12 @@ enum class ImageOpenErrorStringTarget {
     Provided = 2,
 };
 
+enum class ImageOpenEmbeddedMetadataTarget {
+    Unchanged = 0,
+    Clear = 1,
+    Provided = 2,
+};
+
 enum class ImageOpenUrlTarget {
     Unchanged = 0,
     Empty = 1,
@@ -68,7 +74,7 @@ struct ImageOpenStateDelta {
     ImageOpenStatusTarget status = ImageOpenStatusTarget::Unchanged;
     ImageOpenErrorStringTarget errorString = ImageOpenErrorStringTarget::Unchanged;
     ImageOpenBoolTarget unsupportedOpenedCollectionVideo = ImageOpenBoolTarget::Unchanged;
-    bool clearEmbeddedMetadata = false;
+    ImageOpenEmbeddedMetadataTarget embeddedMetadata = ImageOpenEmbeddedMetadataTarget::Unchanged;
     bool clearLoadingContainerNavigationUrl = false;
 };
 

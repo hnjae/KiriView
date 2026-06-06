@@ -101,6 +101,12 @@ KiriView::ImageOpenErrorStringTarget imageOpenErrorStringTarget(
     return KiriView::ImageOpenErrorStringTarget::Unchanged;
 }
 
+KiriView::ImageOpenEmbeddedMetadataTarget imageOpenEmbeddedMetadataTarget(bool clear)
+{
+    return clear ? KiriView::ImageOpenEmbeddedMetadataTarget::Clear
+                 : KiriView::ImageOpenEmbeddedMetadataTarget::Unchanged;
+}
+
 KiriView::ImageOpenUrlTarget imageOpenUrlTarget(KiriView::RustImageOpenUrlTarget target)
 {
     switch (target) {
@@ -247,7 +253,7 @@ ImageOpenTransition imageOpenTransitionFromBridge(const RustImageOpenTransition 
         imageOpenStatusTarget(rustTransition.state_delta.status),
         imageOpenErrorStringTarget(rustTransition.state_delta.error_string),
         imageOpenBoolTarget(rustTransition.state_delta.unsupported_opened_collection_video),
-        rustTransition.state_delta.clear_embedded_metadata,
+        imageOpenEmbeddedMetadataTarget(rustTransition.state_delta.clear_embedded_metadata),
         rustTransition.state_delta.clear_loading_container_navigation_url,
     };
 

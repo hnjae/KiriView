@@ -9,6 +9,7 @@
 #include "imageopenapplicationplan.h"
 #include "imageopentransition.h"
 #include "location/imagelocation.h"
+#include "metadata/embeddedmetadata.h"
 
 #include <vector>
 
@@ -62,6 +63,9 @@ namespace ImageOpenWorkflow {
         const ImageLoadSession &session);
     ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
         ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession &session);
+    ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
+        ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession &session,
+        EmbeddedMetadata metadata);
     ImageOpenApplicationPlan finishLoadWithErrorPlan(ImageOpenLoadErrorSnapshot snapshot,
         const ImageLoadSession &session, const QUrl &displayedUrl, const QString &errorString);
     ImageOpenApplicationPlan finishContainerNavigationLoadWithErrorPlan(

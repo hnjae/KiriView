@@ -69,7 +69,7 @@ private:
         const ImagePresentationLoadResult &result, EmbeddedMetadata metadata);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
-    void finishSuccessfulImageLoad(const ImageLoadSession &session);
+    void finishSuccessfulImageLoad(const ImageLoadSession &session, EmbeddedMetadata metadata);
     void reportRuntimePlan(ImageDocumentRuntimePlan plan);
 
     ImageDocumentState &m_state;

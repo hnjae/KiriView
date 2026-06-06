@@ -57,6 +57,22 @@ std::optional<QString> errorStringTarget(KiriView::ImageOpenErrorStringTarget ta
     return std::nullopt;
 }
 
+std::optional<KiriView::EmbeddedMetadata> embeddedMetadataTarget(
+    KiriView::ImageOpenEmbeddedMetadataTarget target,
+    const KiriView::ImageOpenTransitionContext &context)
+{
+    switch (target) {
+    case KiriView::ImageOpenEmbeddedMetadataTarget::Clear:
+        return KiriView::EmbeddedMetadata {};
+    case KiriView::ImageOpenEmbeddedMetadataTarget::Provided:
+        return context.embeddedMetadata;
+    case KiriView::ImageOpenEmbeddedMetadataTarget::Unchanged:
+        break;
+    }
+
+    return std::nullopt;
+}
+
 std::optional<KiriView::ImageDocumentPageKind> sourceKindTarget(
     KiriView::ImageOpenSourceKindTarget target, const KiriView::ImageOpenTransitionContext &context)
 {
@@ -170,7 +186,7 @@ KiriView::ImageOpenResolvedStateDelta resolvedStateDelta(
         documentStatus(delta.status),
         errorStringTarget(delta.errorString, context),
         boolTarget(delta.unsupportedOpenedCollectionVideo),
-        delta.clearEmbeddedMetadata,
+        embeddedMetadataTarget(delta.embeddedMetadata, context),
         delta.clearLoadingContainerNavigationUrl,
     };
 }
@@ -216,7 +232,7 @@ private:
             applySourceKind(delta.sourceKind);
             applyDisplayedLocation(delta.displayedLocation);
             applyErrorString(delta.errorString);
-            applyEmbeddedMetadata(delta.clearEmbeddedMetadata);
+            applyEmbeddedMetadata(delta.embeddedMetadata);
             applyStatus(delta.status);
             applyUnsupportedOpenedCollectionVideo(delta.unsupportedOpenedCollectionVideo, true);
             return;
@@ -227,7 +243,7 @@ private:
         applyDisplayedLocation(delta.displayedLocation);
         applyContainerNavigationUrl(delta.containerNavigationUrl);
         applyErrorString(delta.errorString);
-        applyEmbeddedMetadata(delta.clearEmbeddedMetadata);
+        applyEmbeddedMetadata(delta.embeddedMetadata);
         if (delta.clearLoadingContainerNavigationUrl) {
             applyTrackedLoadCompletion(delta);
         } else {
@@ -300,10 +316,10 @@ private:
         }
     }
 
-    void applyEmbeddedMetadata(bool clearEmbeddedMetadata)
+    void applyEmbeddedMetadata(const std::optional<KiriView::EmbeddedMetadata> &metadata)
     {
-        if (clearEmbeddedMetadata) {
-            m_state.setEmbeddedMetadata({});
+        if (metadata.has_value()) {
+            m_state.setEmbeddedMetadata(*metadata);
         }
     }
 
@@ -335,6 +351,14 @@ ImageOpenTransitionContext ImageOpenTransitionContext::successfulImageLoad(
 {
     ImageOpenTransitionContext context;
     context.session = &session;
+    return context;
+}
+
+ImageOpenTransitionContext ImageOpenTransitionContext::successfulImageLoad(
+    const ImageLoadSession &session, EmbeddedMetadata metadata)
+{
+    ImageOpenTransitionContext context = successfulImageLoad(session);
+    context.embeddedMetadata = std::move(metadata);
     return context;
 }
 

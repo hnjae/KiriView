@@ -8,6 +8,7 @@
 #include "imagedocumenttypes.h"
 #include "imageloadtypes.h"
 #include "location/imagelocation.h"
+#include "metadata/embeddedmetadata.h"
 
 #include <QString>
 #include <QUrl>
@@ -23,7 +24,7 @@ struct ImageOpenResolvedStateDelta {
     std::optional<ImageDocumentStatus> status;
     std::optional<QString> errorString;
     std::optional<bool> unsupportedOpenedCollectionVideo;
-    bool clearEmbeddedMetadata = false;
+    std::optional<EmbeddedMetadata> embeddedMetadata;
     bool clearLoadingContainerNavigationUrl = false;
 };
 
@@ -37,9 +38,12 @@ struct ImageOpenTransitionContext {
     std::optional<QUrl> containerUrl;
     std::optional<QUrl> displayedUrl;
     std::optional<QString> errorString;
+    std::optional<EmbeddedMetadata> embeddedMetadata;
 
     static ImageOpenTransitionContext sourceResolved(const ImageLoadSession &session);
     static ImageOpenTransitionContext successfulImageLoad(const ImageLoadSession &session);
+    static ImageOpenTransitionContext successfulImageLoad(
+        const ImageLoadSession &session, EmbeddedMetadata metadata);
     static ImageOpenTransitionContext sourceLoadError(
         const ImageLoadSession &session, const QUrl &displayedUrl, const QString &errorString);
     static ImageOpenTransitionContext containerNavigationError(
