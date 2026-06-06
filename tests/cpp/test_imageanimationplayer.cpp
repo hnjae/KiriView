@@ -3,6 +3,8 @@
 
 #include "presentation/imageanimationplayer.h"
 
+#include "async/timerscheduler.h"
+
 #include <QObject>
 #include <QSize>
 #include <QString>
@@ -23,6 +25,70 @@ QImage frameImage(const QSize &size)
 struct FakePlaybackSourceStats {
     int openCount = 0;
     int readCount = 0;
+};
+
+struct ManualTimerState {
+    int intervalMsec = 0;
+    KiriView::RuntimeTimerCallback callback;
+    bool active = false;
+};
+
+class ManualRuntimeTimer final : public KiriView::RuntimeTimerHandle
+{
+public:
+    explicit ManualRuntimeTimer(std::shared_ptr<ManualTimerState> state)
+        : m_state(std::move(state))
+    {
+    }
+
+    ~ManualRuntimeTimer() override
+    {
+        if (m_state) {
+            m_state->active = false;
+        }
+    }
+
+    void start() override { m_state->active = true; }
+    void stop() override { m_state->active = false; }
+
+private:
+    std::shared_ptr<ManualTimerState> m_state;
+};
+
+class ManualTimerScheduler
+{
+public:
+    KiriView::TimerScheduler scheduler()
+    {
+        return KiriView::TimerScheduler {
+            []() { return qint64(0); },
+            [this](QObject *, int intervalMsec, KiriView::RuntimeTimerCallback callback)
+                -> std::unique_ptr<KiriView::RuntimeTimerHandle> {
+                auto state = std::make_shared<ManualTimerState>(
+                    ManualTimerState { intervalMsec, std::move(callback), false });
+                m_timers.push_back(state);
+                return std::make_unique<ManualRuntimeTimer>(std::move(state));
+            },
+        };
+    }
+
+    std::size_t timerCount() const { return m_timers.size(); }
+    int intervalAt(std::size_t index) const { return m_timers.at(index)->intervalMsec; }
+    bool activeAt(std::size_t index) const { return m_timers.at(index)->active; }
+
+    void fireAt(std::size_t index)
+    {
+        std::shared_ptr<ManualTimerState> state = m_timers.at(index);
+        if (!state->active || !state->callback) {
+            return;
+        }
+
+        state->active = false;
+        state->callback();
+    }
+
+private:
+    std::vector<std::shared_ptr<ManualTimerState>> m_timers;
 };
 
 KiriView::ImageAnimationPlaybackOpenResult openResult(
@@ -188,10 +254,12 @@ void TestImageAnimationPlayer::startConsumesFirstFrameAndEmitsSubsequentFrames()
 {
     std::vector<QSize> emittedFrameSizes;
     QString errorString;
+    ManualTimerScheduler timerScheduler;
     KiriView::ImageAnimationPlayer player(
         this,
         [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
-        [&errorString](const QString &error) { errorString = error; });
+        [&errorString](const QString &error) { errorString = error; }, {},
+        timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
@@ -199,7 +267,12 @@ void TestImageAnimationPlayer::startConsumesFirstFrameAndEmitsSubsequentFrames()
 
     QCOMPARE(stats->openCount, 1);
     QVERIFY(emittedFrameSizes.empty());
-    QTRY_COMPARE_WITH_TIMEOUT(emittedFrameSizes.size(), std::size_t(1), 100);
+    QCOMPARE(timerScheduler.timerCount(), std::size_t(1));
+    QCOMPARE(timerScheduler.intervalAt(0), KiriView::normalizedAnimationFrameDelay(0));
+    QVERIFY(timerScheduler.activeAt(0));
+
+    timerScheduler.fireAt(0);
+
     QCOMPARE(emittedFrameSizes.at(0), QSize(2, 1));
     QVERIFY(errorString.isEmpty());
 }
@@ -207,16 +280,20 @@ void TestImageAnimationPlayer::startConsumesFirstFrameAndEmitsSubsequentFrames()
 void TestImageAnimationPlayer::restartableSourcesEmitFirstFrameOnLoopRestart()
 {
     std::vector<QSize> emittedFrameSizes;
+    ManualTimerScheduler timerScheduler;
     KiriView::ImageAnimationPlayer player(
         this,
         [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
-        [](const QString &) {});
+        [](const QString &) {}, {}, timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
         QSize(1, 1), std::vector<QSize> { QSize(2, 1) }, 1, true, stats));
 
-    QTRY_COMPARE_WITH_TIMEOUT(emittedFrameSizes.size(), std::size_t(3), 200);
+    timerScheduler.fireAt(0);
+    timerScheduler.fireAt(1);
+    timerScheduler.fireAt(2);
+
     QCOMPARE(stats->openCount, 2);
     QCOMPARE(emittedFrameSizes.at(0), QSize(2, 1));
     QCOMPARE(emittedFrameSizes.at(1), QSize(1, 1));
@@ -226,17 +303,19 @@ void TestImageAnimationPlayer::restartableSourcesEmitFirstFrameOnLoopRestart()
 void TestImageAnimationPlayer::nonRestartableSourcesDoNotReopenAtSequenceEnd()
 {
     std::vector<QSize> emittedFrameSizes;
+    ManualTimerScheduler timerScheduler;
     KiriView::ImageAnimationPlayer player(
         this,
         [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
-        [](const QString &) {});
+        [](const QString &) {}, {}, timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
         QSize(1, 1), std::vector<QSize> { QSize(2, 1) }, -1, false, stats));
 
-    QTRY_COMPARE_WITH_TIMEOUT(emittedFrameSizes.size(), std::size_t(1), 100);
-    QTest::qWait(40);
+    timerScheduler.fireAt(0);
+    timerScheduler.fireAt(1);
+
     QCOMPARE(stats->openCount, 1);
     QCOMPARE(emittedFrameSizes.size(), std::size_t(1));
 }
@@ -265,8 +344,10 @@ void TestImageAnimationPlayer::startReportsOpenErrors()
 void TestImageAnimationPlayer::readFrameErrorsAreReportedWithoutSequenceRestart()
 {
     QString errorString;
+    ManualTimerScheduler timerScheduler;
     KiriView::ImageAnimationPlayer player(
-        this, [](const QImage &) {}, [&errorString](const QString &error) { errorString = error; });
+        this, [](const QImage &) {}, [&errorString](const QString &error) { errorString = error; },
+        {}, timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
@@ -278,7 +359,9 @@ void TestImageAnimationPlayer::readFrameErrorsAreReportedWithoutSequenceRestart(
         },
         true, stats));
 
-    QTRY_COMPARE_WITH_TIMEOUT(errorString, QStringLiteral("read failed"), 100);
+    timerScheduler.fireAt(0);
+
+    QCOMPARE(errorString, QStringLiteral("read failed"));
     QCOMPARE(stats->openCount, 1);
     QCOMPARE(stats->readCount, 1);
 }
@@ -286,8 +369,10 @@ void TestImageAnimationPlayer::readFrameErrorsAreReportedWithoutSequenceRestart(
 void TestImageAnimationPlayer::readEndStopsOptimisticSourceWithoutError()
 {
     QString errorString;
+    ManualTimerScheduler timerScheduler;
     KiriView::ImageAnimationPlayer player(
-        this, [](const QImage &) {}, [&errorString](const QString &error) { errorString = error; });
+        this, [](const QImage &) {}, [&errorString](const QString &error) { errorString = error; },
+        {}, timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
@@ -299,8 +384,8 @@ void TestImageAnimationPlayer::readEndStopsOptimisticSourceWithoutError()
         },
         false, stats));
 
-    QTRY_COMPARE_WITH_TIMEOUT(stats->readCount, 1, 100);
-    QTest::qWait(40);
+    timerScheduler.fireAt(0);
+
     QCOMPARE(stats->openCount, 1);
     QCOMPARE(stats->readCount, 1);
     QVERIFY(errorString.isEmpty());
@@ -310,10 +395,12 @@ void TestImageAnimationPlayer::restartOpenErrorsAreReported()
 {
     std::vector<QSize> emittedFrameSizes;
     QString errorString;
+    ManualTimerScheduler timerScheduler;
     KiriView::ImageAnimationPlayer player(
         this,
         [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
-        [&errorString](const QString &error) { errorString = error; });
+        [&errorString](const QString &error) { errorString = error; }, {},
+        timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
@@ -326,7 +413,10 @@ void TestImageAnimationPlayer::restartOpenErrorsAreReported()
         },
         true, stats));
 
-    QTRY_COMPARE_WITH_TIMEOUT(errorString, QStringLiteral("restart failed"), 200);
+    timerScheduler.fireAt(0);
+    timerScheduler.fireAt(1);
+
+    QCOMPARE(errorString, QStringLiteral("restart failed"));
     QCOMPARE(stats->openCount, 2);
     QCOMPARE(emittedFrameSizes.size(), std::size_t(1));
     QCOMPARE(emittedFrameSizes.front(), QSize(2, 1));
