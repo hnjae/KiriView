@@ -39,9 +39,64 @@ class TestDirectoryListingJob : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void injectedProviderCompletesWithoutFilesystem();
+    void injectedProviderCancellationSuppressesCompletion();
     void localDirectoryReturnsItemSnapshot();
     void cancelSuppressesCompletion();
 };
+
+void TestDirectoryListingJob::injectedProviderCompletesWithoutFilesystem()
+{
+    const QUrl requestedUrl = QUrl::fromLocalFile(QStringLiteral("/synthetic/"));
+    QUrl providerUrl;
+    int providerCallCount = 0;
+    KiriView::DirectoryItemListProvider provider
+        = [&providerCallCount, &providerUrl](QObject *, QUrl directoryUrl,
+              KiriView::DirectoryItemListCallback callback, KiriView::ErrorCallback) {
+              ++providerCallCount;
+              providerUrl = std::move(directoryUrl);
+              callback({});
+              return KiriView::ImageIoJob();
+          };
+
+    bool listed = false;
+    QString errorString;
+    KiriView::ImageIoJob job = KiriView::startDirectoryItemList(
+        this, requestedUrl, [&listed](KFileItemList) { listed = true; },
+        [&errorString](const QString &message) { errorString = message; }, std::move(provider));
+
+    QCOMPARE(providerCallCount, 1);
+    QCOMPARE(providerUrl, requestedUrl);
+    QVERIFY(listed);
+    QVERIFY(errorString.isEmpty());
+    QVERIFY(!job.isActive());
+}
+
+void TestDirectoryListingJob::injectedProviderCancellationSuppressesCompletion()
+{
+    KiriView::ImageIoJobCompletion completion;
+    KiriView::DirectoryItemListCallback capturedCallback;
+    KiriView::DirectoryItemListProvider provider
+        = [&completion, &capturedCallback](QObject *receiver, QUrl,
+              KiriView::DirectoryItemListCallback callback, KiriView::ErrorCallback) {
+              auto *token = new QObject(receiver);
+              KiriView::ImageIoJob job(token, [](QObject *object) { object->deleteLater(); });
+              completion = job.completion();
+              capturedCallback = std::move(callback);
+              return job;
+          };
+
+    bool listed = false;
+    KiriView::ImageIoJob job = KiriView::startDirectoryItemList(
+        this, QUrl::fromLocalFile(QStringLiteral("/synthetic/")),
+        [&listed](KFileItemList) { listed = true; }, {}, std::move(provider));
+
+    QVERIFY(job.isActive());
+    job.cancel();
+
+    QVERIFY(!completion.claimAndDelete([&capturedCallback]() { capturedCallback({}); }));
+    QVERIFY(!listed);
+}
 
 void TestDirectoryListingJob::localDirectoryReturnsItemSnapshot()
 {
