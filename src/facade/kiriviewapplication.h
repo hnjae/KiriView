@@ -194,6 +194,7 @@ private:
     bool executeHorizontalArrowShortcut(bool leftArrow);
     bool executeSinglePageArrowShortcut(bool leftArrow);
     bool executeVerticalPanShortcut(bool up);
+    bool executeVideoSeekShortcut(qint64 deltaMilliseconds);
 
     std::unique_ptr<KiriView::ApplicationActions::KiriViewApplicationActionHost> m_actionHost;
     std::unique_ptr<KiriView::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;

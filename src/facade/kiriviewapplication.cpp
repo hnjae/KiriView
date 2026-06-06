@@ -72,6 +72,8 @@ KiriViewApplication::KiriViewApplication(QObject *parent)
               [this](bool leftArrow) { return executeHorizontalArrowShortcut(leftArrow); },
               [this](bool leftArrow) { return executeSinglePageArrowShortcut(leftArrow); },
               [this](bool up) { return executeVerticalPanShortcut(up); },
+              [this](
+                  qint64 deltaMilliseconds) { return executeVideoSeekShortcut(deltaMilliseconds); },
           }))
 {
     KiriViewApplication::setupActions();
@@ -754,5 +756,22 @@ bool KiriViewApplication::executeVerticalPanShortcut(bool up)
     }
 
     image->requestViewportPanBy(0.0, up ? -keyboardPanDistance : keyboardPanDistance);
+    return true;
+}
+
+bool KiriViewApplication::executeVideoSeekShortcut(qint64 deltaMilliseconds)
+{
+    if (!videoMode() || m_documentSession == nullptr) {
+        return false;
+    }
+
+    KiriVideoDocument *video = m_documentSession->videoDocument();
+    if (video == nullptr) {
+        return false;
+    }
+
+    if (video->seekable()) {
+        video->seekBy(deltaMilliseconds);
+    }
     return true;
 }

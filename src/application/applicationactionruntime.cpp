@@ -39,6 +39,7 @@ ApplicationActionRuntime::ApplicationActionRuntime(ApplicationActionHost &host, 
               std::move(callbacks.horizontalArrowShortcutTriggered),
               std::move(callbacks.singlePageArrowShortcutTriggered),
               std::move(callbacks.verticalPanShortcutTriggered),
+              std::move(callbacks.videoSeekShortcutTriggered),
           }))
     , m_actionStateChanged(std::move(callbacks.actionStateChanged))
     , m_actionTriggered(std::move(callbacks.actionTriggered))

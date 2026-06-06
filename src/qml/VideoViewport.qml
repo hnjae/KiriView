@@ -34,35 +34,6 @@ MediaViewportDelegate {
         root.updateVideoOutputAttachment();
     }
 
-    function seekByShortcut(deltaMilliseconds) {
-        if (root.videoDocument.seekable) {
-            root.videoDocument.seekBy(deltaMilliseconds);
-        }
-    }
-
-    function handleSeekShortcut(event) {
-        if (event.modifiers !== Qt.AltModifier) {
-            return false;
-        }
-
-        switch (event.key) {
-        case Qt.Key_Left:
-            root.seekByShortcut(-5000);
-            return true;
-        case Qt.Key_Right:
-            root.seekByShortcut(5000);
-            return true;
-        case Qt.Key_Up:
-            root.seekByShortcut(45000);
-            return true;
-        case Qt.Key_Down:
-            root.seekByShortcut(-45000);
-            return true;
-        default:
-            return false;
-        }
-    }
-
     onPresentationActiveChanged: updateVideoOutputAttachment()
     onVideoDocumentChanged: updateVideoOutputAttachment()
     onVisibleChanged: updateVideoOutputAttachment()
@@ -81,12 +52,6 @@ MediaViewportDelegate {
     }
     Component.onDestruction: {
         root.documentSession.reportVideoOutputSurfaceClaim(root.documentSession.nextVideoOutputSurfaceClaimToken(), root.documentSession.publicProjectionRevision, root, null, false, Qt.rect(0, 0, 0, 0), Qt.rect(0, 0, 0, 0));
-    }
-
-    Keys.onPressed: event => {
-        if (root.handleSeekShortcut(event)) {
-            event.accepted = true;
-        }
     }
 
     Rectangle {

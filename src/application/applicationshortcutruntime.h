@@ -17,6 +17,7 @@
 #include <QString>
 #include <QStringList>
 #include <QWindow>
+#include <QtGlobal>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -36,6 +37,7 @@ public:
         std::function<bool(bool)> horizontalArrowShortcutTriggered;
         std::function<bool(bool)> singlePageArrowShortcutTriggered;
         std::function<bool(bool)> verticalPanShortcutTriggered;
+        std::function<bool(qint64)> videoSeekShortcutTriggered;
     };
 
     ApplicationShortcutRuntime(ApplicationActionHost &host,

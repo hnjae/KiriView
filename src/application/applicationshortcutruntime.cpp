@@ -15,6 +15,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <algorithm>
+#include <optional>
 #include <utility>
 
 namespace {
@@ -56,6 +57,24 @@ bool exactShortcut(const QKeySequence &shortcut, const char *portableText)
     return shortcut.matches(QKeySequence::fromString(
                QString::fromLatin1(portableText), QKeySequence::PortableText))
         == QKeySequence::ExactMatch;
+}
+
+std::optional<qint64> fixedVideoSeekShortcutDeltaMilliseconds(const QKeySequence &shortcut)
+{
+    if (exactShortcut(shortcut, "Alt+Left")) {
+        return -5000;
+    }
+    if (exactShortcut(shortcut, "Alt+Right")) {
+        return 5000;
+    }
+    if (exactShortcut(shortcut, "Alt+Up")) {
+        return 45000;
+    }
+    if (exactShortcut(shortcut, "Alt+Down")) {
+        return -45000;
+    }
+
+    return std::nullopt;
 }
 
 class ShortcutEventFilter final : public QObject
@@ -332,7 +351,15 @@ bool ApplicationShortcutRuntime::handleFixedShortcutEvent(const QKeySequence &sh
     const bool horizontalArrowEnabled
         = mediaHorizontalArrowShortcutsEnabled(m_actionStateInput.videoMode,
             m_actionStateInput.readyViewerShortcutsEnabled, videoShortcutInput);
+    const bool videoSeekEnabled = m_actionStateInput.videoMode
+        && videoShortcutsEnabledForScope(
+            videoShortcutInput, ImageShortcutScope::ReadyViewerShortcutScope);
+    const std::optional<qint64> videoSeekDelta = fixedVideoSeekShortcutDeltaMilliseconds(shortcut);
 
+    if (videoSeekEnabled && videoSeekDelta.has_value()) {
+        return m_triggerCallbacks.videoSeekShortcutTriggered
+            && m_triggerCallbacks.videoSeekShortcutTriggered(*videoSeekDelta);
+    }
     if (horizontalArrowEnabled && exactShortcut(shortcut, "Left")) {
         return m_triggerCallbacks.horizontalArrowShortcutTriggered
             && m_triggerCallbacks.horizontalArrowShortcutTriggered(true);
