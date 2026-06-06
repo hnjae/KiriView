@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "async/imageiojob.h"
+#include "async/imageworkerscheduler.h"
+#include "candidate_test_support.h"
 #include "decoding/imagedecodedependencies.h"
+#include "location/imagedocumentlocation.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "system/filedeletion.h"
 #include "system/powersaverprovider.h"
@@ -12,7 +15,51 @@
 #include <QTest>
 #include <QUrl>
 #include <memory>
+#include <optional>
 #include <utility>
+#include <vector>
+
+namespace {
+using KiriView::TestSupport::archivePageUrl;
+using KiriView::TestSupport::localUrl;
+
+struct ManualImageWorkerSchedule {
+    KiriView::ImageWorkerOperation work;
+    KiriView::ImageWorkerCompletion completion;
+};
+
+class ManualImageWorkerScheduler
+{
+public:
+    KiriView::ImageWorkerScheduler scheduler()
+    {
+        return KiriView::ImageWorkerScheduler([this](QObject *, KiriView::ImageWorkerOperation work,
+                                                  KiriView::ImageWorkerCompletion completion) {
+            m_schedules.push_back(
+                ManualImageWorkerSchedule { std::move(work), std::move(completion) });
+        });
+    }
+
+    std::size_t scheduleCount() const { return m_schedules.size(); }
+
+    void runWork(std::size_t index)
+    {
+        if (m_schedules.at(index).work) {
+            m_schedules.at(index).work();
+        }
+    }
+
+    void finish(std::size_t index)
+    {
+        if (m_schedules.at(index).completion) {
+            m_schedules.at(index).completion();
+        }
+    }
+
+private:
+    std::vector<ManualImageWorkerSchedule> m_schedules;
+};
+}
 
 class TestRuntimeProviderDefaults : public QObject
 {
@@ -21,6 +68,7 @@ class TestRuntimeProviderDefaults : public QObject
 private Q_SLOTS:
     void candidateProviderDefaultsFillMissingLoadersAndPreserveOverrides();
     void decodeDependencyDefaultsFillMissingFunctionsAndPreserveOverrides();
+    void decodeDependencyDefaultsBindDataLoaderToWorkerScheduler();
     void fileDeletionDefaultFillsMissingProviderAndPreservesOverride();
     void powerSaverDefaultFillsMissingProviderAndPreservesOverride();
 };
@@ -75,6 +123,46 @@ void TestRuntimeProviderDefaults::decodeDependencyDefaultsFillMissingFunctionsAn
 
     resolved.dataLoader(nullptr, KiriView::ImageDecodeRequest(), {}, {});
     QCOMPARE(dataLoadCount, 1);
+}
+
+void TestRuntimeProviderDefaults::decodeDependencyDefaultsBindDataLoaderToWorkerScheduler()
+{
+    ManualImageWorkerScheduler workerScheduler;
+    KiriView::ImageDecodeDependencies dependencies;
+    dependencies.workerScheduler = workerScheduler.scheduler();
+
+    KiriView::ImageDecodeDependencies resolved
+        = KiriView::imageDecodeDependenciesWithDefaults(std::move(dependencies));
+    QVERIFY(resolved.dataLoader);
+
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(
+            localUrl(QStringLiteral("/books/book.cbz")));
+    QVERIFY(archiveCollection.has_value());
+    const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+
+    int dataCallbackCount = 0;
+    int errorCallbackCount = 0;
+    KiriView::ImageIoJob job = resolved.dataLoader(
+        this,
+        KiriView::ImageDecodeRequest::fromLocation(17,
+            KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+                pageUrl, *archiveCollection)),
+        [&dataCallbackCount](QByteArray) { ++dataCallbackCount; },
+        [&errorCallbackCount](QString) { ++errorCallbackCount; });
+
+    QCOMPARE(workerScheduler.scheduleCount(), std::size_t(1));
+    QCOMPARE(dataCallbackCount, 0);
+    QCOMPARE(errorCallbackCount, 0);
+    QVERIFY(job.isActive());
+
+    job.cancel();
+    workerScheduler.runWork(0);
+    workerScheduler.finish(0);
+
+    QVERIFY(!job.isActive());
+    QCOMPARE(dataCallbackCount, 0);
+    QCOMPARE(errorCallbackCount, 0);
 }
 
 void TestRuntimeProviderDefaults::fileDeletionDefaultFillsMissingProviderAndPreservesOverride()
