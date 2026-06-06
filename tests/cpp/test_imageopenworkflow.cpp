@@ -147,6 +147,7 @@ private Q_SLOTS:
     void animationFailureClearsImageAndResetsZoom();
     void routedLoadFailureAppliesErrorTransitions();
     void trackedLoadCompletionsClearLoadingContainerNavigationUrl();
+    void workflowTransitionsClearUnsupportedOpenedCollectionVideo();
     void stateChangesFollowWorkflowDeltaOrder();
 };
 
@@ -452,6 +453,63 @@ void TestImageOpenWorkflow::trackedLoadCompletionsClearLoadingContainerNavigatio
         finishAnimationLoadWithError(state, QStringLiteral("animation failed"));
 
         QVERIFY(state.loadingContainerNavigationUrl().isEmpty());
+    }
+}
+
+void TestImageOpenWorkflow::workflowTransitionsClearUnsupportedOpenedCollectionVideo()
+{
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
+    const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setUnsupportedOpenedCollectionVideo(true);
+
+        beginSourceLoad(state, false);
+
+        QVERIFY(!state.unsupportedOpenedCollectionVideo());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setUnsupportedOpenedCollectionVideo(true);
+
+        finishEmptySourceLoad(state);
+
+        QVERIFY(!state.unsupportedOpenedCollectionVideo());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setUnsupportedOpenedCollectionVideo(true);
+
+        finishSuccessfulImageLoad(state, loadSession(imageUrl, imageUrl));
+
+        QVERIFY(!state.unsupportedOpenedCollectionVideo());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setUnsupportedOpenedCollectionVideo(true);
+        state.setSourceUrl(localUrl(QStringLiteral("/images/missing.png")));
+        state.setLoading(true);
+        state.setStatus(KiriView::ImageDocumentStatus::Loading);
+
+        finishLoadWithError(
+            state, loadSession(imageUrl, imageUrl), true, QStringLiteral("missing"));
+
+        QVERIFY(!state.unsupportedOpenedCollectionVideo());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setUnsupportedOpenedCollectionVideo(true);
+        state.setLoading(true);
+        state.setLoadingContainerNavigationUrl(containerUrl);
+
+        finishContainerNavigationLoadWithError(state, containerUrl, QStringLiteral("empty"));
+
+        QVERIFY(!state.unsupportedOpenedCollectionVideo());
     }
 }
 
