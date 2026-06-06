@@ -53,6 +53,7 @@ private Q_SLOTS:
     void sourceKeysExposeTypedExtensionFamilies();
     void sourceKeysExposeOperationalExtensionContracts();
     void openedCollectionThumbnailEligibilityUsesSharedPolicy();
+    void decodingUsesNeutralThumbnailContracts();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void activePresentationDoesNotWritePageSurfacePresentationState();
@@ -985,6 +986,31 @@ void TestArchitectureBoundaries::openedCollectionThumbnailEligibilityUsesSharedP
     }
 
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::decodingUsesNeutralThumbnailContracts()
+{
+    const QStringList files = projectFilesUnder(
+        { QStringLiteral("src/decoding") }, { QStringLiteral("*.cpp"), QStringLiteral("*.h") });
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(#include\s+"session/thumbnail[^"]+")")),
+        QRegularExpression(
+            QStringLiteral(R"(#include\s+"session/activenavigationthumbnaildemand\.h")")),
+    };
+
+    QStringList violations;
+    for (const QString &filePath : files) {
+        const QString matches = matchingLines(filePath, forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+
+    const QString cacheLookupHeader
+        = readProjectFile(QStringLiteral("src/thumbnail/thumbnailcachelookup.h"));
+    QVERIFY(cacheLookupHeader.contains(QStringLiteral("ThumbnailCacheLookupRequest")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
