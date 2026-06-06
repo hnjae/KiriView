@@ -5,9 +5,9 @@
 #define KIRIVIEW_KIRIVIEWAPPLICATION_H
 
 #include "application/applicationactionstatepolicy.h"
+#include "application/applicationcommandrouter.h"
 #include "application/applicationtypes.h"
 #include "application/imageactionavailabilitypolicy.h"
-#include "navigation/imageshortcutnavigationpolicy.h"
 
 #include <AbstractKirigamiApplication>
 #include <QAbstractListModel>
@@ -183,6 +183,8 @@ private:
     bool videoMode() const;
     ImageActionAvailabilityInput imageActionAvailabilityInput() const;
     KiriView::ApplicationActions::ApplicationActionStateInput actionStateInput() const;
+    KiriView::ApplicationActions::ApplicationCommandRouterInput commandRouterInput() const;
+    KiriView::ApplicationActions::ApplicationCommandRouterPorts commandRouterPorts();
     void handleRuntimeActionTriggered(KiriView::ApplicationActions::ActionId actionId);
     void emitBoundaryText(const QString &message);
     void requestPreviousActiveNavigationWithBoundary();
@@ -200,7 +202,7 @@ private:
     std::unique_ptr<KiriView::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;
     QPointer<KiriDocumentSession> m_documentSession;
     std::vector<QMetaObject::Connection> m_actionStateConnections;
-    KiriView::ImageShortcutNavigationPolicy m_navigationPolicy;
+    KiriView::ApplicationActions::ApplicationCommandRouter m_commandRouter;
     ImageActionAvailabilityProjection m_imageActionProjection;
     KiriView::ApplicationActions::ApplicationActionStateInput m_actionStateInput;
     quint64 m_actionUiGateRevision = 0;

@@ -6,6 +6,7 @@ src/decoding/apngframecomposer.cpp
 src/decoding/apngrgbabuffer.cpp
 src/decoding/animationtiming.cpp
 src/decoding/decodedimageresult.cpp
+src/application/applicationcommandrouter.cpp
 src/application/applicationactionregistry.cpp
 src/application/applicationactionruntime.cpp
 src/application/applicationactionstatepolicy.cpp

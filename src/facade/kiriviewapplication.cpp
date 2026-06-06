@@ -14,8 +14,6 @@
 namespace Actions = KiriView::ApplicationActions;
 
 namespace {
-constexpr double keyboardPanDistance = 64.0;
-
 bool sharedImagePannabilityActionGate(
     const KiriView::DocumentSessionActionAvailabilityFacts &facts, bool viewportLocalPannable)
 {
@@ -474,6 +472,82 @@ Actions::ApplicationActionStateInput KiriViewApplication::actionStateInput() con
     return input;
 }
 
+Actions::ApplicationCommandRouterInput KiriViewApplication::commandRouterInput() const
+{
+    Actions::ApplicationCommandRouterInput input;
+    input.imagePannable = m_imagePannable;
+    input.rightToLeftReadingActive = m_imageActionProjection.rightToLeftReadingActive;
+    input.videoMode = videoMode();
+    input.imageDocumentPageNavigationActive = m_documentSession != nullptr
+        && m_documentSession->activeNavigationBoundaryScope()
+            == KiriDocumentSession::ActiveNavigationBoundaryScope::
+                ImageDocumentPageNavigationBoundary;
+    input.atKnownFirstActiveNavigation
+        = m_documentSession != nullptr && m_documentSession->atKnownFirstActiveNavigation();
+    input.canOpenPreviousActiveNavigation
+        = m_documentSession != nullptr && m_documentSession->canOpenPreviousActiveNavigation();
+    return input;
+}
+
+Actions::ApplicationCommandRouterPorts KiriViewApplication::commandRouterPorts()
+{
+    Actions::ApplicationCommandRouterPorts ports;
+    ports.imageAvailable = [this]() { return imageDocument() != nullptr; };
+    ports.imageViewportHorizontallyPannable = [this]() {
+        KiriImageDocument *image = imageDocument();
+        return image != nullptr && image->viewportHorizontallyPannable();
+    };
+    ports.requestViewportPanBy = [this](double dx, double dy) {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->requestViewportPanBy(dx, dy);
+        }
+    };
+    ports.requestViewportScanForward = [this]() {
+        KiriImageDocument *image = imageDocument();
+        return image != nullptr && image->requestViewportScanForward();
+    };
+    ports.requestViewportScanBackward = [this]() {
+        KiriImageDocument *image = imageDocument();
+        return image != nullptr && image->requestViewportScanBackward();
+    };
+    ports.requestNextDisplayedImageStartToFinalScanPosition = [this]() {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->requestNextDisplayedImageStartToFinalScanPosition();
+        }
+    };
+    ports.openPreviousSinglePage = [this]() {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->openPreviousSinglePage();
+        }
+    };
+    ports.openNextSinglePage = [this]() {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->openNextSinglePage();
+        }
+    };
+    ports.requestPreviousActiveNavigationWithBoundary
+        = [this]() { requestPreviousActiveNavigationWithBoundary(); };
+    ports.requestNextActiveNavigationWithBoundary
+        = [this]() { requestNextActiveNavigationWithBoundary(); };
+    ports.showFirstImageBoundary
+        = [this]() { Q_EMIT imageBoundaryReached(i18nc("@info:status", "First image")); };
+    ports.videoAvailable = [this]() {
+        return m_documentSession != nullptr && m_documentSession->videoDocument() != nullptr;
+    };
+    ports.videoSeekable = [this]() {
+        KiriVideoDocument *video
+            = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument();
+        return video != nullptr && video->seekable();
+    };
+    ports.seekVideoBy = [this](qint64 deltaMilliseconds) {
+        if (KiriVideoDocument *video
+            = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
+            video->seekBy(deltaMilliseconds);
+        }
+    };
+    return ports;
+}
+
 void KiriViewApplication::handleRuntimeActionTriggered(Actions::ActionId actionId)
 {
     KiriImageDocument *image = imageDocument();
@@ -642,136 +716,34 @@ void KiriViewApplication::requestNextActiveNavigationWithBoundary()
 
 void KiriViewApplication::handleScanForwardAction()
 {
-    KiriImageDocument *image = imageDocument();
-    const bool viewportMoved = image != nullptr && image->requestViewportScanForward();
-    const KiriView::ImageShortcutNavigationPolicy::ScanAction action
-        = m_navigationPolicy.scanForwardAction(m_imagePannable, viewportMoved);
-    switch (action) {
-    case KiriView::ImageShortcutNavigationPolicy::ScanAction::RequestNextActiveNavigationFromScan:
-        requestNextActiveNavigationWithBoundary();
-        return;
-    default:
-        return;
-    }
+    m_commandRouter.handleScanForwardAction(commandRouterInput(), commandRouterPorts());
 }
 
 void KiriViewApplication::handleScanBackwardAction()
 {
-    KiriImageDocument *image = imageDocument();
-    const bool viewportMoved = image != nullptr && image->requestViewportScanBackward();
-    const bool imageDocumentPageNavigationActive = m_documentSession != nullptr
-        && m_documentSession->activeNavigationBoundaryScope()
-            == KiriDocumentSession::ActiveNavigationBoundaryScope::
-                ImageDocumentPageNavigationBoundary;
-    const KiriView::ImageShortcutNavigationPolicy::ScanAction action
-        = m_navigationPolicy.scanBackwardAction(m_imagePannable, viewportMoved,
-            imageDocumentPageNavigationActive,
-            m_documentSession != nullptr && m_documentSession->atKnownFirstActiveNavigation(),
-            m_documentSession != nullptr && m_documentSession->canOpenPreviousActiveNavigation());
-    switch (action) {
-    case KiriView::ImageShortcutNavigationPolicy::ScanAction::
-        RequestPreviousActiveNavigationFromScan:
-        requestPreviousActiveNavigationWithBoundary();
-        return;
-    case KiriView::ImageShortcutNavigationPolicy::ScanAction::OpenPreviousPageFromFinalScanStart:
-        if (image != nullptr) {
-            image->requestNextDisplayedImageStartToFinalScanPosition();
-        }
-        requestPreviousActiveNavigationWithBoundary();
-        return;
-    case KiriView::ImageShortcutNavigationPolicy::ScanAction::ShowFirstImageBoundary:
-        Q_EMIT imageBoundaryReached(i18nc("@info:status", "First image"));
-        return;
-    default:
-        return;
-    }
+    m_commandRouter.handleScanBackwardAction(commandRouterInput(), commandRouterPorts());
 }
 
 bool KiriViewApplication::executeHorizontalArrowShortcut(bool leftArrow)
 {
-    if (videoMode()) {
-        if (leftArrow) {
-            requestPreviousActiveNavigationWithBoundary();
-        } else {
-            requestNextActiveNavigationWithBoundary();
-        }
-        return true;
-    }
-
-    KiriImageDocument *image = imageDocument();
-    if (image == nullptr) {
-        return false;
-    }
-
-    const KiriView::ImageShortcutNavigationPolicy::HorizontalArrowAction action
-        = m_navigationPolicy.horizontalArrowAction(leftArrow, image->viewportHorizontallyPannable(),
-            m_imageActionProjection.rightToLeftReadingActive);
-    switch (action) {
-    case KiriView::ImageShortcutNavigationPolicy::HorizontalArrowAction::PanLeft:
-        image->requestViewportPanBy(-keyboardPanDistance, 0.0);
-        return true;
-    case KiriView::ImageShortcutNavigationPolicy::HorizontalArrowAction::PanRight:
-        image->requestViewportPanBy(keyboardPanDistance, 0.0);
-        return true;
-    case KiriView::ImageShortcutNavigationPolicy::HorizontalArrowAction::
-        RequestPreviousActiveNavigation:
-        requestPreviousActiveNavigationWithBoundary();
-        return true;
-    case KiriView::ImageShortcutNavigationPolicy::HorizontalArrowAction::
-        RequestNextActiveNavigation:
-        requestNextActiveNavigationWithBoundary();
-        return true;
-    }
-
-    return false;
+    return m_commandRouter.executeHorizontalArrowShortcut(
+        commandRouterInput(), commandRouterPorts(), leftArrow);
 }
 
 bool KiriViewApplication::executeSinglePageArrowShortcut(bool leftArrow)
 {
-    KiriImageDocument *image = imageDocument();
-    if (image == nullptr) {
-        return false;
-    }
-
-    const KiriView::ImageShortcutNavigationPolicy::SinglePageArrowAction action
-        = m_navigationPolicy.singlePageArrowAction(
-            leftArrow, m_imageActionProjection.rightToLeftReadingActive);
-    switch (action) {
-    case KiriView::ImageShortcutNavigationPolicy::SinglePageArrowAction::OpenPreviousSinglePage:
-        image->openPreviousSinglePage();
-        return true;
-    case KiriView::ImageShortcutNavigationPolicy::SinglePageArrowAction::OpenNextSinglePage:
-        image->openNextSinglePage();
-        return true;
-    }
-
-    return false;
+    return m_commandRouter.executeSinglePageArrowShortcut(
+        commandRouterInput(), commandRouterPorts(), leftArrow);
 }
 
 bool KiriViewApplication::executeVerticalPanShortcut(bool up)
 {
-    KiriImageDocument *image = imageDocument();
-    if (image == nullptr) {
-        return false;
-    }
-
-    image->requestViewportPanBy(0.0, up ? -keyboardPanDistance : keyboardPanDistance);
-    return true;
+    return m_commandRouter.executeVerticalPanShortcut(
+        commandRouterInput(), commandRouterPorts(), up);
 }
 
 bool KiriViewApplication::executeVideoSeekShortcut(qint64 deltaMilliseconds)
 {
-    if (!videoMode() || m_documentSession == nullptr) {
-        return false;
-    }
-
-    KiriVideoDocument *video = m_documentSession->videoDocument();
-    if (video == nullptr) {
-        return false;
-    }
-
-    if (video->seekable()) {
-        video->seekBy(deltaMilliseconds);
-    }
-    return true;
+    return m_commandRouter.executeVideoSeekShortcut(
+        commandRouterInput(), commandRouterPorts(), deltaMilliseconds);
 }
