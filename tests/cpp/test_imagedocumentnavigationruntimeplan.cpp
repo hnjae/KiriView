@@ -31,6 +31,7 @@ private Q_SLOTS:
     void invalidComicMediaEntrySourceErrorMapsToLocalizedOpenError();
     void genericContainerErrorKeepsReportedErrorString();
     void containerBoundaryMapsToBoundaryOperation();
+    void containerListErrorIsDiagnosticOnly();
     void clearCurrentImageDocumentPageNavigationExpandsDeletedImageClearPlan();
     void mixedNavigationPlanPreservesOperationOrder();
 };
@@ -146,6 +147,20 @@ void TestImageDocumentNavigationRuntimePlan::containerBoundaryMapsToBoundaryOper
         plan, operationTypes<KiriView::ReportContainerNavigationBoundaryOperation>()));
     QCOMPARE(operationAt<KiriView::ReportContainerNavigationBoundaryOperation>(plan, 0).direction,
         KiriView::NavigationDirection::Previous);
+}
+
+void TestImageDocumentNavigationRuntimePlan::containerListErrorIsDiagnosticOnly()
+{
+    const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
+        KiriView::ReportContainerNavigationListErrorEffect {
+            localUrl(QStringLiteral("/books/a/")),
+            localUrl(QStringLiteral("/books/")),
+            KiriView::NavigationDirection::Next,
+            QStringLiteral("provider failure"),
+        },
+    });
+
+    QVERIFY(plan.empty());
 }
 
 void TestImageDocumentNavigationRuntimePlan::

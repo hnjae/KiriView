@@ -154,12 +154,16 @@ KiriView::ImageContainerNavigationController::Callbacks controllerCallbacks(
     std::function<void(const QUrl &, KiriView::ContainerNavigationError, const QString &)>
         containerNavigationError
     = {},
-    std::function<void(KiriView::NavigationDirection)> containerNavigationBoundary = {})
+    std::function<void(KiriView::NavigationDirection)> containerNavigationBoundary = {},
+    std::function<void(const QUrl &, const QUrl &, KiriView::NavigationDirection, const QString &)>
+        containerNavigationListError
+    = {})
 {
     return KiriView::ImageContainerNavigationController::Callbacks {
         [openContainerImage = std::move(openContainerImage),
             containerNavigationError = std::move(containerNavigationError),
-            containerNavigationBoundary = std::move(containerNavigationBoundary)](
+            containerNavigationBoundary = std::move(containerNavigationBoundary),
+            containerNavigationListError = std::move(containerNavigationListError)](
             KiriView::ImageDocumentPageNavigationPlan plan) mutable {
             for (const KiriView::ImageDocumentPageNavigationEffect &effect : plan) {
                 if (const auto *openEffect
@@ -174,6 +178,11 @@ KiriView::ImageContainerNavigationController::Callbacks controllerCallbacks(
                 } else if (const auto *boundaryEffect
                     = std::get_if<KiriView::ReportContainerNavigationBoundaryEffect>(&effect)) {
                     KiriView::invokeIfSet(containerNavigationBoundary, boundaryEffect->direction);
+                } else if (const auto *listErrorEffect
+                    = std::get_if<KiriView::ReportContainerNavigationListErrorEffect>(&effect)) {
+                    KiriView::invokeIfSet(containerNavigationListError,
+                        listErrorEffect->currentContainerUrl, listErrorEffect->parentUrl,
+                        listErrorEffect->direction, listErrorEffect->errorString);
                 }
             }
         },
@@ -191,6 +200,7 @@ private Q_SLOTS:
     void reportsPreviousBoundaryWhenNoAdjacentContainerExists();
     void reportsNextBoundaryWhenNoAdjacentContainerExists();
     void missingCurrentContainerDoesNotReportBoundary();
+    void forwardsAdjacentContainerListingErrorAsDiagnostic();
     void reportsEmptyAdjacentContainer();
     void reportsInvalidAdjacentArchiveContainer();
     void forwardsAdjacentContainerImageListingError();
@@ -345,6 +355,44 @@ void TestImageContainerNavigationController::missingCurrentContainerDoesNotRepor
     controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
 
     QCOMPARE(boundaryCount, 0);
+}
+
+void TestImageContainerNavigationController::forwardsAdjacentContainerListingErrorAsDiagnostic()
+{
+    FakeImageDocumentPageCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
+    fakeProvider.setContainerError(parentUrl, QStringLiteral("No parent access"));
+
+    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    bool openedImage = false;
+    int openErrorCount = 0;
+    QUrl reportedCurrentContainerUrl;
+    QUrl reportedParentUrl;
+    NavigationDirection reportedDirection = NavigationDirection::Previous;
+    QString diagnostic;
+    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+        controllerCallbacks([&openedImage](const QUrl &, const QUrl &) { openedImage = true; },
+            [&openErrorCount](
+                const QUrl &, ImageContainerOpenError, const QString &) { ++openErrorCount; },
+            {},
+            [&reportedCurrentContainerUrl, &reportedParentUrl, &reportedDirection, &diagnostic](
+                const QUrl &currentContainer, const QUrl &parent, NavigationDirection direction,
+                const QString &message) {
+                reportedCurrentContainerUrl = currentContainer;
+                reportedParentUrl = parent;
+                reportedDirection = direction;
+                diagnostic = message;
+            }));
+
+    controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
+
+    QVERIFY(!openedImage);
+    QCOMPARE(openErrorCount, 0);
+    QCOMPARE(reportedCurrentContainerUrl, currentContainerUrl);
+    QCOMPARE(reportedParentUrl, parentUrl);
+    QCOMPARE(reportedDirection, NavigationDirection::Next);
+    QCOMPARE(diagnostic, QStringLiteral("No parent access"));
 }
 
 void TestImageContainerNavigationController::reportsEmptyAdjacentContainer()
