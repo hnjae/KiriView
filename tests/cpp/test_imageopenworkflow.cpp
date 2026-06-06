@@ -139,6 +139,7 @@ class TestImageOpenWorkflow : public QObject
 private Q_SLOTS:
     void transitionsUseExplicitSnapshotInputs();
     void sourceResolutionUsesCanonicalSessionImageUrl();
+    void sourceResolutionTracksSessionSourceKind();
     void firstImageLoadSuccessTransitionsToReady();
     void directArchiveImageLoadSuccessDisablesContainerNavigation();
     void replacementLoadFailureSelectsTargetError();
@@ -198,6 +199,29 @@ void TestImageOpenWorkflow::sourceResolutionUsesCanonicalSessionImageUrl()
     QVERIFY(plan.empty());
     QCOMPARE(state.sourceUrl(), imageUrl);
     QVERIFY(state.displayedUrl().isEmpty());
+    QVERIFY(state.loading());
+    QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Loading);
+}
+
+void TestImageOpenWorkflow::sourceResolutionTracksSessionSourceKind()
+{
+    KiriView::ImageDocumentState state;
+    const QUrl videoUrl = localUrl(QStringLiteral("/videos/clip.mp4"));
+    state.setSourceUrl(videoUrl);
+    state.setLoading(true);
+    state.setStatus(KiriView::ImageDocumentStatus::Loading);
+
+    const KiriView::ImageLoadSession session(1,
+        KiriView::ImageLoadRequest::fromTarget(
+            KiriView::ImageDocumentPageTarget { videoUrl, KiriView::ImageDocumentPageKind::Video },
+            KiriView::OpenedCollectionScopeLocation::none()),
+        KiriView::DisplayedImageLocation::fromUrl(videoUrl));
+
+    const KiriView::ImageDocumentRuntimePlan plan = resolveSourceImage(state, session);
+
+    QVERIFY(plan.empty());
+    QCOMPARE(state.sourceUrl(), videoUrl);
+    QCOMPARE(state.sourceKind(), KiriView::ImageDocumentPageKind::Video);
     QVERIFY(state.loading());
     QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Loading);
 }
