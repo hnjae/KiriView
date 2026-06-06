@@ -29,6 +29,7 @@ private Q_SLOTS:
     void resolverCanReturnSeparatePlaybackUrl();
     void resolvedPlaybackPathPublishesEmbeddedMetadata();
     void resolverFailureSurfacesErrorWithoutChangingSourceUrl();
+    void backendRecoveryClearsStaleErrorText();
     void staleResolverCompletionsAreIgnored();
     void resolverCleanupRunsOnSourceChangeAndDestruction();
     void videoSizeFollowsBackendMetadata();
@@ -114,6 +115,12 @@ public:
     {
         currentStatus = status;
         callbacks.mediaStatusChanged();
+    }
+
+    void emitError(QString errorString)
+    {
+        currentErrorString = std::move(errorString);
+        callbacks.errorChanged();
     }
 
     void emitDuration(qint64 duration)
@@ -460,6 +467,24 @@ void TestVideoDocumentRuntime::resolverFailureSurfacesErrorWithoutChangingSource
     QCOMPARE(fixture.runtime->status(), KiriView::VideoDocumentStatus::Error);
     QCOMPARE(fixture.runtime->errorString(), QStringLiteral("resolution failed"));
     QCOMPARE(fixture.backend->sourceUrl, QUrl());
+}
+
+void TestVideoDocumentRuntime::backendRecoveryClearsStaleErrorText()
+{
+    RuntimeFixture fixture;
+    const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/clip.mp4"));
+
+    fixture.runtime->setSourceUrl(sourceUrl);
+    fixture.resolveLatest(sourceUrl);
+    fixture.backend->emitError(QStringLiteral("backend failed"));
+
+    QCOMPARE(fixture.runtime->status(), KiriView::VideoDocumentStatus::Error);
+    QCOMPARE(fixture.runtime->errorString(), QStringLiteral("backend failed"));
+
+    fixture.backend->emitStatus(KiriView::VideoMediaStatus::Buffered);
+
+    QCOMPARE(fixture.runtime->status(), KiriView::VideoDocumentStatus::Ready);
+    QCOMPARE(fixture.runtime->errorString(), QString());
 }
 
 void TestVideoDocumentRuntime::staleResolverCompletionsAreIgnored()
