@@ -35,6 +35,7 @@ private Q_SLOTS:
     void qmlDoesNotManufactureStaleSensitiveRevisions();
     void imageActionAvailabilityFacadeIsNotWritableQmlBackdoor();
     void fixedViewerShortcutsDoNotBypassRuntimeRouting();
+    void videoSeekShortcutsRouteThroughApplicationRuntime();
     void sessionPublicProjectionHasNoPartialUpdateBackdoor();
     void sessionPublicProjectionDoesNotSampleLeafFacadesWhileApplying();
     void qmlDoesNotWriteSharedVideoOutputAttachment();
@@ -516,6 +517,45 @@ void TestArchitectureBoundaries::fixedViewerShortcutsDoNotBypassRuntimeRouting()
     QVERIFY(!header.contains(QStringLiteral("handleVerticalPanShortcut")));
     QVERIFY(!implementation.contains(QStringLiteral("class FixedShortcutEventFilter")));
     QVERIFY(!implementation.contains(QStringLiteral("handleFixedShortcutEvent")));
+}
+
+void TestArchitectureBoundaries::videoSeekShortcutsRouteThroughApplicationRuntime()
+{
+    const QString videoViewport = readProjectFile(QStringLiteral("src/qml/VideoViewport.qml"));
+    const QString shortcutRuntime
+        = readProjectFile(QStringLiteral("src/application/applicationshortcutruntime.cpp"));
+    const QString applicationHeader
+        = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.h"));
+    const QString applicationImplementation
+        = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.cpp"));
+    const QList<QRegularExpression> forbiddenVideoViewportPatterns {
+        QRegularExpression(QStringLiteral(R"(\bKeys\s*\.\s*onPressed\b)")),
+        QRegularExpression(QStringLiteral(R"(\bhandleSeekShortcut\b)")),
+        QRegularExpression(QStringLiteral(R"(\bseekByShortcut\b)")),
+        QRegularExpression(QStringLiteral(R"(\bvideoDocument\s*\.\s*seekable\b)")),
+        QRegularExpression(QStringLiteral(R"(\bvideoDocument\s*\.\s*seekBy\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bQt\s*\.\s*Key_(?:Left|Right|Up|Down)\b)")),
+    };
+
+    QStringList violations;
+    for (const QRegularExpression &pattern : forbiddenVideoViewportPatterns) {
+        QRegularExpressionMatchIterator iterator = pattern.globalMatch(videoViewport);
+        while (iterator.hasNext()) {
+            violations.push_back(iterator.next().captured(0));
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+    QVERIFY(shortcutRuntime.contains(QStringLiteral("fixedVideoSeekShortcut")));
+    QVERIFY(shortcutRuntime.contains(QStringLiteral("Alt+Left")));
+    QVERIFY(shortcutRuntime.contains(QStringLiteral("Alt+Right")));
+    QVERIFY(shortcutRuntime.contains(QStringLiteral("Alt+Up")));
+    QVERIFY(shortcutRuntime.contains(QStringLiteral("Alt+Down")));
+    QVERIFY(shortcutRuntime.contains(QStringLiteral("videoSeekShortcutTriggered")));
+    QVERIFY(applicationHeader.contains(QStringLiteral("executeVideoSeekShortcut")));
+    QVERIFY(applicationImplementation.contains(QStringLiteral("executeVideoSeekShortcut")));
+    QVERIFY(applicationImplementation.contains(QStringLiteral("seekable()")));
+    QVERIFY(applicationImplementation.contains(QStringLiteral("seekBy(")));
 }
 
 void TestArchitectureBoundaries::sessionPublicProjectionHasNoPartialUpdateBackdoor()
