@@ -8,8 +8,8 @@
 #include "imagedocumentdeletionfallbackcontroller.h"
 #include "imagedocumentdeletionstate.h"
 #include "imagedocumentruntimeplan.h"
-#include "imageremovalfallback.h"
 #include "navigation/imagedocumentpagecandidaterepository.h"
+#include "navigation/imageremovalfallback.h"
 #include "system/filedeletion.h"
 
 #include <QString>

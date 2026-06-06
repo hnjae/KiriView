@@ -7,8 +7,8 @@
 #include "async/imageasyncoperationstate.h"
 #include "async/imageiojob.h"
 #include "imagedocumentruntimeplan.h"
-#include "imageremovalfallback.h"
 #include "navigation/imagedocumentpagecandidaterepository.h"
+#include "navigation/imageremovalfallback.h"
 
 #include <QtGlobal>
 #include <functional>

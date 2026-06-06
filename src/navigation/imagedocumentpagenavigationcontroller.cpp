@@ -4,8 +4,8 @@
 #include "imagedocumentpagenavigationcontroller.h"
 
 #include "async/imagecallback.h"
-#include "document/imageremovalfallback.h"
 #include "imagedocumentpagenavigationpolicy.h"
+#include "imageremovalfallback.h"
 
 #include <QString>
 #include <optional>
