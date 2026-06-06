@@ -90,6 +90,13 @@ KiriView::ImageDocumentRuntimePlan resolveSourceImage(
         state, KiriView::ImageOpenWorkflow::resolveSourceImagePlan(session));
 }
 
+KiriView::ImageDocumentRuntimePlan finishUnsupportedOpenedCollectionVideoLoad(
+    KiriView::ImageDocumentState &state, const KiriView::ImageLoadSession &session)
+{
+    return KiriView::applyImageOpenApplicationPlan(state,
+        KiriView::ImageOpenWorkflow::finishUnsupportedOpenedCollectionVideoLoadPlan(session));
+}
+
 KiriView::ImageDocumentRuntimePlan finishSuccessfulImageLoad(
     KiriView::ImageDocumentState &state, const KiriView::ImageLoadSession &session)
 {
@@ -140,6 +147,7 @@ private Q_SLOTS:
     void transitionsUseExplicitSnapshotInputs();
     void sourceResolutionUsesCanonicalSessionImageUrl();
     void sourceResolutionTracksSessionSourceKind();
+    void unsupportedOpenedCollectionVideoTransitionPublishesReadyVideoState();
     void firstImageLoadSuccessTransitionsToReady();
     void directArchiveImageLoadSuccessDisablesContainerNavigation();
     void replacementLoadFailureSelectsTargetError();
@@ -226,6 +234,48 @@ void TestImageOpenWorkflow::sourceResolutionTracksSessionSourceKind()
     QCOMPARE(state.sourceKind(), KiriView::ImageDocumentPageKind::Video);
     QVERIFY(state.loading());
     QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Loading);
+}
+
+void TestImageOpenWorkflow::unsupportedOpenedCollectionVideoTransitionPublishesReadyVideoState()
+{
+    KiriView::ImageDocumentState state;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
+    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl videoUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.mp4"));
+    const KiriView::DisplayedImageLocation location
+        = KiriView::DisplayedImageLocation::fromUrl(videoUrl, *archiveCollection);
+    KiriView::EmbeddedMetadata metadata;
+    metadata.cameraMake = QStringLiteral("Kiri Camera");
+    state.setLoading(true);
+    state.setLoadingContainerNavigationUrl(archiveUrl);
+    state.setErrorString(QStringLiteral("previous error"));
+    state.setEmbeddedMetadata(metadata);
+
+    const KiriView::ImageLoadSession session(8,
+        KiriView::ImageLoadRequest::fromTarget(
+            KiriView::ImageDocumentPageTarget { videoUrl, KiriView::ImageDocumentPageKind::Video },
+            *archiveCollection),
+        location);
+
+    const KiriView::ImageDocumentRuntimePlan plan
+        = finishUnsupportedOpenedCollectionVideoLoad(state, session);
+
+    QCOMPARE(state.sourceUrl(), videoUrl);
+    QCOMPARE(state.sourceKind(), KiriView::ImageDocumentPageKind::Video);
+    QCOMPARE(state.displayedImageLocation(), location);
+    QCOMPARE(state.containerNavigationUrl(), KiriView::containerNavigationUrlForLocation(location));
+    QVERIFY(state.errorString().isEmpty());
+    QVERIFY(state.embeddedMetadata().isEmpty());
+    QVERIFY(state.loadingContainerNavigationUrl().isEmpty());
+    QVERIFY(!state.loading());
+    QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Ready);
+    QVERIFY(state.unsupportedOpenedCollectionVideo());
+    QCOMPARE(plan.size(), std::size_t(3));
+    QVERIFY(operationAtType<KiriView::FinishSpreadTransitionOperation>(plan, 0));
+    QVERIFY(operationAtType<KiriView::ClearSecondaryPageOperation>(plan, 1));
+    QVERIFY(operationAtType<KiriView::UpdatePageNavigationOperation>(plan, 2));
 }
 
 void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()

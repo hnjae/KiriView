@@ -58,6 +58,8 @@ namespace ImageOpenWorkflow {
     ImageOpenApplicationPlan beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot snapshot);
     ImageOpenApplicationPlan finishEmptySourceLoadPlan();
     ImageOpenApplicationPlan resolveSourceImagePlan(const ImageLoadSession &session);
+    ImageOpenApplicationPlan finishUnsupportedOpenedCollectionVideoLoadPlan(
+        const ImageLoadSession &session);
     ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
         ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession &session);
     ImageOpenApplicationPlan finishLoadWithErrorPlan(ImageOpenLoadErrorSnapshot snapshot,
@@ -68,6 +70,7 @@ namespace ImageOpenWorkflow {
     ImageOpenTransition beginSourceLoadTransition(ImageOpenBeginSourceLoadSnapshot snapshot);
     ImageOpenTransition finishEmptySourceLoadTransition();
     ImageOpenTransition resolveSourceImageTransition();
+    ImageOpenTransition finishUnsupportedOpenedCollectionVideoLoadTransition();
     ImageOpenTransition finishSuccessfulImageLoadTransition(
         ImageOpenSuccessfulImageLoadSnapshot snapshot);
     ImageOpenTransition finishLoadWithErrorTransition(ImageOpenLoadErrorSnapshot snapshot);
