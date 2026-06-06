@@ -360,8 +360,7 @@ void VideoDocumentRuntime::publishSourceLoadFailure(const QUrl &, const QString 
 {
     invalidatePlaybackCallbacks();
     m_state.setEmbeddedMetadata({});
-    m_state.setErrorString(errorString);
-    m_state.setStatus(VideoDocumentStatus::Error);
+    m_state.setStatusAndError(VideoDocumentStatus::Error, errorString);
     updateZoomPercent();
 }
 
@@ -402,7 +401,8 @@ void VideoDocumentRuntime::updateStatusFromBackend()
     if (plan.clearPlaying) {
         m_state.setPlaying(false);
     }
-    m_state.setStatus(plan.status);
+    m_state.setStatusAndError(
+        plan.status, plan.status == VideoDocumentStatus::Error ? m_state.errorString() : QString());
     updateZoomPercent();
 }
 
@@ -414,8 +414,7 @@ void VideoDocumentRuntime::updateErrorFromBackend()
 
     const QString backendError = m_mediaBackend->errorString();
     if (!backendError.isEmpty()) {
-        m_state.setErrorString(backendError);
-        m_state.setStatus(VideoDocumentStatus::Error);
+        m_state.setStatusAndError(VideoDocumentStatus::Error, backendError);
         updateZoomPercent();
     }
 }

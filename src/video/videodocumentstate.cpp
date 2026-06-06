@@ -115,6 +115,15 @@ void VideoDocumentState::setStatus(VideoDocumentStatus status)
     publish(std::move(changes));
 }
 
+void VideoDocumentState::setStatusAndError(VideoDocumentStatus status, const QString &errorString)
+{
+    std::vector<VideoDocumentChange> changes;
+    appendIfErrorStringChanged(
+        changes, status == VideoDocumentStatus::Error ? errorString : QString());
+    appendIfStatusChanged(changes, status);
+    publish(std::move(changes));
+}
+
 void VideoDocumentState::setErrorString(const QString &errorString)
 {
     std::vector<VideoDocumentChange> changes;

@@ -43,6 +43,7 @@ public:
 
     void resetForClearedSource();
     void resetForSourceLoad(const QUrl &sourceUrl);
+    void setStatusAndError(VideoDocumentStatus status, const QString &errorString = {});
     void setStatus(VideoDocumentStatus status);
     void setErrorString(const QString &errorString);
     void setDuration(qint64 duration);
