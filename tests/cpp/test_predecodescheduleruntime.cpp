@@ -9,6 +9,8 @@
 #include <QUrl>
 #include <memory>
 #include <optional>
+#include <utility>
+#include <vector>
 
 namespace {
 using KiriView::TestSupport::indexedImageUrl;
@@ -47,6 +49,63 @@ KiriView::PowerSaverProvider noOpPowerSaverProvider()
         },
     };
 }
+
+class ManualRuntimeTimer final : public KiriView::RuntimeTimerHandle
+{
+public:
+    ManualRuntimeTimer(int intervalMsec, KiriView::RuntimeTimerCallback callback)
+        : m_intervalMsec(intervalMsec)
+        , m_callback(std::move(callback))
+    {
+    }
+
+    int intervalMsec() const { return m_intervalMsec; }
+    bool active() const { return m_active; }
+
+    void start() override { m_active = true; }
+    void stop() override { m_active = false; }
+
+    void fire()
+    {
+        if (!m_active || !m_callback) {
+            return;
+        }
+
+        m_active = false;
+        m_callback();
+    }
+
+private:
+    int m_intervalMsec = 0;
+    KiriView::RuntimeTimerCallback m_callback;
+    bool m_active = false;
+};
+
+class ManualTimerScheduler
+{
+public:
+    KiriView::TimerScheduler scheduler()
+    {
+        return KiriView::TimerScheduler {
+            [this]() { return m_currentMsec; },
+            [this](QObject *, int intervalMsec, KiriView::RuntimeTimerCallback callback)
+                -> std::unique_ptr<KiriView::RuntimeTimerHandle> {
+                auto timer
+                    = std::make_unique<ManualRuntimeTimer>(intervalMsec, std::move(callback));
+                m_timers.push_back(timer.get());
+                return timer;
+            },
+        };
+    }
+
+    void advanceTo(qint64 monotonicMsec) { m_currentMsec = monotonicMsec; }
+    std::size_t timerCount() const { return m_timers.size(); }
+    ManualRuntimeTimer &timerAt(std::size_t index) { return *m_timers.at(index); }
+
+private:
+    qint64 m_currentMsec = 0;
+    std::vector<ManualRuntimeTimer *> m_timers;
+};
 }
 
 class TestPredecodeScheduleRuntime : public QObject
@@ -55,6 +114,7 @@ class TestPredecodeScheduleRuntime : public QObject
 
 private Q_SLOTS:
     void scheduleCachesDisplayedImagesAndStartsAdjacentAfterDebounce();
+    void manualTimerSchedulerFiresDebouncedPredecode();
     void invalidScheduleCancelsDomainBackgroundWork();
     void powerSaverSuppressesAndReschedulesPendingPredecode();
 };
@@ -81,6 +141,37 @@ void TestPredecodeScheduleRuntime::scheduleCachesDisplayedImagesAndStartsAdjacen
     QVERIFY(capturedSchedule.has_value());
     QCOMPARE(capturedSchedule->context.currentLocation.imageUrl(), displayedUrl);
     QVERIFY(runtime.accepts(capturedSchedule->generation));
+}
+
+void TestPredecodeScheduleRuntime::manualTimerSchedulerFiresDebouncedPredecode()
+{
+    KiriView::PredecodeLoadController loadController(
+        this, KiriView::ImageDecodeDependencies {}, testCacheByteBudget);
+    ManualTimerScheduler timerScheduler;
+    int startCount = 0;
+    std::optional<KiriView::PredecodePendingSchedule> capturedSchedule;
+    KiriView::PredecodeScheduleRuntime runtime(
+        this, loadController,
+        [&startCount, &capturedSchedule](const KiriView::PredecodePendingSchedule &schedule) {
+            ++startCount;
+            capturedSchedule = schedule;
+        },
+        {}, noOpPowerSaverProvider(), timerScheduler.scheduler());
+
+    const QUrl displayedUrl = indexedImageUrl(4);
+    timerScheduler.advanceTo(1000);
+    runtime.schedule(scheduleContext(displayedUrl));
+
+    QCOMPARE(timerScheduler.timerCount(), std::size_t(2));
+    QCOMPARE(timerScheduler.timerAt(0).intervalMsec(), KiriView::predecodeDebounceMsec());
+    QVERIFY(timerScheduler.timerAt(0).active());
+    QCOMPARE(startCount, 0);
+
+    timerScheduler.timerAt(0).fire();
+
+    QCOMPARE(startCount, 1);
+    QVERIFY(capturedSchedule.has_value());
+    QCOMPARE(capturedSchedule->context.currentLocation.imageUrl(), displayedUrl);
 }
 
 void TestPredecodeScheduleRuntime::invalidScheduleCancelsDomainBackgroundWork()
