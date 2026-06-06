@@ -36,6 +36,7 @@ private Q_SLOTS:
     void imageActionAvailabilityFacadeIsNotWritableQmlBackdoor();
     void fixedViewerShortcutsDoNotBypassRuntimeRouting();
     void videoSeekShortcutsRouteThroughApplicationRuntime();
+    void applicationFacadeDoesNotOwnFixedViewerCommandRouting();
     void sessionPublicProjectionHasNoPartialUpdateBackdoor();
     void sessionPublicProjectionDoesNotSampleLeafFacadesWhileApplying();
     void qmlDoesNotWriteSharedVideoOutputAttachment();
@@ -556,6 +557,22 @@ void TestArchitectureBoundaries::videoSeekShortcutsRouteThroughApplicationRuntim
     QVERIFY(applicationImplementation.contains(QStringLiteral("executeVideoSeekShortcut")));
     QVERIFY(applicationImplementation.contains(QStringLiteral("seekable()")));
     QVERIFY(applicationImplementation.contains(QStringLiteral("seekBy(")));
+}
+
+void TestArchitectureBoundaries::applicationFacadeDoesNotOwnFixedViewerCommandRouting()
+{
+    const QString header = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.h"));
+    const QString implementation
+        = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.cpp"));
+    const QString coreSources = readProjectFile(QStringLiteral("src/cpp_core_sources.txt"));
+
+    QVERIFY(!header.contains(QStringLiteral("navigation/imageshortcutnavigationpolicy.h")));
+    QVERIFY(!header.contains(QStringLiteral("ImageShortcutNavigationPolicy m_navigationPolicy")));
+    QVERIFY(!implementation.contains(QStringLiteral("m_navigationPolicy.")));
+    QVERIFY(!implementation.contains(QStringLiteral("keyboardPanDistance")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouter")));
+    QVERIFY(implementation.contains(QStringLiteral("ApplicationCommandRouter")));
+    QVERIFY(coreSources.contains(QStringLiteral("src/application/applicationcommandrouter.cpp")));
 }
 
 void TestArchitectureBoundaries::sessionPublicProjectionHasNoPartialUpdateBackdoor()
