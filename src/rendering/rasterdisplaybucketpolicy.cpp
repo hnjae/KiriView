@@ -5,6 +5,7 @@
 
 #include "cache/imagebytecost.h"
 #include "kiriview/src/policy/rasterdisplaybucketpolicy.cxx.h"
+#include "rendering/imagerotation.h"
 
 #include <algorithm>
 #include <cmath>
@@ -109,12 +110,6 @@ namespace {
 
     bool finitePositive(qreal value) { return std::isfinite(value) && value > 0.0; }
 
-    bool rotationSwapsAxes(int degrees)
-    {
-        const int normalized = ((degrees % 360) + 360) % 360;
-        return normalized == 90 || normalized == 270;
-    }
-
     bool svgDisplayDemandIsValid(const RasterDisplayBucketPolicyInput &input)
     {
         return input.originalSize.isValid() && !input.originalSize.isEmpty()
@@ -130,7 +125,7 @@ namespace {
     {
         qreal displayWidth = input.displaySize.width();
         qreal displayHeight = input.displaySize.height();
-        if (rotationSwapsAxes(input.rotationDegrees)) {
+        if (imageRotationSwapsAxes(input.rotationDegrees)) {
             std::swap(displayWidth, displayHeight);
         }
 
