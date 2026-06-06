@@ -3,6 +3,7 @@
 
 #include "presentation/imagepagesurfacecontroller.h"
 
+#include "async/imageworkerscheduler.h"
 #include "decoding/kiriimagedecoder.h"
 #include "image_test_support.h"
 #include "rendering/heiftilesource.h"
@@ -53,6 +54,43 @@ private Q_SLOTS:
 
 namespace {
 constexpr qsizetype testByteBudget = 1024 * 1024;
+
+struct ManualImageWorkerSchedule {
+    KiriView::ImageWorkerOperation work;
+    KiriView::ImageWorkerCompletion completion;
+};
+
+class ManualImageWorkerScheduler
+{
+public:
+    KiriView::ImageWorkerScheduler scheduler()
+    {
+        return KiriView::ImageWorkerScheduler([this](QObject *, KiriView::ImageWorkerOperation work,
+                                                  KiriView::ImageWorkerCompletion completion) {
+            m_schedules.push_back(
+                ManualImageWorkerSchedule { std::move(work), std::move(completion) });
+        });
+    }
+
+    std::size_t scheduleCount() const { return m_schedules.size(); }
+
+    void runWork(std::size_t index)
+    {
+        if (m_schedules.at(index).work) {
+            m_schedules.at(index).work();
+        }
+    }
+
+    void finish(std::size_t index)
+    {
+        if (m_schedules.at(index).completion) {
+            m_schedules.at(index).completion();
+        }
+    }
+
+private:
+    std::vector<ManualImageWorkerSchedule> m_schedules;
+};
 
 KiriView::ImageCacheBudgets cacheBudgets(qsizetype displayImageBudget = testByteBudget)
 {
@@ -433,7 +471,9 @@ void TestImagePageSurfaceController::rawShadowThumbnailPreviewEntryIsReleasedOnD
 void TestImagePageSurfaceController::qtRasterFirstDisplayRefinesToProviderBucket()
 {
     auto store = std::make_shared<KiriView::DisplayImageStore>(testByteBudget);
-    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
+    ManualImageWorkerScheduler workerScheduler;
+    KiriView::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store,
+        KiriView::DisplayedPageRole::Primary, workerScheduler.scheduler());
 
     controller.setStaticDisplayImage(
         qtRasterPayload(QSize(16, 12), QSize(4, 3), QStringLiteral("source-a")), false,
@@ -444,7 +484,16 @@ void TestImagePageSurfaceController::qtRasterFirstDisplayRefinesToProviderBucket
 
     controller.updateDisplayProjection(visibleProjection(QSizeF(8.0, 6.0)));
 
-    QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
+    QCOMPARE(workerScheduler.scheduleCount(), std::size_t(1));
+    QCOMPARE(controller.snapshot().displaySource.providerUrl, first.providerUrl);
+
+    workerScheduler.runWork(0);
+
+    QCOMPARE(controller.snapshot().displaySource.providerUrl, first.providerUrl);
+
+    workerScheduler.finish(0);
+
+    QVERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
     const KiriView::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
     QCOMPARE(refined.sourceIdentity, QStringLiteral("source-a"));
     QCOMPARE(refined.rasterSize, QSize(8, 6));
