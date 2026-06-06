@@ -73,8 +73,12 @@ void TestVideoSourceLoadPlan::failurePlanCarriesSourceAndError()
     QCOMPARE(plan.size(), std::size_t(1));
     const KiriView::PublishVideoSourceLoadFailureOperation &operation
         = operationAt<KiriView::PublishVideoSourceLoadFailureOperation>(plan, 0);
-    QCOMPARE(operation.sourceUrl, sourceUrl);
-    QCOMPARE(operation.errorString, errorString);
+    QCOMPARE(operation.failure.sourceUrl, sourceUrl);
+    QVERIFY(operation.failure.kind == KiriView::VideoSourceLoadFailureKind::PlaybackUrlResolution);
+    QCOMPARE(operation.failure.userMessage, errorString);
+    QCOMPARE(operation.failure.diagnosticDetail, errorString);
+    QVERIFY(operation.failure.severity == KiriView::VideoSourceLoadFailureSeverity::Error);
+    QVERIFY(!operation.failure.retryable);
 }
 
 QTEST_GUILESS_MAIN(TestVideoSourceLoadPlan)

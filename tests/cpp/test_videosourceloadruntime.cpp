@@ -74,6 +74,9 @@ struct SourceLoadFixture {
     QUrl readyPlaybackUrl;
     QUrl failedSourceUrl;
     QString failedErrorString;
+    QString failedDiagnosticDetail;
+    KiriView::VideoSourceLoadFailureKind failedKind
+        = KiriView::VideoSourceLoadFailureKind::PlaybackUrlResolution;
 
     KiriView::VideoSourceLoadPlanCallback planCallback()
     {
@@ -107,8 +110,10 @@ struct SourceLoadFixture {
                 } else if constexpr (std::is_same_v<Operation,
                                          KiriView::PublishVideoSourceLoadFailureOperation>) {
                     events.push_back(QStringLiteral("source-load-failed"));
-                    failedSourceUrl = payload.sourceUrl;
-                    failedErrorString = payload.errorString;
+                    failedSourceUrl = payload.failure.sourceUrl;
+                    failedErrorString = payload.failure.userMessage;
+                    failedDiagnosticDetail = payload.failure.diagnosticDetail;
+                    failedKind = payload.failure.kind;
                 } else {
                     static_assert(alwaysFalse<Operation>, "Unhandled video source load operation");
                 }
@@ -215,7 +220,9 @@ void TestVideoSourceLoadRuntime::acceptedResolverFailurePublishesError()
 
     QVERIFY(!fixture.runtime.active());
     QCOMPARE(fixture.failedSourceUrl, sourceUrl);
+    QVERIFY(fixture.failedKind == KiriView::VideoSourceLoadFailureKind::PlaybackUrlResolution);
     QCOMPARE(fixture.failedErrorString, QStringLiteral("resolution failed"));
+    QCOMPARE(fixture.failedDiagnosticDetail, QStringLiteral("resolution failed"));
     QCOMPARE(fixture.events.back(), QStringLiteral("source-load-failed"));
 }
 
