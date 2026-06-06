@@ -56,6 +56,7 @@ private Q_SLOTS:
     void windowCommandShortcutsWorkWithoutQmlShortcutInstallers();
     void videoViewerAliasTriggersFullscreenAction();
     void videoImageOnlyShortcutsShowUnsupportedToast();
+    void videoModeIgnoresReportedImagePannabilityForPanShortcuts();
 };
 
 namespace {
@@ -793,6 +794,21 @@ void TestImageShortcuts::videoImageOnlyShortcutsShowUnsupportedToast()
     pressKey(fixture.view.get(), Qt::Key_0, Qt::ControlModifier);
     QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 9);
     QCOMPARE(fitWindowSpy.count(), 0);
+}
+
+void TestImageShortcuts::videoModeIgnoresReportedImagePannabilityForPanShortcuts()
+{
+    ImageShortcutsFixture fixture = createVideoFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_COMPARE(fixture.root->property("documentKind").toInt(),
+        static_cast<int>(KiriDocumentSession::DocumentKind::Video));
+    QVERIFY(fixture.root->setProperty("imagePannable", true));
+    fixture.root->setProperty("panCount", 0);
+
+    pressKey(fixture.view.get(), Qt::Key_Up);
+    pressKey(fixture.view.get(), Qt::Key_Down);
+
+    QCOMPARE(fixture.root->property("panCount").toInt(), 0);
 }
 
 QTEST_MAIN(TestImageShortcuts)

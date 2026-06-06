@@ -24,6 +24,7 @@ private Q_SLOTS:
     void qmlDoesNotWriteSharedActionState();
     void qmlActionProxiesDoNotOverrideRuntimeActionState();
     void qmlDoesNotOwnSharedActionPolicy();
+    void qmlDoesNotComputePannabilityActionGate();
     void qmlDoesNotRecomputeSharedMediaReadiness();
     void qmlDoesNotWriteDurablePresentationState();
     void imageDocumentHasNoPublicPresentationBackdoorSetters();
@@ -279,6 +280,26 @@ void TestArchitectureBoundaries::qmlDoesNotOwnSharedActionPolicy()
     }
 
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::qmlDoesNotComputePannabilityActionGate()
+{
+    const QString mainQml = readProjectFile(QStringLiteral("src/qml/Main.qml"));
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(\bimageMode\s*&&\s*[\w.]+imagePannable\b)")),
+        QRegularExpression(QStringLiteral(R"(\bimagePannable\s*&&\s*\w+\.imageMode\b)")),
+    };
+    QStringList violations;
+    for (const QRegularExpression &pattern : forbiddenPatterns) {
+        QRegularExpressionMatchIterator iterator = pattern.globalMatch(mainQml);
+        while (iterator.hasNext()) {
+            violations.push_back(iterator.next().captured(0));
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+    QVERIFY(mainQml.contains(
+        QStringLiteral("mediaWorkspaceHost.imageInteractionSurface.imagePannable")));
 }
 
 void TestArchitectureBoundaries::qmlDoesNotRecomputeSharedMediaReadiness()
