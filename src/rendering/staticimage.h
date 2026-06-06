@@ -4,9 +4,12 @@
 #ifndef KIRIVIEW_STATICIMAGE_H
 #define KIRIVIEW_STATICIMAGE_H
 
+#include "displayimagequality.h"
 #include "imagetile.h"
+#include "metadata/embeddedmetadata.h"
 
 #include <QImage>
+#include <QImageIOHandler>
 #include <QSize>
 #include <QString>
 #include <QtGlobal>
@@ -35,8 +38,10 @@ struct FirstDisplayImageDecodeResult {
     qreal displayPixelsPerSourcePixel = 0.0;
 };
 
-struct StaticImageDisplayHints {
-    qreal firstDisplayPixelsPerSourcePixel = 0.0;
+struct StaticImageReaderTransform {
+    QImageIOHandler::Transformations transformations = QImageIOHandler::TransformationNone;
+
+    bool hasTransform() const { return transformations != QImageIOHandler::TransformationNone; }
 };
 
 class ImageTileSource
@@ -50,15 +55,24 @@ public:
         = 0;
     virtual FirstDisplayImageDecodeResult decodeFirstDisplayImage(
         const ImageFirstDisplayDecodeContext &context, QString *errorString) const;
+    virtual bool supportsRasterDisplayRefinement() const;
+    virtual QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *errorString) const;
     virtual QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const = 0;
     virtual qsizetype byteCost() const = 0;
     virtual bool isResolutionIndependent() const;
+    virtual StaticImageReaderTransform imageReaderTransform() const;
 };
 
-struct StaticImagePayload {
-    std::shared_ptr<ImageTileSource> source;
-    QImage preview;
-    StaticImageDisplayHints displayHints;
+struct StaticDisplayImagePayload {
+    QString sourceIdentity;
+    StaticImageReaderTransform imageReaderTransform;
+    QSize originalSize;
+    QImage image;
+    DisplayImageQuality quality = DisplayImageQuality::Exact;
+    qreal displayPixelsPerSourcePixel = 0.0;
+    EmbeddedMetadata embeddedMetadata;
+    std::shared_ptr<ImageTileSource> refinementSource;
+    DisplayImagePreviewOrigin previewOrigin = DisplayImagePreviewOrigin::None;
 
     bool isValid() const;
     qsizetype byteCost() const;

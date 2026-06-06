@@ -17,6 +17,14 @@ namespace {
         projection.pageRole = role;
         return projection;
     }
+
+    ImageDisplaySourceProjection hiddenDisplaySourceProjection(DisplayedPageRole role)
+    {
+        ImageDisplaySourceProjection projection;
+        projection.pageRole = role;
+        projection.revisionToken = imageDisplaySourceRevisionToken(projection.revision);
+        return projection;
+    }
 }
 
 ImagePresentationScopeKey ImagePresentationScopeKey::directImage(const QUrl &url)
@@ -496,6 +504,20 @@ ImagePresentationRenderProjection ImagePresentationRuntime::renderProjection(
     return renderProjection(currentSnapshot(), role);
 }
 
+ImageDisplaySourceProjection ImagePresentationRuntime::displaySourceProjection(
+    DisplayedPageRole role) const
+{
+    if (m_transitionState == ImagePresentationTransitionState::TransitioningPlaceholder) {
+        return hiddenDisplaySourceProjection(role);
+    }
+
+    if (m_transitionState == ImagePresentationTransitionState::PreviousActive) {
+        return displaySourceProjection(m_committedSnapshot, role);
+    }
+
+    return displaySourceProjection(currentSnapshot(), role);
+}
+
 ImagePresentationSnapshot ImagePresentationRuntime::currentSnapshot() const
 {
     return ImagePresentationSnapshot {
@@ -580,9 +602,9 @@ QRectF ImagePresentationRuntime::secondaryPageRect(const ImagePresentationSnapsh
 }
 
 ImageZoomChangeSet ImagePresentationRuntime::mutateZoomState(
-    const ZoomStateMutation &mutation, bool forceTileRefresh)
+    const ZoomStateMutation &mutation, bool forceDisplayProjectionUpdate)
 {
-    return m_zoomWorkflowState.mutate(mutation, forceTileRefresh).changes;
+    return m_zoomWorkflowState.mutate(mutation, forceDisplayProjectionUpdate).changes;
 }
 
 void ImagePresentationRuntime::refreshViewportFrame(ImageViewportObservationOrigin origin)
@@ -609,7 +631,6 @@ ImagePresentationRenderProjection ImagePresentationRuntime::renderProjection(
         return ImagePresentationRenderProjection {
             !secondary,
             role,
-            slot.surface,
             slot.imageRevision,
             logicalSinglePageImageSize(snapshot),
             snapshot.zoom.displaySize,
@@ -630,7 +651,6 @@ ImagePresentationRenderProjection ImagePresentationRuntime::renderProjection(
     return ImagePresentationRenderProjection {
         true,
         role,
-        slot.surface,
         slot.imageRevision,
         slot.imageSize,
         pageDisplaySize,
@@ -640,6 +660,56 @@ ImagePresentationRenderProjection ImagePresentationRuntime::renderProjection(
         context.generation,
         0,
     };
+}
+
+ImageDisplaySourceProjection ImagePresentationRuntime::displaySourceProjection(
+    const ImagePresentationSnapshot &snapshot, DisplayedPageRole role) const
+{
+    const bool secondary = role == DisplayedPageRole::Secondary;
+    const ImagePresentationPageSlotSnapshot &slot
+        = secondary ? snapshot.secondary : snapshot.primary;
+    if (!slot.hasImage) {
+        return hiddenDisplaySourceProjection(role);
+    }
+    if (secondary
+        && (snapshot.mode == ImagePresentationMode::SinglePage || !snapshot.secondaryPageVisible)) {
+        return hiddenDisplaySourceProjection(role);
+    }
+
+    ImageDisplaySourceProjection projection;
+    projection.visible = true;
+    projection.pageRole = role;
+    projection.providerUrl = slot.displaySource.providerUrl;
+    projection.revision = slot.displaySource.revision;
+    projection.revisionToken = imageDisplaySourceRevisionToken(projection.revision);
+    projection.sourceIdentity = slot.displaySource.sourceIdentity;
+    projection.selectedSourceScope = snapshot.scopeKey;
+    projection.originalSize = slot.displaySource.originalSize.isEmpty()
+        ? slot.imageSize
+        : slot.displaySource.originalSize;
+    projection.rasterSize = slot.displaySource.rasterSize;
+    projection.sourceSizeHint = slot.displaySource.sourceSizeHint;
+    projection.quality = slot.displaySource.quality;
+    projection.status = slot.displaySource.status;
+    projection.cacheEnabled = slot.displaySource.cacheEnabled;
+    projection.loadAcknowledgmentRequired = slot.displaySource.loadAcknowledgmentRequired;
+    projection.rotationDegrees
+        = snapshot.mode == ImagePresentationMode::SinglePage ? snapshot.rotationDegrees : 0;
+    projection.retentionStatus = slot.displaySource.retentionStatus;
+    projection.retainWhileLoadingEligible = slot.displaySource.retainWhileLoadingEligible;
+
+    if (snapshot.mode == ImagePresentationMode::SinglePage) {
+        projection.displaySize = snapshot.zoom.displaySize;
+        projection.visibleItemRect
+            = !secondary ? snapshot.viewport.frame.visibleItemRect : QRectF();
+        return projection;
+    }
+
+    projection.displaySize
+        = secondary ? secondaryDisplaySize(snapshot) : primaryDisplaySize(snapshot);
+    projection.visibleItemRect = imageSpreadVisiblePageRect(snapshot.viewport.frame.visibleItemRect,
+        secondary ? secondaryPageRect(snapshot) : primaryPageRect(snapshot));
+    return projection;
 }
 
 void ImagePresentationRuntime::restoreSnapshot(const ImagePresentationSnapshot &snapshot)

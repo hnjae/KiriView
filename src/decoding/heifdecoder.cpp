@@ -16,6 +16,8 @@
 #include "heifcontainer.h"
 #include "heifsequencereader.h"
 #include "heifsupport.h"
+#include "imagedecoderequest.h"
+#include "location/sourcekey.h"
 #include "rendering/heiftilesource.h"
 #include "staticimagedecode.h"
 
@@ -24,8 +26,8 @@
 #include <utility>
 
 namespace {
-std::optional<KiriView::DecodedImageResult> decodeHeifStillImageDataForInfo(
-    const QByteArray &data, const KiriView::HeifContainerInfo &info)
+std::optional<KiriView::DecodedImageResult> decodeHeifStillImageDataForInfo(const QByteArray &data,
+    const KiriView::HeifContainerInfo &info, const KiriView::ImageDecodeRequest &request)
 {
     if (!info.stillImage) {
         return std::nullopt;
@@ -38,11 +40,12 @@ std::optional<KiriView::DecodedImageResult> decodeHeifStillImageDataForInfo(
         return KiriView::failedDecodedImageResult(errorString);
     }
 
-    return KiriView::staticDecodedImageResult(std::move(source), {}, &errorString);
+    return KiriView::staticDecodedImageResult(std::move(source), request, &errorString);
 }
 
 std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
-    const QByteArray &data, const KiriView::HeifContainerInfo &info)
+    const QByteArray &data, const KiriView::HeifContainerInfo &info,
+    const KiriView::ImageDecodeRequest &request)
 {
     if (!info.imageSequence) {
         return std::nullopt;
@@ -71,6 +74,7 @@ std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
         std::move(firstFrame->image),
         data,
         {},
+        KiriView::sourceKeyForUrl(request.imageUrl()).identity,
     });
 }
 }
@@ -78,22 +82,34 @@ std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
 namespace KiriView {
 std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &data)
 {
-    return decodeHeifStillImageDataForInfo(data, heifContainerInfo(data));
+    return decodeHeifStillImageData(data, {});
+}
+
+std::optional<DecodedImageResult> decodeHeifStillImageData(
+    const QByteArray &data, const ImageDecodeRequest &request)
+{
+    return decodeHeifStillImageDataForInfo(data, heifContainerInfo(data), request);
 }
 
 std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data)
 {
-    return decodeHeifSequenceImageDataForInfo(data, heifContainerInfo(data));
+    return decodeHeifSequenceImageDataForInfo(data, heifContainerInfo(data), {});
 }
 
 std::optional<DecodedImageResult> decodeHeifImageData(const QByteArray &data)
 {
+    return decodeHeifImageData(data, {});
+}
+
+std::optional<DecodedImageResult> decodeHeifImageData(
+    const QByteArray &data, const ImageDecodeRequest &request)
+{
     const HeifContainerInfo info = heifContainerInfo(data);
     if (std::optional<DecodedImageResult> sequenceResult
-        = decodeHeifSequenceImageDataForInfo(data, info)) {
+        = decodeHeifSequenceImageDataForInfo(data, info, request)) {
         return sequenceResult;
     }
 
-    return decodeHeifStillImageDataForInfo(data, info);
+    return decodeHeifStillImageDataForInfo(data, info, request);
 }
 }

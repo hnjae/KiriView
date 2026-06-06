@@ -39,6 +39,8 @@ public:
     void cancel();
 
     bool isCurrent(const ImageLoadSession &session) const;
+    std::optional<ImageLoadSession> currentForDecodeRequest(
+        const ImageDecodeRequest &request) const;
     std::optional<ImageLoadSession> claimCurrentForDecodeRequest(const ImageDecodeRequest &request);
     OpenedCollectionCandidateCompletion completeOpenedCollectionCandidates(
         const ImageLoadSession &session, const std::vector<ImageDocumentPageCandidate> &candidates);

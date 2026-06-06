@@ -8,6 +8,7 @@
 #include "heifdecoder.h"
 #include "kiriview/src/policy/avifcompat.cxx.h"
 #include "localization/imageerrortext.h"
+#include "location/sourcekey.h"
 #include "metadata/embeddedmetadata.h"
 #include "qimagereaderdecoder.h"
 #include "rawdecoder.h"
@@ -159,6 +160,11 @@ KiriView::DecodedImageResult failedImageDataResult(QString errorString)
     return KiriView::failedDecodedImageResult(std::move(errorString));
 }
 
+QString sourceIdentityForRequest(const KiriView::ImageDecodeRequest &request)
+{
+    return KiriView::sourceKeyForUrl(request.imageUrl()).identity;
+}
+
 KiriView::DecodedImageResult decodeSvgImageData(const KiriView::ImageDecodeRouterInput &input)
 {
     QString errorString;
@@ -168,8 +174,7 @@ KiriView::DecodedImageResult decodeSvgImageData(const KiriView::ImageDecodeRoute
         return failedImageDataResult(std::move(errorString));
     }
 
-    return KiriView::staticDecodedImageResult(
-        std::move(source), input.request.firstDisplay(), &errorString);
+    return KiriView::staticDecodedImageResult(std::move(source), input.request, &errorString);
 }
 
 KiriView::DecodedImageResult decodeApngImageData(const KiriView::ImageDecodeRouterInput &input)
@@ -188,13 +193,15 @@ KiriView::DecodedImageResult decodeApngImageData(const KiriView::ImageDecodeRout
         std::move(apngResult.firstFrame),
         input.data,
         {},
+        sourceIdentityForRequest(input.request),
     });
 }
 
 KiriView::DecodedImageResult decodeHeifRouterImageData(
     const KiriView::ImageDecodeRouterInput &input)
 {
-    std::optional<KiriView::DecodedImageResult> result = KiriView::decodeHeifImageData(input.data);
+    std::optional<KiriView::DecodedImageResult> result
+        = KiriView::decodeHeifImageData(input.data, input.request);
     if (!result.has_value()) {
         return failedReadImageDataResult();
     }

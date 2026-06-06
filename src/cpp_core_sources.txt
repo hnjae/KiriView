@@ -6,7 +6,6 @@ src/decoding/apngframecomposer.cpp
 src/decoding/apngrgbabuffer.cpp
 src/decoding/animationtiming.cpp
 src/decoding/decodedimageresult.cpp
-src/rendering/decodedtilecache.cpp
 src/application/applicationactionregistry.cpp
 src/application/applicationactionruntime.cpp
 src/application/applicationactionstatepolicy.cpp
@@ -36,10 +35,10 @@ src/bridge/imagespreadpolicyconversion.cpp
 src/bridge/imagezoomstateconversion.cpp
 src/bridge/predecodepolicyconversion.cpp
 src/bridge/videodocumentpolicyconversion.cpp
-src/rendering/displayedimagesurfacestate.cpp
+src/rendering/displayimagestore.cpp
+src/presentation/imagedisplaysourceprojection.cpp
 src/session/mediaopenwith.cpp
 src/document/imageremovalfallback.cpp
-src/rendering/imagerendernodestate.cpp
 src/decoding/heifcontainer.cpp
 src/decoding/heifdecoder.cpp
 src/decoding/heifsequencereader.cpp
@@ -49,6 +48,7 @@ src/async/directorylistingjob.cpp
 src/rendering/heiftilesource.cpp
 src/presentation/imageanimationplaybacksource.cpp
 src/presentation/imageanimationpolicy.cpp
+src/presentation/imageanimationpresentergate.cpp
 src/presentation/imageanimationplayer.cpp
 src/async/imageasyncoperationstate.cpp
 src/application/imageactionavailabilitypolicy.cpp
@@ -62,7 +62,6 @@ src/navigation/imagedocumentpagecandidatelistsource.cpp
 src/navigation/imagecontainernavigationcontroller.cpp
 src/navigation/imagecontainernavigationstate.cpp
 src/location/imagedocumentlocation.cpp
-src/rendering/imagerenderframe.cpp
 src/rendering/imagerendering.cpp
 src/rendering/imagerotation.cpp
 src/document/imagedocumentchangebatcher.cpp
@@ -84,7 +83,6 @@ src/decoding/imagedecodedependencies.cpp
 src/decoding/imagedecodejob.cpp
 src/decoding/imagedecodejobstate.cpp
 src/document/imagedocumentstate.cpp
-src/rendering/imagesurface.cpp
 src/decoding/imageformatregistry.cpp
 src/decoding/imageinputclassification.cpp
 src/localization/activenavigationboundarytext.cpp
@@ -101,11 +99,7 @@ src/location/imagelocation.cpp
 src/location/sourcekey.cpp
 src/presentation/imagerectmapping.cpp
 src/rendering/imagetile.cpp
-src/rendering/imagetiledecoderuntime.cpp
 src/rendering/imagetilegeometrypolicy.cpp
-src/rendering/imagetiledecodestate.cpp
-src/rendering/imagetilerequestplan.cpp
-src/rendering/imagetiledecodescheduler.cpp
 src/rendering/imagetilevisibility.cpp
 src/rendering/imagetilesourcehelpers.cpp
 src/document/imageloader.cpp
@@ -181,6 +175,8 @@ src/decoding/qimagereaderdecoder.cpp
 src/rendering/qimagereaderscaledlevelcache.cpp
 src/rendering/qimagereadertilesource.cpp
 src/decoding/rawdecoder.cpp
+src/decoding/rawthumbnailpreview.cpp
+src/rendering/rasterdisplaybucketpolicy.cpp
 src/application/shortcuthelpmodel.cpp
 src/application/shortcutroutemodel.cpp
 src/session/activenavigationprojection.cpp
@@ -207,6 +203,7 @@ src/session/documentsessionstate.cpp
 src/session/windowtitleprojection.cpp
 src/rendering/staticimage.cpp
 src/decoding/staticimagedecode.cpp
+src/decoding/thumbnailpreview.cpp
 src/system/systemmemory.cpp
 src/rendering/svgtilesource.cpp
 src/video/videooutputrendercontextobserver.cpp

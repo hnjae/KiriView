@@ -17,7 +17,7 @@
 
 namespace {
 using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::staticTestImagePayload;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 KiriView::ImageDocumentRenderContext renderContext()
@@ -84,7 +84,7 @@ public:
         }
 
         return KiriView::PredecodedImage {
-            staticTestImagePayload(testImage(imageSize->second)),
+            staticDisplayTestImagePayload(testImage(imageSize->second)),
             displayedLocation(url),
         };
     }

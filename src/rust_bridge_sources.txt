@@ -25,5 +25,6 @@ src/policy/imagedocumentpagenavigation.rs
 src/policy/imageviewportgeometry.rs
 src/policy/imagezoomstate.rs
 src/policy/predecodepolicy.rs
+src/policy/rasterdisplaybucketpolicy.rs
 src/policy/svgrenderer.rs
 src/policy/videodocumentpolicy.rs

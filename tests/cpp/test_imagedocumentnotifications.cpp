@@ -32,8 +32,7 @@ void TestImageDocumentNotifications::notificationPlansReturnChangesInEmissionOrd
 {
     compareChanges(KiriView::imageDocumentSpreadTransitionNotifications(),
         { KiriView::ImageDocumentChange::PresentationTransitionState,
-            KiriView::ImageDocumentChange::Status, KiriView::ImageDocumentChange::Loading,
-            KiriView::ImageDocumentChange::Repaint });
+            KiriView::ImageDocumentChange::Status, KiriView::ImageDocumentChange::Loading });
     compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(true, true),
         { KiriView::ImageDocumentChange::DisplayedUrl,
             KiriView::ImageDocumentChange::WindowTitleFileName });
@@ -48,7 +47,7 @@ void TestImageDocumentNotifications::notificationPlansReturnChangesInEmissionOrd
             KiriView::ImageDocumentChange::DisplaySize, KiriView::ImageDocumentChange::ZoomPercent,
             KiriView::ImageDocumentChange::ZoomMode,
             KiriView::ImageDocumentChange::MaximumManualZoomPercent,
-            KiriView::ImageDocumentChange::Repaint });
+            KiriView::ImageDocumentChange::DisplaySource });
     KiriView::ImageZoomChangeSet spreadZoomChanges;
     spreadZoomChanges.zoomModeChanged = true;
     spreadZoomChanges.zoomPercentChanged = true;
@@ -58,14 +57,15 @@ void TestImageDocumentNotifications::notificationPlansReturnChangesInEmissionOrd
         { KiriView::ImageDocumentChange::ZoomMode, KiriView::ImageDocumentChange::ZoomPercent,
             KiriView::ImageDocumentChange::DisplaySize,
             KiriView::ImageDocumentChange::MaximumManualZoomPercent,
-            KiriView::ImageDocumentChange::Repaint, KiriView::ImageDocumentChange::TwoPageMode });
+            KiriView::ImageDocumentChange::TwoPageMode });
     compareChanges(KiriView::imageDocumentSpreadZoomNotifications({}),
         std::vector<KiriView::ImageDocumentChange> {});
     compareChanges(KiriView::imageDocumentRightToLeftReadingNotifications(false),
         { KiriView::ImageDocumentChange::RightToLeftReading,
-            KiriView::ImageDocumentChange::Repaint });
+            KiriView::ImageDocumentChange::DisplaySource });
     compareChanges(KiriView::imageDocumentRightToLeftReadingNotifications(true),
-        { KiriView::ImageDocumentChange::RightToLeftReading, KiriView::ImageDocumentChange::Repaint,
+        { KiriView::ImageDocumentChange::RightToLeftReading,
+            KiriView::ImageDocumentChange::DisplaySource,
             KiriView::ImageDocumentChange::TwoPageMode });
 
     KiriView::ImageZoomChangeSet presentationZoomChanges;
@@ -78,12 +78,13 @@ void TestImageDocumentNotifications::notificationPlansReturnChangesInEmissionOrd
     compareChanges(KiriView::imageDocumentPresentationZoomNotifications(presentationZoomChanges),
         { KiriView::ImageDocumentChange::ImageSize, KiriView::ImageDocumentChange::ViewportSize,
             KiriView::ImageDocumentChange::ZoomMode, KiriView::ImageDocumentChange::ZoomPercent,
-            KiriView::ImageDocumentChange::DisplaySize, KiriView::ImageDocumentChange::Repaint,
+            KiriView::ImageDocumentChange::DisplaySize,
             KiriView::ImageDocumentChange::MaximumManualZoomPercent });
 
-    KiriView::ImageZoomChangeSet tileRefreshOnlyChanges;
-    tileRefreshOnlyChanges.scheduleVisibleTileDecode = true;
-    compareChanges(KiriView::imageDocumentPresentationZoomNotifications(tileRefreshOnlyChanges),
+    KiriView::ImageZoomChangeSet projectionUpdateOnlyChanges;
+    projectionUpdateOnlyChanges.displayProjectionUpdateNeeded = true;
+    compareChanges(
+        KiriView::imageDocumentPresentationZoomNotifications(projectionUpdateOnlyChanges),
         std::vector<KiriView::ImageDocumentChange> {});
 }
 

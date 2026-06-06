@@ -11,6 +11,14 @@ let
   patchedKArchive = pkgs.kdePackages.karchive.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [ karchiveContentChecksumPatch ];
   });
+  kiriviewLibHeif = pkgs.libheif.overrideAttrs (old: {
+    cmakeFlags = (old.cmakeFlags or [ ]) ++ [
+      "-DWITH_JPEG_DECODER=ON"
+      "-DWITH_JPEG_DECODER_PLUGIN=OFF"
+      "-DWITH_JPEG_ENCODER=ON"
+      "-DWITH_JPEG_ENCODER_PLUGIN=OFF"
+    ];
+  });
   qtCxxqt = import ../internal/qt-cxxqt.nix {
     inherit config lib pkgs;
     karchivePackage = patchedKArchive;
@@ -37,6 +45,9 @@ in
   packages = [
     qtCxxqt.qmake
     patchedKArchive
+    kiriviewLibHeif.bin
+    kiriviewLibHeif.dev
+    kiriviewLibHeif.lib
   ]
   ++ (with pkgs; [
     # Flatpak
@@ -67,8 +78,6 @@ in
     libarchive
     libaom
     libde265
-    libheif.dev
-    libheif.lib
     libpng
     libraw.dev
     libraw.lib

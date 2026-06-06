@@ -5,19 +5,19 @@
 #define KIRIVIEW_IMAGEPRESENTATIONRUNTIME_H
 
 #include "document/imagedocumenttypes.h"
+#include "presentation/imagedisplaysourceprojection.h"
+#include "presentation/imagepresentationscope.h"
 #include "presentation/imagepresentationstate.h"
 #include "presentation/imageviewportcommandstate.h"
 #include "presentation/imagezoomworkflowstate.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagerendering.h"
-#include "rendering/imagesurface.h"
 
 #include <QPointF>
 #include <QRectF>
 #include <QSize>
 #include <QSizeF>
 #include <QUrl>
-#include <memory>
 
 namespace KiriView {
 enum class ImagePresentationMode {
@@ -30,44 +30,16 @@ enum class ImagePresentationPrimaryChangePolicy {
     PreserveZoomAndClearPan,
 };
 
-struct ImagePresentationScopeKey {
-    enum class Kind {
-        Empty,
-        DirectImage,
-        OpenedCollection,
-    };
-
-    Kind kind = Kind::Empty;
-    QUrl url;
-
-    static ImagePresentationScopeKey directImage(const QUrl &url);
-    static ImagePresentationScopeKey openedCollection(const QUrl &url);
-    bool preservesPageNavigationZoom() const;
-
-    friend bool operator==(
-        const ImagePresentationScopeKey &left, const ImagePresentationScopeKey &right)
-    {
-        return left.kind == right.kind && left.url == right.url;
-    }
-
-    friend bool operator!=(
-        const ImagePresentationScopeKey &left, const ImagePresentationScopeKey &right)
-    {
-        return !(left == right);
-    }
-};
-
 struct ImagePresentationPageSlotSnapshot {
-    std::shared_ptr<DisplayedImageSurface> surface;
     quint64 imageRevision = 0;
     QSize imageSize;
     bool hasImage = false;
+    ImageDisplaySourceSlot displaySource;
 };
 
 struct ImagePresentationRenderProjection {
     bool visible = false;
     DisplayedPageRole pageRole = DisplayedPageRole::Primary;
-    std::shared_ptr<DisplayedImageSurface> surface;
     quint64 imageRevision = 0;
     QSize imageSize;
     QSizeF displaySize;
@@ -173,6 +145,7 @@ public:
     ImageDocumentRenderContext renderContext() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     ImagePresentationRenderProjection renderProjection(DisplayedPageRole role) const;
+    ImageDisplaySourceProjection displaySourceProjection(DisplayedPageRole role) const;
 
 private:
     using ZoomStateMutation = ImageZoomWorkflowState::ZoomStateMutation;
@@ -189,9 +162,11 @@ private:
     QRectF primaryPageRect(const ImagePresentationSnapshot &snapshot) const;
     QRectF secondaryPageRect(const ImagePresentationSnapshot &snapshot) const;
     ImageZoomChangeSet mutateZoomState(
-        const ZoomStateMutation &mutation, bool forceTileRefresh = false);
+        const ZoomStateMutation &mutation, bool forceDisplayProjectionUpdate = false);
     void refreshViewportFrame(ImageViewportObservationOrigin origin);
     ImagePresentationRenderProjection renderProjection(
+        const ImagePresentationSnapshot &snapshot, DisplayedPageRole role) const;
+    ImageDisplaySourceProjection displaySourceProjection(
         const ImagePresentationSnapshot &snapshot, DisplayedPageRole role) const;
     void restoreSnapshot(const ImagePresentationSnapshot &snapshot);
 

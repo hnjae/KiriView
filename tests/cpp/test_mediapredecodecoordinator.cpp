@@ -19,8 +19,8 @@ using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::ManualPowerSaverMonitor;
 using KiriView::TestSupport::powerSaverProviderFor;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::staticImageDataDecoder;
-using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 constexpr qsizetype testCacheByteBudget = 1024 * 1024;
@@ -45,7 +45,7 @@ KiriView::DisplayedPredecodeImage displayedImage(const QUrl &url)
     return KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(url),
         true,
-        staticTestImagePayload(testImage()),
+        staticDisplayTestImagePayload(testImage()),
     };
 }
 

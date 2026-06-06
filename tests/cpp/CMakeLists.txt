@@ -60,30 +60,6 @@ function(kiriview_manifest_sources output manifest)
     set("${output}" "${source_paths}" PARENT_SCOPE)
 endfunction()
 
-function(kiriview_qt_rhi_include_dirs output)
-    get_target_property(qt_gui_include_dirs Qt6::Gui INTERFACE_INCLUDE_DIRECTORIES)
-    set(rhi_include_dirs "")
-
-    foreach(include_dir IN LISTS qt_gui_include_dirs)
-        foreach(candidate IN ITEMS
-                "${include_dir}"
-                "${include_dir}/QtGui"
-                "${include_dir}/QtGui/${Qt6Gui_VERSION}/QtGui"
-                "${include_dir}/QtGui/${Qt6_VERSION}/QtGui"
-                "${include_dir}/${Qt6Gui_VERSION}/QtGui"
-                "${include_dir}/${Qt6_VERSION}/QtGui")
-            if(EXISTS "${candidate}/rhi/qrhi.h" AND EXISTS "${candidate}/rhi/qshader.h")
-                list(APPEND rhi_include_dirs "${candidate}")
-            endif()
-        endforeach()
-    endforeach()
-
-    if(rhi_include_dirs)
-        list(REMOVE_DUPLICATES rhi_include_dirs)
-    endif()
-    set("${output}" "${rhi_include_dirs}" PARENT_SCOPE)
-endfunction()
-
 set(KIRIVIEW_CARGO_TARGET_DIR "${CMAKE_SOURCE_DIR}/../../target/flatpak/debug"
     CACHE PATH "Cargo target debug artifacts directory"
 )
@@ -102,10 +78,6 @@ endif()
 
 kiriview_manifest_sources(KIRIVIEW_CORE_SOURCE_PATHS "../../src/cpp_core_sources.txt")
 kiriview_manifest_sources(KIRIVIEW_CXXQT_SOURCE_PATHS "../../src/cpp_cxxqt_sources.txt")
-kiriview_qt_rhi_include_dirs(KIRIVIEW_QT_RHI_INCLUDE_DIRS)
-if(NOT KIRIVIEW_QT_RHI_INCLUDE_DIRS)
-    message(FATAL_ERROR "Qt RHI private headers are missing. Install the Qt Gui private headers.")
-endif()
 
 add_library(kiriview_test_core STATIC
     ${KIRIVIEW_CORE_SOURCE_PATHS}
@@ -115,7 +87,6 @@ target_include_directories(kiriview_test_core PUBLIC
     ../../src
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${KIRIVIEW_CXXQT_INCLUDE_DIR}"
-    ${KIRIVIEW_QT_RHI_INCLUDE_DIRS}
 )
 target_compile_definitions(kiriview_test_core PUBLIC
     TRANSLATION_DOMAIN="kiriview"
@@ -288,6 +259,12 @@ endif()
 
 if(TARGET test_imageviewport)
     set_tests_properties(test_imageviewport PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    )
+endif()
+
+if(TARGET test_displayimagepage)
+    set_tests_properties(test_displayimagepage PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     )
 endif()

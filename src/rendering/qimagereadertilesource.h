@@ -22,15 +22,19 @@ public:
     static std::shared_ptr<QImageReaderTileSource> open(
         const QByteArray &data, const QByteArray &format, QString *errorString);
 
-    QImageReaderTileSource(QByteArray data, QByteArray format, QSize imageSize, bool hasTransform);
+    QImageReaderTileSource(
+        QByteArray data, QByteArray format, QSize imageSize, StaticImageReaderTransform transform);
 
     QSize imageSize() const override;
     std::optional<DecodedTile> decodeTile(
         const TileRequest &request, QString *errorString) const override;
     FirstDisplayImageDecodeResult decodeFirstDisplayImage(
         const ImageFirstDisplayDecodeContext &context, QString *errorString) const override;
+    bool supportsRasterDisplayRefinement() const override;
+    QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *errorString) const override;
     QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const override;
     qsizetype byteCost() const override;
+    StaticImageReaderTransform imageReaderTransform() const override;
 
 private:
     bool supportsJpegScaledFirstDisplay() const;
@@ -47,7 +51,7 @@ private:
     QByteArray m_data;
     QByteArray m_format;
     QSize m_imageSize;
-    bool m_hasTransform = false;
+    StaticImageReaderTransform m_transform;
     mutable QImageReaderScaledLevelCache m_scaledLevelCache;
 };
 }

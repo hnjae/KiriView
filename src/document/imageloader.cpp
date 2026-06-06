@@ -39,6 +39,9 @@ ImageLoader::ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider can
               [this](const ImageDecodeRequest &request, const QString &errorString) {
                   finishImageLoadError(request, errorString);
               },
+              [this](const ImageDecodeRequest &request, StaticDisplayImagePayload preview) {
+                  finishThumbnailPreview(request, std::move(preview));
+              },
           })
     , m_candidateRepository(std::move(candidateProvider))
 {
@@ -69,6 +72,17 @@ void ImageLoader::finishImageLoadError(
     const ImageDecodeRequest &request, const QString &errorString)
 {
     finishDecodeRequestWithError(request, ImageLoadError::Generic, errorString);
+}
+
+void ImageLoader::finishThumbnailPreview(
+    const ImageDecodeRequest &request, StaticDisplayImagePayload preview)
+{
+    std::optional<ImageLoadSession> session = m_sessionTracker.currentForDecodeRequest(request);
+    if (!session.has_value()) {
+        return;
+    }
+
+    finishThumbnailPreview(std::move(*session), std::move(preview));
 }
 
 void ImageLoader::start(
@@ -216,5 +230,11 @@ void ImageLoader::finishDecodedImage(ImageLoadSession session, DecodedImage imag
 void ImageLoader::finishPredecodedImage(ImageLoadSession session, PredecodedImage image)
 {
     invokeIfSet(m_callbacks.predecodedImage, std::move(session), std::move(image));
+}
+
+void ImageLoader::finishThumbnailPreview(
+    ImageLoadSession session, StaticDisplayImagePayload preview)
+{
+    invokeIfSet(m_callbacks.thumbnailPreview, std::move(session), std::move(preview));
 }
 }

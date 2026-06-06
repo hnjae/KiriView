@@ -7,6 +7,7 @@
 
 #include <QByteArray>
 #include <QObject>
+#include <QQmlEngine>
 #include <QString>
 #include <QTest>
 #include <QUrl>
@@ -33,6 +34,7 @@ private Q_SLOTS:
     void startupSourceUrlUsesLocalFilePath();
     void startupSourceUrlUsesUrlText();
     void startupSourceUrlRejectsEmptyUrlText();
+    void registersDisplayImageProvider();
 };
 
 void TestApplicationRuntime::startupSourceUrlIsEmptyWithoutSource()
@@ -71,6 +73,16 @@ void TestApplicationRuntime::startupSourceUrlRejectsEmptyUrlText()
         startupSource(KiriView::ApplicationStartupSourceKind::UrlText));
 
     QVERIFY(url.isEmpty());
+}
+
+void TestApplicationRuntime::registersDisplayImageProvider()
+{
+    QQmlEngine engine;
+
+    KiriView::registerApplicationImageProviders(engine);
+
+    QVERIFY(engine.imageProvider(QStringLiteral("kiriview-thumbnails")) != nullptr);
+    QVERIFY(engine.imageProvider(QStringLiteral("kiriview-images")) != nullptr);
 }
 
 QTEST_GUILESS_MAIN(TestApplicationRuntime)

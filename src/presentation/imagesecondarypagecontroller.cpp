@@ -22,8 +22,7 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
     m_pageSurfaceController = std::make_unique<ImagePageSurfaceController>(parent,
         ImagePageSurfaceController::Callbacks {
             [this](ImageDocumentChange change) {
-                if (change == ImageDocumentChange::RenderFrame
-                    || change == ImageDocumentChange::Repaint) {
+                if (change == ImageDocumentChange::DisplaySource) {
                     notify(change);
                 }
             },
@@ -35,7 +34,7 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
                 }
             },
         },
-        cacheBudgets);
+        cacheBudgets, std::shared_ptr<DisplayImageStore> {}, DisplayedPageRole::Secondary);
     m_imageLoader = std::make_unique<ImageLoader>(parent, std::move(candidateProvider),
         std::move(decodeDependencies),
         ImageLoader::Callbacks {
@@ -48,6 +47,7 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
             [this](ImageLoadSession session, PredecodedImage image) {
                 finishPredecodedImageLoad(std::move(session), std::move(image));
             },
+            {},
             {},
             [this](const QUrl &url) {
                 if (!m_callbacks.findPredecodedImage) {

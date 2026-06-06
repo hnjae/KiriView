@@ -14,7 +14,7 @@
 
 namespace {
 using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::staticTestImagePayload;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 struct UnrelatedPredecodeSchedulePayload final : KiriView::PredecodeSchedulePayload {
@@ -30,7 +30,7 @@ KiriView::DisplayedPredecodeImage displayedImage(const QUrl &url)
     return KiriView::DisplayedPredecodeImage {
         KiriView::DisplayedImageLocation::fromUrl(url),
         true,
-        staticTestImagePayload(testImage()),
+        staticDisplayTestImagePayload(testImage()),
     };
 }
 

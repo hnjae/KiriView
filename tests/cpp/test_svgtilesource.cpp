@@ -33,9 +33,11 @@ class TestSvgTileSource : public QObject
 
 private Q_SLOTS:
     void sourceRendersIntrinsicPreviewAndTile();
+    void sourceRendersWholeSurfaceDisplayBucket();
     void sourceRendersUpscaledFirstDisplayPreview();
     void sourceSkipsFirstDisplayPreviewWithoutValidViewport();
     void sourceReportsFirstDisplayRenderFailure();
+    void sourceReportsWholeSurfaceRenderFailure();
     void sourceAppliesClipPathToPreviewAndTile();
     void sourceRendersOversampledBucketTile();
     void sourceRejectsEmptyTileRequest();
@@ -70,6 +72,26 @@ void TestSvgTileSource::sourceRendersIntrinsicPreviewAndTile()
     QVERIFY2(tile.has_value(), qPrintable(errorString));
     QCOMPARE(tile->image.size(), QSize(80, 40));
     QVERIFY(qRed(tile->image.pixel(10, 10)) > 0);
+}
+
+void TestSvgTileSource::sourceRendersWholeSurfaceDisplayBucket()
+{
+    const QByteArray data
+        = QByteArrayLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"40\">"
+                            "<rect width=\"80\" height=\"40\" fill=\"red\"/>"
+                            "</svg>");
+
+    QString errorString;
+    std::shared_ptr<KiriView::SvgTileSource> source
+        = KiriView::SvgTileSource::open(data, &errorString);
+    QVERIFY2(source != nullptr, qPrintable(errorString));
+    QVERIFY(source->supportsRasterDisplayRefinement());
+
+    const QImage bucket = source->decodeRasterDisplayImage(QSize(120, 60), &errorString);
+
+    QVERIFY2(!bucket.isNull(), qPrintable(errorString));
+    QCOMPARE(bucket.size(), QSize(120, 60));
+    QCOMPARE(bucket.pixelColor(10, 10), QColor(Qt::red));
 }
 
 void TestSvgTileSource::sourceRendersUpscaledFirstDisplayPreview()
@@ -121,6 +143,18 @@ void TestSvgTileSource::sourceReportsFirstDisplayRenderFailure()
 
     QCOMPARE(firstDisplay.status, KiriView::FirstDisplayImageDecodeStatus::Error);
     QVERIFY(firstDisplay.image.isNull());
+    QVERIFY(!errorString.isEmpty());
+}
+
+void TestSvgTileSource::sourceReportsWholeSurfaceRenderFailure()
+{
+    KiriView::SvgTileSource source(QByteArrayLiteral("not svg"), QSize(80, 40));
+
+    QString errorString;
+    const QImage bucket = source.decodeRasterDisplayImage(QSize(120, 60), &errorString);
+
+    QVERIFY(source.supportsRasterDisplayRefinement());
+    QVERIFY(bucket.isNull());
     QVERIFY(!errorString.isEmpty());
 }
 

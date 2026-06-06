@@ -31,8 +31,8 @@ using KiriView::TestSupport::instrumentedMediaEntrySourceFactory;
 using KiriView::TestSupport::InstrumentedMediaEntrySourceState;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::releaseInstrumentedMediaEntrySourceLoads;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::staticImageDataDecoder;
-using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 KiriView::ImageDocumentPageCandidateProvider openedCollectionOnlyProvider()
@@ -268,7 +268,7 @@ void TestMediaEntrySourceStore::predecodeLoadsAdjacentOpenedCollectionImagesThro
         KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
             displayedUrl, *archiveCollection),
         true,
-        staticTestImagePayload(testImage()),
+        staticDisplayTestImagePayload(testImage()),
     };
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
         displayedImage.location,

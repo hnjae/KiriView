@@ -68,7 +68,8 @@ KiriView::ImageDocumentPublicSignalOperations recordingOperations(QStringList &e
         = [&events]() { events.append(QStringLiteral("imageDocumentSourceScope")); };
     operations.unsupportedOpenedCollectionVideoChanged
         = [&events]() { events.append(QStringLiteral("unsupportedOpenedCollectionVideo")); };
-    operations.repaintRequested = [&events]() { events.append(QStringLiteral("repaint")); };
+    operations.displaySourceChanged
+        = [&events]() { events.append(QStringLiteral("displaySource")); };
     return operations;
 }
 }
@@ -124,9 +125,7 @@ void TestImageDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
         KiriView::imageDocumentPublicSignals(Change::UnsupportedOpenedCollectionVideo),
         { Signal::UnsupportedOpenedCollectionVideo, Signal::ZoomPercentKnown });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::RenderFrame), { Signal::Repaint });
-    comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::Repaint), { Signal::Repaint });
+        KiriView::imageDocumentPublicSignals(Change::DisplaySource), { Signal::DisplaySource });
 }
 
 void TestImageDocumentPublicSignals::
@@ -137,9 +136,9 @@ void TestImageDocumentPublicSignals::
 
     comparePublicSignals(KiriView::imageDocumentPublicSignalsForChanges(
                              { Change::TwoPageMode, Change::PageNavigation, Change::DisplayedUrl,
-                                 Change::Status, Change::Repaint, Change::TwoPageMode }),
+                                 Change::Status, Change::DisplaySource, Change::TwoPageMode }),
         { Signal::TwoPageMode, Signal::PageNavigation, Signal::DisplayedUrl, Signal::Status,
-            Signal::ZoomPercentKnown, Signal::Repaint, Signal::ImageDocumentSourceScope });
+            Signal::ZoomPercentKnown, Signal::DisplaySource, Signal::ImageDocumentSourceScope });
 }
 
 void TestImageDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionOrder()
@@ -149,14 +148,18 @@ void TestImageDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionO
 
     emitter.emitChanges({ KiriView::ImageDocumentChange::TwoPageMode,
         KiriView::ImageDocumentChange::PageNavigation });
-    emitter.emitSignal(KiriView::ImageDocumentPublicSignal::Repaint);
+    emitter.emitSignal(KiriView::ImageDocumentPublicSignal::DisplaySource);
 
     QCOMPARE(events,
         QStringList({
             QStringLiteral("twoPageMode"),
             QStringLiteral("pageNavigation"),
-            QStringLiteral("repaint"),
+            QStringLiteral("displaySource"),
         }));
+
+    events.clear();
+    emitter.emitChange(KiriView::ImageDocumentChange::DisplaySource);
+    QCOMPARE(events, QStringList({ QStringLiteral("displaySource") }));
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentPublicSignals)

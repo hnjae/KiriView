@@ -38,7 +38,7 @@ struct ImageZoomChangeSet {
     bool zoomPercentChanged = false;
     bool displaySizeChanged = false;
     bool maximumManualZoomPercentChanged = false;
-    bool scheduleVisibleTileDecode = false;
+    bool displayProjectionUpdateNeeded = false;
 };
 
 class ImageZoomState
@@ -51,7 +51,7 @@ public:
         const ImageZoomSnapshot &snapshot, qreal devicePixelRatio);
     static ImageZoomChangeSet changeSet(const ImageZoomSnapshot &previous,
         qreal previousDevicePixelRatio, const ImageZoomSnapshot &current,
-        qreal currentDevicePixelRatio, bool forceTileRefresh);
+        qreal currentDevicePixelRatio, bool forceDisplayProjectionUpdate);
 
     const QSize &imageSize() const;
     const QSizeF &viewportSize() const;

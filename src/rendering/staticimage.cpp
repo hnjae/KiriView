@@ -15,20 +15,36 @@ FirstDisplayImageDecodeResult ImageTileSource::decodeFirstDisplayImage(
     return {};
 }
 
+bool ImageTileSource::supportsRasterDisplayRefinement() const { return false; }
+
+QImage ImageTileSource::decodeRasterDisplayImage(
+    const QSize &rasterSize, QString *errorString) const
+{
+    Q_UNUSED(rasterSize);
+    Q_UNUSED(errorString);
+    return {};
+}
+
 bool ImageTileSource::isResolutionIndependent() const { return false; }
 
-bool StaticImagePayload::isValid() const { return source != nullptr && !preview.isNull(); }
+StaticImageReaderTransform ImageTileSource::imageReaderTransform() const { return {}; }
 
-qsizetype StaticImagePayload::byteCost() const
+bool StaticDisplayImagePayload::isValid() const
+{
+    return !image.isNull() && originalSize.isValid() && !originalSize.isEmpty();
+}
+
+qsizetype StaticDisplayImagePayload::byteCost() const
 {
     if (!isValid()) {
         return 0;
     }
 
-    return saturatedQtByteSum(source->byteCost(), imageByteCost(preview));
+    const qsizetype sourceCost = refinementSource == nullptr ? 0 : refinementSource->byteCost();
+    return saturatedQtByteSum(sourceCost, imageByteCost(image));
 }
 
-std::optional<qsizetype> StaticImagePayload::byteCostWithinBudget(qsizetype byteBudget) const
+std::optional<qsizetype> StaticDisplayImagePayload::byteCostWithinBudget(qsizetype byteBudget) const
 {
     const qsizetype cost = byteCost();
     if (cost <= 0 || cost > byteBudget) {

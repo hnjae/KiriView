@@ -20,7 +20,7 @@
 
 namespace {
 using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::staticTestImagePayload;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 KiriView::ImageDocumentRenderContext renderContext()
@@ -63,6 +63,12 @@ KiriView::ImageDocumentPageNavigationSnapshot navigationSnapshot(
     };
 }
 
+bool projectionReady(const KiriView::ImageDisplaySourceProjection &projection)
+{
+    return projection.visible && projection.status == KiriView::ImageDisplaySourceStatus::Ready
+        && !projection.providerUrl.isEmpty();
+}
+
 class SpreadPresentationFixture
 {
 public:
@@ -85,8 +91,8 @@ public:
     {
         snapshot = navigationSnapshot(pageUrls, pageNumber);
         state.setDisplayedImageLocation(displayedLocation(url));
-        primaryPageSurface.setStaticImage(
-            staticTestImagePayload(testImage(imageSize)), false, renderContext());
+        primaryPageSurface.setStaticDisplayImage(
+            staticDisplayTestImagePayload(testImage(imageSize)), false, renderContext());
         controller.commitPrimaryPageSlot(state.displayedImageLocation());
     }
 
@@ -98,7 +104,7 @@ public:
         }
 
         return KiriView::PredecodedImage {
-            staticTestImagePayload(testImage(imageSize->second)),
+            staticDisplayTestImagePayload(testImage(imageSize->second)),
             displayedLocation(url),
         };
     }
@@ -169,19 +175,19 @@ void TestImageSpreadPresentationController::spreadVisibleRectOwnsPageVisibleRect
     fixture.controller.requestViewportContentPosition(QPointF(800.0, 0.0));
 
     QCOMPARE(fixture.controller.visibleItemRect(), QRectF(800.0, 0.0, 800.0, 600.0));
-    QVERIFY(fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary)
+    QVERIFY(fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Primary)
             .visibleItemRect.isEmpty());
-    QCOMPARE(
-        fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary).visibleItemRect,
+    QCOMPARE(fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Secondary)
+                 .visibleItemRect,
         QRectF(0.0, 0.0, 800.0, 600.0));
 
     fixture.controller.setRightToLeftReadingEnabled(true);
 
     QCOMPARE(fixture.controller.visibleItemRect(), QRectF(800.0, 0.0, 800.0, 600.0));
-    QCOMPARE(
-        fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary).visibleItemRect,
+    QCOMPARE(fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Primary)
+                 .visibleItemRect,
         QRectF(0.0, 0.0, 800.0, 600.0));
-    QVERIFY(fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary)
+    QVERIFY(fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Secondary)
             .visibleItemRect.isEmpty());
 }
 
@@ -236,29 +242,31 @@ void TestImageSpreadPresentationController::transitionPhaseKeepsPreviousActiveUn
 
     QCOMPARE(fixture.controller.presentationTransitionState(),
         KiriView::ImagePresentationTransitionState::PreviousActive);
-    QVERIFY(fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary).isRenderable());
-    QVERIFY(
-        fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary).isRenderable());
+    QVERIFY(projectionReady(
+        fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Primary)));
+    QVERIFY(projectionReady(
+        fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Secondary)));
 
     fixture.controller.clearSecondaryPage();
 
-    QVERIFY(
-        fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary).isRenderable());
+    QVERIFY(projectionReady(
+        fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Secondary)));
 
     fixture.controller.showTransitionPlaceholder();
 
     QCOMPARE(fixture.controller.presentationTransitionState(),
         KiriView::ImagePresentationTransitionState::TransitioningPlaceholder);
-    QVERIFY(
-        !fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary).isRenderable());
-    QVERIFY(
-        !fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary).isRenderable());
+    QVERIFY(!projectionReady(
+        fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Primary)));
+    QVERIFY(!projectionReady(
+        fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Secondary)));
 
     fixture.controller.abortTransition();
 
     QCOMPARE(fixture.controller.presentationTransitionState(),
         KiriView::ImagePresentationTransitionState::CommittedActive);
-    QVERIFY(fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary).isRenderable());
+    QVERIFY(projectionReady(
+        fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Primary)));
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadPresentationController)

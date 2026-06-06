@@ -58,8 +58,8 @@ void TestImageDocumentRuntimeDependencies::defaultDependenciesUseMediaEntrySourc
     QVERIFY(resolved.cacheBudgets.predecodeCacheByteBudget > 0);
     QVERIFY(resolved.cacheBudgets.predecodeCacheByteBudget
         <= KiriView::predecodeCachePreferredByteBudget());
-    QVERIFY(resolved.cacheBudgets.staticTileCacheByteBudget > 0);
-    QVERIFY(resolved.cacheBudgets.staticTileCacheByteBudget
+    QVERIFY(resolved.cacheBudgets.displayImageCacheByteBudget > 0);
+    QVERIFY(resolved.cacheBudgets.displayImageCacheByteBudget
         <= KiriView::imageFullDecodeFallbackByteLimit);
 }
 
@@ -158,7 +158,7 @@ void TestImageDocumentRuntimeDependencies::
               return std::make_unique<FakePowerSaverMonitor>();
           };
     dependencies.cacheBudgetRequest.predecodeCacheByteBudget = 4096;
-    dependencies.cacheBudgetRequest.staticTileCacheByteBudget = 8192;
+    dependencies.cacheBudgetRequest.displayImageCacheByteBudget = 8192;
 
     KiriView::ImageDocumentRuntimeDependencies resolved
         = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
@@ -173,7 +173,7 @@ void TestImageDocumentRuntimeDependencies::
     QVERIFY(resolved.fileDeletionProvider);
     QVERIFY(resolved.powerSaver.monitor);
     QCOMPARE(resolved.cacheBudgets.predecodeCacheByteBudget, qsizetype(4096));
-    QCOMPARE(resolved.cacheBudgets.staticTileCacheByteBudget, qsizetype(8192));
+    QCOMPARE(resolved.cacheBudgets.displayImageCacheByteBudget, qsizetype(8192));
 
     bool candidatesReported = false;
     QByteArray loadedData;

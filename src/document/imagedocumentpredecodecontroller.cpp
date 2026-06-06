@@ -37,9 +37,9 @@ ImageDocumentPredecodeController::~ImageDocumentPredecodeController() = default;
 void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
     std::optional<DisplayedPredecodeImage> secondaryImage)
 {
-    std::optional<StaticImagePayload> staticImage = m_pageSurfaceController.staticImage();
+    std::optional<StaticDisplayImagePayload> displayImage = m_pageSurfaceController.displayImage();
     if (!m_pageSurfaceController.hasImage() || m_state.displayedUrl().isEmpty()
-        || !staticImage.has_value()) {
+        || !displayImage.has_value()) {
         m_coordinator->cancel();
         return;
     }
@@ -53,7 +53,7 @@ void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
     DisplayedPredecodeImage primaryImage {
         m_state.displayedImageLocation(),
         m_pageSurfaceController.isPredecodeCacheable(),
-        std::move(staticImage),
+        std::move(displayImage),
         m_state.embeddedMetadata(),
     };
     const DisplayedImageLocation currentLocation = primaryImage.location;

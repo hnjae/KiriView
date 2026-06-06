@@ -21,8 +21,8 @@ using KiriView::TestSupport::imageDecodeDependenciesFor;
 using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
+using KiriView::TestSupport::staticDisplayTestImagePayload;
 using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
-using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::testImageDecodeFailureString;
 using KiriView::TestSupport::videoCandidate;
@@ -211,14 +211,14 @@ void TestImageLoader::predecodedImageBypassesDataLoad()
 
         const QImage image = testImage();
         return std::optional<KiriView::PredecodedImage>(
-            KiriView::PredecodedImage { staticTestImagePayload(image),
+            KiriView::PredecodedImage { staticDisplayTestImagePayload(image),
                 KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
                     imageUrl, *archiveCollection) });
     };
     callbacks.predecodedImage = [&predecodedSession, &imageSize](KiriView::ImageLoadSession session,
                                     KiriView::PredecodedImage image) {
         predecodedSession = std::move(session);
-        imageSize = image.staticImage.preview.size();
+        imageSize = image.displayImage.image.size();
     };
     KiriView::ImageLoader loader
         = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
@@ -251,7 +251,7 @@ void TestImageLoader::mismatchedPredecodedImageFallsBackToDecode()
         }
 
         return std::optional<KiriView::PredecodedImage>(
-            KiriView::PredecodedImage { staticTestImagePayload(testImage()),
+            KiriView::PredecodedImage { staticDisplayTestImagePayload(testImage()),
                 KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
                     imageUrl, *archiveCollection) });
     };

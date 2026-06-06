@@ -9,11 +9,11 @@
 #include "imagedocumenttypes.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
+#include "presentation/imagedisplaysourceprojection.h"
 #include "presentation/imagepresentationstate.h"
 #include "presentation/imageviewportcommandstate.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagerendercontext.h"
-#include "rendering/imagesurface.h"
 #include "system/filedeletion.h"
 
 #include <QPointF>
@@ -116,8 +116,12 @@ public:
     std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     const EmbeddedMetadata &embeddedMetadata() const;
-    DisplayedImageRenderSnapshot renderSnapshot(
+    ImageDisplaySourceProjection displaySourceProjection(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
+    void acknowledgeDisplayImageLoad(DisplayedPageRole role, const QUrl &providerUrl,
+        quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
+    void acknowledgeStillImageDisplayLoad(DisplayedPageRole role, const QUrl &providerUrl,
+        quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
 
     void notify(ImageDocumentChange change);
     void setRenderContextProvider(RenderContextProvider provider);

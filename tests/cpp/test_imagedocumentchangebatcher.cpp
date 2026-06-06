@@ -29,12 +29,12 @@ void TestImageDocumentChangeBatcher::immediateNotificationsForwardInOrder()
 
     batcher.notify(KiriView::ImageDocumentChange::Loading);
     batcher.notifyAll(
-        { KiriView::ImageDocumentChange::Status, KiriView::ImageDocumentChange::Repaint });
+        { KiriView::ImageDocumentChange::Status, KiriView::ImageDocumentChange::DisplaySource });
 
     QCOMPARE(changes.size(), std::size_t(3));
     QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
     QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::Status);
-    QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::Repaint);
+    QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::DisplaySource);
 }
 
 void TestImageDocumentChangeBatcher::batchCallbacksReceiveWholeOrderedBatches()
@@ -51,7 +51,7 @@ void TestImageDocumentChangeBatcher::batchCallbacksReceiveWholeOrderedBatches()
         [[maybe_unused]] auto batch = batcher.beginBatch();
         batcher.notify(KiriView::ImageDocumentChange::Status);
         batcher.notify(KiriView::ImageDocumentChange::Status);
-        batcher.notify(KiriView::ImageDocumentChange::Repaint);
+        batcher.notify(KiriView::ImageDocumentChange::DisplaySource);
         QVERIFY(publishedBatches.size() == std::size_t(1));
     }
 
@@ -60,7 +60,7 @@ void TestImageDocumentChangeBatcher::batchCallbacksReceiveWholeOrderedBatches()
     QCOMPARE(publishedBatches.at(0).at(0), KiriView::ImageDocumentChange::Loading);
     QCOMPARE(publishedBatches.at(1).size(), std::size_t(2));
     QCOMPARE(publishedBatches.at(1).at(0), KiriView::ImageDocumentChange::Status);
-    QCOMPARE(publishedBatches.at(1).at(1), KiriView::ImageDocumentChange::Repaint);
+    QCOMPARE(publishedBatches.at(1).at(1), KiriView::ImageDocumentChange::DisplaySource);
 }
 
 void TestImageDocumentChangeBatcher::emptyBatchesDoNotPublish()
@@ -93,13 +93,13 @@ void TestImageDocumentChangeBatcher::batchesPublishUniqueChangesWhenOutermostBat
             batcher.notify(KiriView::ImageDocumentChange::Status);
         }
         QVERIFY(changes.empty());
-        batcher.notify(KiriView::ImageDocumentChange::Repaint);
+        batcher.notify(KiriView::ImageDocumentChange::DisplaySource);
     }
 
     QCOMPARE(changes.size(), std::size_t(3));
     QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
     QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::Status);
-    QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::Repaint);
+    QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::DisplaySource);
 }
 
 void TestImageDocumentChangeBatcher::movedBatchKeepsSingleFlushOwner()

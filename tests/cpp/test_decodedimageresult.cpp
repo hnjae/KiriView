@@ -19,6 +19,7 @@ private Q_SLOTS:
     void exposesFailurePayload();
     void exposesImagePayload();
     void takeImageMovesImagePayloadOnly();
+    void staticMetadataMirrorsIntoDisplayPayload();
 };
 
 void TestDecodedImageResult::exposesFailurePayload()
@@ -53,6 +54,21 @@ void TestDecodedImageResult::takeImageMovesImagePayloadOnly()
 
     image = KiriView::failedDecodedImageResult(QStringLiteral("decode failed")).takeImage();
     QVERIFY(!image.has_value());
+}
+
+void TestDecodedImageResult::staticMetadataMirrorsIntoDisplayPayload()
+{
+    KiriView::DecodedImage image = KiriView::TestSupport::staticDecodedTestImage();
+    KiriView::EmbeddedMetadata metadata;
+    metadata.cameraMake = QStringLiteral("Kiri Camera");
+
+    KiriView::setDecodedImageEmbeddedMetadata(image, metadata);
+
+    const KiriView::StaticDecodedImage *decoded = std::get_if<KiriView::StaticDecodedImage>(&image);
+    QVERIFY(decoded != nullptr);
+    QCOMPARE(
+        KiriView::decodedImageEmbeddedMetadata(image).cameraMake, QStringLiteral("Kiri Camera"));
+    QCOMPARE(decoded->displayImage.embeddedMetadata.cameraMake, QStringLiteral("Kiri Camera"));
 }
 
 QTEST_GUILESS_MAIN(TestDecodedImageResult)

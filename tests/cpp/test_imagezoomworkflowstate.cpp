@@ -41,7 +41,7 @@ void TestImageZoomWorkflowState::mutationOwnsRenderContextRefreshAndZoomChanges(
     QVERIFY(result.changes.imageSizeChanged);
     QVERIFY(result.changes.viewportSizeChanged);
     QVERIFY(result.changes.displaySizeChanged);
-    QVERIFY(result.changes.scheduleVisibleTileDecode);
+    QVERIFY(result.changes.displayProjectionUpdateNeeded);
     QCOMPARE(state.zoomState().displaySize(), QSizeF(400.0, 200.0));
 
     devicePixelRatio = 2.0;
@@ -70,7 +70,7 @@ void TestImageZoomWorkflowState::forcedTileRefreshSchedulesDecodeWithoutZoomChan
     QVERIFY(!result.changes.imageSizeChanged);
     QVERIFY(!result.changes.viewportSizeChanged);
     QVERIFY(!result.changes.zoomPercentChanged);
-    QVERIFY(result.changes.scheduleVisibleTileDecode);
+    QVERIFY(result.changes.displayProjectionUpdateNeeded);
 }
 
 void TestImageZoomWorkflowState::clearResetsCanonicalZoomState()

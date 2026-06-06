@@ -9,6 +9,7 @@ Use these documents when changing module ownership, crossing the Rust/C++/QML bo
 - [Layer Ownership](layer-ownership.md)
 - [Language Boundary](language-boundary.md)
 - [State Ownership](state-ownership.md)
+- [Provider Rendering Architecture](provider-rendering.md)
 - [Thumbnail Source Adapters](thumbnail-source-adapters.md)
 - [Extension Contracts](extension-contracts.md)
 - [FFI Design](ffi-design.md)

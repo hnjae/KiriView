@@ -4,7 +4,7 @@ Out-of-order workflows must have one local lifecycle owner. The owner is the onl
 
 Every async owner contract names its owner token, QObject affinity, queued acceptance path, identity kind, destruction invalidation point, cancellation behavior, and result publication point.
 
-The identity kind is one of operation id, scoped operation id, source key plus freshness generation, demand key, or render-frame revision. A completion must carry that identity back to the owner, and the owner must accept or reject the identity before mutating authoritative state.
+The identity kind is one of operation id, scoped operation id, source key plus freshness generation, demand key, or display-source revision. A completion must carry that identity back to the owner, and the owner must accept or reject the identity before mutating authoritative state.
 
 Cancellation is either guaranteed or best-effort. Guaranteed cancellation means no completion callback can run after cancel returns. Best-effort cancellation means the owner invalidates identity and treats any later callback as stale or no-op. Qt and KIO jobs are usually best-effort unless the provider contract explicitly proves otherwise.
 

@@ -42,6 +42,16 @@ ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptLoadError(const ImageDecode
     return claim<DeliverImageLoadErrorOperation>(ticket, Phase::LoadingData);
 }
 
+ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptThumbnailPreview(
+    const ImageDecodeJobTicket &ticket)
+{
+    if (!accepts(ticket) || m_phase != Phase::Decoding) {
+        return noOperation();
+    }
+
+    return thumbnailPreviewPlan(*m_request);
+}
+
 ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptDecodeResult(
     const ImageDecodeJobTicket &ticket)
 {
@@ -61,6 +71,14 @@ ImageDecodeJobRuntimePlan ImageDecodeJobState::startDecodePlan(
 {
     return ImageDecodeJobRuntimePlan {
         StartImageDecodeOperation { request },
+    };
+}
+
+ImageDecodeJobRuntimePlan ImageDecodeJobState::thumbnailPreviewPlan(
+    const ImageDecodeRequest &request) const
+{
+    return ImageDecodeJobRuntimePlan {
+        DeliverImageThumbnailPreviewOperation { request },
     };
 }
 

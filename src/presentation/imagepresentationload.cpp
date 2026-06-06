@@ -21,52 +21,57 @@ KiriView::ImagePresentationLoadResult finishImagePresentation(
 }
 
 KiriView::ImagePresentationLoadResult presentStaticImage(
-    KiriView::ImagePageSurfaceController &pageSurface, KiriView::StaticImagePayload staticImage,
-    bool predecodeCacheable, const KiriView::ImageDocumentRenderContext &renderContext)
+    KiriView::ImagePageSurfaceController &pageSurface,
+    KiriView::StaticDisplayImagePayload displayImage, bool predecodeCacheable,
+    const KiriView::ImageDocumentRenderContext &renderContext)
 {
-    pageSurface.setStaticImage(std::move(staticImage), predecodeCacheable, renderContext);
+    pageSurface.setStaticDisplayImage(std::move(displayImage), predecodeCacheable, renderContext);
     return finishImagePresentation(pageSurface);
 }
 
 KiriView::ImagePresentationLoadResult presentImageFrame(
-    KiriView::ImagePageSurfaceController &pageSurface, const QImage &image)
+    KiriView::ImagePageSurfaceController &pageSurface, const QImage &image,
+    const QString &sourceIdentity)
 {
     pageSurface.stopAnimation();
-    pageSurface.setImage(image, false);
+    pageSurface.setAnimationFrame(image, sourceIdentity);
     return finishImagePresentation(pageSurface);
 }
 
-KiriView::ImagePresentationLoadPlan staticImagePlan(
-    KiriView::StaticImagePayload staticImage, bool predecodeCacheable)
+KiriView::ImagePresentationLoadPlan staticDisplayImagePlan(
+    KiriView::StaticDisplayImagePayload displayImage, bool predecodeCacheable)
 {
     return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationStaticImageLoad {
-        std::move(staticImage),
+        std::move(displayImage),
         predecodeCacheable,
     } };
 }
 
-KiriView::ImagePresentationLoadPlan framePlan(QImage frame)
+KiriView::ImagePresentationLoadPlan framePlan(QImage frame, QString sourceIdentity)
 {
     return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationFrameLoad {
         std::move(frame),
+        std::move(sourceIdentity),
     } };
 }
 
 KiriView::ImagePresentationLoadPlan animationPlan(
-    QImage firstFrame, KiriView::ImageAnimationPlaybackRequest request)
+    QImage firstFrame, KiriView::ImageAnimationPlaybackRequest request, QString sourceIdentity)
 {
     return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationAnimationLoad {
         std::move(firstFrame),
         std::move(request),
+        std::move(sourceIdentity),
     } };
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::StaticDecodedImage &decoded,
     KiriView::ImagePresentationAnimationHandling, qsizetype predecodeCacheByteBudget)
 {
+    KiriView::StaticDisplayImagePayload displayImage = std::move(decoded.displayImage);
     const bool predecodeCacheable
-        = KiriView::PredecodeCache::canCacheImage(decoded.staticImage, predecodeCacheByteBudget);
-    return staticImagePlan(std::move(decoded.staticImage), predecodeCacheable);
+        = KiriView::PredecodeCache::canCacheImage(displayImage, predecodeCacheByteBudget);
+    return staticDisplayImagePlan(std::move(displayImage), predecodeCacheable);
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ApngAnimationImage &decoded,
@@ -77,34 +82,37 @@ KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ApngAnimationImag
     }
 
     if (animationHandling == KiriView::ImagePresentationAnimationHandling::FirstFrameOnly) {
-        return framePlan(std::move(decoded.firstFrame));
+        return framePlan(std::move(decoded.firstFrame), std::move(decoded.sourceIdentity));
     }
 
     return animationPlan(std::move(decoded.firstFrame),
-        KiriView::apngAnimationPlaybackRequest(std::move(decoded.data)));
+        KiriView::apngAnimationPlaybackRequest(std::move(decoded.data)),
+        std::move(decoded.sourceIdentity));
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ReaderAnimationImage &decoded,
     KiriView::ImagePresentationAnimationHandling animationHandling, qsizetype)
 {
     if (animationHandling == KiriView::ImagePresentationAnimationHandling::FirstFrameOnly) {
-        return framePlan(std::move(decoded.firstFrame));
+        return framePlan(std::move(decoded.firstFrame), std::move(decoded.sourceIdentity));
     }
 
     return animationPlan(std::move(decoded.firstFrame),
         KiriView::readerAnimationPlaybackRequest(
-            std::move(decoded.data), std::move(decoded.format)));
+            std::move(decoded.data), std::move(decoded.format)),
+        std::move(decoded.sourceIdentity));
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::HeifSequenceAnimationImage &decoded,
     KiriView::ImagePresentationAnimationHandling animationHandling, qsizetype)
 {
     if (animationHandling == KiriView::ImagePresentationAnimationHandling::FirstFrameOnly) {
-        return framePlan(std::move(decoded.firstFrame));
+        return framePlan(std::move(decoded.firstFrame), std::move(decoded.sourceIdentity));
     }
 
     return animationPlan(std::move(decoded.firstFrame),
-        KiriView::heifSequenceAnimationPlaybackRequest(std::move(decoded.data)));
+        KiriView::heifSequenceAnimationPlaybackRequest(std::move(decoded.data)),
+        std::move(decoded.sourceIdentity));
 }
 }
 
@@ -116,7 +124,7 @@ bool ImagePresentationLoadPlan::hasPresentation() const
 
 ImagePresentationLoadPlan planPredecodedImagePresentationLoad(PredecodedImage image)
 {
-    return staticImagePlan(std::move(image.staticImage), true);
+    return staticDisplayImagePlan(std::move(image.displayImage), true);
 }
 
 ImagePresentationLoadPlan planDecodedImagePresentationLoad(DecodedImage image,
@@ -137,14 +145,15 @@ ImagePresentationLoadResult executeImagePresentationLoadPlan(
         return {};
     }
     if (auto *staticImage = std::get_if<ImagePresentationStaticImageLoad>(&plan.payload)) {
-        return presentStaticImage(pageSurface, std::move(staticImage->staticImage),
+        return presentStaticImage(pageSurface, std::move(staticImage->displayImage),
             staticImage->predecodeCacheable, renderContext);
     }
     if (const auto *frame = std::get_if<ImagePresentationFrameLoad>(&plan.payload)) {
-        return presentImageFrame(pageSurface, frame->frame);
+        return presentImageFrame(pageSurface, frame->frame, frame->sourceIdentity);
     }
     if (auto *animation = std::get_if<ImagePresentationAnimationLoad>(&plan.payload)) {
-        ImagePresentationLoadResult result = presentImageFrame(pageSurface, animation->firstFrame);
+        ImagePresentationLoadResult result
+            = presentImageFrame(pageSurface, animation->firstFrame, animation->sourceIdentity);
         pageSurface.startAnimation(std::move(animation->playback));
         return result;
     }

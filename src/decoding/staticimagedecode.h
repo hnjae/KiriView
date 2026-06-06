@@ -10,8 +10,10 @@
 #include <memory>
 
 namespace KiriView {
+class ImageDecodeRequest;
+
 DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> source,
-    const ImageFirstDisplayDecodeContext &firstDisplay, QString *errorString);
+    const ImageDecodeRequest &request, QString *errorString);
 }
 
 #endif

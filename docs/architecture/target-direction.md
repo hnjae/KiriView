@@ -15,6 +15,6 @@ The document-session refactor should extract coherent contracts before moving im
 
 Those boundaries should keep `DocumentSessionState` as the public C++ owner and keep Qt/KDE effects in C++. Rust may later host pure projection or plan computation from plain snapshots, but C++ applies the resulting state, executes document routing, publishes signal batches, and preserves cursor-generation rejection for stale async completions.
 
-When later stages add C++ or Rust files for these boundaries, keep source ownership manifests in sync, including `src/rust_policy_sources.txt`, `src/rust_bridge_sources.txt`, and relevant REUSE coverage.
+When adding C++ or Rust files for these boundaries, keep source ownership manifests in sync, including `src/rust_policy_sources.txt`, `src/rust_bridge_sources.txt`, and relevant REUSE coverage.
 
 C++ should remain the place where those plans are executed through Qt/KDE APIs. This keeps the application adaptable while the pre-release codebase continues to change.

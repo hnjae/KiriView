@@ -4,11 +4,9 @@
 #include "imagerendering.h"
 
 #include "bridge/qtgeometryconversion.h"
-#include "imagerenderframe.h"
 #include "kiriview/src/policy/imagerendergeometry.cxx.h"
 
 #include <QRectF>
-#include <vector>
 
 namespace KiriView {
 QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
@@ -35,38 +33,6 @@ qreal imagePixelsPerSourcePixel(const QSize &imageSize, const QSize &displaySize
 {
     return rustImagePixelsPerSourcePixel(Bridge::rustSize<RustImageRenderSize>(imageSize),
         Bridge::rustSize<RustImageRenderSize>(displaySize));
-}
-
-std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
-    const DisplayedImageSurface &surface, const ImageSurfaceDrawContext &context)
-{
-    return projectImageRenderFrame(
-        ImageRenderFrameInput { &surface, 0, 0, context, DisplayedPageRole::Primary, {} })
-        .drawEntries;
-}
-
-std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
-    const DisplayedImageSurface &surface, const QRectF &targetRect, int rotationDegrees)
-{
-    return imageSurfaceDrawEntries(surface,
-        ImageSurfaceDrawContext {
-            targetRect,
-            targetRect.size(),
-            targetRect,
-            1.0,
-            rotationDegrees,
-        });
-}
-
-std::vector<ImageSurfaceDrawIdentity> imageSurfaceDrawIdentities(
-    const std::vector<ImageSurfaceDrawEntry> &entries)
-{
-    std::vector<ImageSurfaceDrawIdentity> identities;
-    identities.reserve(entries.size());
-    for (const ImageSurfaceDrawEntry &entry : entries) {
-        identities.push_back(entry.identity);
-    }
-    return identities;
 }
 
 QImage displayReadyImage(const QImage &image)

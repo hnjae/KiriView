@@ -5,8 +5,9 @@ src/facade/menuaccesskeyrouter.h
 src/facade/imageactionavailability.h
 src/facade/imageshortcutnavigationpolicy.h
 src/facade/kiridocumentsession.h
+src/facade/kiriimagedisplaysource.h
 src/facade/kiriimagedocument.h
-src/facade/kiriimageview.h
+src/facade/kiriimageviewportcontextbridge.h
 src/facade/kirimediainformation.h
 src/facade/kirivideodocument.h
 src/facade/kiriviewapplication.h

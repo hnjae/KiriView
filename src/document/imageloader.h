@@ -31,6 +31,8 @@ public:
     using ErrorCallback = std::function<void(ImageLoadSession, ImageLoadError, const QString &)>;
     using DecodedImageCallback = std::function<void(ImageLoadSession, DecodedImage)>;
     using PredecodedImageCallback = std::function<void(ImageLoadSession, PredecodedImage)>;
+    using ThumbnailPreviewCallback
+        = std::function<void(ImageLoadSession, StaticDisplayImagePayload)>;
     using UnsupportedOpenedCollectionVideoCallback = std::function<void(ImageLoadSession)>;
     using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
 
@@ -38,6 +40,7 @@ public:
         ErrorCallback error;
         DecodedImageCallback decodedImage;
         PredecodedImageCallback predecodedImage;
+        ThumbnailPreviewCallback thumbnailPreview;
         UnsupportedOpenedCollectionVideoCallback unsupportedOpenedCollectionVideo;
         FindPredecodedImageCallback findPredecodedImage;
         SourceResolvedCallback sourceResolved;
@@ -55,6 +58,8 @@ public:
 
 private:
     void finishDecodeResult(ImageDecodeRequest request, DecodedImageResult result);
+    void finishThumbnailPreview(
+        const ImageDecodeRequest &request, StaticDisplayImagePayload preview);
     void finishImageLoadError(const ImageDecodeRequest &request, const QString &errorString);
     void startImageLoad(ImageLoadSession session);
     void startOpenedCollectionLoad(ImageLoadSession session);
@@ -64,6 +69,7 @@ private:
         const ImageDecodeRequest &request, ImageLoadError error, const QString &errorString);
     void finishDecodedImage(ImageLoadSession session, DecodedImage image);
     void finishPredecodedImage(ImageLoadSession session, PredecodedImage image);
+    void finishThumbnailPreview(ImageLoadSession session, StaticDisplayImagePayload preview);
 
     Callbacks m_callbacks;
     ImageDecodeJob m_decodeJob;

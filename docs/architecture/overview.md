@@ -15,7 +15,7 @@ flowchart TD
 
 The main maintenance goal is to keep product policy testable without making Rust own Qt runtime concerns. Rust defines policy decisions. C++ executes them through Qt and KDE.
 
-The public QML facade layer is grouped in `src/facade/`. Domain runtime code remains in directories such as `src/document/`, `src/presentation/`, `src/rendering/`, `src/navigation/`, and `src/application/`. Shared C++ runtime support with clear ownership, such as localized user-facing text, localization setup, and KDE file-deletion side-effect providers, lives in a named support domain such as `src/localization/` or `src/system/`. C++ helpers that only convert values across the Rust/C++ boundary live in `src/bridge/`; Rust policy bridge files remain under `src/policy/`.
+The public QML facade layer is grouped in `src/facade/`. Domain runtime code remains in directories such as `src/document/`, `src/presentation/`, `src/rendering/`, `src/navigation/`, and `src/application/`. Shared C++ runtime support with clear ownership, such as localized user-facing text, localization setup, and KDE file-deletion side-effect providers, lives in a named support domain such as `src/localization/` or `src/system/`. C++ helpers that only convert values across the Rust/C++ boundary live in `src/bridge/`; Rust policy bridge files remain under `src/policy/`. The provider-rendering architecture is recorded separately in [Provider Rendering Architecture](provider-rendering.md); `src/rendering/` owns provider display storage, render-context value helpers, display bucket policy, and decoder/refinement helpers, not custom Qt Quick render nodes or QRhi resources.
 
 ## Current Source Shape
 
@@ -31,7 +31,7 @@ flowchart TD
     VideoDocument["KiriVideoDocument\nsrc/video/"]
     Navigation["src/navigation/\nCandidates and page/media targets"]
     Presentation["src/presentation/\nZoom, viewport, spread, animation"]
-    Rendering["src/rendering/\nSurfaces, tiles, scene graph"]
+    Rendering["src/rendering/\nDisplay store, source helpers, bucket policy"]
     Decoding["src/decoding/\nDecode pipeline"]
     Archive["src/archive/\nOpened collection entry sources"]
     Predecode["src/predecode/\nAdjacent still-image cache"]

@@ -6,7 +6,7 @@
 #include "facade/imageshortcutnavigationpolicy.h"
 #include "facade/kiridocumentsession.h"
 #include "facade/kiriimagedocument.h"
-#include "facade/kiriimageview.h"
+#include "facade/kiriimageviewportcontextbridge.h"
 #include "facade/kirimediainformation.h"
 #include "facade/kirivideodocument.h"
 #include "facade/kiriviewapplication.h"
@@ -88,7 +88,8 @@ void registerKiriViewQmlTypes()
         "io.github.hnjae.kiriview", 1, 0, "ImageShortcutNavigationPolicy");
     qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
     qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
-    qmlRegisterType<KiriImageView>("io.github.hnjae.kiriview", 1, 0, "KiriImageView");
+    qmlRegisterType<KiriImageViewportContextBridge>(
+        "io.github.hnjae.kiriview", 1, 0, "KiriImageViewportContextBridge");
     qmlRegisterType<KiriMediaInformation>("io.github.hnjae.kiriview", 1, 0, "KiriMediaInformation");
     qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
     qmlRegisterType<MenuAccessKeyRouter>("io.github.hnjae.kiriview", 1, 0, "MenuAccessKeyRouter");

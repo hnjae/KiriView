@@ -253,10 +253,10 @@ void TestKiriImageDecoder::jpegCompressedHeifStillImageDecodes()
     KiriView::DecodedImageResult result = KiriView::decodeImageData(*imageData);
     const auto *decoded = decodedImage<KiriView::StaticDecodedImage>(result);
     QVERIFY2(decoded != nullptr, "JPEG-compressed HEIF should decode as a static image");
-    QVERIFY(decoded->staticImage.source != nullptr);
-    QCOMPARE(decoded->staticImage.source->imageSize(), QSize(2, 2));
-    QCOMPARE(decoded->staticImage.preview.size(), QSize(2, 2));
-    QVERIFY(!decoded->staticImage.preview.isNull());
+    QVERIFY(decoded->displayImage.refinementSource != nullptr);
+    QCOMPARE(decoded->displayImage.originalSize, QSize(2, 2));
+    QCOMPARE(decoded->displayImage.image.size(), QSize(2, 2));
+    QVERIFY(!decoded->displayImage.image.isNull());
 }
 
 void TestKiriImageDecoder::avifStillBrandUsesHeifStaticPath()
@@ -270,11 +270,12 @@ void TestKiriImageDecoder::avifStillBrandUsesHeifStaticPath()
     KiriView::DecodedImageResult result = KiriView::decodeImageData(*imageData);
     const auto *decoded = decodedImage<KiriView::StaticDecodedImage>(result);
     QVERIFY2(decoded != nullptr, "AVIF still brand should use the HEIF static image path");
-    QVERIFY(decoded->staticImage.source != nullptr);
-    QVERIFY(dynamic_cast<KiriView::QImageReaderTileSource *>(decoded->staticImage.source.get())
+    QVERIFY(decoded->displayImage.refinementSource != nullptr);
+    QVERIFY(dynamic_cast<KiriView::QImageReaderTileSource *>(
+                decoded->displayImage.refinementSource.get())
         == nullptr);
-    QCOMPARE(decoded->staticImage.source->imageSize(), QSize(2, 2));
-    QCOMPARE(decoded->staticImage.preview.size(), QSize(2, 2));
+    QCOMPARE(decoded->displayImage.originalSize, QSize(2, 2));
+    QCOMPARE(decoded->displayImage.image.size(), QSize(2, 2));
 }
 
 void TestKiriImageDecoder::avifsSequenceBrandUsesHeifSequencePath()
@@ -346,9 +347,9 @@ void TestKiriImageDecoder::rawSamplesDecodeWhenConfigured()
         QVERIFY2(decoded != nullptr,
             qPrintable(failure != nullptr ? failure->errorString
                                           : QStringLiteral("RAW sample did not decode.")));
-        QVERIFY(decoded->staticImage.source != nullptr);
-        QVERIFY(!decoded->staticImage.preview.isNull());
-        QVERIFY(!decoded->staticImage.source->imageSize().isEmpty());
+        QVERIFY(decoded->displayImage.refinementSource != nullptr);
+        QVERIFY(!decoded->displayImage.image.isNull());
+        QVERIFY(!decoded->displayImage.originalSize.isEmpty());
     }
 }
 

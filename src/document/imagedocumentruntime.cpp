@@ -408,17 +408,17 @@ bool ImageDocumentRuntime::unsupportedOpenedCollectionVideo() const
 
 std::optional<DisplayedPredecodeImage> ImageDocumentRuntime::primaryDisplayedPredecodeImage() const
 {
-    std::optional<StaticImagePayload> staticImage
-        = controllers->pageSurfaceController().staticImage();
+    std::optional<StaticDisplayImagePayload> displayImage
+        = controllers->pageSurfaceController().displayImage();
     if (!controllers->pageSurfaceController().hasImage() || state.displayedUrl().isEmpty()
-        || !staticImage.has_value()) {
+        || !displayImage.has_value()) {
         return std::nullopt;
     }
 
     return DisplayedPredecodeImage {
         state.displayedImageLocation(),
         controllers->pageSurfaceController().isPredecodeCacheable(),
-        std::move(staticImage),
+        std::move(displayImage),
         state.embeddedMetadata(),
     };
 }
@@ -433,13 +433,33 @@ const EmbeddedMetadata &ImageDocumentRuntime::embeddedMetadata() const
     return state.embeddedMetadata();
 }
 
-DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageRole role) const
+ImageDisplaySourceProjection ImageDocumentRuntime::displaySourceProjection(
+    DisplayedPageRole role) const
 {
-    if (status() != ImageDocumentStatus::Ready) {
-        return {};
+    if (displayedUrl().isEmpty()) {
+        ImageDisplaySourceProjection projection;
+        projection.pageRole = role;
+        projection.revisionToken = imageDisplaySourceRevisionToken(projection.revision);
+        return projection;
     }
 
-    return controllers->spreadController().renderSnapshot(role);
+    return controllers->spreadController().displaySourceProjection(role);
+}
+
+void ImageDocumentRuntime::acknowledgeStillImageDisplayLoad(DisplayedPageRole role,
+    const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
+    ImageDisplayLoadOutcome outcome)
+{
+    controllers->spreadController().acknowledgeStillImageDisplayLoad(
+        role, providerUrl, revision, sourceIdentity, outcome);
+}
+
+void ImageDocumentRuntime::acknowledgeDisplayImageLoad(DisplayedPageRole role,
+    const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
+    ImageDisplayLoadOutcome outcome)
+{
+    controllers->spreadController().acknowledgeDisplayImageLoad(
+        role, providerUrl, revision, sourceIdentity, outcome);
 }
 
 void ImageDocumentRuntime::notify(ImageDocumentChange change) { changeBatcher.notify(change); }

@@ -52,10 +52,10 @@ std::vector<ImageCacheRetainedEntry> lruCacheRetentionPlan(
     return retentionPlan;
 }
 
-qsizetype staticTileCacheByteBudgetForSystemMemory(
+qsizetype displayImageCacheByteBudgetForSystemMemory(
     qsizetype systemMemoryByteSize, qsizetype preferredByteBudget)
 {
-    return Bridge::qtByteSize(rustStaticTileCacheByteBudgetForSystemMemory(
+    return Bridge::qtByteSize(rustDisplayImageCacheByteBudgetForSystemMemory(
         Bridge::rustByteSize(systemMemoryByteSize), Bridge::rustByteSize(preferredByteBudget)));
 }
 
@@ -87,16 +87,16 @@ ImageCacheBudgets resolvedImageCacheBudgets(
     const qsizetype predecodeCacheByteBudget = request.predecodeCacheByteBudget > 0
         ? request.predecodeCacheByteBudget
         : predecodeCacheByteBudgetForSystemMemory(systemMemory.physicalByteSize);
-    const qsizetype staticTileCacheByteBudget = request.staticTileCacheByteBudget > 0
-        ? request.staticTileCacheByteBudget
-        : staticTileCacheByteBudgetForSystemMemory(
-              systemMemory.physicalByteSize, request.staticTileCachePreferredByteBudget);
+    const qsizetype displayImageCacheByteBudget = request.displayImageCacheByteBudget > 0
+        ? request.displayImageCacheByteBudget
+        : displayImageCacheByteBudgetForSystemMemory(
+              systemMemory.physicalByteSize, request.displayImageCachePreferredByteBudget);
     const qsizetype thumbnailCacheByteBudget = request.thumbnailCacheByteBudget > 0
         ? request.thumbnailCacheByteBudget
         : thumbnailCacheByteBudgetForSystemMemory(systemMemory.physicalByteSize);
     return ImageCacheBudgets {
         predecodeCacheByteBudget,
-        staticTileCacheByteBudget,
+        displayImageCacheByteBudget,
         thumbnailCacheByteBudget,
     };
 }

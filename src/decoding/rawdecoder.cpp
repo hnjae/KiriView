@@ -182,6 +182,16 @@ public:
 
     QSize imageSize() const override { return m_image.size(); }
     qsizetype byteCost() const override { return KiriView::imageByteCost(m_image); }
+    bool supportsRasterDisplayRefinement() const override { return true; }
+
+    QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *) const override
+    {
+        if (rasterSize.isEmpty()) {
+            return {};
+        }
+
+        return KiriView::scaledTileImage(m_image, rasterSize);
+    }
 
     QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *) const override
     {
@@ -223,6 +233,6 @@ DecodedImageResult decodeRawImageData(const QByteArray &data, const ImageDecodeR
 
     std::shared_ptr<ImageTileSource> source
         = std::make_shared<RawImageTileSource>(std::move(*image));
-    return staticDecodedImageResult(std::move(source), request.firstDisplay(), &errorString);
+    return staticDecodedImageResult(std::move(source), request, &errorString);
 }
 }

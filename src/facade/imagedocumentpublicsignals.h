@@ -36,7 +36,7 @@ enum class ImageDocumentPublicSignal {
     ImageDocumentSourceScope,
     UnsupportedOpenedCollectionVideo,
     EmbeddedMetadata,
-    Repaint,
+    DisplaySource,
 };
 
 struct ImageDocumentPublicSignalOperations {
@@ -65,7 +65,7 @@ struct ImageDocumentPublicSignalOperations {
     std::function<void()> imageDocumentSourceScopeChanged;
     std::function<void()> unsupportedOpenedCollectionVideoChanged;
     std::function<void()> embeddedMetadataChanged;
-    std::function<void()> repaintRequested;
+    std::function<void()> displaySourceChanged;
 };
 
 class ImageDocumentPublicSignalEmitter final

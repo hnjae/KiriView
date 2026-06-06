@@ -71,6 +71,7 @@ bool PredecodeLoadController::startLoad(PredecodeLoadStart load)
             },
             [this](
                 const ImageDecodeRequest &request, const QString &) { finishLoadError(request); },
+            {},
         });
     const ImageDecodeRequest request = load.request;
     if (!m_activeDecodes.add(std::move(load.request), decodeJob)) {
@@ -131,15 +132,14 @@ void PredecodeLoadController::finishDecode(
 
     const auto *staticImage = decodedImageResultImageAs<StaticDecodedImage>(result);
     if (staticImage != nullptr) {
-        const QSize imageSize = staticImage->staticImage.source != nullptr
-            ? staticImage->staticImage.source->imageSize()
-            : QSize {};
+        StaticDisplayImagePayload displayImage = staticImage->displayImage;
         qCDebug(kiriviewPredecodeLog)
             << "predecode decode finished"
             << "generation" << activeRequest->id() << "url" << activeRequest->imageUrl()
-            << "imageSize" << imageSize << "byteCost" << staticImage->staticImage.byteCost();
+            << "originalSize" << displayImage.originalSize << "rasterSize"
+            << displayImage.image.size() << "byteCost" << displayImage.byteCost();
         m_loadState.cacheDecodedImage(
-            *activeRequest, staticImage->staticImage, staticImage->embeddedMetadata);
+            *activeRequest, std::move(displayImage), staticImage->embeddedMetadata);
     } else {
         qCDebug(kiriviewPredecodeLog)
             << "predecode decoded non-static image ignored"

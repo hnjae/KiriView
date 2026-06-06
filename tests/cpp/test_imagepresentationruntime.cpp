@@ -30,10 +30,10 @@ KiriView::ImageDocumentRenderContext renderContext()
 KiriView::ImagePresentationPageSlotSnapshot pageSlot(const QSize &imageSize, quint64 revision)
 {
     return KiriView::ImagePresentationPageSlotSnapshot {
-        {},
         revision,
         imageSize,
         true,
+        {},
     };
 }
 }

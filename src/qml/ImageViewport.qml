@@ -9,7 +9,7 @@ import io.github.hnjae.kiriview
 MediaViewportDelegate {
     id: root
 
-    property alias imageView: primaryImageView
+    property alias imageView: primaryDisplayImagePage
     property alias flickable: imageFlickable
     property bool applyingViewportProjection: false
     property string appliedViewportCommandRevisionToken: "0"
@@ -176,7 +176,7 @@ MediaViewportDelegate {
             return false;
         }
 
-        return imageView.viewportPointInsideImage(currentContentPosition(), Qt.point(viewportX, viewportY));
+        return root.imageDocument.viewportPointInsideImage(Qt.point(viewportX, viewportY));
     }
 
     function nearestImageViewportPoint(viewportX, viewportY) {
@@ -184,7 +184,7 @@ MediaViewportDelegate {
             return null;
         }
 
-        const point = imageView.nearestImageViewportPoint(currentContentPosition(), Qt.point(viewportX, viewportY));
+        const point = root.imageDocument.nearestImageViewportPoint(Qt.point(viewportX, viewportY));
         return Number.isFinite(point.x) && Number.isFinite(point.y) ? point : null;
     }
 
@@ -252,6 +252,10 @@ MediaViewportDelegate {
         function onViewportFrameChanged() {
             root.applyViewportProjection();
         }
+
+        function onDisplayedUrlChanged() {
+            root.applyDisplayedImageInitialContentPosition();
+        }
     }
 
     Flickable {
@@ -317,28 +321,58 @@ MediaViewportDelegate {
             x: root.presentationActive ? root.imageDocument.viewportImageRect.x : 0
             y: root.presentationActive ? root.imageDocument.viewportImageRect.y : 0
 
-            KiriImageView {
-                id: primaryImageView
+            DisplayImagePage {
+                id: primaryDisplayImagePage
 
-                document: root.presentationActive ? root.imageDocument : null
+                displaySource: root.presentationActive ? root.imageDocument.primaryDisplaySource : null
                 height: root.presentationActive ? root.imageDocument.primaryDisplaySize.height : 0
+                objectName: "primaryDisplayImagePage"
                 width: root.presentationActive ? root.imageDocument.primaryDisplaySize.width : 0
-                x: root.presentationActive && root.imageDocument.secondaryPageVisible && root.documentSession.activeImageRightToLeftReadingActive ? secondaryImageView.width : 0
+                x: root.presentationActive && root.imageDocument.secondaryPageVisible && root.documentSession.activeImageRightToLeftReadingActive ? secondaryDisplayImagePage.width : 0
                 y: Math.max(0, (spreadItem.height - height) / 2)
 
-                onDisplayedImageInitialContentPositionRequested: root.applyDisplayedImageInitialContentPosition()
+                onLoadOutcomeAcknowledged: (providerUrl, revisionToken, sourceIdentity, outcome) => {
+                    root.imageDocument.acknowledgeDisplayImageLoad(displaySource.pageRole, providerUrl, revisionToken, sourceIdentity, outcome);
+                }
             }
 
-            KiriImageView {
-                id: secondaryImageView
+            DisplayImagePage {
+                id: secondaryDisplayImagePage
+
+                displaySource: root.presentationActive ? root.imageDocument.secondaryDisplaySource : null
+                height: root.presentationActive ? root.imageDocument.secondaryDisplaySize.height : 0
+                objectName: "secondaryDisplayImagePage"
+                width: root.presentationActive ? root.imageDocument.secondaryDisplaySize.width : 0
+                x: root.presentationActive && root.documentSession.activeImageRightToLeftReadingActive ? 0 : primaryDisplayImagePage.width
+                y: Math.max(0, (spreadItem.height - height) / 2)
+
+                onLoadOutcomeAcknowledged: (providerUrl, revisionToken, sourceIdentity, outcome) => {
+                    root.imageDocument.acknowledgeDisplayImageLoad(displaySource.pageRole, providerUrl, revisionToken, sourceIdentity, outcome);
+                }
+            }
+
+            KiriImageViewportContextBridge {
+                id: primaryContextBridge
 
                 document: root.presentationActive ? root.imageDocument : null
-                height: root.presentationActive ? root.imageDocument.secondaryDisplaySize.height : 0
+                height: primaryDisplayImagePage.height
+                objectName: "primaryContextBridge"
+                width: primaryDisplayImagePage.width
+                x: primaryDisplayImagePage.x
+                y: primaryDisplayImagePage.y
+            }
+
+            KiriImageViewportContextBridge {
+                id: secondaryContextBridge
+
+                document: root.presentationActive ? root.imageDocument : null
+                height: secondaryDisplayImagePage.height
+                objectName: "secondaryContextBridge"
                 secondaryPage: true
-                visible: root.presentationActive && root.imageDocument.secondaryPageVisible
-                width: root.presentationActive ? root.imageDocument.secondaryDisplaySize.width : 0
-                x: root.presentationActive && root.documentSession.activeImageRightToLeftReadingActive ? 0 : primaryImageView.width
-                y: Math.max(0, (spreadItem.height - height) / 2)
+                visible: secondaryDisplayImagePage.visible
+                width: secondaryDisplayImagePage.width
+                x: secondaryDisplayImagePage.x
+                y: secondaryDisplayImagePage.y
             }
         }
     }

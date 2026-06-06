@@ -82,6 +82,31 @@ KiriView::FileDeletionMode toFileDeletionMode(KiriImageDocument::DeletionMode de
     return KiriView::FileDeletionMode::MoveToTrash;
 }
 
+std::optional<KiriView::DisplayedPageRole> toDisplayedPageRole(int pageRole)
+{
+    if (pageRole == static_cast<int>(KiriImageDisplaySource::PageRole::Primary)) {
+        return KiriView::DisplayedPageRole::Primary;
+    }
+    if (pageRole == static_cast<int>(KiriImageDisplaySource::PageRole::Secondary)) {
+        return KiriView::DisplayedPageRole::Secondary;
+    }
+    return std::nullopt;
+}
+
+std::optional<KiriView::ImageDisplayLoadOutcome> toImageDisplayLoadOutcome(int outcome)
+{
+    switch (outcome) {
+    case static_cast<int>(KiriView::ImageDisplayLoadOutcome::Loaded):
+        return KiriView::ImageDisplayLoadOutcome::Loaded;
+    case static_cast<int>(KiriView::ImageDisplayLoadOutcome::Error):
+        return KiriView::ImageDisplayLoadOutcome::Error;
+    case static_cast<int>(KiriView::ImageDisplayLoadOutcome::Missing):
+        return KiriView::ImageDisplayLoadOutcome::Missing;
+    default:
+        return std::nullopt;
+    }
+}
+
 KiriView::ImageViewportObservationOrigin toImageViewportObservationOrigin(
     KiriImageDocument::ViewportObservationOrigin origin)
 {
@@ -206,7 +231,7 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
         = [&document]() { Q_EMIT document.unsupportedOpenedCollectionVideoChanged(); };
     operations.embeddedMetadataChanged
         = [&document]() { Q_EMIT document.embeddedMetadataChanged(); };
-    operations.repaintRequested = [&document]() { Q_EMIT document.repaintRequested(); };
+    operations.displaySourceChanged = [&document]() { Q_EMIT document.displaySourceChanged(); };
     return operations;
 }
 }
@@ -227,6 +252,11 @@ KiriImageDocument::KiriImageDocument(
         [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); },
         [this](const QString &message) { Q_EMIT unsupportedOpenedCollectionVideoEntered(message); },
         [this](const QString &message) { Q_EMIT containerNavigationBoundaryReached(message); });
+    m_primaryDisplaySource
+        = std::make_unique<KiriImageDisplaySource>(KiriView::DisplayedPageRole::Primary, this);
+    m_secondaryDisplaySource
+        = std::make_unique<KiriImageDisplaySource>(KiriView::DisplayedPageRole::Secondary, this);
+    refreshDisplaySources();
 }
 
 KiriImageDocument::~KiriImageDocument() = default;
@@ -436,6 +466,16 @@ bool KiriImageDocument::unsupportedOpenedCollectionVideo() const
     return m_runtime->unsupportedOpenedCollectionVideo();
 }
 
+KiriImageDisplaySource *KiriImageDocument::primaryDisplaySource() const
+{
+    return m_primaryDisplaySource.get();
+}
+
+KiriImageDisplaySource *KiriImageDocument::secondaryDisplaySource() const
+{
+    return m_secondaryDisplaySource.get();
+}
+
 std::optional<KiriView::DisplayedPredecodeImage>
 KiriImageDocument::primaryDisplayedPredecodeImage() const
 {
@@ -450,12 +490,6 @@ KiriView::ImageFirstDisplayDecodeContext KiriImageDocument::firstDisplayDecodeCo
 const KiriView::EmbeddedMetadata &KiriImageDocument::embeddedMetadata() const
 {
     return m_runtime->embeddedMetadata();
-}
-
-KiriView::DisplayedImageRenderSnapshot KiriImageDocument::renderSnapshot(
-    KiriView::DisplayedPageRole role) const
-{
-    return m_runtime->renderSnapshot(role);
 }
 
 void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
@@ -642,6 +676,18 @@ bool KiriImageDocument::requestDisplayedImageInitialContentPosition()
         m_viewportInteraction.displayedImageInitialContentPosition(viewportInteractionSnapshot()));
 }
 
+bool KiriImageDocument::viewportPointInsideImage(const QPointF &viewportPoint) const
+{
+    return m_viewportInteraction.viewportPointInsideImage(
+        viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
+}
+
+QPointF KiriImageDocument::nearestImageViewportPoint(const QPointF &viewportPoint) const
+{
+    return m_viewportInteraction.nearestImageViewportPoint(
+        viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
+}
+
 void KiriImageDocument::requestToggleTwoPageMode() { setTwoPageModeEnabled(!twoPageModeEnabled()); }
 
 void KiriImageDocument::requestToggleRightToLeftReading()
@@ -723,13 +769,52 @@ bool KiriImageDocument::observeViewportContentPosition(
         contentPosition, toImageViewportObservationOrigin(origin));
 }
 
+bool KiriImageDocument::acknowledgeStillImageDisplayLoad(int pageRole, const QUrl &providerUrl,
+    const QString &revisionToken, const QString &sourceIdentity, int outcome)
+{
+    const std::optional<KiriView::DisplayedPageRole> displayPageRole
+        = toDisplayedPageRole(pageRole);
+    const std::optional<quint64> revision = viewportRevisionFromToken(revisionToken);
+    const std::optional<KiriView::ImageDisplayLoadOutcome> loadOutcome
+        = toImageDisplayLoadOutcome(outcome);
+    if (!displayPageRole.has_value() || !revision.has_value() || !loadOutcome.has_value()) {
+        return false;
+    }
+
+    m_runtime->acknowledgeStillImageDisplayLoad(
+        *displayPageRole, providerUrl, *revision, sourceIdentity, *loadOutcome);
+    return true;
+}
+
+bool KiriImageDocument::acknowledgeDisplayImageLoad(int pageRole, const QUrl &providerUrl,
+    const QString &revisionToken, const QString &sourceIdentity, int outcome)
+{
+    const std::optional<KiriView::DisplayedPageRole> displayPageRole
+        = toDisplayedPageRole(pageRole);
+    const std::optional<quint64> revision = viewportRevisionFromToken(revisionToken);
+    const std::optional<KiriView::ImageDisplayLoadOutcome> loadOutcome
+        = toImageDisplayLoadOutcome(outcome);
+    if (!displayPageRole.has_value() || !revision.has_value() || !loadOutcome.has_value()) {
+        return false;
+    }
+
+    m_runtime->acknowledgeDisplayImageLoad(
+        *displayPageRole, providerUrl, *revision, sourceIdentity, *loadOutcome);
+    return true;
+}
+
 KiriView::ImageViewportInteractionSnapshot KiriImageDocument::viewportInteractionSnapshot() const
 {
+    const KiriView::ImageFirstDisplayDecodeContext firstDisplayContext
+        = m_runtime->firstDisplayDecodeContext();
+    const double devicePixelRatio = firstDisplayContext.isValid() && viewportSize().width() > 0.0
+        ? firstDisplayContext.physicalViewportSize.width() / viewportSize().width()
+        : 1.0;
     return KiriView::ImageViewportInteractionSnapshot {
         imageSize(),
         viewportSize(),
         displaySize(),
-        renderSnapshot().devicePixelRatio,
+        devicePixelRatio,
         rightToLeftReadingEnabled() && rightToLeftReadingAvailable(),
     };
 }
@@ -769,5 +854,34 @@ bool KiriImageDocument::requestAnchoredManualZoom(
 
 void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
 {
+    refreshDisplaySources();
+    for (KiriView::ImageDocumentPublicSignal signal :
+        KiriView::imageDocumentPublicSignalsForChanges(changes)) {
+        switch (signal) {
+        case KiriView::ImageDocumentPublicSignal::Loading:
+            if (!loading()) {
+                m_viewportInteraction.cancelPendingDisplayedImageStart();
+            }
+            break;
+        case KiriView::ImageDocumentPublicSignal::DisplayedUrl:
+            m_viewportInteraction.beginDisplayedImage();
+            break;
+        default:
+            break;
+        }
+    }
     KiriView::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
+}
+
+void KiriImageDocument::refreshDisplaySources()
+{
+    if (m_runtime == nullptr || m_primaryDisplaySource == nullptr
+        || m_secondaryDisplaySource == nullptr) {
+        return;
+    }
+
+    m_primaryDisplaySource->setProjection(
+        m_runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary));
+    m_secondaryDisplaySource->setProjection(
+        m_runtime->displaySourceProjection(KiriView::DisplayedPageRole::Secondary));
 }
