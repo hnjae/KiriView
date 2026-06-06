@@ -25,7 +25,7 @@ RowLayout {
     property bool zoomEditable: !readOnlyDisplayMode && imageReady
     property real pendingZoomStepCount: 0
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
-    readonly property int wheelAngleDeltaPerStep: 120
+    readonly property real toolbarWheelZoomStepScale: 0.5
     readonly property bool textInputActive: textInputFocused()
 
     signal editingCompleted(bool returnViewerFocus)
@@ -56,20 +56,21 @@ RowLayout {
         return Math.max(1, Math.abs(root.steppedZoomValue(stepCount) - zoomSpinBox.value));
     }
 
-    function wheelZoomStepCount(wheel) {
-        const verticalDelta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y;
-        return verticalDelta / wheelAngleDeltaPerStep;
-    }
-
     function handleZoomWheel(wheel) {
-        const stepCount = root.wheelZoomStepCount(wheel);
+        const stepCount = wheelZoomPolicy.stepCount(wheel);
         if (stepCount === 0) {
             wheel.accepted = false;
             return;
         }
 
-        root.imageDocument.requestZoomByStepAtCenter(stepCount * 0.5);
+        root.imageDocument.requestZoomByStepAtCenter(stepCount);
         wheel.accepted = true;
+    }
+
+    ZoomWheelStepPolicy {
+        id: wheelZoomPolicy
+
+        stepScale: root.toolbarWheelZoomStepScale
     }
 
     Controls.SpinBox {

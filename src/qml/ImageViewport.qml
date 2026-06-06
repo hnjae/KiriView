@@ -18,7 +18,6 @@ MediaViewportDelegate {
     property bool imageReady: root.presentationActive && root.documentSession.activeImageReady
     readonly property int minimumManualZoomPercent: root.imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: root.imageDocument.maximumManualZoomPercent
-    readonly property int wheelAngleDeltaPerStep: 120
     readonly property bool imageHorizontallyPannable: root.presentationActive && root.imageDocument.viewportHorizontallyPannable
     readonly property bool imagePannable: root.presentationActive && root.imageDocument.viewportPannable
     readonly property real viewportWidth: imageFlickable.width
@@ -208,17 +207,12 @@ MediaViewportDelegate {
         return toggled;
     }
 
-    function wheelZoomStepCount(wheel) {
-        const verticalDelta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y;
-        return verticalDelta / wheelAngleDeltaPerStep;
-    }
-
     function wheelViewportPoint(wheel) {
         return Qt.point(wheel.x - imageFlickable.contentX, wheel.y - imageFlickable.contentY);
     }
 
     function handleWheelZoom(wheel, inputGesture) {
-        const stepCount = root.wheelZoomStepCount(wheel);
+        const stepCount = wheelZoomPolicy.stepCount(wheel);
         const viewportPoint = root.wheelViewportPoint(wheel);
         const insideImage = root.viewportPointInsideImage(viewportPoint.x, viewportPoint.y);
         const anchorPoint = root.nearestImageViewportPoint(viewportPoint.x, viewportPoint.y);
@@ -237,6 +231,10 @@ MediaViewportDelegate {
         console.debug(inputLog, "wheel zoom applied", "gesture", inputGesture, "applied", zoomed, "previousZoomPercent", previousZoomPercent, "nextZoomPercent", root.imageDocument.zoomPercent, "previousContentX", previousContentX, "previousContentY", previousContentY, "nextContentX", imageFlickable.contentX, "nextContentY", imageFlickable.contentY);
         wheel.accepted = true;
         return true;
+    }
+
+    ZoomWheelStepPolicy {
+        id: wheelZoomPolicy
     }
 
     Binding {
