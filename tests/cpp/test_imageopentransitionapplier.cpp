@@ -60,6 +60,7 @@ class TestImageOpenTransitionApplier : public QObject
 private Q_SLOTS:
     void applicationPlanResolvesRuntimeTargetsBeforeStateMutation();
     void successfulTransitionAppliesSessionStateAndEffects();
+    void successfulTransitionPublishesEmbeddedMetadataFromContext();
     void errorTransitionUsesDisplayedFallbackAndProvidedError();
     void missingRuntimeContextDoesNotClearResolvedTargets();
 };
@@ -154,6 +155,39 @@ void TestImageOpenTransitionApplier::successfulTransitionAppliesSessionStateAndE
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::ContainerNavigation));
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::Loading));
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::Status));
+}
+
+void TestImageOpenTransitionApplier::successfulTransitionPublishesEmbeddedMetadataFromContext()
+{
+    KiriView::ImageDocumentState state;
+    KiriView::EmbeddedMetadata previousMetadata;
+    previousMetadata.cameraMake = QStringLiteral("Previous Camera");
+    state.setEmbeddedMetadata(previousMetadata);
+
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
+    const KiriView::ImageLoadSession session {
+        11,
+        KiriView::ImageLoadRequest::fromUrl(imageUrl),
+        KiriView::DisplayedImageLocation::fromUrl(imageUrl),
+    };
+    KiriView::EmbeddedMetadata metadata;
+    metadata.cameraMake = QStringLiteral("Kiri Camera");
+    KiriView::ImageOpenTransition transition;
+    transition.stateDelta = stateDelta(KiriView::ImageOpenUrlTarget::SessionImage,
+        KiriView::ImageOpenDisplayedLocationTarget::Session,
+        KiriView::ImageOpenUrlTarget::DerivedContainerNavigation,
+        KiriView::ImageOpenBoolTarget::False, KiriView::ImageOpenStatusTarget::Ready,
+        KiriView::ImageOpenErrorStringTarget::Clear, true);
+    transition.stateDelta.embeddedMetadata = KiriView::ImageOpenEmbeddedMetadataTarget::Provided;
+
+    const KiriView::ImageOpenApplicationPlan applicationPlan = KiriView::imageOpenApplicationPlan(
+        transition, KiriView::ImageOpenTransitionContext::successfulImageLoad(session, metadata));
+    const KiriView::ImageDocumentRuntimePlan plan
+        = KiriView::applyImageOpenApplicationPlan(state, applicationPlan);
+
+    QVERIFY(plan.empty());
+    QCOMPARE(state.sourceUrl(), imageUrl);
+    QCOMPARE(state.embeddedMetadata().cameraMake, QStringLiteral("Kiri Camera"));
 }
 
 void TestImageOpenTransitionApplier::errorTransitionUsesDisplayedFallbackAndProvidedError()
