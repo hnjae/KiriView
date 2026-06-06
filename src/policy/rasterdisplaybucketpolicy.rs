@@ -6,6 +6,7 @@ const DISPLAY_IMAGE_QUALITY_BOUNDED_DETAIL: i32 = 3;
 const DISPLAY_IMAGE_QUALITY_UNSUPPORTED: i32 = 4;
 const DISPLAY_IMAGE_QUALITY_FAILED: i32 = 5;
 const DISPLAY_BYTES_PER_PIXEL: i64 = 4;
+const SVG_DISPLAY_BUCKET_SCALE_FACTOR: f64 = 1.5;
 
 use crate::imagerendergeometry::image_rotation_swaps_axes;
 
@@ -61,6 +62,11 @@ mod ffi {
     extern "Rust" {
         #[cxx_name = "rustRasterDisplayBucketDecision"]
         fn rust_raster_display_bucket_decision(
+            input: RustRasterDisplayBucketInput,
+        ) -> RustRasterDisplayBucketDecision;
+
+        #[cxx_name = "rustSvgDisplayBucketDecision"]
+        fn rust_svg_display_bucket_decision(
             input: RustRasterDisplayBucketInput,
         ) -> RustRasterDisplayBucketDecision;
     }
@@ -189,6 +195,92 @@ fn rust_raster_display_bucket_decision(
     )
 }
 
+fn rust_svg_display_bucket_decision(
+    input: RustRasterDisplayBucketInput,
+) -> RustRasterDisplayBucketDecision {
+    let original_size = Size {
+        width: input.original_width,
+        height: input.original_height,
+    };
+    let current_size = Size {
+        width: input.current_raster_width,
+        height: input.current_raster_height,
+    };
+    if original_size.is_empty() || !display_demand_is_valid(input) {
+        return decision(
+            RustRasterDisplayBucketStatus::Failed,
+            DISPLAY_IMAGE_QUALITY_FAILED,
+            empty_bucket_key(input),
+            false,
+            false,
+        );
+    }
+
+    let bucket_scale = svg_bucket_scale(svg_desired_scale(original_size, input));
+    let bucket_size = svg_bucket_size(original_size, bucket_scale);
+    if bucket_size.is_empty() {
+        return decision(
+            RustRasterDisplayBucketStatus::Failed,
+            DISPLAY_IMAGE_QUALITY_FAILED,
+            empty_bucket_key(input),
+            false,
+            false,
+        );
+    }
+
+    const NO_REFINEMENT: bool = false;
+    const REFINEMENT: bool = true;
+    let has_current = !current_size.is_empty();
+    let current_is_safe = has_current && size_is_safe(current_size, input);
+
+    if size_is_safe(bucket_size, input) {
+        if current_is_safe && current_satisfies(current_size, bucket_size) {
+            let current_is_exact = input.current_quality == DISPLAY_IMAGE_QUALITY_EXACT;
+            return decision(
+                if current_is_exact {
+                    RustRasterDisplayBucketStatus::Exact
+                } else {
+                    RustRasterDisplayBucketStatus::FirstDisplaySufficient
+                },
+                input.current_quality,
+                bucket_key_with_exact(current_size, input, current_is_exact),
+                NO_REFINEMENT,
+                true,
+            );
+        }
+
+        return decision(
+            RustRasterDisplayBucketStatus::RefinementNeeded,
+            DISPLAY_IMAGE_QUALITY_EXACT,
+            bucket_key_with_exact(bucket_size, input, true),
+            REFINEMENT,
+            has_current,
+        );
+    }
+
+    if current_is_safe {
+        return decision(
+            RustRasterDisplayBucketStatus::BoundedDetail,
+            DISPLAY_IMAGE_QUALITY_BOUNDED_DETAIL,
+            bucket_key_with_exact(current_size, input, false),
+            NO_REFINEMENT,
+            true,
+        );
+    }
+
+    decision(
+        RustRasterDisplayBucketStatus::UnsupportedTooLarge,
+        DISPLAY_IMAGE_QUALITY_UNSUPPORTED,
+        empty_bucket_key(input),
+        NO_REFINEMENT,
+        false,
+    )
+}
+
+fn finite_positive(value: f64) -> bool {
+    value.is_finite() && value > 0.0
+}
+
 fn display_demand_is_valid(input: RustRasterDisplayBucketInput) -> bool {
     input.display_width.is_finite()
         && input.display_height.is_finite()
@@ -229,6 +321,57 @@ fn desired_bucket_size(original_size: Size, input: RustRasterDisplayBucketInput)
         width: ceil_scaled_dimension(original_size.width, scale),
         height: ceil_scaled_dimension(original_size.height, scale),
     }
+}
+
+fn svg_desired_scale(original_size: Size, input: RustRasterDisplayBucketInput) -> f64 {
+    let mut display_width = input.display_width;
+    let mut display_height = input.display_height;
+    if image_rotation_swaps_axes(input.rotation_degrees) {
+        core::mem::swap(&mut display_width, &mut display_height);
+    }
+
+    let physical_width = display_width * input.device_pixel_ratio;
+    let physical_height = display_height * input.device_pixel_ratio;
+    if !finite_positive(physical_width) || !finite_positive(physical_height) {
+        return 0.0;
+    }
+
+    (physical_width / f64::from(original_size.width))
+        .max(physical_height / f64::from(original_size.height))
+}
+
+fn svg_bucket_scale(desired_scale: f64) -> f64 {
+    if !finite_positive(desired_scale) {
+        return 0.0;
+    }
+
+    let mut scale = 1.0;
+    while scale < desired_scale {
+        scale *= SVG_DISPLAY_BUCKET_SCALE_FACTOR;
+        if !finite_positive(scale) {
+            return 0.0;
+        }
+    }
+    scale
+}
+
+fn svg_bucket_size(original_size: Size, scale: f64) -> Size {
+    Size {
+        width: svg_scaled_dimension(original_size.width, scale),
+        height: svg_scaled_dimension(original_size.height, scale),
+    }
+}
+
+fn svg_scaled_dimension(source: i32, scale: f64) -> i32 {
+    if source <= 0 || !finite_positive(scale) {
+        return 0;
+    }
+
+    let dimension = (f64::from(source) * scale).ceil();
+    if !finite_positive(dimension) || dimension > f64::from(i32::MAX) {
+        return 0;
+    }
+    (dimension as i32).max(1)
 }
 
 fn ceil_scaled_dimension(source: i32, scale: f64) -> i32 {
@@ -324,11 +467,22 @@ fn bucket_key(
     original_size: Size,
     input: RustRasterDisplayBucketInput,
 ) -> RustRasterDisplayBucketKey {
+    bucket_key_with_exact(
+        raster_size,
+        input,
+        raster_size.width >= original_size.width && raster_size.height >= original_size.height,
+    )
+}
+
+fn bucket_key_with_exact(
+    raster_size: Size,
+    input: RustRasterDisplayBucketInput,
+    exact: bool,
+) -> RustRasterDisplayBucketKey {
     RustRasterDisplayBucketKey {
         raster_width: raster_size.width,
         raster_height: raster_size.height,
-        exact: raster_size.width >= original_size.width
-            && raster_size.height >= original_size.height,
+        exact,
         maximum_texture_size: input.maximum_texture_size,
         display_image_byte_budget: input.display_image_byte_budget,
     }
