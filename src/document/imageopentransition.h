@@ -66,6 +66,7 @@ struct ImageOpenStateDelta {
     ImageOpenStatusTarget status = ImageOpenStatusTarget::Unchanged;
     ImageOpenErrorStringTarget errorString = ImageOpenErrorStringTarget::Unchanged;
     ImageOpenBoolTarget unsupportedOpenedCollectionVideo = ImageOpenBoolTarget::Unchanged;
+    bool clearEmbeddedMetadata = false;
     bool clearLoadingContainerNavigationUrl = false;
 };
 

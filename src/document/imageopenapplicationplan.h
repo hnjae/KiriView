@@ -23,6 +23,7 @@ struct ImageOpenResolvedStateDelta {
     std::optional<ImageDocumentStatus> status;
     std::optional<QString> errorString;
     std::optional<bool> unsupportedOpenedCollectionVideo;
+    bool clearEmbeddedMetadata = false;
     bool clearLoadingContainerNavigationUrl = false;
 };
 

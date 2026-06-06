@@ -149,6 +149,7 @@ mod ffi {
         status: RustImageOpenStatusTarget,
         error_string: RustImageOpenErrorStringTarget,
         unsupported_opened_collection_video: RustImageOpenBoolTarget,
+        clear_embedded_metadata: bool,
         clear_loading_container_navigation_url: bool,
     }
 
@@ -328,6 +329,7 @@ fn begin_source_load_transition(event: RustImageOpenWorkflowEvent) -> RustImageO
     let mut transition = empty_transition();
     let input = event.begin_source_load;
     set_unsupported_opened_collection_video(&mut transition, RustImageOpenBoolTarget::False);
+    set_embedded_metadata_cleared(&mut transition);
 
     if !input.has_image && !input.has_loading_container_navigation_target {
         set_container_navigation_url(&mut transition, RustImageOpenUrlTarget::Empty);
@@ -353,6 +355,7 @@ fn finish_empty_source_load_transition() -> RustImageOpenTransition {
     push_effect(&mut transition, RustImageOpenEffect::ClearImage);
     push_effect(&mut transition, RustImageOpenEffect::ResetZoom);
     set_unsupported_opened_collection_video(&mut transition, RustImageOpenBoolTarget::False);
+    set_embedded_metadata_cleared(&mut transition);
     set_tracked_load_completed(&mut transition);
     set_container_navigation_url(&mut transition, RustImageOpenUrlTarget::Empty);
     set_status(&mut transition, RustImageOpenStatusTarget::Null);
@@ -415,6 +418,7 @@ fn source_target_load_error_transition() -> RustImageOpenTransition {
     set_container_navigation_url(&mut transition, RustImageOpenUrlTarget::Empty);
     set_error_string(&mut transition, RustImageOpenErrorStringTarget::Provided);
     set_unsupported_opened_collection_video(&mut transition, RustImageOpenBoolTarget::False);
+    set_embedded_metadata_cleared(&mut transition);
     set_status(&mut transition, RustImageOpenStatusTarget::Error);
     transition
 }
@@ -534,6 +538,11 @@ fn set_unsupported_opened_collection_video(
     transition.state_delta.unsupported_opened_collection_video = target;
 }
 
+fn set_embedded_metadata_cleared(transition: &mut RustImageOpenTransition) {
+    debug_assert!(!transition.state_delta.clear_embedded_metadata);
+    transition.state_delta.clear_embedded_metadata = true;
+}
+
 fn push_effect(transition: &mut RustImageOpenTransition, effect: RustImageOpenEffect) {
     transition.effects.push(effect);
 }
@@ -555,6 +564,7 @@ fn empty_state_delta() -> RustImageOpenStateDelta {
         status: RustImageOpenStatusTarget::Unchanged,
         error_string: RustImageOpenErrorStringTarget::Unchanged,
         unsupported_opened_collection_video: RustImageOpenBoolTarget::Unchanged,
+        clear_embedded_metadata: false,
         clear_loading_container_navigation_url: false,
     }
 }
@@ -585,6 +595,7 @@ mod tests {
             status,
             error_string,
             unsupported_opened_collection_video: RustImageOpenBoolTarget::Unchanged,
+            clear_embedded_metadata: false,
             clear_loading_container_navigation_url,
         }
     }
@@ -611,6 +622,13 @@ mod tests {
         mut delta: RustImageOpenStateDelta,
     ) -> RustImageOpenStateDelta {
         delta.unsupported_opened_collection_video = RustImageOpenBoolTarget::False;
+        delta
+    }
+
+    fn with_embedded_metadata_cleared(
+        mut delta: RustImageOpenStateDelta,
+    ) -> RustImageOpenStateDelta {
+        delta.clear_embedded_metadata = true;
         delta
     }
 
@@ -680,14 +698,16 @@ mod tests {
 
         assert_eq!(
             transition.state_delta,
-            with_unsupported_opened_collection_video_cleared(state_delta(
-                RustImageOpenUrlTarget::Unchanged,
-                RustImageOpenDisplayedLocationTarget::Unchanged,
-                RustImageOpenUrlTarget::Empty,
-                RustImageOpenBoolTarget::True,
-                RustImageOpenStatusTarget::Loading,
-                RustImageOpenErrorStringTarget::Unchanged,
-                false,
+            with_embedded_metadata_cleared(with_unsupported_opened_collection_video_cleared(
+                state_delta(
+                    RustImageOpenUrlTarget::Unchanged,
+                    RustImageOpenDisplayedLocationTarget::Unchanged,
+                    RustImageOpenUrlTarget::Empty,
+                    RustImageOpenBoolTarget::True,
+                    RustImageOpenStatusTarget::Loading,
+                    RustImageOpenErrorStringTarget::Unchanged,
+                    false,
+                ),
             ))
         );
         assert_eq!(
@@ -705,14 +725,16 @@ mod tests {
 
         assert_eq!(
             transition.state_delta,
-            with_unsupported_opened_collection_video_cleared(state_delta(
-                RustImageOpenUrlTarget::Unchanged,
-                RustImageOpenDisplayedLocationTarget::Unchanged,
-                RustImageOpenUrlTarget::Unchanged,
-                RustImageOpenBoolTarget::True,
-                RustImageOpenStatusTarget::Loading,
-                RustImageOpenErrorStringTarget::Unchanged,
-                false,
+            with_embedded_metadata_cleared(with_unsupported_opened_collection_video_cleared(
+                state_delta(
+                    RustImageOpenUrlTarget::Unchanged,
+                    RustImageOpenDisplayedLocationTarget::Unchanged,
+                    RustImageOpenUrlTarget::Unchanged,
+                    RustImageOpenBoolTarget::True,
+                    RustImageOpenStatusTarget::Loading,
+                    RustImageOpenErrorStringTarget::Unchanged,
+                    false,
+                ),
             ))
         );
         assert!(has_effect(
@@ -796,12 +818,14 @@ mod tests {
 
         assert_eq!(
             transition.state_delta,
-            with_unsupported_opened_collection_video_cleared(completed_load_delta(
-                RustImageOpenUrlTarget::Unchanged,
-                RustImageOpenDisplayedLocationTarget::Unchanged,
-                RustImageOpenUrlTarget::Empty,
-                RustImageOpenStatusTarget::Error,
-                RustImageOpenErrorStringTarget::Provided,
+            with_embedded_metadata_cleared(with_unsupported_opened_collection_video_cleared(
+                completed_load_delta(
+                    RustImageOpenUrlTarget::Unchanged,
+                    RustImageOpenDisplayedLocationTarget::Unchanged,
+                    RustImageOpenUrlTarget::Empty,
+                    RustImageOpenStatusTarget::Error,
+                    RustImageOpenErrorStringTarget::Provided,
+                ),
             ))
         );
         assert!(transition.effects.is_empty());

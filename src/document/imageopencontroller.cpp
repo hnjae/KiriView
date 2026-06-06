@@ -121,7 +121,6 @@ void ImageOpenController::finishAnimationLoadWithError(const QString &errorStrin
 
 void ImageOpenController::finishEmptySourceLoad()
 {
-    m_state.setEmbeddedMetadata({});
     reportRuntimePlan(
         applyImageOpenApplicationPlan(m_state, ImageOpenWorkflow::finishEmptySourceLoadPlan()));
 }
@@ -129,7 +128,6 @@ void ImageOpenController::finishEmptySourceLoad()
 void ImageOpenController::beginSourceLoad()
 {
     m_pageSurfaceController.clearShadowDisplayImage();
-    m_state.setEmbeddedMetadata({});
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot {
             m_pageSurfaceController.hasImage(),
@@ -239,9 +237,6 @@ void ImageOpenController::finishLoadWithError(
                 !displayedUrl.isEmpty(),
             },
             session, displayedUrl, message)));
-    if (m_state.status() == ImageDocumentStatus::Error) {
-        m_state.setEmbeddedMetadata({});
-    }
 }
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)

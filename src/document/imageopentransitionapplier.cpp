@@ -164,6 +164,7 @@ KiriView::ImageOpenResolvedStateDelta resolvedStateDelta(
         documentStatus(delta.status),
         errorStringTarget(delta.errorString, context),
         boolTarget(delta.unsupportedOpenedCollectionVideo),
+        delta.clearEmbeddedMetadata,
         delta.clearLoadingContainerNavigationUrl,
     };
 }
@@ -209,6 +210,7 @@ private:
             applySourceKind(delta.sourceKind);
             applyDisplayedLocation(delta.displayedLocation);
             applyErrorString(delta.errorString);
+            applyEmbeddedMetadata(delta.clearEmbeddedMetadata);
             applyStatus(delta.status);
             applyUnsupportedOpenedCollectionVideo(delta.unsupportedOpenedCollectionVideo, true);
             return;
@@ -219,6 +221,7 @@ private:
         applyDisplayedLocation(delta.displayedLocation);
         applyContainerNavigationUrl(delta.containerNavigationUrl);
         applyErrorString(delta.errorString);
+        applyEmbeddedMetadata(delta.clearEmbeddedMetadata);
         if (delta.clearLoadingContainerNavigationUrl) {
             applyTrackedLoadCompletion(delta);
         } else {
@@ -288,6 +291,13 @@ private:
     {
         if (errorString.has_value()) {
             m_state.setErrorString(*errorString);
+        }
+    }
+
+    void applyEmbeddedMetadata(bool clearEmbeddedMetadata)
+    {
+        if (clearEmbeddedMetadata) {
+            m_state.setEmbeddedMetadata({});
         }
     }
 

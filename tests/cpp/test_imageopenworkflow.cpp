@@ -566,9 +566,10 @@ void TestImageOpenWorkflow::stateChangesFollowWorkflowDeltaOrder()
 
         beginSourceLoad(state, false);
 
-        QCOMPARE(changes.size(), std::size_t(2));
-        QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
-        QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::Status);
+        QCOMPARE(changes.size(), std::size_t(3));
+        QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::EmbeddedMetadata);
+        QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::Loading);
+        QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::Status);
     }
 
     {
@@ -598,10 +599,11 @@ void TestImageOpenWorkflow::stateChangesFollowWorkflowDeltaOrder()
         finishLoadWithError(
             state, loadSession(replacementUrl, replacementUrl), true, QStringLiteral("missing"));
 
-        QCOMPARE(changes.size(), std::size_t(3));
+        QCOMPARE(changes.size(), std::size_t(4));
         QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
         QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::ErrorString);
-        QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::Status);
+        QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::EmbeddedMetadata);
+        QCOMPARE(changes.at(3), KiriView::ImageDocumentChange::Status);
     }
 }
 
