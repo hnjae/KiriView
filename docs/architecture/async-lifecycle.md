@@ -12,7 +12,7 @@ QObject-backed work must use a live owner token or weak Qt reference before queu
 
 Worker-thread and Rust async work return plain payloads only. Payloads crossing a worker boundary must be safe to move to the GUI acceptance path, must not contain QObject pointers, and must not carry an alternate authoritative URL, page, frame, or status beside the owner's current identity.
 
-Worker-backed owners must receive scheduling through an injectable dependency port when tests need deterministic lifecycle control. Production adapters may use the global Qt thread pool, but runtime owners such as image decode jobs should depend on a scheduler contract that preserves QObject-guarded queued delivery and stale-completion acceptance instead of calling global worker primitives directly.
+Worker-backed owners must receive scheduling through an injectable dependency port when tests need deterministic lifecycle control. Production adapters may use the global Qt thread pool, but runtime owners such as image decode jobs and opened-collection media entry runtimes should depend on a scheduler contract that preserves QObject-guarded queued delivery and stale-completion acceptance instead of calling global worker primitives directly.
 
 Timer-backed owners must receive monotonic time and timer firing through dependency ports when behavior depends on elapsed time. Production adapters may use `QElapsedTimer` and `QTimer`, but runtime state should consume plain timestamps and scheduled callback events so tests can advance time or fire callbacks without waiting on wall-clock delays.
 
