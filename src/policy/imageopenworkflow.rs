@@ -57,6 +57,8 @@ mod ffi {
         ScheduleAdjacentImagePredecode = 3,
         PrepareFailedContainer = 4,
         ClearLoadingPresentation = 5,
+        FinishSpreadTransition = 6,
+        ClearSecondaryPage = 7,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -68,6 +70,7 @@ mod ffi {
         FinishContainerNavigationLoadWithError = 4,
         FinishAnimationLoadWithError = 5,
         ResolveSourceImage = 6,
+        FinishUnsupportedOpenedCollectionVideoLoad = 7,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -193,6 +196,9 @@ fn rust_image_open_transition(event: RustImageOpenWorkflowEvent) -> RustImageOpe
             animation_load_error_transition()
         }
         RustImageOpenWorkflowEventKind::ResolveSourceImage => resolve_source_image_transition(),
+        RustImageOpenWorkflowEventKind::FinishUnsupportedOpenedCollectionVideoLoad => {
+            unsupported_opened_collection_video_transition()
+        }
         _ => empty_transition(),
     }
 }
@@ -366,6 +372,29 @@ fn resolve_source_image_transition() -> RustImageOpenTransition {
     let mut transition = empty_transition();
     set_source_url(&mut transition, RustImageOpenUrlTarget::SessionImage);
     set_source_kind(&mut transition, RustImageOpenSourceKindTarget::Session);
+    transition
+}
+
+fn unsupported_opened_collection_video_transition() -> RustImageOpenTransition {
+    let mut transition = empty_transition();
+    set_source_url(&mut transition, RustImageOpenUrlTarget::SessionImage);
+    set_source_kind(&mut transition, RustImageOpenSourceKindTarget::Session);
+    set_displayed_location(
+        &mut transition,
+        RustImageOpenDisplayedLocationTarget::Session,
+    );
+    set_container_navigation_url(
+        &mut transition,
+        RustImageOpenUrlTarget::DerivedContainerNavigation,
+    );
+    set_error_string(&mut transition, RustImageOpenErrorStringTarget::Clear);
+    set_embedded_metadata_cleared(&mut transition);
+    set_tracked_load_completed(&mut transition);
+    set_status(&mut transition, RustImageOpenStatusTarget::Ready);
+    set_unsupported_opened_collection_video(&mut transition, RustImageOpenBoolTarget::True);
+    push_effect(&mut transition, RustImageOpenEffect::FinishSpreadTransition);
+    push_effect(&mut transition, RustImageOpenEffect::ClearSecondaryPage);
+    push_effect(&mut transition, RustImageOpenEffect::UpdatePageNavigation);
     transition
 }
 

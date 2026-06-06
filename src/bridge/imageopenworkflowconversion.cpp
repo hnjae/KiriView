@@ -164,6 +164,10 @@ KiriView::ImageOpenEffect imageOpenEffect(KiriView::RustImageOpenEffect effect)
         return KiriView::ImageOpenEffect::PrepareFailedContainer;
     case KiriView::RustImageOpenEffect::ClearLoadingPresentation:
         return KiriView::ImageOpenEffect::ClearLoadingPresentation;
+    case KiriView::RustImageOpenEffect::FinishSpreadTransition:
+        return KiriView::ImageOpenEffect::FinishSpreadTransition;
+    case KiriView::RustImageOpenEffect::ClearSecondaryPage:
+        return KiriView::ImageOpenEffect::ClearSecondaryPage;
     }
 
     return KiriView::ImageOpenEffect::ClearImage;

@@ -159,28 +159,12 @@ void ImageOpenController::finishSourceResolved(ImageLoadSession session)
 void ImageOpenController::finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSession session)
 {
     const QString message = unsupportedOpenedCollectionVideoMessage();
-    {
-        ImageDocumentState::ChangeBatch batch = m_state.beginChangeBatch();
-        m_pageSurfaceController.clearImage();
-        invokeIfSet(m_callbacks.clearPrimaryPageSlot);
-        m_state.setSourceKind(session.kind());
-        m_state.setSourceUrl(session.imageUrl());
-        m_state.setDisplayedImageLocation(session.location());
-        m_state.setContainerNavigationUrl(containerNavigationUrlForLocation(session.location()));
-        m_state.setErrorString(QString());
-        m_state.setEmbeddedMetadata({});
-        m_state.clearLoadingContainerNavigationUrl();
-        m_state.setLoading(false);
-        m_state.setStatus(ImageDocumentStatus::Ready);
-        m_state.setUnsupportedOpenedCollectionVideo(true);
-    }
-
+    m_pageSurfaceController.clearImage();
+    invokeIfSet(m_callbacks.clearPrimaryPageSlot);
+    const ImageDocumentRuntimePlan plan = applyImageOpenApplicationPlan(
+        m_state, ImageOpenWorkflow::finishUnsupportedOpenedCollectionVideoLoadPlan(session));
     invokeIfSet(m_callbacks.unsupportedOpenedCollectionVideoEntered, message);
-    reportRuntimePlan(ImageDocumentRuntimePlan {
-        FinishSpreadTransitionOperation {},
-        ClearSecondaryPageOperation {},
-        UpdatePageNavigationOperation {},
-    });
+    reportRuntimePlan(plan);
 }
 
 void ImageOpenController::finishThumbnailPreviewLoad(

@@ -190,7 +190,8 @@ ImageOpenTransition resolveSourceImageTransition()
 
 ImageOpenTransition finishUnsupportedOpenedCollectionVideoLoadTransition()
 {
-    return ImageOpenTransition {};
+    return imageOpenTransitionFromBridge(rustImageOpenTransition(rustImageOpenWorkflowEvent(
+        RustImageOpenWorkflowEventKind::FinishUnsupportedOpenedCollectionVideoLoad)));
 }
 
 ImageOpenTransition finishSuccessfulImageLoadTransition(

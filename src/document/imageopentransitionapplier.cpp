@@ -121,6 +121,12 @@ void appendRuntimeOperationsForOpenEffect(KiriView::ImageDocumentRuntimePlan &pl
             plan.push_back(KiriView::PrepareFailedContainerOperation { *context.containerUrl });
         }
         return;
+    case KiriView::ImageOpenEffect::FinishSpreadTransition:
+        plan.push_back(KiriView::FinishSpreadTransitionOperation {});
+        return;
+    case KiriView::ImageOpenEffect::ClearSecondaryPage:
+        plan.push_back(KiriView::ClearSecondaryPageOperation {});
+        return;
     }
 }
 
