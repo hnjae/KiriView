@@ -554,9 +554,7 @@ void ImagePageSurfaceController::scheduleRasterDisplayRefinement(
         return;
     }
 
-    const qsizetype displayImageByteBudget = m_displayImageStore == nullptr
-        ? m_displayImageByteBudget
-        : m_displayImageStore->byteBudget();
+    const qsizetype displayImageByteBudget = m_displayImageByteBudget;
     const RasterDisplayBucketPolicyInput policyInput {
         currentDisplay->originalSize,
         currentDisplay->image.size(),
