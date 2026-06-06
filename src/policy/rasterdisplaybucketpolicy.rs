@@ -7,6 +7,8 @@ const DISPLAY_IMAGE_QUALITY_UNSUPPORTED: i32 = 4;
 const DISPLAY_IMAGE_QUALITY_FAILED: i32 = 5;
 const DISPLAY_BYTES_PER_PIXEL: i64 = 4;
 
+use crate::imagerendergeometry::image_rotation_swaps_axes;
+
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy, PartialEq, Eq)]
@@ -205,7 +207,7 @@ fn display_demand_is_valid(input: RustRasterDisplayBucketInput) -> bool {
 fn desired_bucket_size(original_size: Size, input: RustRasterDisplayBucketInput) -> Size {
     let mut display_width = input.display_width;
     let mut display_height = input.display_height;
-    if rotation_swaps_axes(input.rotation_degrees) {
+    if image_rotation_swaps_axes(input.rotation_degrees) {
         core::mem::swap(&mut display_width, &mut display_height);
     }
 
@@ -227,10 +229,6 @@ fn desired_bucket_size(original_size: Size, input: RustRasterDisplayBucketInput)
         width: ceil_scaled_dimension(original_size.width, scale),
         height: ceil_scaled_dimension(original_size.height, scale),
     }
-}
-
-fn rotation_swaps_axes(degrees: i32) -> bool {
-    matches!(degrees.rem_euclid(360), 90 | 270)
 }
 
 fn ceil_scaled_dimension(source: i32, scale: f64) -> i32 {

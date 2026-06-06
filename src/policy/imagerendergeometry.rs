@@ -369,25 +369,33 @@ fn rust_static_image_fits_full_image_surface(
         && image_size.height <= maximum_texture_size
 }
 
-fn rust_normalized_image_rotation_degrees(degrees: i32) -> i32 {
+pub(crate) fn normalized_image_rotation_degrees(degrees: i32) -> i32 {
     let normalized = degrees.rem_euclid(360);
     if normalized % 90 == 0 { normalized } else { 0 }
 }
 
+pub(crate) fn image_rotation_swaps_axes(degrees: i32) -> bool {
+    matches!(normalized_image_rotation_degrees(degrees), 90 | 270)
+}
+
+fn rust_normalized_image_rotation_degrees(degrees: i32) -> i32 {
+    normalized_image_rotation_degrees(degrees)
+}
+
 fn rust_image_rotation_clockwise(degrees: i32) -> i32 {
-    rust_normalized_image_rotation_degrees(degrees + 90)
+    normalized_image_rotation_degrees(degrees + 90)
 }
 
 fn rust_image_rotation_counterclockwise(degrees: i32) -> i32 {
-    rust_normalized_image_rotation_degrees(degrees - 90)
+    normalized_image_rotation_degrees(degrees - 90)
 }
 
 fn rust_image_rotation_swaps_axes(degrees: i32) -> bool {
-    matches!(rust_normalized_image_rotation_degrees(degrees), 90 | 270)
+    image_rotation_swaps_axes(degrees)
 }
 
 fn rust_rotated_image_size(size: RustImageRenderSize, degrees: i32) -> RustImageRenderSize {
-    if rust_image_rotation_swaps_axes(degrees) {
+    if image_rotation_swaps_axes(degrees) {
         RustImageRenderSize {
             width: size.height,
             height: size.width,
@@ -398,7 +406,7 @@ fn rust_rotated_image_size(size: RustImageRenderSize, degrees: i32) -> RustImage
 }
 
 fn rust_rotated_image_size_f(size: RustImageRenderSizeF, degrees: i32) -> RustImageRenderSizeF {
-    if rust_image_rotation_swaps_axes(degrees) {
+    if image_rotation_swaps_axes(degrees) {
         RustImageRenderSizeF {
             width: size.height,
             height: size.width,
@@ -424,7 +432,7 @@ fn rust_rotated_source_rect_in_target(
         return empty_rect_f();
     }
 
-    let (x, y, width, height) = match rust_normalized_image_rotation_degrees(degrees) {
+    let (x, y, width, height) = match normalized_image_rotation_degrees(degrees) {
         90 => (
             (source_height - source_rect.y - source_rect.height) / source_height,
             source_rect.x / source_width,
@@ -468,7 +476,7 @@ fn rust_unrotated_visible_rect_for_rotation(
         return empty_rect_f();
     }
 
-    match rust_normalized_image_rotation_degrees(degrees) {
+    match normalized_image_rotation_degrees(degrees) {
         90 => RustImageRenderRectF {
             x: visible_item_rect.y,
             y: source_display_size.height - visible_item_rect.x - visible_item_rect.width,
@@ -502,7 +510,7 @@ fn rust_image_texture_coordinate_transform(
     let width = texture_rect.width;
     let height = texture_rect.height;
 
-    match rust_normalized_image_rotation_degrees(degrees) {
+    match normalized_image_rotation_degrees(degrees) {
         90 => transform(point(left, bottom), point(0.0, -height), point(width, 0.0)),
         180 => transform(
             point(right, bottom),

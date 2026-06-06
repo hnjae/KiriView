@@ -5,6 +5,8 @@ const FIRST_DISPLAY_PIXELS_PER_SOURCE_PIXEL_EPSILON: f64 = 0.001;
 const SVG_RASTER_SCALE_BUCKET_FACTOR: f64 = 1.5;
 const SVG_RASTER_TILE_LEVEL: i32 = 0;
 
+use crate::imagerendergeometry::image_rotation_swaps_axes;
+
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq)]
@@ -951,17 +953,8 @@ fn scaled_dimension_for_bucket(dimension: i32, scale: f64) -> i32 {
     scaled as i32
 }
 
-fn normalized_rotation_degrees(degrees: i32) -> i32 {
-    let normalized = degrees.rem_euclid(360);
-    if normalized % 90 == 0 { normalized } else { 0 }
-}
-
-fn rotation_swaps_axes(degrees: i32) -> bool {
-    matches!(normalized_rotation_degrees(degrees), 90 | 270)
-}
-
 fn rotated_sizef(size: RustTileSizeF, degrees: i32) -> RustTileSizeF {
-    if rotation_swaps_axes(degrees) {
+    if image_rotation_swaps_axes(degrees) {
         RustTileSizeF {
             width: size.height,
             height: size.width,
