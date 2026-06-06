@@ -124,6 +124,43 @@ public:
     std::vector<KiriView::ThumbnailCacheLookupCallback> callbacks;
 };
 
+struct ManualImageWorkerSchedule {
+    KiriView::ImageWorkerOperation work;
+    KiriView::ImageWorkerCompletion completion;
+};
+
+class ManualImageWorkerScheduler
+{
+public:
+    KiriView::ImageWorkerScheduler scheduler()
+    {
+        return KiriView::ImageWorkerScheduler([this](QObject *, KiriView::ImageWorkerOperation work,
+                                                  KiriView::ImageWorkerCompletion completion) {
+            m_schedules.push_back(
+                ManualImageWorkerSchedule { std::move(work), std::move(completion) });
+        });
+    }
+
+    std::size_t scheduleCount() const { return m_schedules.size(); }
+
+    void runWork(std::size_t index)
+    {
+        if (m_schedules.at(index).work) {
+            m_schedules.at(index).work();
+        }
+    }
+
+    void finish(std::size_t index)
+    {
+        if (m_schedules.at(index).completion) {
+            m_schedules.at(index).completion();
+        }
+    }
+
+private:
+    std::vector<ManualImageWorkerSchedule> m_schedules;
+};
+
 class SemaphoreReleaseOnExit
 {
 public:
@@ -242,6 +279,7 @@ private Q_SLOTS:
     void loadErrorsAreDeliveredForCurrentRequest();
     void decodeErrorsAreDeliveredAsResults();
     void decodeRequestIsPassedToDecoder();
+    void decodeWorkerSchedulerCanBeDrivenManually();
     void xdgThumbnailPreviewIsDeliveredBeforeDecodeCompletes();
     void staleXdgThumbnailPreviewIsIgnored();
     void nonRawXdgMissDoesNotRunRawEmbeddedPreview();
@@ -391,6 +429,44 @@ void TestImageDecodeJob::decodeRequestIsPassedToDecoder()
     QTRY_VERIFY(decoderRequest.has_value());
     QCOMPARE(decoderRequest->id(), quint64(5));
     QCOMPARE(decoderRequest->firstDisplay().physicalViewportSize, QSize(320, 200));
+}
+
+void TestImageDecodeJob::decodeWorkerSchedulerCanBeDrivenManually()
+{
+    ManualImageDataLoader dataLoader;
+    ManualImageWorkerScheduler workerScheduler;
+    bool decoderCalled = false;
+    std::vector<KiriView::ImageDecodeRequest> decodedRequests;
+    KiriView::ImageDecodeDependencies dependencies = imageDecodeDependenciesFor(
+        dataLoader, [&decoderCalled](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+            decoderCalled = true;
+            return KiriView::successfulDecodedImageResult(
+                KiriView::TestSupport::staticDecodedTestImage());
+        });
+    dependencies.workerScheduler = workerScheduler.scheduler();
+    KiriView::ImageDecodeJob decodeJob(this, std::move(dependencies),
+        decodeJobCallbacks(
+            [&decodedRequests](KiriView::ImageDecodeRequest request, KiriView::DecodedImageResult) {
+                decodedRequests.push_back(std::move(request));
+            }));
+
+    decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(16, indexedImageUrl(16)));
+    dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
+
+    QCOMPARE(workerScheduler.scheduleCount(), std::size_t(1));
+    QVERIFY(!decoderCalled);
+    QCOMPARE(decodedRequests.size(), std::size_t(0));
+
+    workerScheduler.runWork(0);
+
+    QVERIFY(decoderCalled);
+    QCOMPARE(decodedRequests.size(), std::size_t(0));
+
+    workerScheduler.finish(0);
+
+    QCOMPARE(decodedRequests.size(), std::size_t(1));
+    QCOMPARE(decodedRequests.front().id(), quint64(16));
+    QVERIFY(!decodeJob.hasActiveRequest());
 }
 
 void TestImageDecodeJob::xdgThumbnailPreviewIsDeliveredBeforeDecodeCompletes()
