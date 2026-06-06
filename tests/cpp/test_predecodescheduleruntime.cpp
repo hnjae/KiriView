@@ -125,19 +125,26 @@ void TestPredecodeScheduleRuntime::scheduleCachesDisplayedImagesAndStartsAdjacen
         this, KiriView::ImageDecodeDependencies {}, testCacheByteBudget);
     int startCount = 0;
     std::optional<KiriView::PredecodePendingSchedule> capturedSchedule;
+    ManualTimerScheduler timerScheduler;
     KiriView::PredecodeScheduleRuntime runtime(
         this, loadController,
         [&startCount, &capturedSchedule](const KiriView::PredecodePendingSchedule &schedule) {
             ++startCount;
             capturedSchedule = schedule;
         },
-        noOpPowerSaverProvider());
+        {}, noOpPowerSaverProvider(), timerScheduler.scheduler());
 
     const QUrl displayedUrl = indexedImageUrl(3);
+    timerScheduler.advanceTo(1000);
     runtime.schedule(scheduleContext(displayedUrl));
 
     QVERIFY(loadController.findPredecodedImage(displayedUrl).has_value());
-    QTRY_COMPARE(startCount, 1);
+    QCOMPARE(startCount, 0);
+    QVERIFY(timerScheduler.timerAt(0).active());
+
+    timerScheduler.timerAt(0).fire();
+
+    QCOMPARE(startCount, 1);
     QVERIFY(capturedSchedule.has_value());
     QCOMPARE(capturedSchedule->context.currentLocation.imageUrl(), displayedUrl);
     QVERIFY(runtime.accepts(capturedSchedule->generation));
@@ -193,6 +200,7 @@ void TestPredecodeScheduleRuntime::powerSaverSuppressesAndReschedulesPendingPred
     KiriView::PredecodeLoadController loadController(
         this, KiriView::ImageDecodeDependencies {}, testCacheByteBudget);
     ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
+    ManualTimerScheduler timerScheduler;
     int startCount = 0;
     std::optional<KiriView::PredecodePendingSchedule> capturedSchedule;
     KiriView::PredecodeScheduleRuntime runtime(
@@ -201,19 +209,26 @@ void TestPredecodeScheduleRuntime::powerSaverSuppressesAndReschedulesPendingPred
             ++startCount;
             capturedSchedule = schedule;
         },
-        powerSaverProviderFor(powerSaverMonitor, true));
+        {}, powerSaverProviderFor(powerSaverMonitor, true), timerScheduler.scheduler());
     QVERIFY(powerSaverMonitor != nullptr);
 
     const QUrl displayedUrl = indexedImageUrl(5);
+    timerScheduler.advanceTo(1000);
     runtime.schedule(scheduleContext(displayedUrl));
 
     QVERIFY(loadController.findPredecodedImage(displayedUrl).has_value());
-    QTest::qWait(250);
     QCOMPARE(startCount, 0);
+    QVERIFY(!timerScheduler.timerAt(0).active());
 
+    timerScheduler.advanceTo(1200);
     powerSaverMonitor->setPowerSaverEnabled(false);
 
-    QTRY_COMPARE(startCount, 1);
+    QVERIFY(timerScheduler.timerAt(0).active());
+    QCOMPARE(startCount, 0);
+
+    timerScheduler.timerAt(0).fire();
+
+    QCOMPARE(startCount, 1);
     QVERIFY(capturedSchedule.has_value());
     QCOMPARE(capturedSchedule->context.currentLocation.imageUrl(), displayedUrl);
 }

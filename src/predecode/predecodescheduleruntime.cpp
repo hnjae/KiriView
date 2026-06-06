@@ -18,27 +18,23 @@ PredecodeScheduleRuntime::PredecodeScheduleRuntime(QObject *owner,
     PredecodeLoadController &loadController, StartAdjacentPredecodeCallback startAdjacentPredecode,
     PowerSaverProvider powerSaverProvider)
     : PredecodeScheduleRuntime(owner, loadController, std::move(startAdjacentPredecode), {},
-          std::move(powerSaverProvider))
+          std::move(powerSaverProvider), {})
 {
 }
 
 PredecodeScheduleRuntime::PredecodeScheduleRuntime(QObject *owner,
     PredecodeLoadController &loadController, StartAdjacentPredecodeCallback startAdjacentPredecode,
-    CancelDomainBackgroundCallback cancelDomainBackground, PowerSaverProvider powerSaverProvider)
+    CancelDomainBackgroundCallback cancelDomainBackground, PowerSaverProvider powerSaverProvider,
+    TimerScheduler timerScheduler)
     : m_loadController(loadController)
     , m_startAdjacentPredecode(std::move(startAdjacentPredecode))
     , m_cancelDomainBackground(std::move(cancelDomainBackground))
+    , m_timerScheduler(timerSchedulerWithDefaults(std::move(timerScheduler)))
 {
-    m_monotonicClock.start();
-    m_debounceTimer.setSingleShot(true);
-    m_debounceTimer.setInterval(predecodeDebounceMsec());
-    m_neutralTimer.setSingleShot(true);
-    m_neutralTimer.setInterval(predecodeNeutralRefreshMsec());
-
-    QObject::connect(
-        &m_debounceTimer, &QTimer::timeout, owner, [this]() { startDebouncedPredecode(); });
-    QObject::connect(
-        &m_neutralTimer, &QTimer::timeout, owner, [this]() { scheduleSettledNeutralPredecode(); });
+    m_debounceTimer = m_timerScheduler.singleShotTimer(
+        owner, predecodeDebounceMsec(), [this]() { startDebouncedPredecode(); });
+    m_neutralTimer = m_timerScheduler.singleShotTimer(
+        owner, predecodeNeutralRefreshMsec(), [this]() { scheduleSettledNeutralPredecode(); });
 
     powerSaverProvider = powerSaverProviderWithDefault(std::move(powerSaverProvider));
     if (powerSaverProvider.monitor) {
@@ -111,8 +107,12 @@ void PredecodeScheduleRuntime::dispatchScheduleOperation(
                     << "start predecode debounce"
                     << "generation" << payload.schedule.generation << "url"
                     << payload.schedule.context.currentLocation.imageUrl();
-                m_debounceTimer.start();
-                m_neutralTimer.start();
+                if (m_debounceTimer != nullptr) {
+                    m_debounceTimer->start();
+                }
+                if (m_neutralTimer != nullptr) {
+                    m_neutralTimer->start();
+                }
             } else if constexpr (std::is_same_v<Operation, StartAdjacentPredecodeOperation>) {
                 qCDebug(kiriviewPredecodeLog)
                     << "start adjacent predecode"
@@ -151,8 +151,12 @@ void PredecodeScheduleRuntime::scheduleSettledNeutralPredecode()
 
 void PredecodeScheduleRuntime::cancelBackgroundRuntime()
 {
-    m_debounceTimer.stop();
-    m_neutralTimer.stop();
+    if (m_debounceTimer != nullptr) {
+        m_debounceTimer->stop();
+    }
+    if (m_neutralTimer != nullptr) {
+        m_neutralTimer->stop();
+    }
     if (m_cancelDomainBackground) {
         m_cancelDomainBackground();
     }
@@ -161,7 +165,7 @@ void PredecodeScheduleRuntime::cancelBackgroundRuntime()
 
 qint64 PredecodeScheduleRuntime::currentMonotonicMsec() const
 {
-    return m_monotonicClock.isValid() ? m_monotonicClock.elapsed() : 0;
+    return m_timerScheduler.currentMonotonicMsec ? m_timerScheduler.currentMonotonicMsec() : 0;
 }
 
 void PredecodeScheduleRuntime::cancel()

@@ -4,13 +4,12 @@
 #ifndef KIRIVIEW_PREDECODESCHEDULERUNTIME_H
 #define KIRIVIEW_PREDECODESCHEDULERUNTIME_H
 
+#include "async/timerscheduler.h"
 #include "predecodeloadcontroller.h"
 #include "predecodeschedulestate.h"
 #include "system/powersaverprovider.h"
 
-#include <QElapsedTimer>
 #include <QObject>
-#include <QTimer>
 #include <functional>
 #include <memory>
 
@@ -27,7 +26,7 @@ public:
     PredecodeScheduleRuntime(QObject *owner, PredecodeLoadController &loadController,
         StartAdjacentPredecodeCallback startAdjacentPredecode,
         CancelDomainBackgroundCallback cancelDomainBackground,
-        PowerSaverProvider powerSaverProvider = {});
+        PowerSaverProvider powerSaverProvider = {}, TimerScheduler timerScheduler = {});
 
     void schedule(PredecodeScheduleContext context);
     void setPowerSaverEnabled(bool enabled);
@@ -47,11 +46,11 @@ private:
     PredecodeLoadController &m_loadController;
     StartAdjacentPredecodeCallback m_startAdjacentPredecode;
     CancelDomainBackgroundCallback m_cancelDomainBackground;
+    TimerScheduler m_timerScheduler;
     std::unique_ptr<PowerSaverStateMonitor> m_powerSaverMonitor;
     PredecodeScheduleState m_scheduleState;
-    QTimer m_debounceTimer;
-    QTimer m_neutralTimer;
-    QElapsedTimer m_monotonicClock;
+    std::unique_ptr<RuntimeTimerHandle> m_debounceTimer;
+    std::unique_ptr<RuntimeTimerHandle> m_neutralTimer;
 };
 }
 
