@@ -48,6 +48,7 @@ private Q_SLOTS:
     void spreadModePreservesZoomAndDisablesRotation();
     void previousActiveTransitionKeepsCommittedProjectionAuthoritative();
     void hiddenSecondaryProjectionIsNotVisible();
+    void singlePageSnapshotDoesNotExposeSecondaryVisibility();
 };
 
 void TestImagePresentationRuntime::
@@ -166,6 +167,22 @@ void TestImagePresentationRuntime::hiddenSecondaryProjectionIsNotVisible()
 
     QVERIFY(!projection.visible);
     QVERIFY(projection.visibleItemRect.isEmpty());
+}
+
+void TestImagePresentationRuntime::singlePageSnapshotDoesNotExposeSecondaryVisibility()
+{
+    KiriView::ImagePresentationRuntime runtime(renderContext);
+
+    runtime.commitPrimaryPageSlot(pageSlot(QSize(800, 1200), 1),
+        KiriView::ImagePresentationScopeKey::openedCollection(
+            localUrl(QStringLiteral("/books/book.cbz"))),
+        KiriView::ImagePresentationPrimaryChangePolicy::ResetZoom);
+    runtime.commitSecondaryPageSlot(pageSlot(QSize(800, 1200), 2));
+    runtime.setSecondaryPageVisible(true);
+
+    QCOMPARE(runtime.mode(), KiriView::ImagePresentationMode::SinglePage);
+    QVERIFY(!runtime.secondaryPageVisible());
+    QVERIFY(!runtime.snapshot().secondaryPageVisible);
 }
 
 QTEST_GUILESS_MAIN(TestImagePresentationRuntime)
