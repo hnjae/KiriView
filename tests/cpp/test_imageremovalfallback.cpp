@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "document/imageremovalfallback.h"
+#include "navigation/imageremovalfallback.h"
 
 #include "candidate_test_support.h"
 #include "location/imagedocumentlocation.h"
