@@ -242,6 +242,7 @@ ImageOpenTransition imageOpenTransitionFromBridge(const RustImageOpenTransition 
         imageOpenBoolTarget(rustTransition.state_delta.loading),
         imageOpenStatusTarget(rustTransition.state_delta.status),
         imageOpenErrorStringTarget(rustTransition.state_delta.error_string),
+        imageOpenBoolTarget(rustTransition.state_delta.unsupported_opened_collection_video),
         rustTransition.state_delta.clear_loading_container_navigation_url,
     };
 

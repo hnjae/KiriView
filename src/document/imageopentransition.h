@@ -65,6 +65,7 @@ struct ImageOpenStateDelta {
     ImageOpenBoolTarget loading = ImageOpenBoolTarget::Unchanged;
     ImageOpenStatusTarget status = ImageOpenStatusTarget::Unchanged;
     ImageOpenErrorStringTarget errorString = ImageOpenErrorStringTarget::Unchanged;
+    ImageOpenBoolTarget unsupportedOpenedCollectionVideo = ImageOpenBoolTarget::Unchanged;
     bool clearLoadingContainerNavigationUrl = false;
 };
 

@@ -163,6 +163,7 @@ KiriView::ImageOpenResolvedStateDelta resolvedStateDelta(
         boolTarget(delta.loading),
         documentStatus(delta.status),
         errorStringTarget(delta.errorString, context),
+        boolTarget(delta.unsupportedOpenedCollectionVideo),
         delta.clearLoadingContainerNavigationUrl,
     };
 }
@@ -199,6 +200,8 @@ public:
 private:
     void applyStateDelta(const KiriView::ImageOpenResolvedStateDelta &delta)
     {
+        applyUnsupportedOpenedCollectionVideo(delta.unsupportedOpenedCollectionVideo, false);
+
         if (trackedLoadCompletionBeforeVisibleState(delta)) {
             applyTrackedLoadCompletion(delta);
             applyContainerNavigationUrl(delta.containerNavigationUrl);
@@ -207,6 +210,7 @@ private:
             applyDisplayedLocation(delta.displayedLocation);
             applyErrorString(delta.errorString);
             applyStatus(delta.status);
+            applyUnsupportedOpenedCollectionVideo(delta.unsupportedOpenedCollectionVideo, true);
             return;
         }
 
@@ -221,6 +225,7 @@ private:
             applyLoading(delta.loading);
         }
         applyStatus(delta.status);
+        applyUnsupportedOpenedCollectionVideo(delta.unsupportedOpenedCollectionVideo, true);
     }
 
     bool trackedLoadCompletionBeforeVisibleState(
@@ -283,6 +288,14 @@ private:
     {
         if (errorString.has_value()) {
             m_state.setErrorString(*errorString);
+        }
+    }
+
+    void applyUnsupportedOpenedCollectionVideo(
+        const std::optional<bool> &unsupported, bool targetValue)
+    {
+        if (unsupported.has_value() && *unsupported == targetValue) {
+            m_state.setUnsupportedOpenedCollectionVideo(*unsupported);
         }
     }
 

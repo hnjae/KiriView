@@ -31,7 +31,8 @@ KiriView::ImageOpenStateDelta stateDelta(KiriView::ImageOpenUrlTarget sourceUrl,
 {
     return KiriView::ImageOpenStateDelta { sourceUrl,
         KiriView::ImageOpenSourceKindTarget::Unchanged, displayedLocation, containerNavigationUrl,
-        loading, status, errorString, clearLoadingContainerNavigationUrl };
+        loading, status, errorString, KiriView::ImageOpenBoolTarget::Unchanged,
+        clearLoadingContainerNavigationUrl };
 }
 
 template <typename Operation>

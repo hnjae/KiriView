@@ -121,7 +121,6 @@ void ImageOpenController::finishAnimationLoadWithError(const QString &errorStrin
 
 void ImageOpenController::finishEmptySourceLoad()
 {
-    m_state.setUnsupportedOpenedCollectionVideo(false);
     m_state.setEmbeddedMetadata({});
     reportRuntimePlan(
         applyImageOpenApplicationPlan(m_state, ImageOpenWorkflow::finishEmptySourceLoadPlan()));
@@ -130,7 +129,6 @@ void ImageOpenController::finishEmptySourceLoad()
 void ImageOpenController::beginSourceLoad()
 {
     m_pageSurfaceController.clearShadowDisplayImage();
-    m_state.setUnsupportedOpenedCollectionVideo(false);
     m_state.setEmbeddedMetadata({});
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot {
@@ -152,7 +150,6 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
     const QString message = openedCollectionOpenErrorMessage(errorString);
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::finishContainerNavigationLoadWithErrorPlan(containerUrl, message)));
-    m_state.setUnsupportedOpenedCollectionVideo(false);
 }
 
 void ImageOpenController::finishSourceResolved(ImageLoadSession session)
@@ -243,14 +240,12 @@ void ImageOpenController::finishLoadWithError(
             },
             session, displayedUrl, message)));
     if (m_state.status() == ImageDocumentStatus::Error) {
-        m_state.setUnsupportedOpenedCollectionVideo(false);
         m_state.setEmbeddedMetadata({});
     }
 }
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)
 {
-    m_state.setUnsupportedOpenedCollectionVideo(false);
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::finishSuccessfulImageLoadPlan(
             ImageOpenSuccessfulImageLoadSnapshot {
