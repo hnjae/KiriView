@@ -22,6 +22,8 @@ Image page-surface owners must schedule raster display refinement through an inj
 
 Timer-backed owners must receive monotonic time and timer firing through dependency ports when behavior depends on elapsed time. Production adapters may use `QElapsedTimer` and `QTimer`, but runtime state should consume plain timestamps and scheduled callback events so tests can advance time or fire callbacks without waiting on wall-clock delays.
 
+Directory listing and watching must cross an injectable provider boundary. Production providers may use `KCoreDirLister`, KDirNotify, and KIO jobs, but candidate loaders, direct-media navigation, and live candidate stores should consume directory snapshots, change events, deletion events, and listing failures through provider ports so core navigation behavior can be tested without real filesystem or KDE notification timing.
+
 QML may own UI-local timers and physical item transients, but it must not use delayed callbacks to reconcile durable domain state. If a delayed UI callback observes public session state, the C++ owner must already have published a coherent snapshot for that state.
 
 Use the existing support vocabulary where it fits: `ImageAsyncTicket` for generation acceptance, `ImageAsyncOperationState` for single operation ownership, `ImageAsyncScopedOperationState` for operation plus scope ownership, and `ImageIoJob` for cancelable QObject/job lifetime. Do not introduce a shared base state machine unless several owners need the same behavior and the abstraction removes real duplicated lifecycle logic.
