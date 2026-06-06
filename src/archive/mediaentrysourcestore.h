@@ -18,8 +18,8 @@ struct ImageDocumentSourceLoadRequest;
 class MediaEntrySourceStore final : public QObject
 {
 public:
-    explicit MediaEntrySourceStore(
-        MediaEntrySourceFactory sourceFactory = {}, QObject *parent = nullptr);
+    explicit MediaEntrySourceStore(MediaEntrySourceFactory sourceFactory = {},
+        QObject *parent = nullptr, ImageWorkerScheduler workerScheduler = {});
     ~MediaEntrySourceStore() override;
 
     ImageDocumentPageCandidateProvider wrapCandidateProvider(

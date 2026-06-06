@@ -6,6 +6,7 @@
 
 #include "async/imageasynccallbacks.h"
 #include "async/imageiojob.h"
+#include "async/imageworkerscheduler.h"
 #include "imagedocumentpagecandidatecallbacks.h"
 #include "location/imagelocation.h"
 
@@ -31,9 +32,10 @@ struct ImageDocumentPageCandidateProvider {
     ImageDocumentPageCandidateChangeSubscriber directoryImageDocumentPageChanges;
 };
 
-ImageDocumentPageCandidateProvider defaultImageDocumentPageCandidateProvider();
+ImageDocumentPageCandidateProvider defaultImageDocumentPageCandidateProvider(
+    ImageWorkerScheduler workerScheduler = {});
 ImageDocumentPageCandidateProvider imageDocumentPageNavigationCandidateProviderWithDefaults(
-    ImageDocumentPageCandidateProvider provider);
+    ImageDocumentPageCandidateProvider provider, ImageWorkerScheduler workerScheduler = {});
 }
 
 #endif

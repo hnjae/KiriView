@@ -99,8 +99,17 @@ ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
     OpenedCollectionScopeLocation openedCollectionScope,
     ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
+    return startOpenedCollectionCandidateList(receiver, std::move(openedCollectionScope),
+        ImageWorkerScheduler(), std::move(callback), std::move(errorCallback));
+}
+
+ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
+    OpenedCollectionScopeLocation openedCollectionScope,
+    const ImageWorkerScheduler &workerScheduler, ImageDocumentPageCandidatesCallback callback,
+    ErrorCallback errorCallback)
+{
     return startMediaEntrySourceWorkerJob(
-        receiver, ImageWorkerScheduler(),
+        receiver, workerScheduler,
         [openedCollectionScope = std::move(openedCollectionScope)]() {
             return loadMediaEntrySourceCandidates(openedCollectionScope);
         },

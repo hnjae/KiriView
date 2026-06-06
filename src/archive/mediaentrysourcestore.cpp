@@ -28,9 +28,10 @@ std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScopeForS
 }
 
 namespace KiriView {
-MediaEntrySourceStore::MediaEntrySourceStore(MediaEntrySourceFactory sourceFactory, QObject *parent)
+MediaEntrySourceStore::MediaEntrySourceStore(
+    MediaEntrySourceFactory sourceFactory, QObject *parent, ImageWorkerScheduler workerScheduler)
     : QObject(parent)
-    , m_runtime(this, std::move(sourceFactory))
+    , m_runtime(this, std::move(sourceFactory), std::move(workerScheduler))
 {
 }
 

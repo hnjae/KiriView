@@ -18,7 +18,8 @@ KiriView::ImageIoJob noOpImageDocumentPageCandidateChanges(
 }
 
 namespace KiriView {
-ImageDocumentPageCandidateProvider defaultImageDocumentPageCandidateProvider()
+ImageDocumentPageCandidateProvider defaultImageDocumentPageCandidateProvider(
+    ImageWorkerScheduler workerScheduler)
 {
     auto candidateStore = std::make_shared<ImageDocumentPageCandidateStore>();
     return ImageDocumentPageCandidateProvider {
@@ -28,7 +29,12 @@ ImageDocumentPageCandidateProvider defaultImageDocumentPageCandidateProvider()
                 receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));
         },
         startDirectoryContainerCandidateList,
-        startOpenedCollectionCandidateList,
+        [workerScheduler = std::move(workerScheduler)](QObject *receiver,
+            OpenedCollectionScopeLocation openedCollectionScope,
+            ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) {
+            return startOpenedCollectionCandidateList(receiver, std::move(openedCollectionScope),
+                workerScheduler, std::move(callback), std::move(errorCallback));
+        },
         [candidateStore](QObject *receiver, QUrl directoryUrl,
             ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) {
             return candidateStore->watchDirectoryImages(
@@ -38,12 +44,13 @@ ImageDocumentPageCandidateProvider defaultImageDocumentPageCandidateProvider()
 }
 
 ImageDocumentPageCandidateProvider imageDocumentPageNavigationCandidateProviderWithDefaults(
-    ImageDocumentPageCandidateProvider provider)
+    ImageDocumentPageCandidateProvider provider, ImageWorkerScheduler workerScheduler)
 {
     const bool providerIsEmpty = !provider.directoryImageDocumentPages
         && !provider.directoryContainers && !provider.openedCollectionCandidates
         && !provider.directoryImageDocumentPageChanges;
-    ImageDocumentPageCandidateProvider defaults = defaultImageDocumentPageCandidateProvider();
+    ImageDocumentPageCandidateProvider defaults
+        = defaultImageDocumentPageCandidateProvider(std::move(workerScheduler));
     if (!provider.directoryImageDocumentPages) {
         provider.directoryImageDocumentPages = std::move(defaults.directoryImageDocumentPages);
     }
