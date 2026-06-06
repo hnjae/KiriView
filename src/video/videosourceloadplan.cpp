@@ -3,6 +3,8 @@
 
 #include "video/videosourceloadplan.h"
 
+#include <utility>
+
 namespace KiriView {
 VideoSourceLoadPlan videoSourceLoadClearPlan()
 {
@@ -30,13 +32,31 @@ VideoSourceLoadPlan videoSourceLoadReadyPlan(const QUrl &sourceUrl, const QUrl &
     };
 }
 
-VideoSourceLoadPlan videoSourceLoadFailurePlan(const QUrl &sourceUrl, const QString &errorString)
+VideoSourceLoadFailure videoSourceLoadPlaybackUrlResolutionFailure(
+    const QUrl &sourceUrl, const QString &diagnosticDetail)
+{
+    return VideoSourceLoadFailure {
+        sourceUrl,
+        VideoSourceLoadFailureKind::PlaybackUrlResolution,
+        diagnosticDetail,
+        diagnosticDetail,
+        VideoSourceLoadFailureSeverity::Error,
+        false,
+    };
+}
+
+VideoSourceLoadPlan videoSourceLoadFailurePlan(VideoSourceLoadFailure failure)
 {
     return {
         PublishVideoSourceLoadFailureOperation {
-            sourceUrl,
-            errorString,
+            std::move(failure),
         },
     };
+}
+
+VideoSourceLoadPlan videoSourceLoadFailurePlan(const QUrl &sourceUrl, const QString &errorString)
+{
+    return videoSourceLoadFailurePlan(
+        videoSourceLoadPlaybackUrlResolutionFailure(sourceUrl, errorString));
 }
 }

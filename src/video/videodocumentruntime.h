@@ -88,7 +88,7 @@ private:
     void executeSourceLoadOperation(const PublishVideoSourceLoadFailureOperation &operation);
     void clearPlaybackSource();
     void applyResolvedPlaybackUrl(const QUrl &playbackUrl);
-    void publishSourceLoadFailure(const QUrl &sourceUrl, const QString &errorString);
+    void publishSourceLoadFailure(const VideoSourceLoadFailure &failure);
     void invalidatePlaybackCallbacks();
     void acceptPlaybackCallbacks();
     bool playbackCallbacksAccepted() const;

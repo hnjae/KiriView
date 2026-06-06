@@ -25,9 +25,25 @@ struct ApplyVideoPlaybackUrlOperation {
     QUrl playbackUrl;
 };
 
-struct PublishVideoSourceLoadFailureOperation {
+enum class VideoSourceLoadFailureKind {
+    PlaybackUrlResolution,
+};
+
+enum class VideoSourceLoadFailureSeverity {
+    Error,
+};
+
+struct VideoSourceLoadFailure {
     QUrl sourceUrl;
-    QString errorString;
+    VideoSourceLoadFailureKind kind = VideoSourceLoadFailureKind::PlaybackUrlResolution;
+    QString userMessage;
+    QString diagnosticDetail;
+    VideoSourceLoadFailureSeverity severity = VideoSourceLoadFailureSeverity::Error;
+    bool retryable = false;
+};
+
+struct PublishVideoSourceLoadFailureOperation {
+    VideoSourceLoadFailure failure;
 };
 
 using VideoSourceLoadOperation = std::variant<ClearVideoPlaybackSourceOperation,
@@ -38,6 +54,9 @@ using VideoSourceLoadPlan = std::vector<VideoSourceLoadOperation>;
 VideoSourceLoadPlan videoSourceLoadClearPlan();
 VideoSourceLoadPlan videoSourceLoadStartPlan(const QUrl &sourceUrl);
 VideoSourceLoadPlan videoSourceLoadReadyPlan(const QUrl &sourceUrl, const QUrl &playbackUrl);
+VideoSourceLoadFailure videoSourceLoadPlaybackUrlResolutionFailure(
+    const QUrl &sourceUrl, const QString &diagnosticDetail);
+VideoSourceLoadPlan videoSourceLoadFailurePlan(VideoSourceLoadFailure failure);
 VideoSourceLoadPlan videoSourceLoadFailurePlan(const QUrl &sourceUrl, const QString &errorString);
 }
 

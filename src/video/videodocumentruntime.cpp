@@ -340,7 +340,7 @@ void VideoDocumentRuntime::executeSourceLoadOperation(
 void VideoDocumentRuntime::executeSourceLoadOperation(
     const PublishVideoSourceLoadFailureOperation &operation)
 {
-    publishSourceLoadFailure(operation.sourceUrl, operation.errorString);
+    publishSourceLoadFailure(operation.failure);
 }
 
 void VideoDocumentRuntime::applyResolvedPlaybackUrl(const QUrl &playbackUrl)
@@ -356,11 +356,11 @@ void VideoDocumentRuntime::applyResolvedPlaybackUrl(const QUrl &playbackUrl)
     play();
 }
 
-void VideoDocumentRuntime::publishSourceLoadFailure(const QUrl &, const QString &errorString)
+void VideoDocumentRuntime::publishSourceLoadFailure(const VideoSourceLoadFailure &failure)
 {
     invalidatePlaybackCallbacks();
     m_state.setEmbeddedMetadata({});
-    m_state.setStatusAndError(VideoDocumentStatus::Error, errorString);
+    m_state.setStatusAndError(VideoDocumentStatus::Error, failure.userMessage);
     updateZoomPercent();
 }
 
