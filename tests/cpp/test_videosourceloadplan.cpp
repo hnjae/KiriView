@@ -67,6 +67,7 @@ void TestVideoSourceLoadPlan::failurePlanCarriesSourceAndError()
 {
     const QUrl sourceUrl(QStringLiteral("zip:///home/me/videos.zip!/clip.mp4"));
     const QString errorString = QStringLiteral("resolution failed");
+    const QString userMessage = QStringLiteral("Could not open the selected video.");
     const KiriView::VideoSourceLoadPlan plan
         = KiriView::videoSourceLoadFailurePlan(sourceUrl, errorString);
 
@@ -75,7 +76,7 @@ void TestVideoSourceLoadPlan::failurePlanCarriesSourceAndError()
         = operationAt<KiriView::PublishVideoSourceLoadFailureOperation>(plan, 0);
     QCOMPARE(operation.failure.sourceUrl, sourceUrl);
     QVERIFY(operation.failure.kind == KiriView::VideoSourceLoadFailureKind::PlaybackUrlResolution);
-    QCOMPARE(operation.failure.userMessage, errorString);
+    QCOMPARE(operation.failure.userMessage, userMessage);
     QCOMPARE(operation.failure.diagnosticDetail, errorString);
     QVERIFY(operation.failure.severity == KiriView::VideoSourceLoadFailureSeverity::Error);
     QVERIFY(!operation.failure.retryable);

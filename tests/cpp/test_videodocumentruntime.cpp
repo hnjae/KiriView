@@ -461,11 +461,11 @@ void TestVideoDocumentRuntime::resolverFailureSurfacesErrorWithoutChangingSource
     const QUrl sourceUrl(QStringLiteral("zip:///home/me/videos.zip!/clip.mp4"));
 
     fixture.runtime->setSourceUrl(sourceUrl);
-    fixture.failLatest(QStringLiteral("resolution failed"));
+    fixture.failLatest(QStringLiteral("DBus backend detail"));
 
     QCOMPARE(fixture.runtime->sourceUrl(), sourceUrl);
     QCOMPARE(fixture.runtime->status(), KiriView::VideoDocumentStatus::Error);
-    QCOMPARE(fixture.runtime->errorString(), QStringLiteral("resolution failed"));
+    QCOMPARE(fixture.runtime->errorString(), QStringLiteral("Could not open the selected video."));
     QCOMPARE(fixture.backend->sourceUrl, QUrl());
 }
 

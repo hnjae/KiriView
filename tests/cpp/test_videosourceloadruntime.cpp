@@ -221,7 +221,7 @@ void TestVideoSourceLoadRuntime::acceptedResolverFailurePublishesError()
     QVERIFY(!fixture.runtime.active());
     QCOMPARE(fixture.failedSourceUrl, sourceUrl);
     QVERIFY(fixture.failedKind == KiriView::VideoSourceLoadFailureKind::PlaybackUrlResolution);
-    QCOMPARE(fixture.failedErrorString, QStringLiteral("resolution failed"));
+    QCOMPARE(fixture.failedErrorString, QStringLiteral("Could not open the selected video."));
     QCOMPARE(fixture.failedDiagnosticDetail, QStringLiteral("resolution failed"));
     QCOMPARE(fixture.events.back(), QStringLiteral("source-load-failed"));
 }

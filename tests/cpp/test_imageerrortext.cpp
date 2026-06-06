@@ -21,6 +21,8 @@ void TestImageErrorText::plainTextIdsExposeCanonicalMessages()
 {
     QCOMPARE(KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData),
         QStringLiteral("Could not read the selected image data."));
+    QCOMPARE(KiriView::imageErrorText(KiriView::ImageErrorTextId::OpenVideo),
+        QStringLiteral("Could not open the selected video."));
     QCOMPARE(KiriView::imageErrorText(KiriView::ImageErrorTextId::HeifSequenceTrackMissing),
         QStringLiteral("Could not decode the selected HEIF image: sequence track is missing."));
     QCOMPARE(KiriView::imageErrorText(KiriView::ImageErrorTextId::RawFullDecodeTooLarge),
