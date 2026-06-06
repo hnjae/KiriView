@@ -50,7 +50,7 @@ A display-source projection is read-only facade state derived from the accepted 
 
 ## Raster Bucket Policy
 
-- The pure raster bucket policy consumes post-transform original image size, the current accepted raster size and quality when one exists, target display size, visible viewport, device pixel ratio, rotation, the resolved display texture cap, and the active display-image byte budget.
+- The pure raster bucket policy consumes post-transform original image size, the current accepted raster size and quality when one exists, target display size, visible viewport, device pixel ratio, rotation, the resolved display texture cap, and the resolved display-image byte budget supplied to the page-surface owner. `DisplayImageStore` enforces provider-entry insertion and retention against its own resolved budget, but page-surface refinement policy must not switch to a different budget just because a shared or custom store is present.
 - A candidate whole-image bucket is safe only when it is non-empty, each raster axis fits the resolved display texture cap, and its estimated display byte cost fits the active display-image budget. Unsafe demands never fall back to visual tiles in the provider path.
 - The policy classifies the current accepted image as exact, first-display sufficient, refinement-needed, bounded-detail reuse, unsupported-too-large initial display, or failed. `refinement-needed` is a demand marker consumed by decoder-specific refinement jobs.
 - Bucket keys describe the desired whole-raster target size, exactness, and limiting cap used to choose it. They are stable demand metadata, not provider ids and not QML `sourceSize` churn.
