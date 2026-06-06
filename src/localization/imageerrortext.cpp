@@ -11,6 +11,8 @@ QString imageErrorText(ImageErrorTextId id)
     switch (id) {
     case ImageErrorTextId::ReadImageData:
         return i18n("Could not read the selected image data.");
+    case ImageErrorTextId::OpenVideo:
+        return i18n("Could not open the selected video.");
     case ImageErrorTextId::DecodePngImage:
         return i18n("Could not decode the selected PNG image.");
     case ImageErrorTextId::DecodeApngAnimation:

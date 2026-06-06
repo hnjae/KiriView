@@ -9,6 +9,7 @@
 namespace KiriView {
 enum class ImageErrorTextId {
     ReadImageData,
+    OpenVideo,
     DecodePngImage,
     DecodeApngAnimation,
     DecodeImageAnimation,

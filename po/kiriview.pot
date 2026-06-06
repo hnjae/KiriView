@@ -515,6 +515,11 @@ msgstr ""
 
 #: src/localization/imageerrortext.cpp
 #, kde-format
+msgid "Could not open the selected video."
+msgstr ""
+
+#: src/localization/imageerrortext.cpp
+#, kde-format
 msgid "Could not decode the selected PNG image."
 msgstr ""
 

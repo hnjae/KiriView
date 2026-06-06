@@ -3,6 +3,8 @@
 
 #include "video/videosourceloadplan.h"
 
+#include "localization/imageerrortext.h"
+
 #include <utility>
 
 namespace KiriView {
@@ -38,7 +40,7 @@ VideoSourceLoadFailure videoSourceLoadPlaybackUrlResolutionFailure(
     return VideoSourceLoadFailure {
         sourceUrl,
         VideoSourceLoadFailureKind::PlaybackUrlResolution,
-        diagnosticDetail,
+        imageErrorText(ImageErrorTextId::OpenVideo),
         diagnosticDetail,
         VideoSourceLoadFailureSeverity::Error,
         false,
