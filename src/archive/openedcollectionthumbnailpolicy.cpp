@@ -5,20 +5,19 @@
 
 #include "location/imagedocumentlocation.h"
 
-namespace {
-bool rootSchemeSupportsContentThumbnailIdentity(const QString &scheme)
+namespace KiriView {
+bool openedCollectionRootSchemeSupportsThumbnailContentIdentity(const QString &rootScheme)
 {
-    return scheme == QStringLiteral("zip") || scheme == QStringLiteral("sevenz");
-}
+    return rootScheme == QStringLiteral("zip") || rootScheme == QStringLiteral("sevenz");
 }
 
-namespace KiriView {
 OpenedCollectionThumbnailSourcePlan openedCollectionThumbnailSourcePlan(
     const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &entryUrl,
     ImageDocumentPageKind pageKind)
 {
     if (pageKind != ImageDocumentPageKind::Image || !openedCollectionScope.isComicBook()
-        || !rootSchemeSupportsContentThumbnailIdentity(openedCollectionScope.rootUrl().scheme())
+        || !openedCollectionRootSchemeSupportsThumbnailContentIdentity(
+            openedCollectionScope.rootUrl().scheme())
         || !openedCollectionScopeContainsUrl(openedCollectionScope, entryUrl)) {
         return {};
     }

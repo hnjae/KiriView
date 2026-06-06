@@ -5,6 +5,7 @@
 
 #include "archiveformat.h"
 #include "decoding/imageformatregistry.h"
+#include "openedcollectionthumbnailpolicy.h"
 
 #include <K7Zip>
 #include <KArchive>
@@ -21,11 +22,6 @@
 
 namespace {
 namespace Backend = KiriView::MediaEntrySourceBackendDetail;
-
-bool rootSchemeSupportsThumbnailMetadata(const QString &scheme)
-{
-    return scheme == QStringLiteral("zip") || scheme == QStringLiteral("sevenz");
-}
 
 class ScopedKArchive final
 {
@@ -244,7 +240,8 @@ public:
         }
 
         if (!m_openedCollectionScope.isComicBook()
-            || !rootSchemeSupportsThumbnailMetadata(m_openedCollectionScope.rootUrl().scheme())
+            || !KiriView::openedCollectionRootSchemeSupportsThumbnailContentIdentity(
+                m_openedCollectionScope.rootUrl().scheme())
             || !KiriView::isSupportedImageFileName(*entryPath)) {
             return Backend::mediaEntrySourceErrorResult<
                 KiriView::MediaEntrySourceThumbnailMetadataResult>(

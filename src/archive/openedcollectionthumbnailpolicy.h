@@ -7,6 +7,7 @@
 #include "location/imagelocation.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 
+#include <QString>
 #include <QUrl>
 
 namespace KiriView {
@@ -21,6 +22,7 @@ struct OpenedCollectionThumbnailSourcePlan {
     OpenedCollectionScopeLocation openedCollectionScope;
 };
 
+bool openedCollectionRootSchemeSupportsThumbnailContentIdentity(const QString &rootScheme);
 OpenedCollectionThumbnailSourcePlan openedCollectionThumbnailSourcePlan(
     const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &entryUrl,
     ImageDocumentPageKind pageKind);
