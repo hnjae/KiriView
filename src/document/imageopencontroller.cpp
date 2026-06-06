@@ -96,7 +96,6 @@ ImageOpenController::~ImageOpenController() { cancel(); }
 void ImageOpenController::open()
 {
     cancel();
-    m_state.setErrorString(QString());
 
     if (m_state.sourceUrl().isEmpty()) {
         finishEmptySourceLoad();

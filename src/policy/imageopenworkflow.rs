@@ -336,6 +336,7 @@ fn begin_source_load_transition(event: RustImageOpenWorkflowEvent) -> RustImageO
     let input = event.begin_source_load;
     set_unsupported_opened_collection_video(&mut transition, RustImageOpenBoolTarget::False);
     set_embedded_metadata_cleared(&mut transition);
+    set_error_string(&mut transition, RustImageOpenErrorStringTarget::Clear);
 
     if !input.has_image && !input.has_loading_container_navigation_target {
         set_container_navigation_url(&mut transition, RustImageOpenUrlTarget::Empty);
@@ -362,6 +363,7 @@ fn finish_empty_source_load_transition() -> RustImageOpenTransition {
     push_effect(&mut transition, RustImageOpenEffect::ResetZoom);
     set_unsupported_opened_collection_video(&mut transition, RustImageOpenBoolTarget::False);
     set_embedded_metadata_cleared(&mut transition);
+    set_error_string(&mut transition, RustImageOpenErrorStringTarget::Clear);
     set_tracked_load_completed(&mut transition);
     set_container_navigation_url(&mut transition, RustImageOpenUrlTarget::Empty);
     set_status(&mut transition, RustImageOpenStatusTarget::Null);
@@ -734,7 +736,7 @@ mod tests {
                     RustImageOpenUrlTarget::Empty,
                     RustImageOpenBoolTarget::True,
                     RustImageOpenStatusTarget::Loading,
-                    RustImageOpenErrorStringTarget::Unchanged,
+                    RustImageOpenErrorStringTarget::Clear,
                     false,
                 ),
             ))
@@ -761,7 +763,7 @@ mod tests {
                     RustImageOpenUrlTarget::Unchanged,
                     RustImageOpenBoolTarget::True,
                     RustImageOpenStatusTarget::Loading,
-                    RustImageOpenErrorStringTarget::Unchanged,
+                    RustImageOpenErrorStringTarget::Clear,
                     false,
                 ),
             ))
