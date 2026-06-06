@@ -148,6 +148,7 @@ private Q_SLOTS:
     void routedLoadFailureAppliesErrorTransitions();
     void trackedLoadCompletionsClearLoadingContainerNavigationUrl();
     void workflowTransitionsClearUnsupportedOpenedCollectionVideo();
+    void workflowTransitionsClearEmbeddedMetadata();
     void stateChangesFollowWorkflowDeltaOrder();
 };
 
@@ -510,6 +511,47 @@ void TestImageOpenWorkflow::workflowTransitionsClearUnsupportedOpenedCollectionV
         finishContainerNavigationLoadWithError(state, containerUrl, QStringLiteral("empty"));
 
         QVERIFY(!state.unsupportedOpenedCollectionVideo());
+    }
+}
+
+void TestImageOpenWorkflow::workflowTransitionsClearEmbeddedMetadata()
+{
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
+    auto publishMetadata = [](KiriView::ImageDocumentState &state) {
+        KiriView::EmbeddedMetadata metadata;
+        metadata.cameraMake = QStringLiteral("Kiri Camera");
+        state.setEmbeddedMetadata(metadata);
+    };
+
+    {
+        KiriView::ImageDocumentState state;
+        publishMetadata(state);
+
+        beginSourceLoad(state, false);
+
+        QVERIFY(state.embeddedMetadata().isEmpty());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        publishMetadata(state);
+
+        finishEmptySourceLoad(state);
+
+        QVERIFY(state.embeddedMetadata().isEmpty());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        publishMetadata(state);
+        state.setSourceUrl(localUrl(QStringLiteral("/images/missing.png")));
+        state.setLoading(true);
+        state.setStatus(KiriView::ImageDocumentStatus::Loading);
+
+        finishLoadWithError(
+            state, loadSession(imageUrl, imageUrl), true, QStringLiteral("missing"));
+
+        QVERIFY(state.embeddedMetadata().isEmpty());
     }
 }
 
