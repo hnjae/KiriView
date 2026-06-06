@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_DIRECTMEDIANAVIGATIONCANDIDATEPROVIDER_H
 #define KIRIVIEW_DIRECTMEDIANAVIGATIONCANDIDATEPROVIDER_H
 
+#include "async/directorylistingjob.h"
 #include "async/imageasynccallbacks.h"
 #include "async/imageiojob.h"
 #include "directmedianavigationmodel.h"
@@ -25,9 +26,11 @@ struct DirectMediaNavigationCandidateProvider {
     DirectMediaNavigationCandidateLoader directoryCandidateLoader;
 };
 
-DirectMediaNavigationCandidateProvider defaultDirectMediaNavigationCandidateProvider();
+DirectMediaNavigationCandidateProvider defaultDirectMediaNavigationCandidateProvider(
+    DirectoryItemListProvider directoryItemListProvider = {});
 DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProviderWithDefault(
-    DirectMediaNavigationCandidateProvider provider);
+    DirectMediaNavigationCandidateProvider provider,
+    DirectoryItemListProvider directoryItemListProvider = {});
 }
 
 #endif

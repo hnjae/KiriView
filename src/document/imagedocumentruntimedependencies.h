@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMEDEPENDENCIES_H
 
 #include "archive/mediaentrysourcebackend.h"
+#include "async/directorylistingjob.h"
 #include "cache/imagecachepolicy.h"
 #include "decoding/imagedecodedependencies.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
@@ -29,6 +30,7 @@ struct ImageDocumentRuntimeDependencyOverrides {
     ImageDocumentPageCandidateProvider candidateProvider;
     ImageDecodeDependencies imageDecode;
     FileDeletionProvider fileDeletionProvider;
+    DirectoryItemListProvider directoryItemListProvider;
     MediaEntrySourceFactory mediaEntrySourceFactory;
     PowerSaverProvider powerSaver;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;

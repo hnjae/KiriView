@@ -16,7 +16,8 @@
 namespace {
 KiriView::ImageIoJob startDirectoryDirectMediaNavigationCandidateList(QObject *receiver,
     const QUrl &directoryUrl, KiriView::DirectMediaNavigationCandidatesCallback callback,
-    KiriView::ErrorCallback errorCallback)
+    KiriView::ErrorCallback errorCallback,
+    KiriView::DirectoryItemListProvider directoryItemListProvider)
 {
     qCDebug(kiriviewNavigationLog) << "direct media navigation candidate provider listing directory"
                                    << "directoryUrl" << directoryUrl;
@@ -36,27 +37,32 @@ KiriView::ImageIoJob startDirectoryDirectMediaNavigationCandidateList(QObject *r
                 << "direct media navigation candidate provider listing failed"
                 << "directoryUrl" << directoryUrl << "error" << errorString;
             KiriView::invokeIfSet(errorCallback, errorString);
-        });
+        },
+        std::move(directoryItemListProvider));
 }
 }
 
 namespace KiriView {
-DirectMediaNavigationCandidateProvider defaultDirectMediaNavigationCandidateProvider()
+DirectMediaNavigationCandidateProvider defaultDirectMediaNavigationCandidateProvider(
+    DirectoryItemListProvider directoryItemListProvider)
 {
     return DirectMediaNavigationCandidateProvider {
-        [](QObject *receiver, QUrl directoryUrl, DirectMediaNavigationCandidatesCallback callback,
+        [directoryItemListProvider = std::move(directoryItemListProvider)](QObject *receiver,
+            QUrl directoryUrl, DirectMediaNavigationCandidatesCallback callback,
             ErrorCallback errorCallback) {
-            return startDirectoryDirectMediaNavigationCandidateList(
-                receiver, directoryUrl, std::move(callback), std::move(errorCallback));
+            return startDirectoryDirectMediaNavigationCandidateList(receiver, directoryUrl,
+                std::move(callback), std::move(errorCallback), directoryItemListProvider);
         },
     };
 }
 
 DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProviderWithDefault(
-    DirectMediaNavigationCandidateProvider provider)
+    DirectMediaNavigationCandidateProvider provider,
+    DirectoryItemListProvider directoryItemListProvider)
 {
     if (!provider.directoryCandidateLoader) {
-        provider = defaultDirectMediaNavigationCandidateProvider();
+        provider
+            = defaultDirectMediaNavigationCandidateProvider(std::move(directoryItemListProvider));
     }
     return provider;
 }

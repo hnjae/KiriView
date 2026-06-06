@@ -19,7 +19,7 @@ KiriView::ImageIoJob noOpImageDocumentPageCandidateChanges(
 
 namespace KiriView {
 ImageDocumentPageCandidateProvider defaultImageDocumentPageCandidateProvider(
-    ImageWorkerScheduler workerScheduler)
+    ImageWorkerScheduler workerScheduler, DirectoryItemListProvider directoryItemListProvider)
 {
     auto candidateStore = std::make_shared<ImageDocumentPageCandidateStore>();
     return ImageDocumentPageCandidateProvider {
@@ -28,7 +28,11 @@ ImageDocumentPageCandidateProvider defaultImageDocumentPageCandidateProvider(
             return candidateStore->loadDirectoryImages(
                 receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));
         },
-        startDirectoryContainerCandidateList,
+        [directoryItemListProvider = std::move(directoryItemListProvider)](QObject *receiver,
+            QUrl directoryUrl, ContainerCandidatesCallback callback, ErrorCallback errorCallback) {
+            return startDirectoryContainerCandidateList(receiver, std::move(directoryUrl),
+                std::move(callback), std::move(errorCallback), directoryItemListProvider);
+        },
         [workerScheduler = std::move(workerScheduler)](QObject *receiver,
             OpenedCollectionScopeLocation openedCollectionScope,
             ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) {
@@ -44,13 +48,14 @@ ImageDocumentPageCandidateProvider defaultImageDocumentPageCandidateProvider(
 }
 
 ImageDocumentPageCandidateProvider imageDocumentPageNavigationCandidateProviderWithDefaults(
-    ImageDocumentPageCandidateProvider provider, ImageWorkerScheduler workerScheduler)
+    ImageDocumentPageCandidateProvider provider, ImageWorkerScheduler workerScheduler,
+    DirectoryItemListProvider directoryItemListProvider)
 {
     const bool providerIsEmpty = !provider.directoryImageDocumentPages
         && !provider.directoryContainers && !provider.openedCollectionCandidates
         && !provider.directoryImageDocumentPageChanges;
-    ImageDocumentPageCandidateProvider defaults
-        = defaultImageDocumentPageCandidateProvider(std::move(workerScheduler));
+    ImageDocumentPageCandidateProvider defaults = defaultImageDocumentPageCandidateProvider(
+        std::move(workerScheduler), std::move(directoryItemListProvider));
     if (!provider.directoryImageDocumentPages) {
         provider.directoryImageDocumentPages = std::move(defaults.directoryImageDocumentPages);
     }

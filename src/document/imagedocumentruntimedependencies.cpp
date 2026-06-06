@@ -43,7 +43,8 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     overrides.mediaEntrySourceFactory = {};
     overrides.imageDecode = imageDecodeDependenciesWithDefaults(std::move(overrides.imageDecode));
     overrides.candidateProvider = imageDocumentPageNavigationCandidateProviderWithDefaults(
-        std::move(overrides.candidateProvider), overrides.imageDecode.workerScheduler);
+        std::move(overrides.candidateProvider), overrides.imageDecode.workerScheduler,
+        std::move(overrides.directoryItemListProvider));
     overrides.fileDeletionProvider
         = fileDeletionProviderWithDefault(std::move(overrides.fileDeletionProvider));
     overrides.powerSaver = powerSaverProviderWithDefault(std::move(overrides.powerSaver));

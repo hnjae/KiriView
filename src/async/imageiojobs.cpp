@@ -60,7 +60,9 @@ void cancelKJob(QObject *object)
 
 template <typename CandidateCallback, typename CandidateFactory>
 KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &directoryUrl,
-    CandidateCallback callback, ErrorCallback errorCallback, CandidateFactory candidateFactory)
+    CandidateCallback callback, ErrorCallback errorCallback,
+    KiriView::DirectoryItemListProvider directoryItemListProvider,
+    CandidateFactory candidateFactory)
 {
     return KiriView::startDirectoryItemList(
         receiver, directoryUrl,
@@ -68,7 +70,7 @@ KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &
             KFileItemList items) mutable {
             KiriView::invokeIfSet(callback, candidateFactory(items));
         },
-        std::move(errorCallback));
+        std::move(errorCallback), std::move(directoryItemListProvider));
 }
 
 template <typename Work, typename Finish>
@@ -85,14 +87,32 @@ ImageIoJob startDirectoryImageDocumentPageCandidateList(QObject *receiver, QUrl 
     ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
     return startDirectoryCandidateList(receiver, directoryUrl, std::move(callback),
-        std::move(errorCallback), imageDocumentPageNavigationCandidates);
+        std::move(errorCallback), {}, imageDocumentPageNavigationCandidates);
+}
+
+ImageIoJob startDirectoryImageDocumentPageCandidateList(QObject *receiver, QUrl directoryUrl,
+    ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback,
+    DirectoryItemListProvider directoryItemListProvider)
+{
+    return startDirectoryCandidateList(receiver, directoryUrl, std::move(callback),
+        std::move(errorCallback), std::move(directoryItemListProvider),
+        imageDocumentPageNavigationCandidates);
 }
 
 ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl directoryUrl,
     ContainerCandidatesCallback callback, ErrorCallback errorCallback)
 {
     return startDirectoryCandidateList(receiver, directoryUrl, std::move(callback),
-        std::move(errorCallback), containerNavigationCandidates);
+        std::move(errorCallback), {}, containerNavigationCandidates);
+}
+
+ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl directoryUrl,
+    ContainerCandidatesCallback callback, ErrorCallback errorCallback,
+    DirectoryItemListProvider directoryItemListProvider)
+{
+    return startDirectoryCandidateList(receiver, directoryUrl, std::move(callback),
+        std::move(errorCallback), std::move(directoryItemListProvider),
+        containerNavigationCandidates);
 }
 
 ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
