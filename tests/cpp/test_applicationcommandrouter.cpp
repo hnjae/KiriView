@@ -2,16 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "application/applicationcommandrouter.h"
+#include "application/applicationtypes.h"
 
 #include <QObject>
+#include <QStringList>
 #include <QTest>
 
 namespace {
 using KiriView::ApplicationActions::ApplicationCommandRouter;
 using KiriView::ApplicationActions::ApplicationCommandRouterInput;
 using KiriView::ApplicationActions::ApplicationCommandRouterPorts;
+using ActionId = KiriView::ApplicationActions::ActionId;
 
 struct CommandLog {
+    QStringList actionCalls;
     bool imageAvailable = true;
     bool videoAvailable = true;
     bool videoSeekable = true;
@@ -35,6 +39,14 @@ struct CommandLog {
 ApplicationCommandRouterPorts commandPorts(CommandLog &log)
 {
     ApplicationCommandRouterPorts ports;
+    ports.requestOpenDialog
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("open-dialog")); };
+    ports.openCurrentMediaWith
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("open-with")); };
+    ports.moveDisplayedFileToTrash
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("move-trash")); };
+    ports.deleteDisplayedFilePermanently
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("delete-permanent")); };
     ports.imageAvailable = [&log]() { return log.imageAvailable; };
     ports.imageViewportHorizontallyPannable = [&log]() { return log.viewportHorizontallyPannable; };
     ports.requestViewportPanBy = [&log](double dx, double dy) {
@@ -43,20 +55,81 @@ ApplicationCommandRouterPorts commandPorts(CommandLog &log)
         log.lastPanDy = dy;
     };
     ports.requestViewportScanForward = [&log]() {
+        log.actionCalls.push_back(QStringLiteral("scan-forward"));
         ++log.scanForwardCount;
         return log.scanMoved;
     };
     ports.requestViewportScanBackward = [&log]() {
+        log.actionCalls.push_back(QStringLiteral("scan-backward"));
         ++log.scanBackwardCount;
         return log.scanMoved;
     };
-    ports.requestNextDisplayedImageStartToFinalScanPosition
-        = [&log]() { ++log.nextDisplayedImageStartToFinalScanPositionCount; };
-    ports.openPreviousSinglePage = [&log]() { ++log.previousSinglePageCount; };
-    ports.openNextSinglePage = [&log]() { ++log.nextSinglePageCount; };
-    ports.requestPreviousActiveNavigationWithBoundary = [&log]() { ++log.previousNavigationCount; };
-    ports.requestNextActiveNavigationWithBoundary = [&log]() { ++log.nextNavigationCount; };
-    ports.showFirstImageBoundary = [&log]() { ++log.firstImageBoundaryCount; };
+    ports.requestNextDisplayedImageStartToFinalScanPosition = [&log]() {
+        log.actionCalls.push_back(
+            QStringLiteral("next-displayed-image-start-to-final-scan-position"));
+        ++log.nextDisplayedImageStartToFinalScanPositionCount;
+    };
+    ports.openPreviousContainer
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("previous-container")); };
+    ports.openNextContainer
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("next-container")); };
+    ports.openPreviousSinglePage = [&log]() {
+        log.actionCalls.push_back(QStringLiteral("previous-single-page"));
+        ++log.previousSinglePageCount;
+    };
+    ports.openNextSinglePage = [&log]() {
+        log.actionCalls.push_back(QStringLiteral("next-single-page"));
+        ++log.nextSinglePageCount;
+    };
+    ports.requestPreviousActiveNavigationWithBoundary = [&log]() {
+        log.actionCalls.push_back(QStringLiteral("previous-navigation"));
+        ++log.previousNavigationCount;
+    };
+    ports.requestNextActiveNavigationWithBoundary = [&log]() {
+        log.actionCalls.push_back(QStringLiteral("next-navigation"));
+        ++log.nextNavigationCount;
+    };
+    ports.openFirstActiveNavigation
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("first-navigation")); };
+    ports.openLastActiveNavigation
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("last-navigation")); };
+    ports.requestZoomByStepAtCenter = [&log](double stepCount) {
+        log.actionCalls.push_back(QStringLiteral("zoom-step:%1").arg(stepCount));
+    };
+    ports.requestManualZoomPercent = [&log](double zoomPercent) {
+        log.actionCalls.push_back(QStringLiteral("manual-zoom:%1").arg(zoomPercent));
+    };
+    ports.requestFitMode = [&log]() { log.actionCalls.push_back(QStringLiteral("fit")); };
+    ports.requestFitHeightMode
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("fit-height")); };
+    ports.requestFitWidthMode
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("fit-width")); };
+    ports.rotateClockwise
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("rotate-clockwise")); };
+    ports.rotateCounterclockwise
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("rotate-counterclockwise")); };
+    ports.requestToggleTwoPageMode
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("toggle-two-page")); };
+    ports.requestToggleRightToLeftReading
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("toggle-right-to-left")); };
+    ports.toggleInfoPanel
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("toggle-info-panel")); };
+    ports.toggleThumbnailPanel
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("toggle-thumbnail-panel")); };
+    ports.requestViewportPanToInitialScanPosition
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("pan-initial-scan-position")); };
+    ports.requestViewportPanToFinalScanPosition
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("pan-final-scan-position")); };
+    ports.showFirstImageBoundary = [&log]() {
+        log.actionCalls.push_back(QStringLiteral("first-image-boundary"));
+        ++log.firstImageBoundaryCount;
+    };
+    ports.toggleFullScreen
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("toggle-fullscreen")); };
+    ports.requestShortcutHelp
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("shortcut-help")); };
+    ports.openApplicationMenu
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("open-application-menu")); };
     ports.videoAvailable = [&log]() { return log.videoAvailable; };
     ports.videoSeekable = [&log]() { return log.videoSeekable; };
     ports.seekVideoBy = [&log](qint64 deltaMilliseconds) {
@@ -74,6 +147,7 @@ class TestApplicationCommandRouter : public QObject
 private Q_SLOTS:
     void horizontalArrowsRouteImagePanAndNavigation();
     void videoHorizontalArrowsUseActiveNavigation();
+    void actionDispatchRoutesToPorts();
     void singlePageAndVerticalPanRouteToImagePorts();
     void videoSeekChecksModeAndSeekability();
     void scanShortcutsRoutePolicyEffects();
@@ -122,6 +196,84 @@ void TestApplicationCommandRouter::videoHorizontalArrowsUseActiveNavigation()
     QCOMPARE(log.previousNavigationCount, 1);
     QCOMPARE(log.nextNavigationCount, 1);
     QCOMPARE(log.panCount, 0);
+}
+
+void TestApplicationCommandRouter::actionDispatchRoutesToPorts()
+{
+    ApplicationCommandRouter router;
+    ApplicationCommandRouterInput input;
+    CommandLog log;
+    ApplicationCommandRouterPorts ports = commandPorts(log);
+
+    router.handleActionTriggered(ActionId::FileOpenAction, input, ports);
+    router.handleActionTriggered(ActionId::FileOpenWithAction, input, ports);
+    router.handleActionTriggered(ActionId::FileMoveToTrashAction, input, ports);
+    router.handleActionTriggered(ActionId::FileDeleteAction, input, ports);
+    router.handleActionTriggered(ActionId::GoPreviousArchiveAction, input, ports);
+    router.handleActionTriggered(ActionId::GoNextArchiveAction, input, ports);
+    router.handleActionTriggered(ActionId::GoPreviousImageAction, input, ports);
+    router.handleActionTriggered(ActionId::GoNextImageAction, input, ports);
+    router.handleActionTriggered(ActionId::GoFirstImageAction, input, ports);
+    router.handleActionTriggered(ActionId::GoLastImageAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewZoomInAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewZoomOutAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewZoom50PercentAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewZoom100PercentAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewZoom200PercentAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewFitAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewFitHeightAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewFitWidthAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewRotateClockwiseAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewRotateCounterclockwiseAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewToggleTwoPageModeAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewToggleRightToLeftReadingAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewToggleInfoPanelAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewToggleThumbnailPanelAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewPanTopLeftAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewPanBottomRightAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewScanForwardAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewScanBackwardAction, input, ports);
+    router.handleActionTriggered(ActionId::WindowFullscreenAction, input, ports);
+    router.handleActionTriggered(ActionId::HelpShortcutsAction, input, ports);
+    router.handleActionTriggered(ActionId::OpenApplicationMenuAction, input, ports);
+    router.handleActionTriggered(ActionId::ActionCount, input, ports);
+
+    const QStringList expectedCalls {
+        QStringLiteral("open-dialog"),
+        QStringLiteral("open-with"),
+        QStringLiteral("move-trash"),
+        QStringLiteral("delete-permanent"),
+        QStringLiteral("previous-container"),
+        QStringLiteral("next-container"),
+        QStringLiteral("previous-navigation"),
+        QStringLiteral("next-navigation"),
+        QStringLiteral("first-navigation"),
+        QStringLiteral("last-navigation"),
+        QStringLiteral("zoom-step:1"),
+        QStringLiteral("zoom-step:-1"),
+        QStringLiteral("manual-zoom:50"),
+        QStringLiteral("manual-zoom:100"),
+        QStringLiteral("manual-zoom:200"),
+        QStringLiteral("fit"),
+        QStringLiteral("fit-height"),
+        QStringLiteral("fit-width"),
+        QStringLiteral("rotate-clockwise"),
+        QStringLiteral("rotate-counterclockwise"),
+        QStringLiteral("toggle-two-page"),
+        QStringLiteral("toggle-right-to-left"),
+        QStringLiteral("toggle-info-panel"),
+        QStringLiteral("toggle-thumbnail-panel"),
+        QStringLiteral("pan-initial-scan-position"),
+        QStringLiteral("pan-final-scan-position"),
+        QStringLiteral("scan-forward"),
+        QStringLiteral("next-navigation"),
+        QStringLiteral("scan-backward"),
+        QStringLiteral("previous-navigation"),
+        QStringLiteral("toggle-fullscreen"),
+        QStringLiteral("shortcut-help"),
+        QStringLiteral("open-application-menu"),
+    };
+    QCOMPARE(log.actionCalls, expectedCalls);
 }
 
 void TestApplicationCommandRouter::singlePageAndVerticalPanRouteToImagePorts()

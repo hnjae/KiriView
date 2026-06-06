@@ -37,6 +37,7 @@ private Q_SLOTS:
     void fixedViewerShortcutsDoNotBypassRuntimeRouting();
     void videoSeekShortcutsRouteThroughApplicationRuntime();
     void applicationFacadeDoesNotOwnFixedViewerCommandRouting();
+    void applicationFacadeDoesNotOwnActionCommandSwitch();
     void sessionPublicProjectionHasNoPartialUpdateBackdoor();
     void sessionPublicProjectionDoesNotSampleLeafFacadesWhileApplying();
     void qmlDoesNotWriteSharedVideoOutputAttachment();
@@ -573,6 +574,17 @@ void TestArchitectureBoundaries::applicationFacadeDoesNotOwnFixedViewerCommandRo
     QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouter")));
     QVERIFY(implementation.contains(QStringLiteral("ApplicationCommandRouter")));
     QVERIFY(coreSources.contains(QStringLiteral("src/application/applicationcommandrouter.cpp")));
+}
+
+void TestArchitectureBoundaries::applicationFacadeDoesNotOwnActionCommandSwitch()
+{
+    const QString implementation
+        = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.cpp"));
+
+    QVERIFY(!implementation.contains(QStringLiteral("switch (actionId)")));
+    QVERIFY(!implementation.contains(QStringLiteral("requestFitMode(KiriImageDocument::ZoomMode")));
+    QVERIFY(!implementation.contains(QStringLiteral("deleteDisplayedFile(KiriDocumentSession::")));
+    QVERIFY(implementation.contains(QStringLiteral("handleActionTriggered(actionId")));
 }
 
 void TestArchitectureBoundaries::sessionPublicProjectionHasNoPartialUpdateBackdoor()
