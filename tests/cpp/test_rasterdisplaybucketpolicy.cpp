@@ -23,6 +23,8 @@ private Q_SLOTS:
     void initialDemandWithoutSafeBucketIsUnsupported();
     void svgBucketsUseCoarseScaleSequence();
     void svgBucketsApplyRotationBeforeChoosingScale();
+    void svgUnsafeSharperDemandKeepsCurrentImageAsBoundedDetail();
+    void svgInitialDemandWithoutSafeBucketIsUnsupported();
     void demandKeysMatchOnlyWhenEveryStaleRejectionFieldMatches();
 };
 
@@ -192,6 +194,48 @@ void TestRasterDisplayBucketPolicy::svgBucketsApplyRotationBeforeChoosingScale()
     QCOMPARE(decision.bucketKey.rasterSize, QSize(120, 60));
     QVERIFY(decision.refinementRequired);
     QVERIFY(decision.currentImageRetained);
+}
+
+void TestRasterDisplayBucketPolicy::svgUnsafeSharperDemandKeepsCurrentImageAsBoundedDetail()
+{
+    KiriView::RasterDisplayBucketPolicyInput input = policyInput();
+    input.originalSize = QSize(10000, 10000);
+    input.currentRasterSize = QSize(1000, 1000);
+    input.currentQuality = KiriView::DisplayImageQuality::FirstDisplay;
+    input.displaySize = QSizeF(10000.0, 10000.0);
+    input.visibleItemRect = QRectF(0.0, 0.0, 10000.0, 10000.0);
+    input.maximumTextureSize = 4096;
+
+    const KiriView::RasterDisplayBucketDecision decision
+        = KiriView::svgDisplayBucketDecision(input);
+
+    QCOMPARE(decision.status, KiriView::RasterDisplayBucketStatus::BoundedDetail);
+    QCOMPARE(decision.quality, KiriView::DisplayImageQuality::BoundedDetail);
+    QCOMPARE(decision.bucketKey.rasterSize, QSize(1000, 1000));
+    QVERIFY(!decision.bucketKey.exact);
+    QVERIFY(!decision.refinementRequired);
+    QVERIFY(decision.currentImageRetained);
+}
+
+void TestRasterDisplayBucketPolicy::svgInitialDemandWithoutSafeBucketIsUnsupported()
+{
+    KiriView::RasterDisplayBucketPolicyInput input = policyInput();
+    input.originalSize = QSize(10000, 10000);
+    input.currentRasterSize = QSize();
+    input.displaySize = QSizeF(10000.0, 10000.0);
+    input.visibleItemRect = QRectF(0.0, 0.0, 10000.0, 10000.0);
+    input.maximumTextureSize = 4096;
+    input.displayImageByteBudget = 3;
+
+    const KiriView::RasterDisplayBucketDecision decision
+        = KiriView::svgDisplayBucketDecision(input);
+
+    QCOMPARE(decision.status, KiriView::RasterDisplayBucketStatus::UnsupportedTooLarge);
+    QCOMPARE(decision.quality, KiriView::DisplayImageQuality::Unsupported);
+    QVERIFY(decision.bucketKey.rasterSize.isEmpty());
+    QVERIFY(!decision.bucketKey.exact);
+    QVERIFY(!decision.refinementRequired);
+    QVERIFY(!decision.currentImageRetained);
 }
 
 void TestRasterDisplayBucketPolicy::demandKeysMatchOnlyWhenEveryStaleRejectionFieldMatches()
