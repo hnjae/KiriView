@@ -4,7 +4,6 @@
 #include "mediaentrysourcebackend_p.h"
 
 #include "archiveformat.h"
-#include "decoding/imageformatregistry.h"
 #include "openedcollectionthumbnailpolicy.h"
 
 #include <K7Zip>
@@ -239,10 +238,8 @@ public:
                 Backend::openedCollectionImageNotFoundError());
         }
 
-        if (!m_openedCollectionScope.isComicBook()
-            || !KiriView::openedCollectionRootSchemeSupportsThumbnailContentIdentity(
-                m_openedCollectionScope.rootUrl().scheme())
-            || !KiriView::isSupportedImageFileName(*entryPath)) {
+        if (!KiriView::openedCollectionEntryPathSupportsThumbnailContentIdentity(
+                m_openedCollectionScope, *entryPath)) {
             return Backend::mediaEntrySourceErrorResult<
                 KiriView::MediaEntrySourceThumbnailMetadataResult>(
                 Backend::openedCollectionThumbnailMetadataUnsupportedError());

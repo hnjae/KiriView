@@ -22,7 +22,10 @@ struct OpenedCollectionThumbnailSourcePlan {
     OpenedCollectionScopeLocation openedCollectionScope;
 };
 
-bool openedCollectionRootSchemeSupportsThumbnailContentIdentity(const QString &rootScheme);
+bool openedCollectionEntrySupportsThumbnailContentIdentity(
+    const OpenedCollectionScopeLocation &openedCollectionScope, ImageDocumentPageKind pageKind);
+bool openedCollectionEntryPathSupportsThumbnailContentIdentity(
+    const OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath);
 OpenedCollectionThumbnailSourcePlan openedCollectionThumbnailSourcePlan(
     const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &entryUrl,
     ImageDocumentPageKind pageKind);
