@@ -198,4 +198,29 @@ mod tests {
         assert!(!extensions.contains(&"zip".to_owned()));
         assert!(!extensions.contains(&"rar".to_owned()));
     }
+
+    #[test]
+    fn matches_supported_image_file_names_case_insensitively() {
+        assert!(is_supported_image_file_name("photo.png"));
+        assert!(is_supported_image_file_name("photo.JPG"));
+        assert!(is_supported_image_file_name("scan.DnG"));
+        assert!(is_supported_image_file_name(
+            "zip:///path/archive.cbz!/page.SVG"
+        ));
+    }
+
+    #[test]
+    fn excludes_hidden_trailing_dot_and_non_image_file_names() {
+        for name in [
+            ".png",
+            "photo.",
+            "photo",
+            "clip.mp4",
+            "book.cbz",
+            "archive.zip",
+            "zip:///path/archive.cbz!/chapter/",
+        ] {
+            assert!(!is_supported_image_file_name(name), "{name}");
+        }
+    }
 }
