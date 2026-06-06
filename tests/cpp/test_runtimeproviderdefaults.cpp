@@ -69,6 +69,7 @@ private Q_SLOTS:
     void candidateProviderDefaultsFillMissingLoadersAndPreserveOverrides();
     void decodeDependencyDefaultsFillMissingFunctionsAndPreserveOverrides();
     void decodeDependencyDefaultsBindDataLoaderToWorkerScheduler();
+    void decodeDependencyDefaultsBindThumbnailLookupToWorkerScheduler();
     void fileDeletionDefaultFillsMissingProviderAndPreservesOverride();
     void powerSaverDefaultFillsMissingProviderAndPreservesOverride();
 };
@@ -163,6 +164,33 @@ void TestRuntimeProviderDefaults::decodeDependencyDefaultsBindDataLoaderToWorker
     QVERIFY(!job.isActive());
     QCOMPARE(dataCallbackCount, 0);
     QCOMPARE(errorCallbackCount, 0);
+}
+
+void TestRuntimeProviderDefaults::decodeDependencyDefaultsBindThumbnailLookupToWorkerScheduler()
+{
+    ManualImageWorkerScheduler workerScheduler;
+    KiriView::ImageDecodeDependencies dependencies;
+    dependencies.workerScheduler = workerScheduler.scheduler();
+
+    KiriView::ImageDecodeDependencies resolved
+        = KiriView::imageDecodeDependenciesWithDefaults(std::move(dependencies));
+    QVERIFY(resolved.thumbnailPreviewLookupProvider);
+
+    int callbackCount = 0;
+    KiriView::ImageIoJob job
+        = resolved.thumbnailPreviewLookupProvider(this, KiriView::ThumbnailCacheLookupRequest {},
+            [&callbackCount](KiriView::ThumbnailCacheLookupResult) { ++callbackCount; });
+
+    QCOMPARE(workerScheduler.scheduleCount(), std::size_t(1));
+    QCOMPARE(callbackCount, 0);
+    QVERIFY(job.isActive());
+
+    job.cancel();
+    workerScheduler.runWork(0);
+    workerScheduler.finish(0);
+
+    QVERIFY(!job.isActive());
+    QCOMPARE(callbackCount, 0);
 }
 
 void TestRuntimeProviderDefaults::fileDeletionDefaultFillsMissingProviderAndPreservesOverride()
