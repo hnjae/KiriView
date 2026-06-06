@@ -47,6 +47,7 @@ private Q_SLOTS:
     void productionImageDisplayUsesProviderPathOnly();
     void sourceKeysExposeTypedExtensionFamilies();
     void sourceKeysExposeOperationalExtensionContracts();
+    void openedCollectionThumbnailEligibilityUsesSharedPolicy();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void activePresentationDoesNotWritePageSurfacePresentationState();
@@ -821,6 +822,40 @@ void TestArchitectureBoundaries::sourceKeysExposeOperationalExtensionContracts()
          }) {
         QVERIFY2(header.contains(symbolName), qPrintable(symbolName));
     }
+}
+
+void TestArchitectureBoundaries::openedCollectionThumbnailEligibilityUsesSharedPolicy()
+{
+    const QString policyHeader
+        = readProjectFile(QStringLiteral("src/archive/openedcollectionthumbnailpolicy.h"));
+    const QString karchiveBackend
+        = readProjectFile(QStringLiteral("src/archive/mediaentrysourcebackend_karchive.cpp"));
+
+    QVERIFY(policyHeader.contains(
+        QStringLiteral("openedCollectionEntrySupportsThumbnailContentIdentity")));
+    QVERIFY(policyHeader.contains(
+        QStringLiteral("openedCollectionEntryPathSupportsThumbnailContentIdentity")));
+    QVERIFY(!policyHeader.contains(
+        QStringLiteral("openedCollectionRootSchemeSupportsThumbnailContentIdentity")));
+    QVERIFY(karchiveBackend.contains(
+        QStringLiteral("openedCollectionEntryPathSupportsThumbnailContentIdentity")));
+
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(
+            QStringLiteral(R"(\bopenedCollectionRootSchemeSupportsThumbnailContentIdentity\b)")),
+        QRegularExpression(QStringLiteral(R"(\bisSupportedImageFileName\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bisComicBook\s*\()")),
+    };
+
+    QStringList violations;
+    for (const QRegularExpression &pattern : forbiddenPatterns) {
+        QRegularExpressionMatchIterator iterator = pattern.globalMatch(karchiveBackend);
+        while (iterator.hasNext()) {
+            violations.push_back(iterator.next().captured(0));
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
