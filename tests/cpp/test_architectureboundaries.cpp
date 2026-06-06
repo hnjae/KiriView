@@ -38,6 +38,7 @@ private Q_SLOTS:
     void qmlDoesNotWriteSharedVideoOutputAttachment();
     void videoOutputAttachmentIsNotWritablePublicVideoDocumentState();
     void qmlDoesNotDeriveSharedControlPolicyFromLeafDocuments();
+    void qmlUsesCentralNavigationPresentationOrder();
     void qmlViewportUsesFullCommandLifecycle();
     void viewportContextBridgeIsNonRenderingPublicQtFacade();
     void qmlViewportUsesContextBridgeForRenderContextDiscovery();
@@ -540,6 +541,41 @@ void TestArchitectureBoundaries::qmlDoesNotDeriveSharedControlPolicyFromLeafDocu
     }
 
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::qmlUsesCentralNavigationPresentationOrder()
+{
+    const QString projectionRelativePath
+        = QStringLiteral("src/qml/NavigationPresentationOrder.qml");
+    QVERIFY2(QFileInfo::exists(projectPath(projectionRelativePath)),
+        qPrintable(QStringLiteral("%1 must own RTL-aware navigation presentation ordering")
+                .arg(projectionRelativePath)));
+
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(
+            R"(\brightToLeftReadingActive\b[^\n]*\?[^\n]*(?:previous|next|first|last)(?:Image|Container)(?:Managed|Menu)?Action)")),
+        QRegularExpression(QStringLiteral(
+            R"((?:previous|next|first|last)(?:Image|Container)(?:Managed|Menu)?Action[^\n]*\brightToLeftReadingActive\b[^\n]*\?)")),
+    };
+
+    QStringList violations;
+    for (const QString &filePath : productionQmlFiles()) {
+        if (relativeProjectPath(filePath) == projectionRelativePath) {
+            continue;
+        }
+
+        const QString matches = matchingLines(filePath, forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+
+    const QString projection = readProjectFile(projectionRelativePath);
+    QVERIFY(projection.contains(QStringLiteral("rightToLeftReadingActive")));
+    QVERIFY(projection.contains(QStringLiteral("leading")));
+    QVERIFY(projection.contains(QStringLiteral("trailing")));
 }
 
 void TestArchitectureBoundaries::qmlViewportUsesFullCommandLifecycle()
