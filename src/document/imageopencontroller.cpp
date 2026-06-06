@@ -159,7 +159,6 @@ void ImageOpenController::finishSourceResolved(ImageLoadSession session)
 {
     reportRuntimePlan(
         applyImageOpenApplicationPlan(m_state, ImageOpenWorkflow::resolveSourceImagePlan(session)));
-    m_state.setSourceKind(session.kind());
 }
 
 void ImageOpenController::finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSession session)

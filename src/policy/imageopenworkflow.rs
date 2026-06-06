@@ -38,6 +38,12 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageOpenSourceKindTarget {
+        Unchanged = 0,
+        Session = 1,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum RustImageOpenDisplayedLocationTarget {
         Unchanged = 0,
         Session = 1,
@@ -136,6 +142,7 @@ mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageOpenStateDelta {
         source_url: RustImageOpenUrlTarget,
+        source_kind: RustImageOpenSourceKindTarget,
         displayed_location: RustImageOpenDisplayedLocationTarget,
         container_navigation_url: RustImageOpenUrlTarget,
         loading: RustImageOpenBoolTarget,
@@ -160,9 +167,9 @@ use ffi::{
     RustImageDocumentSourceLoadKind, RustImageDocumentSourceLoadOperation,
     RustImageDocumentSourceLoadPlan, RustImageDocumentSourceLoadPolicyInput,
     RustImageOpenBoolTarget, RustImageOpenDisplayedLocationTarget, RustImageOpenEffect,
-    RustImageOpenErrorStringTarget, RustImageOpenStateDelta, RustImageOpenStatusTarget,
-    RustImageOpenTransition, RustImageOpenUrlTarget, RustImageOpenWorkflowEvent,
-    RustImageOpenWorkflowEventKind,
+    RustImageOpenErrorStringTarget, RustImageOpenSourceKindTarget, RustImageOpenStateDelta,
+    RustImageOpenStatusTarget, RustImageOpenTransition, RustImageOpenUrlTarget,
+    RustImageOpenWorkflowEvent, RustImageOpenWorkflowEventKind,
 };
 
 fn rust_image_open_transition(event: RustImageOpenWorkflowEvent) -> RustImageOpenTransition {
@@ -352,6 +359,7 @@ fn finish_empty_source_load_transition() -> RustImageOpenTransition {
 fn resolve_source_image_transition() -> RustImageOpenTransition {
     let mut transition = empty_transition();
     set_source_url(&mut transition, RustImageOpenUrlTarget::SessionImage);
+    set_source_kind(&mut transition, RustImageOpenSourceKindTarget::Session);
     transition
 }
 
@@ -449,6 +457,17 @@ fn set_source_url(transition: &mut RustImageOpenTransition, target: RustImageOpe
     transition.state_delta.source_url = target;
 }
 
+fn set_source_kind(
+    transition: &mut RustImageOpenTransition,
+    target: RustImageOpenSourceKindTarget,
+) {
+    debug_assert_eq!(
+        transition.state_delta.source_kind,
+        RustImageOpenSourceKindTarget::Unchanged
+    );
+    transition.state_delta.source_kind = target;
+}
+
 fn set_displayed_location(
     transition: &mut RustImageOpenTransition,
     target: RustImageOpenDisplayedLocationTarget,
@@ -512,6 +531,7 @@ fn empty_transition() -> RustImageOpenTransition {
 fn empty_state_delta() -> RustImageOpenStateDelta {
     RustImageOpenStateDelta {
         source_url: RustImageOpenUrlTarget::Unchanged,
+        source_kind: RustImageOpenSourceKindTarget::Unchanged,
         displayed_location: RustImageOpenDisplayedLocationTarget::Unchanged,
         container_navigation_url: RustImageOpenUrlTarget::Unchanged,
         loading: RustImageOpenBoolTarget::Unchanged,
@@ -540,6 +560,7 @@ mod tests {
     ) -> RustImageOpenStateDelta {
         RustImageOpenStateDelta {
             source_url,
+            source_kind: RustImageOpenSourceKindTarget::Unchanged,
             displayed_location,
             container_navigation_url,
             loading,
@@ -718,19 +739,18 @@ mod tests {
         let transition = rust_image_open_transition(image_open_event(
             RustImageOpenWorkflowEventKind::ResolveSourceImage,
         ));
-
-        assert_eq!(
-            transition.state_delta,
-            state_delta(
-                RustImageOpenUrlTarget::SessionImage,
-                RustImageOpenDisplayedLocationTarget::Unchanged,
-                RustImageOpenUrlTarget::Unchanged,
-                RustImageOpenBoolTarget::Unchanged,
-                RustImageOpenStatusTarget::Unchanged,
-                RustImageOpenErrorStringTarget::Unchanged,
-                false,
-            )
+        let mut expected = state_delta(
+            RustImageOpenUrlTarget::SessionImage,
+            RustImageOpenDisplayedLocationTarget::Unchanged,
+            RustImageOpenUrlTarget::Unchanged,
+            RustImageOpenBoolTarget::Unchanged,
+            RustImageOpenStatusTarget::Unchanged,
+            RustImageOpenErrorStringTarget::Unchanged,
+            false,
         );
+        expected.source_kind = RustImageOpenSourceKindTarget::Session;
+
+        assert_eq!(transition.state_delta, expected);
         assert!(transition.effects.is_empty());
     }
 

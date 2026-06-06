@@ -123,6 +123,19 @@ KiriView::ImageOpenUrlTarget imageOpenUrlTarget(KiriView::RustImageOpenUrlTarget
     return KiriView::ImageOpenUrlTarget::Unchanged;
 }
 
+KiriView::ImageOpenSourceKindTarget imageOpenSourceKindTarget(
+    KiriView::RustImageOpenSourceKindTarget target)
+{
+    switch (target) {
+    case KiriView::RustImageOpenSourceKindTarget::Session:
+        return KiriView::ImageOpenSourceKindTarget::Session;
+    case KiriView::RustImageOpenSourceKindTarget::Unchanged:
+        return KiriView::ImageOpenSourceKindTarget::Unchanged;
+    }
+
+    return KiriView::ImageOpenSourceKindTarget::Unchanged;
+}
+
 KiriView::ImageOpenDisplayedLocationTarget imageOpenDisplayedLocationTarget(
     KiriView::RustImageOpenDisplayedLocationTarget target)
 {
@@ -223,6 +236,7 @@ ImageOpenTransition imageOpenTransitionFromBridge(const RustImageOpenTransition 
     ImageOpenTransition transition;
     transition.stateDelta = ImageOpenStateDelta {
         imageOpenUrlTarget(rustTransition.state_delta.source_url),
+        imageOpenSourceKindTarget(rustTransition.state_delta.source_kind),
         imageOpenDisplayedLocationTarget(rustTransition.state_delta.displayed_location),
         imageOpenUrlTarget(rustTransition.state_delta.container_navigation_url),
         imageOpenBoolTarget(rustTransition.state_delta.loading),

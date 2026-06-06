@@ -37,6 +37,11 @@ enum class ImageOpenUrlTarget {
     Displayed = 6,
 };
 
+enum class ImageOpenSourceKindTarget {
+    Unchanged = 0,
+    Session = 1,
+};
+
 enum class ImageOpenDisplayedLocationTarget {
     Unchanged = 0,
     Session = 1,
@@ -53,6 +58,7 @@ enum class ImageOpenEffect {
 
 struct ImageOpenStateDelta {
     ImageOpenUrlTarget sourceUrl = ImageOpenUrlTarget::Unchanged;
+    ImageOpenSourceKindTarget sourceKind = ImageOpenSourceKindTarget::Unchanged;
     ImageOpenDisplayedLocationTarget displayedLocation
         = ImageOpenDisplayedLocationTarget::Unchanged;
     ImageOpenUrlTarget containerNavigationUrl = ImageOpenUrlTarget::Unchanged;

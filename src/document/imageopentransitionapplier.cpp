@@ -57,6 +57,22 @@ std::optional<QString> errorStringTarget(KiriView::ImageOpenErrorStringTarget ta
     return std::nullopt;
 }
 
+std::optional<KiriView::ImageDocumentPageKind> sourceKindTarget(
+    KiriView::ImageOpenSourceKindTarget target, const KiriView::ImageOpenTransitionContext &context)
+{
+    switch (target) {
+    case KiriView::ImageOpenSourceKindTarget::Session:
+        if (context.session != nullptr) {
+            return context.session->kind();
+        }
+        return std::nullopt;
+    case KiriView::ImageOpenSourceKindTarget::Unchanged:
+        return std::nullopt;
+    }
+
+    return std::nullopt;
+}
+
 std::optional<KiriView::DisplayedImageLocation> displayedLocationTarget(
     KiriView::ImageOpenDisplayedLocationTarget target,
     const KiriView::ImageOpenTransitionContext &context)
@@ -141,6 +157,7 @@ KiriView::ImageOpenResolvedStateDelta resolvedStateDelta(
 {
     return KiriView::ImageOpenResolvedStateDelta {
         resolvedUrlForTarget(delta.sourceUrl, context),
+        sourceKindTarget(delta.sourceKind, context),
         displayedLocationTarget(delta.displayedLocation, context),
         resolvedUrlForTarget(delta.containerNavigationUrl, context),
         boolTarget(delta.loading),
@@ -186,6 +203,7 @@ private:
             applyTrackedLoadCompletion(delta);
             applyContainerNavigationUrl(delta.containerNavigationUrl);
             applySourceUrl(delta.sourceUrl);
+            applySourceKind(delta.sourceKind);
             applyDisplayedLocation(delta.displayedLocation);
             applyErrorString(delta.errorString);
             applyStatus(delta.status);
@@ -193,6 +211,7 @@ private:
         }
 
         applySourceUrl(delta.sourceUrl);
+        applySourceKind(delta.sourceKind);
         applyDisplayedLocation(delta.displayedLocation);
         applyContainerNavigationUrl(delta.containerNavigationUrl);
         applyErrorString(delta.errorString);
@@ -222,6 +241,13 @@ private:
     {
         if (url.has_value()) {
             m_state.setSourceUrl(*url);
+        }
+    }
+
+    void applySourceKind(const std::optional<KiriView::ImageDocumentPageKind> &sourceKind)
+    {
+        if (sourceKind.has_value()) {
+            m_state.setSourceKind(*sourceKind);
         }
     }
 
