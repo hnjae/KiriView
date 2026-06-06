@@ -492,7 +492,25 @@ Actions::ApplicationCommandRouterInput KiriViewApplication::commandRouterInput()
 Actions::ApplicationCommandRouterPorts KiriViewApplication::commandRouterPorts()
 {
     Actions::ApplicationCommandRouterPorts ports;
+    ports.requestOpenDialog = [this]() { Q_EMIT openDialogRequested(); };
+    ports.openCurrentMediaWith = [this]() {
+        if (m_documentSession != nullptr) {
+            m_documentSession->openCurrentMediaWith();
+        }
+    };
+    ports.moveDisplayedFileToTrash = [this]() { moveDisplayedFileToTrash(); };
+    ports.deleteDisplayedFilePermanently = [this]() { deleteDisplayedFilePermanently(); };
     ports.imageAvailable = [this]() { return imageDocument() != nullptr; };
+    ports.openPreviousContainer = [this]() {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->openPreviousContainer();
+        }
+    };
+    ports.openNextContainer = [this]() {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->openNextContainer();
+        }
+    };
     ports.imageViewportHorizontallyPannable = [this]() {
         KiriImageDocument *image = imageDocument();
         return image != nullptr && image->viewportHorizontallyPannable();
@@ -515,6 +533,16 @@ Actions::ApplicationCommandRouterPorts KiriViewApplication::commandRouterPorts()
             image->requestNextDisplayedImageStartToFinalScanPosition();
         }
     };
+    ports.requestViewportPanToInitialScanPosition = [this]() {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->requestViewportPanToInitialScanPosition();
+        }
+    };
+    ports.requestViewportPanToFinalScanPosition = [this]() {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->requestViewportPanToFinalScanPosition();
+        }
+    };
     ports.openPreviousSinglePage = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->openPreviousSinglePage();
@@ -529,8 +557,56 @@ Actions::ApplicationCommandRouterPorts KiriViewApplication::commandRouterPorts()
         = [this]() { requestPreviousActiveNavigationWithBoundary(); };
     ports.requestNextActiveNavigationWithBoundary
         = [this]() { requestNextActiveNavigationWithBoundary(); };
+    ports.openFirstActiveNavigation = [this]() {
+        if (m_documentSession != nullptr) {
+            m_documentSession->openFirstActiveNavigation();
+        }
+    };
+    ports.openLastActiveNavigation = [this]() {
+        if (m_documentSession != nullptr) {
+            m_documentSession->openLastActiveNavigation();
+        }
+    };
+    ports.requestZoomByStepAtCenter = [this](double stepCount) {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->requestZoomByStepAtCenter(stepCount);
+        }
+    };
+    ports.requestManualZoomPercent = [this](double zoomPercent) {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->requestManualZoomPercent(zoomPercent);
+        }
+    };
+    ports.requestFitMode = [this]() { requestImageFitMode(); };
+    ports.requestFitHeightMode = [this]() { requestImageFitHeightMode(); };
+    ports.requestFitWidthMode = [this]() { requestImageFitWidthMode(); };
+    ports.rotateClockwise = [this]() {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->rotateClockwise();
+        }
+    };
+    ports.rotateCounterclockwise = [this]() {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->rotateCounterclockwise();
+        }
+    };
+    ports.requestToggleTwoPageMode = [this]() {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->requestToggleTwoPageMode();
+        }
+    };
+    ports.requestToggleRightToLeftReading = [this]() {
+        if (KiriImageDocument *image = imageDocument()) {
+            image->requestToggleRightToLeftReading();
+        }
+    };
+    ports.toggleInfoPanel = [this]() { Q_EMIT toggleInfoPanelRequested(); };
+    ports.toggleThumbnailPanel = [this]() { Q_EMIT toggleThumbnailPanelRequested(); };
     ports.showFirstImageBoundary
         = [this]() { Q_EMIT imageBoundaryReached(i18nc("@info:status", "First image")); };
+    ports.toggleFullScreen = [this]() { Q_EMIT toggleFullScreenRequested(); };
+    ports.requestShortcutHelp = [this]() { Q_EMIT shortcutHelpRequested(); };
+    ports.openApplicationMenu = [this]() { Q_EMIT openApplicationMenuRequested(); };
     ports.videoAvailable = [this]() {
         return m_documentSession != nullptr && m_documentSession->videoDocument() != nullptr;
     };
@@ -548,149 +624,49 @@ Actions::ApplicationCommandRouterPorts KiriViewApplication::commandRouterPorts()
     return ports;
 }
 
+void KiriViewApplication::moveDisplayedFileToTrash()
+{
+    if (m_documentSession != nullptr) {
+        const auto mode = KiriDocumentSession::DeletionMode::MoveToTrash;
+        m_documentSession->deleteDisplayedFile(mode);
+    }
+}
+
+void KiriViewApplication::deleteDisplayedFilePermanently()
+{
+    if (m_documentSession != nullptr) {
+        const auto mode = KiriDocumentSession::DeletionMode::DeletePermanently;
+        m_documentSession->deleteDisplayedFile(mode);
+    }
+}
+
+void KiriViewApplication::requestImageFitMode()
+{
+    if (KiriImageDocument *image = imageDocument()) {
+        const auto mode = KiriImageDocument::ZoomMode::Fit;
+        image->requestFitMode(mode);
+    }
+}
+
+void KiriViewApplication::requestImageFitHeightMode()
+{
+    if (KiriImageDocument *image = imageDocument()) {
+        const auto mode = KiriImageDocument::ZoomMode::FitHeight;
+        image->requestFitMode(mode);
+    }
+}
+
+void KiriViewApplication::requestImageFitWidthMode()
+{
+    if (KiriImageDocument *image = imageDocument()) {
+        const auto mode = KiriImageDocument::ZoomMode::FitWidth;
+        image->requestFitMode(mode);
+    }
+}
+
 void KiriViewApplication::handleRuntimeActionTriggered(Actions::ActionId actionId)
 {
-    KiriImageDocument *image = imageDocument();
-    switch (actionId) {
-    case Actions::ActionId::FileOpenAction:
-        Q_EMIT openDialogRequested();
-        return;
-    case Actions::ActionId::FileOpenWithAction:
-        if (m_documentSession != nullptr) {
-            m_documentSession->openCurrentMediaWith();
-        }
-        return;
-    case Actions::ActionId::FileMoveToTrashAction:
-        if (m_documentSession != nullptr) {
-            m_documentSession->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
-        }
-        return;
-    case Actions::ActionId::FileDeleteAction:
-        if (m_documentSession != nullptr) {
-            m_documentSession->deleteDisplayedFile(
-                KiriDocumentSession::DeletionMode::DeletePermanently);
-        }
-        return;
-    case Actions::ActionId::GoPreviousArchiveAction:
-        if (image != nullptr) {
-            image->openPreviousContainer();
-        }
-        return;
-    case Actions::ActionId::GoNextArchiveAction:
-        if (image != nullptr) {
-            image->openNextContainer();
-        }
-        return;
-    case Actions::ActionId::GoPreviousImageAction:
-        requestPreviousActiveNavigationWithBoundary();
-        return;
-    case Actions::ActionId::GoNextImageAction:
-        requestNextActiveNavigationWithBoundary();
-        return;
-    case Actions::ActionId::GoFirstImageAction:
-        if (m_documentSession != nullptr) {
-            m_documentSession->openFirstActiveNavigation();
-        }
-        return;
-    case Actions::ActionId::GoLastImageAction:
-        if (m_documentSession != nullptr) {
-            m_documentSession->openLastActiveNavigation();
-        }
-        return;
-    case Actions::ActionId::ViewZoomInAction:
-        if (image != nullptr) {
-            image->requestZoomByStepAtCenter(1.0);
-        }
-        return;
-    case Actions::ActionId::ViewZoomOutAction:
-        if (image != nullptr) {
-            image->requestZoomByStepAtCenter(-1.0);
-        }
-        return;
-    case Actions::ActionId::ViewZoom50PercentAction:
-        if (image != nullptr) {
-            image->requestManualZoomPercent(50.0);
-        }
-        return;
-    case Actions::ActionId::ViewZoom100PercentAction:
-        if (image != nullptr) {
-            image->requestManualZoomPercent(100.0);
-        }
-        return;
-    case Actions::ActionId::ViewZoom200PercentAction:
-        if (image != nullptr) {
-            image->requestManualZoomPercent(200.0);
-        }
-        return;
-    case Actions::ActionId::ViewFitAction:
-        if (image != nullptr) {
-            image->requestFitMode(KiriImageDocument::ZoomMode::Fit);
-        }
-        return;
-    case Actions::ActionId::ViewFitHeightAction:
-        if (image != nullptr) {
-            image->requestFitMode(KiriImageDocument::ZoomMode::FitHeight);
-        }
-        return;
-    case Actions::ActionId::ViewFitWidthAction:
-        if (image != nullptr) {
-            image->requestFitMode(KiriImageDocument::ZoomMode::FitWidth);
-        }
-        return;
-    case Actions::ActionId::ViewRotateClockwiseAction:
-        if (image != nullptr) {
-            image->rotateClockwise();
-        }
-        return;
-    case Actions::ActionId::ViewRotateCounterclockwiseAction:
-        if (image != nullptr) {
-            image->rotateCounterclockwise();
-        }
-        return;
-    case Actions::ActionId::ViewToggleTwoPageModeAction:
-        if (image != nullptr) {
-            image->requestToggleTwoPageMode();
-        }
-        return;
-    case Actions::ActionId::ViewToggleRightToLeftReadingAction:
-        if (image != nullptr) {
-            image->requestToggleRightToLeftReading();
-        }
-        return;
-    case Actions::ActionId::ViewToggleInfoPanelAction:
-        Q_EMIT toggleInfoPanelRequested();
-        return;
-    case Actions::ActionId::ViewToggleThumbnailPanelAction:
-        Q_EMIT toggleThumbnailPanelRequested();
-        return;
-    case Actions::ActionId::ViewPanTopLeftAction:
-        if (image != nullptr) {
-            image->requestViewportPanToInitialScanPosition();
-        }
-        return;
-    case Actions::ActionId::ViewPanBottomRightAction:
-        if (image != nullptr) {
-            image->requestViewportPanToFinalScanPosition();
-        }
-        return;
-    case Actions::ActionId::ViewScanForwardAction:
-        handleScanForwardAction();
-        return;
-    case Actions::ActionId::ViewScanBackwardAction:
-        handleScanBackwardAction();
-        return;
-    case Actions::ActionId::WindowFullscreenAction:
-        Q_EMIT toggleFullScreenRequested();
-        return;
-    case Actions::ActionId::HelpShortcutsAction:
-        Q_EMIT shortcutHelpRequested();
-        return;
-    case Actions::ActionId::OpenApplicationMenuAction:
-        Q_EMIT openApplicationMenuRequested();
-        return;
-    default:
-        return;
-    }
+    m_commandRouter.handleActionTriggered(actionId, commandRouterInput(), commandRouterPorts());
 }
 
 void KiriViewApplication::emitBoundaryText(const QString &message)

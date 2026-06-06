@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_APPLICATIONCOMMANDROUTER_H
 #define KIRIVIEW_APPLICATIONCOMMANDROUTER_H
 
+#include "application/applicationtypes.h"
 #include "navigation/imageshortcutnavigationpolicy.h"
 
 #include <QtGlobal>
@@ -20,17 +21,41 @@ struct ApplicationCommandRouterInput {
 };
 
 struct ApplicationCommandRouterPorts {
+    std::function<void()> requestOpenDialog;
+    std::function<void()> openCurrentMediaWith;
+    std::function<void()> moveDisplayedFileToTrash;
+    std::function<void()> deleteDisplayedFilePermanently;
     std::function<bool()> imageAvailable;
+    std::function<void()> openPreviousContainer;
+    std::function<void()> openNextContainer;
     std::function<bool()> imageViewportHorizontallyPannable;
     std::function<void(double, double)> requestViewportPanBy;
     std::function<bool()> requestViewportScanForward;
     std::function<bool()> requestViewportScanBackward;
+    std::function<void()> requestViewportPanToInitialScanPosition;
+    std::function<void()> requestViewportPanToFinalScanPosition;
     std::function<void()> requestNextDisplayedImageStartToFinalScanPosition;
     std::function<void()> openPreviousSinglePage;
     std::function<void()> openNextSinglePage;
     std::function<void()> requestPreviousActiveNavigationWithBoundary;
     std::function<void()> requestNextActiveNavigationWithBoundary;
+    std::function<void()> openFirstActiveNavigation;
+    std::function<void()> openLastActiveNavigation;
+    std::function<void(double)> requestZoomByStepAtCenter;
+    std::function<void(double)> requestManualZoomPercent;
+    std::function<void()> requestFitMode;
+    std::function<void()> requestFitHeightMode;
+    std::function<void()> requestFitWidthMode;
+    std::function<void()> rotateClockwise;
+    std::function<void()> rotateCounterclockwise;
+    std::function<void()> requestToggleTwoPageMode;
+    std::function<void()> requestToggleRightToLeftReading;
+    std::function<void()> toggleInfoPanel;
+    std::function<void()> toggleThumbnailPanel;
     std::function<void()> showFirstImageBoundary;
+    std::function<void()> toggleFullScreen;
+    std::function<void()> requestShortcutHelp;
+    std::function<void()> openApplicationMenu;
     std::function<bool()> videoAvailable;
     std::function<bool()> videoSeekable;
     std::function<void(qint64)> seekVideoBy;
@@ -39,6 +64,8 @@ struct ApplicationCommandRouterPorts {
 class ApplicationCommandRouter final
 {
 public:
+    void handleActionTriggered(ActionId actionId, const ApplicationCommandRouterInput &input,
+        const ApplicationCommandRouterPorts &ports) const;
     void handleScanForwardAction(const ApplicationCommandRouterInput &input,
         const ApplicationCommandRouterPorts &ports) const;
     void handleScanBackwardAction(const ApplicationCommandRouterInput &input,

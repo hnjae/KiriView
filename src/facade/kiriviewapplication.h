@@ -186,6 +186,11 @@ private:
     KiriView::ApplicationActions::ApplicationCommandRouterInput commandRouterInput() const;
     KiriView::ApplicationActions::ApplicationCommandRouterPorts commandRouterPorts();
     void handleRuntimeActionTriggered(KiriView::ApplicationActions::ActionId actionId);
+    void moveDisplayedFileToTrash();
+    void deleteDisplayedFilePermanently();
+    void requestImageFitMode();
+    void requestImageFitHeightMode();
+    void requestImageFitWidthMode();
     void emitBoundaryText(const QString &message);
     void requestPreviousActiveNavigationWithBoundary();
     void requestNextActiveNavigationWithBoundary();

@@ -15,6 +15,13 @@ void callVoid(const std::function<void()> &callback)
     }
 }
 
+void callDouble(const std::function<void(double)> &callback, double value)
+{
+    if (callback) {
+        callback(value);
+    }
+}
+
 void panBy(
     const KiriView::ApplicationActions::ApplicationCommandRouterPorts &ports, double dx, double dy)
 {
@@ -25,6 +32,111 @@ void panBy(
 }
 
 namespace KiriView::ApplicationActions {
+void ApplicationCommandRouter::handleActionTriggered(ActionId actionId,
+    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
+{
+    switch (actionId) {
+    case ActionId::FileOpenAction:
+        callVoid(ports.requestOpenDialog);
+        return;
+    case ActionId::FileOpenWithAction:
+        callVoid(ports.openCurrentMediaWith);
+        return;
+    case ActionId::FileMoveToTrashAction:
+        callVoid(ports.moveDisplayedFileToTrash);
+        return;
+    case ActionId::FileDeleteAction:
+        callVoid(ports.deleteDisplayedFilePermanently);
+        return;
+    case ActionId::GoPreviousArchiveAction:
+        callVoid(ports.openPreviousContainer);
+        return;
+    case ActionId::GoNextArchiveAction:
+        callVoid(ports.openNextContainer);
+        return;
+    case ActionId::GoPreviousImageAction:
+        callVoid(ports.requestPreviousActiveNavigationWithBoundary);
+        return;
+    case ActionId::GoNextImageAction:
+        callVoid(ports.requestNextActiveNavigationWithBoundary);
+        return;
+    case ActionId::GoFirstImageAction:
+        callVoid(ports.openFirstActiveNavigation);
+        return;
+    case ActionId::GoLastImageAction:
+        callVoid(ports.openLastActiveNavigation);
+        return;
+    case ActionId::ViewZoomInAction:
+        callDouble(ports.requestZoomByStepAtCenter, 1.0);
+        return;
+    case ActionId::ViewZoomOutAction:
+        callDouble(ports.requestZoomByStepAtCenter, -1.0);
+        return;
+    case ActionId::ViewZoom50PercentAction:
+        callDouble(ports.requestManualZoomPercent, 50.0);
+        return;
+    case ActionId::ViewZoom100PercentAction:
+        callDouble(ports.requestManualZoomPercent, 100.0);
+        return;
+    case ActionId::ViewZoom200PercentAction:
+        callDouble(ports.requestManualZoomPercent, 200.0);
+        return;
+    case ActionId::ViewFitAction:
+        callVoid(ports.requestFitMode);
+        return;
+    case ActionId::ViewFitHeightAction:
+        callVoid(ports.requestFitHeightMode);
+        return;
+    case ActionId::ViewFitWidthAction:
+        callVoid(ports.requestFitWidthMode);
+        return;
+    case ActionId::ViewRotateClockwiseAction:
+        callVoid(ports.rotateClockwise);
+        return;
+    case ActionId::ViewRotateCounterclockwiseAction:
+        callVoid(ports.rotateCounterclockwise);
+        return;
+    case ActionId::ViewToggleTwoPageModeAction:
+        callVoid(ports.requestToggleTwoPageMode);
+        return;
+    case ActionId::ViewToggleRightToLeftReadingAction:
+        callVoid(ports.requestToggleRightToLeftReading);
+        return;
+    case ActionId::ViewToggleInfoPanelAction:
+        callVoid(ports.toggleInfoPanel);
+        return;
+    case ActionId::ViewToggleThumbnailPanelAction:
+        callVoid(ports.toggleThumbnailPanel);
+        return;
+    case ActionId::ViewPanTopLeftAction:
+        callVoid(ports.requestViewportPanToInitialScanPosition);
+        return;
+    case ActionId::ViewPanBottomRightAction:
+        callVoid(ports.requestViewportPanToFinalScanPosition);
+        return;
+    case ActionId::ViewScanForwardAction:
+        handleScanForwardAction(input, ports);
+        return;
+    case ActionId::ViewScanBackwardAction:
+        handleScanBackwardAction(input, ports);
+        return;
+    case ActionId::WindowFullscreenAction:
+        callVoid(ports.toggleFullScreen);
+        return;
+    case ActionId::HelpShortcutsAction:
+        callVoid(ports.requestShortcutHelp);
+        return;
+    case ActionId::OpenApplicationMenuAction:
+        callVoid(ports.openApplicationMenu);
+        return;
+    case ActionId::OptionsConfigureKeybindingAction:
+    case ActionId::OptionsShowMenubarAction:
+    case ActionId::FileQuitAction:
+    case ActionId::ActionCount:
+        return;
+    }
+}
+
 void ApplicationCommandRouter::handleScanForwardAction(
     const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
 {
