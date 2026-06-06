@@ -77,6 +77,7 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(bool zoomPercentKnown READ zoomPercentKnown NOTIFY zoomPercentKnownChanged)
     Q_PROPERTY(double zoomPercent READ zoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
+    Q_PROPERTY(ZoomMode fitModeSelection READ fitModeSelection NOTIFY zoomModeChanged)
     Q_PROPERTY(int rotationDegrees READ rotationDegrees NOTIFY rotationDegreesChanged)
     Q_PROPERTY(int minimumManualZoomPercent READ minimumManualZoomPercent CONSTANT)
     Q_PROPERTY(int maximumManualZoomPercent READ maximumManualZoomPercent NOTIFY
@@ -201,6 +202,7 @@ public:
     bool zoomPercentKnown() const;
     double zoomPercent() const;
     ZoomMode zoomMode() const;
+    ZoomMode fitModeSelection() const;
     int rotationDegrees() const;
     int minimumManualZoomPercent() const;
     int maximumManualZoomPercent() const;

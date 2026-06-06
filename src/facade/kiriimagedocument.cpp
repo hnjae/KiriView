@@ -369,6 +369,11 @@ KiriImageDocument::ZoomMode KiriImageDocument::zoomMode() const
     return fromImageZoomMode(m_runtime->zoomMode());
 }
 
+KiriImageDocument::ZoomMode KiriImageDocument::fitModeSelection() const
+{
+    return fromImageZoomMode(m_runtime->fitModeSelection());
+}
+
 int KiriImageDocument::rotationDegrees() const { return m_runtime->rotationDegrees(); }
 
 int KiriImageDocument::minimumManualZoomPercent() const

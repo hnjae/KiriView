@@ -19,7 +19,7 @@ Controls.Control {
     required property int fitMode
     required property int fitHeightMode
     required property int fitWidthMode
-    required property int selectedFitMode
+    required property int fitModeSelection
     property bool textVisible: true
 
     property alias display: fitButton.display
@@ -75,7 +75,7 @@ Controls.Control {
             objectName: "fitToWindowMenuItem"
 
             checkable: true
-            checked: root.selectedFitMode === root.fitMode
+            checked: root.fitModeSelection === root.fitMode
             enabled: root.fitAction?.enabled ?? false
             icon.name: root.fitAction?.icon.name ?? "zoom-fit-best-symbolic"
             text: KI18n.i18nc("@action:inmenu", "Fit to Window")
@@ -87,7 +87,7 @@ Controls.Control {
             objectName: "fitWidthMenuItem"
 
             checkable: true
-            checked: root.selectedFitMode === root.fitWidthMode
+            checked: root.fitModeSelection === root.fitWidthMode
             enabled: root.fitWidthAction?.enabled ?? false
             icon.name: "zoom-fit-width"
             text: KI18n.i18nc("@action:inmenu", "Fit Width")
@@ -99,7 +99,7 @@ Controls.Control {
             objectName: "fitHeightMenuItem"
 
             checkable: true
-            checked: root.selectedFitMode === root.fitHeightMode
+            checked: root.fitModeSelection === root.fitHeightMode
             enabled: root.fitHeightAction?.enabled ?? false
             icon.name: "zoom-fit-height"
             text: KI18n.i18nc("@action:inmenu", "Fit Height")

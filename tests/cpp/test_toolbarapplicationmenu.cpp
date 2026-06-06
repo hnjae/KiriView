@@ -475,7 +475,10 @@ Item {
         icon.name: "zoom-fit-best-symbolic"
         text: "Fit"
 
-        onTriggered: root.fitTriggerCount += 1
+        onTriggered: {
+            root.fitTriggerCount += 1;
+            root.sessionImageDocument.requestFitMode(KiriImageDocument.Fit);
+        }
     }
 
     Kirigami.Action {
@@ -484,7 +487,10 @@ Item {
         enabled: !root.videoMode
         text: "Fit Height"
 
-        onTriggered: root.fitHeightTriggerCount += 1
+        onTriggered: {
+            root.fitHeightTriggerCount += 1;
+            root.sessionImageDocument.requestFitMode(KiriImageDocument.FitHeight);
+        }
     }
 
     Kirigami.Action {
@@ -493,7 +499,10 @@ Item {
         enabled: !root.videoMode
         text: "Fit Width"
 
-        onTriggered: root.fitWidthTriggerCount += 1
+        onTriggered: {
+            root.fitWidthTriggerCount += 1;
+            root.sessionImageDocument.requestFitMode(KiriImageDocument.FitWidth);
+        }
     }
 
     Kirigami.Action {
@@ -1178,8 +1187,16 @@ void TestToolBarApplicationMenu::fitMenuButtonClickOnlyOpensMenu()
 
 void TestToolBarApplicationMenu::fitMenuButtonMenuSelectionUpdatesRuntimeSelection()
 {
-    ToolBarMenuFixture fixture = createFixture();
+    QString sourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> imageDirectory = createImageDirectory(&sourcePath, &errorString);
+    QVERIFY2(imageDirectory != nullptr, qPrintable(errorString));
+
+    ToolBarMenuFixture fixture
+        = createOpenedCollectionScopeFixture(QUrl::fromLocalFile(sourcePath).toString());
+    fixture.temporaryDirectory = std::move(imageDirectory);
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
 
     QQuickItem *fitButton = findQuickItem(fixture.root, QStringLiteral("fitModeMenuButton"));
     QVERIFY2(fitButton != nullptr, "fit menu button was not created");

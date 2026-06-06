@@ -253,6 +253,11 @@ ImageZoomMode ImageSpreadPresentationController::zoomMode() const
     return m_presentationRuntime.zoomMode();
 }
 
+ImageZoomMode ImageSpreadPresentationController::fitModeSelection() const
+{
+    return m_presentationRuntime.fitModeSelection();
+}
+
 qreal ImageSpreadPresentationController::maximumManualZoomPercent() const
 {
     return m_presentationRuntime.maximumManualZoomPercent();

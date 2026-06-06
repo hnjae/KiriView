@@ -99,6 +99,7 @@ public:
     QPointF viewportContentPosition() const;
     qreal zoomPercent() const;
     ImageZoomMode zoomMode() const;
+    ImageZoomMode fitModeSelection() const;
     qreal maximumManualZoomPercent() const;
     qreal clampedManualZoomPercent(qreal zoomPercent) const;
     qreal steppedManualZoomPercent(qreal stepCount) const;

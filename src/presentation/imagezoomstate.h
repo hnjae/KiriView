@@ -58,6 +58,7 @@ public:
     const QSizeF &displaySize() const;
     qreal zoomPercent() const;
     ImageZoomMode zoomMode() const;
+    ImageZoomMode fitModeSelection() const;
     const QUrl &containerUrl() const;
     ImageZoomSnapshot snapshot() const;
 
@@ -91,6 +92,7 @@ private:
     QSizeF m_displaySize;
     qreal m_zoomPercent = 100.0;
     ImageZoomMode m_zoomMode = ImageZoomMode::Fit;
+    ImageZoomMode m_fitModeSelection = ImageZoomMode::Fit;
     QUrl m_containerUrl;
 };
 

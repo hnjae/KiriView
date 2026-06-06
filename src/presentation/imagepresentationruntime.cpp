@@ -147,6 +147,11 @@ ImageZoomMode ImagePresentationRuntime::zoomMode() const
     return m_zoomWorkflowState.zoomState().zoomMode();
 }
 
+ImageZoomMode ImagePresentationRuntime::fitModeSelection() const
+{
+    return m_zoomWorkflowState.zoomState().fitModeSelection();
+}
+
 qreal ImagePresentationRuntime::maximumManualZoomPercent() const
 {
     return m_zoomWorkflowState.zoomState().maximumManualZoomPercent(

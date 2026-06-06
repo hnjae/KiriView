@@ -58,6 +58,8 @@ qreal ImageZoomState::zoomPercent() const { return m_zoomPercent; }
 
 ImageZoomMode ImageZoomState::zoomMode() const { return m_zoomMode; }
 
+ImageZoomMode ImageZoomState::fitModeSelection() const { return m_fitModeSelection; }
+
 const QUrl &ImageZoomState::containerUrl() const { return m_containerUrl; }
 
 ImageZoomSnapshot ImageZoomState::snapshot() const
@@ -73,6 +75,9 @@ void ImageZoomState::applySnapshot(const ImageZoomSnapshot &snapshot)
     m_displaySize = snapshot.displaySize;
     m_zoomPercent = snapshot.zoomPercent;
     m_zoomMode = snapshot.zoomMode;
+    if (snapshot.zoomMode != ImageZoomMode::Manual) {
+        m_fitModeSelection = snapshot.zoomMode;
+    }
     m_containerUrl = snapshot.containerUrl;
 }
 

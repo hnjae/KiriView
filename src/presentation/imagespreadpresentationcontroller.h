@@ -94,6 +94,7 @@ public:
     qreal zoomPercent() const;
     void requestManualZoomPercent(qreal zoomPercent);
     ImageZoomMode zoomMode() const;
+    ImageZoomMode fitModeSelection() const;
     qreal maximumManualZoomPercent() const;
     qreal clampedManualZoomPercent(qreal zoomPercent) const;
     qreal steppedManualZoomPercent(qreal stepCount) const;

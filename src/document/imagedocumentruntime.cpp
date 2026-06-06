@@ -296,6 +296,11 @@ ImageZoomMode ImageDocumentRuntime::zoomMode() const
     return controllers->spreadController().zoomMode();
 }
 
+ImageZoomMode ImageDocumentRuntime::fitModeSelection() const
+{
+    return controllers->spreadController().fitModeSelection();
+}
+
 qreal ImageDocumentRuntime::maximumManualZoomPercent() const
 {
     return controllers->spreadController().maximumManualZoomPercent();

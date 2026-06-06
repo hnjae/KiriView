@@ -46,7 +46,7 @@ Controls.ToolBar {
     property double applicationMenuClosedTimestamp: 0
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
     readonly property int edgeMargin: controlSpacing
-    property int selectedFitMode: KiriImageDocument.Fit
+    readonly property int fitModeSelection: imageDocument?.fitModeSelection ?? KiriImageDocument.Fit
     readonly property bool fitMenuButtonTextVisible: width >= Kirigami.Units.gridUnit * 40
     readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused()
     readonly property int toolbarVerticalPadding: controlSpacing
@@ -181,18 +181,11 @@ Controls.ToolBar {
         return KI18n.i18nc("@action:button", "Fit to Window");
     }
 
-    function syncSelectedFitModeFromZoomMode() {
-        if (imageDocument !== null && fitModeIsSelectable(imageDocument.zoomMode)) {
-            selectedFitMode = imageDocument.zoomMode;
-        }
-    }
-
     function triggerFitMode(zoomMode) {
         if (!fitModeIsSelectable(zoomMode)) {
             return;
         }
 
-        selectedFitMode = zoomMode;
         const action = fitModeAction(zoomMode);
         if (action !== null && action !== undefined && action.enabled) {
             action.trigger();
@@ -205,17 +198,8 @@ Controls.ToolBar {
     bottomPadding: toolbarVerticalPadding
 
     Component.onCompleted: {
-        syncSelectedFitModeFromZoomMode();
         if (floating) {
             background = floatingBackgroundComponent.createObject(root);
-        }
-    }
-
-    Connections {
-        target: root.imageDocument
-
-        function onZoomModeChanged() {
-            root.syncSelectedFitModeFromZoomMode();
         }
     }
 
@@ -302,7 +286,7 @@ Controls.ToolBar {
             fitMode: KiriImageDocument.Fit
             fitWidthAction: root.actions.fitWidthAction
             fitWidthMode: KiriImageDocument.FitWidth
-            selectedFitMode: root.selectedFitMode
+            fitModeSelection: root.fitModeSelection
             textVisible: root.fitMenuButtonTextVisible
 
             onFitModeTriggered: function (zoomMode) {
@@ -310,12 +294,12 @@ Controls.ToolBar {
             }
         }
         displayHint: Kirigami.DisplayHint.KeepVisible
-        enabled: root.fitModeAction(root.selectedFitMode).enabled
-        icon.name: root.fitModeIconName(root.selectedFitMode)
-        text: root.fitModeText(root.selectedFitMode)
+        enabled: root.fitModeAction(root.fitModeSelection).enabled
+        icon.name: root.fitModeIconName(root.fitModeSelection)
+        text: root.fitModeText(root.fitModeSelection)
         tooltip: text
 
-        onTriggered: root.triggerFitMode(root.selectedFitMode)
+        onTriggered: root.triggerFitMode(root.fitModeSelection)
     }
 
     readonly property Kirigami.Action applicationMenuAction: Kirigami.Action {
