@@ -157,6 +157,7 @@ private Q_SLOTS:
     void trackedLoadCompletionsClearLoadingContainerNavigationUrl();
     void workflowTransitionsClearUnsupportedOpenedCollectionVideo();
     void workflowTransitionsClearEmbeddedMetadata();
+    void workflowTransitionsClearOpenStartErrorString();
     void stateChangesFollowWorkflowDeltaOrder();
 };
 
@@ -602,6 +603,27 @@ void TestImageOpenWorkflow::workflowTransitionsClearEmbeddedMetadata()
             state, loadSession(imageUrl, imageUrl), true, QStringLiteral("missing"));
 
         QVERIFY(state.embeddedMetadata().isEmpty());
+    }
+}
+
+void TestImageOpenWorkflow::workflowTransitionsClearOpenStartErrorString()
+{
+    {
+        KiriView::ImageDocumentState state;
+        state.setErrorString(QStringLiteral("previous error"));
+
+        beginSourceLoad(state, false);
+
+        QVERIFY(state.errorString().isEmpty());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setErrorString(QStringLiteral("previous error"));
+
+        finishEmptySourceLoad(state);
+
+        QVERIFY(state.errorString().isEmpty());
     }
 }
 
