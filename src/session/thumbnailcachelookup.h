@@ -5,6 +5,7 @@
 #define KIRIVIEW_THUMBNAILCACHELOOKUP_H
 
 #include "async/imageiojob.h"
+#include "async/imageworkerscheduler.h"
 #include "session/activenavigationthumbnaildemand.h"
 #include "session/thumbnailoriginalidentity.h"
 
@@ -45,7 +46,8 @@ using ThumbnailCacheLookupCallback = std::function<void(ThumbnailCacheLookupResu
 using ThumbnailCacheLookupProvider = std::function<ImageIoJob(
     QObject *, ThumbnailCacheLookupRequest, ThumbnailCacheLookupCallback)>;
 
-ThumbnailCacheLookupProvider defaultThumbnailCacheLookupProvider();
+ThumbnailCacheLookupProvider defaultThumbnailCacheLookupProvider(
+    ImageWorkerScheduler workerScheduler = {});
 }
 
 #endif

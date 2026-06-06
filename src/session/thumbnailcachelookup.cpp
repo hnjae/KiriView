@@ -113,12 +113,14 @@ KiriView::ThumbnailCacheLookupResult lookupThumbnailCache(
 }
 
 namespace KiriView {
-ThumbnailCacheLookupProvider defaultThumbnailCacheLookupProvider()
+ThumbnailCacheLookupProvider defaultThumbnailCacheLookupProvider(
+    ImageWorkerScheduler workerScheduler)
 {
-    return [](QObject *receiver, ThumbnailCacheLookupRequest request,
-               ThumbnailCacheLookupCallback callback) {
+    return [workerScheduler = std::move(workerScheduler)](QObject *receiver,
+               ThumbnailCacheLookupRequest request, ThumbnailCacheLookupCallback callback) {
         return startImageIoWorkerJob(
-            receiver, [request = std::move(request)]() { return lookupThumbnailCache(request); },
+            receiver, workerScheduler,
+            [request = std::move(request)]() { return lookupThumbnailCache(request); },
             [callback = std::move(callback)](ThumbnailCacheLookupResult result) mutable {
                 if (callback) {
                     callback(std::move(result));

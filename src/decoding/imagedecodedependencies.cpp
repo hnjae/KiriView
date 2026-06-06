@@ -9,11 +9,14 @@
 #include <utility>
 
 namespace {
-KiriView::ImageIoJob loadImageData(QObject *receiver, KiriView::ImageDecodeRequest request,
-    KiriView::ImageDataCallback callback, KiriView::ErrorCallback errorCallback)
+KiriView::ImageDataLoader imageDataLoader(KiriView::ImageWorkerScheduler workerScheduler)
 {
-    return KiriView::startStoredImageDataLoad(
-        receiver, std::move(request), std::move(callback), std::move(errorCallback));
+    return [workerScheduler = std::move(workerScheduler)](QObject *receiver,
+               KiriView::ImageDecodeRequest request, KiriView::ImageDataCallback callback,
+               KiriView::ErrorCallback errorCallback) {
+        return KiriView::startStoredImageDataLoad(receiver, std::move(request), workerScheduler,
+            std::move(callback), std::move(errorCallback));
+    };
 }
 
 KiriView::DecodedImageResult decodeImageDataWithDefaults(
@@ -26,34 +29,35 @@ KiriView::DecodedImageResult decodeImageDataWithDefaults(
 namespace KiriView {
 ImageDecodeDependencies defaultImageDecodeDependencies()
 {
+    ImageWorkerScheduler workerScheduler = defaultImageWorkerScheduler();
     return ImageDecodeDependencies {
-        loadImageData,
+        imageDataLoader(workerScheduler),
         decodeImageDataWithDefaults,
-        defaultThumbnailCacheLookupProvider(),
+        defaultThumbnailCacheLookupProvider(workerScheduler),
         rawEmbeddedThumbnailPreviewResult,
-        defaultImageWorkerScheduler(),
+        std::move(workerScheduler),
     };
 }
 
 ImageDecodeDependencies imageDecodeDependenciesWithDefaults(ImageDecodeDependencies dependencies)
 {
     ImageDecodeDependencies defaults = defaultImageDecodeDependencies();
+    if (!dependencies.workerScheduler.isValid()) {
+        dependencies.workerScheduler = std::move(defaults.workerScheduler);
+    }
     if (!dependencies.dataLoader) {
-        dependencies.dataLoader = std::move(defaults.dataLoader);
+        dependencies.dataLoader = imageDataLoader(dependencies.workerScheduler);
     }
     if (!dependencies.dataDecoder) {
         dependencies.dataDecoder = std::move(defaults.dataDecoder);
     }
     if (!dependencies.thumbnailPreviewLookupProvider) {
         dependencies.thumbnailPreviewLookupProvider
-            = std::move(defaults.thumbnailPreviewLookupProvider);
+            = defaultThumbnailCacheLookupProvider(dependencies.workerScheduler);
     }
     if (!dependencies.rawEmbeddedThumbnailPreviewExtractor) {
         dependencies.rawEmbeddedThumbnailPreviewExtractor
             = std::move(defaults.rawEmbeddedThumbnailPreviewExtractor);
-    }
-    if (!dependencies.workerScheduler.isValid()) {
-        dependencies.workerScheduler = std::move(defaults.workerScheduler);
     }
 
     return dependencies;

@@ -72,9 +72,11 @@ KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &
 }
 
 template <typename Work, typename Finish>
-KiriView::ImageIoJob startMediaEntrySourceWorkerJob(QObject *receiver, Work work, Finish finish)
+KiriView::ImageIoJob startMediaEntrySourceWorkerJob(QObject *receiver,
+    const KiriView::ImageWorkerScheduler &workerScheduler, Work work, Finish finish)
 {
-    return KiriView::startImageIoWorkerJob(receiver, std::move(work), std::move(finish));
+    return KiriView::startImageIoWorkerJob(
+        receiver, workerScheduler, std::move(work), std::move(finish));
 }
 }
 
@@ -98,7 +100,7 @@ ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
     ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
     return startMediaEntrySourceWorkerJob(
-        receiver,
+        receiver, ImageWorkerScheduler(),
         [openedCollectionScope = std::move(openedCollectionScope)]() {
             return loadMediaEntrySourceCandidates(openedCollectionScope);
         },
@@ -115,9 +117,17 @@ ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
 ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
     ImageDataCallback callback, ErrorCallback errorCallback)
 {
+    return startStoredImageDataLoad(receiver, std::move(request), ImageWorkerScheduler(),
+        std::move(callback), std::move(errorCallback));
+}
+
+ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
+    const ImageWorkerScheduler &workerScheduler, ImageDataCallback callback,
+    ErrorCallback errorCallback)
+{
     if (openedCollectionScopeContainsUrl(request.openedCollectionScope(), request.imageUrl())) {
         return startMediaEntrySourceWorkerJob(
-            receiver,
+            receiver, workerScheduler,
             [request = std::move(request)]() {
                 return loadMediaEntrySourceImageData(
                     request.openedCollectionScope(), request.imageUrl());
