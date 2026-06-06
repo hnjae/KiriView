@@ -133,10 +133,9 @@ public:
     Q_INVOKABLE QString actionToolbarTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString actionToolbarTooltipTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE void setDocumentSession(QObject *session);
-    Q_INVOKABLE void updateActionUiGateSnapshot(quint64 revision, bool helpDialogOpen,
-        bool textInputFocused, bool imagePannable, bool infoPanelVisible,
-        bool thumbnailPanelVisible, bool fullscreen, bool applicationMenuShortcutEnabled,
-        bool showMenubarActionEnabled);
+    Q_INVOKABLE void updateActionUiGateSnapshot(bool helpDialogOpen, bool textInputFocused,
+        bool imagePannable, bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
+        bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled);
     Q_INVOKABLE void setShortcutHost(QObject *host);
     Q_INVOKABLE bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool mediaHorizontalArrowShortcutsEnabled(bool videoMode,
@@ -163,7 +162,6 @@ private:
     friend class KiriView::ApplicationActions::KiriViewApplicationActionHost;
 
     struct ActionUiGateSnapshot {
-        quint64 revision = 0;
         bool helpDialogOpen = false;
         bool textInputFocused = false;
         bool imagePannable = false;

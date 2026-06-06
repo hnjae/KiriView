@@ -253,12 +253,11 @@ void KiriViewApplication::setDocumentSession(QObject *session)
     rebuildActionState();
 }
 
-void KiriViewApplication::updateActionUiGateSnapshot(quint64 revision, bool helpDialogOpen,
-    bool textInputFocused, bool imagePannable, bool infoPanelVisible, bool thumbnailPanelVisible,
-    bool fullscreen, bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled)
+void KiriViewApplication::updateActionUiGateSnapshot(bool helpDialogOpen, bool textInputFocused,
+    bool imagePannable, bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
+    bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled)
 {
     updateActionUiGateSnapshot(ActionUiGateSnapshot {
-        revision,
         helpDialogOpen,
         textInputFocused,
         imagePannable,
@@ -272,16 +271,12 @@ void KiriViewApplication::updateActionUiGateSnapshot(quint64 revision, bool help
 
 void KiriViewApplication::updateActionUiGateSnapshot(ActionUiGateSnapshot snapshot)
 {
-    if (snapshot.revision < m_actionUiGateRevision) {
-        return;
-    }
-
     applyActionUiGateSnapshot(snapshot);
 }
 
 void KiriViewApplication::applyActionUiGateSnapshot(const ActionUiGateSnapshot &snapshot)
 {
-    m_actionUiGateRevision = snapshot.revision;
+    ++m_actionUiGateRevision;
     m_helpDialogOpen = snapshot.helpDialogOpen;
     m_textInputFocused = snapshot.textInputFocused;
     m_imagePannable = snapshot.imagePannable;

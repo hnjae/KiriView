@@ -228,7 +228,8 @@ public:
     Q_INVOKABLE bool reportActiveNavigationThumbnailDemand(int number, QUrl url,
         int physicalMaxEdge, KiriDocumentSession::ThumbnailDemandPriority priority,
         quint64 navigationGeneration);
-    Q_INVOKABLE bool reportVideoOutputSurfaceClaim(quint64 claimRevision,
+    Q_INVOKABLE QString nextVideoOutputSurfaceClaimToken();
+    Q_INVOKABLE bool reportVideoOutputSurfaceClaim(const QString &claimToken,
         quint64 projectionRevision, QObject *surfaceOwner, QObject *videoOutput, bool active,
         QRectF contentRect, QRectF sourceRect);
     Q_INVOKABLE void deleteDisplayedFile(KiriDocumentSession::DeletionMode mode);

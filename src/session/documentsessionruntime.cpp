@@ -58,6 +58,19 @@ const char *routeKindName(KiriView::DocumentSessionRouteKind kind)
     return "Unknown";
 }
 
+QString videoOutputSurfaceClaimToken(quint64 revision) { return QString::number(revision); }
+
+std::optional<quint64> videoOutputSurfaceClaimRevisionFromToken(const QString &token)
+{
+    bool ok = false;
+    const quint64 revision = token.toULongLong(&ok);
+    if (!ok) {
+        return std::nullopt;
+    }
+
+    return revision;
+}
+
 void logDirectMediaScope(const char *message, const KiriView::DirectMediaScope &scope)
 {
     qCDebug(kiriviewNavigationLog) << message << "currentUrl" << scope.currentUrl << "parentUrl"
@@ -361,17 +374,25 @@ bool DocumentSessionRuntime::reportActiveNavigationThumbnailDemand(int number, c
         number, url, bucket, priority, navigationGeneration);
 }
 
-bool DocumentSessionRuntime::reportVideoOutputSurfaceClaim(quint64 claimRevision,
+QString DocumentSessionRuntime::nextVideoOutputSurfaceClaimToken()
+{
+    ++m_nextVideoOutputSurfaceClaimRevision;
+    return videoOutputSurfaceClaimToken(m_nextVideoOutputSurfaceClaimRevision);
+}
+
+bool DocumentSessionRuntime::reportVideoOutputSurfaceClaim(const QString &claimToken,
     quint64 projectionRevision, QObject *surfaceOwner, QObject *videoOutput, bool active,
     const QRectF &contentRect, const QRectF &sourceRect)
 {
+    const std::optional<quint64> claimRevision
+        = videoOutputSurfaceClaimRevisionFromToken(claimToken);
     const bool currentProjection = projectionRevision == m_state.publicSnapshot().revision;
-    if (!currentProjection || surfaceOwner == nullptr) {
+    if (!claimRevision || !currentProjection || surfaceOwner == nullptr) {
         return false;
     }
 
     const bool sameOwner = m_videoOutputSurfaceClaimOwner == surfaceOwner;
-    if (sameOwner && claimRevision < m_videoOutputSurfaceClaimRevision) {
+    if (sameOwner && *claimRevision < m_videoOutputSurfaceClaimRevision) {
         return false;
     }
 
@@ -388,7 +409,7 @@ bool DocumentSessionRuntime::reportVideoOutputSurfaceClaim(quint64 claimRevision
     }
 
     m_videoOutputSurfaceClaimOwner = surfaceOwner;
-    m_videoOutputSurfaceClaimRevision = claimRevision;
+    m_videoOutputSurfaceClaimRevision = *claimRevision;
     m_videoDocument.setVideoOutput(videoOutput);
     m_videoDocument.setVideoOutputGeometry(contentRect, sourceRect);
     return true;

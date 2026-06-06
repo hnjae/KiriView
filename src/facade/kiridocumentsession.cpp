@@ -621,12 +621,17 @@ bool KiriDocumentSession::reportActiveNavigationThumbnailDemand(int number, QUrl
         toRuntimeThumbnailDemandPriority(priority), navigationGeneration);
 }
 
-bool KiriDocumentSession::reportVideoOutputSurfaceClaim(quint64 claimRevision,
+QString KiriDocumentSession::nextVideoOutputSurfaceClaimToken()
+{
+    return m_runtime->nextVideoOutputSurfaceClaimToken();
+}
+
+bool KiriDocumentSession::reportVideoOutputSurfaceClaim(const QString &claimToken,
     quint64 projectionRevision, QObject *surfaceOwner, QObject *videoOutput, bool active,
     QRectF contentRect, QRectF sourceRect)
 {
-    return m_runtime->reportVideoOutputSurfaceClaim(claimRevision, projectionRevision, surfaceOwner,
-        videoOutput, active, contentRect, sourceRect);
+    return m_runtime->reportVideoOutputSurfaceClaim(
+        claimToken, projectionRevision, surfaceOwner, videoOutput, active, contentRect, sourceRect);
 }
 
 void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)

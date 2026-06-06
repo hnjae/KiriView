@@ -20,20 +20,14 @@ MediaViewportDelegate {
     readonly property bool fixedControlsMode: Kirigami.Settings.isMobile || Kirigami.Settings.hasTransientTouchInput || Kirigami.Units.longDuration <= 0 || width < Kirigami.Units.gridUnit * 32 || height < Kirigami.Units.gridUnit * 16
     readonly property bool controlsReserveSpace: floatingControls.visible && root.fixedControlsMode
     readonly property bool controlsEffectivelyShown: floatingControls.visible && floatingControls.opacity > 0
-    property int videoOutputClaimRevision: 0
 
     function shouldAttachVideoOutput() {
         return root.presentationActive && root.visible && root.videoDocument !== null;
     }
 
-    function nextVideoOutputClaimRevision() {
-        root.videoOutputClaimRevision += 1;
-        return root.videoOutputClaimRevision;
-    }
-
     function updateVideoOutputAttachment() {
         const attach = shouldAttachVideoOutput();
-        root.documentSession.reportVideoOutputSurfaceClaim(root.nextVideoOutputClaimRevision(), root.documentSession.publicProjectionRevision, root, attach ? videoOutput : null, attach, videoOutput.contentRect, videoOutput.sourceRect);
+        root.documentSession.reportVideoOutputSurfaceClaim(root.documentSession.nextVideoOutputSurfaceClaimToken(), root.documentSession.publicProjectionRevision, root, attach ? videoOutput : null, attach, videoOutput.contentRect, videoOutput.sourceRect);
     }
 
     function reportVideoOutputGeometry() {
@@ -86,7 +80,7 @@ MediaViewportDelegate {
         reportVideoOutputGeometry();
     }
     Component.onDestruction: {
-        root.documentSession.reportVideoOutputSurfaceClaim(root.nextVideoOutputClaimRevision(), root.documentSession.publicProjectionRevision, root, null, false, Qt.rect(0, 0, 0, 0), Qt.rect(0, 0, 0, 0));
+        root.documentSession.reportVideoOutputSurfaceClaim(root.documentSession.nextVideoOutputSurfaceClaimToken(), root.documentSession.publicProjectionRevision, root, null, false, Qt.rect(0, 0, 0, 0), Qt.rect(0, 0, 0, 0));
     }
 
     Keys.onPressed: event => {

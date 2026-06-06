@@ -101,7 +101,8 @@ public:
         int physicalMaxEdge) const;
     bool reportActiveNavigationThumbnailDemand(int number, const QUrl &url, int physicalMaxEdge,
         ActiveNavigationThumbnailDemandPriority priority, quint64 navigationGeneration);
-    bool reportVideoOutputSurfaceClaim(quint64 claimRevision, quint64 projectionRevision,
+    QString nextVideoOutputSurfaceClaimToken();
+    bool reportVideoOutputSurfaceClaim(const QString &claimToken, quint64 projectionRevision,
         QObject *surfaceOwner, QObject *videoOutput, bool active, const QRectF &contentRect,
         const QRectF &sourceRect);
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
@@ -197,6 +198,7 @@ private:
     DocumentSessionPublicImageLeafSnapshot m_imagePublicSnapshot;
     DocumentSessionPublicVideoLeafSnapshot m_videoPublicSnapshot;
     QPointer<QObject> m_videoOutputSurfaceClaimOwner;
+    quint64 m_nextVideoOutputSurfaceClaimRevision = 0;
     quint64 m_videoOutputSurfaceClaimRevision = 0;
     quint64 m_publicSnapshotInputRevision = 0;
     bool m_routingSource = false;
