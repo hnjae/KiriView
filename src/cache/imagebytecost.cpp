@@ -4,10 +4,7 @@
 #include "cache/imagebytecost.h"
 
 #include "cache/imagebyteaccounting.h"
-
-namespace {
-constexpr std::int64_t rgbaBytesPerPixel = 4;
-}
+#include "kiriview/src/policy/imagebytecost.cxx.h"
 
 namespace KiriView {
 qsizetype imageByteCost(const QImage &image)
@@ -20,7 +17,6 @@ qsizetype imageByteCost(const QImage &image)
 
 qsizetype estimatedRgbaByteCost(const QSize &size)
 {
-    const std::int64_t pixelCount = saturatedPositiveByteProduct(size.width(), size.height());
-    return saturatedQtByteProduct(pixelCount, rgbaBytesPerPixel);
+    return saturatedQtByteSize(rustEstimatedRgbaByteCost(size.width(), size.height()));
 }
 }

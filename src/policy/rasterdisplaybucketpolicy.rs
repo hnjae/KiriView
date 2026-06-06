@@ -5,9 +5,9 @@ const DISPLAY_IMAGE_QUALITY_EXACT: i32 = 0;
 const DISPLAY_IMAGE_QUALITY_BOUNDED_DETAIL: i32 = 3;
 const DISPLAY_IMAGE_QUALITY_UNSUPPORTED: i32 = 4;
 const DISPLAY_IMAGE_QUALITY_FAILED: i32 = 5;
-const DISPLAY_BYTES_PER_PIXEL: i64 = 4;
 const SVG_DISPLAY_BUCKET_SCALE_FACTOR: f64 = 1.5;
 
+use crate::imagebytecost::{ESTIMATED_RGBA_BYTES_PER_PIXEL, estimated_rgba_byte_cost};
 use crate::imagerendergeometry::image_rotation_swaps_axes;
 
 #[cxx::bridge(namespace = "KiriView")]
@@ -398,15 +398,10 @@ fn size_is_safe(size: Size, input: RustRasterDisplayBucketInput) -> bool {
         return false;
     }
 
-    let Some(byte_cost) = image_byte_cost(size) else {
+    let Some(byte_cost) = estimated_rgba_byte_cost(size.width, size.height) else {
         return false;
     };
     input.display_image_byte_budget >= byte_cost
-}
-
-fn image_byte_cost(size: Size) -> Option<i64> {
-    let pixels = i64::from(size.width).checked_mul(i64::from(size.height))?;
-    pixels.checked_mul(DISPLAY_BYTES_PER_PIXEL)
 }
 
 fn bounded_bucket_size(
@@ -414,7 +409,8 @@ fn bounded_bucket_size(
     desired_size: Size,
     input: RustRasterDisplayBucketInput,
 ) -> Option<Size> {
-    if input.maximum_texture_size <= 0 || input.display_image_byte_budget < DISPLAY_BYTES_PER_PIXEL
+    if input.maximum_texture_size <= 0
+        || input.display_image_byte_budget < ESTIMATED_RGBA_BYTES_PER_PIXEL
     {
         return None;
     }
@@ -423,7 +419,7 @@ fn bounded_bucket_size(
         .max(f64::from(desired_size.height) / f64::from(original_size.height));
     let texture_scale = (f64::from(input.maximum_texture_size) / f64::from(original_size.width))
         .min(f64::from(input.maximum_texture_size) / f64::from(original_size.height));
-    let max_pixels = input.display_image_byte_budget / DISPLAY_BYTES_PER_PIXEL;
+    let max_pixels = input.display_image_byte_budget / ESTIMATED_RGBA_BYTES_PER_PIXEL;
     if max_pixels <= 0 {
         return None;
     }

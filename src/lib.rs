@@ -18,6 +18,8 @@ mod archivepath;
 // Cache policy.
 #[path = "policy/cachebudget.rs"]
 mod cachebudget;
+#[path = "policy/imagebytecost.rs"]
+mod imagebytecost;
 #[path = "policy/thumbnailcache.rs"]
 mod thumbnailcache;
 
