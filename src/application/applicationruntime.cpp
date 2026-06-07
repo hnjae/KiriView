@@ -3,7 +3,9 @@
 
 #include "applicationruntime.h"
 
+#include "applicationdiagnostics.h"
 #include "applicationstartupsource.h"
+#include "kiriview/src/policy/applicationruntime.cxx.h"
 #include "localization/localization.h"
 #include "rendering/displayimagestore.h"
 #include "session/thumbnailimagestore.h"
@@ -41,6 +43,11 @@ void initializeApplicationRuntime()
     setupDefaultQuickStyle();
 }
 
+void configureApplicationRuntimeDiagnostics(const ApplicationStartupSource &startupSource)
+{
+    configureApplicationDiagnosticLogging(startupSource.verbose);
+}
+
 void registerApplicationImageProviders(QQmlEngine &engine)
 {
     engine.addImageProvider(QStringLiteral("kiriview-thumbnails"),
@@ -73,6 +80,7 @@ int runApplication(const ApplicationStartupSource &startupSource)
 
     QApplication application(argumentCount, arguments);
     initializeApplicationRuntime();
+    configureApplicationRuntimeDiagnostics(startupSource);
 
     QQmlApplicationEngine engine;
     loadApplicationMainQml(engine, startupSource);

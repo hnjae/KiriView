@@ -10,6 +10,7 @@ src/application/applicationcommandrouter.cpp
 src/application/applicationactionregistry.cpp
 src/application/applicationactionruntime.cpp
 src/application/applicationactionstatepolicy.cpp
+src/application/applicationdiagnostics.cpp
 src/application/applicationmenupresentationruntime.cpp
 src/application/applicationmenupresentationstate.cpp
 src/application/applicationshortcutruntime.cpp
@@ -37,6 +38,7 @@ src/bridge/imagezoomstateconversion.cpp
 src/bridge/predecodepolicyconversion.cpp
 src/bridge/videodocumentpolicyconversion.cpp
 src/rendering/displayimagestore.cpp
+src/rendering/displayproviderlogging.cpp
 src/presentation/imagedisplaysourceprojection.cpp
 src/session/mediaopenwith.cpp
 src/navigation/imageremovalfallback.cpp
@@ -48,6 +50,7 @@ src/decoding/heiftilingplan.cpp
 src/decoding/jxlanimationreader.cpp
 src/async/directorylistingjob.cpp
 src/rendering/heiftilesource.cpp
+src/presentation/animationlogging.cpp
 src/presentation/imageanimationplaybacksource.cpp
 src/presentation/imageanimationpolicy.cpp
 src/presentation/imageanimationpresentergate.cpp

@@ -5,8 +5,9 @@ use std::{env, process};
 
 fn startup_source() -> Result<kiriview::ApplicationStartupSource, kiriview::StartupArgumentError> {
     let working_directory = env::current_dir().ok();
-    let source = kiriview::initial_source_from_args(env::args_os(), working_directory.as_deref())?;
-    Ok(kiriview::application_startup_source(source))
+    let options =
+        kiriview::startup_options_from_args(env::args_os(), working_directory.as_deref())?;
+    Ok(kiriview::application_startup_source(options))
 }
 
 fn main() {

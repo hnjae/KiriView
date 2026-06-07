@@ -8,6 +8,7 @@
 #include "presentation/imageanimationplaybacksource.h"
 #include "presentation/imageanimationpolicy.h"
 
+#include <QElapsedTimer>
 #include <QImage>
 #include <functional>
 #include <memory>
@@ -48,6 +49,8 @@ private:
     TimerScheduler m_timerScheduler;
     std::unique_ptr<RuntimeTimerHandle> m_frameTimer;
     std::unique_ptr<ImageAnimationPlaybackSource> m_source;
+    QElapsedTimer m_frameScheduleTimer;
+    int m_scheduledFrameDelayMs = 0;
     bool m_frameScheduled = false;
     AnimationPlaybackState m_playbackState;
 };

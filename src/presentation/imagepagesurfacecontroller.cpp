@@ -4,9 +4,11 @@
 #include "presentation/imagepagesurfacecontroller.h"
 
 #include "async/imagecallback.h"
+#include "presentation/animationlogging.h"
 #include "presentation/imageanimationplayer.h"
 #include "rendering/imagerendering.h"
 
+#include <QDebug>
 #include <algorithm>
 #include <memory>
 #include <optional>
@@ -339,6 +341,11 @@ void ImagePageSurfaceController::publishAnimationFrameDisplaySource(
         ImageDisplaySourceRetentionStatus::None,
         false,
     };
+    qCDebug(kiriviewAnimationLog) << "animation frame provider source published" << "providerUrl"
+                                  << providerUrl << "revision" << m_displaySourceRevision
+                                  << "entryId" << entryId << "rasterSize" << rasterSize
+                                  << "sourceIdentity" << sourceIdentity
+                                  << "loadAcknowledgmentRequired" << loadAcknowledgmentRequired;
 }
 
 QString ImagePageSurfaceController::publishShadowDisplayImage(
@@ -429,12 +436,18 @@ void ImagePageSurfaceController::retainCurrentAnimationFrameEntryForLoad()
 
     if (!m_currentDisplayEntryIsAnimationFrame || m_displayEntryId.isEmpty()
         || m_displayImageStore == nullptr) {
+        qCDebug(kiriviewAnimationLog)
+            << "animation frame retention skipped" << "currentIsAnimationFrame"
+            << m_currentDisplayEntryIsAnimationFrame << "entryId" << m_displayEntryId << "hasStore"
+            << (m_displayImageStore != nullptr);
         releaseCurrentDisplayEntry();
         return;
     }
 
     const QString entryId = m_displayEntryId;
     if (m_displayEntryVisiblePinned) {
+        qCDebug(kiriviewAnimationLog)
+            << "animation frame visible pin released for retention" << "entryId" << entryId;
         m_displayImageStore->releasePinLease(entryId, DisplayImagePinKind::Visible);
     }
 
@@ -447,15 +460,22 @@ void ImagePageSurfaceController::retainCurrentAnimationFrameEntryForLoad()
     if (retained) {
         m_retainedAnimationFrameEntryId = entryId;
     }
+    qCDebug(kiriviewAnimationLog) << "animation frame retention acquired" << "entryId" << entryId
+                                  << "retained" << retained;
 }
 
 void ImagePageSurfaceController::releaseRetainedAnimationFrameEntry()
 {
     if (m_displayImageStore == nullptr || m_retainedAnimationFrameEntryId.isEmpty()) {
+        qCDebug(kiriviewAnimationLog)
+            << "animation frame retention release skipped" << "entryId"
+            << m_retainedAnimationFrameEntryId << "hasStore" << (m_displayImageStore != nullptr);
         m_retainedAnimationFrameEntryId.clear();
         return;
     }
 
+    qCDebug(kiriviewAnimationLog) << "animation frame retention released" << "entryId"
+                                  << m_retainedAnimationFrameEntryId;
     m_displayImageStore->releasePinLease(
         m_retainedAnimationFrameEntryId, DisplayImagePinKind::FrameRetention);
     m_retainedAnimationFrameEntryId.clear();

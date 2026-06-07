@@ -11,6 +11,7 @@ namespace KiriView {
 struct ApplicationStartupSource;
 
 void initializeApplicationRuntime();
+void configureApplicationRuntimeDiagnostics(const ApplicationStartupSource &startupSource);
 void registerApplicationImageProviders(QQmlEngine &engine);
 void loadApplicationMainQml(
     QQmlApplicationEngine &engine, const ApplicationStartupSource &startupSource);

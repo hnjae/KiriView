@@ -90,7 +90,8 @@ mod rasterdisplaybucketpolicy;
 mod svgrenderer;
 
 pub use startup_arguments::{
-    STARTUP_ARGUMENT_ERROR_EXIT_CODE, StartupArgumentError, StartupSource, initial_source_from_args,
+    STARTUP_ARGUMENT_ERROR_EXIT_CODE, StartupArgumentError, StartupOptions, StartupSource,
+    initial_source_from_args, startup_options_from_args,
 };
 
 // Keep CXX-Qt dependency initializers linked for Rust test binaries even when Rust does not

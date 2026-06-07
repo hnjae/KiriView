@@ -10,11 +10,19 @@ use std::{
 pub const STARTUP_ARGUMENT_ERROR_EXIT_CODE: i32 = 2;
 
 const MISSING_LOCAL_FILE_REASON: &str = "No such file or directory";
+const UNKNOWN_STARTUP_OPTION_REASON: &str = "unknown startup option";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct StartupArgumentError {
-    path: PathBuf,
+    argument: PathBuf,
     reason: String,
+    kind: StartupArgumentErrorKind,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum StartupArgumentErrorKind {
+    LocalFile,
+    UnknownOption,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -23,40 +31,109 @@ pub enum StartupSource {
     Url(String),
 }
 
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct StartupOptions {
+    pub source: Option<StartupSource>,
+    pub verbose: bool,
+}
+
 impl StartupArgumentError {
     pub fn path(&self) -> &Path {
-        &self.path
+        &self.argument
     }
 
     pub fn reason(&self) -> &str {
         &self.reason
     }
+
+    fn local_file(path: PathBuf, reason: String) -> Self {
+        Self {
+            argument: path,
+            reason,
+            kind: StartupArgumentErrorKind::LocalFile,
+        }
+    }
+
+    fn unknown_option(option: &OsStr) -> Self {
+        Self {
+            argument: PathBuf::from(option),
+            reason: UNKNOWN_STARTUP_OPTION_REASON.to_owned(),
+            kind: StartupArgumentErrorKind::UnknownOption,
+        }
+    }
 }
 
 impl fmt::Display for StartupArgumentError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            formatter,
-            "cannot open '{}': {}",
-            self.path.display(),
-            self.reason
-        )
+        match self.kind {
+            StartupArgumentErrorKind::LocalFile => {
+                write!(
+                    formatter,
+                    "cannot open '{}': {}",
+                    self.argument.display(),
+                    self.reason
+                )
+            }
+            StartupArgumentErrorKind::UnknownOption => {
+                write!(
+                    formatter,
+                    "unknown startup option '{}'",
+                    self.argument.display()
+                )
+            }
+        }
     }
+}
+
+pub fn startup_options_from_args(
+    args: impl IntoIterator<Item = impl AsRef<OsStr>>,
+    working_directory: Option<&Path>,
+) -> Result<StartupOptions, StartupArgumentError> {
+    let mut startup_options = StartupOptions::default();
+    let mut parse_options = true;
+    let mut source_argument_seen = false;
+
+    for argument in args.into_iter().skip(1) {
+        let argument = argument.as_ref();
+        if parse_options {
+            if argument == OsStr::new("--") {
+                parse_options = false;
+                continue;
+            }
+
+            if is_verbose_option(argument) {
+                startup_options.verbose = true;
+                continue;
+            }
+
+            if is_dash_option(argument) {
+                return Err(StartupArgumentError::unknown_option(argument));
+            }
+        }
+
+        if !source_argument_seen {
+            source_argument_seen = true;
+            startup_options.source = source_from_argument(argument, working_directory)?;
+        }
+    }
+
+    Ok(startup_options)
 }
 
 pub fn initial_source_from_args(
     args: impl IntoIterator<Item = impl AsRef<OsStr>>,
     working_directory: Option<&Path>,
 ) -> Result<Option<StartupSource>, StartupArgumentError> {
-    let Some(argument) = args
-        .into_iter()
-        .skip(1)
-        .find(|argument| argument.as_ref() != OsStr::new("--"))
-    else {
-        return Ok(None);
-    };
+    Ok(startup_options_from_args(args, working_directory)?.source)
+}
 
-    source_from_argument(argument.as_ref(), working_directory)
+fn is_verbose_option(argument: &OsStr) -> bool {
+    argument == OsStr::new("--verbose") || argument == OsStr::new("-v")
+}
+
+fn is_dash_option(argument: &OsStr) -> bool {
+    let argument = argument.to_string_lossy();
+    argument.starts_with('-') && argument.len() > 1
 }
 
 fn source_from_argument(
@@ -175,14 +252,14 @@ fn validate_non_empty_local_file_path(path: &Path) -> Result<(), StartupArgument
 fn validate_local_file_path(path: &Path) -> Result<(), StartupArgumentError> {
     match path.try_exists() {
         Ok(true) => Ok(()),
-        Ok(false) => Err(StartupArgumentError {
-            path: path.to_path_buf(),
-            reason: MISSING_LOCAL_FILE_REASON.to_owned(),
-        }),
-        Err(error) => Err(StartupArgumentError {
-            path: path.to_path_buf(),
-            reason: error.to_string(),
-        }),
+        Ok(false) => Err(StartupArgumentError::local_file(
+            path.to_path_buf(),
+            MISSING_LOCAL_FILE_REASON.to_owned(),
+        )),
+        Err(error) => Err(StartupArgumentError::local_file(
+            path.to_path_buf(),
+            error.to_string(),
+        )),
     }
 }
 

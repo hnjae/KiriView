@@ -48,8 +48,9 @@ int percentile95Value(QVector<int> values)
     }
 
     std::sort(values.begin(), values.end());
-    const int index = std::min(values.size() - 1,
-        static_cast<int>((static_cast<qint64>(values.size()) * 95 + 99) / 100) - 1);
+    const int lastIndex = static_cast<int>(values.size()) - 1;
+    const int index = std::min(
+        lastIndex, static_cast<int>((static_cast<qint64>(values.size()) * 95 + 99) / 100) - 1);
     return values.at(index);
 }
 
