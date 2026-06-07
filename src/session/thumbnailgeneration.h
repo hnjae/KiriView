@@ -7,9 +7,9 @@
 #include "async/imageiojob.h"
 #include "async/imageworkerscheduler.h"
 #include "location/imagelocation.h"
-#include "session/activenavigationthumbnailprojection.h"
 #include "thumbnail/thumbnailbucket.h"
 #include "thumbnail/thumbnailoriginalidentity.h"
+#include "thumbnail/thumbnailsourcekind.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -31,8 +31,7 @@ struct ThumbnailGenerationRequest {
     OpenedCollectionScopeLocation openedCollectionScope;
     QUrl sourceUrl;
     QString sourceLabel;
-    ActiveNavigationThumbnailSourceKind sourceKind
-        = ActiveNavigationThumbnailSourceKind::DirectImage;
+    ThumbnailSourceKind sourceKind = ThumbnailSourceKind::DirectImage;
     ActiveNavigationThumbnailDemandBucket requestedBucket
         = ActiveNavigationThumbnailDemandBucket::None;
     bool cacheInstallEnabled = true;

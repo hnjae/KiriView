@@ -31,6 +31,23 @@ constexpr std::array<Bucket, 4> backgroundFillBuckets()
 {
     return { Bucket::Normal, Bucket::Large, Bucket::XLarge, Bucket::XXLarge };
 }
+
+KiriView::ThumbnailSourceKind thumbnailSourceKind(
+    KiriView::ActiveNavigationThumbnailSourceKind sourceKind)
+{
+    switch (sourceKind) {
+    case KiriView::ActiveNavigationThumbnailSourceKind::DirectImage:
+        return KiriView::ThumbnailSourceKind::DirectImage;
+    case KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo:
+        return KiriView::ThumbnailSourceKind::DirectVideo;
+    case KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage:
+        return KiriView::ThumbnailSourceKind::ImageDocumentPageImage;
+    case KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageVideo:
+        return KiriView::ThumbnailSourceKind::ImageDocumentPageVideo;
+    }
+
+    return KiriView::ThumbnailSourceKind::DirectImage;
+}
 }
 
 namespace KiriView {
@@ -490,7 +507,7 @@ void ActiveNavigationThumbnailRuntime::startGenerationJob(
     request.openedCollectionScope = demand.sourcePlan.openedCollectionScope;
     request.sourceUrl = demand.sourceKey.url;
     request.sourceLabel = demand.sourceKey.label;
-    request.sourceKind = demand.sourceKey.sourceKind;
+    request.sourceKind = thumbnailSourceKind(demand.sourceKey.sourceKind);
     request.requestedBucket = demand.bucket;
     request.cacheInstallEnabled = enablesCacheInstall(demand.sourcePlan);
 

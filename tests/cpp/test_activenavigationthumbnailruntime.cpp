@@ -1292,7 +1292,7 @@ void TestActiveNavigationThumbnailRuntime::injectedDirectVideoAdapterUsesGenerat
     QCOMPARE(generationProvider.generationAt(0).request.localPathBytes,
         QByteArrayLiteral("/media/clip.mp4"));
     QCOMPARE(generationProvider.generationAt(0).request.sourceKind,
-        KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo);
+        KiriView::ThumbnailSourceKind::DirectVideo);
     QCOMPARE(generationProvider.generationAt(0).request.cacheInstallEnabled, true);
     generationProvider.finish(0,
         generationResult(KiriView::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::blue),
@@ -1335,7 +1335,7 @@ void TestActiveNavigationThumbnailRuntime::injectedCollectionAdapterUsesGenerate
     QCOMPARE(lookupProvider.lookupAt(0).request.localPathBytes,
         QByteArrayLiteral("/archive/pages/001.png"));
     QCOMPARE(generationProvider.generationAt(0).request.sourceKind,
-        KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage);
+        KiriView::ThumbnailSourceKind::ImageDocumentPageImage);
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QCOMPARE(store->size(), qsizetype(1));
 }
