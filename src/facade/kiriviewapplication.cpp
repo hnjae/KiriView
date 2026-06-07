@@ -260,13 +260,12 @@ void KiriViewApplication::setDocumentSession(QObject *session)
 }
 
 void KiriViewApplication::updateActionUiGateSnapshot(bool helpDialogOpen, bool textInputFocused,
-    bool imagePannable, bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
+    bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
     bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled)
 {
     updateActionUiGateSnapshot(ActionUiGateSnapshot {
         helpDialogOpen,
         textInputFocused,
-        imagePannable,
         infoPanelVisible,
         thumbnailPanelVisible,
         fullscreen,
@@ -285,7 +284,6 @@ void KiriViewApplication::applyActionUiGateSnapshot(const ActionUiGateSnapshot &
     ++m_actionUiGateRevision;
     m_helpDialogOpen = snapshot.helpDialogOpen;
     m_textInputFocused = snapshot.textInputFocused;
-    m_imagePannable = snapshot.imagePannable;
     m_infoPanelVisible = snapshot.infoPanelVisible;
     m_thumbnailPanelVisible = snapshot.thumbnailPanelVisible;
     m_fullscreen = snapshot.fullscreen;
@@ -358,6 +356,9 @@ void KiriViewApplication::connectActionStateSources()
     connectRebuild(session, &KiriDocumentSession::fileDeletionInProgressChanged);
     connectRebuild(session, &KiriDocumentSession::activeMediaReadinessChanged);
     connectRebuild(session, &KiriDocumentSession::activeNavigationChanged);
+    if (KiriImageDocument *image = session->imageDocument()) {
+        connectRebuild(image, &KiriImageDocument::viewportFrameChanged);
+    }
 }
 
 void KiriViewApplication::disconnectActionStateSources()
@@ -385,6 +386,12 @@ bool KiriViewApplication::videoMode() const
         && m_documentSession->documentKind() == KiriDocumentSession::DocumentKind::Video;
 }
 
+bool KiriViewApplication::sharedImagePannable() const
+{
+    const KiriImageDocument *image = imageDocument();
+    return imageMode() && image != nullptr && image->viewportPannable();
+}
+
 ImageActionAvailabilityInput KiriViewApplication::imageActionAvailabilityInput() const
 {
     const KiriView::DocumentSessionActionAvailabilityFacts facts = m_documentSession == nullptr
@@ -396,7 +403,7 @@ ImageActionAvailabilityInput KiriViewApplication::imageActionAvailabilityInput()
         m_documentSession != nullptr && m_documentSession->fileDeletionInProgress(),
         m_helpDialogOpen,
         m_textInputFocused,
-        sharedImagePannabilityActionGate(facts, m_imagePannable),
+        sharedImagePannabilityActionGate(facts, sharedImagePannable()),
         facts.containerNavigationAvailable,
         facts.twoPageModeActive,
         facts.twoPageModeAvailable,
@@ -475,7 +482,7 @@ Actions::ApplicationActionStateInput KiriViewApplication::actionStateInput() con
 Actions::ApplicationCommandRouterInput KiriViewApplication::commandRouterInput() const
 {
     Actions::ApplicationCommandRouterInput input;
-    input.imagePannable = m_imagePannable;
+    input.imagePannable = sharedImagePannable();
     input.rightToLeftReadingActive = m_imageActionProjection.rightToLeftReadingActive;
     input.videoMode = videoMode();
     input.imageDocumentPageNavigationActive = m_documentSession != nullptr

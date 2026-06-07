@@ -105,7 +105,7 @@ StatefulApp.StatefulWindow {
     }
 
     function publishActionUiState() {
-        kiriApplication.updateActionUiGateSnapshot(root.helpDialogOpen, root.toolbarTextInputFocused(), mediaWorkspaceHost.imageInteractionSurface.imagePannable, mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, !root.helpDialogOpen);
+        kiriApplication.updateActionUiGateSnapshot(root.helpDialogOpen, root.toolbarTextInputFocused(), mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible, root.fullscreen, root.applicationMenuShortcutEnabled, !root.helpDialogOpen);
     }
 
     minimumWidth: Kirigami.Units.gridUnit * 14
@@ -245,7 +245,7 @@ StatefulApp.StatefulWindow {
         readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
         readonly property bool imageReady: documentSession.activeImageReady
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
-        readonly property string actionUiGateFingerprint: [root.helpDialogOpen, root.fullscreen, root.applicationMenuShortcutEnabled, root.toolbarTextInputFocused(), mediaWorkspaceHost.imageInteractionSurface.imagePannable, mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible].join("|")
+        readonly property string actionUiGateFingerprint: [root.helpDialogOpen, root.fullscreen, root.applicationMenuShortcutEnabled, root.toolbarTextInputFocused(), mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible].join("|")
         property bool documentDeletionWasInProgress: false
 
         background: Rectangle {

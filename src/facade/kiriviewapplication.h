@@ -134,7 +134,7 @@ public:
     Q_INVOKABLE QString actionToolbarTooltipTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE void setDocumentSession(QObject *session);
     Q_INVOKABLE void updateActionUiGateSnapshot(bool helpDialogOpen, bool textInputFocused,
-        bool imagePannable, bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
+        bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
         bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled);
     Q_INVOKABLE void setShortcutHost(QObject *host);
     Q_INVOKABLE bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
@@ -164,7 +164,6 @@ private:
     struct ActionUiGateSnapshot {
         bool helpDialogOpen = false;
         bool textInputFocused = false;
-        bool imagePannable = false;
         bool infoPanelVisible = false;
         bool thumbnailPanelVisible = false;
         bool fullscreen = false;
@@ -181,6 +180,7 @@ private:
     KiriImageDocument *imageDocument() const;
     bool imageMode() const;
     bool videoMode() const;
+    bool sharedImagePannable() const;
     ImageActionAvailabilityInput imageActionAvailabilityInput() const;
     KiriView::ApplicationActions::ApplicationActionStateInput actionStateInput() const;
     KiriView::ApplicationActions::ApplicationCommandRouterInput commandRouterInput() const;
@@ -213,7 +213,6 @@ private:
     quint64 m_actionUiGateRevision = 0;
     bool m_helpDialogOpen = false;
     bool m_textInputFocused = false;
-    bool m_imagePannable = false;
     bool m_infoPanelVisible = false;
     bool m_thumbnailPanelVisible = false;
     bool m_fullscreen = false;

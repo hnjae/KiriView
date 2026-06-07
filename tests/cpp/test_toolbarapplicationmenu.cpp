@@ -755,7 +755,7 @@ Item {
     }
 
     function publishActionUiState() {
-        application.updateActionUiGateSnapshot(false, false, false, false, false, false, true, true);
+        application.updateActionUiGateSnapshot(false, false, false, false, false, true, true);
     }
 
     Component.onCompleted: {

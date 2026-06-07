@@ -215,7 +215,6 @@ Item {
 
     property bool helpDialogOpen: false
     property bool imageHorizontallyPannable: false
-    property bool imagePannable: false
     property bool toolbarTextInputFocused: false
     property bool videoFileDeletionInProgress: false
     property bool videoMode: false
@@ -253,7 +252,6 @@ Item {
     }
 
     onHelpDialogOpenChanged: publishActionUiState()
-    onImagePannableChanged: publishActionUiState()
     onToolbarTextInputFocusedChanged: publishActionUiState()
 
     function openImageAtPage(pageNumber) {
@@ -269,7 +267,7 @@ Item {
     }
 
     function publishActionUiState() {
-        application.updateActionUiGateSnapshot(helpDialogOpen, toolbarTextInputFocused, imagePannable, false, false, false, true, true);
+        application.updateActionUiGateSnapshot(helpDialogOpen, toolbarTextInputFocused, false, false, false, true, true);
     }
 
     function refreshDerivedDocumentState() {
@@ -510,8 +508,6 @@ void TestImageShortcuts::arrowKeysPanAsFixedViewerShortcuts()
     QTRY_VERIFY(documentReady(fixture.root));
     QVERIFY(zoomToActualSize(fixture.root));
     QTRY_VERIFY(fixture.root->property("viewportPannable").toBool());
-    QVERIFY(fixture.root->setProperty("imagePannable", true));
-
     const QPointF initialPosition = viewportContentPosition(fixture.root);
     pressKey(fixture.view.get(), Qt::Key_Right);
     QTRY_VERIFY(viewportContentPosition(fixture.root).x() > initialPosition.x());
@@ -553,7 +549,6 @@ void TestImageShortcuts::arrowKeysAreIgnoredWhileViewerShortcutsAreSuppressed()
     QTRY_VERIFY(documentReady(fixture.root));
     QVERIFY(zoomToActualSize(fixture.root));
     QTRY_VERIFY(fixture.root->property("viewportPannable").toBool());
-    QVERIFY(fixture.root->setProperty("imagePannable", true));
     const QPointF initialPosition = viewportContentPosition(fixture.root);
 
     fixture.root->setProperty("toolbarTextInputFocused", true);
@@ -799,7 +794,6 @@ void TestImageShortcuts::videoModeIgnoresReportedImagePannabilityForPanShortcuts
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_COMPARE(fixture.root->property("documentKind").toInt(),
         static_cast<int>(KiriDocumentSession::DocumentKind::Video));
-    QVERIFY(fixture.root->setProperty("imagePannable", true));
     fixture.root->setProperty("panCount", 0);
 
     pressKey(fixture.view.get(), Qt::Key_Up);
