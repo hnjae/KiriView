@@ -6,6 +6,8 @@
 
 #include <QObject>
 #include <QTest>
+#include <QVector>
+#include <algorithm>
 #include <limits>
 
 class TestImageAnimationPolicy : public QObject
@@ -21,6 +23,7 @@ private Q_SLOTS:
     void playbackStateOwnsLoopProgress();
     void playbackStatePlansFrameSchedulingAndStop();
     void providerRevisionPresenterPassesDocumentedGate();
+    void providerRevisionPresenterAcceptsRepresentativeMeasuredProviderTiming();
     void providerRevisionPresenterRejectsEachGateFailure();
 };
 
@@ -30,6 +33,40 @@ KiriView::AnimationLoopState loopState(int loopCount, int completedLoops)
     return KiriView::AnimationLoopState {
         loopCount,
         completedLoops,
+    };
+}
+
+int maximumValue(const QVector<int> &values)
+{
+    return values.isEmpty() ? 0 : *std::max_element(values.cbegin(), values.cend());
+}
+
+int percentile95Value(QVector<int> values)
+{
+    if (values.isEmpty()) {
+        return 0;
+    }
+
+    std::sort(values.begin(), values.end());
+    const int index = std::min(values.size() - 1,
+        static_cast<int>((static_cast<qint64>(values.size()) * 95 + 99) / 100) - 1);
+    return values.at(index);
+}
+
+KiriView::AnimationProviderChurnGateSample sampleFromMeasuredProviderTiming(
+    int frameDelayMs, const QVector<int> &timerDriftMs, const QVector<int> &providerLatencyMs)
+{
+    return KiriView::AnimationProviderChurnGateSample {
+        KiriView::normalizedAnimationFrameDelay(frameDelayMs),
+        false,
+        maximumValue(timerDriftMs),
+        percentile95Value(providerLatencyMs),
+        maximumValue(providerLatencyMs),
+        true,
+        2,
+        true,
+        1,
+        true,
     };
 }
 }
@@ -147,6 +184,21 @@ void TestImageAnimationPolicy::providerRevisionPresenterPassesDocumentedGate()
     QVERIFY(result.requiresLoadOutcomeAcknowledgment);
     QVERIFY(result.requiresPreviousFrameRetention);
     QCOMPARE(result.maximumPinnedFrameEntriesPerPageRole, 2);
+}
+
+void TestImageAnimationPolicy::
+    providerRevisionPresenterAcceptsRepresentativeMeasuredProviderTiming()
+{
+    const KiriView::AnimationProviderChurnGateSample sample
+        = sampleFromMeasuredProviderTiming(16, { 0, 1, 1, 2, 1, 0 }, { 1, 1, 2, 2, 1, 2 });
+
+    const KiriView::AnimationProviderChurnGateResult result
+        = KiriView::evaluateAnimationProviderChurnGate(sample);
+
+    QVERIFY(result.passed());
+    QCOMPARE(sample.providerRequestLatencyP95Ms, 2);
+    QCOMPARE(sample.providerRequestLatencyMaxMs, 2);
+    QCOMPARE(sample.maximumFrameScheduleDriftMs, 2);
 }
 
 void TestImageAnimationPolicy::providerRevisionPresenterRejectsEachGateFailure()

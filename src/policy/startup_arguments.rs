@@ -245,6 +245,102 @@ mod tests {
     }
 
     #[test]
+    fn no_startup_arguments_produce_default_options() {
+        let options =
+            startup_options_from_args(startup_args(&[]), Some(Path::new("/home/user/books")))
+                .expect("empty startup arguments should be accepted");
+
+        assert!(!options.verbose);
+        assert!(options.source.is_none());
+    }
+
+    #[test]
+    fn verbose_long_option_enables_verbose_without_source() {
+        let options = startup_options_from_args(
+            startup_args(&["--verbose"]),
+            Some(Path::new("/home/user/books")),
+        )
+        .expect("verbose startup option should be accepted");
+
+        assert!(options.verbose);
+        assert!(options.source.is_none());
+    }
+
+    #[test]
+    fn verbose_short_option_enables_verbose_without_source() {
+        let options =
+            startup_options_from_args(startup_args(&["-v"]), Some(Path::new("/home/user/books")))
+                .expect("verbose startup option should be accepted");
+
+        assert!(options.verbose);
+        assert!(options.source.is_none());
+    }
+
+    #[test]
+    fn verbose_long_option_before_source_opens_source() {
+        let working_directory = TestDirectory::new("verbose-before-source");
+        let expected_path = existing_test_file(working_directory.path(), "image.png");
+
+        let options = startup_options_from_args(
+            startup_args(&["--verbose", "image.png"]),
+            Some(working_directory.path()),
+        )
+        .expect("verbose startup option with source should be accepted");
+
+        assert!(options.verbose);
+        assert_eq!(
+            options.source,
+            Some(StartupSource::LocalFile(expected_path))
+        );
+    }
+
+    #[test]
+    fn verbose_short_option_after_source_opens_source() {
+        let working_directory = TestDirectory::new("verbose-after-source");
+        let expected_path = existing_test_file(working_directory.path(), "image.png");
+
+        let options = startup_options_from_args(
+            startup_args(&["image.png", "-v"]),
+            Some(working_directory.path()),
+        )
+        .expect("verbose startup option after source should be accepted");
+
+        assert!(options.verbose);
+        assert_eq!(
+            options.source,
+            Some(StartupSource::LocalFile(expected_path))
+        );
+    }
+
+    #[test]
+    fn option_separator_treats_verbose_short_name_as_source() {
+        let working_directory = TestDirectory::new("verbose-after-separator");
+        let expected_path = existing_test_file(working_directory.path(), "-v");
+
+        let options =
+            startup_options_from_args(startup_args(&["--", "-v"]), Some(working_directory.path()))
+                .expect("startup source after option separator should be accepted");
+
+        assert!(!options.verbose);
+        assert_eq!(
+            options.source,
+            Some(StartupSource::LocalFile(expected_path))
+        );
+    }
+
+    #[test]
+    fn unknown_dash_option_reports_argument_error() {
+        let error = startup_options_from_args(
+            startup_args(&["--unknown"]),
+            Some(Path::new("/home/user/books")),
+        )
+        .expect_err("unknown startup option should report an argument error");
+
+        assert_eq!(error.path(), Path::new("--unknown"));
+        assert_eq!(error.reason(), "unknown startup option");
+    }
+
+    #[test]
     fn relative_startup_path_becomes_local_file_source() {
         let working_directory = TestDirectory::new("relative-startup-path");
         let expected_path = existing_test_file(working_directory.path(), "archive-zip.cbt");
