@@ -9,6 +9,7 @@
 #include "location/imagedocumentlocation.h"
 
 #include <QByteArray>
+#include <QFile>
 #include <QMetaProperty>
 #include <QObject>
 #include <QSignalSpy>
@@ -25,6 +26,8 @@ class TestKiriImageDocument : public QObject
 private Q_SLOTS:
     void sourceUrlPropertyIsReadOnlyObservation();
     void displaySourceFacadeObjectsAreStableReadOnlyObservations();
+    void animatedFixturePlaybackUpdatesPrimaryDisplaySource_data();
+    void animatedFixturePlaybackUpdatesPrimaryDisplaySource();
     void openedCollectionScopeActiveFollowsDisplayedLocation();
 };
 
@@ -47,6 +50,18 @@ std::unique_ptr<KiriDocumentSession> createSession(
     auto session = std::make_unique<KiriDocumentSession>(std::move(dependencies), parent);
     session->imageDocument()->setViewportSize(QSizeF(400.0, 300.0));
     return session;
+}
+
+std::unique_ptr<KiriDocumentSession> createRealDecodeSession(QObject *parent)
+{
+    auto session = std::make_unique<KiriDocumentSession>(parent);
+    session->imageDocument()->setViewportSize(QSizeF(400.0, 300.0));
+    return session;
+}
+
+QString fixturePath(const QString &fileName)
+{
+    return QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/") + fileName;
 }
 
 void loadReady(KiriDocumentSession &session, ManualImageDataLoader &dataLoader,
@@ -120,6 +135,39 @@ void TestKiriImageDocument::displaySourceFacadeObjectsAreStableReadOnlyObservati
     QCOMPARE(primary->rasterSize(), QSize(1, 1));
     QCOMPARE(primary->pageRole(), KiriImageDisplaySource::PageRole::Primary);
     QCOMPARE(secondary->pageRole(), KiriImageDisplaySource::PageRole::Secondary);
+}
+
+void TestKiriImageDocument::animatedFixturePlaybackUpdatesPrimaryDisplaySource_data()
+{
+    QTest::addColumn<QString>("fileName");
+
+    QTest::newRow("apng") << QStringLiteral("animated-smoke.apng");
+    QTest::newRow("jxl") << QStringLiteral("animated-smoke.jxl");
+}
+
+void TestKiriImageDocument::animatedFixturePlaybackUpdatesPrimaryDisplaySource()
+{
+    QFETCH(QString, fileName);
+
+    const QString path = fixturePath(fileName);
+    QVERIFY2(QFile::exists(path), qPrintable(path));
+
+    std::unique_ptr<KiriDocumentSession> session = createRealDecodeSession(this);
+    KiriImageDocument &document = *session->imageDocument();
+    KiriImageDisplaySource *primary = document.primaryDisplaySource();
+    QVERIFY(primary != nullptr);
+    QSignalSpy primarySpy(primary, &KiriImageDisplaySource::changed);
+
+    session->setSourceUrl(QUrl::fromLocalFile(path));
+
+    QTRY_COMPARE(document.status(), KiriImageDocument::Status::Ready);
+    QVERIFY(!primary->providerUrl().isEmpty());
+    const QUrl firstProviderUrl = primary->providerUrl();
+    const QString firstRevisionToken = primary->revisionToken();
+
+    QTRY_VERIFY(primary->providerUrl() != firstProviderUrl
+        || primary->revisionToken() != firstRevisionToken);
+    QVERIFY(primarySpy.count() > 0);
 }
 
 void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation()

@@ -23,6 +23,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <type_traits>
 #include <variant>
 
 namespace {
@@ -227,6 +228,34 @@ template <typename Image> const Image *decodedImage(const KiriView::DecodedImage
 {
     return KiriView::decodedImageResultImageAs<Image>(result);
 }
+
+QString fixturePath(const QString &fileName)
+{
+    return QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/") + fileName;
+}
+
+QByteArray fixtureData(const QString &fileName)
+{
+    QFile file(fixturePath(fileName));
+    if (!file.open(QIODevice::ReadOnly)) {
+        return {};
+    }
+    return file.readAll();
+}
+
+QSize decodedFrameSize(const KiriView::DecodedImage &image)
+{
+    return std::visit(
+        [](const auto &decoded) {
+            using Image = std::decay_t<decltype(decoded)>;
+            if constexpr (std::is_same_v<Image, KiriView::StaticDecodedImage>) {
+                return decoded.displayImage.image.size();
+            } else {
+                return decoded.firstFrame.size();
+            }
+        },
+        image);
+}
 }
 
 class TestKiriImageDecoder : public QObject
@@ -234,6 +263,8 @@ class TestKiriImageDecoder : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void realAnimatedFixturesDecodeAsAnimations_data();
+    void realAnimatedFixturesDecodeAsAnimations();
     void jpegCompressedHeifStillImageDecodes();
     void avifStillBrandUsesHeifStaticPath();
     void avifsSequenceBrandUsesHeifSequencePath();
@@ -241,6 +272,39 @@ private Q_SLOTS:
     void rawExtensionForcesRawDecodeBeforeQtFallback();
     void rawSamplesDecodeWhenConfigured();
 };
+
+void TestKiriImageDecoder::realAnimatedFixturesDecodeAsAnimations_data()
+{
+    QTest::addColumn<QString>("fileName");
+    QTest::addColumn<QSize>("frameSize");
+
+    QTest::newRow("apng") << QStringLiteral("animated-smoke.apng") << QSize(2, 1);
+    QTest::newRow("webp") << QStringLiteral("animated-smoke.webp") << QSize(2, 1);
+    QTest::newRow("jxl") << QStringLiteral("animated-smoke.jxl") << QSize(2, 1);
+    QTest::newRow("heif-sequence") << QStringLiteral("heif-sequence-alpha.heics") << QSize(64, 64);
+}
+
+void TestKiriImageDecoder::realAnimatedFixturesDecodeAsAnimations()
+{
+    QFETCH(QString, fileName);
+    QFETCH(QSize, frameSize);
+
+    const QByteArray imageData = fixtureData(fileName);
+    QVERIFY2(!imageData.isEmpty(), qPrintable(fixturePath(fileName)));
+
+    const QUrl imageUrl = QUrl::fromLocalFile(fixturePath(fileName));
+    KiriView::DecodedImageResult result
+        = KiriView::decodeImageData(imageData, KiriView::ImageDecodeRequest::fromUrl(1, imageUrl));
+
+    const KiriView::DecodedImageFailure *failure = KiriView::decodedImageResultFailure(result);
+    QVERIFY2(failure == nullptr, qPrintable(failure == nullptr ? QString() : failure->errorString));
+
+    const KiriView::DecodedImage *image = KiriView::decodedImageResultImage(result);
+    QVERIFY(image != nullptr);
+    QVERIFY2(!std::holds_alternative<KiriView::StaticDecodedImage>(*image),
+        "Multi-frame fixtures must not decode as static still images");
+    QCOMPARE(decodedFrameSize(*image), frameSize);
+}
 
 void TestKiriImageDecoder::jpegCompressedHeifStillImageDecodes()
 {

@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "decoding/kiriimagedecoder.h"
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
 #include "predecode/imagepredecodecoordinator.h"
 
+#include <QFile>
 #include <QObject>
 #include <QSize>
 #include <QTest>
@@ -42,6 +44,22 @@ KiriView::PowerSaverProvider noOpPowerSaverProvider()
     };
 }
 
+KiriView::ImageWorkerScheduler immediateWorkerScheduler()
+{
+    return KiriView::ImageWorkerScheduler([](QObject *, KiriView::ImageWorkerOperation work,
+                                              KiriView::ImageWorkerCompletion completion) {
+        work();
+        completion();
+    });
+}
+
+KiriView::ImageDataDecoder defaultImageDataDecoder()
+{
+    return [](const QByteArray &data, const KiriView::ImageDecodeRequest &request) {
+        return KiriView::decodeImageData(data, request);
+    };
+}
+
 KiriView::ImagePredecodeCoordinator createCoordinator(QObject *parent,
     FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
     KiriView::PowerSaverProvider powerSaverProvider)
@@ -49,6 +67,17 @@ KiriView::ImagePredecodeCoordinator createCoordinator(QObject *parent,
     return KiriView::ImagePredecodeCoordinator(parent, candidateProvider.provider(),
         imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()),
         std::move(powerSaverProvider), testCacheByteBudget);
+}
+
+KiriView::ImagePredecodeCoordinator createCoordinator(QObject *parent,
+    FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
+    KiriView::ImageDataDecoder dataDecoder)
+{
+    KiriView::ImageDecodeDependencies dependencies
+        = imageDecodeDependenciesFor(dataLoader, std::move(dataDecoder));
+    dependencies.workerScheduler = immediateWorkerScheduler();
+    return KiriView::ImagePredecodeCoordinator(parent, candidateProvider.provider(),
+        std::move(dependencies), noOpPowerSaverProvider(), testCacheByteBudget);
 }
 
 KiriView::ImagePredecodeCoordinator createCoordinator(
@@ -96,6 +125,20 @@ KiriView::ImagePredecodeCoordinator::Context predecodeContext(
         {},
     };
 }
+
+QString fixturePath(const QString &fileName)
+{
+    return QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/") + fileName;
+}
+
+QByteArray fixtureData(const QString &fileName)
+{
+    QFile file(fixturePath(fileName));
+    if (!file.open(QIODevice::ReadOnly)) {
+        return {};
+    }
+    return file.readAll();
+}
 }
 
 class TestImagePredecodeCoordinator : public QObject
@@ -110,6 +153,8 @@ private Q_SLOTS:
     void regularPredecodeWindowKeepsOnePreviousAndTwoNextPages();
     void directoryCollectionStartsTwoBackgroundDecodes();
     void candidateListingFailureStartsEmptyFallbackWindow();
+    void animatedBackgroundDecodeIsNotCachedAsStaticPredecodedImage_data();
+    void animatedBackgroundDecodeIsNotCachedAsStaticPredecodedImage();
     void staleGenerationDecodeIsIgnored();
     void rapidNavigationDebouncesSkippedPagePredecode();
     void powerSaverMonitorSuppressesAndReschedulesPredecode();
@@ -334,6 +379,50 @@ void TestImagePredecodeCoordinator::candidateListingFailureStartsEmptyFallbackWi
     QTest::qWait(250);
     QCOMPARE(dataLoader.loadCount(), std::size_t(0));
     QVERIFY(coordinator.findPredecodedImage(displayedUrl).has_value());
+}
+
+void TestImagePredecodeCoordinator::
+    animatedBackgroundDecodeIsNotCachedAsStaticPredecodedImage_data()
+{
+    QTest::addColumn<QString>("fileName");
+
+    QTest::newRow("apng") << QStringLiteral("animated-smoke.apng");
+    QTest::newRow("webp") << QStringLiteral("animated-smoke.webp");
+    QTest::newRow("jxl") << QStringLiteral("animated-smoke.jxl");
+    QTest::newRow("heif-sequence") << QStringLiteral("heif-sequence-alpha.heics");
+}
+
+void TestImagePredecodeCoordinator::animatedBackgroundDecodeIsNotCachedAsStaticPredecodedImage()
+{
+    QFETCH(QString, fileName);
+
+    const QByteArray imageData = fixtureData(fileName);
+    QVERIFY2(!imageData.isEmpty(), qPrintable(fixturePath(fileName)));
+
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImagePredecodeCoordinator coordinator
+        = createCoordinator(this, candidateProvider, dataLoader, defaultImageDataDecoder());
+
+    const QUrl displayedUrl = indexedImageUrl(0);
+    const QUrl animatedUrl = indexedImageUrl(1);
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
+        {
+            imageDocumentPageCandidate(displayedUrl),
+            imageDocumentPageCandidate(animatedUrl),
+        });
+
+    coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
+        KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
+        false,
+        displayTestImagePayload(testImage()),
+    }));
+
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, animatedUrl);
+    dataLoader.finishFrontLoad(imageData);
+
+    QVERIFY(!coordinator.findPredecodedImage(animatedUrl).has_value());
 }
 
 void TestImagePredecodeCoordinator::staleGenerationDecodeIsIgnored()
