@@ -55,7 +55,6 @@ src/async/imageasyncoperationstate.cpp
 src/application/imageactionavailabilitypolicy.cpp
 src/application/imageactionavailabilityruntime.cpp
 src/facade/imageactionavailability.cpp
-src/facade/imageshortcutnavigationpolicy.cpp
 src/cache/imagebytecost.cpp
 src/navigation/imagedocumentpagecandidateprovider.cpp
 src/cache/imagecachepolicy.cpp

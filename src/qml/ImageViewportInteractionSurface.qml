@@ -21,14 +21,6 @@ QtObject {
         return false;
     }
 
-    function scanBackward() {
-        return false;
-    }
-
-    function scanForward() {
-        return false;
-    }
-
     function setNextDisplayedImageStartToFinalScanPosition() {
     }
 

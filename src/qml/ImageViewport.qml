@@ -41,14 +41,6 @@ MediaViewportDelegate {
             return root.panToTopLeft();
         }
 
-        function scanBackward() {
-            return root.scanBackward();
-        }
-
-        function scanForward() {
-            return root.scanForward();
-        }
-
         function setNextDisplayedImageStartToFinalScanPosition() {
             root.setNextDisplayedImageStartToFinalScanPosition();
         }
@@ -154,18 +146,6 @@ MediaViewportDelegate {
 
     function panToTopLeft() {
         const moved = root.imageDocument.requestViewportPanToInitialScanPosition();
-        root.applyViewportProjection();
-        return moved;
-    }
-
-    function scanForward() {
-        const moved = root.imageDocument.requestViewportScanForward();
-        root.applyViewportProjection();
-        return moved;
-    }
-
-    function scanBackward() {
-        const moved = root.imageDocument.requestViewportScanBackward();
         root.applyViewportProjection();
         return moved;
     }

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "facade/imageactionavailability.h"
-#include "facade/imageshortcutnavigationpolicy.h"
 #include "facade/kiridocumentsession.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kirimediainformation.h"
@@ -92,8 +91,6 @@ void registerKiriViewQmlTypes()
     qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
     qmlRegisterType<ImageActionAvailability>(
         "io.github.hnjae.kiriview", 1, 0, "ImageActionAvailability");
-    qmlRegisterType<ImageShortcutNavigationPolicy>(
-        "io.github.hnjae.kiriview", 1, 0, "ImageShortcutNavigationPolicy");
     qmlRegisterType<KiriViewApplication>("io.github.hnjae.kiriview", 1, 0, "KiriViewApplication");
     registered = true;
 }
