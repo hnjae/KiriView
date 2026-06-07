@@ -8,6 +8,7 @@
 #include "async/imageworkerscheduler.h"
 #include "location/imagelocation.h"
 #include "thumbnail/thumbnailbucket.h"
+#include "thumbnail/thumbnailcachelookup.h"
 #include "thumbnail/thumbnailoriginalidentity.h"
 #include "thumbnail/thumbnailsourcekind.h"
 
@@ -53,9 +54,28 @@ using ThumbnailGenerationOriginalIdentityLoader
     = std::function<std::optional<ThumbnailOriginalIdentity>(
         const ThumbnailGenerationRequest &, QString *)>;
 
+struct ThumbnailGenerationCacheInstallResult {
+    bool success = false;
+    ActiveNavigationThumbnailDemandBucket requestedBucket
+        = ActiveNavigationThumbnailDemandBucket::None;
+    QString installedCachePath;
+    QString errorString;
+};
+
+using ThumbnailGenerationCacheLookup = std::function<std::optional<ThumbnailCacheLookupResult>(
+    const ThumbnailOriginalIdentity &, ActiveNavigationThumbnailDemandBucket)>;
+using ThumbnailGenerationCacheInstall = std::function<ThumbnailGenerationCacheInstallResult(
+    const ThumbnailOriginalIdentity &, ActiveNavigationThumbnailDemandBucket, const QImage &)>;
+
+struct ThumbnailGenerationCacheRepository {
+    ThumbnailGenerationCacheLookup lookup;
+    ThumbnailGenerationCacheInstall install;
+};
+
 struct ThumbnailGenerationDependencies {
     ThumbnailGenerationBytesLoader bytesLoader;
     ThumbnailGenerationOriginalIdentityLoader openedCollectionOriginalIdentityLoader;
+    ThumbnailGenerationCacheRepository cacheRepository;
 };
 
 using ThumbnailGenerationCallback = std::function<void(ThumbnailGenerationResult)>;

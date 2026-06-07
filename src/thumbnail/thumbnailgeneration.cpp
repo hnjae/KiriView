@@ -295,38 +295,51 @@ std::optional<KiriView::ThumbnailOriginalIdentity> defaultOpenedCollectionOrigin
     return identity;
 }
 
-std::optional<KiriView::ThumbnailCacheLookupResult> lookupOpenedCollectionThumbnail(
+std::optional<KiriView::ThumbnailCacheLookupResult> defaultThumbnailGenerationCacheLookup(
     const KiriView::ThumbnailOriginalIdentity &identity,
     KiriView::ActiveNavigationThumbnailDemandBucket requestedBucket)
 {
-    const QByteArray uri = identity.uri.toUtf8();
-    const QByteArray mimeType = identity.mimeType.toUtf8();
-    const KiriView::RustThumbnailCacheLookupResult rustResult
-        = KiriView::rustLookupDisplayThumbnailNonFileUriRgba8(KiriView::Bridge::rustStr(uri),
-            identity.mtimeSeconds, identity.originalByteSize, KiriView::Bridge::rustStr(mimeType),
-            rustBucket(requestedBucket));
+    KiriView::RustThumbnailCacheLookupResult rustResult;
+    if (identity.isNonFileUri()) {
+        const QByteArray uri = identity.uri.toUtf8();
+        const QByteArray mimeType = identity.mimeType.toUtf8();
+        rustResult = KiriView::rustLookupDisplayThumbnailNonFileUriRgba8(
+            KiriView::Bridge::rustStr(uri), identity.mtimeSeconds, identity.originalByteSize,
+            KiriView::Bridge::rustStr(mimeType), rustBucket(requestedBucket));
+    } else {
+        rustResult = KiriView::rustLookupDisplayThumbnailRgba8(
+            KiriView::Bridge::rustBytes(identity.localPathBytes), rustBucket(requestedBucket));
+    }
     return lookupResultFromRust(rustResult);
 }
 
-KiriView::RustThumbnailCacheInstallResult installThumbnail(
+KiriView::ThumbnailGenerationCacheInstallResult installThumbnail(
     const KiriView::ThumbnailOriginalIdentity &identity,
     KiriView::ActiveNavigationThumbnailDemandBucket requestedBucket, const QImage &rgba8)
 {
     const rust::Slice<const std::uint8_t> pixels(
         reinterpret_cast<const std::uint8_t *>(rgba8.constBits()),
         static_cast<std::size_t>(rgba8.sizeInBytes()));
+    KiriView::RustThumbnailCacheInstallResult install;
     if (identity.isNonFileUri()) {
         const QByteArray uri = identity.uri.toUtf8();
         const QByteArray mimeType = identity.mimeType.toUtf8();
-        return KiriView::rustInstallDisplayThumbnailNonFileUriRgba8(KiriView::Bridge::rustStr(uri),
-            identity.mtimeSeconds, identity.originalByteSize, KiriView::Bridge::rustStr(mimeType),
-            rustBucket(requestedBucket), rgba8.width(), rgba8.height(), rgba8.bytesPerLine(),
-            pixels);
+        install = KiriView::rustInstallDisplayThumbnailNonFileUriRgba8(
+            KiriView::Bridge::rustStr(uri), identity.mtimeSeconds, identity.originalByteSize,
+            KiriView::Bridge::rustStr(mimeType), rustBucket(requestedBucket), rgba8.width(),
+            rgba8.height(), rgba8.bytesPerLine(), pixels);
+    } else {
+        install = KiriView::rustInstallDisplayThumbnailRgba8(
+            KiriView::Bridge::rustBytes(identity.localPathBytes), rustBucket(requestedBucket),
+            rgba8.width(), rgba8.height(), rgba8.bytesPerLine(), pixels);
     }
 
-    return KiriView::rustInstallDisplayThumbnailRgba8(
-        KiriView::Bridge::rustBytes(identity.localPathBytes), rustBucket(requestedBucket),
-        rgba8.width(), rgba8.height(), rgba8.bytesPerLine(), pixels);
+    return KiriView::ThumbnailGenerationCacheInstallResult {
+        install.success,
+        thumbnailBucket(install.requested_bucket),
+        KiriView::Bridge::qtString(install.installed_cache_path),
+        KiriView::Bridge::qtString(install.error),
+    };
 }
 
 KiriView::ThumbnailGenerationDependencies resolvedThumbnailGenerationDependencies(
@@ -338,6 +351,12 @@ KiriView::ThumbnailGenerationDependencies resolvedThumbnailGenerationDependencie
     if (!dependencies.openedCollectionOriginalIdentityLoader) {
         dependencies.openedCollectionOriginalIdentityLoader
             = defaultOpenedCollectionOriginalIdentityLoader;
+    }
+    if (!dependencies.cacheRepository.lookup) {
+        dependencies.cacheRepository.lookup = defaultThumbnailGenerationCacheLookup;
+    }
+    if (!dependencies.cacheRepository.install) {
+        dependencies.cacheRepository.install = installThumbnail;
     }
     return dependencies;
 }
@@ -367,7 +386,7 @@ KiriView::ThumbnailGenerationResult generateThumbnailWithDependencies(
         originalIdentity = *virtualIdentity;
         if (request.cacheInstallEnabled) {
             const std::optional<KiriView::ThumbnailCacheLookupResult> lookup
-                = lookupOpenedCollectionThumbnail(originalIdentity, request.requestedBucket);
+                = dependencies.cacheRepository.lookup(originalIdentity, request.requestedBucket);
             if (lookup.has_value()
                 && lookup->status == KiriView::ThumbnailCacheLookupStatus::Ready) {
                 return readyResultFromCache(*lookup);
@@ -421,18 +440,17 @@ KiriView::ThumbnailGenerationResult generateThumbnailWithDependencies(
         };
     }
 
-    const KiriView::RustThumbnailCacheInstallResult install
-        = installThumbnail(originalIdentity, request.requestedBucket, rgba8);
+    const KiriView::ThumbnailGenerationCacheInstallResult install
+        = dependencies.cacheRepository.install(originalIdentity, request.requestedBucket, rgba8);
     if (!install.success) {
-        return failedResult(
-            thumbnailBucket(install.requested_bucket), KiriView::Bridge::qtString(install.error));
+        return failedResult(install.requestedBucket, install.errorString);
     }
 
     return KiriView::ThumbnailGenerationResult {
         KiriView::ThumbnailGenerationStatus::Ready,
         std::move(rgba8),
-        thumbnailBucket(install.requested_bucket),
-        KiriView::Bridge::qtString(install.installed_cache_path),
+        install.requestedBucket,
+        install.installedCachePath,
         {},
     };
 }
@@ -444,6 +462,8 @@ ThumbnailGenerationDependencies defaultThumbnailGenerationDependencies()
     return ThumbnailGenerationDependencies {
         defaultThumbnailGenerationBytesLoader,
         defaultOpenedCollectionOriginalIdentityLoader,
+        ThumbnailGenerationCacheRepository {
+            defaultThumbnailGenerationCacheLookup, installThumbnail },
     };
 }
 
