@@ -6,6 +6,8 @@ Adapters consume the active thumbnail source key and demand bucket described by 
 
 Thumbnail cache lookup, generation requests, cache original identity, source-kind classification, and bucket sizing are neutral thumbnail infrastructure, not session-owned active-navigation state. The active-navigation strip and main-image preview may both consume these contracts, so decoding code must import thumbnail cache contracts from the thumbnail boundary rather than from `session/`, and active-navigation row kinds must be mapped into thumbnail source kinds before crossing the generation provider boundary.
 
+The default thumbnail generation core resolves source bytes and opened-collection cache identity through injectable thumbnail dependencies before it decodes, renders, or installs a thumbnail. Default dependencies may use local files, media-entry source metadata, media-entry source bytes, and the XDG thumbnail cache, but tests and future clients must be able to replace source loading without constructing session runtimes or mutating global opened-collection state.
+
 ## Original Identity
 
 Thumbnail cache identity is expressed separately from row source identity. Local files use Freedesktop file-original identity derived from the local path. Cacheable non-file originals use an explicit virtual original identity with URI, mtime, byte size, and optional MIME type supplied by the owning adapter or generation path.
