@@ -50,6 +50,7 @@ private Q_SLOTS:
     void qmlViewportUsesContextBridgeForRenderContextDiscovery();
     void oldImageRendererArtifactsAreAbsent();
     void oldImageRendererBuildWiringIsAbsent();
+    void cppTestBuildConsumesCargoAppLibraryOnly();
     void productionImageDisplayUsesProviderPathOnly();
     void sourceKeysExposeTypedExtensionFamilies();
     void sourceKeysExposeOperationalExtensionContracts();
@@ -914,6 +915,41 @@ void TestArchitectureBoundaries::oldImageRendererBuildWiringIsAbsent()
     }
 
     QVERIFY2(buildViolations.isEmpty(), qPrintable(buildViolations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::cppTestBuildConsumesCargoAppLibraryOnly()
+{
+    const QString testCMake = readProjectFile(QStringLiteral("tests/cpp/CMakeLists.txt"));
+    const QList<QString> forbiddenTokens {
+        QStringLiteral("kiriview_manifest_sources"),
+        QStringLiteral("cpp_core_sources.txt"),
+        QStringLiteral("cpp_cxxqt_sources.txt"),
+        QStringLiteral("KIRIVIEW_CORE_SOURCE_PATHS"),
+        QStringLiteral("KIRIVIEW_CXXQT_SOURCE_PATHS"),
+        QStringLiteral("kconfig_add_kcfg_files"),
+    };
+    const QList<QString> requiredTokens {
+        QStringLiteral("KiriViewCargoStatic"),
+        QStringLiteral("add_library(kiriview_test_core INTERFACE"),
+        QStringLiteral("LINK_LIBRARY:WHOLE_ARCHIVE"),
+        QStringLiteral("libkiriview.a"),
+    };
+
+    QStringList violations;
+    for (const QString &token : forbiddenTokens) {
+        if (testCMake.contains(token)) {
+            violations.push_back(
+                QStringLiteral("tests/cpp/CMakeLists.txt must not contain %1").arg(token));
+        }
+    }
+    for (const QString &token : requiredTokens) {
+        if (!testCMake.contains(token)) {
+            violations.push_back(
+                QStringLiteral("tests/cpp/CMakeLists.txt must contain %1").arg(token));
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
 void TestArchitectureBoundaries::productionImageDisplayUsesProviderPathOnly()
