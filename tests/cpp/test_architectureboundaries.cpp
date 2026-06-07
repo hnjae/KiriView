@@ -292,9 +292,14 @@ void TestArchitectureBoundaries::qmlDoesNotOwnSharedActionPolicy()
 void TestArchitectureBoundaries::qmlDoesNotComputePannabilityActionGate()
 {
     const QString mainQml = readProjectFile(QStringLiteral("src/qml/Main.qml"));
+    const QString applicationHeader
+        = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.h"));
+    const QString applicationImplementation
+        = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.cpp"));
     const QList<QRegularExpression> forbiddenPatterns {
         QRegularExpression(QStringLiteral(R"(\bimageMode\s*&&\s*[\w.]+imagePannable\b)")),
         QRegularExpression(QStringLiteral(R"(\bimagePannable\s*&&\s*\w+\.imageMode\b)")),
+        QRegularExpression(QStringLiteral(R"(\bimageInteractionSurface\s*\.\s*imagePannable\b)")),
     };
     QStringList violations;
     for (const QRegularExpression &pattern : forbiddenPatterns) {
@@ -305,8 +310,10 @@ void TestArchitectureBoundaries::qmlDoesNotComputePannabilityActionGate()
     }
 
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
-    QVERIFY(mainQml.contains(
-        QStringLiteral("mediaWorkspaceHost.imageInteractionSurface.imagePannable")));
+    QVERIFY(!applicationHeader.contains(QStringLiteral("bool imagePannable")));
+    QVERIFY(!applicationHeader.contains(QStringLiteral("m_imagePannable")));
+    QVERIFY(!applicationImplementation.contains(QStringLiteral("m_imagePannable")));
+    QVERIFY(applicationImplementation.contains(QStringLiteral("viewportPannable()")));
 }
 
 void TestArchitectureBoundaries::qmlDoesNotRecomputeSharedMediaReadiness()
