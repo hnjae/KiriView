@@ -213,7 +213,28 @@ KiriView::MediaEntrySourceThumbnailMetadataResult loadOpenedCollectionThumbnailM
         request.openedCollectionScope, request.sourceUrl);
 }
 
-QByteArray loadThumbnailBytes(
+std::optional<KiriView::ThumbnailOriginalIdentity> openedCollectionVirtualOriginalIdentity(
+    const KiriView::MediaEntrySourceThumbnailMetadata &metadata)
+{
+    if (metadata.checksum.algorithm != KiriView::MediaEntryContentChecksumAlgorithm::Crc32
+        || metadata.checksum.value > std::numeric_limits<std::uint32_t>::max()
+        || metadata.uncompressedSize < 0) {
+        return std::nullopt;
+    }
+
+    const QString uri
+        = KiriView::Bridge::qtString(KiriView::rustVirtualThumbnailArchiveEntryCrc32Uri(
+            static_cast<std::uint32_t>(metadata.checksum.value),
+            static_cast<std::uint64_t>(metadata.uncompressedSize)));
+    if (uri.isEmpty()) {
+        return std::nullopt;
+    }
+
+    return KiriView::ThumbnailOriginalIdentity::fromNonFileUri(
+        uri, 0, metadata.uncompressedSize, QString());
+}
+
+QByteArray defaultThumbnailGenerationBytesLoader(
     const KiriView::ThumbnailGenerationRequest &request, QString *errorString)
 {
     if (!request.openedCollectionScope.isEmpty()) {
@@ -245,25 +266,33 @@ QByteArray loadThumbnailBytes(
     return file.readAll();
 }
 
-std::optional<KiriView::ThumbnailOriginalIdentity> openedCollectionVirtualOriginalIdentity(
-    const KiriView::MediaEntrySourceThumbnailMetadata &metadata)
+std::optional<KiriView::ThumbnailOriginalIdentity> defaultOpenedCollectionOriginalIdentityLoader(
+    const KiriView::ThumbnailGenerationRequest &request, QString *errorString)
 {
-    if (metadata.checksum.algorithm != KiriView::MediaEntryContentChecksumAlgorithm::Crc32
-        || metadata.checksum.value > std::numeric_limits<std::uint32_t>::max()
-        || metadata.uncompressedSize < 0) {
+    KiriView::MediaEntrySourceThumbnailMetadataResult metadataResult
+        = loadOpenedCollectionThumbnailMetadata(request);
+    if (const auto *error = std::get_if<KiriView::MediaEntrySourceError>(&metadataResult)) {
+        if (errorString != nullptr) {
+            *errorString = error->errorString;
+        }
         return std::nullopt;
     }
 
-    const QString uri
-        = KiriView::Bridge::qtString(KiriView::rustVirtualThumbnailArchiveEntryCrc32Uri(
-            static_cast<std::uint32_t>(metadata.checksum.value),
-            static_cast<std::uint64_t>(metadata.uncompressedSize)));
-    if (uri.isEmpty()) {
+    const auto *metadata
+        = std::get_if<KiriView::MediaEntrySourceThumbnailMetadata>(&metadataResult);
+    if (metadata == nullptr) {
+        if (errorString != nullptr) {
+            *errorString = QStringLiteral("collection thumbnail metadata failed");
+        }
         return std::nullopt;
     }
 
-    return KiriView::ThumbnailOriginalIdentity::fromNonFileUri(
-        uri, 0, metadata.uncompressedSize, QString());
+    std::optional<KiriView::ThumbnailOriginalIdentity> identity
+        = openedCollectionVirtualOriginalIdentity(*metadata);
+    if (!identity.has_value() && errorString != nullptr) {
+        *errorString = QStringLiteral("collection thumbnail identity failed");
+    }
+    return identity;
 }
 
 std::optional<KiriView::ThumbnailCacheLookupResult> lookupOpenedCollectionThumbnail(
@@ -300,8 +329,22 @@ KiriView::RustThumbnailCacheInstallResult installThumbnail(
         rgba8.width(), rgba8.height(), rgba8.bytesPerLine(), pixels);
 }
 
-KiriView::ThumbnailGenerationResult generateThumbnail(
-    const KiriView::ThumbnailGenerationRequest &request)
+KiriView::ThumbnailGenerationDependencies resolvedThumbnailGenerationDependencies(
+    KiriView::ThumbnailGenerationDependencies dependencies)
+{
+    if (!dependencies.bytesLoader) {
+        dependencies.bytesLoader = defaultThumbnailGenerationBytesLoader;
+    }
+    if (!dependencies.openedCollectionOriginalIdentityLoader) {
+        dependencies.openedCollectionOriginalIdentityLoader
+            = defaultOpenedCollectionOriginalIdentityLoader;
+    }
+    return dependencies;
+}
+
+KiriView::ThumbnailGenerationResult generateThumbnailWithDependencies(
+    const KiriView::ThumbnailGenerationRequest &request,
+    KiriView::ThumbnailGenerationDependencies dependencies)
 {
     const int maximumLongEdge = bucketMaxEdge(request.requestedBucket);
     if (maximumLongEdge <= 0) {
@@ -313,23 +356,13 @@ KiriView::ThumbnailGenerationResult generateThumbnail(
         ? request.originalIdentity
         : KiriView::ThumbnailOriginalIdentity::fromLocalPathBytes(request.localPathBytes);
     if (!request.openedCollectionScope.isEmpty()) {
-        KiriView::MediaEntrySourceThumbnailMetadataResult metadataResult
-            = loadOpenedCollectionThumbnailMetadata(request);
-        if (const auto *error = std::get_if<KiriView::MediaEntrySourceError>(&metadataResult)) {
-            return failedResult(request.requestedBucket, error->errorString);
-        }
-        const auto *metadata
-            = std::get_if<KiriView::MediaEntrySourceThumbnailMetadata>(&metadataResult);
-        if (metadata == nullptr) {
-            return failedResult(
-                request.requestedBucket, QStringLiteral("collection thumbnail metadata failed"));
-        }
-
+        QString identityError;
         const std::optional<KiriView::ThumbnailOriginalIdentity> virtualIdentity
-            = openedCollectionVirtualOriginalIdentity(*metadata);
+            = dependencies.openedCollectionOriginalIdentityLoader(request, &identityError);
         if (!virtualIdentity.has_value()) {
-            return failedResult(
-                request.requestedBucket, QStringLiteral("collection thumbnail identity failed"));
+            return failedResult(request.requestedBucket,
+                identityError.isEmpty() ? QStringLiteral("collection thumbnail identity failed")
+                                        : std::move(identityError));
         }
         originalIdentity = *virtualIdentity;
         if (request.cacheInstallEnabled) {
@@ -348,7 +381,7 @@ KiriView::ThumbnailGenerationResult generateThumbnail(
     }
 
     QString loadError;
-    QByteArray bytes = loadThumbnailBytes(request, &loadError);
+    QByteArray bytes = dependencies.bytesLoader(request, &loadError);
     if (bytes.isEmpty() && !loadError.isEmpty()) {
         return failedResult(request.requestedBucket, std::move(loadError));
     }
@@ -406,13 +439,32 @@ KiriView::ThumbnailGenerationResult generateThumbnail(
 }
 
 namespace KiriView {
-ThumbnailGenerationProvider defaultThumbnailGenerationProvider(ImageWorkerScheduler workerScheduler)
+ThumbnailGenerationDependencies defaultThumbnailGenerationDependencies()
 {
-    return [workerScheduler = std::move(workerScheduler)](QObject *receiver,
-               ThumbnailGenerationRequest request, ThumbnailGenerationCallback callback) {
+    return ThumbnailGenerationDependencies {
+        defaultThumbnailGenerationBytesLoader,
+        defaultOpenedCollectionOriginalIdentityLoader,
+    };
+}
+
+ThumbnailGenerationResult generateThumbnail(
+    const ThumbnailGenerationRequest &request, ThumbnailGenerationDependencies dependencies)
+{
+    return generateThumbnailWithDependencies(
+        request, resolvedThumbnailGenerationDependencies(std::move(dependencies)));
+}
+
+ThumbnailGenerationProvider defaultThumbnailGenerationProvider(
+    ImageWorkerScheduler workerScheduler, ThumbnailGenerationDependencies dependencies)
+{
+    return [workerScheduler = std::move(workerScheduler), dependencies = std::move(dependencies)](
+               QObject *receiver, ThumbnailGenerationRequest request,
+               ThumbnailGenerationCallback callback) {
         return startImageIoWorkerJob(
             receiver, workerScheduler,
-            [request = std::move(request)]() { return generateThumbnail(request); },
+            [request = std::move(request), dependencies]() {
+                return generateThumbnail(request, dependencies);
+            },
             [callback = std::move(callback)](ThumbnailGenerationResult result) mutable {
                 if (callback) {
                     callback(std::move(result));

@@ -16,6 +16,7 @@
 #include <QString>
 #include <QUrl>
 #include <functional>
+#include <optional>
 
 class QObject;
 
@@ -46,12 +47,28 @@ struct ThumbnailGenerationResult {
     QString errorString;
 };
 
+using ThumbnailGenerationBytesLoader
+    = std::function<QByteArray(const ThumbnailGenerationRequest &, QString *)>;
+using ThumbnailGenerationOriginalIdentityLoader
+    = std::function<std::optional<ThumbnailOriginalIdentity>(
+        const ThumbnailGenerationRequest &, QString *)>;
+
+struct ThumbnailGenerationDependencies {
+    ThumbnailGenerationBytesLoader bytesLoader;
+    ThumbnailGenerationOriginalIdentityLoader openedCollectionOriginalIdentityLoader;
+};
+
 using ThumbnailGenerationCallback = std::function<void(ThumbnailGenerationResult)>;
 using ThumbnailGenerationProvider
     = std::function<ImageIoJob(QObject *, ThumbnailGenerationRequest, ThumbnailGenerationCallback)>;
 
+ThumbnailGenerationDependencies defaultThumbnailGenerationDependencies();
+
+ThumbnailGenerationResult generateThumbnail(
+    const ThumbnailGenerationRequest &request, ThumbnailGenerationDependencies dependencies = {});
+
 ThumbnailGenerationProvider defaultThumbnailGenerationProvider(
-    ImageWorkerScheduler workerScheduler = {});
+    ImageWorkerScheduler workerScheduler = {}, ThumbnailGenerationDependencies dependencies = {});
 }
 
 #endif
