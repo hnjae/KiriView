@@ -54,7 +54,7 @@ private Q_SLOTS:
     void sourceKeysExposeOperationalExtensionContracts();
     void openedCollectionThumbnailEligibilityUsesSharedPolicy();
     void decodingUsesNeutralThumbnailContracts();
-    void thumbnailGenerationUsesNeutralSourceKinds();
+    void thumbnailGenerationContractsLiveInThumbnailModule();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void activePresentationDoesNotWritePageSurfacePresentationState();
@@ -1014,10 +1014,26 @@ void TestArchitectureBoundaries::decodingUsesNeutralThumbnailContracts()
     QVERIFY(cacheLookupHeader.contains(QStringLiteral("ThumbnailCacheLookupRequest")));
 }
 
-void TestArchitectureBoundaries::thumbnailGenerationUsesNeutralSourceKinds()
+void TestArchitectureBoundaries::thumbnailGenerationContractsLiveInThumbnailModule()
 {
-    const QString generationHeader
-        = readProjectFile(QStringLiteral("src/session/thumbnailgeneration.h"));
+    const QString generationHeaderPath = QStringLiteral("src/thumbnail/thumbnailgeneration.h");
+    const QString generationSourcePath = QStringLiteral("src/thumbnail/thumbnailgeneration.cpp");
+    const QString legacyGenerationHeaderPath = QStringLiteral("src/session/thumbnailgeneration.h");
+    const QString legacyGenerationSourcePath
+        = QStringLiteral("src/session/thumbnailgeneration.cpp");
+
+    QVERIFY2(QFileInfo::exists(projectPath(generationHeaderPath)),
+        qPrintable(QStringLiteral("%1 must own thumbnail generation contracts")
+                .arg(generationHeaderPath)));
+    QVERIFY2(!QFileInfo::exists(projectPath(legacyGenerationHeaderPath)),
+        qPrintable(QStringLiteral("%1 must move out of session").arg(legacyGenerationHeaderPath)));
+    QVERIFY2(!QFileInfo::exists(projectPath(legacyGenerationSourcePath)),
+        qPrintable(QStringLiteral("%1 must move out of session").arg(legacyGenerationSourcePath)));
+
+    const QString generationHeader = readProjectFile(generationHeaderPath);
+    const QString coreSources = readProjectFile(QStringLiteral("src/cpp_core_sources.txt"));
+    const QString activeNavigationRuntimeHeader
+        = readProjectFile(QStringLiteral("src/session/activenavigationthumbnailruntime.h"));
 
     QVERIFY(generationHeader.contains(QStringLiteral("ThumbnailSourceKind sourceKind")));
     QVERIFY(!generationHeader.contains(QStringLiteral("ActiveNavigationThumbnailSourceKind")));
@@ -1025,6 +1041,12 @@ void TestArchitectureBoundaries::thumbnailGenerationUsesNeutralSourceKinds()
         QStringLiteral("#include \"session/activenavigationthumbnailprojection.h\"")));
     QVERIFY(
         generationHeader.contains(QStringLiteral("#include \"thumbnail/thumbnailsourcekind.h\"")));
+    QVERIFY(coreSources.contains(generationSourcePath));
+    QVERIFY(!coreSources.contains(legacyGenerationSourcePath));
+    QVERIFY(activeNavigationRuntimeHeader.contains(
+        QStringLiteral("#include \"thumbnail/thumbnailgeneration.h\"")));
+    QVERIFY(!activeNavigationRuntimeHeader.contains(
+        QStringLiteral("#include \"session/thumbnailgeneration.h\"")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
