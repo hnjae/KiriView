@@ -152,7 +152,9 @@ Switching between single-page display and Two-Page Spread is transactional. Duri
 
 ## Animation
 
-Animated image files, including GIF, APNG, and HEIF-family image sequences such as `.heics` and `.avifs`, play when animation frames are available.
+Animated image files, including GIF, APNG, animated WebP, animated JPEG XL, and HEIF-family image sequences such as `.heics` and `.avifs`, play when animation frames are available.
+
+When KiriView can identify more than one authored frame in a supported animated image file, it presents the file as an animation instead of freezing it as a static still image.
 
 The first frame is shown once loading succeeds. Later frames use the file's frame delays and loop count.
 
