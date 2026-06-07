@@ -54,6 +54,8 @@ using ThumbnailGenerationOriginalIdentityLoader
     = std::function<std::optional<ThumbnailOriginalIdentity>(
         const ThumbnailGenerationRequest &, QString *)>;
 using ThumbnailGenerationImageDecoder = std::function<QImage(QByteArray, int, QString *)>;
+using ThumbnailGenerationMaximumLongEdgePolicy
+    = std::function<int(ActiveNavigationThumbnailDemandBucket)>;
 
 struct ThumbnailGenerationCacheInstallResult {
     bool success = false;
@@ -76,6 +78,7 @@ struct ThumbnailGenerationCacheRepository {
 struct ThumbnailGenerationDependencies {
     ThumbnailGenerationBytesLoader bytesLoader;
     ThumbnailGenerationImageDecoder imageDecoder;
+    ThumbnailGenerationMaximumLongEdgePolicy maximumLongEdgeForBucket;
     ThumbnailGenerationOriginalIdentityLoader openedCollectionOriginalIdentityLoader;
     ThumbnailGenerationCacheRepository cacheRepository;
 };

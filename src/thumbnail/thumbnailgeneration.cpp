@@ -373,6 +373,9 @@ KiriView::ThumbnailGenerationDependencies resolvedThumbnailGenerationDependencie
     if (!dependencies.imageDecoder) {
         dependencies.imageDecoder = defaultThumbnailGenerationImageDecoder;
     }
+    if (!dependencies.maximumLongEdgeForBucket) {
+        dependencies.maximumLongEdgeForBucket = bucketMaxEdge;
+    }
     if (!dependencies.openedCollectionOriginalIdentityLoader) {
         dependencies.openedCollectionOriginalIdentityLoader
             = defaultOpenedCollectionOriginalIdentityLoader;
@@ -390,7 +393,7 @@ KiriView::ThumbnailGenerationResult generateThumbnailWithDependencies(
     const KiriView::ThumbnailGenerationRequest &request,
     KiriView::ThumbnailGenerationDependencies dependencies)
 {
-    const int maximumLongEdge = bucketMaxEdge(request.requestedBucket);
+    const int maximumLongEdge = dependencies.maximumLongEdgeForBucket(request.requestedBucket);
     if (maximumLongEdge <= 0) {
         return failedResult(
             request.requestedBucket, QStringLiteral("thumbnail generation requires a size bucket"));
@@ -476,6 +479,7 @@ ThumbnailGenerationDependencies defaultThumbnailGenerationDependencies()
     return ThumbnailGenerationDependencies {
         defaultThumbnailGenerationBytesLoader,
         defaultThumbnailGenerationImageDecoder,
+        bucketMaxEdge,
         defaultOpenedCollectionOriginalIdentityLoader,
         ThumbnailGenerationCacheRepository {
             defaultThumbnailGenerationCacheLookup, installThumbnail },
