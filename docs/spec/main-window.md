@@ -110,6 +110,8 @@ The right-click gesture is a fixed mouse gesture. It is not listed in Keyboard S
 
 When KiriView is launched with one or more file path or URL arguments, including from a file manager's Open With action, it processes only the first argument in the supplied order and opens it at startup.
 
+When KiriView is launched with `--verbose` or `-v`, it enables diagnostic and performance logging for the launch while otherwise following normal GUI startup and source-opening behavior.
+
 Activating the open action shows the XDG portal file chooser, which accepts a single selection only.
 
 Dropping one or more file or URL items onto the running main window opens only the first item in the order supplied by the desktop environment.
