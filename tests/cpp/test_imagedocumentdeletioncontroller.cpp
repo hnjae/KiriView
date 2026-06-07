@@ -196,6 +196,7 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
     std::vector<QString> failures;
     int inProgressChangeCount = 0;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    state.setStatus(KiriView::ImageDocumentStatus::Ready);
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(imageUrl));
     pageSurface.setImage(testImage(2, 1), false);
 
@@ -237,6 +238,7 @@ void TestImageDocumentDeletionController::canceledFallbackCandidateCompletionIsI
     std::vector<QString> failures;
     const QUrl currentUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl nextUrl = localUrl(QStringLiteral("/images/02.png"));
+    state.setStatus(KiriView::ImageDocumentStatus::Ready);
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(currentUrl));
     pageSurface.setImage(testImage(2, 1), false);
 

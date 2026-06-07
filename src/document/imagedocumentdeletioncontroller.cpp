@@ -15,6 +15,11 @@ QString genericFileDeletionErrorMessage()
 {
     return KiriView::imageErrorText(KiriView::ImageErrorTextId::DeleteFile);
 }
+
+bool documentReadyForFileDeletion(const KiriView::ImageDocumentState &state)
+{
+    return state.status() == KiriView::ImageDocumentStatus::Ready;
+}
 }
 
 namespace KiriView {
@@ -39,6 +44,10 @@ bool ImageDocumentDeletionController::inProgress() const { return m_deletionStat
 
 void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
 {
+    if (!documentReadyForFileDeletion(m_state)) {
+        return;
+    }
+
     if (!m_pageSurfaceController.hasImage()) {
         return;
     }
