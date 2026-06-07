@@ -55,6 +55,7 @@ private Q_SLOTS:
     void openedCollectionThumbnailEligibilityUsesSharedPolicy();
     void decodingUsesNeutralThumbnailContracts();
     void thumbnailGenerationContractsLiveInThumbnailModule();
+    void documentSessionUsesThumbnailStripDependencyPort();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void activePresentationDoesNotWritePageSurfacePresentationState();
@@ -1047,6 +1048,36 @@ void TestArchitectureBoundaries::thumbnailGenerationContractsLiveInThumbnailModu
         QStringLiteral("#include \"thumbnail/thumbnailgeneration.h\"")));
     QVERIFY(!activeNavigationRuntimeHeader.contains(
         QStringLiteral("#include \"session/thumbnailgeneration.h\"")));
+}
+
+void TestArchitectureBoundaries::documentSessionUsesThumbnailStripDependencyPort()
+{
+    const QString documentSessionHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.h"));
+    const QString thumbnailRuntimeHeader
+        = readProjectFile(QStringLiteral("src/session/activenavigationthumbnailruntime.h"));
+
+    QVERIFY(thumbnailRuntimeHeader.contains(
+        QStringLiteral("struct ActiveNavigationThumbnailRuntimeDependencies")));
+    QVERIFY(documentSessionHeader.contains(
+        QStringLiteral("ActiveNavigationThumbnailRuntimeDependencies activeNavigationThumbnails")));
+
+    const QList<QRegularExpression> rawThumbnailProviderFields {
+        QRegularExpression(QStringLiteral(R"(\bactiveNavigationThumbnailLookupProvider\b)")),
+        QRegularExpression(QStringLiteral(R"(\bactiveNavigationThumbnailGenerationProvider\b)")),
+        QRegularExpression(QStringLiteral(R"(\bactiveNavigationThumbnailSourceAdapter\b)")),
+        QRegularExpression(QStringLiteral(R"(\bactiveNavigationThumbnailWorkerScheduler\b)")),
+        QRegularExpression(QStringLiteral(R"(\bactiveNavigationThumbnailImageStore\b)")),
+    };
+
+    QStringList violations;
+    for (const QRegularExpression &pattern : rawThumbnailProviderFields) {
+        if (pattern.match(documentSessionHeader).hasMatch()) {
+            violations.push_back(pattern.pattern());
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
