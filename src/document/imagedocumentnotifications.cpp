@@ -39,15 +39,18 @@ std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications(
     std::vector<ImageDocumentChange> notifications;
     bool twoPageMode = false;
 
+    if (changes.viewportSizeChanged) {
+        notifications.push_back(ImageDocumentChange::ViewportSize);
+    }
     if (changes.zoomModeChanged) {
         notifications.push_back(ImageDocumentChange::ZoomMode);
     }
     if (changes.zoomPercentChanged) {
         notifications.push_back(ImageDocumentChange::ZoomPercent);
     }
-    if (changes.displaySizeChanged) {
+    if (changes.displaySizeChanged || changes.viewportSizeChanged) {
         notifications.push_back(ImageDocumentChange::DisplaySize);
-        twoPageMode = true;
+        twoPageMode = changes.displaySizeChanged;
     }
     if (changes.maximumManualZoomPercentChanged) {
         notifications.push_back(ImageDocumentChange::MaximumManualZoomPercent);

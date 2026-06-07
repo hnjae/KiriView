@@ -62,6 +62,20 @@ namespace {
         };
     }
 
+    ImageDisplaySourceStatus displaySourceStatusForLoadOutcome(ImageDisplayLoadOutcome outcome)
+    {
+        switch (outcome) {
+        case ImageDisplayLoadOutcome::Loaded:
+            return ImageDisplaySourceStatus::Ready;
+        case ImageDisplayLoadOutcome::Error:
+            return ImageDisplaySourceStatus::Error;
+        case ImageDisplayLoadOutcome::Missing:
+            return ImageDisplaySourceStatus::Missing;
+        }
+
+        return ImageDisplaySourceStatus::Error;
+    }
+
     StaticDisplayImagePayload refinedDisplayImagePayload(
         RasterDisplayRefinementWork work, QImage image)
     {
@@ -470,45 +484,48 @@ void ImagePageSurfaceController::clearAnimationFrameLoadContract()
     m_pendingAnimationFrameSourceIdentity.clear();
 }
 
-void ImagePageSurfaceController::acknowledgeDisplayImageLoad(const QUrl &providerUrl,
+bool ImagePageSurfaceController::acknowledgeDisplayImageLoad(const QUrl &providerUrl,
     quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome)
 {
     if (m_currentDisplayEntryIsAnimationFrame) {
-        acknowledgeAnimationFrameDisplayLoad(providerUrl, revision, sourceIdentity, outcome);
-        return;
+        return acknowledgeAnimationFrameDisplayLoad(providerUrl, revision, sourceIdentity, outcome);
     }
 
-    acknowledgeStillImageDisplayLoad(providerUrl, revision, sourceIdentity, outcome);
+    return acknowledgeStillImageDisplayLoad(providerUrl, revision, sourceIdentity, outcome);
 }
 
-void ImagePageSurfaceController::acknowledgeStillImageDisplayLoad(const QUrl &providerUrl,
+bool ImagePageSurfaceController::acknowledgeStillImageDisplayLoad(const QUrl &providerUrl,
     quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome)
 {
-    Q_UNUSED(outcome);
-
     if (m_currentDisplayEntryIsAnimationFrame || !m_stillImageDisplayLoadPending
         || providerUrl != m_pendingStillImageProviderUrl || revision != m_pendingStillImageRevision
         || sourceIdentity != m_pendingStillImageSourceIdentity) {
-        return;
+        return false;
     }
 
     clearStillImageLoadContract();
+    m_displaySource.status = displaySourceStatusForLoadOutcome(outcome);
+    m_displaySource.loadAcknowledgmentRequired = false;
+    notify(ImageDocumentChange::DisplaySource);
+    return true;
 }
 
-void ImagePageSurfaceController::acknowledgeAnimationFrameDisplayLoad(const QUrl &providerUrl,
+bool ImagePageSurfaceController::acknowledgeAnimationFrameDisplayLoad(const QUrl &providerUrl,
     quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome)
 {
-    Q_UNUSED(outcome);
-
     if (!m_currentDisplayEntryIsAnimationFrame || !m_animationFrameDisplayLoadPending
         || providerUrl != m_pendingAnimationFrameProviderUrl
         || revision != m_pendingAnimationFrameRevision
         || sourceIdentity != m_pendingAnimationFrameSourceIdentity) {
-        return;
+        return false;
     }
 
     clearAnimationFrameLoadContract();
     releaseRetainedAnimationFrameEntry();
+    m_displaySource.status = displaySourceStatusForLoadOutcome(outcome);
+    m_displaySource.loadAcknowledgmentRequired = false;
+    notify(ImageDocumentChange::DisplaySource);
+    return true;
 }
 
 void ImagePageSurfaceController::updateDisplaySourceVisibility(bool visible)

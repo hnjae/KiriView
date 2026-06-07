@@ -64,11 +64,11 @@ public:
 
     void startAnimation(ImageAnimationPlaybackRequest request);
     void stopAnimation();
-    void acknowledgeDisplayImageLoad(const QUrl &providerUrl, quint64 revision,
+    bool acknowledgeDisplayImageLoad(const QUrl &providerUrl, quint64 revision,
         const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
-    void acknowledgeStillImageDisplayLoad(const QUrl &providerUrl, quint64 revision,
+    bool acknowledgeStillImageDisplayLoad(const QUrl &providerUrl, quint64 revision,
         const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
-    void acknowledgeAnimationFrameDisplayLoad(const QUrl &providerUrl, quint64 revision,
+    bool acknowledgeAnimationFrameDisplayLoad(const QUrl &providerUrl, quint64 revision,
         const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
 
 private:

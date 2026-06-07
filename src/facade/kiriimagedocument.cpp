@@ -356,9 +356,21 @@ QRectF KiriImageDocument::visibleItemRect() const { return m_runtime->visibleIte
 
 QSizeF KiriImageDocument::displaySize() const { return m_runtime->displaySize(); }
 
+double KiriImageDocument::displayWidth() const { return displaySize().width(); }
+
+double KiriImageDocument::displayHeight() const { return displaySize().height(); }
+
 QSizeF KiriImageDocument::primaryDisplaySize() const { return m_runtime->primaryDisplaySize(); }
 
+double KiriImageDocument::primaryDisplayWidth() const { return primaryDisplaySize().width(); }
+
+double KiriImageDocument::primaryDisplayHeight() const { return primaryDisplaySize().height(); }
+
 QSizeF KiriImageDocument::secondaryDisplaySize() const { return m_runtime->secondaryDisplaySize(); }
+
+double KiriImageDocument::secondaryDisplayWidth() const { return secondaryDisplaySize().width(); }
+
+double KiriImageDocument::secondaryDisplayHeight() const { return secondaryDisplaySize().height(); }
 
 bool KiriImageDocument::zoomPercentKnown() const { return m_runtime->zoomPercentKnown(); }
 

@@ -87,7 +87,8 @@ void registerKiriViewQmlTypes()
     KiriView::initializeLocalization();
     qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
     qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
-    qmlRegisterType<KiriMediaInformation>("io.github.hnjae.kiriview", 1, 0, "KiriMediaInformation");
+    qmlRegisterUncreatableType<KiriMediaInformation>("io.github.hnjae.kiriview", 1, 0,
+        "KiriMediaInformation", "KiriMediaInformation is owned by KiriDocumentSession");
     qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
     qmlRegisterType<ImageActionAvailability>(
         "io.github.hnjae.kiriview", 1, 0, "ImageActionAvailability");

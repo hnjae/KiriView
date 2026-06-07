@@ -409,17 +409,24 @@ void ImageSpreadPresentationController::acknowledgeDisplayImageLoad(DisplayedPag
     const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
     ImageDisplayLoadOutcome outcome)
 {
+    bool accepted = false;
     switch (role) {
     case DisplayedPageRole::Primary:
-        m_primaryPageSurface.acknowledgeDisplayImageLoad(
+        accepted = m_primaryPageSurface.acknowledgeDisplayImageLoad(
             providerUrl, revision, sourceIdentity, outcome);
-        return;
+        break;
     case DisplayedPageRole::Secondary:
         if (m_secondaryPageController != nullptr) {
-            m_secondaryPageController->pageSurfaceController().acknowledgeDisplayImageLoad(
-                providerUrl, revision, sourceIdentity, outcome);
+            accepted
+                = m_secondaryPageController->pageSurfaceController().acknowledgeDisplayImageLoad(
+                    providerUrl, revision, sourceIdentity, outcome);
         }
-        return;
+        break;
+    }
+
+    if (accepted && updatePresentationPageSlot(role)) {
+        updateDisplayProjections();
+        notify(ImageDocumentChange::DisplaySource);
     }
 }
 
@@ -427,17 +434,24 @@ void ImageSpreadPresentationController::acknowledgeStillImageDisplayLoad(Display
     const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
     ImageDisplayLoadOutcome outcome)
 {
+    bool accepted = false;
     switch (role) {
     case DisplayedPageRole::Primary:
-        m_primaryPageSurface.acknowledgeStillImageDisplayLoad(
+        accepted = m_primaryPageSurface.acknowledgeStillImageDisplayLoad(
             providerUrl, revision, sourceIdentity, outcome);
-        return;
+        break;
     case DisplayedPageRole::Secondary:
         if (m_secondaryPageController != nullptr) {
-            m_secondaryPageController->pageSurfaceController().acknowledgeStillImageDisplayLoad(
-                providerUrl, revision, sourceIdentity, outcome);
+            accepted = m_secondaryPageController->pageSurfaceController()
+                           .acknowledgeStillImageDisplayLoad(
+                               providerUrl, revision, sourceIdentity, outcome);
         }
-        return;
+        break;
+    }
+
+    if (accepted && updatePresentationPageSlot(role)) {
+        updateDisplayProjections();
+        notify(ImageDocumentChange::DisplaySource);
     }
 }
 
@@ -770,6 +784,22 @@ void ImageSpreadPresentationController::notifyActivePresentationZoomChanged(
     const ImageZoomChangeSet &changes)
 {
     notifyChanges(imageDocumentSpreadZoomNotifications(changes));
+}
+
+bool ImageSpreadPresentationController::updatePresentationPageSlot(DisplayedPageRole role)
+{
+    switch (role) {
+    case DisplayedPageRole::Primary:
+        return m_presentationRuntime.updatePrimaryPageSlot(m_primaryPageSurface.snapshot());
+    case DisplayedPageRole::Secondary:
+        if (m_secondaryPageController == nullptr) {
+            return false;
+        }
+        return m_presentationRuntime.updateSecondaryPageSlot(
+            m_secondaryPageController->pageSlotSnapshot());
+    }
+
+    return false;
 }
 
 void ImageSpreadPresentationController::updateDisplayProjections()

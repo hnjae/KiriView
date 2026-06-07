@@ -49,15 +49,21 @@ void TestImageDocumentNotifications::notificationPlansReturnChangesInEmissionOrd
             KiriView::ImageDocumentChange::MaximumManualZoomPercent,
             KiriView::ImageDocumentChange::DisplaySource });
     KiriView::ImageZoomChangeSet spreadZoomChanges;
+    spreadZoomChanges.viewportSizeChanged = true;
     spreadZoomChanges.zoomModeChanged = true;
     spreadZoomChanges.zoomPercentChanged = true;
     spreadZoomChanges.displaySizeChanged = true;
     spreadZoomChanges.maximumManualZoomPercentChanged = true;
     compareChanges(KiriView::imageDocumentSpreadZoomNotifications(spreadZoomChanges),
-        { KiriView::ImageDocumentChange::ZoomMode, KiriView::ImageDocumentChange::ZoomPercent,
-            KiriView::ImageDocumentChange::DisplaySize,
+        { KiriView::ImageDocumentChange::ViewportSize, KiriView::ImageDocumentChange::ZoomMode,
+            KiriView::ImageDocumentChange::ZoomPercent, KiriView::ImageDocumentChange::DisplaySize,
             KiriView::ImageDocumentChange::MaximumManualZoomPercent,
             KiriView::ImageDocumentChange::TwoPageMode });
+    KiriView::ImageZoomChangeSet viewportOnlySpreadZoomChanges;
+    viewportOnlySpreadZoomChanges.viewportSizeChanged = true;
+    compareChanges(KiriView::imageDocumentSpreadZoomNotifications(viewportOnlySpreadZoomChanges),
+        { KiriView::ImageDocumentChange::ViewportSize,
+            KiriView::ImageDocumentChange::DisplaySize });
     compareChanges(KiriView::imageDocumentSpreadZoomNotifications({}),
         std::vector<KiriView::ImageDocumentChange> {});
     compareChanges(KiriView::imageDocumentRightToLeftReadingNotifications(false),

@@ -133,6 +133,8 @@ public:
     ImageZoomChangeSet commitPrimaryPageSlot(
         const ImagePresentationPageSlotSnapshot &slot, const ImagePresentationScopeKey &scopeKey);
     ImageZoomChangeSet commitSecondaryPageSlot(const ImagePresentationPageSlotSnapshot &slot);
+    bool updatePrimaryPageSlot(const ImagePresentationPageSlotSnapshot &slot);
+    bool updateSecondaryPageSlot(const ImagePresentationPageSlotSnapshot &slot);
     void clearPrimaryPageSlot();
     void clearSecondaryPageSlot();
 

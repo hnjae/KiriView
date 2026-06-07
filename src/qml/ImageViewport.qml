@@ -294,18 +294,18 @@ MediaViewportDelegate {
         Item {
             id: spreadItem
 
-            height: root.presentationActive ? root.imageDocument.displaySize.height : 0
-            width: root.presentationActive ? root.imageDocument.displaySize.width : 0
-            x: root.presentationActive ? root.imageDocument.viewportImageRect.x : 0
-            y: root.presentationActive ? root.imageDocument.viewportImageRect.y : 0
+            height: root.imageReady ? root.imageDocument.displayHeight : 0
+            width: root.imageReady ? root.imageDocument.displayWidth : 0
+            x: root.imageReady ? root.imageDocument.viewportImageRect.x : 0
+            y: root.imageReady ? root.imageDocument.viewportImageRect.y : 0
 
             DisplayImagePage {
                 id: primaryDisplayImagePage
 
                 displaySource: root.presentationActive ? root.imageDocument.primaryDisplaySource : null
-                height: root.presentationActive ? root.imageDocument.primaryDisplaySize.height : 0
+                height: root.imageReady ? root.imageDocument.primaryDisplayHeight : 0
                 objectName: "primaryDisplayImagePage"
-                width: root.presentationActive ? root.imageDocument.primaryDisplaySize.width : 0
+                width: root.imageReady ? root.imageDocument.primaryDisplayWidth : 0
                 x: root.presentationActive && root.imageDocument.secondaryPageVisible && root.documentSession.activeImageRightToLeftReadingActive ? secondaryDisplayImagePage.width : 0
                 y: Math.max(0, (spreadItem.height - height) / 2)
 
@@ -318,9 +318,9 @@ MediaViewportDelegate {
                 id: secondaryDisplayImagePage
 
                 displaySource: root.presentationActive ? root.imageDocument.secondaryDisplaySource : null
-                height: root.presentationActive ? root.imageDocument.secondaryDisplaySize.height : 0
+                height: root.imageReady ? root.imageDocument.secondaryDisplayHeight : 0
                 objectName: "secondaryDisplayImagePage"
-                width: root.presentationActive ? root.imageDocument.secondaryDisplaySize.width : 0
+                width: root.imageReady ? root.imageDocument.secondaryDisplayWidth : 0
                 x: root.presentationActive && root.documentSession.activeImageRightToLeftReadingActive ? 0 : primaryDisplayImagePage.width
                 y: Math.max(0, (spreadItem.height - height) / 2)
 

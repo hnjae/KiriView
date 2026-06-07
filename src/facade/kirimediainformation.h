@@ -46,7 +46,8 @@ private:
 class KiriMediaInformation : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
+    QML_NAMED_ELEMENT(KiriMediaInformation)
+    QML_UNCREATABLE("KiriMediaInformation is owned by KiriDocumentSession")
 
     Q_PROPERTY(bool available READ available NOTIFY changed)
     Q_PROPERTY(quint64 revision READ revision NOTIFY changed)

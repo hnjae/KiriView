@@ -161,6 +161,7 @@ private:
     void applyActivePresentationChanges(
         const ImageZoomChangeSet &changes, bool notifyPublicChanges = true);
     void notifyActivePresentationZoomChanged(const ImageZoomChangeSet &changes);
+    bool updatePresentationPageSlot(DisplayedPageRole role);
     void updateDisplayProjections();
     const ImageViewportFrame &viewportFrame() const;
     void notifyChanges(const std::vector<ImageDocumentChange> &changes);

@@ -72,8 +72,14 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(bool viewportPannable READ viewportPannable NOTIFY viewportFrameChanged)
     Q_PROPERTY(QRectF visibleItemRect READ visibleItemRect NOTIFY visibleItemRectChanged)
     Q_PROPERTY(QSizeF displaySize READ displaySize NOTIFY displaySizeChanged)
+    Q_PROPERTY(double displayWidth READ displayWidth NOTIFY displaySizeChanged)
+    Q_PROPERTY(double displayHeight READ displayHeight NOTIFY displaySizeChanged)
     Q_PROPERTY(QSizeF primaryDisplaySize READ primaryDisplaySize NOTIFY displaySizeChanged)
+    Q_PROPERTY(double primaryDisplayWidth READ primaryDisplayWidth NOTIFY displaySizeChanged)
+    Q_PROPERTY(double primaryDisplayHeight READ primaryDisplayHeight NOTIFY displaySizeChanged)
     Q_PROPERTY(QSizeF secondaryDisplaySize READ secondaryDisplaySize NOTIFY twoPageModeChanged)
+    Q_PROPERTY(double secondaryDisplayWidth READ secondaryDisplayWidth NOTIFY twoPageModeChanged)
+    Q_PROPERTY(double secondaryDisplayHeight READ secondaryDisplayHeight NOTIFY twoPageModeChanged)
     Q_PROPERTY(bool zoomPercentKnown READ zoomPercentKnown NOTIFY zoomPercentKnownChanged)
     Q_PROPERTY(double zoomPercent READ zoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
@@ -197,8 +203,14 @@ public:
     bool viewportPannable() const;
     QRectF visibleItemRect() const;
     QSizeF displaySize() const;
+    double displayWidth() const;
+    double displayHeight() const;
     QSizeF primaryDisplaySize() const;
+    double primaryDisplayWidth() const;
+    double primaryDisplayHeight() const;
     QSizeF secondaryDisplaySize() const;
+    double secondaryDisplayWidth() const;
+    double secondaryDisplayHeight() const;
     bool zoomPercentKnown() const;
     double zoomPercent() const;
     ZoomMode zoomMode() const;

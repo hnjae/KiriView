@@ -216,8 +216,14 @@ class FakeKiriImageDocument : public QObject
     Q_PROPERTY(QRectF visibleItemRect READ visibleItemRect WRITE setVisibleItemRect NOTIFY
             visibleItemRectChanged)
     Q_PROPERTY(QSizeF displaySize READ displaySize NOTIFY displaySizeChanged)
+    Q_PROPERTY(double displayWidth READ displayWidth NOTIFY displaySizeChanged)
+    Q_PROPERTY(double displayHeight READ displayHeight NOTIFY displaySizeChanged)
     Q_PROPERTY(QSizeF primaryDisplaySize READ primaryDisplaySize NOTIFY displaySizeChanged)
+    Q_PROPERTY(double primaryDisplayWidth READ primaryDisplayWidth NOTIFY displaySizeChanged)
+    Q_PROPERTY(double primaryDisplayHeight READ primaryDisplayHeight NOTIFY displaySizeChanged)
     Q_PROPERTY(QSizeF secondaryDisplaySize READ secondaryDisplaySize CONSTANT)
+    Q_PROPERTY(double secondaryDisplayWidth READ secondaryDisplayWidth CONSTANT)
+    Q_PROPERTY(double secondaryDisplayHeight READ secondaryDisplayHeight CONSTANT)
     Q_PROPERTY(double zoomPercent READ zoomPercent WRITE setZoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
     Q_PROPERTY(int minimumManualZoomPercent READ minimumManualZoomPercent CONSTANT)
@@ -299,6 +305,7 @@ public:
 
         m_viewportSize = viewportSize;
         Q_EMIT viewportSizeChanged();
+        Q_EMIT displaySizeChanged();
         Q_EMIT viewportFrameChanged();
     }
 
@@ -345,8 +352,14 @@ public:
         return KiriView::imageViewportDisplaySizeForZoom(imageSize(), m_zoomPercent, 1.0);
     }
 
+    double displayWidth() const { return displaySize().width(); }
+    double displayHeight() const { return displaySize().height(); }
     QSizeF primaryDisplaySize() const { return displaySize(); }
+    double primaryDisplayWidth() const { return primaryDisplaySize().width(); }
+    double primaryDisplayHeight() const { return primaryDisplaySize().height(); }
     QSizeF secondaryDisplaySize() const { return QSizeF(); }
+    double secondaryDisplayWidth() const { return secondaryDisplaySize().width(); }
+    double secondaryDisplayHeight() const { return secondaryDisplaySize().height(); }
 
     double zoomPercent() const { return m_zoomPercent; }
     void setZoomPercent(double zoomPercent)

@@ -25,6 +25,27 @@ namespace {
         projection.revisionToken = imageDisplaySourceRevisionToken(projection.revision);
         return projection;
     }
+
+    bool displaySourceSlotsEqual(
+        const ImageDisplaySourceSlot &left, const ImageDisplaySourceSlot &right)
+    {
+        return left.providerUrl == right.providerUrl && left.revision == right.revision
+            && left.sourceIdentity == right.sourceIdentity
+            && left.originalSize == right.originalSize && left.rasterSize == right.rasterSize
+            && left.sourceSizeHint == right.sourceSizeHint && left.quality == right.quality
+            && left.status == right.status && left.cacheEnabled == right.cacheEnabled
+            && left.loadAcknowledgmentRequired == right.loadAcknowledgmentRequired
+            && left.retentionStatus == right.retentionStatus
+            && left.retainWhileLoadingEligible == right.retainWhileLoadingEligible;
+    }
+
+    bool pageSlotsEqual(const ImagePresentationPageSlotSnapshot &left,
+        const ImagePresentationPageSlotSnapshot &right)
+    {
+        return left.imageRevision == right.imageRevision && left.imageSize == right.imageSize
+            && left.hasImage == right.hasImage
+            && displaySourceSlotsEqual(left.displaySource, right.displaySource);
+    }
 }
 
 ImagePresentationScopeKey ImagePresentationScopeKey::directImage(const QUrl &url)
@@ -406,6 +427,37 @@ ImageZoomChangeSet ImagePresentationRuntime::commitSecondaryPageSlot(
           });
     refreshViewportFrame(ImageViewportObservationOrigin::System);
     return changes;
+}
+
+bool ImagePresentationRuntime::updatePrimaryPageSlot(const ImagePresentationPageSlotSnapshot &slot)
+{
+    if (pageSlotsEqual(m_primarySlot, slot)) {
+        return false;
+    }
+
+    const quint64 previousImageRevision = m_primarySlot.imageRevision;
+    m_primarySlot = slot;
+    if (m_transitionState == ImagePresentationTransitionState::PreviousActive
+        && m_committedSnapshot.primary.imageRevision == previousImageRevision) {
+        m_committedSnapshot.primary = slot;
+    }
+    return true;
+}
+
+bool ImagePresentationRuntime::updateSecondaryPageSlot(
+    const ImagePresentationPageSlotSnapshot &slot)
+{
+    if (pageSlotsEqual(m_secondarySlot, slot)) {
+        return false;
+    }
+
+    const quint64 previousImageRevision = m_secondarySlot.imageRevision;
+    m_secondarySlot = slot;
+    if (m_transitionState == ImagePresentationTransitionState::PreviousActive
+        && m_committedSnapshot.secondary.imageRevision == previousImageRevision) {
+        m_committedSnapshot.secondary = slot;
+    }
+    return true;
 }
 
 void ImagePresentationRuntime::clearPrimaryPageSlot()
