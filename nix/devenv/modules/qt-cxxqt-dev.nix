@@ -79,9 +79,12 @@ in
     libarchive
     libaom
     libde265
+    libjxl.dev
+    libjxl.out
     libpng
     libraw.dev
     libraw.lib
+    libwebp
     ninja
     pipewire
     pkg-config

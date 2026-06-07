@@ -47,7 +47,7 @@ std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
     const QByteArray &data, const KiriView::HeifContainerInfo &info,
     const KiriView::ImageDecodeRequest &request)
 {
-    if (!info.imageSequence) {
+    if (!info.isHeif()) {
         return std::nullopt;
     }
 

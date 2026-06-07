@@ -441,6 +441,42 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
     }
 
     {
+        KiriView::DecodedImage decoded = KiriView::WebPAnimationImage {
+            testImage(QSize(9, 6)),
+            QByteArrayLiteral("webp-data"),
+        };
+        const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation,
+            testPredecodeCacheByteBudget);
+
+        const auto *load = planPayload<KiriView::ImagePresentationAnimationLoad>(plan);
+        QVERIFY(load != nullptr);
+        QCOMPARE(load->firstFrame.size(), QSize(9, 6));
+        const auto *request
+            = std::get_if<KiriView::WebPAnimationPlaybackRequest>(&load->playback.payload);
+        QVERIFY(request != nullptr);
+        QCOMPARE(request->data, QByteArrayLiteral("webp-data"));
+    }
+
+    {
+        KiriView::DecodedImage decoded = KiriView::JxlAnimationImage {
+            testImage(QSize(15, 9)),
+            QByteArrayLiteral("jxl-data"),
+        };
+        const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation,
+            testPredecodeCacheByteBudget);
+
+        const auto *load = planPayload<KiriView::ImagePresentationAnimationLoad>(plan);
+        QVERIFY(load != nullptr);
+        QCOMPARE(load->firstFrame.size(), QSize(15, 9));
+        const auto *request
+            = std::get_if<KiriView::JxlAnimationPlaybackRequest>(&load->playback.payload);
+        QVERIFY(request != nullptr);
+        QCOMPARE(request->data, QByteArrayLiteral("jxl-data"));
+    }
+
+    {
         KiriView::DecodedImage decoded = KiriView::HeifSequenceAnimationImage {
             testImage(QSize(11, 5)),
             QByteArrayLiteral("heif-data"),

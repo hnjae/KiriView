@@ -22,13 +22,22 @@ struct ApngAnimationPlaybackRequest {
     QByteArray data;
 };
 
+struct WebPAnimationPlaybackRequest {
+    QByteArray data;
+};
+
+struct JxlAnimationPlaybackRequest {
+    QByteArray data;
+};
+
 struct HeifSequenceAnimationPlaybackRequest {
     QByteArray data;
 };
 
 struct ImageAnimationPlaybackRequest {
     using Payload = std::variant<std::monostate, ReaderAnimationPlaybackRequest,
-        ApngAnimationPlaybackRequest, HeifSequenceAnimationPlaybackRequest>;
+        ApngAnimationPlaybackRequest, WebPAnimationPlaybackRequest, JxlAnimationPlaybackRequest,
+        HeifSequenceAnimationPlaybackRequest>;
 
     Payload payload;
 
@@ -74,6 +83,8 @@ public:
 
 ImageAnimationPlaybackRequest readerAnimationPlaybackRequest(QByteArray data, QByteArray format);
 ImageAnimationPlaybackRequest apngAnimationPlaybackRequest(QByteArray data);
+ImageAnimationPlaybackRequest webpAnimationPlaybackRequest(QByteArray data);
+ImageAnimationPlaybackRequest jxlAnimationPlaybackRequest(QByteArray data);
 ImageAnimationPlaybackRequest heifSequenceAnimationPlaybackRequest(QByteArray data);
 std::unique_ptr<ImageAnimationPlaybackSource> makeImageAnimationPlaybackSource(
     ImageAnimationPlaybackRequest request);

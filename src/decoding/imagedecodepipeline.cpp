@@ -6,6 +6,7 @@
 #include "apnganimationreader.h"
 #include "bridge/rustqtconversion.h"
 #include "heifdecoder.h"
+#include "jxlanimationreader.h"
 #include "kiriview/src/policy/avifcompat.cxx.h"
 #include "localization/imageerrortext.h"
 #include "location/sourcekey.h"
@@ -14,6 +15,7 @@
 #include "rawdecoder.h"
 #include "rendering/svgtilesource.h"
 #include "staticimagedecode.h"
+#include "webpanimationreader.h"
 
 #include <QDebug>
 #include <QLoggingCategory>
@@ -216,6 +218,44 @@ KiriView::DecodedImageResult decodeRawRouterImageData(const KiriView::ImageDecod
 KiriView::DecodedImageResult decodeQImageReaderRouterImageData(
     const KiriView::ImageDecodeRouterInput &input)
 {
+    if (input.qtRasterFormat == KiriView::QtRasterFormat::Webp) {
+        KiriView::WebPAnimationReader reader;
+        KiriView::WebPAnimationOpenResult openResult = reader.open(input.data);
+        switch (openResult.status) {
+        case KiriView::WebPAnimationOpenStatus::Success:
+            return KiriView::successfulDecodedImageResult(KiriView::WebPAnimationImage {
+                std::move(openResult.firstFrame),
+                input.data,
+                {},
+                sourceIdentityForRequest(input.request),
+            });
+        case KiriView::WebPAnimationOpenStatus::Error:
+            return KiriView::failedDecodedImageResult(openResult.errorString);
+        case KiriView::WebPAnimationOpenStatus::NotWebP:
+        case KiriView::WebPAnimationOpenStatus::NotAnimation:
+            break;
+        }
+    }
+
+    if (input.qtRasterFormat == KiriView::QtRasterFormat::Jxl) {
+        KiriView::JxlAnimationReader reader;
+        KiriView::JxlAnimationOpenResult openResult = reader.open(input.data);
+        switch (openResult.status) {
+        case KiriView::JxlAnimationOpenStatus::Success:
+            return KiriView::successfulDecodedImageResult(KiriView::JxlAnimationImage {
+                std::move(openResult.firstFrame),
+                input.data,
+                {},
+                sourceIdentityForRequest(input.request),
+            });
+        case KiriView::JxlAnimationOpenStatus::Error:
+            return KiriView::failedDecodedImageResult(openResult.errorString);
+        case KiriView::JxlAnimationOpenStatus::NotJxl:
+        case KiriView::JxlAnimationOpenStatus::NotAnimation:
+            break;
+        }
+    }
+
     return KiriView::decodeQImageReaderImageData(input.data, input.request, input.qtRasterFormat);
 }
 

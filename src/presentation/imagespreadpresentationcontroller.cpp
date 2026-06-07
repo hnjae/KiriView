@@ -574,6 +574,12 @@ void ImageSpreadPresentationController::refreshSecondaryPage()
 
 void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange change)
 {
+    if (change == ImageDocumentChange::DisplaySource) {
+        if (updatePresentationPageSlot(DisplayedPageRole::Primary)) {
+            updateDisplayProjections();
+        }
+    }
+
     if (change == ImageDocumentChange::ErrorString && !m_state.errorString().isEmpty()) {
         finishTransition();
     }

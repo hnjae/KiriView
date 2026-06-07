@@ -24,8 +24,12 @@ find_package(KF6Service CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LibArchive REQUIRED IMPORTED_TARGET libarchive)
 pkg_check_modules(LibHeif REQUIRED IMPORTED_TARGET libheif)
+pkg_check_modules(LibJxl REQUIRED IMPORTED_TARGET libjxl)
+pkg_check_modules(LibJxlThreads REQUIRED IMPORTED_TARGET libjxl_threads)
 pkg_check_modules(LibRaw REQUIRED IMPORTED_TARGET libraw)
 pkg_check_modules(LibPng REQUIRED IMPORTED_TARGET libpng)
+pkg_check_modules(LibWebP REQUIRED IMPORTED_TARGET libwebp)
+pkg_check_modules(LibWebPDemux REQUIRED IMPORTED_TARGET libwebpdemux)
 find_program(MSGFMT_EXECUTABLE msgfmt REQUIRED)
 find_program(DESKTOP_FILE_VALIDATE_EXECUTABLE desktop-file-validate REQUIRED)
 
@@ -103,8 +107,12 @@ target_link_libraries(kiriview_test_core INTERFACE
     KirigamiAddonsStatefulApp
     PkgConfig::LibArchive
     PkgConfig::LibHeif
+    PkgConfig::LibJxl
+    PkgConfig::LibJxlThreads
     PkgConfig::LibRaw
     PkgConfig::LibPng
+    PkgConfig::LibWebP
+    PkgConfig::LibWebPDemux
 )
 
 set(KIRIVIEW_TEST_LOCALE_DIR "${CMAKE_CURRENT_BINARY_DIR}/locale")

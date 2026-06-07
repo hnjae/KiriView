@@ -246,6 +246,22 @@ void TestImageAnimationPlayer::playbackRequestsAreTypedValues()
     QVERIFY(apngPayload != nullptr);
     QCOMPARE(apngPayload->data, QByteArrayLiteral("apng-data"));
 
+    KiriView::ImageAnimationPlaybackRequest webpRequest
+        = KiriView::webpAnimationPlaybackRequest(QByteArrayLiteral("webp-data"));
+    QVERIFY(webpRequest.isValid());
+    const auto *webpPayload
+        = std::get_if<KiriView::WebPAnimationPlaybackRequest>(&webpRequest.payload);
+    QVERIFY(webpPayload != nullptr);
+    QCOMPARE(webpPayload->data, QByteArrayLiteral("webp-data"));
+
+    KiriView::ImageAnimationPlaybackRequest jxlRequest
+        = KiriView::jxlAnimationPlaybackRequest(QByteArrayLiteral("jxl-data"));
+    QVERIFY(jxlRequest.isValid());
+    const auto *jxlPayload
+        = std::get_if<KiriView::JxlAnimationPlaybackRequest>(&jxlRequest.payload);
+    QVERIFY(jxlPayload != nullptr);
+    QCOMPARE(jxlPayload->data, QByteArrayLiteral("jxl-data"));
+
     KiriView::ImageAnimationPlaybackRequest heifRequest
         = KiriView::heifSequenceAnimationPlaybackRequest(QByteArrayLiteral("heif-data"));
     QVERIFY(heifRequest.isValid());

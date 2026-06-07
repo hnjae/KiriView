@@ -6,6 +6,8 @@
 #include "decoding/apnganimationreader.h"
 #include "decoding/bufferedimagereader.h"
 #include "decoding/heifsequencereader.h"
+#include "decoding/jxlanimationreader.h"
+#include "decoding/webpanimationreader.h"
 #include "localization/imageerrortext.h"
 
 #include <QImage>
@@ -183,6 +185,116 @@ private:
     std::unique_ptr<KiriView::ApngAnimationReader> m_reader;
 };
 
+class WebPAnimationPlaybackSource final : public KiriView::ImageAnimationPlaybackSource
+{
+public:
+    explicit WebPAnimationPlaybackSource(QByteArray data)
+        : m_data(std::move(data))
+    {
+    }
+
+    KiriView::ImageAnimationPlaybackOpenResult open() override
+    {
+        m_reader = std::make_unique<KiriView::WebPAnimationReader>();
+        KiriView::WebPAnimationOpenResult openResult = m_reader->open(m_data);
+        switch (openResult.status) {
+        case KiriView::WebPAnimationOpenStatus::Success:
+            return playbackOpenResult(std::move(openResult.firstFrame), openResult.firstFrameDelay,
+                openResult.loopCount, openResult.sourceHasMoreFrames);
+        case KiriView::WebPAnimationOpenStatus::Error:
+            m_reader.reset();
+            return playbackOpenError(openResult.errorString);
+        case KiriView::WebPAnimationOpenStatus::NotWebP:
+        case KiriView::WebPAnimationOpenStatus::NotAnimation:
+            m_reader.reset();
+            return playbackOpenError(
+                KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeImageAnimation));
+        }
+
+        m_reader.reset();
+        return playbackOpenError(
+            KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeImageAnimation));
+    }
+
+    KiriView::ImageAnimationPlaybackReadResult readNextFrame() override
+    {
+        if (m_reader == nullptr) {
+            return playbackReadEnd();
+        }
+
+        QString errorString;
+        std::optional<KiriView::AnimationFrame> frame = m_reader->readNextFrame(&errorString);
+        if (frame.has_value()) {
+            return playbackReadFrame(std::move(*frame), m_reader->hasMoreFrames());
+        }
+        if (!errorString.isEmpty()) {
+            return playbackReadError(std::move(errorString));
+        }
+        return playbackReadEnd();
+    }
+
+    bool restartable() const override { return true; }
+
+private:
+    QByteArray m_data;
+    std::unique_ptr<KiriView::WebPAnimationReader> m_reader;
+};
+
+class JxlAnimationPlaybackSource final : public KiriView::ImageAnimationPlaybackSource
+{
+public:
+    explicit JxlAnimationPlaybackSource(QByteArray data)
+        : m_data(std::move(data))
+    {
+    }
+
+    KiriView::ImageAnimationPlaybackOpenResult open() override
+    {
+        m_reader = std::make_unique<KiriView::JxlAnimationReader>();
+        KiriView::JxlAnimationOpenResult openResult = m_reader->open(m_data);
+        switch (openResult.status) {
+        case KiriView::JxlAnimationOpenStatus::Success:
+            return playbackOpenResult(std::move(openResult.firstFrame), openResult.firstFrameDelay,
+                openResult.loopCount, openResult.sourceHasMoreFrames);
+        case KiriView::JxlAnimationOpenStatus::Error:
+            m_reader.reset();
+            return playbackOpenError(openResult.errorString);
+        case KiriView::JxlAnimationOpenStatus::NotJxl:
+        case KiriView::JxlAnimationOpenStatus::NotAnimation:
+            m_reader.reset();
+            return playbackOpenError(
+                KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeImageAnimation));
+        }
+
+        m_reader.reset();
+        return playbackOpenError(
+            KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeImageAnimation));
+    }
+
+    KiriView::ImageAnimationPlaybackReadResult readNextFrame() override
+    {
+        if (m_reader == nullptr) {
+            return playbackReadEnd();
+        }
+
+        QString errorString;
+        std::optional<KiriView::AnimationFrame> frame = m_reader->readNextFrame(&errorString);
+        if (frame.has_value()) {
+            return playbackReadFrame(std::move(*frame), true);
+        }
+        if (!errorString.isEmpty()) {
+            return playbackReadError(std::move(errorString));
+        }
+        return playbackReadEnd();
+    }
+
+    bool restartable() const override { return true; }
+
+private:
+    QByteArray m_data;
+    std::unique_ptr<KiriView::JxlAnimationReader> m_reader;
+};
+
 class HeifSequenceAnimationPlaybackSource final : public KiriView::ImageAnimationPlaybackSource
 {
 public:
@@ -250,6 +362,18 @@ std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makeApngPlaybackSource(
     return std::make_unique<ApngAnimationPlaybackSource>(std::move(request.data));
 }
 
+std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makeWebPPlaybackSource(
+    KiriView::WebPAnimationPlaybackRequest request)
+{
+    return std::make_unique<WebPAnimationPlaybackSource>(std::move(request.data));
+}
+
+std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makeJxlPlaybackSource(
+    KiriView::JxlAnimationPlaybackRequest request)
+{
+    return std::make_unique<JxlAnimationPlaybackSource>(std::move(request.data));
+}
+
 std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makeHeifSequencePlaybackSource(
     KiriView::HeifSequenceAnimationPlaybackRequest request)
 {
@@ -271,6 +395,18 @@ std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makePlaybackSource(
     KiriView::ApngAnimationPlaybackRequest request)
 {
     return makeApngPlaybackSource(std::move(request));
+}
+
+std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makePlaybackSource(
+    KiriView::WebPAnimationPlaybackRequest request)
+{
+    return makeWebPPlaybackSource(std::move(request));
+}
+
+std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makePlaybackSource(
+    KiriView::JxlAnimationPlaybackRequest request)
+{
+    return makeJxlPlaybackSource(std::move(request));
 }
 
 std::unique_ptr<KiriView::ImageAnimationPlaybackSource> makePlaybackSource(
@@ -300,6 +436,24 @@ ImageAnimationPlaybackRequest apngAnimationPlaybackRequest(QByteArray data)
 {
     return ImageAnimationPlaybackRequest {
         ApngAnimationPlaybackRequest {
+            std::move(data),
+        },
+    };
+}
+
+ImageAnimationPlaybackRequest webpAnimationPlaybackRequest(QByteArray data)
+{
+    return ImageAnimationPlaybackRequest {
+        WebPAnimationPlaybackRequest {
+            std::move(data),
+        },
+    };
+}
+
+ImageAnimationPlaybackRequest jxlAnimationPlaybackRequest(QByteArray data)
+{
+    return ImageAnimationPlaybackRequest {
+        JxlAnimationPlaybackRequest {
             std::move(data),
         },
     };

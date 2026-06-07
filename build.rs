@@ -108,6 +108,16 @@ const NATIVE_LIBRARIES: &[NativeLibrary] = &[
         pkg_config_package: Some("libheif"),
     },
     NativeLibrary {
+        link_name: "jxl_threads",
+        file_name: "libjxl_threads.so",
+        pkg_config_package: Some("libjxl_threads"),
+    },
+    NativeLibrary {
+        link_name: "jxl",
+        file_name: "libjxl.so",
+        pkg_config_package: Some("libjxl"),
+    },
+    NativeLibrary {
         link_name: "raw",
         file_name: "libraw.so",
         pkg_config_package: Some("libraw"),
@@ -117,6 +127,16 @@ const NATIVE_LIBRARIES: &[NativeLibrary] = &[
         file_name: "libpng16.so",
         pkg_config_package: Some("libpng"),
     },
+    NativeLibrary {
+        link_name: "webpdemux",
+        file_name: "libwebpdemux.so",
+        pkg_config_package: Some("libwebpdemux"),
+    },
+    NativeLibrary {
+        link_name: "webp",
+        file_name: "libwebp.so",
+        pkg_config_package: Some("libwebp"),
+    },
 ];
 const NO_PKG_CONFIG_PACKAGES: &[&str] = &[];
 const KIO_INCLUDE_COLLECTORS: &[IncludeDirCollector] =
@@ -125,8 +145,10 @@ const QT_QML_INTEGRATION_INCLUDE_COLLECTORS: &[IncludeDirCollector] =
     &[add_qt_qml_integration_include_dirs];
 const LIBARCHIVE_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libarchive_include_dir];
 const LIBHEIF_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libheif_include_dir];
+const LIBJXL_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libjxl_include_dir];
 const LIBRAW_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libraw_include_dir];
 const LIBPNG_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libpng_include_dir];
+const LIBWEBP_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libwebp_include_dir];
 const NATIVE_INCLUDE_SEARCHES: &[IncludeSearch] = &[
     IncludeSearch {
         collectors: KIO_INCLUDE_COLLECTORS,
@@ -141,12 +163,20 @@ const NATIVE_INCLUDE_SEARCHES: &[IncludeSearch] = &[
         pkg_config_packages: &["libheif"],
     },
     IncludeSearch {
+        collectors: LIBJXL_INCLUDE_COLLECTORS,
+        pkg_config_packages: &["libjxl", "libjxl_threads"],
+    },
+    IncludeSearch {
         collectors: LIBRAW_INCLUDE_COLLECTORS,
         pkg_config_packages: &["libraw"],
     },
     IncludeSearch {
         collectors: LIBPNG_INCLUDE_COLLECTORS,
         pkg_config_packages: &["libpng"],
+    },
+    IncludeSearch {
+        collectors: LIBWEBP_INCLUDE_COLLECTORS,
+        pkg_config_packages: &["libwebp", "libwebpdemux"],
     },
     IncludeSearch {
         collectors: QT_QML_INTEGRATION_INCLUDE_COLLECTORS,
@@ -480,6 +510,17 @@ fn add_libheif_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
     }
 }
 
+fn add_libjxl_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
+    if include_root.join("jxl").join("decode.h").exists()
+        && include_root
+            .join("jxl")
+            .join("thread_parallel_runner.h")
+            .exists()
+    {
+        dirs.insert(include_root.to_path_buf());
+    }
+}
+
 fn add_libraw_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
     if include_root.join("libraw").join("libraw.h").exists() {
         dirs.insert(include_root.to_path_buf());
@@ -488,6 +529,14 @@ fn add_libraw_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
 
 fn add_libpng_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
     if include_root.join("png.h").exists() {
+        dirs.insert(include_root.to_path_buf());
+    }
+}
+
+fn add_libwebp_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
+    if include_root.join("webp").join("decode.h").exists()
+        && include_root.join("webp").join("demux.h").exists()
+    {
         dirs.insert(include_root.to_path_buf());
     }
 }

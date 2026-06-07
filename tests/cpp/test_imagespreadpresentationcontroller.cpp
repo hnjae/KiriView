@@ -135,6 +135,7 @@ private Q_SLOTS:
     void pageWidthCacheBelongsToSpreadNavigationOwner();
     void spreadVisibleRectOwnsPageVisibleRectProjection();
     void stillImageLoadOutcomeUpdatesDisplayProjection();
+    void primaryDisplaySourceChangeRefreshesCommittedProjection();
     void spreadZoomDoesNotMutatePageZoomOwners();
     void spreadZoomRestoresToSinglePageWithoutMutatingPageZoomOwner();
     void transitionPhaseKeepsPreviousActiveUntilPlaceholder();
@@ -210,6 +211,32 @@ void TestImageSpreadPresentationController::stillImageLoadOutcomeUpdatesDisplayP
     projection = fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Primary);
     QVERIFY(projectionReady(projection));
     QVERIFY(!projection.loadAcknowledgmentRequired);
+}
+
+void TestImageSpreadPresentationController::primaryDisplaySourceChangeRefreshesCommittedProjection()
+{
+    SpreadPresentationFixture fixture;
+
+    fixture.displayPrimaryPage(fixture.pageUrls.at(0), QSize(800, 1200), 1);
+
+    const KiriView::ImageDisplaySourceProjection firstProjection
+        = fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    QVERIFY(projectionReady(firstProjection));
+
+    fixture.primaryPageSurface.setAnimationFrame(
+        testImage(QSize(800, 1200)), QStringLiteral("animated-frame"));
+    const KiriView::ImagePresentationPageSlotSnapshot frameSurfaceSnapshot
+        = fixture.primaryPageSurface.snapshot();
+    QVERIFY(frameSurfaceSnapshot.displaySource.revision != firstProjection.revision);
+    QCOMPARE(frameSurfaceSnapshot.displaySource.sourceIdentity, QStringLiteral("animated-frame"));
+
+    fixture.controller.handleDocumentChange(KiriView::ImageDocumentChange::DisplaySource);
+
+    const KiriView::ImageDisplaySourceProjection frameProjection
+        = fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    QVERIFY(projectionReady(frameProjection));
+    QCOMPARE(frameProjection.revision, frameSurfaceSnapshot.displaySource.revision);
+    QCOMPARE(frameProjection.sourceIdentity, frameSurfaceSnapshot.displaySource.sourceIdentity);
 }
 
 void TestImageSpreadPresentationController::spreadZoomDoesNotMutatePageZoomOwners()

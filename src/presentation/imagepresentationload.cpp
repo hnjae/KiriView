@@ -103,6 +103,30 @@ KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ReaderAnimationIm
         std::move(decoded.sourceIdentity));
 }
 
+KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::WebPAnimationImage &decoded,
+    KiriView::ImagePresentationAnimationHandling animationHandling, qsizetype)
+{
+    if (animationHandling == KiriView::ImagePresentationAnimationHandling::FirstFrameOnly) {
+        return framePlan(std::move(decoded.firstFrame), std::move(decoded.sourceIdentity));
+    }
+
+    return animationPlan(std::move(decoded.firstFrame),
+        KiriView::webpAnimationPlaybackRequest(std::move(decoded.data)),
+        std::move(decoded.sourceIdentity));
+}
+
+KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::JxlAnimationImage &decoded,
+    KiriView::ImagePresentationAnimationHandling animationHandling, qsizetype)
+{
+    if (animationHandling == KiriView::ImagePresentationAnimationHandling::FirstFrameOnly) {
+        return framePlan(std::move(decoded.firstFrame), std::move(decoded.sourceIdentity));
+    }
+
+    return animationPlan(std::move(decoded.firstFrame),
+        KiriView::jxlAnimationPlaybackRequest(std::move(decoded.data)),
+        std::move(decoded.sourceIdentity));
+}
+
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::HeifSequenceAnimationImage &decoded,
     KiriView::ImagePresentationAnimationHandling animationHandling, qsizetype)
 {

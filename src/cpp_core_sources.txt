@@ -45,6 +45,7 @@ src/decoding/heifdecoder.cpp
 src/decoding/heifsequencereader.cpp
 src/decoding/heifsupport.cpp
 src/decoding/heiftilingplan.cpp
+src/decoding/jxlanimationreader.cpp
 src/async/directorylistingjob.cpp
 src/rendering/heiftilesource.cpp
 src/presentation/imageanimationplaybacksource.cpp
@@ -204,6 +205,7 @@ src/session/windowtitleprojection.cpp
 src/rendering/staticimage.cpp
 src/decoding/staticimagedecode.cpp
 src/decoding/thumbnailpreview.cpp
+src/decoding/webpanimationreader.cpp
 src/system/systemmemory.cpp
 src/rendering/svgtilesource.cpp
 src/video/videooutputrendercontextobserver.cpp
