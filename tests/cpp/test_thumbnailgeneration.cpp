@@ -51,6 +51,7 @@ class TestThumbnailGeneration : public QObject
 
 private Q_SLOTS:
     void injectedBytesLoaderProvidesGenerationBytes();
+    void injectedDecoderReceivesLoadedBytesAndBucketEdge();
     void openedCollectionIdentityFailureSkipsBytesLoader();
     void injectedCacheHitSkipsBytesLoader();
     void injectedCacheInstallPublishesInstalledPath();
@@ -75,6 +76,35 @@ void TestThumbnailGeneration::injectedBytesLoaderProvidesGenerationBytes()
     QCOMPARE(result.image.size(), QSize(4, 3));
     QCOMPARE(result.image.format(), QImage::Format_RGBA8888);
     QVERIFY(result.installedCachePath.isEmpty());
+}
+
+void TestThumbnailGeneration::injectedDecoderReceivesLoadedBytesAndBucketEdge()
+{
+    const QByteArray bytes("synthetic bytes");
+    QByteArray decodedBytes;
+    int decodedMaximumLongEdge = 0;
+
+    KiriView::ThumbnailGenerationDependencies dependencies;
+    dependencies.bytesLoader
+        = [&bytes](const KiriView::ThumbnailGenerationRequest &, QString *) { return bytes; };
+    dependencies.imageDecoder = [&decodedBytes, &decodedMaximumLongEdge](
+                                    QByteArray data, int maximumLongEdge, QString *) {
+        decodedBytes = std::move(data);
+        decodedMaximumLongEdge = maximumLongEdge;
+        QImage image(QSize(9, 7), QImage::Format_RGB32);
+        image.fill(QColor(Qt::yellow));
+        return image;
+    };
+
+    const KiriView::ThumbnailGenerationResult result
+        = KiriView::generateThumbnail(generationRequest(Bucket::Large), std::move(dependencies));
+
+    QCOMPARE(decodedBytes, bytes);
+    QCOMPARE(decodedMaximumLongEdge, 256);
+    QCOMPARE(result.status, Status::Ready);
+    QCOMPARE(result.requestedBucket, Bucket::Large);
+    QCOMPARE(result.image.size(), QSize(9, 7));
+    QCOMPARE(result.image.format(), QImage::Format_RGBA8888);
 }
 
 void TestThumbnailGeneration::openedCollectionIdentityFailureSkipsBytesLoader()
