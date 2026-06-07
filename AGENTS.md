@@ -55,7 +55,7 @@ All Rust host recipes run through `kiriview-rust-host-env`, which owns the host 
 **Rust (prefer a filtered lib test before the full suite)** — `<filter>` e.g. `imagezoomstate`:
 
 ```sh
-devenv shell -- env CARGO_TARGET_DIR=target kiriview-rust-host-env cargo test --locked --lib --all-features <filter> -- --test-threads "$(nproc)"
+devenv shell -- env CARGO_TARGET_DIR=target kiriview-rust-host-env cargo nextest run --locked --lib --all-features --build-jobs "$(nproc)" --test-threads "$(nproc)" <filter>
 ```
 
 **C++/Qt (build host Rust artifacts, then run the matching CTest target)** — `<test_target>` e.g. `test_imagezoomstate`:

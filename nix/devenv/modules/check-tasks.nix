@@ -257,18 +257,30 @@ in
 
   tasks = {
     "ci:test:rust" = {
-      description = "Run host Rust library tests";
+      description = "Run host Rust library and doc tests";
       exec = ''
         ${hostTaskPrelude}
         ${testJobsPrelude}
 
-        printf 'Running host Rust tests with %d jobs...\n' "$test_jobs"
+        printf 'Running host Rust tests with nextest using %d jobs...\n' "$test_jobs"
+        CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
+            kiriview-rust-host-env \
+            cargo \
+                nextest \
+                run \
+                --locked \
+                --lib \
+                --all-features \
+                --build-jobs "$test_jobs" \
+                --test-threads "$test_jobs"
+
+        printf 'Running host Rust doc tests with %d jobs...\n' "$test_jobs"
         CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
             kiriview-rust-host-env \
             cargo \
                 test \
+                --doc \
                 --locked \
-                --lib \
                 --all-features \
                 --jobs "$test_jobs" \
                 -- \

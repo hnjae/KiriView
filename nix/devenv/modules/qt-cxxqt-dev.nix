@@ -55,6 +55,7 @@ in
     flatpak-builder
 
     # Rust/Qt host development
+    cargo-nextest
     clazy
     cmake
     kdePackages.extra-cmake-modules
