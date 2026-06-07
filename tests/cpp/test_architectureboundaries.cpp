@@ -35,6 +35,7 @@ private Q_SLOTS:
     void qmlDoesNotManufactureStaleSensitiveRevisions();
     void imageActionAvailabilityFacadeIsNotWritableQmlBackdoor();
     void fixedViewerShortcutsDoNotBypassRuntimeRouting();
+    void qmlDoesNotExposeFixedViewerScanCommandRoutes();
     void videoSeekShortcutsRouteThroughApplicationRuntime();
     void applicationFacadeDoesNotOwnFixedViewerCommandRouting();
     void applicationFacadeDoesNotOwnActionCommandSwitch();
@@ -522,6 +523,39 @@ void TestArchitectureBoundaries::fixedViewerShortcutsDoNotBypassRuntimeRouting()
     QVERIFY(!header.contains(QStringLiteral("handleVerticalPanShortcut")));
     QVERIFY(!implementation.contains(QStringLiteral("class FixedShortcutEventFilter")));
     QVERIFY(!implementation.contains(QStringLiteral("handleFixedShortcutEvent")));
+}
+
+void TestArchitectureBoundaries::qmlDoesNotExposeFixedViewerScanCommandRoutes()
+{
+    const QString imageViewport = readProjectFile(QStringLiteral("src/qml/ImageViewport.qml"));
+    const QString imageInteractionSurface
+        = readProjectFile(QStringLiteral("src/qml/ImageViewportInteractionSurface.qml"));
+    const QString coreSources = readProjectFile(QStringLiteral("src/cpp_core_sources.txt"));
+    const QString qmlHeaders = readProjectFile(QStringLiteral("src/cpp_cxxqt_header_sources.txt"));
+    const QStringList stalePolicyFacadeFiles = existingProjectFiles({
+        QStringLiteral("src/facade/imageshortcutnavigationpolicy.h"),
+        QStringLiteral("src/facade/imageshortcutnavigationpolicy.cpp"),
+    });
+    const QList<QRegularExpression> forbiddenQmlPatterns {
+        QRegularExpression(QStringLiteral(R"(\brequestViewportScan(?:Forward|Backward)\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bfunction\s+scan(?:Forward|Backward)\s*\()")),
+    };
+
+    QStringList violations;
+    for (const QString &source : { imageViewport, imageInteractionSurface }) {
+        for (const QRegularExpression &pattern : forbiddenQmlPatterns) {
+            QRegularExpressionMatchIterator iterator = pattern.globalMatch(source);
+            while (iterator.hasNext()) {
+                violations.push_back(iterator.next().captured(0));
+            }
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+    QVERIFY2(stalePolicyFacadeFiles.isEmpty(),
+        qPrintable(stalePolicyFacadeFiles.join(QLatin1Char('\n'))));
+    QVERIFY(!coreSources.contains(QStringLiteral("facade/imageshortcutnavigationpolicy")));
+    QVERIFY(!qmlHeaders.contains(QStringLiteral("facade/imageshortcutnavigationpolicy")));
 }
 
 void TestArchitectureBoundaries::videoSeekShortcutsRouteThroughApplicationRuntime()
