@@ -54,6 +54,7 @@ private Q_SLOTS:
     void sourceKeysExposeOperationalExtensionContracts();
     void openedCollectionThumbnailEligibilityUsesSharedPolicy();
     void decodingUsesNeutralThumbnailContracts();
+    void thumbnailGenerationUsesNeutralSourceKinds();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void activePresentationDoesNotWritePageSurfacePresentationState();
@@ -1011,6 +1012,19 @@ void TestArchitectureBoundaries::decodingUsesNeutralThumbnailContracts()
     const QString cacheLookupHeader
         = readProjectFile(QStringLiteral("src/thumbnail/thumbnailcachelookup.h"));
     QVERIFY(cacheLookupHeader.contains(QStringLiteral("ThumbnailCacheLookupRequest")));
+}
+
+void TestArchitectureBoundaries::thumbnailGenerationUsesNeutralSourceKinds()
+{
+    const QString generationHeader
+        = readProjectFile(QStringLiteral("src/session/thumbnailgeneration.h"));
+
+    QVERIFY(generationHeader.contains(QStringLiteral("ThumbnailSourceKind sourceKind")));
+    QVERIFY(!generationHeader.contains(QStringLiteral("ActiveNavigationThumbnailSourceKind")));
+    QVERIFY(!generationHeader.contains(
+        QStringLiteral("#include \"session/activenavigationthumbnailprojection.h\"")));
+    QVERIFY(
+        generationHeader.contains(QStringLiteral("#include \"thumbnail/thumbnailsourcekind.h\"")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
