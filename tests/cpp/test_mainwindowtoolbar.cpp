@@ -14,6 +14,8 @@
 #include "localization/localization.h"
 
 #include <KLocalizedQmlContext>
+#include <KZip>
+#include <QBuffer>
 #include <QDir>
 #include <QFile>
 #include <QImage>
@@ -28,6 +30,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
+#include <QVariantMap>
 #include <QWheelEvent>
 #include <QtQml/qqml.h>
 #include <cmath>
@@ -41,6 +44,8 @@ private Q_SLOTS:
     void initTestCase();
     void init();
     void startupCreatesOneVisibleToolbarWithDisabledMediaControls();
+    void startupInitialDirectImageRendersMainViewport();
+    void startupInitialComicArchiveRendersAndNavigatesMainViewport();
     void directImageShowsMediaPositionAfterSiblingListing();
     void directoryImageDocumentShowsPagePosition();
     void mediaViewportHostLoadsOnlyActiveDelegate();
@@ -173,6 +178,20 @@ bool writeTestPng(const QString &path)
     return image.save(path, "PNG");
 }
 
+QByteArray encodedTestPng(Qt::GlobalColor color)
+{
+    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
+    image.fill(color);
+
+    QByteArray data;
+    QBuffer buffer(&data);
+    if (!buffer.open(QIODevice::WriteOnly) || !image.save(&buffer, "PNG")) {
+        return {};
+    }
+
+    return data;
+}
+
 bool writeEmptyFile(const QString &path)
 {
     QFile file(path);
@@ -222,7 +241,43 @@ std::unique_ptr<QTemporaryDir> createDirectoryCollection(QString *sourcePath, QS
     return directory;
 }
 
-MainWindowFixture createMainWindowFixture()
+std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QString *errorString)
+{
+    auto directory = std::make_unique<QTemporaryDir>();
+    if (!directory->isValid()) {
+        *errorString = QStringLiteral("temporary comic archive directory was not created");
+        return nullptr;
+    }
+
+    const QByteArray firstPage = encodedTestPng(Qt::blue);
+    const QByteArray secondPage = encodedTestPng(Qt::green);
+    if (firstPage.isEmpty() || secondPage.isEmpty()) {
+        *errorString = QStringLiteral("failed to encode test archive pages");
+        return nullptr;
+    }
+
+    const QString archivePath = directory->filePath(QStringLiteral("book.cbz"));
+    KZip archive(archivePath);
+    if (!archive.open(QIODevice::WriteOnly)) {
+        *errorString = QStringLiteral("failed to open test comic archive for writing");
+        return nullptr;
+    }
+    if (!archive.writeFile(QStringLiteral("01.png"), firstPage)
+        || !archive.writeFile(QStringLiteral("02.png"), secondPage)) {
+        *errorString = QStringLiteral("failed to write test comic archive pages");
+        return nullptr;
+    }
+    archive.close();
+
+    *sourcePath = archivePath;
+    return directory;
+}
+
+MainWindowFixture createMainWindowFixture(const QUrl &initialSourceUrl);
+
+MainWindowFixture createMainWindowFixture() { return createMainWindowFixture(QUrl()); }
+
+MainWindowFixture createMainWindowFixture(const QUrl &initialSourceUrl)
 {
     MainWindowFixture fixture;
     registerKiriViewQmlTypes();
@@ -231,6 +286,11 @@ MainWindowFixture createMainWindowFixture()
     fixture.engine->addImportPath(QDir(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR))
             .absoluteFilePath(QStringLiteral("../../src/qml")));
     KLocalization::setupLocalizedContext(fixture.engine.get());
+    if (!initialSourceUrl.isEmpty()) {
+        QVariantMap initialProperties;
+        initialProperties.insert(QStringLiteral("initialSourceUrl"), initialSourceUrl);
+        fixture.engine->setInitialProperties(initialProperties);
+    }
 
     fixture.engine->load(mainQmlUrl());
     if (fixture.engine->rootObjects().isEmpty()) {
@@ -250,6 +310,20 @@ MainWindowFixture createMainWindowFixture()
     }
 
     return fixture;
+}
+
+QQuickItem *readyProviderImage(QObject *root)
+{
+    const QList<QQuickItem *> items = root->findChildren<QQuickItem *>(
+        QStringLiteral("providerImage"), Qt::FindChildrenRecursively);
+    for (QQuickItem *item : items) {
+        if (effectivelyVisible(item) && item->property("status").toInt() == 1
+            && !item->property("source").toUrl().isEmpty() && item->width() > 0
+            && item->height() > 0) {
+            return item;
+        }
+    }
+    return nullptr;
 }
 
 void openSourceUrl(MainWindowFixture &fixture, const QString &sourcePath)
@@ -400,6 +474,73 @@ void TestMainWindowToolBar::startupCreatesOneVisibleToolbarWithDisabledMediaCont
         = visibleItemsByObjectName(fixture.window, QStringLiteral("toolbarApplicationMenuButton"));
     QCOMPARE(visibleApplicationMenuButtons.size(), 1);
     QVERIFY(visibleApplicationMenuButtons.constFirst()->isEnabled());
+}
+
+void TestMainWindowToolBar::startupInitialDirectImageRendersMainViewport()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString imagePath = directory.filePath(QStringLiteral("startup.png"));
+    QVERIFY(writeTestPng(imagePath));
+
+    MainWindowFixture fixture = createMainWindowFixture(QUrl::fromLocalFile(imagePath));
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    QVERIFY(documentSession != nullptr);
+    QTRY_VERIFY(documentSession->activeImageReady());
+    QTRY_COMPARE(documentSession->imageDocument()->status(), KiriImageDocument::Status::Ready);
+
+    QQuickItem *thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
+    QVERIFY(thumbnailPanel != nullptr);
+    QVERIFY(!thumbnailPanel->isVisible());
+
+    QQuickItem *providerImage = nullptr;
+    QTRY_VERIFY((providerImage = readyProviderImage(fixture.window)) != nullptr);
+    QVERIFY(!providerImage->property("source").toUrl().isEmpty());
+    QVERIFY(providerImage->width() > 0);
+    QVERIFY(providerImage->height() > 0);
+}
+
+void TestMainWindowToolBar::startupInitialComicArchiveRendersAndNavigatesMainViewport()
+{
+    QString archivePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> archiveDirectory
+        = createComicBookArchive(&archivePath, &errorString);
+    QVERIFY2(archiveDirectory != nullptr, qPrintable(errorString));
+
+    MainWindowFixture fixture = createMainWindowFixture(QUrl::fromLocalFile(archivePath));
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    QVERIFY(documentSession != nullptr);
+    QTRY_VERIFY(documentSession->activeImageReady());
+    QTRY_COMPARE(documentSession->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    compareToolbarPageReadout(fixture, QStringLiteral("1"), QStringLiteral("2"), true);
+
+    QQuickItem *thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
+    QVERIFY(thumbnailPanel != nullptr);
+    QVERIFY(!thumbnailPanel->isVisible());
+
+    QQuickItem *providerImage = nullptr;
+    QTRY_VERIFY((providerImage = readyProviderImage(fixture.window)) != nullptr);
+    const QUrl firstPageSource = providerImage->property("source").toUrl();
+    QVERIFY(!firstPageSource.isEmpty());
+
+    documentSession->imageDocument()->openNextPage();
+    compareToolbarPageReadout(fixture, QStringLiteral("2"), QStringLiteral("2"), true);
+    QTRY_VERIFY((providerImage = readyProviderImage(fixture.window)) != nullptr
+        && providerImage->property("source").toUrl() != firstPageSource);
+    const QUrl secondPageSource = providerImage->property("source").toUrl();
+    QVERIFY(!secondPageSource.isEmpty());
+
+    documentSession->imageDocument()->openPreviousPage();
+    compareToolbarPageReadout(fixture, QStringLiteral("1"), QStringLiteral("2"), true);
+    QTRY_VERIFY((providerImage = readyProviderImage(fixture.window)) != nullptr
+        && providerImage->property("source").toUrl() != secondPageSource);
+    QVERIFY(!providerImage->property("source").toUrl().isEmpty());
+    QVERIFY(!thumbnailPanel->isVisible());
 }
 
 void TestMainWindowToolBar::directImageShowsMediaPositionAfterSiblingListing()

@@ -134,6 +134,7 @@ class TestImageSpreadPresentationController : public QObject
 private Q_SLOTS:
     void pageWidthCacheBelongsToSpreadNavigationOwner();
     void spreadVisibleRectOwnsPageVisibleRectProjection();
+    void stillImageLoadOutcomeUpdatesDisplayProjection();
     void spreadZoomDoesNotMutatePageZoomOwners();
     void spreadZoomRestoresToSinglePageWithoutMutatingPageZoomOwner();
     void transitionPhaseKeepsPreviousActiveUntilPlaceholder();
@@ -189,6 +190,26 @@ void TestImageSpreadPresentationController::spreadVisibleRectOwnsPageVisibleRect
         QRectF(0.0, 0.0, 800.0, 600.0));
     QVERIFY(fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Secondary)
             .visibleItemRect.isEmpty());
+}
+
+void TestImageSpreadPresentationController::stillImageLoadOutcomeUpdatesDisplayProjection()
+{
+    SpreadPresentationFixture fixture;
+
+    fixture.displayPrimaryPage(fixture.pageUrls.at(0), QSize(800, 1200), 1);
+
+    KiriView::ImageDisplaySourceProjection projection
+        = fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    QVERIFY(projectionReady(projection));
+    QVERIFY(projection.loadAcknowledgmentRequired);
+
+    fixture.controller.acknowledgeDisplayImageLoad(KiriView::DisplayedPageRole::Primary,
+        projection.providerUrl, projection.revision, projection.sourceIdentity,
+        KiriView::ImageDisplayLoadOutcome::Loaded);
+
+    projection = fixture.controller.displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    QVERIFY(projectionReady(projection));
+    QVERIFY(!projection.loadAcknowledgmentRequired);
 }
 
 void TestImageSpreadPresentationController::spreadZoomDoesNotMutatePageZoomOwners()
