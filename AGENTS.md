@@ -58,9 +58,9 @@ All Rust host recipes run through `kiriview-rust-host-env`, which owns the host 
 devenv shell -- env CARGO_TARGET_DIR=target kiriview-rust-host-env cargo nextest run --locked --lib --all-features --build-jobs "$(nproc)" --test-threads "$(nproc)" <filter>
 ```
 
-**C++/Qt (build host Rust artifacts, then run the matching CTest target)** — `<test_target>` e.g. `test_imagezoomstate`:
+**C++/Qt (build the Cargo-owned app staticlib and generated headers, then run the matching CTest target)** — `<test_target>` e.g. `test_imagezoomstate`:
 
-For the full host C++ test task, run `devenv tasks run --mode single ci:test:cpp` when you intentionally want only the C++ task; it skips declared Rust test dependencies and builds the required host Rust artifacts inside the task. Without `--mode single`, `ci:test:cpp` runs `ci:test:rust` first.
+For the full host C++ test task, run `devenv tasks run --mode single ci:test:cpp` when you intentionally want only the C++ task; it skips declared Rust test dependencies and builds the required Cargo-owned KiriView app library artifacts inside the task. Without `--mode single`, `ci:test:cpp` runs `ci:test:rust` first. The CMake build compiles C++ test binaries that link that Cargo-produced app library.
 
 ```sh
 devenv shell -- env CARGO_TARGET_DIR=target kiriview-rust-host-env cargo build --locked --lib --all-features
