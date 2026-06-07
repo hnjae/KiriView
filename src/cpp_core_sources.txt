@@ -187,7 +187,7 @@ src/session/activenavigationthumbnailprojection.cpp
 src/session/activenavigationthumbnailruntime.cpp
 src/session/thumbnaillogging.cpp
 src/thumbnail/thumbnailcachelookup.cpp
-src/session/thumbnailgeneration.cpp
+src/thumbnail/thumbnailgeneration.cpp
 src/session/thumbnailimagestore.cpp
 src/session/directmediacursor.cpp
 src/session/documentsessiondirectmedianavigationloadstate.cpp
