@@ -612,6 +612,40 @@ mod tests {
     }
 
     #[test]
+    fn numbered_dispatch_clamps_to_known_range() {
+        let direct_media =
+            active_navigation_snapshot(true, true, true, true, true, false, false, 2, 4);
+        let image_document =
+            active_navigation_snapshot(true, true, true, true, true, false, false, 2, 5);
+
+        assert_eq!(
+            rust_active_navigation_dispatch_plan(
+                RustActiveNavigationSourceKind::OrdinaryDirectMedia,
+                direct_media,
+                dispatch_request(RustActiveNavigationDispatchRequestKind::Number, 0),
+            ),
+            RustActiveNavigationDispatchPlan {
+                operation_kind: RustActiveNavigationDispatchOperationKind::OpenDirectMediaAtNumber,
+                operation_number: 1,
+                outcome: RustActiveNavigationDispatchOutcome::Dispatch,
+            }
+        );
+        assert_eq!(
+            rust_active_navigation_dispatch_plan(
+                RustActiveNavigationSourceKind::ImageDocumentPages,
+                image_document,
+                dispatch_request(RustActiveNavigationDispatchRequestKind::Number, 8),
+            ),
+            RustActiveNavigationDispatchPlan {
+                operation_kind:
+                    RustActiveNavigationDispatchOperationKind::OpenImageDocumentPageAtNumber,
+                operation_number: 5,
+                outcome: RustActiveNavigationDispatchOutcome::Dispatch,
+            }
+        );
+    }
+
+    #[test]
     fn image_document_dispatch_uses_page_operations_and_boundaries() {
         let middle = active_navigation_snapshot(true, true, true, true, true, false, false, 2, 5);
         let first = active_navigation_snapshot(true, true, true, false, true, true, false, 1, 5);

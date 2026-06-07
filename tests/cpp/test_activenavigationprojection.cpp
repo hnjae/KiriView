@@ -74,6 +74,7 @@ private Q_SLOTS:
     void boundaryScopeMapsSourceKind();
     void directMediaDispatchPlanFollowsProjectedBoundaryGates();
     void imageDocumentDispatchPlanUsesNumberedPageTargets();
+    void numberedDispatchPlanClampsToKnownRange();
     void previousNextDispatchPlanReportsEditableBoundaries();
     void dispatchPlanRejectsUnknownMaskedAndUnavailableNavigation();
 };
@@ -306,6 +307,41 @@ void TestActiveNavigationProjection::imageDocumentDispatchPlanUsesNumberedPageTa
         = dispatchOperation<KiriView::OpenImageDocumentPageAtNumberOperation>(numbered);
     QVERIFY(numberedOperation != nullptr);
     QCOMPARE(numberedOperation->number, 4);
+}
+
+void TestActiveNavigationProjection::numberedDispatchPlanClampsToKnownRange()
+{
+    const KiriView::ActiveNavigationSnapshot directMedia = KiriView::projectActiveNavigation(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
+        KiriView::DirectMediaActiveNavigationInput {
+            KiriView::DirectMediaNavigationBoundaryState { true, true, false, false, 2, 4 }, true },
+        {}, false);
+
+    const KiriView::ActiveNavigationDispatchPlan directMediaBelowRange
+        = KiriView::activeNavigationDispatchPlan(
+            KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, directMedia,
+            KiriView::numberedActiveNavigationDispatchRequest(0));
+    QVERIFY(directMediaBelowRange.shouldDispatch());
+    const auto *directMediaOperation
+        = dispatchOperation<KiriView::OpenDirectMediaNavigationAtNumberOperation>(
+            directMediaBelowRange);
+    QVERIFY(directMediaOperation != nullptr);
+    QCOMPARE(directMediaOperation->number, 1);
+
+    const KiriView::ActiveNavigationSnapshot imageDocument = KiriView::projectActiveNavigation(
+        KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
+        imageDocumentActiveNavigationSnapshot(true, true, false, false, 2, 5), false);
+
+    const KiriView::ActiveNavigationDispatchPlan imageDocumentAboveRange
+        = KiriView::activeNavigationDispatchPlan(
+            KiriView::ActiveNavigationSourceKind::ImageDocumentPages, imageDocument,
+            KiriView::numberedActiveNavigationDispatchRequest(8));
+    QVERIFY(imageDocumentAboveRange.shouldDispatch());
+    const auto *imageDocumentOperation
+        = dispatchOperation<KiriView::OpenImageDocumentPageAtNumberOperation>(
+            imageDocumentAboveRange);
+    QVERIFY(imageDocumentOperation != nullptr);
+    QCOMPARE(imageDocumentOperation->number, 5);
 }
 
 void TestActiveNavigationProjection::previousNextDispatchPlanReportsEditableBoundaries()
