@@ -335,11 +335,11 @@ std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
     dependencies.sessionRuntime.directMediaNavigationCandidateProvider
         = std::move(directMediaNavigationCandidateProvider);
     dependencies.sessionRuntime.mediaOpenWithProvider = std::move(mediaOpenWithProvider);
-    dependencies.sessionRuntime.activeNavigationThumbnailLookupProvider
+    dependencies.sessionRuntime.activeNavigationThumbnails.lookupProvider
         = std::move(thumbnailLookupProvider);
-    dependencies.sessionRuntime.activeNavigationThumbnailGenerationProvider
+    dependencies.sessionRuntime.activeNavigationThumbnails.generationProvider
         = std::move(thumbnailGenerationProvider);
-    dependencies.sessionRuntime.activeNavigationThumbnailImageStore
+    dependencies.sessionRuntime.activeNavigationThumbnails.imageStore
         = std::move(thumbnailImageStore);
     dependencies.imageDocument.candidateProvider = std::move(imageDocumentPageCandidateProvider);
     if (fileDeletion != nullptr) {

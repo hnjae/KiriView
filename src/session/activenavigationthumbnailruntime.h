@@ -74,10 +74,20 @@ using ThumbnailSourceAdapter
 
 ThumbnailSourceAdapter defaultThumbnailSourceAdapter();
 
+struct ActiveNavigationThumbnailRuntimeDependencies {
+    ThumbnailCacheLookupProvider lookupProvider;
+    std::shared_ptr<ThumbnailImageStore> imageStore;
+    ThumbnailGenerationProvider generationProvider;
+    ThumbnailSourceAdapter sourceAdapter;
+    ImageWorkerScheduler workerScheduler;
+};
+
 class ActiveNavigationThumbnailRuntime final
 {
 public:
-    explicit ActiveNavigationThumbnailRuntime(QObject *owner = nullptr,
+    explicit ActiveNavigationThumbnailRuntime(
+        QObject *owner = nullptr, ActiveNavigationThumbnailRuntimeDependencies dependencies = {});
+    ActiveNavigationThumbnailRuntime(QObject *owner,
         ThumbnailCacheLookupProvider lookupProvider = {},
         std::shared_ptr<ThumbnailImageStore> imageStore = {},
         ThumbnailGenerationProvider generationProvider = {},

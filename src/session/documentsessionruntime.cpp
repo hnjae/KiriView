@@ -127,6 +127,15 @@ KiriView::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
         return plan;
     };
 }
+
+KiriView::ActiveNavigationThumbnailRuntimeDependencies documentSessionThumbnailDependencies(
+    KiriView::DocumentSessionImageDocumentPort *imageDocument,
+    KiriView::ActiveNavigationThumbnailRuntimeDependencies dependencies)
+{
+    dependencies.sourceAdapter = documentSessionThumbnailSourceAdapter(
+        imageDocument, std::move(dependencies.sourceAdapter));
+    return dependencies;
+}
 }
 
 namespace KiriView {
@@ -138,12 +147,8 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_videoDocument(std::move(videoDocument))
     , m_state(std::move(changeCallback))
     , m_activeNavigationThumbnailRuntime(std::make_unique<ActiveNavigationThumbnailRuntime>(owner,
-          std::move(dependencies.activeNavigationThumbnailLookupProvider),
-          std::move(dependencies.activeNavigationThumbnailImageStore),
-          std::move(dependencies.activeNavigationThumbnailGenerationProvider),
-          documentSessionThumbnailSourceAdapter(
-              &m_imageDocument, std::move(dependencies.activeNavigationThumbnailSourceAdapter)),
-          std::move(dependencies.activeNavigationThumbnailWorkerScheduler)))
+          documentSessionThumbnailDependencies(
+              &m_imageDocument, std::move(dependencies.activeNavigationThumbnails))))
     , m_directMediaNavigationRuntime(dependencies.directMediaNavigationCandidateProvider)
     , m_directMediaDeletionCandidateRuntime(
           std::move(dependencies.directMediaNavigationCandidateProvider))

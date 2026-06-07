@@ -69,6 +69,14 @@ ThumbnailSourceAdapter defaultThumbnailSourceAdapter()
     };
 }
 
+ActiveNavigationThumbnailRuntime::ActiveNavigationThumbnailRuntime(
+    QObject *owner, ActiveNavigationThumbnailRuntimeDependencies dependencies)
+    : ActiveNavigationThumbnailRuntime(owner, std::move(dependencies.lookupProvider),
+          std::move(dependencies.imageStore), std::move(dependencies.generationProvider),
+          std::move(dependencies.sourceAdapter), std::move(dependencies.workerScheduler))
+{
+}
+
 ActiveNavigationThumbnailRuntime::ActiveNavigationThumbnailRuntime(QObject *owner,
     ThumbnailCacheLookupProvider lookupProvider, std::shared_ptr<ThumbnailImageStore> imageStore,
     ThumbnailGenerationProvider generationProvider, ThumbnailSourceAdapter sourceAdapter,

@@ -43,11 +43,7 @@ struct DocumentSessionRuntimeDependencies {
     DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProvider;
     FileDeletionProvider fileDeletionProvider;
     MediaOpenWithProvider mediaOpenWithProvider;
-    ThumbnailCacheLookupProvider activeNavigationThumbnailLookupProvider;
-    ThumbnailGenerationProvider activeNavigationThumbnailGenerationProvider;
-    ThumbnailSourceAdapter activeNavigationThumbnailSourceAdapter;
-    ImageWorkerScheduler activeNavigationThumbnailWorkerScheduler;
-    std::shared_ptr<ThumbnailImageStore> activeNavigationThumbnailImageStore;
+    ActiveNavigationThumbnailRuntimeDependencies activeNavigationThumbnails;
     MediaPredecodeDependencyOverrides directMediaPredecodeDependencies;
 };
 
