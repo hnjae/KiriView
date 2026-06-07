@@ -289,7 +289,7 @@ in
     };
 
     "ci:test:cpp" = {
-      description = "Run host C++ tests against host Rust artifacts";
+      description = "Run host C++ tests against the Cargo-owned KiriView app library";
       after = [
         "ci:test:rust@succeeded"
       ];
@@ -297,7 +297,7 @@ in
         ${hostTaskPrelude}
         ${testJobsPrelude}
 
-        printf 'Building host Rust library artifacts with %d jobs...\n' "$test_jobs"
+        printf 'Building Cargo-owned KiriView app library artifacts with %d jobs...\n' "$test_jobs"
         CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
             kiriview-rust-host-env \
             cargo \

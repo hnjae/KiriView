@@ -6,6 +6,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QObject>
 #include <QPoint>
 #include <QQmlComponent>
@@ -15,6 +16,7 @@
 #include <QRectF>
 #include <QSize>
 #include <QSizeF>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
 #include <QVariant>
@@ -902,6 +904,7 @@ private:
 
 struct ImageViewportFixture {
     std::unique_ptr<QQuickView> view;
+    std::unique_ptr<QTemporaryDir> qmlDirectory;
     QObject *root = nullptr;
     QString errorString;
 
@@ -923,26 +926,86 @@ void registerKiriViewQmlTypes()
         return;
     }
 
-    qmlRegisterType<FakeKiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
+    const char *uri = "io.github.hnjae.kiriview.tests";
+    qmlRegisterType<FakeKiriImageDocument>(uri, 1, 0, "KiriImageDocument");
     qmlRegisterType<FakeKiriImageViewportContextBridge>(
-        "io.github.hnjae.kiriview", 1, 0, "KiriImageViewportContextBridge");
+        uri, 1, 0, "KiriImageViewportContextBridge");
     registered = true;
 }
 
-QString qmlSourceImport()
+QString sourceQmlPath(const QString &fileName)
 {
-    const QString qmlPath = QDir(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR))
-                                .absoluteFilePath(QStringLiteral("../../src/qml"));
-    return QUrl::fromLocalFile(qmlPath).toString();
+    return QDir(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR))
+        .absoluteFilePath(QStringLiteral("../../src/qml/%1").arg(fileName));
 }
 
-QString fixtureQml()
+bool writeFile(const QString &path, const QByteArray &content, QString *errorString)
+{
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        *errorString = QStringLiteral("failed to write %1: %2").arg(path, file.errorString());
+        return false;
+    }
+    if (file.write(content) != content.size()) {
+        *errorString
+            = QStringLiteral("failed to write complete file %1: %2").arg(path, file.errorString());
+        return false;
+    }
+    return true;
+}
+
+std::unique_ptr<QTemporaryDir> createTestQmlDirectory(QString *errorString)
+{
+    auto directory = std::make_unique<QTemporaryDir>();
+    if (!directory->isValid()) {
+        *errorString = QStringLiteral("temporary QML directory was not created");
+        return nullptr;
+    }
+
+    const QStringList files {
+        QStringLiteral("DisplayImagePage.qml"),
+        QStringLiteral("ImageViewport.qml"),
+        QStringLiteral("ImageViewportInteractionSurface.qml"),
+        QStringLiteral("MediaViewportDelegate.qml"),
+        QStringLiteral("ZoomWheelStepPolicy.qml"),
+    };
+    for (const QString &fileName : files) {
+        QFile sourceFile(sourceQmlPath(fileName));
+        if (!sourceFile.open(QIODevice::ReadOnly)) {
+            *errorString = QStringLiteral("failed to read %1: %2")
+                               .arg(sourceFile.fileName(), sourceFile.errorString());
+            return nullptr;
+        }
+
+        QByteArray content = sourceFile.readAll();
+        if (fileName == QStringLiteral("ImageViewport.qml")) {
+            const QByteArray productionImport("import io.github.hnjae.kiriview\n");
+            const QByteArray testImport("import io.github.hnjae.kiriview.tests\n");
+            if (!content.contains(productionImport)) {
+                *errorString = QStringLiteral("ImageViewport.qml production import was not found");
+                return nullptr;
+            }
+            content.replace(productionImport, testImport);
+        }
+
+        const QString destinationPath = QDir(directory->path()).filePath(fileName);
+        if (!writeFile(destinationPath, content, errorString)) {
+            return nullptr;
+        }
+    }
+
+    return directory;
+}
+
+QString qmlDirectoryImport(const QString &path) { return QUrl::fromLocalFile(path).toString(); }
+
+QString fixtureQml(const QString &qmlImportPath)
 {
     return QStringLiteral(R"(
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQml
-import io.github.hnjae.kiriview
+import io.github.hnjae.kiriview.tests
 import "%1" as KiriViewQml
 
 Item {
@@ -1076,20 +1139,26 @@ Item {
     }
 }
 )")
-        .arg(qmlSourceImport());
+        .arg(qmlImportPath);
 }
 
 ImageViewportFixture createFixture()
 {
     ImageViewportFixture fixture;
     registerKiriViewQmlTypes();
+    fixture.qmlDirectory = createTestQmlDirectory(&fixture.errorString);
+    if (fixture.qmlDirectory == nullptr) {
+        return fixture;
+    }
+
     fixture.view = std::make_unique<QQuickView>();
     fixture.view->resize(200, 160);
     fixture.view->setResizeMode(QQuickView::SizeRootObjectToView);
     addEnvironmentImportPaths(*fixture.view->engine());
 
     QQmlComponent component(fixture.view->engine());
-    component.setData(fixtureQml().toUtf8(), QUrl(QStringLiteral("memory:test_imageviewport.qml")));
+    component.setData(fixtureQml(qmlDirectoryImport(fixture.qmlDirectory->path())).toUtf8(),
+        QUrl(QStringLiteral("memory:test_imageviewport.qml")));
     for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
         QCoreApplication::processEvents();
         QTest::qWait(10);

@@ -203,7 +203,7 @@ QByteArray encodedHeifStill(const QSize &size)
 
     heif_encoder *rawEncoder = nullptr;
     if (!heifOk(heif_context_get_encoder_for_format(
-            context.get(), heif_compression_AV1, &rawEncoder))) {
+            context.get(), heif_compression_JPEG, &rawEncoder))) {
         return {};
     }
     std::unique_ptr<heif_encoder, decltype(&heif_encoder_release)> encoder(

@@ -47,53 +47,40 @@ function(kiriview_latest_path output)
     set("${output}" "${latest_path}" PARENT_SCOPE)
 endfunction()
 
-function(kiriview_manifest_sources output manifest)
-    file(STRINGS "${manifest}" manifest_sources
-        REGEX "^[A-Za-z0-9_./-]+\\.cpp$"
-    )
-
-    set(source_paths "")
-    foreach(source IN LISTS manifest_sources)
-        list(APPEND source_paths "../../${source}")
-    endforeach()
-
-    set("${output}" "${source_paths}" PARENT_SCOPE)
-endfunction()
-
 set(KIRIVIEW_CARGO_TARGET_DIR "${CMAKE_SOURCE_DIR}/../../target/flatpak/debug"
     CACHE PATH "Cargo target debug artifacts directory"
 )
-file(GLOB KIRIVIEW_RUST_STATICLIB_CANDIDATES
-    "${KIRIVIEW_CARGO_TARGET_DIR}/deps/libkiriview-*.a"
-)
-kiriview_latest_path(KIRIVIEW_RUST_STATICLIB ${KIRIVIEW_RUST_STATICLIB_CANDIDATES})
+set(KIRIVIEW_CARGO_STATICLIB "${KIRIVIEW_CARGO_TARGET_DIR}/libkiriview.a")
 file(GLOB KIRIVIEW_CXXQT_INCLUDE_DIR_CANDIDATES
     "${KIRIVIEW_CARGO_TARGET_DIR}/build/kiriview-*/out/cxxqtbuild/include"
 )
 kiriview_latest_path(KIRIVIEW_CXXQT_INCLUDE_DIR ${KIRIVIEW_CXXQT_INCLUDE_DIR_CANDIDATES})
-if(NOT KIRIVIEW_RUST_STATICLIB OR NOT EXISTS "${KIRIVIEW_RUST_STATICLIB}"
-    OR NOT KIRIVIEW_CXXQT_INCLUDE_DIR OR NOT EXISTS "${KIRIVIEW_CXXQT_INCLUDE_DIR}")
-    message(FATAL_ERROR "Rust bridge artifacts are missing. Run the host Rust build step first.")
+file(GLOB KIRIVIEW_KCONFIG_INCLUDE_DIR_CANDIDATES
+    "${KIRIVIEW_CARGO_TARGET_DIR}/build/kiriview-*/out/kconfig"
+)
+kiriview_latest_path(KIRIVIEW_KCONFIG_INCLUDE_DIR ${KIRIVIEW_KCONFIG_INCLUDE_DIR_CANDIDATES})
+if(NOT EXISTS "${KIRIVIEW_CARGO_STATICLIB}"
+    OR NOT KIRIVIEW_CXXQT_INCLUDE_DIR OR NOT EXISTS "${KIRIVIEW_CXXQT_INCLUDE_DIR}"
+    OR NOT KIRIVIEW_KCONFIG_INCLUDE_DIR OR NOT EXISTS "${KIRIVIEW_KCONFIG_INCLUDE_DIR}")
+    message(FATAL_ERROR "Cargo-owned KiriView app library artifacts are missing. Run the Cargo app library build step first.")
 endif()
 
-kiriview_manifest_sources(KIRIVIEW_CORE_SOURCE_PATHS "../../src/cpp_core_sources.txt")
-kiriview_manifest_sources(KIRIVIEW_CXXQT_SOURCE_PATHS "../../src/cpp_cxxqt_sources.txt")
+add_library(KiriViewCargoStatic STATIC IMPORTED GLOBAL)
+set_target_properties(KiriViewCargoStatic PROPERTIES
+    IMPORTED_LOCATION "${KIRIVIEW_CARGO_STATICLIB}"
+)
 
-add_library(kiriview_test_core STATIC
-    ${KIRIVIEW_CORE_SOURCE_PATHS}
-    ${KIRIVIEW_CXXQT_SOURCE_PATHS}
-)
-target_include_directories(kiriview_test_core PUBLIC
+add_library(kiriview_test_core INTERFACE)
+target_include_directories(kiriview_test_core INTERFACE
     ../../src
-    "${CMAKE_CURRENT_BINARY_DIR}"
     "${KIRIVIEW_CXXQT_INCLUDE_DIR}"
+    "${KIRIVIEW_KCONFIG_INCLUDE_DIR}"
 )
-target_compile_definitions(kiriview_test_core PUBLIC
+target_compile_definitions(kiriview_test_core INTERFACE
     TRANSLATION_DOMAIN="kiriview"
 )
-kconfig_add_kcfg_files(kiriview_test_core ../../src/kiriviewstate.kcfgc)
-target_link_libraries(kiriview_test_core PUBLIC
-    "${KIRIVIEW_RUST_STATICLIB}"
+target_link_libraries(kiriview_test_core INTERFACE
+    "$<LINK_LIBRARY:WHOLE_ARCHIVE,KiriViewCargoStatic>"
     Qt6::Core
     Qt6::DBus
     Qt6::Gui

@@ -14,10 +14,7 @@ Item {
     property string fixedShortcutText: ""
     readonly property int shortcutRevision: application.shortcutRevision
     readonly property int actionStateRevision: application.actionStateRevision
-    readonly property bool runtimePlacementEnabled: {
-        root.actionStateRevision;
-        return root.application.actionPlacementEnabled(root.actionId);
-    }
+    readonly property bool runtimePlacementEnabled: root.actionStateRevision >= 0 && root.application.actionPlacementEnabled(root.actionId)
     readonly property string menuShortcutText: {
         root.shortcutRevision;
         return root.application.menuShortcutTextForId(root.actionId);

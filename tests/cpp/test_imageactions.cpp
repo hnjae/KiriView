@@ -139,6 +139,12 @@ Item {
     property bool lastProxyEnabled: imageActions.lastImageAction.enabled
     property bool previousProxyVisible: imageActions.previousImageAction.visible
     property bool nextProxyVisible: imageActions.nextImageAction.visible
+    property bool nextProxyHasSourceAction: imageActions.nextImageAction.sourceAction !== null
+    property bool nextProxyPlacementVisible: imageActions.nextImageAction.placementVisible
+    property bool nextPlacementEnabled: {
+        application.actionStateRevision;
+        return application.actionPlacementEnabled(KiriViewApplication.GoNextImageAction);
+    }
     property bool previousQActionEnabled: application.actionForId(KiriViewApplication.GoPreviousImageAction).enabled
     property bool nextQActionEnabled: application.actionForId(KiriViewApplication.GoNextImageAction).enabled
     property bool firstQActionEnabled: application.actionForId(KiriViewApplication.GoFirstImageAction).enabled
@@ -275,21 +281,29 @@ void TestImageActions::previousNextAvailabilityFollowsSessionActiveNavigation()
     archiveFixture.temporaryDirectory = std::move(archiveDirectory);
     QVERIFY2(archiveFixture.isValid(), qPrintable(archiveFixture.errorString));
     QTRY_VERIFY(archiveFixture.documentSession->activeNavigationKnown());
-    QVERIFY(archiveFixture.root->property("previousQActionEnabled").toBool());
-    QVERIFY(archiveFixture.root->property("nextQActionEnabled").toBool());
-    QVERIFY(archiveFixture.root->property("previousProxyEnabled").toBool());
-    QVERIFY(archiveFixture.root->property("nextProxyEnabled").toBool());
+    QTRY_COMPARE(archiveFixture.documentSession->activeNavigationCurrentNumber(), 1);
+    QTRY_COMPARE(archiveFixture.documentSession->activeNavigationCount(), 3);
+    QTRY_VERIFY(archiveFixture.documentSession->canOpenNextActiveNavigation());
+    QVERIFY(invoke(*archiveFixture.root, "publishActionUiState"));
+    QTRY_VERIFY(archiveFixture.root->property("previousQActionEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("nextQActionEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("previousProxyEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("nextProxyEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("nextProxyHasSourceAction").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("nextPlacementEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("nextProxyPlacementVisible").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("nextProxyVisible").toBool());
     QVERIFY(!archiveFixture.root->property("previousProxyVisible").toBool());
-    QVERIFY(archiveFixture.root->property("nextProxyVisible").toBool());
 
     archiveFixture.documentSession->openActiveNavigationAtNumber(2);
     QTRY_COMPARE(archiveFixture.documentSession->activeNavigationCurrentNumber(), 2);
-    QVERIFY(archiveFixture.root->property("previousQActionEnabled").toBool());
-    QVERIFY(archiveFixture.root->property("nextQActionEnabled").toBool());
-    QVERIFY(archiveFixture.root->property("previousProxyEnabled").toBool());
-    QVERIFY(archiveFixture.root->property("nextProxyEnabled").toBool());
-    QVERIFY(archiveFixture.root->property("previousProxyVisible").toBool());
-    QVERIFY(archiveFixture.root->property("nextProxyVisible").toBool());
+    QVERIFY(invoke(*archiveFixture.root, "publishActionUiState"));
+    QTRY_VERIFY(archiveFixture.root->property("previousQActionEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("nextQActionEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("previousProxyEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("nextProxyEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("previousProxyVisible").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("nextProxyVisible").toBool());
 }
 
 void TestImageActions::firstLastDispatchUsesSessionActiveNavigation()
