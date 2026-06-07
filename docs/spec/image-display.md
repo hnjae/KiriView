@@ -26,6 +26,8 @@ If animation playback fails for the displayed image, the UI shows an error state
 
 Opened images are displayed centered in the available page area while preserving their aspect ratio.
 
+When KiriView is started with a direct image source, the initial image appears in the main viewport once it is display-ready. The main viewport does not require thumbnail pane visibility, information pane visibility, or another layout side effect before showing that accepted image.
+
 Image zoom is expressed in physical display pixels. At 100%, one image pixel maps to one physical monitor pixel.
 
 For SVG files, 100% uses the SVG's intrinsic size. SVGs remain sharp instead of pixelated when Fit mode, manual zoom, window resizing, or display scale changes the displayed size.
