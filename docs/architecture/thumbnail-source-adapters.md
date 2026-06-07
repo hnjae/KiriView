@@ -4,7 +4,7 @@ Active navigation thumbnails use source adapters to keep thumbnail scheduling an
 
 Adapters consume the active thumbnail source key and demand bucket described by [Extension Contracts](extension-contracts.md). They must not mutate QML-facing model state, schedule jobs independently, install cache entries directly, or bypass runtime stale-completion identity. Adapter outputs are plans: unsupported fallback, cacheable local-file generation, cacheable opened-collection entry generation, or in-memory-only generation.
 
-Thumbnail cache lookup, cache original identity, and bucket sizing are neutral thumbnail infrastructure, not session-owned active-navigation state. The active-navigation strip and main-image preview may both consume these contracts, so decoding code must import thumbnail cache contracts from the thumbnail boundary rather than from `session/`.
+Thumbnail cache lookup, generation requests, cache original identity, source-kind classification, and bucket sizing are neutral thumbnail infrastructure, not session-owned active-navigation state. The active-navigation strip and main-image preview may both consume these contracts, so decoding code must import thumbnail cache contracts from the thumbnail boundary rather than from `session/`, and active-navigation row kinds must be mapped into thumbnail source kinds before crossing the generation provider boundary.
 
 ## Original Identity
 
