@@ -52,6 +52,8 @@ class TestThumbnailGeneration : public QObject
 private Q_SLOTS:
     void injectedBytesLoaderProvidesGenerationBytes();
     void openedCollectionIdentityFailureSkipsBytesLoader();
+    void injectedCacheHitSkipsBytesLoader();
+    void injectedCacheInstallPublishesInstalledPath();
 };
 
 void TestThumbnailGeneration::injectedBytesLoaderProvidesGenerationBytes()
@@ -107,6 +109,91 @@ void TestThumbnailGeneration::openedCollectionIdentityFailureSkipsBytesLoader()
     QCOMPARE(result.status, Status::Failed);
     QCOMPARE(result.requestedBucket, Bucket::Normal);
     QCOMPARE(result.errorString, QStringLiteral("synthetic identity failure"));
+}
+
+void TestThumbnailGeneration::injectedCacheHitSkipsBytesLoader()
+{
+    KiriView::ThumbnailGenerationRequest request = generationRequest();
+    request.openedCollectionScope = KiriView::OpenedCollectionScopeLocation::fromUrls(
+        QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),
+        QUrl(QStringLiteral("zip:///books/book.cbz")),
+        KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+    request.sourceUrl = QUrl(QStringLiteral("zip:///books/book.cbz/page.png"));
+    request.cacheInstallEnabled = true;
+
+    QImage cachedImage(QSize(16, 12), QImage::Format_RGBA8888);
+    cachedImage.fill(QColor(Qt::blue));
+
+    KiriView::ThumbnailGenerationDependencies dependencies;
+    int bytesLoadCount = 0;
+    dependencies.bytesLoader
+        = [&bytesLoadCount](const KiriView::ThumbnailGenerationRequest &, QString *) {
+              ++bytesLoadCount;
+              return encodedPngData();
+          };
+    dependencies.openedCollectionOriginalIdentityLoader
+        = [](const KiriView::ThumbnailGenerationRequest &, QString *) {
+              return std::optional<KiriView::ThumbnailOriginalIdentity>(
+                  KiriView::ThumbnailOriginalIdentity::fromNonFileUri(
+                      QStringLiteral("x-kiriview://thumbnail/test"), 0, 8, QString()));
+          };
+    dependencies.cacheRepository.lookup
+        = [cachedImage](const KiriView::ThumbnailOriginalIdentity &, Bucket bucket) {
+              return std::optional<KiriView::ThumbnailCacheLookupResult>(
+                  KiriView::ThumbnailCacheLookupResult {
+                      KiriView::ThumbnailCacheLookupStatus::Ready,
+                      cachedImage,
+                      bucket,
+                      bucket,
+                      QStringLiteral("/cache/hit.png"),
+                      {},
+                  });
+          };
+
+    const KiriView::ThumbnailGenerationResult result
+        = KiriView::generateThumbnail(std::move(request), std::move(dependencies));
+
+    QCOMPARE(bytesLoadCount, 0);
+    QCOMPARE(result.status, Status::Ready);
+    QCOMPARE(result.requestedBucket, Bucket::Normal);
+    QCOMPARE(result.image.size(), cachedImage.size());
+    QCOMPARE(result.installedCachePath, QStringLiteral("/cache/hit.png"));
+}
+
+void TestThumbnailGeneration::injectedCacheInstallPublishesInstalledPath()
+{
+    KiriView::ThumbnailGenerationRequest request = generationRequest(Bucket::Large);
+    request.cacheInstallEnabled = true;
+
+    KiriView::ThumbnailOriginalIdentity installedIdentity;
+    QImage installedImage;
+
+    KiriView::ThumbnailGenerationDependencies dependencies;
+    dependencies.bytesLoader
+        = [](const KiriView::ThumbnailGenerationRequest &, QString *) { return encodedPngData(); };
+    dependencies.cacheRepository.install
+        = [&installedIdentity, &installedImage](const KiriView::ThumbnailOriginalIdentity &identity,
+              Bucket bucket, const QImage &image) {
+              installedIdentity = identity;
+              installedImage = image.copy();
+              return KiriView::ThumbnailGenerationCacheInstallResult {
+                  true,
+                  bucket,
+                  QStringLiteral("/cache/generated.png"),
+                  {},
+              };
+          };
+
+    const KiriView::ThumbnailGenerationResult result
+        = KiriView::generateThumbnail(std::move(request), std::move(dependencies));
+
+    QCOMPARE(result.status, Status::Ready);
+    QCOMPARE(result.requestedBucket, Bucket::Large);
+    QCOMPARE(result.installedCachePath, QStringLiteral("/cache/generated.png"));
+    QVERIFY(installedIdentity.isLocalPath());
+    QCOMPARE(installedIdentity.localPathBytes, QByteArrayLiteral("/missing/source.png"));
+    QCOMPARE(installedImage.size(), QSize(4, 3));
+    QCOMPARE(installedImage.format(), QImage::Format_RGBA8888);
 }
 
 QTEST_GUILESS_MAIN(TestThumbnailGeneration)
