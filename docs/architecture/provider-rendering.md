@@ -26,6 +26,10 @@ A display-source projection is read-only facade state derived from the accepted 
 
 `ImagePageSurfaceController` owns provider-entry ids and store leases for its page role. Static display payloads and animation frames publish immutable entries, superseded or cleared entries are released through `DisplayImageStore`, visible entries are pinned and prioritized from presentation visibility, and pending-load or frame-retention pins are released only by matching QML load acknowledgments or source supersession. Cross-source replacement clears the previous projection; same-source stale retention may keep a previous provider URL only when presentation policy intentionally keeps that same entry visible.
 
+Provider load outcomes are presentation state, not only lease cleanup. A loaded outcome marks the current provider entry visually accepted for its page role and releases the matching pending-load ownership. Error and missing outcomes must resolve through a named presentation path: either a display error is surfaced for the active target or an explicit runtime reconciliation retries the still-current accepted payload after the missing attachment, viewport, render-context, or provider condition has changed. The document must not remain silently ready with an empty display-source projection.
+
+Display-source projection is reconciled idempotently whenever the accepted decoded payload changes, viewport size changes, visible rect changes, render-context attachment changes, scene attachment changes, device-pixel-ratio changes, or a provider load outcome arrives. Late arrival of any viewport or render-context fact must reproject the current accepted provider payload instead of depending on thumbnail pane toggles, unrelated layout changes, or one-shot startup ordering.
+
 ## Static Display Payloads
 
 - Static decode results are display-payload-first: the decoded result carries source identity, applied image-reader transform metadata, post-transform original image size, the current display-ready `QImage`, display quality, display pixels per source pixel, embedded metadata, and an optional refinement-capable source payload.
