@@ -2,1252 +2,420 @@
 
 ## Executive Summary
 
-KiriView already has a clear intended direction in `docs/architecture/`: C++ owns authoritative runtime state, Rust policy/reducer code computes value decisions where practical, QML renders projections and reports local facts, and facades should expose QML API rather than own domain behavior. The main design risk is that several important features only partially follow that direction. State clusters still have public setters outside their transition paths, session and facade objects still coordinate too many workflows, and some feature modules leak across archive, document, session, decoding, rendering, and QML boundaries.
+KiriView already has a sound architectural direction: `QML -> facade -> C++ runtime/effect executor -> Rust policy`. The main issue is not the absence of layers. The issue is that several boundaries still allow the same domain rule or state concept to be defined more than once, allow external effects to rely on UI/projection availability checks instead of command-boundary validation, and place too much workflow assembly inside facade or runtime composition objects.
 
-The most important correct end state is not a broad rewrite. It is to finish landing the repository's existing architectural intent: centralize invariant-coupled state transitions, move duplicated policy into single owners, isolate external effects behind narrow ports, and make facades and QML consume typed projections rather than recomputing shared decisions.
+The highest-risk findings are around rules that affect real user behavior and state consistency: file deletion eligibility, active-navigation numbered requests, thumbnail source identity, image-open state transitions, and failure representation. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, `KiriViewApplication`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
+
+The correct end state should be precise and conservative, not clever. Rust policy should own duplicated-free domain decisions and typed plans. C++ runtime should own Qt/KDE objects and external effects behind typed adapters. Facades should expose QML-friendly types and forward commands. QML should report geometry/input facts and render projections. Errors should flow internally as typed failures with source, stage, diagnostic detail, severity, and retryability, while the UI receives only user-facing messages.
 
 ## Top Design Risks
 
-1. Invariant-coupled state is still representable as independent fields in `ImageDocumentState`, `VideoDocumentState`, and `ImagePresentationRuntime`, so valid snapshots depend on call order rather than on central transition APIs.
-2. `DocumentSessionRuntime` and `KiriViewApplication` still own broad routing and coordination responsibilities, making session behavior, actions, thumbnails, direct media, deletion, Open With, and predecode harder to reason about independently.
-3. Thumbnail, opened-collection, predecode, and secondary-page behavior cross module boundaries in ways that make features hard to remove or replace cleanly.
-4. Core workflow tests depend on real Qt/KDE effects such as `QThreadPool::globalInstance()`, `QTimer`, `KCoreDirLister`, DBus, filesystem notifications, and broad test link targets.
-5. Failures are mostly represented as raw `QString` values, with some errors displayed directly, some swallowed, and no consistent distinction between user-facing messages, internal diagnostics, retryable adapter errors, and fatal runtime errors.
+1. P1: `ImageDocument` deletion is projected as available only when the document is ready, but the actual side-effect path can bypass that readiness rule.
+2. P1: Identity and validity rules are split across layers, especially `ThumbnailSourceKey` vs. `ActiveNavigationThumbnailSourceKey` and raw active-navigation numbered dispatch.
+3. P1: `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
+4. P1: Image, video, and file-operation failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
+5. P1/P2: HEIF/BMFF brands, image format capabilities, and image-open state transitions are not enforced by one central catalog or state-machine boundary.
 
 ## Single Source of Truth Violations
 
-### Finding: Display image cache budget has competing defaults
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/policy/cachebudget.rs` computes display cache budget from a caller-provided preferred display budget.
-- `src/cache/imagecachepolicy.cpp` resolves `request.displayImageCachePreferredByteBudget`.
-- `src/document/imagedocumentruntimedependencies.cpp` defaults `displayImageCachePreferredByteBudget` from `imageFullDecodeFallbackByteLimit`.
-- `src/rendering/staticimage.h` defines `imageFullDecodeFallbackByteLimit = 512 * 1024 * 1024`.
-- `src/rendering/displayimagestore.cpp` has a separate `fallbackDisplayStoreByteBudget = 64 * 1024 * 1024` and resolves an empty `ImageCacheBudgetRequest`.
-- `src/presentation/imagepagesurfacecontroller.cpp` stores a resolved display budget but uses `m_displayImageStore->byteBudget()` when a shared store is present.
-
-#### Current state
-
-Document runtime dependency construction and shared display-store construction can resolve different default display-image budgets. The page surface controller can then use one budget when no store exists and a different budget when a shared store is injected.
-
-#### Design concern
-
-Display-image cache budget is a product and safety policy, but it has multiple defaults. Refinement and cache behavior can depend on composition path rather than a single budget rule.
-
-#### Correct end state
-
-The cache policy layer should own one named default for display-image cache budget. `DisplayImageStore`, document runtime dependency construction, and page surface controllers should all receive or derive the same resolved value. If full-decode fallback size intentionally informs display-cache budget, that relationship should be encoded as an explicit policy name rather than as an incidental reuse of `imageFullDecodeFallbackByteLimit`.
-
-#### Suggested migration
-
-Add characterization tests that compare document dependency budgets and `DisplayImageStore` defaults under the same memory snapshot. Introduce one display-image preferred-budget provider in cache policy. Make `imageDocumentCacheBudgetRequestWithDefaults()` and `DisplayImageStore` delegate to that provider or receive the same resolved budget from application/session composition.
-
-#### Acceptance criteria
-
-- Only one production default for display image cache preferred budget remains.
-- `DisplayImageStore` no longer has an unrelated private fallback budget.
-- `ImagePageSurfaceController` does not silently switch between unrelated budget sources.
-- Tests prove the shared store and document dependency path resolve the same budget.
-
-### Finding: Display bucket, memory safety, and rotation rules are duplicated
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/policy/rasterdisplaybucketpolicy.rs` defines raster display demand validation, desired bucket sizing, rotation axis swap, size safety, and `DISPLAY_BYTES_PER_PIXEL`.
-- `src/rendering/rasterdisplaybucketpolicy.cpp` defines SVG-specific demand validation, desired scale, rotation axis swap, display size safety, and display bucket decision logic.
-- `src/cache/imagebytecost.cpp` estimates RGBA byte cost independently.
-- `src/policy/imagerendergeometry.rs` owns `rust_normalized_image_rotation_degrees()` and `rust_image_rotation_swaps_axes()`.
-- `src/policy/imagetilegeometry.rs`, `src/policy/rasterdisplaybucketpolicy.rs`, and `src/rendering/rasterdisplaybucketpolicy.cpp` repeat rotation normalization or axis-swap logic.
-
-#### Current state
-
-Raster bucket decisions live in Rust policy and are bridged to C++. SVG bucket decisions live in C++ and repeat common demand, safety, byte-cost, and rotation concepts. Rotation policy exists as a shared render-geometry policy but is also reimplemented in tile and bucket policies.
-
-#### Design concern
-
-Display safety is correctness-sensitive because it protects texture and memory limits. Drift between raster, SVG, tile geometry, render geometry, and byte-cost estimation can produce inconsistent bucket decisions for the same image, rotation, or memory budget.
-
-#### Correct end state
-
-A single display bucket policy should own common validation, rotation, byte-cost, and safety status semantics. SVG-specific scale behavior can be a parameter or strategy, but common safety and axis-swap behavior should be shared, preferably in the Rust policy layer already used by raster decisions. Thin C++ wrappers are acceptable; duplicate production implementations are not.
-
-#### Suggested migration
-
-Extract shared Rust helpers for normalized rotation, axis swapping, demand validation, RGBA byte cost, and safe-size checks. Move SVG bucket decision into Rust or make the C++ SVG path call the shared primitives. Then remove local C++ safety helpers and local Rust rotation copies.
-
-#### Acceptance criteria
-
-- Only one production implementation of quarter-turn normalization and axis swapping remains, excluding bridge wrappers.
-- `src/rendering/rasterdisplaybucketpolicy.cpp` no longer contains local copies of demand validation or display-image safety checks.
-- Raster and SVG bucket tests cover the same memory and rotation edge cases.
-- Byte-cost assumptions are named once and consumed by cache and bucket policy.
-
-### Finding: Opened-collection thumbnail identity eligibility is duplicated
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/archive/openedcollectionthumbnailpolicy.cpp` has `rootSchemeSupportsContentThumbnailIdentity()` for `zip` and `sevenz`.
-- `src/archive/mediaentrysourcebackend_karchive.cpp` has `rootSchemeSupportsThumbnailMetadata()` for the same root schemes.
-- `src/session/documentsessionruntime.cpp` uses `documentSessionThumbnailSourceAdapter()` to consume `openedCollectionThumbnailSourcePlan()`.
-- `docs/architecture/thumbnail-source-adapters.md` describes v1 support as image entries inside comic-book archives backed by `zip` or `sevenz` roots.
-
-#### Current state
-
-The session planner decides that certain opened-collection entries can provide stable thumbnail identity, and the KArchive backend independently decides whether it can provide thumbnail metadata for the same schemes and entry kinds.
-
-#### Design concern
-
-Planner and backend support can drift. A new checksum-capable archive backend or changed archive eligibility rule would require coordinated edits in at least two private helper functions.
-
-#### Correct end state
-
-Archive thumbnail identity eligibility should have one owner in the archive or opened-collection source layer. The session thumbnail planner should consume a capability fact or shared policy rather than duplicating archive scheme knowledge.
-
-#### Suggested migration
-
-Add a shared archive capability function or method for thumbnail content identity support. Use it from both `openedcollectionthumbnailpolicy.cpp` and `mediaentrysourcebackend_karchive.cpp`. Keep the external behavior unchanged.
-
-#### Acceptance criteria
-
-- No duplicated `zip`/`sevenz` thumbnail metadata helper remains in production code.
-- Planner and backend use the same capability source.
-- Tests cover supported CBZ/CB7 image entries and rejected non-image, non-comic-book, and unsupported archive cases.
-
-### Finding: Filename extension parsing is duplicated in Rust policy
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/policy/imageinputclassification.rs` defines `extension_for_file_name(name)`.
-- `src/policy/archiveformat.rs` defines a private `extension_for_file_name(name)`.
-- `src/policy/imageformatregistry.rs` and `src/policy/videoformatregistry.rs` import the image classification extension helper.
-
-#### Current state
-
-Image and video format matching share one parser, while archive format matching uses a duplicate parser.
-
-#### Design concern
-
-Extension parsing edge cases such as hidden files, trailing dots, and case normalization are part of file support behavior. Archive matching can drift from image/video matching if either parser changes.
-
-#### Correct end state
-
-A neutral Rust policy helper should own extension extraction. Image, video, and archive format registries should import that helper.
-
-#### Suggested migration
-
-Move `extension_for_file_name()` to a neutral policy module, update image classification and archive format matching to use it, and preserve current behavior with focused tests.
-
-#### Acceptance criteria
-
-- `rg "fn extension_for_file_name"` finds one production implementation.
-- Archive, image, and video extension matching use the same helper.
-- Tests cover hidden files, trailing dots, and uppercase extensions.
-
-### Finding: RTL navigation presentation ordering is recomputed in QML
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/navigation/imageshortcutnavigationpolicy.cpp` owns physical arrow mapping with `horizontalArrowAction()` and `singlePageArrowAction()`.
-- `src/facade/kiriviewapplication.cpp` applies that policy in `executeHorizontalArrowShortcut()` and `executeSinglePageArrowShortcut()`.
-- `src/qml/ImageDocumentPageNavigation.qml` defines `leftNavigationAction` and `rightNavigationAction` from `rightToLeftReadingActive`.
-- `src/qml/ImageActions.qml` constructs `applicationMenuNavigationActions` with RTL-dependent ordering.
-- `src/qml/ApplicationMenuBar.qml` maps leading/trailing menu actions and first/last image icons based on RTL state.
-
-#### Current state
-
-Keyboard physical-arrow semantics are centralized in C++ policy, but toolbar and menu presentation order is recomputed in several QML files.
-
-#### Design concern
-
-The concept "leading/trailing navigation action under the active reading direction" has multiple presentation definitions. Toolbar, menu, and keyboard behavior can drift as navigation evolves.
-
-#### Correct end state
-
-One navigation presentation projection should expose ordered leading/trailing/first/last action slots for the active reading direction. QML should render that projection. Physical keyboard shortcut policy may remain separate, but should share the same direction-mapping primitive where applicable.
-
-#### Suggested migration
-
-Add a small navigation ordering policy or projection. Replace QML ternaries with projected action references. Add verification for LTR and RTL toolbar, menu bar, and application menu ordering.
-
-#### Acceptance criteria
-
-- Production QML no longer directly maps `rightToLeftReadingActive` to previous/next navigation actions.
-- One policy or projection owns RTL-aware presentation ordering.
-- LTR and RTL ordering are verified across the relevant presentation surfaces.
-
-### Finding: Wheel zoom step conversion is duplicated in QML
-
-**Priority:** P3
-
-#### Evidence
-
-- `src/qml/ImageZoomControls.qml` defines `wheelAngleDeltaPerStep`, `wheelZoomStepCount(wheel)`, and `handleZoomWheel()`.
-- `src/qml/ImageViewport.qml` defines the same wheel angle divisor and conversion helper in `handleWheelZoom()`.
-
-#### Current state
-
-Both QML components convert wheel delta into zoom step count with the same `120` divisor. `ImageZoomControls.qml` applies an additional `0.5` multiplier that is not named as policy.
-
-#### Design concern
-
-This is a small duplication, but touchpad/wheel normalization changes would need coordinated edits. The toolbar sensitivity difference may be intentional, but it is not explicit.
-
-#### Correct end state
-
-One QML helper or exposed input policy should own wheel-to-zoom-step conversion. Any per-surface sensitivity difference should be named.
-
-#### Suggested migration
-
-Extract wheel step normalization into a shared helper and keep toolbar scaling as a named multiplier if current behavior is desired.
-
-#### Acceptance criteria
-
-- `wheelAngleDeltaPerStep` and `wheelZoomStepCount()` appear once in production code or in a shared helper.
-- Toolbar-specific wheel scaling, if retained, has a named constant or policy.
+### Finding: HEIF/BMFF brand classification is duplicated
+
+- Evidence: `src/policy/imageinputclassification.rs` defines `is_heif_family_brand` and `classify_bmff_payload`; `src/policy/heifcontainer.rs` defines `heif_brand_kind` and `parse_heif_container_info`; `src/decoding/heifcontainer.cpp` bridges through `rustHeifBrandKind` and `rustHeifContainerInfo`.
+- Current state: The input classifier owns one brand list for routing BMFF payloads as HEIF/AVIF-family image input. `heifcontainer.rs` owns another brand list for still-image versus sequence classification.
+- Design concern: Adding or correcting a brand requires coordinated edits in multiple Rust policy modules. Drift can make a payload accepted by input routing but not recognized by container analysis, or the reverse.
+- Correct end state: One Rust policy module should own BMFF/HEIF brand knowledge and expose both coarse family membership and detailed `HeifBrandKind`. C++ bridge code should remain a consumer only.
+- Suggested migration: Extract the brand table/classifier from `heifcontainer.rs` or a new policy helper, then replace the local family list in `imageinputclassification.rs`. Add Rust tests proving that still/sequence brand union matches family membership.
+- Acceptance criteria: There is exactly one authoritative Rust HEIF/BMFF brand table or classifier; `imageinputclassification.rs` no longer maintains a local HEIF brand list; C++ does not duplicate brand policy.
+- Priority: P1
+
+### Finding: Supported image format metadata and decode classification are competing catalogs
+
+- Evidence: `src/policy/imageformatregistry.rs` defines `SUPPORTED_IMAGE_FORMATS`, `RAW_IMAGE_EXTENSIONS`, `supported_image_extensions`, and `supported_image_mime_types`; `src/policy/imageinputclassification.rs` defines `RustQtRasterFormat` and `classify_image_input`; `src/decoding/imageinputclassification.h`, `src/bridge/imageinputclassificationconversion.cpp`, and `src/decoding/imagedecodepipeline.cpp` mirror and route those values through `imageDecodeRouteForClassification` and `handlerForRoute`.
+- Current state: Openable extension/MIME metadata, byte-signature and extension-fallback classification, FFI enum conversion, and concrete decode routing are separate partial definitions.
+- Design concern: Adding or removing a format requires matching edits across the registry, classifier, bridge, and decode route. A format can be advertised by UI/desktop metadata while lacking a decode route, or be decodable while missing from supported metadata.
+- Correct end state: A policy-level image format capability catalog should own format family, extension/MIME metadata, and decoder-family capability. Byte-level classification may remain separate, but catalog/route alignment should be enforced by tests.
+- Suggested migration: First add policy tests asserting that each meaningful `SUPPORTED_IMAGE_FORMATS` entry has an expected classifier/decoder family. Move `RAW_IMAGE_EXTENSIONS` ownership from the classifier into the capability catalog.
+- Acceptance criteria: There is one obvious policy entry point for adding/removing formats; tests fail when registry-supported formats lack classifier/decoder mapping; C++ decode routing remains an execution layer.
+- Priority: P2
+
+### Finding: Thumbnail source identity has two production-like definitions
+
+- Evidence: `src/location/sourcekey.h` and `src/location/sourcekey.cpp` define `ThumbnailSourceKey`, `thumbnailSourceKey`, `sameThumbnailSourceKey`, and `qHash(const ThumbnailSourceKey &)`. `src/session/activenavigationthumbnailruntime.h` defines `ActiveNavigationThumbnailSourceKey`. `src/session/activenavigationthumbnailruntime.cpp` defines `sourceKeyForRow`, `sameSourceKey`, and `rowIndexForIdentity`. `tests/cpp/test_architectureboundaries.cpp` checks the source-key extension contract.
+- Current state: The location-layer key normalizes URL identity through `sourceKeyForUrl` and compares mostly by `rowIdentity`. The active navigation thumbnail runtime uses a separate key that compares raw `QUrl`, row number, label, kind, source kind, and `navigationGeneration`.
+- Design concern: Durable identity and freshness generation have different meanings depending on the key type. It is unclear which identity is canonical for cache lookup, stale completion rejection, and row matching.
+- Correct end state: There should be one production thumbnail source identity value object. If `navigationGeneration` represents freshness rather than identity, that distinction should be explicit and tested separately.
+- Suggested migration: Add characterization tests for URL normalization, row identity, and generation changes. Convert `ActiveNavigationThumbnailRow` into the canonical `ThumbnailSourceKey`, then replace local equality and lookup helpers with shared identity comparison plus an explicit generation check.
+- Acceptance criteria: Only one production thumbnail identity type defines equality/hash semantics; generation-based stale rejection is tested separately from durable identity.
+- Priority: P1
+
+### Finding: Zoom preset action values are duplicated between metadata and dispatch
+
+- Evidence: `src/application/kiriviewapplicationactions.cpp` declares `ViewZoom50PercentAction`, `ViewZoom100PercentAction`, and `ViewZoom200PercentAction`; `src/application/applicationcommandrouter.cpp` dispatches them with `requestManualZoomPercent(..., 50.0/100.0/200.0)`; `src/application/applicationactionstatepolicy.cpp` repeats zoom labels; `src/qml/ImageActions.qml` exposes managed actions for those presets.
+- Current state: Action IDs and labels say 50/100/200, while the router supplies the same values as separate literal payloads.
+- Design concern: The visible label/action identity can drift from the actual executed percent. Adding a preset requires checking action declarations, menu text, router literals, and QML placement.
+- Correct end state: Zoom presets should be represented by one descriptor table or helper keyed by `ActionId`, with the percent payload declared once and consumed by metadata and dispatch.
+- Suggested migration: Introduce a small zoom preset descriptor and remove hard-coded double literals from the router. Add tests aligning action label/name and dispatched percent.
+- Acceptance criteria: Each preset value is declared once, and adding a preset requires one descriptor plus intentional UI placement.
+- Priority: P2
+
+### Finding: `ImageShortcutScope` validity is enumerated more than once in C++
+
+- Evidence: `src/application/applicationtypes.h` defines `ImageShortcutScope`; `src/policy/imageactionavailability.rs` mirrors it as `RustImageShortcutScope`; `src/bridge/imageactionavailabilityconversion.cpp` converts it; `src/application/imageactionavailabilitypolicy.cpp` defines `imageShortcutScopeKnown`; `src/application/applicationshortcutpolicy.cpp` defines `imageShortcutScopeFromValue`.
+- Current state: Rust/C++ FFI mirroring is expected, but C++ also repeats the valid enum list in both known-scope validation and integer conversion.
+- Design concern: Adding a scope can leave one path accepting it and another rejecting it.
+- Correct end state: C++ should have one canonical validity helper or safe sentinel/range mechanism near `ImageShortcutScope`. Policy and conversion paths should share it.
+- Suggested migration: Add a helper such as `knownImageShortcutScope(ImageShortcutScope)` and replace local validation switches. Keep Rust bridge conversion exhaustive, but do not make it a second source of C++ validity.
+- Acceptance criteria: C++ scope validity is defined in one place, and a new scope requires one validity update plus intentional policy handling.
+- Priority: P2
 
 ## Invariant and Correctness Risks
 
-### Finding: Image document open state can be partially mutated outside the central transition workflow
+### Finding: Image document deletion bypasses the Ready/deletion-availability invariant at the side-effect boundary
 
-**Priority:** P1
+- Evidence: `src/session/documentsessionpublicprojection.cpp:69` has `displayedFileDeletionAvailableForInput`, which checks `fileDeletionInProgress` and image `readyForDeletion`. `src/session/documentsessionruntime.cpp:578` has `DocumentSessionRuntime::deleteDisplayedFile`, which forwards non-direct image deletion to `m_imageDocument.deleteDisplayedFile(mode)` without using `displayedFileDeletionAvailable()`. `src/session/documentsessionruntime.cpp:714` sets `snapshot.readyForDeletion = m_imageDocument.ready()`. `src/facade/kiriimagedocument.h:254` exposes `KiriImageDocument::deleteDisplayedFile` as a public `Q_INVOKABLE`. `src/document/imagedocumentdeletioncontroller.cpp:40` checks only `hasImage()` and an image-removal target.
+- Current state: The public session projection says image deletion is available only when the image document is ready, but the actual image deletion command owner does not enforce that invariant. A loading path can retain a previous page surface, so `hasImage()` is not the same as deletion-ready.
+- Design concern: File deletion is an external side effect, but eligibility is enforced opportunistically through UI/session projection instead of the command boundary. A public invokable or image-session branch can bypass the same rule direct-media deletion uses.
+- Correct end state: A single image deletion eligibility policy/plan should be used by `DocumentSessionRuntime`, `KiriImageDocument`, and `ImageDocumentDeletionController`. The provider should receive only requests that pass status `Ready`, valid displayed target, no in-progress deletion, and correct session/source ownership context.
+- Suggested migration: Add characterization tests for `Loading`, `Error`, replacement load with retained image surface, and in-progress deletion states. Introduce an `ImageDocumentDeletionEligibilitySnapshot` or equivalent plan function and use it before session forwarding and before provider invocation.
+- Acceptance criteria: `FileDeletionProvider` is not invoked unless the image document is deletion-ready; `DocumentSessionRuntime` and `KiriImageDocument` agree on deletion availability for the same snapshot.
+- Priority: P1
 
-#### Evidence
+### Finding: Active navigation numbered dispatch does not centrally validate number ranges
 
-- `src/document/imagedocumentstate.h` exposes independent setters for source URL, source kind, displayed image location, status, loading, error string, container navigation URL, unsupported opened-collection video, and metadata.
-- `src/document/imagedocumentstate.cpp` applies those setters independently.
-- `src/document/imageopentransition.h` defines `ImageOpenStateDelta`, but it does not include every open-state fact, such as source kind, unsupported opened-collection video, or embedded metadata.
-- `src/document/imageopentransitionapplier.cpp` applies transition fields one by one to `ImageDocumentState`.
-- `src/document/imageopencontroller.cpp` combines workflow transitions with additional direct state mutations.
-- `src/document/imageopencontroller.cpp` handles unsupported opened-collection video by manually batching state setters instead of expressing the case as a normal transition outcome.
+- Evidence: `src/session/activenavigationprojection.cpp:63` stores raw numbers in `numberedActiveNavigationDispatchRequest(int number)`. `src/session/documentsessionruntime.cpp:473` forwards the number into the dispatch plan. `src/policy/activenavigation.rs:250` dispatches `Number` requests when the snapshot is known/editable but does not validate `1 <= number <= snapshot.count`. `src/navigation/directmedianavigationmodel.cpp:14` clamps invalid numbers. `src/navigation/imagedocumentpagenavigationpolicy.cpp:204` rejects invalid pages with `std::nullopt`. `tests/cpp/test_activenavigationprojection.cpp:253` covers valid numbered dispatch but not out-of-range dispatch.
+- Current state: Active-navigation projection normalizes availability, but numbered command validity is left to downstream owners. Direct media clamps invalid requests, while image-document page navigation rejects/no-ops them.
+- Design concern: The central active-navigation policy can emit invalid operations. The same public command has source-dependent out-of-range semantics.
+- Correct end state: `activeNavigationDispatchPlan` should validate numbers against the normalized snapshot count. The outcome should be an explicit no-op, boundary result, or documented clamp before any `OpenDirectMediaNavigationAtNumberOperation` or `OpenImageDocumentPageAtNumberOperation` is constructed.
+- Suggested migration: Add Rust and C++ characterization tests for `0`, negative, valid, and `> count` requests for both direct media and image-document pages. If direct-media clamping is intentional user-facing behavior, move the clamp into active-navigation policy and apply it consistently.
+- Acceptance criteria: Active-navigation dispatch operations never contain numbers outside `1..count`; invalid numbered command semantics are consistent for direct media and image-document pages.
+- Priority: P1
 
-#### Current state
+### Finding: Image open transitions can represent contradictory document state
 
-The image-open workflow centralizes some loading/status/error/displayed-location behavior, but several related facts are still set directly by `ImageOpenController`. Unsupported opened-collection video is a hand-built state cluster rather than a first-class workflow outcome.
+- Evidence: `src/document/imagedocumentstate.h:44` exposes independent setters for `sourceUrl`, `sourceKind`, `displayedImageLocation`, `status`, `loading`, `errorString`, and navigation URLs. `src/policy/imageopenworkflow.rs:146` defines `RustImageOpenStateDelta` with independent field targets. `src/document/imageopentransitionapplier.cpp:270` applies optional fields independently. `tests/cpp/test_imageopenworkflow.cpp:376` constructs `loading == true` with `status == Ready`. `tests/cpp/test_imageopentransitionapplier.cpp:254` can request `status Ready` with `errorString Provided`.
+- Current state: Existing workflow builders usually produce coherent transitions, but the types and applier allow combinations such as `Ready + loading`, `Ready + errorString`, or `Error + empty errorString`.
+- Design concern: Correctness depends on every transition builder preserving implicit cross-field relationships. Release builds do not protect those relationships with `debug_assert!`.
+- Correct end state: Image document state changes should pass through named transition variants or a validating state-machine boundary. The owner should define allowed combinations for `Null`, `Loading`, `Ready`, `Error`, and unsupported states, and validate final state before notifications or effects are emitted.
+- Suggested migration: First document current invariants in tests. Add final-state validation to `applyImageOpenApplicationPlan` or a transition factory. Gradually replace open-ended field-target deltas with named transitions for source load begin, success, source error, container error, animation error, and empty source.
+- Acceptance criteria: Contradictory transition outputs fail tests unless explicitly allowed; new image-open transitions cannot update status/loading/error/displayed-location independently without the invariant boundary.
+- Priority: P2
 
-#### Design concern
+### Finding: Uncertain - image presentation can expose visible image state without a provider-ready display source
 
-The valid image document state is a cross-field invariant. Production code can represent combinations such as ready status with stale error text, loading true with a terminal status, or unsupported opened-collection video with unrelated source facts if a call path misses part of the setter sequence.
-
-#### Correct end state
-
-Image document open state should change through one transition/reducer API that owns source kind, source URL, displayed location, loading, status, error, container navigation, unsupported opened-collection video, and metadata. Low-level setters for invariant-coupled fields should be private, test-only, or available only to a narrow transition applier.
-
-#### Suggested migration
-
-Add characterization tests for empty source, resolved source, successful image load, load error, container navigation error, and unsupported opened-collection video. Extend `ImageOpenStateDelta` or introduce a richer typed result that covers all invariant-coupled fields. Move unsupported opened-collection video into the same transition path.
-
-#### Acceptance criteria
-
-- All production image-open outcomes are expressed through one transition path.
-- `ImageDocumentState` cannot be driven to inconsistent status/loading/error/displayed-location combinations by production code.
-- Unsupported opened-collection video has explicit transition tests.
-- Direct setters for invariant-coupled fields are private, removed, or guarded by a transition applier.
-
-### Finding: Video status and error text are independent mutable facts
-
-**Priority:** P2, uncertain
-
-#### Evidence
-
-- `src/video/videodocumentstate.h` exposes `setStatus()` and `setErrorString()` independently.
-- `src/video/videodocumentstate.cpp` clears error on source reset/load but implements status and error setters separately.
-- `src/video/videodocumentruntime.cpp` sets error text and status for source-load failure.
-- `src/video/videodocumentruntime.cpp` updates status from backend media status without clearing error text when the computed status is non-error.
-- `src/session/documentsessionpublicprojection.cpp` exposes `input.video.errorString` for video sessions independent of video status.
-
-#### Current state
-
-Video status and error string are modeled as separate fields. Error paths usually set both, but later non-error backend status updates can change status without clearing a previous error string.
-
-#### Design concern
-
-A public state such as `Ready` with a stale nonempty error string is representable. This may or may not occur with supported Qt backends, but the invariant is not encoded in the design.
-
-#### Correct end state
-
-Video load state should be represented as one status/error value where `Error` carries error text and non-error states cannot carry one. Public projection should receive normalized video state rather than combining status and error fields independently.
-
-#### Suggested migration
-
-Add a characterization test for backend error followed by a loaded/buffered status, or explicitly document and test that backend errors are terminal for the current supported backend behavior. Replace direct production use of `setStatus()` and `setErrorString()` with a transition method or plan applier that clears, preserves, or replaces error text centrally.
-
-#### Acceptance criteria
-
-- A non-error `VideoDocumentStatus` cannot be published with stale error text through production paths.
-- Tests cover error, recovery-or-terminal semantics, source reset, and source-load failure.
-- Public document-session projection receives normalized video error state.
-- Direct independent status/error mutation is removed from production paths or restricted behind a central applier.
-
-### Finding: Presentation mode and secondary-page visibility can form impossible snapshots
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/presentation/imagepresentationruntime.h` exposes independent mutators for two-page mode, mode, secondary-page visibility, primary slot, and secondary slot.
-- `src/presentation/imagepresentationruntime.cpp` masks `secondaryPageVisible()` so it only returns true in `TwoPageSpread`.
-- `src/presentation/imagepresentationruntime.cpp` mutates `m_mode` and `m_secondaryPageVisible` independently.
-- `src/presentation/imagepresentationruntime.cpp` returns `currentSnapshot()` with raw `m_mode` and raw `m_secondaryPageVisible`.
-- `src/presentation/imagespreadpresentationcontroller.cpp` manually sequences two-page mode and secondary visibility outcomes.
-
-#### Current state
-
-The runtime stores presentation mode, two-page setting, secondary slot, and secondary visibility as separate mutable fields. One getter masks invalid visibility, but the snapshot exposes the raw stored value.
-
-#### Design concern
-
-`ImagePresentationSnapshot` can expose impossible combinations, such as single-page mode with secondary page visibility true. Consumers may accidentally depend on raw invalid values.
-
-#### Correct end state
-
-Presentation state should be represented as an invariant-preserving mode state, for example `SinglePage` versus `TwoPageSpread` with explicit secondary-slot semantics. Transitions such as "finish secondary page visible," "finish secondary as primary," and "clear secondary page" should be atomic runtime operations.
-
-#### Suggested migration
-
-First harden `currentSnapshot()` to emit normalized visibility. Add tests that assert snapshots cannot report secondary visibility in single-page mode. Then introduce runtime transition methods for existing controller sequences and collapse mode, visibility, and slot fields into a typed presentation-state value when practical.
-
-#### Acceptance criteria
-
-- `ImagePresentationSnapshot` cannot expose `SinglePage` with `secondaryPageVisible == true`.
-- Production code no longer sets secondary visibility and mode as separate public operations for one domain transition.
-- Controller methods call atomic runtime transitions for spread/single-page outcomes.
-- Tests cover visible secondary, hidden secondary, clear secondary, two-page disable, and transition-state behavior.
-
-### Finding: QML-owned revision counters are used as C++ stale gates
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/qml/Main.qml` defines `property int actionUiGateRevision`, increments it, and passes it to `updateActionUiGateSnapshot(...)`.
-- `src/facade/kiriviewapplication.h` exposes `updateActionUiGateSnapshot(quint64 revision, ...)`.
-- `src/facade/kiriviewapplication.cpp` rejects only snapshots whose revision is lower than `m_actionUiGateRevision`.
-- `src/qml/VideoViewport.qml` defines `property int videoOutputClaimRevision`, increments it, and sends it to `reportVideoOutputSurfaceClaim(...)`.
-- `src/facade/kiridocumentsession.h` exposes `reportVideoOutputSurfaceClaim(quint64 claimRevision, quint64 projectionRevision, ...)`.
-- `src/session/documentsessionruntime.cpp` uses `claimRevision < m_videoOutputSurfaceClaimRevision` as a stale-claim guard.
-
-#### Current state
-
-QML manufactures integer revisions used by C++ to reject stale action UI gate snapshots and video output surface claims.
-
-#### Design concern
-
-The layer enforcing monotonicity does not own the monotonic token. QML `int` counters cross into C++ `quint64` stale gates, so wrap, reuse, or uncoordinated call paths can weaken stale-update rejection.
-
-#### Correct end state
-
-C++ should own revision generation for stale-sensitive state, or QML should receive opaque tokens that it cannot arithmetically manipulate. QML should report facts and object identity, not manufacture correctness tokens.
-
-#### Suggested migration
-
-Introduce C++ token owners for action UI gate snapshots and video output surface claims. Replace QML integer counters with opaque tokens or C++-issued handles, keeping the existing `quint64` API temporarily behind an adapter while tests are added.
-
-#### Acceptance criteria
-
-- No QML `property int` is used as a monotonic stale token for C++ correctness gates.
-- Stale action UI and video output updates are rejected based on C++-owned identity.
-- Tests prove older tokens cannot overwrite newer state.
-- Tests prove equal or reused tokens cannot publish different facts unless explicitly allowed.
+- Evidence: `src/presentation/imagepagesurfacecontroller.cpp:155` returns `hasImage` and `m_displaySource` independently. `src/presentation/imagepagesurfacecontroller.cpp:246` creates a display source even when `DisplayImageStore::insert` returns an empty entry id. `src/rendering/displayimagestore.cpp:237` returns empty for null images or images over budget. `src/presentation/imagepresentationruntime.cpp:724` marks the projection visible when `slot.hasImage` is true and copies the provider URL. `src/qml/DisplayImagePage.qml:28` shows the page when the projection is visible and uses `providerUrl` for the inner image.
+- Current state: `hasImage == true` with an empty provider URL or display-error source is representable. More evidence is needed to prove the oversize/budget path is reachable in production, and `setImage` may effectively be test-only.
+- Design concern: The visible provider-backed image invariant is not encoded in the type, so a blank page or unnamed display failure may be possible.
+- Correct end state: `ImagePresentationPageSlotSnapshot` should use explicit variants such as empty, provider-ready, display-error, and retained/stale presentation. A visible provider-backed state should always include either a valid provider URL or an explicit display-error state consumed by UI/document failure handling.
+- Suggested migration: Add tests for `DisplayImageStore` insertion failure and `ImagePageSurfaceController::snapshot` after `setImage`. Decide whether `setImage` should be removed, made test-only, or made invariant-preserving.
+- Acceptance criteria: No production `ImageDisplaySourceProjection` can be `visible == true` with an empty provider URL unless it carries an explicit display-error state.
+- Priority: P2, uncertain
 
 ## Cohesion, Coupling, and Ownership Problems
 
-### Finding: `DocumentSessionRuntime` concentrates too many coordinator roles
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/session/documentsessionruntime.cpp` is one of the largest files in the repository and coordinates active navigation, public projections, routing, video output claims, direct media, predecode, deletion, and Open With.
-- `src/session/documentsessionruntime.h` dependency construction includes navigation, deletion, Open With, thumbnail, predecode, direct media, image document, and video document dependencies.
-- `src/session/documentsessionruntime.cpp` `connectDocuments()` wires image and video leaf signals to session projection and action availability refresh.
-- `src/session/documentsessionruntime.cpp` `executeRoutePlan()` applies operations across session state, image document, video document, direct navigation, predecode, and projection refresh.
-- `src/session/documentsessionpublicprojection.cpp` already contains a pure projection layer, but `DocumentSessionRuntime` still assembles large leaf snapshots and owns many side effects.
-
-#### Current state
-
-`DocumentSessionRuntime` is the application-level coordinator for mixed-media sessions, but it also stores and orchestrates multiple feature runtimes and side-effect workflows.
-
-#### Design concern
-
-The session runtime has unclear internal ownership boundaries. Changes to one feature can affect routing, projections, thumbnails, deletion, direct media, and predecode through a single class. That makes the file hard to audit and makes regressions more likely.
-
-#### Correct end state
-
-`DocumentSessionRuntime` should own session-level composition and revisioned public snapshots. Feature-specific runtimes should own their own state and side effects behind narrow ports: active navigation thumbnails, direct media navigation, media deletion, Open With, video output claims, and predecode coordination. The session runtime should issue high-level commands, receive typed outputs, and update `DocumentSessionState`.
-
-#### Suggested migration
-
-Keep current behavior and add characterization tests around route execution, projection refresh, active document switches, deletion completion, Open With availability, and direct-media navigation. Extract one feature coordinator at a time, starting with high-churn areas such as active navigation thumbnails or direct-media predecode. Preserve `DocumentSessionPublicProjection` as the pure projection boundary.
-
-#### Acceptance criteria
-
-- `DocumentSessionRuntime` no longer stores low-level job state for thumbnails, deletion, Open With, direct media, and predecode directly.
-- Each feature runtime has a small public port and focused tests.
-- Session projection refresh consumes typed feature outputs rather than reaching into each leaf workflow.
-- `DocumentSessionPublicProjection` remains pure and owns public snapshot derivation.
-
-### Finding: Thumbnail infrastructure is not a self-contained feature boundary
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/facade/kiridocumentsession.h` exposes thumbnail model, demand/result enums, activation, bucket calculation, and demand reporting through the session QML facade.
-- `src/qml/ThumbnailPanel.qml` binds to `activeNavigationThumbnailModel` and computes demand bucket/priority before reporting it back to the session.
-- `src/session/documentsessionruntime.h` injects thumbnail lookup, generation, source adapter, and image-store dependencies into `DocumentSessionRuntime`.
-- `src/session/activenavigationthumbnailruntime.h` owns model, lookup/generation jobs, row state, background work, image retention, and demand handling.
-- `src/session/thumbnailgeneration.cpp` imports archive, decoding, rendering, Rust thumbnail cache, and session cache lookup, then loads local or opened-collection bytes, decodes, scales, converts, and installs thumbnails.
-- `src/decoding/imagedecodejob.cpp` uses the thumbnail cache lookup provider for main-image XDG thumbnail preview delivery.
-- `src/decoding/thumbnailpreview.h` imports rendering and session thumbnail cache/demand types.
-
-#### Current state
-
-Thumbnail behavior is spread across QML demand reporting, QML-facing session API, session runtime scheduling, cache lookup/generation, archive metadata, image decoding, rendering payloads, and main-image thumbnail preview.
-
-#### Design concern
-
-The active-navigation thumbnail strip and main-image thumbnail preview are separate product behaviors, but they share session-owned cache/demand types and low-level generation code without a neutral thumbnail subsystem. Removing or replacing thumbnails would require edits across UI, facade, session, decoding, archive, and rendering.
-
-#### Correct end state
-
-Thumbnail cache identity, lookup, generation, and XDG cache integration should live in a dedicated thumbnail module. Active navigation should be one client adapter of that module. Main-image preview should be another client adapter. `decoding/` should not depend on session thumbnail demand/cache types.
-
-#### Suggested migration
-
-Move `ThumbnailCacheLookupProvider`, generation requests/results, bucket conversion, and original identity into a neutral `thumbnail/` module. Give active navigation a `SessionThumbnailStripRuntime` adapter that owns row state and demand policy. Give image decode/open a separate preview adapter that consumes neutral lookup results and maps them to `StaticDisplayImagePayload`.
-
-#### Acceptance criteria
-
-- `src/decoding/` no longer includes `session/activenavigationthumbnaildemand.h` or `session/thumbnailcachelookup.h`.
-- `DocumentSessionRuntimeDependencies` no longer exposes raw thumbnail cache/generation providers directly; it receives one thumbnail-strip dependency or port.
-- Active-navigation thumbnails and main-image thumbnail previews can be disabled or replaced independently in tests.
-- Default thumbnail generation has a focused core with injectable file/archive bytes, decoder, cache repository, and scaling policy.
-
-### Finding: Opened-collection/archive support leaks across feature boundaries
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/archive/mediaentrysourcebackend.h` imports location and navigation page types and makes `MediaEntrySource` return navigation candidates, image data, and thumbnail metadata.
-- `src/archive/mediaentrysourcestore.h` wraps both `ImageDocumentPageCandidateProvider` and `ImageDecodeDependencies` around opened-collection scope handling.
-- `src/document/imageloader.cpp` branches into `LoadOpenedCollectionScopeCandidates` and loads opened-collection candidates before decoding.
-- `src/predecode/predecodecache.h` stores opened-collection scope directly in predecode requests and cache entries.
-- `src/predecode/predecodepolicy.cpp` varies predecode source profile based on `OpenedCollectionScopeLocation`.
-- `src/session/thumbnailgeneration.cpp` loads opened-collection thumbnail bytes and handles opened-collection thumbnail metadata and virtual identity.
-- `src/session/mediaopenwithplan.cpp` imports archive format rules into session Open With availability.
-
-#### Current state
-
-Opened-collection support is represented directly in archive backends, navigation candidate loading, document loading, predecode cache keys, predecode policy, thumbnail generation, and session Open With policy.
-
-#### Design concern
-
-Archive/directory collection support is a source extension, but it is not behind one extension boundary. Removing archive support or changing how collections are loaded would require coordinated edits across many modules.
-
-#### Correct end state
-
-Opened collections should be represented by a source adapter contract that owns collection opening, entry listing, entry bytes, entry metadata, and capability facts. Navigation, document loading, predecode, thumbnails, and Open With should consume typed capabilities and results from that adapter rather than importing archive-specific rules or carrying raw `OpenedCollectionScopeLocation` pairs everywhere.
-
-#### Suggested migration
-
-Extract an `OpenedCollectionSourcePort` with list, read bytes, thumbnail metadata, and capability methods. Make `MediaEntrySourceStore` the first implementation. Then migrate thumbnail and Open With policies to consume adapter capability facts.
-
-#### Acceptance criteria
-
-- `session/` modules no longer include `archive/archiveformat.h` for opened-collection operation policy.
-- Thumbnail generation consumes an opened-collection metadata/bytes port, not global `loadMediaEntrySource*` functions.
-- Predecode keys and cache entries use a typed opened-collection entry key or source handle instead of raw URL plus scope pairs.
-- Archive support can be excluded from a focused build/test fixture by replacing one adapter.
-
-### Finding: Two-page spread presentation owns secondary-page loading
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/presentation/imagespreadpresentationcontroller.h` imports cache, decoding, document state, navigation, predecode, and rendering dependencies.
-- `src/presentation/imagespreadpresentationcontroller.h` constructs `ImageSpreadPresentationController` with `ImageDocumentState`, `ImageDocumentPageCandidateProvider`, `ImageDecodeDependencies`, and `ImageCacheBudgets`.
-- `src/presentation/imagespreadpresentationcontroller.cpp` constructs `ImageSecondaryPageController` from presentation code.
-- `src/presentation/imagespreadpresentationcontroller.cpp` starts secondary-page load using document state and first-display decode context.
-- `src/presentation/imagesecondarypagecontroller.cpp` imports `document/imageloader.h`, constructs `ImagePageSurfaceController` and `ImageLoader`, and starts image loading.
-
-#### Current state
-
-The spread presentation controller owns both spread layout/state and secondary-page load workflow, including candidate resolution, predecode lookup, decode dependencies, image loader construction, and page-surface presentation.
-
-#### Design concern
-
-Presentation is deciding how a secondary slot is resolved and loaded, not just how a ready slot is presented. That pulls document/source-loading concerns into a module that should own presentation state and projection.
-
-#### Correct end state
-
-Presentation should request a secondary page slot by URL/page identity and consume a typed load result. Document/image-load ownership should decide candidate resolution, predecode hit/miss, decode jobs, stale-load rejection, and load errors. Presentation should own spread state, secondary visibility, geometry, and display projection after a slot result is accepted.
-
-#### Suggested migration
-
-Introduce a secondary-page load request/result port. Move `ImageLoader` construction out of `ImageSecondaryPageController` into document-owned loading code. Keep `ImageSecondaryPageController` as a page-slot presenter that accepts slot-ready or slot-failed events.
-
-#### Acceptance criteria
-
-- `src/presentation/` no longer includes `document/imageloader.h`.
-- `ImageSpreadPresentationController` no longer receives `ImageDecodeDependencies` or `ImageDocumentPageCandidateProvider`.
-- Secondary-page tests verify ready, failed, stale, opened-collection, and predecode-hit behavior through the new load boundary.
-
-### Finding: Decoding, rendering, and session thumbnail dependencies form confusing ownership cycles
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/decoding/decodedimageresult.h` returns `StaticDisplayImagePayload` from `src/rendering/staticimage.h`.
-- `src/decoding/thumbnailpreview.h` imports rendering display types and session thumbnail cache/demand types.
-- `src/decoding/qimagereaderdecoder.cpp` and `src/decoding/heifdecoder.cpp` create rendering `ImageTileSource` implementations.
-- `src/rendering/qimagereadertilesource.cpp` imports `src/decoding/bufferedimagereader.h`.
-- `src/rendering/heiftilesource.h` imports `src/decoding/heiftilingplan.h`.
-- `src/session/thumbnailgeneration.cpp` consumes decoding and rendering internals for thumbnail generation.
-
-#### Current state
-
-Decoding returns rendering payloads, rendering sources import decoding helpers, decoding imports session thumbnail types for preview, and session thumbnail generation imports both decoding and rendering.
-
-#### Design concern
-
-The language boundary is not the issue here; the ownership boundary is. Decode result, display payload, thumbnail preview, and source refinement are tightly interwoven, which makes it hard to change one feature without touching several layers.
-
-#### Correct end state
-
-Decoding should return neutral decoded media/source results. Rendering should own display payload construction and refinement source adapters. Thumbnail preview should depend on a neutral thumbnail/cache port, not on session-specific demand types. Where shared implementation helpers are needed, they should live in a neutral module with one directional dependency.
-
-#### Suggested migration
-
-Start by moving thumbnail cache/demand types out of `session/`. Then split static display refinement source types from decoding result types. Preserve existing decode/render behavior while making dependency direction explicit.
-
-#### Acceptance criteria
-
-- `decoding/` no longer imports session thumbnail demand/cache headers.
-- Rendering source helpers do not require decoding-internal headers unless those helpers are moved to a neutral support module.
-- Decode result APIs are understandable without session thumbnail concepts.
-
-### Finding: Application actions are not owned at one removable boundary
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/application/kiriviewapplicationactions.cpp` defines the canonical action table with ids, names, text, icons, shortcuts, scopes, and categories.
-- `src/application/applicationactionstatepolicy.cpp` has a separate switch over action ids for enabled/checked/placement state.
-- `src/facade/kiriviewapplication.cpp` has `handleRuntimeActionTriggered(...)` with another switch over action ids for command dispatch and shell signals.
-- `src/qml/ImageActions.qml` manually constructs action arrays and instantiates one `ManagedAction` per action id.
-- `src/facade/kiriviewapplication.h` defines a QML-facing `ActionId` enum parallel to `KiriView::ApplicationActions::ActionId`.
-
-#### Current state
-
-There is a canonical action definition table, but command routing, availability, placement, QML object instantiation, and facade enum exposure repeat action identity across layers.
-
-#### Design concern
-
-Adding, removing, or reshaping an action requires lockstep edits across application policy, facade routing, QML placement, and tests. This increases the risk of orphaned commands, stale menu entries, or enabled actions without valid dispatch.
-
-#### Correct end state
-
-Action identity should remain canonical in the application layer. Command dispatch should live in an application command router with explicit ports. Placement/group metadata should be data-driven from the action registry or from one typed presentation model. The facade should expose QML surfaces and shell callbacks, not switch over every domain action.
-
-#### Suggested migration
-
-Extract `handleRuntimeActionTriggered(...)` into an application command router first. Then move QML menu grouping and placement toward a generated or projected action model, leaving QML to render action groups rather than hand-list every action id.
-
-#### Acceptance criteria
-
-- `KiriViewApplication` no longer switches over every domain `ActionId`.
-- Action command routing is unit-testable without a QML-facing facade object.
-- Adding or removing an action requires updating the canonical action definition plus one clear placement/command metadata location, not hand-edited QML arrays and a facade switch.
-
-### Finding: Image removal fallback policy creates a document/navigation ownership cycle
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/navigation/imagedocumentpagenavigationcontroller.cpp` includes `document/imageremovalfallback.h` and uses it when the current page disappears.
-- `src/document/imageremovalfallback.h` and `.cpp` import navigation and location types, sort candidates, and compute fallback targets.
-- `src/document/imagedocumentdeletioncontroller.cpp` also uses `imageRemovalPlanForDisplayedLocation()`.
-
-#### Current state
-
-The fallback policy for a displayed image removed from its candidate set lives in `document/`, but navigation also uses it.
-
-#### Design concern
-
-The policy is really about candidate navigation after removal. Its placement in `document/` creates a small but real cross-layer cycle and makes ownership unclear.
-
-#### Correct end state
-
-Removal fallback should live in a neutral navigation policy module or in `navigation/`, with document and deletion code consuming the same policy.
-
-#### Suggested migration
-
-Move the fallback value policy to a navigation policy location and keep call sites unchanged through a compatibility include if needed. Add tests that cover deletion and live-candidate removal through the shared policy.
-
-#### Acceptance criteria
-
-- Navigation code no longer imports a document-owned fallback policy.
-- Document deletion and live navigation use the same neutral removal fallback policy.
-- Tests prove current fallback behavior is preserved.
+### Finding: `DocumentSessionRuntime` is a mixed-media feature convergence point
+
+- Evidence: `src/session/documentsessionruntime.h:42-47` groups direct-media navigation, file deletion, Open With, thumbnail runtime, and predecode dependencies. `src/session/documentsessionruntime.h:118-177` declares methods for routing, leaf snapshot refresh, thumbnails, video-output claims, direct-media navigation, deletion, Open With, predecode, and public projection. `src/session/documentsessionruntime.cpp:389-421`, `:578-621`, `:862-990`, `:1054-1159`, and `:1162-1194` handle video-output claims, deletion/Open With, route execution, direct-media navigation, and predecode.
+- Current state: `DocumentSessionRuntime` is the public mixed-media session owner and directly executes routing, active navigation, thumbnail scheduling, video output attachment, deletion, Open With, predecode, and projection publication.
+- Design concern: Independent feature changes or removals converge on the same runtime and require revalidating routing/projection side effects.
+- Correct end state: `DocumentSessionState` should remain the public projection owner. `DocumentSessionRuntime` should orchestrate named subowners through typed inputs/results: route executor, direct-media navigation coordinator, displayed-media deletion coordinator, Open With controller, video-output claim runtime, active-navigation thumbnail runtime, and direct-media predecode adapter.
+- Suggested migration: Extract small workflows first, such as Open With or video-output claims. Keep public projection updates centralized in `DocumentSessionState` and move lifecycle execution/cancellation into subowners.
+- Acceptance criteria: Feature-specific coordinators can be tested without full session runtime construction; removing thumbnail strip or Open With does not require edits to direct-media routing logic.
+- Priority: P1
+
+### Finding: Session-to-leaf document ports expose leaf internals as wide callback bags
+
+- Evidence: `src/session/documentsessiondocumentports.h:31-83` exposes 17 image signal connectors plus source/displayed URL/opened collection/status/deletion/navigation/zoom/presentation/metadata/predecode getters and commands. `src/session/documentsessiondocumentports.h:86-114` lists video getters and commands. `src/facade/kiridocumentsession.cpp:252-340` manually maps facade properties/signals. `src/session/documentsessionruntime.cpp:624-764` connects individual signals and samples individual getters to rebuild snapshots.
+- Current state: The port is explicit, but it exposes leaf object shape rather than cohesive snapshot/events.
+- Design concern: Adding or moving one projected fact requires coordinated edits in the leaf facade adapter, port struct, signal wiring, snapshot sampling, and projection code.
+- Correct end state: Leaf documents should expose session-facing snapshot families plus narrow command ports. The session should consume values such as `ImageDocumentSessionSnapshot` and `VideoDocumentSessionSnapshot` and receive snapshot-changed events.
+- Suggested migration: Add snapshot getters/events behind the existing port and gradually move fields into snapshot structs. Once covered by tests, replace individual signal connectors with snapshot-family events.
+- Acceptance criteria: `refreshImagePublicSnapshot()` and `refreshVideoPublicSnapshot()` no longer sample every leaf getter directly; adding a projected leaf fact is localized to one snapshot type and one leaf owner.
+- Priority: P1
+
+### Finding: `ImageDocumentRuntimeControllers` hides a peer-controller callback mesh
+
+- Evidence: `src/document/imagedocumentruntimecontrollers.h:62-72` stores source store, deletion, page surface, presentation, open, navigation, predecode, spread, navigation controller, and plan executor in one composition object. `src/document/imagedocumentruntimecontrollers.cpp:50-124` wires animation errors, open callbacks, predecode, spread, and navigation through sibling-capturing lambdas. `src/document/imagedocumentruntimecontrollers.cpp:170-278` builds `ImageDocumentRuntimeOperations`, which dispatches into many sibling controllers.
+- Current state: Controllers are named, but actual choreography is hidden in composition-root lambdas and a broad runtime operation table.
+- Design concern: Constructor signatures do not reveal dependencies, and removing workflows such as predecode, spread, or source-load requires auditing the callback mesh.
+- Correct end state: Cross-controller choreography should live in a named workflow executor/coordinator. Individual controllers should depend on narrow typed ports, and construction should expose dependencies without hidden `this` captures.
+- Suggested migration: Define small port structs for open, spread, navigation, predecode, and page-surface interactions. Move runtime-operation execution into a workflow executor with fakeable ports.
+- Acceptance criteria: Controllers no longer call siblings through hidden captures; construction order is not semantically important for callback validity; the workflow executor can be tested with fake ports.
+- Priority: P1
+
+### Finding: `MediaEntrySourceStore` depends upward on document load planning
+
+- Evidence: `src/archive/mediaentrysourcestore.h:16` forward-declares `ImageDocumentSourceLoadRequest`; `src/archive/mediaentrysourcestore.h:29-30` exposes `prepareForSourceLoad(const ImageDocumentSourceLoadRequest &, ...)`; `src/archive/mediaentrysourcestore.cpp:7-8` includes `document/imagedocumentsourceloadrequest.h` and `document/imageloadplan.h`; `src/archive/mediaentrysourcestore.cpp:15-27` calls `openedCollectionScopeLoadPlan(...)`; `src/document/imagedocumentruntimecontrollers.cpp:262-267` invokes it.
+- Current state: A source lifetime store under `src/archive/` understands image document source-load requests and image load planning semantics.
+- Design concern: The archive/source lifetime abstraction is coupled upward to image document workflow shape, so source-load request changes can force edits in `src/archive/`.
+- Correct end state: The document/open workflow should compute the opened-collection scope or store command. `MediaEntrySourceStore` should own only media-entry source lifetime/loading for an already resolved `OpenedCollectionScopeLocation`.
+- Suggested migration: Add a document-layer adapter that converts `ImageDocumentSourceLoadRequest` plus current scope into a store command. Move `openedCollectionScopeLoadPlan(...)` use out of `src/archive/`.
+- Acceptance criteria: `src/archive/mediaentrysourcestore.*` no longer includes `document/*`; source-store reuse tests do not need document request types.
+- Priority: P2
+
+### Finding: `ApplicationCommandRouterPorts` is a flat cross-domain command surface
+
+- Evidence: `src/application/applicationcommandrouter.h:23-62` defines one `ApplicationCommandRouterPorts` struct containing shell/window, session, image document, viewport, panel, and video callbacks. `src/application/applicationcommandrouter.cpp:38-137` and `:180-264` switch across file, navigation, zoom, presentation, panels, fullscreen, help, menus, and video seek through the same port object. `src/facade/kiriviewapplication.cpp:499-631` binds application signals, `KiriDocumentSession`, `KiriImageDocument`, panel toggles, and `KiriVideoDocument` calls in one method.
+- Current state: Dispatch policy is centralized, but the target boundary is not cohesive.
+- Design concern: Changing or removing video seek, thumbnail panel, image zoom, direct navigation, or shell menu commands touches the same broad port struct and facade binding.
+- Correct end state: Keep the command router, but split ports by owner: shell/window, session media/navigation, image presentation/viewport, panel, and video playback.
+- Suggested migration: Introduce grouped port structs while keeping existing callback bodies. Gradually move shortcut/action handling paths to narrower port groups, then split `KiriViewApplication::commandRouterPorts()` into owner-specific builders.
+- Acceptance criteria: Video seek shortcuts can be tested with only video/session ports; image pan/zoom shortcuts can be tested with only image ports.
+- Priority: P2
 
 ## Logic Placement and Flow Predictability
 
-### Finding: Shared action availability depends on QML-computed presentation facts
+### Finding: Viewport command planning lives in the QML facade
 
-**Priority:** P1
+- Evidence: `src/facade/kiriimagedocument.h:247-345` exposes many viewport commands as `Q_INVOKABLE`s and owns `KiriView::ImageViewportInteraction m_viewportInteraction`. `src/facade/kiriimagedocument.cpp:567-705` computes zoom step, pan, scan, and nearest-anchor logic in the facade. `src/facade/kiriimagedocument.cpp:823-868` computes anchored zoom content position and sequences `m_runtime->requestManualZoomPercent()` with `requestViewportInteractionContentPosition()`. `src/facade/kiriimagedocument.cpp:872-890` mutates scan-start state while handling public signals. `src/qml/ImageViewport.qml:126-236` calls facade commands and explicitly calls `applyViewportProjection()` after many commands.
+- Current state: QML events enter the facade; the facade samples presentation state, computes viewport content position, owns scan-start state, calls runtime mutation, and then QML applies the projection.
+- Design concern: `KiriImageDocument` acts as a stateful presentation command planner instead of a thin facade. The hidden scan-state mutation in `handleDocumentChanges()` makes the flow especially surprising.
+- Correct end state: Viewport command planning, anchored zoom positioning, pan/scan positioning, and displayed-image scan-start handoff should be owned by the presentation runtime/controller layer. The facade should only convert QML-friendly inputs and forward commands.
+- Suggested migration: Add characterization tests for anchored zoom, pan/scan, and “next displayed image starts at final scan position.” Keep the QML API while moving calculations into runtime-level methods and moving `ImageViewportInteraction` ownership into presentation runtime/controller.
+- Acceptance criteria: `KiriImageDocument` no longer owns `ImageViewportInteraction`; `handleDocumentChanges()` does not mutate viewport interaction state; QML does not need to understand scan-start handoff.
+- Priority: P1
 
-#### Evidence
+### Finding: Application action routing input assembly lives in the facade
 
-- `src/qml/Main.qml` computes and publishes action UI gate facts, including `page.imageMode && mediaWorkspaceHost.imageInteractionSurface.imagePannable`.
-- `src/qml/ImageViewport.qml` derives `imagePannable` from `root.presentationActive && root.imageDocument.viewportPannable`.
-- `src/facade/kiriviewapplication.cpp` builds `ImageActionAvailabilityInput` from `facts.imageReady && m_imagePannable`.
-- `src/application/applicationshortcutruntime.cpp` gates fixed pan shortcuts on `pannableViewerShortcutsEnabled`.
-- `src/qml/VideoViewport.qml` handles video seek shortcuts locally with hard-coded `Alt+Left`, `Alt+Right`, `Alt+Up`, and `Alt+Down`, checking `videoDocument.seekable` before calling `seekBy`.
+- Evidence: `src/facade/kiriviewapplication.h:7-10` includes action state policy, command router, application types, and image action availability policy. `src/facade/kiriviewapplication.h:177-220` owns router input/port builders, `ApplicationCommandRouter`, `ImageActionAvailabilityProjection`, `ApplicationActionStateInput`, and UI gate fields. `src/facade/kiriviewapplication.cpp:331-360` rebuilds action state and subscribes to sources; `:395-497` assembles `ImageActionAvailabilityInput`, `ApplicationActionStateInput`, and `ApplicationCommandRouterInput`; `:499-631` builds concrete command router ports.
+- Current state: `ApplicationActionRuntime` and `ApplicationCommandRouter` exist, but the QML-facing `KiriViewApplication` facade still owns state gathering, policy input assembly, command port construction, and dispatch.
+- Design concern: Adding or changing an action affects the facade even when the behavior is application-domain routing rather than QML API shape.
+- Correct end state: An application-layer coordinator/runtime should own action-state input assembly, source subscriptions, command-router input, and command ports. `KiriViewApplication` should expose QML APIs, attach the session, forward UI gate snapshots, and emit UI requests.
+- Suggested migration: Create an application-shell coordinator or extend `ApplicationActionRuntime` to own session/UI-gate attachment. Move `imageActionAvailabilityInput()`, `actionStateInput()`, `commandRouterInput()`, and `commandRouterPorts()` into that application-layer object.
+- Acceptance criteria: `src/facade/kiriviewapplication.h` no longer includes action policy/router headers; action-state rebuild tests target the application runtime/coordinator rather than the facade.
+- Priority: P2
 
-#### Current state
+### Finding: Document session route plans mix mutation, publication, and follow-up effects
 
-Action availability and shortcut behavior partly live in application policy, partly in the facade, and partly in QML. QML supplies a shared pannability fact used by application action availability, and video seek shortcuts bypass the application shortcut runtime.
+- Evidence: `src/session/documentsessionrouteplan.h:22-98` defines `DocumentSessionRouteOperation` with state mutation, leaf document routing, `RecomputePublicProjectionRouteOperation`, `RefreshDirectMediaNavigationAfterRoutingRouteOperation`, and `ClearMediaPredecodeRouteOperation` in one variant list. `src/session/documentsessionruntime.cpp:862-990` applies state mutation, leaf mutation, snapshot refresh, projection recomputation, direct navigation refresh, and predecode clearing in one loop. `src/session/documentsessionruntime.cpp:874-877` relies on `m_routingSource` suppression. `src/session/documentsessionruntime.cpp:1091-1125` may recompute projection, schedule predecode, and call `openMediaUrl()` from direct media navigation completion.
+- Current state: A route plan is linear, but execution phases are not separated.
+- Design concern: Observable publication and external follow-up effects interleave with internal mutation, so correctness depends on operation order and an implicit `m_routingSource` flag.
+- Correct end state: Session routing should remain owned by `DocumentSessionRuntime`, but execution should be phase-oriented: apply state/leaf mutations, publish the accepted public projection once, then execute typed follow-up effects such as direct-navigation refresh, predecode scheduling, or follow-up media routing.
+- Suggested migration: Add characterization tests for empty, direct image, direct video, image-document, and deletion-fallback routes. Introduce an internal `RouteExecutionResult` or executor that separates mutation results from follow-up effects.
+- Acceptance criteria: Route plan types distinguish mutation operations from follow-up effects; the mutation visitor does not call `recomputePublicProjection()` or start direct media refresh.
+- Priority: P2
 
-#### Design concern
+### Finding: `async/imageiojobs` mixes generic async infrastructure with domain loaders
 
-QML is no longer just rendering projections and reporting local facts. It is combining presentation and document state into shared command availability, while another set of shortcuts is implemented outside the central action/shortcut runtime. This makes command behavior hard to audit.
+- Evidence: `src/async/imageiojobs.h:7-14` imports directory listing, callbacks, worker scheduler, decode request, image location, and navigation candidate types. `src/async/imageiojobs.cpp:86-190` implements directory candidates, opened-collection candidates, opened-collection reads, and `KIO::storedGet` image data loading. `src/navigation/imagedocumentpagecandidateprovider.cpp` and `src/decoding/imagedecodedependencies.cpp` import this header for default domain providers.
+- Current state: `src/async/` appears to own generic job/callback/scheduler infrastructure, but `imageiojobs` also owns navigation/archive/decoding/KIO domain defaults.
+- Design concern: Default domain IO behavior is hard to locate, and archive/navigation/decoding features are harder to remove independently.
+- Correct end state: `src/async/` should own cancelable job wrappers, callback delivery, schedulers, and generic worker primitives. Directory candidate jobs should live in navigation, opened-collection jobs in archive, and stored image data loading in decoding or a clearly named IO infrastructure module.
+- Suggested migration: Move one function group at a time and keep compatibility wrappers temporarily if needed.
+- Acceptance criteria: `src/async/imageiojobs.*` is removed or contains only generic IO primitives; removing opened-collection support does not require editing a generic async module.
+- Priority: P2
 
-#### Correct end state
+### Finding: Uncertain - `navigation/mediaformatregistry` owns both navigation predicates and localized open-dialog text
 
-Application action and shortcut availability should be computed by application/runtime policy from authoritative state and typed leaf facts. QML may report local viewport facts, but it should not own shared command decisions. Fixed video seek shortcuts should be registered and routed through the same application shortcut runtime as image pan/zoom/navigation shortcuts.
-
-#### Suggested migration
-
-Define a C++-owned action gate snapshot input that distinguishes local viewport facts from domain decisions. Move video seek shortcut definitions into the application action/shortcut registry. Keep QML event handlers only as input capture where Qt requires it, forwarding events to the central runtime.
-
-#### Acceptance criteria
-
-- QML no longer combines image mode, presentation activity, and pannability to decide shared action availability.
-- Video seek shortcuts are represented in the application action/shortcut registry or a clearly equivalent central runtime.
-- Application action availability tests cover image pannability and video seekability without QML.
-- QML input handlers are thin event forwarding surfaces.
-
-### Finding: `KiriViewApplication` facade owns broad command routing
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/facade/kiriviewapplication.cpp` `handleRuntimeActionTriggered(...)` dispatches file/open-with/deletion/navigation/zoom/rotation/pan/fullscreen/help actions.
-- `src/facade/kiriviewapplication.cpp` `handleScanForwardAction()`, `handleScanBackwardAction()`, `executeHorizontalArrowShortcut()`, `executeSinglePageArrowShortcut()`, and `executeVerticalPanShortcut()` contain command routing logic and use `m_navigationPolicy`.
-- `src/application/applicationactionruntime.cpp` owns QAction setup/state but delegates action triggers back to facade callbacks.
-
-#### Current state
-
-The facade is a CXX-Qt/QML-facing object, but it still decides how many domain commands route to documents, sessions, shell signals, and navigation policy.
-
-#### Design concern
-
-This violates the intended thin-facade boundary and makes command logic harder to test without facade construction and QML-facing concerns.
-
-#### Correct end state
-
-`KiriViewApplication` should expose QML properties, action objects, and shell signals. An application command router in `src/application/` should own action dispatch and depend on explicit ports for file dialog requests, session commands, image document commands, video commands, shell/help signals, and navigation policy.
-
-#### Suggested migration
-
-Extract command routing into a pure or Qt-light application command router while leaving facade method signatures in place. Have the facade translate QML action triggers into router calls and emit shell-facing signals from router effects.
-
-#### Acceptance criteria
-
-- Command dispatch is unit-testable without a CXX-Qt facade.
-- `KiriViewApplication` no longer contains broad action switch statements.
-- Navigation shortcut policy is consumed by the application command router.
-- QML-facing action objects continue to behave the same.
-
-### Finding: Fit mode toolbar keeps a second mutable selected state
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/qml/ImageToolBar.qml` defines mutable `selectedFitMode`.
-- `src/qml/ImageToolBar.qml` has `syncSelectedFitModeFromZoomMode()` and `triggerFitMode(zoomMode)` assigning `selectedFitMode = zoomMode` before the action has necessarily completed.
-- `src/qml/FitModeMenuButton.qml` uses `selectedFitMode` for checked state.
-- The authoritative flow is through `KiriImageDocument::requestFitMode(...)` and `ImagePresentationRuntime::setFitMode(...)` / `zoomMode()`.
-
-#### Current state
-
-QML mirrors fit mode locally for menu selection while C++ owns the actual presentation zoom mode.
-
-#### Design concern
-
-The UI can temporarily or permanently display a selected fit mode that does not match the authoritative runtime if a command is rejected, delayed, or superseded.
-
-#### Correct end state
-
-The menu checked state should come from the authoritative presentation/runtime projection. QML may use transient pressed/hover states, but not a second durable selected-fit-mode state.
-
-#### Suggested migration
-
-Bind fit mode checked state to the document/presentation projection. If optimistic UI is required, model it explicitly as pending command state with clear invalidation.
-
-#### Acceptance criteria
-
-- QML no longer has a durable `selectedFitMode` mirror of runtime zoom mode.
-- Fit mode menu checked state follows the authoritative projection.
-- Tests or QML verification cover command rejection and repeated fit-mode changes.
-
-### Finding: Menu access-key routing depends on reflective QML contracts and multiple global filters
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/facade/menuaccesskeyrouter.cpp` installs a `QCoreApplication` event filter in each `MenuAccessKeyRouter` instance.
-- `src/qml/ApplicationMenuBar.qml`, `src/qml/ImageToolBar.qml`, and `src/qml/ContextActionMenu.qml` create multiple routers.
-- `src/application/menuaccesskeymenuruntime.cpp` detects menus by `object->inherits("QQuickMenu")` and string properties such as `opened`, `visible`, and `enabled`.
-- `src/application/menuaccesskeymenuruntime.cpp` invokes `itemAt`, reads `subMenu`, reads `text`, calls `popup`, sets `accessKeysActive`, and calls `click` through string-named QObject APIs.
-- `src/qml/MenuActionItem.qml` declares the `accessKeysActive` hook consumed by C++.
-
-#### Current state
-
-Mnemonic behavior is implemented as C++ runtime logic over arbitrary QML `QObject` menus, with several router instances observing global events and mutating QML item state through string names.
-
-#### Design concern
-
-The C++/QML contract is implicit and reflective. QML menu changes can break C++ behavior without compiler feedback, and multiple router instances participate in application-wide event filtering.
-
-#### Correct end state
-
-There should be one menu access-key owner per application/window. Menu interaction should use an explicit typed adapter contract for item enumeration, submenu access, triggering, and mnemonic visual state. Alternatively, the feature should be kept local in QML and the C++ reflective adapter removed.
-
-#### Suggested migration
-
-Keep `MenuAccessKeySessionState` as the pure state machine. Introduce a typed menu adapter and route one event-filter owner to the active adapter. Replace normal operation through `QObject::property()` and `invokeMethod()` string contracts incrementally.
-
-#### Acceptance criteria
-
-- Normal menu access-key routing does not rely on string-named `itemAt`, `subMenu`, `popup`, `click`, or `accessKeysActive`.
-- There is one event-filter owner for menu access-key routing.
-- Existing nested submenu and mnemonic tests pass through the explicit adapter.
+- Evidence: `src/navigation/mediaformatregistry.cpp:6-12` imports archive format, Rust conversion, decoding image registry, Rust media policy, direct navigation model, and `KLocalizedString`. `src/navigation/mediaformatregistry.h:15-23` exposes support predicates and `ordinaryMediaOpenDialogNameFilters()`. `src/decoding/imageformatregistry.cpp:37-46` also builds image/comic-book open-dialog filters.
+- Current state: A navigation module owns media support predicates used by routing/predecode/session code and also builds localized file-dialog filter strings.
+- Design concern: Navigation may legitimately own media target decisions, but localized UI text should probably live outside navigation.
+- Correct end state: A neutral media-format capability wrapper should expose predicates and extension lists. Open-dialog filter text should be generated by facade/application/localization code. Navigation should not depend on `KLocalizedString`.
+- Suggested migration: Move `ordinaryMediaOpenDialogNameFilters()` to an application/facade formatting helper first. Decide the long-term location of generic media predicates after confirming mixed-media session ownership intent.
+- Acceptance criteria: `src/navigation/mediaformatregistry.cpp` no longer includes or uses `KLocalizedString`; image-only and mixed-media open-dialog builders share extension-list inputs.
+- Priority: P3, uncertain
 
 ## Testability Problems
 
-### Finding: Async worker execution is a hidden global dependency
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/async/imageasyncworker.h` `runAsyncWorker` dispatches through `QThreadPool::globalInstance()` and delivers through `QCoreApplication::instance()` / `QMetaObject::invokeMethod`.
-- `src/async/imageioworkerjob.h` `startImageIoWorkerJob` delegates to `runAsyncWorker`.
-- `src/decoding/imagedecodejob.cpp` calls `runAsyncWorker` directly for decode and raw embedded thumbnail preview validation.
-- `src/archive/mediaentrysourceruntime.cpp` calls `runAsyncWorker` in `startCandidateLoad` and uses `startImageIoWorkerJob` for opened-collection image data.
-- `tests/cpp/test_imagedecodejob.cpp` uses `QSemaphore`, `QThreadPool::globalInstance()->waitForDone(5000)`, and repeated waits.
-- `tests/cpp/test_imageioworkerjob.cpp` uses eventual `QTRY_*` and `QTest::qWait` patterns.
-
-#### Current state
-
-Async work is scheduled by a free template function that chooses Qt global thread-pool behavior whenever a QObject context and application instance exist.
-
-#### Design concern
-
-Core workflow tests become timing-sensitive and depend on global thread-pool state. Ordering and stale-completion behavior are harder to prove deterministically.
-
-#### Correct end state
-
-Async execution should be represented by an explicit executor/scheduler port with production Qt-thread-pool and test inline/manual implementations. `ImageDecodeJob`, `MediaEntrySourceRuntime`, `startImageIoWorkerJob`, and default worker-backed providers should receive or resolve that executor through dependencies.
-
-#### Suggested migration
-
-Introduce a minimal `WorkerScheduler` or `AsyncExecutor` interface. Keep `runAsyncWorker` as the production adapter. Add defaulted executor fields to `ImageDecodeDependencies` and runtime/provider dependency structs. Convert `ImageDecodeJob` first, then `MediaEntrySourceRuntime`, then `startImageIoWorkerJob` users.
-
-#### Acceptance criteria
-
-- `ImageDecodeJob` stale-result tests run without changing `QThreadPool::globalInstance()` and without `QTest::qWait`.
-- `MediaEntrySourceRuntime` candidate/data completion ordering can be driven by a manual executor.
-- Production behavior still uses the Qt thread pool by default.
-
-### Finding: Timer and clock behavior lacks a manual scheduler seam
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/predecode/predecodescheduleruntime.h` owns `QTimer m_debounceTimer`, `QTimer m_neutralTimer`, and `QElapsedTimer m_monotonicClock`.
-- `src/predecode/predecodescheduleruntime.cpp` starts the monotonic clock, configures timers, and reads `currentMonotonicMsec()`.
-- `src/predecode/predecodeschedulestate.cpp` is pure and accepts `monotonicMsec`.
-- `src/presentation/imageanimationplayer.h` owns `QTimer m_timer`.
-- `src/presentation/imageanimationplayer.cpp` directly starts `m_timer`.
-- `tests/cpp/test_predecodescheduleruntime.cpp`, `tests/cpp/test_imagedocumentpredecodecontroller.cpp`, and `tests/cpp/test_imageanimationplayer.cpp` use waits and timeouts.
-
-#### Current state
-
-Runtime objects directly own real Qt timers and monotonic clocks. Tests verify eventual behavior by waiting for wall-clock time and processing Qt events.
-
-#### Design concern
-
-Predecode and animation behavior is time-sensitive. Tests are slower and can be flaky under load, even though the predecode state layer already accepts explicit timestamps.
-
-#### Correct end state
-
-Timer and clock effects should live behind a runtime scheduler boundary. Production should use `QTimer` / `QElapsedTimer`; tests should use manual clock and timer handles. Domain state should continue receiving timestamps and events as plain values.
-
-#### Suggested migration
-
-Add `MonotonicClock` and single-shot timer scheduler dependencies for `PredecodeScheduleRuntime`. Replace direct `QTimer` use in `ImageAnimationPlayer` with a frame scheduler. Convert wait-based tests to advance the manual clock or fire scheduled callbacks.
-
-#### Acceptance criteria
-
-- Predecode debounce and neutral-settle tests do not call `QTest::qWait`.
-- Animation playback loop/restart/error tests can trigger scheduled frames synchronously.
-- Production defaults still use `QTimer` and `QElapsedTimer`.
-
-### Finding: Directory listing and live candidate refresh are tied to real `KCoreDirLister`
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/navigation/imagedocumentpagecandidatedirectoryentry.cpp` constructs `KCoreDirLister`, calls `openUrl`, and wires to `KCoreDirLister` / `KIO::Job` signals.
-- `src/navigation/imagedocumentpagecandidatedirectoryentry.cpp` uses `QTimer::singleShot(0, ...)` in `notifyChanged`.
-- `src/async/directorylistingjob.cpp` constructs another `KCoreDirLister` for one-shot listing.
-- `src/navigation/directmedianavigationcandidateprovider.cpp` defaults to `startDirectoryItemList`.
-- `tests/cpp/test_imagedocumentpagecandidatedirectoryentry.cpp`, `tests/cpp/test_imagedocumentpagecandidatestore.cpp`, and `tests/cpp/test_directorylistingjob.cpp` use temp directories, KDirNotify, and long waits.
-
-#### Current state
-
-Directory candidate discovery and live updates are implemented directly on top of KDE directory listers and filesystem notifications.
-
-#### Design concern
-
-Candidate refresh is core navigation behavior, but edge cases such as rapid updates, stale callbacks, errors, and deletion ordering are hard to test without real filesystem/KDE behavior and long timeouts.
-
-#### Correct end state
-
-Directory listing and watching should be behind injectable provider/event-source abstractions. Production can use `KCoreDirLister`; tests should provide synthetic snapshots, changes, deletions, and errors. Candidate conversion should remain pure.
-
-#### Suggested migration
-
-Introduce `DirectoryListingProvider` and `DirectoryWatchProvider` ports. Refactor `ImageDocumentPageCandidateDirectoryEntry`, `startDirectoryItemList`, and default direct media navigation candidate provider to consume the same production adapter.
-
-#### Acceptance criteria
-
-- Directory entry/store tests can load, change, delete, and error without `QTemporaryDir`, `KDirNotify`, or 10-second waits.
-- One integration test may remain for the `KCoreDirLister` adapter.
-- Direct media navigation and image page candidate stores use the same directory provider boundary.
-
-### Finding: Video playback URL resolver default adapter is only integration-testable
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/video/videoplaybackurlresolver.cpp` private `KioFuseVideoPlaybackUrlResolver` directly calls `KProtocolInfo::protocolClass`, `QDBusConnection::sessionBus()`, `QDBusInterface`, and `QDBusPendingCallWatcher`.
-- `src/video/videoplaybackurlresolver.cpp` `createDefaultVideoPlaybackUrlResolver()` always returns the KIOFuse resolver.
-- `src/video/videosourceloadruntime.cpp` accepts `VideoPlaybackUrlResolver`, but default construction creates the concrete resolver.
-- `tests/cpp/test_videoplaybackurlresolver.cpp` uses event loops, timers, session bus checks, and skips when KIOFuse or a KIO worker is unavailable.
-
-#### Current state
-
-Higher-level video source loading can use a fake resolver, but the default resolver's protocol classification and DBus mount behavior are embedded in a private concrete class.
-
-#### Design concern
-
-DBus errors, invalid mount replies, stale callbacks, and cancellation behavior cannot be covered deterministically. Important adapter coverage can disappear on machines without KIOFuse.
-
-#### Correct end state
-
-Split default resolution into pure URL-resolution policy plus injectable platform ports: protocol classifier and KIOFuse mount client. Production uses DBus; tests use a fake mount client.
-
-#### Suggested migration
-
-Extract protocol classification and add a `KioFuseMountClient` interface. Keep `createDefaultVideoPlaybackUrlResolver()` wiring the real classifier/client. Add unit tests with fake success, failure, delayed completion, cancellation, and invalid paths.
-
-#### Acceptance criteria
-
-- Resolver tests for success, DBus failure, invalid mount path, and cancellation run without session bus or KIOFuse.
-- Existing skip-prone tests are reduced to adapter smoke coverage.
-- `VideoSourceLoadRuntime` continues to use resolver injection unchanged.
-
-### Finding: C++ test target structure forces broad integration dependencies
-
-**Priority:** P2
-
-#### Evidence
-
-- `tests/cpp/CMakeLists.txt` builds `kiriview_test_core` from both `src/cpp_core_sources.txt` and `src/cpp_cxxqt_sources.txt`.
-- `tests/cpp/CMakeLists.txt` links `kiriview_test_core` against Qt Core/DBus/Gui/Multimedia/Qml/Quick/QuickControls2/Widgets, KF6 Archive/Config/I18n/KIO/JobWidgets/Service, Kirigami, LibArchive, LibHeif, LibRaw, LibPng, and the Rust static library.
-- Every `test_*.cpp` executable links `kiriview_test_core`.
-- `src/cpp_core_sources.txt` mixes pure policy/runtime files with adapters such as archive backends, directory listing, application runtime, decoding backends, rendering, presentation, and facade-adjacent logic.
-
-#### Current state
-
-All C++ tests, including narrow policy and state tests, link against one broad static app-core target.
-
-#### Design concern
-
-The build boundary does not reflect the intended architecture. Small tests inherit heavy platform dependencies, slowing iteration and making pure logic isolation harder to maintain.
-
-#### Correct end state
-
-C++ code should be split into smaller linkable targets matching ownership boundaries: pure policy/state/runtime helpers, Qt runtime without KDE side effects, KDE/KIO adapters, rendering/codec adapters, and facades. Tests should link the narrowest target that contains the behavior under test.
-
-#### Suggested migration
-
-Add a small target for pure C++ policy/state/runtime code. Move adapter files into separate targets while preserving the app build. Update tests incrementally, starting with state/policy tests.
-
-#### Acceptance criteria
-
-- Pure tests for action policy, cache policy, navigation policy, and state can build without KIO, QML, multimedia, LibRaw, LibHeif, or LibArchive.
-- Adapter tests still link required adapter libraries.
-- Adding a pure logic test does not require broad platform dependencies by default.
+### Finding: Live directory candidate watching bypasses the provider seam
+
+- Evidence: `src/navigation/imagedocumentpagecandidatedirectoryentry.cpp:18` constructs `KCoreDirLister` directly; `:76` uses `QTimer::singleShot(0, ...)`; `:200` connects `KCoreDirLister` signals directly. `src/navigation/imagedocumentpagecandidatestore.cpp:60` and `:93` watch through directory entries. In contrast, `tests/cpp/test_directorylistingjob.cpp:48` and `:75` use fake `DirectoryItemListProvider` for one-shot listing. `tests/cpp/test_imagedocumentpagecandidatedirectoryentry.cpp:53` and `:82` use `QTemporaryDir`, real files, KDirNotify DBus emission, and `QTRY_VERIFY_WITH_TIMEOUT(..., 10000)`.
+- Current state: One-shot directory listing has an injectable provider seam, but live local-directory candidate watching directly owns KDE, filesystem, and timer effects.
+- Design concern: Candidate-store state transitions, stale results, cancellation, and failure paths are hard to test deterministically without KDE directory notification timing and filesystem setup.
+- Correct end state: A directory candidate/watch provider should own external directory effects. `ImageDocumentPageCandidateDirectoryEntry` should consume events such as initial snapshot, add/remove/change, deleted directory, error, and cancellation.
+- Suggested migration: Extract a watch-oriented provider interface or extend `DirectoryItemListProvider` with live events. Move `KCoreDirLister` creation into the production adapter and add fake-provider tests.
+- Acceptance criteria: Candidate-store and directory-entry transitions can be tested without `QTemporaryDir`, KDirNotify DBus, or `QTRY_VERIFY_WITH_TIMEOUT`; `KCoreDirLister` appears only in the production adapter.
+- Priority: P1
+
+### Finding: Predecode coordinators hide the timer seam
+
+- Evidence: `src/predecode/predecodescheduleruntime.cpp:25` accepts `TimerScheduler`, and `tests/cpp/test_predecodescheduleruntime.cpp:84` uses `ManualTimerScheduler`. However, `src/predecode/imagepredecodecoordinator.cpp:16` and `src/predecode/mediapredecodecoordinator.cpp:16` construct `m_scheduleRuntime` without taking a scheduler dependency. `src/predecode/imagepredecodecoordinator.cpp:50` calls `QThread::idealThreadCount()` directly. `tests/cpp/test_imagepredecodecoordinator.cpp`, `tests/cpp/test_mediapredecodecoordinator.cpp`, and `tests/cpp/test_imagedocumentpredecodecontroller.cpp` rely on `QTest::qWait(...)`.
+- Current state: The lower-level scheduler runtime is manually testable, but higher-level coordinators/controllers use wall-clock waits.
+- Design concern: Debounce, momentum, stale-work suppression, and power-saver transitions are scheduling policy, but tests depend on elapsed time and host thread count.
+- Correct end state: Predecode dependency structs should carry `TimerScheduler` and, where needed, a system profile/thread-count provider. Production should provide Qt timers and real facts; tests should provide manual timers and fixed facts.
+- Suggested migration: Add optional timer scheduler and thread-count/system facts to image/media predecode dependency overrides. Convert qWait-based tests to manual timer advancement.
+- Acceptance criteria: Predecode coordinator/controller tests do not need `QTest::qWait` for debounce or stale behavior; parallelism tests can set thread count deterministically.
+- Priority: P1
+
+### Finding: Image load planning performs filesystem directory probes
+
+- Evidence: `src/document/imageloadplan.cpp:51` calls `openedCollectionScopeLocationForDirectlyOpenedLocalUrl(request.sourceUrl())`; `src/location/imagedocumentlocation.cpp:86` uses `QFileInfo(localPath).isDir()` to identify directories. `tests/cpp/test_imageloadplan.cpp:68` and `tests/cpp/test_imageloader.cpp:388` use `QTemporaryDir` for directory planning tests.
+- Current state: The planner that chooses direct image load versus collection-scope directory load performs real filesystem existence/type checks.
+- Design concern: Core routing logic cannot be tested with synthetic URLs only, and planning tests become coupled to filesystem state.
+- Correct end state: Filesystem source resolution should live outside `ImageLoadPlan`. The planner should consume resolved facts such as opened collection scope or source classification.
+- Suggested migration: Introduce an `OpenedCollectionScopeResolver` or source-classification value and move `QFileInfo::isDir()` into the production resolver.
+- Acceptance criteria: `imageLoadPlan(...)` can be tested without creating directories; filesystem adapter tests are small and separate.
+- Priority: P2
+
+### Finding: Navigation-source identity mixes URL policy with process and OS probes
+
+- Evidence: `src/location/imageurl.cpp:23` reads `qgetenv("XDG_RUNTIME_DIR")`; `:47` reads document-portal host paths with `getxattr(...)`; `:176` combines xattr lookup, KIOFuse runtime-dir parsing, and fallback in `navigationSourceUrl(...)`. `src/location/sourcekey.cpp:61` and `:66` build source keys from `navigationSourceUrl(url)`. `tests/cpp/test_imageurl.cpp:151` uses `setxattr`, `:182` uses `qputenv`/`qunsetenv`, and `tests/cpp/test_sourcekey.cpp:111` depends on symlink availability.
+- Current state: Navigation URL normalization and source-key construction depend on host filesystem capabilities and process-wide environment mutation.
+- Design concern: Source identity is correctness-sensitive, but important branches can be skipped or made flaky by OS feature availability and global environment changes.
+- Correct end state: Platform fact collection should be separated from pure URL identity derivation. A production `NavigationSourceResolver` can read xattrs and environment, while pure helpers accept facts such as optional portal host path and runtime dir.
+- Suggested migration: Extract a helper such as `navigationSourceUrlForFacts(url, portalHostPath, runtimeDir)` and make `navigationSourceUrl(...)` a production wrapper.
+- Acceptance criteria: KIOFuse and document-portal URL cases can be tested without environment mutation or xattrs; OS adapter tests remain guarded and small.
+- Priority: P2
+
+### Finding: Default cache budgets are resolved from host memory outside dependency injection
+
+- Evidence: `src/system/systemmemory.cpp:17` reads physical memory through `sysconf`; `src/document/imagedocumentruntimedependencies.cpp:32`, `src/predecode/mediapredecodedependencies.cpp:14`, `src/rendering/displayimagestore.cpp:35` and `:429`, and `src/session/thumbnailimagestore.cpp:38` call production `systemMemorySnapshot()` directly. `tests/cpp/test_systemmemory.cpp:21` tests lower-level injected readers, but owner-level budget tests assert only broad host-dependent properties.
+- Current state: The low-level memory seam exists, but dependency resolution and default store construction capture host-derived values directly.
+- Design concern: Low-memory, missing-memory, and invalid-memory budget behavior cannot be tested deterministically at the owner level.
+- Correct end state: Runtime dependency resolution should accept `SystemMemorySnapshot` or `SystemMemoryRuntime`, and stores should receive explicit budgets from the owning dependency layer.
+- Suggested migration: Add optional system-memory snapshot/runtime fields to the relevant dependency overrides and resolve image document, media predecode, display, and thumbnail budgets from supplied facts.
+- Acceptance criteria: Dependency-resolution tests can set physical memory to known values and verify low/missing-memory behavior at owner level.
+- Priority: P2
+
+### Finding: Shortcut dispatch core is private inside the Qt event-filter runtime
+
+- Evidence: `src/application/applicationshortcutruntime.h:59` keeps `handleShortcutEvent`, `handleFixedShortcutEvent`, `shortcutBindingEnabled`, and `handleShortcutActivated` private. `src/application/applicationshortcutruntime.cpp:272` installs event filters, and `:317`, `:343`, and `:422` handle focus gating, fixed shortcut mapping, unsupported-video interception, and QAction triggering. Pure adjacent tests exist in `tests/cpp/test_applicationshortcutpolicy.cpp` and `tests/cpp/test_applicationcommandrouter.cpp`, while many shortcut paths are exercised through `tests/cpp/test_imageshortcuts.cpp` using `QQuickView`, `QTest::keyClick`, focus, and window state.
+- Current state: Shortcut filtering and adjacent policies are partly isolated, but full dispatch precedence is reachable only through Qt event filters and UI key events.
+- Design concern: Reproducing precedence bugs requires app/window bootstrapping, and failures do not clearly point to policy, focus state, event filtering, or QAction invocation.
+- Correct end state: A small dispatch policy/service should accept key sequence, focus applicability, action-state snapshot, registered bindings, and action-enabled facts, then return explicit outcomes such as ignore, trigger action, fixed navigation, or unsupported-video action. `ApplicationShortcutRuntime` should adapt Qt events to outcomes.
+- Suggested migration: Add characterization coverage for untested runtime shortcut paths, then extract fixed shortcut mapping and binding dispatch into a helper.
+- Acceptance criteria: Shortcut dispatch precedence can be tested without `QQuickView` or `QTest::keyClick`; focus/window integration remains covered by a small adapter test.
+- Priority: P2
 
 ## Error Handling and Observability Problems
 
-### Finding: Runtime media failures collapse into raw strings
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/decoding/decodedimageresult.h` uses `DecodedImageFailure { QString errorString; }`.
-- `src/document/imageloadtypes.h` `ImageLoadError` has only broad values such as `Generic` and `EmptyOpenedCollection`.
-- `src/async/imageasynccallbacks.h` defines shared `ErrorCallback = std::function<void(const QString&)>`.
-- `src/archive/mediaentrysourcebackend.h` uses `MediaEntrySourceError { QString errorString; }`.
-- `src/video/videosourceloadplan.h` `PublishVideoSourceLoadFailureOperation` carries only a `QString`.
-- `src/system/filedeletion.cpp` can report deletion failure with an empty `QString` for an empty target.
-
-#### Current state
-
-Many layers propagate failure as raw text, sometimes with a small status enum, and the same string may serve as user-facing message, internal diagnostic, and control signal.
-
-#### Design concern
-
-The system cannot consistently distinguish recoverable adapter failures, user-visible validation errors, internal diagnostics, stale/cancelled completions, and fatal runtime failures. This makes behavior harder to test and harder to debug.
-
-#### Correct end state
-
-Use typed domain failure values with at least kind, user-facing text or text id, diagnostic detail, affected source identity, retryability where applicable, and severity. Raw backend strings should be diagnostic payloads, not the primary error representation.
-
-#### Suggested migration
-
-Start with foreground image/video source load failures and directory listing errors. Add typed error structs while preserving current user-visible text. Then migrate async callbacks and archive/decode providers to return typed failures. Finally, update public projections to map typed failures to localized display text.
-
-#### Acceptance criteria
-
-- Foreground image and video load failures publish typed failure values internally.
-- Public UI text is derived from typed errors, not directly from backend strings.
-- Tests assert error kind and user-facing message separately.
-- Empty or vague failure strings are replaced by explicit error kinds.
-
-### Finding: Backend diagnostics can be displayed directly to users
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/video/videoplaybackurlresolver.cpp` emits raw strings such as invalid video URL text and DBus `reply.error().message()`.
-- `src/video/videodocumentruntime.cpp` stores resolver and backend error strings in document state.
-- QML displays video and image document error strings through document/session projections.
-
-#### Current state
-
-Some infrastructure strings become document error strings and can appear in the UI.
-
-#### Design concern
-
-Backend messages may be vague, unlocalized, too technical, or inconsistent. Internal diagnostics and user-facing text should not be the same field.
-
-#### Correct end state
-
-Infrastructure adapters should produce typed diagnostic failures. Presentation should map those failures to localized, safe user-facing messages while logs retain backend detail.
-
-#### Suggested migration
-
-Introduce error ids for video URL resolution and media backend failures. Preserve backend messages in diagnostics. Map current user-visible messages through a presentation/localization layer.
-
-#### Acceptance criteria
-
-- DBus/KIO/Qt backend messages are not directly displayed as primary user-facing text.
-- Logs or diagnostics retain raw backend detail.
-- Tests prove user-facing text and diagnostic text can differ.
-
-### Finding: Adjacent container navigation listing errors are swallowed
-
-**Priority:** P1
-
-#### Evidence
-
-- `src/navigation/imagecontainernavigationcontroller.cpp` error callbacks ignore the provided listing error string.
-- `src/navigation/imagecontainernavigationcontroller.cpp` finishes container navigation list errors without preserving the diagnostic.
-- Direct media navigation providers and tests show a contrasting path that forwards or logs explicit errors.
-
-#### Current state
-
-When adjacent container navigation listing fails, the error text is discarded.
-
-#### Design concern
-
-Navigation failures become difficult to diagnose, and behavior can appear as simply no adjacent media rather than a failed listing.
-
-#### Correct end state
-
-Navigation listing errors should be represented as typed effects or diagnostics, even if the user-facing behavior remains quiet. The system should distinguish "no candidates" from "listing failed."
-
-#### Suggested migration
-
-Add a typed container-listing failure result and thread it through `ImageContainerNavigationController`. Decide whether it affects UI, logs only, or both. Preserve current user-visible behavior until a product decision changes it.
-
-#### Acceptance criteria
-
-- Listing failure and empty listing are distinct internal states or effects.
-- The original diagnostic is available to logs/tests.
-- Tests cover list success, empty result, and list failure.
-
-### Finding: Background thumbnail, predecode, and refinement failures lose diagnostics
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/predecode/predecodeloadcontroller.cpp` error callbacks ignore the supplied string, and `finishLoadError` logs only generation/source identity.
-- `src/session/thumbnailgeneration.cpp` creates detailed error strings, but `src/session/activenavigationthumbnailruntime.cpp` primarily logs lookup/generation status rather than a consistent diagnostic payload.
-- `src/presentation/imagepagesurfacecontroller.cpp` `runRasterDisplayRefinement()` captures `errorString` from `decodeRasterDisplayImage(...)` and immediately discards it with `Q_UNUSED(errorString)`.
-
-#### Current state
-
-Background failures often preserve enough state to avoid breaking UI, but diagnostics are not consistently retained.
-
-#### Design concern
-
-These failures are hard to debug when they affect performance, cache behavior, thumbnail quality, or image refinement. Silent background failure also makes tests assert only high-level status, not cause.
-
-#### Correct end state
-
-Background workflows should have lightweight diagnostics with source identity, operation kind, failure kind, and backend detail when available. Not every background failure needs user-facing UI, but it should be observable in logs or test hooks.
-
-#### Suggested migration
-
-Introduce a small diagnostic event type for background image operations. Thread it through predecode load, thumbnail lookup/generation, and raster refinement. Use typed error kinds as they become available.
-
-#### Acceptance criteria
-
-- Predecode, thumbnail, and refinement tests can assert failure cause where relevant.
-- Logs include operation kind and source identity for background failures.
-- Diagnostic collection does not change current user-visible behavior.
-
-### Finding: Retry and cancellation semantics are implicit
-
-**Priority:** P2, uncertain
-
-#### Evidence
-
-- KIO directory listing, KIOFuse DBus resolution, image decode workers, thumbnail generation, and predecode loads mostly perform single attempts.
-- Existing code has stale-result and cancellation checks in several runtimes, but retryability is not represented as an error property.
-
-#### Current state
-
-Retries appear to be absent or ad hoc, and failures do not generally encode whether retrying would be useful.
-
-#### Design concern
-
-Without explicit retry/cancellation semantics, future retry behavior could be added inconsistently or at the wrong layer. This is uncertain because the current product may intentionally prefer single-attempt operations.
-
-#### Correct end state
-
-Typed failures should identify retryability where it matters. Retry policy should be owned by effect adapters or workflow runtimes, not by UI call sites. If no retries are desired, that should be an explicit product policy.
-
-#### Suggested migration
-
-Do not add retries immediately. First add failure kinds and diagnostic ownership. Then decide per adapter whether retryability is relevant and test those semantics.
-
-#### Acceptance criteria
-
-- Retryability is either explicitly absent by policy or represented on typed failures for relevant adapters.
-- No UI call site invents retry behavior independently.
+### Finding: Primary image load failures collapse user-facing errors and diagnostics into raw strings
+
+- Evidence: `src/decoding/decodedimageresult.h` has `DecodedImageFailure` with only `QString errorString`; `src/document/imageloadtypes.h` defines `ImageLoadError` mostly around `Generic` and `EmptyOpenedCollection`; `src/document/imageloader.cpp` forwards decode/data failures as `Generic` and string; `src/document/imageopencontroller.cpp` maps to raw strings; `src/rendering/qimagereadertilesource.cpp` forwards `reader.errorString()`; `src/qml/ImageStateOverlay.qml` displays `imageDocument.errorString`.
+- Current state: Primary image load failures do not preserve stage, source identity, backend, retryability, severity, or diagnostic detail as typed values.
+- Design concern: UI copy and internal diagnostics are mixed in one string. Tests, logs, and retry policy cannot reliably distinguish failure kinds.
+- Correct end state: The image/document loading boundary should use typed `ImageLoadFailure` with source URL/session id, stage/kind, user message, diagnostic detail, backend, severity, and retryability. Document state should expose only a user-message projection to QML.
+- Suggested migration: Wrap existing decode/data/load strings into kinded typed failures first, while preserving current UI text.
+- Acceptance criteria: Image load failure tests can assert stage/kind/retryability/diagnostic fields; QML does not depend on internal diagnostic strings.
+- Priority: P1
+
+### Finding: Video source-load failure metadata is produced but discarded
+
+- Evidence: `src/video/videosourceloadplan.h` and `.cpp` define rich `VideoSourceLoadFailure` fields, and `src/video/videosourceloadruntime.cpp` creates failure plans. `src/video/videodocumentruntime.cpp` uses only `failure.userMessage` in `publishSourceLoadFailure()`, while backend `updateErrorFromBackend()` stores raw backend strings. `src/video/videodocumentstate.h` exposes string-oriented state.
+- Current state: Source URL, failure kind, detail, severity, and retryability metadata are not preserved through publication/logging/projection.
+- Design concern: The code creates a diagnostic model but does not carry it into runtime observability.
+- Correct end state: Video runtime should preserve typed failure internally and expose a user-message projection to QML. Backend errors should be normalized into the same typed failure or a sibling typed backend failure.
+- Suggested migration: Extend `VideoDocumentState` with an internal typed failure field while keeping the public QML property as the user-message projection.
+- Acceptance criteria: Video source-load failure tests verify preservation of source URL, kind, detail, severity, and retryability; raw backend strings are wrapped as diagnostics.
+- Priority: P1
+
+### Finding: KIO file-operation failures lose error codes and duplicate cancellation policy
+
+- Evidence: `src/system/filedeletion.h` and `.cpp` use result plus `QString` and local cancellation classification. `src/session/mediaopenwith.cpp` duplicates cancellation classification and string failures. `src/document/imagedocumentdeletioncontroller.cpp` and `src/session/documentsessionruntime.cpp` use generic fallback/user-message paths. `src/qml/Main.qml` displays toasts directly.
+- Current state: File deletion and Open With KIO failures flow as raw strings, local cancellation decisions, and generic fallbacks.
+- Design concern: Cancellation, retryability, and user/internal/fatal distinctions can drift by operation.
+- Correct end state: A shared typed `KioOperationFailure` should contain operation kind, URL, raw KJob/KIO code, cancelled flag, user text, diagnostic detail, and retryability.
+- Suggested migration: Normalize deletion and Open With provider results into `KioOperationFailure`; keep existing UI copy as a projection.
+- Acceptance criteria: Cancellation policy is defined in one helper/type; deletion/Open With tests assert raw code and user message separately.
+- Priority: P2
+
+### Finding: Collection source errors are inconsistent across backends
+
+- Evidence: `src/archive/mediaentrysourcebackend.h` defines string-oriented `MediaEntrySourceError`; directory backend behavior does not consistently preserve `QFile` error detail; KArchive and libarchive paths preserve different levels of detail; `src/async/imageiojobs.cpp` forwards opened-collection read/candidate-load errors as strings.
+- Current state: Directory, KArchive, and libarchive source failures do not consistently preserve backend, operation, and source identity.
+- Design concern: Opened-collection failures are hard to compare, reproduce, and log across backends.
+- Correct end state: Typed `MediaEntrySourceFailure` should include backend, operation, collection URL, entry path, user text, and diagnostic detail.
+- Suggested migration: Extend backend result types to typed failures first, then update `imageiojobs` forwarding to project typed failures.
+- Acceptance criteria: Backend-specific failure tests assert operation, source identity, and diagnostic detail through common fields.
+- Priority: P2
+
+### Finding: QImageReader tile fallback can overwrite the original cause
+
+- Evidence: `src/rendering/qimagereadertilesource.cpp` uses the same `QString*` error output through clip, scaled, and fallback attempts in `decodeTile()`. `src/decoding/staticimagedecode.cpp` returns only the final string, and `setTileSourceError` can overwrite previous causes.
+- Current state: Multi-attempt tile decode failure does not distinguish primary failure from fallback diagnostics.
+- Design concern: The first meaningful reader failure can be lost behind a later fallback message.
+- Correct end state: Tile decode should return structured attempt results that preserve primary failure and fallback diagnostics separately.
+- Suggested migration: Introduce a tile decode attempt list or primary/fallback failure struct. Keep user-message selection as a separate policy.
+- Acceptance criteria: Fallback path tests verify both primary reader failure and fallback failure detail are preserved.
+- Priority: P2
+
+### Finding: Thumbnail failure diagnostics are produced but dropped by runtime observability
+
+- Evidence: `src/thumbnail/thumbnailcachelookup.h` and `src/thumbnail/thumbnailgeneration.h`/`.cpp` carry error strings, but `src/session/activenavigationthumbnailruntime.cpp` primarily handles status/source and does not preserve errorString in structured logs or diagnostics.
+- Current state: Cache lookup/generation failures are not user-visible, but they also do not leave enough internal diagnostics.
+- Design concern: When thumbnails are blank or stale, production debugging lacks source, bucket, job, backend, and error detail.
+- Correct end state: The public thumbnail model can remain unchanged, but runtime diagnostics/logging should include job id, source key, demand bucket, failure kind, and error detail.
+- Suggested migration: Add typed diagnostic events or structured logs in active thumbnail runtime completion handling for failed/invalid lookup and generation.
+- Acceptance criteria: Thumbnail failure tests or log probes verify preservation of source, bucket, kind, and error detail.
+- Priority: P2
+
+### Finding: Uncertain - async no-op paths can hide unexpected failures
+
+- Evidence: `src/decoding/imagedecodejob.cpp` has empty/dependency-missing/no-delivery paths; `src/document/imageloader.cpp` quietly ignores stale no-current callbacks; `src/async/directorylistingjob.cpp` has an empty-string path for `openUrl` failure; `src/qml/ImageToolBar.qml` catches an exception without logging.
+- Current state: Expected stale/cancel paths and unexpected missing-dependency/failure paths can both look like quiet no-ops.
+- Design concern: Some no-ops are correct cancellation behavior, but unexpected no-ops can disappear without a debug signal.
+- Correct end state: No-op reasons should be classified into expected stale/cancelled and unexpected invalid dependency/backend failure. Unexpected paths should produce debug/warn diagnostics.
+- Suggested migration: Add a reason enum/log hook for callback suppression and stale completion. Investigate production reachability before changing user-visible behavior.
+- Acceptance criteria: Expected stale completions remain quiet; missing dependency or `openUrl` failure paths leave structured diagnostics.
+- Priority: P3, uncertain
 
 ## Deletion, Modularity, and Abstraction Problems
 
-### Finding: Static display refinement still exposes a tile-era abstraction
+### Finding: Feature removal cost is concentrated in `DocumentSessionRuntime` and wide ports
 
-**Priority:** P2
+- Evidence: Same evidence as the `DocumentSessionRuntime` convergence and session leaf port findings above in `src/session/documentsessionruntime.*` and `src/session/documentsessiondocumentports.h`.
+- Current state: Thumbnail strip, Open With, deletion, video-output, predecode, and direct-media routing are tied to the same session runtime and broad leaf port.
+- Design concern: Removing a feature becomes a session orchestration/projection/leaf-sampling change rather than a feature-owner change.
+- Correct end state: Feature lifecycle should move into removable subowners, while `DocumentSessionState` remains the public projection owner.
+- Suggested migration: Extract small effect-boundary features first, such as Open With or video-output, then proceed to thumbnails, predecode, and direct navigation.
+- Acceptance criteria: Removing a feature does not require unrelated route/projection logic changes; feature subowner tests run without the full session runtime.
+- Priority: P1
 
-#### Evidence
+### Finding: Thumbnail demand tracker appears to be a parallel abstraction outside the production runtime path
 
-- `src/rendering/staticimage.h` defines `ImageTileSource` with mandatory `decodeTile(...)`, first-display decode, raster refinement, and blocking-display methods.
-- `src/rendering/staticimage.h` stores `std::shared_ptr<ImageTileSource> refinementSource` in `StaticDisplayImagePayload`.
-- `src/decoding/qimagereaderdecoder.cpp` opens a `QImageReaderTileSource` and passes it into static decoded image results.
-- `src/decoding/staticimagedecode.cpp` builds display payloads from `ImageTileSource` but active production consumers use first-display or whole-display methods.
-- `src/presentation/imagepagesurfacecontroller.cpp` uses `supportsRasterDisplayRefinement()` and `decodeRasterDisplayImage(...)`.
-- `src/session/thumbnailgeneration.cpp` uses `refinementSource->decodeBlockingDisplayImage(...)`.
-- `src/rendering/qimagereadertilesource.cpp`, `src/rendering/heiftilesource.cpp`, `src/rendering/svgtilesource.cpp`, and `src/decoding/rawdecoder.cpp` still implement `decodeTile(...)`.
+- Evidence: `src/session/activenavigationthumbnaildemand.h` and `.cpp` define `ActiveNavigationThumbnailDemandTracker` and `record(...)`. `tests/cpp/test_activenavigationthumbnaildemand.cpp` tests the tracker directly. `rg` shows the production demand flow from `src/qml/ThumbnailPanel.qml:329` to `KiriDocumentSession::reportActiveNavigationThumbnailDemand`, `src/facade/kiridocumentsession.cpp:617`, and `src/session/documentsessionruntime.cpp:368`, while tracker usage appears limited to tests and definitions.
+- Current state: A separate demand tracker abstraction exists, but the active runtime's production demand path does not appear to use it.
+- Design concern: A test-only or abandoned abstraction makes it unclear where the real demand validation/bucketing rule lives.
+- Correct end state: If the tracker is the intended abstraction, production demand flow should use it. Otherwise it should be removed or explicitly made a test helper.
+- Suggested migration: Add a characterization comparison between `DocumentSessionRuntime::reportActiveNavigationThumbnailDemand` and `ActiveNavigationThumbnailDemandTracker` rules. If the rules match, wire the tracker into production; otherwise remove or rename it.
+- Acceptance criteria: Active thumbnail demand validation/bucketing rules exist in one production-used type, and tests validate that type.
+- Priority: P3
 
-#### Current state
+### Finding: `ImageDocumentRuntimePlan` should remain, but its operation vocabulary is too broad
 
-The active provider-display path consumes whole display images and whole-raster refinement, but the payload-facing source interface still requires tile vocabulary and APIs.
-
-#### Design concern
-
-The abstraction preserves an apparent visual tile extension point even though the architecture direction says provider display is cache-only whole-image display. This makes source helpers harder to simplify and invites future work down the wrong path.
-
-#### Correct end state
-
-Replace `ImageTileSource` as the payload-facing type with a whole-image `StaticDisplayRefinementSource` interface: source size, first-display decode, blocking thumbnail/display decode, whole-raster refinement, byte cost, transform, and resolution-independence. Any source-internal tile mechanics should be private to specific implementations.
-
-#### Suggested migration
-
-Add a new whole-image refinement interface and adapt existing sources to it. Keep `decodeTile` only as an internal helper while tests migrate. Remove `ImageTileSource::decodeTile` from payload-facing APIs once production and tests use the whole-image interface.
-
-#### Acceptance criteria
-
-- `StaticDisplayImagePayload` no longer stores `ImageTileSource`.
-- Static image source implementations are not required to expose `DecodedTile` or `TileRequest` through the public refinement interface.
-- Production code contains no visual tile decode entry point except private source-internal helpers where still needed.
-
-### Finding: Predecode coordination is split across two similar owner paths
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/predecode/imagepredecodecoordinator.h` defines `ImagePredecodeCoordinator`, owning a candidate repository, `PredecodeLoadController`, and `PredecodeScheduleRuntime`.
-- `src/predecode/mediapredecodecoordinator.h` defines `MediaPredecodeCoordinator`, also owning `PredecodeLoadController` and `PredecodeScheduleRuntime`.
-- `src/document/imagedocumentpredecodecontroller.cpp` constructs `ImagePredecodeCoordinator` from image document state, page surface, presentation runtime, candidate provider, decode dependencies, power saver, and cache budget.
-- `src/session/documentsessionruntime.cpp` schedules media predecode from direct-media candidates and caches displayed images for media predecode.
-- `src/document/imagedocumentpredecodecontroller.cpp` includes an `ordinaryDirectMediaPredecodeEnabled` gate.
-
-#### Current state
-
-Image-document predecode and mixed direct-media predecode share core load/schedule components, but each has a separate coordinator and integration path.
-
-#### Design concern
-
-The split is understandable by scope, but predecode as a feature remains difficult to disable, test, or reason about because scheduling, power saver, active loads, and cache lifetime are wired through multiple owners.
-
-#### Correct end state
-
-Keep scope-specific planning adapters, but centralize shared predecode runtime ownership: debounce, power saver, active loads, cache lifetime, displayed-image caching, and decode load admission. Image-document and session code should provide candidate windows and displayed-image snapshots through typed ports.
-
-#### Suggested migration
-
-Extract common `PredecodeLoadController` plus `PredecodeScheduleRuntime` ownership into a shared runtime facade. Make `ImagePredecodeCoordinator` and `MediaPredecodeCoordinator` thin planners. Move ordinary direct-media gating to the session/direct-media predecode boundary.
-
-#### Acceptance criteria
-
-- Only one runtime class owns predecode load scheduling/cache lifetime.
-- Image-document and direct-media predecode differ by planning input, not duplicate runtime ownership.
-- Disabling ordinary direct-media predecode is represented at the session/direct-media boundary.
-
-### Finding: Typed source-key families are declared but not enforced at runtime boundaries
-
-**Priority:** P2
-
-#### Evidence
-
-- `src/location/sourcekey.h` declares family-specific key structs: `OrdinaryFileSourceKey`, `DirectMediaSourceKey`, `DirectMediaScopeKey`, `ImageDocumentPageSourceKey`, `OpenedCollectionEntrySourceKey`, `ThumbnailSourceKey`, `PredecodeCandidateKey`, and `RenderSurfaceKey`.
-- `src/session/activenavigationthumbnailruntime.h` defines a separate `ActiveNavigationThumbnailSourceKey` instead of using `ThumbnailSourceKey`.
-- `src/predecode/predecodecache.h` uses `QUrl` plus `OpenedCollectionScopeLocation` for predecode requests and cached images instead of `PredecodeCandidateKey`.
-- `src/presentation/imagepagesurfacecontroller.cpp` builds raster refinement demand keys from display identity, original size, page role, and revisions instead of `RenderSurfaceKey`.
-- `src/decoding/staticimagedecode.cpp` and `src/decoding/qimagereaderdecoder.cpp` derive plain string identities from `sourceKeyForUrl(...).identity`.
-
-#### Current state
-
-Typed key families exist, but runtime boundaries still carry parallel local key structs, raw URL/scope pairs, or plain strings.
-
-#### Design concern
-
-This is an incomplete abstraction. The declared key families do not prevent unrelated key families from being compared or serialized incorrectly at stale-completion, cache, thumbnail, predecode, or render-demand boundaries.
-
-#### Correct end state
-
-Either adopt typed source-key families at actual runtime boundaries, or remove unused family abstractions and keep only the generic source key until a boundary needs typed identity. The code should not contain both declared family types and parallel runtime-specific key shapes for the same concept.
-
-#### Suggested migration
-
-Pick one boundary first, likely thumbnails or predecode. Replace the local key shape with the typed family key and add tests proving cross-family keys cannot be compared accidentally. Then migrate render demand/source identity or delete unused key families that remain unadopted.
-
-#### Acceptance criteria
-
-- `ThumbnailSourceKey`, `PredecodeCandidateKey`, and `RenderSurfaceKey` are used by their corresponding runtime boundaries, or removed if not needed.
-- Parallel local key structs for the same family are deleted or narrowed to UI-only row metadata.
-- Tests assert equality/stale rejection through typed key families rather than raw strings or URL/scope pairs.
+- Evidence: `src/document/imagedocumentruntimeplan.h:107-123` defines `ImageDocumentRuntimeOperation` variants covering lifecycle, media entry source, predecode, spread, navigation, open, and source-load operations. `src/document/imagedocumentruntimecontrollers.cpp:170-278` dispatches those operations into sibling controllers.
+- Current state: The runtime plan is useful as a C++ side-effect boundary, but it is used like a broad operation bus rather than a vocabulary that exposes phase/owner boundaries.
+- Design concern: Removing the plan concept would conflict with architecture docs; the problem is broad vocabulary and hidden dispatch ownership.
+- Correct end state: Keep the plan as the canonical side-effect boundary, but split operation families and executor ownership by phase/feature.
+- Suggested migration: Gradually split source-load, open, navigation, and predecode operation families into named executors, and shrink the broad variant list through compatibility wrappers.
+- Acceptance criteria: Plan consumers are split by feature family, and the controller composition root no longer builds one broad dispatch table directly.
+- Priority: P2
 
 ## Recommended Correct End-State Architecture
 
-KiriView's correct end state should preserve the existing Rust + CXX-Qt + Kirigami structure, but make ownership stricter.
-
-Ownership boundaries should be explicit. `src/application/` should own action identity, command routing, shortcut policy, and high-level app commands. `src/facade/` should expose QML-facing API and forward commands/events. `src/session/` should own mixed-media session state, active document selection, and public projections. Feature runtimes such as thumbnails, direct media, deletion, Open With, and predecode should sit behind narrow session ports instead of being stored and operated directly inside `DocumentSessionRuntime`.
-
-Domain rules should live in policy/reducer modules, preferably Rust where that is already the local pattern. Display cache budgets, display bucket safety, rotation normalization, extension parsing, navigation ordering, source identity, and open-state transitions should each have one owner. Thin C++ wrappers and QML projections are fine; duplicate rule implementations are not.
-
-State should be defined as invariant-preserving values. Image open state, video load state, and presentation mode/secondary-page state should be changed through typed transitions, not through independent public setters. Stale-sensitive state should use C++-owned revision tokens or opaque handles, not QML integer counters.
-
-Validation should happen at the boundary that owns the invariant. Source/load validation should be part of document or source adapter transitions. Action availability should be computed by application policy from authoritative runtime facts. Presentation should validate presentation state and expose normalized snapshots. QML should render projections and report local input facts only.
-
-External effects should be isolated behind ports. Async workers, timers/clocks, directory listing/watching, KIOFuse DBus mounts, thumbnail cache/filesystem access, archive bytes/metadata, and decode adapters should have production implementations plus manual/fake test implementations. Pure state and policy tests should not link or boot broad KDE/QML/codec dependencies.
-
-Errors should be represented as typed failures. User-facing messages, localization ids, backend diagnostics, source identities, retryability, and severity should not be collapsed into one `QString`. Background operations should emit lightweight diagnostic events even when user-visible behavior remains quiet.
-
-Tests should be layered around these boundaries. Characterization tests should lock current behavior before migration. Pure policy/state tests should use narrow link targets and no Qt/KDE effects where practical. Runtime tests should use manual executors, manual clocks, fake directory providers, fake mount clients, and typed source adapters. Adapter smoke tests should remain for KDE, DBus, codec, and filesystem integration.
+- Ownership boundaries: `DocumentSessionState` owns public mixed-media projection and snapshot publication. `DocumentSessionRuntime` orchestrates named subowners for route, direct-media navigation, deletion, Open With, video-output, thumbnails, and predecode through typed results/effects.
+- Domain rules: HEIF/BMFF brands, image format capability, active-navigation numbered semantics, deletion eligibility, and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
+- State definition: Image document state changes pass through named transitions or a validating final-state boundary. Thumbnail source identity is defined by one canonical value object that separates durable identity from freshness generation.
+- Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. File deletion, Open With, navigation dispatch, and source-load planning all pass through typed plans before providers run.
+- External effects: `KCoreDirLister`, `QFileInfo`, xattrs, environment variables, `sysconf`, Qt timers, thread count, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
+- Error representation: Image, video, KIO operation, media-entry source, and thumbnail generation failures use typed failures. Internal paths preserve source identity, stage/kind, backend/raw code, severity, and retryability. QML receives user-facing projections.
+- Facade/QML: `KiriImageDocument` and `KiriViewApplication` expose QML-friendly types, invokables, and signals. Viewport command planning and action routing input assembly move into presentation/application runtime. QML continues to report geometry/input facts and render projections.
+- Tests: Characterization tests lock current behavior first. Rust policy and C++ domain helpers are tested with pure/fake dependencies. Qt/KDE/filesystem adapter tests remain small. Architecture boundary tests should verify abstractions used by production code.
 
 ## Suggested Refactoring Sequence
 
-1. Add characterization tests around current behavior: image open outcomes, video error/status transitions, presentation spread snapshots, action routing, thumbnail cache identity, opened-collection metadata, directory listing failure, and predecode scheduling.
-2. Centralize duplicated rules/state: display cache budgets, bucket safety and rotation, extension parsing, opened-collection thumbnail eligibility, RTL navigation ordering, and wheel zoom normalization.
-3. Isolate core domain logic from external effects: introduce worker executor, clock/timer scheduler, directory provider, KIOFuse mount client, thumbnail generation core, and opened-collection source port.
-4. Clarify ownership boundaries: extract application command router, narrow `DocumentSessionRuntime`, move secondary-page loading out of presentation, and move thumbnail infrastructure into a neutral thumbnail module.
-5. Improve error semantics and observability: introduce typed foreground load failures first, then navigation listing diagnostics, then background thumbnail/predecode/refinement diagnostics.
-6. Remove or simplify premature abstractions: replace payload-facing `ImageTileSource` with whole-image refinement source, adopt or delete typed source-key families, and consolidate predecode runtime ownership.
+1. Add characterization tests around current behavior: deletion eligibility in `Loading`/`Error`/retained-image states, invalid active-navigation numbers for direct media and image-document pages, thumbnail source key normalization/generation behavior, route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
+2. Centralize duplicated rules/state: extract HEIF/BMFF brand classification, add image format capability alignment tests, create canonical thumbnail source identity, centralize zoom preset descriptors, and centralize `ImageShortcutScope` validity.
+3. Isolate core domain logic from external effects: add a directory watch provider seam, thread timer scheduler/system facts into predecode coordinators, split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
+4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, move application action input/port assembly into application runtime/coordinator, and move `MediaEntrySourceStore` document planning out of `src/archive/`.
+5. Improve error semantics and observability: introduce typed image/video failures, then KIO and media-entry source failures, then tile decode attempt diagnostics and thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
+6. Remove or simplify premature/parallel abstractions: either wire `ActiveNavigationThumbnailDemandTracker` into production or remove/test-helper it, phase `ImageDocumentRuntimeOperation` vocabulary by workflow family, and remove compatibility wrappers after tests prove behavior preservation.
 
 ## Things Not To Change Yet
 
-- Do not rewrite the Rust/C++ boundary wholesale. The current policy/reducer direction is useful; the problem is incomplete ownership, not the language split itself.
-- Do not move authoritative runtime state into QML. QML should become thinner for shared decisions, not more stateful.
-- Do not change user-visible supported formats or archive behavior while centralizing extension and archive policies.
-- Do not add retries before typed errors and retryability semantics exist.
-- Do not remove thumbnail, opened-collection, predecode, or two-page features as part of this design cleanup. The first goal is to make each feature removable and testable, not to remove it.
-- Do not rebuild the rendering pipeline around visual tiles. The architecture direction is whole-image/provider display; the tile-era interface should shrink, not expand.
-- Do not introduce a large generic service framework. Prefer small ports with production and test adapters.
+- Do not move `src/qml/NavigationPresentationOrder.qml` out of QML just because it contains logic. Existing architecture tests intentionally expect QML to own RTL-aware presentation order for visual projection.
+- Do not collapse all Rust/C++ mirror enums or bridge conversions. Some duplication at the FFI boundary is intentional; the target is duplicated domain policy, not exhaustive conversion code.
+- Do not rewrite `DocumentSessionRuntime` or `ImageDocumentRuntimeControllers` wholesale. Extract one workflow at a time behind characterization tests.
+- Do not change invalid numbered-navigation behavior before deciding whether direct-media clamping is intentional user-visible behavior. First capture current direct-media and image-document page semantics.
+- Do not remove `ImageDocumentRuntimePlan` as a concept. It matches the documented C++ side-effect boundary; the problem is broad operation vocabulary and hidden dispatch ownership.
+- Do not introduce a generic logging/observability framework before typed failure values exist. Without typed failures, logging would mostly preserve the current string ambiguity.
+- Do not alter user-visible error text as part of the first migration unless current text is clearly a bug. Internal typed diagnostics can be added while preserving existing UI messages.
 
 ## Appendix: Subagent Reports
 
-### Single Source of Truth / Duplication Agent
-
-Retained findings: display image cache budget defaults, raster/SVG bucket safety duplication, rotation duplication, extension parsing duplication, opened-collection thumbnail eligibility duplication, RTL navigation ordering duplication, and wheel zoom duplication. The display bucket and rotation items were merged because they are one rendering-policy ownership problem. Wheel zoom was kept as P3 cleanup. No finding was added for user-facing spec extension lists because specs are external behavior documentation and not themselves competing production policy.
-
-### Invariant / Correctness Agent
-
-Retained findings: image document open state partial mutation, QML-owned stale revision counters, video status/error separation, and presentation secondary visibility invalid snapshots. The video status/error finding is marked uncertain because more evidence is needed about whether supported Qt media backends can emit recoverable non-error status after an error for the same source.
-
-### Cohesion / Coupling / Ownership Agent
-
-Retained findings: `DocumentSessionRuntime` broad ownership, decoding/rendering/session thumbnail coupling, two-page presentation owning secondary-page loading, `KiriViewApplication` facade command routing, and image removal fallback policy placement. The command-routing finding was merged with the deletion/modularity action-removability report.
-
-### Logic Placement / Flow Readability Agent
-
-Retained findings: shared action availability depending on QML-computed presentation facts, video seek shortcuts bypassing application shortcut runtime, broad facade command routing, fit mode toolbar mirror state, and reflective menu access-key routing. The action availability, video shortcut, and facade routing findings were consolidated into the action/command architecture findings.
-
-### Testability Agent
-
-Retained findings: hidden global async worker execution, missing timer/clock scheduler seam, directory listing tied to real `KCoreDirLister`, KIOFuse resolver only integration-testable, thumbnail generation hidden inside effectful providers, and broad C++ test target structure. The thumbnail testability finding was merged into the thumbnail subsystem boundary finding, with test-specific acceptance criteria preserved.
-
-### Error Handling / Observability Agent
-
-Retained findings: raw string failure model, backend diagnostics displayed directly, swallowed adjacent container navigation errors, lost background diagnostics for thumbnail/predecode/refinement, and implicit retry semantics. Retry semantics are marked uncertain and intentionally sequenced after typed error modeling.
-
-### Deletion / Modularity / Abstraction Agent
-
-Retained findings: thumbnail infrastructure not self-contained, two-page presentation owning secondary-page loading, opened-collection support leaking across boundaries, tile-era static display refinement abstraction, application actions not removable at one boundary, menu access-key reflective contract, split predecode coordination, and typed source-key families not enforced. Findings that overlapped with cohesion, logic placement, and testability reports were merged rather than repeated.
+- Single Source of Truth / Duplication Agent: Reported HEIF/BMFF brand duplication, image format catalog split, thumbnail source identity split, zoom preset duplication, and `ImageShortcutScope` validity duplication. All were accepted. Thumbnail identity was merged with the deletion/modularity parallel-abstraction finding. Image format catalog was merged with the modularity finding about format support being hard to add/remove.
+- Invariant / Correctness Agent: Reported image deletion readiness bypass, active-navigation numbered dispatch validation gap, image-open contradictory state, and uncertain visible image without provider-ready source. Deletion and numbered dispatch were promoted to top design risks. The image presentation provider-ready issue was kept uncertain because production reachability needs more evidence.
+- Cohesion / Coupling / Ownership Agent: Reported `DocumentSessionRuntime` breadth, wide session leaf ports, `ImageDocumentRuntimeControllers` callback mesh, `MediaEntrySourceStore` upward dependency, `async/imageiojobs` mixed ownership, flat application command router ports, and `navigation/mediaformatregistry` UI text. These were accepted, with `mediaformatregistry` marked uncertain/P3 because navigation ownership for predicates may be intentional while localized UI text is the clearer issue.
+- Logic Placement / Flow Readability Agent: Reported viewport planning in `KiriImageDocument`, application action routing input in `KiriViewApplication`, mixed route plan phases, and uncertain QML page-number clamping. Viewport planning was promoted to P1. Page-number clamping was merged into the stronger active-navigation numbered dispatch finding, retaining uncertainty only around exact intended clamp/no-op behavior.
+- Testability Agent: Reported live directory watch missing provider seam, hidden predecode timer seam, filesystem probes in image load planning, OS/process probes in navigation-source identity, host-memory budget resolution outside DI, and shortcut dispatch private in Qt runtime. All were accepted and placed under Testability. The live directory and predecode timer findings are P1 because they affect core navigation/predecode behavior and produce slow or brittle tests.
+- Error Handling / Observability Agent: Reported string-only image failures, discarded video failure metadata, KIO failure/cancellation inconsistency, collection source error inconsistency, tile fallback cause overwrite, thumbnail diagnostics drop, and uncertain silent async no-op paths. All evidence-backed findings were accepted; async no-op was kept uncertain/P3 pending reachability classification.
+- Deletion / Modularity / Abstraction Agent: Reported `DocumentSessionRuntime` convergence, wide session ports, `ImageDocumentRuntimeControllers` mesh, `MediaEntrySourceStore` upward dependency, `async/imageiojobs` mixed module, flat command router ports, thumbnail source identity parallel abstractions, image format modularity, and uncertain `mediaformatregistry` UI text. Duplicate items were merged with cohesion and single-source findings. The main-agent local check added the P3 `ActiveNavigationThumbnailDemandTracker` finding because `rg` showed production demand flow bypassing the tracker while tests cover it directly.
