@@ -53,6 +53,7 @@ using ThumbnailGenerationBytesLoader
 using ThumbnailGenerationOriginalIdentityLoader
     = std::function<std::optional<ThumbnailOriginalIdentity>(
         const ThumbnailGenerationRequest &, QString *)>;
+using ThumbnailGenerationImageDecoder = std::function<QImage(QByteArray, int, QString *)>;
 
 struct ThumbnailGenerationCacheInstallResult {
     bool success = false;
@@ -74,6 +75,7 @@ struct ThumbnailGenerationCacheRepository {
 
 struct ThumbnailGenerationDependencies {
     ThumbnailGenerationBytesLoader bytesLoader;
+    ThumbnailGenerationImageDecoder imageDecoder;
     ThumbnailGenerationOriginalIdentityLoader openedCollectionOriginalIdentityLoader;
     ThumbnailGenerationCacheRepository cacheRepository;
 };

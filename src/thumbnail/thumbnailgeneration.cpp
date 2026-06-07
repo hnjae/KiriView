@@ -199,6 +199,28 @@ QImage renderedThumbnailImage(
         decoded);
 }
 
+QImage defaultThumbnailGenerationImageDecoder(
+    QByteArray bytes, int maximumLongEdge, QString *errorString)
+{
+    KiriView::DecodedImageResult decodeResult = KiriView::decodeImageData(bytes);
+    if (const KiriView::DecodedImageFailure *failure = decodeResult.failure()) {
+        if (errorString != nullptr) {
+            *errorString = failure->errorString;
+        }
+        return {};
+    }
+
+    const KiriView::DecodedImage *decoded = decodeResult.image();
+    if (decoded == nullptr) {
+        if (errorString != nullptr) {
+            *errorString = QStringLiteral("image decode produced no image");
+        }
+        return {};
+    }
+
+    return renderedThumbnailImage(*decoded, maximumLongEdge, errorString);
+}
+
 KiriView::MediaEntrySourceImageDataResult loadOpenedCollectionThumbnailBytes(
     const KiriView::ThumbnailGenerationRequest &request)
 {
@@ -348,6 +370,9 @@ KiriView::ThumbnailGenerationDependencies resolvedThumbnailGenerationDependencie
     if (!dependencies.bytesLoader) {
         dependencies.bytesLoader = defaultThumbnailGenerationBytesLoader;
     }
+    if (!dependencies.imageDecoder) {
+        dependencies.imageDecoder = defaultThumbnailGenerationImageDecoder;
+    }
     if (!dependencies.openedCollectionOriginalIdentityLoader) {
         dependencies.openedCollectionOriginalIdentityLoader
             = defaultOpenedCollectionOriginalIdentityLoader;
@@ -405,23 +430,12 @@ KiriView::ThumbnailGenerationResult generateThumbnailWithDependencies(
         return failedResult(request.requestedBucket, std::move(loadError));
     }
 
-    KiriView::DecodedImageResult decodeResult = KiriView::decodeImageData(bytes);
-    if (const KiriView::DecodedImageFailure *failure = decodeResult.failure()) {
-        return failedResult(request.requestedBucket, failure->errorString);
-    }
-
-    const KiriView::DecodedImage *decoded = decodeResult.image();
-    if (decoded == nullptr) {
-        return failedResult(
-            request.requestedBucket, QStringLiteral("image decode produced no image"));
-    }
-
-    QString renderError;
-    QImage image = renderedThumbnailImage(*decoded, maximumLongEdge, &renderError);
+    QString decodeError;
+    QImage image = dependencies.imageDecoder(std::move(bytes), maximumLongEdge, &decodeError);
     if (image.isNull()) {
         return failedResult(request.requestedBucket,
-            renderError.isEmpty() ? QStringLiteral("thumbnail render produced no image")
-                                  : std::move(renderError));
+            decodeError.isEmpty() ? QStringLiteral("thumbnail render produced no image")
+                                  : std::move(decodeError));
     }
 
     QImage rgba8 = image.convertToFormat(QImage::Format_RGBA8888);
@@ -461,6 +475,7 @@ ThumbnailGenerationDependencies defaultThumbnailGenerationDependencies()
 {
     return ThumbnailGenerationDependencies {
         defaultThumbnailGenerationBytesLoader,
+        defaultThumbnailGenerationImageDecoder,
         defaultOpenedCollectionOriginalIdentityLoader,
         ThumbnailGenerationCacheRepository {
             defaultThumbnailGenerationCacheLookup, installThumbnail },
