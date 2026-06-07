@@ -277,27 +277,52 @@ fn rust_active_navigation_dispatch_plan(
         }
         RustActiveNavigationDispatchRequestKind::First => {
             if snapshot.known && snapshot.editable && !snapshot.at_known_first {
-                dispatch_operation(numbered_operation_for_source(source_kind), request.number)
+                if let Some(number) = valid_dispatch_number(snapshot, 1) {
+                    dispatch_operation(numbered_operation_for_source(source_kind), number)
+                } else {
+                    no_op_plan()
+                }
             } else {
                 no_op_plan()
             }
         }
         RustActiveNavigationDispatchRequestKind::Last => {
             if snapshot.known && snapshot.editable && !snapshot.at_known_last {
-                dispatch_operation(numbered_operation_for_source(source_kind), snapshot.count)
+                if let Some(number) = valid_dispatch_number(snapshot, snapshot.count) {
+                    dispatch_operation(numbered_operation_for_source(source_kind), number)
+                } else {
+                    no_op_plan()
+                }
             } else {
                 no_op_plan()
             }
         }
         RustActiveNavigationDispatchRequestKind::Number => {
-            if snapshot.known && snapshot.editable {
-                dispatch_operation(numbered_operation_for_source(source_kind), request.number)
+            if let Some(number) = valid_dispatch_number(snapshot, request.number) {
+                dispatch_operation(numbered_operation_for_source(source_kind), number)
             } else {
                 no_op_plan()
             }
         }
         _ => no_op_plan(),
     }
+}
+
+fn valid_dispatch_number(snapshot: RustActiveNavigationSnapshot, number: i32) -> Option<i32> {
+    if !snapshot.known
+        || !snapshot.editable
+        || snapshot.current_number < 1
+        || snapshot.count < 1
+        || snapshot.current_number > snapshot.count
+    {
+        return None;
+    }
+
+    if number <= 1 {
+        return Some(1);
+    }
+
+    Some(number.min(snapshot.count))
 }
 
 fn previous_operation_for_source(
