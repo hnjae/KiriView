@@ -667,8 +667,13 @@ bool KiriImageDocument::requestViewportScanForward()
         return false;
     }
 
-    return requestViewportInteractionContentPosition(m_viewportInteraction.nextScanContentPosition(
-        viewportInteractionSnapshot(), viewportContentPosition()));
+    const QPointF nextContentPosition = m_viewportInteraction.nextScanContentPosition(
+        viewportInteractionSnapshot(), viewportContentPosition());
+    if (nextContentPosition == viewportContentPosition()) {
+        return false;
+    }
+
+    return requestViewportInteractionContentPosition(nextContentPosition);
 }
 
 bool KiriImageDocument::requestViewportScanBackward()
@@ -677,9 +682,13 @@ bool KiriImageDocument::requestViewportScanBackward()
         return false;
     }
 
-    return requestViewportInteractionContentPosition(
-        m_viewportInteraction.previousScanContentPosition(
-            viewportInteractionSnapshot(), viewportContentPosition()));
+    const QPointF previousContentPosition = m_viewportInteraction.previousScanContentPosition(
+        viewportInteractionSnapshot(), viewportContentPosition());
+    if (previousContentPosition == viewportContentPosition()) {
+        return false;
+    }
+
+    return requestViewportInteractionContentPosition(previousContentPosition);
 }
 
 void KiriImageDocument::requestNextDisplayedImageStartToFinalScanPosition()
