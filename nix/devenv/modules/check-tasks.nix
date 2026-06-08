@@ -293,34 +293,36 @@ in
       after = [
         "ci:test:rust@succeeded"
       ];
-      exec = ''
-        ${hostTaskPrelude}
-        ${testJobsPrelude}
+      showOutput = true;
+      exec = # sh
+        ''
+          ${hostTaskPrelude}
+          ${testJobsPrelude}
 
-        printf 'Building Cargo-owned KiriView app library artifacts with %d jobs...\n' "$test_jobs"
-        CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
-            kiriview-rust-host-env \
-            cargo \
-                build \
-                --locked \
-                --lib \
-                --all-features \
-                --jobs "$test_jobs"
+          printf 'Building Cargo-owned KiriView app library artifacts with %d jobs...\n' "$test_jobs"
+          CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
+              kiriview-rust-host-env \
+              cargo \
+                  build \
+                  --locked \
+                  --lib \
+                  --all-features \
+                  --jobs "$test_jobs"
 
-        cmake \
-            -S tests/cpp \
-            -B target/devenv/cpp-tests \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DKIRIVIEW_CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target/debug"}
-        printf 'Building and running host C++ tests with %d jobs...\n' "$test_jobs"
-        cmake --build target/devenv/cpp-tests --parallel "$test_jobs"
-        # GNU gettext ignores LANGUAGE under C/POSIX locales; devenv defaults to C.UTF-8.
-        LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
-            ctest \
-                --test-dir target/devenv/cpp-tests \
-                --output-on-failure \
-                --parallel "$test_jobs"
-      '';
+          cmake \
+              -S tests/cpp \
+              -B target/devenv/cpp-tests \
+              -DCMAKE_BUILD_TYPE=Debug \
+              -DKIRIVIEW_CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target/debug"}
+          printf 'Building and running host C++ tests with %d jobs...\n' "$test_jobs"
+          cmake --build target/devenv/cpp-tests --parallel "$test_jobs"
+          # GNU gettext ignores LANGUAGE under C/POSIX locales; devenv defaults to C.UTF-8.
+          LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
+              ctest \
+                  --test-dir target/devenv/cpp-tests \
+                  --output-on-failure \
+                  --parallel "$test_jobs"
+        '';
     };
 
     "ci:lint:rust" = {
