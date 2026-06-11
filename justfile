@@ -45,10 +45,16 @@ i18n-update:
     devenv shell -- kiriview-update-translations
 
 [group('build')]
-build: (_flatpak-builder "build")
+build:
+    devenv shell -- flatpak-builder --disable-tests \
+        --force-clean build-dir \
+        io.github.hnjae.KiriView.json
 
 [group('build')]
-build-with-tests: (_flatpak-builder "build-with-tests")
+build-with-tests:
+    devenv shell -- flatpak-builder \
+        --force-clean build-dir \
+        io.github.hnjae.KiriView.json
 
 [group('build')]
 run:
@@ -91,79 +97,8 @@ run:
         kiriview
 
 [group('build')]
-install: (_flatpak-builder "install")
-
-_flatpak-builder mode:
-    #!/bin/sh
-    set -eu
-
-    mode={{ quote(mode) }}
-
-    run_flatpak_builder() {
-        if command -v flatpak-builder >/dev/null 2>&1; then
-            exec flatpak-builder "$@"
-        fi
-
-        if command -v flatpak >/dev/null 2>&1; then
-            if flatpak info --user org.flatpak.Builder >/dev/null 2>&1; then
-                exec flatpak run --user org.flatpak.Builder "$@"
-            fi
-
-            if flatpak info --system org.flatpak.Builder >/dev/null 2>&1; then
-                exec flatpak run --system org.flatpak.Builder "$@"
-            fi
-        fi
-
-        if command -v nix >/dev/null 2>&1; then
-            exec nix run nixpkgs#flatpak-builder -- "$@"
-        fi
-
-        cat >&2 <<'EOF'
-    flatpak-builder was not found.
-
-    Install flatpak-builder with one of these options:
-    - Install your distribution's flatpak-builder package.
-    - Install the Flatpak app: flatpak install --user flathub org.flatpak.Builder
-    - Install Nix so this task can run nixpkgs#flatpak-builder.
-    EOF
-        exit 127
-    }
-
-    flatpak_jobs="${KIRIVIEW_FLATPAK_JOBS:-}"
-    if [ -z "$flatpak_jobs" ]; then
-        flatpak_jobs="$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || printf '1')"
-    fi
-    case "$flatpak_jobs" in
-        ''|*[!0-9]*|0)
-            printf 'Invalid KIRIVIEW_FLATPAK_JOBS value: %s\n' "$flatpak_jobs" >&2
-            exit 2
-            ;;
-    esac
-
-    set -- \
-        --default-branch main \
-        --user \
-        --install-deps-from=flathub \
-        --jobs="$flatpak_jobs" \
-        --disable-rofiles-fuse \
-        --ccache \
-
-    case "$mode" in
-        build)
-            set -- "$@" --disable-tests
-            ;;
-        build-with-tests)
-            ;;
-        install)
-            set -- "$@" --install --disable-tests
-            ;;
-        *)
-            printf 'Invalid flatpak-builder mode: %s\n' "$mode" >&2
-            exit 2
-            ;;
-    esac
-
-    run_flatpak_builder "$@" \
+install:
+    devenv shell -- flatpak-builder --install --disable-tests \
         --force-clean build-dir \
         io.github.hnjae.KiriView.json
 
