@@ -5,50 +5,27 @@
   pkgs,
   lib,
   qtCxxqt,
+  rustHostCargoTargetDir,
+  rustHostEnvironment,
   ...
 }:
 let
   repoRoot = lib.escapeShellArg config.devenv.root;
-  hostRuntimeLibraryPath = lib.concatStringsSep ":" [
-    "${config.devenv.root}/.devenv/profile/lib"
-    (lib.makeLibraryPath [
-      (lib.getLib pkgs.pipewire)
-      (lib.getLib pkgs.stdenv.cc.cc)
-    ])
-  ];
-  hostTaskPrelude = ''
+  baseTaskPrelude = ''
     set -euo pipefail
 
     cd ${repoRoot}
 
     export LC_ALL=C.UTF-8
     export LANG=C.UTF-8
-
-    ${qtCxxqt.runtimeEnvironment}
+  '';
+  qtRuntimePrelude = ''
+    ${qtCxxqt.qtRuntimeEnvironment}
     unset QT_ADDITIONAL_PACKAGES_PREFIX_PATH
-
-    host_runtime_library_path=${lib.escapeShellArg hostRuntimeLibraryPath}
-    nix_runtime_library_path=""
-    nix_ldflags=( ''${NIX_LDFLAGS:-} )
-    for ((i = 0; i < ''${#nix_ldflags[@]}; i++)); do
-        case "''${nix_ldflags[$i]}" in
-        -L)
-            ((i += 1))
-            library_path="''${nix_ldflags[$i]:-}"
-            ;;
-        -L*)
-            library_path="''${nix_ldflags[$i]#-L}"
-            ;;
-        *)
-            continue
-            ;;
-        esac
-
-        if [[ -d $library_path ]]; then
-            nix_runtime_library_path="''${nix_runtime_library_path:+$nix_runtime_library_path:}$library_path"
-        fi
-    done
-    export LD_LIBRARY_PATH="$host_runtime_library_path''${nix_runtime_library_path:+:$nix_runtime_library_path}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+  '';
+  qtBuildPrelude = ''
+    ${qtCxxqt.qtBuildEnvironment}
+    unset QT_ADDITIONAL_PACKAGES_PREFIX_PATH
   '';
   testJobsPrelude = ''
     test_jobs="''${KIRIVIEW_TEST_JOBS:-$(nproc)}"
@@ -259,32 +236,30 @@ in
     "ci:test:rust" = {
       description = "Run host Rust library and doc tests";
       exec = ''
-        ${hostTaskPrelude}
+        ${baseTaskPrelude}
+        ${qtRuntimePrelude}
+        ${rustHostEnvironment}
         ${testJobsPrelude}
 
         printf 'Running host Rust tests with nextest using %d jobs...\n' "$test_jobs"
-        CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
-            kiriview-rust-host-env \
-            cargo \
-                nextest \
-                run \
-                --locked \
-                --lib \
-                --all-features \
-                --build-jobs "$test_jobs" \
-                --test-threads "$test_jobs"
+        cargo \
+            nextest \
+            run \
+            --locked \
+            --lib \
+            --all-features \
+            --build-jobs "$test_jobs" \
+            --test-threads "$test_jobs"
 
         printf 'Running host Rust doc tests with %d jobs...\n' "$test_jobs"
-        CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
-            kiriview-rust-host-env \
-            cargo \
-                test \
-                --doc \
-                --locked \
-                --all-features \
-                --jobs "$test_jobs" \
-                -- \
-                --test-threads "$test_jobs"
+        cargo \
+            test \
+            --doc \
+            --locked \
+            --all-features \
+            --jobs "$test_jobs" \
+            -- \
+            --test-threads "$test_jobs"
       '';
     };
 
@@ -296,24 +271,24 @@ in
       showOutput = true;
       exec = # sh
         ''
-          ${hostTaskPrelude}
+          ${baseTaskPrelude}
+          ${qtRuntimePrelude}
+          ${rustHostEnvironment}
           ${testJobsPrelude}
 
           printf 'Building Cargo-owned KiriView app library artifacts with %d jobs...\n' "$test_jobs"
-          CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
-              kiriview-rust-host-env \
-              cargo \
-                  build \
-                  --locked \
-                  --lib \
-                  --all-features \
-                  --jobs "$test_jobs"
+          cargo \
+              build \
+              --locked \
+              --lib \
+              --all-features \
+              --jobs "$test_jobs"
 
           cmake \
               -S tests/cpp \
               -B target/devenv/cpp-tests \
               -DCMAKE_BUILD_TYPE=Debug \
-              -DKIRIVIEW_CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target/debug"}
+              -DKIRIVIEW_CARGO_TARGET_DIR=${lib.escapeShellArg "${rustHostCargoTargetDir}/debug"}
           printf 'Building and running host C++ tests with %d jobs...\n' "$test_jobs"
           cmake --build target/devenv/cpp-tests --parallel "$test_jobs"
           # GNU gettext ignores LANGUAGE under C/POSIX locales; devenv defaults to C.UTF-8.
@@ -331,18 +306,17 @@ in
         "ci:test:cpp@succeeded"
       ];
       exec = ''
-        ${hostTaskPrelude}
-        unset LD_LIBRARY_PATH
-        unset QT_PLUGIN_PATH
+        ${baseTaskPrelude}
+        ${qtBuildPrelude}
+        ${rustHostEnvironment}
         ${lintJobsPrelude}
 
-        kiriview-rust-host-env \
-            cargo \
-                clippy \
-                --locked \
-                --all-targets \
-                --all-features \
-                --jobs "$lint_jobs" \
+        cargo \
+            clippy \
+            --locked \
+            --all-targets \
+            --all-features \
+            --jobs "$lint_jobs" \
             -- \
             -D warnings \
             2>&1 \
@@ -353,12 +327,7 @@ in
     "ci:lint:qml" = {
       description = "Run qmllint against QML sources";
       exec = ''
-        set -euo pipefail
-
-        cd ${repoRoot}
-
-        export LC_ALL=C.UTF-8
-        export LANG=C.UTF-8
+        ${baseTaskPrelude}
         unset LD_LIBRARY_PATH
         unset QT_PLUGIN_PATH
         unset QT_ADDITIONAL_PACKAGES_PREFIX_PATH
@@ -379,8 +348,8 @@ in
       exec = ''
         ${qtCxxqt.cppLintPrelude}
 
-        ${hostTaskPrelude}
-        unset QT_PLUGIN_PATH
+        ${baseTaskPrelude}
+        ${qtBuildPrelude}
         ${lintJobsPrelude}
 
         ${lib.getExe' pkgs.llvmPackages.clang-unwrapped "run-clang-tidy"} \

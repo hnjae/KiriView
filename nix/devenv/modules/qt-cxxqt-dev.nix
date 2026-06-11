@@ -4,6 +4,7 @@
   config,
   pkgs,
   lib,
+  rustHostEnvironment,
   ...
 }:
 let
@@ -36,7 +37,10 @@ in
     "fortify3"
   ];
 
-  enterShell = qtCxxqt.enterShell;
+  enterShell = ''
+    ${qtCxxqt.enterShell}
+    ${rustHostEnvironment}
+  '';
 
   files."compile_commands.json".json = qtCxxqt.compileCommands;
   files.".vscode/settings.json".json = qtCxxqt.vscodeSettings;

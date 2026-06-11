@@ -50,8 +50,6 @@ Always report any skipped focused or final check in your final response.
 
 ## Targeted test recipes
 
-All Rust host recipes run through `kiriview-rust-host-env`, which owns the host linker configuration.
-
 **Rust (prefer a filtered lib test before the full suite)** — `<filter>` e.g. `imagezoomstate`:
 
 ```sh
