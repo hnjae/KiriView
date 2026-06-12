@@ -20,14 +20,14 @@ bool activeNavigationActionEnabled(
 
 KiriView::ApplicationActions::ApplicationActionState state(bool enabled)
 {
-    return KiriView::ApplicationActions::ApplicationActionState { enabled, enabled, false, false };
+    return KiriView::ApplicationActions::ApplicationActionState { enabled, true, false, false };
 }
 
 KiriView::ApplicationActions::ApplicationActionState checkableState(bool enabled, bool checked)
 {
     return KiriView::ApplicationActions::ApplicationActionState {
         enabled,
-        enabled,
+        true,
         true,
         checked,
     };
