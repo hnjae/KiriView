@@ -21,11 +21,15 @@ FormCard.FormCardDialog {
     readonly property real minimumDialogWidth: Kirigami.Units.gridUnit * 14
     readonly property real availableDialogWidth: parent ? Math.max(minimumDialogWidth, parent.width - dialogMargin * 2) : maximumDialogWidth
     readonly property real availableDialogHeight: parent ? Math.max(Kirigami.Units.gridUnit * 12, parent.height - dialogMargin * 2) : maximumDialogHeight
+    readonly property real cappedDialogHeight: Math.min(availableDialogHeight, maximumDialogHeight)
     readonly property real formMaximumWidth: Kirigami.Units.gridUnit * 32
+    readonly property real headerHeightBudget: header ? header.implicitHeight : 0
+    readonly property real footerHeightBudget: footer ? footer.implicitHeight : 0
+    readonly property real listViewportHeight: Math.max(Kirigami.Units.gridUnit * 8, cappedDialogHeight - headerHeightBudget - footerHeightBudget)
 
     closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnReleaseOutside
     focus: true
-    height: Math.min(implicitHeight, availableDialogHeight, maximumDialogHeight)
+    height: Math.min(implicitHeight, cappedDialogHeight)
     parent: Controls.Overlay.overlay
     standardButtons: Controls.Dialog.Ok
     title: KI18n.i18nc("@title:window", "Keyboard Shortcuts")
@@ -89,9 +93,12 @@ FormCard.FormCardDialog {
         objectName: "shortcutHelpScrollView"
 
         Layout.fillWidth: true
-        Layout.maximumHeight: Math.max(Kirigami.Units.gridUnit * 8, root.availableDialogHeight - Kirigami.Units.gridUnit * 6)
+        Layout.fillHeight: true
+        Layout.maximumHeight: Layout.preferredHeight
+        Layout.preferredHeight: Math.min(shortcutList.implicitHeight, root.listViewportHeight)
         Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
         clip: true
+        contentHeight: shortcutList.implicitHeight
         contentWidth: availableWidth
 
         ColumnLayout {
