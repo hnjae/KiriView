@@ -8,6 +8,14 @@ Layout: `src/` (app), `tests/cpp/` (C++ tests), `docs/` (docs), `po/` (translati
 - **Architecture lives in `docs/architecture/`** (start at `README.md`). Follow it for language boundaries, module ownership, FFI, and workflow structure. Record long-term rules there or in ADRs — never duplicate them here.
 - **Pre-release: no backward compatibility.** Do not preserve compatibility for configs, APIs, or internal formats unless explicitly asked.
 
+## External dependency and upstream boundaries
+
+- Do not add, replace, vendor, or patch external libraries unless the user explicitly asks for that change.
+- Do not modify upstream, third-party, generated, vendored, or packaged dependency sources as a workaround unless explicitly requested.
+- If the correct or straightforward fix appears to require adding an external dependency, changing dependency versions, patching upstream code, or carrying a local workaround for an upstream or library defect, stop before implementing and ask the user how they want to proceed.
+- When asking, briefly present the tradeoff, including the dependency or upstream option and any local workaround option.
+- Do not avoid this pause by implementing a convoluted local workaround when a dependency addition or upstream patch is the clean solution.
+
 ## Project conventions
 
 - 4-space indentation for Rust, QML, C++, and headers.
