@@ -98,7 +98,7 @@ run:
 
 [group('build')]
 install:
-    devenv shell -- flatpak-builder --install --disable-tests \
+    devenv shell -- flatpak-builder --install --user --disable-tests \
         --force-clean build-dir \
         io.github.hnjae.KiriView.json
 
