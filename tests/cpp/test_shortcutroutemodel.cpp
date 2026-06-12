@@ -47,8 +47,8 @@ void TestShortcutRouteModel::routeRowsExposeApplicationShortcutPolicy()
     const QHash<int, QByteArray> roles = model.roleNames();
     QCOMPARE(roles.value(KiriView::ApplicationActions::ShortcutRouteModel::ActionIdsRole),
         QByteArrayLiteral("actionIds"));
-    QCOMPARE(roles.value(KiriView::ApplicationActions::ShortcutRouteModel::ShortcutFilterRole),
-        QByteArrayLiteral("shortcutFilter"));
+    QCOMPARE(roles.value(KiriView::ApplicationActions::ShortcutRouteModel::ActivationScopeRole),
+        QByteArrayLiteral("activationScope"));
     QCOMPARE(roles.value(KiriView::ApplicationActions::ShortcutRouteModel::ShortcutScopeRole),
         QByteArrayLiteral("shortcutScope"));
 
@@ -59,9 +59,9 @@ void TestShortcutRouteModel::routeRowsExposeApplicationShortcutPolicy()
                      .toList(),
             actionIdVariants(route.actionIds));
         QCOMPARE(
-            model.data(index, KiriView::ApplicationActions::ShortcutRouteModel::ShortcutFilterRole)
+            model.data(index, KiriView::ApplicationActions::ShortcutRouteModel::ActivationScopeRole)
                 .toInt(),
-            static_cast<int>(route.shortcutFilter));
+            static_cast<int>(route.activationScope));
         QCOMPARE(
             model.data(index, KiriView::ApplicationActions::ShortcutRouteModel::ShortcutScopeRole)
                 .toInt(),

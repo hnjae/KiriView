@@ -14,7 +14,7 @@
 namespace {
 using ActionId = KiriView::ApplicationActions::ActionId;
 using Category = KiriView::ApplicationActions::ShortcutHelpCategory;
-using Filter = KiriView::ApplicationActions::ApplicationShortcutFilter;
+using ActivationScope = KiriView::ApplicationActions::ApplicationShortcutActivationScope;
 using Scope = KiriView::ApplicationActions::ImageShortcutScope;
 
 QKeySequence shortcut(const QString &sequence)
@@ -55,10 +55,10 @@ QList<KiriView::ApplicationActions::ShortcutRouteSpec> routeSpecsFor(ActionId ac
     return specs;
 }
 
-bool hasRouteSpec(ActionId actionId, Filter filter, Scope scope)
+bool hasRouteSpec(ActionId actionId, ActivationScope activationScope, Scope scope)
 {
     for (const KiriView::ApplicationActions::ShortcutRouteSpec &spec : routeSpecsFor(actionId)) {
-        if (spec.shortcutFilter == filter && spec.shortcutScope == scope) {
+        if (spec.activationScope == activationScope && spec.shortcutScope == scope) {
             return true;
         }
     }
@@ -66,11 +66,12 @@ bool hasRouteSpec(ActionId actionId, Filter filter, Scope scope)
     return false;
 }
 
-const KiriView::ApplicationActions::ApplicationShortcutRoute *routeFor(Filter filter, Scope scope)
+const KiriView::ApplicationActions::ApplicationShortcutRoute *routeFor(
+    ActivationScope activationScope, Scope scope)
 {
     for (const KiriView::ApplicationActions::ApplicationShortcutRoute &route :
         KiriView::ApplicationActions::shortcutRoutes()) {
-        if (route.shortcutFilter == filter && route.shortcutScope == scope) {
+        if (route.activationScope == activationScope && route.shortcutScope == scope) {
             return &route;
         }
     }
@@ -84,12 +85,11 @@ class TestApplicationShortcutPolicy : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void commandModifierFilterPartitionsShortcuts();
-    void menuShortcutSkipsViewerOnlyShortcuts();
-    void shortcutAliasesDeriveViewerShortcutsFromCtrlShortcuts();
+    void programWideSanitizationKeepsTextInputSafeShortcuts();
+    void menuShortcutSkipsViewerLocalShortcuts();
     void shortcutListTextJoinsAssignedShortcuts();
-    void shortcutProjectionDerivesPublicViewsFromOneShortcutList();
-    void sanitizeShortcutsRemovesUnmodifiedTextInputShortcuts();
+    void shortcutProjectionSeparatesActivationScopes();
+    void sanitizeProgramWideShortcutsRemovesUnmodifiedTextInputShortcuts();
     void actionDefinitionsOwnApplicationShortcutRoutes();
     void actionDefinitionsOwnShortcutHelpCategories();
     void shortcutRoutesGroupDefinitionOwnedSpecs();
@@ -99,26 +99,21 @@ private Q_SLOTS:
     void horizontalArrowShortcutPolicyUsesActiveMediaMode();
 };
 
-void TestApplicationShortcutPolicy::commandModifierFilterPartitionsShortcuts()
+void TestApplicationShortcutPolicy::programWideSanitizationKeepsTextInputSafeShortcuts()
 {
     const QList<QKeySequence> shortcuts {
-        QKeySequence(),
-        shortcut(QStringLiteral("Ctrl+Q")),
-        shortcut(QStringLiteral("Alt+Q")),
-        shortcut(QStringLiteral("Meta+Q")),
-        shortcut(QStringLiteral("Shift+Q")),
         shortcut(QStringLiteral("Q")),
+        shortcut(QStringLiteral("Shift+Q")),
+        shortcut(QStringLiteral("Ctrl+Q")),
+        shortcut(QStringLiteral("Delete")),
     };
 
-    QCOMPARE(KiriView::ApplicationActions::filterShortcutsByCommandModifier(shortcuts, true),
-        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+Q")), shortcut(QStringLiteral("Alt+Q")),
-            shortcut(QStringLiteral("Meta+Q")) }));
-    QCOMPARE(KiriView::ApplicationActions::filterShortcutsByCommandModifier(shortcuts, false),
-        QList<QKeySequence>(
-            { shortcut(QStringLiteral("Shift+Q")), shortcut(QStringLiteral("Q")) }));
+    QCOMPARE(KiriView::ApplicationActions::sanitizeProgramWideShortcuts(shortcuts),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Shift+Q")),
+            shortcut(QStringLiteral("Ctrl+Q")), shortcut(QStringLiteral("Delete")) }));
 }
 
-void TestApplicationShortcutPolicy::menuShortcutSkipsViewerOnlyShortcuts()
+void TestApplicationShortcutPolicy::menuShortcutSkipsViewerLocalShortcuts()
 {
     const QList<QKeySequence> shortcuts {
         QKeySequence(),
@@ -136,22 +131,6 @@ void TestApplicationShortcutPolicy::menuShortcutSkipsViewerOnlyShortcuts()
             .isEmpty());
 }
 
-void TestApplicationShortcutPolicy::shortcutAliasesDeriveViewerShortcutsFromCtrlShortcuts()
-{
-    const QList<QKeySequence> shortcuts {
-        shortcut(QStringLiteral("Ctrl+R")),
-        shortcut(QStringLiteral("Ctrl+Shift+R")),
-        shortcut(QStringLiteral("Ctrl+R")),
-        shortcut(QStringLiteral("Alt+R")),
-        shortcut(QStringLiteral("Ctrl+Delete")),
-        shortcut(QStringLiteral("Ctrl+X, Ctrl+Y")),
-    };
-
-    QCOMPARE(KiriView::ApplicationActions::shortcutAliases(shortcuts),
-        QList<QKeySequence>(
-            { shortcut(QStringLiteral("R")), shortcut(QStringLiteral("Shift+R")) }));
-}
-
 void TestApplicationShortcutPolicy::shortcutListTextJoinsAssignedShortcuts()
 {
     QCOMPARE(KiriView::ApplicationActions::shortcutListText({ QKeySequence() }), QString());
@@ -161,38 +140,34 @@ void TestApplicationShortcutPolicy::shortcutListTextJoinsAssignedShortcuts()
             nativeText(shortcut(QStringLiteral("Ctrl+Shift+O")))));
 }
 
-void TestApplicationShortcutPolicy::shortcutProjectionDerivesPublicViewsFromOneShortcutList()
+void TestApplicationShortcutPolicy::shortcutProjectionSeparatesActivationScopes()
 {
-    const QList<QKeySequence> shortcuts {
-        QKeySequence(),
-        shortcut(QStringLiteral("Ctrl+R")),
+    const QList<QKeySequence> programWideShortcuts { shortcut(QStringLiteral("Ctrl+R")) };
+    const QList<QKeySequence> viewerLocalShortcuts {
+        shortcut(QStringLiteral("R")),
         shortcut(QStringLiteral("Shift+R")),
-        shortcut(QStringLiteral("Home")),
-        shortcut(QStringLiteral("Alt+O")),
     };
 
     const KiriView::ApplicationActions::ApplicationShortcutProjection projection
-        = KiriView::ApplicationActions::shortcutProjection(shortcuts);
+        = KiriView::ApplicationActions::shortcutProjection(
+            programWideShortcuts, viewerLocalShortcuts);
 
-    QCOMPARE(projection.shortcuts, shortcuts);
-    QCOMPARE(projection.shortcutsWithCommandModifier,
-        QList<QKeySequence>(
-            { shortcut(QStringLiteral("Ctrl+R")), shortcut(QStringLiteral("Alt+O")) }));
-    QCOMPARE(projection.shortcutsWithoutCommandModifier,
-        QList<QKeySequence>(
-            { shortcut(QStringLiteral("Shift+R")), shortcut(QStringLiteral("Home")) }));
-    QCOMPARE(projection.shortcutAliases, QList<QKeySequence>({ shortcut(QStringLiteral("R")) }));
+    QCOMPARE(projection.shortcuts,
+        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+R")), shortcut(QStringLiteral("R")),
+            shortcut(QStringLiteral("Shift+R")) }));
+    QCOMPARE(projection.programWideShortcuts, programWideShortcuts);
+    QCOMPARE(projection.viewerLocalShortcuts, viewerLocalShortcuts);
     QCOMPARE(projection.menuShortcut, shortcut(QStringLiteral("Ctrl+R")));
     QCOMPARE(projection.shortcutText,
-        QStringLiteral("%1 / %2 / %3 / %4")
+        QStringLiteral("%1 / %2 / %3")
             .arg(nativeText(shortcut(QStringLiteral("Ctrl+R"))),
                 nativeText(shortcut(QStringLiteral("Shift+R"))),
-                nativeText(shortcut(QStringLiteral("Home"))),
-                nativeText(shortcut(QStringLiteral("Alt+O")))));
+                nativeText(shortcut(QStringLiteral("R")))));
     QCOMPARE(projection.menuShortcutText, nativeText(shortcut(QStringLiteral("Ctrl+R"))));
 }
 
-void TestApplicationShortcutPolicy::sanitizeShortcutsRemovesUnmodifiedTextInputShortcuts()
+void TestApplicationShortcutPolicy::
+    sanitizeProgramWideShortcutsRemovesUnmodifiedTextInputShortcuts()
 {
     const QList<QKeySequence> shortcuts {
         shortcut(QStringLiteral("Q")),
@@ -201,7 +176,7 @@ void TestApplicationShortcutPolicy::sanitizeShortcutsRemovesUnmodifiedTextInputS
         shortcut(QStringLiteral("Delete")),
     };
 
-    QCOMPARE(KiriView::ApplicationActions::sanitizeShortcuts(shortcuts),
+    QCOMPARE(KiriView::ApplicationActions::sanitizeProgramWideShortcuts(shortcuts),
         QList<QKeySequence>({ shortcut(QStringLiteral("Shift+Q")),
             shortcut(QStringLiteral("Ctrl+Q")), shortcut(QStringLiteral("Delete")) }));
 }
@@ -209,34 +184,30 @@ void TestApplicationShortcutPolicy::sanitizeShortcutsRemovesUnmodifiedTextInputS
 void TestApplicationShortcutPolicy::actionDefinitionsOwnApplicationShortcutRoutes()
 {
     QVERIFY(hasRouteSpec(
-        ActionId::FileOpenAction, Filter::WithCommandModifier, Scope::HelpShortcutScope));
-    QVERIFY(hasRouteSpec(
-        ActionId::FileOpenAction, Filter::WithoutCommandModifier, Scope::ViewerShortcutScope));
-    QVERIFY(hasRouteSpec(
-        ActionId::FileMoveToTrashAction, Filter::AllShortcuts, Scope::ReadyViewerShortcutScope));
-    QVERIFY(hasRouteSpec(
-        ActionId::ViewZoomInAction, Filter::WithCommandModifier, Scope::ReadyShortcutScope));
-    QVERIFY(hasRouteSpec(ActionId::ViewToggleTwoPageModeAction, Filter::ShortcutAliases,
+        ActionId::FileOpenAction, ActivationScope::ProgramWide, Scope::HelpShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::FileMoveToTrashAction, ActivationScope::ViewerLocal,
         Scope::ReadyViewerShortcutScope));
-    QVERIFY(hasRouteSpec(ActionId::ViewToggleRightToLeftReadingAction, Filter::WithCommandModifier,
-        Scope::RightToLeftReadingShortcutScope));
-    QVERIFY(hasRouteSpec(ActionId::ViewToggleInfoPanelAction, Filter::WithCommandModifier,
-        Scope::HelpShortcutScope));
-    QVERIFY(hasRouteSpec(ActionId::ViewToggleThumbnailPanelAction, Filter::WithCommandModifier,
-        Scope::HelpShortcutScope));
     QVERIFY(hasRouteSpec(
-        ActionId::ViewToggleInfoPanelAction, Filter::ShortcutAliases, Scope::ViewerShortcutScope));
-    QVERIFY(hasRouteSpec(ActionId::ViewToggleThumbnailPanelAction, Filter::ShortcutAliases,
+        ActionId::ViewZoomInAction, ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::ViewToggleTwoPageModeAction, ActivationScope::ViewerLocal,
+        Scope::ReadyViewerShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::ViewToggleRightToLeftReadingAction, ActivationScope::ViewerLocal,
+        Scope::RightToLeftReadingViewerShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::ViewToggleInfoPanelAction, ActivationScope::ViewerLocal,
         Scope::ViewerShortcutScope));
-    QVERIFY(hasRouteSpec(ActionId::GoPreviousImageAction, Filter::WithCommandModifier,
-        Scope::ImageSelectionShortcutScope));
-    QVERIFY(hasRouteSpec(
-        ActionId::GoFirstImageAction, Filter::ShortcutAliases, Scope::PageViewerShortcutScope));
-    QVERIFY(hasRouteSpec(ActionId::GoPreviousArchiveAction, Filter::WithoutCommandModifier,
+    QVERIFY(hasRouteSpec(ActionId::ViewToggleThumbnailPanelAction, ActivationScope::ViewerLocal,
+        Scope::ViewerShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::GoPreviousImageAction, ActivationScope::ViewerLocal,
+        Scope::ImageSelectionViewerShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::GoFirstImageAction, ActivationScope::ViewerLocal,
+        Scope::PageViewerShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::GoPreviousArchiveAction, ActivationScope::ViewerLocal,
         Scope::ContainerViewerShortcutScope));
     QVERIFY(hasRouteSpec(
-        ActionId::HelpShortcutsAction, Filter::ShortcutAliases, Scope::ViewerShortcutScope));
-    QVERIFY(hasRouteSpec(ActionId::OptionsConfigureKeybindingAction, Filter::AllShortcuts,
+        ActionId::HelpShortcutsAction, ActivationScope::ViewerLocal, Scope::ViewerShortcutScope));
+    QVERIFY(hasRouteSpec(
+        ActionId::HelpShortcutsAction, ActivationScope::ProgramWide, Scope::HelpShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::OptionsConfigureKeybindingAction, ActivationScope::ProgramWide,
         Scope::HelpShortcutScope));
 }
 
@@ -291,7 +262,7 @@ void TestApplicationShortcutPolicy::actionDefinitionsOwnShortcutHelpCategories()
 void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
 {
     const KiriView::ApplicationActions::ApplicationShortcutRoute *readyRoute
-        = routeFor(Filter::WithCommandModifier, Scope::ReadyShortcutScope);
+        = routeFor(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope);
     QVERIFY(readyRoute != nullptr);
     QCOMPARE(actionIdVariants(readyRoute->actionIds),
         actionIdVariants({ ActionId::ViewZoomInAction, ActionId::ViewZoomOutAction,
@@ -302,23 +273,23 @@ void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
             ActionId::ViewScanBackwardAction }));
 
     const KiriView::ApplicationActions::ApplicationShortcutRoute *containerRoute
-        = routeFor(Filter::ShortcutAliases, Scope::ContainerViewerShortcutScope);
+        = routeFor(ActivationScope::ViewerLocal, Scope::ContainerViewerShortcutScope);
     QVERIFY(containerRoute != nullptr);
     QCOMPARE(actionIdVariants(containerRoute->actionIds),
         actionIdVariants({ ActionId::GoPreviousArchiveAction, ActionId::GoNextArchiveAction }));
 
-    const KiriView::ApplicationActions::ApplicationShortcutRoute *viewerAliasRoute
-        = routeFor(Filter::ShortcutAliases, Scope::ViewerShortcutScope);
-    QVERIFY(viewerAliasRoute != nullptr);
-    QVERIFY(viewerAliasRoute->actionIds.contains(ActionId::ViewToggleInfoPanelAction));
-    QVERIFY(viewerAliasRoute->actionIds.contains(ActionId::ViewToggleThumbnailPanelAction));
+    const KiriView::ApplicationActions::ApplicationShortcutRoute *viewerLocalRoute
+        = routeFor(ActivationScope::ViewerLocal, Scope::ViewerShortcutScope);
+    QVERIFY(viewerLocalRoute != nullptr);
+    QVERIFY(viewerLocalRoute->actionIds.contains(ActionId::ViewToggleInfoPanelAction));
+    QVERIFY(viewerLocalRoute->actionIds.contains(ActionId::ViewToggleThumbnailPanelAction));
 
     for (const KiriView::ApplicationActions::ApplicationShortcutRoute &route :
         KiriView::ApplicationActions::shortcutRoutes()) {
         QVERIFY(!route.actionIds.isEmpty());
         for (ActionId actionId : route.actionIds) {
             QVERIFY(KiriView::ApplicationActions::definitionForId(actionId) != nullptr);
-            QVERIFY(hasRouteSpec(actionId, route.shortcutFilter, route.shortcutScope));
+            QVERIFY(hasRouteSpec(actionId, route.activationScope, route.shortcutScope));
         }
     }
 
@@ -327,7 +298,7 @@ void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
         for (const KiriView::ApplicationActions::ShortcutRouteSpec &spec :
             routeSpecsFor(definition.actionId)) {
             const KiriView::ApplicationActions::ApplicationShortcutRoute *route
-                = routeFor(spec.shortcutFilter, spec.shortcutScope);
+                = routeFor(spec.activationScope, spec.shortcutScope);
             QVERIFY(route != nullptr);
             QVERIFY(route->actionIds.contains(definition.actionId));
         }

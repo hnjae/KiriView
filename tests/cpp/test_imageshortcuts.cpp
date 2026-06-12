@@ -53,7 +53,7 @@ private Q_SLOTS:
     void zoomPresetAndFitShortcutsUseNewMapping();
     void configuredActionShortcutsTriggerActions();
     void windowCommandShortcutsWorkWithoutQmlShortcutInstallers();
-    void videoViewerAliasTriggersFullscreenAction();
+    void videoViewerLocalShortcutTriggersFullscreenAction();
     void videoImageOnlyShortcutsShowUnsupportedToast();
     void videoModeIgnoresReportedImagePannabilityForPanShortcuts();
 };
@@ -106,6 +106,7 @@ void resetConfig()
 
     KSharedConfig::Ptr appConfig = KSharedConfig::openConfig();
     appConfig->deleteGroup(QStringLiteral("Shortcuts"));
+    appConfig->deleteGroup(QStringLiteral("ViewerLocalShortcuts"));
     appConfig->sync();
     appConfig->reparseConfiguration();
 }
@@ -618,27 +619,27 @@ void TestImageShortcuts::zoomPresetAndFitShortcutsUseNewMapping()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(documentReady(fixture.root));
 
-    pressKey(fixture.view.get(), Qt::Key_QuoteLeft, Qt::ControlModifier);
+    pressKey(fixture.view.get(), Qt::Key_QuoteLeft);
     QTRY_VERIFY(zoomPercentApproximately(fixture.root, 50.0));
     QCOMPARE(imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::Manual));
 
-    pressKey(fixture.view.get(), Qt::Key_1, Qt::ControlModifier);
+    pressKey(fixture.view.get(), Qt::Key_1);
     QTRY_VERIFY(zoomPercentApproximately(fixture.root, 100.0));
     QCOMPARE(imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::Manual));
 
-    pressKey(fixture.view.get(), Qt::Key_2, Qt::ControlModifier);
+    pressKey(fixture.view.get(), Qt::Key_2);
     QTRY_VERIFY(zoomPercentApproximately(fixture.root, 200.0));
     QCOMPARE(imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::Manual));
 
-    pressKey(fixture.view.get(), Qt::Key_8, Qt::ControlModifier);
+    pressKey(fixture.view.get(), Qt::Key_8);
     QTRY_COMPARE(
         imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::FitHeight));
 
-    pressKey(fixture.view.get(), Qt::Key_9, Qt::ControlModifier);
+    pressKey(fixture.view.get(), Qt::Key_9);
     QTRY_COMPARE(
         imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::FitWidth));
 
-    pressKey(fixture.view.get(), Qt::Key_0, Qt::ControlModifier);
+    pressKey(fixture.view.get(), Qt::Key_0);
     QTRY_COMPARE(imageZoomMode(fixture.root), static_cast<int>(KiriImageDocument::ZoomMode::Fit));
 }
 
@@ -653,17 +654,17 @@ void TestImageShortcuts::configuredActionShortcutsTriggerActions()
     QSignalSpy triggeredSpy(rotateAction, &QAction::triggered);
 
     pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
-    QTRY_COMPARE(triggeredSpy.count(), 1);
+    QCOMPARE(triggeredSpy.count(), 0);
 
     pressKey(fixture.view.get(), Qt::Key_R);
-    QTRY_COMPARE(triggeredSpy.count(), 2);
+    QTRY_COMPARE(triggeredSpy.count(), 1);
 
     fixture.root->setProperty("toolbarTextInputFocused", true);
     pressKey(fixture.view.get(), Qt::Key_R);
-    QCOMPARE(triggeredSpy.count(), 2);
+    QCOMPARE(triggeredSpy.count(), 1);
 
     pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
-    QTRY_COMPARE(triggeredSpy.count(), 3);
+    QCOMPARE(triggeredSpy.count(), 1);
 }
 
 void TestImageShortcuts::windowCommandShortcutsWorkWithoutQmlShortcutInstallers()
@@ -685,14 +686,14 @@ void TestImageShortcuts::windowCommandShortcutsWorkWithoutQmlShortcutInstallers(
     imageShortcuts->setProperty("visible", false);
 
     pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
-    QTRY_COMPARE(rotateSpy.count(), 1);
+    QCOMPARE(rotateSpy.count(), 0);
 
     pressKey(fixture.view.get(), Qt::Key_R);
-    QTRY_COMPARE(rotateSpy.count(), 2);
+    QTRY_COMPARE(rotateSpy.count(), 1);
 
     fixture.root->setProperty("toolbarTextInputFocused", true);
     pressKey(fixture.view.get(), Qt::Key_R);
-    QCOMPARE(rotateSpy.count(), 2);
+    QCOMPARE(rotateSpy.count(), 1);
 
     fixture.root->setProperty("toolbarTextInputFocused", false);
     pressKey(fixture.view.get(), Qt::Key_F10);
@@ -702,7 +703,7 @@ void TestImageShortcuts::windowCommandShortcutsWorkWithoutQmlShortcutInstallers(
     QTRY_COMPARE(showMenubarSpy.count(), 1);
 }
 
-void TestImageShortcuts::videoViewerAliasTriggersFullscreenAction()
+void TestImageShortcuts::videoViewerLocalShortcutTriggersFullscreenAction()
 {
     ImageShortcutsFixture fixture = createVideoFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
@@ -753,39 +754,39 @@ void TestImageShortcuts::videoImageOnlyShortcutsShowUnsupportedToast()
     QSignalSpy fitWindowSpy(fitWindowAction, &QAction::triggered);
 
     pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
-    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 1);
+    QCOMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 0);
     QCOMPARE(rotateSpy.count(), 0);
 
     pressKey(fixture.view.get(), Qt::Key_R);
-    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 2);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 1);
     QCOMPARE(rotateSpy.count(), 0);
 
-    pressKey(fixture.view.get(), Qt::Key_Equal, Qt::ControlModifier);
-    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 3);
+    pressKey(fixture.view.get(), Qt::Key_Equal);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 2);
     QCOMPARE(zoomInSpy.count(), 0);
 
-    pressKey(fixture.view.get(), Qt::Key_QuoteLeft, Qt::ControlModifier);
-    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 4);
+    pressKey(fixture.view.get(), Qt::Key_QuoteLeft);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 3);
     QCOMPARE(zoom50Spy.count(), 0);
 
-    pressKey(fixture.view.get(), Qt::Key_1, Qt::ControlModifier);
-    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 5);
+    pressKey(fixture.view.get(), Qt::Key_1);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 4);
     QCOMPARE(zoom100Spy.count(), 0);
 
-    pressKey(fixture.view.get(), Qt::Key_2, Qt::ControlModifier);
-    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 6);
+    pressKey(fixture.view.get(), Qt::Key_2);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 5);
     QCOMPARE(zoom200Spy.count(), 0);
 
-    pressKey(fixture.view.get(), Qt::Key_8, Qt::ControlModifier);
-    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 7);
+    pressKey(fixture.view.get(), Qt::Key_8);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 6);
     QCOMPARE(fitHeightSpy.count(), 0);
 
-    pressKey(fixture.view.get(), Qt::Key_9, Qt::ControlModifier);
-    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 8);
+    pressKey(fixture.view.get(), Qt::Key_9);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 7);
     QCOMPARE(fitWidthSpy.count(), 0);
 
-    pressKey(fixture.view.get(), Qt::Key_0, Qt::ControlModifier);
-    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 9);
+    pressKey(fixture.view.get(), Qt::Key_0);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 8);
     QCOMPARE(fitWindowSpy.count(), 0);
 }
 
