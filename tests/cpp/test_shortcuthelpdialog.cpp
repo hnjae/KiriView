@@ -14,6 +14,8 @@
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QQuickView>
+#include <QRectF>
+#include <QSize>
 #include <QStandardPaths>
 #include <QString>
 #include <QStringList>
@@ -35,6 +37,7 @@ private Q_SLOTS:
     void enterAcceptsAndClosesDialog();
     void outsideClickClosesDialog();
     void presentsConfigurableActionShortcutsAsFormCards();
+    void shortcutListScrollsWithinConstrainedDialog();
 };
 
 namespace {
@@ -81,7 +84,7 @@ QString qmlSourceImport()
     return QUrl::fromLocalFile(qmlPath).toString();
 }
 
-QString fixtureQml()
+QString fixtureQml(const QSize &viewSize)
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -92,8 +95,8 @@ Item {
     id: root
 
     focus: true
-    width: 900
-    height: 700
+    width: %2
+    height: %3
 
     property int acceptedCount: 0
     property int closedCount: 0
@@ -121,22 +124,24 @@ Item {
     }
 }
 )")
-        .arg(qmlSourceImport());
+        .arg(qmlSourceImport())
+        .arg(viewSize.width())
+        .arg(viewSize.height());
 }
 
-ShortcutHelpDialogFixture createFixture()
+ShortcutHelpDialogFixture createFixture(const QSize &viewSize = QSize(900, 700))
 {
     ShortcutHelpDialogFixture fixture;
     registerKiriViewQmlTypes();
     fixture.view = std::make_unique<QQuickView>();
-    fixture.view->resize(900, 700);
+    fixture.view->resize(viewSize);
     fixture.view->setResizeMode(QQuickView::SizeRootObjectToView);
     addEnvironmentImportPaths(*fixture.view->engine());
     KLocalization::setupLocalizedContext(fixture.view->engine());
 
     QQmlComponent component(fixture.view->engine());
     component.setData(
-        fixtureQml().toUtf8(), QUrl(QStringLiteral("memory:test_shortcuthelpdialog.qml")));
+        fixtureQml(viewSize).toUtf8(), QUrl(QStringLiteral("memory:test_shortcuthelpdialog.qml")));
     for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
         QCoreApplication::processEvents();
         QTest::qWait(10);
@@ -229,6 +234,45 @@ int childObjectCount(QQuickItem *root, const QString &objectName)
     }
     return count;
 }
+
+QQuickItem *findChildItem(QQuickItem *root, const QString &objectName)
+{
+    if (root == nullptr) {
+        return nullptr;
+    }
+
+    if (root->objectName() == objectName) {
+        return root;
+    }
+
+    for (QQuickItem *child : root->childItems()) {
+        if (QQuickItem *matchingChild = findChildItem(child, objectName)) {
+            return matchingChild;
+        }
+    }
+    return nullptr;
+}
+
+QQuickItem *dialogContentItem(QObject *dialog)
+{
+    return qvariant_cast<QQuickItem *>(dialog->property("contentItem"));
+}
+
+QRectF sceneBounds(QQuickItem *item)
+{
+    return item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+}
+
+QRectF dialogSceneBounds(QObject *dialog)
+{
+    const QPointF localTopLeft(dialog->property("x").toReal(), dialog->property("y").toReal());
+    QPointF sceneTopLeft = localTopLeft;
+    if (QQuickItem *parent = qvariant_cast<QQuickItem *>(dialog->property("parent"))) {
+        sceneTopLeft = parent->mapToScene(localTopLeft);
+    }
+    return QRectF(sceneTopLeft,
+        QSizeF(dialog->property("width").toReal(), dialog->property("height").toReal()));
+}
 }
 
 void TestShortcutHelpDialog::initTestCase()
@@ -319,6 +363,39 @@ void TestShortcutHelpDialog::presentsConfigurableActionShortcutsAsFormCards()
     QVERIFY(!allRowText.contains(QStringLiteral("Ctrl+wheel")));
     QVERIFY(!allRowText.contains(QStringLiteral("Drag")));
     QVERIFY(!allRowText.contains(QStringLiteral("Esc")));
+}
+
+void TestShortcutHelpDialog::shortcutListScrollsWithinConstrainedDialog()
+{
+    ShortcutHelpDialogFixture fixture = createFixture(QSize(900, 700));
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    openDialog(fixture);
+
+    QQuickItem *rootItem = qobject_cast<QQuickItem *>(fixture.root);
+    QQuickItem *dialogContent = dialogContentItem(fixture.dialog);
+    QQuickItem *scrollView
+        = findChildItem(fixture.view->contentItem(), QStringLiteral("shortcutHelpScrollView"));
+    QQuickItem *shortcutList
+        = findChildItem(fixture.view->contentItem(), QStringLiteral("shortcutHelpList"));
+    QVERIFY(rootItem != nullptr);
+    QVERIFY(dialogContent != nullptr);
+    QVERIFY(scrollView != nullptr);
+    QVERIFY(shortcutList != nullptr);
+    QTRY_VERIFY(scrollView->height() > 0);
+
+    constexpr qreal epsilon = 1.0;
+    const qreal dialogMargin = fixture.dialog->property("dialogMargin").toReal();
+    const qreal availableParentHeight = rootItem->height() - dialogMargin * 2;
+    QVERIFY(fixture.dialog->property("height").toReal() <= availableParentHeight + epsilon);
+
+    const QRectF contentBounds = sceneBounds(dialogContent);
+    const QRectF scrollBounds = sceneBounds(scrollView);
+    const QRectF dialogBounds = dialogSceneBounds(fixture.dialog);
+    QVERIFY(scrollBounds.top() >= contentBounds.top() - epsilon);
+    QVERIFY(scrollBounds.bottom() <= contentBounds.bottom() + epsilon);
+    QVERIFY(scrollBounds.bottom() <= dialogBounds.bottom() + epsilon);
+
+    QVERIFY(shortcutList->implicitHeight() > scrollView->height() + epsilon);
 }
 
 QTEST_MAIN(TestShortcutHelpDialog)
