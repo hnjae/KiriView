@@ -35,6 +35,7 @@ class TestImageActions : public QObject
 private Q_SLOTS:
     void initTestCase();
     void previousNextAvailabilityFollowsSessionActiveNavigation();
+    void readingControlPlacementSurvivesShortcutHelpGate();
     void firstLastDispatchUsesSessionActiveNavigation();
     void boundaryFeedbackUsesSessionBoundaryScope();
 };
@@ -142,6 +143,12 @@ Item {
     property bool nextProxyVisible: imageActions.nextImageAction.visible
     property bool nextProxyHasSourceAction: imageActions.nextImageAction.sourceAction !== null
     property bool nextProxyPlacementVisible: imageActions.nextImageAction.placementVisible
+    property bool twoPageProxyEnabled: imageActions.twoPageModeAction.enabled
+    property bool twoPageProxyVisible: imageActions.twoPageModeAction.visible
+    property bool twoPageProxyPlacementVisible: imageActions.twoPageModeAction.placementVisible
+    property bool rightToLeftProxyEnabled: imageActions.rightToLeftReadingAction.enabled
+    property bool rightToLeftProxyVisible: imageActions.rightToLeftReadingAction.visible
+    property bool rightToLeftProxyPlacementVisible: imageActions.rightToLeftReadingAction.placementVisible
     property bool nextPlacementEnabled: {
         application.actionStateRevision;
         return application.actionPlacementEnabled(KiriViewApplication.GoNextImageAction);
@@ -171,6 +178,10 @@ Item {
 
     function publishActionUiState() {
         application.updateActionUiGateSnapshot(false, false, false, false, false, true, true);
+    }
+
+    function publishShortcutHelpOpenActionUiState() {
+        application.updateActionUiGateSnapshot(true, false, false, false, false, true, true);
     }
 
     Component.onCompleted: {
@@ -305,6 +316,33 @@ void TestImageActions::previousNextAvailabilityFollowsSessionActiveNavigation()
     QTRY_VERIFY(archiveFixture.root->property("nextProxyEnabled").toBool());
     QTRY_VERIFY(archiveFixture.root->property("previousProxyVisible").toBool());
     QTRY_VERIFY(archiveFixture.root->property("nextProxyVisible").toBool());
+}
+
+void TestImageActions::readingControlPlacementSurvivesShortcutHelpGate()
+{
+    QString errorString;
+    QString archivePath;
+    auto archiveDirectory = createComicBookArchive(&archivePath, &errorString);
+    QVERIFY2(archiveDirectory != nullptr, qPrintable(errorString));
+    ImageActionsFixture archiveFixture = createFixture(QUrl::fromLocalFile(archivePath).toString());
+    archiveFixture.temporaryDirectory = std::move(archiveDirectory);
+    QVERIFY2(archiveFixture.isValid(), qPrintable(archiveFixture.errorString));
+    QTRY_VERIFY(archiveFixture.documentSession->activeNavigationKnown());
+    QVERIFY(invoke(*archiveFixture.root, "publishActionUiState"));
+    QTRY_VERIFY(archiveFixture.root->property("rightToLeftProxyEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("rightToLeftProxyPlacementVisible").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("rightToLeftProxyVisible").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("twoPageProxyEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("twoPageProxyPlacementVisible").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("twoPageProxyVisible").toBool());
+
+    QVERIFY(invoke(*archiveFixture.root, "publishShortcutHelpOpenActionUiState"));
+    QTRY_VERIFY(!archiveFixture.root->property("rightToLeftProxyEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("rightToLeftProxyPlacementVisible").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("rightToLeftProxyVisible").toBool());
+    QTRY_VERIFY(!archiveFixture.root->property("twoPageProxyEnabled").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("twoPageProxyPlacementVisible").toBool());
+    QTRY_VERIFY(archiveFixture.root->property("twoPageProxyVisible").toBool());
 }
 
 void TestImageActions::firstLastDispatchUsesSessionActiveNavigation()

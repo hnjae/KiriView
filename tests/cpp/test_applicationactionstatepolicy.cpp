@@ -42,6 +42,7 @@ class TestApplicationActionStatePolicy : public QObject
 private Q_SLOTS:
     void visiblePreviousNextPlacementsDisableAtBoundaries();
     void sharedActionEnabledStateUsesRuntimeGates();
+    void disabledStableActionsKeepPlacement();
     void checkedStateComesFromRuntimeInputs();
 };
 
@@ -81,6 +82,29 @@ void TestApplicationActionStatePolicy::sharedActionEnabledStateUsesRuntimeGates(
     QVERIFY(!stateFor(ActionId::FileOpenAction, input).actionEnabled);
     QVERIFY(!stateFor(ActionId::FileOpenWithAction, input).actionEnabled);
     QVERIFY(!stateFor(ActionId::GoPreviousImageAction, input).actionEnabled);
+}
+
+void TestApplicationActionStatePolicy::disabledStableActionsKeepPlacement()
+{
+    auto input = readyImageInput();
+    input.helpActionsEnabled = false;
+    input.readyActionsEnabled = false;
+    input.twoPageModeActionsEnabled = false;
+    input.rightToLeftReadingActionsEnabled = false;
+
+    const KiriView::ApplicationActions::ApplicationActionState rightToLeftState
+        = stateFor(ActionId::ViewToggleRightToLeftReadingAction, input);
+    const KiriView::ApplicationActions::ApplicationActionState twoPageState
+        = stateFor(ActionId::ViewToggleTwoPageModeAction, input);
+    const KiriView::ApplicationActions::ApplicationActionState openState
+        = stateFor(ActionId::FileOpenAction, input);
+
+    QVERIFY(!rightToLeftState.actionEnabled);
+    QVERIFY(rightToLeftState.placementEnabled);
+    QVERIFY(!twoPageState.actionEnabled);
+    QVERIFY(twoPageState.placementEnabled);
+    QVERIFY(!openState.actionEnabled);
+    QVERIFY(openState.placementEnabled);
 }
 
 void TestApplicationActionStatePolicy::checkedStateComesFromRuntimeInputs()
