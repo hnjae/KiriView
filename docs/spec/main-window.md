@@ -184,6 +184,8 @@ Ctrl+? and F1 open the modal Keyboard Shortcuts help dialog. The viewer-local Ke
 
 The Keyboard Shortcuts help is shown as a modal dialog over the main window.
 
+The Keyboard Shortcuts help content remains contained within the modal dialog. When shortcut rows exceed the available dialog content height, the shortcut list scrolls vertically and does not overflow the dialog window.
+
 It lists user-configurable KiriView actions and their current configured shortcut text.
 
 Program-wide and viewer-local configurable shortcuts are both listed. Viewer-local shortcuts are identified by scope text or grouping.
