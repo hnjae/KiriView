@@ -1,5 +1,7 @@
 # Libpng APNG Streaming Decoder
 
+Status: Superseded by `0005-rust-png-apng-streaming-decoder.md`.
+
 ## Context
 
 The original APNG shim parsed APNG chunks in Rust, decoded every frame, composed every full-canvas image, and returned all frames to C++ at load completion. That kept APNG policy covered by Rust unit tests, but it made memory use scale with canvas size times frame count before the first frame could be presented.
