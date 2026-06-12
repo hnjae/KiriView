@@ -3,6 +3,7 @@
 
 src/policy/applicationruntime.rs
 src/policy/activenavigation.rs
+src/policy/apnganimationreader.rs
 src/policy/archiveformat.rs
 src/policy/archivepath.rs
 src/policy/avifcompat.rs

@@ -669,6 +669,7 @@ dependencies = [
  "cxx-qt-build",
  "cxx-qt-lib",
  "nom-exif",
+ "png",
  "resvg",
  "tempfile",
  "xdg-thumbnail",

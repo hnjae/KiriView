@@ -24,6 +24,8 @@ mod imagebytecost;
 mod thumbnailcache;
 
 // Decoding and format policy.
+#[path = "policy/apnganimationreader.rs"]
+mod apnganimationreader;
 #[path = "policy/avifcompat.rs"]
 mod avifcompat;
 #[path = "policy/bmff.rs"]

@@ -1,72 +1,26 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-// Compatibility shim: KiriView decodes APNG through APNG-patched libpng because
-// QImageReader's normal PNG path does not reliably expose authored APNG
-// animations yet. The reader keeps libpng's sequential stream state and only
-// stores the current composed canvas instead of all frames.
-
 #include "apnganimationreader.h"
 
 #include "animationtiming.h"
 #include "apngframecomposer.h"
+#include "bridge/rustqtconversion.h"
+#include "kiriview/src/policy/apnganimationreader.cxx.h"
 #include "localization/imageerrortext.h"
 
-#include <png.h>
-
-#include <QtGlobal>
+#include <QSize>
 #include <algorithm>
-#include <array>
-#include <csetjmp>
 #include <cstdint>
-#include <cstring>
 #include <limits>
 #include <optional>
 #include <utility>
-#include <vector>
-
-#ifndef PNG_APNG_SUPPORTED
-#error "KiriView APNG playback requires libpng built with PNG_APNG_SUPPORTED"
-#endif
-
-#ifndef PNG_READ_APNG_SUPPORTED
-#error "KiriView APNG playback requires libpng built with PNG_READ_APNG_SUPPORTED"
-#endif
 
 namespace {
-constexpr std::array<unsigned char, 8> pngSignature { 0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a };
-struct PngErrorContext {
-    QString errorString;
-};
-
-struct ReadCursor {
-    const QByteArray *data = nullptr;
-    qsizetype offset = 0;
-};
-
-struct FrameControl {
-    KiriView::ApngFrameControl composition;
-    png_uint_16 delayNum = 1;
-    png_uint_16 delayDen = 10;
-};
-
-bool isPngData(const QByteArray &data)
-{
-    return data.size() >= static_cast<qsizetype>(pngSignature.size())
-        && std::memcmp(data.constData(), pngSignature.data(), pngSignature.size()) == 0;
-}
-
-QString pngDecodeErrorString()
-{
-    return KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodePngImage);
-}
-
 QString apngDecodeErrorString()
 {
     return KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeApngAnimation);
 }
-
-KiriView::ApngOpenResult notApngResult() { return {}; }
 
 KiriView::ApngOpenResult errorResult(QString errorString)
 {
@@ -76,56 +30,41 @@ KiriView::ApngOpenResult errorResult(QString errorString)
     return result;
 }
 
-[[noreturn]] void handlePngError(png_structp png, png_const_charp message)
-{
-    if (auto *context = static_cast<PngErrorContext *>(png_get_error_ptr(png))) {
-        context->errorString = QString::fromLatin1(message != nullptr ? message : "");
-    }
-    longjmp(png_jmpbuf(png), 1);
-}
-
-void handlePngWarning(png_structp, png_const_charp) { }
-
-void readPngBytes(png_structp png, png_bytep output, png_size_t byteCount)
-{
-    auto *cursor = static_cast<ReadCursor *>(png_get_io_ptr(png));
-    if (cursor == nullptr || cursor->data == nullptr || output == nullptr
-        || byteCount > static_cast<png_size_t>(std::numeric_limits<qsizetype>::max())) {
-        png_error(png, "invalid PNG read request");
-    }
-
-    const qsizetype requested = static_cast<qsizetype>(byteCount);
-    const qsizetype available = cursor->data->size() - cursor->offset;
-    if (cursor->offset < 0 || requested < 0 || available < requested) {
-        png_error(png, "unexpected end of PNG data");
-    }
-
-    std::memcpy(output, cursor->data->constData() + cursor->offset, byteCount);
-    cursor->offset += requested;
-}
-
-int frameDelay(const FrameControl &control)
-{
-    return KiriView::apngFrameDelay(control.delayNum, control.delayDen);
-}
-
-KiriView::ApngFrameDisposeOp disposeOpFromPng(png_byte disposeOp)
+KiriView::ApngFrameDisposeOp disposeOpFromRust(KiriView::RustApngDisposeOp disposeOp)
 {
     switch (disposeOp) {
-    case PNG_DISPOSE_OP_BACKGROUND:
+    case KiriView::RustApngDisposeOp::Background:
         return KiriView::ApngFrameDisposeOp::Background;
-    case PNG_DISPOSE_OP_PREVIOUS:
+    case KiriView::RustApngDisposeOp::Previous:
         return KiriView::ApngFrameDisposeOp::Previous;
-    case PNG_DISPOSE_OP_NONE:
+    case KiriView::RustApngDisposeOp::None:
     default:
         return KiriView::ApngFrameDisposeOp::None;
     }
 }
 
-KiriView::ApngFrameBlendOp blendOpFromPng(png_byte blendOp)
+KiriView::ApngFrameBlendOp blendOpFromRust(KiriView::RustApngBlendOp blendOp)
 {
-    return blendOp == PNG_BLEND_OP_OVER ? KiriView::ApngFrameBlendOp::Over
-                                        : KiriView::ApngFrameBlendOp::Source;
+    return blendOp == KiriView::RustApngBlendOp::Over ? KiriView::ApngFrameBlendOp::Over
+                                                      : KiriView::ApngFrameBlendOp::Source;
+}
+
+KiriView::ApngFrameControl frameControlFromRust(const KiriView::RustApngFrameResult &frame)
+{
+    return KiriView::ApngFrameControl {
+        frame.width,
+        frame.height,
+        frame.x_offset,
+        frame.y_offset,
+        disposeOpFromRust(frame.dispose_op),
+        blendOpFromRust(frame.blend_op),
+    };
+}
+
+bool canRepresentCanvas(quint32 width, quint32 height)
+{
+    return width > 0 && height > 0 && width <= static_cast<quint32>(std::numeric_limits<int>::max())
+        && height <= static_cast<quint32>(std::numeric_limits<int>::max());
 }
 }
 
@@ -133,83 +72,33 @@ namespace KiriView {
 class ApngAnimationReader::Private
 {
 public:
-    ~Private() { close(); }
-
     ApngOpenResult open(QByteArray inputData)
     {
         close();
-        if (!isPngData(inputData)) {
-            return notApngResult();
-        }
 
-        data = std::move(inputData);
-        errorContext.errorString.clear();
-        png = png_create_read_struct(
-            PNG_LIBPNG_VER_STRING, &errorContext, handlePngError, handlePngWarning);
-        if (png == nullptr) {
-            close();
-            return errorResult(pngDecodeErrorString());
-        }
-
-        info = png_create_info_struct(png);
-        if (info == nullptr) {
-            close();
-            return errorResult(pngDecodeErrorString());
-        }
-
-        if (setjmp(png_jmpbuf(png))) {
-            const QString errorString
-                = readingApng ? apngDecodeErrorString() : pngDecodeErrorString();
-            close();
-            return errorResult(errorString);
-        }
-
-        cursor = ReadCursor { &data, 0 };
-        png_set_read_fn(png, &cursor, readPngBytes);
-        png_read_info(png, info);
-        if (!png_get_valid(png, info, PNG_INFO_acTL)) {
-            close();
-            return notApngResult();
-        }
-
-        readingApng = true;
-#ifdef PNG_PROGRESSIVE_READ_SUPPORTED
-        png_set_progressive_frame_fn(png, nullptr, nullptr);
-#endif
-
-        png_uint_32 playCount = 0;
-        if (png_get_acTL(png, info, &totalFrameCount, &playCount) == 0 || totalFrameCount == 0) {
+        const RustApngOpenResult openResult
+            = rustOpenApngAnimationReader(*reader, Bridge::rustBytes(inputData));
+        switch (openResult.status) {
+        case RustApngOpenStatus::NotApng:
+            return {};
+        case RustApngOpenStatus::Error:
             close();
             return errorResult(apngDecodeErrorString());
+        case RustApngOpenStatus::Success:
+            break;
         }
 
-        firstFrameHidden = png_get_first_frame_is_hidden(png, info) != 0;
-        if (displayFrameCount() <= 0) {
-            close();
-            return errorResult(apngDecodeErrorString());
-        }
-
-        png_set_expand(png);
-        png_set_strip_16(png);
-        png_set_gray_to_rgb(png);
-        png_set_add_alpha(png, 0xff, PNG_FILLER_AFTER);
-        png_read_update_info(png, info);
-
-        if (!initializeImageBuffers()) {
+        if (!canRepresentCanvas(openResult.canvas_width, openResult.canvas_height)
+            || !composer.initialize(QSize(static_cast<int>(openResult.canvas_width),
+                                        static_cast<int>(openResult.canvas_height)),
+                static_cast<std::size_t>(openResult.canvas_width)
+                    * ApngRgbaBuffer::bytesPerPixel)) {
             close();
             return errorResult(apngDecodeErrorString());
         }
 
         QString frameError;
-        if (firstFrameHidden) {
-            readFrame(false, &frameError);
-            if (!frameError.isEmpty()) {
-                close();
-                return errorResult(frameError);
-            }
-        }
-
-        std::optional<AnimationFrame> firstFrame = readFrame(true, &frameError);
+        std::optional<AnimationFrame> firstFrame = readNextFrame(&frameError);
         if (!firstFrame.has_value()) {
             close();
             return errorResult(frameError.isEmpty() ? apngDecodeErrorString() : frameError);
@@ -219,135 +108,57 @@ public:
         result.status = ApngOpenStatus::Success;
         result.firstFrame = std::move(firstFrame->image);
         result.firstFrameDelay = firstFrame->delay;
-        result.loopCount = apngLoopCountForPlayCount(playCount);
-        result.frameCount = displayFrameCount();
+        result.loopCount = openResult.loop_count;
+        result.frameCount = openResult.frame_count;
         return result;
     }
 
     std::optional<AnimationFrame> readNextFrame(QString *errorString)
     {
         clearError(errorString);
-        if (png == nullptr || info == nullptr || rawFramesRead >= totalFrameCount) {
+
+        const RustApngFrameResult frame = rustReadApngAnimationFrame(*reader);
+        switch (frame.status) {
+        case RustApngReadStatus::End:
             return std::nullopt;
+        case RustApngReadStatus::Error:
+            setError(errorString, apngDecodeErrorString());
+            close();
+            return std::nullopt;
+        case RustApngReadStatus::Frame:
+            break;
         }
 
-        if (setjmp(png_jmpbuf(png))) {
+        const ApngFrameControl control = frameControlFromRust(frame);
+        if (!composer.setFrameBytes(
+                control, frame.pixels.data(), frame.pixels.size(), frame.row_bytes)) {
             setError(errorString, apngDecodeErrorString());
             close();
             return std::nullopt;
         }
 
-        return readFrame(true, errorString);
+        std::optional<QImage> image = composer.composeFrame(control);
+        if (!image.has_value()) {
+            setError(errorString, apngDecodeErrorString());
+            close();
+            return std::nullopt;
+        }
+
+        return AnimationFrame {
+            std::move(*image),
+            apngFrameDelay(frame.delay_num, frame.delay_den),
+        };
     }
 
-    bool hasMoreFrames() const { return png != nullptr && rawFramesRead < totalFrameCount; }
+    bool hasMoreFrames() const { return rustApngAnimationReaderHasMoreFrames(*reader); }
 
     void close()
     {
-        if (png != nullptr || info != nullptr) {
-            png_destroy_read_struct(&png, &info, nullptr);
-        }
-
-        data.clear();
-        cursor = {};
-        errorContext.errorString.clear();
-        readingApng = false;
-        firstFrameHidden = false;
-        canvasWidth = 0;
-        canvasHeight = 0;
-        totalFrameCount = 0;
-        rawFramesRead = 0;
+        reader = rustNewApngAnimationReader();
         composer.clear();
     }
 
 private:
-    int displayFrameCount() const
-    {
-        if (firstFrameHidden && totalFrameCount > 0) {
-            return static_cast<int>(std::min<png_uint_32>(
-                totalFrameCount - 1, static_cast<png_uint_32>(std::numeric_limits<int>::max())));
-        }
-        return static_cast<int>(std::min<png_uint_32>(
-            totalFrameCount, static_cast<png_uint_32>(std::numeric_limits<int>::max())));
-    }
-
-    bool initializeImageBuffers()
-    {
-        canvasWidth = png_get_image_width(png, info);
-        canvasHeight = png_get_image_height(png, info);
-        if (canvasWidth == 0 || canvasHeight == 0
-            || canvasWidth > static_cast<png_uint_32>(std::numeric_limits<int>::max())
-            || canvasHeight > static_cast<png_uint_32>(std::numeric_limits<int>::max())) {
-            return false;
-        }
-
-        if (png_get_bit_depth(png, info) != 8 || png_get_channels(png, info) != 4) {
-            return false;
-        }
-
-        return composer.initialize(
-            QSize(static_cast<int>(canvasWidth), static_cast<int>(canvasHeight)),
-            png_get_rowbytes(png, info));
-    }
-
-    std::optional<AnimationFrame> readFrame(bool displayFrame, QString *errorString)
-    {
-        if (rawFramesRead >= totalFrameCount) {
-            return std::nullopt;
-        }
-
-        std::optional<FrameControl> control = nextFrameControl(displayFrame);
-        if (!control.has_value()) {
-            setError(errorString, apngDecodeErrorString());
-            return std::nullopt;
-        }
-
-        png_read_image(png, composer.frameRows());
-        ++rawFramesRead;
-
-        if (!displayFrame) {
-            return std::nullopt;
-        }
-
-        std::optional<QImage> composedFrame = composer.composeFrame(control->composition);
-        if (!composedFrame.has_value()) {
-            setError(errorString, apngDecodeErrorString());
-            return std::nullopt;
-        }
-
-        return AnimationFrame { std::move(*composedFrame), frameDelay(*control) };
-    }
-
-    std::optional<FrameControl> nextFrameControl(bool displayFrame)
-    {
-        png_read_frame_head(png, info);
-
-        FrameControl control;
-        control.composition.width = canvasWidth;
-        control.composition.height = canvasHeight;
-
-        if (png_get_valid(png, info, PNG_INFO_fcTL)) {
-            png_byte disposeOp = PNG_DISPOSE_OP_NONE;
-            png_byte blendOp = PNG_BLEND_OP_SOURCE;
-            if (png_get_next_frame_fcTL(png, info, &control.composition.width,
-                    &control.composition.height, &control.composition.xOffset,
-                    &control.composition.yOffset, &control.delayNum, &control.delayDen, &disposeOp,
-                    &blendOp)
-                == 0) {
-                return std::nullopt;
-            }
-            control.composition.disposeOp = disposeOpFromPng(disposeOp);
-            control.composition.blendOp = blendOpFromPng(blendOp);
-        } else if (displayFrame) {
-            return std::nullopt;
-        }
-
-        if (!composer.canComposeFrame(control.composition)) {
-            return std::nullopt;
-        }
-        return control;
-    }
-
     void clearError(QString *errorString)
     {
         if (errorString != nullptr) {
@@ -362,17 +173,7 @@ private:
         }
     }
 
-    QByteArray data;
-    ReadCursor cursor;
-    PngErrorContext errorContext;
-    png_structp png = nullptr;
-    png_infop info = nullptr;
-    bool readingApng = false;
-    bool firstFrameHidden = false;
-    png_uint_32 canvasWidth = 0;
-    png_uint_32 canvasHeight = 0;
-    png_uint_32 totalFrameCount = 0;
-    png_uint_32 rawFramesRead = 0;
+    rust::Box<RustApngAnimationReader> reader = rustNewApngAnimationReader();
     ApngFrameComposer composer;
 };
 

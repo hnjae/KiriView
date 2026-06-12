@@ -107,6 +107,26 @@ bool ApngFrameComposer::canComposeFrame(const ApngFrameControl &control) const
 
 unsigned char **ApngFrameComposer::frameRows() { return m_frame.rows(); }
 
+bool ApngFrameComposer::setFrameBytes(const ApngFrameControl &control, const unsigned char *bytes,
+    std::size_t byteCount, std::size_t rowBytes)
+{
+    if (bytes == nullptr || !canComposeFrame(control)) {
+        return false;
+    }
+
+    const std::optional<std::size_t> expectedRowBytes = frameRowBytes(control.width);
+    if (!expectedRowBytes.has_value() || rowBytes != *expectedRowBytes
+        || (control.height != 0 && byteCount / static_cast<std::size_t>(control.height) != rowBytes)
+        || byteCount != rowBytes * static_cast<std::size_t>(control.height)) {
+        return false;
+    }
+
+    for (quint32 y = 0; y < control.height; ++y) {
+        std::memcpy(m_frame.row(y), bytes + static_cast<std::size_t>(y) * rowBytes, rowBytes);
+    }
+    return true;
+}
+
 std::optional<QImage> ApngFrameComposer::composeFrame(ApngFrameControl control)
 {
     if (!canComposeFrame(control)) {

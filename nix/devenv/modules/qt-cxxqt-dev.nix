@@ -81,7 +81,6 @@ in
     libde265
     libjxl.dev
     libjxl.out
-    libpng
     libraw.dev
     libraw.lib
     libwebp

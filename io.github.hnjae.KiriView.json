@@ -51,28 +51,6 @@
   ],
   "modules": [
     {
-      "name": "libpng-apng",
-      "buildsystem": "simple",
-      "build-commands": [
-        "gzip -dc libpng-1.6.58-apng.patch.gz | patch --batch -p1",
-        "./configure --prefix=/app --disable-static",
-        "make -j ${FLATPAK_BUILDER_N_JOBS:-$(nproc)}",
-        "make install"
-      ],
-      "sources": [
-        {
-          "type": "archive",
-          "url": "https://download.sourceforge.net/libpng/libpng-1.6.58.tar.xz",
-          "sha256": "28eb403f51f0f7405249132cecfe82ea5c0ef97f1b32c5a65828814ae0d34775"
-        },
-        {
-          "type": "file",
-          "url": "https://download.sourceforge.net/project/libpng-apng/libpng16/1.6.58/libpng-1.6.58-apng.patch.gz",
-          "sha256": "eee7dea22ed502868017971c86c63c4ed1e6085de0baebfdcc3d3322f00f3eb0"
-        }
-      ]
-    },
-    {
       "name": "vvdec",
       "buildsystem": "cmake-ninja",
       "config-opts": [

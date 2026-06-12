@@ -75,7 +75,6 @@ let
   kioDev = pkgs.kdePackages.kio.dev or pkgs.kdePackages.kio;
   kserviceDev = pkgs.kdePackages.kservice.dev or pkgs.kdePackages.kservice;
   qtmultimediaDev = pkgs.kdePackages.qtmultimedia.dev or pkgs.kdePackages.qtmultimedia;
-  libpngDev = pkgs.libpng.dev or pkgs.libpng;
   appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
   qtQmlRoot = "${pkgs.kdePackages.qtdeclarative}/lib/qt-6/qml";
   qtmultimediaQmlRoot = "${pkgs.kdePackages.qtmultimedia}/lib/qt-6/qml";
@@ -169,7 +168,6 @@ let
     "${kioDev}/include/KF6/KIOWidgets"
     "${kjobwidgetsDev}/include/KF6/KJobWidgets"
     "${kserviceDev}/include/KF6/KService"
-    "${libpngDev}/include/libpng16"
     "${pkgs.kdePackages.qtmultimedia}/include"
     "${pkgs.kdePackages.qtmultimedia}/include/QtMultimedia"
     "${qtmultimediaDev}/mkspecs/modules"
