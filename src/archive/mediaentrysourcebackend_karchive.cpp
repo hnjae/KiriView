@@ -12,6 +12,7 @@
 #include <KArchiveFile>
 #include <KTar>
 #include <KZip>
+#include <KZipFileEntry>
 #include <QIODevice>
 #include <cstddef>
 #include <memory>
@@ -182,16 +183,15 @@ KiriView::MediaEntrySourceImageDataResult readKArchiveFileData(const KArchiveFil
 std::optional<KiriView::MediaEntrySourceThumbnailMetadata> thumbnailMetadataForKArchiveFile(
     const KArchiveFile &file)
 {
-    const std::optional<KArchiveFileContentChecksum> checksum = file.contentChecksum();
-    if (!checksum.has_value() || checksum->algorithm != KArchiveFileContentChecksumAlgorithm::Crc32
-        || file.size() < 0) {
+    const auto *zipFile = dynamic_cast<const KZipFileEntry *>(&file);
+    if (zipFile == nullptr || file.size() < 0) {
         return std::nullopt;
     }
 
     return KiriView::MediaEntrySourceThumbnailMetadata {
         KiriView::MediaEntryContentChecksum {
             KiriView::MediaEntryContentChecksumAlgorithm::Crc32,
-            checksum->value,
+            zipFile->crc32(),
         },
         file.size(),
     };

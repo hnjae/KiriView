@@ -9,7 +9,7 @@
 namespace {
 bool rootSchemeSupportsThumbnailContentIdentity(const QString &rootScheme)
 {
-    return rootScheme == QStringLiteral("zip") || rootScheme == QStringLiteral("sevenz");
+    return rootScheme == QStringLiteral("zip");
 }
 }
 
@@ -17,7 +17,7 @@ namespace KiriView {
 bool openedCollectionEntrySupportsThumbnailContentIdentity(
     const OpenedCollectionScopeLocation &openedCollectionScope, ImageDocumentPageKind pageKind)
 {
-    return pageKind == ImageDocumentPageKind::Image && openedCollectionScope.isComicBook()
+    return pageKind == ImageDocumentPageKind::Image
         && rootSchemeSupportsThumbnailContentIdentity(openedCollectionScope.rootUrl().scheme());
 }
 

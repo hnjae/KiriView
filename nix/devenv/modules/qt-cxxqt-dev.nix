@@ -8,10 +8,6 @@
   ...
 }:
 let
-  karchiveContentChecksumPatch = ../../patches/karchive-content-checksum.patch;
-  patchedKArchive = pkgs.kdePackages.karchive.overrideAttrs (old: {
-    patches = (old.patches or [ ]) ++ [ karchiveContentChecksumPatch ];
-  });
   kiriviewLibHeif = pkgs.libheif.overrideAttrs (old: {
     cmakeFlags = (old.cmakeFlags or [ ]) ++ [
       "-DWITH_JPEG_DECODER=ON"
@@ -22,12 +18,12 @@ let
   });
   qtCxxqt = import ../internal/qt-cxxqt.nix {
     inherit config lib pkgs;
-    karchivePackage = patchedKArchive;
+    karchivePackage = pkgs.kdePackages.karchive;
   };
 in
 {
   _module.args = {
-    inherit patchedKArchive qtCxxqt;
+    inherit qtCxxqt;
   };
 
   # Cargo debug builds compile the C++ bridge sources without optimization,
@@ -48,7 +44,7 @@ in
 
   packages = [
     qtCxxqt.qmake
-    patchedKArchive
+    pkgs.kdePackages.karchive
     kiriviewLibHeif.bin
     kiriviewLibHeif.dev
     kiriviewLibHeif.lib
