@@ -42,6 +42,20 @@ The toolbar page navigation arrow buttons, page-number entry, shared Previous, N
 
 Configurable application actions and their shortcuts use one shared runtime availability decision. If an action is disabled, activating its menu item, toolbar placement, context-menu placement, or shortcut has no effect.
 
+Configurable shortcuts have an action-owned activation scope. `ProgramWide` shortcuts are active throughout the KiriView window subject to the action's normal enabled state. `ViewerLocal` shortcuts are active only in viewer context after the viewer shortcut gates for the action are enabled.
+
+Users may edit a shortcut slot's key sequence but may not change that slot's activation scope.
+
+Program-wide configurable shortcuts are stored in the KDE/Kirigami action collection and appear as ordinary action shortcuts in menus, Keyboard Shortcuts configuration, and Keyboard Shortcuts help.
+
+Viewer-local configurable shortcuts are stored by KiriView, shown in Keyboard Shortcuts help and KiriView shortcut configuration as viewer-local shortcuts, and are routed only by KiriView's viewer shortcut handler. They never become ordinary global `QAction` shortcuts.
+
+Viewer-local shortcuts are inactive while text input, input-method-sensitive UI, shortcut help, modal UI, inactive windows, or other viewer-suppressed states are active.
+
+Unmodified ASCII printable key sequences are allowed for viewer-local configurable shortcuts but disallowed for program-wide configurable shortcuts.
+
+Viewer commands use viewer-local shortcuts by default unless the action explicitly declares a program-wide shortcut slot. KiriView does not derive runtime-only viewer aliases by dropping Ctrl from program-wide shortcuts and does not keep program-wide Ctrl fallbacks for viewer-local commands.
+
 Toolbar controls, menus, context menus, shortcut help, and shortcut handling use the same current action availability decision. During media replacement, mode switches, deletion, modal dialogs, or focus changes, KiriView must not display or trigger action state derived from an older document, older viewport, or older UI gate observation after a newer state has been accepted.
 
 Open, Open With, Previous Archive, and Next Archive are provided by the application menu and shortcuts rather than fixed toolbar buttons. Previous Archive and Next Archive use visually distinct previous/next-use icons so they are not confused with page Previous and Next navigation.
@@ -72,13 +86,15 @@ The toolbar application menu is a single popup menu surface. Activating the tool
 
 Activating the toolbar application menu button while that menu is open closes it. Pressing F10 opens the toolbar application menu and leaves it open when it is already open.
 
-The menubar and toolbar application menu display one representative configured shortcut for actions with user-configurable shortcuts through the menu action's shortcut column.
+The menubar and toolbar application menu display one representative configured program-wide shortcut for actions with user-configurable program-wide shortcuts through the menu action's shortcut column.
 
 The representative shortcut is the first of the action's current configured shortcuts that is safe to display in menus. Delete shortcuts, arrow and navigation-key shortcuts, and unmodified printable shortcuts are not menu-display safe because they can affect focused text input.
 
-Actions without a menu-display-safe representative shortcut do not show configured shortcut text in menus.
+Actions without a menu-display-safe program-wide representative shortcut do not show configured shortcut text in menus.
 
 Fixed shortcuts that users cannot configure may be shown only as display-only menu or tooltip text for the control they activate. They are not user-configurable action shortcuts.
+
+Fixed shortcuts include arrow pan/navigation, Shift+arrow two-page stepping, video Alt+Arrow seeking, F10 for the toolbar application menu, and Ctrl+M for menubar presentation.
 
 In the menubar, representative shortcut text is visually deemphasized from the menu item label when the item is not pressed. In the toolbar application menu, representative shortcut text is displayed separately on the trailing side of the menu item.
 
@@ -148,7 +164,7 @@ When no image, video, archive page, or directory page is displayed, the window t
 
 ## Fullscreen
 
-Ctrl+F and F11 toggle the main window between normal windowed display and system fullscreen.
+Ctrl+F and F11 toggle the main window between normal windowed display and system fullscreen. The viewer-local Fullscreen shortcut is F.
 
 Fullscreen hides the system titlebar and window decorations and shows the app toolbar as a top-attached overlay toolbar above the image viewing area without reserving layout space.
 
@@ -164,11 +180,13 @@ Leaving fullscreen restores the window's previous windowed, maximized, or minimi
 
 ## Shortcut Help
 
-Ctrl+? and F1 open the modal Keyboard Shortcuts help dialog.
+Ctrl+? and F1 open the modal Keyboard Shortcuts help dialog. The viewer-local Keyboard Shortcuts help shortcut is ?.
 
 The Keyboard Shortcuts help is shown as a modal dialog over the main window.
 
 It lists user-configurable KiriView actions and their current configured shortcut text.
+
+Program-wide and viewer-local configurable shortcuts are both listed. Viewer-local shortcuts are identified by scope text or grouping.
 
 Shortcut help is presented as a Kirigami Addons FormCard dialog grouped by app-menu category headers.
 
@@ -252,7 +270,7 @@ When both panels are visible, the Info Panel occupies the right side for the ful
 
 The panels are resizable with splitters. The Thumbnail Panel minimum height is tall enough to show the media-type icon, one-line candidate name, and dedicated horizontal scrollbar lane without clipping. Its default resizable height range is compact, roughly 6 to 7.5 Kirigami grid units.
 
-Ctrl+I toggles the Info Panel, and Ctrl+T toggles the Thumbnail Panel.
+I toggles the Info Panel in viewer context, and T toggles the Thumbnail Panel in viewer context.
 
 The panel toggle shortcuts are user-configurable application action shortcuts, not fixed shortcuts.
 
