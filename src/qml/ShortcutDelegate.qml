@@ -14,12 +14,13 @@ FormCard.AbstractFormDelegate {
     id: root
 
     required property string actionText
+    required property string scopeText
     required property string shortcutText
     required property var shortcutKeyTexts
     readonly property bool narrow: width < Kirigami.Units.gridUnit * 22
 
     objectName: "shortcutDelegate"
-    Accessible.name: root.shortcutText.length > 0 ? KI18n.i18nc("@info:accessible", "%1, shortcut %2", root.actionText, root.shortcutText) : root.actionText
+    Accessible.name: root.shortcutText.length > 0 ? KI18n.i18nc("@info:accessible", "%1, %2 shortcut %3", root.actionText, root.scopeText, root.shortcutText) : KI18n.i18nc("@info:accessible", "%1, %2", root.actionText, root.scopeText)
     text: root.actionText
 
     contentItem: GridLayout {
@@ -27,21 +28,40 @@ FormCard.AbstractFormDelegate {
         columns: root.narrow ? 1 : 2
         rowSpacing: Kirigami.Units.smallSpacing
 
-        Controls.Label {
+        ColumnLayout {
             id: actionLabel
+
+            property string text: root.actionText
 
             objectName: "shortcutActionLabel"
 
-            Accessible.ignored: true
             Layout.alignment: Qt.AlignVCenter
             Layout.fillWidth: true
-            color: Kirigami.Theme.textColor
-            elide: Text.ElideRight
-            maximumLineCount: root.narrow ? 2 : 1
-            text: root.actionText
-            textFormat: Text.PlainText
-            verticalAlignment: Text.AlignVCenter
-            wrapMode: Text.Wrap
+            spacing: 0
+
+            Controls.Label {
+                Accessible.ignored: true
+                Layout.fillWidth: true
+                color: Kirigami.Theme.textColor
+                elide: Text.ElideRight
+                maximumLineCount: root.narrow ? 2 : 1
+                text: root.actionText
+                textFormat: Text.PlainText
+                verticalAlignment: Text.AlignVCenter
+                wrapMode: Text.Wrap
+            }
+
+            Controls.Label {
+                objectName: "shortcutScopeLabel"
+
+                Accessible.ignored: true
+                Layout.fillWidth: true
+                color: Kirigami.Theme.disabledTextColor
+                elide: Text.ElideRight
+                font: Kirigami.Theme.smallFont
+                text: root.scopeText
+                textFormat: Text.PlainText
+            }
         }
 
         Flow {

@@ -100,6 +100,38 @@ ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForId(
     return m_shortcutRuntime->shortcutProjectionForId(actionId);
 }
 
+QList<QKeySequence> ApplicationActionRuntime::programWideShortcuts(const QString &actionName) const
+{
+    return m_shortcutRuntime->programWideShortcuts(actionName);
+}
+
+QList<QKeySequence> ApplicationActionRuntime::programWideShortcutsForId(ActionId actionId) const
+{
+    return m_shortcutRuntime->programWideShortcutsForId(actionId);
+}
+
+QList<QKeySequence> ApplicationActionRuntime::viewerLocalShortcuts(const QString &actionName) const
+{
+    return m_shortcutRuntime->viewerLocalShortcuts(actionName);
+}
+
+QList<QKeySequence> ApplicationActionRuntime::viewerLocalShortcutsForId(ActionId actionId) const
+{
+    return m_shortcutRuntime->viewerLocalShortcutsForId(actionId);
+}
+
+bool ApplicationActionRuntime::setViewerLocalShortcuts(
+    const QString &actionName, const QList<QKeySequence> &shortcuts)
+{
+    return m_shortcutRuntime->setViewerLocalShortcuts(actionName, shortcuts);
+}
+
+bool ApplicationActionRuntime::setViewerLocalShortcutsForId(
+    ActionId actionId, const QList<QKeySequence> &shortcuts)
+{
+    return m_shortcutRuntime->setViewerLocalShortcutsForId(actionId, shortcuts);
+}
+
 int ApplicationActionRuntime::actionStateRevision() const { return m_actionStateRevision; }
 
 bool ApplicationActionRuntime::actionPlacementEnabled(ActionId actionId) const
@@ -160,7 +192,7 @@ void ApplicationActionRuntime::setupActions()
     const auto addAction = [this](const Actions::ActionDefinition &definition) {
         const QString name = QString::fromLatin1(definition.name);
         const QList<QKeySequence> shortcuts
-            = Actions::defaultShortcuts(definition.defaultShortcuts);
+            = Actions::defaultShortcuts(definition.defaultProgramWideShortcuts);
         QAction *registeredAction = nullptr;
 
         switch (definition.kind) {

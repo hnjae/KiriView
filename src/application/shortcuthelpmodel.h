@@ -21,6 +21,7 @@ struct ShortcutHelpRow {
     QString shortcutText;
     QString categoryKey;
     QString categoryText;
+    QString scopeText;
     QStringList shortcutKeyTexts;
     bool categoryFirst = false;
     bool categoryLast = false;
@@ -41,6 +42,7 @@ public:
         CategoryFirstRole,
         CategoryLastRole,
         ShortcutKeyTextsRole,
+        ScopeTextRole,
     };
 
     explicit ShortcutHelpModel(ShortcutHelpRowsProvider rowsProvider, QObject *parent = nullptr);

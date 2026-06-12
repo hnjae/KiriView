@@ -798,9 +798,17 @@ void TestMainWindowToolBar::panelShortcutsToggleResizablePanels()
     QVERIFY(!thumbnailPanel->isVisible());
 
     QTest::keyClick(fixture.window, Qt::Key_I, Qt::ControlModifier);
-    QTRY_VERIFY(infoPanel->isVisible());
+    QCoreApplication::processEvents();
+    QVERIFY(!infoPanel->isVisible());
 
     QTest::keyClick(fixture.window, Qt::Key_T, Qt::ControlModifier);
+    QCoreApplication::processEvents();
+    QVERIFY(!thumbnailPanel->isVisible());
+
+    QTest::keyClick(fixture.window, Qt::Key_I);
+    QTRY_VERIFY(infoPanel->isVisible());
+
+    QTest::keyClick(fixture.window, Qt::Key_T);
     QTRY_VERIFY(thumbnailPanel->isVisible());
 
     QTest::keyClick(fixture.window, Qt::Key_I);

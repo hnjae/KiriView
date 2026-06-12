@@ -112,6 +112,7 @@ FormCard.FormCardDialog {
                     required property bool categoryFirst
                     required property bool categoryLast
                     required property string categoryText
+                    required property string scopeText
                     required property var shortcutKeyTexts
                     required property string shortcutText
 
@@ -130,6 +131,7 @@ FormCard.FormCardDialog {
                     ShortcutDelegate {
                         Layout.fillWidth: true
                         actionText: shortcutRow.actionText
+                        scopeText: shortcutRow.scopeText
                         shortcutKeyTexts: shortcutRow.shortcutKeyTexts
                         shortcutText: shortcutRow.shortcutText
                     }

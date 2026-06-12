@@ -16,7 +16,7 @@ class ShortcutRouteModel : public QAbstractListModel
 public:
     enum Role {
         ActionIdsRole = Qt::UserRole + 1,
-        ShortcutFilterRole,
+        ActivationScopeRole,
         ShortcutScopeRole,
     };
 

@@ -161,39 +161,36 @@ QList<QKeySequence> KiriViewApplication::shortcutsForId(ActionId actionId) const
     return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).shortcuts;
 }
 
-QList<QKeySequence> KiriViewApplication::shortcutsWithCommandModifier(
-    const QString &actionName) const
+QList<QKeySequence> KiriViewApplication::programWideShortcuts(const QString &actionName) const
 {
-    return m_actionRuntime->shortcutProjection(actionName).shortcutsWithCommandModifier;
+    return m_actionRuntime->programWideShortcuts(actionName);
 }
 
-QList<QKeySequence> KiriViewApplication::shortcutsWithCommandModifierForId(ActionId actionId) const
+QList<QKeySequence> KiriViewApplication::programWideShortcutsForId(ActionId actionId) const
 {
-    return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId))
-        .shortcutsWithCommandModifier;
+    return m_actionRuntime->programWideShortcutsForId(domainActionId(actionId));
 }
 
-QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifier(
-    const QString &actionName) const
+QList<QKeySequence> KiriViewApplication::viewerLocalShortcuts(const QString &actionName) const
 {
-    return m_actionRuntime->shortcutProjection(actionName).shortcutsWithoutCommandModifier;
+    return m_actionRuntime->viewerLocalShortcuts(actionName);
 }
 
-QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifierForId(
-    ActionId actionId) const
+QList<QKeySequence> KiriViewApplication::viewerLocalShortcutsForId(ActionId actionId) const
 {
-    return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId))
-        .shortcutsWithoutCommandModifier;
+    return m_actionRuntime->viewerLocalShortcutsForId(domainActionId(actionId));
 }
 
-QList<QKeySequence> KiriViewApplication::shortcutAliases(const QString &actionName) const
+bool KiriViewApplication::setViewerLocalShortcuts(
+    const QString &actionName, const QList<QKeySequence> &shortcuts)
 {
-    return m_actionRuntime->shortcutProjection(actionName).shortcutAliases;
+    return m_actionRuntime->setViewerLocalShortcuts(actionName, shortcuts);
 }
 
-QList<QKeySequence> KiriViewApplication::shortcutAliasesForId(ActionId actionId) const
+bool KiriViewApplication::setViewerLocalShortcutsForId(
+    ActionId actionId, const QList<QKeySequence> &shortcuts)
 {
-    return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).shortcutAliases;
+    return m_actionRuntime->setViewerLocalShortcutsForId(domainActionId(actionId), shortcuts);
 }
 
 QString KiriViewApplication::shortcutText(const QString &actionName) const

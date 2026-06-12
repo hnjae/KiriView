@@ -34,11 +34,6 @@ enum class ShortcutConfigurability {
     NonConfigurable,
 };
 
-enum class ShortcutAliasPolicy {
-    DeriveViewerAlias,
-    NoAlias,
-};
-
 enum class ShortcutHelpCategory {
     File,
     Navigation,
@@ -70,11 +65,11 @@ struct ActionDefinition {
     KStandardActions::StandardAction actionType;
     KLazyLocalizedString text;
     const char *iconName;
-    DefaultShortcutSpec defaultShortcuts;
+    DefaultShortcutSpec defaultProgramWideShortcuts;
+    DefaultShortcutSpec defaultViewerLocalShortcuts;
     DefaultShortcutRouteSpec shortcutRoutes;
     ShortcutHelpCategory shortcutHelpCategory = ShortcutHelpCategory::Help;
     ShortcutConfigurability shortcutConfigurability = ShortcutConfigurability::Configurable;
-    ShortcutAliasPolicy shortcutAliasPolicy = ShortcutAliasPolicy::DeriveViewerAlias;
 };
 
 const std::array<ActionDefinition, actionDefinitionCount> &definitions();

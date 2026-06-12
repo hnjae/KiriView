@@ -5,7 +5,7 @@
 
 namespace {
 namespace Actions = KiriView::ApplicationActions;
-using Filter = KiriView::ApplicationActions::ApplicationShortcutFilter;
+using ActivationScope = KiriView::ApplicationActions::ApplicationShortcutActivationScope;
 using Category = KiriView::ApplicationActions::ShortcutHelpCategory;
 using Scope = KiriView::ApplicationActions::ImageShortcutScope;
 
@@ -58,9 +58,9 @@ constexpr Actions::DefaultShortcutSpec portableShortcutSpec(Sequences... sequenc
     };
 }
 
-constexpr Actions::ShortcutRouteSpec route(Filter filter, Scope scope)
+constexpr Actions::ShortcutRouteSpec route(ActivationScope activationScope, Scope scope)
 {
-    return Actions::ShortcutRouteSpec { filter, scope };
+    return Actions::ShortcutRouteSpec { activationScope, scope };
 }
 
 template <typename... Routes>
@@ -71,12 +71,13 @@ constexpr Actions::DefaultShortcutRouteSpec shortcutRouteSpecs(Routes... routes)
 }
 
 constexpr Actions::ActionDefinition existingAction(Actions::ActionId actionId, const char *name,
-    Category shortcutHelpCategory, Actions::DefaultShortcutSpec defaultShortcuts,
+    Category shortcutHelpCategory, Actions::DefaultShortcutSpec programWideShortcuts,
+    Actions::DefaultShortcutSpec viewerLocalShortcuts,
     Actions::DefaultShortcutRouteSpec shortcutRoutes)
 {
     return Actions::ActionDefinition { actionId, name, Actions::RegistrationKind::Existing,
-        KStandardActions::Open, {}, nullptr, defaultShortcuts, shortcutRoutes,
-        shortcutHelpCategory };
+        KStandardActions::Open, {}, nullptr, programWideShortcuts, viewerLocalShortcuts,
+        shortcutRoutes, shortcutHelpCategory };
 }
 
 constexpr Actions::ActionDefinition inheritedAction(Actions::ActionId actionId, const char *name,
@@ -84,26 +85,30 @@ constexpr Actions::ActionDefinition inheritedAction(Actions::ActionId actionId, 
     Actions::DefaultShortcutRouteSpec shortcutRoutes = noShortcutRoutes())
 {
     return Actions::ActionDefinition { actionId, name, Actions::RegistrationKind::Inherited,
-        KStandardActions::Open, {}, nullptr, noDefaultShortcuts(), shortcutRoutes,
-        shortcutHelpCategory };
+        KStandardActions::Open, {}, nullptr, noDefaultShortcuts(), noDefaultShortcuts(),
+        shortcutRoutes, shortcutHelpCategory };
 }
 
 constexpr Actions::ActionDefinition registeredAction(Actions::ActionId actionId, const char *name,
     Category shortcutHelpCategory, KLazyLocalizedString text, const char *iconName,
-    Actions::DefaultShortcutSpec defaultShortcuts, Actions::DefaultShortcutRouteSpec shortcutRoutes)
+    Actions::DefaultShortcutSpec programWideShortcuts,
+    Actions::DefaultShortcutSpec viewerLocalShortcuts,
+    Actions::DefaultShortcutRouteSpec shortcutRoutes)
 {
     return Actions::ActionDefinition { actionId, name, Actions::RegistrationKind::Registered,
-        KStandardActions::Open, text, iconName, defaultShortcuts, shortcutRoutes,
-        shortcutHelpCategory };
+        KStandardActions::Open, text, iconName, programWideShortcuts, viewerLocalShortcuts,
+        shortcutRoutes, shortcutHelpCategory };
 }
 
 constexpr Actions::ActionDefinition standardAction(Actions::ActionId actionId, const char *name,
     Category shortcutHelpCategory, KStandardActions::StandardAction actionType,
-    KLazyLocalizedString text, Actions::DefaultShortcutSpec defaultShortcuts,
+    KLazyLocalizedString text, Actions::DefaultShortcutSpec programWideShortcuts,
+    Actions::DefaultShortcutSpec viewerLocalShortcuts,
     Actions::DefaultShortcutRouteSpec shortcutRoutes)
 {
     return Actions::ActionDefinition { actionId, name, Actions::RegistrationKind::Standard,
-        actionType, text, nullptr, defaultShortcuts, shortcutRoutes, shortcutHelpCategory };
+        actionType, text, nullptr, programWideShortcuts, viewerLocalShortcuts, shortcutRoutes,
+        shortcutHelpCategory };
 }
 
 constexpr Actions::ActionDefinition showMenubarAction(Actions::ActionId actionId, const char *name,
@@ -112,8 +117,8 @@ constexpr Actions::ActionDefinition showMenubarAction(Actions::ActionId actionId
     Actions::DefaultShortcutRouteSpec shortcutRoutes)
 {
     return Actions::ActionDefinition { actionId, name, Actions::RegistrationKind::ShowMenubar,
-        actionType, text, nullptr, defaultShortcuts, shortcutRoutes, shortcutHelpCategory,
-        Actions::ShortcutConfigurability::NonConfigurable, Actions::ShortcutAliasPolicy::NoAlias };
+        actionType, text, nullptr, defaultShortcuts, noDefaultShortcuts(), shortcutRoutes,
+        shortcutHelpCategory, Actions::ShortcutConfigurability::NonConfigurable };
 }
 
 constexpr Actions::ActionDefinition fixedCommandAction(Actions::ActionId actionId, const char *name,
@@ -121,180 +126,144 @@ constexpr Actions::ActionDefinition fixedCommandAction(Actions::ActionId actionI
     Actions::DefaultShortcutSpec defaultShortcuts)
 {
     return Actions::ActionDefinition { actionId, name, Actions::RegistrationKind::Registered,
-        KStandardActions::Open, text, iconName, defaultShortcuts, noShortcutRoutes(),
-        shortcutHelpCategory, Actions::ShortcutConfigurability::NonConfigurable,
-        Actions::ShortcutAliasPolicy::NoAlias };
+        KStandardActions::Open, text, iconName, defaultShortcuts, noDefaultShortcuts(),
+        noShortcutRoutes(), shortcutHelpCategory,
+        Actions::ShortcutConfigurability::NonConfigurable };
 }
 
 constexpr std::array actionDefinitions {
     standardAction(Actions::ActionId::FileOpenAction, "file_open", Category::File,
         KStandardActions::Open, kli18n("Open"), standardShortcutSpec(QKeySequence::Open),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::HelpShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ViewerShortcutScope))),
+        noDefaultShortcuts(),
+        shortcutRouteSpecs(route(ActivationScope::ProgramWide, Scope::HelpShortcutScope))),
     registeredAction(Actions::ActionId::FileOpenWithAction, "file_open_with", Category::File,
         kli18nc("@action", "Open With..."), "document-open-symbolic", noDefaultShortcuts(),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::HelpShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ViewerShortcutScope))),
+        noDefaultShortcuts(), noShortcutRoutes()),
     standardAction(Actions::ActionId::FileMoveToTrashAction, "movetotrash", Category::File,
-        KStandardActions::MoveToTrash, kli18nc("@action", "Move to Trash"),
+        KStandardActions::MoveToTrash, kli18nc("@action", "Move to Trash"), noDefaultShortcuts(),
         portableShortcutSpec("Delete"),
-        shortcutRouteSpecs(route(Filter::AllShortcuts, Scope::ReadyViewerShortcutScope))),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     standardAction(Actions::ActionId::FileDeleteAction, "deletefile", Category::File,
         KStandardActions::DeleteFile, kli18nc("@action", "Delete Permanently"),
-        portableShortcutSpec("Shift+Delete"),
-        shortcutRouteSpecs(route(Filter::AllShortcuts, Scope::ReadyViewerShortcutScope))),
+        noDefaultShortcuts(), portableShortcutSpec("Shift+Delete"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     registeredAction(Actions::ActionId::GoPreviousArchiveAction, "go_previous_archive",
         Category::Navigation, kli18nc("@action", "Previous Archive"), "go-previous-use",
-        portableShortcutSpec("Ctrl+["),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ContainerShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ContainerViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ContainerViewerShortcutScope))),
+        noDefaultShortcuts(), portableShortcutSpec("["),
+        shortcutRouteSpecs(
+            route(ActivationScope::ViewerLocal, Scope::ContainerViewerShortcutScope))),
     registeredAction(Actions::ActionId::GoNextArchiveAction, "go_next_archive",
         Category::Navigation, kli18nc("@action", "Next Archive"), "go-next-use",
-        portableShortcutSpec("Ctrl+]"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ContainerShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ContainerViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ContainerViewerShortcutScope))),
+        noDefaultShortcuts(), portableShortcutSpec("]"),
+        shortcutRouteSpecs(
+            route(ActivationScope::ViewerLocal, Scope::ContainerViewerShortcutScope))),
     registeredAction(Actions::ActionId::GoPreviousImageAction, "go_previous_image",
-        Category::Navigation, kli18nc("@action", "Previous"), "go-previous",
+        Category::Navigation, kli18nc("@action", "Previous"), "go-previous", noDefaultShortcuts(),
         standardShortcutSpec(QKeySequence::MoveToPreviousPage),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ImageSelectionShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ImageSelectionViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ImageSelectionViewerShortcutScope))),
+        shortcutRouteSpecs(
+            route(ActivationScope::ViewerLocal, Scope::ImageSelectionViewerShortcutScope))),
     registeredAction(Actions::ActionId::GoNextImageAction, "go_next_image", Category::Navigation,
-        kli18nc("@action", "Next"), "go-next", standardShortcutSpec(QKeySequence::MoveToNextPage),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ImageSelectionShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ImageSelectionViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ImageSelectionViewerShortcutScope))),
+        kli18nc("@action", "Next"), "go-next", noDefaultShortcuts(),
+        standardShortcutSpec(QKeySequence::MoveToNextPage),
+        shortcutRouteSpecs(
+            route(ActivationScope::ViewerLocal, Scope::ImageSelectionViewerShortcutScope))),
     registeredAction(Actions::ActionId::GoFirstImageAction, "go_first_image", Category::Navigation,
-        kli18nc("@action", "First Image"), "go-first-symbolic",
-        portableShortcutSpec("Ctrl+Home", "Home"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::PageShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::PageViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::PageViewerShortcutScope))),
+        kli18nc("@action", "First Image"), "go-first-symbolic", noDefaultShortcuts(),
+        portableShortcutSpec("Home"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::PageViewerShortcutScope))),
     registeredAction(Actions::ActionId::GoLastImageAction, "go_last_image", Category::Navigation,
-        kli18nc("@action", "Last Image"), "go-last-symbolic",
-        portableShortcutSpec("Ctrl+End", "End"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::PageShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::PageViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::PageViewerShortcutScope))),
+        kli18nc("@action", "Last Image"), "go-last-symbolic", noDefaultShortcuts(),
+        portableShortcutSpec("End"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::PageViewerShortcutScope))),
     standardAction(Actions::ActionId::ViewZoomInAction, "view_zoom_in", Category::View,
-        KStandardActions::ZoomIn, kli18nc("@action", "Zoom In"),
-        portableShortcutSpec("Ctrl+=", "Ctrl++"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ReadyShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope))),
+        KStandardActions::ZoomIn, kli18nc("@action", "Zoom In"), noDefaultShortcuts(),
+        portableShortcutSpec("=", "+"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     standardAction(Actions::ActionId::ViewZoomOutAction, "view_zoom_out", Category::View,
-        KStandardActions::ZoomOut, kli18nc("@action", "Zoom Out"), portableShortcutSpec("Ctrl+-"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ReadyShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope))),
+        KStandardActions::ZoomOut, kli18nc("@action", "Zoom Out"), noDefaultShortcuts(),
+        portableShortcutSpec("-"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewZoom50PercentAction, "view_zoom_50_percent",
-        Category::View, kli18nc("@action", "Zoom to 50%"), nullptr, portableShortcutSpec("Ctrl+`"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ReadyShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope))),
+        Category::View, kli18nc("@action", "Zoom to 50%"), nullptr, noDefaultShortcuts(),
+        portableShortcutSpec("`"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewZoom100PercentAction, "view_zoom_100_percent",
-        Category::View, kli18nc("@action", "Zoom to 100%"), nullptr, portableShortcutSpec("Ctrl+1"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ReadyShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope))),
+        Category::View, kli18nc("@action", "Zoom to 100%"), nullptr, noDefaultShortcuts(),
+        portableShortcutSpec("1"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewZoom200PercentAction, "view_zoom_200_percent",
-        Category::View, kli18nc("@action", "Zoom to 200%"), nullptr, portableShortcutSpec("Ctrl+2"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ReadyShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope))),
+        Category::View, kli18nc("@action", "Zoom to 200%"), nullptr, noDefaultShortcuts(),
+        portableShortcutSpec("2"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     standardAction(Actions::ActionId::ViewFitAction, "view_fit", Category::View,
-        KStandardActions::FitToPage, kli18nc("@action", "Fit to Window"),
-        portableShortcutSpec("Ctrl+0"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ReadyShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope))),
+        KStandardActions::FitToPage, kli18nc("@action", "Fit to Window"), noDefaultShortcuts(),
+        portableShortcutSpec("0"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     standardAction(Actions::ActionId::ViewFitHeightAction, "view_fit_height", Category::View,
-        KStandardActions::FitToHeight, kli18nc("@action", "Fit Height"),
-        portableShortcutSpec("Ctrl+8"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ReadyShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope))),
+        KStandardActions::FitToHeight, kli18nc("@action", "Fit Height"), noDefaultShortcuts(),
+        portableShortcutSpec("8"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     standardAction(Actions::ActionId::ViewFitWidthAction, "view_fit_width", Category::View,
-        KStandardActions::FitToWidth, kli18nc("@action", "Fit Width"),
-        portableShortcutSpec("Ctrl+9"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ReadyShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope))),
+        KStandardActions::FitToWidth, kli18nc("@action", "Fit Width"), noDefaultShortcuts(),
+        portableShortcutSpec("9"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewRotateClockwiseAction, "view_rotate_clockwise",
         Category::View, kli18nc("@action", "Rotate Clockwise"), "object-rotate-right-symbolic",
-        portableShortcutSpec("Ctrl+R"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::RotateShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::RotateViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::RotateViewerShortcutScope))),
+        noDefaultShortcuts(), portableShortcutSpec("R"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::RotateViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewRotateCounterclockwiseAction,
         "view_rotate_counterclockwise", Category::View,
         kli18nc("@action", "Rotate Counterclockwise"), "object-rotate-left-symbolic",
-        portableShortcutSpec("Ctrl+Shift+R"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::RotateShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::RotateViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::RotateViewerShortcutScope))),
+        noDefaultShortcuts(), portableShortcutSpec("Shift+R"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::RotateViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewToggleTwoPageModeAction, "view_toggle_two_page_mode",
         Category::View, kli18nc("@action", "Two-Page Spread"), "view-split-left-right-symbolic",
-        portableShortcutSpec("Ctrl+S"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ReadyShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope))),
+        noDefaultShortcuts(), portableShortcutSpec("S"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewToggleRightToLeftReadingAction,
         "view_toggle_right_to_left_reading", Category::View,
         kli18nc("@action", "Right-to-Left Reading"), "format-text-direction-rtl-symbolic",
-        portableShortcutSpec("Ctrl+B"),
+        noDefaultShortcuts(), portableShortcutSpec("B"),
         shortcutRouteSpecs(
-            route(Filter::WithCommandModifier, Scope::RightToLeftReadingShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::RightToLeftReadingViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::RightToLeftReadingViewerShortcutScope))),
+            route(ActivationScope::ViewerLocal, Scope::RightToLeftReadingViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewToggleInfoPanelAction, "view_toggle_info_panel",
         Category::Panels, kli18nc("@action", "Show Info Panel"), "documentinfo-symbolic",
-        portableShortcutSpec("Ctrl+I"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::HelpShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ViewerShortcutScope))),
+        noDefaultShortcuts(), portableShortcutSpec("I"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewToggleThumbnailPanelAction,
         "view_toggle_thumbnail_panel", Category::Panels, kli18nc("@action", "Show Thumbnail Panel"),
-        "view-list-icons-symbolic", portableShortcutSpec("Ctrl+T"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::HelpShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ViewerShortcutScope))),
+        "view-list-icons-symbolic", noDefaultShortcuts(), portableShortcutSpec("T"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewPanTopLeftAction, "view_pan_top_left", Category::View,
-        kli18nc("@action", "Top Left"), nullptr, portableShortcutSpec("Ctrl+<"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::PannableShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::PannableViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::PannableViewerShortcutScope))),
+        kli18nc("@action", "Top Left"), nullptr, noDefaultShortcuts(), portableShortcutSpec("<"),
+        shortcutRouteSpecs(
+            route(ActivationScope::ViewerLocal, Scope::PannableViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewPanBottomRightAction, "view_pan_bottom_right",
-        Category::View, kli18nc("@action", "Bottom Right"), nullptr, portableShortcutSpec("Ctrl+>"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::PannableShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::PannableViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::PannableViewerShortcutScope))),
+        Category::View, kli18nc("@action", "Bottom Right"), nullptr, noDefaultShortcuts(),
+        portableShortcutSpec(">"),
+        shortcutRouteSpecs(
+            route(ActivationScope::ViewerLocal, Scope::PannableViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewScanForwardAction, "view_scan_forward", Category::View,
-        kli18nc("@action", "Scan Forward"), nullptr, portableShortcutSpec("Ctrl+.", "Ctrl+Space"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ReadyShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope))),
+        kli18nc("@action", "Scan Forward"), nullptr, noDefaultShortcuts(),
+        portableShortcutSpec(".", "Space"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewScanBackwardAction, "view_scan_backward",
-        Category::View, kli18nc("@action", "Scan Backward"), nullptr,
-        portableShortcutSpec("Ctrl+,", "Ctrl+Shift+Space"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::ReadyShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope))),
+        Category::View, kli18nc("@action", "Scan Backward"), nullptr, noDefaultShortcuts(),
+        portableShortcutSpec(",", "Shift+Space"),
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
     standardAction(Actions::ActionId::WindowFullscreenAction, "window_fullscreen", Category::Window,
         KStandardActions::FullScreen, kli18nc("@action", "Fullscreen"),
-        portableShortcutSpec("Ctrl+F", "F11"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::HelpShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::HelpShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ViewerShortcutScope))),
+        portableShortcutSpec("Ctrl+F", "F11"), portableShortcutSpec("F"),
+        shortcutRouteSpecs(route(ActivationScope::ProgramWide, Scope::HelpShortcutScope),
+            route(ActivationScope::ViewerLocal, Scope::ViewerShortcutScope))),
     registeredAction(Actions::ActionId::HelpShortcutsAction, "help_shortcuts", Category::Help,
         kli18nc("@action", "Keyboard Shortcuts"), "help-keyboard-shortcuts-symbolic",
-        portableShortcutSpec("Ctrl+?", "F1"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::HelpShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::HelpShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ViewerShortcutScope))),
+        portableShortcutSpec("Ctrl+?", "F1"), portableShortcutSpec("?"),
+        shortcutRouteSpecs(route(ActivationScope::ProgramWide, Scope::HelpShortcutScope),
+            route(ActivationScope::ViewerLocal, Scope::ViewerShortcutScope))),
     inheritedAction(Actions::ActionId::OptionsConfigureKeybindingAction,
         "options_configure_keybinding", Category::Settings,
-        shortcutRouteSpecs(route(Filter::AllShortcuts, Scope::HelpShortcutScope))),
+        shortcutRouteSpecs(route(ActivationScope::ProgramWide, Scope::HelpShortcutScope))),
     showMenubarAction(Actions::ActionId::OptionsShowMenubarAction, "options_show_menubar",
         Category::Settings, KStandardActions::ShowMenubar, kli18nc("@action", "Show Menubar"),
         portableShortcutSpec("Ctrl+M"), noShortcutRoutes()),
@@ -302,10 +271,8 @@ constexpr std::array actionDefinitions {
         Category::Help, kli18nc("@action", "Open Application Menu"), "application-menu-symbolic",
         portableShortcutSpec("F10")),
     existingAction(Actions::ActionId::FileQuitAction, "file_quit", Category::File,
-        portableShortcutSpec("Ctrl+Q"),
-        shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::HelpShortcutScope),
-            route(Filter::WithoutCommandModifier, Scope::ViewerShortcutScope),
-            route(Filter::ShortcutAliases, Scope::ViewerShortcutScope))),
+        portableShortcutSpec("Ctrl+Q"), noDefaultShortcuts(),
+        shortcutRouteSpecs(route(ActivationScope::ProgramWide, Scope::HelpShortcutScope))),
 };
 
 static_assert(actionDefinitions.size() == Actions::actionDefinitionCount);

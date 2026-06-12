@@ -21,6 +21,7 @@ constexpr int categoryTextRole = Qt::UserRole + 6;
 constexpr int categoryFirstRole = Qt::UserRole + 7;
 constexpr int categoryLastRole = Qt::UserRole + 8;
 constexpr int shortcutKeyTextsRole = Qt::UserRole + 9;
+constexpr int scopeTextRole = Qt::UserRole + 10;
 
 KiriView::ApplicationActions::ShortcutHelpRow row(
     int actionId, const QString &actionName, const QString &actionText, const QString &shortcutText)
@@ -32,6 +33,7 @@ KiriView::ApplicationActions::ShortcutHelpRow row(
         shortcutText,
         QStringLiteral("view"),
         QStringLiteral("View"),
+        QStringLiteral("Viewer-local"),
         QStringList { shortcutText },
         true,
         true,
@@ -65,6 +67,7 @@ void TestShortcutHelpModel::rowsComeFromRuntimeProvider()
     QCOMPARE(model.data(index, shortcutTextRole).toString(), QStringLiteral("Ctrl+R"));
     QCOMPARE(model.data(index, categoryKeyRole).toString(), QStringLiteral("view"));
     QCOMPARE(model.data(index, categoryTextRole).toString(), QStringLiteral("View"));
+    QCOMPARE(model.data(index, scopeTextRole).toString(), QStringLiteral("Viewer-local"));
     QVERIFY(model.data(index, categoryFirstRole).toBool());
     QVERIFY(model.data(index, categoryLastRole).toBool());
     QCOMPARE(model.data(index, shortcutKeyTextsRole).toStringList(),

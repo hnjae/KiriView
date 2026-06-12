@@ -161,8 +161,8 @@ void TestApplicationShortcutPolicy::shortcutProjectionSeparatesActivationScopes(
     QCOMPARE(projection.shortcutText,
         QStringLiteral("%1 / %2 / %3")
             .arg(nativeText(shortcut(QStringLiteral("Ctrl+R"))),
-                nativeText(shortcut(QStringLiteral("Shift+R"))),
-                nativeText(shortcut(QStringLiteral("R")))));
+                nativeText(shortcut(QStringLiteral("R"))),
+                nativeText(shortcut(QStringLiteral("Shift+R")))));
     QCOMPARE(projection.menuShortcutText, nativeText(shortcut(QStringLiteral("Ctrl+R"))));
 }
 
@@ -265,7 +265,8 @@ void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
         = routeFor(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope);
     QVERIFY(readyRoute != nullptr);
     QCOMPARE(actionIdVariants(readyRoute->actionIds),
-        actionIdVariants({ ActionId::ViewZoomInAction, ActionId::ViewZoomOutAction,
+        actionIdVariants({ ActionId::FileMoveToTrashAction, ActionId::FileDeleteAction,
+            ActionId::ViewZoomInAction, ActionId::ViewZoomOutAction,
             ActionId::ViewZoom50PercentAction, ActionId::ViewZoom100PercentAction,
             ActionId::ViewZoom200PercentAction, ActionId::ViewFitAction,
             ActionId::ViewFitHeightAction, ActionId::ViewFitWidthAction,

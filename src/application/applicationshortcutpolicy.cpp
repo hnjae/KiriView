@@ -9,25 +9,9 @@
 
 namespace {
 using Route = KiriView::ApplicationActions::ApplicationShortcutRoute;
-using Filter = KiriView::ApplicationActions::ApplicationShortcutFilter;
+using ActivationScope = KiriView::ApplicationActions::ApplicationShortcutActivationScope;
 using Scope = KiriView::ApplicationActions::ImageShortcutScope;
 using RouteSpec = KiriView::ApplicationActions::ShortcutRouteSpec;
-
-bool shortcutHasCommandModifier(const QKeySequence &shortcut)
-{
-    const Qt::KeyboardModifiers commandModifiers
-        = Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier;
-
-    for (int index = 0; index < shortcut.count(); ++index) {
-        const Qt::KeyboardModifiers shortcutModifiers
-            = shortcut[static_cast<uint>(index)].keyboardModifiers();
-        if ((shortcutModifiers & commandModifiers) != Qt::NoModifier) {
-            return true;
-        }
-    }
-
-    return false;
-}
 
 bool isAsciiPrintableKey(Qt::Key key) { return key >= Qt::Key_Space && key <= Qt::Key_AsciiTilde; }
 
@@ -93,27 +77,10 @@ bool shortcutIsUnmodifiedAsciiPrintable(const QKeySequence &shortcut)
     return shortcut.count() == 1 && shortcutCombinationIsUnmodifiedAsciiPrintable(shortcut[0]);
 }
 
-QKeySequence shortcutAlias(const QKeySequence &shortcut)
-{
-    if (shortcut.count() != 1) {
-        return {};
-    }
-
-    const QKeyCombination combination = shortcut[0];
-    const Qt::KeyboardModifiers modifiers = combination.keyboardModifiers();
-    const Qt::KeyboardModifiers allowedModifiers = Qt::ControlModifier | Qt::ShiftModifier;
-    if ((modifiers & Qt::ControlModifier) == Qt::NoModifier
-        || (modifiers & ~allowedModifiers) != Qt::NoModifier
-        || !isAsciiPrintableKey(combination.key())) {
-        return {};
-    }
-
-    return QKeySequence(QKeyCombination(modifiers & ~Qt::ControlModifier, combination.key()));
-}
-
 bool routeMatchesSpec(const Route &route, const RouteSpec &spec)
 {
-    return route.shortcutFilter == spec.shortcutFilter && route.shortcutScope == spec.shortcutScope;
+    return route.activationScope == spec.activationScope
+        && route.shortcutScope == spec.shortcutScope;
 }
 
 void appendActionToRoute(
@@ -130,7 +97,7 @@ void appendActionToRoute(
         return;
     }
 
-    routes.push_back(Route { { actionId }, spec.shortcutFilter, spec.shortcutScope });
+    routes.push_back(Route { { actionId }, spec.activationScope, spec.shortcutScope });
 }
 
 QList<Route> buildShortcutRoutes()
@@ -150,21 +117,6 @@ QList<Route> buildShortcutRoutes()
 }
 
 namespace KiriView::ApplicationActions {
-QList<QKeySequence> filterShortcutsByCommandModifier(
-    const QList<QKeySequence> &shortcuts, bool requireCommandModifier)
-{
-    QList<QKeySequence> filteredShortcuts;
-    filteredShortcuts.reserve(shortcuts.size());
-
-    for (const QKeySequence &shortcut : shortcuts) {
-        if (!shortcut.isEmpty() && shortcutHasCommandModifier(shortcut) == requireCommandModifier) {
-            filteredShortcuts.push_back(shortcut);
-        }
-    }
-
-    return filteredShortcuts;
-}
-
 QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts)
 {
     for (const QKeySequence &shortcut : shortcuts) {
@@ -174,21 +126,6 @@ QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts)
     }
 
     return {};
-}
-
-QList<QKeySequence> shortcutAliases(const QList<QKeySequence> &shortcuts)
-{
-    QList<QKeySequence> aliases;
-    aliases.reserve(shortcuts.size());
-
-    for (const QKeySequence &shortcut : shortcuts) {
-        const QKeySequence alias = shortcutAlias(shortcut);
-        if (!alias.isEmpty() && !aliases.contains(alias)) {
-            aliases.push_back(alias);
-        }
-    }
-
-    return aliases;
 }
 
 QString shortcutListText(const QList<QKeySequence> &shortcuts)
@@ -204,7 +141,7 @@ QString shortcutListText(const QList<QKeySequence> &shortcuts)
     return texts.join(QStringLiteral(" / "));
 }
 
-QList<QKeySequence> sanitizeShortcuts(const QList<QKeySequence> &shortcuts)
+QList<QKeySequence> sanitizeProgramWideShortcuts(const QList<QKeySequence> &shortcuts)
 {
     QList<QKeySequence> sanitizedShortcuts;
     sanitizedShortcuts.reserve(shortcuts.size());
@@ -218,16 +155,16 @@ QList<QKeySequence> sanitizeShortcuts(const QList<QKeySequence> &shortcuts)
     return sanitizedShortcuts;
 }
 
-ApplicationShortcutProjection shortcutProjection(
-    const QList<QKeySequence> &shortcuts, ShortcutAliasPolicy aliasPolicy)
+ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &programWideShortcuts,
+    const QList<QKeySequence> &viewerLocalShortcuts)
 {
-    const QKeySequence menu = menuShortcut(shortcuts);
+    QList<QKeySequence> shortcuts = programWideShortcuts;
+    shortcuts.append(viewerLocalShortcuts);
+    const QKeySequence menu = menuShortcut(programWideShortcuts);
     return ApplicationShortcutProjection {
         shortcuts,
-        filterShortcutsByCommandModifier(shortcuts, true),
-        filterShortcutsByCommandModifier(shortcuts, false),
-        aliasPolicy == ShortcutAliasPolicy::DeriveViewerAlias ? shortcutAliases(shortcuts)
-                                                              : QList<QKeySequence>(),
+        programWideShortcuts,
+        viewerLocalShortcuts,
         menu,
         shortcutListText(shortcuts),
         menu.toString(QKeySequence::NativeText),

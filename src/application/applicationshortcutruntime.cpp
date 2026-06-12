@@ -7,7 +7,9 @@
 #include "shortcuthelpmodel.h"
 #include "shortcutroutemodel.h"
 
+#include <KConfigGroup>
 #include <KLocalizedString>
+#include <KSharedConfig>
 #include <KirigamiActionCollection>
 #include <QCoreApplication>
 #include <QGuiApplication>
@@ -20,6 +22,7 @@
 
 namespace {
 using ActionId = KiriView::ApplicationActions::ActionId;
+constexpr const char *viewerLocalShortcutsGroup = "ViewerLocalShortcuts";
 
 KiriView::ApplicationActions::ShortcutHelpCategory shortcutHelpCategory(ActionId actionId)
 {
@@ -35,6 +38,44 @@ KiriView::ApplicationActions::ShortcutHelpCategory shortcutHelpCategory(ActionId
 int shortcutHelpCategoryOrderForAction(ActionId actionId)
 {
     return KiriView::ApplicationActions::shortcutHelpCategoryOrder(shortcutHelpCategory(actionId));
+}
+
+std::optional<std::size_t> actionIndex(ActionId actionId)
+{
+    const int index = static_cast<int>(actionId);
+    if (index < 0
+        || index >= static_cast<int>(KiriView::ApplicationActions::actionDefinitionCount)) {
+        return std::nullopt;
+    }
+
+    return static_cast<std::size_t>(index);
+}
+
+QStringList portableShortcutTexts(const QList<QKeySequence> &shortcuts)
+{
+    QStringList texts;
+    texts.reserve(shortcuts.size());
+    for (const QKeySequence &shortcut : shortcuts) {
+        if (!shortcut.isEmpty()) {
+            texts.push_back(shortcut.toString(QKeySequence::PortableText));
+        }
+    }
+
+    return texts;
+}
+
+QList<QKeySequence> shortcutsFromPortableTexts(const QStringList &texts)
+{
+    QList<QKeySequence> shortcuts;
+    shortcuts.reserve(texts.size());
+    for (const QString &text : texts) {
+        const QKeySequence shortcut = QKeySequence::fromString(text, QKeySequence::PortableText);
+        if (!shortcut.isEmpty()) {
+            shortcuts.push_back(shortcut);
+        }
+    }
+
+    return shortcuts;
 }
 
 QWindow *shortcutWindow(QObject *host)
@@ -129,7 +170,8 @@ ApplicationShortcutRuntime::~ApplicationShortcutRuntime() { clearShortcutRouter(
 
 void ApplicationShortcutRuntime::setup()
 {
-    sanitizeActionShortcuts();
+    loadViewerLocalShortcuts();
+    sanitizeProgramWideActionShortcuts();
     m_shortcutHelpModel = std::make_unique<ShortcutHelpModel>(
         [this]() { return shortcutHelpRows(); }, m_host.actionContext());
 }
@@ -141,17 +183,10 @@ void ApplicationShortcutRuntime::handleActionChanged(QAction *changedAction)
     }
 
     if (changedAction != nullptr) {
-        sanitizeActionShortcuts(changedAction);
+        sanitizeProgramWideActionShortcuts(changedAction);
     }
 
-    if (m_shortcutHelpModel != nullptr) {
-        m_shortcutHelpModel->handleRowsChanged();
-    }
-    ++m_shortcutRevision;
-    rebuildShortcutRouter();
-    if (m_changeCallback) {
-        m_changeCallback();
-    }
+    notifyShortcutRowsChanged();
 }
 
 void ApplicationShortcutRuntime::setActionStateInput(const ApplicationActionStateInput &input)
@@ -184,21 +219,64 @@ QAbstractListModel *ApplicationShortcutRuntime::shortcutRouteModel() const
     return m_shortcutRouteModel.get();
 }
 
-void ApplicationShortcutRuntime::sanitizeActionShortcuts()
+void ApplicationShortcutRuntime::loadViewerLocalShortcuts()
 {
-    for (QAction *action : m_host.mainActionCollection()->actions()) {
-        sanitizeActionShortcuts(action);
+    KConfigGroup group(KSharedConfig::openConfig(), viewerLocalShortcutsGroup);
+    for (const ActionDefinition &definition : definitions()) {
+        const std::optional<std::size_t> index = actionIndex(definition.actionId);
+        if (!index.has_value()) {
+            continue;
+        }
+
+        const QString actionKey = QString::fromLatin1(definition.name);
+        const QStringList storedTexts = group.readEntry(actionKey, QStringList());
+        m_viewerLocalShortcuts[*index] = storedTexts.isEmpty()
+            ? defaultShortcuts(definition.defaultViewerLocalShortcuts)
+            : shortcutsFromPortableTexts(storedTexts);
     }
 }
 
-void ApplicationShortcutRuntime::sanitizeActionShortcuts(QAction *action)
+void ApplicationShortcutRuntime::persistViewerLocalShortcuts(ActionId actionId) const
+{
+    const ActionDefinition *definition = definitionForId(actionId);
+    const std::optional<std::size_t> index = actionIndex(actionId);
+    if (definition == nullptr || !index.has_value()) {
+        return;
+    }
+
+    KConfigGroup group(KSharedConfig::openConfig(), viewerLocalShortcutsGroup);
+    group.writeEntry(QString::fromLatin1(definition->name),
+        portableShortcutTexts(m_viewerLocalShortcuts[*index]));
+    group.sync();
+}
+
+void ApplicationShortcutRuntime::notifyShortcutRowsChanged()
+{
+    if (m_shortcutHelpModel != nullptr) {
+        m_shortcutHelpModel->handleRowsChanged();
+    }
+    ++m_shortcutRevision;
+    rebuildShortcutRouter();
+    if (m_changeCallback) {
+        m_changeCallback();
+    }
+}
+
+void ApplicationShortcutRuntime::sanitizeProgramWideActionShortcuts()
+{
+    for (QAction *action : m_host.mainActionCollection()->actions()) {
+        sanitizeProgramWideActionShortcuts(action);
+    }
+}
+
+void ApplicationShortcutRuntime::sanitizeProgramWideActionShortcuts(QAction *action)
 {
     if (action == nullptr) {
         return;
     }
 
     const QList<QKeySequence> shortcuts = action->shortcuts();
-    const QList<QKeySequence> sanitizedShortcuts = sanitizeShortcuts(shortcuts);
+    const QList<QKeySequence> sanitizedShortcuts = sanitizeProgramWideShortcuts(shortcuts);
     if (sanitizedShortcuts == shortcuts) {
         return;
     }
@@ -210,46 +288,77 @@ void ApplicationShortcutRuntime::sanitizeActionShortcuts(QAction *action)
 }
 
 ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjectionForAction(
-    const QAction *action, ShortcutAliasPolicy aliasPolicy) const
+    ActionId actionId, const QAction *action) const
 {
     return ApplicationActions::shortcutProjection(
-        action == nullptr ? QList<QKeySequence>() : action->shortcuts(), aliasPolicy);
+        action == nullptr ? QList<QKeySequence>() : action->shortcuts(),
+        viewerLocalShortcutsForId(actionId));
 }
 
 ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjection(
     const QString &actionName) const
 {
     const ActionDefinition *definition = definitionForName(actionName);
-    return shortcutProjectionForAction(m_actionRegistry.action(actionName),
-        definition == nullptr ? ShortcutAliasPolicy::DeriveViewerAlias
-                              : definition->shortcutAliasPolicy);
+    return shortcutProjectionForAction(
+        definition == nullptr ? ActionId::ActionCount : definition->actionId,
+        m_actionRegistry.action(actionName));
 }
 
 ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjectionForId(
     ActionId actionId) const
 {
     const ActionDefinition *definition = definitionForId(actionId);
-    return shortcutProjectionForAction(m_actionRegistry.actionForId(actionId),
-        definition == nullptr ? ShortcutAliasPolicy::DeriveViewerAlias
-                              : definition->shortcutAliasPolicy);
+    return shortcutProjectionForAction(
+        definition == nullptr ? ActionId::ActionCount : definition->actionId,
+        m_actionRegistry.actionForId(actionId));
 }
 
-QList<QKeySequence> ApplicationShortcutRuntime::routedShortcuts(
-    ActionId actionId, ApplicationShortcutFilter shortcutFilter) const
+QList<QKeySequence> ApplicationShortcutRuntime::programWideShortcuts(
+    const QString &actionName) const
 {
-    const ApplicationShortcutProjection projection = shortcutProjectionForId(actionId);
-    switch (shortcutFilter) {
-    case ApplicationShortcutFilter::WithCommandModifier:
-        return projection.shortcutsWithCommandModifier;
-    case ApplicationShortcutFilter::WithoutCommandModifier:
-        return projection.shortcutsWithoutCommandModifier;
-    case ApplicationShortcutFilter::ShortcutAliases:
-        return projection.shortcutAliases;
-    case ApplicationShortcutFilter::AllShortcuts:
-        return projection.shortcuts;
+    QAction *action = m_actionRegistry.action(actionName);
+    return action == nullptr ? QList<QKeySequence>() : action->shortcuts();
+}
+
+QList<QKeySequence> ApplicationShortcutRuntime::programWideShortcutsForId(ActionId actionId) const
+{
+    QAction *action = m_actionRegistry.actionForId(actionId);
+    return action == nullptr ? QList<QKeySequence>() : action->shortcuts();
+}
+
+QList<QKeySequence> ApplicationShortcutRuntime::viewerLocalShortcuts(
+    const QString &actionName) const
+{
+    const ActionDefinition *definition = definitionForName(actionName);
+    return definition == nullptr ? QList<QKeySequence>()
+                                 : viewerLocalShortcutsForId(definition->actionId);
+}
+
+QList<QKeySequence> ApplicationShortcutRuntime::viewerLocalShortcutsForId(ActionId actionId) const
+{
+    const std::optional<std::size_t> index = actionIndex(actionId);
+    return index.has_value() ? m_viewerLocalShortcuts[*index] : QList<QKeySequence>();
+}
+
+bool ApplicationShortcutRuntime::setViewerLocalShortcuts(
+    const QString &actionName, const QList<QKeySequence> &shortcuts)
+{
+    const ActionDefinition *definition = definitionForName(actionName);
+    return definition != nullptr && setViewerLocalShortcutsForId(definition->actionId, shortcuts);
+}
+
+bool ApplicationShortcutRuntime::setViewerLocalShortcutsForId(
+    ActionId actionId, const QList<QKeySequence> &shortcuts)
+{
+    const std::optional<std::size_t> index = actionIndex(actionId);
+    if (!index.has_value()) {
+        return false;
     }
 
-    return {};
+    m_viewerLocalShortcuts[*index] = shortcuts;
+    persistViewerLocalShortcuts(actionId);
+    notifyShortcutRowsChanged();
+    return true;
 }
 
 void ApplicationShortcutRuntime::clearShortcutRouter()
@@ -290,28 +399,33 @@ void ApplicationShortcutRuntime::rebuildShortcutRouter()
 
     for (const ApplicationShortcutRoute &route : shortcutRoutes()) {
         for (ActionId actionId : route.actionIds) {
-            addShortcutBinding(
-                actionId, routedShortcuts(actionId, route.shortcutFilter), route.shortcutScope);
+            const QList<QKeySequence> shortcuts
+                = route.activationScope == ApplicationShortcutActivationScope::ProgramWide
+                ? programWideShortcutsForId(actionId)
+                : viewerLocalShortcutsForId(actionId);
+            addShortcutBinding(actionId, shortcuts, route.activationScope, route.shortcutScope);
         }
     }
 
     addShortcutBinding(ActionId::OpenApplicationMenuAction,
-        routedShortcuts(
-            ActionId::OpenApplicationMenuAction, ApplicationShortcutFilter::AllShortcuts));
+        programWideShortcutsForId(ActionId::OpenApplicationMenuAction),
+        ApplicationShortcutActivationScope::ProgramWide);
     addShortcutBinding(ActionId::OptionsShowMenubarAction,
-        routedShortcuts(
-            ActionId::OptionsShowMenubarAction, ApplicationShortcutFilter::AllShortcuts));
+        programWideShortcutsForId(ActionId::OptionsShowMenubarAction),
+        ApplicationShortcutActivationScope::ProgramWide);
     updateShortcutEnabledStates();
 }
 
 void ApplicationShortcutRuntime::addShortcutBinding(ActionId actionId,
-    const QList<QKeySequence> &shortcuts, std::optional<ImageShortcutScope> shortcutScope)
+    const QList<QKeySequence> &shortcuts, ApplicationShortcutActivationScope activationScope,
+    std::optional<ImageShortcutScope> shortcutScope)
 {
     if (shortcuts.isEmpty() || m_shortcutHost == nullptr) {
         return;
     }
 
-    m_shortcuts.push_back(ShortcutBinding { actionId, shortcutScope, shortcuts, false });
+    m_shortcuts.push_back(
+        ShortcutBinding { actionId, activationScope, shortcutScope, shortcuts, false });
 }
 
 bool ApplicationShortcutRuntime::handleShortcutEvent(const QKeySequence &shortcut)
@@ -484,6 +598,35 @@ QStringList ApplicationShortcutRuntime::shortcutKeyDisplayTexts(const QAction *a
     return texts;
 }
 
+QString shortcutScopeText(ApplicationShortcutActivationScope scope)
+{
+    switch (scope) {
+    case ApplicationShortcutActivationScope::ProgramWide:
+        return i18nc("@info:shortcut scope", "Program-wide");
+    case ApplicationShortcutActivationScope::ViewerLocal:
+        return i18nc("@info:shortcut scope", "Viewer-local");
+    }
+
+    return {};
+}
+
+QStringList shortcutKeyDisplayTextsForList(const QList<QKeySequence> &shortcuts)
+{
+    QStringList texts;
+    texts.reserve(shortcuts.size());
+    for (const QKeySequence &shortcut : shortcuts) {
+        if (!shortcut.isEmpty()) {
+            texts.push_back(shortcut.toString(QKeySequence::NativeText));
+        }
+    }
+
+    if (texts.isEmpty()) {
+        texts.push_back(i18nc("@info:keyboard shortcut", "Unassigned"));
+    }
+
+    return texts;
+}
+
 QList<ShortcutHelpRow> ApplicationShortcutRuntime::shortcutHelpRows() const
 {
     QList<ShortcutHelpRow> rows;
@@ -496,15 +639,35 @@ QList<ShortcutHelpRow> ApplicationShortcutRuntime::shortcutHelpRows() const
         }
 
         const ShortcutHelpCategory category = shortcutHelpCategory(registeredAction.actionId);
-        rows.push_back(ShortcutHelpRow {
-            static_cast<int>(registeredAction.actionId),
-            registeredAction.actionName,
-            actionDisplayText(registeredAction.action),
-            shortcutDisplayText(registeredAction.action),
-            shortcutHelpCategoryKey(category),
-            shortcutHelpCategoryText(category),
-            shortcutKeyDisplayTexts(registeredAction.action),
-        });
+        QString actionText = actionDisplayText(registeredAction.action);
+        if (actionText.isEmpty()) {
+            if (const ActionDefinition *definition = definitionForId(registeredAction.actionId)) {
+                actionText = localizedString(definition->text);
+            }
+        }
+        const auto appendRow
+            = [&](ApplicationShortcutActivationScope scope, const QList<QKeySequence> &shortcuts) {
+                  if (shortcuts.isEmpty()) {
+                      return;
+                  }
+                  const QStringList keyTexts = shortcutKeyDisplayTextsForList(shortcuts);
+                  rows.push_back(ShortcutHelpRow {
+                      static_cast<int>(registeredAction.actionId),
+                      registeredAction.actionName,
+                      actionText,
+                      keyTexts.join(QStringLiteral(" / ")),
+                      shortcutHelpCategoryKey(category),
+                      shortcutHelpCategoryText(category),
+                      shortcutScopeText(scope),
+                      keyTexts,
+                  });
+              };
+
+        appendRow(ApplicationShortcutActivationScope::ProgramWide,
+            registeredAction.action == nullptr ? QList<QKeySequence>()
+                                               : registeredAction.action->shortcuts());
+        appendRow(ApplicationShortcutActivationScope::ViewerLocal,
+            viewerLocalShortcutsForId(registeredAction.actionId));
     }
 
     std::stable_sort(
@@ -516,7 +679,10 @@ QList<ShortcutHelpRow> ApplicationShortcutRuntime::shortcutHelpRows() const
             if (leftOrder != rightOrder) {
                 return leftOrder < rightOrder;
             }
-            return left.actionId < right.actionId;
+            if (left.actionId != right.actionId) {
+                return left.actionId < right.actionId;
+            }
+            return left.scopeText < right.scopeText;
         });
 
     for (qsizetype index = 0; index < rows.size(); ++index) {

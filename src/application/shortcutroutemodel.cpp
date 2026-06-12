@@ -45,8 +45,8 @@ QVariant ShortcutRouteModel::data(const QModelIndex &index, int role) const
     switch (role) {
     case ActionIdsRole:
         return actionIdVariants(route.actionIds);
-    case ShortcutFilterRole:
-        return static_cast<int>(route.shortcutFilter);
+    case ActivationScopeRole:
+        return static_cast<int>(route.activationScope);
     case ShortcutScopeRole:
         return static_cast<int>(route.shortcutScope);
     default:
@@ -58,7 +58,7 @@ QHash<int, QByteArray> ShortcutRouteModel::roleNames() const
 {
     return {
         { ActionIdsRole, QByteArrayLiteral("actionIds") },
-        { ShortcutFilterRole, QByteArrayLiteral("shortcutFilter") },
+        { ActivationScopeRole, QByteArrayLiteral("activationScope") },
         { ShortcutScopeRole, QByteArrayLiteral("shortcutScope") },
     };
 }

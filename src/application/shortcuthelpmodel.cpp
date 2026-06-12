@@ -42,6 +42,8 @@ QVariant ShortcutHelpModel::data(const QModelIndex &index, int role) const
         return row.categoryKey;
     case CategoryTextRole:
         return row.categoryText;
+    case ScopeTextRole:
+        return row.scopeText;
     case CategoryFirstRole:
         return row.categoryFirst;
     case CategoryLastRole:
@@ -65,6 +67,7 @@ QHash<int, QByteArray> ShortcutHelpModel::roleNames() const
         { CategoryFirstRole, QByteArrayLiteral("categoryFirst") },
         { CategoryLastRole, QByteArrayLiteral("categoryLast") },
         { ShortcutKeyTextsRole, QByteArrayLiteral("shortcutKeyTexts") },
+        { ScopeTextRole, QByteArrayLiteral("scopeText") },
     };
 }
 
@@ -88,7 +91,7 @@ void ShortcutHelpModel::handleRowsChanged()
     m_rows = rows;
     for (int row : changedRows) {
         Q_EMIT dataChanged(index(row, 0), index(row, 0),
-            { ActionTextRole, ShortcutTextRole, CategoryKeyRole, CategoryTextRole,
+            { ActionTextRole, ShortcutTextRole, CategoryKeyRole, CategoryTextRole, ScopeTextRole,
                 CategoryFirstRole, CategoryLastRole, ShortcutKeyTextsRole });
     }
 }
@@ -107,7 +110,8 @@ bool ShortcutHelpModel::sameRowIdentities(
 
     for (int index = 0; index < left.size(); ++index) {
         if (left.at(index).actionId != right.at(index).actionId
-            || left.at(index).actionName != right.at(index).actionName) {
+            || left.at(index).actionName != right.at(index).actionName
+            || left.at(index).scopeText != right.at(index).scopeText) {
             return false;
         }
     }
@@ -119,7 +123,7 @@ bool ShortcutHelpModel::sameRowData(const ShortcutHelpRow &left, const ShortcutH
 {
     return left.actionText == right.actionText && left.shortcutText == right.shortcutText
         && left.categoryKey == right.categoryKey && left.categoryText == right.categoryText
-        && left.shortcutKeyTexts == right.shortcutKeyTexts
+        && left.scopeText == right.scopeText && left.shortcutKeyTexts == right.shortcutKeyTexts
         && left.categoryFirst == right.categoryFirst && left.categoryLast == right.categoryLast;
 }
 }

@@ -16,28 +16,25 @@
 namespace KiriView::ApplicationActions {
 struct ApplicationShortcutRoute {
     QList<ActionId> actionIds;
-    ApplicationShortcutFilter shortcutFilter = ApplicationShortcutFilter::AllShortcuts;
+    ApplicationShortcutActivationScope activationScope
+        = ApplicationShortcutActivationScope::ProgramWide;
     ImageShortcutScope shortcutScope = ImageShortcutScope::HelpShortcutScope;
 };
 
 struct ApplicationShortcutProjection {
     QList<QKeySequence> shortcuts;
-    QList<QKeySequence> shortcutsWithCommandModifier;
-    QList<QKeySequence> shortcutsWithoutCommandModifier;
-    QList<QKeySequence> shortcutAliases;
+    QList<QKeySequence> programWideShortcuts;
+    QList<QKeySequence> viewerLocalShortcuts;
     QKeySequence menuShortcut;
     QString shortcutText;
     QString menuShortcutText;
 };
 
-QList<QKeySequence> filterShortcutsByCommandModifier(
-    const QList<QKeySequence> &shortcuts, bool requireCommandModifier);
 QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts);
-QList<QKeySequence> shortcutAliases(const QList<QKeySequence> &shortcuts);
 QString shortcutListText(const QList<QKeySequence> &shortcuts);
-QList<QKeySequence> sanitizeShortcuts(const QList<QKeySequence> &shortcuts);
-ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &shortcuts,
-    ShortcutAliasPolicy aliasPolicy = ShortcutAliasPolicy::DeriveViewerAlias);
+QList<QKeySequence> sanitizeProgramWideShortcuts(const QList<QKeySequence> &shortcuts);
+ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &programWideShortcuts,
+    const QList<QKeySequence> &viewerLocalShortcuts = {});
 const QList<ApplicationShortcutRoute> &shortcutRoutes();
 std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value);
 bool videoActionUnsupported(ActionId actionId);
