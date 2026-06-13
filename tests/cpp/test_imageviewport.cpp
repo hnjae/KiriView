@@ -27,6 +27,10 @@
 #include <limits>
 #include <memory>
 
+namespace {
+double binaryOctaveZoomStepFactor() { return std::pow(2.0, 1.0 / 8.0); }
+}
+
 class TestImageViewport : public QObject
 {
     Q_OBJECT
@@ -394,7 +398,7 @@ public:
 
     Q_INVOKABLE double steppedManualZoomPercent(double stepCount) const
     {
-        return std::clamp(m_zoomPercent * std::pow(1.1, stepCount),
+        return std::clamp(m_zoomPercent * std::pow(binaryOctaveZoomStepFactor(), stepCount),
             static_cast<double>(minimumManualZoomPercent()),
             static_cast<double>(maximumManualZoomPercent()));
     }

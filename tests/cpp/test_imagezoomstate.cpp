@@ -21,6 +21,8 @@ using kiriview::LoadedImageZoom;
 QUrl containerUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
 qreal longEdge(const QSizeF &size) { return std::max(size.width(), size.height()); }
+
+qreal binaryOctaveZoomStepFactor() { return std::pow(2.0, 1.0 / 8.0); }
 }
 
 class TestImageZoomState : public QObject
@@ -199,15 +201,18 @@ void TestImageZoomState::manualZoomStepsUseMultiplicativeFactor()
     state.setViewportSize(QSizeF(400.0, 300.0), 1.0);
     state.setImageSize(QSize(200, 100), 1.0);
 
-    QVERIFY(imageZoomApproximatelyEqual(ImageZoomState::manualZoomStepFactor(), 1.1));
+    const qreal stepFactor = binaryOctaveZoomStepFactor();
+    QVERIFY(imageZoomApproximatelyEqual(ImageZoomState::manualZoomStepFactor(), stepFactor));
 
     QVERIFY(state.setManualZoomPercent(100.0, 1.0));
-    QVERIFY(imageZoomApproximatelyEqual(state.steppedManualZoomPercent(1.0, 1.0), 110.0));
-    QVERIFY(imageZoomApproximatelyEqual(state.steppedManualZoomPercent(2.0, 1.0), 121.0));
+    QVERIFY(
+        imageZoomApproximatelyEqual(state.steppedManualZoomPercent(1.0, 1.0), 100.0 * stepFactor));
     QVERIFY(imageZoomApproximatelyEqual(
-        state.steppedManualZoomPercent(0.5, 1.0), 100.0 * std::sqrt(1.1)));
+        state.steppedManualZoomPercent(2.0, 1.0), 100.0 * std::pow(2.0, 1.0 / 4.0)));
+    QVERIFY(imageZoomApproximatelyEqual(
+        state.steppedManualZoomPercent(0.5, 1.0), 100.0 * std::pow(2.0, 1.0 / 16.0)));
 
-    QVERIFY(state.setManualZoomPercent(110.0, 1.0));
+    QVERIFY(state.setManualZoomPercent(100.0 * stepFactor, 1.0));
     QVERIFY(imageZoomApproximatelyEqual(state.steppedManualZoomPercent(-1.0, 1.0), 100.0));
 
     const qreal minimumZoomPercent = ImageZoomState::minimumManualZoomPercent();

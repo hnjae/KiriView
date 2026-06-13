@@ -14,6 +14,7 @@
 #include <QTest>
 #include <QUrl>
 #include <QtQml/qqml.h>
+#include <cmath>
 #include <limits>
 #include <memory>
 
@@ -66,6 +67,8 @@ QUrl imageZoomControlsQmlUrl()
             .absoluteFilePath(QStringLiteral("../../src/qml/ImageZoomControls.qml")));
 }
 
+double binaryOctaveZoomStepFactor() { return std::pow(2.0, 1.0 / 8.0); }
+
 ZoomControlsFixture createZoomControlsFixture()
 {
     ZoomControlsFixture fixture;
@@ -84,7 +87,7 @@ ZoomControlsFixture createZoomControlsFixture()
         { QStringLiteral("imageReady"), false },
         { QStringLiteral("minimumManualZoomPercent"), 10 },
         { QStringLiteral("maximumManualZoomPercent"), 1'000'000 },
-        { QStringLiteral("zoomStepFactor"), 1.1 },
+        { QStringLiteral("zoomStepFactor"), binaryOctaveZoomStepFactor() },
     };
     fixture.root.reset(component.createWithInitialProperties(properties));
     if (fixture.root == nullptr) {
