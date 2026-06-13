@@ -236,12 +236,12 @@ constexpr std::array actionDefinitions {
         shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewGoToContentStartAction, "view_go_to_content_start",
         Category::View, kli18nc("@action", "Go to Content Start"), nullptr, noDefaultShortcuts(),
-        portableShortcutSpec("Shift+,"),
+        portableShortcutSpec("Shift+,", "Alt+Home"),
         shortcutRouteSpecs(
             route(ActivationScope::ViewerLocal, Scope::MediaStartEndViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewGoToContentEndAction, "view_go_to_content_end",
         Category::View, kli18nc("@action", "Go to Content End"), nullptr, noDefaultShortcuts(),
-        portableShortcutSpec("Shift+."),
+        portableShortcutSpec("Shift+.", "Alt+End"),
         shortcutRouteSpecs(
             route(ActivationScope::ViewerLocal, Scope::MediaStartEndViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewScanForwardAction, "view_scan_forward", Category::View,
