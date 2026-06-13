@@ -142,7 +142,7 @@ In video mode, Left opens the previous supported media item and Right opens the 
 
 In Right-to-Left Reading mode, Left and Right keep physical horizontal panning while the image can pan horizontally, but their non-pannable ordinary direct media navigation fallback is reversed: Left opens the next supported media item and Right opens the previous supported media item.
 
-When an image is zoomed large enough to pan in any direction, Up and Down pan the image vertically within the available scroll bounds and have no image-navigation fallback. `Shift+,` moves the current content to its scan start position and `Shift+.` moves the current content to its scan end position. For images, scan start and scan end are the same geometry-aware positions used by scan navigation, including Right-to-Left Reading order. The mouse cursor shows that the image can be dragged to pan.
+When an image is zoomed large enough to pan in any direction, Up and Down pan the image vertically within the available scroll bounds and have no image-navigation fallback. `Shift+,` and `Alt+Home` move the current content to its scan start position, and `Shift+.` and `Alt+End` move the current content to its scan end position. For images, scan start and scan end are the same geometry-aware positions used by scan navigation, including Right-to-Left Reading order. The mouse cursor shows that the image can be dragged to pan.
 
 Keyboard panning and Left/Right viewer navigation are inactive while the page number or zoom input is focused.
 
@@ -154,7 +154,7 @@ If keyboard focus is inside the timeline control, that control may handle its ow
 
 Video mode supports fixed local seek shortcuts: `Alt+Left` seeks backward 5 seconds, `Alt+Right` seeks forward 5 seconds, `Alt+Up` seeks forward 45 seconds, and `Alt+Down` seeks backward 45 seconds.
 
-Video mode supports configurable viewer-local current-content boundary shortcuts: `Shift+,` seeks to the start of the current video and `Shift+.` seeks to the end of the current video when the video is seekable and has a known positive duration.
+Video mode supports configurable viewer-local current-content boundary shortcuts: `Shift+,` and `Alt+Home` seek to the start of the current video, and `Shift+.` and `Alt+End` seek to the end of the current video when the video is seekable and has a known positive duration.
 
 Video seek shortcuts are video-mode-only and do not affect image mode, archive collection scope, or directly opened directory collection scope.
 
@@ -176,7 +176,7 @@ When the current image is not zoomed large enough to pan, `.` or `Space` opens t
 
 In video mode, `.` or `Space` opens the next supported media item and `,` or `Shift+Space` opens the previous supported media item in the ordinary direct media scope. They do not pan or seek within the video.
 
-In Right-to-Left Reading mode, scan order starts at the top-right and proceeds toward the bottom-left. The forward scan shortcuts still scan forward or open the next image, the backward scan shortcuts still scan backward or open the previous image, `Shift+,` jumps to the current content start, and `Shift+.` jumps to the current content end.
+In Right-to-Left Reading mode, scan order starts at the top-right and proceeds toward the bottom-left. The forward scan shortcuts still scan forward or open the next image, the backward scan shortcuts still scan backward or open the previous image, `Shift+,` and `Alt+Home` jump to the current content start, and `Shift+.` and `Alt+End` jump to the current content end.
 
 ## Background Loading
 

@@ -104,7 +104,7 @@ In video mode, the shared scan shortcuts also use adjacent navigation: `.` and `
 
 Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Current Content Start, Current Content End, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit. Shared direct media navigation shortcuts use session active-navigation dispatch and availability.
 
-The Current Content Start and Current Content End shortcuts are viewer-local configurable video seek actions. By default, `Shift+,` seeks to position `0 ms` in the current video, and `Shift+.` seeks to the video's known positive duration. They are distinct from the fixed `Alt+Arrow` video seek shortcuts.
+The Current Content Start and Current Content End shortcuts are viewer-local configurable video seek actions. By default, `Shift+,` and `Alt+Home` seek to position `0 ms` in the current video, and `Shift+.` and `Alt+End` seek to the video's known positive duration. They are distinct from the fixed `Alt+Arrow` video seek shortcuts.
 
 `P` toggles play/pause for the current video using the same playback command as the playback panel button.
 
