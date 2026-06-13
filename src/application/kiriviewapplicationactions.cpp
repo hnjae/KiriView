@@ -235,12 +235,13 @@ constexpr std::array actionDefinitions {
         "view-list-icons-symbolic", noDefaultShortcuts(), portableShortcutSpec("T"),
         shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewPanTopLeftAction, "view_pan_top_left", Category::View,
-        kli18nc("@action", "Top Left"), nullptr, noDefaultShortcuts(), portableShortcutSpec("<"),
+        kli18nc("@action", "Top Left"), nullptr, noDefaultShortcuts(),
+        portableShortcutSpec("Shift+,"),
         shortcutRouteSpecs(
             route(ActivationScope::ViewerLocal, Scope::PannableViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewPanBottomRightAction, "view_pan_bottom_right",
         Category::View, kli18nc("@action", "Bottom Right"), nullptr, noDefaultShortcuts(),
-        portableShortcutSpec(">"),
+        portableShortcutSpec("Shift+."),
         shortcutRouteSpecs(
             route(ActivationScope::ViewerLocal, Scope::PannableViewerShortcutScope))),
     registeredAction(Actions::ActionId::ViewScanForwardAction, "view_scan_forward", Category::View,
