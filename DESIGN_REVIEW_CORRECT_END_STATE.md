@@ -4,17 +4,16 @@
 
 KiriView already has a sound architectural direction: `QML -> facade -> C++ runtime/effect executor -> Rust policy`. The main issue is not the absence of layers. The issue is that several boundaries still allow the same domain rule or state concept to be defined more than once, allow external effects to rely on UI/projection availability checks instead of command-boundary validation, and place too much workflow assembly inside facade or runtime composition objects.
 
-The highest-risk findings are around rules that affect real user behavior and state consistency: file deletion eligibility, active-navigation numbered requests, thumbnail source identity, image-open state transitions, and failure representation. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, `KiriViewApplication`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
+The highest-risk findings are around rules that affect real user behavior and state consistency: thumbnail source identity, image-open state transitions, format capability catalogs, and failure representation. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, `KiriViewApplication`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
 
 The correct end state should be precise and conservative, not clever. Rust policy should own duplicated-free domain decisions and typed plans. C++ runtime should own Qt/KDE objects and external effects behind typed adapters. Facades should expose QML-friendly types and forward commands. QML should report geometry/input facts and render projections. Errors should flow internally as typed failures with source, stage, diagnostic detail, severity, and retryability, while the UI receives only user-facing messages.
 
 ## Top Design Risks
 
-1. P1: `ImageDocument` deletion is projected as available only when the document is ready, but the actual side-effect path can bypass that readiness rule.
-2. P1: Identity and validity rules are split across layers, especially `ThumbnailSourceKey` vs. `ActiveNavigationThumbnailSourceKey` and raw active-navigation numbered dispatch.
-3. P1: `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
-4. P1: Image, video, and file-operation failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
-5. P1/P2: HEIF/BMFF brands, image format capabilities, and image-open state transitions are not enforced by one central catalog or state-machine boundary.
+1. P1: Identity rules are split across layers, especially `ThumbnailSourceKey` vs. `ActiveNavigationThumbnailSourceKey`.
+2. P1: `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
+3. P1: Image, video, and file-operation failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
+4. P1/P2: HEIF/BMFF brands, image format capabilities, and image-open state transitions are not enforced by one central catalog or state-machine boundary.
 
 ## Single Source of Truth Violations
 
@@ -69,26 +68,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Priority: P2
 
 ## Invariant and Correctness Risks
-
-### Finding: Image document deletion bypasses the Ready/deletion-availability invariant at the side-effect boundary
-
-- Evidence: `src/session/documentsessionpublicprojection.cpp:69` has `displayedFileDeletionAvailableForInput`, which checks `fileDeletionInProgress` and image `readyForDeletion`. `src/session/documentsessionruntime.cpp:578` has `DocumentSessionRuntime::deleteDisplayedFile`, which forwards non-direct image deletion to `m_imageDocument.deleteDisplayedFile(mode)` without using `displayedFileDeletionAvailable()`. `src/session/documentsessionruntime.cpp:714` sets `snapshot.readyForDeletion = m_imageDocument.ready()`. `src/facade/kiriimagedocument.h:254` exposes `KiriImageDocument::deleteDisplayedFile` as a public `Q_INVOKABLE`. `src/document/imagedocumentdeletioncontroller.cpp:40` checks only `hasImage()` and an image-removal target.
-- Current state: The public session projection says image deletion is available only when the image document is ready, but the actual image deletion command owner does not enforce that invariant. A loading path can retain a previous page surface, so `hasImage()` is not the same as deletion-ready.
-- Design concern: File deletion is an external side effect, but eligibility is enforced opportunistically through UI/session projection instead of the command boundary. A public invokable or image-session branch can bypass the same rule direct-media deletion uses.
-- Correct end state: A single image deletion eligibility policy/plan should be used by `DocumentSessionRuntime`, `KiriImageDocument`, and `ImageDocumentDeletionController`. The provider should receive only requests that pass status `Ready`, valid displayed target, no in-progress deletion, and correct session/source ownership context.
-- Suggested migration: Add characterization tests for `Loading`, `Error`, replacement load with retained image surface, and in-progress deletion states. Introduce an `ImageDocumentDeletionEligibilitySnapshot` or equivalent plan function and use it before session forwarding and before provider invocation.
-- Acceptance criteria: `FileDeletionProvider` is not invoked unless the image document is deletion-ready; `DocumentSessionRuntime` and `KiriImageDocument` agree on deletion availability for the same snapshot.
-- Priority: P1
-
-### Finding: Active navigation numbered dispatch does not centrally validate number ranges
-
-- Evidence: `src/session/activenavigationprojection.cpp:63` stores raw numbers in `numberedActiveNavigationDispatchRequest(int number)`. `src/session/documentsessionruntime.cpp:473` forwards the number into the dispatch plan. `src/policy/activenavigation.rs:250` dispatches `Number` requests when the snapshot is known/editable but does not validate `1 <= number <= snapshot.count`. `src/navigation/directmedianavigationmodel.cpp:14` clamps invalid numbers. `src/navigation/imagedocumentpagenavigationpolicy.cpp:204` rejects invalid pages with `std::nullopt`. `tests/cpp/test_activenavigationprojection.cpp:253` covers valid numbered dispatch but not out-of-range dispatch.
-- Current state: Active-navigation projection normalizes availability, but numbered command validity is left to downstream owners. Direct media clamps invalid requests, while image-document page navigation rejects/no-ops them.
-- Design concern: The central active-navigation policy can emit invalid operations. The same public command has source-dependent out-of-range semantics.
-- Correct end state: `activeNavigationDispatchPlan` should validate numbers against the normalized snapshot count. The outcome should be an explicit no-op, boundary result, or documented clamp before any `OpenDirectMediaNavigationAtNumberOperation` or `OpenImageDocumentPageAtNumberOperation` is constructed.
-- Suggested migration: Add Rust and C++ characterization tests for `0`, negative, valid, and `> count` requests for both direct media and image-document pages. If direct-media clamping is intentional user-facing behavior, move the clamp into active-navigation policy and apply it consistently.
-- Acceptance criteria: Active-navigation dispatch operations never contain numbers outside `1..count`; invalid numbered command semantics are consistent for direct media and image-document pages.
-- Priority: P1
 
 ### Finding: Image open transitions can represent contradictory document state
 
@@ -370,22 +349,22 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Active thumbnail demand validation/bucketing rules exist in one production-used type, and tests validate that type.
 - Priority: P3
 
-### Finding: `ImageDocumentRuntimePlan` should remain, but its operation vocabulary is too broad
+### Finding: `ImageDocumentRuntimePlan` should remain, but its operation vocabulary is still too broad
 
-- Evidence: `src/document/imagedocumentruntimeplan.h:107-123` defines `ImageDocumentRuntimeOperation` variants covering lifecycle, media entry source, predecode, spread, navigation, open, and source-load operations. `src/document/imagedocumentruntimecontrollers.cpp:170-278` dispatches those operations into sibling controllers.
-- Current state: The runtime plan is useful as a C++ side-effect boundary, but it is used like a broad operation bus rather than a vocabulary that exposes phase/owner boundaries.
-- Design concern: Removing the plan concept would conflict with architecture docs; the problem is broad vocabulary and hidden dispatch ownership.
+- Evidence: `src/document/imagedocumentruntimeplan.h:107-123` defines `ImageDocumentRuntimeOperation` variants covering lifecycle, media entry source, predecode, spread, navigation, open, and source-load operations. `src/document/imagedocumentruntimeplanexecutor.h` groups runtime operations by family and `src/document/imagedocumentruntimeplanexecutor.cpp` owns explicit dispatch, but `src/document/imagedocumentruntimecontrollers.cpp:170-278` still builds one broad operation table that reaches across sibling controllers.
+- Current state: The runtime plan is useful as a C++ side-effect boundary, and dispatch has moved out of the composition root into `ImageDocumentRuntimePlanExecutor`. The remaining issue is that the plan vocabulary and bound operation table still span most image-document workflows at once.
+- Design concern: Removing the plan concept would conflict with architecture docs; the problem is broad vocabulary and cross-feature operation ownership.
 - Correct end state: Keep the plan as the canonical side-effect boundary, but split operation families and executor ownership by phase/feature.
 - Suggested migration: Gradually split source-load, open, navigation, and predecode operation families into named executors, and shrink the broad variant list through compatibility wrappers.
-- Acceptance criteria: Plan consumers are split by feature family, and the controller composition root no longer builds one broad dispatch table directly.
+- Acceptance criteria: Plan consumers are split by feature family; feature-specific executors can be tested without binding unrelated lifecycle, predecode, spread, navigation, open, and source-load callbacks.
 - Priority: P2
 
 ## Recommended Correct End-State Architecture
 
 - Ownership boundaries: `DocumentSessionState` owns public mixed-media projection and snapshot publication. `DocumentSessionRuntime` orchestrates named subowners for route, direct-media navigation, deletion, Open With, video-output, thumbnails, and predecode through typed results/effects.
-- Domain rules: HEIF/BMFF brands, image format capability, active-navigation numbered semantics, deletion eligibility, and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
+- Domain rules: HEIF/BMFF brands, image format capability, thumbnail source identity, and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
 - State definition: Image document state changes pass through named transitions or a validating final-state boundary. Thumbnail source identity is defined by one canonical value object that separates durable identity from freshness generation.
-- Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. File deletion, Open With, navigation dispatch, and source-load planning all pass through typed plans before providers run.
+- Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Open With and source-load planning should pass through typed plans before providers run.
 - External effects: `KCoreDirLister`, `QFileInfo`, xattrs, environment variables, `sysconf`, Qt timers, thread count, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
 - Error representation: Image, video, KIO operation, media-entry source, and thumbnail generation failures use typed failures. Internal paths preserve source identity, stage/kind, backend/raw code, severity, and retryability. QML receives user-facing projections.
 - Facade/QML: `KiriImageDocument` and `KiriViewApplication` expose QML-friendly types, invokables, and signals. Viewport command planning and action routing input assembly move into presentation/application runtime. QML continues to report geometry/input facts and render projections.
@@ -393,7 +372,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ## Suggested Refactoring Sequence
 
-1. Add characterization tests around current behavior: deletion eligibility in `Loading`/`Error`/retained-image states, invalid active-navigation numbers for direct media and image-document pages, thumbnail source key normalization/generation behavior, route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
+1. Add characterization tests around current behavior: thumbnail source key normalization/generation behavior, route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
 2. Centralize duplicated rules/state: extract HEIF/BMFF brand classification, add image format capability alignment tests, create canonical thumbnail source identity, centralize zoom preset descriptors, and centralize `ImageShortcutScope` validity.
 3. Isolate core domain logic from external effects: add a directory watch provider seam, thread timer scheduler/system facts into predecode coordinators, split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
 4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, move application action input/port assembly into application runtime/coordinator, and move `MediaEntrySourceStore` document planning out of `src/archive/`.
@@ -405,17 +384,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Do not move `src/qml/NavigationPresentationOrder.qml` out of QML just because it contains logic. Existing architecture tests intentionally expect QML to own RTL-aware presentation order for visual projection.
 - Do not collapse all Rust/C++ mirror enums or bridge conversions. Some duplication at the FFI boundary is intentional; the target is duplicated domain policy, not exhaustive conversion code.
 - Do not rewrite `DocumentSessionRuntime` or `ImageDocumentRuntimeControllers` wholesale. Extract one workflow at a time behind characterization tests.
-- Do not change invalid numbered-navigation behavior before deciding whether direct-media clamping is intentional user-visible behavior. First capture current direct-media and image-document page semantics.
 - Do not remove `ImageDocumentRuntimePlan` as a concept. It matches the documented C++ side-effect boundary; the problem is broad operation vocabulary and hidden dispatch ownership.
 - Do not introduce a generic logging/observability framework before typed failure values exist. Without typed failures, logging would mostly preserve the current string ambiguity.
 - Do not alter user-visible error text as part of the first migration unless current text is clearly a bug. Internal typed diagnostics can be added while preserving existing UI messages.
-
-## Appendix: Subagent Reports
-
-- Single Source of Truth / Duplication Agent: Reported HEIF/BMFF brand duplication, image format catalog split, thumbnail source identity split, zoom preset duplication, and `ImageShortcutScope` validity duplication. All were accepted. Thumbnail identity was merged with the deletion/modularity parallel-abstraction finding. Image format catalog was merged with the modularity finding about format support being hard to add/remove.
-- Invariant / Correctness Agent: Reported image deletion readiness bypass, active-navigation numbered dispatch validation gap, image-open contradictory state, and uncertain visible image without provider-ready source. Deletion and numbered dispatch were promoted to top design risks. The image presentation provider-ready issue was kept uncertain because production reachability needs more evidence.
-- Cohesion / Coupling / Ownership Agent: Reported `DocumentSessionRuntime` breadth, wide session leaf ports, `ImageDocumentRuntimeControllers` callback mesh, `MediaEntrySourceStore` upward dependency, `async/imageiojobs` mixed ownership, flat application command router ports, and `navigation/mediaformatregistry` UI text. These were accepted, with `mediaformatregistry` marked uncertain/P3 because navigation ownership for predicates may be intentional while localized UI text is the clearer issue.
-- Logic Placement / Flow Readability Agent: Reported viewport planning in `KiriImageDocument`, application action routing input in `KiriViewApplication`, mixed route plan phases, and uncertain QML page-number clamping. Viewport planning was promoted to P1. Page-number clamping was merged into the stronger active-navigation numbered dispatch finding, retaining uncertainty only around exact intended clamp/no-op behavior.
-- Testability Agent: Reported live directory watch missing provider seam, hidden predecode timer seam, filesystem probes in image load planning, OS/process probes in navigation-source identity, host-memory budget resolution outside DI, and shortcut dispatch private in Qt runtime. All were accepted and placed under Testability. The live directory and predecode timer findings are P1 because they affect core navigation/predecode behavior and produce slow or brittle tests.
-- Error Handling / Observability Agent: Reported string-only image failures, discarded video failure metadata, KIO failure/cancellation inconsistency, collection source error inconsistency, tile fallback cause overwrite, thumbnail diagnostics drop, and uncertain silent async no-op paths. All evidence-backed findings were accepted; async no-op was kept uncertain/P3 pending reachability classification.
-- Deletion / Modularity / Abstraction Agent: Reported `DocumentSessionRuntime` convergence, wide session ports, `ImageDocumentRuntimeControllers` mesh, `MediaEntrySourceStore` upward dependency, `async/imageiojobs` mixed module, flat command router ports, thumbnail source identity parallel abstractions, image format modularity, and uncertain `mediaformatregistry` UI text. Duplicate items were merged with cohesion and single-source findings. The main-agent local check added the P3 `ActiveNavigationThumbnailDemandTracker` finding because `rg` showed production demand flow bypassing the tracker while tests cover it directly.
