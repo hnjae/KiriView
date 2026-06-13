@@ -284,10 +284,12 @@ in
               --all-features \
               --jobs "$test_jobs"
 
+          cmake_make_program="$(command -v make)"
           cmake \
               -S tests/cpp \
               -B target/devenv/cpp-tests \
               -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_MAKE_PROGRAM="$cmake_make_program" \
               -DKIRIVIEW_CARGO_TARGET_DIR=${lib.escapeShellArg "${rustHostCargoTargetDir}/debug"}
           printf 'Building and running host C++ tests with %d jobs...\n' "$test_jobs"
           cmake --build target/devenv/cpp-tests --parallel "$test_jobs"

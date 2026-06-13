@@ -170,6 +170,12 @@ msgstr ""
 #: src/application/applicationactionstatepolicy.cpp
 #, kde-format
 msgctxt "@action:inmenu"
+msgid "&Play/Pause"
+msgstr ""
+
+#: src/application/applicationactionstatepolicy.cpp
+#, kde-format
+msgctxt "@action:inmenu"
 msgid "&Fullscreen"
 msgstr ""
 
@@ -227,6 +233,18 @@ msgstr ""
 #, kde-format
 msgctxt "@info:keyboard shortcut"
 msgid "Unassigned"
+msgstr ""
+
+#: src/application/applicationshortcutruntime.cpp
+#, kde-format
+msgctxt "@info:shortcut scope"
+msgid "Program-wide"
+msgstr ""
+
+#: src/application/applicationshortcutruntime.cpp
+#, kde-format
+msgctxt "@info:shortcut scope"
+msgid "Viewer-local"
 msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp
@@ -391,6 +409,11 @@ msgstr ""
 #: src/application/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Scan Backward"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Play/Pause"
 msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp
@@ -1050,6 +1073,11 @@ msgstr ""
 
 #: src/qml/Main.qml
 msgctxt "@info:status"
+msgid "This action is not available for images"
+msgstr ""
+
+#: src/qml/Main.qml
+msgctxt "@info:status"
 msgid "Could not open media with another application"
 msgstr ""
 
@@ -1060,7 +1088,12 @@ msgstr ""
 
 #: src/qml/ShortcutDelegate.qml
 msgctxt "@info:accessible"
-msgid "%1, shortcut %2"
+msgid "%1, %2 shortcut %3"
+msgstr ""
+
+#: src/qml/ShortcutDelegate.qml
+msgctxt "@info:accessible"
+msgid "%1, %2"
 msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml
