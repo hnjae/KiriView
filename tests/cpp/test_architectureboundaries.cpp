@@ -56,6 +56,7 @@ private Q_SLOTS:
     void sourceKeysExposeOperationalExtensionContracts();
     void openedCollectionThumbnailEligibilityUsesSharedPolicy();
     void decodingUsesNeutralThumbnailContracts();
+    void cppNamespaceIsLowercaseKiriview();
     void thumbnailGenerationContractsLiveInThumbnailModule();
     void documentSessionUsesThumbnailStripDependencyPort();
     void imagePageSurfaceOwnerTypeExists();
@@ -1090,6 +1091,39 @@ void TestArchitectureBoundaries::decodingUsesNeutralThumbnailContracts()
     const QString cacheLookupHeader
         = readProjectFile(QStringLiteral("src/thumbnail/thumbnailcachelookup.h"));
     QVERIFY(cacheLookupHeader.contains(QStringLiteral("ThumbnailCacheLookupRequest")));
+}
+
+void TestArchitectureBoundaries::cppNamespaceIsLowercaseKiriview()
+{
+    const QList<QRegularExpression> forbiddenCppPatterns {
+        QRegularExpression(QStringLiteral(R"(\bnamespace\s+KiriView\b)")),
+        QRegularExpression(QStringLiteral(R"(\bKiriView::)")),
+        QRegularExpression(QStringLiteral(R"(\busing\s+namespace\s+KiriView\b)")),
+    };
+    const QList<QRegularExpression> forbiddenRustPatterns {
+        QRegularExpression(QStringLiteral(R"(namespace\s*=\s*"KiriView")")),
+    };
+
+    QStringList violations;
+    for (const QString &filePath : projectFilesUnder(QStringList { QStringLiteral("src") },
+             QStringList {
+                 QStringLiteral("*.cpp"),
+                 QStringLiteral("*.h"),
+             })) {
+        const QString matches = matchingLines(filePath, forbiddenCppPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+    for (const QString &filePath : projectFilesUnder(QStringList { QStringLiteral("src/policy") },
+             QStringList { QStringLiteral("*.rs") })) {
+        const QString matches = matchingLines(filePath, forbiddenRustPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
 void TestArchitectureBoundaries::thumbnailGenerationContractsLiveInThumbnailModule()
