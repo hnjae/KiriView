@@ -320,6 +320,6 @@ Changing a shortcut updates the toolbar, application menu, menubar, shortcut hel
 
 Shortcut changes apply immediately and persist across launches.
 
-When an action has a user-configurable shortcut that uses Ctrl or Ctrl+Shift and can be used safely as a viewer-only shortcut without Ctrl, KiriView derives a matching runtime-only viewer alias by dropping Ctrl from that shortcut. Examples include Ctrl+I to `i`, Ctrl+T to `t`, Ctrl+L to `l`, Ctrl+Shift+R to Shift+R, Ctrl+< to `<`, Ctrl+[ to `[`, Ctrl+Home to Home, and Ctrl+End to End. Derived aliases are not stored, are inactive while the page number or zoom input is focused, are not user-configurable shortcuts, and are not displayed as separate shortcuts in menus, Keyboard Shortcuts configuration, or the Keyboard Shortcuts help.
+Changing a program-wide shortcut does not create a viewer-local alias, and changing a viewer-local shortcut does not create a program-wide fallback.
 
-Unmodified ASCII printable shortcuts are not kept as user-configurable action shortcuts.
+Unmodified ASCII printable shortcuts are not kept as program-wide user-configurable action shortcuts.

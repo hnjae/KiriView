@@ -2,7 +2,7 @@
 
 ## Two-Page Spread and Reading Direction
 
-When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is displayed, Ctrl+S toggles Two-Page Spread.
+When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is displayed, `S` toggles Two-Page Spread.
 
 Two-Page Spread displays the current page on the left and the next page on the right when both pages are eligible images.
 
@@ -18,7 +18,7 @@ Two-Page Spread is unavailable for ordinary image files, direct video files, KDE
 
 Showing a disabled Two-Page Spread toolbar control while a directly opened ZIP, TAR, 7Z, RAR, or directory collection is active does not make Two-Page Spread available.
 
-When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is displayed, Ctrl+B toggles Right-to-Left Reading mode.
+When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is displayed, `B` toggles Right-to-Left Reading mode.
 
 Right-to-Left Reading mode is off by default, is unavailable for ordinary image files, direct video files, KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories, and is not saved as a global setting.
 
@@ -90,9 +90,9 @@ Candidates are sorted with the same user locale-aware file name order used for i
 
 Navigation does not wrap. Pressing Previous Archive on the first candidate or Next Archive on the last candidate keeps the current view unchanged.
 
-`Ctrl+[` opens the previous sibling archive and `Ctrl+]` opens the next sibling archive when archive navigation is available.
+`[` opens the previous sibling archive and `]` opens the next sibling archive when archive navigation is available.
 
-Ctrl+Home opens the first image in the current archive, and Ctrl+End opens the last image in the current archive.
+`Home` opens the first image in the current archive, and `End` opens the last image in the current archive.
 
 Opening a comic book archive displays the first supported image or supported video in that archive using the same archive media ordering as page navigation. If the first supported item is a video, KiriView displays the unsupported-video placeholder.
 

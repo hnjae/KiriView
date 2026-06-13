@@ -106,7 +106,7 @@ Rotation is display-only. It does not modify image files, metadata, archive cont
 
 Fit, Fit Height, Fit Width, manual zoom, scrollbars, drag panning, wheel zoom, keyboard panning, and scan shortcuts use the rotated logical image bounds.
 
-Ctrl+R rotates clockwise, and Ctrl+Shift+R rotates counterclockwise.
+`R` rotates clockwise, and `Shift+R` rotates counterclockwise.
 
 Rotation resets to 0 degrees whenever a different image or page is displayed, and it also resets when the displayed image is cleared.
 
@@ -134,7 +134,7 @@ When an image is ready and the zoom input is not being edited, unmodified wheel 
 
 The toolbar fit control is a menu button that starts with Fit to Window selected. The button displays the currently selected fit mode's icon and label and opens a menu when clicked; clicking the button itself does not apply a fit mode. The menu offers Fit to Window, Fit Width, and Fit Height; selecting a menu item immediately applies that fit mode and updates the button's icon, label, and tooltip. Manual zoom does not replace the selected fit mode displayed by the button.
 
-When an image is ready, Ctrl+= or Ctrl++ zooms in by multiplying the current zoom by 1.1, and Ctrl+- zooms out by multiplying the current zoom by 1/1.1.
+When an image is ready, `=` or `+` zooms in by multiplying the current zoom by 1.1, and `-` zooms out by multiplying the current zoom by 1/1.1.
 
 Keyboard zoom uses the same dynamic manual zoom range as the toolbar zoom input.
 
@@ -142,7 +142,7 @@ Holding Ctrl and using the mouse wheel, or holding the right mouse button and us
 
 Double-clicking the image viewport toggles between Fit mode and 100% manual zoom. If the current zoom mode is Fit, double-clicking switches to 100% manual zoom around the clicked viewport point when it is over the image, or around the nearest displayed image point when the click is inside the viewport outside the image. If the current zoom mode is Manual, Fit Height, or Fit Width, double-clicking switches to Fit mode.
 
-When an image is ready, Ctrl+` switches to 50% manual zoom, Ctrl+1 switches to 100% manual zoom, Ctrl+2 switches to 200% manual zoom, Ctrl+8 selects Fit Height mode, Ctrl+9 selects Fit Width mode, and Ctrl+0 selects Fit to Window mode.
+When an image is ready, `` ` `` switches to 50% manual zoom, `1` switches to 100% manual zoom, `2` switches to 200% manual zoom, `8` selects Fit Height mode, `9` selects Fit Width mode, and `0` selects Fit to Window mode.
 
 Viewport zoom, fit, panning, and scan results are computed from the current active presentation state. Physical gesture sampling may happen in the Qt Quick viewport, but stale or delayed physical viewport callbacks must not overwrite newer zoom, pan, rotation, resize, or device-pixel-ratio results.
 

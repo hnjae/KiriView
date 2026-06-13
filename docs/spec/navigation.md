@@ -142,7 +142,7 @@ In video mode, Left opens the previous supported media item and Right opens the 
 
 In Right-to-Left Reading mode, Left and Right keep physical horizontal panning while the image can pan horizontally, but their non-pannable ordinary direct media navigation fallback is reversed: Left opens the next supported media item and Right opens the previous supported media item.
 
-When an image is zoomed large enough to pan in any direction, Up and Down pan the image vertically within the available scroll bounds and have no image-navigation fallback. Ctrl+< moves the pan position to the top-left, Ctrl+> moves the pan position to the bottom-right, and the mouse cursor shows that the image can be dragged to pan.
+When an image is zoomed large enough to pan in any direction, Up and Down pan the image vertically within the available scroll bounds and have no image-navigation fallback. `<` moves the pan position to the top-left, `>` moves the pan position to the bottom-right, and the mouse cursor shows that the image can be dragged to pan.
 
 Keyboard panning and Left/Right viewer navigation are inactive while the page number or zoom input is focused.
 
@@ -162,17 +162,17 @@ The actual landed position may be adjusted by the Qt Multimedia backend, commonl
 
 ## Scan Shortcuts
 
-When an image is zoomed large enough to pan, Ctrl+. scans forward through the image from left to right and then top to bottom.
+When an image is zoomed large enough to pan, `.` or `Space` scans forward through the image from left to right and then top to bottom.
 
 Each scan step moves horizontally or vertically by at most three quarters of the visible viewport, except that moving from the right edge of one row to the next row jumps directly to the left edge of the next row.
 
-At the final scan position, Ctrl+. opens the next image.
+At the final scan position, `.` or `Space` opens the next image.
 
-Ctrl+, scans backward through the same positions. At the initial scan position, it opens the previous image, starting that image at its final scan position.
+`,` or `Shift+Space` scans backward through the same positions. At the initial scan position, it opens the previous image, starting that image at its final scan position.
 
-When the current image is not zoomed large enough to pan, Ctrl+. opens the next image and Ctrl+, opens the previous image.
+When the current image is not zoomed large enough to pan, `.` or `Space` opens the next image and `,` or `Shift+Space` opens the previous image.
 
-In Right-to-Left Reading mode, scan order starts at the top-right and proceeds toward the bottom-left. Ctrl+. still scans forward or opens the next image, Ctrl+, still scans backward or opens the previous image, Ctrl+< jumps to scan start, and Ctrl+> jumps to scan end.
+In Right-to-Left Reading mode, scan order starts at the top-right and proceeds toward the bottom-left. The forward scan shortcuts still scan forward or open the next image, the backward scan shortcuts still scan backward or open the previous image, `<` jumps to scan start, and `>` jumps to scan end.
 
 ## Background Loading
 
