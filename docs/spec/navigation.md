@@ -142,7 +142,7 @@ In video mode, Left opens the previous supported media item and Right opens the 
 
 In Right-to-Left Reading mode, Left and Right keep physical horizontal panning while the image can pan horizontally, but their non-pannable ordinary direct media navigation fallback is reversed: Left opens the next supported media item and Right opens the previous supported media item.
 
-When an image is zoomed large enough to pan in any direction, Up and Down pan the image vertically within the available scroll bounds and have no image-navigation fallback. `<` moves the pan position to the top-left, `>` moves the pan position to the bottom-right, and the mouse cursor shows that the image can be dragged to pan.
+When an image is zoomed large enough to pan in any direction, Up and Down pan the image vertically within the available scroll bounds and have no image-navigation fallback. `Shift+,` moves the pan position to the top-left, `Shift+.` moves the pan position to the bottom-right, and the mouse cursor shows that the image can be dragged to pan.
 
 Keyboard panning and Left/Right viewer navigation are inactive while the page number or zoom input is focused.
 
@@ -174,7 +174,7 @@ When the current image is not zoomed large enough to pan, `.` or `Space` opens t
 
 In video mode, `.` or `Space` opens the next supported media item and `,` or `Shift+Space` opens the previous supported media item in the ordinary direct media scope. They do not pan or seek within the video.
 
-In Right-to-Left Reading mode, scan order starts at the top-right and proceeds toward the bottom-left. The forward scan shortcuts still scan forward or open the next image, the backward scan shortcuts still scan backward or open the previous image, `<` jumps to scan start, and `>` jumps to scan end.
+In Right-to-Left Reading mode, scan order starts at the top-right and proceeds toward the bottom-left. The forward scan shortcuts still scan forward or open the next image, the backward scan shortcuts still scan backward or open the previous image, `Shift+,` jumps to scan start, and `Shift+.` jumps to scan end.
 
 ## Background Loading
 
