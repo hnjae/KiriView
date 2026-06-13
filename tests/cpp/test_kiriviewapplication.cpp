@@ -311,6 +311,10 @@ void TestKiriViewApplication::mediaShortcutPolicyApiExposesApplicationPolicy()
     QVERIFY(application.videoActionUnsupported(KiriViewApplication::ViewZoom100PercentAction));
     QVERIFY(application.videoActionUnsupported(KiriViewApplication::ViewZoom200PercentAction));
     QVERIFY(!application.videoActionUnsupported(KiriViewApplication::WindowFullscreenAction));
+    QVERIFY(
+        !application.videoActionUnsupported(KiriViewApplication::ViewToggleVideoPlaybackAction));
+    QVERIFY(application.imageActionUnsupported(KiriViewApplication::ViewToggleVideoPlaybackAction));
+    QVERIFY(!application.imageActionUnsupported(KiriViewApplication::ViewZoomInAction));
 
     QVERIFY(application.mediaHorizontalArrowShortcutsEnabled(false, true, false, false, false));
     QVERIFY(!application.mediaHorizontalArrowShortcutsEnabled(false, false, true, true, false));
@@ -334,6 +338,8 @@ void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
         QList<QKeySequence>({ shortcut(QStringLiteral("I")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("view_toggle_thumbnail_panel")),
         QList<QKeySequence>({ shortcut(QStringLiteral("T")) }));
+    QCOMPARE(application.shortcuts(QStringLiteral("view_toggle_video_playback")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("P")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("options_show_menubar")),
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+M")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("open_application_menu")),
@@ -388,6 +394,8 @@ void TestKiriViewApplication::zoomPresetActionsUseNewDefaultShortcutMap()
         QList<QKeySequence>({ shortcut(QStringLiteral("9")) }));
     QCOMPARE(application.viewerLocalShortcuts(QStringLiteral("view_fit")),
         QList<QKeySequence>({ shortcut(QStringLiteral("0")) }));
+    QCOMPARE(application.viewerLocalShortcuts(QStringLiteral("view_toggle_video_playback")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("P")) }));
     QVERIFY(application.action(QStringLiteral("view_actual_size")) == nullptr);
 }
 
@@ -589,6 +597,16 @@ void TestKiriViewApplication::shortcutHelpModelListsConfigurableActions()
     QCOMPARE(model->data(zoomPresetIndex, shortcutHelpShortcutKeyTextsRole).toStringList(),
         QStringList({ nativeText(shortcut(QStringLiteral("1"))) }));
     QCOMPARE(model->data(zoomPresetIndex, shortcutHelpCategoryKeyRole).toString(),
+        QStringLiteral("view"));
+
+    const QModelIndex videoPlaybackIndex
+        = shortcutHelpIndexForAction(model, QStringLiteral("view_toggle_video_playback"));
+    QVERIFY(videoPlaybackIndex.isValid());
+    QCOMPARE(model->data(videoPlaybackIndex, shortcutHelpActionTextRole).toString(),
+        QStringLiteral("Play/Pause"));
+    QCOMPARE(model->data(videoPlaybackIndex, shortcutHelpShortcutKeyTextsRole).toStringList(),
+        QStringList({ nativeText(shortcut(QStringLiteral("P"))) }));
+    QCOMPARE(model->data(videoPlaybackIndex, shortcutHelpCategoryKeyRole).toString(),
         QStringLiteral("view"));
 
     const QModelIndex panelsIndex

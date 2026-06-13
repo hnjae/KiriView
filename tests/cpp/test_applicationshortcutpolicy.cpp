@@ -96,6 +96,7 @@ private Q_SLOTS:
     void shortcutScopeValuesMapOnlyKnownScopes();
     void videoShortcutScopesUseViewerDeletionAndNavigationGates();
     void videoUnsupportedActionPolicyRejectsImageOnlyCommands();
+    void imageUnsupportedActionPolicyRejectsVideoOnlyCommands();
     void horizontalArrowShortcutPolicyUsesActiveMediaMode();
 };
 
@@ -197,6 +198,8 @@ void TestApplicationShortcutPolicy::actionDefinitionsOwnApplicationShortcutRoute
         Scope::ViewerShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::ViewToggleThumbnailPanelAction, ActivationScope::ViewerLocal,
         Scope::ViewerShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::ViewToggleVideoPlaybackAction, ActivationScope::ViewerLocal,
+        Scope::ReadyViewerShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::GoPreviousImageAction, ActivationScope::ViewerLocal,
         Scope::ImageSelectionViewerShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::GoFirstImageAction, ActivationScope::ViewerLocal,
@@ -271,7 +274,7 @@ void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
             ActionId::ViewZoom200PercentAction, ActionId::ViewFitAction,
             ActionId::ViewFitHeightAction, ActionId::ViewFitWidthAction,
             ActionId::ViewToggleTwoPageModeAction, ActionId::ViewScanForwardAction,
-            ActionId::ViewScanBackwardAction }));
+            ActionId::ViewScanBackwardAction, ActionId::ViewToggleVideoPlaybackAction }));
 
     const KiriView::ApplicationActions::ApplicationShortcutRoute *containerRoute
         = routeFor(ActivationScope::ViewerLocal, Scope::ContainerViewerShortcutScope);
@@ -393,6 +396,20 @@ void TestApplicationShortcutPolicy::videoUnsupportedActionPolicyRejectsImageOnly
     QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::FileOpenAction));
     QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::GoPreviousImageAction));
     QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::FileDeleteAction));
+    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(
+        ActionId::ViewToggleVideoPlaybackAction));
+}
+
+void TestApplicationShortcutPolicy::imageUnsupportedActionPolicyRejectsVideoOnlyCommands()
+{
+    QVERIFY(KiriView::ApplicationActions::imageActionUnsupported(
+        ActionId::ViewToggleVideoPlaybackAction));
+    QVERIFY(!KiriView::ApplicationActions::imageActionUnsupported(ActionId::ViewZoomInAction));
+    QVERIFY(
+        !KiriView::ApplicationActions::imageActionUnsupported(ActionId::ViewRotateClockwiseAction));
+    QVERIFY(
+        !KiriView::ApplicationActions::imageActionUnsupported(ActionId::WindowFullscreenAction));
+    QVERIFY(!KiriView::ApplicationActions::imageActionUnsupported(ActionId::FileOpenAction));
 }
 
 void TestApplicationShortcutPolicy::horizontalArrowShortcutPolicyUsesActiveMediaMode()

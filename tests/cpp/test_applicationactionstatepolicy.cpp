@@ -42,6 +42,7 @@ class TestApplicationActionStatePolicy : public QObject
 private Q_SLOTS:
     void visiblePreviousNextPlacementsDisableAtBoundaries();
     void sharedActionEnabledStateUsesRuntimeGates();
+    void videoPlaybackActionUsesVideoModeGates();
     void disabledStableActionsKeepPlacement();
     void checkedStateComesFromRuntimeInputs();
 };
@@ -82,6 +83,23 @@ void TestApplicationActionStatePolicy::sharedActionEnabledStateUsesRuntimeGates(
     QVERIFY(!stateFor(ActionId::FileOpenAction, input).actionEnabled);
     QVERIFY(!stateFor(ActionId::FileOpenWithAction, input).actionEnabled);
     QVERIFY(!stateFor(ActionId::GoPreviousImageAction, input).actionEnabled);
+}
+
+void TestApplicationActionStatePolicy::videoPlaybackActionUsesVideoModeGates()
+{
+    auto input = readyImageInput();
+
+    QVERIFY(!stateFor(ActionId::ViewToggleVideoPlaybackAction, input).actionEnabled);
+
+    input.videoMode = true;
+    QVERIFY(stateFor(ActionId::ViewToggleVideoPlaybackAction, input).actionEnabled);
+
+    input.fileDeletionInProgress = true;
+    QVERIFY(!stateFor(ActionId::ViewToggleVideoPlaybackAction, input).actionEnabled);
+
+    input.fileDeletionInProgress = false;
+    input.helpActionsEnabled = false;
+    QVERIFY(!stateFor(ActionId::ViewToggleVideoPlaybackAction, input).actionEnabled);
 }
 
 void TestApplicationActionStatePolicy::disabledStableActionsKeepPlacement()

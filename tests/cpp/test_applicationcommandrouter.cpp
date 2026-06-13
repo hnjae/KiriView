@@ -33,6 +33,7 @@ struct CommandLog {
     int nextDisplayedImageStartToFinalScanPositionCount = 0;
     int firstImageBoundaryCount = 0;
     int seekCount = 0;
+    int toggleVideoPlaybackCount = 0;
     qint64 lastSeekDeltaMilliseconds = 0;
 };
 
@@ -136,6 +137,10 @@ ApplicationCommandRouterPorts commandPorts(CommandLog &log)
         ++log.seekCount;
         log.lastSeekDeltaMilliseconds = deltaMilliseconds;
     };
+    ports.toggleVideoPlayback = [&log]() {
+        log.actionCalls.push_back(QStringLiteral("toggle-video-playback"));
+        ++log.toggleVideoPlaybackCount;
+    };
     return ports;
 }
 }
@@ -149,6 +154,7 @@ private Q_SLOTS:
     void videoHorizontalArrowsUseActiveNavigation();
     void actionDispatchRoutesToPorts();
     void singlePageAndVerticalPanRouteToImagePorts();
+    void videoPlaybackActionChecksModeAndVideoAvailability();
     void videoSeekChecksModeAndSeekability();
     void videoScanShortcutsUseActiveNavigation();
     void scanShortcutsRoutePolicyEffects();
@@ -299,6 +305,26 @@ void TestApplicationCommandRouter::singlePageAndVerticalPanRouteToImagePorts()
     QVERIFY(router.executeVerticalPanShortcut(input, ports, false));
     QCOMPARE(log.panCount, 2);
     QCOMPARE(log.lastPanDy, 64.0);
+}
+
+void TestApplicationCommandRouter::videoPlaybackActionChecksModeAndVideoAvailability()
+{
+    ApplicationCommandRouter router;
+    ApplicationCommandRouterInput input;
+    CommandLog log;
+    ApplicationCommandRouterPorts ports = commandPorts(log);
+
+    router.handleActionTriggered(ActionId::ViewToggleVideoPlaybackAction, input, ports);
+    QCOMPARE(log.toggleVideoPlaybackCount, 0);
+
+    input.videoMode = true;
+    log.videoAvailable = false;
+    router.handleActionTriggered(ActionId::ViewToggleVideoPlaybackAction, input, ports);
+    QCOMPARE(log.toggleVideoPlaybackCount, 0);
+
+    log.videoAvailable = true;
+    router.handleActionTriggered(ActionId::ViewToggleVideoPlaybackAction, input, ports);
+    QCOMPARE(log.toggleVideoPlaybackCount, 1);
 }
 
 void TestApplicationCommandRouter::videoSeekChecksModeAndSeekability()

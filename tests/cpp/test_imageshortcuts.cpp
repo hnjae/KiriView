@@ -55,6 +55,8 @@ private Q_SLOTS:
     void configuredActionShortcutsTriggerActions();
     void windowCommandShortcutsWorkWithoutQmlShortcutInstallers();
     void videoViewerLocalShortcutTriggersFullscreenAction();
+    void videoPlaybackShortcutTriggersPlaybackAction();
+    void videoPlaybackShortcutShowsImageUnsupportedToastForReadyImages();
     void videoImageOnlyShortcutsShowUnsupportedToast();
     void videoModeIgnoresReportedImagePannabilityForPanShortcuts();
 };
@@ -222,6 +224,7 @@ Item {
     property bool videoFileDeletionInProgress: false
     property bool videoMode: false
     property int panCount: 0
+    property int unsupportedImageActionCount: 0
     property int unsupportedVideoActionCount: 0
     property int openApplicationMenuCount: 0
     property string lastBoundaryMessage: ""
@@ -318,6 +321,10 @@ Item {
 
         function onUnsupportedVideoActionTriggered(actionId) {
             root.unsupportedVideoActionCount += 1;
+        }
+
+        function onUnsupportedImageActionTriggered(actionId) {
+            root.unsupportedImageActionCount += 1;
         }
     }
 }
@@ -736,6 +743,47 @@ void TestImageShortcuts::videoViewerLocalShortcutTriggersFullscreenAction()
 
     QTRY_COMPARE(triggeredSpy.count(), 1);
     QCOMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 0);
+}
+
+void TestImageShortcuts::videoPlaybackShortcutTriggersPlaybackAction()
+{
+    ImageShortcutsFixture fixture = createVideoFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_COMPARE(fixture.root->property("documentKind").toInt(),
+        static_cast<int>(KiriDocumentSession::DocumentKind::Video));
+
+    QAction *playbackAction
+        = fixture.application->action(QStringLiteral("view_toggle_video_playback"));
+    QVERIFY(playbackAction != nullptr);
+    QSignalSpy triggeredSpy(playbackAction, &QAction::triggered);
+
+    pressKey(fixture.view.get(), Qt::Key_P);
+
+    QTRY_COMPARE(triggeredSpy.count(), 1);
+    QCOMPARE(fixture.root->property("unsupportedImageActionCount").toInt(), 0);
+    QCOMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 0);
+}
+
+void TestImageShortcuts::videoPlaybackShortcutShowsImageUnsupportedToastForReadyImages()
+{
+    ImageShortcutsFixture fixture = createReadyFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(documentReady(fixture.root));
+
+    QAction *playbackAction
+        = fixture.application->action(QStringLiteral("view_toggle_video_playback"));
+    QVERIFY(playbackAction != nullptr);
+    QSignalSpy triggeredSpy(playbackAction, &QAction::triggered);
+
+    pressKey(fixture.view.get(), Qt::Key_P);
+
+    QTRY_COMPARE(fixture.root->property("unsupportedImageActionCount").toInt(), 1);
+    QCOMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 0);
+    QCOMPARE(triggeredSpy.count(), 0);
+
+    fixture.root->setProperty("toolbarTextInputFocused", true);
+    pressKey(fixture.view.get(), Qt::Key_P);
+    QCOMPARE(fixture.root->property("unsupportedImageActionCount").toInt(), 1);
 }
 
 void TestImageShortcuts::videoImageOnlyShortcutsShowUnsupportedToast()
