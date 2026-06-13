@@ -13,7 +13,7 @@
 #include <functional>
 #include <memory>
 
-namespace KiriView {
+namespace kiriview {
 class PredecodeScheduleRuntime final
 {
 public:

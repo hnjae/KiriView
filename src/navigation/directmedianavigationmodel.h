@@ -11,7 +11,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct DirectMediaNavigationCandidate {
     QUrl url;
     QString name;

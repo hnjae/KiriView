@@ -12,54 +12,54 @@
 namespace {
 template <typename> inline constexpr bool alwaysFalse = false;
 
-void appendNavigationEffectRuntimeOperation(KiriView::ImageDocumentRuntimePlan &plan,
-    const KiriView::ImageDocumentPageNavigationEffect &effect)
+void appendNavigationEffectRuntimeOperation(kiriview::ImageDocumentRuntimePlan &plan,
+    const kiriview::ImageDocumentPageNavigationEffect &effect)
 {
     std::visit(
         [&plan](const auto &payload) {
             using Effect = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Effect, KiriView::OpenImageDocumentPageUrlEffect>) {
-                plan.push_back(KiriView::LoadUrlOperation { payload.target });
+            if constexpr (std::is_same_v<Effect, kiriview::OpenImageDocumentPageUrlEffect>) {
+                plan.push_back(kiriview::LoadUrlOperation { payload.target });
             } else if constexpr (std::is_same_v<Effect,
-                                     KiriView::OpenContainerImageDocumentPageNavigationEffect>) {
-                plan.push_back(KiriView::LoadContainerImageOperation {
+                                     kiriview::OpenContainerImageDocumentPageNavigationEffect>) {
+                plan.push_back(kiriview::LoadContainerImageOperation {
                     payload.target,
                     payload.containerUrl,
                 });
             } else if constexpr (std::is_same_v<Effect,
-                                     KiriView::ReportContainerNavigationErrorEffect>) {
-                if (payload.error == KiriView::ContainerNavigationError::EmptyContainer) {
+                                     kiriview::ReportContainerNavigationErrorEffect>) {
+                if (payload.error == kiriview::ContainerNavigationError::EmptyContainer) {
                     plan.push_back(
-                        KiriView::FinishEmptyContainerNavigationOperation { payload.containerUrl });
+                        kiriview::FinishEmptyContainerNavigationOperation { payload.containerUrl });
                     return;
                 }
 
-                if (payload.error == KiriView::ContainerNavigationError::InvalidComicBookArchive) {
-                    plan.push_back(KiriView::FinishContainerNavigationLoadWithErrorOperation {
+                if (payload.error == kiriview::ContainerNavigationError::InvalidComicBookArchive) {
+                    plan.push_back(kiriview::FinishContainerNavigationLoadWithErrorOperation {
                         payload.containerUrl,
-                        KiriView::imageErrorText(KiriView::ImageErrorTextId::OpenComicBookArchive),
+                        kiriview::imageErrorText(kiriview::ImageErrorTextId::OpenComicBookArchive),
                     });
                     return;
                 }
 
-                plan.push_back(KiriView::FinishContainerNavigationLoadWithErrorOperation {
+                plan.push_back(kiriview::FinishContainerNavigationLoadWithErrorOperation {
                     payload.containerUrl,
                     payload.errorString,
                 });
             } else if constexpr (std::is_same_v<Effect,
-                                     KiriView::ReportContainerNavigationBoundaryEffect>) {
-                plan.push_back(KiriView::ReportContainerNavigationBoundaryOperation {
+                                     kiriview::ReportContainerNavigationBoundaryEffect>) {
+                plan.push_back(kiriview::ReportContainerNavigationBoundaryOperation {
                     payload.direction,
                 });
             } else if constexpr (std::is_same_v<Effect,
-                                     KiriView::ReportContainerNavigationListErrorEffect>) {
-                plan.push_back(KiriView::ReportContainerNavigationListFailureOperation {
+                                     kiriview::ReportContainerNavigationListErrorEffect>) {
+                plan.push_back(kiriview::ReportContainerNavigationListFailureOperation {
                     payload.failure,
                 });
             } else if constexpr (std::is_same_v<Effect,
-                                     KiriView::ClearCurrentImageDocumentPageNavigationEffect>) {
-                KiriView::ImageDocumentRuntimePlan clearPlan
-                    = KiriView::imageDocumentClearDeletedImagePlan();
+                                     kiriview::ClearCurrentImageDocumentPageNavigationEffect>) {
+                kiriview::ImageDocumentRuntimePlan clearPlan
+                    = kiriview::imageDocumentClearDeletedImagePlan();
                 plan.insert(plan.end(), std::make_move_iterator(clearPlan.begin()),
                     std::make_move_iterator(clearPlan.end()));
             } else {
@@ -70,7 +70,7 @@ void appendNavigationEffectRuntimeOperation(KiriView::ImageDocumentRuntimePlan &
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentRuntimePlan imageDocumentRuntimePlanForNavigationPlan(
     const ImageDocumentPageNavigationPlan &navigationPlan)
 {

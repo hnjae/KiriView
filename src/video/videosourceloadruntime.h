@@ -15,7 +15,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 using VideoSourceLoadPlanCallback = std::function<void(VideoSourceLoadPlan)>;
 
 class VideoSourceLoadRuntime final

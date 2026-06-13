@@ -8,7 +8,7 @@
 
 #include <functional>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 class ImageActionAvailabilityRuntime final
 {
 public:

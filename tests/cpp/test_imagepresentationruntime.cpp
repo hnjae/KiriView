@@ -16,20 +16,20 @@
 #include <QUrl>
 
 namespace {
-using KiriView::TestSupport::localUrl;
+using kiriview::TestSupport::localUrl;
 
-KiriView::ImageDocumentRenderContext renderContext()
+kiriview::ImageDocumentRenderContext renderContext()
 {
-    return KiriView::ImageDocumentRenderContext {
+    return kiriview::ImageDocumentRenderContext {
         1.0,
-        KiriView::fallbackTextureSizeMax,
+        kiriview::fallbackTextureSizeMax,
         7,
     };
 }
 
-KiriView::ImagePresentationPageSlotSnapshot pageSlot(const QSize &imageSize, quint64 revision)
+kiriview::ImagePresentationPageSlotSnapshot pageSlot(const QSize &imageSize, quint64 revision)
 {
-    return KiriView::ImagePresentationPageSlotSnapshot {
+    return kiriview::ImagePresentationPageSlotSnapshot {
         revision,
         imageSize,
         true,
@@ -54,116 +54,116 @@ private Q_SLOTS:
 void TestImagePresentationRuntime::
     openedCollectionPageChangePreservesZoomClearsPanAndResetsRotation()
 {
-    KiriView::ImagePresentationRuntime runtime(renderContext);
-    const KiriView::ImagePresentationScopeKey scope
-        = KiriView::ImagePresentationScopeKey::openedCollection(
+    kiriview::ImagePresentationRuntime runtime(renderContext);
+    const kiriview::ImagePresentationScopeKey scope
+        = kiriview::ImagePresentationScopeKey::openedCollection(
             localUrl(QStringLiteral("/books/book.cbz")));
 
     runtime.setViewportSize(QSizeF(400.0, 300.0));
     runtime.commitPrimaryPageSlot(pageSlot(QSize(800, 600), 1), scope,
-        KiriView::ImagePresentationPrimaryChangePolicy::ResetZoom);
+        kiriview::ImagePresentationPrimaryChangePolicy::ResetZoom);
     runtime.setZoomPercent(150.0);
     runtime.requestViewportContentPosition(QPointF(80.0, 40.0));
     QVERIFY(runtime.rotateClockwise());
 
     runtime.commitPrimaryPageSlot(pageSlot(QSize(800, 600), 2), scope,
-        KiriView::ImagePresentationPrimaryChangePolicy::PreserveZoomAndClearPan);
+        kiriview::ImagePresentationPrimaryChangePolicy::PreserveZoomAndClearPan);
 
-    QCOMPARE(runtime.zoomMode(), KiriView::ImageZoomMode::Manual);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(runtime.zoomPercent(), 150.0));
+    QCOMPARE(runtime.zoomMode(), kiriview::ImageZoomMode::Manual);
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(runtime.zoomPercent(), 150.0));
     QCOMPARE(runtime.viewportContentPosition(), QPointF());
     QCOMPARE(runtime.rotationDegrees(), 0);
 }
 
 void TestImagePresentationRuntime::directImageChangeResetsZoom()
 {
-    KiriView::ImagePresentationRuntime runtime(renderContext);
+    kiriview::ImagePresentationRuntime runtime(renderContext);
 
     runtime.setViewportSize(QSizeF(400.0, 300.0));
     runtime.commitPrimaryPageSlot(pageSlot(QSize(800, 600), 1),
-        KiriView::ImagePresentationScopeKey::directImage(localUrl(QStringLiteral("/images/a.png"))),
-        KiriView::ImagePresentationPrimaryChangePolicy::ResetZoom);
+        kiriview::ImagePresentationScopeKey::directImage(localUrl(QStringLiteral("/images/a.png"))),
+        kiriview::ImagePresentationPrimaryChangePolicy::ResetZoom);
     runtime.setZoomPercent(175.0);
 
     runtime.commitPrimaryPageSlot(pageSlot(QSize(800, 600), 2),
-        KiriView::ImagePresentationScopeKey::directImage(localUrl(QStringLiteral("/images/b.png"))),
-        KiriView::ImagePresentationPrimaryChangePolicy::ResetZoom);
+        kiriview::ImagePresentationScopeKey::directImage(localUrl(QStringLiteral("/images/b.png"))),
+        kiriview::ImagePresentationPrimaryChangePolicy::ResetZoom);
 
-    QCOMPARE(runtime.zoomMode(), KiriView::ImageZoomMode::Fit);
+    QCOMPARE(runtime.zoomMode(), kiriview::ImageZoomMode::Fit);
 }
 
 void TestImagePresentationRuntime::spreadModePreservesZoomAndDisablesRotation()
 {
-    KiriView::ImagePresentationRuntime runtime(renderContext);
+    kiriview::ImagePresentationRuntime runtime(renderContext);
 
     runtime.setViewportSize(QSizeF(400.0, 300.0));
     runtime.commitPrimaryPageSlot(pageSlot(QSize(800, 1200), 1),
-        KiriView::ImagePresentationScopeKey::openedCollection(
+        kiriview::ImagePresentationScopeKey::openedCollection(
             localUrl(QStringLiteral("/books/book.cbz"))),
-        KiriView::ImagePresentationPrimaryChangePolicy::ResetZoom);
+        kiriview::ImagePresentationPrimaryChangePolicy::ResetZoom);
     runtime.commitSecondaryPageSlot(pageSlot(QSize(800, 1200), 2));
     runtime.setSecondaryPageVisible(true);
     runtime.setZoomPercent(140.0);
     QVERIFY(runtime.rotateClockwise());
 
-    runtime.setMode(KiriView::ImagePresentationMode::TwoPageSpread);
+    runtime.setMode(kiriview::ImagePresentationMode::TwoPageSpread);
 
     QCOMPARE(runtime.rotationDegrees(), 0);
-    QCOMPARE(runtime.zoomMode(), KiriView::ImageZoomMode::Manual);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(runtime.zoomPercent(), 140.0));
+    QCOMPARE(runtime.zoomMode(), kiriview::ImageZoomMode::Manual);
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(runtime.zoomPercent(), 140.0));
     QVERIFY(!runtime.rotateClockwise());
 
-    runtime.setMode(KiriView::ImagePresentationMode::SinglePage);
+    runtime.setMode(kiriview::ImagePresentationMode::SinglePage);
 
-    QCOMPARE(runtime.zoomMode(), KiriView::ImageZoomMode::Manual);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(runtime.zoomPercent(), 140.0));
+    QCOMPARE(runtime.zoomMode(), kiriview::ImageZoomMode::Manual);
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(runtime.zoomPercent(), 140.0));
 }
 
 void TestImagePresentationRuntime::previousActiveTransitionKeepsCommittedProjectionAuthoritative()
 {
-    KiriView::ImagePresentationRuntime runtime(renderContext);
+    kiriview::ImagePresentationRuntime runtime(renderContext);
 
     runtime.setViewportSize(QSizeF(400.0, 300.0));
     runtime.commitPrimaryPageSlot(pageSlot(QSize(800, 1200), 1),
-        KiriView::ImagePresentationScopeKey::openedCollection(
+        kiriview::ImagePresentationScopeKey::openedCollection(
             localUrl(QStringLiteral("/books/book.cbz"))),
-        KiriView::ImagePresentationPrimaryChangePolicy::ResetZoom);
+        kiriview::ImagePresentationPrimaryChangePolicy::ResetZoom);
     runtime.commitSecondaryPageSlot(pageSlot(QSize(800, 1200), 2));
     runtime.setSecondaryPageVisible(true);
-    runtime.setMode(KiriView::ImagePresentationMode::TwoPageSpread);
-    QVERIFY(runtime.renderProjection(KiriView::DisplayedPageRole::Secondary).visible);
+    runtime.setMode(kiriview::ImagePresentationMode::TwoPageSpread);
+    QVERIFY(runtime.renderProjection(kiriview::DisplayedPageRole::Secondary).visible);
 
     QVERIFY(runtime.beginTransition());
     runtime.setSecondaryPageVisible(false);
 
-    QCOMPARE(runtime.transitionState(), KiriView::ImagePresentationTransitionState::PreviousActive);
-    QVERIFY(runtime.renderProjection(KiriView::DisplayedPageRole::Secondary).visible);
+    QCOMPARE(runtime.transitionState(), kiriview::ImagePresentationTransitionState::PreviousActive);
+    QVERIFY(runtime.renderProjection(kiriview::DisplayedPageRole::Secondary).visible);
 
     QVERIFY(runtime.showTransitionPlaceholder());
-    QVERIFY(!runtime.renderProjection(KiriView::DisplayedPageRole::Primary).visible);
-    QVERIFY(!runtime.renderProjection(KiriView::DisplayedPageRole::Secondary).visible);
+    QVERIFY(!runtime.renderProjection(kiriview::DisplayedPageRole::Primary).visible);
+    QVERIFY(!runtime.renderProjection(kiriview::DisplayedPageRole::Secondary).visible);
 
     QVERIFY(runtime.abortTransition());
     QCOMPARE(
-        runtime.transitionState(), KiriView::ImagePresentationTransitionState::CommittedActive);
-    QVERIFY(runtime.renderProjection(KiriView::DisplayedPageRole::Secondary).visible);
+        runtime.transitionState(), kiriview::ImagePresentationTransitionState::CommittedActive);
+    QVERIFY(runtime.renderProjection(kiriview::DisplayedPageRole::Secondary).visible);
 }
 
 void TestImagePresentationRuntime::hiddenSecondaryProjectionIsNotVisible()
 {
-    KiriView::ImagePresentationRuntime runtime(renderContext);
+    kiriview::ImagePresentationRuntime runtime(renderContext);
 
     runtime.setViewportSize(QSizeF(400.0, 300.0));
     runtime.commitPrimaryPageSlot(pageSlot(QSize(800, 1200), 1),
-        KiriView::ImagePresentationScopeKey::openedCollection(
+        kiriview::ImagePresentationScopeKey::openedCollection(
             localUrl(QStringLiteral("/books/book.cbz"))),
-        KiriView::ImagePresentationPrimaryChangePolicy::ResetZoom);
+        kiriview::ImagePresentationPrimaryChangePolicy::ResetZoom);
     runtime.commitSecondaryPageSlot(pageSlot(QSize(800, 1200), 2));
-    runtime.setMode(KiriView::ImagePresentationMode::TwoPageSpread);
+    runtime.setMode(kiriview::ImagePresentationMode::TwoPageSpread);
     runtime.setSecondaryPageVisible(false);
 
-    const KiriView::ImagePresentationRenderProjection projection
-        = runtime.renderProjection(KiriView::DisplayedPageRole::Secondary);
+    const kiriview::ImagePresentationRenderProjection projection
+        = runtime.renderProjection(kiriview::DisplayedPageRole::Secondary);
 
     QVERIFY(!projection.visible);
     QVERIFY(projection.visibleItemRect.isEmpty());
@@ -171,16 +171,16 @@ void TestImagePresentationRuntime::hiddenSecondaryProjectionIsNotVisible()
 
 void TestImagePresentationRuntime::singlePageSnapshotDoesNotExposeSecondaryVisibility()
 {
-    KiriView::ImagePresentationRuntime runtime(renderContext);
+    kiriview::ImagePresentationRuntime runtime(renderContext);
 
     runtime.commitPrimaryPageSlot(pageSlot(QSize(800, 1200), 1),
-        KiriView::ImagePresentationScopeKey::openedCollection(
+        kiriview::ImagePresentationScopeKey::openedCollection(
             localUrl(QStringLiteral("/books/book.cbz"))),
-        KiriView::ImagePresentationPrimaryChangePolicy::ResetZoom);
+        kiriview::ImagePresentationPrimaryChangePolicy::ResetZoom);
     runtime.commitSecondaryPageSlot(pageSlot(QSize(800, 1200), 2));
     runtime.setSecondaryPageVisible(true);
 
-    QCOMPARE(runtime.mode(), KiriView::ImagePresentationMode::SinglePage);
+    QCOMPARE(runtime.mode(), kiriview::ImagePresentationMode::SinglePage);
     QVERIFY(!runtime.secondaryPageVisible());
     QVERIFY(!runtime.snapshot().secondaryPageVisible);
 }

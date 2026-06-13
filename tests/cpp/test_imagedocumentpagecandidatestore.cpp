@@ -27,11 +27,11 @@ bool createFile(const QTemporaryDir &directory, const QString &fileName)
     return file.open(QIODevice::WriteOnly);
 }
 
-std::vector<QUrl> candidateUrls(const std::vector<KiriView::ImageDocumentPageCandidate> &candidates)
+std::vector<QUrl> candidateUrls(const std::vector<kiriview::ImageDocumentPageCandidate> &candidates)
 {
     std::vector<QUrl> urls;
     urls.reserve(candidates.size());
-    for (const KiriView::ImageDocumentPageCandidate &candidate : candidates) {
+    for (const kiriview::ImageDocumentPageCandidate &candidate : candidates) {
         urls.push_back(candidate.url);
     }
     return urls;
@@ -53,13 +53,13 @@ void TestImageDocumentPageCandidateStore::localDirectoryPublishesAddedImagesAndR
     QVERIFY(directory.isValid());
     QVERIFY(createFile(directory, QStringLiteral("01.png")));
 
-    KiriView::ImageDocumentPageCandidateStore store;
-    std::vector<KiriView::ImageDocumentPageCandidate> loadedCandidates;
+    kiriview::ImageDocumentPageCandidateStore store;
+    std::vector<kiriview::ImageDocumentPageCandidate> loadedCandidates;
     QString loadError;
     bool loaded = false;
-    KiriView::ImageIoJob loadJob = store.loadDirectoryImages(
+    kiriview::ImageIoJob loadJob = store.loadDirectoryImages(
         this, directoryUrl(directory),
-        [&loadedCandidates, &loaded](std::vector<KiriView::ImageDocumentPageCandidate> candidates) {
+        [&loadedCandidates, &loaded](std::vector<kiriview::ImageDocumentPageCandidate> candidates) {
             loadedCandidates = std::move(candidates);
             loaded = true;
         },
@@ -70,12 +70,12 @@ void TestImageDocumentPageCandidateStore::localDirectoryPublishesAddedImagesAndR
     QCOMPARE(static_cast<int>(loadedCandidates.size()), 1);
     QCOMPARE(loadedCandidates.front().url, fileUrl(directory, QStringLiteral("01.png")));
 
-    std::vector<KiriView::ImageDocumentPageCandidate> changedCandidates;
+    std::vector<kiriview::ImageDocumentPageCandidate> changedCandidates;
     int changeCount = 0;
-    KiriView::ImageIoJob watchJob = store.watchDirectoryImages(
+    kiriview::ImageIoJob watchJob = store.watchDirectoryImages(
         this, directoryUrl(directory),
         [&changedCandidates, &changeCount](
-            std::vector<KiriView::ImageDocumentPageCandidate> candidates) {
+            std::vector<kiriview::ImageDocumentPageCandidate> candidates) {
             changedCandidates = std::move(candidates);
             ++changeCount;
         },
@@ -90,10 +90,10 @@ void TestImageDocumentPageCandidateStore::localDirectoryPublishesAddedImagesAndR
     QTRY_VERIFY_WITH_TIMEOUT(candidateUrls(changedCandidates) == addedUrls, 10000);
     QCOMPARE(changeCount, 1);
 
-    std::vector<KiriView::ImageDocumentPageCandidate> cachedCandidates;
+    std::vector<kiriview::ImageDocumentPageCandidate> cachedCandidates;
     store.loadDirectoryImages(
         this, directoryUrl(directory),
-        [&cachedCandidates](std::vector<KiriView::ImageDocumentPageCandidate> candidates) {
+        [&cachedCandidates](std::vector<kiriview::ImageDocumentPageCandidate> candidates) {
             cachedCandidates = std::move(candidates);
         },
         [](const QString &) {});
@@ -107,12 +107,12 @@ void TestImageDocumentPageCandidateStore::liveDirectoryWatchJobCanOutliveStore()
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
 
-    KiriView::ImageIoJob watchJob;
+    kiriview::ImageIoJob watchJob;
     {
-        KiriView::ImageDocumentPageCandidateStore store;
+        kiriview::ImageDocumentPageCandidateStore store;
         watchJob = store.watchDirectoryImages(
             this, directoryUrl(directory),
-            [](std::vector<KiriView::ImageDocumentPageCandidate>) { }, [](const QString &) { });
+            [](std::vector<kiriview::ImageDocumentPageCandidate>) { }, [](const QString &) { });
         QVERIFY(watchJob.isActive());
     }
 

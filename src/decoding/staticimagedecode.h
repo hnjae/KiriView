@@ -9,7 +9,7 @@
 #include <QString>
 #include <memory>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDecodeRequest;
 
 DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> source,

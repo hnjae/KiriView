@@ -9,7 +9,7 @@
 
 namespace {
 template <typename Operation>
-const Operation *dispatchOperation(const KiriView::ActiveNavigationDispatchPlan &plan)
+const Operation *dispatchOperation(const kiriview::ActiveNavigationDispatchPlan &plan)
 {
     return std::get_if<Operation>(&plan.operation);
 }
@@ -28,34 +28,34 @@ private Q_SLOTS:
 void TestActiveNavigationProjectionConversion::sourceKindAndBoundaryScopeConvert()
 {
     QVERIFY(
-        KiriView::Bridge::rustActiveNavigationSourceKind(KiriView::ActiveNavigationSourceKind::None)
-        == KiriView::RustActiveNavigationSourceKind::NoSource);
-    QVERIFY(KiriView::Bridge::rustActiveNavigationSourceKind(
-                KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia)
-        == KiriView::RustActiveNavigationSourceKind::OrdinaryDirectMedia);
-    QVERIFY(KiriView::Bridge::rustActiveNavigationSourceKind(
-                KiriView::ActiveNavigationSourceKind::ImageDocumentPages)
-        == KiriView::RustActiveNavigationSourceKind::ImageDocumentPages);
+        kiriview::Bridge::rustActiveNavigationSourceKind(kiriview::ActiveNavigationSourceKind::None)
+        == kiriview::RustActiveNavigationSourceKind::NoSource);
+    QVERIFY(kiriview::Bridge::rustActiveNavigationSourceKind(
+                kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia)
+        == kiriview::RustActiveNavigationSourceKind::OrdinaryDirectMedia);
+    QVERIFY(kiriview::Bridge::rustActiveNavigationSourceKind(
+                kiriview::ActiveNavigationSourceKind::ImageDocumentPages)
+        == kiriview::RustActiveNavigationSourceKind::ImageDocumentPages);
 
-    QVERIFY(KiriView::Bridge::activeNavigationBoundaryScopeFromRust(
-                KiriView::RustActiveNavigationBoundaryScope::NoBoundary)
-        == KiriView::ActiveNavigationBoundaryScope::None);
-    QVERIFY(KiriView::Bridge::activeNavigationBoundaryScopeFromRust(
-                KiriView::RustActiveNavigationBoundaryScope::DirectMedia)
-        == KiriView::ActiveNavigationBoundaryScope::DirectMedia);
-    QVERIFY(KiriView::Bridge::activeNavigationBoundaryScopeFromRust(
-                KiriView::RustActiveNavigationBoundaryScope::ImageDocumentPage)
-        == KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage);
+    QVERIFY(kiriview::Bridge::activeNavigationBoundaryScopeFromRust(
+                kiriview::RustActiveNavigationBoundaryScope::NoBoundary)
+        == kiriview::ActiveNavigationBoundaryScope::None);
+    QVERIFY(kiriview::Bridge::activeNavigationBoundaryScopeFromRust(
+                kiriview::RustActiveNavigationBoundaryScope::DirectMedia)
+        == kiriview::ActiveNavigationBoundaryScope::DirectMedia);
+    QVERIFY(kiriview::Bridge::activeNavigationBoundaryScopeFromRust(
+                kiriview::RustActiveNavigationBoundaryScope::ImageDocumentPage)
+        == kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage);
 }
 
 void TestActiveNavigationProjectionConversion::snapshotsConvertAcrossBridge()
 {
-    const KiriView::DirectMediaActiveNavigationInput directMediaInput {
-        KiriView::DirectMediaNavigationBoundaryState { true, false, false, true, 4, 4 },
+    const kiriview::DirectMediaActiveNavigationInput directMediaInput {
+        kiriview::DirectMediaNavigationBoundaryState { true, false, false, true, 4, 4 },
         true,
     };
-    const KiriView::RustDirectMediaActiveNavigationInput rustDirectMediaInput
-        = KiriView::Bridge::rustDirectMediaActiveNavigationInput(directMediaInput);
+    const kiriview::RustDirectMediaActiveNavigationInput rustDirectMediaInput
+        = kiriview::Bridge::rustDirectMediaActiveNavigationInput(directMediaInput);
     QVERIFY(rustDirectMediaInput.known);
     QVERIFY(rustDirectMediaInput.boundary_state.can_open_previous);
     QVERIFY(!rustDirectMediaInput.boundary_state.can_open_next);
@@ -63,10 +63,10 @@ void TestActiveNavigationProjectionConversion::snapshotsConvertAcrossBridge()
     QCOMPARE(rustDirectMediaInput.boundary_state.current_number, 4);
     QCOMPARE(rustDirectMediaInput.boundary_state.count, 4);
 
-    const KiriView::ImageDocumentPageActiveNavigationSnapshot imagePageSnapshot { true, true, false,
+    const kiriview::ImageDocumentPageActiveNavigationSnapshot imagePageSnapshot { true, true, false,
         false, true, 7, 7 };
-    const KiriView::RustImageDocumentPageActiveNavigationSnapshot rustImagePageSnapshot
-        = KiriView::Bridge::rustImageDocumentPageActiveNavigationSnapshot(imagePageSnapshot);
+    const kiriview::RustImageDocumentPageActiveNavigationSnapshot rustImagePageSnapshot
+        = kiriview::Bridge::rustImageDocumentPageActiveNavigationSnapshot(imagePageSnapshot);
     QVERIFY(rustImagePageSnapshot.known);
     QVERIFY(rustImagePageSnapshot.can_open_previous);
     QVERIFY(!rustImagePageSnapshot.can_open_next);
@@ -74,7 +74,7 @@ void TestActiveNavigationProjectionConversion::snapshotsConvertAcrossBridge()
     QCOMPARE(rustImagePageSnapshot.current_number, 7);
     QCOMPARE(rustImagePageSnapshot.count, 7);
 
-    KiriView::RustActiveNavigationSnapshot rustSnapshot {};
+    kiriview::RustActiveNavigationSnapshot rustSnapshot {};
     rustSnapshot.available = true;
     rustSnapshot.known = true;
     rustSnapshot.editable = true;
@@ -85,8 +85,8 @@ void TestActiveNavigationProjectionConversion::snapshotsConvertAcrossBridge()
     rustSnapshot.current_number = 3;
     rustSnapshot.count = 3;
 
-    const KiriView::ActiveNavigationSnapshot snapshot
-        = KiriView::Bridge::activeNavigationSnapshotFromRust(rustSnapshot);
+    const kiriview::ActiveNavigationSnapshot snapshot
+        = kiriview::Bridge::activeNavigationSnapshotFromRust(rustSnapshot);
     QVERIFY(snapshot.available);
     QVERIFY(snapshot.known);
     QVERIFY(snapshot.editable);
@@ -99,24 +99,24 @@ void TestActiveNavigationProjectionConversion::snapshotsConvertAcrossBridge()
 
 void TestActiveNavigationProjectionConversion::dispatchRequestAndPlanConvertAcrossBridge()
 {
-    const KiriView::RustActiveNavigationDispatchRequest request
-        = KiriView::Bridge::rustActiveNavigationDispatchRequest(
-            KiriView::numberedActiveNavigationDispatchRequest(12));
-    QVERIFY(request.kind == KiriView::RustActiveNavigationDispatchRequestKind::Number);
+    const kiriview::RustActiveNavigationDispatchRequest request
+        = kiriview::Bridge::rustActiveNavigationDispatchRequest(
+            kiriview::numberedActiveNavigationDispatchRequest(12));
+    QVERIFY(request.kind == kiriview::RustActiveNavigationDispatchRequestKind::Number);
     QCOMPARE(request.number, 12);
 
-    KiriView::RustActiveNavigationDispatchPlan rustPlan {};
+    kiriview::RustActiveNavigationDispatchPlan rustPlan {};
     rustPlan.operation_kind
-        = KiriView::RustActiveNavigationDispatchOperationKind::OpenDirectMediaAtNumber;
+        = kiriview::RustActiveNavigationDispatchOperationKind::OpenDirectMediaAtNumber;
     rustPlan.operation_number = 5;
-    rustPlan.outcome = KiriView::RustActiveNavigationDispatchOutcome::Dispatch;
+    rustPlan.outcome = kiriview::RustActiveNavigationDispatchOutcome::Dispatch;
 
-    const KiriView::ActiveNavigationDispatchPlan plan
-        = KiriView::Bridge::activeNavigationDispatchPlanFromRust(rustPlan);
+    const kiriview::ActiveNavigationDispatchPlan plan
+        = kiriview::Bridge::activeNavigationDispatchPlanFromRust(rustPlan);
     QVERIFY(plan.shouldDispatch());
-    QCOMPARE(plan.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
+    QCOMPARE(plan.outcome, kiriview::ActiveNavigationDispatchOutcome::Dispatch);
     const auto *operation
-        = dispatchOperation<KiriView::OpenDirectMediaNavigationAtNumberOperation>(plan);
+        = dispatchOperation<kiriview::OpenDirectMediaNavigationAtNumberOperation>(plan);
     QVERIFY(operation != nullptr);
     QCOMPARE(operation->number, 5);
 }

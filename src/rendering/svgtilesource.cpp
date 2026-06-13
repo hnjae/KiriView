@@ -46,8 +46,8 @@ QByteArray renderSvgImageBytes(const QByteArray &data, const QSize &size)
         return {};
     }
 
-    return KiriView::Bridge::qtByteArray(KiriView::rustRenderSvgImage(
-        KiriView::Bridge::rustBytes(data), size.width(), size.height()));
+    return kiriview::Bridge::qtByteArray(kiriview::rustRenderSvgImage(
+        kiriview::Bridge::rustBytes(data), size.width(), size.height()));
 }
 
 QImage renderSvgImage(const QByteArray &data, const QSize &size)
@@ -61,7 +61,7 @@ QSize svgFirstDisplayPreviewSize(const QSize &imageSize, const QSize &physicalVi
         return {};
     }
 
-    const QRectF targetRect = KiriView::imageTargetRect(imageSize, QSizeF(physicalViewportSize));
+    const QRectF targetRect = kiriview::imageTargetRect(imageSize, QSizeF(physicalViewportSize));
     if (targetRect.isEmpty()) {
         return {};
     }
@@ -73,7 +73,7 @@ QSize svgFirstDisplayPreviewSize(const QSize &imageSize, const QSize &physicalVi
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 std::shared_ptr<SvgTileSource> SvgTileSource::open(const QByteArray &data, QString *errorString)
 {
     const RustSvgImageSize intrinsicSize = rustSvgIntrinsicSize(Bridge::rustBytes(data));

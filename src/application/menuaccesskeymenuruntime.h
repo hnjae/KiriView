@@ -10,7 +10,7 @@
 class QKeyEvent;
 class QQuickItem;
 
-namespace KiriView {
+namespace kiriview {
 class MenuAccessKeyMenuRuntime final
 {
 public:

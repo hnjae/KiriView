@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-namespace KiriView {
+namespace kiriview {
 namespace {
     int displayImageQualityIndex(DisplayImageQuality quality)
     {

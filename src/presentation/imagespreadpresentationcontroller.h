@@ -32,7 +32,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 class ImagePageSurfaceController;
 class ImagePresentationRuntime;
 class ImageSecondaryPageController;

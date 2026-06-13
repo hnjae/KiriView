@@ -15,7 +15,7 @@
 
 class QImageReader;
 
-namespace KiriView {
+namespace kiriview {
 class BufferedImageReader final
 {
 public:

@@ -10,7 +10,7 @@ enum ZScanDirection {
     Previous,
 }
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     #[derive(Clone, Copy)]
     struct RustPointF {

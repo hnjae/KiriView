@@ -20,7 +20,7 @@ template <typename Value> bool replaceIfChanged(Value &current, const Value &nex
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentState::ImageDocumentState(ChangeCallback changeCallback)
     : m_ownedChanges(std::make_unique<ImageDocumentChangeBatcher>(std::move(changeCallback)))
     , m_changes(m_ownedChanges.get())

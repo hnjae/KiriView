@@ -9,7 +9,7 @@
 #include <QUrl>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 class ImageLocation
 {
 public:

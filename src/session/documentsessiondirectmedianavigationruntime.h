@@ -14,7 +14,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 struct DocumentSessionDirectMediaNavigationCandidatesResult {
     std::vector<DirectMediaNavigationCandidate> candidates;
     bool succeeded = false;

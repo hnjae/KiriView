@@ -8,7 +8,7 @@
 #include "kiriview/src/policy/imagezoomstate.cxx.h"
 #include "location/imageurl.h"
 
-namespace KiriView {
+namespace kiriview {
 bool imageZoomApproximatelyEqual(qreal left, qreal right)
 {
     return rustImageZoomApproximatelyEqual(left, right);

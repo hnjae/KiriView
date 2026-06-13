@@ -11,7 +11,7 @@
 #include <QSize>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 inline constexpr int imageTileCoreSize = 512;
 inline constexpr int imageTileApronSourcePixels = 1;
 

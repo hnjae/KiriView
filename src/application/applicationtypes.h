@@ -6,7 +6,7 @@
 
 #include <cstddef>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 enum class MenuPresentation {
     HamburgerMenu = 0,
     MenuBar = 1,

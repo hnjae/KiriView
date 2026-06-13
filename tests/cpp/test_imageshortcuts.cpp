@@ -87,7 +87,7 @@ void registerKiriViewQmlTypes()
         return;
     }
 
-    KiriView::initializeLocalization();
+    kiriview::initializeLocalization();
     qmlRegisterType<KiriImageDocument>("org.hnjae.kiriview", 1, 0, "KiriImageDocument");
     qmlRegisterType<KiriDocumentSession>("org.hnjae.kiriview", 1, 0, "KiriDocumentSession");
     qmlRegisterUncreatableType<KiriMediaInformation>("org.hnjae.kiriview", 1, 0,
@@ -502,7 +502,7 @@ void prepareTwoPageSpread(ImageShortcutsFixture &fixture)
 void TestImageShortcuts::initTestCase()
 {
     QStandardPaths::setTestModeEnabled(true);
-    KiriView::initializeLocalization();
+    kiriview::initializeLocalization();
     resetConfig();
 }
 

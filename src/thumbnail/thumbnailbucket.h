@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_THUMBNAILBUCKET_H
 #define KIRIVIEW_THUMBNAILBUCKET_H
 
-namespace KiriView {
+namespace kiriview {
 enum class ActiveNavigationThumbnailDemandBucket {
     None,
     Normal,

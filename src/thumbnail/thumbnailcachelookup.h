@@ -16,7 +16,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 enum class ThumbnailCacheLookupStatus {
     Ready,
     Missing,

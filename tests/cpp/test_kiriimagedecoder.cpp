@@ -27,7 +27,7 @@
 #include <variant>
 
 namespace {
-using KiriView::TestSupport::heifFtypBox;
+using kiriview::TestSupport::heifFtypBox;
 
 struct HeifLibraryScope {
     explicit HeifLibraryScope(QString *error)
@@ -224,9 +224,9 @@ QByteArray ordinaryTiffData()
     return data;
 }
 
-template <typename Image> const Image *decodedImage(const KiriView::DecodedImageResult &result)
+template <typename Image> const Image *decodedImage(const kiriview::DecodedImageResult &result)
 {
-    return KiriView::decodedImageResultImageAs<Image>(result);
+    return kiriview::decodedImageResultImageAs<Image>(result);
 }
 
 QString fixturePath(const QString &fileName)
@@ -243,12 +243,12 @@ QByteArray fixtureData(const QString &fileName)
     return file.readAll();
 }
 
-QSize decodedFrameSize(const KiriView::DecodedImage &image)
+QSize decodedFrameSize(const kiriview::DecodedImage &image)
 {
     return std::visit(
         [](const auto &decoded) {
             using Image = std::decay_t<decltype(decoded)>;
-            if constexpr (std::is_same_v<Image, KiriView::StaticDecodedImage>) {
+            if constexpr (std::is_same_v<Image, kiriview::StaticDecodedImage>) {
                 return decoded.displayImage.image.size();
             } else {
                 return decoded.firstFrame.size();
@@ -293,15 +293,15 @@ void TestKiriImageDecoder::realAnimatedFixturesDecodeAsAnimations()
     QVERIFY2(!imageData.isEmpty(), qPrintable(fixturePath(fileName)));
 
     const QUrl imageUrl = QUrl::fromLocalFile(fixturePath(fileName));
-    KiriView::DecodedImageResult result
-        = KiriView::decodeImageData(imageData, KiriView::ImageDecodeRequest::fromUrl(1, imageUrl));
+    kiriview::DecodedImageResult result
+        = kiriview::decodeImageData(imageData, kiriview::ImageDecodeRequest::fromUrl(1, imageUrl));
 
-    const KiriView::DecodedImageFailure *failure = KiriView::decodedImageResultFailure(result);
+    const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY2(failure == nullptr, qPrintable(failure == nullptr ? QString() : failure->errorString));
 
-    const KiriView::DecodedImage *image = KiriView::decodedImageResultImage(result);
+    const kiriview::DecodedImage *image = kiriview::decodedImageResultImage(result);
     QVERIFY(image != nullptr);
-    QVERIFY2(!std::holds_alternative<KiriView::StaticDecodedImage>(*image),
+    QVERIFY2(!std::holds_alternative<kiriview::StaticDecodedImage>(*image),
         "Multi-frame fixtures must not decode as static still images");
     QCOMPARE(decodedFrameSize(*image), frameSize);
 }
@@ -314,8 +314,8 @@ void TestKiriImageDecoder::jpegCompressedHeifStillImageDecodes()
     QCOMPARE(imageData->mid(4, 4), QByteArrayLiteral("ftyp"));
     QCOMPARE(imageData->mid(8, 4), QByteArrayLiteral("jpeg"));
 
-    KiriView::DecodedImageResult result = KiriView::decodeImageData(*imageData);
-    const auto *decoded = decodedImage<KiriView::StaticDecodedImage>(result);
+    kiriview::DecodedImageResult result = kiriview::decodeImageData(*imageData);
+    const auto *decoded = decodedImage<kiriview::StaticDecodedImage>(result);
     QVERIFY2(decoded != nullptr, "JPEG-compressed HEIF should decode as a static image");
     QVERIFY(decoded->displayImage.refinementSource != nullptr);
     QCOMPARE(decoded->displayImage.originalSize, QSize(2, 2));
@@ -329,13 +329,13 @@ void TestKiriImageDecoder::avifStillBrandUsesHeifStaticPath()
     std::optional<QByteArray> imageData = createJpegCompressedHeifData(&encodeError);
     QVERIFY2(imageData.has_value(), qPrintable(encodeError));
     std::memcpy(imageData->data() + 8, "avif", 4);
-    QVERIFY(KiriView::isLikelyHeifStillImageContainer(*imageData));
+    QVERIFY(kiriview::isLikelyHeifStillImageContainer(*imageData));
 
-    KiriView::DecodedImageResult result = KiriView::decodeImageData(*imageData);
-    const auto *decoded = decodedImage<KiriView::StaticDecodedImage>(result);
+    kiriview::DecodedImageResult result = kiriview::decodeImageData(*imageData);
+    const auto *decoded = decodedImage<kiriview::StaticDecodedImage>(result);
     QVERIFY2(decoded != nullptr, "AVIF still brand should use the HEIF static image path");
     QVERIFY(decoded->displayImage.refinementSource != nullptr);
-    QVERIFY(dynamic_cast<KiriView::QImageReaderTileSource *>(
+    QVERIFY(dynamic_cast<kiriview::QImageReaderTileSource *>(
                 decoded->displayImage.refinementSource.get())
         == nullptr);
     QCOMPARE(decoded->displayImage.originalSize, QSize(2, 2));
@@ -345,10 +345,10 @@ void TestKiriImageDecoder::avifStillBrandUsesHeifStaticPath()
 void TestKiriImageDecoder::avifsSequenceBrandUsesHeifSequencePath()
 {
     const QByteArray imageData = heifFtypBox("avis", {});
-    QVERIFY(KiriView::isLikelyHeifSequenceContainer(imageData));
+    QVERIFY(kiriview::isLikelyHeifSequenceContainer(imageData));
 
-    KiriView::DecodedImageResult result = KiriView::decodeImageData(imageData);
-    const auto *failure = KiriView::decodedImageResultFailure(result);
+    kiriview::DecodedImageResult result = kiriview::decodeImageData(imageData);
+    const auto *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY2(failure != nullptr, "AVIF sequence brand should be handled by the HEIF sequence path");
     QVERIFY(failure->errorString.contains(QStringLiteral("HEIF image")));
 }
@@ -360,8 +360,8 @@ void TestKiriImageDecoder::heifSequenceDecodesAsStreamingAnimation()
     const QByteArray imageData = file.readAll();
     QVERIFY(!imageData.isEmpty());
 
-    KiriView::DecodedImageResult result = KiriView::decodeImageData(imageData);
-    const auto *decoded = decodedImage<KiriView::HeifSequenceAnimationImage>(result);
+    kiriview::DecodedImageResult result = kiriview::decodeImageData(imageData);
+    const auto *decoded = decodedImage<kiriview::HeifSequenceAnimationImage>(result);
     QVERIFY2(decoded != nullptr, "HEIF image sequences should decode as streaming animations");
     QCOMPARE(decoded->firstFrame.size(), QSize(64, 64));
     QVERIFY(!decoded->data.isEmpty());
@@ -373,14 +373,14 @@ void TestKiriImageDecoder::rawExtensionForcesRawDecodeBeforeQtFallback()
     const QByteArray imageData = ordinaryTiffData();
     QVERIFY(!imageData.isEmpty());
 
-    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
+    const kiriview::ImageDecodeRequest request = kiriview::ImageDecodeRequest::fromUrl(
         1, QUrl::fromLocalFile(QStringLiteral("/tmp/not-actually-raw.dng")));
-    KiriView::DecodedImageResult result = KiriView::decodeImageData(imageData, request);
+    kiriview::DecodedImageResult result = kiriview::decodeImageData(imageData, request);
 
-    const auto *failure = KiriView::decodedImageResultFailure(result);
+    const auto *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY2(failure != nullptr, "A TIFF-family .dng request should use LibRaw before Qt fallback");
     QVERIFY(failure->errorString.contains(QStringLiteral("RAW image")));
-    QVERIFY(decodedImage<KiriView::StaticDecodedImage>(result) == nullptr);
+    QVERIFY(decodedImage<kiriview::StaticDecodedImage>(result) == nullptr);
 }
 
 void TestKiriImageDecoder::rawSamplesDecodeWhenConfigured()
@@ -402,12 +402,12 @@ void TestKiriImageDecoder::rawSamplesDecodeWhenConfigured()
         const QByteArray imageData = file.readAll();
         QVERIFY(!imageData.isEmpty());
 
-        const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
+        const kiriview::ImageDecodeRequest request = kiriview::ImageDecodeRequest::fromUrl(
             static_cast<quint64>(index + 1), QUrl::fromLocalFile(sampleInfo.filePath()));
-        KiriView::DecodedImageResult result = KiriView::decodeImageData(imageData, request);
+        kiriview::DecodedImageResult result = kiriview::decodeImageData(imageData, request);
 
-        const auto *decoded = decodedImage<KiriView::StaticDecodedImage>(result);
-        const auto *failure = KiriView::decodedImageResultFailure(result);
+        const auto *decoded = decodedImage<kiriview::StaticDecodedImage>(result);
+        const auto *failure = kiriview::decodedImageResultFailure(result);
         QVERIFY2(decoded != nullptr,
             qPrintable(failure != nullptr ? failure->errorString
                                           : QStringLiteral("RAW sample did not decode.")));

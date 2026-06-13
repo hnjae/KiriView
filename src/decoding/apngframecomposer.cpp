@@ -13,16 +13,16 @@ std::optional<std::size_t> frameRowBytes(quint32 width)
     const auto pixelCount = static_cast<std::size_t>(width);
     if (pixelCount != 0
         && pixelCount
-            > std::numeric_limits<std::size_t>::max() / KiriView::ApngRgbaBuffer::bytesPerPixel) {
+            > std::numeric_limits<std::size_t>::max() / kiriview::ApngRgbaBuffer::bytesPerPixel) {
         return std::nullopt;
     }
-    return pixelCount * KiriView::ApngRgbaBuffer::bytesPerPixel;
+    return pixelCount * kiriview::ApngRgbaBuffer::bytesPerPixel;
 }
 
 void premultiplyRgbaRow(unsigned char *row, std::size_t width)
 {
     for (std::size_t x = 0; x < width; ++x) {
-        unsigned char *pixel = row + x * KiriView::ApngRgbaBuffer::bytesPerPixel;
+        unsigned char *pixel = row + x * kiriview::ApngRgbaBuffer::bytesPerPixel;
         const unsigned int alpha = pixel[3];
         pixel[0]
             = static_cast<unsigned char>((static_cast<unsigned int>(pixel[0]) * alpha + 127) / 255);
@@ -51,7 +51,7 @@ void blendPixelOver(unsigned char *destination, const unsigned char *source)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ApngFrameCompositionPlan apngFrameCompositionPlan(bool hasDisplayedFrame, ApngFrameControl control)
 {
     if (!hasDisplayedFrame) {

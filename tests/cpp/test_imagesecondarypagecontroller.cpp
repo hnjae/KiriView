@@ -16,34 +16,34 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::staticDisplayTestImagePayload;
-using KiriView::TestSupport::testImage;
+using kiriview::TestSupport::localUrl;
+using kiriview::TestSupport::staticDisplayTestImagePayload;
+using kiriview::TestSupport::testImage;
 
-KiriView::ImageDocumentRenderContext renderContext()
+kiriview::ImageDocumentRenderContext renderContext()
 {
-    return KiriView::ImageDocumentRenderContext {
+    return kiriview::ImageDocumentRenderContext {
         1.0,
-        KiriView::fallbackTextureSizeMax,
+        kiriview::fallbackTextureSizeMax,
     };
 }
 
-KiriView::ImageCacheBudgets testCacheBudgets()
+kiriview::ImageCacheBudgets testCacheBudgets()
 {
-    return KiriView::ImageCacheBudgets {
+    return kiriview::ImageCacheBudgets {
         1024 * 1024,
         512 * 1024,
     };
 }
 
-KiriView::DisplayedImageLocation displayedLocation(const QUrl &url)
+kiriview::DisplayedImageLocation displayedLocation(const QUrl &url)
 {
-    return KiriView::DisplayedImageLocation::fromUrl(url);
+    return kiriview::DisplayedImageLocation::fromUrl(url);
 }
 
 struct SecondaryPageLoadReport {
-    KiriView::ImageSecondaryPageLoadResult result = KiriView::ImageSecondaryPageLoadResult::Failed;
-    KiriView::DisplayedImageLocation location;
+    kiriview::ImageSecondaryPageLoadResult result = kiriview::ImageSecondaryPageLoadResult::Failed;
+    kiriview::DisplayedImageLocation location;
     QSize imageSize;
 };
 
@@ -52,10 +52,10 @@ class SecondaryPageFixture
 public:
     SecondaryPageFixture()
         : controller(&context, renderContext,
-              KiriView::ImageSecondaryPageController::Callbacks {
-                  [this](KiriView::ImageDocumentChange change) { changes.push_back(change); },
-                  [this](KiriView::ImageSecondaryPageLoadResult result,
-                      const KiriView::DisplayedImageLocation &location, const QSize &imageSize) {
+              kiriview::ImageSecondaryPageController::Callbacks {
+                  [this](kiriview::ImageDocumentChange change) { changes.push_back(change); },
+                  [this](kiriview::ImageSecondaryPageLoadResult result,
+                      const kiriview::DisplayedImageLocation &location, const QSize &imageSize) {
                       loadReports.push_back(
                           SecondaryPageLoadReport { result, location, imageSize });
                   },
@@ -73,17 +73,17 @@ public:
 
     void startLoad(const QUrl &url)
     {
-        controller.startLoad(url, KiriView::OpenedCollectionScopeLocation::none(), {});
+        controller.startLoad(url, kiriview::OpenedCollectionScopeLocation::none(), {});
     }
 
-    std::optional<KiriView::PredecodedImage> findPredecodedImage(const QUrl &url) const
+    std::optional<kiriview::PredecodedImage> findPredecodedImage(const QUrl &url) const
     {
         const auto imageSize = predecodedImageSizes.find(url);
         if (imageSize == predecodedImageSizes.cend()) {
             return std::nullopt;
         }
 
-        return KiriView::PredecodedImage {
+        return kiriview::PredecodedImage {
             staticDisplayTestImagePayload(testImage(imageSize->second)),
             displayedLocation(url),
         };
@@ -91,10 +91,10 @@ public:
 
     QObject context;
     std::map<QUrl, QSize> predecodedImageSizes;
-    std::vector<KiriView::ImageDocumentChange> changes;
+    std::vector<kiriview::ImageDocumentChange> changes;
     std::vector<SecondaryPageLoadReport> loadReports;
     int visibilityChangedCount = 0;
-    KiriView::ImageSecondaryPageController controller;
+    kiriview::ImageSecondaryPageController controller;
 };
 }
 
@@ -122,7 +122,7 @@ void TestImageSecondaryPageController::visiblePredecodedPageOwnsDisplayedState()
     QCOMPARE(fixture.controller.imageSize(), pageSize);
     QVERIFY(fixture.controller.pageSlotSnapshot().hasImage);
     QCOMPARE(static_cast<int>(fixture.loadReports.size()), 1);
-    QCOMPARE(fixture.loadReports.back().result, KiriView::ImageSecondaryPageLoadResult::Visible);
+    QCOMPARE(fixture.loadReports.back().result, kiriview::ImageSecondaryPageLoadResult::Visible);
     QCOMPARE(fixture.loadReports.back().location.imageUrl(), pageUrl);
     QCOMPARE(fixture.loadReports.back().imageSize, pageSize);
 }
@@ -142,7 +142,7 @@ void TestImageSecondaryPageController::widePredecodedPageReportsPrimaryOnlyWitho
     QVERIFY(!fixture.controller.pageSlotSnapshot().hasImage);
     QCOMPARE(static_cast<int>(fixture.loadReports.size()), 1);
     QCOMPARE(
-        fixture.loadReports.back().result, KiriView::ImageSecondaryPageLoadResult::PrimaryOnly);
+        fixture.loadReports.back().result, kiriview::ImageSecondaryPageLoadResult::PrimaryOnly);
     QCOMPARE(fixture.loadReports.back().location.imageUrl(), pageUrl);
     QCOMPARE(fixture.loadReports.back().imageSize, pageSize);
 }

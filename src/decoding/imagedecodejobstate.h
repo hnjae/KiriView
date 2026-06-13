@@ -11,7 +11,7 @@
 #include <optional>
 #include <variant>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageDecodeJobTicket {
     quint64 operationId = 0;
     ImageDecodeRequest request;

@@ -6,7 +6,7 @@
 #include "bridge/qtgeometryconversion.h"
 #include "kiriview/src/policy/imageviewportgeometry.cxx.h"
 
-namespace KiriView {
+namespace kiriview {
 QRectF imageViewportImageRect(const QSizeF &viewportSize, const QSizeF &displaySize)
 {
     return Bridge::qtRectF(rustImageViewportImageRect(

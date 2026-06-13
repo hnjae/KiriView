@@ -6,7 +6,7 @@
 #include "bridge/qtgeometryconversion.h"
 #include "kiriview/src/policy/imagerendergeometry.cxx.h"
 
-namespace KiriView {
+namespace kiriview {
 int normalizedImageRotationDegrees(int degrees)
 {
     return rustNormalizedImageRotationDegrees(degrees);

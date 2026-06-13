@@ -13,40 +13,40 @@
 #include <variant>
 
 namespace {
-namespace Backend = KiriView::MediaEntrySourceBackendDetail;
+namespace Backend = kiriview::MediaEntrySourceBackendDetail;
 
-void finishMediaEntrySourceCandidateResult(const KiriView::MediaEntrySourceCandidatesResult &result,
-    const KiriView::ImageDocumentPageCandidatesCallback &callback,
-    const KiriView::ErrorCallback &errorCallback)
+void finishMediaEntrySourceCandidateResult(const kiriview::MediaEntrySourceCandidatesResult &result,
+    const kiriview::ImageDocumentPageCandidatesCallback &callback,
+    const kiriview::ErrorCallback &errorCallback)
 {
-    if (const auto *error = std::get_if<KiriView::MediaEntrySourceError>(&result)) {
-        KiriView::invokeIfSet(errorCallback, error->errorString);
+    if (const auto *error = std::get_if<kiriview::MediaEntrySourceError>(&result)) {
+        kiriview::invokeIfSet(errorCallback, error->errorString);
         return;
     }
 
-    const auto *candidates = std::get_if<KiriView::MediaEntrySourceCandidates>(&result);
+    const auto *candidates = std::get_if<kiriview::MediaEntrySourceCandidates>(&result);
     if (candidates != nullptr) {
-        KiriView::invokeIfSet(callback, candidates->candidates);
+        kiriview::invokeIfSet(callback, candidates->candidates);
     }
 }
 
-void finishMediaEntrySourceDataResult(KiriView::MediaEntrySourceImageDataResult result,
-    KiriView::ImageDataCallback callback, KiriView::ErrorCallback errorCallback)
+void finishMediaEntrySourceDataResult(kiriview::MediaEntrySourceImageDataResult result,
+    kiriview::ImageDataCallback callback, kiriview::ErrorCallback errorCallback)
 {
-    if (const auto *error = std::get_if<KiriView::MediaEntrySourceError>(&result)) {
-        KiriView::invokeIfSet(errorCallback, error->errorString);
+    if (const auto *error = std::get_if<kiriview::MediaEntrySourceError>(&result)) {
+        kiriview::invokeIfSet(errorCallback, error->errorString);
         return;
     }
 
-    auto *data = std::get_if<KiriView::MediaEntrySourceImageData>(&result);
+    auto *data = std::get_if<kiriview::MediaEntrySourceImageData>(&result);
     if (data != nullptr) {
-        KiriView::invokeIfSet(callback, std::move(data->data));
+        kiriview::invokeIfSet(callback, std::move(data->data));
     }
 }
 
 }
 
-namespace KiriView {
+namespace kiriview {
 MediaEntrySourceRuntime::MediaEntrySourceRuntime(
     QObject *context, MediaEntrySourceFactory sourceFactory, ImageWorkerScheduler workerScheduler)
     : m_context(context)

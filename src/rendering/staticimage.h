@@ -16,7 +16,7 @@
 #include <memory>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 inline constexpr int imageBlockingDisplayLongEdgeMax = 2048;
 inline constexpr qsizetype imageFullDecodeFallbackByteLimit = 512 * 1024 * 1024;
 

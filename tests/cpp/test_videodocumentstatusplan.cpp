@@ -18,9 +18,9 @@ private Q_SLOTS:
 };
 
 namespace {
-KiriView::VideoDocumentStatusPlan planForMediaStatus(KiriView::VideoMediaStatus mediaStatus)
+kiriview::VideoDocumentStatusPlan planForMediaStatus(kiriview::VideoMediaStatus mediaStatus)
 {
-    return KiriView::videoDocumentStatusPlan(KiriView::VideoDocumentStatusSnapshot {
+    return kiriview::videoDocumentStatusPlan(kiriview::VideoDocumentStatusSnapshot {
         false,
         false,
         true,
@@ -31,36 +31,36 @@ KiriView::VideoDocumentStatusPlan planForMediaStatus(KiriView::VideoMediaStatus 
 
 void TestVideoDocumentStatusPlan::sourceAndResolverStateTakePrecedenceOverBackendStatus()
 {
-    const KiriView::VideoDocumentStatusPlan noSourcePlan
-        = KiriView::videoDocumentStatusPlan(KiriView::VideoDocumentStatusSnapshot {
+    const kiriview::VideoDocumentStatusPlan noSourcePlan
+        = kiriview::videoDocumentStatusPlan(kiriview::VideoDocumentStatusSnapshot {
             true,
             false,
             true,
-            KiriView::VideoMediaStatus::Buffered,
+            kiriview::VideoMediaStatus::Buffered,
         });
-    QCOMPARE(noSourcePlan.status, KiriView::VideoDocumentStatus::Null);
+    QCOMPARE(noSourcePlan.status, kiriview::VideoDocumentStatus::Null);
     QVERIFY(!noSourcePlan.mediaEnded);
     QVERIFY(!noSourcePlan.clearPlaying);
 
-    const KiriView::VideoDocumentStatusPlan sourceLoadPlan
-        = KiriView::videoDocumentStatusPlan(KiriView::VideoDocumentStatusSnapshot {
+    const kiriview::VideoDocumentStatusPlan sourceLoadPlan
+        = kiriview::videoDocumentStatusPlan(kiriview::VideoDocumentStatusSnapshot {
             false,
             true,
             true,
-            KiriView::VideoMediaStatus::Invalid,
+            kiriview::VideoMediaStatus::Invalid,
         });
-    QCOMPARE(sourceLoadPlan.status, KiriView::VideoDocumentStatus::Loading);
+    QCOMPARE(sourceLoadPlan.status, kiriview::VideoDocumentStatus::Loading);
     QVERIFY(!sourceLoadPlan.mediaEnded);
     QVERIFY(!sourceLoadPlan.clearPlaying);
 
-    const KiriView::VideoDocumentStatusPlan missingBackendPlan
-        = KiriView::videoDocumentStatusPlan(KiriView::VideoDocumentStatusSnapshot {
+    const kiriview::VideoDocumentStatusPlan missingBackendPlan
+        = kiriview::videoDocumentStatusPlan(kiriview::VideoDocumentStatusSnapshot {
             false,
             false,
             false,
-            KiriView::VideoMediaStatus::Invalid,
+            kiriview::VideoMediaStatus::Invalid,
         });
-    QCOMPARE(missingBackendPlan.status, KiriView::VideoDocumentStatus::Loading);
+    QCOMPARE(missingBackendPlan.status, kiriview::VideoDocumentStatus::Loading);
     QVERIFY(!missingBackendPlan.mediaEnded);
     QVERIFY(!missingBackendPlan.clearPlaying);
 }
@@ -68,21 +68,21 @@ void TestVideoDocumentStatusPlan::sourceAndResolverStateTakePrecedenceOverBacken
 void TestVideoDocumentStatusPlan::mediaStatusMapsToPublicDocumentStatus()
 {
     struct Case {
-        KiriView::VideoMediaStatus mediaStatus;
-        KiriView::VideoDocumentStatus documentStatus;
+        kiriview::VideoMediaStatus mediaStatus;
+        kiriview::VideoDocumentStatus documentStatus;
     };
     const std::vector<Case> cases {
-        { KiriView::VideoMediaStatus::Null, KiriView::VideoDocumentStatus::Loading },
-        { KiriView::VideoMediaStatus::Loading, KiriView::VideoDocumentStatus::Loading },
-        { KiriView::VideoMediaStatus::Loaded, KiriView::VideoDocumentStatus::Ready },
-        { KiriView::VideoMediaStatus::Stalled, KiriView::VideoDocumentStatus::Loading },
-        { KiriView::VideoMediaStatus::Buffering, KiriView::VideoDocumentStatus::Ready },
-        { KiriView::VideoMediaStatus::Buffered, KiriView::VideoDocumentStatus::Ready },
-        { KiriView::VideoMediaStatus::Invalid, KiriView::VideoDocumentStatus::Error },
+        { kiriview::VideoMediaStatus::Null, kiriview::VideoDocumentStatus::Loading },
+        { kiriview::VideoMediaStatus::Loading, kiriview::VideoDocumentStatus::Loading },
+        { kiriview::VideoMediaStatus::Loaded, kiriview::VideoDocumentStatus::Ready },
+        { kiriview::VideoMediaStatus::Stalled, kiriview::VideoDocumentStatus::Loading },
+        { kiriview::VideoMediaStatus::Buffering, kiriview::VideoDocumentStatus::Ready },
+        { kiriview::VideoMediaStatus::Buffered, kiriview::VideoDocumentStatus::Ready },
+        { kiriview::VideoMediaStatus::Invalid, kiriview::VideoDocumentStatus::Error },
     };
 
     for (const Case &testCase : cases) {
-        const KiriView::VideoDocumentStatusPlan plan = planForMediaStatus(testCase.mediaStatus);
+        const kiriview::VideoDocumentStatusPlan plan = planForMediaStatus(testCase.mediaStatus);
 
         QCOMPARE(plan.status, testCase.documentStatus);
         QVERIFY(!plan.mediaEnded);
@@ -92,10 +92,10 @@ void TestVideoDocumentStatusPlan::mediaStatusMapsToPublicDocumentStatus()
 
 void TestVideoDocumentStatusPlan::naturalEndClearsPlayingWithoutChangingReadyStatus()
 {
-    const KiriView::VideoDocumentStatusPlan plan
-        = planForMediaStatus(KiriView::VideoMediaStatus::EndOfMedia);
+    const kiriview::VideoDocumentStatusPlan plan
+        = planForMediaStatus(kiriview::VideoMediaStatus::EndOfMedia);
 
-    QCOMPARE(plan.status, KiriView::VideoDocumentStatus::Ready);
+    QCOMPARE(plan.status, kiriview::VideoDocumentStatus::Ready);
     QVERIFY(plan.mediaEnded);
     QVERIFY(plan.clearPlaying);
 }

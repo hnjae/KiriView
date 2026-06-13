@@ -27,7 +27,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 namespace {
     ImageDocumentRenderContext renderContextOrDefault(
         const std::function<ImageDocumentRenderContext()> &renderContext)

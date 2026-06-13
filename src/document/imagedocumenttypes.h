@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTTYPES_H
 #define KIRIVIEW_IMAGEDOCUMENTTYPES_H
 
-namespace KiriView {
+namespace kiriview {
 enum class ImageDocumentStatus {
     Null,
     Loading,

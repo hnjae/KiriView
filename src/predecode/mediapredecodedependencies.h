@@ -10,7 +10,7 @@
 
 #include <QtGlobal>
 
-namespace KiriView {
+namespace kiriview {
 struct MediaPredecodeDependencyOverrides {
     ImageDecodeDependencies imageDecode;
     PowerSaverProvider powerSaver;

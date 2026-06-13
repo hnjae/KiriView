@@ -13,7 +13,7 @@
 #include <optional>
 
 namespace {
-using KiriView::TestSupport::localUrl;
+using kiriview::TestSupport::localUrl;
 }
 
 class TestImageSpreadPageCache : public QObject
@@ -27,7 +27,7 @@ private Q_SLOTS:
 
 void TestImageSpreadPageCache::cacheNormalizesUrlKeys()
 {
-    KiriView::ImageSpreadPageCache cache;
+    kiriview::ImageSpreadPageCache cache;
 
     cache.cachePageSize(localUrl(QStringLiteral("/books/chapter/../page.png")), QSize(1200, 800));
 
@@ -39,7 +39,7 @@ void TestImageSpreadPageCache::cacheNormalizesUrlKeys()
 
 void TestImageSpreadPageCache::emptyUrlsAndSizesAreIgnored()
 {
-    KiriView::ImageSpreadPageCache cache;
+    kiriview::ImageSpreadPageCache cache;
     const QUrl pageUrl = localUrl(QStringLiteral("/books/page.png"));
 
     cache.cachePageSize(QUrl(), QSize(1200, 800));

@@ -6,7 +6,7 @@
 #include "cache/imagebyteaccounting.h"
 #include "cache/imagebytecost.h"
 
-namespace KiriView {
+namespace kiriview {
 FirstDisplayImageDecodeResult ImageTileSource::decodeFirstDisplayImage(
     const ImageFirstDisplayDecodeContext &context, QString *errorString) const
 {

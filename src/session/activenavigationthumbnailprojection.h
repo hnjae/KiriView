@@ -12,7 +12,7 @@
 #include <QUrl>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 enum class ActiveNavigationThumbnailKind {
     Image,
     Video,

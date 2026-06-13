@@ -10,7 +10,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 std::vector<QUrl> imageDocumentPageCandidateUrls(
     const std::vector<ImageDocumentPageCandidate> &candidates);
 std::vector<ImageDocumentPageTarget> imageDocumentPageCandidateTargets(

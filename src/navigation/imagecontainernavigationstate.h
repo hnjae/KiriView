@@ -6,7 +6,7 @@
 
 #include "async/imageasyncoperationstate.h"
 
-namespace KiriView {
+namespace kiriview {
 class ImageContainerNavigationState final
 {
 public:

@@ -3,6 +3,6 @@
 
 #include "presentation/imagedisplaysourceprojection.h"
 
-namespace KiriView {
+namespace kiriview {
 QString imageDisplaySourceRevisionToken(quint64 revision) { return QString::number(revision); }
 }

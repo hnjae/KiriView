@@ -13,7 +13,7 @@
 #include <QString>
 #include <QtGlobal>
 
-namespace KiriView {
+namespace kiriview {
 enum class RasterDisplayBucketStatus {
     Exact,
     FirstDisplaySufficient,

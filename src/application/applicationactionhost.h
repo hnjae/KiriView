@@ -9,7 +9,7 @@ class KirigamiActionCollection;
 class QObject;
 class QString;
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 class ApplicationActionHost
 {
 public:

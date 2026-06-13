@@ -11,7 +11,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 enum class PredecodeMomentumMode {
     Neutral,
     NextBiased,

@@ -13,16 +13,16 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::imageDocumentPageCandidate;
-using KiriView::TestSupport::imagesDirectoryUrl;
-using KiriView::TestSupport::indexedImageUrl;
-using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::videoCandidate;
+using kiriview::TestSupport::archivePageUrl;
+using kiriview::TestSupport::imageDocumentPageCandidate;
+using kiriview::TestSupport::imagesDirectoryUrl;
+using kiriview::TestSupport::indexedImageUrl;
+using kiriview::TestSupport::localUrl;
+using kiriview::TestSupport::videoCandidate;
 
-std::vector<KiriView::ImageDocumentPageCandidate> imageDocumentPageCandidates(int count)
+std::vector<kiriview::ImageDocumentPageCandidate> imageDocumentPageCandidates(int count)
 {
-    std::vector<KiriView::ImageDocumentPageCandidate> candidates;
+    std::vector<kiriview::ImageDocumentPageCandidate> candidates;
     candidates.reserve(static_cast<std::size_t>(count));
     for (int index = 0; index < count; ++index) {
         candidates.push_back(imageDocumentPageCandidate(indexedImageUrl(index)));
@@ -30,25 +30,25 @@ std::vector<KiriView::ImageDocumentPageCandidate> imageDocumentPageCandidates(in
     return candidates;
 }
 
-KiriView::PredecodePolicyInput policyInputForLocation(
-    const KiriView::DisplayedImageLocation &location,
-    KiriView::PredecodeMomentumMode momentumMode = KiriView::PredecodeMomentumMode::Neutral,
+kiriview::PredecodePolicyInput policyInputForLocation(
+    const kiriview::DisplayedImageLocation &location,
+    kiriview::PredecodeMomentumMode momentumMode = kiriview::PredecodeMomentumMode::Neutral,
     bool powerSaverEnabled = false, int idealThreadCount = 4)
 {
-    return KiriView::PredecodePolicyInput {
-        KiriView::predecodeSourceProfileForOpenedCollectionScope(
+    return kiriview::PredecodePolicyInput {
+        kiriview::predecodeSourceProfileForOpenedCollectionScope(
             location.openedCollectionScope(), idealThreadCount),
         momentumMode,
         powerSaverEnabled,
     };
 }
 
-KiriView::PredecodeWindowStartPlan startPlanForLocation(
-    const KiriView::DisplayedImageLocation &location,
-    KiriView::PredecodeMomentumMode momentumMode = KiriView::PredecodeMomentumMode::Neutral,
+kiriview::PredecodeWindowStartPlan startPlanForLocation(
+    const kiriview::DisplayedImageLocation &location,
+    kiriview::PredecodeMomentumMode momentumMode = kiriview::PredecodeMomentumMode::Neutral,
     bool powerSaverEnabled = false, int idealThreadCount = 4)
 {
-    return KiriView::predecodeWindowStartPlan(KiriView::PredecodeWindowPlanRequest {
+    return kiriview::predecodeWindowStartPlan(kiriview::PredecodeWindowPlanRequest {
         location,
         policyInputForLocation(location, momentumMode, powerSaverEnabled, idealThreadCount),
     });
@@ -73,9 +73,9 @@ private Q_SLOTS:
 
 void TestPredecodeWindowPlan::regularImagePlansCandidateContextAndNeutralWindow()
 {
-    const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(5));
-    const KiriView::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
+    const kiriview::DisplayedImageLocation location
+        = kiriview::DisplayedImageLocation::fromUrl(indexedImageUrl(5));
+    const kiriview::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
 
     QVERIFY(startPlan.shouldLoadCandidates());
     QVERIFY(startPlan.fallbackWindow.openedCollectionScope.isEmpty());
@@ -84,8 +84,8 @@ void TestPredecodeWindowPlan::regularImagePlansCandidateContextAndNeutralWindow(
     QVERIFY(startPlan.candidateList.has_value());
     QCOMPARE(startPlan.candidateList->context.currentUrl(), indexedImageUrl(5));
 
-    const KiriView::PredecodeWindowPlan windowPlan
-        = KiriView::predecodeWindowPlanForCandidates(startPlan, imageDocumentPageCandidates(15));
+    const kiriview::PredecodeWindowPlan windowPlan
+        = kiriview::predecodeWindowPlanForCandidates(startPlan, imageDocumentPageCandidates(15));
 
     QCOMPARE(windowPlan.parallelLimit, std::size_t(1));
     QCOMPARE(windowPlan.urls.size(), std::size_t(4));
@@ -97,29 +97,29 @@ void TestPredecodeWindowPlan::regularImagePlansCandidateContextAndNeutralWindow(
 
 void TestPredecodeWindowPlan::powerSaverSuppressesCandidateLoading()
 {
-    const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(5));
-    const KiriView::PredecodeWindowStartPlan startPlan
-        = startPlanForLocation(location, KiriView::PredecodeMomentumMode::Neutral, true);
+    const kiriview::DisplayedImageLocation location
+        = kiriview::DisplayedImageLocation::fromUrl(indexedImageUrl(5));
+    const kiriview::PredecodeWindowStartPlan startPlan
+        = startPlanForLocation(location, kiriview::PredecodeMomentumMode::Neutral, true);
 
     QVERIFY(!startPlan.shouldLoadCandidates());
     QVERIFY(!startPlan.candidateList.has_value());
 
-    const KiriView::PredecodeWindowPlan windowPlan = startPlan.fallbackWindow;
+    const kiriview::PredecodeWindowPlan windowPlan = startPlan.fallbackWindow;
     QCOMPARE(windowPlan.parallelLimit, std::size_t(0));
     QVERIFY(windowPlan.urls.empty());
 }
 
 void TestPredecodeWindowPlan::missingCandidateContextStillCarriesFallbackWindow()
 {
-    const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromUrl(QUrl());
-    const KiriView::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
+    const kiriview::DisplayedImageLocation location
+        = kiriview::DisplayedImageLocation::fromUrl(QUrl());
+    const kiriview::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
 
     QVERIFY(!startPlan.shouldLoadCandidates());
     QVERIFY(!startPlan.candidateList.has_value());
 
-    const KiriView::PredecodeWindowPlan windowPlan = startPlan.fallbackWindow;
+    const kiriview::PredecodeWindowPlan windowPlan = startPlan.fallbackWindow;
     QCOMPARE(windowPlan.parallelLimit, std::size_t(1));
     QVERIFY(windowPlan.openedCollectionScope.isEmpty());
     QVERIFY(windowPlan.urls.empty());
@@ -127,19 +127,19 @@ void TestPredecodeWindowPlan::missingCandidateContextStillCarriesFallbackWindow(
 
 void TestPredecodeWindowPlan::directoryCollectionUsesDocumentParallelLimit()
 {
-    const KiriView::OpenedCollectionScopeLocation directoryCollection
-        = KiriView::OpenedCollectionScopeLocation::fromUrls(imagesDirectoryUrl(),
-            imagesDirectoryUrl(), KiriView::OpenedCollectionScopeKind::Directory);
-    const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+    const kiriview::OpenedCollectionScopeLocation directoryCollection
+        = kiriview::OpenedCollectionScopeLocation::fromUrls(imagesDirectoryUrl(),
+            imagesDirectoryUrl(), kiriview::OpenedCollectionScopeKind::Directory);
+    const kiriview::DisplayedImageLocation location
+        = kiriview::DisplayedImageLocation::fromOpenedCollectionScope(
             indexedImageUrl(5), directoryCollection);
-    const KiriView::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
+    const kiriview::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
 
     QVERIFY(startPlan.shouldLoadCandidates());
     QCOMPARE(startPlan.fallbackWindow.openedCollectionScope, directoryCollection);
 
-    const KiriView::PredecodeWindowPlan windowPlan
-        = KiriView::predecodeWindowPlanForCandidates(startPlan, imageDocumentPageCandidates(15));
+    const kiriview::PredecodeWindowPlan windowPlan
+        = kiriview::predecodeWindowPlanForCandidates(startPlan, imageDocumentPageCandidates(15));
 
     QCOMPARE(windowPlan.parallelLimit, std::size_t(2));
     QVERIFY(windowPlan.urls.size() >= 2);
@@ -149,19 +149,19 @@ void TestPredecodeWindowPlan::directoryCollectionUsesDocumentParallelLimit()
 
 void TestPredecodeWindowPlan::predecodeWindowSkipsOpenedCollectionVideoCandidates()
 {
-    const KiriView::OpenedCollectionScopeLocation directoryCollection
-        = KiriView::OpenedCollectionScopeLocation::fromUrls(imagesDirectoryUrl(),
-            imagesDirectoryUrl(), KiriView::OpenedCollectionScopeKind::Directory);
+    const kiriview::OpenedCollectionScopeLocation directoryCollection
+        = kiriview::OpenedCollectionScopeLocation::fromUrls(imagesDirectoryUrl(),
+            imagesDirectoryUrl(), kiriview::OpenedCollectionScopeKind::Directory);
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl videoUrl = localUrl(QStringLiteral("/images/02.mp4"));
     const QUrl nextImageUrl = indexedImageUrl(3);
-    const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+    const kiriview::DisplayedImageLocation location
+        = kiriview::DisplayedImageLocation::fromOpenedCollectionScope(
             displayedUrl, directoryCollection);
-    const KiriView::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
+    const kiriview::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
 
-    const KiriView::PredecodeWindowPlan windowPlan
-        = KiriView::predecodeWindowPlanForCandidates(startPlan,
+    const kiriview::PredecodeWindowPlan windowPlan
+        = kiriview::predecodeWindowPlanForCandidates(startPlan,
             {
                 imageDocumentPageCandidate(displayedUrl),
                 videoCandidate(videoUrl),
@@ -176,23 +176,23 @@ void TestPredecodeWindowPlan::predecodeWindowSkipsOpenedCollectionVideoCandidate
 void TestPredecodeWindowPlan::archiveWindowPreservesOpenedCollectionScopeContext()
 {
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScope
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> openedCollectionScope
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(openedCollectionScope.has_value());
 
     const QUrl displayedUrl
         = archivePageUrl(openedCollectionScope->rootUrl(), QStringLiteral("01.png"));
     const QUrl nextUrl = archivePageUrl(openedCollectionScope->rootUrl(), QStringLiteral("02.png"));
-    const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+    const kiriview::DisplayedImageLocation location
+        = kiriview::DisplayedImageLocation::fromOpenedCollectionScope(
             displayedUrl, *openedCollectionScope);
-    const KiriView::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
+    const kiriview::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
 
     QVERIFY(startPlan.shouldLoadCandidates());
     QCOMPARE(startPlan.fallbackWindow.openedCollectionScope, *openedCollectionScope);
 
-    const KiriView::PredecodeWindowPlan windowPlan
-        = KiriView::predecodeWindowPlanForCandidates(startPlan,
+    const kiriview::PredecodeWindowPlan windowPlan
+        = kiriview::predecodeWindowPlanForCandidates(startPlan,
             {
                 imageDocumentPageCandidate(displayedUrl),
                 imageDocumentPageCandidate(nextUrl),
@@ -207,12 +207,12 @@ void TestPredecodeWindowPlan::archiveWindowPreservesOpenedCollectionScopeContext
 
 void TestPredecodeWindowPlan::missingCurrentCandidateYieldsEmptyWindow()
 {
-    const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(5));
-    const KiriView::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
+    const kiriview::DisplayedImageLocation location
+        = kiriview::DisplayedImageLocation::fromUrl(indexedImageUrl(5));
+    const kiriview::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
 
-    const KiriView::PredecodeWindowPlan windowPlan
-        = KiriView::predecodeWindowPlanForCandidates(startPlan,
+    const kiriview::PredecodeWindowPlan windowPlan
+        = kiriview::predecodeWindowPlanForCandidates(startPlan,
             {
                 imageDocumentPageCandidate(indexedImageUrl(0)),
                 imageDocumentPageCandidate(indexedImageUrl(1)),
@@ -225,16 +225,16 @@ void TestPredecodeWindowPlan::missingCurrentCandidateYieldsEmptyWindow()
 
 void TestPredecodeWindowPlan::candidateListingFailureUsesPlannedFallbackWindow()
 {
-    const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(5));
-    const KiriView::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
+    const kiriview::DisplayedImageLocation location
+        = kiriview::DisplayedImageLocation::fromUrl(indexedImageUrl(5));
+    const kiriview::PredecodeWindowStartPlan startPlan = startPlanForLocation(location);
 
     QVERIFY(startPlan.shouldLoadCandidates());
     QCOMPARE(startPlan.fallbackWindow.parallelLimit, std::size_t(1));
     QVERIFY(startPlan.fallbackWindow.urls.empty());
 
-    const KiriView::PredecodeWindowPlan fallbackWindow = KiriView::predecodeWindowPlanForCandidates(
-        KiriView::PredecodeWindowStartPlan {
+    const kiriview::PredecodeWindowPlan fallbackWindow = kiriview::predecodeWindowPlanForCandidates(
+        kiriview::PredecodeWindowStartPlan {
             startPlan.fallbackWindow,
             std::nullopt,
         },

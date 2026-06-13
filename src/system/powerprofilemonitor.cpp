@@ -43,7 +43,7 @@ void subscribePortalPowerSaverChanges(QObject *receiver)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 PowerProfileMonitor::PowerProfileMonitor(QObject *parent, PowerSaverChangedCallback callback)
     : PowerProfileMonitor(parent, std::move(callback), {})
 {

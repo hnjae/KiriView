@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_THUMBNAILSOURCEKIND_H
 #define KIRIVIEW_THUMBNAILSOURCEKIND_H
 
-namespace KiriView {
+namespace kiriview {
 enum class ThumbnailSourceKind {
     DirectImage,
     DirectVideo,

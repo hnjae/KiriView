@@ -11,11 +11,11 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::localUrl;
+using kiriview::TestSupport::localUrl;
 
-KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 }
 
@@ -36,8 +36,8 @@ void TestMediaPredecodeEligibility::snapshotKeepsMixedMediaIndicesForStillImages
     const QUrl laterVideo = localUrl(QStringLiteral("/media/03.mov"));
     const QUrl laterImage = localUrl(QStringLiteral("/media/04.jpg"));
 
-    const KiriView::MediaPredecodeEligibilitySnapshot snapshot
-        = KiriView::mediaPredecodeEligibilitySnapshot(
+    const kiriview::MediaPredecodeEligibilitySnapshot snapshot
+        = kiriview::mediaPredecodeEligibilitySnapshot(
             {
                 directMediaNavigationCandidate(previousImage),
                 directMediaNavigationCandidate(currentVideo),
@@ -65,8 +65,8 @@ void TestMediaPredecodeEligibility::targetIndicesReturnOnlyEligibleStillImages()
     const QUrl currentVideo = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl nextImage = localUrl(QStringLiteral("/media/02.png"));
     const QUrl laterImage = localUrl(QStringLiteral("/media/04.jpg"));
-    const KiriView::MediaPredecodeEligibilitySnapshot snapshot
-        = KiriView::mediaPredecodeEligibilitySnapshot(
+    const kiriview::MediaPredecodeEligibilitySnapshot snapshot
+        = kiriview::mediaPredecodeEligibilitySnapshot(
             {
                 directMediaNavigationCandidate(previousImage),
                 directMediaNavigationCandidate(currentVideo),
@@ -77,7 +77,7 @@ void TestMediaPredecodeEligibility::targetIndicesReturnOnlyEligibleStillImages()
             currentVideo);
 
     const std::vector<QUrl> urls
-        = KiriView::mediaPredecodeEligibleUrlsForTargetIndices(snapshot, { 2, 1, 4, 99, 0 });
+        = kiriview::mediaPredecodeEligibleUrlsForTargetIndices(snapshot, { 2, 1, 4, 99, 0 });
 
     QCOMPARE(urls.size(), std::size_t(3));
     QCOMPARE(urls.at(0), nextImage);

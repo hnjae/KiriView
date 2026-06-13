@@ -8,7 +8,7 @@
 
 #include <QtGlobal>
 
-namespace KiriView {
+namespace kiriview {
 enum class OpenedCollectionScopeLoadEffect {
     ReadImage,
     LoadImageDocumentPageCandidates,

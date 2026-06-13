@@ -24,21 +24,21 @@ private Q_SLOTS:
 
 void TestImageRotation::rotationDegreesNormalizeToQuarterTurns()
 {
-    QCOMPARE(KiriView::normalizedImageRotationDegrees(0), 0);
-    QCOMPARE(KiriView::normalizedImageRotationDegrees(450), 90);
-    QCOMPARE(KiriView::normalizedImageRotationDegrees(-90), 270);
-    QCOMPARE(KiriView::normalizedImageRotationDegrees(45), 0);
-    QCOMPARE(KiriView::imageRotationClockwise(270), 0);
-    QCOMPARE(KiriView::imageRotationCounterclockwise(0), 270);
+    QCOMPARE(kiriview::normalizedImageRotationDegrees(0), 0);
+    QCOMPARE(kiriview::normalizedImageRotationDegrees(450), 90);
+    QCOMPARE(kiriview::normalizedImageRotationDegrees(-90), 270);
+    QCOMPARE(kiriview::normalizedImageRotationDegrees(45), 0);
+    QCOMPARE(kiriview::imageRotationClockwise(270), 0);
+    QCOMPARE(kiriview::imageRotationCounterclockwise(0), 270);
 }
 
 void TestImageRotation::rotatedSizesSwapAxesForSidewaysRotation()
 {
-    QVERIFY(KiriView::imageRotationSwapsAxes(90));
-    QVERIFY(KiriView::imageRotationSwapsAxes(270));
-    QVERIFY(!KiriView::imageRotationSwapsAxes(180));
-    QCOMPARE(KiriView::rotatedImageSize(QSize(640, 480), 90), QSize(480, 640));
-    QCOMPARE(KiriView::rotatedImageSize(QSizeF(640.0, 480.0), 180), QSizeF(640.0, 480.0));
+    QVERIFY(kiriview::imageRotationSwapsAxes(90));
+    QVERIFY(kiriview::imageRotationSwapsAxes(270));
+    QVERIFY(!kiriview::imageRotationSwapsAxes(180));
+    QCOMPARE(kiriview::rotatedImageSize(QSize(640, 480), 90), QSize(480, 640));
+    QCOMPARE(kiriview::rotatedImageSize(QSizeF(640.0, 480.0), 180), QSizeF(640.0, 480.0));
 }
 
 void TestImageRotation::rotatedSourceRectsMapIntoTargetSpace()
@@ -46,37 +46,37 @@ void TestImageRotation::rotatedSourceRectsMapIntoTargetSpace()
     const QRectF sourceRect(250.0, 100.0, 500.0, 200.0);
     const QSizeF sourceSize(1000.0, 500.0);
 
-    QCOMPARE(KiriView::rotatedSourceRectInTarget(
+    QCOMPARE(kiriview::rotatedSourceRectInTarget(
                  sourceRect, sourceSize, QRectF(10.0, 20.0, 500.0, 1000.0), 90),
         QRectF(210.0, 270.0, 200.0, 500.0));
-    QCOMPARE(KiriView::rotatedSourceRectInTarget(
+    QCOMPARE(kiriview::rotatedSourceRectInTarget(
                  sourceRect, sourceSize, QRectF(10.0, 20.0, 1000.0, 500.0), 180),
         QRectF(260.0, 220.0, 500.0, 200.0));
-    QCOMPARE(KiriView::rotatedSourceRectInTarget(
+    QCOMPARE(kiriview::rotatedSourceRectInTarget(
                  sourceRect, sourceSize, QRectF(10.0, 20.0, 500.0, 1000.0), 270),
         QRectF(110.0, 270.0, 200.0, 500.0));
 }
 
 void TestImageRotation::unrotatedVisibleRectsMapBackToSourceOrientation()
 {
-    QCOMPARE(KiriView::unrotatedVisibleRectForRotation(
+    QCOMPARE(kiriview::unrotatedVisibleRectForRotation(
                  QSizeF(1000.0, 500.0), QRectF(10.0, 20.0, 100.0, 200.0), 90),
         QRectF(20.0, 390.0, 200.0, 100.0));
-    QCOMPARE(KiriView::unrotatedVisibleRectForRotation(
+    QCOMPARE(kiriview::unrotatedVisibleRectForRotation(
                  QSizeF(1000.0, 500.0), QRectF(10.0, 20.0, 100.0, 200.0), 270),
         QRectF(780.0, 10.0, 200.0, 100.0));
 }
 
 void TestImageRotation::textureCoordinateTransformsRotateAxes()
 {
-    const KiriView::ImageTextureCoordinateTransform clockwise
-        = KiriView::imageTextureCoordinateTransform(QRectF(0.25, 0.5, 0.5, 0.25), 90);
+    const kiriview::ImageTextureCoordinateTransform clockwise
+        = kiriview::imageTextureCoordinateTransform(QRectF(0.25, 0.5, 0.5, 0.25), 90);
     QCOMPARE(clockwise.origin, QPointF(0.25, 0.75));
     QCOMPARE(clockwise.xAxis, QPointF(0.0, -0.25));
     QCOMPARE(clockwise.yAxis, QPointF(0.5, 0.0));
 
-    const KiriView::ImageTextureCoordinateTransform counterclockwise
-        = KiriView::imageTextureCoordinateTransform(QRectF(0.25, 0.5, 0.5, 0.25), 270);
+    const kiriview::ImageTextureCoordinateTransform counterclockwise
+        = kiriview::imageTextureCoordinateTransform(QRectF(0.25, 0.5, 0.5, 0.25), 270);
     QCOMPARE(counterclockwise.origin, QPointF(0.75, 0.5));
     QCOMPARE(counterclockwise.xAxis, QPointF(0.0, 0.25));
     QCOMPARE(counterclockwise.yAxis, QPointF(-0.5, 0.0));

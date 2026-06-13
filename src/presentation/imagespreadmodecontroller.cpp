@@ -3,7 +3,7 @@
 
 #include "presentation/imagespreadmodecontroller.h"
 
-namespace KiriView {
+namespace kiriview {
 bool ImageSpreadModeController::twoPageModeEnabled() const { return m_twoPageModeEnabled; }
 
 ImageSpreadTwoPageModeChange ImageSpreadModeController::setTwoPageModeEnabled(

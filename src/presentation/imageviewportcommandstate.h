@@ -10,7 +10,7 @@
 #include <QSizeF>
 #include <QtGlobal>
 
-namespace KiriView {
+namespace kiriview {
 enum class ImageViewportCommandStatus {
     Pending,
     Applying,

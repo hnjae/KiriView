@@ -14,7 +14,7 @@ class QEvent;
 class QKeyEvent;
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 enum class MenuAccessKeyRouterChange {
     Menu,
     Enabled,

@@ -13,7 +13,7 @@
 #include <unistd.h>
 #endif
 
-namespace KiriView {
+namespace kiriview {
 std::optional<qsizetype> physicalSystemMemoryByteSize()
 {
 #if defined(Q_OS_LINUX)

@@ -12,7 +12,7 @@ mod momentum;
 #[path = "predecodepolicy/schedule.rs"]
 mod schedule;
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustPredecodeSourceProfile {

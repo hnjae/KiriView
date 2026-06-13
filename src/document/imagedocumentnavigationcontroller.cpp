@@ -16,21 +16,21 @@
 #include <utility>
 
 namespace {
-bool imageDocumentPageNavigationScopeActive(const KiriView::ImageDocumentState &state)
+bool imageDocumentPageNavigationScopeActive(const kiriview::ImageDocumentState &state)
 {
-    const KiriView::DisplayedImageLocation &location = state.displayedImageLocation();
-    if (!KiriView::displayedLocationIsInsideOpenedCollectionScope(location)) {
+    const kiriview::DisplayedImageLocation &location = state.displayedImageLocation();
+    if (!kiriview::displayedLocationIsInsideOpenedCollectionScope(location)) {
         return false;
     }
 
     return !state.sourceUrl().isEmpty()
-        && KiriView::openedCollectionScopeContainsUrl(
+        && kiriview::openedCollectionScopeContainsUrl(
             location.openedCollectionScope(), state.sourceUrl());
 }
 
-std::optional<KiriView::ImageDocumentPageCandidateListContext> navigationCandidateContext(
-    const KiriView::ImageDocumentState &state,
-    const KiriView::ImagePageSurfaceController &pageSurfaceController)
+std::optional<kiriview::ImageDocumentPageCandidateListContext> navigationCandidateContext(
+    const kiriview::ImageDocumentState &state,
+    const kiriview::ImagePageSurfaceController &pageSurfaceController)
 {
     if (!pageSurfaceController.hasImage() && !state.unsupportedOpenedCollectionVideo()) {
         return std::nullopt;
@@ -40,12 +40,12 @@ std::optional<KiriView::ImageDocumentPageCandidateListContext> navigationCandida
         return std::nullopt;
     }
 
-    return KiriView::imageDocumentPageCandidateListContextForDisplayedImage(
+    return kiriview::imageDocumentPageCandidateListContextForDisplayedImage(
         state.displayedImageLocation());
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentNavigationController::ImageDocumentNavigationController(ImageDocumentState &state,
     ImagePageSurfaceController &pageSurfaceController,
     ImageDocumentPageNavigationService &navigationService,

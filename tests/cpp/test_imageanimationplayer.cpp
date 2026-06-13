@@ -29,11 +29,11 @@ struct FakePlaybackSourceStats {
 
 struct ManualTimerState {
     int intervalMsec = 0;
-    KiriView::RuntimeTimerCallback callback;
+    kiriview::RuntimeTimerCallback callback;
     bool active = false;
 };
 
-class ManualRuntimeTimer final : public KiriView::RuntimeTimerHandle
+class ManualRuntimeTimer final : public kiriview::RuntimeTimerHandle
 {
 public:
     explicit ManualRuntimeTimer(std::shared_ptr<ManualTimerState> state)
@@ -63,12 +63,12 @@ private:
 class ManualTimerScheduler
 {
 public:
-    KiriView::TimerScheduler scheduler()
+    kiriview::TimerScheduler scheduler()
     {
-        return KiriView::TimerScheduler {
+        return kiriview::TimerScheduler {
             []() { return qint64(0); },
-            [this](QObject *, int intervalMsec, KiriView::RuntimeTimerCallback callback)
-                -> std::unique_ptr<KiriView::RuntimeTimerHandle> {
+            [this](QObject *, int intervalMsec, kiriview::RuntimeTimerCallback callback)
+                -> std::unique_ptr<kiriview::RuntimeTimerHandle> {
                 auto state = std::make_shared<ManualTimerState>(
                     ManualTimerState { intervalMsec, std::move(callback), false });
                 m_timers.push_back(state);
@@ -96,11 +96,11 @@ private:
     std::vector<std::shared_ptr<ManualTimerState>> m_timers;
 };
 
-KiriView::ImageAnimationPlaybackOpenResult openResult(
+kiriview::ImageAnimationPlaybackOpenResult openResult(
     QSize firstFrameSize, int loopCount, bool sourceHasMoreFrames)
 {
-    return KiriView::ImageAnimationPlaybackOpenResult {
-        KiriView::ImageAnimationPlaybackOpenStatus::Success,
+    return kiriview::ImageAnimationPlaybackOpenResult {
+        kiriview::ImageAnimationPlaybackOpenStatus::Success,
         frameImage(firstFrameSize),
         0,
         loopCount,
@@ -109,18 +109,18 @@ KiriView::ImageAnimationPlaybackOpenResult openResult(
     };
 }
 
-KiriView::ImageAnimationPlaybackOpenResult openError(const QString &errorString)
+kiriview::ImageAnimationPlaybackOpenResult openError(const QString &errorString)
 {
-    KiriView::ImageAnimationPlaybackOpenResult result;
+    kiriview::ImageAnimationPlaybackOpenResult result;
     result.errorString = errorString;
     return result;
 }
 
-KiriView::ImageAnimationPlaybackReadResult readFrame(QSize frameSize, bool sourceHasMoreFrames)
+kiriview::ImageAnimationPlaybackReadResult readFrame(QSize frameSize, bool sourceHasMoreFrames)
 {
-    return KiriView::ImageAnimationPlaybackReadResult {
-        KiriView::ImageAnimationPlaybackReadStatus::Frame,
-        KiriView::AnimationFrame {
+    return kiriview::ImageAnimationPlaybackReadResult {
+        kiriview::ImageAnimationPlaybackReadStatus::Frame,
+        kiriview::AnimationFrame {
             frameImage(frameSize),
             0,
         },
@@ -129,27 +129,27 @@ KiriView::ImageAnimationPlaybackReadResult readFrame(QSize frameSize, bool sourc
     };
 }
 
-KiriView::ImageAnimationPlaybackReadResult readEnd()
+kiriview::ImageAnimationPlaybackReadResult readEnd()
 {
-    return KiriView::ImageAnimationPlaybackReadResult {
-        KiriView::ImageAnimationPlaybackReadStatus::End,
+    return kiriview::ImageAnimationPlaybackReadResult {
+        kiriview::ImageAnimationPlaybackReadStatus::End,
         {},
         false,
         {},
     };
 }
 
-KiriView::ImageAnimationPlaybackReadResult readError(const QString &errorString)
+kiriview::ImageAnimationPlaybackReadResult readError(const QString &errorString)
 {
-    return KiriView::ImageAnimationPlaybackReadResult {
-        KiriView::ImageAnimationPlaybackReadStatus::Error,
+    return kiriview::ImageAnimationPlaybackReadResult {
+        kiriview::ImageAnimationPlaybackReadStatus::Error,
         {},
         false,
         errorString,
     };
 }
 
-class FakePlaybackSource final : public KiriView::ImageAnimationPlaybackSource
+class FakePlaybackSource final : public kiriview::ImageAnimationPlaybackSource
 {
 public:
     FakePlaybackSource(QSize firstFrameSize, std::vector<QSize> frameSizes, int loopCount,
@@ -164,8 +164,8 @@ public:
         }
     }
 
-    FakePlaybackSource(std::vector<KiriView::ImageAnimationPlaybackOpenResult> openResults,
-        std::vector<KiriView::ImageAnimationPlaybackReadResult> readResults, bool restartable,
+    FakePlaybackSource(std::vector<kiriview::ImageAnimationPlaybackOpenResult> openResults,
+        std::vector<kiriview::ImageAnimationPlaybackReadResult> readResults, bool restartable,
         std::shared_ptr<FakePlaybackSourceStats> stats)
         : m_openResults(std::move(openResults))
         , m_readResults(std::move(readResults))
@@ -174,7 +174,7 @@ public:
     {
     }
 
-    KiriView::ImageAnimationPlaybackOpenResult open() override
+    kiriview::ImageAnimationPlaybackOpenResult open() override
     {
         m_nextFrameIndex = 0;
         const int openIndex = m_stats->openCount++;
@@ -186,7 +186,7 @@ public:
             std::min<std::size_t>(static_cast<std::size_t>(openIndex), m_openResults.size() - 1));
     }
 
-    KiriView::ImageAnimationPlaybackReadResult readNextFrame() override
+    kiriview::ImageAnimationPlaybackReadResult readNextFrame() override
     {
         ++m_stats->readCount;
         if (m_nextFrameIndex >= m_readResults.size()) {
@@ -199,8 +199,8 @@ public:
     bool restartable() const override { return m_restartable; }
 
 private:
-    std::vector<KiriView::ImageAnimationPlaybackOpenResult> m_openResults;
-    std::vector<KiriView::ImageAnimationPlaybackReadResult> m_readResults;
+    std::vector<kiriview::ImageAnimationPlaybackOpenResult> m_openResults;
+    std::vector<kiriview::ImageAnimationPlaybackReadResult> m_readResults;
     bool m_restartable = false;
     std::shared_ptr<FakePlaybackSourceStats> m_stats;
     std::size_t m_nextFrameIndex = 0;
@@ -224,49 +224,49 @@ private Q_SLOTS:
 
 void TestImageAnimationPlayer::playbackRequestsAreTypedValues()
 {
-    KiriView::ImageAnimationPlaybackRequest invalidRequest;
+    kiriview::ImageAnimationPlaybackRequest invalidRequest;
     QVERIFY(!invalidRequest.isValid());
-    QVERIFY(KiriView::makeImageAnimationPlaybackSource(std::move(invalidRequest)) == nullptr);
+    QVERIFY(kiriview::makeImageAnimationPlaybackSource(std::move(invalidRequest)) == nullptr);
 
-    KiriView::ImageAnimationPlaybackRequest readerRequest
-        = KiriView::readerAnimationPlaybackRequest(
+    kiriview::ImageAnimationPlaybackRequest readerRequest
+        = kiriview::readerAnimationPlaybackRequest(
             QByteArrayLiteral("reader-data"), QByteArrayLiteral("gif"));
     QVERIFY(readerRequest.isValid());
     const auto *readerPayload
-        = std::get_if<KiriView::ReaderAnimationPlaybackRequest>(&readerRequest.payload);
+        = std::get_if<kiriview::ReaderAnimationPlaybackRequest>(&readerRequest.payload);
     QVERIFY(readerPayload != nullptr);
     QCOMPARE(readerPayload->data, QByteArrayLiteral("reader-data"));
     QCOMPARE(readerPayload->format, QByteArrayLiteral("gif"));
 
-    KiriView::ImageAnimationPlaybackRequest apngRequest
-        = KiriView::apngAnimationPlaybackRequest(QByteArrayLiteral("apng-data"));
+    kiriview::ImageAnimationPlaybackRequest apngRequest
+        = kiriview::apngAnimationPlaybackRequest(QByteArrayLiteral("apng-data"));
     QVERIFY(apngRequest.isValid());
     const auto *apngPayload
-        = std::get_if<KiriView::ApngAnimationPlaybackRequest>(&apngRequest.payload);
+        = std::get_if<kiriview::ApngAnimationPlaybackRequest>(&apngRequest.payload);
     QVERIFY(apngPayload != nullptr);
     QCOMPARE(apngPayload->data, QByteArrayLiteral("apng-data"));
 
-    KiriView::ImageAnimationPlaybackRequest webpRequest
-        = KiriView::webpAnimationPlaybackRequest(QByteArrayLiteral("webp-data"));
+    kiriview::ImageAnimationPlaybackRequest webpRequest
+        = kiriview::webpAnimationPlaybackRequest(QByteArrayLiteral("webp-data"));
     QVERIFY(webpRequest.isValid());
     const auto *webpPayload
-        = std::get_if<KiriView::WebPAnimationPlaybackRequest>(&webpRequest.payload);
+        = std::get_if<kiriview::WebPAnimationPlaybackRequest>(&webpRequest.payload);
     QVERIFY(webpPayload != nullptr);
     QCOMPARE(webpPayload->data, QByteArrayLiteral("webp-data"));
 
-    KiriView::ImageAnimationPlaybackRequest jxlRequest
-        = KiriView::jxlAnimationPlaybackRequest(QByteArrayLiteral("jxl-data"));
+    kiriview::ImageAnimationPlaybackRequest jxlRequest
+        = kiriview::jxlAnimationPlaybackRequest(QByteArrayLiteral("jxl-data"));
     QVERIFY(jxlRequest.isValid());
     const auto *jxlPayload
-        = std::get_if<KiriView::JxlAnimationPlaybackRequest>(&jxlRequest.payload);
+        = std::get_if<kiriview::JxlAnimationPlaybackRequest>(&jxlRequest.payload);
     QVERIFY(jxlPayload != nullptr);
     QCOMPARE(jxlPayload->data, QByteArrayLiteral("jxl-data"));
 
-    KiriView::ImageAnimationPlaybackRequest heifRequest
-        = KiriView::heifSequenceAnimationPlaybackRequest(QByteArrayLiteral("heif-data"));
+    kiriview::ImageAnimationPlaybackRequest heifRequest
+        = kiriview::heifSequenceAnimationPlaybackRequest(QByteArrayLiteral("heif-data"));
     QVERIFY(heifRequest.isValid());
     const auto *heifPayload
-        = std::get_if<KiriView::HeifSequenceAnimationPlaybackRequest>(&heifRequest.payload);
+        = std::get_if<kiriview::HeifSequenceAnimationPlaybackRequest>(&heifRequest.payload);
     QVERIFY(heifPayload != nullptr);
     QCOMPARE(heifPayload->data, QByteArrayLiteral("heif-data"));
 }
@@ -276,7 +276,7 @@ void TestImageAnimationPlayer::startConsumesFirstFrameAndEmitsSubsequentFrames()
     std::vector<QSize> emittedFrameSizes;
     QString errorString;
     ManualTimerScheduler timerScheduler;
-    KiriView::ImageAnimationPlayer player(
+    kiriview::ImageAnimationPlayer player(
         this,
         [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
         [&errorString](const QString &error) { errorString = error; }, {},
@@ -289,7 +289,7 @@ void TestImageAnimationPlayer::startConsumesFirstFrameAndEmitsSubsequentFrames()
     QCOMPARE(stats->openCount, 1);
     QVERIFY(emittedFrameSizes.empty());
     QCOMPARE(timerScheduler.timerCount(), std::size_t(1));
-    QCOMPARE(timerScheduler.intervalAt(0), KiriView::normalizedAnimationFrameDelay(0));
+    QCOMPARE(timerScheduler.intervalAt(0), kiriview::normalizedAnimationFrameDelay(0));
     QVERIFY(timerScheduler.activeAt(0));
 
     timerScheduler.fireAt(0);
@@ -302,7 +302,7 @@ void TestImageAnimationPlayer::restartableSourcesEmitFirstFrameOnLoopRestart()
 {
     std::vector<QSize> emittedFrameSizes;
     ManualTimerScheduler timerScheduler;
-    KiriView::ImageAnimationPlayer player(
+    kiriview::ImageAnimationPlayer player(
         this,
         [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
         [](const QString &) {}, {}, timerScheduler.scheduler());
@@ -326,7 +326,7 @@ void TestImageAnimationPlayer::nonRestartableSourcesDoNotReopenAtSequenceEnd()
 {
     std::vector<QSize> emittedFrameSizes;
     ManualTimerScheduler timerScheduler;
-    KiriView::ImageAnimationPlayer player(
+    kiriview::ImageAnimationPlayer player(
         this,
         [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
         [](const QString &) {}, {}, timerScheduler.scheduler());
@@ -347,17 +347,17 @@ void TestImageAnimationPlayer::startReportsOpenErrors()
 {
     std::vector<QSize> emittedFrameSizes;
     QString errorString;
-    KiriView::ImageAnimationPlayer player(
+    kiriview::ImageAnimationPlayer player(
         this,
         [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
         [&errorString](const QString &error) { errorString = error; });
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
-        std::vector<KiriView::ImageAnimationPlaybackOpenResult> {
+        std::vector<kiriview::ImageAnimationPlaybackOpenResult> {
             openError(QStringLiteral("open failed")),
         },
-        std::vector<KiriView::ImageAnimationPlaybackReadResult> {}, true, stats));
+        std::vector<kiriview::ImageAnimationPlaybackReadResult> {}, true, stats));
 
     QCOMPARE(stats->openCount, 1);
     QCOMPARE(errorString, QStringLiteral("open failed"));
@@ -368,16 +368,16 @@ void TestImageAnimationPlayer::readFrameErrorsAreReportedWithoutSequenceRestart(
 {
     QString errorString;
     ManualTimerScheduler timerScheduler;
-    KiriView::ImageAnimationPlayer player(
+    kiriview::ImageAnimationPlayer player(
         this, [](const QImage &) {}, [&errorString](const QString &error) { errorString = error; },
         {}, timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
-        std::vector<KiriView::ImageAnimationPlaybackOpenResult> {
+        std::vector<kiriview::ImageAnimationPlaybackOpenResult> {
             openResult(QSize(1, 1), 1, true),
         },
-        std::vector<KiriView::ImageAnimationPlaybackReadResult> {
+        std::vector<kiriview::ImageAnimationPlaybackReadResult> {
             readError(QStringLiteral("read failed")),
         },
         true, stats));
@@ -393,16 +393,16 @@ void TestImageAnimationPlayer::readEndStopsOptimisticSourceWithoutError()
 {
     QString errorString;
     ManualTimerScheduler timerScheduler;
-    KiriView::ImageAnimationPlayer player(
+    kiriview::ImageAnimationPlayer player(
         this, [](const QImage &) {}, [&errorString](const QString &error) { errorString = error; },
         {}, timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
-        std::vector<KiriView::ImageAnimationPlaybackOpenResult> {
+        std::vector<kiriview::ImageAnimationPlaybackOpenResult> {
             openResult(QSize(1, 1), -1, true),
         },
-        std::vector<KiriView::ImageAnimationPlaybackReadResult> {
+        std::vector<kiriview::ImageAnimationPlaybackReadResult> {
             readEnd(),
         },
         false, stats));
@@ -419,7 +419,7 @@ void TestImageAnimationPlayer::restartOpenErrorsAreReported()
     std::vector<QSize> emittedFrameSizes;
     QString errorString;
     ManualTimerScheduler timerScheduler;
-    KiriView::ImageAnimationPlayer player(
+    kiriview::ImageAnimationPlayer player(
         this,
         [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
         [&errorString](const QString &error) { errorString = error; }, {},
@@ -427,11 +427,11 @@ void TestImageAnimationPlayer::restartOpenErrorsAreReported()
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
-        std::vector<KiriView::ImageAnimationPlaybackOpenResult> {
+        std::vector<kiriview::ImageAnimationPlaybackOpenResult> {
             openResult(QSize(1, 1), 1, true),
             openError(QStringLiteral("restart failed")),
         },
-        std::vector<KiriView::ImageAnimationPlaybackReadResult> {
+        std::vector<kiriview::ImageAnimationPlaybackReadResult> {
             readFrame(QSize(2, 1), false),
         },
         true, stats));

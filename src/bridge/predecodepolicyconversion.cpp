@@ -5,7 +5,7 @@
 
 #include "bridge/rustqtconversion.h"
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustPredecodeSourceProfile rustPredecodeSourceProfile(PredecodeSourceProfile profile)
 {
     return RustPredecodeSourceProfile {

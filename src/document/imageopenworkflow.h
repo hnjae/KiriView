@@ -13,7 +13,7 @@
 
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageDocumentSourceLoadSnapshot {
     QUrl currentSourceUrl;
     OpenedCollectionScopeLocation displayedOpenedCollectionScope;

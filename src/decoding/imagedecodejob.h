@@ -15,7 +15,7 @@
 #include <QString>
 #include <functional>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDecodeJob final : public QObject
 {
 public:

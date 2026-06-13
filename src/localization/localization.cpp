@@ -12,7 +12,7 @@
 #define TRANSLATION_DOMAIN "kiriview"
 #endif
 
-namespace KiriView {
+namespace kiriview {
 void initializeLocalization()
 {
     KLocalizedString::setApplicationDomain(QByteArrayLiteral(TRANSLATION_DOMAIN));

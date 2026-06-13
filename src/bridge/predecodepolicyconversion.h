@@ -7,7 +7,7 @@
 #include "kiriview/src/policy/predecodepolicy.cxx.h"
 #include "predecode/predecodepolicy.h"
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustPredecodeSourceProfile rustPredecodeSourceProfile(PredecodeSourceProfile profile);
 RustPredecodeMomentumMode rustPredecodeMomentumMode(PredecodeMomentumMode mode);
 PredecodeMomentumMode predecodeMomentumModeFromRust(RustPredecodeMomentumMode mode);

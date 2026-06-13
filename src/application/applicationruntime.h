@@ -7,7 +7,7 @@
 class QQmlApplicationEngine;
 class QQmlEngine;
 
-namespace KiriView {
+namespace kiriview {
 struct ApplicationStartupSource;
 
 void initializeApplicationRuntime();

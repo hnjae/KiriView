@@ -60,8 +60,8 @@ ResolverResult resolvePlaybackUrl(const QUrl &sourceUrl, int timeoutMilliseconds
     QEventLoop loop;
     QTimer timeout;
     ResolverResult result;
-    std::unique_ptr<KiriView::VideoPlaybackUrlResolver> resolver
-        = KiriView::createDefaultVideoPlaybackUrlResolver();
+    std::unique_ptr<kiriview::VideoPlaybackUrlResolver> resolver
+        = kiriview::createDefaultVideoPlaybackUrlResolver();
 
     timeout.setSingleShot(true);
     QObject::connect(&timeout, &QTimer::timeout, &loop, [&]() {
@@ -80,7 +80,7 @@ ResolverResult resolvePlaybackUrl(const QUrl &sourceUrl, int timeoutMilliseconds
     timeout.start(timeoutMilliseconds);
     resolver->resolve(
         1, sourceUrl, &receiver,
-        [&](KiriView::VideoPlaybackUrlResolution resolution) {
+        [&](kiriview::VideoPlaybackUrlResolution resolution) {
             result.resolved = true;
             result.operationId = resolution.operationId;
             result.sourceUrl = resolution.sourceUrl;
@@ -120,7 +120,7 @@ void TestVideoPlaybackUrlResolver::directBackendUrlsResolveToThemselves()
 void TestVideoPlaybackUrlResolver::nonLocalKioProtocolsFailWithoutPlaybackUrl()
 {
     const QUrl sourceUrl(QStringLiteral("kiriview-unresolved:/share/clip.mp4"));
-    QVERIFY(!KiriView::videoPlaybackBackendCanConsumeUrl(sourceUrl));
+    QVERIFY(!kiriview::videoPlaybackBackendCanConsumeUrl(sourceUrl));
     QVERIFY(KProtocolInfo::protocolClass(sourceUrl.scheme()) != QLatin1String(":local"));
 
     const ResolverResult result = resolvePlaybackUrl(sourceUrl);
@@ -153,7 +153,7 @@ void TestVideoPlaybackUrlResolver::zipArchiveEntriesResolveToBackendConsumablePl
 
     const QUrl sourceUrl(QStringLiteral("zip:%1/foo.mp4").arg(archivePath));
     QVERIFY(sourceUrl.isValid());
-    QVERIFY(!KiriView::videoPlaybackBackendCanConsumeUrl(sourceUrl));
+    QVERIFY(!kiriview::videoPlaybackBackendCanConsumeUrl(sourceUrl));
 
     const ResolverResult result = resolvePlaybackUrl(sourceUrl);
 
@@ -161,7 +161,7 @@ void TestVideoPlaybackUrlResolver::zipArchiveEntriesResolveToBackendConsumablePl
     QVERIFY2(result.resolved, qPrintable(result.errorString));
     QCOMPARE(result.operationId, quint64(1));
     QCOMPARE(result.sourceUrl, sourceUrl);
-    QVERIFY(KiriView::videoPlaybackBackendCanConsumeUrl(result.playbackUrl));
+    QVERIFY(kiriview::videoPlaybackBackendCanConsumeUrl(result.playbackUrl));
     QVERIFY(result.playbackUrl.isLocalFile());
 }
 

@@ -8,7 +8,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge)
 {
     return scaledImageSizeToFit(QSizeF(imageSize), QSize(maximumLongEdge, maximumLongEdge));

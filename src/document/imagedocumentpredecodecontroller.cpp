@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject *parent,
     ImageDocumentState &state, ImagePageSurfaceController &pageSurfaceController,
     ImagePresentationRuntime &presentationRuntime,

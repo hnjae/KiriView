@@ -23,7 +23,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 using DocumentSessionDocumentChangeHandler = std::function<void()>;
 using DocumentSessionDocumentSignalConnector
     = std::function<QMetaObject::Connection(QObject *, DocumentSessionDocumentChangeHandler)>;

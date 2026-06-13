@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEANIMATIONPOLICY_H
 #define KIRIVIEW_IMAGEANIMATIONPOLICY_H
 
-namespace KiriView {
+namespace kiriview {
 struct AnimationLoopState {
     int loopCount = 0;
     int completedLoops = 0;

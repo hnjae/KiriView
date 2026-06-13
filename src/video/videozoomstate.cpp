@@ -11,7 +11,7 @@ namespace {
 bool positiveFinite(qreal value) { return std::isfinite(value) && value > 0.0; }
 }
 
-namespace KiriView {
+namespace kiriview {
 std::optional<int> videoZoomPercentForRects(
     const QRectF &contentRect, const QRectF &sourceRect, qreal devicePixelRatio)
 {

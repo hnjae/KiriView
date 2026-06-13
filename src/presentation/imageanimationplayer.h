@@ -16,7 +16,7 @@
 class QObject;
 class QString;
 
-namespace KiriView {
+namespace kiriview {
 class ImageAnimationPlayer
 {
 public:

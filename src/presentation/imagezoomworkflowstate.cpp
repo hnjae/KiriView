@@ -5,7 +5,7 @@
 
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ImageZoomWorkflowState::ImageZoomWorkflowState(RenderContextProvider renderContextProvider)
     : m_renderContextState(std::move(renderContextProvider))
 {

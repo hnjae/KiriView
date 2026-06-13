@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 namespace {
     int priorityRank(DisplayImageRetentionPriority priority)
     {

@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 
-namespace KiriView::TestSupport {
+namespace kiriview::TestSupport {
 inline QString keyForUrl(const QUrl &url)
 {
     return url.adjusted(QUrl::NormalizePathSegments).toString();

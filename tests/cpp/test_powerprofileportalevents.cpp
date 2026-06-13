@@ -23,8 +23,8 @@ private Q_SLOTS:
 };
 
 namespace {
-void compareEvent(const KiriView::PowerProfileMonitorEvent &event,
-    KiriView::PowerProfileMonitorEventKind kind, bool powerSaverEnabled = false)
+void compareEvent(const kiriview::PowerProfileMonitorEvent &event,
+    kiriview::PowerProfileMonitorEventKind kind, bool powerSaverEnabled = false)
 {
     QCOMPARE(static_cast<int>(event.kind), static_cast<int>(kind));
     QCOMPARE(event.powerSaverEnabled, powerSaverEnabled);
@@ -33,26 +33,26 @@ void compareEvent(const KiriView::PowerProfileMonitorEvent &event,
 
 void TestPowerProfilePortalEvents::portalValuesUnwrapDBusVariants()
 {
-    std::optional<bool> value = KiriView::powerSaverEnabledFromPortalValue(QVariant(true));
+    std::optional<bool> value = kiriview::powerSaverEnabledFromPortalValue(QVariant(true));
     QVERIFY(value.has_value());
     QCOMPARE(*value, true);
 
-    value = KiriView::powerSaverEnabledFromPortalValue(
+    value = kiriview::powerSaverEnabledFromPortalValue(
         QVariant::fromValue(QDBusVariant(QVariant(false))));
     QVERIFY(value.has_value());
     QCOMPARE(*value, false);
 
-    QVERIFY(!KiriView::powerSaverEnabledFromPortalValue(QVariant(QVariantMap())).has_value());
+    QVERIFY(!kiriview::powerSaverEnabledFromPortalValue(QVariant(QVariantMap())).has_value());
 }
 
 void TestPowerProfilePortalEvents::refreshReplyFallsBackToDisabledWhenUnreadable()
 {
-    compareEvent(KiriView::powerProfileMonitorEventFromRefreshReply(QVariantList { true }),
-        KiriView::PowerProfileMonitorEventKind::PowerSaverValue, true);
-    compareEvent(KiriView::powerProfileMonitorEventFromRefreshReply({}),
-        KiriView::PowerProfileMonitorEventKind::PowerSaverValue, false);
-    compareEvent(KiriView::powerProfileMonitorEventFromRefreshReply(QVariantList { QVariantMap() }),
-        KiriView::PowerProfileMonitorEventKind::PowerSaverValue, false);
+    compareEvent(kiriview::powerProfileMonitorEventFromRefreshReply(QVariantList { true }),
+        kiriview::PowerProfileMonitorEventKind::PowerSaverValue, true);
+    compareEvent(kiriview::powerProfileMonitorEventFromRefreshReply({}),
+        kiriview::PowerProfileMonitorEventKind::PowerSaverValue, false);
+    compareEvent(kiriview::powerProfileMonitorEventFromRefreshReply(QVariantList { QVariantMap() }),
+        kiriview::PowerProfileMonitorEventKind::PowerSaverValue, false);
 }
 
 void TestPowerProfilePortalEvents::propertiesChangedAppliesPowerSaverProperty()
@@ -62,35 +62,35 @@ void TestPowerProfilePortalEvents::propertiesChangedAppliesPowerSaverProperty()
         QStringLiteral("power-saver-enabled"), QVariant::fromValue(QDBusVariant(QVariant(true))));
 
     compareEvent(
-        KiriView::powerProfileMonitorEventFromPropertiesChanged(
+        kiriview::powerProfileMonitorEventFromPropertiesChanged(
             QStringLiteral("org.freedesktop.portal.PowerProfileMonitor"), changedProperties, {}),
-        KiriView::PowerProfileMonitorEventKind::PowerSaverValue, true);
+        kiriview::PowerProfileMonitorEventKind::PowerSaverValue, true);
 
     changedProperties.insert(QStringLiteral("power-saver-enabled"), QVariantMap());
     compareEvent(
-        KiriView::powerProfileMonitorEventFromPropertiesChanged(
+        kiriview::powerProfileMonitorEventFromPropertiesChanged(
             QStringLiteral("org.freedesktop.portal.PowerProfileMonitor"), changedProperties, {}),
-        KiriView::PowerProfileMonitorEventKind::PowerSaverValue, false);
+        kiriview::PowerProfileMonitorEventKind::PowerSaverValue, false);
 
     changedProperties.insert(QStringLiteral("power-saver-enabled"), true);
-    compareEvent(KiriView::powerProfileMonitorEventFromPropertiesChanged(
+    compareEvent(kiriview::powerProfileMonitorEventFromPropertiesChanged(
                      QStringLiteral("org.freedesktop.portal.Other"), changedProperties, {}),
-        KiriView::PowerProfileMonitorEventKind::Ignore);
+        kiriview::PowerProfileMonitorEventKind::Ignore);
 }
 
 void TestPowerProfilePortalEvents::propertiesChangedRequestsRefreshForInvalidation()
 {
-    compareEvent(KiriView::powerProfileMonitorEventFromPropertiesChanged(
+    compareEvent(kiriview::powerProfileMonitorEventFromPropertiesChanged(
                      QStringLiteral("org.freedesktop.portal.PowerProfileMonitor"), {},
                      { QStringLiteral("power-saver-enabled") }),
-        KiriView::PowerProfileMonitorEventKind::PowerSaverInvalidated);
+        kiriview::PowerProfileMonitorEventKind::PowerSaverInvalidated);
 
     QVariantMap changedProperties;
     changedProperties.insert(QStringLiteral("power-saver-enabled"), true);
-    compareEvent(KiriView::powerProfileMonitorEventFromPropertiesChanged(
+    compareEvent(kiriview::powerProfileMonitorEventFromPropertiesChanged(
                      QStringLiteral("org.freedesktop.portal.PowerProfileMonitor"),
                      changedProperties, { QStringLiteral("power-saver-enabled") }),
-        KiriView::PowerProfileMonitorEventKind::PowerSaverValue, true);
+        kiriview::PowerProfileMonitorEventKind::PowerSaverValue, true);
 }
 
 QTEST_GUILESS_MAIN(TestPowerProfilePortalEvents)

@@ -8,7 +8,7 @@
 #include "video/videodocumentstatusplan.h"
 #include "video/videoplaybackcontrolplan.h"
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustVideoDocumentStatusSnapshot rustVideoDocumentStatusSnapshot(
     const VideoDocumentStatusSnapshot &snapshot);
 VideoDocumentStatusPlan videoDocumentStatusPlanFromRust(const RustVideoDocumentStatusPlan &plan);

@@ -11,7 +11,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct ApngRgbaRegion {
     quint32 width = 0;
     quint32 height = 0;

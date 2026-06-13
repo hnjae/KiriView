@@ -19,8 +19,8 @@ private Q_SLOTS:
 };
 
 namespace {
-void comparePublicSignals(const std::vector<KiriView::VideoDocumentPublicSignal> &actual,
-    const std::vector<KiriView::VideoDocumentPublicSignal> &expected)
+void comparePublicSignals(const std::vector<kiriview::VideoDocumentPublicSignal> &actual,
+    const std::vector<kiriview::VideoDocumentPublicSignal> &expected)
 {
     QCOMPARE(actual.size(), expected.size());
     for (std::size_t index = 0; index < expected.size(); ++index) {
@@ -28,9 +28,9 @@ void comparePublicSignals(const std::vector<KiriView::VideoDocumentPublicSignal>
     }
 }
 
-KiriView::VideoDocumentPublicSignalOperations recordingOperations(QStringList &events)
+kiriview::VideoDocumentPublicSignalOperations recordingOperations(QStringList &events)
 {
-    KiriView::VideoDocumentPublicSignalOperations operations;
+    kiriview::VideoDocumentPublicSignalOperations operations;
     operations.sourceUrlChanged = [&events]() { events.append(QStringLiteral("sourceUrl")); };
     operations.statusChanged = [&events]() { events.append(QStringLiteral("status")); };
     operations.errorStringChanged = [&events]() { events.append(QStringLiteral("errorString")); };
@@ -54,45 +54,45 @@ KiriView::VideoDocumentPublicSignalOperations recordingOperations(QStringList &e
 
 void TestVideoDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrder()
 {
-    using Change = KiriView::VideoDocumentChange;
-    using Signal = KiriView::VideoDocumentPublicSignal;
+    using Change = kiriview::VideoDocumentChange;
+    using Signal = kiriview::VideoDocumentPublicSignal;
 
     comparePublicSignals(
-        KiriView::videoDocumentPublicSignals(Change::SourceUrl), { Signal::SourceUrl });
-    comparePublicSignals(KiriView::videoDocumentPublicSignals(Change::Status), { Signal::Status });
+        kiriview::videoDocumentPublicSignals(Change::SourceUrl), { Signal::SourceUrl });
+    comparePublicSignals(kiriview::videoDocumentPublicSignals(Change::Status), { Signal::Status });
     comparePublicSignals(
-        KiriView::videoDocumentPublicSignals(Change::ErrorString), { Signal::ErrorString });
-    comparePublicSignals(KiriView::videoDocumentPublicSignals(Change::WindowTitleFileName),
+        kiriview::videoDocumentPublicSignals(Change::ErrorString), { Signal::ErrorString });
+    comparePublicSignals(kiriview::videoDocumentPublicSignals(Change::WindowTitleFileName),
         { Signal::WindowTitleFileName });
     comparePublicSignals(
-        KiriView::videoDocumentPublicSignals(Change::Duration), { Signal::Duration });
+        kiriview::videoDocumentPublicSignals(Change::Duration), { Signal::Duration });
     comparePublicSignals(
-        KiriView::videoDocumentPublicSignals(Change::Position), { Signal::Position });
+        kiriview::videoDocumentPublicSignals(Change::Position), { Signal::Position });
     comparePublicSignals(
-        KiriView::videoDocumentPublicSignals(Change::Playing), { Signal::Playing });
+        kiriview::videoDocumentPublicSignals(Change::Playing), { Signal::Playing });
     comparePublicSignals(
-        KiriView::videoDocumentPublicSignals(Change::Seekable), { Signal::Seekable });
+        kiriview::videoDocumentPublicSignals(Change::Seekable), { Signal::Seekable });
     comparePublicSignals(
-        KiriView::videoDocumentPublicSignals(Change::HasVideo), { Signal::HasVideo });
+        kiriview::videoDocumentPublicSignals(Change::HasVideo), { Signal::HasVideo });
     comparePublicSignals(
-        KiriView::videoDocumentPublicSignals(Change::HasAudio), { Signal::HasAudio });
+        kiriview::videoDocumentPublicSignals(Change::HasAudio), { Signal::HasAudio });
     comparePublicSignals(
-        KiriView::videoDocumentPublicSignals(Change::VideoSize), { Signal::VideoSize });
-    comparePublicSignals(KiriView::videoDocumentPublicSignals(Change::ZoomPercentKnown),
+        kiriview::videoDocumentPublicSignals(Change::VideoSize), { Signal::VideoSize });
+    comparePublicSignals(kiriview::videoDocumentPublicSignals(Change::ZoomPercentKnown),
         { Signal::ZoomPercentKnown });
     comparePublicSignals(
-        KiriView::videoDocumentPublicSignals(Change::ZoomPercent), { Signal::ZoomPercent });
-    comparePublicSignals(KiriView::videoDocumentPublicSignals(Change::Muted), { Signal::Muted });
+        kiriview::videoDocumentPublicSignals(Change::ZoomPercent), { Signal::ZoomPercent });
+    comparePublicSignals(kiriview::videoDocumentPublicSignals(Change::Muted), { Signal::Muted });
     comparePublicSignals(
-        KiriView::videoDocumentPublicSignals(Change::VideoOutput), { Signal::VideoOutput });
+        kiriview::videoDocumentPublicSignals(Change::VideoOutput), { Signal::VideoOutput });
 }
 
 void TestVideoDocumentPublicSignals::publicSignalBatchPlansDeduplicateSignalsInEmissionOrder()
 {
-    using Change = KiriView::VideoDocumentChange;
-    using Signal = KiriView::VideoDocumentPublicSignal;
+    using Change = kiriview::VideoDocumentChange;
+    using Signal = kiriview::VideoDocumentPublicSignal;
 
-    comparePublicSignals(KiriView::videoDocumentPublicSignalsForChanges(
+    comparePublicSignals(kiriview::videoDocumentPublicSignalsForChanges(
                              { Change::Status, Change::Duration, Change::Status, Change::Playing }),
         { Signal::Status, Signal::Duration, Signal::Playing });
 }
@@ -100,12 +100,12 @@ void TestVideoDocumentPublicSignals::publicSignalBatchPlansDeduplicateSignalsInE
 void TestVideoDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionOrder()
 {
     QStringList events;
-    const KiriView::VideoDocumentPublicSignalEmitter emitter(recordingOperations(events));
+    const kiriview::VideoDocumentPublicSignalEmitter emitter(recordingOperations(events));
 
     emitter.emitChanges(
-        { KiriView::VideoDocumentChange::Position, KiriView::VideoDocumentChange::HasVideo,
-            KiriView::VideoDocumentChange::ZoomPercent, KiriView::VideoDocumentChange::Muted });
-    emitter.emitSignal(KiriView::VideoDocumentPublicSignal::VideoOutput);
+        { kiriview::VideoDocumentChange::Position, kiriview::VideoDocumentChange::HasVideo,
+            kiriview::VideoDocumentChange::ZoomPercent, kiriview::VideoDocumentChange::Muted });
+    emitter.emitSignal(kiriview::VideoDocumentPublicSignal::VideoOutput);
 
     QCOMPARE(events,
         QStringList({

@@ -7,7 +7,7 @@
 #include <QString>
 #include <QStringList>
 
-namespace KiriView {
+namespace kiriview {
 QStringList supportedImageExtensions();
 QStringList supportedImageMimeTypes();
 QStringList supportedOpenExtensions();

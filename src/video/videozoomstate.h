@@ -8,7 +8,7 @@
 #include <QtGlobal>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 std::optional<int> videoZoomPercentForRects(
     const QRectF &contentRect, const QRectF &sourceRect, qreal devicePixelRatio);
 }

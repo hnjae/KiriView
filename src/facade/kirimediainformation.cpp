@@ -131,7 +131,7 @@ void KiriMediaInformation::openContainingFolder()
 
 void KiriMediaInformation::refresh()
 {
-    const KiriView::MediaInformationProjectionSnapshot &snapshot
+    const kiriview::MediaInformationProjectionSnapshot &snapshot
         = m_session.mediaInformationSnapshot();
     m_revision = snapshot.revision;
     m_available = snapshot.available;
@@ -153,5 +153,5 @@ QUrl KiriMediaInformation::targetUrl() const { return m_targetUrl; }
 
 QString KiriMediaInformation::copiedFilePath() const
 {
-    return KiriView::mediaInformationDisplayPathForUrl(m_targetUrl);
+    return kiriview::mediaInformationDisplayPathForUrl(m_targetUrl);
 }

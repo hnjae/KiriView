@@ -12,7 +12,7 @@
 #include <functional>
 #include <memory>
 
-namespace KiriView {
+namespace kiriview {
 enum class VideoMediaStatus {
     Null,
     Loading,

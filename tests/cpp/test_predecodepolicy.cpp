@@ -12,14 +12,14 @@
 #include <vector>
 
 namespace {
-using KiriView::PredecodeMomentumDirection;
-using KiriView::PredecodeMomentumMode;
-using KiriView::PredecodeMomentumState;
-using KiriView::PredecodePolicyInput;
-using KiriView::PredecodeSchedulePlan;
-using KiriView::PredecodeSourceProfile;
-using KiriView::TestSupport::imagesDirectoryUrl;
-using KiriView::TestSupport::localUrl;
+using kiriview::PredecodeMomentumDirection;
+using kiriview::PredecodeMomentumMode;
+using kiriview::PredecodeMomentumState;
+using kiriview::PredecodePolicyInput;
+using kiriview::PredecodeSchedulePlan;
+using kiriview::PredecodeSourceProfile;
+using kiriview::TestSupport::imagesDirectoryUrl;
+using kiriview::TestSupport::localUrl;
 
 PredecodePolicyInput policyInput(
     PredecodeSourceProfile profile, PredecodeMomentumMode mode = PredecodeMomentumMode::Neutral)
@@ -40,43 +40,43 @@ private Q_SLOTS:
 
 void TestPredecodePolicy::schedulePlanUsesCppCandidateSnapshot()
 {
-    const std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScope
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(
+    const std::optional<kiriview::OpenedCollectionScopeLocation> openedCollectionScope
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(
             localUrl(QStringLiteral("/book.cbz")));
     QVERIFY(openedCollectionScope.has_value());
     const PredecodeSourceProfile archiveProfile
-        = KiriView::predecodeSourceProfileForOpenedCollectionScope(*openedCollectionScope, 8);
+        = kiriview::predecodeSourceProfileForOpenedCollectionScope(*openedCollectionScope, 8);
 
     const PredecodeSchedulePlan plan
-        = KiriView::predecodeSchedulePlan(15, 5, policyInput(archiveProfile));
+        = kiriview::predecodeSchedulePlan(15, 5, policyInput(archiveProfile));
 
     QCOMPARE(plan.parallelLimit, std::size_t(4));
     QVERIFY(plan.targetIndices == std::vector<std::size_t>({ 5, 6, 4, 7, 3, 8, 9 }));
 
-    const PredecodeSchedulePlan missingCurrent = KiriView::predecodeSchedulePlan(
-        15, std::nullopt, policyInput(KiriView::directMediaPredecodeSourceProfile()));
+    const PredecodeSchedulePlan missingCurrent = kiriview::predecodeSchedulePlan(
+        15, std::nullopt, policyInput(kiriview::directMediaPredecodeSourceProfile()));
     QCOMPARE(missingCurrent.parallelLimit, std::size_t(1));
     QVERIFY(missingCurrent.targetIndices.empty());
 }
 
 void TestPredecodePolicy::openedCollectionSourceProfilesPreserveRuntimeTuning()
 {
-    const KiriView::OpenedCollectionScopeLocation directoryCollection
-        = KiriView::OpenedCollectionScopeLocation::fromUrls(imagesDirectoryUrl(),
-            imagesDirectoryUrl(), KiriView::OpenedCollectionScopeKind::Directory);
+    const kiriview::OpenedCollectionScopeLocation directoryCollection
+        = kiriview::OpenedCollectionScopeLocation::fromUrls(imagesDirectoryUrl(),
+            imagesDirectoryUrl(), kiriview::OpenedCollectionScopeKind::Directory);
     const PredecodeSourceProfile directoryProfile
-        = KiriView::predecodeSourceProfileForOpenedCollectionScope(directoryCollection, 8);
+        = kiriview::predecodeSourceProfileForOpenedCollectionScope(directoryCollection, 8);
     QCOMPARE(directoryProfile.neutralPreviousPageCount, std::size_t(2));
     QCOMPARE(directoryProfile.neutralNextPageCount, std::size_t(4));
     QCOMPARE(directoryProfile.biasedDirectionPageCount, std::size_t(6));
     QCOMPARE(directoryProfile.parallelLimit, std::size_t(2));
 
-    const std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScope
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(
+    const std::optional<kiriview::OpenedCollectionScopeLocation> openedCollectionScope
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(
             localUrl(QStringLiteral("/book.cbz")));
     QVERIFY(openedCollectionScope.has_value());
     const PredecodeSourceProfile archiveProfile
-        = KiriView::predecodeSourceProfileForOpenedCollectionScope(*openedCollectionScope, 8);
+        = kiriview::predecodeSourceProfileForOpenedCollectionScope(*openedCollectionScope, 8);
     QCOMPARE(archiveProfile.neutralPreviousPageCount, std::size_t(2));
     QCOMPARE(archiveProfile.neutralNextPageCount, std::size_t(4));
     QCOMPARE(archiveProfile.biasedDirectionPageCount, std::size_t(8));
@@ -86,15 +86,15 @@ void TestPredecodePolicy::openedCollectionSourceProfilesPreserveRuntimeTuning()
 void TestPredecodePolicy::momentumStateRoundTripsThroughPolicyBoundary()
 {
     PredecodeMomentumState state
-        = KiriView::predecodeUpdatedMomentumState(PredecodeMomentumState {}, 4, 1000);
+        = kiriview::predecodeUpdatedMomentumState(PredecodeMomentumState {}, 4, 1000);
     QCOMPARE(state.lastPageIndex, 4);
     QCOMPARE(state.lastNavigationMsec, qint64(1000));
     QCOMPARE(state.sameDirectionMoveCount, 0);
     QVERIFY(state.lastDirection == PredecodeMomentumDirection::None);
     QVERIFY(state.mode == PredecodeMomentumMode::Neutral);
 
-    state = KiriView::predecodeUpdatedMomentumState(state, 5, 1300);
-    state = KiriView::predecodeUpdatedMomentumState(state, 6, 1600);
+    state = kiriview::predecodeUpdatedMomentumState(state, 5, 1300);
+    state = kiriview::predecodeUpdatedMomentumState(state, 6, 1600);
 
     QCOMPARE(state.lastPageIndex, 6);
     QCOMPARE(state.sameDirectionMoveCount, 2);

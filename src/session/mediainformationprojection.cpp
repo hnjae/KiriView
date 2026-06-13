@@ -29,29 +29,29 @@ QString fileNameForUrl(const QUrl &url)
         return fileName;
     }
 
-    return KiriView::mediaInformationDisplayPathForUrl(url);
+    return kiriview::mediaInformationDisplayPathForUrl(url);
 }
 
 void appendRowIfValue(
-    std::vector<KiriView::MediaInformationProjectionRow> &rows, QString label, const QString &value)
+    std::vector<kiriview::MediaInformationProjectionRow> &rows, QString label, const QString &value)
 {
     if (!value.isEmpty()) {
         rows.push_back({ std::move(label), value });
     }
 }
 
-bool openedCollectionScopeInformationAvailable(const KiriView::OpenedCollectionScopeLocation &scope)
+bool openedCollectionScopeInformationAvailable(const kiriview::OpenedCollectionScopeLocation &scope)
 {
     if (scope.isEmpty() || scope.isDirectory()) {
         return true;
     }
 
-    return KiriView::archiveRootSchemeUsesKioFuse(scope.rootUrl().scheme());
+    return kiriview::archiveRootSchemeUsesKioFuse(scope.rootUrl().scheme());
 }
 
-QUrl imageInformationTargetUrl(const KiriView::MediaInformationProjectionInput &input)
+QUrl imageInformationTargetUrl(const kiriview::MediaInformationProjectionInput &input)
 {
-    if (input.documentKind != KiriView::DocumentSessionKind::Image || !input.imageReady) {
+    if (input.documentKind != kiriview::DocumentSessionKind::Image || !input.imageReady) {
         return {};
     }
 
@@ -62,23 +62,23 @@ QUrl imageInformationTargetUrl(const KiriView::MediaInformationProjectionInput &
     return input.imageDisplayedUrl;
 }
 
-QUrl videoInformationTargetUrl(const KiriView::MediaInformationProjectionInput &input)
+QUrl videoInformationTargetUrl(const kiriview::MediaInformationProjectionInput &input)
 {
-    if (input.documentKind != KiriView::DocumentSessionKind::Video) {
+    if (input.documentKind != kiriview::DocumentSessionKind::Video) {
         return {};
     }
 
     return input.videoSourceUrl;
 }
 
-QUrl informationTargetUrl(const KiriView::MediaInformationProjectionInput &input)
+QUrl informationTargetUrl(const kiriview::MediaInformationProjectionInput &input)
 {
     switch (input.documentKind) {
-    case KiriView::DocumentSessionKind::Image:
+    case kiriview::DocumentSessionKind::Image:
         return imageInformationTargetUrl(input);
-    case KiriView::DocumentSessionKind::Video:
+    case kiriview::DocumentSessionKind::Video:
         return videoInformationTargetUrl(input);
-    case KiriView::DocumentSessionKind::Empty:
+    case kiriview::DocumentSessionKind::Empty:
         break;
     }
 
@@ -87,46 +87,46 @@ QUrl informationTargetUrl(const KiriView::MediaInformationProjectionInput &input
 
 bool canOpenContainingLocation(const QUrl &url) { return !url.isEmpty() && !url.path().isEmpty(); }
 
-std::vector<KiriView::MediaInformationProjectionRow> generalRows(
-    KiriView::MediaInformationKind kind, const QUrl &targetUrl)
+std::vector<kiriview::MediaInformationProjectionRow> generalRows(
+    kiriview::MediaInformationKind kind, const QUrl &targetUrl)
 {
     QString typeValue;
     switch (kind) {
-    case KiriView::MediaInformationKind::Image:
+    case kiriview::MediaInformationKind::Image:
         typeValue = i18nc("@info:metadata value", "Image");
         break;
-    case KiriView::MediaInformationKind::Video:
+    case kiriview::MediaInformationKind::Video:
         typeValue = i18nc("@info:metadata value", "Video");
         break;
-    case KiriView::MediaInformationKind::Empty:
+    case kiriview::MediaInformationKind::Empty:
         break;
     }
 
-    std::vector<KiriView::MediaInformationProjectionRow> rows;
+    std::vector<kiriview::MediaInformationProjectionRow> rows;
     appendRowIfValue(rows, i18nc("@label:metadata", "Type"), typeValue);
     appendRowIfValue(rows, i18nc("@label:metadata", "Path"),
-        KiriView::mediaInformationDisplayPathForUrl(targetUrl));
+        kiriview::mediaInformationDisplayPathForUrl(targetUrl));
     return rows;
 }
 
-std::vector<KiriView::MediaInformationProjectionRow> imageRows(const QSize &size)
+std::vector<kiriview::MediaInformationProjectionRow> imageRows(const QSize &size)
 {
-    std::vector<KiriView::MediaInformationProjectionRow> rows;
+    std::vector<kiriview::MediaInformationProjectionRow> rows;
     appendRowIfValue(rows, i18nc("@label:metadata", "Dimensions"), dimensionsText(size));
     return rows;
 }
 
-std::vector<KiriView::MediaInformationProjectionRow> videoRows(
-    const QSize &size, const KiriView::EmbeddedMetadata &metadata)
+std::vector<kiriview::MediaInformationProjectionRow> videoRows(
+    const QSize &size, const kiriview::EmbeddedMetadata &metadata)
 {
-    std::vector<KiriView::MediaInformationProjectionRow> rows;
+    std::vector<kiriview::MediaInformationProjectionRow> rows;
     appendRowIfValue(rows, i18nc("@label:metadata", "Duration"), metadata.duration);
     appendRowIfValue(rows, i18nc("@label:metadata", "Frame Size"),
         !metadata.frameSize.isEmpty() ? metadata.frameSize : dimensionsText(size));
     return rows;
 }
 
-QString cameraText(const KiriView::EmbeddedMetadata &metadata)
+QString cameraText(const kiriview::EmbeddedMetadata &metadata)
 {
     if (!metadata.cameraMake.isEmpty() && !metadata.cameraModel.isEmpty()) {
         return QStringLiteral("%1 %2").arg(metadata.cameraMake, metadata.cameraModel);
@@ -137,10 +137,10 @@ QString cameraText(const KiriView::EmbeddedMetadata &metadata)
     return metadata.cameraModel;
 }
 
-std::vector<KiriView::MediaInformationProjectionRow> cameraRows(
-    const KiriView::EmbeddedMetadata &metadata)
+std::vector<kiriview::MediaInformationProjectionRow> cameraRows(
+    const kiriview::EmbeddedMetadata &metadata)
 {
-    std::vector<KiriView::MediaInformationProjectionRow> rows;
+    std::vector<kiriview::MediaInformationProjectionRow> rows;
     appendRowIfValue(rows, i18nc("@label:metadata", "Camera"), cameraText(metadata));
     appendRowIfValue(rows, i18nc("@label:metadata", "Taken"), metadata.taken);
     appendRowIfValue(rows, i18nc("@label:metadata", "Location"), metadata.location);
@@ -152,21 +152,21 @@ std::vector<KiriView::MediaInformationProjectionRow> cameraRows(
     return rows;
 }
 
-std::vector<KiriView::MediaInformationProjectionRow> advancedRows(
-    const KiriView::EmbeddedMetadata &metadata)
+std::vector<kiriview::MediaInformationProjectionRow> advancedRows(
+    const kiriview::EmbeddedMetadata &metadata)
 {
-    std::vector<KiriView::MediaInformationProjectionRow> rows;
+    std::vector<kiriview::MediaInformationProjectionRow> rows;
     rows.reserve(metadata.advancedRows.size());
-    for (const KiriView::EmbeddedMetadataRow &row : metadata.advancedRows) {
+    for (const kiriview::EmbeddedMetadataRow &row : metadata.advancedRows) {
         appendRowIfValue(rows, row.label, row.value);
     }
     return rows;
 }
 
-KiriView::MediaInformationProjectionSnapshot unavailableSnapshot(
-    const KiriView::MediaInformationProjectionInput &input, quint64 revision)
+kiriview::MediaInformationProjectionSnapshot unavailableSnapshot(
+    const kiriview::MediaInformationProjectionInput &input, quint64 revision)
 {
-    KiriView::MediaInformationProjectionSnapshot snapshot;
+    kiriview::MediaInformationProjectionSnapshot snapshot;
     snapshot.revision = revision;
     snapshot.inputRevision = input.inputRevision;
     snapshot.summary = i18nc("@info:metadata unavailable", "No media selected");
@@ -175,7 +175,7 @@ KiriView::MediaInformationProjectionSnapshot unavailableSnapshot(
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 QString mediaInformationDisplayPathForUrl(const QUrl &url)
 {
     if (url.isLocalFile()) {

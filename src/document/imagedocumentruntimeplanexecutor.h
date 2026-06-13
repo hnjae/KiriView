@@ -10,7 +10,7 @@
 #include <QUrl>
 #include <functional>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageDocumentLifecycleRuntimeOperations {
     std::function<void()> cancelFileDeletion;
     std::function<void()> stopPresentationAnimation;

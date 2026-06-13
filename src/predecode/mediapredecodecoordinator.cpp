@@ -12,7 +12,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 MediaPredecodeCoordinator::MediaPredecodeCoordinator(
     QObject *parent, MediaPredecodeDependencies dependencies)
     : QObject(parent)

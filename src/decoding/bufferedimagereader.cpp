@@ -7,7 +7,7 @@
 #include <QImageReader>
 #include <memory>
 
-namespace KiriView {
+namespace kiriview {
 BufferedImageReader::BufferedImageReader(
     const QByteArray &data, const QByteArray &format, bool autoTransform)
 {

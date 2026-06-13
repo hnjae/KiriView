@@ -16,7 +16,7 @@
 #include <memory>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 class VideoDocumentRuntime;
 enum class VideoDocumentChange;
 }
@@ -73,7 +73,7 @@ public:
     int zoomPercent() const;
     bool muted() const;
     QObject *videoOutput() const;
-    const KiriView::EmbeddedMetadata &embeddedMetadata() const;
+    const kiriview::EmbeddedMetadata &embeddedMetadata() const;
     Q_INVOKABLE void play();
     Q_INVOKABLE void pause();
     Q_INVOKABLE void stop();
@@ -107,9 +107,9 @@ private:
     void setSourceUrl(const QUrl &sourceUrl);
     void setVideoOutput(QObject *videoOutput);
     void setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect);
-    void handleDocumentChanges(const std::vector<KiriView::VideoDocumentChange> &changes);
+    void handleDocumentChanges(const std::vector<kiriview::VideoDocumentChange> &changes);
 
-    std::unique_ptr<KiriView::VideoDocumentRuntime> m_runtime;
+    std::unique_ptr<kiriview::VideoDocumentRuntime> m_runtime;
 };
 
 #endif

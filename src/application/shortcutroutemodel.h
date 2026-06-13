@@ -10,7 +10,7 @@
 #include <QModelIndex>
 #include <QVariant>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 class ShortcutRouteModel : public QAbstractListModel
 {
 public:

@@ -13,7 +13,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 using DirectoryItemListCallback = std::function<void(KFileItemList)>;
 using DirectoryItemListProvider
     = std::function<ImageIoJob(QObject *, QUrl, DirectoryItemListCallback, ErrorCallback)>;

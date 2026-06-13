@@ -13,7 +13,7 @@
 #include <QDebug>
 #include <cstddef>
 
-namespace KiriView {
+namespace kiriview {
 std::vector<ImageDocumentPageCandidate> imageDocumentPageNavigationCandidates(
     const KFileItemList &items)
 {
@@ -22,12 +22,12 @@ std::vector<ImageDocumentPageCandidate> imageDocumentPageNavigationCandidates(
 
     for (const KFileItem &item : items) {
         const QString name = item.name();
-        if (!item.isFile() || !KiriView::isSupportedOrdinaryMediaFileName(name)) {
+        if (!item.isFile() || !kiriview::isSupportedOrdinaryMediaFileName(name)) {
             continue;
         }
 
         candidates.push_back(ImageDocumentPageCandidate { item.url(), name,
-            KiriView::isSupportedDirectVideoFileName(name) ? ImageDocumentPageKind::Video
+            kiriview::isSupportedDirectVideoFileName(name) ? ImageDocumentPageKind::Video
                                                            : ImageDocumentPageKind::Image });
     }
 
@@ -70,7 +70,7 @@ std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KF
     for (const KFileItem &item : items) {
         const QString name = item.name();
         if (item.isFile() && item.url().isLocalFile()
-            && KiriView::isComicBookArchiveFileName(name)) {
+            && kiriview::isComicBookArchiveFileName(name)) {
             candidates.push_back(
                 ContainerNavigationCandidate { normalizedFileContainerUrl(item.url()), name,
                     ContainerNavigationCandidateType::ComicBookArchive });

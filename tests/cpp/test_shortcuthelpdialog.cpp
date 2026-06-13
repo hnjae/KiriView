@@ -278,7 +278,7 @@ QRectF dialogSceneBounds(QObject *dialog)
 void TestShortcutHelpDialog::initTestCase()
 {
     QStandardPaths::setTestModeEnabled(true);
-    KiriView::initializeLocalization();
+    kiriview::initializeLocalization();
     resetConfig();
 }
 

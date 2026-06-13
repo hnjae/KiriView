@@ -10,7 +10,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageCacheRetentionEntry {
     qsizetype byteCost = 0;
     quint64 lastUse = 0;

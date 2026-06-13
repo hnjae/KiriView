@@ -14,7 +14,7 @@
 #include <functional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 class DocumentSessionState final
 {
 public:

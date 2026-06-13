@@ -16,7 +16,7 @@
 #include <vector>
 
 namespace {
-namespace Backend = KiriView::MediaEntrySourceBackendDetail;
+namespace Backend = kiriview::MediaEntrySourceBackendDetail;
 using LibArchiveReader = std::unique_ptr<archive, int (*)(archive *)>;
 
 class ScopedFileDescriptor final
@@ -85,7 +85,7 @@ LibArchiveReader makeLibArchiveReader()
 }
 
 OpenArchiveFileResult openArchiveFileDescriptor(
-    const KiriView::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
 {
     const QString filePath = openedCollectionScope.fileUrl().toLocalFile();
     if (filePath.isEmpty()) {
@@ -110,7 +110,7 @@ OpenArchiveFileResult openArchiveFileDescriptor(
 }
 
 bool configureLibArchiveReader(archive *reader,
-    const KiriView::OpenedCollectionScopeLocation &openedCollectionScope, QString *errorString)
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, QString *errorString)
 {
     if (archive_read_support_filter_all(reader) != ARCHIVE_OK
         || archive_read_support_format_rar(reader) != ARCHIVE_OK
@@ -124,7 +124,7 @@ bool configureLibArchiveReader(archive *reader,
 }
 
 LibArchiveReader openLibArchiveReaderOnFd(
-    const KiriView::OpenedCollectionScopeLocation &openedCollectionScope, int fileDescriptor,
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, int fileDescriptor,
     QString *errorString)
 {
     if (fileDescriptor < 0 || ::lseek(fileDescriptor, 0, SEEK_SET) < 0) {
@@ -176,7 +176,7 @@ bool skipLibArchiveEntry(archive *reader, QString *errorString)
     return false;
 }
 
-KiriView::MediaEntrySourceImageDataResult readLibArchiveEntryData(
+kiriview::MediaEntrySourceImageDataResult readLibArchiveEntryData(
     archive *reader, archive_entry *entry)
 {
     QByteArray data;
@@ -187,7 +187,7 @@ KiriView::MediaEntrySourceImageDataResult readLibArchiveEntryData(
             break;
         }
         if (bytesRead < 0) {
-            return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceImageDataResult>(
+            return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
                 libArchiveErrorString(reader, Backend::openedCollectionImageReadError()));
         }
 
@@ -197,7 +197,7 @@ KiriView::MediaEntrySourceImageDataResult readLibArchiveEntryData(
     if (archive_entry_size_is_set(entry)) {
         const la_int64_t expectedSize = archive_entry_size(entry);
         if (expectedSize >= 0 && static_cast<qint64>(data.size()) != expectedSize) {
-            return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceImageDataResult>(
+            return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
                 Backend::openedCollectionImageReadError());
         }
     }
@@ -206,12 +206,12 @@ KiriView::MediaEntrySourceImageDataResult readLibArchiveEntryData(
 }
 
 struct LibArchiveMediaEntrySourceMetadata {
-    std::vector<KiriView::ImageDocumentPageCandidate> candidates;
+    std::vector<kiriview::ImageDocumentPageCandidate> candidates;
     std::map<QString, int> entryOrderByPath;
 };
 
 std::optional<LibArchiveMediaEntrySourceMetadata> scanLibArchiveMediaEntrySourceMetadata(
-    const KiriView::OpenedCollectionScopeLocation &openedCollectionScope, archive *reader,
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, archive *reader,
     QString *errorString)
 {
     LibArchiveMediaEntrySourceMetadata metadata;
@@ -233,7 +233,7 @@ std::optional<LibArchiveMediaEntrySourceMetadata> scanLibArchiveMediaEntrySource
         ++entryOrder;
 
         if (archive_entry_filetype(entry) == AE_IFREG) {
-            std::optional<KiriView::ImageDocumentPageCandidate> candidate
+            std::optional<kiriview::ImageDocumentPageCandidate> candidate
                 = Backend::openedCollectionImageDocumentPageCandidate(
                     openedCollectionScope, libArchiveEntryPath(entry));
             if (candidate.has_value()) {
@@ -251,12 +251,12 @@ std::optional<LibArchiveMediaEntrySourceMetadata> scanLibArchiveMediaEntrySource
 class LibArchiveMediaEntrySource final : public Backend::MediaEntrySourceWithCandidateSnapshot
 {
 public:
-    static KiriView::MediaEntrySourceOpenResult create(
-        const KiriView::OpenedCollectionScopeLocation &openedCollectionScope)
+    static kiriview::MediaEntrySourceOpenResult create(
+        const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
     {
         OpenArchiveFileResult opened = openArchiveFileDescriptor(openedCollectionScope);
         if (!opened.fileDescriptor) {
-            return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceOpenResult>(
+            return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
                 opened.errorString);
         }
 
@@ -266,7 +266,7 @@ public:
         LibArchiveReader reader = openLibArchiveReaderOnFd(
             openedCollectionScope, source->m_archiveFile.get(), &errorString);
         if (reader == nullptr) {
-            return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceOpenResult>(
+            return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
                 errorString);
         }
 
@@ -274,27 +274,27 @@ public:
             = scanLibArchiveMediaEntrySourceMetadata(
                 openedCollectionScope, reader.get(), &errorString);
         if (!metadata.has_value()) {
-            return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceOpenResult>(
+            return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
                 errorString);
         }
 
         source->m_entryOrderByPath = std::move(metadata->entryOrderByPath);
         source->replaceCandidateSnapshot(std::move(metadata->candidates));
-        return KiriView::MediaEntrySourcePtr(std::move(source));
+        return kiriview::MediaEntrySourcePtr(std::move(source));
     }
 
-    KiriView::MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) override
+    kiriview::MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) override
     {
         const std::optional<QString> entryPath
             = Backend::openedCollectionImageEntryPathForRead(m_openedCollectionScope, imageUrl);
         if (!entryPath.has_value()) {
-            return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceImageDataResult>(
+            return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
                 Backend::openedCollectionImageNotFoundError());
         }
 
         const auto entryOrder = m_entryOrderByPath.find(*entryPath);
         if (entryOrder == m_entryOrderByPath.cend()) {
-            return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceImageDataResult>(
+            return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
                 Backend::openedCollectionImageNotFoundError());
         }
 
@@ -302,7 +302,7 @@ public:
     }
 
 private:
-    LibArchiveMediaEntrySource(KiriView::OpenedCollectionScopeLocation openedCollectionScope,
+    LibArchiveMediaEntrySource(kiriview::OpenedCollectionScopeLocation openedCollectionScope,
         ScopedFileDescriptor archiveFile)
         : Backend::MediaEntrySourceWithCandidateSnapshot({})
         , m_openedCollectionScope(std::move(openedCollectionScope))
@@ -310,11 +310,11 @@ private:
     {
     }
 
-    KiriView::MediaEntrySourceImageDataResult readImageDataAtOrder(int targetEntryOrder)
+    kiriview::MediaEntrySourceImageDataResult readImageDataAtOrder(int targetEntryOrder)
     {
         QString errorString;
         if (!prepareReaderForEntry(targetEntryOrder, &errorString)) {
-            return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceImageDataResult>(
+            return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
                 errorString);
         }
 
@@ -325,12 +325,12 @@ private:
             if (status == ARCHIVE_EOF) {
                 m_readerExhausted = true;
                 return Backend::mediaEntrySourceErrorResult<
-                    KiriView::MediaEntrySourceImageDataResult>(
+                    kiriview::MediaEntrySourceImageDataResult>(
                     Backend::openedCollectionImageReadError());
             }
             if (status != ARCHIVE_OK) {
                 return Backend::mediaEntrySourceErrorResult<
-                    KiriView::MediaEntrySourceImageDataResult>(libArchiveErrorString(
+                    kiriview::MediaEntrySourceImageDataResult>(libArchiveErrorString(
                     m_reader.get(), Backend::openedCollectionImageReadError()));
             }
 
@@ -338,7 +338,7 @@ private:
             if (currentEntryOrder == targetEntryOrder) {
                 if (archive_entry_filetype(entry) != AE_IFREG) {
                     return Backend::mediaEntrySourceErrorResult<
-                        KiriView::MediaEntrySourceImageDataResult>(
+                        kiriview::MediaEntrySourceImageDataResult>(
                         Backend::openedCollectionImageNotFoundError());
                 }
 
@@ -347,11 +347,11 @@ private:
 
             if (!skipLibArchiveEntry(m_reader.get(), &errorString)) {
                 return Backend::mediaEntrySourceErrorResult<
-                    KiriView::MediaEntrySourceImageDataResult>(errorString);
+                    kiriview::MediaEntrySourceImageDataResult>(errorString);
             }
         }
 
-        return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceImageDataResult>(
+        return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
             Backend::openedCollectionImageReadError());
     }
 
@@ -380,7 +380,7 @@ private:
         return true;
     }
 
-    KiriView::OpenedCollectionScopeLocation m_openedCollectionScope;
+    kiriview::OpenedCollectionScopeLocation m_openedCollectionScope;
     ScopedFileDescriptor m_archiveFile;
     std::map<QString, int> m_entryOrderByPath;
     LibArchiveReader m_reader { nullptr, archive_read_free };
@@ -388,14 +388,14 @@ private:
     bool m_readerExhausted = true;
 };
 
-KiriView::MediaEntrySourceOpenResult openLibArchiveMediaEntrySource(
-    const KiriView::OpenedCollectionScopeLocation &openedCollectionScope)
+kiriview::MediaEntrySourceOpenResult openLibArchiveMediaEntrySource(
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
 {
     return LibArchiveMediaEntrySource::create(openedCollectionScope);
 }
 }
 
-namespace KiriView::MediaEntrySourceBackendDetail {
+namespace kiriview::MediaEntrySourceBackendDetail {
 const MediaEntrySourceBackendOperations *libArchiveMediaEntrySourceBackendOperations()
 {
     static const MediaEntrySourceBackendOperations operations {

@@ -12,12 +12,12 @@
 #include <utility>
 
 namespace {
-std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScopeForSourceLoad(
-    const KiriView::ImageDocumentSourceLoadRequest &request,
-    const KiriView::OpenedCollectionScopeLocation &displayedOpenedCollectionScope)
+std::optional<kiriview::OpenedCollectionScopeLocation> openedCollectionScopeForSourceLoad(
+    const kiriview::ImageDocumentSourceLoadRequest &request,
+    const kiriview::OpenedCollectionScopeLocation &displayedOpenedCollectionScope)
 {
-    const KiriView::OpenedCollectionScopeLoadPlan plan
-        = KiriView::openedCollectionScopeLoadPlan(KiriView::ImageLoadRequest::fromLocation(
+    const kiriview::OpenedCollectionScopeLoadPlan plan
+        = kiriview::openedCollectionScopeLoadPlan(kiriview::ImageLoadRequest::fromLocation(
             request.sourceUrl, displayedOpenedCollectionScope, request.containerNavigationUrl));
     if (plan.openedCollectionScope.isEmpty()) {
         return std::nullopt;
@@ -27,7 +27,7 @@ std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScopeForS
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 MediaEntrySourceStore::MediaEntrySourceStore(
     MediaEntrySourceFactory sourceFactory, QObject *parent, ImageWorkerScheduler workerScheduler)
     : QObject(parent)

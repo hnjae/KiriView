@@ -29,12 +29,12 @@ void setRawDecodeError(QString *errorString, QString message)
 
 QString rawDecodeErrorString(const QString &action, int errorCode)
 {
-    QString message = KiriView::imageErrorText(KiriView::ImageErrorTextId::UnknownLibrawError);
+    QString message = kiriview::imageErrorText(kiriview::ImageErrorTextId::UnknownLibrawError);
     if (const char *rawMessage = LibRaw::strerror(errorCode); rawMessage != nullptr) {
         message = QString::fromUtf8(rawMessage);
     }
 
-    return KiriView::rawDecodeErrorText(action, message);
+    return kiriview::rawDecodeErrorText(action, message);
 }
 
 QSize libRawImageSize(const LibRaw &processor)
@@ -50,13 +50,13 @@ bool validateRawImageSize(const QSize &size, QString *errorString)
 {
     if (size.isEmpty()) {
         setRawDecodeError(errorString,
-            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawDecodedImageSizeInvalid));
+            kiriview::imageErrorText(kiriview::ImageErrorTextId::RawDecodedImageSizeInvalid));
         return false;
     }
 
-    if (KiriView::estimatedRgbaByteCost(size) > KiriView::imageFullDecodeFallbackByteLimit) {
+    if (kiriview::estimatedRgbaByteCost(size) > kiriview::imageFullDecodeFallbackByteLimit) {
         setRawDecodeError(errorString,
-            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawFullDecodeTooLarge));
+            kiriview::imageErrorText(kiriview::ImageErrorTextId::RawFullDecodeTooLarge));
         return false;
     }
 
@@ -68,14 +68,14 @@ std::optional<QImage> qImageFromRawProcessedImage(
 {
     if (processedImage == nullptr) {
         setRawDecodeError(errorString,
-            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawDecodedImageInvalid));
+            kiriview::imageErrorText(kiriview::ImageErrorTextId::RawDecodedImageInvalid));
         return std::nullopt;
     }
 
     if (processedImage->type != LIBRAW_IMAGE_BITMAP || processedImage->bits != 8
         || (processedImage->colors != 3 && processedImage->colors != 4)) {
         setRawDecodeError(errorString,
-            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawDecodedPixelFormatUnsupported));
+            kiriview::imageErrorText(kiriview::ImageErrorTextId::RawDecodedPixelFormatUnsupported));
         return std::nullopt;
     }
 
@@ -89,14 +89,14 @@ std::optional<QImage> qImageFromRawProcessedImage(
         * static_cast<std::size_t>(processedImage->height) * channelCount;
     if (processedImage->data_size < minimumDataSize) {
         setRawDecodeError(errorString,
-            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawDecodedPixelDataInvalid));
+            kiriview::imageErrorText(kiriview::ImageErrorTextId::RawDecodedPixelDataInvalid));
         return std::nullopt;
     }
 
     QImage image(imageSize, QImage::Format_RGBA8888);
     if (image.isNull()) {
         setRawDecodeError(errorString,
-            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawDecodedImageAllocationFailed));
+            kiriview::imageErrorText(kiriview::ImageErrorTextId::RawDecodedImageAllocationFailed));
         return std::nullopt;
     }
 
@@ -117,7 +117,7 @@ std::optional<QImage> qImageFromRawProcessedImage(
     }
     image.setColorSpace(QColorSpace(QColorSpace::SRgb));
 
-    return KiriView::displayReadyImage(image);
+    return kiriview::displayReadyImage(image);
 }
 
 std::optional<QImage> decodeRawImage(const QByteArray &data, QString *errorString)
@@ -127,7 +127,7 @@ std::optional<QImage> decodeRawImage(const QByteArray &data, QString *errorStrin
     if (errorCode != LIBRAW_SUCCESS) {
         setRawDecodeError(errorString,
             rawDecodeErrorString(
-                KiriView::imageErrorActionText(KiriView::ImageErrorActionTextId::ReadRawImage),
+                kiriview::imageErrorActionText(kiriview::ImageErrorActionTextId::ReadRawImage),
                 errorCode));
         return std::nullopt;
     }
@@ -144,7 +144,7 @@ std::optional<QImage> decodeRawImage(const QByteArray &data, QString *errorStrin
     if (errorCode != LIBRAW_SUCCESS) {
         setRawDecodeError(errorString,
             rawDecodeErrorString(
-                KiriView::imageErrorActionText(KiriView::ImageErrorActionTextId::UnpackRawImage),
+                kiriview::imageErrorActionText(kiriview::ImageErrorActionTextId::UnpackRawImage),
                 errorCode));
         return std::nullopt;
     }
@@ -153,7 +153,7 @@ std::optional<QImage> decodeRawImage(const QByteArray &data, QString *errorStrin
     if (errorCode != LIBRAW_SUCCESS) {
         setRawDecodeError(errorString,
             rawDecodeErrorString(
-                KiriView::imageErrorActionText(KiriView::ImageErrorActionTextId::ProcessRawImage),
+                kiriview::imageErrorActionText(kiriview::ImageErrorActionTextId::ProcessRawImage),
                 errorCode));
         return std::nullopt;
     }
@@ -163,8 +163,8 @@ std::optional<QImage> decodeRawImage(const QByteArray &data, QString *errorStrin
         processor.dcraw_make_mem_image(&memImageErrorCode), &LibRaw::dcraw_clear_mem);
     if (memImageErrorCode != LIBRAW_SUCCESS) {
         setRawDecodeError(errorString,
-            rawDecodeErrorString(KiriView::imageErrorActionText(
-                                     KiriView::ImageErrorActionTextId::CreateDisplayImage),
+            rawDecodeErrorString(kiriview::imageErrorActionText(
+                                     kiriview::ImageErrorActionTextId::CreateDisplayImage),
                 memImageErrorCode));
         return std::nullopt;
     }
@@ -172,7 +172,7 @@ std::optional<QImage> decodeRawImage(const QByteArray &data, QString *errorStrin
     return qImageFromRawProcessedImage(processedImage.get(), errorString);
 }
 
-class RawImageTileSource final : public KiriView::ImageTileSource
+class RawImageTileSource final : public kiriview::ImageTileSource
 {
 public:
     explicit RawImageTileSource(QImage image)
@@ -181,7 +181,7 @@ public:
     }
 
     QSize imageSize() const override { return m_image.size(); }
-    qsizetype byteCost() const override { return KiriView::imageByteCost(m_image); }
+    qsizetype byteCost() const override { return kiriview::imageByteCost(m_image); }
     bool supportsRasterDisplayRefinement() const override { return true; }
 
     QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *) const override
@@ -190,30 +190,30 @@ public:
             return {};
         }
 
-        return KiriView::scaledTileImage(m_image, rasterSize);
+        return kiriview::scaledTileImage(m_image, rasterSize);
     }
 
     QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *) const override
     {
-        return KiriView::scaledTileImage(
-            m_image, KiriView::boundedPreviewSize(m_image.size(), maximumLongEdge));
+        return kiriview::scaledTileImage(
+            m_image, kiriview::boundedPreviewSize(m_image.size(), maximumLongEdge));
     }
 
-    std::optional<KiriView::DecodedTile> decodeTile(
-        const KiriView::TileRequest &request, QString *errorString) const override
+    std::optional<kiriview::DecodedTile> decodeTile(
+        const kiriview::TileRequest &request, QString *errorString) const override
     {
-        if (!KiriView::tileRequestCanDecode(request)) {
+        if (!kiriview::tileRequestCanDecode(request)) {
             return std::nullopt;
         }
 
-        QImage levelImage = KiriView::scaledTileImage(m_image, request.levelSize);
-        if (std::optional<KiriView::DecodedTile> tile
-            = KiriView::decodedTileFromLevelImage(request, levelImage)) {
+        QImage levelImage = kiriview::scaledTileImage(m_image, request.levelSize);
+        if (std::optional<kiriview::DecodedTile> tile
+            = kiriview::decodedTileFromLevelImage(request, levelImage)) {
             return tile;
         }
 
-        KiriView::setTileSourceError(
-            errorString, KiriView::imageErrorText(KiriView::ImageErrorTextId::RenderRawTile));
+        kiriview::setTileSourceError(
+            errorString, kiriview::imageErrorText(kiriview::ImageErrorTextId::RenderRawTile));
         return std::nullopt;
     }
 
@@ -222,7 +222,7 @@ private:
 };
 }
 
-namespace KiriView {
+namespace kiriview {
 DecodedImageResult decodeRawImageData(const QByteArray &data, const ImageDecodeRequest &request)
 {
     QString errorString;

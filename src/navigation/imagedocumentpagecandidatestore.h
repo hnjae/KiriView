@@ -12,7 +12,7 @@
 #include <map>
 #include <memory>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentPageCandidateDirectoryEntry;
 
 class ImageDocumentPageCandidateStore final : public QObject

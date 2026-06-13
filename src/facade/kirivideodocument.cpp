@@ -9,25 +9,25 @@
 #include <memory>
 
 namespace {
-KiriVideoDocument::Status fromVideoDocumentStatus(KiriView::VideoDocumentStatus status)
+KiriVideoDocument::Status fromVideoDocumentStatus(kiriview::VideoDocumentStatus status)
 {
     switch (status) {
-    case KiriView::VideoDocumentStatus::Null:
+    case kiriview::VideoDocumentStatus::Null:
         return KiriVideoDocument::Status::Null;
-    case KiriView::VideoDocumentStatus::Loading:
+    case kiriview::VideoDocumentStatus::Loading:
         return KiriVideoDocument::Status::Loading;
-    case KiriView::VideoDocumentStatus::Ready:
+    case kiriview::VideoDocumentStatus::Ready:
         return KiriVideoDocument::Status::Ready;
-    case KiriView::VideoDocumentStatus::Error:
+    case kiriview::VideoDocumentStatus::Error:
         return KiriVideoDocument::Status::Error;
     }
 
     return KiriVideoDocument::Status::Null;
 }
 
-KiriView::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDocument &document)
+kiriview::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDocument &document)
 {
-    KiriView::VideoDocumentPublicSignalOperations operations;
+    kiriview::VideoDocumentPublicSignalOperations operations;
     operations.sourceUrlChanged = [&document]() { Q_EMIT document.sourceUrlChanged(); };
     operations.statusChanged = [&document]() { Q_EMIT document.statusChanged(); };
     operations.errorStringChanged = [&document]() { Q_EMIT document.errorStringChanged(); };
@@ -54,8 +54,8 @@ KiriView::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDo
 KiriVideoDocument::KiriVideoDocument(QObject *parent)
     : QObject(parent)
 {
-    m_runtime = std::make_unique<KiriView::VideoDocumentRuntime>(
-        this, [this](const std::vector<KiriView::VideoDocumentChange> &changes) {
+    m_runtime = std::make_unique<kiriview::VideoDocumentRuntime>(
+        this, [this](const std::vector<kiriview::VideoDocumentChange> &changes) {
             handleDocumentChanges(changes);
         });
 }
@@ -97,7 +97,7 @@ bool KiriVideoDocument::muted() const { return m_runtime->muted(); }
 
 QObject *KiriVideoDocument::videoOutput() const { return m_runtime->videoOutput(); }
 
-const KiriView::EmbeddedMetadata &KiriVideoDocument::embeddedMetadata() const
+const kiriview::EmbeddedMetadata &KiriVideoDocument::embeddedMetadata() const
 {
     return m_runtime->embeddedMetadata();
 }
@@ -129,7 +129,7 @@ void KiriVideoDocument::setVideoOutputGeometry(const QRectF &contentRect, const 
 }
 
 void KiriVideoDocument::handleDocumentChanges(
-    const std::vector<KiriView::VideoDocumentChange> &changes)
+    const std::vector<kiriview::VideoDocumentChange> &changes)
 {
-    KiriView::VideoDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
+    kiriview::VideoDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
 }

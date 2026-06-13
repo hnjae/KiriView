@@ -16,7 +16,7 @@
 #include <QTest>
 
 namespace {
-using MenuPresentation = KiriView::ApplicationActions::MenuPresentation;
+using MenuPresentation = kiriview::ApplicationActions::MenuPresentation;
 constexpr const char *interfaceConfigGroup = "Interface";
 constexpr const char *menuPresentationConfigKey = "menuPresentation";
 
@@ -40,7 +40,7 @@ void resetConfig()
 }
 
 class FakeApplicationActionHost final : public QObject,
-                                        public KiriView::ApplicationActions::ApplicationActionHost
+                                        public kiriview::ApplicationActions::ApplicationActionHost
 {
     Q_OBJECT
 
@@ -64,10 +64,10 @@ Q_SIGNALS:
     void menuPresentationChanged();
 };
 
-KiriView::ApplicationActions::ApplicationMenuPresentationRuntime createRuntime(
+kiriview::ApplicationActions::ApplicationMenuPresentationRuntime createRuntime(
     FakeApplicationActionHost &host)
 {
-    return KiriView::ApplicationActions::ApplicationMenuPresentationRuntime(
+    return kiriview::ApplicationActions::ApplicationMenuPresentationRuntime(
         host, [&host]() { Q_EMIT host.menuPresentationChanged(); });
 }
 }
@@ -100,7 +100,7 @@ void TestApplicationMenuPresentationRuntime::invalidStoredValueFallsBackToHambur
 {
     KiriViewState::setMenuPresentation(99);
     FakeApplicationActionHost host;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
+    kiriview::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
 
     QCOMPARE(runtime.menuPresentation(), MenuPresentation::HamburgerMenu);
 }
@@ -108,7 +108,7 @@ void TestApplicationMenuPresentationRuntime::invalidStoredValueFallsBackToHambur
 void TestApplicationMenuPresentationRuntime::setMenuPresentationPersistsAndSignalsChanges()
 {
     FakeApplicationActionHost host;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
+    kiriview::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
     QSignalSpy changedSpy(&host, &FakeApplicationActionHost::menuPresentationChanged);
 
     runtime.setMenuPresentation(MenuPresentation::MenuBar);
@@ -127,7 +127,7 @@ void TestApplicationMenuPresentationRuntime::setMenuPresentationPersistsAndSigna
 void TestApplicationMenuPresentationRuntime::syncFromSettingsUpdatesRuntimeStateAndAction()
 {
     FakeApplicationActionHost host;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
+    kiriview::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
     QAction action;
     QSignalSpy changedSpy(&host, &FakeApplicationActionHost::menuPresentationChanged);
 
@@ -150,7 +150,7 @@ void TestApplicationMenuPresentationRuntime::showMenuBarActionMirrorsAndUpdatesP
 {
     KiriViewState::setMenuPresentation(KiriViewState::EnumMenuPresentation::MenuBar);
     FakeApplicationActionHost host;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
+    kiriview::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
     QAction action;
 
     runtime.bindShowMenuBarAction(&action);

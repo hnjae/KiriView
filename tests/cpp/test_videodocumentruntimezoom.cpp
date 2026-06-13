@@ -23,10 +23,10 @@ private Q_SLOTS:
 };
 
 namespace {
-class FakeVideoMediaBackend final : public KiriView::VideoMediaBackend
+class FakeVideoMediaBackend final : public kiriview::VideoMediaBackend
 {
 public:
-    void setCallbacks(KiriView::VideoMediaBackendCallbacks nextCallbacks) override
+    void setCallbacks(kiriview::VideoMediaBackendCallbacks nextCallbacks) override
     {
         callbacks = std::move(nextCallbacks);
     }
@@ -59,7 +59,7 @@ public:
     }
     void setVideoOutput(QObject *nextVideoOutput) override { output = nextVideoOutput; }
     QObject *videoOutput() const override { return output.data(); }
-    KiriView::VideoMediaStatus mediaStatus() const override { return currentStatus; }
+    kiriview::VideoMediaStatus mediaStatus() const override { return currentStatus; }
     QString errorString() const override { return {}; }
     qint64 duration() const override { return 0; }
     qint64 position() const override { return currentPosition; }
@@ -70,7 +70,7 @@ public:
     QSize videoSize() const override { return {}; }
     bool muted() const override { return isMuted; }
 
-    void emitStatus(KiriView::VideoMediaStatus status)
+    void emitStatus(kiriview::VideoMediaStatus status)
     {
         currentStatus = status;
         callbacks.mediaStatusChanged();
@@ -82,24 +82,24 @@ public:
         callbacks.hasVideoChanged();
     }
 
-    KiriView::VideoMediaBackendCallbacks callbacks;
+    kiriview::VideoMediaBackendCallbacks callbacks;
     QUrl sourceUrl;
     QPointer<QObject> output;
-    KiriView::VideoMediaStatus currentStatus = KiriView::VideoMediaStatus::Null;
+    kiriview::VideoMediaStatus currentStatus = kiriview::VideoMediaStatus::Null;
     qint64 currentPosition = 0;
     bool isPlaying = false;
     bool isMuted = false;
     bool videoAvailable = false;
 };
 
-class ImmediateVideoPlaybackUrlResolver final : public KiriView::VideoPlaybackUrlResolver
+class ImmediateVideoPlaybackUrlResolver final : public kiriview::VideoPlaybackUrlResolver
 {
 public:
     void resolve(quint64 operationId, const QUrl &sourceUrl, QObject *,
-        KiriView::VideoPlaybackUrlResolvedCallback resolvedCallback,
-        KiriView::VideoPlaybackUrlFailedCallback) override
+        kiriview::VideoPlaybackUrlResolvedCallback resolvedCallback,
+        kiriview::VideoPlaybackUrlFailedCallback) override
     {
-        resolvedCallback(KiriView::VideoPlaybackUrlResolution {
+        resolvedCallback(kiriview::VideoPlaybackUrlResolution {
             operationId,
             sourceUrl,
             sourceUrl,
@@ -113,18 +113,18 @@ public:
 struct RuntimeFixture {
     QObject documentObject;
     FakeVideoMediaBackend *backend = nullptr;
-    std::unique_ptr<KiriView::VideoDocumentRuntime> runtime;
+    std::unique_ptr<kiriview::VideoDocumentRuntime> runtime;
 
     RuntimeFixture()
     {
         auto mediaBackend = std::make_unique<FakeVideoMediaBackend>();
         backend = mediaBackend.get();
-        runtime = std::make_unique<KiriView::VideoDocumentRuntime>(&documentObject,
-            KiriView::VideoDocumentRuntime::ChangeCallback(), std::move(mediaBackend),
+        runtime = std::make_unique<kiriview::VideoDocumentRuntime>(&documentObject,
+            kiriview::VideoDocumentRuntime::ChangeCallback(), std::move(mediaBackend),
             std::make_unique<ImmediateVideoPlaybackUrlResolver>());
         runtime->setSourceUrl(QUrl::fromLocalFile(QStringLiteral("/videos/clip.mp4")));
         backend->emitHasVideo(true);
-        backend->emitStatus(KiriView::VideoMediaStatus::Buffered);
+        backend->emitStatus(kiriview::VideoMediaStatus::Buffered);
     }
 };
 }

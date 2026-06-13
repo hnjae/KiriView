@@ -7,7 +7,7 @@
 #include "imagedocumentruntimeplan.h"
 #include "navigation/imagedocumentpagenavigationplan.h"
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentRuntimePlan imageDocumentRuntimePlanForNavigationPlan(
     const ImageDocumentPageNavigationPlan &navigationPlan);
 }

@@ -10,7 +10,7 @@
 
 namespace {
 std::vector<QUrl> predecodeWindowImageUrls(
-    const std::vector<KiriView::ImageDocumentPageCandidate> &candidates,
+    const std::vector<kiriview::ImageDocumentPageCandidate> &candidates,
     const std::vector<std::size_t> &indices)
 {
     std::vector<QUrl> urls;
@@ -25,7 +25,7 @@ std::vector<QUrl> predecodeWindowImageUrls(
 
 }
 
-namespace KiriView {
+namespace kiriview {
 bool PredecodeWindowStartPlan::shouldLoadCandidates() const { return candidateList.has_value(); }
 
 PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanRequest &request)

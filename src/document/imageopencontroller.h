@@ -20,7 +20,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentState;
 class ImageLoader;
 class ImagePageSurfaceController;

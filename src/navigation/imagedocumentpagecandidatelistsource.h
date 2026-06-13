@@ -11,7 +11,7 @@
 #include <utility>
 #include <variant>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentPageCandidateListSource
 {
 public:

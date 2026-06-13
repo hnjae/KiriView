@@ -25,20 +25,20 @@ private Q_SLOTS:
 
 void TestImageByteCost::byteAccountingSaturatesProductsSumsAndQtSizes()
 {
-    QCOMPARE(KiriView::saturatedQtByteSize(-5), qsizetype(-5));
-    QCOMPARE(KiriView::saturatedQtByteSize(std::numeric_limits<std::int64_t>::max()),
+    QCOMPARE(kiriview::saturatedQtByteSize(-5), qsizetype(-5));
+    QCOMPARE(kiriview::saturatedQtByteSize(std::numeric_limits<std::int64_t>::max()),
         std::numeric_limits<qsizetype>::max());
-    QCOMPARE(KiriView::saturatedPositiveByteProduct(0, 10), std::int64_t(0));
-    QCOMPARE(KiriView::saturatedPositiveByteProduct(-1, 10), std::int64_t(0));
-    QCOMPARE(KiriView::saturatedPositiveByteProduct(10, 3), std::int64_t(30));
-    QCOMPARE(KiriView::saturatedPositiveByteProduct(std::numeric_limits<std::int64_t>::max(), 2),
+    QCOMPARE(kiriview::saturatedPositiveByteProduct(0, 10), std::int64_t(0));
+    QCOMPARE(kiriview::saturatedPositiveByteProduct(-1, 10), std::int64_t(0));
+    QCOMPARE(kiriview::saturatedPositiveByteProduct(10, 3), std::int64_t(30));
+    QCOMPARE(kiriview::saturatedPositiveByteProduct(std::numeric_limits<std::int64_t>::max(), 2),
         std::numeric_limits<std::int64_t>::max());
     QCOMPARE(
-        KiriView::saturatedQtByteProduct(std::numeric_limits<std::int64_t>::max(), std::int64_t(2)),
+        kiriview::saturatedQtByteProduct(std::numeric_limits<std::int64_t>::max(), std::int64_t(2)),
         std::numeric_limits<qsizetype>::max());
-    QCOMPARE(KiriView::saturatedQtByteSum(10, 3), qsizetype(13));
-    QCOMPARE(KiriView::saturatedQtByteSum(-5, 3), qsizetype(3));
-    QCOMPARE(KiriView::saturatedQtByteSum(std::numeric_limits<qsizetype>::max(), 1),
+    QCOMPARE(kiriview::saturatedQtByteSum(10, 3), qsizetype(13));
+    QCOMPARE(kiriview::saturatedQtByteSum(-5, 3), qsizetype(3));
+    QCOMPARE(kiriview::saturatedQtByteSum(std::numeric_limits<qsizetype>::max(), 1),
         std::numeric_limits<qsizetype>::max());
 }
 
@@ -47,15 +47,15 @@ void TestImageByteCost::imageByteCostUsesQtImageStorageSize()
     QImage image(10, 3, QImage::Format_RGBA8888_Premultiplied);
     image.fill(Qt::transparent);
 
-    QCOMPARE(KiriView::imageByteCost(QImage()), qsizetype(0));
-    QCOMPARE(KiriView::imageByteCost(image), image.sizeInBytes());
+    QCOMPARE(kiriview::imageByteCost(QImage()), qsizetype(0));
+    QCOMPARE(kiriview::imageByteCost(image), image.sizeInBytes());
 }
 
 void TestImageByteCost::estimatedRgbaByteCostHandlesEmptyAndOverflow()
 {
-    QCOMPARE(KiriView::estimatedRgbaByteCost(QSize()), qsizetype(0));
-    QCOMPARE(KiriView::estimatedRgbaByteCost(QSize(10, 3)), qsizetype(120));
-    QCOMPARE(KiriView::estimatedRgbaByteCost(
+    QCOMPARE(kiriview::estimatedRgbaByteCost(QSize()), qsizetype(0));
+    QCOMPARE(kiriview::estimatedRgbaByteCost(QSize(10, 3)), qsizetype(120));
+    QCOMPARE(kiriview::estimatedRgbaByteCost(
                  QSize(std::numeric_limits<int>::max(), std::numeric_limits<int>::max())),
         std::numeric_limits<qsizetype>::max());
 }

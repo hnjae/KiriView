@@ -9,7 +9,7 @@
 
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 ArchiveStorageBackend archiveStorageBackendFromBridge(RustArchiveStorageBackend backend);
 std::optional<ArchiveOpenMatch> archiveOpenMatchFromBridge(const RustArchiveOpenMatch &match);
 }

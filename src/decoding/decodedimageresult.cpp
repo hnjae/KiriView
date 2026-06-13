@@ -8,7 +8,7 @@
 #include <utility>
 #include <variant>
 
-namespace KiriView {
+namespace kiriview {
 DecodedImageResult::DecodedImageResult(DecodedImageFailure failure)
     : m_payload(std::move(failure))
 {

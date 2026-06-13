@@ -10,7 +10,7 @@
 #include <memory>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 class ImageIoJobState final
 {
 public:

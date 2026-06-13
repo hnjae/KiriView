@@ -200,9 +200,9 @@ QByteArray makeApng(quint32 canvasWidth, quint32 canvasHeight, quint32 playCount
 
 QColor pixel(const QImage &image, int x, int y) { return image.pixelColor(x, y); }
 
-template <typename Image> const Image *decodedImage(const KiriView::DecodedImageResult &result)
+template <typename Image> const Image *decodedImage(const kiriview::DecodedImageResult &result)
 {
-    const KiriView::DecodedImage *image = KiriView::decodedImageResultImage(result);
+    const kiriview::DecodedImage *image = kiriview::decodedImageResultImage(result);
     return image == nullptr ? nullptr : std::get_if<Image>(image);
 }
 }
@@ -224,13 +224,13 @@ private Q_SLOTS:
 
 void TestApngAnimationReader::nonPngAndPlainPngReturnNotApng()
 {
-    KiriView::ApngAnimationReader reader;
-    KiriView::ApngOpenResult result = reader.open(QByteArrayLiteral("not png"));
-    QCOMPARE(result.status, KiriView::ApngOpenStatus::NotApng);
+    kiriview::ApngAnimationReader reader;
+    kiriview::ApngOpenResult result = reader.open(QByteArrayLiteral("not png"));
+    QCOMPARE(result.status, kiriview::ApngOpenStatus::NotApng);
 
     const QByteArray png = encodeRgbaPng(1, 1, pixelBytes({ { { 255, 0, 0, 255 } } }));
     result = reader.open(png);
-    QCOMPARE(result.status, KiriView::ApngOpenStatus::NotApng);
+    QCOMPARE(result.status, kiriview::ApngOpenStatus::NotApng);
 }
 
 void TestApngAnimationReader::readerDecodesSequentialFramesAndLoopCount()
@@ -240,9 +240,9 @@ void TestApngAnimationReader::readerDecodesSequentialFramesAndLoopCount()
     second.delayNum = 2;
     const QByteArray apng = makeApng(1, 1, 2, { first, second });
 
-    KiriView::ApngAnimationReader reader;
-    const KiriView::ApngOpenResult result = reader.open(apng);
-    QCOMPARE(result.status, KiriView::ApngOpenStatus::Success);
+    kiriview::ApngAnimationReader reader;
+    const kiriview::ApngOpenResult result = reader.open(apng);
+    QCOMPARE(result.status, kiriview::ApngOpenStatus::Success);
     QCOMPARE(result.frameCount, 2);
     QCOMPARE(result.loopCount, 1);
     QCOMPARE(result.firstFrameDelay, 100);
@@ -250,7 +250,7 @@ void TestApngAnimationReader::readerDecodesSequentialFramesAndLoopCount()
     QVERIFY(reader.hasMoreFrames());
 
     QString errorString;
-    const std::optional<KiriView::AnimationFrame> frame = reader.readNextFrame(&errorString);
+    const std::optional<kiriview::AnimationFrame> frame = reader.readNextFrame(&errorString);
     QVERIFY2(frame.has_value(), qPrintable(errorString));
     QCOMPARE(frame->delay, 200);
     QCOMPARE(pixel(frame->image, 0, 0), QColor(0, 0, 255, 255));
@@ -265,9 +265,9 @@ void TestApngAnimationReader::hiddenDefaultImageIsNotDisplayed()
     const QByteArray hiddenDefault = pixelBytes({ { { 255, 0, 0, 255 } } });
     const QByteArray apng = makeApng(1, 1, 0, { animationFrame }, hiddenDefault);
 
-    KiriView::ApngAnimationReader reader;
-    const KiriView::ApngOpenResult result = reader.open(apng);
-    QCOMPARE(result.status, KiriView::ApngOpenStatus::Success);
+    kiriview::ApngAnimationReader reader;
+    const kiriview::ApngOpenResult result = reader.open(apng);
+    QCOMPARE(result.status, kiriview::ApngOpenStatus::Success);
     QCOMPARE(result.frameCount, 1);
     QCOMPARE(result.loopCount, -1);
     QCOMPARE(pixel(result.firstFrame, 0, 0), QColor(0, 0, 255, 255));
@@ -281,11 +281,11 @@ void TestApngAnimationReader::blendOverComposesWithExistingCanvas()
     second.blendOp = 1;
     const QByteArray apng = makeApng(1, 1, 1, { first, second });
 
-    KiriView::ApngAnimationReader reader;
-    QCOMPARE(reader.open(apng).status, KiriView::ApngOpenStatus::Success);
+    kiriview::ApngAnimationReader reader;
+    QCOMPARE(reader.open(apng).status, kiriview::ApngOpenStatus::Success);
 
     QString errorString;
-    const std::optional<KiriView::AnimationFrame> frame = reader.readNextFrame(&errorString);
+    const std::optional<kiriview::AnimationFrame> frame = reader.readNextFrame(&errorString);
     QVERIFY2(frame.has_value(), qPrintable(errorString));
     const QColor color = pixel(frame->image, 0, 0);
     QCOMPARE(color.alpha(), 255);
@@ -303,12 +303,12 @@ void TestApngAnimationReader::disposeBackgroundClearsFrameRegion()
     third.xOffset = 1;
     const QByteArray apng = makeApng(2, 1, 1, { first, second, third });
 
-    KiriView::ApngAnimationReader reader;
-    QCOMPARE(reader.open(apng).status, KiriView::ApngOpenStatus::Success);
+    kiriview::ApngAnimationReader reader;
+    QCOMPARE(reader.open(apng).status, kiriview::ApngOpenStatus::Success);
 
     QString errorString;
     QVERIFY(reader.readNextFrame(&errorString).has_value());
-    const std::optional<KiriView::AnimationFrame> thirdFrame = reader.readNextFrame(&errorString);
+    const std::optional<kiriview::AnimationFrame> thirdFrame = reader.readNextFrame(&errorString);
     QVERIFY2(thirdFrame.has_value(), qPrintable(errorString));
     QCOMPARE(pixel(thirdFrame->image, 0, 0).alpha(), 0);
     QCOMPARE(pixel(thirdFrame->image, 1, 0), QColor(0, 255, 0, 255));
@@ -324,12 +324,12 @@ void TestApngAnimationReader::disposePreviousRestoresFrameRegion()
     third.xOffset = 1;
     const QByteArray apng = makeApng(2, 1, 1, { first, second, third });
 
-    KiriView::ApngAnimationReader reader;
-    QCOMPARE(reader.open(apng).status, KiriView::ApngOpenStatus::Success);
+    kiriview::ApngAnimationReader reader;
+    QCOMPARE(reader.open(apng).status, kiriview::ApngOpenStatus::Success);
 
     QString errorString;
     QVERIFY(reader.readNextFrame(&errorString).has_value());
-    const std::optional<KiriView::AnimationFrame> thirdFrame = reader.readNextFrame(&errorString);
+    const std::optional<kiriview::AnimationFrame> thirdFrame = reader.readNextFrame(&errorString);
     QVERIFY2(thirdFrame.has_value(), qPrintable(errorString));
     QCOMPARE(pixel(thirdFrame->image, 0, 0), QColor(255, 0, 0, 255));
     QCOMPARE(pixel(thirdFrame->image, 1, 0), QColor(0, 255, 0, 255));
@@ -341,9 +341,9 @@ void TestApngAnimationReader::malformedApngReportsError()
         = fullCanvasFrame(2, 1, pixelBytes({ { { 255, 0, 0, 255 } }, { { 255, 0, 0, 255 } } }));
     const QByteArray apng = makeApng(1, 1, 1, { frame });
 
-    KiriView::ApngAnimationReader reader;
-    const KiriView::ApngOpenResult result = reader.open(apng);
-    QCOMPARE(result.status, KiriView::ApngOpenStatus::Error);
+    kiriview::ApngAnimationReader reader;
+    const kiriview::ApngOpenResult result = reader.open(apng);
+    QCOMPARE(result.status, kiriview::ApngOpenStatus::Error);
     QVERIFY(result.errorString.contains(QStringLiteral("APNG")));
 }
 
@@ -353,8 +353,8 @@ void TestApngAnimationReader::imageDecoderReturnsStreamingApngImage()
     FrameSpec second = fullCanvasFrame(1, 1, pixelBytes({ { { 0, 0, 255, 255 } } }));
     const QByteArray apng = makeApng(1, 1, 1, { first, second });
 
-    const KiriView::DecodedImageResult result = KiriView::decodeImageData(apng);
-    const auto *decoded = decodedImage<KiriView::ApngAnimationImage>(result);
+    const kiriview::DecodedImageResult result = kiriview::decodeImageData(apng);
+    const auto *decoded = decodedImage<kiriview::ApngAnimationImage>(result);
     QVERIFY(decoded != nullptr);
     QCOMPARE(pixel(decoded->firstFrame, 0, 0), QColor(255, 0, 0, 255));
     QCOMPARE(decoded->data, apng);

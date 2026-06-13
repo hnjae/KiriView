@@ -14,7 +14,7 @@
 #include <QUrl>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageOpenResolvedStateDelta {
     std::optional<QUrl> sourceUrl;
     std::optional<ImageDocumentPageKind> sourceKind;

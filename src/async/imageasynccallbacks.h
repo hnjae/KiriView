@@ -8,7 +8,7 @@
 #include <QString>
 #include <functional>
 
-namespace KiriView {
+namespace kiriview {
 using ImageDataCallback = std::function<void(QByteArray)>;
 using ErrorCallback = std::function<void(const QString &)>;
 }

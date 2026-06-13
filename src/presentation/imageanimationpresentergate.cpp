@@ -3,7 +3,7 @@
 
 #include "presentation/imageanimationpresentergate.h"
 
-namespace KiriView {
+namespace kiriview {
 bool AnimationProviderChurnGateResult::passed() const
 {
     return presenter == AnimationPresenterKind::ProviderImageRevisions

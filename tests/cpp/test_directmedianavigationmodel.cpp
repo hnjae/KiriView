@@ -9,9 +9,9 @@
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
-KiriView::DirectMediaNavigationCandidate candidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate candidate(const QUrl &url)
 {
-    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 }
 
@@ -29,41 +29,41 @@ private Q_SLOTS:
 
 void TestDirectMediaNavigationModel::parentUrlUsesDirectImageDocumentPageCandidateContextRule()
 {
-    QCOMPARE(KiriView::directMediaNavigationParentUrl(
+    QCOMPARE(kiriview::directMediaNavigationParentUrl(
                  localUrl(QStringLiteral("/media/a/../b/clip.mp4"))),
         localUrl(QStringLiteral("/media/b/")));
 
     const QUrl archiveEntry(QStringLiteral("zip:///path/archive.zip!/chapter/clip.mp4"));
-    QCOMPARE(KiriView::directMediaNavigationParentUrl(archiveEntry),
+    QCOMPARE(kiriview::directMediaNavigationParentUrl(archiveEntry),
         QUrl(QStringLiteral("zip:///path/archive.zip!/chapter/")));
 }
 
 void TestDirectMediaNavigationModel::navigatesMixedMediaWithoutWrapping()
 {
-    std::vector<KiriView::DirectMediaNavigationCandidate> candidates {
+    std::vector<kiriview::DirectMediaNavigationCandidate> candidates {
         candidate(localUrl(QStringLiteral("/media/01.jpg"))),
         candidate(localUrl(QStringLiteral("/media/02.mp4"))),
         candidate(localUrl(QStringLiteral("/media/03.png"))),
     };
-    KiriView::sortDirectMediaNavigationCandidates(&candidates);
+    kiriview::sortDirectMediaNavigationCandidates(&candidates);
 
-    QCOMPARE(KiriView::adjacentDirectMediaNavigationUrl(candidates,
-                 localUrl(QStringLiteral("/media/02.mp4")), KiriView::NavigationDirection::Previous)
+    QCOMPARE(kiriview::adjacentDirectMediaNavigationUrl(candidates,
+                 localUrl(QStringLiteral("/media/02.mp4")), kiriview::NavigationDirection::Previous)
                  .value(),
         localUrl(QStringLiteral("/media/01.jpg")));
-    QCOMPARE(KiriView::adjacentDirectMediaNavigationUrl(candidates,
-                 localUrl(QStringLiteral("/media/02.mp4")), KiriView::NavigationDirection::Next)
+    QCOMPARE(kiriview::adjacentDirectMediaNavigationUrl(candidates,
+                 localUrl(QStringLiteral("/media/02.mp4")), kiriview::NavigationDirection::Next)
                  .value(),
         localUrl(QStringLiteral("/media/03.png")));
-    QVERIFY(!KiriView::adjacentDirectMediaNavigationUrl(candidates,
-        localUrl(QStringLiteral("/media/01.jpg")), KiriView::NavigationDirection::Previous));
-    QVERIFY(!KiriView::adjacentDirectMediaNavigationUrl(candidates,
-        localUrl(QStringLiteral("/media/03.png")), KiriView::NavigationDirection::Next));
-    QVERIFY(!KiriView::adjacentDirectMediaNavigationUrl(candidates,
-        localUrl(QStringLiteral("/media/missing.png")), KiriView::NavigationDirection::Next));
+    QVERIFY(!kiriview::adjacentDirectMediaNavigationUrl(candidates,
+        localUrl(QStringLiteral("/media/01.jpg")), kiriview::NavigationDirection::Previous));
+    QVERIFY(!kiriview::adjacentDirectMediaNavigationUrl(candidates,
+        localUrl(QStringLiteral("/media/03.png")), kiriview::NavigationDirection::Next));
+    QVERIFY(!kiriview::adjacentDirectMediaNavigationUrl(candidates,
+        localUrl(QStringLiteral("/media/missing.png")), kiriview::NavigationDirection::Next));
 
-    const KiriView::DirectMediaNavigationBoundaryState firstBoundary
-        = KiriView::directMediaNavigationBoundaryState(
+    const kiriview::DirectMediaNavigationBoundaryState firstBoundary
+        = kiriview::directMediaNavigationBoundaryState(
             candidates, localUrl(QStringLiteral("/media/01.jpg")));
     QVERIFY(firstBoundary.atKnownFirst);
     QVERIFY(!firstBoundary.canOpenPrevious);
@@ -71,8 +71,8 @@ void TestDirectMediaNavigationModel::navigatesMixedMediaWithoutWrapping()
     QCOMPARE(firstBoundary.currentNumber, 1);
     QCOMPARE(firstBoundary.count, 3);
 
-    const KiriView::DirectMediaNavigationBoundaryState videoBoundary
-        = KiriView::directMediaNavigationBoundaryState(
+    const kiriview::DirectMediaNavigationBoundaryState videoBoundary
+        = kiriview::directMediaNavigationBoundaryState(
             candidates, localUrl(QStringLiteral("/media/02.mp4")));
     QCOMPARE(videoBoundary.currentNumber, 2);
     QCOMPARE(videoBoundary.count, 3);
@@ -80,44 +80,44 @@ void TestDirectMediaNavigationModel::navigatesMixedMediaWithoutWrapping()
 
 void TestDirectMediaNavigationModel::openPlanUpdatesBoundaryStateAndSelectsTargets()
 {
-    std::vector<KiriView::DirectMediaNavigationCandidate> candidates {
+    std::vector<kiriview::DirectMediaNavigationCandidate> candidates {
         candidate(localUrl(QStringLiteral("/media/01.jpg"))),
         candidate(localUrl(QStringLiteral("/media/02.mp4"))),
         candidate(localUrl(QStringLiteral("/media/03.png"))),
     };
-    KiriView::sortDirectMediaNavigationCandidates(&candidates);
+    kiriview::sortDirectMediaNavigationCandidates(&candidates);
 
-    const KiriView::DirectMediaNavigationOpenPlan nextPlan
-        = KiriView::directMediaNavigationOpenPlan(candidates,
+    const kiriview::DirectMediaNavigationOpenPlan nextPlan
+        = kiriview::directMediaNavigationOpenPlan(candidates,
             localUrl(QStringLiteral("/media/02.mp4")),
-            KiriView::nextDirectMediaNavigationOpenRequest());
+            kiriview::nextDirectMediaNavigationOpenRequest());
     QCOMPARE(nextPlan.targetUrl.value(), localUrl(QStringLiteral("/media/03.png")));
     QCOMPARE(nextPlan.boundaryState.currentNumber, 2);
     QCOMPARE(nextPlan.boundaryState.count, 3);
     QVERIFY(nextPlan.boundaryState.canOpenPrevious);
     QVERIFY(nextPlan.boundaryState.canOpenNext);
 
-    const KiriView::DirectMediaNavigationOpenPlan previousPlan
-        = KiriView::directMediaNavigationOpenPlan(candidates,
+    const kiriview::DirectMediaNavigationOpenPlan previousPlan
+        = kiriview::directMediaNavigationOpenPlan(candidates,
             localUrl(QStringLiteral("/media/02.mp4")),
-            KiriView::previousDirectMediaNavigationOpenRequest());
+            kiriview::previousDirectMediaNavigationOpenRequest());
     QCOMPARE(previousPlan.targetUrl.value(), localUrl(QStringLiteral("/media/01.jpg")));
 
-    const KiriView::DirectMediaNavigationOpenPlan lowNumberPlan
-        = KiriView::directMediaNavigationOpenPlan(candidates,
+    const kiriview::DirectMediaNavigationOpenPlan lowNumberPlan
+        = kiriview::directMediaNavigationOpenPlan(candidates,
             localUrl(QStringLiteral("/media/02.mp4")),
-            KiriView::numberedDirectMediaNavigationOpenRequest(-4));
+            kiriview::numberedDirectMediaNavigationOpenRequest(-4));
     QCOMPARE(lowNumberPlan.targetUrl.value(), localUrl(QStringLiteral("/media/01.jpg")));
 
-    const KiriView::DirectMediaNavigationOpenPlan highNumberPlan
-        = KiriView::directMediaNavigationOpenPlan(candidates,
+    const kiriview::DirectMediaNavigationOpenPlan highNumberPlan
+        = kiriview::directMediaNavigationOpenPlan(candidates,
             localUrl(QStringLiteral("/media/02.mp4")),
-            KiriView::numberedDirectMediaNavigationOpenRequest(9));
+            kiriview::numberedDirectMediaNavigationOpenRequest(9));
     QCOMPARE(highNumberPlan.targetUrl.value(), localUrl(QStringLiteral("/media/03.png")));
 
-    const KiriView::DirectMediaNavigationOpenPlan emptyPlan
-        = KiriView::directMediaNavigationOpenPlan({}, localUrl(QStringLiteral("/media/02.mp4")),
-            KiriView::numberedDirectMediaNavigationOpenRequest(1));
+    const kiriview::DirectMediaNavigationOpenPlan emptyPlan
+        = kiriview::directMediaNavigationOpenPlan({}, localUrl(QStringLiteral("/media/02.mp4")),
+            kiriview::numberedDirectMediaNavigationOpenRequest(1));
     QVERIFY(!emptyPlan.targetUrl.has_value());
     QCOMPARE(emptyPlan.boundaryState.count, 0);
 }
@@ -126,26 +126,26 @@ void TestDirectMediaNavigationModel::sortingAndMatchingNormalizePathSegmentsAndP
 {
     const QUrl encoded(QStringLiteral("zip:///path/archive.zip!/chapter/a%20clip.mp4"));
     const QUrl normalized(QStringLiteral("zip:///path/archive.zip!/chapter/extra/../a%20clip.mp4"));
-    std::vector<KiriView::DirectMediaNavigationCandidate> candidates {
-        KiriView::DirectMediaNavigationCandidate { encoded, QStringLiteral("a clip.mp4") },
-        KiriView::DirectMediaNavigationCandidate { normalized, QStringLiteral("a clip.mp4") },
+    std::vector<kiriview::DirectMediaNavigationCandidate> candidates {
+        kiriview::DirectMediaNavigationCandidate { encoded, QStringLiteral("a clip.mp4") },
+        kiriview::DirectMediaNavigationCandidate { normalized, QStringLiteral("a clip.mp4") },
     };
 
-    KiriView::sortDirectMediaNavigationCandidates(&candidates);
+    kiriview::sortDirectMediaNavigationCandidates(&candidates);
     QCOMPARE(candidates.size(), std::size_t(1));
-    QVERIFY(KiriView::directMediaNavigationCandidateIndex(candidates, normalized).has_value());
+    QVERIFY(kiriview::directMediaNavigationCandidateIndex(candidates, normalized).has_value());
 }
 
 void TestDirectMediaNavigationModel::boundaryStateIsUnknownWhenCurrentMediaIsMissing()
 {
-    std::vector<KiriView::DirectMediaNavigationCandidate> candidates {
+    std::vector<kiriview::DirectMediaNavigationCandidate> candidates {
         candidate(localUrl(QStringLiteral("/media/01.jpg"))),
         candidate(localUrl(QStringLiteral("/media/02.mp4"))),
     };
-    KiriView::sortDirectMediaNavigationCandidates(&candidates);
+    kiriview::sortDirectMediaNavigationCandidates(&candidates);
 
-    const KiriView::DirectMediaNavigationBoundaryState boundary
-        = KiriView::directMediaNavigationBoundaryState(
+    const kiriview::DirectMediaNavigationBoundaryState boundary
+        = kiriview::directMediaNavigationBoundaryState(
             candidates, localUrl(QStringLiteral("/media/missing.png")));
     QVERIFY(!boundary.canOpenPrevious);
     QVERIFY(!boundary.canOpenNext);

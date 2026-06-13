@@ -11,7 +11,7 @@ constexpr auto powerProfileMonitorInterface = "org.freedesktop.portal.PowerProfi
 constexpr auto powerSaverEnabledProperty = "power-saver-enabled";
 }
 
-namespace KiriView {
+namespace kiriview {
 PowerProfileMonitorEvent powerProfileMonitorEventFromRefreshReply(const QVariantList &arguments)
 {
     if (arguments.isEmpty()) {

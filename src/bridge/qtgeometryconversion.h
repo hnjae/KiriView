@@ -11,7 +11,7 @@
 #include <QSizeF>
 #include <QtGlobal>
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 template <typename RustSize> RustSize rustSize(const QSize &size)
 {
     return RustSize { size.width(), size.height() };

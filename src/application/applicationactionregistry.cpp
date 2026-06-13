@@ -5,7 +5,7 @@
 
 #include <cstddef>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 ApplicationActionRegistry::ApplicationActionRegistry(ApplicationActionHost &host)
     : m_host(host)
 {
@@ -48,7 +48,7 @@ QAction *ApplicationActionRegistry::actionForId(ActionId actionId) const
 
 QString ApplicationActionRegistry::actionName(ActionId actionId) const
 {
-    return KiriView::ApplicationActions::actionName(actionId);
+    return kiriview::ApplicationActions::actionName(actionId);
 }
 
 QList<RegisteredApplicationAction> ApplicationActionRegistry::registeredActions() const

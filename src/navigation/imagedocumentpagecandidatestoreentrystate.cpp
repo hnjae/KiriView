@@ -9,15 +9,15 @@
 #include <utility>
 
 namespace {
-bool sameImageDocumentPageCandidates(const std::vector<KiriView::ImageDocumentPageCandidate> &left,
-    const std::vector<KiriView::ImageDocumentPageCandidate> &right)
+bool sameImageDocumentPageCandidates(const std::vector<kiriview::ImageDocumentPageCandidate> &left,
+    const std::vector<kiriview::ImageDocumentPageCandidate> &right)
 {
     if (left.size() != right.size()) {
         return false;
     }
 
     for (std::size_t index = 0; index < left.size(); ++index) {
-        if (!KiriView::sameNormalizedUrl(left[index].url, right[index].url)
+        if (!kiriview::sameNormalizedUrl(left[index].url, right[index].url)
             || left[index].name != right[index].name) {
             return false;
         }
@@ -34,7 +34,7 @@ template <typename Item> void pruneInactiveItems(std::vector<Item> *items)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 const std::vector<ImageDocumentPageCandidate> &
 ImageDocumentPageCandidateStoreEntryState::candidates() const
 {

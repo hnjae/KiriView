@@ -14,7 +14,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct PredecodeWindowPlanRequest {
     DisplayedImageLocation displayedLocation;
     PredecodePolicyInput policyInput;

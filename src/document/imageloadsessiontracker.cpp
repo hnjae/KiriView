@@ -5,7 +5,7 @@
 
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ImageLoadSessionTracker::ImageLoadSessionTracker(quint64 nextSessionId)
     : m_sessionIds(nextSessionId)
 {

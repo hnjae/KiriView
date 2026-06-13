@@ -9,7 +9,7 @@
 #include <QString>
 #include <QtGlobal>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 struct ApplicationActionStateInput {
     quint64 uiGateRevision = 0;
     bool helpActionsEnabled = false;

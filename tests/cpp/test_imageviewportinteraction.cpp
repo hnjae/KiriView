@@ -12,9 +12,9 @@
 #include <cmath>
 
 namespace {
-KiriView::ImageViewportInteractionSnapshot interactionSnapshot(bool rightToLeftReading = false)
+kiriview::ImageViewportInteractionSnapshot interactionSnapshot(bool rightToLeftReading = false)
 {
-    return KiriView::ImageViewportInteractionSnapshot {
+    return kiriview::ImageViewportInteractionSnapshot {
         QSize(400, 400),
         QSizeF(100.0, 100.0),
         QSizeF(400.0, 300.0),
@@ -48,8 +48,8 @@ private Q_SLOTS:
 
 void TestImageViewportInteraction::delegatesViewportGeometryFromSnapshot()
 {
-    KiriView::ImageViewportInteraction interaction;
-    const KiriView::ImageViewportInteractionSnapshot snapshot = interactionSnapshot();
+    kiriview::ImageViewportInteraction interaction;
+    const kiriview::ImageViewportInteractionSnapshot snapshot = interactionSnapshot();
 
     comparePoint(interaction.panContentPosition(snapshot, QPointF(180.0, 0.0), QPointF(80.0, 0.0)),
         QPointF(260.0, 0.0));
@@ -62,25 +62,25 @@ void TestImageViewportInteraction::delegatesViewportGeometryFromSnapshot()
 
 void TestImageViewportInteraction::scanStartStateOwnsDisplayedImageInitialPosition()
 {
-    KiriView::ImageViewportInteraction interaction;
-    const KiriView::ImageViewportInteractionSnapshot snapshot = interactionSnapshot();
+    kiriview::ImageViewportInteraction interaction;
+    const kiriview::ImageViewportInteractionSnapshot snapshot = interactionSnapshot();
 
     comparePoint(interaction.displayedImageInitialContentPosition(snapshot), QPointF(0.0, 0.0));
 
     interaction.requestNextDisplayedImageFinalScanStart();
     QVERIFY(interaction.pendingFinalScanStart());
-    QCOMPARE(interaction.beginDisplayedImage(), KiriView::ImageViewportScanStart::Final);
+    QCOMPARE(interaction.beginDisplayedImage(), kiriview::ImageViewportScanStart::Final);
     QVERIFY(!interaction.pendingFinalScanStart());
     comparePoint(interaction.displayedImageInitialContentPosition(snapshot), QPointF(300.0, 200.0));
 
-    QCOMPARE(interaction.beginDisplayedImage(), KiriView::ImageViewportScanStart::Initial);
+    QCOMPARE(interaction.beginDisplayedImage(), kiriview::ImageViewportScanStart::Initial);
     comparePoint(interaction.displayedImageInitialContentPosition(snapshot), QPointF(0.0, 0.0));
 }
 
 void TestImageViewportInteraction::rightToLeftSnapshotChangesScanDirection()
 {
-    KiriView::ImageViewportInteraction interaction;
-    const KiriView::ImageViewportInteractionSnapshot snapshot = interactionSnapshot(true);
+    kiriview::ImageViewportInteraction interaction;
+    const kiriview::ImageViewportInteractionSnapshot snapshot = interactionSnapshot(true);
 
     comparePoint(interaction.initialScanContentPosition(snapshot), QPointF(300.0, 0.0));
     comparePoint(interaction.finalScanContentPosition(snapshot), QPointF(0.0, 200.0));
@@ -90,8 +90,8 @@ void TestImageViewportInteraction::rightToLeftSnapshotChangesScanDirection()
 
 void TestImageViewportInteraction::anchoredZoomUsesSnapshotImageSize()
 {
-    KiriView::ImageViewportInteraction interaction;
-    KiriView::ImageViewportInteractionSnapshot snapshot = interactionSnapshot();
+    kiriview::ImageViewportInteraction interaction;
+    kiriview::ImageViewportInteractionSnapshot snapshot = interactionSnapshot();
     snapshot.imageSize = QSize(100, 100);
     snapshot.displaySize = QSizeF(100.0, 100.0);
 
@@ -102,8 +102,8 @@ void TestImageViewportInteraction::anchoredZoomUsesSnapshotImageSize()
 
 void TestImageViewportInteraction::nearestImageViewportPointUsesSnapshotGeometry()
 {
-    KiriView::ImageViewportInteraction interaction;
-    const KiriView::ImageViewportInteractionSnapshot snapshot = interactionSnapshot();
+    kiriview::ImageViewportInteraction interaction;
+    const kiriview::ImageViewportInteractionSnapshot snapshot = interactionSnapshot();
 
     comparePoint(
         interaction.nearestImageViewportPoint(snapshot, QPointF(0.0, 0.0), QPointF(50.0, 320.0)),

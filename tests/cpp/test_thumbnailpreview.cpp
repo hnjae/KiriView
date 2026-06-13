@@ -17,14 +17,14 @@
 #include <optional>
 
 namespace {
-using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-using Status = KiriView::ThumbnailCacheLookupStatus;
+using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+using Status = kiriview::ThumbnailCacheLookupStatus;
 
-KiriView::XdgThumbnailPreviewRequest previewRequest(
+kiriview::XdgThumbnailPreviewRequest previewRequest(
     QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/tmp/source.jpg")),
     QSize trustedOriginalSize = QSize(4000, 3000), Bucket bucket = Bucket::XXLarge)
 {
-    return KiriView::XdgThumbnailPreviewRequest {
+    return kiriview::XdgThumbnailPreviewRequest {
         std::move(sourceUrl),
         trustedOriginalSize,
         bucket,
@@ -39,10 +39,10 @@ QImage previewImage(const QSize &size)
     return image;
 }
 
-KiriView::ThumbnailCacheLookupResult lookupResult(Status status,
+kiriview::ThumbnailCacheLookupResult lookupResult(Status status,
     QImage image = previewImage(QSize(1024, 768)), Bucket sourceBucket = Bucket::XXLarge)
 {
-    return KiriView::ThumbnailCacheLookupResult {
+    return kiriview::ThumbnailCacheLookupResult {
         status,
         std::move(image),
         Bucket::XXLarge,
@@ -52,11 +52,11 @@ KiriView::ThumbnailCacheLookupResult lookupResult(Status status,
     };
 }
 
-KiriView::RawEmbeddedThumbnailPreviewResult rawReadyResult(
+kiriview::RawEmbeddedThumbnailPreviewResult rawReadyResult(
     QImage image = previewImage(QSize(320, 240)), QSize originalSize = QSize(640, 480))
 {
-    return KiriView::RawEmbeddedThumbnailPreviewResult {
-        KiriView::RawEmbeddedThumbnailPreviewStatus::Ready,
+    return kiriview::RawEmbeddedThumbnailPreviewResult {
+        kiriview::RawEmbeddedThumbnailPreviewStatus::Ready,
         std::move(image),
         originalSize,
         {},
@@ -108,10 +108,10 @@ private Q_SLOTS:
 
 void TestThumbnailPreview::buildsLocalStillLookupRequest()
 {
-    const KiriView::XdgThumbnailPreviewRequest request = previewRequest();
+    const kiriview::XdgThumbnailPreviewRequest request = previewRequest();
 
-    const std::optional<KiriView::ThumbnailCacheLookupRequest> lookup
-        = KiriView::xdgThumbnailPreviewCacheLookupRequest(request);
+    const std::optional<kiriview::ThumbnailCacheLookupRequest> lookup
+        = kiriview::xdgThumbnailPreviewCacheLookupRequest(request);
 
     QVERIFY(lookup.has_value());
     QCOMPARE(lookup->localPathBytes, QFile::encodeName(request.sourceUrl.toLocalFile()));
@@ -123,19 +123,19 @@ void TestThumbnailPreview::buildsLocalStillLookupRequest()
 
 void TestThumbnailPreview::rejectsLookupWithoutLocalStillIdentity()
 {
-    QVERIFY(!KiriView::xdgThumbnailPreviewCacheLookupRequest(
+    QVERIFY(!kiriview::xdgThumbnailPreviewCacheLookupRequest(
         previewRequest(QUrl(QStringLiteral("https://example.test/image.jpg"))))
             .has_value());
 
-    KiriView::XdgThumbnailPreviewRequest animated = previewRequest();
+    kiriview::XdgThumbnailPreviewRequest animated = previewRequest();
     animated.stillImage = false;
-    QVERIFY(!KiriView::xdgThumbnailPreviewCacheLookupRequest(animated).has_value());
+    QVERIFY(!kiriview::xdgThumbnailPreviewCacheLookupRequest(animated).has_value());
 
-    QVERIFY(!KiriView::xdgThumbnailPreviewCacheLookupRequest(
+    QVERIFY(!kiriview::xdgThumbnailPreviewCacheLookupRequest(
         previewRequest(QUrl::fromLocalFile(QStringLiteral("/tmp/source.jpg")), QSize()))
             .has_value());
 
-    QVERIFY(!KiriView::xdgThumbnailPreviewCacheLookupRequest(
+    QVERIFY(!kiriview::xdgThumbnailPreviewCacheLookupRequest(
         previewRequest(QUrl::fromLocalFile(QStringLiteral("/tmp/source.jpg")), QSize(4000, 3000),
             Bucket::None))
             .has_value());
@@ -143,15 +143,15 @@ void TestThumbnailPreview::rejectsLookupWithoutLocalStillIdentity()
 
 void TestThumbnailPreview::acceptsReadyThumbnailWithTrustedOriginalSize()
 {
-    const KiriView::XdgThumbnailPreviewRequest request = previewRequest();
+    const kiriview::XdgThumbnailPreviewRequest request = previewRequest();
 
-    const KiriView::XdgThumbnailPreviewResult result
-        = KiriView::xdgThumbnailPreviewResult(request, lookupResult(Status::Ready));
+    const kiriview::XdgThumbnailPreviewResult result
+        = kiriview::xdgThumbnailPreviewResult(request, lookupResult(Status::Ready));
 
     QCOMPARE(result.status, Status::Ready);
     QCOMPARE(result.image.size(), QSize(1024, 768));
     QCOMPARE(result.originalSize, QSize(4000, 3000));
-    QCOMPARE(result.quality, KiriView::DisplayImageQuality::ThumbnailPreview);
+    QCOMPARE(result.quality, kiriview::DisplayImageQuality::ThumbnailPreview);
     QCOMPARE(result.requestedBucket, Bucket::XXLarge);
     QCOMPARE(result.sourceBucket, Bucket::XXLarge);
     QCOMPARE(result.sourceCachePath, QStringLiteral("/cache/source.png"));
@@ -160,11 +160,11 @@ void TestThumbnailPreview::acceptsReadyThumbnailWithTrustedOriginalSize()
 
 void TestThumbnailPreview::acceptsFallbackCacheBuckets()
 {
-    const KiriView::XdgThumbnailPreviewRequest request = previewRequest();
+    const kiriview::XdgThumbnailPreviewRequest request = previewRequest();
 
-    const KiriView::XdgThumbnailPreviewResult xLarge = KiriView::xdgThumbnailPreviewResult(
+    const kiriview::XdgThumbnailPreviewResult xLarge = kiriview::xdgThumbnailPreviewResult(
         request, lookupResult(Status::Ready, previewImage(QSize(512, 384)), Bucket::XLarge));
-    const KiriView::XdgThumbnailPreviewResult large = KiriView::xdgThumbnailPreviewResult(
+    const kiriview::XdgThumbnailPreviewResult large = kiriview::xdgThumbnailPreviewResult(
         request, lookupResult(Status::Ready, previewImage(QSize(256, 192)), Bucket::Large));
 
     QCOMPARE(xLarge.status, Status::Ready);
@@ -175,14 +175,14 @@ void TestThumbnailPreview::acceptsFallbackCacheBuckets()
 
 void TestThumbnailPreview::acceptsExifRotatedProjectionOnlyWithTrustedDimensions()
 {
-    const KiriView::ThumbnailCacheLookupResult portraitLookup
+    const kiriview::ThumbnailCacheLookupResult portraitLookup
         = lookupResult(Status::Ready, previewImage(QSize(300, 400)), Bucket::Large);
 
-    const KiriView::XdgThumbnailPreviewResult trustedRotated = KiriView::xdgThumbnailPreviewResult(
+    const kiriview::XdgThumbnailPreviewResult trustedRotated = kiriview::xdgThumbnailPreviewResult(
         previewRequest(QUrl::fromLocalFile(QStringLiteral("/tmp/rotated.jpg")), QSize(600, 800)),
         portraitLookup);
-    const KiriView::XdgThumbnailPreviewResult unrotatedDimensions
-        = KiriView::xdgThumbnailPreviewResult(
+    const kiriview::XdgThumbnailPreviewResult unrotatedDimensions
+        = kiriview::xdgThumbnailPreviewResult(
             previewRequest(
                 QUrl::fromLocalFile(QStringLiteral("/tmp/rotated.jpg")), QSize(800, 600)),
             portraitLookup);
@@ -193,37 +193,37 @@ void TestThumbnailPreview::acceptsExifRotatedProjectionOnlyWithTrustedDimensions
 
 void TestThumbnailPreview::rejectsMissingInvalidFailedAndNullLookupResults()
 {
-    const KiriView::XdgThumbnailPreviewRequest request = previewRequest();
+    const kiriview::XdgThumbnailPreviewRequest request = previewRequest();
 
-    QCOMPARE(KiriView::xdgThumbnailPreviewResult(request, lookupResult(Status::Missing)).status,
+    QCOMPARE(kiriview::xdgThumbnailPreviewResult(request, lookupResult(Status::Missing)).status,
         Status::Missing);
-    QCOMPARE(KiriView::xdgThumbnailPreviewResult(request, lookupResult(Status::Invalid)).status,
+    QCOMPARE(kiriview::xdgThumbnailPreviewResult(request, lookupResult(Status::Invalid)).status,
         Status::Invalid);
-    QCOMPARE(KiriView::xdgThumbnailPreviewResult(request, lookupResult(Status::Failed)).status,
+    QCOMPARE(kiriview::xdgThumbnailPreviewResult(request, lookupResult(Status::Failed)).status,
         Status::Failed);
 
-    KiriView::ThumbnailCacheLookupResult nullReady = lookupResult(Status::Ready);
+    kiriview::ThumbnailCacheLookupResult nullReady = lookupResult(Status::Ready);
     nullReady.image = QImage();
-    const KiriView::XdgThumbnailPreviewResult result
-        = KiriView::xdgThumbnailPreviewResult(request, std::move(nullReady));
+    const kiriview::XdgThumbnailPreviewResult result
+        = kiriview::xdgThumbnailPreviewResult(request, std::move(nullReady));
     QCOMPARE(result.status, Status::Invalid);
     QVERIFY(result.image.isNull());
 }
 
 void TestThumbnailPreview::rejectsMissingMismatchedOrOversizedOriginalSize()
 {
-    QCOMPARE(KiriView::xdgThumbnailPreviewResult(
+    QCOMPARE(kiriview::xdgThumbnailPreviewResult(
                  previewRequest(QUrl::fromLocalFile(QStringLiteral("/tmp/source.jpg")), QSize()),
                  lookupResult(Status::Ready))
                  .status,
         Status::Invalid);
 
-    QCOMPARE(KiriView::xdgThumbnailPreviewResult(
+    QCOMPARE(kiriview::xdgThumbnailPreviewResult(
                  previewRequest(), lookupResult(Status::Ready, previewImage(QSize(800, 800))))
                  .status,
         Status::Invalid);
 
-    QCOMPARE(KiriView::xdgThumbnailPreviewResult(
+    QCOMPARE(kiriview::xdgThumbnailPreviewResult(
                  previewRequest(), lookupResult(Status::Ready, previewImage(QSize(5000, 3750))))
                  .status,
         Status::Invalid);
@@ -231,15 +231,15 @@ void TestThumbnailPreview::rejectsMissingMismatchedOrOversizedOriginalSize()
 
 void TestThumbnailPreview::rawEmbeddedPreviewPayloadUsesPreviewQualityAndOrigin()
 {
-    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
+    const kiriview::ImageDecodeRequest request = kiriview::ImageDecodeRequest::fromUrl(
         12, QUrl::fromLocalFile(QStringLiteral("/tmp/source.dng")));
 
-    const std::optional<KiriView::StaticDisplayImagePayload> payload
-        = KiriView::rawEmbeddedThumbnailPreviewDisplayPayload(request, rawReadyResult());
+    const std::optional<kiriview::StaticDisplayImagePayload> payload
+        = kiriview::rawEmbeddedThumbnailPreviewDisplayPayload(request, rawReadyResult());
 
     QVERIFY(payload.has_value());
-    QCOMPARE(payload->quality, KiriView::DisplayImageQuality::ThumbnailPreview);
-    QCOMPARE(payload->previewOrigin, KiriView::DisplayImagePreviewOrigin::RawEmbeddedThumbnail);
+    QCOMPARE(payload->quality, kiriview::DisplayImageQuality::ThumbnailPreview);
+    QCOMPARE(payload->previewOrigin, kiriview::DisplayImagePreviewOrigin::RawEmbeddedThumbnail);
     QCOMPARE(payload->originalSize, QSize(640, 480));
     QCOMPARE(payload->image.size(), QSize(320, 240));
     QVERIFY(payload->refinementSource == nullptr);
@@ -247,16 +247,16 @@ void TestThumbnailPreview::rawEmbeddedPreviewPayloadUsesPreviewQualityAndOrigin(
 
 void TestThumbnailPreview::rawEmbeddedPreviewPayloadRejectsInvalidImageOrOriginalSize()
 {
-    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
+    const kiriview::ImageDecodeRequest request = kiriview::ImageDecodeRequest::fromUrl(
         13, QUrl::fromLocalFile(QStringLiteral("/tmp/source.dng")));
 
-    QVERIFY(!KiriView::rawEmbeddedThumbnailPreviewDisplayPayload(
+    QVERIFY(!kiriview::rawEmbeddedThumbnailPreviewDisplayPayload(
         request, rawReadyResult(QImage(), QSize(640, 480)))
             .has_value());
-    QVERIFY(!KiriView::rawEmbeddedThumbnailPreviewDisplayPayload(
+    QVERIFY(!kiriview::rawEmbeddedThumbnailPreviewDisplayPayload(
         request, rawReadyResult(previewImage(QSize(320, 240)), QSize()))
             .has_value());
-    QVERIFY(!KiriView::rawEmbeddedThumbnailPreviewDisplayPayload(
+    QVERIFY(!kiriview::rawEmbeddedThumbnailPreviewDisplayPayload(
         request, rawReadyResult(previewImage(QSize(300, 300)), QSize(640, 480)))
             .has_value());
 }
@@ -265,13 +265,13 @@ void TestThumbnailPreview::nonRawDataDoesNotExtractRawEmbeddedPreview()
 {
     const QByteArray data = encodedPngData();
     QVERIFY(!data.isEmpty());
-    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
+    const kiriview::ImageDecodeRequest request = kiriview::ImageDecodeRequest::fromUrl(
         14, QUrl::fromLocalFile(QStringLiteral("/tmp/source.png")));
 
-    const KiriView::RawEmbeddedThumbnailPreviewResult result
-        = KiriView::rawEmbeddedThumbnailPreviewResult(data, request);
+    const kiriview::RawEmbeddedThumbnailPreviewResult result
+        = kiriview::rawEmbeddedThumbnailPreviewResult(data, request);
 
-    QCOMPARE(result.status, KiriView::RawEmbeddedThumbnailPreviewStatus::Missing);
+    QCOMPARE(result.status, kiriview::RawEmbeddedThumbnailPreviewStatus::Missing);
     QVERIFY(result.image.isNull());
 }
 
@@ -279,17 +279,17 @@ void TestThumbnailPreview::rawFixtureEmbeddedPreviewReturnsReadyOrMissingWithout
 {
     const QByteArray data = rawFixtureData();
     QVERIFY(!data.isEmpty());
-    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
+    const kiriview::ImageDecodeRequest request = kiriview::ImageDecodeRequest::fromUrl(
         15, QUrl::fromLocalFile(QStringLiteral("/tmp/raw-cfa-smoke.dng")));
 
-    const KiriView::RawEmbeddedThumbnailPreviewResult result
-        = KiriView::rawEmbeddedThumbnailPreviewResult(data, request);
+    const kiriview::RawEmbeddedThumbnailPreviewResult result
+        = kiriview::rawEmbeddedThumbnailPreviewResult(data, request);
 
-    QVERIFY(result.status == KiriView::RawEmbeddedThumbnailPreviewStatus::Ready
-        || result.status == KiriView::RawEmbeddedThumbnailPreviewStatus::Missing);
-    if (result.status == KiriView::RawEmbeddedThumbnailPreviewStatus::Ready) {
+    QVERIFY(result.status == kiriview::RawEmbeddedThumbnailPreviewStatus::Ready
+        || result.status == kiriview::RawEmbeddedThumbnailPreviewStatus::Missing);
+    if (result.status == kiriview::RawEmbeddedThumbnailPreviewStatus::Ready) {
         QCOMPARE(result.originalSize, QSize(32, 32));
-        QVERIFY(KiriView::rawEmbeddedThumbnailPreviewDisplayPayload(request, result).has_value());
+        QVERIFY(kiriview::rawEmbeddedThumbnailPreviewDisplayPayload(request, result).has_value());
     }
 }
 

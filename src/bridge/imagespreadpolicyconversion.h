@@ -11,7 +11,7 @@
 #include "presentation/imagespreadnavigation.h"
 #include "presentation/imagespreadsecondarypagerefreshpolicy.h"
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustImageSpreadReadingAvailability rustImageSpreadReadingAvailability(
     const ImageSpreadReadingAvailability &availability);
 ImageSpreadTwoPageModeChange imageSpreadTwoPageModeChangeFromRust(

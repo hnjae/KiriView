@@ -14,7 +14,7 @@
 #include <array>
 #include <cstddef>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 struct RegisteredApplicationAction {
     QAction *action = nullptr;
     ActionId actionId = ActionId::ActionCount;
@@ -23,7 +23,7 @@ struct RegisteredApplicationAction {
 
 }
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 
 class ApplicationActionRegistry final
 {

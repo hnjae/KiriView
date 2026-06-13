@@ -3,7 +3,7 @@
 
 #include "presentation/imageviewrendercontextbinding.h"
 
-namespace KiriView {
+namespace kiriview {
 ImageViewRenderContextBindingAction ImageViewRenderContextBinding::synchronize(
     const ImageViewRenderContextBindingInput &input)
 {

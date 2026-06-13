@@ -14,12 +14,12 @@
 #include <utility>
 
 namespace {
-KIO::AskUserActionInterface::DeletionType kioDeletionType(KiriView::FileDeletionMode deletionMode)
+KIO::AskUserActionInterface::DeletionType kioDeletionType(kiriview::FileDeletionMode deletionMode)
 {
     switch (deletionMode) {
-    case KiriView::FileDeletionMode::MoveToTrash:
+    case kiriview::FileDeletionMode::MoveToTrash:
         return KIO::AskUserActionInterface::Trash;
-    case KiriView::FileDeletionMode::DeletePermanently:
+    case kiriview::FileDeletionMode::DeletePermanently:
         return KIO::AskUserActionInterface::Delete;
     }
 
@@ -41,37 +41,37 @@ void cancelKJob(QObject *object)
     job->kill(KJob::Quietly);
 }
 
-KiriView::ImageIoJob startKioFileDeletion(QObject *receiver, KiriView::FileDeletionRequest request,
-    KiriView::FileDeletionCallback callback)
+kiriview::ImageIoJob startKioFileDeletion(QObject *receiver, kiriview::FileDeletionRequest request,
+    kiriview::FileDeletionCallback callback)
 {
     if (request.targetUrl.isEmpty()) {
-        KiriView::invokeIfSet(callback, KiriView::FileDeletionResult::Failed, QString());
-        return KiriView::ImageIoJob();
+        kiriview::invokeIfSet(callback, kiriview::FileDeletionResult::Failed, QString());
+        return kiriview::ImageIoJob();
     }
 
     auto *job = new KIO::DeleteOrTrashJob(QList<QUrl> { request.targetUrl },
         kioDeletionType(request.mode), KIO::AskUserActionInterface::ForceConfirmation, receiver);
-    KiriView::ImageIoJob ioJob(job, cancelKJob);
-    const KiriView::ImageIoJobCompletion completion = ioJob.completion();
+    kiriview::ImageIoJob ioJob(job, cancelKJob);
+    const kiriview::ImageIoJobCompletion completion = ioJob.completion();
     QObject *context = receiver == nullptr ? job : receiver;
 
     QObject::connect(job, &KJob::result, context,
         [completion, callback = std::move(callback)](KJob *finishedJob) mutable {
             completion.claimAndRun([&]() {
                 if (finishedJob->error() == KJob::NoError) {
-                    KiriView::invokeIfSet(
-                        callback, KiriView::FileDeletionResult::Succeeded, QString());
+                    kiriview::invokeIfSet(
+                        callback, kiriview::FileDeletionResult::Succeeded, QString());
                     return;
                 }
 
                 if (isUserCanceledError(finishedJob->error())) {
-                    KiriView::invokeIfSet(
-                        callback, KiriView::FileDeletionResult::Canceled, QString());
+                    kiriview::invokeIfSet(
+                        callback, kiriview::FileDeletionResult::Canceled, QString());
                     return;
                 }
 
-                KiriView::invokeIfSet(
-                    callback, KiriView::FileDeletionResult::Failed, finishedJob->errorString());
+                kiriview::invokeIfSet(
+                    callback, kiriview::FileDeletionResult::Failed, finishedJob->errorString());
             });
         });
     job->start();
@@ -79,7 +79,7 @@ KiriView::ImageIoJob startKioFileDeletion(QObject *receiver, KiriView::FileDelet
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 FileDeletionCompletionAction fileDeletionCompletionAction(FileDeletionResult result)
 {
     switch (result) {

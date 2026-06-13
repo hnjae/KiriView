@@ -26,14 +26,14 @@ private Q_SLOTS:
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
-KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
 template <typename Operation>
 const Operation *operationAt(
-    const KiriView::DocumentSessionMediaDeletionCompletionPlan &plan, std::size_t index)
+    const kiriview::DocumentSessionMediaDeletionCompletionPlan &plan, std::size_t index)
 {
     if (index >= plan.routePlan.operations.size()) {
         return nullptr;
@@ -44,19 +44,19 @@ const Operation *operationAt(
 
 struct RuntimeFixture {
     QObject receiver;
-    KiriView::TestSupport::ManualFileDeletionProvider fileDeletionProvider;
-    KiriView::DocumentSessionMediaDeletionRuntime runtime {
-        KiriView::TestSupport::fileDeletionProviderFor(fileDeletionProvider)
+    kiriview::TestSupport::ManualFileDeletionProvider fileDeletionProvider;
+    kiriview::DocumentSessionMediaDeletionRuntime runtime {
+        kiriview::TestSupport::fileDeletionProviderFor(fileDeletionProvider)
     };
     int completionCount = 0;
-    KiriView::DocumentSessionMediaDeletionCompletion completion;
+    kiriview::DocumentSessionMediaDeletionCompletion completion;
 
-    KiriView::DocumentSessionMediaDeletionStartPlan start(KiriView::FileDeletionMode mode,
-        std::vector<KiriView::DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl,
-        KiriView::DocumentSessionKind kind = KiriView::DocumentSessionKind::Video)
+    kiriview::DocumentSessionMediaDeletionStartPlan start(kiriview::FileDeletionMode mode,
+        std::vector<kiriview::DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl,
+        kiriview::DocumentSessionKind kind = kiriview::DocumentSessionKind::Video)
     {
         return runtime.start(&receiver, mode, std::move(candidates), currentUrl, kind,
-            [this](KiriView::DocumentSessionMediaDeletionCompletion deletionCompletion) {
+            [this](kiriview::DocumentSessionMediaDeletionCompletion deletionCompletion) {
                 ++completionCount;
                 completion = std::move(deletionCompletion);
             });
@@ -68,8 +68,8 @@ void TestDocumentSessionMediaDeletionRuntime::emptyTargetDoesNotStartFileOperati
 {
     RuntimeFixture fixture;
 
-    const KiriView::DocumentSessionMediaDeletionStartPlan plan = fixture.start(
-        KiriView::FileDeletionMode::MoveToTrash, {}, QUrl(), KiriView::DocumentSessionKind::Video);
+    const kiriview::DocumentSessionMediaDeletionStartPlan plan = fixture.start(
+        kiriview::FileDeletionMode::MoveToTrash, {}, QUrl(), kiriview::DocumentSessionKind::Video);
 
     QVERIFY(!plan.shouldStartDeletion);
     QCOMPARE(fixture.fileDeletionProvider.operationCount(), std::size_t(0));
@@ -84,8 +84,8 @@ void TestDocumentSessionMediaDeletionRuntime::startRunsFileOperationAndPublishes
     const QUrl currentUrl = localUrl(QStringLiteral("/media/02.mp4"));
     const QUrl nextUrl = localUrl(QStringLiteral("/media/03.png"));
 
-    const KiriView::DocumentSessionMediaDeletionStartPlan startPlan = fixture.start(
-        KiriView::FileDeletionMode::DeletePermanently,
+    const kiriview::DocumentSessionMediaDeletionStartPlan startPlan = fixture.start(
+        kiriview::FileDeletionMode::DeletePermanently,
         { directMediaNavigationCandidate(previousUrl), directMediaNavigationCandidate(currentUrl),
             directMediaNavigationCandidate(nextUrl) },
         currentUrl);
@@ -94,20 +94,20 @@ void TestDocumentSessionMediaDeletionRuntime::startRunsFileOperationAndPublishes
     QCOMPARE(fixture.fileDeletionProvider.operationCount(), std::size_t(1));
     QCOMPARE(fixture.fileDeletionProvider.backOperation().request.targetUrl, currentUrl);
     QCOMPARE(fixture.fileDeletionProvider.backOperation().request.mode,
-        KiriView::FileDeletionMode::DeletePermanently);
+        kiriview::FileDeletionMode::DeletePermanently);
     QVERIFY(fixture.runtime.active());
     QCOMPARE(startPlan.fallbackPlan.preferredFallbackUrl.value(), nextUrl);
 
-    fixture.fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    fixture.fileDeletionProvider.finishBackOperation(kiriview::FileDeletionResult::Succeeded);
 
     QCOMPARE(fixture.completionCount, 1);
     QVERIFY(!fixture.runtime.active());
     QVERIFY(fixture.completion.plan.hasRoutePlan());
     QCOMPARE(
-        fixture.completion.plan.routePlan.kind, KiriView::DocumentSessionRouteKind::DirectImage);
+        fixture.completion.plan.routePlan.kind, kiriview::DocumentSessionRouteKind::DirectImage);
     QCOMPARE(fixture.completion.plan.routePlan.sourceUrl, nextUrl);
     QVERIFY(
-        operationAt<KiriView::LeaveVideoModeRouteOperation>(fixture.completion.plan, 0) != nullptr);
+        operationAt<kiriview::LeaveVideoModeRouteOperation>(fixture.completion.plan, 0) != nullptr);
     QCOMPARE(fixture.completion.errorString, QString());
 }
 
@@ -116,14 +116,14 @@ void TestDocumentSessionMediaDeletionRuntime::cancelRejectsLateCompletion()
     RuntimeFixture fixture;
     const QUrl currentUrl = localUrl(QStringLiteral("/media/02.mp4"));
 
-    fixture.start(KiriView::FileDeletionMode::MoveToTrash,
+    fixture.start(kiriview::FileDeletionMode::MoveToTrash,
         { directMediaNavigationCandidate(currentUrl) }, currentUrl);
     fixture.runtime.cancel();
     QVERIFY(fixture.fileDeletionProvider.backOperation().canceled);
     QVERIFY(!fixture.runtime.active());
 
     fixture.fileDeletionProvider.deliverOperationAtIgnoringCancellation(
-        0, KiriView::FileDeletionResult::Succeeded);
+        0, kiriview::FileDeletionResult::Succeeded);
 
     QCOMPARE(fixture.completionCount, 0);
 }
@@ -136,11 +136,11 @@ void TestDocumentSessionMediaDeletionRuntime::replacementStartRejectsStaleComple
     const QUrl secondUrl = localUrl(QStringLiteral("/media/03.mp4"));
     const QUrl secondFallbackUrl = localUrl(QStringLiteral("/media/04.png"));
 
-    fixture.start(KiriView::FileDeletionMode::MoveToTrash,
+    fixture.start(kiriview::FileDeletionMode::MoveToTrash,
         { directMediaNavigationCandidate(firstUrl),
             directMediaNavigationCandidate(firstFallbackUrl) },
         firstUrl);
-    fixture.start(KiriView::FileDeletionMode::MoveToTrash,
+    fixture.start(kiriview::FileDeletionMode::MoveToTrash,
         { directMediaNavigationCandidate(secondUrl),
             directMediaNavigationCandidate(secondFallbackUrl) },
         secondUrl);
@@ -149,10 +149,10 @@ void TestDocumentSessionMediaDeletionRuntime::replacementStartRejectsStaleComple
     QVERIFY(fixture.fileDeletionProvider.operationAt(0).canceled);
 
     fixture.fileDeletionProvider.deliverOperationAtIgnoringCancellation(
-        0, KiriView::FileDeletionResult::Succeeded);
+        0, kiriview::FileDeletionResult::Succeeded);
     QCOMPARE(fixture.completionCount, 0);
 
-    fixture.fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    fixture.fileDeletionProvider.finishBackOperation(kiriview::FileDeletionResult::Succeeded);
     QCOMPARE(fixture.completionCount, 1);
     QCOMPARE(fixture.completion.plan.routePlan.sourceUrl, secondFallbackUrl);
 }
@@ -162,11 +162,11 @@ void TestDocumentSessionMediaDeletionRuntime::failedCompletionReportsFailureWith
     RuntimeFixture fixture;
     const QUrl currentUrl = localUrl(QStringLiteral("/media/02.mp4"));
 
-    fixture.start(KiriView::FileDeletionMode::MoveToTrash,
+    fixture.start(kiriview::FileDeletionMode::MoveToTrash,
         { directMediaNavigationCandidate(currentUrl) }, currentUrl,
-        KiriView::DocumentSessionKind::Image);
+        kiriview::DocumentSessionKind::Image);
     fixture.fileDeletionProvider.finishBackOperation(
-        KiriView::FileDeletionResult::Failed, QStringLiteral("delete failed"));
+        kiriview::FileDeletionResult::Failed, QStringLiteral("delete failed"));
 
     QCOMPARE(fixture.completionCount, 1);
     QVERIFY(!fixture.completion.plan.hasRoutePlan());

@@ -15,7 +15,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 struct MediaEntrySourceCandidateLoad {
     ImageIoJobCompletion completion;
     ImageDocumentPageCandidatesCallback callback;

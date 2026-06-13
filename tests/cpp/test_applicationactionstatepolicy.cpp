@@ -7,11 +7,11 @@
 #include <QTest>
 
 namespace {
-using ActionId = KiriView::ApplicationActions::ActionId;
+using ActionId = kiriview::ApplicationActions::ActionId;
 
-KiriView::ApplicationActions::ApplicationActionStateInput readyImageInput()
+kiriview::ApplicationActions::ApplicationActionStateInput readyImageInput()
 {
-    KiriView::ApplicationActions::ApplicationActionStateInput input;
+    kiriview::ApplicationActions::ApplicationActionStateInput input;
     input.helpActionsEnabled = true;
     input.readyActionsEnabled = true;
     input.rotateActionsEnabled = true;
@@ -28,10 +28,10 @@ KiriView::ApplicationActions::ApplicationActionStateInput readyImageInput()
     return input;
 }
 
-KiriView::ApplicationActions::ApplicationActionState stateFor(
-    ActionId actionId, const KiriView::ApplicationActions::ApplicationActionStateInput &input)
+kiriview::ApplicationActions::ApplicationActionState stateFor(
+    ActionId actionId, const kiriview::ApplicationActions::ApplicationActionStateInput &input)
 {
-    return KiriView::ApplicationActions::applicationActionState(actionId, input);
+    return kiriview::ApplicationActions::applicationActionState(actionId, input);
 }
 }
 
@@ -54,9 +54,9 @@ void TestApplicationActionStatePolicy::visiblePreviousNextPlacementsDisableAtBou
     input.canOpenPreviousActiveNavigation = false;
     input.canOpenNextActiveNavigation = true;
 
-    const KiriView::ApplicationActions::ApplicationActionState previousState
+    const kiriview::ApplicationActions::ApplicationActionState previousState
         = stateFor(ActionId::GoPreviousImageAction, input);
-    const KiriView::ApplicationActions::ApplicationActionState nextState
+    const kiriview::ApplicationActions::ApplicationActionState nextState
         = stateFor(ActionId::GoNextImageAction, input);
 
     QVERIFY(previousState.actionEnabled);
@@ -145,11 +145,11 @@ void TestApplicationActionStatePolicy::disabledStableActionsKeepPlacement()
     input.twoPageModeActionsEnabled = false;
     input.rightToLeftReadingActionsEnabled = false;
 
-    const KiriView::ApplicationActions::ApplicationActionState rightToLeftState
+    const kiriview::ApplicationActions::ApplicationActionState rightToLeftState
         = stateFor(ActionId::ViewToggleRightToLeftReadingAction, input);
-    const KiriView::ApplicationActions::ApplicationActionState twoPageState
+    const kiriview::ApplicationActions::ApplicationActionState twoPageState
         = stateFor(ActionId::ViewToggleTwoPageModeAction, input);
-    const KiriView::ApplicationActions::ApplicationActionState openState
+    const kiriview::ApplicationActions::ApplicationActionState openState
         = stateFor(ActionId::FileOpenAction, input);
 
     QVERIFY(!rightToLeftState.actionEnabled);

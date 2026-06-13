@@ -6,7 +6,7 @@
 
 #include "application/applicationtypes.h"
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 struct VideoShortcutAvailabilityInput {
     bool helpShortcutsEnabled = false;
     bool viewerShortcutsEnabled = false;
@@ -61,11 +61,11 @@ ImageActionAvailabilityProjection imageActionAvailabilityProjection(
     const ImageActionAvailabilityInput &input);
 bool imageActionAvailabilityShortcutsEnabledForScope(
     const ImageActionAvailabilityProjection &projection,
-    KiriView::ApplicationActions::ImageShortcutScope scope);
+    kiriview::ApplicationActions::ImageShortcutScope scope);
 bool activeMediaShortcutsEnabledForScope(const ActiveMediaShortcutAvailabilityInput &input,
-    KiriView::ApplicationActions::ImageShortcutScope scope);
+    kiriview::ApplicationActions::ImageShortcutScope scope);
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 bool videoShortcutsEnabledForScope(
     const VideoShortcutAvailabilityInput &input, ImageShortcutScope scope);
 bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,

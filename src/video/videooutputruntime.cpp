@@ -9,7 +9,7 @@
 #include <QObject>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 VideoOutputRuntime::VideoOutputRuntime(QObject *context, VideoOutputRuntimeCallbacks callbacks)
     : m_callbacks(std::move(callbacks))
     , m_renderContextObserver(std::make_unique<VideoOutputRenderContextObserver>(

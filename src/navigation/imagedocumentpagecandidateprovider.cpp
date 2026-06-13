@@ -10,14 +10,14 @@
 #include <utility>
 
 namespace {
-KiriView::ImageIoJob noOpImageDocumentPageCandidateChanges(
-    QObject *, QUrl, KiriView::ImageDocumentPageCandidatesCallback, KiriView::ErrorCallback)
+kiriview::ImageIoJob noOpImageDocumentPageCandidateChanges(
+    QObject *, QUrl, kiriview::ImageDocumentPageCandidatesCallback, kiriview::ErrorCallback)
 {
-    return KiriView::ImageIoJob();
+    return kiriview::ImageIoJob();
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentPageCandidateProvider defaultImageDocumentPageCandidateProvider(
     ImageWorkerScheduler workerScheduler, DirectoryItemListProvider directoryItemListProvider)
 {

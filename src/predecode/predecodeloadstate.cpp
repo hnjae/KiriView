@@ -10,11 +10,11 @@
 
 namespace {
 std::vector<QUrl> displayedPredecodeImageUrls(
-    const std::vector<KiriView::DisplayedPredecodeImage> &images)
+    const std::vector<kiriview::DisplayedPredecodeImage> &images)
 {
     std::vector<QUrl> urls;
     urls.reserve(images.size());
-    for (const KiriView::DisplayedPredecodeImage &image : images) {
+    for (const kiriview::DisplayedPredecodeImage &image : images) {
         if (image.hasLocation()) {
             urls.push_back(image.location.imageUrl());
         }
@@ -24,7 +24,7 @@ std::vector<QUrl> displayedPredecodeImageUrls(
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 PredecodeLoadState::PredecodeLoadState(qsizetype cacheByteBudget)
     : m_cache(cacheByteBudget)
 {

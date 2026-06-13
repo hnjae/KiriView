@@ -22,7 +22,7 @@ void TestImageIoWorkerJob::nullReceiverRunsSynchronously()
     int workCount = 0;
     int finishValue = 0;
 
-    KiriView::ImageIoJob job = KiriView::startImageIoWorkerJob(
+    kiriview::ImageIoJob job = kiriview::startImageIoWorkerJob(
         nullptr,
         [&workCount]() {
             ++workCount;
@@ -41,7 +41,7 @@ void TestImageIoWorkerJob::workerCompletionFinishesJobOnce()
     int finishCount = 0;
     int finishValue = 0;
 
-    KiriView::ImageIoJob job = KiriView::startImageIoWorkerJob(
+    kiriview::ImageIoJob job = kiriview::startImageIoWorkerJob(
         &receiver, []() { return 11; },
         [&finishCount, &finishValue](int value) {
             ++finishCount;
@@ -61,7 +61,7 @@ void TestImageIoWorkerJob::canceledWorkerCompletionIsIgnored()
     std::atomic_bool workFinished = false;
     int finishCount = 0;
 
-    KiriView::ImageIoJob job = KiriView::startImageIoWorkerJob(
+    kiriview::ImageIoJob job = kiriview::startImageIoWorkerJob(
         &context, &receiver,
         [&releaseWorker, &workFinished]() {
             releaseWorker.acquire();

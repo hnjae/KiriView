@@ -33,22 +33,22 @@ using WebPAnimDecoderPtr = std::unique_ptr<WebPAnimDecoder, WebPAnimDecoderDelet
 
 QString webpAnimationDecodeErrorString()
 {
-    return KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeImageAnimation);
+    return kiriview::imageErrorText(kiriview::ImageErrorTextId::DecodeImageAnimation);
 }
 
-KiriView::WebPAnimationOpenResult notWebPResult() { return {}; }
+kiriview::WebPAnimationOpenResult notWebPResult() { return {}; }
 
-KiriView::WebPAnimationOpenResult notAnimationResult()
+kiriview::WebPAnimationOpenResult notAnimationResult()
 {
-    KiriView::WebPAnimationOpenResult result;
-    result.status = KiriView::WebPAnimationOpenStatus::NotAnimation;
+    kiriview::WebPAnimationOpenResult result;
+    result.status = kiriview::WebPAnimationOpenStatus::NotAnimation;
     return result;
 }
 
-KiriView::WebPAnimationOpenResult errorOpenResult(QString errorString)
+kiriview::WebPAnimationOpenResult errorOpenResult(QString errorString)
 {
-    KiriView::WebPAnimationOpenResult result;
-    result.status = KiriView::WebPAnimationOpenStatus::Error;
+    kiriview::WebPAnimationOpenResult result;
+    result.status = kiriview::WebPAnimationOpenStatus::Error;
     result.errorString = std::move(errorString);
     return result;
 }
@@ -80,11 +80,11 @@ std::optional<QImage> imageFromRgbaFrame(const std::uint8_t *bytes, QSize size)
 
     QImage image = borrowedImage.copy();
     image.setColorSpace(QColorSpace(QColorSpace::SRgb));
-    return KiriView::displayReadyImage(image);
+    return kiriview::displayReadyImage(image);
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 class WebPAnimationReader::Private
 {
 public:

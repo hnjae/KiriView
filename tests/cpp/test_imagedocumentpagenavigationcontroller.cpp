@@ -15,35 +15,35 @@
 #include <vector>
 
 namespace {
-using KiriView::ImageDocumentPageCandidate;
-using KiriView::ImageDocumentPageCandidateListContext;
-using KiriView::ImageDocumentPageCandidateRepository;
-using KiriView::ImageDocumentPageNavigationController;
-using KiriView::NavigationDirection;
-using KiriView::TestSupport::imageDocumentPageCandidate;
-using KiriView::TestSupport::localUrl;
+using kiriview::ImageDocumentPageCandidate;
+using kiriview::ImageDocumentPageCandidateListContext;
+using kiriview::ImageDocumentPageCandidateRepository;
+using kiriview::ImageDocumentPageNavigationController;
+using kiriview::NavigationDirection;
+using kiriview::TestSupport::imageDocumentPageCandidate;
+using kiriview::TestSupport::localUrl;
 
-using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
+using FakeCandidateProvider = kiriview::TestSupport::FakeImageDocumentPageCandidateProvider;
 
 class DelayedDirectoryImageProvider
 {
 public:
-    KiriView::ImageDocumentPageCandidateProvider provider()
+    kiriview::ImageDocumentPageCandidateProvider provider()
     {
-        return KiriView::ImageDocumentPageCandidateProvider {
+        return kiriview::ImageDocumentPageCandidateProvider {
             [this](QObject *, QUrl directoryUrl,
-                KiriView::ImageDocumentPageCandidatesCallback callback, KiriView::ErrorCallback) {
+                kiriview::ImageDocumentPageCandidatesCallback callback, kiriview::ErrorCallback) {
                 m_loads.push_back(Load { std::move(directoryUrl), std::move(callback) });
-                return KiriView::ImageIoJob();
+                return kiriview::ImageIoJob();
             },
-            [](QObject *, QUrl, KiriView::ContainerCandidatesCallback, KiriView::ErrorCallback) {
-                return KiriView::ImageIoJob();
+            [](QObject *, QUrl, kiriview::ContainerCandidatesCallback, kiriview::ErrorCallback) {
+                return kiriview::ImageIoJob();
             },
-            [](QObject *, KiriView::OpenedCollectionScopeLocation,
-                KiriView::ImageDocumentPageCandidatesCallback,
-                KiriView::ErrorCallback) { return KiriView::ImageIoJob(); },
-            [](QObject *, QUrl, KiriView::ImageDocumentPageCandidatesCallback,
-                KiriView::ErrorCallback) { return KiriView::ImageIoJob(); },
+            [](QObject *, kiriview::OpenedCollectionScopeLocation,
+                kiriview::ImageDocumentPageCandidatesCallback,
+                kiriview::ErrorCallback) { return kiriview::ImageIoJob(); },
+            [](QObject *, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
+                kiriview::ErrorCallback) { return kiriview::ImageIoJob(); },
         };
     }
 
@@ -53,7 +53,7 @@ public:
 
     void finishLoad(std::size_t index, std::vector<ImageDocumentPageCandidate> candidates)
     {
-        KiriView::ImageDocumentPageCandidatesCallback callback = m_loads.at(index).callback;
+        kiriview::ImageDocumentPageCandidatesCallback callback = m_loads.at(index).callback;
         if (callback) {
             callback(std::move(candidates));
         }
@@ -62,7 +62,7 @@ public:
 private:
     struct Load {
         QUrl directoryUrl;
-        KiriView::ImageDocumentPageCandidatesCallback callback;
+        kiriview::ImageDocumentPageCandidatesCallback callback;
     };
 
     std::vector<Load> m_loads;
@@ -76,14 +76,14 @@ ImageDocumentPageNavigationController::Callbacks controllerCallbacks(
 {
     return ImageDocumentPageNavigationController::Callbacks {
         [openUrl = std::move(openUrl), clearCurrentImage = std::move(clearCurrentImage)](
-            KiriView::ImageDocumentPageNavigationPlan plan) mutable {
-            for (const KiriView::ImageDocumentPageNavigationEffect &effect : plan) {
+            kiriview::ImageDocumentPageNavigationPlan plan) mutable {
+            for (const kiriview::ImageDocumentPageNavigationEffect &effect : plan) {
                 if (const auto *openEffect
-                    = std::get_if<KiriView::OpenImageDocumentPageUrlEffect>(&effect)) {
-                    KiriView::invokeIfSet(openUrl, openEffect->target.url);
+                    = std::get_if<kiriview::OpenImageDocumentPageUrlEffect>(&effect)) {
+                    kiriview::invokeIfSet(openUrl, openEffect->target.url);
                 } else if (std::holds_alternative<
-                               KiriView::ClearCurrentImageDocumentPageNavigationEffect>(effect)) {
-                    KiriView::invokeIfSet(clearCurrentImage);
+                               kiriview::ClearCurrentImageDocumentPageNavigationEffect>(effect)) {
+                    kiriview::invokeIfSet(clearCurrentImage);
                 }
             }
         },

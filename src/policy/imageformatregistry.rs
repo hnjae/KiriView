@@ -103,7 +103,7 @@ const SUPPORTED_IMAGE_FORMATS: &[ImageFormat] = &[
     },
 ];
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     extern "Rust" {
         #[cxx_name = "rustSupportedImageExtensions"]

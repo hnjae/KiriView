@@ -14,7 +14,7 @@
 #include <array>
 #include <cstddef>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 enum class RegistrationKind {
     Existing,
     Inherited,

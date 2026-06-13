@@ -9,24 +9,24 @@
 #include <utility>
 
 namespace {
-KiriView::ImageDataLoader imageDataLoader(KiriView::ImageWorkerScheduler workerScheduler)
+kiriview::ImageDataLoader imageDataLoader(kiriview::ImageWorkerScheduler workerScheduler)
 {
     return [workerScheduler = std::move(workerScheduler)](QObject *receiver,
-               KiriView::ImageDecodeRequest request, KiriView::ImageDataCallback callback,
-               KiriView::ErrorCallback errorCallback) {
-        return KiriView::startStoredImageDataLoad(receiver, std::move(request), workerScheduler,
+               kiriview::ImageDecodeRequest request, kiriview::ImageDataCallback callback,
+               kiriview::ErrorCallback errorCallback) {
+        return kiriview::startStoredImageDataLoad(receiver, std::move(request), workerScheduler,
             std::move(callback), std::move(errorCallback));
     };
 }
 
-KiriView::DecodedImageResult decodeImageDataWithDefaults(
-    const QByteArray &data, const KiriView::ImageDecodeRequest &request)
+kiriview::DecodedImageResult decodeImageDataWithDefaults(
+    const QByteArray &data, const kiriview::ImageDecodeRequest &request)
 {
-    return KiriView::decodeImageData(data, request);
+    return kiriview::decodeImageData(data, request);
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDecodeDependencies defaultImageDecodeDependencies()
 {
     ImageWorkerScheduler workerScheduler = defaultImageWorkerScheduler();

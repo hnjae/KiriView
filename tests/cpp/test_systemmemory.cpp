@@ -21,14 +21,14 @@ private Q_SLOTS:
 void TestSystemMemory::snapshotUsesInjectedPhysicalMemoryReader()
 {
     int readCount = 0;
-    KiriView::SystemMemoryRuntime runtime;
+    kiriview::SystemMemoryRuntime runtime;
     runtime.readPhysicalSystemMemory = [&readCount]() -> std::optional<qsizetype> {
         ++readCount;
         return 4096;
     };
 
-    const KiriView::SystemMemorySnapshot snapshot
-        = KiriView::systemMemorySnapshot(std::move(runtime));
+    const kiriview::SystemMemorySnapshot snapshot
+        = kiriview::systemMemorySnapshot(std::move(runtime));
 
     QCOMPARE(readCount, 1);
     QCOMPARE(snapshot.physicalByteSize, qsizetype(4096));
@@ -37,19 +37,19 @@ void TestSystemMemory::snapshotUsesInjectedPhysicalMemoryReader()
 
 void TestSystemMemory::unreadablePhysicalMemoryFallsBackToZero()
 {
-    KiriView::SystemMemoryRuntime runtime;
+    kiriview::SystemMemoryRuntime runtime;
     runtime.readPhysicalSystemMemory = []() -> std::optional<qsizetype> { return std::nullopt; };
 
-    const KiriView::SystemMemorySnapshot snapshot
-        = KiriView::systemMemorySnapshot(std::move(runtime));
+    const kiriview::SystemMemorySnapshot snapshot
+        = kiriview::systemMemorySnapshot(std::move(runtime));
 
     QCOMPARE(snapshot.physicalByteSize, qsizetype(0));
     QVERIFY(!snapshot.hasPhysicalByteSize());
 
     runtime.readPhysicalSystemMemory = []() -> std::optional<qsizetype> { return -128; };
 
-    const KiriView::SystemMemorySnapshot negativeSnapshot
-        = KiriView::systemMemorySnapshot(std::move(runtime));
+    const kiriview::SystemMemorySnapshot negativeSnapshot
+        = kiriview::systemMemorySnapshot(std::move(runtime));
 
     QCOMPARE(negativeSnapshot.physicalByteSize, qsizetype(0));
     QVERIFY(!negativeSnapshot.hasPhysicalByteSize());
@@ -58,19 +58,19 @@ void TestSystemMemory::unreadablePhysicalMemoryFallsBackToZero()
 void TestSystemMemory::runtimeDefaultsFillMissingProbeAndPreserveOverrides()
 {
     int readCount = 0;
-    KiriView::SystemMemoryRuntime runtime;
+    kiriview::SystemMemoryRuntime runtime;
     runtime.readPhysicalSystemMemory = [&readCount]() -> std::optional<qsizetype> {
         ++readCount;
         return 128;
     };
 
-    KiriView::SystemMemoryRuntime resolved
-        = KiriView::systemMemoryRuntimeWithDefaults(std::move(runtime));
+    kiriview::SystemMemoryRuntime resolved
+        = kiriview::systemMemoryRuntimeWithDefaults(std::move(runtime));
     QVERIFY(resolved.readPhysicalSystemMemory);
     QCOMPARE(resolved.readPhysicalSystemMemory().value_or(0), qsizetype(128));
     QCOMPARE(readCount, 1);
 
-    resolved = KiriView::systemMemoryRuntimeWithDefaults({});
+    resolved = kiriview::systemMemoryRuntimeWithDefaults({});
     QVERIFY(resolved.readPhysicalSystemMemory);
 }
 

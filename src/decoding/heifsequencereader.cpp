@@ -15,7 +15,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 QString heifSequenceDecodeErrorString()
 {
     return imageErrorText(ImageErrorTextId::DecodeHeifSequence);

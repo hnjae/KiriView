@@ -10,7 +10,7 @@
 #include <map>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 class ImageSpreadPageCache
 {
 public:

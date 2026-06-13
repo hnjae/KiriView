@@ -16,38 +16,38 @@
 #include <variant>
 
 namespace {
-namespace Backend = KiriView::MediaEntrySourceBackendDetail;
+namespace Backend = kiriview::MediaEntrySourceBackendDetail;
 
 const Backend::MediaEntrySourceBackendOperations *
 mediaEntrySourceBackendOperationsForOpenedCollection(
-    const KiriView::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
 {
     if (openedCollectionScope.isDirectory()) {
         return Backend::directoryCollectionMediaEntrySourceBackendOperations();
     }
 
     switch (
-        KiriView::archiveStorageBackendForRootScheme(openedCollectionScope.rootUrl().scheme())) {
-    case KiriView::ArchiveStorageBackend::KZip:
-    case KiriView::ArchiveStorageBackend::KTar:
-    case KiriView::ArchiveStorageBackend::K7Zip:
+        kiriview::archiveStorageBackendForRootScheme(openedCollectionScope.rootUrl().scheme())) {
+    case kiriview::ArchiveStorageBackend::KZip:
+    case kiriview::ArchiveStorageBackend::KTar:
+    case kiriview::ArchiveStorageBackend::K7Zip:
         return Backend::kArchiveMediaEntrySourceBackendOperations();
-    case KiriView::ArchiveStorageBackend::LibArchive:
+    case kiriview::ArchiveStorageBackend::LibArchive:
         return Backend::libArchiveMediaEntrySourceBackendOperations();
-    case KiriView::ArchiveStorageBackend::None:
+    case kiriview::ArchiveStorageBackend::None:
         return nullptr;
     }
 
     return nullptr;
 }
 
-KiriView::MediaEntrySourceOpenResult openWithMediaEntrySourceBackend(
-    const KiriView::OpenedCollectionScopeLocation &openedCollectionScope)
+kiriview::MediaEntrySourceOpenResult openWithMediaEntrySourceBackend(
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
 {
     const Backend::MediaEntrySourceBackendOperations *backend
         = mediaEntrySourceBackendOperationsForOpenedCollection(openedCollectionScope);
     if (backend == nullptr) {
-        return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceOpenResult>(
+        return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
             Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope));
     }
 
@@ -55,7 +55,7 @@ KiriView::MediaEntrySourceOpenResult openWithMediaEntrySourceBackend(
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 MediaEntrySourceThumbnailMetadataResult MediaEntrySource::loadThumbnailMetadata(
     const QUrl &imageUrl)
 {
@@ -66,7 +66,7 @@ MediaEntrySourceThumbnailMetadataResult MediaEntrySource::loadThumbnailMetadata(
 }
 }
 
-namespace KiriView::MediaEntrySourceBackendDetail {
+namespace kiriview::MediaEntrySourceBackendDetail {
 MediaEntrySourceWithCandidateSnapshot::MediaEntrySourceWithCandidateSnapshot(
     std::vector<ImageDocumentPageCandidate> candidates)
 {
@@ -160,7 +160,7 @@ MediaEntrySourceThumbnailMetadataResult mediaEntrySourceThumbnailMetadataResult(
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 MediaEntrySourceCandidatesResult loadMediaEntrySourceCandidates(
     const OpenedCollectionScopeLocation &openedCollectionScope)
 {

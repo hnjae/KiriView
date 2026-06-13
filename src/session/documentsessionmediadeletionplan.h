@@ -13,7 +13,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct DocumentSessionMediaDeletionFallbackPlan {
     QUrl targetUrl;
     std::optional<QUrl> preferredFallbackUrl;

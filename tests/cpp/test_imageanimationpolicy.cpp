@@ -28,9 +28,9 @@ private Q_SLOTS:
 };
 
 namespace {
-KiriView::AnimationLoopState loopState(int loopCount, int completedLoops)
+kiriview::AnimationLoopState loopState(int loopCount, int completedLoops)
 {
-    return KiriView::AnimationLoopState {
+    return kiriview::AnimationLoopState {
         loopCount,
         completedLoops,
     };
@@ -54,11 +54,11 @@ int percentile95Value(QVector<int> values)
     return values.at(index);
 }
 
-KiriView::AnimationProviderChurnGateSample sampleFromMeasuredProviderTiming(
+kiriview::AnimationProviderChurnGateSample sampleFromMeasuredProviderTiming(
     int frameDelayMs, const QVector<int> &timerDriftMs, const QVector<int> &providerLatencyMs)
 {
-    return KiriView::AnimationProviderChurnGateSample {
-        KiriView::normalizedAnimationFrameDelay(frameDelayMs),
+    return kiriview::AnimationProviderChurnGateSample {
+        kiriview::normalizedAnimationFrameDelay(frameDelayMs),
         false,
         maximumValue(timerDriftMs),
         percentile95Value(providerLatencyMs),
@@ -74,39 +74,39 @@ KiriView::AnimationProviderChurnGateSample sampleFromMeasuredProviderTiming(
 
 void TestImageAnimationPolicy::normalizedFrameDelayUsesDefaultForNegativeDelays()
 {
-    QCOMPARE(KiriView::normalizedAnimationFrameDelay(-1), 100);
+    QCOMPARE(kiriview::normalizedAnimationFrameDelay(-1), 100);
 }
 
 void TestImageAnimationPolicy::normalizedFrameDelayAppliesMinimumToShortDelays()
 {
-    QCOMPARE(KiriView::normalizedAnimationFrameDelay(0), 10);
-    QCOMPARE(KiriView::normalizedAnimationFrameDelay(9), 10);
-    QCOMPARE(KiriView::normalizedAnimationFrameDelay(10), 10);
-    QCOMPARE(KiriView::normalizedAnimationFrameDelay(25), 25);
+    QCOMPARE(kiriview::normalizedAnimationFrameDelay(0), 10);
+    QCOMPARE(kiriview::normalizedAnimationFrameDelay(9), 10);
+    QCOMPARE(kiriview::normalizedAnimationFrameDelay(10), 10);
+    QCOMPARE(kiriview::normalizedAnimationFrameDelay(25), 25);
 }
 
 void TestImageAnimationPolicy::loopPolicyTracksFiniteAndInfiniteRemainingLoops()
 {
-    QVERIFY(KiriView::animationHasRemainingLoops(loopState(-1, 99)));
-    QVERIFY(KiriView::animationHasRemainingLoops(loopState(2, 1)));
-    QVERIFY(!KiriView::animationHasRemainingLoops(loopState(2, 2)));
+    QVERIFY(kiriview::animationHasRemainingLoops(loopState(-1, 99)));
+    QVERIFY(kiriview::animationHasRemainingLoops(loopState(2, 1)));
+    QVERIFY(!kiriview::animationHasRemainingLoops(loopState(2, 2)));
 }
 
 void TestImageAnimationPolicy::loopAdvanceIncrementsOnlyWhenMoreLoopsAreAvailable()
 {
-    const KiriView::AnimationLoopAdvance advance = KiriView::advanceAnimationLoop(loopState(2, 1));
+    const kiriview::AnimationLoopAdvance advance = kiriview::advanceAnimationLoop(loopState(2, 1));
     QVERIFY(advance.shouldContinue);
     QCOMPARE(advance.completedLoops, 2);
 
-    const KiriView::AnimationLoopAdvance stop = KiriView::advanceAnimationLoop(loopState(2, 2));
+    const kiriview::AnimationLoopAdvance stop = kiriview::advanceAnimationLoop(loopState(2, 2));
     QVERIFY(!stop.shouldContinue);
     QCOMPARE(stop.completedLoops, 2);
 }
 
 void TestImageAnimationPolicy::loopAdvanceSaturatesCompletedLoopCount()
 {
-    const KiriView::AnimationLoopAdvance advance
-        = KiriView::advanceAnimationLoop(loopState(-1, std::numeric_limits<int>::max()));
+    const kiriview::AnimationLoopAdvance advance
+        = kiriview::advanceAnimationLoop(loopState(-1, std::numeric_limits<int>::max()));
 
     QVERIFY(advance.shouldContinue);
     QCOMPARE(advance.completedLoops, std::numeric_limits<int>::max());
@@ -114,24 +114,24 @@ void TestImageAnimationPolicy::loopAdvanceSaturatesCompletedLoopCount()
 
 void TestImageAnimationPolicy::playbackStateOwnsLoopProgress()
 {
-    KiriView::AnimationPlaybackState state;
+    kiriview::AnimationPlaybackState state;
     state.startLoop(2);
 
     QCOMPARE(state.loopState().loopCount, 2);
     QCOMPARE(state.loopState().completedLoops, 0);
 
-    const KiriView::AnimationSequencePlan firstRestart = state.planAtSequenceEnd();
-    QVERIFY(firstRestart.action == KiriView::AnimationSequenceAction::RestartSequence);
+    const kiriview::AnimationSequencePlan firstRestart = state.planAtSequenceEnd();
+    QVERIFY(firstRestart.action == kiriview::AnimationSequenceAction::RestartSequence);
     QCOMPARE(firstRestart.completedLoops, 1);
     QCOMPARE(state.loopState().completedLoops, 1);
 
-    const KiriView::AnimationSequencePlan secondRestart = state.planAtSequenceEnd();
-    QVERIFY(secondRestart.action == KiriView::AnimationSequenceAction::RestartSequence);
+    const kiriview::AnimationSequencePlan secondRestart = state.planAtSequenceEnd();
+    QVERIFY(secondRestart.action == kiriview::AnimationSequenceAction::RestartSequence);
     QCOMPARE(secondRestart.completedLoops, 2);
     QCOMPARE(state.loopState().completedLoops, 2);
 
-    const KiriView::AnimationSequencePlan stop = state.planAtSequenceEnd();
-    QVERIFY(stop.action == KiriView::AnimationSequenceAction::Stop);
+    const kiriview::AnimationSequencePlan stop = state.planAtSequenceEnd();
+    QVERIFY(stop.action == kiriview::AnimationSequenceAction::Stop);
     QCOMPARE(stop.completedLoops, 2);
     QCOMPARE(state.loopState().completedLoops, 2);
 
@@ -142,32 +142,32 @@ void TestImageAnimationPolicy::playbackStateOwnsLoopProgress()
 
 void TestImageAnimationPolicy::playbackStatePlansFrameSchedulingAndStop()
 {
-    KiriView::AnimationPlaybackState finiteState;
+    kiriview::AnimationPlaybackState finiteState;
     finiteState.startLoop(1);
 
-    KiriView::AnimationFramePlan plan = finiteState.planAfterFrame(true);
-    QVERIFY(plan.action == KiriView::AnimationFrameAction::ScheduleNextFrame);
+    kiriview::AnimationFramePlan plan = finiteState.planAfterFrame(true);
+    QVERIFY(plan.action == kiriview::AnimationFrameAction::ScheduleNextFrame);
     QCOMPARE(plan.completedLoops, 0);
 
     plan = finiteState.planAfterFrame(false);
-    QVERIFY(plan.action == KiriView::AnimationFrameAction::ScheduleNextFrame);
+    QVERIFY(plan.action == kiriview::AnimationFrameAction::ScheduleNextFrame);
     QCOMPARE(plan.completedLoops, 0);
 
     finiteState.planAtSequenceEnd();
     plan = finiteState.planAfterFrame(false);
-    QVERIFY(plan.action == KiriView::AnimationFrameAction::Stop);
+    QVERIFY(plan.action == kiriview::AnimationFrameAction::Stop);
     QCOMPARE(plan.completedLoops, 1);
 
-    KiriView::AnimationPlaybackState infiniteState;
+    kiriview::AnimationPlaybackState infiniteState;
     infiniteState.startLoop(-1);
     plan = infiniteState.planAfterFrame(false);
-    QVERIFY(plan.action == KiriView::AnimationFrameAction::ScheduleNextFrame);
+    QVERIFY(plan.action == kiriview::AnimationFrameAction::ScheduleNextFrame);
 }
 
 void TestImageAnimationPolicy::providerRevisionPresenterPassesDocumentedGate()
 {
-    const KiriView::AnimationProviderChurnGateResult result
-        = KiriView::evaluateAnimationProviderChurnGate(KiriView::AnimationProviderChurnGateSample {
+    const kiriview::AnimationProviderChurnGateResult result
+        = kiriview::evaluateAnimationProviderChurnGate(kiriview::AnimationProviderChurnGateSample {
             10,
             false,
             1,
@@ -181,7 +181,7 @@ void TestImageAnimationPolicy::providerRevisionPresenterPassesDocumentedGate()
         });
 
     QVERIFY(result.passed());
-    QCOMPARE(result.presenter, KiriView::AnimationPresenterKind::ProviderImageRevisions);
+    QCOMPARE(result.presenter, kiriview::AnimationPresenterKind::ProviderImageRevisions);
     QVERIFY(result.requiresLoadOutcomeAcknowledgment);
     QVERIFY(result.requiresPreviousFrameRetention);
     QCOMPARE(result.maximumPinnedFrameEntriesPerPageRole, 2);
@@ -190,11 +190,11 @@ void TestImageAnimationPolicy::providerRevisionPresenterPassesDocumentedGate()
 void TestImageAnimationPolicy::
     providerRevisionPresenterAcceptsRepresentativeMeasuredProviderTiming()
 {
-    const KiriView::AnimationProviderChurnGateSample sample
+    const kiriview::AnimationProviderChurnGateSample sample
         = sampleFromMeasuredProviderTiming(16, { 0, 1, 1, 2, 1, 0 }, { 1, 1, 2, 2, 1, 2 });
 
-    const KiriView::AnimationProviderChurnGateResult result
-        = KiriView::evaluateAnimationProviderChurnGate(sample);
+    const kiriview::AnimationProviderChurnGateResult result
+        = kiriview::evaluateAnimationProviderChurnGate(sample);
 
     QVERIFY(result.passed());
     QCOMPARE(sample.providerRequestLatencyP95Ms, 2);
@@ -204,7 +204,7 @@ void TestImageAnimationPolicy::
 
 void TestImageAnimationPolicy::providerRevisionPresenterRejectsEachGateFailure()
 {
-    const KiriView::AnimationProviderChurnGateSample passingSample {
+    const kiriview::AnimationProviderChurnGateSample passingSample {
         10,
         false,
         1,
@@ -218,49 +218,49 @@ void TestImageAnimationPolicy::providerRevisionPresenterRejectsEachGateFailure()
     };
 
     {
-        KiriView::AnimationProviderChurnGateSample sample = passingSample;
+        kiriview::AnimationProviderChurnGateSample sample = passingSample;
         sample.timerWaitsForProviderLoad = true;
-        const KiriView::AnimationProviderChurnGateResult result
-            = KiriView::evaluateAnimationProviderChurnGate(sample);
+        const kiriview::AnimationProviderChurnGateResult result
+            = kiriview::evaluateAnimationProviderChurnGate(sample);
         QVERIFY(!result.passed());
-        QCOMPARE(result.failure, KiriView::AnimationProviderChurnGateFailure::FramePacing);
+        QCOMPARE(result.failure, kiriview::AnimationProviderChurnGateFailure::FramePacing);
     }
 
     {
-        KiriView::AnimationProviderChurnGateSample sample = passingSample;
+        kiriview::AnimationProviderChurnGateSample sample = passingSample;
         sample.providerRequestLatencyP95Ms = 3;
-        const KiriView::AnimationProviderChurnGateResult result
-            = KiriView::evaluateAnimationProviderChurnGate(sample);
+        const kiriview::AnimationProviderChurnGateResult result
+            = kiriview::evaluateAnimationProviderChurnGate(sample);
         QVERIFY(!result.passed());
         QCOMPARE(
-            result.failure, KiriView::AnimationProviderChurnGateFailure::ProviderRequestLatency);
+            result.failure, kiriview::AnimationProviderChurnGateFailure::ProviderRequestLatency);
     }
 
     {
-        KiriView::AnimationProviderChurnGateSample sample = passingSample;
+        kiriview::AnimationProviderChurnGateSample sample = passingSample;
         sample.staleLoadOutcomeRejected = false;
-        const KiriView::AnimationProviderChurnGateResult result
-            = KiriView::evaluateAnimationProviderChurnGate(sample);
+        const kiriview::AnimationProviderChurnGateResult result
+            = kiriview::evaluateAnimationProviderChurnGate(sample);
         QVERIFY(!result.passed());
-        QCOMPARE(result.failure, KiriView::AnimationProviderChurnGateFailure::StaleFrameRejection);
+        QCOMPARE(result.failure, kiriview::AnimationProviderChurnGateFailure::StaleFrameRejection);
     }
 
     {
-        KiriView::AnimationProviderChurnGateSample sample = passingSample;
+        kiriview::AnimationProviderChurnGateSample sample = passingSample;
         sample.retainedFrameEntriesPerPageRole = 3;
-        const KiriView::AnimationProviderChurnGateResult result
-            = KiriView::evaluateAnimationProviderChurnGate(sample);
+        const kiriview::AnimationProviderChurnGateResult result
+            = kiriview::evaluateAnimationProviderChurnGate(sample);
         QVERIFY(!result.passed());
-        QCOMPARE(result.failure, KiriView::AnimationProviderChurnGateFailure::MemoryRetention);
+        QCOMPARE(result.failure, kiriview::AnimationProviderChurnGateFailure::MemoryRetention);
     }
 
     {
-        KiriView::AnimationProviderChurnGateSample sample = passingSample;
+        kiriview::AnimationProviderChurnGateSample sample = passingSample;
         sample.providerUrlsPerAcceptedFrame = 2;
-        const KiriView::AnimationProviderChurnGateResult result
-            = KiriView::evaluateAnimationProviderChurnGate(sample);
+        const kiriview::AnimationProviderChurnGateResult result
+            = kiriview::evaluateAnimationProviderChurnGate(sample);
         QVERIFY(!result.passed());
-        QCOMPARE(result.failure, KiriView::AnimationProviderChurnGateFailure::UrlChurn);
+        QCOMPARE(result.failure, kiriview::AnimationProviderChurnGateFailure::UrlChurn);
     }
 }
 

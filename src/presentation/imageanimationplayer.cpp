@@ -11,7 +11,7 @@
 #include <memory>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ImageAnimationPlayer::ImageAnimationPlayer(QObject *context, FrameReadyCallback frameReady,
     ErrorCallback animationError, PlaybackStoppedCallback playbackStopped,
     TimerScheduler timerScheduler)

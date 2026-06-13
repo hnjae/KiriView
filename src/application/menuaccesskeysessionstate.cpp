@@ -3,7 +3,7 @@
 
 #include "menuaccesskeysessionstate.h"
 
-namespace KiriView {
+namespace kiriview {
 bool MenuAccessKeySessionState::isActive() const { return m_active; }
 
 MenuAccessKeySessionPlan MenuAccessKeySessionState::handleSessionEvent(

@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentChangeBatcher::Batch::Batch(ImageDocumentChangeBatcher &batcher)
     : m_batcher(&batcher)
 {

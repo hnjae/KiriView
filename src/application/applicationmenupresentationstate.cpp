@@ -3,7 +3,7 @@
 
 #include "applicationmenupresentationstate.h"
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 ApplicationMenuPresentationState::ApplicationMenuPresentationState(MenuPresentation presentation)
     : m_presentation(presentationForStoredValue(storedValueForPresentation(presentation)))
 {

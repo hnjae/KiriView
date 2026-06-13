@@ -10,7 +10,7 @@
 #include <QUrl>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 struct MediaOpenWithRequest {
     QUrl targetUrl;
 };

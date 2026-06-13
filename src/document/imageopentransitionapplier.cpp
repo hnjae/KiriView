@@ -10,174 +10,174 @@
 #include <utility>
 
 namespace {
-std::optional<KiriView::ImageDocumentStatus> documentStatus(KiriView::ImageOpenStatusTarget status)
+std::optional<kiriview::ImageDocumentStatus> documentStatus(kiriview::ImageOpenStatusTarget status)
 {
     switch (status) {
-    case KiriView::ImageOpenStatusTarget::Null:
-        return KiriView::ImageDocumentStatus::Null;
-    case KiriView::ImageOpenStatusTarget::Loading:
-        return KiriView::ImageDocumentStatus::Loading;
-    case KiriView::ImageOpenStatusTarget::Ready:
-        return KiriView::ImageDocumentStatus::Ready;
-    case KiriView::ImageOpenStatusTarget::Error:
-        return KiriView::ImageDocumentStatus::Error;
-    case KiriView::ImageOpenStatusTarget::Unchanged:
+    case kiriview::ImageOpenStatusTarget::Null:
+        return kiriview::ImageDocumentStatus::Null;
+    case kiriview::ImageOpenStatusTarget::Loading:
+        return kiriview::ImageDocumentStatus::Loading;
+    case kiriview::ImageOpenStatusTarget::Ready:
+        return kiriview::ImageDocumentStatus::Ready;
+    case kiriview::ImageOpenStatusTarget::Error:
+        return kiriview::ImageDocumentStatus::Error;
+    case kiriview::ImageOpenStatusTarget::Unchanged:
         break;
     }
 
     return std::nullopt;
 }
 
-std::optional<bool> boolTarget(KiriView::ImageOpenBoolTarget target)
+std::optional<bool> boolTarget(kiriview::ImageOpenBoolTarget target)
 {
     switch (target) {
-    case KiriView::ImageOpenBoolTarget::False:
+    case kiriview::ImageOpenBoolTarget::False:
         return false;
-    case KiriView::ImageOpenBoolTarget::True:
+    case kiriview::ImageOpenBoolTarget::True:
         return true;
-    case KiriView::ImageOpenBoolTarget::Unchanged:
+    case kiriview::ImageOpenBoolTarget::Unchanged:
         break;
     }
 
     return std::nullopt;
 }
 
-std::optional<QString> errorStringTarget(KiriView::ImageOpenErrorStringTarget target,
-    const KiriView::ImageOpenTransitionContext &context)
+std::optional<QString> errorStringTarget(kiriview::ImageOpenErrorStringTarget target,
+    const kiriview::ImageOpenTransitionContext &context)
 {
     switch (target) {
-    case KiriView::ImageOpenErrorStringTarget::Clear:
+    case kiriview::ImageOpenErrorStringTarget::Clear:
         return QString();
-    case KiriView::ImageOpenErrorStringTarget::Provided:
+    case kiriview::ImageOpenErrorStringTarget::Provided:
         return context.errorString;
-    case KiriView::ImageOpenErrorStringTarget::Unchanged:
+    case kiriview::ImageOpenErrorStringTarget::Unchanged:
         break;
     }
 
     return std::nullopt;
 }
 
-std::optional<KiriView::EmbeddedMetadata> embeddedMetadataTarget(
-    KiriView::ImageOpenEmbeddedMetadataTarget target,
-    const KiriView::ImageOpenTransitionContext &context)
+std::optional<kiriview::EmbeddedMetadata> embeddedMetadataTarget(
+    kiriview::ImageOpenEmbeddedMetadataTarget target,
+    const kiriview::ImageOpenTransitionContext &context)
 {
     switch (target) {
-    case KiriView::ImageOpenEmbeddedMetadataTarget::Clear:
-        return KiriView::EmbeddedMetadata {};
-    case KiriView::ImageOpenEmbeddedMetadataTarget::Provided:
+    case kiriview::ImageOpenEmbeddedMetadataTarget::Clear:
+        return kiriview::EmbeddedMetadata {};
+    case kiriview::ImageOpenEmbeddedMetadataTarget::Provided:
         return context.embeddedMetadata;
-    case KiriView::ImageOpenEmbeddedMetadataTarget::Unchanged:
+    case kiriview::ImageOpenEmbeddedMetadataTarget::Unchanged:
         break;
     }
 
     return std::nullopt;
 }
 
-std::optional<KiriView::ImageDocumentPageKind> sourceKindTarget(
-    KiriView::ImageOpenSourceKindTarget target, const KiriView::ImageOpenTransitionContext &context)
+std::optional<kiriview::ImageDocumentPageKind> sourceKindTarget(
+    kiriview::ImageOpenSourceKindTarget target, const kiriview::ImageOpenTransitionContext &context)
 {
     switch (target) {
-    case KiriView::ImageOpenSourceKindTarget::Session:
+    case kiriview::ImageOpenSourceKindTarget::Session:
         if (context.session != nullptr) {
             return context.session->kind();
         }
         return std::nullopt;
-    case KiriView::ImageOpenSourceKindTarget::Unchanged:
+    case kiriview::ImageOpenSourceKindTarget::Unchanged:
         return std::nullopt;
     }
 
     return std::nullopt;
 }
 
-std::optional<KiriView::DisplayedImageLocation> displayedLocationTarget(
-    KiriView::ImageOpenDisplayedLocationTarget target,
-    const KiriView::ImageOpenTransitionContext &context)
+std::optional<kiriview::DisplayedImageLocation> displayedLocationTarget(
+    kiriview::ImageOpenDisplayedLocationTarget target,
+    const kiriview::ImageOpenTransitionContext &context)
 {
     switch (target) {
-    case KiriView::ImageOpenDisplayedLocationTarget::Session:
+    case kiriview::ImageOpenDisplayedLocationTarget::Session:
         if (context.session != nullptr) {
             return context.session->location();
         }
         return std::nullopt;
-    case KiriView::ImageOpenDisplayedLocationTarget::Unchanged:
+    case kiriview::ImageOpenDisplayedLocationTarget::Unchanged:
         return std::nullopt;
     }
 
     return std::nullopt;
 }
 
-void appendRuntimeOperationsForOpenEffect(KiriView::ImageDocumentRuntimePlan &plan,
-    KiriView::ImageOpenEffect effect, const KiriView::ImageOpenTransitionContext &context)
+void appendRuntimeOperationsForOpenEffect(kiriview::ImageDocumentRuntimePlan &plan,
+    kiriview::ImageOpenEffect effect, const kiriview::ImageOpenTransitionContext &context)
 {
     switch (effect) {
-    case KiriView::ImageOpenEffect::ClearImage: {
-        KiriView::ImageDocumentRuntimePlan clearPlan = KiriView::imageDocumentClearImagePlan();
+    case kiriview::ImageOpenEffect::ClearImage: {
+        kiriview::ImageDocumentRuntimePlan clearPlan = kiriview::imageDocumentClearImagePlan();
         plan.insert(plan.end(), std::make_move_iterator(clearPlan.begin()),
             std::make_move_iterator(clearPlan.end()));
         return;
     }
-    case KiriView::ImageOpenEffect::ClearLoadingPresentation: {
-        KiriView::ImageDocumentRuntimePlan clearPlan
-            = KiriView::imageDocumentClearLoadingPresentationPlan();
+    case kiriview::ImageOpenEffect::ClearLoadingPresentation: {
+        kiriview::ImageDocumentRuntimePlan clearPlan
+            = kiriview::imageDocumentClearLoadingPresentationPlan();
         plan.insert(plan.end(), std::make_move_iterator(clearPlan.begin()),
             std::make_move_iterator(clearPlan.end()));
         return;
     }
-    case KiriView::ImageOpenEffect::ResetZoom:
-        plan.push_back(KiriView::ResetZoomOperation {});
+    case kiriview::ImageOpenEffect::ResetZoom:
+        plan.push_back(kiriview::ResetZoomOperation {});
         return;
-    case KiriView::ImageOpenEffect::UpdatePageNavigation:
-        plan.push_back(KiriView::UpdatePageNavigationOperation {});
+    case kiriview::ImageOpenEffect::UpdatePageNavigation:
+        plan.push_back(kiriview::UpdatePageNavigationOperation {});
         return;
-    case KiriView::ImageOpenEffect::ScheduleAdjacentImagePredecode:
-        plan.push_back(KiriView::ScheduleAdjacentImagePredecodeOperation {});
+    case kiriview::ImageOpenEffect::ScheduleAdjacentImagePredecode:
+        plan.push_back(kiriview::ScheduleAdjacentImagePredecodeOperation {});
         return;
-    case KiriView::ImageOpenEffect::PrepareFailedContainer:
+    case kiriview::ImageOpenEffect::PrepareFailedContainer:
         if (context.containerUrl.has_value()) {
-            plan.push_back(KiriView::PrepareFailedContainerOperation { *context.containerUrl });
+            plan.push_back(kiriview::PrepareFailedContainerOperation { *context.containerUrl });
         }
         return;
-    case KiriView::ImageOpenEffect::FinishSpreadTransition:
-        plan.push_back(KiriView::FinishSpreadTransitionOperation {});
+    case kiriview::ImageOpenEffect::FinishSpreadTransition:
+        plan.push_back(kiriview::FinishSpreadTransitionOperation {});
         return;
-    case KiriView::ImageOpenEffect::ClearSecondaryPage:
-        plan.push_back(KiriView::ClearSecondaryPageOperation {});
+    case kiriview::ImageOpenEffect::ClearSecondaryPage:
+        plan.push_back(kiriview::ClearSecondaryPageOperation {});
         return;
     }
 }
 
 std::optional<QUrl> resolvedUrlForTarget(
-    KiriView::ImageOpenUrlTarget target, const KiriView::ImageOpenTransitionContext &context)
+    kiriview::ImageOpenUrlTarget target, const kiriview::ImageOpenTransitionContext &context)
 {
     switch (target) {
-    case KiriView::ImageOpenUrlTarget::Empty:
+    case kiriview::ImageOpenUrlTarget::Empty:
         return QUrl();
-    case KiriView::ImageOpenUrlTarget::SessionImage:
+    case kiriview::ImageOpenUrlTarget::SessionImage:
         return context.session != nullptr ? std::optional<QUrl>(context.session->imageUrl())
                                           : std::nullopt;
-    case KiriView::ImageOpenUrlTarget::SessionContainerNavigation:
+    case kiriview::ImageOpenUrlTarget::SessionContainerNavigation:
         return context.session != nullptr
             ? std::optional<QUrl>(context.session->containerNavigationUrl())
             : std::nullopt;
-    case KiriView::ImageOpenUrlTarget::DerivedContainerNavigation:
+    case kiriview::ImageOpenUrlTarget::DerivedContainerNavigation:
         return context.session != nullptr
             ? std::optional<QUrl>(containerNavigationUrlForLocation(context.session->location()))
             : std::nullopt;
-    case KiriView::ImageOpenUrlTarget::Container:
+    case kiriview::ImageOpenUrlTarget::Container:
         return context.containerUrl;
-    case KiriView::ImageOpenUrlTarget::Displayed:
+    case kiriview::ImageOpenUrlTarget::Displayed:
         return context.displayedUrl;
-    case KiriView::ImageOpenUrlTarget::Unchanged:
+    case kiriview::ImageOpenUrlTarget::Unchanged:
         break;
     }
 
     return std::nullopt;
 }
 
-KiriView::ImageOpenResolvedStateDelta resolvedStateDelta(
-    const KiriView::ImageOpenStateDelta &delta, const KiriView::ImageOpenTransitionContext &context)
+kiriview::ImageOpenResolvedStateDelta resolvedStateDelta(
+    const kiriview::ImageOpenStateDelta &delta, const kiriview::ImageOpenTransitionContext &context)
 {
-    return KiriView::ImageOpenResolvedStateDelta {
+    return kiriview::ImageOpenResolvedStateDelta {
         resolvedUrlForTarget(delta.sourceUrl, context),
         sourceKindTarget(delta.sourceKind, context),
         displayedLocationTarget(delta.displayedLocation, context),
@@ -191,13 +191,13 @@ KiriView::ImageOpenResolvedStateDelta resolvedStateDelta(
     };
 }
 
-KiriView::ImageDocumentRuntimePlan resolvedRuntimePlan(
-    const KiriView::ImageOpenTransition &transition,
-    const KiriView::ImageOpenTransitionContext &context)
+kiriview::ImageDocumentRuntimePlan resolvedRuntimePlan(
+    const kiriview::ImageOpenTransition &transition,
+    const kiriview::ImageOpenTransitionContext &context)
 {
-    KiriView::ImageDocumentRuntimePlan plan;
+    kiriview::ImageDocumentRuntimePlan plan;
     plan.reserve(transition.effects.size());
-    for (KiriView::ImageOpenEffect effect : transition.effects) {
+    for (kiriview::ImageOpenEffect effect : transition.effects) {
         appendRuntimeOperationsForOpenEffect(plan, effect, context);
     }
     return plan;
@@ -206,22 +206,22 @@ KiriView::ImageDocumentRuntimePlan resolvedRuntimePlan(
 class ImageOpenTransitionApplier final
 {
 public:
-    explicit ImageOpenTransitionApplier(KiriView::ImageDocumentState &state)
+    explicit ImageOpenTransitionApplier(kiriview::ImageDocumentState &state)
         : m_state(state)
         , m_batch(m_state.beginChangeBatch())
     {
     }
 
-    void apply(KiriView::ImageOpenApplicationPlan plan)
+    void apply(kiriview::ImageOpenApplicationPlan plan)
     {
         applyStateDelta(plan.stateDelta);
         m_runtimePlan = std::move(plan.runtimePlan);
     }
 
-    KiriView::ImageDocumentRuntimePlan takeRuntimePlan() { return std::move(m_runtimePlan); }
+    kiriview::ImageDocumentRuntimePlan takeRuntimePlan() { return std::move(m_runtimePlan); }
 
 private:
-    void applyStateDelta(const KiriView::ImageOpenResolvedStateDelta &delta)
+    void applyStateDelta(const kiriview::ImageOpenResolvedStateDelta &delta)
     {
         applyUnsupportedOpenedCollectionVideo(delta.unsupportedOpenedCollectionVideo, false);
 
@@ -254,12 +254,12 @@ private:
     }
 
     bool trackedLoadCompletionBeforeVisibleState(
-        const KiriView::ImageOpenResolvedStateDelta &delta) const
+        const kiriview::ImageOpenResolvedStateDelta &delta) const
     {
         return delta.clearLoadingContainerNavigationUrl && !delta.displayedLocation.has_value();
     }
 
-    void applyTrackedLoadCompletion(const KiriView::ImageOpenResolvedStateDelta &delta)
+    void applyTrackedLoadCompletion(const kiriview::ImageOpenResolvedStateDelta &delta)
     {
         if (delta.clearLoadingContainerNavigationUrl) {
             m_state.clearLoadingContainerNavigationUrl();
@@ -274,14 +274,14 @@ private:
         }
     }
 
-    void applySourceKind(const std::optional<KiriView::ImageDocumentPageKind> &sourceKind)
+    void applySourceKind(const std::optional<kiriview::ImageDocumentPageKind> &sourceKind)
     {
         if (sourceKind.has_value()) {
             m_state.setSourceKind(*sourceKind);
         }
     }
 
-    void applyDisplayedLocation(const std::optional<KiriView::DisplayedImageLocation> &location)
+    void applyDisplayedLocation(const std::optional<kiriview::DisplayedImageLocation> &location)
     {
         if (location.has_value()) {
             m_state.setDisplayedImageLocation(*location);
@@ -302,7 +302,7 @@ private:
         }
     }
 
-    void applyStatus(const std::optional<KiriView::ImageDocumentStatus> &status)
+    void applyStatus(const std::optional<kiriview::ImageDocumentStatus> &status)
     {
         if (status.has_value()) {
             m_state.setStatus(*status);
@@ -316,7 +316,7 @@ private:
         }
     }
 
-    void applyEmbeddedMetadata(const std::optional<KiriView::EmbeddedMetadata> &metadata)
+    void applyEmbeddedMetadata(const std::optional<kiriview::EmbeddedMetadata> &metadata)
     {
         if (metadata.has_value()) {
             m_state.setEmbeddedMetadata(*metadata);
@@ -331,13 +331,13 @@ private:
         }
     }
 
-    KiriView::ImageDocumentState &m_state;
-    KiriView::ImageDocumentState::ChangeBatch m_batch;
-    KiriView::ImageDocumentRuntimePlan m_runtimePlan;
+    kiriview::ImageDocumentState &m_state;
+    kiriview::ImageDocumentState::ChangeBatch m_batch;
+    kiriview::ImageDocumentRuntimePlan m_runtimePlan;
 };
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageOpenTransitionContext ImageOpenTransitionContext::sourceResolved(
     const ImageLoadSession &session)
 {

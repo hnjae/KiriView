@@ -13,22 +13,22 @@
 #include <utility>
 
 namespace {
-KiriView::RustNavigationDirection rustNavigationDirection(KiriView::NavigationDirection direction)
+kiriview::RustNavigationDirection rustNavigationDirection(kiriview::NavigationDirection direction)
 {
     switch (direction) {
-    case KiriView::NavigationDirection::Previous:
-        return KiriView::RustNavigationDirection::Previous;
-    case KiriView::NavigationDirection::Next:
-        return KiriView::RustNavigationDirection::Next;
+    case kiriview::NavigationDirection::Previous:
+        return kiriview::RustNavigationDirection::Previous;
+    case kiriview::NavigationDirection::Next:
+        return kiriview::RustNavigationDirection::Next;
     }
 
-    return KiriView::RustNavigationDirection::Next;
+    return kiriview::RustNavigationDirection::Next;
 }
 
 std::optional<std::size_t> currentUrlIndex(const std::vector<QUrl> &urls, const QUrl &currentUrl)
 {
     const auto current = std::find_if(urls.cbegin(), urls.cend(),
-        [&currentUrl](const QUrl &url) { return KiriView::sameNormalizedUrl(url, currentUrl); });
+        [&currentUrl](const QUrl &url) { return kiriview::sameNormalizedUrl(url, currentUrl); });
     if (current == urls.cend()) {
         return std::nullopt;
     }
@@ -36,7 +36,7 @@ std::optional<std::size_t> currentUrlIndex(const std::vector<QUrl> &urls, const 
     return static_cast<std::size_t>(std::distance(urls.cbegin(), current));
 }
 
-std::optional<std::size_t> pageNavigationIndexValue(KiriView::RustNavigationIndex index)
+std::optional<std::size_t> pageNavigationIndexValue(kiriview::RustNavigationIndex index)
 {
     if (!index.found) {
         return std::nullopt;
@@ -45,13 +45,13 @@ std::optional<std::size_t> pageNavigationIndexValue(KiriView::RustNavigationInde
     return index.index;
 }
 
-KiriView::RustNavigationIndex pageRustNavigationIndex(std::optional<std::size_t> index)
+kiriview::RustNavigationIndex pageRustNavigationIndex(std::optional<std::size_t> index)
 {
-    return KiriView::RustNavigationIndex { index.has_value(), index.value_or(0) };
+    return kiriview::RustNavigationIndex { index.has_value(), index.value_or(0) };
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 PageNavigationState::PageNavigationState(std::vector<QUrl> urls, int currentIndex)
     : targets()
     , currentIndex(currentIndex)

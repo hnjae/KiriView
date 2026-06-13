@@ -14,7 +14,7 @@
 #include <QUrl>
 #include <memory>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentState
 {
 public:

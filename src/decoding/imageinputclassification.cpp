@@ -7,7 +7,7 @@
 #include "bridge/rustqtconversion.h"
 #include "kiriview/src/policy/imageinputclassification.cxx.h"
 
-namespace KiriView {
+namespace kiriview {
 ImageInputClassification classifyImageInput(const QByteArray &data, const QString &fileName)
 {
     const QByteArray utf8FileName = fileName.toUtf8();

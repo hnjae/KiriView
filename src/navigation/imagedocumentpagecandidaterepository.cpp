@@ -9,60 +9,60 @@
 #include <vector>
 
 namespace {
-void reportLoadProviderMissing(const KiriView::ErrorCallback &errorCallback)
+void reportLoadProviderMissing(const kiriview::ErrorCallback &errorCallback)
 {
-    KiriView::invokeIfSet(errorCallback, QString());
+    kiriview::invokeIfSet(errorCallback, QString());
 }
 
 template <typename Provider, typename... Args>
-KiriView::ImageIoJob loadWithProvider(
-    const Provider &provider, KiriView::ErrorCallback errorCallback, Args &&...args)
+kiriview::ImageIoJob loadWithProvider(
+    const Provider &provider, kiriview::ErrorCallback errorCallback, Args &&...args)
 {
     if (!provider) {
         reportLoadProviderMissing(errorCallback);
-        return KiriView::ImageIoJob();
+        return kiriview::ImageIoJob();
     }
 
     return provider(std::forward<Args>(args)..., std::move(errorCallback));
 }
 
-KiriView::ImageIoJob loadImagesForSource(
-    const KiriView::ImageDocumentPageCandidateRepository &repository, QObject *receiver,
-    const KiriView::ImageDocumentPageCandidateListSource::Directory &source,
-    KiriView::ImageDocumentPageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
+kiriview::ImageIoJob loadImagesForSource(
+    const kiriview::ImageDocumentPageCandidateRepository &repository, QObject *receiver,
+    const kiriview::ImageDocumentPageCandidateListSource::Directory &source,
+    kiriview::ImageDocumentPageCandidatesCallback callback, kiriview::ErrorCallback errorCallback)
 {
     return repository.loadDirectoryImages(
         receiver, source.directoryUrl, std::move(callback), std::move(errorCallback));
 }
 
-KiriView::ImageIoJob loadImagesForSource(
-    const KiriView::ImageDocumentPageCandidateRepository &repository, QObject *receiver,
-    const KiriView::ImageDocumentPageCandidateListSource::OpenedCollectionScope &source,
-    KiriView::ImageDocumentPageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
+kiriview::ImageIoJob loadImagesForSource(
+    const kiriview::ImageDocumentPageCandidateRepository &repository, QObject *receiver,
+    const kiriview::ImageDocumentPageCandidateListSource::OpenedCollectionScope &source,
+    kiriview::ImageDocumentPageCandidatesCallback callback, kiriview::ErrorCallback errorCallback)
 {
     return repository.loadOpenedCollectionCandidates(
         receiver, source.openedCollectionScope, std::move(callback), std::move(errorCallback));
 }
 
-KiriView::ImageIoJob watchChangesForSource(
-    const KiriView::ImageDocumentPageCandidateRepository &repository, QObject *receiver,
-    const KiriView::ImageDocumentPageCandidateListSource::Directory &source,
-    KiriView::ImageDocumentPageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
+kiriview::ImageIoJob watchChangesForSource(
+    const kiriview::ImageDocumentPageCandidateRepository &repository, QObject *receiver,
+    const kiriview::ImageDocumentPageCandidateListSource::Directory &source,
+    kiriview::ImageDocumentPageCandidatesCallback callback, kiriview::ErrorCallback errorCallback)
 {
     return repository.watchDirectoryImageChanges(
         receiver, source.directoryUrl, std::move(callback), std::move(errorCallback));
 }
 
-KiriView::ImageIoJob watchChangesForSource(const KiriView::ImageDocumentPageCandidateRepository &,
-    QObject *, const KiriView::ImageDocumentPageCandidateListSource::OpenedCollectionScope &,
-    KiriView::ImageDocumentPageCandidatesCallback, KiriView::ErrorCallback)
+kiriview::ImageIoJob watchChangesForSource(const kiriview::ImageDocumentPageCandidateRepository &,
+    QObject *, const kiriview::ImageDocumentPageCandidateListSource::OpenedCollectionScope &,
+    kiriview::ImageDocumentPageCandidatesCallback, kiriview::ErrorCallback)
 {
-    return KiriView::ImageIoJob();
+    return kiriview::ImageIoJob();
 }
 
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentPageCandidateRepository::ImageDocumentPageCandidateRepository(
     ImageDocumentPageCandidateProvider provider)
     : m_provider(imageDocumentPageNavigationCandidateProviderWithDefaults(std::move(provider)))

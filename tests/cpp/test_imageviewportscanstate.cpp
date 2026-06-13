@@ -18,37 +18,37 @@ private Q_SLOTS:
 
 void TestImageViewportScanState::displayedImagesStartAtInitialScanPositionByDefault()
 {
-    KiriView::ImageViewportScanState state;
+    kiriview::ImageViewportScanState state;
 
     QVERIFY(!state.pendingFinalScanStart());
-    QVERIFY(state.displayedImageScanStart() == KiriView::ImageViewportScanStart::Initial);
-    QVERIFY(state.beginDisplayedImage() == KiriView::ImageViewportScanStart::Initial);
-    QVERIFY(state.displayedImageScanStart() == KiriView::ImageViewportScanStart::Initial);
+    QVERIFY(state.displayedImageScanStart() == kiriview::ImageViewportScanStart::Initial);
+    QVERIFY(state.beginDisplayedImage() == kiriview::ImageViewportScanStart::Initial);
+    QVERIFY(state.displayedImageScanStart() == kiriview::ImageViewportScanStart::Initial);
 }
 
 void TestImageViewportScanState::pendingFinalScanStartAppliesToOneDisplayedImage()
 {
-    KiriView::ImageViewportScanState state;
+    kiriview::ImageViewportScanState state;
 
     state.requestNextDisplayedImageFinalScanStart();
     QVERIFY(state.pendingFinalScanStart());
-    QVERIFY(state.beginDisplayedImage() == KiriView::ImageViewportScanStart::Final);
+    QVERIFY(state.beginDisplayedImage() == kiriview::ImageViewportScanStart::Final);
     QVERIFY(!state.pendingFinalScanStart());
-    QVERIFY(state.displayedImageScanStart() == KiriView::ImageViewportScanStart::Final);
+    QVERIFY(state.displayedImageScanStart() == kiriview::ImageViewportScanStart::Final);
 
-    QVERIFY(state.beginDisplayedImage() == KiriView::ImageViewportScanStart::Initial);
-    QVERIFY(state.displayedImageScanStart() == KiriView::ImageViewportScanStart::Initial);
+    QVERIFY(state.beginDisplayedImage() == kiriview::ImageViewportScanStart::Initial);
+    QVERIFY(state.displayedImageScanStart() == kiriview::ImageViewportScanStart::Initial);
 }
 
 void TestImageViewportScanState::cancelledPendingStartDoesNotChangeDisplayedImageStart()
 {
-    KiriView::ImageViewportScanState state;
+    kiriview::ImageViewportScanState state;
 
     state.requestNextDisplayedImageFinalScanStart();
     state.cancelPendingDisplayedImageStart();
 
     QVERIFY(!state.pendingFinalScanStart());
-    QVERIFY(state.beginDisplayedImage() == KiriView::ImageViewportScanStart::Initial);
+    QVERIFY(state.beginDisplayedImage() == kiriview::ImageViewportScanStart::Initial);
 }
 
 QTEST_GUILESS_MAIN(TestImageViewportScanState)

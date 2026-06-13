@@ -23,11 +23,11 @@ private Q_SLOTS:
 void TestImageRenderContextState::ownsNormalizedInitialContext()
 {
     const qreal nan = std::numeric_limits<qreal>::quiet_NaN();
-    KiriView::ImageRenderContextState state(
-        [nan]() { return KiriView::ImageDocumentRenderContext { nan, 0, 9 }; });
+    kiriview::ImageRenderContextState state(
+        [nan]() { return kiriview::ImageDocumentRenderContext { nan, 0, 9 }; });
 
     QCOMPARE(state.current().devicePixelRatio, 1.0);
-    QCOMPARE(state.current().maximumTextureSize, KiriView::fallbackTextureSizeMax);
+    QCOMPARE(state.current().maximumTextureSize, kiriview::fallbackTextureSizeMax);
     QCOMPARE(state.current().generation, quint64(9));
     QCOMPARE(state.devicePixelRatio(), 1.0);
 }
@@ -36,13 +36,13 @@ void TestImageRenderContextState::refreshReportsPreviousAndCurrentContext()
 {
     qreal devicePixelRatio = 1.0;
     int maximumTextureSize = 4096;
-    KiriView::ImageRenderContextState state([&]() {
-        return KiriView::ImageDocumentRenderContext { devicePixelRatio, maximumTextureSize, 1 };
+    kiriview::ImageRenderContextState state([&]() {
+        return kiriview::ImageDocumentRenderContext { devicePixelRatio, maximumTextureSize, 1 };
     });
 
     devicePixelRatio = 2.0;
     maximumTextureSize = 8192;
-    const KiriView::ImageRenderContextChange change = state.refresh();
+    const kiriview::ImageRenderContextChange change = state.refresh();
 
     QCOMPARE(change.previous.devicePixelRatio, 1.0);
     QCOMPARE(change.previous.maximumTextureSize, 4096);
@@ -57,16 +57,16 @@ void TestImageRenderContextState::refreshReportsPreviousAndCurrentContext()
 void TestImageRenderContextState::refreshPreservesProviderGeneration()
 {
     quint64 generation = 5;
-    KiriView::ImageRenderContextState state([&generation]() {
-        return KiriView::ImageDocumentRenderContext {
+    kiriview::ImageRenderContextState state([&generation]() {
+        return kiriview::ImageDocumentRenderContext {
             1.0,
-            KiriView::fallbackTextureSizeMax,
+            kiriview::fallbackTextureSizeMax,
             generation,
         };
     });
 
     generation = 6;
-    const KiriView::ImageRenderContextChange change = state.refresh();
+    const kiriview::ImageRenderContextChange change = state.refresh();
 
     QCOMPARE(change.previous.generation, quint64(5));
     QCOMPARE(change.current.generation, quint64(6));
@@ -75,10 +75,10 @@ void TestImageRenderContextState::refreshPreservesProviderGeneration()
 
 void TestImageRenderContextState::missingProviderUsesSafeDefaults()
 {
-    KiriView::ImageRenderContextState state;
+    kiriview::ImageRenderContextState state;
 
     QCOMPARE(state.current().devicePixelRatio, 1.0);
-    QCOMPARE(state.current().maximumTextureSize, KiriView::fallbackTextureSizeMax);
+    QCOMPARE(state.current().maximumTextureSize, kiriview::fallbackTextureSizeMax);
     QCOMPARE(state.current().generation, quint64(0));
 }
 

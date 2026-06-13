@@ -17,8 +17,8 @@ private Q_SLOTS:
 };
 
 namespace {
-void compareChanges(const std::vector<KiriView::ImageDocumentChange> &actual,
-    const std::vector<KiriView::ImageDocumentChange> &expected)
+void compareChanges(const std::vector<kiriview::ImageDocumentChange> &actual,
+    const std::vector<kiriview::ImageDocumentChange> &expected)
 {
     QCOMPARE(actual.size(), expected.size());
     for (std::size_t index = 0; index < expected.size(); ++index) {
@@ -30,68 +30,68 @@ void compareChanges(const std::vector<KiriView::ImageDocumentChange> &actual,
 
 void TestImageDocumentNotifications::notificationPlansReturnChangesInEmissionOrder()
 {
-    compareChanges(KiriView::imageDocumentSpreadTransitionNotifications(),
-        { KiriView::ImageDocumentChange::PresentationTransitionState,
-            KiriView::ImageDocumentChange::Status, KiriView::ImageDocumentChange::Loading });
-    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(true, true),
-        { KiriView::ImageDocumentChange::DisplayedUrl,
-            KiriView::ImageDocumentChange::WindowTitleFileName });
-    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(true, false),
-        { KiriView::ImageDocumentChange::DisplayedUrl });
-    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(false, true),
-        { KiriView::ImageDocumentChange::WindowTitleFileName });
-    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(false, false),
-        std::vector<KiriView::ImageDocumentChange> {});
-    compareChanges(KiriView::imageDocumentTwoPageModeNotifications(),
-        { KiriView::ImageDocumentChange::TwoPageMode, KiriView::ImageDocumentChange::ImageSize,
-            KiriView::ImageDocumentChange::DisplaySize, KiriView::ImageDocumentChange::ZoomPercent,
-            KiriView::ImageDocumentChange::ZoomMode,
-            KiriView::ImageDocumentChange::MaximumManualZoomPercent,
-            KiriView::ImageDocumentChange::DisplaySource });
-    KiriView::ImageZoomChangeSet spreadZoomChanges;
+    compareChanges(kiriview::imageDocumentSpreadTransitionNotifications(),
+        { kiriview::ImageDocumentChange::PresentationTransitionState,
+            kiriview::ImageDocumentChange::Status, kiriview::ImageDocumentChange::Loading });
+    compareChanges(kiriview::imageDocumentDisplayedLocationNotifications(true, true),
+        { kiriview::ImageDocumentChange::DisplayedUrl,
+            kiriview::ImageDocumentChange::WindowTitleFileName });
+    compareChanges(kiriview::imageDocumentDisplayedLocationNotifications(true, false),
+        { kiriview::ImageDocumentChange::DisplayedUrl });
+    compareChanges(kiriview::imageDocumentDisplayedLocationNotifications(false, true),
+        { kiriview::ImageDocumentChange::WindowTitleFileName });
+    compareChanges(kiriview::imageDocumentDisplayedLocationNotifications(false, false),
+        std::vector<kiriview::ImageDocumentChange> {});
+    compareChanges(kiriview::imageDocumentTwoPageModeNotifications(),
+        { kiriview::ImageDocumentChange::TwoPageMode, kiriview::ImageDocumentChange::ImageSize,
+            kiriview::ImageDocumentChange::DisplaySize, kiriview::ImageDocumentChange::ZoomPercent,
+            kiriview::ImageDocumentChange::ZoomMode,
+            kiriview::ImageDocumentChange::MaximumManualZoomPercent,
+            kiriview::ImageDocumentChange::DisplaySource });
+    kiriview::ImageZoomChangeSet spreadZoomChanges;
     spreadZoomChanges.viewportSizeChanged = true;
     spreadZoomChanges.zoomModeChanged = true;
     spreadZoomChanges.zoomPercentChanged = true;
     spreadZoomChanges.displaySizeChanged = true;
     spreadZoomChanges.maximumManualZoomPercentChanged = true;
-    compareChanges(KiriView::imageDocumentSpreadZoomNotifications(spreadZoomChanges),
-        { KiriView::ImageDocumentChange::ViewportSize, KiriView::ImageDocumentChange::ZoomMode,
-            KiriView::ImageDocumentChange::ZoomPercent, KiriView::ImageDocumentChange::DisplaySize,
-            KiriView::ImageDocumentChange::MaximumManualZoomPercent,
-            KiriView::ImageDocumentChange::TwoPageMode });
-    KiriView::ImageZoomChangeSet viewportOnlySpreadZoomChanges;
+    compareChanges(kiriview::imageDocumentSpreadZoomNotifications(spreadZoomChanges),
+        { kiriview::ImageDocumentChange::ViewportSize, kiriview::ImageDocumentChange::ZoomMode,
+            kiriview::ImageDocumentChange::ZoomPercent, kiriview::ImageDocumentChange::DisplaySize,
+            kiriview::ImageDocumentChange::MaximumManualZoomPercent,
+            kiriview::ImageDocumentChange::TwoPageMode });
+    kiriview::ImageZoomChangeSet viewportOnlySpreadZoomChanges;
     viewportOnlySpreadZoomChanges.viewportSizeChanged = true;
-    compareChanges(KiriView::imageDocumentSpreadZoomNotifications(viewportOnlySpreadZoomChanges),
-        { KiriView::ImageDocumentChange::ViewportSize,
-            KiriView::ImageDocumentChange::DisplaySize });
-    compareChanges(KiriView::imageDocumentSpreadZoomNotifications({}),
-        std::vector<KiriView::ImageDocumentChange> {});
-    compareChanges(KiriView::imageDocumentRightToLeftReadingNotifications(false),
-        { KiriView::ImageDocumentChange::RightToLeftReading,
-            KiriView::ImageDocumentChange::DisplaySource });
-    compareChanges(KiriView::imageDocumentRightToLeftReadingNotifications(true),
-        { KiriView::ImageDocumentChange::RightToLeftReading,
-            KiriView::ImageDocumentChange::DisplaySource,
-            KiriView::ImageDocumentChange::TwoPageMode });
+    compareChanges(kiriview::imageDocumentSpreadZoomNotifications(viewportOnlySpreadZoomChanges),
+        { kiriview::ImageDocumentChange::ViewportSize,
+            kiriview::ImageDocumentChange::DisplaySize });
+    compareChanges(kiriview::imageDocumentSpreadZoomNotifications({}),
+        std::vector<kiriview::ImageDocumentChange> {});
+    compareChanges(kiriview::imageDocumentRightToLeftReadingNotifications(false),
+        { kiriview::ImageDocumentChange::RightToLeftReading,
+            kiriview::ImageDocumentChange::DisplaySource });
+    compareChanges(kiriview::imageDocumentRightToLeftReadingNotifications(true),
+        { kiriview::ImageDocumentChange::RightToLeftReading,
+            kiriview::ImageDocumentChange::DisplaySource,
+            kiriview::ImageDocumentChange::TwoPageMode });
 
-    KiriView::ImageZoomChangeSet presentationZoomChanges;
+    kiriview::ImageZoomChangeSet presentationZoomChanges;
     presentationZoomChanges.imageSizeChanged = true;
     presentationZoomChanges.viewportSizeChanged = true;
     presentationZoomChanges.zoomModeChanged = true;
     presentationZoomChanges.zoomPercentChanged = true;
     presentationZoomChanges.displaySizeChanged = true;
     presentationZoomChanges.maximumManualZoomPercentChanged = true;
-    compareChanges(KiriView::imageDocumentPresentationZoomNotifications(presentationZoomChanges),
-        { KiriView::ImageDocumentChange::ImageSize, KiriView::ImageDocumentChange::ViewportSize,
-            KiriView::ImageDocumentChange::ZoomMode, KiriView::ImageDocumentChange::ZoomPercent,
-            KiriView::ImageDocumentChange::DisplaySize,
-            KiriView::ImageDocumentChange::MaximumManualZoomPercent });
+    compareChanges(kiriview::imageDocumentPresentationZoomNotifications(presentationZoomChanges),
+        { kiriview::ImageDocumentChange::ImageSize, kiriview::ImageDocumentChange::ViewportSize,
+            kiriview::ImageDocumentChange::ZoomMode, kiriview::ImageDocumentChange::ZoomPercent,
+            kiriview::ImageDocumentChange::DisplaySize,
+            kiriview::ImageDocumentChange::MaximumManualZoomPercent });
 
-    KiriView::ImageZoomChangeSet projectionUpdateOnlyChanges;
+    kiriview::ImageZoomChangeSet projectionUpdateOnlyChanges;
     projectionUpdateOnlyChanges.displayProjectionUpdateNeeded = true;
     compareChanges(
-        KiriView::imageDocumentPresentationZoomNotifications(projectionUpdateOnlyChanges),
-        std::vector<KiriView::ImageDocumentChange> {});
+        kiriview::imageDocumentPresentationZoomNotifications(projectionUpdateOnlyChanges),
+        std::vector<kiriview::ImageDocumentChange> {});
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentNotifications)

@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGESPREADSECONDARYPAGEREFRESHPOLICY_H
 #define KIRIVIEW_IMAGESPREADSECONDARYPAGEREFRESHPOLICY_H
 
-namespace KiriView {
+namespace kiriview {
 enum class ImageSpreadSecondaryPageDecision {
     PrimaryOnly,
     LoadNext,

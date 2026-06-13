@@ -13,7 +13,7 @@
 #include <QtGlobal>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 enum class DocumentSessionKind;
 
 enum class MediaInformationKind {

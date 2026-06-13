@@ -20,7 +20,7 @@ bool isLiveLocalDirectoryUrl(const QUrl &url)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentPageCandidateStore::ImageDocumentPageCandidateStore(QObject *parent)
     : QObject(parent)
 {

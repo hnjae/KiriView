@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_DISPLAYIMAGEQUALITY_H
 #define KIRIVIEW_DISPLAYIMAGEQUALITY_H
 
-namespace KiriView {
+namespace kiriview {
 enum class DisplayImageQuality {
     Exact,
     FirstDisplay,

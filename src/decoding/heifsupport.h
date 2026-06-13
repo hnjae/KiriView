@@ -14,7 +14,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 QString heifErrorString(const QString &action, const heif_error &error);
 
 namespace Detail {

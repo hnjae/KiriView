@@ -9,7 +9,7 @@
 
 class QUrl;
 
-namespace KiriView {
+namespace kiriview {
 struct DirectMediaNavigationCandidate;
 
 QStringList supportedOrdinaryMediaExtensions();

@@ -23,15 +23,15 @@ private Q_SLOTS:
 void TestImageZoomWorkflowState::mutationOwnsRenderContextRefreshAndZoomChanges()
 {
     qreal devicePixelRatio = 1.0;
-    KiriView::ImageZoomWorkflowState state([&devicePixelRatio]() {
-        return KiriView::ImageDocumentRenderContext {
+    kiriview::ImageZoomWorkflowState state([&devicePixelRatio]() {
+        return kiriview::ImageDocumentRenderContext {
             devicePixelRatio,
-            KiriView::fallbackTextureSizeMax,
+            kiriview::fallbackTextureSizeMax,
         };
     });
 
-    KiriView::ImageZoomWorkflowMutationResult result
-        = state.mutate([](KiriView::ImageZoomState &zoomState, qreal mutationDevicePixelRatio) {
+    kiriview::ImageZoomWorkflowMutationResult result
+        = state.mutate([](kiriview::ImageZoomState &zoomState, qreal mutationDevicePixelRatio) {
               zoomState.setViewportSize(QSizeF(400.0, 200.0), mutationDevicePixelRatio);
               zoomState.setImageSize(QSize(800, 400), mutationDevicePixelRatio);
           });
@@ -45,7 +45,7 @@ void TestImageZoomWorkflowState::mutationOwnsRenderContextRefreshAndZoomChanges(
     QCOMPARE(state.zoomState().displaySize(), QSizeF(400.0, 200.0));
 
     devicePixelRatio = 2.0;
-    result = state.mutate([](KiriView::ImageZoomState &zoomState, qreal mutationDevicePixelRatio) {
+    result = state.mutate([](kiriview::ImageZoomState &zoomState, qreal mutationDevicePixelRatio) {
         zoomState.update(mutationDevicePixelRatio);
     });
 
@@ -57,15 +57,15 @@ void TestImageZoomWorkflowState::mutationOwnsRenderContextRefreshAndZoomChanges(
 
 void TestImageZoomWorkflowState::forcedTileRefreshSchedulesDecodeWithoutZoomChange()
 {
-    KiriView::ImageZoomWorkflowState state([]() {
-        return KiriView::ImageDocumentRenderContext { 1.0, KiriView::fallbackTextureSizeMax };
+    kiriview::ImageZoomWorkflowState state([]() {
+        return kiriview::ImageDocumentRenderContext { 1.0, kiriview::fallbackTextureSizeMax };
     });
-    state.mutate([](KiriView::ImageZoomState &zoomState, qreal devicePixelRatio) {
+    state.mutate([](kiriview::ImageZoomState &zoomState, qreal devicePixelRatio) {
         zoomState.setViewportSize(QSizeF(100.0, 100.0), devicePixelRatio);
     });
 
-    const KiriView::ImageZoomWorkflowMutationResult result
-        = state.mutate([](KiriView::ImageZoomState &, qreal) { }, true);
+    const kiriview::ImageZoomWorkflowMutationResult result
+        = state.mutate([](kiriview::ImageZoomState &, qreal) { }, true);
 
     QVERIFY(!result.changes.imageSizeChanged);
     QVERIFY(!result.changes.viewportSizeChanged);
@@ -75,8 +75,8 @@ void TestImageZoomWorkflowState::forcedTileRefreshSchedulesDecodeWithoutZoomChan
 
 void TestImageZoomWorkflowState::clearResetsCanonicalZoomState()
 {
-    KiriView::ImageZoomWorkflowState state;
-    state.mutate([](KiriView::ImageZoomState &zoomState, qreal devicePixelRatio) {
+    kiriview::ImageZoomWorkflowState state;
+    state.mutate([](kiriview::ImageZoomState &zoomState, qreal devicePixelRatio) {
         zoomState.setViewportSize(QSizeF(100.0, 100.0), devicePixelRatio);
         zoomState.setImageSize(QSize(50, 50), devicePixelRatio);
     });
@@ -85,7 +85,7 @@ void TestImageZoomWorkflowState::clearResetsCanonicalZoomState()
 
     QVERIFY(state.zoomState().imageSize().isEmpty());
     QVERIFY(state.zoomState().viewportSize().isEmpty());
-    QCOMPARE(state.zoomState().zoomMode(), KiriView::ImageZoomMode::Fit);
+    QCOMPARE(state.zoomState().zoomMode(), kiriview::ImageZoomMode::Fit);
 }
 
 QTEST_GUILESS_MAIN(TestImageZoomWorkflowState)

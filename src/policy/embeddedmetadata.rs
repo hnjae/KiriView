@@ -8,7 +8,7 @@ use nom_exif::{
     TrackInfoTag, URational,
 };
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     #[derive(Clone, Debug, PartialEq, Eq)]
     struct RustEmbeddedMetadataRow {

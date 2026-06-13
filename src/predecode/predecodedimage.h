@@ -10,7 +10,7 @@
 
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 struct PredecodedImage {
     StaticDisplayImagePayload displayImage;
     DisplayedImageLocation location;

@@ -7,7 +7,7 @@
 
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 PowerSaverProvider defaultPowerSaverProvider()
 {
     return PowerSaverProvider {

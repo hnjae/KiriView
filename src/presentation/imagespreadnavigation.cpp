@@ -6,7 +6,7 @@
 #include "bridge/imagespreadpolicyconversion.h"
 #include "kiriview/src/policy/imagespreadnavigation.cxx.h"
 
-namespace KiriView {
+namespace kiriview {
 int imageSpreadNavigationCurrentLastPageNumber(const ImageSpreadNavigationState &state)
 {
     return rustImageSpreadNavigationCurrentLastPageNumber(

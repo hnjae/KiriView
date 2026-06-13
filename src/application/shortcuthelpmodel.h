@@ -13,7 +13,7 @@
 #include <QVariant>
 #include <functional>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 struct ShortcutHelpRow {
     int actionId = -1;
     QString actionName;

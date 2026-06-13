@@ -7,7 +7,7 @@
 #include <QByteArray>
 #include <string_view>
 
-namespace KiriView {
+namespace kiriview {
 enum class HeifBrandKind {
     Unknown,
     StillImage,

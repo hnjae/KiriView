@@ -10,15 +10,15 @@
 #include <utility>
 
 namespace {
-using KiriView::ImageLoadStartEffect;
-using KiriView::openedCollectionScopeContainsUrl;
-using KiriView::OpenedCollectionScopeLoadEffect;
-using KiriView::OpenedCollectionScopeLocation;
-using KiriView::openedCollectionScopeLocationForDirectlyOpenedLocalUrl;
-using KiriView::openedCollectionScopeLocationForLocalArchiveUrl;
+using kiriview::ImageLoadStartEffect;
+using kiriview::openedCollectionScopeContainsUrl;
+using kiriview::OpenedCollectionScopeLoadEffect;
+using kiriview::OpenedCollectionScopeLocation;
+using kiriview::openedCollectionScopeLocationForDirectlyOpenedLocalUrl;
+using kiriview::openedCollectionScopeLocationForLocalArchiveUrl;
 
 std::optional<OpenedCollectionScopeLocation> containerOpenedCollectionScopeForImageLoadRequest(
-    const KiriView::ImageLoadRequest &request)
+    const kiriview::ImageLoadRequest &request)
 {
     if (!request.isContainerNavigation()) {
         return std::nullopt;
@@ -47,7 +47,7 @@ ImageLoadStartEffect imageLoadStartEffectForPageScopeEffect(OpenedCollectionScop
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 OpenedCollectionScopeLoadPlan openedCollectionScopeLoadPlan(const ImageLoadRequest &request)
 {
     const std::optional<OpenedCollectionScopeLocation> sourceOpenedCollectionScope

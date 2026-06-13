@@ -16,11 +16,11 @@
 #include <string>
 
 namespace {
-KiriView::ApplicationStartupSource startupSource(
-    KiriView::ApplicationStartupSourceKind kind, const QString &text = {}, bool verbose = false)
+kiriview::ApplicationStartupSource startupSource(
+    kiriview::ApplicationStartupSourceKind kind, const QString &text = {}, bool verbose = false)
 {
     const QByteArray utf8Text = text.toUtf8();
-    return KiriView::ApplicationStartupSource {
+    return kiriview::ApplicationStartupSource {
         kind,
         rust::String(std::string(utf8Text.constData(), static_cast<std::size_t>(utf8Text.size()))),
         verbose,
@@ -67,8 +67,8 @@ void TestApplicationRuntime::cleanup() { QLoggingCategory::setFilterRules(QStrin
 
 void TestApplicationRuntime::startupSourceUrlIsEmptyWithoutSource()
 {
-    const QUrl url = KiriView::initialSourceUrlFromStartupSource(
-        startupSource(KiriView::ApplicationStartupSourceKind::None));
+    const QUrl url = kiriview::initialSourceUrlFromStartupSource(
+        startupSource(kiriview::ApplicationStartupSourceKind::None));
 
     QVERIFY(url.isEmpty());
 }
@@ -77,8 +77,8 @@ void TestApplicationRuntime::startupSourceUrlUsesLocalFilePath()
 {
     const QString path = QStringLiteral("/tmp/kiriview/image.png");
 
-    const QUrl url = KiriView::initialSourceUrlFromStartupSource(
-        startupSource(KiriView::ApplicationStartupSourceKind::LocalFilePath, path));
+    const QUrl url = kiriview::initialSourceUrlFromStartupSource(
+        startupSource(kiriview::ApplicationStartupSourceKind::LocalFilePath, path));
 
     QVERIFY(url.isValid());
     QVERIFY(url.isLocalFile());
@@ -87,8 +87,8 @@ void TestApplicationRuntime::startupSourceUrlUsesLocalFilePath()
 
 void TestApplicationRuntime::startupSourceUrlUsesUrlText()
 {
-    const QUrl url = KiriView::initialSourceUrlFromStartupSource(
-        startupSource(KiriView::ApplicationStartupSourceKind::UrlText,
+    const QUrl url = kiriview::initialSourceUrlFromStartupSource(
+        startupSource(kiriview::ApplicationStartupSourceKind::UrlText,
             QStringLiteral("https://example.invalid/image.png")));
 
     QVERIFY(url.isValid());
@@ -97,16 +97,16 @@ void TestApplicationRuntime::startupSourceUrlUsesUrlText()
 
 void TestApplicationRuntime::startupSourceUrlRejectsEmptyUrlText()
 {
-    const QUrl url = KiriView::initialSourceUrlFromStartupSource(
-        startupSource(KiriView::ApplicationStartupSourceKind::UrlText));
+    const QUrl url = kiriview::initialSourceUrlFromStartupSource(
+        startupSource(kiriview::ApplicationStartupSourceKind::UrlText));
 
     QVERIFY(url.isEmpty());
 }
 
 void TestApplicationRuntime::startupSourceCarriesVerboseMode()
 {
-    const KiriView::ApplicationStartupSource source
-        = startupSource(KiriView::ApplicationStartupSourceKind::None, {}, true);
+    const kiriview::ApplicationStartupSource source
+        = startupSource(kiriview::ApplicationStartupSourceKind::None, {}, true);
 
     QVERIFY(source.verbose);
 }
@@ -115,8 +115,8 @@ void TestApplicationRuntime::runtimeDiagnosticsStayDisabledWithoutVerboseStartup
 {
     QLoggingCategory::setFilterRules(QStringLiteral("org.hnjae.kiriview.*.debug=false"));
 
-    KiriView::configureApplicationRuntimeDiagnostics(
-        startupSource(KiriView::ApplicationStartupSourceKind::None));
+    kiriview::configureApplicationRuntimeDiagnostics(
+        startupSource(kiriview::ApplicationStartupSourceKind::None));
 
     for (const QString &categoryName : diagnosticCategoryNames()) {
         QVERIFY2(!categoryDebugEnabled(categoryName), qPrintable(categoryName));
@@ -127,8 +127,8 @@ void TestApplicationRuntime::runtimeDiagnosticsEnableVerboseStartupCategories()
 {
     QLoggingCategory::setFilterRules(QStringLiteral("org.hnjae.kiriview.*.debug=false"));
 
-    KiriView::configureApplicationRuntimeDiagnostics(
-        startupSource(KiriView::ApplicationStartupSourceKind::None, {}, true));
+    kiriview::configureApplicationRuntimeDiagnostics(
+        startupSource(kiriview::ApplicationStartupSourceKind::None, {}, true));
 
     for (const QString &categoryName : diagnosticCategoryNames()) {
         QVERIFY2(categoryDebugEnabled(categoryName), qPrintable(categoryName));
@@ -139,7 +139,7 @@ void TestApplicationRuntime::registersDisplayImageProvider()
 {
     QQmlEngine engine;
 
-    KiriView::registerApplicationImageProviders(engine);
+    kiriview::registerApplicationImageProviders(engine);
 
     QVERIFY(engine.imageProvider(QStringLiteral("kiriview-thumbnails")) != nullptr);
     QVERIFY(engine.imageProvider(QStringLiteral("kiriview-images")) != nullptr);

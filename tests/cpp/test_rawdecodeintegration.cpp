@@ -35,12 +35,12 @@ QByteArray rawFixtureData(QFileInfo *fixtureInfo)
 }
 
 void verifyDecodedRawFixture(
-    const QByteArray &imageData, const KiriView::ImageDecodeRequest &request)
+    const QByteArray &imageData, const kiriview::ImageDecodeRequest &request)
 {
-    const KiriView::DecodedImageResult result = KiriView::decodeImageData(imageData, request);
+    const kiriview::DecodedImageResult result = kiriview::decodeImageData(imageData, request);
 
-    const auto *decoded = KiriView::decodedImageResultImageAs<KiriView::StaticDecodedImage>(result);
-    const auto *failure = KiriView::decodedImageResultFailure(result);
+    const auto *decoded = kiriview::decodedImageResultImageAs<kiriview::StaticDecodedImage>(result);
+    const auto *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY2(decoded != nullptr,
         qPrintable(failure != nullptr ? failure->errorString
                                       : QStringLiteral("RAW fixture did not decode.")));
@@ -59,8 +59,8 @@ void TestRawDecodeIntegration::smallDngFixtureDecodesThroughPublicDecodePath()
     QVERIFY2(fixtureInfo.exists(), qPrintable(fixtureInfo.filePath()));
     QVERIFY(!imageData.isEmpty());
 
-    const KiriView::ImageDecodeRequest request
-        = KiriView::ImageDecodeRequest::fromUrl(1, QUrl::fromLocalFile(fixtureInfo.filePath()));
+    const kiriview::ImageDecodeRequest request
+        = kiriview::ImageDecodeRequest::fromUrl(1, QUrl::fromLocalFile(fixtureInfo.filePath()));
     verifyDecodedRawFixture(imageData, request);
 }
 
@@ -75,9 +75,9 @@ void TestRawDecodeIntegration::smallDngFixtureDecodesWhenRequestUrlLacksRawExten
 
     const QUrl extensionlessUrl
         = QUrl::fromLocalFile(fixtureInfo.absolutePath() + QStringLiteral("/raw-cfa-smoke"));
-    const KiriView::ImageDecodeRequest request
-        = KiriView::ImageDecodeRequest::fromUrl(1, extensionlessUrl);
-    QVERIFY(!KiriView::isSupportedRawImageFileName(request.imageUrl().fileName()));
+    const kiriview::ImageDecodeRequest request
+        = kiriview::ImageDecodeRequest::fromUrl(1, extensionlessUrl);
+    QVERIFY(!kiriview::isSupportedRawImageFileName(request.imageUrl().fileName()));
     verifyDecodedRawFixture(imageData, request);
 }
 

@@ -14,24 +14,24 @@ std::int64_t rustByteCost(qsizetype byteCost) { return static_cast<std::int64_t>
 
 std::uint64_t rustUseClock(quint64 useClock) { return static_cast<std::uint64_t>(useClock); }
 
-KiriView::RustLruCacheRetentionEntry rustRetentionEntry(KiriView::ImageCacheRetentionEntry entry)
+kiriview::RustLruCacheRetentionEntry rustRetentionEntry(kiriview::ImageCacheRetentionEntry entry)
 {
-    return KiriView::RustLruCacheRetentionEntry {
+    return kiriview::RustLruCacheRetentionEntry {
         rustByteCost(entry.byteCost),
         rustUseClock(entry.lastUse),
     };
 }
 
-KiriView::ImageCacheRetainedEntry retainedEntryFromRust(KiriView::RustLruCacheRetainedEntry entry)
+kiriview::ImageCacheRetainedEntry retainedEntryFromRust(kiriview::RustLruCacheRetainedEntry entry)
 {
-    return KiriView::ImageCacheRetainedEntry {
+    return kiriview::ImageCacheRetainedEntry {
         entry.original_index,
-        KiriView::Bridge::qtByteSize(entry.byte_cost),
+        kiriview::Bridge::qtByteSize(entry.byte_cost),
     };
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 std::vector<ImageCacheRetainedEntry> lruCacheRetentionPlan(
     const std::vector<ImageCacheRetentionEntry> &entries, qsizetype byteBudget)
 {

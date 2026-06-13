@@ -7,7 +7,7 @@
 
 namespace {
 void dispatchPlan(
-    const KiriView::VideoSourceLoadPlanCallback &callback, KiriView::VideoSourceLoadPlan plan)
+    const kiriview::VideoSourceLoadPlanCallback &callback, kiriview::VideoSourceLoadPlan plan)
 {
     if (callback) {
         callback(std::move(plan));
@@ -15,7 +15,7 @@ void dispatchPlan(
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 VideoSourceLoadRuntime::VideoSourceLoadRuntime(std::unique_ptr<VideoPlaybackUrlResolver> resolver)
     : m_resolver(
           resolver == nullptr ? createDefaultVideoPlaybackUrlResolver() : std::move(resolver))

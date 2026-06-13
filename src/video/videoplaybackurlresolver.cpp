@@ -41,30 +41,30 @@ bool kioProtocolMayProvideLocalPath(const QUrl &url)
     return KProtocolInfo::protocolClass(url.scheme()) == QLatin1String(":local");
 }
 
-class KioFuseVideoPlaybackUrlResolver final : public KiriView::VideoPlaybackUrlResolver
+class KioFuseVideoPlaybackUrlResolver final : public kiriview::VideoPlaybackUrlResolver
 {
 public:
     void resolve(quint64 operationId, const QUrl &sourceUrl, QObject *receiver,
-        KiriView::VideoPlaybackUrlResolvedCallback resolvedCallback,
-        KiriView::VideoPlaybackUrlFailedCallback failedCallback) override
+        kiriview::VideoPlaybackUrlResolvedCallback resolvedCallback,
+        kiriview::VideoPlaybackUrlFailedCallback failedCallback) override
     {
         cancel();
         cleanup();
 
         if (sourceUrl.isEmpty() || !sourceUrl.isValid()) {
-            KiriView::invokeIfSet(
+            kiriview::invokeIfSet(
                 failedCallback, operationId, sourceUrl, QStringLiteral("Invalid video URL."));
             return;
         }
 
-        if (KiriView::videoPlaybackBackendCanConsumeUrl(sourceUrl)) {
-            KiriView::invokeIfSet(resolvedCallback,
-                KiriView::VideoPlaybackUrlResolution { operationId, sourceUrl, sourceUrl });
+        if (kiriview::videoPlaybackBackendCanConsumeUrl(sourceUrl)) {
+            kiriview::invokeIfSet(resolvedCallback,
+                kiriview::VideoPlaybackUrlResolution { operationId, sourceUrl, sourceUrl });
             return;
         }
 
         if (!kioProtocolMayProvideLocalPath(sourceUrl)) {
-            KiriView::invokeIfSet(failedCallback, operationId, sourceUrl,
+            kiriview::invokeIfSet(failedCallback, operationId, sourceUrl,
                 QStringLiteral("This video URL cannot be resolved to a local playback URL."));
             return;
         }
@@ -73,8 +73,8 @@ public:
             kioFuseService, kioFusePath, kioFuseInterface, QDBusConnection::sessionBus());
         auto *watcher = new QDBusPendingCallWatcher(
             kioFuse.asyncCall(QStringLiteral("mountUrl"), sourceUrl.toString(QUrl::FullyEncoded)));
-        m_job = KiriView::ImageIoJob(watcher, deleteQObjectLater);
-        const KiriView::ImageIoJobCompletion completion = m_job.completion();
+        m_job = kiriview::ImageIoJob(watcher, deleteQObjectLater);
+        const kiriview::ImageIoJobCompletion completion = m_job.completion();
         QObject *context = receiver == nullptr ? watcher : receiver;
 
         QObject::connect(watcher, &QDBusPendingCallWatcher::finished, context,
@@ -84,20 +84,20 @@ public:
                 completion.claimAndDelete([&]() {
                     const QDBusPendingReply<QString> reply(*finishedWatcher);
                     if (reply.isError()) {
-                        KiriView::invokeIfSet(
+                        kiriview::invokeIfSet(
                             failedCallback, operationId, sourceUrl, reply.error().message());
                         return;
                     }
 
                     const QUrl playbackUrl = QUrl::fromLocalFile(reply.value());
-                    if (!KiriView::videoPlaybackBackendCanConsumeUrl(playbackUrl)) {
-                        KiriView::invokeIfSet(failedCallback, operationId, sourceUrl,
+                    if (!kiriview::videoPlaybackBackendCanConsumeUrl(playbackUrl)) {
+                        kiriview::invokeIfSet(failedCallback, operationId, sourceUrl,
                             QStringLiteral("Could not resolve a local video playback URL."));
                         return;
                     }
 
-                    KiriView::invokeIfSet(resolvedCallback,
-                        KiriView::VideoPlaybackUrlResolution {
+                    kiriview::invokeIfSet(resolvedCallback,
+                        kiriview::VideoPlaybackUrlResolution {
                             operationId, sourceUrl, playbackUrl });
                 });
             });
@@ -111,11 +111,11 @@ public:
     }
 
 private:
-    KiriView::ImageIoJob m_job;
+    kiriview::ImageIoJob m_job;
 };
 }
 
-namespace KiriView {
+namespace kiriview {
 bool videoPlaybackBackendCanConsumeUrl(const QUrl &url)
 {
     return url.isValid() && !url.isEmpty() && isDirectBackendScheme(url.scheme());

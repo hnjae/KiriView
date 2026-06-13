@@ -8,7 +8,7 @@
 #include <QString>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct EmbeddedMetadataRow {
     QString label;
     QString value;

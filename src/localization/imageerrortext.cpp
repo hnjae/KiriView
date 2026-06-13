@@ -5,7 +5,7 @@
 
 #include <KLocalizedString>
 
-namespace KiriView {
+namespace kiriview {
 QString imageErrorText(ImageErrorTextId id)
 {
     switch (id) {

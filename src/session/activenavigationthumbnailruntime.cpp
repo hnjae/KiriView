@@ -12,12 +12,12 @@
 #include <utility>
 
 namespace {
-using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
+using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
 
-KiriView::ActiveNavigationThumbnailSourceKey sourceKeyForRow(
-    const KiriView::ActiveNavigationThumbnailRow &row, quint64 navigationGeneration)
+kiriview::ActiveNavigationThumbnailSourceKey sourceKeyForRow(
+    const kiriview::ActiveNavigationThumbnailRow &row, quint64 navigationGeneration)
 {
-    return KiriView::ActiveNavigationThumbnailSourceKey {
+    return kiriview::ActiveNavigationThumbnailSourceKey {
         row.number,
         row.url,
         row.label,
@@ -32,25 +32,25 @@ constexpr std::array<Bucket, 4> backgroundFillBuckets()
     return { Bucket::Normal, Bucket::Large, Bucket::XLarge, Bucket::XXLarge };
 }
 
-KiriView::ThumbnailSourceKind thumbnailSourceKind(
-    KiriView::ActiveNavigationThumbnailSourceKind sourceKind)
+kiriview::ThumbnailSourceKind thumbnailSourceKind(
+    kiriview::ActiveNavigationThumbnailSourceKind sourceKind)
 {
     switch (sourceKind) {
-    case KiriView::ActiveNavigationThumbnailSourceKind::DirectImage:
-        return KiriView::ThumbnailSourceKind::DirectImage;
-    case KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo:
-        return KiriView::ThumbnailSourceKind::DirectVideo;
-    case KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage:
-        return KiriView::ThumbnailSourceKind::ImageDocumentPageImage;
-    case KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageVideo:
-        return KiriView::ThumbnailSourceKind::ImageDocumentPageVideo;
+    case kiriview::ActiveNavigationThumbnailSourceKind::DirectImage:
+        return kiriview::ThumbnailSourceKind::DirectImage;
+    case kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo:
+        return kiriview::ThumbnailSourceKind::DirectVideo;
+    case kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage:
+        return kiriview::ThumbnailSourceKind::ImageDocumentPageImage;
+    case kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageVideo:
+        return kiriview::ThumbnailSourceKind::ImageDocumentPageVideo;
     }
 
-    return KiriView::ThumbnailSourceKind::DirectImage;
+    return kiriview::ThumbnailSourceKind::DirectImage;
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ThumbnailSourceAdapter defaultThumbnailSourceAdapter()
 {
     return [](ThumbnailSourceAdapterRequest request) {

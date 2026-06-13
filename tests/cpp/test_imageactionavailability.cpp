@@ -156,7 +156,7 @@ void TestImageActionAvailability::shortcutAvailabilityUsesViewerAndRuntimeGates(
 
 void TestImageActionAvailability::policyScopeLookupUsesApplicationScope()
 {
-    using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+    using Scope = kiriview::ApplicationActions::ImageShortcutScope;
 
     ImageActionAvailabilityProjection projection;
     projection.helpShortcutsEnabled = true;
@@ -181,7 +181,7 @@ void TestImageActionAvailability::policyScopeLookupUsesApplicationScope()
 
 void TestImageActionAvailability::activeImageDocumentSourceScopeLookupUsesSessionNavigationInput()
 {
-    using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+    using Scope = kiriview::ApplicationActions::ImageShortcutScope;
 
     ImageActionAvailabilityProjection projection;
     projection.helpShortcutsEnabled = true;

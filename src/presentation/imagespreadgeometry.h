@@ -8,7 +8,7 @@
 #include <QSize>
 #include <QSizeF>
 
-namespace KiriView {
+namespace kiriview {
 QSize imageSpreadImageSize(const QSize &primarySize, const QSize &secondarySize);
 QSizeF imageSpreadScaledPageDisplaySize(
     const QSize &pageSize, const QSize &spreadImageSize, const QSizeF &spreadDisplaySize);

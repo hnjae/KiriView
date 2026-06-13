@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustHeifTiling {

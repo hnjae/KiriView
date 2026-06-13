@@ -73,7 +73,7 @@ public:
     };
     Q_ENUM(RetentionStatus)
 
-    explicit KiriImageDisplaySource(KiriView::DisplayedPageRole role, QObject *parent = nullptr);
+    explicit KiriImageDisplaySource(kiriview::DisplayedPageRole role, QObject *parent = nullptr);
 
     bool visible() const;
     PageRole pageRole() const;
@@ -93,13 +93,13 @@ public:
     RetentionStatus retentionStatus() const;
     bool retainWhileLoadingEligible() const;
 
-    void setProjection(KiriView::ImageDisplaySourceProjection projection);
+    void setProjection(kiriview::ImageDisplaySourceProjection projection);
 
 Q_SIGNALS:
     void changed();
 
 private:
-    KiriView::ImageDisplaySourceProjection m_projection;
+    kiriview::ImageDisplaySourceProjection m_projection;
 };
 
 #endif

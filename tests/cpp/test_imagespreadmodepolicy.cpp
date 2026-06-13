@@ -17,40 +17,40 @@ private Q_SLOTS:
 
 void TestImageSpreadModePolicy::readingControlsRequireDisplayedComicArchiveImage()
 {
-    QVERIFY(!KiriView::imageSpreadReadingControlsAvailable(
-        KiriView::ImageSpreadReadingAvailability { false, true, true }));
-    QVERIFY(!KiriView::imageSpreadReadingControlsAvailable(
-        KiriView::ImageSpreadReadingAvailability { true, false, true }));
-    QVERIFY(!KiriView::imageSpreadReadingControlsAvailable(
-        KiriView::ImageSpreadReadingAvailability { true, true, false }));
-    QVERIFY(KiriView::imageSpreadReadingControlsAvailable(
-        KiriView::ImageSpreadReadingAvailability { true, true, true }));
+    QVERIFY(!kiriview::imageSpreadReadingControlsAvailable(
+        kiriview::ImageSpreadReadingAvailability { false, true, true }));
+    QVERIFY(!kiriview::imageSpreadReadingControlsAvailable(
+        kiriview::ImageSpreadReadingAvailability { true, false, true }));
+    QVERIFY(!kiriview::imageSpreadReadingControlsAvailable(
+        kiriview::ImageSpreadReadingAvailability { true, true, false }));
+    QVERIFY(kiriview::imageSpreadReadingControlsAvailable(
+        kiriview::ImageSpreadReadingAvailability { true, true, true }));
 }
 
 void TestImageSpreadModePolicy::twoPageModeChangePlansToggleSideEffects()
 {
-    const KiriView::ImageSpreadTwoPageModeChange noChange
-        = KiriView::imageSpreadTwoPageModeChange(true, true, true);
+    const kiriview::ImageSpreadTwoPageModeChange noChange
+        = kiriview::imageSpreadTwoPageModeChange(true, true, true);
     QVERIFY(!noChange.changed);
 
-    const KiriView::ImageSpreadTwoPageModeChange enable
-        = KiriView::imageSpreadTwoPageModeChange(false, true, false);
+    const kiriview::ImageSpreadTwoPageModeChange enable
+        = kiriview::imageSpreadTwoPageModeChange(false, true, false);
     QVERIFY(enable.changed);
     QVERIFY(!enable.finishTransition);
     QVERIFY(!enable.clearSecondaryPage);
     QVERIFY(enable.refreshSecondaryPage);
     QVERIFY(enable.notifyTwoPageMode);
 
-    const KiriView::ImageSpreadTwoPageModeChange disableHidden
-        = KiriView::imageSpreadTwoPageModeChange(true, false, false);
+    const kiriview::ImageSpreadTwoPageModeChange disableHidden
+        = kiriview::imageSpreadTwoPageModeChange(true, false, false);
     QVERIFY(disableHidden.changed);
     QVERIFY(disableHidden.finishTransition);
     QVERIFY(disableHidden.clearSecondaryPage);
     QVERIFY(disableHidden.refreshSecondaryPage);
     QVERIFY(disableHidden.notifyTwoPageMode);
 
-    const KiriView::ImageSpreadTwoPageModeChange disableVisible
-        = KiriView::imageSpreadTwoPageModeChange(true, false, true);
+    const kiriview::ImageSpreadTwoPageModeChange disableVisible
+        = kiriview::imageSpreadTwoPageModeChange(true, false, true);
     QVERIFY(disableVisible.changed);
     QVERIFY(disableVisible.finishTransition);
     QVERIFY(disableVisible.clearSecondaryPage);

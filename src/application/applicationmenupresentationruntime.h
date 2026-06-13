@@ -11,7 +11,7 @@
 
 class QAction;
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 class ApplicationMenuPresentationRuntime final
 {
 public:

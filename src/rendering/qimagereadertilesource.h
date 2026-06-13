@@ -15,7 +15,7 @@
 #include <memory>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 class QImageReaderTileSource final : public ImageTileSource
 {
 public:

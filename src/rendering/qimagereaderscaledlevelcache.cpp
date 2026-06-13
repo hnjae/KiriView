@@ -7,7 +7,7 @@
 
 #include <QMutexLocker>
 
-namespace KiriView {
+namespace kiriview {
 QImageReaderScaledLevelCache::QImageReaderScaledLevelCache(qsizetype byteBudget)
     : m_cache(byteBudget)
 {

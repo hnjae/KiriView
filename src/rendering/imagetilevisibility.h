@@ -12,7 +12,7 @@
 #include <QtGlobal>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct TileVisibilityContext {
     QSizeF displaySize;
     QRectF visibleItemRect;

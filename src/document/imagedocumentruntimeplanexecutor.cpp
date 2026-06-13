@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 namespace {
     template <typename> inline constexpr bool alwaysFalse = false;
 

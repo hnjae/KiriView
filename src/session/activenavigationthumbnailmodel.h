@@ -14,7 +14,7 @@
 #include <QVariant>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 class ActiveNavigationThumbnailModel final : public QAbstractListModel
 {
 public:

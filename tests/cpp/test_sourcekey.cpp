@@ -29,7 +29,7 @@ private Q_SLOTS:
 
 void TestSourceKey::emptyAndInvalidUrlsHaveInvalidKeys()
 {
-    const KiriView::SourceKey emptyKey = KiriView::sourceKeyForUrl(QUrl());
+    const kiriview::SourceKey emptyKey = kiriview::sourceKeyForUrl(QUrl());
     QVERIFY(!emptyKey.valid);
     QVERIFY(emptyKey.normalizedUrl.isEmpty());
     QVERIFY(emptyKey.identity.isEmpty());
@@ -37,14 +37,14 @@ void TestSourceKey::emptyAndInvalidUrlsHaveInvalidKeys()
     const QUrl invalidUrl
         = QUrl::fromEncoded(QByteArrayLiteral("http://example.test/%zz"), QUrl::StrictMode);
     QVERIFY(!invalidUrl.isValid());
-    const KiriView::SourceKey invalidKey = KiriView::sourceKeyForUrl(invalidUrl);
+    const kiriview::SourceKey invalidKey = kiriview::sourceKeyForUrl(invalidUrl);
     QVERIFY(!invalidKey.valid);
     QVERIFY(invalidKey.identity.isEmpty());
 
-    QVERIFY(!KiriView::sameSourceUrlKey(QUrl(), QUrl()));
-    QVERIFY(KiriView::sameSourceUrlKeyOrEmpty(QUrl(), QUrl()));
+    QVERIFY(!kiriview::sameSourceUrlKey(QUrl(), QUrl()));
+    QVERIFY(kiriview::sameSourceUrlKeyOrEmpty(QUrl(), QUrl()));
     QVERIFY(
-        !KiriView::sameSourceUrlKeyOrEmpty(QUrl(), QUrl(QStringLiteral("file:///media/01.png"))));
+        !kiriview::sameSourceUrlKeyOrEmpty(QUrl(), QUrl(QStringLiteral("file:///media/01.png"))));
 }
 
 void TestSourceKey::pathSegmentsAreNormalizedButQueryAndFragmentArePreserved()
@@ -54,12 +54,12 @@ void TestSourceKey::pathSegmentsAreNormalizedButQueryAndFragmentArePreserved()
     const QUrl normalized(
         QStringLiteral("https://example.test/image%20folder/cover.png?name=A%20B#page%201"));
 
-    const KiriView::SourceKey key = KiriView::sourceKeyForUrl(requested);
+    const kiriview::SourceKey key = kiriview::sourceKeyForUrl(requested);
     QVERIFY(key.valid);
     QCOMPARE(key.normalizedUrl, normalized);
     QCOMPARE(key.normalizedUrl.query(QUrl::FullyEncoded), QStringLiteral("name=A%20B"));
     QCOMPARE(key.normalizedUrl.fragment(QUrl::FullyEncoded), QStringLiteral("page%201"));
-    QVERIFY(KiriView::sameSourceUrlKey(requested, normalized));
+    QVERIFY(kiriview::sameSourceUrlKey(requested, normalized));
 }
 
 void TestSourceKey::identityUsesFullyEncodedUrlText()
@@ -71,7 +71,7 @@ void TestSourceKey::identityUsesFullyEncodedUrlText()
     url.setQuery(QStringLiteral("caption=one two"));
     url.setFragment(QStringLiteral("section one"));
 
-    const KiriView::SourceKey key = KiriView::sourceKeyForUrl(url);
+    const kiriview::SourceKey key = kiriview::sourceKeyForUrl(url);
     QVERIFY(key.valid);
     QCOMPARE(key.identity, key.normalizedUrl.toString(QUrl::FullyEncoded));
     QVERIFY(key.identity.contains(QStringLiteral("%20")));
@@ -85,7 +85,7 @@ void TestSourceKey::relativeLocalFilePathsUseAbsoluteIdentity()
         = QDir::cleanPath(QDir::current().absoluteFilePath(QStringLiteral("cover.png")));
     const QUrl expected = QUrl::fromLocalFile(expectedPath);
 
-    const KiriView::SourceKey key = KiriView::sourceKeyForUrl(requested);
+    const kiriview::SourceKey key = kiriview::sourceKeyForUrl(requested);
     QVERIFY(key.valid);
     QCOMPARE(key.normalizedUrl, expected);
     QCOMPARE(key.identity, expected.toString(QUrl::FullyEncoded));
@@ -96,15 +96,15 @@ void TestSourceKey::localFileKeysCleanTrailingSlashSyntax()
     const QUrl trailingSlash = QUrl::fromLocalFile(QStringLiteral("/media/folder/../image.png/"));
     const QUrl clean = QUrl::fromLocalFile(QStringLiteral("/media/image.png"));
 
-    const KiriView::SourceKey key = KiriView::sourceKeyForUrl(trailingSlash);
+    const kiriview::SourceKey key = kiriview::sourceKeyForUrl(trailingSlash);
     QVERIFY(key.valid);
     QCOMPARE(key.normalizedUrl, clean);
-    QVERIFY(KiriView::sameSourceUrlKey(trailingSlash, clean));
+    QVERIFY(kiriview::sameSourceUrlKey(trailingSlash, clean));
 }
 
 void TestSourceKey::pathIdentityIsCaseSensitive()
 {
-    QVERIFY(!KiriView::sameSourceUrlKey(QUrl(QStringLiteral("file:///media/Image.png")),
+    QVERIFY(!kiriview::sameSourceUrlKey(QUrl(QStringLiteral("file:///media/Image.png")),
         QUrl(QStringLiteral("file:///media/image.png"))));
 }
 
@@ -123,7 +123,7 @@ void TestSourceKey::localFileKeysDoNotResolveSymlinks()
         QSKIP("Symlink creation is unavailable in this test environment");
     }
 
-    QVERIFY(!KiriView::sameSourceUrlKey(
+    QVERIFY(!kiriview::sameSourceUrlKey(
         QUrl::fromLocalFile(target.fileName()), QUrl::fromLocalFile(linkPath)));
 }
 
@@ -131,13 +131,13 @@ void TestSourceKey::directMediaKeysUseNavigationSourceIdentity()
 {
     const QUrl current(QStringLiteral("file:///media/chapter/../01.png"));
     const QUrl parent(QStringLiteral("file:///media/chapter/.."));
-    const KiriView::SourceKey currentKey = KiriView::sourceKeyForDirectMediaCurrentUrl(current);
-    const KiriView::SourceKey parentKey = KiriView::sourceKeyForDirectMediaParentUrl(parent);
+    const kiriview::SourceKey currentKey = kiriview::sourceKeyForDirectMediaCurrentUrl(current);
+    const kiriview::SourceKey parentKey = kiriview::sourceKeyForDirectMediaParentUrl(parent);
 
-    QVERIFY(KiriView::sameSourceKey(
-        currentKey, KiriView::sourceKeyForUrl(QUrl(QStringLiteral("file:///media/01.png")))));
-    QVERIFY(KiriView::sameSourceKey(
-        parentKey, KiriView::sourceKeyForUrl(QUrl(QStringLiteral("file:///media")))));
+    QVERIFY(kiriview::sameSourceKey(
+        currentKey, kiriview::sourceKeyForUrl(QUrl(QStringLiteral("file:///media/01.png")))));
+    QVERIFY(kiriview::sameSourceKey(
+        parentKey, kiriview::sourceKeyForUrl(QUrl(QStringLiteral("file:///media")))));
 }
 
 void TestSourceKey::typedSourceKeyFamiliesKeepIdentityAndFreshnessSeparate()
@@ -145,30 +145,30 @@ void TestSourceKey::typedSourceKeyFamiliesKeepIdentityAndFreshnessSeparate()
     const QUrl current(QStringLiteral("file:///media/chapter/../01.png"));
     const QUrl parent(QStringLiteral("file:///media/chapter/.."));
 
-    const KiriView::OrdinaryFileSourceKey ordinary = KiriView::ordinaryFileSourceKeyForUrl(current);
-    const KiriView::DirectMediaSourceKey direct = KiriView::directMediaSourceKeyForUrl(current);
-    const KiriView::DirectMediaScopeKey firstScope
-        = KiriView::directMediaScopeKeyForUrls(current, parent, 1);
-    const KiriView::DirectMediaScopeKey refreshedScope
-        = KiriView::directMediaScopeKeyForUrls(current, parent, 2);
-    const KiriView::RenderSurfaceKey firstRenderSurface = KiriView::renderSurfaceKey(
+    const kiriview::OrdinaryFileSourceKey ordinary = kiriview::ordinaryFileSourceKeyForUrl(current);
+    const kiriview::DirectMediaSourceKey direct = kiriview::directMediaSourceKeyForUrl(current);
+    const kiriview::DirectMediaScopeKey firstScope
+        = kiriview::directMediaScopeKeyForUrls(current, parent, 1);
+    const kiriview::DirectMediaScopeKey refreshedScope
+        = kiriview::directMediaScopeKeyForUrls(current, parent, 2);
+    const kiriview::RenderSurfaceKey firstRenderSurface = kiriview::renderSurfaceKey(
         QStringLiteral("surface-1"), 1, 10, QStringLiteral("primary"), QStringLiteral("raster"));
-    const KiriView::RenderSurfaceKey repeatedRenderSurface = KiriView::renderSurfaceKey(
+    const kiriview::RenderSurfaceKey repeatedRenderSurface = kiriview::renderSurfaceKey(
         QStringLiteral("surface-1"), 1, 10, QStringLiteral("primary"), QStringLiteral("raster"));
-    const KiriView::RenderSurfaceKey refreshedRenderSurface = KiriView::renderSurfaceKey(
+    const kiriview::RenderSurfaceKey refreshedRenderSurface = kiriview::renderSurfaceKey(
         QStringLiteral("surface-1"), 2, 10, QStringLiteral("primary"), QStringLiteral("raster"));
 
-    QVERIFY(KiriView::sameOrdinaryFileSourceKey(ordinary,
-        KiriView::ordinaryFileSourceKeyForUrl(QUrl(QStringLiteral("file:///media/01.png")))));
-    QVERIFY(KiriView::sameDirectMediaSourceKey(direct,
-        KiriView::directMediaSourceKeyForUrl(QUrl(QStringLiteral("file:///media/01.png")))));
-    QVERIFY(KiriView::sameDirectMediaScopeKey(firstScope, refreshedScope));
+    QVERIFY(kiriview::sameOrdinaryFileSourceKey(ordinary,
+        kiriview::ordinaryFileSourceKeyForUrl(QUrl(QStringLiteral("file:///media/01.png")))));
+    QVERIFY(kiriview::sameDirectMediaSourceKey(direct,
+        kiriview::directMediaSourceKeyForUrl(QUrl(QStringLiteral("file:///media/01.png")))));
+    QVERIFY(kiriview::sameDirectMediaScopeKey(firstScope, refreshedScope));
     QCOMPARE(firstScope.generation, quint64(1));
     QCOMPARE(refreshedScope.generation, quint64(2));
-    QVERIFY(!KiriView::sameDirectMediaScopeKey(firstScope,
-        KiriView::directMediaScopeKeyForUrls(current, QUrl(QStringLiteral("file:///other")), 1)));
-    QVERIFY(KiriView::sameRenderSurfaceKey(firstRenderSurface, repeatedRenderSurface));
-    QVERIFY(!KiriView::sameRenderSurfaceKey(firstRenderSurface, refreshedRenderSurface));
+    QVERIFY(!kiriview::sameDirectMediaScopeKey(firstScope,
+        kiriview::directMediaScopeKeyForUrls(current, QUrl(QStringLiteral("file:///other")), 1)));
+    QVERIFY(kiriview::sameRenderSurfaceKey(firstRenderSurface, repeatedRenderSurface));
+    QVERIFY(!kiriview::sameRenderSurfaceKey(firstRenderSurface, refreshedRenderSurface));
     QCOMPARE(firstRenderSurface.surfaceGeneration, quint64(1));
     QCOMPARE(refreshedRenderSurface.surfaceGeneration, quint64(2));
 }

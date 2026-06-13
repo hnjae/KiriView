@@ -24,12 +24,12 @@ private Q_SLOTS:
 
 void TestArchiveFormat::comicBookArchiveFileNamesAreCaseInsensitive()
 {
-    QVERIFY(KiriView::isComicBookArchiveFileName(QStringLiteral("book.CBZ")));
-    QVERIFY(KiriView::isComicBookArchiveFileName(QStringLiteral("book.CBT")));
-    QVERIFY(KiriView::isComicBookArchiveFileName(QStringLiteral("book.CB7")));
-    QVERIFY(KiriView::isComicBookArchiveFileName(QStringLiteral("book.CBR")));
-    QVERIFY(!KiriView::isComicBookArchiveFileName(QStringLiteral("book.zip")));
-    QVERIFY(!KiriView::isComicBookArchiveFileName(QStringLiteral("book.rar")));
+    QVERIFY(kiriview::isComicBookArchiveFileName(QStringLiteral("book.CBZ")));
+    QVERIFY(kiriview::isComicBookArchiveFileName(QStringLiteral("book.CBT")));
+    QVERIFY(kiriview::isComicBookArchiveFileName(QStringLiteral("book.CB7")));
+    QVERIFY(kiriview::isComicBookArchiveFileName(QStringLiteral("book.CBR")));
+    QVERIFY(!kiriview::isComicBookArchiveFileName(QStringLiteral("book.zip")));
+    QVERIFY(!kiriview::isComicBookArchiveFileName(QStringLiteral("book.rar")));
 }
 
 void TestArchiveFormat::comicBookArchiveUrlsMapToKioSchemes()
@@ -39,29 +39,29 @@ void TestArchiveFormat::comicBookArchiveUrlsMapToKioSchemes()
     const QUrl cb7Url = QUrl::fromLocalFile(QStringLiteral("/books/book.cb7"));
     const QUrl cbrUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbr"));
 
-    QCOMPARE(KiriView::comicBookArchiveKioSchemeForUrl(cbzUrl), QStringLiteral("zip"));
-    QCOMPARE(KiriView::comicBookArchiveKioSchemeForUrl(cbtUrl), QStringLiteral("tar"));
-    QCOMPARE(KiriView::comicBookArchiveKioSchemeForUrl(cb7Url), QStringLiteral("sevenz"));
-    QCOMPARE(KiriView::comicBookArchiveKioSchemeForUrl(cbrUrl), QStringLiteral("rar"));
-    QVERIFY(KiriView::isComicBookArchiveUrl(cbrUrl));
-    QVERIFY(KiriView::comicBookArchiveKioSchemeForUrl(
+    QCOMPARE(kiriview::comicBookArchiveKioSchemeForUrl(cbzUrl), QStringLiteral("zip"));
+    QCOMPARE(kiriview::comicBookArchiveKioSchemeForUrl(cbtUrl), QStringLiteral("tar"));
+    QCOMPARE(kiriview::comicBookArchiveKioSchemeForUrl(cb7Url), QStringLiteral("sevenz"));
+    QCOMPARE(kiriview::comicBookArchiveKioSchemeForUrl(cbrUrl), QStringLiteral("rar"));
+    QVERIFY(kiriview::isComicBookArchiveUrl(cbrUrl));
+    QVERIFY(kiriview::comicBookArchiveKioSchemeForUrl(
         QUrl(QStringLiteral("smb://server/books/book.cb7")))
             .isEmpty());
 }
 
 void TestArchiveFormat::comicBookArchiveUrlMatchesExposeArchiveKind()
 {
-    const std::optional<KiriView::ArchiveOpenMatch> match = KiriView::comicBookArchiveMatchForUrl(
+    const std::optional<kiriview::ArchiveOpenMatch> match = kiriview::comicBookArchiveMatchForUrl(
         QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")));
     QVERIFY(match.has_value());
     QCOMPARE(match->scheme, QStringLiteral("zip"));
-    QVERIFY(match->kind == KiriView::ArchiveOpenMatchKind::ComicBook);
+    QVERIFY(match->kind == kiriview::ArchiveOpenMatchKind::ComicBook);
 
-    QVERIFY(!KiriView::comicBookArchiveMatchForUrl(
+    QVERIFY(!kiriview::comicBookArchiveMatchForUrl(
         QUrl::fromLocalFile(QStringLiteral("/books/book.zip")))
             .has_value());
     QVERIFY(
-        !KiriView::comicBookArchiveMatchForUrl(QUrl(QStringLiteral("smb://server/books/book.cbz")))
+        !kiriview::comicBookArchiveMatchForUrl(QUrl(QStringLiteral("smb://server/books/book.cbz")))
             .has_value());
 }
 
@@ -72,92 +72,92 @@ void TestArchiveFormat::directArchiveOpenUrlsMapGeneralArchivesToKioSchemes()
     const QUrl sevenZipUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.7z"));
     const QUrl rarUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.rar"));
 
-    QCOMPARE(KiriView::directArchiveOpenKioSchemeForUrl(zipUrl), QStringLiteral("zip"));
-    QCOMPARE(KiriView::directArchiveOpenKioSchemeForUrl(tarUrl), QStringLiteral("tar"));
-    QCOMPARE(KiriView::directArchiveOpenKioSchemeForUrl(sevenZipUrl), QStringLiteral("sevenz"));
-    QCOMPARE(KiriView::directArchiveOpenKioSchemeForUrl(rarUrl), QStringLiteral("rar"));
-    QVERIFY(KiriView::directArchiveOpenKioSchemeForUrl(
+    QCOMPARE(kiriview::directArchiveOpenKioSchemeForUrl(zipUrl), QStringLiteral("zip"));
+    QCOMPARE(kiriview::directArchiveOpenKioSchemeForUrl(tarUrl), QStringLiteral("tar"));
+    QCOMPARE(kiriview::directArchiveOpenKioSchemeForUrl(sevenZipUrl), QStringLiteral("sevenz"));
+    QCOMPARE(kiriview::directArchiveOpenKioSchemeForUrl(rarUrl), QStringLiteral("rar"));
+    QVERIFY(kiriview::directArchiveOpenKioSchemeForUrl(
         QUrl(QStringLiteral("smb://server/books/book.zip")))
             .isEmpty());
-    QVERIFY(KiriView::comicBookArchiveKioSchemeForUrl(zipUrl).isEmpty());
-    QVERIFY(KiriView::comicBookArchiveKioSchemeForUrl(rarUrl).isEmpty());
+    QVERIFY(kiriview::comicBookArchiveKioSchemeForUrl(zipUrl).isEmpty());
+    QVERIFY(kiriview::comicBookArchiveKioSchemeForUrl(rarUrl).isEmpty());
 }
 
 void TestArchiveFormat::directArchiveOpenMatchesExposeArchiveKind()
 {
-    const std::optional<KiriView::ArchiveOpenMatch> cbzFileNameMatch
-        = KiriView::directArchiveOpenMatchForFileName(QStringLiteral("book.cbz"));
+    const std::optional<kiriview::ArchiveOpenMatch> cbzFileNameMatch
+        = kiriview::directArchiveOpenMatchForFileName(QStringLiteral("book.cbz"));
     QVERIFY(cbzFileNameMatch.has_value());
     QCOMPARE(cbzFileNameMatch->scheme, QStringLiteral("zip"));
-    QVERIFY(cbzFileNameMatch->kind == KiriView::ArchiveOpenMatchKind::ComicBook);
+    QVERIFY(cbzFileNameMatch->kind == kiriview::ArchiveOpenMatchKind::ComicBook);
 
-    const std::optional<KiriView::ArchiveOpenMatch> zipFileNameMatch
-        = KiriView::directArchiveOpenMatchForFileName(QStringLiteral("book.zip"));
+    const std::optional<kiriview::ArchiveOpenMatch> zipFileNameMatch
+        = kiriview::directArchiveOpenMatchForFileName(QStringLiteral("book.zip"));
     QVERIFY(zipFileNameMatch.has_value());
     QCOMPARE(zipFileNameMatch->scheme, QStringLiteral("zip"));
-    QVERIFY(zipFileNameMatch->kind == KiriView::ArchiveOpenMatchKind::GeneralArchive);
+    QVERIFY(zipFileNameMatch->kind == kiriview::ArchiveOpenMatchKind::GeneralArchive);
 
-    const std::optional<KiriView::ArchiveOpenMatch> cbrMimeMatch
-        = KiriView::directArchiveOpenMatchForMimeTypeName(QStringLiteral("application/x-cbr"));
+    const std::optional<kiriview::ArchiveOpenMatch> cbrMimeMatch
+        = kiriview::directArchiveOpenMatchForMimeTypeName(QStringLiteral("application/x-cbr"));
     QVERIFY(cbrMimeMatch.has_value());
     QCOMPARE(cbrMimeMatch->scheme, QStringLiteral("rar"));
-    QVERIFY(cbrMimeMatch->kind == KiriView::ArchiveOpenMatchKind::ComicBook);
+    QVERIFY(cbrMimeMatch->kind == kiriview::ArchiveOpenMatchKind::ComicBook);
 
-    const std::optional<KiriView::ArchiveOpenMatch> rarMimeMatch
-        = KiriView::directArchiveOpenMatchForMimeTypeName(QStringLiteral("application/vnd.rar"));
+    const std::optional<kiriview::ArchiveOpenMatch> rarMimeMatch
+        = kiriview::directArchiveOpenMatchForMimeTypeName(QStringLiteral("application/vnd.rar"));
     QVERIFY(rarMimeMatch.has_value());
     QCOMPARE(rarMimeMatch->scheme, QStringLiteral("rar"));
-    QVERIFY(rarMimeMatch->kind == KiriView::ArchiveOpenMatchKind::GeneralArchive);
+    QVERIFY(rarMimeMatch->kind == kiriview::ArchiveOpenMatchKind::GeneralArchive);
 
-    const std::optional<KiriView::ArchiveOpenMatch> cbzUrlMatch
-        = KiriView::directArchiveOpenMatchForUrl(
+    const std::optional<kiriview::ArchiveOpenMatch> cbzUrlMatch
+        = kiriview::directArchiveOpenMatchForUrl(
             QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")));
     QVERIFY(cbzUrlMatch.has_value());
     QCOMPARE(cbzUrlMatch->scheme, QStringLiteral("zip"));
-    QVERIFY(cbzUrlMatch->kind == KiriView::ArchiveOpenMatchKind::ComicBook);
+    QVERIFY(cbzUrlMatch->kind == kiriview::ArchiveOpenMatchKind::ComicBook);
 
-    const std::optional<KiriView::ArchiveOpenMatch> rarUrlMatch
-        = KiriView::directArchiveOpenMatchForUrl(
+    const std::optional<kiriview::ArchiveOpenMatch> rarUrlMatch
+        = kiriview::directArchiveOpenMatchForUrl(
             QUrl::fromLocalFile(QStringLiteral("/books/book.rar")));
     QVERIFY(rarUrlMatch.has_value());
     QCOMPARE(rarUrlMatch->scheme, QStringLiteral("rar"));
-    QVERIFY(rarUrlMatch->kind == KiriView::ArchiveOpenMatchKind::GeneralArchive);
+    QVERIFY(rarUrlMatch->kind == kiriview::ArchiveOpenMatchKind::GeneralArchive);
 }
 
 void TestArchiveFormat::directArchiveOpenMimeTypesMapGeneralArchivesToKioSchemes()
 {
-    QCOMPARE(KiriView::directArchiveOpenKioSchemeForMimeTypeName(QStringLiteral("application/zip")),
+    QCOMPARE(kiriview::directArchiveOpenKioSchemeForMimeTypeName(QStringLiteral("application/zip")),
         QStringLiteral("zip"));
     QCOMPARE(
-        KiriView::directArchiveOpenKioSchemeForMimeTypeName(QStringLiteral("application/x-tar")),
+        kiriview::directArchiveOpenKioSchemeForMimeTypeName(QStringLiteral("application/x-tar")),
         QStringLiteral("tar"));
     const QString sevenZipMimeType = QStringLiteral("application/x-7z-compressed");
-    QCOMPARE(KiriView::directArchiveOpenKioSchemeForMimeTypeName(sevenZipMimeType),
+    QCOMPARE(kiriview::directArchiveOpenKioSchemeForMimeTypeName(sevenZipMimeType),
         QStringLiteral("sevenz"));
     const QString comicBookRarMimeType = QStringLiteral("application/vnd.comicbook-rar");
-    QCOMPARE(KiriView::directArchiveOpenKioSchemeForMimeTypeName(comicBookRarMimeType),
+    QCOMPARE(kiriview::directArchiveOpenKioSchemeForMimeTypeName(comicBookRarMimeType),
         QStringLiteral("rar"));
     const QString cbrAliasMimeType = QStringLiteral("application/x-cbr");
-    QCOMPARE(KiriView::directArchiveOpenKioSchemeForMimeTypeName(cbrAliasMimeType),
+    QCOMPARE(kiriview::directArchiveOpenKioSchemeForMimeTypeName(cbrAliasMimeType),
         QStringLiteral("rar"));
     const QString rarMimeType = QStringLiteral("application/vnd.rar");
     QCOMPARE(
-        KiriView::directArchiveOpenKioSchemeForMimeTypeName(rarMimeType), QStringLiteral("rar"));
+        kiriview::directArchiveOpenKioSchemeForMimeTypeName(rarMimeType), QStringLiteral("rar"));
     const QString rarAliasMimeType = QStringLiteral("application/x-rar");
-    QCOMPARE(KiriView::directArchiveOpenKioSchemeForMimeTypeName(rarAliasMimeType),
+    QCOMPARE(kiriview::directArchiveOpenKioSchemeForMimeTypeName(rarAliasMimeType),
         QStringLiteral("rar"));
     const QString rarCompressedAliasMimeType = QStringLiteral("application/x-rar-compressed");
-    QCOMPARE(KiriView::directArchiveOpenKioSchemeForMimeTypeName(rarCompressedAliasMimeType),
+    QCOMPARE(kiriview::directArchiveOpenKioSchemeForMimeTypeName(rarCompressedAliasMimeType),
         QStringLiteral("rar"));
 }
 
 void TestArchiveFormat::archiveRootSchemesReportKioFuseSupportByBackend()
 {
-    QVERIFY(KiriView::archiveRootSchemeUsesKioFuse(QStringLiteral("zip")));
-    QVERIFY(KiriView::archiveRootSchemeUsesKioFuse(QStringLiteral("tar")));
-    QVERIFY(KiriView::archiveRootSchemeUsesKioFuse(QStringLiteral("sevenz")));
-    QVERIFY(!KiriView::archiveRootSchemeUsesKioFuse(QStringLiteral("rar")));
-    QVERIFY(!KiriView::archiveRootSchemeUsesKioFuse(QStringLiteral("unknown")));
+    QVERIFY(kiriview::archiveRootSchemeUsesKioFuse(QStringLiteral("zip")));
+    QVERIFY(kiriview::archiveRootSchemeUsesKioFuse(QStringLiteral("tar")));
+    QVERIFY(kiriview::archiveRootSchemeUsesKioFuse(QStringLiteral("sevenz")));
+    QVERIFY(!kiriview::archiveRootSchemeUsesKioFuse(QStringLiteral("rar")));
+    QVERIFY(!kiriview::archiveRootSchemeUsesKioFuse(QStringLiteral("unknown")));
 }
 
 QTEST_GUILESS_MAIN(TestArchiveFormat)

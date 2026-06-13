@@ -9,7 +9,7 @@
 
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 namespace {
     ImagePresentationRenderProjection hiddenProjection(DisplayedPageRole role)
     {

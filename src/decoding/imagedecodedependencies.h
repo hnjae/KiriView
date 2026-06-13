@@ -17,7 +17,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 using ImageDataLoader
     = std::function<ImageIoJob(QObject *, ImageDecodeRequest, ImageDataCallback, ErrorCallback)>;
 using ImageDataDecoder

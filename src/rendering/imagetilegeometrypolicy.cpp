@@ -7,62 +7,62 @@
 #include "kiriview/src/policy/imagetilegeometry.cxx.h"
 
 namespace {
-KiriView::RustTileSize rustTileSize(const QSize &size)
+kiriview::RustTileSize rustTileSize(const QSize &size)
 {
-    return KiriView::Bridge::rustSize<KiriView::RustTileSize>(size);
+    return kiriview::Bridge::rustSize<kiriview::RustTileSize>(size);
 }
 
-KiriView::RustTileSizeF rustTileSizeF(const QSizeF &size)
+kiriview::RustTileSizeF rustTileSizeF(const QSizeF &size)
 {
-    return KiriView::Bridge::rustSizeF<KiriView::RustTileSizeF>(size);
+    return kiriview::Bridge::rustSizeF<kiriview::RustTileSizeF>(size);
 }
 
-KiriView::RustTileRect rustTileRect(const QRect &rect)
+kiriview::RustTileRect rustTileRect(const QRect &rect)
 {
-    return KiriView::Bridge::rustRect<KiriView::RustTileRect>(rect);
+    return kiriview::Bridge::rustRect<kiriview::RustTileRect>(rect);
 }
 
-KiriView::RustTileRectF rustTileRectF(const QRectF &rect)
+kiriview::RustTileRectF rustTileRectF(const QRectF &rect)
 {
-    return KiriView::Bridge::rustRectF<KiriView::RustTileRectF>(rect);
+    return kiriview::Bridge::rustRectF<kiriview::RustTileRectF>(rect);
 }
 
-KiriView::RustTileKey rustTileKey(const KiriView::TileKey &key)
+kiriview::RustTileKey rustTileKey(const kiriview::TileKey &key)
 {
-    return KiriView::RustTileKey { key.level, key.x, key.y, key.scaleBucket };
+    return kiriview::RustTileKey { key.level, key.x, key.y, key.scaleBucket };
 }
 
-KiriView::TileKey tileKeyFromRust(const KiriView::RustTileKey &key)
+kiriview::TileKey tileKeyFromRust(const kiriview::RustTileKey &key)
 {
-    return KiriView::TileKey { key.level, key.x, key.y, key.scale_bucket };
+    return kiriview::TileKey { key.level, key.x, key.y, key.scale_bucket };
 }
 
-KiriView::TileLevel tileLevelFromRust(const KiriView::RustTileLevel &level)
+kiriview::TileLevel tileLevelFromRust(const kiriview::RustTileLevel &level)
 {
-    return KiriView::TileLevel { level.index, KiriView::Bridge::qtSize(level.size) };
+    return kiriview::TileLevel { level.index, kiriview::Bridge::qtSize(level.size) };
 }
 
-KiriView::ActiveTileLayer activeTileLayerFromRust(const KiriView::RustActiveTileLayer &layer)
+kiriview::ActiveTileLayer activeTileLayerFromRust(const kiriview::RustActiveTileLayer &layer)
 {
-    return KiriView::ActiveTileLayer { layer.level, layer.scale_bucket };
+    return kiriview::ActiveTileLayer { layer.level, layer.scale_bucket };
 }
 
-KiriView::TileRequest tileRequestFromRust(const KiriView::RustTileRequest &request)
+kiriview::TileRequest tileRequestFromRust(const kiriview::RustTileRequest &request)
 {
-    return KiriView::TileRequest {
+    return kiriview::TileRequest {
         tileKeyFromRust(request.key),
-        KiriView::Bridge::qtSize(request.level_size),
-        KiriView::Bridge::qtRect(request.level_rect),
-        KiriView::Bridge::qtRect(request.texture_level_rect),
-        KiriView::Bridge::qtRect(request.source_rect),
-        KiriView::Bridge::qtRect(request.display_source_rect),
-        KiriView::Bridge::qtRectF(request.display_source_rect_f),
+        kiriview::Bridge::qtSize(request.level_size),
+        kiriview::Bridge::qtRect(request.level_rect),
+        kiriview::Bridge::qtRect(request.texture_level_rect),
+        kiriview::Bridge::qtRect(request.source_rect),
+        kiriview::Bridge::qtRect(request.display_source_rect),
+        kiriview::Bridge::qtRectF(request.display_source_rect_f),
     };
 }
 
 }
 
-namespace KiriView::ImageTileGeometryPolicy {
+namespace kiriview::ImageTileGeometryPolicy {
 std::vector<TileLevel> tilePyramidLevels(const QSize &imageSize)
 {
     std::vector<TileLevel> levels;

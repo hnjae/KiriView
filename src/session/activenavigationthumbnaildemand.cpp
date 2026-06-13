@@ -4,8 +4,8 @@
 #include "activenavigationthumbnaildemand.h"
 
 namespace {
-bool sameDemandState(const KiriView::ActiveNavigationThumbnailDemand &left,
-    const KiriView::ActiveNavigationThumbnailDemand &right)
+bool sameDemandState(const kiriview::ActiveNavigationThumbnailDemand &left,
+    const kiriview::ActiveNavigationThumbnailDemand &right)
 {
     return left.number == right.number && left.url == right.url && left.bucket == right.bucket
         && left.priority == right.priority
@@ -13,7 +13,7 @@ bool sameDemandState(const KiriView::ActiveNavigationThumbnailDemand &left,
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ActiveNavigationThumbnailDemandBucket activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(
     int physicalMaxEdge)
 {

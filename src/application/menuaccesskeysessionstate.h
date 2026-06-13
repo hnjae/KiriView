@@ -6,7 +6,7 @@
 
 #include "application/menuaccesskeyinput.h"
 
-namespace KiriView {
+namespace kiriview {
 enum class MenuAccessKeyVisualEffect {
     None,
     Activate,

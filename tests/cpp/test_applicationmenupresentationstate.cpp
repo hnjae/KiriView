@@ -7,7 +7,7 @@
 #include <QTest>
 
 namespace {
-using MenuPresentation = KiriView::ApplicationActions::MenuPresentation;
+using MenuPresentation = kiriview::ApplicationActions::MenuPresentation;
 }
 
 class TestApplicationMenuPresentationState : public QObject
@@ -23,22 +23,22 @@ private Q_SLOTS:
 void TestApplicationMenuPresentationState::invalidStoredValuesNormalizeToHamburgerMenu()
 {
     QCOMPARE(
-        KiriView::ApplicationActions::ApplicationMenuPresentationState::presentationForStoredValue(
+        kiriview::ApplicationActions::ApplicationMenuPresentationState::presentationForStoredValue(
             -1),
         MenuPresentation::HamburgerMenu);
     QCOMPARE(
-        KiriView::ApplicationActions::ApplicationMenuPresentationState::presentationForStoredValue(
+        kiriview::ApplicationActions::ApplicationMenuPresentationState::presentationForStoredValue(
             99),
         MenuPresentation::HamburgerMenu);
     QCOMPARE(
-        KiriView::ApplicationActions::ApplicationMenuPresentationState::storedValueForPresentation(
+        kiriview::ApplicationActions::ApplicationMenuPresentationState::storedValueForPresentation(
             static_cast<MenuPresentation>(99)),
         static_cast<int>(MenuPresentation::HamburgerMenu));
 }
 
 void TestApplicationMenuPresentationState::presentationChangesReportOnlyActualStateChanges()
 {
-    KiriView::ApplicationActions::ApplicationMenuPresentationState state;
+    kiriview::ApplicationActions::ApplicationMenuPresentationState state;
 
     QCOMPARE(state.presentation(), MenuPresentation::HamburgerMenu);
     QVERIFY(!state.setPresentation(MenuPresentation::HamburgerMenu));
@@ -50,7 +50,7 @@ void TestApplicationMenuPresentationState::presentationChangesReportOnlyActualSt
 
 void TestApplicationMenuPresentationState::storedValueChangesNormalizeAndReportOnlyActualChanges()
 {
-    KiriView::ApplicationActions::ApplicationMenuPresentationState state(MenuPresentation::MenuBar);
+    kiriview::ApplicationActions::ApplicationMenuPresentationState state(MenuPresentation::MenuBar);
 
     QVERIFY(!state.setStoredValue(static_cast<int>(MenuPresentation::MenuBar)));
     QVERIFY(state.setStoredValue(99));

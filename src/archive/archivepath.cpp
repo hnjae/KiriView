@@ -13,11 +13,11 @@
 namespace {
 QString rustStringForQString(const QString &value, rust::String (*rustFunction)(rust::Str))
 {
-    return KiriView::Bridge::qtString(KiriView::Bridge::rustResultForQString(value, rustFunction));
+    return kiriview::Bridge::qtString(kiriview::Bridge::rustResultForQString(value, rustFunction));
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 QString normalizedArchiveRootPath(const QUrl &archiveRootUrl)
 {
     return rustStringForQString(archiveRootUrl.path(), rustNormalizedArchiveRootPath);

@@ -52,28 +52,28 @@ enum class JxlReadStatus {
 
 struct JxlReadResult {
     JxlReadStatus status = JxlReadStatus::Error;
-    KiriView::AnimationFrame frame;
+    kiriview::AnimationFrame frame;
     QString errorString;
 };
 
 QString jxlAnimationDecodeErrorString()
 {
-    return KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeImageAnimation);
+    return kiriview::imageErrorText(kiriview::ImageErrorTextId::DecodeImageAnimation);
 }
 
-KiriView::JxlAnimationOpenResult notJxlResult() { return {}; }
+kiriview::JxlAnimationOpenResult notJxlResult() { return {}; }
 
-KiriView::JxlAnimationOpenResult notAnimationResult()
+kiriview::JxlAnimationOpenResult notAnimationResult()
 {
-    KiriView::JxlAnimationOpenResult result;
-    result.status = KiriView::JxlAnimationOpenStatus::NotAnimation;
+    kiriview::JxlAnimationOpenResult result;
+    result.status = kiriview::JxlAnimationOpenStatus::NotAnimation;
     return result;
 }
 
-KiriView::JxlAnimationOpenResult errorOpenResult(QString errorString)
+kiriview::JxlAnimationOpenResult errorOpenResult(QString errorString)
 {
-    KiriView::JxlAnimationOpenResult result;
-    result.status = KiriView::JxlAnimationOpenStatus::Error;
+    kiriview::JxlAnimationOpenResult result;
+    result.status = kiriview::JxlAnimationOpenStatus::Error;
     result.errorString = std::move(errorString);
     return result;
 }
@@ -146,11 +146,11 @@ std::optional<QImage> imageFromRgbaBuffer(const std::vector<std::uint8_t> &buffe
 
     QImage image = borrowedImage.copy();
     image.setColorSpace(QColorSpace(QColorSpace::SRgb));
-    return KiriView::displayReadyImage(image);
+    return kiriview::displayReadyImage(image);
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 class JxlAnimationReader::Private
 {
 public:

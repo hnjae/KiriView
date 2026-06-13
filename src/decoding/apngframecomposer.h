@@ -13,7 +13,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 enum class ApngFrameDisposeOp {
     None,
     Background,

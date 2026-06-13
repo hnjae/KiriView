@@ -6,7 +6,7 @@
 
 #include <QString>
 
-namespace KiriView {
+namespace kiriview {
 enum class ImageErrorTextId {
     ReadImageData,
     OpenVideo,

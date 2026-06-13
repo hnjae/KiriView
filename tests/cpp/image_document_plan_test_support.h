@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <variant>
 
-namespace KiriView::TestSupport {
+namespace kiriview::TestSupport {
 template <typename... Operations> struct ImageDocumentRuntimeOperationTypes {
 };
 

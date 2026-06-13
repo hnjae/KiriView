@@ -11,15 +11,15 @@
 #include <vector>
 
 namespace {
-KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
-KiriView::DocumentSessionPublicSnapshotInput snapshotInputForProjection(
-    const KiriView::DocumentSessionPublicProjectionInput &input)
+kiriview::DocumentSessionPublicSnapshotInput snapshotInputForProjection(
+    const kiriview::DocumentSessionPublicProjectionInput &input)
 {
-    KiriView::DocumentSessionPublicSnapshotInput snapshotInput;
+    kiriview::DocumentSessionPublicSnapshotInput snapshotInput;
     snapshotInput.session.documentKind = input.documentKind;
     snapshotInput.session.directImageLoadMayUseImageDocumentSourceScope
         = input.directImageLoadMayUseImageDocumentSourceScope;
@@ -60,9 +60,9 @@ private Q_SLOTS:
 
 void TestDocumentSessionState::sourceIdentityUpdatesInternalStateUntilSnapshotCommit()
 {
-    std::vector<KiriView::DocumentSessionChange> changes;
-    KiriView::DocumentSessionState state(
-        [&changes](const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
+    std::vector<kiriview::DocumentSessionChange> changes;
+    kiriview::DocumentSessionState state(
+        [&changes](const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
             changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
         });
 
@@ -78,33 +78,33 @@ void TestDocumentSessionState::sourceIdentityUpdatesInternalStateUntilSnapshotCo
 
 void TestDocumentSessionState::documentKindUpdatesInternalStateUntilSnapshotCommit()
 {
-    std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
-    KiriView::DocumentSessionState state(
-        [&batches](const std::vector<KiriView::DocumentSessionChange> &changes) {
+    std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
+    kiriview::DocumentSessionState state(
+        [&batches](const std::vector<kiriview::DocumentSessionChange> &changes) {
             batches.push_back(changes);
         });
 
-    state.setDocumentKindAndActiveZoomSnapshot(KiriView::DocumentSessionKind::Video,
-        KiriView::ActiveZoomSnapshot { true, true, 67, false });
+    state.setDocumentKindAndActiveZoomSnapshot(kiriview::DocumentSessionKind::Video,
+        kiriview::ActiveZoomSnapshot { true, true, 67, false });
 
-    QCOMPARE(state.documentKind(), KiriView::DocumentSessionKind::Video);
+    QCOMPARE(state.documentKind(), kiriview::DocumentSessionKind::Video);
     QCOMPARE(batches.size(), std::size_t(0));
 
-    state.setDocumentKindAndActiveZoomSnapshot(KiriView::DocumentSessionKind::Video,
-        KiriView::ActiveZoomSnapshot { true, true, 67, false });
+    state.setDocumentKindAndActiveZoomSnapshot(kiriview::DocumentSessionKind::Video,
+        kiriview::ActiveZoomSnapshot { true, true, 67, false });
     QCOMPARE(batches.size(), std::size_t(0));
 }
 
 void TestDocumentSessionState::activeZoomReadoutPublishesThroughSnapshotCommit()
 {
-    std::vector<KiriView::DocumentSessionChange> changes;
-    KiriView::DocumentSessionState state(
-        [&changes](const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
+    std::vector<kiriview::DocumentSessionChange> changes;
+    kiriview::DocumentSessionState state(
+        [&changes](const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
             changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
         });
 
-    KiriView::DocumentSessionPublicSnapshotInput input;
-    input.session.documentKind = KiriView::DocumentSessionKind::Image;
+    kiriview::DocumentSessionPublicSnapshotInput input;
+    input.session.documentKind = kiriview::DocumentSessionKind::Image;
     input.image.zoomPercentKnown = true;
     input.image.zoomPercent = 125.0;
     state.updatePublicSnapshot(input);
@@ -113,8 +113,8 @@ void TestDocumentSessionState::activeZoomReadoutPublishesThroughSnapshotCommit()
     QVERIFY(state.activeZoomSnapshot().known);
     QCOMPARE(state.activeZoomSnapshot().percent, 125.0);
     QCOMPARE(changes.size(), std::size_t(3));
-    QCOMPARE(changes.at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
-    QCOMPARE(changes.at(2), KiriView::DocumentSessionChange::ActiveZoomReadout);
+    QCOMPARE(changes.at(0), kiriview::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(changes.at(2), kiriview::DocumentSessionChange::ActiveZoomReadout);
 
     state.updatePublicSnapshot(input);
     QCOMPARE(changes.size(), std::size_t(3));
@@ -122,15 +122,15 @@ void TestDocumentSessionState::activeZoomReadoutPublishesThroughSnapshotCommit()
     input.image.zoomPercent = 150.0;
     state.updatePublicSnapshot(input);
     QCOMPARE(changes.size(), std::size_t(5));
-    QCOMPARE(changes.at(4), KiriView::DocumentSessionChange::ActiveZoomReadout);
+    QCOMPARE(changes.at(4), kiriview::DocumentSessionChange::ActiveZoomReadout);
     QCOMPARE(state.activeZoomSnapshot().percent, 150.0);
 }
 
 void TestDocumentSessionState::fileDeletionProgressPublishesThroughSnapshotCommit()
 {
-    std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
-    KiriView::DocumentSessionState state(
-        [&batches](const std::vector<KiriView::DocumentSessionChange> &changes) {
+    std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
+    kiriview::DocumentSessionState state(
+        [&batches](const std::vector<kiriview::DocumentSessionChange> &changes) {
             batches.push_back(changes);
         });
 
@@ -139,13 +139,13 @@ void TestDocumentSessionState::fileDeletionProgressPublishesThroughSnapshotCommi
     QVERIFY(state.fileDeletionInProgress());
     QCOMPARE(batches.size(), std::size_t(0));
 
-    KiriView::DocumentSessionPublicSnapshotInput input;
+    kiriview::DocumentSessionPublicSnapshotInput input;
     input.session.fileDeletionInProgress = true;
     QVERIFY(state.updatePublicSnapshot(input));
     QCOMPARE(batches.size(), std::size_t(1));
     QCOMPARE(batches.back().size(), std::size_t(2));
-    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
-    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::FileDeletionInProgress);
+    QCOMPARE(batches.back().at(0), kiriview::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(batches.back().at(1), kiriview::DocumentSessionChange::FileDeletionInProgress);
 
     state.setFileDeletionInProgress(true);
     QCOMPARE(batches.size(), std::size_t(1));
@@ -153,13 +153,13 @@ void TestDocumentSessionState::fileDeletionProgressPublishesThroughSnapshotCommi
 
 void TestDocumentSessionState::directMediaNavigationSnapshotOwnsBoundaryAndCandidates()
 {
-    std::vector<KiriView::DocumentSessionChange> changes;
-    KiriView::DocumentSessionState state(
-        [&changes](const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
+    std::vector<kiriview::DocumentSessionChange> changes;
+    kiriview::DocumentSessionState state(
+        [&changes](const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
             changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
         });
 
-    KiriView::DirectMediaNavigationBoundaryState boundary {
+    kiriview::DirectMediaNavigationBoundaryState boundary {
         true,
         false,
         false,
@@ -206,17 +206,17 @@ void TestDocumentSessionState::directMediaNavigationSnapshotOwnsBoundaryAndCandi
 
 void TestDocumentSessionState::publicSnapshotCommitsProjectionValuesBeforePublishing()
 {
-    std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
-    KiriView::DocumentSessionState *stateDuringCallback = nullptr;
-    KiriView::DocumentSessionState state(
+    std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
+    kiriview::DocumentSessionState *stateDuringCallback = nullptr;
+    kiriview::DocumentSessionState state(
         [&batches, &stateDuringCallback](
-            const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
+            const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
             batches.push_back(publishedChanges);
             QVERIFY(stateDuringCallback != nullptr);
             QCOMPARE(stateDuringCallback->activeNavigationSourceKind(),
-                KiriView::ActiveNavigationSourceKind::ImageDocumentPages);
+                kiriview::ActiveNavigationSourceKind::ImageDocumentPages);
             QCOMPARE(stateDuringCallback->activeNavigationBoundaryScope(),
-                KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage);
+                kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage);
             QCOMPARE(stateDuringCallback->activeNavigationSnapshot().currentNumber, 2);
             QCOMPARE(stateDuringCallback->activeNavigationSnapshot().count, 4);
             QCOMPARE(stateDuringCallback->windowTitleSubject(), QStringLiteral("book.cbz – 2/4"));
@@ -225,10 +225,10 @@ void TestDocumentSessionState::publicSnapshotCommitsProjectionValuesBeforePublis
         });
     stateDuringCallback = &state;
 
-    KiriView::DocumentSessionPublicProjectionInput input;
-    input.documentKind = KiriView::DocumentSessionKind::Image;
+    kiriview::DocumentSessionPublicProjectionInput input;
+    input.documentKind = kiriview::DocumentSessionKind::Image;
     input.imageSourceMayRepresentDocument = true;
-    input.imageDocumentPageNavigation = KiriView::ImageDocumentPageActiveNavigationSnapshot { true,
+    input.imageDocumentPageNavigation = kiriview::ImageDocumentPageActiveNavigationSnapshot { true,
         true, true, false, false, 2, 4 };
     input.imageWindowTitleFileName = QStringLiteral("book.cbz");
     input.imageReadyForDeletion = true;
@@ -238,12 +238,12 @@ void TestDocumentSessionState::publicSnapshotCommitsProjectionValuesBeforePublis
 
     QCOMPARE(batches.size(), std::size_t(1));
     QCOMPARE(batches.back().size(), std::size_t(6));
-    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
-    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::DocumentKind);
-    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::ActiveNavigation);
-    QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::WindowTitleSubject);
-    QCOMPARE(batches.back().at(4), KiriView::DocumentSessionChange::FileDeletionAvailability);
-    QCOMPARE(batches.back().at(5), KiriView::DocumentSessionChange::OpenWithAvailability);
+    QCOMPARE(batches.back().at(0), kiriview::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(batches.back().at(1), kiriview::DocumentSessionChange::DocumentKind);
+    QCOMPARE(batches.back().at(2), kiriview::DocumentSessionChange::ActiveNavigation);
+    QCOMPARE(batches.back().at(3), kiriview::DocumentSessionChange::WindowTitleSubject);
+    QCOMPARE(batches.back().at(4), kiriview::DocumentSessionChange::FileDeletionAvailability);
+    QCOMPARE(batches.back().at(5), kiriview::DocumentSessionChange::OpenWithAvailability);
 
     state.updatePublicSnapshot(snapshotInputForProjection(input));
     QCOMPARE(batches.size(), std::size_t(1));
@@ -251,16 +251,16 @@ void TestDocumentSessionState::publicSnapshotCommitsProjectionValuesBeforePublis
 
 void TestDocumentSessionState::publicSnapshotOnlyNotifiesChangedProjectionOutputs()
 {
-    std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
-    KiriView::DocumentSessionState state(
-        [&batches](const std::vector<KiriView::DocumentSessionChange> &changes) {
+    std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
+    kiriview::DocumentSessionState state(
+        [&batches](const std::vector<kiriview::DocumentSessionChange> &changes) {
             batches.push_back(changes);
         });
 
-    KiriView::DocumentSessionPublicProjectionInput input;
-    input.documentKind = KiriView::DocumentSessionKind::Video;
-    input.directMediaNavigation = KiriView::DirectMediaActiveNavigationInput {
-        KiriView::DirectMediaNavigationBoundaryState { false, false, true, true, 1, 1 },
+    kiriview::DocumentSessionPublicProjectionInput input;
+    input.documentKind = kiriview::DocumentSessionKind::Video;
+    input.directMediaNavigation = kiriview::DirectMediaActiveNavigationInput {
+        kiriview::DirectMediaNavigationBoundaryState { false, false, true, true, 1, 1 },
         true,
     };
     input.videoSourcePresent = true;
@@ -269,10 +269,10 @@ void TestDocumentSessionState::publicSnapshotOnlyNotifiesChangedProjectionOutput
     state.updatePublicSnapshot(snapshotInputForProjection(input));
     QCOMPARE(batches.size(), std::size_t(1));
 
-    input.documentKind = KiriView::DocumentSessionKind::Image;
+    input.documentKind = kiriview::DocumentSessionKind::Image;
     input.directMediaNavigation = {};
     input.imageSourceMayRepresentDocument = true;
-    input.imageDocumentPageNavigation = KiriView::ImageDocumentPageActiveNavigationSnapshot { true,
+    input.imageDocumentPageNavigation = kiriview::ImageDocumentPageActiveNavigationSnapshot { true,
         false, false, true, true, 1, 1 };
     input.imageReadyForDeletion = true;
     input.videoSourcePresent = false;
@@ -280,24 +280,24 @@ void TestDocumentSessionState::publicSnapshotOnlyNotifiesChangedProjectionOutput
 
     QCOMPARE(batches.size(), std::size_t(2));
     QVERIFY(std::find(batches.back().cbegin(), batches.back().cend(),
-                KiriView::DocumentSessionChange::PublicProjectionRevision)
+                kiriview::DocumentSessionChange::PublicProjectionRevision)
         != batches.back().cend());
     QVERIFY(std::find(batches.back().cbegin(), batches.back().cend(),
-                KiriView::DocumentSessionChange::DocumentKind)
+                kiriview::DocumentSessionChange::DocumentKind)
         != batches.back().cend());
     QVERIFY(std::find(batches.back().cbegin(), batches.back().cend(),
-                KiriView::DocumentSessionChange::ActiveNavigation)
+                kiriview::DocumentSessionChange::ActiveNavigation)
         != batches.back().cend());
     QCOMPARE(state.activeNavigationBoundaryScope(),
-        KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage);
+        kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage);
 
     input.imageReadyForDeletion = false;
     state.updatePublicSnapshot(snapshotInputForProjection(input));
 
     QCOMPARE(batches.size(), std::size_t(3));
     QCOMPARE(batches.back().size(), std::size_t(2));
-    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
-    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::FileDeletionAvailability);
+    QCOMPARE(batches.back().at(0), kiriview::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(batches.back().at(1), kiriview::DocumentSessionChange::FileDeletionAvailability);
     QVERIFY(!state.displayedFileDeletionAvailable());
 
     input.displayedMediaOpenWithAvailable = false;
@@ -305,8 +305,8 @@ void TestDocumentSessionState::publicSnapshotOnlyNotifiesChangedProjectionOutput
 
     QCOMPARE(batches.size(), std::size_t(4));
     QCOMPARE(batches.back().size(), std::size_t(2));
-    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
-    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::OpenWithAvailability);
+    QCOMPARE(batches.back().at(0), kiriview::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(batches.back().at(1), kiriview::DocumentSessionChange::OpenWithAvailability);
     QVERIFY(!state.displayedMediaOpenWithAvailable());
 
     state.updatePublicSnapshot(snapshotInputForProjection(input));
@@ -315,17 +315,17 @@ void TestDocumentSessionState::publicSnapshotOnlyNotifiesChangedProjectionOutput
 
 void TestDocumentSessionState::publicSnapshotCommitsOneRevisionedBatch()
 {
-    std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
-    KiriView::DocumentSessionState *stateDuringCallback = nullptr;
-    KiriView::DocumentSessionState state(
+    std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
+    kiriview::DocumentSessionState *stateDuringCallback = nullptr;
+    kiriview::DocumentSessionState state(
         [&batches, &stateDuringCallback](
-            const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
+            const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
             batches.push_back(publishedChanges);
             QVERIFY(stateDuringCallback != nullptr);
             QCOMPARE(stateDuringCallback->publicSnapshot().revision, quint64(1));
             QCOMPARE(stateDuringCallback->sourceUrl(),
                 QUrl::fromLocalFile(QStringLiteral("/media/01.png")));
-            QCOMPARE(stateDuringCallback->documentKind(), KiriView::DocumentSessionKind::Image);
+            QCOMPARE(stateDuringCallback->documentKind(), kiriview::DocumentSessionKind::Image);
             QCOMPARE(stateDuringCallback->activeZoomSnapshot().percent, 125.0);
             QCOMPARE(stateDuringCallback->activeNavigationSnapshot().currentNumber, 1);
             QCOMPARE(stateDuringCallback->windowTitleSubject(), QStringLiteral("01.png – 640×480"));
@@ -334,13 +334,13 @@ void TestDocumentSessionState::publicSnapshotCommitsOneRevisionedBatch()
         });
     stateDuringCallback = &state;
 
-    KiriView::DocumentSessionPublicSnapshotInput input;
+    kiriview::DocumentSessionPublicSnapshotInput input;
     input.inputRevision = 12;
     input.session.sourceUrl = QUrl::fromLocalFile(QStringLiteral("/media/01.png"));
-    input.session.documentKind = KiriView::DocumentSessionKind::Image;
+    input.session.documentKind = kiriview::DocumentSessionKind::Image;
     input.session.directImageLoadMayUseImageDocumentSourceScope = true;
-    input.session.directMediaNavigation = KiriView::DirectMediaActiveNavigationInput {
-        KiriView::DirectMediaNavigationBoundaryState { false, false, true, true, 1, 1 },
+    input.session.directMediaNavigation = kiriview::DirectMediaActiveNavigationInput {
+        kiriview::DirectMediaNavigationBoundaryState { false, false, true, true, 1, 1 },
         true,
     };
     input.image.windowTitleFileName = QStringLiteral("01.png");
@@ -354,29 +354,29 @@ void TestDocumentSessionState::publicSnapshotCommitsOneRevisionedBatch()
 
     QCOMPARE(batches.size(), std::size_t(1));
     QCOMPARE(batches.back().size(), std::size_t(8));
-    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::PublicProjectionRevision);
-    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::SourceUrl);
-    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::DocumentKind);
-    QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::ActiveZoomReadout);
-    QCOMPARE(batches.back().at(4), KiriView::DocumentSessionChange::ActiveNavigation);
-    QCOMPARE(batches.back().at(5), KiriView::DocumentSessionChange::WindowTitleSubject);
-    QCOMPARE(batches.back().at(6), KiriView::DocumentSessionChange::FileDeletionAvailability);
-    QCOMPARE(batches.back().at(7), KiriView::DocumentSessionChange::OpenWithAvailability);
+    QCOMPARE(batches.back().at(0), kiriview::DocumentSessionChange::PublicProjectionRevision);
+    QCOMPARE(batches.back().at(1), kiriview::DocumentSessionChange::SourceUrl);
+    QCOMPARE(batches.back().at(2), kiriview::DocumentSessionChange::DocumentKind);
+    QCOMPARE(batches.back().at(3), kiriview::DocumentSessionChange::ActiveZoomReadout);
+    QCOMPARE(batches.back().at(4), kiriview::DocumentSessionChange::ActiveNavigation);
+    QCOMPARE(batches.back().at(5), kiriview::DocumentSessionChange::WindowTitleSubject);
+    QCOMPARE(batches.back().at(6), kiriview::DocumentSessionChange::FileDeletionAvailability);
+    QCOMPARE(batches.back().at(7), kiriview::DocumentSessionChange::OpenWithAvailability);
     QCOMPARE(state.publicSnapshot().inputRevision, quint64(12));
 }
 
 void TestDocumentSessionState::unchangedPublicSnapshotDoesNotAdvanceRevision()
 {
-    std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
-    KiriView::DocumentSessionState state(
-        [&batches](const std::vector<KiriView::DocumentSessionChange> &changes) {
+    std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
+    kiriview::DocumentSessionState state(
+        [&batches](const std::vector<kiriview::DocumentSessionChange> &changes) {
             batches.push_back(changes);
         });
 
-    KiriView::DocumentSessionPublicSnapshotInput input;
+    kiriview::DocumentSessionPublicSnapshotInput input;
     input.inputRevision = 3;
     input.session.sourceUrl = QUrl::fromLocalFile(QStringLiteral("/media/clip.mp4"));
-    input.session.documentKind = KiriView::DocumentSessionKind::Video;
+    input.session.documentKind = kiriview::DocumentSessionKind::Video;
     input.video.sourcePresent = true;
 
     QVERIFY(state.updatePublicSnapshot(input));
@@ -388,18 +388,18 @@ void TestDocumentSessionState::unchangedPublicSnapshotDoesNotAdvanceRevision()
 
 void TestDocumentSessionState::publishDeduplicatesChangesInOrder()
 {
-    std::vector<KiriView::DocumentSessionChange> changes;
-    KiriView::DocumentSessionState state(
-        [&changes](const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
+    std::vector<kiriview::DocumentSessionChange> changes;
+    kiriview::DocumentSessionState state(
+        [&changes](const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
             changes = publishedChanges;
         });
 
-    state.publish({ KiriView::DocumentSessionChange::ErrorString,
-        KiriView::DocumentSessionChange::SourceUrl, KiriView::DocumentSessionChange::ErrorString });
+    state.publish({ kiriview::DocumentSessionChange::ErrorString,
+        kiriview::DocumentSessionChange::SourceUrl, kiriview::DocumentSessionChange::ErrorString });
 
     QCOMPARE(changes.size(), std::size_t(2));
-    QCOMPARE(changes.at(0), KiriView::DocumentSessionChange::ErrorString);
-    QCOMPARE(changes.at(1), KiriView::DocumentSessionChange::SourceUrl);
+    QCOMPARE(changes.at(0), kiriview::DocumentSessionChange::ErrorString);
+    QCOMPARE(changes.at(1), kiriview::DocumentSessionChange::SourceUrl);
 }
 
 QTEST_GUILESS_MAIN(TestDocumentSessionState)

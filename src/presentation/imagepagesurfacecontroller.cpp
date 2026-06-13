@@ -14,7 +14,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 namespace {
     struct RasterDisplayRefinementWork {
         quint64 ticket = 0;

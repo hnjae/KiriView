@@ -9,7 +9,7 @@
 
 class QUrl;
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustImageZoomMode rustImageZoomMode(ImageZoomMode zoomMode);
 ImageZoomMode imageZoomModeFromRust(RustImageZoomMode zoomMode);
 RustImageZoomState rustImageZoomState(const ImageZoomSnapshot &snapshot);

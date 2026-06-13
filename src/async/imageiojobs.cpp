@@ -19,14 +19,14 @@
 #include <variant>
 
 namespace {
-using KiriView::containerNavigationCandidates;
-using KiriView::ErrorCallback;
-using KiriView::imageDocumentPageNavigationCandidates;
-using KiriView::MediaEntrySourceCandidates;
-using KiriView::MediaEntrySourceCandidatesResult;
-using KiriView::MediaEntrySourceError;
-using KiriView::MediaEntrySourceImageData;
-using KiriView::MediaEntrySourceImageDataResult;
+using kiriview::containerNavigationCandidates;
+using kiriview::ErrorCallback;
+using kiriview::imageDocumentPageNavigationCandidates;
+using kiriview::MediaEntrySourceCandidates;
+using kiriview::MediaEntrySourceCandidatesResult;
+using kiriview::MediaEntrySourceError;
+using kiriview::MediaEntrySourceImageData;
+using kiriview::MediaEntrySourceImageDataResult;
 
 template <typename... Handlers> struct MediaEntrySourceResultHandler : Handlers... {
     using Handlers::operator()...;
@@ -41,7 +41,7 @@ void finishMediaEntrySourceWorkerResult(
 {
     auto resultHandler = MediaEntrySourceResultHandler {
         [&errorCallback](const MediaEntrySourceError &error) {
-            KiriView::invokeIfSet(errorCallback, error.errorString);
+            kiriview::invokeIfSet(errorCallback, error.errorString);
         },
         [&successCallback](Success &success) mutable { successCallback(std::move(success)); },
     };
@@ -59,30 +59,30 @@ void cancelKJob(QObject *object)
 }
 
 template <typename CandidateCallback, typename CandidateFactory>
-KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &directoryUrl,
+kiriview::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &directoryUrl,
     CandidateCallback callback, ErrorCallback errorCallback,
-    KiriView::DirectoryItemListProvider directoryItemListProvider,
+    kiriview::DirectoryItemListProvider directoryItemListProvider,
     CandidateFactory candidateFactory)
 {
-    return KiriView::startDirectoryItemList(
+    return kiriview::startDirectoryItemList(
         receiver, directoryUrl,
         [callback = std::move(callback), candidateFactory = std::move(candidateFactory)](
             KFileItemList items) mutable {
-            KiriView::invokeIfSet(callback, candidateFactory(items));
+            kiriview::invokeIfSet(callback, candidateFactory(items));
         },
         std::move(errorCallback), std::move(directoryItemListProvider));
 }
 
 template <typename Work, typename Finish>
-KiriView::ImageIoJob startMediaEntrySourceWorkerJob(QObject *receiver,
-    const KiriView::ImageWorkerScheduler &workerScheduler, Work work, Finish finish)
+kiriview::ImageIoJob startMediaEntrySourceWorkerJob(QObject *receiver,
+    const kiriview::ImageWorkerScheduler &workerScheduler, Work work, Finish finish)
 {
-    return KiriView::startImageIoWorkerJob(
+    return kiriview::startImageIoWorkerJob(
         receiver, workerScheduler, std::move(work), std::move(finish));
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageIoJob startDirectoryImageDocumentPageCandidateList(QObject *receiver, QUrl directoryUrl,
     ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
@@ -138,7 +138,7 @@ ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
             finishMediaEntrySourceWorkerResult<MediaEntrySourceCandidates>(std::move(result),
                 std::move(errorCallback),
                 [callback = std::move(callback)](MediaEntrySourceCandidates candidates) mutable {
-                    KiriView::invokeIfSet(callback, std::move(candidates.candidates));
+                    kiriview::invokeIfSet(callback, std::move(candidates.candidates));
                 });
         });
 }
@@ -166,7 +166,7 @@ ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest reques
                 finishMediaEntrySourceWorkerResult<MediaEntrySourceImageData>(std::move(result),
                     std::move(errorCallback),
                     [callback = std::move(callback)](MediaEntrySourceImageData data) mutable {
-                        KiriView::invokeIfSet(callback, std::move(data.data));
+                        kiriview::invokeIfSet(callback, std::move(data.data));
                     });
             });
     }
@@ -180,11 +180,11 @@ ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest reques
             KJob *finishedJob) mutable {
             completion.claimAndRun([&]() {
                 if (finishedJob->error() != KJob::NoError) {
-                    KiriView::invokeIfSet(errorCallback, finishedJob->errorString());
+                    kiriview::invokeIfSet(errorCallback, finishedJob->errorString());
                     return;
                 }
 
-                KiriView::invokeIfSet(callback, job->data());
+                kiriview::invokeIfSet(callback, job->data());
             });
         });
     return ioJob;

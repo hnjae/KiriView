@@ -11,17 +11,17 @@
 
 #include <utility>
 
-namespace Actions = KiriView::ApplicationActions;
+namespace Actions = kiriview::ApplicationActions;
 
 namespace {
 bool sharedImagePannabilityActionGate(
-    const KiriView::DocumentSessionActionAvailabilityFacts &facts, bool viewportLocalPannable)
+    const kiriview::DocumentSessionActionAvailabilityFacts &facts, bool viewportLocalPannable)
 {
     return facts.imageReady && viewportLocalPannable;
 }
 }
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 class KiriViewApplicationActionHost final : public ApplicationActionHost
 {
 public:
@@ -403,8 +403,8 @@ bool KiriViewApplication::sharedImagePannable() const
 
 ImageActionAvailabilityInput KiriViewApplication::imageActionAvailabilityInput() const
 {
-    const KiriView::DocumentSessionActionAvailabilityFacts facts = m_documentSession == nullptr
-        ? KiriView::DocumentSessionActionAvailabilityFacts {}
+    const kiriview::DocumentSessionActionAvailabilityFacts facts = m_documentSession == nullptr
+        ? kiriview::DocumentSessionActionAvailabilityFacts {}
         : m_documentSession->actionAvailabilityFacts();
 
     return ImageActionAvailabilityInput {
@@ -424,8 +424,8 @@ ImageActionAvailabilityInput KiriViewApplication::imageActionAvailabilityInput()
 Actions::ApplicationActionStateInput KiriViewApplication::actionStateInput() const
 {
     Actions::ApplicationActionStateInput input;
-    const KiriView::DocumentSessionActionAvailabilityFacts facts = m_documentSession == nullptr
-        ? KiriView::DocumentSessionActionAvailabilityFacts {}
+    const kiriview::DocumentSessionActionAvailabilityFacts facts = m_documentSession == nullptr
+        ? kiriview::DocumentSessionActionAvailabilityFacts {}
         : m_documentSession->actionAvailabilityFacts();
     const bool activeVideoMode = videoMode();
     const bool activeNavigationActionsAvailable = m_documentSession != nullptr

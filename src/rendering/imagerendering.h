@@ -14,7 +14,7 @@
 #include <QSizeF>
 #include <QtGlobal>
 
-namespace KiriView {
+namespace kiriview {
 inline constexpr int fallbackTextureSizeMax = 16384;
 
 QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize);

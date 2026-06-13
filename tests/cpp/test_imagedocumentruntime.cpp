@@ -20,64 +20,64 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::comicBookContainerCandidate;
-using KiriView::TestSupport::fileDeletionProviderFor;
-using KiriView::TestSupport::imageDocumentPageCandidate;
-using KiriView::TestSupport::imageDocumentRuntimeDependencyOverridesFor;
-using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::ManualFileDeletionProvider;
-using KiriView::TestSupport::ManualImageDataLoader;
-using KiriView::TestSupport::staticDisplayTestImagePayload;
-using KiriView::TestSupport::staticImageDataDecoder;
-using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
-using KiriView::TestSupport::testImage;
-using KiriView::TestSupport::testImageDecodeFailureString;
-using KiriView::TestSupport::videoCandidate;
+using kiriview::TestSupport::archivePageUrl;
+using kiriview::TestSupport::comicBookContainerCandidate;
+using kiriview::TestSupport::fileDeletionProviderFor;
+using kiriview::TestSupport::imageDocumentPageCandidate;
+using kiriview::TestSupport::imageDocumentRuntimeDependencyOverridesFor;
+using kiriview::TestSupport::localUrl;
+using kiriview::TestSupport::ManualFileDeletionProvider;
+using kiriview::TestSupport::ManualImageDataLoader;
+using kiriview::TestSupport::staticDisplayTestImagePayload;
+using kiriview::TestSupport::staticImageDataDecoder;
+using kiriview::TestSupport::staticImageDataDecoderRejectingBadData;
+using kiriview::TestSupport::testImage;
+using kiriview::TestSupport::testImageDecodeFailureString;
+using kiriview::TestSupport::videoCandidate;
 
-using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
+using FakeCandidateProvider = kiriview::TestSupport::FakeImageDocumentPageCandidateProvider;
 
 class RuntimeOwner final : public QObject
 {
 public:
     RuntimeOwner(QObject *parent,
-        KiriView::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
-        KiriView::ImageDocumentRuntime::ChangeCallback changeCallback,
-        KiriView::ImageDocumentRuntimeDependencyOverrides dependencies,
-        KiriView::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
+        kiriview::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
+        kiriview::ImageDocumentRuntime::ChangeCallback changeCallback,
+        kiriview::ImageDocumentRuntimeDependencyOverrides dependencies,
+        kiriview::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
         : QObject(parent)
         , runtime(this, std::move(renderContextProvider), std::move(changeCallback),
               std::move(dependencies), std::move(fileDeletionFailedCallback))
     {
     }
 
-    KiriView::ImageDocumentRuntime runtime;
+    kiriview::ImageDocumentRuntime runtime;
 };
 
 class RuntimeHandle final
 {
 public:
     RuntimeHandle(QObject *parent,
-        KiriView::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
-        KiriView::ImageDocumentRuntime::ChangeCallback changeCallback,
-        KiriView::ImageDocumentRuntimeDependencyOverrides dependencies,
-        KiriView::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
+        kiriview::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
+        kiriview::ImageDocumentRuntime::ChangeCallback changeCallback,
+        kiriview::ImageDocumentRuntimeDependencyOverrides dependencies,
+        kiriview::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
         : m_owner(std::make_unique<RuntimeOwner>(parent, std::move(renderContextProvider),
               std::move(changeCallback), std::move(dependencies),
               std::move(fileDeletionFailedCallback)))
     {
     }
 
-    KiriView::ImageDocumentRuntime *operator->() { return &m_owner->runtime; }
-    const KiriView::ImageDocumentRuntime *operator->() const { return &m_owner->runtime; }
-    KiriView::ImageDocumentRuntime &operator*() { return m_owner->runtime; }
-    const KiriView::ImageDocumentRuntime &operator*() const { return m_owner->runtime; }
+    kiriview::ImageDocumentRuntime *operator->() { return &m_owner->runtime; }
+    const kiriview::ImageDocumentRuntime *operator->() const { return &m_owner->runtime; }
+    kiriview::ImageDocumentRuntime &operator*() { return m_owner->runtime; }
+    const kiriview::ImageDocumentRuntime &operator*() const { return m_owner->runtime; }
 
 private:
     std::unique_ptr<RuntimeOwner> m_owner;
 };
 
-class NonCacheableTestImageTileSource final : public KiriView::ImageTileSource
+class NonCacheableTestImageTileSource final : public kiriview::ImageTileSource
 {
 public:
     explicit NonCacheableTestImageTileSource(QImage image)
@@ -87,8 +87,8 @@ public:
 
     QSize imageSize() const override { return m_image.size(); }
 
-    std::optional<KiriView::DecodedTile> decodeTile(
-        const KiriView::TileRequest &, QString *) const override
+    std::optional<kiriview::DecodedTile> decodeTile(
+        const kiriview::TileRequest &, QString *) const override
     {
         return std::nullopt;
     }
@@ -101,27 +101,27 @@ private:
     QImage m_image;
 };
 
-KiriView::DecodedImageResult staticDecodedImageWithPreview(
+kiriview::DecodedImageResult staticDecodedImageWithPreview(
     const QSize &sourceSize, const QSize &previewSize, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
-    return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
+    return kiriview::successfulDecodedImageResult(kiriview::StaticDecodedImage {
         staticDisplayTestImagePayload(testImage(sourceSize), testImage(previewSize),
             firstDisplayPixelsPerSourcePixel,
-            sourceSize == previewSize ? KiriView::DisplayImageQuality::Exact
-                                      : KiriView::DisplayImageQuality::FirstDisplay),
+            sourceSize == previewSize ? kiriview::DisplayImageQuality::Exact
+                                      : kiriview::DisplayImageQuality::FirstDisplay),
     });
 }
 
-KiriView::DecodedImageResult singleFrameDecodedImage(const QSize &size)
+kiriview::DecodedImageResult singleFrameDecodedImage(const QSize &size)
 {
     QImage image = testImage(size);
-    return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
-        KiriView::StaticDisplayImagePayload {
+    return kiriview::successfulDecodedImageResult(kiriview::StaticDecodedImage {
+        kiriview::StaticDisplayImagePayload {
             QStringLiteral("test-image"),
             {},
             image.size(),
             image,
-            KiriView::DisplayImageQuality::Exact,
+            kiriview::DisplayImageQuality::Exact,
             1.0,
             {},
             std::make_shared<NonCacheableTestImageTileSource>(std::move(image)),
@@ -131,20 +131,20 @@ KiriView::DecodedImageResult singleFrameDecodedImage(const QSize &size)
 
 RuntimeHandle createRuntime(QObject *parent, FakeCandidateProvider &candidateProvider,
     ManualImageDataLoader &dataLoader,
-    KiriView::ImageDataDecoder dataDecoder = staticImageDataDecoder(testImage(2)),
-    int maximumTextureSize = KiriView::fallbackTextureSizeMax, qreal devicePixelRatio = 1.0,
-    KiriView::FileDeletionProvider fileDeletionProvider = {},
-    KiriView::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
+    kiriview::ImageDataDecoder dataDecoder = staticImageDataDecoder(testImage(2)),
+    int maximumTextureSize = kiriview::fallbackTextureSizeMax, qreal devicePixelRatio = 1.0,
+    kiriview::FileDeletionProvider fileDeletionProvider = {},
+    kiriview::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
 {
     return RuntimeHandle(
         parent,
         [maximumTextureSize, devicePixelRatio]() {
-            return KiriView::ImageDocumentRenderContext {
+            return kiriview::ImageDocumentRenderContext {
                 devicePixelRatio,
                 maximumTextureSize,
             };
         },
-        KiriView::ImageDocumentRuntime::ChangeCallback {},
+        kiriview::ImageDocumentRuntime::ChangeCallback {},
         imageDocumentRuntimeDependencyOverridesFor(
             candidateProvider, dataLoader, std::move(dataDecoder), std::move(fileDeletionProvider)),
         std::move(fileDeletionFailedCallback));
@@ -160,16 +160,16 @@ bool finishOldestActiveLoadForUrl(ManualImageDataLoader &dataLoader, const QUrl 
     return dataLoader.finishOldestActiveLoadForUrl(url, QByteArrayLiteral("ok"));
 }
 
-bool hasReadyDisplaySourceProjection(const KiriView::ImageDocumentRuntime &runtime,
-    KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary)
+bool hasReadyDisplaySourceProjection(const kiriview::ImageDocumentRuntime &runtime,
+    kiriview::DisplayedPageRole role = kiriview::DisplayedPageRole::Primary)
 {
-    const KiriView::ImageDisplaySourceProjection projection = runtime.displaySourceProjection(role);
-    return projection.visible && projection.status == KiriView::ImageDisplaySourceStatus::Ready
+    const kiriview::ImageDisplaySourceProjection projection = runtime.displaySourceProjection(role);
+    return projection.visible && projection.status == kiriview::ImageDisplaySourceStatus::Ready
         && !projection.providerUrl.isEmpty();
 }
 
 bool containsChange(
-    const std::vector<KiriView::ImageDocumentChange> &changes, KiriView::ImageDocumentChange change)
+    const std::vector<kiriview::ImageDocumentChange> &changes, kiriview::ImageDocumentChange change)
 {
     return std::find(changes.begin(), changes.end(), change) != changes.end();
 }
@@ -236,12 +236,12 @@ void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
 
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Loading);
     QVERIFY(!runtime->zoomPercentKnown());
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QVERIFY(runtime->zoomPercentKnown());
     QCOMPARE(runtime->sourceUrl(), imageUrl);
     QCOMPARE(runtime->displayedUrl(), imageUrl);
@@ -265,19 +265,19 @@ void TestImageDocumentRuntime::displaySourceProjectionPublishesProviderForStatic
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
     runtime->setViewportSize(QSizeF(400.0, 300.0));
 
-    KiriView::ImageDisplaySourceProjection projection
-        = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    kiriview::ImageDisplaySourceProjection projection
+        = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Primary);
     QVERIFY(!projection.visible);
-    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Missing);
+    QCOMPARE(projection.status, kiriview::ImageDisplaySourceStatus::Missing);
 
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
-    projection = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    projection = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Primary);
     QVERIFY(projection.visible);
-    QCOMPARE(projection.pageRole, KiriView::DisplayedPageRole::Primary);
-    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Ready);
+    QCOMPARE(projection.pageRole, kiriview::DisplayedPageRole::Primary);
+    QCOMPARE(projection.status, kiriview::ImageDisplaySourceStatus::Ready);
     QVERIFY(!projection.providerUrl.isEmpty());
     QCOMPARE(projection.revision, quint64(1));
     QCOMPARE(projection.revisionToken, QStringLiteral("1"));
@@ -285,7 +285,7 @@ void TestImageDocumentRuntime::displaySourceProjectionPublishesProviderForStatic
     QCOMPARE(projection.originalSize, QSize(2, 1));
     QCOMPARE(projection.rasterSize, QSize(2, 1));
     QCOMPARE(projection.selectedSourceScope.kind,
-        KiriView::ImagePresentationScopeKey::Kind::DirectImage);
+        kiriview::ImagePresentationScopeKey::Kind::DirectImage);
     QCOMPARE(projection.selectedSourceScope.url, imageUrl);
 }
 
@@ -306,13 +306,13 @@ void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedIm
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QVERIFY(runtime->ordinaryDirectMediaScopeActive());
     QVERIFY(!runtime->openedCollectionScopeActive());
 
     const QUrl comicArchiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> comicArchiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(comicArchiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> comicArchiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(comicArchiveUrl);
     QVERIFY(comicArchiveCollection.has_value());
     const QUrl comicArchivePage
         = archivePageUrl(comicArchiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -324,14 +324,14 @@ void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedIm
     archiveRuntime->setSourceUrl(comicArchiveUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, comicArchivePage));
 
-    QTRY_COMPARE(archiveRuntime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(archiveRuntime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(archiveRuntime->displayedUrl(), comicArchivePage);
     QVERIFY(!archiveRuntime->ordinaryDirectMediaScopeActive());
     QVERIFY(archiveRuntime->openedCollectionScopeActive());
 
     const QUrl generalArchiveUrl = localUrl(QStringLiteral("/books/book.zip"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> generalArchiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(generalArchiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> generalArchiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(generalArchiveUrl);
     QVERIFY(generalArchiveCollection.has_value());
     const QUrl generalArchivePage
         = archivePageUrl(generalArchiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -343,7 +343,7 @@ void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedIm
     generalArchiveRuntime->setSourceUrl(generalArchiveUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, generalArchivePage));
 
-    QTRY_COMPARE(generalArchiveRuntime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(generalArchiveRuntime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(generalArchiveRuntime->displayedUrl(), generalArchivePage);
     QVERIFY(!generalArchiveRuntime->ordinaryDirectMediaScopeActive());
     QVERIFY(generalArchiveRuntime->openedCollectionScopeActive());
@@ -351,8 +351,8 @@ void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedIm
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
     const QUrl directoryUrl = localUrl(directory.path());
-    const std::optional<KiriView::OpenedCollectionScopeLocation> directoryCollection
-        = KiriView::openedCollectionScopeLocationForDirectlyOpenedLocalUrl(directoryUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> directoryCollection
+        = kiriview::openedCollectionScopeLocationForDirectlyOpenedLocalUrl(directoryUrl);
     QVERIFY(directoryCollection.has_value());
     const QUrl directoryPage
         = archivePageUrl(directoryCollection->rootUrl(), QStringLiteral("01.png"));
@@ -364,7 +364,7 @@ void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedIm
     directoryRuntime->setSourceUrl(directoryUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, directoryPage));
 
-    QTRY_COMPARE(directoryRuntime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(directoryRuntime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(directoryRuntime->displayedUrl(), directoryPage);
     QVERIFY(!directoryRuntime->ordinaryDirectMediaScopeActive());
     QVERIFY(directoryRuntime->openedCollectionScopeActive());
@@ -378,7 +378,7 @@ void TestImageDocumentRuntime::openedCollectionScopeProjectionsFollowDisplayedIm
     archiveEntryRuntime->setSourceUrl(openedCollectionEntryUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, openedCollectionEntryUrl));
 
-    QTRY_COMPARE(archiveEntryRuntime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(archiveEntryRuntime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(archiveEntryRuntime->displayedUrl(), openedCollectionEntryUrl);
     QVERIFY(archiveEntryRuntime->ordinaryDirectMediaScopeActive());
     QVERIFY(!archiveEntryRuntime->openedCollectionScopeActive());
@@ -389,8 +389,8 @@ void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -409,7 +409,7 @@ void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
     runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), firstPageUrl);
     QCOMPARE(runtime->currentPageNumber(), 1);
     QCOMPARE(runtime->pageCount(), 3);
@@ -419,7 +419,7 @@ void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
     const std::size_t loadCountBeforeVideo = dataLoader.loadCount();
     runtime->openNextPage();
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), videoUrl);
     QCOMPARE(runtime->currentPageNumber(), 2);
     QCOMPARE(runtime->pageCount(), 3);
@@ -454,7 +454,7 @@ void TestImageDocumentRuntime::imageLoadsUsePhysicalViewportForFirstDisplayDecod
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
-        staticImageDataDecoder(testImage(2)), KiriView::fallbackTextureSizeMax, 2.0);
+        staticImageDataDecoder(testImage(2)), kiriview::fallbackTextureSizeMax, 2.0);
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
 
@@ -462,7 +462,7 @@ void TestImageDocumentRuntime::imageLoadsUsePhysicalViewportForFirstDisplayDecod
     QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(800, 600));
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, nextImageUrl);
     QCOMPARE(dataLoader.backLoad().firstDisplay.physicalViewportSize, QSize(800, 600));
@@ -472,22 +472,22 @@ void TestImageDocumentRuntime::renderContextProviderCanBeReplacedAfterConstructi
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    std::vector<KiriView::ImageDocumentChange> changes;
+    std::vector<kiriview::ImageDocumentChange> changes;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/regular.png"));
 
     RuntimeHandle runtime(
         this,
         []() {
-            return KiriView::ImageDocumentRenderContext {
+            return kiriview::ImageDocumentRenderContext {
                 1.0,
-                KiriView::fallbackTextureSizeMax,
+                kiriview::fallbackTextureSizeMax,
             };
         },
-        [&changes](const std::vector<KiriView::ImageDocumentChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::ImageDocumentChange> &publishedChanges) {
             changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
         },
         imageDocumentRuntimeDependencyOverridesFor(candidateProvider, dataLoader,
-            [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+            [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
                 return staticDecodedImageWithPreview(QSize(1000, 500), QSize(1000, 500));
             }));
 
@@ -495,20 +495,20 @@ void TestImageDocumentRuntime::renderContextProviderCanBeReplacedAfterConstructi
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(
         runtime->maximumManualZoomPercent(), 65536.0 * 100.0 / 1000.0));
 
     changes.clear();
     runtime->setRenderContextProvider([]() {
-        return KiriView::ImageDocumentRenderContext {
+        return kiriview::ImageDocumentRenderContext {
             2.0,
-            KiriView::fallbackTextureSizeMax,
+            kiriview::fallbackTextureSizeMax,
         };
     });
 
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::MaximumManualZoomPercent));
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(
+    QVERIFY(containsChange(changes, kiriview::ImageDocumentChange::MaximumManualZoomPercent));
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(
         runtime->maximumManualZoomPercent(), 65536.0 * 2.0 * 100.0 / 1000.0));
 }
 
@@ -516,12 +516,12 @@ void TestImageDocumentRuntime::maximumManualZoomChangesAfterViewportImageAndRend
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    std::vector<KiriView::ImageDocumentChange> changes;
+    std::vector<kiriview::ImageDocumentChange> changes;
     qreal devicePixelRatio = 1.0;
     const QUrl firstImageUrl = localUrl(QStringLiteral("/images/regular.png"));
     const QUrl secondImageUrl = localUrl(QStringLiteral("/images/wide.png"));
 
-    auto dataDecoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &request) {
+    auto dataDecoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &request) {
         const QSize sourceSize = request.imageUrl().fileName() == QStringLiteral("wide.png")
             ? QSize(2000, 1000)
             : QSize(1000, 500);
@@ -530,12 +530,12 @@ void TestImageDocumentRuntime::maximumManualZoomChangesAfterViewportImageAndRend
     RuntimeHandle runtime(
         this,
         [&devicePixelRatio]() {
-            return KiriView::ImageDocumentRenderContext {
+            return kiriview::ImageDocumentRenderContext {
                 devicePixelRatio,
-                KiriView::fallbackTextureSizeMax,
+                kiriview::fallbackTextureSizeMax,
             };
         },
-        [&changes](const std::vector<KiriView::ImageDocumentChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::ImageDocumentChange> &publishedChanges) {
             changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
         },
         imageDocumentRuntimeDependencyOverridesFor(
@@ -545,21 +545,21 @@ void TestImageDocumentRuntime::maximumManualZoomChangesAfterViewportImageAndRend
     runtime->setSourceUrl(firstImageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(
         runtime->maximumManualZoomPercent(), 65536.0 * 100.0 / 1000.0));
 
     changes.clear();
     runtime->setViewportSize(QSizeF(9000.0, 100.0));
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::MaximumManualZoomPercent));
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(
+    QVERIFY(containsChange(changes, kiriview::ImageDocumentChange::MaximumManualZoomPercent));
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(
         runtime->maximumManualZoomPercent(), 9000.0 * 8.0 * 100.0 / 1000.0));
 
     changes.clear();
     devicePixelRatio = 2.0;
     runtime->updateRenderContext();
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::MaximumManualZoomPercent));
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(
+    QVERIFY(containsChange(changes, kiriview::ImageDocumentChange::MaximumManualZoomPercent));
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(
         runtime->maximumManualZoomPercent(), 9000.0 * 8.0 * 2.0 * 100.0 / 1000.0));
 }
 
@@ -580,9 +580,9 @@ void TestImageDocumentRuntime::ordinaryDirectImagePageNavigationDoesNotUseSiblin
     runtime->setSourceUrl(firstImageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     runtime->requestManualZoomPercent(150.0);
-    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
+    QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Manual);
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
     runtime->openNextPage();
@@ -591,7 +591,7 @@ void TestImageDocumentRuntime::ordinaryDirectImagePageNavigationDoesNotUseSiblin
     QCOMPARE(runtime->displayedUrl(), firstImageUrl);
     QCOMPARE(runtime->currentPageNumber(), 0);
     QCOMPARE(runtime->pageCount(), 0);
-    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
+    QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Manual);
 }
 
 void TestImageDocumentRuntime::archiveCollectionPageNavigationPreservesManualZoom()
@@ -599,8 +599,8 @@ void TestImageDocumentRuntime::archiveCollectionPageNavigationPreservesManualZoo
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -617,10 +617,10 @@ void TestImageDocumentRuntime::archiveCollectionPageNavigationPreservesManualZoo
     runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), firstPageUrl);
     runtime->requestManualZoomPercent(150.0);
-    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
+    QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Manual);
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
     runtime->openNextPage();
@@ -630,15 +630,15 @@ void TestImageDocumentRuntime::archiveCollectionPageNavigationPreservesManualZoo
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
-    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(runtime->zoomPercent(), 150.0));
+    QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Manual);
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(runtime->zoomPercent(), 150.0));
 }
 
 void TestImageDocumentRuntime::rotationChangesLogicalSizeAndPreservesManualZoom()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    std::vector<KiriView::ImageDocumentChange> changes;
+    std::vector<kiriview::ImageDocumentChange> changes;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/portrait.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
@@ -648,23 +648,23 @@ void TestImageDocumentRuntime::rotationChangesLogicalSizeAndPreservesManualZoom(
     RuntimeHandle runtime(
         this,
         []() {
-            return KiriView::ImageDocumentRenderContext {
+            return kiriview::ImageDocumentRenderContext {
                 1.0,
-                KiriView::fallbackTextureSizeMax,
+                kiriview::fallbackTextureSizeMax,
             };
         },
-        [&changes](const std::vector<KiriView::ImageDocumentChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::ImageDocumentChange> &publishedChanges) {
             changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
         },
         imageDocumentRuntimeDependencyOverridesFor(candidateProvider, dataLoader,
-            [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+            [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
                 return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
             }));
     runtime->setViewportSize(QSizeF(500.0, 500.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     runtime->requestManualZoomPercent(100.0);
     changes.clear();
 
@@ -674,12 +674,12 @@ void TestImageDocumentRuntime::rotationChangesLogicalSizeAndPreservesManualZoom(
     QCOMPARE(runtime->imageSize(), QSize(200, 100));
     QCOMPARE(runtime->primaryImageSize(), QSize(200, 100));
     QCOMPARE(runtime->displaySize(), QSizeF(200.0, 100.0));
-    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(runtime->zoomPercent(), 100.0));
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::Rotation));
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::ImageSize));
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::DisplaySize));
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::DisplaySource));
+    QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Manual);
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(runtime->zoomPercent(), 100.0));
+    QVERIFY(containsChange(changes, kiriview::ImageDocumentChange::Rotation));
+    QVERIFY(containsChange(changes, kiriview::ImageDocumentChange::ImageSize));
+    QVERIFY(containsChange(changes, kiriview::ImageDocumentChange::DisplaySize));
+    QVERIFY(containsChange(changes, kiriview::ImageDocumentChange::DisplaySource));
 
     runtime->rotateCounterclockwise();
 
@@ -699,23 +699,23 @@ void TestImageDocumentRuntime::rotationRecomputesFitZoomForRotatedBounds()
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
-        [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
             return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
         });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Fit);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(runtime->zoomPercent(), 150.0));
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Fit);
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(runtime->zoomPercent(), 150.0));
     QCOMPARE(runtime->displaySize(), QSizeF(150.0, 300.0));
 
     runtime->rotateClockwise();
 
     QCOMPARE(runtime->rotationDegrees(), 90);
-    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Fit);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(runtime->zoomPercent(), 200.0));
+    QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Fit);
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(runtime->zoomPercent(), 200.0));
     QCOMPARE(runtime->displaySize(), QSizeF(400.0, 200.0));
 }
 
@@ -724,8 +724,8 @@ void TestImageDocumentRuntime::rotationResetsOnImageDocumentPageNavigation()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -738,14 +738,14 @@ void TestImageDocumentRuntime::rotationResetsOnImageDocumentPageNavigation()
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
-        [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
             return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
         });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     runtime->rotateClockwise();
     QCOMPARE(runtime->rotationDegrees(), 90);
     QCOMPARE(runtime->imageSize(), QSize(200, 100));
@@ -766,8 +766,8 @@ void TestImageDocumentRuntime::rotationResetsAndStopsWhileTwoPageModeIsEnabled()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -780,14 +780,14 @@ void TestImageDocumentRuntime::rotationResetsAndStopsWhileTwoPageModeIsEnabled()
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
-        [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
             return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
         });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     runtime->rotateClockwise();
     QCOMPARE(runtime->rotationDegrees(), 90);
 
@@ -805,8 +805,8 @@ void TestImageDocumentRuntime::pendingAdjacentNavigationSkipsIntermediateLoad()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/pending-adjacent.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstImageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -825,7 +825,7 @@ void TestImageDocumentRuntime::pendingAdjacentNavigationSkipsIntermediateLoad()
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
     runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
@@ -848,8 +848,8 @@ void TestImageDocumentRuntime::pendingPageSelectionSupersedesEarlierLoad()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/pending-selection.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstImageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -868,7 +868,7 @@ void TestImageDocumentRuntime::pendingPageSelectionSupersedesEarlierLoad()
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
     runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
@@ -892,8 +892,8 @@ void TestImageDocumentRuntime::pageSelectionStartsTrackedLoadThroughEffectExecut
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/page-selection.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstImageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -909,7 +909,7 @@ void TestImageDocumentRuntime::pageSelectionStartsTrackedLoadThroughEffectExecut
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
     const std::size_t loadCountBeforeSelection = dataLoader.loadCount();
     runtime->openImageAtPage(2);
@@ -932,8 +932,8 @@ void TestImageDocumentRuntime::pendingLoadFailureKeepsTargetPageNavigation()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/pending-failure.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstImageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -949,7 +949,7 @@ void TestImageDocumentRuntime::pendingLoadFailureKeepsTargetPageNavigation()
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
     runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
@@ -959,7 +959,7 @@ void TestImageDocumentRuntime::pendingLoadFailureKeepsTargetPageNavigation()
 
     dataLoader.failBackLoad(QStringLiteral("missing"));
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Error);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Error);
     QCOMPARE(runtime->sourceUrl(), secondImageUrl);
     QCOMPARE(runtime->displayedUrl(), QUrl());
     QCOMPARE(runtime->currentPageNumber(), 2);
@@ -972,10 +972,10 @@ void TestImageDocumentRuntime::siblingArchiveNavigationResetsManualZoom()
     ManualImageDataLoader dataLoader;
     const QUrl firstArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl secondArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> firstArchiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(firstArchiveUrl);
-    const std::optional<KiriView::OpenedCollectionScopeLocation> secondArchiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(secondArchiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> firstArchiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(firstArchiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> secondArchiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(secondArchiveUrl);
     QVERIFY(firstArchiveCollection.has_value());
     QVERIFY(secondArchiveCollection.has_value());
     const QUrl firstPageUrl
@@ -1001,10 +1001,10 @@ void TestImageDocumentRuntime::siblingArchiveNavigationResetsManualZoom()
     runtime->setSourceUrl(firstArchiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), firstPageUrl);
     runtime->requestManualZoomPercent(150.0);
-    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
+    QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Manual);
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
     runtime->openNextContainer();
@@ -1014,7 +1014,7 @@ void TestImageDocumentRuntime::siblingArchiveNavigationResetsManualZoom()
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
-    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Fit);
+    QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Fit);
 }
 
 void TestImageDocumentRuntime::smallStaticImagePublishesProviderDisplay()
@@ -1029,18 +1029,18 @@ void TestImageDocumentRuntime::smallStaticImagePublishesProviderDisplay()
 
     RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader,
-        [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
             return staticDecodedImageWithPreview(QSize(1024, 1), QSize(1024, 1));
         },
-        KiriView::fallbackTextureSizeMax);
+        kiriview::fallbackTextureSizeMax);
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    const KiriView::ImageDisplaySourceProjection projection = runtime->displaySourceProjection();
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
+    const kiriview::ImageDisplaySourceProjection projection = runtime->displaySourceProjection();
     QVERIFY(projection.visible);
-    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Ready);
+    QCOMPARE(projection.status, kiriview::ImageDisplaySourceStatus::Ready);
     QCOMPARE(projection.originalSize, QSize(1024, 1));
     QCOMPARE(projection.rasterSize, QSize(1024, 1));
     QCOMPARE(runtime->imageSize(), QSize(1024, 1));
@@ -1058,22 +1058,22 @@ void TestImageDocumentRuntime::largeStaticImagePublishesProviderPreview()
 
     RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader,
-        [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
             return staticDecodedImageWithPreview(
-                QSize(KiriView::imageBlockingDisplayLongEdgeMax + 1, 1),
-                QSize(KiriView::imageBlockingDisplayLongEdgeMax, 1));
+                QSize(kiriview::imageBlockingDisplayLongEdgeMax + 1, 1),
+                QSize(kiriview::imageBlockingDisplayLongEdgeMax, 1));
         },
-        KiriView::fallbackTextureSizeMax);
+        kiriview::fallbackTextureSizeMax);
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    const KiriView::ImageDisplaySourceProjection projection = runtime->displaySourceProjection();
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
+    const kiriview::ImageDisplaySourceProjection projection = runtime->displaySourceProjection();
     QVERIFY(projection.visible);
-    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Ready);
-    QCOMPARE(projection.originalSize, QSize(KiriView::imageBlockingDisplayLongEdgeMax + 1, 1));
-    QCOMPARE(projection.rasterSize, QSize(KiriView::imageBlockingDisplayLongEdgeMax, 1));
+    QCOMPARE(projection.status, kiriview::ImageDisplaySourceStatus::Ready);
+    QCOMPARE(projection.originalSize, QSize(kiriview::imageBlockingDisplayLongEdgeMax + 1, 1));
+    QCOMPARE(projection.rasterSize, QSize(kiriview::imageBlockingDisplayLongEdgeMax, 1));
 }
 
 void TestImageDocumentRuntime::staticImageStillSchedulesAdjacentPredecode()
@@ -1090,15 +1090,15 @@ void TestImageDocumentRuntime::staticImageStillSchedulesAdjacentPredecode()
 
     RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader,
-        [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
             return staticDecodedImageWithPreview(QSize(1024, 1), QSize(1024, 1));
         },
-        KiriView::fallbackTextureSizeMax);
+        kiriview::fallbackTextureSizeMax);
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QVERIFY(hasReadyDisplaySourceProjection(*runtime));
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, nextImageUrl);
@@ -1120,28 +1120,28 @@ void TestImageDocumentRuntime::replacementLoadFailureSelectsTargetError()
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
-    KiriView::ImageDisplaySourceProjection projection
-        = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
+    kiriview::ImageDisplaySourceProjection projection
+        = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Primary);
     QVERIFY(projection.visible);
-    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Ready);
+    QCOMPARE(projection.status, kiriview::ImageDisplaySourceStatus::Ready);
     QVERIFY(!projection.providerUrl.isEmpty());
     const std::size_t loadCountBeforeReplacement = dataLoader.loadCount();
 
     runtime->setSourceUrl(missingUrl);
     QCOMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 1);
     QCOMPARE(dataLoader.backLoad().url, missingUrl);
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Loading);
     QCOMPARE(runtime->sourceUrl(), missingUrl);
     QCOMPARE(runtime->displayedUrl(), QUrl());
     QVERIFY(!hasReadyDisplaySourceProjection(*runtime));
-    projection = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    projection = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Primary);
     QVERIFY(!projection.visible);
-    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Missing);
+    QCOMPARE(projection.status, kiriview::ImageDisplaySourceStatus::Missing);
     QVERIFY(projection.providerUrl.isEmpty());
     dataLoader.failBackLoad(QStringLiteral("missing"));
 
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Error);
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Error);
     QCOMPARE(runtime->sourceUrl(), missingUrl);
     QCOMPARE(runtime->displayedUrl(), QUrl());
     QCOMPARE(runtime->errorString(), QStringLiteral("missing"));
@@ -1167,7 +1167,7 @@ void TestImageDocumentRuntime::decodedReplacementFailureSelectsTargetError()
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, badUrl);
     const std::size_t loadCountBeforeReplacement = dataLoader.loadCount();
@@ -1175,12 +1175,12 @@ void TestImageDocumentRuntime::decodedReplacementFailureSelectsTargetError()
     runtime->setSourceUrl(badUrl);
     QCOMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 1);
     QCOMPARE(dataLoader.backLoad().url, badUrl);
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Loading);
     QCOMPARE(runtime->displayedUrl(), QUrl());
     dataLoader.finishBackLoad(QByteArrayLiteral("bad"));
 
     QTRY_COMPARE(runtime->errorString(), testImageDecodeFailureString());
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Error);
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Error);
     QCOMPARE(runtime->sourceUrl(), badUrl);
     QCOMPARE(runtime->displayedUrl(), QUrl());
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 1);
@@ -1192,10 +1192,10 @@ void TestImageDocumentRuntime::emptyContainerNavigationClearsImageAndSelectsCont
     ManualImageDataLoader dataLoader;
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> currentArchiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(currentContainerUrl);
-    const std::optional<KiriView::OpenedCollectionScopeLocation> targetArchiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(targetContainerUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> currentArchiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(currentContainerUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> targetArchiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(targetContainerUrl);
     QVERIFY(currentArchiveCollection.has_value());
     QVERIFY(targetArchiveCollection.has_value());
     const QUrl currentImageUrl
@@ -1215,11 +1215,11 @@ void TestImageDocumentRuntime::emptyContainerNavigationClearsImageAndSelectsCont
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(currentContainerUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
     runtime->openNextContainer();
 
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Error);
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Error);
     QCOMPARE(runtime->sourceUrl(), targetContainerUrl);
     QCOMPARE(runtime->displayedUrl(), QUrl());
     QVERIFY(runtime->containerNavigationAvailable());
@@ -1236,9 +1236,9 @@ void TestImageDocumentRuntime::deletingWithoutDisplayedImageDoesNotStartFileOper
 
     RuntimeHandle runtime
         = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-            KiriView::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
+            kiriview::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
 
-    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
+    runtime->deleteDisplayedFile(kiriview::FileDeletionMode::MoveToTrash);
 
     QCOMPARE(fileDeletionProvider.operationCount(), std::size_t(0));
     QVERIFY(!runtime->fileDeletionInProgress());
@@ -1257,27 +1257,27 @@ void TestImageDocumentRuntime::fileDeletionFailureKeepsDisplayedImageAndReportsE
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
-        staticImageDataDecoder(testImage(2)), KiriView::fallbackTextureSizeMax, 1.0,
+        staticImageDataDecoder(testImage(2)), kiriview::fallbackTextureSizeMax, 1.0,
         fileDeletionProviderFor(fileDeletionProvider),
         [&deletionErrors](const QString &errorString) { deletionErrors.push_back(errorString); });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
-    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
+    runtime->deleteDisplayedFile(kiriview::FileDeletionMode::MoveToTrash);
 
     QCOMPARE(fileDeletionProvider.operationCount(), std::size_t(1));
     QCOMPARE(fileDeletionProvider.backOperation().request.targetUrl, imageUrl);
     QCOMPARE(
-        fileDeletionProvider.backOperation().request.mode, KiriView::FileDeletionMode::MoveToTrash);
+        fileDeletionProvider.backOperation().request.mode, kiriview::FileDeletionMode::MoveToTrash);
     QVERIFY(runtime->fileDeletionInProgress());
 
     fileDeletionProvider.finishBackOperation(
-        KiriView::FileDeletionResult::Failed, QStringLiteral("permission denied"));
+        kiriview::FileDeletionResult::Failed, QStringLiteral("permission denied"));
 
     QVERIFY(!runtime->fileDeletionInProgress());
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->sourceUrl(), imageUrl);
     QCOMPARE(runtime->displayedUrl(), imageUrl);
     QCOMPARE(deletionErrors.size(), std::size_t(1));
@@ -1298,25 +1298,25 @@ void TestImageDocumentRuntime::fileDeletionCancelKeepsDisplayedImageWithoutError
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
-        staticImageDataDecoder(testImage(2)), KiriView::fallbackTextureSizeMax, 1.0,
+        staticImageDataDecoder(testImage(2)), kiriview::fallbackTextureSizeMax, 1.0,
         fileDeletionProviderFor(fileDeletionProvider),
         [&deletionErrors](const QString &errorString) { deletionErrors.push_back(errorString); });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
-    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::DeletePermanently);
+    runtime->deleteDisplayedFile(kiriview::FileDeletionMode::DeletePermanently);
 
     QCOMPARE(fileDeletionProvider.operationCount(), std::size_t(1));
     QCOMPARE(fileDeletionProvider.backOperation().request.targetUrl, imageUrl);
     QCOMPARE(fileDeletionProvider.backOperation().request.mode,
-        KiriView::FileDeletionMode::DeletePermanently);
+        kiriview::FileDeletionMode::DeletePermanently);
 
-    fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Canceled);
+    fileDeletionProvider.finishBackOperation(kiriview::FileDeletionResult::Canceled);
 
     QVERIFY(!runtime->fileDeletionInProgress());
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->sourceUrl(), imageUrl);
     QCOMPARE(runtime->displayedUrl(), imageUrl);
     QVERIFY(deletionErrors.empty());
@@ -1339,21 +1339,21 @@ void TestImageDocumentRuntime::successfulFileDeletionOpensNextImageFallback()
 
     RuntimeHandle runtime
         = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-            KiriView::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
+            kiriview::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(currentUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
-    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
-    fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    runtime->deleteDisplayedFile(kiriview::FileDeletionMode::MoveToTrash);
+    fileDeletionProvider.finishBackOperation(kiriview::FileDeletionResult::Succeeded);
 
     QCOMPARE(runtime->sourceUrl(), nextUrl);
     QCOMPARE(runtime->displayedUrl(), QUrl());
     QCOMPARE(dataLoader.backLoad().url, nextUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), nextUrl);
 }
 
@@ -1373,20 +1373,20 @@ void TestImageDocumentRuntime::successfulFileDeletionOpensPreviousImageFallback(
 
     RuntimeHandle runtime
         = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-            KiriView::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
+            kiriview::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(currentUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
-    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
-    fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    runtime->deleteDisplayedFile(kiriview::FileDeletionMode::MoveToTrash);
+    fileDeletionProvider.finishBackOperation(kiriview::FileDeletionResult::Succeeded);
 
     QCOMPARE(runtime->sourceUrl(), previousUrl);
     QCOMPARE(dataLoader.backLoad().url, previousUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), previousUrl);
 }
 
@@ -1400,16 +1400,16 @@ void TestImageDocumentRuntime::successfulFileDeletionWithoutFallbackClearsDocume
 
     RuntimeHandle runtime
         = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-            KiriView::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
+            kiriview::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
-    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
-    fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    runtime->deleteDisplayedFile(kiriview::FileDeletionMode::MoveToTrash);
+    fileDeletionProvider.finishBackOperation(kiriview::FileDeletionResult::Succeeded);
 
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Null);
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Null);
     QCOMPARE(runtime->sourceUrl(), QUrl());
     QCOMPARE(runtime->displayedUrl(), QUrl());
     QCOMPARE(runtime->imageSize(), QSize());
@@ -1423,10 +1423,10 @@ void TestImageDocumentRuntime::successfulComicBookDeletionOpensNextSiblingArchiv
     ManualFileDeletionProvider fileDeletionProvider;
     const QUrl currentArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl nextArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> currentArchiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(currentArchiveUrl);
-    const std::optional<KiriView::OpenedCollectionScopeLocation> nextArchiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(nextArchiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> currentArchiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(currentArchiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> nextArchiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(nextArchiveUrl);
     QVERIFY(currentArchiveCollection.has_value());
     QVERIFY(nextArchiveCollection.has_value());
     const QUrl currentImageUrl
@@ -1448,23 +1448,23 @@ void TestImageDocumentRuntime::successfulComicBookDeletionOpensNextSiblingArchiv
 
     RuntimeHandle runtime
         = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-            KiriView::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
+            kiriview::fallbackTextureSizeMax, 1.0, fileDeletionProviderFor(fileDeletionProvider));
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(currentArchiveUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
 
-    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::DeletePermanently);
+    runtime->deleteDisplayedFile(kiriview::FileDeletionMode::DeletePermanently);
 
     QCOMPARE(fileDeletionProvider.operationCount(), std::size_t(1));
     QCOMPARE(fileDeletionProvider.backOperation().request.targetUrl, currentArchiveUrl);
-    fileDeletionProvider.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+    fileDeletionProvider.finishBackOperation(kiriview::FileDeletionResult::Succeeded);
 
     QCOMPARE(runtime->sourceUrl(), nextImageUrl);
     QCOMPARE(dataLoader.backLoad().url, nextImageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), nextImageUrl);
     QVERIFY(runtime->containerNavigationAvailable());
 }
@@ -1475,10 +1475,10 @@ void TestImageDocumentRuntime::rightToLeftReadingIsOnlyAvailableForComicArchives
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
-    const QUrl archivePageUrl = KiriView::TestSupport::archivePageUrl(
+    const QUrl archivePageUrl = kiriview::TestSupport::archivePageUrl(
         archiveCollection->rootUrl(), QStringLiteral("01.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
@@ -1494,7 +1494,7 @@ void TestImageDocumentRuntime::rightToLeftReadingIsOnlyAvailableForComicArchives
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QVERIFY(!runtime->rightToLeftReadingEnabled());
     QVERIFY(!runtime->rightToLeftReadingAvailable());
 
@@ -1513,10 +1513,10 @@ void TestImageDocumentRuntime::rightToLeftReadingPersistsAcrossSiblingArchiveNav
     const QUrl firstArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl secondArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
     const QUrl ordinaryImageUrl = localUrl(QStringLiteral("/images/01.png"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> firstArchiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(firstArchiveUrl);
-    const std::optional<KiriView::OpenedCollectionScopeLocation> secondArchiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(secondArchiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> firstArchiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(firstArchiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> secondArchiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(secondArchiveUrl);
     QVERIFY(firstArchiveCollection.has_value());
     QVERIFY(secondArchiveCollection.has_value());
     const QUrl firstPageUrl
@@ -1570,8 +1570,8 @@ void TestImageDocumentRuntime::twoPageModeDisplaysCurrentAndNextComicArchivePage
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -1586,7 +1586,7 @@ void TestImageDocumentRuntime::twoPageModeDisplaysCurrentAndNextComicArchivePage
             imageDocumentPageCandidate(thirdPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));
@@ -1594,12 +1594,12 @@ void TestImageDocumentRuntime::twoPageModeDisplaysCurrentAndNextComicArchivePage
     runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QCOMPARE(runtime->displayedUrl(), firstPageUrl);
     QVERIFY(runtime->twoPageModeAvailable());
 
     runtime->rotateClockwise();
-    const KiriView::ImageDisplaySourceProjection rotatedSinglePageProjection
+    const kiriview::ImageDisplaySourceProjection rotatedSinglePageProjection
         = runtime->displaySourceProjection();
     QVERIFY(hasReadyDisplaySourceProjection(*runtime));
     QCOMPARE(runtime->imageSize(), QSize(200, 100));
@@ -1624,12 +1624,12 @@ void TestImageDocumentRuntime::twoPageModeDisplaysCurrentAndNextComicArchivePage
     QCOMPARE(runtime->secondaryImageSize(), QSize(100, 200));
     QCOMPARE(runtime->imageSize(), QSize(200, 200));
 
-    const KiriView::ImageDisplaySourceProjection primaryProjection
+    const kiriview::ImageDisplaySourceProjection primaryProjection
         = runtime->displaySourceProjection();
-    const KiriView::ImageDisplaySourceProjection secondaryProjection
-        = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Secondary);
+    const kiriview::ImageDisplaySourceProjection secondaryProjection
+        = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Secondary);
     QVERIFY(hasReadyDisplaySourceProjection(*runtime));
-    QVERIFY(hasReadyDisplaySourceProjection(*runtime, KiriView::DisplayedPageRole::Secondary));
+    QVERIFY(hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
     QCOMPARE(primaryProjection.originalSize, QSize(100, 200));
     QCOMPARE(secondaryProjection.originalSize, QSize(100, 200));
     QCOMPARE(primaryProjection.rotationDegrees, 0);
@@ -1641,8 +1641,8 @@ void TestImageDocumentRuntime::twoPageModeUsesRightToLeftPageOrder()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -1657,7 +1657,7 @@ void TestImageDocumentRuntime::twoPageModeUsesRightToLeftPageOrder()
             imageDocumentPageCandidate(thirdPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
         return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
     };
     RuntimeHandle runtime
@@ -1682,7 +1682,7 @@ void TestImageDocumentRuntime::twoPageModeUsesRightToLeftPageOrder()
     runtime->requestViewportContentPosition(QPointF(0.0, 0.0));
 
     QTRY_VERIFY(hasReadyDisplaySourceProjection(*runtime));
-    QVERIFY(hasReadyDisplaySourceProjection(*runtime, KiriView::DisplayedPageRole::Secondary));
+    QVERIFY(hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
 }
 
 void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSemantic()
@@ -1690,8 +1690,8 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -1709,7 +1709,7 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
             imageDocumentPageCandidate(fourthPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));
@@ -1757,10 +1757,10 @@ void TestImageDocumentRuntime::twoPageModePublishesAndClearsSecondaryDisplaySour
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    std::vector<KiriView::ImageDocumentChange> changes;
+    std::vector<kiriview::ImageDocumentChange> changes;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -1775,18 +1775,18 @@ void TestImageDocumentRuntime::twoPageModePublishesAndClearsSecondaryDisplaySour
             imageDocumentPageCandidate(thirdPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
     RuntimeHandle runtime(
         this,
         []() {
-            return KiriView::ImageDocumentRenderContext {
+            return kiriview::ImageDocumentRenderContext {
                 1.0,
-                KiriView::fallbackTextureSizeMax,
+                kiriview::fallbackTextureSizeMax,
             };
         },
-        [&changes](const std::vector<KiriView::ImageDocumentChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::ImageDocumentChange> &publishedChanges) {
             changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
         },
         imageDocumentRuntimeDependencyOverridesFor(
@@ -1805,30 +1805,30 @@ void TestImageDocumentRuntime::twoPageModePublishesAndClearsSecondaryDisplaySour
     finishLoad(dataLoader);
 
     QTRY_VERIFY(runtime->secondaryPageVisible());
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::DisplaySource));
-    const KiriView::ImageDisplaySourceProjection primary
-        = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary);
-    const KiriView::ImageDisplaySourceProjection secondary
-        = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Secondary);
+    QVERIFY(containsChange(changes, kiriview::ImageDocumentChange::DisplaySource));
+    const kiriview::ImageDisplaySourceProjection primary
+        = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Primary);
+    const kiriview::ImageDisplaySourceProjection secondary
+        = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Secondary);
     QVERIFY(primary.visible);
     QVERIFY(secondary.visible);
-    QCOMPARE(secondary.pageRole, KiriView::DisplayedPageRole::Secondary);
-    QCOMPARE(secondary.status, KiriView::ImageDisplaySourceStatus::Ready);
+    QCOMPARE(secondary.pageRole, kiriview::DisplayedPageRole::Secondary);
+    QCOMPARE(secondary.status, kiriview::ImageDisplaySourceStatus::Ready);
     QVERIFY(!secondary.providerUrl.isEmpty());
     QVERIFY(primary.providerUrl != secondary.providerUrl);
     QCOMPARE(secondary.revision, quint64(1));
     QCOMPARE(secondary.sourceIdentity, QStringLiteral("test-image"));
     QCOMPARE(secondary.selectedSourceScope.kind,
-        KiriView::ImagePresentationScopeKey::Kind::OpenedCollection);
+        kiriview::ImagePresentationScopeKey::Kind::OpenedCollection);
 
     changes.clear();
     runtime->setTwoPageModeEnabled(false);
 
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::DisplaySource));
-    const KiriView::ImageDisplaySourceProjection clearedSecondary
-        = runtime->displaySourceProjection(KiriView::DisplayedPageRole::Secondary);
+    QVERIFY(containsChange(changes, kiriview::ImageDocumentChange::DisplaySource));
+    const kiriview::ImageDisplaySourceProjection clearedSecondary
+        = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Secondary);
     QVERIFY(!clearedSecondary.visible);
-    QCOMPARE(clearedSecondary.status, KiriView::ImageDisplaySourceStatus::Missing);
+    QCOMPARE(clearedSecondary.status, kiriview::ImageDisplaySourceStatus::Missing);
     QVERIFY(clearedSecondary.providerUrl.isEmpty());
 }
 
@@ -1837,8 +1837,8 @@ void TestImageDocumentRuntime::twoPageModeClearsPreviousSpreadWhileTargetSpreadL
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -1859,7 +1859,7 @@ void TestImageDocumentRuntime::twoPageModeClearsPreviousSpreadWhileTargetSpreadL
             imageDocumentPageCandidate(fifthPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));
@@ -1879,31 +1879,31 @@ void TestImageDocumentRuntime::twoPageModeClearsPreviousSpreadWhileTargetSpreadL
     QCOMPARE(runtime->displayedUrl(), secondPageUrl);
     QCOMPARE(runtime->currentLastPageNumber(), 3);
     QVERIFY(hasReadyDisplaySourceProjection(*runtime));
-    QVERIFY(hasReadyDisplaySourceProjection(*runtime, KiriView::DisplayedPageRole::Secondary));
+    QVERIFY(hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
 
     runtime->openNextPage();
 
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Loading);
     QVERIFY(runtime->loading());
     QVERIFY(!hasReadyDisplaySourceProjection(*runtime));
-    QVERIFY(!hasReadyDisplaySourceProjection(*runtime, KiriView::DisplayedPageRole::Secondary));
+    QVERIFY(!hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->displayedUrl(), QUrl());
     QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
-    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Loading);
     QVERIFY(runtime->loading());
     QVERIFY(!hasReadyDisplaySourceProjection(*runtime));
-    QVERIFY(!hasReadyDisplaySourceProjection(*runtime, KiriView::DisplayedPageRole::Secondary));
+    QVERIFY(!hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
     QTRY_VERIFY(runtime->secondaryPageVisible());
     QCOMPARE(runtime->displayedUrl(), fourthPageUrl);
     QCOMPARE(runtime->currentLastPageNumber(), 5);
     QVERIFY(hasReadyDisplaySourceProjection(*runtime));
-    QVERIFY(hasReadyDisplaySourceProjection(*runtime, KiriView::DisplayedPageRole::Secondary));
+    QVERIFY(hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
 }
 
 void TestImageDocumentRuntime::twoPageModeLoadingNavigationUsesPendingPrimaryPage()
@@ -1911,8 +1911,8 @@ void TestImageDocumentRuntime::twoPageModeLoadingNavigationUsesPendingPrimaryPag
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -1933,7 +1933,7 @@ void TestImageDocumentRuntime::twoPageModeLoadingNavigationUsesPendingPrimaryPag
             imageDocumentPageCandidate(fifthPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));

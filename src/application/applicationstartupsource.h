@@ -6,7 +6,7 @@
 
 #include <QUrl>
 
-namespace KiriView {
+namespace kiriview {
 struct ApplicationStartupSource;
 
 QUrl initialSourceUrlFromStartupSource(const ApplicationStartupSource &source);

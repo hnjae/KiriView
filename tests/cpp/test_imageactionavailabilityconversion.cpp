@@ -32,8 +32,8 @@ void TestImageActionAvailabilityConversion::imageAvailabilityInputMapsPlainField
     input.rightToLeftReadingEnabled = true;
     input.rightToLeftReadingAvailable = true;
 
-    const KiriView::RustImageActionAvailabilityInput converted
-        = KiriView::Bridge::rustImageActionAvailabilityInput(input);
+    const kiriview::RustImageActionAvailabilityInput converted
+        = kiriview::Bridge::rustImageActionAvailabilityInput(input);
 
     QVERIFY(converted.image_ready);
     QVERIFY(converted.file_deletion_in_progress);
@@ -70,8 +70,8 @@ void TestImageActionAvailabilityConversion::imageAvailabilityProjectionMapsPlain
     projection.containerShortcutsEnabled = true;
     projection.containerViewerShortcutsEnabled = true;
 
-    const KiriView::RustImageActionAvailabilityProjection converted
-        = KiriView::Bridge::rustImageActionAvailabilityProjection(projection);
+    const kiriview::RustImageActionAvailabilityProjection converted
+        = kiriview::Bridge::rustImageActionAvailabilityProjection(projection);
 
     QVERIFY(converted.can_use_ready_actions);
     QVERIFY(converted.can_use_rotate_actions);
@@ -96,7 +96,7 @@ void TestImageActionAvailabilityConversion::imageAvailabilityProjectionMapsPlain
 
 void TestImageActionAvailabilityConversion::projectionMapsPlainFields()
 {
-    KiriView::RustImageActionAvailabilityProjection projection {};
+    kiriview::RustImageActionAvailabilityProjection projection {};
     projection.can_use_ready_actions = true;
     projection.can_use_rotate_actions = true;
     projection.can_use_two_page_mode_actions = true;
@@ -118,7 +118,7 @@ void TestImageActionAvailabilityConversion::projectionMapsPlainFields()
     projection.container_viewer_shortcuts_enabled = true;
 
     const ImageActionAvailabilityProjection converted
-        = KiriView::Bridge::imageActionAvailabilityProjectionFromRust(projection);
+        = kiriview::Bridge::imageActionAvailabilityProjectionFromRust(projection);
 
     QVERIFY(converted.canUseReadyActions);
     QVERIFY(converted.canUseRotateActions);
@@ -143,30 +143,30 @@ void TestImageActionAvailabilityConversion::projectionMapsPlainFields()
 
 void TestImageActionAvailabilityConversion::shortcutScopeMapsApplicationScopeValues()
 {
-    using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+    using Scope = kiriview::ApplicationActions::ImageShortcutScope;
 
-    QVERIFY(KiriView::Bridge::rustImageShortcutScope(Scope::HelpShortcutScope)
-        == KiriView::RustImageShortcutScope::HelpShortcutScope);
-    QVERIFY(KiriView::Bridge::rustImageShortcutScope(Scope::ReadyViewerShortcutScope)
-        == KiriView::RustImageShortcutScope::ReadyViewerShortcutScope);
-    QVERIFY(KiriView::Bridge::rustImageShortcutScope(Scope::RightToLeftReadingViewerShortcutScope)
-        == KiriView::RustImageShortcutScope::RightToLeftReadingViewerShortcutScope);
-    QVERIFY(KiriView::Bridge::rustImageShortcutScope(Scope::ContainerViewerShortcutScope)
-        == KiriView::RustImageShortcutScope::ContainerViewerShortcutScope);
-    QVERIFY(KiriView::Bridge::rustImageShortcutScope(Scope::MediaStartEndViewerShortcutScope)
-        == KiriView::RustImageShortcutScope::MediaStartEndViewerShortcutScope);
+    QVERIFY(kiriview::Bridge::rustImageShortcutScope(Scope::HelpShortcutScope)
+        == kiriview::RustImageShortcutScope::HelpShortcutScope);
+    QVERIFY(kiriview::Bridge::rustImageShortcutScope(Scope::ReadyViewerShortcutScope)
+        == kiriview::RustImageShortcutScope::ReadyViewerShortcutScope);
+    QVERIFY(kiriview::Bridge::rustImageShortcutScope(Scope::RightToLeftReadingViewerShortcutScope)
+        == kiriview::RustImageShortcutScope::RightToLeftReadingViewerShortcutScope);
+    QVERIFY(kiriview::Bridge::rustImageShortcutScope(Scope::ContainerViewerShortcutScope)
+        == kiriview::RustImageShortcutScope::ContainerViewerShortcutScope);
+    QVERIFY(kiriview::Bridge::rustImageShortcutScope(Scope::MediaStartEndViewerShortcutScope)
+        == kiriview::RustImageShortcutScope::MediaStartEndViewerShortcutScope);
 }
 
 void TestImageActionAvailabilityConversion::videoAvailabilityInputMapsPlainFields()
 {
-    KiriView::ApplicationActions::VideoShortcutAvailabilityInput input;
+    kiriview::ApplicationActions::VideoShortcutAvailabilityInput input;
     input.helpShortcutsEnabled = true;
     input.viewerShortcutsEnabled = true;
     input.fileDeletionInProgress = true;
     input.directMediaNavigationActive = true;
 
-    const KiriView::RustVideoShortcutAvailabilityInput converted
-        = KiriView::Bridge::rustVideoShortcutAvailabilityInput(input);
+    const kiriview::RustVideoShortcutAvailabilityInput converted
+        = kiriview::Bridge::rustVideoShortcutAvailabilityInput(input);
 
     QVERIFY(converted.help_shortcuts_enabled);
     QVERIFY(converted.viewer_shortcuts_enabled);

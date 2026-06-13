@@ -22,7 +22,7 @@ private Q_SLOTS:
 
 void TestImageAsyncOperationState::completionClaimsOnlyCurrentOperation()
 {
-    KiriView::ImageAsyncOperationState state;
+    kiriview::ImageAsyncOperationState state;
 
     const quint64 stale = state.start();
     const quint64 current = state.start();
@@ -40,7 +40,7 @@ void TestImageAsyncOperationState::completionClaimsOnlyCurrentOperation()
 
 void TestImageAsyncOperationState::cancelRejectsPendingOperation()
 {
-    KiriView::ImageAsyncOperationState state;
+    kiriview::ImageAsyncOperationState state;
     const quint64 operation = state.start();
 
     QVERIFY(state.accepts(operation));
@@ -51,7 +51,7 @@ void TestImageAsyncOperationState::cancelRejectsPendingOperation()
 
 void TestImageAsyncOperationState::operationIdsStayNonZeroAfterWrap()
 {
-    KiriView::ImageAsyncOperationState state(std::numeric_limits<quint64>::max());
+    kiriview::ImageAsyncOperationState state(std::numeric_limits<quint64>::max());
 
     QCOMPARE(state.start(), quint64(1));
     QCOMPARE(state.start(), quint64(2));
@@ -59,11 +59,11 @@ void TestImageAsyncOperationState::operationIdsStayNonZeroAfterWrap()
 
 void TestImageAsyncOperationState::scopedCompletionRequiresCurrentOperationAndScope()
 {
-    KiriView::ImageAsyncScopedOperationState<QUrl> state;
+    kiriview::ImageAsyncScopedOperationState<QUrl> state;
 
-    const KiriView::ImageAsyncScopedOperation<QUrl> stale
+    const kiriview::ImageAsyncScopedOperation<QUrl> stale
         = state.start(QUrl::fromLocalFile(QStringLiteral("/media/01.mp4")));
-    const KiriView::ImageAsyncScopedOperation<QUrl> current
+    const kiriview::ImageAsyncScopedOperation<QUrl> current
         = state.start(QUrl::fromLocalFile(QStringLiteral("/media/02.mp4")));
 
     QVERIFY(stale.operationId != 0);
@@ -81,8 +81,8 @@ void TestImageAsyncOperationState::scopedCompletionRequiresCurrentOperationAndSc
 
 void TestImageAsyncOperationState::scopedCancelRejectsPendingOperation()
 {
-    KiriView::ImageAsyncScopedOperationState<QUrl> state;
-    const KiriView::ImageAsyncScopedOperation<QUrl> operation
+    kiriview::ImageAsyncScopedOperationState<QUrl> state;
+    const kiriview::ImageAsyncScopedOperation<QUrl> operation
         = state.start(QUrl::fromLocalFile(QStringLiteral("/media/01.mp4")));
 
     QVERIFY(state.active());

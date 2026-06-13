@@ -11,7 +11,7 @@
 #include <QSizeF>
 #include <QtGlobal>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageViewportInteractionSnapshot {
     QSize imageSize;
     QSizeF viewportSize;

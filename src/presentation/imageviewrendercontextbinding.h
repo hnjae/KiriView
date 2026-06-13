@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEVIEWRENDERCONTEXTBINDING_H
 #define KIRIVIEW_IMAGEVIEWRENDERCONTEXTBINDING_H
 
-namespace KiriView {
+namespace kiriview {
 enum class ImageViewRenderContextBindingAction {
     None,
     InstallProvider,

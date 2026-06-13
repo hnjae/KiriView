@@ -6,7 +6,7 @@
 #include "location/imageurl.h"
 #include "presentation/imagespreadgeometry.h"
 
-namespace KiriView {
+namespace kiriview {
 void ImageSpreadPageCache::cachePageSize(const QUrl &url, const QSize &imageSize)
 {
     const QString key = cacheKey(url);

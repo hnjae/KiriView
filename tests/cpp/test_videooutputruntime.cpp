@@ -27,11 +27,11 @@ struct RuntimeFixture {
     int backendOutputSetCount = 0;
     int outputChangedCount = 0;
     int zoomProjectionChangedCount = 0;
-    KiriView::VideoOutputRuntime runtime;
+    kiriview::VideoOutputRuntime runtime;
 
     RuntimeFixture()
         : runtime(&context,
-              KiriView::VideoOutputRuntimeCallbacks {
+              kiriview::VideoOutputRuntimeCallbacks {
                   [this](QObject *output) {
                       backendOutput = output;
                       ++backendOutputSetCount;

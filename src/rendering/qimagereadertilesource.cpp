@@ -18,7 +18,7 @@
 namespace {
 QString imageDataReadError()
 {
-    return KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData);
+    return kiriview::imageErrorText(kiriview::ImageErrorTextId::ReadImageData);
 }
 
 QSize transformedImageSize(const QSize &size, QImageIOHandler::Transformations transformations)
@@ -64,24 +64,24 @@ template <typename ConfigureReader>
 QImage readBufferedImage(const QByteArray &data, const QByteArray &format, bool autoTransform,
     ConfigureReader configureReader, QString *errorString)
 {
-    KiriView::BufferedImageReader reader(data, format, autoTransform);
+    kiriview::BufferedImageReader reader(data, format, autoTransform);
     if (!reader) {
-        KiriView::setTileSourceError(errorString, imageDataReadError());
+        kiriview::setTileSourceError(errorString, imageDataReadError());
         return {};
     }
 
     configureReader(reader);
     QImage image = reader.read();
     if (image.isNull()) {
-        KiriView::setTileSourceError(errorString, reader.errorString());
+        kiriview::setTileSourceError(errorString, reader.errorString());
         return {};
     }
 
-    return KiriView::displayReadyImage(image);
+    return kiriview::displayReadyImage(image);
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 std::shared_ptr<QImageReaderTileSource> QImageReaderTileSource::open(
     const QByteArray &data, const QByteArray &format, QString *errorString)
 {

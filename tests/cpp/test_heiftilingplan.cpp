@@ -39,20 +39,20 @@ private Q_SLOTS:
 
 void TestHeifTilingPlan::gridRejectsInvalidAndSingleTileLayouts()
 {
-    QVERIFY(!KiriView::heifTileGridForTiling(tiling(0, 2, 64, 64)).has_value());
-    QVERIFY(!KiriView::heifTileGridForTiling(tiling(2, 0, 64, 64)).has_value());
-    QVERIFY(!KiriView::heifTileGridForTiling(tiling(2, 2, 0, 64)).has_value());
-    QVERIFY(!KiriView::heifTileGridForTiling(tiling(2, 2, 64, 0)).has_value());
-    QVERIFY(!KiriView::heifTileGridForTiling(tiling(1, 1, 64, 64)).has_value());
-    QVERIFY(!KiriView::heifTileGridForTiling(
+    QVERIFY(!kiriview::heifTileGridForTiling(tiling(0, 2, 64, 64)).has_value());
+    QVERIFY(!kiriview::heifTileGridForTiling(tiling(2, 0, 64, 64)).has_value());
+    QVERIFY(!kiriview::heifTileGridForTiling(tiling(2, 2, 0, 64)).has_value());
+    QVERIFY(!kiriview::heifTileGridForTiling(tiling(2, 2, 64, 0)).has_value());
+    QVERIFY(!kiriview::heifTileGridForTiling(tiling(1, 1, 64, 64)).has_value());
+    QVERIFY(!kiriview::heifTileGridForTiling(
         tiling(static_cast<std::uint32_t>(std::numeric_limits<int>::max()) + 1U, 2, 64, 64))
             .has_value());
 }
 
 void TestHeifTilingPlan::gridAcceptsMultiTileLayouts()
 {
-    const std::optional<KiriView::HeifTileGrid> grid
-        = KiriView::heifTileGridForTiling(tiling(3, 2, 128, 64));
+    const std::optional<kiriview::HeifTileGrid> grid
+        = kiriview::heifTileGridForTiling(tiling(3, 2, 128, 64));
 
     QVERIFY(grid.has_value());
     QCOMPARE(grid->columns, 3);
@@ -63,15 +63,15 @@ void TestHeifTilingPlan::gridAcceptsMultiTileLayouts()
 
 void TestHeifTilingPlan::regionsCoverIntersectingTilesInPaintOrder()
 {
-    const KiriView::HeifTileGrid grid {
+    const kiriview::HeifTileGrid grid {
         3,
         2,
         100,
         80,
     };
 
-    const std::vector<KiriView::HeifTileDecodeRegion> regions
-        = KiriView::heifTileDecodeRegions(grid, QRect(50, 20, 180, 90));
+    const std::vector<kiriview::HeifTileDecodeRegion> regions
+        = kiriview::heifTileDecodeRegions(grid, QRect(50, 20, 180, 90));
 
     QCOMPARE(regions.size(), std::size_t(6));
     QCOMPARE(regions.at(0).tileX, 0);
@@ -93,15 +93,15 @@ void TestHeifTilingPlan::regionsCoverIntersectingTilesInPaintOrder()
 
 void TestHeifTilingPlan::regionsClampToAvailableGrid()
 {
-    const KiriView::HeifTileGrid grid {
+    const kiriview::HeifTileGrid grid {
         3,
         2,
         100,
         80,
     };
 
-    std::vector<KiriView::HeifTileDecodeRegion> regions
-        = KiriView::heifTileDecodeRegions(grid, QRect(250, 70, 200, 40));
+    std::vector<kiriview::HeifTileDecodeRegion> regions
+        = kiriview::heifTileDecodeRegions(grid, QRect(250, 70, 200, 40));
     QCOMPARE(regions.size(), std::size_t(2));
     QCOMPARE(regions.at(0).tileX, 2);
     QCOMPARE(regions.at(0).tileY, 0);
@@ -110,10 +110,10 @@ void TestHeifTilingPlan::regionsClampToAvailableGrid()
     QCOMPARE(regions.at(1).tileY, 1);
     QCOMPARE(regions.at(1).targetPoint, QPoint(-50, 10));
 
-    regions = KiriView::heifTileDecodeRegions(grid, QRect(400, 0, 50, 50));
+    regions = kiriview::heifTileDecodeRegions(grid, QRect(400, 0, 50, 50));
     QVERIFY(regions.empty());
 
-    regions = KiriView::heifTileDecodeRegions(grid, QRect());
+    regions = kiriview::heifTileDecodeRegions(grid, QRect());
     QVERIFY(regions.empty());
 }
 

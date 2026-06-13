@@ -16,8 +16,8 @@ bool sameDirectMediaCurrentUrlKeyOrEmpty(const QUrl &left, const QUrl &right)
         return left.isEmpty() && right.isEmpty();
     }
 
-    return KiriView::sameSourceKey(KiriView::sourceKeyForDirectMediaCurrentUrl(left),
-        KiriView::sourceKeyForDirectMediaCurrentUrl(right));
+    return kiriview::sameSourceKey(kiriview::sourceKeyForDirectMediaCurrentUrl(left),
+        kiriview::sourceKeyForDirectMediaCurrentUrl(right));
 }
 
 bool sameDirectMediaParentUrlKeyOrEmpty(const QUrl &left, const QUrl &right)
@@ -26,21 +26,21 @@ bool sameDirectMediaParentUrlKeyOrEmpty(const QUrl &left, const QUrl &right)
         return left.isEmpty() && right.isEmpty();
     }
 
-    return KiriView::sameSourceKey(KiriView::sourceKeyForDirectMediaParentUrl(left),
-        KiriView::sourceKeyForDirectMediaParentUrl(right));
+    return kiriview::sameSourceKey(kiriview::sourceKeyForDirectMediaParentUrl(left),
+        kiriview::sourceKeyForDirectMediaParentUrl(right));
 }
 
 bool sameEffectiveDirectMediaCursorUrl(
-    const KiriView::DirectMediaCursor &left, const KiriView::DirectMediaCursor &right)
+    const kiriview::DirectMediaCursor &left, const kiriview::DirectMediaCursor &right)
 {
-    const KiriView::DirectMediaScope leftScope = KiriView::directMediaScopeForCursor(left);
-    const KiriView::DirectMediaScope rightScope = KiriView::directMediaScopeForCursor(right);
+    const kiriview::DirectMediaScope leftScope = kiriview::directMediaScopeForCursor(left);
+    const kiriview::DirectMediaScope rightScope = kiriview::directMediaScopeForCursor(right);
     return sameDirectMediaCurrentUrlKeyOrEmpty(leftScope.currentUrl, rightScope.currentUrl)
         && sameDirectMediaParentUrlKeyOrEmpty(leftScope.parentUrl, rightScope.parentUrl);
 }
 
 bool replaceDirectMediaCursor(
-    KiriView::DirectMediaCursor &current, KiriView::DirectMediaCursor next)
+    kiriview::DirectMediaCursor &current, kiriview::DirectMediaCursor next)
 {
     if (current.stableUrl == next.stableUrl && current.pendingUrl == next.pendingUrl) {
         return false;
@@ -53,9 +53,9 @@ bool replaceDirectMediaCursor(
 }
 
 void logCursorOperation(
-    const char *operation, const KiriView::DirectMediaCursor &cursor, bool effectiveUrlChanged)
+    const char *operation, const kiriview::DirectMediaCursor &cursor, bool effectiveUrlChanged)
 {
-    const KiriView::DirectMediaScope scope = KiriView::directMediaScopeForCursor(cursor);
+    const kiriview::DirectMediaScope scope = kiriview::directMediaScopeForCursor(cursor);
     qCDebug(kiriviewNavigationLog)
         << "direct media cursor operation"
         << "operation" << operation << "effectiveUrlChanged" << effectiveUrlChanged << "stableUrl"
@@ -64,7 +64,7 @@ void logCursorOperation(
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 QUrl effectiveDirectMediaCursorUrl(const DirectMediaCursor &cursor)
 {
     return !cursor.pendingUrl.isEmpty() ? cursor.pendingUrl : cursor.stableUrl;

@@ -14,7 +14,7 @@
 #include <functional>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 enum class RawEmbeddedThumbnailPreviewStatus {
     Ready,
     Missing,

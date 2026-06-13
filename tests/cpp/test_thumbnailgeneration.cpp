@@ -15,8 +15,8 @@
 #include <optional>
 
 namespace {
-using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-using Status = KiriView::ThumbnailGenerationStatus;
+using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+using Status = kiriview::ThumbnailGenerationStatus;
 
 QByteArray encodedPngData()
 {
@@ -33,9 +33,9 @@ QByteArray encodedPngData()
     return data;
 }
 
-KiriView::ThumbnailGenerationRequest generationRequest(Bucket bucket = Bucket::Normal)
+kiriview::ThumbnailGenerationRequest generationRequest(Bucket bucket = Bucket::Normal)
 {
-    KiriView::ThumbnailGenerationRequest request;
+    kiriview::ThumbnailGenerationRequest request;
     request.localPathBytes = QByteArrayLiteral("/missing/source.png");
     request.sourceUrl = QUrl::fromLocalFile(QStringLiteral("/missing/source.png"));
     request.sourceLabel = QStringLiteral("source.png");
@@ -60,16 +60,16 @@ private Q_SLOTS:
 
 void TestThumbnailGeneration::injectedBytesLoaderProvidesGenerationBytes()
 {
-    KiriView::ThumbnailGenerationDependencies dependencies;
+    kiriview::ThumbnailGenerationDependencies dependencies;
     int bytesLoadCount = 0;
     dependencies.bytesLoader
-        = [&bytesLoadCount](const KiriView::ThumbnailGenerationRequest &, QString *) {
+        = [&bytesLoadCount](const kiriview::ThumbnailGenerationRequest &, QString *) {
               ++bytesLoadCount;
               return encodedPngData();
           };
 
-    const KiriView::ThumbnailGenerationResult result
-        = KiriView::generateThumbnail(generationRequest(), std::move(dependencies));
+    const kiriview::ThumbnailGenerationResult result
+        = kiriview::generateThumbnail(generationRequest(), std::move(dependencies));
 
     QCOMPARE(bytesLoadCount, 1);
     QCOMPARE(result.status, Status::Ready);
@@ -85,9 +85,9 @@ void TestThumbnailGeneration::injectedDecoderReceivesLoadedBytesAndBucketEdge()
     QByteArray decodedBytes;
     int decodedMaximumLongEdge = 0;
 
-    KiriView::ThumbnailGenerationDependencies dependencies;
+    kiriview::ThumbnailGenerationDependencies dependencies;
     dependencies.bytesLoader
-        = [&bytes](const KiriView::ThumbnailGenerationRequest &, QString *) { return bytes; };
+        = [&bytes](const kiriview::ThumbnailGenerationRequest &, QString *) { return bytes; };
     dependencies.imageDecoder = [&decodedBytes, &decodedMaximumLongEdge](
                                     QByteArray data, int maximumLongEdge, QString *) {
         decodedBytes = std::move(data);
@@ -97,8 +97,8 @@ void TestThumbnailGeneration::injectedDecoderReceivesLoadedBytesAndBucketEdge()
         return image;
     };
 
-    const KiriView::ThumbnailGenerationResult result
-        = KiriView::generateThumbnail(generationRequest(Bucket::Large), std::move(dependencies));
+    const kiriview::ThumbnailGenerationResult result
+        = kiriview::generateThumbnail(generationRequest(Bucket::Large), std::move(dependencies));
 
     QCOMPARE(decodedBytes, bytes);
     QCOMPARE(decodedMaximumLongEdge, 256);
@@ -114,9 +114,9 @@ void TestThumbnailGeneration::injectedScalingPolicySuppliesDecoderEdge()
     Bucket policyBucket = Bucket::None;
     int decodedMaximumLongEdge = 0;
 
-    KiriView::ThumbnailGenerationDependencies dependencies;
+    kiriview::ThumbnailGenerationDependencies dependencies;
     dependencies.bytesLoader
-        = [&bytes](const KiriView::ThumbnailGenerationRequest &, QString *) { return bytes; };
+        = [&bytes](const kiriview::ThumbnailGenerationRequest &, QString *) { return bytes; };
     dependencies.maximumLongEdgeForBucket = [&policyBucket](Bucket bucket) {
         policyBucket = bucket;
         return 777;
@@ -129,8 +129,8 @@ void TestThumbnailGeneration::injectedScalingPolicySuppliesDecoderEdge()
               return image;
           };
 
-    const KiriView::ThumbnailGenerationResult result
-        = KiriView::generateThumbnail(generationRequest(Bucket::XLarge), std::move(dependencies));
+    const kiriview::ThumbnailGenerationResult result
+        = kiriview::generateThumbnail(generationRequest(Bucket::XLarge), std::move(dependencies));
 
     QCOMPARE(policyBucket, Bucket::XLarge);
     QCOMPARE(decodedMaximumLongEdge, 777);
@@ -140,31 +140,31 @@ void TestThumbnailGeneration::injectedScalingPolicySuppliesDecoderEdge()
 
 void TestThumbnailGeneration::openedCollectionIdentityFailureSkipsBytesLoader()
 {
-    KiriView::ThumbnailGenerationRequest request = generationRequest();
-    request.openedCollectionScope = KiriView::OpenedCollectionScopeLocation::fromUrls(
+    kiriview::ThumbnailGenerationRequest request = generationRequest();
+    request.openedCollectionScope = kiriview::OpenedCollectionScopeLocation::fromUrls(
         QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),
         QUrl(QStringLiteral("zip:///books/book.cbz")),
-        KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+        kiriview::OpenedCollectionScopeKind::ComicBookArchive);
     request.sourceUrl = QUrl(QStringLiteral("zip:///books/book.cbz/page.png"));
     request.cacheInstallEnabled = true;
 
-    KiriView::ThumbnailGenerationDependencies dependencies;
+    kiriview::ThumbnailGenerationDependencies dependencies;
     int bytesLoadCount = 0;
     dependencies.bytesLoader
-        = [&bytesLoadCount](const KiriView::ThumbnailGenerationRequest &, QString *) {
+        = [&bytesLoadCount](const kiriview::ThumbnailGenerationRequest &, QString *) {
               ++bytesLoadCount;
               return encodedPngData();
           };
     dependencies.openedCollectionOriginalIdentityLoader
-        = [](const KiriView::ThumbnailGenerationRequest &, QString *errorString) {
+        = [](const kiriview::ThumbnailGenerationRequest &, QString *errorString) {
               if (errorString != nullptr) {
                   *errorString = QStringLiteral("synthetic identity failure");
               }
-              return std::optional<KiriView::ThumbnailOriginalIdentity>();
+              return std::optional<kiriview::ThumbnailOriginalIdentity>();
           };
 
-    const KiriView::ThumbnailGenerationResult result
-        = KiriView::generateThumbnail(std::move(request), std::move(dependencies));
+    const kiriview::ThumbnailGenerationResult result
+        = kiriview::generateThumbnail(std::move(request), std::move(dependencies));
 
     QCOMPARE(bytesLoadCount, 0);
     QCOMPARE(result.status, Status::Failed);
@@ -174,35 +174,35 @@ void TestThumbnailGeneration::openedCollectionIdentityFailureSkipsBytesLoader()
 
 void TestThumbnailGeneration::injectedCacheHitSkipsBytesLoader()
 {
-    KiriView::ThumbnailGenerationRequest request = generationRequest();
-    request.openedCollectionScope = KiriView::OpenedCollectionScopeLocation::fromUrls(
+    kiriview::ThumbnailGenerationRequest request = generationRequest();
+    request.openedCollectionScope = kiriview::OpenedCollectionScopeLocation::fromUrls(
         QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),
         QUrl(QStringLiteral("zip:///books/book.cbz")),
-        KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+        kiriview::OpenedCollectionScopeKind::ComicBookArchive);
     request.sourceUrl = QUrl(QStringLiteral("zip:///books/book.cbz/page.png"));
     request.cacheInstallEnabled = true;
 
     QImage cachedImage(QSize(16, 12), QImage::Format_RGBA8888);
     cachedImage.fill(QColor(Qt::blue));
 
-    KiriView::ThumbnailGenerationDependencies dependencies;
+    kiriview::ThumbnailGenerationDependencies dependencies;
     int bytesLoadCount = 0;
     dependencies.bytesLoader
-        = [&bytesLoadCount](const KiriView::ThumbnailGenerationRequest &, QString *) {
+        = [&bytesLoadCount](const kiriview::ThumbnailGenerationRequest &, QString *) {
               ++bytesLoadCount;
               return encodedPngData();
           };
     dependencies.openedCollectionOriginalIdentityLoader
-        = [](const KiriView::ThumbnailGenerationRequest &, QString *) {
-              return std::optional<KiriView::ThumbnailOriginalIdentity>(
-                  KiriView::ThumbnailOriginalIdentity::fromNonFileUri(
+        = [](const kiriview::ThumbnailGenerationRequest &, QString *) {
+              return std::optional<kiriview::ThumbnailOriginalIdentity>(
+                  kiriview::ThumbnailOriginalIdentity::fromNonFileUri(
                       QStringLiteral("x-kiriview://thumbnail/test"), 0, 8, QString()));
           };
     dependencies.cacheRepository.lookup
-        = [cachedImage](const KiriView::ThumbnailOriginalIdentity &, Bucket bucket) {
-              return std::optional<KiriView::ThumbnailCacheLookupResult>(
-                  KiriView::ThumbnailCacheLookupResult {
-                      KiriView::ThumbnailCacheLookupStatus::Ready,
+        = [cachedImage](const kiriview::ThumbnailOriginalIdentity &, Bucket bucket) {
+              return std::optional<kiriview::ThumbnailCacheLookupResult>(
+                  kiriview::ThumbnailCacheLookupResult {
+                      kiriview::ThumbnailCacheLookupStatus::Ready,
                       cachedImage,
                       bucket,
                       bucket,
@@ -211,8 +211,8 @@ void TestThumbnailGeneration::injectedCacheHitSkipsBytesLoader()
                   });
           };
 
-    const KiriView::ThumbnailGenerationResult result
-        = KiriView::generateThumbnail(std::move(request), std::move(dependencies));
+    const kiriview::ThumbnailGenerationResult result
+        = kiriview::generateThumbnail(std::move(request), std::move(dependencies));
 
     QCOMPARE(bytesLoadCount, 0);
     QCOMPARE(result.status, Status::Ready);
@@ -223,21 +223,21 @@ void TestThumbnailGeneration::injectedCacheHitSkipsBytesLoader()
 
 void TestThumbnailGeneration::injectedCacheInstallPublishesInstalledPath()
 {
-    KiriView::ThumbnailGenerationRequest request = generationRequest(Bucket::Large);
+    kiriview::ThumbnailGenerationRequest request = generationRequest(Bucket::Large);
     request.cacheInstallEnabled = true;
 
-    KiriView::ThumbnailOriginalIdentity installedIdentity;
+    kiriview::ThumbnailOriginalIdentity installedIdentity;
     QImage installedImage;
 
-    KiriView::ThumbnailGenerationDependencies dependencies;
+    kiriview::ThumbnailGenerationDependencies dependencies;
     dependencies.bytesLoader
-        = [](const KiriView::ThumbnailGenerationRequest &, QString *) { return encodedPngData(); };
+        = [](const kiriview::ThumbnailGenerationRequest &, QString *) { return encodedPngData(); };
     dependencies.cacheRepository.install
-        = [&installedIdentity, &installedImage](const KiriView::ThumbnailOriginalIdentity &identity,
+        = [&installedIdentity, &installedImage](const kiriview::ThumbnailOriginalIdentity &identity,
               Bucket bucket, const QImage &image) {
               installedIdentity = identity;
               installedImage = image.copy();
-              return KiriView::ThumbnailGenerationCacheInstallResult {
+              return kiriview::ThumbnailGenerationCacheInstallResult {
                   true,
                   bucket,
                   QStringLiteral("/cache/generated.png"),
@@ -245,8 +245,8 @@ void TestThumbnailGeneration::injectedCacheInstallPublishesInstalledPath()
               };
           };
 
-    const KiriView::ThumbnailGenerationResult result
-        = KiriView::generateThumbnail(std::move(request), std::move(dependencies));
+    const kiriview::ThumbnailGenerationResult result
+        = kiriview::generateThumbnail(std::move(request), std::move(dependencies));
 
     QCOMPARE(result.status, Status::Ready);
     QCOMPARE(result.requestedBucket, Bucket::Large);

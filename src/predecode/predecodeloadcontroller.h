@@ -15,7 +15,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 class PredecodeLoadController final
 {
 public:

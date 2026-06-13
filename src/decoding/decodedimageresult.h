@@ -15,7 +15,7 @@
 #include <utility>
 #include <variant>
 
-namespace KiriView {
+namespace kiriview {
 struct DecodedImageFailure {
     QString errorString;
 };

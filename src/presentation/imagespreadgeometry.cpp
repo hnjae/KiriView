@@ -6,7 +6,7 @@
 #include "bridge/qtgeometryconversion.h"
 #include "kiriview/src/policy/imagespreadgeometry.cxx.h"
 
-namespace KiriView {
+namespace kiriview {
 QSize imageSpreadImageSize(const QSize &primarySize, const QSize &secondarySize)
 {
     return Bridge::qtSize(

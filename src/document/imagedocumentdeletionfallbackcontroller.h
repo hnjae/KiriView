@@ -17,7 +17,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentDeletionFallbackController final
 {
 public:

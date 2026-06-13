@@ -9,7 +9,7 @@
 #include <QByteArray>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDecodeRequest;
 
 std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &data);

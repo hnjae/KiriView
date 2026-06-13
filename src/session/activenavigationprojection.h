@@ -9,7 +9,7 @@
 
 #include <variant>
 
-namespace KiriView {
+namespace kiriview {
 enum class ActiveNavigationSourceKind {
     None,
     OrdinaryDirectMedia,

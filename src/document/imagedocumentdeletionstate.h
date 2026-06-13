@@ -6,7 +6,7 @@
 
 #include "async/imageasyncoperationstate.h"
 
-namespace KiriView {
+namespace kiriview {
 struct ImageDocumentDeletionFileOperationStart {
     quint64 operationId = 0;
     bool inProgressChanged = false;

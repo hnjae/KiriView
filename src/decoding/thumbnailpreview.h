@@ -17,7 +17,7 @@
 #include <QUrl>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 struct XdgThumbnailPreviewRequest {
     QUrl sourceUrl;
     QSize trustedOriginalSize;

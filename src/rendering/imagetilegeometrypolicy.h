@@ -13,7 +13,7 @@
 #include <QtGlobal>
 #include <vector>
 
-namespace KiriView::ImageTileGeometryPolicy {
+namespace kiriview::ImageTileGeometryPolicy {
 std::vector<TileLevel> tilePyramidLevels(const QSize &imageSize);
 QSize tilePyramidTileGridSize(const QSize &imageSize, int tileSize, int level);
 bool tilePyramidContainsLevel(int levelCount, int level);

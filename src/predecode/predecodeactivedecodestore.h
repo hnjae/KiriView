@@ -13,7 +13,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDecodeJob;
 
 class PredecodeActiveDecodeStore final

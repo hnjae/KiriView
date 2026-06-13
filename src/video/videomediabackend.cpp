@@ -13,7 +13,7 @@
 #include <utility>
 
 namespace {
-class QtVideoMediaBackend final : public QObject, public KiriView::VideoMediaBackend
+class QtVideoMediaBackend final : public QObject, public kiriview::VideoMediaBackend
 {
 public:
     explicit QtVideoMediaBackend(QObject *parent)
@@ -23,30 +23,30 @@ public:
     {
         m_player.setAudioOutput(&m_audioOutput);
         QObject::connect(&m_player, &QMediaPlayer::mediaStatusChanged, this,
-            [this]() { KiriView::invokeIfSet(m_callbacks.mediaStatusChanged); });
+            [this]() { kiriview::invokeIfSet(m_callbacks.mediaStatusChanged); });
         QObject::connect(&m_player, &QMediaPlayer::errorChanged, this,
-            [this]() { KiriView::invokeIfSet(m_callbacks.errorChanged); });
+            [this]() { kiriview::invokeIfSet(m_callbacks.errorChanged); });
         QObject::connect(&m_player, &QMediaPlayer::durationChanged, this,
-            [this]() { KiriView::invokeIfSet(m_callbacks.durationChanged); });
+            [this]() { kiriview::invokeIfSet(m_callbacks.durationChanged); });
         QObject::connect(&m_player, &QMediaPlayer::positionChanged, this,
-            [this]() { KiriView::invokeIfSet(m_callbacks.positionChanged); });
+            [this]() { kiriview::invokeIfSet(m_callbacks.positionChanged); });
         QObject::connect(&m_player, &QMediaPlayer::playingChanged, this,
-            [this]() { KiriView::invokeIfSet(m_callbacks.playingChanged); });
+            [this]() { kiriview::invokeIfSet(m_callbacks.playingChanged); });
         QObject::connect(&m_player, &QMediaPlayer::seekableChanged, this,
-            [this]() { KiriView::invokeIfSet(m_callbacks.seekableChanged); });
+            [this]() { kiriview::invokeIfSet(m_callbacks.seekableChanged); });
         QObject::connect(&m_player, &QMediaPlayer::hasVideoChanged, this,
-            [this]() { KiriView::invokeIfSet(m_callbacks.hasVideoChanged); });
+            [this]() { kiriview::invokeIfSet(m_callbacks.hasVideoChanged); });
         QObject::connect(&m_player, &QMediaPlayer::hasAudioChanged, this,
-            [this]() { KiriView::invokeIfSet(m_callbacks.hasAudioChanged); });
+            [this]() { kiriview::invokeIfSet(m_callbacks.hasAudioChanged); });
         QObject::connect(&m_player, &QMediaPlayer::metaDataChanged, this,
-            [this]() { KiriView::invokeIfSet(m_callbacks.videoSizeChanged); });
+            [this]() { kiriview::invokeIfSet(m_callbacks.videoSizeChanged); });
         QObject::connect(&m_audioOutput, &QAudioOutput::mutedChanged, this,
-            [this]() { KiriView::invokeIfSet(m_callbacks.mutedChanged); });
+            [this]() { kiriview::invokeIfSet(m_callbacks.mutedChanged); });
         QObject::connect(&m_player, &QMediaPlayer::videoOutputChanged, this,
-            [this]() { KiriView::invokeIfSet(m_callbacks.videoOutputChanged); });
+            [this]() { kiriview::invokeIfSet(m_callbacks.videoOutputChanged); });
     }
 
-    void setCallbacks(KiriView::VideoMediaBackendCallbacks callbacks) override
+    void setCallbacks(kiriview::VideoMediaBackendCallbacks callbacks) override
     {
         m_callbacks = std::move(callbacks);
     }
@@ -60,28 +60,28 @@ public:
     void setVideoOutput(QObject *videoOutput) override { m_player.setVideoOutput(videoOutput); }
     QObject *videoOutput() const override { return m_player.videoOutput(); }
 
-    KiriView::VideoMediaStatus mediaStatus() const override
+    kiriview::VideoMediaStatus mediaStatus() const override
     {
         switch (m_player.mediaStatus()) {
         case QMediaPlayer::NoMedia:
-            return KiriView::VideoMediaStatus::Null;
+            return kiriview::VideoMediaStatus::Null;
         case QMediaPlayer::LoadingMedia:
-            return KiriView::VideoMediaStatus::Loading;
+            return kiriview::VideoMediaStatus::Loading;
         case QMediaPlayer::LoadedMedia:
-            return KiriView::VideoMediaStatus::Loaded;
+            return kiriview::VideoMediaStatus::Loaded;
         case QMediaPlayer::StalledMedia:
-            return KiriView::VideoMediaStatus::Stalled;
+            return kiriview::VideoMediaStatus::Stalled;
         case QMediaPlayer::BufferingMedia:
-            return KiriView::VideoMediaStatus::Buffering;
+            return kiriview::VideoMediaStatus::Buffering;
         case QMediaPlayer::BufferedMedia:
-            return KiriView::VideoMediaStatus::Buffered;
+            return kiriview::VideoMediaStatus::Buffered;
         case QMediaPlayer::EndOfMedia:
-            return KiriView::VideoMediaStatus::EndOfMedia;
+            return kiriview::VideoMediaStatus::EndOfMedia;
         case QMediaPlayer::InvalidMedia:
-            return KiriView::VideoMediaStatus::Invalid;
+            return kiriview::VideoMediaStatus::Invalid;
         }
 
-        return KiriView::VideoMediaStatus::Null;
+        return kiriview::VideoMediaStatus::Null;
     }
 
     QString errorString() const override { return m_player.errorString(); }
@@ -100,11 +100,11 @@ public:
 private:
     QMediaPlayer m_player;
     QAudioOutput m_audioOutput;
-    KiriView::VideoMediaBackendCallbacks m_callbacks;
+    kiriview::VideoMediaBackendCallbacks m_callbacks;
 };
 }
 
-namespace KiriView {
+namespace kiriview {
 std::unique_ptr<VideoMediaBackend> createDefaultVideoMediaBackend(QObject *parent)
 {
     return std::make_unique<QtVideoMediaBackend>(parent);

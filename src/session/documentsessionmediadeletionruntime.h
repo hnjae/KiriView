@@ -18,7 +18,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 struct DocumentSessionMediaDeletionCompletion {
     DocumentSessionMediaDeletionCompletionPlan plan;
     QString errorString;

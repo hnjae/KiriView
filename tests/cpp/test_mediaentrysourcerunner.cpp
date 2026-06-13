@@ -14,17 +14,17 @@
 #include <vector>
 
 namespace {
-using KiriView::ImageDocumentPageCandidate;
-using KiriView::MediaEntrySourceCandidates;
-using KiriView::MediaEntrySourceError;
-using KiriView::MediaEntrySourceImageData;
-using KiriView::TestSupport::addInstrumentedMediaEntrySourceFixture;
-using KiriView::TestSupport::archiveCollectionForLocalArchiveUrl;
-using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::imageDocumentPageCandidate;
-using KiriView::TestSupport::instrumentedMediaEntrySourceFactory;
-using KiriView::TestSupport::InstrumentedMediaEntrySourceState;
-using KiriView::TestSupport::localUrl;
+using kiriview::ImageDocumentPageCandidate;
+using kiriview::MediaEntrySourceCandidates;
+using kiriview::MediaEntrySourceError;
+using kiriview::MediaEntrySourceImageData;
+using kiriview::TestSupport::addInstrumentedMediaEntrySourceFixture;
+using kiriview::TestSupport::archiveCollectionForLocalArchiveUrl;
+using kiriview::TestSupport::archivePageUrl;
+using kiriview::TestSupport::imageDocumentPageCandidate;
+using kiriview::TestSupport::instrumentedMediaEntrySourceFactory;
+using kiriview::TestSupport::InstrumentedMediaEntrySourceState;
+using kiriview::TestSupport::localUrl;
 }
 
 class TestMediaEntrySourceRunner : public QObject
@@ -41,21 +41,21 @@ private Q_SLOTS:
 void TestMediaEntrySourceRunner::ownsOpenedCollectionScope()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
 
-    KiriView::MediaEntrySourceRunner runner(
+    kiriview::MediaEntrySourceRunner runner(
         *archiveCollection, instrumentedMediaEntrySourceFactory(state));
 
-    QVERIFY(KiriView::sameOpenedCollectionScopeLocation(
+    QVERIFY(kiriview::sameOpenedCollectionScopeLocation(
         runner.openedCollectionScope(), *archiveCollection));
 }
 
 void TestMediaEntrySourceRunner::candidateLoadsAreCachedAfterLazyOpen()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
     const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -63,12 +63,12 @@ void TestMediaEntrySourceRunner::candidateLoadsAreCachedAfterLazyOpen()
     addInstrumentedMediaEntrySourceFixture(state, *archiveCollection,
         { imageDocumentPageCandidate(firstUrl), imageDocumentPageCandidate(secondUrl) });
 
-    KiriView::MediaEntrySourceRunner runner(
+    kiriview::MediaEntrySourceRunner runner(
         *archiveCollection, instrumentedMediaEntrySourceFactory(state));
 
-    KiriView::MediaEntrySourceCandidatesResult firstResult
+    kiriview::MediaEntrySourceCandidatesResult firstResult
         = runner.loadImageDocumentPageCandidates();
-    KiriView::MediaEntrySourceCandidatesResult secondResult
+    kiriview::MediaEntrySourceCandidatesResult secondResult
         = runner.loadImageDocumentPageCandidates();
 
     const auto *firstCandidates = std::get_if<MediaEntrySourceCandidates>(&firstResult);
@@ -89,18 +89,18 @@ void TestMediaEntrySourceRunner::candidateLoadsAreCachedAfterLazyOpen()
 void TestMediaEntrySourceRunner::dataLoadsReuseLazyOpenSource()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
     const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     addInstrumentedMediaEntrySourceFixture(
         state, *archiveCollection, { imageDocumentPageCandidate(pageUrl) });
 
-    KiriView::MediaEntrySourceRunner runner(
+    kiriview::MediaEntrySourceRunner runner(
         *archiveCollection, instrumentedMediaEntrySourceFactory(state));
 
-    KiriView::MediaEntrySourceImageDataResult firstResult = runner.loadImageData(pageUrl);
-    KiriView::MediaEntrySourceImageDataResult secondResult = runner.loadImageData(pageUrl);
+    kiriview::MediaEntrySourceImageDataResult firstResult = runner.loadImageData(pageUrl);
+    kiriview::MediaEntrySourceImageDataResult secondResult = runner.loadImageData(pageUrl);
 
     const auto *firstData = std::get_if<MediaEntrySourceImageData>(&firstResult);
     const auto *secondData = std::get_if<MediaEntrySourceImageData>(&secondResult);
@@ -115,16 +115,16 @@ void TestMediaEntrySourceRunner::dataLoadsReuseLazyOpenSource()
 void TestMediaEntrySourceRunner::failedOpenIsMemoized()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/missing.cbz")));
     QVERIFY(archiveCollection.has_value());
 
-    KiriView::MediaEntrySourceRunner runner(
+    kiriview::MediaEntrySourceRunner runner(
         *archiveCollection, instrumentedMediaEntrySourceFactory(state));
 
-    KiriView::MediaEntrySourceCandidatesResult candidatesResult
+    kiriview::MediaEntrySourceCandidatesResult candidatesResult
         = runner.loadImageDocumentPageCandidates();
-    KiriView::MediaEntrySourceImageDataResult dataResult = runner.loadImageData(
+    kiriview::MediaEntrySourceImageDataResult dataResult = runner.loadImageData(
         archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png")));
 
     QVERIFY(std::get_if<MediaEntrySourceError>(&candidatesResult) != nullptr);

@@ -23,21 +23,21 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::localUrl;
+using kiriview::TestSupport::archivePageUrl;
+using kiriview::TestSupport::localUrl;
 
 struct ManualImageWorkerSchedule {
-    KiriView::ImageWorkerOperation work;
-    KiriView::ImageWorkerCompletion completion;
+    kiriview::ImageWorkerOperation work;
+    kiriview::ImageWorkerCompletion completion;
 };
 
 class ManualImageWorkerScheduler
 {
 public:
-    KiriView::ImageWorkerScheduler scheduler()
+    kiriview::ImageWorkerScheduler scheduler()
     {
-        return KiriView::ImageWorkerScheduler([this](QObject *, KiriView::ImageWorkerOperation work,
-                                                  KiriView::ImageWorkerCompletion completion) {
+        return kiriview::ImageWorkerScheduler([this](QObject *, kiriview::ImageWorkerOperation work,
+                                                  kiriview::ImageWorkerCompletion completion) {
             m_schedules.push_back(
                 ManualImageWorkerSchedule { std::move(work), std::move(completion) });
         });
@@ -86,22 +86,22 @@ void TestRuntimeProviderDefaults::candidateProviderDefaultsFillMissingLoadersAnd
 {
     int directoryLoadCount = 0;
     int directoryChangeSubscriptionCount = 0;
-    KiriView::ImageDocumentPageCandidateProvider provider;
+    kiriview::ImageDocumentPageCandidateProvider provider;
     provider.directoryImageDocumentPages
-        = [&directoryLoadCount](QObject *, QUrl, KiriView::ImageDocumentPageCandidatesCallback,
-              KiriView::ErrorCallback) {
+        = [&directoryLoadCount](QObject *, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
+              kiriview::ErrorCallback) {
               ++directoryLoadCount;
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
     provider.directoryImageDocumentPageChanges
         = [&directoryChangeSubscriptionCount](QObject *, QUrl,
-              KiriView::ImageDocumentPageCandidatesCallback, KiriView::ErrorCallback) {
+              kiriview::ImageDocumentPageCandidatesCallback, kiriview::ErrorCallback) {
               ++directoryChangeSubscriptionCount;
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
 
-    KiriView::ImageDocumentPageCandidateProvider resolved
-        = KiriView::imageDocumentPageNavigationCandidateProviderWithDefaults(std::move(provider));
+    kiriview::ImageDocumentPageCandidateProvider resolved
+        = kiriview::imageDocumentPageNavigationCandidateProviderWithDefaults(std::move(provider));
 
     QVERIFY(resolved.directoryImageDocumentPages);
     QVERIFY(resolved.directoryContainers);
@@ -119,18 +119,18 @@ void TestRuntimeProviderDefaults::candidateProviderDefaultsBindContainerLoaderTo
     const QUrl requestedUrl = localUrl(QStringLiteral("/containers/"));
     QUrl providerUrl;
     int providerCallCount = 0;
-    KiriView::DirectoryItemListProvider directoryItemListProvider
+    kiriview::DirectoryItemListProvider directoryItemListProvider
         = [&providerCallCount, &providerUrl](QObject *, QUrl directoryUrl,
-              KiriView::DirectoryItemListCallback callback, KiriView::ErrorCallback) {
+              kiriview::DirectoryItemListCallback callback, kiriview::ErrorCallback) {
               ++providerCallCount;
               providerUrl = std::move(directoryUrl);
               callback({});
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
 
-    KiriView::ImageDocumentPageCandidateProvider resolved
-        = KiriView::imageDocumentPageNavigationCandidateProviderWithDefaults(
-            KiriView::ImageDocumentPageCandidateProvider {}, {},
+    kiriview::ImageDocumentPageCandidateProvider resolved
+        = kiriview::imageDocumentPageNavigationCandidateProviderWithDefaults(
+            kiriview::ImageDocumentPageCandidateProvider {}, {},
             std::move(directoryItemListProvider));
     QVERIFY(resolved.directoryContainers);
 
@@ -138,7 +138,7 @@ void TestRuntimeProviderDefaults::candidateProviderDefaultsBindContainerLoaderTo
     int errorCallbackCount = 0;
     resolved.directoryContainers(
         this, requestedUrl,
-        [&callbackCount](std::vector<KiriView::ContainerNavigationCandidate>) { ++callbackCount; },
+        [&callbackCount](std::vector<kiriview::ContainerNavigationCandidate>) { ++callbackCount; },
         [&errorCallbackCount](QString) { ++errorCallbackCount; });
 
     QCOMPARE(providerCallCount, 1);
@@ -151,21 +151,21 @@ void TestRuntimeProviderDefaults::
     candidateProviderDefaultsBindOpenedCollectionLoaderToWorkerScheduler()
 {
     ManualImageWorkerScheduler workerScheduler;
-    KiriView::ImageDocumentPageCandidateProvider resolved
-        = KiriView::imageDocumentPageNavigationCandidateProviderWithDefaults(
-            KiriView::ImageDocumentPageCandidateProvider {}, workerScheduler.scheduler());
+    kiriview::ImageDocumentPageCandidateProvider resolved
+        = kiriview::imageDocumentPageNavigationCandidateProviderWithDefaults(
+            kiriview::ImageDocumentPageCandidateProvider {}, workerScheduler.scheduler());
     QVERIFY(resolved.openedCollectionCandidates);
 
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(
             localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
 
     int callbackCount = 0;
     int errorCallbackCount = 0;
-    KiriView::ImageIoJob job = resolved.openedCollectionCandidates(
+    kiriview::ImageIoJob job = resolved.openedCollectionCandidates(
         this, *archiveCollection,
-        [&callbackCount](std::vector<KiriView::ImageDocumentPageCandidate>) { ++callbackCount; },
+        [&callbackCount](std::vector<kiriview::ImageDocumentPageCandidate>) { ++callbackCount; },
         [&errorCallbackCount](QString) { ++errorCallbackCount; });
 
     QCOMPARE(workerScheduler.scheduleCount(), std::size_t(1));
@@ -187,18 +187,18 @@ void TestRuntimeProviderDefaults::directMediaProviderDefaultBindsDirectoryProvid
     const QUrl requestedUrl = localUrl(QStringLiteral("/media/"));
     QUrl providerUrl;
     int providerCallCount = 0;
-    KiriView::DirectoryItemListProvider directoryItemListProvider
+    kiriview::DirectoryItemListProvider directoryItemListProvider
         = [&providerCallCount, &providerUrl](QObject *, QUrl directoryUrl,
-              KiriView::DirectoryItemListCallback callback, KiriView::ErrorCallback) {
+              kiriview::DirectoryItemListCallback callback, kiriview::ErrorCallback) {
               ++providerCallCount;
               providerUrl = std::move(directoryUrl);
               callback({});
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
 
-    KiriView::DirectMediaNavigationCandidateProvider resolved
-        = KiriView::directMediaNavigationCandidateProviderWithDefault(
-            KiriView::DirectMediaNavigationCandidateProvider {},
+    kiriview::DirectMediaNavigationCandidateProvider resolved
+        = kiriview::directMediaNavigationCandidateProviderWithDefault(
+            kiriview::DirectMediaNavigationCandidateProvider {},
             std::move(directoryItemListProvider));
     QVERIFY(resolved.directoryCandidateLoader);
 
@@ -207,7 +207,7 @@ void TestRuntimeProviderDefaults::directMediaProviderDefaultBindsDirectoryProvid
     resolved.directoryCandidateLoader(
         this, requestedUrl,
         [&callbackCount](
-            std::vector<KiriView::DirectMediaNavigationCandidate>) { ++callbackCount; },
+            std::vector<kiriview::DirectMediaNavigationCandidate>) { ++callbackCount; },
         [&errorCallbackCount](QString) { ++errorCallbackCount; });
 
     QCOMPARE(providerCallCount, 1);
@@ -222,25 +222,25 @@ void TestRuntimeProviderDefaults::
     const QUrl requestedUrl = localUrl(QStringLiteral("/containers/"));
     QUrl providerUrl;
     int providerCallCount = 0;
-    KiriView::ImageDocumentRuntimeDependencyOverrides overrides;
+    kiriview::ImageDocumentRuntimeDependencyOverrides overrides;
     overrides.directoryItemListProvider
         = [&providerCallCount, &providerUrl](QObject *, QUrl directoryUrl,
-              KiriView::DirectoryItemListCallback callback, KiriView::ErrorCallback) {
+              kiriview::DirectoryItemListCallback callback, kiriview::ErrorCallback) {
               ++providerCallCount;
               providerUrl = std::move(directoryUrl);
               callback({});
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
 
-    KiriView::ImageDocumentRuntimeDependencies resolved
-        = KiriView::resolveImageDocumentRuntimeDependencies(std::move(overrides), this);
+    kiriview::ImageDocumentRuntimeDependencies resolved
+        = kiriview::resolveImageDocumentRuntimeDependencies(std::move(overrides), this);
     QVERIFY(resolved.candidateProvider.directoryContainers);
 
     int callbackCount = 0;
     int errorCallbackCount = 0;
     resolved.candidateProvider.directoryContainers(
         this, requestedUrl,
-        [&callbackCount](std::vector<KiriView::ContainerNavigationCandidate>) { ++callbackCount; },
+        [&callbackCount](std::vector<kiriview::ContainerNavigationCandidate>) { ++callbackCount; },
         [&errorCallbackCount](QString) { ++errorCallbackCount; });
 
     QCOMPARE(providerCallCount, 1);
@@ -253,23 +253,23 @@ void TestRuntimeProviderDefaults::
     imageDocumentRuntimeDependenciesBindMediaEntryStoreToWorkerScheduler()
 {
     ManualImageWorkerScheduler workerScheduler;
-    KiriView::ImageDocumentRuntimeDependencyOverrides overrides;
+    kiriview::ImageDocumentRuntimeDependencyOverrides overrides;
     overrides.imageDecode.workerScheduler = workerScheduler.scheduler();
 
-    KiriView::ImageDocumentRuntimeDependencies resolved
-        = KiriView::resolveImageDocumentRuntimeDependencies(std::move(overrides), this);
+    kiriview::ImageDocumentRuntimeDependencies resolved
+        = kiriview::resolveImageDocumentRuntimeDependencies(std::move(overrides), this);
     QVERIFY(resolved.candidateProvider.openedCollectionCandidates);
 
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(
             localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
 
     int callbackCount = 0;
     int errorCallbackCount = 0;
-    KiriView::ImageIoJob job = resolved.candidateProvider.openedCollectionCandidates(
+    kiriview::ImageIoJob job = resolved.candidateProvider.openedCollectionCandidates(
         this, *archiveCollection,
-        [&callbackCount](std::vector<KiriView::ImageDocumentPageCandidate>) { ++callbackCount; },
+        [&callbackCount](std::vector<kiriview::ImageDocumentPageCandidate>) { ++callbackCount; },
         [&errorCallbackCount](QString) { ++errorCallbackCount; });
 
     QCOMPARE(workerScheduler.scheduleCount(), std::size_t(1));
@@ -289,45 +289,45 @@ void TestRuntimeProviderDefaults::
 void TestRuntimeProviderDefaults::decodeDependencyDefaultsFillMissingFunctionsAndPreserveOverrides()
 {
     int dataLoadCount = 0;
-    KiriView::ImageDataLoader dataLoader
-        = [&dataLoadCount](QObject *, KiriView::ImageDecodeRequest, KiriView::ImageDataCallback,
-              KiriView::ErrorCallback) {
+    kiriview::ImageDataLoader dataLoader
+        = [&dataLoadCount](QObject *, kiriview::ImageDecodeRequest, kiriview::ImageDataCallback,
+              kiriview::ErrorCallback) {
               ++dataLoadCount;
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
 
-    KiriView::ImageDecodeDependencies resolved
-        = KiriView::imageDecodeDependenciesWithDefaults({ std::move(dataLoader), {} });
+    kiriview::ImageDecodeDependencies resolved
+        = kiriview::imageDecodeDependenciesWithDefaults({ std::move(dataLoader), {} });
 
     QVERIFY(resolved.dataLoader);
     QVERIFY(resolved.dataDecoder);
 
-    resolved.dataLoader(nullptr, KiriView::ImageDecodeRequest(), {}, {});
+    resolved.dataLoader(nullptr, kiriview::ImageDecodeRequest(), {}, {});
     QCOMPARE(dataLoadCount, 1);
 }
 
 void TestRuntimeProviderDefaults::decodeDependencyDefaultsBindDataLoaderToWorkerScheduler()
 {
     ManualImageWorkerScheduler workerScheduler;
-    KiriView::ImageDecodeDependencies dependencies;
+    kiriview::ImageDecodeDependencies dependencies;
     dependencies.workerScheduler = workerScheduler.scheduler();
 
-    KiriView::ImageDecodeDependencies resolved
-        = KiriView::imageDecodeDependenciesWithDefaults(std::move(dependencies));
+    kiriview::ImageDecodeDependencies resolved
+        = kiriview::imageDecodeDependenciesWithDefaults(std::move(dependencies));
     QVERIFY(resolved.dataLoader);
 
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(
             localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
     const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
 
     int dataCallbackCount = 0;
     int errorCallbackCount = 0;
-    KiriView::ImageIoJob job = resolved.dataLoader(
+    kiriview::ImageIoJob job = resolved.dataLoader(
         this,
-        KiriView::ImageDecodeRequest::fromLocation(17,
-            KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+        kiriview::ImageDecodeRequest::fromLocation(17,
+            kiriview::DisplayedImageLocation::fromOpenedCollectionScope(
                 pageUrl, *archiveCollection)),
         [&dataCallbackCount](QByteArray) { ++dataCallbackCount; },
         [&errorCallbackCount](QString) { ++errorCallbackCount; });
@@ -349,17 +349,17 @@ void TestRuntimeProviderDefaults::decodeDependencyDefaultsBindDataLoaderToWorker
 void TestRuntimeProviderDefaults::decodeDependencyDefaultsBindThumbnailLookupToWorkerScheduler()
 {
     ManualImageWorkerScheduler workerScheduler;
-    KiriView::ImageDecodeDependencies dependencies;
+    kiriview::ImageDecodeDependencies dependencies;
     dependencies.workerScheduler = workerScheduler.scheduler();
 
-    KiriView::ImageDecodeDependencies resolved
-        = KiriView::imageDecodeDependenciesWithDefaults(std::move(dependencies));
+    kiriview::ImageDecodeDependencies resolved
+        = kiriview::imageDecodeDependenciesWithDefaults(std::move(dependencies));
     QVERIFY(resolved.thumbnailPreviewLookupProvider);
 
     int callbackCount = 0;
-    KiriView::ImageIoJob job
-        = resolved.thumbnailPreviewLookupProvider(this, KiriView::ThumbnailCacheLookupRequest {},
-            [&callbackCount](KiriView::ThumbnailCacheLookupResult) { ++callbackCount; });
+    kiriview::ImageIoJob job
+        = resolved.thumbnailPreviewLookupProvider(this, kiriview::ThumbnailCacheLookupRequest {},
+            [&callbackCount](kiriview::ThumbnailCacheLookupResult) { ++callbackCount; });
 
     QCOMPARE(workerScheduler.scheduleCount(), std::size_t(1));
     QCOMPARE(callbackCount, 0);
@@ -376,38 +376,38 @@ void TestRuntimeProviderDefaults::decodeDependencyDefaultsBindThumbnailLookupToW
 void TestRuntimeProviderDefaults::fileDeletionDefaultFillsMissingProviderAndPreservesOverride()
 {
     int fileDeletionCount = 0;
-    KiriView::FileDeletionProvider fileDeletionProvider
+    kiriview::FileDeletionProvider fileDeletionProvider
         = [&fileDeletionCount](
-              QObject *, KiriView::FileDeletionRequest, KiriView::FileDeletionCallback) {
+              QObject *, kiriview::FileDeletionRequest, kiriview::FileDeletionCallback) {
               ++fileDeletionCount;
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
 
-    KiriView::FileDeletionProvider resolved
-        = KiriView::fileDeletionProviderWithDefault(std::move(fileDeletionProvider));
+    kiriview::FileDeletionProvider resolved
+        = kiriview::fileDeletionProviderWithDefault(std::move(fileDeletionProvider));
     QVERIFY(resolved);
-    resolved(nullptr, KiriView::FileDeletionRequest(), {});
+    resolved(nullptr, kiriview::FileDeletionRequest(), {});
     QCOMPARE(fileDeletionCount, 1);
 
-    QVERIFY(KiriView::fileDeletionProviderWithDefault({}));
+    QVERIFY(kiriview::fileDeletionProviderWithDefault({}));
 }
 
 void TestRuntimeProviderDefaults::powerSaverDefaultFillsMissingProviderAndPreservesOverride()
 {
     int monitorCount = 0;
-    KiriView::PowerSaverProvider provider;
-    provider.monitor = [&monitorCount](QObject *, KiriView::PowerSaverChangedCallback) {
+    kiriview::PowerSaverProvider provider;
+    provider.monitor = [&monitorCount](QObject *, kiriview::PowerSaverChangedCallback) {
         ++monitorCount;
-        return std::unique_ptr<KiriView::PowerSaverStateMonitor>();
+        return std::unique_ptr<kiriview::PowerSaverStateMonitor>();
     };
 
-    KiriView::PowerSaverProvider resolved
-        = KiriView::powerSaverProviderWithDefault(std::move(provider));
+    kiriview::PowerSaverProvider resolved
+        = kiriview::powerSaverProviderWithDefault(std::move(provider));
     QVERIFY(resolved.monitor);
     resolved.monitor(nullptr, {});
     QCOMPARE(monitorCount, 1);
 
-    QVERIFY(KiriView::powerSaverProviderWithDefault({}).monitor);
+    QVERIFY(kiriview::powerSaverProviderWithDefault({}).monitor);
 }
 
 QTEST_GUILESS_MAIN(TestRuntimeProviderDefaults)

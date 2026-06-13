@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 template <typename Key, typename Value> class ImageLruCacheState final
 {
 public:

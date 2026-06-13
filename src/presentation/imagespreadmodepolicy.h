@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGESPREADMODEPOLICY_H
 #define KIRIVIEW_IMAGESPREADMODEPOLICY_H
 
-namespace KiriView {
+namespace kiriview {
 struct ImageSpreadReadingAvailability {
     bool hasImage = false;
     bool hasDisplayedImage = false;

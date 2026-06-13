@@ -22,7 +22,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 class VideoDocumentRuntime final
 {
 public:

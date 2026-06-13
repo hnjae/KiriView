@@ -76,7 +76,7 @@ const ARCHIVE_FORMATS: &[ArchiveFormat] = &[
     },
 ];
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     enum RustArchiveStorageBackend {
         None = 0,

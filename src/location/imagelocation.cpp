@@ -5,7 +5,7 @@
 
 #include "location/imageurl.h"
 
-namespace KiriView {
+namespace kiriview {
 bool sameOpenedCollectionScopeLocation(
     const OpenedCollectionScopeLocation &left, const OpenedCollectionScopeLocation &right)
 {

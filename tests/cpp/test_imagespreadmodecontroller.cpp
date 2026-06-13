@@ -16,10 +16,10 @@ private Q_SLOTS:
 };
 
 namespace {
-KiriView::ImageSpreadReadingAvailability readingAvailability(
+kiriview::ImageSpreadReadingAvailability readingAvailability(
     bool hasImage, bool hasDisplayedImage, bool displayedDocumentIsComicBook)
 {
-    return KiriView::ImageSpreadReadingAvailability {
+    return kiriview::ImageSpreadReadingAvailability {
         hasImage,
         hasDisplayedImage,
         displayedDocumentIsComicBook,
@@ -29,9 +29,9 @@ KiriView::ImageSpreadReadingAvailability readingAvailability(
 
 void TestImageSpreadModeController::twoPageModeRequiresDisplayedComicArchiveImage()
 {
-    KiriView::ImageSpreadModeController controller;
+    kiriview::ImageSpreadModeController controller;
 
-    const KiriView::ImageSpreadTwoPageModeChange change
+    const kiriview::ImageSpreadTwoPageModeChange change
         = controller.setTwoPageModeEnabled(true, false);
     QVERIFY(change.changed);
     QVERIFY(controller.twoPageModeEnabled());
@@ -50,7 +50,7 @@ void TestImageSpreadModeController::twoPageModeRequiresDisplayedComicArchiveImag
 
 void TestImageSpreadModeController::resetRightToLeftReadingClearsCurrentModeState()
 {
-    KiriView::ImageSpreadModeController controller;
+    kiriview::ImageSpreadModeController controller;
 
     QVERIFY(controller.setRightToLeftReadingEnabled(true));
     QVERIFY(controller.rightToLeftReadingActive(readingAvailability(true, true, true)));

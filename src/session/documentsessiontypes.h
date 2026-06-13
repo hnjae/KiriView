@@ -11,7 +11,7 @@
 #include <QUrl>
 #include <QtGlobal>
 
-namespace KiriView {
+namespace kiriview {
 enum class DocumentSessionKind {
     Empty,
     Image,

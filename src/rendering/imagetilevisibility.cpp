@@ -6,7 +6,7 @@
 #include "imagetilegeometrypolicy.h"
 #include "rendering/imagerotation.h"
 
-namespace KiriView {
+namespace kiriview {
 TileSourceVisibilityContext tileSourceVisibilityContext(const TileVisibilityContext &context)
 {
     const QSizeF sourceDisplaySize = rotatedImageSize(context.displaySize, context.rotationDegrees);

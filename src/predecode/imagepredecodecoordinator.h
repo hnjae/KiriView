@@ -20,7 +20,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct PredecodeWindowPlan;
 
 class ImagePredecodeCoordinator final : public QObject

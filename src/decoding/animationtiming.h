@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-namespace KiriView {
+namespace kiriview {
 int heifFrameDelay(std::uint32_t duration, std::uint32_t timescale);
 int jxlFrameDelay(std::uint32_t duration, std::uint32_t ticksPerSecondNumerator,
     std::uint32_t ticksPerSecondDenominator);

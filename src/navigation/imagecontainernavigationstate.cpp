@@ -3,7 +3,7 @@
 
 #include "imagecontainernavigationstate.h"
 
-namespace KiriView {
+namespace kiriview {
 ImageContainerNavigationState::ImageContainerNavigationState(quint64 nextOperationId)
     : m_operation(nextOperationId)
 {

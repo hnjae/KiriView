@@ -13,11 +13,11 @@
 #include <type_traits>
 
 namespace {
-using KiriView::ContainerNavigationCandidateType;
-using KiriView::ImageContainerOpenError;
-using KiriView::ImageDocumentPageCandidateListSource;
-using KiriView::TestSupport::imageDocumentPageCandidate;
-using KiriView::TestSupport::localUrl;
+using kiriview::ContainerNavigationCandidateType;
+using kiriview::ImageContainerOpenError;
+using kiriview::ImageDocumentPageCandidateListSource;
+using kiriview::TestSupport::imageDocumentPageCandidate;
+using kiriview::TestSupport::localUrl;
 
 template <typename ExpectedSource>
 const ExpectedSource *typedSource(const ImageDocumentPageCandidateListSource &source)
@@ -47,8 +47,8 @@ private Q_SLOTS:
 void TestImageContainerOpenPlan::directoryContainerPlansDirectoryListing()
 {
     const QUrl containerUrl = localUrl(QStringLiteral("/books/a/"));
-    const KiriView::ImageContainerOpenPlan plan
-        = KiriView::imageContainerOpenPlanForCandidate(KiriView::ContainerNavigationCandidate {
+    const kiriview::ImageContainerOpenPlan plan
+        = kiriview::imageContainerOpenPlanForCandidate(kiriview::ContainerNavigationCandidate {
             containerUrl, QStringLiteral("a"), ContainerNavigationCandidateType::Directory });
 
     QVERIFY(plan.shouldLoadCandidates());
@@ -61,12 +61,12 @@ void TestImageContainerOpenPlan::directoryContainerPlansDirectoryListing()
 void TestImageContainerOpenPlan::comicBookArchiveContainerPlansArchiveListing()
 {
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScope
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(containerUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> openedCollectionScope
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(containerUrl);
     QVERIFY(openedCollectionScope.has_value());
 
-    const KiriView::ImageContainerOpenPlan plan = KiriView::imageContainerOpenPlanForCandidate(
-        KiriView::ContainerNavigationCandidate { containerUrl, QStringLiteral("book.cbz"),
+    const kiriview::ImageContainerOpenPlan plan = kiriview::imageContainerOpenPlanForCandidate(
+        kiriview::ContainerNavigationCandidate { containerUrl, QStringLiteral("book.cbz"),
             ContainerNavigationCandidateType::ComicBookArchive });
 
     QVERIFY(plan.shouldLoadCandidates());
@@ -80,8 +80,8 @@ void TestImageContainerOpenPlan::comicBookArchiveContainerPlansArchiveListing()
 void TestImageContainerOpenPlan::invalidArchiveContainerReportsTypedError()
 {
     const QUrl containerUrl = localUrl(QStringLiteral("/books/not-an-archive.png"));
-    const KiriView::ImageContainerOpenPlan plan = KiriView::imageContainerOpenPlanForCandidate(
-        KiriView::ContainerNavigationCandidate { containerUrl, QStringLiteral("not-an-archive.png"),
+    const kiriview::ImageContainerOpenPlan plan = kiriview::imageContainerOpenPlanForCandidate(
+        kiriview::ContainerNavigationCandidate { containerUrl, QStringLiteral("not-an-archive.png"),
             ContainerNavigationCandidateType::ComicBookArchive });
 
     QVERIFY(!plan.shouldLoadCandidates());
@@ -91,18 +91,18 @@ void TestImageContainerOpenPlan::invalidArchiveContainerReportsTypedError()
 void TestImageContainerOpenPlan::firstCandidateSelectionReportsImageOrEmptyContainer()
 {
     const QUrl firstImageUrl = localUrl(QStringLiteral("/books/a/01.png"));
-    const KiriView::ImageContainerOpenResult opened
-        = KiriView::imageContainerOpenResultForCandidates(
-            { KiriView::ImageDocumentPageCandidate {
-                  firstImageUrl, QStringLiteral("01.bin"), KiriView::ImageDocumentPageKind::Video },
+    const kiriview::ImageContainerOpenResult opened
+        = kiriview::imageContainerOpenResultForCandidates(
+            { kiriview::ImageDocumentPageCandidate {
+                  firstImageUrl, QStringLiteral("01.bin"), kiriview::ImageDocumentPageKind::Video },
                 imageDocumentPageCandidate(localUrl(QStringLiteral("/books/a/02.png"))) });
 
     QVERIFY(opened.openedImage());
     QCOMPARE(opened.target->url, firstImageUrl);
-    QCOMPARE(opened.target->kind, KiriView::ImageDocumentPageKind::Video);
+    QCOMPARE(opened.target->kind, kiriview::ImageDocumentPageKind::Video);
 
-    const KiriView::ImageContainerOpenResult empty
-        = KiriView::imageContainerOpenResultForCandidates({});
+    const kiriview::ImageContainerOpenResult empty
+        = kiriview::imageContainerOpenResultForCandidates({});
     QVERIFY(!empty.openedImage());
     QCOMPARE(empty.error, ImageContainerOpenError::EmptyContainer);
 }

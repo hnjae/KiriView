@@ -20,15 +20,15 @@ Pixel rgba(unsigned char red, unsigned char green, unsigned char blue, unsigned 
     return Pixel { red, green, blue, alpha };
 }
 
-KiriView::ApngFrameControl frameControl(quint32 width, quint32 height)
+kiriview::ApngFrameControl frameControl(quint32 width, quint32 height)
 {
-    KiriView::ApngFrameControl control;
+    kiriview::ApngFrameControl control;
     control.width = width;
     control.height = height;
     return control;
 }
 
-void writeFramePixels(KiriView::ApngFrameComposer *composer, std::initializer_list<Pixel> pixels)
+void writeFramePixels(kiriview::ApngFrameComposer *composer, std::initializer_list<Pixel> pixels)
 {
     unsigned char **rows = composer->frameRows();
     Q_ASSERT(rows != nullptr);
@@ -37,9 +37,9 @@ void writeFramePixels(KiriView::ApngFrameComposer *composer, std::initializer_li
 
 QColor pixel(const QImage &image, int x, int y) { return image.pixelColor(x, y); }
 
-void comparePlan(const KiriView::ApngFrameCompositionPlan &plan, KiriView::ApngFrameBlendOp blendOp,
-    KiriView::ApngFrameDisposeOp disposeOp, bool capturePreviousRegion,
-    KiriView::ApngFrameDisposeAction disposeAction)
+void comparePlan(const kiriview::ApngFrameCompositionPlan &plan, kiriview::ApngFrameBlendOp blendOp,
+    kiriview::ApngFrameDisposeOp disposeOp, bool capturePreviousRegion,
+    kiriview::ApngFrameDisposeAction disposeAction)
 {
     QVERIFY(plan.displayControl.blendOp == blendOp);
     QVERIFY(plan.displayControl.disposeOp == disposeOp);
@@ -64,53 +64,53 @@ private Q_SLOTS:
 
 void TestApngFrameComposer::firstFramePlanUsesSourceBlendAndBackgroundDispose()
 {
-    KiriView::ApngFrameControl control = frameControl(2, 1);
-    control.blendOp = KiriView::ApngFrameBlendOp::Over;
-    control.disposeOp = KiriView::ApngFrameDisposeOp::Previous;
+    kiriview::ApngFrameControl control = frameControl(2, 1);
+    control.blendOp = kiriview::ApngFrameBlendOp::Over;
+    control.disposeOp = kiriview::ApngFrameDisposeOp::Previous;
 
-    const KiriView::ApngFrameCompositionPlan plan
-        = KiriView::apngFrameCompositionPlan(false, control);
+    const kiriview::ApngFrameCompositionPlan plan
+        = kiriview::apngFrameCompositionPlan(false, control);
 
-    comparePlan(plan, KiriView::ApngFrameBlendOp::Source, KiriView::ApngFrameDisposeOp::Background,
-        false, KiriView::ApngFrameDisposeAction::ClearFrameRegion);
+    comparePlan(plan, kiriview::ApngFrameBlendOp::Source, kiriview::ApngFrameDisposeOp::Background,
+        false, kiriview::ApngFrameDisposeAction::ClearFrameRegion);
 }
 
 void TestApngFrameComposer::subsequentFramePlanPreservesPreviousDispose()
 {
-    KiriView::ApngFrameControl control = frameControl(2, 1);
-    control.blendOp = KiriView::ApngFrameBlendOp::Over;
-    control.disposeOp = KiriView::ApngFrameDisposeOp::Previous;
+    kiriview::ApngFrameControl control = frameControl(2, 1);
+    control.blendOp = kiriview::ApngFrameBlendOp::Over;
+    control.disposeOp = kiriview::ApngFrameDisposeOp::Previous;
 
-    const KiriView::ApngFrameCompositionPlan plan
-        = KiriView::apngFrameCompositionPlan(true, control);
+    const kiriview::ApngFrameCompositionPlan plan
+        = kiriview::apngFrameCompositionPlan(true, control);
 
-    comparePlan(plan, KiriView::ApngFrameBlendOp::Over, KiriView::ApngFrameDisposeOp::Previous,
-        true, KiriView::ApngFrameDisposeAction::RestorePreviousRegion);
+    comparePlan(plan, kiriview::ApngFrameBlendOp::Over, kiriview::ApngFrameDisposeOp::Previous,
+        true, kiriview::ApngFrameDisposeAction::RestorePreviousRegion);
 }
 
 void TestApngFrameComposer::framePlanMapsDisposeActions()
 {
-    KiriView::ApngFrameControl control = frameControl(2, 1);
+    kiriview::ApngFrameControl control = frameControl(2, 1);
 
-    control.disposeOp = KiriView::ApngFrameDisposeOp::None;
-    comparePlan(KiriView::apngFrameCompositionPlan(true, control),
-        KiriView::ApngFrameBlendOp::Source, KiriView::ApngFrameDisposeOp::None, false,
-        KiriView::ApngFrameDisposeAction::None);
+    control.disposeOp = kiriview::ApngFrameDisposeOp::None;
+    comparePlan(kiriview::apngFrameCompositionPlan(true, control),
+        kiriview::ApngFrameBlendOp::Source, kiriview::ApngFrameDisposeOp::None, false,
+        kiriview::ApngFrameDisposeAction::None);
 
-    control.disposeOp = KiriView::ApngFrameDisposeOp::Background;
-    comparePlan(KiriView::apngFrameCompositionPlan(true, control),
-        KiriView::ApngFrameBlendOp::Source, KiriView::ApngFrameDisposeOp::Background, false,
-        KiriView::ApngFrameDisposeAction::ClearFrameRegion);
+    control.disposeOp = kiriview::ApngFrameDisposeOp::Background;
+    comparePlan(kiriview::apngFrameCompositionPlan(true, control),
+        kiriview::ApngFrameBlendOp::Source, kiriview::ApngFrameDisposeOp::Background, false,
+        kiriview::ApngFrameDisposeAction::ClearFrameRegion);
 }
 
 void TestApngFrameComposer::rejectsFramesOutsideTheCanvas()
 {
-    KiriView::ApngFrameComposer composer;
+    kiriview::ApngFrameComposer composer;
     QVERIFY(!composer.canComposeFrame(frameControl(1, 1)));
     QVERIFY(composer.initialize(QSize(2, 1), 8));
     QVERIFY(composer.canComposeFrame(frameControl(2, 1)));
 
-    KiriView::ApngFrameControl outside = frameControl(2, 1);
+    kiriview::ApngFrameControl outside = frameControl(2, 1);
     outside.xOffset = 1;
     QVERIFY(!composer.canComposeFrame(outside));
     QVERIFY(!composer.composeFrame(outside).has_value());
@@ -118,18 +118,18 @@ void TestApngFrameComposer::rejectsFramesOutsideTheCanvas()
 
 void TestApngFrameComposer::firstFrameWithDisposePreviousClearsAsBackground()
 {
-    KiriView::ApngFrameComposer composer;
+    kiriview::ApngFrameComposer composer;
     QVERIFY(composer.initialize(QSize(2, 1), 8));
 
-    KiriView::ApngFrameControl first = frameControl(2, 1);
-    first.disposeOp = KiriView::ApngFrameDisposeOp::Previous;
+    kiriview::ApngFrameControl first = frameControl(2, 1);
+    first.disposeOp = kiriview::ApngFrameDisposeOp::Previous;
     writeFramePixels(&composer, { rgba(255, 0, 0, 255), rgba(255, 0, 0, 255) });
     const std::optional<QImage> firstImage = composer.composeFrame(first);
     QVERIFY(firstImage.has_value());
     QCOMPARE(pixel(*firstImage, 0, 0), QColor(255, 0, 0, 255));
     QCOMPARE(pixel(*firstImage, 1, 0), QColor(255, 0, 0, 255));
 
-    KiriView::ApngFrameControl second = frameControl(1, 1);
+    kiriview::ApngFrameControl second = frameControl(1, 1);
     second.xOffset = 1;
     writeFramePixels(&composer, { rgba(0, 255, 0, 255) });
     const std::optional<QImage> secondImage = composer.composeFrame(second);
@@ -140,14 +140,14 @@ void TestApngFrameComposer::firstFrameWithDisposePreviousClearsAsBackground()
 
 void TestApngFrameComposer::blendOverComposesWithExistingCanvas()
 {
-    KiriView::ApngFrameComposer composer;
+    kiriview::ApngFrameComposer composer;
     QVERIFY(composer.initialize(QSize(1, 1), 4));
 
     writeFramePixels(&composer, { rgba(255, 0, 0, 255) });
     QVERIFY(composer.composeFrame(frameControl(1, 1)).has_value());
 
-    KiriView::ApngFrameControl over = frameControl(1, 1);
-    over.blendOp = KiriView::ApngFrameBlendOp::Over;
+    kiriview::ApngFrameControl over = frameControl(1, 1);
+    over.blendOp = kiriview::ApngFrameBlendOp::Over;
     writeFramePixels(&composer, { rgba(0, 0, 255, 128) });
     const std::optional<QImage> image = composer.composeFrame(over);
     QVERIFY(image.has_value());
@@ -159,20 +159,20 @@ void TestApngFrameComposer::blendOverComposesWithExistingCanvas()
 
 void TestApngFrameComposer::disposePreviousRestoresCanvasForFollowingFrames()
 {
-    KiriView::ApngFrameComposer composer;
+    kiriview::ApngFrameComposer composer;
     QVERIFY(composer.initialize(QSize(2, 1), 8));
 
     writeFramePixels(&composer, { rgba(255, 0, 0, 255), rgba(255, 0, 0, 255) });
     QVERIFY(composer.composeFrame(frameControl(2, 1)).has_value());
 
-    KiriView::ApngFrameControl temporary = frameControl(1, 1);
-    temporary.disposeOp = KiriView::ApngFrameDisposeOp::Previous;
+    kiriview::ApngFrameControl temporary = frameControl(1, 1);
+    temporary.disposeOp = kiriview::ApngFrameDisposeOp::Previous;
     writeFramePixels(&composer, { rgba(0, 0, 255, 255) });
     const std::optional<QImage> temporaryImage = composer.composeFrame(temporary);
     QVERIFY(temporaryImage.has_value());
     QCOMPARE(pixel(*temporaryImage, 0, 0), QColor(0, 0, 255, 255));
 
-    KiriView::ApngFrameControl next = frameControl(1, 1);
+    kiriview::ApngFrameControl next = frameControl(1, 1);
     next.xOffset = 1;
     writeFramePixels(&composer, { rgba(0, 255, 0, 255) });
     const std::optional<QImage> nextImage = composer.composeFrame(next);

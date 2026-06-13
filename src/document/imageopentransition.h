@@ -6,7 +6,7 @@
 
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 enum class ImageOpenBoolTarget {
     Unchanged = 0,
     False = 1,

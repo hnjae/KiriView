@@ -6,7 +6,7 @@
 
 #include "presentation/imagespreadmodepolicy.h"
 
-namespace KiriView {
+namespace kiriview {
 class ImageSpreadModeController final
 {
 public:

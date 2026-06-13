@@ -22,37 +22,37 @@ private Q_SLOTS:
 
 void TestActiveNavigationThumbnailDemand::bucketPolicyMapsPhysicalEdge()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
 
-    QCOMPARE(KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(-1), Bucket::None);
-    QCOMPARE(KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(0), Bucket::None);
-    QCOMPARE(KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(1), Bucket::Normal);
+    QCOMPARE(kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(-1), Bucket::None);
+    QCOMPARE(kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(0), Bucket::None);
+    QCOMPARE(kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(1), Bucket::Normal);
     QCOMPARE(
-        KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(127), Bucket::Normal);
+        kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(127), Bucket::Normal);
     QCOMPARE(
-        KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(128), Bucket::Normal);
-    QCOMPARE(KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(129), Bucket::Large);
-    QCOMPARE(KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(255), Bucket::Large);
-    QCOMPARE(KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(256), Bucket::Large);
+        kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(128), Bucket::Normal);
+    QCOMPARE(kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(129), Bucket::Large);
+    QCOMPARE(kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(255), Bucket::Large);
+    QCOMPARE(kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(256), Bucket::Large);
     QCOMPARE(
-        KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(257), Bucket::XLarge);
+        kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(257), Bucket::XLarge);
     QCOMPARE(
-        KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(511), Bucket::XLarge);
+        kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(511), Bucket::XLarge);
     QCOMPARE(
-        KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(512), Bucket::XLarge);
+        kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(512), Bucket::XLarge);
     QCOMPARE(
-        KiriView::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(513), Bucket::XXLarge);
+        kiriview::activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(513), Bucket::XXLarge);
 }
 
 void TestActiveNavigationThumbnailDemand::trackerCoalescesByBucketPrioritySourceAndGeneration()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
-    KiriView::ActiveNavigationThumbnailDemandTracker tracker;
+    kiriview::ActiveNavigationThumbnailDemandTracker tracker;
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
-    KiriView::ActiveNavigationThumbnailDemand demand {
+    kiriview::ActiveNavigationThumbnailDemand demand {
         1,
         firstUrl,
         Bucket::Normal,

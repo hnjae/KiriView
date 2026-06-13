@@ -8,7 +8,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 int ImageDocumentPageNavigationModel::currentPageNumber() const
 {
     return pageNavigationCurrentPageNumber(m_state);

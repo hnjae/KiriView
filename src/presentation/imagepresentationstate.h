@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPRESENTATIONSTATE_H
 #define KIRIVIEW_IMAGEPRESENTATIONSTATE_H
 
-namespace KiriView {
+namespace kiriview {
 enum class ImagePresentationTransitionState {
     PreviousActive,
     TransitioningPlaceholder,

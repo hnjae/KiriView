@@ -9,7 +9,7 @@
 #include <QSize>
 #include <QString>
 
-namespace KiriView {
+namespace kiriview {
 struct WindowTitleSubjectInput {
     QString baseName;
     ActiveNavigationSourceKind sourceKind = ActiveNavigationSourceKind::None;

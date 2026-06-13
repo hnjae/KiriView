@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEVIEWPORTSCANSTATE_H
 #define KIRIVIEW_IMAGEVIEWPORTSCANSTATE_H
 
-namespace KiriView {
+namespace kiriview {
 enum class ImageViewportScanStart {
     Initial,
     Final,

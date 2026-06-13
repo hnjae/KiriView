@@ -8,7 +8,7 @@
 #include <QUrl>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 class OpenedCollectionScopeLocation;
 
 struct KioFuseArchivePath {

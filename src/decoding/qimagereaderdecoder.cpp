@@ -15,26 +15,26 @@
 #include <utility>
 
 namespace {
-KiriView::DecodedImageResult openedStaticImageResult(
-    const QByteArray &data, const KiriView::ImageDecodeRequest &request, const QByteArray &format)
+kiriview::DecodedImageResult openedStaticImageResult(
+    const QByteArray &data, const kiriview::ImageDecodeRequest &request, const QByteArray &format)
 {
     QString errorString;
-    std::shared_ptr<KiriView::ImageTileSource> source
-        = KiriView::QImageReaderTileSource::open(data, format, &errorString);
+    std::shared_ptr<kiriview::ImageTileSource> source
+        = kiriview::QImageReaderTileSource::open(data, format, &errorString);
     if (source == nullptr) {
-        return KiriView::failedDecodedImageResult(errorString);
+        return kiriview::failedDecodedImageResult(errorString);
     }
 
-    return KiriView::staticDecodedImageResult(std::move(source), request, &errorString);
+    return kiriview::staticDecodedImageResult(std::move(source), request, &errorString);
 }
 
-QString sourceIdentityForRequest(const KiriView::ImageDecodeRequest &request)
+QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest &request)
 {
-    return KiriView::sourceKeyForUrl(request.imageUrl()).identity;
+    return kiriview::sourceKeyForUrl(request.imageUrl()).identity;
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 DecodedImageResult decodeQImageReaderImageData(
     const QByteArray &data, const ImageDecodeRequest &request, QtRasterFormat format)
 {

@@ -6,7 +6,7 @@
 #include "bridge/imagespreadpolicyconversion.h"
 #include "kiriview/src/policy/imagespreadpolicy.cxx.h"
 
-namespace KiriView {
+namespace kiriview {
 bool imageSpreadReadingControlsAvailable(const ImageSpreadReadingAvailability &availability)
 {
     return rustImageSpreadReadingControlsAvailable(

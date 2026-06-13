@@ -12,7 +12,7 @@
 
 #include <QObject>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageDocumentSourceLoadRequest;
 
 class MediaEntrySourceStore final : public QObject

@@ -12,7 +12,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageDocumentPageNavigationRefreshResult {
     bool accepted = false;
     bool changed = false;

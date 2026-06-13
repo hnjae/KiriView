@@ -17,7 +17,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 class MediaPredecodeCoordinator final : public QObject
 {
 public:

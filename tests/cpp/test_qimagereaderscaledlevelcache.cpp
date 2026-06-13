@@ -32,7 +32,7 @@ private Q_SLOTS:
 
 void TestQImageReaderScaledLevelCache::evictsLeastRecentlyUsedLevelsToBudget()
 {
-    KiriView::QImageReaderScaledLevelCache cache(32);
+    kiriview::QImageReaderScaledLevelCache cache(32);
 
     QVERIFY(cache.insert(0, cacheImage(QSize(2, 2), Qt::red)));
     QVERIFY(cache.insert(1, cacheImage(QSize(2, 2), Qt::green)));
@@ -47,7 +47,7 @@ void TestQImageReaderScaledLevelCache::evictsLeastRecentlyUsedLevelsToBudget()
 
 void TestQImageReaderScaledLevelCache::replacesExistingLevelWithoutDoubleCounting()
 {
-    KiriView::QImageReaderScaledLevelCache cache(80);
+    kiriview::QImageReaderScaledLevelCache cache(80);
 
     QVERIFY(cache.insert(0, cacheImage(QSize(2, 2))));
     const qsizetype firstByteCost = cache.byteCost();
@@ -61,7 +61,7 @@ void TestQImageReaderScaledLevelCache::replacesExistingLevelWithoutDoubleCountin
 
 void TestQImageReaderScaledLevelCache::rejectsNullAndOversizedImages()
 {
-    KiriView::QImageReaderScaledLevelCache cache(1);
+    kiriview::QImageReaderScaledLevelCache cache(1);
 
     QVERIFY(!cache.insert(0, QImage()));
     QVERIFY(!cache.insert(1, cacheImage(QSize(1, 1))));
@@ -73,7 +73,7 @@ void TestQImageReaderScaledLevelCache::rejectsNullAndOversizedImages()
 
 void TestQImageReaderScaledLevelCache::clearRemovesImagesAndByteCost()
 {
-    KiriView::QImageReaderScaledLevelCache cache(16);
+    kiriview::QImageReaderScaledLevelCache cache(16);
 
     QVERIFY(cache.insert(0, cacheImage(QSize(2, 2))));
     QVERIFY(cache.contains(0));

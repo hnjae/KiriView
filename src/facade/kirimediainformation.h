@@ -29,7 +29,7 @@ public:
     };
     Q_ENUM(Role)
 
-    using Row = KiriView::MediaInformationProjectionRow;
+    using Row = kiriview::MediaInformationProjectionRow;
 
     explicit KiriMediaInformationRowModel(QObject *parent = nullptr);
 

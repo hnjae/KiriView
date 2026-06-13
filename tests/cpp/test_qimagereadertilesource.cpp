@@ -66,8 +66,8 @@ private Q_SLOTS:
 void TestQImageReaderTileSource::sourceDecodesBlockingDisplayImageAndTile()
 {
     QString errorString;
-    std::shared_ptr<KiriView::QImageReaderTileSource> source
-        = KiriView::QImageReaderTileSource::open(pngData(), QByteArrayLiteral("png"), &errorString);
+    std::shared_ptr<kiriview::QImageReaderTileSource> source
+        = kiriview::QImageReaderTileSource::open(pngData(), QByteArrayLiteral("png"), &errorString);
     QVERIFY2(source != nullptr, qPrintable(errorString));
     QCOMPARE(source->imageSize(), QSize(4, 4));
 
@@ -75,9 +75,9 @@ void TestQImageReaderTileSource::sourceDecodesBlockingDisplayImageAndTile()
     QVERIFY2(!preview.isNull(), qPrintable(errorString));
     QCOMPARE(preview.size(), QSize(2, 2));
 
-    const KiriView::TilePyramid pyramid(source->imageSize());
-    const KiriView::TileRequest request = pyramid.requestForTile(KiriView::TileKey { 0, 0, 0 });
-    const std::optional<KiriView::DecodedTile> tile = source->decodeTile(request, &errorString);
+    const kiriview::TilePyramid pyramid(source->imageSize());
+    const kiriview::TileRequest request = pyramid.requestForTile(kiriview::TileKey { 0, 0, 0 });
+    const std::optional<kiriview::DecodedTile> tile = source->decodeTile(request, &errorString);
     QVERIFY2(tile.has_value(), qPrintable(errorString));
     QCOMPARE(tile->image.size(), QSize(4, 4));
 }
@@ -95,14 +95,14 @@ void TestQImageReaderTileSource::jpegSourceDecodesFirstDisplayToViewport()
     const QByteArray data = encodedImageData(image, jpegWriterFormat(), &errorString);
     QVERIFY2(!data.isEmpty(), qPrintable(errorString));
 
-    std::shared_ptr<KiriView::QImageReaderTileSource> source
-        = KiriView::QImageReaderTileSource::open(data, QByteArrayLiteral("jpeg"), &errorString);
+    std::shared_ptr<kiriview::QImageReaderTileSource> source
+        = kiriview::QImageReaderTileSource::open(data, QByteArrayLiteral("jpeg"), &errorString);
     QVERIFY2(source != nullptr, qPrintable(errorString));
 
-    const KiriView::FirstDisplayImageDecodeResult result = source->decodeFirstDisplayImage(
-        KiriView::ImageFirstDisplayDecodeContext { QSize(400, 300) }, &errorString);
+    const kiriview::FirstDisplayImageDecodeResult result = source->decodeFirstDisplayImage(
+        kiriview::ImageFirstDisplayDecodeContext { QSize(400, 300) }, &errorString);
 
-    QCOMPARE(result.status, KiriView::FirstDisplayImageDecodeStatus::Ready);
+    QCOMPARE(result.status, kiriview::FirstDisplayImageDecodeStatus::Ready);
     QVERIFY2(!result.image.isNull(), qPrintable(errorString));
     QCOMPARE(result.image.size(), QSize(400, 300));
     QVERIFY(result.image.size() != source->imageSize());
@@ -122,27 +122,27 @@ void TestQImageReaderTileSource::jpegSourceSkipsFirstDisplayWhenImageFitsViewpor
     const QByteArray data = encodedImageData(image, jpegWriterFormat(), &errorString);
     QVERIFY2(!data.isEmpty(), qPrintable(errorString));
 
-    std::shared_ptr<KiriView::QImageReaderTileSource> source
-        = KiriView::QImageReaderTileSource::open(data, QByteArrayLiteral("jpeg"), &errorString);
+    std::shared_ptr<kiriview::QImageReaderTileSource> source
+        = kiriview::QImageReaderTileSource::open(data, QByteArrayLiteral("jpeg"), &errorString);
     QVERIFY2(source != nullptr, qPrintable(errorString));
 
-    const KiriView::FirstDisplayImageDecodeResult result = source->decodeFirstDisplayImage(
-        KiriView::ImageFirstDisplayDecodeContext { QSize(400, 300) }, &errorString);
+    const kiriview::FirstDisplayImageDecodeResult result = source->decodeFirstDisplayImage(
+        kiriview::ImageFirstDisplayDecodeContext { QSize(400, 300) }, &errorString);
 
-    QCOMPARE(result.status, KiriView::FirstDisplayImageDecodeStatus::NotImplemented);
+    QCOMPARE(result.status, kiriview::FirstDisplayImageDecodeStatus::NotImplemented);
     QVERIFY(result.image.isNull());
 }
 
 void TestQImageReaderTileSource::pngSourceLeavesFirstDisplayNotImplemented()
 {
     QString errorString;
-    std::shared_ptr<KiriView::QImageReaderTileSource> source
-        = KiriView::QImageReaderTileSource::open(pngData(), QByteArrayLiteral("png"), &errorString);
+    std::shared_ptr<kiriview::QImageReaderTileSource> source
+        = kiriview::QImageReaderTileSource::open(pngData(), QByteArrayLiteral("png"), &errorString);
     QVERIFY2(source != nullptr, qPrintable(errorString));
 
-    const KiriView::FirstDisplayImageDecodeResult result = source->decodeFirstDisplayImage(
-        KiriView::ImageFirstDisplayDecodeContext { QSize(2, 2) }, &errorString);
-    QCOMPARE(result.status, KiriView::FirstDisplayImageDecodeStatus::NotImplemented);
+    const kiriview::FirstDisplayImageDecodeResult result = source->decodeFirstDisplayImage(
+        kiriview::ImageFirstDisplayDecodeContext { QSize(2, 2) }, &errorString);
+    QCOMPARE(result.status, kiriview::FirstDisplayImageDecodeStatus::NotImplemented);
 
     const QImage blockingDisplay = source->decodeBlockingDisplayImage(2, &errorString);
     QVERIFY2(!blockingDisplay.isNull(), qPrintable(errorString));

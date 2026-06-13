@@ -44,16 +44,16 @@ Q_SIGNALS:
     void renderContextProviderInstalledChanged();
 
 private:
-    KiriView::ImageViewRenderContextBindingInput renderContextBindingInput(
+    kiriview::ImageViewRenderContextBindingInput renderContextBindingInput(
         bool documentAttached) const;
     void connectDocument();
     void disconnectDocument();
     void synchronizeRenderContextBinding(KiriImageDocument *document, bool documentAttached);
     void applyRenderContextBinding(
-        KiriView::ImageViewRenderContextBindingAction action, KiriImageDocument *document);
+        kiriview::ImageViewRenderContextBindingAction action, KiriImageDocument *document);
     void emitProviderInstalledChangeIfNeeded(bool previouslyInstalled);
     void invalidateRenderContext();
-    KiriView::ImageDocumentRenderContext renderContext() const;
+    kiriview::ImageDocumentRenderContext renderContext() const;
     qreal displayDevicePixelRatio() const;
     int maximumTextureSize() const;
 
@@ -62,7 +62,7 @@ private:
     bool m_componentComplete = true;
     quint64 m_renderContextGeneration = 1;
     QMetaObject::Connection m_documentDestroyedConnection;
-    KiriView::ImageViewRenderContextBinding m_renderContextBinding;
+    kiriview::ImageViewRenderContextBinding m_renderContextBinding;
 };
 
 #endif

@@ -9,7 +9,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 bool MediaPredecodeSchedulePlan::shouldSchedule() const
 {
     return !context.currentLocation.isEmpty();

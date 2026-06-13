@@ -8,7 +8,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentPageNavigationService::ImageDocumentPageNavigationService(
     QObject *parent, ImageDocumentPageCandidateProvider candidateProvider, Callbacks callbacks)
     : QObject(parent)

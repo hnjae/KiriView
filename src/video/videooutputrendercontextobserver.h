@@ -16,7 +16,7 @@ class QEvent;
 class QQuickItem;
 class QQuickWindow;
 
-namespace KiriView {
+namespace kiriview {
 class VideoOutputRenderContextObserver final : public QObject
 {
 public:

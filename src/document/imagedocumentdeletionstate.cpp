@@ -3,7 +3,7 @@
 
 #include "imagedocumentdeletionstate.h"
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentDeletionState::ImageDocumentDeletionState(quint64 nextOperationId)
     : m_fileDeletion(nextOperationId)
 {

@@ -12,7 +12,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 class PredecodeActiveLoads final
 {
 public:

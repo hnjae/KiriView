@@ -8,10 +8,10 @@
 #include <QStringList>
 
 namespace {
-using Route = KiriView::ApplicationActions::ApplicationShortcutRoute;
-using ActivationScope = KiriView::ApplicationActions::ApplicationShortcutActivationScope;
-using Scope = KiriView::ApplicationActions::ImageShortcutScope;
-using RouteSpec = KiriView::ApplicationActions::ShortcutRouteSpec;
+using Route = kiriview::ApplicationActions::ApplicationShortcutRoute;
+using ActivationScope = kiriview::ApplicationActions::ApplicationShortcutActivationScope;
+using Scope = kiriview::ApplicationActions::ImageShortcutScope;
+using RouteSpec = kiriview::ApplicationActions::ShortcutRouteSpec;
 
 bool isAsciiPrintableKey(Qt::Key key) { return key >= Qt::Key_Space && key <= Qt::Key_AsciiTilde; }
 
@@ -84,7 +84,7 @@ bool routeMatchesSpec(const Route &route, const RouteSpec &spec)
 }
 
 void appendActionToRoute(
-    QList<Route> &routes, KiriView::ApplicationActions::ActionId actionId, const RouteSpec &spec)
+    QList<Route> &routes, kiriview::ApplicationActions::ActionId actionId, const RouteSpec &spec)
 {
     for (Route &route : routes) {
         if (!routeMatchesSpec(route, spec)) {
@@ -103,8 +103,8 @@ void appendActionToRoute(
 QList<Route> buildShortcutRoutes()
 {
     QList<Route> routes;
-    for (const KiriView::ApplicationActions::ActionDefinition &definition :
-        KiriView::ApplicationActions::definitions()) {
+    for (const kiriview::ApplicationActions::ActionDefinition &definition :
+        kiriview::ApplicationActions::definitions()) {
         for (std::size_t index = 0; index < definition.shortcutRoutes.count; ++index) {
             appendActionToRoute(
                 routes, definition.actionId, definition.shortcutRoutes.specs[index]);
@@ -116,7 +116,7 @@ QList<Route> buildShortcutRoutes()
 
 }
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts)
 {
     for (const QKeySequence &shortcut : shortcuts) {

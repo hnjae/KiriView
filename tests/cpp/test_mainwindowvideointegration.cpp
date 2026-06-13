@@ -348,7 +348,7 @@ bool metaObjectExposesName(const QMetaObject &metaObject, const QByteArray &name
 void TestMainWindowVideoIntegration::initTestCase()
 {
     QStandardPaths::setTestModeEnabled(true);
-    KiriView::initializeLocalization();
+    kiriview::initializeLocalization();
     if (!qEnvironmentVariableIsSet("QT_QUICK_CONTROLS_STYLE")) {
         QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
     }
@@ -460,7 +460,7 @@ void TestMainWindowVideoIntegration::documentSessionFacadeExposesOnlySharedActiv
 void TestMainWindowVideoIntegration::
     documentSessionRuntimePublicApiExposesOnlySharedActiveNavigationSurface()
 {
-    using Runtime = KiriView::DocumentSessionRuntime;
+    using Runtime = kiriview::DocumentSessionRuntime;
 
     QVERIFY(HasOpenPreviousActiveNavigation<Runtime>::value);
     QVERIFY(HasOpenNextActiveNavigation<Runtime>::value);

@@ -13,7 +13,7 @@ namespace {
 template <typename> inline constexpr bool alwaysFalse = false;
 }
 
-namespace KiriView {
+namespace kiriview {
 PredecodeScheduleRuntime::PredecodeScheduleRuntime(QObject *owner,
     PredecodeLoadController &loadController, StartAdjacentPredecodeCallback startAdjacentPredecode,
     PowerSaverProvider powerSaverProvider)

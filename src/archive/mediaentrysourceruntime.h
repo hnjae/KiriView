@@ -15,7 +15,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 class MediaEntrySourceRunner;
 
 class MediaEntrySourceRuntime final

@@ -6,7 +6,7 @@
 
 class QKeyEvent;
 
-namespace KiriView {
+namespace kiriview {
 enum class MenuAccessKeyInputKind {
     AltKey,
     AltMnemonic,

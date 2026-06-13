@@ -4,13 +4,13 @@
 #include "predecodeschedulestate.h"
 
 namespace {
-bool validPredecodeScheduleContext(const KiriView::PredecodeScheduleContext &context)
+bool validPredecodeScheduleContext(const kiriview::PredecodeScheduleContext &context)
 {
     return !context.currentLocation.isEmpty();
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 PredecodeScheduleRuntimePlan PredecodeScheduleState::schedule(
     PredecodeScheduleContext context, qint64 monotonicMsec)
 {

@@ -9,7 +9,7 @@
 #include <QtGlobal>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 class ImageAsyncOperationState final
 {
 public:

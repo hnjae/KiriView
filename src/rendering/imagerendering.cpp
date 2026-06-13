@@ -8,7 +8,7 @@
 
 #include <QRectF>
 
-namespace KiriView {
+namespace kiriview {
 QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
 {
     return Bridge::qtRectF(rustImageTargetRect(Bridge::rustSize<RustImageRenderSize>(imageSize),

@@ -5,7 +5,7 @@
 
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ImageDecodeJobState::ImageDecodeJobState(quint64 nextOperationId)
     : m_operation(nextOperationId)
 {

@@ -9,7 +9,7 @@
 #include <variant>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct VideoPlaybackControlSnapshot {
     bool sourceUrlEmpty = true;
     bool mediaBackendAvailable = false;

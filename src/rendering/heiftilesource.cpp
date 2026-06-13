@@ -18,7 +18,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 HeifTileSource::HeifTileSource(
     QByteArray data, QSize imageSize, std::optional<HeifTileGrid> tileGrid)
     : m_data(std::move(data))

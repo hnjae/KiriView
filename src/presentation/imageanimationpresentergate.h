@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEANIMATIONPRESENTERGATE_H
 #define KIRIVIEW_IMAGEANIMATIONPRESENTERGATE_H
 
-namespace KiriView {
+namespace kiriview {
 enum class AnimationPresenterKind {
     ProviderImageRevisions,
     DegradedUnsupported,

@@ -17,7 +17,7 @@
 #include <functional>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentPageNavigationService final : public QObject
 {
 public:

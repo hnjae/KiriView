@@ -24,50 +24,50 @@ private Q_SLOTS:
 
 void TestDecodedImageResult::exposesFailurePayload()
 {
-    const KiriView::DecodedImageResult result
-        = KiriView::failedDecodedImageResult(QStringLiteral("decode failed"));
+    const kiriview::DecodedImageResult result
+        = kiriview::failedDecodedImageResult(QStringLiteral("decode failed"));
 
-    const KiriView::DecodedImageFailure *failure = KiriView::decodedImageResultFailure(result);
+    const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("decode failed"));
-    QVERIFY(KiriView::decodedImageResultImage(result) == nullptr);
+    QVERIFY(kiriview::decodedImageResultImage(result) == nullptr);
 }
 
 void TestDecodedImageResult::exposesImagePayload()
 {
-    const KiriView::DecodedImageResult result
-        = KiriView::successfulDecodedImageResult(KiriView::TestSupport::staticDecodedTestImage());
+    const kiriview::DecodedImageResult result
+        = kiriview::successfulDecodedImageResult(kiriview::TestSupport::staticDecodedTestImage());
 
-    QVERIFY(KiriView::decodedImageResultFailure(result) == nullptr);
-    const KiriView::DecodedImage *image = KiriView::decodedImageResultImage(result);
+    QVERIFY(kiriview::decodedImageResultFailure(result) == nullptr);
+    const kiriview::DecodedImage *image = kiriview::decodedImageResultImage(result);
     QVERIFY(image != nullptr);
-    QVERIFY(std::get_if<KiriView::StaticDecodedImage>(image) != nullptr);
+    QVERIFY(std::get_if<kiriview::StaticDecodedImage>(image) != nullptr);
 }
 
 void TestDecodedImageResult::takeImageMovesImagePayloadOnly()
 {
-    std::optional<KiriView::DecodedImage> image
-        = KiriView::successfulDecodedImageResult(KiriView::TestSupport::staticDecodedTestImage())
+    std::optional<kiriview::DecodedImage> image
+        = kiriview::successfulDecodedImageResult(kiriview::TestSupport::staticDecodedTestImage())
               .takeImage();
     QVERIFY(image.has_value());
-    QVERIFY(std::get_if<KiriView::StaticDecodedImage>(&*image) != nullptr);
+    QVERIFY(std::get_if<kiriview::StaticDecodedImage>(&*image) != nullptr);
 
-    image = KiriView::failedDecodedImageResult(QStringLiteral("decode failed")).takeImage();
+    image = kiriview::failedDecodedImageResult(QStringLiteral("decode failed")).takeImage();
     QVERIFY(!image.has_value());
 }
 
 void TestDecodedImageResult::staticMetadataMirrorsIntoDisplayPayload()
 {
-    KiriView::DecodedImage image = KiriView::TestSupport::staticDecodedTestImage();
-    KiriView::EmbeddedMetadata metadata;
+    kiriview::DecodedImage image = kiriview::TestSupport::staticDecodedTestImage();
+    kiriview::EmbeddedMetadata metadata;
     metadata.cameraMake = QStringLiteral("Kiri Camera");
 
-    KiriView::setDecodedImageEmbeddedMetadata(image, metadata);
+    kiriview::setDecodedImageEmbeddedMetadata(image, metadata);
 
-    const KiriView::StaticDecodedImage *decoded = std::get_if<KiriView::StaticDecodedImage>(&image);
+    const kiriview::StaticDecodedImage *decoded = std::get_if<kiriview::StaticDecodedImage>(&image);
     QVERIFY(decoded != nullptr);
     QCOMPARE(
-        KiriView::decodedImageEmbeddedMetadata(image).cameraMake, QStringLiteral("Kiri Camera"));
+        kiriview::decodedImageEmbeddedMetadata(image).cameraMake, QStringLiteral("Kiri Camera"));
     QCOMPARE(decoded->displayImage.embeddedMetadata.cameraMake, QStringLiteral("Kiri Camera"));
 }
 

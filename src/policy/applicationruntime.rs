@@ -3,7 +3,7 @@
 
 use crate::startup_arguments::{StartupOptions, StartupSource};
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     enum ApplicationStartupSourceKind {
         None,

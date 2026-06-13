@@ -6,7 +6,7 @@
 
 #include "application/applicationtypes.h"
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 class ApplicationMenuPresentationState final
 {
 public:

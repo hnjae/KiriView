@@ -12,10 +12,10 @@
 #include <optional>
 
 namespace {
-using ActionId = KiriView::ApplicationActions::ActionId;
-using Category = KiriView::ApplicationActions::ShortcutHelpCategory;
-using ActivationScope = KiriView::ApplicationActions::ApplicationShortcutActivationScope;
-using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+using ActionId = kiriview::ApplicationActions::ActionId;
+using Category = kiriview::ApplicationActions::ShortcutHelpCategory;
+using ActivationScope = kiriview::ApplicationActions::ApplicationShortcutActivationScope;
+using Scope = kiriview::ApplicationActions::ImageShortcutScope;
 
 QKeySequence shortcut(const QString &sequence)
 {
@@ -39,11 +39,11 @@ QVariantList actionIdVariants(const QList<ActionId> &actionIds)
     return variants;
 }
 
-QList<KiriView::ApplicationActions::ShortcutRouteSpec> routeSpecsFor(ActionId actionId)
+QList<kiriview::ApplicationActions::ShortcutRouteSpec> routeSpecsFor(ActionId actionId)
 {
-    QList<KiriView::ApplicationActions::ShortcutRouteSpec> specs;
-    const KiriView::ApplicationActions::ActionDefinition *definition
-        = KiriView::ApplicationActions::definitionForId(actionId);
+    QList<kiriview::ApplicationActions::ShortcutRouteSpec> specs;
+    const kiriview::ApplicationActions::ActionDefinition *definition
+        = kiriview::ApplicationActions::definitionForId(actionId);
     if (definition == nullptr) {
         return specs;
     }
@@ -57,7 +57,7 @@ QList<KiriView::ApplicationActions::ShortcutRouteSpec> routeSpecsFor(ActionId ac
 
 bool hasRouteSpec(ActionId actionId, ActivationScope activationScope, Scope scope)
 {
-    for (const KiriView::ApplicationActions::ShortcutRouteSpec &spec : routeSpecsFor(actionId)) {
+    for (const kiriview::ApplicationActions::ShortcutRouteSpec &spec : routeSpecsFor(actionId)) {
         if (spec.activationScope == activationScope && spec.shortcutScope == scope) {
             return true;
         }
@@ -66,11 +66,11 @@ bool hasRouteSpec(ActionId actionId, ActivationScope activationScope, Scope scop
     return false;
 }
 
-const KiriView::ApplicationActions::ApplicationShortcutRoute *routeFor(
+const kiriview::ApplicationActions::ApplicationShortcutRoute *routeFor(
     ActivationScope activationScope, Scope scope)
 {
-    for (const KiriView::ApplicationActions::ApplicationShortcutRoute &route :
-        KiriView::ApplicationActions::shortcutRoutes()) {
+    for (const kiriview::ApplicationActions::ApplicationShortcutRoute &route :
+        kiriview::ApplicationActions::shortcutRoutes()) {
         if (route.activationScope == activationScope && route.shortcutScope == scope) {
             return &route;
         }
@@ -109,7 +109,7 @@ void TestApplicationShortcutPolicy::programWideSanitizationKeepsTextInputSafeSho
         shortcut(QStringLiteral("Delete")),
     };
 
-    QCOMPARE(KiriView::ApplicationActions::sanitizeProgramWideShortcuts(shortcuts),
+    QCOMPARE(kiriview::ApplicationActions::sanitizeProgramWideShortcuts(shortcuts),
         QList<QKeySequence>({ shortcut(QStringLiteral("Shift+Q")),
             shortcut(QStringLiteral("Ctrl+Q")), shortcut(QStringLiteral("Delete")) }));
 }
@@ -125,17 +125,17 @@ void TestApplicationShortcutPolicy::menuShortcutSkipsViewerLocalShortcuts()
     };
 
     QCOMPARE(
-        KiriView::ApplicationActions::menuShortcut(shortcuts), shortcut(QStringLiteral("Alt+O")));
+        kiriview::ApplicationActions::menuShortcut(shortcuts), shortcut(QStringLiteral("Alt+O")));
     QVERIFY(
-        KiriView::ApplicationActions::menuShortcut({ shortcut(QStringLiteral("Home")) }).isEmpty());
-    QVERIFY(KiriView::ApplicationActions::menuShortcut({ shortcut(QStringLiteral("Ctrl+X, Q")) })
+        kiriview::ApplicationActions::menuShortcut({ shortcut(QStringLiteral("Home")) }).isEmpty());
+    QVERIFY(kiriview::ApplicationActions::menuShortcut({ shortcut(QStringLiteral("Ctrl+X, Q")) })
             .isEmpty());
 }
 
 void TestApplicationShortcutPolicy::shortcutListTextJoinsAssignedShortcuts()
 {
-    QCOMPARE(KiriView::ApplicationActions::shortcutListText({ QKeySequence() }), QString());
-    QCOMPARE(KiriView::ApplicationActions::shortcutListText({ QKeySequence(),
+    QCOMPARE(kiriview::ApplicationActions::shortcutListText({ QKeySequence() }), QString());
+    QCOMPARE(kiriview::ApplicationActions::shortcutListText({ QKeySequence(),
                  shortcut(QStringLiteral("Alt+O")), shortcut(QStringLiteral("Ctrl+Shift+O")) }),
         QStringLiteral("%1 / %2").arg(nativeText(shortcut(QStringLiteral("Alt+O"))),
             nativeText(shortcut(QStringLiteral("Ctrl+Shift+O")))));
@@ -149,8 +149,8 @@ void TestApplicationShortcutPolicy::shortcutProjectionSeparatesActivationScopes(
         shortcut(QStringLiteral("Shift+R")),
     };
 
-    const KiriView::ApplicationActions::ApplicationShortcutProjection projection
-        = KiriView::ApplicationActions::shortcutProjection(
+    const kiriview::ApplicationActions::ApplicationShortcutProjection projection
+        = kiriview::ApplicationActions::shortcutProjection(
             programWideShortcuts, viewerLocalShortcuts);
 
     QCOMPARE(projection.shortcuts,
@@ -177,7 +177,7 @@ void TestApplicationShortcutPolicy::
         shortcut(QStringLiteral("Delete")),
     };
 
-    QCOMPARE(KiriView::ApplicationActions::sanitizeProgramWideShortcuts(shortcuts),
+    QCOMPARE(kiriview::ApplicationActions::sanitizeProgramWideShortcuts(shortcuts),
         QList<QKeySequence>({ shortcut(QStringLiteral("Shift+Q")),
             shortcut(QStringLiteral("Ctrl+Q")), shortcut(QStringLiteral("Delete")) }));
 }
@@ -221,8 +221,8 @@ void TestApplicationShortcutPolicy::actionDefinitionsOwnApplicationShortcutRoute
 void TestApplicationShortcutPolicy::actionDefinitionsOwnShortcutHelpCategories()
 {
     const auto categoryFor = [](ActionId actionId) {
-        const KiriView::ApplicationActions::ActionDefinition *definition
-            = KiriView::ApplicationActions::definitionForId(actionId);
+        const kiriview::ApplicationActions::ActionDefinition *definition
+            = kiriview::ApplicationActions::definitionForId(actionId);
         Q_ASSERT(definition != nullptr);
         return definition->shortcutHelpCategory;
     };
@@ -259,16 +259,16 @@ void TestApplicationShortcutPolicy::actionDefinitionsOwnShortcutHelpCategories()
 
     for (int index = 0; index < orderedCategories.size(); ++index) {
         QCOMPARE(
-            KiriView::ApplicationActions::shortcutHelpCategoryOrder(orderedCategories.at(index)),
+            kiriview::ApplicationActions::shortcutHelpCategoryOrder(orderedCategories.at(index)),
             index);
-        QCOMPARE(KiriView::ApplicationActions::shortcutHelpCategoryKey(orderedCategories.at(index)),
+        QCOMPARE(kiriview::ApplicationActions::shortcutHelpCategoryKey(orderedCategories.at(index)),
             orderedKeys.at(index));
     }
 }
 
 void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
 {
-    const KiriView::ApplicationActions::ApplicationShortcutRoute *readyRoute
+    const kiriview::ApplicationActions::ApplicationShortcutRoute *readyRoute
         = routeFor(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope);
     QVERIFY(readyRoute != nullptr);
     QCOMPARE(actionIdVariants(readyRoute->actionIds),
@@ -280,32 +280,32 @@ void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
             ActionId::ViewToggleTwoPageModeAction, ActionId::ViewScanForwardAction,
             ActionId::ViewScanBackwardAction, ActionId::ViewToggleVideoPlaybackAction }));
 
-    const KiriView::ApplicationActions::ApplicationShortcutRoute *containerRoute
+    const kiriview::ApplicationActions::ApplicationShortcutRoute *containerRoute
         = routeFor(ActivationScope::ViewerLocal, Scope::ContainerViewerShortcutScope);
     QVERIFY(containerRoute != nullptr);
     QCOMPARE(actionIdVariants(containerRoute->actionIds),
         actionIdVariants({ ActionId::GoPreviousArchiveAction, ActionId::GoNextArchiveAction }));
 
-    const KiriView::ApplicationActions::ApplicationShortcutRoute *viewerLocalRoute
+    const kiriview::ApplicationActions::ApplicationShortcutRoute *viewerLocalRoute
         = routeFor(ActivationScope::ViewerLocal, Scope::ViewerShortcutScope);
     QVERIFY(viewerLocalRoute != nullptr);
     QVERIFY(viewerLocalRoute->actionIds.contains(ActionId::ViewToggleInfoPanelAction));
     QVERIFY(viewerLocalRoute->actionIds.contains(ActionId::ViewToggleThumbnailPanelAction));
 
-    for (const KiriView::ApplicationActions::ApplicationShortcutRoute &route :
-        KiriView::ApplicationActions::shortcutRoutes()) {
+    for (const kiriview::ApplicationActions::ApplicationShortcutRoute &route :
+        kiriview::ApplicationActions::shortcutRoutes()) {
         QVERIFY(!route.actionIds.isEmpty());
         for (ActionId actionId : route.actionIds) {
-            QVERIFY(KiriView::ApplicationActions::definitionForId(actionId) != nullptr);
+            QVERIFY(kiriview::ApplicationActions::definitionForId(actionId) != nullptr);
             QVERIFY(hasRouteSpec(actionId, route.activationScope, route.shortcutScope));
         }
     }
 
-    for (const KiriView::ApplicationActions::ActionDefinition &definition :
-        KiriView::ApplicationActions::definitions()) {
-        for (const KiriView::ApplicationActions::ShortcutRouteSpec &spec :
+    for (const kiriview::ApplicationActions::ActionDefinition &definition :
+        kiriview::ApplicationActions::definitions()) {
+        for (const kiriview::ApplicationActions::ShortcutRouteSpec &spec :
             routeSpecsFor(definition.actionId)) {
-            const KiriView::ApplicationActions::ApplicationShortcutRoute *route
+            const kiriview::ApplicationActions::ApplicationShortcutRoute *route
                 = routeFor(spec.activationScope, spec.shortcutScope);
             QVERIFY(route != nullptr);
             QVERIFY(route->actionIds.contains(definition.actionId));
@@ -316,135 +316,135 @@ void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
 void TestApplicationShortcutPolicy::shortcutScopeValuesMapOnlyKnownScopes()
 {
     const std::optional<Scope> readyViewerScope
-        = KiriView::ApplicationActions::imageShortcutScopeFromValue(
+        = kiriview::ApplicationActions::imageShortcutScopeFromValue(
             static_cast<int>(Scope::ReadyViewerShortcutScope));
     QVERIFY(readyViewerScope.has_value());
     QCOMPARE(*readyViewerScope, Scope::ReadyViewerShortcutScope);
 
     const std::optional<Scope> containerViewerScope
-        = KiriView::ApplicationActions::imageShortcutScopeFromValue(
+        = kiriview::ApplicationActions::imageShortcutScopeFromValue(
             static_cast<int>(Scope::ContainerViewerShortcutScope));
     QVERIFY(containerViewerScope.has_value());
     QCOMPARE(*containerViewerScope, Scope::ContainerViewerShortcutScope);
 
-    QVERIFY(!KiriView::ApplicationActions::imageShortcutScopeFromValue(-1).has_value());
-    QVERIFY(!KiriView::ApplicationActions::imageShortcutScopeFromValue(999).has_value());
+    QVERIFY(!kiriview::ApplicationActions::imageShortcutScopeFromValue(-1).has_value());
+    QVERIFY(!kiriview::ApplicationActions::imageShortcutScopeFromValue(999).has_value());
 }
 
 void TestApplicationShortcutPolicy::videoShortcutScopesUseViewerDeletionAndNavigationGates()
 {
-    KiriView::ApplicationActions::VideoShortcutAvailabilityInput input;
+    kiriview::ApplicationActions::VideoShortcutAvailabilityInput input;
     input.helpShortcutsEnabled = true;
     input.viewerShortcutsEnabled = true;
     input.directMediaNavigationActive = true;
 
-    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::HelpShortcutScope));
-    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ViewerShortcutScope));
-    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ReadyShortcutScope));
-    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ReadyViewerShortcutScope));
-    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ImageSelectionShortcutScope));
-    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ImageSelectionViewerShortcutScope));
-    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::MediaStartEndViewerShortcutScope));
 
     input.viewerShortcutsEnabled = false;
-    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ReadyShortcutScope));
-    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(!kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ReadyViewerShortcutScope));
-    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(!kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ImageSelectionViewerShortcutScope));
-    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(!kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::MediaStartEndViewerShortcutScope));
 
     input.viewerShortcutsEnabled = true;
     input.directMediaNavigationActive = false;
-    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(!kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ImageSelectionShortcutScope));
-    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(!kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::PageViewerShortcutScope));
 
     input.fileDeletionInProgress = true;
-    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::HelpShortcutScope));
-    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(!kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ReadyShortcutScope));
-    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+    QVERIFY(!kiriview::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ContainerViewerShortcutScope));
 }
 
 void TestApplicationShortcutPolicy::videoUnsupportedActionPolicyRejectsImageOnlyCommands()
 {
     QVERIFY(
-        KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewRotateClockwiseAction));
-    QVERIFY(KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewZoomInAction));
+        kiriview::ApplicationActions::videoActionUnsupported(ActionId::ViewRotateClockwiseAction));
+    QVERIFY(kiriview::ApplicationActions::videoActionUnsupported(ActionId::ViewZoomInAction));
     QVERIFY(
-        KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewZoom50PercentAction));
+        kiriview::ApplicationActions::videoActionUnsupported(ActionId::ViewZoom50PercentAction));
     QVERIFY(
-        KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewZoom100PercentAction));
+        kiriview::ApplicationActions::videoActionUnsupported(ActionId::ViewZoom100PercentAction));
     QVERIFY(
-        KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewZoom200PercentAction));
-    QVERIFY(KiriView::ApplicationActions::videoActionUnsupported(
+        kiriview::ApplicationActions::videoActionUnsupported(ActionId::ViewZoom200PercentAction));
+    QVERIFY(kiriview::ApplicationActions::videoActionUnsupported(
         ActionId::ViewToggleTwoPageModeAction));
     QVERIFY(
-        KiriView::ApplicationActions::videoActionUnsupported(ActionId::GoPreviousArchiveAction));
-    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewScanForwardAction));
+        kiriview::ApplicationActions::videoActionUnsupported(ActionId::GoPreviousArchiveAction));
+    QVERIFY(!kiriview::ApplicationActions::videoActionUnsupported(ActionId::ViewScanForwardAction));
     QVERIFY(
-        !KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewScanBackwardAction));
-    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(
+        !kiriview::ApplicationActions::videoActionUnsupported(ActionId::ViewScanBackwardAction));
+    QVERIFY(!kiriview::ApplicationActions::videoActionUnsupported(
         ActionId::ViewGoToContentStartAction));
     QVERIFY(
-        !KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewGoToContentEndAction));
+        !kiriview::ApplicationActions::videoActionUnsupported(ActionId::ViewGoToContentEndAction));
 
     QVERIFY(
-        !KiriView::ApplicationActions::videoActionUnsupported(ActionId::WindowFullscreenAction));
-    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::HelpShortcutsAction));
-    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::FileOpenAction));
-    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::GoPreviousImageAction));
-    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::FileDeleteAction));
-    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(
+        !kiriview::ApplicationActions::videoActionUnsupported(ActionId::WindowFullscreenAction));
+    QVERIFY(!kiriview::ApplicationActions::videoActionUnsupported(ActionId::HelpShortcutsAction));
+    QVERIFY(!kiriview::ApplicationActions::videoActionUnsupported(ActionId::FileOpenAction));
+    QVERIFY(!kiriview::ApplicationActions::videoActionUnsupported(ActionId::GoPreviousImageAction));
+    QVERIFY(!kiriview::ApplicationActions::videoActionUnsupported(ActionId::FileDeleteAction));
+    QVERIFY(!kiriview::ApplicationActions::videoActionUnsupported(
         ActionId::ViewToggleVideoPlaybackAction));
 }
 
 void TestApplicationShortcutPolicy::imageUnsupportedActionPolicyRejectsVideoOnlyCommands()
 {
-    QVERIFY(KiriView::ApplicationActions::imageActionUnsupported(
+    QVERIFY(kiriview::ApplicationActions::imageActionUnsupported(
         ActionId::ViewToggleVideoPlaybackAction));
-    QVERIFY(!KiriView::ApplicationActions::imageActionUnsupported(ActionId::ViewZoomInAction));
+    QVERIFY(!kiriview::ApplicationActions::imageActionUnsupported(ActionId::ViewZoomInAction));
     QVERIFY(
-        !KiriView::ApplicationActions::imageActionUnsupported(ActionId::ViewRotateClockwiseAction));
+        !kiriview::ApplicationActions::imageActionUnsupported(ActionId::ViewRotateClockwiseAction));
     QVERIFY(
-        !KiriView::ApplicationActions::imageActionUnsupported(ActionId::WindowFullscreenAction));
-    QVERIFY(!KiriView::ApplicationActions::imageActionUnsupported(ActionId::FileOpenAction));
+        !kiriview::ApplicationActions::imageActionUnsupported(ActionId::WindowFullscreenAction));
+    QVERIFY(!kiriview::ApplicationActions::imageActionUnsupported(ActionId::FileOpenAction));
 }
 
 void TestApplicationShortcutPolicy::horizontalArrowShortcutPolicyUsesActiveMediaMode()
 {
-    KiriView::ApplicationActions::VideoShortcutAvailabilityInput input;
+    kiriview::ApplicationActions::VideoShortcutAvailabilityInput input;
     input.viewerShortcutsEnabled = true;
     input.directMediaNavigationActive = true;
 
-    QVERIFY(KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(false, true, input));
+    QVERIFY(kiriview::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(false, true, input));
     QVERIFY(
-        !KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(false, false, input));
-    QVERIFY(KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, false, input));
+        !kiriview::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(false, false, input));
+    QVERIFY(kiriview::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, false, input));
 
     input.viewerShortcutsEnabled = false;
-    QVERIFY(!KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
+    QVERIFY(!kiriview::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
 
     input.viewerShortcutsEnabled = true;
     input.fileDeletionInProgress = true;
-    QVERIFY(!KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
+    QVERIFY(!kiriview::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
 
     input.fileDeletionInProgress = false;
     input.directMediaNavigationActive = false;
-    QVERIFY(!KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
+    QVERIFY(!kiriview::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
 }
 
 QTEST_GUILESS_MAIN(TestApplicationShortcutPolicy)

@@ -16,35 +16,35 @@ private Q_SLOTS:
 
 void TestImageInputClassificationConversion::imageInputClassificationProjectsBridgeEnums()
 {
-    const KiriView::ImageInputClassification svg
-        = KiriView::imageInputClassificationFromBridge(KiriView::RustImageInputClassification {
-            KiriView::RustImageInputKind::Svg,
-            KiriView::RustQtRasterFormat::None,
-            KiriView::RustImageDecodeDataSource::Original,
+    const kiriview::ImageInputClassification svg
+        = kiriview::imageInputClassificationFromBridge(kiriview::RustImageInputClassification {
+            kiriview::RustImageInputKind::Svg,
+            kiriview::RustQtRasterFormat::None,
+            kiriview::RustImageDecodeDataSource::Original,
         });
-    QVERIFY(svg.kind == KiriView::ImageInputKind::Svg);
-    QVERIFY(svg.qtFormat == KiriView::QtRasterFormat::None);
-    QVERIFY(svg.dataSource == KiriView::ImageDecodeDataSource::Original);
+    QVERIFY(svg.kind == kiriview::ImageInputKind::Svg);
+    QVERIFY(svg.qtFormat == kiriview::QtRasterFormat::None);
+    QVERIFY(svg.dataSource == kiriview::ImageDecodeDataSource::Original);
 
-    const KiriView::ImageInputClassification heif
-        = KiriView::imageInputClassificationFromBridge(KiriView::RustImageInputClassification {
-            KiriView::RustImageInputKind::HeifFamily,
-            KiriView::RustQtRasterFormat::None,
-            KiriView::RustImageDecodeDataSource::AvifCompatible,
+    const kiriview::ImageInputClassification heif
+        = kiriview::imageInputClassificationFromBridge(kiriview::RustImageInputClassification {
+            kiriview::RustImageInputKind::HeifFamily,
+            kiriview::RustQtRasterFormat::None,
+            kiriview::RustImageDecodeDataSource::AvifCompatible,
         });
-    QVERIFY(heif.kind == KiriView::ImageInputKind::HeifFamily);
-    QVERIFY(heif.qtFormat == KiriView::QtRasterFormat::None);
-    QVERIFY(heif.dataSource == KiriView::ImageDecodeDataSource::AvifCompatible);
+    QVERIFY(heif.kind == kiriview::ImageInputKind::HeifFamily);
+    QVERIFY(heif.qtFormat == kiriview::QtRasterFormat::None);
+    QVERIFY(heif.dataSource == kiriview::ImageDecodeDataSource::AvifCompatible);
 
-    const KiriView::ImageInputClassification jxl
-        = KiriView::imageInputClassificationFromBridge(KiriView::RustImageInputClassification {
-            KiriView::RustImageInputKind::QtRaster,
-            KiriView::RustQtRasterFormat::Jxl,
-            KiriView::RustImageDecodeDataSource::Original,
+    const kiriview::ImageInputClassification jxl
+        = kiriview::imageInputClassificationFromBridge(kiriview::RustImageInputClassification {
+            kiriview::RustImageInputKind::QtRaster,
+            kiriview::RustQtRasterFormat::Jxl,
+            kiriview::RustImageDecodeDataSource::Original,
         });
-    QVERIFY(jxl.kind == KiriView::ImageInputKind::QtRaster);
-    QVERIFY(jxl.qtFormat == KiriView::QtRasterFormat::Jxl);
-    QVERIFY(jxl.dataSource == KiriView::ImageDecodeDataSource::Original);
+    QVERIFY(jxl.kind == kiriview::ImageInputKind::QtRaster);
+    QVERIFY(jxl.qtFormat == kiriview::QtRasterFormat::Jxl);
+    QVERIFY(jxl.dataSource == kiriview::ImageDecodeDataSource::Original);
 }
 
 QTEST_GUILESS_MAIN(TestImageInputClassificationConversion)

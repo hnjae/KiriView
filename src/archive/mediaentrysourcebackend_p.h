@@ -14,7 +14,7 @@
 #include <utility>
 #include <vector>
 
-namespace KiriView::MediaEntrySourceBackendDetail {
+namespace kiriview::MediaEntrySourceBackendDetail {
 using MediaEntrySourceOpener
     = MediaEntrySourceOpenResult (*)(const OpenedCollectionScopeLocation &);
 

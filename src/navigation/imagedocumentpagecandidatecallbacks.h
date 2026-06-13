@@ -9,7 +9,7 @@
 #include <functional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 using ImageDocumentPageCandidatesCallback
     = std::function<void(std::vector<ImageDocumentPageCandidate>)>;
 using ContainerCandidatesCallback = std::function<void(std::vector<ContainerNavigationCandidate>)>;

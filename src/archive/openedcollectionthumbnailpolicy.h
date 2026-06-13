@@ -10,7 +10,7 @@
 #include <QString>
 #include <QUrl>
 
-namespace KiriView {
+namespace kiriview {
 enum class OpenedCollectionThumbnailSourcePlanKind {
     Unsupported,
     CacheableOpenedCollectionEntry,

@@ -7,7 +7,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ActiveNavigationThumbnailModel::ActiveNavigationThumbnailModel(QObject *parent)
     : QAbstractListModel(parent)
 {

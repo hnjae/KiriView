@@ -5,7 +5,7 @@
 
 #include <QKeyEvent>
 
-namespace KiriView {
+namespace kiriview {
 bool menuAccessKeyIsMnemonicKeyPress(const QKeyEvent &event)
 {
     if (event.key() == Qt::Key_Alt) {

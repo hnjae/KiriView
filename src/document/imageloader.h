@@ -23,7 +23,7 @@
 #include <functional>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 class ImageLoader final : public QObject
 {
 public:

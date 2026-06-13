@@ -3,7 +3,7 @@
 
 use crate::byteio::read_be_u32;
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     enum RustHeifBrandKind {
         Unknown = 0,

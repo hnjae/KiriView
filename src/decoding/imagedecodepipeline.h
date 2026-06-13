@@ -11,7 +11,7 @@
 #include <QByteArray>
 #include <functional>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageDecodeRouterInput {
     const QByteArray &data;
     const ImageDecodeRequest &request;

@@ -11,7 +11,7 @@
 #include <memory>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 enum class HeifSequenceOpenStatus {
     NotHeif,
     NotSequence,

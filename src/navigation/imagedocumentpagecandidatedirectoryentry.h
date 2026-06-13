@@ -20,7 +20,7 @@
 class KCoreDirLister;
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentPageCandidateDirectoryEntry final
 {
 public:

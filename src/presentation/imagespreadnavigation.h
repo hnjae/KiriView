@@ -6,7 +6,7 @@
 
 #include "navigation/imagedocumentpagenavigationtypes.h"
 
-namespace KiriView {
+namespace kiriview {
 struct ImageSpreadNavigationState {
     bool twoPageModeActive = false;
     int currentPageNumber = 0;

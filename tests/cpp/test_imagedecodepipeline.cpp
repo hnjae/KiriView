@@ -16,23 +16,23 @@
 #include <utility>
 
 namespace {
-KiriView::ImageInputClassification classification(KiriView::ImageInputKind kind,
-    KiriView::QtRasterFormat qtFormat = KiriView::QtRasterFormat::None,
-    KiriView::ImageDecodeDataSource dataSource = KiriView::ImageDecodeDataSource::Original)
+kiriview::ImageInputClassification classification(kiriview::ImageInputKind kind,
+    kiriview::QtRasterFormat qtFormat = kiriview::QtRasterFormat::None,
+    kiriview::ImageDecodeDataSource dataSource = kiriview::ImageDecodeDataSource::Original)
 {
-    return KiriView::ImageInputClassification {
+    return kiriview::ImageInputClassification {
         kind,
         qtFormat,
         dataSource,
     };
 }
 
-KiriView::ImageDecodeRouterHandler recordingHandler(const QString &name, QStringList *calls,
-    QByteArrayList *inputData = nullptr, QList<KiriView::QtRasterFormat> *qtFormats = nullptr,
+kiriview::ImageDecodeRouterHandler recordingHandler(const QString &name, QStringList *calls,
+    QByteArrayList *inputData = nullptr, QList<kiriview::QtRasterFormat> *qtFormats = nullptr,
     QString errorString = {})
 {
     return [name, calls, inputData, qtFormats, errorString](
-               const KiriView::ImageDecodeRouterInput &input) {
+               const kiriview::ImageDecodeRouterInput &input) {
         calls->push_back(name);
         if (inputData != nullptr) {
             inputData->push_back(input.data);
@@ -40,15 +40,15 @@ KiriView::ImageDecodeRouterHandler recordingHandler(const QString &name, QString
         if (qtFormats != nullptr) {
             qtFormats->push_back(input.qtRasterFormat);
         }
-        return KiriView::failedDecodedImageResult(
+        return kiriview::failedDecodedImageResult(
             errorString.isEmpty() ? name + QStringLiteral(" failed") : errorString);
     };
 }
 
-KiriView::ImageDecodeRouterHandlers recordingHandlers(QStringList *calls,
-    QByteArrayList *inputData = nullptr, QList<KiriView::QtRasterFormat> *qtFormats = nullptr)
+kiriview::ImageDecodeRouterHandlers recordingHandlers(QStringList *calls,
+    QByteArrayList *inputData = nullptr, QList<kiriview::QtRasterFormat> *qtFormats = nullptr)
 {
-    return KiriView::ImageDecodeRouterHandlers {
+    return kiriview::ImageDecodeRouterHandlers {
         recordingHandler(QStringLiteral("svg"), calls, inputData, qtFormats),
         recordingHandler(QStringLiteral("apng"), calls, inputData, qtFormats),
         recordingHandler(QStringLiteral("heif"), calls, inputData, qtFormats),
@@ -76,35 +76,35 @@ private Q_SLOTS:
 void TestImageDecodePipeline::routePlanKeepsClassificationSeparateFromDecoderExecution()
 {
     struct Case {
-        KiriView::ImageInputClassification classification;
-        KiriView::ImageDecodeHandlerKind expectedHandler;
-        KiriView::ImageDecodeDataSource expectedDataSource;
-        KiriView::QtRasterFormat expectedFormat;
+        kiriview::ImageInputClassification classification;
+        kiriview::ImageDecodeHandlerKind expectedHandler;
+        kiriview::ImageDecodeDataSource expectedDataSource;
+        kiriview::QtRasterFormat expectedFormat;
         bool expectedShouldDecode = true;
     };
     const QList<Case> cases {
-        { classification(KiriView::ImageInputKind::Svg), KiriView::ImageDecodeHandlerKind::Svg,
-            KiriView::ImageDecodeDataSource::Original, KiriView::QtRasterFormat::None },
-        { classification(KiriView::ImageInputKind::Apng), KiriView::ImageDecodeHandlerKind::Apng,
-            KiriView::ImageDecodeDataSource::Original, KiriView::QtRasterFormat::None },
-        { classification(KiriView::ImageInputKind::HeifFamily, KiriView::QtRasterFormat::None,
-              KiriView::ImageDecodeDataSource::AvifCompatible),
-            KiriView::ImageDecodeHandlerKind::HeifFamily,
-            KiriView::ImageDecodeDataSource::AvifCompatible, KiriView::QtRasterFormat::None },
-        { classification(KiriView::ImageInputKind::Raw), KiriView::ImageDecodeHandlerKind::Raw,
-            KiriView::ImageDecodeDataSource::Original, KiriView::QtRasterFormat::None },
-        { classification(KiriView::ImageInputKind::QtRaster, KiriView::QtRasterFormat::Jxl),
-            KiriView::ImageDecodeHandlerKind::QtRaster, KiriView::ImageDecodeDataSource::Original,
-            KiriView::QtRasterFormat::Jxl },
-        { classification(KiriView::ImageInputKind::Unknown, KiriView::QtRasterFormat::None,
-              KiriView::ImageDecodeDataSource::AvifCompatible),
-            KiriView::ImageDecodeHandlerKind::None, KiriView::ImageDecodeDataSource::Original,
-            KiriView::QtRasterFormat::None, false },
+        { classification(kiriview::ImageInputKind::Svg), kiriview::ImageDecodeHandlerKind::Svg,
+            kiriview::ImageDecodeDataSource::Original, kiriview::QtRasterFormat::None },
+        { classification(kiriview::ImageInputKind::Apng), kiriview::ImageDecodeHandlerKind::Apng,
+            kiriview::ImageDecodeDataSource::Original, kiriview::QtRasterFormat::None },
+        { classification(kiriview::ImageInputKind::HeifFamily, kiriview::QtRasterFormat::None,
+              kiriview::ImageDecodeDataSource::AvifCompatible),
+            kiriview::ImageDecodeHandlerKind::HeifFamily,
+            kiriview::ImageDecodeDataSource::AvifCompatible, kiriview::QtRasterFormat::None },
+        { classification(kiriview::ImageInputKind::Raw), kiriview::ImageDecodeHandlerKind::Raw,
+            kiriview::ImageDecodeDataSource::Original, kiriview::QtRasterFormat::None },
+        { classification(kiriview::ImageInputKind::QtRaster, kiriview::QtRasterFormat::Jxl),
+            kiriview::ImageDecodeHandlerKind::QtRaster, kiriview::ImageDecodeDataSource::Original,
+            kiriview::QtRasterFormat::Jxl },
+        { classification(kiriview::ImageInputKind::Unknown, kiriview::QtRasterFormat::None,
+              kiriview::ImageDecodeDataSource::AvifCompatible),
+            kiriview::ImageDecodeHandlerKind::None, kiriview::ImageDecodeDataSource::Original,
+            kiriview::QtRasterFormat::None, false },
     };
 
     for (const Case &testCase : cases) {
-        const KiriView::ImageDecodeRoute route
-            = KiriView::imageDecodeRouteForClassification(testCase.classification);
+        const kiriview::ImageDecodeRoute route
+            = kiriview::imageDecodeRouteForClassification(testCase.classification);
         QCOMPARE(route.handlerKind, testCase.expectedHandler);
         QCOMPARE(route.dataSource, testCase.expectedDataSource);
         QCOMPARE(route.qtRasterFormat, testCase.expectedFormat);
@@ -120,51 +120,51 @@ void TestImageDecodePipeline::runtimeExecutesRoutePlansWithoutClassifier()
     int compatibleTransformCount = 0;
     QStringList calls;
     QByteArrayList inputData;
-    QList<KiriView::QtRasterFormat> qtFormats;
-    KiriView::ImageDecodeRouterRuntime runtime(recordingHandlers(&calls, &inputData, &qtFormats),
+    QList<kiriview::QtRasterFormat> qtFormats;
+    kiriview::ImageDecodeRouterRuntime runtime(recordingHandlers(&calls, &inputData, &qtFormats),
         [&compatibleTransformCount, compatibleData](const QByteArray &) {
             ++compatibleTransformCount;
             return compatibleData;
         });
 
-    const KiriView::ImageDecodeRoute route {
-        KiriView::ImageDecodeHandlerKind::QtRaster,
-        KiriView::ImageDecodeDataSource::AvifCompatible,
-        KiriView::QtRasterFormat::Jxl,
+    const kiriview::ImageDecodeRoute route {
+        kiriview::ImageDecodeHandlerKind::QtRaster,
+        kiriview::ImageDecodeDataSource::AvifCompatible,
+        kiriview::QtRasterFormat::Jxl,
     };
 
-    runtime.execute(route, originalData, KiriView::ImageDecodeRequest {});
+    runtime.execute(route, originalData, kiriview::ImageDecodeRequest {});
 
     QCOMPARE(compatibleTransformCount, 1);
     QCOMPARE(calls, QStringList({ QStringLiteral("qt") }));
     QCOMPARE(inputData, QByteArrayList({ compatibleData }));
-    QCOMPARE(qtFormats, QList<KiriView::QtRasterFormat>({ KiriView::QtRasterFormat::Jxl }));
+    QCOMPARE(qtFormats, QList<kiriview::QtRasterFormat>({ kiriview::QtRasterFormat::Jxl }));
 }
 
 void TestImageDecodePipeline::routerCallsExactlyOneDecoderForClassifiedInputs()
 {
     struct Case {
-        KiriView::ImageInputClassification classification;
+        kiriview::ImageInputClassification classification;
         QString expectedCall;
     };
     const QList<Case> cases {
-        { classification(KiriView::ImageInputKind::Svg), QStringLiteral("svg") },
-        { classification(KiriView::ImageInputKind::Apng), QStringLiteral("apng") },
-        { classification(KiriView::ImageInputKind::HeifFamily), QStringLiteral("heif") },
-        { classification(KiriView::ImageInputKind::Raw), QStringLiteral("raw") },
-        { classification(KiriView::ImageInputKind::QtRaster, KiriView::QtRasterFormat::Png),
+        { classification(kiriview::ImageInputKind::Svg), QStringLiteral("svg") },
+        { classification(kiriview::ImageInputKind::Apng), QStringLiteral("apng") },
+        { classification(kiriview::ImageInputKind::HeifFamily), QStringLiteral("heif") },
+        { classification(kiriview::ImageInputKind::Raw), QStringLiteral("raw") },
+        { classification(kiriview::ImageInputKind::QtRaster, kiriview::QtRasterFormat::Png),
             QStringLiteral("qt") },
     };
 
     for (const Case &testCase : cases) {
         QStringList calls;
-        KiriView::ImageDecodeRouter router(recordingHandlers(&calls),
+        kiriview::ImageDecodeRouter router(recordingHandlers(&calls),
             [testCase](const QByteArray &, const QString &) { return testCase.classification; });
 
-        const KiriView::DecodedImageResult result
-            = router.decode(QByteArrayLiteral("image bytes"), KiriView::ImageDecodeRequest {});
+        const kiriview::DecodedImageResult result
+            = router.decode(QByteArrayLiteral("image bytes"), kiriview::ImageDecodeRequest {});
 
-        QVERIFY(KiriView::decodedImageResultFailure(result) != nullptr);
+        QVERIFY(kiriview::decodedImageResultFailure(result) != nullptr);
         QCOMPARE(calls, QStringList({ testCase.expectedCall }));
     }
 }
@@ -172,20 +172,20 @@ void TestImageDecodePipeline::routerCallsExactlyOneDecoderForClassifiedInputs()
 void TestImageDecodePipeline::selectedDecoderFailureDoesNotFallback()
 {
     QStringList calls;
-    KiriView::ImageDecodeRouterHandlers handlers = recordingHandlers(&calls);
+    kiriview::ImageDecodeRouterHandlers handlers = recordingHandlers(&calls);
     handlers.raw = recordingHandler(
         QStringLiteral("raw"), &calls, nullptr, nullptr, QStringLiteral("raw failed"));
     handlers.qtRaster = recordingHandler(
         QStringLiteral("qt"), &calls, nullptr, nullptr, QStringLiteral("qt fallback ran"));
-    KiriView::ImageDecodeRouter router(
+    kiriview::ImageDecodeRouter router(
         std::move(handlers), [](const QByteArray &, const QString &) {
-            return classification(KiriView::ImageInputKind::Raw);
+            return classification(kiriview::ImageInputKind::Raw);
         });
 
-    const KiriView::DecodedImageResult result
-        = router.decode(QByteArrayLiteral("not raw"), KiriView::ImageDecodeRequest {});
+    const kiriview::DecodedImageResult result
+        = router.decode(QByteArrayLiteral("not raw"), kiriview::ImageDecodeRequest {});
 
-    const KiriView::DecodedImageFailure *failure = KiriView::decodedImageResultFailure(result);
+    const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("raw failed"));
     QCOMPARE(calls, QStringList({ QStringLiteral("raw") }));
@@ -199,18 +199,18 @@ void TestImageDecodePipeline::compatibleDataIsComputedOnlyWhenClassificationRequ
     int qtCompatibleTransformCount = 0;
     QStringList qtCalls;
     QByteArrayList qtInputData;
-    KiriView::ImageDecodeRouter qtRouter(
+    kiriview::ImageDecodeRouter qtRouter(
         recordingHandlers(&qtCalls, &qtInputData),
         [](const QByteArray &, const QString &) {
             return classification(
-                KiriView::ImageInputKind::QtRaster, KiriView::QtRasterFormat::Png);
+                kiriview::ImageInputKind::QtRaster, kiriview::QtRasterFormat::Png);
         },
         [&qtCompatibleTransformCount, compatibleData](const QByteArray &) {
             ++qtCompatibleTransformCount;
             return compatibleData;
         });
 
-    qtRouter.decode(originalData, KiriView::ImageDecodeRequest {});
+    qtRouter.decode(originalData, kiriview::ImageDecodeRequest {});
 
     QCOMPARE(qtCompatibleTransformCount, 0);
     QCOMPARE(qtCalls, QStringList({ QStringLiteral("qt") }));
@@ -219,18 +219,18 @@ void TestImageDecodePipeline::compatibleDataIsComputedOnlyWhenClassificationRequ
     int heifCompatibleTransformCount = 0;
     QStringList heifCalls;
     QByteArrayList heifInputData;
-    KiriView::ImageDecodeRouter heifRouter(
+    kiriview::ImageDecodeRouter heifRouter(
         recordingHandlers(&heifCalls, &heifInputData),
         [](const QByteArray &, const QString &) {
-            return classification(KiriView::ImageInputKind::HeifFamily,
-                KiriView::QtRasterFormat::None, KiriView::ImageDecodeDataSource::AvifCompatible);
+            return classification(kiriview::ImageInputKind::HeifFamily,
+                kiriview::QtRasterFormat::None, kiriview::ImageDecodeDataSource::AvifCompatible);
         },
         [&heifCompatibleTransformCount, compatibleData](const QByteArray &) {
             ++heifCompatibleTransformCount;
             return compatibleData;
         });
 
-    heifRouter.decode(originalData, KiriView::ImageDecodeRequest {});
+    heifRouter.decode(originalData, kiriview::ImageDecodeRequest {});
 
     QCOMPARE(heifCompatibleTransformCount, 1);
     QCOMPARE(heifCalls, QStringList({ QStringLiteral("heif") }));
@@ -240,17 +240,17 @@ void TestImageDecodePipeline::compatibleDataIsComputedOnlyWhenClassificationRequ
 void TestImageDecodePipeline::qtRasterClassificationCarriesExplicitFormat()
 {
     QStringList calls;
-    QList<KiriView::QtRasterFormat> qtFormats;
-    KiriView::ImageDecodeRouter router(
+    QList<kiriview::QtRasterFormat> qtFormats;
+    kiriview::ImageDecodeRouter router(
         recordingHandlers(&calls, nullptr, &qtFormats), [](const QByteArray &, const QString &) {
             return classification(
-                KiriView::ImageInputKind::QtRaster, KiriView::QtRasterFormat::Tiff);
+                kiriview::ImageInputKind::QtRaster, kiriview::QtRasterFormat::Tiff);
         });
 
-    router.decode(QByteArrayLiteral("tiff bytes"), KiriView::ImageDecodeRequest {});
+    router.decode(QByteArrayLiteral("tiff bytes"), kiriview::ImageDecodeRequest {});
 
     QCOMPARE(calls, QStringList({ QStringLiteral("qt") }));
-    QCOMPARE(qtFormats, QList<KiriView::QtRasterFormat>({ KiriView::QtRasterFormat::Tiff }));
+    QCOMPARE(qtFormats, QList<kiriview::QtRasterFormat>({ kiriview::QtRasterFormat::Tiff }));
 }
 
 void TestImageDecodePipeline::defaultSvgDecodeUsesFirstDisplayContext()
@@ -259,14 +259,14 @@ void TestImageDecodePipeline::defaultSvgDecodeUsesFirstDisplayContext()
         = QByteArrayLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"40\">"
                             "<rect width=\"80\" height=\"40\" fill=\"red\"/>"
                             "</svg>");
-    const KiriView::DecodedImageResult result = KiriView::decodeImageDataWithDefaultRouter(data,
-        KiriView::ImageDecodeRequest::fromUrl(7, QUrl(QStringLiteral("file:///tmp/vector.svg")),
-            KiriView::ImageFirstDisplayDecodeContext { QSize(200, 200) }));
+    const kiriview::DecodedImageResult result = kiriview::decodeImageDataWithDefaultRouter(data,
+        kiriview::ImageDecodeRequest::fromUrl(7, QUrl(QStringLiteral("file:///tmp/vector.svg")),
+            kiriview::ImageFirstDisplayDecodeContext { QSize(200, 200) }));
 
-    const auto *image = KiriView::decodedImageResultImageAs<KiriView::StaticDecodedImage>(result);
+    const auto *image = kiriview::decodedImageResultImageAs<kiriview::StaticDecodedImage>(result);
     QVERIFY(image != nullptr);
     QCOMPARE(image->displayImage.image.size(), QSize(200, 100));
-    QCOMPARE(image->displayImage.quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(image->displayImage.quality, kiriview::DisplayImageQuality::FirstDisplay);
     QCOMPARE(image->displayImage.displayPixelsPerSourcePixel, 2.5);
 }
 
@@ -274,24 +274,24 @@ void TestImageDecodePipeline::unknownClassificationFailsWithoutDecoder()
 {
     int compatibleTransformCount = 0;
     QStringList calls;
-    KiriView::ImageDecodeRouter router(
+    kiriview::ImageDecodeRouter router(
         recordingHandlers(&calls),
         [](const QByteArray &, const QString &) {
-            return classification(KiriView::ImageInputKind::Unknown, KiriView::QtRasterFormat::None,
-                KiriView::ImageDecodeDataSource::AvifCompatible);
+            return classification(kiriview::ImageInputKind::Unknown, kiriview::QtRasterFormat::None,
+                kiriview::ImageDecodeDataSource::AvifCompatible);
         },
         [&compatibleTransformCount](const QByteArray &data) {
             ++compatibleTransformCount;
             return data + QByteArrayLiteral("-compatible");
         });
 
-    const KiriView::DecodedImageResult result
-        = router.decode(QByteArrayLiteral("unknown bytes"), KiriView::ImageDecodeRequest {});
+    const kiriview::DecodedImageResult result
+        = router.decode(QByteArrayLiteral("unknown bytes"), kiriview::ImageDecodeRequest {});
 
-    const KiriView::DecodedImageFailure *failure = KiriView::decodedImageResultFailure(result);
+    const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
     QCOMPARE(
-        failure->errorString, KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData));
+        failure->errorString, kiriview::imageErrorText(kiriview::ImageErrorTextId::ReadImageData));
     QVERIFY(calls.isEmpty());
     QCOMPARE(compatibleTransformCount, 0);
 }

@@ -9,16 +9,16 @@
 #include <variant>
 
 namespace {
-namespace Backend = KiriView::MediaEntrySourceBackendDetail;
+namespace Backend = kiriview::MediaEntrySourceBackendDetail;
 
-KiriView::MediaEntrySourceFactory defaultSourceFactory(
-    KiriView::MediaEntrySourceFactory sourceFactory)
+kiriview::MediaEntrySourceFactory defaultSourceFactory(
+    kiriview::MediaEntrySourceFactory sourceFactory)
 {
-    return sourceFactory ? std::move(sourceFactory) : KiriView::openMediaEntrySource;
+    return sourceFactory ? std::move(sourceFactory) : kiriview::openMediaEntrySource;
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 MediaEntrySourceRunner::MediaEntrySourceRunner(
     OpenedCollectionScopeLocation openedCollectionScope, MediaEntrySourceFactory sourceFactory)
     : m_openedCollectionScope(std::move(openedCollectionScope))

@@ -26,11 +26,11 @@ std::optional<std::size_t> checkedAdd(std::size_t lhs, std::size_t rhs)
 
 std::optional<std::size_t> rgbaRowBytes(quint32 width)
 {
-    return checkedMul(static_cast<std::size_t>(width), KiriView::ApngRgbaBuffer::bytesPerPixel);
+    return checkedMul(static_cast<std::size_t>(width), kiriview::ApngRgbaBuffer::bytesPerPixel);
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 bool ApngRgbaBuffer::initialize(QSize imageSize, std::size_t rowBytes)
 {
     clear();

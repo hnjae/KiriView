@@ -77,10 +77,10 @@ void KiriImageViewportContextBridge::componentComplete()
     synchronizeRenderContextBinding(m_document, m_document != nullptr);
 }
 
-KiriView::ImageViewRenderContextBindingInput
+kiriview::ImageViewRenderContextBindingInput
 KiriImageViewportContextBridge::renderContextBindingInput(bool documentAttached) const
 {
-    return KiriView::ImageViewRenderContextBindingInput {
+    return kiriview::ImageViewRenderContextBindingInput {
         documentAttached,
         m_secondaryPage,
         m_componentComplete,
@@ -123,19 +123,19 @@ void KiriImageViewportContextBridge::synchronizeRenderContextBinding(
 }
 
 void KiriImageViewportContextBridge::applyRenderContextBinding(
-    KiriView::ImageViewRenderContextBindingAction action, KiriImageDocument *document)
+    kiriview::ImageViewRenderContextBindingAction action, KiriImageDocument *document)
 {
     if (document == nullptr) {
         return;
     }
 
     switch (action) {
-    case KiriView::ImageViewRenderContextBindingAction::None:
+    case kiriview::ImageViewRenderContextBindingAction::None:
         return;
-    case KiriView::ImageViewRenderContextBindingAction::InstallProvider:
+    case kiriview::ImageViewRenderContextBindingAction::InstallProvider:
         document->setRenderContextProvider([this]() { return renderContext(); });
         return;
-    case KiriView::ImageViewRenderContextBindingAction::ClearProvider:
+    case kiriview::ImageViewRenderContextBindingAction::ClearProvider:
         document->setRenderContextProvider({});
         return;
     }
@@ -156,9 +156,9 @@ void KiriImageViewportContextBridge::invalidateRenderContext()
     }
 }
 
-KiriView::ImageDocumentRenderContext KiriImageViewportContextBridge::renderContext() const
+kiriview::ImageDocumentRenderContext KiriImageViewportContextBridge::renderContext() const
 {
-    return KiriView::ImageDocumentRenderContext {
+    return kiriview::ImageDocumentRenderContext {
         displayDevicePixelRatio(),
         maximumTextureSize(),
         m_renderContextGeneration,
@@ -182,5 +182,5 @@ qreal KiriImageViewportContextBridge::displayDevicePixelRatio() const
 
 int KiriImageViewportContextBridge::maximumTextureSize() const
 {
-    return KiriView::fallbackTextureSizeMax;
+    return kiriview::fallbackTextureSizeMax;
 }

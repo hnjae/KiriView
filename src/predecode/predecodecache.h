@@ -17,7 +17,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct PredecodeRequest {
     QUrl url;
     OpenedCollectionScopeLocation openedCollectionScope;

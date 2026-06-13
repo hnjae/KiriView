@@ -33,14 +33,14 @@ KCoreDirLister *createDirectoryItemLister(QObject *parent)
     return lister;
 }
 
-void finishDirectoryItemListWithError(KiriView::ImageIoJobCompletion completion,
-    const QString &errorString, const KiriView::ErrorCallback &errorCallback)
+void finishDirectoryItemListWithError(kiriview::ImageIoJobCompletion completion,
+    const QString &errorString, const kiriview::ErrorCallback &errorCallback)
 {
-    completion.claimAndDelete([&]() { KiriView::invokeIfSet(errorCallback, errorString); });
+    completion.claimAndDelete([&]() { kiriview::invokeIfSet(errorCallback, errorString); });
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 namespace {
     ImageIoJob startKCoreDirectoryItemList(QObject *receiver, QUrl directoryUrl,
         DirectoryItemListCallback callback, ErrorCallback errorCallback)
@@ -52,7 +52,7 @@ namespace {
         QObject::connect(lister, &KCoreDirLister::completed, receiver,
             [completion, lister, callback = std::move(callback)]() mutable {
                 completion.claimAndDelete([&]() {
-                    KiriView::invokeIfSet(callback, lister->items(KCoreDirLister::AllItems));
+                    kiriview::invokeIfSet(callback, lister->items(KCoreDirLister::AllItems));
                 });
             });
         QObject::connect(lister, &KCoreDirLister::jobError, receiver,

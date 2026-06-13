@@ -25,17 +25,17 @@ std::optional<std::size_t> clampedMediaNumberIndex(int mediaNumber, std::size_t 
 }
 
 std::optional<QUrl> directMediaNavigationTargetUrlForRequest(
-    const std::vector<KiriView::DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl,
-    KiriView::DirectMediaNavigationOpenRequest request)
+    const std::vector<kiriview::DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl,
+    kiriview::DirectMediaNavigationOpenRequest request)
 {
     switch (request.kind) {
-    case KiriView::DirectMediaNavigationOpenKind::Previous:
-        return KiriView::adjacentDirectMediaNavigationUrl(
-            candidates, currentUrl, KiriView::NavigationDirection::Previous);
-    case KiriView::DirectMediaNavigationOpenKind::Next:
-        return KiriView::adjacentDirectMediaNavigationUrl(
-            candidates, currentUrl, KiriView::NavigationDirection::Next);
-    case KiriView::DirectMediaNavigationOpenKind::Number: {
+    case kiriview::DirectMediaNavigationOpenKind::Previous:
+        return kiriview::adjacentDirectMediaNavigationUrl(
+            candidates, currentUrl, kiriview::NavigationDirection::Previous);
+    case kiriview::DirectMediaNavigationOpenKind::Next:
+        return kiriview::adjacentDirectMediaNavigationUrl(
+            candidates, currentUrl, kiriview::NavigationDirection::Next);
+    case kiriview::DirectMediaNavigationOpenKind::Number: {
         const std::optional<std::size_t> targetIndex
             = clampedMediaNumberIndex(request.mediaNumber, candidates.size());
         if (!targetIndex.has_value()) {
@@ -50,7 +50,7 @@ std::optional<QUrl> directMediaNavigationTargetUrlForRequest(
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 DirectMediaNavigationOpenRequest previousDirectMediaNavigationOpenRequest()
 {
     return DirectMediaNavigationOpenRequest { DirectMediaNavigationOpenKind::Previous, 0 };

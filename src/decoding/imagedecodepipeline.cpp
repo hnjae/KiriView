@@ -27,78 +27,78 @@
 Q_LOGGING_CATEGORY(kiriviewDecodeLog, "org.hnjae.kiriview.decode", QtWarningMsg)
 
 namespace {
-const char *imageInputKindName(KiriView::ImageInputKind kind)
+const char *imageInputKindName(kiriview::ImageInputKind kind)
 {
     switch (kind) {
-    case KiriView::ImageInputKind::Unknown:
+    case kiriview::ImageInputKind::Unknown:
         return "Unknown";
-    case KiriView::ImageInputKind::Svg:
+    case kiriview::ImageInputKind::Svg:
         return "Svg";
-    case KiriView::ImageInputKind::Apng:
+    case kiriview::ImageInputKind::Apng:
         return "Apng";
-    case KiriView::ImageInputKind::HeifFamily:
+    case kiriview::ImageInputKind::HeifFamily:
         return "HeifFamily";
-    case KiriView::ImageInputKind::Raw:
+    case kiriview::ImageInputKind::Raw:
         return "Raw";
-    case KiriView::ImageInputKind::QtRaster:
+    case kiriview::ImageInputKind::QtRaster:
         return "QtRaster";
     }
 
     return "Unknown";
 }
 
-const char *imageDecodeHandlerKindName(KiriView::ImageDecodeHandlerKind kind)
+const char *imageDecodeHandlerKindName(kiriview::ImageDecodeHandlerKind kind)
 {
     switch (kind) {
-    case KiriView::ImageDecodeHandlerKind::None:
+    case kiriview::ImageDecodeHandlerKind::None:
         return "None";
-    case KiriView::ImageDecodeHandlerKind::Svg:
+    case kiriview::ImageDecodeHandlerKind::Svg:
         return "Svg";
-    case KiriView::ImageDecodeHandlerKind::Apng:
+    case kiriview::ImageDecodeHandlerKind::Apng:
         return "Apng";
-    case KiriView::ImageDecodeHandlerKind::HeifFamily:
+    case kiriview::ImageDecodeHandlerKind::HeifFamily:
         return "HeifFamily";
-    case KiriView::ImageDecodeHandlerKind::Raw:
+    case kiriview::ImageDecodeHandlerKind::Raw:
         return "Raw";
-    case KiriView::ImageDecodeHandlerKind::QtRaster:
+    case kiriview::ImageDecodeHandlerKind::QtRaster:
         return "QtRaster";
     }
 
     return "None";
 }
 
-const char *imageDecodeDataSourceName(KiriView::ImageDecodeDataSource source)
+const char *imageDecodeDataSourceName(kiriview::ImageDecodeDataSource source)
 {
     switch (source) {
-    case KiriView::ImageDecodeDataSource::Original:
+    case kiriview::ImageDecodeDataSource::Original:
         return "Original";
-    case KiriView::ImageDecodeDataSource::AvifCompatible:
+    case kiriview::ImageDecodeDataSource::AvifCompatible:
         return "AvifCompatible";
     }
 
     return "Original";
 }
 
-const char *qtRasterFormatName(KiriView::QtRasterFormat format)
+const char *qtRasterFormatName(kiriview::QtRasterFormat format)
 {
     switch (format) {
-    case KiriView::QtRasterFormat::None:
+    case kiriview::QtRasterFormat::None:
         return "None";
-    case KiriView::QtRasterFormat::Png:
+    case kiriview::QtRasterFormat::Png:
         return "Png";
-    case KiriView::QtRasterFormat::Jpeg:
+    case kiriview::QtRasterFormat::Jpeg:
         return "Jpeg";
-    case KiriView::QtRasterFormat::Gif:
+    case kiriview::QtRasterFormat::Gif:
         return "Gif";
-    case KiriView::QtRasterFormat::Webp:
+    case kiriview::QtRasterFormat::Webp:
         return "Webp";
-    case KiriView::QtRasterFormat::Bmp:
+    case kiriview::QtRasterFormat::Bmp:
         return "Bmp";
-    case KiriView::QtRasterFormat::Tiff:
+    case kiriview::QtRasterFormat::Tiff:
         return "Tiff";
-    case KiriView::QtRasterFormat::Jxl:
+    case kiriview::QtRasterFormat::Jxl:
         return "Jxl";
-    case KiriView::QtRasterFormat::Jp2:
+    case kiriview::QtRasterFormat::Jp2:
         return "Jp2";
     }
 
@@ -107,26 +107,26 @@ const char *qtRasterFormatName(KiriView::QtRasterFormat format)
 
 QByteArray avifCompatibleImageData(const QByteArray &data)
 {
-    return KiriView::Bridge::qtByteArray(
-        KiriView::avifDataWithCompatibilityFixes(KiriView::Bridge::rustBytes(data)));
+    return kiriview::Bridge::qtByteArray(
+        kiriview::avifDataWithCompatibilityFixes(kiriview::Bridge::rustBytes(data)));
 }
 
 class ImageDecodeRouterByteInputs
 {
 public:
     ImageDecodeRouterByteInputs(const QByteArray &originalData,
-        const KiriView::ImageDecodeCompatibleDataTransform &compatibleDataTransform)
+        const kiriview::ImageDecodeCompatibleDataTransform &compatibleDataTransform)
         : m_originalData(originalData)
         , m_compatibleDataTransform(compatibleDataTransform)
     {
     }
 
-    const QByteArray &dataFor(KiriView::ImageDecodeDataSource dataSource)
+    const QByteArray &dataFor(kiriview::ImageDecodeDataSource dataSource)
     {
         switch (dataSource) {
-        case KiriView::ImageDecodeDataSource::Original:
+        case kiriview::ImageDecodeDataSource::Original:
             return m_originalData;
-        case KiriView::ImageDecodeDataSource::AvifCompatible:
+        case kiriview::ImageDecodeDataSource::AvifCompatible:
             return compatibleData();
         }
 
@@ -144,54 +144,54 @@ private:
     }
 
     const QByteArray &m_originalData;
-    const KiriView::ImageDecodeCompatibleDataTransform &m_compatibleDataTransform;
+    const kiriview::ImageDecodeCompatibleDataTransform &m_compatibleDataTransform;
     std::optional<QByteArray> m_compatibleData;
 };
 
-KiriView::DecodedImageResult failedReadImageDataResult()
+kiriview::DecodedImageResult failedReadImageDataResult()
 {
-    return KiriView::failedDecodedImageResult(
-        KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData));
+    return kiriview::failedDecodedImageResult(
+        kiriview::imageErrorText(kiriview::ImageErrorTextId::ReadImageData));
 }
 
-KiriView::DecodedImageResult failedImageDataResult(QString errorString)
+kiriview::DecodedImageResult failedImageDataResult(QString errorString)
 {
     if (errorString.isEmpty()) {
         return failedReadImageDataResult();
     }
-    return KiriView::failedDecodedImageResult(std::move(errorString));
+    return kiriview::failedDecodedImageResult(std::move(errorString));
 }
 
-QString sourceIdentityForRequest(const KiriView::ImageDecodeRequest &request)
+QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest &request)
 {
-    return KiriView::sourceKeyForUrl(request.imageUrl()).identity;
+    return kiriview::sourceKeyForUrl(request.imageUrl()).identity;
 }
 
-KiriView::DecodedImageResult decodeSvgImageData(const KiriView::ImageDecodeRouterInput &input)
+kiriview::DecodedImageResult decodeSvgImageData(const kiriview::ImageDecodeRouterInput &input)
 {
     QString errorString;
-    std::shared_ptr<KiriView::SvgTileSource> source
-        = KiriView::SvgTileSource::open(input.data, &errorString);
+    std::shared_ptr<kiriview::SvgTileSource> source
+        = kiriview::SvgTileSource::open(input.data, &errorString);
     if (source == nullptr) {
         return failedImageDataResult(std::move(errorString));
     }
 
-    return KiriView::staticDecodedImageResult(std::move(source), input.request, &errorString);
+    return kiriview::staticDecodedImageResult(std::move(source), input.request, &errorString);
 }
 
-KiriView::DecodedImageResult decodeApngImageData(const KiriView::ImageDecodeRouterInput &input)
+kiriview::DecodedImageResult decodeApngImageData(const kiriview::ImageDecodeRouterInput &input)
 {
-    KiriView::ApngAnimationReader apngReader;
-    KiriView::ApngOpenResult apngResult = apngReader.open(input.data);
-    if (apngResult.status == KiriView::ApngOpenStatus::NotApng) {
-        return KiriView::failedDecodedImageResult(
-            KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeApngAnimation));
+    kiriview::ApngAnimationReader apngReader;
+    kiriview::ApngOpenResult apngResult = apngReader.open(input.data);
+    if (apngResult.status == kiriview::ApngOpenStatus::NotApng) {
+        return kiriview::failedDecodedImageResult(
+            kiriview::imageErrorText(kiriview::ImageErrorTextId::DecodeApngAnimation));
     }
-    if (apngResult.status == KiriView::ApngOpenStatus::Error) {
-        return KiriView::failedDecodedImageResult(apngResult.errorString);
+    if (apngResult.status == kiriview::ApngOpenStatus::Error) {
+        return kiriview::failedDecodedImageResult(apngResult.errorString);
     }
 
-    return KiriView::successfulDecodedImageResult(KiriView::ApngAnimationImage {
+    return kiriview::successfulDecodedImageResult(kiriview::ApngAnimationImage {
         std::move(apngResult.firstFrame),
         input.data,
         {},
@@ -199,69 +199,69 @@ KiriView::DecodedImageResult decodeApngImageData(const KiriView::ImageDecodeRout
     });
 }
 
-KiriView::DecodedImageResult decodeHeifRouterImageData(
-    const KiriView::ImageDecodeRouterInput &input)
+kiriview::DecodedImageResult decodeHeifRouterImageData(
+    const kiriview::ImageDecodeRouterInput &input)
 {
-    std::optional<KiriView::DecodedImageResult> result
-        = KiriView::decodeHeifImageData(input.data, input.request);
+    std::optional<kiriview::DecodedImageResult> result
+        = kiriview::decodeHeifImageData(input.data, input.request);
     if (!result.has_value()) {
         return failedReadImageDataResult();
     }
     return std::move(*result);
 }
 
-KiriView::DecodedImageResult decodeRawRouterImageData(const KiriView::ImageDecodeRouterInput &input)
+kiriview::DecodedImageResult decodeRawRouterImageData(const kiriview::ImageDecodeRouterInput &input)
 {
-    return KiriView::decodeRawImageData(input.data, input.request);
+    return kiriview::decodeRawImageData(input.data, input.request);
 }
 
-KiriView::DecodedImageResult decodeQImageReaderRouterImageData(
-    const KiriView::ImageDecodeRouterInput &input)
+kiriview::DecodedImageResult decodeQImageReaderRouterImageData(
+    const kiriview::ImageDecodeRouterInput &input)
 {
-    if (input.qtRasterFormat == KiriView::QtRasterFormat::Webp) {
-        KiriView::WebPAnimationReader reader;
-        KiriView::WebPAnimationOpenResult openResult = reader.open(input.data);
+    if (input.qtRasterFormat == kiriview::QtRasterFormat::Webp) {
+        kiriview::WebPAnimationReader reader;
+        kiriview::WebPAnimationOpenResult openResult = reader.open(input.data);
         switch (openResult.status) {
-        case KiriView::WebPAnimationOpenStatus::Success:
-            return KiriView::successfulDecodedImageResult(KiriView::WebPAnimationImage {
+        case kiriview::WebPAnimationOpenStatus::Success:
+            return kiriview::successfulDecodedImageResult(kiriview::WebPAnimationImage {
                 std::move(openResult.firstFrame),
                 input.data,
                 {},
                 sourceIdentityForRequest(input.request),
             });
-        case KiriView::WebPAnimationOpenStatus::Error:
-            return KiriView::failedDecodedImageResult(openResult.errorString);
-        case KiriView::WebPAnimationOpenStatus::NotWebP:
-        case KiriView::WebPAnimationOpenStatus::NotAnimation:
+        case kiriview::WebPAnimationOpenStatus::Error:
+            return kiriview::failedDecodedImageResult(openResult.errorString);
+        case kiriview::WebPAnimationOpenStatus::NotWebP:
+        case kiriview::WebPAnimationOpenStatus::NotAnimation:
             break;
         }
     }
 
-    if (input.qtRasterFormat == KiriView::QtRasterFormat::Jxl) {
-        KiriView::JxlAnimationReader reader;
-        KiriView::JxlAnimationOpenResult openResult = reader.open(input.data);
+    if (input.qtRasterFormat == kiriview::QtRasterFormat::Jxl) {
+        kiriview::JxlAnimationReader reader;
+        kiriview::JxlAnimationOpenResult openResult = reader.open(input.data);
         switch (openResult.status) {
-        case KiriView::JxlAnimationOpenStatus::Success:
-            return KiriView::successfulDecodedImageResult(KiriView::JxlAnimationImage {
+        case kiriview::JxlAnimationOpenStatus::Success:
+            return kiriview::successfulDecodedImageResult(kiriview::JxlAnimationImage {
                 std::move(openResult.firstFrame),
                 input.data,
                 {},
                 sourceIdentityForRequest(input.request),
             });
-        case KiriView::JxlAnimationOpenStatus::Error:
-            return KiriView::failedDecodedImageResult(openResult.errorString);
-        case KiriView::JxlAnimationOpenStatus::NotJxl:
-        case KiriView::JxlAnimationOpenStatus::NotAnimation:
+        case kiriview::JxlAnimationOpenStatus::Error:
+            return kiriview::failedDecodedImageResult(openResult.errorString);
+        case kiriview::JxlAnimationOpenStatus::NotJxl:
+        case kiriview::JxlAnimationOpenStatus::NotAnimation:
             break;
         }
     }
 
-    return KiriView::decodeQImageReaderImageData(input.data, input.request, input.qtRasterFormat);
+    return kiriview::decodeQImageReaderImageData(input.data, input.request, input.qtRasterFormat);
 }
 
-KiriView::ImageDecodeRouterHandlers defaultImageDecodeRouterHandlers()
+kiriview::ImageDecodeRouterHandlers defaultImageDecodeRouterHandlers()
 {
-    return KiriView::ImageDecodeRouterHandlers {
+    return kiriview::ImageDecodeRouterHandlers {
         decodeSvgImageData,
         decodeApngImageData,
         decodeHeifRouterImageData,
@@ -270,10 +270,10 @@ KiriView::ImageDecodeRouterHandlers defaultImageDecodeRouterHandlers()
     };
 }
 
-KiriView::ImageDecodeRouterHandlers withDefaultHandlers(
-    KiriView::ImageDecodeRouterHandlers handlers)
+kiriview::ImageDecodeRouterHandlers withDefaultHandlers(
+    kiriview::ImageDecodeRouterHandlers handlers)
 {
-    const KiriView::ImageDecodeRouterHandlers defaults = defaultImageDecodeRouterHandlers();
+    const kiriview::ImageDecodeRouterHandlers defaults = defaultImageDecodeRouterHandlers();
     if (!handlers.svg) {
         handlers.svg = defaults.svg;
     }
@@ -292,8 +292,8 @@ KiriView::ImageDecodeRouterHandlers withDefaultHandlers(
     return handlers;
 }
 
-KiriView::DecodedImageResult dispatchToHandler(const KiriView::ImageDecodeRouterHandler &handler,
-    const KiriView::ImageDecodeRouterInput &input)
+kiriview::DecodedImageResult dispatchToHandler(const kiriview::ImageDecodeRouterHandler &handler,
+    const kiriview::ImageDecodeRouterInput &input)
 {
     if (!handler) {
         return failedReadImageDataResult();
@@ -301,28 +301,28 @@ KiriView::DecodedImageResult dispatchToHandler(const KiriView::ImageDecodeRouter
     return handler(input);
 }
 
-const KiriView::ImageDecodeRouterHandler &emptyHandler()
+const kiriview::ImageDecodeRouterHandler &emptyHandler()
 {
-    static const KiriView::ImageDecodeRouterHandler handler;
+    static const kiriview::ImageDecodeRouterHandler handler;
     return handler;
 }
 
-const KiriView::ImageDecodeRouterHandler &handlerForRoute(
-    const KiriView::ImageDecodeRouterHandlers &handlers,
-    KiriView::ImageDecodeHandlerKind handlerKind)
+const kiriview::ImageDecodeRouterHandler &handlerForRoute(
+    const kiriview::ImageDecodeRouterHandlers &handlers,
+    kiriview::ImageDecodeHandlerKind handlerKind)
 {
     switch (handlerKind) {
-    case KiriView::ImageDecodeHandlerKind::Svg:
+    case kiriview::ImageDecodeHandlerKind::Svg:
         return handlers.svg;
-    case KiriView::ImageDecodeHandlerKind::Apng:
+    case kiriview::ImageDecodeHandlerKind::Apng:
         return handlers.apng;
-    case KiriView::ImageDecodeHandlerKind::HeifFamily:
+    case kiriview::ImageDecodeHandlerKind::HeifFamily:
         return handlers.heifFamily;
-    case KiriView::ImageDecodeHandlerKind::Raw:
+    case kiriview::ImageDecodeHandlerKind::Raw:
         return handlers.raw;
-    case KiriView::ImageDecodeHandlerKind::QtRaster:
+    case kiriview::ImageDecodeHandlerKind::QtRaster:
         return handlers.qtRaster;
-    case KiriView::ImageDecodeHandlerKind::None:
+    case kiriview::ImageDecodeHandlerKind::None:
         return emptyHandler();
     }
 
@@ -330,7 +330,7 @@ const KiriView::ImageDecodeRouterHandler &handlerForRoute(
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDecodeRoute imageDecodeRouteForClassification(ImageInputClassification classification)
 {
     switch (classification.kind) {

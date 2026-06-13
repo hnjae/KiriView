@@ -9,10 +9,10 @@
 #include <QTest>
 
 namespace {
-using KiriView::ApplicationActions::ApplicationCommandRouter;
-using KiriView::ApplicationActions::ApplicationCommandRouterInput;
-using KiriView::ApplicationActions::ApplicationCommandRouterPorts;
-using ActionId = KiriView::ApplicationActions::ActionId;
+using kiriview::ApplicationActions::ApplicationCommandRouter;
+using kiriview::ApplicationActions::ApplicationCommandRouterInput;
+using kiriview::ApplicationActions::ApplicationCommandRouterPorts;
+using ActionId = kiriview::ApplicationActions::ActionId;
 
 struct CommandLog {
     QStringList actionCalls;

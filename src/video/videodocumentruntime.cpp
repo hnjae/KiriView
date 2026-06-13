@@ -10,7 +10,7 @@
 #include <utility>
 #include <variant>
 
-namespace KiriView {
+namespace kiriview {
 VideoDocumentRuntime::VideoDocumentRuntime(QObject *documentObject, ChangeCallback changeCallback,
     std::unique_ptr<VideoMediaBackend> mediaBackend,
     std::unique_ptr<VideoPlaybackUrlResolver> playbackUrlResolver,

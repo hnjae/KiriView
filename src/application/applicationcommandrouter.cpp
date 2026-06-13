@@ -32,7 +32,7 @@ void callInt64(const std::function<void(qint64)> &callback, qint64 value)
 }
 
 void panBy(
-    const KiriView::ApplicationActions::ApplicationCommandRouterPorts &ports, double dx, double dy)
+    const kiriview::ApplicationActions::ApplicationCommandRouterPorts &ports, double dx, double dy)
 {
     if (ports.requestViewportPanBy) {
         ports.requestViewportPanBy(dx, dy);
@@ -40,7 +40,7 @@ void panBy(
 }
 }
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 void ApplicationCommandRouter::handleActionTriggered(ActionId actionId,
     const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
 {
@@ -173,10 +173,10 @@ void ApplicationCommandRouter::handleScanForwardAction(
     }
 
     const bool viewportMoved = callBool(ports.requestViewportScanForward);
-    const KiriView::ImageShortcutNavigationPolicy::ScanAction action
+    const kiriview::ImageShortcutNavigationPolicy::ScanAction action
         = m_navigationPolicy.scanForwardAction(input.imagePannable, viewportMoved);
     switch (action) {
-    case KiriView::ImageShortcutNavigationPolicy::ScanAction::RequestNextActiveNavigationFromScan:
+    case kiriview::ImageShortcutNavigationPolicy::ScanAction::RequestNextActiveNavigationFromScan:
         callVoid(ports.requestNextActiveNavigationWithBoundary);
         return;
     default:
@@ -193,20 +193,20 @@ void ApplicationCommandRouter::handleScanBackwardAction(
     }
 
     const bool viewportMoved = callBool(ports.requestViewportScanBackward);
-    const KiriView::ImageShortcutNavigationPolicy::ScanAction action
+    const kiriview::ImageShortcutNavigationPolicy::ScanAction action
         = m_navigationPolicy.scanBackwardAction(input.imagePannable, viewportMoved,
             input.imageDocumentPageNavigationActive, input.atKnownFirstActiveNavigation,
             input.canOpenPreviousActiveNavigation);
     switch (action) {
-    case KiriView::ImageShortcutNavigationPolicy::ScanAction::
+    case kiriview::ImageShortcutNavigationPolicy::ScanAction::
         RequestPreviousActiveNavigationFromScan:
         callVoid(ports.requestPreviousActiveNavigationWithBoundary);
         return;
-    case KiriView::ImageShortcutNavigationPolicy::ScanAction::OpenPreviousPageFromFinalScanStart:
+    case kiriview::ImageShortcutNavigationPolicy::ScanAction::OpenPreviousPageFromFinalScanStart:
         callVoid(ports.requestNextDisplayedImageStartToFinalScanPosition);
         callVoid(ports.requestPreviousActiveNavigationWithBoundary);
         return;
-    case KiriView::ImageShortcutNavigationPolicy::ScanAction::ShowFirstImageBoundary:
+    case kiriview::ImageShortcutNavigationPolicy::ScanAction::ShowFirstImageBoundary:
         callVoid(ports.showFirstImageBoundary);
         return;
     default:
@@ -231,21 +231,21 @@ bool ApplicationCommandRouter::executeHorizontalArrowShortcut(
         return false;
     }
 
-    const KiriView::ImageShortcutNavigationPolicy::HorizontalArrowAction action
+    const kiriview::ImageShortcutNavigationPolicy::HorizontalArrowAction action
         = m_navigationPolicy.horizontalArrowAction(leftArrow,
             callBool(ports.imageViewportHorizontallyPannable), input.rightToLeftReadingActive);
     switch (action) {
-    case KiriView::ImageShortcutNavigationPolicy::HorizontalArrowAction::PanLeft:
+    case kiriview::ImageShortcutNavigationPolicy::HorizontalArrowAction::PanLeft:
         panBy(ports, -keyboardPanDistance, 0.0);
         return true;
-    case KiriView::ImageShortcutNavigationPolicy::HorizontalArrowAction::PanRight:
+    case kiriview::ImageShortcutNavigationPolicy::HorizontalArrowAction::PanRight:
         panBy(ports, keyboardPanDistance, 0.0);
         return true;
-    case KiriView::ImageShortcutNavigationPolicy::HorizontalArrowAction::
+    case kiriview::ImageShortcutNavigationPolicy::HorizontalArrowAction::
         RequestPreviousActiveNavigation:
         callVoid(ports.requestPreviousActiveNavigationWithBoundary);
         return true;
-    case KiriView::ImageShortcutNavigationPolicy::HorizontalArrowAction::
+    case kiriview::ImageShortcutNavigationPolicy::HorizontalArrowAction::
         RequestNextActiveNavigation:
         callVoid(ports.requestNextActiveNavigationWithBoundary);
         return true;
@@ -262,13 +262,13 @@ bool ApplicationCommandRouter::executeSinglePageArrowShortcut(
         return false;
     }
 
-    const KiriView::ImageShortcutNavigationPolicy::SinglePageArrowAction action
+    const kiriview::ImageShortcutNavigationPolicy::SinglePageArrowAction action
         = m_navigationPolicy.singlePageArrowAction(leftArrow, input.rightToLeftReadingActive);
     switch (action) {
-    case KiriView::ImageShortcutNavigationPolicy::SinglePageArrowAction::OpenPreviousSinglePage:
+    case kiriview::ImageShortcutNavigationPolicy::SinglePageArrowAction::OpenPreviousSinglePage:
         callVoid(ports.openPreviousSinglePage);
         return true;
-    case KiriView::ImageShortcutNavigationPolicy::SinglePageArrowAction::OpenNextSinglePage:
+    case kiriview::ImageShortcutNavigationPolicy::SinglePageArrowAction::OpenNextSinglePage:
         callVoid(ports.openNextSinglePage);
         return true;
     }

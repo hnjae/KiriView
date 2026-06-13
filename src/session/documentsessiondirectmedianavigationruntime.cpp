@@ -10,7 +10,7 @@
 #include <memory>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 DocumentSessionDirectMediaNavigationRuntime::DocumentSessionDirectMediaNavigationRuntime(
     DirectMediaNavigationCandidateProvider provider)
     : m_provider(directMediaNavigationCandidateProviderWithDefault(std::move(provider)))

@@ -31,9 +31,9 @@ void TestMenuAccessKeyInput::inputKindClassifiesAltKeySeparatelyFromMnemonics()
 {
     const QKeyEvent alt = keyPress(Qt::Key_Alt, Qt::AltModifier);
 
-    QCOMPARE(KiriView::menuAccessKeyInputKind(alt), KiriView::MenuAccessKeyInputKind::AltKey);
-    QVERIFY(!KiriView::menuAccessKeyIsMnemonicKeyPress(alt));
-    QVERIFY(!KiriView::menuAccessKeyIsAltMnemonicKeyPress(alt));
+    QCOMPARE(kiriview::menuAccessKeyInputKind(alt), kiriview::MenuAccessKeyInputKind::AltKey);
+    QVERIFY(!kiriview::menuAccessKeyIsMnemonicKeyPress(alt));
+    QVERIFY(!kiriview::menuAccessKeyIsAltMnemonicKeyPress(alt));
 }
 
 void TestMenuAccessKeyInput::inputKindClassifiesAltModifiedMnemonic()
@@ -41,9 +41,9 @@ void TestMenuAccessKeyInput::inputKindClassifiesAltModifiedMnemonic()
     const QKeyEvent event = keyPress(Qt::Key_O, Qt::AltModifier);
 
     QCOMPARE(
-        KiriView::menuAccessKeyInputKind(event), KiriView::MenuAccessKeyInputKind::AltMnemonic);
-    QVERIFY(KiriView::menuAccessKeyIsMnemonicKeyPress(event));
-    QVERIFY(KiriView::menuAccessKeyIsAltMnemonicKeyPress(event));
+        kiriview::menuAccessKeyInputKind(event), kiriview::MenuAccessKeyInputKind::AltMnemonic);
+    QVERIFY(kiriview::menuAccessKeyIsMnemonicKeyPress(event));
+    QVERIFY(kiriview::menuAccessKeyIsAltMnemonicKeyPress(event));
 }
 
 void TestMenuAccessKeyInput::inputKindClassifiesPlainMnemonicWithIgnoredModifiers()
@@ -60,9 +60,9 @@ void TestMenuAccessKeyInput::inputKindClassifiesPlainMnemonicWithIgnoredModifier
         const QKeyEvent event = keyPress(Qt::Key_O, modifier);
 
         QCOMPARE(
-            KiriView::menuAccessKeyInputKind(event), KiriView::MenuAccessKeyInputKind::Mnemonic);
-        QVERIFY(KiriView::menuAccessKeyIsMnemonicKeyPress(event));
-        QVERIFY(!KiriView::menuAccessKeyIsAltMnemonicKeyPress(event));
+            kiriview::menuAccessKeyInputKind(event), kiriview::MenuAccessKeyInputKind::Mnemonic);
+        QVERIFY(kiriview::menuAccessKeyIsMnemonicKeyPress(event));
+        QVERIFY(!kiriview::menuAccessKeyIsAltMnemonicKeyPress(event));
     }
 }
 
@@ -78,9 +78,9 @@ void TestMenuAccessKeyInput::inputKindRejectsNonMnemonicModifiers()
     for (Qt::KeyboardModifiers modifier : modifiers) {
         const QKeyEvent event = keyPress(Qt::Key_O, modifier);
 
-        QCOMPARE(KiriView::menuAccessKeyInputKind(event), KiriView::MenuAccessKeyInputKind::Other);
-        QVERIFY(!KiriView::menuAccessKeyIsMnemonicKeyPress(event));
-        QVERIFY(!KiriView::menuAccessKeyIsAltMnemonicKeyPress(event));
+        QCOMPARE(kiriview::menuAccessKeyInputKind(event), kiriview::MenuAccessKeyInputKind::Other);
+        QVERIFY(!kiriview::menuAccessKeyIsMnemonicKeyPress(event));
+        QVERIFY(!kiriview::menuAccessKeyIsAltMnemonicKeyPress(event));
     }
 }
 
@@ -89,10 +89,10 @@ void TestMenuAccessKeyInput::mnemonicHelpersExcludeAltKeyAndTrackAltModifier()
     const QKeyEvent plain = keyPress(Qt::Key_F);
     const QKeyEvent shiftedAlt = keyPress(Qt::Key_F, Qt::AltModifier | Qt::ShiftModifier);
 
-    QVERIFY(KiriView::menuAccessKeyIsMnemonicKeyPress(plain));
-    QVERIFY(!KiriView::menuAccessKeyIsAltMnemonicKeyPress(plain));
-    QVERIFY(KiriView::menuAccessKeyIsMnemonicKeyPress(shiftedAlt));
-    QVERIFY(KiriView::menuAccessKeyIsAltMnemonicKeyPress(shiftedAlt));
+    QVERIFY(kiriview::menuAccessKeyIsMnemonicKeyPress(plain));
+    QVERIFY(!kiriview::menuAccessKeyIsAltMnemonicKeyPress(plain));
+    QVERIFY(kiriview::menuAccessKeyIsMnemonicKeyPress(shiftedAlt));
+    QVERIFY(kiriview::menuAccessKeyIsAltMnemonicKeyPress(shiftedAlt));
 }
 
 QTEST_GUILESS_MAIN(TestMenuAccessKeyInput)

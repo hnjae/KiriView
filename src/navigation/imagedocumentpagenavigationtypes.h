@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 enum class ImageDocumentPageKind {
     Image,
     Video,

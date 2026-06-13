@@ -13,7 +13,7 @@
 #include <QVariantMap>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 PowerProfileMonitorEvent powerProfileMonitorEventFromRefreshReply(const QVariantList &arguments);
 PowerProfileMonitorEvent powerProfileMonitorEventFromPropertiesChanged(const QString &interfaceName,
     const QVariantMap &changedProperties, const QStringList &invalidatedProperties);

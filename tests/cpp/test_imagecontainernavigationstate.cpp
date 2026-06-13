@@ -19,7 +19,7 @@ private Q_SLOTS:
 
 void TestImageContainerNavigationState::navigationCompletionClaimsOnlyCurrentOperation()
 {
-    KiriView::ImageContainerNavigationState state;
+    kiriview::ImageContainerNavigationState state;
 
     const quint64 stale = state.startNavigation();
     const quint64 current = state.startNavigation();
@@ -37,7 +37,7 @@ void TestImageContainerNavigationState::navigationCompletionClaimsOnlyCurrentOpe
 
 void TestImageContainerNavigationState::cancelRejectsPendingOperation()
 {
-    KiriView::ImageContainerNavigationState state;
+    kiriview::ImageContainerNavigationState state;
     const quint64 operation = state.startNavigation();
 
     QVERIFY(state.acceptsNavigation(operation));
@@ -48,7 +48,7 @@ void TestImageContainerNavigationState::cancelRejectsPendingOperation()
 
 void TestImageContainerNavigationState::operationIdsStayNonZeroAfterWrap()
 {
-    KiriView::ImageContainerNavigationState state(std::numeric_limits<quint64>::max());
+    kiriview::ImageContainerNavigationState state(std::numeric_limits<quint64>::max());
 
     QCOMPARE(state.startNavigation(), quint64(1));
     QCOMPARE(state.startNavigation(), quint64(2));

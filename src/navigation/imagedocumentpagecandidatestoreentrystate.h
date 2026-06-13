@@ -15,7 +15,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 struct ImageDocumentPageCandidateStoreEntryPendingLoad {
     ImageIoJobCompletion completion;
     ImageDocumentPageCandidatesCallback callback;

@@ -7,7 +7,7 @@ use png::{
     BitDepth, BlendOp, ColorType, Decoder, DisposeOp, FrameControl, Reader, Transformations,
 };
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum RustApngOpenStatus {

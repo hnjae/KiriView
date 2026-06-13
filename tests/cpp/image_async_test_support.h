@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-namespace KiriView::TestSupport {
+namespace kiriview::TestSupport {
 namespace Detail {
     template <typename Operation>
     ImageIoJob startManualIoJob(QObject *receiver, const std::shared_ptr<Operation> &operation)

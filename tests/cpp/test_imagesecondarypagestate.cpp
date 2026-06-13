@@ -11,9 +11,9 @@
 #include <QUrl>
 
 namespace {
-KiriView::DisplayedImageLocation displayedLocation(const QString &path)
+kiriview::DisplayedImageLocation displayedLocation(const QString &path)
 {
-    return KiriView::DisplayedImageLocation::fromUrl(KiriView::TestSupport::localUrl(path));
+    return kiriview::DisplayedImageLocation::fromUrl(kiriview::TestSupport::localUrl(path));
 }
 }
 
@@ -30,18 +30,18 @@ private Q_SLOTS:
 
 void TestImageSecondaryPageState::visibleLoadOwnsDisplayedPage()
 {
-    KiriView::ImageSecondaryPageState state;
-    const KiriView::DisplayedImageLocation location
+    kiriview::ImageSecondaryPageState state;
+    const kiriview::DisplayedImageLocation location
         = displayedLocation(QStringLiteral("/book/002.png"));
     const QSize imageSize(800, 1200);
 
-    const KiriView::ImageSecondaryPageLoadCompletion completion
+    const kiriview::ImageSecondaryPageLoadCompletion completion
         = state.finishPresentedLoad(location, imageSize, false);
 
     QVERIFY(state.visible());
     QCOMPARE(state.displayedImageLocation().imageUrl(), location.imageUrl());
     QCOMPARE(state.imageSize(), imageSize);
-    QCOMPARE(completion.result, KiriView::ImageSecondaryPageLoadResult::Visible);
+    QCOMPARE(completion.result, kiriview::ImageSecondaryPageLoadResult::Visible);
     QCOMPARE(completion.location.imageUrl(), location.imageUrl());
     QCOMPARE(completion.imageSize, imageSize);
     QVERIFY(!completion.clearPresentation);
@@ -49,20 +49,20 @@ void TestImageSecondaryPageState::visibleLoadOwnsDisplayedPage()
 
 void TestImageSecondaryPageState::primaryOnlyLoadClearsDisplayedPageAndRequestsPresentationClear()
 {
-    KiriView::ImageSecondaryPageState state;
+    kiriview::ImageSecondaryPageState state;
     state.finishPresentedLoad(
         displayedLocation(QStringLiteral("/book/002.png")), QSize(800, 1200), false);
-    const KiriView::DisplayedImageLocation location
+    const kiriview::DisplayedImageLocation location
         = displayedLocation(QStringLiteral("/book/003.png"));
     const QSize imageSize(1200, 800);
 
-    const KiriView::ImageSecondaryPageLoadCompletion completion
+    const kiriview::ImageSecondaryPageLoadCompletion completion
         = state.finishPresentedLoad(location, imageSize, true);
 
     QVERIFY(!state.visible());
     QVERIFY(state.displayedImageLocation().isEmpty());
     QCOMPARE(state.imageSize(), QSize());
-    QCOMPARE(completion.result, KiriView::ImageSecondaryPageLoadResult::PrimaryOnly);
+    QCOMPARE(completion.result, kiriview::ImageSecondaryPageLoadResult::PrimaryOnly);
     QCOMPARE(completion.location.imageUrl(), location.imageUrl());
     QCOMPARE(completion.imageSize, imageSize);
     QVERIFY(completion.clearPresentation);
@@ -70,21 +70,21 @@ void TestImageSecondaryPageState::primaryOnlyLoadClearsDisplayedPageAndRequestsP
 
 void TestImageSecondaryPageState::failedLoadReportsFailureWithoutChangingDisplayedPage()
 {
-    KiriView::ImageSecondaryPageState state;
-    const KiriView::DisplayedImageLocation visibleLocation
+    kiriview::ImageSecondaryPageState state;
+    const kiriview::DisplayedImageLocation visibleLocation
         = displayedLocation(QStringLiteral("/book/002.png"));
     const QSize visibleSize(800, 1200);
     state.finishPresentedLoad(visibleLocation, visibleSize, false);
-    const KiriView::DisplayedImageLocation failedLocation
+    const kiriview::DisplayedImageLocation failedLocation
         = displayedLocation(QStringLiteral("/book/missing.png"));
 
-    const KiriView::ImageSecondaryPageLoadCompletion completion
+    const kiriview::ImageSecondaryPageLoadCompletion completion
         = state.finishFailedLoad(failedLocation);
 
     QVERIFY(state.visible());
     QCOMPARE(state.displayedImageLocation().imageUrl(), visibleLocation.imageUrl());
     QCOMPARE(state.imageSize(), visibleSize);
-    QCOMPARE(completion.result, KiriView::ImageSecondaryPageLoadResult::Failed);
+    QCOMPARE(completion.result, kiriview::ImageSecondaryPageLoadResult::Failed);
     QCOMPARE(completion.location.imageUrl(), failedLocation.imageUrl());
     QCOMPARE(completion.imageSize, QSize());
     QVERIFY(!completion.clearPresentation);
@@ -92,7 +92,7 @@ void TestImageSecondaryPageState::failedLoadReportsFailureWithoutChangingDisplay
 
 void TestImageSecondaryPageState::clearDropsDisplayedPage()
 {
-    KiriView::ImageSecondaryPageState state;
+    kiriview::ImageSecondaryPageState state;
     state.finishPresentedLoad(
         displayedLocation(QStringLiteral("/book/002.png")), QSize(800, 1200), false);
 

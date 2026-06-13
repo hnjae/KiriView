@@ -15,7 +15,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 using DirectMediaNavigationCandidatesCallback
     = std::function<void(std::vector<DirectMediaNavigationCandidate>)>;
 

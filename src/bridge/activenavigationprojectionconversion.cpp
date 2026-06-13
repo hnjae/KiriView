@@ -4,48 +4,48 @@
 #include "bridge/activenavigationprojectionconversion.h"
 
 namespace {
-KiriView::ActiveNavigationDispatchOperation activeNavigationDispatchOperationFromRust(
-    KiriView::RustActiveNavigationDispatchOperationKind kind, int number)
+kiriview::ActiveNavigationDispatchOperation activeNavigationDispatchOperationFromRust(
+    kiriview::RustActiveNavigationDispatchOperationKind kind, int number)
 {
     switch (kind) {
-    case KiriView::RustActiveNavigationDispatchOperationKind::NoOperation:
+    case kiriview::RustActiveNavigationDispatchOperationKind::NoOperation:
         return std::monostate {};
-    case KiriView::RustActiveNavigationDispatchOperationKind::OpenPreviousDirectMedia:
-        return KiriView::OpenPreviousDirectMediaNavigationOperation {};
-    case KiriView::RustActiveNavigationDispatchOperationKind::OpenNextDirectMedia:
-        return KiriView::OpenNextDirectMediaNavigationOperation {};
-    case KiriView::RustActiveNavigationDispatchOperationKind::OpenDirectMediaAtNumber:
-        return KiriView::OpenDirectMediaNavigationAtNumberOperation { number };
-    case KiriView::RustActiveNavigationDispatchOperationKind::OpenPreviousImageDocumentPage:
-        return KiriView::OpenPreviousImageDocumentPageOperation {};
-    case KiriView::RustActiveNavigationDispatchOperationKind::OpenNextImageDocumentPage:
-        return KiriView::OpenNextImageDocumentPageOperation {};
-    case KiriView::RustActiveNavigationDispatchOperationKind::OpenImageDocumentPageAtNumber:
-        return KiriView::OpenImageDocumentPageAtNumberOperation { number };
+    case kiriview::RustActiveNavigationDispatchOperationKind::OpenPreviousDirectMedia:
+        return kiriview::OpenPreviousDirectMediaNavigationOperation {};
+    case kiriview::RustActiveNavigationDispatchOperationKind::OpenNextDirectMedia:
+        return kiriview::OpenNextDirectMediaNavigationOperation {};
+    case kiriview::RustActiveNavigationDispatchOperationKind::OpenDirectMediaAtNumber:
+        return kiriview::OpenDirectMediaNavigationAtNumberOperation { number };
+    case kiriview::RustActiveNavigationDispatchOperationKind::OpenPreviousImageDocumentPage:
+        return kiriview::OpenPreviousImageDocumentPageOperation {};
+    case kiriview::RustActiveNavigationDispatchOperationKind::OpenNextImageDocumentPage:
+        return kiriview::OpenNextImageDocumentPageOperation {};
+    case kiriview::RustActiveNavigationDispatchOperationKind::OpenImageDocumentPageAtNumber:
+        return kiriview::OpenImageDocumentPageAtNumberOperation { number };
     }
 
     return std::monostate {};
 }
 
-KiriView::ActiveNavigationDispatchOutcome activeNavigationDispatchOutcomeFromRust(
-    KiriView::RustActiveNavigationDispatchOutcome outcome)
+kiriview::ActiveNavigationDispatchOutcome activeNavigationDispatchOutcomeFromRust(
+    kiriview::RustActiveNavigationDispatchOutcome outcome)
 {
     switch (outcome) {
-    case KiriView::RustActiveNavigationDispatchOutcome::NoOp:
-        return KiriView::ActiveNavigationDispatchOutcome::NoOp;
-    case KiriView::RustActiveNavigationDispatchOutcome::Dispatch:
-        return KiriView::ActiveNavigationDispatchOutcome::Dispatch;
-    case KiriView::RustActiveNavigationDispatchOutcome::FirstBoundary:
-        return KiriView::ActiveNavigationDispatchOutcome::FirstBoundary;
-    case KiriView::RustActiveNavigationDispatchOutcome::LastBoundary:
-        return KiriView::ActiveNavigationDispatchOutcome::LastBoundary;
+    case kiriview::RustActiveNavigationDispatchOutcome::NoOp:
+        return kiriview::ActiveNavigationDispatchOutcome::NoOp;
+    case kiriview::RustActiveNavigationDispatchOutcome::Dispatch:
+        return kiriview::ActiveNavigationDispatchOutcome::Dispatch;
+    case kiriview::RustActiveNavigationDispatchOutcome::FirstBoundary:
+        return kiriview::ActiveNavigationDispatchOutcome::FirstBoundary;
+    case kiriview::RustActiveNavigationDispatchOutcome::LastBoundary:
+        return kiriview::ActiveNavigationDispatchOutcome::LastBoundary;
     }
 
-    return KiriView::ActiveNavigationDispatchOutcome::NoOp;
+    return kiriview::ActiveNavigationDispatchOutcome::NoOp;
 }
 }
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustActiveNavigationSourceKind rustActiveNavigationSourceKind(ActiveNavigationSourceKind sourceKind)
 {
     switch (sourceKind) {

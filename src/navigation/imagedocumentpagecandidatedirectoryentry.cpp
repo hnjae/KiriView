@@ -25,10 +25,10 @@ KCoreDirLister *createLiveImageDocumentPageCandidateLister()
     return lister;
 }
 
-std::vector<KiriView::ImageDocumentPageCandidate> imageDocumentPageCandidatesForLister(
+std::vector<kiriview::ImageDocumentPageCandidate> imageDocumentPageCandidatesForLister(
     KCoreDirLister *lister, const QUrl &directoryUrl)
 {
-    return KiriView::imageDocumentPageNavigationCandidates(
+    return kiriview::imageDocumentPageNavigationCandidates(
         lister->itemsForDir(directoryUrl, KCoreDirLister::AllItems));
 }
 
@@ -42,16 +42,16 @@ QList<QUrl> urlsForItems(const KFileItemList &items)
     return urls;
 }
 
-std::vector<KiriView::ImageDocumentPageCandidate> imageDocumentPageCandidatesWithoutDeletedUrls(
-    const std::vector<KiriView::ImageDocumentPageCandidate> &candidates,
+std::vector<kiriview::ImageDocumentPageCandidate> imageDocumentPageCandidatesWithoutDeletedUrls(
+    const std::vector<kiriview::ImageDocumentPageCandidate> &candidates,
     const QList<QUrl> &deletedUrls)
 {
-    std::vector<KiriView::ImageDocumentPageCandidate> filteredCandidates;
+    std::vector<kiriview::ImageDocumentPageCandidate> filteredCandidates;
     filteredCandidates.reserve(candidates.size());
-    for (const KiriView::ImageDocumentPageCandidate &candidate : candidates) {
+    for (const kiriview::ImageDocumentPageCandidate &candidate : candidates) {
         const bool removed
             = std::any_of(deletedUrls.cbegin(), deletedUrls.cend(), [&candidate](const QUrl &url) {
-                  return KiriView::sameNormalizedUrl(candidate.url, url);
+                  return kiriview::sameNormalizedUrl(candidate.url, url);
               });
         if (!removed) {
             filteredCandidates.push_back(candidate);
@@ -65,15 +65,15 @@ QObject *createEntryJobToken(QObject *receiver, QObject *fallbackParent)
     return new QObject(receiver == nullptr ? fallbackParent : receiver);
 }
 
-KiriView::ImageIoJob createEntryJob(QObject *token, std::function<void(QObject *)> removeToken)
+kiriview::ImageIoJob createEntryJob(QObject *token, std::function<void(QObject *)> removeToken)
 {
-    return KiriView::ImageIoJob(token, [removeToken = std::move(removeToken)](QObject *object) {
+    return kiriview::ImageIoJob(token, [removeToken = std::move(removeToken)](QObject *object) {
         removeToken(object);
         object->deleteLater();
     });
 }
 
-void notifyChanged(QObject *context, KiriView::ImageDocumentPageCandidateDirectoryEntry *entry)
+void notifyChanged(QObject *context, kiriview::ImageDocumentPageCandidateDirectoryEntry *entry)
 {
     QTimer::singleShot(0, context, [entry]() {
         if (entry != nullptr) {
@@ -82,29 +82,29 @@ void notifyChanged(QObject *context, KiriView::ImageDocumentPageCandidateDirecto
     });
 }
 
-void applyEntryNotificationPlan(KiriView::ImageDocumentPageCandidateStoreEntryNotificationPlan plan)
+void applyEntryNotificationPlan(kiriview::ImageDocumentPageCandidateStoreEntryNotificationPlan plan)
 {
-    for (const KiriView::ImageDocumentPageCandidateStoreEntryPendingLoad &load :
+    for (const kiriview::ImageDocumentPageCandidateStoreEntryPendingLoad &load :
         plan.completedLoads) {
         load.completion.claimAndDelete(
-            [&]() { KiriView::invokeIfSet(load.callback, plan.candidates); });
+            [&]() { kiriview::invokeIfSet(load.callback, plan.candidates); });
     }
-    for (const KiriView::ImageDocumentPageCandidateStoreEntrySubscriber &subscriber :
+    for (const kiriview::ImageDocumentPageCandidateStoreEntrySubscriber &subscriber :
         plan.changedSubscribers) {
-        KiriView::invokeIfSet(subscriber.callback, plan.candidates);
+        kiriview::invokeIfSet(subscriber.callback, plan.candidates);
     }
-    for (const KiriView::ImageDocumentPageCandidateStoreEntryPendingLoad &load : plan.failedLoads) {
+    for (const kiriview::ImageDocumentPageCandidateStoreEntryPendingLoad &load : plan.failedLoads) {
         load.completion.claimAndDelete(
-            [&]() { KiriView::invokeIfSet(load.errorCallback, plan.errorString); });
+            [&]() { kiriview::invokeIfSet(load.errorCallback, plan.errorString); });
     }
-    for (const KiriView::ImageDocumentPageCandidateStoreEntrySubscriber &subscriber :
+    for (const kiriview::ImageDocumentPageCandidateStoreEntrySubscriber &subscriber :
         plan.failedSubscribers) {
-        KiriView::invokeIfSet(subscriber.errorCallback, plan.errorString);
+        kiriview::invokeIfSet(subscriber.errorCallback, plan.errorString);
     }
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentPageCandidateDirectoryEntry::ImageDocumentPageCandidateDirectoryEntry(
     QUrl directoryUrl, QObject *signalContext)
     : m_directoryUrl(std::move(directoryUrl))

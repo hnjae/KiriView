@@ -17,11 +17,11 @@ private Q_SLOTS:
 
 void TestImageDecodeRequest::matchesUsesIdAndNormalizedImageUrl()
 {
-    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
+    const kiriview::ImageDecodeRequest request = kiriview::ImageDecodeRequest::fromUrl(
         42, QUrl(QStringLiteral("file:///images/./page.png")));
 
     QVERIFY(request.matches(42, QUrl(QStringLiteral("file:///images/page.png"))));
-    QVERIFY(request.matches(KiriView::ImageDecodeRequest::fromUrl(
+    QVERIFY(request.matches(kiriview::ImageDecodeRequest::fromUrl(
         42, QUrl(QStringLiteral("file:///images/page.png")))));
     QVERIFY(!request.matches(43, QUrl(QStringLiteral("file:///images/page.png"))));
     QVERIFY(!request.matches(42, QUrl(QStringLiteral("file:///images/other.png"))));

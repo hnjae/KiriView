@@ -8,14 +8,14 @@
 
 namespace {
 void appendDeletedDirectMediaNavigationCandidate(
-    std::vector<KiriView::DirectMediaNavigationCandidate> *candidates, const QUrl &currentUrl)
+    std::vector<kiriview::DirectMediaNavigationCandidate> *candidates, const QUrl &currentUrl)
 {
     candidates->push_back(
-        KiriView::DirectMediaNavigationCandidate { currentUrl, currentUrl.fileName() });
+        kiriview::DirectMediaNavigationCandidate { currentUrl, currentUrl.fileName() });
 }
 
 std::optional<QUrl> preferredMediaDeletionFallback(
-    const KiriView::DocumentSessionMediaDeletionFallbackPlan &fallbackPlan)
+    const kiriview::DocumentSessionMediaDeletionFallbackPlan &fallbackPlan)
 {
     if (fallbackPlan.preferredFallbackUrl.has_value()) {
         return fallbackPlan.preferredFallbackUrl;
@@ -25,7 +25,7 @@ std::optional<QUrl> preferredMediaDeletionFallback(
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(FileDeletionMode mode,
     std::vector<DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl)
 {

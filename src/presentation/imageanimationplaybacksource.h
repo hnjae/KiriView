@@ -12,7 +12,7 @@
 #include <memory>
 #include <variant>
 
-namespace KiriView {
+namespace kiriview {
 struct ReaderAnimationPlaybackRequest {
     QByteArray data;
     QByteArray format;

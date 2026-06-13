@@ -7,7 +7,7 @@
 
 #include <QUrl>
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustImageZoomMode rustImageZoomMode(ImageZoomMode zoomMode)
 {
     switch (zoomMode) {

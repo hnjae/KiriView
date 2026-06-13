@@ -18,57 +18,57 @@
 #include <vector>
 
 namespace {
-using KiriView::ContainerNavigationCandidate;
-using KiriView::ContainerNavigationCandidateType;
-using KiriView::ImageContainerOpenError;
-using KiriView::ImageDocumentPageCandidate;
-using KiriView::NavigationDirection;
-using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::containerCandidate;
-using KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
-using KiriView::TestSupport::imageDocumentPageCandidate;
-using KiriView::TestSupport::localUrl;
+using kiriview::ContainerNavigationCandidate;
+using kiriview::ContainerNavigationCandidateType;
+using kiriview::ImageContainerOpenError;
+using kiriview::ImageDocumentPageCandidate;
+using kiriview::NavigationDirection;
+using kiriview::TestSupport::archivePageUrl;
+using kiriview::TestSupport::containerCandidate;
+using kiriview::TestSupport::FakeImageDocumentPageCandidateProvider;
+using kiriview::TestSupport::imageDocumentPageCandidate;
+using kiriview::TestSupport::localUrl;
 
 template <typename Candidates, typename Callback> struct ManualCandidateLoad {
     QObject *object = nullptr;
     QUrl url;
     Callback callback;
-    KiriView::ErrorCallback errorCallback;
-    KiriView::ImageIoJobCompletion completion;
+    kiriview::ErrorCallback errorCallback;
+    kiriview::ImageIoJobCompletion completion;
     bool canceled = false;
 };
 
 using ManualContainerList = ManualCandidateLoad<std::vector<ContainerNavigationCandidate>,
-    KiriView::ContainerCandidatesCallback>;
+    kiriview::ContainerCandidatesCallback>;
 using ManualImageList = ManualCandidateLoad<std::vector<ImageDocumentPageCandidate>,
-    KiriView::ImageDocumentPageCandidatesCallback>;
+    kiriview::ImageDocumentPageCandidatesCallback>;
 
 class ManualContainerNavigationProvider
 {
 public:
-    KiriView::ImageIoJob startContainerList(QObject *receiver, QUrl directoryUrl,
-        KiriView::ContainerCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
+    kiriview::ImageIoJob startContainerList(QObject *receiver, QUrl directoryUrl,
+        kiriview::ContainerCandidatesCallback callback, kiriview::ErrorCallback errorCallback)
     {
         auto load = std::make_shared<ManualContainerList>();
         load->url = std::move(directoryUrl);
         load->callback = std::move(callback);
         load->errorCallback = std::move(errorCallback);
 
-        KiriView::ImageIoJob job = KiriView::TestSupport::Detail::startManualIoJob(receiver, load);
+        kiriview::ImageIoJob job = kiriview::TestSupport::Detail::startManualIoJob(receiver, load);
         m_containerLists.push_back(load);
         return job;
     }
 
-    KiriView::ImageIoJob startImageList(QObject *receiver, QUrl directoryUrl,
-        KiriView::ImageDocumentPageCandidatesCallback callback,
-        KiriView::ErrorCallback errorCallback)
+    kiriview::ImageIoJob startImageList(QObject *receiver, QUrl directoryUrl,
+        kiriview::ImageDocumentPageCandidatesCallback callback,
+        kiriview::ErrorCallback errorCallback)
     {
         auto load = std::make_shared<ManualImageList>();
         load->url = std::move(directoryUrl);
         load->callback = std::move(callback);
         load->errorCallback = std::move(errorCallback);
 
-        KiriView::ImageIoJob job = KiriView::TestSupport::Detail::startManualIoJob(receiver, load);
+        kiriview::ImageIoJob job = kiriview::TestSupport::Detail::startManualIoJob(receiver, load);
         m_imageLists.push_back(load);
         return job;
     }
@@ -82,7 +82,7 @@ public:
     void finishContainerListAt(
         std::size_t index, std::vector<ContainerNavigationCandidate> candidates)
     {
-        KiriView::TestSupport::Detail::finishManualIoJob(m_containerLists.at(index),
+        kiriview::TestSupport::Detail::finishManualIoJob(m_containerLists.at(index),
             [candidates = std::move(candidates)](ManualContainerList &load) mutable {
                 if (load.callback) {
                     load.callback(std::move(candidates));
@@ -101,7 +101,7 @@ public:
 
     void finishImageListAt(std::size_t index, std::vector<ImageDocumentPageCandidate> candidates)
     {
-        KiriView::TestSupport::Detail::finishManualIoJob(m_imageLists.at(index),
+        kiriview::TestSupport::Detail::finishManualIoJob(m_imageLists.at(index),
             [candidates = std::move(candidates)](ManualImageList &load) mutable {
                 if (load.callback) {
                     load.callback(std::move(candidates));
@@ -118,28 +118,28 @@ public:
         }
     }
 
-    KiriView::ImageDocumentPageCandidateProvider provider()
+    kiriview::ImageDocumentPageCandidateProvider provider()
     {
-        return KiriView::ImageDocumentPageCandidateProvider {
+        return kiriview::ImageDocumentPageCandidateProvider {
             [this](QObject *receiver, QUrl directoryUrl,
-                KiriView::ImageDocumentPageCandidatesCallback callback,
-                KiriView::ErrorCallback errorCallback) {
+                kiriview::ImageDocumentPageCandidatesCallback callback,
+                kiriview::ErrorCallback errorCallback) {
                 return startImageList(receiver, std::move(directoryUrl), std::move(callback),
                     std::move(errorCallback));
             },
             [this](QObject *receiver, QUrl directoryUrl,
-                KiriView::ContainerCandidatesCallback callback,
-                KiriView::ErrorCallback errorCallback) {
+                kiriview::ContainerCandidatesCallback callback,
+                kiriview::ErrorCallback errorCallback) {
                 return startContainerList(receiver, std::move(directoryUrl), std::move(callback),
                     std::move(errorCallback));
             },
-            [](QObject *, KiriView::OpenedCollectionScopeLocation,
-                KiriView::ImageDocumentPageCandidatesCallback,
-                KiriView::ErrorCallback errorCallback) {
+            [](QObject *, kiriview::OpenedCollectionScopeLocation,
+                kiriview::ImageDocumentPageCandidatesCallback,
+                kiriview::ErrorCallback errorCallback) {
                 if (errorCallback) {
                     errorCallback(QStringLiteral("unexpected archive image listing"));
                 }
-                return KiriView::ImageIoJob();
+                return kiriview::ImageIoJob();
             },
         };
     }
@@ -149,38 +149,38 @@ private:
     std::vector<std::shared_ptr<ManualImageList>> m_imageLists;
 };
 
-KiriView::ImageContainerNavigationController::Callbacks controllerCallbacks(
+kiriview::ImageContainerNavigationController::Callbacks controllerCallbacks(
     std::function<void(const QUrl &, const QUrl &)> openContainerImage = {},
-    std::function<void(const QUrl &, KiriView::ContainerNavigationError, const QString &)>
+    std::function<void(const QUrl &, kiriview::ContainerNavigationError, const QString &)>
         containerNavigationError
     = {},
-    std::function<void(KiriView::NavigationDirection)> containerNavigationBoundary = {},
-    std::function<void(const KiriView::ContainerNavigationListFailure &)>
+    std::function<void(kiriview::NavigationDirection)> containerNavigationBoundary = {},
+    std::function<void(const kiriview::ContainerNavigationListFailure &)>
         containerNavigationListFailure
     = {})
 {
-    return KiriView::ImageContainerNavigationController::Callbacks {
+    return kiriview::ImageContainerNavigationController::Callbacks {
         [openContainerImage = std::move(openContainerImage),
             containerNavigationError = std::move(containerNavigationError),
             containerNavigationBoundary = std::move(containerNavigationBoundary),
             containerNavigationListFailure = std::move(containerNavigationListFailure)](
-            KiriView::ImageDocumentPageNavigationPlan plan) mutable {
-            for (const KiriView::ImageDocumentPageNavigationEffect &effect : plan) {
+            kiriview::ImageDocumentPageNavigationPlan plan) mutable {
+            for (const kiriview::ImageDocumentPageNavigationEffect &effect : plan) {
                 if (const auto *openEffect
-                    = std::get_if<KiriView::OpenContainerImageDocumentPageNavigationEffect>(
+                    = std::get_if<kiriview::OpenContainerImageDocumentPageNavigationEffect>(
                         &effect)) {
-                    KiriView::invokeIfSet(
+                    kiriview::invokeIfSet(
                         openContainerImage, openEffect->target.url, openEffect->containerUrl);
                 } else if (const auto *errorEffect
-                    = std::get_if<KiriView::ReportContainerNavigationErrorEffect>(&effect)) {
-                    KiriView::invokeIfSet(containerNavigationError, errorEffect->containerUrl,
+                    = std::get_if<kiriview::ReportContainerNavigationErrorEffect>(&effect)) {
+                    kiriview::invokeIfSet(containerNavigationError, errorEffect->containerUrl,
                         errorEffect->error, errorEffect->errorString);
                 } else if (const auto *boundaryEffect
-                    = std::get_if<KiriView::ReportContainerNavigationBoundaryEffect>(&effect)) {
-                    KiriView::invokeIfSet(containerNavigationBoundary, boundaryEffect->direction);
+                    = std::get_if<kiriview::ReportContainerNavigationBoundaryEffect>(&effect)) {
+                    kiriview::invokeIfSet(containerNavigationBoundary, boundaryEffect->direction);
                 } else if (const auto *listErrorEffect
-                    = std::get_if<KiriView::ReportContainerNavigationListErrorEffect>(&effect)) {
-                    KiriView::invokeIfSet(containerNavigationListFailure, listErrorEffect->failure);
+                    = std::get_if<kiriview::ReportContainerNavigationListErrorEffect>(&effect)) {
+                    kiriview::invokeIfSet(containerNavigationListFailure, listErrorEffect->failure);
                 }
             }
         },
@@ -211,14 +211,14 @@ private Q_SLOTS:
 void TestImageContainerNavigationController::opensFirstImageFromAdjacentContainer()
 {
     ManualContainerNavigationProvider provider;
-    KiriView::ImageDocumentPageCandidateRepository repository(provider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(provider.provider());
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
     const QUrl targetImageUrl = localUrl(QStringLiteral("/books/b/01.png"));
 
     QUrl openedImageUrl;
     QUrl openedContainerUrl;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks(
             [&openedImageUrl, &openedContainerUrl](const QUrl &imageUrl, const QUrl &containerUrl) {
                 openedImageUrl = imageUrl;
@@ -246,8 +246,8 @@ void TestImageContainerNavigationController::opensFirstImageFromAdjacentArchiveC
     const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(targetContainerUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(targetContainerUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl targetImageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -260,10 +260,10 @@ void TestImageContainerNavigationController::opensFirstImageFromAdjacentArchiveC
     fakeProvider.setOpenedCollectionCandidates(
         archiveCollection->rootUrl(), { imageDocumentPageCandidate(targetImageUrl) });
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     QUrl openedImageUrl;
     QUrl openedContainerUrl;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks(
             [&openedImageUrl, &openedContainerUrl](const QUrl &imageUrl, const QUrl &containerUrl) {
                 openedImageUrl = imageUrl;
@@ -288,10 +288,10 @@ void TestImageContainerNavigationController::reportsPreviousBoundaryWhenNoAdjace
                 localUrl(QStringLiteral("/books/b/")), ContainerNavigationCandidateType::Directory),
         });
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     int boundaryCount = 0;
     NavigationDirection boundaryDirection = NavigationDirection::Next;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks(
             {}, {}, [&boundaryCount, &boundaryDirection](NavigationDirection direction) {
                 ++boundaryCount;
@@ -316,10 +316,10 @@ void TestImageContainerNavigationController::reportsNextBoundaryWhenNoAdjacentCo
             containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
         });
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     int boundaryCount = 0;
     NavigationDirection boundaryDirection = NavigationDirection::Previous;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks(
             {}, {}, [&boundaryCount, &boundaryDirection](NavigationDirection direction) {
                 ++boundaryCount;
@@ -345,9 +345,9 @@ void TestImageContainerNavigationController::missingCurrentContainerDoesNotRepor
                 localUrl(QStringLiteral("/books/b/")), ContainerNavigationCandidateType::Directory),
         });
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     int boundaryCount = 0;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks({}, {}, [&boundaryCount](NavigationDirection) { ++boundaryCount; }));
 
     controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
@@ -362,28 +362,28 @@ void TestImageContainerNavigationController::forwardsAdjacentContainerListingErr
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     fakeProvider.setContainerError(parentUrl, QStringLiteral("No parent access"));
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     bool openedImage = false;
     int openErrorCount = 0;
     QUrl reportedCurrentContainerUrl;
     QUrl reportedParentUrl;
     NavigationDirection reportedDirection = NavigationDirection::Previous;
     QString diagnostic;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks([&openedImage](const QUrl &, const QUrl &) { openedImage = true; },
             [&openErrorCount](
                 const QUrl &, ImageContainerOpenError, const QString &) { ++openErrorCount; },
             {},
             [&reportedCurrentContainerUrl, &reportedParentUrl, &reportedDirection, &diagnostic](
-                const KiriView::ContainerNavigationListFailure &failure) {
+                const kiriview::ContainerNavigationListFailure &failure) {
                 reportedCurrentContainerUrl = failure.currentContainerUrl;
                 reportedParentUrl = failure.parentUrl;
                 reportedDirection = failure.direction;
                 diagnostic = failure.diagnosticDetail;
                 QCOMPARE(
-                    failure.kind, KiriView::ContainerNavigationListFailureKind::DirectoryListing);
+                    failure.kind, kiriview::ContainerNavigationListFailureKind::DirectoryListing);
                 QCOMPARE(
-                    failure.severity, KiriView::ContainerNavigationListFailureSeverity::Diagnostic);
+                    failure.severity, kiriview::ContainerNavigationListFailureSeverity::Diagnostic);
             }));
 
     controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
@@ -409,10 +409,10 @@ void TestImageContainerNavigationController::reportsEmptyAdjacentContainer()
         });
     fakeProvider.setDirectoryImages(targetContainerUrl, {});
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     QUrl errorContainerUrl;
     ImageContainerOpenError error = ImageContainerOpenError::Generic;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks({},
             [&errorContainerUrl, &error](
                 const QUrl &containerUrl, ImageContainerOpenError type, const QString &) {
@@ -439,11 +439,11 @@ void TestImageContainerNavigationController::reportsInvalidAdjacentArchiveContai
                 targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
         });
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     bool openedImage = false;
     QUrl errorContainerUrl;
     ImageContainerOpenError error = ImageContainerOpenError::Generic;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks([&openedImage](const QUrl &, const QUrl &) { openedImage = true; },
             [&errorContainerUrl, &error](
                 const QUrl &containerUrl, ImageContainerOpenError type, const QString &) {
@@ -471,11 +471,11 @@ void TestImageContainerNavigationController::forwardsAdjacentContainerImageListi
         });
     fakeProvider.setDirectoryImageError(targetContainerUrl, QStringLiteral("No access"));
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     QUrl errorContainerUrl;
     ImageContainerOpenError error = ImageContainerOpenError::EmptyContainer;
     QString errorString;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks({},
             [&errorContainerUrl, &error, &errorString](
                 const QUrl &containerUrl, ImageContainerOpenError type, const QString &message) {
@@ -494,12 +494,12 @@ void TestImageContainerNavigationController::forwardsAdjacentContainerImageListi
 void TestImageContainerNavigationController::cancelRejectsPendingContainerListing()
 {
     ManualContainerNavigationProvider provider;
-    KiriView::ImageDocumentPageCandidateRepository repository(provider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(provider.provider());
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
 
     QUrl openedImageUrl;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks(
             [&openedImageUrl](const QUrl &imageUrl, const QUrl &) { openedImageUrl = imageUrl; },
             {}));
@@ -522,7 +522,7 @@ void TestImageContainerNavigationController::cancelRejectsPendingContainerListin
 void TestImageContainerNavigationController::newRequestCancelsPendingFirstImageLoad()
 {
     ManualContainerNavigationProvider provider;
-    KiriView::ImageDocumentPageCandidateRepository repository(provider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(provider.provider());
     const QUrl firstCurrentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl firstTargetContainerUrl = localUrl(QStringLiteral("/books/b/"));
     const QUrl firstTargetImageUrl = localUrl(QStringLiteral("/books/b/01.png"));
@@ -531,7 +531,7 @@ void TestImageContainerNavigationController::newRequestCancelsPendingFirstImageL
     const QUrl secondTargetImageUrl = localUrl(QStringLiteral("/books/d/01.png"));
 
     std::vector<QUrl> openedImageUrls;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks([&openedImageUrls](const QUrl &imageUrl,
                                 const QUrl &) { openedImageUrls.push_back(imageUrl); },
             {}));
@@ -569,12 +569,12 @@ void TestImageContainerNavigationController::newRequestCancelsPendingFirstImageL
 void TestImageContainerNavigationController::canceledContainerListingCompletionIsIgnored()
 {
     ManualContainerNavigationProvider provider;
-    KiriView::ImageDocumentPageCandidateRepository repository(provider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(provider.provider());
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
 
     QUrl openedImageUrl;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks(
             [&openedImageUrl](const QUrl &imageUrl, const QUrl &) { openedImageUrl = imageUrl; },
             {}));
@@ -596,13 +596,13 @@ void TestImageContainerNavigationController::canceledContainerListingCompletionI
 void TestImageContainerNavigationController::canceledFirstImageCompletionIsIgnored()
 {
     ManualContainerNavigationProvider provider;
-    KiriView::ImageDocumentPageCandidateRepository repository(provider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(provider.provider());
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
     const QUrl targetImageUrl = localUrl(QStringLiteral("/books/b/01.png"));
 
     QUrl openedImageUrl;
-    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+    kiriview::ImageContainerNavigationController controller(nullptr, repository,
         controllerCallbacks(
             [&openedImageUrl](const QUrl &imageUrl, const QUrl &) { openedImageUrl = imageUrl; },
             {}));

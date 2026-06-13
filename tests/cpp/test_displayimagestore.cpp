@@ -37,16 +37,16 @@ QImage testImage(const QSize &size, QColor color = Qt::red)
     return image;
 }
 
-KiriView::DisplayImageEntry testEntry(
-    const QSize &rasterSize, KiriView::DisplayImageRetentionPriority priority = {})
+kiriview::DisplayImageEntry testEntry(
+    const QSize &rasterSize, kiriview::DisplayImageRetentionPriority priority = {})
 {
-    return KiriView::DisplayImageEntry {
+    return kiriview::DisplayImageEntry {
         testImage(rasterSize),
         QSize(rasterSize.width() * 2, rasterSize.height() * 2),
         rasterSize,
         QStringLiteral("file:///tmp/image.png"),
-        KiriView::DisplayedPageRole::Primary,
-        KiriView::DisplayImageQuality::Exact,
+        kiriview::DisplayedPageRole::Primary,
+        kiriview::DisplayImageQuality::Exact,
         priority,
         42,
         QStringLiteral("test-entry"),
@@ -56,21 +56,21 @@ KiriView::DisplayImageEntry testEntry(
 
 void TestDisplayImageStore::storesImagesAndMetadata()
 {
-    KiriView::DisplayImageStore store(1024);
+    kiriview::DisplayImageStore store(1024);
 
     const QString id = store.insert(testEntry(QSize(8, 4)));
     QVERIFY(!id.isEmpty());
 
-    const std::optional<KiriView::DisplayImageStoreEntry> stored = store.entry(id);
+    const std::optional<kiriview::DisplayImageStoreEntry> stored = store.entry(id);
     QVERIFY(stored.has_value());
     QCOMPARE(stored->id, id);
     QCOMPARE(stored->image.size(), QSize(8, 4));
     QCOMPARE(stored->originalSize, QSize(16, 8));
     QCOMPARE(stored->rasterSize, QSize(8, 4));
     QCOMPARE(stored->sourceIdentity, QStringLiteral("file:///tmp/image.png"));
-    QCOMPARE(stored->pageRole, KiriView::DisplayedPageRole::Primary);
-    QCOMPARE(stored->quality, KiriView::DisplayImageQuality::Exact);
-    QCOMPARE(stored->priority, KiriView::DisplayImageRetentionPriority::Nearby);
+    QCOMPARE(stored->pageRole, kiriview::DisplayedPageRole::Primary);
+    QCOMPARE(stored->quality, kiriview::DisplayImageQuality::Exact);
+    QCOMPARE(stored->priority, kiriview::DisplayImageRetentionPriority::Nearby);
     QCOMPARE(stored->generation, quint64(42));
     QCOMPARE(stored->debugLabel, QStringLiteral("test-entry"));
     QCOMPARE(stored->byteCost, qsizetype(128));
@@ -80,7 +80,7 @@ void TestDisplayImageStore::storesImagesAndMetadata()
 
 void TestDisplayImageStore::urlShapeUsesNeverReusedIds()
 {
-    KiriView::DisplayImageStore store(1024);
+    kiriview::DisplayImageStore store(1024);
 
     const QString first = store.insert(testEntry(QSize(4, 4)));
     store.release(first);
@@ -89,16 +89,16 @@ void TestDisplayImageStore::urlShapeUsesNeverReusedIds()
     QVERIFY(!first.isEmpty());
     QVERIFY(!second.isEmpty());
     QVERIFY(first != second);
-    QCOMPARE(KiriView::displayImageSourceForId(second),
+    QCOMPARE(kiriview::displayImageSourceForId(second),
         QUrl(QStringLiteral("image://kiriview-images/%1").arg(second)));
-    QVERIFY(KiriView::displayImageSourceForId({}).isEmpty());
+    QVERIFY(kiriview::displayImageSourceForId({}).isEmpty());
 }
 
 void TestDisplayImageStore::providerReportsOriginalSizeAndMissesReturnEmpty()
 {
-    auto store = std::make_shared<KiriView::DisplayImageStore>(1024);
+    auto store = std::make_shared<kiriview::DisplayImageStore>(1024);
     const QString id = store->insert(testEntry(QSize(8, 4)));
-    KiriView::DisplayImageProvider provider(store);
+    kiriview::DisplayImageProvider provider(store);
 
     QSize originalSize;
     const QImage image = provider.requestImage(id, &originalSize, {});
@@ -112,9 +112,9 @@ void TestDisplayImageStore::providerReportsOriginalSizeAndMissesReturnEmpty()
 
 void TestDisplayImageStore::providerHandlesRequestedSizeAsDownscaleOnly()
 {
-    auto store = std::make_shared<KiriView::DisplayImageStore>(32768);
+    auto store = std::make_shared<kiriview::DisplayImageStore>(32768);
     const QString id = store->insert(testEntry(QSize(80, 40)));
-    KiriView::DisplayImageProvider provider(store);
+    kiriview::DisplayImageProvider provider(store);
 
     QSize originalSize;
     QCOMPARE(provider.requestImage(id, &originalSize, QSize(40, 40)).size(), QSize(40, 20));
@@ -129,14 +129,14 @@ void TestDisplayImageStore::providerHandlesRequestedSizeAsDownscaleOnly()
 
 void TestDisplayImageStore::evictsLeastRecentlyUsedImagesByPriority()
 {
-    KiriView::DisplayImageStore store(128);
+    kiriview::DisplayImageStore store(128);
 
     const QString background
-        = store.insert(testEntry(QSize(4, 4), KiriView::DisplayImageRetentionPriority::Background));
+        = store.insert(testEntry(QSize(4, 4), kiriview::DisplayImageRetentionPriority::Background));
     const QString nearby
-        = store.insert(testEntry(QSize(4, 4), KiriView::DisplayImageRetentionPriority::Nearby));
+        = store.insert(testEntry(QSize(4, 4), kiriview::DisplayImageRetentionPriority::Nearby));
     const QString visible
-        = store.insert(testEntry(QSize(4, 4), KiriView::DisplayImageRetentionPriority::Visible));
+        = store.insert(testEntry(QSize(4, 4), kiriview::DisplayImageRetentionPriority::Visible));
 
     QCOMPARE(store.size(), qsizetype(2));
     QVERIFY(!background.isEmpty());
@@ -147,15 +147,15 @@ void TestDisplayImageStore::evictsLeastRecentlyUsedImagesByPriority()
 
 void TestDisplayImageStore::pinLeasesPreventEvictionAndReleaseDefersRemoval()
 {
-    KiriView::DisplayImageStore store(128);
+    kiriview::DisplayImageStore store(128);
 
     const QString pinned
-        = store.insert(testEntry(QSize(4, 4), KiriView::DisplayImageRetentionPriority::Background));
-    QVERIFY(store.acquirePinLease(pinned, KiriView::DisplayImagePinKind::Visible));
+        = store.insert(testEntry(QSize(4, 4), kiriview::DisplayImageRetentionPriority::Background));
+    QVERIFY(store.acquirePinLease(pinned, kiriview::DisplayImagePinKind::Visible));
     const QString newer
-        = store.insert(testEntry(QSize(4, 4), KiriView::DisplayImageRetentionPriority::Background));
+        = store.insert(testEntry(QSize(4, 4), kiriview::DisplayImageRetentionPriority::Background));
     const QString newest
-        = store.insert(testEntry(QSize(4, 4), KiriView::DisplayImageRetentionPriority::Background));
+        = store.insert(testEntry(QSize(4, 4), kiriview::DisplayImageRetentionPriority::Background));
 
     QCOMPARE(store.size(), qsizetype(2));
     QVERIFY(store.entry(pinned).has_value());
@@ -164,15 +164,15 @@ void TestDisplayImageStore::pinLeasesPreventEvictionAndReleaseDefersRemoval()
 
     store.release(pinned);
     QVERIFY(store.entry(pinned).has_value());
-    store.releasePinLease(pinned, KiriView::DisplayImagePinKind::Visible);
+    store.releasePinLease(pinned, kiriview::DisplayImagePinKind::Visible);
     QVERIFY(store.entry(pinned) == std::nullopt);
 }
 
 void TestDisplayImageStore::providerRequestsAreThreadSafeReads()
 {
-    auto store = std::make_shared<KiriView::DisplayImageStore>(4096);
+    auto store = std::make_shared<kiriview::DisplayImageStore>(4096);
     const QString id = store->insert(testEntry(QSize(16, 8)));
-    KiriView::DisplayImageProvider provider(store);
+    kiriview::DisplayImageProvider provider(store);
 
     std::vector<std::future<QSize>> futures;
     for (int index = 0; index < 32; ++index) {

@@ -15,9 +15,9 @@
 #include <utility>
 
 namespace {
-using KiriView::ImageDocumentChange;
-using KiriView::ImageDocumentStatus;
-using KiriView::ImageZoomMode;
+using kiriview::ImageDocumentChange;
+using kiriview::ImageDocumentStatus;
+using kiriview::ImageZoomMode;
 
 ImageZoomMode toImageZoomMode(KiriImageDocument::ZoomMode zoomMode)
 {
@@ -70,87 +70,87 @@ bool revisionIsNewerThanToken(quint64 revision, const QString &token)
     return !tokenRevision.has_value() || revision > *tokenRevision;
 }
 
-KiriView::FileDeletionMode toFileDeletionMode(KiriImageDocument::DeletionMode deletionMode)
+kiriview::FileDeletionMode toFileDeletionMode(KiriImageDocument::DeletionMode deletionMode)
 {
     switch (deletionMode) {
     case KiriImageDocument::DeletionMode::MoveToTrash:
-        return KiriView::FileDeletionMode::MoveToTrash;
+        return kiriview::FileDeletionMode::MoveToTrash;
     case KiriImageDocument::DeletionMode::DeletePermanently:
-        return KiriView::FileDeletionMode::DeletePermanently;
+        return kiriview::FileDeletionMode::DeletePermanently;
     }
 
-    return KiriView::FileDeletionMode::MoveToTrash;
+    return kiriview::FileDeletionMode::MoveToTrash;
 }
 
-std::optional<KiriView::DisplayedPageRole> toDisplayedPageRole(int pageRole)
+std::optional<kiriview::DisplayedPageRole> toDisplayedPageRole(int pageRole)
 {
     if (pageRole == static_cast<int>(KiriImageDisplaySource::PageRole::Primary)) {
-        return KiriView::DisplayedPageRole::Primary;
+        return kiriview::DisplayedPageRole::Primary;
     }
     if (pageRole == static_cast<int>(KiriImageDisplaySource::PageRole::Secondary)) {
-        return KiriView::DisplayedPageRole::Secondary;
+        return kiriview::DisplayedPageRole::Secondary;
     }
     return std::nullopt;
 }
 
-std::optional<KiriView::ImageDisplayLoadOutcome> toImageDisplayLoadOutcome(int outcome)
+std::optional<kiriview::ImageDisplayLoadOutcome> toImageDisplayLoadOutcome(int outcome)
 {
     switch (outcome) {
-    case static_cast<int>(KiriView::ImageDisplayLoadOutcome::Loaded):
-        return KiriView::ImageDisplayLoadOutcome::Loaded;
-    case static_cast<int>(KiriView::ImageDisplayLoadOutcome::Error):
-        return KiriView::ImageDisplayLoadOutcome::Error;
-    case static_cast<int>(KiriView::ImageDisplayLoadOutcome::Missing):
-        return KiriView::ImageDisplayLoadOutcome::Missing;
+    case static_cast<int>(kiriview::ImageDisplayLoadOutcome::Loaded):
+        return kiriview::ImageDisplayLoadOutcome::Loaded;
+    case static_cast<int>(kiriview::ImageDisplayLoadOutcome::Error):
+        return kiriview::ImageDisplayLoadOutcome::Error;
+    case static_cast<int>(kiriview::ImageDisplayLoadOutcome::Missing):
+        return kiriview::ImageDisplayLoadOutcome::Missing;
     default:
         return std::nullopt;
     }
 }
 
-KiriView::ImageViewportObservationOrigin toImageViewportObservationOrigin(
+kiriview::ImageViewportObservationOrigin toImageViewportObservationOrigin(
     KiriImageDocument::ViewportObservationOrigin origin)
 {
     switch (origin) {
     case KiriImageDocument::ViewportObservationOrigin::Command:
-        return KiriView::ImageViewportObservationOrigin::Command;
+        return kiriview::ImageViewportObservationOrigin::Command;
     case KiriImageDocument::ViewportObservationOrigin::User:
-        return KiriView::ImageViewportObservationOrigin::User;
+        return kiriview::ImageViewportObservationOrigin::User;
     case KiriImageDocument::ViewportObservationOrigin::Inertia:
-        return KiriView::ImageViewportObservationOrigin::Inertia;
+        return kiriview::ImageViewportObservationOrigin::Inertia;
     case KiriImageDocument::ViewportObservationOrigin::Overshoot:
-        return KiriView::ImageViewportObservationOrigin::Overshoot;
+        return kiriview::ImageViewportObservationOrigin::Overshoot;
     case KiriImageDocument::ViewportObservationOrigin::Resize:
-        return KiriView::ImageViewportObservationOrigin::Resize;
+        return kiriview::ImageViewportObservationOrigin::Resize;
     case KiriImageDocument::ViewportObservationOrigin::Rotation:
-        return KiriView::ImageViewportObservationOrigin::Rotation;
+        return kiriview::ImageViewportObservationOrigin::Rotation;
     case KiriImageDocument::ViewportObservationOrigin::DevicePixelRatio:
-        return KiriView::ImageViewportObservationOrigin::DevicePixelRatio;
+        return kiriview::ImageViewportObservationOrigin::DevicePixelRatio;
     case KiriImageDocument::ViewportObservationOrigin::System:
-        return KiriView::ImageViewportObservationOrigin::System;
+        return kiriview::ImageViewportObservationOrigin::System;
     }
 
-    return KiriView::ImageViewportObservationOrigin::System;
+    return kiriview::ImageViewportObservationOrigin::System;
 }
 
 KiriImageDocument::ViewportObservationOrigin fromImageViewportObservationOrigin(
-    KiriView::ImageViewportObservationOrigin origin)
+    kiriview::ImageViewportObservationOrigin origin)
 {
     switch (origin) {
-    case KiriView::ImageViewportObservationOrigin::Command:
+    case kiriview::ImageViewportObservationOrigin::Command:
         return KiriImageDocument::ViewportObservationOrigin::Command;
-    case KiriView::ImageViewportObservationOrigin::User:
+    case kiriview::ImageViewportObservationOrigin::User:
         return KiriImageDocument::ViewportObservationOrigin::User;
-    case KiriView::ImageViewportObservationOrigin::Inertia:
+    case kiriview::ImageViewportObservationOrigin::Inertia:
         return KiriImageDocument::ViewportObservationOrigin::Inertia;
-    case KiriView::ImageViewportObservationOrigin::Overshoot:
+    case kiriview::ImageViewportObservationOrigin::Overshoot:
         return KiriImageDocument::ViewportObservationOrigin::Overshoot;
-    case KiriView::ImageViewportObservationOrigin::Resize:
+    case kiriview::ImageViewportObservationOrigin::Resize:
         return KiriImageDocument::ViewportObservationOrigin::Resize;
-    case KiriView::ImageViewportObservationOrigin::Rotation:
+    case kiriview::ImageViewportObservationOrigin::Rotation:
         return KiriImageDocument::ViewportObservationOrigin::Rotation;
-    case KiriView::ImageViewportObservationOrigin::DevicePixelRatio:
+    case kiriview::ImageViewportObservationOrigin::DevicePixelRatio:
         return KiriImageDocument::ViewportObservationOrigin::DevicePixelRatio;
-    case KiriView::ImageViewportObservationOrigin::System:
+    case kiriview::ImageViewportObservationOrigin::System:
         return KiriImageDocument::ViewportObservationOrigin::System;
     }
 
@@ -163,14 +163,14 @@ bool pointIsFinite(const QPointF &point)
 }
 
 KiriImageDocument::PresentationTransitionState fromImagePresentationTransitionState(
-    KiriView::ImagePresentationTransitionState state)
+    kiriview::ImagePresentationTransitionState state)
 {
     switch (state) {
-    case KiriView::ImagePresentationTransitionState::PreviousActive:
+    case kiriview::ImagePresentationTransitionState::PreviousActive:
         return KiriImageDocument::PresentationTransitionState::PreviousActive;
-    case KiriView::ImagePresentationTransitionState::TransitioningPlaceholder:
+    case kiriview::ImagePresentationTransitionState::TransitioningPlaceholder:
         return KiriImageDocument::PresentationTransitionState::TransitioningPlaceholder;
-    case KiriView::ImagePresentationTransitionState::CommittedActive:
+    case kiriview::ImagePresentationTransitionState::CommittedActive:
         return KiriImageDocument::PresentationTransitionState::CommittedActive;
     }
 
@@ -193,9 +193,9 @@ KiriImageDocument::Status fromImageDocumentStatus(ImageDocumentStatus status)
     return KiriImageDocument::Status::Null;
 }
 
-KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDocument &document)
+kiriview::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDocument &document)
 {
-    KiriView::ImageDocumentPublicSignalOperations operations;
+    kiriview::ImageDocumentPublicSignalOperations operations;
     operations.sourceUrlChanged = [&document]() { Q_EMIT document.sourceUrlChanged(); };
     operations.statusChanged = [&document]() { Q_EMIT document.statusChanged(); };
     operations.loadingChanged = [&document]() { Q_EMIT document.loadingChanged(); };
@@ -237,15 +237,15 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
 }
 
 KiriImageDocument::KiriImageDocument(QObject *parent)
-    : KiriImageDocument(KiriView::ImageDocumentRuntimeDependencyOverrides {}, parent)
+    : KiriImageDocument(kiriview::ImageDocumentRuntimeDependencyOverrides {}, parent)
 {
 }
 
 KiriImageDocument::KiriImageDocument(
-    KiriView::ImageDocumentRuntimeDependencyOverrides dependencies, QObject *parent)
+    kiriview::ImageDocumentRuntimeDependencyOverrides dependencies, QObject *parent)
     : QObject(parent)
 {
-    m_runtime = std::make_unique<KiriView::ImageDocumentRuntime>(
+    m_runtime = std::make_unique<kiriview::ImageDocumentRuntime>(
         this, RenderContextProvider {},
         [this](const std::vector<ImageDocumentChange> &changes) { handleDocumentChanges(changes); },
         std::move(dependencies),
@@ -253,9 +253,9 @@ KiriImageDocument::KiriImageDocument(
         [this](const QString &message) { Q_EMIT unsupportedOpenedCollectionVideoEntered(message); },
         [this](const QString &message) { Q_EMIT containerNavigationBoundaryReached(message); });
     m_primaryDisplaySource
-        = std::make_unique<KiriImageDisplaySource>(KiriView::DisplayedPageRole::Primary, this);
+        = std::make_unique<KiriImageDisplaySource>(kiriview::DisplayedPageRole::Primary, this);
     m_secondaryDisplaySource
-        = std::make_unique<KiriImageDisplaySource>(KiriView::DisplayedPageRole::Secondary, this);
+        = std::make_unique<KiriImageDisplaySource>(kiriview::DisplayedPageRole::Secondary, this);
     refreshDisplaySources();
 }
 
@@ -278,7 +278,7 @@ QString KiriImageDocument::windowTitleFileName() const { return m_runtime->windo
 
 QUrl KiriImageDocument::displayedUrl() const { return m_runtime->displayedUrl(); }
 
-KiriView::OpenedCollectionScopeLocation KiriImageDocument::displayedOpenedCollectionScope() const
+kiriview::OpenedCollectionScopeLocation KiriImageDocument::displayedOpenedCollectionScope() const
 {
     return m_runtime->displayedOpenedCollectionScope();
 }
@@ -390,23 +390,23 @@ int KiriImageDocument::rotationDegrees() const { return m_runtime->rotationDegre
 
 int KiriImageDocument::minimumManualZoomPercent() const
 {
-    return static_cast<int>(KiriView::ImageZoomState::minimumManualZoomPercent());
+    return static_cast<int>(kiriview::ImageZoomState::minimumManualZoomPercent());
 }
 
 int KiriImageDocument::maximumManualZoomPercent() const
 {
-    return KiriView::ImageZoomState::manualZoomPercentPropertyValue(
+    return kiriview::ImageZoomState::manualZoomPercentPropertyValue(
         m_runtime->maximumManualZoomPercent());
 }
 
 double KiriImageDocument::zoomStepFactor() const
 {
-    return KiriView::ImageZoomState::manualZoomStepFactor();
+    return kiriview::ImageZoomState::manualZoomStepFactor();
 }
 
 QStringList KiriImageDocument::openDialogNameFilters() const
 {
-    return KiriView::openDialogNameFilters();
+    return kiriview::openDialogNameFilters();
 }
 
 int KiriImageDocument::currentPageNumber() const { return m_runtime->currentPageNumber(); }
@@ -415,12 +415,12 @@ int KiriImageDocument::currentLastPageNumber() const { return m_runtime->current
 
 int KiriImageDocument::pageCount() const { return m_runtime->pageCount(); }
 
-KiriView::ImageDocumentPageNavigationSnapshot KiriImageDocument::pageNavigationSnapshot() const
+kiriview::ImageDocumentPageNavigationSnapshot KiriImageDocument::pageNavigationSnapshot() const
 {
     return m_runtime->pageNavigationSnapshot();
 }
 
-KiriView::ImageDocumentPageActiveNavigationSnapshot
+kiriview::ImageDocumentPageActiveNavigationSnapshot
 KiriImageDocument::activeNavigationSnapshot() const
 {
     return m_runtime->activeNavigationSnapshot();
@@ -493,18 +493,18 @@ KiriImageDisplaySource *KiriImageDocument::secondaryDisplaySource() const
     return m_secondaryDisplaySource.get();
 }
 
-std::optional<KiriView::DisplayedPredecodeImage>
+std::optional<kiriview::DisplayedPredecodeImage>
 KiriImageDocument::primaryDisplayedPredecodeImage() const
 {
     return m_runtime->primaryDisplayedPredecodeImage();
 }
 
-KiriView::ImageFirstDisplayDecodeContext KiriImageDocument::firstDisplayDecodeContext() const
+kiriview::ImageFirstDisplayDecodeContext KiriImageDocument::firstDisplayDecodeContext() const
 {
     return m_runtime->firstDisplayDecodeContext();
 }
 
-const KiriView::EmbeddedMetadata &KiriImageDocument::embeddedMetadata() const
+const kiriview::EmbeddedMetadata &KiriImageDocument::embeddedMetadata() const
 {
     return m_runtime->embeddedMetadata();
 }
@@ -798,10 +798,10 @@ bool KiriImageDocument::observeViewportContentPosition(
 bool KiriImageDocument::acknowledgeStillImageDisplayLoad(int pageRole, const QUrl &providerUrl,
     const QString &revisionToken, const QString &sourceIdentity, int outcome)
 {
-    const std::optional<KiriView::DisplayedPageRole> displayPageRole
+    const std::optional<kiriview::DisplayedPageRole> displayPageRole
         = toDisplayedPageRole(pageRole);
     const std::optional<quint64> revision = viewportRevisionFromToken(revisionToken);
-    const std::optional<KiriView::ImageDisplayLoadOutcome> loadOutcome
+    const std::optional<kiriview::ImageDisplayLoadOutcome> loadOutcome
         = toImageDisplayLoadOutcome(outcome);
     if (!displayPageRole.has_value() || !revision.has_value() || !loadOutcome.has_value()) {
         return false;
@@ -815,10 +815,10 @@ bool KiriImageDocument::acknowledgeStillImageDisplayLoad(int pageRole, const QUr
 bool KiriImageDocument::acknowledgeDisplayImageLoad(int pageRole, const QUrl &providerUrl,
     const QString &revisionToken, const QString &sourceIdentity, int outcome)
 {
-    const std::optional<KiriView::DisplayedPageRole> displayPageRole
+    const std::optional<kiriview::DisplayedPageRole> displayPageRole
         = toDisplayedPageRole(pageRole);
     const std::optional<quint64> revision = viewportRevisionFromToken(revisionToken);
-    const std::optional<KiriView::ImageDisplayLoadOutcome> loadOutcome
+    const std::optional<kiriview::ImageDisplayLoadOutcome> loadOutcome
         = toImageDisplayLoadOutcome(outcome);
     if (!displayPageRole.has_value() || !revision.has_value() || !loadOutcome.has_value()) {
         return false;
@@ -829,14 +829,14 @@ bool KiriImageDocument::acknowledgeDisplayImageLoad(int pageRole, const QUrl &pr
     return true;
 }
 
-KiriView::ImageViewportInteractionSnapshot KiriImageDocument::viewportInteractionSnapshot() const
+kiriview::ImageViewportInteractionSnapshot KiriImageDocument::viewportInteractionSnapshot() const
 {
-    const KiriView::ImageFirstDisplayDecodeContext firstDisplayContext
+    const kiriview::ImageFirstDisplayDecodeContext firstDisplayContext
         = m_runtime->firstDisplayDecodeContext();
     const double devicePixelRatio = firstDisplayContext.isValid() && viewportSize().width() > 0.0
         ? firstDisplayContext.physicalViewportSize.width() / viewportSize().width()
         : 1.0;
-    return KiriView::ImageViewportInteractionSnapshot {
+    return kiriview::ImageViewportInteractionSnapshot {
         imageSize(),
         viewportSize(),
         displaySize(),
@@ -881,22 +881,22 @@ bool KiriImageDocument::requestAnchoredManualZoom(
 void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
 {
     refreshDisplaySources();
-    for (KiriView::ImageDocumentPublicSignal signal :
-        KiriView::imageDocumentPublicSignalsForChanges(changes)) {
+    for (kiriview::ImageDocumentPublicSignal signal :
+        kiriview::imageDocumentPublicSignalsForChanges(changes)) {
         switch (signal) {
-        case KiriView::ImageDocumentPublicSignal::Loading:
+        case kiriview::ImageDocumentPublicSignal::Loading:
             if (!loading()) {
                 m_viewportInteraction.cancelPendingDisplayedImageStart();
             }
             break;
-        case KiriView::ImageDocumentPublicSignal::DisplayedUrl:
+        case kiriview::ImageDocumentPublicSignal::DisplayedUrl:
             m_viewportInteraction.beginDisplayedImage();
             break;
         default:
             break;
         }
     }
-    KiriView::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
+    kiriview::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
 }
 
 void KiriImageDocument::refreshDisplaySources()
@@ -907,7 +907,7 @@ void KiriImageDocument::refreshDisplaySources()
     }
 
     m_primaryDisplaySource->setProjection(
-        m_runtime->displaySourceProjection(KiriView::DisplayedPageRole::Primary));
+        m_runtime->displaySourceProjection(kiriview::DisplayedPageRole::Primary));
     m_secondaryDisplaySource->setProjection(
-        m_runtime->displaySourceProjection(KiriView::DisplayedPageRole::Secondary));
+        m_runtime->displaySourceProjection(kiriview::DisplayedPageRole::Secondary));
 }

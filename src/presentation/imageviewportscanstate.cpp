@@ -3,7 +3,7 @@
 
 #include "presentation/imageviewportscanstate.h"
 
-namespace KiriView {
+namespace kiriview {
 void ImageViewportScanState::requestNextDisplayedImageFinalScanStart()
 {
     m_pendingFinalScanStart = true;

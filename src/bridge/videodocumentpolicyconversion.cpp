@@ -4,67 +4,67 @@
 #include "bridge/videodocumentpolicyconversion.h"
 
 namespace {
-KiriView::RustVideoMediaStatus rustVideoMediaStatus(KiriView::VideoMediaStatus status)
+kiriview::RustVideoMediaStatus rustVideoMediaStatus(kiriview::VideoMediaStatus status)
 {
     switch (status) {
-    case KiriView::VideoMediaStatus::Null:
-        return KiriView::RustVideoMediaStatus::Null;
-    case KiriView::VideoMediaStatus::Loading:
-        return KiriView::RustVideoMediaStatus::Loading;
-    case KiriView::VideoMediaStatus::Loaded:
-        return KiriView::RustVideoMediaStatus::Loaded;
-    case KiriView::VideoMediaStatus::Stalled:
-        return KiriView::RustVideoMediaStatus::Stalled;
-    case KiriView::VideoMediaStatus::Buffering:
-        return KiriView::RustVideoMediaStatus::Buffering;
-    case KiriView::VideoMediaStatus::Buffered:
-        return KiriView::RustVideoMediaStatus::Buffered;
-    case KiriView::VideoMediaStatus::EndOfMedia:
-        return KiriView::RustVideoMediaStatus::EndOfMedia;
-    case KiriView::VideoMediaStatus::Invalid:
-        return KiriView::RustVideoMediaStatus::Invalid;
+    case kiriview::VideoMediaStatus::Null:
+        return kiriview::RustVideoMediaStatus::Null;
+    case kiriview::VideoMediaStatus::Loading:
+        return kiriview::RustVideoMediaStatus::Loading;
+    case kiriview::VideoMediaStatus::Loaded:
+        return kiriview::RustVideoMediaStatus::Loaded;
+    case kiriview::VideoMediaStatus::Stalled:
+        return kiriview::RustVideoMediaStatus::Stalled;
+    case kiriview::VideoMediaStatus::Buffering:
+        return kiriview::RustVideoMediaStatus::Buffering;
+    case kiriview::VideoMediaStatus::Buffered:
+        return kiriview::RustVideoMediaStatus::Buffered;
+    case kiriview::VideoMediaStatus::EndOfMedia:
+        return kiriview::RustVideoMediaStatus::EndOfMedia;
+    case kiriview::VideoMediaStatus::Invalid:
+        return kiriview::RustVideoMediaStatus::Invalid;
     }
 
-    return KiriView::RustVideoMediaStatus::Null;
+    return kiriview::RustVideoMediaStatus::Null;
 }
 
-KiriView::VideoDocumentStatus videoDocumentStatus(KiriView::RustVideoDocumentStatus status)
+kiriview::VideoDocumentStatus videoDocumentStatus(kiriview::RustVideoDocumentStatus status)
 {
     switch (status) {
-    case KiriView::RustVideoDocumentStatus::Null:
-        return KiriView::VideoDocumentStatus::Null;
-    case KiriView::RustVideoDocumentStatus::Loading:
-        return KiriView::VideoDocumentStatus::Loading;
-    case KiriView::RustVideoDocumentStatus::Ready:
-        return KiriView::VideoDocumentStatus::Ready;
-    case KiriView::RustVideoDocumentStatus::Error:
-        return KiriView::VideoDocumentStatus::Error;
+    case kiriview::RustVideoDocumentStatus::Null:
+        return kiriview::VideoDocumentStatus::Null;
+    case kiriview::RustVideoDocumentStatus::Loading:
+        return kiriview::VideoDocumentStatus::Loading;
+    case kiriview::RustVideoDocumentStatus::Ready:
+        return kiriview::VideoDocumentStatus::Ready;
+    case kiriview::RustVideoDocumentStatus::Error:
+        return kiriview::VideoDocumentStatus::Error;
     }
 
-    return KiriView::VideoDocumentStatus::Null;
+    return kiriview::VideoDocumentStatus::Null;
 }
 
-KiriView::VideoPlaybackBackendOperation videoPlaybackBackendOperation(
-    const KiriView::RustVideoPlaybackBackendOperation &operation)
+kiriview::VideoPlaybackBackendOperation videoPlaybackBackendOperation(
+    const kiriview::RustVideoPlaybackBackendOperation &operation)
 {
     switch (operation.kind) {
-    case KiriView::RustVideoPlaybackBackendOperationKind::EnsureBackend:
-        return KiriView::EnsureVideoPlaybackBackendOperation {};
-    case KiriView::RustVideoPlaybackBackendOperationKind::Play:
-        return KiriView::PlayVideoPlaybackOperation {};
-    case KiriView::RustVideoPlaybackBackendOperationKind::Pause:
-        return KiriView::PauseVideoPlaybackOperation {};
-    case KiriView::RustVideoPlaybackBackendOperationKind::Stop:
-        return KiriView::StopVideoPlaybackOperation {};
-    case KiriView::RustVideoPlaybackBackendOperationKind::SetPosition:
-        return KiriView::SetVideoPlaybackPositionOperation { operation.position };
+    case kiriview::RustVideoPlaybackBackendOperationKind::EnsureBackend:
+        return kiriview::EnsureVideoPlaybackBackendOperation {};
+    case kiriview::RustVideoPlaybackBackendOperationKind::Play:
+        return kiriview::PlayVideoPlaybackOperation {};
+    case kiriview::RustVideoPlaybackBackendOperationKind::Pause:
+        return kiriview::PauseVideoPlaybackOperation {};
+    case kiriview::RustVideoPlaybackBackendOperationKind::Stop:
+        return kiriview::StopVideoPlaybackOperation {};
+    case kiriview::RustVideoPlaybackBackendOperationKind::SetPosition:
+        return kiriview::SetVideoPlaybackPositionOperation { operation.position };
     }
 
-    return KiriView::EnsureVideoPlaybackBackendOperation {};
+    return kiriview::EnsureVideoPlaybackBackendOperation {};
 }
 }
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustVideoDocumentStatusSnapshot rustVideoDocumentStatusSnapshot(
     const VideoDocumentStatusSnapshot &snapshot)
 {

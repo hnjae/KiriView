@@ -25,7 +25,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 struct ActiveNavigationThumbnailSourceKey {
     int number = 0;
     QUrl url;

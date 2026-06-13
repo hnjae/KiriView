@@ -19,8 +19,8 @@ private Q_SLOTS:
 };
 
 namespace {
-void comparePublicSignals(const std::vector<KiriView::ImageDocumentPublicSignal> &actual,
-    const std::vector<KiriView::ImageDocumentPublicSignal> &expected)
+void comparePublicSignals(const std::vector<kiriview::ImageDocumentPublicSignal> &actual,
+    const std::vector<kiriview::ImageDocumentPublicSignal> &expected)
 {
     QCOMPARE(actual.size(), expected.size());
     for (std::size_t index = 0; index < expected.size(); ++index) {
@@ -28,9 +28,9 @@ void comparePublicSignals(const std::vector<KiriView::ImageDocumentPublicSignal>
     }
 }
 
-KiriView::ImageDocumentPublicSignalOperations recordingOperations(QStringList &events)
+kiriview::ImageDocumentPublicSignalOperations recordingOperations(QStringList &events)
 {
-    KiriView::ImageDocumentPublicSignalOperations operations;
+    kiriview::ImageDocumentPublicSignalOperations operations;
     operations.sourceUrlChanged = [&events]() { events.append(QStringLiteral("sourceUrl")); };
     operations.statusChanged = [&events]() { events.append(QStringLiteral("status")); };
     operations.loadingChanged = [&events]() { events.append(QStringLiteral("loading")); };
@@ -76,65 +76,65 @@ KiriView::ImageDocumentPublicSignalOperations recordingOperations(QStringList &e
 
 void TestImageDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrder()
 {
-    using Change = KiriView::ImageDocumentChange;
-    using Signal = KiriView::ImageDocumentPublicSignal;
+    using Change = kiriview::ImageDocumentChange;
+    using Signal = kiriview::ImageDocumentPublicSignal;
 
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::SourceUrl), { Signal::SourceUrl });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::Status),
+        kiriview::imageDocumentPublicSignals(Change::SourceUrl), { Signal::SourceUrl });
+    comparePublicSignals(kiriview::imageDocumentPublicSignals(Change::Status),
         { Signal::Status, Signal::ZoomPercentKnown });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::Loading), { Signal::Loading });
+        kiriview::imageDocumentPublicSignals(Change::Loading), { Signal::Loading });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::ErrorString), { Signal::ErrorString });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::WindowTitleFileName),
+        kiriview::imageDocumentPublicSignals(Change::ErrorString), { Signal::ErrorString });
+    comparePublicSignals(kiriview::imageDocumentPublicSignals(Change::WindowTitleFileName),
         { Signal::WindowTitleFileName });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::DisplayedUrl), { Signal::DisplayedUrl });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::ImageSize),
+        kiriview::imageDocumentPublicSignals(Change::DisplayedUrl), { Signal::DisplayedUrl });
+    comparePublicSignals(kiriview::imageDocumentPublicSignals(Change::ImageSize),
         { Signal::ImageSize, Signal::ZoomPercentKnown });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::ViewportSize), { Signal::ViewportSize });
+        kiriview::imageDocumentPublicSignals(Change::ViewportSize), { Signal::ViewportSize });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::ViewportFrame), { Signal::ViewportFrame });
+        kiriview::imageDocumentPublicSignals(Change::ViewportFrame), { Signal::ViewportFrame });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::VisibleItemRect), { Signal::VisibleItemRect });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::DisplaySize),
+        kiriview::imageDocumentPublicSignals(Change::VisibleItemRect), { Signal::VisibleItemRect });
+    comparePublicSignals(kiriview::imageDocumentPublicSignals(Change::DisplaySize),
         { Signal::DisplaySize, Signal::ZoomPercentKnown });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::ZoomPercent), { Signal::ZoomPercent });
+        kiriview::imageDocumentPublicSignals(Change::ZoomPercent), { Signal::ZoomPercent });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::ZoomMode), { Signal::ZoomMode });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::MaximumManualZoomPercent),
+        kiriview::imageDocumentPublicSignals(Change::ZoomMode), { Signal::ZoomMode });
+    comparePublicSignals(kiriview::imageDocumentPublicSignals(Change::MaximumManualZoomPercent),
         { Signal::MaximumManualZoomPercent });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::PageNavigation), { Signal::PageNavigation });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::ContainerNavigation),
+        kiriview::imageDocumentPublicSignals(Change::PageNavigation), { Signal::PageNavigation });
+    comparePublicSignals(kiriview::imageDocumentPublicSignals(Change::ContainerNavigation),
         { Signal::ContainerNavigation });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::FileDeletionInProgress),
+    comparePublicSignals(kiriview::imageDocumentPublicSignals(Change::FileDeletionInProgress),
         { Signal::FileDeletionInProgress });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::TwoPageMode),
+    comparePublicSignals(kiriview::imageDocumentPublicSignals(Change::TwoPageMode),
         { Signal::TwoPageMode, Signal::PageNavigation });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::RightToLeftReading),
+    comparePublicSignals(kiriview::imageDocumentPublicSignals(Change::RightToLeftReading),
         { Signal::RightToLeftReading });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::PresentationTransitionState),
+    comparePublicSignals(kiriview::imageDocumentPublicSignals(Change::PresentationTransitionState),
         { Signal::PresentationTransitionState });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::Rotation), { Signal::RotationDegrees });
+        kiriview::imageDocumentPublicSignals(Change::Rotation), { Signal::RotationDegrees });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::UnsupportedOpenedCollectionVideo),
+        kiriview::imageDocumentPublicSignals(Change::UnsupportedOpenedCollectionVideo),
         { Signal::UnsupportedOpenedCollectionVideo, Signal::ZoomPercentKnown });
     comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::DisplaySource), { Signal::DisplaySource });
+        kiriview::imageDocumentPublicSignals(Change::DisplaySource), { Signal::DisplaySource });
 }
 
 void TestImageDocumentPublicSignals::
     publicSignalBatchPlansDeduplicateDerivedSignalsInEmissionOrder()
 {
-    using Change = KiriView::ImageDocumentChange;
-    using Signal = KiriView::ImageDocumentPublicSignal;
+    using Change = kiriview::ImageDocumentChange;
+    using Signal = kiriview::ImageDocumentPublicSignal;
 
-    comparePublicSignals(KiriView::imageDocumentPublicSignalsForChanges(
+    comparePublicSignals(kiriview::imageDocumentPublicSignalsForChanges(
                              { Change::TwoPageMode, Change::PageNavigation, Change::DisplayedUrl,
                                  Change::Status, Change::DisplaySource, Change::TwoPageMode }),
         { Signal::TwoPageMode, Signal::PageNavigation, Signal::DisplayedUrl, Signal::Status,
@@ -144,11 +144,11 @@ void TestImageDocumentPublicSignals::
 void TestImageDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionOrder()
 {
     QStringList events;
-    const KiriView::ImageDocumentPublicSignalEmitter emitter(recordingOperations(events));
+    const kiriview::ImageDocumentPublicSignalEmitter emitter(recordingOperations(events));
 
-    emitter.emitChanges({ KiriView::ImageDocumentChange::TwoPageMode,
-        KiriView::ImageDocumentChange::PageNavigation });
-    emitter.emitSignal(KiriView::ImageDocumentPublicSignal::DisplaySource);
+    emitter.emitChanges({ kiriview::ImageDocumentChange::TwoPageMode,
+        kiriview::ImageDocumentChange::PageNavigation });
+    emitter.emitSignal(kiriview::ImageDocumentPublicSignal::DisplaySource);
 
     QCOMPARE(events,
         QStringList({
@@ -158,7 +158,7 @@ void TestImageDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionO
         }));
 
     events.clear();
-    emitter.emitChange(KiriView::ImageDocumentChange::DisplaySource);
+    emitter.emitChange(kiriview::ImageDocumentChange::DisplaySource);
     QCOMPARE(events, QStringList({ QStringLiteral("displaySource") }));
 }
 

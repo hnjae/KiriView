@@ -9,7 +9,7 @@
 
 #include <QtGlobal>
 
-namespace KiriView {
+namespace kiriview {
 struct DocumentSessionDirectMediaNavigationLoad {
     quint64 operationId = 0;
     DirectMediaScope scope;

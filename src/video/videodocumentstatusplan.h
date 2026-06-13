@@ -7,7 +7,7 @@
 #include "video/videodocumenttypes.h"
 #include "video/videomediabackend.h"
 
-namespace KiriView {
+namespace kiriview {
 struct VideoDocumentStatusSnapshot {
     bool sourceUrlEmpty = true;
     bool sourceLoadActive = false;

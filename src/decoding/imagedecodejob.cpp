@@ -14,15 +14,15 @@
 
 namespace {
 bool rawEmbeddedThumbnailPreviewEligible(
-    const QByteArray &data, const KiriView::ImageDecodeRequest &request)
+    const QByteArray &data, const kiriview::ImageDecodeRequest &request)
 {
-    const KiriView::ImageInputClassification classification
-        = KiriView::classifyImageInput(data, request.imageUrl().fileName());
-    return classification.kind == KiriView::ImageInputKind::Raw;
+    const kiriview::ImageInputClassification classification
+        = kiriview::classifyImageInput(data, request.imageUrl().fileName());
+    return classification.kind == kiriview::ImageInputKind::Raw;
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDecodeJob::ImageDecodeJob(QObject *parent)
     : ImageDecodeJob(parent, Callbacks {})
 {

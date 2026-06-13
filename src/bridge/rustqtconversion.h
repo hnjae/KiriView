@@ -15,7 +15,7 @@
 #include <limits>
 #include <rust/cxx.h>
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 inline rust::Str rustStr(const QByteArray &bytes)
 {
     return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));

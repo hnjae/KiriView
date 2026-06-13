@@ -8,30 +8,30 @@
 #include <KLocalizedString>
 
 namespace {
-using ActionId = KiriView::ApplicationActions::ActionId;
+using ActionId = kiriview::ApplicationActions::ActionId;
 
 bool activeNavigationActionEnabled(
-    const KiriView::ApplicationActions::ApplicationActionStateInput &input)
+    const kiriview::ApplicationActions::ApplicationActionStateInput &input)
 {
     return input.helpActionsEnabled && input.activeNavigationAvailable
         && input.activeNavigationKnown && input.activeNavigationHasTargets
         && !input.fileDeletionInProgress;
 }
 
-bool videoSeekActionEnabled(const KiriView::ApplicationActions::ApplicationActionStateInput &input)
+bool videoSeekActionEnabled(const kiriview::ApplicationActions::ApplicationActionStateInput &input)
 {
     return input.videoMode && input.helpActionsEnabled && input.videoSeekable
         && !input.fileDeletionInProgress;
 }
 
-KiriView::ApplicationActions::ApplicationActionState state(bool enabled)
+kiriview::ApplicationActions::ApplicationActionState state(bool enabled)
 {
-    return KiriView::ApplicationActions::ApplicationActionState { enabled, true, false, false };
+    return kiriview::ApplicationActions::ApplicationActionState { enabled, true, false, false };
 }
 
-KiriView::ApplicationActions::ApplicationActionState checkableState(bool enabled, bool checked)
+kiriview::ApplicationActions::ApplicationActionState checkableState(bool enabled, bool checked)
 {
-    return KiriView::ApplicationActions::ApplicationActionState {
+    return kiriview::ApplicationActions::ApplicationActionState {
         enabled,
         true,
         true,
@@ -42,7 +42,7 @@ KiriView::ApplicationActions::ApplicationActionState checkableState(bool enabled
 QString emptyText() { return {}; }
 }
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 ApplicationActionState applicationActionState(
     ActionId actionId, const ApplicationActionStateInput &input)
 {

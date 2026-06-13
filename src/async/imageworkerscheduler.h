@@ -14,7 +14,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 using ImageWorkerOperation = std::function<void()>;
 using ImageWorkerCompletion = std::function<void()>;
 using ImageWorkerScheduleCallback

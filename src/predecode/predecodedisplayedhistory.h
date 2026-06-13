@@ -8,7 +8,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 class PredecodeDisplayedHistory
 {
 public:

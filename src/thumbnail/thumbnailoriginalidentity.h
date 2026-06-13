@@ -9,7 +9,7 @@
 #include <QtGlobal>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 enum class ThumbnailOriginalIdentityMode {
     LocalPath,
     NonFileUri,

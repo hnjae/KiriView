@@ -8,7 +8,7 @@
 #include <QObject>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ImageIoJobState::ImageIoJobState(QObject *object, CancelCallback cancelCallback)
     : m_token(object)
     , m_activeObject(object)

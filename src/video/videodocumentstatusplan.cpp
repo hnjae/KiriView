@@ -6,7 +6,7 @@
 #include "bridge/videodocumentpolicyconversion.h"
 #include "kiriview/src/policy/videodocumentpolicy.cxx.h"
 
-namespace KiriView {
+namespace kiriview {
 VideoDocumentStatusPlan videoDocumentStatusPlan(VideoDocumentStatusSnapshot snapshot)
 {
     return Bridge::videoDocumentStatusPlanFromRust(

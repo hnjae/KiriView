@@ -21,7 +21,7 @@ QImage testImage(const QSize &size)
     return image;
 }
 
-class ResultTileSource final : public KiriView::ImageTileSource
+class ResultTileSource final : public kiriview::ImageTileSource
 {
 public:
     explicit ResultTileSource(QSize imageSize = QSize(16, 16))
@@ -32,14 +32,14 @@ public:
     QSize imageSize() const override { return m_imageSize; }
     qsizetype byteCost() const override { return 1; }
 
-    std::optional<KiriView::DecodedTile> decodeTile(
-        const KiriView::TileRequest &, QString *) const override
+    std::optional<kiriview::DecodedTile> decodeTile(
+        const kiriview::TileRequest &, QString *) const override
     {
         return std::nullopt;
     }
 
-    KiriView::FirstDisplayImageDecodeResult decodeFirstDisplayImage(
-        const KiriView::ImageFirstDisplayDecodeContext &, QString *errorString) const override
+    kiriview::FirstDisplayImageDecodeResult decodeFirstDisplayImage(
+        const kiriview::ImageFirstDisplayDecodeContext &, QString *errorString) const override
     {
         ++firstDisplayDecodeCount;
         if (!firstDisplayError.isEmpty() && errorString != nullptr) {
@@ -58,7 +58,7 @@ public:
         return blockingDisplay;
     }
 
-    KiriView::FirstDisplayImageDecodeResult firstDisplayResult;
+    kiriview::FirstDisplayImageDecodeResult firstDisplayResult;
     QImage blockingDisplay;
     QString firstDisplayError;
     QString blockingDisplayError;
@@ -70,15 +70,15 @@ private:
     QSize m_imageSize;
 };
 
-const KiriView::StaticDecodedImage *staticDecodedImage(const KiriView::DecodedImageResult &result)
+const kiriview::StaticDecodedImage *staticDecodedImage(const kiriview::DecodedImageResult &result)
 {
-    return KiriView::decodedImageResultImageAs<KiriView::StaticDecodedImage>(result);
+    return kiriview::decodedImageResultImageAs<kiriview::StaticDecodedImage>(result);
 }
 
-KiriView::ImageDecodeRequest testDecodeRequest(
-    KiriView::ImageFirstDisplayDecodeContext firstDisplay = {})
+kiriview::ImageDecodeRequest testDecodeRequest(
+    kiriview::ImageFirstDisplayDecodeContext firstDisplay = {})
 {
-    return KiriView::ImageDecodeRequest::fromUrl(
+    return kiriview::ImageDecodeRequest::fromUrl(
         7, QUrl::fromLocalFile(QStringLiteral("/tmp/stage3-source.jpg")), std::move(firstDisplay));
 }
 }
@@ -99,23 +99,23 @@ private Q_SLOTS:
 void TestStaticImageDecode::staticResultUsesReadyFirstDisplayImage()
 {
     auto source = std::make_shared<ResultTileSource>();
-    source->firstDisplayResult = KiriView::FirstDisplayImageDecodeResult {
-        KiriView::FirstDisplayImageDecodeStatus::Ready,
+    source->firstDisplayResult = kiriview::FirstDisplayImageDecodeResult {
+        kiriview::FirstDisplayImageDecodeStatus::Ready,
         testImage(QSize(8, 4)),
         0.5,
     };
 
     QString errorString;
-    const KiriView::DecodedImageResult result = KiriView::staticDecodedImageResult(source,
-        testDecodeRequest(KiriView::ImageFirstDisplayDecodeContext { QSize(400, 300) }),
+    const kiriview::DecodedImageResult result = kiriview::staticDecodedImageResult(source,
+        testDecodeRequest(kiriview::ImageFirstDisplayDecodeContext { QSize(400, 300) }),
         &errorString);
 
-    const KiriView::StaticDecodedImage *decoded = staticDecodedImage(result);
+    const kiriview::StaticDecodedImage *decoded = staticDecodedImage(result);
     QVERIFY(decoded != nullptr);
     QCOMPARE(decoded->displayImage.refinementSource.get(), source.get());
     QCOMPARE(decoded->displayImage.image.size(), QSize(8, 4));
     QCOMPARE(decoded->displayImage.originalSize, QSize(16, 16));
-    QCOMPARE(decoded->displayImage.quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(decoded->displayImage.quality, kiriview::DisplayImageQuality::FirstDisplay);
     QCOMPARE(decoded->displayImage.displayPixelsPerSourcePixel, 0.5);
     QCOMPARE(decoded->displayImage.sourceIdentity, QStringLiteral("file:///tmp/stage3-source.jpg"));
     QVERIFY(decoded->displayImage.isValid());
@@ -130,21 +130,21 @@ void TestStaticImageDecode::staticResultFallsBackToBlockingPreview()
     source->blockingDisplay = testImage(QSize(12, 9));
 
     QString errorString;
-    const KiriView::DecodedImageResult result = KiriView::staticDecodedImageResult(source,
-        testDecodeRequest(KiriView::ImageFirstDisplayDecodeContext { QSize(400, 300) }),
+    const kiriview::DecodedImageResult result = kiriview::staticDecodedImageResult(source,
+        testDecodeRequest(kiriview::ImageFirstDisplayDecodeContext { QSize(400, 300) }),
         &errorString);
 
-    const KiriView::StaticDecodedImage *decoded = staticDecodedImage(result);
+    const kiriview::StaticDecodedImage *decoded = staticDecodedImage(result);
     QVERIFY(decoded != nullptr);
     QCOMPARE(decoded->displayImage.refinementSource.get(), source.get());
     QCOMPARE(decoded->displayImage.image.size(), QSize(12, 9));
     QCOMPARE(decoded->displayImage.originalSize, QSize(12, 9));
-    QCOMPARE(decoded->displayImage.quality, KiriView::DisplayImageQuality::Exact);
+    QCOMPARE(decoded->displayImage.quality, kiriview::DisplayImageQuality::Exact);
     QCOMPARE(decoded->displayImage.displayPixelsPerSourcePixel, 1.0);
-    QCOMPARE(decoded->displayImage.previewOrigin, KiriView::DisplayImagePreviewOrigin::None);
+    QCOMPARE(decoded->displayImage.previewOrigin, kiriview::DisplayImagePreviewOrigin::None);
     QCOMPARE(source->firstDisplayDecodeCount, 1);
     QCOMPARE(source->blockingDisplayDecodeCount, 1);
-    QCOMPARE(source->blockingDisplayMaximumLongEdge, KiriView::imageBlockingDisplayLongEdgeMax);
+    QCOMPARE(source->blockingDisplayMaximumLongEdge, kiriview::imageBlockingDisplayLongEdgeMax);
     QVERIFY(errorString.isEmpty());
 }
 
@@ -154,14 +154,14 @@ void TestStaticImageDecode::staticResultMarksScaledBlockingPreviewAsFirstDisplay
     source->blockingDisplay = testImage(QSize(2048, 1536));
 
     QString errorString;
-    const KiriView::DecodedImageResult result
-        = KiriView::staticDecodedImageResult(source, testDecodeRequest(), &errorString);
+    const kiriview::DecodedImageResult result
+        = kiriview::staticDecodedImageResult(source, testDecodeRequest(), &errorString);
 
-    const KiriView::StaticDecodedImage *decoded = staticDecodedImage(result);
+    const kiriview::StaticDecodedImage *decoded = staticDecodedImage(result);
     QVERIFY(decoded != nullptr);
     QCOMPARE(decoded->displayImage.image.size(), QSize(2048, 1536));
     QCOMPARE(decoded->displayImage.originalSize, QSize(4000, 3000));
-    QCOMPARE(decoded->displayImage.quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(decoded->displayImage.quality, kiriview::DisplayImageQuality::FirstDisplay);
     QVERIFY(decoded->displayImage.displayPixelsPerSourcePixel > 0.0);
     QVERIFY(decoded->displayImage.displayPixelsPerSourcePixel < 1.0);
     QVERIFY(errorString.isEmpty());
@@ -170,16 +170,16 @@ void TestStaticImageDecode::staticResultMarksScaledBlockingPreviewAsFirstDisplay
 void TestStaticImageDecode::staticResultReportsFirstDisplayErrors()
 {
     auto source = std::make_shared<ResultTileSource>();
-    source->firstDisplayResult.status = KiriView::FirstDisplayImageDecodeStatus::Error;
+    source->firstDisplayResult.status = kiriview::FirstDisplayImageDecodeStatus::Error;
     source->firstDisplayError = QStringLiteral("first display failed");
     source->blockingDisplay = testImage(QSize(12, 9));
 
     QString errorString;
-    const KiriView::DecodedImageResult result = KiriView::staticDecodedImageResult(source,
-        testDecodeRequest(KiriView::ImageFirstDisplayDecodeContext { QSize(400, 300) }),
+    const kiriview::DecodedImageResult result = kiriview::staticDecodedImageResult(source,
+        testDecodeRequest(kiriview::ImageFirstDisplayDecodeContext { QSize(400, 300) }),
         &errorString);
 
-    const KiriView::DecodedImageFailure *failure = KiriView::decodedImageResultFailure(result);
+    const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("first display failed"));
     QCOMPARE(source->firstDisplayDecodeCount, 1);
@@ -189,15 +189,15 @@ void TestStaticImageDecode::staticResultReportsFirstDisplayErrors()
 void TestStaticImageDecode::staticResultReportsMissingReadyFirstDisplayImage()
 {
     auto source = std::make_shared<ResultTileSource>();
-    source->firstDisplayResult.status = KiriView::FirstDisplayImageDecodeStatus::Ready;
+    source->firstDisplayResult.status = kiriview::FirstDisplayImageDecodeStatus::Ready;
     source->blockingDisplay = testImage(QSize(12, 9));
 
     QString errorString;
-    const KiriView::DecodedImageResult result = KiriView::staticDecodedImageResult(source,
-        testDecodeRequest(KiriView::ImageFirstDisplayDecodeContext { QSize(400, 300) }),
+    const kiriview::DecodedImageResult result = kiriview::staticDecodedImageResult(source,
+        testDecodeRequest(kiriview::ImageFirstDisplayDecodeContext { QSize(400, 300) }),
         &errorString);
 
-    QVERIFY(KiriView::decodedImageResultFailure(result) != nullptr);
+    QVERIFY(kiriview::decodedImageResultFailure(result) != nullptr);
     QCOMPARE(source->firstDisplayDecodeCount, 1);
     QCOMPARE(source->blockingDisplayDecodeCount, 0);
 }
@@ -208,11 +208,11 @@ void TestStaticImageDecode::staticResultReportsMissingBlockingPreview()
     source->blockingDisplayError = QStringLiteral("blocking display failed");
 
     QString errorString;
-    const KiriView::DecodedImageResult result = KiriView::staticDecodedImageResult(source,
-        testDecodeRequest(KiriView::ImageFirstDisplayDecodeContext { QSize(400, 300) }),
+    const kiriview::DecodedImageResult result = kiriview::staticDecodedImageResult(source,
+        testDecodeRequest(kiriview::ImageFirstDisplayDecodeContext { QSize(400, 300) }),
         &errorString);
 
-    const KiriView::DecodedImageFailure *failure = KiriView::decodedImageResultFailure(result);
+    const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("blocking display failed"));
     QCOMPARE(source->firstDisplayDecodeCount, 1);

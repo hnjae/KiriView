@@ -14,7 +14,7 @@
 #include <QVariantMap>
 #include <functional>
 
-namespace KiriView {
+namespace kiriview {
 using PowerProfilePortalReader = std::function<QVariantList()>;
 using PowerProfilePortalSubscription = std::function<void(QObject *)>;
 

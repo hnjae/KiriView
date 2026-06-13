@@ -8,14 +8,14 @@
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
-KiriView::OpenedCollectionScopeLocation archiveScope(const QString &scheme)
+kiriview::OpenedCollectionScopeLocation archiveScope(const QString &scheme)
 {
     QUrl rootUrl;
     rootUrl.setScheme(scheme);
     rootUrl.setPath(QStringLiteral("/books/book.%1/").arg(scheme));
-    return KiriView::OpenedCollectionScopeLocation::fromUrls(
+    return kiriview::OpenedCollectionScopeLocation::fromUrls(
         localUrl(QStringLiteral("/books/book.%1").arg(scheme)), rootUrl,
-        KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+        kiriview::OpenedCollectionScopeKind::ComicBookArchive);
 }
 }
 
@@ -34,13 +34,13 @@ private Q_SLOTS:
 };
 
 namespace {
-void expectNoRequest(const KiriView::MediaOpenWithPlan &plan)
+void expectNoRequest(const kiriview::MediaOpenWithPlan &plan)
 {
     QVERIFY(!plan.hasRequest());
     QVERIFY(!plan.request.has_value());
 }
 
-void expectRequestTarget(const KiriView::MediaOpenWithPlan &plan, const QUrl &targetUrl)
+void expectRequestTarget(const kiriview::MediaOpenWithPlan &plan, const QUrl &targetUrl)
 {
     QVERIFY(plan.hasRequest());
     QVERIFY(plan.request.has_value());
@@ -50,16 +50,16 @@ void expectRequestTarget(const KiriView::MediaOpenWithPlan &plan, const QUrl &ta
 
 void TestMediaOpenWithPlan::emptyAndUnreadyDocumentsHaveNoRequest()
 {
-    expectNoRequest(KiriView::mediaOpenWithPlan({}));
+    expectNoRequest(kiriview::mediaOpenWithPlan({}));
 
-    expectNoRequest(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
-        KiriView::DocumentSessionKind::Image,
+    expectNoRequest(kiriview::mediaOpenWithPlan(kiriview::MediaOpenWithPlanInput {
+        kiriview::DocumentSessionKind::Image,
         false,
         localUrl(QStringLiteral("/images/page.png")),
     }));
 
-    expectNoRequest(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
-        KiriView::DocumentSessionKind::Video,
+    expectNoRequest(kiriview::mediaOpenWithPlan(kiriview::MediaOpenWithPlanInput {
+        kiriview::DocumentSessionKind::Video,
         false,
         {},
         {},
@@ -71,8 +71,8 @@ void TestMediaOpenWithPlan::emptyAndUnreadyDocumentsHaveNoRequest()
 void TestMediaOpenWithPlan::directImageUsesDisplayedUrl()
 {
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
-    expectRequestTarget(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
-                            KiriView::DocumentSessionKind::Image,
+    expectRequestTarget(kiriview::mediaOpenWithPlan(kiriview::MediaOpenWithPlanInput {
+                            kiriview::DocumentSessionKind::Image,
                             true,
                             imageUrl,
                         }),
@@ -82,8 +82,8 @@ void TestMediaOpenWithPlan::directImageUsesDisplayedUrl()
 void TestMediaOpenWithPlan::directVideoUsesSourceUrl()
 {
     const QUrl videoUrl = localUrl(QStringLiteral("/videos/clip.mp4"));
-    expectRequestTarget(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
-                            KiriView::DocumentSessionKind::Video,
+    expectRequestTarget(kiriview::mediaOpenWithPlan(kiriview::MediaOpenWithPlanInput {
+                            kiriview::DocumentSessionKind::Video,
                             false,
                             {},
                             {},
@@ -96,11 +96,11 @@ void TestMediaOpenWithPlan::directVideoUsesSourceUrl()
 void TestMediaOpenWithPlan::directoryCollectionUsesCurrentImageUrl()
 {
     const QUrl imageUrl = localUrl(QStringLiteral("/book/page.png"));
-    const KiriView::OpenedCollectionScopeLocation scope
-        = KiriView::OpenedCollectionScopeLocation::fromUrls(localUrl(QStringLiteral("/book")),
-            localUrl(QStringLiteral("/book")), KiriView::OpenedCollectionScopeKind::Directory);
-    expectRequestTarget(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
-                            KiriView::DocumentSessionKind::Image,
+    const kiriview::OpenedCollectionScopeLocation scope
+        = kiriview::OpenedCollectionScopeLocation::fromUrls(localUrl(QStringLiteral("/book")),
+            localUrl(QStringLiteral("/book")), kiriview::OpenedCollectionScopeKind::Directory);
+    expectRequestTarget(kiriview::mediaOpenWithPlan(kiriview::MediaOpenWithPlanInput {
+                            kiriview::DocumentSessionKind::Image,
                             true,
                             imageUrl,
                             scope,
@@ -124,8 +124,8 @@ void TestMediaOpenWithPlan::kioSupportedArchiveCollectionsUseCurrentImageUrl()
     QUrl imageUrl;
     imageUrl.setScheme(scheme);
     imageUrl.setPath(QStringLiteral("/books/book.%1/page.png").arg(scheme));
-    expectRequestTarget(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
-                            KiriView::DocumentSessionKind::Image,
+    expectRequestTarget(kiriview::mediaOpenWithPlan(kiriview::MediaOpenWithPlanInput {
+                            kiriview::DocumentSessionKind::Image,
                             true,
                             imageUrl,
                             archiveScope(scheme),
@@ -138,8 +138,8 @@ void TestMediaOpenWithPlan::rarArchiveCollectionsHaveNoTarget()
     QUrl imageUrl;
     imageUrl.setScheme(QStringLiteral("rar"));
     imageUrl.setPath(QStringLiteral("/books/book.rar/page.png"));
-    expectNoRequest(KiriView::mediaOpenWithPlan(KiriView::MediaOpenWithPlanInput {
-        KiriView::DocumentSessionKind::Image,
+    expectNoRequest(kiriview::mediaOpenWithPlan(kiriview::MediaOpenWithPlanInput {
+        kiriview::DocumentSessionKind::Image,
         true,
         imageUrl,
         archiveScope(QStringLiteral("rar")),

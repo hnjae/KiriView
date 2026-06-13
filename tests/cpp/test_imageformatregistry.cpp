@@ -91,7 +91,7 @@ private Q_SLOTS:
 
 void TestImageFormatRegistry::supportedImageExtensionsIncludeAdvertisedFormats()
 {
-    const QStringList extensions = KiriView::supportedImageExtensions();
+    const QStringList extensions = kiriview::supportedImageExtensions();
 
     QVERIFY(extensions.contains(QStringLiteral("avci")));
     QVERIFY(extensions.contains(QStringLiteral("hej2")));
@@ -99,35 +99,35 @@ void TestImageFormatRegistry::supportedImageExtensionsIncludeAdvertisedFormats()
     QVERIFY(extensions.contains(QStringLiteral("heifs")));
     QVERIFY(extensions.contains(QStringLiteral("tif")));
     QVERIFY(extensions.contains(QStringLiteral("tiff")));
-    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("still.AVCI")));
-    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("still.HEJ2")));
-    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("sequence.HEICS")));
-    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("sequence.HEIFS")));
-    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("scan.TIF")));
-    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("scan.TIFF")));
+    QVERIFY(kiriview::isSupportedImageFileName(QStringLiteral("still.AVCI")));
+    QVERIFY(kiriview::isSupportedImageFileName(QStringLiteral("still.HEJ2")));
+    QVERIFY(kiriview::isSupportedImageFileName(QStringLiteral("sequence.HEICS")));
+    QVERIFY(kiriview::isSupportedImageFileName(QStringLiteral("sequence.HEIFS")));
+    QVERIFY(kiriview::isSupportedImageFileName(QStringLiteral("scan.TIF")));
+    QVERIFY(kiriview::isSupportedImageFileName(QStringLiteral("scan.TIFF")));
 }
 
 void TestImageFormatRegistry::supportedImageExtensionsIncludeRawFormats()
 {
-    const QStringList extensions = KiriView::supportedImageExtensions();
+    const QStringList extensions = kiriview::supportedImageExtensions();
     for (const QString &extension : expectedRawExtensions()) {
         QVERIFY2(extensions.contains(extension), qPrintable(extension));
-        QVERIFY2(KiriView::isSupportedImageFileName(QStringLiteral("image.%1").arg(extension)),
+        QVERIFY2(kiriview::isSupportedImageFileName(QStringLiteral("image.%1").arg(extension)),
             qPrintable(extension));
-        QVERIFY2(KiriView::isSupportedRawImageFileName(QStringLiteral("image.%1").arg(extension)),
+        QVERIFY2(kiriview::isSupportedRawImageFileName(QStringLiteral("image.%1").arg(extension)),
             qPrintable(extension));
-        QVERIFY2(KiriView::isSupportedRawImageFileName(
+        QVERIFY2(kiriview::isSupportedRawImageFileName(
                      QStringLiteral("image.%1").arg(extension.toUpper())),
             qPrintable(extension));
     }
 
-    QVERIFY(!KiriView::isSupportedRawImageFileName(QStringLiteral("scan.tif")));
-    QVERIFY(!KiriView::isSupportedRawImageFileName(QStringLiteral("image.png")));
+    QVERIFY(!kiriview::isSupportedRawImageFileName(QStringLiteral("scan.tif")));
+    QVERIFY(!kiriview::isSupportedRawImageFileName(QStringLiteral("image.png")));
 }
 
 void TestImageFormatRegistry::supportedImageMimeTypesIncludeRawFormats()
 {
-    const QStringList mimeTypes = KiriView::supportedImageMimeTypes();
+    const QStringList mimeTypes = kiriview::supportedImageMimeTypes();
     for (const QString &mimeType : expectedRawMimeTypes()) {
         QVERIFY2(mimeTypes.contains(mimeType), qPrintable(mimeType));
     }
@@ -135,7 +135,7 @@ void TestImageFormatRegistry::supportedImageMimeTypesIncludeRawFormats()
 
 void TestImageFormatRegistry::supportedOpenExtensionsIncludeComicBookArchives()
 {
-    const QStringList extensions = KiriView::supportedOpenExtensions();
+    const QStringList extensions = kiriview::supportedOpenExtensions();
 
     QVERIFY(extensions.contains(QStringLiteral("cbz")));
     QVERIFY(extensions.contains(QStringLiteral("cbt")));
@@ -145,7 +145,7 @@ void TestImageFormatRegistry::supportedOpenExtensionsIncludeComicBookArchives()
 
 void TestImageFormatRegistry::supportedOpenExtensionsDoNotAdvertiseGeneralArchives()
 {
-    const QStringList extensions = KiriView::supportedOpenExtensions();
+    const QStringList extensions = kiriview::supportedOpenExtensions();
 
     QVERIFY(!extensions.contains(QStringLiteral("zip")));
     QVERIFY(!extensions.contains(QStringLiteral("tar")));

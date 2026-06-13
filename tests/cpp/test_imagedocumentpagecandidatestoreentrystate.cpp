@@ -15,17 +15,17 @@
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
-KiriView::ImageDocumentPageCandidate candidate(const QString &path, const QString &name)
+kiriview::ImageDocumentPageCandidate candidate(const QString &path, const QString &name)
 {
-    return KiriView::ImageDocumentPageCandidate {
+    return kiriview::ImageDocumentPageCandidate {
         localUrl(path),
         name,
     };
 }
 
-std::vector<KiriView::ImageDocumentPageCandidate> candidates(std::initializer_list<QString> names)
+std::vector<kiriview::ImageDocumentPageCandidate> candidates(std::initializer_list<QString> names)
 {
-    std::vector<KiriView::ImageDocumentPageCandidate> result;
+    std::vector<kiriview::ImageDocumentPageCandidate> result;
     result.reserve(names.size());
     for (const QString &name : names) {
         result.push_back(candidate(QStringLiteral("/images/%1").arg(name), name));
@@ -33,12 +33,12 @@ std::vector<KiriView::ImageDocumentPageCandidate> candidates(std::initializer_li
     return result;
 }
 
-KiriView::ImageIoJob addPendingLoad(KiriView::ImageDocumentPageCandidateStoreEntryState &state,
-    QObject *parent, KiriView::ImageDocumentPageCandidatesCallback callback,
-    KiriView::ErrorCallback errorCallback, std::function<void(QObject *)> removeToken)
+kiriview::ImageIoJob addPendingLoad(kiriview::ImageDocumentPageCandidateStoreEntryState &state,
+    QObject *parent, kiriview::ImageDocumentPageCandidatesCallback callback,
+    kiriview::ErrorCallback errorCallback, std::function<void(QObject *)> removeToken)
 {
     QObject *token = new QObject(parent);
-    KiriView::ImageIoJob job(token, [removeToken = std::move(removeToken)](QObject *object) {
+    kiriview::ImageIoJob job(token, [removeToken = std::move(removeToken)](QObject *object) {
         removeToken(object);
         object->deleteLater();
     });
@@ -46,12 +46,12 @@ KiriView::ImageIoJob addPendingLoad(KiriView::ImageDocumentPageCandidateStoreEnt
     return job;
 }
 
-KiriView::ImageIoJob addSubscriber(KiriView::ImageDocumentPageCandidateStoreEntryState &state,
-    QObject *parent, KiriView::ImageDocumentPageCandidatesCallback callback,
-    KiriView::ErrorCallback errorCallback, std::function<void(QObject *)> removeToken)
+kiriview::ImageIoJob addSubscriber(kiriview::ImageDocumentPageCandidateStoreEntryState &state,
+    QObject *parent, kiriview::ImageDocumentPageCandidatesCallback callback,
+    kiriview::ErrorCallback errorCallback, std::function<void(QObject *)> removeToken)
 {
     QObject *token = new QObject(parent);
-    KiriView::ImageIoJob job(token, [removeToken = std::move(removeToken)](QObject *object) {
+    kiriview::ImageIoJob job(token, [removeToken = std::move(removeToken)](QObject *object) {
         removeToken(object);
         object->deleteLater();
     });
@@ -60,9 +60,9 @@ KiriView::ImageIoJob addSubscriber(KiriView::ImageDocumentPageCandidateStoreEntr
 }
 
 void deliverCandidatePlan(
-    const KiriView::ImageDocumentPageCandidateStoreEntryNotificationPlan &plan)
+    const kiriview::ImageDocumentPageCandidateStoreEntryNotificationPlan &plan)
 {
-    for (const KiriView::ImageDocumentPageCandidateStoreEntryPendingLoad &load :
+    for (const kiriview::ImageDocumentPageCandidateStoreEntryPendingLoad &load :
         plan.completedLoads) {
         load.completion.claimAndDelete([&]() {
             if (load.callback) {
@@ -70,7 +70,7 @@ void deliverCandidatePlan(
             }
         });
     }
-    for (const KiriView::ImageDocumentPageCandidateStoreEntrySubscriber &subscriber :
+    for (const kiriview::ImageDocumentPageCandidateStoreEntrySubscriber &subscriber :
         plan.changedSubscribers) {
         if (subscriber.callback) {
             subscriber.callback(plan.candidates);
@@ -78,16 +78,16 @@ void deliverCandidatePlan(
     }
 }
 
-void deliverErrorPlan(const KiriView::ImageDocumentPageCandidateStoreEntryNotificationPlan &plan)
+void deliverErrorPlan(const kiriview::ImageDocumentPageCandidateStoreEntryNotificationPlan &plan)
 {
-    for (const KiriView::ImageDocumentPageCandidateStoreEntryPendingLoad &load : plan.failedLoads) {
+    for (const kiriview::ImageDocumentPageCandidateStoreEntryPendingLoad &load : plan.failedLoads) {
         load.completion.claimAndDelete([&]() {
             if (load.errorCallback) {
                 load.errorCallback(plan.errorString);
             }
         });
     }
-    for (const KiriView::ImageDocumentPageCandidateStoreEntrySubscriber &subscriber :
+    for (const kiriview::ImageDocumentPageCandidateStoreEntrySubscriber &subscriber :
         plan.failedSubscribers) {
         if (subscriber.errorCallback) {
             subscriber.errorCallback(plan.errorString);
@@ -110,14 +110,14 @@ private Q_SLOTS:
 void TestImageDocumentPageCandidateStoreEntryState::
     completedListingReturnsPendingLoadPlanAndCachesCandidates()
 {
-    KiriView::ImageDocumentPageCandidateStoreEntryState state;
-    std::vector<KiriView::ImageDocumentPageCandidate> loadedCandidates;
+    kiriview::ImageDocumentPageCandidateStoreEntryState state;
+    std::vector<kiriview::ImageDocumentPageCandidate> loadedCandidates;
     int errorCount = 0;
     int cancelCount = 0;
 
-    KiriView::ImageIoJob job = addPendingLoad(
+    kiriview::ImageIoJob job = addPendingLoad(
         state, this,
-        [&loadedCandidates](std::vector<KiriView::ImageDocumentPageCandidate> candidates) {
+        [&loadedCandidates](std::vector<kiriview::ImageDocumentPageCandidate> candidates) {
             loadedCandidates = std::move(candidates);
         },
         [&errorCount](const QString &) { ++errorCount; },
@@ -127,7 +127,7 @@ void TestImageDocumentPageCandidateStoreEntryState::
         });
 
     QVERIFY(job.isActive());
-    const KiriView::ImageDocumentPageCandidateStoreEntryNotificationPlan plan
+    const kiriview::ImageDocumentPageCandidateStoreEntryNotificationPlan plan
         = state.completeListing(candidates({ QStringLiteral("01.png"), QStringLiteral("02.png") }));
 
     QVERIFY(state.listed());
@@ -151,13 +151,13 @@ void TestImageDocumentPageCandidateStoreEntryState::
 
 void TestImageDocumentPageCandidateStoreEntryState::cancelledPendingLoadDoesNotReceiveCompletion()
 {
-    KiriView::ImageDocumentPageCandidateStoreEntryState state;
+    kiriview::ImageDocumentPageCandidateStoreEntryState state;
     int loadCount = 0;
     int cancelCount = 0;
 
-    KiriView::ImageIoJob job = addPendingLoad(
+    kiriview::ImageIoJob job = addPendingLoad(
         state, this,
-        [&loadCount](std::vector<KiriView::ImageDocumentPageCandidate>) { ++loadCount; },
+        [&loadCount](std::vector<kiriview::ImageDocumentPageCandidate>) { ++loadCount; },
         [](const QString &) {},
         [&state, &cancelCount](QObject *token) {
             ++cancelCount;
@@ -165,7 +165,7 @@ void TestImageDocumentPageCandidateStoreEntryState::cancelledPendingLoadDoesNotR
         });
 
     job.cancel();
-    const KiriView::ImageDocumentPageCandidateStoreEntryNotificationPlan plan
+    const kiriview::ImageDocumentPageCandidateStoreEntryNotificationPlan plan
         = state.completeListing(candidates({ QStringLiteral("01.png") }));
 
     QCOMPARE(plan.completedLoads.size(), std::size_t(0));
@@ -176,15 +176,15 @@ void TestImageDocumentPageCandidateStoreEntryState::cancelledPendingLoadDoesNotR
 
 void TestImageDocumentPageCandidateStoreEntryState::subscribersOnlyReceivePlansAfterInitialListing()
 {
-    KiriView::ImageDocumentPageCandidateStoreEntryState state;
-    std::vector<KiriView::ImageDocumentPageCandidate> changedCandidates;
+    kiriview::ImageDocumentPageCandidateStoreEntryState state;
+    std::vector<kiriview::ImageDocumentPageCandidate> changedCandidates;
     int changeCount = 0;
     int cancelCount = 0;
 
-    KiriView::ImageIoJob job = addSubscriber(
+    kiriview::ImageIoJob job = addSubscriber(
         state, this,
         [&changedCandidates, &changeCount](
-            std::vector<KiriView::ImageDocumentPageCandidate> candidates) {
+            std::vector<kiriview::ImageDocumentPageCandidate> candidates) {
             changedCandidates = std::move(candidates);
             ++changeCount;
         },
@@ -194,7 +194,7 @@ void TestImageDocumentPageCandidateStoreEntryState::subscribersOnlyReceivePlansA
             state.removeSubscriber(token);
         });
 
-    KiriView::ImageDocumentPageCandidateStoreEntryNotificationPlan plan
+    kiriview::ImageDocumentPageCandidateStoreEntryNotificationPlan plan
         = state.completeListing(candidates({ QStringLiteral("01.png") }));
     QCOMPARE(plan.changedSubscribers.size(), std::size_t(0));
     QCOMPARE(changeCount, 0);
@@ -221,25 +221,25 @@ void TestImageDocumentPageCandidateStoreEntryState::subscribersOnlyReceivePlansA
 void TestImageDocumentPageCandidateStoreEntryState::
     failedListingReturnsErrorPlansForPendingLoadsAndSubscribers()
 {
-    KiriView::ImageDocumentPageCandidateStoreEntryState state;
+    kiriview::ImageDocumentPageCandidateStoreEntryState state;
     QString pendingError;
     QString subscriberError;
     int loadCount = 0;
     int subscriberChangeCount = 0;
 
-    KiriView::ImageIoJob pending = addPendingLoad(
+    kiriview::ImageIoJob pending = addPendingLoad(
         state, this,
-        [&loadCount](std::vector<KiriView::ImageDocumentPageCandidate>) { ++loadCount; },
+        [&loadCount](std::vector<kiriview::ImageDocumentPageCandidate>) { ++loadCount; },
         [&pendingError](const QString &errorString) { pendingError = errorString; },
         [&state](QObject *token) { state.removePendingLoad(token); });
-    KiriView::ImageIoJob subscriber = addSubscriber(
+    kiriview::ImageIoJob subscriber = addSubscriber(
         state, this,
         [&subscriberChangeCount](
-            std::vector<KiriView::ImageDocumentPageCandidate>) { ++subscriberChangeCount; },
+            std::vector<kiriview::ImageDocumentPageCandidate>) { ++subscriberChangeCount; },
         [&subscriberError](const QString &errorString) { subscriberError = errorString; },
         [&state](QObject *token) { state.removeSubscriber(token); });
 
-    const KiriView::ImageDocumentPageCandidateStoreEntryNotificationPlan plan
+    const kiriview::ImageDocumentPageCandidateStoreEntryNotificationPlan plan
         = state.failListing(QStringLiteral("missing directory"));
 
     QVERIFY(state.failed());

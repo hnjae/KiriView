@@ -13,7 +13,7 @@
 #include <memory>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 class SvgTileSource final : public ImageTileSource
 {
 public:

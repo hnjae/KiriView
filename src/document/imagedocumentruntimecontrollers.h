@@ -15,7 +15,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 class MediaEntrySourceStore;
 class ImageDocumentDeletionController;
 class ImageDocumentRuntimePlanExecutor;

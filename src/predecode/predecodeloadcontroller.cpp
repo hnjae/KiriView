@@ -11,7 +11,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 PredecodeLoadController::PredecodeLoadController(
     QObject *parent, ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget)
     : m_parent(parent)

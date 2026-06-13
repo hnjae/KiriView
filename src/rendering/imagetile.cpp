@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 uint qHash(const TileKey &key, uint seed)
 {
     return qHashMulti(seed, key.level, key.x, key.y, key.scaleBucket);

@@ -12,7 +12,7 @@
 #include <QtGlobal>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 class QImageReaderScaledLevelCache final
 {
 public:

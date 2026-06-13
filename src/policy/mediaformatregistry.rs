@@ -9,7 +9,7 @@ use crate::videoformatregistry::{
     supported_direct_video_mime_types,
 };
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     extern "Rust" {
         #[cxx_name = "rustSupportedOrdinaryMediaExtensions"]

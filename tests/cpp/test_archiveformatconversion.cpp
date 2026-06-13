@@ -27,47 +27,47 @@ private Q_SLOTS:
 
 void TestArchiveFormatConversion::archiveStorageBackendProjectsBridgeEnums()
 {
-    QCOMPARE(KiriView::archiveStorageBackendFromBridge(KiriView::RustArchiveStorageBackend::None),
-        KiriView::ArchiveStorageBackend::None);
-    QCOMPARE(KiriView::archiveStorageBackendFromBridge(KiriView::RustArchiveStorageBackend::KZip),
-        KiriView::ArchiveStorageBackend::KZip);
-    QCOMPARE(KiriView::archiveStorageBackendFromBridge(KiriView::RustArchiveStorageBackend::KTar),
-        KiriView::ArchiveStorageBackend::KTar);
-    QCOMPARE(KiriView::archiveStorageBackendFromBridge(KiriView::RustArchiveStorageBackend::K7Zip),
-        KiriView::ArchiveStorageBackend::K7Zip);
+    QCOMPARE(kiriview::archiveStorageBackendFromBridge(kiriview::RustArchiveStorageBackend::None),
+        kiriview::ArchiveStorageBackend::None);
+    QCOMPARE(kiriview::archiveStorageBackendFromBridge(kiriview::RustArchiveStorageBackend::KZip),
+        kiriview::ArchiveStorageBackend::KZip);
+    QCOMPARE(kiriview::archiveStorageBackendFromBridge(kiriview::RustArchiveStorageBackend::KTar),
+        kiriview::ArchiveStorageBackend::KTar);
+    QCOMPARE(kiriview::archiveStorageBackendFromBridge(kiriview::RustArchiveStorageBackend::K7Zip),
+        kiriview::ArchiveStorageBackend::K7Zip);
     QCOMPARE(
-        KiriView::archiveStorageBackendFromBridge(KiriView::RustArchiveStorageBackend::LibArchive),
-        KiriView::ArchiveStorageBackend::LibArchive);
+        kiriview::archiveStorageBackendFromBridge(kiriview::RustArchiveStorageBackend::LibArchive),
+        kiriview::ArchiveStorageBackend::LibArchive);
 }
 
 void TestArchiveFormatConversion::archiveOpenMatchProjectsAbsentAndFoundBridgeValues()
 {
-    QVERIFY(!KiriView::archiveOpenMatchFromBridge(KiriView::RustArchiveOpenMatch {
+    QVERIFY(!kiriview::archiveOpenMatchFromBridge(kiriview::RustArchiveOpenMatch {
                                                       false,
                                                       rustString(QStringLiteral("zip")),
-                                                      KiriView::RustArchiveOpenMatchKind::ComicBook,
+                                                      kiriview::RustArchiveOpenMatchKind::ComicBook,
                                                   })
             .has_value());
 
-    const std::optional<KiriView::ArchiveOpenMatch> comicBookMatch
-        = KiriView::archiveOpenMatchFromBridge(KiriView::RustArchiveOpenMatch {
+    const std::optional<kiriview::ArchiveOpenMatch> comicBookMatch
+        = kiriview::archiveOpenMatchFromBridge(kiriview::RustArchiveOpenMatch {
             true,
             rustString(QStringLiteral("zip")),
-            KiriView::RustArchiveOpenMatchKind::ComicBook,
+            kiriview::RustArchiveOpenMatchKind::ComicBook,
         });
     QVERIFY(comicBookMatch.has_value());
     QCOMPARE(comicBookMatch->scheme, QStringLiteral("zip"));
-    QVERIFY(comicBookMatch->kind == KiriView::ArchiveOpenMatchKind::ComicBook);
+    QVERIFY(comicBookMatch->kind == kiriview::ArchiveOpenMatchKind::ComicBook);
 
-    const std::optional<KiriView::ArchiveOpenMatch> archiveMatch
-        = KiriView::archiveOpenMatchFromBridge(KiriView::RustArchiveOpenMatch {
+    const std::optional<kiriview::ArchiveOpenMatch> archiveMatch
+        = kiriview::archiveOpenMatchFromBridge(kiriview::RustArchiveOpenMatch {
             true,
             rustString(QStringLiteral("rar")),
-            KiriView::RustArchiveOpenMatchKind::GeneralArchive,
+            kiriview::RustArchiveOpenMatchKind::GeneralArchive,
         });
     QVERIFY(archiveMatch.has_value());
     QCOMPARE(archiveMatch->scheme, QStringLiteral("rar"));
-    QVERIFY(archiveMatch->kind == KiriView::ArchiveOpenMatchKind::GeneralArchive);
+    QVERIFY(archiveMatch->kind == kiriview::ArchiveOpenMatchKind::GeneralArchive);
 }
 
 QTEST_GUILESS_MAIN(TestArchiveFormatConversion)

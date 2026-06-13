@@ -10,7 +10,7 @@
 #include <QObject>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 namespace Detail {
     inline void cancelImageIoWorkerToken(QObject *object)
     {

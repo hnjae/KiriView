@@ -312,9 +312,9 @@ public:
     QPointF viewportContentPosition() const { return viewportFrame().contentPosition; }
     void setViewportContentPosition(const QPointF &viewportContentPosition)
     {
-        const KiriView::ImageViewportFrame previousFrame = viewportFrame();
+        const kiriview::ImageViewportFrame previousFrame = viewportFrame();
         m_viewportContentPosition = viewportContentPosition;
-        const KiriView::ImageViewportFrame nextFrame = viewportFrame();
+        const kiriview::ImageViewportFrame nextFrame = viewportFrame();
         m_viewportContentPosition = nextFrame.contentPosition;
         if (previousFrame != nextFrame) {
             Q_EMIT viewportFrameChanged();
@@ -349,7 +349,7 @@ public:
 
     QSizeF displaySize() const
     {
-        return KiriView::imageViewportDisplaySizeForZoom(imageSize(), m_zoomPercent, 1.0);
+        return kiriview::imageViewportDisplaySizeForZoom(imageSize(), m_zoomPercent, 1.0);
     }
 
     double displayWidth() const { return displaySize().width(); }
@@ -482,14 +482,14 @@ public:
     Q_INVOKABLE bool viewportPointInsideImage(const QPointF &viewportPoint) const
     {
         ++m_documentHitTestHelperCallCount;
-        return KiriView::imageViewportPointInsideImage(
+        return kiriview::imageViewportPointInsideImage(
             viewportContentPosition(), viewportPoint, viewportImageRect());
     }
 
     Q_INVOKABLE QPointF nearestImageViewportPoint(const QPointF &viewportAnchorPoint) const
     {
         ++m_documentHitTestHelperCallCount;
-        return KiriView::imageViewportNearestImagePoint(
+        return kiriview::imageViewportNearestImagePoint(
             viewportContentPosition(), viewportAnchorPoint, viewportImageRect());
     }
 
@@ -518,7 +518,7 @@ public:
         }
 
         return requestViewportInteractionContentPosition(
-            KiriView::imageViewportPanPosition(m_viewportSize, viewportImageRect(),
+            kiriview::imageViewportPanPosition(m_viewportSize, viewportImageRect(),
                 viewportContentPosition(), QPointF(deltaX, deltaY)));
     }
 
@@ -529,7 +529,7 @@ public:
         }
 
         return requestViewportInteractionContentPosition(
-            KiriView::imageViewportInitialZScanPosition(m_viewportSize, viewportImageRect()));
+            kiriview::imageViewportInitialZScanPosition(m_viewportSize, viewportImageRect()));
     }
 
     Q_INVOKABLE bool requestViewportPanToFinalScanPosition()
@@ -539,7 +539,7 @@ public:
         }
 
         return requestViewportInteractionContentPosition(
-            KiriView::imageViewportFinalZScanPosition(m_viewportSize, viewportImageRect()));
+            kiriview::imageViewportFinalZScanPosition(m_viewportSize, viewportImageRect()));
     }
 
     Q_INVOKABLE bool requestViewportScanForward()
@@ -548,7 +548,7 @@ public:
             return false;
         }
 
-        return requestViewportInteractionContentPosition(KiriView::imageViewportNextZScanPosition(
+        return requestViewportInteractionContentPosition(kiriview::imageViewportNextZScanPosition(
             m_viewportSize, viewportImageRect(), viewportContentPosition()));
     }
 
@@ -559,7 +559,7 @@ public:
         }
 
         return requestViewportInteractionContentPosition(
-            KiriView::imageViewportPreviousZScanPosition(
+            kiriview::imageViewportPreviousZScanPosition(
                 m_viewportSize, viewportImageRect(), viewportContentPosition()));
     }
 
@@ -617,7 +617,7 @@ public:
     Q_INVOKABLE bool requestDisplayedImageInitialContentPosition()
     {
         return requestViewportInteractionContentPosition(
-            KiriView::imageViewportInitialZScanPosition(m_viewportSize, viewportImageRect()));
+            kiriview::imageViewportInitialZScanPosition(m_viewportSize, viewportImageRect()));
     }
 
     Q_INVOKABLE bool requestViewportContentPosition(const QPointF &viewportContentPosition)
@@ -717,9 +717,9 @@ private:
 
     quint64 issueViewportContentPositionCommand(const QPointF &viewportContentPosition)
     {
-        const KiriView::ImageViewportFrame previousFrame = viewportFrame();
+        const kiriview::ImageViewportFrame previousFrame = viewportFrame();
         m_viewportContentPosition = viewportContentPosition;
-        const KiriView::ImageViewportFrame nextFrame = viewportFrame();
+        const kiriview::ImageViewportFrame nextFrame = viewportFrame();
         m_viewportContentPosition = nextFrame.contentPosition;
         ++m_viewportCommandRevision;
         m_viewportCommandStatus = ViewportCommandStatus::Pending;
@@ -805,9 +805,9 @@ private:
         }
 
         const QSizeF nextDisplaySize
-            = KiriView::imageViewportDisplaySizeForZoom(imageSize(), nextZoomPercent, 1.0);
+            = kiriview::imageViewportDisplaySizeForZoom(imageSize(), nextZoomPercent, 1.0);
         const QPointF nextContentPosition
-            = KiriView::imageViewportContentPositionForZoom(m_viewportSize, displaySize(),
+            = kiriview::imageViewportContentPositionForZoom(m_viewportSize, displaySize(),
                 nextDisplaySize, viewportContentPosition(), viewportAnchorPoint);
         setZoomPercent(nextZoomPercent);
         requestViewportInteractionContentPosition(nextContentPosition);
@@ -835,9 +835,9 @@ private:
         return 100.0;
     }
 
-    KiriView::ImageViewportFrame viewportFrame() const
+    kiriview::ImageViewportFrame viewportFrame() const
     {
-        return KiriView::projectImageViewportFrame(
+        return kiriview::projectImageViewportFrame(
             m_viewportSize, displaySize(), m_viewportContentPosition);
     }
 

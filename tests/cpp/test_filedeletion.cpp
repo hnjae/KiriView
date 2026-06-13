@@ -17,15 +17,15 @@ private Q_SLOTS:
 void TestFileDeletion::completionActionRoutesDeletionResults()
 {
     QCOMPARE(static_cast<int>(
-                 KiriView::fileDeletionCompletionAction(KiriView::FileDeletionResult::Succeeded)),
+                 kiriview::fileDeletionCompletionAction(kiriview::FileDeletionResult::Succeeded)),
         static_cast<int>(
-            KiriView::FileDeletionCompletionAction::ClearDeletedTargetAndOpenFallback));
+            kiriview::FileDeletionCompletionAction::ClearDeletedTargetAndOpenFallback));
     QCOMPARE(static_cast<int>(
-                 KiriView::fileDeletionCompletionAction(KiriView::FileDeletionResult::Canceled)),
-        static_cast<int>(KiriView::FileDeletionCompletionAction::Ignore));
+                 kiriview::fileDeletionCompletionAction(kiriview::FileDeletionResult::Canceled)),
+        static_cast<int>(kiriview::FileDeletionCompletionAction::Ignore));
     QCOMPARE(static_cast<int>(
-                 KiriView::fileDeletionCompletionAction(KiriView::FileDeletionResult::Failed)),
-        static_cast<int>(KiriView::FileDeletionCompletionAction::ReportFailure));
+                 kiriview::fileDeletionCompletionAction(kiriview::FileDeletionResult::Failed)),
+        static_cast<int>(kiriview::FileDeletionCompletionAction::ReportFailure));
 }
 
 QTEST_GUILESS_MAIN(TestFileDeletion)

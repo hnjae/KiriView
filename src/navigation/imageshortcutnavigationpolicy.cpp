@@ -3,7 +3,7 @@
 
 #include "imageshortcutnavigationpolicy.h"
 
-namespace KiriView {
+namespace kiriview {
 ImageShortcutNavigationPolicy::HorizontalArrowAction
 ImageShortcutNavigationPolicy::horizontalArrowAction(
     bool leftArrow, bool horizontallyPannable, bool rightToLeftReadingActive) const

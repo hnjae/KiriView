@@ -20,7 +20,7 @@ private Q_SLOTS:
 
 void TestImageAsyncTicket::ticketsAreInactiveUntilAdvanced()
 {
-    KiriView::ImageAsyncTicket ticket;
+    kiriview::ImageAsyncTicket ticket;
 
     QCOMPARE(ticket.current(), quint64(0));
     QVERIFY(!ticket.accepts(0));
@@ -28,7 +28,7 @@ void TestImageAsyncTicket::ticketsAreInactiveUntilAdvanced()
 
 void TestImageAsyncTicket::nextPublishesOnlyCurrentNonZeroTicket()
 {
-    KiriView::ImageAsyncTicket ticket;
+    kiriview::ImageAsyncTicket ticket;
 
     const quint64 first = ticket.next();
     const quint64 second = ticket.next();
@@ -42,7 +42,7 @@ void TestImageAsyncTicket::nextPublishesOnlyCurrentNonZeroTicket()
 
 void TestImageAsyncTicket::invalidateRejectsPreviousTicket()
 {
-    KiriView::ImageAsyncTicket ticket;
+    kiriview::ImageAsyncTicket ticket;
     const quint64 stale = ticket.next();
 
     ticket.invalidate();
@@ -53,7 +53,7 @@ void TestImageAsyncTicket::invalidateRejectsPreviousTicket()
 
 void TestImageAsyncTicket::ticketsStayNonZeroAfterWrap()
 {
-    KiriView::ImageAsyncTicket ticket(std::numeric_limits<quint64>::max());
+    kiriview::ImageAsyncTicket ticket(std::numeric_limits<quint64>::max());
 
     QCOMPARE(ticket.next(), quint64(1));
     QVERIFY(ticket.accepts(1));

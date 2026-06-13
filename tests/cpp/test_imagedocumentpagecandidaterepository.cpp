@@ -13,15 +13,15 @@
 #include <vector>
 
 namespace {
-using KiriView::ContainerNavigationCandidate;
-using KiriView::ContainerNavigationCandidateType;
-using KiriView::ImageDocumentPageCandidate;
-using KiriView::ImageDocumentPageCandidateListSource;
-using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::containerCandidate;
-using KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
-using KiriView::TestSupport::imageDocumentPageCandidate;
-using KiriView::TestSupport::localUrl;
+using kiriview::ContainerNavigationCandidate;
+using kiriview::ContainerNavigationCandidateType;
+using kiriview::ImageDocumentPageCandidate;
+using kiriview::ImageDocumentPageCandidateListSource;
+using kiriview::TestSupport::archivePageUrl;
+using kiriview::TestSupport::containerCandidate;
+using kiriview::TestSupport::FakeImageDocumentPageCandidateProvider;
+using kiriview::TestSupport::imageDocumentPageCandidate;
+using kiriview::TestSupport::localUrl;
 
 void compareSingleImageDocumentPageCandidate(
     const std::vector<ImageDocumentPageCandidate> &candidates, const QUrl &url)
@@ -56,7 +56,7 @@ void TestImageDocumentPageCandidateRepository::loadImagesRoutesDirectorySources(
     const QUrl imageUrl = localUrl(QStringLiteral("/books/a/01.png"));
     fakeProvider.setDirectoryImages(directoryUrl, { imageDocumentPageCandidate(imageUrl) });
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     std::vector<ImageDocumentPageCandidate> loadedCandidates;
     repository.loadImages(nullptr, ImageDocumentPageCandidateListSource::forDirectory(directoryUrl),
         [&loadedCandidates](std::vector<ImageDocumentPageCandidate> candidates) {
@@ -71,15 +71,15 @@ void TestImageDocumentPageCandidateRepository::loadImagesRoutesArchiveSources()
 {
     FakeImageDocumentPageCandidateProvider fakeProvider;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> openedCollectionScope
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> openedCollectionScope
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(openedCollectionScope.has_value());
     const QUrl imageUrl
         = archivePageUrl(openedCollectionScope->rootUrl(), QStringLiteral("01.png"));
     fakeProvider.setOpenedCollectionCandidates(
         openedCollectionScope->rootUrl(), { imageDocumentPageCandidate(imageUrl) });
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     std::vector<ImageDocumentPageCandidate> loadedCandidates;
     repository.loadImages(nullptr,
         ImageDocumentPageCandidateListSource::forOpenedCollectionScope(*openedCollectionScope),
@@ -99,7 +99,7 @@ void TestImageDocumentPageCandidateRepository::loadContainersRoutesDirectoryCont
     fakeProvider.setContainerCandidates(directoryUrl,
         { containerCandidate(containerUrl, ContainerNavigationCandidateType::Directory) });
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     std::vector<ContainerNavigationCandidate> loadedCandidates;
     repository.loadContainers(nullptr, directoryUrl,
         [&loadedCandidates](std::vector<ContainerNavigationCandidate> candidates) {
@@ -117,9 +117,9 @@ void TestImageDocumentPageCandidateRepository::watchCandidateChangesRoutesDirect
     const QUrl imageUrl = localUrl(QStringLiteral("/books/a/01.png"));
     QObject receiver;
 
-    KiriView::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
+    kiriview::ImageDocumentPageCandidateRepository repository(fakeProvider.provider());
     std::vector<ImageDocumentPageCandidate> changedCandidates;
-    KiriView::ImageIoJob watchJob = repository.watchCandidateChanges(&receiver,
+    kiriview::ImageIoJob watchJob = repository.watchCandidateChanges(&receiver,
         ImageDocumentPageCandidateListSource::forDirectory(directoryUrl),
         [&changedCandidates](std::vector<ImageDocumentPageCandidate> candidates) {
             changedCandidates = std::move(candidates);

@@ -7,9 +7,9 @@
 #include "kiriview/src/policy/imageactionavailability.cxx.h"
 
 namespace {
-bool imageShortcutScopeKnown(KiriView::ApplicationActions::ImageShortcutScope scope)
+bool imageShortcutScopeKnown(kiriview::ApplicationActions::ImageShortcutScope scope)
 {
-    using KiriView::ApplicationActions::ImageShortcutScope;
+    using kiriview::ApplicationActions::ImageShortcutScope;
 
     switch (scope) {
     case ImageShortcutScope::HelpShortcutScope:
@@ -39,51 +39,51 @@ bool imageShortcutScopeKnown(KiriView::ApplicationActions::ImageShortcutScope sc
 ImageActionAvailabilityProjection imageActionAvailabilityProjection(
     const ImageActionAvailabilityInput &input)
 {
-    return KiriView::Bridge::imageActionAvailabilityProjectionFromRust(
-        KiriView::rustImageActionAvailabilityProjection(
-            KiriView::Bridge::rustImageActionAvailabilityInput(input)));
+    return kiriview::Bridge::imageActionAvailabilityProjectionFromRust(
+        kiriview::rustImageActionAvailabilityProjection(
+            kiriview::Bridge::rustImageActionAvailabilityInput(input)));
 }
 
 bool imageActionAvailabilityShortcutsEnabledForScope(
     const ImageActionAvailabilityProjection &projection,
-    KiriView::ApplicationActions::ImageShortcutScope scope)
+    kiriview::ApplicationActions::ImageShortcutScope scope)
 {
     if (!imageShortcutScopeKnown(scope)) {
         return false;
     }
 
-    return KiriView::rustImageActionAvailabilityShortcutsEnabledForScope(
-        KiriView::Bridge::rustImageActionAvailabilityProjection(projection),
-        KiriView::Bridge::rustImageShortcutScope(scope));
+    return kiriview::rustImageActionAvailabilityShortcutsEnabledForScope(
+        kiriview::Bridge::rustImageActionAvailabilityProjection(projection),
+        kiriview::Bridge::rustImageShortcutScope(scope));
 }
 
 bool activeMediaShortcutsEnabledForScope(const ActiveMediaShortcutAvailabilityInput &input,
-    KiriView::ApplicationActions::ImageShortcutScope scope)
+    kiriview::ApplicationActions::ImageShortcutScope scope)
 {
     if (!imageShortcutScopeKnown(scope)) {
         return false;
     }
 
-    return KiriView::rustActiveMediaShortcutsEnabledForScope(
-        KiriView::Bridge::rustImageActionAvailabilityProjection(input.imageProjection),
-        KiriView::Bridge::rustImageShortcutScope(scope), input.videoMode,
+    return kiriview::rustActiveMediaShortcutsEnabledForScope(
+        kiriview::Bridge::rustImageActionAvailabilityProjection(input.imageProjection),
+        kiriview::Bridge::rustImageShortcutScope(scope), input.videoMode,
         input.activeNavigationActionsAvailable, input.videoFileDeletionInProgress);
 }
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 bool videoShortcutsEnabledForScope(
     const VideoShortcutAvailabilityInput &input, ImageShortcutScope scope)
 {
-    return KiriView::rustVideoShortcutsEnabledForScope(
-        KiriView::Bridge::rustVideoShortcutAvailabilityInput(input),
-        KiriView::Bridge::rustImageShortcutScope(scope));
+    return kiriview::rustVideoShortcutsEnabledForScope(
+        kiriview::Bridge::rustVideoShortcutAvailabilityInput(input),
+        kiriview::Bridge::rustImageShortcutScope(scope));
 }
 
 bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
     const VideoShortcutAvailabilityInput &videoInput)
 {
-    return KiriView::rustMediaHorizontalArrowShortcutsEnabled(
-        KiriView::RustMediaHorizontalArrowShortcutInput {
+    return kiriview::rustMediaHorizontalArrowShortcutsEnabled(
+        kiriview::RustMediaHorizontalArrowShortcutInput {
             videoMode,
             imageReadyViewerShortcutsEnabled,
             videoInput.viewerShortcutsEnabled,

@@ -18,8 +18,8 @@
 #include <vector>
 
 namespace {
-namespace Actions = KiriView::ApplicationActions;
-using ActionId = KiriView::ApplicationActions::ActionId;
+namespace Actions = kiriview::ApplicationActions;
+using ActionId = kiriview::ApplicationActions::ActionId;
 
 QString definitionActionName(const Actions::ActionDefinition &definition)
 {
@@ -35,7 +35,7 @@ void resetConfig()
     state->read();
 }
 
-class FakeApplicationActionHost final : public KiriView::ApplicationActions::ApplicationActionHost
+class FakeApplicationActionHost final : public kiriview::ApplicationActions::ApplicationActionHost
 {
 public:
     FakeApplicationActionHost()

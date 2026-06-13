@@ -7,16 +7,16 @@
 #include "kiriview/src/policy/videodocumentpolicy.cxx.h"
 
 namespace {
-using KiriView::VideoPlaybackControlPlan;
-using KiriView::VideoPlaybackControlSnapshot;
+using kiriview::VideoPlaybackControlPlan;
+using kiriview::VideoPlaybackControlSnapshot;
 
-KiriView::RustVideoPlaybackControlSnapshot rustSnapshot(VideoPlaybackControlSnapshot snapshot)
+kiriview::RustVideoPlaybackControlSnapshot rustSnapshot(VideoPlaybackControlSnapshot snapshot)
 {
-    return KiriView::Bridge::rustVideoPlaybackControlSnapshot(snapshot);
+    return kiriview::Bridge::rustVideoPlaybackControlSnapshot(snapshot);
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 bool VideoPlaybackControlPlan::isEmpty() const
 {
     return !stateDelta.mediaEnded.has_value() && !stateDelta.playing.has_value()

@@ -7,28 +7,28 @@
 #include "kiriview/src/policy/imagetilegeometry.cxx.h"
 
 namespace {
-KiriView::RustTileSize rustTileSize(const QSize &size)
+kiriview::RustTileSize rustTileSize(const QSize &size)
 {
-    return KiriView::Bridge::rustSize<KiriView::RustTileSize>(size);
+    return kiriview::Bridge::rustSize<kiriview::RustTileSize>(size);
 }
 
-KiriView::RustTileSizeF rustTileSizeF(const QSizeF &size)
+kiriview::RustTileSizeF rustTileSizeF(const QSizeF &size)
 {
-    return KiriView::Bridge::rustSizeF<KiriView::RustTileSizeF>(size);
+    return kiriview::Bridge::rustSizeF<kiriview::RustTileSizeF>(size);
 }
 
-KiriView::RustTileRect rustTileRect(const QRect &rect)
+kiriview::RustTileRect rustTileRect(const QRect &rect)
 {
-    return KiriView::Bridge::rustRect<KiriView::RustTileRect>(rect);
+    return kiriview::Bridge::rustRect<kiriview::RustTileRect>(rect);
 }
 
-KiriView::RustTileRectF rustTileRectF(const QRectF &rect)
+kiriview::RustTileRectF rustTileRectF(const QRectF &rect)
 {
-    return KiriView::Bridge::rustRectF<KiriView::RustTileRectF>(rect);
+    return kiriview::Bridge::rustRectF<kiriview::RustTileRectF>(rect);
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 QRect boundedIntegerRect(const QRect &rect, const QSize &boundsSize)
 {
     return Bridge::qtRect(rustBoundedIntegerRect(rustTileRect(rect), rustTileSize(boundsSize)));

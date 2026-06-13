@@ -22,37 +22,37 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::imageDecodeDependenciesFor;
-using KiriView::TestSupport::imageDocumentPageCandidate;
-using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::ManualImageDataLoader;
-using KiriView::TestSupport::staticDisplayTestImagePayload;
-using KiriView::TestSupport::staticImageDataDecoder;
-using KiriView::TestSupport::testImage;
+using kiriview::TestSupport::archivePageUrl;
+using kiriview::TestSupport::imageDecodeDependenciesFor;
+using kiriview::TestSupport::imageDocumentPageCandidate;
+using kiriview::TestSupport::localUrl;
+using kiriview::TestSupport::ManualImageDataLoader;
+using kiriview::TestSupport::staticDisplayTestImagePayload;
+using kiriview::TestSupport::staticImageDataDecoder;
+using kiriview::TestSupport::testImage;
 
-using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandidateProvider;
+using FakeCandidateProvider = kiriview::TestSupport::FakeImageDocumentPageCandidateProvider;
 
-KiriView::ImageDocumentRenderContext renderContext()
+kiriview::ImageDocumentRenderContext renderContext()
 {
-    return KiriView::ImageDocumentRenderContext {
+    return kiriview::ImageDocumentRenderContext {
         1.0,
-        KiriView::fallbackTextureSizeMax,
+        kiriview::fallbackTextureSizeMax,
     };
 }
 
-KiriView::ImageCacheBudgets testCacheBudgets()
+kiriview::ImageCacheBudgets testCacheBudgets()
 {
-    return KiriView::ImageCacheBudgets {
+    return kiriview::ImageCacheBudgets {
         1024 * 1024,
         512 * 1024,
     };
 }
 
 template <typename Operation>
-const Operation *findOperation(const KiriView::ImageDocumentRuntimePlan &plan)
+const Operation *findOperation(const kiriview::ImageDocumentRuntimePlan &plan)
 {
-    for (const KiriView::ImageDocumentRuntimeOperation &operation : plan) {
+    for (const kiriview::ImageDocumentRuntimeOperation &operation : plan) {
         if (const auto *payload = std::get_if<Operation>(&operation)) {
             return payload;
         }
@@ -68,20 +68,20 @@ public:
         : pageSurface(&context, {}, testCacheBudgets())
         , presentationRuntime(renderContext)
         , navigation(&context, candidateProvider.provider(),
-              KiriView::ImageDocumentPageNavigationService::Callbacks {
-                  [this](KiriView::ImageDocumentPageNavigationPlan plan) {
-                      for (const KiriView::ImageDocumentPageNavigationEffect &effect : plan) {
+              kiriview::ImageDocumentPageNavigationService::Callbacks {
+                  [this](kiriview::ImageDocumentPageNavigationPlan plan) {
+                      for (const kiriview::ImageDocumentPageNavigationEffect &effect : plan) {
                           if (const auto *openEffect
-                              = std::get_if<KiriView::OpenImageDocumentPageUrlEffect>(&effect)) {
-                              runtimePlans.push_back(KiriView::ImageDocumentRuntimePlan {
-                                  KiriView::LoadUrlOperation { openEffect->target } });
+                              = std::get_if<kiriview::OpenImageDocumentPageUrlEffect>(&effect)) {
+                              runtimePlans.push_back(kiriview::ImageDocumentRuntimePlan {
+                                  kiriview::LoadUrlOperation { openEffect->target } });
                           }
                       }
                   },
                   {},
               })
         , spread(&context, renderContext, state, pageSurface, presentationRuntime,
-              KiriView::ImageSpreadPresentationController::Callbacks {
+              kiriview::ImageSpreadPresentationController::Callbacks {
                   {},
                   {},
                   [this]() { return navigation.pageNavigationSnapshot(); },
@@ -91,7 +91,7 @@ public:
               imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder(testImage())),
               testCacheBudgets())
         , controller(state, pageSurface, navigation, spread,
-              [this](KiriView::ImageDocumentRuntimePlan plan) {
+              [this](kiriview::ImageDocumentRuntimePlan plan) {
                   runtimePlans.push_back(std::move(plan));
               })
     {
@@ -100,33 +100,33 @@ public:
     void displayImage(const QUrl &url)
     {
         state.setSourceUrl(url);
-        state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(url));
+        state.setDisplayedImageLocation(kiriview::DisplayedImageLocation::fromUrl(url));
         pageSurface.setStaticDisplayImage(
             staticDisplayTestImagePayload(testImage()), false, renderContext());
         spread.commitPrimaryPageSlot(state.displayedImageLocation());
     }
 
     void displayComicPage(
-        const QUrl &url, const KiriView::OpenedCollectionScopeLocation &archiveCollection)
+        const QUrl &url, const kiriview::OpenedCollectionScopeLocation &archiveCollection)
     {
         state.setSourceUrl(url);
         state.setDisplayedImageLocation(
-            KiriView::DisplayedImageLocation::fromOpenedCollectionScope(url, archiveCollection));
+            kiriview::DisplayedImageLocation::fromOpenedCollectionScope(url, archiveCollection));
         pageSurface.setStaticDisplayImage(
             staticDisplayTestImagePayload(testImage(QSize(800, 1200))), false, renderContext());
         spread.commitPrimaryPageSlot(state.displayedImageLocation());
     }
 
     QObject context;
-    KiriView::ImageDocumentState state;
+    kiriview::ImageDocumentState state;
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    KiriView::ImagePageSurfaceController pageSurface;
-    KiriView::ImagePresentationRuntime presentationRuntime;
-    KiriView::ImageDocumentPageNavigationService navigation;
-    KiriView::ImageSpreadPresentationController spread;
-    KiriView::ImageDocumentNavigationController controller;
-    std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
+    kiriview::ImagePageSurfaceController pageSurface;
+    kiriview::ImagePresentationRuntime presentationRuntime;
+    kiriview::ImageDocumentPageNavigationService navigation;
+    kiriview::ImageSpreadPresentationController spread;
+    kiriview::ImageDocumentNavigationController controller;
+    std::vector<kiriview::ImageDocumentRuntimePlan> runtimePlans;
 };
 }
 
@@ -148,8 +148,8 @@ void TestImageDocumentNavigationController::updatePageNavigationUsesOpenedCollec
 {
     DocumentNavigationFixture fixture;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
@@ -188,8 +188,8 @@ void TestImageDocumentNavigationController::updatePageNavigationRequiresPresente
 {
     DocumentNavigationFixture fixture;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
@@ -200,10 +200,10 @@ void TestImageDocumentNavigationController::updatePageNavigationRequiresPresente
         });
     fixture.state.setSourceUrl(firstUrl);
     fixture.state.setDisplayedImageLocation(
-        KiriView::DisplayedImageLocation::fromOpenedCollectionScope(firstUrl, *archiveCollection));
+        kiriview::DisplayedImageLocation::fromOpenedCollectionScope(firstUrl, *archiveCollection));
 
     fixture.controller.updatePageNavigation();
-    fixture.controller.openAdjacentPage(KiriView::NavigationDirection::Next);
+    fixture.controller.openAdjacentPage(kiriview::NavigationDirection::Next);
 
     QCOMPARE(fixture.controller.currentPageNumber(), 0);
     QCOMPARE(fixture.controller.pageCount(), 0);
@@ -215,8 +215,8 @@ void TestImageDocumentNavigationController::
 {
     DocumentNavigationFixture fixture;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -234,7 +234,7 @@ void TestImageDocumentNavigationController::
     fixture.runtimePlans.clear();
     fixture.displayImage(localUrl(QStringLiteral("/images/01.png")));
 
-    fixture.controller.openAdjacentPage(KiriView::NavigationDirection::Next);
+    fixture.controller.openAdjacentPage(kiriview::NavigationDirection::Next);
 
     QVERIFY(fixture.runtimePlans.empty());
     QCOMPARE(fixture.controller.currentPageNumber(), 0);
@@ -258,8 +258,8 @@ void TestImageDocumentNavigationController::
 {
     DocumentNavigationFixture fixture;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
@@ -270,10 +270,10 @@ void TestImageDocumentNavigationController::
         });
     fixture.displayComicPage(firstUrl, *archiveCollection);
 
-    fixture.controller.openAdjacentPage(KiriView::NavigationDirection::Next);
+    fixture.controller.openAdjacentPage(kiriview::NavigationDirection::Next);
 
     QCOMPARE(fixture.runtimePlans.size(), std::size_t(1));
-    const auto *operation = findOperation<KiriView::LoadUrlOperation>(fixture.runtimePlans.front());
+    const auto *operation = findOperation<kiriview::LoadUrlOperation>(fixture.runtimePlans.front());
     QVERIFY(operation != nullptr);
     QCOMPARE(operation->target.url, secondUrl);
 }
@@ -282,16 +282,16 @@ void TestImageDocumentNavigationController::pageSelectionDispatchesPageNavigatio
 {
     DocumentNavigationFixture fixture;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.mp4"));
     fixture.candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
         {
             imageDocumentPageCandidate(firstUrl),
-            KiriView::ImageDocumentPageCandidate {
-                secondUrl, QStringLiteral("02.mp4"), KiriView::ImageDocumentPageKind::Video },
+            kiriview::ImageDocumentPageCandidate {
+                secondUrl, QStringLiteral("02.mp4"), kiriview::ImageDocumentPageKind::Video },
         });
     fixture.displayComicPage(firstUrl, *archiveCollection);
     fixture.controller.updatePageNavigation();
@@ -300,10 +300,10 @@ void TestImageDocumentNavigationController::pageSelectionDispatchesPageNavigatio
 
     QCOMPARE(fixture.runtimePlans.size(), std::size_t(1));
     const auto *operation
-        = findOperation<KiriView::LoadPageNavigationUrlOperation>(fixture.runtimePlans.front());
+        = findOperation<kiriview::LoadPageNavigationUrlOperation>(fixture.runtimePlans.front());
     QVERIFY(operation != nullptr);
     QCOMPARE(operation->target.url, secondUrl);
-    QCOMPARE(operation->target.kind, KiriView::ImageDocumentPageKind::Video);
+    QCOMPARE(operation->target.kind, kiriview::ImageDocumentPageKind::Video);
     QVERIFY(!operation->preserveTwoPageSpreadTransition);
     QCOMPARE(fixture.controller.currentPageNumber(), 2);
 }
@@ -312,8 +312,8 @@ void TestImageDocumentNavigationController::spreadPageSelectionStartsTrackedTran
 {
     DocumentNavigationFixture fixture;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
-        = KiriView::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveCollection.has_value());
     const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
@@ -330,7 +330,7 @@ void TestImageDocumentNavigationController::spreadPageSelectionStartsTrackedTran
 
     QCOMPARE(fixture.runtimePlans.size(), std::size_t(1));
     const auto *operation
-        = findOperation<KiriView::LoadPageNavigationUrlOperation>(fixture.runtimePlans.front());
+        = findOperation<kiriview::LoadPageNavigationUrlOperation>(fixture.runtimePlans.front());
     QVERIFY(operation != nullptr);
     QCOMPARE(operation->target.url, secondUrl);
     QVERIFY(operation->preserveTwoPageSpreadTransition);

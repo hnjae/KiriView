@@ -10,7 +10,7 @@
 #include <QUrl>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url);
 std::optional<QUrl> directArchiveOpenRootUrl(const QUrl &url);
 std::optional<OpenedCollectionScopeLocation> openedCollectionScopeLocationForLocalArchiveUrl(

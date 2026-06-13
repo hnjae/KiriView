@@ -3,7 +3,7 @@
 
 #include "async/imageasyncoperationstate.h"
 
-namespace KiriView {
+namespace kiriview {
 ImageAsyncOperationState::ImageAsyncOperationState(quint64 nextOperationId)
     : m_ticket(nextOperationId)
 {

@@ -19,8 +19,8 @@ template <typename Value> bool replaceIfChanged(Value &current, const Value &nex
     return true;
 }
 
-bool sameDirectMediaNavigationState(const KiriView::DirectMediaNavigationBoundaryState &left,
-    const KiriView::DirectMediaNavigationBoundaryState &right)
+bool sameDirectMediaNavigationState(const kiriview::DirectMediaNavigationBoundaryState &left,
+    const kiriview::DirectMediaNavigationBoundaryState &right)
 {
     return left.canOpenPrevious == right.canOpenPrevious && left.canOpenNext == right.canOpenNext
         && left.atKnownFirst == right.atKnownFirst && left.atKnownLast == right.atKnownLast
@@ -28,8 +28,8 @@ bool sameDirectMediaNavigationState(const KiriView::DirectMediaNavigationBoundar
 }
 
 bool sameDirectMediaNavigationCandidates(
-    const std::vector<KiriView::DirectMediaNavigationCandidate> &left,
-    const std::vector<KiriView::DirectMediaNavigationCandidate> &right)
+    const std::vector<kiriview::DirectMediaNavigationCandidate> &left,
+    const std::vector<kiriview::DirectMediaNavigationCandidate> &right)
 {
     if (left.size() != right.size()) {
         return false;
@@ -46,7 +46,7 @@ bool sameDirectMediaNavigationCandidates(
 }
 
 bool sameActiveNavigationSnapshot(
-    const KiriView::ActiveNavigationSnapshot &left, const KiriView::ActiveNavigationSnapshot &right)
+    const kiriview::ActiveNavigationSnapshot &left, const kiriview::ActiveNavigationSnapshot &right)
 {
     return left.available == right.available && left.known == right.known
         && left.editable == right.editable && left.canOpenPrevious == right.canOpenPrevious
@@ -56,14 +56,14 @@ bool sameActiveNavigationSnapshot(
 }
 
 bool sameActiveZoomSnapshot(
-    const KiriView::ActiveZoomSnapshot &left, const KiriView::ActiveZoomSnapshot &right)
+    const kiriview::ActiveZoomSnapshot &left, const kiriview::ActiveZoomSnapshot &right)
 {
     return left.available == right.available && left.known == right.known
         && qAbs(left.percent - right.percent) < 0.000001 && left.editable == right.editable;
 }
 
-bool sameActionAvailabilityFacts(const KiriView::DocumentSessionActionAvailabilityFacts &left,
-    const KiriView::DocumentSessionActionAvailabilityFacts &right)
+bool sameActionAvailabilityFacts(const kiriview::DocumentSessionActionAvailabilityFacts &left,
+    const kiriview::DocumentSessionActionAvailabilityFacts &right)
 {
     return left.imageReady == right.imageReady
         && left.containerNavigationAvailable == right.containerNavigationAvailable
@@ -76,8 +76,8 @@ bool sameActionAvailabilityFacts(const KiriView::DocumentSessionActionAvailabili
         && left.fitWidthModeSelected == right.fitWidthModeSelected;
 }
 
-bool samePublicProjection(const KiriView::DocumentSessionPublicProjection &left,
-    const KiriView::DocumentSessionPublicProjection &right)
+bool samePublicProjection(const kiriview::DocumentSessionPublicProjection &left,
+    const kiriview::DocumentSessionPublicProjection &right)
 {
     return left.sourceKind == right.sourceKind && left.boundaryScope == right.boundaryScope
         && sameActiveNavigationSnapshot(left.activeNavigation, right.activeNavigation)
@@ -86,8 +86,8 @@ bool samePublicProjection(const KiriView::DocumentSessionPublicProjection &left,
         && left.displayedFileDeletionAvailable == right.displayedFileDeletionAvailable;
 }
 
-bool samePublicSnapshot(const KiriView::DocumentSessionPublicSnapshot &left,
-    const KiriView::DocumentSessionPublicSnapshot &right)
+bool samePublicSnapshot(const kiriview::DocumentSessionPublicSnapshot &left,
+    const kiriview::DocumentSessionPublicSnapshot &right)
 {
     return left.sourceUrl == right.sourceUrl && left.documentKind == right.documentKind
         && left.errorString == right.errorString
@@ -103,7 +103,7 @@ bool samePublicSnapshot(const KiriView::DocumentSessionPublicSnapshot &left,
         && left.activeVideoControlsReady == right.activeVideoControlsReady
         && sameActionAvailabilityFacts(left.actionAvailability, right.actionAvailability)
         && samePublicProjection(left.projection, right.projection)
-        && KiriView::sameMediaInformationProjectionSnapshot(
+        && kiriview::sameMediaInformationProjectionSnapshot(
             left.mediaInformation, right.mediaInformation)
         && left.activeNavigationRevealIntent == right.activeNavigationRevealIntent
         && left.activeNavigationRevealDirection == right.activeNavigationRevealDirection;
@@ -111,7 +111,7 @@ bool samePublicSnapshot(const KiriView::DocumentSessionPublicSnapshot &left,
 
 }
 
-namespace KiriView {
+namespace kiriview {
 DocumentSessionState::DocumentSessionState(ChangeCallback changeCallback)
     : m_changeCallback(std::move(changeCallback))
 {
@@ -397,27 +397,27 @@ void DocumentSessionState::setSessionErrorString(const QString &errorString)
 
 bool DocumentSessionState::clearDirectMediaCursor()
 {
-    return KiriView::clearDirectMediaCursor(m_directMediaCursor);
+    return kiriview::clearDirectMediaCursor(m_directMediaCursor);
 }
 
 bool DocumentSessionState::requestDirectImageCursor(const QUrl &url)
 {
-    return KiriView::requestDirectImageCursor(m_directMediaCursor, url);
+    return kiriview::requestDirectImageCursor(m_directMediaCursor, url);
 }
 
 bool DocumentSessionState::confirmDirectImageCursor(const QUrl &url)
 {
-    return KiriView::confirmDirectImageCursor(m_directMediaCursor, url);
+    return kiriview::confirmDirectImageCursor(m_directMediaCursor, url);
 }
 
 bool DocumentSessionState::restoreDirectImageCursorAfterFailure()
 {
-    return KiriView::restoreDirectImageCursorAfterFailure(m_directMediaCursor);
+    return kiriview::restoreDirectImageCursorAfterFailure(m_directMediaCursor);
 }
 
 bool DocumentSessionState::setDirectVideoCursor(const QUrl &url)
 {
-    return KiriView::setDirectVideoCursor(m_directMediaCursor, url);
+    return kiriview::setDirectVideoCursor(m_directMediaCursor, url);
 }
 
 void DocumentSessionState::publish(DocumentSessionChange change)

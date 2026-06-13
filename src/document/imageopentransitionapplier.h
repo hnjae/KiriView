@@ -7,7 +7,7 @@
 #include "imageopenapplicationplan.h"
 #include "imageopentransition.h"
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentState;
 
 ImageOpenApplicationPlan imageOpenApplicationPlan(

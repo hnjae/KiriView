@@ -17,37 +17,37 @@ private Q_SLOTS:
 
 void TestActiveNavigationBoundaryText::feedbackTextFollowsBoundaryScopeAndOutcome()
 {
-    QCOMPARE(KiriView::activeNavigationBoundaryFeedbackText(
-                 KiriView::ActiveNavigationBoundaryScope::DirectMedia,
-                 KiriView::ActiveNavigationDispatchOutcome::FirstBoundary),
+    QCOMPARE(kiriview::activeNavigationBoundaryFeedbackText(
+                 kiriview::ActiveNavigationBoundaryScope::DirectMedia,
+                 kiriview::ActiveNavigationDispatchOutcome::FirstBoundary),
         QStringLiteral("First media item"));
-    QCOMPARE(KiriView::activeNavigationBoundaryFeedbackText(
-                 KiriView::ActiveNavigationBoundaryScope::DirectMedia,
-                 KiriView::ActiveNavigationDispatchOutcome::LastBoundary),
+    QCOMPARE(kiriview::activeNavigationBoundaryFeedbackText(
+                 kiriview::ActiveNavigationBoundaryScope::DirectMedia,
+                 kiriview::ActiveNavigationDispatchOutcome::LastBoundary),
         QStringLiteral("Last media item"));
-    QCOMPARE(KiriView::activeNavigationBoundaryFeedbackText(
-                 KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage,
-                 KiriView::ActiveNavigationDispatchOutcome::FirstBoundary),
+    QCOMPARE(kiriview::activeNavigationBoundaryFeedbackText(
+                 kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage,
+                 kiriview::ActiveNavigationDispatchOutcome::FirstBoundary),
         QStringLiteral("First image"));
-    QCOMPARE(KiriView::activeNavigationBoundaryFeedbackText(
-                 KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage,
-                 KiriView::ActiveNavigationDispatchOutcome::LastBoundary),
+    QCOMPARE(kiriview::activeNavigationBoundaryFeedbackText(
+                 kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage,
+                 kiriview::ActiveNavigationDispatchOutcome::LastBoundary),
         QStringLiteral("Last image"));
 }
 
 void TestActiveNavigationBoundaryText::nonBoundaryOutcomesHaveNoFeedbackText()
 {
-    QCOMPARE(KiriView::activeNavigationBoundaryFeedbackText(
-                 KiriView::ActiveNavigationBoundaryScope::DirectMedia,
-                 KiriView::ActiveNavigationDispatchOutcome::NoOp),
+    QCOMPARE(kiriview::activeNavigationBoundaryFeedbackText(
+                 kiriview::ActiveNavigationBoundaryScope::DirectMedia,
+                 kiriview::ActiveNavigationDispatchOutcome::NoOp),
         QString());
-    QCOMPARE(KiriView::activeNavigationBoundaryFeedbackText(
-                 KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage,
-                 KiriView::ActiveNavigationDispatchOutcome::Dispatch),
+    QCOMPARE(kiriview::activeNavigationBoundaryFeedbackText(
+                 kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage,
+                 kiriview::ActiveNavigationDispatchOutcome::Dispatch),
         QString());
-    QCOMPARE(KiriView::activeNavigationBoundaryFeedbackText(
-                 KiriView::ActiveNavigationBoundaryScope::None,
-                 KiriView::ActiveNavigationDispatchOutcome::FirstBoundary),
+    QCOMPARE(kiriview::activeNavigationBoundaryFeedbackText(
+                 kiriview::ActiveNavigationBoundaryScope::None,
+                 kiriview::ActiveNavigationDispatchOutcome::FirstBoundary),
         QString());
 }
 

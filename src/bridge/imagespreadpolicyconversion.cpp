@@ -3,7 +3,7 @@
 
 #include "bridge/imagespreadpolicyconversion.h"
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustImageSpreadReadingAvailability rustImageSpreadReadingAvailability(
     const ImageSpreadReadingAvailability &availability)
 {

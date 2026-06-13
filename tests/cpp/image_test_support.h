@@ -20,7 +20,7 @@
 #include <string_view>
 #include <utility>
 
-namespace KiriView::TestSupport {
+namespace kiriview::TestSupport {
 namespace Detail {
     inline void appendFourCc(QByteArray &data, std::string_view fourCc)
     {

@@ -25,9 +25,9 @@ private Q_SLOTS:
 
 void TestPredecodePolicyConversion::sourceProfileMapsPlainFields()
 {
-    const KiriView::RustPredecodeSourceProfile converted
-        = KiriView::Bridge::rustPredecodeSourceProfile(
-            KiriView::PredecodeSourceProfile { 2, 4, 8, 3 });
+    const kiriview::RustPredecodeSourceProfile converted
+        = kiriview::Bridge::rustPredecodeSourceProfile(
+            kiriview::PredecodeSourceProfile { 2, 4, 8, 3 });
 
     QCOMPARE(converted.neutral_previous_image_count, std::size_t(2));
     QCOMPARE(converted.neutral_next_image_count, std::size_t(4));
@@ -37,61 +37,61 @@ void TestPredecodePolicyConversion::sourceProfileMapsPlainFields()
 
 void TestPredecodePolicyConversion::momentumModeMapsBothDirections()
 {
-    using KiriView::PredecodeMomentumMode;
-    using KiriView::RustPredecodeMomentumMode;
+    using kiriview::PredecodeMomentumMode;
+    using kiriview::RustPredecodeMomentumMode;
 
-    QVERIFY(KiriView::Bridge::rustPredecodeMomentumMode(PredecodeMomentumMode::Neutral)
+    QVERIFY(kiriview::Bridge::rustPredecodeMomentumMode(PredecodeMomentumMode::Neutral)
         == RustPredecodeMomentumMode::Neutral);
-    QVERIFY(KiriView::Bridge::rustPredecodeMomentumMode(PredecodeMomentumMode::NextBiased)
+    QVERIFY(kiriview::Bridge::rustPredecodeMomentumMode(PredecodeMomentumMode::NextBiased)
         == RustPredecodeMomentumMode::NextBiased);
-    QVERIFY(KiriView::Bridge::rustPredecodeMomentumMode(PredecodeMomentumMode::PrevBiased)
+    QVERIFY(kiriview::Bridge::rustPredecodeMomentumMode(PredecodeMomentumMode::PrevBiased)
         == RustPredecodeMomentumMode::PrevBiased);
-    QVERIFY(KiriView::Bridge::rustPredecodeMomentumMode(PredecodeMomentumMode::ScrubbingNext)
+    QVERIFY(kiriview::Bridge::rustPredecodeMomentumMode(PredecodeMomentumMode::ScrubbingNext)
         == RustPredecodeMomentumMode::ScrubbingNext);
-    QVERIFY(KiriView::Bridge::rustPredecodeMomentumMode(PredecodeMomentumMode::ScrubbingPrev)
+    QVERIFY(kiriview::Bridge::rustPredecodeMomentumMode(PredecodeMomentumMode::ScrubbingPrev)
         == RustPredecodeMomentumMode::ScrubbingPrev);
-    QVERIFY(KiriView::Bridge::predecodeMomentumModeFromRust(RustPredecodeMomentumMode::Neutral)
+    QVERIFY(kiriview::Bridge::predecodeMomentumModeFromRust(RustPredecodeMomentumMode::Neutral)
         == PredecodeMomentumMode::Neutral);
-    QVERIFY(KiriView::Bridge::predecodeMomentumModeFromRust(RustPredecodeMomentumMode::NextBiased)
+    QVERIFY(kiriview::Bridge::predecodeMomentumModeFromRust(RustPredecodeMomentumMode::NextBiased)
         == PredecodeMomentumMode::NextBiased);
-    QVERIFY(KiriView::Bridge::predecodeMomentumModeFromRust(RustPredecodeMomentumMode::PrevBiased)
+    QVERIFY(kiriview::Bridge::predecodeMomentumModeFromRust(RustPredecodeMomentumMode::PrevBiased)
         == PredecodeMomentumMode::PrevBiased);
     QVERIFY(
-        KiriView::Bridge::predecodeMomentumModeFromRust(RustPredecodeMomentumMode::ScrubbingNext)
+        kiriview::Bridge::predecodeMomentumModeFromRust(RustPredecodeMomentumMode::ScrubbingNext)
         == PredecodeMomentumMode::ScrubbingNext);
     QVERIFY(
-        KiriView::Bridge::predecodeMomentumModeFromRust(RustPredecodeMomentumMode::ScrubbingPrev)
+        kiriview::Bridge::predecodeMomentumModeFromRust(RustPredecodeMomentumMode::ScrubbingPrev)
         == PredecodeMomentumMode::ScrubbingPrev);
 }
 
 void TestPredecodePolicyConversion::momentumDirectionMapsBothDirections()
 {
-    using KiriView::PredecodeMomentumDirection;
-    using KiriView::RustPredecodeMomentumDirection;
+    using kiriview::PredecodeMomentumDirection;
+    using kiriview::RustPredecodeMomentumDirection;
 
-    QVERIFY(KiriView::Bridge::rustPredecodeMomentumDirection(PredecodeMomentumDirection::None)
+    QVERIFY(kiriview::Bridge::rustPredecodeMomentumDirection(PredecodeMomentumDirection::None)
         == RustPredecodeMomentumDirection::None);
-    QVERIFY(KiriView::Bridge::rustPredecodeMomentumDirection(PredecodeMomentumDirection::Previous)
+    QVERIFY(kiriview::Bridge::rustPredecodeMomentumDirection(PredecodeMomentumDirection::Previous)
         == RustPredecodeMomentumDirection::Previous);
-    QVERIFY(KiriView::Bridge::rustPredecodeMomentumDirection(PredecodeMomentumDirection::Next)
+    QVERIFY(kiriview::Bridge::rustPredecodeMomentumDirection(PredecodeMomentumDirection::Next)
         == RustPredecodeMomentumDirection::Next);
     QVERIFY(
-        KiriView::Bridge::predecodeMomentumDirectionFromRust(RustPredecodeMomentumDirection::None)
+        kiriview::Bridge::predecodeMomentumDirectionFromRust(RustPredecodeMomentumDirection::None)
         == PredecodeMomentumDirection::None);
-    QVERIFY(KiriView::Bridge::predecodeMomentumDirectionFromRust(
+    QVERIFY(kiriview::Bridge::predecodeMomentumDirectionFromRust(
                 RustPredecodeMomentumDirection::Previous)
         == PredecodeMomentumDirection::Previous);
     QVERIFY(
-        KiriView::Bridge::predecodeMomentumDirectionFromRust(RustPredecodeMomentumDirection::Next)
+        kiriview::Bridge::predecodeMomentumDirectionFromRust(RustPredecodeMomentumDirection::Next)
         == PredecodeMomentumDirection::Next);
 }
 
 void TestPredecodePolicyConversion::policyInputMapsPlainFields()
 {
-    const KiriView::RustPredecodePolicyInput converted
-        = KiriView::Bridge::rustPredecodePolicyInput(KiriView::PredecodePolicyInput {
-            KiriView::PredecodeSourceProfile { 2, 4, 8, 3 },
-            KiriView::PredecodeMomentumMode::ScrubbingPrev,
+    const kiriview::RustPredecodePolicyInput converted
+        = kiriview::Bridge::rustPredecodePolicyInput(kiriview::PredecodePolicyInput {
+            kiriview::PredecodeSourceProfile { 2, 4, 8, 3 },
+            kiriview::PredecodeMomentumMode::ScrubbingPrev,
             true,
         });
 
@@ -99,48 +99,48 @@ void TestPredecodePolicyConversion::policyInputMapsPlainFields()
     QCOMPARE(converted.source_profile.neutral_next_image_count, std::size_t(4));
     QCOMPARE(converted.source_profile.biased_direction_image_count, std::size_t(8));
     QCOMPARE(converted.source_profile.parallel_limit, std::size_t(3));
-    QVERIFY(converted.momentum_mode == KiriView::RustPredecodeMomentumMode::ScrubbingPrev);
+    QVERIFY(converted.momentum_mode == kiriview::RustPredecodeMomentumMode::ScrubbingPrev);
     QVERIFY(converted.power_saver_enabled);
 }
 
 void TestPredecodePolicyConversion::momentumStateMapsPlainFieldsBothDirections()
 {
-    const KiriView::RustPredecodeMomentumState rustState
-        = KiriView::Bridge::rustPredecodeMomentumState(KiriView::PredecodeMomentumState {
+    const kiriview::RustPredecodeMomentumState rustState
+        = kiriview::Bridge::rustPredecodeMomentumState(kiriview::PredecodeMomentumState {
             7,
             1234,
             3,
-            KiriView::PredecodeMomentumDirection::Next,
-            KiriView::PredecodeMomentumMode::NextBiased,
+            kiriview::PredecodeMomentumDirection::Next,
+            kiriview::PredecodeMomentumMode::NextBiased,
         });
 
     QCOMPARE(rustState.last_page_index, 7);
     QCOMPARE(rustState.last_navigation_msec, qint64(1234));
     QCOMPARE(rustState.same_direction_move_count, 3);
-    QVERIFY(rustState.last_direction == KiriView::RustPredecodeMomentumDirection::Next);
-    QVERIFY(rustState.mode == KiriView::RustPredecodeMomentumMode::NextBiased);
+    QVERIFY(rustState.last_direction == kiriview::RustPredecodeMomentumDirection::Next);
+    QVERIFY(rustState.mode == kiriview::RustPredecodeMomentumMode::NextBiased);
 
-    KiriView::RustPredecodeMomentumState updated {};
+    kiriview::RustPredecodeMomentumState updated {};
     updated.last_page_index = 4;
     updated.last_navigation_msec = 2000;
     updated.same_direction_move_count = 2;
-    updated.last_direction = KiriView::RustPredecodeMomentumDirection::Previous;
-    updated.mode = KiriView::RustPredecodeMomentumMode::PrevBiased;
+    updated.last_direction = kiriview::RustPredecodeMomentumDirection::Previous;
+    updated.mode = kiriview::RustPredecodeMomentumMode::PrevBiased;
 
-    const KiriView::PredecodeMomentumState converted
-        = KiriView::Bridge::predecodeMomentumStateFromRust(updated);
+    const kiriview::PredecodeMomentumState converted
+        = kiriview::Bridge::predecodeMomentumStateFromRust(updated);
 
     QCOMPARE(converted.lastPageIndex, 4);
     QCOMPARE(converted.lastNavigationMsec, qint64(2000));
     QCOMPARE(converted.sameDirectionMoveCount, 2);
-    QVERIFY(converted.lastDirection == KiriView::PredecodeMomentumDirection::Previous);
-    QVERIFY(converted.mode == KiriView::PredecodeMomentumMode::PrevBiased);
+    QVERIFY(converted.lastDirection == kiriview::PredecodeMomentumDirection::Previous);
+    QVERIFY(converted.mode == kiriview::PredecodeMomentumMode::PrevBiased);
 }
 
 void TestPredecodePolicyConversion::loadStateInputsMapPlainFields()
 {
-    const KiriView::RustPredecodeCachedImageState cached
-        = KiriView::Bridge::rustPredecodeCachedImageState(KiriView::PredecodeCachedImageState {
+    const kiriview::RustPredecodeCachedImageState cached
+        = kiriview::Bridge::rustPredecodeCachedImageState(kiriview::PredecodeCachedImageState {
             true,
             true,
             1,
@@ -155,16 +155,16 @@ void TestPredecodePolicyConversion::loadStateInputsMapPlainFields()
     QCOMPARE(cached.window_priority, std::size_t(3));
     QCOMPARE(cached.byte_cost, qint64(4096));
 
-    const KiriView::RustPredecodeWindowLoadState window
-        = KiriView::Bridge::rustPredecodeWindowLoadState(
-            KiriView::PredecodeWindowLoadState { true, false, true });
+    const kiriview::RustPredecodeWindowLoadState window
+        = kiriview::Bridge::rustPredecodeWindowLoadState(
+            kiriview::PredecodeWindowLoadState { true, false, true });
     QVERIFY(window.displayed);
     QVERIFY(!window.cached);
     QVERIFY(window.in_flight);
 
-    const KiriView::RustPredecodeQueuedLoadState queued
-        = KiriView::Bridge::rustPredecodeQueuedLoadState(
-            KiriView::PredecodeQueuedLoadState { true, true, false, true });
+    const kiriview::RustPredecodeQueuedLoadState queued
+        = kiriview::Bridge::rustPredecodeQueuedLoadState(
+            kiriview::PredecodeQueuedLoadState { true, true, false, true });
     QVERIFY(queued.valid);
     QVERIFY(queued.in_window);
     QVERIFY(!queued.cached);
@@ -173,13 +173,13 @@ void TestPredecodePolicyConversion::loadStateInputsMapPlainFields()
 
 void TestPredecodePolicyConversion::schedulePlanMapsFromRust()
 {
-    KiriView::RustPredecodeSchedulePlan rustPlan {};
+    kiriview::RustPredecodeSchedulePlan rustPlan {};
     rustPlan.parallel_limit = 3;
     rustPlan.target_indices.push_back(5);
     rustPlan.target_indices.push_back(8);
 
-    const KiriView::PredecodeSchedulePlan plan
-        = KiriView::Bridge::predecodeSchedulePlanFromRust(rustPlan);
+    const kiriview::PredecodeSchedulePlan plan
+        = kiriview::Bridge::predecodeSchedulePlanFromRust(rustPlan);
 
     QCOMPARE(plan.parallelLimit, std::size_t(3));
     QVERIFY(plan.targetIndices == std::vector<std::size_t>({ 5, 8 }));
@@ -187,13 +187,13 @@ void TestPredecodePolicyConversion::schedulePlanMapsFromRust()
 
 void TestPredecodePolicyConversion::queuedLoadPlanMapsFromRust()
 {
-    KiriView::RustPredecodeQueuedLoadPlan rustPlan {};
+    kiriview::RustPredecodeQueuedLoadPlan rustPlan {};
     rustPlan.found = true;
     rustPlan.index = 6;
     rustPlan.discard_count = 2;
 
-    const KiriView::PredecodeQueuedLoadPlan plan
-        = KiriView::Bridge::predecodeQueuedLoadPlanFromRust(rustPlan);
+    const kiriview::PredecodeQueuedLoadPlan plan
+        = kiriview::Bridge::predecodeQueuedLoadPlanFromRust(rustPlan);
 
     QVERIFY(plan.found);
     QCOMPARE(plan.index, std::size_t(6));

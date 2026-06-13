@@ -20,7 +20,7 @@
 #include <functional>
 #include <memory>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 struct ActionDefinition;
 class ApplicationShortcutRuntime;
 

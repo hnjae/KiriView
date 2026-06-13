@@ -19,10 +19,10 @@ private Q_SLOTS:
 };
 
 namespace {
-KiriView::DirectMediaScope directMediaScope(
+kiriview::DirectMediaScope directMediaScope(
     const QString &currentPath, const QString &parentPath, quint64 generation)
 {
-    return KiriView::DirectMediaScope {
+    return kiriview::DirectMediaScope {
         QUrl::fromLocalFile(currentPath),
         QUrl::fromLocalFile(parentPath),
         generation,
@@ -32,11 +32,11 @@ KiriView::DirectMediaScope directMediaScope(
 
 void TestDocumentSessionDirectMediaNavigationLoadState::onlyCurrentLoadCanFinish()
 {
-    KiriView::DocumentSessionDirectMediaNavigationLoadState state;
+    kiriview::DocumentSessionDirectMediaNavigationLoadState state;
 
-    const KiriView::DocumentSessionDirectMediaNavigationLoad stale = state.start(
+    const kiriview::DocumentSessionDirectMediaNavigationLoad stale = state.start(
         directMediaScope(QStringLiteral("/media/01.mp4"), QStringLiteral("/media/"), 1));
-    const KiriView::DocumentSessionDirectMediaNavigationLoad current = state.start(
+    const kiriview::DocumentSessionDirectMediaNavigationLoad current = state.start(
         directMediaScope(QStringLiteral("/media/02.mp4"), QStringLiteral("/media/"), 2));
 
     QVERIFY(stale.operationId != 0);
@@ -51,18 +51,18 @@ void TestDocumentSessionDirectMediaNavigationLoadState::onlyCurrentLoadCanFinish
 
 void TestDocumentSessionDirectMediaNavigationLoadState::cursorScopeMustMatchCurrentLoad()
 {
-    KiriView::DocumentSessionDirectMediaNavigationLoadState state;
+    kiriview::DocumentSessionDirectMediaNavigationLoadState state;
 
-    const KiriView::DocumentSessionDirectMediaNavigationLoad first = state.start(
+    const kiriview::DocumentSessionDirectMediaNavigationLoad first = state.start(
         directMediaScope(QStringLiteral("/first/01.mp4"), QStringLiteral("/first/"), 1));
-    const KiriView::DocumentSessionDirectMediaNavigationLoad second = state.start(
+    const kiriview::DocumentSessionDirectMediaNavigationLoad second = state.start(
         directMediaScope(QStringLiteral("/second/01.mp4"), QStringLiteral("/second/"), 2));
 
-    KiriView::DocumentSessionDirectMediaNavigationLoad wrongScope = second;
+    kiriview::DocumentSessionDirectMediaNavigationLoad wrongScope = second;
     wrongScope.scope.parentUrl = first.scope.parentUrl;
-    KiriView::DocumentSessionDirectMediaNavigationLoad wrongCurrent = second;
+    kiriview::DocumentSessionDirectMediaNavigationLoad wrongCurrent = second;
     wrongCurrent.scope.currentUrl = first.scope.currentUrl;
-    KiriView::DocumentSessionDirectMediaNavigationLoad wrongGeneration = second;
+    kiriview::DocumentSessionDirectMediaNavigationLoad wrongGeneration = second;
     wrongGeneration.scope.generation = first.scope.generation;
 
     QVERIFY(!state.accepts(first));
@@ -79,10 +79,10 @@ void TestDocumentSessionDirectMediaNavigationLoadState::cursorScopeMustMatchCurr
 
 void TestDocumentSessionDirectMediaNavigationLoadState::sourceKeyEquivalentScopeCanFinish()
 {
-    KiriView::DocumentSessionDirectMediaNavigationLoadState state;
+    kiriview::DocumentSessionDirectMediaNavigationLoadState state;
 
-    KiriView::DocumentSessionDirectMediaNavigationLoad load
-        = state.start(KiriView::DirectMediaScope {
+    kiriview::DocumentSessionDirectMediaNavigationLoad load
+        = state.start(kiriview::DirectMediaScope {
             QUrl(QStringLiteral("file:///media/chapter/../01.mp4")),
             QUrl(QStringLiteral("file:///media/chapter/..")),
             3,
@@ -92,7 +92,7 @@ void TestDocumentSessionDirectMediaNavigationLoadState::sourceKeyEquivalentScope
     load.scope.parentUrl = QUrl(QStringLiteral("file:///media/"));
     QVERIFY(state.accepts(load));
 
-    KiriView::DocumentSessionDirectMediaNavigationLoad wrongGeneration = load;
+    kiriview::DocumentSessionDirectMediaNavigationLoad wrongGeneration = load;
     wrongGeneration.scope.generation = 4;
     QVERIFY(!state.accepts(wrongGeneration));
     QVERIFY(state.finish(load));
@@ -100,8 +100,8 @@ void TestDocumentSessionDirectMediaNavigationLoadState::sourceKeyEquivalentScope
 
 void TestDocumentSessionDirectMediaNavigationLoadState::cancelRejectsPendingLoad()
 {
-    KiriView::DocumentSessionDirectMediaNavigationLoadState state;
-    const KiriView::DocumentSessionDirectMediaNavigationLoad load = state.start(
+    kiriview::DocumentSessionDirectMediaNavigationLoadState state;
+    const kiriview::DocumentSessionDirectMediaNavigationLoad load = state.start(
         directMediaScope(QStringLiteral("/media/01.mp4"), QStringLiteral("/media/"), 1));
 
     QVERIFY(state.accepts(load));

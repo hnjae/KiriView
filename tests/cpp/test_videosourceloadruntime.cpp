@@ -32,8 +32,8 @@ struct FakeResolverState {
     struct Request {
         quint64 operationId = 0;
         QUrl sourceUrl;
-        KiriView::VideoPlaybackUrlResolvedCallback resolvedCallback;
-        KiriView::VideoPlaybackUrlFailedCallback failedCallback;
+        kiriview::VideoPlaybackUrlResolvedCallback resolvedCallback;
+        kiriview::VideoPlaybackUrlFailedCallback failedCallback;
     };
 
     std::vector<Request> requests;
@@ -41,7 +41,7 @@ struct FakeResolverState {
     int cleanupCount = 0;
 };
 
-class FakeVideoPlaybackUrlResolver final : public KiriView::VideoPlaybackUrlResolver
+class FakeVideoPlaybackUrlResolver final : public kiriview::VideoPlaybackUrlResolver
 {
 public:
     explicit FakeVideoPlaybackUrlResolver(std::shared_ptr<FakeResolverState> resolverState)
@@ -50,8 +50,8 @@ public:
     }
 
     void resolve(quint64 operationId, const QUrl &sourceUrl, QObject *,
-        KiriView::VideoPlaybackUrlResolvedCallback resolvedCallback,
-        KiriView::VideoPlaybackUrlFailedCallback failedCallback) override
+        kiriview::VideoPlaybackUrlResolvedCallback resolvedCallback,
+        kiriview::VideoPlaybackUrlFailedCallback failedCallback) override
     {
         state->requests.push_back(FakeResolverState::Request {
             operationId, sourceUrl, std::move(resolvedCallback), std::move(failedCallback) });
@@ -67,7 +67,7 @@ private:
 struct SourceLoadFixture {
     QObject receiver;
     std::shared_ptr<FakeResolverState> resolverState = std::make_shared<FakeResolverState>();
-    KiriView::VideoSourceLoadRuntime runtime { std::make_unique<FakeVideoPlaybackUrlResolver>(
+    kiriview::VideoSourceLoadRuntime runtime { std::make_unique<FakeVideoPlaybackUrlResolver>(
         resolverState) };
     QStringList events;
     QUrl readySourceUrl;
@@ -75,40 +75,40 @@ struct SourceLoadFixture {
     QUrl failedSourceUrl;
     QString failedErrorString;
     QString failedDiagnosticDetail;
-    KiriView::VideoSourceLoadFailureKind failedKind
-        = KiriView::VideoSourceLoadFailureKind::PlaybackUrlResolution;
+    kiriview::VideoSourceLoadFailureKind failedKind
+        = kiriview::VideoSourceLoadFailureKind::PlaybackUrlResolution;
 
-    KiriView::VideoSourceLoadPlanCallback planCallback()
+    kiriview::VideoSourceLoadPlanCallback planCallback()
     {
-        return [this](KiriView::VideoSourceLoadPlan plan) {
-            for (const KiriView::VideoSourceLoadOperation &operation : plan) {
+        return [this](kiriview::VideoSourceLoadPlan plan) {
+            for (const kiriview::VideoSourceLoadOperation &operation : plan) {
                 recordOperation(operation);
             }
         };
     }
 
-    void recordOperation(const KiriView::VideoSourceLoadOperation &operation)
+    void recordOperation(const kiriview::VideoSourceLoadOperation &operation)
     {
         std::visit(
             [this](const auto &payload) {
                 using Operation = std::decay_t<decltype(payload)>;
                 if constexpr (std::is_same_v<Operation,
-                                  KiriView::ClearVideoPlaybackSourceOperation>) {
+                                  kiriview::ClearVideoPlaybackSourceOperation>) {
                     events.push_back(QStringLiteral("clear-playback"));
                 } else if constexpr (std::is_same_v<Operation,
-                                         KiriView::ResetClearedVideoSourceOperation>) {
+                                         kiriview::ResetClearedVideoSourceOperation>) {
                     events.push_back(QStringLiteral("source-cleared"));
                 } else if constexpr (std::is_same_v<Operation,
-                                         KiriView::ResetVideoSourceLoadOperation>) {
+                                         kiriview::ResetVideoSourceLoadOperation>) {
                     events.push_back(
                         QStringLiteral("source-load-started:%1").arg(payload.sourceUrl.toString()));
                 } else if constexpr (std::is_same_v<Operation,
-                                         KiriView::ApplyVideoPlaybackUrlOperation>) {
+                                         kiriview::ApplyVideoPlaybackUrlOperation>) {
                     events.push_back(QStringLiteral("playback-ready"));
                     readySourceUrl = payload.sourceUrl;
                     readyPlaybackUrl = payload.playbackUrl;
                 } else if constexpr (std::is_same_v<Operation,
-                                         KiriView::PublishVideoSourceLoadFailureOperation>) {
+                                         kiriview::PublishVideoSourceLoadFailureOperation>) {
                     events.push_back(QStringLiteral("source-load-failed"));
                     failedSourceUrl = payload.failure.sourceUrl;
                     failedErrorString = payload.failure.userMessage;
@@ -168,7 +168,7 @@ void TestVideoSourceLoadRuntime::acceptedResolverCompletionPublishesPlaybackUrl(
 
     fixture.setSourceUrl(sourceUrl);
     auto &request = fixture.resolverState->requests.back();
-    request.resolvedCallback(KiriView::VideoPlaybackUrlResolution {
+    request.resolvedCallback(kiriview::VideoPlaybackUrlResolution {
         request.operationId, request.sourceUrl, playbackUrl });
 
     QVERIFY(!fixture.runtime.active());
@@ -189,7 +189,7 @@ void TestVideoSourceLoadRuntime::staleResolverCompletionsAreIgnored()
     fixture.setSourceUrl(secondSourceUrl);
 
     auto &firstRequest = fixture.resolverState->requests.front();
-    firstRequest.resolvedCallback(KiriView::VideoPlaybackUrlResolution {
+    firstRequest.resolvedCallback(kiriview::VideoPlaybackUrlResolution {
         firstRequest.operationId,
         firstRequest.sourceUrl,
         stalePlaybackUrl,
@@ -198,7 +198,7 @@ void TestVideoSourceLoadRuntime::staleResolverCompletionsAreIgnored()
     QVERIFY(fixture.runtime.active());
 
     auto &secondRequest = fixture.resolverState->requests.back();
-    secondRequest.resolvedCallback(KiriView::VideoPlaybackUrlResolution {
+    secondRequest.resolvedCallback(kiriview::VideoPlaybackUrlResolution {
         secondRequest.operationId,
         secondRequest.sourceUrl,
         currentPlaybackUrl,
@@ -220,7 +220,7 @@ void TestVideoSourceLoadRuntime::acceptedResolverFailurePublishesError()
 
     QVERIFY(!fixture.runtime.active());
     QCOMPARE(fixture.failedSourceUrl, sourceUrl);
-    QVERIFY(fixture.failedKind == KiriView::VideoSourceLoadFailureKind::PlaybackUrlResolution);
+    QVERIFY(fixture.failedKind == kiriview::VideoSourceLoadFailureKind::PlaybackUrlResolution);
     QCOMPARE(fixture.failedErrorString, QStringLiteral("Could not open the selected video."));
     QCOMPARE(fixture.failedDiagnosticDetail, QStringLiteral("resolution failed"));
     QCOMPARE(fixture.events.back(), QStringLiteral("source-load-failed"));
@@ -230,7 +230,7 @@ void TestVideoSourceLoadRuntime::shutdownCancelsAndCleansUpOnce()
 {
     auto resolverState = std::make_shared<FakeResolverState>();
     {
-        KiriView::VideoSourceLoadRuntime runtime(
+        kiriview::VideoSourceLoadRuntime runtime(
             std::make_unique<FakeVideoPlaybackUrlResolver>(resolverState));
         runtime.shutdown();
         runtime.shutdown();

@@ -30,7 +30,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentRuntimeControllers;
 struct ImageDocumentSourceLoadRequest;
 

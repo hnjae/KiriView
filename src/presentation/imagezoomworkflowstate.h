@@ -9,7 +9,7 @@
 
 #include <functional>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageZoomWorkflowMutationResult {
     ImageZoomChangeSet changes;
     ImageRenderContextChange renderContextChange;

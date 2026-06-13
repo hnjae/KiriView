@@ -10,7 +10,7 @@ const SVG_DISPLAY_BUCKET_SCALE_FACTOR: f64 = 1.5;
 use crate::imagebytecost::{ESTIMATED_RGBA_BYTES_PER_PIXEL, estimated_rgba_byte_cost};
 use crate::imagerendergeometry::image_rotation_swaps_axes;
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     #[derive(Clone, Copy, PartialEq, Eq)]
     enum RustRasterDisplayBucketStatus {

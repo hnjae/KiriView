@@ -21,21 +21,21 @@ rust::Slice<const std::uint8_t> rustByteArrayBytes(const QByteArray &data)
         static_cast<std::size_t>(data.size()));
 }
 
-KiriView::HeifBrandKind heifBrandKindFromRust(KiriView::RustHeifBrandKind brandKind)
+kiriview::HeifBrandKind heifBrandKindFromRust(kiriview::RustHeifBrandKind brandKind)
 {
     switch (brandKind) {
-    case KiriView::RustHeifBrandKind::StillImage:
-        return KiriView::HeifBrandKind::StillImage;
-    case KiriView::RustHeifBrandKind::ImageSequence:
-        return KiriView::HeifBrandKind::ImageSequence;
-    case KiriView::RustHeifBrandKind::Unknown:
-        return KiriView::HeifBrandKind::Unknown;
+    case kiriview::RustHeifBrandKind::StillImage:
+        return kiriview::HeifBrandKind::StillImage;
+    case kiriview::RustHeifBrandKind::ImageSequence:
+        return kiriview::HeifBrandKind::ImageSequence;
+    case kiriview::RustHeifBrandKind::Unknown:
+        return kiriview::HeifBrandKind::Unknown;
     }
-    return KiriView::HeifBrandKind::Unknown;
+    return kiriview::HeifBrandKind::Unknown;
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 HeifBrandKind heifBrandKind(std::string_view brand)
 {
     return heifBrandKindFromRust(rustHeifBrandKind(rustBrandBytes(brand)));

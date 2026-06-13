@@ -3,7 +3,7 @@
 
 #include "presentation/imageviewportcommandstate.h"
 
-namespace KiriView {
+namespace kiriview {
 const ImageViewportProjection &ImageViewportCommandState::projection() const
 {
     return m_projection;

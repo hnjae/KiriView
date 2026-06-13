@@ -21,30 +21,30 @@
 #include <utility>
 
 namespace {
-using ActionId = KiriView::ApplicationActions::ActionId;
+using ActionId = kiriview::ApplicationActions::ActionId;
 constexpr const char *viewerLocalShortcutsGroup = "ViewerLocalShortcuts";
 
-KiriView::ApplicationActions::ShortcutHelpCategory shortcutHelpCategory(ActionId actionId)
+kiriview::ApplicationActions::ShortcutHelpCategory shortcutHelpCategory(ActionId actionId)
 {
-    const KiriView::ApplicationActions::ActionDefinition *definition
-        = KiriView::ApplicationActions::definitionForId(actionId);
+    const kiriview::ApplicationActions::ActionDefinition *definition
+        = kiriview::ApplicationActions::definitionForId(actionId);
     if (definition != nullptr) {
         return definition->shortcutHelpCategory;
     }
 
-    return KiriView::ApplicationActions::ShortcutHelpCategory::Help;
+    return kiriview::ApplicationActions::ShortcutHelpCategory::Help;
 }
 
 int shortcutHelpCategoryOrderForAction(ActionId actionId)
 {
-    return KiriView::ApplicationActions::shortcutHelpCategoryOrder(shortcutHelpCategory(actionId));
+    return kiriview::ApplicationActions::shortcutHelpCategoryOrder(shortcutHelpCategory(actionId));
 }
 
 std::optional<std::size_t> actionIndex(ActionId actionId)
 {
     const int index = static_cast<int>(actionId);
     if (index < 0
-        || index >= static_cast<int>(KiriView::ApplicationActions::actionDefinitionCount)) {
+        || index >= static_cast<int>(kiriview::ApplicationActions::actionDefinitionCount)) {
         return std::nullopt;
     }
 
@@ -154,7 +154,7 @@ private:
 };
 }
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 ApplicationShortcutRuntime::ApplicationShortcutRuntime(ApplicationActionHost &host,
     const ApplicationActionRegistry &actionRegistry, ChangeCallback changeCallback,
     TriggerCallbacks triggerCallbacks)

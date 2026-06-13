@@ -13,7 +13,7 @@ bool rootSchemeSupportsThumbnailContentIdentity(const QString &rootScheme)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 bool openedCollectionEntrySupportsThumbnailContentIdentity(
     const OpenedCollectionScopeLocation &openedCollectionScope, ImageDocumentPageKind pageKind)
 {

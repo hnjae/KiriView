@@ -13,39 +13,39 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::staticDisplayTestImagePayload;
-using KiriView::TestSupport::testImage;
+using kiriview::TestSupport::localUrl;
+using kiriview::TestSupport::staticDisplayTestImagePayload;
+using kiriview::TestSupport::testImage;
 
-struct UnrelatedPredecodeSchedulePayload final : KiriView::PredecodeSchedulePayload {
+struct UnrelatedPredecodeSchedulePayload final : kiriview::PredecodeSchedulePayload {
 };
 
-KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
-KiriView::DisplayedPredecodeImage displayedImage(const QUrl &url)
+kiriview::DisplayedPredecodeImage displayedImage(const QUrl &url)
 {
-    return KiriView::DisplayedPredecodeImage {
-        KiriView::DisplayedImageLocation::fromUrl(url),
+    return kiriview::DisplayedPredecodeImage {
+        kiriview::DisplayedImageLocation::fromUrl(url),
         true,
         staticDisplayTestImagePayload(testImage()),
     };
 }
 
-const std::vector<KiriView::DirectMediaNavigationCandidate> *scheduleCandidates(
-    const KiriView::MediaPredecodeSchedulePlan &plan)
+const std::vector<kiriview::DirectMediaNavigationCandidate> *scheduleCandidates(
+    const kiriview::MediaPredecodeSchedulePlan &plan)
 {
-    return KiriView::mediaPredecodeScheduleCandidates(
-        KiriView::PredecodePendingSchedule { plan.context, 1 });
+    return kiriview::mediaPredecodeScheduleCandidates(
+        kiriview::PredecodePendingSchedule { plan.context, 1 });
 }
 
-const KiriView::MediaPredecodeEligibilitySnapshot *scheduleEligibility(
-    const KiriView::MediaPredecodeSchedulePlan &plan)
+const kiriview::MediaPredecodeEligibilitySnapshot *scheduleEligibility(
+    const kiriview::MediaPredecodeSchedulePlan &plan)
 {
-    return KiriView::mediaPredecodeScheduleEligibility(
-        KiriView::PredecodePendingSchedule { plan.context, 1 });
+    return kiriview::mediaPredecodeScheduleEligibility(
+        kiriview::PredecodePendingSchedule { plan.context, 1 });
 }
 }
 
@@ -67,8 +67,8 @@ void TestMediaPredecodeSchedulePlan::videoCursorBuildsScheduleContextAndCarriesC
     const QUrl normalizedVideoUrl = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl nextUrl = localUrl(QStringLiteral("/media/02.png"));
 
-    const KiriView::MediaPredecodeSchedulePlan plan
-        = KiriView::mediaPredecodeSchedulePlan(KiriView::MediaPredecodeScheduleRequest {
+    const kiriview::MediaPredecodeSchedulePlan plan
+        = kiriview::mediaPredecodeSchedulePlan(kiriview::MediaPredecodeScheduleRequest {
             videoUrl,
             {
                 directMediaNavigationCandidate(displayedUrl),
@@ -76,7 +76,7 @@ void TestMediaPredecodeSchedulePlan::videoCursorBuildsScheduleContextAndCarriesC
                 directMediaNavigationCandidate(nextUrl),
             },
             { displayedImage(displayedUrl) },
-            KiriView::ImageFirstDisplayDecodeContext {},
+            kiriview::ImageFirstDisplayDecodeContext {},
         });
 
     QVERIFY(plan.shouldSchedule());
@@ -85,12 +85,12 @@ void TestMediaPredecodeSchedulePlan::videoCursorBuildsScheduleContextAndCarriesC
     QCOMPARE(plan.context.displayedImages.front().location.imageUrl(), displayedUrl);
     QCOMPARE(plan.context.pageIndex, 1);
 
-    const std::vector<KiriView::DirectMediaNavigationCandidate> *candidates
+    const std::vector<kiriview::DirectMediaNavigationCandidate> *candidates
         = scheduleCandidates(plan);
     QVERIFY(candidates != nullptr);
     QCOMPARE(candidates->size(), std::size_t(3));
     QCOMPARE(candidates->at(1).url, normalizedVideoUrl);
-    const KiriView::MediaPredecodeEligibilitySnapshot *eligibility = scheduleEligibility(plan);
+    const kiriview::MediaPredecodeEligibilitySnapshot *eligibility = scheduleEligibility(plan);
     QVERIFY(eligibility != nullptr);
     QCOMPARE(eligibility->directMediaNavigationCandidateCount, std::size_t(3));
     QVERIFY(eligibility->currentMediaIndex.has_value());
@@ -105,22 +105,22 @@ void TestMediaPredecodeSchedulePlan::videoCursorBuildsScheduleContextAndCarriesC
 void TestMediaPredecodeSchedulePlan::missingCurrentCandidateKeepsUnknownPageIndex()
 {
     const QUrl videoUrl = localUrl(QStringLiteral("/media/01.mp4"));
-    const KiriView::MediaPredecodeSchedulePlan plan
-        = KiriView::mediaPredecodeSchedulePlan(KiriView::MediaPredecodeScheduleRequest {
+    const kiriview::MediaPredecodeSchedulePlan plan
+        = kiriview::mediaPredecodeSchedulePlan(kiriview::MediaPredecodeScheduleRequest {
             videoUrl,
             {
                 directMediaNavigationCandidate(localUrl(QStringLiteral("/media/00.png"))),
                 directMediaNavigationCandidate(localUrl(QStringLiteral("/media/02.png"))),
             },
             {},
-            KiriView::ImageFirstDisplayDecodeContext {},
+            kiriview::ImageFirstDisplayDecodeContext {},
         });
 
     QVERIFY(plan.shouldSchedule());
     QCOMPARE(plan.context.currentLocation.imageUrl(), videoUrl);
     QCOMPARE(plan.context.pageIndex, -1);
     QVERIFY(scheduleCandidates(plan) != nullptr);
-    const KiriView::MediaPredecodeEligibilitySnapshot *eligibility = scheduleEligibility(plan);
+    const kiriview::MediaPredecodeEligibilitySnapshot *eligibility = scheduleEligibility(plan);
     QVERIFY(eligibility != nullptr);
     QCOMPARE(eligibility->directMediaNavigationCandidateCount, std::size_t(2));
     QVERIFY(!eligibility->currentMediaIndex.has_value());
@@ -128,12 +128,12 @@ void TestMediaPredecodeSchedulePlan::missingCurrentCandidateKeepsUnknownPageInde
 
 void TestMediaPredecodeSchedulePlan::invalidCursorYieldsEmptyScheduleContext()
 {
-    const KiriView::MediaPredecodeSchedulePlan plan
-        = KiriView::mediaPredecodeSchedulePlan(KiriView::MediaPredecodeScheduleRequest {
+    const kiriview::MediaPredecodeSchedulePlan plan
+        = kiriview::mediaPredecodeSchedulePlan(kiriview::MediaPredecodeScheduleRequest {
             QUrl(),
             { directMediaNavigationCandidate(localUrl(QStringLiteral("/media/00.png"))) },
             {},
-            KiriView::ImageFirstDisplayDecodeContext {},
+            kiriview::ImageFirstDisplayDecodeContext {},
         });
 
     QVERIFY(!plan.shouldSchedule());
@@ -144,14 +144,14 @@ void TestMediaPredecodeSchedulePlan::invalidCursorYieldsEmptyScheduleContext()
 
 void TestMediaPredecodeSchedulePlan::mediaPayloadAccessorsRejectWrongPayloadType()
 {
-    KiriView::PredecodeScheduleContext context;
+    kiriview::PredecodeScheduleContext context;
     context.currentLocation
-        = KiriView::DisplayedImageLocation::fromUrl(localUrl(QStringLiteral("/media/01.mp4")));
+        = kiriview::DisplayedImageLocation::fromUrl(localUrl(QStringLiteral("/media/01.mp4")));
     context.payload = std::make_shared<UnrelatedPredecodeSchedulePayload>();
-    const KiriView::PredecodePendingSchedule schedule { std::move(context), 1 };
+    const kiriview::PredecodePendingSchedule schedule { std::move(context), 1 };
 
-    QVERIFY(KiriView::mediaPredecodeScheduleCandidates(schedule) == nullptr);
-    QVERIFY(KiriView::mediaPredecodeScheduleEligibility(schedule) == nullptr);
+    QVERIFY(kiriview::mediaPredecodeScheduleCandidates(schedule) == nullptr);
+    QVERIFY(kiriview::mediaPredecodeScheduleEligibility(schedule) == nullptr);
 }
 
 QTEST_GUILESS_MAIN(TestMediaPredecodeSchedulePlan)

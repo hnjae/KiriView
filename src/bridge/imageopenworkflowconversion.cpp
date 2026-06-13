@@ -4,183 +4,183 @@
 #include "imageopenworkflowconversion.h"
 
 namespace {
-KiriView::RustImageDocumentSourceLoadKind rustSourceLoadKind(
-    KiriView::Bridge::ImageDocumentSourceLoadKind loadKind)
+kiriview::RustImageDocumentSourceLoadKind rustSourceLoadKind(
+    kiriview::Bridge::ImageDocumentSourceLoadKind loadKind)
 {
     switch (loadKind) {
-    case KiriView::Bridge::ImageDocumentSourceLoadKind::CurrentSource:
-        return KiriView::RustImageDocumentSourceLoadKind::CurrentSource;
-    case KiriView::Bridge::ImageDocumentSourceLoadKind::ReplacementSource:
-        return KiriView::RustImageDocumentSourceLoadKind::ReplacementSource;
+    case kiriview::Bridge::ImageDocumentSourceLoadKind::CurrentSource:
+        return kiriview::RustImageDocumentSourceLoadKind::CurrentSource;
+    case kiriview::Bridge::ImageDocumentSourceLoadKind::ReplacementSource:
+        return kiriview::RustImageDocumentSourceLoadKind::ReplacementSource;
     }
 
-    return KiriView::RustImageDocumentSourceLoadKind::CurrentSource;
+    return kiriview::RustImageDocumentSourceLoadKind::CurrentSource;
 }
 
-KiriView::ImageDocumentSourceLoadEffect sourceLoadEffectFromBridge(
-    KiriView::RustImageDocumentSourceLoadOperation operation)
+kiriview::ImageDocumentSourceLoadEffect sourceLoadEffectFromBridge(
+    kiriview::RustImageDocumentSourceLoadOperation operation)
 {
-    using RustOperation = KiriView::RustImageDocumentSourceLoadOperation;
+    using RustOperation = kiriview::RustImageDocumentSourceLoadOperation;
 
     switch (operation) {
     case RustOperation::CancelFileDeletion:
-        return KiriView::ImageDocumentSourceLoadEffect::CancelFileDeletion;
+        return kiriview::ImageDocumentSourceLoadEffect::CancelFileDeletion;
     case RustOperation::CancelAllNavigation:
-        return KiriView::ImageDocumentSourceLoadEffect::CancelAllNavigation;
+        return kiriview::ImageDocumentSourceLoadEffect::CancelAllNavigation;
     case RustOperation::CancelPredecode:
-        return KiriView::ImageDocumentSourceLoadEffect::CancelPredecode;
+        return kiriview::ImageDocumentSourceLoadEffect::CancelPredecode;
     case RustOperation::FinishSpreadTransition:
-        return KiriView::ImageDocumentSourceLoadEffect::FinishSpreadTransition;
+        return kiriview::ImageDocumentSourceLoadEffect::FinishSpreadTransition;
     case RustOperation::ResetRightToLeftReading:
-        return KiriView::ImageDocumentSourceLoadEffect::ResetRightToLeftReading;
+        return kiriview::ImageDocumentSourceLoadEffect::ResetRightToLeftReading;
     case RustOperation::NotifyRightToLeftReadingChanged:
-        return KiriView::ImageDocumentSourceLoadEffect::NotifyRightToLeftReadingChanged;
+        return kiriview::ImageDocumentSourceLoadEffect::NotifyRightToLeftReadingChanged;
     case RustOperation::ClearSecondaryPage:
-        return KiriView::ImageDocumentSourceLoadEffect::ClearSecondaryPage;
+        return kiriview::ImageDocumentSourceLoadEffect::ClearSecondaryPage;
     case RustOperation::ClearLoadingContainerNavigationUrl:
-        return KiriView::ImageDocumentSourceLoadEffect::ClearLoadingContainerNavigationUrl;
+        return kiriview::ImageDocumentSourceLoadEffect::ClearLoadingContainerNavigationUrl;
     case RustOperation::SetLoadingContainerNavigationUrlToRequested:
-        return KiriView::ImageDocumentSourceLoadEffect::SetLoadingContainerNavigationUrlToRequested;
+        return kiriview::ImageDocumentSourceLoadEffect::SetLoadingContainerNavigationUrlToRequested;
     case RustOperation::SetContainerNavigationUrlToRequested:
-        return KiriView::ImageDocumentSourceLoadEffect::SetContainerNavigationUrlToRequested;
+        return kiriview::ImageDocumentSourceLoadEffect::SetContainerNavigationUrlToRequested;
     case RustOperation::PrepareSourceLoad:
-        return KiriView::ImageDocumentSourceLoadEffect::PrepareSourceLoad;
+        return kiriview::ImageDocumentSourceLoadEffect::PrepareSourceLoad;
     case RustOperation::SetSourceUrlToRequested:
-        return KiriView::ImageDocumentSourceLoadEffect::SetSourceUrlToRequested;
+        return kiriview::ImageDocumentSourceLoadEffect::SetSourceUrlToRequested;
     case RustOperation::BeginOpen:
-        return KiriView::ImageDocumentSourceLoadEffect::BeginOpen;
+        return kiriview::ImageDocumentSourceLoadEffect::BeginOpen;
     }
 
-    return KiriView::ImageDocumentSourceLoadEffect::CancelFileDeletion;
+    return kiriview::ImageDocumentSourceLoadEffect::CancelFileDeletion;
 }
 
-KiriView::ImageOpenBoolTarget imageOpenBoolTarget(KiriView::RustImageOpenBoolTarget target)
+kiriview::ImageOpenBoolTarget imageOpenBoolTarget(kiriview::RustImageOpenBoolTarget target)
 {
     switch (target) {
-    case KiriView::RustImageOpenBoolTarget::False:
-        return KiriView::ImageOpenBoolTarget::False;
-    case KiriView::RustImageOpenBoolTarget::True:
-        return KiriView::ImageOpenBoolTarget::True;
-    case KiriView::RustImageOpenBoolTarget::Unchanged:
-        return KiriView::ImageOpenBoolTarget::Unchanged;
+    case kiriview::RustImageOpenBoolTarget::False:
+        return kiriview::ImageOpenBoolTarget::False;
+    case kiriview::RustImageOpenBoolTarget::True:
+        return kiriview::ImageOpenBoolTarget::True;
+    case kiriview::RustImageOpenBoolTarget::Unchanged:
+        return kiriview::ImageOpenBoolTarget::Unchanged;
     }
 
-    return KiriView::ImageOpenBoolTarget::Unchanged;
+    return kiriview::ImageOpenBoolTarget::Unchanged;
 }
 
-KiriView::ImageOpenStatusTarget imageOpenStatusTarget(KiriView::RustImageOpenStatusTarget target)
+kiriview::ImageOpenStatusTarget imageOpenStatusTarget(kiriview::RustImageOpenStatusTarget target)
 {
     switch (target) {
-    case KiriView::RustImageOpenStatusTarget::Null:
-        return KiriView::ImageOpenStatusTarget::Null;
-    case KiriView::RustImageOpenStatusTarget::Loading:
-        return KiriView::ImageOpenStatusTarget::Loading;
-    case KiriView::RustImageOpenStatusTarget::Ready:
-        return KiriView::ImageOpenStatusTarget::Ready;
-    case KiriView::RustImageOpenStatusTarget::Error:
-        return KiriView::ImageOpenStatusTarget::Error;
-    case KiriView::RustImageOpenStatusTarget::Unchanged:
-        return KiriView::ImageOpenStatusTarget::Unchanged;
+    case kiriview::RustImageOpenStatusTarget::Null:
+        return kiriview::ImageOpenStatusTarget::Null;
+    case kiriview::RustImageOpenStatusTarget::Loading:
+        return kiriview::ImageOpenStatusTarget::Loading;
+    case kiriview::RustImageOpenStatusTarget::Ready:
+        return kiriview::ImageOpenStatusTarget::Ready;
+    case kiriview::RustImageOpenStatusTarget::Error:
+        return kiriview::ImageOpenStatusTarget::Error;
+    case kiriview::RustImageOpenStatusTarget::Unchanged:
+        return kiriview::ImageOpenStatusTarget::Unchanged;
     }
 
-    return KiriView::ImageOpenStatusTarget::Unchanged;
+    return kiriview::ImageOpenStatusTarget::Unchanged;
 }
 
-KiriView::ImageOpenErrorStringTarget imageOpenErrorStringTarget(
-    KiriView::RustImageOpenErrorStringTarget target)
+kiriview::ImageOpenErrorStringTarget imageOpenErrorStringTarget(
+    kiriview::RustImageOpenErrorStringTarget target)
 {
     switch (target) {
-    case KiriView::RustImageOpenErrorStringTarget::Clear:
-        return KiriView::ImageOpenErrorStringTarget::Clear;
-    case KiriView::RustImageOpenErrorStringTarget::Provided:
-        return KiriView::ImageOpenErrorStringTarget::Provided;
-    case KiriView::RustImageOpenErrorStringTarget::Unchanged:
-        return KiriView::ImageOpenErrorStringTarget::Unchanged;
+    case kiriview::RustImageOpenErrorStringTarget::Clear:
+        return kiriview::ImageOpenErrorStringTarget::Clear;
+    case kiriview::RustImageOpenErrorStringTarget::Provided:
+        return kiriview::ImageOpenErrorStringTarget::Provided;
+    case kiriview::RustImageOpenErrorStringTarget::Unchanged:
+        return kiriview::ImageOpenErrorStringTarget::Unchanged;
     }
 
-    return KiriView::ImageOpenErrorStringTarget::Unchanged;
+    return kiriview::ImageOpenErrorStringTarget::Unchanged;
 }
 
-KiriView::ImageOpenEmbeddedMetadataTarget imageOpenEmbeddedMetadataTarget(bool clear)
+kiriview::ImageOpenEmbeddedMetadataTarget imageOpenEmbeddedMetadataTarget(bool clear)
 {
-    return clear ? KiriView::ImageOpenEmbeddedMetadataTarget::Clear
-                 : KiriView::ImageOpenEmbeddedMetadataTarget::Unchanged;
+    return clear ? kiriview::ImageOpenEmbeddedMetadataTarget::Clear
+                 : kiriview::ImageOpenEmbeddedMetadataTarget::Unchanged;
 }
 
-KiriView::ImageOpenUrlTarget imageOpenUrlTarget(KiriView::RustImageOpenUrlTarget target)
-{
-    switch (target) {
-    case KiriView::RustImageOpenUrlTarget::Empty:
-        return KiriView::ImageOpenUrlTarget::Empty;
-    case KiriView::RustImageOpenUrlTarget::SessionImage:
-        return KiriView::ImageOpenUrlTarget::SessionImage;
-    case KiriView::RustImageOpenUrlTarget::SessionContainerNavigation:
-        return KiriView::ImageOpenUrlTarget::SessionContainerNavigation;
-    case KiriView::RustImageOpenUrlTarget::DerivedContainerNavigation:
-        return KiriView::ImageOpenUrlTarget::DerivedContainerNavigation;
-    case KiriView::RustImageOpenUrlTarget::Container:
-        return KiriView::ImageOpenUrlTarget::Container;
-    case KiriView::RustImageOpenUrlTarget::Displayed:
-        return KiriView::ImageOpenUrlTarget::Displayed;
-    case KiriView::RustImageOpenUrlTarget::Unchanged:
-        return KiriView::ImageOpenUrlTarget::Unchanged;
-    }
-
-    return KiriView::ImageOpenUrlTarget::Unchanged;
-}
-
-KiriView::ImageOpenSourceKindTarget imageOpenSourceKindTarget(
-    KiriView::RustImageOpenSourceKindTarget target)
+kiriview::ImageOpenUrlTarget imageOpenUrlTarget(kiriview::RustImageOpenUrlTarget target)
 {
     switch (target) {
-    case KiriView::RustImageOpenSourceKindTarget::Session:
-        return KiriView::ImageOpenSourceKindTarget::Session;
-    case KiriView::RustImageOpenSourceKindTarget::Unchanged:
-        return KiriView::ImageOpenSourceKindTarget::Unchanged;
+    case kiriview::RustImageOpenUrlTarget::Empty:
+        return kiriview::ImageOpenUrlTarget::Empty;
+    case kiriview::RustImageOpenUrlTarget::SessionImage:
+        return kiriview::ImageOpenUrlTarget::SessionImage;
+    case kiriview::RustImageOpenUrlTarget::SessionContainerNavigation:
+        return kiriview::ImageOpenUrlTarget::SessionContainerNavigation;
+    case kiriview::RustImageOpenUrlTarget::DerivedContainerNavigation:
+        return kiriview::ImageOpenUrlTarget::DerivedContainerNavigation;
+    case kiriview::RustImageOpenUrlTarget::Container:
+        return kiriview::ImageOpenUrlTarget::Container;
+    case kiriview::RustImageOpenUrlTarget::Displayed:
+        return kiriview::ImageOpenUrlTarget::Displayed;
+    case kiriview::RustImageOpenUrlTarget::Unchanged:
+        return kiriview::ImageOpenUrlTarget::Unchanged;
     }
 
-    return KiriView::ImageOpenSourceKindTarget::Unchanged;
+    return kiriview::ImageOpenUrlTarget::Unchanged;
 }
 
-KiriView::ImageOpenDisplayedLocationTarget imageOpenDisplayedLocationTarget(
-    KiriView::RustImageOpenDisplayedLocationTarget target)
+kiriview::ImageOpenSourceKindTarget imageOpenSourceKindTarget(
+    kiriview::RustImageOpenSourceKindTarget target)
 {
     switch (target) {
-    case KiriView::RustImageOpenDisplayedLocationTarget::Session:
-        return KiriView::ImageOpenDisplayedLocationTarget::Session;
-    case KiriView::RustImageOpenDisplayedLocationTarget::Unchanged:
-        return KiriView::ImageOpenDisplayedLocationTarget::Unchanged;
+    case kiriview::RustImageOpenSourceKindTarget::Session:
+        return kiriview::ImageOpenSourceKindTarget::Session;
+    case kiriview::RustImageOpenSourceKindTarget::Unchanged:
+        return kiriview::ImageOpenSourceKindTarget::Unchanged;
     }
 
-    return KiriView::ImageOpenDisplayedLocationTarget::Unchanged;
+    return kiriview::ImageOpenSourceKindTarget::Unchanged;
 }
 
-KiriView::ImageOpenEffect imageOpenEffect(KiriView::RustImageOpenEffect effect)
+kiriview::ImageOpenDisplayedLocationTarget imageOpenDisplayedLocationTarget(
+    kiriview::RustImageOpenDisplayedLocationTarget target)
+{
+    switch (target) {
+    case kiriview::RustImageOpenDisplayedLocationTarget::Session:
+        return kiriview::ImageOpenDisplayedLocationTarget::Session;
+    case kiriview::RustImageOpenDisplayedLocationTarget::Unchanged:
+        return kiriview::ImageOpenDisplayedLocationTarget::Unchanged;
+    }
+
+    return kiriview::ImageOpenDisplayedLocationTarget::Unchanged;
+}
+
+kiriview::ImageOpenEffect imageOpenEffect(kiriview::RustImageOpenEffect effect)
 {
     switch (effect) {
-    case KiriView::RustImageOpenEffect::ClearImage:
-        return KiriView::ImageOpenEffect::ClearImage;
-    case KiriView::RustImageOpenEffect::ResetZoom:
-        return KiriView::ImageOpenEffect::ResetZoom;
-    case KiriView::RustImageOpenEffect::UpdatePageNavigation:
-        return KiriView::ImageOpenEffect::UpdatePageNavigation;
-    case KiriView::RustImageOpenEffect::ScheduleAdjacentImagePredecode:
-        return KiriView::ImageOpenEffect::ScheduleAdjacentImagePredecode;
-    case KiriView::RustImageOpenEffect::PrepareFailedContainer:
-        return KiriView::ImageOpenEffect::PrepareFailedContainer;
-    case KiriView::RustImageOpenEffect::ClearLoadingPresentation:
-        return KiriView::ImageOpenEffect::ClearLoadingPresentation;
-    case KiriView::RustImageOpenEffect::FinishSpreadTransition:
-        return KiriView::ImageOpenEffect::FinishSpreadTransition;
-    case KiriView::RustImageOpenEffect::ClearSecondaryPage:
-        return KiriView::ImageOpenEffect::ClearSecondaryPage;
+    case kiriview::RustImageOpenEffect::ClearImage:
+        return kiriview::ImageOpenEffect::ClearImage;
+    case kiriview::RustImageOpenEffect::ResetZoom:
+        return kiriview::ImageOpenEffect::ResetZoom;
+    case kiriview::RustImageOpenEffect::UpdatePageNavigation:
+        return kiriview::ImageOpenEffect::UpdatePageNavigation;
+    case kiriview::RustImageOpenEffect::ScheduleAdjacentImagePredecode:
+        return kiriview::ImageOpenEffect::ScheduleAdjacentImagePredecode;
+    case kiriview::RustImageOpenEffect::PrepareFailedContainer:
+        return kiriview::ImageOpenEffect::PrepareFailedContainer;
+    case kiriview::RustImageOpenEffect::ClearLoadingPresentation:
+        return kiriview::ImageOpenEffect::ClearLoadingPresentation;
+    case kiriview::RustImageOpenEffect::FinishSpreadTransition:
+        return kiriview::ImageOpenEffect::FinishSpreadTransition;
+    case kiriview::RustImageOpenEffect::ClearSecondaryPage:
+        return kiriview::ImageOpenEffect::ClearSecondaryPage;
     }
 
-    return KiriView::ImageOpenEffect::ClearImage;
+    return kiriview::ImageOpenEffect::ClearImage;
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 RustImageDocumentSourceLoadPolicyInput rustImageDocumentSourceLoadPolicyInput(
     const Bridge::ImageDocumentSourceLoadPolicyInput &input)
 {

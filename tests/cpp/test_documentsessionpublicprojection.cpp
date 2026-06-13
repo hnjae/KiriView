@@ -25,11 +25,11 @@ private Q_SLOTS:
 
 void TestDocumentSessionPublicProjection::emptySessionProjectsUnavailableNavigationAndEmptyTitle()
 {
-    const KiriView::DocumentSessionPublicProjection projection
-        = KiriView::projectDocumentSessionPublicState({});
+    const kiriview::DocumentSessionPublicProjection projection
+        = kiriview::projectDocumentSessionPublicState({});
 
-    QCOMPARE(projection.sourceKind, KiriView::ActiveNavigationSourceKind::None);
-    QCOMPARE(projection.boundaryScope, KiriView::ActiveNavigationBoundaryScope::None);
+    QCOMPARE(projection.sourceKind, kiriview::ActiveNavigationSourceKind::None);
+    QCOMPARE(projection.boundaryScope, kiriview::ActiveNavigationBoundaryScope::None);
     QVERIFY(!projection.activeNavigation.available);
     QCOMPARE(projection.windowTitleSubject, QString());
     QVERIFY(!projection.displayedFileDeletionAvailable);
@@ -38,15 +38,15 @@ void TestDocumentSessionPublicProjection::emptySessionProjectsUnavailableNavigat
 void TestDocumentSessionPublicProjection::
     directImageProjectsDirectMediaNavigationAndIntrinsicSizeTitle()
 {
-    const KiriView::DocumentSessionPublicProjection projection
-        = KiriView::projectDocumentSessionPublicState(
-            KiriView::DocumentSessionPublicProjectionInput {
-                KiriView::DocumentSessionKind::Image,
+    const kiriview::DocumentSessionPublicProjection projection
+        = kiriview::projectDocumentSessionPublicState(
+            kiriview::DocumentSessionPublicProjectionInput {
+                kiriview::DocumentSessionKind::Image,
                 true,
                 false,
                 false,
-                KiriView::DirectMediaActiveNavigationInput {
-                    KiriView::DirectMediaNavigationBoundaryState { false, true, true, false, 1, 3 },
+                kiriview::DirectMediaActiveNavigationInput {
+                    kiriview::DirectMediaNavigationBoundaryState { false, true, true, false, 1, 3 },
                     true,
                 },
                 {},
@@ -60,8 +60,8 @@ void TestDocumentSessionPublicProjection::
                 false,
             });
 
-    QCOMPARE(projection.sourceKind, KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia);
-    QCOMPARE(projection.boundaryScope, KiriView::ActiveNavigationBoundaryScope::DirectMedia);
+    QCOMPARE(projection.sourceKind, kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia);
+    QCOMPARE(projection.boundaryScope, kiriview::ActiveNavigationBoundaryScope::DirectMedia);
     QVERIFY(projection.activeNavigation.known);
     QVERIFY(projection.activeNavigation.canOpenNext);
     QCOMPARE(projection.activeNavigation.currentNumber, 1);
@@ -72,15 +72,15 @@ void TestDocumentSessionPublicProjection::
 
 void TestDocumentSessionPublicProjection::archiveImageProjectsPageNavigationAndCounterTitle()
 {
-    const KiriView::DocumentSessionPublicProjection projection
-        = KiriView::projectDocumentSessionPublicState(
-            KiriView::DocumentSessionPublicProjectionInput {
-                KiriView::DocumentSessionKind::Image,
+    const kiriview::DocumentSessionPublicProjection projection
+        = kiriview::projectDocumentSessionPublicState(
+            kiriview::DocumentSessionPublicProjectionInput {
+                kiriview::DocumentSessionKind::Image,
                 false,
                 true,
                 false,
                 {},
-                KiriView::ImageDocumentPageActiveNavigationSnapshot {
+                kiriview::ImageDocumentPageActiveNavigationSnapshot {
                     true, true, true, false, false, 2, 5 },
                 QStringLiteral("book.cbz"),
                 QSize(640, 480),
@@ -92,8 +92,8 @@ void TestDocumentSessionPublicProjection::archiveImageProjectsPageNavigationAndC
                 false,
             });
 
-    QCOMPARE(projection.sourceKind, KiriView::ActiveNavigationSourceKind::ImageDocumentPages);
-    QCOMPARE(projection.boundaryScope, KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage);
+    QCOMPARE(projection.sourceKind, kiriview::ActiveNavigationSourceKind::ImageDocumentPages);
+    QCOMPARE(projection.boundaryScope, kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage);
     QVERIFY(projection.activeNavigation.known);
     QVERIFY(projection.activeNavigation.canOpenPrevious);
     QVERIFY(projection.activeNavigation.canOpenNext);
@@ -106,15 +106,15 @@ void TestDocumentSessionPublicProjection::archiveImageProjectsPageNavigationAndC
 void TestDocumentSessionPublicProjection::
     deletionMasksNavigationDispatchWithoutDroppingTitleCounter()
 {
-    const KiriView::DocumentSessionPublicProjection projection
-        = KiriView::projectDocumentSessionPublicState(
-            KiriView::DocumentSessionPublicProjectionInput {
-                KiriView::DocumentSessionKind::Video,
+    const kiriview::DocumentSessionPublicProjection projection
+        = kiriview::projectDocumentSessionPublicState(
+            kiriview::DocumentSessionPublicProjectionInput {
+                kiriview::DocumentSessionKind::Video,
                 false,
                 false,
                 true,
-                KiriView::DirectMediaActiveNavigationInput {
-                    KiriView::DirectMediaNavigationBoundaryState { true, true, false, false, 2, 4 },
+                kiriview::DirectMediaActiveNavigationInput {
+                    kiriview::DirectMediaNavigationBoundaryState { true, true, false, false, 2, 4 },
                     true,
                 },
                 {},
@@ -128,7 +128,7 @@ void TestDocumentSessionPublicProjection::
                 false,
             });
 
-    QCOMPARE(projection.sourceKind, KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia);
+    QCOMPARE(projection.sourceKind, kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia);
     QVERIFY(projection.activeNavigation.known);
     QVERIFY(!projection.activeNavigation.editable);
     QVERIFY(!projection.activeNavigation.canOpenPrevious);
@@ -142,65 +142,65 @@ void TestDocumentSessionPublicProjection::
 void TestDocumentSessionPublicProjection::
     imageDeletionAvailabilityRequiresReadyImageWithoutPendingReplacement()
 {
-    KiriView::DocumentSessionPublicProjectionInput input;
-    input.documentKind = KiriView::DocumentSessionKind::Image;
+    kiriview::DocumentSessionPublicProjectionInput input;
+    input.documentKind = kiriview::DocumentSessionKind::Image;
     input.imageReadyForDeletion = true;
 
-    KiriView::DocumentSessionPublicProjection projection
-        = KiriView::projectDocumentSessionPublicState(input);
+    kiriview::DocumentSessionPublicProjection projection
+        = kiriview::projectDocumentSessionPublicState(input);
     QVERIFY(projection.displayedFileDeletionAvailable);
 
     input.imageReadyForDeletion = false;
-    projection = KiriView::projectDocumentSessionPublicState(input);
+    projection = kiriview::projectDocumentSessionPublicState(input);
     QVERIFY(!projection.displayedFileDeletionAvailable);
 
     input.directImageLoadMayUseImageDocumentSourceScope = true;
     input.imageReadyForDeletion = true;
     input.directImageReplacementPending = true;
-    projection = KiriView::projectDocumentSessionPublicState(input);
+    projection = kiriview::projectDocumentSessionPublicState(input);
     QVERIFY(!projection.displayedFileDeletionAvailable);
 }
 
 void TestDocumentSessionPublicProjection::videoDeletionAvailabilityRequiresSourceWithoutError()
 {
-    KiriView::DocumentSessionPublicProjectionInput input;
-    input.documentKind = KiriView::DocumentSessionKind::Video;
+    kiriview::DocumentSessionPublicProjectionInput input;
+    input.documentKind = kiriview::DocumentSessionKind::Video;
     input.videoSourcePresent = true;
 
-    KiriView::DocumentSessionPublicProjection projection
-        = KiriView::projectDocumentSessionPublicState(input);
+    kiriview::DocumentSessionPublicProjection projection
+        = kiriview::projectDocumentSessionPublicState(input);
     QVERIFY(projection.displayedFileDeletionAvailable);
 
     input.videoSourcePresent = false;
-    projection = KiriView::projectDocumentSessionPublicState(input);
+    projection = kiriview::projectDocumentSessionPublicState(input);
     QVERIFY(!projection.displayedFileDeletionAvailable);
 
     input.videoSourcePresent = true;
     input.videoError = true;
-    projection = KiriView::projectDocumentSessionPublicState(input);
+    projection = kiriview::projectDocumentSessionPublicState(input);
     QVERIFY(!projection.displayedFileDeletionAvailable);
 }
 
 void TestDocumentSessionPublicProjection::deletionProgressSuppressesDeletionAvailability()
 {
-    KiriView::DocumentSessionPublicProjectionInput input;
-    input.documentKind = KiriView::DocumentSessionKind::Image;
+    kiriview::DocumentSessionPublicProjectionInput input;
+    input.documentKind = kiriview::DocumentSessionKind::Image;
     input.imageReadyForDeletion = true;
     input.fileDeletionInProgress = true;
 
-    KiriView::DocumentSessionPublicProjection projection
-        = KiriView::projectDocumentSessionPublicState(input);
+    kiriview::DocumentSessionPublicProjection projection
+        = kiriview::projectDocumentSessionPublicState(input);
     QVERIFY(!projection.displayedFileDeletionAvailable);
 }
 
 void TestDocumentSessionPublicProjection::publicSnapshotProjectsRevisionedMixedMediaState()
 {
-    KiriView::DocumentSessionPublicSnapshotInput input;
+    kiriview::DocumentSessionPublicSnapshotInput input;
     input.inputRevision = 7;
     input.session.sourceUrl = QUrl::fromLocalFile(QStringLiteral("/media/clip.mp4"));
-    input.session.documentKind = KiriView::DocumentSessionKind::Video;
-    input.session.directMediaNavigation = KiriView::DirectMediaActiveNavigationInput {
-        KiriView::DirectMediaNavigationBoundaryState { true, false, false, true, 2, 2 },
+    input.session.documentKind = kiriview::DocumentSessionKind::Video;
+    input.session.directMediaNavigation = kiriview::DirectMediaActiveNavigationInput {
+        kiriview::DirectMediaNavigationBoundaryState { true, false, false, true, 2, 2 },
         true,
     };
     input.video.windowTitleFileName = QStringLiteral("clip.mp4");
@@ -211,20 +211,20 @@ void TestDocumentSessionPublicProjection::publicSnapshotProjectsRevisionedMixedM
     input.video.errorString = QStringLiteral("decode details");
     input.operations.displayedMediaOpenWithAvailable = true;
 
-    const KiriView::DocumentSessionPublicSnapshot snapshot
-        = KiriView::projectDocumentSessionPublicSnapshot(input, 3);
+    const kiriview::DocumentSessionPublicSnapshot snapshot
+        = kiriview::projectDocumentSessionPublicSnapshot(input, 3);
 
     QCOMPARE(snapshot.revision, quint64(3));
     QCOMPARE(snapshot.inputRevision, quint64(7));
     QCOMPARE(snapshot.sourceUrl, input.session.sourceUrl);
-    QCOMPARE(snapshot.documentKind, KiriView::DocumentSessionKind::Video);
+    QCOMPARE(snapshot.documentKind, kiriview::DocumentSessionKind::Video);
     QCOMPARE(snapshot.errorString, QStringLiteral("decode details"));
     QVERIFY(snapshot.activeZoom.available);
     QVERIFY(snapshot.activeZoom.known);
     QCOMPARE(snapshot.activeZoom.percent, 75.0);
     QVERIFY(!snapshot.activeZoom.editable);
     QCOMPARE(
-        snapshot.projection.sourceKind, KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia);
+        snapshot.projection.sourceKind, kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia);
     QCOMPARE(snapshot.projection.activeNavigation.currentNumber, 2);
     QCOMPARE(snapshot.projection.activeNavigation.count, 2);
     QCOMPARE(snapshot.projection.windowTitleSubject, QStringLiteral("clip.mp4 – 1920×1080"));

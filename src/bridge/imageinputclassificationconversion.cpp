@@ -4,67 +4,67 @@
 #include "imageinputclassificationconversion.h"
 
 namespace {
-KiriView::ImageInputKind imageInputKindFromBridge(KiriView::RustImageInputKind kind)
+kiriview::ImageInputKind imageInputKindFromBridge(kiriview::RustImageInputKind kind)
 {
     switch (kind) {
-    case KiriView::RustImageInputKind::Unknown:
-        return KiriView::ImageInputKind::Unknown;
-    case KiriView::RustImageInputKind::Svg:
-        return KiriView::ImageInputKind::Svg;
-    case KiriView::RustImageInputKind::Apng:
-        return KiriView::ImageInputKind::Apng;
-    case KiriView::RustImageInputKind::HeifFamily:
-        return KiriView::ImageInputKind::HeifFamily;
-    case KiriView::RustImageInputKind::Raw:
-        return KiriView::ImageInputKind::Raw;
-    case KiriView::RustImageInputKind::QtRaster:
-        return KiriView::ImageInputKind::QtRaster;
+    case kiriview::RustImageInputKind::Unknown:
+        return kiriview::ImageInputKind::Unknown;
+    case kiriview::RustImageInputKind::Svg:
+        return kiriview::ImageInputKind::Svg;
+    case kiriview::RustImageInputKind::Apng:
+        return kiriview::ImageInputKind::Apng;
+    case kiriview::RustImageInputKind::HeifFamily:
+        return kiriview::ImageInputKind::HeifFamily;
+    case kiriview::RustImageInputKind::Raw:
+        return kiriview::ImageInputKind::Raw;
+    case kiriview::RustImageInputKind::QtRaster:
+        return kiriview::ImageInputKind::QtRaster;
     }
 
-    return KiriView::ImageInputKind::Unknown;
+    return kiriview::ImageInputKind::Unknown;
 }
 
-KiriView::QtRasterFormat qtRasterFormatFromBridge(KiriView::RustQtRasterFormat format)
+kiriview::QtRasterFormat qtRasterFormatFromBridge(kiriview::RustQtRasterFormat format)
 {
     switch (format) {
-    case KiriView::RustQtRasterFormat::None:
-        return KiriView::QtRasterFormat::None;
-    case KiriView::RustQtRasterFormat::Png:
-        return KiriView::QtRasterFormat::Png;
-    case KiriView::RustQtRasterFormat::Jpeg:
-        return KiriView::QtRasterFormat::Jpeg;
-    case KiriView::RustQtRasterFormat::Gif:
-        return KiriView::QtRasterFormat::Gif;
-    case KiriView::RustQtRasterFormat::Webp:
-        return KiriView::QtRasterFormat::Webp;
-    case KiriView::RustQtRasterFormat::Bmp:
-        return KiriView::QtRasterFormat::Bmp;
-    case KiriView::RustQtRasterFormat::Tiff:
-        return KiriView::QtRasterFormat::Tiff;
-    case KiriView::RustQtRasterFormat::Jxl:
-        return KiriView::QtRasterFormat::Jxl;
-    case KiriView::RustQtRasterFormat::Jp2:
-        return KiriView::QtRasterFormat::Jp2;
+    case kiriview::RustQtRasterFormat::None:
+        return kiriview::QtRasterFormat::None;
+    case kiriview::RustQtRasterFormat::Png:
+        return kiriview::QtRasterFormat::Png;
+    case kiriview::RustQtRasterFormat::Jpeg:
+        return kiriview::QtRasterFormat::Jpeg;
+    case kiriview::RustQtRasterFormat::Gif:
+        return kiriview::QtRasterFormat::Gif;
+    case kiriview::RustQtRasterFormat::Webp:
+        return kiriview::QtRasterFormat::Webp;
+    case kiriview::RustQtRasterFormat::Bmp:
+        return kiriview::QtRasterFormat::Bmp;
+    case kiriview::RustQtRasterFormat::Tiff:
+        return kiriview::QtRasterFormat::Tiff;
+    case kiriview::RustQtRasterFormat::Jxl:
+        return kiriview::QtRasterFormat::Jxl;
+    case kiriview::RustQtRasterFormat::Jp2:
+        return kiriview::QtRasterFormat::Jp2;
     }
 
-    return KiriView::QtRasterFormat::None;
+    return kiriview::QtRasterFormat::None;
 }
 
-KiriView::ImageDecodeDataSource imageDecodeDataSourceFromBridge(
-    KiriView::RustImageDecodeDataSource dataSource)
+kiriview::ImageDecodeDataSource imageDecodeDataSourceFromBridge(
+    kiriview::RustImageDecodeDataSource dataSource)
 {
     switch (dataSource) {
-    case KiriView::RustImageDecodeDataSource::Original:
-        return KiriView::ImageDecodeDataSource::Original;
-    case KiriView::RustImageDecodeDataSource::AvifCompatible:
-        return KiriView::ImageDecodeDataSource::AvifCompatible;
+    case kiriview::RustImageDecodeDataSource::Original:
+        return kiriview::ImageDecodeDataSource::Original;
+    case kiriview::RustImageDecodeDataSource::AvifCompatible:
+        return kiriview::ImageDecodeDataSource::AvifCompatible;
     }
 
-    return KiriView::ImageDecodeDataSource::Original;
+    return kiriview::ImageDecodeDataSource::Original;
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageInputClassification imageInputClassificationFromBridge(
     const RustImageInputClassification &classification)
 {

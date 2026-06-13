@@ -3,7 +3,7 @@
 
 #include "imagedocumentruntimeplan.h"
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentRuntimePlan imageDocumentClearImagePlan()
 {
     return {

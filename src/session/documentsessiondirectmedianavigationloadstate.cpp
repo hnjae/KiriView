@@ -3,7 +3,7 @@
 
 #include "documentsessiondirectmedianavigationloadstate.h"
 
-namespace KiriView {
+namespace kiriview {
 DocumentSessionDirectMediaNavigationLoadState::DocumentSessionDirectMediaNavigationLoadState(
     quint64 nextOperationId)
     : m_operation(nextOperationId)

@@ -13,10 +13,10 @@
 #include <limits>
 
 namespace {
-using KiriView::imageZoomApproximatelyEqual;
-using KiriView::ImageZoomMode;
-using KiriView::ImageZoomState;
-using KiriView::LoadedImageZoom;
+using kiriview::imageZoomApproximatelyEqual;
+using kiriview::ImageZoomMode;
+using kiriview::ImageZoomState;
+using kiriview::LoadedImageZoom;
 
 QUrl containerUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 

@@ -12,22 +12,22 @@
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
-KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(
     const QUrl &url, const QString &name = {})
 {
-    return KiriView::DirectMediaNavigationCandidate { url, name };
+    return kiriview::DirectMediaNavigationCandidate { url, name };
 }
 
-KiriView::ImageDocumentPageTarget imageTarget(const QUrl &url,
-    KiriView::ImageDocumentPageKind kind = KiriView::ImageDocumentPageKind::Image,
+kiriview::ImageDocumentPageTarget imageTarget(const QUrl &url,
+    kiriview::ImageDocumentPageKind kind = kiriview::ImageDocumentPageKind::Image,
     const QString &name = {})
 {
-    return KiriView::ImageDocumentPageTarget(url, kind, name);
+    return kiriview::ImageDocumentPageTarget(url, kind, name);
 }
 
-KiriView::ActiveNavigationSnapshot knownNavigation(int currentNumber, int count)
+kiriview::ActiveNavigationSnapshot knownNavigation(int currentNumber, int count)
 {
-    return KiriView::ActiveNavigationSnapshot {
+    return kiriview::ActiveNavigationSnapshot {
         true,
         true,
         true,
@@ -56,9 +56,9 @@ void TestActiveNavigationThumbnailProjection::directMediaRowsUseConfirmedCandida
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl videoUrl = localUrl(QStringLiteral("/media/02.mp4"));
 
-    const std::vector<KiriView::ActiveNavigationThumbnailRow> rows
-        = KiriView::projectActiveNavigationThumbnailRows(
-            KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, knownNavigation(2, 2),
+    const std::vector<kiriview::ActiveNavigationThumbnailRow> rows
+        = kiriview::projectActiveNavigationThumbnailRows(
+            kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia, knownNavigation(2, 2),
             {
                 directMediaNavigationCandidate(imageUrl),
                 directMediaNavigationCandidate(videoUrl, QStringLiteral("Clip")),
@@ -69,13 +69,13 @@ void TestActiveNavigationThumbnailProjection::directMediaRowsUseConfirmedCandida
     QCOMPARE(rows.at(0).number, 1);
     QCOMPARE(rows.at(0).url, imageUrl);
     QCOMPARE(rows.at(0).label, QStringLiteral("01.png"));
-    QVERIFY(rows.at(0).kind == KiriView::ActiveNavigationThumbnailKind::Image);
+    QVERIFY(rows.at(0).kind == kiriview::ActiveNavigationThumbnailKind::Image);
     QVERIFY(!rows.at(0).current);
 
     QCOMPARE(rows.at(1).number, 2);
     QCOMPARE(rows.at(1).url, videoUrl);
     QCOMPARE(rows.at(1).label, QStringLiteral("Clip"));
-    QVERIFY(rows.at(1).kind == KiriView::ActiveNavigationThumbnailKind::Video);
+    QVERIFY(rows.at(1).kind == kiriview::ActiveNavigationThumbnailKind::Video);
     QVERIFY(rows.at(1).current);
 }
 
@@ -83,31 +83,31 @@ void TestActiveNavigationThumbnailProjection::imageDocumentRowsUsePageSnapshot()
 {
     const QUrl firstPage = localUrl(QStringLiteral("/archive/01.png"));
     const QUrl secondPage = localUrl(QStringLiteral("/archive/clip.mp4"));
-    KiriView::ImageDocumentPageNavigationSnapshot pageSnapshot;
-    pageSnapshot.state = KiriView::PageNavigationState(
+    kiriview::ImageDocumentPageNavigationSnapshot pageSnapshot;
+    pageSnapshot.state = kiriview::PageNavigationState(
         {
-            imageTarget(firstPage, KiriView::ImageDocumentPageKind::Image,
+            imageTarget(firstPage, kiriview::ImageDocumentPageKind::Image,
                 QStringLiteral("chapter/01.png")),
-            imageTarget(secondPage, KiriView::ImageDocumentPageKind::Video),
+            imageTarget(secondPage, kiriview::ImageDocumentPageKind::Video),
         },
         0);
 
-    const std::vector<KiriView::ActiveNavigationThumbnailRow> rows
-        = KiriView::projectActiveNavigationThumbnailRows(
-            KiriView::ActiveNavigationSourceKind::ImageDocumentPages, knownNavigation(1, 2), {},
+    const std::vector<kiriview::ActiveNavigationThumbnailRow> rows
+        = kiriview::projectActiveNavigationThumbnailRows(
+            kiriview::ActiveNavigationSourceKind::ImageDocumentPages, knownNavigation(1, 2), {},
             pageSnapshot);
 
     QCOMPARE(rows.size(), std::size_t(2));
     QCOMPARE(rows.at(0).number, 1);
     QCOMPARE(rows.at(0).url, firstPage);
     QCOMPARE(rows.at(0).label, QStringLiteral("chapter/01.png"));
-    QVERIFY(rows.at(0).kind == KiriView::ActiveNavigationThumbnailKind::Image);
+    QVERIFY(rows.at(0).kind == kiriview::ActiveNavigationThumbnailKind::Image);
     QVERIFY(rows.at(0).current);
 
     QCOMPARE(rows.at(1).number, 2);
     QCOMPARE(rows.at(1).url, secondPage);
     QCOMPARE(rows.at(1).label, QStringLiteral("clip.mp4"));
-    QVERIFY(rows.at(1).kind == KiriView::ActiveNavigationThumbnailKind::Video);
+    QVERIFY(rows.at(1).kind == kiriview::ActiveNavigationThumbnailKind::Video);
     QVERIFY(!rows.at(1).current);
 }
 
@@ -115,22 +115,22 @@ void TestActiveNavigationThumbnailProjection::
     unavailableUnknownAndMismatchedNavigationProjectNoRows()
 {
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
-    const std::vector<KiriView::DirectMediaNavigationCandidate> candidates {
+    const std::vector<kiriview::DirectMediaNavigationCandidate> candidates {
         directMediaNavigationCandidate(imageUrl)
     };
 
-    QVERIFY(KiriView::projectActiveNavigationThumbnailRows(
-        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, {}, candidates, {})
+    QVERIFY(kiriview::projectActiveNavigationThumbnailRows(
+        kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia, {}, candidates, {})
             .empty());
 
-    KiriView::ActiveNavigationSnapshot unknown;
+    kiriview::ActiveNavigationSnapshot unknown;
     unknown.available = true;
-    QVERIFY(KiriView::projectActiveNavigationThumbnailRows(
-        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, unknown, candidates, {})
+    QVERIFY(kiriview::projectActiveNavigationThumbnailRows(
+        kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia, unknown, candidates, {})
             .empty());
 
-    QVERIFY(KiriView::projectActiveNavigationThumbnailRows(
-        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, knownNavigation(1, 2),
+    QVERIFY(kiriview::projectActiveNavigationThumbnailRows(
+        kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia, knownNavigation(1, 2),
         candidates, {})
             .empty());
 }

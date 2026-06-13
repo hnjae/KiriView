@@ -12,7 +12,7 @@
 #include <QtGlobal>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDecodeRequest
 {
 public:

@@ -10,7 +10,7 @@
 #include <QObject>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 MenuAccessKeyRouterRuntime::MenuAccessKeyRouterRuntime(
     QObject *owner, ChangeCallback changeCallback)
     : m_owner(owner)

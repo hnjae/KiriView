@@ -10,7 +10,7 @@
 #include <QtGlobal>
 #include <memory>
 
-namespace KiriView {
+namespace kiriview {
 enum class ThumbnailImageRetentionPriority {
     Background,
     Nearby,

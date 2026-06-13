@@ -15,7 +15,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 namespace Detail {
     template <typename Work, typename Finish> struct AsyncWorkerCallbacks {
         Work work;

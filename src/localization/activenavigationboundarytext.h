@@ -9,7 +9,7 @@
 
 #include <QString>
 
-namespace KiriView {
+namespace kiriview {
 QString activeNavigationBoundaryFeedbackText(
     ActiveNavigationBoundaryScope scope, ActiveNavigationDispatchOutcome outcome);
 QString containerNavigationBoundaryFeedbackText(NavigationDirection direction);

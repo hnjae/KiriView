@@ -8,7 +8,7 @@
 
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageZoomChangeSet;
 
 std::vector<ImageDocumentChange> imageDocumentSpreadTransitionNotifications();

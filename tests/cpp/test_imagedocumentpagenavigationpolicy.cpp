@@ -12,14 +12,14 @@
 #include <vector>
 
 namespace {
-using KiriView::ContainerNavigationCandidate;
-using KiriView::ContainerNavigationCandidateType;
-using KiriView::ImageDocumentPageCandidate;
-using KiriView::NavigationDirection;
-using KiriView::PageNavigationState;
-using KiriView::TestSupport::indexedImageFileName;
-using KiriView::TestSupport::indexedImageUrl;
-using KiriView::TestSupport::localUrl;
+using kiriview::ContainerNavigationCandidate;
+using kiriview::ContainerNavigationCandidateType;
+using kiriview::ImageDocumentPageCandidate;
+using kiriview::NavigationDirection;
+using kiriview::PageNavigationState;
+using kiriview::TestSupport::indexedImageFileName;
+using kiriview::TestSupport::indexedImageUrl;
+using kiriview::TestSupport::localUrl;
 
 std::vector<ImageDocumentPageCandidate> imageDocumentPageCandidates(int count)
 {
@@ -62,41 +62,41 @@ void TestImageDocumentPageNavigationPolicy::
     imageDocumentPageNavigationCandidateProjectionsUseNormalizedUrlIdentity()
 {
     const std::vector<ImageDocumentPageCandidate> candidates = imageDocumentPageCandidates(3);
-    const std::vector<QUrl> urls = KiriView::imageDocumentPageCandidateUrls(candidates);
-    const std::vector<KiriView::ImageDocumentPageTarget> targets
-        = KiriView::imageDocumentPageCandidateTargets(candidates);
+    const std::vector<QUrl> urls = kiriview::imageDocumentPageCandidateUrls(candidates);
+    const std::vector<kiriview::ImageDocumentPageTarget> targets
+        = kiriview::imageDocumentPageCandidateTargets(candidates);
 
     compareUrls(urls, { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) });
     QCOMPARE(targets.at(1).name, indexedImageFileName(1));
-    const std::optional<std::size_t> secondIndex = KiriView::imageDocumentPageCandidateIndex(
+    const std::optional<std::size_t> secondIndex = kiriview::imageDocumentPageCandidateIndex(
         candidates, localUrl(QStringLiteral("/images/subdirectory/../01.png")));
     QVERIFY(secondIndex.has_value());
     QCOMPARE(*secondIndex, std::size_t(1));
-    QVERIFY(KiriView::imageDocumentPageCandidatesContainUrl(candidates, indexedImageUrl(2)));
-    QVERIFY(!KiriView::imageDocumentPageCandidatesContainUrl(candidates, indexedImageUrl(9)));
+    QVERIFY(kiriview::imageDocumentPageCandidatesContainUrl(candidates, indexedImageUrl(2)));
+    QVERIFY(!kiriview::imageDocumentPageCandidatesContainUrl(candidates, indexedImageUrl(9)));
 }
 
 void TestImageDocumentPageNavigationPolicy::adjacentImageDocumentPageNavigationDoesNotWrap()
 {
     const std::vector<ImageDocumentPageCandidate> candidates = imageDocumentPageCandidates(3);
 
-    const std::optional<QUrl> previous = KiriView::adjacentImageDocumentPageUrl(
+    const std::optional<QUrl> previous = kiriview::adjacentImageDocumentPageUrl(
         candidates, indexedImageUrl(1), NavigationDirection::Previous);
     QVERIFY(previous.has_value());
     QCOMPARE(*previous, indexedImageUrl(0));
 
-    const std::optional<QUrl> next = KiriView::adjacentImageDocumentPageUrl(
+    const std::optional<QUrl> next = kiriview::adjacentImageDocumentPageUrl(
         candidates, indexedImageUrl(1), NavigationDirection::Next);
     QVERIFY(next.has_value());
     QCOMPARE(*next, indexedImageUrl(2));
 
-    QVERIFY(!KiriView::adjacentImageDocumentPageUrl(
+    QVERIFY(!kiriview::adjacentImageDocumentPageUrl(
         candidates, indexedImageUrl(0), NavigationDirection::Previous)
             .has_value());
-    QVERIFY(!KiriView::adjacentImageDocumentPageUrl(
+    QVERIFY(!kiriview::adjacentImageDocumentPageUrl(
         candidates, indexedImageUrl(2), NavigationDirection::Next)
             .has_value());
-    QVERIFY(!KiriView::adjacentImageDocumentPageUrl(
+    QVERIFY(!kiriview::adjacentImageDocumentPageUrl(
         candidates, indexedImageUrl(9), NavigationDirection::Next)
             .has_value());
 }
@@ -113,22 +113,22 @@ void TestImageDocumentPageNavigationPolicy::adjacentContainerNavigationUsesTheSa
     };
 
     const std::optional<ContainerNavigationCandidate> previous
-        = KiriView::adjacentContainerNavigationCandidate(
+        = kiriview::adjacentContainerNavigationCandidate(
             candidates, second, NavigationDirection::Previous);
     QVERIFY(previous.has_value());
     QCOMPARE(previous->url, first);
     QCOMPARE(previous->type, ContainerNavigationCandidateType::Directory);
 
     const std::optional<ContainerNavigationCandidate> next
-        = KiriView::adjacentContainerNavigationCandidate(
+        = kiriview::adjacentContainerNavigationCandidate(
             candidates, second, NavigationDirection::Next);
     QVERIFY(next.has_value());
     QCOMPARE(next->url, third);
 
-    QVERIFY(!KiriView::adjacentContainerNavigationCandidate(
+    QVERIFY(!kiriview::adjacentContainerNavigationCandidate(
         candidates, first, NavigationDirection::Previous)
             .has_value());
-    QVERIFY(!KiriView::adjacentContainerNavigationCandidate(
+    QVERIFY(!kiriview::adjacentContainerNavigationCandidate(
         candidates, third, NavigationDirection::Next)
             .has_value());
 }
@@ -141,24 +141,24 @@ void TestImageDocumentPageNavigationPolicy::
         1,
     };
 
-    QCOMPARE(KiriView::pageNavigationCurrentPageNumber(state), 2);
-    QCOMPARE(KiriView::pageNavigationPageCount(state), 3);
-    QVERIFY(KiriView::pageNavigationHasKnownSelection(state));
-    QVERIFY(KiriView::pageNavigationUrlAtPage(state, 2).has_value());
-    QCOMPARE(*KiriView::pageNavigationUrlAtPage(state, 2), indexedImageUrl(1));
-    QVERIFY(!KiriView::pageNavigationUrlAtPage(state, 0).has_value());
-    QVERIFY(!KiriView::pageNavigationUrlAtPage(state, 4).has_value());
-    QVERIFY(KiriView::samePageNavigationState(state,
+    QCOMPARE(kiriview::pageNavigationCurrentPageNumber(state), 2);
+    QCOMPARE(kiriview::pageNavigationPageCount(state), 3);
+    QVERIFY(kiriview::pageNavigationHasKnownSelection(state));
+    QVERIFY(kiriview::pageNavigationUrlAtPage(state, 2).has_value());
+    QCOMPARE(*kiriview::pageNavigationUrlAtPage(state, 2), indexedImageUrl(1));
+    QVERIFY(!kiriview::pageNavigationUrlAtPage(state, 0).has_value());
+    QVERIFY(!kiriview::pageNavigationUrlAtPage(state, 4).has_value());
+    QVERIFY(kiriview::samePageNavigationState(state,
         PageNavigationState { { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) }, 1 }));
-    QVERIFY(!KiriView::samePageNavigationState(state,
+    QVERIFY(!kiriview::samePageNavigationState(state,
         PageNavigationState { { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) }, 2 }));
 
     const PageNavigationState unknownSelection {
         { indexedImageUrl(0) },
         -1,
     };
-    QCOMPARE(KiriView::pageNavigationCurrentPageNumber(unknownSelection), 0);
-    QVERIFY(!KiriView::pageNavigationHasKnownSelection(unknownSelection));
+    QCOMPARE(kiriview::pageNavigationCurrentPageNumber(unknownSelection), 0);
+    QVERIFY(!kiriview::pageNavigationHasKnownSelection(unknownSelection));
 }
 
 void TestImageDocumentPageNavigationPolicy::
@@ -166,17 +166,17 @@ void TestImageDocumentPageNavigationPolicy::
 {
     PageNavigationState state { { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) }, 1 };
 
-    std::optional<std::size_t> target = KiriView::pageNavigationTargetIndex(state, 1);
+    std::optional<std::size_t> target = kiriview::pageNavigationTargetIndex(state, 1);
     QVERIFY(target.has_value());
     QCOMPARE(*target, std::size_t(0));
 
-    target = KiriView::pageNavigationTargetIndex(state, 2);
+    target = kiriview::pageNavigationTargetIndex(state, 2);
     QVERIFY(!target.has_value());
 
-    target = KiriView::pageNavigationTargetIndex(state, 0);
+    target = kiriview::pageNavigationTargetIndex(state, 0);
     QVERIFY(!target.has_value());
 
-    target = KiriView::pageNavigationTargetIndex(state, 4);
+    target = kiriview::pageNavigationTargetIndex(state, 4);
     QVERIFY(!target.has_value());
 }
 
@@ -185,33 +185,33 @@ void TestImageDocumentPageNavigationPolicy::pageNavigationAdjacentTargetUsesKnow
     PageNavigationState state { { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) }, 1 };
 
     std::optional<std::size_t> target
-        = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Previous);
+        = kiriview::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Previous);
     QVERIFY(target.has_value());
     QCOMPARE(*target, std::size_t(0));
 
-    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
+    target = kiriview::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
     QVERIFY(target.has_value());
     QCOMPARE(*target, std::size_t(2));
 
     state.currentIndex = 0;
-    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Previous);
+    target = kiriview::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Previous);
     QVERIFY(!target.has_value());
 
     state.currentIndex = 2;
-    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
+    target = kiriview::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
     QVERIFY(!target.has_value());
 
     state.currentIndex = -1;
-    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
+    target = kiriview::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
     QVERIFY(!target.has_value());
 
     state.currentIndex = 9;
-    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
+    target = kiriview::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
     QVERIFY(!target.has_value());
 
     state.targets.clear();
     state.currentIndex = 0;
-    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
+    target = kiriview::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
     QVERIFY(!target.has_value());
 }
 
@@ -223,21 +223,21 @@ void TestImageDocumentPageNavigationPolicy::pageNavigationPreviewReusesKnownList
     };
 
     PageNavigationState state
-        = KiriView::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(2));
+        = kiriview::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(2));
     QCOMPARE(state.currentIndex, 2);
-    compareUrls(KiriView::imageDocumentPageTargetUrls(state.targets),
-        KiriView::imageDocumentPageTargetUrls(knownState.targets));
+    compareUrls(kiriview::imageDocumentPageTargetUrls(state.targets),
+        kiriview::imageDocumentPageTargetUrls(knownState.targets));
 
-    state = KiriView::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(9));
+    state = kiriview::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, -1);
-    compareUrls(KiriView::imageDocumentPageTargetUrls(state.targets),
-        KiriView::imageDocumentPageTargetUrls(knownState.targets));
+    compareUrls(kiriview::imageDocumentPageTargetUrls(state.targets),
+        kiriview::imageDocumentPageTargetUrls(knownState.targets));
 
-    state = KiriView::pageNavigationStateForCurrentUrl(knownState, QUrl());
+    state = kiriview::pageNavigationStateForCurrentUrl(knownState, QUrl());
     QCOMPARE(state.currentIndex, -1);
     QVERIFY(state.targets.empty());
 
-    state = KiriView::pageNavigationStateForCurrentUrl(PageNavigationState {}, indexedImageUrl(9));
+    state = kiriview::pageNavigationStateForCurrentUrl(PageNavigationState {}, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, -1);
     QVERIFY(state.targets.empty());
 }
@@ -251,45 +251,45 @@ void TestImageDocumentPageNavigationPolicy::
     };
 
     const PageNavigationState state
-        = KiriView::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(9));
+        = kiriview::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, -1);
-    compareUrls(KiriView::imageDocumentPageTargetUrls(state.targets),
-        KiriView::imageDocumentPageTargetUrls(knownState.targets));
+    compareUrls(kiriview::imageDocumentPageTargetUrls(state.targets),
+        kiriview::imageDocumentPageTargetUrls(knownState.targets));
 
     PageNavigationState emptyState {};
     const PageNavigationState unknownState
-        = KiriView::pageNavigationStateForCurrentUrl(emptyState, indexedImageUrl(9));
+        = kiriview::pageNavigationStateForCurrentUrl(emptyState, indexedImageUrl(9));
     QCOMPARE(unknownState.currentIndex, -1);
     QVERIFY(unknownState.targets.empty());
 }
 
 void TestImageDocumentPageNavigationPolicy::pageNavigationInsertsFallbackCurrentUrl()
 {
-    PageNavigationState state = KiriView::pageNavigationStateForUrls(
+    PageNavigationState state = kiriview::pageNavigationStateForUrls(
         { indexedImageUrl(0), indexedImageUrl(1) }, indexedImageUrl(1));
     QCOMPARE(state.currentIndex, 1);
-    compareUrls(KiriView::imageDocumentPageTargetUrls(state.targets),
+    compareUrls(kiriview::imageDocumentPageTargetUrls(state.targets),
         { indexedImageUrl(0), indexedImageUrl(1) });
 
-    state = KiriView::pageNavigationStateForUrls(
+    state = kiriview::pageNavigationStateForUrls(
         { indexedImageUrl(0), indexedImageUrl(1) }, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, -1);
-    compareUrls(KiriView::imageDocumentPageTargetUrls(state.targets),
+    compareUrls(kiriview::imageDocumentPageTargetUrls(state.targets),
         { indexedImageUrl(0), indexedImageUrl(1) });
 }
 
 void TestImageDocumentPageNavigationPolicy::
     pageNavigationUpdateKeepsCandidateListWhenCurrentMissing()
 {
-    PageNavigationState state = KiriView::pageNavigationStateForUrls(
+    PageNavigationState state = kiriview::pageNavigationStateForUrls(
         { indexedImageUrl(0), indexedImageUrl(1) }, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, -1);
-    compareUrls(KiriView::imageDocumentPageTargetUrls(state.targets),
+    compareUrls(kiriview::imageDocumentPageTargetUrls(state.targets),
         { indexedImageUrl(0), indexedImageUrl(1) });
 
-    state = KiriView::pageNavigationStateForUrls({}, indexedImageUrl(9));
+    state = kiriview::pageNavigationStateForUrls({}, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, 0);
-    compareUrls(KiriView::imageDocumentPageTargetUrls(state.targets), { indexedImageUrl(9) });
+    compareUrls(kiriview::imageDocumentPageTargetUrls(state.targets), { indexedImageUrl(9) });
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentPageNavigationPolicy)

@@ -13,7 +13,7 @@
 #include <QtGlobal>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageLoadRequest {
     ImageLocation source;
     ImageDocumentPageKind sourceKind = ImageDocumentPageKind::Image;

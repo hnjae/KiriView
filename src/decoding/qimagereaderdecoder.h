@@ -10,7 +10,7 @@
 
 #include <QByteArray>
 
-namespace KiriView {
+namespace kiriview {
 DecodedImageResult decodeQImageReaderImageData(
     const QByteArray &data, const ImageDecodeRequest &request, QtRasterFormat format);
 }

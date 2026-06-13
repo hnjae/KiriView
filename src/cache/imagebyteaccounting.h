@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace KiriView {
+namespace kiriview {
 inline qsizetype saturatedQtByteSize(std::int64_t byteSize)
 {
     constexpr qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();

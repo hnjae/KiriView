@@ -7,7 +7,7 @@
 
 #include <algorithm>
 
-namespace KiriView {
+namespace kiriview {
 MediaPredecodeEligibilitySnapshot mediaPredecodeEligibilitySnapshot(
     const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl)
 {

@@ -4,10 +4,10 @@
 #include "imageactionavailability.h"
 
 namespace {
-KiriView::ApplicationActions::ImageShortcutScope applicationShortcutScope(
+kiriview::ApplicationActions::ImageShortcutScope applicationShortcutScope(
     ImageActionAvailability::ShortcutScope scope)
 {
-    return static_cast<KiriView::ApplicationActions::ImageShortcutScope>(scope);
+    return static_cast<kiriview::ApplicationActions::ImageShortcutScope>(scope);
 }
 }
 

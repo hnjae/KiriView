@@ -11,7 +11,7 @@
 #include <variant>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 enum class DocumentSessionRouteKind {
     Empty,
     DirectVideo,

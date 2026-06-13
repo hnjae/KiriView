@@ -18,11 +18,11 @@ QUrl parentUrlForAdjacentContainerNavigation(const QUrl &currentContainerUrl)
         return {};
     }
 
-    return KiriView::parentUrlForContainerNavigation(currentContainerUrl);
+    return kiriview::parentUrlForContainerNavigation(currentContainerUrl);
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageContainerNavigationController::ImageContainerNavigationController(QObject *parent,
     const ImageDocumentPageCandidateRepository &candidateRepository, Callbacks callbacks)
     : QObject(parent)

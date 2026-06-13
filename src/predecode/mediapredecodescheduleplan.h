@@ -11,7 +11,7 @@
 #include <QUrl>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct MediaPredecodeSchedulePayload final : PredecodeSchedulePayload {
     std::vector<DirectMediaNavigationCandidate> directMediaNavigationCandidates;
     MediaPredecodeEligibilitySnapshot eligibleImages;

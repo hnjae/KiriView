@@ -6,16 +6,16 @@
 #include "archive/archiveformat.h"
 
 namespace {
-bool openedCollectionScopeOpenWithAvailable(const KiriView::OpenedCollectionScopeLocation &scope)
+bool openedCollectionScopeOpenWithAvailable(const kiriview::OpenedCollectionScopeLocation &scope)
 {
     if (scope.isEmpty() || scope.isDirectory()) {
         return true;
     }
 
-    return KiriView::archiveRootSchemeUsesKioFuse(scope.rootUrl().scheme());
+    return kiriview::archiveRootSchemeUsesKioFuse(scope.rootUrl().scheme());
 }
 
-QUrl imageOpenWithTargetUrl(const KiriView::MediaOpenWithPlanInput &input)
+QUrl imageOpenWithTargetUrl(const kiriview::MediaOpenWithPlanInput &input)
 {
     if (!input.imageReady || input.imageDisplayedUrl.isEmpty()
         || !openedCollectionScopeOpenWithAvailable(input.openedCollectionScope)) {
@@ -25,7 +25,7 @@ QUrl imageOpenWithTargetUrl(const KiriView::MediaOpenWithPlanInput &input)
     return input.imageDisplayedUrl;
 }
 
-QUrl videoOpenWithTargetUrl(const KiriView::MediaOpenWithPlanInput &input)
+QUrl videoOpenWithTargetUrl(const kiriview::MediaOpenWithPlanInput &input)
 {
     if (!input.videoReady || input.videoSourceUrl.isEmpty()) {
         return {};
@@ -35,7 +35,7 @@ QUrl videoOpenWithTargetUrl(const KiriView::MediaOpenWithPlanInput &input)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 MediaOpenWithPlan mediaOpenWithPlan(const MediaOpenWithPlanInput &input)
 {
     QUrl targetUrl;

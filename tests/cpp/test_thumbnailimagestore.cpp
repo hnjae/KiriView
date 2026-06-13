@@ -33,7 +33,7 @@ QImage testImage(QColor color)
 
 void TestThumbnailImageStore::evictsLeastRecentlyUsedImagesByByteBudget()
 {
-    KiriView::ThumbnailImageStore store(128);
+    kiriview::ThumbnailImageStore store(128);
 
     const QString first = store.insert(testImage(Qt::red));
     const QString second = store.insert(testImage(Qt::green));
@@ -51,7 +51,7 @@ void TestThumbnailImageStore::evictsLeastRecentlyUsedImagesByByteBudget()
 
 void TestThumbnailImageStore::imageAccessRefreshesLruOrder()
 {
-    KiriView::ThumbnailImageStore store(128);
+    kiriview::ThumbnailImageStore store(128);
 
     const QString first = store.insert(testImage(Qt::red));
     const QString second = store.insert(testImage(Qt::green));
@@ -66,14 +66,14 @@ void TestThumbnailImageStore::imageAccessRefreshesLruOrder()
 
 void TestThumbnailImageStore::visiblePriorityOutlivesNearbyWhenBudgetIsTight()
 {
-    KiriView::ThumbnailImageStore store(128);
+    kiriview::ThumbnailImageStore store(128);
 
     const QString visible
-        = store.insert(testImage(Qt::red), KiriView::ThumbnailImageRetentionPriority::Visible);
+        = store.insert(testImage(Qt::red), kiriview::ThumbnailImageRetentionPriority::Visible);
     const QString nearby
-        = store.insert(testImage(Qt::green), KiriView::ThumbnailImageRetentionPriority::Nearby);
+        = store.insert(testImage(Qt::green), kiriview::ThumbnailImageRetentionPriority::Nearby);
     const QString newerNearby
-        = store.insert(testImage(Qt::blue), KiriView::ThumbnailImageRetentionPriority::Nearby);
+        = store.insert(testImage(Qt::blue), kiriview::ThumbnailImageRetentionPriority::Nearby);
 
     QCOMPARE(store.size(), qsizetype(2));
     QVERIFY(!store.image(visible).isNull());
@@ -83,14 +83,14 @@ void TestThumbnailImageStore::visiblePriorityOutlivesNearbyWhenBudgetIsTight()
 
 void TestThumbnailImageStore::evictsBackgroundBeforeNearbyBeforeVisible()
 {
-    KiriView::ThumbnailImageStore store(128);
+    kiriview::ThumbnailImageStore store(128);
 
     const QString background
-        = store.insert(testImage(Qt::red), KiriView::ThumbnailImageRetentionPriority::Background);
+        = store.insert(testImage(Qt::red), kiriview::ThumbnailImageRetentionPriority::Background);
     const QString nearby
-        = store.insert(testImage(Qt::green), KiriView::ThumbnailImageRetentionPriority::Nearby);
+        = store.insert(testImage(Qt::green), kiriview::ThumbnailImageRetentionPriority::Nearby);
     const QString visible
-        = store.insert(testImage(Qt::blue), KiriView::ThumbnailImageRetentionPriority::Visible);
+        = store.insert(testImage(Qt::blue), kiriview::ThumbnailImageRetentionPriority::Visible);
 
     QCOMPARE(store.size(), qsizetype(2));
     QVERIFY(store.image(background).isNull());
@@ -98,14 +98,14 @@ void TestThumbnailImageStore::evictsBackgroundBeforeNearbyBeforeVisible()
     QVERIFY(!store.image(visible).isNull());
 
     const QString secondBackground
-        = store.insert(testImage(Qt::cyan), KiriView::ThumbnailImageRetentionPriority::Background);
+        = store.insert(testImage(Qt::cyan), kiriview::ThumbnailImageRetentionPriority::Background);
     QCOMPARE(store.size(), qsizetype(2));
     QVERIFY(store.image(secondBackground).isNull());
     QVERIFY(!store.image(nearby).isNull());
     QVERIFY(!store.image(visible).isNull());
 
     const QString newerNearby
-        = store.insert(testImage(Qt::magenta), KiriView::ThumbnailImageRetentionPriority::Nearby);
+        = store.insert(testImage(Qt::magenta), kiriview::ThumbnailImageRetentionPriority::Nearby);
     QCOMPARE(store.size(), qsizetype(2));
     QVERIFY(store.image(nearby).isNull());
     QVERIFY(!store.image(newerNearby).isNull());
@@ -114,7 +114,7 @@ void TestThumbnailImageStore::evictsBackgroundBeforeNearbyBeforeVisible()
 
 void TestThumbnailImageStore::explicitReleaseRemovesImageAndByteCost()
 {
-    KiriView::ThumbnailImageStore store(128);
+    kiriview::ThumbnailImageStore store(128);
 
     const QString id = store.insert(testImage(Qt::red));
     QVERIFY(!id.isEmpty());

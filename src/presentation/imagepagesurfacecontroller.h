@@ -25,7 +25,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 class ImageAnimationPlayer;
 
 class ImagePageSurfaceController final

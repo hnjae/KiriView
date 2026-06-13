@@ -5,7 +5,7 @@
 
 #include <utility>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 ImageActionAvailabilityRuntime::ImageActionAvailabilityRuntime(ChangeCallback changeCallback)
     : m_changeCallback(std::move(changeCallback))
     , m_projection(imageActionAvailabilityProjection(m_input))

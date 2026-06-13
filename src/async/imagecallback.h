@@ -6,7 +6,7 @@
 
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 template <typename Callback, typename... Args> void invokeIfSet(Callback &callback, Args &&...args)
 {
     if (callback) {

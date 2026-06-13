@@ -12,26 +12,26 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::localUrl;
+using kiriview::TestSupport::localUrl;
 
-KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
-KiriView::PredecodePolicyInput regularPolicyInput()
+kiriview::PredecodePolicyInput regularPolicyInput()
 {
-    return KiriView::PredecodePolicyInput {
-        KiriView::directMediaPredecodeSourceProfile(),
-        KiriView::PredecodeMomentumMode::Neutral,
+    return kiriview::PredecodePolicyInput {
+        kiriview::directMediaPredecodeSourceProfile(),
+        kiriview::PredecodeMomentumMode::Neutral,
         false,
     };
 }
 
-KiriView::MediaPredecodeEligibilitySnapshot eligibilitySnapshot(
-    const std::vector<KiriView::DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl)
+kiriview::MediaPredecodeEligibilitySnapshot eligibilitySnapshot(
+    const std::vector<kiriview::DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    return KiriView::mediaPredecodeEligibilitySnapshot(candidates, currentUrl);
+    return kiriview::mediaPredecodeEligibilitySnapshot(candidates, currentUrl);
 }
 }
 
@@ -50,8 +50,8 @@ void TestMediaPredecodeWindowPlan::mediaWindowUsesVideoCursorAndQueuesOnlyImages
     const QUrl currentVideo = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl nextImage = localUrl(QStringLiteral("/media/02.png"));
     const QUrl nextVideo = localUrl(QStringLiteral("/media/03.mov"));
-    const KiriView::PredecodeWindowPlan windowPlan
-        = KiriView::mediaPredecodeWindowPlan(eligibilitySnapshot(
+    const kiriview::PredecodeWindowPlan windowPlan
+        = kiriview::mediaPredecodeWindowPlan(eligibilitySnapshot(
                                                  {
                                                      directMediaNavigationCandidate(previousImage),
                                                      directMediaNavigationCandidate(currentVideo),
@@ -61,7 +61,7 @@ void TestMediaPredecodeWindowPlan::mediaWindowUsesVideoCursorAndQueuesOnlyImages
                                                  currentVideo),
             regularPolicyInput());
 
-    QCOMPARE(windowPlan.openedCollectionScope, KiriView::OpenedCollectionScopeLocation {});
+    QCOMPARE(windowPlan.openedCollectionScope, kiriview::OpenedCollectionScopeLocation {});
     QCOMPARE(windowPlan.parallelLimit, std::size_t(1));
     QCOMPARE(windowPlan.urls.size(), std::size_t(2));
     QCOMPARE(windowPlan.urls.at(0), nextImage);
@@ -70,7 +70,7 @@ void TestMediaPredecodeWindowPlan::mediaWindowUsesVideoCursorAndQueuesOnlyImages
 
 void TestMediaPredecodeWindowPlan::missingCurrentCandidateYieldsEmptyWindow()
 {
-    const KiriView::PredecodeWindowPlan windowPlan = KiriView::mediaPredecodeWindowPlan(
+    const kiriview::PredecodeWindowPlan windowPlan = kiriview::mediaPredecodeWindowPlan(
         eligibilitySnapshot(
             {
                 directMediaNavigationCandidate(localUrl(QStringLiteral("/media/00.png"))),

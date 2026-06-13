@@ -7,7 +7,7 @@
 #include "decoding/imageinputclassification.h"
 #include "kiriview/src/policy/imageinputclassification.cxx.h"
 
-namespace KiriView {
+namespace kiriview {
 ImageInputClassification imageInputClassificationFromBridge(
     const RustImageInputClassification &classification);
 }

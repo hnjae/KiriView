@@ -9,7 +9,7 @@
 #include <QUrl>
 #include <QtGlobal>
 
-namespace KiriView {
+namespace kiriview {
 struct DirectMediaCursor {
     QUrl stableUrl;
     QUrl pendingUrl;

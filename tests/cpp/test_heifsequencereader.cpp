@@ -24,7 +24,7 @@ private Q_SLOTS:
 };
 
 namespace {
-using KiriView::TestSupport::heifFtypBox;
+using kiriview::TestSupport::heifFtypBox;
 
 QByteArray fixtureData()
 {
@@ -38,13 +38,13 @@ QByteArray fixtureData()
 
 void TestHeifSequenceReader::rejectsNonHeifData()
 {
-    KiriView::HeifSequenceReader reader;
+    kiriview::HeifSequenceReader reader;
 
-    const KiriView::HeifSequenceOpenResult emptyResult = reader.open({});
-    QCOMPARE(emptyResult.status, KiriView::HeifSequenceOpenStatus::NotHeif);
+    const kiriview::HeifSequenceOpenResult emptyResult = reader.open({});
+    QCOMPARE(emptyResult.status, kiriview::HeifSequenceOpenStatus::NotHeif);
 
-    const KiriView::HeifSequenceOpenResult nonHeifResult = reader.open(heifFtypBox("png ", {}));
-    QCOMPARE(nonHeifResult.status, KiriView::HeifSequenceOpenStatus::NotHeif);
+    const kiriview::HeifSequenceOpenResult nonHeifResult = reader.open(heifFtypBox("png ", {}));
+    QCOMPARE(nonHeifResult.status, kiriview::HeifSequenceOpenStatus::NotHeif);
 }
 
 void TestHeifSequenceReader::readsFramesFromStreamingSequence()
@@ -52,19 +52,19 @@ void TestHeifSequenceReader::readsFramesFromStreamingSequence()
     const QByteArray imageData = fixtureData();
     QVERIFY(!imageData.isEmpty());
 
-    KiriView::HeifSequenceReader reader;
-    const KiriView::HeifSequenceOpenResult openResult = reader.open(imageData);
-    QCOMPARE(openResult.status, KiriView::HeifSequenceOpenStatus::Success);
+    kiriview::HeifSequenceReader reader;
+    const kiriview::HeifSequenceOpenResult openResult = reader.open(imageData);
+    QCOMPARE(openResult.status, kiriview::HeifSequenceOpenStatus::Success);
 
     QString errorString;
-    const std::optional<KiriView::AnimationFrame> firstFrame = reader.readNextFrame(&errorString);
+    const std::optional<kiriview::AnimationFrame> firstFrame = reader.readNextFrame(&errorString);
     QVERIFY2(firstFrame.has_value(), qPrintable(errorString));
     QCOMPARE(firstFrame->image.size(), QSize(64, 64));
     QVERIFY(firstFrame->delay > 0);
     QVERIFY(qAlpha(firstFrame->image.pixel(16, 32)) > 0);
     QVERIFY(qAlpha(firstFrame->image.pixel(48, 32)) < 255);
 
-    const std::optional<KiriView::AnimationFrame> secondFrame = reader.readNextFrame(&errorString);
+    const std::optional<kiriview::AnimationFrame> secondFrame = reader.readNextFrame(&errorString);
     QVERIFY2(secondFrame.has_value(), qPrintable(errorString));
     QCOMPARE(secondFrame->image.size(), QSize(64, 64));
     QVERIFY(secondFrame->delay > 0);
@@ -77,17 +77,17 @@ void TestHeifSequenceReader::closeClearsTheActiveSequence()
     const QByteArray imageData = fixtureData();
     QVERIFY(!imageData.isEmpty());
 
-    KiriView::HeifSequenceReader reader;
-    const KiriView::HeifSequenceOpenResult openResult = reader.open(imageData);
-    QCOMPARE(openResult.status, KiriView::HeifSequenceOpenStatus::Success);
+    kiriview::HeifSequenceReader reader;
+    const kiriview::HeifSequenceOpenResult openResult = reader.open(imageData);
+    QCOMPARE(openResult.status, kiriview::HeifSequenceOpenStatus::Success);
 
     reader.close();
 
     QString errorString;
-    const std::optional<KiriView::AnimationFrame> frame = reader.readNextFrame(&errorString);
+    const std::optional<kiriview::AnimationFrame> frame = reader.readNextFrame(&errorString);
     QVERIFY(!frame.has_value());
     QCOMPARE(errorString,
-        KiriView::imageErrorText(KiriView::ImageErrorTextId::HeifSequenceTrackMissing));
+        kiriview::imageErrorText(kiriview::ImageErrorTextId::HeifSequenceTrackMissing));
 }
 
 QTEST_GUILESS_MAIN(TestHeifSequenceReader)

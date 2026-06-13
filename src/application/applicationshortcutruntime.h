@@ -24,7 +24,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 class ShortcutRouteModel;
 class ShortcutHelpModel;
 struct ShortcutHelpRow;

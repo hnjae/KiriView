@@ -29,7 +29,7 @@ void TestImageIoJob::cancelInvokesCallbackOnce()
     QObject object;
     int cancelCount = 0;
     QObject *canceledObject = nullptr;
-    KiriView::ImageIoJob job(&object, [&cancelCount, &canceledObject](QObject *objectToCancel) {
+    kiriview::ImageIoJob job(&object, [&cancelCount, &canceledObject](QObject *objectToCancel) {
         ++cancelCount;
         canceledObject = objectToCancel;
     });
@@ -48,8 +48,8 @@ void TestImageIoJob::completionClaimCompletesJobWithoutCanceling()
 {
     QObject object;
     int cancelCount = 0;
-    KiriView::ImageIoJob job(&object, [&cancelCount](QObject *) { ++cancelCount; });
-    const KiriView::ImageIoJobCompletion completion = job.completion();
+    kiriview::ImageIoJob job(&object, [&cancelCount](QObject *) { ++cancelCount; });
+    const kiriview::ImageIoJobCompletion completion = job.completion();
 
     QVERIFY(completion.claimAndRun([]() { }));
     QVERIFY(!job.isActive());
@@ -63,8 +63,8 @@ void TestImageIoJob::completionClaimAndRunCompletesJobOnce()
     QObject object;
     int finishCount = 0;
     int cancelCount = 0;
-    KiriView::ImageIoJob job(&object, [&cancelCount](QObject *) { ++cancelCount; });
-    const KiriView::ImageIoJobCompletion completion = job.completion();
+    kiriview::ImageIoJob job(&object, [&cancelCount](QObject *) { ++cancelCount; });
+    const kiriview::ImageIoJobCompletion completion = job.completion();
 
     QCOMPARE(completion.object(), &object);
     QVERIFY(completion.isActive());
@@ -83,8 +83,8 @@ void TestImageIoJob::completionClaimAndDeleteCompletesJobOnce()
     auto *object = new QObject();
     int finishCount = 0;
     int cancelCount = 0;
-    KiriView::ImageIoJob job(object, [&cancelCount](QObject *) { ++cancelCount; });
-    const KiriView::ImageIoJobCompletion completion = job.completion();
+    kiriview::ImageIoJob job(object, [&cancelCount](QObject *) { ++cancelCount; });
+    const kiriview::ImageIoJobCompletion completion = job.completion();
 
     QVERIFY(completion.claimAndDelete([&finishCount]() { ++finishCount; }));
     QVERIFY(!completion.claimAndDelete([&finishCount]() { ++finishCount; }));
@@ -99,9 +99,9 @@ void TestImageIoJob::completionClaimAndDeleteCompletesJobOnce()
 void TestImageIoJob::completionTokenRemainsAvailableDuringCancelCallback()
 {
     QObject object;
-    KiriView::ImageIoJobCompletion completion;
+    kiriview::ImageIoJobCompletion completion;
     int cancelCount = 0;
-    KiriView::ImageIoJob job(&object, [&completion, &object, &cancelCount](QObject *token) {
+    kiriview::ImageIoJob job(&object, [&completion, &object, &cancelCount](QObject *token) {
         ++cancelCount;
         QCOMPARE(token, &object);
         QCOMPARE(completion.object(), &object);
@@ -120,11 +120,11 @@ void TestImageIoJob::completionTokenRemainsAvailableDuringCancelCallback()
 void TestImageIoJob::destroyedObjectDeactivatesJobWithoutCanceling()
 {
     int cancelCount = 0;
-    KiriView::ImageIoJob job;
+    kiriview::ImageIoJob job;
 
     {
         auto object = std::make_unique<QObject>();
-        job = KiriView::ImageIoJob(object.get(), [&cancelCount](QObject *) { ++cancelCount; });
+        job = kiriview::ImageIoJob(object.get(), [&cancelCount](QObject *) { ++cancelCount; });
         QVERIFY(job.isActive());
     }
 
@@ -140,8 +140,8 @@ void TestImageIoJob::moveAssignmentCancelsReplacedJob()
     QObject secondObject;
     int firstCancelCount = 0;
     int secondCancelCount = 0;
-    KiriView::ImageIoJob job(&firstObject, [&firstCancelCount](QObject *) { ++firstCancelCount; });
-    KiriView::ImageIoJob replacement(
+    kiriview::ImageIoJob job(&firstObject, [&firstCancelCount](QObject *) { ++firstCancelCount; });
+    kiriview::ImageIoJob replacement(
         &secondObject, [&secondCancelCount](QObject *) { ++secondCancelCount; });
 
     job = std::move(replacement);

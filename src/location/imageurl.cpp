@@ -23,7 +23,7 @@ constexpr const char *documentPortalHostPathAttribute = "user.document-portal.ho
 std::optional<QUrl> kioFuseArchiveUrl(const QString &localPath)
 {
     const QString runtimeDir = QFile::decodeName(qgetenv("XDG_RUNTIME_DIR"));
-    return KiriView::kioFuseArchiveUrlForLocalPath(localPath, runtimeDir);
+    return kiriview::kioFuseArchiveUrlForLocalPath(localPath, runtimeDir);
 }
 
 QUrl navigationUrlForLocalPath(const QString &localPath)
@@ -96,7 +96,7 @@ std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 bool DirectoryNavigationLocation::isValid() const
 {
     return fileUrl.isValid() && !fileUrl.isEmpty() && directoryUrl.isValid()

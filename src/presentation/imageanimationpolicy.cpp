@@ -11,7 +11,7 @@ constexpr int defaultAnimationFrameDelayMs = 100;
 constexpr int minimumAnimationFrameDelayMs = 10;
 }
 
-namespace KiriView {
+namespace kiriview {
 void AnimationPlaybackState::startLoop(int loopCount)
 {
     m_loopState = AnimationLoopState { loopCount, 0 };

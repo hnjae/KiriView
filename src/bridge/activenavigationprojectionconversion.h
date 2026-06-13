@@ -7,7 +7,7 @@
 #include "kiriview/src/policy/activenavigation.cxx.h"
 #include "session/activenavigationprojection.h"
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustActiveNavigationSourceKind rustActiveNavigationSourceKind(
     ActiveNavigationSourceKind sourceKind);
 RustDirectMediaNavigationBoundaryState rustDirectMediaNavigationBoundaryState(

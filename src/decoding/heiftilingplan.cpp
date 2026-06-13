@@ -7,9 +7,9 @@
 #include "kiriview/src/policy/heiftiling.cxx.h"
 
 namespace {
-KiriView::RustHeifTiling rustHeifTiling(const heif_image_tiling &tiling)
+kiriview::RustHeifTiling rustHeifTiling(const heif_image_tiling &tiling)
 {
-    return KiriView::RustHeifTiling {
+    return kiriview::RustHeifTiling {
         tiling.num_columns,
         tiling.num_rows,
         tiling.tile_width,
@@ -17,9 +17,9 @@ KiriView::RustHeifTiling rustHeifTiling(const heif_image_tiling &tiling)
     };
 }
 
-KiriView::HeifTileGrid heifTileGridFromRust(const KiriView::RustHeifTileGrid &grid)
+kiriview::HeifTileGrid heifTileGridFromRust(const kiriview::RustHeifTileGrid &grid)
 {
-    return KiriView::HeifTileGrid {
+    return kiriview::HeifTileGrid {
         grid.columns,
         grid.rows,
         grid.tile_width,
@@ -27,19 +27,19 @@ KiriView::HeifTileGrid heifTileGridFromRust(const KiriView::RustHeifTileGrid &gr
     };
 }
 
-KiriView::HeifTileDecodeRegion heifTileDecodeRegionFromRust(
-    const KiriView::RustHeifTileDecodeRegion &region)
+kiriview::HeifTileDecodeRegion heifTileDecodeRegionFromRust(
+    const kiriview::RustHeifTileDecodeRegion &region)
 {
-    return KiriView::HeifTileDecodeRegion {
+    return kiriview::HeifTileDecodeRegion {
         region.tile_x,
         region.tile_y,
         QPoint(region.target_x, region.target_y),
     };
 }
 
-KiriView::RustHeifTileGrid rustHeifTileGrid(const KiriView::HeifTileGrid &grid)
+kiriview::RustHeifTileGrid rustHeifTileGrid(const kiriview::HeifTileGrid &grid)
 {
-    return KiriView::RustHeifTileGrid {
+    return kiriview::RustHeifTileGrid {
         grid.columns,
         grid.rows,
         grid.tileWidth,
@@ -47,14 +47,14 @@ KiriView::RustHeifTileGrid rustHeifTileGrid(const KiriView::HeifTileGrid &grid)
     };
 }
 
-KiriView::RustHeifTileRect rustHeifTileRect(const QRect &rect)
+kiriview::RustHeifTileRect rustHeifTileRect(const QRect &rect)
 {
-    return KiriView::Bridge::rustRect<KiriView::RustHeifTileRect>(rect);
+    return kiriview::Bridge::rustRect<kiriview::RustHeifTileRect>(rect);
 }
 
 }
 
-namespace KiriView {
+namespace kiriview {
 std::optional<HeifTileGrid> heifTileGridForTiling(const heif_image_tiling &tiling)
 {
     const RustHeifTileGridPlan plan = rustHeifTileGridForTiling(rustHeifTiling(tiling));

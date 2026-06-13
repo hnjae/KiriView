@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 ImageLoader::ImageLoader(QObject *parent)
     : ImageLoader(parent, ImageDocumentPageCandidateProvider {}, ImageDecodeDependencies {})
 {

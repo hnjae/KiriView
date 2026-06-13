@@ -12,7 +12,7 @@
 #include <QString>
 #include <QUrl>
 
-namespace KiriView {
+namespace kiriview {
 struct DocumentSessionPublicProjectionInput {
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     bool directImageLoadMayUseImageDocumentSourceScope = false;

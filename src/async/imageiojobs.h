@@ -17,7 +17,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 ImageIoJob startDirectoryImageDocumentPageCandidateList(QObject *receiver, QUrl directoryUrl,
     ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback);
 ImageIoJob startDirectoryImageDocumentPageCandidateList(QObject *receiver, QUrl directoryUrl,

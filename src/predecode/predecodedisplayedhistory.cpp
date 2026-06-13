@@ -14,7 +14,7 @@ namespace {
 constexpr std::size_t recentDisplayedCacheLimit = 4;
 }
 
-namespace KiriView {
+namespace kiriview {
 void PredecodeDisplayedHistory::clear()
 {
     m_currentUrls.clear();

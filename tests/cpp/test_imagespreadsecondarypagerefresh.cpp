@@ -12,23 +12,23 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::localUrl;
+using kiriview::TestSupport::localUrl;
 
-KiriView::ImageDocumentPageNavigationSnapshot navigationSnapshot(
+kiriview::ImageDocumentPageNavigationSnapshot navigationSnapshot(
     const std::vector<QUrl> &urls, int currentPageNumber)
 {
-    return KiriView::ImageDocumentPageNavigationSnapshot {
-        KiriView::PageNavigationState {
+    return kiriview::ImageDocumentPageNavigationSnapshot {
+        kiriview::PageNavigationState {
             urls,
             currentPageNumber - 1,
         },
     };
 }
 
-KiriView::ImageSpreadSecondaryPageRefreshRequest refreshRequest(
+kiriview::ImageSpreadSecondaryPageRefreshRequest refreshRequest(
     const std::vector<QUrl> &urls, int currentPageNumber)
 {
-    return KiriView::ImageSpreadSecondaryPageRefreshRequest {
+    return kiriview::ImageSpreadSecondaryPageRefreshRequest {
         true,
         false,
         false,
@@ -63,12 +63,12 @@ void TestImageSpreadSecondaryPageRefresh::plansNextPageLoadFromNavigationSnapsho
         localUrl(QStringLiteral("/books/003.png")),
         localUrl(QStringLiteral("/books/004.png")),
     };
-    KiriView::ImageSpreadSecondaryPageRefresh refresh;
+    kiriview::ImageSpreadSecondaryPageRefresh refresh;
 
-    const KiriView::ImageSpreadSecondaryPageRefreshResult result
+    const kiriview::ImageSpreadSecondaryPageRefreshResult result
         = refresh.planRefresh(refreshRequest(urls, 2));
 
-    QCOMPARE(result.action, KiriView::ImageSpreadSecondaryPageRefreshAction::LoadTarget);
+    QCOMPARE(result.action, kiriview::ImageSpreadSecondaryPageRefreshAction::LoadTarget);
     QCOMPARE(result.targetUrl, urls.at(2));
 }
 
@@ -80,14 +80,14 @@ void TestImageSpreadSecondaryPageRefresh::keepsCurrentSecondaryWhenItAlreadyMatc
         localUrl(QStringLiteral("/books/003.png")),
         localUrl(QStringLiteral("/books/004.png")),
     };
-    KiriView::ImageSpreadSecondaryPageRefresh refresh;
-    KiriView::ImageSpreadSecondaryPageRefreshRequest request = refreshRequest(urls, 2);
+    kiriview::ImageSpreadSecondaryPageRefresh refresh;
+    kiriview::ImageSpreadSecondaryPageRefreshRequest request = refreshRequest(urls, 2);
     request.secondaryPageVisible = true;
     request.currentSecondaryUrl = urls.at(2);
 
-    const KiriView::ImageSpreadSecondaryPageRefreshResult result = refresh.planRefresh(request);
+    const kiriview::ImageSpreadSecondaryPageRefreshResult result = refresh.planRefresh(request);
 
-    QCOMPARE(result.action, KiriView::ImageSpreadSecondaryPageRefreshAction::KeepCurrentSecondary);
+    QCOMPARE(result.action, kiriview::ImageSpreadSecondaryPageRefreshAction::KeepCurrentSecondary);
     QVERIFY(result.targetUrl.isEmpty());
 }
 
@@ -99,13 +99,13 @@ void TestImageSpreadSecondaryPageRefresh::wideCachedNextPageFallsBackToPrimaryOn
         localUrl(QStringLiteral("/books/003.png")),
         localUrl(QStringLiteral("/books/004.png")),
     };
-    KiriView::ImageSpreadSecondaryPageRefresh refresh;
+    kiriview::ImageSpreadSecondaryPageRefresh refresh;
     refresh.cachePageSize(urls.at(2), QSize(1200, 800));
 
-    const KiriView::ImageSpreadSecondaryPageRefreshResult result
+    const kiriview::ImageSpreadSecondaryPageRefreshResult result
         = refresh.planRefresh(refreshRequest(urls, 2));
 
-    QCOMPARE(result.action, KiriView::ImageSpreadSecondaryPageRefreshAction::PrimaryOnly);
+    QCOMPARE(result.action, kiriview::ImageSpreadSecondaryPageRefreshAction::PrimaryOnly);
     QVERIFY(result.targetUrl.isEmpty());
 }
 
@@ -117,12 +117,12 @@ void TestImageSpreadSecondaryPageRefresh::videoNextPageFallsBackToPrimaryOnly()
         localUrl(QStringLiteral("/books/003.mp4")),
         localUrl(QStringLiteral("/books/004.png")),
     };
-    KiriView::ImageSpreadSecondaryPageRefresh refresh;
+    kiriview::ImageSpreadSecondaryPageRefresh refresh;
 
-    const KiriView::ImageSpreadSecondaryPageRefreshResult result
+    const kiriview::ImageSpreadSecondaryPageRefreshResult result
         = refresh.planRefresh(refreshRequest(urls, 2));
 
-    QCOMPARE(result.action, KiriView::ImageSpreadSecondaryPageRefreshAction::PrimaryOnly);
+    QCOMPARE(result.action, kiriview::ImageSpreadSecondaryPageRefreshAction::PrimaryOnly);
     QVERIFY(result.targetUrl.isEmpty());
 }
 
@@ -135,20 +135,20 @@ void TestImageSpreadSecondaryPageRefresh::previousNavigationUsesCachedPreviousPa
         localUrl(QStringLiteral("/books/004.png")),
         localUrl(QStringLiteral("/books/005.png")),
     };
-    KiriView::ImageSpreadSecondaryPageRefresh refresh;
-    KiriView::ImageSpreadPageNavigationContext context {
+    kiriview::ImageSpreadSecondaryPageRefresh refresh;
+    kiriview::ImageSpreadPageNavigationContext context {
         true,
         true,
         navigationSnapshot(urls, 5),
     };
 
-    KiriView::ImageSpreadPageNavigationTarget target
-        = refresh.pageNavigationTarget(KiriView::NavigationDirection::Previous, context);
+    kiriview::ImageSpreadPageNavigationTarget target
+        = refresh.pageNavigationTarget(kiriview::NavigationDirection::Previous, context);
     QVERIFY(target.handledBySpread);
     QCOMPARE(target.pageNumber, 3);
 
     refresh.cachePageSize(urls.at(3), QSize(1200, 800));
-    target = refresh.pageNavigationTarget(KiriView::NavigationDirection::Previous, context);
+    target = refresh.pageNavigationTarget(kiriview::NavigationDirection::Previous, context);
     QVERIFY(target.handledBySpread);
     QCOMPARE(target.pageNumber, 4);
 }
@@ -162,15 +162,15 @@ void TestImageSpreadSecondaryPageRefresh::previousNavigationTreatsVideoAsSingleP
         localUrl(QStringLiteral("/books/004.mp4")),
         localUrl(QStringLiteral("/books/005.png")),
     };
-    KiriView::ImageSpreadSecondaryPageRefresh refresh;
-    const KiriView::ImageSpreadPageNavigationContext context {
+    kiriview::ImageSpreadSecondaryPageRefresh refresh;
+    const kiriview::ImageSpreadPageNavigationContext context {
         true,
         true,
         navigationSnapshot(urls, 5),
     };
 
-    const KiriView::ImageSpreadPageNavigationTarget target
-        = refresh.pageNavigationTarget(KiriView::NavigationDirection::Previous, context);
+    const kiriview::ImageSpreadPageNavigationTarget target
+        = refresh.pageNavigationTarget(kiriview::NavigationDirection::Previous, context);
 
     QVERIFY(target.handledBySpread);
     QCOMPARE(target.pageNumber, 4);
@@ -183,17 +183,17 @@ void TestImageSpreadSecondaryPageRefresh::transitionPlanningUsesNavigationContex
         localUrl(QStringLiteral("/books/002.png")),
         localUrl(QStringLiteral("/books/003.png")),
     };
-    const KiriView::ImageSpreadPageNavigationContext activeContext {
+    const kiriview::ImageSpreadPageNavigationContext activeContext {
         true,
         false,
         navigationSnapshot(urls, 2),
     };
-    const KiriView::ImageSpreadPageNavigationContext inactiveContext {
+    const kiriview::ImageSpreadPageNavigationContext inactiveContext {
         false,
         false,
         navigationSnapshot(urls, 2),
     };
-    KiriView::ImageSpreadSecondaryPageRefresh refresh;
+    kiriview::ImageSpreadSecondaryPageRefresh refresh;
 
     QCOMPARE(refresh.currentLastPageNumber(activeContext), 2);
     QCOMPARE(refresh.relativePageNavigationTarget(1, activeContext), 3);
@@ -208,14 +208,14 @@ void TestImageSpreadSecondaryPageRefresh::activeNavigationSnapshotUsesVisibleSpr
         localUrl(QStringLiteral("/books/002.png")),
         localUrl(QStringLiteral("/books/003.png")),
     };
-    const KiriView::ImageSpreadPageNavigationContext context {
+    const kiriview::ImageSpreadPageNavigationContext context {
         true,
         true,
         navigationSnapshot(urls, 2),
     };
-    KiriView::ImageSpreadSecondaryPageRefresh refresh;
+    kiriview::ImageSpreadSecondaryPageRefresh refresh;
 
-    const KiriView::ImageDocumentPageActiveNavigationSnapshot snapshot
+    const kiriview::ImageDocumentPageActiveNavigationSnapshot snapshot
         = refresh.activeNavigationSnapshot(context);
 
     QVERIFY(snapshot.known);
@@ -233,7 +233,7 @@ void TestImageSpreadSecondaryPageRefresh::primarySelectionMatchingNormalizesDisp
         localUrl(QStringLiteral("/books/001.png")),
         localUrl(QStringLiteral("/books/chapter/../002.png")),
     };
-    KiriView::ImageSpreadSecondaryPageRefresh refresh;
+    kiriview::ImageSpreadSecondaryPageRefresh refresh;
 
     QVERIFY(refresh.primarySelectionMatchesDisplayed(
         navigationSnapshot(urls, 2), localUrl(QStringLiteral("/books/002.png"))));
@@ -244,7 +244,7 @@ void TestImageSpreadSecondaryPageRefresh::primarySelectionMatchingNormalizesDisp
 
 void TestImageSpreadSecondaryPageRefresh::pageWidthCacheNormalizesUrlKeys()
 {
-    KiriView::ImageSpreadSecondaryPageRefresh refresh;
+    kiriview::ImageSpreadSecondaryPageRefresh refresh;
 
     refresh.cachePageSize(localUrl(QStringLiteral("/books/chapter/../page.png")), QSize(1200, 800));
 

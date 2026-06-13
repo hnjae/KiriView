@@ -35,7 +35,7 @@ void setupDefaultQuickStyle()
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 void initializeApplicationRuntime()
 {
     initializeLocalization();

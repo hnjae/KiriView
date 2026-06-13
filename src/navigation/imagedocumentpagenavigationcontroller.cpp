@@ -11,7 +11,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentPageNavigationController::ImageDocumentPageNavigationController(QObject *parent,
     const ImageDocumentPageCandidateRepository &candidateRepository, Callbacks callbacks)
     : QObject(parent)

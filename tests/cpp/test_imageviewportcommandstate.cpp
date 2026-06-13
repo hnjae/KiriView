@@ -23,29 +23,29 @@ private Q_SLOTS:
 
 void TestImageViewportCommandState::commandsPublishMonotonicRevisions()
 {
-    KiriView::ImageViewportCommandState state;
+    kiriview::ImageViewportCommandState state;
     state.setGeometry(QSizeF(200.0, 160.0), QSizeF(1000.0, 800.0));
 
-    const KiriView::ImageViewportCommand first = state.requestContentPosition(QPointF(10.0, 20.0));
-    const KiriView::ImageViewportCommand second = state.requestContentPosition(QPointF(30.0, 40.0));
+    const kiriview::ImageViewportCommand first = state.requestContentPosition(QPointF(10.0, 20.0));
+    const kiriview::ImageViewportCommand second = state.requestContentPosition(QPointF(30.0, 40.0));
 
     QCOMPARE(first.revision, 1);
     QCOMPARE(second.revision, 2);
     QCOMPARE(state.projection().commandRevision, 2);
     QCOMPARE(state.projection().requestedContentPosition, QPointF(30.0, 40.0));
-    QCOMPARE(state.projection().status, KiriView::ImageViewportCommandStatus::Pending);
+    QCOMPARE(state.projection().status, kiriview::ImageViewportCommandStatus::Pending);
 }
 
 void TestImageViewportCommandState::newerCommandSupersedesOlderAcknowledgement()
 {
-    KiriView::ImageViewportCommandState state;
+    kiriview::ImageViewportCommandState state;
     state.setGeometry(QSizeF(200.0, 160.0), QSizeF(1000.0, 800.0));
 
-    const KiriView::ImageViewportCommand stale = state.requestContentPosition(QPointF(10.0, 20.0));
-    const KiriView::ImageViewportCommand latest = state.requestContentPosition(QPointF(30.0, 40.0));
+    const kiriview::ImageViewportCommand stale = state.requestContentPosition(QPointF(10.0, 20.0));
+    const kiriview::ImageViewportCommand latest = state.requestContentPosition(QPointF(30.0, 40.0));
 
     QVERIFY(!state.acknowledgeCommand(stale.revision, QPointF(10.0, 20.0)));
-    QCOMPARE(state.projection().status, KiriView::ImageViewportCommandStatus::Superseded);
+    QCOMPARE(state.projection().status, kiriview::ImageViewportCommandStatus::Superseded);
     QCOMPARE(state.projection().commandRevision, latest.revision);
     QCOMPARE(state.projection().frame.contentPosition, QPointF(30.0, 40.0));
 }
@@ -53,55 +53,55 @@ void TestImageViewportCommandState::newerCommandSupersedesOlderAcknowledgement()
 void TestImageViewportCommandState::
     commandApplicationPublishesApplyingAppliedAndAcknowledgedStates()
 {
-    KiriView::ImageViewportCommandState state;
+    kiriview::ImageViewportCommandState state;
     state.setGeometry(QSizeF(200.0, 160.0), QSizeF(1000.0, 800.0));
 
-    const KiriView::ImageViewportCommand command
+    const kiriview::ImageViewportCommand command
         = state.requestContentPosition(QPointF(30.0, 40.0));
 
     QVERIFY(state.markCommandApplying(command.revision));
-    QCOMPARE(state.projection().status, KiriView::ImageViewportCommandStatus::Applying);
+    QCOMPARE(state.projection().status, kiriview::ImageViewportCommandStatus::Applying);
     QCOMPARE(state.projection().appliedCommandRevision, quint64(0));
 
     QVERIFY(state.completeCommandApplication(command.revision, QPointF(70.0, 80.0)));
-    QCOMPARE(state.projection().status, KiriView::ImageViewportCommandStatus::Applied);
+    QCOMPARE(state.projection().status, kiriview::ImageViewportCommandStatus::Applied);
     QCOMPARE(state.projection().appliedCommandRevision, command.revision);
     QCOMPARE(
-        state.projection().observationOrigin, KiriView::ImageViewportObservationOrigin::Command);
+        state.projection().observationOrigin, kiriview::ImageViewportObservationOrigin::Command);
     QCOMPARE(state.projection().frame.contentPosition, QPointF(70.0, 80.0));
     QCOMPARE(state.projection().frame.visibleItemRect, QRectF(70.0, 80.0, 200.0, 160.0));
 
     QVERIFY(state.acknowledgeCommand(command.revision));
-    QCOMPARE(state.projection().status, KiriView::ImageViewportCommandStatus::Acknowledged);
+    QCOMPARE(state.projection().status, kiriview::ImageViewportCommandStatus::Acknowledged);
     QCOMPARE(state.projection().observationRevision, quint64(1));
     QCOMPARE(state.projection().frame.contentPosition, QPointF(70.0, 80.0));
 }
 
 void TestImageViewportCommandState::userObservationPromotesCanonicalFrame()
 {
-    KiriView::ImageViewportCommandState state;
+    kiriview::ImageViewportCommandState state;
     state.setGeometry(QSizeF(200.0, 160.0), QSizeF(1000.0, 800.0));
     state.requestContentPosition(QPointF(30.0, 40.0));
 
     QVERIFY(state.observeContentPosition(
-        QPointF(70.0, 80.0), KiriView::ImageViewportObservationOrigin::User));
+        QPointF(70.0, 80.0), kiriview::ImageViewportObservationOrigin::User));
 
     QCOMPARE(state.projection().observationRevision, 1);
-    QCOMPARE(state.projection().observationOrigin, KiriView::ImageViewportObservationOrigin::User);
-    QCOMPARE(state.projection().status, KiriView::ImageViewportCommandStatus::Settled);
+    QCOMPARE(state.projection().observationOrigin, kiriview::ImageViewportObservationOrigin::User);
+    QCOMPARE(state.projection().status, kiriview::ImageViewportCommandStatus::Settled);
     QCOMPARE(state.projection().frame.contentPosition, QPointF(70.0, 80.0));
     QCOMPARE(state.projection().frame.visibleItemRect, QRectF(70.0, 80.0, 200.0, 160.0));
 }
 
 void TestImageViewportCommandState::commandAcknowledgementRejectsImpossibleRevision()
 {
-    KiriView::ImageViewportCommandState state;
+    kiriview::ImageViewportCommandState state;
     state.setGeometry(QSizeF(200.0, 160.0), QSizeF(1000.0, 800.0));
     state.requestContentPosition(QPointF(30.0, 40.0));
 
     QVERIFY(!state.acknowledgeCommand(99, QPointF(30.0, 40.0)));
 
-    QCOMPARE(state.projection().status, KiriView::ImageViewportCommandStatus::Rejected);
+    QCOMPARE(state.projection().status, kiriview::ImageViewportCommandStatus::Rejected);
     QCOMPARE(state.projection().appliedCommandRevision, 0);
     QCOMPARE(state.projection().frame.contentPosition, QPointF(30.0, 40.0));
 }

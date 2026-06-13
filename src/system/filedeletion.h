@@ -12,7 +12,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 enum class FileDeletionMode {
     MoveToTrash,
     DeletePermanently,

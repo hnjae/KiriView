@@ -24,7 +24,7 @@ private Q_SLOTS:
 
 void TestImageLruCacheState::evictsLeastRecentlyUsedEntriesToBudget()
 {
-    KiriView::ImageLruCacheState<int, QString> cache(32);
+    kiriview::ImageLruCacheState<int, QString> cache(32);
 
     QVERIFY(cache.insert(1, QStringLiteral("first"), 16));
     QVERIFY(cache.insert(2, QStringLiteral("second"), 16));
@@ -45,7 +45,7 @@ void TestImageLruCacheState::evictsLeastRecentlyUsedEntriesToBudget()
 
 void TestImageLruCacheState::replacesExistingEntriesWithoutDoubleCounting()
 {
-    KiriView::ImageLruCacheState<int, QString> cache(32);
+    kiriview::ImageLruCacheState<int, QString> cache(32);
 
     QVERIFY(cache.insert(1, QStringLiteral("first"), 16));
     QVERIFY(cache.insert(1, QStringLiteral("replacement"), 24));
@@ -59,7 +59,7 @@ void TestImageLruCacheState::replacesExistingEntriesWithoutDoubleCounting()
 
 void TestImageLruCacheState::rejectsInvalidOrOversizedEntries()
 {
-    KiriView::ImageLruCacheState<int, QString> cache(16);
+    kiriview::ImageLruCacheState<int, QString> cache(16);
 
     QVERIFY(!cache.insert(1, QStringLiteral("empty"), 0));
     QVERIFY(!cache.insert(2, QStringLiteral("oversized"), 17));
@@ -71,7 +71,7 @@ void TestImageLruCacheState::rejectsInvalidOrOversizedEntries()
 
 void TestImageLruCacheState::clearRemovesEntriesAndByteCost()
 {
-    KiriView::ImageLruCacheState<int, QString> cache(16);
+    kiriview::ImageLruCacheState<int, QString> cache(16);
 
     QVERIFY(cache.insert(1, QStringLiteral("first"), 16));
     cache.clear();

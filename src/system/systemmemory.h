@@ -8,7 +8,7 @@
 #include <functional>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 using PhysicalSystemMemoryReader = std::function<std::optional<qsizetype>()>;
 
 struct SystemMemoryRuntime {

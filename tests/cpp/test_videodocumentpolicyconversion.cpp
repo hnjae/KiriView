@@ -19,7 +19,7 @@ private Q_SLOTS:
 
 namespace {
 template <typename Operation>
-const Operation *operationAt(const KiriView::VideoPlaybackControlPlan &plan, std::size_t index)
+const Operation *operationAt(const kiriview::VideoPlaybackControlPlan &plan, std::size_t index)
 {
     return std::get_if<Operation>(&plan.backendOperations.at(index));
 }
@@ -27,28 +27,28 @@ const Operation *operationAt(const KiriView::VideoPlaybackControlPlan &plan, std
 
 void TestVideoDocumentPolicyConversion::statusSnapshotAndPlanRoundTripThroughRustPolicy()
 {
-    const KiriView::RustVideoDocumentStatusSnapshot snapshot
-        = KiriView::Bridge::rustVideoDocumentStatusSnapshot(KiriView::VideoDocumentStatusSnapshot {
+    const kiriview::RustVideoDocumentStatusSnapshot snapshot
+        = kiriview::Bridge::rustVideoDocumentStatusSnapshot(kiriview::VideoDocumentStatusSnapshot {
             false,
             false,
             true,
-            KiriView::VideoMediaStatus::EndOfMedia,
+            kiriview::VideoMediaStatus::EndOfMedia,
         });
 
-    const KiriView::VideoDocumentStatusPlan plan
-        = KiriView::Bridge::videoDocumentStatusPlanFromRust(
-            KiriView::rustVideoDocumentStatusPlan(snapshot));
+    const kiriview::VideoDocumentStatusPlan plan
+        = kiriview::Bridge::videoDocumentStatusPlanFromRust(
+            kiriview::rustVideoDocumentStatusPlan(snapshot));
 
-    QCOMPARE(plan.status, KiriView::VideoDocumentStatus::Ready);
+    QCOMPARE(plan.status, kiriview::VideoDocumentStatus::Ready);
     QVERIFY(plan.mediaEnded);
     QVERIFY(plan.clearPlaying);
 }
 
 void TestVideoDocumentPolicyConversion::playbackPlanConversionPreservesOrderedBackendEffects()
 {
-    const KiriView::RustVideoPlaybackControlSnapshot snapshot
-        = KiriView::Bridge::rustVideoPlaybackControlSnapshot(
-            KiriView::VideoPlaybackControlSnapshot {
+    const kiriview::RustVideoPlaybackControlSnapshot snapshot
+        = kiriview::Bridge::rustVideoPlaybackControlSnapshot(
+            kiriview::VideoPlaybackControlSnapshot {
                 false,
                 true,
                 false,
@@ -58,16 +58,16 @@ void TestVideoDocumentPolicyConversion::playbackPlanConversionPreservesOrderedBa
                 10000,
             });
 
-    const KiriView::VideoPlaybackControlPlan plan
-        = KiriView::Bridge::videoPlaybackControlPlanFromRust(
-            KiriView::rustVideoPlaybackPlayPlan(snapshot));
+    const kiriview::VideoPlaybackControlPlan plan
+        = kiriview::Bridge::videoPlaybackControlPlanFromRust(
+            kiriview::rustVideoPlaybackPlayPlan(snapshot));
 
     QCOMPARE(plan.backendOperations.size(), std::size_t(3));
-    QVERIFY(operationAt<KiriView::EnsureVideoPlaybackBackendOperation>(plan, 0) != nullptr);
-    const auto *setPosition = operationAt<KiriView::SetVideoPlaybackPositionOperation>(plan, 1);
+    QVERIFY(operationAt<kiriview::EnsureVideoPlaybackBackendOperation>(plan, 0) != nullptr);
+    const auto *setPosition = operationAt<kiriview::SetVideoPlaybackPositionOperation>(plan, 1);
     QVERIFY(setPosition != nullptr);
     QCOMPARE(setPosition->position, 0);
-    QVERIFY(operationAt<KiriView::PlayVideoPlaybackOperation>(plan, 2) != nullptr);
+    QVERIFY(operationAt<kiriview::PlayVideoPlaybackOperation>(plan, 2) != nullptr);
     QVERIFY(plan.stateDelta.mediaEnded.has_value());
     QCOMPARE(plan.stateDelta.mediaEnded.value(), false);
     QVERIFY(plan.stateDelta.position.has_value());

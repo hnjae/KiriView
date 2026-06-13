@@ -10,23 +10,23 @@
 #include <limits>
 
 namespace {
-KiriView::ImageSpreadSecondaryPageRefreshResult primaryOnlyRefresh()
+kiriview::ImageSpreadSecondaryPageRefreshResult primaryOnlyRefresh()
 {
-    return { KiriView::ImageSpreadSecondaryPageRefreshAction::PrimaryOnly, {} };
+    return { kiriview::ImageSpreadSecondaryPageRefreshAction::PrimaryOnly, {} };
 }
 
-KiriView::ImageSpreadSecondaryPageRefreshResult keepCurrentSecondaryRefresh()
+kiriview::ImageSpreadSecondaryPageRefreshResult keepCurrentSecondaryRefresh()
 {
-    return { KiriView::ImageSpreadSecondaryPageRefreshAction::KeepCurrentSecondary, {} };
+    return { kiriview::ImageSpreadSecondaryPageRefreshAction::KeepCurrentSecondary, {} };
 }
 
-KiriView::ImageSpreadSecondaryPageRefreshResult loadTargetRefresh(const QUrl &targetUrl)
+kiriview::ImageSpreadSecondaryPageRefreshResult loadTargetRefresh(const QUrl &targetUrl)
 {
-    return { KiriView::ImageSpreadSecondaryPageRefreshAction::LoadTarget, targetUrl };
+    return { kiriview::ImageSpreadSecondaryPageRefreshAction::LoadTarget, targetUrl };
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 void ImageSpreadSecondaryPageRefresh::cachePageSize(const QUrl &url, const QSize &imageSize)
 {
     m_pageCache.cachePageSize(url, imageSize);

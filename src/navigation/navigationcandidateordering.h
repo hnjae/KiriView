@@ -16,7 +16,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 inline std::optional<std::size_t> adjacentNavigationIndex(std::size_t candidateCount,
     std::optional<std::size_t> currentIndex, NavigationDirection direction)
 {

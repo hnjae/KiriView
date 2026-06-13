@@ -7,7 +7,7 @@
 #include "application/imageactionavailabilitypolicy.h"
 #include "kiriview/src/policy/imageactionavailability.cxx.h"
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
     const ::ImageActionAvailabilityInput &input);
 RustImageActionAvailabilityProjection rustImageActionAvailabilityProjection(

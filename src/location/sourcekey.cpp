@@ -38,7 +38,7 @@ QUrl normalizedSourceIdentityUrl(const QUrl &url)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 SourceKey sourceKeyForUrl(const QUrl &url)
 {
     if (url.isEmpty() || !url.isValid()) {

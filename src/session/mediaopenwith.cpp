@@ -30,12 +30,12 @@ void cancelKJob(QObject *object)
     job->kill(KJob::Quietly);
 }
 
-KiriView::ImageIoJob startKioMediaOpenWith(QObject *receiver,
-    KiriView::MediaOpenWithRequest request, KiriView::MediaOpenWithCallback callback)
+kiriview::ImageIoJob startKioMediaOpenWith(QObject *receiver,
+    kiriview::MediaOpenWithRequest request, kiriview::MediaOpenWithCallback callback)
 {
     if (request.targetUrl.isEmpty()) {
-        KiriView::invokeIfSet(callback, KiriView::MediaOpenWithResult::Failed, QString());
-        return KiriView::ImageIoJob();
+        kiriview::invokeIfSet(callback, kiriview::MediaOpenWithResult::Failed, QString());
+        return kiriview::ImageIoJob();
     }
 
     auto *job = new KIO::ApplicationLauncherJob(receiver);
@@ -43,27 +43,27 @@ KiriView::ImageIoJob startKioMediaOpenWith(QObject *receiver,
     job->setUiDelegate(
         KIO::createDefaultJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled, nullptr));
 
-    KiriView::ImageIoJob ioJob(job, cancelKJob);
-    const KiriView::ImageIoJobCompletion completion = ioJob.completion();
+    kiriview::ImageIoJob ioJob(job, cancelKJob);
+    const kiriview::ImageIoJobCompletion completion = ioJob.completion();
     QObject *context = receiver == nullptr ? job : receiver;
 
     QObject::connect(job, &KJob::result, context,
         [completion, callback = std::move(callback)](KJob *finishedJob) mutable {
             completion.claimAndRun([&]() {
                 if (finishedJob->error() == KJob::NoError) {
-                    KiriView::invokeIfSet(
-                        callback, KiriView::MediaOpenWithResult::Succeeded, QString());
+                    kiriview::invokeIfSet(
+                        callback, kiriview::MediaOpenWithResult::Succeeded, QString());
                     return;
                 }
 
                 if (isUserCanceledError(finishedJob->error())) {
-                    KiriView::invokeIfSet(
-                        callback, KiriView::MediaOpenWithResult::Canceled, QString());
+                    kiriview::invokeIfSet(
+                        callback, kiriview::MediaOpenWithResult::Canceled, QString());
                     return;
                 }
 
-                KiriView::invokeIfSet(
-                    callback, KiriView::MediaOpenWithResult::Failed, finishedJob->errorString());
+                kiriview::invokeIfSet(
+                    callback, kiriview::MediaOpenWithResult::Failed, finishedJob->errorString());
             });
         });
     job->start();
@@ -71,7 +71,7 @@ KiriView::ImageIoJob startKioMediaOpenWith(QObject *receiver,
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 MediaOpenWithProvider defaultMediaOpenWithProvider()
 {
     return [](QObject *receiver, MediaOpenWithRequest request, MediaOpenWithCallback callback) {

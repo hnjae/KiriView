@@ -10,12 +10,12 @@
 #include <QVariantList>
 
 namespace {
-QVariantList actionIdVariants(const QList<KiriView::ApplicationActions::ActionId> &actionIds)
+QVariantList actionIdVariants(const QList<kiriview::ApplicationActions::ActionId> &actionIds)
 {
     QVariantList variants;
     variants.reserve(actionIds.size());
 
-    for (KiriView::ApplicationActions::ActionId actionId : actionIds) {
+    for (kiriview::ApplicationActions::ActionId actionId : actionIds) {
         variants.push_back(static_cast<int>(actionId));
     }
 
@@ -23,7 +23,7 @@ QVariantList actionIdVariants(const QList<KiriView::ApplicationActions::ActionId
 }
 }
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 ShortcutRouteModel::ShortcutRouteModel(QObject *parent)
     : QAbstractListModel(parent)
 {

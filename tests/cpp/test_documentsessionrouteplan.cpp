@@ -14,7 +14,7 @@ namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
 template <typename Operation>
-const Operation *operationAt(const KiriView::DocumentSessionRoutePlan &plan, std::size_t index)
+const Operation *operationAt(const kiriview::DocumentSessionRoutePlan &plan, std::size_t index)
 {
     if (index >= plan.operations.size()) {
         return nullptr;
@@ -23,9 +23,9 @@ const Operation *operationAt(const KiriView::DocumentSessionRoutePlan &plan, std
     return std::get_if<Operation>(&plan.operations.at(index));
 }
 
-template <typename Operation> bool hasOperation(const KiriView::DocumentSessionRoutePlan &plan)
+template <typename Operation> bool hasOperation(const kiriview::DocumentSessionRoutePlan &plan)
 {
-    for (const KiriView::DocumentSessionRouteOperation &operation : plan.operations) {
+    for (const kiriview::DocumentSessionRouteOperation &operation : plan.operations) {
         if (std::holds_alternative<Operation>(operation)) {
             return true;
         }
@@ -57,24 +57,24 @@ private Q_SLOTS:
 
 void TestDocumentSessionRoutePlan::emptyUrlProducesEmptyClearPlan()
 {
-    const KiriView::DocumentSessionRoutePlan plan = KiriView::documentSessionRoutePlanForSourceUrl(
-        QUrl(), KiriView::DocumentSessionKind::Video);
+    const kiriview::DocumentSessionRoutePlan plan = kiriview::documentSessionRoutePlanForSourceUrl(
+        QUrl(), kiriview::DocumentSessionKind::Video);
 
-    QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::Empty);
+    QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::Empty);
     QVERIFY(plan.sourceUrl.isEmpty());
     QCOMPARE(plan.operations.size(), std::size_t(11));
-    QVERIFY(operationAt<KiriView::ClearSessionErrorStringRouteOperation>(plan, 0) != nullptr);
-    QVERIFY(operationAt<KiriView::CancelDirectMediaNavigationRouteOperation>(plan, 1) != nullptr);
-    QVERIFY(operationAt<KiriView::CancelMediaDeletionRouteOperation>(plan, 2) != nullptr);
-    QVERIFY(operationAt<KiriView::ClearDirectMediaNavigationRouteOperation>(plan, 3) != nullptr);
-    QVERIFY(operationAt<KiriView::ClearDirectMediaCursorRouteOperation>(plan, 4) != nullptr);
-    QVERIFY(operationAt<KiriView::LeaveVideoModeRouteOperation>(plan, 5) != nullptr);
-    QVERIFY(operationAt<KiriView::ClearImageDocumentRouteOperation>(plan, 6) != nullptr);
-    QVERIFY(operationAt<KiriView::EnterEmptyDocumentRouteOperation>(plan, 7) != nullptr);
-    QVERIFY(operationAt<KiriView::ClearSourceIdentityRouteOperation>(plan, 8) != nullptr);
-    QVERIFY(operationAt<KiriView::RecomputePublicProjectionRouteOperation>(plan, 9) != nullptr);
-    QVERIFY(operationAt<KiriView::ClearMediaPredecodeRouteOperation>(plan, 10) != nullptr);
-    QVERIFY(!hasOperation<KiriView::RefreshDirectMediaNavigationAfterRoutingRouteOperation>(plan));
+    QVERIFY(operationAt<kiriview::ClearSessionErrorStringRouteOperation>(plan, 0) != nullptr);
+    QVERIFY(operationAt<kiriview::CancelDirectMediaNavigationRouteOperation>(plan, 1) != nullptr);
+    QVERIFY(operationAt<kiriview::CancelMediaDeletionRouteOperation>(plan, 2) != nullptr);
+    QVERIFY(operationAt<kiriview::ClearDirectMediaNavigationRouteOperation>(plan, 3) != nullptr);
+    QVERIFY(operationAt<kiriview::ClearDirectMediaCursorRouteOperation>(plan, 4) != nullptr);
+    QVERIFY(operationAt<kiriview::LeaveVideoModeRouteOperation>(plan, 5) != nullptr);
+    QVERIFY(operationAt<kiriview::ClearImageDocumentRouteOperation>(plan, 6) != nullptr);
+    QVERIFY(operationAt<kiriview::EnterEmptyDocumentRouteOperation>(plan, 7) != nullptr);
+    QVERIFY(operationAt<kiriview::ClearSourceIdentityRouteOperation>(plan, 8) != nullptr);
+    QVERIFY(operationAt<kiriview::RecomputePublicProjectionRouteOperation>(plan, 9) != nullptr);
+    QVERIFY(operationAt<kiriview::ClearMediaPredecodeRouteOperation>(plan, 10) != nullptr);
+    QVERIFY(!hasOperation<kiriview::RefreshDirectMediaNavigationAfterRoutingRouteOperation>(plan));
 }
 
 void TestDocumentSessionRoutePlan::directVideoLocalAndKdeArchiveUrlsRouteToDirectVideo()
@@ -83,29 +83,29 @@ void TestDocumentSessionRoutePlan::directVideoLocalAndKdeArchiveUrlsRouteToDirec
     const QUrl archiveVideo = QUrl(QStringLiteral("zip:///books/book.zip!/chapter/clip.mov"));
 
     for (const QUrl &url : { localVideo, archiveVideo }) {
-        const KiriView::DocumentSessionRoutePlan plan
-            = KiriView::documentSessionRoutePlanForSourceUrl(
-                url, KiriView::DocumentSessionKind::Image);
+        const kiriview::DocumentSessionRoutePlan plan
+            = kiriview::documentSessionRoutePlanForSourceUrl(
+                url, kiriview::DocumentSessionKind::Image);
 
-        QVERIFY(KiriView::isSupportedDirectVideoUrl(url));
-        QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::DirectVideo);
+        QVERIFY(kiriview::isSupportedDirectVideoUrl(url));
+        QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::DirectVideo);
         QCOMPARE(plan.sourceUrl, url);
-        const auto *cursor = operationAt<KiriView::SetDirectVideoCursorRouteOperation>(plan, 4);
+        const auto *cursor = operationAt<kiriview::SetDirectVideoCursorRouteOperation>(plan, 4);
         QVERIFY(cursor != nullptr);
         QCOMPARE(cursor->url, url);
-        QVERIFY(operationAt<KiriView::ClearImageDocumentRouteOperation>(plan, 5) != nullptr);
-        const auto *enterVideo = operationAt<KiriView::EnterVideoDocumentRouteOperation>(plan, 6);
+        QVERIFY(operationAt<kiriview::ClearImageDocumentRouteOperation>(plan, 5) != nullptr);
+        const auto *enterVideo = operationAt<kiriview::EnterVideoDocumentRouteOperation>(plan, 6);
         QVERIFY(enterVideo != nullptr);
         QCOMPARE(enterVideo->url, url);
         const auto *identity
-            = operationAt<KiriView::UseOriginalSourceIdentityRouteOperation>(plan, 7);
+            = operationAt<kiriview::UseOriginalSourceIdentityRouteOperation>(plan, 7);
         QVERIFY(identity != nullptr);
         QCOMPARE(identity->url, url);
-        QVERIFY(operationAt<KiriView::RecomputePublicProjectionRouteOperation>(plan, 8) != nullptr);
+        QVERIFY(operationAt<kiriview::RecomputePublicProjectionRouteOperation>(plan, 8) != nullptr);
         QVERIFY(
-            operationAt<KiriView::RefreshDirectMediaNavigationAfterRoutingRouteOperation>(plan, 9)
+            operationAt<kiriview::RefreshDirectMediaNavigationAfterRoutingRouteOperation>(plan, 9)
             != nullptr);
-        QVERIFY(!hasOperation<KiriView::ClearMediaPredecodeRouteOperation>(plan));
+        QVERIFY(!hasOperation<kiriview::ClearMediaPredecodeRouteOperation>(plan));
     }
 }
 
@@ -115,29 +115,29 @@ void TestDocumentSessionRoutePlan::directImageLocalAndKdeArchiveUrlsRouteToDirec
     const QUrl archiveImage = QUrl(QStringLiteral("zip:///books/book.zip!/chapter/page.avif"));
 
     for (const QUrl &url : { localImage, archiveImage }) {
-        const KiriView::DocumentSessionRoutePlan plan
-            = KiriView::documentSessionRoutePlanForSourceUrl(
-                url, KiriView::DocumentSessionKind::Image);
+        const kiriview::DocumentSessionRoutePlan plan
+            = kiriview::documentSessionRoutePlanForSourceUrl(
+                url, kiriview::DocumentSessionKind::Image);
 
-        QVERIFY(KiriView::isSupportedDirectImageUrl(url));
-        QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::DirectImage);
+        QVERIFY(kiriview::isSupportedDirectImageUrl(url));
+        QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::DirectImage);
         QCOMPARE(plan.sourceUrl, url);
-        const auto *cursor = operationAt<KiriView::RequestDirectImageCursorRouteOperation>(plan, 4);
+        const auto *cursor = operationAt<kiriview::RequestDirectImageCursorRouteOperation>(plan, 4);
         QVERIFY(cursor != nullptr);
         QCOMPARE(cursor->url, url);
-        QVERIFY(operationAt<KiriView::LeaveVideoModeRouteOperation>(plan, 5) != nullptr);
-        const auto *enterImage = operationAt<KiriView::EnterImageDocumentRouteOperation>(plan, 6);
+        QVERIFY(operationAt<kiriview::LeaveVideoModeRouteOperation>(plan, 5) != nullptr);
+        const auto *enterImage = operationAt<kiriview::EnterImageDocumentRouteOperation>(plan, 6);
         QVERIFY(enterImage != nullptr);
         QCOMPARE(enterImage->url, url);
-        QVERIFY(operationAt<KiriView::SyncDirectImageCursorFromDocumentRouteOperation>(plan, 7)
+        QVERIFY(operationAt<kiriview::SyncDirectImageCursorFromDocumentRouteOperation>(plan, 7)
             != nullptr);
-        QVERIFY(operationAt<KiriView::UseImageDocumentSourceIdentityRouteOperation>(plan, 8)
+        QVERIFY(operationAt<kiriview::UseImageDocumentSourceIdentityRouteOperation>(plan, 8)
             != nullptr);
-        QVERIFY(operationAt<KiriView::RecomputePublicProjectionRouteOperation>(plan, 9) != nullptr);
+        QVERIFY(operationAt<kiriview::RecomputePublicProjectionRouteOperation>(plan, 9) != nullptr);
         QVERIFY(
-            operationAt<KiriView::RefreshDirectMediaNavigationAfterRoutingRouteOperation>(plan, 10)
+            operationAt<kiriview::RefreshDirectMediaNavigationAfterRoutingRouteOperation>(plan, 10)
             != nullptr);
-        QVERIFY(!hasOperation<KiriView::ClearMediaPredecodeRouteOperation>(plan));
+        QVERIFY(!hasOperation<kiriview::ClearMediaPredecodeRouteOperation>(plan));
     }
 }
 
@@ -147,18 +147,18 @@ void TestDocumentSessionRoutePlan::localDirectoryAndGeneralArchiveNamesRouteToIm
         { localUrl(QStringLiteral("/books/")), localUrl(QStringLiteral("/books/book.zip")),
             localUrl(QStringLiteral("/books/book.tar")), localUrl(QStringLiteral("/books/book.7z")),
             localUrl(QStringLiteral("/books/book.rar")) }) {
-        const KiriView::DocumentSessionRoutePlan plan
-            = KiriView::documentSessionRoutePlanForSourceUrl(
-                url, KiriView::DocumentSessionKind::Video);
+        const kiriview::DocumentSessionRoutePlan plan
+            = kiriview::documentSessionRoutePlanForSourceUrl(
+                url, kiriview::DocumentSessionKind::Video);
 
-        QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::ImageDocument);
-        QVERIFY(operationAt<KiriView::ClearDirectMediaCursorRouteOperation>(plan, 4) != nullptr);
-        QVERIFY(operationAt<KiriView::LeaveVideoModeRouteOperation>(plan, 5) != nullptr);
-        QVERIFY(operationAt<KiriView::EnterImageDocumentRouteOperation>(plan, 6) != nullptr);
-        QVERIFY(operationAt<KiriView::SyncDirectImageCursorFromDocumentRouteOperation>(plan, 7)
+        QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::ImageDocument);
+        QVERIFY(operationAt<kiriview::ClearDirectMediaCursorRouteOperation>(plan, 4) != nullptr);
+        QVERIFY(operationAt<kiriview::LeaveVideoModeRouteOperation>(plan, 5) != nullptr);
+        QVERIFY(operationAt<kiriview::EnterImageDocumentRouteOperation>(plan, 6) != nullptr);
+        QVERIFY(operationAt<kiriview::SyncDirectImageCursorFromDocumentRouteOperation>(plan, 7)
             != nullptr);
         QVERIFY(
-            operationAt<KiriView::RefreshDirectMediaNavigationAfterRoutingRouteOperation>(plan, 10)
+            operationAt<kiriview::RefreshDirectMediaNavigationAfterRoutingRouteOperation>(plan, 10)
             != nullptr);
     }
 }
@@ -166,14 +166,14 @@ void TestDocumentSessionRoutePlan::localDirectoryAndGeneralArchiveNamesRouteToIm
 void TestDocumentSessionRoutePlan::unsupportedExtensionRoutesToImageDocument()
 {
     const QUrl unsupported = localUrl(QStringLiteral("/media/readme.txt"));
-    const KiriView::DocumentSessionRoutePlan plan = KiriView::documentSessionRoutePlanForSourceUrl(
-        unsupported, KiriView::DocumentSessionKind::Image);
+    const kiriview::DocumentSessionRoutePlan plan = kiriview::documentSessionRoutePlanForSourceUrl(
+        unsupported, kiriview::DocumentSessionKind::Image);
 
-    QVERIFY(!KiriView::isSupportedDirectVideoUrl(unsupported));
-    QVERIFY(!KiriView::isSupportedDirectImageUrl(unsupported));
-    QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::ImageDocument);
-    QVERIFY(operationAt<KiriView::ClearDirectMediaCursorRouteOperation>(plan, 4) != nullptr);
-    QVERIFY(operationAt<KiriView::EnterImageDocumentRouteOperation>(plan, 6) != nullptr);
+    QVERIFY(!kiriview::isSupportedDirectVideoUrl(unsupported));
+    QVERIFY(!kiriview::isSupportedDirectImageUrl(unsupported));
+    QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::ImageDocument);
+    QVERIFY(operationAt<kiriview::ClearDirectMediaCursorRouteOperation>(plan, 4) != nullptr);
+    QVERIFY(operationAt<kiriview::EnterImageDocumentRouteOperation>(plan, 6) != nullptr);
 }
 
 void TestDocumentSessionRoutePlan::fileNamesMatchCaseInsensitively()
@@ -182,33 +182,33 @@ void TestDocumentSessionRoutePlan::fileNamesMatchCaseInsensitively()
     const QUrl image = localUrl(QStringLiteral("/media/SCAN.TIFF"));
 
     QCOMPARE(
-        KiriView::documentSessionRoutePlanForSourceUrl(video, KiriView::DocumentSessionKind::Empty)
+        kiriview::documentSessionRoutePlanForSourceUrl(video, kiriview::DocumentSessionKind::Empty)
             .kind,
-        KiriView::DocumentSessionRouteKind::DirectVideo);
+        kiriview::DocumentSessionRouteKind::DirectVideo);
     QCOMPARE(
-        KiriView::documentSessionRoutePlanForSourceUrl(image, KiriView::DocumentSessionKind::Empty)
+        kiriview::documentSessionRoutePlanForSourceUrl(image, kiriview::DocumentSessionKind::Empty)
             .kind,
-        KiriView::DocumentSessionRouteKind::DirectImage);
+        kiriview::DocumentSessionRouteKind::DirectImage);
 }
 
 void TestDocumentSessionRoutePlan::sourceRoutesPrepareSessionForTopLevelRouting()
 {
     const QUrl image = localUrl(QStringLiteral("/media/page.png"));
 
-    const KiriView::DocumentSessionRoutePlan sourcePlan
-        = KiriView::documentSessionRoutePlanForSourceUrl(
-            image, KiriView::DocumentSessionKind::Image);
-    QVERIFY(operationAt<KiriView::ClearSessionErrorStringRouteOperation>(sourcePlan, 0) != nullptr);
+    const kiriview::DocumentSessionRoutePlan sourcePlan
+        = kiriview::documentSessionRoutePlanForSourceUrl(
+            image, kiriview::DocumentSessionKind::Image);
+    QVERIFY(operationAt<kiriview::ClearSessionErrorStringRouteOperation>(sourcePlan, 0) != nullptr);
     QVERIFY(
-        operationAt<KiriView::CancelDirectMediaNavigationRouteOperation>(sourcePlan, 1) != nullptr);
-    QVERIFY(operationAt<KiriView::CancelMediaDeletionRouteOperation>(sourcePlan, 2) != nullptr);
+        operationAt<kiriview::CancelDirectMediaNavigationRouteOperation>(sourcePlan, 1) != nullptr);
+    QVERIFY(operationAt<kiriview::CancelMediaDeletionRouteOperation>(sourcePlan, 2) != nullptr);
 
-    const KiriView::DocumentSessionRoutePlan mediaPlan
-        = KiriView::documentSessionRoutePlanForMediaUrl(
-            image, KiriView::DocumentSessionKind::Image);
-    QVERIFY(!hasOperation<KiriView::ClearSessionErrorStringRouteOperation>(mediaPlan));
-    QVERIFY(!hasOperation<KiriView::CancelDirectMediaNavigationRouteOperation>(mediaPlan));
-    QVERIFY(!hasOperation<KiriView::CancelMediaDeletionRouteOperation>(mediaPlan));
+    const kiriview::DocumentSessionRoutePlan mediaPlan
+        = kiriview::documentSessionRoutePlanForMediaUrl(
+            image, kiriview::DocumentSessionKind::Image);
+    QVERIFY(!hasOperation<kiriview::ClearSessionErrorStringRouteOperation>(mediaPlan));
+    QVERIFY(!hasOperation<kiriview::CancelDirectMediaNavigationRouteOperation>(mediaPlan));
+    QVERIFY(!hasOperation<kiriview::CancelMediaDeletionRouteOperation>(mediaPlan));
 }
 
 void TestDocumentSessionRoutePlan::routePlanDoesNotAdvertiseVideoBeyondDirectUrlClassification()
@@ -218,17 +218,17 @@ void TestDocumentSessionRoutePlan::routePlanDoesNotAdvertiseVideoBeyondDirectUrl
     const QUrl archiveVideoEntry = QUrl(QStringLiteral("zip:///books/book.zip!/clip.mp4"));
 
     for (const QUrl &url : { archiveRoot, directoryRoot }) {
-        const KiriView::DocumentSessionRoutePlan plan
-            = KiriView::documentSessionRoutePlanForSourceUrl(
-                url, KiriView::DocumentSessionKind::Image);
-        QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::ImageDocument);
-        QVERIFY(!hasOperation<KiriView::EnterVideoDocumentRouteOperation>(plan));
+        const kiriview::DocumentSessionRoutePlan plan
+            = kiriview::documentSessionRoutePlanForSourceUrl(
+                url, kiriview::DocumentSessionKind::Image);
+        QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::ImageDocument);
+        QVERIFY(!hasOperation<kiriview::EnterVideoDocumentRouteOperation>(plan));
     }
 
-    QCOMPARE(KiriView::documentSessionRoutePlanForSourceUrl(
-                 archiveVideoEntry, KiriView::DocumentSessionKind::Image)
+    QCOMPARE(kiriview::documentSessionRoutePlanForSourceUrl(
+                 archiveVideoEntry, kiriview::DocumentSessionKind::Image)
                  .kind,
-        KiriView::DocumentSessionRouteKind::DirectVideo);
+        kiriview::DocumentSessionRouteKind::DirectVideo);
 }
 
 void TestDocumentSessionRoutePlan::
@@ -236,12 +236,12 @@ void TestDocumentSessionRoutePlan::
 {
     const QUrl image = localUrl(QStringLiteral("/media/page.png"));
 
-    QVERIFY(hasOperation<KiriView::ClearDirectMediaNavigationRouteOperation>(
-        KiriView::documentSessionRoutePlanForSourceUrl(
-            image, KiriView::DocumentSessionKind::Image)));
-    QVERIFY(!hasOperation<KiriView::ClearDirectMediaNavigationRouteOperation>(
-        KiriView::documentSessionRoutePlanForMediaUrl(
-            image, KiriView::DocumentSessionKind::Image)));
+    QVERIFY(hasOperation<kiriview::ClearDirectMediaNavigationRouteOperation>(
+        kiriview::documentSessionRoutePlanForSourceUrl(
+            image, kiriview::DocumentSessionKind::Image)));
+    QVERIFY(!hasOperation<kiriview::ClearDirectMediaNavigationRouteOperation>(
+        kiriview::documentSessionRoutePlanForMediaUrl(
+            image, kiriview::DocumentSessionKind::Image)));
 }
 
 void TestDocumentSessionRoutePlan::
@@ -249,19 +249,19 @@ void TestDocumentSessionRoutePlan::
 {
     const QUrl image = localUrl(QStringLiteral("/media/page.png"));
 
-    QVERIFY(operationAt<KiriView::RequestDirectImageCursorRouteOperation>(
-                KiriView::documentSessionRoutePlanForSourceUrl(
-                    image, KiriView::DocumentSessionKind::Image),
+    QVERIFY(operationAt<kiriview::RequestDirectImageCursorRouteOperation>(
+                kiriview::documentSessionRoutePlanForSourceUrl(
+                    image, kiriview::DocumentSessionKind::Image),
                 4)
         != nullptr);
-    QVERIFY(operationAt<KiriView::ClearThenRequestDirectImageCursorRouteOperation>(
-                KiriView::documentSessionRoutePlanForSourceUrl(
-                    image, KiriView::DocumentSessionKind::Video),
+    QVERIFY(operationAt<kiriview::ClearThenRequestDirectImageCursorRouteOperation>(
+                kiriview::documentSessionRoutePlanForSourceUrl(
+                    image, kiriview::DocumentSessionKind::Video),
                 4)
         != nullptr);
-    QVERIFY(operationAt<KiriView::ClearThenRequestDirectImageCursorRouteOperation>(
-                KiriView::documentSessionRoutePlanForSourceUrl(
-                    image, KiriView::DocumentSessionKind::Empty),
+    QVERIFY(operationAt<kiriview::ClearThenRequestDirectImageCursorRouteOperation>(
+                kiriview::documentSessionRoutePlanForSourceUrl(
+                    image, kiriview::DocumentSessionKind::Empty),
                 4)
         != nullptr);
 }
@@ -270,55 +270,55 @@ void TestDocumentSessionRoutePlan::deletedImageFallbackRoutesAfterClearingImageD
 {
     const QUrl fallback = localUrl(QStringLiteral("/media/fallback.png"));
 
-    const KiriView::DocumentSessionRoutePlan plan
-        = KiriView::documentSessionRoutePlanAfterMediaDeletion(
-            KiriView::DocumentSessionKind::Image, fallback);
+    const kiriview::DocumentSessionRoutePlan plan
+        = kiriview::documentSessionRoutePlanAfterMediaDeletion(
+            kiriview::DocumentSessionKind::Image, fallback);
 
-    QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::DirectImage);
+    QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::DirectImage);
     QCOMPARE(plan.sourceUrl, fallback);
-    QVERIFY(operationAt<KiriView::ClearImageDocumentRouteOperation>(plan, 0) != nullptr);
-    const auto *cursor = operationAt<KiriView::RequestDirectImageCursorRouteOperation>(plan, 1);
+    QVERIFY(operationAt<kiriview::ClearImageDocumentRouteOperation>(plan, 0) != nullptr);
+    const auto *cursor = operationAt<kiriview::RequestDirectImageCursorRouteOperation>(plan, 1);
     QVERIFY(cursor != nullptr);
     QCOMPARE(cursor->url, fallback);
-    QVERIFY(!hasOperation<KiriView::ClearDirectMediaNavigationRouteOperation>(plan));
-    QVERIFY(!hasOperation<KiriView::ClearMediaPredecodeRouteOperation>(plan));
+    QVERIFY(!hasOperation<kiriview::ClearDirectMediaNavigationRouteOperation>(plan));
+    QVERIFY(!hasOperation<kiriview::ClearMediaPredecodeRouteOperation>(plan));
 }
 
 void TestDocumentSessionRoutePlan::deletedVideoFallbackRoutesFromEmptySession()
 {
     const QUrl fallback = localUrl(QStringLiteral("/media/fallback.png"));
 
-    const KiriView::DocumentSessionRoutePlan plan
-        = KiriView::documentSessionRoutePlanAfterMediaDeletion(
-            KiriView::DocumentSessionKind::Video, fallback);
+    const kiriview::DocumentSessionRoutePlan plan
+        = kiriview::documentSessionRoutePlanAfterMediaDeletion(
+            kiriview::DocumentSessionKind::Video, fallback);
 
-    QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::DirectImage);
+    QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::DirectImage);
     QCOMPARE(plan.sourceUrl, fallback);
-    QVERIFY(operationAt<KiriView::LeaveVideoModeRouteOperation>(plan, 0) != nullptr);
-    QVERIFY(operationAt<KiriView::EnterEmptyDocumentRouteOperation>(plan, 1) != nullptr);
+    QVERIFY(operationAt<kiriview::LeaveVideoModeRouteOperation>(plan, 0) != nullptr);
+    QVERIFY(operationAt<kiriview::EnterEmptyDocumentRouteOperation>(plan, 1) != nullptr);
     const auto *cursor
-        = operationAt<KiriView::ClearThenRequestDirectImageCursorRouteOperation>(plan, 2);
+        = operationAt<kiriview::ClearThenRequestDirectImageCursorRouteOperation>(plan, 2);
     QVERIFY(cursor != nullptr);
     QCOMPARE(cursor->url, fallback);
 }
 
 void TestDocumentSessionRoutePlan::deletedMediaWithoutFallbackClearsNavigationAndPredecode()
 {
-    const KiriView::DocumentSessionRoutePlan plan
-        = KiriView::documentSessionRoutePlanAfterMediaDeletion(
-            KiriView::DocumentSessionKind::Video, std::nullopt);
+    const kiriview::DocumentSessionRoutePlan plan
+        = kiriview::documentSessionRoutePlanAfterMediaDeletion(
+            kiriview::DocumentSessionKind::Video, std::nullopt);
 
-    QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::Empty);
+    QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::Empty);
     QVERIFY(plan.sourceUrl.isEmpty());
     QCOMPARE(plan.operations.size(), std::size_t(8));
-    QVERIFY(operationAt<KiriView::ClearDirectMediaNavigationRouteOperation>(plan, 0) != nullptr);
-    QVERIFY(operationAt<KiriView::ClearDirectMediaCursorRouteOperation>(plan, 1) != nullptr);
-    QVERIFY(operationAt<KiriView::LeaveVideoModeRouteOperation>(plan, 2) != nullptr);
-    QVERIFY(operationAt<KiriView::ClearImageDocumentRouteOperation>(plan, 3) != nullptr);
-    QVERIFY(operationAt<KiriView::EnterEmptyDocumentRouteOperation>(plan, 4) != nullptr);
-    QVERIFY(operationAt<KiriView::ClearSourceIdentityRouteOperation>(plan, 5) != nullptr);
-    QVERIFY(operationAt<KiriView::RecomputePublicProjectionRouteOperation>(plan, 6) != nullptr);
-    QVERIFY(operationAt<KiriView::ClearMediaPredecodeRouteOperation>(plan, 7) != nullptr);
+    QVERIFY(operationAt<kiriview::ClearDirectMediaNavigationRouteOperation>(plan, 0) != nullptr);
+    QVERIFY(operationAt<kiriview::ClearDirectMediaCursorRouteOperation>(plan, 1) != nullptr);
+    QVERIFY(operationAt<kiriview::LeaveVideoModeRouteOperation>(plan, 2) != nullptr);
+    QVERIFY(operationAt<kiriview::ClearImageDocumentRouteOperation>(plan, 3) != nullptr);
+    QVERIFY(operationAt<kiriview::EnterEmptyDocumentRouteOperation>(plan, 4) != nullptr);
+    QVERIFY(operationAt<kiriview::ClearSourceIdentityRouteOperation>(plan, 5) != nullptr);
+    QVERIFY(operationAt<kiriview::RecomputePublicProjectionRouteOperation>(plan, 6) != nullptr);
+    QVERIFY(operationAt<kiriview::ClearMediaPredecodeRouteOperation>(plan, 7) != nullptr);
 }
 
 QTEST_GUILESS_MAIN(TestDocumentSessionRoutePlan)

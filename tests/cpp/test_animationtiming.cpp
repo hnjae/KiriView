@@ -23,41 +23,41 @@ private Q_SLOTS:
 
 void TestAnimationTiming::heifFrameDelayRoundsUpDurationToMilliseconds()
 {
-    QCOMPARE(KiriView::heifFrameDelay(1, 24), 42);
-    QCOMPARE(KiriView::heifFrameDelay(3, 2), 1500);
+    QCOMPARE(kiriview::heifFrameDelay(1, 24), 42);
+    QCOMPARE(kiriview::heifFrameDelay(3, 2), 1500);
 }
 
 void TestAnimationTiming::heifFrameDelayRejectsMissingDurationOrTimescale()
 {
-    QCOMPARE(KiriView::heifFrameDelay(0, 24), 0);
-    QCOMPARE(KiriView::heifFrameDelay(1, 0), 0);
+    QCOMPARE(kiriview::heifFrameDelay(0, 24), 0);
+    QCOMPARE(kiriview::heifFrameDelay(1, 0), 0);
 }
 
 void TestAnimationTiming::heifFrameDelayClampsToTimerRange()
 {
-    QCOMPARE(KiriView::heifFrameDelay(std::numeric_limits<std::uint32_t>::max(), 1),
+    QCOMPARE(kiriview::heifFrameDelay(std::numeric_limits<std::uint32_t>::max(), 1),
         std::numeric_limits<int>::max());
 }
 
 void TestAnimationTiming::apngFrameDelayUsesDefaultDenominatorAndFloorRounding()
 {
-    QCOMPARE(KiriView::apngFrameDelay(1, 10), 100);
-    QCOMPARE(KiriView::apngFrameDelay(1, 0), 10);
-    QCOMPARE(KiriView::apngFrameDelay(1, 24), 41);
+    QCOMPARE(kiriview::apngFrameDelay(1, 10), 100);
+    QCOMPARE(kiriview::apngFrameDelay(1, 0), 10);
+    QCOMPARE(kiriview::apngFrameDelay(1, 24), 41);
 }
 
 void TestAnimationTiming::apngFrameDelayClampsToTimerRange()
 {
-    QCOMPARE(KiriView::apngFrameDelay(std::numeric_limits<std::uint32_t>::max(), 1),
+    QCOMPARE(kiriview::apngFrameDelay(std::numeric_limits<std::uint32_t>::max(), 1),
         std::numeric_limits<int>::max());
 }
 
 void TestAnimationTiming::apngLoopCountMapsZeroToInfiniteAndClampsFiniteLoops()
 {
-    QCOMPARE(KiriView::apngLoopCountForPlayCount(0), -1);
-    QCOMPARE(KiriView::apngLoopCountForPlayCount(1), 0);
-    QCOMPARE(KiriView::apngLoopCountForPlayCount(2), 1);
-    QCOMPARE(KiriView::apngLoopCountForPlayCount(std::numeric_limits<std::uint32_t>::max()),
+    QCOMPARE(kiriview::apngLoopCountForPlayCount(0), -1);
+    QCOMPARE(kiriview::apngLoopCountForPlayCount(1), 0);
+    QCOMPARE(kiriview::apngLoopCountForPlayCount(2), 1);
+    QCOMPARE(kiriview::apngLoopCountForPlayCount(std::numeric_limits<std::uint32_t>::max()),
         std::numeric_limits<int>::max());
 }
 

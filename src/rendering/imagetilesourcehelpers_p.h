@@ -11,7 +11,7 @@
 #include <QString>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge);
 bool tileRequestCanDecode(const TileRequest &request);
 QImage scaledTileImage(const QImage &image, const QSize &size);

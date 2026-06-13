@@ -16,39 +16,39 @@ private Q_SLOTS:
 
 void TestImageSpreadSecondaryPageRefreshPolicy::secondaryPageRefreshPlanSelectsPrimaryKeepOrLoad()
 {
-    using KiriView::ImageSpreadSecondaryPageDecision;
+    using kiriview::ImageSpreadSecondaryPageDecision;
 
-    const KiriView::ImageSpreadSecondaryPageRefreshPlan coverPlan
-        = KiriView::imageSpreadSecondaryPageRefreshPlan(
-            KiriView::ImageSpreadSecondaryPageRefreshState {
+    const kiriview::ImageSpreadSecondaryPageRefreshPlan coverPlan
+        = kiriview::imageSpreadSecondaryPageRefreshPlan(
+            kiriview::ImageSpreadSecondaryPageRefreshState {
                 true, 1, 4, false, true, false, false });
     QCOMPARE(coverPlan.decision, ImageSpreadSecondaryPageDecision::PrimaryOnly);
     QCOMPARE(coverPlan.targetPageNumber, 0);
 
-    const KiriView::ImageSpreadSecondaryPageRefreshPlan widePrimaryPlan
-        = KiriView::imageSpreadSecondaryPageRefreshPlan(
-            KiriView::ImageSpreadSecondaryPageRefreshState {
+    const kiriview::ImageSpreadSecondaryPageRefreshPlan widePrimaryPlan
+        = kiriview::imageSpreadSecondaryPageRefreshPlan(
+            kiriview::ImageSpreadSecondaryPageRefreshState {
                 true, 2, 4, true, true, false, false });
     QCOMPARE(widePrimaryPlan.decision, ImageSpreadSecondaryPageDecision::PrimaryOnly);
     QCOMPARE(widePrimaryPlan.targetPageNumber, 0);
 
-    const KiriView::ImageSpreadSecondaryPageRefreshPlan wideNextPlan
-        = KiriView::imageSpreadSecondaryPageRefreshPlan(
-            KiriView::ImageSpreadSecondaryPageRefreshState {
+    const kiriview::ImageSpreadSecondaryPageRefreshPlan wideNextPlan
+        = kiriview::imageSpreadSecondaryPageRefreshPlan(
+            kiriview::ImageSpreadSecondaryPageRefreshState {
                 true, 2, 4, false, true, true, false });
     QCOMPARE(wideNextPlan.decision, ImageSpreadSecondaryPageDecision::PrimaryOnly);
     QCOMPARE(wideNextPlan.targetPageNumber, 0);
 
-    const KiriView::ImageSpreadSecondaryPageRefreshPlan keepPlan
-        = KiriView::imageSpreadSecondaryPageRefreshPlan(
-            KiriView::ImageSpreadSecondaryPageRefreshState {
+    const kiriview::ImageSpreadSecondaryPageRefreshPlan keepPlan
+        = kiriview::imageSpreadSecondaryPageRefreshPlan(
+            kiriview::ImageSpreadSecondaryPageRefreshState {
                 true, 2, 4, false, true, false, true });
     QCOMPARE(keepPlan.decision, ImageSpreadSecondaryPageDecision::KeepCurrentSecondary);
     QCOMPARE(keepPlan.targetPageNumber, 3);
 
-    const KiriView::ImageSpreadSecondaryPageRefreshPlan loadPlan
-        = KiriView::imageSpreadSecondaryPageRefreshPlan(
-            KiriView::ImageSpreadSecondaryPageRefreshState {
+    const kiriview::ImageSpreadSecondaryPageRefreshPlan loadPlan
+        = kiriview::imageSpreadSecondaryPageRefreshPlan(
+            kiriview::ImageSpreadSecondaryPageRefreshState {
                 true, 2, 4, false, true, false, false });
     QCOMPARE(loadPlan.decision, ImageSpreadSecondaryPageDecision::LoadNext);
     QCOMPARE(loadPlan.targetPageNumber, 3);

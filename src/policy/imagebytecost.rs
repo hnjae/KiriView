@@ -3,7 +3,7 @@
 
 pub(crate) const ESTIMATED_RGBA_BYTES_PER_PIXEL: i64 = 4;
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     extern "Rust" {
         #[cxx_name = "rustEstimatedRgbaByteCost"]

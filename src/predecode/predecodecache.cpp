@@ -14,7 +14,7 @@
 #include <optional>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 bool PredecodeCache::canCacheImage(
     const StaticDisplayImagePayload &displayImage, qsizetype byteBudget)
 {

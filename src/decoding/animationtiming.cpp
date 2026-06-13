@@ -32,7 +32,7 @@ int animationFrameDelayFromTimescale(
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 int heifFrameDelay(std::uint32_t duration, std::uint32_t timescale)
 {
     return animationFrameDelayFromTimescale(duration, timescale, DelayRounding::Ceiling);

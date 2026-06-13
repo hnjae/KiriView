@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-namespace KiriView::TestSupport {
+namespace kiriview::TestSupport {
 struct InstrumentedMediaEntrySourceFixture {
     std::vector<ImageDocumentPageCandidate> candidates;
     std::map<QString, QByteArray> dataByUrl;

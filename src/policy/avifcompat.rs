@@ -24,7 +24,7 @@ const EMPTY_IPMA_BOX_SIZE: usize = IPMA_ENTRIES_OFFSET;
 
 #[cxx::bridge]
 mod ffi {
-    #[namespace = "KiriView"]
+    #[namespace = "kiriview"]
     extern "Rust" {
         #[cxx_name = "avifDataWithCompatibilityFixes"]
         fn avif_data_with_compatibility_fixes(data: &[u8]) -> Vec<u8>;

@@ -8,12 +8,12 @@
 
 MenuAccessKeyRouter::MenuAccessKeyRouter(QObject *parent)
     : QObject(parent)
-    , m_runtime(this, [this](KiriView::MenuAccessKeyRouterChange change) {
+    , m_runtime(this, [this](kiriview::MenuAccessKeyRouterChange change) {
         switch (change) {
-        case KiriView::MenuAccessKeyRouterChange::Menu:
+        case kiriview::MenuAccessKeyRouterChange::Menu:
             Q_EMIT menuChanged();
             return;
-        case KiriView::MenuAccessKeyRouterChange::Enabled:
+        case kiriview::MenuAccessKeyRouterChange::Enabled:
             Q_EMIT enabledChanged();
             return;
         }

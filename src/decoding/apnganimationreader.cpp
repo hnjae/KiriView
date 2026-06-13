@@ -19,39 +19,39 @@
 namespace {
 QString apngDecodeErrorString()
 {
-    return KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeApngAnimation);
+    return kiriview::imageErrorText(kiriview::ImageErrorTextId::DecodeApngAnimation);
 }
 
-KiriView::ApngOpenResult errorResult(QString errorString)
+kiriview::ApngOpenResult errorResult(QString errorString)
 {
-    KiriView::ApngOpenResult result;
-    result.status = KiriView::ApngOpenStatus::Error;
+    kiriview::ApngOpenResult result;
+    result.status = kiriview::ApngOpenStatus::Error;
     result.errorString = std::move(errorString);
     return result;
 }
 
-KiriView::ApngFrameDisposeOp disposeOpFromRust(KiriView::RustApngDisposeOp disposeOp)
+kiriview::ApngFrameDisposeOp disposeOpFromRust(kiriview::RustApngDisposeOp disposeOp)
 {
     switch (disposeOp) {
-    case KiriView::RustApngDisposeOp::Background:
-        return KiriView::ApngFrameDisposeOp::Background;
-    case KiriView::RustApngDisposeOp::Previous:
-        return KiriView::ApngFrameDisposeOp::Previous;
-    case KiriView::RustApngDisposeOp::None:
+    case kiriview::RustApngDisposeOp::Background:
+        return kiriview::ApngFrameDisposeOp::Background;
+    case kiriview::RustApngDisposeOp::Previous:
+        return kiriview::ApngFrameDisposeOp::Previous;
+    case kiriview::RustApngDisposeOp::None:
     default:
-        return KiriView::ApngFrameDisposeOp::None;
+        return kiriview::ApngFrameDisposeOp::None;
     }
 }
 
-KiriView::ApngFrameBlendOp blendOpFromRust(KiriView::RustApngBlendOp blendOp)
+kiriview::ApngFrameBlendOp blendOpFromRust(kiriview::RustApngBlendOp blendOp)
 {
-    return blendOp == KiriView::RustApngBlendOp::Over ? KiriView::ApngFrameBlendOp::Over
-                                                      : KiriView::ApngFrameBlendOp::Source;
+    return blendOp == kiriview::RustApngBlendOp::Over ? kiriview::ApngFrameBlendOp::Over
+                                                      : kiriview::ApngFrameBlendOp::Source;
 }
 
-KiriView::ApngFrameControl frameControlFromRust(const KiriView::RustApngFrameResult &frame)
+kiriview::ApngFrameControl frameControlFromRust(const kiriview::RustApngFrameResult &frame)
 {
-    return KiriView::ApngFrameControl {
+    return kiriview::ApngFrameControl {
         frame.width,
         frame.height,
         frame.x_offset,
@@ -68,7 +68,7 @@ bool canRepresentCanvas(quint32 width, quint32 height)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 class ApngAnimationReader::Private
 {
 public:

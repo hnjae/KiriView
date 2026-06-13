@@ -18,10 +18,10 @@ private Q_SLOTS:
 
 void TestImageSpreadNavigation::adjacentNavigationFallsBackWhenSpreadIsInactive()
 {
-    const KiriView::ImageSpreadNavigationState state { false, 3, 6, true, false };
+    const kiriview::ImageSpreadNavigationState state { false, 3, 6, true, false };
 
-    const KiriView::ImageSpreadPageNavigationTarget target
-        = KiriView::imageSpreadPageNavigationTarget(KiriView::NavigationDirection::Next, state);
+    const kiriview::ImageSpreadPageNavigationTarget target
+        = kiriview::imageSpreadPageNavigationTarget(kiriview::NavigationDirection::Next, state);
 
     QVERIFY(!target.handledBySpread);
     QCOMPARE(target.pageNumber, 0);
@@ -29,43 +29,43 @@ void TestImageSpreadNavigation::adjacentNavigationFallsBackWhenSpreadIsInactive(
 
 void TestImageSpreadNavigation::adjacentNavigationUsesVisibleSpreadEdges()
 {
-    const KiriView::ImageSpreadNavigationState state { true, 2, 6, true, false };
+    const kiriview::ImageSpreadNavigationState state { true, 2, 6, true, false };
 
-    const KiriView::ImageSpreadPageNavigationTarget next
-        = KiriView::imageSpreadPageNavigationTarget(KiriView::NavigationDirection::Next, state);
-    const KiriView::ImageSpreadPageNavigationTarget previous
-        = KiriView::imageSpreadPageNavigationTarget(KiriView::NavigationDirection::Previous, state);
+    const kiriview::ImageSpreadPageNavigationTarget next
+        = kiriview::imageSpreadPageNavigationTarget(kiriview::NavigationDirection::Next, state);
+    const kiriview::ImageSpreadPageNavigationTarget previous
+        = kiriview::imageSpreadPageNavigationTarget(kiriview::NavigationDirection::Previous, state);
 
     QVERIFY(next.handledBySpread);
     QCOMPARE(next.pageNumber, 4);
     QVERIFY(previous.handledBySpread);
     QCOMPARE(previous.pageNumber, 1);
-    QCOMPARE(KiriView::imageSpreadNavigationCurrentLastPageNumber(state), 3);
+    QCOMPARE(kiriview::imageSpreadNavigationCurrentLastPageNumber(state), 3);
 }
 
 void TestImageSpreadNavigation::previousNavigationAccountsForWidePreviousPage()
 {
-    const KiriView::ImageSpreadNavigationState narrowPreviousPage { true, 5, 8, true, false };
-    const KiriView::ImageSpreadNavigationState widePreviousPage { true, 5, 8, true, true };
+    const kiriview::ImageSpreadNavigationState narrowPreviousPage { true, 5, 8, true, false };
+    const kiriview::ImageSpreadNavigationState widePreviousPage { true, 5, 8, true, true };
 
-    QCOMPARE(KiriView::imageSpreadPageNavigationTarget(
-                 KiriView::NavigationDirection::Previous, narrowPreviousPage)
+    QCOMPARE(kiriview::imageSpreadPageNavigationTarget(
+                 kiriview::NavigationDirection::Previous, narrowPreviousPage)
                  .pageNumber,
         3);
-    QCOMPARE(KiriView::imageSpreadPageNavigationTarget(
-                 KiriView::NavigationDirection::Previous, widePreviousPage)
+    QCOMPARE(kiriview::imageSpreadPageNavigationTarget(
+                 kiriview::NavigationDirection::Previous, widePreviousPage)
                  .pageNumber,
         4);
 }
 
 void TestImageSpreadNavigation::relativeNavigationAndTransitionsUseSpreadState()
 {
-    const KiriView::ImageSpreadNavigationState state { true, 3, 5, false, false };
+    const kiriview::ImageSpreadNavigationState state { true, 3, 5, false, false };
 
-    QCOMPARE(KiriView::imageSpreadRelativePageNavigationTarget(state, -1), 2);
-    QCOMPARE(KiriView::imageSpreadRelativePageNavigationTarget(state, 1), 4);
-    QVERIFY(KiriView::imageSpreadShouldBeginNavigationTransition(state, 4));
-    QVERIFY(!KiriView::imageSpreadShouldBeginNavigationTransition(state, 6));
+    QCOMPARE(kiriview::imageSpreadRelativePageNavigationTarget(state, -1), 2);
+    QCOMPARE(kiriview::imageSpreadRelativePageNavigationTarget(state, 1), 4);
+    QVERIFY(kiriview::imageSpreadShouldBeginNavigationTransition(state, 4));
+    QVERIFY(!kiriview::imageSpreadShouldBeginNavigationTransition(state, 6));
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadNavigation)

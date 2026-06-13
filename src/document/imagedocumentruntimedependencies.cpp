@@ -9,7 +9,7 @@
 
 namespace {
 bool shouldUseMediaEntrySourceStore(
-    const KiriView::ImageDocumentRuntimeDependencyOverrides &overrides)
+    const kiriview::ImageDocumentRuntimeDependencyOverrides &overrides)
 {
     return overrides.mediaEntrySourceFactory
         || (!overrides.candidateProvider.openedCollectionCandidates
@@ -18,7 +18,7 @@ bool shouldUseMediaEntrySourceStore(
 
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentRuntimeDependencies::~ImageDocumentRuntimeDependencies() = default;
 
 ImageCacheBudgetRequest imageDocumentCacheBudgetRequestWithDefaults(ImageCacheBudgetRequest request)

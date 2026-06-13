@@ -7,7 +7,7 @@
 
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ImageRenderContextState::ImageRenderContextState(Provider provider)
     : m_provider(std::move(provider))
     , m_context(providedContext())

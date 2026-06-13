@@ -21,14 +21,14 @@ private Q_SLOTS:
 
 void TestWindowTitleProjection::emptyBaseNameProducesEmptySubject()
 {
-    QCOMPARE(KiriView::projectWindowTitleSubject(KiriView::WindowTitleSubjectInput {}), QString());
+    QCOMPARE(kiriview::projectWindowTitleSubject(kiriview::WindowTitleSubjectInput {}), QString());
 }
 
 void TestWindowTitleProjection::directMediaUsesKnownIntrinsicSize()
 {
-    QCOMPARE(KiriView::projectWindowTitleSubject(KiriView::WindowTitleSubjectInput {
+    QCOMPARE(kiriview::projectWindowTitleSubject(kiriview::WindowTitleSubjectInput {
                  QStringLiteral("photo.png"),
-                 KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
+                 kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia,
                  QSize(1920, 1080),
                  {},
              }),
@@ -37,9 +37,9 @@ void TestWindowTitleProjection::directMediaUsesKnownIntrinsicSize()
 
 void TestWindowTitleProjection::directMediaWithUnknownSizeFallsBackToName()
 {
-    QCOMPARE(KiriView::projectWindowTitleSubject(KiriView::WindowTitleSubjectInput {
+    QCOMPARE(kiriview::projectWindowTitleSubject(kiriview::WindowTitleSubjectInput {
                  QStringLiteral("clip.mp4"),
-                 KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
+                 kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia,
                  QSize(),
                  {},
              }),
@@ -48,15 +48,15 @@ void TestWindowTitleProjection::directMediaWithUnknownSizeFallsBackToName()
 
 void TestWindowTitleProjection::documentPagesUseKnownNavigationCounter()
 {
-    KiriView::ActiveNavigationSnapshot navigation;
+    kiriview::ActiveNavigationSnapshot navigation;
     navigation.available = true;
     navigation.known = true;
     navigation.currentNumber = 12;
     navigation.count = 80;
 
-    QCOMPARE(KiriView::projectWindowTitleSubject(KiriView::WindowTitleSubjectInput {
+    QCOMPARE(kiriview::projectWindowTitleSubject(kiriview::WindowTitleSubjectInput {
                  QStringLiteral("book.cbz"),
-                 KiriView::ActiveNavigationSourceKind::ImageDocumentPages,
+                 kiriview::ActiveNavigationSourceKind::ImageDocumentPages,
                  {},
                  navigation,
              }),
@@ -65,12 +65,12 @@ void TestWindowTitleProjection::documentPagesUseKnownNavigationCounter()
 
 void TestWindowTitleProjection::documentPagesWithUnknownNavigationFallsBackToName()
 {
-    KiriView::ActiveNavigationSnapshot navigation;
+    kiriview::ActiveNavigationSnapshot navigation;
     navigation.available = true;
 
-    QCOMPARE(KiriView::projectWindowTitleSubject(KiriView::WindowTitleSubjectInput {
+    QCOMPARE(kiriview::projectWindowTitleSubject(kiriview::WindowTitleSubjectInput {
                  QStringLiteral("book.cbz"),
-                 KiriView::ActiveNavigationSourceKind::ImageDocumentPages,
+                 kiriview::ActiveNavigationSourceKind::ImageDocumentPages,
                  {},
                  navigation,
              }),

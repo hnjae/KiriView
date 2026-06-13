@@ -13,7 +13,7 @@
 #include <QString>
 #include <optional>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 struct ApplicationShortcutRoute {
     QList<ActionId> actionIds;
     ApplicationShortcutActivationScope activationScope

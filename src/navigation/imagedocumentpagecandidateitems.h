@@ -10,7 +10,7 @@
 #include <KFileItem>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 std::vector<ImageDocumentPageCandidate> imageDocumentPageNavigationCandidates(
     const KFileItemList &items);
 std::vector<DirectMediaNavigationCandidate> directMediaNavigationCandidates(

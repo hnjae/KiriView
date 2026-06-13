@@ -15,38 +15,38 @@
 #include <utility>
 
 namespace {
-KiriDocumentSession::DocumentKind fromRuntimeKind(KiriView::DocumentSessionKind kind)
+KiriDocumentSession::DocumentKind fromRuntimeKind(kiriview::DocumentSessionKind kind)
 {
     switch (kind) {
-    case KiriView::DocumentSessionKind::Empty:
+    case kiriview::DocumentSessionKind::Empty:
         return KiriDocumentSession::DocumentKind::Empty;
-    case KiriView::DocumentSessionKind::Image:
+    case kiriview::DocumentSessionKind::Image:
         return KiriDocumentSession::DocumentKind::Image;
-    case KiriView::DocumentSessionKind::Video:
+    case kiriview::DocumentSessionKind::Video:
         return KiriDocumentSession::DocumentKind::Video;
     }
 
     return KiriDocumentSession::DocumentKind::Empty;
 }
 
-KiriView::FileDeletionMode toFileDeletionMode(KiriDocumentSession::DeletionMode mode)
+kiriview::FileDeletionMode toFileDeletionMode(KiriDocumentSession::DeletionMode mode)
 {
     switch (mode) {
     case KiriDocumentSession::DeletionMode::MoveToTrash:
-        return KiriView::FileDeletionMode::MoveToTrash;
+        return kiriview::FileDeletionMode::MoveToTrash;
     case KiriDocumentSession::DeletionMode::DeletePermanently:
-        return KiriView::FileDeletionMode::DeletePermanently;
+        return kiriview::FileDeletionMode::DeletePermanently;
     }
 
-    return KiriView::FileDeletionMode::MoveToTrash;
+    return kiriview::FileDeletionMode::MoveToTrash;
 }
 
-KiriImageDocument::DeletionMode toImageDocumentDeletionMode(KiriView::FileDeletionMode mode)
+KiriImageDocument::DeletionMode toImageDocumentDeletionMode(kiriview::FileDeletionMode mode)
 {
     switch (mode) {
-    case KiriView::FileDeletionMode::MoveToTrash:
+    case kiriview::FileDeletionMode::MoveToTrash:
         return KiriImageDocument::DeletionMode::MoveToTrash;
-    case KiriView::FileDeletionMode::DeletePermanently:
+    case kiriview::FileDeletionMode::DeletePermanently:
         return KiriImageDocument::DeletionMode::DeletePermanently;
     }
 
@@ -54,15 +54,15 @@ KiriImageDocument::DeletionMode toImageDocumentDeletionMode(KiriView::FileDeleti
 }
 
 KiriDocumentSession::ActiveNavigationBoundaryScope fromRuntimeBoundaryScope(
-    KiriView::ActiveNavigationBoundaryScope scope)
+    kiriview::ActiveNavigationBoundaryScope scope)
 {
     switch (scope) {
-    case KiriView::ActiveNavigationBoundaryScope::DirectMedia:
+    case kiriview::ActiveNavigationBoundaryScope::DirectMedia:
         return KiriDocumentSession::ActiveNavigationBoundaryScope::DirectMediaNavigationBoundary;
-    case KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage:
+    case kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage:
         return KiriDocumentSession::ActiveNavigationBoundaryScope::
             ImageDocumentPageNavigationBoundary;
-    case KiriView::ActiveNavigationBoundaryScope::None:
+    case kiriview::ActiveNavigationBoundaryScope::None:
         return KiriDocumentSession::ActiveNavigationBoundaryScope::NoNavigationBoundary;
     }
 
@@ -70,17 +70,17 @@ KiriDocumentSession::ActiveNavigationBoundaryScope fromRuntimeBoundaryScope(
 }
 
 KiriDocumentSession::ActiveNavigationRequestResult fromRuntimeRequestOutcome(
-    KiriView::ActiveNavigationDispatchOutcome outcome)
+    kiriview::ActiveNavigationDispatchOutcome outcome)
 {
     switch (outcome) {
-    case KiriView::ActiveNavigationDispatchOutcome::NoOp:
+    case kiriview::ActiveNavigationDispatchOutcome::NoOp:
         return KiriDocumentSession::ActiveNavigationRequestResult::NoActiveNavigationRequestResult;
-    case KiriView::ActiveNavigationDispatchOutcome::Dispatch:
+    case kiriview::ActiveNavigationDispatchOutcome::Dispatch:
         return KiriDocumentSession::ActiveNavigationRequestResult::
             ActiveNavigationRequestDispatched;
-    case KiriView::ActiveNavigationDispatchOutcome::FirstBoundary:
+    case kiriview::ActiveNavigationDispatchOutcome::FirstBoundary:
         return KiriDocumentSession::ActiveNavigationRequestResult::FirstActiveNavigationBoundary;
-    case KiriView::ActiveNavigationDispatchOutcome::LastBoundary:
+    case kiriview::ActiveNavigationDispatchOutcome::LastBoundary:
         return KiriDocumentSession::ActiveNavigationRequestResult::LastActiveNavigationBoundary;
     }
 
@@ -88,20 +88,20 @@ KiriDocumentSession::ActiveNavigationRequestResult fromRuntimeRequestOutcome(
 }
 
 KiriDocumentSession::ActiveNavigationRevealIntent fromRuntimeRevealIntent(
-    KiriView::ActiveNavigationRevealIntent intent)
+    kiriview::ActiveNavigationRevealIntent intent)
 {
     switch (intent) {
-    case KiriView::ActiveNavigationRevealIntent::None:
+    case kiriview::ActiveNavigationRevealIntent::None:
         return KiriDocumentSession::ActiveNavigationRevealIntent::None;
-    case KiriView::ActiveNavigationRevealIntent::ThumbnailActivation:
+    case kiriview::ActiveNavigationRevealIntent::ThumbnailActivation:
         return KiriDocumentSession::ActiveNavigationRevealIntent::ThumbnailActivation;
-    case KiriView::ActiveNavigationRevealIntent::AdjacentNavigation:
+    case kiriview::ActiveNavigationRevealIntent::AdjacentNavigation:
         return KiriDocumentSession::ActiveNavigationRevealIntent::AdjacentNavigation;
-    case KiriView::ActiveNavigationRevealIntent::LargeJump:
+    case kiriview::ActiveNavigationRevealIntent::LargeJump:
         return KiriDocumentSession::ActiveNavigationRevealIntent::LargeJump;
-    case KiriView::ActiveNavigationRevealIntent::LoadOrOpen:
+    case kiriview::ActiveNavigationRevealIntent::LoadOrOpen:
         return KiriDocumentSession::ActiveNavigationRevealIntent::LoadOrOpen;
-    case KiriView::ActiveNavigationRevealIntent::ProgrammaticSync:
+    case kiriview::ActiveNavigationRevealIntent::ProgrammaticSync:
         return KiriDocumentSession::ActiveNavigationRevealIntent::ProgrammaticSync;
     }
 
@@ -109,14 +109,14 @@ KiriDocumentSession::ActiveNavigationRevealIntent fromRuntimeRevealIntent(
 }
 
 KiriDocumentSession::ActiveNavigationRevealDirection fromRuntimeRevealDirection(
-    KiriView::ActiveNavigationRevealDirection direction)
+    kiriview::ActiveNavigationRevealDirection direction)
 {
     switch (direction) {
-    case KiriView::ActiveNavigationRevealDirection::None:
+    case kiriview::ActiveNavigationRevealDirection::None:
         return KiriDocumentSession::ActiveNavigationRevealDirection::None;
-    case KiriView::ActiveNavigationRevealDirection::Previous:
+    case kiriview::ActiveNavigationRevealDirection::Previous:
         return KiriDocumentSession::ActiveNavigationRevealDirection::Previous;
-    case KiriView::ActiveNavigationRevealDirection::Next:
+    case kiriview::ActiveNavigationRevealDirection::Next:
         return KiriDocumentSession::ActiveNavigationRevealDirection::Next;
     }
 
@@ -124,43 +124,43 @@ KiriDocumentSession::ActiveNavigationRevealDirection fromRuntimeRevealDirection(
 }
 
 KiriDocumentSession::ThumbnailDemandBucket fromRuntimeThumbnailDemandBucket(
-    KiriView::ActiveNavigationThumbnailDemandBucket bucket)
+    kiriview::ActiveNavigationThumbnailDemandBucket bucket)
 {
     switch (bucket) {
-    case KiriView::ActiveNavigationThumbnailDemandBucket::None:
+    case kiriview::ActiveNavigationThumbnailDemandBucket::None:
         return KiriDocumentSession::ThumbnailDemandBucket::NoThumbnailDemandBucket;
-    case KiriView::ActiveNavigationThumbnailDemandBucket::Normal:
+    case kiriview::ActiveNavigationThumbnailDemandBucket::Normal:
         return KiriDocumentSession::ThumbnailDemandBucket::NormalThumbnailDemandBucket;
-    case KiriView::ActiveNavigationThumbnailDemandBucket::Large:
+    case kiriview::ActiveNavigationThumbnailDemandBucket::Large:
         return KiriDocumentSession::ThumbnailDemandBucket::LargeThumbnailDemandBucket;
-    case KiriView::ActiveNavigationThumbnailDemandBucket::XLarge:
+    case kiriview::ActiveNavigationThumbnailDemandBucket::XLarge:
         return KiriDocumentSession::ThumbnailDemandBucket::XLargeThumbnailDemandBucket;
-    case KiriView::ActiveNavigationThumbnailDemandBucket::XXLarge:
+    case kiriview::ActiveNavigationThumbnailDemandBucket::XXLarge:
         return KiriDocumentSession::ThumbnailDemandBucket::XXLargeThumbnailDemandBucket;
     }
 
     return KiriDocumentSession::ThumbnailDemandBucket::NoThumbnailDemandBucket;
 }
 
-KiriView::ActiveNavigationThumbnailDemandPriority toRuntimeThumbnailDemandPriority(
+kiriview::ActiveNavigationThumbnailDemandPriority toRuntimeThumbnailDemandPriority(
     KiriDocumentSession::ThumbnailDemandPriority priority)
 {
     switch (priority) {
     case KiriDocumentSession::ThumbnailDemandPriority::VisibleThumbnailDemand:
-        return KiriView::ActiveNavigationThumbnailDemandPriority::Visible;
+        return kiriview::ActiveNavigationThumbnailDemandPriority::Visible;
     case KiriDocumentSession::ThumbnailDemandPriority::NearbyThumbnailDemand:
-        return KiriView::ActiveNavigationThumbnailDemandPriority::Nearby;
+        return kiriview::ActiveNavigationThumbnailDemandPriority::Nearby;
     }
 
-    return KiriView::ActiveNavigationThumbnailDemandPriority::Nearby;
+    return kiriview::ActiveNavigationThumbnailDemandPriority::Nearby;
 }
 
 template <typename Document, typename Signal>
-KiriView::DocumentSessionDocumentSignalConnector documentSignalConnector(
+kiriview::DocumentSessionDocumentSignalConnector documentSignalConnector(
     Document &document, Signal signal)
 {
     return [&document, signal](
-               QObject *context, KiriView::DocumentSessionDocumentChangeHandler handler) {
+               QObject *context, kiriview::DocumentSessionDocumentChangeHandler handler) {
         return QObject::connect(&document, signal, context, [handler = std::move(handler)]() {
             if (handler) {
                 handler();
@@ -169,9 +169,9 @@ KiriView::DocumentSessionDocumentSignalConnector documentSignalConnector(
     };
 }
 
-KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithPredecodeFinder(
-    KiriView::ImageDocumentRuntimeDependencyOverrides dependencies,
-    KiriView::ExternalPredecodedImageFinder predecodedImageFinder)
+kiriview::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithPredecodeFinder(
+    kiriview::ImageDocumentRuntimeDependencyOverrides dependencies,
+    kiriview::ExternalPredecodedImageFinder predecodedImageFinder)
 {
     dependencies.externalPredecodedImageFinder = std::move(predecodedImageFinder);
     dependencies.ordinaryDirectMediaPredecodeEnabled = false;
@@ -179,11 +179,11 @@ KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithP
 }
 
 void inheritMissingDirectMediaPredecodeDependencies(
-    KiriView::KiriDocumentSessionDependencies &dependencies)
+    kiriview::KiriDocumentSessionDependencies &dependencies)
 {
-    KiriView::MediaPredecodeDependencyOverrides &directMediaPredecode
+    kiriview::MediaPredecodeDependencyOverrides &directMediaPredecode
         = dependencies.sessionRuntime.directMediaPredecodeDependencies;
-    const KiriView::ImageDocumentRuntimeDependencyOverrides &imageDocument
+    const kiriview::ImageDocumentRuntimeDependencyOverrides &imageDocument
         = dependencies.imageDocument;
 
     if (!directMediaPredecode.imageDecode.dataLoader) {
@@ -201,16 +201,16 @@ void inheritMissingDirectMediaPredecodeDependencies(
     }
 }
 
-KiriView::KiriDocumentSessionDependencies documentSessionDependenciesWithComposedDefaults(
-    KiriView::KiriDocumentSessionDependencies dependencies)
+kiriview::KiriDocumentSessionDependencies documentSessionDependenciesWithComposedDefaults(
+    kiriview::KiriDocumentSessionDependencies dependencies)
 {
-    KiriView::ImageCacheBudgetRequest request
-        = KiriView::imageDocumentCacheBudgetRequestWithDefaults(
+    kiriview::ImageCacheBudgetRequest request
+        = kiriview::imageDocumentCacheBudgetRequestWithDefaults(
             dependencies.imageDocument.cacheBudgetRequest);
     if (request.predecodeCacheByteBudget <= 0 || request.displayImageCacheByteBudget <= 0
         || request.thumbnailCacheByteBudget <= 0) {
-        const KiriView::ImageCacheBudgets cacheBudgets
-            = KiriView::resolvedImageCacheBudgets(request, KiriView::systemMemorySnapshot());
+        const kiriview::ImageCacheBudgets cacheBudgets
+            = kiriview::resolvedImageCacheBudgets(request, kiriview::systemMemorySnapshot());
         request.predecodeCacheByteBudget = cacheBudgets.predecodeCacheByteBudget;
         request.displayImageCacheByteBudget = cacheBudgets.displayImageCacheByteBudget;
         request.thumbnailCacheByteBudget = cacheBudgets.thumbnailCacheByteBudget;
@@ -220,9 +220,9 @@ KiriView::KiriDocumentSessionDependencies documentSessionDependenciesWithCompose
     return dependencies;
 }
 
-KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocumentSession &session)
+kiriview::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocumentSession &session)
 {
-    KiriView::DocumentSessionPublicSignalOperations operations;
+    kiriview::DocumentSessionPublicSignalOperations operations;
     operations.publicProjectionRevisionChanged
         = [&session]() { Q_EMIT session.publicProjectionRevisionChanged(); };
     operations.sourceUrlChanged = [&session]() { Q_EMIT session.sourceUrlChanged(); };
@@ -249,10 +249,10 @@ KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
 }
 }
 
-KiriView::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPort(
+kiriview::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPort(
     KiriImageDocument &document)
 {
-    return KiriView::DocumentSessionImageDocumentPort {
+    return kiriview::DocumentSessionImageDocumentPort {
         [&document]() { return document.sourceUrl(); },
         [&document](const QUrl &url) { document.setSourceUrl(url); },
         [&document]() { return document.errorString(); },
@@ -284,10 +284,10 @@ KiriView::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
         [&document]() { document.openPreviousPage(); },
         [&document]() { document.openNextPage(); },
         [&document](int pageNumber) { document.openImageAtPage(pageNumber); },
-        [&document](KiriView::FileDeletionMode mode) {
+        [&document](kiriview::FileDeletionMode mode) {
             document.deleteDisplayedFile(toImageDocumentDeletionMode(mode));
         },
-        KiriView::DocumentSessionImageDocumentSignals {
+        kiriview::DocumentSessionImageDocumentSignals {
             documentSignalConnector(document, &KiriImageDocument::sourceUrlChanged),
             documentSignalConnector(document, &KiriImageDocument::statusChanged),
             documentSignalConnector(document, &KiriImageDocument::windowTitleFileNameChanged),
@@ -309,10 +309,10 @@ KiriView::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
     };
 }
 
-KiriView::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPort(
+kiriview::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPort(
     KiriVideoDocument &document)
 {
-    return KiriView::DocumentSessionVideoDocumentPort {
+    return kiriview::DocumentSessionVideoDocumentPort {
         [&document]() { return document.sourceUrl(); },
         [&document](const QUrl &url) { document.setSourceUrl(url); },
         [&document]() { return document.errorString(); },
@@ -330,7 +330,7 @@ KiriView::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPor
         [&document](const QRectF &contentRect, const QRectF &sourceRect) {
             document.setVideoOutputGeometry(contentRect, sourceRect);
         },
-        KiriView::DocumentSessionVideoDocumentSignals {
+        kiriview::DocumentSessionVideoDocumentSignals {
             documentSignalConnector(document, &KiriVideoDocument::sourceUrlChanged),
             documentSignalConnector(document, &KiriVideoDocument::statusChanged),
             documentSignalConnector(document, &KiriVideoDocument::hasVideoChanged),
@@ -345,32 +345,32 @@ KiriView::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPor
 }
 
 KiriDocumentSession::KiriDocumentSession(QObject *parent)
-    : KiriDocumentSession(KiriView::KiriDocumentSessionDependencies {}, parent)
+    : KiriDocumentSession(kiriview::KiriDocumentSessionDependencies {}, parent)
 {
 }
 
 KiriDocumentSession::KiriDocumentSession(
-    KiriView::KiriDocumentSessionDependencies dependencies, QObject *parent)
+    kiriview::KiriDocumentSessionDependencies dependencies, QObject *parent)
     : KiriDocumentSession(documentSessionDependenciesWithComposedDefaults(std::move(dependencies)),
           ResolvedDependenciesTag {}, parent)
 {
 }
 
-KiriDocumentSession::KiriDocumentSession(KiriView::KiriDocumentSessionDependencies dependencies,
+KiriDocumentSession::KiriDocumentSession(kiriview::KiriDocumentSessionDependencies dependencies,
     ResolvedDependenciesTag, QObject *parent)
     : QObject(parent)
     , m_imageDocument(std::make_unique<KiriImageDocument>(
           imageDocumentDependenciesWithPredecodeFinder(dependencies.imageDocument,
               [this](const QUrl &url) {
                   return m_runtime != nullptr ? m_runtime->findPredecodedImage(url)
-                                              : std::optional<KiriView::PredecodedImage>();
+                                              : std::optional<kiriview::PredecodedImage>();
               }),
           this))
     , m_videoDocument(std::make_unique<KiriVideoDocument>(this))
 {
-    m_runtime = std::make_unique<KiriView::DocumentSessionRuntime>(
+    m_runtime = std::make_unique<kiriview::DocumentSessionRuntime>(
         this, imageDocumentPort(*m_imageDocument), videoDocumentPort(*m_videoDocument),
-        [this](const std::vector<KiriView::DocumentSessionChange> &changes) {
+        [this](const std::vector<kiriview::DocumentSessionChange> &changes) {
             handleSessionChanges(changes);
         },
         std::move(dependencies.sessionRuntime));
@@ -402,7 +402,7 @@ QString KiriDocumentSession::windowTitleSubject() const { return m_runtime->wind
 
 QStringList KiriDocumentSession::openDialogNameFilters() const
 {
-    return KiriView::ordinaryMediaOpenDialogNameFilters();
+    return kiriview::ordinaryMediaOpenDialogNameFilters();
 }
 
 bool KiriDocumentSession::displayedFileDeletionAvailable() const
@@ -546,13 +546,13 @@ KiriMediaInformation *KiriDocumentSession::mediaInformation() const
     return m_mediaInformation.get();
 }
 
-const KiriView::MediaInformationProjectionSnapshot &
+const kiriview::MediaInformationProjectionSnapshot &
 KiriDocumentSession::mediaInformationSnapshot() const
 {
     return m_runtime->mediaInformationSnapshot();
 }
 
-const KiriView::DocumentSessionActionAvailabilityFacts &
+const kiriview::DocumentSessionActionAvailabilityFacts &
 KiriDocumentSession::actionAvailabilityFacts() const
 {
     return m_runtime->actionAvailabilityFacts();
@@ -597,13 +597,13 @@ KiriDocumentSession::requestNextActiveNavigation()
 
 QString KiriDocumentSession::requestPreviousActiveNavigationBoundaryText()
 {
-    return KiriView::activeNavigationBoundaryFeedbackText(
+    return kiriview::activeNavigationBoundaryFeedbackText(
         m_runtime->activeNavigationBoundaryScope(), m_runtime->requestPreviousActiveNavigation());
 }
 
 QString KiriDocumentSession::requestNextActiveNavigationBoundaryText()
 {
-    return KiriView::activeNavigationBoundaryFeedbackText(
+    return kiriview::activeNavigationBoundaryFeedbackText(
         m_runtime->activeNavigationBoundaryScope(), m_runtime->requestNextActiveNavigation());
 }
 
@@ -642,16 +642,16 @@ void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)
 void KiriDocumentSession::openCurrentMediaWith()
 {
     m_runtime->openCurrentMediaWith(
-        [this](KiriView::MediaOpenWithResult result, const QString &errorString) {
-            if (result == KiriView::MediaOpenWithResult::Failed) {
+        [this](kiriview::MediaOpenWithResult result, const QString &errorString) {
+            if (result == kiriview::MediaOpenWithResult::Failed) {
                 Q_EMIT openWithFailed(errorString);
             }
         });
 }
 
 void KiriDocumentSession::handleSessionChanges(
-    const std::vector<KiriView::DocumentSessionChange> &changes)
+    const std::vector<kiriview::DocumentSessionChange> &changes)
 {
-    KiriView::DocumentSessionPublicSignalEmitter(publicSignalOperations(*this))
+    kiriview::DocumentSessionPublicSignalEmitter(publicSignalOperations(*this))
         .emitChanges(changes);
 }

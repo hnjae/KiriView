@@ -12,97 +12,97 @@
 #include <utility>
 
 namespace {
-KiriView::RustThumbnailCacheBucket rustBucket(
-    KiriView::ActiveNavigationThumbnailDemandBucket bucket)
+kiriview::RustThumbnailCacheBucket rustBucket(
+    kiriview::ActiveNavigationThumbnailDemandBucket bucket)
 {
     switch (bucket) {
-    case KiriView::ActiveNavigationThumbnailDemandBucket::None:
-        return KiriView::RustThumbnailCacheBucket::None;
-    case KiriView::ActiveNavigationThumbnailDemandBucket::Normal:
-        return KiriView::RustThumbnailCacheBucket::Normal;
-    case KiriView::ActiveNavigationThumbnailDemandBucket::Large:
-        return KiriView::RustThumbnailCacheBucket::Large;
-    case KiriView::ActiveNavigationThumbnailDemandBucket::XLarge:
-        return KiriView::RustThumbnailCacheBucket::XLarge;
-    case KiriView::ActiveNavigationThumbnailDemandBucket::XXLarge:
-        return KiriView::RustThumbnailCacheBucket::XxLarge;
+    case kiriview::ActiveNavigationThumbnailDemandBucket::None:
+        return kiriview::RustThumbnailCacheBucket::None;
+    case kiriview::ActiveNavigationThumbnailDemandBucket::Normal:
+        return kiriview::RustThumbnailCacheBucket::Normal;
+    case kiriview::ActiveNavigationThumbnailDemandBucket::Large:
+        return kiriview::RustThumbnailCacheBucket::Large;
+    case kiriview::ActiveNavigationThumbnailDemandBucket::XLarge:
+        return kiriview::RustThumbnailCacheBucket::XLarge;
+    case kiriview::ActiveNavigationThumbnailDemandBucket::XXLarge:
+        return kiriview::RustThumbnailCacheBucket::XxLarge;
     }
 
-    return KiriView::RustThumbnailCacheBucket::None;
+    return kiriview::RustThumbnailCacheBucket::None;
 }
 
-KiriView::ActiveNavigationThumbnailDemandBucket thumbnailBucket(
-    KiriView::RustThumbnailCacheBucket bucket)
+kiriview::ActiveNavigationThumbnailDemandBucket thumbnailBucket(
+    kiriview::RustThumbnailCacheBucket bucket)
 {
     switch (bucket) {
-    case KiriView::RustThumbnailCacheBucket::None:
-        return KiriView::ActiveNavigationThumbnailDemandBucket::None;
-    case KiriView::RustThumbnailCacheBucket::Normal:
-        return KiriView::ActiveNavigationThumbnailDemandBucket::Normal;
-    case KiriView::RustThumbnailCacheBucket::Large:
-        return KiriView::ActiveNavigationThumbnailDemandBucket::Large;
-    case KiriView::RustThumbnailCacheBucket::XLarge:
-        return KiriView::ActiveNavigationThumbnailDemandBucket::XLarge;
-    case KiriView::RustThumbnailCacheBucket::XxLarge:
-        return KiriView::ActiveNavigationThumbnailDemandBucket::XXLarge;
+    case kiriview::RustThumbnailCacheBucket::None:
+        return kiriview::ActiveNavigationThumbnailDemandBucket::None;
+    case kiriview::RustThumbnailCacheBucket::Normal:
+        return kiriview::ActiveNavigationThumbnailDemandBucket::Normal;
+    case kiriview::RustThumbnailCacheBucket::Large:
+        return kiriview::ActiveNavigationThumbnailDemandBucket::Large;
+    case kiriview::RustThumbnailCacheBucket::XLarge:
+        return kiriview::ActiveNavigationThumbnailDemandBucket::XLarge;
+    case kiriview::RustThumbnailCacheBucket::XxLarge:
+        return kiriview::ActiveNavigationThumbnailDemandBucket::XXLarge;
     }
 
-    return KiriView::ActiveNavigationThumbnailDemandBucket::None;
+    return kiriview::ActiveNavigationThumbnailDemandBucket::None;
 }
 
-KiriView::ThumbnailCacheLookupStatus thumbnailStatus(
-    KiriView::RustThumbnailCacheLookupStatus status)
+kiriview::ThumbnailCacheLookupStatus thumbnailStatus(
+    kiriview::RustThumbnailCacheLookupStatus status)
 {
     switch (status) {
-    case KiriView::RustThumbnailCacheLookupStatus::Ready:
-        return KiriView::ThumbnailCacheLookupStatus::Ready;
-    case KiriView::RustThumbnailCacheLookupStatus::Missing:
-        return KiriView::ThumbnailCacheLookupStatus::Missing;
-    case KiriView::RustThumbnailCacheLookupStatus::Invalid:
-        return KiriView::ThumbnailCacheLookupStatus::Invalid;
-    case KiriView::RustThumbnailCacheLookupStatus::Failed:
-        return KiriView::ThumbnailCacheLookupStatus::Failed;
+    case kiriview::RustThumbnailCacheLookupStatus::Ready:
+        return kiriview::ThumbnailCacheLookupStatus::Ready;
+    case kiriview::RustThumbnailCacheLookupStatus::Missing:
+        return kiriview::ThumbnailCacheLookupStatus::Missing;
+    case kiriview::RustThumbnailCacheLookupStatus::Invalid:
+        return kiriview::ThumbnailCacheLookupStatus::Invalid;
+    case kiriview::RustThumbnailCacheLookupStatus::Failed:
+        return kiriview::ThumbnailCacheLookupStatus::Failed;
     }
 
-    return KiriView::ThumbnailCacheLookupStatus::Failed;
+    return kiriview::ThumbnailCacheLookupStatus::Failed;
 }
 
-KiriView::ThumbnailCacheLookupResult lookupThumbnailCache(
-    const KiriView::ThumbnailCacheLookupRequest &request)
+kiriview::ThumbnailCacheLookupResult lookupThumbnailCache(
+    const kiriview::ThumbnailCacheLookupRequest &request)
 {
-    KiriView::RustThumbnailCacheLookupResult rustResult;
+    kiriview::RustThumbnailCacheLookupResult rustResult;
     if (request.originalIdentity.isNonFileUri()) {
         const QByteArray uri = request.originalIdentity.uri.toUtf8();
         const QByteArray mimeType = request.originalIdentity.mimeType.toUtf8();
         rustResult
-            = KiriView::rustLookupDisplayThumbnailNonFileUriRgba8(KiriView::Bridge::rustStr(uri),
+            = kiriview::rustLookupDisplayThumbnailNonFileUriRgba8(kiriview::Bridge::rustStr(uri),
                 request.originalIdentity.mtimeSeconds, request.originalIdentity.originalByteSize,
-                KiriView::Bridge::rustStr(mimeType), rustBucket(request.requestedBucket));
+                kiriview::Bridge::rustStr(mimeType), rustBucket(request.requestedBucket));
     } else {
         const QByteArray localPathBytes = request.originalIdentity.localPathBytes.isEmpty()
             ? request.localPathBytes
             : request.originalIdentity.localPathBytes;
-        rustResult = KiriView::rustLookupDisplayThumbnailRgba8(
-            KiriView::Bridge::rustBytes(localPathBytes), rustBucket(request.requestedBucket));
+        rustResult = kiriview::rustLookupDisplayThumbnailRgba8(
+            kiriview::Bridge::rustBytes(localPathBytes), rustBucket(request.requestedBucket));
     }
 
-    KiriView::ThumbnailCacheLookupResult result;
+    kiriview::ThumbnailCacheLookupResult result;
     result.status = thumbnailStatus(rustResult.status);
     result.requestedBucket = thumbnailBucket(rustResult.requested_bucket);
     result.sourceBucket = thumbnailBucket(rustResult.source_bucket);
-    result.sourceCachePath = KiriView::Bridge::qtString(rustResult.source_cache_path);
-    result.errorString = KiriView::Bridge::qtString(rustResult.error);
+    result.sourceCachePath = kiriview::Bridge::qtString(rustResult.source_cache_path);
+    result.errorString = kiriview::Bridge::qtString(rustResult.error);
 
-    if (result.status != KiriView::ThumbnailCacheLookupStatus::Ready || rustResult.width <= 0
+    if (result.status != kiriview::ThumbnailCacheLookupStatus::Ready || rustResult.width <= 0
         || rustResult.height <= 0 || rustResult.stride <= 0) {
         return result;
     }
 
-    const QByteArray pixels = KiriView::Bridge::qtByteArray(rustResult.pixels);
+    const QByteArray pixels = kiriview::Bridge::qtByteArray(rustResult.pixels);
     const QImage image(reinterpret_cast<const uchar *>(pixels.constData()), rustResult.width,
         rustResult.height, rustResult.stride, QImage::Format_RGBA8888);
     if (image.isNull()) {
-        result.status = KiriView::ThumbnailCacheLookupStatus::Failed;
+        result.status = kiriview::ThumbnailCacheLookupStatus::Failed;
         result.errorString = QStringLiteral("thumbnail cache RGBA8 result could not form a QImage");
         return result;
     }
@@ -112,7 +112,7 @@ KiriView::ThumbnailCacheLookupResult lookupThumbnailCache(
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ThumbnailCacheLookupProvider defaultThumbnailCacheLookupProvider(
     ImageWorkerScheduler workerScheduler)
 {

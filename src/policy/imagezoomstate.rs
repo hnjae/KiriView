@@ -7,7 +7,7 @@ const MANUAL_ZOOM_VIEWPORT_LONG_EDGE_MULTIPLIER: f64 = 8.0;
 const MANUAL_ZOOM_STEP_FACTOR: f64 = 1.1;
 const ZOOM_EPSILON: f64 = 0.001;
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     #[derive(Clone, Copy, PartialEq, Eq)]
     enum RustImageZoomMode {

@@ -29,7 +29,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 class OpenedCollectionScopeLocation;
 class ImageDocumentRuntime;
 }
@@ -116,7 +116,7 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(KiriImageDisplaySource *secondaryDisplaySource READ secondaryDisplaySource CONSTANT)
 
 public:
-    using RenderContextProvider = std::function<KiriView::ImageDocumentRenderContext()>;
+    using RenderContextProvider = std::function<kiriview::ImageDocumentRenderContext()>;
 
     enum class Status {
         Null,
@@ -172,7 +172,7 @@ public:
 
     explicit KiriImageDocument(QObject *parent = nullptr);
     explicit KiriImageDocument(
-        KiriView::ImageDocumentRuntimeDependencyOverrides dependencies, QObject *parent = nullptr);
+        kiriview::ImageDocumentRuntimeDependencyOverrides dependencies, QObject *parent = nullptr);
     ~KiriImageDocument() override;
 
     QUrl sourceUrl() const;
@@ -182,7 +182,7 @@ public:
     QString errorString() const;
     QString windowTitleFileName() const;
     QUrl displayedUrl() const;
-    KiriView::OpenedCollectionScopeLocation displayedOpenedCollectionScope() const;
+    kiriview::OpenedCollectionScopeLocation displayedOpenedCollectionScope() const;
     QSize imageSize() const;
     QSize primaryImageSize() const;
     QSize secondaryImageSize() const;
@@ -223,8 +223,8 @@ public:
     int currentPageNumber() const;
     int currentLastPageNumber() const;
     int pageCount() const;
-    KiriView::ImageDocumentPageNavigationSnapshot pageNavigationSnapshot() const;
-    KiriView::ImageDocumentPageActiveNavigationSnapshot activeNavigationSnapshot() const;
+    kiriview::ImageDocumentPageNavigationSnapshot pageNavigationSnapshot() const;
+    kiriview::ImageDocumentPageActiveNavigationSnapshot activeNavigationSnapshot() const;
     bool containerNavigationAvailable() const;
     bool ordinaryDirectMediaScopeActive() const;
     bool openedCollectionScopeActive() const;
@@ -238,9 +238,9 @@ public:
     bool unsupportedOpenedCollectionVideo() const;
     KiriImageDisplaySource *primaryDisplaySource() const;
     KiriImageDisplaySource *secondaryDisplaySource() const;
-    std::optional<KiriView::DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
-    KiriView::ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
-    const KiriView::EmbeddedMetadata &embeddedMetadata() const;
+    std::optional<kiriview::DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
+    kiriview::ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
+    const kiriview::EmbeddedMetadata &embeddedMetadata() const;
 
     void setRenderContextProvider(RenderContextProvider provider);
 
@@ -333,16 +333,16 @@ private:
     void setSourceUrl(const QUrl &sourceUrl);
     void setTwoPageModeEnabled(bool enabled);
     void setRightToLeftReadingEnabled(bool enabled);
-    void handleDocumentChanges(const std::vector<KiriView::ImageDocumentChange> &changes);
+    void handleDocumentChanges(const std::vector<kiriview::ImageDocumentChange> &changes);
     void refreshDisplaySources();
-    KiriView::ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
+    kiriview::ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
     bool requestViewportInteractionContentPosition(const QPointF &contentPosition);
     bool requestAnchoredManualZoom(double zoomPercent, const QPointF &viewportAnchorPoint);
 
-    std::unique_ptr<KiriView::ImageDocumentRuntime> m_runtime;
+    std::unique_ptr<kiriview::ImageDocumentRuntime> m_runtime;
     std::unique_ptr<KiriImageDisplaySource> m_primaryDisplaySource;
     std::unique_ptr<KiriImageDisplaySource> m_secondaryDisplaySource;
-    KiriView::ImageViewportInteraction m_viewportInteraction;
+    kiriview::ImageViewportInteraction m_viewportInteraction;
 };
 
 #endif

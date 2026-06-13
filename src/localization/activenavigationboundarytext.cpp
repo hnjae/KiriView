@@ -6,28 +6,28 @@
 #include <KLocalizedString>
 
 namespace {
-QString firstBoundaryText(KiriView::ActiveNavigationBoundaryScope scope)
+QString firstBoundaryText(kiriview::ActiveNavigationBoundaryScope scope)
 {
     switch (scope) {
-    case KiriView::ActiveNavigationBoundaryScope::DirectMedia:
+    case kiriview::ActiveNavigationBoundaryScope::DirectMedia:
         return i18nc("@info:status", "First media item");
-    case KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage:
+    case kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage:
         return i18nc("@info:status", "First image");
-    case KiriView::ActiveNavigationBoundaryScope::None:
+    case kiriview::ActiveNavigationBoundaryScope::None:
         return {};
     }
 
     return {};
 }
 
-QString lastBoundaryText(KiriView::ActiveNavigationBoundaryScope scope)
+QString lastBoundaryText(kiriview::ActiveNavigationBoundaryScope scope)
 {
     switch (scope) {
-    case KiriView::ActiveNavigationBoundaryScope::DirectMedia:
+    case kiriview::ActiveNavigationBoundaryScope::DirectMedia:
         return i18nc("@info:status", "Last media item");
-    case KiriView::ActiveNavigationBoundaryScope::ImageDocumentPage:
+    case kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage:
         return i18nc("@info:status", "Last image");
-    case KiriView::ActiveNavigationBoundaryScope::None:
+    case kiriview::ActiveNavigationBoundaryScope::None:
         return {};
     }
 
@@ -35,7 +35,7 @@ QString lastBoundaryText(KiriView::ActiveNavigationBoundaryScope scope)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 QString activeNavigationBoundaryFeedbackText(
     ActiveNavigationBoundaryScope scope, ActiveNavigationDispatchOutcome outcome)
 {

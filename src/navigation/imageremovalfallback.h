@@ -14,7 +14,7 @@
 #include <variant>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct NoImageRemovalFallback {
 };
 

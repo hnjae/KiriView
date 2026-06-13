@@ -3,7 +3,7 @@
 
 #include "presentation/imagesecondarypagestate.h"
 
-namespace KiriView {
+namespace kiriview {
 bool ImageSecondaryPageState::visible() const { return m_displayedPage.has_value(); }
 
 DisplayedImageLocation ImageSecondaryPageState::displayedImageLocation() const

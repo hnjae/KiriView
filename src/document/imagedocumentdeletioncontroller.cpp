@@ -13,16 +13,16 @@
 namespace {
 QString genericFileDeletionErrorMessage()
 {
-    return KiriView::imageErrorText(KiriView::ImageErrorTextId::DeleteFile);
+    return kiriview::imageErrorText(kiriview::ImageErrorTextId::DeleteFile);
 }
 
-bool documentReadyForFileDeletion(const KiriView::ImageDocumentState &state)
+bool documentReadyForFileDeletion(const kiriview::ImageDocumentState &state)
 {
-    return state.status() == KiriView::ImageDocumentStatus::Ready;
+    return state.status() == kiriview::ImageDocumentStatus::Ready;
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent,
     ImageDocumentState &state, ImagePageSurfaceController &pageSurfaceController,
     ImageDocumentPageCandidateProvider candidateProvider, FileDeletionProvider fileDeletionProvider,

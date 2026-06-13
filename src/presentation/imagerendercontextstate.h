@@ -9,7 +9,7 @@
 #include <QtGlobal>
 #include <functional>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageRenderContextChange {
     ImageDocumentRenderContext previous;
     ImageDocumentRenderContext current;

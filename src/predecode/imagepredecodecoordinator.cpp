@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,

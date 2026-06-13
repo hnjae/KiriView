@@ -5,7 +5,7 @@
 
 #include "location/imagedocumentlocation.h"
 
-namespace KiriView {
+namespace kiriview {
 bool ImageContainerOpenPlan::shouldLoadCandidates() const { return source.has_value(); }
 
 bool ImageContainerOpenResult::openedImage() const { return target.has_value(); }

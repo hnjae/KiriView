@@ -7,10 +7,10 @@
 #include <QTest>
 
 namespace {
-using Policy = KiriView::ImageShortcutNavigationPolicy;
-using HorizontalAction = KiriView::ImageShortcutNavigationPolicy::HorizontalArrowAction;
-using ScanAction = KiriView::ImageShortcutNavigationPolicy::ScanAction;
-using SinglePageAction = KiriView::ImageShortcutNavigationPolicy::SinglePageArrowAction;
+using Policy = kiriview::ImageShortcutNavigationPolicy;
+using HorizontalAction = kiriview::ImageShortcutNavigationPolicy::HorizontalArrowAction;
+using ScanAction = kiriview::ImageShortcutNavigationPolicy::ScanAction;
+using SinglePageAction = kiriview::ImageShortcutNavigationPolicy::SinglePageArrowAction;
 }
 
 class TestImageShortcutNavigationPolicy : public QObject

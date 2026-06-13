@@ -17,21 +17,21 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::localUrl;
+using kiriview::TestSupport::archivePageUrl;
+using kiriview::TestSupport::localUrl;
 
 struct ManualImageWorkerSchedule {
-    KiriView::ImageWorkerOperation work;
-    KiriView::ImageWorkerCompletion completion;
+    kiriview::ImageWorkerOperation work;
+    kiriview::ImageWorkerCompletion completion;
 };
 
 class ManualImageWorkerScheduler
 {
 public:
-    KiriView::ImageWorkerScheduler scheduler()
+    kiriview::ImageWorkerScheduler scheduler()
     {
-        return KiriView::ImageWorkerScheduler([this](QObject *, KiriView::ImageWorkerOperation work,
-                                                  KiriView::ImageWorkerCompletion completion) {
+        return kiriview::ImageWorkerScheduler([this](QObject *, kiriview::ImageWorkerOperation work,
+                                                  kiriview::ImageWorkerCompletion completion) {
             m_schedules.push_back(
                 ManualImageWorkerSchedule { std::move(work), std::move(completion) });
         });
@@ -57,19 +57,19 @@ private:
     std::vector<ManualImageWorkerSchedule> m_schedules;
 };
 
-KiriView::ActiveNavigationThumbnailRow thumbnailRow(int number, const QUrl &url,
-    const QString &label, KiriView::ActiveNavigationThumbnailSourceKind sourceKind,
+kiriview::ActiveNavigationThumbnailRow thumbnailRow(int number, const QUrl &url,
+    const QString &label, kiriview::ActiveNavigationThumbnailSourceKind sourceKind,
     bool current = false)
 {
-    return KiriView::ActiveNavigationThumbnailRow {
+    return kiriview::ActiveNavigationThumbnailRow {
         number,
         url,
         label,
-        sourceKind == KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo
+        sourceKind == kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo
                 || sourceKind
-                    == KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageVideo
-            ? KiriView::ActiveNavigationThumbnailKind::Video
-            : KiriView::ActiveNavigationThumbnailKind::Image,
+                    == kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageVideo
+            ? kiriview::ActiveNavigationThumbnailKind::Video
+            : kiriview::ActiveNavigationThumbnailKind::Image,
         sourceKind,
         current,
     };
@@ -99,25 +99,25 @@ QVariant modelData(const QAbstractItemModel &model, int row, const QByteArray &r
 
 struct ManualThumbnailLookup {
     QObject *object = nullptr;
-    KiriView::ThumbnailCacheLookupRequest request;
-    KiriView::ThumbnailCacheLookupCallback callback;
-    KiriView::ImageIoJobCompletion completion;
+    kiriview::ThumbnailCacheLookupRequest request;
+    kiriview::ThumbnailCacheLookupCallback callback;
+    kiriview::ImageIoJobCompletion completion;
     bool canceled = false;
 };
 
 class ManualThumbnailLookupProvider
 {
 public:
-    KiriView::ThumbnailCacheLookupProvider provider()
+    kiriview::ThumbnailCacheLookupProvider provider()
     {
-        return [this](QObject *receiver, KiriView::ThumbnailCacheLookupRequest request,
-                   KiriView::ThumbnailCacheLookupCallback callback) {
+        return [this](QObject *receiver, kiriview::ThumbnailCacheLookupRequest request,
+                   kiriview::ThumbnailCacheLookupCallback callback) {
             auto lookup = std::make_shared<ManualThumbnailLookup>();
             lookup->request = std::move(request);
             lookup->callback = std::move(callback);
 
-            KiriView::ImageIoJob job
-                = KiriView::TestSupport::Detail::startManualIoJob(receiver, lookup);
+            kiriview::ImageIoJob job
+                = kiriview::TestSupport::Detail::startManualIoJob(receiver, lookup);
             m_lookups.push_back(lookup);
             return job;
         };
@@ -127,9 +127,9 @@ public:
 
     ManualThumbnailLookup &lookupAt(std::size_t index) { return *m_lookups.at(index); }
 
-    void finish(std::size_t index, KiriView::ThumbnailCacheLookupResult result)
+    void finish(std::size_t index, kiriview::ThumbnailCacheLookupResult result)
     {
-        KiriView::TestSupport::Detail::finishManualIoJob(m_lookups.at(index),
+        kiriview::TestSupport::Detail::finishManualIoJob(m_lookups.at(index),
             [result = std::move(result)](ManualThumbnailLookup &lookup) mutable {
                 if (lookup.callback) {
                     lookup.callback(std::move(result));
@@ -137,7 +137,7 @@ public:
             });
     }
 
-    void deliverIgnoringCancellation(std::size_t index, KiriView::ThumbnailCacheLookupResult result)
+    void deliverIgnoringCancellation(std::size_t index, kiriview::ThumbnailCacheLookupResult result)
     {
         ManualThumbnailLookup &lookup = lookupAt(index);
         if (lookup.callback) {
@@ -151,25 +151,25 @@ private:
 
 struct ManualThumbnailGeneration {
     QObject *object = nullptr;
-    KiriView::ThumbnailGenerationRequest request;
-    KiriView::ThumbnailGenerationCallback callback;
-    KiriView::ImageIoJobCompletion completion;
+    kiriview::ThumbnailGenerationRequest request;
+    kiriview::ThumbnailGenerationCallback callback;
+    kiriview::ImageIoJobCompletion completion;
     bool canceled = false;
 };
 
 class ManualThumbnailGenerationProvider
 {
 public:
-    KiriView::ThumbnailGenerationProvider provider()
+    kiriview::ThumbnailGenerationProvider provider()
     {
-        return [this](QObject *receiver, KiriView::ThumbnailGenerationRequest request,
-                   KiriView::ThumbnailGenerationCallback callback) {
+        return [this](QObject *receiver, kiriview::ThumbnailGenerationRequest request,
+                   kiriview::ThumbnailGenerationCallback callback) {
             auto generation = std::make_shared<ManualThumbnailGeneration>();
             generation->request = std::move(request);
             generation->callback = std::move(callback);
 
-            KiriView::ImageIoJob job
-                = KiriView::TestSupport::Detail::startManualIoJob(receiver, generation);
+            kiriview::ImageIoJob job
+                = kiriview::TestSupport::Detail::startManualIoJob(receiver, generation);
             m_generations.push_back(generation);
             return job;
         };
@@ -179,9 +179,9 @@ public:
 
     ManualThumbnailGeneration &generationAt(std::size_t index) { return *m_generations.at(index); }
 
-    void finish(std::size_t index, KiriView::ThumbnailGenerationResult result)
+    void finish(std::size_t index, kiriview::ThumbnailGenerationResult result)
     {
-        KiriView::TestSupport::Detail::finishManualIoJob(m_generations.at(index),
+        kiriview::TestSupport::Detail::finishManualIoJob(m_generations.at(index),
             [result = std::move(result)](ManualThumbnailGeneration &generation) mutable {
                 if (generation.callback) {
                     generation.callback(std::move(result));
@@ -189,7 +189,7 @@ public:
             });
     }
 
-    void deliverIgnoringCancellation(std::size_t index, KiriView::ThumbnailGenerationResult result)
+    void deliverIgnoringCancellation(std::size_t index, kiriview::ThumbnailGenerationResult result)
     {
         ManualThumbnailGeneration &generation = generationAt(index);
         if (generation.callback) {
@@ -210,12 +210,12 @@ QImage testThumbnailImage(QColor color = Qt::red)
 
 QString thumbnailImageStoreId(const QUrl &source) { return source.path().mid(1); }
 
-KiriView::ThumbnailCacheLookupResult lookupResult(KiriView::ThumbnailCacheLookupStatus status,
+kiriview::ThumbnailCacheLookupResult lookupResult(kiriview::ThumbnailCacheLookupStatus status,
     QImage image = {},
-    KiriView::ActiveNavigationThumbnailDemandBucket requestedBucket
-    = KiriView::ActiveNavigationThumbnailDemandBucket::Normal)
+    kiriview::ActiveNavigationThumbnailDemandBucket requestedBucket
+    = kiriview::ActiveNavigationThumbnailDemandBucket::Normal)
 {
-    return KiriView::ThumbnailCacheLookupResult {
+    return kiriview::ThumbnailCacheLookupResult {
         status,
         std::move(image),
         requestedBucket,
@@ -225,12 +225,12 @@ KiriView::ThumbnailCacheLookupResult lookupResult(KiriView::ThumbnailCacheLookup
     };
 }
 
-KiriView::ThumbnailGenerationResult generationResult(KiriView::ThumbnailGenerationStatus status,
+kiriview::ThumbnailGenerationResult generationResult(kiriview::ThumbnailGenerationStatus status,
     QImage image = {},
-    KiriView::ActiveNavigationThumbnailDemandBucket requestedBucket
-    = KiriView::ActiveNavigationThumbnailDemandBucket::Normal)
+    kiriview::ActiveNavigationThumbnailDemandBucket requestedBucket
+    = kiriview::ActiveNavigationThumbnailDemandBucket::Normal)
 {
-    return KiriView::ThumbnailGenerationResult {
+    return kiriview::ThumbnailGenerationResult {
         status,
         std::move(image),
         requestedBucket,
@@ -239,10 +239,10 @@ KiriView::ThumbnailGenerationResult generationResult(KiriView::ThumbnailGenerati
     };
 }
 
-KiriView::ThumbnailSourceAdapterPlan sourceAdapterPlan(
-    KiriView::ThumbnailSourceAdapterPlanKind kind, QByteArray localPathBytes = {})
+kiriview::ThumbnailSourceAdapterPlan sourceAdapterPlan(
+    kiriview::ThumbnailSourceAdapterPlanKind kind, QByteArray localPathBytes = {})
 {
-    return KiriView::ThumbnailSourceAdapterPlan {
+    return kiriview::ThumbnailSourceAdapterPlan {
         kind,
         std::move(localPathBytes),
     };
@@ -251,17 +251,17 @@ KiriView::ThumbnailSourceAdapterPlan sourceAdapterPlan(
 class RecordingThumbnailSourceAdapter
 {
 public:
-    KiriView::ThumbnailSourceAdapter adapter()
+    kiriview::ThumbnailSourceAdapter adapter()
     {
-        return [this](KiriView::ThumbnailSourceAdapterRequest request) {
+        return [this](kiriview::ThumbnailSourceAdapterRequest request) {
             requests.push_back(request);
             return plan;
         };
     }
 
-    KiriView::ThumbnailSourceAdapterPlan plan
-        = sourceAdapterPlan(KiriView::ThumbnailSourceAdapterPlanKind::Unsupported);
-    std::vector<KiriView::ThumbnailSourceAdapterRequest> requests;
+    kiriview::ThumbnailSourceAdapterPlan plan
+        = sourceAdapterPlan(kiriview::ThumbnailSourceAdapterPlanKind::Unsupported);
+    std::vector<kiriview::ThumbnailSourceAdapterRequest> requests;
 };
 }
 
@@ -309,15 +309,15 @@ void TestActiveNavigationThumbnailRuntime::buildsSourceKeysAndBumpsGenerationOnl
 {
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.mp4"));
 
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
         thumbnailRow(2, secondUrl, QStringLiteral("02.mp4"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo),
     });
 
     QCOMPARE(runtime.navigationGeneration(), quint64(1));
@@ -325,22 +325,22 @@ void TestActiveNavigationThumbnailRuntime::buildsSourceKeysAndBumpsGenerationOnl
     QCOMPARE(runtime.sourceKeyAt(0).url, firstUrl);
     QCOMPARE(runtime.sourceKeyAt(0).label, QStringLiteral("01.png"));
     QCOMPARE(runtime.sourceKeyAt(0).sourceKind,
-        KiriView::ActiveNavigationThumbnailSourceKind::DirectImage);
+        kiriview::ActiveNavigationThumbnailSourceKind::DirectImage);
     QCOMPARE(runtime.sourceKeyAt(0).navigationGeneration, quint64(1));
 
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
         thumbnailRow(2, secondUrl, QStringLiteral("02.mp4"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo, true),
     });
     QCOMPARE(runtime.navigationGeneration(), quint64(1));
 
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("renamed.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
         thumbnailRow(2, secondUrl, QStringLiteral("02.mp4"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo, true),
     });
     QCOMPARE(runtime.navigationGeneration(), quint64(2));
     QCOMPARE(runtime.sourceKeyAt(0).label, QStringLiteral("renamed.png"));
@@ -350,22 +350,22 @@ void TestActiveNavigationThumbnailRuntime::buildsSourceKeysAndBumpsGenerationOnl
 void TestActiveNavigationThumbnailRuntime::
     sameRowDemandCoalescesButBucketAndPriorityChangesAreAccepted()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
 
     const quint64 generation = runtime.navigationGeneration();
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Normal, Priority::Visible, generation));
     QVERIFY(!runtime.reportDemand(1, imageUrl, Bucket::Normal, Priority::Visible, generation));
-    QCOMPARE(runtime.resultAt(0).status, KiriView::ActiveNavigationThumbnailResultStatus::Pending);
+    QCOMPARE(runtime.resultAt(0).status, kiriview::ActiveNavigationThumbnailResultStatus::Pending);
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Visible, generation));
     QVERIFY(!runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Visible, generation));
@@ -376,19 +376,19 @@ void TestActiveNavigationThumbnailRuntime::
 
 void TestActiveNavigationThumbnailRuntime::multipleRowsKeepIndependentDemandState()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
         thumbnailRow(2, secondUrl, QStringLiteral("02.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
     });
 
     const quint64 generation = runtime.navigationGeneration();
@@ -400,19 +400,19 @@ void TestActiveNavigationThumbnailRuntime::multipleRowsKeepIndependentDemandStat
 
 void TestActiveNavigationThumbnailRuntime::unsupportedRowsProjectThroughModelResultPath()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl videoUrl = localUrl(QStringLiteral("/media/clip.mp4"));
     const QUrl pageUrl = localUrl(QStringLiteral("/archive/01.png"));
     runtime.setRows({
         thumbnailRow(1, videoUrl, QStringLiteral("clip.mp4"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo, true),
         thumbnailRow(2, pageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage),
     });
 
     const quint64 generation = runtime.navigationGeneration();
@@ -422,40 +422,40 @@ void TestActiveNavigationThumbnailRuntime::unsupportedRowsProjectThroughModelRes
     QAbstractItemModel *model = runtime.model();
     QVERIFY(model != nullptr);
     QCOMPARE(modelData(*model, 0, QByteArrayLiteral("thumbnailStatus")).toInt(),
-        static_cast<int>(KiriView::ActiveNavigationThumbnailResultStatus::Unsupported));
+        static_cast<int>(kiriview::ActiveNavigationThumbnailResultStatus::Unsupported));
     QCOMPARE(modelData(*model, 1, QByteArrayLiteral("thumbnailStatus")).toInt(),
-        static_cast<int>(KiriView::ActiveNavigationThumbnailResultStatus::Unsupported));
+        static_cast<int>(kiriview::ActiveNavigationThumbnailResultStatus::Unsupported));
     QCOMPARE(modelData(*model, 0, QByteArrayLiteral("thumbnailImageSource")).toUrl(), QUrl());
 }
 
 void TestActiveNavigationThumbnailRuntime::staleCompletionIsRejected()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     const quint64 generation = runtime.navigationGeneration();
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Visible, generation));
 
-    const KiriView::ActiveNavigationThumbnailSourceKey key = runtime.sourceKeyAt(0);
-    KiriView::ActiveNavigationThumbnailCompletion completion {
+    const kiriview::ActiveNavigationThumbnailSourceKey key = runtime.sourceKeyAt(0);
+    kiriview::ActiveNavigationThumbnailCompletion completion {
         key,
         Bucket::Large,
-        KiriView::ActiveNavigationThumbnailResult {
+        kiriview::ActiveNavigationThumbnailResult {
             Status::Ready,
             QUrl(QStringLiteral("image://kiriview-thumbnails/current")),
         },
     };
 
-    KiriView::ActiveNavigationThumbnailCompletion stale = completion;
+    kiriview::ActiveNavigationThumbnailCompletion stale = completion;
     stale.sourceKey.url = localUrl(QStringLiteral("/media/other.png"));
     QVERIFY(!runtime.applyCompletion(stale));
 
@@ -464,7 +464,7 @@ void TestActiveNavigationThumbnailRuntime::staleCompletionIsRejected()
     QVERIFY(!runtime.applyCompletion(stale));
 
     stale = completion;
-    stale.sourceKey.sourceKind = KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo;
+    stale.sourceKey.sourceKind = kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo;
     QVERIFY(!runtime.applyCompletion(stale));
 
     stale = completion;
@@ -483,34 +483,34 @@ void TestActiveNavigationThumbnailRuntime::staleCompletionIsRejected()
 
 void TestActiveNavigationThumbnailRuntime::rowResetRejectsOlderCompletion()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     QVERIFY(runtime.reportDemand(
         1, firstUrl, Bucket::Normal, Priority::Visible, runtime.navigationGeneration()));
-    const KiriView::ActiveNavigationThumbnailSourceKey staleKey = runtime.sourceKeyAt(0);
+    const kiriview::ActiveNavigationThumbnailSourceKey staleKey = runtime.sourceKeyAt(0);
 
     runtime.setRows({
         thumbnailRow(1, secondUrl, QStringLiteral("02.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     QCOMPARE(runtime.navigationGeneration(), quint64(2));
     QCOMPARE(runtime.resultAt(0).status, Status::NoResult);
 
-    QVERIFY(!runtime.applyCompletion(KiriView::ActiveNavigationThumbnailCompletion {
+    QVERIFY(!runtime.applyCompletion(kiriview::ActiveNavigationThumbnailCompletion {
         staleKey,
         Bucket::Normal,
-        KiriView::ActiveNavigationThumbnailResult {
+        kiriview::ActiveNavigationThumbnailResult {
             Status::Ready,
             QUrl(QStringLiteral("image://kiriview-thumbnails/stale")),
         },
@@ -520,17 +520,17 @@ void TestActiveNavigationThumbnailRuntime::rowResetRejectsOlderCompletion()
 
 void TestActiveNavigationThumbnailRuntime::activeJobsCancelOnIdentityChangeAndSupersedingDemand()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
@@ -545,21 +545,21 @@ void TestActiveNavigationThumbnailRuntime::activeJobsCancelOnIdentityChangeAndSu
 
     runtime.setRows({
         thumbnailRow(1, secondUrl, QStringLiteral("02.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     QCOMPARE(runtime.activeJobCount(), qsizetype(0));
     QCOMPARE(runtime.canceledJobCount(), qsizetype(2));
 
     ManualThumbnailGenerationProvider generationProvider;
-    KiriView::ActiveNavigationThumbnailRuntime generationRuntime(
+    kiriview::ActiveNavigationThumbnailRuntime generationRuntime(
         &owner, provider.provider(), {}, generationProvider.provider());
     generationRuntime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     QVERIFY(generationRuntime.reportDemand(
         1, firstUrl, Bucket::Normal, Priority::Visible, generationRuntime.navigationGeneration()));
-    provider.finish(2, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
+    provider.finish(2, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing));
     QCOMPARE(generationProvider.generationCount(), std::size_t(1));
     QCOMPARE(generationRuntime.activeJobCount(), qsizetype(1));
 
@@ -571,18 +571,18 @@ void TestActiveNavigationThumbnailRuntime::activeJobsCancelOnIdentityChangeAndSu
 
 void TestActiveNavigationThumbnailRuntime::readyLookupPublishesImageProviderSourceAndStoresImage()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
@@ -592,14 +592,14 @@ void TestActiveNavigationThumbnailRuntime::readyLookupPublishesImageProviderSour
     QCOMPARE(provider.lookupAt(0).request.requestedBucket, Bucket::Normal);
 
     provider.finish(0,
-        lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
+        lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
 
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QVERIFY(runtime.resultAt(0).imageSource.toString().startsWith(
         QStringLiteral("image://kiriview-thumbnails/")));
     QCOMPARE(store->size(), qsizetype(1));
 
-    KiriView::ThumbnailImageProvider imageProvider(store);
+    kiriview::ThumbnailImageProvider imageProvider(store);
     QSize imageSize;
     const QString id = runtime.resultAt(0).imageSource.path().mid(1);
     const QImage image = imageProvider.requestImage(id, &imageSize, {});
@@ -610,25 +610,25 @@ void TestActiveNavigationThumbnailRuntime::readyLookupPublishesImageProviderSour
 
 void TestActiveNavigationThumbnailRuntime::missingLookupStartsGenerationAndPublishesGeneratedImage()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
     ManualThumbnailGenerationProvider generationProvider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    KiriView::ActiveNavigationThumbnailRuntime runtime(
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    kiriview::ActiveNavigationThumbnailRuntime runtime(
         &owner, provider.provider(), store, generationProvider.provider());
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     const quint64 generation = runtime.navigationGeneration();
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Normal, Priority::Visible, generation));
-    provider.finish(0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
+    provider.finish(0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing));
     QCOMPARE(runtime.resultAt(0).status, Status::Pending);
     QCOMPARE(runtime.resultAt(0).imageSource, QUrl());
     QCOMPARE(generationProvider.generationCount(), std::size_t(1));
@@ -637,7 +637,7 @@ void TestActiveNavigationThumbnailRuntime::missingLookupStartsGenerationAndPubli
     QCOMPARE(generationProvider.generationAt(0).request.requestedBucket, Bucket::Normal);
 
     generationProvider.finish(0,
-        generationResult(KiriView::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::blue)));
+        generationResult(kiriview::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::blue)));
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QVERIFY(runtime.resultAt(0).imageSource.toString().startsWith(
         QStringLiteral("image://kiriview-thumbnails/")));
@@ -646,24 +646,24 @@ void TestActiveNavigationThumbnailRuntime::missingLookupStartsGenerationAndPubli
 
 void TestActiveNavigationThumbnailRuntime::cacheHitSkipsGeneration()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
     ManualThumbnailGenerationProvider generationProvider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(
+    kiriview::ActiveNavigationThumbnailRuntime runtime(
         &owner, provider.provider(), {}, generationProvider.provider());
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
         1, imageUrl, Bucket::Normal, Priority::Visible, runtime.navigationGeneration()));
     provider.finish(0,
-        lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
+        lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
 
     QCOMPARE(generationProvider.generationCount(), std::size_t(0));
 }
@@ -671,24 +671,24 @@ void TestActiveNavigationThumbnailRuntime::cacheHitSkipsGeneration()
 void TestActiveNavigationThumbnailRuntime::
     largerBucketDemandKeepsReadyThumbnailWhileLookupIsPending()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     const quint64 generation = runtime.navigationGeneration();
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Normal, Priority::Visible, generation));
     provider.finish(0,
-        lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
+        lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
     const QUrl previousSource = runtime.resultAt(0).imageSource;
     QVERIFY(!previousSource.isEmpty());
 
@@ -702,24 +702,24 @@ void TestActiveNavigationThumbnailRuntime::
 void TestActiveNavigationThumbnailRuntime::
     newerReadyResultReplacesOldThumbnailAndReleasesOldStoreEntry()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     const quint64 generation = runtime.navigationGeneration();
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Normal, Priority::Visible, generation));
     provider.finish(0,
-        lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
+        lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
     const QUrl previousSource = runtime.resultAt(0).imageSource;
     const QString previousId = thumbnailImageStoreId(previousSource);
 
@@ -727,7 +727,7 @@ void TestActiveNavigationThumbnailRuntime::
     QCOMPARE(provider.lookupAt(1).canceled, true);
     QCOMPARE(provider.lookupCount(), std::size_t(3));
     provider.finish(
-        2, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::blue)));
+        2, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::blue)));
 
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QVERIFY(runtime.resultAt(0).imageSource != previousSource);
@@ -739,40 +739,40 @@ void TestActiveNavigationThumbnailRuntime::
 
 void TestActiveNavigationThumbnailRuntime::lookupOrGenerationFailureKeepsExistingReadyThumbnail()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
     ManualThumbnailGenerationProvider generationProvider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    KiriView::ActiveNavigationThumbnailRuntime runtime(
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    kiriview::ActiveNavigationThumbnailRuntime runtime(
         &owner, provider.provider(), store, generationProvider.provider());
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     const quint64 generation = runtime.navigationGeneration();
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Normal, Priority::Visible, generation));
     provider.finish(0,
-        lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
+        lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
     const QUrl previousSource = runtime.resultAt(0).imageSource;
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Visible, generation));
     QCOMPARE(provider.lookupAt(1).canceled, true);
     QCOMPARE(provider.lookupCount(), std::size_t(3));
-    provider.finish(2, lookupResult(KiriView::ThumbnailCacheLookupStatus::Failed));
+    provider.finish(2, lookupResult(kiriview::ThumbnailCacheLookupStatus::Failed));
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QCOMPARE(runtime.resultAt(0).imageSource, previousSource);
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::XLarge, Priority::Visible, generation));
     QCOMPARE(provider.lookupAt(3).canceled, true);
     QCOMPARE(provider.lookupCount(), std::size_t(5));
-    provider.finish(4, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
-    generationProvider.finish(0, generationResult(KiriView::ThumbnailGenerationStatus::Failed));
+    provider.finish(4, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing));
+    generationProvider.finish(0, generationResult(kiriview::ThumbnailGenerationStatus::Failed));
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QCOMPARE(runtime.resultAt(0).imageSource, previousSource);
     QCOMPARE(store->size(), qsizetype(1));
@@ -781,32 +781,32 @@ void TestActiveNavigationThumbnailRuntime::lookupOrGenerationFailureKeepsExistin
 void TestActiveNavigationThumbnailRuntime::
     lookupInvalidAndFailedSkipGenerationAndPublishFallbackResults()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
     ManualThumbnailGenerationProvider generationProvider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    KiriView::ActiveNavigationThumbnailRuntime runtime(
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    kiriview::ActiveNavigationThumbnailRuntime runtime(
         &owner, provider.provider(), store, generationProvider.provider());
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     const quint64 generation = runtime.navigationGeneration();
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Visible, generation));
-    provider.finish(0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Invalid));
+    provider.finish(0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Invalid));
     QCOMPARE(runtime.resultAt(0).status, Status::Failed);
     QCOMPARE(runtime.resultAt(0).imageSource, QUrl());
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::XLarge, Priority::Visible, generation));
     QCOMPARE(provider.lookupAt(1).canceled, true);
     QCOMPARE(provider.lookupCount(), std::size_t(3));
-    provider.finish(2, lookupResult(KiriView::ThumbnailCacheLookupStatus::Failed));
+    provider.finish(2, lookupResult(kiriview::ThumbnailCacheLookupStatus::Failed));
     QCOMPARE(runtime.resultAt(0).status, Status::Failed);
     QCOMPARE(runtime.resultAt(0).imageSource, QUrl());
     QCOMPARE(store->size(), qsizetype(0));
@@ -815,25 +815,25 @@ void TestActiveNavigationThumbnailRuntime::
 
 void TestActiveNavigationThumbnailRuntime::generationFailurePublishesFallbackResult()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
     ManualThumbnailGenerationProvider generationProvider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(
+    kiriview::ActiveNavigationThumbnailRuntime runtime(
         &owner, provider.provider(), {}, generationProvider.provider());
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
         1, imageUrl, Bucket::Normal, Priority::Visible, runtime.navigationGeneration()));
-    provider.finish(0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
-    generationProvider.finish(0, generationResult(KiriView::ThumbnailGenerationStatus::Failed));
+    provider.finish(0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing));
+    generationProvider.finish(0, generationResult(kiriview::ThumbnailGenerationStatus::Failed));
 
     QCOMPARE(runtime.resultAt(0).status, Status::Failed);
     QCOMPARE(runtime.resultAt(0).imageSource, QUrl());
@@ -841,17 +841,17 @@ void TestActiveNavigationThumbnailRuntime::generationFailurePublishesFallbackRes
 
 void TestActiveNavigationThumbnailRuntime::nonLocalDirectImageIsUnsupportedWithoutLookup()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl imageUrl(QStringLiteral("https://example.invalid/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
@@ -864,19 +864,19 @@ void TestActiveNavigationThumbnailRuntime::nonLocalDirectImageIsUnsupportedWitho
 
 void TestActiveNavigationThumbnailRuntime::defaultDirectVideoIsUnsupportedWithoutAdapter()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider lookupProvider;
     ManualThumbnailGenerationProvider generationProvider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(
+    kiriview::ActiveNavigationThumbnailRuntime runtime(
         &owner, lookupProvider.provider(), {}, generationProvider.provider());
     const QUrl videoUrl = localUrl(QStringLiteral("/media/clip.mp4"));
     runtime.setRows({
         thumbnailRow(1, videoUrl, QStringLiteral("clip.mp4"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo, true),
     });
 
     QVERIFY(runtime.reportDemand(
@@ -890,19 +890,19 @@ void TestActiveNavigationThumbnailRuntime::defaultDirectVideoIsUnsupportedWithou
 
 void TestActiveNavigationThumbnailRuntime::staleLookupCompletionIsRejectedAndReleasesInsertedImage()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
@@ -911,10 +911,10 @@ void TestActiveNavigationThumbnailRuntime::staleLookupCompletionIsRejectedAndRel
 
     runtime.setRows({
         thumbnailRow(1, secondUrl, QStringLiteral("02.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     provider.deliverIgnoringCancellation(
-        0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
+        0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
 
     QCOMPARE(runtime.resultAt(0).status, Status::NoResult);
     QCOMPARE(runtime.resultAt(0).imageSource, QUrl());
@@ -923,80 +923,80 @@ void TestActiveNavigationThumbnailRuntime::staleLookupCompletionIsRejectedAndRel
 
 void TestActiveNavigationThumbnailRuntime::staleGenerationCompletionIsRejected()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
     ManualThumbnailGenerationProvider generationProvider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    KiriView::ActiveNavigationThumbnailRuntime runtime(
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    kiriview::ActiveNavigationThumbnailRuntime runtime(
         &owner, provider.provider(), store, generationProvider.provider());
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
         1, firstUrl, Bucket::Normal, Priority::Visible, runtime.navigationGeneration()));
-    provider.finish(0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
+    provider.finish(0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing));
 
     QVERIFY(runtime.reportDemand(
         1, firstUrl, Bucket::Large, Priority::Visible, runtime.navigationGeneration()));
     generationProvider.deliverIgnoringCancellation(
-        0, generationResult(KiriView::ThumbnailGenerationStatus::Ready, testThumbnailImage()));
+        0, generationResult(kiriview::ThumbnailGenerationStatus::Ready, testThumbnailImage()));
     QCOMPARE(runtime.resultAt(0).status, Status::Pending);
     QCOMPARE(store->size(), qsizetype(0));
 
-    provider.finish(1, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
+    provider.finish(1, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing));
     runtime.setRows({
         thumbnailRow(1, secondUrl, QStringLiteral("02.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
     generationProvider.deliverIgnoringCancellation(
-        1, generationResult(KiriView::ThumbnailGenerationStatus::Ready, testThumbnailImage()));
+        1, generationResult(kiriview::ThumbnailGenerationStatus::Ready, testThumbnailImage()));
     QCOMPARE(runtime.resultAt(0).status, Status::NoResult);
     QCOMPARE(store->size(), qsizetype(0));
 }
 
 void TestActiveNavigationThumbnailRuntime::independentRowsDoNotOverwriteGeneratedResults()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
     ManualThumbnailGenerationProvider generationProvider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    KiriView::ActiveNavigationThumbnailRuntime runtime(
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    kiriview::ActiveNavigationThumbnailRuntime runtime(
         &owner, provider.provider(), store, generationProvider.provider());
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
         thumbnailRow(2, secondUrl, QStringLiteral("02.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
     });
 
     const quint64 generation = runtime.navigationGeneration();
     QVERIFY(runtime.reportDemand(1, firstUrl, Bucket::Normal, Priority::Visible, generation));
     QVERIFY(runtime.reportDemand(2, secondUrl, Bucket::Normal, Priority::Visible, generation));
-    provider.finish(0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
-    provider.finish(1, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
+    provider.finish(0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing));
+    provider.finish(1, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing));
 
     generationProvider.finish(1,
-        generationResult(KiriView::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::cyan)));
+        generationResult(kiriview::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::cyan)));
     QCOMPARE(runtime.resultAt(0).status, Status::Pending);
     QCOMPARE(runtime.resultAt(1).status, Status::Ready);
 
     generationProvider.finish(0,
         generationResult(
-            KiriView::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::magenta)));
+            kiriview::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::magenta)));
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QCOMPARE(runtime.resultAt(1).status, Status::Ready);
     QVERIFY(runtime.resultAt(0).imageSource != runtime.resultAt(1).imageSource);
@@ -1005,22 +1005,22 @@ void TestActiveNavigationThumbnailRuntime::independentRowsDoNotOverwriteGenerate
 
 void TestActiveNavigationThumbnailRuntime::backgroundFillStartsOnlyAfterForegroundJobsDrain()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
     const QUrl thirdUrl = localUrl(QStringLiteral("/media/03.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
         thumbnailRow(2, secondUrl, QStringLiteral("02.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
         thumbnailRow(3, thirdUrl, QStringLiteral("03.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
     });
 
     const quint64 generation = runtime.navigationGeneration();
@@ -1029,11 +1029,11 @@ void TestActiveNavigationThumbnailRuntime::backgroundFillStartsOnlyAfterForegrou
     QCOMPARE(provider.lookupCount(), std::size_t(2));
 
     provider.finish(
-        0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
+        0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
     QCOMPARE(provider.lookupCount(), std::size_t(2));
 
     provider.finish(
-        1, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
+        1, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
     QCOMPARE(provider.lookupCount(), std::size_t(3));
     QCOMPARE(provider.lookupAt(2).request.localPathBytes, QByteArrayLiteral("/media/03.png"));
     QCOMPARE(provider.lookupAt(2).request.requestedBucket, Bucket::Normal);
@@ -1041,38 +1041,38 @@ void TestActiveNavigationThumbnailRuntime::backgroundFillStartsOnlyAfterForegrou
 
 void TestActiveNavigationThumbnailRuntime::backgroundFillRunsNormalBeforeLargerBuckets()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
         thumbnailRow(2, secondUrl, QStringLiteral("02.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
     });
 
     const quint64 generation = runtime.navigationGeneration();
     QVERIFY(runtime.reportDemand(1, firstUrl, Bucket::Normal, Priority::Visible, generation));
     provider.finish(
-        0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
+        0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
 
     QCOMPARE(provider.lookupCount(), std::size_t(2));
     QCOMPARE(provider.lookupAt(1).request.localPathBytes, QByteArrayLiteral("/media/02.png"));
     QCOMPARE(provider.lookupAt(1).request.requestedBucket, Bucket::Normal);
 
     provider.finish(
-        1, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
+        1, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
     QCOMPARE(provider.lookupCount(), std::size_t(3));
     QCOMPARE(provider.lookupAt(2).request.localPathBytes, QByteArrayLiteral("/media/01.png"));
     QCOMPARE(provider.lookupAt(2).request.requestedBucket, Bucket::Large);
 
     provider.finish(
-        2, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
+        2, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
     QCOMPARE(provider.lookupCount(), std::size_t(4));
     QCOMPARE(provider.lookupAt(3).request.localPathBytes, QByteArrayLiteral("/media/02.png"));
     QCOMPARE(provider.lookupAt(3).request.requestedBucket, Bucket::Large);
@@ -1080,25 +1080,25 @@ void TestActiveNavigationThumbnailRuntime::backgroundFillRunsNormalBeforeLargerB
 
 void TestActiveNavigationThumbnailRuntime::foregroundDemandCancelsActiveBackgroundWork()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
         thumbnailRow(2, secondUrl, QStringLiteral("02.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
     });
 
     const quint64 generation = runtime.navigationGeneration();
     QVERIFY(runtime.reportDemand(1, firstUrl, Bucket::Normal, Priority::Visible, generation));
     provider.finish(
-        0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
+        0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
     QCOMPARE(provider.lookupCount(), std::size_t(2));
 
     QVERIFY(runtime.reportDemand(1, firstUrl, Bucket::Large, Priority::Visible, generation));
@@ -1110,28 +1110,28 @@ void TestActiveNavigationThumbnailRuntime::foregroundDemandCancelsActiveBackgrou
 
 void TestActiveNavigationThumbnailRuntime::backgroundFillSkipsUnsupportedAndNonLocalRows()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider());
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl videoUrl = localUrl(QStringLiteral("/media/02.mp4"));
     const QUrl remoteUrl(QStringLiteral("https://example.invalid/03.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
         thumbnailRow(2, videoUrl, QStringLiteral("02.mp4"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo),
         thumbnailRow(3, remoteUrl, QStringLiteral("03.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
     });
 
     QVERIFY(runtime.reportDemand(
         1, firstUrl, Bucket::Normal, Priority::Visible, runtime.navigationGeneration()));
     provider.finish(
-        0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
+        0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
 
     QCOMPARE(provider.lookupCount(), std::size_t(2));
     QCOMPARE(provider.lookupAt(1).request.localPathBytes, QByteArrayLiteral("/media/01.png"));
@@ -1140,32 +1140,32 @@ void TestActiveNavigationThumbnailRuntime::backgroundFillSkipsUnsupportedAndNonL
 
 void TestActiveNavigationThumbnailRuntime::staleCanceledBackgroundCompletionsAreRejected()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
         thumbnailRow(2, secondUrl, QStringLiteral("02.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
     });
 
     const quint64 generation = runtime.navigationGeneration();
     QVERIFY(runtime.reportDemand(1, firstUrl, Bucket::Normal, Priority::Visible, generation));
     provider.finish(
-        0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
+        0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage()));
     QCOMPARE(provider.lookupCount(), std::size_t(2));
 
     QVERIFY(runtime.reportDemand(1, firstUrl, Bucket::Large, Priority::Visible, generation));
     provider.deliverIgnoringCancellation(
-        1, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::blue)));
+        1, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::blue)));
 
     QCOMPARE(runtime.resultAt(1).status, Status::NoResult);
     QCOMPARE(store->size(), qsizetype(1));
@@ -1174,30 +1174,30 @@ void TestActiveNavigationThumbnailRuntime::staleCanceledBackgroundCompletionsAre
 void TestActiveNavigationThumbnailRuntime::
     backgroundReadyResultDoesNotReplaceExistingReadyThumbnail()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider provider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, provider.provider(), store);
     const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
     runtime.setRows({
         thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
         thumbnailRow(2, secondUrl, QStringLiteral("02.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
     });
 
     const quint64 generation = runtime.navigationGeneration();
     QVERIFY(runtime.reportDemand(1, firstUrl, Bucket::Normal, Priority::Visible, generation));
     provider.finish(
-        0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::red)));
+        0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::red)));
     QCOMPARE(provider.lookupCount(), std::size_t(2));
     provider.finish(
-        1, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::blue)));
+        1, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::blue)));
     QCOMPARE(runtime.resultAt(1).status, Status::Ready);
     const QUrl backgroundSource = runtime.resultAt(1).imageSource;
 
@@ -1207,7 +1207,7 @@ void TestActiveNavigationThumbnailRuntime::
     QCOMPARE(provider.lookupAt(2).canceled, true);
     QCOMPARE(provider.lookupCount(), std::size_t(4));
     provider.finish(3,
-        lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
+        lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::green)));
     QCOMPARE(runtime.resultAt(1).status, Status::Ready);
     QVERIFY(runtime.resultAt(1).imageSource != foregroundSource);
     const QUrl foregroundReadySource = runtime.resultAt(1).imageSource;
@@ -1215,13 +1215,13 @@ void TestActiveNavigationThumbnailRuntime::
     while (provider.lookupCount() < 6) {
         provider.finish(provider.lookupCount() - 1,
             lookupResult(
-                KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::yellow)));
+                kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::yellow)));
     }
 
     QCOMPARE(provider.lookupAt(5).request.localPathBytes, QByteArrayLiteral("/media/02.png"));
     QCOMPARE(provider.lookupAt(5).request.requestedBucket, Bucket::Large);
     provider.finish(
-        5, lookupResult(KiriView::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::cyan)));
+        5, lookupResult(kiriview::ThumbnailCacheLookupStatus::Ready, testThumbnailImage(Qt::cyan)));
 
     QCOMPARE(runtime.resultAt(1).status, Status::Ready);
     QCOMPARE(runtime.resultAt(1).imageSource, foregroundReadySource);
@@ -1229,21 +1229,21 @@ void TestActiveNavigationThumbnailRuntime::
 
 void TestActiveNavigationThumbnailRuntime::injectedUnsupportedAdapterSkipsLookupAndGeneration()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider lookupProvider;
     ManualThumbnailGenerationProvider generationProvider;
     RecordingThumbnailSourceAdapter sourceAdapter;
-    sourceAdapter.plan = sourceAdapterPlan(KiriView::ThumbnailSourceAdapterPlanKind::Unsupported);
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), {},
+    sourceAdapter.plan = sourceAdapterPlan(kiriview::ThumbnailSourceAdapterPlanKind::Unsupported);
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), {},
         generationProvider.provider(), sourceAdapter.adapter());
     const QUrl imageUrl = localUrl(QStringLiteral("/media/unsupported.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("unsupported.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
@@ -1251,7 +1251,7 @@ void TestActiveNavigationThumbnailRuntime::injectedUnsupportedAdapterSkipsLookup
 
     QCOMPARE(sourceAdapter.requests.size(), std::size_t(1));
     QCOMPARE(sourceAdapter.requests.at(0).sourceKey.sourceKind,
-        KiriView::ActiveNavigationThumbnailSourceKind::DirectImage);
+        kiriview::ActiveNavigationThumbnailSourceKind::DirectImage);
     QCOMPARE(sourceAdapter.requests.at(0).requestedBucket, Bucket::Normal);
     QCOMPARE(lookupProvider.lookupCount(), std::size_t(0));
     QCOMPARE(generationProvider.generationCount(), std::size_t(0));
@@ -1261,24 +1261,24 @@ void TestActiveNavigationThumbnailRuntime::injectedUnsupportedAdapterSkipsLookup
 
 void TestActiveNavigationThumbnailRuntime::injectedDirectVideoAdapterUsesGeneratedResultPath()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider lookupProvider;
     ManualThumbnailGenerationProvider generationProvider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
     RecordingThumbnailSourceAdapter sourceAdapter;
     sourceAdapter.plan
-        = sourceAdapterPlan(KiriView::ThumbnailSourceAdapterPlanKind::CacheableLocalFile,
+        = sourceAdapterPlan(kiriview::ThumbnailSourceAdapterPlanKind::CacheableLocalFile,
             QByteArrayLiteral("/media/clip.mp4"));
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), store,
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), store,
         generationProvider.provider(), sourceAdapter.adapter());
     const QUrl videoUrl = localUrl(QStringLiteral("/media/clip.mp4"));
     runtime.setRows({
         thumbnailRow(1, videoUrl, QStringLiteral("clip.mp4"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectVideo, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo, true),
     });
 
     QVERIFY(runtime.reportDemand(
@@ -1286,16 +1286,16 @@ void TestActiveNavigationThumbnailRuntime::injectedDirectVideoAdapterUsesGenerat
     QCOMPARE(lookupProvider.lookupCount(), std::size_t(1));
     QCOMPARE(
         lookupProvider.lookupAt(0).request.localPathBytes, QByteArrayLiteral("/media/clip.mp4"));
-    lookupProvider.finish(0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
+    lookupProvider.finish(0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing));
 
     QCOMPARE(generationProvider.generationCount(), std::size_t(1));
     QCOMPARE(generationProvider.generationAt(0).request.localPathBytes,
         QByteArrayLiteral("/media/clip.mp4"));
     QCOMPARE(generationProvider.generationAt(0).request.sourceKind,
-        KiriView::ThumbnailSourceKind::DirectVideo);
+        kiriview::ThumbnailSourceKind::DirectVideo);
     QCOMPARE(generationProvider.generationAt(0).request.cacheInstallEnabled, true);
     generationProvider.finish(0,
-        generationResult(KiriView::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::blue),
+        generationResult(kiriview::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::blue),
             Bucket::Large));
 
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
@@ -1306,36 +1306,36 @@ void TestActiveNavigationThumbnailRuntime::injectedDirectVideoAdapterUsesGenerat
 
 void TestActiveNavigationThumbnailRuntime::injectedCollectionAdapterUsesGeneratedResultPath()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider lookupProvider;
     ManualThumbnailGenerationProvider generationProvider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
     RecordingThumbnailSourceAdapter sourceAdapter;
     sourceAdapter.plan
-        = sourceAdapterPlan(KiriView::ThumbnailSourceAdapterPlanKind::CacheableLocalFile,
+        = sourceAdapterPlan(kiriview::ThumbnailSourceAdapterPlanKind::CacheableLocalFile,
             QByteArrayLiteral("/archive/pages/001.png"));
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), store,
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), store,
         generationProvider.provider(), sourceAdapter.adapter());
     const QUrl pageUrl = localUrl(QStringLiteral("/archive/book.cbz#001"));
     runtime.setRows({
         thumbnailRow(1, pageUrl, QStringLiteral("001.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
         1, pageUrl, Bucket::Normal, Priority::Visible, runtime.navigationGeneration()));
-    lookupProvider.finish(0, lookupResult(KiriView::ThumbnailCacheLookupStatus::Missing));
+    lookupProvider.finish(0, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing));
     generationProvider.finish(0,
-        generationResult(KiriView::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::cyan)));
+        generationResult(kiriview::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::cyan)));
 
     QCOMPARE(lookupProvider.lookupAt(0).request.localPathBytes,
         QByteArrayLiteral("/archive/pages/001.png"));
     QCOMPARE(generationProvider.generationAt(0).request.sourceKind,
-        KiriView::ThumbnailSourceKind::ImageDocumentPageImage);
+        kiriview::ThumbnailSourceKind::ImageDocumentPageImage);
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
     QCOMPARE(store->size(), qsizetype(1));
 }
@@ -1343,29 +1343,29 @@ void TestActiveNavigationThumbnailRuntime::injectedCollectionAdapterUsesGenerate
 void TestActiveNavigationThumbnailRuntime::
     openedCollectionEntryAdapterStartsGenerationWithoutPrelookup()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider lookupProvider;
     ManualThumbnailGenerationProvider generationProvider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
-    const KiriView::OpenedCollectionScopeLocation cbzScope
-        = KiriView::OpenedCollectionScopeLocation::fromUrls(
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
+    const kiriview::OpenedCollectionScopeLocation cbzScope
+        = kiriview::OpenedCollectionScopeLocation::fromUrls(
             localUrl(QStringLiteral("/books/book.cbz")),
             QUrl(QStringLiteral("zip:///books/book.cbz/")),
-            KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+            kiriview::OpenedCollectionScopeKind::ComicBookArchive);
     RecordingThumbnailSourceAdapter sourceAdapter;
     sourceAdapter.plan.kind
-        = KiriView::ThumbnailSourceAdapterPlanKind::CacheableOpenedCollectionEntry;
+        = kiriview::ThumbnailSourceAdapterPlanKind::CacheableOpenedCollectionEntry;
     sourceAdapter.plan.openedCollectionScope = cbzScope;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), store,
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), store,
         generationProvider.provider(), sourceAdapter.adapter());
     const QUrl pageUrl = archivePageUrl(cbzScope.rootUrl(), QStringLiteral("pages/001.png"));
     runtime.setRows({
         thumbnailRow(1, pageUrl, QStringLiteral("pages/001.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
@@ -1376,7 +1376,7 @@ void TestActiveNavigationThumbnailRuntime::
     QCOMPARE(generationProvider.generationAt(0).request.openedCollectionScope, cbzScope);
     QCOMPARE(generationProvider.generationAt(0).request.cacheInstallEnabled, true);
     generationProvider.finish(0,
-        generationResult(KiriView::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::cyan),
+        generationResult(kiriview::ThumbnailGenerationStatus::Ready, testThumbnailImage(Qt::cyan),
             Bucket::Large));
 
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
@@ -1385,23 +1385,23 @@ void TestActiveNavigationThumbnailRuntime::
 
 void TestActiveNavigationThumbnailRuntime::inMemoryOnlyAdapterSkipsLookupAndDisablesCacheInstall()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
-    using Status = KiriView::ActiveNavigationThumbnailResultStatus;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using Status = kiriview::ActiveNavigationThumbnailResultStatus;
 
     QObject owner;
     ManualThumbnailLookupProvider lookupProvider;
     ManualThumbnailGenerationProvider generationProvider;
-    auto store = std::make_shared<KiriView::ThumbnailImageStore>();
+    auto store = std::make_shared<kiriview::ThumbnailImageStore>();
     RecordingThumbnailSourceAdapter sourceAdapter;
-    sourceAdapter.plan = sourceAdapterPlan(KiriView::ThumbnailSourceAdapterPlanKind::InMemoryOnly,
+    sourceAdapter.plan = sourceAdapterPlan(kiriview::ThumbnailSourceAdapterPlanKind::InMemoryOnly,
         QByteArrayLiteral("archive-entry:001"));
-    KiriView::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), store,
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), store,
         generationProvider.provider(), sourceAdapter.adapter());
     const QUrl pageUrl = localUrl(QStringLiteral("/archive/book.cbz#001"));
     runtime.setRows({
         thumbnailRow(1, pageUrl, QStringLiteral("001.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
@@ -1413,7 +1413,7 @@ void TestActiveNavigationThumbnailRuntime::inMemoryOnlyAdapterSkipsLookupAndDisa
         QByteArrayLiteral("archive-entry:001"));
     QCOMPARE(generationProvider.generationAt(0).request.cacheInstallEnabled, false);
     generationProvider.finish(0,
-        generationResult(KiriView::ThumbnailGenerationStatus::Ready,
+        generationResult(kiriview::ThumbnailGenerationStatus::Ready,
             testThumbnailImage(Qt::magenta), Bucket::XLarge));
 
     QCOMPARE(runtime.resultAt(0).status, Status::Ready);
@@ -1422,18 +1422,18 @@ void TestActiveNavigationThumbnailRuntime::inMemoryOnlyAdapterSkipsLookupAndDisa
 
 void TestActiveNavigationThumbnailRuntime::defaultDirectLocalImageBehaviorStillUsesLookup()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
     QObject owner;
     ManualThumbnailLookupProvider lookupProvider;
     ManualThumbnailGenerationProvider generationProvider;
-    KiriView::ActiveNavigationThumbnailRuntime runtime(
+    kiriview::ActiveNavigationThumbnailRuntime runtime(
         &owner, lookupProvider.provider(), {}, generationProvider.provider());
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
 
     QVERIFY(runtime.reportDemand(
@@ -1446,19 +1446,19 @@ void TestActiveNavigationThumbnailRuntime::defaultDirectLocalImageBehaviorStillU
 
 void TestActiveNavigationThumbnailRuntime::defaultGenerationProviderUsesWorkerScheduler()
 {
-    using Bucket = KiriView::ActiveNavigationThumbnailDemandBucket;
-    using Priority = KiriView::ActiveNavigationThumbnailDemandPriority;
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
 
     QObject owner;
     ManualImageWorkerScheduler workerScheduler;
     RecordingThumbnailSourceAdapter sourceAdapter;
-    sourceAdapter.plan = sourceAdapterPlan(KiriView::ThumbnailSourceAdapterPlanKind::InMemoryOnly);
-    KiriView::ActiveNavigationThumbnailRuntime runtime(
+    sourceAdapter.plan = sourceAdapterPlan(kiriview::ThumbnailSourceAdapterPlanKind::InMemoryOnly);
+    kiriview::ActiveNavigationThumbnailRuntime runtime(
         &owner, {}, {}, {}, sourceAdapter.adapter(), workerScheduler.scheduler());
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     runtime.setRows({
         thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
-            KiriView::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
     });
 
     QVERIFY(runtime.reportDemand(

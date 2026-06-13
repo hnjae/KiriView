@@ -30,7 +30,7 @@ QString verboseDiagnosticFilterRules()
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 void configureApplicationDiagnosticLogging(bool verbose)
 {
     if (!verbose) {

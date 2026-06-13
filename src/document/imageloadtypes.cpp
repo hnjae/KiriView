@@ -5,7 +5,7 @@
 
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ImageLoadSession::ImageLoadSession(quint64 id, ImageLoadRequest request,
     DisplayedImageLocation location, ImageFirstDisplayDecodeContext firstDisplay)
     : m_id(id)

@@ -15,7 +15,7 @@ template <typename Operation> void run(const Operation &operation)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 DocumentSessionPublicSignalEmitter::DocumentSessionPublicSignalEmitter(
     DocumentSessionPublicSignalOperations operations)
     : m_operations(std::move(operations))

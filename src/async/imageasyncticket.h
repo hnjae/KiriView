@@ -6,7 +6,7 @@
 
 #include <QtGlobal>
 
-namespace KiriView {
+namespace kiriview {
 class ImageAsyncTicket
 {
 public:

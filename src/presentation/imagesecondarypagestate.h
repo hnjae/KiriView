@@ -9,7 +9,7 @@
 #include <QSize>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 enum class ImageSecondaryPageLoadResult {
     PrimaryOnly,
     Visible,

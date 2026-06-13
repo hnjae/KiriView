@@ -14,29 +14,29 @@
 #include <vector>
 
 namespace {
-using KiriView::ImageDocumentPageCandidate;
-using KiriView::TestSupport::addInstrumentedMediaEntrySourceFixture;
-using KiriView::TestSupport::archiveCollectionForLocalArchiveUrl;
-using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::blockInstrumentedMediaEntrySourceCandidateLoads;
-using KiriView::TestSupport::imageDocumentPageCandidate;
-using KiriView::TestSupport::instrumentedMediaEntrySourceFactory;
-using KiriView::TestSupport::InstrumentedMediaEntrySourceState;
-using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::releaseInstrumentedMediaEntrySourceLoads;
+using kiriview::ImageDocumentPageCandidate;
+using kiriview::TestSupport::addInstrumentedMediaEntrySourceFixture;
+using kiriview::TestSupport::archiveCollectionForLocalArchiveUrl;
+using kiriview::TestSupport::archivePageUrl;
+using kiriview::TestSupport::blockInstrumentedMediaEntrySourceCandidateLoads;
+using kiriview::TestSupport::imageDocumentPageCandidate;
+using kiriview::TestSupport::instrumentedMediaEntrySourceFactory;
+using kiriview::TestSupport::InstrumentedMediaEntrySourceState;
+using kiriview::TestSupport::localUrl;
+using kiriview::TestSupport::releaseInstrumentedMediaEntrySourceLoads;
 
 struct ManualImageWorkerSchedule {
-    KiriView::ImageWorkerOperation work;
-    KiriView::ImageWorkerCompletion completion;
+    kiriview::ImageWorkerOperation work;
+    kiriview::ImageWorkerCompletion completion;
 };
 
 class ManualImageWorkerScheduler
 {
 public:
-    KiriView::ImageWorkerScheduler scheduler()
+    kiriview::ImageWorkerScheduler scheduler()
     {
-        return KiriView::ImageWorkerScheduler([this](QObject *, KiriView::ImageWorkerOperation work,
-                                                  KiriView::ImageWorkerCompletion completion) {
+        return kiriview::ImageWorkerScheduler([this](QObject *, kiriview::ImageWorkerOperation work,
+                                                  kiriview::ImageWorkerCompletion completion) {
             m_schedules.push_back(
                 ManualImageWorkerSchedule { std::move(work), std::move(completion) });
         });
@@ -78,7 +78,7 @@ private Q_SLOTS:
 void TestMediaEntrySourceRuntime::synchronousLoadsShareLazyOpenAndCandidateCache()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
     const QUrl firstUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -86,7 +86,7 @@ void TestMediaEntrySourceRuntime::synchronousLoadsShareLazyOpenAndCandidateCache
     addInstrumentedMediaEntrySourceFixture(state, *archiveCollection,
         { imageDocumentPageCandidate(firstUrl), imageDocumentPageCandidate(secondUrl) });
 
-    KiriView::MediaEntrySourceRuntime runtime(this, instrumentedMediaEntrySourceFactory(state));
+    kiriview::MediaEntrySourceRuntime runtime(this, instrumentedMediaEntrySourceFactory(state));
     std::vector<ImageDocumentPageCandidate> firstCandidates;
     std::vector<ImageDocumentPageCandidate> cachedCandidates;
     QByteArray data;
@@ -96,8 +96,8 @@ void TestMediaEntrySourceRuntime::synchronousLoadsShareLazyOpenAndCandidateCache
     runtime.loadOpenedCollectionCandidates(nullptr, *archiveCollection,
         [&cachedCandidates](auto loaded) { cachedCandidates = std::move(loaded); }, {});
     runtime.loadOpenedCollectionImageData(nullptr,
-        KiriView::ImageDecodeRequest::fromLocation(1,
-            KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+        kiriview::ImageDecodeRequest::fromLocation(1,
+            kiriview::DisplayedImageLocation::fromOpenedCollectionScope(
                 firstUrl, *archiveCollection)),
         [&data](QByteArray loaded) { data = std::move(loaded); }, {});
 
@@ -112,7 +112,7 @@ void TestMediaEntrySourceRuntime::synchronousLoadsShareLazyOpenAndCandidateCache
 void TestMediaEntrySourceRuntime::simultaneousCandidateLoadsSharePendingBatch()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
     const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -120,11 +120,11 @@ void TestMediaEntrySourceRuntime::simultaneousCandidateLoadsSharePendingBatch()
         state, *archiveCollection, { imageDocumentPageCandidate(pageUrl) });
     blockInstrumentedMediaEntrySourceCandidateLoads(state);
 
-    KiriView::MediaEntrySourceRuntime runtime(this, instrumentedMediaEntrySourceFactory(state));
+    kiriview::MediaEntrySourceRuntime runtime(this, instrumentedMediaEntrySourceFactory(state));
     int callbackCount = 0;
-    KiriView::ImageIoJob firstJob = runtime.loadOpenedCollectionCandidates(this, *archiveCollection,
+    kiriview::ImageIoJob firstJob = runtime.loadOpenedCollectionCandidates(this, *archiveCollection,
         [&callbackCount](std::vector<ImageDocumentPageCandidate>) { ++callbackCount; }, {});
-    KiriView::ImageIoJob secondJob
+    kiriview::ImageIoJob secondJob
         = runtime.loadOpenedCollectionCandidates(this, *archiveCollection,
             [&callbackCount](std::vector<ImageDocumentPageCandidate>) { ++callbackCount; }, {});
     QTRY_COMPARE(state->waitingCandidateLoadCount.load(), 1);
@@ -139,7 +139,7 @@ void TestMediaEntrySourceRuntime::simultaneousCandidateLoadsSharePendingBatch()
 void TestMediaEntrySourceRuntime::candidateLoadAddedDuringActiveBatchSharesWorker()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
-    const std::optional<KiriView::OpenedCollectionScopeLocation> archiveCollection
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveCollection.has_value());
     const QUrl pageUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
@@ -147,13 +147,13 @@ void TestMediaEntrySourceRuntime::candidateLoadAddedDuringActiveBatchSharesWorke
         state, *archiveCollection, { imageDocumentPageCandidate(pageUrl) });
 
     ManualImageWorkerScheduler workerScheduler;
-    KiriView::MediaEntrySourceRuntime runtime(
+    kiriview::MediaEntrySourceRuntime runtime(
         this, instrumentedMediaEntrySourceFactory(state), workerScheduler.scheduler());
     int callbackCount = 0;
-    KiriView::ImageIoJob firstJob = runtime.loadOpenedCollectionCandidates(this, *archiveCollection,
+    kiriview::ImageIoJob firstJob = runtime.loadOpenedCollectionCandidates(this, *archiveCollection,
         [&callbackCount](std::vector<ImageDocumentPageCandidate>) { ++callbackCount; }, {});
 
-    KiriView::ImageIoJob secondJob
+    kiriview::ImageIoJob secondJob
         = runtime.loadOpenedCollectionCandidates(this, *archiveCollection,
             [&callbackCount](std::vector<ImageDocumentPageCandidate>) { ++callbackCount; }, {});
 
@@ -182,9 +182,9 @@ void TestMediaEntrySourceRuntime::candidateLoadAddedDuringActiveBatchSharesWorke
 void TestMediaEntrySourceRuntime::candidateBatchCancellationPreventsStaleCallbacks()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
-    const std::optional<KiriView::OpenedCollectionScopeLocation> firstArchiveCollection
+    const std::optional<kiriview::OpenedCollectionScopeLocation> firstArchiveCollection
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/a.cbz")));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> secondArchiveCollection
+    const std::optional<kiriview::OpenedCollectionScopeLocation> secondArchiveCollection
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/b.cbz")));
     QVERIFY(firstArchiveCollection.has_value());
     QVERIFY(secondArchiveCollection.has_value());
@@ -198,9 +198,9 @@ void TestMediaEntrySourceRuntime::candidateBatchCancellationPreventsStaleCallbac
         state, *secondArchiveCollection, { imageDocumentPageCandidate(secondPageUrl) });
     blockInstrumentedMediaEntrySourceCandidateLoads(state);
 
-    KiriView::MediaEntrySourceRuntime runtime(this, instrumentedMediaEntrySourceFactory(state));
+    kiriview::MediaEntrySourceRuntime runtime(this, instrumentedMediaEntrySourceFactory(state));
     int staleCallbackCount = 0;
-    KiriView::ImageIoJob staleJob = runtime.loadOpenedCollectionCandidates(this,
+    kiriview::ImageIoJob staleJob = runtime.loadOpenedCollectionCandidates(this,
         *firstArchiveCollection,
         [&staleCallbackCount](std::vector<ImageDocumentPageCandidate>) { ++staleCallbackCount; },
         {});
@@ -217,9 +217,9 @@ void TestMediaEntrySourceRuntime::candidateBatchCancellationPreventsStaleCallbac
 void TestMediaEntrySourceRuntime::dataCompletionAfterOpenedCollectionSwitchIsIgnored()
 {
     auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
-    const std::optional<KiriView::OpenedCollectionScopeLocation> firstArchiveCollection
+    const std::optional<kiriview::OpenedCollectionScopeLocation> firstArchiveCollection
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/a.cbz")));
-    const std::optional<KiriView::OpenedCollectionScopeLocation> secondArchiveCollection
+    const std::optional<kiriview::OpenedCollectionScopeLocation> secondArchiveCollection
         = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/b.cbz")));
     QVERIFY(firstArchiveCollection.has_value());
     QVERIFY(secondArchiveCollection.has_value());
@@ -233,12 +233,12 @@ void TestMediaEntrySourceRuntime::dataCompletionAfterOpenedCollectionSwitchIsIgn
         state, *secondArchiveCollection, { imageDocumentPageCandidate(secondPageUrl) });
 
     ManualImageWorkerScheduler workerScheduler;
-    KiriView::MediaEntrySourceRuntime runtime(
+    kiriview::MediaEntrySourceRuntime runtime(
         this, instrumentedMediaEntrySourceFactory(state), workerScheduler.scheduler());
     int staleCallbackCount = 0;
-    KiriView::ImageIoJob staleJob = runtime.loadOpenedCollectionImageData(this,
-        KiriView::ImageDecodeRequest::fromLocation(1,
-            KiriView::DisplayedImageLocation::fromOpenedCollectionScope(
+    kiriview::ImageIoJob staleJob = runtime.loadOpenedCollectionImageData(this,
+        kiriview::ImageDecodeRequest::fromLocation(1,
+            kiriview::DisplayedImageLocation::fromOpenedCollectionScope(
                 firstPageUrl, *firstArchiveCollection)),
         [&staleCallbackCount](QByteArray) { ++staleCallbackCount; }, {});
 

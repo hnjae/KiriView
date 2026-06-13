@@ -12,7 +12,7 @@
 #include <utility>
 
 namespace {
-namespace Actions = KiriView::ApplicationActions;
+namespace Actions = kiriview::ApplicationActions;
 
 Actions::VideoShortcutAvailabilityInput videoShortcutInput(bool helpShortcutsEnabled,
     bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
@@ -27,7 +27,7 @@ Actions::VideoShortcutAvailabilityInput videoShortcutInput(bool helpShortcutsEna
 }
 }
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 ApplicationActionRuntime::ApplicationActionRuntime(ApplicationActionHost &host, Callbacks callbacks)
     : m_host(host)
     , m_actionRegistry(host)

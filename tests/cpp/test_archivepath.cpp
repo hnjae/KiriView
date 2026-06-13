@@ -11,12 +11,12 @@
 #include <optional>
 
 namespace {
-KiriView::OpenedCollectionScopeLocation openedCollectionScope()
+kiriview::OpenedCollectionScopeLocation openedCollectionScope()
 {
-    return KiriView::OpenedCollectionScopeLocation::fromUrls(
+    return kiriview::OpenedCollectionScopeLocation::fromUrls(
         QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),
         QUrl(QStringLiteral("zip:///books/book.cbz/")),
-        KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+        kiriview::OpenedCollectionScopeKind::ComicBookArchive);
 }
 }
 
@@ -34,15 +34,15 @@ private Q_SLOTS:
 
 void TestArchivePath::entryUrlsNormalizePathsAndClearUrlMetadata()
 {
-    KiriView::OpenedCollectionScopeLocation archive = openedCollectionScope();
+    kiriview::OpenedCollectionScopeLocation archive = openedCollectionScope();
     QUrl rootUrl = archive.rootUrl();
     rootUrl.setQuery(QStringLiteral("token=ignored"));
     rootUrl.setFragment(QStringLiteral("ignored"));
-    archive = KiriView::OpenedCollectionScopeLocation::fromUrls(
+    archive = kiriview::OpenedCollectionScopeLocation::fromUrls(
         archive.fileUrl(), rootUrl, archive.kind());
 
     const QUrl url
-        = KiriView::openedCollectionEntryUrl(archive, QStringLiteral("./chapter/./page001.png"));
+        = kiriview::openedCollectionEntryUrl(archive, QStringLiteral("./chapter/./page001.png"));
 
     QCOMPARE(url, QUrl(QStringLiteral("zip:///books/book.cbz/chapter/page001.png")));
     QVERIFY(url.query().isEmpty());
@@ -51,38 +51,38 @@ void TestArchivePath::entryUrlsNormalizePathsAndClearUrlMetadata()
 
 void TestArchivePath::entryUrlsRejectUnsafePaths()
 {
-    const KiriView::OpenedCollectionScopeLocation archive = openedCollectionScope();
+    const kiriview::OpenedCollectionScopeLocation archive = openedCollectionScope();
 
     QVERIFY(
-        KiriView::openedCollectionEntryUrl(archive, QStringLiteral("../page001.png")).isEmpty());
+        kiriview::openedCollectionEntryUrl(archive, QStringLiteral("../page001.png")).isEmpty());
     QVERIFY(
-        KiriView::openedCollectionEntryUrl(archive, QStringLiteral("/tmp/page001.png")).isEmpty());
-    QVERIFY(KiriView::openedCollectionEntryUrl(
-        KiriView::OpenedCollectionScopeLocation::none(), QStringLiteral("page001.png"))
+        kiriview::openedCollectionEntryUrl(archive, QStringLiteral("/tmp/page001.png")).isEmpty());
+    QVERIFY(kiriview::openedCollectionEntryUrl(
+        kiriview::OpenedCollectionScopeLocation::none(), QStringLiteral("page001.png"))
             .isEmpty());
 }
 
 void TestArchivePath::entryPathsResolveOnlyInsideArchiveRoot()
 {
-    const KiriView::OpenedCollectionScopeLocation archive = openedCollectionScope();
+    const kiriview::OpenedCollectionScopeLocation archive = openedCollectionScope();
 
-    QCOMPARE(KiriView::openedCollectionEntryPathForUrl(
+    QCOMPARE(kiriview::openedCollectionEntryPathForUrl(
                  archive, QUrl(QStringLiteral("zip:///books/book.cbz/chapter/page001.png"))),
         QStringLiteral("chapter/page001.png"));
-    QVERIFY(KiriView::openedCollectionEntryPathForUrl(
+    QVERIFY(kiriview::openedCollectionEntryPathForUrl(
         archive, QUrl(QStringLiteral("zip:///books/book.cbz/")))
             .isEmpty());
-    QVERIFY(KiriView::openedCollectionEntryPathForUrl(
+    QVERIFY(kiriview::openedCollectionEntryPathForUrl(
         archive, QUrl(QStringLiteral("zip:///books/book.cbz/../page001.png")))
             .isEmpty());
-    QVERIFY(KiriView::openedCollectionEntryPathForUrl(
+    QVERIFY(kiriview::openedCollectionEntryPathForUrl(
         archive, QUrl(QStringLiteral("tar:///books/book.cbz/chapter/page001.png")))
             .isEmpty());
 }
 
 void TestArchivePath::kioFuseArchivePathsExposeParsedArchiveParts()
 {
-    const std::optional<KiriView::KioFuseArchivePath> parsed = KiriView::kioFuseArchivePath(
+    const std::optional<kiriview::KioFuseArchivePath> parsed = kiriview::kioFuseArchivePath(
         QStringLiteral("/run/user/1000/kio-fuse-test/zip/books/book.cbz/page001.png"),
         QStringLiteral("/run/user/1000"));
 
@@ -90,7 +90,7 @@ void TestArchivePath::kioFuseArchivePathsExposeParsedArchiveParts()
     QCOMPARE(parsed->scheme, QStringLiteral("zip"));
     QCOMPARE(parsed->path, QStringLiteral("/books/book.cbz/page001.png"));
 
-    QVERIFY(!KiriView::kioFuseArchivePath(
+    QVERIFY(!kiriview::kioFuseArchivePath(
         QStringLiteral("/tmp/kio-fuse-test/zip/books/book.cbz/page001.png"),
         QStringLiteral("/run/user/1000"))
             .has_value());
@@ -100,17 +100,17 @@ void TestArchivePath::kioFuseArchiveUrlsRejectUnsupportedOrMalformedPaths()
 {
     const QString runtimeDir = QStringLiteral("/run/user/1000");
 
-    const std::optional<QUrl> url = KiriView::kioFuseArchiveUrlForLocalPath(
+    const std::optional<QUrl> url = kiriview::kioFuseArchiveUrlForLocalPath(
         QStringLiteral("/run/user/1000/kio-fuse-test/sevenz/books/book.cb7/page001.png"),
         runtimeDir);
     QVERIFY(url.has_value());
     QCOMPARE(url->scheme(), QStringLiteral("sevenz"));
     QCOMPARE(url->path(), QStringLiteral("/books/book.cb7/page001.png"));
 
-    QVERIFY(!KiriView::kioFuseArchiveUrlForLocalPath(
+    QVERIFY(!kiriview::kioFuseArchiveUrlForLocalPath(
         QStringLiteral("/run/user/1000/kio-fuse-test/rar/books/book.cbr/page001.png"), runtimeDir)
             .has_value());
-    QVERIFY(!KiriView::kioFuseArchiveUrlForLocalPath(
+    QVERIFY(!kiriview::kioFuseArchiveUrlForLocalPath(
         QStringLiteral("/run/user/1000/kio-fuse-test/zip"), runtimeDir)
             .has_value());
 }

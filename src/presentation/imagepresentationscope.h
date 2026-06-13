@@ -6,7 +6,7 @@
 
 #include <QUrl>
 
-namespace KiriView {
+namespace kiriview {
 struct ImagePresentationScopeKey {
     enum class Kind {
         Empty,

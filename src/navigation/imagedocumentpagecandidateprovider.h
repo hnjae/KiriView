@@ -16,7 +16,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 struct ImageDocumentPageCandidateProvider {
     using ImageDocumentPageCandidateLoader = std::function<ImageIoJob(
         QObject *, QUrl, ImageDocumentPageCandidatesCallback, ErrorCallback)>;

@@ -24,7 +24,7 @@ private Q_SLOTS:
 
 namespace {
 template <typename Operation>
-const Operation &operationAt(const KiriView::VideoSourceLoadPlan &plan, std::size_t index)
+const Operation &operationAt(const kiriview::VideoSourceLoadPlan &plan, std::size_t index)
 {
     return std::get<Operation>(plan.at(index));
 }
@@ -32,33 +32,33 @@ const Operation &operationAt(const KiriView::VideoSourceLoadPlan &plan, std::siz
 
 void TestVideoSourceLoadPlan::clearPlanClearsPlaybackBeforePublicState()
 {
-    const KiriView::VideoSourceLoadPlan plan = KiriView::videoSourceLoadClearPlan();
+    const kiriview::VideoSourceLoadPlan plan = kiriview::videoSourceLoadClearPlan();
 
     QCOMPARE(plan.size(), std::size_t(2));
-    QVERIFY(std::holds_alternative<KiriView::ClearVideoPlaybackSourceOperation>(plan.at(0)));
-    QVERIFY(std::holds_alternative<KiriView::ResetClearedVideoSourceOperation>(plan.at(1)));
+    QVERIFY(std::holds_alternative<kiriview::ClearVideoPlaybackSourceOperation>(plan.at(0)));
+    QVERIFY(std::holds_alternative<kiriview::ResetClearedVideoSourceOperation>(plan.at(1)));
 }
 
 void TestVideoSourceLoadPlan::startPlanClearsPlaybackBeforePublishingSourceLoad()
 {
     const QUrl sourceUrl(QStringLiteral("zip:///home/me/videos.zip!/clip.mp4"));
-    const KiriView::VideoSourceLoadPlan plan = KiriView::videoSourceLoadStartPlan(sourceUrl);
+    const kiriview::VideoSourceLoadPlan plan = kiriview::videoSourceLoadStartPlan(sourceUrl);
 
     QCOMPARE(plan.size(), std::size_t(2));
-    QVERIFY(std::holds_alternative<KiriView::ClearVideoPlaybackSourceOperation>(plan.at(0)));
-    QCOMPARE(operationAt<KiriView::ResetVideoSourceLoadOperation>(plan, 1).sourceUrl, sourceUrl);
+    QVERIFY(std::holds_alternative<kiriview::ClearVideoPlaybackSourceOperation>(plan.at(0)));
+    QCOMPARE(operationAt<kiriview::ResetVideoSourceLoadOperation>(plan, 1).sourceUrl, sourceUrl);
 }
 
 void TestVideoSourceLoadPlan::readyPlanCarriesSourceAndPlaybackUrls()
 {
     const QUrl sourceUrl(QStringLiteral("zip:///home/me/videos.zip!/clip.mp4"));
     const QUrl playbackUrl = QUrl::fromLocalFile(QStringLiteral("/tmp/clip.mp4"));
-    const KiriView::VideoSourceLoadPlan plan
-        = KiriView::videoSourceLoadReadyPlan(sourceUrl, playbackUrl);
+    const kiriview::VideoSourceLoadPlan plan
+        = kiriview::videoSourceLoadReadyPlan(sourceUrl, playbackUrl);
 
     QCOMPARE(plan.size(), std::size_t(1));
-    const KiriView::ApplyVideoPlaybackUrlOperation &operation
-        = operationAt<KiriView::ApplyVideoPlaybackUrlOperation>(plan, 0);
+    const kiriview::ApplyVideoPlaybackUrlOperation &operation
+        = operationAt<kiriview::ApplyVideoPlaybackUrlOperation>(plan, 0);
     QCOMPARE(operation.sourceUrl, sourceUrl);
     QCOMPARE(operation.playbackUrl, playbackUrl);
 }
@@ -68,17 +68,17 @@ void TestVideoSourceLoadPlan::failurePlanCarriesSourceAndError()
     const QUrl sourceUrl(QStringLiteral("zip:///home/me/videos.zip!/clip.mp4"));
     const QString errorString = QStringLiteral("resolution failed");
     const QString userMessage = QStringLiteral("Could not open the selected video.");
-    const KiriView::VideoSourceLoadPlan plan
-        = KiriView::videoSourceLoadFailurePlan(sourceUrl, errorString);
+    const kiriview::VideoSourceLoadPlan plan
+        = kiriview::videoSourceLoadFailurePlan(sourceUrl, errorString);
 
     QCOMPARE(plan.size(), std::size_t(1));
-    const KiriView::PublishVideoSourceLoadFailureOperation &operation
-        = operationAt<KiriView::PublishVideoSourceLoadFailureOperation>(plan, 0);
+    const kiriview::PublishVideoSourceLoadFailureOperation &operation
+        = operationAt<kiriview::PublishVideoSourceLoadFailureOperation>(plan, 0);
     QCOMPARE(operation.failure.sourceUrl, sourceUrl);
-    QVERIFY(operation.failure.kind == KiriView::VideoSourceLoadFailureKind::PlaybackUrlResolution);
+    QVERIFY(operation.failure.kind == kiriview::VideoSourceLoadFailureKind::PlaybackUrlResolution);
     QCOMPARE(operation.failure.userMessage, userMessage);
     QCOMPARE(operation.failure.diagnosticDetail, errorString);
-    QVERIFY(operation.failure.severity == KiriView::VideoSourceLoadFailureSeverity::Error);
+    QVERIFY(operation.failure.severity == kiriview::VideoSourceLoadFailureSeverity::Error);
     QVERIFY(!operation.failure.retryable);
 }
 

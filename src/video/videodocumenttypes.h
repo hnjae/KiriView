@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_VIDEODOCUMENTTYPES_H
 #define KIRIVIEW_VIDEODOCUMENTTYPES_H
 
-namespace KiriView {
+namespace kiriview {
 enum class VideoDocumentStatus {
     Null,
     Loading,

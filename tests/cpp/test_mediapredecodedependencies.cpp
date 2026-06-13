@@ -13,7 +13,7 @@
 #include <utility>
 
 namespace {
-class FakePowerSaverMonitor final : public KiriView::PowerSaverStateMonitor
+class FakePowerSaverMonitor final : public kiriview::PowerSaverStateMonitor
 {
 public:
     bool powerSaverEnabled() const override { return true; }
@@ -31,14 +31,14 @@ private Q_SLOTS:
 
 void TestMediaPredecodeDependencies::defaultsFillRuntimeProvidersAndBudget()
 {
-    KiriView::MediaPredecodeDependencies dependencies
-        = KiriView::resolveMediaPredecodeDependencies({});
+    kiriview::MediaPredecodeDependencies dependencies
+        = kiriview::resolveMediaPredecodeDependencies({});
 
     QVERIFY(dependencies.imageDecode.dataLoader);
     QVERIFY(dependencies.imageDecode.dataDecoder);
     QVERIFY(dependencies.powerSaver.monitor);
     QVERIFY(dependencies.cacheByteBudget > 0);
-    QVERIFY(dependencies.cacheByteBudget <= KiriView::predecodeCachePreferredByteBudget());
+    QVERIFY(dependencies.cacheByteBudget <= kiriview::predecodeCachePreferredByteBudget());
 }
 
 void TestMediaPredecodeDependencies::explicitDependenciesArePreserved()
@@ -48,42 +48,42 @@ void TestMediaPredecodeDependencies::explicitDependenciesArePreserved()
     int powerSaverMonitorCount = 0;
     QByteArray decodedData;
 
-    KiriView::MediaPredecodeDependencyOverrides overrides;
+    kiriview::MediaPredecodeDependencyOverrides overrides;
     overrides.imageDecode.dataLoader
-        = [&dataLoadCount](QObject *, KiriView::ImageDecodeRequest,
-              KiriView::ImageDataCallback callback, KiriView::ErrorCallback) {
+        = [&dataLoadCount](QObject *, kiriview::ImageDecodeRequest,
+              kiriview::ImageDataCallback callback, kiriview::ErrorCallback) {
               ++dataLoadCount;
               callback(QByteArrayLiteral("custom media predecode data"));
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
     overrides.imageDecode.dataDecoder = [&dataDecodeCount, &decodedData](const QByteArray &data,
-                                            const KiriView::ImageDecodeRequest &) {
+                                            const kiriview::ImageDecodeRequest &) {
         ++dataDecodeCount;
         decodedData = data;
-        return KiriView::failedDecodedImageResult(QStringLiteral("decoded by override"));
+        return kiriview::failedDecodedImageResult(QStringLiteral("decoded by override"));
     };
     overrides.powerSaver.monitor
-        = [&powerSaverMonitorCount](QObject *, KiriView::PowerSaverChangedCallback) {
+        = [&powerSaverMonitorCount](QObject *, kiriview::PowerSaverChangedCallback) {
               ++powerSaverMonitorCount;
               return std::make_unique<FakePowerSaverMonitor>();
           };
     overrides.cacheBudgetRequest.predecodeCacheByteBudget = 4096;
 
-    KiriView::MediaPredecodeDependencies dependencies
-        = KiriView::resolveMediaPredecodeDependencies(std::move(overrides));
+    kiriview::MediaPredecodeDependencies dependencies
+        = kiriview::resolveMediaPredecodeDependencies(std::move(overrides));
 
     QByteArray loadedData;
-    dependencies.imageDecode.dataLoader(nullptr, KiriView::ImageDecodeRequest(),
+    dependencies.imageDecode.dataLoader(nullptr, kiriview::ImageDecodeRequest(),
         [&loadedData](QByteArray data) { loadedData = std::move(data); }, {});
-    const KiriView::DecodedImageResult result
-        = dependencies.imageDecode.dataDecoder(loadedData, KiriView::ImageDecodeRequest());
-    std::unique_ptr<KiriView::PowerSaverStateMonitor> monitor
+    const kiriview::DecodedImageResult result
+        = dependencies.imageDecode.dataDecoder(loadedData, kiriview::ImageDecodeRequest());
+    std::unique_ptr<kiriview::PowerSaverStateMonitor> monitor
         = dependencies.powerSaver.monitor(nullptr, {});
 
     QCOMPARE(dataLoadCount, 1);
     QCOMPARE(dataDecodeCount, 1);
     QCOMPARE(decodedData, QByteArrayLiteral("custom media predecode data"));
-    QVERIFY(KiriView::decodedImageResultFailure(result) != nullptr);
+    QVERIFY(kiriview::decodedImageResultFailure(result) != nullptr);
     QCOMPARE(powerSaverMonitorCount, 1);
     QVERIFY(monitor);
     QVERIFY(monitor->powerSaverEnabled());

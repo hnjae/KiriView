@@ -41,7 +41,7 @@ private Q_SLOTS:
 
 void TestApngRgbaBuffer::initializeRejectsInvalidLayout()
 {
-    KiriView::ApngRgbaBuffer buffer;
+    kiriview::ApngRgbaBuffer buffer;
 
     QVERIFY(!buffer.initialize(QSize(), 0));
     QVERIFY(!buffer.isValid());
@@ -56,7 +56,7 @@ void TestApngRgbaBuffer::initializeRejectsInvalidLayout()
 
 void TestApngRgbaBuffer::rowsExposePaddedRgbaStorage()
 {
-    KiriView::ApngRgbaBuffer buffer;
+    kiriview::ApngRgbaBuffer buffer;
     QVERIFY(buffer.initialize(QSize(1, 2), 8));
 
     QVERIFY(buffer.rows() != nullptr);
@@ -67,12 +67,12 @@ void TestApngRgbaBuffer::rowsExposePaddedRgbaStorage()
 
 void TestApngRgbaBuffer::regionCopyClearAndRestoreUseCanvasOffsets()
 {
-    KiriView::ApngRgbaBuffer buffer;
+    kiriview::ApngRgbaBuffer buffer;
     QVERIFY(buffer.initialize(QSize(2, 2), 8));
     writePixels(buffer.row(0), { rgba(255, 0, 0, 255), rgba(0, 255, 0, 255) });
     writePixels(buffer.row(1), { rgba(0, 0, 255, 255), rgba(255, 255, 0, 255) });
 
-    const KiriView::ApngRgbaRegion rightColumn { 1, 2, 1, 0 };
+    const kiriview::ApngRgbaRegion rightColumn { 1, 2, 1, 0 };
     QVERIFY(buffer.contains(rightColumn));
     const std::optional<std::vector<unsigned char>> copied = buffer.copyRegion(rightColumn);
     QVERIFY(copied.has_value());
@@ -91,13 +91,13 @@ void TestApngRgbaBuffer::regionCopyClearAndRestoreUseCanvasOffsets()
     QCOMPARE(pixel(*restored, 1, 0), QColor(0, 255, 0, 255));
     QCOMPARE(pixel(*restored, 1, 1), QColor(255, 255, 0, 255));
 
-    QVERIFY(!buffer.contains(KiriView::ApngRgbaRegion { 2, 1, 1, 0 }));
-    QVERIFY(!buffer.copyRegion(KiriView::ApngRgbaRegion { 2, 1, 1, 0 }).has_value());
+    QVERIFY(!buffer.contains(kiriview::ApngRgbaRegion { 2, 1, 1, 0 }));
+    QVERIFY(!buffer.copyRegion(kiriview::ApngRgbaRegion { 2, 1, 1, 0 }).has_value());
 }
 
 void TestApngRgbaBuffer::imageCopyOwnsTheCurrentBufferBytes()
 {
-    KiriView::ApngRgbaBuffer buffer;
+    kiriview::ApngRgbaBuffer buffer;
     QVERIFY(buffer.initialize(QSize(1, 1), 4));
     writePixels(buffer.row(0), { rgba(255, 0, 0, 255) });
 

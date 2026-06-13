@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 int predecodeDebounceMsec() { return rustPredecodeDebounceMsec(); }
 
 int predecodeNeutralRefreshMsec() { return rustPredecodeNeutralRefreshMsec(); }

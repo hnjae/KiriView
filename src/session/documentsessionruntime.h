@@ -36,7 +36,7 @@ class QAbstractListModel;
 class QObject;
 class QString;
 
-namespace KiriView {
+namespace kiriview {
 class MediaPredecodeCoordinator;
 
 struct DocumentSessionRuntimeDependencies {

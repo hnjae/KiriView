@@ -33,22 +33,22 @@ void TestImageDocumentPageCandidateItems::
     items.append(
         KFileItem(QUrl::fromLocalFile(QStringLiteral("/images/01.jpg")), QString(), S_IFREG));
 
-    const std::vector<KiriView::ImageDocumentPageCandidate> candidates
-        = KiriView::imageDocumentPageNavigationCandidates(items);
+    const std::vector<kiriview::ImageDocumentPageCandidate> candidates
+        = kiriview::imageDocumentPageNavigationCandidates(items);
 
     QCOMPARE(candidates.size(), std::size_t(3));
     QCOMPARE(candidates.front().url, QUrl::fromLocalFile(QStringLiteral("/images/01.jpg")));
     QCOMPARE(candidates.front().name, QStringLiteral("01.jpg"));
-    QCOMPARE(candidates.front().kind, KiriView::ImageDocumentPageKind::Image);
+    QCOMPARE(candidates.front().kind, kiriview::ImageDocumentPageKind::Image);
     QCOMPARE(candidates.at(1).url, QUrl::fromLocalFile(QStringLiteral("/images/02.png")));
     QCOMPARE(candidates.at(1).name, QStringLiteral("02.png"));
-    QCOMPARE(candidates.at(1).kind, KiriView::ImageDocumentPageKind::Image);
+    QCOMPARE(candidates.at(1).kind, kiriview::ImageDocumentPageKind::Image);
     QCOMPARE(candidates.back().url, QUrl::fromLocalFile(QStringLiteral("/images/03.mp4")));
     QCOMPARE(candidates.back().name, QStringLiteral("03.mp4"));
-    QCOMPARE(candidates.back().kind, KiriView::ImageDocumentPageKind::Video);
+    QCOMPARE(candidates.back().kind, kiriview::ImageDocumentPageKind::Video);
 
-    const std::vector<KiriView::DirectMediaNavigationCandidate> directMediaNavigationCandidates
-        = KiriView::directMediaNavigationCandidates(items);
+    const std::vector<kiriview::DirectMediaNavigationCandidate> directMediaNavigationCandidates
+        = kiriview::directMediaNavigationCandidates(items);
 
     QCOMPARE(directMediaNavigationCandidates.size(), candidates.size());
     QCOMPARE(directMediaNavigationCandidates.front().url, candidates.front().url);
@@ -72,13 +72,13 @@ void TestImageDocumentPageCandidateItems::containerCandidatesOnlyIncludeComicBoo
     items.append(
         KFileItem(QUrl::fromLocalFile(QStringLiteral("/books/book.rar")), QString(), S_IFREG));
 
-    const std::vector<KiriView::ContainerNavigationCandidate> candidates
-        = KiriView::containerNavigationCandidates(items);
+    const std::vector<kiriview::ContainerNavigationCandidate> candidates
+        = kiriview::containerNavigationCandidates(items);
     QCOMPARE(candidates.size(), std::size_t(2));
     QCOMPARE(candidates.front().url, QUrl::fromLocalFile(QStringLiteral("/books/a.cbz")));
-    QCOMPARE(candidates.front().type, KiriView::ContainerNavigationCandidateType::ComicBookArchive);
+    QCOMPARE(candidates.front().type, kiriview::ContainerNavigationCandidateType::ComicBookArchive);
     QCOMPARE(candidates.back().url, QUrl::fromLocalFile(QStringLiteral("/books/b.cbr")));
-    QCOMPARE(candidates.back().type, KiriView::ContainerNavigationCandidateType::ComicBookArchive);
+    QCOMPARE(candidates.back().type, kiriview::ContainerNavigationCandidateType::ComicBookArchive);
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentPageCandidateItems)

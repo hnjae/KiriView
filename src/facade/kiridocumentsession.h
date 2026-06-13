@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct KiriDocumentSessionDependencies {
     DocumentSessionRuntimeDependencies sessionRuntime;
     ImageDocumentRuntimeDependencyOverrides imageDocument;
@@ -167,7 +167,7 @@ public:
 
     explicit KiriDocumentSession(QObject *parent = nullptr);
     explicit KiriDocumentSession(
-        KiriView::KiriDocumentSessionDependencies dependencies, QObject *parent = nullptr);
+        kiriview::KiriDocumentSessionDependencies dependencies, QObject *parent = nullptr);
     ~KiriDocumentSession() override;
 
     QUrl sourceUrl() const;
@@ -207,8 +207,8 @@ public:
     ActiveNavigationRevealDirection activeNavigationRevealDirection() const;
     QAbstractListModel *activeNavigationThumbnailModel() const;
     KiriMediaInformation *mediaInformation() const;
-    const KiriView::MediaInformationProjectionSnapshot &mediaInformationSnapshot() const;
-    const KiriView::DocumentSessionActionAvailabilityFacts &actionAvailabilityFacts() const;
+    const kiriview::MediaInformationProjectionSnapshot &mediaInformationSnapshot() const;
+    const kiriview::DocumentSessionActionAvailabilityFacts &actionAvailabilityFacts() const;
     KiriImageDocument *imageDocument() const;
     KiriVideoDocument *videoDocument() const;
 
@@ -255,19 +255,19 @@ private:
     struct ResolvedDependenciesTag {
     };
 
-    static KiriView::DocumentSessionImageDocumentPort imageDocumentPort(
+    static kiriview::DocumentSessionImageDocumentPort imageDocumentPort(
         KiriImageDocument &document);
-    static KiriView::DocumentSessionVideoDocumentPort videoDocumentPort(
+    static kiriview::DocumentSessionVideoDocumentPort videoDocumentPort(
         KiriVideoDocument &document);
 
-    KiriDocumentSession(KiriView::KiriDocumentSessionDependencies dependencies,
+    KiriDocumentSession(kiriview::KiriDocumentSessionDependencies dependencies,
         ResolvedDependenciesTag, QObject *parent = nullptr);
 
-    void handleSessionChanges(const std::vector<KiriView::DocumentSessionChange> &changes);
+    void handleSessionChanges(const std::vector<kiriview::DocumentSessionChange> &changes);
 
     std::unique_ptr<KiriImageDocument> m_imageDocument;
     std::unique_ptr<KiriVideoDocument> m_videoDocument;
-    std::unique_ptr<KiriView::DocumentSessionRuntime> m_runtime;
+    std::unique_ptr<kiriview::DocumentSessionRuntime> m_runtime;
     std::unique_ptr<KiriMediaInformation> m_mediaInformation;
 };
 

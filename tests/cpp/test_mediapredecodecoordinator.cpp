@@ -14,23 +14,23 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::imageDecodeDependenciesFor;
-using KiriView::TestSupport::localUrl;
-using KiriView::TestSupport::ManualImageDataLoader;
-using KiriView::TestSupport::ManualPowerSaverMonitor;
-using KiriView::TestSupport::powerSaverProviderFor;
-using KiriView::TestSupport::staticDisplayTestImagePayload;
-using KiriView::TestSupport::staticImageDataDecoder;
-using KiriView::TestSupport::testImage;
+using kiriview::TestSupport::imageDecodeDependenciesFor;
+using kiriview::TestSupport::localUrl;
+using kiriview::TestSupport::ManualImageDataLoader;
+using kiriview::TestSupport::ManualPowerSaverMonitor;
+using kiriview::TestSupport::powerSaverProviderFor;
+using kiriview::TestSupport::staticDisplayTestImagePayload;
+using kiriview::TestSupport::staticImageDataDecoder;
+using kiriview::TestSupport::testImage;
 
 constexpr qsizetype testCacheByteBudget = 1024 * 1024;
 
-KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
-std::vector<KiriView::DirectMediaNavigationCandidate> mixedDirectMediaNavigationCandidates()
+std::vector<kiriview::DirectMediaNavigationCandidate> mixedDirectMediaNavigationCandidates()
 {
     return {
         directMediaNavigationCandidate(localUrl(QStringLiteral("/media/00.png"))),
@@ -40,36 +40,36 @@ std::vector<KiriView::DirectMediaNavigationCandidate> mixedDirectMediaNavigation
     };
 }
 
-KiriView::DisplayedPredecodeImage displayedImage(const QUrl &url)
+kiriview::DisplayedPredecodeImage displayedImage(const QUrl &url)
 {
-    return KiriView::DisplayedPredecodeImage {
-        KiriView::DisplayedImageLocation::fromUrl(url),
+    return kiriview::DisplayedPredecodeImage {
+        kiriview::DisplayedImageLocation::fromUrl(url),
         true,
         staticDisplayTestImagePayload(testImage()),
     };
 }
 
-KiriView::PowerSaverProvider noOpPowerSaverProvider()
+kiriview::PowerSaverProvider noOpPowerSaverProvider()
 {
-    return KiriView::PowerSaverProvider {
-        [](QObject *, KiriView::PowerSaverChangedCallback) {
-            return std::unique_ptr<KiriView::PowerSaverStateMonitor>();
+    return kiriview::PowerSaverProvider {
+        [](QObject *, kiriview::PowerSaverChangedCallback) {
+            return std::unique_ptr<kiriview::PowerSaverStateMonitor>();
         },
     };
 }
 
-KiriView::MediaPredecodeCoordinator createCoordinator(QObject *parent,
-    ManualImageDataLoader &dataLoader, KiriView::PowerSaverProvider powerSaverProvider)
+kiriview::MediaPredecodeCoordinator createCoordinator(QObject *parent,
+    ManualImageDataLoader &dataLoader, kiriview::PowerSaverProvider powerSaverProvider)
 {
-    return KiriView::MediaPredecodeCoordinator(parent,
-        KiriView::MediaPredecodeDependencies {
+    return kiriview::MediaPredecodeCoordinator(parent,
+        kiriview::MediaPredecodeDependencies {
             imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()),
             std::move(powerSaverProvider),
             testCacheByteBudget,
         });
 }
 
-KiriView::MediaPredecodeCoordinator createCoordinator(
+kiriview::MediaPredecodeCoordinator createCoordinator(
     QObject *parent, ManualImageDataLoader &dataLoader)
 {
     return createCoordinator(parent, dataLoader, noOpPowerSaverProvider());
@@ -90,16 +90,16 @@ private Q_SLOTS:
 void TestMediaPredecodeCoordinator::videoCursorKeepsImageCacheAndLoadsAdjacentImages()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::MediaPredecodeCoordinator coordinator = createCoordinator(this, dataLoader);
+    kiriview::MediaPredecodeCoordinator coordinator = createCoordinator(this, dataLoader);
 
     const QUrl displayedUrl = localUrl(QStringLiteral("/media/00.png"));
     const QUrl videoUrl = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl nextUrl = localUrl(QStringLiteral("/media/02.png"));
     const QUrl laterUrl = localUrl(QStringLiteral("/media/03.png"));
-    const std::vector<KiriView::DirectMediaNavigationCandidate> candidates
+    const std::vector<kiriview::DirectMediaNavigationCandidate> candidates
         = mixedDirectMediaNavigationCandidates();
 
-    coordinator.schedule(KiriView::MediaPredecodeCoordinator::Context {
+    coordinator.schedule(kiriview::MediaPredecodeCoordinator::Context {
         displayedUrl,
         candidates,
         { displayedImage(displayedUrl) },
@@ -111,7 +111,7 @@ void TestMediaPredecodeCoordinator::videoCursorKeepsImageCacheAndLoadsAdjacentIm
     QVERIFY(dataLoader.finishOldestActiveLoadForUrl(nextUrl, QByteArrayLiteral("next")));
     QTRY_VERIFY(coordinator.findPredecodedImage(nextUrl).has_value());
 
-    coordinator.schedule(KiriView::MediaPredecodeCoordinator::Context {
+    coordinator.schedule(kiriview::MediaPredecodeCoordinator::Context {
         videoUrl,
         candidates,
         {},
@@ -128,13 +128,13 @@ void TestMediaPredecodeCoordinator::powerSaverSuppressesLoadsButRetainsDisplayed
 {
     ManualImageDataLoader dataLoader;
     ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
-    KiriView::MediaPredecodeCoordinator coordinator
+    kiriview::MediaPredecodeCoordinator coordinator
         = createCoordinator(this, dataLoader, powerSaverProviderFor(powerSaverMonitor, true));
     QVERIFY(powerSaverMonitor != nullptr);
 
     const QUrl displayedUrl = localUrl(QStringLiteral("/media/00.png"));
     const QUrl nextUrl = localUrl(QStringLiteral("/media/02.png"));
-    coordinator.schedule(KiriView::MediaPredecodeCoordinator::Context {
+    coordinator.schedule(kiriview::MediaPredecodeCoordinator::Context {
         displayedUrl,
         mixedDirectMediaNavigationCandidates(),
         { displayedImage(displayedUrl) },
@@ -155,13 +155,13 @@ void TestMediaPredecodeCoordinator::powerSaverReschedulesVideoCursorWithoutDispl
 {
     ManualImageDataLoader dataLoader;
     ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
-    KiriView::MediaPredecodeCoordinator coordinator
+    kiriview::MediaPredecodeCoordinator coordinator
         = createCoordinator(this, dataLoader, powerSaverProviderFor(powerSaverMonitor, true));
     QVERIFY(powerSaverMonitor != nullptr);
 
     const QUrl videoUrl = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl nextUrl = localUrl(QStringLiteral("/media/02.png"));
-    coordinator.schedule(KiriView::MediaPredecodeCoordinator::Context {
+    coordinator.schedule(kiriview::MediaPredecodeCoordinator::Context {
         videoUrl,
         mixedDirectMediaNavigationCandidates(),
         {},
@@ -180,16 +180,16 @@ void TestMediaPredecodeCoordinator::invalidScheduleClearsSuppressedDirectMediaNa
 {
     ManualImageDataLoader dataLoader;
     ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
-    KiriView::MediaPredecodeCoordinator coordinator
+    kiriview::MediaPredecodeCoordinator coordinator
         = createCoordinator(this, dataLoader, powerSaverProviderFor(powerSaverMonitor, true));
     QVERIFY(powerSaverMonitor != nullptr);
 
-    coordinator.schedule(KiriView::MediaPredecodeCoordinator::Context {
+    coordinator.schedule(kiriview::MediaPredecodeCoordinator::Context {
         localUrl(QStringLiteral("/media/01.mp4")),
         mixedDirectMediaNavigationCandidates(),
         {},
     });
-    coordinator.schedule(KiriView::MediaPredecodeCoordinator::Context {});
+    coordinator.schedule(kiriview::MediaPredecodeCoordinator::Context {});
 
     powerSaverMonitor->setPowerSaverEnabled(false);
 

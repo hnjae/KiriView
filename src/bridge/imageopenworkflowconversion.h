@@ -7,7 +7,7 @@
 #include "document/imageopenworkflow.h"
 #include "kiriview/src/policy/imageopenworkflow.cxx.h"
 
-namespace KiriView {
+namespace kiriview {
 namespace Bridge {
     enum class ImageDocumentSourceLoadKind {
         CurrentSource,

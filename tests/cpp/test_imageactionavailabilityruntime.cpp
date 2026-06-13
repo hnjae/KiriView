@@ -20,7 +20,7 @@ private Q_SLOTS:
 
 void TestImageActionAvailabilityRuntime::defaultProjectionStartsDisabledAndUnrevised()
 {
-    KiriView::ApplicationActions::ImageActionAvailabilityRuntime runtime;
+    kiriview::ApplicationActions::ImageActionAvailabilityRuntime runtime;
 
     QVERIFY(!runtime.imageReady());
     QVERIFY(!runtime.canUseReadyActions());
@@ -32,7 +32,7 @@ void TestImageActionAvailabilityRuntime::defaultProjectionStartsDisabledAndUnrev
 void TestImageActionAvailabilityRuntime::settersRecomputeProjectionAndNotifyOnce()
 {
     int changeCount = 0;
-    KiriView::ApplicationActions::ImageActionAvailabilityRuntime runtime(
+    kiriview::ApplicationActions::ImageActionAvailabilityRuntime runtime(
         [&changeCount]() { ++changeCount; });
 
     runtime.setImageReady(true);
@@ -48,7 +48,7 @@ void TestImageActionAvailabilityRuntime::settersRecomputeProjectionAndNotifyOnce
 void TestImageActionAvailabilityRuntime::unchangedInputsDoNotNotifyOrRevise()
 {
     int changeCount = 0;
-    KiriView::ApplicationActions::ImageActionAvailabilityRuntime runtime(
+    kiriview::ApplicationActions::ImageActionAvailabilityRuntime runtime(
         [&changeCount]() { ++changeCount; });
 
     runtime.setImageReady(false);
@@ -63,9 +63,9 @@ void TestImageActionAvailabilityRuntime::unchangedInputsDoNotNotifyOrRevise()
 
 void TestImageActionAvailabilityRuntime::shortcutScopeLookupUsesProjectionFields()
 {
-    using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+    using Scope = kiriview::ApplicationActions::ImageShortcutScope;
 
-    KiriView::ApplicationActions::ImageActionAvailabilityRuntime runtime;
+    kiriview::ApplicationActions::ImageActionAvailabilityRuntime runtime;
     runtime.setImageReady(true);
     runtime.setImagePannable(true);
     runtime.setContainerNavigationAvailable(true);
@@ -88,9 +88,9 @@ void TestImageActionAvailabilityRuntime::shortcutScopeLookupUsesProjectionFields
 
 void TestImageActionAvailabilityRuntime::mediaShortcutScopeLookupCombinesSessionAndVideoInputs()
 {
-    using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+    using Scope = kiriview::ApplicationActions::ImageShortcutScope;
 
-    KiriView::ApplicationActions::ImageActionAvailabilityRuntime runtime;
+    kiriview::ApplicationActions::ImageActionAvailabilityRuntime runtime;
     runtime.setImageReady(true);
 
     QVERIFY(runtime.mediaShortcutsEnabledForScope(

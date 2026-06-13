@@ -24,9 +24,9 @@
 #include <cstddef>
 
 namespace {
-namespace Actions = KiriView::ApplicationActions;
+namespace Actions = kiriview::ApplicationActions;
 
-using DomainActionId = KiriView::ApplicationActions::ActionId;
+using DomainActionId = kiriview::ApplicationActions::ActionId;
 
 constexpr const char *interfaceConfigGroup = "Interface";
 constexpr const char *menuPresentationConfigKey = "menuPresentation";

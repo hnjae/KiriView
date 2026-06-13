@@ -6,7 +6,7 @@
 #include "cache/imagebyteaccounting.h"
 #include "kiriview/src/policy/imagebytecost.cxx.h"
 
-namespace KiriView {
+namespace kiriview {
 qsizetype imageByteCost(const QImage &image)
 {
     if (image.isNull()) {

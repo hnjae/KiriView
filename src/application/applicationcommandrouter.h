@@ -10,7 +10,7 @@
 #include <QtGlobal>
 #include <functional>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 struct ApplicationCommandRouterInput {
     bool imagePannable = false;
     bool rightToLeftReadingActive = false;
@@ -83,7 +83,7 @@ public:
         const ApplicationCommandRouterPorts &ports, qint64 deltaMilliseconds) const;
 
 private:
-    KiriView::ImageShortcutNavigationPolicy m_navigationPolicy;
+    kiriview::ImageShortcutNavigationPolicy m_navigationPolicy;
 };
 }
 

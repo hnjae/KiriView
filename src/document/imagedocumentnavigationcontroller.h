@@ -9,7 +9,7 @@
 
 #include <functional>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentState;
 class ImageDocumentPageNavigationService;
 class ImagePageSurfaceController;

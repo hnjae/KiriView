@@ -7,7 +7,7 @@
 
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 MediaPredecodeDependencies resolveMediaPredecodeDependencies(
     MediaPredecodeDependencyOverrides overrides)
 {

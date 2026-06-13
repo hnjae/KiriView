@@ -86,7 +86,7 @@ void registerKiriViewQmlTypes()
         return;
     }
 
-    KiriView::initializeLocalization();
+    kiriview::initializeLocalization();
     qmlRegisterType<KiriViewApplication>("org.hnjae.kiriview", 1, 0, "KiriViewApplication");
     qmlRegisterType<ImageActionAvailability>("org.hnjae.kiriview", 1, 0, "ImageActionAvailability");
     qmlRegisterType<KiriDocumentSession>("org.hnjae.kiriview", 1, 0, "KiriDocumentSession");
@@ -288,7 +288,7 @@ MainWindowFixture createMainWindowFixture(const QUrl &initialSourceUrl)
     fixture.engine->addImportPath(QDir(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR))
             .absoluteFilePath(QStringLiteral("../../src/qml")));
     KLocalization::setupLocalizedContext(fixture.engine.get());
-    KiriView::registerApplicationImageProviders(*fixture.engine);
+    kiriview::registerApplicationImageProviders(*fixture.engine);
     if (!initialSourceUrl.isEmpty()) {
         QVariantMap initialProperties;
         initialProperties.insert(QStringLiteral("initialSourceUrl"), initialSourceUrl);

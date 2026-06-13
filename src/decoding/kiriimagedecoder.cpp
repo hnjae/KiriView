@@ -5,7 +5,7 @@
 
 #include "imagedecodepipeline.h"
 
-namespace KiriView {
+namespace kiriview {
 DecodedImageResult decodeImageData(const QByteArray &data)
 {
     return decodeImageData(data, ImageDecodeRequest {});

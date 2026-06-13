@@ -8,7 +8,7 @@
 
 #include <QUrl>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageDocumentSourceLoadRequest {
     QUrl sourceUrl;
     ImageDocumentPageKind sourceKind = ImageDocumentPageKind::Image;

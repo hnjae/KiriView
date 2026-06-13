@@ -13,27 +13,27 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::indexedImageUrl;
-using KiriView::TestSupport::ManualPowerSaverMonitor;
-using KiriView::TestSupport::powerSaverProviderFor;
-using KiriView::TestSupport::staticDisplayTestImagePayload;
-using KiriView::TestSupport::testImage;
+using kiriview::TestSupport::indexedImageUrl;
+using kiriview::TestSupport::ManualPowerSaverMonitor;
+using kiriview::TestSupport::powerSaverProviderFor;
+using kiriview::TestSupport::staticDisplayTestImagePayload;
+using kiriview::TestSupport::testImage;
 
 constexpr qsizetype testCacheByteBudget = 1024 * 1024;
 
-KiriView::DisplayedPredecodeImage displayedImage(const QUrl &url)
+kiriview::DisplayedPredecodeImage displayedImage(const QUrl &url)
 {
-    return KiriView::DisplayedPredecodeImage {
-        KiriView::DisplayedImageLocation::fromUrl(url),
+    return kiriview::DisplayedPredecodeImage {
+        kiriview::DisplayedImageLocation::fromUrl(url),
         true,
         staticDisplayTestImagePayload(testImage()),
     };
 }
 
-KiriView::PredecodeScheduleContext scheduleContext(const QUrl &url)
+kiriview::PredecodeScheduleContext scheduleContext(const QUrl &url)
 {
-    return KiriView::PredecodeScheduleContext {
-        KiriView::DisplayedImageLocation::fromUrl(url),
+    return kiriview::PredecodeScheduleContext {
+        kiriview::DisplayedImageLocation::fromUrl(url),
         { displayedImage(url) },
         {},
         1,
@@ -41,19 +41,19 @@ KiriView::PredecodeScheduleContext scheduleContext(const QUrl &url)
     };
 }
 
-KiriView::PowerSaverProvider noOpPowerSaverProvider()
+kiriview::PowerSaverProvider noOpPowerSaverProvider()
 {
-    return KiriView::PowerSaverProvider {
-        [](QObject *, KiriView::PowerSaverChangedCallback) {
-            return std::unique_ptr<KiriView::PowerSaverStateMonitor>();
+    return kiriview::PowerSaverProvider {
+        [](QObject *, kiriview::PowerSaverChangedCallback) {
+            return std::unique_ptr<kiriview::PowerSaverStateMonitor>();
         },
     };
 }
 
-class ManualRuntimeTimer final : public KiriView::RuntimeTimerHandle
+class ManualRuntimeTimer final : public kiriview::RuntimeTimerHandle
 {
 public:
-    ManualRuntimeTimer(int intervalMsec, KiriView::RuntimeTimerCallback callback)
+    ManualRuntimeTimer(int intervalMsec, kiriview::RuntimeTimerCallback callback)
         : m_intervalMsec(intervalMsec)
         , m_callback(std::move(callback))
     {
@@ -77,19 +77,19 @@ public:
 
 private:
     int m_intervalMsec = 0;
-    KiriView::RuntimeTimerCallback m_callback;
+    kiriview::RuntimeTimerCallback m_callback;
     bool m_active = false;
 };
 
 class ManualTimerScheduler
 {
 public:
-    KiriView::TimerScheduler scheduler()
+    kiriview::TimerScheduler scheduler()
     {
-        return KiriView::TimerScheduler {
+        return kiriview::TimerScheduler {
             [this]() { return m_currentMsec; },
-            [this](QObject *, int intervalMsec, KiriView::RuntimeTimerCallback callback)
-                -> std::unique_ptr<KiriView::RuntimeTimerHandle> {
+            [this](QObject *, int intervalMsec, kiriview::RuntimeTimerCallback callback)
+                -> std::unique_ptr<kiriview::RuntimeTimerHandle> {
                 auto timer
                     = std::make_unique<ManualRuntimeTimer>(intervalMsec, std::move(callback));
                 m_timers.push_back(timer.get());
@@ -121,14 +121,14 @@ private Q_SLOTS:
 
 void TestPredecodeScheduleRuntime::scheduleCachesDisplayedImagesAndStartsAdjacentAfterDebounce()
 {
-    KiriView::PredecodeLoadController loadController(
-        this, KiriView::ImageDecodeDependencies {}, testCacheByteBudget);
+    kiriview::PredecodeLoadController loadController(
+        this, kiriview::ImageDecodeDependencies {}, testCacheByteBudget);
     int startCount = 0;
-    std::optional<KiriView::PredecodePendingSchedule> capturedSchedule;
+    std::optional<kiriview::PredecodePendingSchedule> capturedSchedule;
     ManualTimerScheduler timerScheduler;
-    KiriView::PredecodeScheduleRuntime runtime(
+    kiriview::PredecodeScheduleRuntime runtime(
         this, loadController,
-        [&startCount, &capturedSchedule](const KiriView::PredecodePendingSchedule &schedule) {
+        [&startCount, &capturedSchedule](const kiriview::PredecodePendingSchedule &schedule) {
             ++startCount;
             capturedSchedule = schedule;
         },
@@ -152,14 +152,14 @@ void TestPredecodeScheduleRuntime::scheduleCachesDisplayedImagesAndStartsAdjacen
 
 void TestPredecodeScheduleRuntime::manualTimerSchedulerFiresDebouncedPredecode()
 {
-    KiriView::PredecodeLoadController loadController(
-        this, KiriView::ImageDecodeDependencies {}, testCacheByteBudget);
+    kiriview::PredecodeLoadController loadController(
+        this, kiriview::ImageDecodeDependencies {}, testCacheByteBudget);
     ManualTimerScheduler timerScheduler;
     int startCount = 0;
-    std::optional<KiriView::PredecodePendingSchedule> capturedSchedule;
-    KiriView::PredecodeScheduleRuntime runtime(
+    std::optional<kiriview::PredecodePendingSchedule> capturedSchedule;
+    kiriview::PredecodeScheduleRuntime runtime(
         this, loadController,
-        [&startCount, &capturedSchedule](const KiriView::PredecodePendingSchedule &schedule) {
+        [&startCount, &capturedSchedule](const kiriview::PredecodePendingSchedule &schedule) {
             ++startCount;
             capturedSchedule = schedule;
         },
@@ -170,7 +170,7 @@ void TestPredecodeScheduleRuntime::manualTimerSchedulerFiresDebouncedPredecode()
     runtime.schedule(scheduleContext(displayedUrl));
 
     QCOMPARE(timerScheduler.timerCount(), std::size_t(2));
-    QCOMPARE(timerScheduler.timerAt(0).intervalMsec(), KiriView::predecodeDebounceMsec());
+    QCOMPARE(timerScheduler.timerAt(0).intervalMsec(), kiriview::predecodeDebounceMsec());
     QVERIFY(timerScheduler.timerAt(0).active());
     QCOMPARE(startCount, 0);
 
@@ -183,11 +183,11 @@ void TestPredecodeScheduleRuntime::manualTimerSchedulerFiresDebouncedPredecode()
 
 void TestPredecodeScheduleRuntime::invalidScheduleCancelsDomainBackgroundWork()
 {
-    KiriView::PredecodeLoadController loadController(
-        this, KiriView::ImageDecodeDependencies {}, testCacheByteBudget);
+    kiriview::PredecodeLoadController loadController(
+        this, kiriview::ImageDecodeDependencies {}, testCacheByteBudget);
     int cancelCount = 0;
-    KiriView::PredecodeScheduleRuntime runtime(
-        this, loadController, [](const KiriView::PredecodePendingSchedule &) {},
+    kiriview::PredecodeScheduleRuntime runtime(
+        this, loadController, [](const kiriview::PredecodePendingSchedule &) {},
         [&cancelCount]() { ++cancelCount; }, noOpPowerSaverProvider());
 
     runtime.schedule({});
@@ -197,15 +197,15 @@ void TestPredecodeScheduleRuntime::invalidScheduleCancelsDomainBackgroundWork()
 
 void TestPredecodeScheduleRuntime::powerSaverSuppressesAndReschedulesPendingPredecode()
 {
-    KiriView::PredecodeLoadController loadController(
-        this, KiriView::ImageDecodeDependencies {}, testCacheByteBudget);
+    kiriview::PredecodeLoadController loadController(
+        this, kiriview::ImageDecodeDependencies {}, testCacheByteBudget);
     ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
     ManualTimerScheduler timerScheduler;
     int startCount = 0;
-    std::optional<KiriView::PredecodePendingSchedule> capturedSchedule;
-    KiriView::PredecodeScheduleRuntime runtime(
+    std::optional<kiriview::PredecodePendingSchedule> capturedSchedule;
+    kiriview::PredecodeScheduleRuntime runtime(
         this, loadController,
-        [&startCount, &capturedSchedule](const KiriView::PredecodePendingSchedule &schedule) {
+        [&startCount, &capturedSchedule](const kiriview::PredecodePendingSchedule &schedule) {
             ++startCount;
             capturedSchedule = schedule;
         },

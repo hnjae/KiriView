@@ -11,17 +11,17 @@
 
 namespace {
 bool sameImageDocumentPageCandidateListSourcePayload(
-    const KiriView::ImageDocumentPageCandidateListSource::Directory &left,
-    const KiriView::ImageDocumentPageCandidateListSource::Directory &right)
+    const kiriview::ImageDocumentPageCandidateListSource::Directory &left,
+    const kiriview::ImageDocumentPageCandidateListSource::Directory &right)
 {
-    return KiriView::sameNormalizedUrl(left.directoryUrl, right.directoryUrl);
+    return kiriview::sameNormalizedUrl(left.directoryUrl, right.directoryUrl);
 }
 
 bool sameImageDocumentPageCandidateListSourcePayload(
-    const KiriView::ImageDocumentPageCandidateListSource::OpenedCollectionScope &left,
-    const KiriView::ImageDocumentPageCandidateListSource::OpenedCollectionScope &right)
+    const kiriview::ImageDocumentPageCandidateListSource::OpenedCollectionScope &left,
+    const kiriview::ImageDocumentPageCandidateListSource::OpenedCollectionScope &right)
 {
-    return KiriView::sameOpenedCollectionScopeLocation(
+    return kiriview::sameOpenedCollectionScopeLocation(
         left.openedCollectionScope, right.openedCollectionScope);
 }
 
@@ -32,7 +32,7 @@ bool sameImageDocumentPageCandidateListSourcePayload(const Left &, const Right &
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageDocumentPageCandidateListSource ImageDocumentPageCandidateListSource::forDirectory(
     QUrl directoryUrl)
 {

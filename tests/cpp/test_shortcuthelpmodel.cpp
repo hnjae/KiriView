@@ -23,10 +23,10 @@ constexpr int categoryLastRole = Qt::UserRole + 8;
 constexpr int shortcutKeyTextsRole = Qt::UserRole + 9;
 constexpr int scopeTextRole = Qt::UserRole + 10;
 
-KiriView::ApplicationActions::ShortcutHelpRow row(
+kiriview::ApplicationActions::ShortcutHelpRow row(
     int actionId, const QString &actionName, const QString &actionText, const QString &shortcutText)
 {
-    return KiriView::ApplicationActions::ShortcutHelpRow {
+    return kiriview::ApplicationActions::ShortcutHelpRow {
         actionId,
         actionName,
         actionText,
@@ -53,11 +53,11 @@ private Q_SLOTS:
 
 void TestShortcutHelpModel::rowsComeFromRuntimeProvider()
 {
-    const QList<KiriView::ApplicationActions::ShortcutHelpRow> rows {
+    const QList<kiriview::ApplicationActions::ShortcutHelpRow> rows {
         row(14, QStringLiteral("view_rotate_clockwise"), QStringLiteral("Rotate Clockwise"),
             QStringLiteral("Ctrl+R")),
     };
-    KiriView::ApplicationActions::ShortcutHelpModel model([&rows]() { return rows; });
+    kiriview::ApplicationActions::ShortcutHelpModel model([&rows]() { return rows; });
 
     QCOMPARE(model.rowCount(), 1);
     const QModelIndex index = model.index(0, 0);
@@ -76,12 +76,12 @@ void TestShortcutHelpModel::rowsComeFromRuntimeProvider()
 
 void TestShortcutHelpModel::changedRowDataUpdatesOnlyMatchingRow()
 {
-    QList<KiriView::ApplicationActions::ShortcutHelpRow> rows {
+    QList<kiriview::ApplicationActions::ShortcutHelpRow> rows {
         row(0, QStringLiteral("file_open"), QStringLiteral("Open"), QStringLiteral("Ctrl+O")),
         row(14, QStringLiteral("view_rotate_clockwise"), QStringLiteral("Rotate Clockwise"),
             QStringLiteral("Ctrl+R")),
     };
-    KiriView::ApplicationActions::ShortcutHelpModel model([&rows]() { return rows; });
+    kiriview::ApplicationActions::ShortcutHelpModel model([&rows]() { return rows; });
     QSignalSpy dataChangedSpy(&model, &QAbstractItemModel::dataChanged);
 
     rows[1].shortcutText = QStringLiteral("Alt+R");
@@ -96,10 +96,10 @@ void TestShortcutHelpModel::changedRowDataUpdatesOnlyMatchingRow()
 
 void TestShortcutHelpModel::changedRowIdentityResetsModel()
 {
-    QList<KiriView::ApplicationActions::ShortcutHelpRow> rows {
+    QList<kiriview::ApplicationActions::ShortcutHelpRow> rows {
         row(0, QStringLiteral("file_open"), QStringLiteral("Open"), QStringLiteral("Ctrl+O")),
     };
-    KiriView::ApplicationActions::ShortcutHelpModel model([&rows]() { return rows; });
+    kiriview::ApplicationActions::ShortcutHelpModel model([&rows]() { return rows; });
     QSignalSpy resetSpy(&model, &QAbstractItemModel::modelReset);
 
     rows.clear();

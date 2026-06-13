@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 PredecodeActiveDecodeStore::~PredecodeActiveDecodeStore() { cancel(); }
 
 bool PredecodeActiveDecodeStore::add(ImageDecodeRequest request, ImageDecodeJob *decodeJob)

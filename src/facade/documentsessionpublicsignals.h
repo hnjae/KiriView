@@ -9,7 +9,7 @@
 #include <functional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 enum class DocumentSessionPublicSignal {
     PublicProjectionRevision,
     SourceUrl,

@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 class KiriViewApplicationActionHost;
 class ApplicationActionRuntime;
 class ApplicationShortcutRuntime;
@@ -99,14 +99,14 @@ public:
     QAbstractListModel *shortcutHelpModel() const;
     QAbstractListModel *shortcutRouteModel() const;
 
-    static KiriView::ApplicationActions::MenuPresentation domainMenuPresentation(
+    static kiriview::ApplicationActions::MenuPresentation domainMenuPresentation(
         KiriViewApplication::MenuPresentation presentation);
     static KiriViewApplication::MenuPresentation facadeMenuPresentation(
-        KiriView::ApplicationActions::MenuPresentation presentation);
-    static KiriView::ApplicationActions::ActionId domainActionId(
+        kiriview::ApplicationActions::MenuPresentation presentation);
+    static kiriview::ApplicationActions::ActionId domainActionId(
         KiriViewApplication::ActionId actionId);
     static KiriViewApplication::ActionId facadeActionId(
-        KiriView::ApplicationActions::ActionId actionId);
+        kiriview::ApplicationActions::ActionId actionId);
 
     Q_INVOKABLE QAction *action(const QString &actionName);
     Q_INVOKABLE QAction *actionForId(KiriViewApplication::ActionId actionId);
@@ -162,7 +162,7 @@ protected:
     void setupActions() override;
 
 private:
-    friend class KiriView::ApplicationActions::KiriViewApplicationActionHost;
+    friend class kiriview::ApplicationActions::KiriViewApplicationActionHost;
 
     struct ActionUiGateSnapshot {
         bool helpDialogOpen = false;
@@ -185,10 +185,10 @@ private:
     bool videoMode() const;
     bool sharedImagePannable() const;
     ImageActionAvailabilityInput imageActionAvailabilityInput() const;
-    KiriView::ApplicationActions::ApplicationActionStateInput actionStateInput() const;
-    KiriView::ApplicationActions::ApplicationCommandRouterInput commandRouterInput() const;
-    KiriView::ApplicationActions::ApplicationCommandRouterPorts commandRouterPorts();
-    void handleRuntimeActionTriggered(KiriView::ApplicationActions::ActionId actionId);
+    kiriview::ApplicationActions::ApplicationActionStateInput actionStateInput() const;
+    kiriview::ApplicationActions::ApplicationCommandRouterInput commandRouterInput() const;
+    kiriview::ApplicationActions::ApplicationCommandRouterPorts commandRouterPorts();
+    void handleRuntimeActionTriggered(kiriview::ApplicationActions::ActionId actionId);
     void moveDisplayedFileToTrash();
     void deleteDisplayedFilePermanently();
     void requestImageFitMode();
@@ -206,13 +206,13 @@ private:
     bool executeVerticalPanShortcut(bool up);
     bool executeVideoSeekShortcut(qint64 deltaMilliseconds);
 
-    std::unique_ptr<KiriView::ApplicationActions::KiriViewApplicationActionHost> m_actionHost;
-    std::unique_ptr<KiriView::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;
+    std::unique_ptr<kiriview::ApplicationActions::KiriViewApplicationActionHost> m_actionHost;
+    std::unique_ptr<kiriview::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;
     QPointer<KiriDocumentSession> m_documentSession;
     std::vector<QMetaObject::Connection> m_actionStateConnections;
-    KiriView::ApplicationActions::ApplicationCommandRouter m_commandRouter;
+    kiriview::ApplicationActions::ApplicationCommandRouter m_commandRouter;
     ImageActionAvailabilityProjection m_imageActionProjection;
-    KiriView::ApplicationActions::ApplicationActionStateInput m_actionStateInput;
+    kiriview::ApplicationActions::ApplicationActionStateInput m_actionStateInput;
     quint64 m_actionUiGateRevision = 0;
     bool m_helpDialogOpen = false;
     bool m_textInputFocused = false;

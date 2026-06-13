@@ -16,7 +16,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct PredecodeLoadWindow {
     QUrl primaryDisplayedUrl;
     OpenedCollectionScopeLocation openedCollectionScope;

@@ -11,7 +11,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct MediaPredecodeEligibleImage {
     QUrl url;
     std::size_t mediaIndex = 0;

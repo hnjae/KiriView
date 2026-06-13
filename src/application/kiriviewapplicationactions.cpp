@@ -4,10 +4,10 @@
 #include "kiriviewapplicationactions.h"
 
 namespace {
-namespace Actions = KiriView::ApplicationActions;
-using ActivationScope = KiriView::ApplicationActions::ApplicationShortcutActivationScope;
-using Category = KiriView::ApplicationActions::ShortcutHelpCategory;
-using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+namespace Actions = kiriview::ApplicationActions;
+using ActivationScope = kiriview::ApplicationActions::ApplicationShortcutActivationScope;
+using Category = kiriview::ApplicationActions::ShortcutHelpCategory;
+using Scope = kiriview::ApplicationActions::ImageShortcutScope;
 
 struct ShortcutHelpCategoryDefinition {
     Category category;
@@ -335,7 +335,7 @@ const ShortcutHelpCategoryDefinition &shortcutHelpCategoryDefinition(Category ca
 }
 }
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 const std::array<ActionDefinition, actionDefinitionCount> &definitions()
 {
     return actionDefinitions;

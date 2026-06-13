@@ -88,7 +88,7 @@ void registerKiriViewQmlTypes()
         return;
     }
 
-    KiriView::initializeLocalization();
+    kiriview::initializeLocalization();
     qmlRegisterType<KiriDocumentSession>("org.hnjae.kiriview", 1, 0, "KiriDocumentSession");
     registered = true;
 }

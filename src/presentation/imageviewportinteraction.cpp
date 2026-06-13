@@ -6,13 +6,13 @@
 #include "presentation/imageviewportgeometry.h"
 
 namespace {
-QRectF viewportImageRect(const KiriView::ImageViewportInteractionSnapshot &snapshot)
+QRectF viewportImageRect(const kiriview::ImageViewportInteractionSnapshot &snapshot)
 {
-    return KiriView::imageViewportImageRect(snapshot.viewportSize, snapshot.displaySize);
+    return kiriview::imageViewportImageRect(snapshot.viewportSize, snapshot.displaySize);
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 QPointF ImageViewportInteraction::panContentPosition(
     const ImageViewportInteractionSnapshot &snapshot, const QPointF &contentPosition,
     const QPointF &delta) const

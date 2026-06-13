@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_POWERPROFILEMONITORSTATE_H
 #define KIRIVIEW_POWERPROFILEMONITORSTATE_H
 
-namespace KiriView {
+namespace kiriview {
 enum class PowerProfileMonitorEventKind {
     Ignore,
     PowerSaverValue,

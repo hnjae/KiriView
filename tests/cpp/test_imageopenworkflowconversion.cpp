@@ -17,17 +17,17 @@ private Q_SLOTS:
 
 void TestImageOpenWorkflowConversion::sourceLoadPolicyInputMapsPlainFields()
 {
-    KiriView::Bridge::ImageDocumentSourceLoadPolicyInput input;
-    input.loadKind = KiriView::Bridge::ImageDocumentSourceLoadKind::ReplacementSource;
+    kiriview::Bridge::ImageDocumentSourceLoadPolicyInput input;
+    input.loadKind = kiriview::Bridge::ImageDocumentSourceLoadKind::ReplacementSource;
     input.preserveTwoPageSpreadTransition = true;
     input.rightToLeftReadingEnabled = true;
     input.sourceWithinDisplayedComicBookArchive = true;
     input.hasRequestedContainerNavigationUrl = true;
 
-    const KiriView::RustImageDocumentSourceLoadPolicyInput converted
-        = KiriView::rustImageDocumentSourceLoadPolicyInput(input);
+    const kiriview::RustImageDocumentSourceLoadPolicyInput converted
+        = kiriview::rustImageDocumentSourceLoadPolicyInput(input);
 
-    QCOMPARE(converted.load_kind, KiriView::RustImageDocumentSourceLoadKind::ReplacementSource);
+    QCOMPARE(converted.load_kind, kiriview::RustImageDocumentSourceLoadKind::ReplacementSource);
     QVERIFY(converted.preserve_two_page_spread_transition);
     QVERIFY(converted.right_to_left_reading_enabled);
     QVERIFY(converted.source_within_displayed_comic_book_archive);
@@ -36,10 +36,10 @@ void TestImageOpenWorkflowConversion::sourceLoadPolicyInputMapsPlainFields()
 
 void TestImageOpenWorkflowConversion::sourceLoadPlanMapsBridgeOperationsToDomainEffects()
 {
-    using Effect = KiriView::ImageDocumentSourceLoadEffect;
-    using RustOperation = KiriView::RustImageDocumentSourceLoadOperation;
+    using Effect = kiriview::ImageDocumentSourceLoadEffect;
+    using RustOperation = kiriview::RustImageDocumentSourceLoadOperation;
 
-    KiriView::RustImageDocumentSourceLoadPlan rustPlan {};
+    kiriview::RustImageDocumentSourceLoadPlan rustPlan {};
     rustPlan.operations.push_back(RustOperation::CancelFileDeletion);
     rustPlan.operations.push_back(RustOperation::CancelAllNavigation);
     rustPlan.operations.push_back(RustOperation::CancelPredecode);
@@ -54,10 +54,10 @@ void TestImageOpenWorkflowConversion::sourceLoadPlanMapsBridgeOperationsToDomain
     rustPlan.operations.push_back(RustOperation::SetSourceUrlToRequested);
     rustPlan.operations.push_back(RustOperation::BeginOpen);
 
-    const KiriView::ImageDocumentSourceLoadPlan plan
-        = KiriView::imageDocumentSourceLoadPlanFromBridge(rustPlan);
+    const kiriview::ImageDocumentSourceLoadPlan plan
+        = kiriview::imageDocumentSourceLoadPlanFromBridge(rustPlan);
 
-    const KiriView::ImageDocumentSourceLoadPlan expected {
+    const kiriview::ImageDocumentSourceLoadPlan expected {
         Effect::CancelFileDeletion,
         Effect::CancelAllNavigation,
         Effect::CancelPredecode,

@@ -55,7 +55,7 @@ void registerKiriViewQmlTypes()
         return;
     }
 
-    KiriView::initializeLocalization();
+    kiriview::initializeLocalization();
     qmlRegisterType<KiriImageDocument>("org.hnjae.kiriview", 1, 0, "KiriImageDocument");
     registered = true;
 }

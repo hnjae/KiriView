@@ -8,7 +8,7 @@
 #include <QRectF>
 #include <QSizeF>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageViewportFrame {
     QRectF imageRect;
     QSizeF contentSize;

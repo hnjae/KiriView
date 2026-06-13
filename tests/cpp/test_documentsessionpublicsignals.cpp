@@ -19,8 +19,8 @@ private Q_SLOTS:
 };
 
 namespace {
-void comparePublicSignals(const std::vector<KiriView::DocumentSessionPublicSignal> &actual,
-    const std::vector<KiriView::DocumentSessionPublicSignal> &expected)
+void comparePublicSignals(const std::vector<kiriview::DocumentSessionPublicSignal> &actual,
+    const std::vector<kiriview::DocumentSessionPublicSignal> &expected)
 {
     QCOMPARE(actual.size(), expected.size());
     for (std::size_t index = 0; index < expected.size(); ++index) {
@@ -28,9 +28,9 @@ void comparePublicSignals(const std::vector<KiriView::DocumentSessionPublicSigna
     }
 }
 
-KiriView::DocumentSessionPublicSignalOperations recordingOperations(QStringList &events)
+kiriview::DocumentSessionPublicSignalOperations recordingOperations(QStringList &events)
 {
-    KiriView::DocumentSessionPublicSignalOperations operations;
+    kiriview::DocumentSessionPublicSignalOperations operations;
     operations.sourceUrlChanged = [&events]() { events.append(QStringLiteral("sourceUrl")); };
     operations.publicProjectionRevisionChanged
         = [&events]() { events.append(QStringLiteral("publicProjectionRevision")); };
@@ -60,46 +60,46 @@ KiriView::DocumentSessionPublicSignalOperations recordingOperations(QStringList 
 
 void TestDocumentSessionPublicSignals::publicSignalPlansReturnSignalsInEmissionOrder()
 {
-    using Change = KiriView::DocumentSessionChange;
-    using Signal = KiriView::DocumentSessionPublicSignal;
+    using Change = kiriview::DocumentSessionChange;
+    using Signal = kiriview::DocumentSessionPublicSignal;
 
-    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::PublicProjectionRevision),
+    comparePublicSignals(kiriview::documentSessionPublicSignals(Change::PublicProjectionRevision),
         { Signal::PublicProjectionRevision });
     comparePublicSignals(
-        KiriView::documentSessionPublicSignals(Change::SourceUrl), { Signal::SourceUrl });
+        kiriview::documentSessionPublicSignals(Change::SourceUrl), { Signal::SourceUrl });
     comparePublicSignals(
-        KiriView::documentSessionPublicSignals(Change::DocumentKind), { Signal::DocumentKind });
+        kiriview::documentSessionPublicSignals(Change::DocumentKind), { Signal::DocumentKind });
     comparePublicSignals(
-        KiriView::documentSessionPublicSignals(Change::ErrorString), { Signal::ErrorString });
-    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::WindowTitleSubject),
+        kiriview::documentSessionPublicSignals(Change::ErrorString), { Signal::ErrorString });
+    comparePublicSignals(kiriview::documentSessionPublicSignals(Change::WindowTitleSubject),
         { Signal::WindowTitleSubject });
-    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::ActiveZoomReadout),
+    comparePublicSignals(kiriview::documentSessionPublicSignals(Change::ActiveZoomReadout),
         { Signal::ActiveZoomReadout });
-    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::ActiveMediaReadiness),
+    comparePublicSignals(kiriview::documentSessionPublicSignals(Change::ActiveMediaReadiness),
         { Signal::ActiveMediaReadiness });
-    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::OpenWithAvailability),
+    comparePublicSignals(kiriview::documentSessionPublicSignals(Change::OpenWithAvailability),
         { Signal::DisplayedMediaOpenWithAvailability });
-    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::FileDeletionAvailability),
+    comparePublicSignals(kiriview::documentSessionPublicSignals(Change::FileDeletionAvailability),
         { Signal::DisplayedFileDeletionAvailability });
-    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::FileDeletionInProgress),
+    comparePublicSignals(kiriview::documentSessionPublicSignals(Change::FileDeletionInProgress),
         { Signal::FileDeletionInProgress });
-    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::ActiveNavigation),
+    comparePublicSignals(kiriview::documentSessionPublicSignals(Change::ActiveNavigation),
         { Signal::ActiveNavigation });
     comparePublicSignals(
-        KiriView::documentSessionPublicSignals(Change::ActiveNavigationRevealIntent),
+        kiriview::documentSessionPublicSignals(Change::ActiveNavigationRevealIntent),
         { Signal::ActiveNavigationRevealIntent });
     comparePublicSignals(
-        KiriView::documentSessionPublicSignals(Change::ActiveNavigationRevealDirection),
+        kiriview::documentSessionPublicSignals(Change::ActiveNavigationRevealDirection),
         { Signal::ActiveNavigationRevealDirection });
 }
 
 void TestDocumentSessionPublicSignals::publicSignalBatchPlansDeduplicateSignalsInEmissionOrder()
 {
-    using Change = KiriView::DocumentSessionChange;
-    using Signal = KiriView::DocumentSessionPublicSignal;
+    using Change = kiriview::DocumentSessionChange;
+    using Signal = kiriview::DocumentSessionPublicSignal;
 
     comparePublicSignals(
-        KiriView::documentSessionPublicSignalsForChanges({ Change::DocumentKind,
+        kiriview::documentSessionPublicSignalsForChanges({ Change::DocumentKind,
             Change::ErrorString, Change::DocumentKind, Change::PublicProjectionRevision,
             Change::ActiveNavigation, Change::ActiveNavigationRevealIntent,
             Change::ActiveNavigationRevealDirection, Change::ActiveNavigationRevealDirection }),
@@ -111,15 +111,15 @@ void TestDocumentSessionPublicSignals::publicSignalBatchPlansDeduplicateSignalsI
 void TestDocumentSessionPublicSignals::emitterDispatchesChangeSignalsInProjectionOrder()
 {
     QStringList events;
-    const KiriView::DocumentSessionPublicSignalEmitter emitter(recordingOperations(events));
+    const kiriview::DocumentSessionPublicSignalEmitter emitter(recordingOperations(events));
 
-    emitter.emitChanges({ KiriView::DocumentSessionChange::PublicProjectionRevision,
-        KiriView::DocumentSessionChange::OpenWithAvailability,
-        KiriView::DocumentSessionChange::FileDeletionAvailability,
-        KiriView::DocumentSessionChange::FileDeletionInProgress,
-        KiriView::DocumentSessionChange::ActiveNavigationRevealIntent,
-        KiriView::DocumentSessionChange::ActiveNavigationRevealDirection });
-    emitter.emitSignal(KiriView::DocumentSessionPublicSignal::SourceUrl);
+    emitter.emitChanges({ kiriview::DocumentSessionChange::PublicProjectionRevision,
+        kiriview::DocumentSessionChange::OpenWithAvailability,
+        kiriview::DocumentSessionChange::FileDeletionAvailability,
+        kiriview::DocumentSessionChange::FileDeletionInProgress,
+        kiriview::DocumentSessionChange::ActiveNavigationRevealIntent,
+        kiriview::DocumentSessionChange::ActiveNavigationRevealDirection });
+    emitter.emitSignal(kiriview::DocumentSessionPublicSignal::SourceUrl);
 
     QCOMPARE(events,
         QStringList({

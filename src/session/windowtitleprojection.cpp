@@ -15,7 +15,7 @@ QString mediaSizeStatus(const QSize &size)
     return QStringLiteral("%1×%2").arg(size.width()).arg(size.height());
 }
 
-QString navigationStatus(const KiriView::ActiveNavigationSnapshot &snapshot)
+QString navigationStatus(const kiriview::ActiveNavigationSnapshot &snapshot)
 {
     if (!snapshot.known || snapshot.currentNumber < 1 || snapshot.count < 1
         || snapshot.currentNumber > snapshot.count) {
@@ -26,7 +26,7 @@ QString navigationStatus(const KiriView::ActiveNavigationSnapshot &snapshot)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 QString projectWindowTitleSubject(WindowTitleSubjectInput input)
 {
     if (input.baseName.isEmpty()) {

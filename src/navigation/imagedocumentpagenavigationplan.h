@@ -12,7 +12,7 @@
 #include <variant>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 using ContainerNavigationError = ImageContainerOpenError;
 
 struct OpenImageDocumentPageUrlEffect {

@@ -71,7 +71,7 @@ void registerKiriViewQmlTypes()
         return;
     }
 
-    KiriView::initializeLocalization();
+    kiriview::initializeLocalization();
     qmlRegisterType<KiriViewApplication>("org.hnjae.kiriview", 1, 0, "KiriViewApplication");
     qmlRegisterType<KiriDocumentSession>("org.hnjae.kiriview", 1, 0, "KiriDocumentSession");
     qmlRegisterType<KiriImageDocument>("org.hnjae.kiriview", 1, 0, "KiriImageDocument");
@@ -271,7 +271,7 @@ bool invoke(QObject &object, const char *method)
 void TestImageActions::initTestCase()
 {
     QStandardPaths::setTestModeEnabled(true);
-    KiriView::initializeLocalization();
+    kiriview::initializeLocalization();
 }
 
 void TestImageActions::previousNextAvailabilityFollowsSessionActiveNavigation()

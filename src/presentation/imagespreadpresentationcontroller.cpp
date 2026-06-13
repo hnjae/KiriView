@@ -15,26 +15,26 @@
 #include <utility>
 
 namespace {
-bool hasSpreadZoomStateChange(const KiriView::ImageZoomChangeSet &changes)
+bool hasSpreadZoomStateChange(const kiriview::ImageZoomChangeSet &changes)
 {
     return changes.imageSizeChanged || changes.viewportSizeChanged || changes.zoomModeChanged
         || changes.zoomPercentChanged || changes.displaySizeChanged
         || changes.maximumManualZoomPercentChanged || changes.displayProjectionUpdateNeeded;
 }
 
-KiriView::ImagePresentationScopeKey presentationScopeKeyForLocation(
-    const KiriView::DisplayedImageLocation &location)
+kiriview::ImagePresentationScopeKey presentationScopeKeyForLocation(
+    const kiriview::DisplayedImageLocation &location)
 {
-    const QUrl openedCollectionScopeUrl = KiriView::zoomScopeUrlForLocation(location);
+    const QUrl openedCollectionScopeUrl = kiriview::zoomScopeUrlForLocation(location);
     if (!openedCollectionScopeUrl.isEmpty()) {
-        return KiriView::ImagePresentationScopeKey::openedCollection(openedCollectionScopeUrl);
+        return kiriview::ImagePresentationScopeKey::openedCollection(openedCollectionScopeUrl);
     }
 
-    return KiriView::ImagePresentationScopeKey::directImage(location.imageUrl());
+    return kiriview::ImagePresentationScopeKey::directImage(location.imageUrl());
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageSpreadPresentationController::ImageSpreadPresentationController(QObject *parent,
     RenderContextProvider renderContextProvider, ImageDocumentState &state,
     ImagePageSurfaceController &primaryPageSurface, ImagePresentationRuntime &presentationRuntime,

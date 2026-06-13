@@ -11,7 +11,7 @@
 #include <cmath>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 VideoOutputRenderContextObserver::VideoOutputRenderContextObserver(
     QObject *parent, std::function<void()> renderContextChanged)
     : QObject(parent)

@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_APPLICATIONDIAGNOSTICS_H
 #define KIRIVIEW_APPLICATIONDIAGNOSTICS_H
 
-namespace KiriView {
+namespace kiriview {
 void configureApplicationDiagnosticLogging(bool verbose);
 }
 

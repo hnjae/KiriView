@@ -31,36 +31,36 @@ private Q_SLOTS:
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
-KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
 struct ManualDirectMediaNavigationCandidateLoad {
     QObject *object = nullptr;
     QUrl parentUrl;
-    KiriView::DirectMediaNavigationCandidatesCallback callback;
-    KiriView::ErrorCallback errorCallback;
-    KiriView::ImageIoJobCompletion completion;
+    kiriview::DirectMediaNavigationCandidatesCallback callback;
+    kiriview::ErrorCallback errorCallback;
+    kiriview::ImageIoJobCompletion completion;
     bool canceled = false;
 };
 
 class ManualDirectMediaNavigationCandidateProvider
 {
 public:
-    KiriView::DirectMediaNavigationCandidateProvider provider()
+    kiriview::DirectMediaNavigationCandidateProvider provider()
     {
-        return KiriView::DirectMediaNavigationCandidateProvider {
+        return kiriview::DirectMediaNavigationCandidateProvider {
             [this](QObject *receiver, QUrl parentUrl,
-                KiriView::DirectMediaNavigationCandidatesCallback callback,
-                KiriView::ErrorCallback errorCallback) {
+                kiriview::DirectMediaNavigationCandidatesCallback callback,
+                kiriview::ErrorCallback errorCallback) {
                 auto load = std::make_shared<ManualDirectMediaNavigationCandidateLoad>();
                 load->parentUrl = std::move(parentUrl);
                 load->callback = std::move(callback);
                 load->errorCallback = std::move(errorCallback);
 
-                KiriView::ImageIoJob job
-                    = KiriView::TestSupport::Detail::startManualIoJob(receiver, load);
+                kiriview::ImageIoJob job
+                    = kiriview::TestSupport::Detail::startManualIoJob(receiver, load);
                 m_loads.push_back(load);
                 return job;
             },
@@ -75,7 +75,7 @@ public:
     }
 
     void deliverIgnoringCancellation(
-        std::size_t index, std::vector<KiriView::DirectMediaNavigationCandidate> candidates)
+        std::size_t index, std::vector<kiriview::DirectMediaNavigationCandidate> candidates)
     {
         ManualDirectMediaNavigationCandidateLoad &load = loadAt(index);
         if (load.callback) {
@@ -98,25 +98,25 @@ private:
 struct RuntimeFixture {
     QObject receiver;
     ManualDirectMediaNavigationCandidateProvider provider;
-    KiriView::DocumentSessionDirectMediaNavigationRuntime runtime { provider.provider() };
+    kiriview::DocumentSessionDirectMediaNavigationRuntime runtime { provider.provider() };
     int completionCount = 0;
-    KiriView::DocumentSessionDirectMediaNavigationCandidatesResult result;
+    kiriview::DocumentSessionDirectMediaNavigationCandidatesResult result;
     bool acceptScope = true;
 
-    void load(const KiriView::DirectMediaScope &scope)
+    void load(const kiriview::DirectMediaScope &scope)
     {
         runtime.loadCandidates(
-            &receiver, scope, [this](const KiriView::DirectMediaScope &) { return acceptScope; },
-            [this](KiriView::DocumentSessionDirectMediaNavigationCandidatesResult loadResult) {
+            &receiver, scope, [this](const kiriview::DirectMediaScope &) { return acceptScope; },
+            [this](kiriview::DocumentSessionDirectMediaNavigationCandidatesResult loadResult) {
                 ++completionCount;
                 result = std::move(loadResult);
             });
     }
 };
 
-KiriView::DirectMediaScope directMediaScope(const QUrl &currentUrl)
+kiriview::DirectMediaScope directMediaScope(const QUrl &currentUrl)
 {
-    return KiriView::DirectMediaScope {
+    return kiriview::DirectMediaScope {
         currentUrl,
         localUrl(QStringLiteral("/media/")),
         7,
@@ -128,7 +128,7 @@ void TestDocumentSessionDirectMediaNavigationRuntime::invalidScopeCompletesWitho
 {
     RuntimeFixture fixture;
 
-    fixture.load(KiriView::DirectMediaScope {});
+    fixture.load(kiriview::DirectMediaScope {});
 
     QCOMPARE(fixture.provider.loadCount(), std::size_t(0));
     QCOMPARE(fixture.completionCount, 1);
@@ -158,13 +158,13 @@ void TestDocumentSessionDirectMediaNavigationRuntime::refreshPublishesBoundaryPl
     const QUrl previousUrl = localUrl(QStringLiteral("/media/00.mp4"));
     const QUrl currentUrl = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl nextUrl = localUrl(QStringLiteral("/media/02.png"));
-    KiriView::DocumentSessionDirectMediaNavigationRefreshResult result;
+    kiriview::DocumentSessionDirectMediaNavigationRefreshResult result;
 
     fixture.runtime.refresh(
         &fixture.receiver, directMediaScope(currentUrl),
-        [](const KiriView::DirectMediaScope &) { return true; },
+        [](const kiriview::DirectMediaScope &) { return true; },
         [&fixture, &result](
-            KiriView::DocumentSessionDirectMediaNavigationRefreshResult loadResult) {
+            kiriview::DocumentSessionDirectMediaNavigationRefreshResult loadResult) {
             ++fixture.completionCount;
             result = std::move(loadResult);
         });
@@ -186,13 +186,13 @@ void TestDocumentSessionDirectMediaNavigationRuntime::openPublishesTargetPlanAnd
     RuntimeFixture fixture;
     const QUrl currentUrl = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl nextUrl = localUrl(QStringLiteral("/media/02.png"));
-    KiriView::DocumentSessionDirectMediaNavigationOpenResult result;
+    kiriview::DocumentSessionDirectMediaNavigationOpenResult result;
 
     fixture.runtime.open(
         &fixture.receiver, directMediaScope(currentUrl),
-        KiriView::nextDirectMediaNavigationOpenRequest(),
-        [](const KiriView::DirectMediaScope &) { return true; },
-        [&fixture, &result](KiriView::DocumentSessionDirectMediaNavigationOpenResult loadResult) {
+        kiriview::nextDirectMediaNavigationOpenRequest(),
+        [](const kiriview::DirectMediaScope &) { return true; },
+        [&fixture, &result](kiriview::DocumentSessionDirectMediaNavigationOpenResult loadResult) {
             ++fixture.completionCount;
             result = std::move(loadResult);
         });
@@ -212,13 +212,13 @@ void TestDocumentSessionDirectMediaNavigationRuntime::failedOpenPublishesUnknown
 {
     RuntimeFixture fixture;
     const QUrl currentUrl = localUrl(QStringLiteral("/media/01.mp4"));
-    KiriView::DocumentSessionDirectMediaNavigationOpenResult result;
+    kiriview::DocumentSessionDirectMediaNavigationOpenResult result;
 
     fixture.runtime.open(
         &fixture.receiver, directMediaScope(currentUrl),
-        KiriView::nextDirectMediaNavigationOpenRequest(),
-        [](const KiriView::DirectMediaScope &) { return true; },
-        [&fixture, &result](KiriView::DocumentSessionDirectMediaNavigationOpenResult loadResult) {
+        kiriview::nextDirectMediaNavigationOpenRequest(),
+        [](const kiriview::DirectMediaScope &) { return true; },
+        [&fixture, &result](kiriview::DocumentSessionDirectMediaNavigationOpenResult loadResult) {
             ++fixture.completionCount;
             result = std::move(loadResult);
         });
@@ -277,11 +277,11 @@ void TestDocumentSessionDirectMediaNavigationRuntime::
 
     fixture.runtime.loadCandidates(
         &fixture.receiver, directMediaScope(currentUrl),
-        [confirmedUrl](const KiriView::DirectMediaScope &scope) {
-            return KiriView::sameNormalizedUrl(scope.currentUrl, confirmedUrl)
+        [confirmedUrl](const kiriview::DirectMediaScope &scope) {
+            return kiriview::sameNormalizedUrl(scope.currentUrl, confirmedUrl)
                 && scope.generation == 7;
         },
-        [&fixture](KiriView::DocumentSessionDirectMediaNavigationCandidatesResult loadResult) {
+        [&fixture](kiriview::DocumentSessionDirectMediaNavigationCandidatesResult loadResult) {
             ++fixture.completionCount;
             fixture.result = std::move(loadResult);
         });

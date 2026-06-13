@@ -7,7 +7,7 @@
 #include <QByteArray>
 #include <QString>
 
-namespace KiriView {
+namespace kiriview {
 enum class ImageInputKind {
     Unknown,
     Svg,

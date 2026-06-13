@@ -25,33 +25,33 @@
 namespace {
 QString genericFileDeletionErrorMessage()
 {
-    return KiriView::imageErrorText(KiriView::ImageErrorTextId::DeleteFile);
+    return kiriview::imageErrorText(kiriview::ImageErrorTextId::DeleteFile);
 }
 
-const char *documentKindName(KiriView::DocumentSessionKind kind)
+const char *documentKindName(kiriview::DocumentSessionKind kind)
 {
     switch (kind) {
-    case KiriView::DocumentSessionKind::Empty:
+    case kiriview::DocumentSessionKind::Empty:
         return "Empty";
-    case KiriView::DocumentSessionKind::Image:
+    case kiriview::DocumentSessionKind::Image:
         return "Image";
-    case KiriView::DocumentSessionKind::Video:
+    case kiriview::DocumentSessionKind::Video:
         return "Video";
     }
 
     return "Unknown";
 }
 
-const char *routeKindName(KiriView::DocumentSessionRouteKind kind)
+const char *routeKindName(kiriview::DocumentSessionRouteKind kind)
 {
     switch (kind) {
-    case KiriView::DocumentSessionRouteKind::Empty:
+    case kiriview::DocumentSessionRouteKind::Empty:
         return "Empty";
-    case KiriView::DocumentSessionRouteKind::DirectVideo:
+    case kiriview::DocumentSessionRouteKind::DirectVideo:
         return "DirectVideo";
-    case KiriView::DocumentSessionRouteKind::DirectImage:
+    case kiriview::DocumentSessionRouteKind::DirectImage:
         return "DirectImage";
-    case KiriView::DocumentSessionRouteKind::ImageDocument:
+    case kiriview::DocumentSessionRouteKind::ImageDocument:
         return "ImageDocument";
     }
 
@@ -71,66 +71,66 @@ std::optional<quint64> videoOutputSurfaceClaimRevisionFromToken(const QString &t
     return revision;
 }
 
-void logDirectMediaScope(const char *message, const KiriView::DirectMediaScope &scope)
+void logDirectMediaScope(const char *message, const kiriview::DirectMediaScope &scope)
 {
     qCDebug(kiriviewNavigationLog) << message << "currentUrl" << scope.currentUrl << "parentUrl"
                                    << scope.parentUrl << "generation" << scope.generation;
 }
 
 void appendConnection(std::vector<QMetaObject::Connection> &connections,
-    const KiriView::DocumentSessionDocumentSignalConnector &connector, QObject *owner,
-    KiriView::DocumentSessionDocumentChangeHandler handler)
+    const kiriview::DocumentSessionDocumentSignalConnector &connector, QObject *owner,
+    kiriview::DocumentSessionDocumentChangeHandler handler)
 {
     if (connector) {
         connections.push_back(connector(owner, std::move(handler)));
     }
 }
 
-KiriView::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
-    KiriView::DocumentSessionImageDocumentPort *imageDocument,
-    KiriView::ThumbnailSourceAdapter injectedAdapter)
+kiriview::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
+    kiriview::DocumentSessionImageDocumentPort *imageDocument,
+    kiriview::ThumbnailSourceAdapter injectedAdapter)
 {
     return [imageDocument, injectedAdapter = std::move(injectedAdapter),
-               directAdapter = KiriView::defaultThumbnailSourceAdapter()](
-               KiriView::ThumbnailSourceAdapterRequest request) mutable {
+               directAdapter = kiriview::defaultThumbnailSourceAdapter()](
+               kiriview::ThumbnailSourceAdapterRequest request) mutable {
         if (injectedAdapter) {
-            KiriView::ThumbnailSourceAdapterPlan plan = injectedAdapter(request);
-            if (plan.kind != KiriView::ThumbnailSourceAdapterPlanKind::Unsupported) {
+            kiriview::ThumbnailSourceAdapterPlan plan = injectedAdapter(request);
+            if (plan.kind != kiriview::ThumbnailSourceAdapterPlanKind::Unsupported) {
                 return plan;
             }
         }
 
-        KiriView::ThumbnailSourceAdapterPlan directPlan = directAdapter(request);
-        if (directPlan.kind != KiriView::ThumbnailSourceAdapterPlanKind::Unsupported) {
+        kiriview::ThumbnailSourceAdapterPlan directPlan = directAdapter(request);
+        if (directPlan.kind != kiriview::ThumbnailSourceAdapterPlanKind::Unsupported) {
             return directPlan;
         }
 
         if (imageDocument == nullptr || !imageDocument->displayedOpenedCollectionScope
             || request.sourceKey.sourceKind
-                != KiriView::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage) {
-            return KiriView::ThumbnailSourceAdapterPlan {};
+                != kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage) {
+            return kiriview::ThumbnailSourceAdapterPlan {};
         }
 
-        const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+        const kiriview::OpenedCollectionScopeLocation openedCollectionScope
             = imageDocument->displayedOpenedCollectionScope();
-        const KiriView::OpenedCollectionThumbnailSourcePlan collectionPlan
-            = KiriView::openedCollectionThumbnailSourcePlan(openedCollectionScope,
-                request.sourceKey.url, KiriView::ImageDocumentPageKind::Image);
+        const kiriview::OpenedCollectionThumbnailSourcePlan collectionPlan
+            = kiriview::openedCollectionThumbnailSourcePlan(openedCollectionScope,
+                request.sourceKey.url, kiriview::ImageDocumentPageKind::Image);
         if (collectionPlan.kind
-            != KiriView::OpenedCollectionThumbnailSourcePlanKind::CacheableOpenedCollectionEntry) {
-            return KiriView::ThumbnailSourceAdapterPlan {};
+            != kiriview::OpenedCollectionThumbnailSourcePlanKind::CacheableOpenedCollectionEntry) {
+            return kiriview::ThumbnailSourceAdapterPlan {};
         }
 
-        KiriView::ThumbnailSourceAdapterPlan plan;
-        plan.kind = KiriView::ThumbnailSourceAdapterPlanKind::CacheableOpenedCollectionEntry;
+        kiriview::ThumbnailSourceAdapterPlan plan;
+        plan.kind = kiriview::ThumbnailSourceAdapterPlanKind::CacheableOpenedCollectionEntry;
         plan.openedCollectionScope = collectionPlan.openedCollectionScope;
         return plan;
     };
 }
 
-KiriView::ActiveNavigationThumbnailRuntimeDependencies documentSessionThumbnailDependencies(
-    KiriView::DocumentSessionImageDocumentPort *imageDocument,
-    KiriView::ActiveNavigationThumbnailRuntimeDependencies dependencies)
+kiriview::ActiveNavigationThumbnailRuntimeDependencies documentSessionThumbnailDependencies(
+    kiriview::DocumentSessionImageDocumentPort *imageDocument,
+    kiriview::ActiveNavigationThumbnailRuntimeDependencies dependencies)
 {
     dependencies.sourceAdapter = documentSessionThumbnailSourceAdapter(
         imageDocument, std::move(dependencies.sourceAdapter));
@@ -138,7 +138,7 @@ KiriView::ActiveNavigationThumbnailRuntimeDependencies documentSessionThumbnailD
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     DocumentSessionImageDocumentPort imageDocument, DocumentSessionVideoDocumentPort videoDocument,
     ChangeCallback changeCallback, DocumentSessionRuntimeDependencies dependencies)

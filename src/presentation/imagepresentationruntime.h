@@ -19,7 +19,7 @@
 #include <QSizeF>
 #include <QUrl>
 
-namespace KiriView {
+namespace kiriview {
 enum class ImagePresentationMode {
     SinglePage,
     TwoPageSpread,

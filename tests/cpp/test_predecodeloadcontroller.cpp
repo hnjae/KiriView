@@ -13,38 +13,38 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::imageDecodeDependenciesFor;
-using KiriView::TestSupport::indexedImageUrl;
-using KiriView::TestSupport::ManualImageDataLoader;
-using KiriView::TestSupport::staticDisplayTestImagePayload;
-using KiriView::TestSupport::staticImageDataDecoder;
-using KiriView::TestSupport::testImage;
+using kiriview::TestSupport::imageDecodeDependenciesFor;
+using kiriview::TestSupport::indexedImageUrl;
+using kiriview::TestSupport::ManualImageDataLoader;
+using kiriview::TestSupport::staticDisplayTestImagePayload;
+using kiriview::TestSupport::staticImageDataDecoder;
+using kiriview::TestSupport::testImage;
 
 constexpr qsizetype testCacheByteBudget = 1024 * 1024;
 
-KiriView::DisplayedPredecodeImage displayedImage(
+kiriview::DisplayedPredecodeImage displayedImage(
     const QUrl &url, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
-    const KiriView::DisplayImageQuality quality = firstDisplayPixelsPerSourcePixel > 0.0
-        ? KiriView::DisplayImageQuality::FirstDisplay
-        : KiriView::DisplayImageQuality::Exact;
-    return KiriView::DisplayedPredecodeImage {
-        KiriView::DisplayedImageLocation::fromUrl(url),
+    const kiriview::DisplayImageQuality quality = firstDisplayPixelsPerSourcePixel > 0.0
+        ? kiriview::DisplayImageQuality::FirstDisplay
+        : kiriview::DisplayImageQuality::Exact;
+    return kiriview::DisplayedPredecodeImage {
+        kiriview::DisplayedImageLocation::fromUrl(url),
         true,
         staticDisplayTestImagePayload(
             testImage(), testImage(), firstDisplayPixelsPerSourcePixel, quality),
     };
 }
 
-KiriView::PredecodeLoadWindow loadWindow(
+kiriview::PredecodeLoadWindow loadWindow(
     const QUrl &displayedUrl, std::vector<QUrl> urls, quint64 generation = 7)
 {
-    return KiriView::PredecodeLoadWindow {
+    return kiriview::PredecodeLoadWindow {
         displayedUrl,
-        KiriView::OpenedCollectionScopeLocation::none(),
+        kiriview::OpenedCollectionScopeLocation::none(),
         std::move(urls),
         { displayedImage(displayedUrl, 0.5) },
-        KiriView::ImageFirstDisplayDecodeContext { QSize(640, 480) },
+        kiriview::ImageFirstDisplayDecodeContext { QSize(640, 480) },
         generation,
         1,
     };
@@ -65,7 +65,7 @@ private Q_SLOTS:
 void TestPredecodeLoadController::windowLoadsCacheDisplayedImageAndPumpQueuedDecodes()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::PredecodeLoadController controller(this,
+    kiriview::PredecodeLoadController controller(this,
         imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl nextUrl = indexedImageUrl(2);
@@ -73,10 +73,10 @@ void TestPredecodeLoadController::windowLoadsCacheDisplayedImageAndPumpQueuedDec
 
     controller.startWindowLoads(loadWindow(displayedUrl, { displayedUrl, nextUrl, previousUrl }));
 
-    const std::optional<KiriView::PredecodedImage> displayed
+    const std::optional<kiriview::PredecodedImage> displayed
         = controller.findPredecodedImage(displayedUrl);
     QVERIFY(displayed.has_value());
-    QCOMPARE(displayed->displayImage.quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(displayed->displayImage.quality, kiriview::DisplayImageQuality::FirstDisplay);
     QCOMPARE(displayed->displayImage.displayPixelsPerSourcePixel, 0.5);
 
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
@@ -85,11 +85,11 @@ void TestPredecodeLoadController::windowLoadsCacheDisplayedImageAndPumpQueuedDec
 
     dataLoader.finishFrontLoad(QByteArrayLiteral("next"));
     QTRY_VERIFY(controller.findPredecodedImage(nextUrl).has_value());
-    const std::optional<KiriView::PredecodedImage> next = controller.findPredecodedImage(nextUrl);
+    const std::optional<kiriview::PredecodedImage> next = controller.findPredecodedImage(nextUrl);
     QCOMPARE(next->displayImage.sourceIdentity, QStringLiteral("test-image"));
     QCOMPARE(next->displayImage.originalSize, testImage().size());
     QCOMPARE(next->displayImage.image.size(), testImage().size());
-    QCOMPARE(next->displayImage.quality, KiriView::DisplayImageQuality::Exact);
+    QCOMPARE(next->displayImage.quality, kiriview::DisplayImageQuality::Exact);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, previousUrl);
 }
@@ -97,12 +97,12 @@ void TestPredecodeLoadController::windowLoadsCacheDisplayedImageAndPumpQueuedDec
 void TestPredecodeLoadController::parallelLimitStartsMultipleWindowLoads()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::PredecodeLoadController controller(this,
+    kiriview::PredecodeLoadController controller(this,
         imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl nextUrl = indexedImageUrl(2);
     const QUrl previousUrl = indexedImageUrl(0);
-    KiriView::PredecodeLoadWindow window
+    kiriview::PredecodeLoadWindow window
         = loadWindow(displayedUrl, { displayedUrl, nextUrl, previousUrl });
     window.parallelLimit = 2;
 
@@ -116,7 +116,7 @@ void TestPredecodeLoadController::parallelLimitStartsMultipleWindowLoads()
 void TestPredecodeLoadController::startWindowLoadsReplacesActiveGeneration()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::PredecodeLoadController controller(this,
+    kiriview::PredecodeLoadController controller(this,
         imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
     const QUrl staleDisplayedUrl = indexedImageUrl(1);
     const QUrl staleNextUrl = indexedImageUrl(2);
@@ -144,7 +144,7 @@ void TestPredecodeLoadController::startWindowLoadsReplacesActiveGeneration()
 void TestPredecodeLoadController::cancelBackgroundWorkSuppressesStaleDecode()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::PredecodeLoadController controller(this,
+    kiriview::PredecodeLoadController controller(this,
         imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl nextUrl = indexedImageUrl(2);

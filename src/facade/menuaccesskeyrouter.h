@@ -43,7 +43,7 @@ private Q_SLOTS:
     void clearMenuAccessKeys();
 
 private:
-    KiriView::MenuAccessKeyRouterRuntime m_runtime;
+    kiriview::MenuAccessKeyRouterRuntime m_runtime;
 };
 
 #endif

@@ -12,7 +12,7 @@
 #include <memory>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 class RuntimeTimerHandle
 {
 public:

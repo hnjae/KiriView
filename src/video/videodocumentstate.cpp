@@ -24,7 +24,7 @@ QSize normalizedVideoSize(QSize size)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 VideoDocumentState::VideoDocumentState(ChangeCallback changeCallback)
     : m_changeCallback(std::move(changeCallback))
 {

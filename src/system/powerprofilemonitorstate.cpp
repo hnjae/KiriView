@@ -3,7 +3,7 @@
 
 #include "powerprofilemonitorstate.h"
 
-namespace KiriView {
+namespace kiriview {
 PowerProfileMonitorEvent PowerProfileMonitorEvent::ignore() { return {}; }
 
 PowerProfileMonitorEvent PowerProfileMonitorEvent::powerSaverValue(bool enabled)

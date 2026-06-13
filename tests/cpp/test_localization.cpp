@@ -35,7 +35,7 @@ private Q_SLOTS:
 void TestLocalization::initTestCase()
 {
     QStandardPaths::setTestModeEnabled(true);
-    KiriView::initializeLocalization();
+    kiriview::initializeLocalization();
     KLocalizedString::addDomainLocaleDir(
         QByteArrayLiteral("kiriview"), QStringLiteral(KIRIVIEW_TEST_LOCALE_DIR));
 }
@@ -59,13 +59,13 @@ void TestLocalization::actionsUseTestCatalog()
 
 void TestLocalization::statusMessagesUseTestCatalog()
 {
-    QCOMPARE(KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData),
+    QCOMPARE(kiriview::imageErrorText(kiriview::ImageErrorTextId::ReadImageData),
         QStringLiteral("__kiriview_test_status_read_image_data__"));
 }
 
 void TestLocalization::applicationRuntimeSetsDesktopFileName()
 {
-    KiriView::initializeApplicationRuntime();
+    kiriview::initializeApplicationRuntime();
 
     QCOMPARE(QGuiApplication::desktopFileName(), QStringLiteral("org.hnjae.kiriview"));
 }
@@ -73,7 +73,7 @@ void TestLocalization::applicationRuntimeSetsDesktopFileName()
 void TestLocalization::qmlContextUsesTestCatalog()
 {
     QQmlApplicationEngine engine;
-    KiriView::setupLocalizedContext(engine);
+    kiriview::setupLocalizedContext(engine);
 
     QQmlComponent component(&engine);
     component.setData(

@@ -6,21 +6,21 @@
 #include "bridge/rustqtconversion.h"
 
 namespace {
-KiriView::ArchiveOpenMatchKind archiveOpenMatchKindFromBridge(
-    KiriView::RustArchiveOpenMatchKind kind)
+kiriview::ArchiveOpenMatchKind archiveOpenMatchKindFromBridge(
+    kiriview::RustArchiveOpenMatchKind kind)
 {
     switch (kind) {
-    case KiriView::RustArchiveOpenMatchKind::ComicBook:
-        return KiriView::ArchiveOpenMatchKind::ComicBook;
-    case KiriView::RustArchiveOpenMatchKind::GeneralArchive:
-        return KiriView::ArchiveOpenMatchKind::GeneralArchive;
+    case kiriview::RustArchiveOpenMatchKind::ComicBook:
+        return kiriview::ArchiveOpenMatchKind::ComicBook;
+    case kiriview::RustArchiveOpenMatchKind::GeneralArchive:
+        return kiriview::ArchiveOpenMatchKind::GeneralArchive;
     }
 
-    return KiriView::ArchiveOpenMatchKind::GeneralArchive;
+    return kiriview::ArchiveOpenMatchKind::GeneralArchive;
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ArchiveStorageBackend archiveStorageBackendFromBridge(RustArchiveStorageBackend backend)
 {
     switch (backend) {

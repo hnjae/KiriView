@@ -17,7 +17,7 @@
 #include <QUrl>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 namespace {
     ImageDocumentSourceLoadSnapshot sourceLoadSnapshot(
         const ImageDocumentState &state, const ImageSpreadPresentationController &spreadController)

@@ -12,27 +12,27 @@
 #include <vector>
 
 namespace {
-void appendRemovedCandidate(std::vector<KiriView::ImageDocumentPageCandidate> *candidates,
+void appendRemovedCandidate(std::vector<kiriview::ImageDocumentPageCandidate> *candidates,
     const QUrl &currentUrl, const QString &currentName)
 {
-    candidates->push_back(KiriView::ImageDocumentPageCandidate { currentUrl, currentName });
+    candidates->push_back(kiriview::ImageDocumentPageCandidate { currentUrl, currentName });
 }
 
-void appendRemovedCandidate(std::vector<KiriView::ContainerNavigationCandidate> *candidates,
+void appendRemovedCandidate(std::vector<kiriview::ContainerNavigationCandidate> *candidates,
     const QUrl &currentUrl, const QString &currentName)
 {
-    candidates->push_back(KiriView::ContainerNavigationCandidate {
-        currentUrl, currentName, KiriView::ContainerNavigationCandidateType::ComicBookArchive });
+    candidates->push_back(kiriview::ContainerNavigationCandidate {
+        currentUrl, currentName, kiriview::ContainerNavigationCandidateType::ComicBookArchive });
 }
 
-void sortRemovalFallbackCandidates(std::vector<KiriView::ImageDocumentPageCandidate> *candidates)
+void sortRemovalFallbackCandidates(std::vector<kiriview::ImageDocumentPageCandidate> *candidates)
 {
-    KiriView::sortImageDocumentPageCandidates(candidates);
+    kiriview::sortImageDocumentPageCandidates(candidates);
 }
 
-void sortRemovalFallbackCandidates(std::vector<KiriView::ContainerNavigationCandidate> *candidates)
+void sortRemovalFallbackCandidates(std::vector<kiriview::ContainerNavigationCandidate> *candidates)
 {
-    KiriView::sortContainerNavigationCandidates(candidates);
+    kiriview::sortContainerNavigationCandidates(candidates);
 }
 
 template <typename Candidate>
@@ -45,75 +45,75 @@ std::vector<Candidate> removalFallbackCandidates(
     return candidates;
 }
 
-std::optional<KiriView::ImageDocumentPageCandidate> nextFallbackCandidate(
-    const std::vector<KiriView::ImageDocumentPageCandidate> &candidates, const QUrl &currentUrl)
+std::optional<kiriview::ImageDocumentPageCandidate> nextFallbackCandidate(
+    const std::vector<kiriview::ImageDocumentPageCandidate> &candidates, const QUrl &currentUrl)
 {
-    return KiriView::adjacentImageDocumentPageCandidate(
-        candidates, currentUrl, KiriView::NavigationDirection::Next);
+    return kiriview::adjacentImageDocumentPageCandidate(
+        candidates, currentUrl, kiriview::NavigationDirection::Next);
 }
 
-std::optional<KiriView::ImageDocumentPageCandidate> previousFallbackCandidate(
-    const std::vector<KiriView::ImageDocumentPageCandidate> &candidates, const QUrl &currentUrl)
+std::optional<kiriview::ImageDocumentPageCandidate> previousFallbackCandidate(
+    const std::vector<kiriview::ImageDocumentPageCandidate> &candidates, const QUrl &currentUrl)
 {
-    return KiriView::adjacentImageDocumentPageCandidate(
-        candidates, currentUrl, KiriView::NavigationDirection::Previous);
+    return kiriview::adjacentImageDocumentPageCandidate(
+        candidates, currentUrl, kiriview::NavigationDirection::Previous);
 }
 
-std::optional<KiriView::ContainerNavigationCandidate> nextFallbackCandidate(
-    const std::vector<KiriView::ContainerNavigationCandidate> &candidates, const QUrl &currentUrl)
+std::optional<kiriview::ContainerNavigationCandidate> nextFallbackCandidate(
+    const std::vector<kiriview::ContainerNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    return KiriView::adjacentContainerNavigationCandidate(
-        candidates, currentUrl, KiriView::NavigationDirection::Next);
+    return kiriview::adjacentContainerNavigationCandidate(
+        candidates, currentUrl, kiriview::NavigationDirection::Next);
 }
 
-std::optional<KiriView::ContainerNavigationCandidate> previousFallbackCandidate(
-    const std::vector<KiriView::ContainerNavigationCandidate> &candidates, const QUrl &currentUrl)
+std::optional<kiriview::ContainerNavigationCandidate> previousFallbackCandidate(
+    const std::vector<kiriview::ContainerNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    return KiriView::adjacentContainerNavigationCandidate(
-        candidates, currentUrl, KiriView::NavigationDirection::Previous);
+    return kiriview::adjacentContainerNavigationCandidate(
+        candidates, currentUrl, kiriview::NavigationDirection::Previous);
 }
 
-QUrl removalTargetUrlForDisplayedLocation(const KiriView::DisplayedImageLocation &location)
+QUrl removalTargetUrlForDisplayedLocation(const kiriview::DisplayedImageLocation &location)
 {
     if (location.imageUrl().isEmpty()) {
         return {};
     }
 
     if (!location.openedCollectionScope().isEmpty()
-        && KiriView::displayedLocationIsInsideOpenedCollectionScope(location)) {
+        && kiriview::displayedLocationIsInsideOpenedCollectionScope(location)) {
         return location.openedCollectionScopeSourceUrl();
     }
 
     return location.imageUrl();
 }
 
-KiriView::ImageRemovalFallbackPlan removalFallbackPlanForDisplayedLocation(
-    const KiriView::DisplayedImageLocation &location)
+kiriview::ImageRemovalFallbackPlan removalFallbackPlanForDisplayedLocation(
+    const kiriview::DisplayedImageLocation &location)
 {
-    const std::optional<KiriView::ImageDocumentPageCandidateListContext> imageContext
-        = KiriView::imageDocumentPageCandidateListContextForDisplayedImage(location);
+    const std::optional<kiriview::ImageDocumentPageCandidateListContext> imageContext
+        = kiriview::imageDocumentPageCandidateListContextForDisplayedImage(location);
 
-    if (KiriView::displayedLocationIsInsideOpenedCollectionScope(location)) {
+    if (kiriview::displayedLocationIsInsideOpenedCollectionScope(location)) {
         if (location.openedCollectionScope().kind()
-            == KiriView::OpenedCollectionScopeKind::ComicBookArchive) {
-            const QUrl currentContainerUrl = KiriView::containerNavigationUrlForLocation(location);
-            return KiriView::ComicBookRemovalFallback { currentContainerUrl,
-                KiriView::parentUrlForContainerNavigation(currentContainerUrl),
+            == kiriview::OpenedCollectionScopeKind::ComicBookArchive) {
+            const QUrl currentContainerUrl = kiriview::containerNavigationUrlForLocation(location);
+            return kiriview::ComicBookRemovalFallback { currentContainerUrl,
+                kiriview::parentUrlForContainerNavigation(currentContainerUrl),
                 currentContainerUrl.fileName() };
         }
 
-        return KiriView::NoImageRemovalFallback {};
+        return kiriview::NoImageRemovalFallback {};
     }
 
     if (imageContext.has_value()) {
-        return KiriView::imageRemovalFallbackForImageContext(*imageContext);
+        return kiriview::imageRemovalFallbackForImageContext(*imageContext);
     }
 
-    return KiriView::NoImageRemovalFallback {};
+    return kiriview::NoImageRemovalFallback {};
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocation &location)
 {
     const QUrl targetUrl = removalTargetUrlForDisplayedLocation(location);

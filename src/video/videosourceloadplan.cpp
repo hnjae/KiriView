@@ -7,7 +7,7 @@
 
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 VideoSourceLoadPlan videoSourceLoadClearPlan()
 {
     return {

@@ -8,7 +8,7 @@
 
 #include <variant>
 
-namespace KiriView {
+namespace kiriview {
 bool ActiveNavigationDispatchPlan::shouldDispatch() const
 {
     return outcome == ActiveNavigationDispatchOutcome::Dispatch

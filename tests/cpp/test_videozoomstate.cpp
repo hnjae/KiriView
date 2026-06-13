@@ -25,7 +25,7 @@ void TestVideoZoomState::usesEffectiveDevicePixelRatioForPhysicalDisplaySize()
     const QRectF sourceRect(0.0, 0.0, 2560.0, 1440.0);
 
     const std::optional<int> zoomPercent
-        = KiriView::videoZoomPercentForRects(contentRect, sourceRect, devicePixelRatio);
+        = kiriview::videoZoomPercentForRects(contentRect, sourceRect, devicePixelRatio);
 
     QVERIFY(zoomPercent.has_value());
     QCOMPARE(zoomPercent.value(), 150);
@@ -37,7 +37,7 @@ void TestVideoZoomState::usesFittedAxisForLetterboxedContent()
     const QRectF sourceRect(0.0, 0.0, 1200.0, 1200.0);
 
     const std::optional<int> zoomPercent
-        = KiriView::videoZoomPercentForRects(contentRect, sourceRect, 1.0);
+        = kiriview::videoZoomPercentForRects(contentRect, sourceRect, 1.0);
 
     QVERIFY(zoomPercent.has_value());
     QCOMPARE(zoomPercent.value(), 67);
@@ -45,13 +45,13 @@ void TestVideoZoomState::usesFittedAxisForLetterboxedContent()
 
 void TestVideoZoomState::rejectsInvalidInputs()
 {
-    QVERIFY(!KiriView::videoZoomPercentForRects(
+    QVERIFY(!kiriview::videoZoomPercentForRects(
         QRectF(0.0, 0.0, 0.0, 100.0), QRectF(0.0, 0.0, 100.0, 100.0), 1.0)
             .has_value());
-    QVERIFY(!KiriView::videoZoomPercentForRects(
+    QVERIFY(!kiriview::videoZoomPercentForRects(
         QRectF(0.0, 0.0, 100.0, 100.0), QRectF(0.0, 0.0, 0.0, 100.0), 1.0)
             .has_value());
-    QVERIFY(!KiriView::videoZoomPercentForRects(
+    QVERIFY(!kiriview::videoZoomPercentForRects(
         QRectF(0.0, 0.0, 100.0, 100.0), QRectF(0.0, 0.0, 100.0, 100.0), 0.0)
             .has_value());
 }

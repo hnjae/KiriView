@@ -21,7 +21,7 @@ void setHeifSupportError(QString *errorString, const QString &message)
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 QString heifErrorString(const QString &action, const heif_error &error)
 {
     QString message = imageErrorText(ImageErrorTextId::UnknownLibheifError);

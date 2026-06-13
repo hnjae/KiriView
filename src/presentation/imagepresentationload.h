@@ -16,7 +16,7 @@
 #include <QtGlobal>
 #include <variant>
 
-namespace KiriView {
+namespace kiriview {
 class ImagePageSurfaceController;
 
 enum class ImagePresentationAnimationHandling {

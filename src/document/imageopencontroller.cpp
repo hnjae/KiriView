@@ -21,19 +21,19 @@
 namespace {
 QString emptyOpenedCollectionErrorMessage()
 {
-    return KiriView::imageErrorText(KiriView::ImageErrorTextId::EmptyOpenedCollection);
+    return kiriview::imageErrorText(kiriview::ImageErrorTextId::EmptyOpenedCollection);
 }
 
 QString openedCollectionOpenErrorMessage(const QString &errorString)
 {
     return errorString.isEmpty()
-        ? KiriView::imageErrorText(KiriView::ImageErrorTextId::OpenOpenedCollection)
+        ? kiriview::imageErrorText(kiriview::ImageErrorTextId::OpenOpenedCollection)
         : errorString;
 }
 
-QString loadErrorMessage(KiriView::ImageLoadError error, const QString &errorString)
+QString loadErrorMessage(kiriview::ImageLoadError error, const QString &errorString)
 {
-    return error == KiriView::ImageLoadError::EmptyOpenedCollection
+    return error == kiriview::ImageLoadError::EmptyOpenedCollection
         ? emptyOpenedCollectionErrorMessage()
         : errorString;
 }
@@ -41,7 +41,7 @@ QString loadErrorMessage(KiriView::ImageLoadError error, const QString &errorStr
 QString animationLoadErrorMessage(const QString &errorString)
 {
     return errorString.isEmpty()
-        ? KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeImageAnimation)
+        ? kiriview::imageErrorText(kiriview::ImageErrorTextId::DecodeImageAnimation)
         : errorString;
 }
 
@@ -52,7 +52,7 @@ QString unsupportedOpenedCollectionVideoMessage()
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &state,
     ImagePageSurfaceController &pageSurfaceController,
     ImagePresentationRuntime &presentationRuntime, ImageOpenController::Callbacks callbacks,

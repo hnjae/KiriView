@@ -11,7 +11,7 @@
 #include <QQuickItem>
 #include <QVariant>
 
-namespace KiriView {
+namespace kiriview {
 QObject *MenuAccessKeyMenuRuntime::menu() const { return m_menu; }
 
 bool MenuAccessKeyMenuRuntime::setMenu(QObject *menu)

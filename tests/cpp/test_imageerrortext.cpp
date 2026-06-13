@@ -19,29 +19,29 @@ private Q_SLOTS:
 
 void TestImageErrorText::plainTextIdsExposeCanonicalMessages()
 {
-    QCOMPARE(KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData),
+    QCOMPARE(kiriview::imageErrorText(kiriview::ImageErrorTextId::ReadImageData),
         QStringLiteral("Could not read the selected image data."));
-    QCOMPARE(KiriView::imageErrorText(KiriView::ImageErrorTextId::OpenVideo),
+    QCOMPARE(kiriview::imageErrorText(kiriview::ImageErrorTextId::OpenVideo),
         QStringLiteral("Could not open the selected video."));
-    QCOMPARE(KiriView::imageErrorText(KiriView::ImageErrorTextId::HeifSequenceTrackMissing),
+    QCOMPARE(kiriview::imageErrorText(kiriview::ImageErrorTextId::HeifSequenceTrackMissing),
         QStringLiteral("Could not decode the selected HEIF image: sequence track is missing."));
-    QCOMPARE(KiriView::imageErrorText(KiriView::ImageErrorTextId::RawFullDecodeTooLarge),
+    QCOMPARE(kiriview::imageErrorText(kiriview::ImageErrorTextId::RawFullDecodeTooLarge),
         QStringLiteral("The selected RAW image is too large for full-image decoding."));
 }
 
 void TestImageErrorText::actionTextIdsExposeCanonicalFragments()
 {
-    QCOMPARE(KiriView::imageErrorActionText(KiriView::ImageErrorActionTextId::ReadHeifContainer),
+    QCOMPARE(kiriview::imageErrorActionText(kiriview::ImageErrorActionTextId::ReadHeifContainer),
         QStringLiteral("reading the HEIF container"));
-    QCOMPARE(KiriView::imageErrorActionText(KiriView::ImageErrorActionTextId::CreateDisplayImage),
+    QCOMPARE(kiriview::imageErrorActionText(kiriview::ImageErrorActionTextId::CreateDisplayImage),
         QStringLiteral("creating the display image"));
 }
 
 void TestImageErrorText::formattedDecodeErrorsPreserveActionAndDetail()
 {
-    QCOMPARE(KiriView::heifDecodeErrorText(QStringLiteral("reading"), QStringLiteral("truncated")),
+    QCOMPARE(kiriview::heifDecodeErrorText(QStringLiteral("reading"), QStringLiteral("truncated")),
         QStringLiteral("Could not decode the selected HEIF image: reading: truncated"));
-    QCOMPARE(KiriView::rawDecodeErrorText(QStringLiteral("processing"), QStringLiteral("failed")),
+    QCOMPARE(kiriview::rawDecodeErrorText(QStringLiteral("processing"), QStringLiteral("failed")),
         QStringLiteral("Could not decode the selected RAW image: processing: failed"));
 }
 

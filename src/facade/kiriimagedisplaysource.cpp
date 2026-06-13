@@ -6,62 +6,62 @@
 #include <utility>
 
 namespace {
-KiriImageDisplaySource::PageRole pageRole(KiriView::DisplayedPageRole role)
+KiriImageDisplaySource::PageRole pageRole(kiriview::DisplayedPageRole role)
 {
     switch (role) {
-    case KiriView::DisplayedPageRole::Primary:
+    case kiriview::DisplayedPageRole::Primary:
         return KiriImageDisplaySource::PageRole::Primary;
-    case KiriView::DisplayedPageRole::Secondary:
+    case kiriview::DisplayedPageRole::Secondary:
         return KiriImageDisplaySource::PageRole::Secondary;
     }
 
     return KiriImageDisplaySource::PageRole::Primary;
 }
 
-KiriImageDisplaySource::ScopeKind scopeKind(KiriView::ImagePresentationScopeKey::Kind kind)
+KiriImageDisplaySource::ScopeKind scopeKind(kiriview::ImagePresentationScopeKey::Kind kind)
 {
     switch (kind) {
-    case KiriView::ImagePresentationScopeKey::Kind::Empty:
+    case kiriview::ImagePresentationScopeKey::Kind::Empty:
         return KiriImageDisplaySource::ScopeKind::Empty;
-    case KiriView::ImagePresentationScopeKey::Kind::DirectImage:
+    case kiriview::ImagePresentationScopeKey::Kind::DirectImage:
         return KiriImageDisplaySource::ScopeKind::DirectImage;
-    case KiriView::ImagePresentationScopeKey::Kind::OpenedCollection:
+    case kiriview::ImagePresentationScopeKey::Kind::OpenedCollection:
         return KiriImageDisplaySource::ScopeKind::OpenedCollection;
     }
 
     return KiriImageDisplaySource::ScopeKind::Empty;
 }
 
-KiriImageDisplaySource::Quality quality(KiriView::DisplayImageQuality quality)
+KiriImageDisplaySource::Quality quality(kiriview::DisplayImageQuality quality)
 {
     switch (quality) {
-    case KiriView::DisplayImageQuality::Exact:
+    case kiriview::DisplayImageQuality::Exact:
         return KiriImageDisplaySource::Quality::Exact;
-    case KiriView::DisplayImageQuality::FirstDisplay:
+    case kiriview::DisplayImageQuality::FirstDisplay:
         return KiriImageDisplaySource::Quality::FirstDisplay;
-    case KiriView::DisplayImageQuality::ThumbnailPreview:
+    case kiriview::DisplayImageQuality::ThumbnailPreview:
         return KiriImageDisplaySource::Quality::ThumbnailPreview;
-    case KiriView::DisplayImageQuality::BoundedDetail:
+    case kiriview::DisplayImageQuality::BoundedDetail:
         return KiriImageDisplaySource::Quality::BoundedDetail;
-    case KiriView::DisplayImageQuality::Unsupported:
+    case kiriview::DisplayImageQuality::Unsupported:
         return KiriImageDisplaySource::Quality::Unsupported;
-    case KiriView::DisplayImageQuality::Failed:
+    case kiriview::DisplayImageQuality::Failed:
         return KiriImageDisplaySource::Quality::Failed;
     }
 
     return KiriImageDisplaySource::Quality::Exact;
 }
 
-KiriImageDisplaySource::Status status(KiriView::ImageDisplaySourceStatus status)
+KiriImageDisplaySource::Status status(kiriview::ImageDisplaySourceStatus status)
 {
     switch (status) {
-    case KiriView::ImageDisplaySourceStatus::Missing:
+    case kiriview::ImageDisplaySourceStatus::Missing:
         return KiriImageDisplaySource::Status::Missing;
-    case KiriView::ImageDisplaySourceStatus::Ready:
+    case kiriview::ImageDisplaySourceStatus::Ready:
         return KiriImageDisplaySource::Status::Ready;
-    case KiriView::ImageDisplaySourceStatus::Error:
+    case kiriview::ImageDisplaySourceStatus::Error:
         return KiriImageDisplaySource::Status::Error;
-    case KiriView::ImageDisplaySourceStatus::Unsupported:
+    case kiriview::ImageDisplaySourceStatus::Unsupported:
         return KiriImageDisplaySource::Status::Unsupported;
     }
 
@@ -69,20 +69,20 @@ KiriImageDisplaySource::Status status(KiriView::ImageDisplaySourceStatus status)
 }
 
 KiriImageDisplaySource::RetentionStatus retentionStatus(
-    KiriView::ImageDisplaySourceRetentionStatus status)
+    kiriview::ImageDisplaySourceRetentionStatus status)
 {
     switch (status) {
-    case KiriView::ImageDisplaySourceRetentionStatus::None:
+    case kiriview::ImageDisplaySourceRetentionStatus::None:
         return KiriImageDisplaySource::RetentionStatus::None;
-    case KiriView::ImageDisplaySourceRetentionStatus::StaleRetained:
+    case kiriview::ImageDisplaySourceRetentionStatus::StaleRetained:
         return KiriImageDisplaySource::RetentionStatus::StaleRetained;
     }
 
     return KiriImageDisplaySource::RetentionStatus::None;
 }
 
-bool projectionsEqual(const KiriView::ImageDisplaySourceProjection &left,
-    const KiriView::ImageDisplaySourceProjection &right)
+bool projectionsEqual(const kiriview::ImageDisplaySourceProjection &left,
+    const kiriview::ImageDisplaySourceProjection &right)
 {
     return left.visible == right.visible && left.pageRole == right.pageRole
         && left.providerUrl == right.providerUrl && left.revision == right.revision
@@ -99,11 +99,11 @@ bool projectionsEqual(const KiriView::ImageDisplaySourceProjection &left,
 }
 }
 
-KiriImageDisplaySource::KiriImageDisplaySource(KiriView::DisplayedPageRole role, QObject *parent)
+KiriImageDisplaySource::KiriImageDisplaySource(kiriview::DisplayedPageRole role, QObject *parent)
     : QObject(parent)
 {
     m_projection.pageRole = role;
-    m_projection.revisionToken = KiriView::imageDisplaySourceRevisionToken(m_projection.revision);
+    m_projection.revisionToken = kiriview::imageDisplaySourceRevisionToken(m_projection.revision);
 }
 
 bool KiriImageDisplaySource::visible() const { return m_projection.visible; }
@@ -164,7 +164,7 @@ bool KiriImageDisplaySource::retainWhileLoadingEligible() const
     return m_projection.retainWhileLoadingEligible;
 }
 
-void KiriImageDisplaySource::setProjection(KiriView::ImageDisplaySourceProjection projection)
+void KiriImageDisplaySource::setProjection(kiriview::ImageDisplaySourceProjection projection)
 {
     if (projectionsEqual(m_projection, projection)) {
         return;

@@ -9,7 +9,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 class PowerSaverStateMonitor
 {
 public:

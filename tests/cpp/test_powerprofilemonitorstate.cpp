@@ -18,32 +18,32 @@ private Q_SLOTS:
 
 void TestPowerProfileMonitorState::powerSaverValueEventOwnsCanonicalStateChanges()
 {
-    KiriView::PowerProfileMonitorState state;
+    kiriview::PowerProfileMonitorState state;
     QVERIFY(!state.powerSaverEnabled());
 
-    KiriView::PowerProfileMonitorPlan plan
-        = state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverValue(true));
+    kiriview::PowerProfileMonitorPlan plan
+        = state.applyEvent(kiriview::PowerProfileMonitorEvent::powerSaverValue(true));
     QVERIFY(plan.powerSaverChanged);
     QVERIFY(!plan.refreshPowerSaverEnabled);
     QVERIFY(state.powerSaverEnabled());
 
-    plan = state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverValue(true));
+    plan = state.applyEvent(kiriview::PowerProfileMonitorEvent::powerSaverValue(true));
     QVERIFY(!plan.powerSaverChanged);
     QVERIFY(!plan.refreshPowerSaverEnabled);
     QVERIFY(state.powerSaverEnabled());
 
-    plan = state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverValue(false));
+    plan = state.applyEvent(kiriview::PowerProfileMonitorEvent::powerSaverValue(false));
     QVERIFY(plan.powerSaverChanged);
     QVERIFY(!state.powerSaverEnabled());
 }
 
 void TestPowerProfileMonitorState::invalidationEventRequestsRefreshWithoutChangingState()
 {
-    KiriView::PowerProfileMonitorState state;
-    state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverValue(true));
+    kiriview::PowerProfileMonitorState state;
+    state.applyEvent(kiriview::PowerProfileMonitorEvent::powerSaverValue(true));
 
-    const KiriView::PowerProfileMonitorPlan plan
-        = state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverInvalidated());
+    const kiriview::PowerProfileMonitorPlan plan
+        = state.applyEvent(kiriview::PowerProfileMonitorEvent::powerSaverInvalidated());
 
     QVERIFY(!plan.powerSaverChanged);
     QVERIFY(plan.refreshPowerSaverEnabled);
@@ -52,12 +52,12 @@ void TestPowerProfileMonitorState::invalidationEventRequestsRefreshWithoutChangi
 
 void TestPowerProfileMonitorState::ignoredEventLeavesStateUnchanged()
 {
-    KiriView::PowerProfileMonitorState state;
-    state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverValue(true));
+    kiriview::PowerProfileMonitorState state;
+    state.applyEvent(kiriview::PowerProfileMonitorEvent::powerSaverValue(true));
     QVERIFY(state.powerSaverEnabled());
 
-    const KiriView::PowerProfileMonitorPlan plan
-        = state.applyEvent(KiriView::PowerProfileMonitorEvent::ignore());
+    const kiriview::PowerProfileMonitorPlan plan
+        = state.applyEvent(kiriview::PowerProfileMonitorEvent::ignore());
 
     QVERIFY(!plan.powerSaverChanged);
     QVERIFY(!plan.refreshPowerSaverEnabled);

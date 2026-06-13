@@ -3,7 +3,7 @@
 
 #include "mediapredecodewindowplan.h"
 
-namespace KiriView {
+namespace kiriview {
 PredecodeWindowPlan mediaPredecodeWindowPlan(
     const MediaPredecodeEligibilitySnapshot &snapshot, PredecodePolicyInput policyInput)
 {

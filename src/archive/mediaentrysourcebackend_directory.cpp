@@ -15,10 +15,10 @@
 #include <vector>
 
 namespace {
-namespace Backend = KiriView::MediaEntrySourceBackendDetail;
+namespace Backend = kiriview::MediaEntrySourceBackendDetail;
 
 std::optional<QString> directoryPathForCollection(
-    const KiriView::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
 {
     if (!openedCollectionScope.isDirectory()) {
         return std::nullopt;
@@ -32,12 +32,12 @@ std::optional<QString> directoryPathForCollection(
     return path;
 }
 
-KiriView::MediaEntrySourceCandidatesResult loadDirectoryCollectionImageDocumentPageCandidates(
-    const KiriView::OpenedCollectionScopeLocation &openedCollectionScope)
+kiriview::MediaEntrySourceCandidatesResult loadDirectoryCollectionImageDocumentPageCandidates(
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
 {
     const std::optional<QString> directoryPath = directoryPathForCollection(openedCollectionScope);
     if (!directoryPath.has_value()) {
-        return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceCandidatesResult>(
+        return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceCandidatesResult>(
             Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope));
     }
 
@@ -45,7 +45,7 @@ KiriView::MediaEntrySourceCandidatesResult loadDirectoryCollectionImageDocumentP
     QDirIterator iterator(rootDirectory.absolutePath(),
         QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
 
-    std::vector<KiriView::ImageDocumentPageCandidate> candidates;
+    std::vector<kiriview::ImageDocumentPageCandidate> candidates;
     while (iterator.hasNext()) {
         iterator.next();
 
@@ -54,7 +54,7 @@ KiriView::MediaEntrySourceCandidatesResult loadDirectoryCollectionImageDocumentP
             continue;
         }
 
-        std::optional<KiriView::ImageDocumentPageCandidate> candidate
+        std::optional<kiriview::ImageDocumentPageCandidate> candidate
             = Backend::openedCollectionImageDocumentPageCandidate(
                 openedCollectionScope, rootDirectory.relativeFilePath(fileInfo.filePath()));
         if (candidate.has_value()) {
@@ -65,30 +65,30 @@ KiriView::MediaEntrySourceCandidatesResult loadDirectoryCollectionImageDocumentP
     return Backend::mediaEntrySourceCandidatesResult(std::move(candidates));
 }
 
-KiriView::MediaEntrySourceImageDataResult loadDirectoryCollectionImageData(
-    const KiriView::OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath)
+kiriview::MediaEntrySourceImageDataResult loadDirectoryCollectionImageData(
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath)
 {
     const std::optional<QString> directoryPath = directoryPathForCollection(openedCollectionScope);
     if (!directoryPath.has_value()) {
-        return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceImageDataResult>(
+        return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
             Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope));
     }
 
     QFileInfo fileInfo(QDir(*directoryPath).filePath(entryPath));
     if (!fileInfo.isFile()) {
-        return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceImageDataResult>(
+        return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
             Backend::openedCollectionImageNotFoundError());
     }
 
     QFile file(fileInfo.filePath());
     if (!file.open(QIODevice::ReadOnly)) {
-        return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceImageDataResult>(
+        return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
             Backend::openedCollectionImageReadError());
     }
 
     QByteArray data = file.readAll();
     if (file.error() != QFile::NoError || data.size() != fileInfo.size()) {
-        return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceImageDataResult>(
+        return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
             Backend::openedCollectionImageReadError());
     }
 
@@ -100,19 +100,19 @@ class DirectoryCollectionMediaEntrySource final
 {
 public:
     DirectoryCollectionMediaEntrySource(
-        KiriView::OpenedCollectionScopeLocation openedCollectionScope,
-        std::vector<KiriView::ImageDocumentPageCandidate> candidates)
+        kiriview::OpenedCollectionScopeLocation openedCollectionScope,
+        std::vector<kiriview::ImageDocumentPageCandidate> candidates)
         : Backend::MediaEntrySourceWithCandidateSnapshot(std::move(candidates))
         , m_openedCollectionScope(std::move(openedCollectionScope))
     {
     }
 
-    KiriView::MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) override
+    kiriview::MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) override
     {
         const std::optional<QString> entryPath
             = Backend::openedCollectionImageEntryPathForRead(m_openedCollectionScope, imageUrl);
         if (!entryPath.has_value()) {
-            return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceImageDataResult>(
+            return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
                 Backend::openedCollectionImageNotFoundError());
         }
 
@@ -120,31 +120,31 @@ public:
     }
 
 private:
-    KiriView::OpenedCollectionScopeLocation m_openedCollectionScope;
+    kiriview::OpenedCollectionScopeLocation m_openedCollectionScope;
 };
 
-KiriView::MediaEntrySourceOpenResult openDirectoryCollectionMediaEntrySource(
-    const KiriView::OpenedCollectionScopeLocation &openedCollectionScope)
+kiriview::MediaEntrySourceOpenResult openDirectoryCollectionMediaEntrySource(
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
 {
-    KiriView::MediaEntrySourceCandidatesResult candidatesResult
+    kiriview::MediaEntrySourceCandidatesResult candidatesResult
         = loadDirectoryCollectionImageDocumentPageCandidates(openedCollectionScope);
-    if (const auto *error = std::get_if<KiriView::MediaEntrySourceError>(&candidatesResult)) {
-        return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceOpenResult>(
+    if (const auto *error = std::get_if<kiriview::MediaEntrySourceError>(&candidatesResult)) {
+        return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
             error->errorString);
     }
 
-    const auto *candidates = std::get_if<KiriView::MediaEntrySourceCandidates>(&candidatesResult);
+    const auto *candidates = std::get_if<kiriview::MediaEntrySourceCandidates>(&candidatesResult);
     if (candidates == nullptr) {
-        return Backend::mediaEntrySourceErrorResult<KiriView::MediaEntrySourceOpenResult>(
+        return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
             Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope));
     }
 
-    return KiriView::MediaEntrySourcePtr(std::make_shared<DirectoryCollectionMediaEntrySource>(
+    return kiriview::MediaEntrySourcePtr(std::make_shared<DirectoryCollectionMediaEntrySource>(
         openedCollectionScope, candidates->candidates));
 }
 }
 
-namespace KiriView::MediaEntrySourceBackendDetail {
+namespace kiriview::MediaEntrySourceBackendDetail {
 const MediaEntrySourceBackendOperations *directoryCollectionMediaEntrySourceBackendOperations()
 {
     static const MediaEntrySourceBackendOperations operations {

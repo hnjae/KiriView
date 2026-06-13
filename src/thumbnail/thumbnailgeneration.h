@@ -21,7 +21,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 enum class ThumbnailGenerationStatus {
     Ready,
     Failed,

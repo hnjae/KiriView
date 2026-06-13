@@ -3,7 +3,7 @@
 
 #include "bridge/imageactionavailabilityconversion.h"
 
-namespace KiriView::Bridge {
+namespace kiriview::Bridge {
 RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
     const ::ImageActionAvailabilityInput &input)
 {

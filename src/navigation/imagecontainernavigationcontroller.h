@@ -16,7 +16,7 @@
 #include <functional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentPageCandidateRepository;
 
 class ImageContainerNavigationController final : public QObject

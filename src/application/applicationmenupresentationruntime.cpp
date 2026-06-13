@@ -11,7 +11,7 @@
 #include <QSignalBlocker>
 #include <utility>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 ApplicationMenuPresentationRuntime::ApplicationMenuPresentationRuntime(
     ApplicationActionHost &host, ChangeCallback changeCallback)
     : m_host(host)

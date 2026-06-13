@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGESHORTCUTNAVIGATIONPOLICY_H
 #define KIRIVIEW_IMAGESHORTCUTNAVIGATIONPOLICY_H
 
-namespace KiriView {
+namespace kiriview {
 class ImageShortcutNavigationPolicy final
 {
 public:

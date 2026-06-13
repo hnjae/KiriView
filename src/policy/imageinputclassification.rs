@@ -10,7 +10,7 @@ pub(crate) const RAW_IMAGE_EXTENSIONS: &[&str] = &[
     "rdc", "rwl", "rw2", "sr2", "srf", "srw", "x3f",
 ];
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum RustImageInputKind {

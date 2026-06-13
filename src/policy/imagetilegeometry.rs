@@ -7,7 +7,7 @@ const SVG_RASTER_TILE_LEVEL: i32 = 0;
 
 use crate::imagerendergeometry::image_rotation_swaps_axes;
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq)]
     struct RustTileSize {

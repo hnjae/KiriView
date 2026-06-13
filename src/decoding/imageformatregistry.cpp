@@ -8,7 +8,7 @@
 
 #include <KLocalizedString>
 
-namespace KiriView {
+namespace kiriview {
 QStringList supportedImageExtensions()
 {
     return Bridge::qtStringList(rustSupportedImageExtensions());

@@ -12,7 +12,7 @@
 #include <memory>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 enum class ApngOpenStatus {
     NotApng,
     Success,

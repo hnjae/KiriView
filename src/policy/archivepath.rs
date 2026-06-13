@@ -8,7 +8,7 @@ use crate::archiveformat::{
 
 const KIO_FUSE_MARKER: &str = "/kio-fuse-";
 
-#[cxx::bridge(namespace = "KiriView")]
+#[cxx::bridge(namespace = "kiriview")]
 mod ffi {
     struct RustKioFuseArchivePath {
         found: bool,

@@ -9,7 +9,7 @@
 #include <QSize>
 #include <QSizeF>
 
-namespace KiriView {
+namespace kiriview {
 struct ImageTextureCoordinateTransform {
     QPointF origin;
     QPointF xAxis;

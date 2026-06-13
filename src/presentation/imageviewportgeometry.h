@@ -9,7 +9,7 @@
 #include <QSize>
 #include <QSizeF>
 
-namespace KiriView {
+namespace kiriview {
 QRectF imageViewportImageRect(const QSizeF &viewportSize, const QSizeF &displaySize);
 QPointF imageViewportMaximumContentPosition(const QSizeF &viewportSize, const QRectF &imageRect);
 QPointF imageViewportClampedContentPosition(

@@ -13,7 +13,7 @@
 #include <QUrl>
 #include <functional>
 
-namespace KiriView {
+namespace kiriview {
 class ImageDocumentPageCandidateRepository
 {
 public:

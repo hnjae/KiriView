@@ -22,17 +22,17 @@ private Q_SLOTS:
 
 void TestImageSpreadGeometry::spreadSizeCombinesPagesWhenBothAreAvailable()
 {
-    QCOMPARE(KiriView::imageSpreadImageSize(QSize(800, 1200), QSize(700, 1000)), QSize(1500, 1200));
-    QCOMPARE(KiriView::imageSpreadImageSize(QSize(800, 1200), QSize()), QSize(800, 1200));
+    QCOMPARE(kiriview::imageSpreadImageSize(QSize(800, 1200), QSize(700, 1000)), QSize(1500, 1200));
+    QCOMPARE(kiriview::imageSpreadImageSize(QSize(800, 1200), QSize()), QSize(800, 1200));
 }
 
 void TestImageSpreadGeometry::scaledPageDisplaySizeUsesSpreadWidthRatio()
 {
-    QCOMPARE(KiriView::imageSpreadScaledPageDisplaySize(
+    QCOMPARE(kiriview::imageSpreadScaledPageDisplaySize(
                  QSize(800, 1200), QSize(1500, 1200), QSizeF(750.0, 600.0)),
         QSizeF(400.0, 600.0));
 
-    const QSizeF invalidSize = KiriView::imageSpreadScaledPageDisplaySize(
+    const QSizeF invalidSize = kiriview::imageSpreadScaledPageDisplaySize(
         QSize(), QSize(1500, 1200), QSizeF(750.0, 600.0));
     QVERIFY(!invalidSize.isValid());
 }
@@ -43,21 +43,21 @@ void TestImageSpreadGeometry::pageRectsRespectReadingDirectionAndVerticalCenteri
     const QSizeF secondarySize(350.0, 500.0);
     const QSizeF spreadSize(750.0, 600.0);
 
-    QCOMPARE(KiriView::imageSpreadPrimaryPageRect(primarySize, secondarySize, spreadSize, false),
+    QCOMPARE(kiriview::imageSpreadPrimaryPageRect(primarySize, secondarySize, spreadSize, false),
         QRectF(0.0, 0.0, 400.0, 600.0));
-    QCOMPARE(KiriView::imageSpreadSecondaryPageRect(primarySize, secondarySize, spreadSize, false),
+    QCOMPARE(kiriview::imageSpreadSecondaryPageRect(primarySize, secondarySize, spreadSize, false),
         QRectF(400.0, 50.0, 350.0, 500.0));
-    QCOMPARE(KiriView::imageSpreadPrimaryPageRect(primarySize, secondarySize, spreadSize, true),
+    QCOMPARE(kiriview::imageSpreadPrimaryPageRect(primarySize, secondarySize, spreadSize, true),
         QRectF(350.0, 0.0, 400.0, 600.0));
-    QCOMPARE(KiriView::imageSpreadSecondaryPageRect(primarySize, secondarySize, spreadSize, true),
+    QCOMPARE(kiriview::imageSpreadSecondaryPageRect(primarySize, secondarySize, spreadSize, true),
         QRectF(0.0, 50.0, 350.0, 500.0));
 }
 
 void TestImageSpreadGeometry::widePagePolicyRequiresLandscapeImage()
 {
-    QVERIFY(KiriView::imageSpreadPageIsWide(QSize(1200, 800)));
-    QVERIFY(!KiriView::imageSpreadPageIsWide(QSize(800, 800)));
-    QVERIFY(!KiriView::imageSpreadPageIsWide(QSize()));
+    QVERIFY(kiriview::imageSpreadPageIsWide(QSize(1200, 800)));
+    QVERIFY(!kiriview::imageSpreadPageIsWide(QSize(800, 800)));
+    QVERIFY(!kiriview::imageSpreadPageIsWide(QSize()));
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadGeometry)

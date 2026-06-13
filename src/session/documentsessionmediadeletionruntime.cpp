@@ -8,7 +8,7 @@
 #include <memory>
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 DocumentSessionMediaDeletionRuntime::DocumentSessionMediaDeletionRuntime(
     FileDeletionProvider fileDeletionProvider)
     : m_fileDeletionProvider(fileDeletionProviderWithDefault(std::move(fileDeletionProvider)))

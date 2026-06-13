@@ -11,7 +11,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 struct HeifTileGrid {
     int columns = 0;
     int rows = 0;

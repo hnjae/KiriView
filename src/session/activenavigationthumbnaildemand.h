@@ -10,7 +10,7 @@
 #include <QtGlobal>
 #include <optional>
 
-namespace KiriView {
+namespace kiriview {
 enum class ActiveNavigationThumbnailDemandPriority {
     Visible,
     Nearby,

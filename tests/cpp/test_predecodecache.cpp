@@ -15,8 +15,8 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::indexedImageUrl;
-using KiriView::TestSupport::staticDisplayTestImagePayload;
+using kiriview::TestSupport::indexedImageUrl;
+using kiriview::TestSupport::staticDisplayTestImagePayload;
 
 QImage cacheImage()
 {
@@ -32,31 +32,31 @@ QImage tooLargeImage()
     return image;
 }
 
-KiriView::OpenedCollectionScopeLocation comicBookArchiveCollection()
+kiriview::OpenedCollectionScopeLocation comicBookArchiveCollection()
 {
-    return KiriView::OpenedCollectionScopeLocation::fromUrls(
+    return kiriview::OpenedCollectionScopeLocation::fromUrls(
         QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),
         QUrl(QStringLiteral("zip:///books/book.cbz/")),
-        KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+        kiriview::OpenedCollectionScopeKind::ComicBookArchive);
 }
 
-KiriView::PredecodeActiveLoads activeLoads(std::vector<QUrl> urls)
+kiriview::PredecodeActiveLoads activeLoads(std::vector<QUrl> urls)
 {
-    return KiriView::PredecodeActiveLoads::fromUrls(std::move(urls));
+    return kiriview::PredecodeActiveLoads::fromUrls(std::move(urls));
 }
 
-KiriView::StaticDisplayImagePayload cacheDisplayImage(
+kiriview::StaticDisplayImagePayload cacheDisplayImage(
     const QImage &image, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
-    const KiriView::DisplayImageQuality quality = firstDisplayPixelsPerSourcePixel > 0.0
-        ? KiriView::DisplayImageQuality::FirstDisplay
-        : KiriView::DisplayImageQuality::Exact;
+    const kiriview::DisplayImageQuality quality = firstDisplayPixelsPerSourcePixel > 0.0
+        ? kiriview::DisplayImageQuality::FirstDisplay
+        : kiriview::DisplayImageQuality::Exact;
     return staticDisplayTestImagePayload(image, image, firstDisplayPixelsPerSourcePixel, quality);
 }
 
-KiriView::PredecodeCache defaultCache()
+kiriview::PredecodeCache defaultCache()
 {
-    return KiriView::PredecodeCache(KiriView::predecodeCachePreferredByteBudget());
+    return kiriview::PredecodeCache(kiriview::predecodeCachePreferredByteBudget());
 }
 }
 
@@ -80,112 +80,112 @@ private Q_SLOTS:
 
 void TestPredecodeCache::queueContainsOnlyMissingWindowImages()
 {
-    KiriView::PredecodeCache cache = defaultCache();
+    kiriview::PredecodeCache cache = defaultCache();
     const QUrl displayedUrl = indexedImageUrl(0);
     const QUrl firstQueuedUrl = indexedImageUrl(1);
     const QUrl secondQueuedUrl = indexedImageUrl(2);
 
     cache.setWindowUrls({ displayedUrl, firstQueuedUrl, firstQueuedUrl, QUrl(), secondQueuedUrl });
-    const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+    const kiriview::OpenedCollectionScopeLocation openedCollectionScope
         = comicBookArchiveCollection();
     const QImage firstImage = cacheImage();
     cache.cacheImage(firstQueuedUrl, openedCollectionScope, cacheDisplayImage(firstImage));
     cache.enqueueMissingWindowLoads(
-        displayedUrl, openedCollectionScope, KiriView::PredecodeActiveLoads {});
+        displayedUrl, openedCollectionScope, kiriview::PredecodeActiveLoads {});
 
-    QVERIFY(cache.isInFlight(secondQueuedUrl, KiriView::PredecodeActiveLoads {}));
+    QVERIFY(cache.isInFlight(secondQueuedUrl, kiriview::PredecodeActiveLoads {}));
 
-    const std::optional<KiriView::PredecodeRequest> request
+    const std::optional<kiriview::PredecodeRequest> request
         = cache.takeNextRequest(activeLoads({ indexedImageUrl(9) }));
     QVERIFY(request.has_value());
     QCOMPARE(request->url, secondQueuedUrl);
     QCOMPARE(request->openedCollectionScope.rootUrl(), openedCollectionScope.rootUrl());
-    QVERIFY(!cache.takeNextRequest(KiriView::PredecodeActiveLoads {}).has_value());
+    QVERIFY(!cache.takeNextRequest(kiriview::PredecodeActiveLoads {}).has_value());
 }
 
 void TestPredecodeCache::queueSkipsAllDisplayedWindowImages()
 {
-    KiriView::PredecodeCache cache = defaultCache();
+    kiriview::PredecodeCache cache = defaultCache();
     const QUrl primaryDisplayedUrl = indexedImageUrl(0);
     const QUrl secondaryDisplayedUrl = indexedImageUrl(1);
     const QUrl queuedUrl = indexedImageUrl(2);
-    const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+    const kiriview::OpenedCollectionScopeLocation openedCollectionScope
         = comicBookArchiveCollection();
 
     cache.setDisplayedUrls({ primaryDisplayedUrl, secondaryDisplayedUrl });
     cache.setWindowUrls({ primaryDisplayedUrl, secondaryDisplayedUrl, queuedUrl });
     cache.enqueueMissingWindowLoads(
-        primaryDisplayedUrl, openedCollectionScope, KiriView::PredecodeActiveLoads {});
+        primaryDisplayedUrl, openedCollectionScope, kiriview::PredecodeActiveLoads {});
 
-    const std::optional<KiriView::PredecodeRequest> request
-        = cache.takeNextRequest(KiriView::PredecodeActiveLoads {});
+    const std::optional<kiriview::PredecodeRequest> request
+        = cache.takeNextRequest(kiriview::PredecodeActiveLoads {});
     QVERIFY(request.has_value());
     QCOMPARE(request->url, queuedUrl);
-    QVERIFY(!cache.takeNextRequest(KiriView::PredecodeActiveLoads {}).has_value());
+    QVERIFY(!cache.takeNextRequest(kiriview::PredecodeActiveLoads {}).has_value());
 }
 
 void TestPredecodeCache::takeNextRequestDiscardsSkippedQueuePrefix()
 {
-    KiriView::PredecodeCache cache = defaultCache();
+    kiriview::PredecodeCache cache = defaultCache();
     const QUrl cachedQueuedUrl = indexedImageUrl(0);
     const QUrl firstRequestUrl = indexedImageUrl(1);
     const QUrl secondRequestUrl = indexedImageUrl(2);
-    const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+    const kiriview::OpenedCollectionScopeLocation openedCollectionScope
         = comicBookArchiveCollection();
 
     cache.setWindowUrls({ cachedQueuedUrl, firstRequestUrl, secondRequestUrl });
     cache.enqueueMissingWindowLoads(
-        indexedImageUrl(9), openedCollectionScope, KiriView::PredecodeActiveLoads {});
+        indexedImageUrl(9), openedCollectionScope, kiriview::PredecodeActiveLoads {});
     cache.cacheImage(cachedQueuedUrl, openedCollectionScope, cacheDisplayImage(cacheImage()));
 
-    const std::optional<KiriView::PredecodeRequest> firstRequest
-        = cache.takeNextRequest(KiriView::PredecodeActiveLoads {});
+    const std::optional<kiriview::PredecodeRequest> firstRequest
+        = cache.takeNextRequest(kiriview::PredecodeActiveLoads {});
     QVERIFY(firstRequest.has_value());
     QCOMPARE(firstRequest->url, firstRequestUrl);
 
-    const std::optional<KiriView::PredecodeRequest> secondRequest
-        = cache.takeNextRequest(KiriView::PredecodeActiveLoads {});
+    const std::optional<kiriview::PredecodeRequest> secondRequest
+        = cache.takeNextRequest(kiriview::PredecodeActiveLoads {});
     QVERIFY(secondRequest.has_value());
     QCOMPARE(secondRequest->url, secondRequestUrl);
-    QVERIFY(!cache.takeNextRequest(KiriView::PredecodeActiveLoads {}).has_value());
+    QVERIFY(!cache.takeNextRequest(kiriview::PredecodeActiveLoads {}).has_value());
 }
 
 void TestPredecodeCache::cacheEligibilityUsesByteBudgetPolicy()
 {
-    const KiriView::StaticDisplayImagePayload image = cacheDisplayImage(cacheImage());
+    const kiriview::StaticDisplayImagePayload image = cacheDisplayImage(cacheImage());
     const qsizetype byteCost = image.byteCost();
 
-    QVERIFY(KiriView::PredecodeCache::canCacheImage(
-        image, KiriView::predecodeCachePreferredByteBudget()));
-    QVERIFY(KiriView::PredecodeCache::canCacheImage(image, byteCost));
-    QVERIFY(!KiriView::PredecodeCache::canCacheImage(image, byteCost - 1));
+    QVERIFY(kiriview::PredecodeCache::canCacheImage(
+        image, kiriview::predecodeCachePreferredByteBudget()));
+    QVERIFY(kiriview::PredecodeCache::canCacheImage(image, byteCost));
+    QVERIFY(!kiriview::PredecodeCache::canCacheImage(image, byteCost - 1));
     QVERIFY(
-        !KiriView::PredecodeCache::canCacheImage(KiriView::StaticDisplayImagePayload {}, byteCost));
-    QVERIFY(!KiriView::PredecodeCache::canCacheImage(image, 0));
+        !kiriview::PredecodeCache::canCacheImage(kiriview::StaticDisplayImagePayload {}, byteCost));
+    QVERIFY(!kiriview::PredecodeCache::canCacheImage(image, 0));
 }
 
 void TestPredecodeCache::cacheStoresAndFindsWindowImages()
 {
-    KiriView::PredecodeCache cache(80);
+    kiriview::PredecodeCache cache(80);
     const QUrl url = indexedImageUrl(0);
-    const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+    const kiriview::OpenedCollectionScopeLocation openedCollectionScope
         = comicBookArchiveCollection();
     const QImage image = cacheImage();
 
     cache.setWindowUrls({ url });
-    KiriView::StaticDisplayImagePayload payload = cacheDisplayImage(image, 0.5);
+    kiriview::StaticDisplayImagePayload payload = cacheDisplayImage(image, 0.5);
     payload.sourceIdentity = QStringLiteral("file:///tmp/predecode-source.jpg");
     payload.imageReaderTransform.transformations = QImageIOHandler::TransformationRotate90;
     payload.embeddedMetadata.cameraMake = QStringLiteral("Kiri Camera");
     cache.cacheImage(url, openedCollectionScope, std::move(payload));
 
-    const std::optional<KiriView::PredecodedImage> found = cache.findImage(url);
+    const std::optional<kiriview::PredecodedImage> found = cache.findImage(url);
     QVERIFY(found.has_value());
     QCOMPARE(found->displayImage.image.size(), image.size());
     QCOMPARE(found->displayImage.originalSize, image.size());
     QCOMPARE(
         found->displayImage.sourceIdentity, QStringLiteral("file:///tmp/predecode-source.jpg"));
-    QCOMPARE(found->displayImage.quality, KiriView::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(found->displayImage.quality, kiriview::DisplayImageQuality::FirstDisplay);
     QCOMPARE(found->displayImage.displayPixelsPerSourcePixel, 0.5);
     QCOMPARE(found->displayImage.imageReaderTransform.transformations,
         QImageIOHandler::TransformationRotate90);
@@ -198,26 +198,26 @@ void TestPredecodeCache::cacheStoresAndFindsWindowImages()
 
 void TestPredecodeCache::cacheFindsImagesByUrlAndOpenedCollectionScope()
 {
-    KiriView::PredecodeCache cache(160);
+    kiriview::PredecodeCache cache(160);
     const QUrl url = indexedImageUrl(0);
-    const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+    const kiriview::OpenedCollectionScopeLocation openedCollectionScope
         = comicBookArchiveCollection();
-    const KiriView::DisplayedImageLocation directLocation
-        = KiriView::DisplayedImageLocation::fromUrl(url);
-    const KiriView::DisplayedImageLocation openedCollectionLocation
-        = KiriView::DisplayedImageLocation::fromOpenedCollectionScope(url, openedCollectionScope);
+    const kiriview::DisplayedImageLocation directLocation
+        = kiriview::DisplayedImageLocation::fromUrl(url);
+    const kiriview::DisplayedImageLocation openedCollectionLocation
+        = kiriview::DisplayedImageLocation::fromOpenedCollectionScope(url, openedCollectionScope);
 
     cache.setWindowUrls({ url });
-    cache.cacheImage(url, KiriView::OpenedCollectionScopeLocation::none(),
+    cache.cacheImage(url, kiriview::OpenedCollectionScopeLocation::none(),
         cacheDisplayImage(cacheImage(), 0.25));
     cache.cacheImage(url, openedCollectionScope, cacheDisplayImage(cacheImage(), 0.75));
 
-    const std::optional<KiriView::PredecodedImage> direct = cache.findImage(directLocation);
+    const std::optional<kiriview::PredecodedImage> direct = cache.findImage(directLocation);
     QVERIFY(direct.has_value());
     QVERIFY(direct->location == directLocation);
     QCOMPARE(direct->displayImage.displayPixelsPerSourcePixel, 0.25);
 
-    const std::optional<KiriView::PredecodedImage> openedCollection
+    const std::optional<kiriview::PredecodedImage> openedCollection
         = cache.findImage(openedCollectionLocation);
     QVERIFY(openedCollection.has_value());
     QVERIFY(openedCollection->location == openedCollectionLocation);
@@ -226,11 +226,11 @@ void TestPredecodeCache::cacheFindsImagesByUrlAndOpenedCollectionScope()
 
 void TestPredecodeCache::cacheRetainsDisplayedImagesBeforeAdjacentImages()
 {
-    KiriView::PredecodeCache cache(160);
+    kiriview::PredecodeCache cache(160);
     const QUrl primaryDisplayedUrl = indexedImageUrl(0);
     const QUrl secondaryDisplayedUrl = indexedImageUrl(1);
     const QUrl adjacentUrl = indexedImageUrl(2);
-    const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+    const kiriview::OpenedCollectionScopeLocation openedCollectionScope
         = comicBookArchiveCollection();
     const QImage image = cacheImage();
 
@@ -249,11 +249,11 @@ void TestPredecodeCache::cacheRetainsDisplayedImagesBeforeAdjacentImages()
 
 void TestPredecodeCache::cacheRetainsRecentDisplayedImagesBeforeAdjacentImages()
 {
-    KiriView::PredecodeCache cache(160);
+    kiriview::PredecodeCache cache(160);
     const QUrl recentDisplayedUrl = indexedImageUrl(0);
     const QUrl currentDisplayedUrl = indexedImageUrl(1);
     const QUrl adjacentUrl = indexedImageUrl(2);
-    const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+    const kiriview::OpenedCollectionScopeLocation openedCollectionScope
         = comicBookArchiveCollection();
     const QImage image = cacheImage();
 
@@ -273,8 +273,8 @@ void TestPredecodeCache::cacheRetainsRecentDisplayedImagesBeforeAdjacentImages()
 
 void TestPredecodeCache::cacheKeepsOnlyFourRecentDisplayedImages()
 {
-    KiriView::PredecodeCache cache(1000);
-    const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+    kiriview::PredecodeCache cache(1000);
+    const kiriview::OpenedCollectionScopeLocation openedCollectionScope
         = comicBookArchiveCollection();
     const QImage image = cacheImage();
 
@@ -294,10 +294,10 @@ void TestPredecodeCache::cacheKeepsOnlyFourRecentDisplayedImages()
 
 void TestPredecodeCache::cacheRejectsUncacheableAndOversizedImages()
 {
-    KiriView::PredecodeCache cache(160);
+    kiriview::PredecodeCache cache(160);
     const QUrl url = indexedImageUrl(0);
     const QUrl outsideWindowUrl = indexedImageUrl(9);
-    const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+    const kiriview::OpenedCollectionScopeLocation openedCollectionScope
         = comicBookArchiveCollection();
 
     cache.setWindowUrls({ url });
@@ -306,7 +306,7 @@ void TestPredecodeCache::cacheRejectsUncacheableAndOversizedImages()
     QVERIFY(!cache.hasImage(url));
 
     cache.cacheDisplayedImage(
-        true, url, openedCollectionScope, KiriView::StaticDisplayImagePayload {});
+        true, url, openedCollectionScope, kiriview::StaticDisplayImagePayload {});
     QVERIFY(!cache.hasImage(url));
 
     cache.cacheImage(outsideWindowUrl, openedCollectionScope, cacheDisplayImage(image));
@@ -319,11 +319,11 @@ void TestPredecodeCache::cacheRejectsUncacheableAndOversizedImages()
 
 void TestPredecodeCache::cacheEvictsLowestPriorityImagesWhenBudgetIsExceeded()
 {
-    KiriView::PredecodeCache cache(160);
+    kiriview::PredecodeCache cache(160);
     const QUrl firstUrl = indexedImageUrl(0);
     const QUrl secondUrl = indexedImageUrl(1);
     const QUrl thirdUrl = indexedImageUrl(2);
-    const KiriView::OpenedCollectionScopeLocation openedCollectionScope
+    const kiriview::OpenedCollectionScopeLocation openedCollectionScope
         = comicBookArchiveCollection();
 
     cache.setWindowUrls({ firstUrl, secondUrl, thirdUrl });

@@ -20,9 +20,9 @@ struct FakePowerProfilePortal {
     int subscriptionCount = 0;
     QObject *subscriber = nullptr;
 
-    KiriView::PowerProfileMonitorRuntime runtime()
+    kiriview::PowerProfileMonitorRuntime runtime()
     {
-        return KiriView::PowerProfileMonitorRuntime {
+        return kiriview::PowerProfileMonitorRuntime {
             [this]() {
                 ++readCount;
                 return readArguments;
@@ -65,7 +65,7 @@ void TestPowerProfileMonitor::initialRefreshReadsPortalAndSubscribes()
     portal.readArguments = { QVariant::fromValue(QDBusVariant(QVariant(true))) };
     std::vector<bool> changes;
 
-    KiriView::PowerProfileMonitor monitor(
+    kiriview::PowerProfileMonitor monitor(
         nullptr, [&changes](bool enabled) { changes.push_back(enabled); }, portal.runtime());
 
     QCOMPARE(portal.readCount, 1);
@@ -80,7 +80,7 @@ void TestPowerProfileMonitor::changedPropertyUpdatesCanonicalStateWithoutRefresh
 {
     FakePowerProfilePortal portal;
     std::vector<bool> changes;
-    KiriView::PowerProfileMonitor monitor(
+    kiriview::PowerProfileMonitor monitor(
         nullptr, [&changes](bool enabled) { changes.push_back(enabled); }, portal.runtime());
 
     QVariantMap changedProperties;
@@ -100,7 +100,7 @@ void TestPowerProfileMonitor::invalidatedPropertyRequestsRefreshThroughRuntime()
 {
     FakePowerProfilePortal portal;
     std::vector<bool> changes;
-    KiriView::PowerProfileMonitor monitor(
+    kiriview::PowerProfileMonitor monitor(
         nullptr, [&changes](bool enabled) { changes.push_back(enabled); }, portal.runtime());
 
     portal.readArguments = { true };
@@ -127,14 +127,14 @@ void TestPowerProfileMonitor::invalidatedPropertyRequestsRefreshThroughRuntime()
 void TestPowerProfileMonitor::runtimeDefaultsFillMissingEffectsAndPreserveOverrides()
 {
     int readCount = 0;
-    KiriView::PowerProfileMonitorRuntime runtime;
+    kiriview::PowerProfileMonitorRuntime runtime;
     runtime.readPowerSaverEnabled = [&readCount]() {
         ++readCount;
         return QVariantList { true };
     };
 
-    KiriView::PowerProfileMonitorRuntime resolved
-        = KiriView::powerProfileMonitorRuntimeWithDefaults(std::move(runtime));
+    kiriview::PowerProfileMonitorRuntime resolved
+        = kiriview::powerProfileMonitorRuntimeWithDefaults(std::move(runtime));
     QVERIFY(resolved.readPowerSaverEnabled);
     QVERIFY(resolved.subscribePropertiesChanged);
     const QVariantList arguments = resolved.readPowerSaverEnabled();

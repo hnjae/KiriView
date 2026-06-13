@@ -13,7 +13,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 class VideoOutputRenderContextObserver;
 
 struct VideoOutputRuntimeCallbacks {

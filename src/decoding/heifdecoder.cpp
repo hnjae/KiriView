@@ -26,60 +26,60 @@
 #include <utility>
 
 namespace {
-std::optional<KiriView::DecodedImageResult> decodeHeifStillImageDataForInfo(const QByteArray &data,
-    const KiriView::HeifContainerInfo &info, const KiriView::ImageDecodeRequest &request)
+std::optional<kiriview::DecodedImageResult> decodeHeifStillImageDataForInfo(const QByteArray &data,
+    const kiriview::HeifContainerInfo &info, const kiriview::ImageDecodeRequest &request)
 {
     if (!info.stillImage) {
         return std::nullopt;
     }
 
     QString errorString;
-    std::shared_ptr<KiriView::ImageTileSource> source
-        = KiriView::openHeifTileSource(data, &errorString);
+    std::shared_ptr<kiriview::ImageTileSource> source
+        = kiriview::openHeifTileSource(data, &errorString);
     if (source == nullptr) {
-        return KiriView::failedDecodedImageResult(errorString);
+        return kiriview::failedDecodedImageResult(errorString);
     }
 
-    return KiriView::staticDecodedImageResult(std::move(source), request, &errorString);
+    return kiriview::staticDecodedImageResult(std::move(source), request, &errorString);
 }
 
-std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
-    const QByteArray &data, const KiriView::HeifContainerInfo &info,
-    const KiriView::ImageDecodeRequest &request)
+std::optional<kiriview::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
+    const QByteArray &data, const kiriview::HeifContainerInfo &info,
+    const kiriview::ImageDecodeRequest &request)
 {
     if (!info.isHeif()) {
         return std::nullopt;
     }
 
-    KiriView::HeifSequenceReader reader;
-    const KiriView::HeifSequenceOpenResult openResult = reader.open(data);
-    if (openResult.status == KiriView::HeifSequenceOpenStatus::NotHeif
-        || openResult.status == KiriView::HeifSequenceOpenStatus::NotSequence) {
+    kiriview::HeifSequenceReader reader;
+    const kiriview::HeifSequenceOpenResult openResult = reader.open(data);
+    if (openResult.status == kiriview::HeifSequenceOpenStatus::NotHeif
+        || openResult.status == kiriview::HeifSequenceOpenStatus::NotSequence) {
         return std::nullopt;
     }
-    if (openResult.status == KiriView::HeifSequenceOpenStatus::Error) {
-        return KiriView::failedDecodedImageResult(openResult.errorString);
+    if (openResult.status == kiriview::HeifSequenceOpenStatus::Error) {
+        return kiriview::failedDecodedImageResult(openResult.errorString);
     }
 
     QString errorString;
-    std::optional<KiriView::AnimationFrame> firstFrame = reader.readNextFrame(&errorString);
+    std::optional<kiriview::AnimationFrame> firstFrame = reader.readNextFrame(&errorString);
     if (!firstFrame.has_value()) {
         if (errorString.isEmpty()) {
-            errorString = KiriView::heifSequenceDecodeErrorString();
+            errorString = kiriview::heifSequenceDecodeErrorString();
         }
-        return KiriView::failedDecodedImageResult(errorString);
+        return kiriview::failedDecodedImageResult(errorString);
     }
 
-    return KiriView::successfulDecodedImageResult(KiriView::HeifSequenceAnimationImage {
+    return kiriview::successfulDecodedImageResult(kiriview::HeifSequenceAnimationImage {
         std::move(firstFrame->image),
         data,
         {},
-        KiriView::sourceKeyForUrl(request.imageUrl()).identity,
+        kiriview::sourceKeyForUrl(request.imageUrl()).identity,
     });
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &data)
 {
     return decodeHeifStillImageData(data, {});

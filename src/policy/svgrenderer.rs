@@ -8,7 +8,7 @@ use resvg::{
 
 #[cxx::bridge]
 mod ffi {
-    #[namespace = "KiriView"]
+    #[namespace = "kiriview"]
     #[derive(Clone, Copy, Debug, PartialEq)]
     struct RustSvgImageSize {
         valid: bool,
@@ -16,7 +16,7 @@ mod ffi {
         height: i32,
     }
 
-    #[namespace = "KiriView"]
+    #[namespace = "kiriview"]
     extern "Rust" {
         #[cxx_name = "rustSvgIntrinsicSize"]
         fn rust_svg_intrinsic_size(data: &[u8]) -> RustSvgImageSize;

@@ -12,7 +12,7 @@
 
 class QObject;
 
-namespace KiriView {
+namespace kiriview {
 struct VideoPlaybackUrlResolution {
     quint64 operationId = 0;
     QUrl sourceUrl;

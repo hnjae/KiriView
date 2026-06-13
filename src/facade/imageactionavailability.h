@@ -134,11 +134,11 @@ Q_SIGNALS:
     void availabilityChanged();
 
 private:
-    KiriView::ApplicationActions::ImageActionAvailabilityRuntime m_runtime;
+    kiriview::ApplicationActions::ImageActionAvailabilityRuntime m_runtime;
 };
 
 static_assert(static_cast<int>(ImageActionAvailability::MediaStartEndViewerShortcutScope)
     == static_cast<int>(
-        KiriView::ApplicationActions::ImageShortcutScope::MediaStartEndViewerShortcutScope));
+        kiriview::ApplicationActions::ImageShortcutScope::MediaStartEndViewerShortcutScope));
 
 #endif

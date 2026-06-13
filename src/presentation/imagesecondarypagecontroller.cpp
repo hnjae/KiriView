@@ -11,7 +11,7 @@
 
 #include <utility>
 
-namespace KiriView {
+namespace kiriview {
 ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
     RenderContextProvider renderContextProvider, ImageSecondaryPageController::Callbacks callbacks,
     ImageDocumentPageCandidateProvider candidateProvider,

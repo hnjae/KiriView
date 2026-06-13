@@ -24,7 +24,7 @@ template <typename Predicate> bool matchesUrlFileNameOrString(const QUrl &url, P
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 QStringList supportedOrdinaryMediaExtensions()
 {
     return Bridge::qtStringList(rustSupportedOrdinaryMediaExtensions());
@@ -47,12 +47,12 @@ bool isSupportedDirectVideoFileName(const QString &name)
 
 bool isSupportedDirectImageUrl(const QUrl &url)
 {
-    return matchesUrlFileNameOrString(url, KiriView::isSupportedImageFileName);
+    return matchesUrlFileNameOrString(url, kiriview::isSupportedImageFileName);
 }
 
 bool isSupportedDirectVideoUrl(const QUrl &url)
 {
-    return matchesUrlFileNameOrString(url, KiriView::isSupportedDirectVideoFileName);
+    return matchesUrlFileNameOrString(url, kiriview::isSupportedDirectVideoFileName);
 }
 
 bool isSupportedStillImageDirectMediaNavigationCandidate(

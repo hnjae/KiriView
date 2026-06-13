@@ -15,15 +15,15 @@
 #include <vector>
 
 namespace {
-KiriView::OpenedCollectionScopeLocation testArchiveCollection()
+kiriview::OpenedCollectionScopeLocation testArchiveCollection()
 {
-    return KiriView::OpenedCollectionScopeLocation::fromUrls(
+    return kiriview::OpenedCollectionScopeLocation::fromUrls(
         QUrl(QStringLiteral("file:///tmp/book.cbz")),
         QUrl(QStringLiteral("file:///tmp/book.cbz#/")),
-        KiriView::OpenedCollectionScopeKind::ComicBookArchive);
+        kiriview::OpenedCollectionScopeKind::ComicBookArchive);
 }
 
-class FakePowerSaverMonitor final : public KiriView::PowerSaverStateMonitor
+class FakePowerSaverMonitor final : public kiriview::PowerSaverStateMonitor
 {
 public:
     bool powerSaverEnabled() const override { return true; }
@@ -44,8 +44,8 @@ private Q_SLOTS:
 
 void TestImageDocumentRuntimeDependencies::defaultDependenciesUseMediaEntrySourceStore()
 {
-    KiriView::ImageDocumentRuntimeDependencies resolved
-        = KiriView::resolveImageDocumentRuntimeDependencies({}, this);
+    kiriview::ImageDocumentRuntimeDependencies resolved
+        = kiriview::resolveImageDocumentRuntimeDependencies({}, this);
 
     QVERIFY(resolved.mediaEntrySourceStore);
     QVERIFY(resolved.candidateProvider.directoryImageDocumentPages);
@@ -58,19 +58,19 @@ void TestImageDocumentRuntimeDependencies::defaultDependenciesUseMediaEntrySourc
     QVERIFY(resolved.powerSaver.monitor);
     QVERIFY(resolved.cacheBudgets.predecodeCacheByteBudget > 0);
     QVERIFY(resolved.cacheBudgets.predecodeCacheByteBudget
-        <= KiriView::predecodeCachePreferredByteBudget());
+        <= kiriview::predecodeCachePreferredByteBudget());
     QVERIFY(resolved.cacheBudgets.displayImageCacheByteBudget > 0);
     QVERIFY(resolved.cacheBudgets.displayImageCacheByteBudget
-        <= KiriView::displayImageCachePreferredByteBudget());
+        <= kiriview::displayImageCachePreferredByteBudget());
 }
 
 void TestImageDocumentRuntimeDependencies::
     sharedDisplayStoreDefaultBudgetMatchesImageDocumentBudget()
 {
-    const KiriView::ImageCacheBudgets documentBudgets
-        = KiriView::resolveImageDocumentCacheBudgets({});
-    const std::shared_ptr<KiriView::DisplayImageStore> sharedStore
-        = KiriView::sharedDisplayImageStore();
+    const kiriview::ImageCacheBudgets documentBudgets
+        = kiriview::resolveImageDocumentCacheBudgets({});
+    const std::shared_ptr<kiriview::DisplayImageStore> sharedStore
+        = kiriview::sharedDisplayImageStore();
 
     QCOMPARE(sharedStore->byteBudget(), documentBudgets.displayImageCacheByteBudget);
 }
@@ -78,17 +78,17 @@ void TestImageDocumentRuntimeDependencies::
 void TestImageDocumentRuntimeDependencies::partialNonSourceOverridesStillUseMediaEntrySourceStore()
 {
     int directoryLoadCount = 0;
-    KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
+    kiriview::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.candidateProvider.directoryImageDocumentPages
         = [&directoryLoadCount](QObject *, QUrl,
-              KiriView::ImageDocumentPageCandidatesCallback callback, KiriView::ErrorCallback) {
+              kiriview::ImageDocumentPageCandidatesCallback callback, kiriview::ErrorCallback) {
               ++directoryLoadCount;
               callback({});
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
 
-    KiriView::ImageDocumentRuntimeDependencies resolved
-        = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
+    kiriview::ImageDocumentRuntimeDependencies resolved
+        = kiriview::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
 
     QVERIFY(resolved.mediaEntrySourceStore);
     QVERIFY(resolved.candidateProvider.directoryImageDocumentPages);
@@ -99,7 +99,7 @@ void TestImageDocumentRuntimeDependencies::partialNonSourceOverridesStillUseMedi
     resolved.candidateProvider.directoryImageDocumentPages(nullptr,
         QUrl::fromLocalFile(QStringLiteral("/tmp/images/")),
         [&candidatesReported](
-            std::vector<KiriView::ImageDocumentPageCandidate>) { candidatesReported = true; },
+            std::vector<kiriview::ImageDocumentPageCandidate>) { candidatesReported = true; },
         {});
     QCOMPARE(directoryLoadCount, 1);
     QVERIFY(candidatesReported);
@@ -109,16 +109,16 @@ void TestImageDocumentRuntimeDependencies::
     customMediaEntrySourceFactoryWrapsOpenedCollectionProviders()
 {
     int openCount = 0;
-    KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
+    kiriview::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.mediaEntrySourceFactory
-        = [&openCount](const KiriView::OpenedCollectionScopeLocation &)
-        -> KiriView::MediaEntrySourceOpenResult {
+        = [&openCount](const kiriview::OpenedCollectionScopeLocation &)
+        -> kiriview::MediaEntrySourceOpenResult {
         ++openCount;
-        return KiriView::MediaEntrySourceError { QStringLiteral("session failed") };
+        return kiriview::MediaEntrySourceError { QStringLiteral("session failed") };
     };
 
-    KiriView::ImageDocumentRuntimeDependencies resolved
-        = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
+    kiriview::ImageDocumentRuntimeDependencies resolved
+        = kiriview::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
 
     QVERIFY(resolved.mediaEntrySourceStore);
 
@@ -127,7 +127,7 @@ void TestImageDocumentRuntimeDependencies::
     resolved.candidateProvider.openedCollectionCandidates(
         nullptr, testArchiveCollection(),
         [&candidatesReported](
-            std::vector<KiriView::ImageDocumentPageCandidate>) { candidatesReported = true; },
+            std::vector<kiriview::ImageDocumentPageCandidate>) { candidatesReported = true; },
         [&errorString](const QString &error) { errorString = error; });
 
     QCOMPARE(openCount, 1);
@@ -143,37 +143,37 @@ void TestImageDocumentRuntimeDependencies::
     int fileDeletionCount = 0;
     int powerSaverMonitorCount = 0;
 
-    KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
+    kiriview::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.candidateProvider.openedCollectionCandidates
-        = [&openedCollectionLoadCount](QObject *, KiriView::OpenedCollectionScopeLocation,
-              KiriView::ImageDocumentPageCandidatesCallback callback, KiriView::ErrorCallback) {
+        = [&openedCollectionLoadCount](QObject *, kiriview::OpenedCollectionScopeLocation,
+              kiriview::ImageDocumentPageCandidatesCallback callback, kiriview::ErrorCallback) {
               ++openedCollectionLoadCount;
               callback({});
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
     dependencies.imageDecode.dataLoader
-        = [&dataLoadCount](QObject *, KiriView::ImageDecodeRequest,
-              KiriView::ImageDataCallback callback, KiriView::ErrorCallback) {
+        = [&dataLoadCount](QObject *, kiriview::ImageDecodeRequest,
+              kiriview::ImageDataCallback callback, kiriview::ErrorCallback) {
               ++dataLoadCount;
               callback(QByteArrayLiteral("custom image data"));
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
     dependencies.fileDeletionProvider
         = [&fileDeletionCount](
-              QObject *, KiriView::FileDeletionRequest, KiriView::FileDeletionCallback) {
+              QObject *, kiriview::FileDeletionRequest, kiriview::FileDeletionCallback) {
               ++fileDeletionCount;
-              return KiriView::ImageIoJob();
+              return kiriview::ImageIoJob();
           };
     dependencies.powerSaver.monitor
-        = [&powerSaverMonitorCount](QObject *, KiriView::PowerSaverChangedCallback) {
+        = [&powerSaverMonitorCount](QObject *, kiriview::PowerSaverChangedCallback) {
               ++powerSaverMonitorCount;
               return std::make_unique<FakePowerSaverMonitor>();
           };
     dependencies.cacheBudgetRequest.predecodeCacheByteBudget = 4096;
     dependencies.cacheBudgetRequest.displayImageCacheByteBudget = 8192;
 
-    KiriView::ImageDocumentRuntimeDependencies resolved
-        = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
+    kiriview::ImageDocumentRuntimeDependencies resolved
+        = kiriview::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
 
     QVERIFY(!resolved.mediaEntrySourceStore);
     QVERIFY(resolved.candidateProvider.directoryImageDocumentPages);
@@ -191,12 +191,12 @@ void TestImageDocumentRuntimeDependencies::
     QByteArray loadedData;
     resolved.candidateProvider.openedCollectionCandidates(nullptr, testArchiveCollection(),
         [&candidatesReported](
-            std::vector<KiriView::ImageDocumentPageCandidate>) { candidatesReported = true; },
+            std::vector<kiriview::ImageDocumentPageCandidate>) { candidatesReported = true; },
         {});
-    resolved.imageDecode.dataLoader(nullptr, KiriView::ImageDecodeRequest(),
+    resolved.imageDecode.dataLoader(nullptr, kiriview::ImageDecodeRequest(),
         [&loadedData](QByteArray data) { loadedData = std::move(data); }, {});
-    resolved.fileDeletionProvider(nullptr, KiriView::FileDeletionRequest(), {});
-    std::unique_ptr<KiriView::PowerSaverStateMonitor> monitor
+    resolved.fileDeletionProvider(nullptr, kiriview::FileDeletionRequest(), {});
+    std::unique_ptr<kiriview::PowerSaverStateMonitor> monitor
         = resolved.powerSaver.monitor(nullptr, {});
 
     QCOMPARE(openedCollectionLoadCount, 1);

@@ -10,7 +10,7 @@
 #include <optional>
 #include <vector>
 
-namespace KiriView {
+namespace kiriview {
 class MediaEntrySourceRunner final
 {
 public:

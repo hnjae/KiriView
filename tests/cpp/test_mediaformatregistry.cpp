@@ -23,9 +23,9 @@ QStringList sortedUnique(QStringList values)
     return values;
 }
 
-KiriView::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
 {
-    return KiriView::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+    return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 }
 
@@ -46,7 +46,7 @@ private Q_SLOTS:
 
 void TestMediaFormatRegistry::ordinaryMediaExtensionsIncludeImagesAndDirectVideos()
 {
-    const QStringList extensions = KiriView::supportedOrdinaryMediaExtensions();
+    const QStringList extensions = kiriview::supportedOrdinaryMediaExtensions();
 
     QVERIFY(extensions.contains(QStringLiteral("png")));
     QVERIFY(extensions.contains(QStringLiteral("mp4")));
@@ -64,7 +64,7 @@ void TestMediaFormatRegistry::ordinaryMediaExtensionsIncludeImagesAndDirectVideo
 
 void TestMediaFormatRegistry::ordinaryMediaMimeTypesIncludeImagesAndDirectVideos()
 {
-    const QStringList mimeTypes = KiriView::supportedOrdinaryMediaMimeTypes();
+    const QStringList mimeTypes = kiriview::supportedOrdinaryMediaMimeTypes();
 
     QVERIFY(mimeTypes.contains(QStringLiteral("image/png")));
     QVERIFY(mimeTypes.contains(QStringLiteral("video/mp4")));
@@ -81,27 +81,27 @@ void TestMediaFormatRegistry::ordinaryMediaMimeTypesIncludeImagesAndDirectVideos
 
 void TestMediaFormatRegistry::ordinaryMediaFileNamesIncludeImagesAndDirectVideos()
 {
-    QVERIFY(KiriView::isSupportedOrdinaryMediaFileName(QStringLiteral("photo.PNG")));
-    QVERIFY(KiriView::isSupportedOrdinaryMediaFileName(QStringLiteral("raw.CR3")));
-    QVERIFY(KiriView::isSupportedOrdinaryMediaFileName(QStringLiteral("clip.MP4")));
-    QVERIFY(KiriView::isSupportedOrdinaryMediaFileName(QStringLiteral("clip.m4v")));
-    QVERIFY(KiriView::isSupportedOrdinaryMediaFileName(QStringLiteral("clip.mov")));
+    QVERIFY(kiriview::isSupportedOrdinaryMediaFileName(QStringLiteral("photo.PNG")));
+    QVERIFY(kiriview::isSupportedOrdinaryMediaFileName(QStringLiteral("raw.CR3")));
+    QVERIFY(kiriview::isSupportedOrdinaryMediaFileName(QStringLiteral("clip.MP4")));
+    QVERIFY(kiriview::isSupportedOrdinaryMediaFileName(QStringLiteral("clip.m4v")));
+    QVERIFY(kiriview::isSupportedOrdinaryMediaFileName(QStringLiteral("clip.mov")));
 
-    QVERIFY(!KiriView::isSupportedOrdinaryMediaFileName(QStringLiteral("book.cbz")));
-    QVERIFY(!KiriView::isSupportedOrdinaryMediaFileName(QStringLiteral("archive.zip")));
-    QVERIFY(!KiriView::isSupportedOrdinaryMediaFileName(QStringLiteral(".mp4")));
+    QVERIFY(!kiriview::isSupportedOrdinaryMediaFileName(QStringLiteral("book.cbz")));
+    QVERIFY(!kiriview::isSupportedOrdinaryMediaFileName(QStringLiteral("archive.zip")));
+    QVERIFY(!kiriview::isSupportedOrdinaryMediaFileName(QStringLiteral(".mp4")));
 }
 
 void TestMediaFormatRegistry::directVideoFileNamesStayExposedThroughMediaRegistry()
 {
-    QVERIFY(KiriView::isSupportedDirectVideoFileName(QStringLiteral("clip.mp4")));
-    QVERIFY(KiriView::isSupportedDirectVideoFileName(QStringLiteral("clip.M4V")));
-    QVERIFY(KiriView::isSupportedDirectVideoFileName(
+    QVERIFY(kiriview::isSupportedDirectVideoFileName(QStringLiteral("clip.mp4")));
+    QVERIFY(kiriview::isSupportedDirectVideoFileName(QStringLiteral("clip.M4V")));
+    QVERIFY(kiriview::isSupportedDirectVideoFileName(
         QStringLiteral("zip:///path/archive.zip!/chapter/clip.MOV")));
 
-    QVERIFY(!KiriView::isSupportedDirectVideoFileName(QStringLiteral("photo.png")));
-    QVERIFY(!KiriView::isSupportedDirectVideoFileName(QStringLiteral("archive.zip")));
-    QVERIFY(!KiriView::isSupportedDirectVideoFileName(QStringLiteral(".mov")));
+    QVERIFY(!kiriview::isSupportedDirectVideoFileName(QStringLiteral("photo.png")));
+    QVERIFY(!kiriview::isSupportedDirectVideoFileName(QStringLiteral("archive.zip")));
+    QVERIFY(!kiriview::isSupportedDirectVideoFileName(QStringLiteral(".mov")));
 }
 
 void TestMediaFormatRegistry::directMediaUrlsClassifyImagesAndVideos()
@@ -112,42 +112,42 @@ void TestMediaFormatRegistry::directMediaUrlsClassifyImagesAndVideos()
     const QUrl archiveImage = QUrl(QStringLiteral("zip:///books/book.zip!/chapter/page.avif"));
     const QUrl unsupported = localUrl(QStringLiteral("/media/readme.txt"));
 
-    QVERIFY(KiriView::isSupportedDirectVideoUrl(localVideo));
-    QVERIFY(KiriView::isSupportedDirectVideoUrl(archiveVideo));
-    QVERIFY(!KiriView::isSupportedDirectVideoUrl(localImage));
-    QVERIFY(!KiriView::isSupportedDirectVideoUrl(unsupported));
+    QVERIFY(kiriview::isSupportedDirectVideoUrl(localVideo));
+    QVERIFY(kiriview::isSupportedDirectVideoUrl(archiveVideo));
+    QVERIFY(!kiriview::isSupportedDirectVideoUrl(localImage));
+    QVERIFY(!kiriview::isSupportedDirectVideoUrl(unsupported));
 
-    QVERIFY(KiriView::isSupportedDirectImageUrl(localImage));
-    QVERIFY(KiriView::isSupportedDirectImageUrl(archiveImage));
-    QVERIFY(!KiriView::isSupportedDirectImageUrl(localVideo));
-    QVERIFY(!KiriView::isSupportedDirectImageUrl(unsupported));
+    QVERIFY(kiriview::isSupportedDirectImageUrl(localImage));
+    QVERIFY(kiriview::isSupportedDirectImageUrl(archiveImage));
+    QVERIFY(!kiriview::isSupportedDirectImageUrl(localVideo));
+    QVERIFY(!kiriview::isSupportedDirectImageUrl(unsupported));
 }
 
 void TestMediaFormatRegistry::
     stillImageDirectMediaNavigationCandidatesUseCandidateNameAndUrlIdentity()
 {
-    QVERIFY(KiriView::isSupportedStillImageDirectMediaNavigationCandidate(
-        KiriView::DirectMediaNavigationCandidate {
+    QVERIFY(kiriview::isSupportedStillImageDirectMediaNavigationCandidate(
+        kiriview::DirectMediaNavigationCandidate {
             localUrl(QStringLiteral("/media/blob.bin")),
             QStringLiteral("cover.png"),
         }));
-    QVERIFY(KiriView::isSupportedStillImageDirectMediaNavigationCandidate(
-        KiriView::DirectMediaNavigationCandidate {
+    QVERIFY(kiriview::isSupportedStillImageDirectMediaNavigationCandidate(
+        kiriview::DirectMediaNavigationCandidate {
             localUrl(QStringLiteral("/media/photo.avif")),
             QString(),
         }));
-    QVERIFY(KiriView::isSupportedStillImageDirectMediaNavigationCandidate(
-        KiriView::DirectMediaNavigationCandidate {
+    QVERIFY(kiriview::isSupportedStillImageDirectMediaNavigationCandidate(
+        kiriview::DirectMediaNavigationCandidate {
             QUrl(QStringLiteral("file:///media/download?name=cover.webp")),
             QString(),
         }));
-    QVERIFY(!KiriView::isSupportedStillImageDirectMediaNavigationCandidate(
+    QVERIFY(!kiriview::isSupportedStillImageDirectMediaNavigationCandidate(
         directMediaNavigationCandidate(localUrl(QStringLiteral("/media/clip.mp4")))));
 }
 
 void TestMediaFormatRegistry::openDialogFilterIncludesMediaAndArchives()
 {
-    const QStringList filters = KiriView::ordinaryMediaOpenDialogNameFilters();
+    const QStringList filters = kiriview::ordinaryMediaOpenDialogNameFilters();
 
     QCOMPARE(filters.size(), 2);
     QVERIFY(filters.first().contains(QStringLiteral("*.png")));
@@ -172,8 +172,8 @@ void TestMediaFormatRegistry::desktopMimeTypesMatchSupportedOpenMimeTypes()
     }
     QVERIFY(!mimeLine.isEmpty());
 
-    QStringList expectedMimeTypes = KiriView::supportedOrdinaryMediaMimeTypes();
-    expectedMimeTypes.append(KiriView::supportedComicBookArchiveMimeTypes());
+    QStringList expectedMimeTypes = kiriview::supportedOrdinaryMediaMimeTypes();
+    expectedMimeTypes.append(kiriview::supportedComicBookArchiveMimeTypes());
 
     QCOMPARE(sortedUnique(mimeLine.split(QLatin1Char(';'), Qt::SkipEmptyParts)),
         sortedUnique(expectedMimeTypes));

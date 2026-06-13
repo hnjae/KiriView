@@ -23,21 +23,21 @@ private Q_SLOTS:
 };
 
 namespace {
-KiriView::ImageDisplaySourceSlot displaySourceSlot(
+kiriview::ImageDisplaySourceSlot displaySourceSlot(
     const QString &id, const QSize &originalSize, const QSize &rasterSize)
 {
-    return KiriView::ImageDisplaySourceSlot {
+    return kiriview::ImageDisplaySourceSlot {
         QUrl(QStringLiteral("image://kiriview-images/%1").arg(id)),
         7,
         QStringLiteral("source-%1").arg(id),
         originalSize,
         rasterSize,
         QSize(rasterSize.width(), 0),
-        KiriView::DisplayImageQuality::FirstDisplay,
-        KiriView::ImageDisplaySourceStatus::Ready,
+        kiriview::DisplayImageQuality::FirstDisplay,
+        kiriview::ImageDisplaySourceStatus::Ready,
         false,
         false,
-        KiriView::ImageDisplaySourceRetentionStatus::None,
+        kiriview::ImageDisplaySourceRetentionStatus::None,
         false,
     };
 }
@@ -45,39 +45,39 @@ KiriView::ImageDisplaySourceSlot displaySourceSlot(
 
 void TestImageDisplaySourceProjection::primaryProjectionCombinesSlotScopeAndGeometry()
 {
-    const QUrl imageUrl = KiriView::TestSupport::localUrl(QStringLiteral("/images/page.png"));
-    KiriView::ImagePresentationRuntime runtime;
+    const QUrl imageUrl = kiriview::TestSupport::localUrl(QStringLiteral("/images/page.png"));
+    kiriview::ImagePresentationRuntime runtime;
     runtime.setViewportSize(QSizeF(200.0, 120.0));
 
-    KiriView::ImagePresentationPageSlotSnapshot slot;
+    kiriview::ImagePresentationPageSlotSnapshot slot;
     slot.imageSize = QSize(100, 50);
     slot.hasImage = true;
     slot.displaySource
         = displaySourceSlot(QStringLiteral("primary"), slot.imageSize, QSize(25, 13));
-    runtime.commitPrimaryPageSlot(slot, KiriView::ImagePresentationScopeKey::directImage(imageUrl));
+    runtime.commitPrimaryPageSlot(slot, kiriview::ImagePresentationScopeKey::directImage(imageUrl));
     runtime.rotateClockwise();
 
-    const KiriView::ImageDisplaySourceProjection projection
-        = runtime.displaySourceProjection(KiriView::DisplayedPageRole::Primary);
+    const kiriview::ImageDisplaySourceProjection projection
+        = runtime.displaySourceProjection(kiriview::DisplayedPageRole::Primary);
 
     QVERIFY(projection.visible);
-    QCOMPARE(projection.pageRole, KiriView::DisplayedPageRole::Primary);
+    QCOMPARE(projection.pageRole, kiriview::DisplayedPageRole::Primary);
     QCOMPARE(projection.providerUrl, QUrl(QStringLiteral("image://kiriview-images/primary")));
     QCOMPARE(projection.revision, quint64(7));
     QCOMPARE(projection.revisionToken, QStringLiteral("7"));
     QCOMPARE(projection.sourceIdentity, QStringLiteral("source-primary"));
     QCOMPARE(projection.selectedSourceScope.kind,
-        KiriView::ImagePresentationScopeKey::Kind::DirectImage);
+        kiriview::ImagePresentationScopeKey::Kind::DirectImage);
     QCOMPARE(projection.selectedSourceScope.url, imageUrl);
     QCOMPARE(projection.originalSize, QSize(100, 50));
     QCOMPARE(projection.rasterSize, QSize(25, 13));
     QCOMPARE(projection.sourceSizeHint, QSize(25, 0));
-    QCOMPARE(projection.quality, KiriView::DisplayImageQuality::FirstDisplay);
-    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Ready);
+    QCOMPARE(projection.quality, kiriview::DisplayImageQuality::FirstDisplay);
+    QCOMPARE(projection.status, kiriview::ImageDisplaySourceStatus::Ready);
     QVERIFY(!projection.cacheEnabled);
     QVERIFY(!projection.loadAcknowledgmentRequired);
     QCOMPARE(projection.rotationDegrees, 90);
-    QCOMPARE(projection.retentionStatus, KiriView::ImageDisplaySourceRetentionStatus::None);
+    QCOMPARE(projection.retentionStatus, kiriview::ImageDisplaySourceRetentionStatus::None);
     QVERIFY(!projection.retainWhileLoadingEligible);
     QVERIFY(!projection.displaySize.isEmpty());
     QVERIFY(!projection.visibleItemRect.isEmpty());
@@ -85,21 +85,21 @@ void TestImageDisplaySourceProjection::primaryProjectionCombinesSlotScopeAndGeom
 
 void TestImageDisplaySourceProjection::hiddenSecondaryProjectionKeepsRoleAndStatusOnly()
 {
-    KiriView::ImagePresentationRuntime runtime;
+    kiriview::ImagePresentationRuntime runtime;
 
-    KiriView::ImagePresentationPageSlotSnapshot secondary;
+    kiriview::ImagePresentationPageSlotSnapshot secondary;
     secondary.imageSize = QSize(80, 40);
     secondary.hasImage = true;
     secondary.displaySource
         = displaySourceSlot(QStringLiteral("secondary"), secondary.imageSize, QSize(80, 40));
     runtime.commitSecondaryPageSlot(secondary);
 
-    const KiriView::ImageDisplaySourceProjection projection
-        = runtime.displaySourceProjection(KiriView::DisplayedPageRole::Secondary);
+    const kiriview::ImageDisplaySourceProjection projection
+        = runtime.displaySourceProjection(kiriview::DisplayedPageRole::Secondary);
 
     QVERIFY(!projection.visible);
-    QCOMPARE(projection.pageRole, KiriView::DisplayedPageRole::Secondary);
-    QCOMPARE(projection.status, KiriView::ImageDisplaySourceStatus::Missing);
+    QCOMPARE(projection.pageRole, kiriview::DisplayedPageRole::Secondary);
+    QCOMPARE(projection.status, kiriview::ImageDisplaySourceStatus::Missing);
     QVERIFY(projection.providerUrl.isEmpty());
     QCOMPARE(projection.revision, quint64(0));
 }

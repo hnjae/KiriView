@@ -9,38 +9,38 @@
 #include <utility>
 
 namespace {
-KiriView::EmbeddedMetadataRow embeddedMetadataRowFromRust(
-    const KiriView::RustEmbeddedMetadataRow &row)
+kiriview::EmbeddedMetadataRow embeddedMetadataRowFromRust(
+    const kiriview::RustEmbeddedMetadataRow &row)
 {
-    return KiriView::EmbeddedMetadataRow {
-        KiriView::Bridge::qtString(row.label),
-        KiriView::Bridge::qtString(row.value),
+    return kiriview::EmbeddedMetadataRow {
+        kiriview::Bridge::qtString(row.label),
+        kiriview::Bridge::qtString(row.value),
     };
 }
 
-KiriView::EmbeddedMetadata embeddedMetadataFromRust(const KiriView::RustEmbeddedMetadata &metadata)
+kiriview::EmbeddedMetadata embeddedMetadataFromRust(const kiriview::RustEmbeddedMetadata &metadata)
 {
-    KiriView::EmbeddedMetadata converted;
-    converted.cameraMake = KiriView::Bridge::qtString(metadata.camera_make);
-    converted.cameraModel = KiriView::Bridge::qtString(metadata.camera_model);
-    converted.taken = KiriView::Bridge::qtString(metadata.taken);
-    converted.location = KiriView::Bridge::qtString(metadata.location);
-    converted.lens = KiriView::Bridge::qtString(metadata.lens);
-    converted.exposure = KiriView::Bridge::qtString(metadata.exposure);
-    converted.iso = KiriView::Bridge::qtString(metadata.iso);
-    converted.focalLength = KiriView::Bridge::qtString(metadata.focal_length);
-    converted.software = KiriView::Bridge::qtString(metadata.software);
-    converted.duration = KiriView::Bridge::qtString(metadata.duration);
-    converted.frameSize = KiriView::Bridge::qtString(metadata.frame_size);
+    kiriview::EmbeddedMetadata converted;
+    converted.cameraMake = kiriview::Bridge::qtString(metadata.camera_make);
+    converted.cameraModel = kiriview::Bridge::qtString(metadata.camera_model);
+    converted.taken = kiriview::Bridge::qtString(metadata.taken);
+    converted.location = kiriview::Bridge::qtString(metadata.location);
+    converted.lens = kiriview::Bridge::qtString(metadata.lens);
+    converted.exposure = kiriview::Bridge::qtString(metadata.exposure);
+    converted.iso = kiriview::Bridge::qtString(metadata.iso);
+    converted.focalLength = kiriview::Bridge::qtString(metadata.focal_length);
+    converted.software = kiriview::Bridge::qtString(metadata.software);
+    converted.duration = kiriview::Bridge::qtString(metadata.duration);
+    converted.frameSize = kiriview::Bridge::qtString(metadata.frame_size);
     converted.advancedRows.reserve(metadata.advanced_rows.size());
-    for (const KiriView::RustEmbeddedMetadataRow &row : metadata.advanced_rows) {
+    for (const kiriview::RustEmbeddedMetadataRow &row : metadata.advanced_rows) {
         converted.advancedRows.push_back(embeddedMetadataRowFromRust(row));
     }
     return converted;
 }
 }
 
-namespace KiriView {
+namespace kiriview {
 bool EmbeddedMetadata::isEmpty() const
 {
     return cameraMake.isEmpty() && cameraModel.isEmpty() && taken.isEmpty() && location.isEmpty()

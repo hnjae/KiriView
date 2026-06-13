@@ -9,7 +9,7 @@
 #include <QVariant>
 #include <utility>
 
-namespace KiriView::ApplicationActions {
+namespace kiriview::ApplicationActions {
 ShortcutHelpModel::ShortcutHelpModel(ShortcutHelpRowsProvider rowsProvider, QObject *parent)
     : QAbstractListModel(parent)
     , m_rowsProvider(std::move(rowsProvider))

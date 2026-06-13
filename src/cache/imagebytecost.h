@@ -8,7 +8,7 @@
 #include <QSize>
 #include <QtGlobal>
 
-namespace KiriView {
+namespace kiriview {
 qsizetype imageByteCost(const QImage &image);
 qsizetype estimatedRgbaByteCost(const QSize &size);
 }

@@ -27,17 +27,17 @@ private Q_SLOTS:
 
 void TestImageCachePolicy::retainsLeastRecentlyUsedEntriesWithinBudget()
 {
-    using Entry = KiriView::ImageCacheRetentionEntry;
+    using Entry = kiriview::ImageCacheRetentionEntry;
 
-    const std::vector<KiriView::ImageCacheRetainedEntry> twoRetained
-        = KiriView::lruCacheRetentionPlan(
+    const std::vector<kiriview::ImageCacheRetainedEntry> twoRetained
+        = kiriview::lruCacheRetentionPlan(
             { Entry { 16, 3 }, Entry { 16, 1 }, Entry { 16, 2 } }, 32);
     QCOMPARE(twoRetained.size(), std::size_t(2));
     QCOMPARE(twoRetained.at(0).originalIndex, std::size_t(0));
     QCOMPARE(twoRetained.at(1).originalIndex, std::size_t(2));
 
-    const std::vector<KiriView::ImageCacheRetainedEntry> oneRetained
-        = KiriView::lruCacheRetentionPlan(
+    const std::vector<kiriview::ImageCacheRetainedEntry> oneRetained
+        = kiriview::lruCacheRetentionPlan(
             { Entry { 60, 3 }, Entry { 50, 2 }, Entry { 40, 1 } }, 100);
     QCOMPARE(oneRetained.size(), std::size_t(1));
     QCOMPARE(oneRetained.at(0).originalIndex, std::size_t(0));
@@ -45,20 +45,20 @@ void TestImageCachePolicy::retainsLeastRecentlyUsedEntriesWithinBudget()
 
 void TestImageCachePolicy::rejectsInvalidEntriesAndBudgets()
 {
-    using Entry = KiriView::ImageCacheRetentionEntry;
+    using Entry = kiriview::ImageCacheRetentionEntry;
 
-    const std::vector<KiriView::ImageCacheRetainedEntry> retained = KiriView::lruCacheRetentionPlan(
+    const std::vector<kiriview::ImageCacheRetainedEntry> retained = kiriview::lruCacheRetentionPlan(
         { Entry { 0, 1 }, Entry { 10, 2 }, Entry { -1, 3 } }, 100);
     QCOMPARE(retained.size(), std::size_t(1));
     QCOMPARE(retained.at(0).originalIndex, std::size_t(1));
-    QVERIFY(KiriView::lruCacheRetentionPlan({ Entry { 10, 1 } }, 0).empty());
+    QVERIFY(kiriview::lruCacheRetentionPlan({ Entry { 10, 1 } }, 0).empty());
 }
 
 void TestImageCachePolicy::reportsRetainedByteCosts()
 {
-    using Entry = KiriView::ImageCacheRetentionEntry;
+    using Entry = kiriview::ImageCacheRetentionEntry;
 
-    const std::vector<KiriView::ImageCacheRetainedEntry> retained = KiriView::lruCacheRetentionPlan(
+    const std::vector<kiriview::ImageCacheRetainedEntry> retained = kiriview::lruCacheRetentionPlan(
         { Entry { 18, 3 }, Entry { 16, 1 }, Entry { 14, 2 } }, 32);
 
     QCOMPARE(retained.size(), std::size_t(2));
@@ -70,17 +70,17 @@ void TestImageCachePolicy::reportsRetainedByteCosts()
 
 void TestImageCachePolicy::displayImageCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap()
 {
-    const qsizetype preferredByteBudget = KiriView::displayImageCachePreferredByteBudget();
+    const qsizetype preferredByteBudget = kiriview::displayImageCachePreferredByteBudget();
 
-    QCOMPARE(KiriView::displayImageCacheByteBudgetForSystemMemory(0, preferredByteBudget),
+    QCOMPARE(kiriview::displayImageCacheByteBudgetForSystemMemory(0, preferredByteBudget),
         preferredByteBudget);
-    QCOMPARE(KiriView::displayImageCacheByteBudgetForSystemMemory(
+    QCOMPARE(kiriview::displayImageCacheByteBudgetForSystemMemory(
                  preferredByteBudget, preferredByteBudget),
         preferredByteBudget / 16);
-    QCOMPARE(KiriView::displayImageCacheByteBudgetForSystemMemory(
+    QCOMPARE(kiriview::displayImageCacheByteBudgetForSystemMemory(
                  preferredByteBudget * 32, preferredByteBudget),
         preferredByteBudget);
-    QCOMPARE(KiriView::displayImageCacheByteBudgetForSystemMemory(preferredByteBudget, -1),
+    QCOMPARE(kiriview::displayImageCacheByteBudgetForSystemMemory(preferredByteBudget, -1),
         qsizetype(0));
 }
 
@@ -88,18 +88,18 @@ void TestImageCachePolicy::displayImageCachePreferredByteBudgetIsNamedPolicyDefa
 {
     constexpr qsizetype preferredByteBudget = 512 * 1024 * 1024;
 
-    QCOMPARE(KiriView::displayImageCachePreferredByteBudget(), preferredByteBudget);
+    QCOMPARE(kiriview::displayImageCachePreferredByteBudget(), preferredByteBudget);
 }
 
 void TestImageCachePolicy::predecodeCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap()
 {
     constexpr qsizetype preferredByteBudget = 1024 * 1024 * 1024;
 
-    QCOMPARE(KiriView::predecodeCachePreferredByteBudget(), preferredByteBudget);
-    QCOMPARE(KiriView::predecodeCacheByteBudgetForSystemMemory(0), preferredByteBudget);
-    QCOMPARE(KiriView::predecodeCacheByteBudgetForSystemMemory(preferredByteBudget),
+    QCOMPARE(kiriview::predecodeCachePreferredByteBudget(), preferredByteBudget);
+    QCOMPARE(kiriview::predecodeCacheByteBudgetForSystemMemory(0), preferredByteBudget);
+    QCOMPARE(kiriview::predecodeCacheByteBudgetForSystemMemory(preferredByteBudget),
         preferredByteBudget / 8);
-    QCOMPARE(KiriView::predecodeCacheByteBudgetForSystemMemory(preferredByteBudget * 16),
+    QCOMPARE(kiriview::predecodeCacheByteBudgetForSystemMemory(preferredByteBudget * 16),
         preferredByteBudget);
 }
 
@@ -107,11 +107,11 @@ void TestImageCachePolicy::thumbnailCacheByteBudgetUsesPreferredLimitAndSystemMe
 {
     constexpr qsizetype preferredByteBudget = 64 * 1024 * 1024;
 
-    QCOMPARE(KiriView::thumbnailCachePreferredByteBudget(), preferredByteBudget);
-    QCOMPARE(KiriView::thumbnailCacheByteBudgetForSystemMemory(0), preferredByteBudget);
-    QCOMPARE(KiriView::thumbnailCacheByteBudgetForSystemMemory(preferredByteBudget),
+    QCOMPARE(kiriview::thumbnailCachePreferredByteBudget(), preferredByteBudget);
+    QCOMPARE(kiriview::thumbnailCacheByteBudgetForSystemMemory(0), preferredByteBudget);
+    QCOMPARE(kiriview::thumbnailCacheByteBudgetForSystemMemory(preferredByteBudget),
         preferredByteBudget / 64);
-    QCOMPARE(KiriView::thumbnailCacheByteBudgetForSystemMemory(preferredByteBudget * 128),
+    QCOMPARE(kiriview::thumbnailCacheByteBudgetForSystemMemory(preferredByteBudget * 128),
         preferredByteBudget);
 }
 
@@ -121,26 +121,26 @@ void TestImageCachePolicy::resolvedCacheBudgetsUseSnapshotAndPreserveOverrides()
     constexpr qsizetype predecodePreferredByteBudget = 1024 * 1024 * 1024;
     constexpr qsizetype thumbnailPreferredByteBudget = 64 * 1024 * 1024;
 
-    const KiriView::ImageCacheBudgets defaultBudgets = KiriView::resolvedImageCacheBudgets(
-        KiriView::ImageCacheBudgetRequest {
+    const kiriview::ImageCacheBudgets defaultBudgets = kiriview::resolvedImageCacheBudgets(
+        kiriview::ImageCacheBudgetRequest {
             0,
             0,
             displayImagePreferredByteBudget,
             0,
         },
-        KiriView::SystemMemorySnapshot { predecodePreferredByteBudget });
+        kiriview::SystemMemorySnapshot { predecodePreferredByteBudget });
     QCOMPARE(defaultBudgets.predecodeCacheByteBudget, predecodePreferredByteBudget / 8);
     QCOMPARE(defaultBudgets.displayImageCacheByteBudget, displayImagePreferredByteBudget / 8);
     QCOMPARE(defaultBudgets.thumbnailCacheByteBudget, predecodePreferredByteBudget / 64);
 
-    const KiriView::ImageCacheBudgets explicitBudgets = KiriView::resolvedImageCacheBudgets(
-        KiriView::ImageCacheBudgetRequest {
+    const kiriview::ImageCacheBudgets explicitBudgets = kiriview::resolvedImageCacheBudgets(
+        kiriview::ImageCacheBudgetRequest {
             4096,
             32768,
             displayImagePreferredByteBudget,
             16384,
         },
-        KiriView::SystemMemorySnapshot { predecodePreferredByteBudget });
+        kiriview::SystemMemorySnapshot { predecodePreferredByteBudget });
     QCOMPARE(explicitBudgets.predecodeCacheByteBudget, qsizetype(4096));
     QCOMPARE(explicitBudgets.displayImageCacheByteBudget, qsizetype(32768));
     QCOMPARE(explicitBudgets.thumbnailCacheByteBudget, qsizetype(16384));
@@ -148,11 +148,11 @@ void TestImageCachePolicy::resolvedCacheBudgetsUseSnapshotAndPreserveOverrides()
 
 void TestImageCachePolicy::resolvedCacheBudgetsUseDisplayImagePreferredDefault()
 {
-    const qsizetype preferredByteBudget = KiriView::displayImageCachePreferredByteBudget();
+    const qsizetype preferredByteBudget = kiriview::displayImageCachePreferredByteBudget();
 
-    const KiriView::ImageCacheBudgets budgets
-        = KiriView::resolvedImageCacheBudgets(KiriView::ImageCacheBudgetRequest {},
-            KiriView::SystemMemorySnapshot {
+    const kiriview::ImageCacheBudgets budgets
+        = kiriview::resolvedImageCacheBudgets(kiriview::ImageCacheBudgetRequest {},
+            kiriview::SystemMemorySnapshot {
                 preferredByteBudget * 32,
             });
 
@@ -161,14 +161,14 @@ void TestImageCachePolicy::resolvedCacheBudgetsUseDisplayImagePreferredDefault()
 
 void TestImageCachePolicy::resolvedCacheBudgetsUseExplicitDisplayImageOverride()
 {
-    const KiriView::ImageCacheBudgets budgets = KiriView::resolvedImageCacheBudgets(
-        KiriView::ImageCacheBudgetRequest {
+    const kiriview::ImageCacheBudgets budgets = kiriview::resolvedImageCacheBudgets(
+        kiriview::ImageCacheBudgetRequest {
             0,
             65536,
             0,
             0,
         },
-        KiriView::SystemMemorySnapshot {});
+        kiriview::SystemMemorySnapshot {});
 
     QCOMPARE(budgets.displayImageCacheByteBudget, qsizetype(65536));
 }
