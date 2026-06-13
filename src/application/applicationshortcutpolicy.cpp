@@ -221,8 +221,6 @@ bool videoActionUnsupported(ActionId actionId)
     case ActionId::ViewToggleRightToLeftReadingAction:
     case ActionId::ViewPanTopLeftAction:
     case ActionId::ViewPanBottomRightAction:
-    case ActionId::ViewScanForwardAction:
-    case ActionId::ViewScanBackwardAction:
         return true;
     default:
         return false;

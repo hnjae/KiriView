@@ -140,6 +140,11 @@ void ApplicationCommandRouter::handleActionTriggered(ActionId actionId,
 void ApplicationCommandRouter::handleScanForwardAction(
     const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
 {
+    if (input.videoMode) {
+        callVoid(ports.requestNextActiveNavigationWithBoundary);
+        return;
+    }
+
     const bool viewportMoved = callBool(ports.requestViewportScanForward);
     const KiriView::ImageShortcutNavigationPolicy::ScanAction action
         = m_navigationPolicy.scanForwardAction(input.imagePannable, viewportMoved);
@@ -155,6 +160,11 @@ void ApplicationCommandRouter::handleScanForwardAction(
 void ApplicationCommandRouter::handleScanBackwardAction(
     const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
 {
+    if (input.videoMode) {
+        callVoid(ports.requestPreviousActiveNavigationWithBoundary);
+        return;
+    }
+
     const bool viewportMoved = callBool(ports.requestViewportScanBackward);
     const KiriView::ImageShortcutNavigationPolicy::ScanAction action
         = m_navigationPolicy.scanBackwardAction(input.imagePannable, viewportMoved,
