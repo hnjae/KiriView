@@ -104,7 +104,11 @@ In video mode, the shared scan shortcuts also use adjacent navigation: `.` and `
 
 Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit. Shared direct media navigation shortcuts use session active-navigation dispatch and availability.
 
+`P` toggles play/pause for the current video using the same playback command as the playback panel button.
+
 When an image-only configurable shortcut is pressed in video mode, KiriView does not trigger the image action and shows the in-app toast `This action is not available for videos`. Repeated unsupported video shortcut presses update the same toast instance.
+
+When the video play/pause configurable shortcut is pressed while a ready image is displayed, KiriView does not trigger video playback and shows the in-app toast `This action is not available for images`. Empty, loading, error, and unsupported-placeholder states do not show this image unavailable-action toast.
 
 Disabled image-only action placements in video mode do not route through image-document commands. Only the unsupported-video shortcut interception produces the unavailable-action toast.
 
