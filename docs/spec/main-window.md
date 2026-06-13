@@ -308,7 +308,9 @@ When no toolbar input is focused and the Info Panel is closed, Escape leaves ful
 
 Outside fullscreen, Escape does not close the main window.
 
-Ctrl+Q closes the main window.
+Ctrl+Q closes the main window as the default program-wide configurable Quit shortcut.
+
+The viewer-local configurable Quit shortcut is `q`; it closes the main window only while viewer-local shortcuts are active.
 
 Quit shortcuts using Ctrl, Alt, or Meta remain active while those inputs are focused.
 
