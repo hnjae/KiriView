@@ -150,6 +150,7 @@ private Q_SLOTS:
     void actionDispatchRoutesToPorts();
     void singlePageAndVerticalPanRouteToImagePorts();
     void videoSeekChecksModeAndSeekability();
+    void videoScanShortcutsUseActiveNavigation();
     void scanShortcutsRoutePolicyEffects();
 };
 
@@ -323,6 +324,30 @@ void TestApplicationCommandRouter::videoSeekChecksModeAndSeekability()
     QVERIFY(router.executeVideoSeekShortcut(input, ports, -45000));
     QCOMPARE(log.seekCount, 1);
     QCOMPARE(log.lastSeekDeltaMilliseconds, qint64(-45000));
+}
+
+void TestApplicationCommandRouter::videoScanShortcutsUseActiveNavigation()
+{
+    ApplicationCommandRouter router;
+    ApplicationCommandRouterInput input;
+    input.videoMode = true;
+    input.imagePannable = true;
+    input.imageDocumentPageNavigationActive = true;
+    input.atKnownFirstActiveNavigation = true;
+    input.canOpenPreviousActiveNavigation = true;
+    CommandLog log;
+    log.scanMoved = true;
+    ApplicationCommandRouterPorts ports = commandPorts(log);
+
+    router.handleScanForwardAction(input, ports);
+    router.handleScanBackwardAction(input, ports);
+
+    QCOMPARE(log.scanForwardCount, 0);
+    QCOMPARE(log.scanBackwardCount, 0);
+    QCOMPARE(log.nextNavigationCount, 1);
+    QCOMPARE(log.previousNavigationCount, 1);
+    QCOMPARE(log.nextDisplayedImageStartToFinalScanPositionCount, 0);
+    QCOMPARE(log.firstImageBoundaryCount, 0);
 }
 
 void TestApplicationCommandRouter::scanShortcutsRoutePolicyEffects()

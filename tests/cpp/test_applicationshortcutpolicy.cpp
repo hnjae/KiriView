@@ -383,7 +383,9 @@ void TestApplicationShortcutPolicy::videoUnsupportedActionPolicyRejectsImageOnly
         ActionId::ViewToggleTwoPageModeAction));
     QVERIFY(
         KiriView::ApplicationActions::videoActionUnsupported(ActionId::GoPreviousArchiveAction));
-    QVERIFY(KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewScanForwardAction));
+    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewScanForwardAction));
+    QVERIFY(
+        !KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewScanBackwardAction));
 
     QVERIFY(
         !KiriView::ApplicationActions::videoActionUnsupported(ActionId::WindowFullscreenAction));
