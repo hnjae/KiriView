@@ -100,6 +100,8 @@ Unknown duration, invalid duration, and non-seekable media produce a stable disa
 
 In video mode, viewer Left and Right and existing adjacent navigation actions move to the previous or next supported media item in the ordinary parent location. They do not seek within the video.
 
+In video mode, the shared scan shortcuts also use adjacent navigation: `.` and `Space` move to the next supported media item, while `,` and `Shift+Space` move to the previous supported media item. They do not pan or seek within the video.
+
 Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit. Shared direct media navigation shortcuts use session active-navigation dispatch and availability.
 
 When an image-only configurable shortcut is pressed in video mode, KiriView does not trigger the image action and shows the in-app toast `This action is not available for videos`. Repeated unsupported video shortcut presses update the same toast instance.

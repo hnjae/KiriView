@@ -172,6 +172,8 @@ At the final scan position, `.` or `Space` opens the next image.
 
 When the current image is not zoomed large enough to pan, `.` or `Space` opens the next image and `,` or `Shift+Space` opens the previous image.
 
+In video mode, `.` or `Space` opens the next supported media item and `,` or `Shift+Space` opens the previous supported media item in the ordinary direct media scope. They do not pan or seek within the video.
+
 In Right-to-Left Reading mode, scan order starts at the top-right and proceeds toward the bottom-left. The forward scan shortcuts still scan forward or open the next image, the backward scan shortcuts still scan backward or open the previous image, `<` jumps to scan start, and `>` jumps to scan end.
 
 ## Background Loading
