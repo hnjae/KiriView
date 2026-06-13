@@ -43,6 +43,7 @@ private Q_SLOTS:
     void visiblePreviousNextPlacementsDisableAtBoundaries();
     void sharedActionEnabledStateUsesRuntimeGates();
     void videoPlaybackActionUsesVideoModeGates();
+    void contentBoundaryActionsUseImageAndVideoGates();
     void disabledStableActionsKeepPlacement();
     void checkedStateComesFromRuntimeInputs();
 };
@@ -100,6 +101,40 @@ void TestApplicationActionStatePolicy::videoPlaybackActionUsesVideoModeGates()
     input.fileDeletionInProgress = false;
     input.helpActionsEnabled = false;
     QVERIFY(!stateFor(ActionId::ViewToggleVideoPlaybackAction, input).actionEnabled);
+}
+
+void TestApplicationActionStatePolicy::contentBoundaryActionsUseImageAndVideoGates()
+{
+    auto input = readyImageInput();
+
+    QVERIFY(stateFor(ActionId::ViewGoToContentStartAction, input).actionEnabled);
+    QVERIFY(stateFor(ActionId::ViewGoToContentEndAction, input).actionEnabled);
+
+    input.readyActionsEnabled = false;
+    QVERIFY(!stateFor(ActionId::ViewGoToContentStartAction, input).actionEnabled);
+    QVERIFY(!stateFor(ActionId::ViewGoToContentEndAction, input).actionEnabled);
+
+    input = readyImageInput();
+    input.videoMode = true;
+    input.readyActionsEnabled = false;
+    input.videoSeekable = true;
+    input.videoDuration = 120000;
+    QVERIFY(stateFor(ActionId::ViewGoToContentStartAction, input).actionEnabled);
+    QVERIFY(stateFor(ActionId::ViewGoToContentEndAction, input).actionEnabled);
+
+    input.videoDuration = 0;
+    QVERIFY(stateFor(ActionId::ViewGoToContentStartAction, input).actionEnabled);
+    QVERIFY(!stateFor(ActionId::ViewGoToContentEndAction, input).actionEnabled);
+
+    input.videoSeekable = false;
+    input.videoDuration = 120000;
+    QVERIFY(!stateFor(ActionId::ViewGoToContentStartAction, input).actionEnabled);
+    QVERIFY(!stateFor(ActionId::ViewGoToContentEndAction, input).actionEnabled);
+
+    input.videoSeekable = true;
+    input.fileDeletionInProgress = true;
+    QVERIFY(!stateFor(ActionId::ViewGoToContentStartAction, input).actionEnabled);
+    QVERIFY(!stateFor(ActionId::ViewGoToContentEndAction, input).actionEnabled);
 }
 
 void TestApplicationActionStatePolicy::disabledStableActionsKeepPlacement()

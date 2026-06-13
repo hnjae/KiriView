@@ -153,6 +153,8 @@ void TestImageActionAvailabilityConversion::shortcutScopeMapsApplicationScopeVal
         == KiriView::RustImageShortcutScope::RightToLeftReadingViewerShortcutScope);
     QVERIFY(KiriView::Bridge::rustImageShortcutScope(Scope::ContainerViewerShortcutScope)
         == KiriView::RustImageShortcutScope::ContainerViewerShortcutScope);
+    QVERIFY(KiriView::Bridge::rustImageShortcutScope(Scope::MediaStartEndViewerShortcutScope)
+        == KiriView::RustImageShortcutScope::MediaStartEndViewerShortcutScope);
 }
 
 void TestImageActionAvailabilityConversion::videoAvailabilityInputMapsPlainFields()

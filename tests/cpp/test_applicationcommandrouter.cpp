@@ -33,8 +33,11 @@ struct CommandLog {
     int nextDisplayedImageStartToFinalScanPositionCount = 0;
     int firstImageBoundaryCount = 0;
     int seekCount = 0;
+    int setVideoPositionCount = 0;
     int toggleVideoPlaybackCount = 0;
     qint64 lastSeekDeltaMilliseconds = 0;
+    qint64 videoDuration = 120000;
+    qint64 lastVideoPosition = -1;
 };
 
 ApplicationCommandRouterPorts commandPorts(CommandLog &log)
@@ -133,9 +136,14 @@ ApplicationCommandRouterPorts commandPorts(CommandLog &log)
         = [&log]() { log.actionCalls.push_back(QStringLiteral("open-application-menu")); };
     ports.videoAvailable = [&log]() { return log.videoAvailable; };
     ports.videoSeekable = [&log]() { return log.videoSeekable; };
+    ports.videoDuration = [&log]() { return log.videoDuration; };
     ports.seekVideoBy = [&log](qint64 deltaMilliseconds) {
         ++log.seekCount;
         log.lastSeekDeltaMilliseconds = deltaMilliseconds;
+    };
+    ports.setVideoPosition = [&log](qint64 positionMilliseconds) {
+        ++log.setVideoPositionCount;
+        log.lastVideoPosition = positionMilliseconds;
     };
     ports.toggleVideoPlayback = [&log]() {
         log.actionCalls.push_back(QStringLiteral("toggle-video-playback"));
@@ -156,6 +164,7 @@ private Q_SLOTS:
     void singlePageAndVerticalPanRouteToImagePorts();
     void videoPlaybackActionChecksModeAndVideoAvailability();
     void videoSeekChecksModeAndSeekability();
+    void contentBoundaryActionsRouteByMediaMode();
     void videoScanShortcutsUseActiveNavigation();
     void scanShortcutsRoutePolicyEffects();
 };
@@ -236,8 +245,8 @@ void TestApplicationCommandRouter::actionDispatchRoutesToPorts()
     router.handleActionTriggered(ActionId::ViewToggleRightToLeftReadingAction, input, ports);
     router.handleActionTriggered(ActionId::ViewToggleInfoPanelAction, input, ports);
     router.handleActionTriggered(ActionId::ViewToggleThumbnailPanelAction, input, ports);
-    router.handleActionTriggered(ActionId::ViewPanTopLeftAction, input, ports);
-    router.handleActionTriggered(ActionId::ViewPanBottomRightAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewGoToContentStartAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewGoToContentEndAction, input, ports);
     router.handleActionTriggered(ActionId::ViewScanForwardAction, input, ports);
     router.handleActionTriggered(ActionId::ViewScanBackwardAction, input, ports);
     router.handleActionTriggered(ActionId::WindowFullscreenAction, input, ports);
@@ -350,6 +359,50 @@ void TestApplicationCommandRouter::videoSeekChecksModeAndSeekability()
     QVERIFY(router.executeVideoSeekShortcut(input, ports, -45000));
     QCOMPARE(log.seekCount, 1);
     QCOMPARE(log.lastSeekDeltaMilliseconds, qint64(-45000));
+}
+
+void TestApplicationCommandRouter::contentBoundaryActionsRouteByMediaMode()
+{
+    ApplicationCommandRouter router;
+    ApplicationCommandRouterInput input;
+    CommandLog log;
+    ApplicationCommandRouterPorts ports = commandPorts(log);
+
+    router.handleActionTriggered(ActionId::ViewGoToContentStartAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewGoToContentEndAction, input, ports);
+    QCOMPARE(log.actionCalls,
+        QStringList({ QStringLiteral("pan-initial-scan-position"),
+            QStringLiteral("pan-final-scan-position") }));
+    QCOMPARE(log.setVideoPositionCount, 0);
+
+    input.videoMode = true;
+    log = CommandLog {};
+    ports = commandPorts(log);
+    router.handleActionTriggered(ActionId::ViewGoToContentStartAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewGoToContentEndAction, input, ports);
+    QCOMPARE(log.actionCalls, QStringList {});
+    QCOMPARE(log.setVideoPositionCount, 2);
+    QCOMPARE(log.lastVideoPosition, log.videoDuration);
+
+    log = CommandLog {};
+    log.videoDuration = 0;
+    ports = commandPorts(log);
+    router.handleActionTriggered(ActionId::ViewGoToContentEndAction, input, ports);
+    QCOMPARE(log.setVideoPositionCount, 0);
+
+    log = CommandLog {};
+    log.videoSeekable = false;
+    ports = commandPorts(log);
+    router.handleActionTriggered(ActionId::ViewGoToContentStartAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewGoToContentEndAction, input, ports);
+    QCOMPARE(log.setVideoPositionCount, 0);
+
+    log = CommandLog {};
+    log.videoAvailable = false;
+    ports = commandPorts(log);
+    router.handleActionTriggered(ActionId::ViewGoToContentStartAction, input, ports);
+    router.handleActionTriggered(ActionId::ViewGoToContentEndAction, input, ports);
+    QCOMPARE(log.setVideoPositionCount, 0);
 }
 
 void TestApplicationCommandRouter::videoScanShortcutsUseActiveNavigation()

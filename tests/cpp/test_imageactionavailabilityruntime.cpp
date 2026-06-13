@@ -78,6 +78,8 @@ void TestImageActionAvailabilityRuntime::shortcutScopeLookupUsesProjectionFields
         runtime.readyViewerShortcutsEnabled());
     QCOMPARE(runtime.shortcutsEnabledForScope(Scope::PannableViewerShortcutScope),
         runtime.pannableViewerShortcutsEnabled());
+    QCOMPARE(runtime.shortcutsEnabledForScope(Scope::MediaStartEndViewerShortcutScope),
+        runtime.pannableViewerShortcutsEnabled());
     QCOMPARE(runtime.shortcutsEnabledForScope(Scope::ContainerShortcutScope),
         runtime.containerShortcutsEnabled());
     QVERIFY(!runtime.shortcutsEnabledForScope(Scope::ImageSelectionShortcutScope));
@@ -99,6 +101,10 @@ void TestImageActionAvailabilityRuntime::mediaShortcutScopeLookupCombinesSession
         !runtime.mediaShortcutsEnabledForScope(Scope::PageViewerShortcutScope, true, false, false));
     QVERIFY(
         runtime.mediaShortcutsEnabledForScope(Scope::ReadyViewerShortcutScope, true, true, false));
+    QVERIFY(runtime.mediaShortcutsEnabledForScope(
+        Scope::MediaStartEndViewerShortcutScope, true, false, false));
+    QVERIFY(!runtime.mediaShortcutsEnabledForScope(
+        Scope::MediaStartEndViewerShortcutScope, true, false, true));
     QVERIFY(
         !runtime.mediaShortcutsEnabledForScope(Scope::ReadyViewerShortcutScope, true, true, true));
 }

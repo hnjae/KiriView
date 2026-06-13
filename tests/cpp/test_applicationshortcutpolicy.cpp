@@ -200,6 +200,10 @@ void TestApplicationShortcutPolicy::actionDefinitionsOwnApplicationShortcutRoute
         Scope::ViewerShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::ViewToggleVideoPlaybackAction, ActivationScope::ViewerLocal,
         Scope::ReadyViewerShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::ViewGoToContentStartAction, ActivationScope::ViewerLocal,
+        Scope::MediaStartEndViewerShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::ViewGoToContentEndAction, ActivationScope::ViewerLocal,
+        Scope::MediaStartEndViewerShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::GoPreviousImageAction, ActivationScope::ViewerLocal,
         Scope::ImageSelectionViewerShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::GoFirstImageAction, ActivationScope::ViewerLocal,
@@ -346,6 +350,8 @@ void TestApplicationShortcutPolicy::videoShortcutScopesUseViewerDeletionAndNavig
         input, Scope::ImageSelectionShortcutScope));
     QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ImageSelectionViewerShortcutScope));
+    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::MediaStartEndViewerShortcutScope));
 
     input.viewerShortcutsEnabled = false;
     QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
@@ -354,6 +360,8 @@ void TestApplicationShortcutPolicy::videoShortcutScopesUseViewerDeletionAndNavig
         input, Scope::ReadyViewerShortcutScope));
     QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
         input, Scope::ImageSelectionViewerShortcutScope));
+    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::MediaStartEndViewerShortcutScope));
 
     input.viewerShortcutsEnabled = true;
     input.directMediaNavigationActive = false;
@@ -389,6 +397,10 @@ void TestApplicationShortcutPolicy::videoUnsupportedActionPolicyRejectsImageOnly
     QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewScanForwardAction));
     QVERIFY(
         !KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewScanBackwardAction));
+    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(
+        ActionId::ViewGoToContentStartAction));
+    QVERIFY(
+        !KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewGoToContentEndAction));
 
     QVERIFY(
         !KiriView::ApplicationActions::videoActionUnsupported(ActionId::WindowFullscreenAction));

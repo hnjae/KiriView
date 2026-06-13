@@ -424,6 +424,10 @@ mod tests {
             input,
             RustImageShortcutScope::ImageSelectionViewerShortcutScope
         ));
+        assert!(rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::MediaStartEndViewerShortcutScope
+        ));
 
         input.viewer_shortcuts_enabled = false;
         assert!(rust_video_shortcuts_enabled_for_scope(
@@ -438,9 +442,17 @@ mod tests {
             input,
             RustImageShortcutScope::ImageSelectionViewerShortcutScope
         ));
+        assert!(!rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::MediaStartEndViewerShortcutScope
+        ));
 
         input.viewer_shortcuts_enabled = true;
         input.media_navigation_active = false;
+        assert!(rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::MediaStartEndViewerShortcutScope
+        ));
         assert!(!rust_video_shortcuts_enabled_for_scope(
             input,
             RustImageShortcutScope::ImageSelectionShortcutScope
@@ -493,6 +505,10 @@ mod tests {
         ));
         assert!(image_shortcuts_enabled_for_scope(
             projection,
+            RustImageShortcutScope::MediaStartEndViewerShortcutScope
+        ));
+        assert!(image_shortcuts_enabled_for_scope(
+            projection,
             RustImageShortcutScope::ContainerShortcutScope
         ));
         assert!(!image_shortcuts_enabled_for_scope(
@@ -531,6 +547,27 @@ mod tests {
             true,
             false,
             false
+        ));
+        assert!(active_media_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::MediaStartEndViewerShortcutScope,
+            false,
+            true,
+            false
+        ));
+        assert!(active_media_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::MediaStartEndViewerShortcutScope,
+            true,
+            false,
+            false
+        ));
+        assert!(!active_media_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::MediaStartEndViewerShortcutScope,
+            true,
+            true,
+            true
         ));
     }
 
