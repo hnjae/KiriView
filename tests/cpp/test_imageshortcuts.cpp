@@ -45,6 +45,7 @@ private Q_SLOTS:
     void init();
     void cleanup();
     void arrowKeysPanAsFixedViewerShortcuts();
+    void shiftedCommaAndPeriodPanToScanEdges();
     void leftAndRightArrowKeysUseNavigationFallback();
     void arrowKeysAreIgnoredWhileViewerShortcutsAreSuppressed();
     void shiftArrowsMoveOnePageInTwoPageModeLeftToRight();
@@ -525,6 +526,23 @@ void TestImageShortcuts::arrowKeysPanAsFixedViewerShortcuts()
     const QPointF downPosition = viewportContentPosition(fixture.root);
     pressKey(fixture.view.get(), Qt::Key_Up);
     QTRY_VERIFY(viewportContentPosition(fixture.root).y() < downPosition.y());
+}
+
+void TestImageShortcuts::shiftedCommaAndPeriodPanToScanEdges()
+{
+    ImageShortcutsFixture fixture = createReadyFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(documentReady(fixture.root));
+    QVERIFY(zoomToActualSize(fixture.root));
+    QTRY_VERIFY(fixture.root->property("viewportPannable").toBool());
+
+    pressKey(fixture.view.get(), Qt::Key_Period, Qt::ShiftModifier);
+    const QPointF bottomRightPosition = viewportContentPosition(fixture.root);
+    QTRY_VERIFY(bottomRightPosition.x() > 0.0);
+    QTRY_VERIFY(bottomRightPosition.y() > 0.0);
+
+    pressKey(fixture.view.get(), Qt::Key_Comma, Qt::ShiftModifier);
+    QTRY_COMPARE(viewportContentPosition(fixture.root), QPointF(0.0, 0.0));
 }
 
 void TestImageShortcuts::leftAndRightArrowKeysUseNavigationFallback()
