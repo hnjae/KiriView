@@ -67,7 +67,7 @@ void TestLocalization::applicationRuntimeSetsDesktopFileName()
 {
     KiriView::initializeApplicationRuntime();
 
-    QCOMPARE(QGuiApplication::desktopFileName(), QStringLiteral("io.github.hnjae.KiriView"));
+    QCOMPARE(QGuiApplication::desktopFileName(), QStringLiteral("org.hnjae.kiriview"));
 }
 
 void TestLocalization::qmlContextUsesTestCatalog()

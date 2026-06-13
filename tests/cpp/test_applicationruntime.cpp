@@ -37,12 +37,12 @@ bool categoryDebugEnabled(const QString &name)
 QStringList diagnosticCategoryNames()
 {
     return {
-        QStringLiteral("io.github.hnjae.kiriview.decode"),
-        QStringLiteral("io.github.hnjae.kiriview.navigation"),
-        QStringLiteral("io.github.hnjae.kiriview.predecode"),
-        QStringLiteral("io.github.hnjae.kiriview.thumbnail"),
-        QStringLiteral("io.github.hnjae.kiriview.display.provider"),
-        QStringLiteral("io.github.hnjae.kiriview.animation"),
+        QStringLiteral("org.hnjae.kiriview.decode"),
+        QStringLiteral("org.hnjae.kiriview.navigation"),
+        QStringLiteral("org.hnjae.kiriview.predecode"),
+        QStringLiteral("org.hnjae.kiriview.thumbnail"),
+        QStringLiteral("org.hnjae.kiriview.display.provider"),
+        QStringLiteral("org.hnjae.kiriview.animation"),
     };
 }
 }
@@ -113,7 +113,7 @@ void TestApplicationRuntime::startupSourceCarriesVerboseMode()
 
 void TestApplicationRuntime::runtimeDiagnosticsStayDisabledWithoutVerboseStartup()
 {
-    QLoggingCategory::setFilterRules(QStringLiteral("io.github.hnjae.kiriview.*.debug=false"));
+    QLoggingCategory::setFilterRules(QStringLiteral("org.hnjae.kiriview.*.debug=false"));
 
     KiriView::configureApplicationRuntimeDiagnostics(
         startupSource(KiriView::ApplicationStartupSourceKind::None));
@@ -125,7 +125,7 @@ void TestApplicationRuntime::runtimeDiagnosticsStayDisabledWithoutVerboseStartup
 
 void TestApplicationRuntime::runtimeDiagnosticsEnableVerboseStartupCategories()
 {
-    QLoggingCategory::setFilterRules(QStringLiteral("io.github.hnjae.kiriview.*.debug=false"));
+    QLoggingCategory::setFilterRules(QStringLiteral("org.hnjae.kiriview.*.debug=false"));
 
     KiriView::configureApplicationRuntimeDiagnostics(
         startupSource(KiriView::ApplicationStartupSourceKind::None, {}, true));
