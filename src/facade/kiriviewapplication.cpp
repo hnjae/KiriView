@@ -364,6 +364,10 @@ void KiriViewApplication::connectActionStateSources()
     if (KiriImageDocument *image = session->imageDocument()) {
         connectRebuild(image, &KiriImageDocument::viewportFrameChanged);
     }
+    if (KiriVideoDocument *video = session->videoDocument()) {
+        connectRebuild(video, &KiriVideoDocument::seekableChanged);
+        connectRebuild(video, &KiriVideoDocument::durationChanged);
+    }
 }
 
 void KiriViewApplication::disconnectActionStateSources()
@@ -481,6 +485,11 @@ Actions::ApplicationActionStateInput KiriViewApplication::actionStateInput() con
     input.videoMode = activeVideoMode;
     input.videoFileDeletionInProgress
         = m_documentSession != nullptr && m_documentSession->fileDeletionInProgress();
+    if (KiriVideoDocument *video
+        = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
+        input.videoSeekable = video->seekable();
+        input.videoDuration = video->duration();
+    }
     return input;
 }
 
@@ -627,10 +636,21 @@ Actions::ApplicationCommandRouterPorts KiriViewApplication::commandRouterPorts()
             = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument();
         return video != nullptr && video->seekable();
     };
+    ports.videoDuration = [this]() {
+        KiriVideoDocument *video
+            = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument();
+        return video == nullptr ? qint64(0) : video->duration();
+    };
     ports.seekVideoBy = [this](qint64 deltaMilliseconds) {
         if (KiriVideoDocument *video
             = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
             video->seekBy(deltaMilliseconds);
+        }
+    };
+    ports.setVideoPosition = [this](qint64 positionMilliseconds) {
+        if (KiriVideoDocument *video
+            = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
+            video->setPosition(positionMilliseconds);
         }
     };
     ports.toggleVideoPlayback = [this]() {

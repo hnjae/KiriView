@@ -51,6 +51,8 @@ struct ApplicationActionStateInput {
     bool activeNavigationActionsAvailable = false;
     bool videoMode = false;
     bool videoFileDeletionInProgress = false;
+    bool videoSeekable = false;
+    qint64 videoDuration = 0;
 };
 
 struct ApplicationActionState {

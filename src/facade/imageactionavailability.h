@@ -77,6 +77,7 @@ public:
         PannableViewerShortcutScope,
         ContainerShortcutScope,
         ContainerViewerShortcutScope,
+        MediaStartEndViewerShortcutScope,
     };
     Q_ENUM(ShortcutScope)
 
@@ -136,8 +137,8 @@ private:
     KiriView::ApplicationActions::ImageActionAvailabilityRuntime m_runtime;
 };
 
-static_assert(static_cast<int>(ImageActionAvailability::ContainerViewerShortcutScope)
+static_assert(static_cast<int>(ImageActionAvailability::MediaStartEndViewerShortcutScope)
     == static_cast<int>(
-        KiriView::ApplicationActions::ImageShortcutScope::ContainerViewerShortcutScope));
+        KiriView::ApplicationActions::ImageShortcutScope::MediaStartEndViewerShortcutScope));
 
 #endif

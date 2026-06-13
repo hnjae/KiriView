@@ -401,12 +401,12 @@ msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp
 msgctxt "@action"
-msgid "Top Left"
+msgid "Go to Content Start"
 msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp
 msgctxt "@action"
-msgid "Bottom Right"
+msgid "Go to Content End"
 msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp

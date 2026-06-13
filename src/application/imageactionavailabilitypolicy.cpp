@@ -28,6 +28,7 @@ bool imageShortcutScopeKnown(KiriView::ApplicationActions::ImageShortcutScope sc
     case ImageShortcutScope::PannableViewerShortcutScope:
     case ImageShortcutScope::ContainerShortcutScope:
     case ImageShortcutScope::ContainerViewerShortcutScope:
+    case ImageShortcutScope::MediaStartEndViewerShortcutScope:
         return true;
     }
 

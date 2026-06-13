@@ -18,6 +18,12 @@ bool activeNavigationActionEnabled(
         && !input.fileDeletionInProgress;
 }
 
+bool videoSeekActionEnabled(const KiriView::ApplicationActions::ApplicationActionStateInput &input)
+{
+    return input.videoMode && input.helpActionsEnabled && input.videoSeekable
+        && !input.fileDeletionInProgress;
+}
+
 KiriView::ApplicationActions::ApplicationActionState state(bool enabled)
 {
     return KiriView::ApplicationActions::ApplicationActionState { enabled, true, false, false };
@@ -77,6 +83,12 @@ ApplicationActionState applicationActionState(
         return state(input.readyActionsEnabled);
     case ActionId::ViewToggleVideoPlaybackAction:
         return state(input.videoMode && input.helpActionsEnabled && !input.fileDeletionInProgress);
+    case ActionId::ViewGoToContentStartAction:
+        return input.videoMode ? state(videoSeekActionEnabled(input))
+                               : state(input.readyActionsEnabled);
+    case ActionId::ViewGoToContentEndAction:
+        return input.videoMode ? state(videoSeekActionEnabled(input) && input.videoDuration > 0)
+                               : state(input.readyActionsEnabled);
     case ActionId::ViewFitAction:
         return checkableState(input.readyActionsEnabled, input.fitModeSelected);
     case ActionId::ViewFitHeightAction:
@@ -105,9 +117,6 @@ ApplicationActionState applicationActionState(
         return state(input.applicationMenuShortcutEnabled);
     case ActionId::FileQuitAction:
         return state(true);
-    case ActionId::ViewPanTopLeftAction:
-    case ActionId::ViewPanBottomRightAction:
-        return state(input.readyActionsEnabled);
     case ActionId::ActionCount:
         return state(false);
     }

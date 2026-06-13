@@ -22,6 +22,15 @@ void callDouble(const std::function<void(double)> &callback, double value)
     }
 }
 
+qint64 callInt64(const std::function<qint64()> &callback) { return callback ? callback() : 0; }
+
+void callInt64(const std::function<void(qint64)> &callback, qint64 value)
+{
+    if (callback) {
+        callback(value);
+    }
+}
+
 void panBy(
     const KiriView::ApplicationActions::ApplicationCommandRouterPorts &ports, double dx, double dy)
 {
@@ -108,10 +117,23 @@ void ApplicationCommandRouter::handleActionTriggered(ActionId actionId,
     case ActionId::ViewToggleThumbnailPanelAction:
         callVoid(ports.toggleThumbnailPanel);
         return;
-    case ActionId::ViewPanTopLeftAction:
+    case ActionId::ViewGoToContentStartAction:
+        if (input.videoMode) {
+            if (callBool(ports.videoAvailable) && callBool(ports.videoSeekable)) {
+                callInt64(ports.setVideoPosition, 0);
+            }
+            return;
+        }
         callVoid(ports.requestViewportPanToInitialScanPosition);
         return;
-    case ActionId::ViewPanBottomRightAction:
+    case ActionId::ViewGoToContentEndAction:
+        if (input.videoMode) {
+            const qint64 duration = callInt64(ports.videoDuration);
+            if (callBool(ports.videoAvailable) && callBool(ports.videoSeekable) && duration > 0) {
+                callInt64(ports.setVideoPosition, duration);
+            }
+            return;
+        }
         callVoid(ports.requestViewportPanToFinalScanPosition);
         return;
     case ActionId::ViewScanForwardAction:

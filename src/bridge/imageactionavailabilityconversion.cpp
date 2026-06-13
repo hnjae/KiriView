@@ -84,6 +84,8 @@ RustImageShortcutScope rustImageShortcutScope(ApplicationActions::ImageShortcutS
         return RustImageShortcutScope::ContainerShortcutScope;
     case Scope::ContainerViewerShortcutScope:
         return RustImageShortcutScope::ContainerViewerShortcutScope;
+    case Scope::MediaStartEndViewerShortcutScope:
+        return RustImageShortcutScope::MediaStartEndViewerShortcutScope;
     }
 
     return RustImageShortcutScope::HelpShortcutScope;

@@ -196,6 +196,7 @@ std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value)
     case ImageShortcutScope::PannableViewerShortcutScope:
     case ImageShortcutScope::ContainerShortcutScope:
     case ImageShortcutScope::ContainerViewerShortcutScope:
+    case ImageShortcutScope::MediaStartEndViewerShortcutScope:
         return static_cast<ImageShortcutScope>(value);
     }
 
@@ -219,8 +220,6 @@ bool videoActionUnsupported(ActionId actionId)
     case ActionId::ViewRotateCounterclockwiseAction:
     case ActionId::ViewToggleTwoPageModeAction:
     case ActionId::ViewToggleRightToLeftReadingAction:
-    case ActionId::ViewPanTopLeftAction:
-    case ActionId::ViewPanBottomRightAction:
         return true;
     default:
         return false;

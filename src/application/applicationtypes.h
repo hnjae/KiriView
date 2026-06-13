@@ -37,8 +37,8 @@ enum class ActionId {
     ViewToggleRightToLeftReadingAction,
     ViewToggleInfoPanelAction,
     ViewToggleThumbnailPanelAction,
-    ViewPanTopLeftAction,
-    ViewPanBottomRightAction,
+    ViewGoToContentStartAction,
+    ViewGoToContentEndAction,
     ViewScanForwardAction,
     ViewScanBackwardAction,
     ViewToggleVideoPlaybackAction,
@@ -76,6 +76,7 @@ enum class ImageShortcutScope {
     PannableViewerShortcutScope,
     ContainerShortcutScope,
     ContainerViewerShortcutScope,
+    MediaStartEndViewerShortcutScope,
 };
 
 struct ShortcutRouteSpec {
