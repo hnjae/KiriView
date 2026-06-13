@@ -47,12 +47,14 @@ i18n-update:
 [group('build')]
 build:
     devenv shell -- flatpak-builder --disable-tests \
+        --delete-build-dirs \
         --force-clean build-dir \
         io.github.hnjae.KiriView.json
 
 [group('build')]
 build-with-tests:
     devenv shell -- flatpak-builder \
+        --delete-build-dirs \
         --force-clean build-dir \
         io.github.hnjae.KiriView.json
 
@@ -99,6 +101,7 @@ run:
 [group('build')]
 install:
     devenv shell -- flatpak-builder --install --user --disable-tests \
+        --delete-build-dirs \
         --force-clean build-dir \
         io.github.hnjae.KiriView.json
 
