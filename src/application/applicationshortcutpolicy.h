@@ -38,6 +38,7 @@ ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &prog
 const QList<ApplicationShortcutRoute> &shortcutRoutes();
 std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value);
 bool videoActionUnsupported(ActionId actionId);
+bool imageActionUnsupported(ActionId actionId);
 }
 
 #endif

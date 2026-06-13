@@ -59,6 +59,7 @@ struct ApplicationCommandRouterPorts {
     std::function<bool()> videoAvailable;
     std::function<bool()> videoSeekable;
     std::function<void(qint64)> seekVideoBy;
+    std::function<void()> toggleVideoPlayback;
 };
 
 class ApplicationCommandRouter final

@@ -36,6 +36,7 @@ ApplicationActionRuntime::ApplicationActionRuntime(ApplicationActionHost &host, 
           std::move(callbacks.shortcutRevisionChanged),
           ApplicationShortcutRuntime::TriggerCallbacks {
               std::move(callbacks.unsupportedVideoActionTriggered),
+              std::move(callbacks.unsupportedImageActionTriggered),
               std::move(callbacks.horizontalArrowShortcutTriggered),
               std::move(callbacks.singlePageArrowShortcutTriggered),
               std::move(callbacks.verticalPanShortcutTriggered),
@@ -157,6 +158,11 @@ QString ApplicationActionRuntime::actionToolbarTooltipText(ActionId actionId) co
 bool ApplicationActionRuntime::videoActionUnsupported(ActionId actionId) const
 {
     return ApplicationActions::videoActionUnsupported(actionId);
+}
+
+bool ApplicationActionRuntime::imageActionUnsupported(ActionId actionId) const
+{
+    return ApplicationActions::imageActionUnsupported(actionId);
 }
 
 bool ApplicationActionRuntime::mediaHorizontalArrowShortcutsEnabled(bool videoMode,

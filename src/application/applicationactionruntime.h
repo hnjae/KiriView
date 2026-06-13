@@ -33,6 +33,7 @@ public:
         std::function<void()> actionStateChanged;
         std::function<void(ActionId)> actionTriggered;
         std::function<void(ActionId)> unsupportedVideoActionTriggered;
+        std::function<void(ActionId)> unsupportedImageActionTriggered;
         std::function<bool(bool)> horizontalArrowShortcutTriggered;
         std::function<bool(bool)> singlePageArrowShortcutTriggered;
         std::function<bool(bool)> verticalPanShortcutTriggered;
@@ -65,6 +66,7 @@ public:
     QString actionToolbarText(ActionId actionId) const;
     QString actionToolbarTooltipText(ActionId actionId) const;
     bool videoActionUnsupported(ActionId actionId) const;
+    bool imageActionUnsupported(ActionId actionId) const;
     bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
         bool videoViewerShortcutsEnabled, bool videoDirectMediaNavigationActive,
         bool videoFileDeletionInProgress) const;

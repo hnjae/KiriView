@@ -75,6 +75,8 @@ ApplicationActionState applicationActionState(
     case ActionId::ViewScanForwardAction:
     case ActionId::ViewScanBackwardAction:
         return state(input.readyActionsEnabled);
+    case ActionId::ViewToggleVideoPlaybackAction:
+        return state(input.videoMode && input.helpActionsEnabled && !input.fileDeletionInProgress);
     case ActionId::ViewFitAction:
         return checkableState(input.readyActionsEnabled, input.fitModeSelected);
     case ActionId::ViewFitHeightAction:
@@ -168,6 +170,8 @@ QString applicationActionMenuText(ActionId actionId, const ApplicationActionStat
         return i18nc("@action:inmenu", "Show &Info Panel");
     case ActionId::ViewToggleThumbnailPanelAction:
         return i18nc("@action:inmenu", "Show &Thumbnail Panel");
+    case ActionId::ViewToggleVideoPlaybackAction:
+        return i18nc("@action:inmenu", "&Play/Pause");
     case ActionId::WindowFullscreenAction:
         return i18nc("@action:inmenu", "&Fullscreen");
     case ActionId::HelpShortcutsAction:

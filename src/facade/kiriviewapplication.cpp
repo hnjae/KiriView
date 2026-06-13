@@ -67,6 +67,9 @@ KiriViewApplication::KiriViewApplication(QObject *parent)
               [this](Actions::ActionId actionId) {
                   Q_EMIT unsupportedVideoActionTriggered(facadeActionId(actionId));
               },
+              [this](Actions::ActionId actionId) {
+                  Q_EMIT unsupportedImageActionTriggered(facadeActionId(actionId));
+              },
               [this](bool leftArrow) { return executeHorizontalArrowShortcut(leftArrow); },
               [this](bool leftArrow) { return executeSinglePageArrowShortcut(leftArrow); },
               [this](bool up) { return executeVerticalPanShortcut(up); },
@@ -294,6 +297,11 @@ void KiriViewApplication::setShortcutHost(QObject *host) { m_actionRuntime->setS
 bool KiriViewApplication::videoActionUnsupported(ActionId actionId) const
 {
     return m_actionRuntime->videoActionUnsupported(domainActionId(actionId));
+}
+
+bool KiriViewApplication::imageActionUnsupported(ActionId actionId) const
+{
+    return m_actionRuntime->imageActionUnsupported(domainActionId(actionId));
 }
 
 bool KiriViewApplication::mediaHorizontalArrowShortcutsEnabled(bool videoMode,
@@ -623,6 +631,12 @@ Actions::ApplicationCommandRouterPorts KiriViewApplication::commandRouterPorts()
         if (KiriVideoDocument *video
             = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
             video->seekBy(deltaMilliseconds);
+        }
+    };
+    ports.toggleVideoPlayback = [this]() {
+        if (KiriVideoDocument *video
+            = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
+            video->togglePlayback();
         }
     };
     return ports;

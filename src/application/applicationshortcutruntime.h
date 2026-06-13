@@ -35,6 +35,7 @@ public:
     using ChangeCallback = std::function<void()>;
     struct TriggerCallbacks {
         std::function<void(ActionId)> unsupportedVideoActionTriggered;
+        std::function<void(ActionId)> unsupportedImageActionTriggered;
         std::function<bool(bool)> horizontalArrowShortcutTriggered;
         std::function<bool(bool)> singlePageArrowShortcutTriggered;
         std::function<bool(bool)> verticalPanShortcutTriggered;

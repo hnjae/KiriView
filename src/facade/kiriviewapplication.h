@@ -78,6 +78,7 @@ public:
         ViewPanBottomRightAction,
         ViewScanForwardAction,
         ViewScanBackwardAction,
+        ViewToggleVideoPlaybackAction,
         WindowFullscreenAction,
         HelpShortcutsAction,
         OptionsConfigureKeybindingAction,
@@ -138,6 +139,7 @@ public:
         bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled);
     Q_INVOKABLE void setShortcutHost(QObject *host);
     Q_INVOKABLE bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
+    Q_INVOKABLE bool imageActionUnsupported(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool mediaHorizontalArrowShortcutsEnabled(bool videoMode,
         bool imageReadyViewerShortcutsEnabled, bool videoViewerShortcutsEnabled,
         bool videoDirectMediaNavigationActive, bool videoFileDeletionInProgress) const;
@@ -154,6 +156,7 @@ Q_SIGNALS:
     void toggleThumbnailPanelRequested();
     void imageBoundaryReached(const QString &message);
     void unsupportedVideoActionTriggered(KiriViewApplication::ActionId actionId);
+    void unsupportedImageActionTriggered(KiriViewApplication::ActionId actionId);
 
 protected:
     void setupActions() override;

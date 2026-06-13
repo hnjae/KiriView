@@ -41,6 +41,7 @@ enum class ActionId {
     ViewPanBottomRightAction,
     ViewScanForwardAction,
     ViewScanBackwardAction,
+    ViewToggleVideoPlaybackAction,
     WindowFullscreenAction,
     HelpShortcutsAction,
     OptionsConfigureKeybindingAction,

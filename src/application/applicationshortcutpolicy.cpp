@@ -227,4 +227,14 @@ bool videoActionUnsupported(ActionId actionId)
     }
 }
 
+bool imageActionUnsupported(ActionId actionId)
+{
+    switch (actionId) {
+    case ActionId::ViewToggleVideoPlaybackAction:
+        return true;
+    default:
+        return false;
+    }
+}
+
 }

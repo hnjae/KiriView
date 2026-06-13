@@ -187,6 +187,10 @@ StatefulApp.StatefulWindow {
         function onUnsupportedVideoActionTriggered(actionId) {
             toastNotification.show(KI18n.i18nc("@info:status", "This action is not available for videos"), "unsupported-video-action");
         }
+
+        function onUnsupportedImageActionTriggered(actionId) {
+            toastNotification.show(KI18n.i18nc("@info:status", "This action is not available for images"), "unsupported-image-action");
+        }
     }
 
     Timer {

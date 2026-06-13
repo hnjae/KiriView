@@ -510,10 +510,12 @@ bool ApplicationShortcutRuntime::shortcutBindingEnabled(
     const bool actionEnabled = action != nullptr && action->isEnabled();
     const bool unsupportedVideoIntercept
         = m_actionStateInput.videoMode && videoActionUnsupported(actionId);
+    const bool unsupportedImageIntercept
+        = !m_actionStateInput.videoMode && imageActionUnsupported(actionId);
 
     if (shortcutScope.has_value()) {
         return applicationShortcutsEnabledForScope(m_actionStateInput, *shortcutScope)
-            && (actionEnabled || unsupportedVideoIntercept);
+            && (actionEnabled || unsupportedVideoIntercept || unsupportedImageIntercept);
     }
 
     switch (actionId) {
@@ -538,6 +540,12 @@ void ApplicationShortcutRuntime::handleShortcutActivated(ActionId actionId)
     if (m_actionStateInput.videoMode && videoActionUnsupported(actionId)) {
         if (m_triggerCallbacks.unsupportedVideoActionTriggered) {
             m_triggerCallbacks.unsupportedVideoActionTriggered(actionId);
+        }
+        return;
+    }
+    if (!m_actionStateInput.videoMode && imageActionUnsupported(actionId)) {
+        if (m_triggerCallbacks.unsupportedImageActionTriggered) {
+            m_triggerCallbacks.unsupportedImageActionTriggered(actionId);
         }
         return;
     }

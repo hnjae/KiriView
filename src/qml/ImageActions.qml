@@ -39,6 +39,7 @@ Item {
     readonly property var zoomOutAction: zoomOutManagedAction.proxy
     readonly property var scanForwardAction: scanForwardManagedAction.proxy
     readonly property var scanBackwardAction: scanBackwardManagedAction.proxy
+    readonly property var videoPlaybackAction: videoPlaybackManagedAction.proxy
     readonly property var fullscreenAction: fullscreenManagedAction.proxy
     readonly property var shortcutHelpAction: shortcutHelpManagedAction.proxy
     readonly property var configureShortcutsAction: configureShortcutsManagedAction.proxy
@@ -323,6 +324,13 @@ Item {
         id: scanBackwardManagedAction
 
         actionId: KiriViewApplication.ViewScanBackwardAction
+        application: root.application
+    }
+
+    ManagedAction {
+        id: videoPlaybackManagedAction
+
+        actionId: KiriViewApplication.ViewToggleVideoPlaybackAction
         application: root.application
     }
 

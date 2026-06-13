@@ -120,6 +120,11 @@ void ApplicationCommandRouter::handleActionTriggered(ActionId actionId,
     case ActionId::ViewScanBackwardAction:
         handleScanBackwardAction(input, ports);
         return;
+    case ActionId::ViewToggleVideoPlaybackAction:
+        if (input.videoMode && callBool(ports.videoAvailable)) {
+            callVoid(ports.toggleVideoPlayback);
+        }
+        return;
     case ActionId::WindowFullscreenAction:
         callVoid(ports.toggleFullScreen);
         return;
