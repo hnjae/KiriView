@@ -31,6 +31,6 @@ Direct media routing should evolve toward an explicit document-session plan boun
 
 Document-session plans may compute active navigation projections, action-availability gates, direct media routing, deletion fallback, and predecode eligibility from plain snapshots. They must not publish QML-facing values directly, store independent workflow state, or bypass the session-owned stale-completion identity checks.
 
-Shared Previous, Next, First, and Last dispatch belongs to the document session. QML actions and shortcuts may combine the session projection with local UI gates, but route selection and boundary dispatch policy stay behind session methods.
+Shared Previous, Next, First, and Last dispatch belongs to the document session. The C++ action runtime combines the session projection with accepted UI gate snapshots for shared action and shortcut availability; QML reports UI-local gate facts and renders action placements. Route selection and boundary dispatch policy stay behind session methods.
 
 Existing controllers do not need immediate rewrites. Move logic when the workflow is already changing and the new boundary reduces complexity.

@@ -2,7 +2,7 @@
 
 QML and Kirigami own declarative UI composition:
 
-- Page structure, menus, toolbars, overlays, and shortcut attachment points.
+- Page structure, menus, toolbars, overlays, and UI-local shortcut attachment points.
 - Visual placement of action objects supplied by the C++ facade.
 - Bindings to documented QObject properties and invokable methods.
 - UI-only state that does not affect application behavior.
