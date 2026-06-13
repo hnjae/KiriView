@@ -164,7 +164,7 @@ The actual landed position may be adjusted by the Qt Multimedia backend, commonl
 
 When an image is zoomed large enough to pan, `.` or `Space` scans forward through the image from left to right and then top to bottom.
 
-Each scan step moves horizontally or vertically by at most three quarters of the visible viewport, except that moving from the right edge of one row to the next row jumps directly to the left edge of the next row.
+Each scan step moves horizontally or vertically by at most seven eighths of the visible viewport, except that moving from the right edge of one row to the next row jumps directly to the left edge of the next row.
 
 At the final scan position, `.` or `Space` opens the next image.
 
