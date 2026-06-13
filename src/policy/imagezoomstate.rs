@@ -4,7 +4,8 @@
 const MINIMUM_MANUAL_ZOOM_PERCENT: f64 = 10.0;
 const MANUAL_ZOOM_LOGICAL_LONG_EDGE_LIMIT: f64 = 65_536.0;
 const MANUAL_ZOOM_VIEWPORT_LONG_EDGE_MULTIPLIER: f64 = 8.0;
-const MANUAL_ZOOM_STEP_FACTOR: f64 = 1.1;
+// Closest f64 to 2^(1/8).
+const MANUAL_ZOOM_STEP_FACTOR: f64 = 1.090_507_732_665_257_7;
 const ZOOM_EPSILON: f64 = 0.001;
 
 #[cxx::bridge(namespace = "kiriview")]
