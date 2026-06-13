@@ -3,4 +3,4 @@
 
 #include "predecodelogging.h"
 
-Q_LOGGING_CATEGORY(kiriviewPredecodeLog, "io.github.hnjae.kiriview.predecode", QtWarningMsg)
+Q_LOGGING_CATEGORY(kiriviewPredecodeLog, "org.hnjae.kiriview.predecode", QtWarningMsg)

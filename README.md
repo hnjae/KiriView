@@ -33,7 +33,7 @@ KiriView can be built and installed locally as a Flatpak development build. This
 
 ```sh
 just install
-flatpak run io.github.hnjae.KiriView
+flatpak run org.hnjae.kiriview
 ```
 
 See [Flatpak Development Builds](docs/flatpak.md) for manual build steps, removal instructions, and packaging notes.

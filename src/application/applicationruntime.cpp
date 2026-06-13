@@ -24,7 +24,7 @@
 namespace {
 void setupApplicationIdentity()
 {
-    QGuiApplication::setDesktopFileName(QStringLiteral("io.github.hnjae.KiriView"));
+    QGuiApplication::setDesktopFileName(QStringLiteral("org.hnjae.kiriview"));
 }
 
 void setupDefaultQuickStyle()
@@ -69,7 +69,7 @@ void loadApplicationMainQml(
         engine.setInitialProperties(initialProperties);
     }
 
-    engine.load(QUrl(QStringLiteral("qrc:/qt/qml/io/github/hnjae/kiriview/src/qml/Main.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:/qt/qml/org/hnjae/kiriview/src/qml/Main.qml")));
 }
 
 int runApplication(const ApplicationStartupSource &startupSource)

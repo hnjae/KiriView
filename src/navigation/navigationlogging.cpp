@@ -3,4 +3,4 @@
 
 #include "navigationlogging.h"
 
-Q_LOGGING_CATEGORY(kiriviewNavigationLog, "io.github.hnjae.kiriview.navigation", QtWarningMsg)
+Q_LOGGING_CATEGORY(kiriviewNavigationLog, "org.hnjae.kiriview.navigation", QtWarningMsg)

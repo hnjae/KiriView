@@ -11,12 +11,12 @@ namespace {
 QStringList verboseDiagnosticCategoryNames()
 {
     return {
-        QStringLiteral("io.github.hnjae.kiriview.decode"),
-        QStringLiteral("io.github.hnjae.kiriview.navigation"),
-        QStringLiteral("io.github.hnjae.kiriview.predecode"),
-        QStringLiteral("io.github.hnjae.kiriview.thumbnail"),
-        QStringLiteral("io.github.hnjae.kiriview.display.provider"),
-        QStringLiteral("io.github.hnjae.kiriview.animation"),
+        QStringLiteral("org.hnjae.kiriview.decode"),
+        QStringLiteral("org.hnjae.kiriview.navigation"),
+        QStringLiteral("org.hnjae.kiriview.predecode"),
+        QStringLiteral("org.hnjae.kiriview.thumbnail"),
+        QStringLiteral("org.hnjae.kiriview.display.provider"),
+        QStringLiteral("org.hnjae.kiriview.animation"),
     };
 }
 

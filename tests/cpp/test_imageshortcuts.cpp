@@ -88,14 +88,13 @@ void registerKiriViewQmlTypes()
     }
 
     KiriView::initializeLocalization();
-    qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
-    qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
-    qmlRegisterUncreatableType<KiriMediaInformation>("io.github.hnjae.kiriview", 1, 0,
+    qmlRegisterType<KiriImageDocument>("org.hnjae.kiriview", 1, 0, "KiriImageDocument");
+    qmlRegisterType<KiriDocumentSession>("org.hnjae.kiriview", 1, 0, "KiriDocumentSession");
+    qmlRegisterUncreatableType<KiriMediaInformation>("org.hnjae.kiriview", 1, 0,
         "KiriMediaInformation", "KiriMediaInformation is owned by KiriDocumentSession");
-    qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
-    qmlRegisterType<ImageActionAvailability>(
-        "io.github.hnjae.kiriview", 1, 0, "ImageActionAvailability");
-    qmlRegisterType<KiriViewApplication>("io.github.hnjae.kiriview", 1, 0, "KiriViewApplication");
+    qmlRegisterType<KiriVideoDocument>("org.hnjae.kiriview", 1, 0, "KiriVideoDocument");
+    qmlRegisterType<ImageActionAvailability>("org.hnjae.kiriview", 1, 0, "ImageActionAvailability");
+    qmlRegisterType<KiriViewApplication>("org.hnjae.kiriview", 1, 0, "KiriViewApplication");
     registered = true;
 }
 
@@ -208,7 +207,7 @@ QString fixtureQml(const QString &sourceUrl = QString())
 {
     return QStringLiteral(R"(
 import QtQuick
-import io.github.hnjae.kiriview
+import org.hnjae.kiriview
 import "%1" as KiriViewQml
 
 Item {

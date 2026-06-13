@@ -19,7 +19,7 @@ Layout: `src/` (app), `tests/cpp/` (C++ tests), `docs/` (docs), `po/` (translati
 ## Project conventions
 
 - 4-space indentation for Rust, QML, C++, and headers.
-- App ID is always `io.github.hnjae.KiriView`.
+- App ID is always `org.hnjae.kiriview`.
 - **Translations:** never author `po/*.po` content yourself. Only update templates or existing files with strings supplied by a translator, upstream tooling, or an explicit request.
 - **Licensing:** AGPL-3.0-or-later with REUSE checks. New source files need SPDX copyright + license headers; cover generated/metadata files in `REUSE.toml` when inline headers are impractical.
 

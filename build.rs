@@ -253,7 +253,7 @@ fn add_qt_modules(mut builder: CxxQtBuilder, modules: &[&str]) -> CxxQtBuilder {
 }
 
 fn qml_module() -> QmlModule {
-    let mut module = QmlModule::new("io.github.hnjae.kiriview")
+    let mut module = QmlModule::new("org.hnjae.kiriview")
         .depend("QtMultimedia")
         .depend("QtQuick")
         .depend("org.kde.kirigamiaddons.formcard")

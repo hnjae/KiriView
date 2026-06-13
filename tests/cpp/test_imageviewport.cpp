@@ -939,7 +939,7 @@ void registerKiriViewQmlTypes()
         return;
     }
 
-    const char *uri = "io.github.hnjae.kiriview.tests";
+    const char *uri = "org.hnjae.kiriview.tests";
     qmlRegisterType<FakeKiriImageDocument>(uri, 1, 0, "KiriImageDocument");
     qmlRegisterType<FakeKiriImageViewportContextBridge>(
         uri, 1, 0, "KiriImageViewportContextBridge");
@@ -992,8 +992,8 @@ std::unique_ptr<QTemporaryDir> createTestQmlDirectory(QString *errorString)
 
         QByteArray content = sourceFile.readAll();
         if (fileName == QStringLiteral("ImageViewport.qml")) {
-            const QByteArray productionImport("import io.github.hnjae.kiriview\n");
-            const QByteArray testImport("import io.github.hnjae.kiriview.tests\n");
+            const QByteArray productionImport("import org.hnjae.kiriview\n");
+            const QByteArray testImport("import org.hnjae.kiriview.tests\n");
             if (!content.contains(productionImport)) {
                 *errorString = QStringLiteral("ImageViewport.qml production import was not found");
                 return nullptr;
@@ -1018,7 +1018,7 @@ QString fixtureQml(const QString &qmlImportPath)
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQml
-import io.github.hnjae.kiriview.tests
+import org.hnjae.kiriview.tests
 import "%1" as KiriViewQml
 
 Item {

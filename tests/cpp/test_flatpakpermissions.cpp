@@ -37,7 +37,7 @@ QByteArray readProjectFile(const QString &relativePath)
 
 QStringList manifestFinishArgs()
 {
-    const QByteArray data = readProjectFile(QStringLiteral("io.github.hnjae.KiriView.json"));
+    const QByteArray data = readProjectFile(QStringLiteral("org.hnjae.kiriview.json"));
     if (data.isEmpty()) {
         return {};
     }

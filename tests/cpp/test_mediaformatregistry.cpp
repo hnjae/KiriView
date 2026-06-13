@@ -158,8 +158,7 @@ void TestMediaFormatRegistry::openDialogFilterIncludesMediaAndArchives()
 
 void TestMediaFormatRegistry::desktopMimeTypesMatchSupportedOpenMimeTypes()
 {
-    QFile desktopFile(
-        QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../../io.github.hnjae.KiriView.desktop"));
+    QFile desktopFile(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../../org.hnjae.kiriview.desktop"));
     QVERIFY(desktopFile.open(QIODevice::ReadOnly | QIODevice::Text));
 
     const QString mimePrefix = QStringLiteral("MimeType=");

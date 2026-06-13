@@ -3,4 +3,4 @@
 
 #include "animationlogging.h"
 
-Q_LOGGING_CATEGORY(kiriviewAnimationLog, "io.github.hnjae.kiriview.animation", QtWarningMsg)
+Q_LOGGING_CATEGORY(kiriviewAnimationLog, "org.hnjae.kiriview.animation", QtWarningMsg)

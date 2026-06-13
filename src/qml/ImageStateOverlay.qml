@@ -3,7 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls as Controls
-import io.github.hnjae.kiriview
+import org.hnjae.kiriview
 import org.kde.ki18n
 import org.kde.kirigami as Kirigami
 

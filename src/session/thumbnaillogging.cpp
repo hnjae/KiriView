@@ -3,4 +3,4 @@
 
 #include "thumbnaillogging.h"
 
-Q_LOGGING_CATEGORY(kiriviewThumbnailLog, "io.github.hnjae.kiriview.thumbnail", QtWarningMsg)
+Q_LOGGING_CATEGORY(kiriviewThumbnailLog, "org.hnjae.kiriview.thumbnail", QtWarningMsg)

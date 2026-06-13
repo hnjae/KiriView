@@ -4,7 +4,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQml
-import io.github.hnjae.kiriview
+import org.hnjae.kiriview
 
 MediaViewportDelegate {
     id: root
@@ -53,7 +53,7 @@ MediaViewportDelegate {
     LoggingCategory {
         id: inputLog
 
-        name: "io.github.hnjae.kiriview.input"
+        name: "org.hnjae.kiriview.input"
         defaultLogLevel: LoggingCategory.Warning
     }
 

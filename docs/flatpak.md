@@ -25,7 +25,7 @@ flatpak-builder \
     --keep-build-dirs \
     --disable-tests \
     --force-clean build-dir \
-    io.github.hnjae.KiriView.json
+    org.hnjae.kiriview.json
 ```
 
 The same development build can also be installed through the repository task:
@@ -37,7 +37,7 @@ just install
 Run the installed development build:
 
 ```sh
-flatpak run io.github.hnjae.KiriView
+flatpak run org.hnjae.kiriview
 ```
 
 To update the installed development build after changing or pulling the source, rerun the build and install command above.
@@ -45,7 +45,7 @@ To update the installed development build after changing or pulling the source, 
 To remove the local development build:
 
 ```sh
-flatpak --user uninstall io.github.hnjae.KiriView
+flatpak --user uninstall org.hnjae.kiriview
 ```
 
 ## Packaging Notes

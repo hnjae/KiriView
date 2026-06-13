@@ -5,7 +5,7 @@
 set -euo pipefail
 
 readonly domain="kiriview"
-readonly desktop_id="io.github.hnjae.KiriView"
+readonly desktop_id="org.hnjae.kiriview"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly repo_root
 

@@ -30,6 +30,6 @@ msgstr "__kiriview_test_previous_archive__"
 msgid "Could not read the selected image data."
 msgstr "__kiriview_test_status_read_image_data__"
 
-#: io.github.hnjae.KiriView.desktop
+#: org.hnjae.kiriview.desktop
 msgid "Image Viewer"
 msgstr "__kiriview_test_generic_name__"

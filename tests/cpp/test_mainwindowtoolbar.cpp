@@ -87,17 +87,16 @@ void registerKiriViewQmlTypes()
     }
 
     KiriView::initializeLocalization();
-    qmlRegisterType<KiriViewApplication>("io.github.hnjae.kiriview", 1, 0, "KiriViewApplication");
-    qmlRegisterType<ImageActionAvailability>(
-        "io.github.hnjae.kiriview", 1, 0, "ImageActionAvailability");
-    qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
-    qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
+    qmlRegisterType<KiriViewApplication>("org.hnjae.kiriview", 1, 0, "KiriViewApplication");
+    qmlRegisterType<ImageActionAvailability>("org.hnjae.kiriview", 1, 0, "ImageActionAvailability");
+    qmlRegisterType<KiriDocumentSession>("org.hnjae.kiriview", 1, 0, "KiriDocumentSession");
+    qmlRegisterType<KiriImageDocument>("org.hnjae.kiriview", 1, 0, "KiriImageDocument");
     qmlRegisterType<KiriImageViewportContextBridge>(
-        "io.github.hnjae.kiriview", 1, 0, "KiriImageViewportContextBridge");
-    qmlRegisterUncreatableType<KiriMediaInformation>("io.github.hnjae.kiriview", 1, 0,
+        "org.hnjae.kiriview", 1, 0, "KiriImageViewportContextBridge");
+    qmlRegisterUncreatableType<KiriMediaInformation>("org.hnjae.kiriview", 1, 0,
         "KiriMediaInformation", "KiriMediaInformation is owned by KiriDocumentSession");
-    qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
-    qmlRegisterType<MenuAccessKeyRouter>("io.github.hnjae.kiriview", 1, 0, "MenuAccessKeyRouter");
+    qmlRegisterType<KiriVideoDocument>("org.hnjae.kiriview", 1, 0, "KiriVideoDocument");
+    qmlRegisterType<MenuAccessKeyRouter>("org.hnjae.kiriview", 1, 0, "MenuAccessKeyRouter");
     registered = true;
 }
 

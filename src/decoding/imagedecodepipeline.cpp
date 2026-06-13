@@ -24,7 +24,7 @@
 #include <optional>
 #include <utility>
 
-Q_LOGGING_CATEGORY(kiriviewDecodeLog, "io.github.hnjae.kiriview.decode", QtWarningMsg)
+Q_LOGGING_CATEGORY(kiriviewDecodeLog, "org.hnjae.kiriview.decode", QtWarningMsg)
 
 namespace {
 const char *imageInputKindName(KiriView::ImageInputKind kind)

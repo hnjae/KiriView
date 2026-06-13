@@ -117,7 +117,7 @@ set(KIRIVIEW_TEST_LOCALE_DIR "${CMAKE_CURRENT_BINARY_DIR}/locale")
 set(KIRIVIEW_TEST_KO_PO "${CMAKE_SOURCE_DIR}/../fixtures/i18n/ko/kiriview.po")
 set(KIRIVIEW_TEST_KO_MO "${KIRIVIEW_TEST_LOCALE_DIR}/ko/LC_MESSAGES/kiriview.mo")
 set(KIRIVIEW_TEST_DESKTOP_FILE
-    "${CMAKE_CURRENT_BINARY_DIR}/io.github.hnjae.KiriView.desktop"
+    "${CMAKE_CURRENT_BINARY_DIR}/org.hnjae.kiriview.desktop"
 )
 
 add_custom_command(
@@ -137,12 +137,12 @@ add_custom_command(
         --locale=ko
         --keyword=Name
         --keyword=GenericName
-        --template "${CMAKE_SOURCE_DIR}/../../io.github.hnjae.KiriView.desktop"
+        --template "${CMAKE_SOURCE_DIR}/../../org.hnjae.kiriview.desktop"
         --output-file "${KIRIVIEW_TEST_DESKTOP_FILE}"
         "${KIRIVIEW_TEST_KO_PO}"
     DEPENDS
         "${KIRIVIEW_TEST_KO_PO}"
-        "${CMAKE_SOURCE_DIR}/../../io.github.hnjae.KiriView.desktop"
+        "${CMAKE_SOURCE_DIR}/../../org.hnjae.kiriview.desktop"
     VERBATIM
 )
 

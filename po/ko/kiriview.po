@@ -1146,10 +1146,10 @@ msgctxt "@info:placeholder"
 msgid "Unable to open video"
 msgstr ""
 
-#: io.github.hnjae.KiriView.desktop
+#: org.hnjae.kiriview.desktop
 msgid "KiriView"
 msgstr ""
 
-#: io.github.hnjae.KiriView.desktop
+#: org.hnjae.kiriview.desktop
 msgid "Image Viewer"
 msgstr ""

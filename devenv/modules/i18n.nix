@@ -140,7 +140,7 @@ let
         --keyword=GenericName \
         --output="$generated_pot" \
         --directory="$repo_root" \
-        io.github.hnjae.KiriView.desktop
+        org.hnjae.kiriview.desktop
 
     sed -i \
         's/^"POT-Creation-Date: .*\\n"$/"POT-Creation-Date: 2026-01-01 00:00+0000\\n"/' \

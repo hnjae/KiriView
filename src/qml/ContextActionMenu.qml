@@ -3,7 +3,7 @@
 
 import QtQuick.Controls as Controls
 import QtQml.Models
-import io.github.hnjae.kiriview
+import org.hnjae.kiriview
 
 Controls.Menu {
     id: root

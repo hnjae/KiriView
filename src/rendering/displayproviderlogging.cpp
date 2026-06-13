@@ -3,5 +3,4 @@
 
 #include "displayproviderlogging.h"
 
-Q_LOGGING_CATEGORY(
-    kiriviewDisplayProviderLog, "io.github.hnjae.kiriview.display.provider", QtWarningMsg)
+Q_LOGGING_CATEGORY(kiriviewDisplayProviderLog, "org.hnjae.kiriview.display.provider", QtWarningMsg)

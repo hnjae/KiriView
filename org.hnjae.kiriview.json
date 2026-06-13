@@ -1,5 +1,5 @@
 {
-  "id": "io.github.hnjae.KiriView",
+  "id": "org.hnjae.kiriview",
   "runtime": "org.kde.Platform",
   "runtime-version": "6.10",
   "sdk": "org.kde.Sdk",
@@ -112,9 +112,9 @@
       "build-commands": [
         "cargo --offline build --release --jobs ${FLATPAK_BUILDER_N_JOBS:-$(nproc)}",
         "install -Dm755 target/release/kiriview /app/bin/kiriview",
-        "install -Dm644 data/icons/hicolor/scalable/apps/io.github.hnjae.KiriView.svg /app/share/icons/hicolor/scalable/apps/io.github.hnjae.KiriView.svg",
+        "install -Dm644 data/icons/hicolor/scalable/apps/org.hnjae.kiriview.svg /app/share/icons/hicolor/scalable/apps/org.hnjae.kiriview.svg",
         "scripts/install-translations.sh /app",
-        "install -Dm644 target/i18n/io.github.hnjae.KiriView.desktop /app/share/applications/io.github.hnjae.KiriView.desktop"
+        "install -Dm644 target/i18n/org.hnjae.kiriview.desktop /app/share/applications/org.hnjae.kiriview.desktop"
       ],
       "run-tests": true,
       "test-rule": "",

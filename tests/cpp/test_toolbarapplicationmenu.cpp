@@ -90,13 +90,13 @@ void registerKiriViewQmlTypes()
     }
 
     KiriView::initializeLocalization();
-    qmlRegisterType<KiriViewApplication>("io.github.hnjae.kiriview", 1, 0, "KiriViewApplication");
-    qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
-    qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
-    qmlRegisterUncreatableType<KiriMediaInformation>("io.github.hnjae.kiriview", 1, 0,
+    qmlRegisterType<KiriViewApplication>("org.hnjae.kiriview", 1, 0, "KiriViewApplication");
+    qmlRegisterType<KiriDocumentSession>("org.hnjae.kiriview", 1, 0, "KiriDocumentSession");
+    qmlRegisterType<KiriImageDocument>("org.hnjae.kiriview", 1, 0, "KiriImageDocument");
+    qmlRegisterUncreatableType<KiriMediaInformation>("org.hnjae.kiriview", 1, 0,
         "KiriMediaInformation", "KiriMediaInformation is owned by KiriDocumentSession");
-    qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
-    qmlRegisterType<MenuAccessKeyRouter>("io.github.hnjae.kiriview", 1, 0, "MenuAccessKeyRouter");
+    qmlRegisterType<KiriVideoDocument>("org.hnjae.kiriview", 1, 0, "KiriVideoDocument");
+    qmlRegisterType<MenuAccessKeyRouter>("org.hnjae.kiriview", 1, 0, "MenuAccessKeyRouter");
     registered = true;
 }
 
@@ -229,7 +229,7 @@ QString fixtureQml(const QString &sourceUrl = QString(), bool navigationActionsE
     return QStringLiteral(R"(
 import QtQuick
 import QtQuick.Controls as Controls
-import io.github.hnjae.kiriview
+import org.hnjae.kiriview
 import "%1" as KiriViewQml
 import org.kde.kirigami as Kirigami
 
@@ -586,7 +586,7 @@ QString menuBarFixtureQml()
 {
     return QStringLiteral(R"(
 import QtQuick
-import io.github.hnjae.kiriview
+import org.hnjae.kiriview
 import "%1" as KiriViewQml
 import org.kde.kirigami as Kirigami
 
@@ -715,7 +715,7 @@ QString imageActionsFixtureQml(const QString &sourceUrl)
 {
     return QStringLiteral(R"(
 import QtQuick
-import io.github.hnjae.kiriview
+import org.hnjae.kiriview
 import "%1" as KiriViewQml
 
 Item {

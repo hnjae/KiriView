@@ -89,7 +89,7 @@ void registerKiriViewQmlTypes()
     }
 
     KiriView::initializeLocalization();
-    qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
+    qmlRegisterType<KiriDocumentSession>("org.hnjae.kiriview", 1, 0, "KiriDocumentSession");
     registered = true;
 }
 
@@ -104,7 +104,7 @@ QString fixtureQml(const QString &sourceUrl)
 {
     return QStringLiteral(R"(
 import QtQuick
-import io.github.hnjae.kiriview
+import org.hnjae.kiriview
 import "%1" as KiriViewQml
 
 Item {

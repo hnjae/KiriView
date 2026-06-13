@@ -65,7 +65,7 @@ void registerKiriViewQmlTypes()
         return;
     }
 
-    qmlRegisterType<KiriViewApplication>("io.github.hnjae.kiriview", 1, 0, "KiriViewApplication");
+    qmlRegisterType<KiriViewApplication>("org.hnjae.kiriview", 1, 0, "KiriViewApplication");
     registered = true;
 }
 
@@ -88,7 +88,7 @@ QString fixtureQml(const QSize &viewSize)
 {
     return QStringLiteral(R"(
 import QtQuick
-import io.github.hnjae.kiriview
+import org.hnjae.kiriview
 import "%1" as KiriViewQml
 
 Item {

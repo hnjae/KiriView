@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import QtQuick
-import io.github.hnjae.kiriview
+import org.hnjae.kiriview
 import org.kde.kirigami as Kirigami
 
 Item {

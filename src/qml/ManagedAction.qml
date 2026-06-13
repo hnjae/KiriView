@@ -3,7 +3,7 @@
 
 import QtQml
 import QtQuick
-import io.github.hnjae.kiriview
+import org.hnjae.kiriview
 
 Item {
     id: root

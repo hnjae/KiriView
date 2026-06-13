@@ -49,14 +49,14 @@ build:
     devenv shell -- flatpak-builder --disable-tests \
         --delete-build-dirs \
         --force-clean build-dir \
-        io.github.hnjae.KiriView.json
+        org.hnjae.kiriview.json
 
 [group('build')]
 build-with-tests:
     devenv shell -- flatpak-builder \
         --delete-build-dirs \
         --force-clean build-dir \
-        io.github.hnjae.KiriView.json
+        org.hnjae.kiriview.json
 
 [group('build')]
 run:
@@ -82,7 +82,7 @@ run:
         --env=QSG_RHI_BACKEND="${QSG_RHI_BACKEND:-vulkan}" \
         --env=WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
         --env=QT_QPA_PLATFORM=wayland \
-        --env=QT_LOGGING_RULES="${QT_LOGGING_RULES:-io.github.hnjae.kiriview.input.debug=true;io.github.hnjae.kiriview.predecode.debug=true;io.github.hnjae.kiriview.decode.debug=true}"
+        --env=QT_LOGGING_RULES="${QT_LOGGING_RULES:-org.hnjae.kiriview.input.debug=true;org.hnjae.kiriview.predecode.debug=true;org.hnjae.kiriview.decode.debug=true}"
 
     if [ -d "$runtime_dir/doc" ]; then
         set -- "$@" --bind-mount="$runtime_dir/doc=$runtime_dir/doc"
@@ -103,7 +103,7 @@ install:
     devenv shell -- flatpak-builder --install --user --disable-tests \
         --delete-build-dirs \
         --force-clean build-dir \
-        io.github.hnjae.KiriView.json
+        org.hnjae.kiriview.json
 
 refresh-fc-cache:
-    flatpak run --user --command=fc-cache io.github.hnjae.KiriView -rv /run/host/fonts
+    flatpak run --user --command=fc-cache org.hnjae.kiriview -rv /run/host/fonts
