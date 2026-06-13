@@ -2,6 +2,8 @@
 
 FFI code should be explicit, typed, and audit-friendly.
 
+KiriView's internal C++ and CXX bridge namespace is `kiriview`. Qt type names, generated KConfig classes, QML facade names, and visible product strings may remain PascalCase when that matches Qt or branding conventions.
+
 Use small bridge structs and enums for:
 
 - Stable policy inputs.
