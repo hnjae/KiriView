@@ -216,6 +216,10 @@ void TestApplicationShortcutPolicy::actionDefinitionsOwnApplicationShortcutRoute
         ActionId::HelpShortcutsAction, ActivationScope::ProgramWide, Scope::HelpShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::OptionsConfigureKeybindingAction, ActivationScope::ProgramWide,
         Scope::HelpShortcutScope));
+    QVERIFY(hasRouteSpec(
+        ActionId::FileQuitAction, ActivationScope::ProgramWide, Scope::HelpShortcutScope));
+    QVERIFY(hasRouteSpec(
+        ActionId::FileQuitAction, ActivationScope::ViewerLocal, Scope::ViewerShortcutScope));
 }
 
 void TestApplicationShortcutPolicy::actionDefinitionsOwnShortcutHelpCategories()
@@ -291,6 +295,7 @@ void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
     QVERIFY(viewerLocalRoute != nullptr);
     QVERIFY(viewerLocalRoute->actionIds.contains(ActionId::ViewToggleInfoPanelAction));
     QVERIFY(viewerLocalRoute->actionIds.contains(ActionId::ViewToggleThumbnailPanelAction));
+    QVERIFY(viewerLocalRoute->actionIds.contains(ActionId::FileQuitAction));
 
     for (const kiriview::ApplicationActions::ApplicationShortcutRoute &route :
         kiriview::ApplicationActions::shortcutRoutes()) {

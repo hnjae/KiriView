@@ -40,6 +40,7 @@ constexpr int shortcutHelpCategoryTextRole = Qt::UserRole + 6;
 constexpr int shortcutHelpCategoryFirstRole = Qt::UserRole + 7;
 constexpr int shortcutHelpCategoryLastRole = Qt::UserRole + 8;
 constexpr int shortcutHelpShortcutKeyTextsRole = Qt::UserRole + 9;
+constexpr int shortcutHelpScopeTextRole = Qt::UserRole + 10;
 
 QKeySequence shortcut(const QString &sequence)
 {
@@ -116,6 +117,24 @@ QModelIndex shortcutHelpIndexForAction(QAbstractItemModel *model, const QString 
     for (int row = 0; row < model->rowCount(); ++row) {
         const QModelIndex index = model->index(row, 0);
         if (model->data(index, shortcutHelpActionNameRole).toString() == actionName) {
+            return index;
+        }
+    }
+
+    return {};
+}
+
+QModelIndex shortcutHelpIndexForActionAndScope(
+    QAbstractItemModel *model, const QString &actionName, const QString &scopeText)
+{
+    if (model == nullptr) {
+        return {};
+    }
+
+    for (int row = 0; row < model->rowCount(); ++row) {
+        const QModelIndex index = model->index(row, 0);
+        if (model->data(index, shortcutHelpActionNameRole).toString() == actionName
+            && model->data(index, shortcutHelpScopeTextRole).toString() == scopeText) {
             return index;
         }
     }
@@ -403,7 +422,8 @@ void TestKiriViewApplication::shortcutScopeApisSeparateProgramWideAndViewerLocal
 {
     KiriViewApplication application;
 
-    QCOMPARE(application.viewerLocalShortcuts(QStringLiteral("file_quit")), QList<QKeySequence>());
+    QCOMPARE(application.viewerLocalShortcuts(QStringLiteral("file_quit")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Q")) }));
     QCOMPARE(application.programWideShortcuts(QStringLiteral("file_quit")),
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+Q")) }));
     QCOMPARE(application.programWideShortcuts(QStringLiteral("view_rotate_clockwise")),
@@ -433,6 +453,8 @@ void TestKiriViewApplication::shortcutScopeApisSeparateProgramWideAndViewerLocal
         QList<QKeySequence>(
             { shortcut(QStringLiteral("Alt+Q")), shortcut(QStringLiteral("Shift+Q")),
                 shortcut(QStringLiteral("Meta+Q")), shortcut(QStringLiteral("Ctrl+Shift+Q")) }));
+    QCOMPARE(application.viewerLocalShortcuts(QStringLiteral("file_quit")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Q")) }));
 
     QVERIFY(application.setViewerLocalShortcuts(
         QStringLiteral("view_rotate_clockwise"), { shortcut(QStringLiteral("Ctrl+L")) }));
@@ -569,6 +591,18 @@ void TestKiriViewApplication::shortcutHelpModelListsConfigurableActions()
     QVERIFY(deleteIndex.isValid());
     QCOMPARE(model->data(deleteIndex, shortcutHelpActionTextRole).toString(),
         QStringLiteral("Delete Permanently"));
+
+    const QModelIndex quitProgramWideIndex = shortcutHelpIndexForActionAndScope(
+        model, QStringLiteral("file_quit"), QStringLiteral("Program-wide"));
+    QVERIFY(quitProgramWideIndex.isValid());
+    QCOMPARE(model->data(quitProgramWideIndex, shortcutHelpShortcutKeyTextsRole).toStringList(),
+        QStringList({ nativeText(shortcut(QStringLiteral("Ctrl+Q"))) }));
+
+    const QModelIndex quitViewerLocalIndex = shortcutHelpIndexForActionAndScope(
+        model, QStringLiteral("file_quit"), QStringLiteral("Viewer-local"));
+    QVERIFY(quitViewerLocalIndex.isValid());
+    QCOMPARE(model->data(quitViewerLocalIndex, shortcutHelpShortcutKeyTextsRole).toStringList(),
+        QStringList({ nativeText(shortcut(QStringLiteral("Q"))) }));
 
     const QModelIndex openIndex = shortcutHelpIndexForAction(model, QStringLiteral("file_open"));
     QVERIFY(openIndex.isValid());

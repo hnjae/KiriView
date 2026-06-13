@@ -53,6 +53,7 @@ private Q_SLOTS:
     void shiftArrowsAreIgnoredWhileViewerShortcutsAreSuppressed();
     void zoomPresetAndFitShortcutsUseNewMapping();
     void configuredActionShortcutsTriggerActions();
+    void quitViewerLocalShortcutTriggersQuitAction();
     void windowCommandShortcutsWorkWithoutQmlShortcutInstallers();
     void videoViewerLocalShortcutTriggersFullscreenAction();
     void videoPlaybackShortcutTriggersPlaybackAction();
@@ -689,6 +690,27 @@ void TestImageShortcuts::configuredActionShortcutsTriggerActions()
 
     pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
     QCOMPARE(triggeredSpy.count(), 1);
+}
+
+void TestImageShortcuts::quitViewerLocalShortcutTriggersQuitAction()
+{
+    ImageShortcutsFixture fixture = createReadyFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(documentReady(fixture.root));
+
+    QAction *quitAction = fixture.application->action(QStringLiteral("file_quit"));
+    QVERIFY(quitAction != nullptr);
+    QSignalSpy triggeredSpy(quitAction, &QAction::triggered);
+
+    pressKey(fixture.view.get(), Qt::Key_Q);
+    QTRY_COMPARE(triggeredSpy.count(), 1);
+
+    fixture.root->setProperty("toolbarTextInputFocused", true);
+    pressKey(fixture.view.get(), Qt::Key_Q);
+    QCOMPARE(triggeredSpy.count(), 1);
+
+    pressKey(fixture.view.get(), Qt::Key_Q, Qt::ControlModifier);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
 }
 
 void TestImageShortcuts::windowCommandShortcutsWorkWithoutQmlShortcutInstallers()
