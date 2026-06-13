@@ -276,8 +276,9 @@ constexpr std::array actionDefinitions {
         Category::Help, kli18nc("@action", "Open Application Menu"), "application-menu-symbolic",
         portableShortcutSpec("F10")),
     existingAction(Actions::ActionId::FileQuitAction, "file_quit", Category::File,
-        portableShortcutSpec("Ctrl+Q"), noDefaultShortcuts(),
-        shortcutRouteSpecs(route(ActivationScope::ProgramWide, Scope::HelpShortcutScope))),
+        portableShortcutSpec("Ctrl+Q"), portableShortcutSpec("Q"),
+        shortcutRouteSpecs(route(ActivationScope::ProgramWide, Scope::HelpShortcutScope),
+            route(ActivationScope::ViewerLocal, Scope::ViewerShortcutScope))),
 };
 
 static_assert(actionDefinitions.size() == Actions::actionDefinitionCount);
