@@ -76,12 +76,16 @@ StatefulApp.StatefulWindow {
             return;
         }
 
-        if (mainImageToolBar.interactionActive) {
+        if (fullscreenToolBarInteractionActive()) {
             fullscreenToolBarHideTimer.stop();
             return;
         }
 
         fullscreenToolBarHideTimer.restart();
+    }
+
+    function fullscreenToolBarInteractionActive() {
+        return mainImageToolBar.interactionActive || fullscreenToolBarRevealArea.hovered;
     }
 
     function activeImageToolBar() {
@@ -200,7 +204,7 @@ StatefulApp.StatefulWindow {
         repeat: false
 
         onTriggered: {
-            if (root.fullscreen && !mainImageToolBar.interactionActive) {
+            if (root.fullscreen && !root.fullscreenToolBarInteractionActive()) {
                 root.fullscreenToolBarRevealed = false;
             }
         }
@@ -248,7 +252,6 @@ StatefulApp.StatefulWindow {
         readonly property bool imageMode: documentSession.documentKind === KiriDocumentSession.Image
         readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
         readonly property bool imageReady: documentSession.activeImageReady
-        readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
         readonly property string actionUiGateFingerprint: [root.helpDialogOpen, root.fullscreen, root.applicationMenuShortcutEnabled, root.toolbarTextInputFocused(), mediaWorkspaceHost.infoPanelVisible, mediaWorkspaceHost.thumbnailPanelVisible].join("|")
         property bool documentDeletionWasInProgress: false
 
@@ -309,24 +312,6 @@ StatefulApp.StatefulWindow {
         }
 
         onActionUiGateFingerprintChanged: root.publishActionUiState()
-
-        onFullscreenPointerPositionChanged: {
-            if (root.fullscreen && fullscreenRevealHandler.hovered) {
-                root.revealFullscreenToolBar();
-            }
-        }
-
-        HoverHandler {
-            id: fullscreenRevealHandler
-
-            enabled: root.fullscreen && !root.helpDialogOpen
-
-            onHoveredChanged: {
-                if (hovered) {
-                    root.revealFullscreenToolBar();
-                }
-            }
-        }
 
         Connections {
             target: page.imageDocument
@@ -393,6 +378,35 @@ StatefulApp.StatefulWindow {
 
             objectName: "viewerContextMenu"
             actions: imageActions.contextMenuActions
+        }
+
+        Item {
+            id: fullscreenToolBarRevealArea
+
+            readonly property bool hovered: fullscreenToolBarRevealHoverHandler.hovered
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            enabled: root.fullscreen && !root.helpDialogOpen
+            height: mainImageToolBar.implicitHeight + Kirigami.Units.largeSpacing
+            visible: enabled
+            z: 19
+
+            HoverHandler {
+                id: fullscreenToolBarRevealHoverHandler
+
+                enabled: fullscreenToolBarRevealArea.enabled
+
+                onHoveredChanged: {
+                    if (hovered) {
+                        root.revealFullscreenToolBar();
+                        return;
+                    }
+
+                    root.scheduleFullscreenToolBarHide();
+                }
+            }
         }
 
         ImageDocumentToolBar {
