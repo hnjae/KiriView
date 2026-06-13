@@ -102,7 +102,9 @@ In video mode, viewer Left and Right and existing adjacent navigation actions mo
 
 In video mode, the shared scan shortcuts also use adjacent navigation: `.` and `Space` move to the next supported media item, while `,` and `Shift+Space` move to the previous supported media item. They do not pan or seek within the video.
 
-Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit. Shared direct media navigation shortcuts use session active-navigation dispatch and availability.
+Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Current Content Start, Current Content End, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit. Shared direct media navigation shortcuts use session active-navigation dispatch and availability.
+
+The Current Content Start and Current Content End shortcuts are viewer-local configurable video seek actions. By default, `Shift+,` seeks to position `0 ms` in the current video, and `Shift+.` seeks to the video's known positive duration. They are distinct from the fixed `Alt+Arrow` video seek shortcuts.
 
 `P` toggles play/pause for the current video using the same playback command as the playback panel button.
 
@@ -117,6 +119,8 @@ Timeline dragging and scrubbing is the primary way to seek within the current vi
 If keyboard focus is inside the timeline control, that control may handle its own keyboard interaction.
 
 Video mode also supports fixed local seek shortcuts: `Alt+Left` seeks backward 5 seconds, `Alt+Right` seeks forward 5 seconds, `Alt+Up` seeks forward 45 seconds, and `Alt+Down` seeks backward 45 seconds.
+
+The configurable current-content start and end shortcuts follow the same media seekability gates as timeline seeking. Current Content End is unavailable when the duration is unknown, zero, or invalid.
 
 Video seek shortcuts are video-mode-only and must not affect image mode, archive collection scope, or directly opened directory collection scope.
 
