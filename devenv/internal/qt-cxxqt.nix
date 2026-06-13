@@ -105,8 +105,8 @@ let
     lib.filter (source: source != "" && !(lib.hasPrefix "#" source)) (
       lib.splitString "\n" (builtins.readFile path)
     );
-  cppCoreSources = readSourceManifest ../../../src/cpp_core_sources.txt;
-  cxxQtCppSources = readSourceManifest ../../../src/cpp_cxxqt_sources.txt;
+  cppCoreSources = readSourceManifest ../../src/cpp_core_sources.txt;
+  cxxQtCppSources = readSourceManifest ../../src/cpp_cxxqt_sources.txt;
   cppSources = lib.sort builtins.lessThan (cxxQtCppSources ++ cppCoreSources);
   qtCompileDefines = [
     "-DQT_CORE_LIB"
