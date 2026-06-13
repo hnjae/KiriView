@@ -54,7 +54,7 @@ void TestImageViewportInteraction::delegatesViewportGeometryFromSnapshot()
     comparePoint(interaction.panContentPosition(snapshot, QPointF(180.0, 0.0), QPointF(80.0, 0.0)),
         QPointF(260.0, 0.0));
     comparePoint(
-        interaction.nextScanContentPosition(snapshot, QPointF(225.0, 0.0)), QPointF(300.0, 0.0));
+        interaction.nextScanContentPosition(snapshot, QPointF(225.0, 0.0)), QPointF(262.5, 0.0));
     QVERIFY(interaction.viewportPointInsideImage(snapshot, QPointF(0.0, 0.0), QPointF(50.0, 50.0)));
     QVERIFY(
         !interaction.viewportPointInsideImage(snapshot, QPointF(0.0, 0.0), QPointF(50.0, 320.0)));
@@ -85,7 +85,7 @@ void TestImageViewportInteraction::rightToLeftSnapshotChangesScanDirection()
     comparePoint(interaction.initialScanContentPosition(snapshot), QPointF(300.0, 0.0));
     comparePoint(interaction.finalScanContentPosition(snapshot), QPointF(0.0, 200.0));
     comparePoint(
-        interaction.nextScanContentPosition(snapshot, QPointF(300.0, 0.0)), QPointF(225.0, 0.0));
+        interaction.nextScanContentPosition(snapshot, QPointF(300.0, 0.0)), QPointF(262.5, 0.0));
 }
 
 void TestImageViewportInteraction::anchoredZoomUsesSnapshotImageSize()

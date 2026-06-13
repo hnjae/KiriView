@@ -31,7 +31,7 @@ class TestImageViewportGeometry : public QObject
 private Q_SLOTS:
     void anchoredZoomKeepsViewportPointOnSameImageRatio();
     void panPositionClampsToContentBounds();
-    void zScanMovesForwardByThreeQuartersOfViewport();
+    void zScanMovesForwardBySevenEighthsOfViewport();
     void zScanMovesBackwardThroughSamePositions();
     void zScanMovesRightToLeftWhenReadingDirectionIsRightToLeft();
     void zScanStopsAtBoundaries();
@@ -72,20 +72,20 @@ void TestImageViewportGeometry::panPositionClampsToContentBounds()
     comparePoint(clampedToMinimum, QPointF(0.0, 0.0));
 }
 
-void TestImageViewportGeometry::zScanMovesForwardByThreeQuartersOfViewport()
+void TestImageViewportGeometry::zScanMovesForwardBySevenEighthsOfViewport()
 {
     const QSizeF viewportSize(100.0, 100.0);
     const QRectF imageRect(0.0, 0.0, 400.0, 300.0);
 
     comparePoint(
         KiriView::imageViewportNextZScanPosition(viewportSize, imageRect, QPointF(0.0, 0.0)),
-        QPointF(75.0, 0.0));
+        QPointF(87.5, 0.0));
     comparePoint(
         KiriView::imageViewportNextZScanPosition(viewportSize, imageRect, QPointF(225.0, 0.0)),
-        QPointF(300.0, 0.0));
+        QPointF(262.5, 0.0));
     comparePoint(
         KiriView::imageViewportNextZScanPosition(viewportSize, imageRect, QPointF(300.0, 0.0)),
-        QPointF(0.0, 75.0));
+        QPointF(0.0, 87.5));
 }
 
 void TestImageViewportGeometry::zScanMovesBackwardThroughSamePositions()
@@ -98,7 +98,7 @@ void TestImageViewportGeometry::zScanMovesBackwardThroughSamePositions()
         QPointF(300.0, 0.0));
     comparePoint(
         KiriView::imageViewportPreviousZScanPosition(viewportSize, imageRect, QPointF(300.0, 0.0)),
-        QPointF(225.0, 0.0));
+        QPointF(262.5, 0.0));
 }
 
 void TestImageViewportGeometry::zScanMovesRightToLeftWhenReadingDirectionIsRightToLeft()
@@ -108,15 +108,15 @@ void TestImageViewportGeometry::zScanMovesRightToLeftWhenReadingDirectionIsRight
 
     comparePoint(KiriView::imageViewportNextZScanPosition(
                      viewportSize, imageRect, QPointF(300.0, 0.0), true),
-        QPointF(225.0, 0.0));
+        QPointF(262.5, 0.0));
     comparePoint(
         KiriView::imageViewportNextZScanPosition(viewportSize, imageRect, QPointF(0.0, 0.0), true),
-        QPointF(300.0, 75.0));
+        QPointF(300.0, 87.5));
     comparePoint(KiriView::imageViewportPreviousZScanPosition(
-                     viewportSize, imageRect, QPointF(300.0, 75.0), true),
+                     viewportSize, imageRect, QPointF(300.0, 87.5), true),
         QPointF(0.0, 0.0));
     comparePoint(KiriView::imageViewportPreviousZScanPosition(
-                     viewportSize, imageRect, QPointF(225.0, 0.0), true),
+                     viewportSize, imageRect, QPointF(262.5, 0.0), true),
         QPointF(300.0, 0.0));
 }
 
@@ -157,9 +157,9 @@ void TestImageViewportGeometry::zScanHandlesSingleAxisPanning()
     const QRectF tallImageRect(10.0, 0.0, 80.0, 300.0);
     comparePoint(
         KiriView::imageViewportNextZScanPosition(viewportSize, tallImageRect, QPointF(0.0, 0.0)),
-        QPointF(0.0, 75.0));
+        QPointF(0.0, 87.5));
     const QPointF previousTallScanPosition = KiriView::imageViewportPreviousZScanPosition(
-        viewportSize, tallImageRect, QPointF(0.0, 75.0));
+        viewportSize, tallImageRect, QPointF(0.0, 87.5));
     comparePoint(previousTallScanPosition, QPointF(0.0, 0.0));
     comparePoint(KiriView::imageViewportFinalZScanPosition(viewportSize, tallImageRect),
         QPointF(0.0, 200.0));
@@ -167,10 +167,10 @@ void TestImageViewportGeometry::zScanHandlesSingleAxisPanning()
     const QRectF wideImageRect(0.0, 10.0, 300.0, 80.0);
     comparePoint(
         KiriView::imageViewportNextZScanPosition(viewportSize, wideImageRect, QPointF(150.0, 0.0)),
-        QPointF(200.0, 0.0));
+        QPointF(175.0, 0.0));
     const QPointF previousWideScanPosition = KiriView::imageViewportPreviousZScanPosition(
         viewportSize, wideImageRect, QPointF(200.0, 0.0));
-    comparePoint(previousWideScanPosition, QPointF(150.0, 0.0));
+    comparePoint(previousWideScanPosition, QPointF(175.0, 0.0));
     comparePoint(KiriView::imageViewportFinalZScanPosition(viewportSize, wideImageRect),
         QPointF(200.0, 0.0));
 }
