@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-const SCAN_STEP_VIEWPORT_RATIO: f64 = 0.75;
+const SCAN_STEP_VIEWPORT_RATIO: f64 = 0.875;
 const POSITION_EPSILON: f64 = 0.001;
 
 #[derive(Clone, Copy)]
