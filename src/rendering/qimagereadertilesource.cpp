@@ -60,6 +60,19 @@ QImage transformedImage(QImage image, QImageIOHandler::Transformations transform
     return image;
 }
 
+void appendTileDecodeFailure(kiriview::QImageReaderTileDecodeDiagnostics *diagnostics,
+    kiriview::QImageReaderTileDecodeAttemptKind kind, const QString &errorString)
+{
+    if (diagnostics == nullptr) {
+        return;
+    }
+
+    diagnostics->failures.push_back(kiriview::QImageReaderTileDecodeAttemptFailure {
+        kind,
+        errorString.isEmpty() ? imageDataReadError() : errorString,
+    });
+}
+
 template <typename ConfigureReader>
 QImage readBufferedImage(const QByteArray &data, const QByteArray &format, bool autoTransform,
     ConfigureReader configureReader, QString *errorString)
@@ -82,6 +95,16 @@ QImage readBufferedImage(const QByteArray &data, const QByteArray &format, bool 
 }
 
 namespace kiriview {
+QString QImageReaderTileDecodeDiagnostics::userMessage() const
+{
+    for (auto failure = failures.crbegin(); failure != failures.crend(); ++failure) {
+        if (!failure->errorString.isEmpty()) {
+            return failure->errorString;
+        }
+    }
+    return {};
+}
+
 std::shared_ptr<QImageReaderTileSource> QImageReaderTileSource::open(
     const QByteArray &data, const QByteArray &format, QString *errorString)
 {
@@ -116,23 +139,38 @@ QSize QImageReaderTileSource::imageSize() const { return m_imageSize; }
 std::optional<DecodedTile> QImageReaderTileSource::decodeTile(
     const TileRequest &request, QString *errorString) const
 {
+    QImageReaderTileDecodeResult result = decodeTileWithDiagnostics(request);
+    if (!result.tile.has_value() && !result.diagnostics.failures.empty()) {
+        setTileSourceError(errorString, result.diagnostics.userMessage());
+    }
+    return std::move(result.tile);
+}
+
+QImageReaderTileDecodeResult QImageReaderTileSource::decodeTileWithDiagnostics(
+    const TileRequest &request) const
+{
+    QImageReaderTileDecodeResult result;
     if (!tileRequestCanDecode(request)) {
-        return std::nullopt;
+        return result;
     }
 
-    if (std::optional<DecodedTile> tile = decodeReaderClipTile(request, errorString)) {
-        return tile;
+    if (std::optional<DecodedTile> tile = decodeReaderClipTile(request, &result.diagnostics)) {
+        result.tile = std::move(tile);
+        return result;
     }
 
-    if (std::optional<DecodedTile> tile = decodeCachedOrScaledLevelTile(request, errorString)) {
-        return tile;
+    if (std::optional<DecodedTile> tile
+        = decodeCachedOrScaledLevelTile(request, &result.diagnostics)) {
+        result.tile = std::move(tile);
+        return result;
     }
 
-    return decodeFullImageFallbackTile(request, errorString);
+    result.tile = decodeFullImageFallbackTile(request, &result.diagnostics);
+    return result;
 }
 
 std::optional<DecodedTile> QImageReaderTileSource::decodeReaderClipTile(
-    const TileRequest &request, QString *errorString) const
+    const TileRequest &request, QImageReaderTileDecodeDiagnostics *diagnostics) const
 {
     if (m_transform.hasTransform()) {
         return std::nullopt;
@@ -146,10 +184,15 @@ std::optional<DecodedTile> QImageReaderTileSource::decodeReaderClipTile(
         if (!image.isNull() && image.size() == request.textureLevelRect.size()) {
             return decodedTileFromImage(request, std::move(image));
         }
+        appendTileDecodeFailure(
+            diagnostics, QImageReaderTileDecodeAttemptKind::ReaderClip, reader.errorString());
     }
 
-    QImage clipped = readSourceClip(request.sourceRect, errorString);
+    QString sourceClipError;
+    QImage clipped = readSourceClip(request.sourceRect, &sourceClipError);
     if (clipped.isNull()) {
+        appendTileDecodeFailure(
+            diagnostics, QImageReaderTileDecodeAttemptKind::SourceClip, sourceClipError);
         return std::nullopt;
     }
 
@@ -157,7 +200,7 @@ std::optional<DecodedTile> QImageReaderTileSource::decodeReaderClipTile(
 }
 
 std::optional<DecodedTile> QImageReaderTileSource::decodeCachedOrScaledLevelTile(
-    const TileRequest &request, QString *errorString) const
+    const TileRequest &request, QImageReaderTileDecodeDiagnostics *diagnostics) const
 {
     if (std::optional<QImage> cached = m_scaledLevelCache.find(request.key.level)) {
         if (std::optional<DecodedTile> tile = decodedTileFromLevelImage(request, *cached)) {
@@ -165,8 +208,11 @@ std::optional<DecodedTile> QImageReaderTileSource::decodeCachedOrScaledLevelTile
         }
     }
 
-    QImage levelImage = readScaledImage(request.levelSize, errorString);
+    QString scaledLevelError;
+    QImage levelImage = readScaledImage(request.levelSize, &scaledLevelError);
     if (levelImage.isNull()) {
+        appendTileDecodeFailure(
+            diagnostics, QImageReaderTileDecodeAttemptKind::ScaledLevel, scaledLevelError);
         return std::nullopt;
     }
 
@@ -175,10 +221,13 @@ std::optional<DecodedTile> QImageReaderTileSource::decodeCachedOrScaledLevelTile
 }
 
 std::optional<DecodedTile> QImageReaderTileSource::decodeFullImageFallbackTile(
-    const TileRequest &request, QString *errorString) const
+    const TileRequest &request, QImageReaderTileDecodeDiagnostics *diagnostics) const
 {
-    QImage fullImage = readFullImage(errorString);
+    QString fullImageError;
+    QImage fullImage = readFullImage(&fullImageError);
     if (fullImage.isNull()) {
+        appendTileDecodeFailure(
+            diagnostics, QImageReaderTileDecodeAttemptKind::FullImageFallback, fullImageError);
         return std::nullopt;
     }
 

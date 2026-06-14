@@ -14,8 +14,32 @@
 #include <QString>
 #include <memory>
 #include <optional>
+#include <vector>
 
 namespace kiriview {
+enum class QImageReaderTileDecodeAttemptKind {
+    ReaderClip,
+    SourceClip,
+    ScaledLevel,
+    FullImageFallback,
+};
+
+struct QImageReaderTileDecodeAttemptFailure {
+    QImageReaderTileDecodeAttemptKind kind = QImageReaderTileDecodeAttemptKind::ReaderClip;
+    QString errorString;
+};
+
+struct QImageReaderTileDecodeDiagnostics {
+    std::vector<QImageReaderTileDecodeAttemptFailure> failures;
+
+    QString userMessage() const;
+};
+
+struct QImageReaderTileDecodeResult {
+    std::optional<DecodedTile> tile;
+    QImageReaderTileDecodeDiagnostics diagnostics;
+};
+
 class QImageReaderTileSource final : public ImageTileSource
 {
 public:
@@ -28,6 +52,7 @@ public:
     QSize imageSize() const override;
     std::optional<DecodedTile> decodeTile(
         const TileRequest &request, QString *errorString) const override;
+    QImageReaderTileDecodeResult decodeTileWithDiagnostics(const TileRequest &request) const;
     FirstDisplayImageDecodeResult decodeFirstDisplayImage(
         const ImageFirstDisplayDecodeContext &context, QString *errorString) const override;
     bool supportsRasterDisplayRefinement() const override;
@@ -39,11 +64,11 @@ public:
 private:
     bool supportsJpegScaledFirstDisplay() const;
     std::optional<DecodedTile> decodeReaderClipTile(
-        const TileRequest &request, QString *errorString) const;
+        const TileRequest &request, QImageReaderTileDecodeDiagnostics *diagnostics) const;
     std::optional<DecodedTile> decodeCachedOrScaledLevelTile(
-        const TileRequest &request, QString *errorString) const;
+        const TileRequest &request, QImageReaderTileDecodeDiagnostics *diagnostics) const;
     std::optional<DecodedTile> decodeFullImageFallbackTile(
-        const TileRequest &request, QString *errorString) const;
+        const TileRequest &request, QImageReaderTileDecodeDiagnostics *diagnostics) const;
     QImage readScaledImage(const QSize &scaledSize, QString *errorString) const;
     QImage readFullImage(QString *errorString) const;
     QImage readSourceClip(const QRect &sourceRect, QString *errorString) const;
