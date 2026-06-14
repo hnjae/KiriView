@@ -440,6 +440,15 @@ fn file_name_has_raw_extension(name: &str) -> bool {
 mod tests {
     use super::*;
 
+    const HEIF_STILL_IMAGE_BRANDS: &[[u8; 4]] = &[
+        *b"avci", *b"avif", *b"heic", *b"heif", *b"heim", *b"heis", *b"heix", *b"hej2", *b"j2ki",
+        *b"jpeg", *b"mif1", *b"mif2", *b"vvic",
+    ];
+    const HEIF_IMAGE_SEQUENCE_BRANDS: &[[u8; 4]] = &[
+        *b"avcs", *b"avis", *b"hevc", *b"hevm", *b"hevs", *b"hevx", *b"j2is", *b"jpgs", *b"msf1",
+        *b"vvis",
+    ];
+
     fn png_chunk(kind: &[u8; 4], body: &[u8]) -> Vec<u8> {
         let mut chunk = Vec::new();
         chunk.extend_from_slice(&(body.len() as u32).to_be_bytes());
@@ -573,6 +582,29 @@ mod tests {
             classify_image_input(&ftyp_box(b"jp2 ", &[]), "image.bin"),
             qt_raster(RustQtRasterFormat::Jp2)
         );
+    }
+
+    #[test]
+    fn classifies_all_heif_brands_as_avif_compatible_heif_family() {
+        for brand in HEIF_STILL_IMAGE_BRANDS
+            .iter()
+            .chain(HEIF_IMAGE_SEQUENCE_BRANDS.iter())
+        {
+            assert_eq!(
+                classify_image_input(&ftyp_box(brand, &[]), "image.bin"),
+                RustImageInputClassification {
+                    kind: RustImageInputKind::HeifFamily,
+                    qt_format: RustQtRasterFormat::None,
+                    data_source: RustImageDecodeDataSource::AvifCompatible,
+                },
+                "major brand {brand:?} should route to HEIF decoding"
+            );
+            assert_eq!(
+                classify_image_input(&ftyp_box(b"zzzz", &[*brand]), "image.bin").kind,
+                RustImageInputKind::HeifFamily,
+                "compatible brand {brand:?} should route to HEIF decoding"
+            );
+        }
     }
 
     #[test]
