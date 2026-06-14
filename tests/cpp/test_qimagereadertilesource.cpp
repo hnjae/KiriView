@@ -58,6 +58,7 @@ class TestQImageReaderTileSource : public QObject
 
 private Q_SLOTS:
     void sourceDecodesBlockingDisplayImageAndTile();
+    void failedTileDecodePreservesAttemptDiagnostics();
     void jpegSourceDecodesFirstDisplayToViewport();
     void jpegSourceSkipsFirstDisplayWhenImageFitsViewport();
     void pngSourceLeavesFirstDisplayNotImplemented();
@@ -80,6 +81,37 @@ void TestQImageReaderTileSource::sourceDecodesBlockingDisplayImageAndTile()
     const std::optional<kiriview::DecodedTile> tile = source->decodeTile(request, &errorString);
     QVERIFY2(tile.has_value(), qPrintable(errorString));
     QCOMPARE(tile->image.size(), QSize(4, 4));
+}
+
+void TestQImageReaderTileSource::failedTileDecodePreservesAttemptDiagnostics()
+{
+    kiriview::QImageReaderTileSource source(QByteArrayLiteral("not image data"),
+        QByteArrayLiteral("png"), QSize(4, 4), kiriview::StaticImageReaderTransform {});
+
+    const kiriview::TilePyramid pyramid(source.imageSize());
+    const kiriview::TileRequest request = pyramid.requestForTile(kiriview::TileKey { 0, 0, 0 });
+    const kiriview::QImageReaderTileDecodeResult result = source.decodeTileWithDiagnostics(request);
+
+    QVERIFY(!result.tile.has_value());
+    QCOMPARE(result.diagnostics.failures.size(), 4);
+    QCOMPARE(result.diagnostics.failures.at(0).kind,
+        kiriview::QImageReaderTileDecodeAttemptKind::ReaderClip);
+    QCOMPARE(result.diagnostics.failures.at(1).kind,
+        kiriview::QImageReaderTileDecodeAttemptKind::SourceClip);
+    QCOMPARE(result.diagnostics.failures.at(2).kind,
+        kiriview::QImageReaderTileDecodeAttemptKind::ScaledLevel);
+    QCOMPARE(result.diagnostics.failures.at(3).kind,
+        kiriview::QImageReaderTileDecodeAttemptKind::FullImageFallback);
+    for (const kiriview::QImageReaderTileDecodeAttemptFailure &failure :
+        result.diagnostics.failures) {
+        QVERIFY(!failure.errorString.isEmpty());
+    }
+
+    QString compatibilityError;
+    const std::optional<kiriview::DecodedTile> compatibilityTile
+        = source.decodeTile(request, &compatibilityError);
+    QVERIFY(!compatibilityTile.has_value());
+    QCOMPARE(compatibilityError, result.diagnostics.userMessage());
 }
 
 void TestQImageReaderTileSource::jpegSourceDecodesFirstDisplayToViewport()
