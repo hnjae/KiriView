@@ -18,6 +18,7 @@ class TestActiveNavigationThumbnailDemand : public QObject
 private Q_SLOTS:
     void bucketPolicyMapsPhysicalEdge();
     void trackerCoalescesByBucketPrioritySourceAndGeneration();
+    void trackerCoalescesRepeatedDemandPerRowAfterOtherRows();
 };
 
 void TestActiveNavigationThumbnailDemand::bucketPolicyMapsPhysicalEdge()
@@ -82,6 +83,42 @@ void TestActiveNavigationThumbnailDemand::trackerCoalescesByBucketPrioritySource
     demand.number = 2;
     QVERIFY(tracker.record(demand));
     QVERIFY(!tracker.record(demand));
+}
+
+void TestActiveNavigationThumbnailDemand::trackerCoalescesRepeatedDemandPerRowAfterOtherRows()
+{
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+
+    kiriview::ActiveNavigationThumbnailDemandTracker tracker;
+    const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
+    kiriview::ActiveNavigationThumbnailDemand firstDemand {
+        1,
+        firstUrl,
+        Bucket::Normal,
+        Priority::Visible,
+        7,
+    };
+    kiriview::ActiveNavigationThumbnailDemand secondDemand {
+        2,
+        secondUrl,
+        Bucket::Normal,
+        Priority::Visible,
+        7,
+    };
+
+    QVERIFY(tracker.record(firstDemand));
+    QVERIFY(tracker.record(secondDemand));
+    QVERIFY(!tracker.record(firstDemand));
+
+    firstDemand.bucket = Bucket::Large;
+    QVERIFY(tracker.record(firstDemand));
+    QVERIFY(!tracker.record(firstDemand));
+
+    firstDemand.bucket = Bucket::Normal;
+    QVERIFY(tracker.record(firstDemand));
+    QVERIFY(!tracker.record(firstDemand));
 }
 
 QTEST_GUILESS_MAIN(TestActiveNavigationThumbnailDemand)

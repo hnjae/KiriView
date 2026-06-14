@@ -272,6 +272,7 @@ class TestActiveNavigationThumbnailRuntime : public QObject
 private Q_SLOTS:
     void buildsSourceKeysAndBumpsGenerationOnlyForScopeChanges();
     void sameRowDemandCoalescesButBucketAndPriorityChangesAreAccepted();
+    void repeatedDemandAfterOtherRowDoesNotPlanAgain();
     void multipleRowsKeepIndependentDemandState();
     void unsupportedRowsProjectThroughModelResultPath();
     void staleCompletionIsRejected();
@@ -372,6 +373,34 @@ void TestActiveNavigationThumbnailRuntime::
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Nearby, generation));
     QVERIFY(!runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Nearby, generation));
+}
+
+void TestActiveNavigationThumbnailRuntime::repeatedDemandAfterOtherRowDoesNotPlanAgain()
+{
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+
+    QObject owner;
+    ManualThumbnailLookupProvider lookupProvider;
+    ManualThumbnailGenerationProvider generationProvider;
+    RecordingThumbnailSourceAdapter sourceAdapter;
+    sourceAdapter.plan = sourceAdapterPlan(kiriview::ThumbnailSourceAdapterPlanKind::InMemoryOnly);
+    kiriview::ActiveNavigationThumbnailRuntime runtime(&owner, lookupProvider.provider(), {},
+        generationProvider.provider(), sourceAdapter.adapter());
+    const QUrl firstUrl = localUrl(QStringLiteral("/media/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/media/02.png"));
+    runtime.setRows({
+        thumbnailRow(1, firstUrl, QStringLiteral("01.png"),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+        thumbnailRow(2, secondUrl, QStringLiteral("02.png"),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage),
+    });
+
+    const quint64 generation = runtime.navigationGeneration();
+    QVERIFY(runtime.reportDemand(1, firstUrl, Bucket::Normal, Priority::Visible, generation));
+    QVERIFY(runtime.reportDemand(2, secondUrl, Bucket::Normal, Priority::Visible, generation));
+    QVERIFY(!runtime.reportDemand(1, firstUrl, Bucket::Normal, Priority::Visible, generation));
+    QCOMPARE(sourceAdapter.requests.size(), std::size_t(2));
 }
 
 void TestActiveNavigationThumbnailRuntime::multipleRowsKeepIndependentDemandState()
