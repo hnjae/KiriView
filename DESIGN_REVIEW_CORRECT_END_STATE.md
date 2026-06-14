@@ -11,7 +11,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ## Top Design Risks
 
 1. P1: `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
-2. P1: Image and file-operation failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
+2. P1: Lower-level image, collection-source, and thumbnail failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
 3. P2: Image format capabilities and image-open state transitions are not enforced by one central catalog or state-machine boundary.
 
 ## Single Source of Truth Violations
@@ -186,16 +186,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Decoder and tile-source tests can assert route/backend/attempt diagnostics separately from the document-level user message.
 - Priority: P2
 
-### Finding: KIO file-operation failures lose error codes and duplicate cancellation policy
-
-- Evidence: `src/system/filedeletion.h` and `.cpp` use result plus `QString` and local cancellation classification. `src/session/mediaopenwith.cpp` duplicates cancellation classification and string failures. `src/document/imagedocumentdeletioncontroller.cpp` and `src/session/documentsessionruntime.cpp` use generic fallback/user-message paths. `src/qml/Main.qml` displays toasts directly.
-- Current state: File deletion and Open With KIO failures flow as raw strings, local cancellation decisions, and generic fallbacks.
-- Design concern: Cancellation, retryability, and user/internal/fatal distinctions can drift by operation.
-- Correct end state: A shared typed `KioOperationFailure` should contain operation kind, URL, raw KJob/KIO code, cancelled flag, user text, diagnostic detail, and retryability.
-- Suggested migration: Normalize deletion and Open With provider results into `KioOperationFailure`; keep existing UI copy as a projection.
-- Acceptance criteria: Cancellation policy is defined in one helper/type; deletion/Open With tests assert raw code and user message separately.
-- Priority: P2
-
 ### Finding: Collection source errors are inconsistent across backends
 
 - Evidence: `src/archive/mediaentrysourcebackend.h` defines string-oriented `MediaEntrySourceError`; directory backend behavior does not consistently preserve `QFile` error detail; KArchive and libarchive paths preserve different levels of detail; `src/async/imageiojobs.cpp` forwards opened-collection read/candidate-load errors as strings.
@@ -265,7 +255,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - State definition: Image document state changes pass through named transitions or a validating final-state boundary.
 - Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Source-load planning should pass through typed plans before providers run.
 - External effects: `QFileInfo`, `sysconf`, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
-- Error representation: Image decoder/tile, KIO operation, media-entry source, and thumbnail generation failures use typed failures. Internal paths preserve source identity, stage/kind, backend/raw code, severity, and retryability. QML receives user-facing projections.
+- Error representation: Image decoder/tile, media-entry source, and thumbnail generation failures use typed failures. Internal paths preserve source identity, stage/kind, backend/raw code, severity, and retryability. QML receives user-facing projections.
 - Facade/QML: `KiriImageDocument` and `KiriViewApplication` expose QML-friendly types, invokables, and signals. Viewport command planning and action routing input assembly move into presentation/application runtime. QML continues to report geometry/input facts and render projections.
 - Tests: Characterization tests lock current behavior first. Rust policy and C++ domain helpers are tested with pure/fake dependencies. Qt/KDE/filesystem adapter tests remain small. Architecture boundary tests should verify abstractions used by production code.
 
@@ -275,7 +265,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 2. Centralize duplicated rules/state: add image format capability alignment tests.
 3. Isolate core domain logic from external effects: split filesystem source resolution from `ImageLoadPlan` and inject system memory facts for cache budget resolution.
 4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
-5. Improve error semantics and observability: extend lower-level image decoder/tile diagnostics, then KIO and media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
+5. Improve error semantics and observability: extend lower-level image decoder/tile diagnostics, then media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
 6. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
 
 ## Things Not To Change Yet
