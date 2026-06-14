@@ -19,6 +19,7 @@ private Q_SLOTS:
     void sourceLoadResetsPublicPlaybackStateInOrder();
     void clearedSourceResetsPublicStateInOrder();
     void sourceLoadFailureStoresTypedFailureAndPublishesUserMessage();
+    void backendFailureStoresTypedFailureAndPublishesUserMessage();
     void scalarSettersOnlyNotifyOnChangedValues();
     void zoomPercentStatePublishesKnownValuePair();
     void mutedStatePersistsAcrossSourceResets();
@@ -171,6 +172,60 @@ void TestVideoDocumentState::sourceLoadFailureStoresTypedFailureAndPublishesUser
     state.resetForSourceLoad(QUrl::fromLocalFile(QStringLiteral("/videos/next.mp4")));
 
     QVERIFY(!state.sourceLoadFailure().has_value());
+    QCOMPARE(state.errorString(), QString());
+    QCOMPARE(state.status(), kiriview::VideoDocumentStatus::Loading);
+}
+
+void TestVideoDocumentState::backendFailureStoresTypedFailureAndPublishesUserMessage()
+{
+    std::vector<std::vector<Change>> batches;
+    kiriview::VideoDocumentState state(
+        [&batches](const std::vector<Change> &changes) { batches.push_back(changes); });
+    const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/videos/clip.mp4"));
+    const QString backendError = QStringLiteral("Qt Multimedia backend rejected stream");
+
+    state.resetForSourceLoad(sourceUrl);
+    batches.clear();
+    state.setBackendFailure(kiriview::VideoBackendFailure {
+        sourceUrl,
+        kiriview::VideoBackendFailureKind::Playback,
+        backendError,
+        backendError,
+        kiriview::VideoBackendFailureSeverity::Error,
+        false,
+    });
+
+    QVERIFY(state.backendFailure().has_value());
+    QCOMPARE(state.backendFailure()->sourceUrl, sourceUrl);
+    QVERIFY(state.backendFailure()->kind == kiriview::VideoBackendFailureKind::Playback);
+    QCOMPARE(state.backendFailure()->userMessage, backendError);
+    QCOMPARE(state.backendFailure()->diagnosticDetail, backendError);
+    QVERIFY(state.backendFailure()->severity == kiriview::VideoBackendFailureSeverity::Error);
+    QVERIFY(!state.backendFailure()->retryable);
+    QVERIFY(!state.sourceLoadFailure().has_value());
+    QCOMPARE(state.errorString(), backendError);
+    QCOMPARE(state.status(), kiriview::VideoDocumentStatus::Error);
+    compareChanges(batches.front(), { Change::ErrorString, Change::Status });
+
+    batches.clear();
+    state.setStatusAndError(kiriview::VideoDocumentStatus::Ready);
+
+    QVERIFY(!state.backendFailure().has_value());
+    QCOMPARE(state.errorString(), QString());
+    QCOMPARE(state.status(), kiriview::VideoDocumentStatus::Ready);
+    compareChanges(batches.front(), { Change::ErrorString, Change::Status });
+
+    state.setBackendFailure(kiriview::VideoBackendFailure {
+        sourceUrl,
+        kiriview::VideoBackendFailureKind::Playback,
+        backendError,
+        backendError,
+        kiriview::VideoBackendFailureSeverity::Error,
+        false,
+    });
+    state.resetForSourceLoad(QUrl::fromLocalFile(QStringLiteral("/videos/next.mp4")));
+
+    QVERIFY(!state.backendFailure().has_value());
     QCOMPARE(state.errorString(), QString());
     QCOMPARE(state.status(), kiriview::VideoDocumentStatus::Loading);
 }

@@ -30,6 +30,7 @@ private Q_SLOTS:
     void resolvedPlaybackPathPublishesEmbeddedMetadata();
     void resolverFailureSurfacesErrorWithoutChangingSourceUrl();
     void resolverFailurePreservesTypedFailureMetadata();
+    void backendFailurePreservesTypedFailureMetadata();
     void backendRecoveryClearsStaleErrorText();
     void staleResolverCompletionsAreIgnored();
     void resolverCleanupRunsOnSourceChangeAndDestruction();
@@ -497,6 +498,33 @@ void TestVideoDocumentRuntime::resolverFailurePreservesTypedFailureMetadata()
     QCOMPARE(fixture.runtime->errorString(), QString());
 }
 
+void TestVideoDocumentRuntime::backendFailurePreservesTypedFailureMetadata()
+{
+    RuntimeFixture fixture;
+    const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/clip.mp4"));
+    const QString backendError = QStringLiteral("Qt Multimedia backend failed");
+
+    fixture.runtime->setSourceUrl(sourceUrl);
+    fixture.resolveLatest(sourceUrl);
+    fixture.backend->emitError(backendError);
+
+    QVERIFY(fixture.runtime->backendFailure().has_value());
+    QCOMPARE(fixture.runtime->backendFailure()->sourceUrl, sourceUrl);
+    QVERIFY(fixture.runtime->backendFailure()->kind == kiriview::VideoBackendFailureKind::Playback);
+    QCOMPARE(fixture.runtime->backendFailure()->userMessage, backendError);
+    QCOMPARE(fixture.runtime->backendFailure()->diagnosticDetail, backendError);
+    QVERIFY(fixture.runtime->backendFailure()->severity
+        == kiriview::VideoBackendFailureSeverity::Error);
+    QVERIFY(!fixture.runtime->backendFailure()->retryable);
+    QVERIFY(!fixture.runtime->sourceLoadFailure().has_value());
+    QCOMPARE(fixture.runtime->errorString(), fixture.runtime->backendFailure()->userMessage);
+
+    fixture.runtime->setSourceUrl(QUrl::fromLocalFile(QStringLiteral("/home/me/next.mp4")));
+
+    QVERIFY(!fixture.runtime->backendFailure().has_value());
+    QCOMPARE(fixture.runtime->errorString(), QString());
+}
+
 void TestVideoDocumentRuntime::backendRecoveryClearsStaleErrorText()
 {
     RuntimeFixture fixture;
@@ -508,11 +536,13 @@ void TestVideoDocumentRuntime::backendRecoveryClearsStaleErrorText()
 
     QCOMPARE(fixture.runtime->status(), kiriview::VideoDocumentStatus::Error);
     QCOMPARE(fixture.runtime->errorString(), QStringLiteral("backend failed"));
+    QVERIFY(fixture.runtime->backendFailure().has_value());
 
     fixture.backend->emitStatus(kiriview::VideoMediaStatus::Buffered);
 
     QCOMPARE(fixture.runtime->status(), kiriview::VideoDocumentStatus::Ready);
     QCOMPARE(fixture.runtime->errorString(), QString());
+    QVERIFY(!fixture.runtime->backendFailure().has_value());
 }
 
 void TestVideoDocumentRuntime::staleResolverCompletionsAreIgnored()
