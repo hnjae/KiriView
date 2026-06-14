@@ -386,6 +386,15 @@ in
       '';
     };
 
+    "ci:lint:desktop" = {
+      description = "Validate desktop metadata";
+      exec = ''
+        ${baseTaskPrelude}
+
+        ${lib.getExe' pkgs.desktop-file-utils "desktop-file-validate"} org.hnjae.kiriview.desktop
+      '';
+    };
+
     "ci:lint:cpp" = {
       description = "Run clang-tidy and clazy against C++ sources";
       after = [

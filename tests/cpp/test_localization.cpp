@@ -8,7 +8,6 @@
 
 #include <KLocalizedString>
 #include <QAction>
-#include <QFile>
 #include <QGuiApplication>
 #include <QObject>
 #include <QQmlApplicationEngine>
@@ -29,7 +28,6 @@ private Q_SLOTS:
     void statusMessagesUseTestCatalog();
     void applicationRuntimeSetsDesktopFileName();
     void qmlContextUsesTestCatalog();
-    void desktopFileIncludesTranslatedGenericName();
 };
 
 void TestLocalization::initTestCase()
@@ -94,15 +92,6 @@ void TestLocalization::qmlContextUsesTestCatalog()
     QScopedPointer<QObject> object(component.create());
     QVERIFY2(!object.isNull(), qPrintable(component.errorString()));
     QCOMPARE(object->property("openText").toString(), QStringLiteral("__kiriview_test_open__"));
-}
-
-void TestLocalization::desktopFileIncludesTranslatedGenericName()
-{
-    QFile desktopFile(QStringLiteral(KIRIVIEW_TEST_DESKTOP_FILE));
-    QVERIFY(desktopFile.open(QIODevice::ReadOnly));
-
-    const QString desktopText = QString::fromUtf8(desktopFile.readAll());
-    QVERIFY(desktopText.contains(QStringLiteral("GenericName[ko]=__kiriview_test_generic_name__")));
 }
 
 QTEST_MAIN(TestLocalization)

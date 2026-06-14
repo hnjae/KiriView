@@ -30,7 +30,6 @@ pkg_check_modules(LibRaw REQUIRED IMPORTED_TARGET libraw)
 pkg_check_modules(LibWebP REQUIRED IMPORTED_TARGET libwebp)
 pkg_check_modules(LibWebPDemux REQUIRED IMPORTED_TARGET libwebpdemux)
 find_program(MSGFMT_EXECUTABLE msgfmt REQUIRED)
-find_program(DESKTOP_FILE_VALIDATE_EXECUTABLE desktop-file-validate REQUIRED)
 
 function(kiriview_latest_path output)
     set(latest_path "")
@@ -116,9 +115,6 @@ target_link_libraries(kiriview_test_core INTERFACE
 set(KIRIVIEW_TEST_LOCALE_DIR "${CMAKE_CURRENT_BINARY_DIR}/locale")
 set(KIRIVIEW_TEST_KO_PO "${CMAKE_SOURCE_DIR}/../fixtures/i18n/ko/kiriview.po")
 set(KIRIVIEW_TEST_KO_MO "${KIRIVIEW_TEST_LOCALE_DIR}/ko/LC_MESSAGES/kiriview.mo")
-set(KIRIVIEW_TEST_DESKTOP_FILE
-    "${CMAKE_CURRENT_BINARY_DIR}/org.hnjae.kiriview.desktop"
-)
 
 add_custom_command(
     OUTPUT "${KIRIVIEW_TEST_KO_MO}"
@@ -130,26 +126,8 @@ add_custom_command(
     VERBATIM
 )
 
-add_custom_command(
-    OUTPUT "${KIRIVIEW_TEST_DESKTOP_FILE}"
-    COMMAND "${MSGFMT_EXECUTABLE}"
-        --desktop
-        --locale=ko
-        --keyword=Name
-        --keyword=GenericName
-        --template "${CMAKE_SOURCE_DIR}/../../org.hnjae.kiriview.desktop"
-        --output-file "${KIRIVIEW_TEST_DESKTOP_FILE}"
-        "${KIRIVIEW_TEST_KO_PO}"
-    DEPENDS
-        "${KIRIVIEW_TEST_KO_PO}"
-        "${CMAKE_SOURCE_DIR}/../../org.hnjae.kiriview.desktop"
-    VERBATIM
-)
-
 add_custom_target(kiriview_test_i18n ALL
-    DEPENDS
-        "${KIRIVIEW_TEST_KO_MO}"
-        "${KIRIVIEW_TEST_DESKTOP_FILE}"
+    DEPENDS "${KIRIVIEW_TEST_KO_MO}"
 )
 
 function(add_kiriview_cpp_test target source)
@@ -182,7 +160,6 @@ endforeach()
 if(TARGET test_localization)
     add_dependencies(test_localization kiriview_test_i18n)
     target_compile_definitions(test_localization PRIVATE
-        KIRIVIEW_TEST_DESKTOP_FILE="${KIRIVIEW_TEST_DESKTOP_FILE}"
         KIRIVIEW_TEST_LOCALE_DIR="${KIRIVIEW_TEST_LOCALE_DIR}"
     )
     set_tests_properties(test_localization PROPERTIES
@@ -285,8 +262,3 @@ if(TARGET test_shortcuthelpmodel)
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     )
 endif()
-
-add_test(
-    NAME test_desktop_file_validate
-    COMMAND "${DESKTOP_FILE_VALIDATE_EXECUTABLE}" "${KIRIVIEW_TEST_DESKTOP_FILE}"
-)

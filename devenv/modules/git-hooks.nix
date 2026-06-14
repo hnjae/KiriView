@@ -22,12 +22,6 @@
     };
     reuse.enable = true;
     typos.enable = true;
-    desktop-file-utils-validate = {
-      enable = true;
-      name = "desktop-file-validate";
-      files = ''\.desktop$'';
-      entry = "${lib.getExe' pkgs.desktop-file-utils "desktop-file-validate"}";
-    };
 
     # Formatters
     treefmt.enable = true;

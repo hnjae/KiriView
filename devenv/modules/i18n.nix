@@ -68,6 +68,23 @@ let
             po_with_default_header "$po_file" "$checked_po" "$language"
             msgfmt --check --check-format --output-file=/dev/null "$checked_po"
         done
+
+        fixture_po="$repo_root/tests/fixtures/i18n/ko/$domain.po"
+        checked_fixture_po="$check_tmp_dir/fixture-ko.po"
+        generated_desktop="$check_tmp_dir/org.hnjae.kiriview.desktop"
+        po_with_default_header "$fixture_po" "$checked_fixture_po" ko
+        msgfmt \
+            --desktop \
+            --locale=ko \
+            --keyword=Name \
+            --keyword=GenericName \
+            --template "$repo_root/org.hnjae.kiriview.desktop" \
+            --output-file "$generated_desktop" \
+            "$checked_fixture_po"
+        if ! grep -Fqx 'GenericName[ko]=__kiriview_test_generic_name__' "$generated_desktop"; then
+            printf 'Desktop translation fixture did not generate expected Korean GenericName.\n' >&2
+            exit 1
+        fi
         exit 0
     fi
 
