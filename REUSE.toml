@@ -3,6 +3,7 @@ SPDX-PackageName = "KiriView"
 
 [[annotations]]
 path = [
+  "**/org.hnjae.kiriview.svg",
   "**/*.md",
   ".biome.json",
   ".clang-format",

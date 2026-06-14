@@ -1,55 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- SPDX-FileCopyrightText: 2026 KIM Hyunjae -->
-<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
-<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" version="1.1" shape-rendering="geometricPrecision">
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" version="1.1" shape-rendering="geometricPrecision">
   <title>City Sunset Photo Icon</title>
-  <desc>Designed for KDE HIG colorful application icon: 48x48 viewport, 4px clear margins, balanced portrait frame, 1px hard shadow.</desc>
   <defs>
-    <linearGradient id="cy_frame" x1="24" y1="4" x2="24" y2="44" gradientUnits="userSpaceOnUse">
+    <linearGradient id="frame-fill" x1="256" y1="40" x2="256" y2="472" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="0.55" stop-color="#f1f5f8"/>
+      <stop offset="0.52" stop-color="#f2f6f9"/>
       <stop offset="1" stop-color="#d5dde4"/>
     </linearGradient>
-    <linearGradient id="cy_rim" x1="24" y1="4" x2="24" y2="44" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
-      <stop offset="1" stop-color="#8997a3" stop-opacity="0.45"/>
+    <linearGradient id="frame-sheen" x1="256" y1="40" x2="256" y2="472" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.72"/>
+      <stop offset="0.24" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#8a98a5" stop-opacity="0.18"/>
     </linearGradient>
-    <mask id="cy_mask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="0" y="0" width="48" height="48">
-      <rect width="48" height="48" fill="black"/>
-      <rect x="10.8" y="6" width="26.4" height="34.6" rx="2" fill="white"/>
-    </mask>
-
-    <linearGradient id="cy_sky" x1="24" y1="6" x2="24" y2="33" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#bd5de8"/><stop offset="0.48" stop-color="#ff8c42"/><stop offset="1" stop-color="#ffd95a"/></linearGradient>
-    <linearGradient id="cy_b1" x1="24" y1="21" x2="24" y2="40.6" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#5560c9"/><stop offset="1" stop-color="#183f8c"/></linearGradient>
-    <linearGradient id="cy_b2" x1="16" y1="29" x2="16" y2="40.6" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8e44ad"/><stop offset="1" stop-color="#29195f"/></linearGradient>
-
+    <linearGradient id="sky-fill" x1="256" y1="60" x2="256" y2="452" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#bd5de8"/>
+      <stop offset="0.46" stop-color="#ff8c42"/>
+      <stop offset="1" stop-color="#ffd95a"/>
+    </linearGradient>
+    <radialGradient id="sun-glow" cx="192" cy="334" r="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff7a8" stop-opacity="0.72"/>
+      <stop offset="0.46" stop-color="#ffd95a" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#ffd95a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tower-fill" x1="260" y1="226" x2="260" y2="452" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5560c9"/>
+      <stop offset="1" stop-color="#183f8c"/>
+    </linearGradient>
+    <linearGradient id="left-building-fill" x1="188" y1="333" x2="188" y2="452" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8e44ad"/>
+      <stop offset="1" stop-color="#29195f"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="84" y="444" width="344" height="44" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+    <clipPath id="inner-clip">
+      <rect x="114" y="60" width="284" height="392" rx="31.84" ry="31.84"/>
+    </clipPath>
   </defs>
-  <rect x="8.4" y="4" width="31.2" height="40" rx="3" fill="url(#cy_frame)"/>
-  <rect x="9.4" y="5" width="29.2" height="38" rx="2.6" fill="#ffffff" opacity="0.72"/>
-  <g mask="url(#cy_mask)">
-
-    <rect x="10.8" y="6" width="26.4" height="34.6" fill="url(#cy_sky)"/>
-    <circle cx="19" cy="30" r="3.2" fill="#fff176" opacity="0.88"/>
-    <path d="M14.8 17h7.8c0-.9-.9-1.5-2-1.4-.5-1.3-1.8-2-3.2-1.9-1.4.2-2.4 1.1-2.6 2.3-.8-.1-1.4.2-1.6.7-.1.6.5.3 1.6.3zM29.5 16.4h4.2c-.2-.7-.9-1.1-1.6-1-.6-1.1-2.6-1.1-3.1.1-.8.1-1.3.5-1.5.9z" fill="#ffd7b3" opacity="0.58"/>
-    <rect x="21.4" y="21" width="5.8" height="19.6" fill="url(#cy_b1)"/>
-    <rect x="22.8" y="18" width="3" height="3.4" rx="0.5" fill="#344aa5"/>
-    <rect x="24" y="15.1" width="0.55" height="3.3" rx="0.25" fill="#344aa5"/>
-    <rect x="28" y="26" width="4.3" height="14.6" fill="#214f9a"/>
-    <path d="M28 26l4.3 2.8v-2.8z" fill="#3f7fd1"/>
-    <rect x="16.3" y="30" width="5" height="10.6" fill="url(#cy_b2)"/>
-    <rect x="10.8" y="34.2" width="3.2" height="6.4" fill="#4b2a83"/><rect x="13" y="33" width="4.3" height="7.6" fill="#44237e"/><rect x="18.4" y="34.5" width="4.4" height="6.1" fill="#22205f"/>
-    <rect x="25.4" y="32" width="3.7" height="8.6" fill="#173373"/><rect x="31.6" y="30.5" width="3.4" height="10.1" fill="#173d77"/><rect x="34.9" y="33.2" width="2.3" height="7.4" fill="#12346d"/>
+  <ellipse cx="256" cy="469" rx="162" ry="13" fill="#000000" opacity="0.13" filter="url(#soft-shadow)"/>
+  <g clip-path="url(#inner-clip)">
+    <rect x="114" y="60" width="284" height="392" fill="url(#sky-fill)"/>
+    <circle cx="192" cy="334" r="92" fill="url(#sun-glow)"/>
+    <circle cx="192" cy="334" r="41" fill="#fff176" opacity="0.88"/>
+    <path d="M136 202H238c-2.5-12-13.5-20-27-19c-6.8-16.5-24-26.5-42-24.5c-18.5 2.4-31.5 14.5-34.5 30.5c-10.5-1.6-18.5 2.4-21 9c-1.2 8 6.5 4 22.5 4z" fill="#ffd7b3" opacity="0.58"/>
+    <path d="M307 192h55c-2.2-9.5-11.5-15.5-21-14c-8-14.5-34-14.5-40.5 1.5c-10.2 1.2-17.2 6.2-19.5 12.5z" fill="#ffd7b3" opacity="0.52"/>
+    <rect x="222.5" y="226" width="74.8" height="226" fill="url(#tower-fill)"/>
+    <rect x="240.5" y="191" width="38.7" height="39.8" rx="6" ry="6" fill="#344aa5"/>
+    <rect x="254.5" y="156" width="7.1" height="39.3" rx="3.55" ry="3.55" fill="#344aa5"/>
+    <rect x="307.6" y="286" width="55.5" height="166" fill="#214f9a"/>
+    <path d="M307.6 286l55.5 33.3V286z" fill="#3f7fd1"/>
+    <rect x="156.6" y="333" width="64.6" height="119" fill="url(#left-building-fill)"/>
+    <rect x="114" y="369" width="55.5" height="83" fill="#44237e"/>
+    <rect x="184.3" y="393.5" width="56.8" height="58.5" fill="#22205f"/>
+    <rect x="269" y="357" width="47.8" height="95" fill="#173373"/>
+    <rect x="354.1" y="339" width="43.9" height="113" fill="#173d77"/>
+    <path d="M114 414h284v38H114z" fill="#17295f" opacity="0.28"/>
     <g fill="#ffe778" opacity="0.95">
-      <rect x="23" y="30.1" width="0.6" height="1" rx="0.15"/><rect x="23" y="32.5" width="0.6" height="1" rx="0.15"/><rect x="26.2" y="31.7" width="0.6" height="1" rx="0.15"/>
-      <rect x="18.2" y="36.2" width="0.6" height="0.8" rx="0.12"/><rect x="19.4" y="36.2" width="0.6" height="0.8" rx="0.12"/>
-      <rect x="29.3" y="29" width="0.55" height="0.9" rx="0.12"/><rect x="30.5" y="29" width="0.55" height="0.9" rx="0.12"/><rect x="31.7" y="29" width="0.55" height="0.9" rx="0.12"/>
-      <rect x="29.3" y="31.2" width="0.55" height="0.9" rx="0.12"/><rect x="31.7" y="31.2" width="0.55" height="0.9" rx="0.12"/>
-      <rect x="27.0" y="36" width="0.6" height="0.9" rx="0.12"/><rect x="35.4" y="35.6" width="0.55" height="0.85" rx="0.12"/>
+      <rect x="237" y="333" width="8" height="13" rx="2" ry="2"/>
+      <rect x="237" y="362" width="8" height="13" rx="2" ry="2"/>
+      <rect x="278" y="352" width="8" height="13" rx="2" ry="2"/>
+      <rect x="278" y="390" width="8" height="13" rx="2" ry="2"/>
+      <rect x="180" y="405" width="8" height="10" rx="2" ry="2"/>
+      <rect x="196" y="405" width="8" height="10" rx="2" ry="2"/>
+      <rect x="181" y="431" width="8" height="10" rx="2" ry="2"/>
+      <rect x="324" y="321" width="7" height="11" rx="1.8" ry="1.8"/>
+      <rect x="340" y="321" width="7" height="11" rx="1.8" ry="1.8"/>
+      <rect x="356" y="321" width="7" height="11" rx="1.8" ry="1.8"/>
+      <rect x="324" y="350" width="7" height="11" rx="1.8" ry="1.8"/>
+      <rect x="356" y="350" width="7" height="11" rx="1.8" ry="1.8"/>
+      <rect x="282" y="405" width="8" height="11" rx="2" ry="2"/>
     </g>
-
   </g>
-  <rect x="10.8" y="6" width="26.4" height="34.6" rx="2" fill="none" stroke="#ffffff" stroke-width="0.7" opacity="0.86"/>
-  <path d="M11.8 40.1H36.2" stroke="#75838f" stroke-width="0.45" opacity="0.28"/>
-  <rect x="8.4" y="43" width="31.2" height="1" fill="#000000" opacity="0.10"/>
-  <rect x="8.7" y="4.3" width="30.6" height="39.4" rx="2.7" fill="none" stroke="url(#cy_rim)" stroke-width="0.6"/>
+  <path fill="url(#frame-fill)" fill-rule="evenodd" d="M145.84 40H366.16A51.84 51.84 0 0 1 418 91.84V420.16A51.84 51.84 0 0 1 366.16 472H145.84A51.84 51.84 0 0 1 94 420.16V91.84A51.84 51.84 0 0 1 145.84 40ZM145.84 60H366.16A31.84 31.84 0 0 1 398 91.84V420.16A31.84 31.84 0 0 1 366.16 452H145.84A31.84 31.84 0 0 1 114 420.16V91.84A31.84 31.84 0 0 1 145.84 60Z"/>
+  <path fill="url(#frame-sheen)" fill-rule="evenodd" d="M145.84 40H366.16A51.84 51.84 0 0 1 418 91.84V420.16A51.84 51.84 0 0 1 366.16 472H145.84A51.84 51.84 0 0 1 94 420.16V91.84A51.84 51.84 0 0 1 145.84 40ZM145.84 60H366.16A31.84 31.84 0 0 1 398 91.84V420.16A31.84 31.84 0 0 1 366.16 452H145.84A31.84 31.84 0 0 1 114 420.16V91.84A31.84 31.84 0 0 1 145.84 60Z"/>
 </svg>
