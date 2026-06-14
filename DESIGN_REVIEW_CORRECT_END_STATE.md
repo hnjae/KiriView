@@ -288,16 +288,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Removing a feature does not require unrelated route/projection logic changes; feature subowner tests run without the full session runtime.
 - Priority: P1
 
-### Finding: Thumbnail demand tracker appears to be a parallel abstraction outside the production runtime path
-
-- Evidence: `src/session/activenavigationthumbnaildemand.h` and `.cpp` define `ActiveNavigationThumbnailDemandTracker` and `record(...)`. `tests/cpp/test_activenavigationthumbnaildemand.cpp` tests the tracker directly. `rg` shows the production demand flow from `src/qml/ThumbnailPanel.qml:329` to `KiriDocumentSession::reportActiveNavigationThumbnailDemand`, `src/facade/kiridocumentsession.cpp:617`, and `src/session/documentsessionruntime.cpp:368`, while tracker usage appears limited to tests and definitions.
-- Current state: A separate demand tracker abstraction exists, but the active runtime's production demand path does not appear to use it.
-- Design concern: A test-only or abandoned abstraction makes it unclear where the real demand validation/bucketing rule lives.
-- Correct end state: If the tracker is the intended abstraction, production demand flow should use it. Otherwise it should be removed or explicitly made a test helper.
-- Suggested migration: Add a characterization comparison between `DocumentSessionRuntime::reportActiveNavigationThumbnailDemand` and `ActiveNavigationThumbnailDemandTracker` rules. If the rules match, wire the tracker into production; otherwise remove or rename it.
-- Acceptance criteria: Active thumbnail demand validation/bucketing rules exist in one production-used type, and tests validate that type.
-- Priority: P3
-
 ### Finding: `ImageDocumentRuntimePlan` should remain, but its operation vocabulary is still too broad
 
 - Evidence: `src/document/imagedocumentruntimeplan.h:107-123` defines `ImageDocumentRuntimeOperation` variants covering lifecycle, media entry source, predecode, spread, navigation, open, and source-load operations. `src/document/imagedocumentruntimeplanexecutor.h` groups runtime operations by family and `src/document/imagedocumentruntimeplanexecutor.cpp` owns explicit dispatch, but `src/document/imagedocumentruntimecontrollers.cpp:170-278` still builds one broad operation table that reaches across sibling controllers.
@@ -326,7 +316,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 3. Isolate core domain logic from external effects: split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
 4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, move application action input/port assembly into application runtime/coordinator, and move `MediaEntrySourceStore` document planning out of `src/archive/`.
 5. Improve error semantics and observability: introduce typed image failures, then KIO and media-entry source failures, then tile decode attempt diagnostics and thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
-6. Remove or simplify premature/parallel abstractions: either wire `ActiveNavigationThumbnailDemandTracker` into production or remove/test-helper it, phase `ImageDocumentRuntimeOperation` vocabulary by workflow family, and remove compatibility wrappers after tests prove behavior preservation.
+6. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
 
 ## Things Not To Change Yet
 

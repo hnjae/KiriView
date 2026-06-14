@@ -11,6 +11,7 @@ This file is an agent-facing status index for `DESIGN_REVIEW_CORRECT_END_STATE.m
 - P1 predecode runtime fact injection: injected timer scheduler and thread-count providers through image and media predecode dependency paths, replaced coordinator/controller wall-clock waits with manual timer tests, and updated architecture/design-review docs. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: a22b26ac.
 - P1 session Open With runtime extraction: moved displayed-media Open With provider invocation, cancellation, and stale-completion rejection from DocumentSessionRuntime into a focused session runtime while preserving target selection, failure, and stale-completion behavior; added focused controller tests and updated architecture/design-review docs. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 1df2b606.
 - P1 live directory watch provider seam: routed live image page candidate directory watching through an injected provider and moved KCoreDirLister into the production adapter; updated async architecture plus fake-provider directory entry/store and architecture-boundary tests. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 44f7917c.
+- P1 active-navigation thumbnail demand ownership: wired production thumbnail demand coalescing through ActiveNavigationThumbnailDemandTracker and covered interleaved row demand behavior in focused C++ tests; removed the completed parallel-tracker backlog item from the design review docs. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 714089eb.
 
 ## Current Status
 
@@ -36,7 +37,6 @@ P2/P3 candidates:
 - Move `MediaEntrySourceStore` away from document load-planning types.
 - Split `ApplicationCommandRouterPorts` by command owner.
 - Move localized open-dialog filter text out of `navigation/mediaformatregistry`.
-- Either wire `ActiveNavigationThumbnailDemandTracker` into production demand flow or remove/rename it as a test helper.
 - Narrow `ImageDocumentRuntimePlan` operation families now that explicit `ImageDocumentRuntimePlanExecutor` dispatch exists.
 
 ## Verification History
