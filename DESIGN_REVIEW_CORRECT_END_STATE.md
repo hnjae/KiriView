@@ -4,7 +4,7 @@
 
 KiriView already has a sound architectural direction: `QML -> facade -> C++ runtime/effect executor -> Rust policy`. The main issue is not the absence of layers. The issue is that several boundaries still allow the same domain rule or state concept to be defined more than once, allow external effects to rely on UI/projection availability checks instead of command-boundary validation, and place too much workflow assembly inside facade or runtime composition objects.
 
-The highest-risk findings are around rules that affect real user behavior and state consistency: image-open state transitions, format capability catalogs, and failure representation. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, `KiriViewApplication`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
+The highest-risk findings are around rules that affect real user behavior and state consistency: image-open state transitions and failure representation. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, `KiriViewApplication`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
 
 The correct end state should be precise and conservative, not clever. Rust policy should own duplicated-free domain decisions and typed plans. C++ runtime should own Qt/KDE objects and external effects behind typed adapters. Facades should expose QML-friendly types and forward commands. QML should report geometry/input facts and render projections. Errors should flow internally as typed failures with source, stage, diagnostic detail, severity, and retryability, while the UI receives only user-facing messages.
 
@@ -12,19 +12,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 1. P1: `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
 2. P1: Lower-level image, collection-source, and thumbnail failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
-3. P2: Image format capabilities and image-open state transitions are not enforced by one central catalog or state-machine boundary.
-
-## Single Source of Truth Violations
-
-### Finding: Supported image format metadata and decode classification are competing catalogs
-
-- Evidence: `src/policy/imageformatregistry.rs` defines `SUPPORTED_IMAGE_FORMATS`, `RAW_IMAGE_EXTENSIONS`, `supported_image_extensions`, and `supported_image_mime_types`; `src/policy/imageinputclassification.rs` defines `RustQtRasterFormat` and `classify_image_input`; `src/decoding/imageinputclassification.h`, `src/bridge/imageinputclassificationconversion.cpp`, and `src/decoding/imagedecodepipeline.cpp` mirror and route those values through `imageDecodeRouteForClassification` and `handlerForRoute`.
-- Current state: Openable extension/MIME metadata, byte-signature and extension-fallback classification, FFI enum conversion, and concrete decode routing are separate partial definitions.
-- Design concern: Adding or removing a format requires matching edits across the registry, classifier, bridge, and decode route. A format can be advertised by UI/desktop metadata while lacking a decode route, or be decodable while missing from supported metadata.
-- Correct end state: A policy-level image format capability catalog should own format family, extension/MIME metadata, and decoder-family capability. Byte-level classification may remain separate, but catalog/route alignment should be enforced by tests.
-- Suggested migration: First add policy tests asserting that each meaningful `SUPPORTED_IMAGE_FORMATS` entry has an expected classifier/decoder family. Move `RAW_IMAGE_EXTENSIONS` ownership from the classifier into the capability catalog.
-- Acceptance criteria: There is one obvious policy entry point for adding/removing formats; tests fail when registry-supported formats lack classifier/decoder mapping; C++ decode routing remains an execution layer.
-- Priority: P2
+3. P2: Image open state transitions are not enforced by one central state-machine boundary.
 
 ## Invariant and Correctness Risks
 
@@ -241,7 +229,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ## Recommended Correct End-State Architecture
 
 - Ownership boundaries: `DocumentSessionState` owns public mixed-media projection and snapshot publication. `DocumentSessionRuntime` orchestrates named subowners for route, direct-media navigation, deletion, video-output, thumbnails, and predecode through typed results/effects.
-- Domain rules: Image format capability and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
+- Domain rules: The image-open state machine lives in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
 - State definition: Image document state changes pass through named transitions or a validating final-state boundary.
 - Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Source-load planning should pass through typed plans before providers run.
 - External effects: `QFileInfo`, `sysconf`, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
@@ -252,11 +240,10 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ## Suggested Refactoring Sequence
 
 1. Add characterization tests around current behavior: route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
-2. Centralize duplicated rules/state: add image format capability alignment tests.
-3. Isolate core domain logic from external effects: split filesystem source resolution from `ImageLoadPlan` and inject system memory facts for cache budget resolution.
-4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
-5. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics, then media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
-6. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
+2. Isolate core domain logic from external effects: split filesystem source resolution from `ImageLoadPlan` and inject system memory facts for cache budget resolution.
+3. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
+4. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics, then media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
+5. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
 
 ## Things Not To Change Yet
 
