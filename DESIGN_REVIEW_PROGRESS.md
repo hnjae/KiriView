@@ -6,6 +6,7 @@ This file is an agent-facing status index for `DESIGN_REVIEW_CORRECT_END_STATE.m
 
 - P1 HEIF/BMFF brand policy: centralized HEIF still/sequence brand kind and family membership in Rust policy and updated HEIF/input classification tests. Verified with `devenv shell -- devenv tasks run --mode single ci`. Commit: a841f33a.
 - P1 typed video source-load failures: preserved source URL, kind, diagnostic detail, severity, and retryability through video document state while keeping public error text unchanged; added video state/runtime regression tests and trimmed the remaining design-review backlog to backend playback errors. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 5cd4b34b.
+- P1 typed video backend failures: preserved backend playback source URL, kind, diagnostic detail, severity, and retryability through video document state while keeping public backend error text unchanged; added video state/runtime regression tests and updated architecture/design-review docs. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 2f9a4ced.
 - P1 thumbnail source identity: replaced the active-navigation thumbnail runtime's local source-key type with canonical `ThumbnailSourceKey` and explicit generation freshness checks; added source-key, runtime, and architecture-boundary coverage and removed the completed backlog item. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: bdb3b78e.
 
 ## Current Status
@@ -22,7 +23,7 @@ Do not reopen these as design-review findings unless the implementation regresse
 P1 candidates:
 
 - Split workflow ownership. `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` still concentrate broad workflow orchestration.
-- Preserve typed failures. Image, video backend, KIO/file-operation, collection-source, tile-decode, and thumbnail failures still lose structured diagnostic fields or collapse to raw strings.
+- Preserve typed failures. Image, KIO/file-operation, collection-source, tile-decode, and thumbnail failures still lose structured diagnostic fields or collapse to raw strings.
 - Move viewport command planning out of `KiriImageDocument`. The facade still owns `ImageViewportInteraction`, anchored zoom positioning, scan-start handoff, and related command calculations.
 - Add provider seams for live directory watching and predecode timing. `ImageDocumentPageCandidateDirectoryEntry` still owns `KCoreDirLister` directly, and high-level predecode coordinator tests still rely on wall-clock waits.
 
