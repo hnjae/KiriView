@@ -3,6 +3,7 @@
 
 use crate::byteio::read_be_u32;
 use crate::fileextension::extension_for_file_name;
+use crate::heifbrands::is_heif_family_brand;
 
 pub(crate) const RAW_IMAGE_EXTENSIONS: &[&str] = &[
     "3fr", "arw", "bay", "bmq", "cr2", "cr3", "crw", "cs1", "cs2", "dcr", "dng", "erf", "fff",
@@ -237,35 +238,6 @@ fn bmff_classification(data: &[u8]) -> Option<RustImageInputClassification> {
     }
 
     None
-}
-
-fn is_heif_family_brand(brand: &[u8]) -> bool {
-    matches!(
-        brand,
-        b"avci"
-            | b"avcs"
-            | b"avif"
-            | b"avis"
-            | b"heic"
-            | b"heif"
-            | b"heim"
-            | b"heis"
-            | b"heix"
-            | b"hevc"
-            | b"hevm"
-            | b"hevs"
-            | b"hevx"
-            | b"hej2"
-            | b"j2is"
-            | b"j2ki"
-            | b"jpeg"
-            | b"jpgs"
-            | b"mif1"
-            | b"mif2"
-            | b"msf1"
-            | b"vvic"
-            | b"vvis"
-    )
 }
 
 fn is_cr3_brand(brand: &[u8]) -> bool {

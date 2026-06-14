@@ -15,6 +15,7 @@ src/policy/imagebytecost.rs
 src/policy/thumbnailcache.rs
 src/policy/embeddedmetadata.rs
 src/policy/fileextension.rs
+src/policy/heifbrands.rs
 src/policy/heifcontainer.rs
 src/policy/heiftiling.rs
 src/policy/imageactionavailability.rs

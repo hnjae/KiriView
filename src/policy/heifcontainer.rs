@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::byteio::read_be_u32;
+use crate::heifbrands::{HeifBrandKind, heif_brand_kind as policy_heif_brand_kind};
 
 #[cxx::bridge(namespace = "kiriview")]
 mod ffi {
@@ -41,12 +42,10 @@ fn rust_heif_container_info(data: &[u8]) -> RustHeifContainerInfo {
 }
 
 fn heif_brand_kind(brand: &[u8]) -> RustHeifBrandKind {
-    match brand {
-        b"avci" | b"avif" | b"heic" | b"heif" | b"heim" | b"heis" | b"heix" | b"hej2" | b"j2ki"
-        | b"jpeg" | b"mif1" | b"mif2" | b"vvic" => RustHeifBrandKind::StillImage,
-        b"avcs" | b"avis" | b"hevc" | b"hevm" | b"hevs" | b"hevx" | b"j2is" | b"jpgs" | b"msf1"
-        | b"vvis" => RustHeifBrandKind::ImageSequence,
-        _ => RustHeifBrandKind::Unknown,
+    match policy_heif_brand_kind(brand) {
+        HeifBrandKind::StillImage => RustHeifBrandKind::StillImage,
+        HeifBrandKind::ImageSequence => RustHeifBrandKind::ImageSequence,
+        HeifBrandKind::Unknown => RustHeifBrandKind::Unknown,
     }
 }
 
