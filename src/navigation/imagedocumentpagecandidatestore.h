@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTPAGECANDIDATESTORE_H
 
 #include "imagedocumentpagecandidateprovider.h"
+#include "imagedocumentpagecandidatewatchprovider.h"
 
 #include <QObject>
 #include <QString>
@@ -19,6 +20,8 @@ class ImageDocumentPageCandidateStore final : public QObject
 {
 public:
     explicit ImageDocumentPageCandidateStore(QObject *parent = nullptr);
+    explicit ImageDocumentPageCandidateStore(
+        ImageDocumentPageCandidateWatchProvider watchProvider, QObject *parent = nullptr);
     ~ImageDocumentPageCandidateStore() override;
 
     ImageIoJob loadDirectoryImages(QObject *receiver, QUrl directoryUrl,
@@ -32,6 +35,7 @@ private:
     void removeSubscriber(const QString &key, QObject *token);
 
     std::map<QString, std::unique_ptr<ImageDocumentPageCandidateDirectoryEntry>> m_entries;
+    ImageDocumentPageCandidateWatchProvider m_watchProvider;
 };
 }
 

@@ -3,28 +3,32 @@
 
 #include "navigation/imagedocumentpagecandidatestore.h"
 
-#include <KDirNotify>
-#include <QFile>
-#include <QTemporaryDir>
+#include <QList>
+#include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <utility>
 #include <vector>
 
 namespace {
-QUrl directoryUrl(const QTemporaryDir &directory)
+QUrl directoryUrl()
 {
-    return QUrl::fromLocalFile(directory.path() + QLatin1Char('/'));
+    return QUrl::fromLocalFile(QStringLiteral("/tmp/kiriview-candidate-store-test/"));
 }
 
-QUrl fileUrl(const QTemporaryDir &directory, const QString &fileName)
+QUrl fileUrl(const QString &fileName)
 {
-    return QUrl::fromLocalFile(directory.filePath(fileName));
+    return QUrl::fromLocalFile(
+        QStringLiteral("/tmp/kiriview-candidate-store-test/%1").arg(fileName));
 }
 
-bool createFile(const QTemporaryDir &directory, const QString &fileName)
+kiriview::ImageDocumentPageCandidate candidate(const QString &fileName)
 {
-    QFile file(directory.filePath(fileName));
-    return file.open(QIODevice::WriteOnly);
+    return kiriview::ImageDocumentPageCandidate {
+        fileUrl(fileName),
+        fileName,
+        kiriview::ImageDocumentPageKind::Image,
+    };
 }
 
 std::vector<QUrl> candidateUrls(const std::vector<kiriview::ImageDocumentPageCandidate> &candidates)
@@ -36,6 +40,47 @@ std::vector<QUrl> candidateUrls(const std::vector<kiriview::ImageDocumentPageCan
     }
     return urls;
 }
+
+struct FakeWatchProvider {
+    QUrl watchedUrl;
+    kiriview::ImageDocumentPageCandidateWatchSnapshotCallback initialSnapshot;
+    kiriview::ImageDocumentPageCandidateWatchSnapshotCallback changedSnapshot;
+    kiriview::ImageDocumentPageCandidateWatchDeletedCallback deletedUrls;
+    kiriview::ErrorCallback errorCallback;
+    int startCount = 0;
+
+    kiriview::ImageDocumentPageCandidateWatchProvider provider()
+    {
+        return [this](QObject *receiver, QUrl directory,
+                   kiriview::ImageDocumentPageCandidateWatchSnapshotCallback initial,
+                   kiriview::ImageDocumentPageCandidateWatchSnapshotCallback changed,
+                   kiriview::ImageDocumentPageCandidateWatchDeletedCallback deleted,
+                   kiriview::ErrorCallback error) {
+            ++startCount;
+            watchedUrl = std::move(directory);
+            initialSnapshot = std::move(initial);
+            changedSnapshot = std::move(changed);
+            deletedUrls = std::move(deleted);
+            errorCallback = std::move(error);
+            auto *token = new QObject(receiver);
+            return kiriview::ImageIoJob(token, [](QObject *object) { object->deleteLater(); });
+        };
+    }
+
+    void complete(std::vector<kiriview::ImageDocumentPageCandidate> candidates)
+    {
+        if (initialSnapshot) {
+            initialSnapshot(std::move(candidates));
+        }
+    }
+
+    void change(std::vector<kiriview::ImageDocumentPageCandidate> candidates)
+    {
+        if (changedSnapshot) {
+            changedSnapshot(std::move(candidates));
+        }
+    }
+};
 }
 
 class TestImageDocumentPageCandidateStore : public QObject
@@ -43,37 +88,38 @@ class TestImageDocumentPageCandidateStore : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void localDirectoryPublishesAddedImagesAndReusesCache();
+    void localDirectoryPublishesProviderSnapshotsAndReusesCache();
     void liveDirectoryWatchJobCanOutliveStore();
 };
 
-void TestImageDocumentPageCandidateStore::localDirectoryPublishesAddedImagesAndReusesCache()
+void TestImageDocumentPageCandidateStore::localDirectoryPublishesProviderSnapshotsAndReusesCache()
 {
-    QTemporaryDir directory;
-    QVERIFY(directory.isValid());
-    QVERIFY(createFile(directory, QStringLiteral("01.png")));
-
-    kiriview::ImageDocumentPageCandidateStore store;
+    FakeWatchProvider provider;
+    kiriview::ImageDocumentPageCandidateStore store(provider.provider());
     std::vector<kiriview::ImageDocumentPageCandidate> loadedCandidates;
     QString loadError;
     bool loaded = false;
     kiriview::ImageIoJob loadJob = store.loadDirectoryImages(
-        this, directoryUrl(directory),
+        this, directoryUrl(),
         [&loadedCandidates, &loaded](std::vector<kiriview::ImageDocumentPageCandidate> candidates) {
             loadedCandidates = std::move(candidates);
             loaded = true;
         },
         [&loadError](const QString &errorString) { loadError = errorString; });
 
-    QTRY_VERIFY_WITH_TIMEOUT(loaded || !loadError.isEmpty(), 10000);
+    QVERIFY(loadJob.isActive());
+    QCOMPARE(provider.startCount, 1);
+    QCOMPARE(provider.watchedUrl, directoryUrl());
+    provider.complete({ candidate(QStringLiteral("01.png")) });
+    QVERIFY(loaded);
     QVERIFY2(loadError.isEmpty(), qPrintable(loadError));
     QCOMPARE(static_cast<int>(loadedCandidates.size()), 1);
-    QCOMPARE(loadedCandidates.front().url, fileUrl(directory, QStringLiteral("01.png")));
+    QCOMPARE(loadedCandidates.front().url, fileUrl(QStringLiteral("01.png")));
 
     std::vector<kiriview::ImageDocumentPageCandidate> changedCandidates;
     int changeCount = 0;
     kiriview::ImageIoJob watchJob = store.watchDirectoryImages(
-        this, directoryUrl(directory),
+        this, directoryUrl(),
         [&changedCandidates, &changeCount](
             std::vector<kiriview::ImageDocumentPageCandidate> candidates) {
             changedCandidates = std::move(candidates);
@@ -81,38 +127,36 @@ void TestImageDocumentPageCandidateStore::localDirectoryPublishesAddedImagesAndR
         },
         [](const QString &) {});
 
-    QVERIFY(createFile(directory, QStringLiteral("02.png")));
-    OrgKdeKDirNotifyInterface::emitFilesAdded(directoryUrl(directory));
+    provider.change({ candidate(QStringLiteral("01.png")), candidate(QStringLiteral("02.png")) });
     const std::vector<QUrl> addedUrls {
-        fileUrl(directory, QStringLiteral("01.png")),
-        fileUrl(directory, QStringLiteral("02.png")),
+        fileUrl(QStringLiteral("01.png")),
+        fileUrl(QStringLiteral("02.png")),
     };
-    QTRY_VERIFY_WITH_TIMEOUT(candidateUrls(changedCandidates) == addedUrls, 10000);
+    QCOMPARE(candidateUrls(changedCandidates), addedUrls);
     QCOMPARE(changeCount, 1);
 
     std::vector<kiriview::ImageDocumentPageCandidate> cachedCandidates;
     store.loadDirectoryImages(
-        this, directoryUrl(directory),
+        this, directoryUrl(),
         [&cachedCandidates](std::vector<kiriview::ImageDocumentPageCandidate> candidates) {
             cachedCandidates = std::move(candidates);
         },
         [](const QString &) {});
-    QVERIFY(candidateUrls(cachedCandidates) == addedUrls);
+    QCOMPARE(candidateUrls(cachedCandidates), addedUrls);
+    QCOMPARE(provider.startCount, 1);
 
     watchJob.cancel();
 }
 
 void TestImageDocumentPageCandidateStore::liveDirectoryWatchJobCanOutliveStore()
 {
-    QTemporaryDir directory;
-    QVERIFY(directory.isValid());
-
+    FakeWatchProvider provider;
     kiriview::ImageIoJob watchJob;
     {
-        kiriview::ImageDocumentPageCandidateStore store;
+        kiriview::ImageDocumentPageCandidateStore store(provider.provider());
         watchJob = store.watchDirectoryImages(
-            this, directoryUrl(directory),
-            [](std::vector<kiriview::ImageDocumentPageCandidate>) { }, [](const QString &) { });
+            this, directoryUrl(), [](std::vector<kiriview::ImageDocumentPageCandidate>) { },
+            [](const QString &) { });
         QVERIFY(watchJob.isActive());
     }
 

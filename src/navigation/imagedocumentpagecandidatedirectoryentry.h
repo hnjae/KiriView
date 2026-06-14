@@ -7,24 +7,23 @@
 #include "async/imageasynccallbacks.h"
 #include "imagedocumentpagecandidatecallbacks.h"
 #include "imagedocumentpagecandidatestoreentrystate.h"
+#include "imagedocumentpagecandidatewatchprovider.h"
 #include "imagedocumentpagenavigationtypes.h"
 
-#include <KFileItem>
 #include <QList>
 #include <QString>
 #include <QUrl>
 #include <functional>
-#include <memory>
 #include <vector>
 
-class KCoreDirLister;
 class QObject;
 
 namespace kiriview {
 class ImageDocumentPageCandidateDirectoryEntry final
 {
 public:
-    ImageDocumentPageCandidateDirectoryEntry(QUrl directoryUrl, QObject *signalContext);
+    ImageDocumentPageCandidateDirectoryEntry(QUrl directoryUrl,
+        ImageDocumentPageCandidateWatchProvider watchProvider, QObject *signalContext);
     ~ImageDocumentPageCandidateDirectoryEntry();
 
     bool failed() const;
@@ -33,9 +32,8 @@ public:
     const std::vector<ImageDocumentPageCandidate> &candidates() const;
 
     bool open();
-    void handleCompleted();
-    void handleChanged();
-    void handleDeleted(const KFileItemList &items);
+    void handleCompleted(std::vector<ImageDocumentPageCandidate> candidates);
+    void handleChanged(std::vector<ImageDocumentPageCandidate> candidates);
     void handleDeleted(const QList<QUrl> &urls);
     void handleError(const QString &errorString);
 
@@ -47,10 +45,10 @@ public:
     void removeSubscriber(QObject *token);
 
 private:
-    void connectSignals(QObject *signalContext);
-
     QUrl m_directoryUrl;
-    std::unique_ptr<KCoreDirLister> m_lister;
+    ImageDocumentPageCandidateWatchProvider m_watchProvider;
+    QObject *m_signalContext = nullptr;
+    ImageIoJob m_watchJob;
     ImageDocumentPageCandidateStoreEntryState m_state;
 };
 }

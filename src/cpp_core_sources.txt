@@ -94,6 +94,7 @@ src/localization/imageerrortext.cpp
 src/navigation/imagedocumentpagecandidateitems.cpp
 src/navigation/imagedocumentpagecandidaterepository.cpp
 src/navigation/imagedocumentpagecandidatedirectoryentry.cpp
+src/navigation/imagedocumentpagecandidatewatchprovider.cpp
 src/navigation/imagedocumentpagecandidatestore.cpp
 src/navigation/imagedocumentpagecandidatestoreentrystate.cpp
 src/navigation/imagecontaineropenplan.cpp

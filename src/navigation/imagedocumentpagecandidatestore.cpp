@@ -22,8 +22,18 @@ bool isLiveLocalDirectoryUrl(const QUrl &url)
 
 namespace kiriview {
 ImageDocumentPageCandidateStore::ImageDocumentPageCandidateStore(QObject *parent)
-    : QObject(parent)
+    : ImageDocumentPageCandidateStore(defaultImageDocumentPageCandidateWatchProvider(), parent)
 {
+}
+
+ImageDocumentPageCandidateStore::ImageDocumentPageCandidateStore(
+    ImageDocumentPageCandidateWatchProvider watchProvider, QObject *parent)
+    : QObject(parent)
+    , m_watchProvider(std::move(watchProvider))
+{
+    if (!m_watchProvider) {
+        m_watchProvider = defaultImageDocumentPageCandidateWatchProvider();
+    }
 }
 
 ImageDocumentPageCandidateStore::~ImageDocumentPageCandidateStore() = default;
@@ -90,8 +100,8 @@ ImageDocumentPageCandidateDirectoryEntry &ImageDocumentPageCandidateStore::entry
         return *entry->second;
     }
 
-    auto insertedEntry
-        = std::make_unique<ImageDocumentPageCandidateDirectoryEntry>(directoryUrl, this);
+    auto insertedEntry = std::make_unique<ImageDocumentPageCandidateDirectoryEntry>(
+        directoryUrl, m_watchProvider, this);
     ImageDocumentPageCandidateDirectoryEntry &entryRef = *insertedEntry;
     m_entries.emplace(key, std::move(insertedEntry));
 
