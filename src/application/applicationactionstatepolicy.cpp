@@ -3,6 +3,7 @@
 
 #include "applicationactionstatepolicy.h"
 
+#include "applicationzoompresets.h"
 #include "imageactionavailabilitypolicy.h"
 
 #include <KLocalizedString>
@@ -156,11 +157,14 @@ QString applicationActionMenuText(ActionId actionId, const ApplicationActionStat
     case ActionId::ViewZoomOutAction:
         return i18nc("@action:inmenu", "Zoom &Out");
     case ActionId::ViewZoom50PercentAction:
-        return i18nc("@action:inmenu", "Zoom to &50%");
     case ActionId::ViewZoom100PercentAction:
-        return i18nc("@action:inmenu", "Zoom to &100%");
     case ActionId::ViewZoom200PercentAction:
-        return i18nc("@action:inmenu", "Zoom to &200%");
+        if (const kiriview::ApplicationActions::ZoomPresetDescriptor *preset
+            = zoomPresetDescriptorForAction(actionId)) {
+            return preset->menuText.toString();
+        }
+
+        return emptyText();
     case ActionId::ViewFitAction:
         return i18nc("@action:inmenu", "Fit to &Window");
     case ActionId::ViewFitHeightAction:

@@ -3,6 +3,8 @@
 
 #include "applicationcommandrouter.h"
 
+#include "applicationzoompresets.h"
+
 namespace {
 constexpr double keyboardPanDistance = 64.0;
 
@@ -82,13 +84,11 @@ void ApplicationCommandRouter::handleActionTriggered(ActionId actionId,
         callDouble(ports.requestZoomByStepAtCenter, -1.0);
         return;
     case ActionId::ViewZoom50PercentAction:
-        callDouble(ports.requestManualZoomPercent, 50.0);
-        return;
     case ActionId::ViewZoom100PercentAction:
-        callDouble(ports.requestManualZoomPercent, 100.0);
-        return;
     case ActionId::ViewZoom200PercentAction:
-        callDouble(ports.requestManualZoomPercent, 200.0);
+        if (const ZoomPresetDescriptor *preset = zoomPresetDescriptorForAction(actionId)) {
+            callDouble(ports.requestManualZoomPercent, preset->zoomPercent);
+        }
         return;
     case ActionId::ViewFitAction:
         callVoid(ports.requestFitMode);

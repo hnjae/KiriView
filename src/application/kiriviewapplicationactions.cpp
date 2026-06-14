@@ -3,6 +3,8 @@
 
 #include "kiriviewapplicationactions.h"
 
+#include "applicationzoompresets.h"
+
 namespace {
 namespace Actions = kiriview::ApplicationActions;
 using ActivationScope = kiriview::ApplicationActions::ApplicationShortcutActivationScope;
@@ -131,6 +133,16 @@ constexpr Actions::ActionDefinition fixedCommandAction(Actions::ActionId actionI
         Actions::ShortcutConfigurability::NonConfigurable };
 }
 
+constexpr Actions::ActionDefinition zoomPresetAction(
+    Actions::ActionId actionId, Actions::DefaultShortcutSpec viewerLocalShortcuts)
+{
+    const Actions::ZoomPresetDescriptor *preset = Actions::zoomPresetDescriptorForAction(actionId);
+    return registeredAction(actionId, preset == nullptr ? "" : preset->actionName, Category::View,
+        preset == nullptr ? KLazyLocalizedString() : preset->actionText, nullptr,
+        noDefaultShortcuts(), viewerLocalShortcuts,
+        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope)));
+}
+
 constexpr std::array actionDefinitions {
     standardAction(Actions::ActionId::FileOpenAction, "file_open", Category::File,
         KStandardActions::Open, kli18n("Open"), standardShortcutSpec(QKeySequence::Open),
@@ -183,18 +195,9 @@ constexpr std::array actionDefinitions {
         KStandardActions::ZoomOut, kli18nc("@action", "Zoom Out"), noDefaultShortcuts(),
         portableShortcutSpec("-"),
         shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
-    registeredAction(Actions::ActionId::ViewZoom50PercentAction, "view_zoom_50_percent",
-        Category::View, kli18nc("@action", "Zoom to 50%"), nullptr, noDefaultShortcuts(),
-        portableShortcutSpec("`"),
-        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
-    registeredAction(Actions::ActionId::ViewZoom100PercentAction, "view_zoom_100_percent",
-        Category::View, kli18nc("@action", "Zoom to 100%"), nullptr, noDefaultShortcuts(),
-        portableShortcutSpec("1"),
-        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
-    registeredAction(Actions::ActionId::ViewZoom200PercentAction, "view_zoom_200_percent",
-        Category::View, kli18nc("@action", "Zoom to 200%"), nullptr, noDefaultShortcuts(),
-        portableShortcutSpec("2"),
-        shortcutRouteSpecs(route(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope))),
+    zoomPresetAction(Actions::ActionId::ViewZoom50PercentAction, portableShortcutSpec("`")),
+    zoomPresetAction(Actions::ActionId::ViewZoom100PercentAction, portableShortcutSpec("1")),
+    zoomPresetAction(Actions::ActionId::ViewZoom200PercentAction, portableShortcutSpec("2")),
     standardAction(Actions::ActionId::ViewFitAction, "view_fit", Category::View,
         KStandardActions::FitToPage, kli18nc("@action", "Fit to Window"), noDefaultShortcuts(),
         portableShortcutSpec("0"),
