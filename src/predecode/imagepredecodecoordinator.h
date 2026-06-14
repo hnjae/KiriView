@@ -5,11 +5,13 @@
 #define KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 
 #include "async/imageiojob.h"
+#include "async/timerscheduler.h"
 #include "decoding/imagedecodedependencies.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "navigation/imagedocumentpagecandidaterepository.h"
 #include "predecodedimage.h"
 #include "predecodeloadcontroller.h"
+#include "predecoderuntimefacts.h"
 #include "predecodescheduleruntime.h"
 #include "rendering/staticimage.h"
 #include "system/powersaverprovider.h"
@@ -30,7 +32,8 @@ public:
 
     ImagePredecodeCoordinator(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,
-        qsizetype cacheByteBudget);
+        qsizetype cacheByteBudget, TimerScheduler timerScheduler = {},
+        PredecodeThreadCountProvider threadCountProvider = {});
 
     void schedule(Context context);
     void setPowerSaverEnabled(bool enabled);
@@ -44,6 +47,7 @@ private:
     void startPredecodeImageLoads(
         const PredecodeWindowPlan &plan, const PredecodePendingSchedule &schedule);
 
+    PredecodeThreadCountProvider m_threadCountProvider;
     ImageIoJob m_listerJob;
     ImageDocumentPageCandidateRepository m_candidateRepository;
     PredecodeLoadController m_loadController;

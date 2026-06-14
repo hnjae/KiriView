@@ -529,6 +529,8 @@ void TestImagePredecodeCoordinator::rapidNavigationDebouncesSkippedPagePredecode
     QCOMPARE(dataLoader.loadCount(), std::size_t(0));
 
     timerScheduler.timerAt(0).fire();
+    QCOMPARE(dataLoader.loadCount(), std::size_t(0));
+    timerScheduler.timerAt(1).fire();
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, indexedImageUrl(3));

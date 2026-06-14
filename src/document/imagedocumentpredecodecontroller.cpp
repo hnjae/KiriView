@@ -20,13 +20,15 @@ ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject *pare
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
     CurrentPageNumberCallback currentPageNumber, PowerSaverProvider powerSaverProvider,
-    bool ordinaryDirectMediaPredecodeEnabled)
+    bool ordinaryDirectMediaPredecodeEnabled, TimerScheduler timerScheduler,
+    PredecodeThreadCountProvider threadCountProvider)
     : m_state(state)
     , m_pageSurfaceController(pageSurfaceController)
     , m_presentationRuntime(presentationRuntime)
     , m_coordinator(
           std::make_unique<ImagePredecodeCoordinator>(parent, std::move(candidateProvider),
-              std::move(decodeDependencies), std::move(powerSaverProvider), cacheByteBudget))
+              std::move(decodeDependencies), std::move(powerSaverProvider), cacheByteBudget,
+              std::move(timerScheduler), std::move(threadCountProvider)))
     , m_currentPageNumber(std::move(currentPageNumber))
     , m_ordinaryDirectMediaPredecodeEnabled(ordinaryDirectMediaPredecodeEnabled)
 {

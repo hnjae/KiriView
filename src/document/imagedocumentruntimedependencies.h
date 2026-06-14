@@ -6,10 +6,12 @@
 
 #include "archive/mediaentrysourcebackend.h"
 #include "async/directorylistingjob.h"
+#include "async/timerscheduler.h"
 #include "cache/imagecachepolicy.h"
 #include "decoding/imagedecodedependencies.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
+#include "predecode/predecoderuntimefacts.h"
 #include "system/filedeletion.h"
 #include "system/powersaverprovider.h"
 
@@ -33,6 +35,8 @@ struct ImageDocumentRuntimeDependencyOverrides {
     DirectoryItemListProvider directoryItemListProvider;
     MediaEntrySourceFactory mediaEntrySourceFactory;
     PowerSaverProvider powerSaver;
+    TimerScheduler predecodeTimerScheduler;
+    PredecodeThreadCountProvider predecodeThreadCountProvider;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;
     ImageCacheBudgetRequest cacheBudgetRequest;
     bool ordinaryDirectMediaPredecodeEnabled = true;
@@ -43,6 +47,8 @@ struct ImageDocumentRuntimeDependencies {
     ImageDecodeDependencies imageDecode;
     FileDeletionProvider fileDeletionProvider;
     PowerSaverProvider powerSaver;
+    TimerScheduler predecodeTimerScheduler;
+    PredecodeThreadCountProvider predecodeThreadCountProvider;
     ImageCacheBudgets cacheBudgets;
     std::unique_ptr<MediaEntrySourceStore> mediaEntrySourceStore;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;

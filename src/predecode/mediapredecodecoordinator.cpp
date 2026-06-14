@@ -19,8 +19,8 @@ MediaPredecodeCoordinator::MediaPredecodeCoordinator(
     , m_loadController(this, std::move(dependencies.imageDecode), dependencies.cacheByteBudget)
     , m_scheduleRuntime(
           this, m_loadController,
-          [this](const PredecodePendingSchedule &schedule) { startPredecodeWindow(schedule); },
-          std::move(dependencies.powerSaver))
+          [this](const PredecodePendingSchedule &schedule) { startPredecodeWindow(schedule); }, {},
+          std::move(dependencies.powerSaver), std::move(dependencies.timerScheduler))
 {
 }
 

@@ -4,9 +4,11 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTPREDECODECONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTPREDECODECONTROLLER_H
 
+#include "async/timerscheduler.h"
 #include "decoding/imagedecodedependencies.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
+#include "predecode/predecoderuntimefacts.h"
 #include "system/powersaverprovider.h"
 
 #include <QUrl>
@@ -34,8 +36,8 @@ public:
         ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
         CurrentPageNumberCallback currentPageNumber = {},
-        PowerSaverProvider powerSaverProvider = {},
-        bool ordinaryDirectMediaPredecodeEnabled = true);
+        PowerSaverProvider powerSaverProvider = {}, bool ordinaryDirectMediaPredecodeEnabled = true,
+        TimerScheduler timerScheduler = {}, PredecodeThreadCountProvider threadCountProvider = {});
     ~ImageDocumentPredecodeController();
 
     void scheduleAdjacentImagePredecode(

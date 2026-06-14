@@ -104,7 +104,9 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         runtimeDependencies.cacheBudgets.predecodeCacheByteBudget,
         [this]() { return m_navigationService->currentPageNumber(); },
         std::move(runtimeDependencies.powerSaver),
-        runtimeDependencies.ordinaryDirectMediaPredecodeEnabled);
+        runtimeDependencies.ordinaryDirectMediaPredecodeEnabled,
+        std::move(runtimeDependencies.predecodeTimerScheduler),
+        std::move(runtimeDependencies.predecodeThreadCountProvider));
     m_spreadController = std::make_unique<ImageSpreadPresentationController>(
         documentObject, [this]() { return renderContextOrDefault(m_callbacks.renderContext); },
         state, *m_pageSurfaceController, *m_presentationRuntime,

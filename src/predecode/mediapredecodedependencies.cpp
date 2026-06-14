@@ -19,6 +19,7 @@ MediaPredecodeDependencies resolveMediaPredecodeDependencies(
         imageDecodeDependenciesWithDefaults(std::move(overrides.imageDecode)),
         powerSaverProviderWithDefault(std::move(overrides.powerSaver)),
         cacheByteBudget,
+        timerSchedulerWithDefaults(std::move(overrides.timerScheduler)),
     };
 }
 }

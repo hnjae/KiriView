@@ -5,6 +5,7 @@
 
 #include "archive/mediaentrysourcestore.h"
 
+#include <QThread>
 #include <utility>
 
 namespace {
@@ -48,6 +49,11 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     overrides.fileDeletionProvider
         = fileDeletionProviderWithDefault(std::move(overrides.fileDeletionProvider));
     overrides.powerSaver = powerSaverProviderWithDefault(std::move(overrides.powerSaver));
+    overrides.predecodeTimerScheduler
+        = timerSchedulerWithDefaults(std::move(overrides.predecodeTimerScheduler));
+    if (!overrides.predecodeThreadCountProvider) {
+        overrides.predecodeThreadCountProvider = []() { return QThread::idealThreadCount(); };
+    }
     const ImageCacheBudgets cacheBudgets
         = resolveImageDocumentCacheBudgets(overrides.cacheBudgetRequest);
 
@@ -66,6 +72,8 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
         std::move(overrides.imageDecode),
         std::move(overrides.fileDeletionProvider),
         std::move(overrides.powerSaver),
+        std::move(overrides.predecodeTimerScheduler),
+        std::move(overrides.predecodeThreadCountProvider),
         cacheBudgets,
         std::move(mediaEntrySourceStore),
         std::move(overrides.externalPredecodedImageFinder),

@@ -13,11 +13,18 @@
 #include <vector>
 
 namespace kiriview {
+namespace {
+    int defaultPredecodeThreadCount() { return QThread::idealThreadCount(); }
+}
+
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,
-    qsizetype cacheByteBudget)
+    qsizetype cacheByteBudget, TimerScheduler timerScheduler,
+    PredecodeThreadCountProvider threadCountProvider)
     : QObject(parent)
+    , m_threadCountProvider(
+          threadCountProvider ? std::move(threadCountProvider) : defaultPredecodeThreadCount)
     , m_candidateRepository(std::move(candidateProvider))
     , m_loadController(this, std::move(decodeDependencies), cacheByteBudget)
     , m_scheduleRuntime(
@@ -25,7 +32,8 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
           [this](const PredecodePendingSchedule &schedule) {
               scheduleAdjacentImagePredecode(schedule);
           },
-          [this]() { m_listerJob.cancel(); }, std::move(powerSaverProvider))
+          [this]() { m_listerJob.cancel(); }, std::move(powerSaverProvider),
+          std::move(timerScheduler))
 {
 }
 
@@ -54,8 +62,7 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
         schedule.context.currentLocation,
         PredecodePolicyInput {
             predecodeSourceProfileForOpenedCollectionScope(
-                schedule.context.currentLocation.openedCollectionScope(),
-                QThread::idealThreadCount()),
+                schedule.context.currentLocation.openedCollectionScope(), m_threadCountProvider()),
             m_scheduleRuntime.momentumMode(),
             m_scheduleRuntime.powerSaverEnabled(),
         },

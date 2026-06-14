@@ -195,6 +195,14 @@ void inheritMissingDirectMediaPredecodeDependencies(
     if (!directMediaPredecode.powerSaver.monitor) {
         directMediaPredecode.powerSaver.monitor = imageDocument.powerSaver.monitor;
     }
+    if (!directMediaPredecode.timerScheduler.currentMonotonicMsec) {
+        directMediaPredecode.timerScheduler.currentMonotonicMsec
+            = imageDocument.predecodeTimerScheduler.currentMonotonicMsec;
+    }
+    if (!directMediaPredecode.timerScheduler.singleShotTimer) {
+        directMediaPredecode.timerScheduler.singleShotTimer
+            = imageDocument.predecodeTimerScheduler.singleShotTimer;
+    }
     if (directMediaPredecode.cacheBudgetRequest.predecodeCacheByteBudget <= 0) {
         directMediaPredecode.cacheBudgetRequest.predecodeCacheByteBudget
             = imageDocument.cacheBudgetRequest.predecodeCacheByteBudget;
