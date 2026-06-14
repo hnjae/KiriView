@@ -342,6 +342,50 @@ in
       '';
     };
 
+    "ci:lint:flatpak" = {
+      description = "Check Flatpak manifest permission policy";
+      exec = ''
+        ${baseTaskPrelude}
+
+        manifest="org.hnjae.kiriview.json"
+
+        has_finish_arg() {
+            ${lib.getExe pkgs.jq} \
+                --exit-status \
+                --arg arg "$1" \
+                '.["finish-args"] | arrays | index($arg) != null' \
+                "$manifest" >/dev/null
+        }
+
+        require_arg() {
+            if ! has_finish_arg "$1"; then
+                printf 'Flatpak manifest must include permission: %s\n' "$1" >&2
+                return 1
+            fi
+        }
+
+        forbid_arg() {
+            if has_finish_arg "$1"; then
+                printf 'Flatpak manifest must not include broad permission: %s\n' "$1" >&2
+                return 1
+            fi
+        }
+
+        require_arg "--nofilesystem=/run/user"
+        require_arg "--filesystem=xdg-run/pipewire-0"
+        require_arg "--filesystem=xdg-run/gvfs"
+        require_arg "--filesystem=xdg-cache/thumbnails:create"
+        require_arg "--talk-name=org.kde.KIOFuse"
+
+        forbid_arg "--filesystem=/run/user"
+        forbid_arg "--filesystem=/run/user:ro"
+        forbid_arg "--filesystem=xdg-run"
+        forbid_arg "--filesystem=xdg-cache"
+        forbid_arg "--filesystem=xdg-cache:ro"
+        forbid_arg "--filesystem=xdg-cache:create"
+      '';
+    };
+
     "ci:lint:cpp" = {
       description = "Run clang-tidy and clazy against C++ sources";
       after = [

@@ -53,6 +53,7 @@ in
     # Flatpak
     desktop-file-utils
     flatpak-builder
+    jq
 
     # Rust/Qt host development
     cargo-nextest
