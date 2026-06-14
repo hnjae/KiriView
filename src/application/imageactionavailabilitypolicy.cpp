@@ -6,36 +6,6 @@
 #include "bridge/imageactionavailabilityconversion.h"
 #include "kiriview/src/policy/imageactionavailability.cxx.h"
 
-namespace {
-bool imageShortcutScopeKnown(kiriview::ApplicationActions::ImageShortcutScope scope)
-{
-    using kiriview::ApplicationActions::ImageShortcutScope;
-
-    switch (scope) {
-    case ImageShortcutScope::HelpShortcutScope:
-    case ImageShortcutScope::ViewerShortcutScope:
-    case ImageShortcutScope::ReadyShortcutScope:
-    case ImageShortcutScope::ReadyViewerShortcutScope:
-    case ImageShortcutScope::ImageSelectionShortcutScope:
-    case ImageShortcutScope::ImageSelectionViewerShortcutScope:
-    case ImageShortcutScope::PageShortcutScope:
-    case ImageShortcutScope::PageViewerShortcutScope:
-    case ImageShortcutScope::RightToLeftReadingShortcutScope:
-    case ImageShortcutScope::RightToLeftReadingViewerShortcutScope:
-    case ImageShortcutScope::RotateShortcutScope:
-    case ImageShortcutScope::RotateViewerShortcutScope:
-    case ImageShortcutScope::PannableShortcutScope:
-    case ImageShortcutScope::PannableViewerShortcutScope:
-    case ImageShortcutScope::ContainerShortcutScope:
-    case ImageShortcutScope::ContainerViewerShortcutScope:
-    case ImageShortcutScope::MediaStartEndViewerShortcutScope:
-        return true;
-    }
-
-    return false;
-}
-}
-
 ImageActionAvailabilityProjection imageActionAvailabilityProjection(
     const ImageActionAvailabilityInput &input)
 {
@@ -48,7 +18,7 @@ bool imageActionAvailabilityShortcutsEnabledForScope(
     const ImageActionAvailabilityProjection &projection,
     kiriview::ApplicationActions::ImageShortcutScope scope)
 {
-    if (!imageShortcutScopeKnown(scope)) {
+    if (!kiriview::ApplicationActions::imageShortcutScopeKnown(scope)) {
         return false;
     }
 
@@ -60,7 +30,7 @@ bool imageActionAvailabilityShortcutsEnabledForScope(
 bool activeMediaShortcutsEnabledForScope(const ActiveMediaShortcutAvailabilityInput &input,
     kiriview::ApplicationActions::ImageShortcutScope scope)
 {
-    if (!imageShortcutScopeKnown(scope)) {
+    if (!kiriview::ApplicationActions::imageShortcutScopeKnown(scope)) {
         return false;
     }
 
@@ -74,6 +44,10 @@ namespace kiriview::ApplicationActions {
 bool videoShortcutsEnabledForScope(
     const VideoShortcutAvailabilityInput &input, ImageShortcutScope scope)
 {
+    if (!imageShortcutScopeKnown(scope)) {
+        return false;
+    }
+
     return kiriview::rustVideoShortcutsEnabledForScope(
         kiriview::Bridge::rustVideoShortcutAvailabilityInput(input),
         kiriview::Bridge::rustImageShortcutScope(scope));

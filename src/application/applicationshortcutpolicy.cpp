@@ -179,28 +179,13 @@ const QList<ApplicationShortcutRoute> &shortcutRoutes()
 
 std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value)
 {
-    switch (static_cast<ImageShortcutScope>(value)) {
-    case ImageShortcutScope::HelpShortcutScope:
-    case ImageShortcutScope::ViewerShortcutScope:
-    case ImageShortcutScope::ReadyShortcutScope:
-    case ImageShortcutScope::ReadyViewerShortcutScope:
-    case ImageShortcutScope::ImageSelectionShortcutScope:
-    case ImageShortcutScope::ImageSelectionViewerShortcutScope:
-    case ImageShortcutScope::PageShortcutScope:
-    case ImageShortcutScope::PageViewerShortcutScope:
-    case ImageShortcutScope::RightToLeftReadingShortcutScope:
-    case ImageShortcutScope::RightToLeftReadingViewerShortcutScope:
-    case ImageShortcutScope::RotateShortcutScope:
-    case ImageShortcutScope::RotateViewerShortcutScope:
-    case ImageShortcutScope::PannableShortcutScope:
-    case ImageShortcutScope::PannableViewerShortcutScope:
-    case ImageShortcutScope::ContainerShortcutScope:
-    case ImageShortcutScope::ContainerViewerShortcutScope:
-    case ImageShortcutScope::MediaStartEndViewerShortcutScope:
-        return static_cast<ImageShortcutScope>(value);
+    const ImageShortcutScope scope = static_cast<ImageShortcutScope>(value);
+
+    if (!imageShortcutScopeKnown(scope)) {
+        return std::nullopt;
     }
 
-    return std::nullopt;
+    return scope;
 }
 
 bool videoActionUnsupported(ActionId actionId)

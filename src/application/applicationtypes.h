@@ -77,7 +77,14 @@ enum class ImageShortcutScope {
     ContainerShortcutScope,
     ContainerViewerShortcutScope,
     MediaStartEndViewerShortcutScope,
+    ImageShortcutScopeCount,
 };
+
+inline constexpr bool imageShortcutScopeKnown(ImageShortcutScope scope)
+{
+    return static_cast<int>(scope) >= 0
+        && static_cast<int>(scope) < static_cast<int>(ImageShortcutScope::ImageShortcutScopeCount);
+}
 
 struct ShortcutRouteSpec {
     ApplicationShortcutActivationScope activationScope
