@@ -24,7 +24,7 @@ QString dimensionsText(const QSize &size)
 
 QString fileNameForUrl(const QUrl &url)
 {
-    QString fileName = url.fileName(QUrl::PrettyDecoded);
+    QString fileName = url.fileName(QUrl::FullyDecoded);
     if (!fileName.isEmpty()) {
         return fileName;
     }
@@ -182,7 +182,8 @@ QString mediaInformationDisplayPathForUrl(const QUrl &url)
         return QDir::toNativeSeparators(url.toLocalFile());
     }
 
-    return url.toDisplayString(QUrl::PreferLocalFile);
+    return QUrl::fromPercentEncoding(
+        url.toDisplayString(QUrl::PreferLocalFile | QUrl::FullyEncoded).toUtf8());
 }
 
 MediaInformationProjectionSnapshot projectMediaInformation(
