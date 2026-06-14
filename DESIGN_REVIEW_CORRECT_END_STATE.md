@@ -154,16 +154,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: `imageLoadPlan(...)` can be tested without creating directories; filesystem adapter tests are small and separate.
 - Priority: P2
 
-### Finding: Navigation-source identity mixes URL policy with process and OS probes
-
-- Evidence: `src/location/imageurl.cpp:23` reads `qgetenv("XDG_RUNTIME_DIR")`; `:47` reads document-portal host paths with `getxattr(...)`; `:176` combines xattr lookup, KIOFuse runtime-dir parsing, and fallback in `navigationSourceUrl(...)`. `src/location/sourcekey.cpp:61` and `:66` build source keys from `navigationSourceUrl(url)`. `tests/cpp/test_imageurl.cpp:151` uses `setxattr`, `:182` uses `qputenv`/`qunsetenv`, and `tests/cpp/test_sourcekey.cpp:111` depends on symlink availability.
-- Current state: Navigation URL normalization and source-key construction depend on host filesystem capabilities and process-wide environment mutation.
-- Design concern: Source identity is correctness-sensitive, but important branches can be skipped or made flaky by OS feature availability and global environment changes.
-- Correct end state: Platform fact collection should be separated from pure URL identity derivation. A production `NavigationSourceResolver` can read xattrs and environment, while pure helpers accept facts such as optional portal host path and runtime dir.
-- Suggested migration: Extract a helper such as `navigationSourceUrlForFacts(url, portalHostPath, runtimeDir)` and make `navigationSourceUrl(...)` a production wrapper.
-- Acceptance criteria: KIOFuse and document-portal URL cases can be tested without environment mutation or xattrs; OS adapter tests remain guarded and small.
-- Priority: P2
-
 ### Finding: Default cache budgets are resolved from host memory outside dependency injection
 
 - Evidence: `src/system/systemmemory.cpp:17` reads physical memory through `sysconf`; `src/document/imagedocumentruntimedependencies.cpp:32`, `src/predecode/mediapredecodedependencies.cpp:14`, `src/rendering/displayimagestore.cpp:35` and `:429`, and `src/session/thumbnailimagestore.cpp:38` call production `systemMemorySnapshot()` directly. `tests/cpp/test_systemmemory.cpp:21` tests lower-level injected readers, but owner-level budget tests assert only broad host-dependent properties.
@@ -274,7 +264,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Domain rules: Image format capability and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
 - State definition: Image document state changes pass through named transitions or a validating final-state boundary.
 - Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Source-load planning should pass through typed plans before providers run.
-- External effects: `QFileInfo`, xattrs, environment variables, `sysconf`, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
+- External effects: `QFileInfo`, `sysconf`, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
 - Error representation: Image decoder/tile, KIO operation, media-entry source, and thumbnail generation failures use typed failures. Internal paths preserve source identity, stage/kind, backend/raw code, severity, and retryability. QML receives user-facing projections.
 - Facade/QML: `KiriImageDocument` and `KiriViewApplication` expose QML-friendly types, invokables, and signals. Viewport command planning and action routing input assembly move into presentation/application runtime. QML continues to report geometry/input facts and render projections.
 - Tests: Characterization tests lock current behavior first. Rust policy and C++ domain helpers are tested with pure/fake dependencies. Qt/KDE/filesystem adapter tests remain small. Architecture boundary tests should verify abstractions used by production code.
@@ -283,7 +273,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 1. Add characterization tests around current behavior: route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
 2. Centralize duplicated rules/state: add image format capability alignment tests.
-3. Isolate core domain logic from external effects: split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
+3. Isolate core domain logic from external effects: split filesystem source resolution from `ImageLoadPlan` and inject system memory facts for cache budget resolution.
 4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
 5. Improve error semantics and observability: extend lower-level image decoder/tile diagnostics, then KIO and media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
 6. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.

@@ -16,6 +16,7 @@ This file is an agent-facing status index for `DESIGN_REVIEW_CORRECT_END_STATE.m
 - P2 shortcut scope validity: centralized C++ `ImageShortcutScope` validity in the application type boundary and guarded image, active-media, and video shortcut availability against unknown scopes; added focused shortcut policy coverage and removed the completed backlog item. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: ab0ba6c0.
 - P2 zoom preset descriptors: centralized preset action names, action text, menu text, and percent payloads in one application descriptor table and aligned metadata/dispatch tests plus generated catalog references. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 28012c59.
 - P2 media entry source boundary: resolved image-document source-load requests to opened-collection scopes before calling MediaEntrySourceStore and kept archive store tests free of document request types; added architecture-boundary and source-load scope tests. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 11c78ee2.
+- P2 navigation source identity: extracted fact-based navigation-source URL derivation so document-portal host paths and KIOFuse runtime dirs are testable without xattrs or process environment mutation; updated architecture/state-ownership docs and image URL/source-key coverage. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: ed571730.
 
 ## Current Status
 
