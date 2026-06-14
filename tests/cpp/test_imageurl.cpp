@@ -45,6 +45,8 @@ private Q_SLOTS:
     void sameNormalizedUrlMatchesPathSegments();
     void sameContainerNavigationUrlMatchesNormalizedPaths();
     void parentUrlForContainerNavigationHandlesContainers();
+    void navigationSourceFactsResolveDocumentPortalHostWithoutXattr();
+    void navigationSourceFactsRestoreKioFuseArchivesWithoutEnvironment();
     void documentPortalHostPathOwnsNavigationScope();
     void kioFuseArchivePathsRestoreSupportedArchiveSchemes();
     void imageLocationTypesExposeExplicitState();
@@ -146,6 +148,39 @@ void TestImageUrl::parentUrlForContainerNavigationHandlesContainers()
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
     QCOMPARE(kiriview::parentUrlForContainerNavigation(archiveUrl),
         QUrl::fromLocalFile(QStringLiteral("/books/")));
+}
+
+void TestImageUrl::navigationSourceFactsResolveDocumentPortalHostWithoutXattr()
+{
+    const QUrl portalUrl = QUrl::fromLocalFile(QStringLiteral("/run/user/1000/doc/02.mp4"));
+    const QUrl hostUrl = QUrl::fromLocalFile(QStringLiteral("/media/videos/02.mp4"));
+
+    kiriview::NavigationSourceFacts facts;
+    facts.documentPortalHostPath = hostUrl.toLocalFile();
+    QCOMPARE(kiriview::navigationSourceUrlForFacts(portalUrl, facts), hostUrl);
+
+    facts.documentPortalHostPath = portalUrl.toLocalFile();
+    QCOMPARE(kiriview::navigationSourceUrlForFacts(portalUrl, facts), portalUrl);
+}
+
+void TestImageUrl::navigationSourceFactsRestoreKioFuseArchivesWithoutEnvironment()
+{
+    kiriview::NavigationSourceFacts facts;
+    facts.runtimeDir = QStringLiteral("/run/user/1000");
+
+    const QString cbzFusePath
+        = QStringLiteral("/run/user/1000/kio-fuse-test/zip/books/book.cbz/page.png");
+    const QString cbtFusePath
+        = QStringLiteral("/run/user/1000/kio-fuse-test/tar/books/book.cbt/page.png");
+    const QString cb7FusePath
+        = QStringLiteral("/run/user/1000/kio-fuse-test/sevenz/books/book.cb7/page.png");
+
+    QCOMPARE(kiriview::navigationSourceUrlForFacts(QUrl::fromLocalFile(cbzFusePath), facts),
+        archiveUrl(QStringLiteral("zip"), QStringLiteral("/books/book.cbz/page.png")));
+    QCOMPARE(kiriview::navigationSourceUrlForFacts(QUrl::fromLocalFile(cbtFusePath), facts),
+        archiveUrl(QStringLiteral("tar"), QStringLiteral("/books/book.cbt/page.png")));
+    QCOMPARE(kiriview::navigationSourceUrlForFacts(QUrl::fromLocalFile(cb7FusePath), facts),
+        archiveUrl(QStringLiteral("sevenz"), QStringLiteral("/books/book.cb7/page.png")));
 }
 
 void TestImageUrl::documentPortalHostPathOwnsNavigationScope()
