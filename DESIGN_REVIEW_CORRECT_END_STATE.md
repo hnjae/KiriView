@@ -4,16 +4,15 @@
 
 KiriView already has a sound architectural direction: `QML -> facade -> C++ runtime/effect executor -> Rust policy`. The main issue is not the absence of layers. The issue is that several boundaries still allow the same domain rule or state concept to be defined more than once, allow external effects to rely on UI/projection availability checks instead of command-boundary validation, and place too much workflow assembly inside facade or runtime composition objects.
 
-The highest-risk findings are around rules that affect real user behavior and state consistency: thumbnail source identity, image-open state transitions, format capability catalogs, and failure representation. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, `KiriViewApplication`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
+The highest-risk findings are around rules that affect real user behavior and state consistency: image-open state transitions, format capability catalogs, and failure representation. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, `KiriViewApplication`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
 
 The correct end state should be precise and conservative, not clever. Rust policy should own duplicated-free domain decisions and typed plans. C++ runtime should own Qt/KDE objects and external effects behind typed adapters. Facades should expose QML-friendly types and forward commands. QML should report geometry/input facts and render projections. Errors should flow internally as typed failures with source, stage, diagnostic detail, severity, and retryability, while the UI receives only user-facing messages.
 
 ## Top Design Risks
 
-1. P1: Identity rules are split across layers, especially `ThumbnailSourceKey` vs. `ActiveNavigationThumbnailSourceKey`.
-2. P1: `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
-3. P1: Image, remaining video backend, and file-operation failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
-4. P2: Image format capabilities and image-open state transitions are not enforced by one central catalog or state-machine boundary.
+1. P1: `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
+2. P1: Image, remaining video backend, and file-operation failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
+3. P2: Image format capabilities and image-open state transitions are not enforced by one central catalog or state-machine boundary.
 
 ## Single Source of Truth Violations
 
@@ -26,16 +25,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Suggested migration: First add policy tests asserting that each meaningful `SUPPORTED_IMAGE_FORMATS` entry has an expected classifier/decoder family. Move `RAW_IMAGE_EXTENSIONS` ownership from the classifier into the capability catalog.
 - Acceptance criteria: There is one obvious policy entry point for adding/removing formats; tests fail when registry-supported formats lack classifier/decoder mapping; C++ decode routing remains an execution layer.
 - Priority: P2
-
-### Finding: Thumbnail source identity has two production-like definitions
-
-- Evidence: `src/location/sourcekey.h` and `src/location/sourcekey.cpp` define `ThumbnailSourceKey`, `thumbnailSourceKey`, `sameThumbnailSourceKey`, and `qHash(const ThumbnailSourceKey &)`. `src/session/activenavigationthumbnailruntime.h` defines `ActiveNavigationThumbnailSourceKey`. `src/session/activenavigationthumbnailruntime.cpp` defines `sourceKeyForRow`, `sameSourceKey`, and `rowIndexForIdentity`. `tests/cpp/test_architectureboundaries.cpp` checks the source-key extension contract.
-- Current state: The location-layer key normalizes URL identity through `sourceKeyForUrl` and compares mostly by `rowIdentity`. The active navigation thumbnail runtime uses a separate key that compares raw `QUrl`, row number, label, kind, source kind, and `navigationGeneration`.
-- Design concern: Durable identity and freshness generation have different meanings depending on the key type. It is unclear which identity is canonical for cache lookup, stale completion rejection, and row matching.
-- Correct end state: There should be one production thumbnail source identity value object. If `navigationGeneration` represents freshness rather than identity, that distinction should be explicit and tested separately.
-- Suggested migration: Add characterization tests for URL normalization, row identity, and generation changes. Convert `ActiveNavigationThumbnailRow` into the canonical `ThumbnailSourceKey`, then replace local equality and lookup helpers with shared identity comparison plus an explicit generation check.
-- Acceptance criteria: Only one production thumbnail identity type defines equality/hash semantics; generation-based stale rejection is tested separately from durable identity.
-- Priority: P1
 
 ### Finding: Zoom preset action values are duplicated between metadata and dispatch
 
@@ -352,8 +341,8 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ## Recommended Correct End-State Architecture
 
 - Ownership boundaries: `DocumentSessionState` owns public mixed-media projection and snapshot publication. `DocumentSessionRuntime` orchestrates named subowners for route, direct-media navigation, deletion, Open With, video-output, thumbnails, and predecode through typed results/effects.
-- Domain rules: Image format capability, thumbnail source identity, and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
-- State definition: Image document state changes pass through named transitions or a validating final-state boundary. Thumbnail source identity is defined by one canonical value object that separates durable identity from freshness generation.
+- Domain rules: Image format capability and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
+- State definition: Image document state changes pass through named transitions or a validating final-state boundary.
 - Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Open With and source-load planning should pass through typed plans before providers run.
 - External effects: `KCoreDirLister`, `QFileInfo`, xattrs, environment variables, `sysconf`, Qt timers, thread count, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
 - Error representation: Image, video, KIO operation, media-entry source, and thumbnail generation failures use typed failures. Internal paths preserve source identity, stage/kind, backend/raw code, severity, and retryability. QML receives user-facing projections.
@@ -362,8 +351,8 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ## Suggested Refactoring Sequence
 
-1. Add characterization tests around current behavior: thumbnail source key normalization/generation behavior, route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
-2. Centralize duplicated rules/state: add image format capability alignment tests, create canonical thumbnail source identity, centralize zoom preset descriptors, and centralize `ImageShortcutScope` validity.
+1. Add characterization tests around current behavior: route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
+2. Centralize duplicated rules/state: add image format capability alignment tests, centralize zoom preset descriptors, and centralize `ImageShortcutScope` validity.
 3. Isolate core domain logic from external effects: add a directory watch provider seam, thread timer scheduler/system facts into predecode coordinators, split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
 4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, move application action input/port assembly into application runtime/coordinator, and move `MediaEntrySourceStore` document planning out of `src/archive/`.
 5. Improve error semantics and observability: introduce typed image failures and remaining video backend failures, then KIO and media-entry source failures, then tile decode attempt diagnostics and thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
