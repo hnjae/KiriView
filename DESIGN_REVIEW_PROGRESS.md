@@ -18,6 +18,7 @@ This file is an agent-facing status index for `DESIGN_REVIEW_CORRECT_END_STATE.m
 - P2 media entry source boundary: resolved image-document source-load requests to opened-collection scopes before calling MediaEntrySourceStore and kept archive store tests free of document request types; added architecture-boundary and source-load scope tests. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 11c78ee2.
 - P2 navigation source identity: extracted fact-based navigation-source URL derivation so document-portal host paths and KIOFuse runtime dirs are testable without xattrs or process environment mutation; updated architecture/state-ownership docs and image URL/source-key coverage. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: ed571730.
 - P2 typed KIO operation failures: preserved operation kind, target URL, raw KJob/KIO code, cancellation status, user text, diagnostic detail, and retryability for deletion and Open With provider failures while keeping public UI text unchanged; added system, deletion runtime, Open With runtime, image deletion, and session coverage plus architecture docs. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 2bbb458c.
+- P2 QImageReader tile diagnostics: preserved ordered reader-clip, source-clip, scaled-level, and full-image fallback tile decode diagnostics while keeping the existing string error adapter stable; added focused QImageReader tile source coverage and updated architecture/design-review docs. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: ce2e4acb.
 
 ## Current Status
 
@@ -33,7 +34,7 @@ Do not reopen these as design-review findings unless the implementation regresse
 P1 candidates:
 
 - Split workflow ownership. `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` still concentrate broad workflow orchestration.
-- Preserve typed failures. Lower-level image decoder/tile, collection-source, and thumbnail failures still lose structured diagnostic fields or collapse to raw strings.
+- Preserve typed failures. Lower-level image decoder/refinement, collection-source, and thumbnail failures still lose structured diagnostic fields or collapse to raw strings.
 - Move viewport command planning out of `KiriImageDocument`. The facade still owns `ImageViewportInteraction`, anchored zoom positioning, scan-start handoff, and related command calculations.
 
 P2/P3 candidates:
