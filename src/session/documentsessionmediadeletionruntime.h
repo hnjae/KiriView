@@ -21,7 +21,7 @@ class QObject;
 namespace kiriview {
 struct DocumentSessionMediaDeletionCompletion {
     DocumentSessionMediaDeletionCompletionPlan plan;
-    QString errorString;
+    KioOperationFailure failure;
 };
 
 class DocumentSessionMediaDeletionRuntime final
@@ -41,7 +41,7 @@ public:
 private:
     void finish(quint64 operationId, DocumentSessionKind documentKind,
         const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan, FileDeletionResult result,
-        const QString &errorString, const CompletionCallback &callback);
+        const KioOperationFailure &failure, const CompletionCallback &callback);
 
     FileDeletionProvider m_fileDeletionProvider;
     ImageIoJob m_job;

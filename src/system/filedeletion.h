@@ -5,6 +5,7 @@
 #define KIRIVIEW_FILEDELETION_H
 
 #include "async/imageiojob.h"
+#include "system/kiooperationfailure.h"
 
 #include <QString>
 #include <QUrl>
@@ -35,7 +36,7 @@ struct FileDeletionRequest {
     FileDeletionMode mode = FileDeletionMode::MoveToTrash;
 };
 
-using FileDeletionCallback = std::function<void(FileDeletionResult, const QString &)>;
+using FileDeletionCallback = std::function<void(FileDeletionResult, const KioOperationFailure &)>;
 using FileDeletionProvider
     = std::function<ImageIoJob(QObject *, FileDeletionRequest, FileDeletionCallback)>;
 

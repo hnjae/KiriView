@@ -1239,16 +1239,16 @@ void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCom
 {
     m_state.setFileDeletionInProgress(false);
     if (completion.plan.reportFailure) {
-        m_state.setSessionErrorString(completion.errorString.isEmpty()
+        m_state.setSessionErrorString(completion.failure.userMessage.isEmpty()
                 ? genericFileDeletionErrorMessage()
-                : completion.errorString);
+                : completion.failure.userMessage);
         recomputePublicProjection();
         return;
     }
 
     recomputePublicProjection();
 
-    executeMediaDeletionCompletionPlan(completion.plan, completion.errorString);
+    executeMediaDeletionCompletionPlan(completion.plan, completion.failure.userMessage);
 }
 
 void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(

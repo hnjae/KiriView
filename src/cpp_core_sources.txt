@@ -162,6 +162,7 @@ src/presentation/imagezoomworkflowstate.cpp
 src/application/applicationshortcutpolicy.cpp
 src/application/kiriviewapplicationactions.cpp
 src/system/filedeletion.cpp
+src/system/kiooperationfailure.cpp
 src/metadata/embeddedmetadata.cpp
 src/system/powerprofilemonitorstate.cpp
 src/system/powerprofileportalevents.cpp

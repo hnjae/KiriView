@@ -6,6 +6,7 @@
 
 #include "async/imageiojob.h"
 #include "session/mediaopenwithplan.h"
+#include "system/kiooperationfailure.h"
 
 #include <QString>
 #include <functional>
@@ -19,7 +20,7 @@ enum class MediaOpenWithResult {
     Failed,
 };
 
-using MediaOpenWithCallback = std::function<void(MediaOpenWithResult, const QString &)>;
+using MediaOpenWithCallback = std::function<void(MediaOpenWithResult, const KioOperationFailure &)>;
 using MediaOpenWithProvider
     = std::function<ImageIoJob(QObject *, MediaOpenWithRequest, MediaOpenWithCallback)>;
 

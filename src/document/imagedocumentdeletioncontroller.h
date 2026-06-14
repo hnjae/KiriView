@@ -47,11 +47,11 @@ public:
 
 private:
     void finishFileDeletion(quint64 operationId, const ImageRemovalFallbackPlan &fallbackPlan,
-        FileDeletionResult result, const QString &errorString);
+        FileDeletionResult result, const KioOperationFailure &failure);
     void notifyInProgressChangedIf(bool changed);
     void cancelFileDeletion();
     void reportRuntimePlan(ImageDocumentRuntimePlan plan);
-    void reportFailure(const QString &errorString);
+    void reportFailure(const KioOperationFailure &failure);
 
     QObject *m_parent = nullptr;
     ImageDocumentState &m_state;

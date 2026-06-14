@@ -32,8 +32,8 @@ DocumentSessionMediaDeletionStartPlan DocumentSessionMediaDeletionRuntime::start
     auto sharedCallback = std::make_shared<CompletionCallback>(std::move(callback));
     m_job = m_fileDeletionProvider(receiver, plan.request,
         [this, operationId, documentKind, fallbackPlan = plan.fallbackPlan, sharedCallback](
-            FileDeletionResult result, const QString &errorString) {
-            finish(operationId, documentKind, fallbackPlan, result, errorString, *sharedCallback);
+            FileDeletionResult result, const KioOperationFailure &failure) {
+            finish(operationId, documentKind, fallbackPlan, result, failure, *sharedCallback);
         });
     return plan;
 }
@@ -48,7 +48,8 @@ bool DocumentSessionMediaDeletionRuntime::active() const { return m_operation.ac
 
 void DocumentSessionMediaDeletionRuntime::finish(quint64 operationId,
     DocumentSessionKind documentKind, const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan,
-    FileDeletionResult result, const QString &errorString, const CompletionCallback &callback)
+    FileDeletionResult result, const KioOperationFailure &failure,
+    const CompletionCallback &callback)
 {
     if (!m_operation.finish(operationId)) {
         return;
@@ -57,7 +58,7 @@ void DocumentSessionMediaDeletionRuntime::finish(quint64 operationId,
     invokeIfSet(callback,
         DocumentSessionMediaDeletionCompletion {
             documentSessionMediaDeletionCompletionPlan(documentKind, fallbackPlan, result),
-            errorString,
+            failure,
         });
 }
 }

@@ -650,9 +650,9 @@ void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)
 void KiriDocumentSession::openCurrentMediaWith()
 {
     m_runtime->openCurrentMediaWith(
-        [this](kiriview::MediaOpenWithResult result, const QString &errorString) {
+        [this](kiriview::MediaOpenWithResult result, const kiriview::KioOperationFailure &failure) {
             if (result == kiriview::MediaOpenWithResult::Failed) {
-                Q_EMIT openWithFailed(errorString);
+                Q_EMIT openWithFailed(failure.userMessage);
             }
         });
 }

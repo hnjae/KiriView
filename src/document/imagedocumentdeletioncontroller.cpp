@@ -65,14 +65,14 @@ void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
     m_fileDeletionJob
         = m_fileDeletionProvider(m_parent, FileDeletionRequest { removalPlan.targetUrl, mode },
             [this, operationId = operation.operationId, fallbackPlan = removalPlan.fallbackPlan](
-                FileDeletionResult result, const QString &errorString) {
-                finishFileDeletion(operationId, fallbackPlan, result, errorString);
+                FileDeletionResult result, const KioOperationFailure &failure) {
+                finishFileDeletion(operationId, fallbackPlan, result, failure);
             });
 }
 
 void ImageDocumentDeletionController::finishFileDeletion(quint64 operationId,
     const ImageRemovalFallbackPlan &fallbackPlan, FileDeletionResult result,
-    const QString &errorString)
+    const KioOperationFailure &failure)
 {
     const ImageDocumentDeletionFileOperationFinish operation
         = m_deletionState.finishFileDeletion(operationId);
@@ -90,7 +90,7 @@ void ImageDocumentDeletionController::finishFileDeletion(quint64 operationId,
     case FileDeletionCompletionAction::Ignore:
         return;
     case FileDeletionCompletionAction::ReportFailure:
-        reportFailure(errorString);
+        reportFailure(failure);
         return;
     }
 }
@@ -120,9 +120,10 @@ void ImageDocumentDeletionController::reportRuntimePlan(ImageDocumentRuntimePlan
     invokeIfSet(m_callbacks.runtimePlan, std::move(plan));
 }
 
-void ImageDocumentDeletionController::reportFailure(const QString &errorString)
+void ImageDocumentDeletionController::reportFailure(const KioOperationFailure &failure)
 {
-    const QString message = errorString.isEmpty() ? genericFileDeletionErrorMessage() : errorString;
+    const QString message
+        = failure.userMessage.isEmpty() ? genericFileDeletionErrorMessage() : failure.userMessage;
     invokeIfSet(m_callbacks.failed, message);
 }
 }

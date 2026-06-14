@@ -42,7 +42,8 @@ void TestFileDeletion::kioOperationFailureClassifiesCanceledErrors()
 {
     const QUrl targetUrl = QUrl::fromLocalFile(QStringLiteral("/images/page.png"));
 
-    for (int errorCode : { KJob::KilledJobError, KIO::ERR_USER_CANCELED }) {
+    for (int errorCode :
+        { static_cast<int>(KJob::KilledJobError), static_cast<int>(KIO::ERR_USER_CANCELED) }) {
         const kiriview::KioOperationFailure failure
             = kiriview::kioOperationFailureFromKJob(kiriview::KioOperationKind::MediaOpenWith,
                 targetUrl, errorCode, QStringLiteral("operation canceled"));

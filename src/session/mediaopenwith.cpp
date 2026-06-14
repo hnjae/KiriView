@@ -6,7 +6,6 @@
 #include "async/imagecallback.h"
 
 #include <KIO/ApplicationLauncherJob>
-#include <KIO/Global>
 #include <KIO/JobUiDelegateFactory>
 #include <KJob>
 #include <KJobUiDelegate>
@@ -15,11 +14,6 @@
 #include <utility>
 
 namespace {
-bool isUserCanceledError(int error)
-{
-    return error == KJob::KilledJobError || error == KIO::ERR_USER_CANCELED;
-}
-
 void cancelKJob(QObject *object)
 {
     auto *job = qobject_cast<KJob *>(object);
@@ -34,10 +28,13 @@ kiriview::ImageIoJob startKioMediaOpenWith(QObject *receiver,
     kiriview::MediaOpenWithRequest request, kiriview::MediaOpenWithCallback callback)
 {
     if (request.targetUrl.isEmpty()) {
-        kiriview::invokeIfSet(callback, kiriview::MediaOpenWithResult::Failed, QString());
+        kiriview::invokeIfSet(callback, kiriview::MediaOpenWithResult::Failed,
+            kiriview::kioOperationValidationFailure(kiriview::KioOperationKind::MediaOpenWith,
+                request.targetUrl, QStringLiteral("No Open With target is available.")));
         return kiriview::ImageIoJob();
     }
 
+    const QUrl targetUrl = request.targetUrl;
     auto *job = new KIO::ApplicationLauncherJob(receiver);
     job->setUrls(QList<QUrl> { request.targetUrl });
     job->setUiDelegate(
@@ -48,22 +45,32 @@ kiriview::ImageIoJob startKioMediaOpenWith(QObject *receiver,
     QObject *context = receiver == nullptr ? job : receiver;
 
     QObject::connect(job, &KJob::result, context,
-        [completion, callback = std::move(callback)](KJob *finishedJob) mutable {
+        [completion, targetUrl, callback = std::move(callback)](KJob *finishedJob) mutable {
             completion.claimAndRun([&]() {
                 if (finishedJob->error() == KJob::NoError) {
-                    kiriview::invokeIfSet(
-                        callback, kiriview::MediaOpenWithResult::Succeeded, QString());
+                    kiriview::invokeIfSet(callback, kiriview::MediaOpenWithResult::Succeeded,
+                        kiriview::KioOperationFailure {
+                            kiriview::KioOperationKind::MediaOpenWith,
+                            targetUrl,
+                            std::nullopt,
+                            false,
+                            QString(),
+                            QString(),
+                            false,
+                        });
                     return;
                 }
 
-                if (isUserCanceledError(finishedJob->error())) {
+                const kiriview::KioOperationFailure failure = kiriview::kioOperationFailureFromKJob(
+                    kiriview::KioOperationKind::MediaOpenWith, targetUrl, finishedJob->error(),
+                    finishedJob->errorString());
+                if (failure.canceled) {
                     kiriview::invokeIfSet(
-                        callback, kiriview::MediaOpenWithResult::Canceled, QString());
+                        callback, kiriview::MediaOpenWithResult::Canceled, failure);
                     return;
                 }
 
-                kiriview::invokeIfSet(
-                    callback, kiriview::MediaOpenWithResult::Failed, finishedJob->errorString());
+                kiriview::invokeIfSet(callback, kiriview::MediaOpenWithResult::Failed, failure);
             });
         });
     job->start();
