@@ -129,6 +129,16 @@ kiriview::DecodedImageResult singleFrameDecodedImage(const QSize &size)
     });
 }
 
+kiriview::DecodedImageResult invalidAnimationDecodedImage()
+{
+    return kiriview::successfulDecodedImageResult(kiriview::ApngAnimationImage {
+        QImage(),
+        QByteArrayLiteral("not-an-animation"),
+        {},
+        QStringLiteral("invalid-animation"),
+    });
+}
+
 RuntimeHandle createRuntime(QObject *parent, FakeCandidateProvider &candidateProvider,
     ManualImageDataLoader &dataLoader,
     kiriview::ImageDataDecoder dataDecoder = staticImageDataDecoder(testImage(2)),
@@ -202,6 +212,10 @@ private Q_SLOTS:
     void staticImageStillSchedulesAdjacentPredecode();
     void replacementLoadFailureSelectsTargetError();
     void decodedReplacementFailureSelectsTargetError();
+    void loadFailurePreservesTypedFailureMetadataAndClearsOnNextLoad();
+    void decodedLoadFailurePreservesTypedFailureMetadata();
+    void presentationFailurePreservesTypedFailureMetadata();
+    void emptyOpenedCollectionFailurePreservesTypedFailureMetadata();
     void emptyContainerNavigationClearsImageAndSelectsContainer();
     void deletingWithoutDisplayedImageDoesNotStartFileOperation();
     void fileDeletionFailureKeepsDisplayedImageAndReportsError();
@@ -1184,6 +1198,121 @@ void TestImageDocumentRuntime::decodedReplacementFailureSelectsTargetError()
     QCOMPARE(runtime->sourceUrl(), badUrl);
     QCOMPARE(runtime->displayedUrl(), QUrl());
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 1);
+}
+
+void TestImageDocumentRuntime::loadFailurePreservesTypedFailureMetadataAndClearsOnNextLoad()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/missing.png"));
+    const QUrl nextImageUrl = localUrl(QStringLiteral("/images/next.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageDocumentPageCandidate(imageUrl),
+            imageDocumentPageCandidate(nextImageUrl),
+        });
+
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
+    dataLoader.failBackLoad(QStringLiteral("KIO data load failed"));
+
+    QTRY_VERIFY(runtime->loadFailure().has_value());
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Error);
+    QCOMPARE(runtime->loadFailure()->sourceUrl, imageUrl);
+    QVERIFY(runtime->loadFailure()->sessionId > 0);
+    QVERIFY(runtime->loadFailure()->kind == kiriview::ImageLoadFailureKind::DataLoad);
+    QCOMPARE(runtime->loadFailure()->userMessage, QStringLiteral("KIO data load failed"));
+    QCOMPARE(runtime->loadFailure()->diagnosticDetail, QStringLiteral("KIO data load failed"));
+    QVERIFY(runtime->loadFailure()->severity == kiriview::ImageLoadFailureSeverity::Error);
+    QVERIFY(!runtime->loadFailure()->retryable);
+    QCOMPARE(runtime->errorString(), runtime->loadFailure()->userMessage);
+
+    runtime->setSourceUrl(nextImageUrl);
+
+    QVERIFY(!runtime->loadFailure().has_value());
+    QCOMPARE(runtime->errorString(), QString());
+    QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Loading);
+}
+
+void TestImageDocumentRuntime::decodedLoadFailurePreservesTypedFailureMetadata()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/bad.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageDocumentPageCandidate(imageUrl),
+        });
+
+    RuntimeHandle runtime = createRuntime(
+        this, candidateProvider, dataLoader, staticImageDataDecoderRejectingBadData(testImage(2)));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
+    dataLoader.finishBackLoad(QByteArrayLiteral("bad"));
+
+    QTRY_VERIFY(runtime->loadFailure().has_value());
+    QCOMPARE(runtime->loadFailure()->sourceUrl, imageUrl);
+    QVERIFY(runtime->loadFailure()->sessionId > 0);
+    QVERIFY(runtime->loadFailure()->kind == kiriview::ImageLoadFailureKind::Decode);
+    QCOMPARE(runtime->loadFailure()->userMessage, testImageDecodeFailureString());
+    QCOMPARE(runtime->loadFailure()->diagnosticDetail, testImageDecodeFailureString());
+    QVERIFY(runtime->loadFailure()->severity == kiriview::ImageLoadFailureSeverity::Error);
+    QVERIFY(!runtime->loadFailure()->retryable);
+    QCOMPARE(runtime->errorString(), runtime->loadFailure()->userMessage);
+}
+
+void TestImageDocumentRuntime::presentationFailurePreservesTypedFailureMetadata()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/invalid-animation.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageDocumentPageCandidate(imageUrl),
+        });
+
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
+        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+            return invalidAnimationDecodedImage();
+        });
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_VERIFY(runtime->loadFailure().has_value());
+    QCOMPARE(runtime->loadFailure()->sourceUrl, imageUrl);
+    QVERIFY(runtime->loadFailure()->sessionId > 0);
+    QVERIFY(runtime->loadFailure()->kind == kiriview::ImageLoadFailureKind::Presentation);
+    QVERIFY(!runtime->loadFailure()->userMessage.isEmpty());
+    QCOMPARE(runtime->loadFailure()->diagnosticDetail, runtime->loadFailure()->userMessage);
+    QVERIFY(runtime->loadFailure()->severity == kiriview::ImageLoadFailureSeverity::Error);
+    QVERIFY(!runtime->loadFailure()->retryable);
+    QCOMPARE(runtime->errorString(), runtime->loadFailure()->userMessage);
+}
+
+void TestImageDocumentRuntime::emptyOpenedCollectionFailurePreservesTypedFailureMetadata()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/empty.cbz"));
+    const std::optional<QUrl> archiveRootUrl = kiriview::comicBookArchiveRootUrl(archiveUrl);
+    QVERIFY(archiveRootUrl.has_value());
+    candidateProvider.setOpenedCollectionCandidates(*archiveRootUrl, {});
+
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(archiveUrl);
+
+    QVERIFY(runtime->loadFailure().has_value());
+    QCOMPARE(runtime->loadFailure()->sourceUrl, archiveUrl);
+    QVERIFY(runtime->loadFailure()->sessionId > 0);
+    QVERIFY(runtime->loadFailure()->kind == kiriview::ImageLoadFailureKind::EmptyOpenedCollection);
+    QVERIFY(!runtime->loadFailure()->userMessage.isEmpty());
+    QCOMPARE(runtime->loadFailure()->diagnosticDetail, QString());
+    QVERIFY(runtime->loadFailure()->severity == kiriview::ImageLoadFailureSeverity::Error);
+    QVERIFY(!runtime->loadFailure()->retryable);
+    QCOMPARE(runtime->errorString(), runtime->loadFailure()->userMessage);
 }
 
 void TestImageDocumentRuntime::emptyContainerNavigationClearsImageAndSelectsContainer()

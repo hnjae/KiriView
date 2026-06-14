@@ -71,6 +71,16 @@ public:
             });
     }
 
+    void failFrontLoad(const QString &errorString)
+    {
+        kiriview::TestSupport::Detail::finishManualIoJob(
+            m_loads.front(), [&errorString](ManualOpenedCollectionCandidateLoad &load) {
+                if (load.errorCallback) {
+                    load.errorCallback(errorString);
+                }
+            });
+    }
+
     kiriview::ImageDocumentPageCandidateProvider provider()
     {
         return kiriview::ImageDocumentPageCandidateProvider {
@@ -128,6 +138,10 @@ private Q_SLOTS:
     void explicitKioArchiveImageStaysImageUrlMode();
     void archiveInteriorVideoReportsUnsupportedOpenedCollectionVideo();
     void archiveInteriorImageKeepsComicBookRoot();
+    void loadErrorPreservesTypedFailureMetadata();
+    void decodeFailurePreservesTypedFailureMetadata();
+    void openedCollectionCandidateFailurePreservesTypedFailureMetadata();
+    void emptyOpenedCollectionPreservesTypedFailureMetadata();
     void staleLoadResultIsIgnored();
     void staleArchiveListingResultIsIgnored();
 };
@@ -166,15 +180,13 @@ void TestImageLoader::decodeFailureUsesErrorCallback()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     std::optional<kiriview::ImageLoadSession> errorSession;
-    kiriview::ImageLoadError error = kiriview::ImageLoadError::Generic;
-    QString errorString;
+    std::optional<kiriview::ImageLoadFailure> failure;
     int decodedCount = 0;
     kiriview::ImageLoader::Callbacks callbacks;
-    callbacks.error = [&errorSession, &error, &errorString](kiriview::ImageLoadSession session,
-                          kiriview::ImageLoadError loadError, const QString &message) {
+    callbacks.error = [&errorSession, &failure](kiriview::ImageLoadSession session,
+                          kiriview::ImageLoadFailure loadFailure) {
         errorSession = std::move(session);
-        error = loadError;
-        errorString = message;
+        failure = std::move(loadFailure);
     };
     callbacks.decodedImage = [&decodedCount](kiriview::ImageLoadSession, auto) { ++decodedCount; };
     kiriview::ImageLoader loader
@@ -186,9 +198,10 @@ void TestImageLoader::decodeFailureUsesErrorCallback()
     dataLoader.finishFrontLoad(QByteArrayLiteral("bad"));
 
     QTRY_VERIFY(errorSession.has_value());
+    QVERIFY(failure.has_value());
     QCOMPARE(errorSession->imageUrl(), imageUrl);
-    QCOMPARE(error, kiriview::ImageLoadError::Generic);
-    QCOMPARE(errorString, testImageDecodeFailureString());
+    QVERIFY(failure->kind == kiriview::ImageLoadFailureKind::Decode);
+    QCOMPARE(failure->userMessage, testImageDecodeFailureString());
     QCOMPARE(decodedCount, 0);
 }
 
@@ -518,6 +531,133 @@ void TestImageLoader::archiveInteriorImageKeepsComicBookRoot()
     QTRY_VERIFY(decodedSession.has_value());
     QCOMPARE(decodedSession->location().imageUrl(), imageUrl);
     QCOMPARE(decodedSession->location().openedCollectionScopeRootUrl(), *archiveRootUrl);
+}
+
+void TestImageLoader::loadErrorPreservesTypedFailureMetadata()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    std::optional<kiriview::ImageLoadSession> errorSession;
+    std::optional<kiriview::ImageLoadFailure> failure;
+    kiriview::ImageLoader::Callbacks callbacks;
+    callbacks.error = [&errorSession, &failure](kiriview::ImageLoadSession session,
+                          kiriview::ImageLoadFailure loadFailure) {
+        errorSession = std::move(session);
+        failure = std::move(loadFailure);
+    };
+    kiriview::ImageLoader loader
+        = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
+
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/missing.png"));
+    loader.start(kiriview::ImageLoadRequest::fromUrl(imageUrl));
+    dataLoader.failBackLoad(QStringLiteral("KIO data load failed"));
+
+    QTRY_VERIFY(failure.has_value());
+    QVERIFY(errorSession.has_value());
+    QCOMPARE(errorSession->imageUrl(), imageUrl);
+    QCOMPARE(failure->sourceUrl, imageUrl);
+    QCOMPARE(failure->sessionId, errorSession->id());
+    QVERIFY(failure->kind == kiriview::ImageLoadFailureKind::DataLoad);
+    QCOMPARE(failure->userMessage, QStringLiteral("KIO data load failed"));
+    QCOMPARE(failure->diagnosticDetail, QStringLiteral("KIO data load failed"));
+    QVERIFY(failure->severity == kiriview::ImageLoadFailureSeverity::Error);
+    QVERIFY(!failure->retryable);
+}
+
+void TestImageLoader::decodeFailurePreservesTypedFailureMetadata()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    std::optional<kiriview::ImageLoadSession> errorSession;
+    std::optional<kiriview::ImageLoadFailure> failure;
+    kiriview::ImageLoader::Callbacks callbacks;
+    callbacks.error = [&errorSession, &failure](kiriview::ImageLoadSession session,
+                          kiriview::ImageLoadFailure loadFailure) {
+        errorSession = std::move(session);
+        failure = std::move(loadFailure);
+    };
+    kiriview::ImageLoader loader
+        = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
+
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/bad.png"));
+    loader.start(kiriview::ImageLoadRequest::fromUrl(imageUrl));
+    dataLoader.finishBackLoad(QByteArrayLiteral("bad"));
+
+    QTRY_VERIFY(failure.has_value());
+    QVERIFY(errorSession.has_value());
+    QCOMPARE(failure->sourceUrl, imageUrl);
+    QCOMPARE(failure->sessionId, errorSession->id());
+    QVERIFY(failure->kind == kiriview::ImageLoadFailureKind::Decode);
+    QCOMPARE(failure->userMessage, testImageDecodeFailureString());
+    QCOMPARE(failure->diagnosticDetail, testImageDecodeFailureString());
+    QVERIFY(failure->severity == kiriview::ImageLoadFailureSeverity::Error);
+    QVERIFY(!failure->retryable);
+}
+
+void TestImageLoader::openedCollectionCandidateFailurePreservesTypedFailureMetadata()
+{
+    ManualOpenedCollectionCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    std::optional<kiriview::ImageLoadSession> errorSession;
+    std::optional<kiriview::ImageLoadFailure> failure;
+    kiriview::ImageLoader::Callbacks callbacks;
+    callbacks.error = [&errorSession, &failure](kiriview::ImageLoadSession session,
+                          kiriview::ImageLoadFailure loadFailure) {
+        errorSession = std::move(session);
+        failure = std::move(loadFailure);
+    };
+    kiriview::ImageLoader loader(this, candidateProvider.provider(),
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoderRejectingBadData()),
+        std::move(callbacks));
+
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/missing.cbz"));
+    const QString diagnosticDetail = QStringLiteral("opened collection listing failed");
+    loader.start(kiriview::ImageLoadRequest::fromUrl(archiveUrl));
+    QCOMPARE(candidateProvider.loadCount(), std::size_t(1));
+    candidateProvider.failFrontLoad(diagnosticDetail);
+
+    QVERIFY(failure.has_value());
+    QVERIFY(errorSession.has_value());
+    QCOMPARE(failure->sourceUrl, archiveUrl);
+    QCOMPARE(failure->sessionId, errorSession->id());
+    QVERIFY(failure->kind == kiriview::ImageLoadFailureKind::OpenedCollectionLoad);
+    QCOMPARE(failure->userMessage, diagnosticDetail);
+    QCOMPARE(failure->diagnosticDetail, diagnosticDetail);
+    QVERIFY(failure->severity == kiriview::ImageLoadFailureSeverity::Error);
+    QVERIFY(!failure->retryable);
+}
+
+void TestImageLoader::emptyOpenedCollectionPreservesTypedFailureMetadata()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    std::optional<kiriview::ImageLoadSession> errorSession;
+    std::optional<kiriview::ImageLoadFailure> failure;
+    kiriview::ImageLoader::Callbacks callbacks;
+    callbacks.error = [&errorSession, &failure](kiriview::ImageLoadSession session,
+                          kiriview::ImageLoadFailure loadFailure) {
+        errorSession = std::move(session);
+        failure = std::move(loadFailure);
+    };
+    kiriview::ImageLoader loader
+        = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
+
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/empty.cbz"));
+    const std::optional<QUrl> archiveRootUrl = kiriview::comicBookArchiveRootUrl(archiveUrl);
+    QVERIFY(archiveRootUrl.has_value());
+    candidateProvider.setOpenedCollectionCandidates(*archiveRootUrl, {});
+
+    loader.start(kiriview::ImageLoadRequest::fromUrl(archiveUrl));
+
+    QVERIFY(failure.has_value());
+    QVERIFY(errorSession.has_value());
+    QCOMPARE(failure->sourceUrl, archiveUrl);
+    QCOMPARE(failure->sessionId, errorSession->id());
+    QVERIFY(failure->kind == kiriview::ImageLoadFailureKind::EmptyOpenedCollection);
+    QCOMPARE(failure->userMessage, QString());
+    QCOMPARE(failure->diagnosticDetail, QString());
+    QVERIFY(failure->severity == kiriview::ImageLoadFailureSeverity::Error);
+    QVERIFY(!failure->retryable);
 }
 
 void TestImageLoader::staleLoadResultIsIgnored()

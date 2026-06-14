@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "document/imagedocumentstate.h"
+#include "document/imageloadfailure.h"
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
 
@@ -25,6 +26,7 @@ private Q_SLOTS:
     void displayedImageLocationUsesCanonicalIdentity();
     void containerNavigationAvailabilityFollowsContainerUrl();
     void statusAndLoadingReducersOnlyNotifyWhenChanged();
+    void loadFailureStoresDiagnosticsAndPublishesUserMessage();
     void changeBatchQueuesUniqueChangesUntilDestroyed();
     void injectedChangeBatchSharesStateAndRuntimeNotifications();
 };
@@ -128,6 +130,43 @@ void TestImageDocumentState::statusAndLoadingReducersOnlyNotifyWhenChanged()
 
     state.setLoading(true);
     QCOMPARE(changes.size(), std::size_t(2));
+}
+
+void TestImageDocumentState::loadFailureStoresDiagnosticsAndPublishesUserMessage()
+{
+    std::vector<kiriview::ImageDocumentChange> changes;
+    kiriview::ImageDocumentState state(
+        [&changes](kiriview::ImageDocumentChange change) { changes.push_back(change); });
+    const QUrl sourceUrl = localUrl(QStringLiteral("/images/missing.png"));
+
+    state.setLoadFailure(kiriview::ImageLoadFailure {
+        sourceUrl,
+        42,
+        kiriview::ImageLoadFailureKind::DataLoad,
+        QStringLiteral("Could not read the selected image."),
+        QStringLiteral("KIO reported file not found"),
+        kiriview::ImageLoadFailureSeverity::Error,
+        false,
+    });
+
+    QVERIFY(state.loadFailure().has_value());
+    QCOMPARE(state.loadFailure()->sourceUrl, sourceUrl);
+    QCOMPARE(state.loadFailure()->sessionId, quint64(42));
+    QVERIFY(state.loadFailure()->kind == kiriview::ImageLoadFailureKind::DataLoad);
+    QCOMPARE(
+        state.loadFailure()->userMessage, QStringLiteral("Could not read the selected image."));
+    QCOMPARE(state.loadFailure()->diagnosticDetail, QStringLiteral("KIO reported file not found"));
+    QVERIFY(state.loadFailure()->severity == kiriview::ImageLoadFailureSeverity::Error);
+    QVERIFY(!state.loadFailure()->retryable);
+    QCOMPARE(state.errorString(), state.loadFailure()->userMessage);
+    QCOMPARE(changes.size(), std::size_t(1));
+    QCOMPARE(changes.back(), kiriview::ImageDocumentChange::ErrorString);
+
+    state.setErrorString(QString());
+
+    QVERIFY(!state.loadFailure().has_value());
+    QCOMPARE(state.errorString(), QString());
+    QCOMPARE(changes.back(), kiriview::ImageDocumentChange::ErrorString);
 }
 
 void TestImageDocumentState::changeBatchQueuesUniqueChangesUntilDestroyed()
