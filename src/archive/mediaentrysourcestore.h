@@ -13,8 +13,6 @@
 #include <QObject>
 
 namespace kiriview {
-struct ImageDocumentSourceLoadRequest;
-
 class MediaEntrySourceStore final : public QObject
 {
 public:
@@ -26,8 +24,8 @@ public:
         ImageDocumentPageCandidateProvider provider);
     ImageDecodeDependencies wrapDecodeDependencies(ImageDecodeDependencies dependencies);
 
-    void prepareForSourceLoad(const ImageDocumentSourceLoadRequest &request,
-        const OpenedCollectionScopeLocation &displayedOpenedCollectionScope);
+    void prepareForOpenedCollectionScope(
+        const OpenedCollectionScopeLocation &openedCollectionScope);
     void clear();
 
     bool hasCurrentOpenedCollectionScope() const;

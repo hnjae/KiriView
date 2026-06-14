@@ -12,6 +12,7 @@
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentruntimeplanexecutor.h"
 #include "imagedocumentsourceloadrequest.h"
+#include "imagedocumentsourceloadscope.h"
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
 #include "localization/activenavigationboundarytext.h"
@@ -264,8 +265,9 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
     operations.sourceLoad.prepareSourceLoad
         = [this, stateOwner](const ImageDocumentSourceLoadRequest &request) {
               if (m_mediaEntrySourceStore != nullptr) {
-                  m_mediaEntrySourceStore->prepareForSourceLoad(
-                      request, stateOwner->displayedOpenedCollectionScope());
+                  m_mediaEntrySourceStore->prepareForOpenedCollectionScope(
+                      openedCollectionScopeForImageDocumentSourceLoad(
+                          request, stateOwner->displayedOpenedCollectionScope()));
               }
           };
     operations.open.setSourceUrl = [stateOwner](const ImageDocumentPageTarget &target) {

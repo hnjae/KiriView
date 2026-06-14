@@ -4,28 +4,9 @@
 #include "mediaentrysourcestore.h"
 
 #include "async/imagecallback.h"
-#include "document/imagedocumentsourceloadrequest.h"
-#include "document/imageloadplan.h"
 #include "location/imagedocumentlocation.h"
 
-#include <optional>
 #include <utility>
-
-namespace {
-std::optional<kiriview::OpenedCollectionScopeLocation> openedCollectionScopeForSourceLoad(
-    const kiriview::ImageDocumentSourceLoadRequest &request,
-    const kiriview::OpenedCollectionScopeLocation &displayedOpenedCollectionScope)
-{
-    const kiriview::OpenedCollectionScopeLoadPlan plan
-        = kiriview::openedCollectionScopeLoadPlan(kiriview::ImageLoadRequest::fromLocation(
-            request.sourceUrl, displayedOpenedCollectionScope, request.containerNavigationUrl));
-    if (plan.openedCollectionScope.isEmpty()) {
-        return std::nullopt;
-    }
-
-    return plan.openedCollectionScope;
-}
-}
 
 namespace kiriview {
 MediaEntrySourceStore::MediaEntrySourceStore(
@@ -72,13 +53,11 @@ ImageDecodeDependencies MediaEntrySourceStore::wrapDecodeDependencies(
     return dependencies;
 }
 
-void MediaEntrySourceStore::prepareForSourceLoad(const ImageDocumentSourceLoadRequest &request,
-    const OpenedCollectionScopeLocation &displayedOpenedCollectionScope)
+void MediaEntrySourceStore::prepareForOpenedCollectionScope(
+    const OpenedCollectionScopeLocation &openedCollectionScope)
 {
-    const std::optional<OpenedCollectionScopeLocation> openedCollectionScope
-        = openedCollectionScopeForSourceLoad(request, displayedOpenedCollectionScope);
-    if (openedCollectionScope.has_value()) {
-        m_runtime.switchToOpenedCollectionScope(*openedCollectionScope);
+    if (!openedCollectionScope.isEmpty()) {
+        m_runtime.switchToOpenedCollectionScope(openedCollectionScope);
         return;
     }
 
