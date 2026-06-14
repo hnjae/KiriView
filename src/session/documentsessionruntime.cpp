@@ -4,7 +4,6 @@
 #include "documentsessionruntime.h"
 
 #include "archive/openedcollectionthumbnailpolicy.h"
-#include "async/imagecallback.h"
 #include "localization/imageerrortext.h"
 #include "location/imageurl.h"
 #include "navigation/mediaformatregistry.h"
@@ -154,8 +153,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_directMediaDeletionCandidateRuntime(
           std::move(dependencies.directMediaNavigationCandidateProvider))
     , m_mediaDeletionRuntime(std::move(dependencies.fileDeletionProvider))
-    , m_mediaOpenWithProvider(
-          mediaOpenWithProviderWithDefault(std::move(dependencies.mediaOpenWithProvider)))
+    , m_mediaOpenWithRuntime(std::move(dependencies.mediaOpenWithProvider))
     , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,
           resolveMediaPredecodeDependencies(
               std::move(dependencies.directMediaPredecodeDependencies))))
@@ -599,27 +597,7 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 
 void DocumentSessionRuntime::openCurrentMediaWith(MediaOpenWithCallback callback)
 {
-    const MediaOpenWithPlan plan = currentMediaOpenWithPlan();
-    if (!plan.hasRequest()) {
-        if (callback) {
-            callback(MediaOpenWithResult::Failed, QString());
-        }
-        return;
-    }
-
-    cancelMediaOpenWith();
-    const std::shared_ptr<ImageAsyncOperationState> operationState = m_mediaOpenWithOperation;
-    const quint64 operationId = operationState->start();
-    auto sharedCallback = std::make_shared<MediaOpenWithCallback>(std::move(callback));
-    m_mediaOpenWithJob = m_mediaOpenWithProvider(m_owner, *plan.request,
-        [operationState, operationId, sharedCallback](
-            MediaOpenWithResult result, const QString &errorString) {
-            if (!operationState->finish(operationId)) {
-                return;
-            }
-
-            invokeIfSet(*sharedCallback, result, errorString);
-        });
+    m_mediaOpenWithRuntime.open(m_owner, currentMediaOpenWithPlan(), std::move(callback));
 }
 
 void DocumentSessionRuntime::connectDocuments()
@@ -1255,11 +1233,7 @@ MediaOpenWithPlan DocumentSessionRuntime::currentMediaOpenWithPlan() const
     });
 }
 
-void DocumentSessionRuntime::cancelMediaOpenWith()
-{
-    m_mediaOpenWithJob.cancel();
-    m_mediaOpenWithOperation->cancel();
-}
+void DocumentSessionRuntime::cancelMediaOpenWith() { m_mediaOpenWithRuntime.cancel(); }
 
 void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion)
 {

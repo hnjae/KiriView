@@ -195,6 +195,7 @@ src/session/thumbnailimagestore.cpp
 src/session/directmediacursor.cpp
 src/session/documentsessiondirectmedianavigationloadstate.cpp
 src/session/documentsessiondirectmedianavigationruntime.cpp
+src/session/documentsessionmediaopenwithruntime.cpp
 src/session/documentsessionmediadeletionplan.cpp
 src/session/documentsessionmediadeletionruntime.cpp
 src/session/mediainformationprojection.cpp
