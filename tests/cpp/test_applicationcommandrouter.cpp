@@ -1,8 +1,11 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "application/applicationactionstatepolicy.h"
 #include "application/applicationcommandrouter.h"
 #include "application/applicationtypes.h"
+#include "application/applicationzoompresets.h"
+#include "application/kiriviewapplicationactions.h"
 
 #include <QObject>
 #include <QStringList>
@@ -165,6 +168,7 @@ private Q_SLOTS:
     void videoPlaybackActionChecksModeAndVideoAvailability();
     void videoSeekChecksModeAndSeekability();
     void contentBoundaryActionsRouteByMediaMode();
+    void zoomPresetDescriptorsOwnMetadataAndDispatch();
     void videoScanShortcutsUseActiveNavigation();
     void scanShortcutsRoutePolicyEffects();
 };
@@ -403,6 +407,39 @@ void TestApplicationCommandRouter::contentBoundaryActionsRouteByMediaMode()
     router.handleActionTriggered(ActionId::ViewGoToContentStartAction, input, ports);
     router.handleActionTriggered(ActionId::ViewGoToContentEndAction, input, ports);
     QCOMPARE(log.setVideoPositionCount, 0);
+}
+
+void TestApplicationCommandRouter::zoomPresetDescriptorsOwnMetadataAndDispatch()
+{
+    ApplicationCommandRouter router;
+    ApplicationCommandRouterInput input;
+    kiriview::ApplicationActions::ApplicationActionStateInput stateInput;
+
+    for (const kiriview::ApplicationActions::ZoomPresetDescriptor &descriptor :
+        kiriview::ApplicationActions::zoomPresetDescriptors) {
+        const kiriview::ApplicationActions::ActionDefinition *definition
+            = kiriview::ApplicationActions::definitionForId(descriptor.actionId);
+        QVERIFY(definition != nullptr);
+        QCOMPARE(QString::fromLatin1(definition->name), QString::fromLatin1(descriptor.actionName));
+        QCOMPARE(kiriview::ApplicationActions::localizedString(definition->text),
+            kiriview::ApplicationActions::localizedString(descriptor.actionText));
+        QCOMPARE(kiriview::ApplicationActions::applicationActionMenuText(
+                     descriptor.actionId, stateInput),
+            kiriview::ApplicationActions::localizedString(descriptor.menuText));
+
+        CommandLog log;
+        ApplicationCommandRouterPorts ports = commandPorts(log);
+        router.handleActionTriggered(descriptor.actionId, input, ports);
+
+        QCOMPARE(log.actionCalls,
+            QStringList { QStringLiteral("manual-zoom:%1").arg(descriptor.zoomPercent) });
+    }
+
+    QVERIFY(kiriview::ApplicationActions::zoomPresetDescriptorForAction(
+                ActionId::ViewZoom50PercentAction)
+        != nullptr);
+    QVERIFY(kiriview::ApplicationActions::zoomPresetDescriptorForAction(ActionId::ViewZoomInAction)
+        == nullptr);
 }
 
 void TestApplicationCommandRouter::videoScanShortcutsUseActiveNavigation()
