@@ -41,6 +41,11 @@ const std::optional<VideoSourceLoadFailure> &VideoDocumentState::sourceLoadFailu
     return m_sourceLoadFailure;
 }
 
+const std::optional<VideoBackendFailure> &VideoDocumentState::backendFailure() const
+{
+    return m_backendFailure;
+}
+
 const QString &VideoDocumentState::windowTitleFileName() const { return m_windowTitleFileName; }
 
 qint64 VideoDocumentState::duration() const { return m_duration; }
@@ -71,6 +76,7 @@ void VideoDocumentState::resetForClearedSource()
 {
     m_mediaEnded = false;
     m_sourceLoadFailure.reset();
+    m_backendFailure.reset();
 
     std::vector<VideoDocumentChange> changes;
     appendIfSourceUrlChanged(changes, QUrl());
@@ -95,6 +101,7 @@ void VideoDocumentState::resetForSourceLoad(const QUrl &sourceUrl)
 {
     m_mediaEnded = false;
     m_sourceLoadFailure.reset();
+    m_backendFailure.reset();
 
     std::vector<VideoDocumentChange> changes;
     appendIfSourceUrlChanged(changes, sourceUrl);
@@ -118,6 +125,7 @@ void VideoDocumentState::resetForSourceLoad(const QUrl &sourceUrl)
 void VideoDocumentState::setSourceLoadFailure(VideoSourceLoadFailure failure)
 {
     m_sourceLoadFailure = std::move(failure);
+    m_backendFailure.reset();
 
     std::vector<VideoDocumentChange> changes;
     appendIfErrorStringChanged(changes, m_sourceLoadFailure->userMessage);
@@ -125,9 +133,23 @@ void VideoDocumentState::setSourceLoadFailure(VideoSourceLoadFailure failure)
     publish(std::move(changes));
 }
 
+void VideoDocumentState::setBackendFailure(VideoBackendFailure failure)
+{
+    m_backendFailure = std::move(failure);
+    m_sourceLoadFailure.reset();
+
+    std::vector<VideoDocumentChange> changes;
+    appendIfErrorStringChanged(changes, m_backendFailure->userMessage);
+    appendIfStatusChanged(changes, VideoDocumentStatus::Error);
+    publish(std::move(changes));
+}
+
 void VideoDocumentState::setStatus(VideoDocumentStatus status)
 {
-    m_sourceLoadFailure.reset();
+    if (status != VideoDocumentStatus::Error) {
+        m_sourceLoadFailure.reset();
+        m_backendFailure.reset();
+    }
 
     std::vector<VideoDocumentChange> changes;
     appendIfStatusChanged(changes, status);
@@ -136,11 +158,19 @@ void VideoDocumentState::setStatus(VideoDocumentStatus status)
 
 void VideoDocumentState::setStatusAndError(VideoDocumentStatus status, const QString &errorString)
 {
-    m_sourceLoadFailure.reset();
+    const QString nextErrorString = status == VideoDocumentStatus::Error ? errorString : QString();
+    if (status != VideoDocumentStatus::Error
+        || (m_sourceLoadFailure.has_value()
+            && m_sourceLoadFailure->userMessage != nextErrorString)) {
+        m_sourceLoadFailure.reset();
+    }
+    if (status != VideoDocumentStatus::Error
+        || (m_backendFailure.has_value() && m_backendFailure->userMessage != nextErrorString)) {
+        m_backendFailure.reset();
+    }
 
     std::vector<VideoDocumentChange> changes;
-    appendIfErrorStringChanged(
-        changes, status == VideoDocumentStatus::Error ? errorString : QString());
+    appendIfErrorStringChanged(changes, nextErrorString);
     appendIfStatusChanged(changes, status);
     publish(std::move(changes));
 }
@@ -148,6 +178,7 @@ void VideoDocumentState::setStatusAndError(VideoDocumentStatus status, const QSt
 void VideoDocumentState::setErrorString(const QString &errorString)
 {
     m_sourceLoadFailure.reset();
+    m_backendFailure.reset();
 
     std::vector<VideoDocumentChange> changes;
     appendIfErrorStringChanged(changes, errorString);

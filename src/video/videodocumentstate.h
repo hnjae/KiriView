@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_VIDEODOCUMENTSTATE_H
 #define KIRIVIEW_VIDEODOCUMENTSTATE_H
 
+#include "video/videobackendfailure.h"
 #include "video/videodocumenttypes.h"
 #include "video/videosourceloadplan.h"
 
@@ -29,6 +30,7 @@ public:
     VideoDocumentStatus status() const;
     const QString &errorString() const;
     const std::optional<VideoSourceLoadFailure> &sourceLoadFailure() const;
+    const std::optional<VideoBackendFailure> &backendFailure() const;
     const QString &windowTitleFileName() const;
     qint64 duration() const;
     qint64 position() const;
@@ -46,6 +48,7 @@ public:
     void resetForClearedSource();
     void resetForSourceLoad(const QUrl &sourceUrl);
     void setSourceLoadFailure(VideoSourceLoadFailure failure);
+    void setBackendFailure(VideoBackendFailure failure);
     void setStatusAndError(VideoDocumentStatus status, const QString &errorString = {});
     void setStatus(VideoDocumentStatus status);
     void setErrorString(const QString &errorString);
@@ -88,6 +91,7 @@ private:
     VideoDocumentStatus m_status = VideoDocumentStatus::Null;
     QString m_errorString;
     std::optional<VideoSourceLoadFailure> m_sourceLoadFailure;
+    std::optional<VideoBackendFailure> m_backendFailure;
     QString m_windowTitleFileName;
     qint64 m_duration = 0;
     qint64 m_position = 0;

@@ -134,6 +134,11 @@ const std::optional<VideoSourceLoadFailure> &VideoDocumentRuntime::sourceLoadFai
     return m_state.sourceLoadFailure();
 }
 
+const std::optional<VideoBackendFailure> &VideoDocumentRuntime::backendFailure() const
+{
+    return m_state.backendFailure();
+}
+
 QString VideoDocumentRuntime::windowTitleFileName() const { return m_state.windowTitleFileName(); }
 
 qint64 VideoDocumentRuntime::duration() const { return m_state.duration(); }
@@ -419,7 +424,14 @@ void VideoDocumentRuntime::updateErrorFromBackend()
 
     const QString backendError = m_mediaBackend->errorString();
     if (!backendError.isEmpty()) {
-        m_state.setStatusAndError(VideoDocumentStatus::Error, backendError);
+        m_state.setBackendFailure(VideoBackendFailure {
+            m_state.sourceUrl(),
+            VideoBackendFailureKind::Playback,
+            backendError,
+            backendError,
+            VideoBackendFailureSeverity::Error,
+            false,
+        });
         updateZoomPercent();
     }
 }
