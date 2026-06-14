@@ -59,6 +59,7 @@ private Q_SLOTS:
     void cppNamespaceIsLowercaseKiriview();
     void thumbnailGenerationContractsLiveInThumbnailModule();
     void documentSessionUsesThumbnailStripDependencyPort();
+    void activeNavigationThumbnailRuntimeUsesCanonicalThumbnailSourceKey();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void activePresentationDoesNotWritePageSurfacePresentationState();
@@ -1189,6 +1190,22 @@ void TestArchitectureBoundaries::documentSessionUsesThumbnailStripDependencyPort
     }
 
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::activeNavigationThumbnailRuntimeUsesCanonicalThumbnailSourceKey()
+{
+    const QString thumbnailRuntimeHeader
+        = readProjectFile(QStringLiteral("src/session/activenavigationthumbnailruntime.h"));
+    const QString thumbnailRuntimeSource
+        = readProjectFile(QStringLiteral("src/session/activenavigationthumbnailruntime.cpp"));
+
+    QVERIFY(thumbnailRuntimeHeader.contains(QStringLiteral("#include \"location/sourcekey.h\"")));
+    QVERIFY(thumbnailRuntimeHeader.contains(QStringLiteral("ThumbnailSourceKey sourceKey")));
+    QVERIFY(!thumbnailRuntimeHeader.contains(
+        QStringLiteral("struct ActiveNavigationThumbnailSourceKey")));
+    QVERIFY(!thumbnailRuntimeHeader.contains(QStringLiteral("static bool sameSourceKey")));
+    QVERIFY(!thumbnailRuntimeSource.contains(
+        QStringLiteral("ActiveNavigationThumbnailSourceKey sourceKeyForRow")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
