@@ -98,7 +98,7 @@ Open With is disabled when no media item is ready, when the current document is 
 
 ## Information Panel File Actions
 
-The Info Panel's Copy File Path action copies the current media target's display path to the clipboard.
+The Info Panel's Copy File Path action copies the current media target's display path to the clipboard. Display paths decode percent-encoded URL path text for user readability.
 
 For direct images, remote images, direct videos, and media opened directly from KDE-supported archive URLs such as `zip://`, the Copy File Path target is the displayed or original direct media URL. For local file URLs, the copied text is the local file path.
 
