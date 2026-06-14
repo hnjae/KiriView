@@ -80,16 +80,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Controllers no longer call siblings through hidden captures; construction order is not semantically important for callback validity; the workflow executor can be tested with fake ports.
 - Priority: P1
 
-### Finding: `MediaEntrySourceStore` depends upward on document load planning
-
-- Evidence: `src/archive/mediaentrysourcestore.h:16` forward-declares `ImageDocumentSourceLoadRequest`; `src/archive/mediaentrysourcestore.h:29-30` exposes `prepareForSourceLoad(const ImageDocumentSourceLoadRequest &, ...)`; `src/archive/mediaentrysourcestore.cpp:7-8` includes `document/imagedocumentsourceloadrequest.h` and `document/imageloadplan.h`; `src/archive/mediaentrysourcestore.cpp:15-27` calls `openedCollectionScopeLoadPlan(...)`; `src/document/imagedocumentruntimecontrollers.cpp:262-267` invokes it.
-- Current state: A source lifetime store under `src/archive/` understands image document source-load requests and image load planning semantics.
-- Design concern: The archive/source lifetime abstraction is coupled upward to image document workflow shape, so source-load request changes can force edits in `src/archive/`.
-- Correct end state: The document/open workflow should compute the opened-collection scope or store command. `MediaEntrySourceStore` should own only media-entry source lifetime/loading for an already resolved `OpenedCollectionScopeLocation`.
-- Suggested migration: Add a document-layer adapter that converts `ImageDocumentSourceLoadRequest` plus current scope into a store command. Move `openedCollectionScopeLoadPlan(...)` use out of `src/archive/`.
-- Acceptance criteria: `src/archive/mediaentrysourcestore.*` no longer includes `document/*`; source-store reuse tests do not need document request types.
-- Priority: P2
-
 ### Finding: `ApplicationCommandRouterPorts` is a flat cross-domain command surface
 
 - Evidence: `src/application/applicationcommandrouter.h:23-62` defines one `ApplicationCommandRouterPorts` struct containing shell/window, session, image document, viewport, panel, and video callbacks. `src/application/applicationcommandrouter.cpp:38-137` and `:180-264` switch across file, navigation, zoom, presentation, panels, fullscreen, help, menus, and video seek through the same port object. `src/facade/kiriviewapplication.cpp:499-631` binds application signals, `KiriDocumentSession`, `KiriImageDocument`, panel toggles, and `KiriVideoDocument` calls in one method.
@@ -294,7 +284,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 1. Add characterization tests around current behavior: route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
 2. Centralize duplicated rules/state: add image format capability alignment tests.
 3. Isolate core domain logic from external effects: split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
-4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, move application action input/port assembly into application runtime/coordinator, and move `MediaEntrySourceStore` document planning out of `src/archive/`.
+4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
 5. Improve error semantics and observability: extend lower-level image decoder/tile diagnostics, then KIO and media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
 6. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
 

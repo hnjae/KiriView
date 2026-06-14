@@ -15,6 +15,7 @@ This file is an agent-facing status index for `DESIGN_REVIEW_CORRECT_END_STATE.m
 - P1 typed primary image load failures: preserved source URL, session id, kind, diagnostic detail, severity, and retryability for primary image data-load, decode, opened-collection, and presentation failures while keeping QML error text unchanged; added state, loader, runtime, and architecture coverage and narrowed the remaining design-review backlog to lower-level decoder/tile diagnostics. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: a0fc102a.
 - P2 shortcut scope validity: centralized C++ `ImageShortcutScope` validity in the application type boundary and guarded image, active-media, and video shortcut availability against unknown scopes; added focused shortcut policy coverage and removed the completed backlog item. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: ab0ba6c0.
 - P2 zoom preset descriptors: centralized preset action names, action text, menu text, and percent payloads in one application descriptor table and aligned metadata/dispatch tests plus generated catalog references. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 28012c59.
+- P2 media entry source boundary: resolved image-document source-load requests to opened-collection scopes before calling MediaEntrySourceStore and kept archive store tests free of document request types; added architecture-boundary and source-load scope tests. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 11c78ee2.
 
 ## Current Status
 
@@ -36,7 +37,6 @@ P1 candidates:
 P2/P3 candidates:
 
 - Align image format capability metadata with decode classification and routing.
-- Move `MediaEntrySourceStore` away from document load-planning types.
 - Split `ApplicationCommandRouterPorts` by command owner.
 - Move localized open-dialog filter text out of `navigation/mediaformatregistry`.
 - Narrow `ImageDocumentRuntimePlan` operation families now that explicit `ImageDocumentRuntimePlanExecutor` dispatch exists.
