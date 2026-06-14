@@ -224,4 +224,39 @@ mod tests {
             assert!(!is_supported_image_file_name(name), "{name}");
         }
     }
+
+    #[test]
+    fn format_capability_catalog_covers_every_advertised_extension() {
+        for extension in supported_image_extensions() {
+            assert!(
+                decoder_family_for_supported_image_extension(&extension).is_some(),
+                "advertised extension {extension} should have a decoder family"
+            );
+        }
+    }
+
+    #[test]
+    fn raw_image_extensions_are_owned_by_format_catalog() {
+        let raw_extensions = raw_image_extensions();
+        assert_eq!(
+            raw_extensions,
+            vec![
+                "3fr", "arw", "bay", "bmq", "cr2", "cr3", "crw", "cs1", "cs2", "dcr", "dng", "erf",
+                "fff", "iiq", "k25", "kdc", "mdc", "mef", "mos", "mrw", "nef", "nrw", "orf", "pef",
+                "raf", "raw", "rdc", "rwl", "rw2", "sr2", "srf", "srw", "x3f",
+            ]
+        );
+
+        for extension in raw_extensions {
+            assert_eq!(
+                decoder_family_for_supported_image_extension(&extension),
+                Some(ImageFormatDecoderFamily::Raw),
+                "raw extension {extension} should route to the RAW decoder family"
+            );
+        }
+        assert_ne!(
+            decoder_family_for_supported_image_extension("tif"),
+            Some(ImageFormatDecoderFamily::Raw)
+        );
+    }
 }

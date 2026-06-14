@@ -596,6 +596,18 @@ mod tests {
     }
 
     #[test]
+    fn classifies_all_catalog_raw_extensions_from_file_name_hint() {
+        for extension in crate::imageformatregistry::raw_image_extensions() {
+            assert_eq!(
+                classify_image_input(b"unrecognized bytes", format!("photo.{extension}").as_str())
+                    .kind,
+                RustImageInputKind::Raw,
+                "raw catalog extension {extension} should classify as RAW"
+            );
+        }
+    }
+
+    #[test]
     fn unknown_bytes_do_not_become_qt_raster() {
         assert_eq!(
             classify_image_input(b"unrecognized bytes", "image.bin").kind,

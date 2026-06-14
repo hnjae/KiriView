@@ -239,18 +239,30 @@ void TestImageDecodePipeline::compatibleDataIsComputedOnlyWhenClassificationRequ
 
 void TestImageDecodePipeline::qtRasterClassificationCarriesExplicitFormat()
 {
-    QStringList calls;
-    QList<kiriview::QtRasterFormat> qtFormats;
-    kiriview::ImageDecodeRouter router(
-        recordingHandlers(&calls, nullptr, &qtFormats), [](const QByteArray &, const QString &) {
-            return classification(
-                kiriview::ImageInputKind::QtRaster, kiriview::QtRasterFormat::Tiff);
-        });
+    const QList<kiriview::QtRasterFormat> formats {
+        kiriview::QtRasterFormat::Png,
+        kiriview::QtRasterFormat::Jpeg,
+        kiriview::QtRasterFormat::Gif,
+        kiriview::QtRasterFormat::Webp,
+        kiriview::QtRasterFormat::Bmp,
+        kiriview::QtRasterFormat::Tiff,
+        kiriview::QtRasterFormat::Jxl,
+        kiriview::QtRasterFormat::Jp2,
+    };
 
-    router.decode(QByteArrayLiteral("tiff bytes"), kiriview::ImageDecodeRequest {});
+    for (kiriview::QtRasterFormat format : formats) {
+        QStringList calls;
+        QList<kiriview::QtRasterFormat> qtFormats;
+        kiriview::ImageDecodeRouter router(recordingHandlers(&calls, nullptr, &qtFormats),
+            [format](const QByteArray &, const QString &) {
+                return classification(kiriview::ImageInputKind::QtRaster, format);
+            });
 
-    QCOMPARE(calls, QStringList({ QStringLiteral("qt") }));
-    QCOMPARE(qtFormats, QList<kiriview::QtRasterFormat>({ kiriview::QtRasterFormat::Tiff }));
+        router.decode(QByteArrayLiteral("raster bytes"), kiriview::ImageDecodeRequest {});
+
+        QCOMPARE(calls, QStringList({ QStringLiteral("qt") }));
+        QCOMPARE(qtFormats, QList<kiriview::QtRasterFormat>({ format }));
+    }
 }
 
 void TestImageDecodePipeline::defaultSvgDecodeUsesFirstDisplayContext()
