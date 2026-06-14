@@ -40,6 +40,8 @@ In Flatpak, adjacent direct media navigation can list neighboring files under `h
 
 In Flatpak, KiriView may use KIOFuse direct-video playback paths when the sandbox has access to the specific session KIOFuse mount path. KiriView does not expose the entire user runtime filesystem for KIOFuse playback.
 
+In Flatpak, KiriView shares generated XDG thumbnails with the host thumbnail cache when the sandbox exposes `xdg-cache/thumbnails`.
+
 Files outside those paths remain available only when explicitly provided by the XDG portal.
 
 In Flatpak, KiriView can also request write access to those same locations for file deletion.
