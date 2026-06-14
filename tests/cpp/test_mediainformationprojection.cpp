@@ -48,6 +48,7 @@ private Q_SLOTS:
     void emptySessionProjectsUnavailableInformation();
     void readyImageProjectsTargetMetadataAndFileActions();
     void directVideoProjectsVideoSectionFromSessionSource();
+    void kioArchivePathDisplayDecodesPercentEscapedText();
     void unsupportedArchiveImageTargetClearsInformation();
 };
 
@@ -135,6 +136,28 @@ void TestMediaInformationProjection::directVideoProjectsVideoSectionFromSessionS
         QStringLiteral("1920×1080 px"));
     QVERIFY(snapshot.canCopyFilePath);
     QVERIFY(snapshot.canOpenContainingFolder);
+}
+
+void TestMediaInformationProjection::kioArchivePathDisplayDecodesPercentEscapedText()
+{
+    kiriview::MediaInformationProjectionInput input;
+    input.documentKind = kiriview::DocumentSessionKind::Image;
+    input.imageReady = true;
+    input.imageDisplayedUrl
+        = QUrl(QStringLiteral("zip:///books/book%20%5B2880p%5D.cbz!/chapter/01%20%5B2880p%5D.jxl"));
+    input.imageDisplayedOpenedCollectionScope = kiriview::OpenedCollectionScopeLocation::fromUrls(
+        QUrl::fromLocalFile(QStringLiteral("/books/book [2880p].cbz")),
+        QUrl(QStringLiteral("zip:///books/book%20%5B2880p%5D.cbz!/")),
+        kiriview::OpenedCollectionScopeKind::ComicBookArchive);
+
+    const kiriview::MediaInformationProjectionSnapshot snapshot
+        = kiriview::projectMediaInformation(input, 13);
+
+    QVERIFY(snapshot.available);
+    QCOMPARE(snapshot.targetUrl, input.imageDisplayedUrl);
+    QCOMPARE(snapshot.title, QStringLiteral("01 [2880p].jxl"));
+    QCOMPARE(valueForLabel(snapshot.generalRows, QStringLiteral("Path")),
+        QStringLiteral("zip:///books/book [2880p].cbz!/chapter/01 [2880p].jxl"));
 }
 
 void TestMediaInformationProjection::unsupportedArchiveImageTargetClearsInformation()
