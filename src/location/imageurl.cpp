@@ -20,15 +20,12 @@
 namespace {
 constexpr const char *documentPortalHostPathAttribute = "user.document-portal.host-path";
 
-std::optional<QUrl> kioFuseArchiveUrl(const QString &localPath)
-{
-    const QString runtimeDir = QFile::decodeName(qgetenv("XDG_RUNTIME_DIR"));
-    return kiriview::kioFuseArchiveUrlForLocalPath(localPath, runtimeDir);
-}
+QString runtimeDirForNavigationSource() { return QFile::decodeName(qgetenv("XDG_RUNTIME_DIR")); }
 
-QUrl navigationUrlForLocalPath(const QString &localPath)
+QUrl navigationUrlForLocalPath(const QString &localPath, const QString &runtimeDir)
 {
-    const std::optional<QUrl> kioUrl = kioFuseArchiveUrl(localPath);
+    const std::optional<QUrl> kioUrl
+        = kiriview::kioFuseArchiveUrlForLocalPath(localPath, runtimeDir);
     if (kioUrl.has_value()) {
         return kioUrl.value();
     }
@@ -44,7 +41,7 @@ QUrl normalizedContainerBaseUrl(const QUrl &url)
     return normalizedUrl;
 }
 
-std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
+std::optional<QString> documentPortalHostPath(const QUrl &url)
 {
     if (!url.isLocalFile()) {
         return std::nullopt;
@@ -88,11 +85,9 @@ std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
         return std::nullopt;
     }
 
-    const QUrl hostUrl = navigationUrlForLocalPath(hostPath);
-    qCDebug(kiriviewNavigationLog)
-        << "document portal host path resolved"
-        << "url" << url << "hostPath" << hostPath << "hostUrl" << hostUrl;
-    return hostUrl;
+    qCDebug(kiriviewNavigationLog) << "document portal host path resolved"
+                                   << "url" << url << "hostPath" << hostPath;
+    return hostPath;
 }
 }
 
@@ -173,25 +168,39 @@ QUrl parentUrlForContainerNavigation(const QUrl &containerUrl)
     return parentSourceUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
 }
 
-QUrl navigationSourceUrl(const QUrl &url)
+QUrl navigationSourceUrlForFacts(const QUrl &url, const NavigationSourceFacts &facts)
 {
-    const std::optional<QUrl> hostUrl = documentPortalHostUrl(url);
-    if (hostUrl.has_value()) {
-        qCDebug(kiriviewNavigationLog) << "navigation source url uses document portal host"
-                                       << "url" << url << "navigationUrl" << hostUrl.value();
-        return hostUrl.value();
+    if (url.isLocalFile() && facts.documentPortalHostPath.has_value()) {
+        const QString localPath = url.toLocalFile();
+        const QString &hostPath = facts.documentPortalHostPath.value();
+        if (!hostPath.isEmpty() && hostPath != localPath) {
+            return navigationUrlForLocalPath(hostPath, facts.runtimeDir);
+        }
     }
 
     if (url.isLocalFile()) {
-        const std::optional<QUrl> kioUrl = kioFuseArchiveUrl(url.toLocalFile());
+        const std::optional<QUrl> kioUrl
+            = kioFuseArchiveUrlForLocalPath(url.toLocalFile(), facts.runtimeDir);
         if (kioUrl.has_value()) {
-            qCDebug(kiriviewNavigationLog) << "navigation source url uses kio-fuse archive"
-                                           << "url" << url << "navigationUrl" << kioUrl.value();
             return kioUrl.value();
         }
     }
 
     return url;
+}
+
+QUrl navigationSourceUrl(const QUrl &url)
+{
+    const NavigationSourceFacts facts {
+        documentPortalHostPath(url),
+        runtimeDirForNavigationSource(),
+    };
+    const QUrl navigationUrl = navigationSourceUrlForFacts(url, facts);
+    if (!sameNormalizedUrl(url, navigationUrl)) {
+        qCDebug(kiriviewNavigationLog) << "navigation source url resolved"
+                                       << "url" << url << "navigationUrl" << navigationUrl;
+    }
+    return navigationUrl;
 }
 
 DirectoryNavigationLocation directoryNavigationLocationForFileUrl(const QUrl &url)
