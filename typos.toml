@@ -3,9 +3,6 @@
 [default]
 locale = "en"
 
-[files]
-extend-exclude = ["nix/patches/*.patch"]
-
 [default.extend-words]
 INVOKABLE = "INVOKABLE"
 trak = "trak"

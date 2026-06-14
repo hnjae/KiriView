@@ -3,29 +3,35 @@ SPDX-PackageName = "KiriView"
 
 [[annotations]]
 path = [
+  # Source:
   "**/org.hnjae.kiriview.svg",
-  "**/*.md",
-  ".biome.json",
-  ".clang-format",
-  ".editorconfig",
-  ".envrc",
-  ".gitignore",
-  ".rumdl.toml",
-  ".typos.toml",
-  ".yamlfmt.yaml",
   "Cargo.lock",
   "Cargo.toml",
   "cargo-sources.json",
-  "cog.toml",
-  "devenv.lock",
-  "devenv.yaml",
   "org.hnjae.kiriview.desktop",
   "org.hnjae.kiriview.json",
-  "justfile",
-  "opencode.jsonc",
   "po/**/*.po",
-  "statix.toml",
   "tests/fixtures/**/*",
+
+  # Dev environments:
+  "justfile",
+  "devenv.lock",
+  "devenv.yaml",
+
+  # Documentations:
+  "**/*.md",
+
+  # Tool configurations:
+  ".gitignore",
+  ".clang-format",
+  ".editorconfig",
+  "biome.json",
+  "cog.toml",
+  "opencode.jsonc",
+  "rumdl.toml",
+  "statix.toml",
+  "typos.toml",
+  "yamlfmt.yaml",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 KIM Hyunjae"
