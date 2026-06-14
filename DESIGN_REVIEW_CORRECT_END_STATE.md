@@ -72,12 +72,12 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ### Finding: `DocumentSessionRuntime` is a mixed-media feature convergence point
 
-- Evidence: `src/session/documentsessionruntime.h:42-47` groups direct-media navigation, file deletion, Open With, thumbnail runtime, and predecode dependencies. `src/session/documentsessionruntime.h:118-177` declares methods for routing, leaf snapshot refresh, thumbnails, video-output claims, direct-media navigation, deletion, Open With, predecode, and public projection. `src/session/documentsessionruntime.cpp:389-421`, `:578-621`, `:862-990`, `:1054-1159`, and `:1162-1194` handle video-output claims, deletion/Open With, route execution, direct-media navigation, and predecode.
-- Current state: `DocumentSessionRuntime` is the public mixed-media session owner and directly executes routing, active navigation, thumbnail scheduling, video output attachment, deletion, Open With, predecode, and projection publication.
+- Evidence: `src/session/documentsessionruntime.h:42-47` groups direct-media navigation, file deletion, thumbnail runtime, and predecode dependencies. `src/session/documentsessionruntime.h:118-177` declares methods for routing, leaf snapshot refresh, thumbnails, video-output claims, direct-media navigation, deletion, predecode, and public projection. `src/session/documentsessionruntime.cpp:389-421`, `:578-621`, `:862-990`, `:1054-1159`, and `:1162-1194` handle video-output claims, deletion, route execution, direct-media navigation, and predecode.
+- Current state: `DocumentSessionRuntime` is the public mixed-media session owner and directly executes routing, active navigation, thumbnail scheduling, video output attachment, deletion, predecode, and projection publication.
 - Design concern: Independent feature changes or removals converge on the same runtime and require revalidating routing/projection side effects.
-- Correct end state: `DocumentSessionState` should remain the public projection owner. `DocumentSessionRuntime` should orchestrate named subowners through typed inputs/results: route executor, direct-media navigation coordinator, displayed-media deletion coordinator, Open With controller, video-output claim runtime, active-navigation thumbnail runtime, and direct-media predecode adapter.
-- Suggested migration: Extract small workflows first, such as Open With or video-output claims. Keep public projection updates centralized in `DocumentSessionState` and move lifecycle execution/cancellation into subowners.
-- Acceptance criteria: Feature-specific coordinators can be tested without full session runtime construction; removing thumbnail strip or Open With does not require edits to direct-media routing logic.
+- Correct end state: `DocumentSessionState` should remain the public projection owner. `DocumentSessionRuntime` should orchestrate named subowners through typed inputs/results: route executor, direct-media navigation coordinator, displayed-media deletion coordinator, video-output claim runtime, active-navigation thumbnail runtime, and direct-media predecode adapter.
+- Suggested migration: Continue extracting small workflows such as video-output claims or displayed-media deletion. Keep public projection updates centralized in `DocumentSessionState` and move lifecycle execution/cancellation into subowners.
+- Acceptance criteria: Feature-specific coordinators can be tested without full session runtime construction; removing thumbnail strip or displayed-media deletion does not require edits to direct-media routing logic.
 - Priority: P1
 
 ### Finding: Session-to-leaf document ports expose leaf internals as wide callback bags
@@ -291,10 +291,10 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ### Finding: Feature removal cost is concentrated in `DocumentSessionRuntime` and wide ports
 
 - Evidence: Same evidence as the `DocumentSessionRuntime` convergence and session leaf port findings above in `src/session/documentsessionruntime.*` and `src/session/documentsessiondocumentports.h`.
-- Current state: Thumbnail strip, Open With, deletion, video-output, predecode, and direct-media routing are tied to the same session runtime and broad leaf port.
+- Current state: Thumbnail strip, deletion, video-output, predecode, and direct-media routing are tied to the same session runtime and broad leaf port.
 - Design concern: Removing a feature becomes a session orchestration/projection/leaf-sampling change rather than a feature-owner change.
 - Correct end state: Feature lifecycle should move into removable subowners, while `DocumentSessionState` remains the public projection owner.
-- Suggested migration: Extract small effect-boundary features first, such as Open With or video-output, then proceed to thumbnails, predecode, and direct navigation.
+- Suggested migration: Continue extracting small effect-boundary features such as video-output or deletion, then proceed to thumbnails, predecode, and direct navigation.
 - Acceptance criteria: Removing a feature does not require unrelated route/projection logic changes; feature subowner tests run without the full session runtime.
 - Priority: P1
 
@@ -320,10 +320,10 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ## Recommended Correct End-State Architecture
 
-- Ownership boundaries: `DocumentSessionState` owns public mixed-media projection and snapshot publication. `DocumentSessionRuntime` orchestrates named subowners for route, direct-media navigation, deletion, Open With, video-output, thumbnails, and predecode through typed results/effects.
+- Ownership boundaries: `DocumentSessionState` owns public mixed-media projection and snapshot publication. `DocumentSessionRuntime` orchestrates named subowners for route, direct-media navigation, deletion, video-output, thumbnails, and predecode through typed results/effects.
 - Domain rules: Image format capability and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
 - State definition: Image document state changes pass through named transitions or a validating final-state boundary.
-- Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Open With and source-load planning should pass through typed plans before providers run.
+- Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Source-load planning should pass through typed plans before providers run.
 - External effects: `KCoreDirLister`, `QFileInfo`, xattrs, environment variables, `sysconf`, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
 - Error representation: Image, KIO operation, media-entry source, and thumbnail generation failures use typed failures. Internal paths preserve source identity, stage/kind, backend/raw code, severity, and retryability. QML receives user-facing projections.
 - Facade/QML: `KiriImageDocument` and `KiriViewApplication` expose QML-friendly types, invokables, and signals. Viewport command planning and action routing input assembly move into presentation/application runtime. QML continues to report geometry/input facts and render projections.
