@@ -174,16 +174,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ## Testability Problems
 
-### Finding: Live directory candidate watching bypasses the provider seam
-
-- Evidence: `src/navigation/imagedocumentpagecandidatedirectoryentry.cpp:18` constructs `KCoreDirLister` directly; `:76` uses `QTimer::singleShot(0, ...)`; `:200` connects `KCoreDirLister` signals directly. `src/navigation/imagedocumentpagecandidatestore.cpp:60` and `:93` watch through directory entries. In contrast, `tests/cpp/test_directorylistingjob.cpp:48` and `:75` use fake `DirectoryItemListProvider` for one-shot listing. `tests/cpp/test_imagedocumentpagecandidatedirectoryentry.cpp:53` and `:82` use `QTemporaryDir`, real files, KDirNotify DBus emission, and `QTRY_VERIFY_WITH_TIMEOUT(..., 10000)`.
-- Current state: One-shot directory listing has an injectable provider seam, but live local-directory candidate watching directly owns KDE, filesystem, and timer effects.
-- Design concern: Candidate-store state transitions, stale results, cancellation, and failure paths are hard to test deterministically without KDE directory notification timing and filesystem setup.
-- Correct end state: A directory candidate/watch provider should own external directory effects. `ImageDocumentPageCandidateDirectoryEntry` should consume events such as initial snapshot, add/remove/change, deleted directory, error, and cancellation.
-- Suggested migration: Extract a watch-oriented provider interface or extend `DirectoryItemListProvider` with live events. Move `KCoreDirLister` creation into the production adapter and add fake-provider tests.
-- Acceptance criteria: Candidate-store and directory-entry transitions can be tested without `QTemporaryDir`, KDirNotify DBus, or `QTRY_VERIFY_WITH_TIMEOUT`; `KCoreDirLister` appears only in the production adapter.
-- Priority: P1
-
 ### Finding: Image load planning performs filesystem directory probes
 
 - Evidence: `src/document/imageloadplan.cpp:51` calls `openedCollectionScopeLocationForDirectlyOpenedLocalUrl(request.sourceUrl())`; `src/location/imagedocumentlocation.cpp:86` uses `QFileInfo(localPath).isDir()` to identify directories. `tests/cpp/test_imageloadplan.cpp:68` and `tests/cpp/test_imageloader.cpp:388` use `QTemporaryDir` for directory planning tests.
@@ -324,7 +314,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Domain rules: Image format capability and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
 - State definition: Image document state changes pass through named transitions or a validating final-state boundary.
 - Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Source-load planning should pass through typed plans before providers run.
-- External effects: `KCoreDirLister`, `QFileInfo`, xattrs, environment variables, `sysconf`, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
+- External effects: `QFileInfo`, xattrs, environment variables, `sysconf`, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
 - Error representation: Image, KIO operation, media-entry source, and thumbnail generation failures use typed failures. Internal paths preserve source identity, stage/kind, backend/raw code, severity, and retryability. QML receives user-facing projections.
 - Facade/QML: `KiriImageDocument` and `KiriViewApplication` expose QML-friendly types, invokables, and signals. Viewport command planning and action routing input assembly move into presentation/application runtime. QML continues to report geometry/input facts and render projections.
 - Tests: Characterization tests lock current behavior first. Rust policy and C++ domain helpers are tested with pure/fake dependencies. Qt/KDE/filesystem adapter tests remain small. Architecture boundary tests should verify abstractions used by production code.
@@ -333,7 +323,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 1. Add characterization tests around current behavior: route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
 2. Centralize duplicated rules/state: add image format capability alignment tests, centralize zoom preset descriptors, and centralize `ImageShortcutScope` validity.
-3. Isolate core domain logic from external effects: add a directory watch provider seam, split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
+3. Isolate core domain logic from external effects: split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
 4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, move application action input/port assembly into application runtime/coordinator, and move `MediaEntrySourceStore` document planning out of `src/archive/`.
 5. Improve error semantics and observability: introduce typed image failures, then KIO and media-entry source failures, then tile decode attempt diagnostics and thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
 6. Remove or simplify premature/parallel abstractions: either wire `ActiveNavigationThumbnailDemandTracker` into production or remove/test-helper it, phase `ImageDocumentRuntimeOperation` vocabulary by workflow family, and remove compatibility wrappers after tests prove behavior preservation.
