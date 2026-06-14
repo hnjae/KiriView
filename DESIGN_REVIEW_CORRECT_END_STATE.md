@@ -184,16 +184,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Candidate-store and directory-entry transitions can be tested without `QTemporaryDir`, KDirNotify DBus, or `QTRY_VERIFY_WITH_TIMEOUT`; `KCoreDirLister` appears only in the production adapter.
 - Priority: P1
 
-### Finding: Predecode coordinators hide the timer seam
-
-- Evidence: `src/predecode/predecodescheduleruntime.cpp:25` accepts `TimerScheduler`, and `tests/cpp/test_predecodescheduleruntime.cpp:84` uses `ManualTimerScheduler`. However, `src/predecode/imagepredecodecoordinator.cpp:16` and `src/predecode/mediapredecodecoordinator.cpp:16` construct `m_scheduleRuntime` without taking a scheduler dependency. `src/predecode/imagepredecodecoordinator.cpp:50` calls `QThread::idealThreadCount()` directly. `tests/cpp/test_imagepredecodecoordinator.cpp`, `tests/cpp/test_mediapredecodecoordinator.cpp`, and `tests/cpp/test_imagedocumentpredecodecontroller.cpp` rely on `QTest::qWait(...)`.
-- Current state: The lower-level scheduler runtime is manually testable, but higher-level coordinators/controllers use wall-clock waits.
-- Design concern: Debounce, momentum, stale-work suppression, and power-saver transitions are scheduling policy, but tests depend on elapsed time and host thread count.
-- Correct end state: Predecode dependency structs should carry `TimerScheduler` and, where needed, a system profile/thread-count provider. Production should provide Qt timers and real facts; tests should provide manual timers and fixed facts.
-- Suggested migration: Add optional timer scheduler and thread-count/system facts to image/media predecode dependency overrides. Convert qWait-based tests to manual timer advancement.
-- Acceptance criteria: Predecode coordinator/controller tests do not need `QTest::qWait` for debounce or stale behavior; parallelism tests can set thread count deterministically.
-- Priority: P1
-
 ### Finding: Image load planning performs filesystem directory probes
 
 - Evidence: `src/document/imageloadplan.cpp:51` calls `openedCollectionScopeLocationForDirectlyOpenedLocalUrl(request.sourceUrl())`; `src/location/imagedocumentlocation.cpp:86` uses `QFileInfo(localPath).isDir()` to identify directories. `tests/cpp/test_imageloadplan.cpp:68` and `tests/cpp/test_imageloader.cpp:388` use `QTemporaryDir` for directory planning tests.
@@ -334,7 +324,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Domain rules: Image format capability and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
 - State definition: Image document state changes pass through named transitions or a validating final-state boundary.
 - Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Open With and source-load planning should pass through typed plans before providers run.
-- External effects: `KCoreDirLister`, `QFileInfo`, xattrs, environment variables, `sysconf`, Qt timers, thread count, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
+- External effects: `KCoreDirLister`, `QFileInfo`, xattrs, environment variables, `sysconf`, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
 - Error representation: Image, KIO operation, media-entry source, and thumbnail generation failures use typed failures. Internal paths preserve source identity, stage/kind, backend/raw code, severity, and retryability. QML receives user-facing projections.
 - Facade/QML: `KiriImageDocument` and `KiriViewApplication` expose QML-friendly types, invokables, and signals. Viewport command planning and action routing input assembly move into presentation/application runtime. QML continues to report geometry/input facts and render projections.
 - Tests: Characterization tests lock current behavior first. Rust policy and C++ domain helpers are tested with pure/fake dependencies. Qt/KDE/filesystem adapter tests remain small. Architecture boundary tests should verify abstractions used by production code.
@@ -343,7 +333,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 1. Add characterization tests around current behavior: route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
 2. Centralize duplicated rules/state: add image format capability alignment tests, centralize zoom preset descriptors, and centralize `ImageShortcutScope` validity.
-3. Isolate core domain logic from external effects: add a directory watch provider seam, thread timer scheduler/system facts into predecode coordinators, split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
+3. Isolate core domain logic from external effects: add a directory watch provider seam, split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
 4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, move application action input/port assembly into application runtime/coordinator, and move `MediaEntrySourceStore` document planning out of `src/archive/`.
 5. Improve error semantics and observability: introduce typed image failures, then KIO and media-entry source failures, then tile decode attempt diagnostics and thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
 6. Remove or simplify premature/parallel abstractions: either wire `ActiveNavigationThumbnailDemandTracker` into production or remove/test-helper it, phase `ImageDocumentRuntimeOperation` vocabulary by workflow family, and remove compatibility wrappers after tests prove behavior preservation.
