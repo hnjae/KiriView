@@ -129,6 +129,11 @@ VideoDocumentStatus VideoDocumentRuntime::status() const { return m_state.status
 
 QString VideoDocumentRuntime::errorString() const { return m_state.errorString(); }
 
+const std::optional<VideoSourceLoadFailure> &VideoDocumentRuntime::sourceLoadFailure() const
+{
+    return m_state.sourceLoadFailure();
+}
+
 QString VideoDocumentRuntime::windowTitleFileName() const { return m_state.windowTitleFileName(); }
 
 qint64 VideoDocumentRuntime::duration() const { return m_state.duration(); }
@@ -360,7 +365,7 @@ void VideoDocumentRuntime::publishSourceLoadFailure(const VideoSourceLoadFailure
 {
     invalidatePlaybackCallbacks();
     m_state.setEmbeddedMetadata({});
-    m_state.setStatusAndError(VideoDocumentStatus::Error, failure.userMessage);
+    m_state.setSourceLoadFailure(failure);
     updateZoomPercent();
 }
 

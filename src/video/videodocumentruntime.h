@@ -39,6 +39,7 @@ public:
     void setSourceUrl(const QUrl &sourceUrl);
     VideoDocumentStatus status() const;
     QString errorString() const;
+    const std::optional<VideoSourceLoadFailure> &sourceLoadFailure() const;
     QString windowTitleFileName() const;
     qint64 duration() const;
     qint64 position() const;

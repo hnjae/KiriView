@@ -5,6 +5,7 @@
 #define KIRIVIEW_VIDEODOCUMENTSTATE_H
 
 #include "video/videodocumenttypes.h"
+#include "video/videosourceloadplan.h"
 
 #include "metadata/embeddedmetadata.h"
 
@@ -27,6 +28,7 @@ public:
     const QUrl &sourceUrl() const;
     VideoDocumentStatus status() const;
     const QString &errorString() const;
+    const std::optional<VideoSourceLoadFailure> &sourceLoadFailure() const;
     const QString &windowTitleFileName() const;
     qint64 duration() const;
     qint64 position() const;
@@ -43,6 +45,7 @@ public:
 
     void resetForClearedSource();
     void resetForSourceLoad(const QUrl &sourceUrl);
+    void setSourceLoadFailure(VideoSourceLoadFailure failure);
     void setStatusAndError(VideoDocumentStatus status, const QString &errorString = {});
     void setStatus(VideoDocumentStatus status);
     void setErrorString(const QString &errorString);
@@ -84,6 +87,7 @@ private:
     QUrl m_sourceUrl;
     VideoDocumentStatus m_status = VideoDocumentStatus::Null;
     QString m_errorString;
+    std::optional<VideoSourceLoadFailure> m_sourceLoadFailure;
     QString m_windowTitleFileName;
     qint64 m_duration = 0;
     qint64 m_position = 0;
