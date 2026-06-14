@@ -29,6 +29,7 @@ private Q_SLOTS:
     void resolverCanReturnSeparatePlaybackUrl();
     void resolvedPlaybackPathPublishesEmbeddedMetadata();
     void resolverFailureSurfacesErrorWithoutChangingSourceUrl();
+    void resolverFailurePreservesTypedFailureMetadata();
     void backendRecoveryClearsStaleErrorText();
     void staleResolverCompletionsAreIgnored();
     void resolverCleanupRunsOnSourceChangeAndDestruction();
@@ -467,6 +468,33 @@ void TestVideoDocumentRuntime::resolverFailureSurfacesErrorWithoutChangingSource
     QCOMPARE(fixture.runtime->status(), kiriview::VideoDocumentStatus::Error);
     QCOMPARE(fixture.runtime->errorString(), QStringLiteral("Could not open the selected video."));
     QCOMPARE(fixture.backend->sourceUrl, QUrl());
+}
+
+void TestVideoDocumentRuntime::resolverFailurePreservesTypedFailureMetadata()
+{
+    RuntimeFixture fixture;
+    const QUrl sourceUrl(QStringLiteral("zip:///home/me/videos.zip!/clip.mp4"));
+    const QString diagnosticDetail = QStringLiteral("KIO resolver failed");
+
+    fixture.runtime->setSourceUrl(sourceUrl);
+    fixture.failLatest(diagnosticDetail);
+
+    QVERIFY(fixture.runtime->sourceLoadFailure().has_value());
+    QCOMPARE(fixture.runtime->sourceLoadFailure()->sourceUrl, sourceUrl);
+    QVERIFY(fixture.runtime->sourceLoadFailure()->kind
+        == kiriview::VideoSourceLoadFailureKind::PlaybackUrlResolution);
+    QCOMPARE(fixture.runtime->sourceLoadFailure()->userMessage,
+        QStringLiteral("Could not open the selected video."));
+    QCOMPARE(fixture.runtime->sourceLoadFailure()->diagnosticDetail, diagnosticDetail);
+    QVERIFY(fixture.runtime->sourceLoadFailure()->severity
+        == kiriview::VideoSourceLoadFailureSeverity::Error);
+    QVERIFY(!fixture.runtime->sourceLoadFailure()->retryable);
+    QCOMPARE(fixture.runtime->errorString(), fixture.runtime->sourceLoadFailure()->userMessage);
+
+    fixture.runtime->setSourceUrl(QUrl::fromLocalFile(QStringLiteral("/home/me/next.mp4")));
+
+    QVERIFY(!fixture.runtime->sourceLoadFailure().has_value());
+    QCOMPARE(fixture.runtime->errorString(), QString());
 }
 
 void TestVideoDocumentRuntime::backendRecoveryClearsStaleErrorText()

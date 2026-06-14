@@ -18,6 +18,7 @@ class TestVideoDocumentState : public QObject
 private Q_SLOTS:
     void sourceLoadResetsPublicPlaybackStateInOrder();
     void clearedSourceResetsPublicStateInOrder();
+    void sourceLoadFailureStoresTypedFailureAndPublishesUserMessage();
     void scalarSettersOnlyNotifyOnChangedValues();
     void zoomPercentStatePublishesKnownValuePair();
     void mutedStatePersistsAcrossSourceResets();
@@ -132,6 +133,46 @@ void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
             Change::Duration, Change::Position, Change::Playing, Change::Seekable, Change::HasVideo,
             Change::HasAudio, Change::VideoSize, Change::ZoomPercentKnown, Change::ZoomPercent,
             Change::EmbeddedMetadata });
+}
+
+void TestVideoDocumentState::sourceLoadFailureStoresTypedFailureAndPublishesUserMessage()
+{
+    std::vector<std::vector<Change>> batches;
+    kiriview::VideoDocumentState state(
+        [&batches](const std::vector<Change> &changes) { batches.push_back(changes); });
+    const QUrl sourceUrl(QStringLiteral("zip:///videos/archive.zip!/clip.mp4"));
+    const QString userMessage = QStringLiteral("Could not open the selected video.");
+    const QString diagnosticDetail = QStringLiteral("resolver rejected archive entry");
+
+    state.resetForSourceLoad(sourceUrl);
+    batches.clear();
+    state.setSourceLoadFailure(kiriview::VideoSourceLoadFailure {
+        sourceUrl,
+        kiriview::VideoSourceLoadFailureKind::PlaybackUrlResolution,
+        userMessage,
+        diagnosticDetail,
+        kiriview::VideoSourceLoadFailureSeverity::Error,
+        false,
+    });
+
+    QVERIFY(state.sourceLoadFailure().has_value());
+    QCOMPARE(state.sourceLoadFailure()->sourceUrl, sourceUrl);
+    QVERIFY(state.sourceLoadFailure()->kind
+        == kiriview::VideoSourceLoadFailureKind::PlaybackUrlResolution);
+    QCOMPARE(state.sourceLoadFailure()->userMessage, userMessage);
+    QCOMPARE(state.sourceLoadFailure()->diagnosticDetail, diagnosticDetail);
+    QVERIFY(state.sourceLoadFailure()->severity == kiriview::VideoSourceLoadFailureSeverity::Error);
+    QVERIFY(!state.sourceLoadFailure()->retryable);
+    QCOMPARE(state.errorString(), userMessage);
+    QCOMPARE(state.status(), kiriview::VideoDocumentStatus::Error);
+    compareChanges(batches.front(), { Change::ErrorString, Change::Status });
+
+    batches.clear();
+    state.resetForSourceLoad(QUrl::fromLocalFile(QStringLiteral("/videos/next.mp4")));
+
+    QVERIFY(!state.sourceLoadFailure().has_value());
+    QCOMPARE(state.errorString(), QString());
+    QCOMPARE(state.status(), kiriview::VideoDocumentStatus::Loading);
 }
 
 void TestVideoDocumentState::scalarSettersOnlyNotifyOnChangedValues()
