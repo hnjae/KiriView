@@ -59,6 +59,7 @@ private Q_SLOTS:
     void cppNamespaceIsLowercaseKiriview();
     void thumbnailGenerationContractsLiveInThumbnailModule();
     void documentSessionUsesThumbnailStripDependencyPort();
+    void documentSessionUsesOpenWithRuntime();
     void activeNavigationThumbnailRuntimeUsesCanonicalThumbnailSourceKey();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
@@ -1184,6 +1185,33 @@ void TestArchitectureBoundaries::documentSessionUsesThumbnailStripDependencyPort
 
     QStringList violations;
     for (const QRegularExpression &pattern : rawThumbnailProviderFields) {
+        if (pattern.match(documentSessionHeader).hasMatch()) {
+            violations.push_back(pattern.pattern());
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::documentSessionUsesOpenWithRuntime()
+{
+    const QString documentSessionHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.h"));
+    const QString openWithRuntimeHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionmediaopenwithruntime.h"));
+
+    QVERIFY(openWithRuntimeHeader.contains(
+        QStringLiteral("class DocumentSessionMediaOpenWithRuntime")));
+    QVERIFY(documentSessionHeader.contains(QStringLiteral("DocumentSessionMediaOpenWithRuntime")));
+
+    const QList<QRegularExpression> rawOpenWithFields {
+        QRegularExpression(QStringLiteral(R"(\bm_mediaOpenWithProvider\b)")),
+        QRegularExpression(QStringLiteral(R"(\bm_mediaOpenWithJob\b)")),
+        QRegularExpression(QStringLiteral(R"(\bm_mediaOpenWithOperation\b)")),
+    };
+
+    QStringList violations;
+    for (const QRegularExpression &pattern : rawOpenWithFields) {
         if (pattern.match(documentSessionHeader).hasMatch()) {
             violations.push_back(pattern.pattern());
         }
