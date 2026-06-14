@@ -94,6 +94,7 @@ private Q_SLOTS:
     void actionDefinitionsOwnShortcutHelpCategories();
     void shortcutRoutesGroupDefinitionOwnedSpecs();
     void shortcutScopeValuesMapOnlyKnownScopes();
+    void unknownShortcutScopesDisableAvailabilityPolicies();
     void videoShortcutScopesUseViewerDeletionAndNavigationGates();
     void videoUnsupportedActionPolicyRejectsImageOnlyCommands();
     void imageUnsupportedActionPolicyRejectsVideoOnlyCommands();
@@ -334,6 +335,35 @@ void TestApplicationShortcutPolicy::shortcutScopeValuesMapOnlyKnownScopes()
 
     QVERIFY(!kiriview::ApplicationActions::imageShortcutScopeFromValue(-1).has_value());
     QVERIFY(!kiriview::ApplicationActions::imageShortcutScopeFromValue(999).has_value());
+}
+
+void TestApplicationShortcutPolicy::unknownShortcutScopesDisableAvailabilityPolicies()
+{
+    const Scope unknownScope = static_cast<Scope>(999);
+
+    ImageActionAvailabilityProjection imageProjection;
+    imageProjection.helpShortcutsEnabled = true;
+    imageProjection.viewerShortcutsEnabled = true;
+    imageProjection.readyShortcutsEnabled = true;
+    imageProjection.readyViewerShortcutsEnabled = true;
+    imageProjection.containerShortcutsEnabled = true;
+    imageProjection.containerViewerShortcutsEnabled = true;
+
+    QVERIFY(!imageActionAvailabilityShortcutsEnabledForScope(imageProjection, unknownScope));
+
+    ActiveMediaShortcutAvailabilityInput activeMediaInput;
+    activeMediaInput.imageProjection = imageProjection;
+    activeMediaInput.videoMode = true;
+    activeMediaInput.activeNavigationActionsAvailable = true;
+
+    QVERIFY(!activeMediaShortcutsEnabledForScope(activeMediaInput, unknownScope));
+
+    kiriview::ApplicationActions::VideoShortcutAvailabilityInput videoInput;
+    videoInput.helpShortcutsEnabled = true;
+    videoInput.viewerShortcutsEnabled = true;
+    videoInput.directMediaNavigationActive = true;
+
+    QVERIFY(!kiriview::ApplicationActions::videoShortcutsEnabledForScope(videoInput, unknownScope));
 }
 
 void TestApplicationShortcutPolicy::videoShortcutScopesUseViewerDeletionAndNavigationGates()
