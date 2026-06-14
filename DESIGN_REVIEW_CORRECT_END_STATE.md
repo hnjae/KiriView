@@ -12,7 +12,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 1. P1: Identity rules are split across layers, especially `ThumbnailSourceKey` vs. `ActiveNavigationThumbnailSourceKey`.
 2. P1: `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
-3. P1: Image, video, and file-operation failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
+3. P1: Image, remaining video backend, and file-operation failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
 4. P2: Image format capabilities and image-open state transitions are not enforced by one central catalog or state-machine boundary.
 
 ## Single Source of Truth Violations
@@ -257,14 +257,14 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Image load failure tests can assert stage/kind/retryability/diagnostic fields; QML does not depend on internal diagnostic strings.
 - Priority: P1
 
-### Finding: Video source-load failure metadata is produced but discarded
+### Finding: Video backend errors are still raw string diagnostics
 
-- Evidence: `src/video/videosourceloadplan.h` and `.cpp` define rich `VideoSourceLoadFailure` fields, and `src/video/videosourceloadruntime.cpp` creates failure plans. `src/video/videodocumentruntime.cpp` uses only `failure.userMessage` in `publishSourceLoadFailure()`, while backend `updateErrorFromBackend()` stores raw backend strings. `src/video/videodocumentstate.h` exposes string-oriented state.
-- Current state: Source URL, failure kind, detail, severity, and retryability metadata are not preserved through publication/logging/projection.
-- Design concern: The code creates a diagnostic model but does not carry it into runtime observability.
-- Correct end state: Video runtime should preserve typed failure internally and expose a user-message projection to QML. Backend errors should be normalized into the same typed failure or a sibling typed backend failure.
-- Suggested migration: Extend `VideoDocumentState` with an internal typed failure field while keeping the public QML property as the user-message projection.
-- Acceptance criteria: Video source-load failure tests verify preservation of source URL, kind, detail, severity, and retryability; raw backend strings are wrapped as diagnostics.
+- Evidence: `src/video/videodocumentruntime.cpp` still stores raw backend strings in `updateErrorFromBackend()`, while source-load failures now preserve typed `VideoSourceLoadFailure` metadata internally and expose only the user-message projection.
+- Current state: Resolver/source-load failures preserve source URL, kind, detail, severity, and retryability through `VideoDocumentState`. Backend playback errors still collapse to the public string.
+- Design concern: Backend diagnostics cannot be distinguished by source, backend stage, severity, or retryability.
+- Correct end state: Backend errors should be normalized into the same typed failure model or a sibling typed backend failure while QML continues to receive only user-facing messages.
+- Suggested migration: Add a typed backend failure value that wraps backend error strings as diagnostics, then store it beside or within the existing video failure projection.
+- Acceptance criteria: Backend error tests assert source URL, backend stage/kind, diagnostic detail, severity, retryability, and unchanged public error text.
 - Priority: P1
 
 ### Finding: KIO file-operation failures lose error codes and duplicate cancellation policy
@@ -366,7 +366,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 2. Centralize duplicated rules/state: add image format capability alignment tests, create canonical thumbnail source identity, centralize zoom preset descriptors, and centralize `ImageShortcutScope` validity.
 3. Isolate core domain logic from external effects: add a directory watch provider seam, thread timer scheduler/system facts into predecode coordinators, split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
 4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, move application action input/port assembly into application runtime/coordinator, and move `MediaEntrySourceStore` document planning out of `src/archive/`.
-5. Improve error semantics and observability: introduce typed image/video failures, then KIO and media-entry source failures, then tile decode attempt diagnostics and thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
+5. Improve error semantics and observability: introduce typed image failures and remaining video backend failures, then KIO and media-entry source failures, then tile decode attempt diagnostics and thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
 6. Remove or simplify premature/parallel abstractions: either wire `ActiveNavigationThumbnailDemandTracker` into production or remove/test-helper it, phase `ImageDocumentRuntimeOperation` vocabulary by workflow family, and remove compatibility wrappers after tests prove behavior preservation.
 
 ## Things Not To Change Yet
