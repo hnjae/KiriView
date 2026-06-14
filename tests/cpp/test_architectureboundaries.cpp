@@ -62,6 +62,7 @@ private Q_SLOTS:
     void documentSessionUsesOpenWithRuntime();
     void activeNavigationThumbnailRuntimeUsesCanonicalThumbnailSourceKey();
     void liveDirectoryWatchUsesProviderBoundary();
+    void mediaEntrySourceStoreDoesNotDependOnDocumentPlanning();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void activePresentationDoesNotWritePageSurfacePresentationState();
@@ -1265,6 +1266,29 @@ void TestArchitectureBoundaries::liveDirectoryWatchUsesProviderBoundary()
         QStringLiteral("src/navigation/imagedocumentpagecandidatewatchprovider.cpp"));
     QVERIFY(providerHeader.contains(QStringLiteral("ImageDocumentPageCandidateWatchProvider")));
     QVERIFY(providerImplementation.contains(QStringLiteral("KCoreDirLister")));
+}
+
+void TestArchitectureBoundaries::mediaEntrySourceStoreDoesNotDependOnDocumentPlanning()
+{
+    const QList<QString> relativePaths {
+        QStringLiteral("src/archive/mediaentrysourcestore.h"),
+        QStringLiteral("src/archive/mediaentrysourcestore.cpp"),
+    };
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(#include\s+"document/)")),
+        QRegularExpression(QStringLiteral(R"(\bImageDocumentSourceLoadRequest\b)")),
+        QRegularExpression(QStringLiteral(R"(\bopenedCollectionScopeLoadPlan\s*\()")),
+    };
+
+    QStringList violations;
+    for (const QString &relativePath : relativePaths) {
+        const QString matches = matchingLines(projectPath(relativePath), forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()

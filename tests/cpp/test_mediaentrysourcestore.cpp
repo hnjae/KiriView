@@ -4,7 +4,6 @@
 #include "archive/mediaentrysourcestore.h"
 
 #include "async/imagecallback.h"
-#include "document/imagedocumentsourceloadrequest.h"
 #include "image_test_support.h"
 #include "media_entry_source_test_support.h"
 #include "navigation/imagedocumentpagenavigationservice.h"
@@ -187,8 +186,7 @@ void TestMediaEntrySourceStore::staleDataLoadCompletionIsIgnoredAfterArchiveSwit
         [&staleCallbackCount](QByteArray) { ++staleCallbackCount; }, {});
     QTRY_COMPARE(state->waitingDataLoadCount.load(), 1);
 
-    store.prepareForSourceLoad(kiriview::ImageDocumentSourceLoadRequest::fromUrl(secondArchiveUrl),
-        *firstArchiveCollection);
+    store.prepareForOpenedCollectionScope(*secondArchiveCollection);
     releaseInstrumentedMediaEntrySourceLoads(state);
 
     QTRY_VERIFY(!staleJob.isActive());
@@ -310,15 +308,12 @@ void TestMediaEntrySourceStore::lifecycleClearsSourceForDifferentArchiveNormalIm
     QCOMPARE(state->openCount.load(), 1);
     QVERIFY(store.hasCurrentOpenedCollectionScope(*firstArchiveCollection));
 
-    store.prepareForSourceLoad(kiriview::ImageDocumentSourceLoadRequest::fromUrl(secondArchiveUrl),
-        *firstArchiveCollection);
+    store.prepareForOpenedCollectionScope(*secondArchiveCollection);
     QVERIFY(store.hasCurrentOpenedCollectionScope(*secondArchiveCollection));
     store.loadOpenedCollectionCandidates(nullptr, *secondArchiveCollection, [](auto) { }, {});
     QCOMPARE(state->openCount.load(), 2);
 
-    store.prepareForSourceLoad(kiriview::ImageDocumentSourceLoadRequest::fromUrl(
-                                   localUrl(QStringLiteral("/images/01.png"))),
-        *secondArchiveCollection);
+    store.prepareForOpenedCollectionScope(kiriview::OpenedCollectionScopeLocation::none());
     QVERIFY(!store.hasCurrentOpenedCollectionScope());
 
     store.loadOpenedCollectionCandidates(nullptr, *secondArchiveCollection, [](auto) { }, {});
