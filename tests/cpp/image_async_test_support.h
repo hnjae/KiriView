@@ -8,6 +8,7 @@
 #include "async/timerscheduler.h"
 #include "decoding/imagedecodedependencies.h"
 #include "system/filedeletion.h"
+#include "system/kiooperationfailure.h"
 #include "system/powersaverprovider.h"
 
 #include <QByteArray>
@@ -291,6 +292,19 @@ struct ManualFileDeletionOperation {
     bool canceled = false;
 };
 
+inline KioOperationFailure manualFileDeletionFailure(
+    const FileDeletionRequest &request, FileDeletionResult result, const QString &errorString)
+{
+    KioOperationFailure failure;
+    failure.operationKind = KioOperationKind::FileDeletion;
+    failure.targetUrl = request.targetUrl;
+    failure.canceled = result == FileDeletionResult::Canceled;
+    failure.userMessage = result == FileDeletionResult::Failed ? errorString : QString();
+    failure.diagnosticDetail = errorString;
+    failure.retryable = result == FileDeletionResult::Failed;
+    return failure;
+}
+
 class ManualFileDeletionProvider
 {
 public:
@@ -320,26 +334,40 @@ public:
 
     void finishBackOperation(FileDeletionResult result, const QString &errorString = QString())
     {
-        finishOperation(m_operations.back(), result, errorString);
+        finishBackOperation(
+            result, manualFileDeletionFailure(m_operations.back()->request, result, errorString));
+    }
+
+    void finishBackOperation(FileDeletionResult result, KioOperationFailure failure)
+    {
+        finishOperation(m_operations.back(), result, std::move(failure));
     }
 
     void deliverOperationAtIgnoringCancellation(
         std::size_t index, FileDeletionResult result, const QString &errorString = QString())
     {
+        deliverOperationAtIgnoringCancellation(index, result,
+            manualFileDeletionFailure(m_operations.at(index)->request, result, errorString));
+    }
+
+    void deliverOperationAtIgnoringCancellation(
+        std::size_t index, FileDeletionResult result, const KioOperationFailure &failure)
+    {
         if (m_operations.at(index)->callback) {
-            m_operations.at(index)->callback(result, errorString);
+            m_operations.at(index)->callback(result, failure);
         }
     }
 
 private:
     static void finishOperation(const std::shared_ptr<ManualFileDeletionOperation> &operation,
-        FileDeletionResult result, const QString &errorString)
+        FileDeletionResult result, KioOperationFailure failure)
     {
-        Detail::finishManualIoJob(operation, [&](ManualFileDeletionOperation &operation) {
-            if (operation.callback) {
-                operation.callback(result, errorString);
-            }
-        });
+        Detail::finishManualIoJob(operation,
+            [result, failure = std::move(failure)](ManualFileDeletionOperation &operation) {
+                if (operation.callback) {
+                    operation.callback(result, failure);
+                }
+            });
     }
 
     std::vector<std::shared_ptr<ManualFileDeletionOperation>> m_operations;

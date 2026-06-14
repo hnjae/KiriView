@@ -219,8 +219,10 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
     QVERIFY(!controller.inProgress());
     QVERIFY(fileDeletionProvider.backOperation().canceled);
 
-    fileDeletionProvider.backOperation().callback(
-        kiriview::FileDeletionResult::Succeeded, QString());
+    fileDeletionProvider.backOperation().callback(kiriview::FileDeletionResult::Succeeded,
+        kiriview::TestSupport::manualFileDeletionFailure(
+            fileDeletionProvider.backOperation().request, kiriview::FileDeletionResult::Succeeded,
+            QString()));
 
     QVERIFY(runtimePlans.empty());
     QVERIFY(failures.empty());

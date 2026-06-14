@@ -20,7 +20,7 @@ private Q_SLOTS:
     void startRunsFileOperationAndPublishesCompletionPlan();
     void cancelRejectsLateCompletion();
     void replacementStartRejectsStaleCompletion();
-    void failedCompletionReportsFailureWithErrorText();
+    void failedCompletionReportsFailureWithTypedFailure();
 };
 
 namespace {
@@ -108,7 +108,7 @@ void TestDocumentSessionMediaDeletionRuntime::startRunsFileOperationAndPublishes
     QCOMPARE(fixture.completion.plan.routePlan.sourceUrl, nextUrl);
     QVERIFY(
         operationAt<kiriview::LeaveVideoModeRouteOperation>(fixture.completion.plan, 0) != nullptr);
-    QCOMPARE(fixture.completion.errorString, QString());
+    QCOMPARE(fixture.completion.failure.userMessage, QString());
 }
 
 void TestDocumentSessionMediaDeletionRuntime::cancelRejectsLateCompletion()
@@ -157,7 +157,7 @@ void TestDocumentSessionMediaDeletionRuntime::replacementStartRejectsStaleComple
     QCOMPARE(fixture.completion.plan.routePlan.sourceUrl, secondFallbackUrl);
 }
 
-void TestDocumentSessionMediaDeletionRuntime::failedCompletionReportsFailureWithErrorText()
+void TestDocumentSessionMediaDeletionRuntime::failedCompletionReportsFailureWithTypedFailure()
 {
     RuntimeFixture fixture;
     const QUrl currentUrl = localUrl(QStringLiteral("/media/02.mp4"));
@@ -171,7 +171,11 @@ void TestDocumentSessionMediaDeletionRuntime::failedCompletionReportsFailureWith
     QCOMPARE(fixture.completionCount, 1);
     QVERIFY(!fixture.completion.plan.hasRoutePlan());
     QVERIFY(fixture.completion.plan.reportFailure);
-    QCOMPARE(fixture.completion.errorString, QStringLiteral("delete failed"));
+    QCOMPARE(fixture.completion.failure.operationKind, kiriview::KioOperationKind::FileDeletion);
+    QCOMPARE(fixture.completion.failure.targetUrl, currentUrl);
+    QCOMPARE(fixture.completion.failure.userMessage, QStringLiteral("delete failed"));
+    QCOMPARE(fixture.completion.failure.diagnosticDetail, QStringLiteral("delete failed"));
+    QVERIFY(fixture.completion.failure.retryable);
 }
 
 QTEST_GUILESS_MAIN(TestDocumentSessionMediaDeletionRuntime)

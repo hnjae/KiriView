@@ -20,7 +20,7 @@ class TestDocumentSessionMediaOpenWithRuntime : public QObject
 private Q_SLOTS:
     void emptyPlanDoesNotStartProviderAndReportsFailure();
     void startRunsProviderAndPublishesSuccess();
-    void failedProviderCompletionForwardsErrorText();
+    void failedProviderCompletionForwardsTypedFailure();
     void canceledProviderCompletionForwardsCanceledResult();
     void cancelRejectsLateCompletion();
     void replacementStartRejectsStaleCompletion();
@@ -33,6 +33,19 @@ QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 kiriview::MediaOpenWithPlan openWithPlanFor(const QUrl &targetUrl)
 {
     return kiriview::MediaOpenWithPlan { kiriview::MediaOpenWithRequest { targetUrl } };
+}
+
+kiriview::KioOperationFailure openWithFailure(
+    const QUrl &targetUrl, kiriview::MediaOpenWithResult result, const QString &errorString)
+{
+    kiriview::KioOperationFailure failure;
+    failure.operationKind = kiriview::KioOperationKind::MediaOpenWith;
+    failure.targetUrl = targetUrl;
+    failure.canceled = result == kiriview::MediaOpenWithResult::Canceled;
+    failure.userMessage = result == kiriview::MediaOpenWithResult::Failed ? errorString : QString();
+    failure.diagnosticDetail = errorString;
+    failure.retryable = result == kiriview::MediaOpenWithResult::Failed;
+    return failure;
 }
 
 struct ManualMediaOpenWithOperation {
@@ -79,26 +92,40 @@ public:
     void finishOperationAt(std::size_t index, kiriview::MediaOpenWithResult result,
         const QString &errorString = QString())
     {
-        finishOperation(m_operations.at(index), result, errorString);
+        finishOperationAt(index, result,
+            openWithFailure(m_operations.at(index)->request.targetUrl, result, errorString));
+    }
+
+    void finishOperationAt(std::size_t index, kiriview::MediaOpenWithResult result,
+        kiriview::KioOperationFailure failure)
+    {
+        finishOperation(m_operations.at(index), result, std::move(failure));
     }
 
     void deliverOperationAtIgnoringCancellation(std::size_t index,
         kiriview::MediaOpenWithResult result, const QString &errorString = QString())
     {
+        deliverOperationAtIgnoringCancellation(index, result,
+            openWithFailure(m_operations.at(index)->request.targetUrl, result, errorString));
+    }
+
+    void deliverOperationAtIgnoringCancellation(std::size_t index,
+        kiriview::MediaOpenWithResult result, const kiriview::KioOperationFailure &failure)
+    {
         if (m_operations.at(index)->callback) {
-            m_operations.at(index)->callback(result, errorString);
+            m_operations.at(index)->callback(result, failure);
         }
     }
 
 private:
     static void finishOperation(const std::shared_ptr<ManualMediaOpenWithOperation> &operation,
-        kiriview::MediaOpenWithResult result, const QString &errorString)
+        kiriview::MediaOpenWithResult result, kiriview::KioOperationFailure failure)
     {
         QObject *object = operation->object;
         operation->completion.claimAndRun([&]() {
             operation->object = nullptr;
             if (operation->callback) {
-                operation->callback(result, errorString);
+                operation->callback(result, failure);
             }
             if (object != nullptr) {
                 object->deleteLater();
@@ -111,7 +138,7 @@ private:
 
 struct CompletionRecord {
     kiriview::MediaOpenWithResult result = kiriview::MediaOpenWithResult::Succeeded;
-    QString errorString;
+    kiriview::KioOperationFailure failure;
 };
 
 struct RuntimeFixture {
@@ -123,8 +150,9 @@ struct RuntimeFixture {
     void open(const kiriview::MediaOpenWithPlan &plan)
     {
         runtime.open(&receiver, plan,
-            [this](kiriview::MediaOpenWithResult result, const QString &errorString) {
-                completions.push_back(CompletionRecord { result, errorString });
+            [this](kiriview::MediaOpenWithResult result,
+                const kiriview::KioOperationFailure &failure) {
+                completions.push_back(CompletionRecord { result, failure });
             });
     }
 };
@@ -140,7 +168,12 @@ void TestDocumentSessionMediaOpenWithRuntime::emptyPlanDoesNotStartProviderAndRe
     QVERIFY(!fixture.runtime.active());
     QCOMPARE(fixture.completions.size(), std::size_t(1));
     QCOMPARE(fixture.completions.at(0).result, kiriview::MediaOpenWithResult::Failed);
-    QCOMPARE(fixture.completions.at(0).errorString, QString());
+    QCOMPARE(
+        fixture.completions.at(0).failure.operationKind, kiriview::KioOperationKind::MediaOpenWith);
+    QVERIFY(fixture.completions.at(0).failure.targetUrl.isEmpty());
+    QVERIFY(!fixture.completions.at(0).failure.rawErrorCode.has_value());
+    QCOMPARE(fixture.completions.at(0).failure.userMessage, QString());
+    QVERIFY(!fixture.completions.at(0).failure.diagnosticDetail.isEmpty());
 }
 
 void TestDocumentSessionMediaOpenWithRuntime::startRunsProviderAndPublishesSuccess()
@@ -159,20 +192,26 @@ void TestDocumentSessionMediaOpenWithRuntime::startRunsProviderAndPublishesSucce
     QVERIFY(!fixture.runtime.active());
     QCOMPARE(fixture.completions.size(), std::size_t(1));
     QCOMPARE(fixture.completions.at(0).result, kiriview::MediaOpenWithResult::Succeeded);
-    QCOMPARE(fixture.completions.at(0).errorString, QString());
+    QCOMPARE(fixture.completions.at(0).failure.userMessage, QString());
 }
 
-void TestDocumentSessionMediaOpenWithRuntime::failedProviderCompletionForwardsErrorText()
+void TestDocumentSessionMediaOpenWithRuntime::failedProviderCompletionForwardsTypedFailure()
 {
     RuntimeFixture fixture;
+    const QUrl targetUrl = localUrl(QStringLiteral("/media/01.png"));
 
-    fixture.open(openWithPlanFor(localUrl(QStringLiteral("/media/01.png"))));
+    fixture.open(openWithPlanFor(targetUrl));
     fixture.provider.finishOperationAt(
         0, kiriview::MediaOpenWithResult::Failed, QStringLiteral("launcher failed"));
 
     QCOMPARE(fixture.completions.size(), std::size_t(1));
     QCOMPARE(fixture.completions.at(0).result, kiriview::MediaOpenWithResult::Failed);
-    QCOMPARE(fixture.completions.at(0).errorString, QStringLiteral("launcher failed"));
+    QCOMPARE(
+        fixture.completions.at(0).failure.operationKind, kiriview::KioOperationKind::MediaOpenWith);
+    QCOMPARE(fixture.completions.at(0).failure.targetUrl, targetUrl);
+    QCOMPARE(fixture.completions.at(0).failure.userMessage, QStringLiteral("launcher failed"));
+    QCOMPARE(fixture.completions.at(0).failure.diagnosticDetail, QStringLiteral("launcher failed"));
+    QVERIFY(fixture.completions.at(0).failure.retryable);
 }
 
 void TestDocumentSessionMediaOpenWithRuntime::canceledProviderCompletionForwardsCanceledResult()
@@ -184,7 +223,8 @@ void TestDocumentSessionMediaOpenWithRuntime::canceledProviderCompletionForwards
 
     QCOMPARE(fixture.completions.size(), std::size_t(1));
     QCOMPARE(fixture.completions.at(0).result, kiriview::MediaOpenWithResult::Canceled);
-    QCOMPARE(fixture.completions.at(0).errorString, QString());
+    QVERIFY(fixture.completions.at(0).failure.canceled);
+    QCOMPARE(fixture.completions.at(0).failure.userMessage, QString());
 }
 
 void TestDocumentSessionMediaOpenWithRuntime::cancelRejectsLateCompletion()
@@ -235,8 +275,9 @@ void TestDocumentSessionMediaOpenWithRuntime::destructionCancelsAndRejectsLateCo
     {
         kiriview::DocumentSessionMediaOpenWithRuntime runtime(provider.provider());
         runtime.open(&receiver, openWithPlanFor(localUrl(QStringLiteral("/media/01.png"))),
-            [&completions](kiriview::MediaOpenWithResult result, const QString &errorString) {
-                completions.push_back(CompletionRecord { result, errorString });
+            [&completions](kiriview::MediaOpenWithResult result,
+                const kiriview::KioOperationFailure &failure) {
+                completions.push_back(CompletionRecord { result, failure });
             });
 
         QCOMPARE(provider.operationCount(), std::size_t(1));

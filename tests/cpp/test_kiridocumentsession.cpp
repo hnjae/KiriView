@@ -217,7 +217,7 @@ public:
                    kiriview::MediaOpenWithCallback callback) {
             requests.push_back(std::move(request));
             if (callback) {
-                callback(result, errorString);
+                callback(result, failureFor(requests.back().targetUrl, result, errorString));
             }
             return kiriview::ImageIoJob();
         };
@@ -226,6 +226,21 @@ public:
     std::vector<kiriview::MediaOpenWithRequest> requests;
     kiriview::MediaOpenWithResult result = kiriview::MediaOpenWithResult::Succeeded;
     QString errorString;
+
+private:
+    static kiriview::KioOperationFailure failureFor(
+        const QUrl &targetUrl, kiriview::MediaOpenWithResult result, const QString &errorString)
+    {
+        kiriview::KioOperationFailure failure;
+        failure.operationKind = kiriview::KioOperationKind::MediaOpenWith;
+        failure.targetUrl = targetUrl;
+        failure.canceled = result == kiriview::MediaOpenWithResult::Canceled;
+        failure.userMessage
+            = result == kiriview::MediaOpenWithResult::Failed ? errorString : QString();
+        failure.diagnosticDetail = errorString;
+        failure.retryable = result == kiriview::MediaOpenWithResult::Failed;
+        return failure;
+    }
 };
 
 struct ManualMediaOpenWithOperation {
@@ -261,10 +276,17 @@ public:
     void finishOperationAt(
         std::size_t index, kiriview::MediaOpenWithResult result, const QString &errorString = {})
     {
-        kiriview::TestSupport::Detail::finishManualIoJob(
-            m_operations.at(index), [result, errorString](ManualMediaOpenWithOperation &operation) {
+        finishOperationAt(index, result,
+            failureFor(m_operations.at(index)->request.targetUrl, result, errorString));
+    }
+
+    void finishOperationAt(std::size_t index, kiriview::MediaOpenWithResult result,
+        kiriview::KioOperationFailure failure)
+    {
+        kiriview::TestSupport::Detail::finishManualIoJob(m_operations.at(index),
+            [result, failure = std::move(failure)](ManualMediaOpenWithOperation &operation) {
                 if (operation.callback) {
-                    operation.callback(result, errorString);
+                    operation.callback(result, failure);
                 }
             });
     }
@@ -272,13 +294,34 @@ public:
     void deliverOperationAtIgnoringCancellation(
         std::size_t index, kiriview::MediaOpenWithResult result, const QString &errorString = {})
     {
+        deliverOperationAtIgnoringCancellation(index, result,
+            failureFor(m_operations.at(index)->request.targetUrl, result, errorString));
+    }
+
+    void deliverOperationAtIgnoringCancellation(std::size_t index,
+        kiriview::MediaOpenWithResult result, const kiriview::KioOperationFailure &failure)
+    {
         ManualMediaOpenWithOperation &operation = operationAt(index);
         if (operation.callback) {
-            operation.callback(result, errorString);
+            operation.callback(result, failure);
         }
     }
 
 private:
+    static kiriview::KioOperationFailure failureFor(
+        const QUrl &targetUrl, kiriview::MediaOpenWithResult result, const QString &errorString)
+    {
+        kiriview::KioOperationFailure failure;
+        failure.operationKind = kiriview::KioOperationKind::MediaOpenWith;
+        failure.targetUrl = targetUrl;
+        failure.canceled = result == kiriview::MediaOpenWithResult::Canceled;
+        failure.userMessage
+            = result == kiriview::MediaOpenWithResult::Failed ? errorString : QString();
+        failure.diagnosticDetail = errorString;
+        failure.retryable = result == kiriview::MediaOpenWithResult::Failed;
+        return failure;
+    }
+
     std::vector<std::shared_ptr<ManualMediaOpenWithOperation>> m_operations;
 };
 
