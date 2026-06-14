@@ -12,6 +12,7 @@ This file is an agent-facing status index for `DESIGN_REVIEW_CORRECT_END_STATE.m
 - P1 session Open With runtime extraction: moved displayed-media Open With provider invocation, cancellation, and stale-completion rejection from DocumentSessionRuntime into a focused session runtime while preserving target selection, failure, and stale-completion behavior; added focused controller tests and updated architecture/design-review docs. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 1df2b606.
 - P1 live directory watch provider seam: routed live image page candidate directory watching through an injected provider and moved KCoreDirLister into the production adapter; updated async architecture plus fake-provider directory entry/store and architecture-boundary tests. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 44f7917c.
 - P1 active-navigation thumbnail demand ownership: wired production thumbnail demand coalescing through ActiveNavigationThumbnailDemandTracker and covered interleaved row demand behavior in focused C++ tests; removed the completed parallel-tracker backlog item from the design review docs. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 714089eb.
+- P1 typed primary image load failures: preserved source URL, session id, kind, diagnostic detail, severity, and retryability for primary image data-load, decode, opened-collection, and presentation failures while keeping QML error text unchanged; added state, loader, runtime, and architecture coverage and narrowed the remaining design-review backlog to lower-level decoder/tile diagnostics. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: a0fc102a.
 
 ## Current Status
 
@@ -27,7 +28,7 @@ Do not reopen these as design-review findings unless the implementation regresse
 P1 candidates:
 
 - Split workflow ownership. `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` still concentrate broad workflow orchestration.
-- Preserve typed failures. Image, KIO/file-operation, collection-source, tile-decode, and thumbnail failures still lose structured diagnostic fields or collapse to raw strings.
+- Preserve typed failures. Lower-level image decoder/tile, KIO/file-operation, collection-source, and thumbnail failures still lose structured diagnostic fields or collapse to raw strings.
 - Move viewport command planning out of `KiriImageDocument`. The facade still owns `ImageViewportInteraction`, anchored zoom positioning, scan-start handoff, and related command calculations.
 
 P2/P3 candidates:
