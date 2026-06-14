@@ -6,6 +6,7 @@
 
 #include "imagedocumentruntimeplan.h"
 #include "imagedocumenttypes.h"
+#include "imageloadfailure.h"
 #include "imageloadtypes.h"
 #include "location/imagelocation.h"
 #include "metadata/embeddedmetadata.h"
@@ -23,6 +24,7 @@ struct ImageOpenResolvedStateDelta {
     std::optional<bool> loading;
     std::optional<ImageDocumentStatus> status;
     std::optional<QString> errorString;
+    std::optional<ImageLoadFailure> loadFailure;
     std::optional<bool> unsupportedOpenedCollectionVideo;
     std::optional<EmbeddedMetadata> embeddedMetadata;
     bool clearLoadingContainerNavigationUrl = false;
@@ -38,6 +40,7 @@ struct ImageOpenTransitionContext {
     std::optional<QUrl> containerUrl;
     std::optional<QUrl> displayedUrl;
     std::optional<QString> errorString;
+    std::optional<ImageLoadFailure> loadFailure;
     std::optional<EmbeddedMetadata> embeddedMetadata;
 
     static ImageOpenTransitionContext sourceResolved(const ImageLoadSession &session);
@@ -45,7 +48,7 @@ struct ImageOpenTransitionContext {
     static ImageOpenTransitionContext successfulImageLoad(
         const ImageLoadSession &session, EmbeddedMetadata metadata);
     static ImageOpenTransitionContext sourceLoadError(
-        const ImageLoadSession &session, const QUrl &displayedUrl, const QString &errorString);
+        const ImageLoadSession &session, const QUrl &displayedUrl, ImageLoadFailure failure);
     static ImageOpenTransitionContext containerNavigationError(
         const QUrl &containerUrl, const QString &errorString);
     static ImageOpenTransitionContext animationError(const QString &errorString);

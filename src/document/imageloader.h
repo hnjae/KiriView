@@ -8,6 +8,7 @@
 #include "decoding/decodedimageresult.h"
 #include "decoding/imagedecodedependencies.h"
 #include "decoding/imagedecodejob.h"
+#include "imageloadfailure.h"
 #include "imageloadsessiontracker.h"
 #include "imageloadtypes.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
@@ -28,7 +29,7 @@ class ImageLoader final : public QObject
 {
 public:
     using SourceResolvedCallback = std::function<void(ImageLoadSession)>;
-    using ErrorCallback = std::function<void(ImageLoadSession, ImageLoadError, const QString &)>;
+    using ErrorCallback = std::function<void(ImageLoadSession, ImageLoadFailure)>;
     using DecodedImageCallback = std::function<void(ImageLoadSession, DecodedImage)>;
     using PredecodedImageCallback = std::function<void(ImageLoadSession, PredecodedImage)>;
     using ThumbnailPreviewCallback
@@ -66,7 +67,7 @@ private:
     bool tryReportUnsupportedOpenedCollectionVideo(ImageLoadSession session);
     bool tryDisplayPredecodedImage(ImageLoadSession session);
     void finishDecodeRequestWithError(
-        const ImageDecodeRequest &request, ImageLoadError error, const QString &errorString);
+        const ImageDecodeRequest &request, ImageLoadFailureKind kind, const QString &errorString);
     void finishDecodedImage(ImageLoadSession session, DecodedImage image);
     void finishPredecodedImage(ImageLoadSession session, PredecodedImage image);
     void finishThumbnailPreview(ImageLoadSession session, StaticDisplayImagePayload preview);

@@ -31,11 +31,13 @@ QString openedCollectionOpenErrorMessage(const QString &errorString)
         : errorString;
 }
 
-QString loadErrorMessage(kiriview::ImageLoadError error, const QString &errorString)
+QString loadFailureUserMessage(const kiriview::ImageLoadFailure &failure)
 {
-    return error == kiriview::ImageLoadError::EmptyOpenedCollection
-        ? emptyOpenedCollectionErrorMessage()
-        : errorString;
+    if (failure.kind == kiriview::ImageLoadFailureKind::EmptyOpenedCollection) {
+        return emptyOpenedCollectionErrorMessage();
+    }
+
+    return failure.userMessage;
 }
 
 QString animationLoadErrorMessage(const QString &errorString)
@@ -49,6 +51,26 @@ QString unsupportedOpenedCollectionVideoMessage()
 {
     return i18nc("@info:status",
         "KiriView can’t play videos inside directly opened archives or directories yet.");
+}
+
+kiriview::ImageLoadFailure imagePresentationFailure(
+    const kiriview::ImageLoadSession &session, QString message)
+{
+    return kiriview::ImageLoadFailure {
+        session.imageUrl(),
+        session.id(),
+        kiriview::ImageLoadFailureKind::Presentation,
+        message,
+        message,
+        kiriview::ImageLoadFailureSeverity::Error,
+        false,
+    };
+}
+
+kiriview::ImageLoadFailure withUserMessage(kiriview::ImageLoadFailure failure, QString userMessage)
+{
+    failure.userMessage = std::move(userMessage);
+    return failure;
 }
 }
 
@@ -66,8 +88,9 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
     m_imageLoader = std::make_unique<ImageLoader>(parent, std::move(candidateProvider),
         std::move(decodeDependencies),
         ImageLoader::Callbacks {
-            [this](const ImageLoadSession &session, ImageLoadError error,
-                const QString &errorString) { finishLoadWithError(session, error, errorString); },
+            [this](ImageLoadSession session, ImageLoadFailure failure) {
+                finishLoadWithError(session, std::move(failure));
+            },
             [this](ImageLoadSession session, DecodedImage image) {
                 finishDecodedImageLoad(std::move(session), std::move(image));
             },
@@ -196,8 +219,9 @@ void ImageOpenController::finishPresentedImageLoad(const ImageLoadSession &sessi
     const ImagePresentationLoadResult &result, EmbeddedMetadata metadata)
 {
     if (!result.presented) {
-        finishLoadWithError(session, ImageLoadError::Generic,
-            imageErrorText(ImageErrorTextId::DecodeImageAnimation));
+        finishLoadWithError(session,
+            imagePresentationFailure(
+                session, imageErrorText(ImageErrorTextId::DecodeImageAnimation)));
         return;
     }
 
@@ -206,11 +230,12 @@ void ImageOpenController::finishPresentedImageLoad(const ImageLoadSession &sessi
 }
 
 void ImageOpenController::finishLoadWithError(
-    const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
+    const ImageLoadSession &session, ImageLoadFailure failure)
 {
     m_pageSurfaceController.clearShadowDisplayImage();
-    const QString message = loadErrorMessage(error, errorString);
     const QUrl displayedUrl = m_state.displayedUrl();
+    const QString userMessage = loadFailureUserMessage(failure);
+    const ImageLoadFailure normalizedFailure = withUserMessage(std::move(failure), userMessage);
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::finishLoadWithErrorPlan(
             ImageOpenLoadErrorSnapshot {
@@ -218,7 +243,7 @@ void ImageOpenController::finishLoadWithError(
                 m_pageSurfaceController.hasImage(),
                 !displayedUrl.isEmpty(),
             },
-            session, displayedUrl, message)));
+            session, displayedUrl, normalizedFailure)));
 }
 
 void ImageOpenController::finishSuccessfulImageLoad(

@@ -75,6 +75,11 @@ bool ImageDocumentRuntime::loading() const
 
 QString ImageDocumentRuntime::errorString() const { return state.errorString(); }
 
+const std::optional<ImageLoadFailure> &ImageDocumentRuntime::loadFailure() const
+{
+    return state.loadFailure();
+}
+
 QString ImageDocumentRuntime::windowTitleFileName() const { return state.windowTitleFileName(); }
 
 QUrl ImageDocumentRuntime::displayedUrl() const

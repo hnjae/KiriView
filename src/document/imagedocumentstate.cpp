@@ -59,6 +59,11 @@ bool ImageDocumentState::loading() const { return m_loading; }
 
 const QString &ImageDocumentState::errorString() const { return m_errorString; }
 
+const std::optional<ImageLoadFailure> &ImageDocumentState::loadFailure() const
+{
+    return m_loadFailure;
+}
+
 QString ImageDocumentState::windowTitleFileName() const
 {
     return windowTitleFileNameForDisplayedLocation(m_displayedImageLocation);
@@ -119,6 +124,10 @@ void ImageDocumentState::replaceDisplayedImageLocation(DisplayedImageLocation lo
 
 void ImageDocumentState::setStatus(ImageDocumentStatus status)
 {
+    if (status != ImageDocumentStatus::Error) {
+        m_loadFailure.reset();
+    }
+
     if (replaceIfChanged(m_status, status)) {
         notify(ImageDocumentChange::Status);
     }
@@ -133,7 +142,18 @@ void ImageDocumentState::setLoading(bool loading)
 
 void ImageDocumentState::setErrorString(const QString &errorString)
 {
+    m_loadFailure.reset();
+
     if (replaceIfChanged(m_errorString, errorString)) {
+        notify(ImageDocumentChange::ErrorString);
+    }
+}
+
+void ImageDocumentState::setLoadFailure(ImageLoadFailure failure)
+{
+    m_loadFailure = std::move(failure);
+
+    if (replaceIfChanged(m_errorString, m_loadFailure->userMessage)) {
         notify(ImageDocumentChange::ErrorString);
     }
 }

@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <optional>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -112,6 +113,15 @@ kiriview::ImageDocumentRuntimePlan finishLoadWithError(kiriview::ImageDocumentSt
     const kiriview::ImageLoadSession &session, bool hasImage, const QString &errorString)
 {
     const QUrl displayedUrl = state.displayedUrl();
+    kiriview::ImageLoadFailure failure {
+        session.imageUrl(),
+        session.id(),
+        kiriview::ImageLoadFailureKind::DataLoad,
+        errorString,
+        errorString,
+        kiriview::ImageLoadFailureSeverity::Error,
+        false,
+    };
     return kiriview::applyImageOpenApplicationPlan(state,
         kiriview::ImageOpenWorkflow::finishLoadWithErrorPlan(
             kiriview::ImageOpenLoadErrorSnapshot {
@@ -119,7 +129,7 @@ kiriview::ImageDocumentRuntimePlan finishLoadWithError(kiriview::ImageDocumentSt
                 hasImage,
                 !displayedUrl.isEmpty(),
             },
-            session, displayedUrl, errorString));
+            session, displayedUrl, std::move(failure)));
 }
 
 kiriview::ImageDocumentRuntimePlan finishContainerNavigationLoadWithError(

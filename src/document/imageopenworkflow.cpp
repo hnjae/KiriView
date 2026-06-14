@@ -163,10 +163,10 @@ ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
 }
 
 ImageOpenApplicationPlan finishLoadWithErrorPlan(ImageOpenLoadErrorSnapshot snapshot,
-    const ImageLoadSession &session, const QUrl &displayedUrl, const QString &errorString)
+    const ImageLoadSession &session, const QUrl &displayedUrl, ImageLoadFailure failure)
 {
     return imageOpenApplicationPlan(finishLoadWithErrorTransition(snapshot),
-        ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, errorString));
+        ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, std::move(failure)));
 }
 
 ImageOpenApplicationPlan finishContainerNavigationLoadWithErrorPlan(

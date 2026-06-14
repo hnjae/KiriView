@@ -88,10 +88,6 @@ private:
     ImageFirstDisplayDecodeContext m_firstDisplay;
 };
 
-enum class ImageLoadError {
-    Generic,
-    EmptyOpenedCollection,
-};
 }
 
 #endif

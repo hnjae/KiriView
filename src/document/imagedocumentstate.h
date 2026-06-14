@@ -6,6 +6,7 @@
 
 #include "imagedocumentchangebatcher.h"
 #include "imagedocumenttypes.h"
+#include "imageloadfailure.h"
 #include "location/imagelocation.h"
 #include "metadata/embeddedmetadata.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
@@ -13,6 +14,7 @@
 #include <QString>
 #include <QUrl>
 #include <memory>
+#include <optional>
 
 namespace kiriview {
 class ImageDocumentState
@@ -34,6 +36,7 @@ public:
     ImageDocumentStatus status() const;
     bool loading() const;
     const QString &errorString() const;
+    const std::optional<ImageLoadFailure> &loadFailure() const;
     QString windowTitleFileName() const;
     const QUrl &containerNavigationUrl() const;
     const QUrl &loadingContainerNavigationUrl() const;
@@ -48,6 +51,7 @@ public:
     void setStatus(ImageDocumentStatus status);
     void setLoading(bool loading);
     void setErrorString(const QString &errorString);
+    void setLoadFailure(ImageLoadFailure failure);
     void setContainerNavigationUrl(const QUrl &containerUrl);
     void setLoadingContainerNavigationUrl(const QUrl &containerUrl);
     void clearLoadingContainerNavigationUrl();
@@ -68,6 +72,7 @@ private:
     bool m_unsupportedOpenedCollectionVideo = false;
     EmbeddedMetadata m_embeddedMetadata;
     QString m_errorString;
+    std::optional<ImageLoadFailure> m_loadFailure;
     QUrl m_containerNavigationUrl;
     QUrl m_loadingContainerNavigationUrl;
 };

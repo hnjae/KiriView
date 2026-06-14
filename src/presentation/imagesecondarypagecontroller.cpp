@@ -38,9 +38,7 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
     m_imageLoader = std::make_unique<ImageLoader>(parent, std::move(candidateProvider),
         std::move(decodeDependencies),
         ImageLoader::Callbacks {
-            [this](ImageLoadSession session, ImageLoadError, const QString &) {
-                finishLoadWithError(session);
-            },
+            [this](ImageLoadSession session, ImageLoadFailure) { finishLoadWithError(session); },
             [this](ImageLoadSession session, DecodedImage image) {
                 finishDecodedImageLoad(std::move(session), std::move(image));
             },

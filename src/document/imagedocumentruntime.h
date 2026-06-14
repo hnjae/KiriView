@@ -57,6 +57,7 @@ public:
     ImageDocumentStatus status() const;
     bool loading() const;
     QString errorString() const;
+    const std::optional<ImageLoadFailure> &loadFailure() const;
     QString windowTitleFileName() const;
     QUrl displayedUrl() const;
     OpenedCollectionScopeLocation displayedOpenedCollectionScope() const;

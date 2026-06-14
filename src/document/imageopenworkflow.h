@@ -67,7 +67,7 @@ namespace ImageOpenWorkflow {
         ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession &session,
         EmbeddedMetadata metadata);
     ImageOpenApplicationPlan finishLoadWithErrorPlan(ImageOpenLoadErrorSnapshot snapshot,
-        const ImageLoadSession &session, const QUrl &displayedUrl, const QString &errorString);
+        const ImageLoadSession &session, const QUrl &displayedUrl, ImageLoadFailure failure);
     ImageOpenApplicationPlan finishContainerNavigationLoadWithErrorPlan(
         const QUrl &containerUrl, const QString &errorString);
     ImageOpenApplicationPlan finishAnimationLoadWithErrorPlan(const QString &errorString);

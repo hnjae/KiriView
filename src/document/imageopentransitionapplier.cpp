@@ -57,6 +57,17 @@ std::optional<QString> errorStringTarget(kiriview::ImageOpenErrorStringTarget ta
     return std::nullopt;
 }
 
+std::optional<kiriview::ImageLoadFailure> loadFailureTarget(
+    kiriview::ImageOpenErrorStringTarget target,
+    const kiriview::ImageOpenTransitionContext &context)
+{
+    if (target == kiriview::ImageOpenErrorStringTarget::Provided) {
+        return context.loadFailure;
+    }
+
+    return std::nullopt;
+}
+
 std::optional<kiriview::EmbeddedMetadata> embeddedMetadataTarget(
     kiriview::ImageOpenEmbeddedMetadataTarget target,
     const kiriview::ImageOpenTransitionContext &context)
@@ -185,6 +196,7 @@ kiriview::ImageOpenResolvedStateDelta resolvedStateDelta(
         boolTarget(delta.loading),
         documentStatus(delta.status),
         errorStringTarget(delta.errorString, context),
+        loadFailureTarget(delta.errorString, context),
         boolTarget(delta.unsupportedOpenedCollectionVideo),
         embeddedMetadataTarget(delta.embeddedMetadata, context),
         delta.clearLoadingContainerNavigationUrl,
@@ -231,7 +243,7 @@ private:
             applySourceUrl(delta.sourceUrl);
             applySourceKind(delta.sourceKind);
             applyDisplayedLocation(delta.displayedLocation);
-            applyErrorString(delta.errorString);
+            applyError(delta.errorString, delta.loadFailure);
             applyEmbeddedMetadata(delta.embeddedMetadata);
             applyStatus(delta.status);
             applyUnsupportedOpenedCollectionVideo(delta.unsupportedOpenedCollectionVideo, true);
@@ -242,7 +254,7 @@ private:
         applySourceKind(delta.sourceKind);
         applyDisplayedLocation(delta.displayedLocation);
         applyContainerNavigationUrl(delta.containerNavigationUrl);
-        applyErrorString(delta.errorString);
+        applyError(delta.errorString, delta.loadFailure);
         applyEmbeddedMetadata(delta.embeddedMetadata);
         if (delta.clearLoadingContainerNavigationUrl) {
             applyTrackedLoadCompletion(delta);
@@ -309,8 +321,14 @@ private:
         }
     }
 
-    void applyErrorString(const std::optional<QString> &errorString)
+    void applyError(const std::optional<QString> &errorString,
+        const std::optional<kiriview::ImageLoadFailure> &loadFailure)
     {
+        if (loadFailure.has_value()) {
+            m_state.setLoadFailure(*loadFailure);
+            return;
+        }
+
         if (errorString.has_value()) {
             m_state.setErrorString(*errorString);
         }
@@ -363,13 +381,14 @@ ImageOpenTransitionContext ImageOpenTransitionContext::successfulImageLoad(
 }
 
 ImageOpenTransitionContext ImageOpenTransitionContext::sourceLoadError(
-    const ImageLoadSession &session, const QUrl &displayedUrl, const QString &errorString)
+    const ImageLoadSession &session, const QUrl &displayedUrl, ImageLoadFailure failure)
 {
     ImageOpenTransitionContext context;
     context.session = &session;
     context.containerUrl = session.containerNavigationUrl();
     context.displayedUrl = displayedUrl;
-    context.errorString = errorString;
+    context.errorString = failure.userMessage;
+    context.loadFailure = std::move(failure);
     return context;
 }
 

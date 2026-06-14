@@ -6,6 +6,7 @@
 
 #include "decoding/imagedecodedependencies.h"
 #include "imagedocumentruntimeplan.h"
+#include "imageloadfailure.h"
 #include "imageloadtypes.h"
 #include "metadata/embeddedmetadata.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
@@ -67,8 +68,7 @@ private:
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
     void finishPresentedImageLoad(const ImageLoadSession &session,
         const ImagePresentationLoadResult &result, EmbeddedMetadata metadata);
-    void finishLoadWithError(
-        const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
+    void finishLoadWithError(const ImageLoadSession &session, ImageLoadFailure failure);
     void finishSuccessfulImageLoad(const ImageLoadSession &session, EmbeddedMetadata metadata);
     void reportRuntimePlan(ImageDocumentRuntimePlan plan);
 

@@ -9,6 +9,28 @@
 #include <utility>
 #include <vector>
 
+namespace {
+kiriview::ImageLoadFailure imageLoadFailure(const kiriview::ImageLoadSession &session,
+    kiriview::ImageLoadFailureKind kind, QString userMessage, QString diagnosticDetail)
+{
+    return kiriview::ImageLoadFailure {
+        session.imageUrl(),
+        session.id(),
+        kind,
+        std::move(userMessage),
+        std::move(diagnosticDetail),
+        kiriview::ImageLoadFailureSeverity::Error,
+        false,
+    };
+}
+
+kiriview::ImageLoadFailure imageLoadFailure(const kiriview::ImageLoadSession &session,
+    kiriview::ImageLoadFailureKind kind, const QString &errorString)
+{
+    return imageLoadFailure(session, kind, errorString, errorString);
+}
+}
+
 namespace kiriview {
 ImageLoader::ImageLoader(QObject *parent)
     : ImageLoader(parent, ImageDocumentPageCandidateProvider {}, ImageDecodeDependencies {})
@@ -50,7 +72,7 @@ ImageLoader::ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider can
 void ImageLoader::finishDecodeResult(ImageDecodeRequest request, DecodedImageResult result)
 {
     if (const DecodedImageFailure *failure = result.failure()) {
-        finishDecodeRequestWithError(request, ImageLoadError::Generic, failure->errorString);
+        finishDecodeRequestWithError(request, ImageLoadFailureKind::Decode, failure->errorString);
         return;
     }
 
@@ -71,7 +93,7 @@ void ImageLoader::finishDecodeResult(ImageDecodeRequest request, DecodedImageRes
 void ImageLoader::finishImageLoadError(
     const ImageDecodeRequest &request, const QString &errorString)
 {
-    finishDecodeRequestWithError(request, ImageLoadError::Generic, errorString);
+    finishDecodeRequestWithError(request, ImageLoadFailureKind::DataLoad, errorString);
 }
 
 void ImageLoader::finishThumbnailPreview(
@@ -134,8 +156,9 @@ void ImageLoader::startOpenedCollectionLoad(ImageLoadSession session)
             case OpenedCollectionCandidateCompletionAction::Ignored:
                 return;
             case OpenedCollectionCandidateCompletionAction::ReportEmptyOpenedCollection:
-                invokeIfSet(m_callbacks.error, std::move(completion.session),
-                    ImageLoadError::EmptyOpenedCollection, QString());
+                invokeIfSet(m_callbacks.error, completion.session,
+                    imageLoadFailure(completion.session,
+                        ImageLoadFailureKind::EmptyOpenedCollection, QString(), QString()));
                 return;
             case OpenedCollectionCandidateCompletionAction::ReportUnsupportedOpenedCollectionVideo:
                 invokeIfSet(m_callbacks.sourceResolved, completion.session);
@@ -155,8 +178,9 @@ void ImageLoader::startOpenedCollectionLoad(ImageLoadSession session)
                 return;
             }
 
-            invokeIfSet(m_callbacks.error, std::move(*currentSession), ImageLoadError::Generic,
-                errorString);
+            invokeIfSet(m_callbacks.error, *currentSession,
+                imageLoadFailure(
+                    *currentSession, ImageLoadFailureKind::OpenedCollectionLoad, errorString));
         });
 }
 
@@ -211,7 +235,7 @@ bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
 }
 
 void ImageLoader::finishDecodeRequestWithError(
-    const ImageDecodeRequest &request, ImageLoadError error, const QString &errorString)
+    const ImageDecodeRequest &request, ImageLoadFailureKind kind, const QString &errorString)
 {
     std::optional<ImageLoadSession> session
         = m_sessionTracker.claimCurrentForDecodeRequest(request);
@@ -219,7 +243,7 @@ void ImageLoader::finishDecodeRequestWithError(
         return;
     }
 
-    invokeIfSet(m_callbacks.error, std::move(*session), error, errorString);
+    invokeIfSet(m_callbacks.error, *session, imageLoadFailure(*session, kind, errorString));
 }
 
 void ImageLoader::finishDecodedImage(ImageLoadSession session, DecodedImage image)

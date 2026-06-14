@@ -10,6 +10,7 @@
 #include <QUrl>
 #include <algorithm>
 #include <optional>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -219,8 +220,16 @@ void TestImageOpenTransitionApplier::errorTransitionUsesDisplayedFallbackAndProv
 
     const kiriview::ImageOpenApplicationPlan applicationPlan
         = kiriview::imageOpenApplicationPlan(transition,
-            kiriview::ImageOpenTransitionContext::sourceLoadError(
-                session, previousImageUrl, QStringLiteral("missing")));
+            kiriview::ImageOpenTransitionContext::sourceLoadError(session, previousImageUrl,
+                kiriview::ImageLoadFailure {
+                    session.imageUrl(),
+                    session.id(),
+                    kiriview::ImageLoadFailureKind::DataLoad,
+                    QStringLiteral("missing"),
+                    QStringLiteral("missing"),
+                    kiriview::ImageLoadFailureSeverity::Error,
+                    false,
+                }));
     const kiriview::ImageDocumentRuntimePlan plan
         = kiriview::applyImageOpenApplicationPlan(state, applicationPlan);
 
