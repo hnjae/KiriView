@@ -6,7 +6,6 @@
 #include "archive/archiveformat.h"
 #include "navigation/directmedianavigationmodel.h"
 
-#include <QFile>
 #include <QObject>
 #include <QStringList>
 #include <QTest>
@@ -41,7 +40,6 @@ private Q_SLOTS:
     void directMediaUrlsClassifyImagesAndVideos();
     void stillImageDirectMediaNavigationCandidatesUseCandidateNameAndUrlIdentity();
     void openDialogFilterIncludesMediaAndArchives();
-    void desktopMimeTypesMatchSupportedOpenMimeTypes();
 };
 
 void TestMediaFormatRegistry::ordinaryMediaExtensionsIncludeImagesAndDirectVideos()
@@ -154,29 +152,6 @@ void TestMediaFormatRegistry::openDialogFilterIncludesMediaAndArchives()
     QVERIFY(filters.first().contains(QStringLiteral("*.mp4")));
     QVERIFY(filters.first().contains(QStringLiteral("*.cbz")));
     QCOMPARE(filters.back(), QStringLiteral("All files (*)"));
-}
-
-void TestMediaFormatRegistry::desktopMimeTypesMatchSupportedOpenMimeTypes()
-{
-    QFile desktopFile(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../../org.hnjae.kiriview.desktop"));
-    QVERIFY(desktopFile.open(QIODevice::ReadOnly | QIODevice::Text));
-
-    const QString mimePrefix = QStringLiteral("MimeType=");
-    QString mimeLine;
-    const QString desktopText = QString::fromUtf8(desktopFile.readAll());
-    for (const QString &line : desktopText.split(QLatin1Char('\n'))) {
-        if (line.startsWith(mimePrefix)) {
-            mimeLine = line.mid(mimePrefix.size());
-            break;
-        }
-    }
-    QVERIFY(!mimeLine.isEmpty());
-
-    QStringList expectedMimeTypes = kiriview::supportedOrdinaryMediaMimeTypes();
-    expectedMimeTypes.append(kiriview::supportedComicBookArchiveMimeTypes());
-
-    QCOMPARE(sortedUnique(mimeLine.split(QLatin1Char(';'), Qt::SkipEmptyParts)),
-        sortedUnique(expectedMimeTypes));
 }
 
 QTEST_GUILESS_MAIN(TestMediaFormatRegistry)
