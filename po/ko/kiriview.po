@@ -98,24 +98,6 @@ msgstr ""
 #: src/application/applicationactionstatepolicy.cpp
 #, kde-format
 msgctxt "@action:inmenu"
-msgid "Zoom to &50%"
-msgstr ""
-
-#: src/application/applicationactionstatepolicy.cpp
-#, kde-format
-msgctxt "@action:inmenu"
-msgid "Zoom to &100%"
-msgstr ""
-
-#: src/application/applicationactionstatepolicy.cpp
-#, kde-format
-msgctxt "@action:inmenu"
-msgid "Zoom to &200%"
-msgstr ""
-
-#: src/application/applicationactionstatepolicy.cpp
-#, kde-format
-msgctxt "@action:inmenu"
 msgid "Fit to &Window"
 msgstr ""
 
@@ -247,6 +229,36 @@ msgctxt "@info:shortcut scope"
 msgid "Viewer-local"
 msgstr ""
 
+#: src/application/applicationzoompresets.h
+msgctxt "@action"
+msgid "Zoom to 50%"
+msgstr ""
+
+#: src/application/applicationzoompresets.h
+msgctxt "@action:inmenu"
+msgid "Zoom to &50%"
+msgstr ""
+
+#: src/application/applicationzoompresets.h
+msgctxt "@action"
+msgid "Zoom to 100%"
+msgstr ""
+
+#: src/application/applicationzoompresets.h
+msgctxt "@action:inmenu"
+msgid "Zoom to &100%"
+msgstr ""
+
+#: src/application/applicationzoompresets.h
+msgctxt "@action"
+msgid "Zoom to 200%"
+msgstr ""
+
+#: src/application/applicationzoompresets.h
+msgctxt "@action:inmenu"
+msgid "Zoom to &200%"
+msgstr ""
+
 #: src/application/kiriviewapplicationactions.cpp
 msgctxt "@title:group"
 msgid "File"
@@ -339,21 +351,6 @@ msgstr ""
 #: src/application/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Zoom Out"
-msgstr ""
-
-#: src/application/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Zoom to 50%"
-msgstr ""
-
-#: src/application/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Zoom to 100%"
-msgstr ""
-
-#: src/application/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Zoom to 200%"
 msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp
