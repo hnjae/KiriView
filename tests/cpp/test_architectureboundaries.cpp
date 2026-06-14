@@ -61,6 +61,7 @@ private Q_SLOTS:
     void documentSessionUsesThumbnailStripDependencyPort();
     void documentSessionUsesOpenWithRuntime();
     void activeNavigationThumbnailRuntimeUsesCanonicalThumbnailSourceKey();
+    void liveDirectoryWatchUsesProviderBoundary();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void activePresentationDoesNotWritePageSurfacePresentationState();
@@ -1234,6 +1235,36 @@ void TestArchitectureBoundaries::activeNavigationThumbnailRuntimeUsesCanonicalTh
     QVERIFY(!thumbnailRuntimeHeader.contains(QStringLiteral("static bool sameSourceKey")));
     QVERIFY(!thumbnailRuntimeSource.contains(
         QStringLiteral("ActiveNavigationThumbnailSourceKey sourceKeyForRow")));
+}
+
+void TestArchitectureBoundaries::liveDirectoryWatchUsesProviderBoundary()
+{
+    const QString entryHeader = readProjectFile(
+        QStringLiteral("src/navigation/imagedocumentpagecandidatedirectoryentry.h"));
+    const QString entryImplementation = readProjectFile(
+        QStringLiteral("src/navigation/imagedocumentpagecandidatedirectoryentry.cpp"));
+    const QString entryCombined = entryHeader + QLatin1Char('\n') + entryImplementation;
+    QVERIFY2(!entryCombined.contains(QStringLiteral("KCoreDirLister")),
+        "ImageDocumentPageCandidateDirectoryEntry must consume watch provider events instead of "
+        "owning KDE listers");
+
+    const QString providerHeaderPath
+        = projectPath(QStringLiteral("src/navigation/imagedocumentpagecandidatewatchprovider.h"));
+    const QString providerImplementationPath
+        = projectPath(QStringLiteral("src/navigation/imagedocumentpagecandidatewatchprovider.cpp"));
+    QVERIFY2(QFileInfo::exists(providerHeaderPath),
+        qPrintable(QStringLiteral("%1 must define the live directory watch provider port")
+                .arg(relativeProjectPath(providerHeaderPath))));
+    QVERIFY2(QFileInfo::exists(providerImplementationPath),
+        qPrintable(QStringLiteral("%1 must implement the production live directory watch provider")
+                .arg(relativeProjectPath(providerImplementationPath))));
+
+    const QString providerHeader = readProjectFile(
+        QStringLiteral("src/navigation/imagedocumentpagecandidatewatchprovider.h"));
+    const QString providerImplementation = readProjectFile(
+        QStringLiteral("src/navigation/imagedocumentpagecandidatewatchprovider.cpp"));
+    QVERIFY(providerHeader.contains(QStringLiteral("ImageDocumentPageCandidateWatchProvider")));
+    QVERIFY(providerImplementation.contains(QStringLiteral("KCoreDirLister")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
