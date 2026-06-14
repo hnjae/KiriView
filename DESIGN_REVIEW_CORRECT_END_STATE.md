@@ -36,16 +36,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Each preset value is declared once, and adding a preset requires one descriptor plus intentional UI placement.
 - Priority: P2
 
-### Finding: `ImageShortcutScope` validity is enumerated more than once in C++
-
-- Evidence: `src/application/applicationtypes.h` defines `ImageShortcutScope`; `src/policy/imageactionavailability.rs` mirrors it as `RustImageShortcutScope`; `src/bridge/imageactionavailabilityconversion.cpp` converts it; `src/application/imageactionavailabilitypolicy.cpp` defines `imageShortcutScopeKnown`; `src/application/applicationshortcutpolicy.cpp` defines `imageShortcutScopeFromValue`.
-- Current state: Rust/C++ FFI mirroring is expected, but C++ also repeats the valid enum list in both known-scope validation and integer conversion.
-- Design concern: Adding a scope can leave one path accepting it and another rejecting it.
-- Correct end state: C++ should have one canonical validity helper or safe sentinel/range mechanism near `ImageShortcutScope`. Policy and conversion paths should share it.
-- Suggested migration: Add a helper such as `knownImageShortcutScope(ImageShortcutScope)` and replace local validation switches. Keep Rust bridge conversion exhaustive, but do not make it a second source of C++ validity.
-- Acceptance criteria: C++ scope validity is defined in one place, and a new scope requires one validity update plus intentional policy handling.
-- Priority: P2
-
 ## Invariant and Correctness Risks
 
 ### Finding: Image open transitions can represent contradictory document state
@@ -312,7 +302,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ## Suggested Refactoring Sequence
 
 1. Add characterization tests around current behavior: route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
-2. Centralize duplicated rules/state: add image format capability alignment tests, centralize zoom preset descriptors, and centralize `ImageShortcutScope` validity.
+2. Centralize duplicated rules/state: add image format capability alignment tests and centralize zoom preset descriptors.
 3. Isolate core domain logic from external effects: split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
 4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, move application action input/port assembly into application runtime/coordinator, and move `MediaEntrySourceStore` document planning out of `src/archive/`.
 5. Improve error semantics and observability: extend lower-level image decoder/tile diagnostics, then KIO and media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.

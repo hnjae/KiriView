@@ -13,6 +13,7 @@ This file is an agent-facing status index for `DESIGN_REVIEW_CORRECT_END_STATE.m
 - P1 live directory watch provider seam: routed live image page candidate directory watching through an injected provider and moved KCoreDirLister into the production adapter; updated async architecture plus fake-provider directory entry/store and architecture-boundary tests. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 44f7917c.
 - P1 active-navigation thumbnail demand ownership: wired production thumbnail demand coalescing through ActiveNavigationThumbnailDemandTracker and covered interleaved row demand behavior in focused C++ tests; removed the completed parallel-tracker backlog item from the design review docs. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: 714089eb.
 - P1 typed primary image load failures: preserved source URL, session id, kind, diagnostic detail, severity, and retryability for primary image data-load, decode, opened-collection, and presentation failures while keeping QML error text unchanged; added state, loader, runtime, and architecture coverage and narrowed the remaining design-review backlog to lower-level decoder/tile diagnostics. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: a0fc102a.
+- P2 shortcut scope validity: centralized C++ `ImageShortcutScope` validity in the application type boundary and guarded image, active-media, and video shortcut availability against unknown scopes; added focused shortcut policy coverage and removed the completed backlog item. Verified with devenv shell -- devenv tasks run --mode single ci. Commit: ab0ba6c0.
 
 ## Current Status
 
@@ -34,7 +35,7 @@ P1 candidates:
 P2/P3 candidates:
 
 - Align image format capability metadata with decode classification and routing.
-- Centralize zoom preset descriptors and `ImageShortcutScope` validity.
+- Centralize zoom preset descriptors.
 - Move `MediaEntrySourceStore` away from document load-planning types.
 - Split `ApplicationCommandRouterPorts` by command owner.
 - Move localized open-dialog filter text out of `navigation/mediaformatregistry`.
