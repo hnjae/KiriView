@@ -26,16 +26,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: There is one obvious policy entry point for adding/removing formats; tests fail when registry-supported formats lack classifier/decoder mapping; C++ decode routing remains an execution layer.
 - Priority: P2
 
-### Finding: Zoom preset action values are duplicated between metadata and dispatch
-
-- Evidence: `src/application/kiriviewapplicationactions.cpp` declares `ViewZoom50PercentAction`, `ViewZoom100PercentAction`, and `ViewZoom200PercentAction`; `src/application/applicationcommandrouter.cpp` dispatches them with `requestManualZoomPercent(..., 50.0/100.0/200.0)`; `src/application/applicationactionstatepolicy.cpp` repeats zoom labels; `src/qml/ImageActions.qml` exposes managed actions for those presets.
-- Current state: Action IDs and labels say 50/100/200, while the router supplies the same values as separate literal payloads.
-- Design concern: The visible label/action identity can drift from the actual executed percent. Adding a preset requires checking action declarations, menu text, router literals, and QML placement.
-- Correct end state: Zoom presets should be represented by one descriptor table or helper keyed by `ActionId`, with the percent payload declared once and consumed by metadata and dispatch.
-- Suggested migration: Introduce a small zoom preset descriptor and remove hard-coded double literals from the router. Add tests aligning action label/name and dispatched percent.
-- Acceptance criteria: Each preset value is declared once, and adding a preset requires one descriptor plus intentional UI placement.
-- Priority: P2
-
 ## Invariant and Correctness Risks
 
 ### Finding: Image open transitions can represent contradictory document state
@@ -302,7 +292,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ## Suggested Refactoring Sequence
 
 1. Add characterization tests around current behavior: route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
-2. Centralize duplicated rules/state: add image format capability alignment tests and centralize zoom preset descriptors.
+2. Centralize duplicated rules/state: add image format capability alignment tests.
 3. Isolate core domain logic from external effects: split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
 4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, move application action input/port assembly into application runtime/coordinator, and move `MediaEntrySourceStore` document planning out of `src/archive/`.
 5. Improve error semantics and observability: extend lower-level image decoder/tile diagnostics, then KIO and media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
