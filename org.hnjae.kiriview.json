@@ -42,6 +42,7 @@
     "--filesystem=/media",
     "--filesystem=/mnt",
     "--filesystem=/run/media",
+    "--filesystem=xdg-cache/thumbnails:create",
     "--nofilesystem=/run/user",
     "--filesystem=xdg-run/pipewire-0",
     "--filesystem=xdg-run/gvfs",
