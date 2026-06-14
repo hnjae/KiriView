@@ -13,19 +13,9 @@ The correct end state should be precise and conservative, not clever. Rust polic
 1. P1: Identity rules are split across layers, especially `ThumbnailSourceKey` vs. `ActiveNavigationThumbnailSourceKey`.
 2. P1: `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
 3. P1: Image, video, and file-operation failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
-4. P1/P2: HEIF/BMFF brands, image format capabilities, and image-open state transitions are not enforced by one central catalog or state-machine boundary.
+4. P2: Image format capabilities and image-open state transitions are not enforced by one central catalog or state-machine boundary.
 
 ## Single Source of Truth Violations
-
-### Finding: HEIF/BMFF brand classification is duplicated
-
-- Evidence: `src/policy/imageinputclassification.rs` defines `is_heif_family_brand` and `classify_bmff_payload`; `src/policy/heifcontainer.rs` defines `heif_brand_kind` and `parse_heif_container_info`; `src/decoding/heifcontainer.cpp` bridges through `rustHeifBrandKind` and `rustHeifContainerInfo`.
-- Current state: The input classifier owns one brand list for routing BMFF payloads as HEIF/AVIF-family image input. `heifcontainer.rs` owns another brand list for still-image versus sequence classification.
-- Design concern: Adding or correcting a brand requires coordinated edits in multiple Rust policy modules. Drift can make a payload accepted by input routing but not recognized by container analysis, or the reverse.
-- Correct end state: One Rust policy module should own BMFF/HEIF brand knowledge and expose both coarse family membership and detailed `HeifBrandKind`. C++ bridge code should remain a consumer only.
-- Suggested migration: Extract the brand table/classifier from `heifcontainer.rs` or a new policy helper, then replace the local family list in `imageinputclassification.rs`. Add Rust tests proving that still/sequence brand union matches family membership.
-- Acceptance criteria: There is exactly one authoritative Rust HEIF/BMFF brand table or classifier; `imageinputclassification.rs` no longer maintains a local HEIF brand list; C++ does not duplicate brand policy.
-- Priority: P1
 
 ### Finding: Supported image format metadata and decode classification are competing catalogs
 
@@ -362,7 +352,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ## Recommended Correct End-State Architecture
 
 - Ownership boundaries: `DocumentSessionState` owns public mixed-media projection and snapshot publication. `DocumentSessionRuntime` orchestrates named subowners for route, direct-media navigation, deletion, Open With, video-output, thumbnails, and predecode through typed results/effects.
-- Domain rules: HEIF/BMFF brands, image format capability, thumbnail source identity, and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
+- Domain rules: Image format capability, thumbnail source identity, and the image-open state machine live in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
 - State definition: Image document state changes pass through named transitions or a validating final-state boundary. Thumbnail source identity is defined by one canonical value object that separates durable identity from freshness generation.
 - Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Open With and source-load planning should pass through typed plans before providers run.
 - External effects: `KCoreDirLister`, `QFileInfo`, xattrs, environment variables, `sysconf`, Qt timers, thread count, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
@@ -373,7 +363,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ## Suggested Refactoring Sequence
 
 1. Add characterization tests around current behavior: thumbnail source key normalization/generation behavior, route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
-2. Centralize duplicated rules/state: extract HEIF/BMFF brand classification, add image format capability alignment tests, create canonical thumbnail source identity, centralize zoom preset descriptors, and centralize `ImageShortcutScope` validity.
+2. Centralize duplicated rules/state: add image format capability alignment tests, create canonical thumbnail source identity, centralize zoom preset descriptors, and centralize `ImageShortcutScope` validity.
 3. Isolate core domain logic from external effects: add a directory watch provider seam, thread timer scheduler/system facts into predecode coordinators, split filesystem source resolution from `ImageLoadPlan`, extract pure navigation-source URL helpers, and inject system memory facts for cache budget resolution.
 4. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, move application action input/port assembly into application runtime/coordinator, and move `MediaEntrySourceStore` document planning out of `src/archive/`.
 5. Improve error semantics and observability: introduce typed image/video failures, then KIO and media-entry source failures, then tile decode attempt diagnostics and thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.

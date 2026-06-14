@@ -2,6 +2,10 @@
 
 This file is an agent-facing status index for `DESIGN_REVIEW_CORRECT_END_STATE.md`. Use it to avoid reopening completed findings and to pick the next design-review task.
 
+## Completed
+
+- P1 HEIF/BMFF brand policy: centralized HEIF still/sequence brand kind and family membership in Rust policy and updated HEIF/input classification tests. Verified with `devenv shell -- devenv tasks run --mode single ci`. Commit: a841f33a.
+
 ## Current Status
 
 Resolved findings:
@@ -18,7 +22,6 @@ P1 candidates:
 - Unify thumbnail source identity. `ThumbnailSourceKey` and `ActiveNavigationThumbnailSourceKey` still define production-like identity semantics separately; separate durable identity from freshness generation.
 - Split workflow ownership. `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` still concentrate broad workflow orchestration.
 - Preserve typed failures. Image, video, KIO/file-operation, collection-source, tile-decode, and thumbnail failures still lose structured diagnostic fields or collapse to raw strings.
-- Extract HEIF/BMFF brand knowledge. `imageinputclassification.rs` and `heifcontainer.rs` still carry separate brand classification policy.
 - Move viewport command planning out of `KiriImageDocument`. The facade still owns `ImageViewportInteraction`, anchored zoom positioning, scan-start handoff, and related command calculations.
 - Add provider seams for live directory watching and predecode timing. `ImageDocumentPageCandidateDirectoryEntry` still owns `KCoreDirLister` directly, and high-level predecode coordinator tests still rely on wall-clock waits.
 
@@ -45,6 +48,12 @@ Active-navigation numbered dispatch checkpoint:
 - New Rust test initially failed with operation number `0`.
 - After policy clamping, focused Rust `activenavigation` tests and focused C++ `test_activenavigationprojection` passed.
 - Final checks passed: `devenv tasks run --mode single ci:test`, `devenv tasks run --mode single ci:lint:rust`, and `devenv tasks run --mode single ci:lint:cpp`.
+
+HEIF/BMFF brand policy checkpoint:
+
+- New Rust coverage verifies that every HEIF still-image and image-sequence brand routes as AVIF-compatible HEIF-family input.
+- The production HEIF brand table now lives in one Rust policy module consumed by both input routing and container kind analysis.
+- Focused Rust `heif` tests and full CI passed.
 
 ## Spec Notes
 
