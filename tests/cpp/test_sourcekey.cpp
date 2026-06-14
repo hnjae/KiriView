@@ -157,6 +157,11 @@ void TestSourceKey::typedSourceKeyFamiliesKeepIdentityAndFreshnessSeparate()
         QStringLiteral("surface-1"), 1, 10, QStringLiteral("primary"), QStringLiteral("raster"));
     const kiriview::RenderSurfaceKey refreshedRenderSurface = kiriview::renderSurfaceKey(
         QStringLiteral("surface-1"), 2, 10, QStringLiteral("primary"), QStringLiteral("raster"));
+    const kiriview::ThumbnailSourceKey firstThumbnail = kiriview::thumbnailSourceKey(1, current,
+        QStringLiteral("01.png"), QStringLiteral("image"), QStringLiteral("direct-image"), 1);
+    const kiriview::ThumbnailSourceKey refreshedThumbnail
+        = kiriview::thumbnailSourceKey(1, QUrl(QStringLiteral("file:///media/01.png")),
+            QStringLiteral("01.png"), QStringLiteral("image"), QStringLiteral("direct-image"), 2);
 
     QVERIFY(kiriview::sameOrdinaryFileSourceKey(ordinary,
         kiriview::ordinaryFileSourceKeyForUrl(QUrl(QStringLiteral("file:///media/01.png")))));
@@ -165,6 +170,9 @@ void TestSourceKey::typedSourceKeyFamiliesKeepIdentityAndFreshnessSeparate()
     QVERIFY(kiriview::sameDirectMediaScopeKey(firstScope, refreshedScope));
     QCOMPARE(firstScope.generation, quint64(1));
     QCOMPARE(refreshedScope.generation, quint64(2));
+    QVERIFY(kiriview::sameThumbnailSourceKey(firstThumbnail, refreshedThumbnail));
+    QCOMPARE(firstThumbnail.navigationGeneration, quint64(1));
+    QCOMPARE(refreshedThumbnail.navigationGeneration, quint64(2));
     QVERIFY(!kiriview::sameDirectMediaScopeKey(firstScope,
         kiriview::directMediaScopeKeyForUrls(current, QUrl(QStringLiteral("file:///other")), 1)));
     QVERIFY(kiriview::sameRenderSurfaceKey(firstRenderSurface, repeatedRenderSurface));

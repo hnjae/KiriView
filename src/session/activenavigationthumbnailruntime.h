@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_ACTIVENAVIGATIONTHUMBNAILRUNTIME_H
 #define KIRIVIEW_ACTIVENAVIGATIONTHUMBNAILRUNTIME_H
 
+#include "location/sourcekey.h"
 #include "session/activenavigationthumbnaildemand.h"
 #include "session/activenavigationthumbnailmodel.h"
 #include "session/activenavigationthumbnailprojection.h"
@@ -26,23 +27,13 @@
 class QObject;
 
 namespace kiriview {
-struct ActiveNavigationThumbnailSourceKey {
-    int number = 0;
-    QUrl url;
-    QString label;
-    ActiveNavigationThumbnailKind kind = ActiveNavigationThumbnailKind::Image;
-    ActiveNavigationThumbnailSourceKind sourceKind
-        = ActiveNavigationThumbnailSourceKind::DirectImage;
-    quint64 navigationGeneration = 0;
-};
-
 struct ActiveNavigationThumbnailResult {
     ActiveNavigationThumbnailResultStatus status = ActiveNavigationThumbnailResultStatus::NoResult;
     QUrl imageSource;
 };
 
 struct ActiveNavigationThumbnailCompletion {
-    ActiveNavigationThumbnailSourceKey sourceKey;
+    ThumbnailSourceKey sourceKey;
     ActiveNavigationThumbnailDemandBucket bucket = ActiveNavigationThumbnailDemandBucket::None;
     ActiveNavigationThumbnailResult result;
 };
@@ -55,7 +46,7 @@ enum class ThumbnailSourceAdapterPlanKind {
 };
 
 struct ThumbnailSourceAdapterRequest {
-    ActiveNavigationThumbnailSourceKey sourceKey;
+    ThumbnailSourceKey sourceKey;
     ActiveNavigationThumbnailDemandBucket requestedBucket
         = ActiveNavigationThumbnailDemandBucket::None;
     ActiveNavigationThumbnailDemandPriority priority
@@ -102,7 +93,7 @@ public:
         ActiveNavigationThumbnailDemandPriority priority, quint64 navigationGeneration);
     bool applyCompletion(const ActiveNavigationThumbnailCompletion &completion);
 
-    ActiveNavigationThumbnailSourceKey sourceKeyAt(std::size_t row) const;
+    ThumbnailSourceKey sourceKeyAt(std::size_t row) const;
     ActiveNavigationThumbnailResult resultAt(std::size_t row) const;
     qsizetype activeJobCount() const;
     qsizetype canceledJobCount() const;
@@ -114,7 +105,7 @@ private:
     };
 
     struct AcceptedDemand {
-        ActiveNavigationThumbnailSourceKey sourceKey;
+        ThumbnailSourceKey sourceKey;
         ActiveNavigationThumbnailDemandBucket bucket = ActiveNavigationThumbnailDemandBucket::None;
         ActiveNavigationThumbnailDemandPriority priority
             = ActiveNavigationThumbnailDemandPriority::Nearby;
@@ -130,7 +121,7 @@ private:
 
     struct RowState {
         ActiveNavigationThumbnailRow row;
-        ActiveNavigationThumbnailSourceKey sourceKey;
+        ThumbnailSourceKey sourceKey;
         ActiveNavigationThumbnailResult result;
         QString imageStoreId;
         std::optional<AcceptedDemand> acceptedDemand;
@@ -140,8 +131,8 @@ private:
 
     static bool sameRowIdentity(
         const ActiveNavigationThumbnailRow &left, const ActiveNavigationThumbnailRow &right);
-    static bool sameSourceKey(const ActiveNavigationThumbnailSourceKey &left,
-        const ActiveNavigationThumbnailSourceKey &right);
+    static bool sameFreshThumbnailSourceKey(
+        const ThumbnailSourceKey &left, const ThumbnailSourceKey &right);
     static bool sameSourceAdapterPlan(
         const ThumbnailSourceAdapterPlan &left, const ThumbnailSourceAdapterPlan &right);
     static bool sameAcceptedDemand(const AcceptedDemand &left, const AcceptedDemand &right);
@@ -155,8 +146,7 @@ private:
 
     std::optional<std::size_t> rowIndexForIdentity(
         int number, const QUrl &url, quint64 navigationGeneration) const;
-    std::optional<std::size_t> rowIndexForSourceKey(
-        const ActiveNavigationThumbnailSourceKey &sourceKey) const;
+    std::optional<std::size_t> rowIndexForSourceKey(const ThumbnailSourceKey &sourceKey) const;
     void cancelActiveJob(RowState &state);
     void cancelActiveBackgroundJob();
     void cancelAllActiveJobs();
@@ -173,15 +163,14 @@ private:
     void markBackgroundBucketCompleted(
         RowState &state, ActiveNavigationThumbnailDemandBucket bucket);
     void maybeScheduleBackgroundWork();
-    ThumbnailSourceAdapterPlan sourcePlanForDemand(
-        const ActiveNavigationThumbnailSourceKey &sourceKey,
+    ThumbnailSourceAdapterPlan sourcePlanForDemand(const ThumbnailSourceKey &sourceKey,
         ActiveNavigationThumbnailDemandBucket bucket,
         ActiveNavigationThumbnailDemandPriority priority) const;
     void startBackgroundWork(RowState &state, ActiveNavigationThumbnailDemandBucket bucket,
         ThumbnailSourceAdapterPlan sourcePlan);
-    void finishLookup(quint64 jobId, const ActiveNavigationThumbnailSourceKey &sourceKey,
+    void finishLookup(quint64 jobId, const ThumbnailSourceKey &sourceKey,
         ActiveNavigationThumbnailDemandBucket bucket, ThumbnailCacheLookupResult lookupResult);
-    void finishGeneration(quint64 jobId, const ActiveNavigationThumbnailSourceKey &sourceKey,
+    void finishGeneration(quint64 jobId, const ThumbnailSourceKey &sourceKey,
         ActiveNavigationThumbnailDemandBucket bucket, ThumbnailGenerationResult generationResult);
     void publishRows();
     void publishResultAt(std::size_t row);

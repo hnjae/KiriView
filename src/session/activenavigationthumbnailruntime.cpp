@@ -14,17 +14,20 @@
 namespace {
 using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
 
-kiriview::ActiveNavigationThumbnailSourceKey sourceKeyForRow(
+bool thumbnailSourceKeyHasSourceKind(const kiriview::ThumbnailSourceKey &sourceKey,
+    kiriview::ActiveNavigationThumbnailSourceKind sourceKind)
+{
+    return sourceKey.sourceKind
+        == kiriview::activeNavigationThumbnailSourceKindIdentity(sourceKind);
+}
+
+kiriview::ThumbnailSourceKey sourceKeyForRow(
     const kiriview::ActiveNavigationThumbnailRow &row, quint64 navigationGeneration)
 {
-    return kiriview::ActiveNavigationThumbnailSourceKey {
-        row.number,
-        row.url,
-        row.label,
-        row.kind,
-        row.sourceKind,
-        navigationGeneration,
-    };
+    return kiriview::thumbnailSourceKey(row.number, row.url, row.label,
+        kiriview::activeNavigationThumbnailPageKindIdentity(row.kind),
+        kiriview::activeNavigationThumbnailSourceKindIdentity(row.sourceKind),
+        navigationGeneration);
 }
 
 constexpr std::array<Bucket, 4> backgroundFillBuckets()
@@ -32,17 +35,26 @@ constexpr std::array<Bucket, 4> backgroundFillBuckets()
     return { Bucket::Normal, Bucket::Large, Bucket::XLarge, Bucket::XXLarge };
 }
 
-kiriview::ThumbnailSourceKind thumbnailSourceKind(
-    kiriview::ActiveNavigationThumbnailSourceKind sourceKind)
+kiriview::ThumbnailSourceKind thumbnailSourceKind(const QString &sourceKind)
 {
-    switch (sourceKind) {
-    case kiriview::ActiveNavigationThumbnailSourceKind::DirectImage:
+    if (sourceKind
+        == kiriview::activeNavigationThumbnailSourceKindIdentity(
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage)) {
         return kiriview::ThumbnailSourceKind::DirectImage;
-    case kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo:
+    }
+    if (sourceKind
+        == kiriview::activeNavigationThumbnailSourceKindIdentity(
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo)) {
         return kiriview::ThumbnailSourceKind::DirectVideo;
-    case kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage:
+    }
+    if (sourceKind
+        == kiriview::activeNavigationThumbnailSourceKindIdentity(
+            kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage)) {
         return kiriview::ThumbnailSourceKind::ImageDocumentPageImage;
-    case kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageVideo:
+    }
+    if (sourceKind
+        == kiriview::activeNavigationThumbnailSourceKindIdentity(
+            kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageVideo)) {
         return kiriview::ThumbnailSourceKind::ImageDocumentPageVideo;
     }
 
@@ -54,7 +66,8 @@ namespace kiriview {
 ThumbnailSourceAdapter defaultThumbnailSourceAdapter()
 {
     return [](ThumbnailSourceAdapterRequest request) {
-        if (request.sourceKey.sourceKind != ActiveNavigationThumbnailSourceKind::DirectImage
+        if (!thumbnailSourceKeyHasSourceKind(
+                request.sourceKey, ActiveNavigationThumbnailSourceKind::DirectImage)
             || !request.sourceKey.url.isLocalFile()) {
             return ThumbnailSourceAdapterPlan {};
         }
@@ -186,7 +199,7 @@ bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl &url,
     cancelActiveBackgroundJob();
 
     if (state.acceptedDemand.has_value()
-        && sameSourceKey(state.acceptedDemand->sourceKey, demand.sourceKey)
+        && sameFreshThumbnailSourceKey(state.acceptedDemand->sourceKey, demand.sourceKey)
         && state.acceptedDemand->bucket == demand.bucket
         && state.acceptedDemand->priority != demand.priority) {
         state.acceptedDemand = demand;
@@ -242,7 +255,7 @@ bool ActiveNavigationThumbnailRuntime::applyCompletion(
 
     RowState &state = m_rows.at(*rowIndex);
     if (!state.acceptedDemand.has_value()
-        || !sameSourceKey(state.acceptedDemand->sourceKey, completion.sourceKey)
+        || !sameFreshThumbnailSourceKey(state.acceptedDemand->sourceKey, completion.sourceKey)
         || state.acceptedDemand->bucket != completion.bucket) {
         return false;
     }
@@ -262,8 +275,7 @@ bool ActiveNavigationThumbnailRuntime::applyCompletion(
     return true;
 }
 
-ActiveNavigationThumbnailSourceKey ActiveNavigationThumbnailRuntime::sourceKeyAt(
-    std::size_t row) const
+ThumbnailSourceKey ActiveNavigationThumbnailRuntime::sourceKeyAt(std::size_t row) const
 {
     return m_rows.at(row).sourceKey;
 }
@@ -296,11 +308,10 @@ bool ActiveNavigationThumbnailRuntime::sameRowIdentity(
         && left.kind == right.kind && left.sourceKind == right.sourceKind;
 }
 
-bool ActiveNavigationThumbnailRuntime::sameSourceKey(
-    const ActiveNavigationThumbnailSourceKey &left, const ActiveNavigationThumbnailSourceKey &right)
+bool ActiveNavigationThumbnailRuntime::sameFreshThumbnailSourceKey(
+    const ThumbnailSourceKey &left, const ThumbnailSourceKey &right)
 {
-    return left.number == right.number && left.url == right.url && left.label == right.label
-        && left.kind == right.kind && left.sourceKind == right.sourceKind
+    return sameThumbnailSourceKey(left, right)
         && left.navigationGeneration == right.navigationGeneration;
 }
 
@@ -321,8 +332,8 @@ bool ActiveNavigationThumbnailRuntime::sameSourceAdapterPlan(
 bool ActiveNavigationThumbnailRuntime::sameAcceptedDemand(
     const AcceptedDemand &left, const AcceptedDemand &right)
 {
-    return sameSourceKey(left.sourceKey, right.sourceKey) && left.bucket == right.bucket
-        && left.priority == right.priority
+    return sameFreshThumbnailSourceKey(left.sourceKey, right.sourceKey)
+        && left.bucket == right.bucket && left.priority == right.priority
         && sameSourceAdapterPlan(left.sourcePlan, right.sourcePlan);
 }
 
@@ -377,8 +388,8 @@ std::optional<std::size_t> ActiveNavigationThumbnailRuntime::rowIndexForIdentity
     int number, const QUrl &url, quint64 navigationGeneration) const
 {
     for (std::size_t row = 0; row < m_rows.size(); ++row) {
-        const ActiveNavigationThumbnailSourceKey &sourceKey = m_rows.at(row).sourceKey;
-        if (sourceKey.number == number && sourceKey.url == url
+        const ThumbnailSourceKey &sourceKey = m_rows.at(row).sourceKey;
+        if (sourceKey.rowNumber == number && sourceKey.url == url
             && sourceKey.navigationGeneration == navigationGeneration) {
             return row;
         }
@@ -388,10 +399,10 @@ std::optional<std::size_t> ActiveNavigationThumbnailRuntime::rowIndexForIdentity
 }
 
 std::optional<std::size_t> ActiveNavigationThumbnailRuntime::rowIndexForSourceKey(
-    const ActiveNavigationThumbnailSourceKey &sourceKey) const
+    const ThumbnailSourceKey &sourceKey) const
 {
     for (std::size_t row = 0; row < m_rows.size(); ++row) {
-        if (sameSourceKey(m_rows.at(row).sourceKey, sourceKey)) {
+        if (sameFreshThumbnailSourceKey(m_rows.at(row).sourceKey, sourceKey)) {
             return row;
         }
     }
@@ -407,7 +418,7 @@ void ActiveNavigationThumbnailRuntime::cancelActiveJob(RowState &state)
 
     qCDebug(kiriviewThumbnailLog) << "Canceling thumbnail job" << state.activeJob->id << "kind"
                                   << static_cast<int>(state.activeJob->kind) << "number"
-                                  << state.sourceKey.number << "bucket"
+                                  << state.sourceKey.rowNumber << "bucket"
                                   << static_cast<int>(state.activeJob->demand.bucket);
     m_canceledJobIds.push_back(state.activeJob->id);
     state.activeJob->job.cancel();
@@ -475,8 +486,9 @@ void ActiveNavigationThumbnailRuntime::startLookupJob(
 
     const quint64 jobId = state.activeJob->id;
     qCDebug(kiriviewThumbnailLog) << "Starting thumbnail lookup job" << jobId << "kind"
-                                  << static_cast<int>(kind) << "number" << demand.sourceKey.number
-                                  << "bucket" << static_cast<int>(demand.bucket);
+                                  << static_cast<int>(kind) << "number"
+                                  << demand.sourceKey.rowNumber << "bucket"
+                                  << static_cast<int>(demand.bucket);
     ImageIoJob job = m_lookupProvider(m_owner, std::move(request),
         [this, jobId, sourceKey = demand.sourceKey, bucket = demand.bucket](
             ThumbnailCacheLookupResult result) mutable {
@@ -521,8 +533,9 @@ void ActiveNavigationThumbnailRuntime::startGenerationJob(
 
     const quint64 jobId = state.activeJob->id;
     qCDebug(kiriviewThumbnailLog) << "Starting thumbnail generation job" << jobId << "kind"
-                                  << static_cast<int>(kind) << "number" << demand.sourceKey.number
-                                  << "bucket" << static_cast<int>(demand.bucket);
+                                  << static_cast<int>(kind) << "number"
+                                  << demand.sourceKey.rowNumber << "bucket"
+                                  << static_cast<int>(demand.bucket);
     ImageIoJob job = m_generationProvider(m_owner, std::move(request),
         [this, jobId, sourceKey = demand.sourceKey, bucket = demand.bucket](
             ThumbnailGenerationResult result) mutable {
@@ -592,7 +605,7 @@ void ActiveNavigationThumbnailRuntime::maybeScheduleBackgroundWork()
             }
 
             qCDebug(kiriviewThumbnailLog)
-                << "Scheduling background thumbnail fill" << state.sourceKey.number
+                << "Scheduling background thumbnail fill" << state.sourceKey.rowNumber
                 << state.sourceKey.url << "bucket" << static_cast<int>(bucket) << "generation"
                 << m_navigationGeneration;
             startBackgroundWork(state, bucket, std::move(sourcePlan));
@@ -602,8 +615,7 @@ void ActiveNavigationThumbnailRuntime::maybeScheduleBackgroundWork()
 }
 
 ThumbnailSourceAdapterPlan ActiveNavigationThumbnailRuntime::sourcePlanForDemand(
-    const ActiveNavigationThumbnailSourceKey &sourceKey,
-    ActiveNavigationThumbnailDemandBucket bucket,
+    const ThumbnailSourceKey &sourceKey, ActiveNavigationThumbnailDemandBucket bucket,
     ActiveNavigationThumbnailDemandPriority priority) const
 {
     if (!m_sourceAdapter) {
@@ -640,22 +652,22 @@ void ActiveNavigationThumbnailRuntime::startBackgroundWork(RowState &state,
 }
 
 void ActiveNavigationThumbnailRuntime::finishLookup(quint64 jobId,
-    const ActiveNavigationThumbnailSourceKey &sourceKey,
-    ActiveNavigationThumbnailDemandBucket bucket, ThumbnailCacheLookupResult lookupResult)
+    const ThumbnailSourceKey &sourceKey, ActiveNavigationThumbnailDemandBucket bucket,
+    ThumbnailCacheLookupResult lookupResult)
 {
     const std::optional<std::size_t> rowIndex = rowIndexForSourceKey(sourceKey);
     if (!rowIndex.has_value()) {
         qCDebug(kiriviewThumbnailLog) << "Rejecting stale thumbnail lookup for missing source"
-                                      << sourceKey.number << sourceKey.url;
+                                      << sourceKey.rowNumber << sourceKey.url;
         return;
     }
 
     RowState &state = m_rows.at(*rowIndex);
     if (!state.activeJob.has_value() || state.activeJob->id != jobId
-        || !sameSourceKey(state.activeJob->demand.sourceKey, sourceKey)
+        || !sameFreshThumbnailSourceKey(state.activeJob->demand.sourceKey, sourceKey)
         || state.activeJob->demand.bucket != bucket) {
         qCDebug(kiriviewThumbnailLog)
-            << "Rejecting stale thumbnail lookup completion" << jobId << sourceKey.number
+            << "Rejecting stale thumbnail lookup completion" << jobId << sourceKey.rowNumber
             << sourceKey.url << "bucket" << static_cast<int>(bucket);
         return;
     }
@@ -663,7 +675,7 @@ void ActiveNavigationThumbnailRuntime::finishLookup(quint64 jobId,
     const ThumbnailWorkKind kind = state.activeJob->kind;
     const AcceptedDemand demand = state.activeJob->demand;
     qCDebug(kiriviewThumbnailLog) << "Thumbnail lookup finished" << jobId << "kind"
-                                  << static_cast<int>(kind) << "number" << sourceKey.number
+                                  << static_cast<int>(kind) << "number" << sourceKey.rowNumber
                                   << "bucket" << static_cast<int>(bucket) << "status"
                                   << static_cast<int>(lookupResult.status);
 
@@ -742,22 +754,22 @@ void ActiveNavigationThumbnailRuntime::finishLookup(quint64 jobId,
 }
 
 void ActiveNavigationThumbnailRuntime::finishGeneration(quint64 jobId,
-    const ActiveNavigationThumbnailSourceKey &sourceKey,
-    ActiveNavigationThumbnailDemandBucket bucket, ThumbnailGenerationResult generationResult)
+    const ThumbnailSourceKey &sourceKey, ActiveNavigationThumbnailDemandBucket bucket,
+    ThumbnailGenerationResult generationResult)
 {
     const std::optional<std::size_t> rowIndex = rowIndexForSourceKey(sourceKey);
     if (!rowIndex.has_value()) {
         qCDebug(kiriviewThumbnailLog) << "Rejecting stale thumbnail generation for missing source"
-                                      << sourceKey.number << sourceKey.url;
+                                      << sourceKey.rowNumber << sourceKey.url;
         return;
     }
 
     RowState &state = m_rows.at(*rowIndex);
     if (!state.activeJob.has_value() || state.activeJob->id != jobId
-        || !sameSourceKey(state.activeJob->demand.sourceKey, sourceKey)
+        || !sameFreshThumbnailSourceKey(state.activeJob->demand.sourceKey, sourceKey)
         || state.activeJob->demand.bucket != bucket) {
         qCDebug(kiriviewThumbnailLog)
-            << "Rejecting stale thumbnail generation completion" << jobId << sourceKey.number
+            << "Rejecting stale thumbnail generation completion" << jobId << sourceKey.rowNumber
             << sourceKey.url << "bucket" << static_cast<int>(bucket);
         return;
     }
@@ -766,7 +778,7 @@ void ActiveNavigationThumbnailRuntime::finishGeneration(quint64 jobId,
     const AcceptedDemand demand = state.activeJob->demand;
     state.activeJob.reset();
     qCDebug(kiriviewThumbnailLog) << "Thumbnail generation finished" << jobId << "kind"
-                                  << static_cast<int>(kind) << "number" << sourceKey.number
+                                  << static_cast<int>(kind) << "number" << sourceKey.rowNumber
                                   << "bucket" << static_cast<int>(bucket) << "status"
                                   << static_cast<int>(generationResult.status);
     switch (generationResult.status) {

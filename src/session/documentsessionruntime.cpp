@@ -107,7 +107,8 @@ kiriview::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
 
         if (imageDocument == nullptr || !imageDocument->displayedOpenedCollectionScope
             || request.sourceKey.sourceKind
-                != kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage) {
+                != kiriview::activeNavigationThumbnailSourceKindIdentity(
+                    kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage)) {
             return kiriview::ThumbnailSourceAdapterPlan {};
         }
 

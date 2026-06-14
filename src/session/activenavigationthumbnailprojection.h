@@ -43,6 +43,8 @@ struct ActiveNavigationThumbnailRow {
     bool current = false;
 };
 
+QString activeNavigationThumbnailPageKindIdentity(ActiveNavigationThumbnailKind kind);
+QString activeNavigationThumbnailSourceKindIdentity(ActiveNavigationThumbnailSourceKind sourceKind);
 std::vector<ActiveNavigationThumbnailRow> projectActiveNavigationThumbnailRows(
     ActiveNavigationSourceKind sourceKind, const ActiveNavigationSnapshot &navigation,
     const std::vector<DirectMediaNavigationCandidate> &directMediaNavigationCandidates,

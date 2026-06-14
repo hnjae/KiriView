@@ -321,11 +321,11 @@ void TestActiveNavigationThumbnailRuntime::buildsSourceKeysAndBumpsGenerationOnl
     });
 
     QCOMPARE(runtime.navigationGeneration(), quint64(1));
-    QCOMPARE(runtime.sourceKeyAt(0).number, 1);
+    QCOMPARE(runtime.sourceKeyAt(0).rowNumber, 1);
     QCOMPARE(runtime.sourceKeyAt(0).url, firstUrl);
     QCOMPARE(runtime.sourceKeyAt(0).label, QStringLiteral("01.png"));
-    QCOMPARE(runtime.sourceKeyAt(0).sourceKind,
-        kiriview::ActiveNavigationThumbnailSourceKind::DirectImage);
+    QCOMPARE(runtime.sourceKeyAt(0).pageKind, QStringLiteral("image"));
+    QCOMPARE(runtime.sourceKeyAt(0).sourceKind, QStringLiteral("direct-image"));
     QCOMPARE(runtime.sourceKeyAt(0).navigationGeneration, quint64(1));
 
     runtime.setRows({
@@ -445,7 +445,7 @@ void TestActiveNavigationThumbnailRuntime::staleCompletionIsRejected()
     const quint64 generation = runtime.navigationGeneration();
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Visible, generation));
 
-    const kiriview::ActiveNavigationThumbnailSourceKey key = runtime.sourceKeyAt(0);
+    const kiriview::ThumbnailSourceKey key = runtime.sourceKeyAt(0);
     kiriview::ActiveNavigationThumbnailCompletion completion {
         key,
         Bucket::Large,
@@ -456,15 +456,19 @@ void TestActiveNavigationThumbnailRuntime::staleCompletionIsRejected()
     };
 
     kiriview::ActiveNavigationThumbnailCompletion stale = completion;
-    stale.sourceKey.url = localUrl(QStringLiteral("/media/other.png"));
+    stale.sourceKey = kiriview::thumbnailSourceKey(1, localUrl(QStringLiteral("/media/other.png")),
+        QStringLiteral("01.png"), QStringLiteral("image"), QStringLiteral("direct-image"),
+        generation);
     QVERIFY(!runtime.applyCompletion(stale));
 
     stale = completion;
-    stale.sourceKey.number = 2;
+    stale.sourceKey = kiriview::thumbnailSourceKey(2, imageUrl, QStringLiteral("01.png"),
+        QStringLiteral("image"), QStringLiteral("direct-image"), generation);
     QVERIFY(!runtime.applyCompletion(stale));
 
     stale = completion;
-    stale.sourceKey.sourceKind = kiriview::ActiveNavigationThumbnailSourceKind::DirectVideo;
+    stale.sourceKey = kiriview::thumbnailSourceKey(1, imageUrl, QStringLiteral("01.png"),
+        QStringLiteral("image"), QStringLiteral("direct-video"), generation);
     QVERIFY(!runtime.applyCompletion(stale));
 
     stale = completion;
@@ -473,6 +477,7 @@ void TestActiveNavigationThumbnailRuntime::staleCompletionIsRejected()
 
     stale = completion;
     stale.sourceKey.navigationGeneration = generation + 1;
+    QVERIFY(kiriview::sameThumbnailSourceKey(completion.sourceKey, stale.sourceKey));
     QVERIFY(!runtime.applyCompletion(stale));
 
     QCOMPARE(runtime.resultAt(0).status, Status::Pending);
@@ -498,7 +503,7 @@ void TestActiveNavigationThumbnailRuntime::rowResetRejectsOlderCompletion()
     });
     QVERIFY(runtime.reportDemand(
         1, firstUrl, Bucket::Normal, Priority::Visible, runtime.navigationGeneration()));
-    const kiriview::ActiveNavigationThumbnailSourceKey staleKey = runtime.sourceKeyAt(0);
+    const kiriview::ThumbnailSourceKey staleKey = runtime.sourceKeyAt(0);
 
     runtime.setRows({
         thumbnailRow(1, secondUrl, QStringLiteral("02.png"),
@@ -1250,8 +1255,7 @@ void TestActiveNavigationThumbnailRuntime::injectedUnsupportedAdapterSkipsLookup
         1, imageUrl, Bucket::Normal, Priority::Visible, runtime.navigationGeneration()));
 
     QCOMPARE(sourceAdapter.requests.size(), std::size_t(1));
-    QCOMPARE(sourceAdapter.requests.at(0).sourceKey.sourceKind,
-        kiriview::ActiveNavigationThumbnailSourceKind::DirectImage);
+    QCOMPARE(sourceAdapter.requests.at(0).sourceKey.sourceKind, QStringLiteral("direct-image"));
     QCOMPARE(sourceAdapter.requests.at(0).requestedBucket, Bucket::Normal);
     QCOMPARE(lookupProvider.lookupCount(), std::size_t(0));
     QCOMPARE(generationProvider.generationCount(), std::size_t(0));

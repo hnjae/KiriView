@@ -85,6 +85,34 @@ thumbnailRowsForImageDocumentPageNavigationSnapshot(
 }
 
 namespace kiriview {
+QString activeNavigationThumbnailPageKindIdentity(ActiveNavigationThumbnailKind kind)
+{
+    switch (kind) {
+    case ActiveNavigationThumbnailKind::Image:
+        return QStringLiteral("image");
+    case ActiveNavigationThumbnailKind::Video:
+        return QStringLiteral("video");
+    }
+
+    return QStringLiteral("image");
+}
+
+QString activeNavigationThumbnailSourceKindIdentity(ActiveNavigationThumbnailSourceKind sourceKind)
+{
+    switch (sourceKind) {
+    case ActiveNavigationThumbnailSourceKind::DirectImage:
+        return QStringLiteral("direct-image");
+    case ActiveNavigationThumbnailSourceKind::DirectVideo:
+        return QStringLiteral("direct-video");
+    case ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage:
+        return QStringLiteral("image-document-page-image");
+    case ActiveNavigationThumbnailSourceKind::ImageDocumentPageVideo:
+        return QStringLiteral("image-document-page-video");
+    }
+
+    return QStringLiteral("direct-image");
+}
+
 std::vector<ActiveNavigationThumbnailRow> projectActiveNavigationThumbnailRows(
     ActiveNavigationSourceKind sourceKind, const ActiveNavigationSnapshot &navigation,
     const std::vector<DirectMediaNavigationCandidate> &directMediaNavigationCandidates,
