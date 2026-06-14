@@ -11,6 +11,13 @@ bool sameDemandState(const kiriview::ActiveNavigationThumbnailDemand &left,
         && left.priority == right.priority
         && left.navigationGeneration == right.navigationGeneration;
 }
+
+bool sameDemandIdentity(const kiriview::ActiveNavigationThumbnailDemand &left,
+    const kiriview::ActiveNavigationThumbnailDemand &right)
+{
+    return left.number == right.number && left.url == right.url
+        && left.navigationGeneration == right.navigationGeneration;
+}
 }
 
 namespace kiriview {
@@ -41,11 +48,22 @@ bool ActiveNavigationThumbnailDemandTracker::record(const ActiveNavigationThumbn
         return false;
     }
 
-    if (m_acceptedDemand.has_value() && sameDemandState(*m_acceptedDemand, demand)) {
-        return false;
+    for (ActiveNavigationThumbnailDemand &acceptedDemand : m_acceptedDemands) {
+        if (!sameDemandIdentity(acceptedDemand, demand)) {
+            continue;
+        }
+
+        if (sameDemandState(acceptedDemand, demand)) {
+            return false;
+        }
+
+        acceptedDemand = demand;
+        return true;
     }
 
-    m_acceptedDemand = demand;
+    m_acceptedDemands.push_back(demand);
     return true;
 }
+
+void ActiveNavigationThumbnailDemandTracker::reset() { m_acceptedDemands.clear(); }
 }

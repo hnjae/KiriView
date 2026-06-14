@@ -8,7 +8,7 @@
 
 #include <QUrl>
 #include <QtGlobal>
-#include <optional>
+#include <vector>
 
 namespace kiriview {
 enum class ActiveNavigationThumbnailDemandPriority {
@@ -32,9 +32,10 @@ class ActiveNavigationThumbnailDemandTracker final
 {
 public:
     bool record(const ActiveNavigationThumbnailDemand &demand);
+    void reset();
 
 private:
-    std::optional<ActiveNavigationThumbnailDemand> m_acceptedDemand;
+    std::vector<ActiveNavigationThumbnailDemand> m_acceptedDemands;
 };
 }
 

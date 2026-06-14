@@ -181,6 +181,7 @@ private:
     ThumbnailGenerationProvider m_generationProvider;
     ThumbnailSourceAdapter m_sourceAdapter;
     std::shared_ptr<ThumbnailImageStore> m_imageStore;
+    ActiveNavigationThumbnailDemandTracker m_demandTracker;
     std::vector<RowState> m_rows;
     quint64 m_navigationGeneration = 0;
     quint64 m_nextJobId = 1;

@@ -144,6 +144,7 @@ void ActiveNavigationThumbnailRuntime::setRows(std::vector<ActiveNavigationThumb
     cancelAllActiveJobs();
     releaseAllImages();
     ++m_navigationGeneration;
+    m_demandTracker.reset();
     m_backgroundArmed = false;
     qCDebug(kiriviewThumbnailLog) << "Reset active navigation thumbnail rows generation"
                                   << m_navigationGeneration << "rowCount" << rows.size();
@@ -179,6 +180,16 @@ bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl &url,
     if (!rowIndex.has_value()) {
         qCDebug(kiriviewThumbnailLog)
             << "Rejecting thumbnail demand for unknown row" << number << url;
+        return false;
+    }
+
+    if (!m_demandTracker.record(ActiveNavigationThumbnailDemand {
+            number,
+            url,
+            bucket,
+            priority,
+            navigationGeneration,
+        })) {
         return false;
     }
 
