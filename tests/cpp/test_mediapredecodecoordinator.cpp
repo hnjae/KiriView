@@ -18,6 +18,7 @@ using kiriview::TestSupport::imageDecodeDependenciesFor;
 using kiriview::TestSupport::localUrl;
 using kiriview::TestSupport::ManualImageDataLoader;
 using kiriview::TestSupport::ManualPowerSaverMonitor;
+using kiriview::TestSupport::ManualTimerScheduler;
 using kiriview::TestSupport::powerSaverProviderFor;
 using kiriview::TestSupport::staticDisplayTestImagePayload;
 using kiriview::TestSupport::staticImageDataDecoder;
@@ -59,13 +60,15 @@ kiriview::PowerSaverProvider noOpPowerSaverProvider()
 }
 
 kiriview::MediaPredecodeCoordinator createCoordinator(QObject *parent,
-    ManualImageDataLoader &dataLoader, kiriview::PowerSaverProvider powerSaverProvider)
+    ManualImageDataLoader &dataLoader, kiriview::PowerSaverProvider powerSaverProvider,
+    kiriview::TimerScheduler timerScheduler = {})
 {
     return kiriview::MediaPredecodeCoordinator(parent,
         kiriview::MediaPredecodeDependencies {
             imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()),
             std::move(powerSaverProvider),
             testCacheByteBudget,
+            std::move(timerScheduler),
         });
 }
 
@@ -128,12 +131,14 @@ void TestMediaPredecodeCoordinator::powerSaverSuppressesLoadsButRetainsDisplayed
 {
     ManualImageDataLoader dataLoader;
     ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
-    kiriview::MediaPredecodeCoordinator coordinator
-        = createCoordinator(this, dataLoader, powerSaverProviderFor(powerSaverMonitor, true));
+    ManualTimerScheduler timerScheduler;
+    kiriview::MediaPredecodeCoordinator coordinator = createCoordinator(this, dataLoader,
+        powerSaverProviderFor(powerSaverMonitor, true), timerScheduler.scheduler());
     QVERIFY(powerSaverMonitor != nullptr);
 
     const QUrl displayedUrl = localUrl(QStringLiteral("/media/00.png"));
     const QUrl nextUrl = localUrl(QStringLiteral("/media/02.png"));
+    timerScheduler.advanceTo(1000);
     coordinator.schedule(kiriview::MediaPredecodeCoordinator::Context {
         displayedUrl,
         mixedDirectMediaNavigationCandidates(),
@@ -141,10 +146,13 @@ void TestMediaPredecodeCoordinator::powerSaverSuppressesLoadsButRetainsDisplayed
     });
 
     QVERIFY(coordinator.findPredecodedImage(displayedUrl).has_value());
-    QTest::qWait(250);
     QCOMPARE(dataLoader.loadCount(), std::size_t(0));
 
+    timerScheduler.advanceTo(1200);
     powerSaverMonitor->setPowerSaverEnabled(false);
+
+    QVERIFY(timerScheduler.timerAt(0).active());
+    timerScheduler.timerAt(0).fire();
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
@@ -155,22 +163,27 @@ void TestMediaPredecodeCoordinator::powerSaverReschedulesVideoCursorWithoutDispl
 {
     ManualImageDataLoader dataLoader;
     ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
-    kiriview::MediaPredecodeCoordinator coordinator
-        = createCoordinator(this, dataLoader, powerSaverProviderFor(powerSaverMonitor, true));
+    ManualTimerScheduler timerScheduler;
+    kiriview::MediaPredecodeCoordinator coordinator = createCoordinator(this, dataLoader,
+        powerSaverProviderFor(powerSaverMonitor, true), timerScheduler.scheduler());
     QVERIFY(powerSaverMonitor != nullptr);
 
     const QUrl videoUrl = localUrl(QStringLiteral("/media/01.mp4"));
     const QUrl nextUrl = localUrl(QStringLiteral("/media/02.png"));
+    timerScheduler.advanceTo(1000);
     coordinator.schedule(kiriview::MediaPredecodeCoordinator::Context {
         videoUrl,
         mixedDirectMediaNavigationCandidates(),
         {},
     });
 
-    QTest::qWait(250);
     QCOMPARE(dataLoader.loadCount(), std::size_t(0));
 
+    timerScheduler.advanceTo(1200);
     powerSaverMonitor->setPowerSaverEnabled(false);
+
+    QVERIFY(timerScheduler.timerAt(0).active());
+    timerScheduler.timerAt(0).fire();
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
@@ -180,10 +193,12 @@ void TestMediaPredecodeCoordinator::invalidScheduleClearsSuppressedDirectMediaNa
 {
     ManualImageDataLoader dataLoader;
     ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
-    kiriview::MediaPredecodeCoordinator coordinator
-        = createCoordinator(this, dataLoader, powerSaverProviderFor(powerSaverMonitor, true));
+    ManualTimerScheduler timerScheduler;
+    kiriview::MediaPredecodeCoordinator coordinator = createCoordinator(this, dataLoader,
+        powerSaverProviderFor(powerSaverMonitor, true), timerScheduler.scheduler());
     QVERIFY(powerSaverMonitor != nullptr);
 
+    timerScheduler.advanceTo(1000);
     coordinator.schedule(kiriview::MediaPredecodeCoordinator::Context {
         localUrl(QStringLiteral("/media/01.mp4")),
         mixedDirectMediaNavigationCandidates(),
@@ -193,7 +208,7 @@ void TestMediaPredecodeCoordinator::invalidScheduleClearsSuppressedDirectMediaNa
 
     powerSaverMonitor->setPowerSaverEnabled(false);
 
-    QTest::qWait(250);
+    QVERIFY(!timerScheduler.timerAt(0).active());
     QCOMPARE(dataLoader.loadCount(), std::size_t(0));
 }
 

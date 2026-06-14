@@ -24,6 +24,7 @@ using kiriview::TestSupport::imagesDirectoryUrl;
 using kiriview::TestSupport::indexedImageUrl;
 using kiriview::TestSupport::ManualImageDataLoader;
 using kiriview::TestSupport::ManualPowerSaverMonitor;
+using kiriview::TestSupport::ManualTimerScheduler;
 using kiriview::TestSupport::powerSaverProviderFor;
 using kiriview::TestSupport::staticDisplayTestImagePayload;
 using kiriview::TestSupport::staticImageDataDecoder;
@@ -57,6 +58,15 @@ kiriview::ImagePageSurfaceController createPageSurfaceController(QObject *parent
 kiriview::ImagePresentationRuntime createPresentationRuntime()
 {
     return kiriview::ImagePresentationRuntime(renderContext);
+}
+
+kiriview::ImageWorkerScheduler immediateWorkerScheduler()
+{
+    return kiriview::ImageWorkerScheduler([](QObject *, kiriview::ImageWorkerOperation work,
+                                              kiriview::ImageWorkerCompletion completion) {
+        work();
+        completion();
+    });
 }
 
 kiriview::StaticDisplayImagePayload displayTestImagePayload(
@@ -155,13 +165,17 @@ void TestImageDocumentPredecodeController::
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
+    ManualTimerScheduler timerScheduler;
     kiriview::ImageDocumentState state;
     kiriview::ImagePageSurfaceController pageSurface = createPageSurfaceController(this);
     kiriview::ImagePresentationRuntime presentationRuntime = createPresentationRuntime();
+    kiriview::ImageDecodeDependencies decodeDependencies
+        = imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder());
+    decodeDependencies.workerScheduler = immediateWorkerScheduler();
     kiriview::ImageDocumentPredecodeController controller(this, state, pageSurface,
-        presentationRuntime, candidateProvider.provider(),
-        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget, {},
-        powerSaverProviderFor(powerSaverMonitor, true));
+        presentationRuntime, candidateProvider.provider(), std::move(decodeDependencies),
+        testCacheByteBudget, {}, powerSaverProviderFor(powerSaverMonitor, true), true,
+        timerScheduler.scheduler(), []() { return 4; });
     QVERIFY(powerSaverMonitor != nullptr);
 
     const QUrl displayedUrl = indexedImageUrl(1);
@@ -175,20 +189,22 @@ void TestImageDocumentPredecodeController::
     state.setDisplayedImageLocation(kiriview::DisplayedImageLocation::fromUrl(displayedUrl));
     pageSurface.setStaticDisplayImage(displayTestImagePayload(testImage()), true, renderContext());
 
+    timerScheduler.advanceTo(1000);
     controller.scheduleAdjacentImagePredecode();
 
     QVERIFY(controller.findPredecodedImage(displayedUrl).has_value());
-    QTest::qWait(250);
     QCOMPARE(dataLoader.loadCount(), std::size_t(0));
 
+    timerScheduler.advanceTo(1200);
     powerSaverMonitor->setPowerSaverEnabled(false);
+    QVERIFY(timerScheduler.timerAt(0).active());
+    timerScheduler.timerAt(0).fire();
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
 
     powerSaverMonitor->setPowerSaverEnabled(true);
     QVERIFY(dataLoader.frontLoad().canceled);
     dataLoader.deliverFrontLoadDataIgnoringCancellation(QByteArrayLiteral("stale"));
-    QTest::qWait(50);
     QVERIFY(!controller.findPredecodedImage(nextUrl).has_value());
     QVERIFY(controller.findPredecodedImage(displayedUrl).has_value());
 }

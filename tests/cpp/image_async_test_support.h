@@ -5,6 +5,7 @@
 #define KIRIVIEW_TESTS_IMAGE_ASYNC_TEST_SUPPORT_H
 
 #include "async/imageiojob.h"
+#include "async/timerscheduler.h"
 #include "decoding/imagedecodedependencies.h"
 #include "system/filedeletion.h"
 #include "system/powersaverprovider.h"
@@ -56,6 +57,63 @@ namespace Detail {
         });
     }
 }
+
+class ManualRuntimeTimer final : public RuntimeTimerHandle
+{
+public:
+    ManualRuntimeTimer(int intervalMsec, RuntimeTimerCallback callback)
+        : m_intervalMsec(intervalMsec)
+        , m_callback(std::move(callback))
+    {
+    }
+
+    int intervalMsec() const { return m_intervalMsec; }
+    bool active() const { return m_active; }
+
+    void start() override { m_active = true; }
+    void stop() override { m_active = false; }
+
+    void fire()
+    {
+        if (!m_active || !m_callback) {
+            return;
+        }
+
+        m_active = false;
+        m_callback();
+    }
+
+private:
+    int m_intervalMsec = 0;
+    RuntimeTimerCallback m_callback;
+    bool m_active = false;
+};
+
+class ManualTimerScheduler
+{
+public:
+    TimerScheduler scheduler()
+    {
+        return TimerScheduler {
+            [this]() { return m_currentMsec; },
+            [this](QObject *, int intervalMsec,
+                RuntimeTimerCallback callback) -> std::unique_ptr<RuntimeTimerHandle> {
+                auto timer
+                    = std::make_unique<ManualRuntimeTimer>(intervalMsec, std::move(callback));
+                m_timers.push_back(timer.get());
+                return timer;
+            },
+        };
+    }
+
+    void advanceTo(qint64 monotonicMsec) { m_currentMsec = monotonicMsec; }
+    std::size_t timerCount() const { return m_timers.size(); }
+    ManualRuntimeTimer &timerAt(std::size_t index) { return *m_timers.at(index); }
+
+private:
+    qint64 m_currentMsec = 0;
+    std::vector<ManualRuntimeTimer *> m_timers;
+};
 
 struct ManualImageDataLoad {
     QObject *object = nullptr;

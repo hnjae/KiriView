@@ -15,6 +15,7 @@
 namespace {
 using kiriview::TestSupport::indexedImageUrl;
 using kiriview::TestSupport::ManualPowerSaverMonitor;
+using kiriview::TestSupport::ManualTimerScheduler;
 using kiriview::TestSupport::powerSaverProviderFor;
 using kiriview::TestSupport::staticDisplayTestImagePayload;
 using kiriview::TestSupport::testImage;
@@ -50,62 +51,6 @@ kiriview::PowerSaverProvider noOpPowerSaverProvider()
     };
 }
 
-class ManualRuntimeTimer final : public kiriview::RuntimeTimerHandle
-{
-public:
-    ManualRuntimeTimer(int intervalMsec, kiriview::RuntimeTimerCallback callback)
-        : m_intervalMsec(intervalMsec)
-        , m_callback(std::move(callback))
-    {
-    }
-
-    int intervalMsec() const { return m_intervalMsec; }
-    bool active() const { return m_active; }
-
-    void start() override { m_active = true; }
-    void stop() override { m_active = false; }
-
-    void fire()
-    {
-        if (!m_active || !m_callback) {
-            return;
-        }
-
-        m_active = false;
-        m_callback();
-    }
-
-private:
-    int m_intervalMsec = 0;
-    kiriview::RuntimeTimerCallback m_callback;
-    bool m_active = false;
-};
-
-class ManualTimerScheduler
-{
-public:
-    kiriview::TimerScheduler scheduler()
-    {
-        return kiriview::TimerScheduler {
-            [this]() { return m_currentMsec; },
-            [this](QObject *, int intervalMsec, kiriview::RuntimeTimerCallback callback)
-                -> std::unique_ptr<kiriview::RuntimeTimerHandle> {
-                auto timer
-                    = std::make_unique<ManualRuntimeTimer>(intervalMsec, std::move(callback));
-                m_timers.push_back(timer.get());
-                return timer;
-            },
-        };
-    }
-
-    void advanceTo(qint64 monotonicMsec) { m_currentMsec = monotonicMsec; }
-    std::size_t timerCount() const { return m_timers.size(); }
-    ManualRuntimeTimer &timerAt(std::size_t index) { return *m_timers.at(index); }
-
-private:
-    qint64 m_currentMsec = 0;
-    std::vector<ManualRuntimeTimer *> m_timers;
-};
 }
 
 class TestPredecodeScheduleRuntime : public QObject
