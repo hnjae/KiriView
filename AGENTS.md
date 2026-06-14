@@ -3,6 +3,13 @@
 KiriView is a Rust + CXX-Qt + KDE Kirigami desktop app.
 Layout: `src/` (app), `tests/cpp/` (C++ tests), `docs/` (docs), `po/` (translations), `flatpak/` (packaging), `nix/` (devenv).
 
+## Project conventions
+
+- 4-space indentation for Rust, QML, C++, and headers.
+- App ID is always `org.hnjae.kiriview`.
+- **Translations:** never author `po/*.po` content yourself. Only update templates or existing files with strings supplied by a translator, upstream tooling, or an explicit request.
+- **Licensing:** AGPL-3.0-or-later with REUSE checks. New source files need SPDX copyright + license headers; cover generated/metadata files in `REUSE.toml` when inline headers are impractical.
+
 ## Policies
 
 - **Architecture lives in `docs/architecture/`** (start at `README.md`). Follow it for language boundaries, module ownership, FFI, and workflow structure. Record long-term rules there or in ADRs — never duplicate them here.
@@ -16,12 +23,9 @@ Layout: `src/` (app), `tests/cpp/` (C++ tests), `docs/` (docs), `po/` (translati
 - When asking, briefly present the tradeoff, including the dependency or upstream option and any local workaround option.
 - Do not avoid this pause by implementing a convoluted local workaround when a dependency addition or upstream patch is the clean solution.
 
-## Project conventions
+## Test ownership
 
-- 4-space indentation for Rust, QML, C++, and headers.
-- App ID is always `org.hnjae.kiriview`.
-- **Translations:** never author `po/*.po` content yourself. Only update templates or existing files with strings supplied by a translator, upstream tooling, or an explicit request.
-- **Licensing:** AGPL-3.0-or-later with REUSE checks. New source files need SPDX copyright + license headers; cover generated/metadata files in `REUSE.toml` when inline headers are impractical.
+Tests must stay within the ownership boundary of the code under test. Do not assert unrelated repository artifacts such as `justfile`, Flatpak manifests, CI wiring, packaging metadata, or maintenance scripts from runtime/component tests. If those artifacts need policy coverage, add a dedicated lint or check task at the owning layer instead.
 
 ## Verification discipline
 
