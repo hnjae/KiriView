@@ -27,6 +27,8 @@ Image-open workflow transitions apply C++-owned document state and return `Image
 
 Image-open state deltas own invariant-coupled document facts including source URL, source kind, displayed location, loading, status, error text, container navigation, unsupported opened-collection video, and embedded metadata. Controllers may prepare decoded images and metadata, but publication of those document facts must happen through the transition application plan.
 
+Image-document source-load effects resolve the requested source URL, displayed opened-collection scope, and container navigation URL into an opened-collection scope command before crossing into archive source lifetime code. `MediaEntrySourceStore` owns only media-entry source reuse for an already resolved `OpenedCollectionScopeLocation`; it must not depend on image-document source-load request or image-load planning types.
+
 Direct media routing should evolve toward an explicit document-session plan boundary. A routing plan may classify a requested source as empty, direct video, direct image, or image-document input, but C++ still executes the Qt/KDE side effects by setting `KiriImageDocument`, `KiriVideoDocument`, the session cursor, candidate refresh, and predecode state.
 
 Document-session plans may compute active navigation projections, action-availability gates, direct media routing, deletion fallback, and predecode eligibility from plain snapshots. They must not publish QML-facing values directly, store independent workflow state, or bypass the session-owned stale-completion identity checks.
