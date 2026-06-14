@@ -3,12 +3,26 @@
 
 use crate::archiveformat::supported_comic_book_archive_extensions;
 use crate::fileextension::extension_for_file_name;
-use crate::imageinputclassification::RAW_IMAGE_EXTENSIONS;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ImageFormatDecoderFamily {
+    Svg,
+    HeifFamily,
+    Raw,
+    QtRaster,
+}
 
 struct ImageFormat {
     extensions: &'static [&'static str],
     mime_types: &'static [&'static str],
+    decoder_family: ImageFormatDecoderFamily,
 }
+
+const RAW_IMAGE_EXTENSIONS: &[&str] = &[
+    "3fr", "arw", "bay", "bmq", "cr2", "cr3", "crw", "cs1", "cs2", "dcr", "dng", "erf", "fff",
+    "iiq", "k25", "kdc", "mdc", "mef", "mos", "mrw", "nef", "nrw", "orf", "pef", "raf", "raw",
+    "rdc", "rwl", "rw2", "sr2", "srf", "srw", "x3f",
+];
 
 const RAW_IMAGE_MIME_TYPES: &[&str] = &[
     "image/x-adobe-dng",
@@ -40,66 +54,82 @@ const SUPPORTED_IMAGE_FORMATS: &[ImageFormat] = &[
     ImageFormat {
         extensions: &["png"],
         mime_types: &["image/png", "image/apng"],
+        decoder_family: ImageFormatDecoderFamily::QtRaster,
     },
     ImageFormat {
         extensions: &["jpeg", "jpg"],
         mime_types: &["image/jpeg"],
+        decoder_family: ImageFormatDecoderFamily::QtRaster,
     },
     ImageFormat {
         extensions: &["jp2"],
         mime_types: &["image/jp2"],
+        decoder_family: ImageFormatDecoderFamily::QtRaster,
     },
     ImageFormat {
         extensions: &["jxl"],
         mime_types: &["image/jxl"],
+        decoder_family: ImageFormatDecoderFamily::QtRaster,
     },
     ImageFormat {
         extensions: &["gif"],
         mime_types: &["image/gif"],
+        decoder_family: ImageFormatDecoderFamily::QtRaster,
     },
     ImageFormat {
         extensions: &["webp"],
         mime_types: &["image/webp"],
+        decoder_family: ImageFormatDecoderFamily::QtRaster,
     },
     ImageFormat {
         extensions: &["avif"],
         mime_types: &["image/avif"],
+        decoder_family: ImageFormatDecoderFamily::HeifFamily,
     },
     ImageFormat {
         extensions: &["avifs"],
         mime_types: &["image/avif-sequence"],
+        decoder_family: ImageFormatDecoderFamily::HeifFamily,
     },
     ImageFormat {
         extensions: &["avci"],
         mime_types: &["image/avci"],
+        decoder_family: ImageFormatDecoderFamily::HeifFamily,
     },
     ImageFormat {
         extensions: &["heic", "heif", "hif"],
         mime_types: &["image/heic", "image/heif"],
+        decoder_family: ImageFormatDecoderFamily::HeifFamily,
     },
     ImageFormat {
         extensions: &["heics", "heifs"],
         mime_types: &["image/heic-sequence", "image/heif-sequence"],
+        decoder_family: ImageFormatDecoderFamily::HeifFamily,
     },
     ImageFormat {
         extensions: &["hej2"],
         mime_types: &["image/hej2k"],
+        decoder_family: ImageFormatDecoderFamily::HeifFamily,
     },
     ImageFormat {
         extensions: &["bmp"],
         mime_types: &["image/bmp"],
+        decoder_family: ImageFormatDecoderFamily::QtRaster,
     },
     ImageFormat {
         extensions: &["tif", "tiff"],
         mime_types: &["image/tiff"],
+        decoder_family: ImageFormatDecoderFamily::QtRaster,
     },
     ImageFormat {
         extensions: RAW_IMAGE_EXTENSIONS,
         mime_types: RAW_IMAGE_MIME_TYPES,
+        decoder_family: ImageFormatDecoderFamily::Raw,
     },
     ImageFormat {
         extensions: &["svg"],
         mime_types: &["image/svg+xml"],
+        decoder_family: ImageFormatDecoderFamily::Svg,
     },
 ];
 
@@ -147,6 +177,24 @@ pub(crate) fn supported_image_mime_types() -> Vec<String> {
     )
 }
 
+#[cfg(test)]
+pub(crate) fn raw_image_extensions() -> Vec<String> {
+    unique_sorted_strings(RAW_IMAGE_EXTENSIONS.iter().copied())
+}
+
+pub(crate) fn is_supported_raw_image_extension(extension: &str) -> bool {
+    decoder_family_for_supported_image_extension(extension) == Some(ImageFormatDecoderFamily::Raw)
+}
+
+pub(crate) fn decoder_family_for_supported_image_extension(
+    extension: &str,
+) -> Option<ImageFormatDecoderFamily> {
+    SUPPORTED_IMAGE_FORMATS
+        .iter()
+        .find(|format| format.extensions.contains(&extension))
+        .map(|format| format.decoder_family)
+}
+
 fn rust_supported_open_extensions() -> Vec<String> {
     let mut extensions = rust_supported_image_extensions();
     extensions.extend(supported_comic_book_archive_extensions());
@@ -165,7 +213,7 @@ pub(crate) fn is_supported_image_file_name(name: &str) -> bool {
 
 fn rust_is_supported_raw_image_file_name(name: &str) -> bool {
     extension_for_file_name(name)
-        .is_some_and(|extension| RAW_IMAGE_EXTENSIONS.contains(&extension.as_str()))
+        .is_some_and(|extension| is_supported_raw_image_extension(extension.as_str()))
 }
 
 fn image_extension_is_supported(extension: &str) -> bool {
@@ -243,7 +291,7 @@ mod tests {
             vec![
                 "3fr", "arw", "bay", "bmq", "cr2", "cr3", "crw", "cs1", "cs2", "dcr", "dng", "erf",
                 "fff", "iiq", "k25", "kdc", "mdc", "mef", "mos", "mrw", "nef", "nrw", "orf", "pef",
-                "raf", "raw", "rdc", "rwl", "rw2", "sr2", "srf", "srw", "x3f",
+                "raf", "raw", "rdc", "rw2", "rwl", "sr2", "srf", "srw", "x3f",
             ]
         );
 
