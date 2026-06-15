@@ -85,6 +85,8 @@ private Q_SLOTS:
     void compatibleDataIsComputedOnlyWhenClassificationRequestsIt();
     void qtRasterClassificationCarriesExplicitFormat();
     void defaultSvgDecodeUsesFirstDisplayContext();
+    void defaultSvgOpenFailurePreservesAdapterDiagnostics();
+    void defaultApngOpenFailurePreservesAdapterDiagnostics();
     void defaultJxlAnimationOpenFailurePreservesAdapterDiagnostics();
     void unknownClassificationFailsWithoutDecoder();
 };
@@ -297,6 +299,48 @@ void TestImageDecodePipeline::defaultSvgDecodeUsesFirstDisplayContext()
     QCOMPARE(image->displayImage.image.size(), QSize(200, 100));
     QCOMPARE(image->displayImage.quality, kiriview::DisplayImageQuality::FirstDisplay);
     QCOMPARE(image->displayImage.displayPixelsPerSourcePixel, 2.5);
+}
+
+void TestImageDecodePipeline::defaultSvgOpenFailurePreservesAdapterDiagnostics()
+{
+    const kiriview::ImageDecodeRoute route {
+        kiriview::ImageDecodeHandlerKind::Svg,
+        kiriview::ImageDecodeDataSource::Original,
+        kiriview::QtRasterFormat::None,
+    };
+    const kiriview::ImageDecodeRouterRuntime runtime({});
+
+    const kiriview::DecodedImageResult result
+        = runtime.execute(route, QByteArrayLiteral("<svg"), kiriview::ImageDecodeRequest {});
+
+    const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    QVERIFY(failure != nullptr);
+    QCOMPARE(failure->route, kiriview::DecodedImageFailureRoute::Svg);
+    QVERIFY(failure->operation != kiriview::DecodedImageFailureOperation::Unknown);
+    QVERIFY(!failure->diagnosticDetail.isEmpty());
+    QVERIFY(failure->diagnosticDetail != failure->errorString);
+    QVERIFY(kiriview::decodedImageResultImage(result) == nullptr);
+}
+
+void TestImageDecodePipeline::defaultApngOpenFailurePreservesAdapterDiagnostics()
+{
+    const kiriview::ImageDecodeRoute route {
+        kiriview::ImageDecodeHandlerKind::Apng,
+        kiriview::ImageDecodeDataSource::Original,
+        kiriview::QtRasterFormat::None,
+    };
+    const kiriview::ImageDecodeRouterRuntime runtime({});
+
+    const kiriview::DecodedImageResult result
+        = runtime.execute(route, QByteArrayLiteral("not an apng"), kiriview::ImageDecodeRequest {});
+
+    const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    QVERIFY(failure != nullptr);
+    QCOMPARE(failure->route, kiriview::DecodedImageFailureRoute::Apng);
+    QVERIFY(failure->operation != kiriview::DecodedImageFailureOperation::Unknown);
+    QVERIFY(!failure->diagnosticDetail.isEmpty());
+    QVERIFY(failure->diagnosticDetail != failure->errorString);
+    QVERIFY(kiriview::decodedImageResultImage(result) == nullptr);
 }
 
 void TestImageDecodePipeline::defaultJxlAnimationOpenFailurePreservesAdapterDiagnostics()
