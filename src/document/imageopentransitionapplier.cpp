@@ -252,6 +252,12 @@ bool finalUnsupportedOpenedCollectionVideo(
         state.unsupportedOpenedCollectionVideo());
 }
 
+QUrl finalContainerNavigationUrl(
+    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+{
+    return delta.containerNavigationUrl.value_or(state.containerNavigationUrl());
+}
+
 bool finalImageOpenStateIsValid(
     const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
 {
@@ -261,7 +267,7 @@ bool finalImageOpenStateIsValid(
 
     switch (status) {
     case kiriview::ImageDocumentStatus::Null:
-        return !loading && !hasError;
+        return !loading && !hasError && finalContainerNavigationUrl(state, delta).isEmpty();
     case kiriview::ImageDocumentStatus::Loading:
         return loading && !hasError;
     case kiriview::ImageDocumentStatus::Ready:
