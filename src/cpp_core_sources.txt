@@ -85,6 +85,7 @@ src/document/imagedocumentruntimeplanexecutor.cpp
 src/document/imagedocumentsourceloadscope.cpp
 src/decoding/imagedecodepipeline.cpp
 src/decoding/imagedecodedependencies.cpp
+src/decoding/imagedataloading.cpp
 src/decoding/imagedecodejob.cpp
 src/decoding/imagedecodejobstate.cpp
 src/document/imagedocumentstate.cpp
