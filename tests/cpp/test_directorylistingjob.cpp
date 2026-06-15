@@ -45,6 +45,7 @@ private Q_SLOTS:
     void localDirectoryReturnsItemSnapshot();
     void cancelSuppressesCompletion();
     void openUrlFailureLeavesDiagnosticWarning();
+    void backendErrorLeavesDiagnosticWarning();
 };
 
 void TestDirectoryListingJob::injectedProviderCompletesWithoutFilesystem()
@@ -160,6 +161,32 @@ void TestDirectoryListingJob::openUrlFailureLeavesDiagnosticWarning()
     QVERIFY(!job.isActive());
     QVERIFY(!listed);
     QVERIFY(errorString.isEmpty());
+}
+
+void TestDirectoryListingJob::backendErrorLeavesDiagnosticWarning()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QUrl missingDirectoryUrl
+        = QUrl::fromLocalFile(directory.filePath(QStringLiteral("missing")) + QLatin1Char('/'));
+
+    bool listed = false;
+    bool errorReceived = false;
+    QString errorString;
+
+    QTest::ignoreMessage(QtWarningMsg,
+        QRegularExpression(".*KiriView directory listing job failed for URL .*missing.*"));
+    kiriview::ImageIoJob job = kiriview::startDirectoryItemList(
+        this, missingDirectoryUrl, [&listed](KFileItemList) { listed = true; },
+        [&errorReceived, &errorString](const QString &message) {
+            errorReceived = true;
+            errorString = message;
+        });
+
+    QTRY_VERIFY_WITH_TIMEOUT(errorReceived, 10000);
+    QVERIFY(!job.isActive());
+    QVERIFY(!listed);
+    QVERIFY(!errorString.isEmpty());
 }
 
 QTEST_GUILESS_MAIN(TestDirectoryListingJob)
