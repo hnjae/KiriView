@@ -182,6 +182,10 @@ void TestStaticImageDecode::staticResultReportsFirstDisplayErrors()
     const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("first display failed"));
+    QCOMPARE(failure->operation, kiriview::DecodedImageFailureOperation::DecodeFirstDisplayImage);
+    QCOMPARE(failure->diagnosticDetail, QStringLiteral("first display failed"));
+    QCOMPARE(failure->severity, kiriview::DecodedImageFailureSeverity::Error);
+    QVERIFY(!failure->retryable);
     QCOMPARE(source->firstDisplayDecodeCount, 1);
     QCOMPARE(source->blockingDisplayDecodeCount, 0);
 }
