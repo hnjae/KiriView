@@ -63,6 +63,7 @@ private Q_SLOTS:
     void successfulTransitionAppliesSessionStateAndEffects();
     void successfulTransitionPublishesEmbeddedMetadataFromContext();
     void errorTransitionUsesDisplayedFallbackAndProvidedError();
+    void invalidReadyWithErrorPlanDoesNotMutateStateOrRunEffects();
     void missingRuntimeContextDoesNotClearResolvedTargets();
 };
 
@@ -242,6 +243,37 @@ void TestImageOpenTransitionApplier::errorTransitionUsesDisplayedFallbackAndProv
     QVERIFY(findOperation<kiriview::ScheduleAdjacentImagePredecodeOperation>(plan) != nullptr);
     QVERIFY(!changes.empty());
     QCOMPARE(changes.front(), kiriview::ImageDocumentChange::Loading);
+}
+
+void TestImageOpenTransitionApplier::invalidReadyWithErrorPlanDoesNotMutateStateOrRunEffects()
+{
+    std::vector<kiriview::ImageDocumentChange> changes;
+    kiriview::ImageDocumentState state(
+        [&changes](kiriview::ImageDocumentChange change) { changes.push_back(change); });
+
+    state.setSourceUrl(localUrl(QStringLiteral("/images/current.png")));
+    state.setLoading(true);
+    state.setStatus(kiriview::ImageDocumentStatus::Loading);
+    changes.clear();
+
+    kiriview::ImageOpenTransition transition;
+    transition.stateDelta = stateDelta(kiriview::ImageOpenUrlTarget::Unchanged,
+        kiriview::ImageOpenDisplayedLocationTarget::Unchanged,
+        kiriview::ImageOpenUrlTarget::Unchanged, kiriview::ImageOpenBoolTarget::False,
+        kiriview::ImageOpenStatusTarget::Ready, kiriview::ImageOpenErrorStringTarget::Provided,
+        false);
+    transition.effects.push_back(kiriview::ImageOpenEffect::UpdatePageNavigation);
+
+    const kiriview::ImageDocumentRuntimePlan plan
+        = kiriview::applyImageOpenTransition(state, transition,
+            kiriview::ImageOpenTransitionContext::animationError(QStringLiteral("late error")));
+
+    QCOMPARE(state.sourceUrl(), localUrl(QStringLiteral("/images/current.png")));
+    QVERIFY(state.loading());
+    QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Loading);
+    QVERIFY(state.errorString().isEmpty());
+    QVERIFY(plan.empty());
+    QVERIFY(changes.empty());
 }
 
 void TestImageOpenTransitionApplier::missingRuntimeContextDoesNotClearResolvedTargets()
