@@ -40,7 +40,7 @@ Provider-rendering work must carry a display-source demand key and publish only 
 
 ## Adapter Contracts
 
-Media entry source adapters list and read opened-collection entries. They return candidates, image bytes, and optional thumbnail metadata through the media entry source owner. They do not update document source state, page navigation, deletion state, thumbnails, or QML models directly.
+Media entry source adapters list and read opened-collection entries. They return candidates, image bytes, optional thumbnail metadata, and typed failure payloads through the media entry source owner. Failure payloads must preserve backend, operation, collection URL, optional entry path, user-facing text, and diagnostic detail before any document or thumbnail owner projects them into broader UI messages. They do not update document source state, page navigation, deletion state, thumbnails, or QML models directly.
 
 Thumbnail source adapters consume thumbnail source keys and demand buckets, then return unsupported fallback, cacheable local-file generation, cacheable opened-collection entry generation, or in-memory-only generation. The document-session thumbnail runtime owns scheduling, lookup, generation jobs, cache installation, image-store retention, result projection, cancellation, and stale-completion rejection.
 
