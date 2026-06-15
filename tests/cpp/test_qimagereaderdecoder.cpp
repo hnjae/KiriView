@@ -121,6 +121,10 @@ void TestQImageReaderDecoder::invalidDataReturnsFailure()
     const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
     QVERIFY(!failure->errorString.isEmpty());
+    QCOMPARE(failure->route, kiriview::DecodedImageFailureRoute::QtRaster);
+    QCOMPARE(failure->operation, kiriview::DecodedImageFailureOperation::OpenStaticImageSource);
+    QVERIFY(!failure->diagnosticDetail.isEmpty());
+    QVERIFY(failure->diagnosticDetail != failure->errorString);
     QVERIFY(decodedImage<kiriview::StaticDecodedImage>(result) == nullptr);
 }
 
