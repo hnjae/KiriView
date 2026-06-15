@@ -64,6 +64,7 @@ private Q_SLOTS:
     void successfulTransitionPublishesEmbeddedMetadataFromContext();
     void errorTransitionUsesDisplayedFallbackAndProvidedError();
     void invalidReadyWithErrorPlanDoesNotMutateStateOrRunEffects();
+    void invalidReadyWithEmptySourcePlanDoesNotMutateStateOrRunEffects();
     void missingRuntimeContextDoesNotClearResolvedTargets();
 };
 
@@ -272,6 +273,38 @@ void TestImageOpenTransitionApplier::invalidReadyWithErrorPlanDoesNotMutateState
     QVERIFY(state.loading());
     QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Loading);
     QVERIFY(state.errorString().isEmpty());
+    QVERIFY(plan.empty());
+    QVERIFY(changes.empty());
+}
+
+void TestImageOpenTransitionApplier::invalidReadyWithEmptySourcePlanDoesNotMutateStateOrRunEffects()
+{
+    std::vector<kiriview::ImageDocumentChange> changes;
+    kiriview::ImageDocumentState state(
+        [&changes](kiriview::ImageDocumentChange change) { changes.push_back(change); });
+
+    const QUrl sourceUrl = localUrl(QStringLiteral("/images/current.png"));
+    const QUrl displayedUrl = localUrl(QStringLiteral("/images/displayed.png"));
+    state.setSourceUrl(sourceUrl);
+    state.setDisplayedImageLocation(kiriview::DisplayedImageLocation::fromUrl(displayedUrl));
+    state.setStatus(kiriview::ImageDocumentStatus::Loading);
+    state.setLoading(true);
+    changes.clear();
+
+    kiriview::ImageOpenApplicationPlan applicationPlan;
+    applicationPlan.stateDelta.sourceUrl = QUrl();
+    applicationPlan.stateDelta.loading = false;
+    applicationPlan.stateDelta.status = kiriview::ImageDocumentStatus::Ready;
+    applicationPlan.stateDelta.errorString = QString();
+    applicationPlan.runtimePlan.push_back(kiriview::UpdatePageNavigationOperation {});
+
+    const kiriview::ImageDocumentRuntimePlan plan
+        = kiriview::applyImageOpenApplicationPlan(state, std::move(applicationPlan));
+
+    QCOMPARE(state.sourceUrl(), sourceUrl);
+    QCOMPARE(state.displayedUrl(), displayedUrl);
+    QVERIFY(state.loading());
+    QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Loading);
     QVERIFY(plan.empty());
     QVERIFY(changes.empty());
 }
