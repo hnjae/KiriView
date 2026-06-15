@@ -64,6 +64,7 @@ private Q_SLOTS:
     void activeNavigationThumbnailRuntimeUsesCanonicalThumbnailSourceKey();
     void liveDirectoryWatchUsesProviderBoundary();
     void mediaFormatRegistryDoesNotOwnLocalizedDialogLabels();
+    void asyncImageIoJobsDoNotOwnDecodeDataLoading();
     void mediaEntrySourceStoreDoesNotDependOnDocumentPlanning();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
@@ -1319,6 +1320,30 @@ void TestArchitectureBoundaries::mediaFormatRegistryDoesNotOwnLocalizedDialogLab
         QRegularExpressionMatchIterator iterator = pattern.globalMatch(combined);
         while (iterator.hasNext()) {
             violations.push_back(iterator.next().captured(0));
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::asyncImageIoJobsDoNotOwnDecodeDataLoading()
+{
+    const QList<QString> relativePaths {
+        QStringLiteral("src/async/imageiojobs.h"),
+        QStringLiteral("src/async/imageiojobs.cpp"),
+    };
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(#include\s+"decoding/imagedecoderequest\.h")")),
+        QRegularExpression(QStringLiteral(R"(\bImageDecodeRequest\b)")),
+        QRegularExpression(QStringLiteral(R"(\bstartStoredImageDataLoad\b)")),
+        QRegularExpression(QStringLiteral(R"(\bKIO::storedGet\b)")),
+    };
+
+    QStringList violations;
+    for (const QString &relativePath : relativePaths) {
+        const QString matches = matchingLines(projectPath(relativePath), forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
         }
     }
 
