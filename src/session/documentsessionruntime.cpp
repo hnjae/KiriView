@@ -16,7 +16,6 @@
 #include <QScopedValueRollback>
 #include <QString>
 #include <memory>
-#include <optional>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -55,19 +54,6 @@ const char *routeKindName(kiriview::DocumentSessionRouteKind kind)
     }
 
     return "Unknown";
-}
-
-QString videoOutputSurfaceClaimToken(quint64 revision) { return QString::number(revision); }
-
-std::optional<quint64> videoOutputSurfaceClaimRevisionFromToken(const QString &token)
-{
-    bool ok = false;
-    const quint64 revision = token.toULongLong(&ok);
-    if (!ok) {
-        return std::nullopt;
-    }
-
-    return revision;
 }
 
 void logDirectMediaScope(const char *message, const kiriview::DirectMediaScope &scope)
@@ -381,40 +367,33 @@ bool DocumentSessionRuntime::reportActiveNavigationThumbnailDemand(int number, c
 
 QString DocumentSessionRuntime::nextVideoOutputSurfaceClaimToken()
 {
-    ++m_nextVideoOutputSurfaceClaimRevision;
-    return videoOutputSurfaceClaimToken(m_nextVideoOutputSurfaceClaimRevision);
+    return m_videoOutputRuntime.nextSurfaceClaimToken();
 }
 
 bool DocumentSessionRuntime::reportVideoOutputSurfaceClaim(const QString &claimToken,
     quint64 projectionRevision, QObject *surfaceOwner, QObject *videoOutput, bool active,
     const QRectF &contentRect, const QRectF &sourceRect)
 {
-    const std::optional<quint64> claimRevision
-        = videoOutputSurfaceClaimRevisionFromToken(claimToken);
     const bool currentProjection = projectionRevision == m_state.publicSnapshot().revision;
-    if (!claimRevision || !currentProjection || surfaceOwner == nullptr) {
-        return false;
-    }
-
-    const bool sameOwner = m_videoOutputSurfaceClaimOwner == surfaceOwner;
-    if (sameOwner && *claimRevision < m_videoOutputSurfaceClaimRevision) {
+    if (!currentProjection) {
         return false;
     }
 
     const bool attach = active
         && m_state.publicSnapshot().documentKind == DocumentSessionKind::Video
         && videoOutput != nullptr;
-    if (!attach) {
-        if (!sameOwner) {
-            return false;
-        }
-        clearVideoOutputSurfaceClaim();
+
+    const DocumentSessionVideoOutputClaimAction action
+        = m_videoOutputRuntime.reportSurfaceClaim({ claimToken, surfaceOwner, attach });
+    if (action == DocumentSessionVideoOutputClaimAction::Reject) {
+        return false;
+    }
+
+    if (action == DocumentSessionVideoOutputClaimAction::Detach) {
         m_videoDocument.setVideoOutput(nullptr);
         return true;
     }
 
-    m_videoOutputSurfaceClaimOwner = surfaceOwner;
-    m_videoOutputSurfaceClaimRevision = *claimRevision;
     m_videoDocument.setVideoOutput(videoOutput);
     m_videoDocument.setVideoOutputGeometry(contentRect, sourceRect);
     return true;
@@ -974,16 +953,10 @@ void DocumentSessionRuntime::leaveVideoMode()
         return;
     }
 
-    clearVideoOutputSurfaceClaim();
+    m_videoOutputRuntime.clear();
     m_videoDocument.stop();
     m_videoDocument.setVideoOutput(nullptr);
     m_videoDocument.setSourceUrl(QUrl());
-}
-
-void DocumentSessionRuntime::clearVideoOutputSurfaceClaim()
-{
-    m_videoOutputSurfaceClaimOwner.clear();
-    m_videoOutputSurfaceClaimRevision = 0;
 }
 
 void DocumentSessionRuntime::syncFromImageDocument()

@@ -201,6 +201,7 @@ src/session/documentsessiondirectmedianavigationruntime.cpp
 src/session/documentsessionmediaopenwithruntime.cpp
 src/session/documentsessionmediadeletionplan.cpp
 src/session/documentsessionmediadeletionruntime.cpp
+src/session/documentsessionvideooutputruntime.cpp
 src/session/mediainformationprojection.cpp
 src/session/documentsessionpublicprojection.cpp
 src/session/documentsessionrouteplan.cpp

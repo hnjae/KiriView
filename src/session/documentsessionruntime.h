@@ -17,10 +17,10 @@
 #include "session/documentsessionpublicprojection.h"
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
+#include "session/documentsessionvideooutputruntime.h"
 #include "system/filedeletion.h"
 
 #include <QMetaObject>
-#include <QPointer>
 #include <QRectF>
 #include <QSize>
 #include <QString>
@@ -143,7 +143,6 @@ private:
     void openMedia(DirectMediaNavigationOpenRequest request);
     void executeRoutePlan(const DocumentSessionRoutePlan &plan);
     void leaveVideoMode();
-    void clearVideoOutputSurfaceClaim();
     void syncFromImageDocument();
     void syncFromVideoDocument();
     void refreshDirectMediaNavigation();
@@ -189,9 +188,7 @@ private:
     ActiveNavigationRevealContext m_pendingActiveNavigationRevealContext;
     DocumentSessionPublicImageLeafSnapshot m_imagePublicSnapshot;
     DocumentSessionPublicVideoLeafSnapshot m_videoPublicSnapshot;
-    QPointer<QObject> m_videoOutputSurfaceClaimOwner;
-    quint64 m_nextVideoOutputSurfaceClaimRevision = 0;
-    quint64 m_videoOutputSurfaceClaimRevision = 0;
+    DocumentSessionVideoOutputRuntime m_videoOutputRuntime;
     quint64 m_publicSnapshotInputRevision = 0;
     bool m_routingSource = false;
 };
