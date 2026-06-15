@@ -68,16 +68,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Controllers no longer call siblings through hidden captures; construction order is not semantically important for callback validity; the workflow executor can be tested with fake ports.
 - Priority: P1
 
-### Finding: `ApplicationCommandRouterPorts` is a flat cross-domain command surface
-
-- Evidence: `src/application/applicationcommandrouter.h:23-62` defines one `ApplicationCommandRouterPorts` struct containing shell/window, session, image document, viewport, panel, and video callbacks. `src/application/applicationcommandrouter.cpp:38-137` and `:180-264` switch across file, navigation, zoom, presentation, panels, fullscreen, help, menus, and video seek through the same port object. `src/facade/kiriviewapplication.cpp:499-631` binds application signals, `KiriDocumentSession`, `KiriImageDocument`, panel toggles, and `KiriVideoDocument` calls in one method.
-- Current state: Dispatch policy is centralized, but the target boundary is not cohesive.
-- Design concern: Changing or removing video seek, thumbnail panel, image zoom, direct navigation, or shell menu commands touches the same broad port struct and facade binding.
-- Correct end state: Keep the command router, but split ports by owner: shell/window, session media/navigation, image presentation/viewport, panel, and video playback.
-- Suggested migration: Introduce grouped port structs while keeping existing callback bodies. Gradually move shortcut/action handling paths to narrower port groups, then split `KiriViewApplication::commandRouterPorts()` into owner-specific builders.
-- Acceptance criteria: Video seek shortcuts can be tested with only video/session ports; image pan/zoom shortcuts can be tested with only image ports.
-- Priority: P2
-
 ## Logic Placement and Flow Predictability
 
 ### Finding: Viewport command planning lives in the QML facade
