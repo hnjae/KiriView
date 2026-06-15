@@ -175,12 +175,62 @@ kiriview::DecodedImageResult failedReadImageDataResult()
         kiriview::imageErrorText(kiriview::ImageErrorTextId::ReadImageData));
 }
 
-kiriview::DecodedImageResult failedImageDataResult(QString errorString)
+QString decodedFailureOperationName(kiriview::DecodedImageFailureOperation operation)
 {
-    if (errorString.isEmpty()) {
-        return failedReadImageDataResult();
+    switch (operation) {
+    case kiriview::DecodedImageFailureOperation::Unknown:
+        return QStringLiteral("unknown");
+    case kiriview::DecodedImageFailureOperation::OpenStaticImageSource:
+        return QStringLiteral("open static image source");
+    case kiriview::DecodedImageFailureOperation::DecodeFirstDisplayImage:
+        return QStringLiteral("decode first display image");
+    case kiriview::DecodedImageFailureOperation::DecodeBlockingDisplayImage:
+        return QStringLiteral("decode blocking display image");
+    case kiriview::DecodedImageFailureOperation::DecodeAnimationOpen:
+        return QStringLiteral("decode animation open");
+    case kiriview::DecodedImageFailureOperation::DecodeRawImage:
+        return QStringLiteral("decode raw image");
+    case kiriview::DecodedImageFailureOperation::DecodeHeifSequenceOpen:
+        return QStringLiteral("decode HEIF sequence open");
+    case kiriview::DecodedImageFailureOperation::DecodeHeifSequenceFrame:
+        return QStringLiteral("decode HEIF sequence frame");
     }
-    return kiriview::failedDecodedImageResult(std::move(errorString));
+    return QStringLiteral("unknown");
+}
+
+QString adapterFailureDiagnosticDetail(const QString &adapterName,
+    kiriview::DecodedImageFailureOperation operation, const QString &backendError)
+{
+    return QStringLiteral("%1 decoder %2 failed: %3")
+        .arg(adapterName, decodedFailureOperationName(operation),
+            backendError.isEmpty() ? QStringLiteral("<empty>") : backendError);
+}
+
+kiriview::DecodedImageResult failedAdapterDecodedImageResult(QString errorString,
+    kiriview::DecodedImageFailureRoute route, kiriview::DecodedImageFailureOperation operation,
+    const QString &adapterName)
+{
+    const QString backendError = errorString;
+    return kiriview::failedDecodedImageResult(kiriview::DecodedImageFailure {
+        std::move(errorString),
+        route,
+        operation,
+        adapterFailureDiagnosticDetail(adapterName, operation, backendError),
+        kiriview::DecodedImageFailureSeverity::Error,
+        false,
+    });
+}
+
+void stampAdapterFailure(kiriview::DecodedImageResult &result,
+    kiriview::DecodedImageFailureRoute route, const QString &adapterName)
+{
+    kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    if (failure == nullptr) {
+        return;
+    }
+    failure->route = route;
+    failure->diagnosticDetail = adapterFailureDiagnosticDetail(
+        adapterName, failure->operation, failure->diagnosticDetail);
 }
 
 kiriview::DecodedImageResult failedAnimationOpenResult(QString errorString, QString adapterName)
@@ -209,10 +259,18 @@ kiriview::DecodedImageResult decodeSvgImageData(const kiriview::ImageDecodeRoute
     std::shared_ptr<kiriview::SvgTileSource> source
         = kiriview::SvgTileSource::open(input.data, &errorString);
     if (source == nullptr) {
-        return failedImageDataResult(std::move(errorString));
+        if (errorString.isEmpty()) {
+            errorString = kiriview::imageErrorText(kiriview::ImageErrorTextId::ReadImageData);
+        }
+        return failedAdapterDecodedImageResult(std::move(errorString),
+            kiriview::DecodedImageFailureRoute::Svg,
+            kiriview::DecodedImageFailureOperation::OpenStaticImageSource, QStringLiteral("SVG"));
     }
 
-    return kiriview::staticDecodedImageResult(std::move(source), input.request, &errorString);
+    kiriview::DecodedImageResult result
+        = kiriview::staticDecodedImageResult(std::move(source), input.request, &errorString);
+    stampAdapterFailure(result, kiriview::DecodedImageFailureRoute::Svg, QStringLiteral("SVG"));
+    return result;
 }
 
 kiriview::DecodedImageResult decodeApngImageData(const kiriview::ImageDecodeRouterInput &input)
@@ -220,11 +278,15 @@ kiriview::DecodedImageResult decodeApngImageData(const kiriview::ImageDecodeRout
     kiriview::ApngAnimationReader apngReader;
     kiriview::ApngOpenResult apngResult = apngReader.open(input.data);
     if (apngResult.status == kiriview::ApngOpenStatus::NotApng) {
-        return kiriview::failedDecodedImageResult(
-            kiriview::imageErrorText(kiriview::ImageErrorTextId::DecodeApngAnimation));
+        return failedAdapterDecodedImageResult(
+            kiriview::imageErrorText(kiriview::ImageErrorTextId::DecodeApngAnimation),
+            kiriview::DecodedImageFailureRoute::Apng,
+            kiriview::DecodedImageFailureOperation::DecodeAnimationOpen, QStringLiteral("APNG"));
     }
     if (apngResult.status == kiriview::ApngOpenStatus::Error) {
-        return kiriview::failedDecodedImageResult(apngResult.errorString);
+        return failedAdapterDecodedImageResult(std::move(apngResult.errorString),
+            kiriview::DecodedImageFailureRoute::Apng,
+            kiriview::DecodedImageFailureOperation::DecodeAnimationOpen, QStringLiteral("APNG"));
     }
 
     return kiriview::successfulDecodedImageResult(kiriview::ApngAnimationImage {
