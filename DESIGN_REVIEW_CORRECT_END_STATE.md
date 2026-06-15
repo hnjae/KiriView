@@ -30,11 +30,11 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ### Finding: `DocumentSessionRuntime` is a mixed-media feature convergence point
 
 - Evidence: `src/session/documentsessionruntime.h:42-47` groups direct-media navigation, file deletion, thumbnail runtime, and predecode dependencies. `src/session/documentsessionruntime.h:118-177` declares methods for routing, leaf snapshot refresh, thumbnails, video-output claims, direct-media navigation, deletion, predecode, and public projection. `src/session/documentsessionruntime.cpp:578-621`, `:862-990`, `:1054-1159`, and `:1162-1194` handle deletion, route execution, direct-media navigation, and predecode.
-- Current state: `DocumentSessionRuntime` is the public mixed-media session owner and directly executes routing, active navigation, thumbnail scheduling, deletion, predecode, and projection publication. Video-output surface token issuance, owner freshness, detach authorization, and clear-on-mode-exit state now live in `DocumentSessionVideoOutputRuntime`; the session runtime remains the adapter that gates by public projection/document kind and applies video document port effects.
+- Current state: `DocumentSessionRuntime` is the public mixed-media session owner and directly executes routing, active navigation, thumbnail scheduling, predecode, and projection publication. Video-output surface token issuance, owner freshness, detach authorization, and clear-on-mode-exit state now live in `DocumentSessionVideoOutputRuntime`. Direct-media deletion candidate lookup, KDE deletion invocation, cancellation, and stale-completion rejection now live in `DocumentSessionMediaDeletionRuntime`; the session runtime remains the adapter that gates commands by public projection/document kind, publishes progress, applies deletion completion routes, and applies video document port effects.
 - Design concern: Independent feature changes or removals converge on the same runtime and require revalidating routing/projection side effects.
 - Correct end state: `DocumentSessionState` should remain the public projection owner. `DocumentSessionRuntime` should orchestrate named subowners through typed inputs/results: route executor, direct-media navigation coordinator, displayed-media deletion coordinator, video-output claim runtime, active-navigation thumbnail runtime, and direct-media predecode adapter.
-- Suggested migration: Continue extracting small workflows such as video-output claims or displayed-media deletion. Keep public projection updates centralized in `DocumentSessionState` and move lifecycle execution/cancellation into subowners.
-- Acceptance criteria: Feature-specific coordinators can be tested without full session runtime construction; removing thumbnail strip or displayed-media deletion does not require edits to direct-media routing logic.
+- Suggested migration: Continue extracting small workflows such as active navigation, thumbnails, direct-media routing, and predecode. Keep public projection updates centralized in `DocumentSessionState` and move lifecycle execution/cancellation into subowners.
+- Acceptance criteria: Feature-specific coordinators can be tested without full session runtime construction; removing thumbnail strip, predecode, or direct-media routing does not require edits to unrelated session projection logic.
 - Priority: P1
 
 ### Finding: Session-to-leaf document ports expose leaf internals as wide callback bags
@@ -118,10 +118,10 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ### Finding: Feature removal cost is concentrated in `DocumentSessionRuntime` and wide ports
 
 - Evidence: Same evidence as the `DocumentSessionRuntime` convergence and session leaf port findings above in `src/session/documentsessionruntime.*` and `src/session/documentsessiondocumentports.h`.
-- Current state: Thumbnail strip, deletion, video-output, predecode, and direct-media routing are tied to the same session runtime and broad leaf port.
+- Current state: Video-output claim lifecycle and direct-media deletion lifecycle now have focused subowners, while thumbnail strip, predecode, direct-media routing, broad leaf ports, and session projection/routing remain tied to the same session runtime.
 - Design concern: Removing a feature becomes a session orchestration/projection/leaf-sampling change rather than a feature-owner change.
 - Correct end state: Feature lifecycle should move into removable subowners, while `DocumentSessionState` remains the public projection owner.
-- Suggested migration: Continue extracting small effect-boundary features such as video-output or deletion, then proceed to thumbnails, predecode, and direct navigation.
+- Suggested migration: Continue extracting small effect-boundary features, proceeding next to thumbnails, predecode, direct navigation, or broad leaf-port snapshot families.
 - Acceptance criteria: Removing a feature does not require unrelated route/projection logic changes; feature subowner tests run without the full session runtime.
 - Priority: P1
 
