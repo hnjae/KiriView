@@ -24,9 +24,15 @@ enum class QImageReaderTileDecodeAttemptKind {
     FullImageFallback,
 };
 
+enum class QImageReaderTileDecodeFailureSeverity {
+    Error,
+};
+
 struct QImageReaderTileDecodeAttemptFailure {
     QImageReaderTileDecodeAttemptKind kind = QImageReaderTileDecodeAttemptKind::ReaderClip;
     QString errorString;
+    QImageReaderTileDecodeFailureSeverity severity = QImageReaderTileDecodeFailureSeverity::Error;
+    bool retryable = false;
 };
 
 struct QImageReaderTileDecodeDiagnostics {
