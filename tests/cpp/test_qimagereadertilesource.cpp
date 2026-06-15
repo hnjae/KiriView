@@ -105,6 +105,8 @@ void TestQImageReaderTileSource::failedTileDecodePreservesAttemptDiagnostics()
     for (const kiriview::QImageReaderTileDecodeAttemptFailure &failure :
         result.diagnostics.failures) {
         QVERIFY(!failure.errorString.isEmpty());
+        QCOMPARE(failure.severity, kiriview::QImageReaderTileDecodeFailureSeverity::Error);
+        QVERIFY(!failure.retryable);
     }
 
     QString compatibilityError;
