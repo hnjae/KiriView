@@ -20,6 +20,7 @@ src/archive/mediaentrysourcebackend.cpp
 src/archive/mediaentrysourcebackend_directory.cpp
 src/archive/mediaentrysourcebackend_karchive.cpp
 src/archive/mediaentrysourcebackend_libarchive.cpp
+src/archive/mediaentrysourcecandidateloading.cpp
 src/archive/openedcollectionthumbnailpolicy.cpp
 src/archive/mediaentrysourcecandidateloadstate.cpp
 src/archive/mediaentrysourcestore.cpp
@@ -102,7 +103,6 @@ src/navigation/imagedocumentpagecandidatestore.cpp
 src/navigation/imagedocumentpagecandidatestoreentrystate.cpp
 src/navigation/imagecontaineropenplan.cpp
 src/async/imageiojob.cpp
-src/async/imageiojobs.cpp
 src/location/imagelocation.cpp
 src/location/sourcekey.cpp
 src/presentation/imagerectmapping.cpp

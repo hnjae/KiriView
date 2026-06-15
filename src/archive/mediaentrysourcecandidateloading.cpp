@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "async/imageiojobs.h"
+#include "archive/mediaentrysourcecandidateloading.h"
 
 #include "archive/mediaentrysourcebackend.h"
 #include "async/imagecallback.h"

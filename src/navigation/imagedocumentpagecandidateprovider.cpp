@@ -3,7 +3,7 @@
 
 #include "imagedocumentpagecandidateprovider.h"
 
-#include "async/imageiojobs.h"
+#include "archive/mediaentrysourcecandidateloading.h"
 #include "imagedocumentpagecandidateloading.h"
 #include "imagedocumentpagecandidatestore.h"
 
