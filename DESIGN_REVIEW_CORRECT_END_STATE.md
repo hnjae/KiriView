@@ -11,7 +11,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ## Top Design Risks
 
 1. P1: `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
-2. P1: Lower-level image, collection-source, and thumbnail failures are represented as raw strings or discarded metadata, which weakens diagnostics, retry semantics, and user/internal error separation.
+2. P1: Lower-level image decoder and remaining refinement failures still lose backend-specific diagnostics before document wrapping, which weakens diagnostics, retry semantics, and user/internal error separation.
 3. P2: Image open state transitions are not enforced by one central state-machine boundary.
 
 ## Invariant and Correctness Risks
@@ -124,16 +124,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Decoder and refinement tests can assert route/backend/operation diagnostics separately from the document-level user message.
 - Priority: P2
 
-### Finding: Thumbnail failure diagnostics are produced but dropped by runtime observability
-
-- Evidence: `src/thumbnail/thumbnailcachelookup.h` and `src/thumbnail/thumbnailgeneration.h`/`.cpp` carry error strings, but `src/session/activenavigationthumbnailruntime.cpp` primarily handles status/source and does not preserve errorString in structured logs or diagnostics.
-- Current state: Cache lookup/generation failures are not user-visible, but they also do not leave enough internal diagnostics.
-- Design concern: When thumbnails are blank or stale, production debugging lacks source, bucket, job, backend, and error detail.
-- Correct end state: The public thumbnail model can remain unchanged, but runtime diagnostics/logging should include job id, source key, demand bucket, failure kind, and error detail.
-- Suggested migration: Add typed diagnostic events or structured logs in active thumbnail runtime completion handling for failed/invalid lookup and generation.
-- Acceptance criteria: Thumbnail failure tests or log probes verify preservation of source, bucket, kind, and error detail.
-- Priority: P2
-
 ### Finding: Uncertain - async no-op paths can hide unexpected failures
 
 - Evidence: `src/decoding/imagedecodejob.cpp` has empty/dependency-missing/no-delivery paths; `src/document/imageloader.cpp` quietly ignores stale no-current callbacks; `src/async/directorylistingjob.cpp` has an empty-string path for `openUrl` failure; `src/qml/ImageToolBar.qml` catches an exception without logging.
@@ -180,7 +170,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ## Suggested Refactoring Sequence
 
 1. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
-2. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics, then media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
+2. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics. Preserve UI text while internal diagnostics become structured.
 3. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
 
 ## Things Not To Change Yet
