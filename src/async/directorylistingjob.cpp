@@ -8,6 +8,7 @@
 #include <KCoreDirLister>
 #include <KIO/Job>
 #include <KJob>
+#include <QDebug>
 #include <QObject>
 #include <utility>
 
@@ -38,6 +39,22 @@ void finishDirectoryItemListWithError(kiriview::ImageIoJobCompletion completion,
 {
     completion.claimAndDelete([&]() { kiriview::invokeIfSet(errorCallback, errorString); });
 }
+
+QString directoryListingDiagnosticUrl(const QUrl &directoryUrl)
+{
+    return directoryUrl.isEmpty() ? QStringLiteral("<empty>") : directoryUrl.toDisplayString();
+}
+
+void warnDirectoryListingRejectedEmptyUrl()
+{
+    qWarning().noquote() << QStringLiteral("KiriView directory listing rejected empty URL");
+}
+
+void warnDirectoryListingOpenFailure(const QUrl &directoryUrl)
+{
+    qWarning().noquote() << QStringLiteral("KiriView directory listing openUrl failed for URL %1")
+                                .arg(directoryListingDiagnosticUrl(directoryUrl));
+}
 }
 
 namespace kiriview {
@@ -61,7 +78,14 @@ namespace {
                 finishDirectoryItemListWithError(completion, errorString, errorCallback);
             });
 
+        if (directoryUrl.isEmpty()) {
+            warnDirectoryListingRejectedEmptyUrl();
+            finishDirectoryItemListWithError(completion, QString(), errorCallback);
+            return ioJob;
+        }
+
         if (!lister->openUrl(directoryUrl, KCoreDirLister::Reload)) {
+            warnDirectoryListingOpenFailure(directoryUrl);
             finishDirectoryItemListWithError(completion, QString(), errorCallback);
         }
 
