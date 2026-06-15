@@ -10,8 +10,10 @@
 
 namespace kiriview {
 DocumentSessionMediaDeletionRuntime::DocumentSessionMediaDeletionRuntime(
-    FileDeletionProvider fileDeletionProvider)
+    FileDeletionProvider fileDeletionProvider,
+    DirectMediaNavigationCandidateProvider candidateProvider)
     : m_fileDeletionProvider(fileDeletionProviderWithDefault(std::move(fileDeletionProvider)))
+    , m_candidateRuntime(std::move(candidateProvider))
 {
 }
 
@@ -27,6 +29,7 @@ DocumentSessionMediaDeletionStartPlan DocumentSessionMediaDeletionRuntime::start
         return plan;
     }
 
+    m_candidateRuntime.cancel();
     m_job.cancel();
     const quint64 operationId = m_operation.start();
     auto sharedCallback = std::make_shared<CompletionCallback>(std::move(callback));
@@ -38,8 +41,28 @@ DocumentSessionMediaDeletionStartPlan DocumentSessionMediaDeletionRuntime::start
     return plan;
 }
 
+bool DocumentSessionMediaDeletionRuntime::startForDirectMedia(QObject *receiver,
+    FileDeletionMode mode, const DirectMediaScope &scope, ScopeAccepted scopeAccepted,
+    DocumentSessionKind documentKind, CompletionCallback callback)
+{
+    cancel();
+    if (scope.currentUrl.isEmpty() || scope.parentUrl.isEmpty() || !scope.parentUrl.isValid()) {
+        return false;
+    }
+
+    auto sharedCallback = std::make_shared<CompletionCallback>(std::move(callback));
+    m_candidateRuntime.loadCandidates(receiver, scope, std::move(scopeAccepted),
+        [this, receiver, mode, currentUrl = scope.currentUrl, documentKind, sharedCallback](
+            DocumentSessionDirectMediaNavigationCandidatesResult result) mutable {
+            start(receiver, mode, std::move(result.candidates), currentUrl, documentKind,
+                std::move(*sharedCallback));
+        });
+    return true;
+}
+
 void DocumentSessionMediaDeletionRuntime::cancel()
 {
+    m_candidateRuntime.cancel();
     m_job.cancel();
     m_operation.cancel();
 }

@@ -136,9 +136,8 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           documentSessionThumbnailDependencies(
               &m_imageDocument, std::move(dependencies.activeNavigationThumbnails))))
     , m_directMediaNavigationRuntime(dependencies.directMediaNavigationCandidateProvider)
-    , m_directMediaDeletionCandidateRuntime(
+    , m_mediaDeletionRuntime(std::move(dependencies.fileDeletionProvider),
           std::move(dependencies.directMediaNavigationCandidateProvider))
-    , m_mediaDeletionRuntime(std::move(dependencies.fileDeletionProvider))
     , m_mediaOpenWithRuntime(std::move(dependencies.mediaOpenWithProvider))
     , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,
           resolveMediaPredecodeDependencies(
@@ -154,7 +153,6 @@ DocumentSessionRuntime::~DocumentSessionRuntime()
         QObject::disconnect(connection);
     }
     m_directMediaNavigationRuntime.cancel();
-    m_directMediaDeletionCandidateRuntime.cancel();
     m_mediaDeletionRuntime.cancel();
     cancelMediaOpenWith();
 }
@@ -568,10 +566,17 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 
     m_state.setFileDeletionInProgress(true);
     recomputePublicProjection();
-    loadDirectMediaNavigationCandidates(
-        [this, mode](DocumentSessionDirectMediaNavigationCandidatesResult result) mutable {
-            startMediaDeletion(mode, std::move(result.candidates));
+    const bool started = m_mediaDeletionRuntime.startForDirectMedia(
+        m_owner, mode, directMediaNavigationLoadScope(),
+        [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
+        m_state.documentKind(),
+        [this](DocumentSessionMediaDeletionCompletion completion) {
+            finishMediaDeletion(std::move(completion));
         });
+    if (!started) {
+        m_state.setFileDeletionInProgress(false);
+        recomputePublicProjection();
+    }
 }
 
 void DocumentSessionRuntime::openCurrentMediaWith(MediaOpenWithCallback callback)
@@ -1031,15 +1036,6 @@ void DocumentSessionRuntime::refreshDirectMediaNavigation()
         });
 }
 
-void DocumentSessionRuntime::loadDirectMediaNavigationCandidates(
-    DocumentSessionDirectMediaNavigationRuntime::CandidatesCallback callback)
-{
-    m_directMediaDeletionCandidateRuntime.loadCandidates(
-        m_owner, directMediaNavigationLoadScope(),
-        [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
-        std::move(callback));
-}
-
 void DocumentSessionRuntime::finishDirectMediaNavigation(
     DocumentSessionDirectMediaNavigationOpenResult result)
 {
@@ -1175,23 +1171,8 @@ void DocumentSessionRuntime::cancelMediaDeletion()
     }
 
     m_mediaDeletionRuntime.cancel();
-    m_directMediaDeletionCandidateRuntime.cancel();
     m_state.setFileDeletionInProgress(false);
     recomputePublicProjection();
-}
-
-void DocumentSessionRuntime::startMediaDeletion(
-    FileDeletionMode mode, std::vector<DirectMediaNavigationCandidate> candidates)
-{
-    const DocumentSessionMediaDeletionStartPlan plan = m_mediaDeletionRuntime.start(m_owner, mode,
-        std::move(candidates), activeDirectMediaCursorUrl(), m_state.documentKind(),
-        [this](DocumentSessionMediaDeletionCompletion completion) {
-            finishMediaDeletion(std::move(completion));
-        });
-    if (!plan.shouldStartDeletion) {
-        m_state.setFileDeletionInProgress(false);
-        recomputePublicProjection();
-    }
 }
 
 MediaOpenWithPlan DocumentSessionRuntime::currentMediaOpenWithPlan() const

@@ -146,8 +146,6 @@ private:
     void syncFromImageDocument();
     void syncFromVideoDocument();
     void refreshDirectMediaNavigation();
-    void loadDirectMediaNavigationCandidates(
-        DocumentSessionDirectMediaNavigationRuntime::CandidatesCallback callback);
     void finishDirectMediaNavigation(DocumentSessionDirectMediaNavigationOpenResult result);
     void updateDirectMediaNavigationBoundaryState(
         DocumentSessionDirectMediaNavigationRefreshResult result);
@@ -156,8 +154,6 @@ private:
     std::vector<DisplayedPredecodeImage> displayedPredecodeImages() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     void cancelMediaDeletion();
-    void startMediaDeletion(
-        FileDeletionMode mode, std::vector<DirectMediaNavigationCandidate> candidates = {});
     MediaOpenWithPlan currentMediaOpenWithPlan() const;
     void cancelMediaOpenWith();
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
@@ -180,7 +176,6 @@ private:
     DocumentSessionState m_state;
     std::unique_ptr<ActiveNavigationThumbnailRuntime> m_activeNavigationThumbnailRuntime;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
-    DocumentSessionDirectMediaNavigationRuntime m_directMediaDeletionCandidateRuntime;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
     DocumentSessionMediaOpenWithRuntime m_mediaOpenWithRuntime;
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
