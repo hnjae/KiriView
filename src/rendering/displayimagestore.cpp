@@ -7,7 +7,6 @@
 #include "cache/imagebytecost.h"
 #include "cache/imagecachepolicy.h"
 #include "displayproviderlogging.h"
-#include "system/systemmemory.h"
 
 #include <QDebug>
 #include <QElapsedTimer>
@@ -35,11 +34,7 @@ namespace {
         return 0;
     }
 
-    qsizetype defaultDisplayStoreByteBudget()
-    {
-        return resolvedImageCacheBudgets(ImageCacheBudgetRequest {}, systemMemorySnapshot())
-            .displayImageCacheByteBudget;
-    }
+    qsizetype defaultDisplayStoreByteBudget() { return displayImageCachePreferredByteBudget(); }
 
     QSize normalizedOriginalSize(const DisplayImageEntry &entry)
     {
@@ -382,6 +377,13 @@ void DisplayImageStore::clear()
     d->byteCost = 0;
 }
 
+void DisplayImageStore::setByteBudget(qsizetype byteBudget)
+{
+    QMutexLocker locker(&d->mutex);
+    d->byteBudget = byteBudget > 0 ? byteBudget : defaultDisplayStoreByteBudget();
+    d->trimToBudget();
+}
+
 qsizetype DisplayImageStore::byteBudget() const
 {
     QMutexLocker locker(&d->mutex);
@@ -459,6 +461,11 @@ std::shared_ptr<DisplayImageStore> sharedDisplayImageStore()
     static const std::shared_ptr<DisplayImageStore> store
         = std::make_shared<DisplayImageStore>(defaultDisplayStoreByteBudget());
     return store;
+}
+
+void configureSharedDisplayImageStoreByteBudget(qsizetype byteBudget)
+{
+    sharedDisplayImageStore()->setByteBudget(byteBudget);
 }
 
 QUrl displayImageSourceForId(const QString &id)

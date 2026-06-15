@@ -9,6 +9,8 @@
 #include "facade/kirivideodocument.h"
 #include "localization/activenavigationboundarytext.h"
 #include "navigation/mediaformatregistry.h"
+#include "rendering/displayimagestore.h"
+#include "session/thumbnailimagestore.h"
 
 #include <memory>
 #include <optional>
@@ -207,6 +209,9 @@ void inheritMissingDirectMediaPredecodeDependencies(
         directMediaPredecode.cacheBudgetRequest.predecodeCacheByteBudget
             = imageDocument.cacheBudgetRequest.predecodeCacheByteBudget;
     }
+    if (!directMediaPredecode.systemMemorySnapshot.has_value()) {
+        directMediaPredecode.systemMemorySnapshot = imageDocument.systemMemorySnapshot;
+    }
 }
 
 kiriview::KiriDocumentSessionDependencies documentSessionDependenciesWithComposedDefaults(
@@ -217,13 +222,18 @@ kiriview::KiriDocumentSessionDependencies documentSessionDependenciesWithCompose
             dependencies.imageDocument.cacheBudgetRequest);
     if (request.predecodeCacheByteBudget <= 0 || request.displayImageCacheByteBudget <= 0
         || request.thumbnailCacheByteBudget <= 0) {
+        const kiriview::SystemMemorySnapshot systemMemory
+            = dependencies.imageDocument.systemMemorySnapshot.value_or(
+                kiriview::systemMemorySnapshot());
         const kiriview::ImageCacheBudgets cacheBudgets
-            = kiriview::resolvedImageCacheBudgets(request, kiriview::systemMemorySnapshot());
+            = kiriview::resolvedImageCacheBudgets(request, systemMemory);
         request.predecodeCacheByteBudget = cacheBudgets.predecodeCacheByteBudget;
         request.displayImageCacheByteBudget = cacheBudgets.displayImageCacheByteBudget;
         request.thumbnailCacheByteBudget = cacheBudgets.thumbnailCacheByteBudget;
     }
     dependencies.imageDocument.cacheBudgetRequest = request;
+    kiriview::configureSharedDisplayImageStoreByteBudget(request.displayImageCacheByteBudget);
+    kiriview::configureSharedThumbnailImageStoreByteBudget(request.thumbnailCacheByteBudget);
     inheritMissingDirectMediaPredecodeDependencies(dependencies);
     return dependencies;
 }

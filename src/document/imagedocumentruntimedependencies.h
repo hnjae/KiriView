@@ -39,6 +39,7 @@ struct ImageDocumentRuntimeDependencyOverrides {
     PredecodeThreadCountProvider predecodeThreadCountProvider;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;
     ImageCacheBudgetRequest cacheBudgetRequest;
+    std::optional<SystemMemorySnapshot> systemMemorySnapshot;
     bool ordinaryDirectMediaPredecodeEnabled = true;
 };
 
@@ -62,6 +63,8 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
 ImageCacheBudgetRequest imageDocumentCacheBudgetRequestWithDefaults(
     ImageCacheBudgetRequest request);
 ImageCacheBudgets resolveImageDocumentCacheBudgets(ImageCacheBudgetRequest request);
+ImageCacheBudgets resolveImageDocumentCacheBudgets(
+    ImageCacheBudgetRequest request, SystemMemorySnapshot systemMemory);
 }
 
 #endif

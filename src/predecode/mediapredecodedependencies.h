@@ -8,8 +8,10 @@
 #include "cache/imagecachepolicy.h"
 #include "decoding/imagedecodedependencies.h"
 #include "system/powersaverprovider.h"
+#include "system/systemmemory.h"
 
 #include <QtGlobal>
+#include <optional>
 
 namespace kiriview {
 struct MediaPredecodeDependencyOverrides {
@@ -17,6 +19,7 @@ struct MediaPredecodeDependencyOverrides {
     PowerSaverProvider powerSaver;
     TimerScheduler timerScheduler;
     ImageCacheBudgetRequest cacheBudgetRequest;
+    std::optional<SystemMemorySnapshot> systemMemorySnapshot;
 };
 
 struct MediaPredecodeDependencies {

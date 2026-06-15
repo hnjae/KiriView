@@ -71,6 +71,7 @@ public:
     void releasePinLease(const QString &id, DisplayImagePinKind kind);
     void release(const QString &id);
     void clear();
+    void setByteBudget(qsizetype byteBudget);
     qsizetype byteBudget() const;
     qsizetype byteCost() const;
     qsizetype size() const;
@@ -92,6 +93,7 @@ private:
 };
 
 std::shared_ptr<DisplayImageStore> sharedDisplayImageStore();
+void configureSharedDisplayImageStoreByteBudget(qsizetype byteBudget);
 QUrl displayImageSourceForId(const QString &id);
 }
 

@@ -28,6 +28,7 @@ public:
     void updatePriority(const QString &id, ThumbnailImageRetentionPriority priority);
     void release(const QString &id);
     void clear();
+    void setByteBudget(qsizetype byteBudget);
     QImage image(const QString &id) const;
     qsizetype byteBudget() const;
     qsizetype byteCost() const;
@@ -50,6 +51,7 @@ private:
 };
 
 std::shared_ptr<ThumbnailImageStore> sharedThumbnailImageStore();
+void configureSharedThumbnailImageStoreByteBudget(qsizetype byteBudget);
 QUrl thumbnailImageSourceForId(const QString &id);
 }
 

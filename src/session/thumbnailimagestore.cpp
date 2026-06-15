@@ -7,7 +7,6 @@
 #include "cache/imagebytecost.h"
 #include "cache/imagecachepolicy.h"
 #include "session/thumbnaillogging.h"
-#include "system/systemmemory.h"
 
 #include <QDebug>
 #include <QMutex>
@@ -35,11 +34,7 @@ namespace {
         return 0;
     }
 
-    qsizetype defaultThumbnailStoreByteBudget()
-    {
-        return resolvedImageCacheBudgets(ImageCacheBudgetRequest {}, systemMemorySnapshot())
-            .thumbnailCacheByteBudget;
-    }
+    qsizetype defaultThumbnailStoreByteBudget() { return thumbnailCachePreferredByteBudget(); }
 }
 
 class ThumbnailImageStore::Private
@@ -178,6 +173,13 @@ void ThumbnailImageStore::clear()
     d->byteCost = 0;
 }
 
+void ThumbnailImageStore::setByteBudget(qsizetype byteBudget)
+{
+    QMutexLocker locker(&d->mutex);
+    d->byteBudget = byteBudget > 0 ? byteBudget : defaultThumbnailStoreByteBudget();
+    d->trimToBudget();
+}
+
 QImage ThumbnailImageStore::image(const QString &id) const
 {
     QMutexLocker locker(&d->mutex);
@@ -233,6 +235,11 @@ std::shared_ptr<ThumbnailImageStore> sharedThumbnailImageStore()
     static const std::shared_ptr<ThumbnailImageStore> store
         = std::make_shared<ThumbnailImageStore>(defaultThumbnailStoreByteBudget());
     return store;
+}
+
+void configureSharedThumbnailImageStoreByteBudget(qsizetype byteBudget)
+{
+    sharedThumbnailImageStore()->setByteBudget(byteBudget);
 }
 
 QUrl thumbnailImageSourceForId(const QString &id)

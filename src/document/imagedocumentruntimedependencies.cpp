@@ -32,8 +32,14 @@ ImageCacheBudgetRequest imageDocumentCacheBudgetRequestWithDefaults(ImageCacheBu
 
 ImageCacheBudgets resolveImageDocumentCacheBudgets(ImageCacheBudgetRequest request)
 {
+    return resolveImageDocumentCacheBudgets(request, systemMemorySnapshot());
+}
+
+ImageCacheBudgets resolveImageDocumentCacheBudgets(
+    ImageCacheBudgetRequest request, SystemMemorySnapshot systemMemory)
+{
     request = imageDocumentCacheBudgetRequestWithDefaults(request);
-    return resolvedImageCacheBudgets(request, systemMemorySnapshot());
+    return resolvedImageCacheBudgets(request, systemMemory);
 }
 
 ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
@@ -55,7 +61,8 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
         overrides.predecodeThreadCountProvider = []() { return QThread::idealThreadCount(); };
     }
     const ImageCacheBudgets cacheBudgets
-        = resolveImageDocumentCacheBudgets(overrides.cacheBudgetRequest);
+        = resolveImageDocumentCacheBudgets(overrides.cacheBudgetRequest,
+            overrides.systemMemorySnapshot.value_or(systemMemorySnapshot()));
 
     std::unique_ptr<MediaEntrySourceStore> mediaEntrySourceStore;
     if (useMediaEntrySourceStore) {
