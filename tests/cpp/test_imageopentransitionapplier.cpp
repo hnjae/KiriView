@@ -214,7 +214,7 @@ void TestImageOpenTransitionApplier::errorTransitionUsesDisplayedFallbackAndProv
     transition.stateDelta = stateDelta(kiriview::ImageOpenUrlTarget::Displayed,
         kiriview::ImageOpenDisplayedLocationTarget::Unchanged,
         kiriview::ImageOpenUrlTarget::Unchanged, kiriview::ImageOpenBoolTarget::False,
-        kiriview::ImageOpenStatusTarget::Ready, kiriview::ImageOpenErrorStringTarget::Provided,
+        kiriview::ImageOpenStatusTarget::Error, kiriview::ImageOpenErrorStringTarget::Provided,
         true);
     transition.effects.push_back(kiriview::ImageOpenEffect::UpdatePageNavigation);
     transition.effects.push_back(kiriview::ImageOpenEffect::ScheduleAdjacentImagePredecode);
@@ -237,7 +237,7 @@ void TestImageOpenTransitionApplier::errorTransitionUsesDisplayedFallbackAndProv
     QCOMPARE(state.sourceUrl(), previousImageUrl);
     QCOMPARE(state.displayedUrl(), previousImageUrl);
     QVERIFY(!state.loading());
-    QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Ready);
+    QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Error);
     QCOMPARE(state.errorString(), QStringLiteral("missing"));
     QVERIFY(findOperation<kiriview::UpdatePageNavigationOperation>(plan) != nullptr);
     QVERIFY(findOperation<kiriview::ScheduleAdjacentImagePredecodeOperation>(plan) != nullptr);
@@ -307,15 +307,15 @@ void TestImageOpenTransitionApplier::missingRuntimeContextDoesNotClearResolvedTa
     QCOMPARE(state.displayedUrl(), displayedUrl);
     QCOMPARE(state.containerNavigationUrl(), containerUrl);
     QCOMPARE(state.errorString(), QStringLiteral("previous error"));
-    QVERIFY(!state.loading());
-    QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Ready);
+    QVERIFY(state.loading());
+    QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Null);
     QVERIFY(plan.empty());
     QVERIFY(!containsChange(changes, kiriview::ImageDocumentChange::SourceUrl));
     QVERIFY(!containsChange(changes, kiriview::ImageDocumentChange::DisplayedUrl));
     QVERIFY(!containsChange(changes, kiriview::ImageDocumentChange::ContainerNavigation));
     QVERIFY(!containsChange(changes, kiriview::ImageDocumentChange::ErrorString));
-    QVERIFY(containsChange(changes, kiriview::ImageDocumentChange::Loading));
-    QVERIFY(containsChange(changes, kiriview::ImageDocumentChange::Status));
+    QVERIFY(!containsChange(changes, kiriview::ImageDocumentChange::Loading));
+    QVERIFY(!containsChange(changes, kiriview::ImageDocumentChange::Status));
 }
 
 QTEST_GUILESS_MAIN(TestImageOpenTransitionApplier)

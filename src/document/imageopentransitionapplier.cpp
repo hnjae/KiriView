@@ -215,6 +215,39 @@ kiriview::ImageDocumentRuntimePlan resolvedRuntimePlan(
     return plan;
 }
 
+QString finalErrorString(
+    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+{
+    if (delta.loadFailure.has_value()) {
+        return delta.loadFailure->userMessage;
+    }
+    if (delta.errorString.has_value()) {
+        return *delta.errorString;
+    }
+    return state.errorString();
+}
+
+bool finalImageOpenStateIsValid(
+    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+{
+    const kiriview::ImageDocumentStatus status = delta.status.value_or(state.status());
+    const bool loading = delta.loading.value_or(state.loading());
+    const bool hasError = !finalErrorString(state, delta).isEmpty();
+
+    switch (status) {
+    case kiriview::ImageDocumentStatus::Null:
+        return !loading && !hasError;
+    case kiriview::ImageDocumentStatus::Loading:
+        return loading && !hasError;
+    case kiriview::ImageDocumentStatus::Ready:
+        return !loading && !hasError;
+    case kiriview::ImageDocumentStatus::Error:
+        return !loading && hasError;
+    }
+
+    return false;
+}
+
 class ImageOpenTransitionApplier final
 {
 public:
@@ -226,6 +259,10 @@ public:
 
     void apply(kiriview::ImageOpenApplicationPlan plan)
     {
+        if (!finalImageOpenStateIsValid(m_state, plan.stateDelta)) {
+            return;
+        }
+
         applyStateDelta(plan.stateDelta);
         m_runtimePlan = std::move(plan.runtimePlan);
     }
