@@ -44,10 +44,14 @@ public:
         kiriview::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
         kiriview::ImageDocumentRuntime::ChangeCallback changeCallback,
         kiriview::ImageDocumentRuntimeDependencyOverrides dependencies,
-        kiriview::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
+        kiriview::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {},
+        kiriview::ImageDocumentRuntime::UnsupportedOpenedCollectionVideoEnteredCallback
+            unsupportedOpenedCollectionVideoEnteredCallback
+        = {})
         : QObject(parent)
         , runtime(this, std::move(renderContextProvider), std::move(changeCallback),
-              std::move(dependencies), std::move(fileDeletionFailedCallback))
+              std::move(dependencies), std::move(fileDeletionFailedCallback),
+              std::move(unsupportedOpenedCollectionVideoEnteredCallback))
     {
     }
 
@@ -61,10 +65,14 @@ public:
         kiriview::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
         kiriview::ImageDocumentRuntime::ChangeCallback changeCallback,
         kiriview::ImageDocumentRuntimeDependencyOverrides dependencies,
-        kiriview::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
+        kiriview::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {},
+        kiriview::ImageDocumentRuntime::UnsupportedOpenedCollectionVideoEnteredCallback
+            unsupportedOpenedCollectionVideoEnteredCallback
+        = {})
         : m_owner(std::make_unique<RuntimeOwner>(parent, std::move(renderContextProvider),
               std::move(changeCallback), std::move(dependencies),
-              std::move(fileDeletionFailedCallback)))
+              std::move(fileDeletionFailedCallback),
+              std::move(unsupportedOpenedCollectionVideoEnteredCallback)))
     {
     }
 
@@ -144,7 +152,10 @@ RuntimeHandle createRuntime(QObject *parent, FakeCandidateProvider &candidatePro
     kiriview::ImageDataDecoder dataDecoder = staticImageDataDecoder(testImage(2)),
     int maximumTextureSize = kiriview::fallbackTextureSizeMax, qreal devicePixelRatio = 1.0,
     kiriview::FileDeletionProvider fileDeletionProvider = {},
-    kiriview::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
+    kiriview::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {},
+    kiriview::ImageDocumentRuntime::UnsupportedOpenedCollectionVideoEnteredCallback
+        unsupportedOpenedCollectionVideoEnteredCallback
+    = {})
 {
     return RuntimeHandle(
         parent,
@@ -157,7 +168,8 @@ RuntimeHandle createRuntime(QObject *parent, FakeCandidateProvider &candidatePro
         kiriview::ImageDocumentRuntime::ChangeCallback {},
         imageDocumentRuntimeDependencyOverridesFor(
             candidateProvider, dataLoader, std::move(dataDecoder), std::move(fileDeletionProvider)),
-        std::move(fileDeletionFailedCallback));
+        std::move(fileDeletionFailedCallback),
+        std::move(unsupportedOpenedCollectionVideoEnteredCallback));
 }
 
 void finishLoad(ManualImageDataLoader &dataLoader)
@@ -402,6 +414,7 @@ void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
+    std::vector<QString> unsupportedVideoMessages;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
         = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
@@ -418,7 +431,10 @@ void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
             imageDocumentPageCandidate(thirdPageUrl),
         });
 
-    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
+        staticImageDataDecoder(testImage(2)), kiriview::fallbackTextureSizeMax, 1.0, {}, {},
+        [&unsupportedVideoMessages](
+            const QString &message) { unsupportedVideoMessages.push_back(message); });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
@@ -440,6 +456,11 @@ void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
     QVERIFY(runtime->unsupportedOpenedCollectionVideo());
     QVERIFY(!hasReadyDisplaySourceProjection(*runtime));
     QCOMPARE(dataLoader.loadCount(), loadCountBeforeVideo);
+    QCOMPARE(unsupportedVideoMessages.size(), std::size_t(1));
+    QCOMPARE(unsupportedVideoMessages.front(),
+        QString::fromUtf8(
+            "KiriView can\342\200\231t play videos inside directly opened archives or "
+            "directories yet."));
 
     runtime->openNextPage();
 
@@ -1284,7 +1305,8 @@ void TestImageDocumentRuntime::presentationFailurePreservesTypedFailureMetadata(
     QCOMPARE(runtime->loadFailure()->sourceUrl, imageUrl);
     QVERIFY(runtime->loadFailure()->sessionId > 0);
     QVERIFY(runtime->loadFailure()->kind == kiriview::ImageLoadFailureKind::Presentation);
-    QVERIFY(!runtime->loadFailure()->userMessage.isEmpty());
+    QCOMPARE(runtime->loadFailure()->userMessage,
+        QStringLiteral("Could not decode the selected image animation."));
     QCOMPARE(runtime->loadFailure()->diagnosticDetail, runtime->loadFailure()->userMessage);
     QVERIFY(runtime->loadFailure()->severity == kiriview::ImageLoadFailureSeverity::Error);
     QVERIFY(!runtime->loadFailure()->retryable);
@@ -1308,7 +1330,8 @@ void TestImageDocumentRuntime::emptyOpenedCollectionFailurePreservesTypedFailure
     QCOMPARE(runtime->loadFailure()->sourceUrl, archiveUrl);
     QVERIFY(runtime->loadFailure()->sessionId > 0);
     QVERIFY(runtime->loadFailure()->kind == kiriview::ImageLoadFailureKind::EmptyOpenedCollection);
-    QVERIFY(!runtime->loadFailure()->userMessage.isEmpty());
+    QCOMPARE(runtime->loadFailure()->userMessage,
+        QStringLiteral("The selected collection does not contain any supported media."));
     QCOMPARE(runtime->loadFailure()->diagnosticDetail, QString());
     QVERIFY(runtime->loadFailure()->severity == kiriview::ImageLoadFailureSeverity::Error);
     QVERIFY(!runtime->loadFailure()->retryable);
