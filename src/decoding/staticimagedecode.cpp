@@ -16,6 +16,19 @@ QString errorStringValue(QString *errorString)
     return errorString == nullptr ? QString() : *errorString;
 }
 
+kiriview::DecodedImageResult failedStaticDecodedImageResult(
+    kiriview::DecodedImageFailureOperation operation, QString *errorString)
+{
+    const QString message = errorStringValue(errorString);
+    return kiriview::failedDecodedImageResult(kiriview::DecodedImageFailure {
+        message,
+        operation,
+        message,
+        kiriview::DecodedImageFailureSeverity::Error,
+        false,
+    });
+}
+
 QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest &request)
 {
     return kiriview::sourceKeyForUrl(request.imageUrl()).identity;
@@ -68,7 +81,8 @@ DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> sou
     const ImageDecodeRequest &request, QString *errorString)
 {
     if (source == nullptr) {
-        return failedDecodedImageResult(errorStringValue(errorString));
+        return failedStaticDecodedImageResult(
+            DecodedImageFailureOperation::OpenStaticImageSource, errorString);
     }
 
     FirstDisplayImageDecodeResult firstDisplayResult
@@ -76,7 +90,8 @@ DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> sou
     switch (firstDisplayResult.status) {
     case FirstDisplayImageDecodeStatus::Ready:
         if (firstDisplayResult.image.isNull()) {
-            return failedDecodedImageResult(errorStringValue(errorString));
+            return failedStaticDecodedImageResult(
+                DecodedImageFailureOperation::DecodeFirstDisplayImage, errorString);
         }
         return successfulDecodedImageResult(StaticDecodedImage {
             staticDisplayPayload(std::move(source), request, std::move(firstDisplayResult.image),
@@ -86,13 +101,15 @@ DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> sou
     case FirstDisplayImageDecodeStatus::NotImplemented:
         break;
     case FirstDisplayImageDecodeStatus::Error:
-        return failedDecodedImageResult(errorStringValue(errorString));
+        return failedStaticDecodedImageResult(
+            DecodedImageFailureOperation::DecodeFirstDisplayImage, errorString);
     }
 
     QImage preview
         = source->decodeBlockingDisplayImage(imageBlockingDisplayLongEdgeMax, errorString);
     if (preview.isNull()) {
-        return failedDecodedImageResult(errorStringValue(errorString));
+        return failedStaticDecodedImageResult(
+            DecodedImageFailureOperation::DecodeBlockingDisplayImage, errorString);
     }
 
     return successfulDecodedImageResult(StaticDecodedImage {

@@ -16,8 +16,23 @@
 #include <variant>
 
 namespace kiriview {
+enum class DecodedImageFailureOperation {
+    Unknown,
+    OpenStaticImageSource,
+    DecodeFirstDisplayImage,
+    DecodeBlockingDisplayImage,
+};
+
+enum class DecodedImageFailureSeverity {
+    Error,
+};
+
 struct DecodedImageFailure {
     QString errorString;
+    DecodedImageFailureOperation operation = DecodedImageFailureOperation::Unknown;
+    QString diagnosticDetail;
+    DecodedImageFailureSeverity severity = DecodedImageFailureSeverity::Error;
+    bool retryable = false;
 };
 
 struct StaticDecodedImage {
@@ -82,6 +97,7 @@ private:
 };
 
 DecodedImageResult failedDecodedImageResult(QString errorString);
+DecodedImageResult failedDecodedImageResult(DecodedImageFailure failure);
 DecodedImageResult successfulDecodedImageResult(DecodedImage image);
 template <typename Image> DecodedImageResult successfulDecodedImageResult(Image image)
 {

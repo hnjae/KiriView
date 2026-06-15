@@ -43,7 +43,22 @@ std::optional<DecodedImage> DecodedImageResult::takeImage() &&
 
 DecodedImageResult failedDecodedImageResult(QString errorString)
 {
-    return DecodedImageResult(DecodedImageFailure { std::move(errorString) });
+    const QString diagnosticDetail = errorString;
+    return DecodedImageResult(DecodedImageFailure {
+        std::move(errorString),
+        DecodedImageFailureOperation::Unknown,
+        diagnosticDetail,
+        DecodedImageFailureSeverity::Error,
+        false,
+    });
+}
+
+DecodedImageResult failedDecodedImageResult(DecodedImageFailure failure)
+{
+    if (failure.diagnosticDetail.isEmpty()) {
+        failure.diagnosticDetail = failure.errorString;
+    }
+    return DecodedImageResult(std::move(failure));
 }
 
 DecodedImageResult successfulDecodedImageResult(DecodedImage image)
