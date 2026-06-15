@@ -55,6 +55,14 @@ void warnDirectoryListingOpenFailure(const QUrl &directoryUrl)
     qWarning().noquote() << QStringLiteral("KiriView directory listing openUrl failed for URL %1")
                                 .arg(directoryListingDiagnosticUrl(directoryUrl));
 }
+
+void warnDirectoryListingJobFailure(const QUrl &directoryUrl, const QString &errorString)
+{
+    const QString diagnosticError
+        = errorString.isEmpty() ? QStringLiteral("<empty error>") : errorString;
+    qWarning().noquote() << QStringLiteral("KiriView directory listing job failed for URL %1: %2")
+                                .arg(directoryListingDiagnosticUrl(directoryUrl), diagnosticError);
+}
 }
 
 namespace kiriview {
@@ -73,8 +81,9 @@ namespace {
                 });
             });
         QObject::connect(lister, &KCoreDirLister::jobError, receiver,
-            [completion, errorCallback](KIO::Job *job) {
+            [completion, directoryUrl, errorCallback](KIO::Job *job) {
                 const QString errorString = job == nullptr ? QString() : job->errorString();
+                warnDirectoryListingJobFailure(directoryUrl, errorString);
                 finishDirectoryItemListWithError(completion, errorString, errorCallback);
             });
 
