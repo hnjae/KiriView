@@ -599,11 +599,15 @@ void TestArchitectureBoundaries::videoSeekShortcutsRouteThroughApplicationRuntim
     }
 
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
-    QVERIFY(shortcutRuntime.contains(QStringLiteral("fixedVideoSeekShortcut")));
-    QVERIFY(shortcutRuntime.contains(QStringLiteral("Alt+Left")));
-    QVERIFY(shortcutRuntime.contains(QStringLiteral("Alt+Right")));
-    QVERIFY(shortcutRuntime.contains(QStringLiteral("Alt+Up")));
-    QVERIFY(shortcutRuntime.contains(QStringLiteral("Alt+Down")));
+    const QString shortcutPolicy
+        = readProjectFile(QStringLiteral("src/application/applicationshortcutpolicy.cpp"));
+    QVERIFY(shortcutPolicy.contains(QStringLiteral("fixedVideoSeekShortcut")));
+    QVERIFY(shortcutPolicy.contains(QStringLiteral("fixedShortcutDispatchOutcome")));
+    QVERIFY(shortcutPolicy.contains(QStringLiteral("Alt+Left")));
+    QVERIFY(shortcutPolicy.contains(QStringLiteral("Alt+Right")));
+    QVERIFY(shortcutPolicy.contains(QStringLiteral("Alt+Up")));
+    QVERIFY(shortcutPolicy.contains(QStringLiteral("Alt+Down")));
+    QVERIFY(shortcutRuntime.contains(QStringLiteral("fixedShortcutDispatchOutcome")));
     QVERIFY(shortcutRuntime.contains(QStringLiteral("videoSeekShortcutTriggered")));
     QVERIFY(applicationHeader.contains(QStringLiteral("executeVideoSeekShortcut")));
     QVERIFY(applicationImplementation.contains(QStringLiteral("executeVideoSeekShortcut")));
