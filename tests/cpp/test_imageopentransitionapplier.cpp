@@ -66,6 +66,7 @@ private Q_SLOTS:
     void invalidReadyWithErrorPlanDoesNotMutateStateOrRunEffects();
     void invalidReadyWithEmptySourcePlanDoesNotMutateStateOrRunEffects();
     void invalidReadyVideoSourceWithoutUnsupportedFlagDoesNotMutateStateOrRunEffects();
+    void invalidNullWithContainerNavigationPlanDoesNotMutateStateOrRunEffects();
     void missingRuntimeContextDoesNotClearResolvedTargets();
 };
 
@@ -342,6 +343,40 @@ void TestImageOpenTransitionApplier::
     QCOMPARE(state.displayedUrl(), sourceUrl);
     QCOMPARE(state.sourceKind(), kiriview::ImageDocumentPageKind::Image);
     QVERIFY(!state.unsupportedOpenedCollectionVideo());
+    QVERIFY(state.loading());
+    QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Loading);
+    QVERIFY(plan.empty());
+    QVERIFY(changes.empty());
+}
+
+void TestImageOpenTransitionApplier::
+    invalidNullWithContainerNavigationPlanDoesNotMutateStateOrRunEffects()
+{
+    std::vector<kiriview::ImageDocumentChange> changes;
+    kiriview::ImageDocumentState state(
+        [&changes](kiriview::ImageDocumentChange change) { changes.push_back(change); });
+
+    const QUrl sourceUrl = localUrl(QStringLiteral("/images/current.png"));
+    const QUrl containerUrl = localUrl(QStringLiteral("/images/"));
+    state.setSourceUrl(sourceUrl);
+    state.setDisplayedImageLocation(kiriview::DisplayedImageLocation::fromUrl(sourceUrl));
+    state.setStatus(kiriview::ImageDocumentStatus::Loading);
+    state.setLoading(true);
+    changes.clear();
+
+    kiriview::ImageOpenApplicationPlan applicationPlan;
+    applicationPlan.stateDelta.containerNavigationUrl = containerUrl;
+    applicationPlan.stateDelta.loading = false;
+    applicationPlan.stateDelta.status = kiriview::ImageDocumentStatus::Null;
+    applicationPlan.stateDelta.errorString = QString();
+    applicationPlan.runtimePlan.push_back(kiriview::ClearPresentationImageOperation {});
+
+    const kiriview::ImageDocumentRuntimePlan plan
+        = kiriview::applyImageOpenApplicationPlan(state, std::move(applicationPlan));
+
+    QCOMPARE(state.sourceUrl(), sourceUrl);
+    QCOMPARE(state.displayedUrl(), sourceUrl);
+    QVERIFY(state.containerNavigationUrl().isEmpty());
     QVERIFY(state.loading());
     QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Loading);
     QVERIFY(plan.empty());
