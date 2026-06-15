@@ -6,7 +6,6 @@
 
 #include "navigation/directmedianavigationcandidateprovider.h"
 #include "navigation/directmedianavigationmodel.h"
-#include "predecode/mediapredecodedependencies.h"
 #include "session/activenavigationprojection.h"
 #include "session/activenavigationthumbnaildemand.h"
 #include "session/activenavigationthumbnailruntime.h"
@@ -14,6 +13,7 @@
 #include "session/documentsessiondocumentports.h"
 #include "session/documentsessionmediadeletionruntime.h"
 #include "session/documentsessionmediaopenwithruntime.h"
+#include "session/documentsessionmediapredecoderuntime.h"
 #include "session/documentsessionpublicprojection.h"
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
@@ -36,8 +36,6 @@ class QObject;
 class QString;
 
 namespace kiriview {
-class MediaPredecodeCoordinator;
-
 struct DocumentSessionRuntimeDependencies {
     DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProvider;
     FileDeletionProvider fileDeletionProvider;
@@ -151,8 +149,7 @@ private:
         DocumentSessionDirectMediaNavigationRefreshResult result);
     void scheduleMediaPredecode(const std::vector<DirectMediaNavigationCandidate> &candidates);
     void cacheDisplayedMediaPredecodeImages();
-    std::vector<DisplayedPredecodeImage> displayedPredecodeImages() const;
-    ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
+    DocumentSessionMediaPredecodeInput mediaPredecodeInput() const;
     void cancelMediaDeletion();
     MediaOpenWithPlan currentMediaOpenWithPlan() const;
     void cancelMediaOpenWith();
@@ -178,7 +175,7 @@ private:
     DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
     DocumentSessionMediaOpenWithRuntime m_mediaOpenWithRuntime;
-    std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
+    DocumentSessionMediaPredecodeRuntime m_mediaPredecodeRuntime;
     std::vector<QMetaObject::Connection> m_documentConnections;
     ActiveNavigationRevealContext m_pendingActiveNavigationRevealContext;
     DocumentSessionPublicImageLeafSnapshot m_imagePublicSnapshot;

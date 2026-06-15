@@ -8,7 +8,6 @@
 #include "location/imageurl.h"
 #include "navigation/mediaformatregistry.h"
 #include "navigation/navigationlogging.h"
-#include "predecode/mediapredecodecoordinator.h"
 
 #include <QAbstractListModel>
 #include <QDebug>
@@ -139,9 +138,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_mediaDeletionRuntime(std::move(dependencies.fileDeletionProvider),
           std::move(dependencies.directMediaNavigationCandidateProvider))
     , m_mediaOpenWithRuntime(std::move(dependencies.mediaOpenWithProvider))
-    , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,
-          resolveMediaPredecodeDependencies(
-              std::move(dependencies.directMediaPredecodeDependencies))))
+    , m_mediaPredecodeRuntime(owner, std::move(dependencies.directMediaPredecodeDependencies))
 {
     refreshLeafPublicSnapshots();
     connectDocuments();
@@ -155,6 +152,7 @@ DocumentSessionRuntime::~DocumentSessionRuntime()
     m_directMediaNavigationRuntime.cancel();
     m_mediaDeletionRuntime.cancel();
     cancelMediaOpenWith();
+    m_mediaPredecodeRuntime.cancel();
 }
 
 QUrl DocumentSessionRuntime::sourceUrl() const { return m_state.publicSnapshot().sourceUrl; }
@@ -399,9 +397,7 @@ bool DocumentSessionRuntime::reportVideoOutputSurfaceClaim(const QString &claimT
 
 std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
 {
-    return m_mediaPredecodeCoordinator != nullptr
-        ? m_mediaPredecodeCoordinator->findPredecodedImage(url)
-        : std::optional<PredecodedImage>();
+    return m_mediaPredecodeRuntime.findPredecodedImage(url);
 }
 
 void DocumentSessionRuntime::openPreviousMedia()
@@ -934,9 +930,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
                         m_state.setDirectMediaNavigation({}, false, {});
                         recomputePublicProjection();
                     }
-                    if (m_mediaPredecodeCoordinator != nullptr) {
-                        m_mediaPredecodeCoordinator->clear();
-                    }
+                    m_mediaPredecodeRuntime.clear();
                 }
             },
             operation);
@@ -1021,7 +1015,7 @@ void DocumentSessionRuntime::refreshDirectMediaNavigation()
             ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
         recomputePublicProjection();
         if (!directImageLoadMayUseImageDocumentSourceScope()) {
-            m_mediaPredecodeCoordinator->clear();
+            m_mediaPredecodeRuntime.clear();
         }
         return;
     }
@@ -1110,56 +1104,25 @@ void DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState(
 void DocumentSessionRuntime::scheduleMediaPredecode(
     const std::vector<DirectMediaNavigationCandidate> &candidates)
 {
-    if (!directMediaNavigationActive() || m_mediaPredecodeCoordinator == nullptr) {
-        return;
-    }
-
-    const QUrl currentUrl = activeDirectMediaCursorUrl();
-    if (currentUrl.isEmpty()) {
-        return;
-    }
-
-    m_mediaPredecodeCoordinator->schedule(MediaPredecodeCoordinator::Context {
-        currentUrl,
-        candidates,
-        displayedPredecodeImages(),
-        firstDisplayDecodeContext(),
-    });
+    m_mediaPredecodeRuntime.schedule(mediaPredecodeInput(), candidates);
 }
 
 void DocumentSessionRuntime::cacheDisplayedMediaPredecodeImages()
 {
-    if (!directMediaNavigationActive() || m_mediaPredecodeCoordinator == nullptr) {
-        return;
-    }
-
-    std::vector<DisplayedPredecodeImage> displayedImages = displayedPredecodeImages();
-    if (displayedImages.empty()) {
-        return;
-    }
-
-    m_mediaPredecodeCoordinator->cacheDisplayedImages(displayedImages);
+    m_mediaPredecodeRuntime.cacheDisplayedImages(mediaPredecodeInput());
 }
 
-std::vector<DisplayedPredecodeImage> DocumentSessionRuntime::displayedPredecodeImages() const
+DocumentSessionMediaPredecodeInput DocumentSessionRuntime::mediaPredecodeInput() const
 {
-    if (m_state.documentKind() != DocumentSessionKind::Image
-        || !activeImageUsesImageDocumentSourceScope() || !m_imageDocument.ready()) {
-        return {};
-    }
-
-    std::optional<DisplayedPredecodeImage> displayed
-        = m_imageDocument.primaryDisplayedPredecodeImage();
-    if (!displayed.has_value()) {
-        return {};
-    }
-
-    return { std::move(*displayed) };
-}
-
-ImageFirstDisplayDecodeContext DocumentSessionRuntime::firstDisplayDecodeContext() const
-{
-    return m_imageDocument.firstDisplayDecodeContext();
+    return DocumentSessionMediaPredecodeInput {
+        directMediaNavigationActive(),
+        m_state.documentKind(),
+        activeImageUsesImageDocumentSourceScope(),
+        m_imageDocument.ready(),
+        activeDirectMediaCursorUrl(),
+        m_imageDocument.primaryDisplayedPredecodeImage(),
+        m_imageDocument.firstDisplayDecodeContext(),
+    };
 }
 
 void DocumentSessionRuntime::cancelMediaDeletion()
