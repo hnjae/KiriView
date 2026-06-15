@@ -25,7 +25,8 @@ class TestImageLoadPlan : public QObject
 private Q_SLOTS:
     void localFilePlansDirectImageLoad();
     void localComicBookArchivePlansArchiveListing();
-    void localDirectoryPlansDocumentListing();
+    void unresolvedLocalDirectoryUrlPlansDirectImageLoad();
+    void resolvedLocalDirectoryScopePlansDocumentListing();
     void containerNavigationRestoresArchiveCollectionForInteriorImage();
     void displayedArchiveContextIsKeptForInteriorImage();
     void explicitKioArchiveImagePlansDirectLoad();
@@ -65,26 +66,36 @@ void TestImageLoadPlan::localComicBookArchivePlansArchiveListing()
         kiriview::OpenedCollectionScopeKind::ComicBookArchive);
 }
 
-void TestImageLoadPlan::localDirectoryPlansDocumentListing()
+void TestImageLoadPlan::unresolvedLocalDirectoryUrlPlansDirectImageLoad()
 {
-    QTemporaryDir directory;
-    QVERIFY(directory.isValid());
-
-    const QUrl directoryUrl = localUrl(directory.path());
-    const std::optional<kiriview::OpenedCollectionScopeLocation> directoryCollection
-        = kiriview::openedCollectionScopeLocationForDirectlyOpenedLocalUrl(directoryUrl);
-    QVERIFY(directoryCollection.has_value());
-
+    const QUrl directoryUrl = localUrl(QStringLiteral("/synthetic/album"));
     const kiriview::ImageLoadPlan plan
         = kiriview::imageLoadPlan(12, kiriview::ImageLoadRequest::fromUrl(directoryUrl));
 
     QCOMPARE(plan.session.id(), quint64(12));
+    QCOMPARE(plan.startEffect, kiriview::ImageLoadStartEffect::DecodeImage);
+    QCOMPARE(plan.session.imageUrl(), directoryUrl);
+    QVERIFY(plan.session.openedCollectionScope().isEmpty());
+}
+
+void TestImageLoadPlan::resolvedLocalDirectoryScopePlansDocumentListing()
+{
+    const QUrl directoryUrl = localUrl(QStringLiteral("/synthetic/album"));
+    const kiriview::OpenedCollectionScopeLocation directoryCollection
+        = kiriview::OpenedCollectionScopeLocation::fromUrls(directoryUrl,
+            kiriview::normalizedDirectoryContainerUrl(directoryUrl),
+            kiriview::OpenedCollectionScopeKind::Directory);
+
+    const kiriview::ImageLoadPlan plan
+        = kiriview::imageLoadPlan(13, kiriview::ImageLoadRequest::fromUrl(directoryUrl), {},
+            kiriview::ImageLoadResolvedSourceFacts { directoryCollection });
+
+    QCOMPARE(plan.session.id(), quint64(13));
     QCOMPARE(plan.startEffect, kiriview::ImageLoadStartEffect::LoadOpenedCollectionScopeCandidates);
     QCOMPARE(plan.session.imageUrl(), directoryUrl);
     QCOMPARE(
-        plan.session.location().openedCollectionScopeSourceUrl(), directoryCollection->fileUrl());
-    QCOMPARE(
-        plan.session.location().openedCollectionScopeRootUrl(), directoryCollection->rootUrl());
+        plan.session.location().openedCollectionScopeSourceUrl(), directoryCollection.fileUrl());
+    QCOMPARE(plan.session.location().openedCollectionScopeRootUrl(), directoryCollection.rootUrl());
     QCOMPARE(plan.session.openedCollectionScope().kind(),
         kiriview::OpenedCollectionScopeKind::Directory);
 }
