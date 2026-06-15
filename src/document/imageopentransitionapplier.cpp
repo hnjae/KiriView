@@ -227,6 +227,18 @@ QString finalErrorString(
     return state.errorString();
 }
 
+QUrl finalSourceUrl(
+    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+{
+    return delta.sourceUrl.value_or(state.sourceUrl());
+}
+
+kiriview::DisplayedImageLocation finalDisplayedLocation(
+    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+{
+    return delta.displayedLocation.value_or(state.displayedImageLocation());
+}
+
 bool finalImageOpenStateIsValid(
     const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
 {
@@ -240,7 +252,8 @@ bool finalImageOpenStateIsValid(
     case kiriview::ImageDocumentStatus::Loading:
         return loading && !hasError;
     case kiriview::ImageDocumentStatus::Ready:
-        return !loading && !hasError;
+        return !loading && !hasError && !finalSourceUrl(state, delta).isEmpty()
+            && !finalDisplayedLocation(state, delta).isEmpty();
     case kiriview::ImageDocumentStatus::Error:
         return !loading && hasError;
     }
