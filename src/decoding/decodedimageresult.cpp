@@ -24,6 +24,11 @@ const DecodedImageFailure *DecodedImageResult::failure() const
     return std::get_if<DecodedImageFailure>(&m_payload);
 }
 
+DecodedImageFailure *DecodedImageResult::failure()
+{
+    return std::get_if<DecodedImageFailure>(&m_payload);
+}
+
 const DecodedImage *DecodedImageResult::image() const
 {
     return std::get_if<DecodedImage>(&m_payload);
@@ -46,6 +51,7 @@ DecodedImageResult failedDecodedImageResult(QString errorString)
     const QString diagnosticDetail = errorString;
     return DecodedImageResult(DecodedImageFailure {
         std::move(errorString),
+        DecodedImageFailureRoute::Unknown,
         DecodedImageFailureOperation::Unknown,
         diagnosticDetail,
         DecodedImageFailureSeverity::Error,
@@ -67,6 +73,11 @@ DecodedImageResult successfulDecodedImageResult(DecodedImage image)
 }
 
 const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result)
+{
+    return result.failure();
+}
+
+DecodedImageFailure *decodedImageResultFailure(DecodedImageResult &result)
 {
     return result.failure();
 }

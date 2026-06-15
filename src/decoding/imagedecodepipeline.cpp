@@ -67,6 +67,27 @@ const char *imageDecodeHandlerKindName(kiriview::ImageDecodeHandlerKind kind)
     return "None";
 }
 
+kiriview::DecodedImageFailureRoute decodedFailureRouteForHandlerKind(
+    kiriview::ImageDecodeHandlerKind kind)
+{
+    switch (kind) {
+    case kiriview::ImageDecodeHandlerKind::Svg:
+        return kiriview::DecodedImageFailureRoute::Svg;
+    case kiriview::ImageDecodeHandlerKind::Apng:
+        return kiriview::DecodedImageFailureRoute::Apng;
+    case kiriview::ImageDecodeHandlerKind::HeifFamily:
+        return kiriview::DecodedImageFailureRoute::HeifFamily;
+    case kiriview::ImageDecodeHandlerKind::Raw:
+        return kiriview::DecodedImageFailureRoute::Raw;
+    case kiriview::ImageDecodeHandlerKind::QtRaster:
+        return kiriview::DecodedImageFailureRoute::QtRaster;
+    case kiriview::ImageDecodeHandlerKind::None:
+        return kiriview::DecodedImageFailureRoute::Unknown;
+    }
+
+    return kiriview::DecodedImageFailureRoute::Unknown;
+}
+
 const char *imageDecodeDataSourceName(kiriview::ImageDecodeDataSource source)
 {
     switch (source) {
@@ -293,12 +314,17 @@ kiriview::ImageDecodeRouterHandlers withDefaultHandlers(
 }
 
 kiriview::DecodedImageResult dispatchToHandler(const kiriview::ImageDecodeRouterHandler &handler,
-    const kiriview::ImageDecodeRouterInput &input)
+    const kiriview::ImageDecodeRouterInput &input, kiriview::ImageDecodeHandlerKind handlerKind)
 {
     if (!handler) {
         return failedReadImageDataResult();
     }
-    return handler(input);
+    kiriview::DecodedImageResult result = handler(input);
+    kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    if (failure != nullptr && failure->route == kiriview::DecodedImageFailureRoute::Unknown) {
+        failure->route = decodedFailureRouteForHandlerKind(handlerKind);
+    }
+    return result;
 }
 
 const kiriview::ImageDecodeRouterHandler &emptyHandler()
@@ -392,7 +418,8 @@ DecodedImageResult ImageDecodeRouterRuntime::execute(
         route.qtRasterFormat,
     };
 
-    return dispatchToHandler(handlerForRoute(m_handlers, route.handlerKind), input);
+    return dispatchToHandler(
+        handlerForRoute(m_handlers, route.handlerKind), input, route.handlerKind);
 }
 
 ImageDecodeRouter::ImageDecodeRouter(ImageDecodeRouterHandlers handlers,

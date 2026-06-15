@@ -30,6 +30,7 @@ void TestDecodedImageResult::exposesFailurePayload()
     const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("decode failed"));
+    QCOMPARE(failure->route, kiriview::DecodedImageFailureRoute::Unknown);
     QCOMPARE(failure->operation, kiriview::DecodedImageFailureOperation::Unknown);
     QCOMPARE(failure->diagnosticDetail, QStringLiteral("decode failed"));
     QCOMPARE(failure->severity, kiriview::DecodedImageFailureSeverity::Error);

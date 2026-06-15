@@ -16,6 +16,15 @@
 #include <variant>
 
 namespace kiriview {
+enum class DecodedImageFailureRoute {
+    Unknown,
+    Svg,
+    Apng,
+    HeifFamily,
+    Raw,
+    QtRaster,
+};
+
 enum class DecodedImageFailureOperation {
     Unknown,
     OpenStaticImageSource,
@@ -29,6 +38,7 @@ enum class DecodedImageFailureSeverity {
 
 struct DecodedImageFailure {
     QString errorString;
+    DecodedImageFailureRoute route = DecodedImageFailureRoute::Unknown;
     DecodedImageFailureOperation operation = DecodedImageFailureOperation::Unknown;
     QString diagnosticDetail;
     DecodedImageFailureSeverity severity = DecodedImageFailureSeverity::Error;
@@ -86,6 +96,7 @@ public:
     explicit DecodedImageResult(DecodedImage image);
 
     const DecodedImageFailure *failure() const;
+    DecodedImageFailure *failure();
     const DecodedImage *image() const;
     DecodedImage *image();
     std::optional<DecodedImage> takeImage() &&;
@@ -106,6 +117,7 @@ template <typename Image> DecodedImageResult successfulDecodedImageResult(Image 
 const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result);
 const DecodedImage *decodedImageResultImage(const DecodedImageResult &result);
 DecodedImage *decodedImageResultImage(DecodedImageResult &result);
+DecodedImageFailure *decodedImageResultFailure(DecodedImageResult &result);
 const EmbeddedMetadata &decodedImageEmbeddedMetadata(const DecodedImage &image);
 void setDecodedImageEmbeddedMetadata(DecodedImage &image, EmbeddedMetadata metadata);
 template <typename Image> const Image *decodedImageResultImageAs(const DecodedImageResult &result)

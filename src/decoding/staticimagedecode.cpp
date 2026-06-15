@@ -22,6 +22,7 @@ kiriview::DecodedImageResult failedStaticDecodedImageResult(
     const QString message = errorStringValue(errorString);
     return kiriview::failedDecodedImageResult(kiriview::DecodedImageFailure {
         message,
+        kiriview::DecodedImageFailureRoute::Unknown,
         operation,
         message,
         kiriview::DecodedImageFailureSeverity::Error,
