@@ -38,6 +38,7 @@ private Q_SLOTS:
     void qmlDoesNotExposeFixedViewerScanCommandRoutes();
     void videoSeekShortcutsRouteThroughApplicationRuntime();
     void applicationFacadeDoesNotOwnFixedViewerCommandRouting();
+    void applicationCommandRouterPortsAreGroupedByOwner();
     void applicationFacadeDoesNotOwnActionCommandSwitch();
     void sessionPublicProjectionHasNoPartialUpdateBackdoor();
     void sessionPublicProjectionDoesNotSampleLeafFacadesWhileApplying();
@@ -624,6 +625,32 @@ void TestArchitectureBoundaries::applicationFacadeDoesNotOwnFixedViewerCommandRo
     QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouter")));
     QVERIFY(implementation.contains(QStringLiteral("ApplicationCommandRouter")));
     QVERIFY(coreSources.contains(QStringLiteral("src/application/applicationcommandrouter.cpp")));
+}
+
+void TestArchitectureBoundaries::applicationCommandRouterPortsAreGroupedByOwner()
+{
+    const QString header
+        = readProjectFile(QStringLiteral("src/application/applicationcommandrouter.h"));
+
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterShellPorts")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterSessionPorts")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterImageDocumentPorts")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterImagePresentationPorts")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterPanelPorts")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterWindowPorts")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterHelpPorts")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterVideoPorts")));
+
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterShellPorts shell")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterSessionPorts session")));
+    QVERIFY(header.contains(
+        QStringLiteral("ApplicationCommandRouterImageDocumentPorts imageDocument")));
+    QVERIFY(header.contains(
+        QStringLiteral("ApplicationCommandRouterImagePresentationPorts imagePresentation")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterPanelPorts panel")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterWindowPorts window")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterHelpPorts help")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouterVideoPorts video")));
 }
 
 void TestArchitectureBoundaries::applicationFacadeDoesNotOwnActionCommandSwitch()
