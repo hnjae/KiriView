@@ -239,6 +239,19 @@ kiriview::DisplayedImageLocation finalDisplayedLocation(
     return delta.displayedLocation.value_or(state.displayedImageLocation());
 }
 
+kiriview::ImageDocumentPageKind finalSourceKind(
+    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+{
+    return delta.sourceKind.value_or(state.sourceKind());
+}
+
+bool finalUnsupportedOpenedCollectionVideo(
+    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+{
+    return delta.unsupportedOpenedCollectionVideo.value_or(
+        state.unsupportedOpenedCollectionVideo());
+}
+
 bool finalImageOpenStateIsValid(
     const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
 {
@@ -253,7 +266,9 @@ bool finalImageOpenStateIsValid(
         return loading && !hasError;
     case kiriview::ImageDocumentStatus::Ready:
         return !loading && !hasError && !finalSourceUrl(state, delta).isEmpty()
-            && !finalDisplayedLocation(state, delta).isEmpty();
+            && !finalDisplayedLocation(state, delta).isEmpty()
+            && (finalSourceKind(state, delta) != kiriview::ImageDocumentPageKind::Video
+                || finalUnsupportedOpenedCollectionVideo(state, delta));
     case kiriview::ImageDocumentStatus::Error:
         return !loading && hasError;
     }
