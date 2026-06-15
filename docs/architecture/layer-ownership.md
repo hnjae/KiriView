@@ -22,6 +22,7 @@ C++ Qt/KDE runtime code owns platform integration and side effects:
 - OS and desktop-environment observers such as system-memory discovery and power-saver portal state.
 - `QAction` identity, KDE action collections, configured shortcut state, and shortcut persistence.
 - KIO jobs, KDE settings, dialogs, notifications, file operations, and runtime integration.
+- Localized user-facing strings for dialogs, menus, actions, notifications, and other UI surfaces. Capability modules may expose extension or MIME-type lists, but they must not own localized file-dialog labels.
 - Image presentation, provider-backed display publication, and async job orchestration.
 - The image presentation runtime as the single owner of active image presentation state: mode, reading direction, transition phase, zoom, rotation, logical viewport frame, visible source rect, display-source projections, page visibility, restoration snapshots, and display refinement demand.
 - Image page surface owners as resource owners for display entries, animation playback, image revision, display-image pin leases, previous-frame retention, predecode facts, and load lifetimes only.
