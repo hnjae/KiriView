@@ -16,6 +16,7 @@
 #include <QSizeF>
 #include <QTemporaryDir>
 #include <QTest>
+#include <cmath>
 #include <memory>
 #include <optional>
 
@@ -29,6 +30,9 @@ private Q_SLOTS:
     void animatedFixturePlaybackUpdatesPrimaryDisplaySource_data();
     void animatedFixturePlaybackUpdatesPrimaryDisplaySource();
     void openedCollectionScopeActiveFollowsDisplayedLocation();
+    void manualZoomAtCenterKeepsCenterAnchored();
+    void viewportPanAndScanCommandsUpdateContentPosition();
+    void nextDisplayedImageCanStartAtFinalScanPosition();
 };
 
 namespace {
@@ -38,6 +42,7 @@ using kiriview::TestSupport::imageDocumentRuntimeDependencyOverridesFor;
 using kiriview::TestSupport::localUrl;
 using kiriview::TestSupport::ManualImageDataLoader;
 using kiriview::TestSupport::staticImageDataDecoder;
+using kiriview::TestSupport::testImage;
 
 using FakeCandidateProvider = kiriview::TestSupport::FakeImageDocumentPageCandidateProvider;
 
@@ -47,6 +52,18 @@ std::unique_ptr<KiriDocumentSession> createSession(
     kiriview::KiriDocumentSessionDependencies dependencies;
     dependencies.imageDocument = imageDocumentRuntimeDependencyOverridesFor(
         candidateProvider, dataLoader, staticImageDataDecoder());
+    auto session = std::make_unique<KiriDocumentSession>(std::move(dependencies), parent);
+    session->imageDocument()->setViewportSize(QSizeF(400.0, 300.0));
+    return session;
+}
+
+std::unique_ptr<KiriDocumentSession> createSession(QObject *parent,
+    FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
+    const QImage &decodedImage)
+{
+    kiriview::KiriDocumentSessionDependencies dependencies;
+    dependencies.imageDocument = imageDocumentRuntimeDependencyOverridesFor(
+        candidateProvider, dataLoader, staticImageDataDecoder(decodedImage));
     auto session = std::make_unique<KiriDocumentSession>(std::move(dependencies), parent);
     session->imageDocument()->setViewportSize(QSizeF(400.0, 300.0));
     return session;
@@ -75,6 +92,28 @@ void loadReady(KiriDocumentSession &session, ManualImageDataLoader &dataLoader,
 
     QTRY_COMPARE(document.status(), KiriImageDocument::Status::Ready);
     QVERIFY(scopeSpy.count() > 0);
+}
+
+bool approximatelyEqual(qreal left, qreal right) { return std::abs(left - right) < 0.001; }
+
+void comparePoint(const QPointF &actual, const QPointF &expected)
+{
+    QVERIFY2(approximatelyEqual(actual.x(), expected.x()),
+        qPrintable(QStringLiteral("x=%1 expected=%2").arg(actual.x()).arg(expected.x())));
+    QVERIFY2(approximatelyEqual(actual.y(), expected.y()),
+        qPrintable(QStringLiteral("y=%1 expected=%2").arg(actual.y()).arg(expected.y())));
+}
+
+std::unique_ptr<KiriDocumentSession> createReadyLargeImageSession(QObject *parent,
+    FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
+    const QUrl &imageUrl)
+{
+    candidateProvider.setDirectoryImages(
+        localUrl(QStringLiteral("/images/")), { imageDocumentPageCandidate(imageUrl) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSession(parent, candidateProvider, dataLoader, testImage(800, 800));
+    loadReady(*session, dataLoader, imageUrl, imageUrl);
+    return session;
 }
 }
 
@@ -237,6 +276,86 @@ void TestKiriImageDocument::openedCollectionScopeActiveFollowsDisplayedLocation(
 
     loadReady(*archiveEntrySession, dataLoader, openedCollectionEntryUrl, openedCollectionEntryUrl);
     QVERIFY(!archiveEntrySession->imageDocument()->openedCollectionScopeActive());
+}
+
+void TestKiriImageDocument::manualZoomAtCenterKeepsCenterAnchored()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    std::unique_ptr<KiriDocumentSession> session
+        = createReadyLargeImageSession(this, candidateProvider, dataLoader, imageUrl);
+    KiriImageDocument &document = *session->imageDocument();
+
+    QCOMPARE(document.displaySize(), QSizeF(300.0, 300.0));
+    QCOMPARE(document.viewportContentPosition(), QPointF());
+
+    QVERIFY(document.requestManualZoomPercent(100.0));
+
+    QCOMPARE(document.zoomMode(), KiriImageDocument::ZoomMode::Manual);
+    QVERIFY(approximatelyEqual(document.zoomPercent(), 100.0));
+    QCOMPARE(document.displaySize(), QSizeF(800.0, 800.0));
+    comparePoint(document.viewportContentPosition(), QPointF(200.0, 250.0));
+}
+
+void TestKiriImageDocument::viewportPanAndScanCommandsUpdateContentPosition()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    std::unique_ptr<KiriDocumentSession> session
+        = createReadyLargeImageSession(this, candidateProvider, dataLoader, imageUrl);
+    KiriImageDocument &document = *session->imageDocument();
+
+    QVERIFY(document.requestActualSizeAtCenter());
+    QVERIFY(document.viewportPannable());
+    QVERIFY(document.viewportHorizontallyPannable());
+    QVERIFY(document.viewportVerticallyPannable());
+
+    QVERIFY(document.requestViewportPanToInitialScanPosition());
+    QCOMPARE(document.viewportContentPosition(), QPointF());
+
+    QVERIFY(document.requestViewportPanBy(125.0, 75.0));
+    comparePoint(document.viewportContentPosition(), QPointF(125.0, 75.0));
+
+    QVERIFY(document.requestViewportPanToFinalScanPosition());
+    comparePoint(document.viewportContentPosition(), QPointF(400.0, 500.0));
+}
+
+void TestKiriImageDocument::nextDisplayedImageCanStartAtFinalScanPosition()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstImageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondImageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+        { imageDocumentPageCandidate(firstImageUrl), imageDocumentPageCandidate(secondImageUrl) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSession(this, candidateProvider, dataLoader, testImage(800, 800));
+    KiriImageDocument &document = *session->imageDocument();
+
+    loadReady(*session, dataLoader, archiveUrl, firstImageUrl);
+    QVERIFY(document.requestActualSizeAtCenter());
+    QVERIFY(document.requestViewportPanToInitialScanPosition());
+    document.requestNextDisplayedImageStartToFinalScanPosition();
+
+    document.openNextSinglePage();
+    QVERIFY(dataLoader.finishOldestActiveLoadForUrl(secondImageUrl, QByteArrayLiteral("ok")));
+    QTRY_COMPARE(document.status(), KiriImageDocument::Status::Ready);
+    QCOMPARE(document.displayedUrl(), secondImageUrl);
+
+    QVERIFY(document.requestDisplayedImageInitialContentPosition());
+
+    QCOMPARE(document.zoomMode(), KiriImageDocument::ZoomMode::Manual);
+    QVERIFY(approximatelyEqual(document.zoomPercent(), 100.0));
+    comparePoint(document.viewportContentPosition(), QPointF(400.0, 500.0));
 }
 
 QTEST_GUILESS_MAIN(TestKiriImageDocument)
