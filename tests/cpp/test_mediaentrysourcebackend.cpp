@@ -161,6 +161,7 @@ private Q_SLOTS:
     void cb7ImageEntryDoesNotReturnThumbnailMetadata();
     void unsupportedCollectionEntriesDoNotReturnThumbnailMetadata();
     void readingUrlOutsideArchiveReturnsNotFound();
+    void sourceErrorsPreserveBackendOperationAndIdentity();
     void missingEmptyAndInvalidArchivesReportExpectedResults();
 };
 
@@ -802,6 +803,51 @@ void TestMediaEntrySourceBackend::readingUrlOutsideArchiveReturnsNotFound()
 
     QVERIFY(error != nullptr);
     QVERIFY(!error->errorString.isEmpty());
+}
+
+void TestMediaEntrySourceBackend::sourceErrorsPreserveBackendOperationAndIdentity()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    const kiriview::OpenedCollectionScopeLocation missingArchive
+        = kiriview::OpenedCollectionScopeLocation::fromUrls(
+            localUrl(dir.filePath(QStringLiteral("missing.cbz"))),
+            QUrl(QStringLiteral("zip:///missing.cbz/")),
+            kiriview::OpenedCollectionScopeKind::ComicBookArchive);
+    const kiriview::MediaEntrySourceCandidatesResult missingArchiveResult
+        = kiriview::loadMediaEntrySourceCandidates(missingArchive);
+    const kiriview::MediaEntrySourceError *missingArchiveError
+        = mediaEntrySourceError(missingArchiveResult);
+
+    QVERIFY(missingArchiveError != nullptr);
+    QCOMPARE(missingArchiveError->backend, kiriview::MediaEntrySourceBackendKind::KArchive);
+    QCOMPARE(missingArchiveError->operation, kiriview::MediaEntrySourceOperation::OpenCollection);
+    QCOMPARE(missingArchiveError->collectionUrl, missingArchive.fileUrl());
+    QVERIFY(missingArchiveError->entryPath.isEmpty());
+    QVERIFY(!missingArchiveError->errorString.isEmpty());
+    QVERIFY(!missingArchiveError->diagnosticDetail.isEmpty());
+
+    QDir root(dir.path());
+    QVERIFY(root.mkpath(QStringLiteral("directory")));
+    const std::optional<kiriview::OpenedCollectionScopeLocation> directoryCollection
+        = kiriview::openedCollectionScopeLocationForDirectlyOpenedLocalUrl(
+            localUrl(dir.filePath(QStringLiteral("directory"))));
+    QVERIFY(directoryCollection.has_value());
+    const QUrl missingEntryUrl
+        = archivePageUrl(directoryCollection->rootUrl(), QStringLiteral("missing.png"));
+    const kiriview::MediaEntrySourceImageDataResult missingEntryResult
+        = kiriview::loadMediaEntrySourceImageData(*directoryCollection, missingEntryUrl);
+    const kiriview::MediaEntrySourceError *missingEntryError
+        = mediaEntrySourceDataError(missingEntryResult);
+
+    QVERIFY(missingEntryError != nullptr);
+    QCOMPARE(missingEntryError->backend, kiriview::MediaEntrySourceBackendKind::Directory);
+    QCOMPARE(missingEntryError->operation, kiriview::MediaEntrySourceOperation::ReadImageData);
+    QCOMPARE(missingEntryError->collectionUrl, directoryCollection->fileUrl());
+    QCOMPARE(missingEntryError->entryPath, QStringLiteral("missing.png"));
+    QVERIFY(!missingEntryError->errorString.isEmpty());
+    QVERIFY(!missingEntryError->diagnosticDetail.isEmpty());
 }
 
 void TestMediaEntrySourceBackend::missingEmptyAndInvalidArchivesReportExpectedResults()
