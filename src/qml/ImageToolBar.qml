@@ -90,6 +90,7 @@ Controls.ToolBar {
             const center = button.mapToItem(actionToolBar, button.width / 2, button.height / 2);
             return center.x >= 0 && center.x <= actionToolBar.width && center.y >= 0 && center.y <= actionToolBar.height;
         } catch (error) {
+            console.warn("KiriView ImageToolBar application menu button mapping failed:", error && error.message ? error.message : String(error));
             return false;
         }
     }
