@@ -39,12 +39,12 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ### Finding: Session-to-leaf document ports expose leaf internals as wide callback bags
 
-- Evidence: `src/session/documentsessiondocumentports.h:31-83` exposes 17 image signal connectors plus source/displayed URL/opened collection/status/deletion/navigation/zoom/presentation/metadata/predecode getters and commands. `src/session/documentsessiondocumentports.h:86-114` lists video getters and commands. `src/facade/kiridocumentsession.cpp:252-340` manually maps facade properties/signals. `src/session/documentsessionruntime.cpp:624-764` connects individual signals and samples individual getters to rebuild snapshots.
-- Current state: The port is explicit, but it exposes leaf object shape rather than cohesive snapshot/events.
+- Evidence: `src/session/documentsessiondocumentports.h:31-101` exposes 17 image signal connectors plus an image snapshot and commands. `src/session/documentsessiondocumentports.h:104-132` lists video signal connectors, a video snapshot, and commands. `src/facade/kiridocumentsession.cpp:252-371` manually maps facade properties/signals. `src/session/documentsessionruntime.cpp:624-764` still connects individual leaf signals to rebuild public snapshots.
+- Current state: Leaf read facts now cross as cohesive `DocumentSessionImageDocumentSnapshot` and `DocumentSessionVideoDocumentSnapshot` callbacks, and `DocumentSessionRuntime` refreshes cached public leaf snapshots from those callbacks instead of sampling individual leaf getters. Individual notification connectors still expose leaf event shape; command/effect callbacks remain intentionally narrow for source routing, page navigation, deletion, video stopping, and video-output attachment.
 - Design concern: Adding or moving one projected fact requires coordinated edits in the leaf facade adapter, port struct, signal wiring, snapshot sampling, and projection code.
 - Correct end state: Leaf documents should expose session-facing snapshot families plus narrow command ports. The session should consume values such as `ImageDocumentSessionSnapshot` and `VideoDocumentSessionSnapshot` and receive snapshot-changed events.
-- Suggested migration: Add snapshot getters/events behind the existing port and gradually move fields into snapshot structs. Once covered by tests, replace individual signal connectors with snapshot-family events.
-- Acceptance criteria: `refreshImagePublicSnapshot()` and `refreshVideoPublicSnapshot()` no longer sample every leaf getter directly; adding a projected leaf fact is localized to one snapshot type and one leaf owner.
+- Suggested migration: Replace individual signal connectors with snapshot-family events and keep command/effect ports narrow.
+- Acceptance criteria: Snapshot-change publication replaces the individual leaf signal connectors; adding a projected leaf fact remains localized to one snapshot type, one leaf owner, and the snapshot-to-public projection mapping.
 - Priority: P1
 
 ### Finding: `ImageDocumentRuntimeControllers` hides a peer-controller callback mesh
@@ -118,10 +118,10 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ### Finding: Feature removal cost is concentrated in `DocumentSessionRuntime` and wide ports
 
 - Evidence: Same evidence as the `DocumentSessionRuntime` convergence and session leaf port findings above in `src/session/documentsessionruntime.*` and `src/session/documentsessiondocumentports.h`.
-- Current state: Video-output claim lifecycle, direct-media deletion lifecycle, and direct-media predecode coordinator lifecycle now have focused subowners, while thumbnail strip, direct-media routing, broad leaf ports, and session projection/routing remain tied to the same session runtime.
-- Design concern: Removing a feature becomes a session orchestration/projection/leaf-sampling change rather than a feature-owner change.
+- Current state: Video-output claim lifecycle, direct-media deletion lifecycle, and direct-media predecode coordinator lifecycle now have focused subowners, and session-facing image/video leaf reads now cross cohesive snapshots. Thumbnail strip, direct-media routing, individual leaf notification hooks, leaf command/effect callbacks, and session projection/routing remain tied to the same session runtime.
+- Design concern: Removing a feature becomes a session orchestration/projection/leaf-event change rather than a feature-owner change.
 - Correct end state: Feature lifecycle should move into removable subowners, while `DocumentSessionState` remains the public projection owner.
-- Suggested migration: Continue extracting small effect-boundary features, proceeding next to thumbnails, direct navigation, or broad leaf-port snapshot families.
+- Suggested migration: Continue extracting small effect-boundary features, proceeding next to thumbnails, direct navigation, or leaf snapshot-change event families.
 - Acceptance criteria: Removing a feature does not require unrelated route/projection logic changes; feature subowner tests run without the full session runtime.
 - Priority: P1
 
@@ -137,7 +137,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ## Recommended Correct End-State Architecture
 
-- Ownership boundaries: `DocumentSessionState` owns public mixed-media projection and snapshot publication. `DocumentSessionRuntime` orchestrates named subowners for route, direct-media navigation, deletion, video-output, thumbnails, and predecode through typed results/effects.
+- Ownership boundaries: `DocumentSessionState` owns public mixed-media projection and snapshot publication. `DocumentSessionRuntime` orchestrates named subowners for route, direct-media navigation, deletion, video-output, thumbnails, and predecode through typed results/effects, and reads leaf document facts through cohesive session snapshots.
 - Domain rules: The image-open state machine lives in one Rust policy or clearly named C++ domain-policy boundary. UI and downstream executors consume validated plans.
 - State definition: Image document state changes pass through named transitions or a validating final-state boundary.
 - Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Source-load planning should pass through typed plans before providers run.
