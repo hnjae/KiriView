@@ -35,6 +35,7 @@ class TestImagePageSurfaceController : public QObject
 
 private Q_SLOTS:
     void providerEntriesAreReleasedOnSupersessionAndClear();
+    void setImageWithoutProviderPublishesDisplayErrorSnapshot();
     void visibleProjectionPinsAndPrioritizesProviderEntry();
     void shadowThumbnailPreviewEntryIsReleasedOnDecodedReplacement();
     void rawShadowThumbnailPreviewEntryIsReleasedOnDecodedReplacement();
@@ -371,6 +372,21 @@ void TestImagePageSurfaceController::providerEntriesAreReleasedOnSupersessionAnd
     QVERIFY(!store->entry(entryId(second)).has_value());
     QCOMPARE(
         controller.snapshot().displaySource.status, kiriview::ImageDisplaySourceStatus::Missing);
+}
+
+void TestImagePageSurfaceController::setImageWithoutProviderPublishesDisplayErrorSnapshot()
+{
+    kiriview::ImagePageSurfaceController controller(this, {}, cacheBudgets());
+
+    controller.setImage(kiriview::TestSupport::testImage(QSize(8, 4)), false);
+
+    const kiriview::ImagePresentationPageSlotSnapshot snapshot = controller.snapshot();
+    QVERIFY(snapshot.hasImage);
+    QCOMPARE(snapshot.imageSize, QSize(8, 4));
+    QVERIFY(snapshot.displaySource.providerUrl.isEmpty());
+    QCOMPARE(snapshot.displaySource.originalSize, QSize(8, 4));
+    QCOMPARE(snapshot.displaySource.rasterSize, QSize(8, 4));
+    QCOMPARE(snapshot.displaySource.status, kiriview::ImageDisplaySourceStatus::Error);
 }
 
 void TestImagePageSurfaceController::visibleProjectionPinsAndPrioritizesProviderEntry()
