@@ -27,6 +27,7 @@ class TestMediaPredecodeDependencies : public QObject
 
 private Q_SLOTS:
     void defaultsFillRuntimeProvidersAndBudget();
+    void defaultBudgetUsesInjectedSystemMemorySnapshot();
     void explicitDependenciesArePreserved();
 };
 
@@ -42,6 +43,18 @@ void TestMediaPredecodeDependencies::defaultsFillRuntimeProvidersAndBudget()
     QVERIFY(dependencies.timerScheduler.singleShotTimer);
     QVERIFY(dependencies.cacheByteBudget > 0);
     QVERIFY(dependencies.cacheByteBudget <= kiriview::predecodeCachePreferredByteBudget());
+}
+
+void TestMediaPredecodeDependencies::defaultBudgetUsesInjectedSystemMemorySnapshot()
+{
+    constexpr qsizetype physicalByteSize = 1024 * 1024 * 1024;
+    kiriview::MediaPredecodeDependencyOverrides overrides;
+    overrides.systemMemorySnapshot = kiriview::SystemMemorySnapshot { physicalByteSize };
+
+    kiriview::MediaPredecodeDependencies dependencies
+        = kiriview::resolveMediaPredecodeDependencies(std::move(overrides));
+
+    QCOMPARE(dependencies.cacheByteBudget, physicalByteSize / 8);
 }
 
 void TestMediaPredecodeDependencies::explicitDependenciesArePreserved()

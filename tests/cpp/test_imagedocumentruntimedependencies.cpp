@@ -38,6 +38,7 @@ class TestImageDocumentRuntimeDependencies : public QObject
 private Q_SLOTS:
     void defaultDependenciesUseMediaEntrySourceStore();
     void sharedDisplayStoreDefaultBudgetMatchesImageDocumentBudget();
+    void cacheBudgetsUseInjectedSystemMemorySnapshot();
     void partialNonSourceOverridesStillUseMediaEntrySourceStore();
     void customMediaEntrySourceFactoryWrapsOpenedCollectionProviders();
     void explicitOpenedCollectionProvidersAvoidMediaEntrySourceStore();
@@ -77,6 +78,20 @@ void TestImageDocumentRuntimeDependencies::
         = kiriview::sharedDisplayImageStore();
 
     QCOMPARE(sharedStore->byteBudget(), documentBudgets.displayImageCacheByteBudget);
+}
+
+void TestImageDocumentRuntimeDependencies::cacheBudgetsUseInjectedSystemMemorySnapshot()
+{
+    constexpr qsizetype physicalByteSize = 1024 * 1024 * 1024;
+    kiriview::ImageDocumentRuntimeDependencyOverrides dependencies;
+    dependencies.systemMemorySnapshot = kiriview::SystemMemorySnapshot { physicalByteSize };
+
+    kiriview::ImageDocumentRuntimeDependencies resolved
+        = kiriview::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
+
+    QCOMPARE(resolved.cacheBudgets.predecodeCacheByteBudget, physicalByteSize / 8);
+    QCOMPARE(resolved.cacheBudgets.displayImageCacheByteBudget, physicalByteSize / 16);
+    QCOMPARE(resolved.cacheBudgets.thumbnailCacheByteBudget, physicalByteSize / 64);
 }
 
 void TestImageDocumentRuntimeDependencies::partialNonSourceOverridesStillUseMediaEntrySourceStore()

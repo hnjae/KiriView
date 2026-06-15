@@ -13,6 +13,7 @@
 #include "metadata/embeddedmetadata.h"
 #include "navigation/directmedianavigationmodel.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
+#include "rendering/displayimagestore.h"
 #include "session/activenavigationthumbnailmodel.h"
 #include "session/thumbnailimagestore.h"
 
@@ -542,6 +543,7 @@ private Q_SLOTS:
     void videoActiveNavigationExposesCurrentNumberAndCount();
     void initialDirectImagePredecodeUsesRequestedMediaCursor();
     void directImagePredecodeUsesSessionDependencyOverrides();
+    void composedDependenciesConfigureSharedProviderStoreBudgetsFromSnapshot();
     void directImagePredecodeDoesNotUseImageDocumentPageCandidates();
     void staleDirectMediaNavigationCandidateCompletionCannotPublishForNewSource();
     void nextMediaFromVideoCanRouteToImageWithoutUsingImageDocumentPageNavigation();
@@ -2512,6 +2514,19 @@ void TestKiriDocumentSession::directImagePredecodeUsesSessionDependencyOverrides
     QTRY_COMPARE(directMediaPredecodeDataLoader.loadCount(), std::size_t(1));
     QCOMPARE(directMediaPredecodeDataLoader.frontLoad().url, nextImage);
     QCOMPARE(imageDataLoader.loadCount(), std::size_t(1));
+}
+
+void TestKiriDocumentSession::composedDependenciesConfigureSharedProviderStoreBudgetsFromSnapshot()
+{
+    constexpr qsizetype physicalByteSize = 1024 * 1024 * 1024;
+    kiriview::KiriDocumentSessionDependencies dependencies;
+    dependencies.imageDocument.systemMemorySnapshot
+        = kiriview::SystemMemorySnapshot { physicalByteSize };
+
+    [[maybe_unused]] KiriDocumentSession session(std::move(dependencies));
+
+    QCOMPARE(kiriview::sharedDisplayImageStore()->byteBudget(), physicalByteSize / 16);
+    QCOMPARE(kiriview::sharedThumbnailImageStore()->byteBudget(), physicalByteSize / 64);
 }
 
 void TestKiriDocumentSession::directImagePredecodeDoesNotUseImageDocumentPageCandidates()
