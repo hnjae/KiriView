@@ -229,11 +229,10 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ## Suggested Refactoring Sequence
 
-1. Add characterization tests around current image/video failure messages.
-2. Isolate core domain logic from external effects: inject system memory facts for cache budget resolution.
-3. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
-4. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics, then media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
-5. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
+1. Isolate core domain logic from external effects: inject system memory facts for cache budget resolution.
+2. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
+3. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics, then media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
+4. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
 
 ## Things Not To Change Yet
 
