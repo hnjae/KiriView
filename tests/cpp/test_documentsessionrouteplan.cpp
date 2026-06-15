@@ -33,6 +33,41 @@ template <typename Operation> bool hasOperation(const kiriview::DocumentSessionR
 
     return false;
 }
+
+bool isPublicationOperation(const kiriview::DocumentSessionRouteOperation &operation)
+{
+    return std::holds_alternative<kiriview::RecomputePublicProjectionRouteOperation>(operation);
+}
+
+bool isFollowUpOperation(const kiriview::DocumentSessionRouteOperation &operation)
+{
+    return std::holds_alternative<kiriview::RefreshDirectMediaNavigationAfterRoutingRouteOperation>(
+               operation)
+        || std::holds_alternative<kiriview::ClearMediaPredecodeRouteOperation>(operation);
+}
+
+void verifyRoutePhaseOrder(const kiriview::DocumentSessionRoutePlan &plan)
+{
+    bool published = false;
+    bool followUpStarted = false;
+
+    for (const kiriview::DocumentSessionRouteOperation &operation : plan.operations) {
+        if (isPublicationOperation(operation)) {
+            QVERIFY(!followUpStarted);
+            published = true;
+            continue;
+        }
+
+        if (isFollowUpOperation(operation)) {
+            QVERIFY(published);
+            followUpStarted = true;
+            continue;
+        }
+
+        QVERIFY(!published);
+        QVERIFY(!followUpStarted);
+    }
+}
 }
 
 class TestDocumentSessionRoutePlan : public QObject
@@ -53,6 +88,7 @@ private Q_SLOTS:
     void deletedImageFallbackRoutesAfterClearingImageDocument();
     void deletedVideoFallbackRoutesFromEmptySession();
     void deletedMediaWithoutFallbackClearsNavigationAndPredecode();
+    void routePlansKeepMutationPublicationFollowUpOrder();
 };
 
 void TestDocumentSessionRoutePlan::emptyUrlProducesEmptyClearPlan()
@@ -319,6 +355,22 @@ void TestDocumentSessionRoutePlan::deletedMediaWithoutFallbackClearsNavigationAn
     QVERIFY(operationAt<kiriview::ClearSourceIdentityRouteOperation>(plan, 5) != nullptr);
     QVERIFY(operationAt<kiriview::RecomputePublicProjectionRouteOperation>(plan, 6) != nullptr);
     QVERIFY(operationAt<kiriview::ClearMediaPredecodeRouteOperation>(plan, 7) != nullptr);
+}
+
+void TestDocumentSessionRoutePlan::routePlansKeepMutationPublicationFollowUpOrder()
+{
+    verifyRoutePhaseOrder(kiriview::documentSessionRoutePlanForSourceUrl(
+        QUrl(), kiriview::DocumentSessionKind::Video));
+    verifyRoutePhaseOrder(kiriview::documentSessionRoutePlanForSourceUrl(
+        localUrl(QStringLiteral("/media/page.png")), kiriview::DocumentSessionKind::Image));
+    verifyRoutePhaseOrder(kiriview::documentSessionRoutePlanForSourceUrl(
+        localUrl(QStringLiteral("/media/clip.mp4")), kiriview::DocumentSessionKind::Image));
+    verifyRoutePhaseOrder(kiriview::documentSessionRoutePlanForSourceUrl(
+        localUrl(QStringLiteral("/books/")), kiriview::DocumentSessionKind::Video));
+    verifyRoutePhaseOrder(kiriview::documentSessionRoutePlanAfterMediaDeletion(
+        kiriview::DocumentSessionKind::Image, localUrl(QStringLiteral("/media/fallback.png"))));
+    verifyRoutePhaseOrder(kiriview::documentSessionRoutePlanAfterMediaDeletion(
+        kiriview::DocumentSessionKind::Video, std::nullopt));
 }
 
 QTEST_GUILESS_MAIN(TestDocumentSessionRoutePlan)
