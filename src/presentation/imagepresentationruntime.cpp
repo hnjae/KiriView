@@ -756,6 +756,11 @@ ImageDisplaySourceProjection ImagePresentationRuntime::displaySourceProjection(
         = snapshot.mode == ImagePresentationMode::SinglePage ? snapshot.rotationDegrees : 0;
     projection.retentionStatus = slot.displaySource.retentionStatus;
     projection.retainWhileLoadingEligible = slot.displaySource.retainWhileLoadingEligible;
+    if (projection.providerUrl.isEmpty() && projection.status == ImageDisplaySourceStatus::Ready) {
+        projection.status = ImageDisplaySourceStatus::Error;
+        projection.cacheEnabled = false;
+        projection.loadAcknowledgmentRequired = false;
+    }
 
     if (snapshot.mode == ImagePresentationMode::SinglePage) {
         projection.displaySize = snapshot.zoom.displaySize;
