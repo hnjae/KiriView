@@ -28,6 +28,8 @@ QString qtRasterFailureOperationName(kiriview::DecodedImageFailureOperation oper
         return QStringLiteral("decode blocking display image");
     case kiriview::DecodedImageFailureOperation::DecodeAnimationOpen:
         return QStringLiteral("decode animation open");
+    case kiriview::DecodedImageFailureOperation::DecodeRawImage:
+        return QStringLiteral("decode raw image");
     }
     return QStringLiteral("unknown");
 }
