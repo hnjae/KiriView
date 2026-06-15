@@ -16,6 +16,8 @@ Worker-backed owners must receive scheduling through an injectable dependency po
 
 Default worker-backed providers filled from a dependency struct must capture that struct's resolved scheduler when one is present. Resolving a default data loader, opened-collection candidate loader, thumbnail cache lookup, or thumbnail generation provider must not silently bypass the scheduler dependency carried by the consuming runtime.
 
+The `src/async/` module owns reusable callback delivery, cancelable job wrappers, operation-state helpers, directory-listing provider contracts, and worker scheduling primitives. Default domain loaders should live with the owning domain: image decode data loading belongs to decoding, page-candidate loading belongs to navigation, opened-collection byte access belongs to archive/media-entry owners, and thumbnail byte or cache work belongs to thumbnail/runtime adapters.
+
 Session runtime dependencies own active-navigation thumbnail worker scheduling. If the session resolves default thumbnail lookup or generation providers, it must bind them to the session's thumbnail worker scheduler before constructing the thumbnail runtime.
 
 Image page-surface owners must schedule raster display refinement through an injected worker scheduler. Refinement completions carry the display-source demand key back to the page-surface owner, which accepts or rejects them before publishing a new provider entry.
