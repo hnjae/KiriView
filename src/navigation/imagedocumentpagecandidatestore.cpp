@@ -4,8 +4,8 @@
 #include "imagedocumentpagecandidatestore.h"
 
 #include "async/imagecallback.h"
-#include "async/imageiojobs.h"
 #include "imagedocumentpagecandidatedirectoryentry.h"
+#include "imagedocumentpagecandidateloading.h"
 #include "location/imageurl.h"
 
 #include <QPointer>

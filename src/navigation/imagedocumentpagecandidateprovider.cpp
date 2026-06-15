@@ -4,6 +4,7 @@
 #include "imagedocumentpagecandidateprovider.h"
 
 #include "async/imageiojobs.h"
+#include "imagedocumentpagecandidateloading.h"
 #include "imagedocumentpagecandidatestore.h"
 
 #include <memory>

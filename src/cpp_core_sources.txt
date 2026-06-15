@@ -94,6 +94,7 @@ src/decoding/imageinputclassification.cpp
 src/localization/activenavigationboundarytext.cpp
 src/localization/imageerrortext.cpp
 src/navigation/imagedocumentpagecandidateitems.cpp
+src/navigation/imagedocumentpagecandidateloading.cpp
 src/navigation/imagedocumentpagecandidaterepository.cpp
 src/navigation/imagedocumentpagecandidatedirectoryentry.cpp
 src/navigation/imagedocumentpagecandidatewatchprovider.cpp
