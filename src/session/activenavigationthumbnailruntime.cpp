@@ -60,6 +60,24 @@ kiriview::ThumbnailSourceKind thumbnailSourceKind(const QString &sourceKind)
 
     return kiriview::ThumbnailSourceKind::DirectImage;
 }
+
+QString fallbackThumbnailFailureError(kiriview::ActiveNavigationThumbnailFailureKind failureKind)
+{
+    switch (failureKind) {
+    case kiriview::ActiveNavigationThumbnailFailureKind::CacheLookupInvalid:
+        return QStringLiteral("Thumbnail cache lookup returned an invalid cache entry.");
+    case kiriview::ActiveNavigationThumbnailFailureKind::CacheLookupFailed:
+        return QStringLiteral("Thumbnail cache lookup failed.");
+    case kiriview::ActiveNavigationThumbnailFailureKind::GenerationFailed:
+        return QStringLiteral("Thumbnail generation failed.");
+    case kiriview::ActiveNavigationThumbnailFailureKind::ImageStoreInsertFailed:
+        return QStringLiteral("Thumbnail image store insertion failed.");
+    case kiriview::ActiveNavigationThumbnailFailureKind::GenerationProviderUnavailable:
+        return QStringLiteral("Thumbnail generation provider is unavailable.");
+    }
+
+    return QStringLiteral("Thumbnail work failed.");
+}
 }
 
 namespace kiriview {
@@ -296,6 +314,12 @@ ActiveNavigationThumbnailResult ActiveNavigationThumbnailRuntime::resultAt(std::
     return m_rows.at(row).result;
 }
 
+const std::vector<ActiveNavigationThumbnailFailureDiagnostic> &
+ActiveNavigationThumbnailRuntime::failureDiagnostics() const
+{
+    return m_failureDiagnostics;
+}
+
 qsizetype ActiveNavigationThumbnailRuntime::activeJobCount() const
 {
     qsizetype count = 0;
@@ -517,6 +541,9 @@ void ActiveNavigationThumbnailRuntime::startGenerationJob(
     RowState &state, const AcceptedDemand &demand, ThumbnailWorkKind kind)
 {
     if (state.activeJob == std::nullopt || !m_generationProvider) {
+        const quint64 jobId = state.activeJob.has_value() ? state.activeJob->id : 0;
+        recordFailureDiagnostic(jobId, demand.sourceKey, kind, demand.bucket,
+            ActiveNavigationThumbnailFailureKind::GenerationProviderUnavailable, {});
         state.activeJob.reset();
         if (kind == ThumbnailWorkKind::Background) {
             markBackgroundBucketCompleted(state, demand.bucket);
@@ -558,6 +585,29 @@ void ActiveNavigationThumbnailRuntime::startGenerationJob(
         return;
     }
     m_rows.at(*rowIndex).activeJob->job = std::move(job);
+}
+
+void ActiveNavigationThumbnailRuntime::recordFailureDiagnostic(quint64 jobId,
+    const ThumbnailSourceKey &sourceKey, ThumbnailWorkKind workKind,
+    ActiveNavigationThumbnailDemandBucket bucket, ActiveNavigationThumbnailFailureKind failureKind,
+    const QString &errorString)
+{
+    const QString resolvedErrorString
+        = errorString.isEmpty() ? fallbackThumbnailFailureError(failureKind) : errorString;
+    m_failureDiagnostics.push_back(ActiveNavigationThumbnailFailureDiagnostic {
+        jobId,
+        sourceKey,
+        workKind == ThumbnailWorkKind::Foreground ? ActiveNavigationThumbnailWorkKind::Foreground
+                                                  : ActiveNavigationThumbnailWorkKind::Background,
+        bucket,
+        failureKind,
+        resolvedErrorString,
+    });
+    qCDebug(kiriviewThumbnailLog) << "Thumbnail failure diagnostic" << jobId << "kind"
+                                  << static_cast<int>(workKind) << "number" << sourceKey.rowNumber
+                                  << "url" << sourceKey.url << "bucket" << static_cast<int>(bucket)
+                                  << "failure" << static_cast<int>(failureKind) << "error"
+                                  << resolvedErrorString;
 }
 
 bool ActiveNavigationThumbnailRuntime::activeJobMatches(const RowState &state, quint64 jobId,
@@ -704,6 +754,8 @@ void ActiveNavigationThumbnailRuntime::finishLookup(quint64 jobId,
             : m_imageStore->insert(
                   lookupResult.image, imageRetentionPriority(kind, demand.priority));
         if (imageId.isEmpty()) {
+            recordFailureDiagnostic(jobId, sourceKey, kind, bucket,
+                ActiveNavigationThumbnailFailureKind::ImageStoreInsertFailed, {});
             if (kind == ThumbnailWorkKind::Background) {
                 markBackgroundBucketCompleted(state, bucket);
                 maybeScheduleBackgroundWork();
@@ -744,6 +796,11 @@ void ActiveNavigationThumbnailRuntime::finishLookup(quint64 jobId,
         break;
     case ThumbnailCacheLookupStatus::Invalid:
     case ThumbnailCacheLookupStatus::Failed:
+        recordFailureDiagnostic(jobId, sourceKey, kind, bucket,
+            lookupResult.status == ThumbnailCacheLookupStatus::Invalid
+                ? ActiveNavigationThumbnailFailureKind::CacheLookupInvalid
+                : ActiveNavigationThumbnailFailureKind::CacheLookupFailed,
+            lookupResult.errorString);
         state.activeJob.reset();
         if (kind == ThumbnailWorkKind::Background) {
             markBackgroundBucketCompleted(state, bucket);
@@ -804,6 +861,8 @@ void ActiveNavigationThumbnailRuntime::finishGeneration(quint64 jobId,
             : m_imageStore->insert(
                   generationResult.image, imageRetentionPriority(kind, demand.priority));
         if (imageId.isEmpty()) {
+            recordFailureDiagnostic(jobId, sourceKey, kind, bucket,
+                ActiveNavigationThumbnailFailureKind::ImageStoreInsertFailed, {});
             if (kind == ThumbnailWorkKind::Background) {
                 markBackgroundBucketCompleted(state, bucket);
             } else if (!hasUsableReadyImage(state)) {
@@ -826,6 +885,8 @@ void ActiveNavigationThumbnailRuntime::finishGeneration(quint64 jobId,
         break;
     }
     case ThumbnailGenerationStatus::Failed:
+        recordFailureDiagnostic(jobId, sourceKey, kind, bucket,
+            ActiveNavigationThumbnailFailureKind::GenerationFailed, generationResult.errorString);
         if (kind == ThumbnailWorkKind::Background) {
             markBackgroundBucketCompleted(state, bucket);
         } else if (hasUsableReadyImage(state)) {

@@ -877,6 +877,9 @@ void TestActiveNavigationThumbnailRuntime::failureDiagnosticsPreserveSourceAndEr
     const std::vector<kiriview::ActiveNavigationThumbnailFailureDiagnostic> &lookupDiagnostics
         = runtime.failureDiagnostics();
     QCOMPARE(lookupDiagnostics.size(), std::size_t(1));
+    if (lookupDiagnostics.size() != std::size_t(1)) {
+        return;
+    }
     QCOMPARE(lookupDiagnostics.at(0).jobId, quint64(1));
     QCOMPARE(lookupDiagnostics.at(0).sourceKey.rowNumber, 1);
     QCOMPARE(lookupDiagnostics.at(0).sourceKey.url, imageUrl);
@@ -888,7 +891,7 @@ void TestActiveNavigationThumbnailRuntime::failureDiagnosticsPreserveSourceAndEr
 
     QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Visible, generation));
     provider.finish(
-        1, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing, {}, Bucket::Large));
+        2, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing, {}, Bucket::Large));
     generationProvider.finish(0,
         generationResult(kiriview::ThumbnailGenerationStatus::Failed, {}, Bucket::Large,
             QStringLiteral("decoder rejected thumbnail bytes")));
@@ -896,7 +899,10 @@ void TestActiveNavigationThumbnailRuntime::failureDiagnosticsPreserveSourceAndEr
     const std::vector<kiriview::ActiveNavigationThumbnailFailureDiagnostic> &diagnostics
         = runtime.failureDiagnostics();
     QCOMPARE(diagnostics.size(), std::size_t(2));
-    QCOMPARE(diagnostics.at(1).jobId, quint64(3));
+    if (diagnostics.size() != std::size_t(2)) {
+        return;
+    }
+    QCOMPARE(diagnostics.at(1).jobId, quint64(4));
     QCOMPARE(diagnostics.at(1).sourceKey.rowNumber, 1);
     QCOMPARE(diagnostics.at(1).sourceKey.url, imageUrl);
     QCOMPARE(diagnostics.at(1).bucket, Bucket::Large);

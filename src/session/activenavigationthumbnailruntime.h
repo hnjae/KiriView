@@ -27,6 +27,29 @@
 class QObject;
 
 namespace kiriview {
+enum class ActiveNavigationThumbnailWorkKind {
+    Foreground,
+    Background,
+};
+
+enum class ActiveNavigationThumbnailFailureKind {
+    CacheLookupInvalid,
+    CacheLookupFailed,
+    GenerationFailed,
+    ImageStoreInsertFailed,
+    GenerationProviderUnavailable,
+};
+
+struct ActiveNavigationThumbnailFailureDiagnostic {
+    quint64 jobId = 0;
+    ThumbnailSourceKey sourceKey;
+    ActiveNavigationThumbnailWorkKind workKind = ActiveNavigationThumbnailWorkKind::Foreground;
+    ActiveNavigationThumbnailDemandBucket bucket = ActiveNavigationThumbnailDemandBucket::None;
+    ActiveNavigationThumbnailFailureKind failureKind
+        = ActiveNavigationThumbnailFailureKind::CacheLookupFailed;
+    QString errorString;
+};
+
 struct ActiveNavigationThumbnailResult {
     ActiveNavigationThumbnailResultStatus status = ActiveNavigationThumbnailResultStatus::NoResult;
     QUrl imageSource;
@@ -95,6 +118,7 @@ public:
 
     ThumbnailSourceKey sourceKeyAt(std::size_t row) const;
     ActiveNavigationThumbnailResult resultAt(std::size_t row) const;
+    const std::vector<ActiveNavigationThumbnailFailureDiagnostic> &failureDiagnostics() const;
     qsizetype activeJobCount() const;
     qsizetype canceledJobCount() const;
 
@@ -156,6 +180,9 @@ private:
     void releaseAllImages();
     void startLookupJob(RowState &state, const AcceptedDemand &demand, ThumbnailWorkKind kind);
     void startGenerationJob(RowState &state, const AcceptedDemand &demand, ThumbnailWorkKind kind);
+    void recordFailureDiagnostic(quint64 jobId, const ThumbnailSourceKey &sourceKey,
+        ThumbnailWorkKind workKind, ActiveNavigationThumbnailDemandBucket bucket,
+        ActiveNavigationThumbnailFailureKind failureKind, const QString &errorString);
     bool activeJobMatches(const RowState &state, quint64 jobId, const AcceptedDemand &demand,
         ThumbnailWorkKind kind) const;
     bool backgroundBucketCompleted(
@@ -186,6 +213,7 @@ private:
     quint64 m_navigationGeneration = 0;
     quint64 m_nextJobId = 1;
     std::vector<quint64> m_canceledJobIds;
+    std::vector<ActiveNavigationThumbnailFailureDiagnostic> m_failureDiagnostics;
     bool m_backgroundArmed = false;
 };
 }
