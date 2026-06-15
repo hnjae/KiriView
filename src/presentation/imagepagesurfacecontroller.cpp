@@ -78,6 +78,24 @@ namespace {
         return ImageDisplaySourceStatus::Error;
     }
 
+    ImageDisplaySourceSlot displayErrorSourceSlot(const QSize &imageSize, quint64 revision)
+    {
+        return ImageDisplaySourceSlot {
+            QUrl(),
+            revision,
+            QString(),
+            imageSize,
+            imageSize,
+            QSize(),
+            DisplayImageQuality::Exact,
+            ImageDisplaySourceStatus::Error,
+            false,
+            false,
+            ImageDisplaySourceRetentionStatus::None,
+            false,
+        };
+    }
+
     StaticDisplayImagePayload refinedDisplayImagePayload(
         RasterDisplayRefinementWork work, QImage image)
     {
@@ -170,6 +188,10 @@ void ImagePageSurfaceController::setImage(const QImage &image, bool predecodeCac
     clearShadowDisplayImage();
     clearDisplaySource();
     m_animationFrameSourceIdentity.clear();
+    if (!image.isNull()) {
+        ++m_displaySourceRevision;
+        m_displaySource = displayErrorSourceSlot(image.size(), m_displaySourceRevision);
+    }
     acceptImageState(image.size(), predecodeCacheable, std::nullopt);
 }
 
