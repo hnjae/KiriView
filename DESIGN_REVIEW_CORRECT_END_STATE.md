@@ -103,10 +103,10 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ### Finding: Document session route plans mix mutation, publication, and follow-up effects
 
 - Evidence: `src/session/documentsessionrouteplan.h:22-98` defines `DocumentSessionRouteOperation` with state mutation, leaf document routing, `RecomputePublicProjectionRouteOperation`, `RefreshDirectMediaNavigationAfterRoutingRouteOperation`, and `ClearMediaPredecodeRouteOperation` in one variant list. `src/session/documentsessionruntime.cpp:862-990` applies state mutation, leaf mutation, snapshot refresh, projection recomputation, direct navigation refresh, and predecode clearing in one loop. `src/session/documentsessionruntime.cpp:874-877` relies on `m_routingSource` suppression. `src/session/documentsessionruntime.cpp:1091-1125` may recompute projection, schedule predecode, and call `openMediaUrl()` from direct media navigation completion.
-- Current state: A route plan is linear, but execution phases are not separated.
+- Current state: A route plan is linear, and focused coverage now characterizes mutation, publication, and follow-up operation ordering across empty, direct image, direct video, image-document, and deletion-fallback route plans. Execution phases are still not separated.
 - Design concern: Observable publication and external follow-up effects interleave with internal mutation, so correctness depends on operation order and an implicit `m_routingSource` flag.
 - Correct end state: Session routing should remain owned by `DocumentSessionRuntime`, but execution should be phase-oriented: apply state/leaf mutations, publish the accepted public projection once, then execute typed follow-up effects such as direct-navigation refresh, predecode scheduling, or follow-up media routing.
-- Suggested migration: Add characterization tests for empty, direct image, direct video, image-document, and deletion-fallback routes. Introduce an internal `RouteExecutionResult` or executor that separates mutation results from follow-up effects.
+- Suggested migration: Introduce an internal `RouteExecutionResult` or executor that separates mutation results from follow-up effects.
 - Acceptance criteria: Route plan types distinguish mutation operations from follow-up effects; the mutation visitor does not call `recomputePublicProjection()` or start direct media refresh.
 - Priority: P2
 
@@ -229,7 +229,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ## Suggested Refactoring Sequence
 
-1. Add characterization tests around current behavior: route projection/follow-up ordering and current image/video failure messages.
+1. Add characterization tests around current image/video failure messages.
 2. Isolate core domain logic from external effects: inject system memory facts for cache budget resolution.
 3. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
 4. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics, then media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
