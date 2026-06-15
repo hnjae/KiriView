@@ -20,14 +20,35 @@ struct ApplicationCommandRouterInput {
     bool canOpenPreviousActiveNavigation = false;
 };
 
-struct ApplicationCommandRouterPorts {
+struct ApplicationCommandRouterShellPorts {
     std::function<void()> requestOpenDialog;
+    std::function<void()> openApplicationMenu;
+};
+
+struct ApplicationCommandRouterSessionPorts {
     std::function<void()> openCurrentMediaWith;
     std::function<void()> moveDisplayedFileToTrash;
     std::function<void()> deleteDisplayedFilePermanently;
+    std::function<void()> requestPreviousActiveNavigationWithBoundary;
+    std::function<void()> requestNextActiveNavigationWithBoundary;
+    std::function<void()> openFirstActiveNavigation;
+    std::function<void()> openLastActiveNavigation;
+    std::function<void()> showFirstImageBoundary;
+};
+
+struct ApplicationCommandRouterImageDocumentPorts {
     std::function<bool()> imageAvailable;
     std::function<void()> openPreviousContainer;
     std::function<void()> openNextContainer;
+    std::function<void()> openPreviousSinglePage;
+    std::function<void()> openNextSinglePage;
+    std::function<void()> rotateClockwise;
+    std::function<void()> rotateCounterclockwise;
+    std::function<void()> requestToggleTwoPageMode;
+    std::function<void()> requestToggleRightToLeftReading;
+};
+
+struct ApplicationCommandRouterImagePresentationPorts {
     std::function<bool()> imageViewportHorizontallyPannable;
     std::function<void(double, double)> requestViewportPanBy;
     std::function<bool()> requestViewportScanForward;
@@ -35,33 +56,44 @@ struct ApplicationCommandRouterPorts {
     std::function<void()> requestViewportPanToInitialScanPosition;
     std::function<void()> requestViewportPanToFinalScanPosition;
     std::function<void()> requestNextDisplayedImageStartToFinalScanPosition;
-    std::function<void()> openPreviousSinglePage;
-    std::function<void()> openNextSinglePage;
-    std::function<void()> requestPreviousActiveNavigationWithBoundary;
-    std::function<void()> requestNextActiveNavigationWithBoundary;
-    std::function<void()> openFirstActiveNavigation;
-    std::function<void()> openLastActiveNavigation;
     std::function<void(double)> requestZoomByStepAtCenter;
     std::function<void(double)> requestManualZoomPercent;
     std::function<void()> requestFitMode;
     std::function<void()> requestFitHeightMode;
     std::function<void()> requestFitWidthMode;
-    std::function<void()> rotateClockwise;
-    std::function<void()> rotateCounterclockwise;
-    std::function<void()> requestToggleTwoPageMode;
-    std::function<void()> requestToggleRightToLeftReading;
+};
+
+struct ApplicationCommandRouterPanelPorts {
     std::function<void()> toggleInfoPanel;
     std::function<void()> toggleThumbnailPanel;
-    std::function<void()> showFirstImageBoundary;
+};
+
+struct ApplicationCommandRouterWindowPorts {
     std::function<void()> toggleFullScreen;
+};
+
+struct ApplicationCommandRouterHelpPorts {
     std::function<void()> requestShortcutHelp;
-    std::function<void()> openApplicationMenu;
+};
+
+struct ApplicationCommandRouterVideoPorts {
     std::function<bool()> videoAvailable;
     std::function<bool()> videoSeekable;
     std::function<qint64()> videoDuration;
     std::function<void(qint64)> seekVideoBy;
     std::function<void(qint64)> setVideoPosition;
     std::function<void()> toggleVideoPlayback;
+};
+
+struct ApplicationCommandRouterPorts {
+    ApplicationCommandRouterShellPorts shell;
+    ApplicationCommandRouterSessionPorts session;
+    ApplicationCommandRouterImageDocumentPorts imageDocument;
+    ApplicationCommandRouterImagePresentationPorts imagePresentation;
+    ApplicationCommandRouterPanelPorts panel;
+    ApplicationCommandRouterWindowPorts window;
+    ApplicationCommandRouterHelpPorts help;
+    ApplicationCommandRouterVideoPorts video;
 };
 
 class ApplicationCommandRouter final

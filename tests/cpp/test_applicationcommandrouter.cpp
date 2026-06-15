@@ -46,109 +46,111 @@ struct CommandLog {
 ApplicationCommandRouterPorts commandPorts(CommandLog &log)
 {
     ApplicationCommandRouterPorts ports;
-    ports.requestOpenDialog
+    ports.shell.requestOpenDialog
         = [&log]() { log.actionCalls.push_back(QStringLiteral("open-dialog")); };
-    ports.openCurrentMediaWith
+    ports.session.openCurrentMediaWith
         = [&log]() { log.actionCalls.push_back(QStringLiteral("open-with")); };
-    ports.moveDisplayedFileToTrash
+    ports.session.moveDisplayedFileToTrash
         = [&log]() { log.actionCalls.push_back(QStringLiteral("move-trash")); };
-    ports.deleteDisplayedFilePermanently
+    ports.session.deleteDisplayedFilePermanently
         = [&log]() { log.actionCalls.push_back(QStringLiteral("delete-permanent")); };
-    ports.imageAvailable = [&log]() { return log.imageAvailable; };
-    ports.imageViewportHorizontallyPannable = [&log]() { return log.viewportHorizontallyPannable; };
-    ports.requestViewportPanBy = [&log](double dx, double dy) {
+    ports.imageDocument.imageAvailable = [&log]() { return log.imageAvailable; };
+    ports.imagePresentation.imageViewportHorizontallyPannable
+        = [&log]() { return log.viewportHorizontallyPannable; };
+    ports.imagePresentation.requestViewportPanBy = [&log](double dx, double dy) {
         ++log.panCount;
         log.lastPanDx = dx;
         log.lastPanDy = dy;
     };
-    ports.requestViewportScanForward = [&log]() {
+    ports.imagePresentation.requestViewportScanForward = [&log]() {
         log.actionCalls.push_back(QStringLiteral("scan-forward"));
         ++log.scanForwardCount;
         return log.scanMoved;
     };
-    ports.requestViewportScanBackward = [&log]() {
+    ports.imagePresentation.requestViewportScanBackward = [&log]() {
         log.actionCalls.push_back(QStringLiteral("scan-backward"));
         ++log.scanBackwardCount;
         return log.scanMoved;
     };
-    ports.requestNextDisplayedImageStartToFinalScanPosition = [&log]() {
+    ports.imagePresentation.requestNextDisplayedImageStartToFinalScanPosition = [&log]() {
         log.actionCalls.push_back(
             QStringLiteral("next-displayed-image-start-to-final-scan-position"));
         ++log.nextDisplayedImageStartToFinalScanPositionCount;
     };
-    ports.openPreviousContainer
+    ports.imageDocument.openPreviousContainer
         = [&log]() { log.actionCalls.push_back(QStringLiteral("previous-container")); };
-    ports.openNextContainer
+    ports.imageDocument.openNextContainer
         = [&log]() { log.actionCalls.push_back(QStringLiteral("next-container")); };
-    ports.openPreviousSinglePage = [&log]() {
+    ports.imageDocument.openPreviousSinglePage = [&log]() {
         log.actionCalls.push_back(QStringLiteral("previous-single-page"));
         ++log.previousSinglePageCount;
     };
-    ports.openNextSinglePage = [&log]() {
+    ports.imageDocument.openNextSinglePage = [&log]() {
         log.actionCalls.push_back(QStringLiteral("next-single-page"));
         ++log.nextSinglePageCount;
     };
-    ports.requestPreviousActiveNavigationWithBoundary = [&log]() {
+    ports.session.requestPreviousActiveNavigationWithBoundary = [&log]() {
         log.actionCalls.push_back(QStringLiteral("previous-navigation"));
         ++log.previousNavigationCount;
     };
-    ports.requestNextActiveNavigationWithBoundary = [&log]() {
+    ports.session.requestNextActiveNavigationWithBoundary = [&log]() {
         log.actionCalls.push_back(QStringLiteral("next-navigation"));
         ++log.nextNavigationCount;
     };
-    ports.openFirstActiveNavigation
+    ports.session.openFirstActiveNavigation
         = [&log]() { log.actionCalls.push_back(QStringLiteral("first-navigation")); };
-    ports.openLastActiveNavigation
+    ports.session.openLastActiveNavigation
         = [&log]() { log.actionCalls.push_back(QStringLiteral("last-navigation")); };
-    ports.requestZoomByStepAtCenter = [&log](double stepCount) {
+    ports.imagePresentation.requestZoomByStepAtCenter = [&log](double stepCount) {
         log.actionCalls.push_back(QStringLiteral("zoom-step:%1").arg(stepCount));
     };
-    ports.requestManualZoomPercent = [&log](double zoomPercent) {
+    ports.imagePresentation.requestManualZoomPercent = [&log](double zoomPercent) {
         log.actionCalls.push_back(QStringLiteral("manual-zoom:%1").arg(zoomPercent));
     };
-    ports.requestFitMode = [&log]() { log.actionCalls.push_back(QStringLiteral("fit")); };
-    ports.requestFitHeightMode
+    ports.imagePresentation.requestFitMode
+        = [&log]() { log.actionCalls.push_back(QStringLiteral("fit")); };
+    ports.imagePresentation.requestFitHeightMode
         = [&log]() { log.actionCalls.push_back(QStringLiteral("fit-height")); };
-    ports.requestFitWidthMode
+    ports.imagePresentation.requestFitWidthMode
         = [&log]() { log.actionCalls.push_back(QStringLiteral("fit-width")); };
-    ports.rotateClockwise
+    ports.imageDocument.rotateClockwise
         = [&log]() { log.actionCalls.push_back(QStringLiteral("rotate-clockwise")); };
-    ports.rotateCounterclockwise
+    ports.imageDocument.rotateCounterclockwise
         = [&log]() { log.actionCalls.push_back(QStringLiteral("rotate-counterclockwise")); };
-    ports.requestToggleTwoPageMode
+    ports.imageDocument.requestToggleTwoPageMode
         = [&log]() { log.actionCalls.push_back(QStringLiteral("toggle-two-page")); };
-    ports.requestToggleRightToLeftReading
+    ports.imageDocument.requestToggleRightToLeftReading
         = [&log]() { log.actionCalls.push_back(QStringLiteral("toggle-right-to-left")); };
-    ports.toggleInfoPanel
+    ports.panel.toggleInfoPanel
         = [&log]() { log.actionCalls.push_back(QStringLiteral("toggle-info-panel")); };
-    ports.toggleThumbnailPanel
+    ports.panel.toggleThumbnailPanel
         = [&log]() { log.actionCalls.push_back(QStringLiteral("toggle-thumbnail-panel")); };
-    ports.requestViewportPanToInitialScanPosition
+    ports.imagePresentation.requestViewportPanToInitialScanPosition
         = [&log]() { log.actionCalls.push_back(QStringLiteral("pan-initial-scan-position")); };
-    ports.requestViewportPanToFinalScanPosition
+    ports.imagePresentation.requestViewportPanToFinalScanPosition
         = [&log]() { log.actionCalls.push_back(QStringLiteral("pan-final-scan-position")); };
-    ports.showFirstImageBoundary = [&log]() {
+    ports.session.showFirstImageBoundary = [&log]() {
         log.actionCalls.push_back(QStringLiteral("first-image-boundary"));
         ++log.firstImageBoundaryCount;
     };
-    ports.toggleFullScreen
+    ports.window.toggleFullScreen
         = [&log]() { log.actionCalls.push_back(QStringLiteral("toggle-fullscreen")); };
-    ports.requestShortcutHelp
+    ports.help.requestShortcutHelp
         = [&log]() { log.actionCalls.push_back(QStringLiteral("shortcut-help")); };
-    ports.openApplicationMenu
+    ports.shell.openApplicationMenu
         = [&log]() { log.actionCalls.push_back(QStringLiteral("open-application-menu")); };
-    ports.videoAvailable = [&log]() { return log.videoAvailable; };
-    ports.videoSeekable = [&log]() { return log.videoSeekable; };
-    ports.videoDuration = [&log]() { return log.videoDuration; };
-    ports.seekVideoBy = [&log](qint64 deltaMilliseconds) {
+    ports.video.videoAvailable = [&log]() { return log.videoAvailable; };
+    ports.video.videoSeekable = [&log]() { return log.videoSeekable; };
+    ports.video.videoDuration = [&log]() { return log.videoDuration; };
+    ports.video.seekVideoBy = [&log](qint64 deltaMilliseconds) {
         ++log.seekCount;
         log.lastSeekDeltaMilliseconds = deltaMilliseconds;
     };
-    ports.setVideoPosition = [&log](qint64 positionMilliseconds) {
+    ports.video.setVideoPosition = [&log](qint64 positionMilliseconds) {
         ++log.setVideoPositionCount;
         log.lastVideoPosition = positionMilliseconds;
     };
-    ports.toggleVideoPlayback = [&log]() {
+    ports.video.toggleVideoPlayback = [&log]() {
         log.actionCalls.push_back(QStringLiteral("toggle-video-playback"));
         ++log.toggleVideoPlaybackCount;
     };

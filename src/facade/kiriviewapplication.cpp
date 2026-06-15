@@ -513,147 +513,147 @@ Actions::ApplicationCommandRouterInput KiriViewApplication::commandRouterInput()
 Actions::ApplicationCommandRouterPorts KiriViewApplication::commandRouterPorts()
 {
     Actions::ApplicationCommandRouterPorts ports;
-    ports.requestOpenDialog = [this]() { Q_EMIT openDialogRequested(); };
-    ports.openCurrentMediaWith = [this]() {
+    ports.shell.requestOpenDialog = [this]() { Q_EMIT openDialogRequested(); };
+    ports.session.openCurrentMediaWith = [this]() {
         if (m_documentSession != nullptr) {
             m_documentSession->openCurrentMediaWith();
         }
     };
-    ports.moveDisplayedFileToTrash = [this]() { moveDisplayedFileToTrash(); };
-    ports.deleteDisplayedFilePermanently = [this]() { deleteDisplayedFilePermanently(); };
-    ports.imageAvailable = [this]() { return imageDocument() != nullptr; };
-    ports.openPreviousContainer = [this]() {
+    ports.session.moveDisplayedFileToTrash = [this]() { moveDisplayedFileToTrash(); };
+    ports.session.deleteDisplayedFilePermanently = [this]() { deleteDisplayedFilePermanently(); };
+    ports.imageDocument.imageAvailable = [this]() { return imageDocument() != nullptr; };
+    ports.imageDocument.openPreviousContainer = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->openPreviousContainer();
         }
     };
-    ports.openNextContainer = [this]() {
+    ports.imageDocument.openNextContainer = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->openNextContainer();
         }
     };
-    ports.imageViewportHorizontallyPannable = [this]() {
+    ports.imagePresentation.imageViewportHorizontallyPannable = [this]() {
         KiriImageDocument *image = imageDocument();
         return image != nullptr && image->viewportHorizontallyPannable();
     };
-    ports.requestViewportPanBy = [this](double dx, double dy) {
+    ports.imagePresentation.requestViewportPanBy = [this](double dx, double dy) {
         if (KiriImageDocument *image = imageDocument()) {
             image->requestViewportPanBy(dx, dy);
         }
     };
-    ports.requestViewportScanForward = [this]() {
+    ports.imagePresentation.requestViewportScanForward = [this]() {
         KiriImageDocument *image = imageDocument();
         return image != nullptr && image->requestViewportScanForward();
     };
-    ports.requestViewportScanBackward = [this]() {
+    ports.imagePresentation.requestViewportScanBackward = [this]() {
         KiriImageDocument *image = imageDocument();
         return image != nullptr && image->requestViewportScanBackward();
     };
-    ports.requestNextDisplayedImageStartToFinalScanPosition = [this]() {
+    ports.imagePresentation.requestNextDisplayedImageStartToFinalScanPosition = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->requestNextDisplayedImageStartToFinalScanPosition();
         }
     };
-    ports.requestViewportPanToInitialScanPosition = [this]() {
+    ports.imagePresentation.requestViewportPanToInitialScanPosition = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->requestViewportPanToInitialScanPosition();
         }
     };
-    ports.requestViewportPanToFinalScanPosition = [this]() {
+    ports.imagePresentation.requestViewportPanToFinalScanPosition = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->requestViewportPanToFinalScanPosition();
         }
     };
-    ports.openPreviousSinglePage = [this]() {
+    ports.imageDocument.openPreviousSinglePage = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->openPreviousSinglePage();
         }
     };
-    ports.openNextSinglePage = [this]() {
+    ports.imageDocument.openNextSinglePage = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->openNextSinglePage();
         }
     };
-    ports.requestPreviousActiveNavigationWithBoundary
+    ports.session.requestPreviousActiveNavigationWithBoundary
         = [this]() { requestPreviousActiveNavigationWithBoundary(); };
-    ports.requestNextActiveNavigationWithBoundary
+    ports.session.requestNextActiveNavigationWithBoundary
         = [this]() { requestNextActiveNavigationWithBoundary(); };
-    ports.openFirstActiveNavigation = [this]() {
+    ports.session.openFirstActiveNavigation = [this]() {
         if (m_documentSession != nullptr) {
             m_documentSession->openFirstActiveNavigation();
         }
     };
-    ports.openLastActiveNavigation = [this]() {
+    ports.session.openLastActiveNavigation = [this]() {
         if (m_documentSession != nullptr) {
             m_documentSession->openLastActiveNavigation();
         }
     };
-    ports.requestZoomByStepAtCenter = [this](double stepCount) {
+    ports.imagePresentation.requestZoomByStepAtCenter = [this](double stepCount) {
         if (KiriImageDocument *image = imageDocument()) {
             image->requestZoomByStepAtCenter(stepCount);
         }
     };
-    ports.requestManualZoomPercent = [this](double zoomPercent) {
+    ports.imagePresentation.requestManualZoomPercent = [this](double zoomPercent) {
         if (KiriImageDocument *image = imageDocument()) {
             image->requestManualZoomPercent(zoomPercent);
         }
     };
-    ports.requestFitMode = [this]() { requestImageFitMode(); };
-    ports.requestFitHeightMode = [this]() { requestImageFitHeightMode(); };
-    ports.requestFitWidthMode = [this]() { requestImageFitWidthMode(); };
-    ports.rotateClockwise = [this]() {
+    ports.imagePresentation.requestFitMode = [this]() { requestImageFitMode(); };
+    ports.imagePresentation.requestFitHeightMode = [this]() { requestImageFitHeightMode(); };
+    ports.imagePresentation.requestFitWidthMode = [this]() { requestImageFitWidthMode(); };
+    ports.imageDocument.rotateClockwise = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->rotateClockwise();
         }
     };
-    ports.rotateCounterclockwise = [this]() {
+    ports.imageDocument.rotateCounterclockwise = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->rotateCounterclockwise();
         }
     };
-    ports.requestToggleTwoPageMode = [this]() {
+    ports.imageDocument.requestToggleTwoPageMode = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->requestToggleTwoPageMode();
         }
     };
-    ports.requestToggleRightToLeftReading = [this]() {
+    ports.imageDocument.requestToggleRightToLeftReading = [this]() {
         if (KiriImageDocument *image = imageDocument()) {
             image->requestToggleRightToLeftReading();
         }
     };
-    ports.toggleInfoPanel = [this]() { Q_EMIT toggleInfoPanelRequested(); };
-    ports.toggleThumbnailPanel = [this]() { Q_EMIT toggleThumbnailPanelRequested(); };
-    ports.showFirstImageBoundary
+    ports.panel.toggleInfoPanel = [this]() { Q_EMIT toggleInfoPanelRequested(); };
+    ports.panel.toggleThumbnailPanel = [this]() { Q_EMIT toggleThumbnailPanelRequested(); };
+    ports.session.showFirstImageBoundary
         = [this]() { Q_EMIT imageBoundaryReached(i18nc("@info:status", "First image")); };
-    ports.toggleFullScreen = [this]() { Q_EMIT toggleFullScreenRequested(); };
-    ports.requestShortcutHelp = [this]() { Q_EMIT shortcutHelpRequested(); };
-    ports.openApplicationMenu = [this]() { Q_EMIT openApplicationMenuRequested(); };
-    ports.videoAvailable = [this]() {
+    ports.window.toggleFullScreen = [this]() { Q_EMIT toggleFullScreenRequested(); };
+    ports.help.requestShortcutHelp = [this]() { Q_EMIT shortcutHelpRequested(); };
+    ports.shell.openApplicationMenu = [this]() { Q_EMIT openApplicationMenuRequested(); };
+    ports.video.videoAvailable = [this]() {
         return m_documentSession != nullptr && m_documentSession->videoDocument() != nullptr;
     };
-    ports.videoSeekable = [this]() {
+    ports.video.videoSeekable = [this]() {
         KiriVideoDocument *video
             = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument();
         return video != nullptr && video->seekable();
     };
-    ports.videoDuration = [this]() {
+    ports.video.videoDuration = [this]() {
         KiriVideoDocument *video
             = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument();
         return video == nullptr ? qint64(0) : video->duration();
     };
-    ports.seekVideoBy = [this](qint64 deltaMilliseconds) {
+    ports.video.seekVideoBy = [this](qint64 deltaMilliseconds) {
         if (KiriVideoDocument *video
             = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
             video->seekBy(deltaMilliseconds);
         }
     };
-    ports.setVideoPosition = [this](qint64 positionMilliseconds) {
+    ports.video.setVideoPosition = [this](qint64 positionMilliseconds) {
         if (KiriVideoDocument *video
             = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
             video->setPosition(positionMilliseconds);
         }
     };
-    ports.toggleVideoPlayback = [this]() {
+    ports.video.toggleVideoPlayback = [this]() {
         if (KiriVideoDocument *video
             = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
             video->togglePlayback();
