@@ -258,6 +258,13 @@ QUrl finalContainerNavigationUrl(
     return delta.containerNavigationUrl.value_or(state.containerNavigationUrl());
 }
 
+bool finalReadyContainerNavigationUrlIsValid(
+    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+{
+    return finalContainerNavigationUrl(state, delta)
+        == containerNavigationUrlForLocation(finalDisplayedLocation(state, delta));
+}
+
 bool finalImageOpenStateIsValid(
     const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
 {
@@ -273,6 +280,7 @@ bool finalImageOpenStateIsValid(
     case kiriview::ImageDocumentStatus::Ready:
         return !loading && !hasError && !finalSourceUrl(state, delta).isEmpty()
             && !finalDisplayedLocation(state, delta).isEmpty()
+            && finalReadyContainerNavigationUrlIsValid(state, delta)
             && (finalSourceKind(state, delta) != kiriview::ImageDocumentPageKind::Video
                 || finalUnsupportedOpenedCollectionVideo(state, delta));
     case kiriview::ImageDocumentStatus::Error:
