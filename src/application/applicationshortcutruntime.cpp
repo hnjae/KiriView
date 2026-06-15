@@ -93,31 +93,6 @@ QWindow *shortcutWindow(QObject *host)
     return nullptr;
 }
 
-bool exactShortcut(const QKeySequence &shortcut, const char *portableText)
-{
-    return shortcut.matches(QKeySequence::fromString(
-               QString::fromLatin1(portableText), QKeySequence::PortableText))
-        == QKeySequence::ExactMatch;
-}
-
-std::optional<qint64> fixedVideoSeekShortcutDeltaMilliseconds(const QKeySequence &shortcut)
-{
-    if (exactShortcut(shortcut, "Alt+Left")) {
-        return -5000;
-    }
-    if (exactShortcut(shortcut, "Alt+Right")) {
-        return 5000;
-    }
-    if (exactShortcut(shortcut, "Alt+Up")) {
-        return 45000;
-    }
-    if (exactShortcut(shortcut, "Alt+Down")) {
-        return -45000;
-    }
-
-    return std::nullopt;
-}
-
 class ShortcutEventFilter final : public QObject
 {
 public:
@@ -456,48 +431,33 @@ bool ApplicationShortcutRuntime::handleShortcutEvent(const QKeySequence &shortcu
 
 bool ApplicationShortcutRuntime::handleFixedShortcutEvent(const QKeySequence &shortcut)
 {
-    const VideoShortcutAvailabilityInput videoShortcutInput {
+    const FixedShortcutDispatchInput input {
+        m_actionStateInput.videoMode,
         m_actionStateInput.helpActionsEnabled,
         m_actionStateInput.viewerShortcutsEnabled,
+        m_actionStateInput.readyViewerShortcutsEnabled,
         m_actionStateInput.videoFileDeletionInProgress,
         m_actionStateInput.activeNavigationActionsAvailable,
+        m_actionStateInput.twoPageViewerShortcutsEnabled,
+        m_actionStateInput.pannableViewerShortcutsEnabled,
     };
-    const bool horizontalArrowEnabled
-        = mediaHorizontalArrowShortcutsEnabled(m_actionStateInput.videoMode,
-            m_actionStateInput.readyViewerShortcutsEnabled, videoShortcutInput);
-    const bool videoSeekEnabled = m_actionStateInput.videoMode
-        && videoShortcutsEnabledForScope(
-            videoShortcutInput, ImageShortcutScope::ReadyViewerShortcutScope);
-    const std::optional<qint64> videoSeekDelta = fixedVideoSeekShortcutDeltaMilliseconds(shortcut);
 
-    if (videoSeekEnabled && videoSeekDelta.has_value()) {
+    const FixedShortcutDispatchOutcome outcome = fixedShortcutDispatchOutcome(input, shortcut);
+    switch (outcome.kind) {
+    case FixedShortcutDispatchKind::VideoSeek:
         return m_triggerCallbacks.videoSeekShortcutTriggered
-            && m_triggerCallbacks.videoSeekShortcutTriggered(*videoSeekDelta);
-    }
-    if (horizontalArrowEnabled && exactShortcut(shortcut, "Left")) {
+            && m_triggerCallbacks.videoSeekShortcutTriggered(outcome.videoSeekDeltaMilliseconds);
+    case FixedShortcutDispatchKind::HorizontalArrow:
         return m_triggerCallbacks.horizontalArrowShortcutTriggered
-            && m_triggerCallbacks.horizontalArrowShortcutTriggered(true);
-    }
-    if (horizontalArrowEnabled && exactShortcut(shortcut, "Right")) {
-        return m_triggerCallbacks.horizontalArrowShortcutTriggered
-            && m_triggerCallbacks.horizontalArrowShortcutTriggered(false);
-    }
-    if (m_actionStateInput.twoPageViewerShortcutsEnabled && exactShortcut(shortcut, "Shift+Left")) {
+            && m_triggerCallbacks.horizontalArrowShortcutTriggered(outcome.previousOrUp);
+    case FixedShortcutDispatchKind::SinglePageArrow:
         return m_triggerCallbacks.singlePageArrowShortcutTriggered
-            && m_triggerCallbacks.singlePageArrowShortcutTriggered(true);
-    }
-    if (m_actionStateInput.twoPageViewerShortcutsEnabled
-        && exactShortcut(shortcut, "Shift+Right")) {
-        return m_triggerCallbacks.singlePageArrowShortcutTriggered
-            && m_triggerCallbacks.singlePageArrowShortcutTriggered(false);
-    }
-    if (m_actionStateInput.pannableViewerShortcutsEnabled && exactShortcut(shortcut, "Up")) {
+            && m_triggerCallbacks.singlePageArrowShortcutTriggered(outcome.previousOrUp);
+    case FixedShortcutDispatchKind::VerticalPan:
         return m_triggerCallbacks.verticalPanShortcutTriggered
-            && m_triggerCallbacks.verticalPanShortcutTriggered(true);
-    }
-    if (m_actionStateInput.pannableViewerShortcutsEnabled && exactShortcut(shortcut, "Down")) {
-        return m_triggerCallbacks.verticalPanShortcutTriggered
-            && m_triggerCallbacks.verticalPanShortcutTriggered(false);
+            && m_triggerCallbacks.verticalPanShortcutTriggered(outcome.previousOrUp);
+    case FixedShortcutDispatchKind::None:
+        return false;
     }
 
     return false;

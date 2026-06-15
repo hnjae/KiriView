@@ -77,6 +77,31 @@ bool shortcutIsUnmodifiedAsciiPrintable(const QKeySequence &shortcut)
     return shortcut.count() == 1 && shortcutCombinationIsUnmodifiedAsciiPrintable(shortcut[0]);
 }
 
+bool exactShortcut(const QKeySequence &shortcut, const char *portableText)
+{
+    return shortcut.matches(QKeySequence::fromString(
+               QString::fromLatin1(portableText), QKeySequence::PortableText))
+        == QKeySequence::ExactMatch;
+}
+
+std::optional<qint64> fixedVideoSeekShortcutDeltaMilliseconds(const QKeySequence &shortcut)
+{
+    if (exactShortcut(shortcut, "Alt+Left")) {
+        return -5000;
+    }
+    if (exactShortcut(shortcut, "Alt+Right")) {
+        return 5000;
+    }
+    if (exactShortcut(shortcut, "Alt+Up")) {
+        return 45000;
+    }
+    if (exactShortcut(shortcut, "Alt+Down")) {
+        return -45000;
+    }
+
+    return std::nullopt;
+}
+
 bool routeMatchesSpec(const Route &route, const RouteSpec &spec)
 {
     return route.activationScope == spec.activationScope
@@ -186,6 +211,53 @@ std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value)
     }
 
     return scope;
+}
+
+FixedShortcutDispatchOutcome fixedShortcutDispatchOutcome(
+    const FixedShortcutDispatchInput &input, const QKeySequence &shortcut)
+{
+    const VideoShortcutAvailabilityInput videoShortcutInput {
+        input.helpActionsEnabled,
+        input.viewerShortcutsEnabled,
+        input.videoFileDeletionInProgress,
+        input.activeNavigationActionsAvailable,
+    };
+    const bool horizontalArrowEnabled = mediaHorizontalArrowShortcutsEnabled(
+        input.videoMode, input.readyViewerShortcutsEnabled, videoShortcutInput);
+    const bool videoSeekEnabled = input.videoMode
+        && videoShortcutsEnabledForScope(
+            videoShortcutInput, ImageShortcutScope::ReadyViewerShortcutScope);
+    const std::optional<qint64> videoSeekDelta = fixedVideoSeekShortcutDeltaMilliseconds(shortcut);
+
+    if (videoSeekEnabled && videoSeekDelta.has_value()) {
+        return FixedShortcutDispatchOutcome {
+            FixedShortcutDispatchKind::VideoSeek,
+            false,
+            *videoSeekDelta,
+        };
+    }
+    if (horizontalArrowEnabled && exactShortcut(shortcut, "Left")) {
+        return FixedShortcutDispatchOutcome { FixedShortcutDispatchKind::HorizontalArrow, true, 0 };
+    }
+    if (horizontalArrowEnabled && exactShortcut(shortcut, "Right")) {
+        return FixedShortcutDispatchOutcome { FixedShortcutDispatchKind::HorizontalArrow, false,
+            0 };
+    }
+    if (input.twoPageViewerShortcutsEnabled && exactShortcut(shortcut, "Shift+Left")) {
+        return FixedShortcutDispatchOutcome { FixedShortcutDispatchKind::SinglePageArrow, true, 0 };
+    }
+    if (input.twoPageViewerShortcutsEnabled && exactShortcut(shortcut, "Shift+Right")) {
+        return FixedShortcutDispatchOutcome { FixedShortcutDispatchKind::SinglePageArrow, false,
+            0 };
+    }
+    if (input.pannableViewerShortcutsEnabled && exactShortcut(shortcut, "Up")) {
+        return FixedShortcutDispatchOutcome { FixedShortcutDispatchKind::VerticalPan, true, 0 };
+    }
+    if (input.pannableViewerShortcutsEnabled && exactShortcut(shortcut, "Down")) {
+        return FixedShortcutDispatchOutcome { FixedShortcutDispatchKind::VerticalPan, false, 0 };
+    }
+
+    return {};
 }
 
 bool videoActionUnsupported(ActionId actionId)

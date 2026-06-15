@@ -11,6 +11,7 @@
 #include <QKeySequence>
 #include <QList>
 #include <QString>
+#include <QtGlobal>
 #include <optional>
 
 namespace kiriview::ApplicationActions {
@@ -30,6 +31,31 @@ struct ApplicationShortcutProjection {
     QString menuShortcutText;
 };
 
+enum class FixedShortcutDispatchKind {
+    None,
+    HorizontalArrow,
+    SinglePageArrow,
+    VerticalPan,
+    VideoSeek,
+};
+
+struct FixedShortcutDispatchInput {
+    bool videoMode = false;
+    bool helpActionsEnabled = false;
+    bool viewerShortcutsEnabled = false;
+    bool readyViewerShortcutsEnabled = false;
+    bool videoFileDeletionInProgress = false;
+    bool activeNavigationActionsAvailable = false;
+    bool twoPageViewerShortcutsEnabled = false;
+    bool pannableViewerShortcutsEnabled = false;
+};
+
+struct FixedShortcutDispatchOutcome {
+    FixedShortcutDispatchKind kind = FixedShortcutDispatchKind::None;
+    bool previousOrUp = false;
+    qint64 videoSeekDeltaMilliseconds = 0;
+};
+
 QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts);
 QString shortcutListText(const QList<QKeySequence> &shortcuts);
 QList<QKeySequence> sanitizeProgramWideShortcuts(const QList<QKeySequence> &shortcuts);
@@ -37,6 +63,8 @@ ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &prog
     const QList<QKeySequence> &viewerLocalShortcuts = {});
 const QList<ApplicationShortcutRoute> &shortcutRoutes();
 std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value);
+FixedShortcutDispatchOutcome fixedShortcutDispatchOutcome(
+    const FixedShortcutDispatchInput &input, const QKeySequence &shortcut);
 bool videoActionUnsupported(ActionId actionId);
 bool imageActionUnsupported(ActionId actionId);
 }
