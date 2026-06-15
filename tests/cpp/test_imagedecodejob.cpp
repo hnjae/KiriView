@@ -13,6 +13,7 @@
 #include <QImage>
 #include <QImageWriter>
 #include <QObject>
+#include <QRegularExpression>
 #include <QSemaphore>
 #include <QSize>
 #include <QTest>
@@ -273,6 +274,7 @@ class TestImageDecodeJob : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void emptyRequestLeavesDiagnosticWarning();
     void cancelSuppressesPendingLoad();
     void staleLoadResultIsIgnored();
     void restartedSameRequestIgnoresStaleLoadResult();
@@ -288,6 +290,28 @@ private Q_SLOTS:
     void lateRawEmbeddedPreviewAfterDecodeIsIgnored();
     void readyXdgThumbnailPreviewSuppressesRawEmbeddedPreview();
 };
+
+void TestImageDecodeJob::emptyRequestLeavesDiagnosticWarning()
+{
+    ManualImageDataLoader dataLoader;
+    int decodedCount = 0;
+    int loadErrorCount = 0;
+    kiriview::ImageDecodeJob decodeJob(this,
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoderRejectingBadData()),
+        decodeJobCallbacks([&decodedCount](kiriview::ImageDecodeRequest,
+                               kiriview::DecodedImageResult) { ++decodedCount; },
+            [&loadErrorCount](
+                const kiriview::ImageDecodeRequest &, const QString &) { ++loadErrorCount; }));
+
+    QTest::ignoreMessage(
+        QtWarningMsg, QRegularExpression(".*KiriView image decode rejected empty request.*"));
+    decodeJob.start(kiriview::ImageDecodeRequest());
+
+    QCOMPARE(dataLoader.loadCount(), std::size_t(0));
+    QCOMPARE(decodedCount, 0);
+    QCOMPARE(loadErrorCount, 0);
+    QVERIFY(!decodeJob.hasActiveRequest());
+}
 
 void TestImageDecodeJob::cancelSuppressesPendingLoad()
 {
