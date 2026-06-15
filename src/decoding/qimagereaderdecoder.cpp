@@ -15,6 +15,54 @@
 #include <utility>
 
 namespace {
+QString qtRasterFailureOperationName(kiriview::DecodedImageFailureOperation operation)
+{
+    switch (operation) {
+    case kiriview::DecodedImageFailureOperation::Unknown:
+        return QStringLiteral("unknown");
+    case kiriview::DecodedImageFailureOperation::OpenStaticImageSource:
+        return QStringLiteral("open static image source");
+    case kiriview::DecodedImageFailureOperation::DecodeFirstDisplayImage:
+        return QStringLiteral("decode first display image");
+    case kiriview::DecodedImageFailureOperation::DecodeBlockingDisplayImage:
+        return QStringLiteral("decode blocking display image");
+    }
+    return QStringLiteral("unknown");
+}
+
+QString qtRasterFailureDiagnosticDetail(const QByteArray &format,
+    kiriview::DecodedImageFailureOperation operation, const QString &backendError)
+{
+    return QStringLiteral("Qt image reader %1 failed for format %2: %3")
+        .arg(qtRasterFailureOperationName(operation), QString::fromLatin1(format),
+            backendError.isEmpty() ? QStringLiteral("<empty>") : backendError);
+}
+
+kiriview::DecodedImageResult failedQtRasterDecodedImageResult(QString errorString,
+    kiriview::DecodedImageFailureOperation operation, const QByteArray &format,
+    const QString &backendError)
+{
+    return kiriview::failedDecodedImageResult(kiriview::DecodedImageFailure {
+        std::move(errorString),
+        kiriview::DecodedImageFailureRoute::QtRaster,
+        operation,
+        qtRasterFailureDiagnosticDetail(format, operation, backendError),
+        kiriview::DecodedImageFailureSeverity::Error,
+        false,
+    });
+}
+
+void stampQtRasterFailure(kiriview::DecodedImageResult &result, const QByteArray &format)
+{
+    kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    if (failure == nullptr) {
+        return;
+    }
+    failure->route = kiriview::DecodedImageFailureRoute::QtRaster;
+    failure->diagnosticDetail
+        = qtRasterFailureDiagnosticDetail(format, failure->operation, failure->diagnosticDetail);
+}
+
 kiriview::DecodedImageResult openedStaticImageResult(
     const QByteArray &data, const kiriview::ImageDecodeRequest &request, const QByteArray &format)
 {
@@ -22,10 +70,14 @@ kiriview::DecodedImageResult openedStaticImageResult(
     std::shared_ptr<kiriview::ImageTileSource> source
         = kiriview::QImageReaderTileSource::open(data, format, &errorString);
     if (source == nullptr) {
-        return kiriview::failedDecodedImageResult(errorString);
+        return failedQtRasterDecodedImageResult(errorString,
+            kiriview::DecodedImageFailureOperation::OpenStaticImageSource, format, errorString);
     }
 
-    return kiriview::staticDecodedImageResult(std::move(source), request, &errorString);
+    kiriview::DecodedImageResult result
+        = kiriview::staticDecodedImageResult(std::move(source), request, &errorString);
+    stampQtRasterFailure(result, format);
+    return result;
 }
 
 QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest &request)
@@ -41,7 +93,9 @@ DecodedImageResult decodeQImageReaderImageData(
     const QByteArray readerFormat = qtImageReaderFormat(format);
     BufferedImageReader reader(data, readerFormat);
     if (!reader) {
-        return failedDecodedImageResult(imageErrorText(ImageErrorTextId::ReadImageData));
+        return failedQtRasterDecodedImageResult(imageErrorText(ImageErrorTextId::ReadImageData),
+            DecodedImageFailureOperation::OpenStaticImageSource, readerFormat,
+            QStringLiteral("QImageReader could not be constructed"));
     }
 
     const bool supportsAnimation = reader.supportsAnimation();
