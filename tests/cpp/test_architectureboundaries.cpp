@@ -65,6 +65,7 @@ private Q_SLOTS:
     void liveDirectoryWatchUsesProviderBoundary();
     void mediaFormatRegistryDoesNotOwnLocalizedDialogLabels();
     void asyncImageIoJobsDoNotOwnDecodeDataLoading();
+    void asyncImageIoJobsDoNotOwnDirectoryCandidateLoading();
     void mediaEntrySourceStoreDoesNotDependOnDocumentPlanning();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
@@ -1337,6 +1338,30 @@ void TestArchitectureBoundaries::asyncImageIoJobsDoNotOwnDecodeDataLoading()
         QRegularExpression(QStringLiteral(R"(\bImageDecodeRequest\b)")),
         QRegularExpression(QStringLiteral(R"(\bstartStoredImageDataLoad\b)")),
         QRegularExpression(QStringLiteral(R"(\bKIO::storedGet\b)")),
+    };
+
+    QStringList violations;
+    for (const QString &relativePath : relativePaths) {
+        const QString matches = matchingLines(projectPath(relativePath), forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::asyncImageIoJobsDoNotOwnDirectoryCandidateLoading()
+{
+    const QList<QString> relativePaths {
+        QStringLiteral("src/async/imageiojobs.h"),
+        QStringLiteral("src/async/imageiojobs.cpp"),
+    };
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(#include\s+"async/directorylistingjob\.h")")),
+        QRegularExpression(QStringLiteral(R"(\bDirectoryItemListProvider\b)")),
+        QRegularExpression(QStringLiteral(R"(\bstartDirectoryImageDocumentPageCandidateList\b)")),
+        QRegularExpression(QStringLiteral(R"(\bstartDirectoryContainerCandidateList\b)")),
     };
 
     QStringList violations;
