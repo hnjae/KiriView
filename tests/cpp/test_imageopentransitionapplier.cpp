@@ -65,6 +65,7 @@ private Q_SLOTS:
     void errorTransitionUsesDisplayedFallbackAndProvidedError();
     void invalidReadyWithErrorPlanDoesNotMutateStateOrRunEffects();
     void invalidReadyWithEmptySourcePlanDoesNotMutateStateOrRunEffects();
+    void invalidReadyVideoSourceWithoutUnsupportedFlagDoesNotMutateStateOrRunEffects();
     void missingRuntimeContextDoesNotClearResolvedTargets();
 };
 
@@ -303,6 +304,44 @@ void TestImageOpenTransitionApplier::invalidReadyWithEmptySourcePlanDoesNotMutat
 
     QCOMPARE(state.sourceUrl(), sourceUrl);
     QCOMPARE(state.displayedUrl(), displayedUrl);
+    QVERIFY(state.loading());
+    QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Loading);
+    QVERIFY(plan.empty());
+    QVERIFY(changes.empty());
+}
+
+void TestImageOpenTransitionApplier::
+    invalidReadyVideoSourceWithoutUnsupportedFlagDoesNotMutateStateOrRunEffects()
+{
+    std::vector<kiriview::ImageDocumentChange> changes;
+    kiriview::ImageDocumentState state(
+        [&changes](kiriview::ImageDocumentChange change) { changes.push_back(change); });
+
+    const QUrl sourceUrl = localUrl(QStringLiteral("/images/current.png"));
+    const QUrl videoUrl = localUrl(QStringLiteral("/archive/video.mp4"));
+    state.setSourceUrl(sourceUrl);
+    state.setDisplayedImageLocation(kiriview::DisplayedImageLocation::fromUrl(sourceUrl));
+    state.setStatus(kiriview::ImageDocumentStatus::Loading);
+    state.setLoading(true);
+    changes.clear();
+
+    kiriview::ImageOpenApplicationPlan applicationPlan;
+    applicationPlan.stateDelta.sourceUrl = videoUrl;
+    applicationPlan.stateDelta.sourceKind = kiriview::ImageDocumentPageKind::Video;
+    applicationPlan.stateDelta.displayedLocation
+        = kiriview::DisplayedImageLocation::fromUrl(videoUrl);
+    applicationPlan.stateDelta.loading = false;
+    applicationPlan.stateDelta.status = kiriview::ImageDocumentStatus::Ready;
+    applicationPlan.stateDelta.errorString = QString();
+    applicationPlan.runtimePlan.push_back(kiriview::UpdatePageNavigationOperation {});
+
+    const kiriview::ImageDocumentRuntimePlan plan
+        = kiriview::applyImageOpenApplicationPlan(state, std::move(applicationPlan));
+
+    QCOMPARE(state.sourceUrl(), sourceUrl);
+    QCOMPARE(state.displayedUrl(), sourceUrl);
+    QCOMPARE(state.sourceKind(), kiriview::ImageDocumentPageKind::Image);
+    QVERIFY(!state.unsupportedOpenedCollectionVideo());
     QVERIFY(state.loading());
     QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Loading);
     QVERIFY(plan.empty());
