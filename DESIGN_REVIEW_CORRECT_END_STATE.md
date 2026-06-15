@@ -29,10 +29,10 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ### Finding: Uncertain - image presentation can expose visible image state without a provider-ready display source
 
 - Evidence: `src/presentation/imagepagesurfacecontroller.cpp:155` returns `hasImage` and `m_displaySource` independently. `src/presentation/imagepagesurfacecontroller.cpp:246` creates a display source even when `DisplayImageStore::insert` returns an empty entry id. `src/rendering/displayimagestore.cpp:237` returns empty for null images or images over budget. `src/presentation/imagepresentationruntime.cpp:724` marks the projection visible when `slot.hasImage` is true and copies the provider URL. `src/qml/DisplayImagePage.qml:28` shows the page when the projection is visible and uses `providerUrl` for the inner image.
-- Current state: `hasImage == true` with an empty provider URL or display-error source is representable. More evidence is needed to prove the oversize/budget path is reachable in production, and `setImage` may effectively be test-only.
+- Current state: `ImagePageSurfaceController::setImage()` now preserves the invariant by publishing a display-error source slot with image dimensions when no provider entry exists, and display-store insertion failure already projects as display-error. The page-slot type still represents `hasImage`, provider readiness, and display-error as independent fields rather than explicit variants.
 - Design concern: The visible provider-backed image invariant is not encoded in the type, so a blank page or unnamed display failure may be possible.
 - Correct end state: `ImagePresentationPageSlotSnapshot` should use explicit variants such as empty, provider-ready, display-error, and retained/stale presentation. A visible provider-backed state should always include either a valid provider URL or an explicit display-error state consumed by UI/document failure handling.
-- Suggested migration: Add tests for `DisplayImageStore` insertion failure and `ImagePageSurfaceController::snapshot` after `setImage`. Decide whether `setImage` should be removed, made test-only, or made invariant-preserving.
+- Suggested migration: Replace independent `ImagePresentationPageSlotSnapshot` fields with explicit empty, provider-ready, display-error, and retained/stale variants, then project QML-visible state from those variants.
 - Acceptance criteria: No production `ImageDisplaySourceProjection` can be `visible == true` with an empty provider URL unless it carries an explicit display-error state.
 - Priority: P2, uncertain
 
