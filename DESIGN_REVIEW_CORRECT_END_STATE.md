@@ -132,16 +132,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ## Testability Problems
 
-### Finding: Default cache budgets are resolved from host memory outside dependency injection
-
-- Evidence: `src/system/systemmemory.cpp:17` reads physical memory through `sysconf`; `src/document/imagedocumentruntimedependencies.cpp:32`, `src/predecode/mediapredecodedependencies.cpp:14`, `src/rendering/displayimagestore.cpp:35` and `:429`, and `src/session/thumbnailimagestore.cpp:38` call production `systemMemorySnapshot()` directly. `tests/cpp/test_systemmemory.cpp:21` tests lower-level injected readers, but owner-level budget tests assert only broad host-dependent properties.
-- Current state: The low-level memory seam exists, but dependency resolution and default store construction capture host-derived values directly.
-- Design concern: Low-memory, missing-memory, and invalid-memory budget behavior cannot be tested deterministically at the owner level.
-- Correct end state: Runtime dependency resolution should accept `SystemMemorySnapshot` or `SystemMemoryRuntime`, and stores should receive explicit budgets from the owning dependency layer.
-- Suggested migration: Add optional system-memory snapshot/runtime fields to the relevant dependency overrides and resolve image document, media predecode, display, and thumbnail budgets from supplied facts.
-- Acceptance criteria: Dependency-resolution tests can set physical memory to known values and verify low/missing-memory behavior at owner level.
-- Priority: P2
-
 ### Finding: Shortcut dispatch core is private inside the Qt event-filter runtime
 
 - Evidence: `src/application/applicationshortcutruntime.h:59` keeps `handleShortcutEvent`, `handleFixedShortcutEvent`, `shortcutBindingEnabled`, and `handleShortcutActivated` private. `src/application/applicationshortcutruntime.cpp:272` installs event filters, and `:317`, `:343`, and `:422` handle focus gating, fixed shortcut mapping, unsupported-video interception, and QAction triggering. Pure adjacent tests exist in `tests/cpp/test_applicationshortcutpolicy.cpp` and `tests/cpp/test_applicationcommandrouter.cpp`, while many shortcut paths are exercised through `tests/cpp/test_imageshortcuts.cpp` using `QQuickView`, `QTest::keyClick`, focus, and window state.
@@ -229,10 +219,9 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ## Suggested Refactoring Sequence
 
-1. Isolate core domain logic from external effects: inject system memory facts for cache budget resolution.
-2. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
-3. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics, then media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
-4. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
+1. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
+2. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics, then media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
+3. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
 
 ## Things Not To Change Yet
 
