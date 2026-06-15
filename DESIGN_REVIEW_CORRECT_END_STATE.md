@@ -100,16 +100,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Route plan types distinguish mutation operations from follow-up effects; the mutation visitor does not call `recomputePublicProjection()` or start direct media refresh.
 - Priority: P2
 
-### Finding: `async/imageiojobs` mixes generic async infrastructure with domain loaders
-
-- Evidence: `src/async/imageiojobs.h:7-13` imports callbacks, worker scheduler, image location, and navigation candidate types. `src/async/imageiojobs.cpp:48-75` still implements opened-collection candidate loading. `src/navigation/imagedocumentpagecandidateprovider.cpp` imports this header for opened-collection default domain providers.
-- Current state: `src/async/` appears to own generic job/callback/scheduler infrastructure, but `imageiojobs` still owns opened-collection candidate defaults. Stored image data loading now lives in `src/decoding/imagedataloading.*`; directory candidate loading now lives in `src/navigation/imagedocumentpagecandidateloading.*`; architecture-boundary tests keep decode request, `KIO::storedGet`, and directory-listing ownership out of `src/async/imageiojobs.*`.
-- Design concern: Default domain IO behavior is hard to locate, and archive/navigation/decoding features are harder to remove independently.
-- Correct end state: `src/async/` should own cancelable job wrappers, callback delivery, schedulers, and generic worker primitives. Directory candidate jobs should live in navigation, opened-collection jobs in archive, and stored image data loading in decoding or a clearly named IO infrastructure module.
-- Suggested migration: Move one function group at a time and keep compatibility wrappers temporarily if needed.
-- Acceptance criteria: `src/async/imageiojobs.*` is removed or contains only generic IO primitives; removing opened-collection support does not require editing a generic async module.
-- Priority: P2
-
 ## Testability Problems
 
 ### Finding: Shortcut dispatch core is private inside the Qt event-filter runtime
@@ -136,11 +126,11 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ### Finding: Collection source errors are inconsistent across backends
 
-- Evidence: `src/archive/mediaentrysourcebackend.h` defines string-oriented `MediaEntrySourceError`; directory backend behavior does not consistently preserve `QFile` error detail; KArchive and libarchive paths preserve different levels of detail; `src/async/imageiojobs.cpp` forwards opened-collection read/candidate-load errors as strings.
+- Evidence: `src/archive/mediaentrysourcebackend.h` defines string-oriented `MediaEntrySourceError`; directory backend behavior does not consistently preserve `QFile` error detail; KArchive and libarchive paths preserve different levels of detail; `src/archive/mediaentrysourcecandidateloading.cpp` forwards opened-collection read/candidate-load errors as strings.
 - Current state: Directory, KArchive, and libarchive source failures do not consistently preserve backend, operation, and source identity.
 - Design concern: Opened-collection failures are hard to compare, reproduce, and log across backends.
 - Correct end state: Typed `MediaEntrySourceFailure` should include backend, operation, collection URL, entry path, user text, and diagnostic detail.
-- Suggested migration: Extend backend result types to typed failures first, then update `imageiojobs` forwarding to project typed failures.
+- Suggested migration: Extend backend result types to typed failures first, then update archive candidate-loading forwarding to project typed failures.
 - Acceptance criteria: Backend-specific failure tests assert operation, source identity, and diagnostic detail through common fields.
 - Priority: P2
 
