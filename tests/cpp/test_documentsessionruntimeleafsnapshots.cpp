@@ -1,0 +1,69 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#include "session/documentsessionruntime.h"
+
+#include <QObject>
+#include <QSize>
+#include <QTest>
+#include <QUrl>
+
+class TestDocumentSessionRuntimeLeafSnapshots : public QObject
+{
+    Q_OBJECT
+
+private Q_SLOTS:
+    void directImageRoutePublishesImageLeafSnapshot();
+};
+
+namespace {
+QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+}
+
+void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeafSnapshot()
+{
+    QObject owner;
+    const QUrl imageUrl = localUrl(QStringLiteral("/media/image.png"));
+    kiriview::DocumentSessionImageDocumentSnapshot imageSnapshot;
+    kiriview::DocumentSessionVideoDocumentSnapshot videoSnapshot;
+
+    kiriview::DocumentSessionImageDocumentPort imagePort;
+    imagePort.snapshot = [&imageSnapshot]() { return imageSnapshot; };
+    imagePort.setSourceUrl = [&imageSnapshot](const QUrl &url) {
+        imageSnapshot.sourceUrl = url;
+        imageSnapshot.displayedUrl = url;
+        imageSnapshot.windowTitleFileName = url.fileName();
+        imageSnapshot.directMediaSize = QSize(320, 200);
+        imageSnapshot.ready = !url.isEmpty();
+        imageSnapshot.ordinaryDirectMediaScopeActive = !url.isEmpty();
+        imageSnapshot.zoomPercentKnown = true;
+        imageSnapshot.zoomPercent = 100.0;
+    };
+    imagePort.openPreviousPage = []() { };
+    imagePort.openNextPage = []() { };
+    imagePort.openImageAtPage = [](int) { };
+    imagePort.deleteDisplayedFile = [](kiriview::FileDeletionMode) { };
+
+    kiriview::DocumentSessionVideoDocumentPort videoPort;
+    videoPort.snapshot = [&videoSnapshot]() { return videoSnapshot; };
+    videoPort.setSourceUrl = [&videoSnapshot](const QUrl &url) { videoSnapshot.sourceUrl = url; };
+    videoPort.videoOutput = []() -> QObject * { return nullptr; };
+    videoPort.stop = []() { };
+    videoPort.setVideoOutput = [](QObject *) { };
+    videoPort.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
+
+    kiriview::DocumentSessionRuntime runtime(&owner, std::move(imagePort), std::move(videoPort));
+
+    runtime.setSourceUrl(imageUrl);
+
+    QCOMPARE(runtime.documentKind(), kiriview::DocumentSessionKind::Image);
+    QCOMPARE(runtime.sourceUrl(), imageUrl);
+    QVERIFY(runtime.activeImageReady());
+    QCOMPARE(runtime.windowTitleSubject(), QStringLiteral("image.png"));
+    QVERIFY(runtime.activeZoomPercentKnown());
+    QCOMPARE(runtime.activeZoomPercent(), 100.0);
+}
+
+QTEST_GUILESS_MAIN(TestDocumentSessionRuntimeLeafSnapshots)
+
+#include "test_documentsessionruntimeleafsnapshots.moc"
