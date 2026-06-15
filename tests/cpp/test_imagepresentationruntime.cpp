@@ -48,6 +48,7 @@ private Q_SLOTS:
     void spreadModePreservesZoomAndDisablesRotation();
     void previousActiveTransitionKeepsCommittedProjectionAuthoritative();
     void hiddenSecondaryProjectionIsNotVisible();
+    void providerReadyProjectionRequiresProviderUrl();
     void singlePageSnapshotDoesNotExposeSecondaryVisibility();
 };
 
@@ -167,6 +168,26 @@ void TestImagePresentationRuntime::hiddenSecondaryProjectionIsNotVisible()
 
     QVERIFY(!projection.visible);
     QVERIFY(projection.visibleItemRect.isEmpty());
+}
+
+void TestImagePresentationRuntime::providerReadyProjectionRequiresProviderUrl()
+{
+    kiriview::ImagePresentationRuntime runtime(renderContext);
+    kiriview::ImagePresentationPageSlotSnapshot slot = pageSlot(QSize(800, 600), 1);
+    slot.displaySource.status = kiriview::ImageDisplaySourceStatus::Ready;
+    slot.displaySource.originalSize = QSize(800, 600);
+    slot.displaySource.rasterSize = QSize(400, 300);
+
+    runtime.commitPrimaryPageSlot(slot,
+        kiriview::ImagePresentationScopeKey::directImage(localUrl(QStringLiteral("/images/a.png"))),
+        kiriview::ImagePresentationPrimaryChangePolicy::ResetZoom);
+
+    const kiriview::ImageDisplaySourceProjection projection
+        = runtime.displaySourceProjection(kiriview::DisplayedPageRole::Primary);
+
+    QVERIFY(projection.visible);
+    QVERIFY(projection.providerUrl.isEmpty());
+    QCOMPARE(projection.status, kiriview::ImageDisplaySourceStatus::Error);
 }
 
 void TestImagePresentationRuntime::singlePageSnapshotDoesNotExposeSecondaryVisibility()
