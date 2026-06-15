@@ -3,6 +3,8 @@
 
 #include "imageloadsessiontracker.h"
 
+#include "location/imagedocumentlocation.h"
+
 #include <utility>
 
 namespace kiriview {
@@ -16,7 +18,11 @@ ImageLoadPlan ImageLoadSessionTracker::start(
 {
     cancel();
 
-    ImageLoadPlan plan = imageLoadPlan(nextSessionId(), std::move(request), firstDisplayContext);
+    ImageLoadResolvedSourceFacts resolvedSourceFacts {
+        openedCollectionScopeLocationForDirectlyOpenedLocalUrl(request.sourceUrl()),
+    };
+    ImageLoadPlan plan = imageLoadPlan(
+        nextSessionId(), std::move(request), firstDisplayContext, std::move(resolvedSourceFacts));
     m_session = plan.session;
     return plan;
 }

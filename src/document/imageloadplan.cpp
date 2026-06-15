@@ -14,7 +14,6 @@ using kiriview::ImageLoadStartEffect;
 using kiriview::openedCollectionScopeContainsUrl;
 using kiriview::OpenedCollectionScopeLoadEffect;
 using kiriview::OpenedCollectionScopeLocation;
-using kiriview::openedCollectionScopeLocationForDirectlyOpenedLocalUrl;
 using kiriview::openedCollectionScopeLocationForLocalArchiveUrl;
 
 std::optional<OpenedCollectionScopeLocation> containerOpenedCollectionScopeForImageLoadRequest(
@@ -48,12 +47,20 @@ ImageLoadStartEffect imageLoadStartEffectForPageScopeEffect(OpenedCollectionScop
 }
 
 namespace kiriview {
-OpenedCollectionScopeLoadPlan openedCollectionScopeLoadPlan(const ImageLoadRequest &request)
+OpenedCollectionScopeLoadPlan openedCollectionScopeLoadPlan(
+    const ImageLoadRequest &request, const ImageLoadResolvedSourceFacts &resolvedSourceFacts)
 {
     const std::optional<OpenedCollectionScopeLocation> sourceOpenedCollectionScope
-        = openedCollectionScopeLocationForDirectlyOpenedLocalUrl(request.sourceUrl());
+        = resolvedSourceFacts.directlyOpenedCollectionScope;
     if (sourceOpenedCollectionScope.has_value()) {
         return { *sourceOpenedCollectionScope,
+            OpenedCollectionScopeLoadEffect::LoadImageDocumentPageCandidates };
+    }
+
+    const std::optional<OpenedCollectionScopeLocation> archiveOpenedCollectionScope
+        = openedCollectionScopeLocationForLocalArchiveUrl(request.sourceUrl());
+    if (archiveOpenedCollectionScope.has_value()) {
+        return { *archiveOpenedCollectionScope,
             OpenedCollectionScopeLoadEffect::LoadImageDocumentPageCandidates };
     }
 
@@ -70,11 +77,13 @@ OpenedCollectionScopeLoadPlan openedCollectionScopeLoadPlan(const ImageLoadReque
     return { OpenedCollectionScopeLocation::none(), OpenedCollectionScopeLoadEffect::ReadImage };
 }
 
-ImageLoadPlan imageLoadPlan(
-    quint64 id, ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext)
+ImageLoadPlan imageLoadPlan(quint64 id, ImageLoadRequest request,
+    ImageFirstDisplayDecodeContext firstDisplayContext,
+    ImageLoadResolvedSourceFacts resolvedSourceFacts)
 {
     QUrl sourceUrl = request.sourceUrl();
-    OpenedCollectionScopeLoadPlan pageScopePlan = openedCollectionScopeLoadPlan(request);
+    OpenedCollectionScopeLoadPlan pageScopePlan
+        = openedCollectionScopeLoadPlan(request, resolvedSourceFacts);
     const ImageLoadStartEffect startEffect
         = imageLoadStartEffectForPageScopeEffect(pageScopePlan.effect);
     ImageLoadSession session(id, std::move(request),

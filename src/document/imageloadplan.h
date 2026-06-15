@@ -7,6 +7,7 @@
 #include "imageloadtypes.h"
 
 #include <QtGlobal>
+#include <optional>
 
 namespace kiriview {
 enum class OpenedCollectionScopeLoadEffect {
@@ -29,9 +30,15 @@ struct ImageLoadPlan {
     ImageLoadStartEffect startEffect = ImageLoadStartEffect::DecodeImage;
 };
 
-OpenedCollectionScopeLoadPlan openedCollectionScopeLoadPlan(const ImageLoadRequest &request);
-ImageLoadPlan imageLoadPlan(
-    quint64 id, ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
+struct ImageLoadResolvedSourceFacts {
+    std::optional<OpenedCollectionScopeLocation> directlyOpenedCollectionScope;
+};
+
+OpenedCollectionScopeLoadPlan openedCollectionScopeLoadPlan(
+    const ImageLoadRequest &request, const ImageLoadResolvedSourceFacts &resolvedSourceFacts = {});
+ImageLoadPlan imageLoadPlan(quint64 id, ImageLoadRequest request,
+    ImageFirstDisplayDecodeContext firstDisplayContext = {},
+    ImageLoadResolvedSourceFacts resolvedSourceFacts = {});
 }
 
 #endif
