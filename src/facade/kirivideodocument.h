@@ -100,7 +100,6 @@ Q_SIGNALS:
     void mutedChanged();
     void videoOutputChanged();
     void embeddedMetadataChanged();
-    void documentSessionSnapshotChanged();
 
 private:
     friend class KiriDocumentSession;

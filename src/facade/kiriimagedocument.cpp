@@ -234,45 +234,6 @@ kiriview::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
     operations.displaySourceChanged = [&document]() { Q_EMIT document.displaySourceChanged(); };
     return operations;
 }
-
-bool documentSessionSnapshotAffected(const std::vector<kiriview::ImageDocumentChange> &changes)
-{
-    for (kiriview::ImageDocumentPublicSignal signal :
-        kiriview::imageDocumentPublicSignalsForChanges(changes)) {
-        switch (signal) {
-        case kiriview::ImageDocumentPublicSignal::SourceUrl:
-        case kiriview::ImageDocumentPublicSignal::Status:
-        case kiriview::ImageDocumentPublicSignal::ErrorString:
-        case kiriview::ImageDocumentPublicSignal::WindowTitleFileName:
-        case kiriview::ImageDocumentPublicSignal::DisplayedUrl:
-        case kiriview::ImageDocumentPublicSignal::ImageSize:
-        case kiriview::ImageDocumentPublicSignal::ZoomPercentKnown:
-        case kiriview::ImageDocumentPublicSignal::ZoomPercent:
-        case kiriview::ImageDocumentPublicSignal::ZoomMode:
-        case kiriview::ImageDocumentPublicSignal::PageNavigation:
-        case kiriview::ImageDocumentPublicSignal::ContainerNavigation:
-        case kiriview::ImageDocumentPublicSignal::FileDeletionInProgress:
-        case kiriview::ImageDocumentPublicSignal::TwoPageMode:
-        case kiriview::ImageDocumentPublicSignal::RightToLeftReading:
-        case kiriview::ImageDocumentPublicSignal::ImageDocumentSourceScope:
-        case kiriview::ImageDocumentPublicSignal::UnsupportedOpenedCollectionVideo:
-        case kiriview::ImageDocumentPublicSignal::EmbeddedMetadata:
-            return true;
-        case kiriview::ImageDocumentPublicSignal::Loading:
-        case kiriview::ImageDocumentPublicSignal::ViewportSize:
-        case kiriview::ImageDocumentPublicSignal::ViewportFrame:
-        case kiriview::ImageDocumentPublicSignal::VisibleItemRect:
-        case kiriview::ImageDocumentPublicSignal::DisplaySize:
-        case kiriview::ImageDocumentPublicSignal::MaximumManualZoomPercent:
-        case kiriview::ImageDocumentPublicSignal::PresentationTransitionState:
-        case kiriview::ImageDocumentPublicSignal::RotationDegrees:
-        case kiriview::ImageDocumentPublicSignal::DisplaySource:
-            break;
-        }
-    }
-
-    return false;
-}
 }
 
 KiriImageDocument::KiriImageDocument(QObject *parent)
@@ -920,7 +881,6 @@ bool KiriImageDocument::requestAnchoredManualZoom(
 void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
 {
     refreshDisplaySources();
-    const bool sessionSnapshotAffected = documentSessionSnapshotAffected(changes);
     for (kiriview::ImageDocumentPublicSignal signal :
         kiriview::imageDocumentPublicSignalsForChanges(changes)) {
         switch (signal) {
@@ -937,9 +897,6 @@ void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentCha
         }
     }
     kiriview::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
-    if (sessionSnapshotAffected) {
-        Q_EMIT documentSessionSnapshotChanged();
-    }
 }
 
 void KiriImageDocument::refreshDisplaySources()

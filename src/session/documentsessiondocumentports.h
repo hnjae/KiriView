@@ -28,6 +28,25 @@ using DocumentSessionDocumentChangeHandler = std::function<void()>;
 using DocumentSessionDocumentSignalConnector
     = std::function<QMetaObject::Connection(QObject *, DocumentSessionDocumentChangeHandler)>;
 
+struct DocumentSessionImageDocumentSignals {
+    DocumentSessionDocumentSignalConnector sourceUrlChanged;
+    DocumentSessionDocumentSignalConnector statusChanged;
+    DocumentSessionDocumentSignalConnector windowTitleFileNameChanged;
+    DocumentSessionDocumentSignalConnector imageSizeChanged;
+    DocumentSessionDocumentSignalConnector errorStringChanged;
+    DocumentSessionDocumentSignalConnector imageDocumentSourceScopeChanged;
+    DocumentSessionDocumentSignalConnector unsupportedOpenedCollectionVideoChanged;
+    DocumentSessionDocumentSignalConnector fileDeletionInProgressChanged;
+    DocumentSessionDocumentSignalConnector zoomPercentKnownChanged;
+    DocumentSessionDocumentSignalConnector zoomPercentChanged;
+    DocumentSessionDocumentSignalConnector zoomModeChanged;
+    DocumentSessionDocumentSignalConnector pageNavigationChanged;
+    DocumentSessionDocumentSignalConnector containerNavigationChanged;
+    DocumentSessionDocumentSignalConnector twoPageModeChanged;
+    DocumentSessionDocumentSignalConnector rightToLeftReadingChanged;
+    DocumentSessionDocumentSignalConnector embeddedMetadataChanged;
+};
+
 struct DocumentSessionImageDocumentSnapshot {
     QUrl sourceUrl;
     QString errorString;
@@ -60,12 +79,24 @@ struct DocumentSessionImageDocumentSnapshot {
 
 struct DocumentSessionImageDocumentPort {
     std::function<DocumentSessionImageDocumentSnapshot()> snapshot;
-    DocumentSessionDocumentSignalConnector snapshotChanged;
     std::function<void(const QUrl &)> setSourceUrl;
     std::function<void()> openPreviousPage;
     std::function<void()> openNextPage;
     std::function<void(int)> openImageAtPage;
     std::function<void(FileDeletionMode)> deleteDisplayedFile;
+    DocumentSessionImageDocumentSignals notifications;
+};
+
+struct DocumentSessionVideoDocumentSignals {
+    DocumentSessionDocumentSignalConnector sourceUrlChanged;
+    DocumentSessionDocumentSignalConnector statusChanged;
+    DocumentSessionDocumentSignalConnector hasVideoChanged;
+    DocumentSessionDocumentSignalConnector windowTitleFileNameChanged;
+    DocumentSessionDocumentSignalConnector videoSizeChanged;
+    DocumentSessionDocumentSignalConnector errorStringChanged;
+    DocumentSessionDocumentSignalConnector zoomPercentKnownChanged;
+    DocumentSessionDocumentSignalConnector zoomPercentChanged;
+    DocumentSessionDocumentSignalConnector embeddedMetadataChanged;
 };
 
 struct DocumentSessionVideoDocumentSnapshot {
@@ -83,12 +114,12 @@ struct DocumentSessionVideoDocumentSnapshot {
 
 struct DocumentSessionVideoDocumentPort {
     std::function<DocumentSessionVideoDocumentSnapshot()> snapshot;
-    DocumentSessionDocumentSignalConnector snapshotChanged;
     std::function<void(const QUrl &)> setSourceUrl;
     std::function<QObject *()> videoOutput;
     std::function<void()> stop;
     std::function<void(QObject *)> setVideoOutput;
     std::function<void(const QRectF &, const QRectF &)> setVideoOutputGeometry;
+    DocumentSessionVideoDocumentSignals notifications;
 };
 }
 

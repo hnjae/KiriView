@@ -323,13 +323,31 @@ kiriview::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
 {
     return kiriview::DocumentSessionImageDocumentPort {
         [&document]() { return imageDocumentSessionSnapshot(document); },
-        documentSignalConnector(document, &KiriImageDocument::documentSessionSnapshotChanged),
         [&document](const QUrl &url) { document.setSourceUrl(url); },
         [&document]() { document.openPreviousPage(); },
         [&document]() { document.openNextPage(); },
         [&document](int pageNumber) { document.openImageAtPage(pageNumber); },
         [&document](kiriview::FileDeletionMode mode) {
             document.deleteDisplayedFile(toImageDocumentDeletionMode(mode));
+        },
+        kiriview::DocumentSessionImageDocumentSignals {
+            documentSignalConnector(document, &KiriImageDocument::sourceUrlChanged),
+            documentSignalConnector(document, &KiriImageDocument::statusChanged),
+            documentSignalConnector(document, &KiriImageDocument::windowTitleFileNameChanged),
+            documentSignalConnector(document, &KiriImageDocument::imageSizeChanged),
+            documentSignalConnector(document, &KiriImageDocument::errorStringChanged),
+            documentSignalConnector(document, &KiriImageDocument::imageDocumentSourceScopeChanged),
+            documentSignalConnector(
+                document, &KiriImageDocument::unsupportedOpenedCollectionVideoChanged),
+            documentSignalConnector(document, &KiriImageDocument::fileDeletionInProgressChanged),
+            documentSignalConnector(document, &KiriImageDocument::zoomPercentKnownChanged),
+            documentSignalConnector(document, &KiriImageDocument::zoomPercentChanged),
+            documentSignalConnector(document, &KiriImageDocument::zoomModeChanged),
+            documentSignalConnector(document, &KiriImageDocument::pageNavigationChanged),
+            documentSignalConnector(document, &KiriImageDocument::containerNavigationChanged),
+            documentSignalConnector(document, &KiriImageDocument::twoPageModeChanged),
+            documentSignalConnector(document, &KiriImageDocument::rightToLeftReadingChanged),
+            documentSignalConnector(document, &KiriImageDocument::embeddedMetadataChanged),
         },
     };
 }
@@ -339,13 +357,23 @@ kiriview::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPor
 {
     return kiriview::DocumentSessionVideoDocumentPort {
         [&document]() { return videoDocumentSessionSnapshot(document); },
-        documentSignalConnector(document, &KiriVideoDocument::documentSessionSnapshotChanged),
         [&document](const QUrl &url) { document.setSourceUrl(url); },
         [&document]() { return document.videoOutput(); },
         [&document]() { document.stop(); },
         [&document](QObject *videoOutput) { document.setVideoOutput(videoOutput); },
         [&document](const QRectF &contentRect, const QRectF &sourceRect) {
             document.setVideoOutputGeometry(contentRect, sourceRect);
+        },
+        kiriview::DocumentSessionVideoDocumentSignals {
+            documentSignalConnector(document, &KiriVideoDocument::sourceUrlChanged),
+            documentSignalConnector(document, &KiriVideoDocument::statusChanged),
+            documentSignalConnector(document, &KiriVideoDocument::hasVideoChanged),
+            documentSignalConnector(document, &KiriVideoDocument::windowTitleFileNameChanged),
+            documentSignalConnector(document, &KiriVideoDocument::videoSizeChanged),
+            documentSignalConnector(document, &KiriVideoDocument::errorStringChanged),
+            documentSignalConnector(document, &KiriVideoDocument::zoomPercentKnownChanged),
+            documentSignalConnector(document, &KiriVideoDocument::zoomPercentChanged),
+            documentSignalConnector(document, &KiriVideoDocument::embeddedMetadataChanged),
         },
     };
 }

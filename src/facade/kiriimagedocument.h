@@ -324,7 +324,6 @@ Q_SIGNALS:
     void unsupportedOpenedCollectionVideoChanged();
     void embeddedMetadataChanged();
     void displaySourceChanged();
-    void documentSessionSnapshotChanged();
     void unsupportedOpenedCollectionVideoEntered(const QString &message);
     void containerNavigationBoundaryReached(const QString &message);
 

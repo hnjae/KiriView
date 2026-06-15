@@ -49,35 +49,6 @@ kiriview::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDo
         = [&document]() { Q_EMIT document.embeddedMetadataChanged(); };
     return operations;
 }
-
-bool documentSessionSnapshotAffected(const std::vector<kiriview::VideoDocumentChange> &changes)
-{
-    for (kiriview::VideoDocumentPublicSignal signal :
-        kiriview::videoDocumentPublicSignalsForChanges(changes)) {
-        switch (signal) {
-        case kiriview::VideoDocumentPublicSignal::SourceUrl:
-        case kiriview::VideoDocumentPublicSignal::Status:
-        case kiriview::VideoDocumentPublicSignal::ErrorString:
-        case kiriview::VideoDocumentPublicSignal::WindowTitleFileName:
-        case kiriview::VideoDocumentPublicSignal::HasVideo:
-        case kiriview::VideoDocumentPublicSignal::VideoSize:
-        case kiriview::VideoDocumentPublicSignal::ZoomPercentKnown:
-        case kiriview::VideoDocumentPublicSignal::ZoomPercent:
-        case kiriview::VideoDocumentPublicSignal::EmbeddedMetadata:
-            return true;
-        case kiriview::VideoDocumentPublicSignal::Duration:
-        case kiriview::VideoDocumentPublicSignal::Position:
-        case kiriview::VideoDocumentPublicSignal::Playing:
-        case kiriview::VideoDocumentPublicSignal::Seekable:
-        case kiriview::VideoDocumentPublicSignal::HasAudio:
-        case kiriview::VideoDocumentPublicSignal::Muted:
-        case kiriview::VideoDocumentPublicSignal::VideoOutput:
-            break;
-        }
-    }
-
-    return false;
-}
 }
 
 KiriVideoDocument::KiriVideoDocument(QObject *parent)
@@ -160,9 +131,5 @@ void KiriVideoDocument::setVideoOutputGeometry(const QRectF &contentRect, const 
 void KiriVideoDocument::handleDocumentChanges(
     const std::vector<kiriview::VideoDocumentChange> &changes)
 {
-    const bool sessionSnapshotAffected = documentSessionSnapshotAffected(changes);
     kiriview::VideoDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
-    if (sessionSnapshotAffected) {
-        Q_EMIT documentSessionSnapshotChanged();
-    }
 }
