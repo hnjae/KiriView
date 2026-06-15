@@ -83,10 +83,10 @@ The correct end state should be precise and conservative, not clever. Rust polic
 ### Finding: Viewport command planning lives in the QML facade
 
 - Evidence: `src/facade/kiriimagedocument.h:247-345` exposes many viewport commands as `Q_INVOKABLE`s and owns `KiriView::ImageViewportInteraction m_viewportInteraction`. `src/facade/kiriimagedocument.cpp:567-705` computes zoom step, pan, scan, and nearest-anchor logic in the facade. `src/facade/kiriimagedocument.cpp:823-868` computes anchored zoom content position and sequences `m_runtime->requestManualZoomPercent()` with `requestViewportInteractionContentPosition()`. `src/facade/kiriimagedocument.cpp:872-890` mutates scan-start state while handling public signals. `src/qml/ImageViewport.qml:126-236` calls facade commands and explicitly calls `applyViewportProjection()` after many commands.
-- Current state: QML events enter the facade; the facade samples presentation state, computes viewport content position, owns scan-start state, calls runtime mutation, and then QML applies the projection.
+- Current state: QML events enter the facade; the facade samples presentation state, computes viewport content position, owns scan-start state, calls runtime mutation, and then QML applies the projection. Focused facade-boundary characterization now covers centered anchored zoom, pan/final scan commands, and next-displayed-image final scan start handoff.
 - Design concern: `KiriImageDocument` acts as a stateful presentation command planner instead of a thin facade. The hidden scan-state mutation in `handleDocumentChanges()` makes the flow especially surprising.
 - Correct end state: Viewport command planning, anchored zoom positioning, pan/scan positioning, and displayed-image scan-start handoff should be owned by the presentation runtime/controller layer. The facade should only convert QML-friendly inputs and forward commands.
-- Suggested migration: Add characterization tests for anchored zoom, pan/scan, and “next displayed image starts at final scan position.” Keep the QML API while moving calculations into runtime-level methods and moving `ImageViewportInteraction` ownership into presentation runtime/controller.
+- Suggested migration: Keep the QML API while moving calculations into runtime-level methods and moving `ImageViewportInteraction` ownership into presentation runtime/controller.
 - Acceptance criteria: `KiriImageDocument` no longer owns `ImageViewportInteraction`; `handleDocumentChanges()` does not mutate viewport interaction state; QML does not need to understand scan-start handoff.
 - Priority: P1
 
@@ -131,16 +131,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Priority: P3, uncertain
 
 ## Testability Problems
-
-### Finding: Image load planning performs filesystem directory probes
-
-- Evidence: `src/document/imageloadplan.cpp:51` calls `openedCollectionScopeLocationForDirectlyOpenedLocalUrl(request.sourceUrl())`; `src/location/imagedocumentlocation.cpp:86` uses `QFileInfo(localPath).isDir()` to identify directories. `tests/cpp/test_imageloadplan.cpp:68` and `tests/cpp/test_imageloader.cpp:388` use `QTemporaryDir` for directory planning tests.
-- Current state: The planner that chooses direct image load versus collection-scope directory load performs real filesystem existence/type checks.
-- Design concern: Core routing logic cannot be tested with synthetic URLs only, and planning tests become coupled to filesystem state.
-- Correct end state: Filesystem source resolution should live outside `ImageLoadPlan`. The planner should consume resolved facts such as opened collection scope or source classification.
-- Suggested migration: Introduce an `OpenedCollectionScopeResolver` or source-classification value and move `QFileInfo::isDir()` into the production resolver.
-- Acceptance criteria: `imageLoadPlan(...)` can be tested without creating directories; filesystem adapter tests are small and separate.
-- Priority: P2
 
 ### Finding: Default cache budgets are resolved from host memory outside dependency injection
 
@@ -239,8 +229,8 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ## Suggested Refactoring Sequence
 
-1. Add characterization tests around current behavior: route projection/follow-up ordering, viewport anchored zoom/scan-start behavior, and current image/video failure messages.
-2. Isolate core domain logic from external effects: split filesystem source resolution from `ImageLoadPlan` and inject system memory facts for cache budget resolution.
+1. Add characterization tests around current behavior: route projection/follow-up ordering and current image/video failure messages.
+2. Isolate core domain logic from external effects: inject system memory facts for cache budget resolution.
 3. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, introduce cohesive leaf session snapshots, move viewport command planning into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
 4. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics, then media-entry source failures, then thumbnail failure diagnostics. Preserve UI text while internal diagnostics become structured.
 5. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
