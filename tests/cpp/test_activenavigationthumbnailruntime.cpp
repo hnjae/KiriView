@@ -213,7 +213,8 @@ QString thumbnailImageStoreId(const QUrl &source) { return source.path().mid(1);
 kiriview::ThumbnailCacheLookupResult lookupResult(kiriview::ThumbnailCacheLookupStatus status,
     QImage image = {},
     kiriview::ActiveNavigationThumbnailDemandBucket requestedBucket
-    = kiriview::ActiveNavigationThumbnailDemandBucket::Normal)
+    = kiriview::ActiveNavigationThumbnailDemandBucket::Normal,
+    QString errorString = {})
 {
     return kiriview::ThumbnailCacheLookupResult {
         status,
@@ -221,21 +222,22 @@ kiriview::ThumbnailCacheLookupResult lookupResult(kiriview::ThumbnailCacheLookup
         requestedBucket,
         requestedBucket,
         QStringLiteral("/cache/thumbnail.png"),
-        {},
+        std::move(errorString),
     };
 }
 
 kiriview::ThumbnailGenerationResult generationResult(kiriview::ThumbnailGenerationStatus status,
     QImage image = {},
     kiriview::ActiveNavigationThumbnailDemandBucket requestedBucket
-    = kiriview::ActiveNavigationThumbnailDemandBucket::Normal)
+    = kiriview::ActiveNavigationThumbnailDemandBucket::Normal,
+    QString errorString = {})
 {
     return kiriview::ThumbnailGenerationResult {
         status,
         std::move(image),
         requestedBucket,
         QStringLiteral("/cache/generated.png"),
-        {},
+        std::move(errorString),
     };
 }
 
@@ -285,6 +287,7 @@ private Q_SLOTS:
     void newerReadyResultReplacesOldThumbnailAndReleasesOldStoreEntry();
     void lookupOrGenerationFailureKeepsExistingReadyThumbnail();
     void lookupInvalidAndFailedSkipGenerationAndPublishFallbackResults();
+    void failureDiagnosticsPreserveSourceAndErrorDetail();
     void generationFailurePublishesFallbackResult();
     void nonLocalDirectImageIsUnsupportedWithoutLookup();
     void defaultDirectVideoIsUnsupportedWithoutAdapter();
@@ -845,6 +848,61 @@ void TestActiveNavigationThumbnailRuntime::
     QCOMPARE(runtime.resultAt(0).imageSource, QUrl());
     QCOMPARE(store->size(), qsizetype(0));
     QCOMPARE(generationProvider.generationCount(), std::size_t(0));
+}
+
+void TestActiveNavigationThumbnailRuntime::failureDiagnosticsPreserveSourceAndErrorDetail()
+{
+    using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
+    using FailureKind = kiriview::ActiveNavigationThumbnailFailureKind;
+    using Priority = kiriview::ActiveNavigationThumbnailDemandPriority;
+    using WorkKind = kiriview::ActiveNavigationThumbnailWorkKind;
+
+    QObject owner;
+    ManualThumbnailLookupProvider provider;
+    ManualThumbnailGenerationProvider generationProvider;
+    kiriview::ActiveNavigationThumbnailRuntime runtime(
+        &owner, provider.provider(), {}, generationProvider.provider());
+    const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
+    runtime.setRows({
+        thumbnailRow(1, imageUrl, QStringLiteral("01.png"),
+            kiriview::ActiveNavigationThumbnailSourceKind::DirectImage, true),
+    });
+    const quint64 generation = runtime.navigationGeneration();
+
+    QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Normal, Priority::Visible, generation));
+    provider.finish(0,
+        lookupResult(kiriview::ThumbnailCacheLookupStatus::Failed, {}, Bucket::Normal,
+            QStringLiteral("cache database unavailable")));
+
+    const std::vector<kiriview::ActiveNavigationThumbnailFailureDiagnostic> &lookupDiagnostics
+        = runtime.failureDiagnostics();
+    QCOMPARE(lookupDiagnostics.size(), std::size_t(1));
+    QCOMPARE(lookupDiagnostics.at(0).jobId, quint64(1));
+    QCOMPARE(lookupDiagnostics.at(0).sourceKey.rowNumber, 1);
+    QCOMPARE(lookupDiagnostics.at(0).sourceKey.url, imageUrl);
+    QCOMPARE(lookupDiagnostics.at(0).sourceKey.label, QStringLiteral("01.png"));
+    QCOMPARE(lookupDiagnostics.at(0).bucket, Bucket::Normal);
+    QCOMPARE(lookupDiagnostics.at(0).workKind, WorkKind::Foreground);
+    QCOMPARE(lookupDiagnostics.at(0).failureKind, FailureKind::CacheLookupFailed);
+    QCOMPARE(lookupDiagnostics.at(0).errorString, QStringLiteral("cache database unavailable"));
+
+    QVERIFY(runtime.reportDemand(1, imageUrl, Bucket::Large, Priority::Visible, generation));
+    provider.finish(
+        1, lookupResult(kiriview::ThumbnailCacheLookupStatus::Missing, {}, Bucket::Large));
+    generationProvider.finish(0,
+        generationResult(kiriview::ThumbnailGenerationStatus::Failed, {}, Bucket::Large,
+            QStringLiteral("decoder rejected thumbnail bytes")));
+
+    const std::vector<kiriview::ActiveNavigationThumbnailFailureDiagnostic> &diagnostics
+        = runtime.failureDiagnostics();
+    QCOMPARE(diagnostics.size(), std::size_t(2));
+    QCOMPARE(diagnostics.at(1).jobId, quint64(3));
+    QCOMPARE(diagnostics.at(1).sourceKey.rowNumber, 1);
+    QCOMPARE(diagnostics.at(1).sourceKey.url, imageUrl);
+    QCOMPARE(diagnostics.at(1).bucket, Bucket::Large);
+    QCOMPARE(diagnostics.at(1).workKind, WorkKind::Foreground);
+    QCOMPARE(diagnostics.at(1).failureKind, FailureKind::GenerationFailed);
+    QCOMPARE(diagnostics.at(1).errorString, QStringLiteral("decoder rejected thumbnail bytes"));
 }
 
 void TestActiveNavigationThumbnailRuntime::generationFailurePublishesFallbackResult()
