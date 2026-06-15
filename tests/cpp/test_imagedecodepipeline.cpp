@@ -56,6 +56,21 @@ kiriview::ImageDecodeRouterHandlers recordingHandlers(QStringList *calls,
         recordingHandler(QStringLiteral("qt"), calls, inputData, qtFormats),
     };
 }
+
+QByteArray invalidJxlContainerData()
+{
+    QByteArray data;
+    data.append(char(0x00));
+    data.append(char(0x00));
+    data.append(char(0x00));
+    data.append(char(0x0c));
+    data.append("JXL ", 4);
+    data.append(char(0x0d));
+    data.append(char(0x0a));
+    data.append(char(0x87));
+    data.append(char(0x0a));
+    return data;
+}
 }
 
 class TestImageDecodePipeline : public QObject
@@ -70,6 +85,7 @@ private Q_SLOTS:
     void compatibleDataIsComputedOnlyWhenClassificationRequestsIt();
     void qtRasterClassificationCarriesExplicitFormat();
     void defaultSvgDecodeUsesFirstDisplayContext();
+    void defaultJxlAnimationOpenFailurePreservesAdapterDiagnostics();
     void unknownClassificationFailsWithoutDecoder();
 };
 
@@ -281,6 +297,27 @@ void TestImageDecodePipeline::defaultSvgDecodeUsesFirstDisplayContext()
     QCOMPARE(image->displayImage.image.size(), QSize(200, 100));
     QCOMPARE(image->displayImage.quality, kiriview::DisplayImageQuality::FirstDisplay);
     QCOMPARE(image->displayImage.displayPixelsPerSourcePixel, 2.5);
+}
+
+void TestImageDecodePipeline::defaultJxlAnimationOpenFailurePreservesAdapterDiagnostics()
+{
+    const kiriview::ImageDecodeRoute route {
+        kiriview::ImageDecodeHandlerKind::QtRaster,
+        kiriview::ImageDecodeDataSource::Original,
+        kiriview::QtRasterFormat::Jxl,
+    };
+    const kiriview::ImageDecodeRouterRuntime runtime({});
+
+    const kiriview::DecodedImageResult result
+        = runtime.execute(route, invalidJxlContainerData(), kiriview::ImageDecodeRequest {});
+
+    const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    QVERIFY(failure != nullptr);
+    QCOMPARE(failure->route, kiriview::DecodedImageFailureRoute::QtRaster);
+    QVERIFY(failure->operation != kiriview::DecodedImageFailureOperation::Unknown);
+    QVERIFY(!failure->diagnosticDetail.isEmpty());
+    QVERIFY(failure->diagnosticDetail != failure->errorString);
+    QVERIFY(kiriview::decodedImageResultImage(result) == nullptr);
 }
 
 void TestImageDecodePipeline::unknownClassificationFailsWithoutDecoder()
