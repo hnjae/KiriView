@@ -63,6 +63,7 @@ private Q_SLOTS:
     void documentSessionUsesOpenWithRuntime();
     void activeNavigationThumbnailRuntimeUsesCanonicalThumbnailSourceKey();
     void liveDirectoryWatchUsesProviderBoundary();
+    void mediaFormatRegistryDoesNotOwnLocalizedDialogLabels();
     void mediaEntrySourceStoreDoesNotDependOnDocumentPlanning();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
@@ -1297,6 +1298,31 @@ void TestArchitectureBoundaries::liveDirectoryWatchUsesProviderBoundary()
         QStringLiteral("src/navigation/imagedocumentpagecandidatewatchprovider.cpp"));
     QVERIFY(providerHeader.contains(QStringLiteral("ImageDocumentPageCandidateWatchProvider")));
     QVERIFY(providerImplementation.contains(QStringLiteral("KCoreDirLister")));
+}
+
+void TestArchitectureBoundaries::mediaFormatRegistryDoesNotOwnLocalizedDialogLabels()
+{
+    const QString mediaRegistryHeader
+        = readProjectFile(QStringLiteral("src/navigation/mediaformatregistry.h"));
+    const QString mediaRegistrySource
+        = readProjectFile(QStringLiteral("src/navigation/mediaformatregistry.cpp"));
+    const QString combined = mediaRegistryHeader + QLatin1Char('\n') + mediaRegistrySource;
+
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(KLocalizedString)")),
+        QRegularExpression(QStringLiteral(R"(\bki?18nc?\s*\()")),
+        QRegularExpression(QStringLiteral(R"(\bordinaryMediaOpenDialogNameFilters\b)")),
+    };
+
+    QStringList violations;
+    for (const QRegularExpression &pattern : forbiddenPatterns) {
+        QRegularExpressionMatchIterator iterator = pattern.globalMatch(combined);
+        while (iterator.hasNext()) {
+            violations.push_back(iterator.next().captured(0));
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
 void TestArchitectureBoundaries::mediaEntrySourceStoreDoesNotDependOnDocumentPlanning()
