@@ -3,6 +3,7 @@
 
 #include "decoding/imageformatregistry.h"
 #include "decoding/kiriimagedecoder.h"
+#include "decoding/rawdecoder.h"
 
 #include <QByteArray>
 #include <QFile>
@@ -19,6 +20,7 @@ class TestRawDecodeIntegration : public QObject
 private Q_SLOTS:
     void smallDngFixtureDecodesThroughPublicDecodePath();
     void smallDngFixtureDecodesWhenRequestUrlLacksRawExtension();
+    void invalidRawDataPreservesBackendFailureDiagnostics();
 };
 
 namespace {
@@ -79,6 +81,20 @@ void TestRawDecodeIntegration::smallDngFixtureDecodesWhenRequestUrlLacksRawExten
         = kiriview::ImageDecodeRequest::fromUrl(1, extensionlessUrl);
     QVERIFY(!kiriview::isSupportedRawImageFileName(request.imageUrl().fileName()));
     verifyDecodedRawFixture(imageData, request);
+}
+
+void TestRawDecodeIntegration::invalidRawDataPreservesBackendFailureDiagnostics()
+{
+    const kiriview::DecodedImageResult result = kiriview::decodeRawImageData(
+        QByteArrayLiteral("not raw image data"), kiriview::ImageDecodeRequest {});
+
+    const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    QVERIFY(failure != nullptr);
+    QCOMPARE(failure->route, kiriview::DecodedImageFailureRoute::Raw);
+    QVERIFY(failure->operation != kiriview::DecodedImageFailureOperation::Unknown);
+    QVERIFY(!failure->diagnosticDetail.isEmpty());
+    QVERIFY(failure->diagnosticDetail != failure->errorString);
+    QVERIFY(kiriview::decodedImageResultImage(result) == nullptr);
 }
 
 QTEST_GUILESS_MAIN(TestRawDecodeIntegration)
