@@ -477,7 +477,7 @@ msgctxt "@item:inlistbox"
 msgid "Image and comic book files (%1)"
 msgstr ""
 
-#: src/decoding/imageformatregistry.cpp src/navigation/mediaformatregistry.cpp
+#: src/decoding/imageformatregistry.cpp src/facade/mediaopendialogfilters.cpp
 #, kde-format
 msgctxt "@item:inlistbox"
 msgid "All files (*)"
@@ -496,6 +496,12 @@ msgstr ""
 #, kde-format
 msgctxt "@info:status"
 msgid "First image"
+msgstr ""
+
+#: src/facade/mediaopendialogfilters.cpp
+#, kde-format
+msgctxt "@item:inlistbox"
+msgid "Image, video, and comic book files (%1)"
 msgstr ""
 
 #: src/localization/activenavigationboundarytext.cpp
@@ -772,12 +778,6 @@ msgstr ""
 #, kde-format
 msgctxt "@info:status"
 msgid "Could not decode the selected RAW image: %1: %2"
-msgstr ""
-
-#: src/navigation/mediaformatregistry.cpp
-#, kde-format
-msgctxt "@item:inlistbox"
-msgid "Image, video, and comic book files (%1)"
 msgstr ""
 
 #: src/session/mediainformationprojection.cpp
