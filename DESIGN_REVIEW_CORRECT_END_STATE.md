@@ -124,16 +124,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Decoder and refinement tests can assert route/backend/operation diagnostics separately from the document-level user message.
 - Priority: P2
 
-### Finding: Collection source errors are inconsistent across backends
-
-- Evidence: `src/archive/mediaentrysourcebackend.h` defines string-oriented `MediaEntrySourceError`; directory backend behavior does not consistently preserve `QFile` error detail; KArchive and libarchive paths preserve different levels of detail; `src/archive/mediaentrysourcecandidateloading.cpp` forwards opened-collection read/candidate-load errors as strings.
-- Current state: Directory, KArchive, and libarchive source failures do not consistently preserve backend, operation, and source identity.
-- Design concern: Opened-collection failures are hard to compare, reproduce, and log across backends.
-- Correct end state: Typed `MediaEntrySourceFailure` should include backend, operation, collection URL, entry path, user text, and diagnostic detail.
-- Suggested migration: Extend backend result types to typed failures first, then update archive candidate-loading forwarding to project typed failures.
-- Acceptance criteria: Backend-specific failure tests assert operation, source identity, and diagnostic detail through common fields.
-- Priority: P2
-
 ### Finding: Thumbnail failure diagnostics are produced but dropped by runtime observability
 
 - Evidence: `src/thumbnail/thumbnailcachelookup.h` and `src/thumbnail/thumbnailgeneration.h`/`.cpp` carry error strings, but `src/session/activenavigationthumbnailruntime.cpp` primarily handles status/source and does not preserve errorString in structured logs or diagnostics.
