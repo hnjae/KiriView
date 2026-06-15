@@ -3,13 +3,11 @@
 
 #include "mediaformatregistry.h"
 
-#include "archive/archiveformat.h"
 #include "bridge/rustqtconversion.h"
 #include "decoding/imageformatregistry.h"
 #include "kiriview/src/policy/mediaformatregistry.cxx.h"
 #include "navigation/directmedianavigationmodel.h"
 
-#include <KLocalizedString>
 #include <QUrl>
 
 namespace {
@@ -61,19 +59,4 @@ bool isSupportedStillImageDirectMediaNavigationCandidate(
     return isSupportedImageFileName(candidate.name) || isSupportedDirectImageUrl(candidate.url);
 }
 
-QStringList ordinaryMediaOpenDialogNameFilters()
-{
-    QStringList extensions = supportedOrdinaryMediaExtensions();
-    extensions.append(supportedComicBookArchiveExtensions());
-    extensions.sort();
-    extensions.removeDuplicates();
-
-    const QString extensionFilter = QStringLiteral("*.") + extensions.join(" *.");
-    return {
-        ki18nc("@item:inlistbox", "Image, video, and comic book files (%1)")
-            .subs(extensionFilter)
-            .toString(),
-        i18nc("@item:inlistbox", "All files (*)"),
-    };
-}
 }

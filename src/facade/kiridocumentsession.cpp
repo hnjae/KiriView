@@ -7,8 +7,8 @@
 #include "facade/documentsessionpublicsignals.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kirivideodocument.h"
+#include "facade/mediaopendialogfilters.h"
 #include "localization/activenavigationboundarytext.h"
-#include "navigation/mediaformatregistry.h"
 #include "rendering/displayimagestore.h"
 #include "session/thumbnailimagestore.h"
 

@@ -208,6 +208,7 @@ src/session/documentsessionrouteplan.cpp
 src/session/documentsessionruntime.cpp
 src/session/mediaopenwithplan.cpp
 src/facade/documentsessionpublicsignals.cpp
+src/facade/mediaopendialogfilters.cpp
 src/session/documentsessionstate.cpp
 src/session/windowtitleprojection.cpp
 src/rendering/staticimage.cpp

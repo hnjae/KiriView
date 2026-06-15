@@ -20,7 +20,6 @@ bool isSupportedDirectImageUrl(const QUrl &url);
 bool isSupportedDirectVideoUrl(const QUrl &url);
 bool isSupportedStillImageDirectMediaNavigationCandidate(
     const DirectMediaNavigationCandidate &candidate);
-QStringList ordinaryMediaOpenDialogNameFilters();
 }
 
 #endif

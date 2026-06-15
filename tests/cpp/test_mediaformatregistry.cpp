@@ -4,6 +4,7 @@
 #include "navigation/mediaformatregistry.h"
 
 #include "archive/archiveformat.h"
+#include "facade/mediaopendialogfilters.h"
 #include "navigation/directmedianavigationmodel.h"
 
 #include <QObject>
