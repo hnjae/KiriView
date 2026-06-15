@@ -99,6 +99,8 @@ private Q_SLOTS:
     void videoUnsupportedActionPolicyRejectsImageOnlyCommands();
     void imageUnsupportedActionPolicyRejectsVideoOnlyCommands();
     void horizontalArrowShortcutPolicyUsesActiveMediaMode();
+    void fixedShortcutDispatchPlansVideoSeek();
+    void fixedShortcutDispatchPlansImageNavigationAndPan();
 };
 
 void TestApplicationShortcutPolicy::programWideSanitizationKeepsTextInputSafeShortcuts()
@@ -480,6 +482,69 @@ void TestApplicationShortcutPolicy::horizontalArrowShortcutPolicyUsesActiveMedia
     input.fileDeletionInProgress = false;
     input.directMediaNavigationActive = false;
     QVERIFY(!kiriview::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
+}
+
+void TestApplicationShortcutPolicy::fixedShortcutDispatchPlansVideoSeek()
+{
+    kiriview::ApplicationActions::FixedShortcutDispatchInput input;
+    input.videoMode = true;
+    input.helpActionsEnabled = true;
+    input.viewerShortcutsEnabled = true;
+    input.readyViewerShortcutsEnabled = true;
+    input.activeNavigationActionsAvailable = true;
+
+    const kiriview::ApplicationActions::FixedShortcutDispatchOutcome leftSeek
+        = kiriview::ApplicationActions::fixedShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("Alt+Left")));
+    QCOMPARE(leftSeek.kind, kiriview::ApplicationActions::FixedShortcutDispatchKind::VideoSeek);
+    QCOMPARE(leftSeek.videoSeekDeltaMilliseconds, qint64(-5000));
+
+    const kiriview::ApplicationActions::FixedShortcutDispatchOutcome downSeek
+        = kiriview::ApplicationActions::fixedShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("Alt+Down")));
+    QCOMPARE(downSeek.kind, kiriview::ApplicationActions::FixedShortcutDispatchKind::VideoSeek);
+    QCOMPARE(downSeek.videoSeekDeltaMilliseconds, qint64(-45000));
+
+    input.videoFileDeletionInProgress = true;
+    const kiriview::ApplicationActions::FixedShortcutDispatchOutcome blocked
+        = kiriview::ApplicationActions::fixedShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("Alt+Right")));
+    QCOMPARE(blocked.kind, kiriview::ApplicationActions::FixedShortcutDispatchKind::None);
+}
+
+void TestApplicationShortcutPolicy::fixedShortcutDispatchPlansImageNavigationAndPan()
+{
+    kiriview::ApplicationActions::FixedShortcutDispatchInput input;
+    input.helpActionsEnabled = true;
+    input.viewerShortcutsEnabled = true;
+    input.readyViewerShortcutsEnabled = true;
+    input.twoPageViewerShortcutsEnabled = true;
+    input.pannableViewerShortcutsEnabled = true;
+
+    const kiriview::ApplicationActions::FixedShortcutDispatchOutcome left
+        = kiriview::ApplicationActions::fixedShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("Left")));
+    QCOMPARE(left.kind, kiriview::ApplicationActions::FixedShortcutDispatchKind::HorizontalArrow);
+    QVERIFY(left.previousOrUp);
+
+    const kiriview::ApplicationActions::FixedShortcutDispatchOutcome nextPage
+        = kiriview::ApplicationActions::fixedShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("Shift+Right")));
+    QCOMPARE(
+        nextPage.kind, kiriview::ApplicationActions::FixedShortcutDispatchKind::SinglePageArrow);
+    QVERIFY(!nextPage.previousOrUp);
+
+    const kiriview::ApplicationActions::FixedShortcutDispatchOutcome panUp
+        = kiriview::ApplicationActions::fixedShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("Up")));
+    QCOMPARE(panUp.kind, kiriview::ApplicationActions::FixedShortcutDispatchKind::VerticalPan);
+    QVERIFY(panUp.previousOrUp);
+
+    input.readyViewerShortcutsEnabled = false;
+    const kiriview::ApplicationActions::FixedShortcutDispatchOutcome blockedHorizontal
+        = kiriview::ApplicationActions::fixedShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("Left")));
+    QCOMPARE(blockedHorizontal.kind, kiriview::ApplicationActions::FixedShortcutDispatchKind::None);
 }
 
 QTEST_GUILESS_MAIN(TestApplicationShortcutPolicy)
