@@ -51,6 +51,7 @@ private Q_SLOTS:
     void fitMenuButtonRejectedSelectionKeepsRuntimeSelection();
     void fitMenuButtonKeepsLastFitSelectionAfterManualZoom();
     void fitMenuButtonCollapsesLabelWhenConstrained();
+    void unusableApplicationMenuButtonMappingLeavesDiagnosticWarning();
     void toolbarActionOrderKeepsReadingDirectionBesideSpread();
     void emptyToolbarHidesReadingControls();
     void directImageToolbarHidesReadingControls();
@@ -281,6 +282,13 @@ Item {
         return toolbar.openApplicationMenu();
     }
 
+    function unusableThrowingApplicationMenuButton() {
+        const button = throwingApplicationMenuButtonComponent.createObject(toolbar);
+        const usable = toolbar.applicationMenuButtonUsable(button);
+        button.destroy();
+        return usable;
+    }
+
     function outsideClickPoint() {
         return Qt.point(root.width / 2, root.height - 12);
     }
@@ -418,6 +426,20 @@ Item {
     function resetNavigationTriggerCounts() {
         previousTriggerCount = 0;
         nextTriggerCount = 0;
+    }
+
+    Component {
+        id: throwingApplicationMenuButtonComponent
+
+        QtObject {
+            property bool visible: true
+            property real width: 16
+            property real height: 16
+
+            function mapToItem() {
+                throw new Error("synthetic application menu button mapping failure");
+            }
+        }
     }
 
     readonly property KiriImageDocument sessionImageDocument: documentSession.imageDocument
@@ -1281,6 +1303,18 @@ void TestToolBarApplicationMenu::fitMenuButtonCollapsesLabelWhenConstrained()
     QVERIFY(ok);
     QVERIFY(fitState.value(QStringLiteral("iconOnly")).toBool());
     QCOMPARE(fitState.value(QStringLiteral("label")).toString(), QStringLiteral("Fit to Window"));
+}
+
+void TestToolBarApplicationMenu::unusableApplicationMenuButtonMappingLeavesDiagnosticWarning()
+{
+    ToolBarMenuFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    QTest::ignoreMessage(QtWarningMsg,
+        QRegularExpression(QStringLiteral(
+            ".*KiriView ImageToolBar application menu button mapping failed.*synthetic "
+            "application menu button mapping failure.*")));
+    QVERIFY(!invokeBool(fixture.root, "unusableThrowingApplicationMenuButton"));
 }
 
 void TestToolBarApplicationMenu::toolbarActionOrderKeepsReadingDirectionBesideSpread()
