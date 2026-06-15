@@ -26,6 +26,62 @@
 #include <utility>
 
 namespace {
+QString heifFailureOperationName(kiriview::DecodedImageFailureOperation operation)
+{
+    switch (operation) {
+    case kiriview::DecodedImageFailureOperation::Unknown:
+        return QStringLiteral("unknown");
+    case kiriview::DecodedImageFailureOperation::OpenStaticImageSource:
+        return QStringLiteral("open static image source");
+    case kiriview::DecodedImageFailureOperation::DecodeFirstDisplayImage:
+        return QStringLiteral("decode first display image");
+    case kiriview::DecodedImageFailureOperation::DecodeBlockingDisplayImage:
+        return QStringLiteral("decode blocking display image");
+    case kiriview::DecodedImageFailureOperation::DecodeAnimationOpen:
+        return QStringLiteral("decode animation open");
+    case kiriview::DecodedImageFailureOperation::DecodeRawImage:
+        return QStringLiteral("decode raw image");
+    case kiriview::DecodedImageFailureOperation::DecodeHeifSequenceOpen:
+        return QStringLiteral("decode HEIF sequence open");
+    case kiriview::DecodedImageFailureOperation::DecodeHeifSequenceFrame:
+        return QStringLiteral("decode HEIF sequence frame");
+    }
+    return QStringLiteral("unknown");
+}
+
+QString heifFailureDiagnosticDetail(
+    kiriview::DecodedImageFailureOperation operation, const QString &backendError)
+{
+    return QStringLiteral("HEIF decoder %1 failed: %2")
+        .arg(heifFailureOperationName(operation),
+            backendError.isEmpty() ? QStringLiteral("<empty>") : backendError);
+}
+
+kiriview::DecodedImageResult failedHeifDecodedImageResult(
+    QString errorString, kiriview::DecodedImageFailureOperation operation)
+{
+    const QString backendError = errorString;
+    return kiriview::failedDecodedImageResult(kiriview::DecodedImageFailure {
+        std::move(errorString),
+        kiriview::DecodedImageFailureRoute::HeifFamily,
+        operation,
+        heifFailureDiagnosticDetail(operation, backendError),
+        kiriview::DecodedImageFailureSeverity::Error,
+        false,
+    });
+}
+
+void stampHeifFailure(kiriview::DecodedImageResult &result)
+{
+    kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    if (failure == nullptr) {
+        return;
+    }
+    failure->route = kiriview::DecodedImageFailureRoute::HeifFamily;
+    failure->diagnosticDetail
+        = heifFailureDiagnosticDetail(failure->operation, failure->diagnosticDetail);
+}
+
 std::optional<kiriview::DecodedImageResult> decodeHeifStillImageDataForInfo(const QByteArray &data,
     const kiriview::HeifContainerInfo &info, const kiriview::ImageDecodeRequest &request)
 {
@@ -37,10 +93,14 @@ std::optional<kiriview::DecodedImageResult> decodeHeifStillImageDataForInfo(cons
     std::shared_ptr<kiriview::ImageTileSource> source
         = kiriview::openHeifTileSource(data, &errorString);
     if (source == nullptr) {
-        return kiriview::failedDecodedImageResult(errorString);
+        return failedHeifDecodedImageResult(
+            errorString, kiriview::DecodedImageFailureOperation::OpenStaticImageSource);
     }
 
-    return kiriview::staticDecodedImageResult(std::move(source), request, &errorString);
+    kiriview::DecodedImageResult result
+        = kiriview::staticDecodedImageResult(std::move(source), request, &errorString);
+    stampHeifFailure(result);
+    return result;
 }
 
 std::optional<kiriview::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
@@ -58,7 +118,8 @@ std::optional<kiriview::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
         return std::nullopt;
     }
     if (openResult.status == kiriview::HeifSequenceOpenStatus::Error) {
-        return kiriview::failedDecodedImageResult(openResult.errorString);
+        return failedHeifDecodedImageResult(
+            openResult.errorString, kiriview::DecodedImageFailureOperation::DecodeHeifSequenceOpen);
     }
 
     QString errorString;
@@ -67,7 +128,8 @@ std::optional<kiriview::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
         if (errorString.isEmpty()) {
             errorString = kiriview::heifSequenceDecodeErrorString();
         }
-        return kiriview::failedDecodedImageResult(errorString);
+        return failedHeifDecodedImageResult(
+            errorString, kiriview::DecodedImageFailureOperation::DecodeHeifSequenceFrame);
     }
 
     return kiriview::successfulDecodedImageResult(kiriview::HeifSequenceAnimationImage {

@@ -30,6 +30,10 @@ QString qtRasterFailureOperationName(kiriview::DecodedImageFailureOperation oper
         return QStringLiteral("decode animation open");
     case kiriview::DecodedImageFailureOperation::DecodeRawImage:
         return QStringLiteral("decode raw image");
+    case kiriview::DecodedImageFailureOperation::DecodeHeifSequenceOpen:
+        return QStringLiteral("decode HEIF sequence open");
+    case kiriview::DecodedImageFailureOperation::DecodeHeifSequenceFrame:
+        return QStringLiteral("decode HEIF sequence frame");
     }
     return QStringLiteral("unknown");
 }
