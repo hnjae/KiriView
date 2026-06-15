@@ -4,7 +4,7 @@
 
 KiriView already has a sound architectural direction: `QML -> facade -> C++ runtime/effect executor -> Rust policy`. The main issue is not the absence of layers. The issue is that several boundaries still allow the same domain rule or state concept to be defined more than once, allow external effects to rely on UI/projection availability checks instead of command-boundary validation, and place too much workflow assembly inside facade or runtime composition objects.
 
-The highest-risk findings are around rules that affect real user behavior and state consistency: image-open state transitions and failure representation. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, `KiriViewApplication`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
+The highest-risk findings are around rules that affect real user behavior and state consistency: failure representation and broad workflow ownership. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, `KiriViewApplication`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
 
 The correct end state should be precise and conservative, not clever. Rust policy should own duplicated-free domain decisions and typed plans. C++ runtime should own Qt/KDE objects and external effects behind typed adapters. Facades should expose QML-friendly types and forward commands. QML should report geometry/input facts and render projections. Errors should flow internally as typed failures with source, stage, diagnostic detail, severity, and retryability, while the UI receives only user-facing messages.
 
@@ -12,19 +12,8 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 1. P1: `DocumentSessionRuntime`, session leaf ports, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
 2. P1: Lower-level image decoder and remaining refinement failures still lose backend-specific diagnostics before document wrapping, which weakens diagnostics, retry semantics, and user/internal error separation.
-3. P2: Image open state transitions are not enforced by one central state-machine boundary.
 
 ## Invariant and Correctness Risks
-
-### Finding: Image open transitions can represent contradictory document state
-
-- Evidence: `src/document/imagedocumentstate.h:44` exposes independent setters for `sourceUrl`, `sourceKind`, `displayedImageLocation`, `status`, `loading`, `errorString`, and navigation URLs. `src/policy/imageopenworkflow.rs:146` defines `RustImageOpenStateDelta` with independent field targets. `src/document/imageopentransitionapplier.cpp` now validates the final `status`/`loading`/`errorString` tuple, rejects `Ready` results without a source URL or displayed image location, rejects `Ready` video source kind unless it is the explicit unsupported opened-collection video state, and rejects `Null` results with an active container-navigation URL, but broader navigation URL relationships remain independent delta fields.
-- Current state: Existing workflow builders usually produce coherent transitions, and the applier now rejects contradictory final combinations such as `Ready + loading`, `Ready + errorString`, `Ready + empty source URL`, `Ready + video source kind without unsupported-video state`, `Null + container navigation`, or `Error + empty errorString` before notifications or effects are emitted. The transition vocabulary still allows unrelated navigation fields to be combined independently.
-- Design concern: Correctness depends on every transition builder preserving implicit cross-field relationships. Release builds do not protect those relationships with `debug_assert!`.
-- Correct end state: Image document state changes should pass through named transition variants or a validating state-machine boundary. The owner should define allowed combinations for `Null`, `Loading`, `Ready`, `Error`, and unsupported states, and validate final state before notifications or effects are emitted.
-- Suggested migration: Gradually replace open-ended field-target deltas with named transitions for source load begin, success, source error, container error, animation error, and empty source. Extend validation from the basic status/loading/error tuple to source/displayed-location/navigation relationships as those named transitions land.
-- Acceptance criteria: Contradictory transition outputs fail tests unless explicitly allowed; new image-open transitions cannot update displayed-location/source/navigation fields independently without the invariant boundary.
-- Priority: P2
 
 ### Finding: Uncertain - image presentation can expose visible image state without a provider-ready display source
 
