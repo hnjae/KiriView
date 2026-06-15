@@ -39,7 +39,7 @@ in
   '';
 
   files."compile_commands.json".json = qtCxxqt.compileCommands;
-  files.".vscode/settings.json".json = qtCxxqt.vscodeSettings;
+  files."rust-analyzer.toml".text = qtCxxqt.rustAnalyzerToml;
   files.".qmlls.ini".ini.General = qtCxxqt.qmllsGeneral;
 
   packages = [
@@ -61,6 +61,7 @@ in
     cmake
     kdePackages.extra-cmake-modules
     kdePackages.kconfig
+    kdePackages.kcoreaddons
     kdePackages.kimageformats
     kdePackages.ki18n
     kdePackages.kjobwidgets

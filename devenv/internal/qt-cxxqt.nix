@@ -63,18 +63,6 @@ let
 
     exec ${lib.getExe' pkgs.kdePackages.qtbase "qmake6"} "$@"
   '';
-  cxxCompiler = pkgs.stdenv.cc.cc;
-  cxxStandardLibraryVersion = lib.getVersion cxxCompiler;
-  cxxTarget = pkgs.stdenv.hostPlatform.config;
-  karchiveDev = karchivePackage.dev or karchivePackage;
-  kconfigDev = pkgs.kdePackages.kconfig.dev or pkgs.kdePackages.kconfig;
-  kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
-  ki18nDev = pkgs.kdePackages.ki18n.dev or pkgs.kdePackages.ki18n;
-  kjobwidgetsDev = pkgs.kdePackages.kjobwidgets.dev or pkgs.kdePackages.kjobwidgets;
-  kirigamiAddonsDev = pkgs.kdePackages.kirigami-addons.dev or pkgs.kdePackages.kirigami-addons;
-  kioDev = pkgs.kdePackages.kio.dev or pkgs.kdePackages.kio;
-  kserviceDev = pkgs.kdePackages.kservice.dev or pkgs.kdePackages.kservice;
-  qtmultimediaDev = pkgs.kdePackages.qtmultimedia.dev or pkgs.kdePackages.qtmultimedia;
   appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
   qtQmlRoot = "${pkgs.kdePackages.qtdeclarative}/lib/qt-6/qml";
   qtmultimediaQmlRoot = "${pkgs.kdePackages.qtmultimedia}/lib/qt-6/qml";
@@ -108,6 +96,13 @@ let
   cppCoreSources = readSourceManifest ../../src/cpp_core_sources.txt;
   cxxQtCppSources = readSourceManifest ../../src/cpp_cxxqt_sources.txt;
   cppSources = lib.sort builtins.lessThan (cxxQtCppSources ++ cppCoreSources);
+  cppTestSources = lib.sort builtins.lessThan (
+    map (name: "tests/cpp/${name}") (
+      lib.filter (name: lib.hasPrefix "test_" name && lib.hasSuffix ".cpp" name) (
+        builtins.attrNames (builtins.readDir ../../tests/cpp)
+      )
+    )
+  );
   qtCompileDefines = [
     "-DQT_CORE_LIB"
     "-DQT_DBUS_LIB"
@@ -130,12 +125,8 @@ let
     "QtQmlIntegration"
     "QtQuick"
     "QtQuickControls2"
+    "QtTest"
     "QtWidgets"
-  ];
-  cxxStandardLibraryIncludeDirs = [
-    "${cxxCompiler}/include/c++/${cxxStandardLibraryVersion}"
-    "${cxxCompiler}/include/c++/${cxxStandardLibraryVersion}/${cxxTarget}"
-    "${pkgs.stdenv.cc.libc_dev}/include"
   ];
   systemIncludeDirs = [
     ".devenv/profile/include"
@@ -143,6 +134,7 @@ let
     ".devenv/profile/include/KF6/KConfig"
     ".devenv/profile/include/KF6/KConfigCore"
     ".devenv/profile/include/KF6/KConfigGui"
+    ".devenv/profile/include/KF6/KCoreAddons"
     ".devenv/profile/include/KF6/KI18n"
     ".devenv/profile/include/KF6/KI18nQml"
     ".devenv/profile/include/KF6/KIO"
@@ -154,27 +146,9 @@ let
     ".devenv/profile/include/KirigamiAddonsStatefulApp"
     ".devenv/profile/include/QtGui/${qtVersion}/QtGui"
     ".devenv/profile/mkspecs/linux-g++"
-    "${karchiveDev}/include/KF6/KArchive"
-    "${kconfigDev}/include/KF6/KConfig"
-    "${kconfigDev}/include/KF6/KConfigCore"
-    "${kconfigDev}/include/KF6/KConfigGui"
-    "${kcoreaddonsDev}/include/KF6/KCoreAddons"
-    "${ki18nDev}/include/KF6/KI18n"
-    "${ki18nDev}/include/KF6/KI18nQml"
-    "${kirigamiAddonsDev}/include/KirigamiAddonsStatefulApp"
-    "${kioDev}/include/KF6/KIO"
-    "${kioDev}/include/KF6/KIOCore"
-    "${kioDev}/include/KF6/KIOGui"
-    "${kioDev}/include/KF6/KIOWidgets"
-    "${kjobwidgetsDev}/include/KF6/KJobWidgets"
-    "${kserviceDev}/include/KF6/KService"
-    "${pkgs.kdePackages.qtmultimedia}/include"
-    "${pkgs.kdePackages.qtmultimedia}/include/QtMultimedia"
-    "${qtmultimediaDev}/mkspecs/modules"
   ]
-  ++ cxxStandardLibraryIncludeDirs
   ++ map (module: ".devenv/profile/include/${module}") qtIncludeModules;
-  compileCommands = map (source: {
+  cppCompileCommand = source: extraArguments: {
     directory = config.devenv.root;
     file = source;
     arguments = [
@@ -183,13 +157,28 @@ let
       "-Isrc"
       "-Itarget/cxxqt/clangd/include"
     ]
+    ++ extraArguments
     ++ qtCompileDefines
     ++ lib.concatMap (dir: [
       "-isystem"
       dir
     ]) systemIncludeDirs
     ++ [ source ];
-  }) cppSources;
+  };
+  cppTestCompileCommand =
+    source:
+    let
+      testTarget = lib.removeSuffix ".cpp" (baseNameOf source);
+    in
+    cppCompileCommand source [
+      "-Itests/cpp"
+      "-Itarget/devenv/cpp-tests/${testTarget}_autogen/include"
+      "-DQT_TESTLIB_LIB"
+      "-DKIRIVIEW_TEST_SOURCE_DIR=\"${config.devenv.root}/tests/cpp\""
+    ];
+  compileCommands =
+    (map (source: cppCompileCommand source [ ]) cppSources)
+    ++ (map cppTestCompileCommand cppTestSources);
   cppSourcesShellArgs = lib.escapeShellArgs cppSources;
   clazyIgnoreDirsRegex = "(^|/)(\\.devenv|target)(/|$)|^/nix/store/";
   qmlLintImportArgs = lib.escapeShellArgs (
@@ -198,6 +187,25 @@ let
       path
     ]) qmlImportPaths
   );
+  rustAnalyzerToml = ''
+    linkedProjects = ["Cargo.toml"]
+
+    [cargo]
+    targetDir = "target/rust-analyzer"
+
+    [files]
+    exclude = [
+        ".cargo-vendor",
+        ".devenv",
+        ".direnv",
+        ".flatpak-builder",
+        ".flatpak-cargo",
+        ".rumdl_cache",
+        "build-dir",
+        "repo",
+        "target",
+    ]
+  '';
   refreshCxxqtIncludes = pkgs.writeShellApplication {
     name = "refresh-cxxqt-includes";
     runtimeInputs = with pkgs; [
@@ -350,6 +358,7 @@ in
     qmake
     qmlLintImportArgs
     refreshCxxqtIncludes
+    rustAnalyzerToml
     qtBuildEnvironment
     qtRuntimeEnvironment
     ;
@@ -366,19 +375,4 @@ in
     "no-cmake-calls" = true;
   };
 
-  vscodeSettings = {
-    "rust-analyzer.linkedProjects" = [ "Cargo.toml" ];
-    "rust-analyzer.cargo.targetDir" = "target/rust-analyzer";
-    "rust-analyzer.files.exclude" = [
-      ".cargo-vendor"
-      ".devenv"
-      ".direnv"
-      ".flatpak-builder"
-      ".flatpak-cargo"
-      ".rumdl_cache"
-      "build-dir"
-      "repo"
-      "target"
-    ];
-  };
 }

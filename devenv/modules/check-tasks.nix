@@ -233,6 +233,34 @@ in
   };
 
   tasks = {
+    "dev:lsp:refresh" = {
+      description = "Refresh generated LSP metadata for rust-analyzer and clangd";
+      exec = ''
+        ${baseTaskPrelude}
+        ${qtBuildPrelude}
+        ${rustHostEnvironment}
+        ${testJobsPrelude}
+
+        printf 'Building Cargo-owned KiriView app library artifacts with %d jobs...\n' "$test_jobs"
+        cargo \
+            build \
+            --locked \
+            --lib \
+            --all-features \
+            --jobs "$test_jobs"
+
+        cmake_make_program="$(command -v make)"
+        cmake \
+            -S tests/cpp \
+            -B target/devenv/cpp-tests \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_MAKE_PROGRAM="$cmake_make_program" \
+            -DKIRIVIEW_CARGO_TARGET_DIR=${lib.escapeShellArg "${rustHostCargoTargetDir}/debug"}
+
+        ${lib.getExe qtCxxqt.refreshCxxqtIncludes}
+      '';
+    };
+
     "ci:test:rust" = {
       description = "Run host Rust library and doc tests";
       exec = ''
