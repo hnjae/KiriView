@@ -3,7 +3,6 @@
 
 #include "documentsessionruntime.h"
 
-#include "archive/openedcollectionthumbnailpolicy.h"
 #include "localization/imageerrortext.h"
 #include "location/imageurl.h"
 #include "navigation/mediaformatregistry.h"
@@ -14,7 +13,6 @@
 #include <QObject>
 #include <QScopedValueRollback>
 #include <QString>
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -70,57 +68,6 @@ void appendConnection(std::vector<QMetaObject::Connection> &connections,
     }
 }
 
-kiriview::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
-    kiriview::DocumentSessionImageDocumentPort *imageDocument,
-    kiriview::ThumbnailSourceAdapter injectedAdapter)
-{
-    return [imageDocument, injectedAdapter = std::move(injectedAdapter),
-               directAdapter = kiriview::defaultThumbnailSourceAdapter()](
-               kiriview::ThumbnailSourceAdapterRequest request) mutable {
-        if (injectedAdapter) {
-            kiriview::ThumbnailSourceAdapterPlan plan = injectedAdapter(request);
-            if (plan.kind != kiriview::ThumbnailSourceAdapterPlanKind::Unsupported) {
-                return plan;
-            }
-        }
-
-        kiriview::ThumbnailSourceAdapterPlan directPlan = directAdapter(request);
-        if (directPlan.kind != kiriview::ThumbnailSourceAdapterPlanKind::Unsupported) {
-            return directPlan;
-        }
-
-        if (imageDocument == nullptr || !imageDocument->snapshot
-            || request.sourceKey.sourceKind
-                != kiriview::activeNavigationThumbnailSourceKindIdentity(
-                    kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage)) {
-            return kiriview::ThumbnailSourceAdapterPlan {};
-        }
-
-        const kiriview::OpenedCollectionScopeLocation openedCollectionScope
-            = imageDocument->snapshot().displayedOpenedCollectionScope;
-        const kiriview::OpenedCollectionThumbnailSourcePlan collectionPlan
-            = kiriview::openedCollectionThumbnailSourcePlan(openedCollectionScope,
-                request.sourceKey.url, kiriview::ImageDocumentPageKind::Image);
-        if (collectionPlan.kind
-            != kiriview::OpenedCollectionThumbnailSourcePlanKind::CacheableOpenedCollectionEntry) {
-            return kiriview::ThumbnailSourceAdapterPlan {};
-        }
-
-        kiriview::ThumbnailSourceAdapterPlan plan;
-        plan.kind = kiriview::ThumbnailSourceAdapterPlanKind::CacheableOpenedCollectionEntry;
-        plan.openedCollectionScope = collectionPlan.openedCollectionScope;
-        return plan;
-    };
-}
-
-kiriview::ActiveNavigationThumbnailRuntimeDependencies documentSessionThumbnailDependencies(
-    kiriview::DocumentSessionImageDocumentPort *imageDocument,
-    kiriview::ActiveNavigationThumbnailRuntimeDependencies dependencies)
-{
-    dependencies.sourceAdapter = documentSessionThumbnailSourceAdapter(
-        imageDocument, std::move(dependencies.sourceAdapter));
-    return dependencies;
-}
 }
 
 namespace kiriview {
@@ -131,9 +78,8 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_imageDocument(std::move(imageDocument))
     , m_videoDocument(std::move(videoDocument))
     , m_state(std::move(changeCallback))
-    , m_activeNavigationThumbnailRuntime(std::make_unique<ActiveNavigationThumbnailRuntime>(owner,
-          documentSessionThumbnailDependencies(
-              &m_imageDocument, std::move(dependencies.activeNavigationThumbnails))))
+    , m_activeNavigationThumbnailRuntime(
+          owner, &m_imageDocument, std::move(dependencies.activeNavigationThumbnails))
     , m_directMediaNavigationRuntime(dependencies.directMediaNavigationCandidateProvider)
     , m_mediaDeletionRuntime(std::move(dependencies.fileDeletionProvider),
           std::move(dependencies.directMediaNavigationCandidateProvider))
@@ -335,30 +281,21 @@ ActiveNavigationRevealDirection DocumentSessionRuntime::activeNavigationRevealDi
 
 QAbstractListModel *DocumentSessionRuntime::activeNavigationThumbnailModel() const
 {
-    return m_activeNavigationThumbnailRuntime != nullptr
-        ? m_activeNavigationThumbnailRuntime->model()
-        : nullptr;
+    return m_activeNavigationThumbnailRuntime.model();
 }
 
 ActiveNavigationThumbnailDemandBucket DocumentSessionRuntime::activeNavigationThumbnailDemandBucket(
     int physicalMaxEdge) const
 {
-    return activeNavigationThumbnailDemandBucketForPhysicalMaxEdge(physicalMaxEdge);
+    return m_activeNavigationThumbnailRuntime.demandBucket(physicalMaxEdge);
 }
 
 bool DocumentSessionRuntime::reportActiveNavigationThumbnailDemand(int number, const QUrl &url,
     int physicalMaxEdge, ActiveNavigationThumbnailDemandPriority priority,
     quint64 navigationGeneration)
 {
-    const ActiveNavigationThumbnailDemandBucket bucket
-        = activeNavigationThumbnailDemandBucket(physicalMaxEdge);
-    if (m_activeNavigationThumbnailRuntime == nullptr
-        || bucket == ActiveNavigationThumbnailDemandBucket::None) {
-        return false;
-    }
-
-    return m_activeNavigationThumbnailRuntime->reportDemand(
-        number, url, bucket, priority, navigationGeneration);
+    return m_activeNavigationThumbnailRuntime.reportDemand(
+        number, url, physicalMaxEdge, priority, navigationGeneration);
 }
 
 QString DocumentSessionRuntime::nextVideoOutputSurfaceClaimToken()
@@ -783,19 +720,15 @@ void DocumentSessionRuntime::recomputePublicProjection()
 
 void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
 {
-    if (m_activeNavigationThumbnailRuntime == nullptr) {
-        return;
-    }
-
     std::vector<ActiveNavigationThumbnailRow> rows = projectActiveNavigationThumbnailRows(
         m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(),
         m_state.directMediaNavigationCandidates(), m_imagePublicSnapshot.pageNavigationRows);
     if (rows.empty()) {
-        m_activeNavigationThumbnailRuntime->setRows({});
+        m_activeNavigationThumbnailRuntime.setRows({});
         return;
     }
 
-    m_activeNavigationThumbnailRuntime->setRows(std::move(rows));
+    m_activeNavigationThumbnailRuntime.setRows(std::move(rows));
 }
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)

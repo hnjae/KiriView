@@ -7,8 +7,6 @@
 #include "navigation/directmedianavigationcandidateprovider.h"
 #include "navigation/directmedianavigationmodel.h"
 #include "session/activenavigationprojection.h"
-#include "session/activenavigationthumbnaildemand.h"
-#include "session/activenavigationthumbnailruntime.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondocumentports.h"
 #include "session/documentsessionmediadeletionruntime.h"
@@ -17,6 +15,7 @@
 #include "session/documentsessionpublicprojection.h"
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
+#include "session/documentsessionthumbnailruntime.h"
 #include "session/documentsessionvideooutputruntime.h"
 #include "system/filedeletion.h"
 
@@ -171,7 +170,7 @@ private:
     DocumentSessionImageDocumentPort m_imageDocument;
     DocumentSessionVideoDocumentPort m_videoDocument;
     DocumentSessionState m_state;
-    std::unique_ptr<ActiveNavigationThumbnailRuntime> m_activeNavigationThumbnailRuntime;
+    DocumentSessionThumbnailRuntime m_activeNavigationThumbnailRuntime;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
     DocumentSessionMediaOpenWithRuntime m_mediaOpenWithRuntime;
