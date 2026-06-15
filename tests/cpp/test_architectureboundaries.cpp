@@ -66,6 +66,7 @@ private Q_SLOTS:
     void mediaFormatRegistryDoesNotOwnLocalizedDialogLabels();
     void asyncImageIoJobsDoNotOwnDecodeDataLoading();
     void asyncImageIoJobsDoNotOwnDirectoryCandidateLoading();
+    void asyncImageIoJobsDoNotOwnOpenedCollectionCandidateLoading();
     void mediaEntrySourceStoreDoesNotDependOnDocumentPlanning();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
@@ -1329,10 +1330,10 @@ void TestArchitectureBoundaries::mediaFormatRegistryDoesNotOwnLocalizedDialogLab
 
 void TestArchitectureBoundaries::asyncImageIoJobsDoNotOwnDecodeDataLoading()
 {
-    const QList<QString> relativePaths {
+    const QStringList relativePaths = existingProjectFiles({
         QStringLiteral("src/async/imageiojobs.h"),
         QStringLiteral("src/async/imageiojobs.cpp"),
-    };
+    });
     const QList<QRegularExpression> forbiddenPatterns {
         QRegularExpression(QStringLiteral(R"(#include\s+"decoding/imagedecoderequest\.h")")),
         QRegularExpression(QStringLiteral(R"(\bImageDecodeRequest\b)")),
@@ -1353,15 +1354,39 @@ void TestArchitectureBoundaries::asyncImageIoJobsDoNotOwnDecodeDataLoading()
 
 void TestArchitectureBoundaries::asyncImageIoJobsDoNotOwnDirectoryCandidateLoading()
 {
-    const QList<QString> relativePaths {
+    const QStringList relativePaths = existingProjectFiles({
         QStringLiteral("src/async/imageiojobs.h"),
         QStringLiteral("src/async/imageiojobs.cpp"),
-    };
+    });
     const QList<QRegularExpression> forbiddenPatterns {
         QRegularExpression(QStringLiteral(R"(#include\s+"async/directorylistingjob\.h")")),
         QRegularExpression(QStringLiteral(R"(\bDirectoryItemListProvider\b)")),
         QRegularExpression(QStringLiteral(R"(\bstartDirectoryImageDocumentPageCandidateList\b)")),
         QRegularExpression(QStringLiteral(R"(\bstartDirectoryContainerCandidateList\b)")),
+    };
+
+    QStringList violations;
+    for (const QString &relativePath : relativePaths) {
+        const QString matches = matchingLines(projectPath(relativePath), forbiddenPatterns);
+        if (!matches.isEmpty()) {
+            violations.push_back(matches);
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::asyncImageIoJobsDoNotOwnOpenedCollectionCandidateLoading()
+{
+    const QStringList relativePaths = existingProjectFiles({
+        QStringLiteral("src/async/imageiojobs.h"),
+        QStringLiteral("src/async/imageiojobs.cpp"),
+    });
+    const QList<QRegularExpression> forbiddenPatterns {
+        QRegularExpression(QStringLiteral(R"(#include\s+"archive/mediaentrysourcebackend\.h")")),
+        QRegularExpression(QStringLiteral(R"(\bMediaEntrySourceCandidatesResult\b)")),
+        QRegularExpression(QStringLiteral(R"(\bloadMediaEntrySourceCandidates\b)")),
+        QRegularExpression(QStringLiteral(R"(\bstartOpenedCollectionCandidateList\b)")),
     };
 
     QStringList violations;
