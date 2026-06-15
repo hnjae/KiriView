@@ -30,6 +30,7 @@ enum class DecodedImageFailureOperation {
     OpenStaticImageSource,
     DecodeFirstDisplayImage,
     DecodeBlockingDisplayImage,
+    DecodeAnimationOpen,
 };
 
 enum class DecodedImageFailureSeverity {

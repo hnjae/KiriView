@@ -26,6 +26,8 @@ QString qtRasterFailureOperationName(kiriview::DecodedImageFailureOperation oper
         return QStringLiteral("decode first display image");
     case kiriview::DecodedImageFailureOperation::DecodeBlockingDisplayImage:
         return QStringLiteral("decode blocking display image");
+    case kiriview::DecodedImageFailureOperation::DecodeAnimationOpen:
+        return QStringLiteral("decode animation open");
     }
     return QStringLiteral("unknown");
 }

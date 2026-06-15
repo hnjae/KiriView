@@ -183,6 +183,21 @@ kiriview::DecodedImageResult failedImageDataResult(QString errorString)
     return kiriview::failedDecodedImageResult(std::move(errorString));
 }
 
+kiriview::DecodedImageResult failedAnimationOpenResult(QString errorString, QString adapterName)
+{
+    const QString backendError = errorString;
+    return kiriview::failedDecodedImageResult(kiriview::DecodedImageFailure {
+        std::move(errorString),
+        kiriview::DecodedImageFailureRoute::QtRaster,
+        kiriview::DecodedImageFailureOperation::DecodeAnimationOpen,
+        QStringLiteral("%1 animation open failed: %2")
+            .arg(std::move(adapterName),
+                backendError.isEmpty() ? QStringLiteral("<empty>") : backendError),
+        kiriview::DecodedImageFailureSeverity::Error,
+        false,
+    });
+}
+
 QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest &request)
 {
     return kiriview::sourceKeyForUrl(request.imageUrl()).identity;
@@ -251,7 +266,7 @@ kiriview::DecodedImageResult decodeQImageReaderRouterImageData(
                 sourceIdentityForRequest(input.request),
             });
         case kiriview::WebPAnimationOpenStatus::Error:
-            return kiriview::failedDecodedImageResult(openResult.errorString);
+            return failedAnimationOpenResult(openResult.errorString, QStringLiteral("WebP"));
         case kiriview::WebPAnimationOpenStatus::NotWebP:
         case kiriview::WebPAnimationOpenStatus::NotAnimation:
             break;
@@ -270,7 +285,7 @@ kiriview::DecodedImageResult decodeQImageReaderRouterImageData(
                 sourceIdentityForRequest(input.request),
             });
         case kiriview::JxlAnimationOpenStatus::Error:
-            return kiriview::failedDecodedImageResult(openResult.errorString);
+            return failedAnimationOpenResult(openResult.errorString, QStringLiteral("JXL"));
         case kiriview::JxlAnimationOpenStatus::NotJxl:
         case kiriview::JxlAnimationOpenStatus::NotAnimation:
             break;
