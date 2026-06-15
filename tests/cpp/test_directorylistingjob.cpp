@@ -5,6 +5,7 @@
 
 #include <KFileItem>
 #include <QFile>
+#include <QRegularExpression>
 #include <QStringList>
 #include <QTemporaryDir>
 #include <QTest>
@@ -43,6 +44,7 @@ private Q_SLOTS:
     void injectedProviderCancellationSuppressesCompletion();
     void localDirectoryReturnsItemSnapshot();
     void cancelSuppressesCompletion();
+    void openUrlFailureLeavesDiagnosticWarning();
 };
 
 void TestDirectoryListingJob::injectedProviderCompletesWithoutFilesystem()
@@ -140,6 +142,22 @@ void TestDirectoryListingJob::cancelSuppressesCompletion()
     QVERIFY(!job.isActive());
 
     QTest::qWait(100);
+    QVERIFY(!listed);
+    QVERIFY(errorString.isEmpty());
+}
+
+void TestDirectoryListingJob::openUrlFailureLeavesDiagnosticWarning()
+{
+    bool listed = false;
+    QString errorString;
+
+    QTest::ignoreMessage(QtWarningMsg,
+        QRegularExpression(QStringLiteral("KiriView directory listing rejected empty URL")));
+    kiriview::ImageIoJob job = kiriview::startDirectoryItemList(
+        this, QUrl(), [&listed](KFileItemList) { listed = true; },
+        [&errorString](const QString &message) { errorString = message; });
+
+    QVERIFY(!job.isActive());
     QVERIFY(!listed);
     QVERIFY(errorString.isEmpty());
 }
