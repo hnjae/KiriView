@@ -8,6 +8,7 @@
 #include "rawthumbnailpreview.h"
 #include "thumbnailpreview.h"
 
+#include <QDebug>
 #include <optional>
 #include <utility>
 #include <variant>
@@ -49,7 +50,12 @@ ImageDecodeJob::ImageDecodeJob(
 void ImageDecodeJob::start(ImageDecodeRequest request)
 {
     cancel();
-    if (request.isEmpty() || !m_dependencies.dataLoader || !m_dependencies.dataDecoder) {
+    if (request.isEmpty()) {
+        qWarning().noquote() << "KiriView image decode rejected empty request";
+        return;
+    }
+    if (!m_dependencies.dataLoader || !m_dependencies.dataDecoder) {
+        qWarning().noquote() << "KiriView image decode rejected missing runtime dependency";
         return;
     }
 
