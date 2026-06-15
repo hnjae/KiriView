@@ -350,6 +350,10 @@ void TestKiriImageDecoder::avifsSequenceBrandUsesHeifSequencePath()
     kiriview::DecodedImageResult result = kiriview::decodeImageData(imageData);
     const auto *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY2(failure != nullptr, "AVIF sequence brand should be handled by the HEIF sequence path");
+    QCOMPARE(failure->route, kiriview::DecodedImageFailureRoute::HeifFamily);
+    QVERIFY(failure->operation != kiriview::DecodedImageFailureOperation::Unknown);
+    QVERIFY(!failure->diagnosticDetail.isEmpty());
+    QVERIFY(failure->diagnosticDetail != failure->errorString);
     QVERIFY(failure->errorString.contains(QStringLiteral("HEIF image")));
 }
 
