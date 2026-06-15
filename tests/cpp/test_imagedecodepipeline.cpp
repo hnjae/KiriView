@@ -188,6 +188,7 @@ void TestImageDecodePipeline::selectedDecoderFailureDoesNotFallback()
     const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("raw failed"));
+    QCOMPARE(failure->route, kiriview::DecodedImageFailureRoute::Raw);
     QCOMPARE(calls, QStringList({ QStringLiteral("raw") }));
 }
 
