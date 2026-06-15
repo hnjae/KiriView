@@ -9,14 +9,35 @@
 
 #include <QByteArray>
 #include <QString>
+#include <QUrl>
 #include <functional>
 #include <memory>
 #include <variant>
 #include <vector>
 
 namespace kiriview {
+enum class MediaEntrySourceBackendKind {
+    Unknown,
+    Unsupported,
+    Directory,
+    KArchive,
+    LibArchive,
+};
+
+enum class MediaEntrySourceOperation {
+    OpenCollection,
+    ListCandidates,
+    ReadImageData,
+    LoadThumbnailMetadata,
+};
+
 struct MediaEntrySourceError {
+    MediaEntrySourceBackendKind backend = MediaEntrySourceBackendKind::Unknown;
+    MediaEntrySourceOperation operation = MediaEntrySourceOperation::OpenCollection;
+    QUrl collectionUrl;
+    QString entryPath;
     QString errorString;
+    QString diagnosticDetail;
 };
 
 struct MediaEntrySourceCandidates {

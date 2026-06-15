@@ -24,12 +24,12 @@ public:
     std::optional<std::vector<ImageDocumentPageCandidate>> cachedImageDocumentPageCandidates();
 
 private:
-    std::optional<QString> ensureSource();
+    std::optional<MediaEntrySourceError> ensureSource();
 
     OpenedCollectionScopeLocation m_openedCollectionScope;
     MediaEntrySourceFactory m_sourceFactory;
     MediaEntrySourcePtr m_source;
-    QString m_openErrorString;
+    std::optional<MediaEntrySourceError> m_openError;
     std::optional<std::vector<ImageDocumentPageCandidate>> m_cachedCandidates;
     bool m_openAttempted = false;
     std::mutex m_mutex;

@@ -848,6 +848,24 @@ void TestMediaEntrySourceBackend::sourceErrorsPreserveBackendOperationAndIdentit
     QCOMPARE(missingEntryError->entryPath, QStringLiteral("missing.png"));
     QVERIFY(!missingEntryError->errorString.isEmpty());
     QVERIFY(!missingEntryError->diagnosticDetail.isEmpty());
+
+    const QString invalidRarPath = dir.filePath(QStringLiteral("invalid.cbr"));
+    writeFile(invalidRarPath, QByteArrayLiteral("not an archive"));
+    const std::optional<kiriview::OpenedCollectionScopeLocation> invalidRarCollection
+        = archiveCollectionForPath(invalidRarPath);
+    QVERIFY(invalidRarCollection.has_value());
+    const kiriview::MediaEntrySourceCandidatesResult invalidRarResult
+        = kiriview::loadMediaEntrySourceCandidates(*invalidRarCollection);
+    const kiriview::MediaEntrySourceError *invalidRarError
+        = mediaEntrySourceError(invalidRarResult);
+
+    QVERIFY(invalidRarError != nullptr);
+    QCOMPARE(invalidRarError->backend, kiriview::MediaEntrySourceBackendKind::LibArchive);
+    QCOMPARE(invalidRarError->operation, kiriview::MediaEntrySourceOperation::OpenCollection);
+    QCOMPARE(invalidRarError->collectionUrl, invalidRarCollection->fileUrl());
+    QVERIFY(invalidRarError->entryPath.isEmpty());
+    QVERIFY(!invalidRarError->errorString.isEmpty());
+    QVERIFY(!invalidRarError->diagnosticDetail.isEmpty());
 }
 
 void TestMediaEntrySourceBackend::missingEmptyAndInvalidArchivesReportExpectedResults()

@@ -48,7 +48,9 @@ kiriview::MediaEntrySourceOpenResult openWithMediaEntrySourceBackend(
         = mediaEntrySourceBackendOperationsForOpenedCollection(openedCollectionScope);
     if (backend == nullptr) {
         return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
-            Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope));
+            Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::Unsupported,
+                kiriview::MediaEntrySourceOperation::OpenCollection, openedCollectionScope,
+                Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope)));
     }
 
     return backend->openSource(openedCollectionScope);
@@ -62,7 +64,9 @@ MediaEntrySourceThumbnailMetadataResult MediaEntrySource::loadThumbnailMetadata(
     Q_UNUSED(imageUrl)
     return MediaEntrySourceBackendDetail::mediaEntrySourceErrorResult<
         MediaEntrySourceThumbnailMetadataResult>(
-        MediaEntrySourceBackendDetail::openedCollectionThumbnailMetadataUnsupportedError());
+        MediaEntrySourceBackendDetail::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
+            MediaEntrySourceOperation::LoadThumbnailMetadata, {},
+            MediaEntrySourceBackendDetail::openedCollectionThumbnailMetadataUnsupportedError()));
 }
 }
 
@@ -141,6 +145,16 @@ QString openedCollectionThumbnailMetadataUnsupportedError()
     return i18nc("@info:status", "Could not cache a preview thumbnail for this collection item.");
 }
 
+MediaEntrySourceError mediaEntrySourceError(MediaEntrySourceBackendKind backend,
+    MediaEntrySourceOperation operation, const OpenedCollectionScopeLocation &openedCollectionScope,
+    QString errorString, QString diagnosticDetail, QString entryPath)
+{
+    const QString resolvedDiagnosticDetail
+        = diagnosticDetail.isEmpty() ? errorString : std::move(diagnosticDetail);
+    return MediaEntrySourceError { backend, operation, openedCollectionScope.fileUrl(),
+        std::move(entryPath), std::move(errorString), resolvedDiagnosticDetail };
+}
+
 MediaEntrySourceCandidatesResult mediaEntrySourceCandidatesResult(
     std::vector<ImageDocumentPageCandidate> candidates)
 {
@@ -166,14 +180,15 @@ MediaEntrySourceCandidatesResult loadMediaEntrySourceCandidates(
 {
     MediaEntrySourceOpenResult opened = openMediaEntrySource(openedCollectionScope);
     if (const auto *error = std::get_if<MediaEntrySourceError>(&opened)) {
-        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceCandidatesResult>(
-            error->errorString);
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceCandidatesResult>(*error);
     }
 
     const auto *source = std::get_if<MediaEntrySourcePtr>(&opened);
     if (source == nullptr || *source == nullptr) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceCandidatesResult>(
-            Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope));
+            Backend::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
+                MediaEntrySourceOperation::OpenCollection, openedCollectionScope,
+                Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope)));
     }
 
     return (*source)->loadImageDocumentPageCandidates();
@@ -184,14 +199,15 @@ MediaEntrySourceImageDataResult loadMediaEntrySourceImageData(
 {
     MediaEntrySourceOpenResult opened = openMediaEntrySource(openedCollectionScope);
     if (const auto *error = std::get_if<MediaEntrySourceError>(&opened)) {
-        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceImageDataResult>(
-            error->errorString);
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceImageDataResult>(*error);
     }
 
     const auto *source = std::get_if<MediaEntrySourcePtr>(&opened);
     if (source == nullptr || *source == nullptr) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceImageDataResult>(
-            Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope));
+            Backend::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
+                MediaEntrySourceOperation::OpenCollection, openedCollectionScope,
+                Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope)));
     }
 
     return (*source)->loadImageData(imageUrl);
@@ -203,13 +219,15 @@ MediaEntrySourceThumbnailMetadataResult loadMediaEntrySourceThumbnailMetadata(
     MediaEntrySourceOpenResult opened = openMediaEntrySource(openedCollectionScope);
     if (const auto *error = std::get_if<MediaEntrySourceError>(&opened)) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceThumbnailMetadataResult>(
-            error->errorString);
+            *error);
     }
 
     const auto *source = std::get_if<MediaEntrySourcePtr>(&opened);
     if (source == nullptr || *source == nullptr) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceThumbnailMetadataResult>(
-            Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope));
+            Backend::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
+                MediaEntrySourceOperation::OpenCollection, openedCollectionScope,
+                Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope)));
     }
 
     return (*source)->loadThumbnailMetadata(imageUrl);
@@ -220,7 +238,9 @@ MediaEntrySourceOpenResult openMediaEntrySource(
 {
     if (openedCollectionScope.isEmpty()) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceOpenResult>(
-            i18nc("@info:status", "Could not open the selected collection."));
+            Backend::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
+                MediaEntrySourceOperation::OpenCollection, openedCollectionScope,
+                i18nc("@info:status", "Could not open the selected collection.")));
     }
 
     return openWithMediaEntrySourceBackend(openedCollectionScope);

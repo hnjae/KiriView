@@ -38,9 +38,9 @@ MediaEntrySourceCandidatesResult MediaEntrySourceRunner::loadImageDocumentPageCa
         return MediaEntrySourceCandidates { *m_cachedCandidates };
     }
 
-    const std::optional<QString> errorString = ensureSource();
-    if (errorString.has_value()) {
-        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceCandidatesResult>(*errorString);
+    const std::optional<MediaEntrySourceError> error = ensureSource();
+    if (error.has_value()) {
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceCandidatesResult>(*error);
     }
 
     MediaEntrySourceCandidatesResult result = m_source->loadImageDocumentPageCandidates();
@@ -53,9 +53,9 @@ MediaEntrySourceCandidatesResult MediaEntrySourceRunner::loadImageDocumentPageCa
 MediaEntrySourceImageDataResult MediaEntrySourceRunner::loadImageData(const QUrl &imageUrl)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    const std::optional<QString> errorString = ensureSource();
-    if (errorString.has_value()) {
-        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceImageDataResult>(*errorString);
+    const std::optional<MediaEntrySourceError> error = ensureSource();
+    if (error.has_value()) {
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceImageDataResult>(*error);
     }
 
     return m_source->loadImageData(imageUrl);
@@ -68,26 +68,28 @@ MediaEntrySourceRunner::cachedImageDocumentPageCandidates()
     return m_cachedCandidates;
 }
 
-std::optional<QString> MediaEntrySourceRunner::ensureSource()
+std::optional<MediaEntrySourceError> MediaEntrySourceRunner::ensureSource()
 {
     if (m_source != nullptr) {
         return std::nullopt;
     }
     if (m_openAttempted) {
-        return m_openErrorString;
+        return m_openError;
     }
 
     m_openAttempted = true;
     MediaEntrySourceOpenResult result = m_sourceFactory(m_openedCollectionScope);
     if (const auto *error = std::get_if<MediaEntrySourceError>(&result)) {
-        m_openErrorString = error->errorString;
-        return m_openErrorString;
+        m_openError = *error;
+        return m_openError;
     }
 
     const auto *source = std::get_if<MediaEntrySourcePtr>(&result);
     if (source == nullptr || *source == nullptr) {
-        m_openErrorString = Backend::fallbackMediaEntrySourceOpenError(m_openedCollectionScope);
-        return m_openErrorString;
+        m_openError = Backend::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
+            MediaEntrySourceOperation::OpenCollection, m_openedCollectionScope,
+            Backend::fallbackMediaEntrySourceOpenError(m_openedCollectionScope));
+        return m_openError;
     }
 
     m_source = *source;

@@ -47,9 +47,13 @@ QString openedCollectionImageNotFoundError();
 QString openedCollectionImageReadError();
 QString openedCollectionThumbnailMetadataUnsupportedError();
 
-template <typename Result> Result mediaEntrySourceErrorResult(QString errorString)
+MediaEntrySourceError mediaEntrySourceError(MediaEntrySourceBackendKind backend,
+    MediaEntrySourceOperation operation, const OpenedCollectionScopeLocation &openedCollectionScope,
+    QString errorString, QString diagnosticDetail = QString(), QString entryPath = QString());
+
+template <typename Result> Result mediaEntrySourceErrorResult(MediaEntrySourceError error)
 {
-    return Result { MediaEntrySourceError { std::move(errorString) } };
+    return Result { std::move(error) };
 }
 
 MediaEntrySourceCandidatesResult mediaEntrySourceCandidatesResult(

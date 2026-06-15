@@ -69,8 +69,10 @@ public:
         std::lock_guard<std::mutex> lock(m_state->mutex);
         const auto data = fixture().dataByUrl.find(keyForUrl(imageUrl));
         if (data == fixture().dataByUrl.cend()) {
-            return MediaEntrySourceError { QStringLiteral(
-                "missing fake media entry source image data") };
+            return MediaEntrySourceError { MediaEntrySourceBackendKind::Unknown,
+                MediaEntrySourceOperation::ReadImageData, m_openedCollectionScope.fileUrl(),
+                imageUrl.toString(), QStringLiteral("missing fake media entry source image data"),
+                QStringLiteral("missing fake media entry source image data") };
         }
 
         return MediaEntrySourceImageData { data->second };
@@ -117,8 +119,10 @@ inline MediaEntrySourceFactory instrumentedMediaEntrySourceFactory(
         ++state->openCount;
         std::lock_guard<std::mutex> lock(state->mutex);
         if (!state->fixturesByRootUrl.count(keyForUrl(openedCollectionScope.rootUrl()))) {
-            return MediaEntrySourceError { QStringLiteral(
-                "missing fake media entry source fixture") };
+            return MediaEntrySourceError { MediaEntrySourceBackendKind::Unknown,
+                MediaEntrySourceOperation::OpenCollection, openedCollectionScope.fileUrl(), {},
+                QStringLiteral("missing fake media entry source fixture"),
+                QStringLiteral("missing fake media entry source fixture") };
         }
 
         return MediaEntrySourcePtr(

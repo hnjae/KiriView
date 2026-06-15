@@ -177,6 +177,7 @@ bool skipLibArchiveEntry(archive *reader, QString *errorString)
 }
 
 kiriview::MediaEntrySourceImageDataResult readLibArchiveEntryData(
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath,
     archive *reader, archive_entry *entry)
 {
     QByteArray data;
@@ -188,7 +189,11 @@ kiriview::MediaEntrySourceImageDataResult readLibArchiveEntryData(
         }
         if (bytesRead < 0) {
             return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
-                libArchiveErrorString(reader, Backend::openedCollectionImageReadError()));
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::ReadImageData, openedCollectionScope,
+                    Backend::openedCollectionImageReadError(),
+                    libArchiveErrorString(reader, Backend::openedCollectionImageReadError()),
+                    entryPath));
         }
 
         data.append(buffer, static_cast<qsizetype>(bytesRead));
@@ -198,7 +203,9 @@ kiriview::MediaEntrySourceImageDataResult readLibArchiveEntryData(
         const la_int64_t expectedSize = archive_entry_size(entry);
         if (expectedSize >= 0 && static_cast<qint64>(data.size()) != expectedSize) {
             return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
-                Backend::openedCollectionImageReadError());
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::ReadImageData, openedCollectionScope,
+                    Backend::openedCollectionImageReadError(), {}, entryPath));
         }
     }
 
@@ -257,7 +264,9 @@ public:
         OpenArchiveFileResult opened = openArchiveFileDescriptor(openedCollectionScope);
         if (!opened.fileDescriptor) {
             return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
-                opened.errorString);
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::OpenCollection, openedCollectionScope,
+                    opened.errorString));
         }
 
         auto source = std::shared_ptr<LibArchiveMediaEntrySource>(new LibArchiveMediaEntrySource(
@@ -267,7 +276,9 @@ public:
             openedCollectionScope, source->m_archiveFile.get(), &errorString);
         if (reader == nullptr) {
             return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
-                errorString);
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::OpenCollection, openedCollectionScope,
+                    errorString));
         }
 
         std::optional<LibArchiveMediaEntrySourceMetadata> metadata
@@ -275,7 +286,10 @@ public:
                 openedCollectionScope, reader.get(), &errorString);
         if (!metadata.has_value()) {
             return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
-                errorString);
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::ListCandidates, openedCollectionScope,
+                    Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope),
+                    errorString));
         }
 
         source->m_entryOrderByPath = std::move(metadata->entryOrderByPath);
@@ -289,16 +303,20 @@ public:
             = Backend::openedCollectionImageEntryPathForRead(m_openedCollectionScope, imageUrl);
         if (!entryPath.has_value()) {
             return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
-                Backend::openedCollectionImageNotFoundError());
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::ReadImageData, m_openedCollectionScope,
+                    Backend::openedCollectionImageNotFoundError(), imageUrl.toString()));
         }
 
         const auto entryOrder = m_entryOrderByPath.find(*entryPath);
         if (entryOrder == m_entryOrderByPath.cend()) {
             return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
-                Backend::openedCollectionImageNotFoundError());
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::ReadImageData, m_openedCollectionScope,
+                    Backend::openedCollectionImageNotFoundError(), {}, *entryPath));
         }
 
-        return readImageDataAtOrder(entryOrder->second);
+        return readImageDataAtOrder(entryOrder->second, *entryPath);
     }
 
 private:
@@ -310,12 +328,15 @@ private:
     {
     }
 
-    kiriview::MediaEntrySourceImageDataResult readImageDataAtOrder(int targetEntryOrder)
+    kiriview::MediaEntrySourceImageDataResult readImageDataAtOrder(
+        int targetEntryOrder, const QString &targetEntryPath)
     {
         QString errorString;
         if (!prepareReaderForEntry(targetEntryOrder, &errorString)) {
             return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
-                errorString);
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::ReadImageData, m_openedCollectionScope,
+                    Backend::openedCollectionImageReadError(), errorString, targetEntryPath));
         }
 
         archive_entry *entry = nullptr;
@@ -325,34 +346,49 @@ private:
             if (status == ARCHIVE_EOF) {
                 m_readerExhausted = true;
                 return Backend::mediaEntrySourceErrorResult<
-                    kiriview::MediaEntrySourceImageDataResult>(
-                    Backend::openedCollectionImageReadError());
+                    kiriview::MediaEntrySourceImageDataResult>(Backend::mediaEntrySourceError(
+                    kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::ReadImageData, m_openedCollectionScope,
+                    Backend::openedCollectionImageReadError(), {}, targetEntryPath));
             }
             if (status != ARCHIVE_OK) {
                 return Backend::mediaEntrySourceErrorResult<
-                    kiriview::MediaEntrySourceImageDataResult>(libArchiveErrorString(
-                    m_reader.get(), Backend::openedCollectionImageReadError()));
+                    kiriview::MediaEntrySourceImageDataResult>(Backend::mediaEntrySourceError(
+                    kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::ReadImageData, m_openedCollectionScope,
+                    Backend::openedCollectionImageReadError(),
+                    libArchiveErrorString(
+                        m_reader.get(), Backend::openedCollectionImageReadError()),
+                    targetEntryPath));
             }
 
             ++m_nextEntryOrder;
             if (currentEntryOrder == targetEntryOrder) {
                 if (archive_entry_filetype(entry) != AE_IFREG) {
                     return Backend::mediaEntrySourceErrorResult<
-                        kiriview::MediaEntrySourceImageDataResult>(
-                        Backend::openedCollectionImageNotFoundError());
+                        kiriview::MediaEntrySourceImageDataResult>(Backend::mediaEntrySourceError(
+                        kiriview::MediaEntrySourceBackendKind::LibArchive,
+                        kiriview::MediaEntrySourceOperation::ReadImageData, m_openedCollectionScope,
+                        Backend::openedCollectionImageNotFoundError(), {}, targetEntryPath));
                 }
 
-                return readLibArchiveEntryData(m_reader.get(), entry);
+                return readLibArchiveEntryData(
+                    m_openedCollectionScope, libArchiveEntryPath(entry), m_reader.get(), entry);
             }
 
             if (!skipLibArchiveEntry(m_reader.get(), &errorString)) {
                 return Backend::mediaEntrySourceErrorResult<
-                    kiriview::MediaEntrySourceImageDataResult>(errorString);
+                    kiriview::MediaEntrySourceImageDataResult>(Backend::mediaEntrySourceError(
+                    kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::ReadImageData, m_openedCollectionScope,
+                    Backend::openedCollectionImageReadError(), errorString, targetEntryPath));
             }
         }
 
         return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
-            Backend::openedCollectionImageReadError());
+            Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::LibArchive,
+                kiriview::MediaEntrySourceOperation::ReadImageData, m_openedCollectionScope,
+                Backend::openedCollectionImageReadError(), {}, targetEntryPath));
     }
 
     bool prepareReaderForEntry(int targetEntryOrder, QString *errorString)
