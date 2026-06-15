@@ -89,7 +89,7 @@ kiriview::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
             return directPlan;
         }
 
-        if (imageDocument == nullptr || !imageDocument->displayedOpenedCollectionScope
+        if (imageDocument == nullptr || !imageDocument->snapshot
             || request.sourceKey.sourceKind
                 != kiriview::activeNavigationThumbnailSourceKindIdentity(
                     kiriview::ActiveNavigationThumbnailSourceKind::ImageDocumentPageImage)) {
@@ -97,7 +97,7 @@ kiriview::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
         }
 
         const kiriview::OpenedCollectionScopeLocation openedCollectionScope
-            = imageDocument->displayedOpenedCollectionScope();
+            = imageDocument->snapshot().displayedOpenedCollectionScope;
         const kiriview::OpenedCollectionThumbnailSourcePlan collectionPlan
             = kiriview::openedCollectionThumbnailSourcePlan(openedCollectionScope,
                 request.sourceKey.url, kiriview::ImageDocumentPageKind::Image);
@@ -672,54 +672,58 @@ void DocumentSessionRuntime::connectDocuments()
 
 void DocumentSessionRuntime::refreshImagePublicSnapshot()
 {
+    const DocumentSessionImageDocumentSnapshot leafSnapshot = m_imageDocument.snapshot();
     DocumentSessionPublicImageLeafSnapshot snapshot;
-    const QUrl sourceUrl = m_imageDocument.sourceUrl();
-    snapshot.sourceUrl = sourceUrl;
+    const QUrl sourceUrl = leafSnapshot.sourceUrl;
+    snapshot.sourceUrl = leafSnapshot.sourceUrl;
     snapshot.sourceMayRepresentDocument
         = !sourceUrl.isEmpty() && !isSupportedDirectImageUrl(sourceUrl);
-    snapshot.pageNavigation = m_imageDocument.activeNavigationSnapshot();
-    snapshot.pageNavigationRows = m_imageDocument.pageNavigationSnapshot();
-    snapshot.displayedUrl = m_imageDocument.displayedUrl();
-    snapshot.displayedOpenedCollectionScope = m_imageDocument.displayedOpenedCollectionScope();
-    snapshot.windowTitleFileName = m_imageDocument.windowTitleFileName();
-    snapshot.directMediaSize = m_imageDocument.primaryImageSize();
-    snapshot.embeddedMetadata = m_imageDocument.embeddedMetadata();
-    snapshot.readyForDeletion = m_imageDocument.ready();
-    snapshot.readyForInformation = m_imageDocument.ready();
-    snapshot.error = m_imageDocument.error();
-    snapshot.fileDeletionInProgress = m_imageDocument.fileDeletionInProgress();
-    snapshot.openedCollectionScopeActive = m_imageDocument.openedCollectionScopeActive();
-    snapshot.ordinaryDirectMediaScopeActive = m_imageDocument.ordinaryDirectMediaScopeActive();
-    snapshot.unsupportedOpenedCollectionVideo = m_imageDocument.unsupportedOpenedCollectionVideo();
+    snapshot.pageNavigation = leafSnapshot.activeNavigationSnapshot;
+    snapshot.pageNavigationRows = leafSnapshot.pageNavigationSnapshot;
+    snapshot.displayedUrl = leafSnapshot.displayedUrl;
+    snapshot.displayedOpenedCollectionScope = leafSnapshot.displayedOpenedCollectionScope;
+    snapshot.windowTitleFileName = leafSnapshot.windowTitleFileName;
+    snapshot.directMediaSize = leafSnapshot.primaryImageSize;
+    snapshot.embeddedMetadata = leafSnapshot.embeddedMetadata;
+    snapshot.readyForDeletion = leafSnapshot.ready;
+    snapshot.readyForInformation = leafSnapshot.ready;
+    snapshot.error = leafSnapshot.error;
+    snapshot.fileDeletionInProgress = leafSnapshot.fileDeletionInProgress;
+    snapshot.openedCollectionScopeActive = leafSnapshot.openedCollectionScopeActive;
+    snapshot.ordinaryDirectMediaScopeActive = leafSnapshot.ordinaryDirectMediaScopeActive;
+    snapshot.unsupportedOpenedCollectionVideo = leafSnapshot.unsupportedOpenedCollectionVideo;
     snapshot.directImageReplacementPending = !m_state.directMediaCursor().pendingUrl.isEmpty();
-    snapshot.containerNavigationAvailable = m_imageDocument.containerNavigationAvailable();
-    snapshot.twoPageModeEnabled = m_imageDocument.twoPageModeEnabled();
-    snapshot.twoPageModeAvailable = m_imageDocument.twoPageModeAvailable();
-    snapshot.rightToLeftReadingEnabled = m_imageDocument.rightToLeftReadingEnabled();
-    snapshot.rightToLeftReadingAvailable = m_imageDocument.rightToLeftReadingAvailable();
-    snapshot.fitModeSelected = m_imageDocument.fitModeSelected();
-    snapshot.fitHeightModeSelected = m_imageDocument.fitHeightModeSelected();
-    snapshot.fitWidthModeSelected = m_imageDocument.fitWidthModeSelected();
-    snapshot.zoomPercentKnown = m_imageDocument.zoomPercentKnown();
-    snapshot.zoomPercent = m_imageDocument.zoomPercent();
-    snapshot.errorString = m_imageDocument.errorString();
+    snapshot.containerNavigationAvailable = leafSnapshot.containerNavigationAvailable;
+    snapshot.twoPageModeEnabled = leafSnapshot.twoPageModeEnabled;
+    snapshot.twoPageModeAvailable = leafSnapshot.twoPageModeAvailable;
+    snapshot.rightToLeftReadingEnabled = leafSnapshot.rightToLeftReadingEnabled;
+    snapshot.rightToLeftReadingAvailable = leafSnapshot.rightToLeftReadingAvailable;
+    snapshot.fitModeSelected = leafSnapshot.fitModeSelected;
+    snapshot.fitHeightModeSelected = leafSnapshot.fitHeightModeSelected;
+    snapshot.fitWidthModeSelected = leafSnapshot.fitWidthModeSelected;
+    snapshot.zoomPercentKnown = leafSnapshot.zoomPercentKnown;
+    snapshot.zoomPercent = leafSnapshot.zoomPercent;
+    snapshot.errorString = leafSnapshot.errorString;
+    snapshot.primaryDisplayedPredecodeImage = leafSnapshot.primaryDisplayedPredecodeImage;
+    snapshot.firstDisplayDecodeContext = leafSnapshot.firstDisplayDecodeContext;
     m_imagePublicSnapshot = std::move(snapshot);
 }
 
 void DocumentSessionRuntime::refreshVideoPublicSnapshot()
 {
+    const DocumentSessionVideoDocumentSnapshot leafSnapshot = m_videoDocument.snapshot();
     DocumentSessionPublicVideoLeafSnapshot snapshot;
-    snapshot.sourceUrl = m_videoDocument.sourceUrl();
-    snapshot.windowTitleFileName = m_videoDocument.windowTitleFileName();
-    snapshot.directMediaSize = m_videoDocument.videoSize();
-    snapshot.embeddedMetadata = m_videoDocument.embeddedMetadata();
-    snapshot.ready = m_videoDocument.ready();
-    snapshot.hasVideo = m_videoDocument.hasVideo();
+    snapshot.sourceUrl = leafSnapshot.sourceUrl;
+    snapshot.windowTitleFileName = leafSnapshot.windowTitleFileName;
+    snapshot.directMediaSize = leafSnapshot.videoSize;
+    snapshot.embeddedMetadata = leafSnapshot.embeddedMetadata;
+    snapshot.ready = leafSnapshot.ready;
+    snapshot.hasVideo = leafSnapshot.hasVideo;
     snapshot.sourcePresent = !snapshot.sourceUrl.isEmpty();
-    snapshot.error = m_videoDocument.error();
-    snapshot.zoomPercentKnown = m_videoDocument.zoomPercentKnown();
-    snapshot.zoomPercent = m_videoDocument.zoomPercent();
-    snapshot.errorString = m_videoDocument.errorString();
+    snapshot.error = leafSnapshot.error;
+    snapshot.zoomPercentKnown = leafSnapshot.zoomPercentKnown;
+    snapshot.zoomPercent = leafSnapshot.zoomPercent;
+    snapshot.errorString = leafSnapshot.errorString;
     m_videoPublicSnapshot = std::move(snapshot);
 }
 
@@ -948,7 +952,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
 
 void DocumentSessionRuntime::leaveVideoMode()
 {
-    if (m_videoDocument.sourceUrl().isEmpty() && m_videoDocument.videoOutput() == nullptr) {
+    if (m_videoPublicSnapshot.sourceUrl.isEmpty() && m_videoDocument.videoOutput() == nullptr) {
         return;
     }
 
@@ -1118,10 +1122,10 @@ DocumentSessionMediaPredecodeInput DocumentSessionRuntime::mediaPredecodeInput()
         directMediaNavigationActive(),
         m_state.documentKind(),
         activeImageUsesImageDocumentSourceScope(),
-        m_imageDocument.ready(),
+        m_imagePublicSnapshot.readyForInformation,
         activeDirectMediaCursorUrl(),
-        m_imageDocument.primaryDisplayedPredecodeImage(),
-        m_imageDocument.firstDisplayDecodeContext(),
+        m_imagePublicSnapshot.primaryDisplayedPredecodeImage,
+        m_imagePublicSnapshot.firstDisplayDecodeContext,
     };
 }
 

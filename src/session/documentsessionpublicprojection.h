@@ -5,12 +5,14 @@
 #define KIRIVIEW_DOCUMENTSESSIONPUBLICPROJECTION_H
 
 #include "metadata/embeddedmetadata.h"
+#include "predecode/predecodedimage.h"
 #include "session/activenavigationprojection.h"
 #include "session/documentsessiontypes.h"
 
 #include <QSize>
 #include <QString>
 #include <QUrl>
+#include <optional>
 
 namespace kiriview {
 struct DocumentSessionPublicProjectionInput {
@@ -72,6 +74,8 @@ struct DocumentSessionPublicImageLeafSnapshot {
     bool zoomPercentKnown = false;
     qreal zoomPercent = 0.0;
     QString errorString;
+    std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage;
+    ImageFirstDisplayDecodeContext firstDisplayDecodeContext;
 };
 
 struct DocumentSessionPublicVideoLeafSnapshot {

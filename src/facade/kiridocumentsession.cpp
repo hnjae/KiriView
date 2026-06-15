@@ -55,6 +55,57 @@ KiriImageDocument::DeletionMode toImageDocumentDeletionMode(kiriview::FileDeleti
     return KiriImageDocument::DeletionMode::MoveToTrash;
 }
 
+kiriview::DocumentSessionImageDocumentSnapshot imageDocumentSessionSnapshot(
+    KiriImageDocument &document)
+{
+    return kiriview::DocumentSessionImageDocumentSnapshot {
+        document.sourceUrl(),
+        document.errorString(),
+        document.windowTitleFileName(),
+        document.displayedUrl(),
+        document.displayedOpenedCollectionScope(),
+        document.primaryImageSize(),
+        document.status() == KiriImageDocument::Status::Ready,
+        document.status() == KiriImageDocument::Status::Error,
+        document.unsupportedOpenedCollectionVideo(),
+        document.fileDeletionInProgress(),
+        document.openedCollectionScopeActive(),
+        document.ordinaryDirectMediaScopeActive(),
+        document.containerNavigationAvailable(),
+        document.twoPageModeEnabled(),
+        document.twoPageModeAvailable(),
+        document.rightToLeftReadingEnabled(),
+        document.rightToLeftReadingAvailable(),
+        document.zoomMode() == KiriImageDocument::ZoomMode::Fit,
+        document.zoomMode() == KiriImageDocument::ZoomMode::FitHeight,
+        document.zoomMode() == KiriImageDocument::ZoomMode::FitWidth,
+        document.zoomPercentKnown(),
+        document.zoomPercent(),
+        document.embeddedMetadata(),
+        document.pageNavigationSnapshot(),
+        document.activeNavigationSnapshot(),
+        document.primaryDisplayedPredecodeImage(),
+        document.firstDisplayDecodeContext(),
+    };
+}
+
+kiriview::DocumentSessionVideoDocumentSnapshot videoDocumentSessionSnapshot(
+    KiriVideoDocument &document)
+{
+    return kiriview::DocumentSessionVideoDocumentSnapshot {
+        document.sourceUrl(),
+        document.errorString(),
+        document.windowTitleFileName(),
+        document.videoSize(),
+        document.status() == KiriVideoDocument::Status::Ready,
+        document.status() == KiriVideoDocument::Status::Error,
+        document.hasVideo(),
+        document.zoomPercentKnown(),
+        document.zoomPercent(),
+        document.embeddedMetadata(),
+    };
+}
+
 KiriDocumentSession::ActiveNavigationBoundaryScope fromRuntimeBoundaryScope(
     kiriview::ActiveNavigationBoundaryScope scope)
 {
@@ -271,34 +322,8 @@ kiriview::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
     KiriImageDocument &document)
 {
     return kiriview::DocumentSessionImageDocumentPort {
-        [&document]() { return document.sourceUrl(); },
+        [&document]() { return imageDocumentSessionSnapshot(document); },
         [&document](const QUrl &url) { document.setSourceUrl(url); },
-        [&document]() { return document.errorString(); },
-        [&document]() { return document.windowTitleFileName(); },
-        [&document]() { return document.displayedUrl(); },
-        [&document]() { return document.displayedOpenedCollectionScope(); },
-        [&document]() { return document.primaryImageSize(); },
-        [&document]() { return document.status() == KiriImageDocument::Status::Ready; },
-        [&document]() { return document.status() == KiriImageDocument::Status::Error; },
-        [&document]() { return document.unsupportedOpenedCollectionVideo(); },
-        [&document]() { return document.fileDeletionInProgress(); },
-        [&document]() { return document.openedCollectionScopeActive(); },
-        [&document]() { return document.ordinaryDirectMediaScopeActive(); },
-        [&document]() { return document.containerNavigationAvailable(); },
-        [&document]() { return document.twoPageModeEnabled(); },
-        [&document]() { return document.twoPageModeAvailable(); },
-        [&document]() { return document.rightToLeftReadingEnabled(); },
-        [&document]() { return document.rightToLeftReadingAvailable(); },
-        [&document]() { return document.zoomMode() == KiriImageDocument::ZoomMode::Fit; },
-        [&document]() { return document.zoomMode() == KiriImageDocument::ZoomMode::FitHeight; },
-        [&document]() { return document.zoomMode() == KiriImageDocument::ZoomMode::FitWidth; },
-        [&document]() { return document.zoomPercentKnown(); },
-        [&document]() { return document.zoomPercent(); },
-        [&document]() { return document.embeddedMetadata(); },
-        [&document]() { return document.pageNavigationSnapshot(); },
-        [&document]() { return document.activeNavigationSnapshot(); },
-        [&document]() { return document.primaryDisplayedPredecodeImage(); },
-        [&document]() { return document.firstDisplayDecodeContext(); },
         [&document]() { document.openPreviousPage(); },
         [&document]() { document.openNextPage(); },
         [&document](int pageNumber) { document.openImageAtPage(pageNumber); },
@@ -331,17 +356,8 @@ kiriview::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPor
     KiriVideoDocument &document)
 {
     return kiriview::DocumentSessionVideoDocumentPort {
-        [&document]() { return document.sourceUrl(); },
+        [&document]() { return videoDocumentSessionSnapshot(document); },
         [&document](const QUrl &url) { document.setSourceUrl(url); },
-        [&document]() { return document.errorString(); },
-        [&document]() { return document.windowTitleFileName(); },
-        [&document]() { return document.videoSize(); },
-        [&document]() { return document.status() == KiriVideoDocument::Status::Ready; },
-        [&document]() { return document.status() == KiriVideoDocument::Status::Error; },
-        [&document]() { return document.hasVideo(); },
-        [&document]() { return document.zoomPercentKnown(); },
-        [&document]() { return document.zoomPercent(); },
-        [&document]() { return document.embeddedMetadata(); },
         [&document]() { return document.videoOutput(); },
         [&document]() { document.stop(); },
         [&document](QObject *videoOutput) { document.setVideoOutput(videoOutput); },

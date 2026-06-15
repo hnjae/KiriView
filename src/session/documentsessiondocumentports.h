@@ -47,35 +47,39 @@ struct DocumentSessionImageDocumentSignals {
     DocumentSessionDocumentSignalConnector embeddedMetadataChanged;
 };
 
+struct DocumentSessionImageDocumentSnapshot {
+    QUrl sourceUrl;
+    QString errorString;
+    QString windowTitleFileName;
+    QUrl displayedUrl;
+    OpenedCollectionScopeLocation displayedOpenedCollectionScope;
+    QSize primaryImageSize;
+    bool ready = false;
+    bool error = false;
+    bool unsupportedOpenedCollectionVideo = false;
+    bool fileDeletionInProgress = false;
+    bool openedCollectionScopeActive = false;
+    bool ordinaryDirectMediaScopeActive = false;
+    bool containerNavigationAvailable = false;
+    bool twoPageModeEnabled = false;
+    bool twoPageModeAvailable = false;
+    bool rightToLeftReadingEnabled = false;
+    bool rightToLeftReadingAvailable = false;
+    bool fitModeSelected = false;
+    bool fitHeightModeSelected = false;
+    bool fitWidthModeSelected = false;
+    bool zoomPercentKnown = false;
+    qreal zoomPercent = 0.0;
+    EmbeddedMetadata embeddedMetadata;
+    ImageDocumentPageNavigationSnapshot pageNavigationSnapshot;
+    ImageDocumentPageActiveNavigationSnapshot activeNavigationSnapshot;
+    std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage;
+    ImageFirstDisplayDecodeContext firstDisplayDecodeContext;
+};
+
 struct DocumentSessionImageDocumentPort {
-    std::function<QUrl()> sourceUrl;
+    std::function<DocumentSessionImageDocumentSnapshot()> snapshot;
     std::function<void(const QUrl &)> setSourceUrl;
-    std::function<QString()> errorString;
-    std::function<QString()> windowTitleFileName;
-    std::function<QUrl()> displayedUrl;
-    std::function<OpenedCollectionScopeLocation()> displayedOpenedCollectionScope;
-    std::function<QSize()> primaryImageSize;
-    std::function<bool()> ready;
-    std::function<bool()> error;
-    std::function<bool()> unsupportedOpenedCollectionVideo;
-    std::function<bool()> fileDeletionInProgress;
-    std::function<bool()> openedCollectionScopeActive;
-    std::function<bool()> ordinaryDirectMediaScopeActive;
-    std::function<bool()> containerNavigationAvailable;
-    std::function<bool()> twoPageModeEnabled;
-    std::function<bool()> twoPageModeAvailable;
-    std::function<bool()> rightToLeftReadingEnabled;
-    std::function<bool()> rightToLeftReadingAvailable;
-    std::function<bool()> fitModeSelected;
-    std::function<bool()> fitHeightModeSelected;
-    std::function<bool()> fitWidthModeSelected;
-    std::function<bool()> zoomPercentKnown;
-    std::function<qreal()> zoomPercent;
-    std::function<EmbeddedMetadata()> embeddedMetadata;
-    std::function<ImageDocumentPageNavigationSnapshot()> pageNavigationSnapshot;
-    std::function<ImageDocumentPageActiveNavigationSnapshot()> activeNavigationSnapshot;
-    std::function<std::optional<DisplayedPredecodeImage>()> primaryDisplayedPredecodeImage;
-    std::function<ImageFirstDisplayDecodeContext()> firstDisplayDecodeContext;
     std::function<void()> openPreviousPage;
     std::function<void()> openNextPage;
     std::function<void(int)> openImageAtPage;
@@ -95,18 +99,22 @@ struct DocumentSessionVideoDocumentSignals {
     DocumentSessionDocumentSignalConnector embeddedMetadataChanged;
 };
 
+struct DocumentSessionVideoDocumentSnapshot {
+    QUrl sourceUrl;
+    QString errorString;
+    QString windowTitleFileName;
+    QSize videoSize;
+    bool ready = false;
+    bool error = false;
+    bool hasVideo = false;
+    bool zoomPercentKnown = false;
+    int zoomPercent = 0;
+    EmbeddedMetadata embeddedMetadata;
+};
+
 struct DocumentSessionVideoDocumentPort {
-    std::function<QUrl()> sourceUrl;
+    std::function<DocumentSessionVideoDocumentSnapshot()> snapshot;
     std::function<void(const QUrl &)> setSourceUrl;
-    std::function<QString()> errorString;
-    std::function<QString()> windowTitleFileName;
-    std::function<QSize()> videoSize;
-    std::function<bool()> ready;
-    std::function<bool()> error;
-    std::function<bool()> hasVideo;
-    std::function<bool()> zoomPercentKnown;
-    std::function<int()> zoomPercent;
-    std::function<EmbeddedMetadata()> embeddedMetadata;
     std::function<QObject *()> videoOutput;
     std::function<void()> stop;
     std::function<void(QObject *)> setVideoOutput;

@@ -33,7 +33,7 @@ void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeaf
         imageSnapshot.sourceUrl = url;
         imageSnapshot.displayedUrl = url;
         imageSnapshot.windowTitleFileName = url.fileName();
-        imageSnapshot.directMediaSize = QSize(320, 200);
+        imageSnapshot.primaryImageSize = QSize(320, 200);
         imageSnapshot.ready = !url.isEmpty();
         imageSnapshot.ordinaryDirectMediaScopeActive = !url.isEmpty();
         imageSnapshot.zoomPercentKnown = true;
@@ -59,7 +59,9 @@ void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeaf
     QCOMPARE(runtime.documentKind(), kiriview::DocumentSessionKind::Image);
     QCOMPARE(runtime.sourceUrl(), imageUrl);
     QVERIFY(runtime.activeImageReady());
-    QCOMPARE(runtime.windowTitleSubject(), QStringLiteral("image.png"));
+    QVERIFY(runtime.windowTitleSubject().startsWith(QStringLiteral("image.png")));
+    QVERIFY(runtime.windowTitleSubject().contains(QStringLiteral("320")));
+    QVERIFY(runtime.windowTitleSubject().contains(QStringLiteral("200")));
     QVERIFY(runtime.activeZoomPercentKnown());
     QCOMPARE(runtime.activeZoomPercent(), 100.0);
 }
