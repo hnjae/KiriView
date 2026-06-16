@@ -219,6 +219,7 @@ private Q_SLOTS:
     void pageSelectionStartsTrackedLoadThroughEffectExecutor();
     void pendingLoadFailureKeepsTargetPageNavigation();
     void siblingArchiveNavigationResetsManualZoom();
+    void anchoredZoomAndPointQueriesUseRuntimeViewportGeometry();
     void viewportPanAndScanCommandsUpdateContentPosition();
     void nextDisplayedImageCanStartAtFinalScanPosition();
     void smallStaticImagePublishesProviderDisplay();
@@ -1094,6 +1095,39 @@ void TestImageDocumentRuntime::nextDisplayedImageCanStartAtFinalScanPosition()
     QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Manual);
     QVERIFY(kiriview::imageZoomApproximatelyEqual(runtime->zoomPercent(), 100.0));
     QCOMPARE(runtime->viewportContentPosition(), QPointF(400.0, 500.0));
+}
+
+void TestImageDocumentRuntime::anchoredZoomAndPointQueriesUseRuntimeViewportGeometry()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageDocumentPageCandidate(imageUrl),
+        });
+
+    RuntimeHandle runtime = createRuntime(
+        this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(800, 800)));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), imageUrl);
+    QCOMPARE(runtime->displaySize(), QSizeF(300.0, 300.0));
+    QCOMPARE(runtime->viewportContentPosition(), QPointF());
+
+    QVERIFY(!runtime->viewportPointInsideImage(QPointF(10.0, 10.0)));
+    QVERIFY(runtime->viewportPointInsideImage(QPointF(60.0, 10.0)));
+    QCOMPARE(runtime->nearestImageViewportPoint(QPointF(10.0, 10.0)), QPointF(50.0, 10.0));
+
+    QVERIFY(runtime->requestManualZoomPercentAtCenter(100.0) > 0);
+
+    QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Manual);
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(runtime->zoomPercent(), 100.0));
+    QCOMPARE(runtime->displaySize(), QSizeF(800.0, 800.0));
+    QCOMPARE(runtime->viewportContentPosition(), QPointF(200.0, 250.0));
 }
 
 void TestImageDocumentRuntime::viewportPanAndScanCommandsUpdateContentPosition()
