@@ -13,6 +13,8 @@ class TestDocumentSessionDirectMediaNavigationApplicationRuntime : public QObjec
     Q_OBJECT
 
 private Q_SLOTS:
+    void inactiveRefreshClearsNavigationPublishesAndClearsPredecode();
+    void inactiveImageDocumentScopeRefreshKeepsPredecodeCache();
     void failedRefreshPublishesUnknownNavigationAndReveal();
     void successfulRefreshPublishesNavigationRevealAndPredecode();
     void successfulOpenSchedulesPredecodeBeforeRoutingTarget();
@@ -52,6 +54,7 @@ struct ApplicationFixture {
         SetNavigation,
         Reveal,
         Publish,
+        ClearPredecode,
         Predecode,
         Route,
     };
@@ -60,6 +63,7 @@ struct ApplicationFixture {
     AppliedNavigation navigation;
     kiriview::DocumentSessionDirectMediaNavigationRevealAction revealAction
         = kiriview::DocumentSessionDirectMediaNavigationRevealAction::None;
+    int clearPredecodeCount = 0;
     std::vector<kiriview::DirectMediaNavigationCandidate> predecodeCandidates;
     QUrl routeTargetUrl;
     kiriview::DocumentSessionDirectMediaNavigationApplicationRuntime runtime {
@@ -74,6 +78,10 @@ struct ApplicationFixture {
                 revealAction = action;
             },
             [this]() { events.push_back(Event::Publish); },
+            [this]() {
+                events.push_back(Event::ClearPredecode);
+                ++clearPredecodeCount;
+            },
             [this](const std::vector<kiriview::DirectMediaNavigationCandidate> &candidates) {
                 events.push_back(Event::Predecode);
                 predecodeCandidates = candidates;
@@ -85,6 +93,40 @@ struct ApplicationFixture {
         }
     };
 };
+}
+
+void TestDocumentSessionDirectMediaNavigationApplicationRuntime::
+    inactiveRefreshClearsNavigationPublishesAndClearsPredecode()
+{
+    ApplicationFixture fixture;
+
+    fixture.runtime.applyInactiveRefresh(true);
+
+    QCOMPARE(fixture.navigation.known, false);
+    QVERIFY(fixture.navigation.candidates.empty());
+    QCOMPARE(fixture.revealAction,
+        kiriview::DocumentSessionDirectMediaNavigationRevealAction::ProgrammaticSync);
+    QCOMPARE(fixture.clearPredecodeCount, 1);
+    QCOMPARE(fixture.events,
+        (std::vector<ApplicationFixture::Event> { ApplicationFixture::Event::SetNavigation,
+            ApplicationFixture::Event::Reveal, ApplicationFixture::Event::Publish,
+            ApplicationFixture::Event::ClearPredecode }));
+}
+
+void TestDocumentSessionDirectMediaNavigationApplicationRuntime::
+    inactiveImageDocumentScopeRefreshKeepsPredecodeCache()
+{
+    ApplicationFixture fixture;
+
+    fixture.runtime.applyInactiveRefresh(false);
+
+    QCOMPARE(fixture.navigation.known, false);
+    QCOMPARE(fixture.revealAction,
+        kiriview::DocumentSessionDirectMediaNavigationRevealAction::ProgrammaticSync);
+    QCOMPARE(fixture.clearPredecodeCount, 0);
+    QCOMPARE(fixture.events,
+        (std::vector<ApplicationFixture::Event> { ApplicationFixture::Event::SetNavigation,
+            ApplicationFixture::Event::Reveal, ApplicationFixture::Event::Publish }));
 }
 
 void TestDocumentSessionDirectMediaNavigationApplicationRuntime::
