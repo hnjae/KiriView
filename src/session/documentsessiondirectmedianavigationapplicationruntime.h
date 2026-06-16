@@ -17,6 +17,7 @@ struct DocumentSessionDirectMediaNavigationApplicationPorts {
         setDirectMediaNavigation;
     std::function<void(DocumentSessionDirectMediaNavigationRevealAction)> applyRevealAction;
     std::function<void()> publishProjection;
+    std::function<void()> clearPredecode;
     std::function<void(const std::vector<DirectMediaNavigationCandidate> &)> schedulePredecode;
     std::function<void(const QUrl &)> routeMediaUrl;
 };
@@ -27,6 +28,7 @@ public:
     explicit DocumentSessionDirectMediaNavigationApplicationRuntime(
         DocumentSessionDirectMediaNavigationApplicationPorts ports);
 
+    void applyInactiveRefresh(bool clearPredecode);
     void applyRefresh(ActiveNavigationSourceKind sourceKind,
         const ActiveNavigationSnapshot &previousSnapshot,
         DocumentSessionDirectMediaNavigationRefreshResult result);

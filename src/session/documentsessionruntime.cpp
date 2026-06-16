@@ -186,6 +186,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
                   applyDirectMediaNavigationRevealAction(action);
               },
               [this]() { recomputePublicProjection(); },
+              [this]() { m_mediaPredecodeRuntime.clear(); },
               [this](const std::vector<DirectMediaNavigationCandidate> &candidates) {
                   scheduleMediaPredecode(candidates);
               },
@@ -798,13 +799,8 @@ void DocumentSessionRuntime::refreshDirectMediaNavigation()
                                        << "inactive"
                                        << "documentKind" << documentKindName(m_state.documentKind())
                                        << "cursorUrl" << activeDirectMediaCursorUrl();
-        m_state.setDirectMediaNavigation({}, false, {});
-        setActiveNavigationRevealContext(
-            ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
-        recomputePublicProjection();
-        if (!directImageLoadMayUseImageDocumentSourceScope()) {
-            m_mediaPredecodeRuntime.clear();
-        }
+        m_directMediaNavigationApplicationRuntime.applyInactiveRefresh(
+            !directImageLoadMayUseImageDocumentSourceScope());
         return;
     }
 

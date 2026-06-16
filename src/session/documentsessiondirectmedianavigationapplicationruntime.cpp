@@ -17,6 +17,19 @@ DocumentSessionDirectMediaNavigationApplicationRuntime::
 {
 }
 
+void DocumentSessionDirectMediaNavigationApplicationRuntime::applyInactiveRefresh(
+    bool clearPredecode)
+{
+    invokeIfSet(m_ports.setDirectMediaNavigation, DirectMediaNavigationBoundaryState {}, false,
+        std::vector<DirectMediaNavigationCandidate> {});
+    invokeIfSet(m_ports.applyRevealAction,
+        DocumentSessionDirectMediaNavigationRevealAction::ProgrammaticSync);
+    invokeIfSet(m_ports.publishProjection);
+    if (clearPredecode) {
+        invokeIfSet(m_ports.clearPredecode);
+    }
+}
+
 void DocumentSessionDirectMediaNavigationApplicationRuntime::applyRefresh(
     ActiveNavigationSourceKind sourceKind, const ActiveNavigationSnapshot &previousSnapshot,
     DocumentSessionDirectMediaNavigationRefreshResult result)
