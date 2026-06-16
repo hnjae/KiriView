@@ -753,26 +753,12 @@ void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
 {
     setPendingActiveNavigationRevealContext(
         ActiveNavigationRevealContext { ActiveNavigationRevealIntent::LoadOrOpen });
-    const DocumentSessionRoutePlan plan
-        = documentSessionRoutePlanForSourceUrl(sourceUrl, m_state.documentKind());
-    qCDebug(kiriviewNavigationLog)
-        << "route source url"
-        << "url" << sourceUrl << "currentKind" << documentKindName(m_state.documentKind())
-        << "routeKind" << routeKindName(plan.kind) << "mutations" << plan.mutations.size()
-        << "followUpEffects" << plan.followUpEffects.size();
-    executeRoutePlan(plan);
+    m_routeRuntime.routeSourceUrl(sourceUrl, m_state.documentKind());
 }
 
 void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
 {
-    const DocumentSessionRoutePlan plan
-        = documentSessionRoutePlanForMediaUrl(url, m_state.documentKind());
-    qCDebug(kiriviewNavigationLog)
-        << "route media url"
-        << "url" << url << "currentKind" << documentKindName(m_state.documentKind()) << "routeKind"
-        << routeKindName(plan.kind) << "mutations" << plan.mutations.size() << "followUpEffects"
-        << plan.followUpEffects.size();
-    executeRoutePlan(plan);
+    m_routeRuntime.routeMediaUrl(url, m_state.documentKind());
 }
 
 void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &plan)

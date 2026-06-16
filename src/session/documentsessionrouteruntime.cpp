@@ -3,14 +3,73 @@
 
 #include "documentsessionrouteruntime.h"
 
+#include "navigation/navigationlogging.h"
+
+#include <QDebug>
 #include <type_traits>
 #include <utility>
 #include <variant>
+
+namespace {
+const char *documentKindName(kiriview::DocumentSessionKind kind)
+{
+    switch (kind) {
+    case kiriview::DocumentSessionKind::Empty:
+        return "Empty";
+    case kiriview::DocumentSessionKind::Image:
+        return "Image";
+    case kiriview::DocumentSessionKind::Video:
+        return "Video";
+    }
+
+    return "Unknown";
+}
+
+const char *routeKindName(kiriview::DocumentSessionRouteKind kind)
+{
+    switch (kind) {
+    case kiriview::DocumentSessionRouteKind::Empty:
+        return "Empty";
+    case kiriview::DocumentSessionRouteKind::DirectVideo:
+        return "DirectVideo";
+    case kiriview::DocumentSessionRouteKind::DirectImage:
+        return "DirectImage";
+    case kiriview::DocumentSessionRouteKind::ImageDocument:
+        return "ImageDocument";
+    }
+
+    return "Unknown";
+}
+}
 
 namespace kiriview {
 DocumentSessionRouteRuntime::DocumentSessionRouteRuntime(DocumentSessionRouteRuntimePorts ports)
     : m_ports(std::move(ports))
 {
+}
+
+void DocumentSessionRouteRuntime::routeSourceUrl(
+    const QUrl &sourceUrl, DocumentSessionKind currentKind)
+{
+    const DocumentSessionRoutePlan plan
+        = documentSessionRoutePlanForSourceUrl(sourceUrl, currentKind);
+    qCDebug(kiriviewNavigationLog)
+        << "route source url"
+        << "url" << sourceUrl << "currentKind" << documentKindName(currentKind) << "routeKind"
+        << routeKindName(plan.kind) << "mutations" << plan.mutations.size() << "followUpEffects"
+        << plan.followUpEffects.size();
+    execute(plan);
+}
+
+void DocumentSessionRouteRuntime::routeMediaUrl(const QUrl &url, DocumentSessionKind currentKind)
+{
+    const DocumentSessionRoutePlan plan = documentSessionRoutePlanForMediaUrl(url, currentKind);
+    qCDebug(kiriviewNavigationLog)
+        << "route media url"
+        << "url" << url << "currentKind" << documentKindName(currentKind) << "routeKind"
+        << routeKindName(plan.kind) << "mutations" << plan.mutations.size() << "followUpEffects"
+        << plan.followUpEffects.size();
+    execute(plan);
 }
 
 void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)

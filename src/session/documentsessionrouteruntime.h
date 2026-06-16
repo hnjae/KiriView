@@ -40,6 +40,8 @@ class DocumentSessionRouteRuntime final
 public:
     explicit DocumentSessionRouteRuntime(DocumentSessionRouteRuntimePorts ports = {});
 
+    void routeSourceUrl(const QUrl &sourceUrl, DocumentSessionKind currentKind);
+    void routeMediaUrl(const QUrl &url, DocumentSessionKind currentKind);
     void execute(const DocumentSessionRoutePlan &plan);
 
 private:
