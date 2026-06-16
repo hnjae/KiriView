@@ -14,7 +14,7 @@
 #include "session/documentsessionmediaopenwithruntime.h"
 #include "session/documentsessionmediapredecoderuntime.h"
 #include "session/documentsessionpublicprojection.h"
-#include "session/documentsessionrouteplan.h"
+#include "session/documentsessionrouteruntime.h"
 #include "session/documentsessionstate.h"
 #include "session/documentsessionthumbnailruntime.h"
 #include "session/documentsessionvideooutputruntime.h"
@@ -176,6 +176,7 @@ private:
     DocumentSessionImageDocumentPort m_imageDocument;
     DocumentSessionVideoDocumentPort m_videoDocument;
     DocumentSessionState m_state;
+    DocumentSessionRouteRuntime m_routeRuntime;
     DocumentSessionActiveNavigationRuntime m_activeNavigationRuntime;
     DocumentSessionThumbnailRuntime m_activeNavigationThumbnailRuntime;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;

@@ -1,0 +1,52 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#ifndef KIRIVIEW_DOCUMENTSESSIONROUTERUNTIME_H
+#define KIRIVIEW_DOCUMENTSESSIONROUTERUNTIME_H
+
+#include "session/documentsessionrouteplan.h"
+
+#include <functional>
+
+namespace kiriview {
+struct DocumentSessionRouteRuntimePorts {
+    std::function<void()> cancelMediaOpenWith;
+    std::function<void()> clearSessionErrorString;
+    std::function<void()> cancelDirectMediaNavigation;
+    std::function<void()> cancelMediaDeletion;
+    std::function<void()> clearDirectMediaNavigation;
+    std::function<bool()> clearDirectMediaCursor;
+    std::function<bool(const QUrl &)> setDirectVideoCursor;
+    std::function<bool(const QUrl &)> requestDirectImageCursor;
+    std::function<void(const std::function<void()> &)> executeWithRoutingSuppressed;
+    std::function<void()> clearImageDocument;
+    std::function<void()> leaveVideoMode;
+    std::function<void()> enterEmptyDocument;
+    std::function<void(const QUrl &)> enterImageDocument;
+    std::function<void(const QUrl &)> enterVideoDocument;
+    std::function<bool()> syncDirectImageCursorFromDocument;
+    std::function<void()> clearSourceIdentity;
+    std::function<void(const QUrl &)> useOriginalSourceIdentity;
+    std::function<void()> useImageDocumentSourceIdentity;
+    std::function<void()> recomputePublicProjection;
+    std::function<bool()> directMediaNavigationActive;
+    std::function<void()> refreshDirectMediaNavigation;
+    std::function<void()> clearMediaPredecode;
+    std::function<void()> routeCompleted;
+};
+
+class DocumentSessionRouteRuntime final
+{
+public:
+    explicit DocumentSessionRouteRuntime(DocumentSessionRouteRuntimePorts ports = {});
+
+    void execute(const DocumentSessionRoutePlan &plan);
+
+private:
+    void executeSuppressed(const std::function<void()> &mutation);
+
+    DocumentSessionRouteRuntimePorts m_ports;
+};
+}
+
+#endif

@@ -14,9 +14,7 @@
 #include <QObject>
 #include <QScopedValueRollback>
 #include <QString>
-#include <type_traits>
 #include <utility>
-#include <variant>
 
 namespace {
 QString genericFileDeletionErrorMessage()
@@ -89,6 +87,65 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_imageDocument(std::move(imageDocument))
     , m_videoDocument(std::move(videoDocument))
     , m_state(std::move(changeCallback))
+    , m_routeRuntime(DocumentSessionRouteRuntimePorts {
+          [this]() { cancelMediaOpenWith(); },
+          [this]() { m_state.setSessionErrorString(QString()); },
+          [this]() { m_directMediaNavigationRuntime.cancel(); },
+          [this]() { cancelMediaDeletion(); },
+          [this]() { m_state.setDirectMediaNavigation({}, false, {}); },
+          [this]() {
+              const bool changed = m_state.clearDirectMediaCursor();
+              logDirectMediaScope("direct media cursor cleared", m_state.directMediaScope());
+              return changed;
+          },
+          [this](const QUrl &url) {
+              const bool changed = m_state.setDirectVideoCursor(url);
+              logDirectMediaScope("direct video cursor set", m_state.directMediaScope());
+              return changed;
+          },
+          [this](const QUrl &url) {
+              const bool changed = m_state.requestDirectImageCursor(url);
+              logDirectMediaScope("direct image cursor requested", m_state.directMediaScope());
+              return changed;
+          },
+          [this](const std::function<void()> &mutation) {
+              QScopedValueRollback<bool> routingSource(m_routingSource, true);
+              mutation();
+          },
+          [this]() {
+              m_imageDocument.setSourceUrl(QUrl());
+              refreshImagePublicSnapshot();
+          },
+          [this]() {
+              leaveVideoMode();
+              refreshVideoPublicSnapshot();
+          },
+          [this]() { setDocumentKind(DocumentSessionKind::Empty); },
+          [this](const QUrl &url) {
+              m_imageDocument.setSourceUrl(url);
+              refreshImagePublicSnapshot();
+              setDocumentKind(DocumentSessionKind::Image);
+          },
+          [this](const QUrl &url) {
+              m_videoDocument.setSourceUrl(url);
+              refreshVideoPublicSnapshot();
+              setDocumentKind(DocumentSessionKind::Video);
+          },
+          [this]() {
+              const bool changed = syncDirectImageCursorFromDocument();
+              logDirectMediaScope(
+                  "direct image cursor synced from document", m_state.directMediaScope());
+              return changed;
+          },
+          [this]() { m_state.setSourceIdentity(QUrl()); },
+          [this](const QUrl &url) { m_state.setSourceIdentity(url); },
+          [this]() { m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl); },
+          [this]() { recomputePublicProjection(); },
+          [this]() { return directMediaNavigationActive(); },
+          [this]() { refreshDirectMediaNavigation(); },
+          [this]() { m_mediaPredecodeRuntime.clear(); },
+          [this]() { clearActiveNavigationRevealContextIfUnavailable(); },
+      })
     , m_activeNavigationRuntime(DocumentSessionActiveNavigationRuntimePorts {
           [this](ActiveNavigationRevealContext context) {
               applyActiveNavigationRevealContext(context);
@@ -721,121 +778,11 @@ void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
 
 void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &plan)
 {
-    struct RouteExecutionState {
-        bool directMediaScopeChanged = false;
-        bool directMediaNavigationCleared = false;
-    };
-
-    RouteExecutionState state;
     qCDebug(kiriviewNavigationLog)
         << "execute route plan"
         << "routeKind" << routeKindName(plan.kind) << "sourceUrl" << plan.sourceUrl
         << "documentKindBefore" << documentKindName(m_state.documentKind());
-    const auto executeWithRoutingSuppressed = [this](auto &&mutation) {
-        QScopedValueRollback<bool> routingSource(m_routingSource, true);
-        mutation();
-    };
-
-    cancelMediaOpenWith();
-
-    for (const DocumentSessionRouteOperation &operation : plan.operations) {
-        std::visit(
-            [this, &state, &executeWithRoutingSuppressed](const auto &payload) {
-                using Operation = std::decay_t<decltype(payload)>;
-
-                if constexpr (std::is_same_v<Operation, ClearSessionErrorStringRouteOperation>) {
-                    m_state.setSessionErrorString(QString());
-                } else if constexpr (std::is_same_v<Operation,
-                                         CancelDirectMediaNavigationRouteOperation>) {
-                    m_directMediaNavigationRuntime.cancel();
-                } else if constexpr (std::is_same_v<Operation, CancelMediaDeletionRouteOperation>) {
-                    cancelMediaDeletion();
-                } else if constexpr (std::is_same_v<Operation,
-                                         ClearDirectMediaNavigationRouteOperation>) {
-                    m_state.setDirectMediaNavigation({}, false, {});
-                    state.directMediaNavigationCleared = true;
-                } else if constexpr (std::is_same_v<Operation,
-                                         ClearDirectMediaCursorRouteOperation>) {
-                    state.directMediaScopeChanged
-                        = m_state.clearDirectMediaCursor() || state.directMediaScopeChanged;
-                    logDirectMediaScope("direct media cursor cleared", m_state.directMediaScope());
-                } else if constexpr (std::is_same_v<Operation,
-                                         SetDirectVideoCursorRouteOperation>) {
-                    state.directMediaScopeChanged = m_state.setDirectVideoCursor(payload.url)
-                        || state.directMediaScopeChanged;
-                    logDirectMediaScope("direct video cursor set", m_state.directMediaScope());
-                } else if constexpr (std::is_same_v<Operation,
-                                         RequestDirectImageCursorRouteOperation>) {
-                    state.directMediaScopeChanged = m_state.requestDirectImageCursor(payload.url)
-                        || state.directMediaScopeChanged;
-                    logDirectMediaScope(
-                        "direct image cursor requested", m_state.directMediaScope());
-                } else if constexpr (std::is_same_v<Operation,
-                                         ClearThenRequestDirectImageCursorRouteOperation>) {
-                    state.directMediaScopeChanged
-                        = m_state.clearDirectMediaCursor() || state.directMediaScopeChanged;
-                    state.directMediaScopeChanged = m_state.requestDirectImageCursor(payload.url)
-                        || state.directMediaScopeChanged;
-                    logDirectMediaScope(
-                        "direct image cursor cleared and requested", m_state.directMediaScope());
-                } else if constexpr (std::is_same_v<Operation, ClearImageDocumentRouteOperation>) {
-                    executeWithRoutingSuppressed([this]() {
-                        m_imageDocument.setSourceUrl(QUrl());
-                        refreshImagePublicSnapshot();
-                    });
-                } else if constexpr (std::is_same_v<Operation, LeaveVideoModeRouteOperation>) {
-                    executeWithRoutingSuppressed([this]() {
-                        leaveVideoMode();
-                        refreshVideoPublicSnapshot();
-                    });
-                } else if constexpr (std::is_same_v<Operation, EnterEmptyDocumentRouteOperation>) {
-                    executeWithRoutingSuppressed(
-                        [this]() { setDocumentKind(DocumentSessionKind::Empty); });
-                } else if constexpr (std::is_same_v<Operation, EnterImageDocumentRouteOperation>) {
-                    executeWithRoutingSuppressed([this, &payload]() {
-                        m_imageDocument.setSourceUrl(payload.url);
-                        refreshImagePublicSnapshot();
-                        setDocumentKind(DocumentSessionKind::Image);
-                    });
-                } else if constexpr (std::is_same_v<Operation, EnterVideoDocumentRouteOperation>) {
-                    executeWithRoutingSuppressed([this, &payload]() {
-                        m_videoDocument.setSourceUrl(payload.url);
-                        refreshVideoPublicSnapshot();
-                        setDocumentKind(DocumentSessionKind::Video);
-                    });
-                } else if constexpr (std::is_same_v<Operation,
-                                         SyncDirectImageCursorFromDocumentRouteOperation>) {
-                    state.directMediaScopeChanged
-                        = syncDirectImageCursorFromDocument() || state.directMediaScopeChanged;
-                    logDirectMediaScope(
-                        "direct image cursor synced from document", m_state.directMediaScope());
-                } else if constexpr (std::is_same_v<Operation, ClearSourceIdentityRouteOperation>) {
-                    m_state.setSourceIdentity(QUrl());
-                } else if constexpr (std::is_same_v<Operation,
-                                         UseOriginalSourceIdentityRouteOperation>) {
-                    m_state.setSourceIdentity(payload.url);
-                } else if constexpr (std::is_same_v<Operation,
-                                         UseImageDocumentSourceIdentityRouteOperation>) {
-                    m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl);
-                } else if constexpr (std::is_same_v<Operation,
-                                         RecomputePublicProjectionRouteOperation>) {
-                    recomputePublicProjection();
-                } else if constexpr (std::is_same_v<Operation,
-                                         RefreshDirectMediaNavigationAfterRoutingRouteOperation>) {
-                    if (state.directMediaScopeChanged || state.directMediaNavigationCleared
-                        || directMediaNavigationActive()) {
-                        refreshDirectMediaNavigation();
-                    }
-                } else if constexpr (std::is_same_v<Operation, ClearMediaPredecodeRouteOperation>) {
-                    if (state.directMediaNavigationCleared) {
-                        m_state.setDirectMediaNavigation({}, false, {});
-                        recomputePublicProjection();
-                    }
-                    m_mediaPredecodeRuntime.clear();
-                }
-            },
-            operation);
-    }
+    m_routeRuntime.execute(plan);
     qCDebug(kiriviewNavigationLog)
         << "execute route plan complete"
         << "routeKind" << routeKindName(plan.kind) << "documentKindAfter"
@@ -844,7 +791,6 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
         << "activeNavigationKnown" << m_state.activeNavigationSnapshot().known
         << "activeNavigationCurrent" << m_state.activeNavigationSnapshot().currentNumber
         << "activeNavigationCount" << m_state.activeNavigationSnapshot().count;
-    clearActiveNavigationRevealContextIfUnavailable();
 }
 
 void DocumentSessionRuntime::leaveVideoMode()
