@@ -13,7 +13,7 @@ The preferred direction is fewer, larger policy boundaries:
 
 The document-session refactor should extract coherent contracts before moving implementation. Useful boundaries include active navigation projection from session and image-document snapshots, direct media routing plans, ordinary direct media deletion fallback plans, action-availability projections, and a named still-image-only direct media predecode eligibility policy.
 
-Session-to-leaf document ports should expose cohesive snapshot families and one snapshot-change event per family, not property-shaped signal bags. Leaf command and effect ports stay narrow, but session projection refresh should consume `DocumentSessionImageDocumentSnapshot` and `DocumentSessionVideoDocumentSnapshot` values rather than depending on each leaf facade's internal notification shape.
+Session-to-leaf document ports should expose cohesive snapshot families and one snapshot-change event per family, not property-shaped signal bags. Leaf snapshot ports must stay separate from leaf command/effect ports: session projection refresh and thumbnail-source adaptation consume `DocumentSessionImageDocumentSnapshot` and `DocumentSessionVideoDocumentSnapshot` values, while routing, page navigation, deletion, stop, and video-output attachment cross explicit command/effect ports.
 
 Active-navigation dispatch should be a named document-session subowner. The subowner may hold pending reveal context and execute typed direct-media or image-page navigation operations through narrow ports, while `DocumentSessionRuntime` supplies the current public active-navigation source/snapshot and `DocumentSessionState` remains the only public projection owner.
 
