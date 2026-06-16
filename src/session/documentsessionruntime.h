@@ -17,6 +17,7 @@
 #include "session/documentsessionrouteruntime.h"
 #include "session/documentsessionstate.h"
 #include "session/documentsessionthumbnailruntime.h"
+#include "session/documentsessionvideodocumentcommandruntime.h"
 #include "session/documentsessionvideooutputruntime.h"
 #include "system/filedeletion.h"
 
@@ -179,7 +180,7 @@ private:
     DocumentSessionImageDocumentSnapshotPort m_imageDocument;
     DocumentSessionImageDocumentCommandPort m_imageCommands;
     DocumentSessionVideoDocumentSnapshotPort m_videoDocument;
-    DocumentSessionVideoDocumentCommandPort m_videoCommands;
+    DocumentSessionVideoDocumentCommandRuntime m_videoDocumentCommandRuntime;
     DocumentSessionState m_state;
     DocumentSessionRouteRuntime m_routeRuntime;
     DocumentSessionActiveNavigationRuntime m_activeNavigationRuntime;

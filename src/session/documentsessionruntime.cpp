@@ -90,7 +90,10 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_imageDocument(std::move(imageDocument))
     , m_imageCommands(std::move(imageCommands))
     , m_videoDocument(std::move(videoDocument))
-    , m_videoCommands(std::move(videoCommands))
+    , m_videoDocumentCommandRuntime(std::move(videoCommands),
+          [this](const DocumentSessionVideoOutputAttachmentPort &attachmentPort) {
+              m_videoOutputRuntime.clearAttachment(attachmentPort);
+          })
     , m_state(std::move(changeCallback))
     , m_routeRuntime(DocumentSessionRouteRuntimePorts {
           [this]() { cancelMediaOpenWith(); },
@@ -132,7 +135,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
               setDocumentKind(DocumentSessionKind::Image);
           },
           [this](const QUrl &url) {
-              m_videoCommands.setSourceUrl(url);
+              m_videoDocumentCommandRuntime.setSourceUrl(url);
               refreshVideoPublicSnapshot();
               setDocumentKind(DocumentSessionKind::Video);
           },
@@ -791,13 +794,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
 
 void DocumentSessionRuntime::leaveVideoMode()
 {
-    if (m_videoPublicSnapshot.sourceUrl.isEmpty() && m_videoCommands.videoOutput() == nullptr) {
-        return;
-    }
-
-    m_videoOutputRuntime.clearAttachment(videoOutputAttachmentPort());
-    m_videoCommands.stop();
-    m_videoCommands.setSourceUrl(QUrl());
+    m_videoDocumentCommandRuntime.leaveMode(m_videoPublicSnapshot.sourceUrl);
 }
 
 void DocumentSessionRuntime::syncFromImageDocument()
@@ -990,12 +987,7 @@ void DocumentSessionRuntime::cancelMediaOpenWith() { m_mediaOpenWithRuntime.canc
 
 DocumentSessionVideoOutputAttachmentPort DocumentSessionRuntime::videoOutputAttachmentPort()
 {
-    return DocumentSessionVideoOutputAttachmentPort {
-        [this](QObject *videoOutput) { m_videoCommands.setVideoOutput(videoOutput); },
-        [this](const QRectF &contentRect, const QRectF &sourceRect) {
-            m_videoCommands.setVideoOutputGeometry(contentRect, sourceRect);
-        },
-    };
+    return m_videoDocumentCommandRuntime.outputAttachmentPort();
 }
 
 void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion)
