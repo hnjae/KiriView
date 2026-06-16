@@ -16,12 +16,14 @@ let
       "-DWITH_JPEG_ENCODER_PLUGIN=OFF"
     ];
   });
-  qtCxxqt = import ../internal/qt-cxxqt.nix {
+  qtCxxqt = import ../internal/qt-cxxqt-context.nix {
     inherit config lib pkgs;
     karchivePackage = pkgs.kdePackages.karchive;
   };
 in
 {
+  # Shared Qt/CXX-Qt tooling context for the dev shell, editor metadata, and
+  # check tasks. Keep cross-module qmake, QML import, and runtime env logic here.
   _module.args = {
     inherit qtCxxqt;
   };
