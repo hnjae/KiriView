@@ -213,6 +213,7 @@ src/session/documentsessionmediadeletionplan.cpp
 src/session/documentsessionmediadeletionruntime.cpp
 src/session/documentsessionmediapredecoderuntime.cpp
 src/session/documentsessionprojectionruntime.cpp
+src/session/documentsessionpublicleafsnapshotbuilder.cpp
 src/session/documentsessionpublicsnapshotinputbuilder.cpp
 src/session/documentsessionthumbnailruntime.cpp
 src/session/documentsessionvideooutputruntime.cpp

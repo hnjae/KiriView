@@ -17,6 +17,7 @@
 #include "session/documentsessionmediaopenwithruntime.h"
 #include "session/documentsessionmediapredecoderuntime.h"
 #include "session/documentsessionprojectionruntime.h"
+#include "session/documentsessionpublicleafsnapshotbuilder.h"
 #include "session/documentsessionpublicprojection.h"
 #include "session/documentsessionpublicsnapshotinputbuilder.h"
 #include "session/documentsessionrouteruntime.h"
