@@ -29,6 +29,7 @@ private Q_SLOTS:
     void qmlDoesNotWriteDurablePresentationState();
     void imageDocumentHasNoPublicPresentationBackdoorSetters();
     void qmlViewportUsesRevisionedCommandAcknowledgement();
+    void qmlViewportCommandHandlersDoNotApplyProjectionDirectly();
     void qmlViewportUsesOpaqueRevisionTokens();
     void leafDocumentsAreNotProductionQmlCreatable();
     void actionUiGatesAreRevisionedSnapshots();
@@ -421,6 +422,40 @@ void TestArchitectureBoundaries::qmlViewportUsesRevisionedCommandAcknowledgement
     QVERIFY(!QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*setVisibleItemRect\s*\()"))
             .match(viewport)
             .hasMatch());
+}
+
+void TestArchitectureBoundaries::qmlViewportCommandHandlersDoNotApplyProjectionDirectly()
+{
+    const QString viewport = readProjectFile(QStringLiteral("src/qml/ImageViewport.qml"));
+    const QStringList commandHandlers {
+        QStringLiteral("moveContentPosition"),
+        QStringLiteral("applyDisplayedImageInitialContentPosition"),
+        QStringLiteral("panBy"),
+        QStringLiteral("panToBottomRight"),
+        QStringLiteral("panToTopLeft"),
+        QStringLiteral("zoomByStep"),
+        QStringLiteral("toggleFitOrActualSize"),
+    };
+
+    QStringList violations;
+    for (const QString &handler : commandHandlers) {
+        const QRegularExpression functionPattern(
+            QStringLiteral(R"(function\s+%1\s*\([^)]*\)\s*\{([\s\S]*?)\n    \})")
+                .arg(QRegularExpression::escape(handler)));
+        QRegularExpressionMatchIterator matches = functionPattern.globalMatch(viewport);
+        QVERIFY2(matches.hasNext(),
+            qPrintable(QStringLiteral("ImageViewport.qml must define %1()").arg(handler)));
+
+        while (matches.hasNext()) {
+            if (matches.next().captured(1).contains(QStringLiteral("applyViewportProjection("))) {
+                violations.push_back(QStringLiteral("%1()").arg(handler));
+            }
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(),
+        qPrintable(QStringLiteral("Viewport command handlers must rely on projection changes: %1")
+                .arg(violations.join(QStringLiteral(", ")))));
 }
 
 void TestArchitectureBoundaries::qmlViewportUsesOpaqueRevisionTokens()
