@@ -9,6 +9,7 @@
 #include "session/activenavigationprojection.h"
 #include "session/documentsessionactivenavigationruntime.h"
 #include "session/documentsessiondirectimagecursorsync.h"
+#include "session/documentsessiondirectmedianavigationapplicationruntime.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondocumentports.h"
 #include "session/documentsessionimagedocumentcommandruntime.h"
@@ -189,6 +190,8 @@ private:
     DocumentSessionActiveNavigationRuntime m_activeNavigationRuntime;
     DocumentSessionThumbnailRuntime m_activeNavigationThumbnailRuntime;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
+    DocumentSessionDirectMediaNavigationApplicationRuntime
+        m_directMediaNavigationApplicationRuntime;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
     DocumentSessionMediaDeletionCompletionRuntime m_mediaDeletionCompletionRuntime;
     DocumentSessionMediaOpenWithRuntime m_mediaOpenWithRuntime;

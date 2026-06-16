@@ -4,7 +4,6 @@
 #include "documentsessionruntime.h"
 
 #include "navigation/navigationlogging.h"
-#include "session/documentsessiondirectmedianavigationworkflow.h"
 
 #include <QAbstractListModel>
 #include <QDebug>
@@ -177,6 +176,21 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_activeNavigationThumbnailRuntime(
           owner, &m_imageDocument, std::move(dependencies.activeNavigationThumbnails))
     , m_directMediaNavigationRuntime(dependencies.directMediaNavigationCandidateProvider)
+    , m_directMediaNavigationApplicationRuntime(
+          DocumentSessionDirectMediaNavigationApplicationPorts {
+              [this](DirectMediaNavigationBoundaryState state, bool known,
+                  std::vector<DirectMediaNavigationCandidate> candidates) {
+                  m_state.setDirectMediaNavigation(state, known, std::move(candidates));
+              },
+              [this](DocumentSessionDirectMediaNavigationRevealAction action) {
+                  applyDirectMediaNavigationRevealAction(action);
+              },
+              [this]() { recomputePublicProjection(); },
+              [this](const std::vector<DirectMediaNavigationCandidate> &candidates) {
+                  scheduleMediaPredecode(candidates);
+              },
+              [this](const QUrl &url) { openMediaUrl(url); },
+          })
     , m_mediaDeletionRuntime(std::move(dependencies.fileDeletionProvider),
           std::move(dependencies.directMediaNavigationCandidateProvider))
     , m_mediaDeletionCompletionRuntime(DocumentSessionMediaDeletionCompletionRuntimePorts {
@@ -807,66 +821,15 @@ void DocumentSessionRuntime::refreshDirectMediaNavigation()
 void DocumentSessionRuntime::finishDirectMediaNavigation(
     DocumentSessionDirectMediaNavigationOpenResult result)
 {
-    const QString errorString = result.errorString;
-    const DocumentSessionDirectMediaNavigationOpenApplication application
-        = documentSessionDirectMediaNavigationOpenApplication(
-            activeDirectMediaCursorUrl(), std::move(result));
-    if (!application.known) {
-        qCDebug(kiriviewNavigationLog) << "direct media navigation open failed"
-                                       << "error" << errorString;
-        m_state.setDirectMediaNavigation(application.boundaryState, false, application.candidates);
-        applyDirectMediaNavigationRevealAction(application.revealAction);
-        recomputePublicProjection();
-        return;
-    }
-
-    m_state.setDirectMediaNavigation(
-        application.boundaryState, application.known, application.candidates);
-    qCDebug(kiriviewNavigationLog)
-        << "direct media navigation open finished"
-        << "candidates" << application.candidates.size() << "currentNumber"
-        << application.boundaryState.currentNumber << "count" << application.boundaryState.count
-        << "targetUrl" << application.routeTargetUrl.value_or(QUrl());
-    applyDirectMediaNavigationRevealAction(application.revealAction);
-    recomputePublicProjection();
-    if (application.schedulePredecode) {
-        scheduleMediaPredecode(application.candidates);
-    }
-    if (application.routeTargetUrl.has_value()) {
-        openMediaUrl(*application.routeTargetUrl);
-    }
+    m_directMediaNavigationApplicationRuntime.applyOpen(
+        activeDirectMediaCursorUrl(), std::move(result));
 }
 
 void DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState(
     DocumentSessionDirectMediaNavigationRefreshResult result)
 {
-    const QString errorString = result.errorString;
-    const DocumentSessionDirectMediaNavigationRefreshApplication application
-        = documentSessionDirectMediaNavigationRefreshApplication(
-            m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(),
-            std::move(result));
-    if (!application.known) {
-        qCDebug(kiriviewNavigationLog) << "direct media navigation refresh failed"
-                                       << "error" << errorString;
-        m_state.setDirectMediaNavigation(application.boundaryState, false, application.candidates);
-        applyDirectMediaNavigationRevealAction(application.revealAction);
-        recomputePublicProjection();
-        return;
-    }
-
-    m_state.setDirectMediaNavigation(
-        application.boundaryState, application.known, application.candidates);
-    qCDebug(kiriviewNavigationLog)
-        << "direct media navigation refresh finished"
-        << "candidates" << application.candidates.size() << "currentNumber"
-        << application.boundaryState.currentNumber << "count" << application.boundaryState.count
-        << "canPrevious" << application.boundaryState.canOpenPrevious << "canNext"
-        << application.boundaryState.canOpenNext;
-    applyDirectMediaNavigationRevealAction(application.revealAction);
-    recomputePublicProjection();
-    if (application.schedulePredecode) {
-        scheduleMediaPredecode(application.candidates);
-    }
+    m_directMediaNavigationApplicationRuntime.applyRefresh(m_state.activeNavigationSourceKind(),
+        m_state.activeNavigationSnapshot(), std::move(result));
 }
 
 void DocumentSessionRuntime::scheduleMediaPredecode(
