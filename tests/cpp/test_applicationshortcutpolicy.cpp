@@ -101,6 +101,8 @@ private Q_SLOTS:
     void horizontalArrowShortcutPolicyUsesActiveMediaMode();
     void fixedShortcutDispatchPlansVideoSeek();
     void fixedShortcutDispatchPlansImageNavigationAndPan();
+    void genericShortcutDispatchUsesFirstEnabledBinding();
+    void genericShortcutDispatchReportsUnsupportedMediaActions();
 };
 
 void TestApplicationShortcutPolicy::programWideSanitizationKeepsTextInputSafeShortcuts()
@@ -545,6 +547,81 @@ void TestApplicationShortcutPolicy::fixedShortcutDispatchPlansImageNavigationAnd
         = kiriview::ApplicationActions::fixedShortcutDispatchOutcome(
             input, shortcut(QStringLiteral("Left")));
     QCOMPARE(blockedHorizontal.kind, kiriview::ApplicationActions::FixedShortcutDispatchKind::None);
+}
+
+void TestApplicationShortcutPolicy::genericShortcutDispatchUsesFirstEnabledBinding()
+{
+    kiriview::ApplicationActions::GenericShortcutDispatchInput input;
+    input.actionState.helpActionsEnabled = true;
+    input.actionState.readyViewerShortcutsEnabled = true;
+    input.actionState.applicationMenuShortcutEnabled = true;
+    input.actionState.showMenubarActionEnabled = true;
+    input.bindings = {
+        kiriview::ApplicationActions::GenericShortcutBinding {
+            ActionId::GoNextImageAction,
+            Scope::ReadyViewerShortcutScope,
+            { shortcut(QStringLiteral("N")) },
+            false,
+        },
+        kiriview::ApplicationActions::GenericShortcutBinding {
+            ActionId::FileOpenAction,
+            std::nullopt,
+            { shortcut(QStringLiteral("N")) },
+            true,
+        },
+    };
+
+    kiriview::ApplicationActions::GenericShortcutDispatchOutcome outcome
+        = kiriview::ApplicationActions::genericShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("N")));
+    QCOMPARE(
+        outcome.kind, kiriview::ApplicationActions::GenericShortcutDispatchKind::TriggerAction);
+    QCOMPARE(outcome.actionId, ActionId::FileOpenAction);
+
+    input.bindings.front().actionEnabled = true;
+    outcome = kiriview::ApplicationActions::genericShortcutDispatchOutcome(
+        input, shortcut(QStringLiteral("N")));
+    QCOMPARE(
+        outcome.kind, kiriview::ApplicationActions::GenericShortcutDispatchKind::TriggerAction);
+    QCOMPARE(outcome.actionId, ActionId::GoNextImageAction);
+
+    input.actionState.readyViewerShortcutsEnabled = false;
+    outcome = kiriview::ApplicationActions::genericShortcutDispatchOutcome(
+        input, shortcut(QStringLiteral("N")));
+    QCOMPARE(
+        outcome.kind, kiriview::ApplicationActions::GenericShortcutDispatchKind::TriggerAction);
+    QCOMPARE(outcome.actionId, ActionId::FileOpenAction);
+}
+
+void TestApplicationShortcutPolicy::genericShortcutDispatchReportsUnsupportedMediaActions()
+{
+    kiriview::ApplicationActions::GenericShortcutDispatchInput input;
+    input.actionState.videoMode = true;
+    input.actionState.helpActionsEnabled = true;
+    input.actionState.readyViewerShortcutsEnabled = true;
+    input.bindings = {
+        kiriview::ApplicationActions::GenericShortcutBinding {
+            ActionId::ViewZoomInAction,
+            Scope::ReadyViewerShortcutScope,
+            { shortcut(QStringLiteral("+")) },
+            false,
+        },
+    };
+
+    kiriview::ApplicationActions::GenericShortcutDispatchOutcome outcome
+        = kiriview::ApplicationActions::genericShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("+")));
+    QCOMPARE(outcome.kind,
+        kiriview::ApplicationActions::GenericShortcutDispatchKind::UnsupportedVideoAction);
+    QCOMPARE(outcome.actionId, ActionId::ViewZoomInAction);
+
+    input.actionState.videoMode = false;
+    input.bindings.front().actionId = ActionId::ViewToggleVideoPlaybackAction;
+    outcome = kiriview::ApplicationActions::genericShortcutDispatchOutcome(
+        input, shortcut(QStringLiteral("+")));
+    QCOMPARE(outcome.kind,
+        kiriview::ApplicationActions::GenericShortcutDispatchKind::UnsupportedImageAction);
+    QCOMPARE(outcome.actionId, ActionId::ViewToggleVideoPlaybackAction);
 }
 
 QTEST_GUILESS_MAIN(TestApplicationShortcutPolicy)
