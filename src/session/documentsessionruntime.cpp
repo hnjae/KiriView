@@ -7,6 +7,7 @@
 #include "location/imageurl.h"
 #include "navigation/mediaformatregistry.h"
 #include "navigation/navigationlogging.h"
+#include "session/documentsessiondirectmedianavigationworkflow.h"
 
 #include <QAbstractListModel>
 #include <QDebug>
@@ -361,6 +362,35 @@ void DocumentSessionRuntime::openMedia(DirectMediaNavigationOpenRequest request)
         [this](DocumentSessionDirectMediaNavigationOpenResult result) {
             finishDirectMediaNavigation(std::move(result));
         });
+}
+
+void DocumentSessionRuntime::applyDirectMediaNavigationRevealAction(
+    DocumentSessionDirectMediaNavigationRevealAction action)
+{
+    switch (action) {
+    case DocumentSessionDirectMediaNavigationRevealAction::None:
+        return;
+    case DocumentSessionDirectMediaNavigationRevealAction::Clear:
+        m_pendingActiveNavigationRevealContext = {};
+        setActiveNavigationRevealContext({});
+        return;
+    case DocumentSessionDirectMediaNavigationRevealAction::ProgrammaticSync:
+        setActiveNavigationRevealContext(
+            ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
+        return;
+    case DocumentSessionDirectMediaNavigationRevealAction::UsePendingOrProgrammaticSync:
+        setActiveNavigationRevealContext(takePendingActiveNavigationRevealContext(
+            ActiveNavigationRevealIntent::ProgrammaticSync));
+        return;
+    case DocumentSessionDirectMediaNavigationRevealAction::
+        UsePendingOrProgrammaticSyncAndKeepPending: {
+        const ActiveNavigationRevealContext context = takePendingActiveNavigationRevealContext(
+            ActiveNavigationRevealIntent::ProgrammaticSync);
+        setActiveNavigationRevealContext(context);
+        m_pendingActiveNavigationRevealContext = context;
+        return;
+    }
+    }
 }
 
 void DocumentSessionRuntime::openPreviousActiveNavigation() { requestPreviousActiveNavigation(); }
@@ -970,72 +1000,66 @@ void DocumentSessionRuntime::refreshDirectMediaNavigation()
 void DocumentSessionRuntime::finishDirectMediaNavigation(
     DocumentSessionDirectMediaNavigationOpenResult result)
 {
-    if (!result.succeeded) {
+    const QString errorString = result.errorString;
+    const DocumentSessionDirectMediaNavigationOpenApplication application
+        = documentSessionDirectMediaNavigationOpenApplication(
+            activeDirectMediaCursorUrl(), std::move(result));
+    if (!application.known) {
         qCDebug(kiriviewNavigationLog) << "direct media navigation open failed"
-                                       << "error" << result.errorString;
-        m_state.setDirectMediaNavigation({}, false, {});
-        setActiveNavigationRevealContext(
-            ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
+                                       << "error" << errorString;
+        m_state.setDirectMediaNavigation(application.boundaryState, false, application.candidates);
+        applyDirectMediaNavigationRevealAction(application.revealAction);
         recomputePublicProjection();
         return;
     }
 
-    m_state.setDirectMediaNavigation(result.plan.boundaryState, true, result.candidates);
+    m_state.setDirectMediaNavigation(
+        application.boundaryState, application.known, application.candidates);
     qCDebug(kiriviewNavigationLog)
         << "direct media navigation open finished"
-        << "candidates" << result.candidates.size() << "currentNumber"
-        << result.plan.boundaryState.currentNumber << "count" << result.plan.boundaryState.count
-        << "targetUrl" << result.plan.targetUrl.value_or(QUrl());
-    const bool targetChangesMedia = result.plan.targetUrl.has_value()
-        && !sameNormalizedUrl(*result.plan.targetUrl, activeDirectMediaCursorUrl());
-    if (targetChangesMedia) {
-        const ActiveNavigationRevealContext context = takePendingActiveNavigationRevealContext(
-            ActiveNavigationRevealIntent::ProgrammaticSync);
-        setActiveNavigationRevealContext(context);
-        m_pendingActiveNavigationRevealContext = context;
-    } else {
-        m_pendingActiveNavigationRevealContext = {};
-        setActiveNavigationRevealContext({});
-    }
+        << "candidates" << application.candidates.size() << "currentNumber"
+        << application.boundaryState.currentNumber << "count" << application.boundaryState.count
+        << "targetUrl" << application.routeTargetUrl.value_or(QUrl());
+    applyDirectMediaNavigationRevealAction(application.revealAction);
     recomputePublicProjection();
-    scheduleMediaPredecode(result.candidates);
-    if (result.plan.targetUrl.has_value()) {
-        openMediaUrl(*result.plan.targetUrl);
+    if (application.schedulePredecode) {
+        scheduleMediaPredecode(application.candidates);
+    }
+    if (application.routeTargetUrl.has_value()) {
+        openMediaUrl(*application.routeTargetUrl);
     }
 }
 
 void DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState(
     DocumentSessionDirectMediaNavigationRefreshResult result)
 {
-    if (!result.succeeded) {
+    const QString errorString = result.errorString;
+    const DocumentSessionDirectMediaNavigationRefreshApplication application
+        = documentSessionDirectMediaNavigationRefreshApplication(
+            m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(),
+            std::move(result));
+    if (!application.known) {
         qCDebug(kiriviewNavigationLog) << "direct media navigation refresh failed"
-                                       << "error" << result.errorString;
-        m_state.setDirectMediaNavigation({}, false, {});
-        setActiveNavigationRevealContext(
-            ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
+                                       << "error" << errorString;
+        m_state.setDirectMediaNavigation(application.boundaryState, false, application.candidates);
+        applyDirectMediaNavigationRevealAction(application.revealAction);
         recomputePublicProjection();
         return;
     }
 
-    const ActiveNavigationSnapshot previousSnapshot = m_state.activeNavigationSnapshot();
-    const bool selectionChanged
-        = m_state.activeNavigationSourceKind() != ActiveNavigationSourceKind::OrdinaryDirectMedia
-        || !previousSnapshot.known
-        || previousSnapshot.currentNumber != result.boundaryState.currentNumber
-        || previousSnapshot.count != result.boundaryState.count;
-    m_state.setDirectMediaNavigation(result.boundaryState, true, result.candidates);
+    m_state.setDirectMediaNavigation(
+        application.boundaryState, application.known, application.candidates);
     qCDebug(kiriviewNavigationLog)
         << "direct media navigation refresh finished"
-        << "candidates" << result.candidates.size() << "currentNumber"
-        << result.boundaryState.currentNumber << "count" << result.boundaryState.count
-        << "canPrevious" << result.boundaryState.canOpenPrevious << "canNext"
-        << result.boundaryState.canOpenNext;
-    if (selectionChanged) {
-        setActiveNavigationRevealContext(takePendingActiveNavigationRevealContext(
-            ActiveNavigationRevealIntent::ProgrammaticSync));
-    }
+        << "candidates" << application.candidates.size() << "currentNumber"
+        << application.boundaryState.currentNumber << "count" << application.boundaryState.count
+        << "canPrevious" << application.boundaryState.canOpenPrevious << "canNext"
+        << application.boundaryState.canOpenNext;
+    applyDirectMediaNavigationRevealAction(application.revealAction);
     recomputePublicProjection();
-    scheduleMediaPredecode(result.candidates);
+    if (application.schedulePredecode) {
+        scheduleMediaPredecode(application.candidates);
+    }
 }
 
 void DocumentSessionRuntime::scheduleMediaPredecode(

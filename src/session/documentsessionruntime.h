@@ -35,6 +35,7 @@ class QObject;
 class QString;
 
 namespace kiriview {
+enum class DocumentSessionDirectMediaNavigationRevealAction;
 struct DocumentSessionRuntimeDependencies {
     DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProvider;
     FileDeletionProvider fileDeletionProvider;
@@ -112,6 +113,8 @@ public:
     void openCurrentMediaWith(MediaOpenWithCallback callback);
 
 private:
+    void applyDirectMediaNavigationRevealAction(
+        DocumentSessionDirectMediaNavigationRevealAction action);
     ActiveNavigationDispatchOutcome executeActiveNavigationDispatchRequest(
         ActiveNavigationDispatchRequest request, ActiveNavigationRevealContext context);
     void executeActiveNavigationDispatchPlan(const ActiveNavigationDispatchPlan &plan);
