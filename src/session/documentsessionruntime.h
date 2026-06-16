@@ -17,6 +17,7 @@
 #include "session/documentsessionmediapredecoderuntime.h"
 #include "session/documentsessionprojectionruntime.h"
 #include "session/documentsessionpublicprojection.h"
+#include "session/documentsessionpublicsnapshotinputbuilder.h"
 #include "session/documentsessionrouteruntime.h"
 #include "session/documentsessionstate.h"
 #include "session/documentsessionthumbnailruntime.h"
@@ -173,7 +174,6 @@ private:
     bool syncDirectImageCursorFromDocument();
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
     DocumentSessionPublicSnapshotInput publicSnapshotInput(quint64 inputRevision) const;
-    DocumentSessionPublicOperationAvailabilitySnapshot operationAvailabilitySnapshot() const;
     DirectMediaActiveNavigationInput directMediaActiveNavigationInput() const;
 
     QObject *m_owner = nullptr;

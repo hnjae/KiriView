@@ -1069,7 +1069,7 @@ ActiveZoomSnapshot DocumentSessionRuntime::activeZoomSnapshotForKind(DocumentSes
 DocumentSessionPublicSnapshotInput DocumentSessionRuntime::publicSnapshotInput(
     quint64 inputRevision) const
 {
-    DocumentSessionPublicSnapshotInput input;
+    DocumentSessionPublicSnapshotInputBuilderInput input;
     input.inputRevision = inputRevision;
     input.session.sourceUrl = m_state.sourceUrl();
     input.session.documentKind = m_state.documentKind();
@@ -1080,12 +1080,10 @@ DocumentSessionPublicSnapshotInput DocumentSessionRuntime::publicSnapshotInput(
     input.session.directMediaNavigation = directMediaActiveNavigationInput();
     input.session.activeNavigationRevealIntent = m_state.activeNavigationRevealIntent();
     input.session.activeNavigationRevealDirection = m_state.activeNavigationRevealDirection();
-
     input.image = m_imagePublicSnapshot;
-    input.image.directImageReplacementPending = !m_state.directMediaCursor().pendingUrl.isEmpty();
     input.video = m_videoPublicSnapshot;
-    input.operations = operationAvailabilitySnapshot();
-    return input;
+    input.directMediaCursor = m_state.directMediaCursor();
+    return buildDocumentSessionPublicSnapshotInput(input);
 }
 
 DirectMediaActiveNavigationInput DocumentSessionRuntime::directMediaActiveNavigationInput() const
@@ -1094,11 +1092,4 @@ DirectMediaActiveNavigationInput DocumentSessionRuntime::directMediaActiveNaviga
         m_state.directMediaNavigationKnown() };
 }
 
-DocumentSessionPublicOperationAvailabilitySnapshot
-DocumentSessionRuntime::operationAvailabilitySnapshot() const
-{
-    return DocumentSessionPublicOperationAvailabilitySnapshot {
-        currentMediaOpenWithPlan().hasRequest(),
-    };
-}
 }

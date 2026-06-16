@@ -724,13 +724,13 @@ void TestArchitectureBoundaries::sessionPublicProjectionHasNoPartialUpdateBackdo
 
 void TestArchitectureBoundaries::sessionPublicProjectionDoesNotSampleLeafFacadesWhileApplying()
 {
-    const QString implementation
-        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.cpp"));
+    const QString implementation = readProjectFile(
+        QStringLiteral("src/session/documentsessionpublicsnapshotinputbuilder.cpp"));
     const qsizetype functionIndex
-        = implementation.indexOf(QStringLiteral("DocumentSessionRuntime::publicSnapshotInput("));
+        = implementation.indexOf(QStringLiteral("buildDocumentSessionPublicSnapshotInput("));
     QVERIFY(functionIndex >= 0);
-    const qsizetype nextFunctionIndex = implementation.indexOf(
-        QStringLiteral("\nDirectMediaActiveNavigationInput"), functionIndex);
+    const qsizetype nextFunctionIndex
+        = implementation.indexOf(QStringLiteral("\n}"), functionIndex);
     QVERIFY(nextFunctionIndex > functionIndex);
     const QString body = implementation.mid(functionIndex, nextFunctionIndex - functionIndex);
 
