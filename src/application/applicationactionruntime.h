@@ -40,6 +40,8 @@ struct ApplicationActionStateSnapshot {
     bool canOpenNextActiveNavigation = false;
     bool directMediaNavigationBoundaryActive = false;
     bool activeNavigationDispatchAvailable = false;
+    bool imageDocumentPageNavigationActive = false;
+    bool atKnownFirstActiveNavigation = false;
     bool videoMode = false;
     bool videoSeekable = false;
     qint64 videoDuration = 0;
@@ -101,6 +103,7 @@ public:
         bool videoFileDeletionInProgress) const;
     void setActionStateSnapshot(const ApplicationActionStateSnapshot &snapshot);
     void setActionStateInput(const ApplicationActionStateInput &input);
+    ApplicationCommandRouterInput commandRouterInput() const;
     bool rightToLeftReadingActive() const;
     void handleActionTriggered(ActionId actionId, const ApplicationCommandRouterInput &input,
         const ApplicationCommandRouterPorts &ports) const;
@@ -137,6 +140,7 @@ private:
     ApplicationMenuPresentationRuntime m_menuPresentationRuntime;
     std::unique_ptr<ApplicationShortcutRuntime> m_shortcutRuntime;
     ImageActionAvailabilityProjection m_imageActionProjection;
+    ApplicationActionStateSnapshot m_actionStateSnapshot;
     ApplicationActionStateInput m_actionStateInput;
     int m_actionStateRevision = 0;
     bool m_applyingActionState = false;

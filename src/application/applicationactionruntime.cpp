@@ -106,6 +106,20 @@ Actions::ApplicationActionStateInput actionStateInput(
     input.videoDuration = snapshot.videoDuration;
     return input;
 }
+
+Actions::ApplicationCommandRouterInput routerInputForSnapshot(
+    const Actions::ApplicationActionStateSnapshot &snapshot,
+    const ImageActionAvailabilityProjection &projection)
+{
+    Actions::ApplicationCommandRouterInput input;
+    input.imagePannable = snapshot.imagePannable;
+    input.rightToLeftReadingActive = projection.rightToLeftReadingActive;
+    input.videoMode = snapshot.videoMode;
+    input.imageDocumentPageNavigationActive = snapshot.imageDocumentPageNavigationActive;
+    input.atKnownFirstActiveNavigation = snapshot.atKnownFirstActiveNavigation;
+    input.canOpenPreviousActiveNavigation = snapshot.canOpenPreviousActiveNavigation;
+    return input;
+}
 }
 
 namespace kiriview::ApplicationActions {
@@ -259,6 +273,7 @@ bool ApplicationActionRuntime::mediaHorizontalArrowShortcutsEnabled(bool videoMo
 void ApplicationActionRuntime::setActionStateSnapshot(
     const ApplicationActionStateSnapshot &snapshot)
 {
+    m_actionStateSnapshot = snapshot;
     m_imageActionProjection
         = imageActionAvailabilityProjection(imageActionAvailabilityInput(snapshot));
     setActionStateInput(actionStateInput(snapshot, m_imageActionProjection));
@@ -273,6 +288,11 @@ void ApplicationActionRuntime::setActionStateInput(const ApplicationActionStateI
     if (m_actionStateChanged) {
         m_actionStateChanged();
     }
+}
+
+ApplicationCommandRouterInput ApplicationActionRuntime::commandRouterInput() const
+{
+    return routerInputForSnapshot(m_actionStateSnapshot, m_imageActionProjection);
 }
 
 bool ApplicationActionRuntime::rightToLeftReadingActive() const

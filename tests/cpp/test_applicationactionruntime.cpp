@@ -132,6 +132,7 @@ void TestApplicationActionRuntime::actionStateSnapshotBuildsCommandRouterInput()
     Actions::ApplicationActionRuntime runtime(host);
     Actions::ApplicationActionStateSnapshot snapshot;
     snapshot.sessionActionAvailability.rightToLeftReadingActive = true;
+    snapshot.sessionActionAvailability.rightToLeftReadingAvailable = true;
     snapshot.imagePannable = true;
     snapshot.videoMode = true;
     snapshot.imageDocumentPageNavigationActive = true;

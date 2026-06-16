@@ -185,7 +185,6 @@ private:
     bool videoMode() const;
     bool sharedImagePannable() const;
     kiriview::ApplicationActions::ApplicationActionStateSnapshot actionStateSnapshot() const;
-    kiriview::ApplicationActions::ApplicationCommandRouterInput commandRouterInput() const;
     kiriview::ApplicationActions::ApplicationCommandRouterPorts commandRouterPorts();
     void handleRuntimeActionTriggered(kiriview::ApplicationActions::ActionId actionId);
     void moveDisplayedFileToTrash();

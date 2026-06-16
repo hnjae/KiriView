@@ -419,6 +419,12 @@ Actions::ApplicationActionStateSnapshot KiriViewApplication::actionStateSnapshot
         = m_documentSession != nullptr && m_documentSession->directMediaNavigationBoundaryActive();
     snapshot.activeNavigationDispatchAvailable
         = m_documentSession != nullptr && m_documentSession->activeNavigationDispatchAvailable();
+    snapshot.imageDocumentPageNavigationActive = m_documentSession != nullptr
+        && m_documentSession->activeNavigationBoundaryScope()
+            == KiriDocumentSession::ActiveNavigationBoundaryScope::
+                ImageDocumentPageNavigationBoundary;
+    snapshot.atKnownFirstActiveNavigation
+        = m_documentSession != nullptr && m_documentSession->atKnownFirstActiveNavigation();
     snapshot.videoMode = videoMode();
     snapshot.helpDialogOpen = m_helpDialogOpen;
     snapshot.textInputFocused = m_textInputFocused;
@@ -434,24 +440,6 @@ Actions::ApplicationActionStateSnapshot KiriViewApplication::actionStateSnapshot
         snapshot.videoDuration = video->duration();
     }
     return snapshot;
-}
-
-Actions::ApplicationCommandRouterInput KiriViewApplication::commandRouterInput() const
-{
-    Actions::ApplicationCommandRouterInput input;
-    input.imagePannable = sharedImagePannable();
-    input.rightToLeftReadingActive
-        = m_actionRuntime != nullptr && m_actionRuntime->rightToLeftReadingActive();
-    input.videoMode = videoMode();
-    input.imageDocumentPageNavigationActive = m_documentSession != nullptr
-        && m_documentSession->activeNavigationBoundaryScope()
-            == KiriDocumentSession::ActiveNavigationBoundaryScope::
-                ImageDocumentPageNavigationBoundary;
-    input.atKnownFirstActiveNavigation
-        = m_documentSession != nullptr && m_documentSession->atKnownFirstActiveNavigation();
-    input.canOpenPreviousActiveNavigation
-        = m_documentSession != nullptr && m_documentSession->canOpenPreviousActiveNavigation();
-    return input;
 }
 
 Actions::ApplicationCommandRouterPorts KiriViewApplication::commandRouterPorts()
@@ -648,7 +636,8 @@ void KiriViewApplication::requestImageFitWidthMode()
 
 void KiriViewApplication::handleRuntimeActionTriggered(Actions::ActionId actionId)
 {
-    m_actionRuntime->handleActionTriggered(actionId, commandRouterInput(), commandRouterPorts());
+    m_actionRuntime->handleActionTriggered(
+        actionId, m_actionRuntime->commandRouterInput(), commandRouterPorts());
 }
 
 void KiriViewApplication::emitBoundaryText(const QString &message)
@@ -674,34 +663,36 @@ void KiriViewApplication::requestNextActiveNavigationWithBoundary()
 
 void KiriViewApplication::handleScanForwardAction()
 {
-    m_actionRuntime->handleScanForwardAction(commandRouterInput(), commandRouterPorts());
+    m_actionRuntime->handleScanForwardAction(
+        m_actionRuntime->commandRouterInput(), commandRouterPorts());
 }
 
 void KiriViewApplication::handleScanBackwardAction()
 {
-    m_actionRuntime->handleScanBackwardAction(commandRouterInput(), commandRouterPorts());
+    m_actionRuntime->handleScanBackwardAction(
+        m_actionRuntime->commandRouterInput(), commandRouterPorts());
 }
 
 bool KiriViewApplication::executeHorizontalArrowShortcut(bool leftArrow)
 {
     return m_actionRuntime->executeHorizontalArrowShortcut(
-        commandRouterInput(), commandRouterPorts(), leftArrow);
+        m_actionRuntime->commandRouterInput(), commandRouterPorts(), leftArrow);
 }
 
 bool KiriViewApplication::executeSinglePageArrowShortcut(bool leftArrow)
 {
     return m_actionRuntime->executeSinglePageArrowShortcut(
-        commandRouterInput(), commandRouterPorts(), leftArrow);
+        m_actionRuntime->commandRouterInput(), commandRouterPorts(), leftArrow);
 }
 
 bool KiriViewApplication::executeVerticalPanShortcut(bool up)
 {
     return m_actionRuntime->executeVerticalPanShortcut(
-        commandRouterInput(), commandRouterPorts(), up);
+        m_actionRuntime->commandRouterInput(), commandRouterPorts(), up);
 }
 
 bool KiriViewApplication::executeVideoSeekShortcut(qint64 deltaMilliseconds)
 {
     return m_actionRuntime->executeVideoSeekShortcut(
-        commandRouterInput(), commandRouterPorts(), deltaMilliseconds);
+        m_actionRuntime->commandRouterInput(), commandRouterPorts(), deltaMilliseconds);
 }
