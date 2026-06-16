@@ -11,9 +11,6 @@ MediaViewportDelegate {
 
     property alias imageView: primaryDisplayImagePage
     property alias flickable: imageFlickable
-    property bool applyingViewportProjection: false
-    property string appliedViewportCommandRevisionToken: "0"
-    property string appliedViewportObservationRevisionToken: "0"
     readonly property var imageDocument: root.documentSession.imageDocument
     property bool imageReady: root.presentationActive && root.documentSession.activeImageReady
     readonly property int minimumManualZoomPercent: root.imageDocument.minimumManualZoomPercent
@@ -57,69 +54,12 @@ MediaViewportDelegate {
         defaultLogLevel: LoggingCategory.Warning
     }
 
-    function currentContentPosition() {
-        return Qt.point(imageFlickable.contentX, imageFlickable.contentY);
-    }
-
-    function contentPositionChanged(contentPosition) {
-        return contentPosition.x !== imageFlickable.contentX || contentPosition.y !== imageFlickable.contentY;
-    }
-
-    function setContentPosition(contentPosition) {
-        imageFlickable.contentX = contentPosition.x;
-        imageFlickable.contentY = contentPosition.y;
-    }
-
-    function applyPhysicalContentPosition(contentPosition) {
-        const moved = contentPositionChanged(contentPosition);
-        setContentPosition(contentPosition);
-        return moved;
-    }
-
     function moveContentPosition(contentPosition) {
-        if (!root.presentationActive || root.imageDocument === null) {
-            return false;
-        }
-
-        const previousContentPosition = currentContentPosition();
-        root.imageDocument.requestViewportContentPosition(contentPosition);
-        const commandAdvanced = root.imageDocument.viewportCommandRevisionNewerThan(root.appliedViewportCommandRevisionToken);
-        return previousContentPosition.x !== imageFlickable.contentX || previousContentPosition.y !== imageFlickable.contentY || commandAdvanced;
-    }
-
-    function applyViewportProjection() {
-        if (!root.presentationActive || root.imageDocument === null || root.applyingViewportProjection) {
-            return;
-        }
-
-        const commandRevisionToken = root.imageDocument.viewportCommandRevisionToken;
-        if (root.imageDocument.viewportCommandStatus === KiriImageDocument.Rejected) {
-            return;
-        }
-        if (!root.imageDocument.viewportProjectionNewerThan(root.appliedViewportCommandRevisionToken, root.appliedViewportObservationRevisionToken)) {
-            return;
-        }
-
-        root.applyingViewportProjection = true;
-        if (root.imageDocument.viewportCommandRevisionNewerThan(root.appliedViewportCommandRevisionToken)) {
-            root.imageDocument.beginViewportCommandApplication(commandRevisionToken);
-        }
-        applyPhysicalContentPosition(root.imageDocument.viewportContentPosition);
-        if (root.imageDocument.viewportCommandRevisionNewerThan(root.appliedViewportCommandRevisionToken)) {
-            root.imageDocument.completeViewportCommandApplication(commandRevisionToken, currentContentPosition());
-            root.appliedViewportCommandRevisionToken = commandRevisionToken;
-            root.imageDocument.acknowledgeViewportCommand(commandRevisionToken, currentContentPosition());
-        }
-        root.appliedViewportObservationRevisionToken = root.imageDocument.viewportObservationRevisionToken;
-        root.applyingViewportProjection = false;
+        return viewportCommandBridge.requestContentPosition(contentPosition);
     }
 
     function observeViewportContentPosition(origin) {
-        if (!root.presentationActive || root.imageDocument === null || root.applyingViewportProjection) {
-            return false;
-        }
-
-        return root.imageDocument.observeViewportContentPosition(currentContentPosition(), origin);
+        return viewportCommandBridge.observeViewportContentPosition(origin);
     }
 
     function setNextDisplayedImageStartToFinalScanPosition() {
@@ -220,13 +160,17 @@ MediaViewportDelegate {
     Connections {
         target: root.presentationActive ? root.imageDocument : null
 
-        function onViewportFrameChanged() {
-            root.applyViewportProjection();
-        }
-
         function onDisplayedUrlChanged() {
             root.applyDisplayedImageInitialContentPosition();
         }
+    }
+
+    KiriImageViewportCommandBridge {
+        id: viewportCommandBridge
+
+        active: root.presentationActive
+        document: root.presentationActive ? root.imageDocument : null
+        target: imageFlickable
     }
 
     Flickable {

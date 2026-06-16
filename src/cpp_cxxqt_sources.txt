@@ -3,6 +3,7 @@
 
 src/facade/kiridocumentsession.cpp
 src/facade/kiriimagedisplaysource.cpp
+src/facade/kiriimageviewportcommandbridge.cpp
 src/facade/kiriimagedocument.cpp
 src/facade/kiriimageviewportcontextbridge.cpp
 src/facade/kirimediainformation.cpp
