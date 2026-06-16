@@ -49,16 +49,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 ## Logic Placement and Flow Predictability
 
-### Finding: Viewport command projection application remains QML-coordinated
-
-- Evidence: `src/facade/kiriimagedocument.h:247-341` exposes viewport commands as `Q_INVOKABLE`s and forwards them to `ImageDocumentRuntime`. `src/document/imagedocumentruntime.cpp:150-230` and `:377-439` own viewport content-position, pan/scan, anchored zoom, toggle-fit/actual-size, and point-query geometry. `src/qml/ImageViewport.qml:90-111` still owns physical Flickable projection application and command acknowledgement, with `onViewportFrameChanged` driving application.
-- Current state: QML events enter the facade; the facade converts QML-friendly inputs and forwards commands. `ImageDocumentRuntime` owns pan/scan content-position commands, anchored zoom positioning, nearest-anchor and point-inside-image queries, pending displayed-image final-scan start state, document-change scan-start updates, and displayed-image initial content-position commands. QML command handlers no longer apply viewport projections directly after dispatch; projection application is driven by viewport-frame changes, but QML still owns the physical Flickable application and acknowledgement handshake.
-- Design concern: Viewport command planning now has the correct runtime owner, and command handlers no longer choose when to apply projected command state. The remaining split is that QML still owns the projection application/acknowledgement adapter rather than a presentation runtime/controller.
-- Correct end state: Viewport command planning, anchored zoom positioning, pan/scan positioning, displayed-image scan-start handoff, and projection application should be owned by the presentation runtime/controller layer. The facade should only convert QML-friendly inputs and forward commands.
-- Suggested migration: Keep the QML API while moving viewport command projection application and acknowledgement out of QML into a presentation runtime/controller path that observes command revisions and applied positions.
-- Acceptance criteria: QML does not own the command application/acknowledgement state machine; the viewport delegate only reports actual content position and renders the projected frame. Already satisfied: `KiriImageDocument` no longer owns `ImageViewportInteraction`; pan/scan commands are runtime-owned; anchored zoom and point-query geometry are runtime-owned; `handleDocumentChanges()` does not mutate viewport interaction state; QML does not need to understand scan-start handoff; QML command handlers no longer call `applyViewportProjection()` after dispatch.
-- Priority: P1
-
 ### Finding: Application action routing input assembly lives in the facade
 
 - Evidence: `src/facade/kiriviewapplication.h:7-10` includes action state policy, command router, application types, and image action availability policy. `src/facade/kiriviewapplication.h:177-220` owns router input/port builders, `ApplicationCommandRouter`, `ImageActionAvailabilityProjection`, `ApplicationActionStateInput`, and UI gate fields. `src/facade/kiriviewapplication.cpp:331-360` rebuilds action state and subscribes to sources; `:395-497` assembles `ImageActionAvailabilityInput`, `ApplicationActionStateInput`, and `ApplicationCommandRouterInput`; `:499-631` builds concrete command router ports.
@@ -123,12 +113,12 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Source-load planning should pass through typed plans before providers run.
 - External effects: `QFileInfo`, `sysconf`, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
 - Error representation: Image decoder, remaining tile/refinement, media-entry source, and thumbnail generation failures use typed failures. Internal paths preserve source identity, stage/kind, backend/raw code, severity, and retryability. QML receives user-facing projections.
-- Facade/QML: `KiriImageDocument` and `KiriViewApplication` expose QML-friendly types, invokables, and signals. Viewport command planning is runtime-owned; action routing input assembly still moves into application runtime. QML continues to report geometry/input facts and render projections, but viewport command projection application should move out of QML.
+- Facade/QML: `KiriImageDocument` and `KiriViewApplication` expose QML-friendly types, invokables, and signals. Viewport command planning and projection application are runtime/C++ bridge-owned; action routing input assembly still moves into application runtime. QML continues to report geometry/input facts and render projections.
 - Tests: Characterization tests lock current behavior first. Rust policy and C++ domain helpers are tested with pure/fake dependencies. Qt/KDE/filesystem adapter tests remain small. Architecture boundary tests should verify abstractions used by production code.
 
 ## Suggested Refactoring Sequence
 
-1. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, move viewport command projection application into presentation runtime, and move application action input/port assembly into application runtime/coordinator.
+1. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, and move application action input/port assembly into application runtime/coordinator.
 2. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics. Preserve UI text while internal diagnostics become structured.
 3. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
 
