@@ -84,7 +84,6 @@ MediaViewportDelegate {
         const previousContentPosition = currentContentPosition();
         root.imageDocument.requestViewportContentPosition(contentPosition);
         const commandAdvanced = root.imageDocument.viewportCommandRevisionNewerThan(root.appliedViewportCommandRevisionToken);
-        root.applyViewportProjection();
         return previousContentPosition.x !== imageFlickable.contentX || previousContentPosition.y !== imageFlickable.contentY || commandAdvanced;
     }
 
@@ -129,24 +128,20 @@ MediaViewportDelegate {
 
     function applyDisplayedImageInitialContentPosition() {
         root.imageDocument.requestDisplayedImageInitialContentPosition();
-        root.applyViewportProjection();
     }
 
     function panBy(deltaX, deltaY) {
         const moved = root.imageDocument.requestViewportPanBy(deltaX, deltaY);
-        root.applyViewportProjection();
         return moved;
     }
 
     function panToBottomRight() {
         const moved = root.imageDocument.requestViewportPanToFinalScanPosition();
-        root.applyViewportProjection();
         return moved;
     }
 
     function panToTopLeft() {
         const moved = root.imageDocument.requestViewportPanToInitialScanPosition();
-        root.applyViewportProjection();
         return moved;
     }
 
@@ -173,7 +168,6 @@ MediaViewportDelegate {
         }
 
         const zoomed = root.imageDocument.requestZoomByStep(stepCount, Qt.point(viewportX, viewportY));
-        root.applyViewportProjection();
         return zoomed;
     }
 
@@ -183,7 +177,6 @@ MediaViewportDelegate {
         }
 
         const toggled = root.imageDocument.requestToggleFitOrActualSize(Qt.point(viewportX, viewportY));
-        root.applyViewportProjection();
         return toggled;
     }
 
