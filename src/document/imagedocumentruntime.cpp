@@ -149,6 +149,17 @@ quint64 ImageDocumentRuntime::requestViewportContentPosition(const QPointF &view
         .revision;
 }
 
+void ImageDocumentRuntime::requestNextDisplayedImageStartToFinalScanPosition()
+{
+    viewportInteraction.requestNextDisplayedImageFinalScanStart();
+}
+
+quint64 ImageDocumentRuntime::requestDisplayedImageInitialContentPosition()
+{
+    return requestViewportContentPosition(
+        viewportInteraction.displayedImageInitialContentPosition(viewportInteractionSnapshot()));
+}
+
 bool ImageDocumentRuntime::beginViewportCommandApplication(quint64 commandRevision)
 {
     return controllers->spreadController().beginViewportCommandApplication(commandRevision);
@@ -489,6 +500,40 @@ ImageDocumentRenderContext ImageDocumentRuntime::renderContext() const
     return ImageDocumentRenderContext {};
 }
 
+ImageViewportInteractionSnapshot ImageDocumentRuntime::viewportInteractionSnapshot() const
+{
+    const ImageFirstDisplayDecodeContext firstDisplayContext = firstDisplayDecodeContext();
+    const double devicePixelRatio = firstDisplayContext.isValid() && viewportSize().width() > 0.0
+        ? firstDisplayContext.physicalViewportSize.width() / viewportSize().width()
+        : 1.0;
+    return ImageViewportInteractionSnapshot {
+        imageSize(),
+        viewportSize(),
+        displaySize(),
+        devicePixelRatio,
+        rightToLeftReadingEnabled() && rightToLeftReadingAvailable(),
+    };
+}
+
+void ImageDocumentRuntime::updateViewportInteractionForPublishedChanges(
+    const std::vector<ImageDocumentChange> &changes)
+{
+    for (ImageDocumentChange change : changes) {
+        switch (change) {
+        case ImageDocumentChange::Loading:
+            if (!loading()) {
+                viewportInteraction.cancelPendingDisplayedImageStart();
+            }
+            break;
+        case ImageDocumentChange::DisplayedUrl:
+            viewportInteraction.beginDisplayedImage();
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 void ImageDocumentRuntime::loadSource(const ImageDocumentSourceLoadRequest &request)
 {
     controllers->dispatchPlan(ImageOpenWorkflow::sourceLoadPlan(
@@ -500,6 +545,7 @@ void ImageDocumentRuntime::publishChanges(const std::vector<ImageDocumentChange>
     for (ImageDocumentChange change : changes) {
         controllers->spreadController().handleDocumentChange(change);
     }
+    updateViewportInteractionForPublishedChanges(changes);
     invokeIfSet(changeCallback, changes);
 }
 

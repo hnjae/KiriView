@@ -12,6 +12,7 @@
 #include "presentation/imagedisplaysourceprojection.h"
 #include "presentation/imagepresentationstate.h"
 #include "presentation/imageviewportcommandstate.h"
+#include "presentation/imageviewportinteraction.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagerendercontext.h"
 #include "system/filedeletion.h"
@@ -68,6 +69,8 @@ public:
     void setViewportSize(const QSizeF &viewportSize);
     QPointF viewportContentPosition() const;
     quint64 requestViewportContentPosition(const QPointF &viewportContentPosition);
+    void requestNextDisplayedImageStartToFinalScanPosition();
+    quint64 requestDisplayedImageInitialContentPosition();
     bool beginViewportCommandApplication(quint64 commandRevision);
     bool completeViewportCommandApplication(
         quint64 commandRevision, const QPointF &actualContentPosition);
@@ -144,6 +147,9 @@ public:
 
 private:
     ImageDocumentRenderContext renderContext() const;
+    ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
+    void updateViewportInteractionForPublishedChanges(
+        const std::vector<ImageDocumentChange> &changes);
     void loadSource(const ImageDocumentSourceLoadRequest &request);
     void publishChanges(const std::vector<ImageDocumentChange> &changes);
 
@@ -152,6 +158,7 @@ private:
     ChangeCallback changeCallback;
     RenderContextProvider renderContextProvider;
     std::unique_ptr<ImageDocumentRuntimeControllers> controllers;
+    ImageViewportInteraction viewportInteraction;
 };
 }
 

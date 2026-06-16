@@ -693,13 +693,12 @@ bool KiriImageDocument::requestViewportScanBackward()
 
 void KiriImageDocument::requestNextDisplayedImageStartToFinalScanPosition()
 {
-    m_viewportInteraction.requestNextDisplayedImageFinalScanStart();
+    m_runtime->requestNextDisplayedImageStartToFinalScanPosition();
 }
 
 bool KiriImageDocument::requestDisplayedImageInitialContentPosition()
 {
-    return requestViewportInteractionContentPosition(
-        m_viewportInteraction.displayedImageInitialContentPosition(viewportInteractionSnapshot()));
+    return m_runtime->requestDisplayedImageInitialContentPosition() > 0;
 }
 
 bool KiriImageDocument::viewportPointInsideImage(const QPointF &viewportPoint) const
@@ -881,21 +880,6 @@ bool KiriImageDocument::requestAnchoredManualZoom(
 void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
 {
     refreshDisplaySources();
-    for (kiriview::ImageDocumentPublicSignal signal :
-        kiriview::imageDocumentPublicSignalsForChanges(changes)) {
-        switch (signal) {
-        case kiriview::ImageDocumentPublicSignal::Loading:
-            if (!loading()) {
-                m_viewportInteraction.cancelPendingDisplayedImageStart();
-            }
-            break;
-        case kiriview::ImageDocumentPublicSignal::DisplayedUrl:
-            m_viewportInteraction.beginDisplayedImage();
-            break;
-        default:
-            break;
-        }
-    }
     kiriview::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
 }
 
