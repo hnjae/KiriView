@@ -59,18 +59,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: `src/facade/kiriviewapplication.h` no longer includes action policy/router headers; action-state rebuild tests target the application runtime/coordinator rather than the facade.
 - Priority: P2
 
-## Testability Problems
-
-### Finding: Shortcut dispatch core is private inside the Qt event-filter runtime
-
-- Evidence: `src/application/applicationshortcutpolicy.h:60-96` exposes generic shortcut dispatch inputs, bindings, and typed outcomes. `src/application/applicationshortcutpolicy.cpp:263-310` owns registered binding enablement, precedence, unsupported-media interception, and trigger-action eligibility. `tests/cpp/test_applicationshortcutpolicy.cpp:552-627` covers generic binding precedence and unsupported media outcomes without `QQuickView` or key events. `src/application/applicationshortcutruntime.h:84-87` and `src/application/applicationshortcutruntime.cpp:406-508` still keep focus gating, fixed-shortcut callback execution, Qt action-enabled adaptation, generic policy input construction, and typed outcome execution inside the Qt runtime adapter.
-- Current state: Fixed viewer shortcut mapping and generic registered binding dispatch are isolated in pure policy. `ApplicationShortcutRuntime` remains the Qt adapter that filters by focused window, adapts `QAction` enabled state into policy bindings, executes fixed shortcut callbacks, and turns generic typed outcomes into unsupported-media callbacks or `QAction::trigger()`.
-- Design concern: Reproducing precedence bugs requires app/window bootstrapping, and failures do not clearly point to policy, focus state, event filtering, or QAction invocation.
-- Correct end state: A small dispatch policy/service should accept key sequence, focus applicability, action-state snapshot, registered bindings, and action-enabled facts, then return explicit outcomes such as ignore, trigger action, fixed navigation, or unsupported-video action. `ApplicationShortcutRuntime` should adapt Qt events to outcomes.
-- Suggested migration: Keep narrowing `ApplicationShortcutRuntime` until focus/window applicability, fixed-shortcut callback execution, and generic outcome execution are the only adapter responsibilities, with any remaining focus applicability represented as explicit dispatch input when practical.
-- Acceptance criteria: Generic shortcut binding precedence stays testable without `QQuickView` or `QTest::keyClick`; focus/window integration and Qt outcome execution remain covered by small adapter tests.
-- Priority: P2
-
 ## Error Handling and Observability Problems
 
 ### Finding: Lower-level image decode failures still lose backend-specific diagnostics before document wrapping
