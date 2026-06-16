@@ -204,6 +204,7 @@ src/thumbnail/thumbnailcachelookup.cpp
 src/thumbnail/thumbnailgeneration.cpp
 src/session/thumbnailimagestore.cpp
 src/session/directmediacursor.cpp
+src/session/documentsessionactivezoom.cpp
 src/session/documentsessiondirectimagecursorsync.cpp
 src/session/documentsessiondirectmedianavigationloadstate.cpp
 src/session/documentsessiondirectmedianavigationapplicationruntime.cpp

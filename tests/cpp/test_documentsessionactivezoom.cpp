@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "session/documentsessionactivezoom.h"
+#include "session/documentsessionpublicprojection.h"
 
 #include <QObject>
 #include <QTest>

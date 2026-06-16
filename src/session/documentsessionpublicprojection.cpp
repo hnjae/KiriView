@@ -3,6 +3,7 @@
 
 #include "documentsessionpublicprojection.h"
 
+#include "session/documentsessionactivezoom.h"
 #include "session/windowtitleprojection.h"
 
 namespace {
@@ -87,29 +88,6 @@ bool displayedFileDeletionAvailableForInput(
     }
 
     return false;
-}
-
-kiriview::ActiveZoomSnapshot activeZoomForInput(
-    const kiriview::DocumentSessionPublicSnapshotInput &input)
-{
-    switch (input.session.documentKind) {
-    case kiriview::DocumentSessionKind::Image:
-        if (!input.image.zoomPercentKnown) {
-            return {};
-        }
-        return kiriview::ActiveZoomSnapshot { true, true, input.image.zoomPercent, true };
-    case kiriview::DocumentSessionKind::Video:
-        return kiriview::ActiveZoomSnapshot {
-            true,
-            input.video.zoomPercentKnown,
-            input.video.zoomPercentKnown ? qreal(input.video.zoomPercent) : 0.0,
-            false,
-        };
-    case kiriview::DocumentSessionKind::Empty:
-        return {};
-    }
-
-    return {};
 }
 
 bool activeImageReadyForInput(const kiriview::DocumentSessionPublicSnapshotInput &input)
@@ -256,7 +234,8 @@ DocumentSessionPublicSnapshot projectDocumentSessionPublicSnapshot(
     snapshot.documentKind = input.session.documentKind;
     snapshot.errorString = errorStringForInput(input);
     snapshot.fileDeletionInProgress = input.session.fileDeletionInProgress;
-    snapshot.activeZoom = activeZoomForInput(input);
+    snapshot.activeZoom
+        = documentSessionActiveZoomSnapshot(input.session.documentKind, input.image, input.video);
     snapshot.activeImageReady = activeImageReadyForInput(input);
     snapshot.activeImageUnsupportedOpenedCollectionVideo
         = input.session.documentKind == DocumentSessionKind::Image

@@ -4,6 +4,7 @@
 #include "documentsessionruntime.h"
 
 #include "navigation/navigationlogging.h"
+#include "session/documentsessionactivezoom.h"
 
 #include <QAbstractListModel>
 #include <QDebug>
@@ -937,24 +938,7 @@ bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
 
 ActiveZoomSnapshot DocumentSessionRuntime::activeZoomSnapshotForKind(DocumentSessionKind kind) const
 {
-    switch (kind) {
-    case DocumentSessionKind::Image:
-        if (!m_imagePublicSnapshot.zoomPercentKnown) {
-            return {};
-        }
-        return ActiveZoomSnapshot { true, true, m_imagePublicSnapshot.zoomPercent, true };
-    case DocumentSessionKind::Video:
-        return ActiveZoomSnapshot {
-            true,
-            m_videoPublicSnapshot.zoomPercentKnown,
-            m_videoPublicSnapshot.zoomPercentKnown ? qreal(m_videoPublicSnapshot.zoomPercent) : 0.0,
-            false,
-        };
-    case DocumentSessionKind::Empty:
-        return {};
-    }
-
-    return {};
+    return documentSessionActiveZoomSnapshot(kind, m_imagePublicSnapshot, m_videoPublicSnapshot);
 }
 
 DocumentSessionPublicSnapshotInput DocumentSessionRuntime::publicSnapshotInput(
