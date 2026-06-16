@@ -14,6 +14,7 @@
 #include "session/documentsessionmediadeletionruntime.h"
 #include "session/documentsessionmediaopenwithruntime.h"
 #include "session/documentsessionmediapredecoderuntime.h"
+#include "session/documentsessionprojectionruntime.h"
 #include "session/documentsessionpublicprojection.h"
 #include "session/documentsessionrouteruntime.h"
 #include "session/documentsessionstate.h"
@@ -140,7 +141,6 @@ private:
     void recomputeActiveZoomReadoutForKind(DocumentSessionKind kind);
     void publishActiveNavigationForImagePages();
     void recomputePublicProjection();
-    void syncActiveNavigationThumbnailRows();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
     bool directMediaNavigationActive() const;
@@ -183,6 +183,7 @@ private:
     DocumentSessionVideoDocumentSnapshotPort m_videoDocument;
     DocumentSessionVideoDocumentCommandRuntime m_videoDocumentCommandRuntime;
     DocumentSessionState m_state;
+    DocumentSessionProjectionRuntime m_projectionRuntime;
     DocumentSessionRouteRuntime m_routeRuntime;
     DocumentSessionActiveNavigationRuntime m_activeNavigationRuntime;
     DocumentSessionThumbnailRuntime m_activeNavigationThumbnailRuntime;

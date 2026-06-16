@@ -95,6 +95,22 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
               m_videoOutputRuntime.clearAttachment(attachmentPort);
           })
     , m_state(std::move(changeCallback))
+    , m_projectionRuntime(DocumentSessionProjectionRuntimePorts {
+          [this](const DocumentSessionPublicSnapshotInput &input) {
+              return m_state.updatePublicSnapshot(input);
+          },
+          [this](const DocumentSessionPublicSnapshotInput &input,
+              ActiveNavigationSourceKind sourceKind) {
+              return m_state.updatePublicSnapshotForSourceKind(input, sourceKind);
+          },
+          [this]() { return m_state.activeNavigationSourceKind(); },
+          [this]() { return m_state.activeNavigationSnapshot(); },
+          [this]() { return m_state.directMediaNavigationCandidates(); },
+          [this](std::vector<ActiveNavigationThumbnailRow> rows) {
+              m_activeNavigationThumbnailRuntime.setRows(std::move(rows));
+          },
+          [this]() { clearActiveNavigationRevealContextIfUnavailable(); },
+      })
     , m_routeRuntime(DocumentSessionRouteRuntimePorts {
           [this]() { cancelMediaOpenWith(); },
           [this]() { m_state.setSessionErrorString(QString()); },
@@ -721,32 +737,14 @@ void DocumentSessionRuntime::publishActiveNavigationForImagePages()
 {
     setActiveNavigationRevealContext(
         takePendingActiveNavigationRevealContext(ActiveNavigationRevealIntent::ProgrammaticSync));
-    if (m_state.updatePublicSnapshotForSourceKind(
-            publicSnapshotInput(++m_publicSnapshotInputRevision),
-            ActiveNavigationSourceKind::ImageDocumentPages)) {
-        syncActiveNavigationThumbnailRows();
-    }
-    clearActiveNavigationRevealContextIfUnavailable();
+    m_projectionRuntime.publishForSourceKind(publicSnapshotInput(++m_publicSnapshotInputRevision),
+        ActiveNavigationSourceKind::ImageDocumentPages, m_imagePublicSnapshot.pageNavigationRows);
 }
 
 void DocumentSessionRuntime::recomputePublicProjection()
 {
-    m_state.updatePublicSnapshot(publicSnapshotInput(++m_publicSnapshotInputRevision));
-    syncActiveNavigationThumbnailRows();
-    clearActiveNavigationRevealContextIfUnavailable();
-}
-
-void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
-{
-    std::vector<ActiveNavigationThumbnailRow> rows = projectActiveNavigationThumbnailRows(
-        m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(),
-        m_state.directMediaNavigationCandidates(), m_imagePublicSnapshot.pageNavigationRows);
-    if (rows.empty()) {
-        m_activeNavigationThumbnailRuntime.setRows({});
-        return;
-    }
-
-    m_activeNavigationThumbnailRuntime.setRows(std::move(rows));
+    m_projectionRuntime.publish(publicSnapshotInput(++m_publicSnapshotInputRevision),
+        m_imagePublicSnapshot.pageNavigationRows);
 }
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
