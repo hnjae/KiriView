@@ -69,6 +69,11 @@ public:
     void setViewportSize(const QSizeF &viewportSize);
     QPointF viewportContentPosition() const;
     quint64 requestViewportContentPosition(const QPointF &viewportContentPosition);
+    quint64 requestViewportPanBy(const QPointF &delta);
+    quint64 requestViewportPanToInitialScanPosition();
+    quint64 requestViewportPanToFinalScanPosition();
+    quint64 requestViewportScanForward();
+    quint64 requestViewportScanBackward();
     void requestNextDisplayedImageStartToFinalScanPosition();
     quint64 requestDisplayedImageInitialContentPosition();
     bool beginViewportCommandApplication(quint64 commandRevision);
@@ -147,6 +152,7 @@ public:
 
 private:
     ImageDocumentRenderContext renderContext() const;
+    quint64 requestViewportInteractionContentPosition(const QPointF &contentPosition);
     ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
     void updateViewportInteractionForPublishedChanges(
         const std::vector<ImageDocumentChange> &changes);

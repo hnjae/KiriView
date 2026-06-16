@@ -15,10 +15,16 @@
 
 #include <QObject>
 #include <QUrl>
+#include <cmath>
 #include <utility>
 
 namespace kiriview {
 namespace {
+    bool pointIsFinite(const QPointF &point)
+    {
+        return std::isfinite(point.x()) && std::isfinite(point.y());
+    }
+
     ImageDocumentSourceLoadSnapshot sourceLoadSnapshot(
         const ImageDocumentState &state, const ImageSpreadPresentationController &spreadController)
     {
@@ -147,6 +153,66 @@ quint64 ImageDocumentRuntime::requestViewportContentPosition(const QPointF &view
     return controllers->spreadController()
         .requestViewportContentPosition(viewportContentPosition)
         .revision;
+}
+
+quint64 ImageDocumentRuntime::requestViewportPanBy(const QPointF &delta)
+{
+    if (!viewportPannable() || !pointIsFinite(delta)) {
+        return 0;
+    }
+
+    return requestViewportInteractionContentPosition(viewportInteraction.panContentPosition(
+        viewportInteractionSnapshot(), viewportContentPosition(), delta));
+}
+
+quint64 ImageDocumentRuntime::requestViewportPanToInitialScanPosition()
+{
+    if (!viewportPannable()) {
+        return 0;
+    }
+
+    return requestViewportInteractionContentPosition(
+        viewportInteraction.initialScanContentPosition(viewportInteractionSnapshot()));
+}
+
+quint64 ImageDocumentRuntime::requestViewportPanToFinalScanPosition()
+{
+    if (!viewportPannable()) {
+        return 0;
+    }
+
+    return requestViewportInteractionContentPosition(
+        viewportInteraction.finalScanContentPosition(viewportInteractionSnapshot()));
+}
+
+quint64 ImageDocumentRuntime::requestViewportScanForward()
+{
+    if (!viewportPannable()) {
+        return 0;
+    }
+
+    const QPointF nextContentPosition = viewportInteraction.nextScanContentPosition(
+        viewportInteractionSnapshot(), viewportContentPosition());
+    if (nextContentPosition == viewportContentPosition()) {
+        return 0;
+    }
+
+    return requestViewportInteractionContentPosition(nextContentPosition);
+}
+
+quint64 ImageDocumentRuntime::requestViewportScanBackward()
+{
+    if (!viewportPannable()) {
+        return 0;
+    }
+
+    const QPointF previousContentPosition = viewportInteraction.previousScanContentPosition(
+        viewportInteractionSnapshot(), viewportContentPosition());
+    if (previousContentPosition == viewportContentPosition()) {
+        return 0;
+    }
+
+    return requestViewportInteractionContentPosition(previousContentPosition);
 }
 
 void ImageDocumentRuntime::requestNextDisplayedImageStartToFinalScanPosition()
@@ -498,6 +564,24 @@ ImageDocumentRenderContext ImageDocumentRuntime::renderContext() const
     }
 
     return ImageDocumentRenderContext {};
+}
+
+quint64 ImageDocumentRuntime::requestViewportInteractionContentPosition(
+    const QPointF &contentPosition)
+{
+    if (!pointIsFinite(contentPosition)) {
+        return 0;
+    }
+
+    const QPointF previousContentPosition = viewportContentPosition();
+    const quint64 previousCommandRevision = viewportCommandRevision();
+    const quint64 commandRevision = requestViewportContentPosition(contentPosition);
+    if (previousContentPosition != viewportContentPosition()
+        || commandRevision > previousCommandRevision) {
+        return commandRevision;
+    }
+
+    return 0;
 }
 
 ImageViewportInteractionSnapshot ImageDocumentRuntime::viewportInteractionSnapshot() const

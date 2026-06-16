@@ -632,63 +632,27 @@ bool KiriImageDocument::requestToggleFitOrActualSize(const QPointF &viewportPoin
 
 bool KiriImageDocument::requestViewportPanBy(double deltaX, double deltaY)
 {
-    if (!viewportPannable()) {
-        return false;
-    }
-
-    const QPointF nextContentPosition = m_viewportInteraction.panContentPosition(
-        viewportInteractionSnapshot(), viewportContentPosition(), QPointF(deltaX, deltaY));
-    return requestViewportInteractionContentPosition(nextContentPosition);
+    return m_runtime->requestViewportPanBy(QPointF(deltaX, deltaY)) > 0;
 }
 
 bool KiriImageDocument::requestViewportPanToInitialScanPosition()
 {
-    if (!viewportPannable()) {
-        return false;
-    }
-
-    return requestViewportInteractionContentPosition(
-        m_viewportInteraction.initialScanContentPosition(viewportInteractionSnapshot()));
+    return m_runtime->requestViewportPanToInitialScanPosition() > 0;
 }
 
 bool KiriImageDocument::requestViewportPanToFinalScanPosition()
 {
-    if (!viewportPannable()) {
-        return false;
-    }
-
-    return requestViewportInteractionContentPosition(
-        m_viewportInteraction.finalScanContentPosition(viewportInteractionSnapshot()));
+    return m_runtime->requestViewportPanToFinalScanPosition() > 0;
 }
 
 bool KiriImageDocument::requestViewportScanForward()
 {
-    if (!viewportPannable()) {
-        return false;
-    }
-
-    const QPointF nextContentPosition = m_viewportInteraction.nextScanContentPosition(
-        viewportInteractionSnapshot(), viewportContentPosition());
-    if (nextContentPosition == viewportContentPosition()) {
-        return false;
-    }
-
-    return requestViewportInteractionContentPosition(nextContentPosition);
+    return m_runtime->requestViewportScanForward() > 0;
 }
 
 bool KiriImageDocument::requestViewportScanBackward()
 {
-    if (!viewportPannable()) {
-        return false;
-    }
-
-    const QPointF previousContentPosition = m_viewportInteraction.previousScanContentPosition(
-        viewportInteractionSnapshot(), viewportContentPosition());
-    if (previousContentPosition == viewportContentPosition()) {
-        return false;
-    }
-
-    return requestViewportInteractionContentPosition(previousContentPosition);
+    return m_runtime->requestViewportScanBackward() > 0;
 }
 
 void KiriImageDocument::requestNextDisplayedImageStartToFinalScanPosition()
