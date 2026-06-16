@@ -3,7 +3,6 @@
 
 #include "documentsessionruntime.h"
 
-#include "localization/imageerrortext.h"
 #include "location/imageurl.h"
 #include "navigation/mediaformatregistry.h"
 #include "navigation/navigationlogging.h"
@@ -17,11 +16,6 @@
 #include <utility>
 
 namespace {
-QString genericFileDeletionErrorMessage()
-{
-    return kiriview::imageErrorText(kiriview::ImageErrorTextId::DeleteFile);
-}
-
 const char *documentKindName(kiriview::DocumentSessionKind kind)
 {
     switch (kind) {
@@ -187,6 +181,12 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_directMediaNavigationRuntime(dependencies.directMediaNavigationCandidateProvider)
     , m_mediaDeletionRuntime(std::move(dependencies.fileDeletionProvider),
           std::move(dependencies.directMediaNavigationCandidateProvider))
+    , m_mediaDeletionCompletionRuntime(DocumentSessionMediaDeletionCompletionRuntimePorts {
+          [this](bool inProgress) { m_state.setFileDeletionInProgress(inProgress); },
+          [this](const QString &errorString) { m_state.setSessionErrorString(errorString); },
+          [this]() { recomputePublicProjection(); },
+          [this](const DocumentSessionRoutePlan &plan) { executeRoutePlan(plan); },
+      })
     , m_mediaOpenWithRuntime(std::move(dependencies.mediaOpenWithProvider))
     , m_mediaPredecodeRuntime(owner, std::move(dependencies.directMediaPredecodeDependencies))
 {
@@ -976,31 +976,7 @@ DocumentSessionVideoOutputAttachmentPort DocumentSessionRuntime::videoOutputAtta
 
 void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion)
 {
-    m_state.setFileDeletionInProgress(false);
-    if (completion.plan.reportFailure) {
-        m_state.setSessionErrorString(completion.failure.userMessage.isEmpty()
-                ? genericFileDeletionErrorMessage()
-                : completion.failure.userMessage);
-        recomputePublicProjection();
-        return;
-    }
-
-    recomputePublicProjection();
-
-    executeMediaDeletionCompletionPlan(completion.plan, completion.failure.userMessage);
-}
-
-void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
-    const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &)
-{
-    if (plan.reportFailure) {
-        return;
-    }
-
-    if (plan.hasRoutePlan()) {
-        executeRoutePlan(plan.routePlan);
-        return;
-    }
+    m_mediaDeletionCompletionRuntime.apply(completion);
 }
 
 DirectMediaScope DocumentSessionRuntime::directMediaNavigationLoadScope() const

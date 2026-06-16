@@ -11,6 +11,7 @@
 #include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondocumentports.h"
 #include "session/documentsessionimagedocumentcommandruntime.h"
+#include "session/documentsessionmediadeletioncompletionruntime.h"
 #include "session/documentsessionmediadeletionruntime.h"
 #include "session/documentsessionmediaopenwithruntime.h"
 #include "session/documentsessionmediapredecoderuntime.h"
@@ -164,8 +165,6 @@ private:
     void cancelMediaOpenWith();
     DocumentSessionVideoOutputAttachmentPort videoOutputAttachmentPort();
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
-    void executeMediaDeletionCompletionPlan(
-        const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString);
     DirectMediaScope directMediaNavigationLoadScope() const;
     QUrl activeDirectMediaCursorUrl() const;
     bool directMediaCursorMatches(const DirectMediaScope &scope) const;
@@ -189,6 +188,7 @@ private:
     DocumentSessionThumbnailRuntime m_activeNavigationThumbnailRuntime;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
+    DocumentSessionMediaDeletionCompletionRuntime m_mediaDeletionCompletionRuntime;
     DocumentSessionMediaOpenWithRuntime m_mediaOpenWithRuntime;
     DocumentSessionMediaPredecodeRuntime m_mediaPredecodeRuntime;
     std::vector<QMetaObject::Connection> m_documentConnections;

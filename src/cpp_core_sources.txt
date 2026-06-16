@@ -44,6 +44,7 @@ src/presentation/imagedisplaysourceprojection.cpp
 src/session/mediaopenwith.cpp
 src/session/documentsessionactivenavigationruntime.cpp
 src/session/documentsessionimagedocumentcommandruntime.cpp
+src/session/documentsessionmediadeletioncompletionruntime.cpp
 src/session/documentsessionrouteruntime.cpp
 src/session/documentsessionvideodocumentcommandruntime.cpp
 src/navigation/imageremovalfallback.cpp
