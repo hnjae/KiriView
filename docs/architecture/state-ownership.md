@@ -87,7 +87,7 @@ Direct media sibling discovery may complete asynchronously, but the cursor used 
 
 Action availability is a session-fed named projection consumed by the application action runtime. It may include image-internal, viewport, shortcut-gating, and presentation-only facts, but those facts must enter the action runtime as C++ snapshots rather than QML-computed booleans. The action runtime owns the derived image-action availability projection and `ApplicationActionStateInput` assembly from those snapshots. Shared Previous, Next, First, and Last availability comes from the session active navigation projection.
 
-Application action command dispatch belongs to the application action runtime. The runtime owns the command-router instance and exposes typed dispatch entry points for triggered actions and fixed viewer shortcuts. The QML facade may temporarily adapt current session/image/video facts and owner-grouped command ports, but it must not store routing policy or the router object.
+Application action command dispatch belongs to the application action runtime. The runtime owns the command-router instance, derives command-router input from the accepted action-state snapshot, and exposes typed dispatch entry points for triggered actions and fixed viewer shortcuts. The QML facade may temporarily adapt owner-grouped command ports that capture current session/image/video objects, but it must not store routing policy, the router object, or the command-router input field mapping.
 
 Extracting active navigation helpers must not move authoritative state to Rust. Rust may later compute pure projections from plain snapshots, but C++ applies and publishes the result through the document session.
 
