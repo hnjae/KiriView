@@ -919,6 +919,163 @@ private:
     bool m_secondaryPage = false;
 };
 
+class FakeKiriImageViewportCommandBridge : public QQuickItem
+{
+    Q_OBJECT
+
+    Q_PROPERTY(
+        FakeKiriImageDocument *document READ document WRITE setDocument NOTIFY documentChanged)
+    Q_PROPERTY(QQuickItem *target READ target WRITE setTarget NOTIFY targetChanged)
+    Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
+    Q_PROPERTY(bool applying READ applying NOTIFY applyingChanged)
+
+public:
+    explicit FakeKiriImageViewportCommandBridge(QQuickItem *parent = nullptr)
+        : QQuickItem(parent)
+    {
+    }
+
+    FakeKiriImageDocument *document() const { return m_document; }
+    void setDocument(FakeKiriImageDocument *document)
+    {
+        if (m_document == document) {
+            return;
+        }
+
+        if (m_document != nullptr) {
+            disconnect(m_document, &FakeKiriImageDocument::viewportFrameChanged, this,
+                &FakeKiriImageViewportCommandBridge::applyViewportProjection);
+        }
+        m_document = document;
+        if (m_document != nullptr) {
+            connect(m_document, &FakeKiriImageDocument::viewportFrameChanged, this,
+                &FakeKiriImageViewportCommandBridge::applyViewportProjection);
+        }
+        Q_EMIT documentChanged();
+        applyViewportProjection();
+    }
+
+    QQuickItem *target() const { return m_target; }
+    void setTarget(QQuickItem *target)
+    {
+        if (m_target == target) {
+            return;
+        }
+
+        m_target = target;
+        Q_EMIT targetChanged();
+        applyViewportProjection();
+    }
+
+    bool active() const { return m_active; }
+    void setActive(bool active)
+    {
+        if (m_active == active) {
+            return;
+        }
+
+        m_active = active;
+        Q_EMIT activeChanged();
+        applyViewportProjection();
+    }
+
+    bool applying() const { return m_applying; }
+
+    Q_INVOKABLE QPointF currentContentPosition() const
+    {
+        if (m_target == nullptr) {
+            return {};
+        }
+
+        return QPointF(
+            m_target->property("contentX").toReal(), m_target->property("contentY").toReal());
+    }
+
+    Q_INVOKABLE bool requestContentPosition(const QPointF &contentPosition)
+    {
+        if (!ready()) {
+            return false;
+        }
+
+        const QPointF previousContentPosition = currentContentPosition();
+        m_document->requestViewportContentPosition(contentPosition);
+        const bool commandAdvanced
+            = m_document->viewportCommandRevisionNewerThan(m_appliedCommandRevisionToken);
+        return previousContentPosition != currentContentPosition() || commandAdvanced;
+    }
+
+    Q_INVOKABLE bool observeViewportContentPosition(
+        FakeKiriImageDocument::ViewportObservationOrigin origin)
+    {
+        if (!ready() || m_applying) {
+            return false;
+        }
+
+        return m_document->observeViewportContentPosition(currentContentPosition(), origin);
+    }
+
+    Q_INVOKABLE void applyViewportProjection()
+    {
+        if (!ready() || m_applying) {
+            return;
+        }
+
+        const QString commandRevisionToken = m_document->viewportCommandRevisionToken();
+        if (m_document->viewportCommandStatus()
+            == static_cast<int>(FakeKiriImageDocument::ViewportCommandStatus::Rejected)) {
+            return;
+        }
+        if (!m_document->viewportProjectionNewerThan(
+                m_appliedCommandRevisionToken, m_appliedObservationRevisionToken)) {
+            return;
+        }
+
+        setApplying(true);
+        const bool commandNewer
+            = m_document->viewportCommandRevisionNewerThan(m_appliedCommandRevisionToken);
+        if (commandNewer) {
+            m_document->beginViewportCommandApplication(commandRevisionToken);
+        }
+        m_target->setProperty("contentX", m_document->viewportContentPosition().x());
+        m_target->setProperty("contentY", m_document->viewportContentPosition().y());
+        if (commandNewer) {
+            const QPointF actualContentPosition = currentContentPosition();
+            m_document->completeViewportCommandApplication(
+                commandRevisionToken, actualContentPosition);
+            m_appliedCommandRevisionToken = commandRevisionToken;
+            m_document->acknowledgeViewportCommand(commandRevisionToken, actualContentPosition);
+        }
+        m_appliedObservationRevisionToken = m_document->viewportObservationRevisionToken();
+        setApplying(false);
+    }
+
+Q_SIGNALS:
+    void documentChanged();
+    void targetChanged();
+    void activeChanged();
+    void applyingChanged();
+
+private:
+    bool ready() const { return m_active && m_document != nullptr && m_target != nullptr; }
+
+    void setApplying(bool applying)
+    {
+        if (m_applying == applying) {
+            return;
+        }
+
+        m_applying = applying;
+        Q_EMIT applyingChanged();
+    }
+
+    FakeKiriImageDocument *m_document = nullptr;
+    QQuickItem *m_target = nullptr;
+    bool m_active = false;
+    bool m_applying = false;
+    QString m_appliedCommandRevisionToken = QStringLiteral("0");
+    QString m_appliedObservationRevisionToken = QStringLiteral("0");
+};
+
 struct ImageViewportFixture {
     std::unique_ptr<QQuickView> view;
     std::unique_ptr<QTemporaryDir> qmlDirectory;
@@ -945,6 +1102,8 @@ void registerKiriViewQmlTypes()
 
     const char *uri = "org.hnjae.kiriview.tests";
     qmlRegisterType<FakeKiriImageDocument>(uri, 1, 0, "KiriImageDocument");
+    qmlRegisterType<FakeKiriImageViewportCommandBridge>(
+        uri, 1, 0, "KiriImageViewportCommandBridge");
     qmlRegisterType<FakeKiriImageViewportContextBridge>(
         uri, 1, 0, "KiriImageViewportContextBridge");
     registered = true;
