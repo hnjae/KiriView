@@ -14,10 +14,32 @@ class TestDocumentSessionRuntimeLeafSnapshots : public QObject
 
 private Q_SLOTS:
     void directImageRoutePublishesImageLeafSnapshot();
+    void imageSnapshotChangeRefreshesPublicProjection();
 };
 
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+
+class SnapshotChangeEmitter : public QObject
+{
+    Q_OBJECT
+
+Q_SIGNALS:
+    void imageSnapshotChanged();
+};
+
+kiriview::DocumentSessionDocumentSignalConnector imageSnapshotChangedConnector(
+    SnapshotChangeEmitter &emitter)
+{
+    return [&emitter](QObject *context, kiriview::DocumentSessionDocumentChangeHandler handler) {
+        return QObject::connect(&emitter, &SnapshotChangeEmitter::imageSnapshotChanged, context,
+            [handler = std::move(handler)]() {
+                if (handler) {
+                    handler();
+                }
+            });
+    };
+}
 }
 
 void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeafSnapshot()
@@ -64,6 +86,48 @@ void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeaf
     QVERIFY(runtime.windowTitleSubject().contains(QStringLiteral("200")));
     QVERIFY(runtime.activeZoomPercentKnown());
     QCOMPARE(runtime.activeZoomPercent(), 100.0);
+}
+
+void TestDocumentSessionRuntimeLeafSnapshots::imageSnapshotChangeRefreshesPublicProjection()
+{
+    QObject owner;
+    SnapshotChangeEmitter emitter;
+    const QUrl imageUrl = localUrl(QStringLiteral("/media/image.png"));
+    kiriview::DocumentSessionImageDocumentSnapshot imageSnapshot;
+    kiriview::DocumentSessionVideoDocumentSnapshot videoSnapshot;
+
+    kiriview::DocumentSessionImageDocumentPort imagePort;
+    imagePort.snapshot = [&imageSnapshot]() { return imageSnapshot; };
+    imagePort.snapshotChanged = imageSnapshotChangedConnector(emitter);
+    imagePort.setSourceUrl = [&imageSnapshot](const QUrl &url) {
+        imageSnapshot.sourceUrl = url;
+        imageSnapshot.displayedUrl = url;
+        imageSnapshot.windowTitleFileName = url.fileName();
+        imageSnapshot.primaryImageSize = QSize(320, 200);
+        imageSnapshot.ready = !url.isEmpty();
+        imageSnapshot.ordinaryDirectMediaScopeActive = !url.isEmpty();
+    };
+    imagePort.openPreviousPage = []() { };
+    imagePort.openNextPage = []() { };
+    imagePort.openImageAtPage = [](int) { };
+    imagePort.deleteDisplayedFile = [](kiriview::FileDeletionMode) { };
+
+    kiriview::DocumentSessionVideoDocumentPort videoPort;
+    videoPort.snapshot = [&videoSnapshot]() { return videoSnapshot; };
+    videoPort.setSourceUrl = [&videoSnapshot](const QUrl &url) { videoSnapshot.sourceUrl = url; };
+    videoPort.videoOutput = []() -> QObject * { return nullptr; };
+    videoPort.stop = []() { };
+    videoPort.setVideoOutput = [](QObject *) { };
+    videoPort.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
+
+    kiriview::DocumentSessionRuntime runtime(&owner, std::move(imagePort), std::move(videoPort));
+    runtime.setSourceUrl(imageUrl);
+
+    imageSnapshot.primaryImageSize = QSize(640, 480);
+    Q_EMIT emitter.imageSnapshotChanged();
+
+    QVERIFY(runtime.windowTitleSubject().contains(QStringLiteral("640")));
+    QVERIFY(runtime.windowTitleSubject().contains(QStringLiteral("480")));
 }
 
 QTEST_GUILESS_MAIN(TestDocumentSessionRuntimeLeafSnapshots)
