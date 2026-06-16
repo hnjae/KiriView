@@ -9,6 +9,7 @@
 #include <QTest>
 #include <QUrl>
 #include <optional>
+#include <type_traits>
 
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
@@ -89,6 +90,7 @@ private Q_SLOTS:
     void deletedVideoFallbackRoutesFromEmptySession();
     void deletedMediaWithoutFallbackClearsNavigationAndPredecode();
     void routePlansKeepMutationPublicationFollowUpOrder();
+    void routePlansExposeTypedFollowUpsOutsideMutationList();
 };
 
 void TestDocumentSessionRoutePlan::emptyUrlProducesEmptyClearPlan()
@@ -371,6 +373,23 @@ void TestDocumentSessionRoutePlan::routePlansKeepMutationPublicationFollowUpOrde
         kiriview::DocumentSessionKind::Image, localUrl(QStringLiteral("/media/fallback.png"))));
     verifyRoutePhaseOrder(kiriview::documentSessionRoutePlanAfterMediaDeletion(
         kiriview::DocumentSessionKind::Video, std::nullopt));
+}
+
+void TestDocumentSessionRoutePlan::routePlansExposeTypedFollowUpsOutsideMutationList()
+{
+    static_assert(!std::is_constructible_v<kiriview::DocumentSessionRouteMutation,
+        kiriview::RefreshDirectMediaNavigationAfterRoutingRouteEffect>);
+    static_assert(!std::is_constructible_v<kiriview::DocumentSessionRouteMutation,
+        kiriview::ClearMediaPredecodeRouteEffect>);
+
+    const kiriview::DocumentSessionRoutePlan plan = kiriview::documentSessionRoutePlanForSourceUrl(
+        localUrl(QStringLiteral("/media/clip.mp4")), kiriview::DocumentSessionKind::Image);
+
+    QCOMPARE(plan.mutations.size(), std::size_t(8));
+    QVERIFY(plan.publishPublicProjection);
+    QCOMPARE(plan.followUpEffects.size(), std::size_t(1));
+    QVERIFY(std::holds_alternative<kiriview::RefreshDirectMediaNavigationAfterRoutingRouteEffect>(
+        plan.followUpEffects.at(0)));
 }
 
 QTEST_GUILESS_MAIN(TestDocumentSessionRoutePlan)
