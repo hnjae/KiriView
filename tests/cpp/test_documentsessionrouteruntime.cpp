@@ -15,7 +15,7 @@ class TestDocumentSessionRouteRuntime : public QObject
 
 private Q_SLOTS:
     void executionRunsMutationPublicationFollowUpAndCompletionInOrder();
-    void executionPublishesBeforeFollowUpsEvenWhenPlanListsFollowUpFirst();
+    void executionPublishesBeforeTypedFollowUps();
     void clearedNavigationRepublishesBeforePredecodeClear();
     void activeNavigationRefreshesWithoutScopeChange();
 };
@@ -60,20 +60,22 @@ void TestDocumentSessionRouteRuntime::executionRunsMutationPublicationFollowUpAn
     kiriview::DocumentSessionRoutePlan plan;
     plan.kind = kiriview::DocumentSessionRouteKind::DirectImage;
     plan.sourceUrl = imageUrl;
-    plan.operations = {
-        kiriview::DocumentSessionRouteOperation {
+    plan.mutations = {
+        kiriview::DocumentSessionRouteMutation {
             kiriview::ClearSessionErrorStringRouteOperation {} },
-        kiriview::DocumentSessionRouteOperation {
+        kiriview::DocumentSessionRouteMutation {
             kiriview::ClearDirectMediaCursorRouteOperation {} },
-        kiriview::DocumentSessionRouteOperation {
+        kiriview::DocumentSessionRouteMutation {
             kiriview::EnterImageDocumentRouteOperation { imageUrl } },
-        kiriview::DocumentSessionRouteOperation {
+        kiriview::DocumentSessionRouteMutation {
             kiriview::UseOriginalSourceIdentityRouteOperation { imageUrl } },
-        kiriview::DocumentSessionRouteOperation {
-            kiriview::RecomputePublicProjectionRouteOperation {} },
-        kiriview::DocumentSessionRouteOperation {
-            kiriview::RefreshDirectMediaNavigationAfterRoutingRouteOperation {} },
-        kiriview::DocumentSessionRouteOperation { kiriview::ClearMediaPredecodeRouteOperation {} },
+    };
+    plan.publishPublicProjection = true;
+    plan.followUpEffects = {
+        kiriview::DocumentSessionRouteFollowUpEffect {
+            kiriview::RefreshDirectMediaNavigationAfterRoutingRouteEffect {} },
+        kiriview::DocumentSessionRouteFollowUpEffect {
+            kiriview::ClearMediaPredecodeRouteEffect {} },
     };
 
     runtime.execute(plan);
@@ -94,8 +96,7 @@ void TestDocumentSessionRouteRuntime::executionRunsMutationPublicationFollowUpAn
     QCOMPARE(events, expected);
 }
 
-void TestDocumentSessionRouteRuntime::
-    executionPublishesBeforeFollowUpsEvenWhenPlanListsFollowUpFirst()
+void TestDocumentSessionRouteRuntime::executionPublishesBeforeTypedFollowUps()
 {
     std::vector<QString> events;
     kiriview::DocumentSessionRouteRuntimePorts ports;
@@ -131,20 +132,22 @@ void TestDocumentSessionRouteRuntime::
     kiriview::DocumentSessionRoutePlan plan;
     plan.kind = kiriview::DocumentSessionRouteKind::DirectImage;
     plan.sourceUrl = imageUrl;
-    plan.operations = {
-        kiriview::DocumentSessionRouteOperation {
+    plan.mutations = {
+        kiriview::DocumentSessionRouteMutation {
             kiriview::ClearSessionErrorStringRouteOperation {} },
-        kiriview::DocumentSessionRouteOperation {
+        kiriview::DocumentSessionRouteMutation {
             kiriview::ClearDirectMediaCursorRouteOperation {} },
-        kiriview::DocumentSessionRouteOperation {
+        kiriview::DocumentSessionRouteMutation {
             kiriview::EnterImageDocumentRouteOperation { imageUrl } },
-        kiriview::DocumentSessionRouteOperation {
+        kiriview::DocumentSessionRouteMutation {
             kiriview::UseOriginalSourceIdentityRouteOperation { imageUrl } },
-        kiriview::DocumentSessionRouteOperation {
-            kiriview::RefreshDirectMediaNavigationAfterRoutingRouteOperation {} },
-        kiriview::DocumentSessionRouteOperation { kiriview::ClearMediaPredecodeRouteOperation {} },
-        kiriview::DocumentSessionRouteOperation {
-            kiriview::RecomputePublicProjectionRouteOperation {} },
+    };
+    plan.publishPublicProjection = true;
+    plan.followUpEffects = {
+        kiriview::DocumentSessionRouteFollowUpEffect {
+            kiriview::RefreshDirectMediaNavigationAfterRoutingRouteEffect {} },
+        kiriview::DocumentSessionRouteFollowUpEffect {
+            kiriview::ClearMediaPredecodeRouteEffect {} },
     };
 
     runtime.execute(plan);
@@ -179,10 +182,13 @@ void TestDocumentSessionRouteRuntime::clearedNavigationRepublishesBeforePredecod
 
     kiriview::DocumentSessionRouteRuntime runtime(std::move(ports));
     kiriview::DocumentSessionRoutePlan plan;
-    plan.operations = {
-        kiriview::DocumentSessionRouteOperation {
+    plan.mutations = {
+        kiriview::DocumentSessionRouteMutation {
             kiriview::ClearDirectMediaNavigationRouteOperation {} },
-        kiriview::DocumentSessionRouteOperation { kiriview::ClearMediaPredecodeRouteOperation {} },
+    };
+    plan.followUpEffects = {
+        kiriview::DocumentSessionRouteFollowUpEffect {
+            kiriview::ClearMediaPredecodeRouteEffect {} },
     };
 
     runtime.execute(plan);
@@ -207,9 +213,9 @@ void TestDocumentSessionRouteRuntime::activeNavigationRefreshesWithoutScopeChang
 
     kiriview::DocumentSessionRouteRuntime runtime(std::move(ports));
     kiriview::DocumentSessionRoutePlan plan;
-    plan.operations = {
-        kiriview::DocumentSessionRouteOperation {
-            kiriview::RefreshDirectMediaNavigationAfterRoutingRouteOperation {} },
+    plan.followUpEffects = {
+        kiriview::DocumentSessionRouteFollowUpEffect {
+            kiriview::RefreshDirectMediaNavigationAfterRoutingRouteEffect {} },
     };
 
     runtime.execute(plan);

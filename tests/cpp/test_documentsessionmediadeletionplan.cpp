@@ -31,11 +31,22 @@ template <typename Operation>
 const Operation *operationAt(
     const kiriview::DocumentSessionMediaDeletionCompletionPlan &plan, std::size_t index)
 {
-    if (index >= plan.routePlan.operations.size()) {
+    if (index >= plan.routePlan.mutations.size()) {
         return nullptr;
     }
 
-    return std::get_if<Operation>(&plan.routePlan.operations.at(index));
+    return std::get_if<Operation>(&plan.routePlan.mutations.at(index));
+}
+
+template <typename Effect>
+const Effect *followUpEffectAt(
+    const kiriview::DocumentSessionMediaDeletionCompletionPlan &plan, std::size_t index)
+{
+    if (index >= plan.routePlan.followUpEffects.size()) {
+        return nullptr;
+    }
+
+    return std::get_if<Effect>(&plan.routePlan.followUpEffects.at(index));
 }
 }
 
@@ -157,7 +168,7 @@ void TestDocumentSessionMediaDeletionPlan::completionClearsSessionWhenNoFallback
     QCOMPARE(plan.routePlan.kind, kiriview::DocumentSessionRouteKind::Empty);
     QVERIFY(plan.routePlan.sourceUrl.isEmpty());
     QVERIFY(operationAt<kiriview::ClearDirectMediaNavigationRouteOperation>(plan, 0) != nullptr);
-    QVERIFY(operationAt<kiriview::ClearMediaPredecodeRouteOperation>(plan, 7) != nullptr);
+    QVERIFY(followUpEffectAt<kiriview::ClearMediaPredecodeRouteEffect>(plan, 0) != nullptr);
 }
 
 void TestDocumentSessionMediaDeletionPlan::canceledCompletionIsNoOp()

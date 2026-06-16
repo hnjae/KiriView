@@ -761,7 +761,8 @@ void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
     qCDebug(kiriviewNavigationLog)
         << "route source url"
         << "url" << sourceUrl << "currentKind" << documentKindName(m_state.documentKind())
-        << "routeKind" << routeKindName(plan.kind) << "operations" << plan.operations.size();
+        << "routeKind" << routeKindName(plan.kind) << "mutations" << plan.mutations.size()
+        << "followUpEffects" << plan.followUpEffects.size();
     executeRoutePlan(plan);
 }
 
@@ -772,7 +773,8 @@ void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
     qCDebug(kiriviewNavigationLog)
         << "route media url"
         << "url" << url << "currentKind" << documentKindName(m_state.documentKind()) << "routeKind"
-        << routeKindName(plan.kind) << "operations" << plan.operations.size();
+        << routeKindName(plan.kind) << "mutations" << plan.mutations.size() << "followUpEffects"
+        << plan.followUpEffects.size();
     executeRoutePlan(plan);
 }
 

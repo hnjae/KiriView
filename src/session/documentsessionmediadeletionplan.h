@@ -32,7 +32,11 @@ struct DocumentSessionMediaDeletionCompletionPlan {
     DocumentSessionRoutePlan routePlan;
     bool reportFailure = false;
 
-    bool hasRoutePlan() const { return !routePlan.operations.empty(); }
+    bool hasRoutePlan() const
+    {
+        return !routePlan.mutations.empty() || routePlan.publishPublicProjection
+            || !routePlan.followUpEffects.empty();
+    }
 };
 
 DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(FileDeletionMode mode,

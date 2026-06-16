@@ -99,11 +99,11 @@ template <typename Operation>
 const Operation *operationAt(
     const kiriview::DocumentSessionMediaDeletionCompletionPlan &plan, std::size_t index)
 {
-    if (index >= plan.routePlan.operations.size()) {
+    if (index >= plan.routePlan.mutations.size()) {
         return nullptr;
     }
 
-    return std::get_if<Operation>(&plan.routePlan.operations.at(index));
+    return std::get_if<Operation>(&plan.routePlan.mutations.at(index));
 }
 
 struct RuntimeFixture {

@@ -29,7 +29,9 @@ void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)
         m_ports.cancelMediaOpenWith();
     }
 
-    for (const DocumentSessionRouteOperation &operation : plan.operations) {
+    result.publishPublicProjection = plan.publishPublicProjection;
+
+    for (const DocumentSessionRouteMutation &mutation : plan.mutations) {
         std::visit(
             [this, &result](const auto &payload) {
                 using Operation = std::decay_t<decltype(payload)>;
@@ -129,18 +131,25 @@ void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)
                     if (m_ports.useImageDocumentSourceIdentity) {
                         m_ports.useImageDocumentSourceIdentity();
                     }
-                } else if constexpr (std::is_same_v<Operation,
-                                         RecomputePublicProjectionRouteOperation>) {
-                    result.publishPublicProjection = true;
-                } else if constexpr (std::is_same_v<Operation,
-                                         RefreshDirectMediaNavigationAfterRoutingRouteOperation>) {
+                }
+            },
+            mutation);
+    }
+
+    for (const DocumentSessionRouteFollowUpEffect &effect : plan.followUpEffects) {
+        std::visit(
+            [this, &result](const auto &payload) {
+                using Effect = std::decay_t<decltype(payload)>;
+
+                if constexpr (std::is_same_v<Effect,
+                                  RefreshDirectMediaNavigationAfterRoutingRouteEffect>) {
                     const bool directMediaNavigationActive = m_ports.directMediaNavigationActive
                         && m_ports.directMediaNavigationActive();
                     if (result.directMediaScopeChanged || result.directMediaNavigationCleared
                         || directMediaNavigationActive) {
                         result.refreshDirectMediaNavigation = true;
                     }
-                } else if constexpr (std::is_same_v<Operation, ClearMediaPredecodeRouteOperation>) {
+                } else if constexpr (std::is_same_v<Effect, ClearMediaPredecodeRouteEffect>) {
                     if (result.directMediaNavigationCleared) {
                         result.clearDirectMediaNavigationBeforePredecode = true;
                         result.publishPublicProjection = true;
@@ -148,7 +157,7 @@ void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)
                     result.clearMediaPredecode = true;
                 }
             },
-            operation);
+            effect);
     }
 
     if (result.clearDirectMediaNavigationBeforePredecode && m_ports.clearDirectMediaNavigation) {

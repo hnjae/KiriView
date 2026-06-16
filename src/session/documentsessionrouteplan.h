@@ -76,31 +76,32 @@ struct UseOriginalSourceIdentityRouteOperation {
 struct UseImageDocumentSourceIdentityRouteOperation {
 };
 
-struct RecomputePublicProjectionRouteOperation {
+using DocumentSessionRouteMutation = std::variant<ClearSessionErrorStringRouteOperation,
+    CancelDirectMediaNavigationRouteOperation, CancelMediaDeletionRouteOperation,
+    ClearDirectMediaNavigationRouteOperation, ClearDirectMediaCursorRouteOperation,
+    SetDirectVideoCursorRouteOperation, RequestDirectImageCursorRouteOperation,
+    ClearThenRequestDirectImageCursorRouteOperation, ClearImageDocumentRouteOperation,
+    LeaveVideoModeRouteOperation, EnterEmptyDocumentRouteOperation,
+    EnterImageDocumentRouteOperation, EnterVideoDocumentRouteOperation,
+    SyncDirectImageCursorFromDocumentRouteOperation, ClearSourceIdentityRouteOperation,
+    UseOriginalSourceIdentityRouteOperation, UseImageDocumentSourceIdentityRouteOperation>;
+
+struct RefreshDirectMediaNavigationAfterRoutingRouteEffect {
 };
 
-struct RefreshDirectMediaNavigationAfterRoutingRouteOperation {
+struct ClearMediaPredecodeRouteEffect {
 };
 
-struct ClearMediaPredecodeRouteOperation {
-};
-
-using DocumentSessionRouteOperation
-    = std::variant<ClearSessionErrorStringRouteOperation, CancelDirectMediaNavigationRouteOperation,
-        CancelMediaDeletionRouteOperation, ClearDirectMediaNavigationRouteOperation,
-        ClearDirectMediaCursorRouteOperation, SetDirectVideoCursorRouteOperation,
-        RequestDirectImageCursorRouteOperation, ClearThenRequestDirectImageCursorRouteOperation,
-        ClearImageDocumentRouteOperation, LeaveVideoModeRouteOperation,
-        EnterEmptyDocumentRouteOperation, EnterImageDocumentRouteOperation,
-        EnterVideoDocumentRouteOperation, SyncDirectImageCursorFromDocumentRouteOperation,
-        ClearSourceIdentityRouteOperation, UseOriginalSourceIdentityRouteOperation,
-        UseImageDocumentSourceIdentityRouteOperation, RecomputePublicProjectionRouteOperation,
-        RefreshDirectMediaNavigationAfterRoutingRouteOperation, ClearMediaPredecodeRouteOperation>;
+using DocumentSessionRouteFollowUpEffect
+    = std::variant<RefreshDirectMediaNavigationAfterRoutingRouteEffect,
+        ClearMediaPredecodeRouteEffect>;
 
 struct DocumentSessionRoutePlan {
     DocumentSessionRouteKind kind = DocumentSessionRouteKind::Empty;
     QUrl sourceUrl;
-    std::vector<DocumentSessionRouteOperation> operations;
+    std::vector<DocumentSessionRouteMutation> mutations;
+    bool publishPublicProjection = false;
+    std::vector<DocumentSessionRouteFollowUpEffect> followUpEffects;
 };
 
 DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
