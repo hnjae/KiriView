@@ -219,6 +219,7 @@ private Q_SLOTS:
     void pageSelectionStartsTrackedLoadThroughEffectExecutor();
     void pendingLoadFailureKeepsTargetPageNavigation();
     void siblingArchiveNavigationResetsManualZoom();
+    void nextDisplayedImageCanStartAtFinalScanPosition();
     void smallStaticImagePublishesProviderDisplay();
     void largeStaticImagePublishesProviderPreview();
     void staticImageStillSchedulesAdjacentPredecode();
@@ -1050,6 +1051,48 @@ void TestImageDocumentRuntime::siblingArchiveNavigationResetsManualZoom()
 
     QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
     QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Fit);
+}
+
+void TestImageDocumentRuntime::nextDisplayedImageCanStartAtFinalScanPosition()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.png"));
+    candidateProvider.setOpenedCollectionCandidates(archiveCollection->rootUrl(),
+        {
+            imageDocumentPageCandidate(firstPageUrl),
+            imageDocumentPageCandidate(secondPageUrl),
+        });
+
+    RuntimeHandle runtime = createRuntime(
+        this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(800, 800)));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(archiveUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), firstPageUrl);
+    runtime->requestManualZoomPercent(100.0);
+    runtime->requestViewportContentPosition(QPointF());
+    runtime->requestNextDisplayedImageStartToFinalScanPosition();
+
+    runtime->openNextSinglePage();
+    QVERIFY(dataLoader.finishOldestActiveLoadForUrl(secondPageUrl, QByteArrayLiteral("ok")));
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), secondPageUrl);
+
+    QVERIFY(runtime->requestDisplayedImageInitialContentPosition() > 0);
+
+    QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Manual);
+    QVERIFY(kiriview::imageZoomApproximatelyEqual(runtime->zoomPercent(), 100.0));
+    QCOMPARE(runtime->viewportContentPosition(), QPointF(400.0, 500.0));
 }
 
 void TestImageDocumentRuntime::smallStaticImagePublishesProviderDisplay()
