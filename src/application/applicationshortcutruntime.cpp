@@ -409,15 +409,15 @@ bool ApplicationShortcutRuntime::handleShortcutEvent(const QKeySequence &shortcu
         return false;
     }
 
-    if (m_shortcutWindow != nullptr && QGuiApplication::focusWindow() != m_shortcutWindow) {
-        return false;
-    }
+    const bool focusApplicable
+        = m_shortcutWindow == nullptr || QGuiApplication::focusWindow() == m_shortcutWindow;
 
     if (handleFixedShortcutEvent(shortcut)) {
         return true;
     }
 
     GenericShortcutDispatchInput input;
+    input.focusApplicable = focusApplicable;
     input.actionState = m_actionStateInput;
     input.bindings.reserve(static_cast<qsizetype>(m_shortcuts.size()));
     for (const ShortcutBinding &binding : m_shortcuts) {
@@ -457,6 +457,7 @@ bool ApplicationShortcutRuntime::handleShortcutEvent(const QKeySequence &shortcu
 bool ApplicationShortcutRuntime::handleFixedShortcutEvent(const QKeySequence &shortcut)
 {
     const FixedShortcutDispatchInput input {
+        m_shortcutWindow == nullptr || QGuiApplication::focusWindow() == m_shortcutWindow,
         m_actionStateInput.videoMode,
         m_actionStateInput.helpActionsEnabled,
         m_actionStateInput.viewerShortcutsEnabled,

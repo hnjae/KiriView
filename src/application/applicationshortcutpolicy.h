@@ -41,6 +41,7 @@ enum class FixedShortcutDispatchKind {
 };
 
 struct FixedShortcutDispatchInput {
+    bool focusApplicable = true;
     bool videoMode = false;
     bool helpActionsEnabled = false;
     bool viewerShortcutsEnabled = false;
@@ -72,6 +73,7 @@ struct GenericShortcutBinding {
 };
 
 struct GenericShortcutDispatchInput {
+    bool focusApplicable = true;
     ApplicationActionStateInput actionState;
     QList<GenericShortcutBinding> bindings;
 };

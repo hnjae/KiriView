@@ -216,6 +216,10 @@ std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value)
 FixedShortcutDispatchOutcome fixedShortcutDispatchOutcome(
     const FixedShortcutDispatchInput &input, const QKeySequence &shortcut)
 {
+    if (!input.focusApplicable) {
+        return {};
+    }
+
     const VideoShortcutAvailabilityInput videoShortcutInput {
         input.helpActionsEnabled,
         input.viewerShortcutsEnabled,
@@ -286,7 +290,7 @@ bool genericShortcutBindingEnabled(
 GenericShortcutDispatchOutcome genericShortcutDispatchOutcome(
     const GenericShortcutDispatchInput &input, const QKeySequence &shortcut)
 {
-    if (shortcut.isEmpty()) {
+    if (!input.focusApplicable || shortcut.isEmpty()) {
         return {};
     }
 
