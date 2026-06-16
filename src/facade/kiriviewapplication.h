@@ -4,9 +4,7 @@
 #ifndef KIRIVIEW_KIRIVIEWAPPLICATION_H
 #define KIRIVIEW_KIRIVIEWAPPLICATION_H
 
-#include "application/applicationactionstatepolicy.h"
 #include "application/applicationtypes.h"
-#include "application/imageactionavailabilitypolicy.h"
 
 #include <AbstractKirigamiApplication>
 #include <QAbstractListModel>
@@ -21,6 +19,7 @@
 #include <vector>
 
 namespace kiriview::ApplicationActions {
+struct ApplicationActionStateSnapshot;
 struct ApplicationCommandRouterInput;
 struct ApplicationCommandRouterPorts;
 class KiriViewApplicationActionHost;
@@ -185,8 +184,7 @@ private:
     bool imageMode() const;
     bool videoMode() const;
     bool sharedImagePannable() const;
-    ImageActionAvailabilityInput imageActionAvailabilityInput() const;
-    kiriview::ApplicationActions::ApplicationActionStateInput actionStateInput() const;
+    kiriview::ApplicationActions::ApplicationActionStateSnapshot actionStateSnapshot() const;
     kiriview::ApplicationActions::ApplicationCommandRouterInput commandRouterInput() const;
     kiriview::ApplicationActions::ApplicationCommandRouterPorts commandRouterPorts();
     void handleRuntimeActionTriggered(kiriview::ApplicationActions::ActionId actionId);
@@ -211,8 +209,6 @@ private:
     std::unique_ptr<kiriview::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;
     QPointer<KiriDocumentSession> m_documentSession;
     std::vector<QMetaObject::Connection> m_actionStateConnections;
-    ImageActionAvailabilityProjection m_imageActionProjection;
-    kiriview::ApplicationActions::ApplicationActionStateInput m_actionStateInput;
     quint64 m_actionUiGateRevision = 0;
     bool m_helpDialogOpen = false;
     bool m_textInputFocused = false;

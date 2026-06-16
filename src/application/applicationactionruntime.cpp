@@ -25,6 +25,87 @@ Actions::VideoShortcutAvailabilityInput videoShortcutInput(bool helpShortcutsEna
         videoDirectMediaNavigationActive,
     };
 }
+
+bool sharedImagePannabilityActionGate(
+    const kiriview::DocumentSessionActionAvailabilityFacts &facts, bool viewportLocalPannable)
+{
+    return facts.imageReady && viewportLocalPannable;
+}
+
+ImageActionAvailabilityInput imageActionAvailabilityInput(
+    const Actions::ApplicationActionStateSnapshot &snapshot)
+{
+    const kiriview::DocumentSessionActionAvailabilityFacts &facts
+        = snapshot.sessionActionAvailability;
+    return ImageActionAvailabilityInput {
+        facts.imageReady,
+        snapshot.fileDeletionInProgress,
+        snapshot.helpDialogOpen,
+        snapshot.textInputFocused,
+        sharedImagePannabilityActionGate(facts, snapshot.imagePannable),
+        facts.containerNavigationAvailable,
+        facts.twoPageModeActive,
+        facts.twoPageModeAvailable,
+        facts.rightToLeftReadingActive,
+        facts.rightToLeftReadingAvailable,
+    };
+}
+
+Actions::ApplicationActionStateInput actionStateInput(
+    const Actions::ApplicationActionStateSnapshot &snapshot,
+    const ImageActionAvailabilityProjection &projection)
+{
+    const kiriview::DocumentSessionActionAvailabilityFacts &facts
+        = snapshot.sessionActionAvailability;
+    const bool activeNavigationActionsAvailable
+        = snapshot.activeNavigationDispatchAvailable && projection.helpShortcutsEnabled;
+
+    Actions::ApplicationActionStateInput input;
+    input.uiGateRevision = snapshot.uiGateRevision;
+    input.helpActionsEnabled = projection.helpShortcutsEnabled;
+    input.readyActionsEnabled = projection.canUseReadyActions;
+    input.rotateActionsEnabled = projection.canUseRotateActions;
+    input.twoPageModeActionsEnabled = projection.canUseTwoPageModeActions;
+    input.rightToLeftReadingActionsEnabled = projection.canUseRightToLeftReadingActions;
+    input.containerNavigationActionsEnabled = projection.containerShortcutsEnabled;
+    input.displayedMediaOpenWithAvailable = snapshot.displayedMediaOpenWithAvailable;
+    input.displayedFileDeletionAvailable = snapshot.displayedFileDeletionAvailable;
+    input.fileDeletionInProgress = snapshot.fileDeletionInProgress;
+    input.activeNavigationAvailable = snapshot.activeNavigationAvailable;
+    input.activeNavigationKnown = snapshot.activeNavigationKnown;
+    input.activeNavigationHasTargets = snapshot.activeNavigationHasTargets;
+    input.canOpenPreviousActiveNavigation = snapshot.canOpenPreviousActiveNavigation;
+    input.canOpenNextActiveNavigation = snapshot.canOpenNextActiveNavigation;
+    input.fitModeSelected = facts.fitModeSelected;
+    input.fitHeightModeSelected = facts.fitHeightModeSelected;
+    input.fitWidthModeSelected = facts.fitWidthModeSelected;
+    input.twoPageModeActive = projection.twoPageModeActive;
+    input.rightToLeftReadingActive = projection.rightToLeftReadingActive;
+    input.infoPanelVisible = snapshot.infoPanelVisible;
+    input.thumbnailPanelVisible = snapshot.thumbnailPanelVisible;
+    input.fullscreen = snapshot.fullscreen;
+    input.applicationMenuShortcutEnabled = snapshot.applicationMenuShortcutEnabled;
+    input.showMenubarActionEnabled = snapshot.showMenubarActionEnabled;
+    input.directMediaNavigationBoundaryActive = snapshot.directMediaNavigationBoundaryActive;
+    input.viewerShortcutsEnabled = projection.viewerShortcutsEnabled;
+    input.readyShortcutsEnabled = projection.readyShortcutsEnabled;
+    input.readyViewerShortcutsEnabled = projection.readyViewerShortcutsEnabled;
+    input.twoPageViewerShortcutsEnabled = projection.twoPageViewerShortcutsEnabled;
+    input.rightToLeftReadingShortcutsEnabled = projection.rightToLeftReadingShortcutsEnabled;
+    input.rightToLeftReadingViewerShortcutsEnabled
+        = projection.rightToLeftReadingViewerShortcutsEnabled;
+    input.rotateShortcutsEnabled = projection.rotateShortcutsEnabled;
+    input.rotateViewerShortcutsEnabled = projection.rotateViewerShortcutsEnabled;
+    input.pannableShortcutsEnabled = projection.pannableShortcutsEnabled;
+    input.pannableViewerShortcutsEnabled = projection.pannableViewerShortcutsEnabled;
+    input.containerViewerShortcutsEnabled = projection.containerViewerShortcutsEnabled;
+    input.activeNavigationActionsAvailable = activeNavigationActionsAvailable;
+    input.videoMode = snapshot.videoMode;
+    input.videoFileDeletionInProgress = snapshot.fileDeletionInProgress;
+    input.videoSeekable = snapshot.videoSeekable;
+    input.videoDuration = snapshot.videoDuration;
+    return input;
+}
 }
 
 namespace kiriview::ApplicationActions {
@@ -175,6 +256,14 @@ bool ApplicationActionRuntime::mediaHorizontalArrowShortcutsEnabled(bool videoMo
             videoDirectMediaNavigationActive));
 }
 
+void ApplicationActionRuntime::setActionStateSnapshot(
+    const ApplicationActionStateSnapshot &snapshot)
+{
+    m_imageActionProjection
+        = imageActionAvailabilityProjection(imageActionAvailabilityInput(snapshot));
+    setActionStateInput(actionStateInput(snapshot, m_imageActionProjection));
+}
+
 void ApplicationActionRuntime::setActionStateInput(const ApplicationActionStateInput &input)
 {
     m_actionStateInput = input;
@@ -184,6 +273,11 @@ void ApplicationActionRuntime::setActionStateInput(const ApplicationActionStateI
     if (m_actionStateChanged) {
         m_actionStateChanged();
     }
+}
+
+bool ApplicationActionRuntime::rightToLeftReadingActive() const
+{
+    return m_imageActionProjection.rightToLeftReadingActive;
 }
 
 void ApplicationActionRuntime::handleActionTriggered(ActionId actionId,

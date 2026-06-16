@@ -121,7 +121,7 @@ void TestApplicationActionRuntime::actionStateSnapshotBuildsRuntimePolicyInput()
     QCOMPARE(runtime.actionStateRevision(), 1);
     QVERIFY(runtime.actionPlacementEnabled(ActionId::GoPreviousImageAction));
     QVERIFY(runtime.actionPlacementEnabled(ActionId::ViewToggleRightToLeftReadingAction));
-    QCOMPARE(runtime.actionMenuText(ActionId::ViewFitAction), QStringLiteral("Fit"));
+    QCOMPARE(runtime.actionMenuText(ActionId::ViewFitAction), QStringLiteral("Fit to &Window"));
     QVERIFY(runtime.rightToLeftReadingActive());
 }
 

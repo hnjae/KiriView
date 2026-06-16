@@ -14,14 +14,6 @@
 
 namespace Actions = kiriview::ApplicationActions;
 
-namespace {
-bool sharedImagePannabilityActionGate(
-    const kiriview::DocumentSessionActionAvailabilityFacts &facts, bool viewportLocalPannable)
-{
-    return facts.imageReady && viewportLocalPannable;
-}
-}
-
 namespace kiriview::ApplicationActions {
 class KiriViewApplicationActionHost final : public ApplicationActionHost
 {
@@ -336,10 +328,8 @@ void KiriViewApplication::readApplicationActionSettings() { readSettings(); }
 
 void KiriViewApplication::rebuildActionState()
 {
-    m_imageActionProjection = imageActionAvailabilityProjection(imageActionAvailabilityInput());
-    m_actionStateInput = actionStateInput();
     if (m_actionRuntime != nullptr) {
-        m_actionRuntime->setActionStateInput(m_actionStateInput);
+        m_actionRuntime->setActionStateSnapshot(actionStateSnapshot());
     }
 }
 
@@ -402,103 +392,56 @@ bool KiriViewApplication::sharedImagePannable() const
     return imageMode() && image != nullptr && image->viewportPannable();
 }
 
-ImageActionAvailabilityInput KiriViewApplication::imageActionAvailabilityInput() const
+Actions::ApplicationActionStateSnapshot KiriViewApplication::actionStateSnapshot() const
 {
-    const kiriview::DocumentSessionActionAvailabilityFacts facts = m_documentSession == nullptr
+    Actions::ApplicationActionStateSnapshot snapshot;
+    snapshot.uiGateRevision = m_actionUiGateRevision;
+    snapshot.sessionActionAvailability = m_documentSession == nullptr
         ? kiriview::DocumentSessionActionAvailabilityFacts {}
         : m_documentSession->actionAvailabilityFacts();
-
-    return ImageActionAvailabilityInput {
-        facts.imageReady,
-        m_documentSession != nullptr && m_documentSession->fileDeletionInProgress(),
-        m_helpDialogOpen,
-        m_textInputFocused,
-        sharedImagePannabilityActionGate(facts, sharedImagePannable()),
-        facts.containerNavigationAvailable,
-        facts.twoPageModeActive,
-        facts.twoPageModeAvailable,
-        facts.rightToLeftReadingActive,
-        facts.rightToLeftReadingAvailable,
-    };
-}
-
-Actions::ApplicationActionStateInput KiriViewApplication::actionStateInput() const
-{
-    Actions::ApplicationActionStateInput input;
-    const kiriview::DocumentSessionActionAvailabilityFacts facts = m_documentSession == nullptr
-        ? kiriview::DocumentSessionActionAvailabilityFacts {}
-        : m_documentSession->actionAvailabilityFacts();
-    const bool activeVideoMode = videoMode();
-    const bool activeNavigationActionsAvailable = m_documentSession != nullptr
-        && m_documentSession->activeNavigationDispatchAvailable()
-        && m_imageActionProjection.helpShortcutsEnabled;
-
-    input.uiGateRevision = m_actionUiGateRevision;
-    input.helpActionsEnabled = m_imageActionProjection.helpShortcutsEnabled;
-    input.readyActionsEnabled = m_imageActionProjection.canUseReadyActions;
-    input.rotateActionsEnabled = m_imageActionProjection.canUseRotateActions;
-    input.twoPageModeActionsEnabled = m_imageActionProjection.canUseTwoPageModeActions;
-    input.rightToLeftReadingActionsEnabled
-        = m_imageActionProjection.canUseRightToLeftReadingActions;
-    input.containerNavigationActionsEnabled = m_imageActionProjection.containerShortcutsEnabled;
-    input.displayedMediaOpenWithAvailable
+    snapshot.displayedMediaOpenWithAvailable
         = m_documentSession != nullptr && m_documentSession->displayedMediaOpenWithAvailable();
-    input.displayedFileDeletionAvailable
+    snapshot.displayedFileDeletionAvailable
         = m_documentSession != nullptr && m_documentSession->displayedFileDeletionAvailable();
-    input.fileDeletionInProgress
+    snapshot.fileDeletionInProgress
         = m_documentSession != nullptr && m_documentSession->fileDeletionInProgress();
-    input.activeNavigationAvailable
+    snapshot.activeNavigationAvailable
         = m_documentSession != nullptr && m_documentSession->activeNavigationAvailable();
-    input.activeNavigationKnown
+    snapshot.activeNavigationKnown
         = m_documentSession != nullptr && m_documentSession->activeNavigationKnown();
-    input.activeNavigationHasTargets
+    snapshot.activeNavigationHasTargets
         = m_documentSession != nullptr && m_documentSession->activeNavigationHasTargets();
-    input.canOpenPreviousActiveNavigation
+    snapshot.canOpenPreviousActiveNavigation
         = m_documentSession != nullptr && m_documentSession->canOpenPreviousActiveNavigation();
-    input.canOpenNextActiveNavigation
+    snapshot.canOpenNextActiveNavigation
         = m_documentSession != nullptr && m_documentSession->canOpenNextActiveNavigation();
-    input.fitModeSelected = facts.fitModeSelected;
-    input.fitHeightModeSelected = facts.fitHeightModeSelected;
-    input.fitWidthModeSelected = facts.fitWidthModeSelected;
-    input.twoPageModeActive = m_imageActionProjection.twoPageModeActive;
-    input.rightToLeftReadingActive = m_imageActionProjection.rightToLeftReadingActive;
-    input.infoPanelVisible = m_infoPanelVisible;
-    input.thumbnailPanelVisible = m_thumbnailPanelVisible;
-    input.fullscreen = m_fullscreen;
-    input.applicationMenuShortcutEnabled = m_applicationMenuShortcutEnabled;
-    input.showMenubarActionEnabled = m_showMenubarActionEnabled;
-    input.directMediaNavigationBoundaryActive
+    snapshot.directMediaNavigationBoundaryActive
         = m_documentSession != nullptr && m_documentSession->directMediaNavigationBoundaryActive();
-    input.viewerShortcutsEnabled = m_imageActionProjection.viewerShortcutsEnabled;
-    input.readyShortcutsEnabled = m_imageActionProjection.readyShortcutsEnabled;
-    input.readyViewerShortcutsEnabled = m_imageActionProjection.readyViewerShortcutsEnabled;
-    input.twoPageViewerShortcutsEnabled = m_imageActionProjection.twoPageViewerShortcutsEnabled;
-    input.rightToLeftReadingShortcutsEnabled
-        = m_imageActionProjection.rightToLeftReadingShortcutsEnabled;
-    input.rightToLeftReadingViewerShortcutsEnabled
-        = m_imageActionProjection.rightToLeftReadingViewerShortcutsEnabled;
-    input.rotateShortcutsEnabled = m_imageActionProjection.rotateShortcutsEnabled;
-    input.rotateViewerShortcutsEnabled = m_imageActionProjection.rotateViewerShortcutsEnabled;
-    input.pannableShortcutsEnabled = m_imageActionProjection.pannableShortcutsEnabled;
-    input.pannableViewerShortcutsEnabled = m_imageActionProjection.pannableViewerShortcutsEnabled;
-    input.containerViewerShortcutsEnabled = m_imageActionProjection.containerViewerShortcutsEnabled;
-    input.activeNavigationActionsAvailable = activeNavigationActionsAvailable;
-    input.videoMode = activeVideoMode;
-    input.videoFileDeletionInProgress
-        = m_documentSession != nullptr && m_documentSession->fileDeletionInProgress();
+    snapshot.activeNavigationDispatchAvailable
+        = m_documentSession != nullptr && m_documentSession->activeNavigationDispatchAvailable();
+    snapshot.videoMode = videoMode();
+    snapshot.helpDialogOpen = m_helpDialogOpen;
+    snapshot.textInputFocused = m_textInputFocused;
+    snapshot.imagePannable = sharedImagePannable();
+    snapshot.infoPanelVisible = m_infoPanelVisible;
+    snapshot.thumbnailPanelVisible = m_thumbnailPanelVisible;
+    snapshot.fullscreen = m_fullscreen;
+    snapshot.applicationMenuShortcutEnabled = m_applicationMenuShortcutEnabled;
+    snapshot.showMenubarActionEnabled = m_showMenubarActionEnabled;
     if (KiriVideoDocument *video
         = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
-        input.videoSeekable = video->seekable();
-        input.videoDuration = video->duration();
+        snapshot.videoSeekable = video->seekable();
+        snapshot.videoDuration = video->duration();
     }
-    return input;
+    return snapshot;
 }
 
 Actions::ApplicationCommandRouterInput KiriViewApplication::commandRouterInput() const
 {
     Actions::ApplicationCommandRouterInput input;
     input.imagePannable = sharedImagePannable();
-    input.rightToLeftReadingActive = m_imageActionProjection.rightToLeftReadingActive;
+    input.rightToLeftReadingActive
+        = m_actionRuntime != nullptr && m_actionRuntime->rightToLeftReadingActive();
     input.videoMode = videoMode();
     input.imageDocumentPageNavigationActive = m_documentSession != nullptr
         && m_documentSession->activeNavigationBoundaryScope()

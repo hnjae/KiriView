@@ -10,6 +10,8 @@
 #include "applicationcommandrouter.h"
 #include "applicationmenupresentationruntime.h"
 #include "applicationshortcutpolicy.h"
+#include "imageactionavailabilitypolicy.h"
+#include "session/documentsessiontypes.h"
 
 #include <KStandardActions>
 #include <QAbstractListModel>
@@ -24,6 +26,32 @@
 namespace kiriview::ApplicationActions {
 struct ActionDefinition;
 class ApplicationShortcutRuntime;
+
+struct ApplicationActionStateSnapshot {
+    quint64 uiGateRevision = 0;
+    kiriview::DocumentSessionActionAvailabilityFacts sessionActionAvailability;
+    bool displayedMediaOpenWithAvailable = false;
+    bool displayedFileDeletionAvailable = false;
+    bool fileDeletionInProgress = false;
+    bool activeNavigationAvailable = false;
+    bool activeNavigationKnown = false;
+    bool activeNavigationHasTargets = false;
+    bool canOpenPreviousActiveNavigation = false;
+    bool canOpenNextActiveNavigation = false;
+    bool directMediaNavigationBoundaryActive = false;
+    bool activeNavigationDispatchAvailable = false;
+    bool videoMode = false;
+    bool videoSeekable = false;
+    qint64 videoDuration = 0;
+    bool helpDialogOpen = false;
+    bool textInputFocused = false;
+    bool imagePannable = false;
+    bool infoPanelVisible = false;
+    bool thumbnailPanelVisible = false;
+    bool fullscreen = false;
+    bool applicationMenuShortcutEnabled = false;
+    bool showMenubarActionEnabled = true;
+};
 
 class ApplicationActionRuntime final
 {
@@ -71,7 +99,9 @@ public:
     bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
         bool videoViewerShortcutsEnabled, bool videoDirectMediaNavigationActive,
         bool videoFileDeletionInProgress) const;
+    void setActionStateSnapshot(const ApplicationActionStateSnapshot &snapshot);
     void setActionStateInput(const ApplicationActionStateInput &input);
+    bool rightToLeftReadingActive() const;
     void handleActionTriggered(ActionId actionId, const ApplicationCommandRouterInput &input,
         const ApplicationCommandRouterPorts &ports) const;
     void handleScanForwardAction(const ApplicationCommandRouterInput &input,
@@ -106,6 +136,7 @@ private:
     ApplicationCommandRouter m_commandRouter;
     ApplicationMenuPresentationRuntime m_menuPresentationRuntime;
     std::unique_ptr<ApplicationShortcutRuntime> m_shortcutRuntime;
+    ImageActionAvailabilityProjection m_imageActionProjection;
     ApplicationActionStateInput m_actionStateInput;
     int m_actionStateRevision = 0;
     bool m_applyingActionState = false;
