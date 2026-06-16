@@ -12,7 +12,6 @@
 #include "predecode/predecodedimage.h"
 #include "presentation/imagepresentationstate.h"
 #include "presentation/imageviewportcommandstate.h"
-#include "presentation/imageviewportinteraction.h"
 #include "rendering/imagerendercontext.h"
 
 #include <QObject>
@@ -335,14 +334,10 @@ private:
     void setRightToLeftReadingEnabled(bool enabled);
     void handleDocumentChanges(const std::vector<kiriview::ImageDocumentChange> &changes);
     void refreshDisplaySources();
-    kiriview::ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
-    bool requestViewportInteractionContentPosition(const QPointF &contentPosition);
-    bool requestAnchoredManualZoom(double zoomPercent, const QPointF &viewportAnchorPoint);
 
     std::unique_ptr<kiriview::ImageDocumentRuntime> m_runtime;
     std::unique_ptr<KiriImageDisplaySource> m_primaryDisplaySource;
     std::unique_ptr<KiriImageDisplaySource> m_secondaryDisplaySource;
-    kiriview::ImageViewportInteraction m_viewportInteraction;
 };
 
 #endif

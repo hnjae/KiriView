@@ -150,6 +150,10 @@ QPointF ImageDocumentRuntime::viewportContentPosition() const
 
 quint64 ImageDocumentRuntime::requestViewportContentPosition(const QPointF &viewportContentPosition)
 {
+    if (!pointIsFinite(viewportContentPosition)) {
+        return 0;
+    }
+
     return controllers->spreadController()
         .requestViewportContentPosition(viewportContentPosition)
         .revision;
@@ -373,6 +377,67 @@ void ImageDocumentRuntime::requestManualZoomPercent(qreal zoomPercent)
     controllers->spreadController().requestManualZoomPercent(zoomPercent);
 }
 
+bool ImageDocumentRuntime::requestManualZoomPercentAtCenter(qreal zoomPercent)
+{
+    if (status() != ImageDocumentStatus::Ready) {
+        return false;
+    }
+
+    return requestAnchoredManualZoom(clampedManualZoomPercent(zoomPercent),
+        QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
+}
+
+bool ImageDocumentRuntime::requestZoomByStep(qreal stepCount, const QPointF &viewportAnchorPoint)
+{
+    if (status() != ImageDocumentStatus::Ready || !pointIsFinite(viewportAnchorPoint)) {
+        return false;
+    }
+
+    const QPointF anchorPoint = viewportInteraction.nearestImageViewportPoint(
+        viewportInteractionSnapshot(), viewportContentPosition(), viewportAnchorPoint);
+    if (!pointIsFinite(anchorPoint)) {
+        return false;
+    }
+
+    return requestAnchoredManualZoom(steppedManualZoomPercent(stepCount), anchorPoint);
+}
+
+bool ImageDocumentRuntime::requestZoomByStepAtCenter(qreal stepCount)
+{
+    return requestZoomByStep(
+        stepCount, QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
+}
+
+bool ImageDocumentRuntime::requestActualSizeAtCenter()
+{
+    if (status() != ImageDocumentStatus::Ready) {
+        return false;
+    }
+
+    return requestAnchoredManualZoom(clampedManualZoomPercent(100.0),
+        QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
+}
+
+bool ImageDocumentRuntime::requestToggleFitOrActualSize(const QPointF &viewportPoint)
+{
+    if (status() != ImageDocumentStatus::Ready || !pointIsFinite(viewportPoint)) {
+        return false;
+    }
+
+    if (zoomMode() != ImageZoomMode::Fit) {
+        setFitMode(ImageZoomMode::Fit);
+        return true;
+    }
+
+    const QPointF anchorPoint = viewportInteraction.nearestImageViewportPoint(
+        viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
+    if (!pointIsFinite(anchorPoint)) {
+        return false;
+    }
+
+    return requestAnchoredManualZoom(clampedManualZoomPercent(100.0), anchorPoint);
+}
+
 ImageZoomMode ImageDocumentRuntime::zoomMode() const
 {
     return controllers->spreadController().zoomMode();
@@ -488,6 +553,18 @@ ImagePresentationTransitionState ImageDocumentRuntime::presentationTransitionSta
     return controllers->spreadController().presentationTransitionState();
 }
 
+bool ImageDocumentRuntime::viewportPointInsideImage(const QPointF &viewportPoint) const
+{
+    return viewportInteraction.viewportPointInsideImage(
+        viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
+}
+
+QPointF ImageDocumentRuntime::nearestImageViewportPoint(const QPointF &viewportPoint) const
+{
+    return viewportInteraction.nearestImageViewportPoint(
+        viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
+}
+
 bool ImageDocumentRuntime::unsupportedOpenedCollectionVideo() const
 {
     return state.unsupportedOpenedCollectionVideo();
@@ -582,6 +659,25 @@ quint64 ImageDocumentRuntime::requestViewportInteractionContentPosition(
     }
 
     return 0;
+}
+
+bool ImageDocumentRuntime::requestAnchoredManualZoom(
+    qreal zoomPercent, const QPointF &viewportAnchorPoint)
+{
+    if (!pointIsFinite(viewportAnchorPoint)) {
+        return false;
+    }
+
+    const qreal nextZoomPercent = clampedManualZoomPercent(zoomPercent);
+    if (std::abs(nextZoomPercent - this->zoomPercent()) < 0.001) {
+        return false;
+    }
+
+    const QPointF nextContentPosition
+        = viewportInteraction.zoomContentPosition(viewportInteractionSnapshot(),
+            viewportContentPosition(), viewportAnchorPoint, nextZoomPercent);
+    requestManualZoomPercent(nextZoomPercent);
+    return requestViewportInteractionContentPosition(nextContentPosition) > 0;
 }
 
 ImageViewportInteractionSnapshot ImageDocumentRuntime::viewportInteractionSnapshot() const

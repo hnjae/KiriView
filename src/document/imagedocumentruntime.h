@@ -99,6 +99,11 @@ public:
     bool zoomPercentKnown() const;
     qreal zoomPercent() const;
     void requestManualZoomPercent(qreal zoomPercent);
+    bool requestManualZoomPercentAtCenter(qreal zoomPercent);
+    bool requestZoomByStep(qreal stepCount, const QPointF &viewportAnchorPoint);
+    bool requestZoomByStepAtCenter(qreal stepCount);
+    bool requestActualSizeAtCenter();
+    bool requestToggleFitOrActualSize(const QPointF &viewportPoint);
     ImageZoomMode zoomMode() const;
     ImageZoomMode fitModeSelection() const;
     qreal maximumManualZoomPercent() const;
@@ -122,6 +127,8 @@ public:
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
     ImagePresentationTransitionState presentationTransitionState() const;
+    bool viewportPointInsideImage(const QPointF &viewportPoint) const;
+    QPointF nearestImageViewportPoint(const QPointF &viewportPoint) const;
     bool unsupportedOpenedCollectionVideo() const;
     std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
@@ -153,6 +160,7 @@ public:
 private:
     ImageDocumentRenderContext renderContext() const;
     quint64 requestViewportInteractionContentPosition(const QPointF &contentPosition);
+    bool requestAnchoredManualZoom(qreal zoomPercent, const QPointF &viewportAnchorPoint);
     ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
     void updateViewportInteractionForPublishedChanges(
         const std::vector<ImageDocumentChange> &changes);

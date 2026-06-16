@@ -9,7 +9,6 @@
 #include "location/imagelocation.h"
 #include "system/filedeletion.h"
 
-#include <cmath>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -155,11 +154,6 @@ KiriImageDocument::ViewportObservationOrigin fromImageViewportObservationOrigin(
     }
 
     return KiriImageDocument::ViewportObservationOrigin::System;
-}
-
-bool pointIsFinite(const QPointF &point)
-{
-    return std::isfinite(point.x()) && std::isfinite(point.y());
 }
 
 KiriImageDocument::PresentationTransitionState fromImagePresentationTransitionState(
@@ -556,43 +550,22 @@ double KiriImageDocument::steppedManualZoomPercent(double stepCount) const
 
 bool KiriImageDocument::requestManualZoomPercent(double zoomPercent)
 {
-    if (status() != Status::Ready) {
-        return false;
-    }
-
-    return requestAnchoredManualZoom(clampedManualZoomPercent(zoomPercent),
-        QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
+    return m_runtime->requestManualZoomPercentAtCenter(zoomPercent);
 }
 
 bool KiriImageDocument::requestZoomByStep(double stepCount, const QPointF &viewportAnchorPoint)
 {
-    if (status() != Status::Ready || !pointIsFinite(viewportAnchorPoint)) {
-        return false;
-    }
-
-    const QPointF anchorPoint = m_viewportInteraction.nearestImageViewportPoint(
-        viewportInteractionSnapshot(), viewportContentPosition(), viewportAnchorPoint);
-    if (!pointIsFinite(anchorPoint)) {
-        return false;
-    }
-
-    return requestAnchoredManualZoom(steppedManualZoomPercent(stepCount), anchorPoint);
+    return m_runtime->requestZoomByStep(stepCount, viewportAnchorPoint);
 }
 
 bool KiriImageDocument::requestZoomByStepAtCenter(double stepCount)
 {
-    return requestZoomByStep(
-        stepCount, QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
+    return m_runtime->requestZoomByStepAtCenter(stepCount);
 }
 
 bool KiriImageDocument::requestActualSizeAtCenter()
 {
-    if (status() != Status::Ready) {
-        return false;
-    }
-
-    return requestAnchoredManualZoom(clampedManualZoomPercent(100.0),
-        QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
+    return m_runtime->requestActualSizeAtCenter();
 }
 
 bool KiriImageDocument::requestFitMode(ZoomMode zoomMode)
@@ -612,22 +585,7 @@ bool KiriImageDocument::requestFitMode(ZoomMode zoomMode)
 
 bool KiriImageDocument::requestToggleFitOrActualSize(const QPointF &viewportPoint)
 {
-    if (status() != Status::Ready || !pointIsFinite(viewportPoint)) {
-        return false;
-    }
-
-    if (zoomMode() != ZoomMode::Fit) {
-        setFitMode(ZoomMode::Fit);
-        return true;
-    }
-
-    const QPointF anchorPoint = m_viewportInteraction.nearestImageViewportPoint(
-        viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
-    if (!pointIsFinite(anchorPoint)) {
-        return false;
-    }
-
-    return requestAnchoredManualZoom(clampedManualZoomPercent(100.0), anchorPoint);
+    return m_runtime->requestToggleFitOrActualSize(viewportPoint);
 }
 
 bool KiriImageDocument::requestViewportPanBy(double deltaX, double deltaY)
@@ -667,14 +625,12 @@ bool KiriImageDocument::requestDisplayedImageInitialContentPosition()
 
 bool KiriImageDocument::viewportPointInsideImage(const QPointF &viewportPoint) const
 {
-    return m_viewportInteraction.viewportPointInsideImage(
-        viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
+    return m_runtime->viewportPointInsideImage(viewportPoint);
 }
 
 QPointF KiriImageDocument::nearestImageViewportPoint(const QPointF &viewportPoint) const
 {
-    return m_viewportInteraction.nearestImageViewportPoint(
-        viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
+    return m_runtime->nearestImageViewportPoint(viewportPoint);
 }
 
 void KiriImageDocument::requestToggleTwoPageMode() { setTwoPageModeEnabled(!twoPageModeEnabled()); }
@@ -789,55 +745,6 @@ bool KiriImageDocument::acknowledgeDisplayImageLoad(int pageRole, const QUrl &pr
 
     m_runtime->acknowledgeDisplayImageLoad(
         *displayPageRole, providerUrl, *revision, sourceIdentity, *loadOutcome);
-    return true;
-}
-
-kiriview::ImageViewportInteractionSnapshot KiriImageDocument::viewportInteractionSnapshot() const
-{
-    const kiriview::ImageFirstDisplayDecodeContext firstDisplayContext
-        = m_runtime->firstDisplayDecodeContext();
-    const double devicePixelRatio = firstDisplayContext.isValid() && viewportSize().width() > 0.0
-        ? firstDisplayContext.physicalViewportSize.width() / viewportSize().width()
-        : 1.0;
-    return kiriview::ImageViewportInteractionSnapshot {
-        imageSize(),
-        viewportSize(),
-        displaySize(),
-        devicePixelRatio,
-        rightToLeftReadingEnabled() && rightToLeftReadingAvailable(),
-    };
-}
-
-bool KiriImageDocument::requestViewportInteractionContentPosition(const QPointF &contentPosition)
-{
-    if (!pointIsFinite(contentPosition)) {
-        return false;
-    }
-
-    const QPointF previousContentPosition = viewportContentPosition();
-    const quint64 previousCommandRevision = viewportCommandRevision();
-    const quint64 commandRevision = m_runtime->requestViewportContentPosition(contentPosition);
-    return previousContentPosition != viewportContentPosition()
-        || commandRevision > previousCommandRevision;
-}
-
-bool KiriImageDocument::requestAnchoredManualZoom(
-    double zoomPercent, const QPointF &viewportAnchorPoint)
-{
-    if (!pointIsFinite(viewportAnchorPoint)) {
-        return false;
-    }
-
-    const double nextZoomPercent = clampedManualZoomPercent(zoomPercent);
-    if (std::abs(nextZoomPercent - this->zoomPercent()) < 0.001) {
-        return false;
-    }
-
-    const QPointF nextContentPosition
-        = m_viewportInteraction.zoomContentPosition(viewportInteractionSnapshot(),
-            viewportContentPosition(), viewportAnchorPoint, nextZoomPercent);
-    m_runtime->requestManualZoomPercent(nextZoomPercent);
-    requestViewportInteractionContentPosition(nextContentPosition);
     return true;
 }
 
