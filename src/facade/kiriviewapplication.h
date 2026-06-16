@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_KIRIVIEWAPPLICATION_H
 #define KIRIVIEW_KIRIVIEWAPPLICATION_H
 
+#include "application/applicationcommandportsource.h"
 #include "application/applicationtypes.h"
 
 #include <AbstractKirigamiApplication>
@@ -20,8 +21,6 @@
 
 namespace kiriview::ApplicationActions {
 struct ApplicationActionStateSnapshot;
-struct ApplicationCommandRouterInput;
-struct ApplicationCommandRouterPorts;
 class KiriViewApplicationActionHost;
 class ApplicationActionRuntime;
 class ApplicationShortcutRuntime;
@@ -30,7 +29,8 @@ class ApplicationShortcutRuntime;
 class KiriDocumentSession;
 class KiriImageDocument;
 
-class KiriViewApplication : public AbstractKirigamiApplication
+class KiriViewApplication : public AbstractKirigamiApplication,
+                            private kiriview::ApplicationActions::ApplicationCommandPortSource
 {
     Q_OBJECT
     QML_ELEMENT
@@ -185,8 +185,22 @@ private:
     bool videoMode() const;
     bool sharedImagePannable() const;
     kiriview::ApplicationActions::ApplicationActionStateSnapshot actionStateSnapshot() const;
-    kiriview::ApplicationActions::ApplicationCommandRouterPorts commandRouterPorts();
-    void handleRuntimeActionTriggered(kiriview::ApplicationActions::ActionId actionId);
+    kiriview::ApplicationActions::ApplicationCommandRouterShellPorts
+    commandRouterShellPorts() override;
+    kiriview::ApplicationActions::ApplicationCommandRouterSessionPorts
+    commandRouterSessionPorts() override;
+    kiriview::ApplicationActions::ApplicationCommandRouterImageDocumentPorts
+    commandRouterImageDocumentPorts() override;
+    kiriview::ApplicationActions::ApplicationCommandRouterImagePresentationPorts
+    commandRouterImagePresentationPorts() override;
+    kiriview::ApplicationActions::ApplicationCommandRouterPanelPorts
+    commandRouterPanelPorts() override;
+    kiriview::ApplicationActions::ApplicationCommandRouterWindowPorts
+    commandRouterWindowPorts() override;
+    kiriview::ApplicationActions::ApplicationCommandRouterHelpPorts
+    commandRouterHelpPorts() override;
+    kiriview::ApplicationActions::ApplicationCommandRouterVideoPorts
+    commandRouterVideoPorts() override;
     void moveDisplayedFileToTrash();
     void deleteDisplayedFilePermanently();
     void requestImageFitMode();
@@ -199,10 +213,6 @@ private:
     void handleScanBackwardAction();
     void updateActionUiGateSnapshot(ActionUiGateSnapshot snapshot);
     void applyActionUiGateSnapshot(const ActionUiGateSnapshot &snapshot);
-    bool executeHorizontalArrowShortcut(bool leftArrow);
-    bool executeSinglePageArrowShortcut(bool leftArrow);
-    bool executeVerticalPanShortcut(bool up);
-    bool executeVideoSeekShortcut(qint64 deltaMilliseconds);
 
     std::unique_ptr<kiriview::ApplicationActions::KiriViewApplicationActionHost> m_actionHost;
     std::unique_ptr<kiriview::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;

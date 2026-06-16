@@ -3,6 +3,7 @@
 
 #include "applicationactionruntime.h"
 
+#include "applicationcommandportsource.h"
 #include "applicationshortcutruntime.h"
 #include "kiriviewapplicationactions.h"
 
@@ -132,13 +133,13 @@ ApplicationActionRuntime::ApplicationActionRuntime(ApplicationActionHost &host, 
           ApplicationShortcutRuntime::TriggerCallbacks {
               std::move(callbacks.unsupportedVideoActionTriggered),
               std::move(callbacks.unsupportedImageActionTriggered),
-              std::move(callbacks.horizontalArrowShortcutTriggered),
-              std::move(callbacks.singlePageArrowShortcutTriggered),
-              std::move(callbacks.verticalPanShortcutTriggered),
-              std::move(callbacks.videoSeekShortcutTriggered),
+              [this](bool leftArrow) { return executeHorizontalArrowShortcut(leftArrow); },
+              [this](bool leftArrow) { return executeSinglePageArrowShortcut(leftArrow); },
+              [this](bool up) { return executeVerticalPanShortcut(up); },
+              [this](
+                  qint64 deltaMilliseconds) { return executeVideoSeekShortcut(deltaMilliseconds); },
           }))
     , m_actionStateChanged(std::move(callbacks.actionStateChanged))
-    , m_actionTriggered(std::move(callbacks.actionTriggered))
 {
 }
 
@@ -290,6 +291,11 @@ void ApplicationActionRuntime::setActionStateInput(const ApplicationActionStateI
     }
 }
 
+void ApplicationActionRuntime::setCommandPortSource(ApplicationCommandPortSource *source)
+{
+    m_commandPortSource = source;
+}
+
 ApplicationCommandRouterInput ApplicationActionRuntime::commandRouterInput() const
 {
     return routerInputForSnapshot(m_actionStateSnapshot, m_imageActionProjection);
@@ -300,49 +306,43 @@ bool ApplicationActionRuntime::rightToLeftReadingActive() const
     return m_imageActionProjection.rightToLeftReadingActive;
 }
 
-void ApplicationActionRuntime::handleActionTriggered(ActionId actionId,
-    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
+void ApplicationActionRuntime::handleActionTriggered(ActionId actionId) const
 {
-    m_commandRouter.handleActionTriggered(actionId, input, ports);
+    m_commandRouter.handleActionTriggered(actionId, commandRouterInput(), commandRouterPorts());
 }
 
-void ApplicationActionRuntime::handleScanForwardAction(
-    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
+void ApplicationActionRuntime::handleScanForwardAction() const
 {
-    m_commandRouter.handleScanForwardAction(input, ports);
+    m_commandRouter.handleScanForwardAction(commandRouterInput(), commandRouterPorts());
 }
 
-void ApplicationActionRuntime::handleScanBackwardAction(
-    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
+void ApplicationActionRuntime::handleScanBackwardAction() const
 {
-    m_commandRouter.handleScanBackwardAction(input, ports);
+    m_commandRouter.handleScanBackwardAction(commandRouterInput(), commandRouterPorts());
 }
 
-bool ApplicationActionRuntime::executeHorizontalArrowShortcut(
-    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports,
-    bool leftArrow) const
+bool ApplicationActionRuntime::executeHorizontalArrowShortcut(bool leftArrow) const
 {
-    return m_commandRouter.executeHorizontalArrowShortcut(input, ports, leftArrow);
+    return m_commandRouter.executeHorizontalArrowShortcut(
+        commandRouterInput(), commandRouterPorts(), leftArrow);
 }
 
-bool ApplicationActionRuntime::executeSinglePageArrowShortcut(
-    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports,
-    bool leftArrow) const
+bool ApplicationActionRuntime::executeSinglePageArrowShortcut(bool leftArrow) const
 {
-    return m_commandRouter.executeSinglePageArrowShortcut(input, ports, leftArrow);
+    return m_commandRouter.executeSinglePageArrowShortcut(
+        commandRouterInput(), commandRouterPorts(), leftArrow);
 }
 
-bool ApplicationActionRuntime::executeVerticalPanShortcut(
-    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports,
-    bool up) const
+bool ApplicationActionRuntime::executeVerticalPanShortcut(bool up) const
 {
-    return m_commandRouter.executeVerticalPanShortcut(input, ports, up);
+    return m_commandRouter.executeVerticalPanShortcut(
+        commandRouterInput(), commandRouterPorts(), up);
 }
 
-bool ApplicationActionRuntime::executeVideoSeekShortcut(const ApplicationCommandRouterInput &input,
-    const ApplicationCommandRouterPorts &ports, qint64 deltaMilliseconds) const
+bool ApplicationActionRuntime::executeVideoSeekShortcut(qint64 deltaMilliseconds) const
 {
-    return m_commandRouter.executeVideoSeekShortcut(input, ports, deltaMilliseconds);
+    return m_commandRouter.executeVideoSeekShortcut(
+        commandRouterInput(), commandRouterPorts(), deltaMilliseconds);
 }
 
 void ApplicationActionRuntime::setShortcutHost(QObject *host)
@@ -457,9 +457,7 @@ void ApplicationActionRuntime::handleActionTriggered(ActionId actionId, QAction 
     if (triggeredAction == nullptr || !triggeredAction->isEnabled()) {
         return;
     }
-    if (m_actionTriggered) {
-        m_actionTriggered(actionId);
-    }
+    handleActionTriggered(actionId);
 }
 
 void ApplicationActionRuntime::applyActionState()
@@ -480,6 +478,14 @@ void ApplicationActionRuntime::applyActionState()
         }
     }
     m_applyingActionState = false;
+}
+
+ApplicationCommandRouterPorts ApplicationActionRuntime::commandRouterPorts() const
+{
+    if (m_commandPortSource == nullptr) {
+        return {};
+    }
+    return applicationCommandRouterPorts(*m_commandPortSource);
 }
 
 }

@@ -7,6 +7,7 @@ src/decoding/apngrgbabuffer.cpp
 src/decoding/animationtiming.cpp
 src/decoding/decodedimageresult.cpp
 src/application/applicationcommandrouter.cpp
+src/application/applicationcommandportsource.cpp
 src/application/applicationactionregistry.cpp
 src/application/applicationactionruntime.cpp
 src/application/applicationactionstatepolicy.cpp

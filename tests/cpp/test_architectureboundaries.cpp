@@ -621,8 +621,10 @@ void TestArchitectureBoundaries::videoSeekShortcutsRouteThroughApplicationRuntim
     const QString videoViewport = readProjectFile(QStringLiteral("src/qml/VideoViewport.qml"));
     const QString shortcutRuntime
         = readProjectFile(QStringLiteral("src/application/applicationshortcutruntime.cpp"));
-    const QString applicationHeader
-        = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.h"));
+    const QString actionRuntimeHeader
+        = readProjectFile(QStringLiteral("src/application/applicationactionruntime.h"));
+    const QString actionRuntimeImplementation
+        = readProjectFile(QStringLiteral("src/application/applicationactionruntime.cpp"));
     const QString applicationImplementation
         = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.cpp"));
     const QList<QRegularExpression> forbiddenVideoViewportPatterns {
@@ -653,8 +655,8 @@ void TestArchitectureBoundaries::videoSeekShortcutsRouteThroughApplicationRuntim
     QVERIFY(shortcutPolicy.contains(QStringLiteral("Alt+Down")));
     QVERIFY(shortcutRuntime.contains(QStringLiteral("fixedShortcutDispatchOutcome")));
     QVERIFY(shortcutRuntime.contains(QStringLiteral("videoSeekShortcutTriggered")));
-    QVERIFY(applicationHeader.contains(QStringLiteral("executeVideoSeekShortcut")));
-    QVERIFY(applicationImplementation.contains(QStringLiteral("executeVideoSeekShortcut")));
+    QVERIFY(actionRuntimeHeader.contains(QStringLiteral("executeVideoSeekShortcut")));
+    QVERIFY(actionRuntimeImplementation.contains(QStringLiteral("executeVideoSeekShortcut")));
     QVERIFY(applicationImplementation.contains(QStringLiteral("seekable()")));
     QVERIFY(applicationImplementation.contains(QStringLiteral("seekBy(")));
 }
@@ -670,9 +672,11 @@ void TestArchitectureBoundaries::applicationFacadeDoesNotOwnFixedViewerCommandRo
     QVERIFY(!header.contains(QStringLiteral("ImageShortcutNavigationPolicy m_navigationPolicy")));
     QVERIFY(!implementation.contains(QStringLiteral("m_navigationPolicy.")));
     QVERIFY(!implementation.contains(QStringLiteral("keyboardPanDistance")));
-    QVERIFY(header.contains(QStringLiteral("ApplicationCommandRouter")));
+    QVERIFY(header.contains(QStringLiteral("ApplicationCommandPortSource")));
     QVERIFY(implementation.contains(QStringLiteral("ApplicationCommandRouter")));
     QVERIFY(coreSources.contains(QStringLiteral("src/application/applicationcommandrouter.cpp")));
+    QVERIFY(
+        coreSources.contains(QStringLiteral("src/application/applicationcommandportsource.cpp")));
 }
 
 void TestArchitectureBoundaries::applicationCommandRouterPortsAreGroupedByOwner()
@@ -710,7 +714,9 @@ void TestArchitectureBoundaries::applicationFacadeDoesNotOwnActionCommandSwitch(
     QVERIFY(!implementation.contains(QStringLiteral("requestFitMode(KiriImageDocument::ZoomMode")));
     QVERIFY(!implementation.contains(QStringLiteral("deleteDisplayedFile(KiriDocumentSession::")));
     QVERIFY(!implementation.contains(QStringLiteral("KiriViewApplication::commandRouterInput")));
-    QVERIFY(implementation.contains(QStringLiteral("m_actionRuntime->handleActionTriggered")));
+    QVERIFY(!implementation.contains(QStringLiteral("KiriViewApplication::commandRouterPorts")));
+    QVERIFY(
+        implementation.contains(QStringLiteral("KiriViewApplication::commandRouterShellPorts")));
 }
 
 void TestArchitectureBoundaries::sessionPublicProjectionHasNoPartialUpdateBackdoor()

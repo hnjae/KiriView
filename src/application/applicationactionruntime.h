@@ -25,6 +25,7 @@
 
 namespace kiriview::ApplicationActions {
 struct ActionDefinition;
+class ApplicationCommandPortSource;
 class ApplicationShortcutRuntime;
 
 struct ApplicationActionStateSnapshot {
@@ -62,13 +63,8 @@ public:
         std::function<void()> menuPresentationChanged;
         std::function<void()> shortcutRevisionChanged;
         std::function<void()> actionStateChanged;
-        std::function<void(ActionId)> actionTriggered;
         std::function<void(ActionId)> unsupportedVideoActionTriggered;
         std::function<void(ActionId)> unsupportedImageActionTriggered;
-        std::function<bool(bool)> horizontalArrowShortcutTriggered;
-        std::function<bool(bool)> singlePageArrowShortcutTriggered;
-        std::function<bool(bool)> verticalPanShortcutTriggered;
-        std::function<bool(qint64)> videoSeekShortcutTriggered;
     };
 
     explicit ApplicationActionRuntime(ApplicationActionHost &host, Callbacks callbacks = {});
@@ -103,22 +99,16 @@ public:
         bool videoFileDeletionInProgress) const;
     void setActionStateSnapshot(const ApplicationActionStateSnapshot &snapshot);
     void setActionStateInput(const ApplicationActionStateInput &input);
+    void setCommandPortSource(ApplicationCommandPortSource *source);
     ApplicationCommandRouterInput commandRouterInput() const;
     bool rightToLeftReadingActive() const;
-    void handleActionTriggered(ActionId actionId, const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports) const;
-    void handleScanForwardAction(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports) const;
-    void handleScanBackwardAction(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports) const;
-    bool executeHorizontalArrowShortcut(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports, bool leftArrow) const;
-    bool executeSinglePageArrowShortcut(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports, bool leftArrow) const;
-    bool executeVerticalPanShortcut(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports, bool up) const;
-    bool executeVideoSeekShortcut(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports, qint64 deltaMilliseconds) const;
+    void handleActionTriggered(ActionId actionId) const;
+    void handleScanForwardAction() const;
+    void handleScanBackwardAction() const;
+    bool executeHorizontalArrowShortcut(bool leftArrow) const;
+    bool executeSinglePageArrowShortcut(bool leftArrow) const;
+    bool executeVerticalPanShortcut(bool up) const;
+    bool executeVideoSeekShortcut(qint64 deltaMilliseconds) const;
     void setShortcutHost(QObject *host);
 
     void setupActions();
@@ -131,6 +121,7 @@ private:
     QAction *finishRegisteredAction(QAction *registeredAction, const QString &text,
         const QList<QKeySequence> &defaultShortcuts);
     void applyActionState();
+    ApplicationCommandRouterPorts commandRouterPorts() const;
     void handleActionChanged(QAction *changedAction);
     void handleActionTriggered(ActionId actionId, QAction *triggeredAction);
 
@@ -142,10 +133,10 @@ private:
     ImageActionAvailabilityProjection m_imageActionProjection;
     ApplicationActionStateSnapshot m_actionStateSnapshot;
     ApplicationActionStateInput m_actionStateInput;
+    ApplicationCommandPortSource *m_commandPortSource = nullptr;
     int m_actionStateRevision = 0;
     bool m_applyingActionState = false;
     std::function<void()> m_actionStateChanged;
-    std::function<void(ActionId)> m_actionTriggered;
 };
 }
 
