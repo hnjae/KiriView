@@ -598,19 +598,21 @@ void TestApplicationShortcutPolicy::genericShortcutDispatchReportsUnsupportedMed
     kiriview::ApplicationActions::GenericShortcutDispatchInput input;
     input.actionState.videoMode = true;
     input.actionState.helpActionsEnabled = true;
+    input.actionState.viewerShortcutsEnabled = true;
     input.actionState.readyViewerShortcutsEnabled = true;
+    input.actionState.activeNavigationActionsAvailable = true;
     input.bindings = {
         kiriview::ApplicationActions::GenericShortcutBinding {
             ActionId::ViewZoomInAction,
             Scope::ReadyViewerShortcutScope,
-            { shortcut(QStringLiteral("+")) },
+            { shortcut(QStringLiteral("Z")) },
             false,
         },
     };
 
     kiriview::ApplicationActions::GenericShortcutDispatchOutcome outcome
         = kiriview::ApplicationActions::genericShortcutDispatchOutcome(
-            input, shortcut(QStringLiteral("+")));
+            input, shortcut(QStringLiteral("Z")));
     QCOMPARE(outcome.kind,
         kiriview::ApplicationActions::GenericShortcutDispatchKind::UnsupportedVideoAction);
     QCOMPARE(outcome.actionId, ActionId::ViewZoomInAction);
@@ -618,7 +620,7 @@ void TestApplicationShortcutPolicy::genericShortcutDispatchReportsUnsupportedMed
     input.actionState.videoMode = false;
     input.bindings.front().actionId = ActionId::ViewToggleVideoPlaybackAction;
     outcome = kiriview::ApplicationActions::genericShortcutDispatchOutcome(
-        input, shortcut(QStringLiteral("+")));
+        input, shortcut(QStringLiteral("Z")));
     QCOMPARE(outcome.kind,
         kiriview::ApplicationActions::GenericShortcutDispatchKind::UnsupportedImageAction);
     QCOMPARE(outcome.actionId, ActionId::ViewToggleVideoPlaybackAction);

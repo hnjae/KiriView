@@ -260,6 +260,55 @@ FixedShortcutDispatchOutcome fixedShortcutDispatchOutcome(
     return {};
 }
 
+bool genericShortcutBindingEnabled(
+    const ApplicationActionStateInput &actionState, const GenericShortcutBinding &binding)
+{
+    const bool unsupportedVideoIntercept
+        = actionState.videoMode && videoActionUnsupported(binding.actionId);
+    const bool unsupportedImageIntercept
+        = !actionState.videoMode && imageActionUnsupported(binding.actionId);
+
+    if (binding.shortcutScope.has_value()) {
+        return applicationShortcutsEnabledForScope(actionState, *binding.shortcutScope)
+            && (binding.actionEnabled || unsupportedVideoIntercept || unsupportedImageIntercept);
+    }
+
+    switch (binding.actionId) {
+    case ActionId::OpenApplicationMenuAction:
+        return actionState.applicationMenuShortcutEnabled && binding.actionEnabled;
+    case ActionId::OptionsShowMenubarAction:
+        return actionState.showMenubarActionEnabled && binding.actionEnabled;
+    default:
+        return binding.actionEnabled;
+    }
+}
+
+GenericShortcutDispatchOutcome genericShortcutDispatchOutcome(
+    const GenericShortcutDispatchInput &input, const QKeySequence &shortcut)
+{
+    if (shortcut.isEmpty()) {
+        return {};
+    }
+
+    for (const GenericShortcutBinding &binding : input.bindings) {
+        if (!binding.shortcuts.contains(shortcut)
+            || !genericShortcutBindingEnabled(input.actionState, binding)) {
+            continue;
+        }
+        if (input.actionState.videoMode && videoActionUnsupported(binding.actionId)) {
+            return { GenericShortcutDispatchKind::UnsupportedVideoAction, binding.actionId };
+        }
+        if (!input.actionState.videoMode && imageActionUnsupported(binding.actionId)) {
+            return { GenericShortcutDispatchKind::UnsupportedImageAction, binding.actionId };
+        }
+        if (binding.actionEnabled) {
+            return { GenericShortcutDispatchKind::TriggerAction, binding.actionId };
+        }
+    }
+
+    return {};
+}
+
 bool videoActionUnsupported(ActionId actionId)
 {
     switch (actionId) {

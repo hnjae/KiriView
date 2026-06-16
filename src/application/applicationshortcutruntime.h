@@ -83,10 +83,8 @@ private:
         std::optional<ImageShortcutScope> shortcutScope = std::nullopt);
     bool handleShortcutEvent(const QKeySequence &shortcut);
     bool handleFixedShortcutEvent(const QKeySequence &shortcut);
-    bool shortcutBindingEnabled(
-        ActionId actionId, std::optional<ImageShortcutScope> shortcutScope) const;
+    bool actionEnabledForShortcut(ActionId actionId) const;
     void updateShortcutEnabledStates();
-    void handleShortcutActivated(ActionId actionId);
 
     struct ShortcutBinding {
         ActionId actionId = ActionId::ActionCount;

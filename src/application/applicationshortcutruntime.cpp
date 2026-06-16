@@ -417,13 +417,38 @@ bool ApplicationShortcutRuntime::handleShortcutEvent(const QKeySequence &shortcu
         return true;
     }
 
+    GenericShortcutDispatchInput input;
+    input.actionState = m_actionStateInput;
+    input.bindings.reserve(static_cast<qsizetype>(m_shortcuts.size()));
     for (const ShortcutBinding &binding : m_shortcuts) {
-        if (!binding.enabled || !binding.shortcuts.contains(shortcut)) {
-            continue;
-        }
+        input.bindings.push_back(GenericShortcutBinding {
+            binding.actionId,
+            binding.shortcutScope,
+            binding.shortcuts,
+            actionEnabledForShortcut(binding.actionId),
+        });
+    }
 
-        handleShortcutActivated(binding.actionId);
+    const GenericShortcutDispatchOutcome outcome = genericShortcutDispatchOutcome(input, shortcut);
+    switch (outcome.kind) {
+    case GenericShortcutDispatchKind::UnsupportedVideoAction:
+        if (m_triggerCallbacks.unsupportedVideoActionTriggered) {
+            m_triggerCallbacks.unsupportedVideoActionTriggered(outcome.actionId);
+        }
         return true;
+    case GenericShortcutDispatchKind::UnsupportedImageAction:
+        if (m_triggerCallbacks.unsupportedImageActionTriggered) {
+            m_triggerCallbacks.unsupportedImageActionTriggered(outcome.actionId);
+        }
+        return true;
+    case GenericShortcutDispatchKind::TriggerAction:
+        if (QAction *action = m_actionRegistry.actionForId(outcome.actionId);
+            action != nullptr && action->isEnabled()) {
+            action->trigger();
+        }
+        return true;
+    case GenericShortcutDispatchKind::None:
+        return false;
     }
 
     return false;
@@ -463,58 +488,23 @@ bool ApplicationShortcutRuntime::handleFixedShortcutEvent(const QKeySequence &sh
     return false;
 }
 
-bool ApplicationShortcutRuntime::shortcutBindingEnabled(
-    ActionId actionId, std::optional<ImageShortcutScope> shortcutScope) const
+bool ApplicationShortcutRuntime::actionEnabledForShortcut(ActionId actionId) const
 {
     const QAction *action = m_actionRegistry.actionForId(actionId);
-    const bool actionEnabled = action != nullptr && action->isEnabled();
-    const bool unsupportedVideoIntercept
-        = m_actionStateInput.videoMode && videoActionUnsupported(actionId);
-    const bool unsupportedImageIntercept
-        = !m_actionStateInput.videoMode && imageActionUnsupported(actionId);
-
-    if (shortcutScope.has_value()) {
-        return applicationShortcutsEnabledForScope(m_actionStateInput, *shortcutScope)
-            && (actionEnabled || unsupportedVideoIntercept || unsupportedImageIntercept);
-    }
-
-    switch (actionId) {
-    case ActionId::OpenApplicationMenuAction:
-        return m_actionStateInput.applicationMenuShortcutEnabled && actionEnabled;
-    case ActionId::OptionsShowMenubarAction:
-        return m_actionStateInput.showMenubarActionEnabled && actionEnabled;
-    default:
-        return actionEnabled;
-    }
+    return action != nullptr && action->isEnabled();
 }
 
 void ApplicationShortcutRuntime::updateShortcutEnabledStates()
 {
     for (ShortcutBinding &binding : m_shortcuts) {
-        binding.enabled = shortcutBindingEnabled(binding.actionId, binding.shortcutScope);
+        binding.enabled = genericShortcutBindingEnabled(m_actionStateInput,
+            GenericShortcutBinding {
+                binding.actionId,
+                binding.shortcutScope,
+                binding.shortcuts,
+                actionEnabledForShortcut(binding.actionId),
+            });
     }
-}
-
-void ApplicationShortcutRuntime::handleShortcutActivated(ActionId actionId)
-{
-    if (m_actionStateInput.videoMode && videoActionUnsupported(actionId)) {
-        if (m_triggerCallbacks.unsupportedVideoActionTriggered) {
-            m_triggerCallbacks.unsupportedVideoActionTriggered(actionId);
-        }
-        return;
-    }
-    if (!m_actionStateInput.videoMode && imageActionUnsupported(actionId)) {
-        if (m_triggerCallbacks.unsupportedImageActionTriggered) {
-            m_triggerCallbacks.unsupportedImageActionTriggered(actionId);
-        }
-        return;
-    }
-
-    QAction *action = m_actionRegistry.actionForId(actionId);
-    if (action == nullptr || !action->isEnabled()) {
-        return;
-    }
-    action->trigger();
 }
 
 QString ApplicationShortcutRuntime::actionDisplayText(const QAction *action)
