@@ -709,7 +709,8 @@ void TestArchitectureBoundaries::applicationFacadeDoesNotOwnActionCommandSwitch(
     QVERIFY(!implementation.contains(QStringLiteral("switch (actionId)")));
     QVERIFY(!implementation.contains(QStringLiteral("requestFitMode(KiriImageDocument::ZoomMode")));
     QVERIFY(!implementation.contains(QStringLiteral("deleteDisplayedFile(KiriDocumentSession::")));
-    QVERIFY(implementation.contains(QStringLiteral("handleActionTriggered(actionId")));
+    QVERIFY(!implementation.contains(QStringLiteral("KiriViewApplication::commandRouterInput")));
+    QVERIFY(implementation.contains(QStringLiteral("m_actionRuntime->handleActionTriggered")));
 }
 
 void TestArchitectureBoundaries::sessionPublicProjectionHasNoPartialUpdateBackdoor()
