@@ -18,8 +18,7 @@ class QObject;
 namespace kiriview {
 class MediaEntrySourceStore;
 class ImageDocumentDeletionController;
-class ImageDocumentRuntimePlanExecutor;
-struct ImageDocumentRuntimeOperations;
+class ImageDocumentRuntimeWorkflow;
 class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
@@ -57,8 +56,6 @@ public:
     void shutdownRuntime();
 
 private:
-    ImageDocumentRuntimeOperations runtimeOperations(ImageDocumentState &state);
-
     ImageDocumentRuntimeControllerCallbacks m_callbacks;
     std::unique_ptr<MediaEntrySourceStore> m_mediaEntrySourceStore;
     std::unique_ptr<ImageDocumentDeletionController> m_deletionController;
@@ -69,7 +66,7 @@ private:
     std::unique_ptr<ImageDocumentPredecodeController> m_predecodeController;
     std::unique_ptr<ImageSpreadPresentationController> m_spreadController;
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
-    std::unique_ptr<ImageDocumentRuntimePlanExecutor> m_runtimePlanExecutor;
+    std::unique_ptr<ImageDocumentRuntimeWorkflow> m_runtimeWorkflow;
 };
 }
 

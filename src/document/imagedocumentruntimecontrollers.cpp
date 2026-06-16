@@ -10,19 +10,15 @@
 #include "imagedocumentnavigationruntimeplan.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentruntimedependencies.h"
-#include "imagedocumentruntimeplanexecutor.h"
+#include "imagedocumentruntimeworkflow.h"
 #include "imagedocumentsourceloadrequest.h"
-#include "imagedocumentsourceloadscope.h"
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
-#include "localization/activenavigationboundarytext.h"
 #include "navigation/imagedocumentpagenavigationservice.h"
-#include "navigation/navigationlogging.h"
 #include "presentation/imagepagesurfacecontroller.h"
 #include "presentation/imagepresentationruntime.h"
 #include "presentation/imagespreadpresentationcontroller.h"
 
-#include <QDebug>
 #include <QObject>
 #include <QUrl>
 #include <optional>
@@ -125,8 +121,19 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(state,
         *m_pageSurfaceController, *m_navigationService, *m_spreadController,
         [this](ImageDocumentRuntimePlan plan) { dispatchPlan(plan); });
-    m_runtimePlanExecutor
-        = std::make_unique<ImageDocumentRuntimePlanExecutor>(runtimeOperations(state));
+    m_runtimeWorkflow
+        = std::make_unique<ImageDocumentRuntimeWorkflow>(ImageDocumentRuntimeWorkflowPorts {
+            &state,
+            m_mediaEntrySourceStore.get(),
+            m_deletionController.get(),
+            m_pageSurfaceController.get(),
+            m_openController.get(),
+            m_predecodeController.get(),
+            m_spreadController.get(),
+            m_navigationController.get(),
+            m_callbacks.loadSource,
+            m_callbacks.containerNavigationBoundaryReached,
+        });
 }
 
 ImageDocumentRuntimeControllers::~ImageDocumentRuntimeControllers() = default;
@@ -158,126 +165,15 @@ ImageSpreadPresentationController &ImageDocumentRuntimeControllers::spreadContro
 
 void ImageDocumentRuntimeControllers::dispatchPlan(const ImageDocumentRuntimePlan &plan)
 {
-    if (m_runtimePlanExecutor != nullptr) {
-        m_runtimePlanExecutor->dispatchPlan(plan);
+    if (m_runtimeWorkflow != nullptr) {
+        m_runtimeWorkflow->dispatchPlan(plan);
     }
 }
 
 void ImageDocumentRuntimeControllers::shutdownRuntime()
 {
-    if (m_runtimePlanExecutor != nullptr) {
-        m_runtimePlanExecutor->shutdownRuntime();
+    if (m_runtimeWorkflow != nullptr) {
+        m_runtimeWorkflow->shutdownRuntime();
     }
-}
-
-ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperations(
-    ImageDocumentState &state)
-{
-    ImageDocumentState *stateOwner = &state;
-
-    ImageDocumentRuntimeOperations operations;
-    operations.lifecycle.cancelFileDeletion = [this]() { m_deletionController->cancel(); };
-    operations.lifecycle.stopPresentationAnimation
-        = [this]() { m_pageSurfaceController->stopAnimation(); };
-    operations.lifecycle.shutdownSpread = [this]() { m_spreadController->shutdown(); };
-    operations.mediaEntrySource.clear = [this]() {
-        if (m_mediaEntrySourceStore != nullptr) {
-            m_mediaEntrySourceStore->clear();
-        }
-    };
-    operations.predecode.clearPredecode = [this]() { m_predecodeController->clear(); };
-    operations.predecode.cancelPredecode = [this]() { m_predecodeController->cancel(); };
-    operations.predecode.scheduleAdjacentImagePredecode = [this]() {
-        m_predecodeController->scheduleAdjacentImagePredecode(
-            m_spreadController->secondaryDisplayedPredecodeImage());
-    };
-    operations.spread.finishSpreadTransition = [this]() { m_spreadController->finishTransition(); };
-    operations.spread.resetRightToLeftReading
-        = [this]() { m_spreadController->resetRightToLeftReading(); };
-    operations.spread.clearSecondaryPage = [this]() { m_spreadController->clearSecondaryPage(); };
-    operations.spread.notifyRightToLeftReadingChanged
-        = [this]() { m_spreadController->notifyRightToLeftReadingChanged(); };
-    operations.spread.resetZoom = [this]() { m_spreadController->resetZoom(); };
-    operations.spread.prepareFailedContainer = [this](const QUrl &containerUrl) {
-        Q_UNUSED(containerUrl);
-        m_spreadController->resetZoom();
-    };
-    operations.navigation.cancelPageNavigationUpdate
-        = [this]() { m_navigationController->cancelPageNavigationUpdate(); };
-    operations.navigation.cancelNavigation
-        = [this]() { m_navigationController->cancelNavigation(); };
-    operations.navigation.cancelContainerNavigation
-        = [this]() { m_navigationController->cancelContainerNavigation(); };
-    operations.navigation.cancelAllNavigation
-        = [this]() { m_navigationController->cancelAllNavigation(); };
-    operations.navigation.clearPageNavigation
-        = [this]() { m_navigationController->clearPageNavigation(); };
-    operations.navigation.updatePageNavigation
-        = [this]() { m_navigationController->updatePageNavigation(); };
-    operations.navigation.loadUrl = [this](const ImageDocumentPageTarget &target) {
-        invokeIfSet(m_callbacks.loadSource, ImageDocumentSourceLoadRequest::fromTarget(target));
-    };
-    operations.navigation.loadContainerImage
-        = [this](const ImageDocumentPageTarget &target, const QUrl &containerUrl) {
-              invokeIfSet(m_callbacks.loadSource,
-                  ImageDocumentSourceLoadRequest::fromContainerTarget(target, containerUrl));
-          };
-    operations.navigation.finishEmptyContainerNavigation = [this](const QUrl &containerUrl) {
-        m_openController->finishContainerNavigationWithEmptyContainer(containerUrl);
-    };
-    operations.navigation.finishContainerNavigationLoadWithError
-        = [this](const QUrl &containerUrl, const QString &errorString) {
-              m_openController->finishContainerNavigationLoadWithError(containerUrl, errorString);
-          };
-    operations.navigation.reportContainerNavigationBoundary
-        = [this](NavigationDirection direction) {
-              invokeIfSet(m_callbacks.containerNavigationBoundaryReached,
-                  containerNavigationBoundaryFeedbackText(direction));
-          };
-    operations.navigation.reportContainerNavigationListFailure
-        = [](const ContainerNavigationListFailure &failure) {
-              qCDebug(kiriviewNavigationLog)
-                  << "container navigation listing failed"
-                  << "currentContainerUrl" << failure.currentContainerUrl << "parentUrl"
-                  << failure.parentUrl << "direction" << static_cast<int>(failure.direction)
-                  << "kind" << static_cast<int>(failure.kind) << "detail"
-                  << failure.diagnosticDetail;
-          };
-    operations.navigation.loadPageNavigationUrl
-        = [this](const ImageDocumentPageTarget &target, bool preserveTwoPageSpreadTransition) {
-              invokeIfSet(m_callbacks.loadSource,
-                  ImageDocumentSourceLoadRequest::fromPageNavigationTarget(
-                      target, preserveTwoPageSpreadTransition));
-          };
-    operations.open.cancelOpen = [this]() { m_openController->cancel(); };
-    operations.open.clearDisplayedImageLocation
-        = [stateOwner]() { stateOwner->clearDisplayedImageLocation(); };
-    operations.open.clearPresentationImage = [this]() {
-        m_pageSurfaceController->clearImage();
-        m_spreadController->clearPrimaryPageSlot();
-    };
-    operations.sourceLoad.clearLoadingContainerNavigationUrl
-        = [stateOwner]() { stateOwner->clearLoadingContainerNavigationUrl(); };
-    operations.sourceLoad.setLoadingContainerNavigationUrl
-        = [stateOwner](const QUrl &url) { stateOwner->setLoadingContainerNavigationUrl(url); };
-    operations.sourceLoad.setContainerNavigationUrl
-        = [stateOwner](const QUrl &url) { stateOwner->setContainerNavigationUrl(url); };
-    operations.sourceLoad.prepareSourceLoad
-        = [this, stateOwner](const ImageDocumentSourceLoadRequest &request) {
-              if (m_mediaEntrySourceStore != nullptr) {
-                  m_mediaEntrySourceStore->prepareForOpenedCollectionScope(
-                      openedCollectionScopeForImageDocumentSourceLoad(
-                          request, stateOwner->displayedOpenedCollectionScope()));
-              }
-          };
-    operations.open.setSourceUrl = [stateOwner](const ImageDocumentPageTarget &target) {
-        stateOwner->setSourceKind(target.kind);
-        stateOwner->setSourceUrl(target.url);
-    };
-    operations.sourceLoad.beginOpen = [this]() { m_openController->open(); };
-    operations.open.setErrorString
-        = [stateOwner](const QString &errorString) { stateOwner->setErrorString(errorString); };
-    operations.open.finishEmptySourceLoad = [this]() { m_openController->finishEmptySourceLoad(); };
-    return operations;
 }
 }

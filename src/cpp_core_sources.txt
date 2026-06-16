@@ -83,6 +83,7 @@ src/document/imagedocumentruntimecontrollers.cpp
 src/document/imagedocumentruntimedependencies.cpp
 src/document/imagedocumentruntimeplan.cpp
 src/document/imagedocumentruntimeplanexecutor.cpp
+src/document/imagedocumentruntimeworkflow.cpp
 src/document/imagedocumentsourceloadscope.cpp
 src/decoding/imagedecodepipeline.cpp
 src/decoding/imagedecodedependencies.cpp

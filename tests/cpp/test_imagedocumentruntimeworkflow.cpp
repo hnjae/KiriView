@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QStringList>
 #include <QTest>
+#include <utility>
 
 namespace {
 struct RecordedWorkflowOperations {
