@@ -186,6 +186,51 @@ void ApplicationActionRuntime::setActionStateInput(const ApplicationActionStateI
     }
 }
 
+void ApplicationActionRuntime::handleActionTriggered(ActionId actionId,
+    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
+{
+    m_commandRouter.handleActionTriggered(actionId, input, ports);
+}
+
+void ApplicationActionRuntime::handleScanForwardAction(
+    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
+{
+    m_commandRouter.handleScanForwardAction(input, ports);
+}
+
+void ApplicationActionRuntime::handleScanBackwardAction(
+    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
+{
+    m_commandRouter.handleScanBackwardAction(input, ports);
+}
+
+bool ApplicationActionRuntime::executeHorizontalArrowShortcut(
+    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports,
+    bool leftArrow) const
+{
+    return m_commandRouter.executeHorizontalArrowShortcut(input, ports, leftArrow);
+}
+
+bool ApplicationActionRuntime::executeSinglePageArrowShortcut(
+    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports,
+    bool leftArrow) const
+{
+    return m_commandRouter.executeSinglePageArrowShortcut(input, ports, leftArrow);
+}
+
+bool ApplicationActionRuntime::executeVerticalPanShortcut(
+    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports,
+    bool up) const
+{
+    return m_commandRouter.executeVerticalPanShortcut(input, ports, up);
+}
+
+bool ApplicationActionRuntime::executeVideoSeekShortcut(const ApplicationCommandRouterInput &input,
+    const ApplicationCommandRouterPorts &ports, qint64 deltaMilliseconds) const
+{
+    return m_commandRouter.executeVideoSeekShortcut(input, ports, deltaMilliseconds);
+}
+
 void ApplicationActionRuntime::setShortcutHost(QObject *host)
 {
     m_shortcutRuntime->setShortcutHost(host);

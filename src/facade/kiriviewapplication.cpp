@@ -5,6 +5,7 @@
 
 #include "application/applicationactionhost.h"
 #include "application/applicationactionruntime.h"
+#include "application/applicationcommandrouter.h"
 #include "facade/kiridocumentsession.h"
 
 #include <KLocalizedString>
@@ -704,7 +705,7 @@ void KiriViewApplication::requestImageFitWidthMode()
 
 void KiriViewApplication::handleRuntimeActionTriggered(Actions::ActionId actionId)
 {
-    m_commandRouter.handleActionTriggered(actionId, commandRouterInput(), commandRouterPorts());
+    m_actionRuntime->handleActionTriggered(actionId, commandRouterInput(), commandRouterPorts());
 }
 
 void KiriViewApplication::emitBoundaryText(const QString &message)
@@ -730,34 +731,34 @@ void KiriViewApplication::requestNextActiveNavigationWithBoundary()
 
 void KiriViewApplication::handleScanForwardAction()
 {
-    m_commandRouter.handleScanForwardAction(commandRouterInput(), commandRouterPorts());
+    m_actionRuntime->handleScanForwardAction(commandRouterInput(), commandRouterPorts());
 }
 
 void KiriViewApplication::handleScanBackwardAction()
 {
-    m_commandRouter.handleScanBackwardAction(commandRouterInput(), commandRouterPorts());
+    m_actionRuntime->handleScanBackwardAction(commandRouterInput(), commandRouterPorts());
 }
 
 bool KiriViewApplication::executeHorizontalArrowShortcut(bool leftArrow)
 {
-    return m_commandRouter.executeHorizontalArrowShortcut(
+    return m_actionRuntime->executeHorizontalArrowShortcut(
         commandRouterInput(), commandRouterPorts(), leftArrow);
 }
 
 bool KiriViewApplication::executeSinglePageArrowShortcut(bool leftArrow)
 {
-    return m_commandRouter.executeSinglePageArrowShortcut(
+    return m_actionRuntime->executeSinglePageArrowShortcut(
         commandRouterInput(), commandRouterPorts(), leftArrow);
 }
 
 bool KiriViewApplication::executeVerticalPanShortcut(bool up)
 {
-    return m_commandRouter.executeVerticalPanShortcut(
+    return m_actionRuntime->executeVerticalPanShortcut(
         commandRouterInput(), commandRouterPorts(), up);
 }
 
 bool KiriViewApplication::executeVideoSeekShortcut(qint64 deltaMilliseconds)
 {
-    return m_commandRouter.executeVideoSeekShortcut(
+    return m_actionRuntime->executeVideoSeekShortcut(
         commandRouterInput(), commandRouterPorts(), deltaMilliseconds);
 }

@@ -7,6 +7,7 @@
 #include "applicationactionhost.h"
 #include "applicationactionregistry.h"
 #include "applicationactionstatepolicy.h"
+#include "applicationcommandrouter.h"
 #include "applicationmenupresentationruntime.h"
 #include "applicationshortcutpolicy.h"
 
@@ -71,6 +72,20 @@ public:
         bool videoViewerShortcutsEnabled, bool videoDirectMediaNavigationActive,
         bool videoFileDeletionInProgress) const;
     void setActionStateInput(const ApplicationActionStateInput &input);
+    void handleActionTriggered(ActionId actionId, const ApplicationCommandRouterInput &input,
+        const ApplicationCommandRouterPorts &ports) const;
+    void handleScanForwardAction(const ApplicationCommandRouterInput &input,
+        const ApplicationCommandRouterPorts &ports) const;
+    void handleScanBackwardAction(const ApplicationCommandRouterInput &input,
+        const ApplicationCommandRouterPorts &ports) const;
+    bool executeHorizontalArrowShortcut(const ApplicationCommandRouterInput &input,
+        const ApplicationCommandRouterPorts &ports, bool leftArrow) const;
+    bool executeSinglePageArrowShortcut(const ApplicationCommandRouterInput &input,
+        const ApplicationCommandRouterPorts &ports, bool leftArrow) const;
+    bool executeVerticalPanShortcut(const ApplicationCommandRouterInput &input,
+        const ApplicationCommandRouterPorts &ports, bool up) const;
+    bool executeVideoSeekShortcut(const ApplicationCommandRouterInput &input,
+        const ApplicationCommandRouterPorts &ports, qint64 deltaMilliseconds) const;
     void setShortcutHost(QObject *host);
 
     void setupActions();
@@ -88,6 +103,7 @@ private:
 
     ApplicationActionHost &m_host;
     ApplicationActionRegistry m_actionRegistry;
+    ApplicationCommandRouter m_commandRouter;
     ApplicationMenuPresentationRuntime m_menuPresentationRuntime;
     std::unique_ptr<ApplicationShortcutRuntime> m_shortcutRuntime;
     ApplicationActionStateInput m_actionStateInput;

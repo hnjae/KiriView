@@ -5,7 +5,6 @@
 #define KIRIVIEW_KIRIVIEWAPPLICATION_H
 
 #include "application/applicationactionstatepolicy.h"
-#include "application/applicationcommandrouter.h"
 #include "application/applicationtypes.h"
 #include "application/imageactionavailabilitypolicy.h"
 
@@ -22,6 +21,8 @@
 #include <vector>
 
 namespace kiriview::ApplicationActions {
+struct ApplicationCommandRouterInput;
+struct ApplicationCommandRouterPorts;
 class KiriViewApplicationActionHost;
 class ApplicationActionRuntime;
 class ApplicationShortcutRuntime;
@@ -210,7 +211,6 @@ private:
     std::unique_ptr<kiriview::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;
     QPointer<KiriDocumentSession> m_documentSession;
     std::vector<QMetaObject::Connection> m_actionStateConnections;
-    kiriview::ApplicationActions::ApplicationCommandRouter m_commandRouter;
     ImageActionAvailabilityProjection m_imageActionProjection;
     kiriview::ApplicationActions::ApplicationActionStateInput m_actionStateInput;
     quint64 m_actionUiGateRevision = 0;
