@@ -42,6 +42,7 @@ src/rendering/displayimagestore.cpp
 src/rendering/displayproviderlogging.cpp
 src/presentation/imagedisplaysourceprojection.cpp
 src/session/mediaopenwith.cpp
+src/session/documentsessionactivenavigationruntime.cpp
 src/navigation/imageremovalfallback.cpp
 src/decoding/heifcontainer.cpp
 src/decoding/heifdecoder.cpp

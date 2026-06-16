@@ -7,6 +7,7 @@
 #include "navigation/directmedianavigationcandidateprovider.h"
 #include "navigation/directmedianavigationmodel.h"
 #include "session/activenavigationprojection.h"
+#include "session/documentsessionactivenavigationruntime.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondocumentports.h"
 #include "session/documentsessionmediadeletionruntime.h"
@@ -117,11 +118,11 @@ private:
         DocumentSessionDirectMediaNavigationRevealAction action);
     ActiveNavigationDispatchOutcome executeActiveNavigationDispatchRequest(
         ActiveNavigationDispatchRequest request, ActiveNavigationRevealContext context);
-    void executeActiveNavigationDispatchPlan(const ActiveNavigationDispatchPlan &plan);
     void setPendingActiveNavigationRevealContext(ActiveNavigationRevealContext context);
     ActiveNavigationRevealContext takePendingActiveNavigationRevealContext(
         ActiveNavigationRevealIntent fallbackIntent);
     void setActiveNavigationRevealContext(ActiveNavigationRevealContext context);
+    void applyActiveNavigationRevealContext(ActiveNavigationRevealContext context);
     void clearActiveNavigationRevealContextIfUnavailable();
     void connectDocuments();
     void handleImageDocumentSnapshotChanged();
@@ -175,13 +176,13 @@ private:
     DocumentSessionImageDocumentPort m_imageDocument;
     DocumentSessionVideoDocumentPort m_videoDocument;
     DocumentSessionState m_state;
+    DocumentSessionActiveNavigationRuntime m_activeNavigationRuntime;
     DocumentSessionThumbnailRuntime m_activeNavigationThumbnailRuntime;
     DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
     DocumentSessionMediaOpenWithRuntime m_mediaOpenWithRuntime;
     DocumentSessionMediaPredecodeRuntime m_mediaPredecodeRuntime;
     std::vector<QMetaObject::Connection> m_documentConnections;
-    ActiveNavigationRevealContext m_pendingActiveNavigationRevealContext;
     DocumentSessionPublicImageLeafSnapshot m_imagePublicSnapshot;
     DocumentSessionPublicVideoLeafSnapshot m_videoPublicSnapshot;
     DocumentSessionVideoOutputRuntime m_videoOutputRuntime;

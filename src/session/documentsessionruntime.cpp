@@ -89,6 +89,18 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_imageDocument(std::move(imageDocument))
     , m_videoDocument(std::move(videoDocument))
     , m_state(std::move(changeCallback))
+    , m_activeNavigationRuntime(DocumentSessionActiveNavigationRuntimePorts {
+          [this](ActiveNavigationRevealContext context) {
+              applyActiveNavigationRevealContext(context);
+          },
+          [this]() { recomputePublicProjection(); },
+          [this]() { openPreviousMedia(); },
+          [this]() { openNextMedia(); },
+          [this](int number) { openMediaAtNumber(number); },
+          [this]() { m_imageDocument.openPreviousPage(); },
+          [this]() { m_imageDocument.openNextPage(); },
+          [this](int number) { m_imageDocument.openImageAtPage(number); },
+      })
     , m_activeNavigationThumbnailRuntime(
           owner, &m_imageDocument, std::move(dependencies.activeNavigationThumbnails))
     , m_directMediaNavigationRuntime(dependencies.directMediaNavigationCandidateProvider)
@@ -381,7 +393,7 @@ void DocumentSessionRuntime::applyDirectMediaNavigationRevealAction(
     case DocumentSessionDirectMediaNavigationRevealAction::None:
         return;
     case DocumentSessionDirectMediaNavigationRevealAction::Clear:
-        m_pendingActiveNavigationRevealContext = {};
+        takePendingActiveNavigationRevealContext(ActiveNavigationRevealIntent::None);
         setActiveNavigationRevealContext({});
         return;
     case DocumentSessionDirectMediaNavigationRevealAction::ProgrammaticSync:
@@ -397,7 +409,7 @@ void DocumentSessionRuntime::applyDirectMediaNavigationRevealAction(
         const ActiveNavigationRevealContext context = takePendingActiveNavigationRevealContext(
             ActiveNavigationRevealIntent::ProgrammaticSync);
         setActiveNavigationRevealContext(context);
-        m_pendingActiveNavigationRevealContext = context;
+        setPendingActiveNavigationRevealContext(context);
         return;
     }
     }
@@ -448,38 +460,29 @@ ActiveNavigationDispatchOutcome DocumentSessionRuntime::requestNextActiveNavigat
 ActiveNavigationDispatchOutcome DocumentSessionRuntime::executeActiveNavigationDispatchRequest(
     ActiveNavigationDispatchRequest request, ActiveNavigationRevealContext context)
 {
-    const ActiveNavigationDispatchPlan plan = activeNavigationDispatchPlan(
-        m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(), request);
-    if (plan.shouldDispatch()) {
-        setPendingActiveNavigationRevealContext(context);
-    } else {
-        m_pendingActiveNavigationRevealContext = {};
-        setActiveNavigationRevealContext({});
-        recomputePublicProjection();
-    }
-    executeActiveNavigationDispatchPlan(plan);
-    return plan.outcome;
+    return m_activeNavigationRuntime.dispatch(
+        m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(), request, context);
 }
 
 void DocumentSessionRuntime::setPendingActiveNavigationRevealContext(
     ActiveNavigationRevealContext context)
 {
-    m_pendingActiveNavigationRevealContext = context;
-    setActiveNavigationRevealContext(context);
+    m_activeNavigationRuntime.setPendingRevealContext(context);
 }
 
 ActiveNavigationRevealContext DocumentSessionRuntime::takePendingActiveNavigationRevealContext(
     ActiveNavigationRevealIntent fallbackIntent)
 {
-    const ActiveNavigationRevealContext context
-        = m_pendingActiveNavigationRevealContext.intent == ActiveNavigationRevealIntent::None
-        ? ActiveNavigationRevealContext { fallbackIntent }
-        : m_pendingActiveNavigationRevealContext;
-    m_pendingActiveNavigationRevealContext = {};
-    return context;
+    return m_activeNavigationRuntime.takePendingRevealContext(fallbackIntent);
 }
 
 void DocumentSessionRuntime::setActiveNavigationRevealContext(ActiveNavigationRevealContext context)
+{
+    m_activeNavigationRuntime.setRevealContext(context);
+}
+
+void DocumentSessionRuntime::applyActiveNavigationRevealContext(
+    ActiveNavigationRevealContext context)
 {
     m_state.setActiveNavigationRevealIntent(context.intent);
     m_state.setActiveNavigationRevealDirection(context.direction);
@@ -487,41 +490,7 @@ void DocumentSessionRuntime::setActiveNavigationRevealContext(ActiveNavigationRe
 
 void DocumentSessionRuntime::clearActiveNavigationRevealContextIfUnavailable()
 {
-    const ActiveNavigationSnapshot &snapshot = m_state.activeNavigationSnapshot();
-    if (!snapshot.available || !snapshot.known) {
-        setActiveNavigationRevealContext({});
-    }
-}
-
-void DocumentSessionRuntime::executeActiveNavigationDispatchPlan(
-    const ActiveNavigationDispatchPlan &plan)
-{
-    if (!plan.shouldDispatch()) {
-        return;
-    }
-
-    std::visit(
-        [this](const auto &operation) {
-            using Operation = std::decay_t<decltype(operation)>;
-            if constexpr (std::is_same_v<Operation, OpenPreviousDirectMediaNavigationOperation>) {
-                openPreviousMedia();
-            } else if constexpr (std::is_same_v<Operation,
-                                     OpenNextDirectMediaNavigationOperation>) {
-                openNextMedia();
-            } else if constexpr (std::is_same_v<Operation,
-                                     OpenDirectMediaNavigationAtNumberOperation>) {
-                openMediaAtNumber(operation.number);
-            } else if constexpr (std::is_same_v<Operation,
-                                     OpenPreviousImageDocumentPageOperation>) {
-                m_imageDocument.openPreviousPage();
-            } else if constexpr (std::is_same_v<Operation, OpenNextImageDocumentPageOperation>) {
-                m_imageDocument.openNextPage();
-            } else if constexpr (std::is_same_v<Operation,
-                                     OpenImageDocumentPageAtNumberOperation>) {
-                m_imageDocument.openImageAtPage(operation.number);
-            }
-        },
-        plan.operation);
+    m_activeNavigationRuntime.clearRevealContextIfUnavailable(m_state.activeNavigationSnapshot());
 }
 
 void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
