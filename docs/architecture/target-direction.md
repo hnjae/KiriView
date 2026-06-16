@@ -19,7 +19,7 @@ Active-navigation dispatch should be a named document-session subowner. The subo
 
 Route plan execution should be a named document-session subowner. The subowner may own the route-operation visitor and route-local execution facts such as direct-media scope changes, while `DocumentSessionRuntime` supplies typed mutation/effect ports for leaf routing, public projection publication, direct-media navigation refresh, predecode clearing, and route-completion cleanup.
 
-Viewport scan-start state should belong to the image-document runtime/presentation layer, not the QML facade. The facade may keep forwarding QML commands while the runtime owns pending displayed-image start state and updates it from document change publication.
+Viewport scan-start state and viewport pan/scan command planning should belong to the image-document runtime/presentation layer, not the QML facade. The facade may keep forwarding QML commands while the runtime owns pending displayed-image start state, updates it from document change publication, and computes pan/scan content-position commands from presentation state.
 
 Those boundaries should keep `DocumentSessionState` as the public C++ owner and keep Qt/KDE effects in C++. Rust may later host pure projection or plan computation from plain snapshots, but C++ applies the resulting state, executes document routing, publishes signal batches, and preserves cursor-generation rejection for stale async completions.
 
