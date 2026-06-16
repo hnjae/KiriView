@@ -15,6 +15,7 @@ class TestDocumentSessionRouteRuntime : public QObject
 
 private Q_SLOTS:
     void executionRunsMutationPublicationFollowUpAndCompletionInOrder();
+    void executionPublishesBeforeFollowUpsEvenWhenPlanListsFollowUpFirst();
     void clearedNavigationRepublishesBeforePredecodeClear();
     void activeNavigationRefreshesWithoutScopeChange();
 };
@@ -73,6 +74,77 @@ void TestDocumentSessionRouteRuntime::executionRunsMutationPublicationFollowUpAn
         kiriview::DocumentSessionRouteOperation {
             kiriview::RefreshDirectMediaNavigationAfterRoutingRouteOperation {} },
         kiriview::DocumentSessionRouteOperation { kiriview::ClearMediaPredecodeRouteOperation {} },
+    };
+
+    runtime.execute(plan);
+
+    const std::vector<QString> expected {
+        QStringLiteral("cancel-open-with"),
+        QStringLiteral("clear-error"),
+        QStringLiteral("clear-cursor"),
+        QStringLiteral("suppress-begin"),
+        QStringLiteral("enter-image:%1").arg(imageUrl.toString()),
+        QStringLiteral("suppress-end"),
+        QStringLiteral("identity:%1").arg(imageUrl.toString()),
+        QStringLiteral("publish"),
+        QStringLiteral("refresh-navigation"),
+        QStringLiteral("clear-predecode"),
+        QStringLiteral("complete"),
+    };
+    QCOMPARE(events, expected);
+}
+
+void TestDocumentSessionRouteRuntime::
+    executionPublishesBeforeFollowUpsEvenWhenPlanListsFollowUpFirst()
+{
+    std::vector<QString> events;
+    kiriview::DocumentSessionRouteRuntimePorts ports;
+    ports.cancelMediaOpenWith
+        = [&events]() { events.push_back(QStringLiteral("cancel-open-with")); };
+    ports.clearSessionErrorString
+        = [&events]() { events.push_back(QStringLiteral("clear-error")); };
+    ports.clearDirectMediaCursor = [&events]() {
+        events.push_back(QStringLiteral("clear-cursor"));
+        return true;
+    };
+    ports.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
+        events.push_back(QStringLiteral("suppress-begin"));
+        mutation();
+        events.push_back(QStringLiteral("suppress-end"));
+    };
+    ports.enterImageDocument = [&events](const QUrl &url) {
+        events.push_back(QStringLiteral("enter-image:%1").arg(url.toString()));
+    };
+    ports.useOriginalSourceIdentity = [&events](const QUrl &url) {
+        events.push_back(QStringLiteral("identity:%1").arg(url.toString()));
+    };
+    ports.recomputePublicProjection = [&events]() { events.push_back(QStringLiteral("publish")); };
+    ports.directMediaNavigationActive = []() { return false; };
+    ports.refreshDirectMediaNavigation
+        = [&events]() { events.push_back(QStringLiteral("refresh-navigation")); };
+    ports.clearMediaPredecode
+        = [&events]() { events.push_back(QStringLiteral("clear-predecode")); };
+    ports.routeCompleted = [&events]() { events.push_back(QStringLiteral("complete")); };
+
+    kiriview::DocumentSessionRouteRuntime runtime(std::move(ports));
+    const QUrl imageUrl = localUrl(QStringLiteral("/tmp/page.png"));
+    kiriview::DocumentSessionRoutePlan plan;
+    plan.kind = kiriview::DocumentSessionRouteKind::DirectImage;
+    plan.sourceUrl = imageUrl;
+    plan.operations = {
+        kiriview::DocumentSessionRouteOperation {
+            kiriview::ClearSessionErrorStringRouteOperation {} },
+        kiriview::DocumentSessionRouteOperation {
+            kiriview::ClearDirectMediaCursorRouteOperation {} },
+        kiriview::DocumentSessionRouteOperation {
+            kiriview::EnterImageDocumentRouteOperation { imageUrl } },
+        kiriview::DocumentSessionRouteOperation {
+            kiriview::UseOriginalSourceIdentityRouteOperation { imageUrl } },
+        kiriview::DocumentSessionRouteOperation {
+            kiriview::RefreshDirectMediaNavigationAfterRoutingRouteOperation {} },
+        kiriview::DocumentSessionRouteOperation { kiriview::ClearMediaPredecodeRouteOperation {} },
+        kiriview::DocumentSessionRouteOperation {
+            kiriview::RecomputePublicProjectionRouteOperation {} },
     };
 
     runtime.execute(plan);
