@@ -219,6 +219,7 @@ private Q_SLOTS:
     void pageSelectionStartsTrackedLoadThroughEffectExecutor();
     void pendingLoadFailureKeepsTargetPageNavigation();
     void siblingArchiveNavigationResetsManualZoom();
+    void viewportPanAndScanCommandsUpdateContentPosition();
     void nextDisplayedImageCanStartAtFinalScanPosition();
     void smallStaticImagePublishesProviderDisplay();
     void largeStaticImagePublishesProviderPreview();
@@ -1092,6 +1093,43 @@ void TestImageDocumentRuntime::nextDisplayedImageCanStartAtFinalScanPosition()
 
     QCOMPARE(runtime->zoomMode(), kiriview::ImageZoomMode::Manual);
     QVERIFY(kiriview::imageZoomApproximatelyEqual(runtime->zoomPercent(), 100.0));
+    QCOMPARE(runtime->viewportContentPosition(), QPointF(400.0, 500.0));
+}
+
+void TestImageDocumentRuntime::viewportPanAndScanCommandsUpdateContentPosition()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageDocumentPageCandidate(imageUrl),
+        });
+
+    RuntimeHandle runtime = createRuntime(
+        this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(800, 800)));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), imageUrl);
+    runtime->requestManualZoomPercent(100.0);
+    QVERIFY(runtime->viewportPannable());
+
+    QVERIFY(runtime->requestViewportPanToInitialScanPosition() > 0);
+    QCOMPARE(runtime->viewportContentPosition(), QPointF());
+
+    QVERIFY(runtime->requestViewportScanForward() > 0);
+    QCOMPARE(runtime->viewportContentPosition(), QPointF(350.0, 0.0));
+
+    QVERIFY(runtime->requestViewportScanBackward() > 0);
+    QCOMPARE(runtime->viewportContentPosition(), QPointF());
+
+    QVERIFY(runtime->requestViewportPanBy(QPointF(125.0, 75.0)) > 0);
+    QCOMPARE(runtime->viewportContentPosition(), QPointF(125.0, 75.0));
+
+    QVERIFY(runtime->requestViewportPanToFinalScanPosition() > 0);
     QCOMPARE(runtime->viewportContentPosition(), QPointF(400.0, 500.0));
 }
 
