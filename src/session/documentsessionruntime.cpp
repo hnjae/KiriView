@@ -81,11 +81,16 @@ bool sameActiveNavigationSnapshot(const kiriview::ImageDocumentPageActiveNavigat
 
 namespace kiriview {
 DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
-    DocumentSessionImageDocumentPort imageDocument, DocumentSessionVideoDocumentPort videoDocument,
-    ChangeCallback changeCallback, DocumentSessionRuntimeDependencies dependencies)
+    DocumentSessionImageDocumentSnapshotPort imageDocument,
+    DocumentSessionImageDocumentCommandPort imageCommands,
+    DocumentSessionVideoDocumentSnapshotPort videoDocument,
+    DocumentSessionVideoDocumentCommandPort videoCommands, ChangeCallback changeCallback,
+    DocumentSessionRuntimeDependencies dependencies)
     : m_owner(owner)
     , m_imageDocument(std::move(imageDocument))
+    , m_imageCommands(std::move(imageCommands))
     , m_videoDocument(std::move(videoDocument))
+    , m_videoCommands(std::move(videoCommands))
     , m_state(std::move(changeCallback))
     , m_routeRuntime(DocumentSessionRouteRuntimePorts {
           [this]() { cancelMediaOpenWith(); },
@@ -113,7 +118,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
               mutation();
           },
           [this]() {
-              m_imageDocument.setSourceUrl(QUrl());
+              m_imageCommands.setSourceUrl(QUrl());
               refreshImagePublicSnapshot();
           },
           [this]() {
@@ -122,12 +127,12 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           },
           [this]() { setDocumentKind(DocumentSessionKind::Empty); },
           [this](const QUrl &url) {
-              m_imageDocument.setSourceUrl(url);
+              m_imageCommands.setSourceUrl(url);
               refreshImagePublicSnapshot();
               setDocumentKind(DocumentSessionKind::Image);
           },
           [this](const QUrl &url) {
-              m_videoDocument.setSourceUrl(url);
+              m_videoCommands.setSourceUrl(url);
               refreshVideoPublicSnapshot();
               setDocumentKind(DocumentSessionKind::Video);
           },
@@ -154,9 +159,9 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           [this]() { openPreviousMedia(); },
           [this]() { openNextMedia(); },
           [this](int number) { openMediaAtNumber(number); },
-          [this]() { m_imageDocument.openPreviousPage(); },
-          [this]() { m_imageDocument.openNextPage(); },
-          [this](int number) { m_imageDocument.openImageAtPage(number); },
+          [this]() { m_imageCommands.openPreviousPage(); },
+          [this]() { m_imageCommands.openNextPage(); },
+          [this](int number) { m_imageCommands.openImageAtPage(number); },
       })
     , m_activeNavigationThumbnailRuntime(
           owner, &m_imageDocument, std::move(dependencies.activeNavigationThumbnails))
@@ -403,12 +408,12 @@ bool DocumentSessionRuntime::reportVideoOutputSurfaceClaim(const QString &claimT
     }
 
     if (action == DocumentSessionVideoOutputClaimAction::Detach) {
-        m_videoDocument.setVideoOutput(nullptr);
+        m_videoCommands.setVideoOutput(nullptr);
         return true;
     }
 
-    m_videoDocument.setVideoOutput(videoOutput);
-    m_videoDocument.setVideoOutputGeometry(contentRect, sourceRect);
+    m_videoCommands.setVideoOutput(videoOutput);
+    m_videoCommands.setVideoOutputGeometry(contentRect, sourceRect);
     return true;
 }
 
@@ -554,7 +559,7 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 {
     if (m_state.documentKind() == DocumentSessionKind::Image
         && !directImageLoadMayUseImageDocumentSourceScope()) {
-        m_imageDocument.deleteDisplayedFile(mode);
+        m_imageCommands.deleteDisplayedFile(mode);
         syncImageDocumentFileDeletionProgress();
         return;
     }
@@ -797,14 +802,14 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
 
 void DocumentSessionRuntime::leaveVideoMode()
 {
-    if (m_videoPublicSnapshot.sourceUrl.isEmpty() && m_videoDocument.videoOutput() == nullptr) {
+    if (m_videoPublicSnapshot.sourceUrl.isEmpty() && m_videoCommands.videoOutput() == nullptr) {
         return;
     }
 
     m_videoOutputRuntime.clear();
-    m_videoDocument.stop();
-    m_videoDocument.setVideoOutput(nullptr);
-    m_videoDocument.setSourceUrl(QUrl());
+    m_videoCommands.stop();
+    m_videoCommands.setVideoOutput(nullptr);
+    m_videoCommands.setSourceUrl(QUrl());
 }
 
 void DocumentSessionRuntime::syncFromImageDocument()

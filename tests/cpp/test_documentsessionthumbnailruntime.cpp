@@ -54,7 +54,7 @@ void TestDocumentSessionThumbnailRuntime::
     kiriview::DocumentSessionImageDocumentSnapshot imageSnapshot;
     imageSnapshot.displayedOpenedCollectionScope = cbzScope;
 
-    kiriview::DocumentSessionImageDocumentPort imageDocument;
+    kiriview::DocumentSessionImageDocumentSnapshotPort imageDocument;
     imageDocument.snapshot = [&imageSnapshot]() { return imageSnapshot; };
 
     kiriview::ThumbnailGenerationRequest generatedRequest;

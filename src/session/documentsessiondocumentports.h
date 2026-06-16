@@ -59,9 +59,12 @@ struct DocumentSessionImageDocumentSnapshot {
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext;
 };
 
-struct DocumentSessionImageDocumentPort {
+struct DocumentSessionImageDocumentSnapshotPort {
     std::function<DocumentSessionImageDocumentSnapshot()> snapshot;
     DocumentSessionDocumentSignalConnector snapshotChanged;
+};
+
+struct DocumentSessionImageDocumentCommandPort {
     std::function<void(const QUrl &)> setSourceUrl;
     std::function<void()> openPreviousPage;
     std::function<void()> openNextPage;
@@ -82,9 +85,12 @@ struct DocumentSessionVideoDocumentSnapshot {
     EmbeddedMetadata embeddedMetadata;
 };
 
-struct DocumentSessionVideoDocumentPort {
+struct DocumentSessionVideoDocumentSnapshotPort {
     std::function<DocumentSessionVideoDocumentSnapshot()> snapshot;
     DocumentSessionDocumentSignalConnector snapshotChanged;
+};
+
+struct DocumentSessionVideoDocumentCommandPort {
     std::function<void(const QUrl &)> setSourceUrl;
     std::function<QObject *()> videoOutput;
     std::function<void()> stop;

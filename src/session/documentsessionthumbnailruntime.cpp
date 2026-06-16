@@ -9,7 +9,7 @@
 
 namespace {
 kiriview::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
-    kiriview::DocumentSessionImageDocumentPort *imageDocument,
+    kiriview::DocumentSessionImageDocumentSnapshotPort *imageDocument,
     kiriview::ThumbnailSourceAdapter injectedAdapter)
 {
     return [imageDocument, injectedAdapter = std::move(injectedAdapter),
@@ -52,7 +52,7 @@ kiriview::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
 }
 
 kiriview::ActiveNavigationThumbnailRuntimeDependencies documentSessionThumbnailDependencies(
-    kiriview::DocumentSessionImageDocumentPort *imageDocument,
+    kiriview::DocumentSessionImageDocumentSnapshotPort *imageDocument,
     kiriview::ActiveNavigationThumbnailRuntimeDependencies dependencies)
 {
     dependencies.sourceAdapter = documentSessionThumbnailSourceAdapter(
@@ -63,7 +63,7 @@ kiriview::ActiveNavigationThumbnailRuntimeDependencies documentSessionThumbnailD
 
 namespace kiriview {
 DocumentSessionThumbnailRuntime::DocumentSessionThumbnailRuntime(QObject *owner,
-    DocumentSessionImageDocumentPort *imageDocument,
+    DocumentSessionImageDocumentSnapshotPort *imageDocument,
     ActiveNavigationThumbnailRuntimeDependencies dependencies)
     : m_runtime(owner, documentSessionThumbnailDependencies(imageDocument, std::move(dependencies)))
 {

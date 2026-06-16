@@ -255,9 +255,13 @@ private:
     struct ResolvedDependenciesTag {
     };
 
-    static kiriview::DocumentSessionImageDocumentPort imageDocumentPort(
+    static kiriview::DocumentSessionImageDocumentSnapshotPort imageDocumentSnapshotPort(
         KiriImageDocument &document);
-    static kiriview::DocumentSessionVideoDocumentPort videoDocumentPort(
+    static kiriview::DocumentSessionImageDocumentCommandPort imageDocumentCommandPort(
+        KiriImageDocument &document);
+    static kiriview::DocumentSessionVideoDocumentSnapshotPort videoDocumentSnapshotPort(
+        KiriVideoDocument &document);
+    static kiriview::DocumentSessionVideoDocumentCommandPort videoDocumentCommandPort(
         KiriVideoDocument &document);
 
     KiriDocumentSession(kiriview::KiriDocumentSessionDependencies dependencies,

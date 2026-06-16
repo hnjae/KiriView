@@ -20,7 +20,8 @@ namespace kiriview {
 class DocumentSessionThumbnailRuntime final
 {
 public:
-    DocumentSessionThumbnailRuntime(QObject *owner, DocumentSessionImageDocumentPort *imageDocument,
+    DocumentSessionThumbnailRuntime(QObject *owner,
+        DocumentSessionImageDocumentSnapshotPort *imageDocument,
         ActiveNavigationThumbnailRuntimeDependencies dependencies = {});
 
     QAbstractListModel *model() const;

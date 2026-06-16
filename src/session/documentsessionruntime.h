@@ -50,8 +50,10 @@ class DocumentSessionRuntime final
 public:
     using ChangeCallback = DocumentSessionState::ChangeCallback;
 
-    DocumentSessionRuntime(QObject *owner, DocumentSessionImageDocumentPort imageDocument,
-        DocumentSessionVideoDocumentPort videoDocument, ChangeCallback changeCallback = {},
+    DocumentSessionRuntime(QObject *owner, DocumentSessionImageDocumentSnapshotPort imageDocument,
+        DocumentSessionImageDocumentCommandPort imageCommands,
+        DocumentSessionVideoDocumentSnapshotPort videoDocument,
+        DocumentSessionVideoDocumentCommandPort videoCommands, ChangeCallback changeCallback = {},
         DocumentSessionRuntimeDependencies dependencies = {});
     ~DocumentSessionRuntime();
 
@@ -173,8 +175,10 @@ private:
     DirectMediaActiveNavigationInput directMediaActiveNavigationInput() const;
 
     QObject *m_owner = nullptr;
-    DocumentSessionImageDocumentPort m_imageDocument;
-    DocumentSessionVideoDocumentPort m_videoDocument;
+    DocumentSessionImageDocumentSnapshotPort m_imageDocument;
+    DocumentSessionImageDocumentCommandPort m_imageCommands;
+    DocumentSessionVideoDocumentSnapshotPort m_videoDocument;
+    DocumentSessionVideoDocumentCommandPort m_videoCommands;
     DocumentSessionState m_state;
     DocumentSessionRouteRuntime m_routeRuntime;
     DocumentSessionActiveNavigationRuntime m_activeNavigationRuntime;

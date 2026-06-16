@@ -52,9 +52,10 @@ void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeaf
     kiriview::DocumentSessionImageDocumentSnapshot imageSnapshot;
     kiriview::DocumentSessionVideoDocumentSnapshot videoSnapshot;
 
-    kiriview::DocumentSessionImageDocumentPort imagePort;
+    kiriview::DocumentSessionImageDocumentSnapshotPort imagePort;
     imagePort.snapshot = [&imageSnapshot]() { return imageSnapshot; };
-    imagePort.setSourceUrl = [&imageSnapshot](const QUrl &url) {
+    kiriview::DocumentSessionImageDocumentCommandPort imageCommands;
+    imageCommands.setSourceUrl = [&imageSnapshot](const QUrl &url) {
         imageSnapshot.sourceUrl = url;
         imageSnapshot.displayedUrl = url;
         imageSnapshot.windowTitleFileName = url.fileName();
@@ -64,20 +65,23 @@ void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeaf
         imageSnapshot.zoomPercentKnown = true;
         imageSnapshot.zoomPercent = 100.0;
     };
-    imagePort.openPreviousPage = []() { };
-    imagePort.openNextPage = []() { };
-    imagePort.openImageAtPage = [](int) { };
-    imagePort.deleteDisplayedFile = [](kiriview::FileDeletionMode) { };
+    imageCommands.openPreviousPage = []() { };
+    imageCommands.openNextPage = []() { };
+    imageCommands.openImageAtPage = [](int) { };
+    imageCommands.deleteDisplayedFile = [](kiriview::FileDeletionMode) { };
 
-    kiriview::DocumentSessionVideoDocumentPort videoPort;
+    kiriview::DocumentSessionVideoDocumentSnapshotPort videoPort;
     videoPort.snapshot = [&videoSnapshot]() { return videoSnapshot; };
-    videoPort.setSourceUrl = [&videoSnapshot](const QUrl &url) { videoSnapshot.sourceUrl = url; };
-    videoPort.videoOutput = []() -> QObject * { return nullptr; };
-    videoPort.stop = []() { };
-    videoPort.setVideoOutput = [](QObject *) { };
-    videoPort.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
+    kiriview::DocumentSessionVideoDocumentCommandPort videoCommands;
+    videoCommands.setSourceUrl
+        = [&videoSnapshot](const QUrl &url) { videoSnapshot.sourceUrl = url; };
+    videoCommands.videoOutput = []() -> QObject * { return nullptr; };
+    videoCommands.stop = []() { };
+    videoCommands.setVideoOutput = [](QObject *) { };
+    videoCommands.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
 
-    kiriview::DocumentSessionRuntime runtime(&owner, std::move(imagePort), std::move(videoPort));
+    kiriview::DocumentSessionRuntime runtime(&owner, std::move(imagePort), std::move(imageCommands),
+        std::move(videoPort), std::move(videoCommands));
 
     runtime.setSourceUrl(imageUrl);
 
@@ -99,10 +103,11 @@ void TestDocumentSessionRuntimeLeafSnapshots::imageSnapshotChangeRefreshesPublic
     kiriview::DocumentSessionImageDocumentSnapshot imageSnapshot;
     kiriview::DocumentSessionVideoDocumentSnapshot videoSnapshot;
 
-    kiriview::DocumentSessionImageDocumentPort imagePort;
+    kiriview::DocumentSessionImageDocumentSnapshotPort imagePort;
     imagePort.snapshot = [&imageSnapshot]() { return imageSnapshot; };
     imagePort.snapshotChanged = imageSnapshotChangedConnector(emitter);
-    imagePort.setSourceUrl = [&imageSnapshot](const QUrl &url) {
+    kiriview::DocumentSessionImageDocumentCommandPort imageCommands;
+    imageCommands.setSourceUrl = [&imageSnapshot](const QUrl &url) {
         imageSnapshot.sourceUrl = url;
         imageSnapshot.displayedUrl = url;
         imageSnapshot.windowTitleFileName = url.fileName();
@@ -110,20 +115,23 @@ void TestDocumentSessionRuntimeLeafSnapshots::imageSnapshotChangeRefreshesPublic
         imageSnapshot.ready = !url.isEmpty();
         imageSnapshot.ordinaryDirectMediaScopeActive = !url.isEmpty();
     };
-    imagePort.openPreviousPage = []() { };
-    imagePort.openNextPage = []() { };
-    imagePort.openImageAtPage = [](int) { };
-    imagePort.deleteDisplayedFile = [](kiriview::FileDeletionMode) { };
+    imageCommands.openPreviousPage = []() { };
+    imageCommands.openNextPage = []() { };
+    imageCommands.openImageAtPage = [](int) { };
+    imageCommands.deleteDisplayedFile = [](kiriview::FileDeletionMode) { };
 
-    kiriview::DocumentSessionVideoDocumentPort videoPort;
+    kiriview::DocumentSessionVideoDocumentSnapshotPort videoPort;
     videoPort.snapshot = [&videoSnapshot]() { return videoSnapshot; };
-    videoPort.setSourceUrl = [&videoSnapshot](const QUrl &url) { videoSnapshot.sourceUrl = url; };
-    videoPort.videoOutput = []() -> QObject * { return nullptr; };
-    videoPort.stop = []() { };
-    videoPort.setVideoOutput = [](QObject *) { };
-    videoPort.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
+    kiriview::DocumentSessionVideoDocumentCommandPort videoCommands;
+    videoCommands.setSourceUrl
+        = [&videoSnapshot](const QUrl &url) { videoSnapshot.sourceUrl = url; };
+    videoCommands.videoOutput = []() -> QObject * { return nullptr; };
+    videoCommands.stop = []() { };
+    videoCommands.setVideoOutput = [](QObject *) { };
+    videoCommands.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
 
-    kiriview::DocumentSessionRuntime runtime(&owner, std::move(imagePort), std::move(videoPort));
+    kiriview::DocumentSessionRuntime runtime(&owner, std::move(imagePort), std::move(imageCommands),
+        std::move(videoPort), std::move(videoCommands));
     runtime.setSourceUrl(imageUrl);
 
     imageSnapshot.primaryImageSize = QSize(640, 480);

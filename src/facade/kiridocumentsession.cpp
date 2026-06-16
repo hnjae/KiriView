@@ -323,10 +323,10 @@ kiriview::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
 }
 }
 
-kiriview::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPort(
+kiriview::DocumentSessionImageDocumentSnapshotPort KiriDocumentSession::imageDocumentSnapshotPort(
     KiriImageDocument &document)
 {
-    return kiriview::DocumentSessionImageDocumentPort {
+    return kiriview::DocumentSessionImageDocumentSnapshotPort {
         [&document]() { return imageDocumentSessionSnapshot(document); },
         documentSignalConnector(document,
             { &KiriImageDocument::sourceUrlChanged, &KiriImageDocument::statusChanged,
@@ -341,6 +341,13 @@ kiriview::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
                 &KiriImageDocument::twoPageModeChanged,
                 &KiriImageDocument::rightToLeftReadingChanged,
                 &KiriImageDocument::embeddedMetadataChanged }),
+    };
+}
+
+kiriview::DocumentSessionImageDocumentCommandPort KiriDocumentSession::imageDocumentCommandPort(
+    KiriImageDocument &document)
+{
+    return kiriview::DocumentSessionImageDocumentCommandPort {
         [&document](const QUrl &url) { document.setSourceUrl(url); },
         [&document]() { document.openPreviousPage(); },
         [&document]() { document.openNextPage(); },
@@ -351,10 +358,10 @@ kiriview::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
     };
 }
 
-kiriview::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPort(
+kiriview::DocumentSessionVideoDocumentSnapshotPort KiriDocumentSession::videoDocumentSnapshotPort(
     KiriVideoDocument &document)
 {
-    return kiriview::DocumentSessionVideoDocumentPort {
+    return kiriview::DocumentSessionVideoDocumentSnapshotPort {
         [&document]() { return videoDocumentSessionSnapshot(document); },
         documentSignalConnector(document,
             { &KiriVideoDocument::sourceUrlChanged, &KiriVideoDocument::statusChanged,
@@ -362,6 +369,13 @@ kiriview::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPor
                 &KiriVideoDocument::videoSizeChanged, &KiriVideoDocument::errorStringChanged,
                 &KiriVideoDocument::zoomPercentKnownChanged, &KiriVideoDocument::zoomPercentChanged,
                 &KiriVideoDocument::embeddedMetadataChanged }),
+    };
+}
+
+kiriview::DocumentSessionVideoDocumentCommandPort KiriDocumentSession::videoDocumentCommandPort(
+    KiriVideoDocument &document)
+{
+    return kiriview::DocumentSessionVideoDocumentCommandPort {
         [&document](const QUrl &url) { document.setSourceUrl(url); },
         [&document]() { return document.videoOutput(); },
         [&document]() { document.stop(); },
@@ -397,7 +411,9 @@ KiriDocumentSession::KiriDocumentSession(kiriview::KiriDocumentSessionDependenci
     , m_videoDocument(std::make_unique<KiriVideoDocument>(this))
 {
     m_runtime = std::make_unique<kiriview::DocumentSessionRuntime>(
-        this, imageDocumentPort(*m_imageDocument), videoDocumentPort(*m_videoDocument),
+        this, imageDocumentSnapshotPort(*m_imageDocument),
+        imageDocumentCommandPort(*m_imageDocument), videoDocumentSnapshotPort(*m_videoDocument),
+        videoDocumentCommandPort(*m_videoDocument),
         [this](const std::vector<kiriview::DocumentSessionChange> &changes) {
             handleSessionChanges(changes);
         },
