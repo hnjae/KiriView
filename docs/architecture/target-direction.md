@@ -29,6 +29,8 @@ Route planning and execution should be a named document-session subowner. The ro
 
 Direct-image cursor synchronization should be a named document-session planner. The planner should decide whether a pending direct-image cursor is confirmed, restored after failure, or left unchanged from committed cursor and image leaf facts. `DocumentSessionRuntime` applies the returned cursor operation to `DocumentSessionState`, but it must not inline pending/displayed/source/error branching.
 
+Direct-media navigation application should be a named document-session subowner. The application runtime should translate refresh/open workflow applications into state replacement, reveal-context operations, projection publication, predecode scheduling, and follow-up media routes through narrow ports. `DocumentSessionRuntime` may supply current cursor and active-navigation facts, but it must not inline workflow-application branching or own the effect sequence.
+
 Viewport scan-start state, pan/scan command planning, anchored zoom positioning, viewport point-query geometry, and viewport command projection application should belong to the image-document runtime/presentation layer, not QML. The facade may keep forwarding QML commands and a non-rendering QQuickItem bridge may adapt the physical `Flickable` position, but C++ owns command revision tracking, begin/complete/acknowledge ordering, and observation revision reconciliation.
 
 Those boundaries should keep `DocumentSessionState` as the public C++ owner and keep Qt/KDE effects in C++. Rust may later host pure projection or plan computation from plain snapshots, but C++ applies the resulting state, executes document routing, publishes signal batches, and preserves cursor-generation rejection for stale async completions.
