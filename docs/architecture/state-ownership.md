@@ -86,6 +86,8 @@ Direct media sibling discovery may complete asynchronously, but the cursor used 
 
 Action availability is a session-fed named projection consumed by the application action runtime. It may include image-internal, viewport, shortcut-gating, and presentation-only facts, but those facts must enter the action runtime as C++ snapshots rather than QML-computed booleans. Shared Previous, Next, First, and Last availability comes from the session active navigation projection.
 
+Application action command dispatch belongs to the application action runtime. The runtime owns the command-router instance and exposes typed dispatch entry points for triggered actions and fixed viewer shortcuts. The QML facade may temporarily adapt current session/image/video facts and owner-grouped command ports, but it must not store routing policy or the router object.
+
 Extracting active navigation helpers must not move authoritative state to Rust. Rust may later compute pure projections from plain snapshots, but C++ applies and publishes the result through the document session.
 
 Direct media cursor generation is part of stale async-completion rejection. Future helper extraction must preserve idempotent cursor operations and reject candidate results unless the cursor URL, scope URL, and generation still match the accepted session request. Cursor generation changes when the effective direct media identity or parent scope changes, not merely when ownership transitions from pending to confirmed for the same direct media URL.
