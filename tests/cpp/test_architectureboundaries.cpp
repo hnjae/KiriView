@@ -74,6 +74,7 @@ private Q_SLOTS:
     void activePresentationDoesNotWritePageSurfacePresentationState();
     void productionFacadesDoNotExposePresentationBackdoorSetters();
     void mediaInformationFacadeExposesSnapshotRevision();
+    void sessionLeafSnapshotPortsAreSeparateFromCommandPorts();
 };
 
 namespace {
@@ -1569,6 +1570,63 @@ void TestArchitectureBoundaries::mediaInformationFacadeExposesSnapshotRevision()
     const QString header = readProjectFile(QStringLiteral("src/facade/kirimediainformation.h"));
     QVERIFY(header.contains(
         QStringLiteral("Q_PROPERTY(quint64 revision READ revision NOTIFY changed)")));
+}
+
+void TestArchitectureBoundaries::sessionLeafSnapshotPortsAreSeparateFromCommandPorts()
+{
+    const QString header
+        = readProjectFile(QStringLiteral("src/session/documentsessiondocumentports.h"));
+    const QStringList snapshotPorts {
+        QStringLiteral("DocumentSessionImageDocumentSnapshotPort"),
+        QStringLiteral("DocumentSessionVideoDocumentSnapshotPort"),
+    };
+    const QStringList commandPorts {
+        QStringLiteral("DocumentSessionImageDocumentCommandPort"),
+        QStringLiteral("DocumentSessionVideoDocumentCommandPort"),
+    };
+
+    QVERIFY(!header.contains(QStringLiteral("struct DocumentSessionImageDocumentPort")));
+    QVERIFY(!header.contains(QStringLiteral("struct DocumentSessionVideoDocumentPort")));
+
+    for (const QString &port : snapshotPorts + commandPorts) {
+        const QRegularExpression structPattern(QStringLiteral(R"(struct\s+%1\s*\{([\s\S]*?)\n\};)")
+                .arg(QRegularExpression::escape(port)));
+        const QRegularExpressionMatch match = structPattern.match(header);
+        QVERIFY2(match.hasMatch(),
+            qPrintable(QStringLiteral("documentsessiondocumentports.h must define %1").arg(port)));
+    }
+
+    const QStringList snapshotForbiddenTokens {
+        QStringLiteral("setSourceUrl"),
+        QStringLiteral("openPreviousPage"),
+        QStringLiteral("openNextPage"),
+        QStringLiteral("openImageAtPage"),
+        QStringLiteral("deleteDisplayedFile"),
+        QStringLiteral("videoOutput"),
+        QStringLiteral("stop"),
+        QStringLiteral("setVideoOutput"),
+        QStringLiteral("setVideoOutputGeometry"),
+    };
+    const QStringList commandForbiddenTokens {
+        QStringLiteral("snapshot"),
+        QStringLiteral("snapshotChanged"),
+    };
+
+    QStringList violations;
+    for (const QString &port : snapshotPorts + commandPorts) {
+        const QRegularExpression structPattern(QStringLiteral(R"(struct\s+%1\s*\{([\s\S]*?)\n\};)")
+                .arg(QRegularExpression::escape(port)));
+        const QString body = structPattern.match(header).captured(1);
+        const QStringList forbiddenTokens
+            = snapshotPorts.contains(port) ? snapshotForbiddenTokens : commandForbiddenTokens;
+        for (const QString &token : forbiddenTokens) {
+            if (body.contains(token)) {
+                violations.push_back(QStringLiteral("%1 contains %2").arg(port, token));
+            }
+        }
+    }
+
+    QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
 QTEST_GUILESS_MAIN(TestArchitectureBoundaries)
