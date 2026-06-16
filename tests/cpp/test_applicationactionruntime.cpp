@@ -3,6 +3,7 @@
 
 #include "application/applicationactionhost.h"
 #include "application/applicationactionruntime.h"
+#include "application/applicationcommandportsource.h"
 #include "application/applicationcommandrouter.h"
 #include "session/documentsessiontypes.h"
 
@@ -42,14 +43,26 @@ struct CommandLog {
     int previousNavigationCount = 0;
 };
 
-Actions::ApplicationCommandRouterPorts commandPorts(CommandLog &log)
+class FakeCommandPortSource final : public Actions::ApplicationCommandPortSource
 {
-    Actions::ApplicationCommandRouterPorts ports;
-    ports.shell.requestOpenDialog = [&log]() { ++log.openDialogCount; };
-    ports.session.requestPreviousActiveNavigationWithBoundary
-        = [&log]() { ++log.previousNavigationCount; };
-    return ports;
-}
+public:
+    Actions::ApplicationCommandRouterShellPorts commandRouterShellPorts() override
+    {
+        Actions::ApplicationCommandRouterShellPorts ports;
+        ports.requestOpenDialog = [this]() { ++log.openDialogCount; };
+        return ports;
+    }
+
+    Actions::ApplicationCommandRouterSessionPorts commandRouterSessionPorts() override
+    {
+        Actions::ApplicationCommandRouterSessionPorts ports;
+        ports.requestPreviousActiveNavigationWithBoundary
+            = [this]() { ++log.previousNavigationCount; };
+        return ports;
+    }
+
+    CommandLog log;
+};
 }
 
 class TestApplicationActionRuntime : public QObject
@@ -67,25 +80,28 @@ void TestApplicationActionRuntime::triggeredActionDispatchesThroughRuntimeOwnedR
 {
     FakeApplicationActionHost host;
     Actions::ApplicationActionRuntime runtime(host);
-    Actions::ApplicationCommandRouterInput input;
-    CommandLog log;
+    FakeCommandPortSource portSource;
 
-    runtime.handleActionTriggered(ActionId::FileOpenAction, input, commandPorts(log));
+    runtime.setCommandPortSource(&portSource);
+    runtime.handleActionTriggered(ActionId::FileOpenAction);
 
-    QCOMPARE(log.openDialogCount, 1);
+    QCOMPARE(portSource.log.openDialogCount, 1);
 }
 
 void TestApplicationActionRuntime::fixedShortcutDispatchesThroughRuntimeOwnedRouter()
 {
     FakeApplicationActionHost host;
     Actions::ApplicationActionRuntime runtime(host);
-    Actions::ApplicationCommandRouterInput input;
-    input.videoMode = true;
-    CommandLog log;
+    FakeCommandPortSource portSource;
+    Actions::ApplicationActionStateSnapshot snapshot;
+    snapshot.videoMode = true;
 
-    QVERIFY(runtime.executeHorizontalArrowShortcut(input, commandPorts(log), true));
+    runtime.setCommandPortSource(&portSource);
+    runtime.setActionStateSnapshot(snapshot);
 
-    QCOMPARE(log.previousNavigationCount, 1);
+    QVERIFY(runtime.executeHorizontalArrowShortcut(true));
+
+    QCOMPARE(portSource.log.previousNavigationCount, 1);
 }
 
 void TestApplicationActionRuntime::actionStateSnapshotBuildsRuntimePolicyInput()
