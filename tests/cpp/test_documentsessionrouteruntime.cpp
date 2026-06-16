@@ -14,6 +14,8 @@ class TestDocumentSessionRouteRuntime : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void routeSourceUrlPlansAndExecutesFromCurrentKind();
+    void routeMediaUrlPlansAndExecutesFromCurrentKind();
     void executionRunsMutationPublicationFollowUpAndCompletionInOrder();
     void executionPublishesBeforeTypedFollowUps();
     void clearedNavigationRepublishesBeforePredecodeClear();
@@ -91,6 +93,127 @@ void TestDocumentSessionRouteRuntime::executionRunsMutationPublicationFollowUpAn
         QStringLiteral("publish"),
         QStringLiteral("refresh-navigation"),
         QStringLiteral("clear-predecode"),
+        QStringLiteral("complete"),
+    };
+    QCOMPARE(events, expected);
+}
+
+void TestDocumentSessionRouteRuntime::routeSourceUrlPlansAndExecutesFromCurrentKind()
+{
+    std::vector<QString> events;
+    kiriview::DocumentSessionRouteRuntimePorts ports;
+    ports.cancelMediaOpenWith
+        = [&events]() { events.push_back(QStringLiteral("cancel-open-with")); };
+    ports.clearSessionErrorString
+        = [&events]() { events.push_back(QStringLiteral("clear-error")); };
+    ports.cancelDirectMediaNavigation
+        = [&events]() { events.push_back(QStringLiteral("cancel-navigation")); };
+    ports.cancelMediaDeletion
+        = [&events]() { events.push_back(QStringLiteral("cancel-deletion")); };
+    ports.clearDirectMediaNavigation
+        = [&events]() { events.push_back(QStringLiteral("clear-navigation")); };
+    ports.clearDirectMediaCursor = [&events]() {
+        events.push_back(QStringLiteral("clear-cursor"));
+        return true;
+    };
+    ports.requestDirectImageCursor = [&events](const QUrl &url) {
+        events.push_back(QStringLiteral("request-image-cursor:%1").arg(url.toString()));
+        return true;
+    };
+    ports.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
+        events.push_back(QStringLiteral("suppress-begin"));
+        mutation();
+        events.push_back(QStringLiteral("suppress-end"));
+    };
+    ports.leaveVideoMode = [&events]() { events.push_back(QStringLiteral("leave-video")); };
+    ports.enterImageDocument = [&events](const QUrl &url) {
+        events.push_back(QStringLiteral("enter-image:%1").arg(url.toString()));
+    };
+    ports.syncDirectImageCursorFromDocument = [&events]() {
+        events.push_back(QStringLiteral("sync-image-cursor"));
+        return true;
+    };
+    ports.useImageDocumentSourceIdentity
+        = [&events]() { events.push_back(QStringLiteral("image-document-identity")); };
+    ports.recomputePublicProjection = [&events]() { events.push_back(QStringLiteral("publish")); };
+    ports.directMediaNavigationActive = []() { return false; };
+    ports.refreshDirectMediaNavigation
+        = [&events]() { events.push_back(QStringLiteral("refresh-navigation")); };
+    ports.routeCompleted = [&events]() { events.push_back(QStringLiteral("complete")); };
+
+    kiriview::DocumentSessionRouteRuntime runtime(std::move(ports));
+    const QUrl imageUrl = localUrl(QStringLiteral("/tmp/page.png"));
+
+    runtime.routeSourceUrl(imageUrl, kiriview::DocumentSessionKind::Empty);
+
+    const std::vector<QString> expected {
+        QStringLiteral("cancel-open-with"),
+        QStringLiteral("clear-error"),
+        QStringLiteral("cancel-navigation"),
+        QStringLiteral("cancel-deletion"),
+        QStringLiteral("clear-navigation"),
+        QStringLiteral("clear-cursor"),
+        QStringLiteral("request-image-cursor:%1").arg(imageUrl.toString()),
+        QStringLiteral("suppress-begin"),
+        QStringLiteral("leave-video"),
+        QStringLiteral("suppress-end"),
+        QStringLiteral("suppress-begin"),
+        QStringLiteral("enter-image:%1").arg(imageUrl.toString()),
+        QStringLiteral("suppress-end"),
+        QStringLiteral("sync-image-cursor"),
+        QStringLiteral("image-document-identity"),
+        QStringLiteral("publish"),
+        QStringLiteral("refresh-navigation"),
+        QStringLiteral("complete"),
+    };
+    QCOMPARE(events, expected);
+}
+
+void TestDocumentSessionRouteRuntime::routeMediaUrlPlansAndExecutesFromCurrentKind()
+{
+    std::vector<QString> events;
+    kiriview::DocumentSessionRouteRuntimePorts ports;
+    ports.cancelMediaOpenWith
+        = [&events]() { events.push_back(QStringLiteral("cancel-open-with")); };
+    ports.setDirectVideoCursor = [&events](const QUrl &url) {
+        events.push_back(QStringLiteral("video-cursor:%1").arg(url.toString()));
+        return true;
+    };
+    ports.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
+        events.push_back(QStringLiteral("suppress-begin"));
+        mutation();
+        events.push_back(QStringLiteral("suppress-end"));
+    };
+    ports.enterVideoDocument = [&events](const QUrl &url) {
+        events.push_back(QStringLiteral("enter-video:%1").arg(url.toString()));
+    };
+    ports.clearImageDocument = [&events]() { events.push_back(QStringLiteral("clear-image")); };
+    ports.useOriginalSourceIdentity = [&events](const QUrl &url) {
+        events.push_back(QStringLiteral("identity:%1").arg(url.toString()));
+    };
+    ports.recomputePublicProjection = [&events]() { events.push_back(QStringLiteral("publish")); };
+    ports.directMediaNavigationActive = []() { return false; };
+    ports.refreshDirectMediaNavigation
+        = [&events]() { events.push_back(QStringLiteral("refresh-navigation")); };
+    ports.routeCompleted = [&events]() { events.push_back(QStringLiteral("complete")); };
+
+    kiriview::DocumentSessionRouteRuntime runtime(std::move(ports));
+    const QUrl videoUrl = localUrl(QStringLiteral("/tmp/movie.mp4"));
+
+    runtime.routeMediaUrl(videoUrl, kiriview::DocumentSessionKind::Image);
+
+    const std::vector<QString> expected {
+        QStringLiteral("cancel-open-with"),
+        QStringLiteral("video-cursor:%1").arg(videoUrl.toString()),
+        QStringLiteral("suppress-begin"),
+        QStringLiteral("clear-image"),
+        QStringLiteral("suppress-end"),
+        QStringLiteral("suppress-begin"),
+        QStringLiteral("enter-video:%1").arg(videoUrl.toString()),
+        QStringLiteral("suppress-end"),
+        QStringLiteral("identity:%1").arg(videoUrl.toString()),
+        QStringLiteral("publish"),
+        QStringLiteral("refresh-navigation"),
         QStringLiteral("complete"),
     };
     QCOMPARE(events, expected);
