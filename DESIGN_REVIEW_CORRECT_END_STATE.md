@@ -69,16 +69,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: `src/facade/kiriviewapplication.h` no longer includes action policy/router headers; action-state rebuild tests target the application runtime/coordinator rather than the facade.
 - Priority: P2
 
-### Finding: Document session route plans mix mutation, publication, and follow-up effects
-
-- Evidence: `src/session/documentsessionrouteplan.h:22-98` defines `DocumentSessionRouteOperation` with state mutation, leaf document routing, `RecomputePublicProjectionRouteOperation`, `RefreshDirectMediaNavigationAfterRoutingRouteOperation`, and `ClearMediaPredecodeRouteOperation` in one variant list. `src/session/documentsessionrouteruntime.cpp:16-166` traverses the linear plan and uses `RouteExecutionResult` to collect publication and follow-up effects after mutation traversal. `src/session/documentsessionruntime.cpp:91-145` supplies the route runtime port table, including `m_routingSource` suppression. `src/session/documentsessionruntime.cpp:1091-1125` may recompute projection, schedule predecode, and call `openMediaUrl()` from direct media navigation completion.
-- Current state: A route plan is linear, route operation dispatch has the named `DocumentSessionRouteRuntime` owner, and runtime execution now phases traversal by applying state/leaf mutations first, collecting public-projection publication and follow-up requests, then publishing before direct-navigation refresh and predecode clearing regardless of linear plan order. The public route plan type still mixes mutation and follow-up operation variants.
-- Design concern: Route authors still express mutation, publication, and follow-up effects as one operation list, so the type vocabulary does not make phase boundaries explicit.
-- Correct end state: Session routing should remain owned by `DocumentSessionRuntime`, but execution should be phase-oriented: apply state/leaf mutations, publish the accepted public projection once, then execute typed follow-up effects such as direct-navigation refresh, predecode scheduling, or follow-up media routing.
-- Suggested migration: Split `DocumentSessionRouteOperation` into mutation operations and typed follow-up effects, using the existing internal `RouteExecutionResult` as the migration target for publication, direct-navigation refresh, and predecode clear requests.
-- Acceptance criteria: Route plan types distinguish mutation operations from follow-up effects; follow-up effects are drained from typed execution results rather than authored as peers of state mutation operations.
-- Priority: P2
-
 ## Testability Problems
 
 ### Finding: Shortcut dispatch core is private inside the Qt event-filter runtime
