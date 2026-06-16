@@ -1007,37 +1007,18 @@ bool DocumentSessionRuntime::directImageLoadMayUseImageDocumentSourceScope() con
 
 bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
 {
-    if (m_state.documentKind() != DocumentSessionKind::Image) {
+    const DocumentSessionDirectImageCursorSyncPlan plan
+        = documentSessionDirectImageCursorSyncPlan(DocumentSessionDirectImageCursorSyncInput {
+            m_state.documentKind(),
+            m_state.directMediaCursor(),
+            m_imagePublicSnapshot,
+        });
+    switch (plan.operation) {
+    case DocumentSessionDirectImageCursorSyncOperation::None:
         return false;
-    }
-
-    const QUrl pendingUrl = m_state.directMediaCursor().pendingUrl;
-    const QUrl displayedUrl = m_imagePublicSnapshot.displayedUrl;
-    if (!pendingUrl.isEmpty()) {
-        if (activeImageUsesImageDocumentSourceScope()
-            && sameNormalizedUrl(displayedUrl, pendingUrl)) {
-            return m_state.confirmDirectImageCursor(displayedUrl);
-        }
-
-        if (m_imagePublicSnapshot.error) {
-            if (sameNormalizedUrl(m_imagePublicSnapshot.sourceUrl, pendingUrl)) {
-                return m_state.confirmDirectImageCursor(pendingUrl);
-            }
-            return m_state.restoreDirectImageCursorAfterFailure();
-        }
-
-        if (!m_imagePublicSnapshot.sourceUrl.isEmpty()
-            && m_imagePublicSnapshot.sourceUrl != pendingUrl) {
-            return m_state.restoreDirectImageCursorAfterFailure();
-        }
-        return false;
-    }
-
-    if (activeImageUsesImageDocumentSourceScope() && !displayedUrl.isEmpty()) {
-        return m_state.confirmDirectImageCursor(displayedUrl);
-    }
-
-    if (m_imagePublicSnapshot.error) {
+    case DocumentSessionDirectImageCursorSyncOperation::ConfirmDirectImageCursor:
+        return m_state.confirmDirectImageCursor(plan.url);
+    case DocumentSessionDirectImageCursorSyncOperation::RestoreDirectImageCursorAfterFailure:
         return m_state.restoreDirectImageCursorAfterFailure();
     }
 

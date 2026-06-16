@@ -8,6 +8,7 @@
 #include "navigation/directmedianavigationmodel.h"
 #include "session/activenavigationprojection.h"
 #include "session/documentsessionactivenavigationruntime.h"
+#include "session/documentsessiondirectimagecursorsync.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondocumentports.h"
 #include "session/documentsessionimagedocumentcommandruntime.h"
