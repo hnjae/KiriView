@@ -17,6 +17,8 @@ Session-to-leaf document ports should expose cohesive snapshot families and one 
 
 Active-navigation dispatch should be a named document-session subowner. The subowner may hold pending reveal context and execute typed direct-media or image-page navigation operations through narrow ports, while `DocumentSessionRuntime` supplies the current public active-navigation source/snapshot and `DocumentSessionState` remains the only public projection owner.
 
+Route plan execution should be a named document-session subowner. The subowner may own the route-operation visitor and route-local execution facts such as direct-media scope changes, while `DocumentSessionRuntime` supplies typed mutation/effect ports for leaf routing, public projection publication, direct-media navigation refresh, predecode clearing, and route-completion cleanup.
+
 Those boundaries should keep `DocumentSessionState` as the public C++ owner and keep Qt/KDE effects in C++. Rust may later host pure projection or plan computation from plain snapshots, but C++ applies the resulting state, executes document routing, publishes signal batches, and preserves cursor-generation rejection for stale async completions.
 
 When adding C++ or Rust files for these boundaries, keep source ownership manifests in sync, including `src/rust_policy_sources.txt`, `src/rust_bridge_sources.txt`, and relevant REUSE coverage.
