@@ -60,6 +60,7 @@ private Q_SLOTS:
     void triggeredActionDispatchesThroughRuntimeOwnedRouter();
     void fixedShortcutDispatchesThroughRuntimeOwnedRouter();
     void actionStateSnapshotBuildsRuntimePolicyInput();
+    void actionStateSnapshotBuildsCommandRouterInput();
 };
 
 void TestApplicationActionRuntime::triggeredActionDispatchesThroughRuntimeOwnedRouter()
@@ -123,6 +124,29 @@ void TestApplicationActionRuntime::actionStateSnapshotBuildsRuntimePolicyInput()
     QVERIFY(runtime.actionPlacementEnabled(ActionId::ViewToggleRightToLeftReadingAction));
     QCOMPARE(runtime.actionMenuText(ActionId::ViewFitAction), QStringLiteral("Fit to &Window"));
     QVERIFY(runtime.rightToLeftReadingActive());
+}
+
+void TestApplicationActionRuntime::actionStateSnapshotBuildsCommandRouterInput()
+{
+    FakeApplicationActionHost host;
+    Actions::ApplicationActionRuntime runtime(host);
+    Actions::ApplicationActionStateSnapshot snapshot;
+    snapshot.sessionActionAvailability.rightToLeftReadingActive = true;
+    snapshot.imagePannable = true;
+    snapshot.videoMode = true;
+    snapshot.imageDocumentPageNavigationActive = true;
+    snapshot.atKnownFirstActiveNavigation = true;
+    snapshot.canOpenPreviousActiveNavigation = true;
+
+    runtime.setActionStateSnapshot(snapshot);
+
+    const Actions::ApplicationCommandRouterInput input = runtime.commandRouterInput();
+    QVERIFY(input.imagePannable);
+    QVERIFY(input.rightToLeftReadingActive);
+    QVERIFY(input.videoMode);
+    QVERIFY(input.imageDocumentPageNavigationActive);
+    QVERIFY(input.atKnownFirstActiveNavigation);
+    QVERIFY(input.canOpenPreviousActiveNavigation);
 }
 
 int main(int argc, char **argv)
