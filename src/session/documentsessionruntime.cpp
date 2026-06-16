@@ -88,7 +88,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     DocumentSessionRuntimeDependencies dependencies)
     : m_owner(owner)
     , m_imageDocument(std::move(imageDocument))
-    , m_imageCommands(std::move(imageCommands))
+    , m_imageDocumentCommandRuntime(std::move(imageCommands))
     , m_videoDocument(std::move(videoDocument))
     , m_videoDocumentCommandRuntime(std::move(videoCommands),
           [this](const DocumentSessionVideoOutputAttachmentPort &attachmentPort) {
@@ -121,7 +121,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
               mutation();
           },
           [this]() {
-              m_imageCommands.setSourceUrl(QUrl());
+              m_imageDocumentCommandRuntime.clearSourceUrl();
               refreshImagePublicSnapshot();
           },
           [this]() {
@@ -130,7 +130,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           },
           [this]() { setDocumentKind(DocumentSessionKind::Empty); },
           [this](const QUrl &url) {
-              m_imageCommands.setSourceUrl(url);
+              m_imageDocumentCommandRuntime.setSourceUrl(url);
               refreshImagePublicSnapshot();
               setDocumentKind(DocumentSessionKind::Image);
           },
@@ -162,9 +162,9 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           [this]() { openPreviousMedia(); },
           [this]() { openNextMedia(); },
           [this](int number) { openMediaAtNumber(number); },
-          [this]() { m_imageCommands.openPreviousPage(); },
-          [this]() { m_imageCommands.openNextPage(); },
-          [this](int number) { m_imageCommands.openImageAtPage(number); },
+          [this]() { m_imageDocumentCommandRuntime.openPreviousPage(); },
+          [this]() { m_imageDocumentCommandRuntime.openNextPage(); },
+          [this](int number) { m_imageDocumentCommandRuntime.openImageAtPage(number); },
       })
     , m_activeNavigationThumbnailRuntime(
           owner, &m_imageDocument, std::move(dependencies.activeNavigationThumbnails))
@@ -551,7 +551,7 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 {
     if (m_state.documentKind() == DocumentSessionKind::Image
         && !directImageLoadMayUseImageDocumentSourceScope()) {
-        m_imageCommands.deleteDisplayedFile(mode);
+        m_imageDocumentCommandRuntime.deleteDisplayedFile(mode);
         syncImageDocumentFileDeletionProgress();
         return;
     }

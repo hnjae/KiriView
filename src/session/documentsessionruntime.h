@@ -10,6 +10,7 @@
 #include "session/documentsessionactivenavigationruntime.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondocumentports.h"
+#include "session/documentsessionimagedocumentcommandruntime.h"
 #include "session/documentsessionmediadeletionruntime.h"
 #include "session/documentsessionmediaopenwithruntime.h"
 #include "session/documentsessionmediapredecoderuntime.h"
@@ -178,7 +179,7 @@ private:
 
     QObject *m_owner = nullptr;
     DocumentSessionImageDocumentSnapshotPort m_imageDocument;
-    DocumentSessionImageDocumentCommandPort m_imageCommands;
+    DocumentSessionImageDocumentCommandRuntime m_imageDocumentCommandRuntime;
     DocumentSessionVideoDocumentSnapshotPort m_videoDocument;
     DocumentSessionVideoDocumentCommandRuntime m_videoDocumentCommandRuntime;
     DocumentSessionState m_state;
