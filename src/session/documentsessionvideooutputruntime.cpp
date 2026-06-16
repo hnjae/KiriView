@@ -27,30 +27,50 @@ QString DocumentSessionVideoOutputRuntime::nextSurfaceClaimToken()
     return surfaceClaimToken(m_nextSurfaceClaimRevision);
 }
 
-DocumentSessionVideoOutputClaimAction DocumentSessionVideoOutputRuntime::reportSurfaceClaim(
-    const DocumentSessionVideoOutputClaimReport &report)
+bool DocumentSessionVideoOutputRuntime::reportSurfaceClaim(
+    const DocumentSessionVideoOutputClaimReport &report,
+    const DocumentSessionVideoOutputAttachmentPort &attachmentPort)
 {
     const std::optional<quint64> claimRevision = surfaceClaimRevisionFromToken(report.claimToken);
     if (!claimRevision || report.surfaceOwner == nullptr) {
-        return DocumentSessionVideoOutputClaimAction::Reject;
+        return false;
     }
 
     const bool sameOwner = m_surfaceClaimOwner == report.surfaceOwner;
     if (sameOwner && *claimRevision < m_surfaceClaimRevision) {
-        return DocumentSessionVideoOutputClaimAction::Reject;
+        return false;
     }
 
     if (!report.attachRequested) {
         if (!sameOwner) {
-            return DocumentSessionVideoOutputClaimAction::Reject;
+            return false;
         }
-        clear();
-        return DocumentSessionVideoOutputClaimAction::Detach;
+        clearAttachment(attachmentPort);
+        return true;
+    }
+
+    if (report.videoOutput == nullptr) {
+        return false;
     }
 
     m_surfaceClaimOwner = report.surfaceOwner;
     m_surfaceClaimRevision = *claimRevision;
-    return DocumentSessionVideoOutputClaimAction::Attach;
+    if (attachmentPort.setVideoOutput) {
+        attachmentPort.setVideoOutput(report.videoOutput);
+    }
+    if (attachmentPort.setVideoOutputGeometry) {
+        attachmentPort.setVideoOutputGeometry(report.contentRect, report.sourceRect);
+    }
+    return true;
+}
+
+void DocumentSessionVideoOutputRuntime::clearAttachment(
+    const DocumentSessionVideoOutputAttachmentPort &attachmentPort)
+{
+    clear();
+    if (attachmentPort.setVideoOutput) {
+        attachmentPort.setVideoOutput(nullptr);
+    }
 }
 
 void DocumentSessionVideoOutputRuntime::clear()

@@ -160,6 +160,7 @@ private:
     void cancelMediaDeletion();
     MediaOpenWithPlan currentMediaOpenWithPlan() const;
     void cancelMediaOpenWith();
+    DocumentSessionVideoOutputAttachmentPort videoOutputAttachmentPort();
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
     void executeMediaDeletionCompletionPlan(
         const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString);

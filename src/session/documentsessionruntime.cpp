@@ -401,20 +401,9 @@ bool DocumentSessionRuntime::reportVideoOutputSurfaceClaim(const QString &claimT
         && m_state.publicSnapshot().documentKind == DocumentSessionKind::Video
         && videoOutput != nullptr;
 
-    const DocumentSessionVideoOutputClaimAction action
-        = m_videoOutputRuntime.reportSurfaceClaim({ claimToken, surfaceOwner, attach });
-    if (action == DocumentSessionVideoOutputClaimAction::Reject) {
-        return false;
-    }
-
-    if (action == DocumentSessionVideoOutputClaimAction::Detach) {
-        m_videoCommands.setVideoOutput(nullptr);
-        return true;
-    }
-
-    m_videoCommands.setVideoOutput(videoOutput);
-    m_videoCommands.setVideoOutputGeometry(contentRect, sourceRect);
-    return true;
+    return m_videoOutputRuntime.reportSurfaceClaim(
+        { claimToken, surfaceOwner, videoOutput, attach, contentRect, sourceRect },
+        videoOutputAttachmentPort());
 }
 
 std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
@@ -806,9 +795,8 @@ void DocumentSessionRuntime::leaveVideoMode()
         return;
     }
 
-    m_videoOutputRuntime.clear();
+    m_videoOutputRuntime.clearAttachment(videoOutputAttachmentPort());
     m_videoCommands.stop();
-    m_videoCommands.setVideoOutput(nullptr);
     m_videoCommands.setSourceUrl(QUrl());
 }
 
@@ -999,6 +987,16 @@ MediaOpenWithPlan DocumentSessionRuntime::currentMediaOpenWithPlan() const
 }
 
 void DocumentSessionRuntime::cancelMediaOpenWith() { m_mediaOpenWithRuntime.cancel(); }
+
+DocumentSessionVideoOutputAttachmentPort DocumentSessionRuntime::videoOutputAttachmentPort()
+{
+    return DocumentSessionVideoOutputAttachmentPort {
+        [this](QObject *videoOutput) { m_videoCommands.setVideoOutput(videoOutput); },
+        [this](const QRectF &contentRect, const QRectF &sourceRect) {
+            m_videoCommands.setVideoOutputGeometry(contentRect, sourceRect);
+        },
+    };
+}
 
 void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion)
 {
