@@ -4,6 +4,7 @@
 #include "application/applicationactionhost.h"
 #include "application/applicationactionruntime.h"
 #include "application/applicationcommandrouter.h"
+#include "session/documentsessiontypes.h"
 
 #include <KirigamiActionCollection>
 #include <QAction>
@@ -58,6 +59,7 @@ class TestApplicationActionRuntime : public QObject
 private Q_SLOTS:
     void triggeredActionDispatchesThroughRuntimeOwnedRouter();
     void fixedShortcutDispatchesThroughRuntimeOwnedRouter();
+    void actionStateSnapshotBuildsRuntimePolicyInput();
 };
 
 void TestApplicationActionRuntime::triggeredActionDispatchesThroughRuntimeOwnedRouter()
@@ -83,6 +85,44 @@ void TestApplicationActionRuntime::fixedShortcutDispatchesThroughRuntimeOwnedRou
     QVERIFY(runtime.executeHorizontalArrowShortcut(input, commandPorts(log), true));
 
     QCOMPARE(log.previousNavigationCount, 1);
+}
+
+void TestApplicationActionRuntime::actionStateSnapshotBuildsRuntimePolicyInput()
+{
+    FakeApplicationActionHost host;
+    Actions::ApplicationActionRuntime runtime(host);
+    Actions::ApplicationActionStateSnapshot snapshot;
+    snapshot.uiGateRevision = 7;
+    snapshot.sessionActionAvailability = kiriview::DocumentSessionActionAvailabilityFacts {
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+    };
+    snapshot.activeNavigationDispatchAvailable = true;
+    snapshot.activeNavigationAvailable = true;
+    snapshot.activeNavigationKnown = true;
+    snapshot.activeNavigationHasTargets = true;
+    snapshot.canOpenPreviousActiveNavigation = true;
+    snapshot.canOpenNextActiveNavigation = true;
+    snapshot.displayedMediaOpenWithAvailable = true;
+    snapshot.displayedFileDeletionAvailable = true;
+    snapshot.imagePannable = true;
+    snapshot.applicationMenuShortcutEnabled = true;
+    snapshot.showMenubarActionEnabled = false;
+
+    runtime.setActionStateSnapshot(snapshot);
+
+    QCOMPARE(runtime.actionStateRevision(), 1);
+    QVERIFY(runtime.actionPlacementEnabled(ActionId::GoPreviousImageAction));
+    QVERIFY(runtime.actionPlacementEnabled(ActionId::ViewToggleRightToLeftReadingAction));
+    QCOMPARE(runtime.actionMenuText(ActionId::ViewFitAction), QStringLiteral("Fit"));
+    QVERIFY(runtime.rightToLeftReadingActive());
 }
 
 int main(int argc, char **argv)
