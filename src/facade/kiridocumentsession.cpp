@@ -208,17 +208,22 @@ kiriview::ActiveNavigationThumbnailDemandPriority toRuntimeThumbnailDemandPriori
     return kiriview::ActiveNavigationThumbnailDemandPriority::Nearby;
 }
 
-template <typename Document, typename Signal>
+template <typename Document>
 kiriview::DocumentSessionDocumentSignalConnector documentSignalConnector(
-    Document &document, Signal signal)
+    Document &document, std::vector<void (Document::*)()> signalMethods)
 {
-    return [&document, signal](
+    return [&document, signalMethods = std::move(signalMethods)](
                QObject *context, kiriview::DocumentSessionDocumentChangeHandler handler) {
-        return QObject::connect(&document, signal, context, [handler = std::move(handler)]() {
-            if (handler) {
-                handler();
-            }
-        });
+        std::vector<QMetaObject::Connection> connections;
+        connections.reserve(signalMethods.size());
+        for (void (Document::*signal)() : signalMethods) {
+            connections.push_back(QObject::connect(&document, signal, context, [handler]() {
+                if (handler) {
+                    handler();
+                }
+            }));
+        }
+        return connections;
     };
 }
 
@@ -323,31 +328,25 @@ kiriview::DocumentSessionImageDocumentPort KiriDocumentSession::imageDocumentPor
 {
     return kiriview::DocumentSessionImageDocumentPort {
         [&document]() { return imageDocumentSessionSnapshot(document); },
+        documentSignalConnector(document,
+            { &KiriImageDocument::sourceUrlChanged, &KiriImageDocument::statusChanged,
+                &KiriImageDocument::windowTitleFileNameChanged,
+                &KiriImageDocument::imageSizeChanged, &KiriImageDocument::errorStringChanged,
+                &KiriImageDocument::imageDocumentSourceScopeChanged,
+                &KiriImageDocument::unsupportedOpenedCollectionVideoChanged,
+                &KiriImageDocument::fileDeletionInProgressChanged,
+                &KiriImageDocument::zoomPercentKnownChanged, &KiriImageDocument::zoomPercentChanged,
+                &KiriImageDocument::zoomModeChanged, &KiriImageDocument::pageNavigationChanged,
+                &KiriImageDocument::containerNavigationChanged,
+                &KiriImageDocument::twoPageModeChanged,
+                &KiriImageDocument::rightToLeftReadingChanged,
+                &KiriImageDocument::embeddedMetadataChanged }),
         [&document](const QUrl &url) { document.setSourceUrl(url); },
         [&document]() { document.openPreviousPage(); },
         [&document]() { document.openNextPage(); },
         [&document](int pageNumber) { document.openImageAtPage(pageNumber); },
         [&document](kiriview::FileDeletionMode mode) {
             document.deleteDisplayedFile(toImageDocumentDeletionMode(mode));
-        },
-        kiriview::DocumentSessionImageDocumentSignals {
-            documentSignalConnector(document, &KiriImageDocument::sourceUrlChanged),
-            documentSignalConnector(document, &KiriImageDocument::statusChanged),
-            documentSignalConnector(document, &KiriImageDocument::windowTitleFileNameChanged),
-            documentSignalConnector(document, &KiriImageDocument::imageSizeChanged),
-            documentSignalConnector(document, &KiriImageDocument::errorStringChanged),
-            documentSignalConnector(document, &KiriImageDocument::imageDocumentSourceScopeChanged),
-            documentSignalConnector(
-                document, &KiriImageDocument::unsupportedOpenedCollectionVideoChanged),
-            documentSignalConnector(document, &KiriImageDocument::fileDeletionInProgressChanged),
-            documentSignalConnector(document, &KiriImageDocument::zoomPercentKnownChanged),
-            documentSignalConnector(document, &KiriImageDocument::zoomPercentChanged),
-            documentSignalConnector(document, &KiriImageDocument::zoomModeChanged),
-            documentSignalConnector(document, &KiriImageDocument::pageNavigationChanged),
-            documentSignalConnector(document, &KiriImageDocument::containerNavigationChanged),
-            documentSignalConnector(document, &KiriImageDocument::twoPageModeChanged),
-            documentSignalConnector(document, &KiriImageDocument::rightToLeftReadingChanged),
-            documentSignalConnector(document, &KiriImageDocument::embeddedMetadataChanged),
         },
     };
 }
@@ -357,23 +356,18 @@ kiriview::DocumentSessionVideoDocumentPort KiriDocumentSession::videoDocumentPor
 {
     return kiriview::DocumentSessionVideoDocumentPort {
         [&document]() { return videoDocumentSessionSnapshot(document); },
+        documentSignalConnector(document,
+            { &KiriVideoDocument::sourceUrlChanged, &KiriVideoDocument::statusChanged,
+                &KiriVideoDocument::hasVideoChanged, &KiriVideoDocument::windowTitleFileNameChanged,
+                &KiriVideoDocument::videoSizeChanged, &KiriVideoDocument::errorStringChanged,
+                &KiriVideoDocument::zoomPercentKnownChanged, &KiriVideoDocument::zoomPercentChanged,
+                &KiriVideoDocument::embeddedMetadataChanged }),
         [&document](const QUrl &url) { document.setSourceUrl(url); },
         [&document]() { return document.videoOutput(); },
         [&document]() { document.stop(); },
         [&document](QObject *videoOutput) { document.setVideoOutput(videoOutput); },
         [&document](const QRectF &contentRect, const QRectF &sourceRect) {
             document.setVideoOutputGeometry(contentRect, sourceRect);
-        },
-        kiriview::DocumentSessionVideoDocumentSignals {
-            documentSignalConnector(document, &KiriVideoDocument::sourceUrlChanged),
-            documentSignalConnector(document, &KiriVideoDocument::statusChanged),
-            documentSignalConnector(document, &KiriVideoDocument::hasVideoChanged),
-            documentSignalConnector(document, &KiriVideoDocument::windowTitleFileNameChanged),
-            documentSignalConnector(document, &KiriVideoDocument::videoSizeChanged),
-            documentSignalConnector(document, &KiriVideoDocument::errorStringChanged),
-            documentSignalConnector(document, &KiriVideoDocument::zoomPercentKnownChanged),
-            documentSignalConnector(document, &KiriVideoDocument::zoomPercentChanged),
-            documentSignalConnector(document, &KiriVideoDocument::embeddedMetadataChanged),
         },
     };
 }

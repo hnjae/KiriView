@@ -124,6 +124,8 @@ private:
     void setActiveNavigationRevealContext(ActiveNavigationRevealContext context);
     void clearActiveNavigationRevealContextIfUnavailable();
     void connectDocuments();
+    void handleImageDocumentSnapshotChanged();
+    void handleVideoDocumentSnapshotChanged();
     void refreshImagePublicSnapshot();
     void refreshVideoPublicSnapshot();
     void refreshLeafPublicSnapshots();

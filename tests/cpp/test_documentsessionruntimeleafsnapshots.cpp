@@ -32,12 +32,15 @@ kiriview::DocumentSessionDocumentSignalConnector imageSnapshotChangedConnector(
     SnapshotChangeEmitter &emitter)
 {
     return [&emitter](QObject *context, kiriview::DocumentSessionDocumentChangeHandler handler) {
-        return QObject::connect(&emitter, &SnapshotChangeEmitter::imageSnapshotChanged, context,
-            [handler = std::move(handler)]() {
-                if (handler) {
-                    handler();
-                }
-            });
+        std::vector<QMetaObject::Connection> connections;
+        connections.push_back(
+            QObject::connect(&emitter, &SnapshotChangeEmitter::imageSnapshotChanged, context,
+                [handler = std::move(handler)]() {
+                    if (handler) {
+                        handler();
+                    }
+                }));
+        return connections;
     };
 }
 }

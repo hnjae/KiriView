@@ -65,8 +65,18 @@ void appendConnection(std::vector<QMetaObject::Connection> &connections,
     kiriview::DocumentSessionDocumentChangeHandler handler)
 {
     if (connector) {
-        connections.push_back(connector(owner, std::move(handler)));
+        std::vector<QMetaObject::Connection> nextConnections = connector(owner, std::move(handler));
+        connections.insert(connections.end(), nextConnections.begin(), nextConnections.end());
     }
+}
+
+bool sameActiveNavigationSnapshot(const kiriview::ImageDocumentPageActiveNavigationSnapshot &left,
+    const kiriview::ImageDocumentPageActiveNavigationSnapshot &right)
+{
+    return left.known == right.known && left.canOpenPrevious == right.canOpenPrevious
+        && left.canOpenNext == right.canOpenNext && left.atKnownFirst == right.atKnownFirst
+        && left.atKnownLast == right.atKnownLast && left.currentNumber == right.currentNumber
+        && left.count == right.count;
 }
 
 }
@@ -549,92 +559,47 @@ void DocumentSessionRuntime::openCurrentMediaWith(MediaOpenWithCallback callback
 
 void DocumentSessionRuntime::connectDocuments()
 {
-    const auto imageHandler = [this](DocumentSessionDocumentChangeHandler handler) {
-        return [this, handler = std::move(handler)]() {
-            refreshImagePublicSnapshot();
-            handler();
-        };
-    };
-    const auto videoHandler = [this](DocumentSessionDocumentChangeHandler handler) {
-        return [this, handler = std::move(handler)]() {
-            refreshVideoPublicSnapshot();
-            handler();
-        };
-    };
+    appendConnection(m_documentConnections, m_imageDocument.snapshotChanged, m_owner,
+        [this]() { handleImageDocumentSnapshotChanged(); });
+    appendConnection(m_documentConnections, m_videoDocument.snapshotChanged, m_owner,
+        [this]() { handleVideoDocumentSnapshotChanged(); });
+}
 
-    appendConnection(m_documentConnections, m_imageDocument.notifications.sourceUrlChanged, m_owner,
-        imageHandler([this]() { syncFromImageDocument(); }));
-    appendConnection(m_documentConnections, m_imageDocument.notifications.statusChanged, m_owner,
-        imageHandler([this]() { syncFromImageDocument(); }));
-    appendConnection(m_documentConnections,
-        m_imageDocument.notifications.windowTitleFileNameChanged, m_owner,
-        imageHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections, m_imageDocument.notifications.imageSizeChanged, m_owner,
-        imageHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections, m_imageDocument.notifications.errorStringChanged,
-        m_owner, imageHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections,
-        m_imageDocument.notifications.imageDocumentSourceScopeChanged, m_owner,
-        imageHandler([this]() {
-            if (m_routingSource) {
-                return;
-            }
+void DocumentSessionRuntime::handleImageDocumentSnapshotChanged()
+{
+    const ImageDocumentPageActiveNavigationSnapshot previousPageNavigation
+        = m_imagePublicSnapshot.pageNavigation;
+    refreshImagePublicSnapshot();
+    if (m_routingSource || m_state.documentKind() != DocumentSessionKind::Image) {
+        return;
+    }
 
-            const bool directMediaScopeChanged = syncDirectImageCursorFromDocument();
-            if (directMediaScopeChanged || !directMediaNavigationActive()) {
-                refreshDirectMediaNavigation();
-            }
-            setActiveNavigationRevealContext(
-                ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
-            recomputePublicProjection();
-        }));
-    appendConnection(m_documentConnections,
-        m_imageDocument.notifications.unsupportedOpenedCollectionVideoChanged, m_owner,
-        imageHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections,
-        m_imageDocument.notifications.fileDeletionInProgressChanged, m_owner,
-        imageHandler([this]() { syncImageDocumentFileDeletionProgress(); }));
-    appendConnection(m_documentConnections, m_imageDocument.notifications.zoomPercentKnownChanged,
-        m_owner,
-        imageHandler([this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); }));
-    appendConnection(m_documentConnections, m_imageDocument.notifications.zoomPercentChanged,
-        m_owner,
-        imageHandler([this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); }));
-    appendConnection(m_documentConnections, m_imageDocument.notifications.zoomModeChanged, m_owner,
-        imageHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections, m_imageDocument.notifications.pageNavigationChanged,
-        m_owner, imageHandler([this]() { publishActiveNavigationForImagePages(); }));
-    appendConnection(m_documentConnections,
-        m_imageDocument.notifications.containerNavigationChanged, m_owner,
-        imageHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections, m_imageDocument.notifications.twoPageModeChanged,
-        m_owner, imageHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections, m_imageDocument.notifications.rightToLeftReadingChanged,
-        m_owner, imageHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections, m_imageDocument.notifications.embeddedMetadataChanged,
-        m_owner, imageHandler([this]() { recomputePublicProjection(); }));
+    const bool directMediaScopeChanged = syncDirectImageCursorFromDocument();
+    m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl);
+    if (!directImageLoadMayUseImageDocumentSourceScope()) {
+        m_state.setFileDeletionInProgress(m_imagePublicSnapshot.fileDeletionInProgress);
+    }
+    if (directMediaScopeChanged || !directMediaNavigationActive()) {
+        refreshDirectMediaNavigation();
+    } else if (m_state.directMediaNavigationKnown()) {
+        cacheDisplayedMediaPredecodeImages();
+    }
 
-    appendConnection(m_documentConnections, m_videoDocument.notifications.sourceUrlChanged, m_owner,
-        videoHandler([this]() { syncFromVideoDocument(); }));
-    appendConnection(m_documentConnections, m_videoDocument.notifications.statusChanged, m_owner,
-        videoHandler([this]() { syncFromVideoDocument(); }));
-    appendConnection(m_documentConnections, m_videoDocument.notifications.hasVideoChanged, m_owner,
-        videoHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections,
-        m_videoDocument.notifications.windowTitleFileNameChanged, m_owner,
-        videoHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections, m_videoDocument.notifications.videoSizeChanged, m_owner,
-        videoHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections, m_videoDocument.notifications.errorStringChanged,
-        m_owner, videoHandler([this]() { recomputePublicProjection(); }));
-    appendConnection(m_documentConnections, m_videoDocument.notifications.zoomPercentKnownChanged,
-        m_owner,
-        videoHandler([this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); }));
-    appendConnection(m_documentConnections, m_videoDocument.notifications.zoomPercentChanged,
-        m_owner,
-        videoHandler([this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); }));
-    appendConnection(m_documentConnections, m_videoDocument.notifications.embeddedMetadataChanged,
-        m_owner, videoHandler([this]() { recomputePublicProjection(); }));
+    if (!sameActiveNavigationSnapshot(
+            previousPageNavigation, m_imagePublicSnapshot.pageNavigation)) {
+        setActiveNavigationRevealContext(
+            ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
+        publishActiveNavigationForImagePages();
+        return;
+    }
+
+    recomputePublicProjection();
+}
+
+void DocumentSessionRuntime::handleVideoDocumentSnapshotChanged()
+{
+    refreshVideoPublicSnapshot();
+    syncFromVideoDocument();
 }
 
 void DocumentSessionRuntime::refreshImagePublicSnapshot()
