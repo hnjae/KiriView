@@ -28,7 +28,7 @@ private Q_SLOTS:
     void qmlDoesNotRecomputeSharedMediaReadiness();
     void qmlDoesNotWriteDurablePresentationState();
     void imageDocumentHasNoPublicPresentationBackdoorSetters();
-    void qmlViewportUsesRevisionedCommandAcknowledgement();
+    void qmlViewportReportsPositionsThroughCommandBridge();
     void qmlViewportCommandHandlersDoNotApplyProjectionDirectly();
     void qmlViewportUsesOpaqueRevisionTokens();
     void leafDocumentsAreNotProductionQmlCreatable();
@@ -47,7 +47,7 @@ private Q_SLOTS:
     void videoOutputAttachmentIsNotWritablePublicVideoDocumentState();
     void qmlDoesNotDeriveSharedControlPolicyFromLeafDocuments();
     void qmlUsesCentralNavigationPresentationOrder();
-    void qmlViewportUsesFullCommandLifecycle();
+    void viewportCommandBridgeOwnsFullCommandLifecycle();
     void viewportContextBridgeIsNonRenderingPublicQtFacade();
     void qmlViewportUsesContextBridgeForRenderContextDiscovery();
     void oldImageRendererArtifactsAreAbsent();
@@ -402,13 +402,17 @@ void TestArchitectureBoundaries::imageDocumentHasNoPublicPresentationBackdoorSet
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 }
 
-void TestArchitectureBoundaries::qmlViewportUsesRevisionedCommandAcknowledgement()
+void TestArchitectureBoundaries::qmlViewportReportsPositionsThroughCommandBridge()
 {
     const QString viewport = readProjectFile(QStringLiteral("src/qml/ImageViewport.qml"));
-    QVERIFY(viewport.contains(QStringLiteral("requestViewportContentPosition(")));
-    QVERIFY(viewport.contains(QStringLiteral("acknowledgeViewportCommand(")));
+    QVERIFY(viewport.contains(QStringLiteral("KiriImageViewportCommandBridge")));
+    QVERIFY(viewport.contains(QStringLiteral("requestContentPosition(")));
     QVERIFY(viewport.contains(QStringLiteral("observeViewportContentPosition(")));
     QVERIFY(!viewport.contains(QStringLiteral("Qt.callLater")));
+    QVERIFY(!viewport.contains(QStringLiteral("requestViewportContentPosition(")));
+    QVERIFY(!viewport.contains(QStringLiteral("beginViewportCommandApplication(")));
+    QVERIFY(!viewport.contains(QStringLiteral("completeViewportCommandApplication(")));
+    QVERIFY(!viewport.contains(QStringLiteral("acknowledgeViewportCommand(")));
     QVERIFY(
         !QRegularExpression(QStringLiteral(R"(\bimageDocument\s*\.\s*viewportContentPosition\s*=)"))
             .match(viewport)
@@ -466,7 +470,7 @@ void TestArchitectureBoundaries::qmlViewportUsesOpaqueRevisionTokens()
         = readProjectFile(QStringLiteral("src/facade/kiriimagedocument.h"));
     const QList<QRegularExpression> qmlForbiddenPatterns {
         QRegularExpression(QStringLiteral(
-            R"(\bproperty\s+(?:int|real|double|var)\s+appliedViewport(?:Command|Observation)Revision\b)")),
+            R"(\bproperty\s+(?:int|real|double|string|var)\s+appliedViewport(?:Command|Observation)Revision(?:Token)?\b)")),
         QRegularExpression(QStringLiteral(R"(\bviewport(?:Command|Observation)Revision\b)")),
     };
     const QList<QRegularExpression> headerForbiddenPatterns {
@@ -492,8 +496,8 @@ void TestArchitectureBoundaries::qmlViewportUsesOpaqueRevisionTokens()
     }
 
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
-    QVERIFY(viewport.contains(QStringLiteral("viewportCommandRevisionToken")));
-    QVERIFY(viewport.contains(QStringLiteral("viewportObservationRevisionToken")));
+    QVERIFY(!viewport.contains(QStringLiteral("viewportCommandRevisionToken")));
+    QVERIFY(!viewport.contains(QStringLiteral("viewportObservationRevisionToken")));
     QVERIFY(imageDocumentHeader.contains(QStringLiteral("viewportCommandRevisionToken")));
     QVERIFY(imageDocumentHeader.contains(QStringLiteral("viewportObservationRevisionToken")));
 }
@@ -829,13 +833,29 @@ void TestArchitectureBoundaries::qmlUsesCentralNavigationPresentationOrder()
     QVERIFY(projection.contains(QStringLiteral("trailing")));
 }
 
-void TestArchitectureBoundaries::qmlViewportUsesFullCommandLifecycle()
+void TestArchitectureBoundaries::viewportCommandBridgeOwnsFullCommandLifecycle()
 {
-    const QString viewport = readProjectFile(QStringLiteral("src/qml/ImageViewport.qml"));
-    QVERIFY(viewport.contains(QStringLiteral("beginViewportCommandApplication(")));
-    QVERIFY(viewport.contains(QStringLiteral("completeViewportCommandApplication(")));
-    QVERIFY(viewport.contains(QStringLiteral("acknowledgeViewportCommand(")));
-    QVERIFY(!viewport.contains(QStringLiteral("rejectedViewportCommandStatus = 6")));
+    const QString header
+        = readProjectFile(QStringLiteral("src/facade/kiriimageviewportcommandbridge.h"));
+    const QString implementation
+        = readProjectFile(QStringLiteral("src/facade/kiriimageviewportcommandbridge.cpp"));
+    const QString combined = header + QLatin1Char('\n') + implementation;
+    QVERIFY(header.contains(QStringLiteral("class KiriImageViewportCommandBridge")));
+    QVERIFY(header.contains(QStringLiteral("QML_ELEMENT")));
+    QVERIFY(header.contains(QStringLiteral("public QQuickItem")));
+    QVERIFY(header.contains(QStringLiteral("KiriImageDocument *document")));
+    QVERIFY(header.contains(QStringLiteral("QQuickItem *target")));
+    QVERIFY(combined.contains(QStringLiteral("beginViewportCommandApplication(")));
+    QVERIFY(combined.contains(QStringLiteral("completeViewportCommandApplication(")));
+    QVERIFY(combined.contains(QStringLiteral("acknowledgeViewportCommand(")));
+    QVERIFY(combined.contains(QStringLiteral("viewportProjectionNewerThan(")));
+    QVERIFY(!combined.contains(QStringLiteral("rejectedViewportCommandStatus = 6")));
+
+    const QString cxxqtSources = readProjectFile(QStringLiteral("src/cpp_cxxqt_sources.txt"));
+    const QString cxxqtHeaders
+        = readProjectFile(QStringLiteral("src/cpp_cxxqt_header_sources.txt"));
+    QVERIFY(cxxqtSources.contains(QStringLiteral("src/facade/kiriimageviewportcommandbridge.cpp")));
+    QVERIFY(cxxqtHeaders.contains(QStringLiteral("src/facade/kiriimageviewportcommandbridge.h")));
 }
 
 void TestArchitectureBoundaries::viewportContextBridgeIsNonRenderingPublicQtFacade()
