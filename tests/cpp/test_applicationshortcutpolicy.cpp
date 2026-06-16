@@ -101,8 +101,10 @@ private Q_SLOTS:
     void horizontalArrowShortcutPolicyUsesActiveMediaMode();
     void fixedShortcutDispatchPlansVideoSeek();
     void fixedShortcutDispatchPlansImageNavigationAndPan();
+    void focusInapplicableBlocksFixedShortcutDispatch();
     void genericShortcutDispatchUsesFirstEnabledBinding();
     void genericShortcutDispatchReportsUnsupportedMediaActions();
+    void focusInapplicableBlocksGenericShortcutDispatch();
 };
 
 void TestApplicationShortcutPolicy::programWideSanitizationKeepsTextInputSafeShortcuts()
@@ -549,6 +551,27 @@ void TestApplicationShortcutPolicy::fixedShortcutDispatchPlansImageNavigationAnd
     QCOMPARE(blockedHorizontal.kind, kiriview::ApplicationActions::FixedShortcutDispatchKind::None);
 }
 
+void TestApplicationShortcutPolicy::focusInapplicableBlocksFixedShortcutDispatch()
+{
+    kiriview::ApplicationActions::FixedShortcutDispatchInput input;
+    input.focusApplicable = false;
+    input.helpActionsEnabled = true;
+    input.viewerShortcutsEnabled = true;
+    input.readyViewerShortcutsEnabled = true;
+    input.activeNavigationActionsAvailable = true;
+
+    const kiriview::ApplicationActions::FixedShortcutDispatchOutcome horizontal
+        = kiriview::ApplicationActions::fixedShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("Left")));
+    QCOMPARE(horizontal.kind, kiriview::ApplicationActions::FixedShortcutDispatchKind::None);
+
+    input.videoMode = true;
+    const kiriview::ApplicationActions::FixedShortcutDispatchOutcome seek
+        = kiriview::ApplicationActions::fixedShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("Alt+Right")));
+    QCOMPARE(seek.kind, kiriview::ApplicationActions::FixedShortcutDispatchKind::None);
+}
+
 void TestApplicationShortcutPolicy::genericShortcutDispatchUsesFirstEnabledBinding()
 {
     kiriview::ApplicationActions::GenericShortcutDispatchInput input;
@@ -624,6 +647,27 @@ void TestApplicationShortcutPolicy::genericShortcutDispatchReportsUnsupportedMed
     QCOMPARE(outcome.kind,
         kiriview::ApplicationActions::GenericShortcutDispatchKind::UnsupportedImageAction);
     QCOMPARE(outcome.actionId, ActionId::ViewToggleVideoPlaybackAction);
+}
+
+void TestApplicationShortcutPolicy::focusInapplicableBlocksGenericShortcutDispatch()
+{
+    kiriview::ApplicationActions::GenericShortcutDispatchInput input;
+    input.focusApplicable = false;
+    input.actionState.helpActionsEnabled = true;
+    input.actionState.readyViewerShortcutsEnabled = true;
+    input.bindings = {
+        kiriview::ApplicationActions::GenericShortcutBinding {
+            ActionId::GoNextImageAction,
+            Scope::ReadyViewerShortcutScope,
+            { shortcut(QStringLiteral("N")) },
+            true,
+        },
+    };
+
+    const kiriview::ApplicationActions::GenericShortcutDispatchOutcome outcome
+        = kiriview::ApplicationActions::genericShortcutDispatchOutcome(
+            input, shortcut(QStringLiteral("N")));
+    QCOMPARE(outcome.kind, kiriview::ApplicationActions::GenericShortcutDispatchKind::None);
 }
 
 QTEST_GUILESS_MAIN(TestApplicationShortcutPolicy)
