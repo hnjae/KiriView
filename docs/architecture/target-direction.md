@@ -13,6 +13,8 @@ The preferred direction is fewer, larger policy boundaries:
 
 The document-session refactor should extract coherent contracts before moving implementation. Useful boundaries include active navigation projection from session and image-document snapshots, direct media routing plans, ordinary direct media deletion fallback plans, action-availability projections, and a named still-image-only direct media predecode eligibility policy.
 
+Session-to-leaf document ports should expose cohesive snapshot families and one snapshot-change event per family, not property-shaped signal bags. Leaf command and effect ports stay narrow, but session projection refresh should consume `DocumentSessionImageDocumentSnapshot` and `DocumentSessionVideoDocumentSnapshot` values rather than depending on each leaf facade's internal notification shape.
+
 Those boundaries should keep `DocumentSessionState` as the public C++ owner and keep Qt/KDE effects in C++. Rust may later host pure projection or plan computation from plain snapshots, but C++ applies the resulting state, executes document routing, publishes signal batches, and preserves cursor-generation rejection for stale async completions.
 
 When adding C++ or Rust files for these boundaries, keep source ownership manifests in sync, including `src/rust_policy_sources.txt`, `src/rust_bridge_sources.txt`, and relevant REUSE coverage.
