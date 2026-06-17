@@ -6,6 +6,7 @@
 #include "archive/mediaentrysourcestore.h"
 #include "async/imagecallback.h"
 #include "imagedocumentadjacentpredecodeschedulerport.h"
+#include "imagedocumentcurrentpagenumberport.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentdeletionprogressport.h"
 #include "imagedocumentnavigationcontroller.h"
@@ -82,6 +83,8 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         });
     m_navigationSnapshotPort
         = std::make_unique<ImageDocumentNavigationSnapshotPort>(m_navigationService.get());
+    m_currentPageNumberPort
+        = std::make_unique<ImageDocumentCurrentPageNumberPort>(m_navigationService.get());
     m_adjacentPredecodeSchedulerPort
         = std::make_unique<ImageDocumentAdjacentPredecodeSchedulerPort>(
             [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); });
@@ -89,7 +92,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         documentObject, state, *m_pageSurfaceController, *m_presentationRuntime,
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode,
         runtimeDependencies.cacheBudgets.predecodeCacheByteBudget,
-        [this]() { return m_navigationService->currentPageNumber(); },
+        [this]() { return m_currentPageNumberPort->currentPageNumber(); },
         std::move(runtimeDependencies.powerSaver),
         runtimeDependencies.ordinaryDirectMediaPredecodeEnabled,
         std::move(runtimeDependencies.predecodeTimerScheduler),

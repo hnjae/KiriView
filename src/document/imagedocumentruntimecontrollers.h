@@ -18,6 +18,7 @@ class QObject;
 namespace kiriview {
 class MediaEntrySourceStore;
 class ImageDocumentAdjacentPredecodeSchedulerPort;
+class ImageDocumentCurrentPageNumberPort;
 class ImageDocumentDeletionController;
 class ImageDocumentDeletionProgressPort;
 class ImageDocumentNavigationSnapshotPort;
@@ -69,6 +70,7 @@ private:
     std::unique_ptr<ImagePresentationRuntime> m_presentationRuntime;
     std::unique_ptr<ImageDocumentPageNavigationService> m_navigationService;
     std::unique_ptr<ImageDocumentNavigationSnapshotPort> m_navigationSnapshotPort;
+    std::unique_ptr<ImageDocumentCurrentPageNumberPort> m_currentPageNumberPort;
     std::unique_ptr<ImageDocumentAdjacentPredecodeSchedulerPort> m_adjacentPredecodeSchedulerPort;
     std::unique_ptr<ImageDocumentPredecodeController> m_predecodeController;
     std::unique_ptr<ImageDocumentPredecodedImageLookup> m_predecodedImageLookup;
