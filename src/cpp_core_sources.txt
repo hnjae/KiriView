@@ -215,6 +215,7 @@ src/session/thumbnailimagestore.cpp
 src/session/directmediacursor.cpp
 src/session/documentsessionactivezoom.cpp
 src/session/documentsessiondirectimagecursorsync.cpp
+src/session/documentsessionimagedocumentsync.cpp
 src/session/documentsessionvideodocumentsync.cpp
 src/session/documentsessiondirectmedianavigationloadstate.cpp
 src/session/documentsessiondirectmedianavigationapplicationruntime.cpp

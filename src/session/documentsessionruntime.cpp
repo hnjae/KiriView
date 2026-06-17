@@ -60,15 +60,6 @@ void appendConnection(std::vector<QMetaObject::Connection> &connections,
     }
 }
 
-bool sameActiveNavigationSnapshot(const kiriview::ImageDocumentPageActiveNavigationSnapshot &left,
-    const kiriview::ImageDocumentPageActiveNavigationSnapshot &right)
-{
-    return left.known == right.known && left.canOpenPrevious == right.canOpenPrevious
-        && left.canOpenNext == right.canOpenNext && left.atKnownFirst == right.atKnownFirst
-        && left.atKnownLast == right.atKnownLast && left.currentNumber == right.currentNumber
-        && left.count == right.count;
-}
-
 }
 
 namespace kiriview {
@@ -628,25 +619,51 @@ void DocumentSessionRuntime::handleImageDocumentSnapshotChanged()
     }
 
     const bool directMediaScopeChanged = syncDirectImageCursorFromDocument();
-    m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl);
-    if (!directImageLoadMayUseImageDocumentSourceScope()) {
-        m_state.setFileDeletionInProgress(m_imagePublicSnapshot.fileDeletionInProgress);
-    }
-    if (directMediaScopeChanged || !directMediaNavigationActive()) {
-        refreshDirectMediaNavigation();
-    } else if (m_state.directMediaNavigationKnown()) {
-        cacheDisplayedMediaPredecodeImages();
+    const DocumentSessionImageDocumentSyncPlan plan
+        = documentSessionImageDocumentSyncPlan(DocumentSessionImageDocumentSyncInput {
+            m_routingSource,
+            m_state.documentKind(),
+            directImageLoadMayUseImageDocumentSourceScope(),
+            directMediaNavigationActive(),
+            m_state.directMediaNavigationKnown(),
+            directMediaScopeChanged,
+            previousPageNavigation,
+            m_imagePublicSnapshot,
+        });
+    if (!plan.active) {
+        return;
     }
 
-    if (!sameActiveNavigationSnapshot(
-            previousPageNavigation, m_imagePublicSnapshot.pageNavigation)) {
+    if (plan.setSourceIdentity) {
+        m_state.setSourceIdentity(plan.sourceIdentityUrl);
+    }
+    if (plan.syncFileDeletionProgress) {
+        m_state.setFileDeletionInProgress(plan.fileDeletionInProgress);
+    }
+
+    switch (plan.directMediaOperation) {
+    case DocumentSessionImageDocumentSyncDirectMediaOperation::None:
+        break;
+    case DocumentSessionImageDocumentSyncDirectMediaOperation::RefreshDirectMediaNavigation:
+        refreshDirectMediaNavigation();
+        break;
+    case DocumentSessionImageDocumentSyncDirectMediaOperation::CacheDisplayedMediaPredecodeImages:
+        cacheDisplayedMediaPredecodeImages();
+        break;
+    }
+
+    switch (plan.projectionOperation) {
+    case DocumentSessionImageDocumentSyncProjectionOperation::None:
+        return;
+    case DocumentSessionImageDocumentSyncProjectionOperation::RecomputePublicProjection:
+        recomputePublicProjection();
+        return;
+    case DocumentSessionImageDocumentSyncProjectionOperation::PublishImagePageActiveNavigation:
         setActiveNavigationRevealContext(
             ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
         publishActiveNavigationForImagePages();
         return;
     }
-
-    recomputePublicProjection();
 }
 
 void DocumentSessionRuntime::handleVideoDocumentSnapshotChanged()

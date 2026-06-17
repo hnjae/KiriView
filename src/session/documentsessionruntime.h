@@ -13,6 +13,7 @@
 #include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondocumentports.h"
 #include "session/documentsessionimagedocumentcommandruntime.h"
+#include "session/documentsessionimagedocumentsync.h"
 #include "session/documentsessionmediadeletioncompletionruntime.h"
 #include "session/documentsessionmediadeletionruntime.h"
 #include "session/documentsessionmediaopenwithruntime.h"
