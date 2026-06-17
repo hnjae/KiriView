@@ -79,6 +79,7 @@ src/rendering/imagerotation.cpp
 src/document/imagedocumentchangebatcher.cpp
 src/document/imagedocumentadjacentpredecodeschedulerport.cpp
 src/document/imagedocumentdeletioncontroller.cpp
+src/document/imagedocumentdeletionprogressport.cpp
 src/document/imagedocumentdeletionfallbackcontroller.cpp
 src/document/imagedocumentdeletionstate.cpp
 src/document/imagedocumentlifecycleruntimeplanexecutor.cpp

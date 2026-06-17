@@ -19,6 +19,7 @@ namespace kiriview {
 class MediaEntrySourceStore;
 class ImageDocumentAdjacentPredecodeSchedulerPort;
 class ImageDocumentDeletionController;
+class ImageDocumentDeletionProgressPort;
 class ImageDocumentNavigationSnapshotPort;
 class ImageDocumentPredecodedImageLookup;
 class ImageDocumentPrimaryPageSlotPort;
@@ -63,6 +64,7 @@ private:
     ImageDocumentRuntimeControllerCallbacks m_callbacks;
     std::unique_ptr<MediaEntrySourceStore> m_mediaEntrySourceStore;
     std::unique_ptr<ImageDocumentDeletionController> m_deletionController;
+    std::unique_ptr<ImageDocumentDeletionProgressPort> m_deletionProgressPort;
     std::unique_ptr<ImagePageSurfaceController> m_pageSurfaceController;
     std::unique_ptr<ImagePresentationRuntime> m_presentationRuntime;
     std::unique_ptr<ImageDocumentPageNavigationService> m_navigationService;

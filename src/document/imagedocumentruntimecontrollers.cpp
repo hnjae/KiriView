@@ -7,6 +7,7 @@
 #include "async/imagecallback.h"
 #include "imagedocumentadjacentpredecodeschedulerport.h"
 #include "imagedocumentdeletioncontroller.h"
+#include "imagedocumentdeletionprogressport.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentnavigationruntimeplan.h"
 #include "imagedocumentnavigationsnapshotport.h"
@@ -68,6 +69,8 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             [this](ImageDocumentRuntimePlan plan) { dispatchPlan(plan); },
             std::move(m_callbacks.fileDeletionFailed),
         });
+    m_deletionProgressPort
+        = std::make_unique<ImageDocumentDeletionProgressPort>(m_deletionController.get());
     m_navigationService = std::make_unique<ImageDocumentPageNavigationService>(documentObject,
         runtimeDependencies.candidateProvider,
         ImageDocumentPageNavigationService::Callbacks {
@@ -75,7 +78,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
                 dispatchPlan(imageDocumentRuntimePlanForNavigationPlan(plan));
             },
             [this]() { invokeIfSet(m_callbacks.notify, ImageDocumentChange::PageNavigation); },
-            [this]() { return m_deletionController->inProgress(); },
+            [this]() { return m_deletionProgressPort->inProgress(); },
         });
     m_navigationSnapshotPort
         = std::make_unique<ImageDocumentNavigationSnapshotPort>(m_navigationService.get());
