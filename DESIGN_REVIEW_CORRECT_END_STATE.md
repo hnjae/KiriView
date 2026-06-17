@@ -4,13 +4,13 @@
 
 KiriView already has a sound architectural direction: `QML -> facade -> C++ runtime/effect executor -> Rust policy`. The main issue is not the absence of layers. The issue is that several boundaries still allow the same domain rule or state concept to be defined more than once, allow external effects to rely on UI/projection availability checks instead of command-boundary validation, and place too much workflow assembly inside facade or runtime composition objects.
 
-The highest-risk findings are around rules that affect real user behavior and state consistency: failure representation and broad workflow ownership. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
+The highest-risk findings are around rules that affect real user behavior and state consistency: failure representation and broad workflow ownership. The next major risk is that `DocumentSessionRuntime` and `KiriImageDocument` still act as broad workflow owners even though the codebase already has useful lower-level objects.
 
 The correct end state should be precise and conservative, not clever. Rust policy should own duplicated-free domain decisions and typed plans. C++ runtime should own Qt/KDE objects and external effects behind typed adapters. Facades should expose QML-friendly types and forward commands. QML should report geometry/input facts and render projections. Errors should flow internally as typed failures with source, stage, diagnostic detail, severity, and retryability, while the UI receives only user-facing messages.
 
 ## Top Design Risks
 
-1. P1: `DocumentSessionRuntime`, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
+1. P1: `DocumentSessionRuntime` and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
 2. P1: Lower-level image decoder and remaining refinement failures still lose backend-specific diagnostics before document wrapping, which weakens diagnostics, retry semantics, and user/internal error separation.
 
 ## Completed Slices
@@ -34,6 +34,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - P1 image-document adjacent predecode scheduling port: named the spread-to-predecode adjacent scheduling collaboration as `ImageDocumentAdjacentPredecodeSchedulerPort`; spread callbacks now request adjacent predecode through that port instead of constructing `ScheduleAdjacentImagePredecodeOperation` in the composition root. Verified with `devenv shell -- devenv tasks run ci`. Commits: `5048af72`, `5b9dc943`, `a50029d7`.
 - P1 image-document deletion progress port: named the navigation-to-deletion in-progress gate as `ImageDocumentDeletionProgressPort`; page-navigation service callbacks now read deletion progress through that port instead of directly capturing `ImageDocumentDeletionController`. Verified with `devenv shell -- devenv tasks run ci`. Commits: `3d615168`, `cd1e3204`, `b0c31db2`.
 - P1 image-document current page-number port: named the navigation-to-predecode current-page read as `ImageDocumentCurrentPageNumberPort`; predecode callbacks now read the current page number through that port instead of directly capturing `ImageDocumentPageNavigationService`. Verified with `devenv shell -- devenv tasks run ci`. Commits: `58d87a81`, `e22172df`, `d6791448`.
+- P1 image-document animation load error port: named the page-surface-to-open animation error collaboration as `ImageDocumentAnimationLoadErrorPort`; page-surface callbacks now complete animation load errors through that port instead of directly capturing `ImageOpenController`, completing the open image-document callback-mesh finding. Verified with `devenv shell -- devenv tasks run ci`. Commits: `8265f4e4`, `18933c9d`, `2802efe4`.
 
 ## Cohesion, Coupling, and Ownership Problems
 
@@ -45,16 +46,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Correct end state: `DocumentSessionState` should remain the public projection owner. `DocumentSessionRuntime` should orchestrate named subowners through typed inputs/results: route executor, active-navigation dispatch runtime, direct-media navigation coordinator, displayed-media deletion coordinator, video-output claim runtime, active-navigation thumbnail runtime, and direct-media predecode adapter.
 - Suggested migration: Continue extracting small workflows and narrowing remaining leaf command/effect callbacks. Keep public projection updates centralized in `DocumentSessionState` and move lifecycle execution/cancellation into subowners.
 - Acceptance criteria: Feature-specific coordinators can be tested without full session runtime construction; removing thumbnail strip or direct-media routing does not require edits to unrelated session projection logic.
-- Priority: P1
-
-### Finding: `ImageDocumentRuntimeControllers` hides a peer-controller callback mesh
-
-- Evidence: `src/document/imagedocumentruntimecontrollers.h:59-69` stores source store, deletion, page surface, presentation, open, navigation, predecode, spread, navigation controller, and runtime workflow in one composition object. `src/document/imagedocumentruntimecontrollers.cpp:47-123` wires animation errors, open callbacks, predecode, spread, and navigation through sibling-capturing lambdas. `src/document/imagedocumentruntimecontrollers.cpp:124-136` wires `ImageDocumentRuntimeWorkflowPorts`, and `src/document/imagedocumentruntimeworkflow.cpp:23-253` builds and dispatches `ImageDocumentRuntimeOperations` across sibling controllers.
-- Current state: `ImageDocumentRuntimeWorkflow` now owns `ImageDocumentRuntimePlan` dispatch and operation binding through fakeable workflow ports. Predecoded-image cache lookup across external direct-media lookup and image-document predecode-controller lookup now crosses `ImageDocumentPredecodedImageLookup`, so open and spread consumers no longer capture `ImageDocumentPredecodeController` directly for cache lookup; image-open primary page-slot commit/clear now crosses `ImageDocumentPrimaryPageSlotPort`, so open callbacks no longer capture `ImageSpreadPresentationController` directly for that slot publication; spread page-navigation snapshot reads now cross `ImageDocumentNavigationSnapshotPort`, so spread callbacks no longer capture `ImageDocumentNavigationController` directly for that snapshot; spread adjacent predecode scheduling now crosses `ImageDocumentAdjacentPredecodeSchedulerPort`, so spread callbacks no longer construct the runtime-plan operation directly in `ImageDocumentRuntimeControllers`; page-navigation deletion-progress gating now crosses `ImageDocumentDeletionProgressPort`, so navigation-service callbacks no longer capture `ImageDocumentDeletionController` directly for that gate; predecode current-page reads now cross `ImageDocumentCurrentPageNumberPort`, so predecode callbacks no longer capture `ImageDocumentPageNavigationService` directly for that read. Controllers still construct the sibling controllers, wire sibling-capturing callbacks for remaining open/spread/navigation interactions, and build the workflow port table.
-- Design concern: Constructor signatures do not reveal dependencies, and removing workflows such as predecode, spread, or source-load requires auditing the callback mesh.
-- Correct end state: Cross-controller choreography should live in a named workflow executor/coordinator. Individual controllers should depend on narrow typed ports, and construction should expose dependencies without hidden `this` captures.
-- Suggested migration: Continue replacing sibling-capturing controller callbacks with narrow typed ports for open, spread, navigation, predecode, and page-surface interactions.
-- Acceptance criteria: Controllers no longer call siblings through hidden captures; construction order is not semantically important for callback validity; the workflow executor can be tested with fake ports.
 - Priority: P1
 
 ## Error Handling and Observability Problems
@@ -102,7 +93,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 - Do not move `src/qml/NavigationPresentationOrder.qml` out of QML just because it contains logic. Existing architecture tests intentionally expect QML to own RTL-aware presentation order for visual projection.
 - Do not collapse all Rust/C++ mirror enums or bridge conversions. Some duplication at the FFI boundary is intentional; the target is duplicated domain policy, not exhaustive conversion code.
-- Do not rewrite `DocumentSessionRuntime` or `ImageDocumentRuntimeControllers` wholesale. Extract one workflow at a time behind characterization tests.
+- Do not rewrite `DocumentSessionRuntime` wholesale. Extract one workflow at a time behind characterization tests.
 - Do not remove `ImageDocumentRuntimePlan` as a concept. It matches the documented C++ side-effect boundary; any future vocabulary narrowing should preserve that boundary.
 - Do not introduce a generic logging/observability framework before typed failure values exist. Without typed failures, logging would mostly preserve the current string ambiguity.
 - Do not alter user-visible error text as part of the first migration unless current text is clearly a bug. Internal typed diagnostics can be added while preserving existing UI messages.
