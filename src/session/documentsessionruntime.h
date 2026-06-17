@@ -11,6 +11,7 @@
 #include "session/documentsessiondirectimagecursorsync.h"
 #include "session/documentsessiondirectmediaactivityport.h"
 #include "session/documentsessiondirectmedianavigationapplicationruntime.h"
+#include "session/documentsessiondirectmedianavigationinputport.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondirectmediascopeport.h"
 #include "session/documentsessiondocumentports.h"
@@ -174,7 +175,6 @@ private:
     bool syncDirectImageCursorFromDocument();
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
     DocumentSessionPublicSnapshotInput publicSnapshotInput(quint64 inputRevision) const;
-    DirectMediaActiveNavigationInput directMediaActiveNavigationInput() const;
 
     QObject *m_owner = nullptr;
     DocumentSessionImageDocumentSnapshotPort m_imageDocument;
@@ -184,6 +184,7 @@ private:
     DocumentSessionState m_state;
     DocumentSessionDirectMediaScopePort m_directMediaScopePort;
     DocumentSessionDirectMediaActivityPort m_directMediaActivityPort;
+    DocumentSessionDirectMediaNavigationInputPort m_directMediaNavigationInputPort;
     DocumentSessionProjectionRuntime m_projectionRuntime;
     DocumentSessionRouteRuntime m_routeRuntime;
     DocumentSessionActiveNavigationRuntime m_activeNavigationRuntime;

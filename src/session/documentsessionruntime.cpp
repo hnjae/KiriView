@@ -80,6 +80,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_state(std::move(changeCallback))
     , m_directMediaScopePort(&m_state)
     , m_directMediaActivityPort(&m_state, &m_directMediaScopePort)
+    , m_directMediaNavigationInputPort(&m_state)
     , m_projectionRuntime(DocumentSessionProjectionRuntimePorts {
           [this](const DocumentSessionPublicSnapshotInput &input) {
               return m_state.updatePublicSnapshot(input);
@@ -910,19 +911,13 @@ DocumentSessionPublicSnapshotInput DocumentSessionRuntime::publicSnapshotInput(
     input.session.fileDeletionInProgress = m_state.fileDeletionInProgress();
     input.session.directImageLoadMayUseImageDocumentSourceScope
         = m_directMediaActivityPort.directImageSourceScopeEligible();
-    input.session.directMediaNavigation = directMediaActiveNavigationInput();
+    input.session.directMediaNavigation = m_directMediaNavigationInputPort.currentInput();
     input.session.activeNavigationRevealIntent = m_state.activeNavigationRevealIntent();
     input.session.activeNavigationRevealDirection = m_state.activeNavigationRevealDirection();
     input.image = m_imagePublicSnapshot;
     input.video = m_videoPublicSnapshot;
     input.directMediaCursor = m_state.directMediaCursor();
     return buildDocumentSessionPublicSnapshotInput(input);
-}
-
-DirectMediaActiveNavigationInput DocumentSessionRuntime::directMediaActiveNavigationInput() const
-{
-    return DirectMediaActiveNavigationInput { m_state.directMediaNavigationState(),
-        m_state.directMediaNavigationKnown() };
 }
 
 }
