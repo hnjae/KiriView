@@ -78,6 +78,7 @@ private Q_SLOTS:
     void imageDocumentMediaEntrySourcePlanDispatchHasNamedExecutor();
     void imageDocumentSpreadPlanDispatchHasNamedExecutor();
     void imageDocumentPredecodedImageLookupUsesNamedPort();
+    void imageDocumentPrimaryPageSlotUsesNamedPort();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void imagePresentationPageSlotsUseDisplaySourceVariants();
@@ -1649,6 +1650,21 @@ void TestArchitectureBoundaries::imageDocumentPredecodedImageLookupUsesNamedPort
     QVERIFY(controllersSource.contains(QStringLiteral("ImageDocumentPredecodedImageLookup")));
     QVERIFY(
         !controllersSource.contains(QStringLiteral("m_predecodeController->findPredecodedImage")));
+}
+
+void TestArchitectureBoundaries::imageDocumentPrimaryPageSlotUsesNamedPort()
+{
+    const QString portHeader
+        = readProjectFile(QStringLiteral("src/document/imagedocumentprimarypageslotport.h"));
+    const QString controllersSource
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimecontrollers.cpp"));
+
+    QVERIFY(portHeader.contains(QStringLiteral("class ImageDocumentPrimaryPageSlotPort")));
+    QVERIFY(controllersSource.contains(QStringLiteral("ImageDocumentPrimaryPageSlotPort")));
+    QVERIFY(
+        !controllersSource.contains(QStringLiteral("m_spreadController->commitPrimaryPageSlot")));
+    QVERIFY(
+        !controllersSource.contains(QStringLiteral("m_spreadController->clearPrimaryPageSlot")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
