@@ -34,6 +34,12 @@ namespace {
         || std::is_same_v<Operation, SetErrorStringOperation>
         || std::is_same_v<Operation, FinishEmptySourceLoadOperation>;
 
+    template <typename Operation>
+    inline constexpr bool isPredecodeRuntimeOperation
+        = std::is_same_v<Operation, ClearPredecodeOperation>
+        || std::is_same_v<Operation, CancelPredecodeOperation>
+        || std::is_same_v<Operation, ScheduleAdjacentImagePredecodeOperation>;
+
 }
 
 ImageDocumentRuntimePlanExecutor::ImageDocumentRuntimePlanExecutor(
@@ -41,6 +47,7 @@ ImageDocumentRuntimePlanExecutor::ImageDocumentRuntimePlanExecutor(
     : m_operations(std::move(operations))
     , m_sourceLoadExecutor(m_operations.sourceLoad)
     , m_openExecutor(m_operations.open)
+    , m_predecodeExecutor(m_operations.predecode)
 {
 }
 
@@ -65,6 +72,9 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
     if (m_openExecutor.dispatchOperation(operation)) {
         return;
     }
+    if (m_predecodeExecutor.dispatchOperation(operation)) {
+        return;
+    }
 
     std::visit(
         [this](const auto &payload) {
@@ -77,13 +87,6 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
                 run(m_operations.lifecycle.shutdownSpread);
             } else if constexpr (std::is_same_v<Operation, ClearMediaEntrySourceOperation>) {
                 run(m_operations.mediaEntrySource.clear);
-            } else if constexpr (std::is_same_v<Operation, ClearPredecodeOperation>) {
-                run(m_operations.predecode.clearPredecode);
-            } else if constexpr (std::is_same_v<Operation, CancelPredecodeOperation>) {
-                run(m_operations.predecode.cancelPredecode);
-            } else if constexpr (std::is_same_v<Operation,
-                                     ScheduleAdjacentImagePredecodeOperation>) {
-                run(m_operations.predecode.scheduleAdjacentImagePredecode);
             } else if constexpr (std::is_same_v<Operation, FinishSpreadTransitionOperation>) {
                 run(m_operations.spread.finishSpreadTransition);
             } else if constexpr (std::is_same_v<Operation, ResetRightToLeftReadingOperation>) {
@@ -131,7 +134,7 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
                 run(m_operations.navigation.loadPageNavigationUrl, payload.target,
                     payload.preserveTwoPageSpreadTransition);
             } else if constexpr (isSourceLoadRuntimeOperation<Operation>
-                || isOpenRuntimeOperation<Operation>) {
+                || isOpenRuntimeOperation<Operation> || isPredecodeRuntimeOperation<Operation>) {
                 // Delegated before the visitor; this branch keeps std::visit exhaustive.
             } else {
                 static_assert(alwaysFalse<Operation>, "Unhandled image document runtime operation");

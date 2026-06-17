@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMEPLANEXECUTOR_H
 
 #include "imagedocumentopenruntimeplanexecutor.h"
+#include "imagedocumentpredecoderuntimeplanexecutor.h"
 #include "imagedocumentruntimeplan.h"
 #include "imagedocumentsourceloadruntimeplanexecutor.h"
 
@@ -20,12 +21,6 @@ struct ImageDocumentLifecycleRuntimeOperations {
 
 struct ImageDocumentMediaEntrySourceOperations {
     std::function<void()> clear;
-};
-
-struct ImageDocumentPredecodeRuntimeOperations {
-    std::function<void()> clearPredecode;
-    std::function<void()> cancelPredecode;
-    std::function<void()> scheduleAdjacentImagePredecode;
 };
 
 struct ImageDocumentSpreadRuntimeOperations {
@@ -78,6 +73,7 @@ private:
     ImageDocumentRuntimeOperations m_operations;
     ImageDocumentSourceLoadRuntimePlanExecutor m_sourceLoadExecutor;
     ImageDocumentOpenRuntimePlanExecutor m_openExecutor;
+    ImageDocumentPredecodeRuntimePlanExecutor m_predecodeExecutor;
 };
 }
 
