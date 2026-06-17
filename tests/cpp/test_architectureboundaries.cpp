@@ -1774,6 +1774,9 @@ void TestArchitectureBoundaries::sessionLeafSnapshotPortsAreSeparateFromCommandP
         QStringLiteral("DocumentSessionImageDocumentPageNavigationCommandPort"),
         QStringLiteral("DocumentSessionImageDocumentDeletionCommandPort"),
         QStringLiteral("DocumentSessionImageDocumentCommandPort"),
+        QStringLiteral("DocumentSessionVideoDocumentSourceCommandPort"),
+        QStringLiteral("DocumentSessionVideoDocumentPlaybackCommandPort"),
+        QStringLiteral("DocumentSessionVideoDocumentOutputCommandPort"),
         QStringLiteral("DocumentSessionVideoDocumentCommandPort"),
     };
 
@@ -1808,6 +1811,30 @@ void TestArchitectureBoundaries::sessionLeafSnapshotPortsAreSeparateFromCommandP
     for (const QString &token : imageCommandAggregateForbiddenTokens) {
         QVERIFY2(!imageCommandPortBody.contains(token),
             qPrintable(QStringLiteral("DocumentSessionImageDocumentCommandPort still contains %1")
+                    .arg(token)));
+    }
+
+    const QRegularExpression videoCommandPortPattern(
+        QStringLiteral(R"(struct\s+DocumentSessionVideoDocumentCommandPort\s*\{([\s\S]*?)\n\};)"));
+    const QString videoCommandPortBody = videoCommandPortPattern.match(header).captured(1);
+    QVERIFY(videoCommandPortBody.contains(
+        QStringLiteral("DocumentSessionVideoDocumentSourceCommandPort source")));
+    QVERIFY(videoCommandPortBody.contains(
+        QStringLiteral("DocumentSessionVideoDocumentPlaybackCommandPort playback")));
+    QVERIFY(videoCommandPortBody.contains(
+        QStringLiteral("DocumentSessionVideoDocumentOutputCommandPort output")));
+
+    const QStringList videoCommandAggregateForbiddenTokens {
+        QStringLiteral("std::function<void(const QUrl &)> setSourceUrl"),
+        QStringLiteral("std::function<QObject *()> videoOutput"),
+        QStringLiteral("std::function<void()> stop"),
+        QStringLiteral("std::function<void(QObject *)> setVideoOutput"),
+        QStringLiteral(
+            "std::function<void(const QRectF &, const QRectF &)> setVideoOutputGeometry"),
+    };
+    for (const QString &token : videoCommandAggregateForbiddenTokens) {
+        QVERIFY2(!videoCommandPortBody.contains(token),
+            qPrintable(QStringLiteral("DocumentSessionVideoDocumentCommandPort still contains %1")
                     .arg(token)));
     }
 
