@@ -10,14 +10,6 @@ namespace kiriview {
 namespace {
     template <typename> inline constexpr bool alwaysFalse = false;
 
-    template <typename Operation, typename... Args>
-    void run(const Operation &operation, Args &&...args)
-    {
-        if (operation) {
-            operation(std::forward<Args>(args)...);
-        }
-    }
-
     template <typename Operation>
     inline constexpr bool isLifecycleRuntimeOperation
         = std::is_same_v<Operation, CancelFileDeletionOperation>
@@ -66,6 +58,15 @@ namespace {
         || std::is_same_v<Operation, ReportContainerNavigationListFailureOperation>
         || std::is_same_v<Operation, LoadPageNavigationUrlOperation>;
 
+    template <typename Operation>
+    inline constexpr bool isSpreadRuntimeOperation
+        = std::is_same_v<Operation, FinishSpreadTransitionOperation>
+        || std::is_same_v<Operation, ResetRightToLeftReadingOperation>
+        || std::is_same_v<Operation, ClearSecondaryPageOperation>
+        || std::is_same_v<Operation, NotifyRightToLeftReadingChangedOperation>
+        || std::is_same_v<Operation, ResetZoomOperation>
+        || std::is_same_v<Operation, PrepareFailedContainerOperation>;
+
 }
 
 ImageDocumentRuntimePlanExecutor::ImageDocumentRuntimePlanExecutor(
@@ -76,6 +77,7 @@ ImageDocumentRuntimePlanExecutor::ImageDocumentRuntimePlanExecutor(
     , m_sourceLoadExecutor(m_operations.sourceLoad)
     , m_openExecutor(m_operations.open)
     , m_predecodeExecutor(m_operations.predecode)
+    , m_spreadExecutor(m_operations.spread)
     , m_navigationExecutor(m_operations.navigation)
 {
 }
@@ -110,30 +112,21 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
     if (m_predecodeExecutor.dispatchOperation(operation)) {
         return;
     }
+    if (m_spreadExecutor.dispatchOperation(operation)) {
+        return;
+    }
     if (m_navigationExecutor.dispatchOperation(operation)) {
         return;
     }
 
     std::visit(
-        [this](const auto &payload) {
+        [](const auto &payload) {
             using Operation = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Operation, FinishSpreadTransitionOperation>) {
-                run(m_operations.spread.finishSpreadTransition);
-            } else if constexpr (std::is_same_v<Operation, ResetRightToLeftReadingOperation>) {
-                run(m_operations.spread.resetRightToLeftReading);
-            } else if constexpr (std::is_same_v<Operation, ClearSecondaryPageOperation>) {
-                run(m_operations.spread.clearSecondaryPage);
-            } else if constexpr (std::is_same_v<Operation,
-                                     NotifyRightToLeftReadingChangedOperation>) {
-                run(m_operations.spread.notifyRightToLeftReadingChanged);
-            } else if constexpr (std::is_same_v<Operation, ResetZoomOperation>) {
-                run(m_operations.spread.resetZoom);
-            } else if constexpr (std::is_same_v<Operation, PrepareFailedContainerOperation>) {
-                run(m_operations.spread.prepareFailedContainer, payload.containerUrl);
-            } else if constexpr (isSourceLoadRuntimeOperation<Operation>
+            if constexpr (isSourceLoadRuntimeOperation<Operation>
                 || isOpenRuntimeOperation<Operation> || isPredecodeRuntimeOperation<Operation>
                 || isNavigationRuntimeOperation<Operation> || isLifecycleRuntimeOperation<Operation>
-                || isMediaEntrySourceRuntimeOperation<Operation>) {
+                || isMediaEntrySourceRuntimeOperation<Operation>
+                || isSpreadRuntimeOperation<Operation>) {
                 // Delegated before the visitor; this branch keeps std::visit exhaustive.
             } else {
                 static_assert(alwaysFalse<Operation>, "Unhandled image document runtime operation");
