@@ -19,6 +19,12 @@ namespace {
     }
 
     template <typename Operation>
+    inline constexpr bool isLifecycleRuntimeOperation
+        = std::is_same_v<Operation, CancelFileDeletionOperation>
+        || std::is_same_v<Operation, StopPresentationAnimationOperation>
+        || std::is_same_v<Operation, ShutdownSpreadOperation>;
+
+    template <typename Operation>
     inline constexpr bool isSourceLoadRuntimeOperation
         = std::is_same_v<Operation, ClearLoadingContainerNavigationUrlOperation>
         || std::is_same_v<Operation, SetLoadingContainerNavigationUrlOperation>
@@ -61,6 +67,7 @@ namespace {
 ImageDocumentRuntimePlanExecutor::ImageDocumentRuntimePlanExecutor(
     ImageDocumentRuntimeOperations operations)
     : m_operations(std::move(operations))
+    , m_lifecycleExecutor(m_operations.lifecycle)
     , m_sourceLoadExecutor(m_operations.sourceLoad)
     , m_openExecutor(m_operations.open)
     , m_predecodeExecutor(m_operations.predecode)
@@ -83,6 +90,9 @@ void ImageDocumentRuntimePlanExecutor::dispatchPlan(const ImageDocumentRuntimePl
 void ImageDocumentRuntimePlanExecutor::dispatchOperation(
     const ImageDocumentRuntimeOperation &operation)
 {
+    if (m_lifecycleExecutor.dispatchOperation(operation)) {
+        return;
+    }
     if (m_sourceLoadExecutor.dispatchOperation(operation)) {
         return;
     }
@@ -99,13 +109,7 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
     std::visit(
         [this](const auto &payload) {
             using Operation = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Operation, CancelFileDeletionOperation>) {
-                run(m_operations.lifecycle.cancelFileDeletion);
-            } else if constexpr (std::is_same_v<Operation, StopPresentationAnimationOperation>) {
-                run(m_operations.lifecycle.stopPresentationAnimation);
-            } else if constexpr (std::is_same_v<Operation, ShutdownSpreadOperation>) {
-                run(m_operations.lifecycle.shutdownSpread);
-            } else if constexpr (std::is_same_v<Operation, ClearMediaEntrySourceOperation>) {
+            if constexpr (std::is_same_v<Operation, ClearMediaEntrySourceOperation>) {
                 run(m_operations.mediaEntrySource.clear);
             } else if constexpr (std::is_same_v<Operation, FinishSpreadTransitionOperation>) {
                 run(m_operations.spread.finishSpreadTransition);
@@ -122,7 +126,8 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
                 run(m_operations.spread.prepareFailedContainer, payload.containerUrl);
             } else if constexpr (isSourceLoadRuntimeOperation<Operation>
                 || isOpenRuntimeOperation<Operation> || isPredecodeRuntimeOperation<Operation>
-                || isNavigationRuntimeOperation<Operation>) {
+                || isNavigationRuntimeOperation<Operation>
+                || isLifecycleRuntimeOperation<Operation>) {
                 // Delegated before the visitor; this branch keeps std::visit exhaustive.
             } else {
                 static_assert(alwaysFalse<Operation>, "Unhandled image document runtime operation");

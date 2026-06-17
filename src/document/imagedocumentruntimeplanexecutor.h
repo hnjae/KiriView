@@ -4,22 +4,16 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMEPLANEXECUTOR_H
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMEPLANEXECUTOR_H
 
+#include "imagedocumentlifecycleruntimeplanexecutor.h"
 #include "imagedocumentnavigationruntimeplanexecutor.h"
 #include "imagedocumentopenruntimeplanexecutor.h"
 #include "imagedocumentpredecoderuntimeplanexecutor.h"
 #include "imagedocumentruntimeplan.h"
 #include "imagedocumentsourceloadruntimeplanexecutor.h"
 
-#include <QUrl>
 #include <functional>
 
 namespace kiriview {
-struct ImageDocumentLifecycleRuntimeOperations {
-    std::function<void()> cancelFileDeletion;
-    std::function<void()> stopPresentationAnimation;
-    std::function<void()> shutdownSpread;
-};
-
 struct ImageDocumentMediaEntrySourceOperations {
     std::function<void()> clear;
 };
@@ -55,6 +49,7 @@ private:
     void dispatchOperation(const ImageDocumentRuntimeOperation &operation);
 
     ImageDocumentRuntimeOperations m_operations;
+    ImageDocumentLifecycleRuntimePlanExecutor m_lifecycleExecutor;
     ImageDocumentSourceLoadRuntimePlanExecutor m_sourceLoadExecutor;
     ImageDocumentOpenRuntimePlanExecutor m_openExecutor;
     ImageDocumentPredecodeRuntimePlanExecutor m_predecodeExecutor;
