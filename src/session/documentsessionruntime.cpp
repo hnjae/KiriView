@@ -79,6 +79,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           })
     , m_state(std::move(changeCallback))
     , m_directMediaScopePort(&m_state)
+    , m_directMediaActivityPort(&m_state, &m_directMediaScopePort)
     , m_projectionRuntime(DocumentSessionProjectionRuntimePorts {
           [this](const DocumentSessionPublicSnapshotInput &input) {
               return m_state.updatePublicSnapshot(input);
@@ -149,7 +150,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           [this](const QUrl &url) { m_state.setSourceIdentity(url); },
           [this]() { m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl); },
           [this]() { recomputePublicProjection(); },
-          [this]() { return directMediaNavigationActive(); },
+          [this]() { return m_directMediaActivityPort.navigationActive(); },
           [this]() { refreshDirectMediaNavigation(); },
           [this]() { m_mediaPredecodeRuntime.clear(); },
           [this]() { clearActiveNavigationRevealContextIfUnavailable(); },
@@ -306,13 +307,6 @@ DocumentSessionRuntime::actionAvailabilityFacts() const
     return m_state.publicSnapshot().actionAvailability;
 }
 
-bool DocumentSessionRuntime::directMediaNavigationActive() const
-{
-    return m_state.documentKind() == DocumentSessionKind::Video
-        || (m_state.documentKind() == DocumentSessionKind::Image
-            && directImageLoadMayUseImageDocumentSourceScope());
-}
-
 bool DocumentSessionRuntime::activeNavigationAvailable() const
 {
     return m_state.activeNavigationSnapshot().available;
@@ -451,7 +445,7 @@ void DocumentSessionRuntime::openMediaAtNumber(int mediaNumber)
 
 void DocumentSessionRuntime::openMedia(DirectMediaNavigationOpenRequest request)
 {
-    if (!directMediaNavigationActive()) {
+    if (!m_directMediaActivityPort.navigationActive()) {
         return;
     }
 
@@ -574,13 +568,13 @@ void DocumentSessionRuntime::clearActiveNavigationRevealContextIfUnavailable()
 void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 {
     if (m_state.documentKind() == DocumentSessionKind::Image
-        && !directImageLoadMayUseImageDocumentSourceScope()) {
+        && !m_directMediaActivityPort.directImageSourceScopeEligible()) {
         m_imageDocumentCommandRuntime.deleteDisplayedFile(mode);
         syncImageDocumentFileDeletionProgress();
         return;
     }
 
-    if (!displayedFileDeletionAvailable() || !directMediaNavigationActive()) {
+    if (!displayedFileDeletionAvailable() || !m_directMediaActivityPort.navigationActive()) {
         return;
     }
 
@@ -628,8 +622,8 @@ void DocumentSessionRuntime::handleImageDocumentSnapshotChanged()
         = documentSessionImageDocumentSyncPlan(DocumentSessionImageDocumentSyncInput {
             m_routingSource,
             m_state.documentKind(),
-            directImageLoadMayUseImageDocumentSourceScope(),
-            directMediaNavigationActive(),
+            m_directMediaActivityPort.directImageSourceScopeEligible(),
+            m_directMediaActivityPort.navigationActive(),
             m_state.directMediaNavigationKnown(),
             directMediaScopeChanged,
             previousPageNavigation,
@@ -696,7 +690,7 @@ void DocumentSessionRuntime::refreshLeafPublicSnapshots()
 void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
 {
     if (m_state.documentKind() != DocumentSessionKind::Image
-        || directImageLoadMayUseImageDocumentSourceScope()) {
+        || m_directMediaActivityPort.directImageSourceScopeEligible()) {
         return;
     }
 
@@ -806,14 +800,14 @@ void DocumentSessionRuntime::syncFromVideoDocument()
 
 void DocumentSessionRuntime::refreshDirectMediaNavigation()
 {
-    if (!directMediaNavigationActive()) {
+    if (!m_directMediaActivityPort.navigationActive()) {
         qCDebug(kiriviewNavigationLog) << "direct media navigation refresh skipped"
                                        << "reason"
                                        << "inactive"
                                        << "documentKind" << documentKindName(m_state.documentKind())
                                        << "cursorUrl" << m_directMediaScopePort.activeCursorUrl();
         m_directMediaNavigationApplicationRuntime.applyInactiveRefresh(
-            !directImageLoadMayUseImageDocumentSourceScope());
+            !m_directMediaActivityPort.directImageSourceScopeEligible());
         return;
     }
 
@@ -856,7 +850,7 @@ void DocumentSessionRuntime::cacheDisplayedMediaPredecodeImages()
 DocumentSessionMediaPredecodeInput DocumentSessionRuntime::mediaPredecodeInput() const
 {
     return DocumentSessionMediaPredecodeInput {
-        directMediaNavigationActive(),
+        m_directMediaActivityPort.navigationActive(),
         m_state.documentKind(),
         activeImageUsesImageDocumentSourceScope(),
         m_imagePublicSnapshot.readyForInformation,
@@ -869,7 +863,7 @@ DocumentSessionMediaPredecodeInput DocumentSessionRuntime::mediaPredecodeInput()
 void DocumentSessionRuntime::cancelMediaDeletion()
 {
     const bool sessionMediaDeletionInProgress
-        = m_state.fileDeletionInProgress() && directMediaNavigationActive();
+        = m_state.fileDeletionInProgress() && m_directMediaActivityPort.navigationActive();
     if (!m_mediaDeletionRuntime.active() && !sessionMediaDeletionInProgress) {
         return;
     }
@@ -894,12 +888,6 @@ void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCom
 bool DocumentSessionRuntime::activeImageUsesImageDocumentSourceScope() const
 {
     return m_imagePublicSnapshot.ordinaryDirectMediaScopeActive;
-}
-
-bool DocumentSessionRuntime::directImageLoadMayUseImageDocumentSourceScope() const
-{
-    return m_state.documentKind() == DocumentSessionKind::Image
-        && !m_directMediaScopePort.activeCursorUrl().isEmpty();
 }
 
 bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
@@ -937,7 +925,7 @@ DocumentSessionPublicSnapshotInput DocumentSessionRuntime::publicSnapshotInput(
     input.session.sessionErrorString = m_state.sessionErrorString();
     input.session.fileDeletionInProgress = m_state.fileDeletionInProgress();
     input.session.directImageLoadMayUseImageDocumentSourceScope
-        = directImageLoadMayUseImageDocumentSourceScope();
+        = m_directMediaActivityPort.directImageSourceScopeEligible();
     input.session.directMediaNavigation = directMediaActiveNavigationInput();
     input.session.activeNavigationRevealIntent = m_state.activeNavigationRevealIntent();
     input.session.activeNavigationRevealDirection = m_state.activeNavigationRevealDirection();

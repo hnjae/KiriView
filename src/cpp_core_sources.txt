@@ -222,6 +222,7 @@ src/session/thumbnailimagestore.cpp
 src/session/directmediacursor.cpp
 src/session/documentsessionactivezoom.cpp
 src/session/documentsessiondirectimagecursorsync.cpp
+src/session/documentsessiondirectmediaactivityport.cpp
 src/session/documentsessiondirectmediascopeport.cpp
 src/session/documentsessionimagedocumentsync.cpp
 src/session/documentsessionvideodocumentsync.cpp

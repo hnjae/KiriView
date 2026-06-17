@@ -9,6 +9,7 @@
 #include "session/activenavigationprojection.h"
 #include "session/documentsessionactivenavigationruntime.h"
 #include "session/documentsessiondirectimagecursorsync.h"
+#include "session/documentsessiondirectmediaactivityport.h"
 #include "session/documentsessiondirectmedianavigationapplicationruntime.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondirectmediascopeport.h"
@@ -152,7 +153,6 @@ private:
     void recomputePublicProjection();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
-    bool directMediaNavigationActive() const;
     void openPreviousMedia();
     void openNextMedia();
     void openMediaAtNumber(int mediaNumber);
@@ -172,7 +172,6 @@ private:
     DocumentSessionVideoOutputAttachmentPort videoOutputAttachmentPort();
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
     bool activeImageUsesImageDocumentSourceScope() const;
-    bool directImageLoadMayUseImageDocumentSourceScope() const;
     bool syncDirectImageCursorFromDocument();
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
     DocumentSessionPublicSnapshotInput publicSnapshotInput(quint64 inputRevision) const;
@@ -185,6 +184,7 @@ private:
     DocumentSessionVideoDocumentCommandRuntime m_videoDocumentCommandRuntime;
     DocumentSessionState m_state;
     DocumentSessionDirectMediaScopePort m_directMediaScopePort;
+    DocumentSessionDirectMediaActivityPort m_directMediaActivityPort;
     DocumentSessionProjectionRuntime m_projectionRuntime;
     DocumentSessionRouteRuntime m_routeRuntime;
     DocumentSessionActiveNavigationRuntime m_activeNavigationRuntime;
