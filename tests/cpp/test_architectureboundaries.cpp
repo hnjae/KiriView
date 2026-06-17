@@ -82,6 +82,7 @@ private Q_SLOTS:
     void imageDocumentNavigationSnapshotUsesNamedPort();
     void imageDocumentAdjacentPredecodeSchedulingUsesNamedPort();
     void imageDocumentDeletionProgressUsesNamedPort();
+    void imageDocumentCurrentPageNumberUsesNamedPort();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void imagePresentationPageSlotsUseDisplaySourceVariants();
@@ -1707,6 +1708,18 @@ void TestArchitectureBoundaries::imageDocumentDeletionProgressUsesNamedPort()
     QVERIFY(portHeader.contains(QStringLiteral("class ImageDocumentDeletionProgressPort")));
     QVERIFY(controllersSource.contains(QStringLiteral("ImageDocumentDeletionProgressPort")));
     QVERIFY(!controllersSource.contains(QStringLiteral("m_deletionController->inProgress")));
+}
+
+void TestArchitectureBoundaries::imageDocumentCurrentPageNumberUsesNamedPort()
+{
+    const QString portHeader
+        = readProjectFile(QStringLiteral("src/document/imagedocumentcurrentpagenumberport.h"));
+    const QString controllersSource
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimecontrollers.cpp"));
+
+    QVERIFY(portHeader.contains(QStringLiteral("class ImageDocumentCurrentPageNumberPort")));
+    QVERIFY(controllersSource.contains(QStringLiteral("ImageDocumentCurrentPageNumberPort")));
+    QVERIFY(!controllersSource.contains(QStringLiteral("m_navigationService->currentPageNumber")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
