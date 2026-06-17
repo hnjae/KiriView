@@ -63,6 +63,7 @@ private Q_SLOTS:
     void thumbnailGenerationContractsLiveInThumbnailModule();
     void documentSessionUsesThumbnailStripDependencyPort();
     void documentSessionUsesOpenWithRuntime();
+    void documentSessionOpenWithUsesNamedPlanPort();
     void activeNavigationThumbnailRuntimeUsesCanonicalThumbnailSourceKey();
     void liveDirectoryWatchUsesProviderBoundary();
     void mediaFormatRegistryDoesNotOwnLocalizedDialogLabels();
@@ -1366,6 +1367,21 @@ void TestArchitectureBoundaries::documentSessionUsesOpenWithRuntime()
     }
 
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::documentSessionOpenWithUsesNamedPlanPort()
+{
+    const QString portHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionmediaopenwithplanport.h"));
+    const QString runtimeHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.h"));
+    const QString runtimeSource
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.cpp"));
+
+    QVERIFY(portHeader.contains(QStringLiteral("class DocumentSessionMediaOpenWithPlanPort")));
+    QVERIFY(runtimeHeader.contains(QStringLiteral("DocumentSessionMediaOpenWithPlanPort")));
+    QVERIFY(!runtimeHeader.contains(QStringLiteral("currentMediaOpenWithPlan")));
+    QVERIFY(!runtimeSource.contains(QStringLiteral("currentMediaOpenWithPlan()")));
 }
 
 void TestArchitectureBoundaries::activeNavigationThumbnailRuntimeUsesCanonicalThumbnailSourceKey()
