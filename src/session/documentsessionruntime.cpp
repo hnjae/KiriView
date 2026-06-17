@@ -195,6 +195,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
       })
     , m_mediaOpenWithRuntime(std::move(dependencies.mediaOpenWithProvider))
     , m_mediaPredecodeRuntime(owner, std::move(dependencies.directMediaPredecodeDependencies))
+    , m_mediaOpenWithPlanPort(&m_state, &m_imagePublicSnapshot, &m_videoPublicSnapshot)
 {
     refreshLeafPublicSnapshots();
     connectDocuments();
@@ -601,7 +602,8 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 
 void DocumentSessionRuntime::openCurrentMediaWith(MediaOpenWithCallback callback)
 {
-    m_mediaOpenWithRuntime.open(m_owner, currentMediaOpenWithPlan(), std::move(callback));
+    m_mediaOpenWithRuntime.open(
+        m_owner, m_mediaOpenWithPlanPort.currentPlan(), std::move(callback));
 }
 
 void DocumentSessionRuntime::connectDocuments()
@@ -875,18 +877,6 @@ void DocumentSessionRuntime::cancelMediaDeletion()
     m_mediaDeletionRuntime.cancel();
     m_state.setFileDeletionInProgress(false);
     recomputePublicProjection();
-}
-
-MediaOpenWithPlan DocumentSessionRuntime::currentMediaOpenWithPlan() const
-{
-    return mediaOpenWithPlan(MediaOpenWithPlanInput {
-        m_state.documentKind(),
-        m_imagePublicSnapshot.readyForInformation,
-        m_imagePublicSnapshot.displayedUrl,
-        m_imagePublicSnapshot.displayedOpenedCollectionScope,
-        m_videoPublicSnapshot.ready,
-        m_videoPublicSnapshot.sourceUrl,
-    });
 }
 
 void DocumentSessionRuntime::cancelMediaOpenWith() { m_mediaOpenWithRuntime.cancel(); }

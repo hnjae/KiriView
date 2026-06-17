@@ -229,6 +229,7 @@ src/session/documentsessiondirectmedianavigationloadstate.cpp
 src/session/documentsessiondirectmedianavigationapplicationruntime.cpp
 src/session/documentsessiondirectmedianavigationruntime.cpp
 src/session/documentsessiondirectmedianavigationworkflow.cpp
+src/session/documentsessionmediaopenwithplanport.cpp
 src/session/documentsessionmediaopenwithruntime.cpp
 src/session/documentsessionmediadeletionplan.cpp
 src/session/documentsessionmediadeletionruntime.cpp

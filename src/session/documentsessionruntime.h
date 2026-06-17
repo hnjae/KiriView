@@ -17,6 +17,7 @@
 #include "session/documentsessionimagedocumentsync.h"
 #include "session/documentsessionmediadeletioncompletionruntime.h"
 #include "session/documentsessionmediadeletionruntime.h"
+#include "session/documentsessionmediaopenwithplanport.h"
 #include "session/documentsessionmediaopenwithruntime.h"
 #include "session/documentsessionmediapredecoderuntime.h"
 #include "session/documentsessionprojectionruntime.h"
@@ -167,7 +168,6 @@ private:
     void cacheDisplayedMediaPredecodeImages();
     DocumentSessionMediaPredecodeInput mediaPredecodeInput() const;
     void cancelMediaDeletion();
-    MediaOpenWithPlan currentMediaOpenWithPlan() const;
     void cancelMediaOpenWith();
     DocumentSessionVideoOutputAttachmentPort videoOutputAttachmentPort();
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
@@ -199,6 +199,7 @@ private:
     std::vector<QMetaObject::Connection> m_documentConnections;
     DocumentSessionPublicImageLeafSnapshot m_imagePublicSnapshot;
     DocumentSessionPublicVideoLeafSnapshot m_videoPublicSnapshot;
+    DocumentSessionMediaOpenWithPlanPort m_mediaOpenWithPlanPort;
     DocumentSessionVideoOutputRuntime m_videoOutputRuntime;
     quint64 m_publicSnapshotInputRevision = 0;
     bool m_routingSource = false;
