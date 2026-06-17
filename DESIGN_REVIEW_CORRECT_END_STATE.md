@@ -22,6 +22,7 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - P2 image-document navigation plan dispatch: split page-navigation cancellation/update, URL loading, container-image loading/completion, boundary feedback, list-failure reporting, and page-navigation URL loading operations behind `ImageDocumentNavigationRuntimePlanExecutor`; the broad runtime plan executor now delegates navigation, predecode, open, and source-load families while preserving the shared plan vocabulary during migration. Verified with `devenv shell -- devenv tasks run ci`. Commits: `649912aa`, `b599b70c`, `ca5f26bd`.
 - P2 image-document lifecycle plan dispatch: split file-deletion cancellation, presentation-animation shutdown, and spread shutdown operations behind `ImageDocumentLifecycleRuntimePlanExecutor`; the broad runtime plan executor now delegates lifecycle, navigation, predecode, open, and source-load families while preserving the shared plan vocabulary during migration. Verified with `devenv shell -- devenv tasks run ci`. Commits: `5762ab6b`, `c88993bf`, `d88cf133`.
 - P2 image-document media-entry source plan dispatch: split media-entry source clearing behind `ImageDocumentMediaEntrySourceRuntimePlanExecutor`; the broad runtime plan executor now delegates media-entry source, lifecycle, navigation, predecode, open, and source-load families while preserving the shared plan vocabulary during migration. Verified with `devenv shell -- devenv tasks run ci`. Commits: `c82459bd`, `26e53813`, `66a5d69f`.
+- P2 image-document spread plan dispatch: split spread transition completion, reading-direction reset/notification, secondary-page clearing, zoom reset, and failed-container preparation operations behind `ImageDocumentSpreadRuntimePlanExecutor`; every current image-document runtime operation family now has a named executor while the shared plan vocabulary remains the canonical side-effect boundary. Verified with `devenv shell -- devenv tasks run ci`. Commits: `5732d83a`, `e3750f36`, `6eb9468d`.
 
 ## Cohesion, Coupling, and Ownership Problems
 
@@ -69,16 +70,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Acceptance criteria: Removing a feature does not require unrelated route/projection logic changes; feature subowner tests run without the full session runtime.
 - Priority: P1
 
-### Finding: `ImageDocumentRuntimePlan` should remain, but its operation vocabulary is still too broad
-
-- Evidence: `src/document/imagedocumentruntimeplan.h:107-123` defines `ImageDocumentRuntimeOperation` variants covering lifecycle, media entry source, predecode, spread, navigation, open, and source-load operations. `src/document/imagedocumentruntimeplanexecutor.h` groups runtime operations by family and `src/document/imagedocumentruntimeplanexecutor.cpp` owns explicit dispatch. `src/document/imagedocumentruntimeworkflow.h:25-48` exposes the workflow ports and owns an executor, while `src/document/imagedocumentruntimeworkflow.cpp:23-232` still builds one broad operation table that reaches across sibling controllers.
-- Current state: The runtime plan is useful as a C++ side-effect boundary, dispatch has moved out of the composition root into `ImageDocumentRuntimePlanExecutor`, and operation binding/dispatch ownership now has the named `ImageDocumentRuntimeWorkflow` owner. Source-load operation dispatch now lives in `ImageDocumentSourceLoadRuntimePlanExecutor`, open operation dispatch now lives in `ImageDocumentOpenRuntimePlanExecutor`, predecode operation dispatch now lives in `ImageDocumentPredecodeRuntimePlanExecutor`, navigation operation dispatch now lives in `ImageDocumentNavigationRuntimePlanExecutor`, lifecycle operation dispatch now lives in `ImageDocumentLifecycleRuntimePlanExecutor`, and media-entry source operation dispatch now lives in `ImageDocumentMediaEntrySourceRuntimePlanExecutor`; the remaining issue is that the shared plan vocabulary and broad executor still span spread workflows.
-- Design concern: Removing the plan concept would conflict with architecture docs; the problem is broad vocabulary and cross-feature operation ownership.
-- Correct end state: Keep the plan as the canonical side-effect boundary, but split operation families and executor ownership by phase/feature.
-- Suggested migration: Move spread dispatch out of the broad executor, and shrink the broad variant list through compatibility wrappers.
-- Acceptance criteria: Plan consumers are split by feature family; the spread executor can be tested without binding unrelated runtime-operation callbacks.
-- Priority: P2
-
 ## Recommended Correct End-State Architecture
 
 - Ownership boundaries: `DocumentSessionState` owns public mixed-media projection state. `DocumentSessionProjectionRuntime` owns revisioned snapshot publication and active-navigation thumbnail-row synchronization against that state. `DocumentSessionPublicSnapshotInputBuilder` owns public snapshot input assembly from committed session, leaf, and direct-media facts. `DocumentSessionPublicLeafSnapshotBuilder` owns public image/video leaf snapshot assembly from cohesive leaf snapshots. `DocumentSessionDirectImageCursorSyncPlan` owns direct-image cursor synchronization decisions from committed cursor and image leaf facts. `DocumentSessionDirectMediaNavigationApplicationRuntime` owns direct-media navigation inactive-refresh clearing and refresh/open workflow application effect sequencing through state, reveal, projection, predecode, and route ports. `DocumentSessionRuntime` orchestrates named subowners for route, projection, active-navigation dispatch, direct-media navigation, deletion, image commands, video commands, video-output, thumbnails, and predecode through typed results/effects, and reads leaf document facts through cohesive session snapshots.
@@ -94,13 +85,13 @@ The correct end state should be precise and conservative, not clever. Rust polic
 
 1. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, keeping public projection updates centralized in `DocumentSessionState`.
 2. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics. Preserve UI text while internal diagnostics become structured.
-3. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
+3. Remove or simplify premature/parallel abstractions: keep workflow-family executors as the side-effect boundary and narrow any remaining compatibility vocabulary only after tests prove behavior preservation.
 
 ## Things Not To Change Yet
 
 - Do not move `src/qml/NavigationPresentationOrder.qml` out of QML just because it contains logic. Existing architecture tests intentionally expect QML to own RTL-aware presentation order for visual projection.
 - Do not collapse all Rust/C++ mirror enums or bridge conversions. Some duplication at the FFI boundary is intentional; the target is duplicated domain policy, not exhaustive conversion code.
 - Do not rewrite `DocumentSessionRuntime` or `ImageDocumentRuntimeControllers` wholesale. Extract one workflow at a time behind characterization tests.
-- Do not remove `ImageDocumentRuntimePlan` as a concept. It matches the documented C++ side-effect boundary; the problem is broad operation vocabulary and hidden dispatch ownership.
+- Do not remove `ImageDocumentRuntimePlan` as a concept. It matches the documented C++ side-effect boundary; any future vocabulary narrowing should preserve that boundary.
 - Do not introduce a generic logging/observability framework before typed failure values exist. Without typed failures, logging would mostly preserve the current string ambiguity.
 - Do not alter user-visible error text as part of the first migration unless current text is clearly a bug. Internal typed diagnostics can be added while preserving existing UI messages.
