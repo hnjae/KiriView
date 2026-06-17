@@ -1770,6 +1770,9 @@ void TestArchitectureBoundaries::sessionLeafSnapshotPortsAreSeparateFromCommandP
         QStringLiteral("DocumentSessionVideoDocumentSnapshotPort"),
     };
     const QStringList commandPorts {
+        QStringLiteral("DocumentSessionImageDocumentSourceCommandPort"),
+        QStringLiteral("DocumentSessionImageDocumentPageNavigationCommandPort"),
+        QStringLiteral("DocumentSessionImageDocumentDeletionCommandPort"),
         QStringLiteral("DocumentSessionImageDocumentCommandPort"),
         QStringLiteral("DocumentSessionVideoDocumentCommandPort"),
     };
@@ -1783,6 +1786,29 @@ void TestArchitectureBoundaries::sessionLeafSnapshotPortsAreSeparateFromCommandP
         const QRegularExpressionMatch match = structPattern.match(header);
         QVERIFY2(match.hasMatch(),
             qPrintable(QStringLiteral("documentsessiondocumentports.h must define %1").arg(port)));
+    }
+
+    const QRegularExpression imageCommandPortPattern(
+        QStringLiteral(R"(struct\s+DocumentSessionImageDocumentCommandPort\s*\{([\s\S]*?)\n\};)"));
+    const QString imageCommandPortBody = imageCommandPortPattern.match(header).captured(1);
+    QVERIFY(imageCommandPortBody.contains(
+        QStringLiteral("DocumentSessionImageDocumentSourceCommandPort source")));
+    QVERIFY(imageCommandPortBody.contains(
+        QStringLiteral("DocumentSessionImageDocumentPageNavigationCommandPort pageNavigation")));
+    QVERIFY(imageCommandPortBody.contains(
+        QStringLiteral("DocumentSessionImageDocumentDeletionCommandPort deletion")));
+
+    const QStringList imageCommandAggregateForbiddenTokens {
+        QStringLiteral("std::function<void(const QUrl &)> setSourceUrl"),
+        QStringLiteral("std::function<void()> openPreviousPage"),
+        QStringLiteral("std::function<void()> openNextPage"),
+        QStringLiteral("std::function<void(int)> openImageAtPage"),
+        QStringLiteral("std::function<void(FileDeletionMode)> deleteDisplayedFile"),
+    };
+    for (const QString &token : imageCommandAggregateForbiddenTokens) {
+        QVERIFY2(!imageCommandPortBody.contains(token),
+            qPrintable(QStringLiteral("DocumentSessionImageDocumentCommandPort still contains %1")
+                    .arg(token)));
     }
 
     const QStringList snapshotForbiddenTokens {
