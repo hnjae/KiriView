@@ -79,6 +79,7 @@ private Q_SLOTS:
     void imageDocumentSpreadPlanDispatchHasNamedExecutor();
     void imageDocumentPredecodedImageLookupUsesNamedPort();
     void imageDocumentPrimaryPageSlotUsesNamedPort();
+    void imageDocumentNavigationSnapshotUsesNamedPort();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void imagePresentationPageSlotsUseDisplaySourceVariants();
@@ -1665,6 +1666,19 @@ void TestArchitectureBoundaries::imageDocumentPrimaryPageSlotUsesNamedPort()
         !controllersSource.contains(QStringLiteral("m_spreadController->commitPrimaryPageSlot")));
     QVERIFY(
         !controllersSource.contains(QStringLiteral("m_spreadController->clearPrimaryPageSlot")));
+}
+
+void TestArchitectureBoundaries::imageDocumentNavigationSnapshotUsesNamedPort()
+{
+    const QString portHeader
+        = readProjectFile(QStringLiteral("src/document/imagedocumentnavigationsnapshotport.h"));
+    const QString controllersSource
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimecontrollers.cpp"));
+
+    QVERIFY(portHeader.contains(QStringLiteral("class ImageDocumentNavigationSnapshotPort")));
+    QVERIFY(controllersSource.contains(QStringLiteral("ImageDocumentNavigationSnapshotPort")));
+    QVERIFY(!controllersSource.contains(
+        QStringLiteral("m_navigationController->pageNavigationSnapshot")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
