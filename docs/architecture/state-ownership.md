@@ -99,6 +99,8 @@ Direct-media activity gates supplied to document-session routing, deletion, sync
 
 Direct-media predecode input facts supplied to the document-session media-predecode runtime should cross a named session predecode input port. `DocumentSessionRuntime` may bind that port to `DocumentSessionState`, the direct-media activity and scope ports, and the committed image public leaf snapshot, but schedule/cache paths should consume the port instead of private runtime helper methods for assembling `DocumentSessionMediaPredecodeInput`.
 
+Direct-media active-navigation projection facts supplied to document-session public snapshot input assembly should cross a named session projection input port. `DocumentSessionRuntime` may bind that port to `DocumentSessionState`, but public snapshot assembly should consume the port instead of a private runtime helper for building `DirectMediaActiveNavigationInput`.
+
 Displayed-media Open With plan reads should cross a named session plan port. `DocumentSessionRuntime` may bind that port to `DocumentSessionState` and the committed image/video public leaf snapshots, but Open With invocation should consume the port instead of capturing a private runtime helper for mixed-media target selection.
 
 Mixed-media deletion fallback remains session-owned for ordinary direct media scopes. Image-document removal fallback remains navigation-owned so deletion completion and live candidate refresh share one sibling-selection policy.
