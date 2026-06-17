@@ -81,6 +81,7 @@ src/document/imagedocumentdeletioncontroller.cpp
 src/document/imagedocumentdeletionfallbackcontroller.cpp
 src/document/imagedocumentdeletionstate.cpp
 src/document/imagedocumentlifecycleruntimeplanexecutor.cpp
+src/document/imagedocumentmediaentrysourceruntimeplanexecutor.cpp
 src/document/imagedocumentnavigationruntimeplanexecutor.cpp
 src/document/imagedocumentnavigationruntimeplan.cpp
 src/document/imagedocumentnavigationcontroller.cpp

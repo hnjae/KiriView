@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMEPLANEXECUTOR_H
 
 #include "imagedocumentlifecycleruntimeplanexecutor.h"
+#include "imagedocumentmediaentrysourceruntimeplanexecutor.h"
 #include "imagedocumentnavigationruntimeplanexecutor.h"
 #include "imagedocumentopenruntimeplanexecutor.h"
 #include "imagedocumentpredecoderuntimeplanexecutor.h"
@@ -14,10 +15,6 @@
 #include <functional>
 
 namespace kiriview {
-struct ImageDocumentMediaEntrySourceOperations {
-    std::function<void()> clear;
-};
-
 struct ImageDocumentSpreadRuntimeOperations {
     std::function<void()> finishSpreadTransition;
     std::function<void()> resetRightToLeftReading;
@@ -29,7 +26,7 @@ struct ImageDocumentSpreadRuntimeOperations {
 
 struct ImageDocumentRuntimeOperations {
     ImageDocumentLifecycleRuntimeOperations lifecycle;
-    ImageDocumentMediaEntrySourceOperations mediaEntrySource;
+    ImageDocumentMediaEntrySourceRuntimeOperations mediaEntrySource;
     ImageDocumentPredecodeRuntimeOperations predecode;
     ImageDocumentSpreadRuntimeOperations spread;
     ImageDocumentNavigationRuntimeOperations navigation;
@@ -50,6 +47,7 @@ private:
 
     ImageDocumentRuntimeOperations m_operations;
     ImageDocumentLifecycleRuntimePlanExecutor m_lifecycleExecutor;
+    ImageDocumentMediaEntrySourceRuntimePlanExecutor m_mediaEntrySourceExecutor;
     ImageDocumentSourceLoadRuntimePlanExecutor m_sourceLoadExecutor;
     ImageDocumentOpenRuntimePlanExecutor m_openExecutor;
     ImageDocumentPredecodeRuntimePlanExecutor m_predecodeExecutor;
