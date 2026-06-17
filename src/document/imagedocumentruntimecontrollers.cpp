@@ -10,6 +10,7 @@
 #include "imagedocumentnavigationruntimeplan.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentpredecodedimagelookup.h"
+#include "imagedocumentprimarypageslotport.h"
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentruntimeworkflow.h"
 #include "imagedocumentsourceloadrequest.h"
@@ -85,18 +86,6 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         std::move(runtimeDependencies.predecodeThreadCountProvider));
     m_predecodedImageLookup = std::make_unique<ImageDocumentPredecodedImageLookup>(
         std::move(externalPredecodedImageFinder), m_predecodeController.get());
-    m_openController = std::make_unique<ImageOpenController>(documentObject, state,
-        *m_pageSurfaceController, *m_presentationRuntime,
-        ImageOpenController::Callbacks {
-            [this](const QUrl &url) { return m_predecodedImageLookup->find(url); },
-            [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); },
-            std::move(m_callbacks.unsupportedOpenedCollectionVideoEntered),
-            [this](const DisplayedImageLocation &location) {
-                m_spreadController->commitPrimaryPageSlot(location);
-            },
-            [this]() { m_spreadController->clearPrimaryPageSlot(); },
-        },
-        runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
     m_spreadController = std::make_unique<ImageSpreadPresentationController>(
         documentObject, [this]() { return renderContextOrDefault(m_callbacks.renderContext); },
         state, *m_pageSurfaceController, *m_presentationRuntime,
@@ -111,6 +100,20 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         },
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode,
         runtimeDependencies.cacheBudgets);
+    m_primaryPageSlotPort
+        = std::make_unique<ImageDocumentPrimaryPageSlotPort>(m_spreadController.get());
+    m_openController = std::make_unique<ImageOpenController>(documentObject, state,
+        *m_pageSurfaceController, *m_presentationRuntime,
+        ImageOpenController::Callbacks {
+            [this](const QUrl &url) { return m_predecodedImageLookup->find(url); },
+            [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); },
+            std::move(m_callbacks.unsupportedOpenedCollectionVideoEntered),
+            [this](const DisplayedImageLocation &location) {
+                m_primaryPageSlotPort->commit(location);
+            },
+            [this]() { m_primaryPageSlotPort->clear(); },
+        },
+        runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(state,
         *m_pageSurfaceController, *m_navigationService, *m_spreadController,
         [this](ImageDocumentRuntimePlan plan) { dispatchPlan(plan); });

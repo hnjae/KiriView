@@ -90,6 +90,7 @@ src/document/imagedocumentopenruntimeplanexecutor.cpp
 src/document/imagedocumentpredecodedimagelookup.cpp
 src/document/imagedocumentpredecoderuntimeplanexecutor.cpp
 src/document/imagedocumentpredecodecontroller.cpp
+src/document/imagedocumentprimarypageslotport.cpp
 src/facade/imagedocumentpublicsignals.cpp
 src/document/imagedocumentruntime.cpp
 src/document/imagedocumentruntimecontrollers.cpp
