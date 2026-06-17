@@ -40,6 +40,22 @@ namespace {
         || std::is_same_v<Operation, CancelPredecodeOperation>
         || std::is_same_v<Operation, ScheduleAdjacentImagePredecodeOperation>;
 
+    template <typename Operation>
+    inline constexpr bool isNavigationRuntimeOperation
+        = std::is_same_v<Operation, CancelPageNavigationUpdateOperation>
+        || std::is_same_v<Operation, CancelNavigationOperation>
+        || std::is_same_v<Operation, CancelContainerNavigationOperation>
+        || std::is_same_v<Operation, CancelAllNavigationOperation>
+        || std::is_same_v<Operation, ClearPageNavigationOperation>
+        || std::is_same_v<Operation, UpdatePageNavigationOperation>
+        || std::is_same_v<Operation, LoadUrlOperation>
+        || std::is_same_v<Operation, LoadContainerImageOperation>
+        || std::is_same_v<Operation, FinishEmptyContainerNavigationOperation>
+        || std::is_same_v<Operation, FinishContainerNavigationLoadWithErrorOperation>
+        || std::is_same_v<Operation, ReportContainerNavigationBoundaryOperation>
+        || std::is_same_v<Operation, ReportContainerNavigationListFailureOperation>
+        || std::is_same_v<Operation, LoadPageNavigationUrlOperation>;
+
 }
 
 ImageDocumentRuntimePlanExecutor::ImageDocumentRuntimePlanExecutor(
@@ -48,6 +64,7 @@ ImageDocumentRuntimePlanExecutor::ImageDocumentRuntimePlanExecutor(
     , m_sourceLoadExecutor(m_operations.sourceLoad)
     , m_openExecutor(m_operations.open)
     , m_predecodeExecutor(m_operations.predecode)
+    , m_navigationExecutor(m_operations.navigation)
 {
 }
 
@@ -75,6 +92,9 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
     if (m_predecodeExecutor.dispatchOperation(operation)) {
         return;
     }
+    if (m_navigationExecutor.dispatchOperation(operation)) {
+        return;
+    }
 
     std::visit(
         [this](const auto &payload) {
@@ -100,41 +120,9 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
                 run(m_operations.spread.resetZoom);
             } else if constexpr (std::is_same_v<Operation, PrepareFailedContainerOperation>) {
                 run(m_operations.spread.prepareFailedContainer, payload.containerUrl);
-            } else if constexpr (std::is_same_v<Operation, CancelPageNavigationUpdateOperation>) {
-                run(m_operations.navigation.cancelPageNavigationUpdate);
-            } else if constexpr (std::is_same_v<Operation, CancelNavigationOperation>) {
-                run(m_operations.navigation.cancelNavigation);
-            } else if constexpr (std::is_same_v<Operation, CancelContainerNavigationOperation>) {
-                run(m_operations.navigation.cancelContainerNavigation);
-            } else if constexpr (std::is_same_v<Operation, CancelAllNavigationOperation>) {
-                run(m_operations.navigation.cancelAllNavigation);
-            } else if constexpr (std::is_same_v<Operation, ClearPageNavigationOperation>) {
-                run(m_operations.navigation.clearPageNavigation);
-            } else if constexpr (std::is_same_v<Operation, UpdatePageNavigationOperation>) {
-                run(m_operations.navigation.updatePageNavigation);
-            } else if constexpr (std::is_same_v<Operation, LoadUrlOperation>) {
-                run(m_operations.navigation.loadUrl, payload.target);
-            } else if constexpr (std::is_same_v<Operation, LoadContainerImageOperation>) {
-                run(m_operations.navigation.loadContainerImage, payload.target,
-                    payload.containerUrl);
-            } else if constexpr (std::is_same_v<Operation,
-                                     FinishEmptyContainerNavigationOperation>) {
-                run(m_operations.navigation.finishEmptyContainerNavigation, payload.containerUrl);
-            } else if constexpr (std::is_same_v<Operation,
-                                     FinishContainerNavigationLoadWithErrorOperation>) {
-                run(m_operations.navigation.finishContainerNavigationLoadWithError,
-                    payload.containerUrl, payload.errorString);
-            } else if constexpr (std::is_same_v<Operation,
-                                     ReportContainerNavigationBoundaryOperation>) {
-                run(m_operations.navigation.reportContainerNavigationBoundary, payload.direction);
-            } else if constexpr (std::is_same_v<Operation,
-                                     ReportContainerNavigationListFailureOperation>) {
-                run(m_operations.navigation.reportContainerNavigationListFailure, payload.failure);
-            } else if constexpr (std::is_same_v<Operation, LoadPageNavigationUrlOperation>) {
-                run(m_operations.navigation.loadPageNavigationUrl, payload.target,
-                    payload.preserveTwoPageSpreadTransition);
             } else if constexpr (isSourceLoadRuntimeOperation<Operation>
-                || isOpenRuntimeOperation<Operation> || isPredecodeRuntimeOperation<Operation>) {
+                || isOpenRuntimeOperation<Operation> || isPredecodeRuntimeOperation<Operation>
+                || isNavigationRuntimeOperation<Operation>) {
                 // Delegated before the visitor; this branch keeps std::visit exhaustive.
             } else {
                 static_assert(alwaysFalse<Operation>, "Unhandled image document runtime operation");

@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMEPLANEXECUTOR_H
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMEPLANEXECUTOR_H
 
+#include "imagedocumentnavigationruntimeplanexecutor.h"
 #include "imagedocumentopenruntimeplanexecutor.h"
 #include "imagedocumentpredecoderuntimeplanexecutor.h"
 #include "imagedocumentruntimeplan.h"
@@ -32,23 +33,6 @@ struct ImageDocumentSpreadRuntimeOperations {
     std::function<void(const QUrl &)> prepareFailedContainer;
 };
 
-struct ImageDocumentNavigationRuntimeOperations {
-    std::function<void()> cancelPageNavigationUpdate;
-    std::function<void()> cancelNavigation;
-    std::function<void()> cancelContainerNavigation;
-    std::function<void()> cancelAllNavigation;
-    std::function<void()> clearPageNavigation;
-    std::function<void()> updatePageNavigation;
-    std::function<void(const ImageDocumentPageTarget &)> loadUrl;
-    std::function<void(const ImageDocumentPageTarget &, const QUrl &)> loadContainerImage;
-    std::function<void(const QUrl &)> finishEmptyContainerNavigation;
-    std::function<void(const QUrl &, const QString &)> finishContainerNavigationLoadWithError;
-    std::function<void(NavigationDirection)> reportContainerNavigationBoundary;
-    std::function<void(const ContainerNavigationListFailure &)>
-        reportContainerNavigationListFailure;
-    std::function<void(const ImageDocumentPageTarget &, bool)> loadPageNavigationUrl;
-};
-
 struct ImageDocumentRuntimeOperations {
     ImageDocumentLifecycleRuntimeOperations lifecycle;
     ImageDocumentMediaEntrySourceOperations mediaEntrySource;
@@ -74,6 +58,7 @@ private:
     ImageDocumentSourceLoadRuntimePlanExecutor m_sourceLoadExecutor;
     ImageDocumentOpenRuntimePlanExecutor m_openExecutor;
     ImageDocumentPredecodeRuntimePlanExecutor m_predecodeExecutor;
+    ImageDocumentNavigationRuntimePlanExecutor m_navigationExecutor;
 };
 }
 
