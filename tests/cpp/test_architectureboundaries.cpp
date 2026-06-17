@@ -71,6 +71,7 @@ private Q_SLOTS:
     void asyncImageIoJobsDoNotOwnOpenedCollectionCandidateLoading();
     void mediaEntrySourceStoreDoesNotDependOnDocumentPlanning();
     void imageDocumentSourceLoadPlanDispatchHasNamedExecutor();
+    void imageDocumentOpenPlanDispatchHasNamedExecutor();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void imagePresentationPageSlotsUseDisplaySourceVariants();
@@ -1534,6 +1535,21 @@ void TestArchitectureBoundaries::imageDocumentSourceLoadPlanDispatchHasNamedExec
     QVERIFY(runtimeExecutorHeader.contains(
         QStringLiteral("ImageDocumentSourceLoadRuntimePlanExecutor")));
     QVERIFY(!runtimeExecutorSource.contains(QStringLiteral("m_operations.sourceLoad.")));
+}
+
+void TestArchitectureBoundaries::imageDocumentOpenPlanDispatchHasNamedExecutor()
+{
+    const QString openExecutorHeader
+        = readProjectFile(QStringLiteral("src/document/imagedocumentopenruntimeplanexecutor.h"));
+    const QString runtimeExecutorHeader
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimeplanexecutor.h"));
+    const QString runtimeExecutorSource
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimeplanexecutor.cpp"));
+
+    QVERIFY(
+        openExecutorHeader.contains(QStringLiteral("class ImageDocumentOpenRuntimePlanExecutor")));
+    QVERIFY(runtimeExecutorHeader.contains(QStringLiteral("ImageDocumentOpenRuntimePlanExecutor")));
+    QVERIFY(!runtimeExecutorSource.contains(QStringLiteral("m_operations.open.")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
