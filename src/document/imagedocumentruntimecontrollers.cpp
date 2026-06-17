@@ -5,6 +5,7 @@
 
 #include "archive/mediaentrysourcestore.h"
 #include "async/imagecallback.h"
+#include "imagedocumentadjacentpredecodeschedulerport.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentnavigationruntimeplan.h"
@@ -78,6 +79,9 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         });
     m_navigationSnapshotPort
         = std::make_unique<ImageDocumentNavigationSnapshotPort>(m_navigationService.get());
+    m_adjacentPredecodeSchedulerPort
+        = std::make_unique<ImageDocumentAdjacentPredecodeSchedulerPort>(
+            [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); });
     m_predecodeController = std::make_unique<ImageDocumentPredecodeController>(
         documentObject, state, *m_pageSurfaceController, *m_presentationRuntime,
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode,
@@ -96,10 +100,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             [this](ImageDocumentChange change) { invokeIfSet(m_callbacks.notify, change); },
             [this](const QUrl &url) { return m_predecodedImageLookup->find(url); },
             [this]() { return m_navigationSnapshotPort->snapshot(); },
-            [this]() {
-                dispatchPlan(
-                    ImageDocumentRuntimePlan { ScheduleAdjacentImagePredecodeOperation {} });
-            },
+            [this]() { m_adjacentPredecodeSchedulerPort->scheduleAdjacentImagePredecode(); },
         },
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode,
         runtimeDependencies.cacheBudgets);
