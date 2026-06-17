@@ -376,13 +376,13 @@ kiriview::DocumentSessionVideoDocumentCommandPort KiriDocumentSession::videoDocu
     KiriVideoDocument &document)
 {
     return kiriview::DocumentSessionVideoDocumentCommandPort {
-        [&document](const QUrl &url) { document.setSourceUrl(url); },
-        [&document]() { return document.videoOutput(); },
-        [&document]() { document.stop(); },
-        [&document](QObject *videoOutput) { document.setVideoOutput(videoOutput); },
-        [&document](const QRectF &contentRect, const QRectF &sourceRect) {
-            document.setVideoOutputGeometry(contentRect, sourceRect);
-        },
+        { [&document](const QUrl &url) { document.setSourceUrl(url); } },
+        { [&document]() { document.stop(); } },
+        { [&document]() { return document.videoOutput(); },
+            [&document](QObject *videoOutput) { document.setVideoOutput(videoOutput); },
+            [&document](const QRectF &contentRect, const QRectF &sourceRect) {
+                document.setVideoOutputGeometry(contentRect, sourceRect);
+            } },
     };
 }
 

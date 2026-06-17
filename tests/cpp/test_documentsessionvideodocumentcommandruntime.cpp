@@ -24,23 +24,23 @@ struct VideoCommandProbe {
     kiriview::DocumentSessionVideoDocumentCommandPort port()
     {
         return kiriview::DocumentSessionVideoDocumentCommandPort {
-            [this](const QUrl &url) {
+            { [this](const QUrl &url) {
                 sourceUrl = url;
                 events.push_back(
                     url.isEmpty() ? QStringLiteral("clear-source") : QStringLiteral("set-source"));
-            },
-            [this]() -> QObject * { return attachedVideoOutput; },
-            [this]() { events.push_back(QStringLiteral("stop")); },
-            [this](QObject *videoOutput) {
-                attachedVideoOutput = videoOutput;
-                events.push_back(videoOutput == nullptr ? QStringLiteral("detach-output")
-                                                        : QStringLiteral("attach-output"));
-            },
-            [this](const QRectF &contentRect, const QRectF &sourceRect) {
-                lastContentRect = contentRect;
-                lastSourceRect = sourceRect;
-                events.push_back(QStringLiteral("set-geometry"));
-            },
+            } },
+            { [this]() { events.push_back(QStringLiteral("stop")); } },
+            { [this]() -> QObject * { return attachedVideoOutput; },
+                [this](QObject *videoOutput) {
+                    attachedVideoOutput = videoOutput;
+                    events.push_back(videoOutput == nullptr ? QStringLiteral("detach-output")
+                                                            : QStringLiteral("attach-output"));
+                },
+                [this](const QRectF &contentRect, const QRectF &sourceRect) {
+                    lastContentRect = contentRect;
+                    lastSourceRect = sourceRect;
+                    events.push_back(QStringLiteral("set-geometry"));
+                } },
         };
     }
 

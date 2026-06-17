@@ -102,12 +102,24 @@ struct DocumentSessionVideoDocumentSnapshotPort {
     DocumentSessionDocumentSignalConnector snapshotChanged;
 };
 
-struct DocumentSessionVideoDocumentCommandPort {
+struct DocumentSessionVideoDocumentSourceCommandPort {
     std::function<void(const QUrl &)> setSourceUrl;
-    std::function<QObject *()> videoOutput;
+};
+
+struct DocumentSessionVideoDocumentPlaybackCommandPort {
     std::function<void()> stop;
+};
+
+struct DocumentSessionVideoDocumentOutputCommandPort {
+    std::function<QObject *()> videoOutput;
     std::function<void(QObject *)> setVideoOutput;
     std::function<void(const QRectF &, const QRectF &)> setVideoOutputGeometry;
+};
+
+struct DocumentSessionVideoDocumentCommandPort {
+    DocumentSessionVideoDocumentSourceCommandPort source;
+    DocumentSessionVideoDocumentPlaybackCommandPort playback;
+    DocumentSessionVideoDocumentOutputCommandPort output;
 };
 }
 

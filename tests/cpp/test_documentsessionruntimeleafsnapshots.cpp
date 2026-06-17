@@ -73,12 +73,12 @@ void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeaf
     kiriview::DocumentSessionVideoDocumentSnapshotPort videoPort;
     videoPort.snapshot = [&videoSnapshot]() { return videoSnapshot; };
     kiriview::DocumentSessionVideoDocumentCommandPort videoCommands;
-    videoCommands.setSourceUrl
+    videoCommands.source.setSourceUrl
         = [&videoSnapshot](const QUrl &url) { videoSnapshot.sourceUrl = url; };
-    videoCommands.videoOutput = []() -> QObject * { return nullptr; };
-    videoCommands.stop = []() { };
-    videoCommands.setVideoOutput = [](QObject *) { };
-    videoCommands.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
+    videoCommands.output.videoOutput = []() -> QObject * { return nullptr; };
+    videoCommands.playback.stop = []() { };
+    videoCommands.output.setVideoOutput = [](QObject *) { };
+    videoCommands.output.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
 
     kiriview::DocumentSessionRuntime runtime(&owner, std::move(imagePort), std::move(imageCommands),
         std::move(videoPort), std::move(videoCommands));
@@ -123,12 +123,12 @@ void TestDocumentSessionRuntimeLeafSnapshots::imageSnapshotChangeRefreshesPublic
     kiriview::DocumentSessionVideoDocumentSnapshotPort videoPort;
     videoPort.snapshot = [&videoSnapshot]() { return videoSnapshot; };
     kiriview::DocumentSessionVideoDocumentCommandPort videoCommands;
-    videoCommands.setSourceUrl
+    videoCommands.source.setSourceUrl
         = [&videoSnapshot](const QUrl &url) { videoSnapshot.sourceUrl = url; };
-    videoCommands.videoOutput = []() -> QObject * { return nullptr; };
-    videoCommands.stop = []() { };
-    videoCommands.setVideoOutput = [](QObject *) { };
-    videoCommands.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
+    videoCommands.output.videoOutput = []() -> QObject * { return nullptr; };
+    videoCommands.playback.stop = []() { };
+    videoCommands.output.setVideoOutput = [](QObject *) { };
+    videoCommands.output.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
 
     kiriview::DocumentSessionRuntime runtime(&owner, std::move(imagePort), std::move(imageCommands),
         std::move(videoPort), std::move(videoCommands));
