@@ -157,7 +157,6 @@ private:
     void openMedia(DirectMediaNavigationOpenRequest request);
     void executeRoutePlan(const DocumentSessionRoutePlan &plan);
     void leaveVideoMode();
-    void syncFromImageDocument();
     void syncFromVideoDocument();
     void refreshDirectMediaNavigation();
     void finishDirectMediaNavigation(DocumentSessionDirectMediaNavigationOpenResult result);

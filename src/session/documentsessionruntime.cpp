@@ -765,23 +765,6 @@ void DocumentSessionRuntime::leaveVideoMode()
     m_videoDocumentCommandRuntime.leaveMode(m_videoPublicSnapshot.sourceUrl);
 }
 
-void DocumentSessionRuntime::syncFromImageDocument()
-{
-    if (m_routingSource || m_state.documentKind() != DocumentSessionKind::Image) {
-        return;
-    }
-
-    const bool directMediaScopeChanged = syncDirectImageCursorFromDocument();
-    m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl);
-    recomputeActiveZoomReadout();
-    recomputePublicProjection();
-    if (directMediaScopeChanged) {
-        refreshDirectMediaNavigation();
-    } else if (m_state.directMediaNavigationKnown()) {
-        cacheDisplayedMediaPredecodeImages();
-    }
-}
-
 void DocumentSessionRuntime::syncFromVideoDocument()
 {
     if (m_routingSource || m_state.documentKind() != DocumentSessionKind::Video) {
