@@ -93,4 +93,6 @@ Extracting active navigation helpers must not move authoritative state to Rust. 
 
 Direct media cursor generation is part of stale async-completion rejection. Future helper extraction must preserve idempotent cursor operations and reject candidate results unless the cursor URL, scope URL, and generation still match the accepted session request. Cursor generation changes when the effective direct media identity or parent scope changes, not merely when ownership transitions from pending to confirmed for the same direct media URL.
 
+Direct-media scope reads and stale-completion checks supplied to document-session subowners should cross a named session scope port. `DocumentSessionRuntime` may bind that port to `DocumentSessionState`, but direct-media navigation and deletion lifecycles should consume the port instead of capturing private runtime helper methods for current scope or cursor matching.
+
 Mixed-media deletion fallback remains session-owned for ordinary direct media scopes. Image-document removal fallback remains navigation-owned so deletion completion and live candidate refresh share one sibling-selection policy.
