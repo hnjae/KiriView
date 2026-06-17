@@ -13,17 +13,9 @@ The correct end state should be precise and conservative, not clever. Rust polic
 1. P1: `DocumentSessionRuntime`, `ImageDocumentRuntimeControllers`, and `KiriImageDocument` concentrate too many feature workflows and make control flow hard to remove or reason about.
 2. P1: Lower-level image decoder and remaining refinement failures still lose backend-specific diagnostics before document wrapping, which weakens diagnostics, retry semantics, and user/internal error separation.
 
-## Invariant and Correctness Risks
+## Completed Slices
 
-### Finding: Uncertain - image presentation can expose visible image state without a provider-ready display source
-
-- Evidence: `src/presentation/imagepagesurfacecontroller.cpp:155` returns `hasImage` and `m_displaySource` independently. `src/presentation/imagepagesurfacecontroller.cpp:246` creates a display source even when `DisplayImageStore::insert` returns an empty entry id. `src/rendering/displayimagestore.cpp:237` returns empty for null images or images over budget. `src/presentation/imagepresentationruntime.cpp:724` marks the projection visible when `slot.hasImage` is true and copies the provider URL. `src/qml/DisplayImagePage.qml:28` shows the page when the projection is visible and uses `providerUrl` for the inner image.
-- Current state: `ImagePageSurfaceController::setImage()` now preserves the invariant by publishing a display-error source slot with image dimensions when no provider entry exists, display-store insertion failure already projects as display-error, and `ImagePresentationRuntime` downgrades malformed provider-ready empty-URL slots to explicit display-error projections. The page-slot type still represents `hasImage`, provider readiness, and display-error as independent fields rather than explicit variants.
-- Design concern: The visible provider-backed image invariant is not encoded in the type, so a blank page or unnamed display failure may be possible.
-- Correct end state: `ImagePresentationPageSlotSnapshot` should use explicit variants such as empty, provider-ready, display-error, and retained/stale presentation. A visible provider-backed state should always include either a valid provider URL or an explicit display-error state consumed by UI/document failure handling.
-- Suggested migration: Replace independent `ImagePresentationPageSlotSnapshot` fields with explicit empty, provider-ready, display-error, and retained/stale variants, then project QML-visible state from those variants.
-- Acceptance criteria: No production `ImageDisplaySourceProjection` can be `visible == true` with an empty provider URL unless it carries an explicit display-error state.
-- Priority: P2, uncertain
+- P2 image presentation page-slot source variants: replaced independent page-slot image/display-source fields with explicit empty, provider-ready, and display-error source variants. Provider-backed projections now originate from provider-ready variants, empty-provider source data downgrades to display-error, and display errors remain visible with image dimensions but no provider URL. Verified with `devenv shell -- devenv tasks run --mode single ci`. Commits: `d9c14e1f`, `bdac663b`, `a4d4a043`.
 
 ## Cohesion, Coupling, and Ownership Problems
 
