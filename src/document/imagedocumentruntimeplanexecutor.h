@@ -4,10 +4,10 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMEPLANEXECUTOR_H
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMEPLANEXECUTOR_H
 
+#include "imagedocumentopenruntimeplanexecutor.h"
 #include "imagedocumentruntimeplan.h"
 #include "imagedocumentsourceloadruntimeplanexecutor.h"
 
-#include <QString>
 #include <QUrl>
 #include <functional>
 
@@ -54,15 +54,6 @@ struct ImageDocumentNavigationRuntimeOperations {
     std::function<void(const ImageDocumentPageTarget &, bool)> loadPageNavigationUrl;
 };
 
-struct ImageDocumentOpenRuntimeOperations {
-    std::function<void()> cancelOpen;
-    std::function<void()> clearDisplayedImageLocation;
-    std::function<void()> clearPresentationImage;
-    std::function<void(const ImageDocumentPageTarget &)> setSourceUrl;
-    std::function<void(const QString &)> setErrorString;
-    std::function<void()> finishEmptySourceLoad;
-};
-
 struct ImageDocumentRuntimeOperations {
     ImageDocumentLifecycleRuntimeOperations lifecycle;
     ImageDocumentMediaEntrySourceOperations mediaEntrySource;
@@ -86,6 +77,7 @@ private:
 
     ImageDocumentRuntimeOperations m_operations;
     ImageDocumentSourceLoadRuntimePlanExecutor m_sourceLoadExecutor;
+    ImageDocumentOpenRuntimePlanExecutor m_openExecutor;
 };
 }
 

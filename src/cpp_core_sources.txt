@@ -83,6 +83,7 @@ src/document/imagedocumentdeletionstate.cpp
 src/document/imagedocumentnavigationruntimeplan.cpp
 src/document/imagedocumentnavigationcontroller.cpp
 src/document/imagedocumentnotifications.cpp
+src/document/imagedocumentopenruntimeplanexecutor.cpp
 src/document/imagedocumentpredecodecontroller.cpp
 src/facade/imagedocumentpublicsignals.cpp
 src/document/imagedocumentruntime.cpp
