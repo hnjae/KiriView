@@ -18,11 +18,20 @@ namespace {
         }
     }
 
+    template <typename Operation>
+    inline constexpr bool isSourceLoadRuntimeOperation
+        = std::is_same_v<Operation, ClearLoadingContainerNavigationUrlOperation>
+        || std::is_same_v<Operation, SetLoadingContainerNavigationUrlOperation>
+        || std::is_same_v<Operation, SetContainerNavigationUrlOperation>
+        || std::is_same_v<Operation, PrepareSourceLoadOperation>
+        || std::is_same_v<Operation, BeginOpenOperation>;
+
 }
 
 ImageDocumentRuntimePlanExecutor::ImageDocumentRuntimePlanExecutor(
     ImageDocumentRuntimeOperations operations)
     : m_operations(std::move(operations))
+    , m_sourceLoadExecutor(m_operations.sourceLoad)
 {
 }
 
@@ -41,6 +50,10 @@ void ImageDocumentRuntimePlanExecutor::dispatchPlan(const ImageDocumentRuntimePl
 void ImageDocumentRuntimePlanExecutor::dispatchOperation(
     const ImageDocumentRuntimeOperation &operation)
 {
+    if (m_sourceLoadExecutor.dispatchOperation(operation)) {
+        return;
+    }
+
     std::visit(
         [this](const auto &payload) {
             using Operation = std::decay_t<decltype(payload)>;
@@ -111,24 +124,14 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
                 run(m_operations.open.clearDisplayedImageLocation);
             } else if constexpr (std::is_same_v<Operation, ClearPresentationImageOperation>) {
                 run(m_operations.open.clearPresentationImage);
-            } else if constexpr (std::is_same_v<Operation,
-                                     ClearLoadingContainerNavigationUrlOperation>) {
-                run(m_operations.sourceLoad.clearLoadingContainerNavigationUrl);
-            } else if constexpr (std::is_same_v<Operation,
-                                     SetLoadingContainerNavigationUrlOperation>) {
-                run(m_operations.sourceLoad.setLoadingContainerNavigationUrl, payload.url);
-            } else if constexpr (std::is_same_v<Operation, SetContainerNavigationUrlOperation>) {
-                run(m_operations.sourceLoad.setContainerNavigationUrl, payload.url);
-            } else if constexpr (std::is_same_v<Operation, PrepareSourceLoadOperation>) {
-                run(m_operations.sourceLoad.prepareSourceLoad, payload.request);
             } else if constexpr (std::is_same_v<Operation, SetSourceUrlOperation>) {
                 run(m_operations.open.setSourceUrl, payload.target);
-            } else if constexpr (std::is_same_v<Operation, BeginOpenOperation>) {
-                run(m_operations.sourceLoad.beginOpen);
             } else if constexpr (std::is_same_v<Operation, SetErrorStringOperation>) {
                 run(m_operations.open.setErrorString, payload.errorString);
             } else if constexpr (std::is_same_v<Operation, FinishEmptySourceLoadOperation>) {
                 run(m_operations.open.finishEmptySourceLoad);
+            } else if constexpr (isSourceLoadRuntimeOperation<Operation>) {
+                // Delegated before the visitor; this branch keeps std::visit exhaustive.
             } else {
                 static_assert(alwaysFalse<Operation>, "Unhandled image document runtime operation");
             }
