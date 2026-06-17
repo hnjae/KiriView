@@ -196,6 +196,8 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
       })
     , m_mediaOpenWithRuntime(std::move(dependencies.mediaOpenWithProvider))
     , m_mediaPredecodeRuntime(owner, std::move(dependencies.directMediaPredecodeDependencies))
+    , m_mediaPredecodeInputPort(
+          &m_state, &m_directMediaActivityPort, &m_directMediaScopePort, &m_imagePublicSnapshot)
     , m_mediaOpenWithPlanPort(&m_state, &m_imagePublicSnapshot, &m_videoPublicSnapshot)
 {
     refreshLeafPublicSnapshots();
@@ -839,25 +841,12 @@ void DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState(
 void DocumentSessionRuntime::scheduleMediaPredecode(
     const std::vector<DirectMediaNavigationCandidate> &candidates)
 {
-    m_mediaPredecodeRuntime.schedule(mediaPredecodeInput(), candidates);
+    m_mediaPredecodeRuntime.schedule(m_mediaPredecodeInputPort.currentInput(), candidates);
 }
 
 void DocumentSessionRuntime::cacheDisplayedMediaPredecodeImages()
 {
-    m_mediaPredecodeRuntime.cacheDisplayedImages(mediaPredecodeInput());
-}
-
-DocumentSessionMediaPredecodeInput DocumentSessionRuntime::mediaPredecodeInput() const
-{
-    return DocumentSessionMediaPredecodeInput {
-        m_directMediaActivityPort.navigationActive(),
-        m_state.documentKind(),
-        activeImageUsesImageDocumentSourceScope(),
-        m_imagePublicSnapshot.readyForInformation,
-        m_directMediaScopePort.activeCursorUrl(),
-        m_imagePublicSnapshot.primaryDisplayedPredecodeImage,
-        m_imagePublicSnapshot.firstDisplayDecodeContext,
-    };
+    m_mediaPredecodeRuntime.cacheDisplayedImages(m_mediaPredecodeInputPort.currentInput());
 }
 
 void DocumentSessionRuntime::cancelMediaDeletion()
@@ -883,11 +872,6 @@ DocumentSessionVideoOutputAttachmentPort DocumentSessionRuntime::videoOutputAtta
 void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion)
 {
     m_mediaDeletionCompletionRuntime.apply(completion);
-}
-
-bool DocumentSessionRuntime::activeImageUsesImageDocumentSourceScope() const
-{
-    return m_imagePublicSnapshot.ordinaryDirectMediaScopeActive;
 }
 
 bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()

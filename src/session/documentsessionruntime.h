@@ -20,6 +20,7 @@
 #include "session/documentsessionmediadeletionruntime.h"
 #include "session/documentsessionmediaopenwithplanport.h"
 #include "session/documentsessionmediaopenwithruntime.h"
+#include "session/documentsessionmediapredecodeinputport.h"
 #include "session/documentsessionmediapredecoderuntime.h"
 #include "session/documentsessionprojectionruntime.h"
 #include "session/documentsessionpublicleafsnapshotbuilder.h"
@@ -166,12 +167,10 @@ private:
         DocumentSessionDirectMediaNavigationRefreshResult result);
     void scheduleMediaPredecode(const std::vector<DirectMediaNavigationCandidate> &candidates);
     void cacheDisplayedMediaPredecodeImages();
-    DocumentSessionMediaPredecodeInput mediaPredecodeInput() const;
     void cancelMediaDeletion();
     void cancelMediaOpenWith();
     DocumentSessionVideoOutputAttachmentPort videoOutputAttachmentPort();
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
-    bool activeImageUsesImageDocumentSourceScope() const;
     bool syncDirectImageCursorFromDocument();
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
     DocumentSessionPublicSnapshotInput publicSnapshotInput(quint64 inputRevision) const;
@@ -199,6 +198,7 @@ private:
     std::vector<QMetaObject::Connection> m_documentConnections;
     DocumentSessionPublicImageLeafSnapshot m_imagePublicSnapshot;
     DocumentSessionPublicVideoLeafSnapshot m_videoPublicSnapshot;
+    DocumentSessionMediaPredecodeInputPort m_mediaPredecodeInputPort;
     DocumentSessionMediaOpenWithPlanPort m_mediaOpenWithPlanPort;
     DocumentSessionVideoOutputRuntime m_videoOutputRuntime;
     quint64 m_publicSnapshotInputRevision = 0;

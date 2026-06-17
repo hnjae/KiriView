@@ -1602,7 +1602,7 @@ void TestArchitectureBoundaries::documentSessionMediaPredecodeInputUsesNamedPort
 
     QVERIFY(portHeader.contains(QStringLiteral("class DocumentSessionMediaPredecodeInputPort")));
     QVERIFY(runtimeHeader.contains(QStringLiteral("DocumentSessionMediaPredecodeInputPort")));
-    QVERIFY(!runtimeHeader.contains(QStringLiteral("mediaPredecodeInput")));
+    QVERIFY(!runtimeHeader.contains(QStringLiteral("mediaPredecodeInput()")));
     QVERIFY(!runtimeHeader.contains(QStringLiteral("activeImageUsesImageDocumentSourceScope")));
     QVERIFY(!runtimeSource.contains(QStringLiteral("DocumentSessionRuntime::mediaPredecodeInput")));
     QVERIFY(!runtimeSource.contains(
