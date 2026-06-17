@@ -771,21 +771,28 @@ void DocumentSessionRuntime::syncFromVideoDocument()
         return;
     }
 
-    if (m_videoPublicSnapshot.sourceUrl.isEmpty()) {
+    const DocumentSessionVideoDocumentSyncPlan plan = documentSessionVideoDocumentSyncPlan(
+        DocumentSessionVideoDocumentSyncInput { m_state.documentKind(), m_videoPublicSnapshot });
+    switch (plan.operation) {
+    case DocumentSessionVideoDocumentSyncOperation::None:
+        break;
+    case DocumentSessionVideoDocumentSyncOperation::ClearSessionDirectMedia:
         qCDebug(kiriviewNavigationLog) << "sync from video document"
                                        << "state" << "empty-source";
         m_state.clearDirectMediaCursor();
         m_state.setSourceIdentity(QUrl());
         setDocumentKind(DocumentSessionKind::Empty);
         m_state.setDirectMediaNavigation({}, false, {});
-    } else {
-        const bool directMediaScopeChanged
-            = m_state.setDirectVideoCursor(m_videoPublicSnapshot.sourceUrl);
+        break;
+    case DocumentSessionVideoDocumentSyncOperation::CommitDirectVideoCursor: {
+        const bool directMediaScopeChanged = m_state.setDirectVideoCursor(plan.url);
         logDirectMediaScope("sync from video document", m_state.directMediaScope());
-        m_state.setSourceIdentity(m_videoPublicSnapshot.sourceUrl);
+        m_state.setSourceIdentity(plan.url);
         if (directMediaScopeChanged) {
             refreshDirectMediaNavigation();
         }
+        break;
+    }
     }
 
     recomputePublicProjection();

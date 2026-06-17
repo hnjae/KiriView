@@ -25,6 +25,7 @@
 #include "session/documentsessionstate.h"
 #include "session/documentsessionthumbnailruntime.h"
 #include "session/documentsessionvideodocumentcommandruntime.h"
+#include "session/documentsessionvideodocumentsync.h"
 #include "session/documentsessionvideooutputruntime.h"
 #include "system/filedeletion.h"
 
