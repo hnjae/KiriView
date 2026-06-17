@@ -356,12 +356,12 @@ void TestImagePageSurfaceController::providerEntriesAreReleasedOnSupersessionAnd
     kiriview::ImagePageSurfaceController controller(this, {}, cacheBudgets(), store);
 
     controller.setStaticDisplayImage(displayPayload(QSize(8, 4)), false, renderContext());
-    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource();
     QVERIFY(!first.providerUrl.isEmpty());
     QVERIFY(store->entry(entryId(first)).has_value());
 
     controller.setStaticDisplayImage(displayPayload(QSize(6, 4)), false, renderContext());
-    const kiriview::ImageDisplaySourceSlot second = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot second = controller.snapshot().displaySource();
     QVERIFY(!second.providerUrl.isEmpty());
     QVERIFY(first.providerUrl != second.providerUrl);
     QCOMPARE(second.revision, quint64(2));
@@ -371,7 +371,7 @@ void TestImagePageSurfaceController::providerEntriesAreReleasedOnSupersessionAnd
     controller.clearImage();
     QVERIFY(!store->entry(entryId(second)).has_value());
     QCOMPARE(
-        controller.snapshot().displaySource.status, kiriview::ImageDisplaySourceStatus::Missing);
+        controller.snapshot().displaySource().status, kiriview::ImageDisplaySourceStatus::Missing);
 }
 
 void TestImagePageSurfaceController::setImageWithoutProviderPublishesDisplayErrorSnapshot()
@@ -381,12 +381,12 @@ void TestImagePageSurfaceController::setImageWithoutProviderPublishesDisplayErro
     controller.setImage(kiriview::TestSupport::testImage(QSize(8, 4)), false);
 
     const kiriview::ImagePresentationPageSlotSnapshot snapshot = controller.snapshot();
-    QVERIFY(snapshot.hasImage);
+    QVERIFY(snapshot.hasImage());
     QCOMPARE(snapshot.imageSize, QSize(8, 4));
-    QVERIFY(snapshot.displaySource.providerUrl.isEmpty());
-    QCOMPARE(snapshot.displaySource.originalSize, QSize(8, 4));
-    QCOMPARE(snapshot.displaySource.rasterSize, QSize(8, 4));
-    QCOMPARE(snapshot.displaySource.status, kiriview::ImageDisplaySourceStatus::Error);
+    QVERIFY(snapshot.displaySource().providerUrl.isEmpty());
+    QCOMPARE(snapshot.displaySource().originalSize, QSize(8, 4));
+    QCOMPARE(snapshot.displaySource().rasterSize, QSize(8, 4));
+    QCOMPARE(snapshot.displaySource().status, kiriview::ImageDisplaySourceStatus::Error);
 }
 
 void TestImagePageSurfaceController::visibleProjectionPinsAndPrioritizesProviderEntry()
@@ -395,7 +395,7 @@ void TestImagePageSurfaceController::visibleProjectionPinsAndPrioritizesProvider
     kiriview::ImagePageSurfaceController controller(this, {}, cacheBudgets(128), store);
 
     controller.setStaticDisplayImage(displayPayload(QSize(8, 4)), false, renderContext());
-    const kiriview::ImageDisplaySourceSlot slot = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot slot = controller.snapshot().displaySource();
     const QString id = entryId(slot);
     QVERIFY(store->entry(id).has_value());
     QVERIFY(slot.loadAcknowledgmentRequired);
@@ -440,7 +440,7 @@ void TestImagePageSurfaceController::shadowThumbnailPreviewEntryIsReleasedOnDeco
 
     QVERIFY(!previewId.isEmpty());
     QCOMPARE(
-        controller.snapshot().displaySource.status, kiriview::ImageDisplaySourceStatus::Missing);
+        controller.snapshot().displaySource().status, kiriview::ImageDisplaySourceStatus::Missing);
     std::optional<kiriview::DisplayImageStoreEntry> storedPreview = store->entry(previewId);
     QVERIFY(storedPreview.has_value());
     QCOMPARE(storedPreview->quality, kiriview::DisplayImageQuality::ThumbnailPreview);
@@ -451,7 +451,7 @@ void TestImagePageSurfaceController::shadowThumbnailPreviewEntryIsReleasedOnDeco
     controller.setStaticDisplayImage(displayPayload(QSize(80, 60)), false, renderContext());
 
     QVERIFY(!store->entry(previewId).has_value());
-    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource();
     QVERIFY(!replacement.providerUrl.isEmpty());
     std::optional<kiriview::DisplayImageStoreEntry> storedReplacement
         = store->entry(entryId(replacement));
@@ -473,7 +473,7 @@ void TestImagePageSurfaceController::rawShadowThumbnailPreviewEntryIsReleasedOnD
 
     QVERIFY(!previewId.isEmpty());
     QCOMPARE(
-        controller.snapshot().displaySource.status, kiriview::ImageDisplaySourceStatus::Missing);
+        controller.snapshot().displaySource().status, kiriview::ImageDisplaySourceStatus::Missing);
     std::optional<kiriview::DisplayImageStoreEntry> storedPreview = store->entry(previewId);
     QVERIFY(storedPreview.has_value());
     QCOMPARE(storedPreview->quality, kiriview::DisplayImageQuality::ThumbnailPreview);
@@ -485,7 +485,7 @@ void TestImagePageSurfaceController::rawShadowThumbnailPreviewEntryIsReleasedOnD
     controller.setStaticDisplayImage(displayPayload(QSize(32, 32)), false, renderContext());
 
     QVERIFY(!store->entry(previewId).has_value());
-    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource();
     QVERIFY(!replacement.providerUrl.isEmpty());
     std::optional<kiriview::DisplayImageStoreEntry> storedReplacement
         = store->entry(entryId(replacement));
@@ -504,23 +504,23 @@ void TestImagePageSurfaceController::qtRasterFirstDisplayRefinesToProviderBucket
     controller.setStaticDisplayImage(
         qtRasterPayload(QSize(16, 12), QSize(4, 3), QStringLiteral("source-a")), false,
         renderContext());
-    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource();
     QVERIFY(!first.providerUrl.isEmpty());
     QCOMPARE(first.rasterSize, QSize(4, 3));
 
     controller.updateDisplayProjection(visibleProjection(QSizeF(8.0, 6.0)));
 
     QCOMPARE(workerScheduler.scheduleCount(), std::size_t(1));
-    QCOMPARE(controller.snapshot().displaySource.providerUrl, first.providerUrl);
+    QCOMPARE(controller.snapshot().displaySource().providerUrl, first.providerUrl);
 
     workerScheduler.runWork(0);
 
-    QCOMPARE(controller.snapshot().displaySource.providerUrl, first.providerUrl);
+    QCOMPARE(controller.snapshot().displaySource().providerUrl, first.providerUrl);
 
     workerScheduler.finish(0);
 
-    QVERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
-    const kiriview::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
+    QVERIFY(controller.snapshot().displaySource().providerUrl != first.providerUrl);
+    const kiriview::ImageDisplaySourceSlot refined = controller.snapshot().displaySource();
     QCOMPARE(refined.sourceIdentity, QStringLiteral("source-a"));
     QCOMPARE(refined.rasterSize, QSize(8, 6));
     QCOMPARE(refined.revision, first.revision + 1);
@@ -537,14 +537,14 @@ void TestImagePageSurfaceController::refinementPolicyUsesResolvedCacheBudgetWhen
     controller.setStaticDisplayImage(
         qtRasterPayload(QSize(16, 12), QSize(4, 3), QStringLiteral("source-a")), false,
         renderContext());
-    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource();
     QVERIFY(!first.providerUrl.isEmpty());
     QCOMPARE(first.rasterSize, QSize(4, 3));
 
     controller.updateDisplayProjection(visibleProjection(QSizeF(8.0, 6.0)));
     QTest::qWait(100);
 
-    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource();
     QCOMPARE(current.providerUrl, first.providerUrl);
     QCOMPARE(current.rasterSize, QSize(4, 3));
     QVERIFY(store->entry(entryId(first)).has_value());
@@ -564,11 +564,11 @@ void TestImagePageSurfaceController::qtRasterRefinementCompletionIsRejectedAfter
         qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
             kiriview::DisplayImageQuality::Exact),
         false, renderContext());
-    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource();
 
     QTest::qWait(100);
 
-    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource();
     QCOMPARE(current.providerUrl, replacement.providerUrl);
     QCOMPARE(current.sourceIdentity, QStringLiteral("source-b"));
     QCOMPARE(current.rasterSize, QSize(10, 10));
@@ -584,12 +584,12 @@ void TestImagePageSurfaceController::exactQtRasterCurrentImageDoesNotRequestRefi
         qtRasterPayload(QSize(8, 6), QSize(8, 6), QStringLiteral("source-exact"),
             kiriview::DisplayImageQuality::Exact),
         false, renderContext());
-    const kiriview::ImageDisplaySourceSlot exact = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot exact = controller.snapshot().displaySource();
 
     controller.updateDisplayProjection(visibleProjection(QSizeF(8.0, 6.0)));
     QTest::qWait(100);
 
-    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource();
     QCOMPARE(current.providerUrl, exact.providerUrl);
     QCOMPARE(current.revision, exact.revision);
     QCOMPARE(current.rasterSize, QSize(8, 6));
@@ -604,14 +604,14 @@ void TestImagePageSurfaceController::heifFirstDisplayRefinesToProviderBucket()
         = heifPayload(QSize(16, 12), QSize(4, 3), QStringLiteral("heif-source-a"));
     QVERIFY2(payload.has_value(), "HEIF still fixture could not be created");
     controller.setStaticDisplayImage(std::move(*payload), false, renderContext());
-    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource();
     QVERIFY(!first.providerUrl.isEmpty());
     QCOMPARE(first.rasterSize, QSize(4, 3));
 
     controller.updateDisplayProjection(visibleProjection(QSizeF(8.0, 6.0)));
 
-    QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
-    const kiriview::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
+    QTRY_VERIFY(controller.snapshot().displaySource().providerUrl != first.providerUrl);
+    const kiriview::ImageDisplaySourceSlot refined = controller.snapshot().displaySource();
     QCOMPARE(refined.sourceIdentity, QStringLiteral("heif-source-a"));
     QCOMPARE(refined.rasterSize, QSize(8, 6));
     QCOMPARE(refined.revision, first.revision + 1);
@@ -635,11 +635,11 @@ void TestImagePageSurfaceController::heifRefinementCompletionIsRejectedAfterSour
         qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
             kiriview::DisplayImageQuality::Exact),
         false, renderContext());
-    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource();
 
     QTest::qWait(100);
 
-    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource();
     QCOMPARE(current.providerUrl, replacement.providerUrl);
     QCOMPARE(current.sourceIdentity, QStringLiteral("source-b"));
     QCOMPARE(current.rasterSize, QSize(10, 10));
@@ -655,14 +655,14 @@ void TestImagePageSurfaceController::rawFirstDisplayRefinesToProviderBucket()
         = rawPayload(QSize(8, 8), QStringLiteral("raw-source-a"));
     QVERIFY2(payload.has_value(), "RAW still fixture could not be decoded");
     controller.setStaticDisplayImage(std::move(*payload), false, renderContext());
-    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource();
     QVERIFY(!first.providerUrl.isEmpty());
     QCOMPARE(first.rasterSize, QSize(8, 8));
 
     controller.updateDisplayProjection(visibleProjection(QSizeF(16.0, 16.0)));
 
-    QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
-    const kiriview::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
+    QTRY_VERIFY(controller.snapshot().displaySource().providerUrl != first.providerUrl);
+    const kiriview::ImageDisplaySourceSlot refined = controller.snapshot().displaySource();
     QCOMPARE(refined.sourceIdentity, QStringLiteral("raw-source-a"));
     QCOMPARE(refined.rasterSize, QSize(16, 16));
     QCOMPARE(refined.revision, first.revision + 1);
@@ -686,11 +686,11 @@ void TestImagePageSurfaceController::rawRefinementCompletionIsRejectedAfterSourc
         qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
             kiriview::DisplayImageQuality::Exact),
         false, renderContext());
-    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource();
 
     QTest::qWait(100);
 
-    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource();
     QCOMPARE(current.providerUrl, replacement.providerUrl);
     QCOMPARE(current.sourceIdentity, QStringLiteral("source-b"));
     QCOMPARE(current.rasterSize, QSize(10, 10));
@@ -705,14 +705,14 @@ void TestImagePageSurfaceController::svgFirstDisplayRefinesToCoarseProviderBucke
     controller.setStaticDisplayImage(
         svgPayload(QSize(80, 40), QSize(80, 40), QStringLiteral("svg-source-a")), false,
         renderContext());
-    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource();
     QVERIFY(!first.providerUrl.isEmpty());
     QCOMPARE(first.rasterSize, QSize(80, 40));
 
     controller.updateDisplayProjection(visibleProjection(QSizeF(100.0, 50.0)));
 
-    QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != first.providerUrl);
-    const kiriview::ImageDisplaySourceSlot refined = controller.snapshot().displaySource;
+    QTRY_VERIFY(controller.snapshot().displaySource().providerUrl != first.providerUrl);
+    const kiriview::ImageDisplaySourceSlot refined = controller.snapshot().displaySource();
     QCOMPARE(refined.sourceIdentity, QStringLiteral("svg-source-a"));
     QCOMPARE(refined.rasterSize, QSize(120, 60));
     QCOMPARE(refined.revision, first.revision + 1);
@@ -722,11 +722,11 @@ void TestImagePageSurfaceController::svgFirstDisplayRefinesToCoarseProviderBucke
 
     controller.updateDisplayProjection(visibleProjection(QSizeF(110.0, 55.0)));
     QTest::qWait(100);
-    QCOMPARE(controller.snapshot().displaySource.providerUrl, refined.providerUrl);
+    QCOMPARE(controller.snapshot().displaySource().providerUrl, refined.providerUrl);
 
     controller.updateDisplayProjection(visibleProjection(QSizeF(150.0, 75.0)));
-    QTRY_VERIFY(controller.snapshot().displaySource.providerUrl != refined.providerUrl);
-    const kiriview::ImageDisplaySourceSlot sharper = controller.snapshot().displaySource;
+    QTRY_VERIFY(controller.snapshot().displaySource().providerUrl != refined.providerUrl);
+    const kiriview::ImageDisplaySourceSlot sharper = controller.snapshot().displaySource();
     QCOMPARE(sharper.rasterSize, QSize(180, 90));
     QCOMPARE(sharper.revision, refined.revision + 1);
 }
@@ -745,11 +745,11 @@ void TestImagePageSurfaceController::svgRefinementCompletionIsRejectedAfterSourc
         qtRasterPayload(QSize(10, 10), QSize(10, 10), QStringLiteral("source-b"),
             kiriview::DisplayImageQuality::Exact),
         false, renderContext());
-    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot replacement = controller.snapshot().displaySource();
 
     QTest::qWait(100);
 
-    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot current = controller.snapshot().displaySource();
     QCOMPARE(current.providerUrl, replacement.providerUrl);
     QCOMPARE(current.sourceIdentity, QStringLiteral("source-b"));
     QCOMPARE(current.rasterSize, QSize(10, 10));
@@ -768,14 +768,14 @@ void TestImagePageSurfaceController::stillImageLoadedOutcomeMarksAcceptedDisplay
         cacheBudgets(), store);
 
     controller.setStaticDisplayImage(displayPayload(QSize(8, 4)), false, renderContext());
-    const kiriview::ImageDisplaySourceSlot ready = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot ready = controller.snapshot().displaySource();
     QVERIFY(ready.loadAcknowledgmentRequired);
     changes.clear();
 
     controller.acknowledgeStillImageDisplayLoad(ready.providerUrl, ready.revision,
         ready.sourceIdentity, kiriview::ImageDisplayLoadOutcome::Loaded);
 
-    const kiriview::ImageDisplaySourceSlot loaded = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot loaded = controller.snapshot().displaySource();
     QCOMPARE(loaded.providerUrl, ready.providerUrl);
     QCOMPARE(loaded.revision, ready.revision);
     QCOMPARE(loaded.status, kiriview::ImageDisplaySourceStatus::Ready);
@@ -796,13 +796,13 @@ void TestImagePageSurfaceController::stillImageErrorOutcomeMarksDisplaySourceErr
         cacheBudgets(), store);
 
     controller.setStaticDisplayImage(displayPayload(QSize(8, 4)), false, renderContext());
-    const kiriview::ImageDisplaySourceSlot ready = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot ready = controller.snapshot().displaySource();
     changes.clear();
 
     controller.acknowledgeStillImageDisplayLoad(ready.providerUrl, ready.revision,
         ready.sourceIdentity, kiriview::ImageDisplayLoadOutcome::Error);
 
-    const kiriview::ImageDisplaySourceSlot failed = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot failed = controller.snapshot().displaySource();
     QCOMPARE(failed.providerUrl, ready.providerUrl);
     QCOMPARE(failed.revision, ready.revision);
     QCOMPARE(failed.status, kiriview::ImageDisplaySourceStatus::Error);
@@ -822,13 +822,13 @@ void TestImagePageSurfaceController::stillImageMissingOutcomeMarksDisplaySourceM
         cacheBudgets(), store);
 
     controller.setStaticDisplayImage(displayPayload(QSize(8, 4)), false, renderContext());
-    const kiriview::ImageDisplaySourceSlot ready = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot ready = controller.snapshot().displaySource();
     changes.clear();
 
     controller.acknowledgeStillImageDisplayLoad(ready.providerUrl, ready.revision,
         ready.sourceIdentity, kiriview::ImageDisplayLoadOutcome::Missing);
 
-    const kiriview::ImageDisplaySourceSlot missing = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot missing = controller.snapshot().displaySource();
     QCOMPARE(missing.providerUrl, ready.providerUrl);
     QCOMPARE(missing.revision, ready.revision);
     QCOMPARE(missing.status, kiriview::ImageDisplaySourceStatus::Missing);
@@ -844,13 +844,13 @@ void TestImagePageSurfaceController::
     const QString sourceIdentity = QStringLiteral("file:///tmp/animated.apng");
 
     controller.setAnimationFrame(kiriview::TestSupport::testImage(QSize(4, 4)), sourceIdentity);
-    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource();
     const QString firstId = entryId(first);
     QVERIFY(first.loadAcknowledgmentRequired);
     QVERIFY(store->entry(firstId).has_value());
 
     controller.setAnimationFrame(kiriview::TestSupport::testImage(QSize(5, 4)), sourceIdentity);
-    const kiriview::ImageDisplaySourceSlot second = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot second = controller.snapshot().displaySource();
     const QString secondId = entryId(second);
     QVERIFY(second.loadAcknowledgmentRequired);
     QVERIFY(first.providerUrl != second.providerUrl);
@@ -862,7 +862,7 @@ void TestImagePageSurfaceController::
 
     QVERIFY(!store->entry(firstId).has_value());
     QVERIFY(store->entry(secondId).has_value());
-    QCOMPARE(controller.snapshot().displaySource.providerUrl, second.providerUrl);
+    QCOMPARE(controller.snapshot().displaySource().providerUrl, second.providerUrl);
 }
 
 void TestImagePageSurfaceController::staleAnimationFrameLoadOutcomesAreRejected()
@@ -872,11 +872,11 @@ void TestImagePageSurfaceController::staleAnimationFrameLoadOutcomesAreRejected(
     const QString sourceIdentity = QStringLiteral("file:///tmp/animated.apng");
 
     controller.setAnimationFrame(kiriview::TestSupport::testImage(QSize(4, 4)), sourceIdentity);
-    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource();
     const QString firstId = entryId(first);
 
     controller.setAnimationFrame(kiriview::TestSupport::testImage(QSize(5, 4)), sourceIdentity);
-    const kiriview::ImageDisplaySourceSlot second = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot second = controller.snapshot().displaySource();
     QVERIFY(store->entry(firstId).has_value());
 
     controller.acknowledgeAnimationFrameDisplayLoad(first.providerUrl, first.revision,
@@ -899,16 +899,16 @@ void TestImagePageSurfaceController::animationFrameRetentionIsBoundedToPreviousF
     const QString sourceIdentity = QStringLiteral("file:///tmp/animated.apng");
 
     controller.setAnimationFrame(kiriview::TestSupport::testImage(QSize(4, 4)), sourceIdentity);
-    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot first = controller.snapshot().displaySource();
     const QString firstId = entryId(first);
 
     controller.setAnimationFrame(kiriview::TestSupport::testImage(QSize(5, 4)), sourceIdentity);
-    const kiriview::ImageDisplaySourceSlot second = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot second = controller.snapshot().displaySource();
     const QString secondId = entryId(second);
     QVERIFY(store->entry(firstId).has_value());
 
     controller.setAnimationFrame(kiriview::TestSupport::testImage(QSize(6, 4)), sourceIdentity);
-    const kiriview::ImageDisplaySourceSlot third = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot third = controller.snapshot().displaySource();
     const QString thirdId = entryId(third);
 
     QVERIFY(!store->entry(firstId).has_value());

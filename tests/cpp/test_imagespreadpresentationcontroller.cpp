@@ -227,16 +227,16 @@ void TestImageSpreadPresentationController::primaryDisplaySourceChangeRefreshesC
         testImage(QSize(800, 1200)), QStringLiteral("animated-frame"));
     const kiriview::ImagePresentationPageSlotSnapshot frameSurfaceSnapshot
         = fixture.primaryPageSurface.snapshot();
-    QVERIFY(frameSurfaceSnapshot.displaySource.revision != firstProjection.revision);
-    QCOMPARE(frameSurfaceSnapshot.displaySource.sourceIdentity, QStringLiteral("animated-frame"));
+    QVERIFY(frameSurfaceSnapshot.displaySource().revision != firstProjection.revision);
+    QCOMPARE(frameSurfaceSnapshot.displaySource().sourceIdentity, QStringLiteral("animated-frame"));
 
     fixture.controller.handleDocumentChange(kiriview::ImageDocumentChange::DisplaySource);
 
     const kiriview::ImageDisplaySourceProjection frameProjection
         = fixture.controller.displaySourceProjection(kiriview::DisplayedPageRole::Primary);
     QVERIFY(projectionReady(frameProjection));
-    QCOMPARE(frameProjection.revision, frameSurfaceSnapshot.displaySource.revision);
-    QCOMPARE(frameProjection.sourceIdentity, frameSurfaceSnapshot.displaySource.sourceIdentity);
+    QCOMPARE(frameProjection.revision, frameSurfaceSnapshot.displaySource().revision);
+    QCOMPARE(frameProjection.sourceIdentity, frameSurfaceSnapshot.displaySource().sourceIdentity);
 }
 
 void TestImageSpreadPresentationController::spreadZoomDoesNotMutatePageZoomOwners()

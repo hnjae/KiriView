@@ -29,11 +29,14 @@ kiriview::ImageDocumentRenderContext renderContext()
 
 kiriview::ImagePresentationPageSlotSnapshot pageSlot(const QSize &imageSize, quint64 revision)
 {
+    kiriview::ImageDisplaySourceSlot source;
+    source.originalSize = imageSize;
+    source.rasterSize = imageSize;
+    source.status = kiriview::ImageDisplaySourceStatus::Error;
     return kiriview::ImagePresentationPageSlotSnapshot {
         revision,
         imageSize,
-        true,
-        {},
+        kiriview::ImagePresentationPageSlotSource::displayError(source),
     };
 }
 }
@@ -174,9 +177,11 @@ void TestImagePresentationRuntime::providerReadyProjectionRequiresProviderUrl()
 {
     kiriview::ImagePresentationRuntime runtime(renderContext);
     kiriview::ImagePresentationPageSlotSnapshot slot = pageSlot(QSize(800, 600), 1);
-    slot.displaySource.status = kiriview::ImageDisplaySourceStatus::Ready;
-    slot.displaySource.originalSize = QSize(800, 600);
-    slot.displaySource.rasterSize = QSize(400, 300);
+    kiriview::ImageDisplaySourceSlot source;
+    source.status = kiriview::ImageDisplaySourceStatus::Ready;
+    source.originalSize = QSize(800, 600);
+    source.rasterSize = QSize(400, 300);
+    slot.source = kiriview::ImagePresentationPageSlotSource::providerReady(source);
 
     runtime.commitPrimaryPageSlot(slot,
         kiriview::ImagePresentationScopeKey::directImage(localUrl(QStringLiteral("/images/a.png"))),

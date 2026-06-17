@@ -120,7 +120,7 @@ void TestImageSecondaryPageController::visiblePredecodedPageOwnsDisplayedState()
     QVERIFY(fixture.controller.visible());
     QCOMPARE(fixture.controller.displayedImageLocation().imageUrl(), pageUrl);
     QCOMPARE(fixture.controller.imageSize(), pageSize);
-    QVERIFY(fixture.controller.pageSlotSnapshot().hasImage);
+    QVERIFY(fixture.controller.pageSlotSnapshot().hasImage());
     QCOMPARE(static_cast<int>(fixture.loadReports.size()), 1);
     QCOMPARE(fixture.loadReports.back().result, kiriview::ImageSecondaryPageLoadResult::Visible);
     QCOMPARE(fixture.loadReports.back().location.imageUrl(), pageUrl);
@@ -139,7 +139,7 @@ void TestImageSecondaryPageController::widePredecodedPageReportsPrimaryOnlyWitho
     QVERIFY(!fixture.controller.visible());
     QVERIFY(fixture.controller.displayedImageLocation().isEmpty());
     QCOMPARE(fixture.controller.imageSize(), QSize());
-    QVERIFY(!fixture.controller.pageSlotSnapshot().hasImage);
+    QVERIFY(!fixture.controller.pageSlotSnapshot().hasImage());
     QCOMPARE(static_cast<int>(fixture.loadReports.size()), 1);
     QCOMPARE(
         fixture.loadReports.back().result, kiriview::ImageSecondaryPageLoadResult::PrimaryOnly);
@@ -159,7 +159,7 @@ void TestImageSecondaryPageController::clearRemovesDisplayedState()
     QVERIFY(!fixture.controller.visible());
     QVERIFY(fixture.controller.displayedImageLocation().isEmpty());
     QCOMPARE(fixture.controller.imageSize(), QSize());
-    QVERIFY(!fixture.controller.pageSlotSnapshot().hasImage);
+    QVERIFY(!fixture.controller.pageSlotSnapshot().hasImage());
 }
 
 QTEST_GUILESS_MAIN(TestImageSecondaryPageController)

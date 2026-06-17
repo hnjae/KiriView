@@ -39,12 +39,18 @@ namespace {
             && left.retainWhileLoadingEligible == right.retainWhileLoadingEligible;
     }
 
+    bool pageSlotSourcesEqual(
+        const ImagePresentationPageSlotSource &left, const ImagePresentationPageSlotSource &right)
+    {
+        return left.kind() == right.kind()
+            && displaySourceSlotsEqual(left.displaySource(), right.displaySource());
+    }
+
     bool pageSlotsEqual(const ImagePresentationPageSlotSnapshot &left,
         const ImagePresentationPageSlotSnapshot &right)
     {
         return left.imageRevision == right.imageRevision && left.imageSize == right.imageSize
-            && left.hasImage == right.hasImage
-            && displaySourceSlotsEqual(left.displaySource, right.displaySource);
+            && pageSlotSourcesEqual(left.source, right.source);
     }
 }
 
@@ -499,7 +505,7 @@ ImagePresentationRotationChange ImagePresentationRuntime::resetRotationChange()
 
 ImagePresentationRotationChange ImagePresentationRuntime::rotateClockwiseChange()
 {
-    if (m_mode == ImagePresentationMode::TwoPageSpread || !m_primarySlot.hasImage) {
+    if (m_mode == ImagePresentationMode::TwoPageSpread || !m_primarySlot.hasImage()) {
         return {};
     }
 
@@ -514,7 +520,7 @@ ImagePresentationRotationChange ImagePresentationRuntime::rotateClockwiseChange(
 
 ImagePresentationRotationChange ImagePresentationRuntime::rotateCounterclockwiseChange()
 {
-    if (m_mode == ImagePresentationMode::TwoPageSpread || !m_primarySlot.hasImage) {
+    if (m_mode == ImagePresentationMode::TwoPageSpread || !m_primarySlot.hasImage()) {
         return {};
     }
 
@@ -678,7 +684,7 @@ ImagePresentationRenderProjection ImagePresentationRuntime::renderProjection(
     const bool secondary = role == DisplayedPageRole::Secondary;
     const ImagePresentationPageSlotSnapshot &slot
         = secondary ? snapshot.secondary : snapshot.primary;
-    if (!slot.hasImage) {
+    if (!slot.hasImage()) {
         return hiddenProjection(role);
     }
     if (secondary
@@ -727,7 +733,7 @@ ImageDisplaySourceProjection ImagePresentationRuntime::displaySourceProjection(
     const bool secondary = role == DisplayedPageRole::Secondary;
     const ImagePresentationPageSlotSnapshot &slot
         = secondary ? snapshot.secondary : snapshot.primary;
-    if (!slot.hasImage) {
+    if (!slot.hasImage()) {
         return hiddenDisplaySourceProjection(role);
     }
     if (secondary
@@ -738,29 +744,24 @@ ImageDisplaySourceProjection ImagePresentationRuntime::displaySourceProjection(
     ImageDisplaySourceProjection projection;
     projection.visible = true;
     projection.pageRole = role;
-    projection.providerUrl = slot.displaySource.providerUrl;
-    projection.revision = slot.displaySource.revision;
+    const ImageDisplaySourceSlot &displaySource = slot.displaySource();
+    projection.providerUrl = displaySource.providerUrl;
+    projection.revision = displaySource.revision;
     projection.revisionToken = imageDisplaySourceRevisionToken(projection.revision);
-    projection.sourceIdentity = slot.displaySource.sourceIdentity;
+    projection.sourceIdentity = displaySource.sourceIdentity;
     projection.selectedSourceScope = snapshot.scopeKey;
-    projection.originalSize = slot.displaySource.originalSize.isEmpty()
-        ? slot.imageSize
-        : slot.displaySource.originalSize;
-    projection.rasterSize = slot.displaySource.rasterSize;
-    projection.sourceSizeHint = slot.displaySource.sourceSizeHint;
-    projection.quality = slot.displaySource.quality;
-    projection.status = slot.displaySource.status;
-    projection.cacheEnabled = slot.displaySource.cacheEnabled;
-    projection.loadAcknowledgmentRequired = slot.displaySource.loadAcknowledgmentRequired;
+    projection.originalSize
+        = displaySource.originalSize.isEmpty() ? slot.imageSize : displaySource.originalSize;
+    projection.rasterSize = displaySource.rasterSize;
+    projection.sourceSizeHint = displaySource.sourceSizeHint;
+    projection.quality = displaySource.quality;
+    projection.status = displaySource.status;
+    projection.cacheEnabled = displaySource.cacheEnabled;
+    projection.loadAcknowledgmentRequired = displaySource.loadAcknowledgmentRequired;
     projection.rotationDegrees
         = snapshot.mode == ImagePresentationMode::SinglePage ? snapshot.rotationDegrees : 0;
-    projection.retentionStatus = slot.displaySource.retentionStatus;
-    projection.retainWhileLoadingEligible = slot.displaySource.retainWhileLoadingEligible;
-    if (projection.providerUrl.isEmpty() && projection.status == ImageDisplaySourceStatus::Ready) {
-        projection.status = ImageDisplaySourceStatus::Error;
-        projection.cacheEnabled = false;
-        projection.loadAcknowledgmentRequired = false;
-    }
+    projection.retentionStatus = displaySource.retentionStatus;
+    projection.retainWhileLoadingEligible = displaySource.retainWhileLoadingEligible;
 
     if (snapshot.mode == ImagePresentationMode::SinglePage) {
         projection.displaySize = snapshot.zoom.displaySize;

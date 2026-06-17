@@ -18,6 +18,7 @@
 #include <QSize>
 #include <QSizeF>
 #include <QUrl>
+#include <utility>
 
 namespace kiriview {
 enum class ImagePresentationMode {
@@ -30,11 +31,60 @@ enum class ImagePresentationPrimaryChangePolicy {
     PreserveZoomAndClearPan,
 };
 
+enum class ImagePresentationPageSlotSourceKind {
+    Empty,
+    ProviderReady,
+    DisplayError,
+};
+
+class ImagePresentationPageSlotSource final
+{
+public:
+    ImagePresentationPageSlotSource() = default;
+
+    static ImagePresentationPageSlotSource empty() { return {}; }
+    static ImagePresentationPageSlotSource providerReady(ImageDisplaySourceSlot displaySource)
+    {
+        if (displaySource.providerUrl.isEmpty()) {
+            return displayError(std::move(displaySource));
+        }
+
+        return ImagePresentationPageSlotSource { ImagePresentationPageSlotSourceKind::ProviderReady,
+            std::move(displaySource) };
+    }
+    static ImagePresentationPageSlotSource displayError(ImageDisplaySourceSlot displaySource)
+    {
+        displaySource.providerUrl = QUrl {};
+        displaySource.status = ImageDisplaySourceStatus::Error;
+        displaySource.cacheEnabled = false;
+        displaySource.loadAcknowledgmentRequired = false;
+        return ImagePresentationPageSlotSource { ImagePresentationPageSlotSourceKind::DisplayError,
+            std::move(displaySource) };
+    }
+
+    ImagePresentationPageSlotSourceKind kind() const { return m_kind; }
+    bool hasImage() const { return m_kind != ImagePresentationPageSlotSourceKind::Empty; }
+    const ImageDisplaySourceSlot &displaySource() const { return m_displaySource; }
+
+private:
+    ImagePresentationPageSlotSource(
+        ImagePresentationPageSlotSourceKind kind, ImageDisplaySourceSlot displaySource)
+        : m_kind(kind)
+        , m_displaySource(std::move(displaySource))
+    {
+    }
+
+    ImagePresentationPageSlotSourceKind m_kind = ImagePresentationPageSlotSourceKind::Empty;
+    ImageDisplaySourceSlot m_displaySource;
+};
+
 struct ImagePresentationPageSlotSnapshot {
     quint64 imageRevision = 0;
     QSize imageSize;
-    bool hasImage = false;
-    ImageDisplaySourceSlot displaySource;
+    ImagePresentationPageSlotSource source;
+
+    bool hasImage() const { return source.hasImage(); }
+    const ImageDisplaySourceSlot &displaySource() const { return source.displaySource(); }
 };
 
 struct ImagePresentationRenderProjection {

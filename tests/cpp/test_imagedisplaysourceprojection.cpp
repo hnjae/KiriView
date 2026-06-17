@@ -77,9 +77,8 @@ void TestImageDisplaySourceProjection::primaryProjectionCombinesSlotScopeAndGeom
 
     kiriview::ImagePresentationPageSlotSnapshot slot;
     slot.imageSize = QSize(100, 50);
-    slot.hasImage = true;
-    slot.displaySource
-        = displaySourceSlot(QStringLiteral("primary"), slot.imageSize, QSize(25, 13));
+    slot.source = kiriview::ImagePresentationPageSlotSource::providerReady(
+        displaySourceSlot(QStringLiteral("primary"), slot.imageSize, QSize(25, 13)));
     runtime.commitPrimaryPageSlot(slot, kiriview::ImagePresentationScopeKey::directImage(imageUrl));
     runtime.rotateClockwise();
 
@@ -115,9 +114,8 @@ void TestImageDisplaySourceProjection::hiddenSecondaryProjectionKeepsRoleAndStat
 
     kiriview::ImagePresentationPageSlotSnapshot secondary;
     secondary.imageSize = QSize(80, 40);
-    secondary.hasImage = true;
-    secondary.displaySource
-        = displaySourceSlot(QStringLiteral("secondary"), secondary.imageSize, QSize(80, 40));
+    secondary.source = kiriview::ImagePresentationPageSlotSource::providerReady(
+        displaySourceSlot(QStringLiteral("secondary"), secondary.imageSize, QSize(80, 40)));
     runtime.commitSecondaryPageSlot(secondary);
 
     const kiriview::ImageDisplaySourceProjection projection

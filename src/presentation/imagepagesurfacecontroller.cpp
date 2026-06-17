@@ -96,6 +96,20 @@ namespace {
         };
     }
 
+    ImagePresentationPageSlotSource pageSlotSource(
+        bool hasImage, const ImageDisplaySourceSlot &displaySource)
+    {
+        if (!hasImage) {
+            return ImagePresentationPageSlotSource::empty();
+        }
+        if (displaySource.status == ImageDisplaySourceStatus::Error
+            && displaySource.providerUrl.isEmpty()) {
+            return ImagePresentationPageSlotSource::displayError(displaySource);
+        }
+
+        return ImagePresentationPageSlotSource::providerReady(displaySource);
+    }
+
     StaticDisplayImagePayload refinedDisplayImagePayload(
         RasterDisplayRefinementWork work, QImage image)
     {
@@ -177,8 +191,7 @@ ImagePresentationPageSlotSnapshot ImagePageSurfaceController::snapshot() const
     return ImagePresentationPageSlotSnapshot {
         imageRevision(),
         imageSize(),
-        hasImage(),
-        m_displaySource,
+        pageSlotSource(hasImage(), m_displaySource),
     };
 }
 

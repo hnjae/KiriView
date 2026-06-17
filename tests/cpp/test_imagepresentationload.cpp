@@ -329,7 +329,7 @@ void TestImagePresentationLoad::predecodedImagesPublishProviderSource()
     QVERIFY(controller.hasImage());
     QCOMPARE(controller.imageSize(), QSize(12, 8));
 
-    const kiriview::ImageDisplaySourceSlot displaySource = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot displaySource = controller.snapshot().displaySource();
     QCOMPARE(displaySource.status, kiriview::ImageDisplaySourceStatus::Ready);
     QVERIFY(!displaySource.providerUrl.isEmpty());
     QCOMPARE(displaySource.sourceIdentity, QStringLiteral("test-image"));
@@ -532,7 +532,7 @@ void TestImagePresentationLoad::staticDecodedImagesPublishProviderSource()
     QVERIFY(controller.hasImage());
     QCOMPARE(controller.imageSize(), QSize(12, 8));
 
-    const kiriview::ImageDisplaySourceSlot displaySource = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot displaySource = controller.snapshot().displaySource();
     QCOMPARE(displaySource.status, kiriview::ImageDisplaySourceStatus::Ready);
     QVERIFY(!displaySource.providerUrl.isEmpty());
     QCOMPARE(displaySource.revision, quint64(1));
@@ -637,7 +637,7 @@ void TestImagePresentationLoad::animationFirstFramesPublishProviderSource()
     QVERIFY(controller.hasImage());
     QCOMPARE(controller.imageSize(), QSize(10, 6));
 
-    const kiriview::ImageDisplaySourceSlot displaySource = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot displaySource = controller.snapshot().displaySource();
     QCOMPARE(displaySource.status, kiriview::ImageDisplaySourceStatus::Ready);
     QVERIFY(!displaySource.providerUrl.isEmpty());
     QCOMPARE(displaySource.revision, quint64(1));
@@ -681,7 +681,7 @@ void TestImagePresentationLoad::animationPlaybackFramesPublishProviderSource()
             kiriview::ImagePresentationAnimationHandling::StartAnimation, renderContext());
 
     QVERIFY(result.presented);
-    const kiriview::ImageDisplaySourceSlot firstDisplay = controller.snapshot().displaySource;
+    const kiriview::ImageDisplaySourceSlot firstDisplay = controller.snapshot().displaySource();
     QCOMPARE(firstDisplay.status, kiriview::ImageDisplaySourceStatus::Ready);
     QVERIFY(!firstDisplay.providerUrl.isEmpty());
     QCOMPARE(firstDisplay.sourceIdentity, sourceIdentity);
@@ -689,8 +689,8 @@ void TestImagePresentationLoad::animationPlaybackFramesPublishProviderSource()
     QVERIFY(displayImageStore->entry(entryId(firstDisplay)).has_value());
 
     QTRY_VERIFY_WITH_TIMEOUT(
-        controller.snapshot().displaySource.providerUrl != firstDisplay.providerUrl, 300);
-    const kiriview::ImageDisplaySourceSlot nextDisplay = controller.snapshot().displaySource;
+        controller.snapshot().displaySource().providerUrl != firstDisplay.providerUrl, 300);
+    const kiriview::ImageDisplaySourceSlot nextDisplay = controller.snapshot().displaySource();
     QCOMPARE(nextDisplay.status, kiriview::ImageDisplaySourceStatus::Ready);
     QCOMPARE(nextDisplay.revision, firstDisplay.revision + 1);
     QCOMPARE(nextDisplay.sourceIdentity, sourceIdentity);
