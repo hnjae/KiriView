@@ -83,6 +83,7 @@ private Q_SLOTS:
     void imageDocumentAdjacentPredecodeSchedulingUsesNamedPort();
     void imageDocumentDeletionProgressUsesNamedPort();
     void imageDocumentCurrentPageNumberUsesNamedPort();
+    void imageDocumentAnimationLoadErrorUsesNamedPort();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void imagePresentationPageSlotsUseDisplaySourceVariants();
@@ -1720,6 +1721,19 @@ void TestArchitectureBoundaries::imageDocumentCurrentPageNumberUsesNamedPort()
     QVERIFY(portHeader.contains(QStringLiteral("class ImageDocumentCurrentPageNumberPort")));
     QVERIFY(controllersSource.contains(QStringLiteral("ImageDocumentCurrentPageNumberPort")));
     QVERIFY(!controllersSource.contains(QStringLiteral("m_navigationService->currentPageNumber")));
+}
+
+void TestArchitectureBoundaries::imageDocumentAnimationLoadErrorUsesNamedPort()
+{
+    const QString portHeader
+        = readProjectFile(QStringLiteral("src/document/imagedocumentanimationloaderrorport.h"));
+    const QString controllersSource
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimecontrollers.cpp"));
+
+    QVERIFY(portHeader.contains(QStringLiteral("class ImageDocumentAnimationLoadErrorPort")));
+    QVERIFY(controllersSource.contains(QStringLiteral("ImageDocumentAnimationLoadErrorPort")));
+    QVERIFY(!controllersSource.contains(
+        QStringLiteral("m_openController->finishAnimationLoadWithError")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
