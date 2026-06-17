@@ -670,9 +670,11 @@ void TestArchitectureBoundaries::applicationFacadeDoesNotOwnFixedViewerCommandRo
 
     QVERIFY(!header.contains(QStringLiteral("navigation/imageshortcutnavigationpolicy.h")));
     QVERIFY(!header.contains(QStringLiteral("ImageShortcutNavigationPolicy m_navigationPolicy")));
+    QVERIFY(!header.contains(QStringLiteral("ApplicationCommandPortSource")));
+    QVERIFY(!header.contains(QStringLiteral("commandRouterShellPorts")));
     QVERIFY(!implementation.contains(QStringLiteral("m_navigationPolicy.")));
     QVERIFY(!implementation.contains(QStringLiteral("keyboardPanDistance")));
-    QVERIFY(header.contains(QStringLiteral("ApplicationCommandPortSource")));
+    QVERIFY(implementation.contains(QStringLiteral("ApplicationCommandPortSource")));
     QVERIFY(implementation.contains(QStringLiteral("ApplicationCommandRouter")));
     QVERIFY(coreSources.contains(QStringLiteral("src/application/applicationcommandrouter.cpp")));
     QVERIFY(
