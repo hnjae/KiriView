@@ -11,6 +11,7 @@
 #include "session/documentsessiondirectimagecursorsync.h"
 #include "session/documentsessiondirectmedianavigationapplicationruntime.h"
 #include "session/documentsessiondirectmedianavigationruntime.h"
+#include "session/documentsessiondirectmediascopeport.h"
 #include "session/documentsessiondocumentports.h"
 #include "session/documentsessionimagedocumentcommandruntime.h"
 #include "session/documentsessionimagedocumentsync.h"
@@ -170,9 +171,6 @@ private:
     void cancelMediaOpenWith();
     DocumentSessionVideoOutputAttachmentPort videoOutputAttachmentPort();
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
-    DirectMediaScope directMediaNavigationLoadScope() const;
-    QUrl activeDirectMediaCursorUrl() const;
-    bool directMediaCursorMatches(const DirectMediaScope &scope) const;
     bool activeImageUsesImageDocumentSourceScope() const;
     bool directImageLoadMayUseImageDocumentSourceScope() const;
     bool syncDirectImageCursorFromDocument();
@@ -186,6 +184,7 @@ private:
     DocumentSessionVideoDocumentSnapshotPort m_videoDocument;
     DocumentSessionVideoDocumentCommandRuntime m_videoDocumentCommandRuntime;
     DocumentSessionState m_state;
+    DocumentSessionDirectMediaScopePort m_directMediaScopePort;
     DocumentSessionProjectionRuntime m_projectionRuntime;
     DocumentSessionRouteRuntime m_routeRuntime;
     DocumentSessionActiveNavigationRuntime m_activeNavigationRuntime;

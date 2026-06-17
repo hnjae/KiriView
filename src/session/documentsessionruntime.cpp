@@ -78,6 +78,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
               m_videoOutputRuntime.clearAttachment(attachmentPort);
           })
     , m_state(std::move(changeCallback))
+    , m_directMediaScopePort(&m_state)
     , m_projectionRuntime(DocumentSessionProjectionRuntimePorts {
           [this](const DocumentSessionPublicSnapshotInput &input) {
               return m_state.updatePublicSnapshot(input);
@@ -454,8 +455,9 @@ void DocumentSessionRuntime::openMedia(DirectMediaNavigationOpenRequest request)
     }
 
     m_directMediaNavigationRuntime.open(
-        m_owner, directMediaNavigationLoadScope(), request,
-        [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
+        m_owner, m_directMediaScopePort.currentScope(), request,
+        [this](
+            const DirectMediaScope &scope) { return m_directMediaScopePort.cursorMatches(scope); },
         [this](DocumentSessionDirectMediaNavigationOpenResult result) {
             finishDirectMediaNavigation(std::move(result));
         });
@@ -584,8 +586,9 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
     m_state.setFileDeletionInProgress(true);
     recomputePublicProjection();
     const bool started = m_mediaDeletionRuntime.startForDirectMedia(
-        m_owner, mode, directMediaNavigationLoadScope(),
-        [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
+        m_owner, mode, m_directMediaScopePort.currentScope(),
+        [this](
+            const DirectMediaScope &scope) { return m_directMediaScopePort.cursorMatches(scope); },
         m_state.documentKind(),
         [this](DocumentSessionMediaDeletionCompletion completion) {
             finishMediaDeletion(std::move(completion));
@@ -806,17 +809,18 @@ void DocumentSessionRuntime::refreshDirectMediaNavigation()
                                        << "reason"
                                        << "inactive"
                                        << "documentKind" << documentKindName(m_state.documentKind())
-                                       << "cursorUrl" << activeDirectMediaCursorUrl();
+                                       << "cursorUrl" << m_directMediaScopePort.activeCursorUrl();
         m_directMediaNavigationApplicationRuntime.applyInactiveRefresh(
             !directImageLoadMayUseImageDocumentSourceScope());
         return;
     }
 
-    const DirectMediaScope scope = directMediaNavigationLoadScope();
+    const DirectMediaScope scope = m_directMediaScopePort.currentScope();
     logDirectMediaScope("direct media navigation refresh requested", scope);
     m_directMediaNavigationRuntime.refresh(
         m_owner, scope,
-        [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
+        [this](
+            const DirectMediaScope &scope) { return m_directMediaScopePort.cursorMatches(scope); },
         [this](DocumentSessionDirectMediaNavigationRefreshResult result) {
             updateDirectMediaNavigationBoundaryState(std::move(result));
         });
@@ -826,7 +830,7 @@ void DocumentSessionRuntime::finishDirectMediaNavigation(
     DocumentSessionDirectMediaNavigationOpenResult result)
 {
     m_directMediaNavigationApplicationRuntime.applyOpen(
-        activeDirectMediaCursorUrl(), std::move(result));
+        m_directMediaScopePort.activeCursorUrl(), std::move(result));
 }
 
 void DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState(
@@ -854,7 +858,7 @@ DocumentSessionMediaPredecodeInput DocumentSessionRuntime::mediaPredecodeInput()
         m_state.documentKind(),
         activeImageUsesImageDocumentSourceScope(),
         m_imagePublicSnapshot.readyForInformation,
-        activeDirectMediaCursorUrl(),
+        m_directMediaScopePort.activeCursorUrl(),
         m_imagePublicSnapshot.primaryDisplayedPredecodeImage,
         m_imagePublicSnapshot.firstDisplayDecodeContext,
     };
@@ -897,21 +901,6 @@ void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCom
     m_mediaDeletionCompletionRuntime.apply(completion);
 }
 
-DirectMediaScope DocumentSessionRuntime::directMediaNavigationLoadScope() const
-{
-    return m_state.directMediaScope();
-}
-
-QUrl DocumentSessionRuntime::activeDirectMediaCursorUrl() const
-{
-    return m_state.directMediaCursorUrl();
-}
-
-bool DocumentSessionRuntime::directMediaCursorMatches(const DirectMediaScope &scope) const
-{
-    return directMediaScopeMatchesCursor(m_state.directMediaCursor(), scope);
-}
-
 bool DocumentSessionRuntime::activeImageUsesImageDocumentSourceScope() const
 {
     return m_imagePublicSnapshot.ordinaryDirectMediaScopeActive;
@@ -920,7 +909,7 @@ bool DocumentSessionRuntime::activeImageUsesImageDocumentSourceScope() const
 bool DocumentSessionRuntime::directImageLoadMayUseImageDocumentSourceScope() const
 {
     return m_state.documentKind() == DocumentSessionKind::Image
-        && !activeDirectMediaCursorUrl().isEmpty();
+        && !m_directMediaScopePort.activeCursorUrl().isEmpty();
 }
 
 bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
