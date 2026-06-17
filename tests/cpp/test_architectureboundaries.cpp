@@ -77,6 +77,7 @@ private Q_SLOTS:
     void imageDocumentLifecyclePlanDispatchHasNamedExecutor();
     void imageDocumentMediaEntrySourcePlanDispatchHasNamedExecutor();
     void imageDocumentSpreadPlanDispatchHasNamedExecutor();
+    void imageDocumentPredecodedImageLookupUsesNamedPort();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void imagePresentationPageSlotsUseDisplaySourceVariants();
@@ -1635,6 +1636,19 @@ void TestArchitectureBoundaries::imageDocumentSpreadPlanDispatchHasNamedExecutor
     QVERIFY(
         runtimeExecutorHeader.contains(QStringLiteral("ImageDocumentSpreadRuntimePlanExecutor")));
     QVERIFY(!runtimeExecutorSource.contains(QStringLiteral("m_operations.spread.")));
+}
+
+void TestArchitectureBoundaries::imageDocumentPredecodedImageLookupUsesNamedPort()
+{
+    const QString lookupHeader
+        = readProjectFile(QStringLiteral("src/document/imagedocumentpredecodedimagelookup.h"));
+    const QString controllersSource
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimecontrollers.cpp"));
+
+    QVERIFY(lookupHeader.contains(QStringLiteral("class ImageDocumentPredecodedImageLookup")));
+    QVERIFY(controllersSource.contains(QStringLiteral("ImageDocumentPredecodedImageLookup")));
+    QVERIFY(
+        !controllersSource.contains(QStringLiteral("m_predecodeController->findPredecodedImage")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
