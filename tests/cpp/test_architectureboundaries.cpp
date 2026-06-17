@@ -670,7 +670,9 @@ void TestArchitectureBoundaries::applicationFacadeDoesNotOwnFixedViewerCommandRo
 
     QVERIFY(!header.contains(QStringLiteral("navigation/imageshortcutnavigationpolicy.h")));
     QVERIFY(!header.contains(QStringLiteral("ImageShortcutNavigationPolicy m_navigationPolicy")));
-    QVERIFY(!header.contains(QStringLiteral("ApplicationCommandPortSource")));
+    QVERIFY(!header.contains(QStringLiteral("application/applicationcommandportsource.h")));
+    QVERIFY(!header.contains(QStringLiteral("private kiriview::ApplicationActions::"
+                                            "ApplicationCommandPortSource")));
     QVERIFY(!header.contains(QStringLiteral("commandRouterShellPorts")));
     QVERIFY(!implementation.contains(QStringLiteral("m_navigationPolicy.")));
     QVERIFY(!implementation.contains(QStringLiteral("keyboardPanDistance")));
@@ -717,8 +719,8 @@ void TestArchitectureBoundaries::applicationFacadeDoesNotOwnActionCommandSwitch(
     QVERIFY(!implementation.contains(QStringLiteral("deleteDisplayedFile(KiriDocumentSession::")));
     QVERIFY(!implementation.contains(QStringLiteral("KiriViewApplication::commandRouterInput")));
     QVERIFY(!implementation.contains(QStringLiteral("KiriViewApplication::commandRouterPorts")));
-    QVERIFY(
-        implementation.contains(QStringLiteral("KiriViewApplication::commandRouterShellPorts")));
+    QVERIFY(implementation.contains(
+        QStringLiteral("KiriViewApplicationCommandPortSource::commandRouterShellPorts")));
 }
 
 void TestArchitectureBoundaries::sessionPublicProjectionHasNoPartialUpdateBackdoor()
