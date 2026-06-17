@@ -73,6 +73,7 @@ private Q_SLOTS:
     void mediaEntrySourceStoreDoesNotDependOnDocumentPlanning();
     void documentSessionDirectMediaScopeUsesNamedPort();
     void documentSessionDirectMediaActivityUsesNamedPort();
+    void documentSessionMediaPredecodeInputUsesNamedPort();
     void imageDocumentSourceLoadPlanDispatchHasNamedExecutor();
     void imageDocumentOpenPlanDispatchHasNamedExecutor();
     void imageDocumentPredecodePlanDispatchHasNamedExecutor();
@@ -1588,6 +1589,24 @@ void TestArchitectureBoundaries::documentSessionDirectMediaActivityUsesNamedPort
         QStringLiteral("DocumentSessionRuntime::directMediaNavigationActive")));
     QVERIFY(!runtimeSource.contains(
         QStringLiteral("DocumentSessionRuntime::directImageLoadMayUseImageDocumentSourceScope")));
+}
+
+void TestArchitectureBoundaries::documentSessionMediaPredecodeInputUsesNamedPort()
+{
+    const QString portHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionmediapredecodeinputport.h"));
+    const QString runtimeHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.h"));
+    const QString runtimeSource
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.cpp"));
+
+    QVERIFY(portHeader.contains(QStringLiteral("class DocumentSessionMediaPredecodeInputPort")));
+    QVERIFY(runtimeHeader.contains(QStringLiteral("DocumentSessionMediaPredecodeInputPort")));
+    QVERIFY(!runtimeHeader.contains(QStringLiteral("mediaPredecodeInput")));
+    QVERIFY(!runtimeHeader.contains(QStringLiteral("activeImageUsesImageDocumentSourceScope")));
+    QVERIFY(!runtimeSource.contains(QStringLiteral("DocumentSessionRuntime::mediaPredecodeInput")));
+    QVERIFY(!runtimeSource.contains(
+        QStringLiteral("DocumentSessionRuntime::activeImageUsesImageDocumentSourceScope")));
 }
 
 void TestArchitectureBoundaries::imageDocumentSourceLoadPlanDispatchHasNamedExecutor()
