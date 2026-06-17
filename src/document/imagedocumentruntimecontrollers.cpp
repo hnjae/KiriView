@@ -8,6 +8,7 @@
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentnavigationruntimeplan.h"
+#include "imagedocumentnavigationsnapshotport.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentpredecodedimagelookup.h"
 #include "imagedocumentprimarypageslotport.h"
@@ -75,6 +76,8 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             [this]() { invokeIfSet(m_callbacks.notify, ImageDocumentChange::PageNavigation); },
             [this]() { return m_deletionController->inProgress(); },
         });
+    m_navigationSnapshotPort
+        = std::make_unique<ImageDocumentNavigationSnapshotPort>(m_navigationService.get());
     m_predecodeController = std::make_unique<ImageDocumentPredecodeController>(
         documentObject, state, *m_pageSurfaceController, *m_presentationRuntime,
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode,
@@ -92,7 +95,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         ImageSpreadPresentationController::Callbacks {
             [this](ImageDocumentChange change) { invokeIfSet(m_callbacks.notify, change); },
             [this](const QUrl &url) { return m_predecodedImageLookup->find(url); },
-            [this]() { return m_navigationController->pageNavigationSnapshot(); },
+            [this]() { return m_navigationSnapshotPort->snapshot(); },
             [this]() {
                 dispatchPlan(
                     ImageDocumentRuntimePlan { ScheduleAdjacentImagePredecodeOperation {} });
