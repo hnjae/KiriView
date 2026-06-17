@@ -39,6 +39,7 @@ private Q_SLOTS:
     void qmlDoesNotExposeFixedViewerScanCommandRoutes();
     void videoSeekShortcutsRouteThroughApplicationRuntime();
     void applicationFacadeDoesNotOwnFixedViewerCommandRouting();
+    void applicationFacadeDoesNotOwnActionStateSourceAttachment();
     void applicationCommandRouterPortsAreGroupedByOwner();
     void applicationFacadeDoesNotOwnActionCommandSwitch();
     void sessionPublicProjectionHasNoPartialUpdateBackdoor();
@@ -681,6 +682,33 @@ void TestArchitectureBoundaries::applicationFacadeDoesNotOwnFixedViewerCommandRo
     QVERIFY(coreSources.contains(QStringLiteral("src/application/applicationcommandrouter.cpp")));
     QVERIFY(
         coreSources.contains(QStringLiteral("src/application/applicationcommandportsource.cpp")));
+}
+
+void TestArchitectureBoundaries::applicationFacadeDoesNotOwnActionStateSourceAttachment()
+{
+    const QString header = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.h"));
+    const QString implementation
+        = readProjectFile(QStringLiteral("src/facade/kiriviewapplication.cpp"));
+    const QString coreSources = readProjectFile(QStringLiteral("src/cpp_core_sources.txt"));
+
+    QVERIFY(!header.contains(QStringLiteral("rebuildActionState")));
+    QVERIFY(!header.contains(QStringLiteral("connectActionStateSources")));
+    QVERIFY(!header.contains(QStringLiteral("disconnectActionStateSources")));
+    QVERIFY(!header.contains(QStringLiteral("actionStateSnapshot")));
+    QVERIFY(!header.contains(QStringLiteral("m_actionStateConnections")));
+    QVERIFY(!header.contains(QStringLiteral("m_actionUiGateRevision")));
+    QVERIFY(!header.contains(QStringLiteral("m_helpDialogOpen")));
+    QVERIFY(!header.contains(QStringLiteral("m_textInputFocused")));
+    QVERIFY(!implementation.contains(QStringLiteral("KiriViewApplication::rebuildActionState")));
+    QVERIFY(
+        !implementation.contains(QStringLiteral("KiriViewApplication::connectActionStateSources")));
+    QVERIFY(!implementation.contains(
+        QStringLiteral("KiriViewApplication::disconnectActionStateSources")));
+    QVERIFY(!implementation.contains(QStringLiteral("KiriViewApplication::actionStateSnapshot")));
+    QVERIFY(implementation.contains(QStringLiteral("KiriViewApplicationActionStateSource")));
+    QVERIFY(implementation.contains(QStringLiteral("ApplicationActionSourceAttachment")));
+    QVERIFY(coreSources.contains(
+        QStringLiteral("src/application/applicationactionsourceattachment.cpp")));
 }
 
 void TestArchitectureBoundaries::applicationCommandRouterPortsAreGroupedByOwner()
