@@ -11,16 +11,15 @@
 #include <QAction>
 #include <QKeySequence>
 #include <QList>
-#include <QMetaObject>
 #include <QPointer>
 #include <QString>
 #include <QtQml/qqmlregistration.h>
 #include <memory>
-#include <vector>
 
 namespace kiriview::ApplicationActions {
-struct ApplicationActionStateSnapshot;
+class ApplicationActionSourceAttachment;
 class KiriViewApplicationActionHost;
+class KiriViewApplicationActionStateSource;
 class KiriViewApplicationCommandPortSource;
 class ApplicationActionRuntime;
 class ApplicationShortcutRuntime;
@@ -164,27 +163,10 @@ private:
     friend class kiriview::ApplicationActions::KiriViewApplicationActionHost;
     friend class kiriview::ApplicationActions::KiriViewApplicationCommandPortSource;
 
-    struct ActionUiGateSnapshot {
-        bool helpDialogOpen = false;
-        bool textInputFocused = false;
-        bool infoPanelVisible = false;
-        bool thumbnailPanelVisible = false;
-        bool fullscreen = false;
-        bool applicationMenuShortcutEnabled = false;
-        bool showMenubarActionEnabled = true;
-    };
-
     KirigamiActionCollection *applicationMainActionCollection();
     QAction *inheritedApplicationAction(const QString &actionName);
     void readApplicationActionSettings();
-    void rebuildActionState();
-    void connectActionStateSources();
-    void disconnectActionStateSources();
     KiriImageDocument *imageDocument() const;
-    bool imageMode() const;
-    bool videoMode() const;
-    bool sharedImagePannable() const;
-    kiriview::ApplicationActions::ApplicationActionStateSnapshot actionStateSnapshot() const;
     void moveDisplayedFileToTrash();
     void deleteDisplayedFilePermanently();
     void requestImageFitMode();
@@ -195,23 +177,16 @@ private:
     void requestNextActiveNavigationWithBoundary();
     void handleScanForwardAction();
     void handleScanBackwardAction();
-    void updateActionUiGateSnapshot(ActionUiGateSnapshot snapshot);
-    void applyActionUiGateSnapshot(const ActionUiGateSnapshot &snapshot);
 
     std::unique_ptr<kiriview::ApplicationActions::KiriViewApplicationActionHost> m_actionHost;
+    std::unique_ptr<kiriview::ApplicationActions::KiriViewApplicationActionStateSource>
+        m_actionStateSource;
     std::unique_ptr<kiriview::ApplicationActions::KiriViewApplicationCommandPortSource>
         m_commandPortSource;
     std::unique_ptr<kiriview::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;
+    std::unique_ptr<kiriview::ApplicationActions::ApplicationActionSourceAttachment>
+        m_actionSourceAttachment;
     QPointer<KiriDocumentSession> m_documentSession;
-    std::vector<QMetaObject::Connection> m_actionStateConnections;
-    quint64 m_actionUiGateRevision = 0;
-    bool m_helpDialogOpen = false;
-    bool m_textInputFocused = false;
-    bool m_infoPanelVisible = false;
-    bool m_thumbnailPanelVisible = false;
-    bool m_fullscreen = false;
-    bool m_applicationMenuShortcutEnabled = false;
-    bool m_showMenubarActionEnabled = true;
 };
 
 #endif

@@ -10,6 +10,7 @@ src/application/applicationcommandrouter.cpp
 src/application/applicationcommandportsource.cpp
 src/application/applicationactionregistry.cpp
 src/application/applicationactionruntime.cpp
+src/application/applicationactionsourceattachment.cpp
 src/application/applicationactionstatepolicy.cpp
 src/application/applicationdiagnostics.cpp
 src/application/applicationmenupresentationruntime.cpp

@@ -5,13 +5,18 @@
 
 #include "application/applicationactionhost.h"
 #include "application/applicationactionruntime.h"
+#include "application/applicationactionsourceattachment.h"
 #include "application/applicationcommandportsource.h"
 #include "application/applicationcommandrouter.h"
 #include "facade/kiridocumentsession.h"
+#include "facade/kiriimagedocument.h"
+#include "facade/kirivideodocument.h"
 
 #include <KLocalizedString>
 
+#include <functional>
 #include <utility>
+#include <vector>
 
 namespace Actions = kiriview::ApplicationActions;
 
@@ -37,6 +42,31 @@ public:
 
 private:
     KiriViewApplication &m_application;
+};
+
+class KiriViewApplicationActionStateSource final : public ApplicationActionStateSource
+{
+public:
+    void setDocumentSession(KiriDocumentSession *session) { m_documentSession = session; }
+    void setUiGateSnapshot(ApplicationActionUiGateSnapshot snapshot)
+    {
+        ++m_uiGateRevision;
+        m_uiGateSnapshot = snapshot;
+    }
+
+    ApplicationActionStateSnapshot actionStateSnapshot() const override;
+    std::vector<QMetaObject::Connection> connectActionStateChanged(
+        QObject *context, std::function<void()> refresh) override;
+
+private:
+    KiriImageDocument *imageDocument() const;
+    bool imageMode() const;
+    bool videoMode() const;
+    bool sharedImagePannable() const;
+
+    QPointer<KiriDocumentSession> m_documentSession;
+    ApplicationActionUiGateSnapshot m_uiGateSnapshot;
+    quint64 m_uiGateRevision = 0;
 };
 
 class KiriViewApplicationCommandPortSource final : public ApplicationCommandPortSource
@@ -73,6 +103,7 @@ static_assert(static_cast<int>(Actions::ActionId::ActionCount)
 KiriViewApplication::KiriViewApplication(QObject *parent)
     : AbstractKirigamiApplication(parent)
     , m_actionHost(std::make_unique<Actions::KiriViewApplicationActionHost>(*this))
+    , m_actionStateSource(std::make_unique<Actions::KiriViewApplicationActionStateSource>())
     , m_commandPortSource(std::make_unique<Actions::KiriViewApplicationCommandPortSource>(*this))
     , m_actionRuntime(std::make_unique<Actions::ApplicationActionRuntime>(*m_actionHost,
           Actions::ApplicationActionRuntime::Callbacks {
@@ -86,13 +117,15 @@ KiriViewApplication::KiriViewApplication(QObject *parent)
                   Q_EMIT unsupportedImageActionTriggered(facadeActionId(actionId));
               },
           }))
+    , m_actionSourceAttachment(
+          std::make_unique<Actions::ApplicationActionSourceAttachment>(*m_actionRuntime, *this))
 {
     m_actionRuntime->setCommandPortSource(m_commandPortSource.get());
     KiriViewApplication::setupActions();
-    rebuildActionState();
+    m_actionSourceAttachment->setSource(m_actionStateSource.get());
 }
 
-KiriViewApplication::~KiriViewApplication() { disconnectActionStateSources(); }
+KiriViewApplication::~KiriViewApplication() = default;
 
 KiriViewApplication::MenuPresentation KiriViewApplication::menuPresentation() const
 {
@@ -264,17 +297,16 @@ void KiriViewApplication::setDocumentSession(QObject *session)
         return;
     }
 
-    disconnectActionStateSources();
     m_documentSession = documentSession;
-    connectActionStateSources();
-    rebuildActionState();
+    m_actionStateSource->setDocumentSession(documentSession);
+    m_actionSourceAttachment->reattach();
 }
 
 void KiriViewApplication::updateActionUiGateSnapshot(bool helpDialogOpen, bool textInputFocused,
     bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
     bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled)
 {
-    updateActionUiGateSnapshot(ActionUiGateSnapshot {
+    m_actionStateSource->setUiGateSnapshot(Actions::ApplicationActionUiGateSnapshot {
         helpDialogOpen,
         textInputFocused,
         infoPanelVisible,
@@ -283,24 +315,7 @@ void KiriViewApplication::updateActionUiGateSnapshot(bool helpDialogOpen, bool t
         applicationMenuShortcutEnabled,
         showMenubarActionEnabled,
     });
-}
-
-void KiriViewApplication::updateActionUiGateSnapshot(ActionUiGateSnapshot snapshot)
-{
-    applyActionUiGateSnapshot(snapshot);
-}
-
-void KiriViewApplication::applyActionUiGateSnapshot(const ActionUiGateSnapshot &snapshot)
-{
-    ++m_actionUiGateRevision;
-    m_helpDialogOpen = snapshot.helpDialogOpen;
-    m_textInputFocused = snapshot.textInputFocused;
-    m_infoPanelVisible = snapshot.infoPanelVisible;
-    m_thumbnailPanelVisible = snapshot.thumbnailPanelVisible;
-    m_fullscreen = snapshot.fullscreen;
-    m_applicationMenuShortcutEnabled = snapshot.applicationMenuShortcutEnabled;
-    m_showMenubarActionEnabled = snapshot.showMenubarActionEnabled;
-    rebuildActionState();
+    m_actionSourceAttachment->refresh();
 }
 
 void KiriViewApplication::setShortcutHost(QObject *host) { m_actionRuntime->setShortcutHost(host); }
@@ -344,47 +359,37 @@ QAction *KiriViewApplication::inheritedApplicationAction(const QString &actionNa
 
 void KiriViewApplication::readApplicationActionSettings() { readSettings(); }
 
-void KiriViewApplication::rebuildActionState()
+std::vector<QMetaObject::Connection>
+Actions::KiriViewApplicationActionStateSource::connectActionStateChanged(
+    QObject *context, std::function<void()> refresh)
 {
-    if (m_actionRuntime != nullptr) {
-        m_actionRuntime->setActionStateSnapshot(actionStateSnapshot());
-    }
-}
-
-void KiriViewApplication::connectActionStateSources()
-{
+    std::vector<QMetaObject::Connection> connections;
     if (m_documentSession == nullptr) {
-        return;
+        return connections;
     }
 
-    const auto connectRebuild = [this](auto *sender, auto signal) {
-        m_actionStateConnections.push_back(
-            connect(sender, signal, this, [this]() { rebuildActionState(); }));
+    const auto connectRefresh = [&connections, context, refresh](auto *sender, auto signal) {
+        connections.push_back(
+            QObject::connect(sender, signal, context, [refresh]() { refresh(); }));
     };
 
     KiriDocumentSession *session = m_documentSession.data();
-    connectRebuild(session, &KiriDocumentSession::publicProjectionRevisionChanged);
-    connectRebuild(session, &KiriDocumentSession::documentKindChanged);
-    connectRebuild(session, &KiriDocumentSession::displayedFileDeletionAvailabilityChanged);
-    connectRebuild(session, &KiriDocumentSession::displayedMediaOpenWithAvailabilityChanged);
-    connectRebuild(session, &KiriDocumentSession::fileDeletionInProgressChanged);
-    connectRebuild(session, &KiriDocumentSession::activeMediaReadinessChanged);
-    connectRebuild(session, &KiriDocumentSession::activeNavigationChanged);
+    connectRefresh(session, &KiriDocumentSession::publicProjectionRevisionChanged);
+    connectRefresh(session, &KiriDocumentSession::documentKindChanged);
+    connectRefresh(session, &KiriDocumentSession::displayedFileDeletionAvailabilityChanged);
+    connectRefresh(session, &KiriDocumentSession::displayedMediaOpenWithAvailabilityChanged);
+    connectRefresh(session, &KiriDocumentSession::fileDeletionInProgressChanged);
+    connectRefresh(session, &KiriDocumentSession::activeMediaReadinessChanged);
+    connectRefresh(session, &KiriDocumentSession::activeNavigationChanged);
     if (KiriImageDocument *image = session->imageDocument()) {
-        connectRebuild(image, &KiriImageDocument::viewportFrameChanged);
+        connectRefresh(image, &KiriImageDocument::viewportFrameChanged);
     }
     if (KiriVideoDocument *video = session->videoDocument()) {
-        connectRebuild(video, &KiriVideoDocument::seekableChanged);
-        connectRebuild(video, &KiriVideoDocument::durationChanged);
+        connectRefresh(video, &KiriVideoDocument::seekableChanged);
+        connectRefresh(video, &KiriVideoDocument::durationChanged);
     }
-}
 
-void KiriViewApplication::disconnectActionStateSources()
-{
-    for (const QMetaObject::Connection &connection : m_actionStateConnections) {
-        QObject::disconnect(connection);
-    }
-    m_actionStateConnections.clear();
+    return connections;
 }
 
 KiriImageDocument *KiriViewApplication::imageDocument() const
@@ -392,28 +397,34 @@ KiriImageDocument *KiriViewApplication::imageDocument() const
     return m_documentSession == nullptr ? nullptr : m_documentSession->imageDocument();
 }
 
-bool KiriViewApplication::imageMode() const
+KiriImageDocument *Actions::KiriViewApplicationActionStateSource::imageDocument() const
+{
+    return m_documentSession == nullptr ? nullptr : m_documentSession->imageDocument();
+}
+
+bool Actions::KiriViewApplicationActionStateSource::imageMode() const
 {
     return m_documentSession != nullptr
         && m_documentSession->documentKind() == KiriDocumentSession::DocumentKind::Image;
 }
 
-bool KiriViewApplication::videoMode() const
+bool Actions::KiriViewApplicationActionStateSource::videoMode() const
 {
     return m_documentSession != nullptr
         && m_documentSession->documentKind() == KiriDocumentSession::DocumentKind::Video;
 }
 
-bool KiriViewApplication::sharedImagePannable() const
+bool Actions::KiriViewApplicationActionStateSource::sharedImagePannable() const
 {
     const KiriImageDocument *image = imageDocument();
     return imageMode() && image != nullptr && image->viewportPannable();
 }
 
-Actions::ApplicationActionStateSnapshot KiriViewApplication::actionStateSnapshot() const
+Actions::ApplicationActionStateSnapshot
+Actions::KiriViewApplicationActionStateSource::actionStateSnapshot() const
 {
     Actions::ApplicationActionStateSnapshot snapshot;
-    snapshot.uiGateRevision = m_actionUiGateRevision;
+    snapshot.uiGateRevision = m_uiGateRevision;
     snapshot.sessionActionAvailability = m_documentSession == nullptr
         ? kiriview::DocumentSessionActionAvailabilityFacts {}
         : m_documentSession->actionAvailabilityFacts();
@@ -444,14 +455,14 @@ Actions::ApplicationActionStateSnapshot KiriViewApplication::actionStateSnapshot
     snapshot.atKnownFirstActiveNavigation
         = m_documentSession != nullptr && m_documentSession->atKnownFirstActiveNavigation();
     snapshot.videoMode = videoMode();
-    snapshot.helpDialogOpen = m_helpDialogOpen;
-    snapshot.textInputFocused = m_textInputFocused;
+    snapshot.helpDialogOpen = m_uiGateSnapshot.helpDialogOpen;
+    snapshot.textInputFocused = m_uiGateSnapshot.textInputFocused;
     snapshot.imagePannable = sharedImagePannable();
-    snapshot.infoPanelVisible = m_infoPanelVisible;
-    snapshot.thumbnailPanelVisible = m_thumbnailPanelVisible;
-    snapshot.fullscreen = m_fullscreen;
-    snapshot.applicationMenuShortcutEnabled = m_applicationMenuShortcutEnabled;
-    snapshot.showMenubarActionEnabled = m_showMenubarActionEnabled;
+    snapshot.infoPanelVisible = m_uiGateSnapshot.infoPanelVisible;
+    snapshot.thumbnailPanelVisible = m_uiGateSnapshot.thumbnailPanelVisible;
+    snapshot.fullscreen = m_uiGateSnapshot.fullscreen;
+    snapshot.applicationMenuShortcutEnabled = m_uiGateSnapshot.applicationMenuShortcutEnabled;
+    snapshot.showMenubarActionEnabled = m_uiGateSnapshot.showMenubarActionEnabled;
     if (KiriVideoDocument *video
         = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
         snapshot.videoSeekable = video->seekable();
