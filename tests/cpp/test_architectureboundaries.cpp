@@ -76,6 +76,7 @@ private Q_SLOTS:
     void imageDocumentNavigationPlanDispatchHasNamedExecutor();
     void imageDocumentLifecyclePlanDispatchHasNamedExecutor();
     void imageDocumentMediaEntrySourcePlanDispatchHasNamedExecutor();
+    void imageDocumentSpreadPlanDispatchHasNamedExecutor();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void imagePresentationPageSlotsUseDisplaySourceVariants();
@@ -1618,6 +1619,22 @@ void TestArchitectureBoundaries::imageDocumentMediaEntrySourcePlanDispatchHasNam
     QVERIFY(runtimeExecutorHeader.contains(
         QStringLiteral("ImageDocumentMediaEntrySourceRuntimePlanExecutor")));
     QVERIFY(!runtimeExecutorSource.contains(QStringLiteral("m_operations.mediaEntrySource.")));
+}
+
+void TestArchitectureBoundaries::imageDocumentSpreadPlanDispatchHasNamedExecutor()
+{
+    const QString spreadExecutorHeader
+        = readProjectFile(QStringLiteral("src/document/imagedocumentspreadruntimeplanexecutor.h"));
+    const QString runtimeExecutorHeader
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimeplanexecutor.h"));
+    const QString runtimeExecutorSource
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimeplanexecutor.cpp"));
+
+    QVERIFY(spreadExecutorHeader.contains(
+        QStringLiteral("class ImageDocumentSpreadRuntimePlanExecutor")));
+    QVERIFY(
+        runtimeExecutorHeader.contains(QStringLiteral("ImageDocumentSpreadRuntimePlanExecutor")));
+    QVERIFY(!runtimeExecutorSource.contains(QStringLiteral("m_operations.spread.")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
