@@ -95,4 +95,6 @@ Direct media cursor generation is part of stale async-completion rejection. Futu
 
 Direct-media scope reads and stale-completion checks supplied to document-session subowners should cross a named session scope port. `DocumentSessionRuntime` may bind that port to `DocumentSessionState`, but direct-media navigation and deletion lifecycles should consume the port instead of capturing private runtime helper methods for current scope or cursor matching.
 
+Displayed-media Open With plan reads should cross a named session plan port. `DocumentSessionRuntime` may bind that port to `DocumentSessionState` and the committed image/video public leaf snapshots, but Open With invocation should consume the port instead of capturing a private runtime helper for mixed-media target selection.
+
 Mixed-media deletion fallback remains session-owned for ordinary direct media scopes. Image-document removal fallback remains navigation-owned so deletion completion and live candidate refresh share one sibling-selection policy.
