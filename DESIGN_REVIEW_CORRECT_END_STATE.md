@@ -4,7 +4,7 @@
 
 KiriView already has a sound architectural direction: `QML -> facade -> C++ runtime/effect executor -> Rust policy`. The main issue is not the absence of layers. The issue is that several boundaries still allow the same domain rule or state concept to be defined more than once, allow external effects to rely on UI/projection availability checks instead of command-boundary validation, and place too much workflow assembly inside facade or runtime composition objects.
 
-The highest-risk findings are around rules that affect real user behavior and state consistency: failure representation and broad workflow ownership. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, `KiriViewApplication`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
+The highest-risk findings are around rules that affect real user behavior and state consistency: failure representation and broad workflow ownership. The next major risk is that `DocumentSessionRuntime`, `KiriImageDocument`, and `ImageDocumentRuntimeControllers` still act as broad workflow owners even though the codebase already has useful lower-level objects.
 
 The correct end state should be precise and conservative, not clever. Rust policy should own duplicated-free domain decisions and typed plans. C++ runtime should own Qt/KDE objects and external effects behind typed adapters. Facades should expose QML-friendly types and forward commands. QML should report geometry/input facts and render projections. Errors should flow internally as typed failures with source, stage, diagnostic detail, severity, and retryability, while the UI receives only user-facing messages.
 
@@ -46,18 +46,6 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Suggested migration: Continue replacing sibling-capturing controller callbacks with narrow typed ports for open, spread, navigation, predecode, and page-surface interactions.
 - Acceptance criteria: Controllers no longer call siblings through hidden captures; construction order is not semantically important for callback validity; the workflow executor can be tested with fake ports.
 - Priority: P1
-
-## Logic Placement and Flow Predictability
-
-### Finding: Application action source attachment still lives in the facade
-
-- Evidence: `src/facade/kiriviewapplication.h:177-214` owns action-state source subscriptions, the snapshot adapter, UI gate fields, and a private command-port adapter member. `src/facade/kiriviewapplication.cpp:347-380` rebuilds action state and subscribes to sources; `:413-460` assembles `ApplicationActionStateSnapshot`; `:42-61` and `:463-671` define `KiriViewApplicationCommandPortSource`, which adapts concrete shell/session/image/video command port sources beside the facade. `src/application/applicationactionruntime.h:100-136` owns accepted action snapshots, command-router input, runtime dispatch entry points, and command-router port assembly from an `ApplicationCommandPortSource`; `src/application/applicationcommandportsource.h:18-33` defines the typed source boundary.
-- Current state: `ApplicationActionRuntime` owns the `ApplicationCommandRouter` instance, typed dispatch entry points for triggered actions and fixed viewer shortcuts, image-action availability projection, `ApplicationActionStateInput` assembly, `ApplicationCommandRouterInput` assembly, and command-router port assembly from a typed source. A private `KiriViewApplicationCommandPortSource` now owns concrete port-source adaptation beside the facade. The QML-facing `KiriViewApplication` facade still owns source subscriptions, snapshot gathering, UI gate fields, and source/adapter attachment.
-- Design concern: Adding or changing an action affects the facade even when the behavior is application-domain routing rather than QML API shape.
-- Correct end state: An application-layer coordinator/runtime should own action-state input assembly, source subscriptions, command-router input, and command port assembly. `KiriViewApplication` should expose QML APIs, forward UI gate snapshots, and emit UI requests through narrow shell ports.
-- Suggested migration: Create an application-shell coordinator or extend `ApplicationActionRuntime` to own session/UI-gate attachment. Move source subscriptions and snapshot gathering behind that application-layer object, then collapse the facade snapshot adapter once the runtime owns source attachment.
-- Acceptance criteria: `KiriViewApplication` no longer owns action-state source subscriptions or snapshot gathering; action-state rebuild tests target the application runtime/coordinator rather than the facade.
-- Priority: P2
 
 ## Error Handling and Observability Problems
 
@@ -101,12 +89,12 @@ The correct end state should be precise and conservative, not clever. Rust polic
 - Validation: External side-effect commands validate eligibility at the command owner, not only at UI/projection availability. Source-load planning should pass through typed plans before providers run.
 - External effects: `QFileInfo`, `sysconf`, KIO jobs, and display-store budget facts are isolated behind providers, resolvers, or dependency adapters. Core policy consumes resolved facts and explicit dependencies.
 - Error representation: Image decoder, remaining tile/refinement, media-entry source, and thumbnail generation failures use typed failures. Internal paths preserve source identity, stage/kind, backend/raw code, severity, and retryability. QML receives user-facing projections.
-- Facade/QML: `KiriImageDocument` and `KiriViewApplication` expose QML-friendly types, invokables, and signals. Viewport command planning and projection application are runtime/C++ bridge-owned; action routing input assembly still moves into application runtime. QML continues to report geometry/input facts and render projections.
+- Facade/QML: `KiriImageDocument` and `KiriViewApplication` expose QML-friendly types, invokables, and signals. Viewport command planning and projection application are runtime/C++ bridge-owned; application action routing, state input, source attachment, and command dispatch are runtime/application-layer owned. QML continues to report geometry/input facts and render projections.
 - Tests: Characterization tests lock current behavior first. Rust policy and C++ domain helpers are tested with pure/fake dependencies. Qt/KDE/filesystem adapter tests remain small. Architecture boundary tests should verify abstractions used by production code.
 
 ## Suggested Refactoring Sequence
 
-1. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, and move application action input/port assembly into application runtime/coordinator.
+1. Clarify ownership boundaries: split small `DocumentSessionRuntime` workflows first, keeping public projection updates centralized in `DocumentSessionState`.
 2. Improve error semantics and observability: extend lower-level image decoder and remaining refinement diagnostics. Preserve UI text while internal diagnostics become structured.
 3. Remove or simplify premature/parallel abstractions: phase `ImageDocumentRuntimeOperation` vocabulary by workflow family and remove compatibility wrappers after tests prove behavior preservation.
 
