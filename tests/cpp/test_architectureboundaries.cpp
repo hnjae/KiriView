@@ -72,6 +72,7 @@ private Q_SLOTS:
     void mediaEntrySourceStoreDoesNotDependOnDocumentPlanning();
     void imageDocumentSourceLoadPlanDispatchHasNamedExecutor();
     void imageDocumentOpenPlanDispatchHasNamedExecutor();
+    void imageDocumentPredecodePlanDispatchHasNamedExecutor();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
     void imagePresentationPageSlotsUseDisplaySourceVariants();
@@ -1550,6 +1551,22 @@ void TestArchitectureBoundaries::imageDocumentOpenPlanDispatchHasNamedExecutor()
         openExecutorHeader.contains(QStringLiteral("class ImageDocumentOpenRuntimePlanExecutor")));
     QVERIFY(runtimeExecutorHeader.contains(QStringLiteral("ImageDocumentOpenRuntimePlanExecutor")));
     QVERIFY(!runtimeExecutorSource.contains(QStringLiteral("m_operations.open.")));
+}
+
+void TestArchitectureBoundaries::imageDocumentPredecodePlanDispatchHasNamedExecutor()
+{
+    const QString predecodeExecutorHeader = readProjectFile(
+        QStringLiteral("src/document/imagedocumentpredecoderuntimeplanexecutor.h"));
+    const QString runtimeExecutorHeader
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimeplanexecutor.h"));
+    const QString runtimeExecutorSource
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimeplanexecutor.cpp"));
+
+    QVERIFY(predecodeExecutorHeader.contains(
+        QStringLiteral("class ImageDocumentPredecodeRuntimePlanExecutor")));
+    QVERIFY(runtimeExecutorHeader.contains(
+        QStringLiteral("ImageDocumentPredecodeRuntimePlanExecutor")));
+    QVERIFY(!runtimeExecutorSource.contains(QStringLiteral("m_operations.predecode.")));
 }
 
 void TestArchitectureBoundaries::imagePageSurfaceOwnerTypeExists()
