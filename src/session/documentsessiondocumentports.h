@@ -64,12 +64,24 @@ struct DocumentSessionImageDocumentSnapshotPort {
     DocumentSessionDocumentSignalConnector snapshotChanged;
 };
 
-struct DocumentSessionImageDocumentCommandPort {
+struct DocumentSessionImageDocumentSourceCommandPort {
     std::function<void(const QUrl &)> setSourceUrl;
+};
+
+struct DocumentSessionImageDocumentPageNavigationCommandPort {
     std::function<void()> openPreviousPage;
     std::function<void()> openNextPage;
     std::function<void(int)> openImageAtPage;
+};
+
+struct DocumentSessionImageDocumentDeletionCommandPort {
     std::function<void(FileDeletionMode)> deleteDisplayedFile;
+};
+
+struct DocumentSessionImageDocumentCommandPort {
+    DocumentSessionImageDocumentSourceCommandPort source;
+    DocumentSessionImageDocumentPageNavigationCommandPort pageNavigation;
+    DocumentSessionImageDocumentDeletionCommandPort deletion;
 };
 
 struct DocumentSessionVideoDocumentSnapshot {

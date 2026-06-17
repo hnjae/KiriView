@@ -55,7 +55,7 @@ void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeaf
     kiriview::DocumentSessionImageDocumentSnapshotPort imagePort;
     imagePort.snapshot = [&imageSnapshot]() { return imageSnapshot; };
     kiriview::DocumentSessionImageDocumentCommandPort imageCommands;
-    imageCommands.setSourceUrl = [&imageSnapshot](const QUrl &url) {
+    imageCommands.source.setSourceUrl = [&imageSnapshot](const QUrl &url) {
         imageSnapshot.sourceUrl = url;
         imageSnapshot.displayedUrl = url;
         imageSnapshot.windowTitleFileName = url.fileName();
@@ -65,10 +65,10 @@ void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeaf
         imageSnapshot.zoomPercentKnown = true;
         imageSnapshot.zoomPercent = 100.0;
     };
-    imageCommands.openPreviousPage = []() { };
-    imageCommands.openNextPage = []() { };
-    imageCommands.openImageAtPage = [](int) { };
-    imageCommands.deleteDisplayedFile = [](kiriview::FileDeletionMode) { };
+    imageCommands.pageNavigation.openPreviousPage = []() { };
+    imageCommands.pageNavigation.openNextPage = []() { };
+    imageCommands.pageNavigation.openImageAtPage = [](int) { };
+    imageCommands.deletion.deleteDisplayedFile = [](kiriview::FileDeletionMode) { };
 
     kiriview::DocumentSessionVideoDocumentSnapshotPort videoPort;
     videoPort.snapshot = [&videoSnapshot]() { return videoSnapshot; };
@@ -107,7 +107,7 @@ void TestDocumentSessionRuntimeLeafSnapshots::imageSnapshotChangeRefreshesPublic
     imagePort.snapshot = [&imageSnapshot]() { return imageSnapshot; };
     imagePort.snapshotChanged = imageSnapshotChangedConnector(emitter);
     kiriview::DocumentSessionImageDocumentCommandPort imageCommands;
-    imageCommands.setSourceUrl = [&imageSnapshot](const QUrl &url) {
+    imageCommands.source.setSourceUrl = [&imageSnapshot](const QUrl &url) {
         imageSnapshot.sourceUrl = url;
         imageSnapshot.displayedUrl = url;
         imageSnapshot.windowTitleFileName = url.fileName();
@@ -115,10 +115,10 @@ void TestDocumentSessionRuntimeLeafSnapshots::imageSnapshotChangeRefreshesPublic
         imageSnapshot.ready = !url.isEmpty();
         imageSnapshot.ordinaryDirectMediaScopeActive = !url.isEmpty();
     };
-    imageCommands.openPreviousPage = []() { };
-    imageCommands.openNextPage = []() { };
-    imageCommands.openImageAtPage = [](int) { };
-    imageCommands.deleteDisplayedFile = [](kiriview::FileDeletionMode) { };
+    imageCommands.pageNavigation.openPreviousPage = []() { };
+    imageCommands.pageNavigation.openNextPage = []() { };
+    imageCommands.pageNavigation.openImageAtPage = [](int) { };
+    imageCommands.deletion.deleteDisplayedFile = [](kiriview::FileDeletionMode) { };
 
     kiriview::DocumentSessionVideoDocumentSnapshotPort videoPort;
     videoPort.snapshot = [&videoSnapshot]() { return videoSnapshot; };

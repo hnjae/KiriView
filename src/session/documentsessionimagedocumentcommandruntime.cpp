@@ -14,8 +14,8 @@ DocumentSessionImageDocumentCommandRuntime::DocumentSessionImageDocumentCommandR
 
 void DocumentSessionImageDocumentCommandRuntime::setSourceUrl(const QUrl &sourceUrl)
 {
-    if (m_commands.setSourceUrl) {
-        m_commands.setSourceUrl(sourceUrl);
+    if (m_commands.source.setSourceUrl) {
+        m_commands.source.setSourceUrl(sourceUrl);
     }
 }
 
@@ -23,29 +23,29 @@ void DocumentSessionImageDocumentCommandRuntime::clearSourceUrl() { setSourceUrl
 
 void DocumentSessionImageDocumentCommandRuntime::openPreviousPage()
 {
-    if (m_commands.openPreviousPage) {
-        m_commands.openPreviousPage();
+    if (m_commands.pageNavigation.openPreviousPage) {
+        m_commands.pageNavigation.openPreviousPage();
     }
 }
 
 void DocumentSessionImageDocumentCommandRuntime::openNextPage()
 {
-    if (m_commands.openNextPage) {
-        m_commands.openNextPage();
+    if (m_commands.pageNavigation.openNextPage) {
+        m_commands.pageNavigation.openNextPage();
     }
 }
 
 void DocumentSessionImageDocumentCommandRuntime::openImageAtPage(int number)
 {
-    if (m_commands.openImageAtPage) {
-        m_commands.openImageAtPage(number);
+    if (m_commands.pageNavigation.openImageAtPage) {
+        m_commands.pageNavigation.openImageAtPage(number);
     }
 }
 
 void DocumentSessionImageDocumentCommandRuntime::deleteDisplayedFile(FileDeletionMode mode)
 {
-    if (m_commands.deleteDisplayedFile) {
-        m_commands.deleteDisplayedFile(mode);
+    if (m_commands.deletion.deleteDisplayedFile) {
+        m_commands.deletion.deleteDisplayedFile(mode);
     }
 }
 }

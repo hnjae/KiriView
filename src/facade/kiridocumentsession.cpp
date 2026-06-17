@@ -348,13 +348,13 @@ kiriview::DocumentSessionImageDocumentCommandPort KiriDocumentSession::imageDocu
     KiriImageDocument &document)
 {
     return kiriview::DocumentSessionImageDocumentCommandPort {
-        [&document](const QUrl &url) { document.setSourceUrl(url); },
-        [&document]() { document.openPreviousPage(); },
-        [&document]() { document.openNextPage(); },
-        [&document](int pageNumber) { document.openImageAtPage(pageNumber); },
-        [&document](kiriview::FileDeletionMode mode) {
+        { [&document](const QUrl &url) { document.setSourceUrl(url); } },
+        { [&document]() { document.openPreviousPage(); },
+            [&document]() { document.openNextPage(); },
+            [&document](int pageNumber) { document.openImageAtPage(pageNumber); } },
+        { [&document](kiriview::FileDeletionMode mode) {
             document.deleteDisplayedFile(toImageDocumentDeletionMode(mode));
-        },
+        } },
     };
 }
 

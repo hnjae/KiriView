@@ -22,21 +22,21 @@ struct ImageCommandProbe {
     kiriview::DocumentSessionImageDocumentCommandPort port()
     {
         return kiriview::DocumentSessionImageDocumentCommandPort {
-            [this](const QUrl &url) {
+            { [this](const QUrl &url) {
                 sourceUrl = url;
                 events.push_back(
                     url.isEmpty() ? QStringLiteral("clear-source") : QStringLiteral("set-source"));
-            },
-            [this]() { events.push_back(QStringLiteral("previous-page")); },
-            [this]() { events.push_back(QStringLiteral("next-page")); },
-            [this](int number) {
-                openedPageNumber = number;
-                events.push_back(QStringLiteral("open-page"));
-            },
-            [this](kiriview::FileDeletionMode mode) {
+            } },
+            { [this]() { events.push_back(QStringLiteral("previous-page")); },
+                [this]() { events.push_back(QStringLiteral("next-page")); },
+                [this](int number) {
+                    openedPageNumber = number;
+                    events.push_back(QStringLiteral("open-page"));
+                } },
+            { [this](kiriview::FileDeletionMode mode) {
                 deletionMode = mode;
                 events.push_back(QStringLiteral("delete-displayed-file"));
-            },
+            } },
         };
     }
 
