@@ -72,6 +72,7 @@ private Q_SLOTS:
     void mediaEntrySourceStoreDoesNotDependOnDocumentPlanning();
     void imagePageSurfaceOwnerTypeExists();
     void imagePageSurfaceOwnersExposeNoPresentationState();
+    void imagePresentationPageSlotsUseDisplaySourceVariants();
     void activePresentationDoesNotWritePageSurfacePresentationState();
     void productionFacadesDoNotExposePresentationBackdoorSetters();
     void mediaInformationFacadeExposesSnapshotRevision();
@@ -1566,6 +1567,17 @@ void TestArchitectureBoundaries::imagePageSurfaceOwnersExposeNoPresentationState
     }
 
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
+}
+
+void TestArchitectureBoundaries::imagePresentationPageSlotsUseDisplaySourceVariants()
+{
+    const QString header
+        = readProjectFile(QStringLiteral("src/presentation/imagepresentationruntime.h"));
+
+    QVERIFY(header.contains(QStringLiteral("enum class ImagePresentationPageSlotSourceKind")));
+    QVERIFY(header.contains(QStringLiteral("ImagePresentationPageSlotSource source")));
+    QVERIFY(!header.contains(QStringLiteral("bool hasImage = false")));
+    QVERIFY(!header.contains(QStringLiteral("ImageDisplaySourceSlot displaySource;")));
 }
 
 void TestArchitectureBoundaries::activePresentationDoesNotWritePageSurfacePresentationState()

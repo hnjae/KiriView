@@ -18,6 +18,7 @@ class TestImageDisplaySourceProjection : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void pageSlotSourceVariantsSeparateProviderReadyAndDisplayError();
     void primaryProjectionCombinesSlotScopeAndGeometry();
     void hiddenSecondaryProjectionKeepsRoleAndStatusOnly();
 };
@@ -41,6 +42,31 @@ kiriview::ImageDisplaySourceSlot displaySourceSlot(
         false,
     };
 }
+}
+
+void TestImageDisplaySourceProjection::pageSlotSourceVariantsSeparateProviderReadyAndDisplayError()
+{
+    const QSize imageSize(100, 50);
+    const kiriview::ImageDisplaySourceSlot readySource
+        = displaySourceSlot(QStringLiteral("ready"), imageSize, QSize(25, 13));
+    kiriview::ImageDisplaySourceSlot errorSource;
+    errorSource.originalSize = imageSize;
+    errorSource.rasterSize = imageSize;
+    errorSource.status = kiriview::ImageDisplaySourceStatus::Error;
+
+    const kiriview::ImagePresentationPageSlotSource ready
+        = kiriview::ImagePresentationPageSlotSource::providerReady(readySource);
+    const kiriview::ImagePresentationPageSlotSource error
+        = kiriview::ImagePresentationPageSlotSource::displayError(errorSource);
+
+    QCOMPARE(ready.kind(), kiriview::ImagePresentationPageSlotSourceKind::ProviderReady);
+    QVERIFY(ready.hasImage());
+    QCOMPARE(ready.displaySource().providerUrl, readySource.providerUrl);
+    QCOMPARE(ready.displaySource().status, kiriview::ImageDisplaySourceStatus::Ready);
+    QCOMPARE(error.kind(), kiriview::ImagePresentationPageSlotSourceKind::DisplayError);
+    QVERIFY(error.hasImage());
+    QVERIFY(error.displaySource().providerUrl.isEmpty());
+    QCOMPARE(error.displaySource().status, kiriview::ImageDisplaySourceStatus::Error);
 }
 
 void TestImageDisplaySourceProjection::primaryProjectionCombinesSlotScopeAndGeometry()
