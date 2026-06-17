@@ -21,17 +21,18 @@ let
   };
   rustHostCargoTargetDir = "${config.devenv.root}/target";
   rustHostLinkerFlag = "-C linker=${lib.getExe rustHostLinker}";
-  rustHostEnvironment = ''
-    export CARGO_TARGET_DIR=${lib.escapeShellArg rustHostCargoTargetDir}
+  rustHostEnvironment = # sh
+    ''
+      export CARGO_TARGET_DIR=${lib.escapeShellArg rustHostCargoTargetDir}
 
-    case " ''${RUSTFLAGS:-} " in
-    *" ${rustHostLinkerFlag} "*)
-        ;;
-    *)
-        export RUSTFLAGS="''${RUSTFLAGS:+$RUSTFLAGS }${rustHostLinkerFlag}"
-        ;;
-    esac
-  '';
+      case " ''${RUSTFLAGS:-} " in
+      *" ${rustHostLinkerFlag} "*)
+          ;;
+      *)
+          export RUSTFLAGS="''${RUSTFLAGS:+$RUSTFLAGS }${rustHostLinkerFlag}"
+          ;;
+      esac
+    '';
 in
 {
   _module.args = {

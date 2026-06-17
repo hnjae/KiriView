@@ -35,10 +35,11 @@ in
     "fortify3"
   ];
 
-  enterShell = ''
-    ${qtCxxqt.enterShell}
-    ${rustHostEnvironment}
-  '';
+  enterShell = # sh
+    ''
+      ${qtCxxqt.enterShell}
+      ${rustHostEnvironment}
+    '';
 
   files."compile_commands.json".json = qtCxxqt.compileCommands;
   files."rust-analyzer.toml".text = qtCxxqt.rustAnalyzerToml;
@@ -50,49 +51,48 @@ in
     kiriviewLibHeif.bin
     kiriviewLibHeif.dev
     kiriviewLibHeif.lib
-  ]
-  ++ (with pkgs; [
+
     # Flatpak
-    desktop-file-utils
-    flatpak-builder
-    jq
+    pkgs.desktop-file-utils
+    pkgs.flatpak-builder
+    pkgs.jq
 
     # Rust/Qt host development
-    cargo-nextest
-    clazy
-    cmake
-    kdePackages.extra-cmake-modules
-    kdePackages.kconfig
-    kdePackages.kcoreaddons
-    kdePackages.kimageformats
-    kdePackages.ki18n
-    kdePackages.kjobwidgets
-    kdePackages.kirigami
-    kdePackages.kirigami-addons
-    kdePackages.kio
-    kdePackages.kservice
-    kdePackages.kio-extras
-    kdePackages.kio-fuse
-    kdePackages.qqc2-desktop-style
-    kdePackages.qtbase
-    kdePackages.qtdeclarative
-    kdePackages.qtimageformats
-    kdePackages.qtmultimedia
-    kdePackages.qtsvg
-    kdePackages.qttools
-    libarchive
-    libaom
-    libde265
-    libjxl.dev
-    libjxl.out
-    libraw.dev
-    libraw.lib
-    libwebp
-    ninja
-    pipewire
-    pkg-config
-    x265
-  ]);
+    pkgs.cargo-nextest
+    pkgs.clazy
+    pkgs.cmake
+    pkgs.kdePackages.extra-cmake-modules
+    pkgs.kdePackages.kconfig
+    pkgs.kdePackages.kcoreaddons
+    pkgs.kdePackages.kimageformats
+    pkgs.kdePackages.ki18n
+    pkgs.kdePackages.kjobwidgets
+    pkgs.kdePackages.kirigami
+    pkgs.kdePackages.kirigami-addons
+    pkgs.kdePackages.kio
+    pkgs.kdePackages.kservice
+    pkgs.kdePackages.kio-extras
+    pkgs.kdePackages.kio-fuse
+    pkgs.kdePackages.qqc2-desktop-style
+    pkgs.kdePackages.qtbase
+    pkgs.kdePackages.qtdeclarative
+    pkgs.kdePackages.qtimageformats
+    pkgs.kdePackages.qtmultimedia
+    pkgs.kdePackages.qtsvg
+    pkgs.kdePackages.qttools
+    pkgs.libarchive
+    pkgs.libaom
+    pkgs.libde265
+    pkgs.libjxl.dev
+    pkgs.libjxl.out
+    pkgs.libraw.dev
+    pkgs.libraw.lib
+    pkgs.libwebp
+    pkgs.ninja
+    pkgs.pipewire
+    pkgs.pkg-config
+    pkgs.x265
+  ];
 
   languages.rust.enable = true;
   languages.nix.enable = true;

@@ -17,7 +17,10 @@
       name = "cog verify";
       description = "Lint commit messages with Cocogitto.";
       package = pkgs.cocogitto;
-      entry = "${lib.getExe pkgs.cocogitto} verify --file";
+      entry = # sh
+        ''
+          ${lib.getExe pkgs.cocogitto} verify --file
+        '';
       stages = [ "commit-msg" ];
     };
     reuse.enable = true;
@@ -48,6 +51,9 @@
   };
 
   tasks."ci:git-hooks" = {
-    exec = "${lib.getExe config.git-hooks.package} run --all-files";
+    exec = # sh
+      ''
+        ${lib.getExe config.git-hooks.package} run --all-files
+      '';
   };
 }

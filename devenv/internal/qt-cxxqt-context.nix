@@ -188,25 +188,26 @@ let
       path
     ]) qmlImportPaths
   );
-  rustAnalyzerToml = ''
-    linkedProjects = ["Cargo.toml"]
+  rustAnalyzerToml = # toml
+    ''
+      linkedProjects = ["Cargo.toml"]
 
-    [cargo]
-    targetDir = "target/rust-analyzer"
+      [cargo]
+      targetDir = "target/rust-analyzer"
 
-    [files]
-    exclude = [
-        ".cargo-vendor",
-        ".devenv",
-        ".direnv",
-        ".flatpak-builder",
-        ".flatpak-cargo",
-        ".rumdl_cache",
-        "build-dir",
-        "repo",
-        "target",
-    ]
-  '';
+      [files]
+      exclude = [
+          ".cargo-vendor",
+          ".devenv",
+          ".direnv",
+          ".flatpak-builder",
+          ".flatpak-cargo",
+          ".rumdl_cache",
+          "build-dir",
+          "repo",
+          "target",
+      ]
+    '';
   refreshCxxqtIncludes = pkgs.writeShellApplication {
     name = "refresh-cxxqt-includes";
     runtimeInputs = with pkgs; [
@@ -260,7 +261,8 @@ let
       )
     '';
   };
-  cppLintPrelude = ''
+  cppLintPrelude = # sh
+  ''
     set -euo pipefail
 
     cd ${lib.escapeShellArg config.devenv.root}
@@ -271,84 +273,88 @@ let
         exit 1
     fi
   ''
-  + lib.optionalString (cppSources == [ ]) ''
-    echo "compile_commands.json does not contain any C++ sources" >&2
-    exit 1
-  '';
-  qtBuildEnvironment = ''
-    export QMAKE=${lib.getExe' qmake "qmake6"}
+  +
+    lib.optionalString (cppSources == [ ]) # sh
+      ''
+        echo "compile_commands.json does not contain any C++ sources" >&2
+        exit 1
+      '';
+  qtBuildEnvironment = # sh
+    ''
+      export QMAKE=${lib.getExe' qmake "qmake6"}
 
-    declare -A seen_cmake_prefix_paths=()
-    cmake_prefix_path=""
-    add_cmake_prefix_path() {
-        local prefix_path=$1
+      declare -A seen_cmake_prefix_paths=()
+      cmake_prefix_path=""
+      add_cmake_prefix_path() {
+          local prefix_path=$1
 
-        if [[ -z $prefix_path || ! -d $prefix_path || -v 'seen_cmake_prefix_paths[$prefix_path]' ]]; then
-            return
-        fi
+          if [[ -z $prefix_path || ! -d $prefix_path || -v 'seen_cmake_prefix_paths[$prefix_path]' ]]; then
+              return
+          fi
 
-        seen_cmake_prefix_paths[$prefix_path]=1
-        cmake_prefix_path="''${cmake_prefix_path:+$cmake_prefix_path:}$prefix_path"
-    }
+          seen_cmake_prefix_paths[$prefix_path]=1
+          cmake_prefix_path="''${cmake_prefix_path:+$cmake_prefix_path:}$prefix_path"
+      }
 
-    add_cmake_prefix_path ${lib.escapeShellArg "${config.devenv.root}/.devenv/profile"}
-    IFS=: read -r -a existing_cmake_prefix_paths <<<"''${CMAKE_PREFIX_PATH:-}"
-    for prefix_path in "''${existing_cmake_prefix_paths[@]}"; do
-        add_cmake_prefix_path "$prefix_path"
-    done
-    export CMAKE_PREFIX_PATH="$cmake_prefix_path"
-    unset seen_cmake_prefix_paths cmake_prefix_path prefix_path
-    unset -f add_cmake_prefix_path
-  '';
-  qtRuntimeEnvironment = ''
-    ${qtBuildEnvironment}
+      add_cmake_prefix_path ${lib.escapeShellArg "${config.devenv.root}/.devenv/profile"}
+      IFS=: read -r -a existing_cmake_prefix_paths <<<"''${CMAKE_PREFIX_PATH:-}"
+      for prefix_path in "''${existing_cmake_prefix_paths[@]}"; do
+          add_cmake_prefix_path "$prefix_path"
+      done
+      export CMAKE_PREFIX_PATH="$cmake_prefix_path"
+      unset seen_cmake_prefix_paths cmake_prefix_path prefix_path
+      unset -f add_cmake_prefix_path
+    '';
+  qtRuntimeEnvironment = # sh
+    ''
+      ${qtBuildEnvironment}
 
-    export QT_PLUGIN_PATH=${lib.escapeShellArg qtPluginPath}
-    declare -A seen_runtime_library_paths=()
-    runtime_library_path=""
-    add_runtime_library_path() {
-        local library_path=$1
+      export QT_PLUGIN_PATH=${lib.escapeShellArg qtPluginPath}
+      declare -A seen_runtime_library_paths=()
+      runtime_library_path=""
+      add_runtime_library_path() {
+          local library_path=$1
 
-        if [[ -z $library_path || ! -d $library_path || -v 'seen_runtime_library_paths[$library_path]' ]]; then
-            return
-        fi
+          if [[ -z $library_path || ! -d $library_path || -v 'seen_runtime_library_paths[$library_path]' ]]; then
+              return
+          fi
 
-        seen_runtime_library_paths[$library_path]=1
-        runtime_library_path="''${runtime_library_path:+$runtime_library_path:}$library_path"
-    }
+          seen_runtime_library_paths[$library_path]=1
+          runtime_library_path="''${runtime_library_path:+$runtime_library_path:}$library_path"
+      }
 
-    IFS=: read -r -a host_runtime_library_paths <<<${lib.escapeShellArg hostRuntimeLibraryPath}
-    for library_path in "''${host_runtime_library_paths[@]}"; do
-        add_runtime_library_path "$library_path"
-    done
+      IFS=: read -r -a host_runtime_library_paths <<<${lib.escapeShellArg hostRuntimeLibraryPath}
+      for library_path in "''${host_runtime_library_paths[@]}"; do
+          add_runtime_library_path "$library_path"
+      done
 
-    # shellcheck disable=SC2206
-    nix_ldflags=( ''${NIX_LDFLAGS:-} )
-    for ((i = 0; i < ''${#nix_ldflags[@]}; i++)); do
-        case "''${nix_ldflags[$i]}" in
-        -L)
-            ((i += 1))
-            library_path="''${nix_ldflags[$i]:-}"
-            ;;
-        -L*)
-            library_path="''${nix_ldflags[$i]#-L}"
-            ;;
-        *)
-            continue
-            ;;
-        esac
+      # shellcheck disable=SC2206
+      nix_ldflags=( ''${NIX_LDFLAGS:-} )
+      for ((i = 0; i < ''${#nix_ldflags[@]}; i++)); do
+          case "''${nix_ldflags[$i]}" in
+          -L)
+              ((i += 1))
+              library_path="''${nix_ldflags[$i]:-}"
+              ;;
+          -L*)
+              library_path="''${nix_ldflags[$i]#-L}"
+              ;;
+          *)
+              continue
+              ;;
+          esac
 
-        add_runtime_library_path "$library_path"
-    done
+          add_runtime_library_path "$library_path"
+      done
 
-    IFS=: read -r -a existing_runtime_library_paths <<<"''${LD_LIBRARY_PATH:-}"
-    for library_path in "''${existing_runtime_library_paths[@]}"; do
-        add_runtime_library_path "$library_path"
-    done
-    export LD_LIBRARY_PATH="$runtime_library_path"
-    unset seen_runtime_library_paths runtime_library_path library_path
-    unset -f add_runtime_library_path
-  '';
+      IFS=: read -r -a existing_runtime_library_paths <<<"''${LD_LIBRARY_PATH:-}"
+      for library_path in "''${existing_runtime_library_paths[@]}"; do
+          add_runtime_library_path "$library_path"
+      done
+      export LD_LIBRARY_PATH="$runtime_library_path"
+      unset seen_runtime_library_paths runtime_library_path library_path
+      unset -f add_runtime_library_path
+    '';
 in
 {
   inherit
@@ -364,11 +370,12 @@ in
     qtRuntimeEnvironment
     ;
 
-  enterShell = ''
-    ${qtRuntimeEnvironment}
+  enterShell = # sh
+    ''
+      ${qtRuntimeEnvironment}
 
-    "${lib.getExe refreshCxxqtIncludes}"
-  '';
+      "${lib.getExe refreshCxxqtIncludes}"
+    '';
 
   qmllsGeneral = {
     buildDir = "${config.devenv.root}/target/cxxqt/qml_modules";
