@@ -76,6 +76,7 @@ src/navigation/imagecontainernavigationstate.cpp
 src/location/imagedocumentlocation.cpp
 src/rendering/imagerendering.cpp
 src/rendering/imagerotation.cpp
+src/document/imagedocumentanimationloaderrorport.cpp
 src/document/imagedocumentchangebatcher.cpp
 src/document/imagedocumentadjacentpredecodeschedulerport.cpp
 src/document/imagedocumentcurrentpagenumberport.cpp

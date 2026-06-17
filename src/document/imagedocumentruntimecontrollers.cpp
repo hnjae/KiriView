@@ -6,6 +6,7 @@
 #include "archive/mediaentrysourcestore.h"
 #include "async/imagecallback.h"
 #include "imagedocumentadjacentpredecodeschedulerport.h"
+#include "imagedocumentanimationloaderrorport.h"
 #include "imagedocumentcurrentpagenumberport.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentdeletionprogressport.h"
@@ -50,11 +51,12 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
     ExternalPredecodedImageFinder externalPredecodedImageFinder
         = std::move(runtimeDependencies.externalPredecodedImageFinder);
     m_mediaEntrySourceStore = std::move(runtimeDependencies.mediaEntrySourceStore);
+    m_animationLoadErrorPort = std::make_unique<ImageDocumentAnimationLoadErrorPort>();
     m_pageSurfaceController = std::make_unique<ImagePageSurfaceController>(documentObject,
         ImagePageSurfaceController::Callbacks {
             [this](ImageDocumentChange change) { invokeIfSet(m_callbacks.notify, change); },
             [this](const QString &errorString) {
-                m_openController->finishAnimationLoadWithError(errorString);
+                m_animationLoadErrorPort->finishAnimationLoadWithError(errorString);
             },
         },
         runtimeDependencies.cacheBudgets);
@@ -124,6 +126,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             [this]() { m_primaryPageSlotPort->clear(); },
         },
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
+    m_animationLoadErrorPort->setOpenController(m_openController.get());
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(state,
         *m_pageSurfaceController, *m_navigationService, *m_spreadController,
         [this](ImageDocumentRuntimePlan plan) { dispatchPlan(plan); });
