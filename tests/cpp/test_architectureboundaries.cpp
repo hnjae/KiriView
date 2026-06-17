@@ -72,6 +72,7 @@ private Q_SLOTS:
     void asyncImageIoJobsDoNotOwnOpenedCollectionCandidateLoading();
     void mediaEntrySourceStoreDoesNotDependOnDocumentPlanning();
     void documentSessionDirectMediaScopeUsesNamedPort();
+    void documentSessionDirectMediaActivityUsesNamedPort();
     void imageDocumentSourceLoadPlanDispatchHasNamedExecutor();
     void imageDocumentOpenPlanDispatchHasNamedExecutor();
     void imageDocumentPredecodePlanDispatchHasNamedExecutor();
@@ -1567,6 +1568,26 @@ void TestArchitectureBoundaries::documentSessionDirectMediaScopeUsesNamedPort()
     QVERIFY(!runtimeSource.contains(QStringLiteral("directMediaNavigationLoadScope()")));
     QVERIFY(!runtimeSource.contains(QStringLiteral("activeDirectMediaCursorUrl()")));
     QVERIFY(!runtimeSource.contains(QStringLiteral("directMediaCursorMatches")));
+}
+
+void TestArchitectureBoundaries::documentSessionDirectMediaActivityUsesNamedPort()
+{
+    const QString portHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessiondirectmediaactivityport.h"));
+    const QString runtimeHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.h"));
+    const QString runtimeSource
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.cpp"));
+
+    QVERIFY(portHeader.contains(QStringLiteral("class DocumentSessionDirectMediaActivityPort")));
+    QVERIFY(runtimeHeader.contains(QStringLiteral("DocumentSessionDirectMediaActivityPort")));
+    QVERIFY(!runtimeHeader.contains(QStringLiteral("directMediaNavigationActive")));
+    QVERIFY(
+        !runtimeHeader.contains(QStringLiteral("directImageLoadMayUseImageDocumentSourceScope")));
+    QVERIFY(!runtimeSource.contains(
+        QStringLiteral("DocumentSessionRuntime::directMediaNavigationActive")));
+    QVERIFY(!runtimeSource.contains(
+        QStringLiteral("DocumentSessionRuntime::directImageLoadMayUseImageDocumentSourceScope")));
 }
 
 void TestArchitectureBoundaries::imageDocumentSourceLoadPlanDispatchHasNamedExecutor()
