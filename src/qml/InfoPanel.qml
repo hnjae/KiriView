@@ -67,39 +67,45 @@ Controls.Pane {
             opacity: 0.25
         }
 
-        Repeater {
-            model: sectionRoot.rowModel
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Kirigami.Units.smallSpacing
             visible: sectionRoot.expanded
 
-            delegate: RowLayout {
-                id: rowDelegate
+            Repeater {
+                model: sectionRoot.rowModel
 
-                required property string label
-                required property string value
+                delegate: RowLayout {
+                    id: rowDelegate
 
-                spacing: Kirigami.Units.smallSpacing
+                    required property string label
+                    required property string value
 
-                Controls.Label {
                     Layout.fillWidth: true
-                    Layout.minimumWidth: Kirigami.Units.gridUnit * 5
-                    Layout.preferredWidth: Kirigami.Units.gridUnit * 7
-                    color: Kirigami.Theme.disabledTextColor
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
-                    text: rowDelegate.label
-                    textFormat: Text.PlainText
-                    wrapMode: Text.NoWrap
-                }
+                    spacing: Kirigami.Units.smallSpacing
 
-                Controls.Label {
-                    Layout.fillWidth: true
-                    color: Kirigami.Theme.textColor
-                    elide: Text.ElideMiddle
-                    horizontalAlignment: Text.AlignRight
-                    maximumLineCount: 1
-                    text: rowDelegate.value
-                    textFormat: Text.PlainText
-                    wrapMode: Text.NoWrap
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: Kirigami.Units.gridUnit * 5
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 7
+                        color: Kirigami.Theme.disabledTextColor
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        text: rowDelegate.label
+                        textFormat: Text.PlainText
+                        wrapMode: Text.NoWrap
+                    }
+
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        color: Kirigami.Theme.textColor
+                        elide: Text.ElideMiddle
+                        horizontalAlignment: Text.AlignRight
+                        maximumLineCount: 1
+                        text: rowDelegate.value
+                        textFormat: Text.PlainText
+                        wrapMode: Text.NoWrap
+                    }
                 }
             }
         }
