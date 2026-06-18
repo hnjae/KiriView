@@ -76,6 +76,7 @@ private Q_SLOTS:
     void documentSessionMediaPredecodeInputUsesNamedPort();
     void documentSessionDirectMediaNavigationInputUsesNamedPort();
     void documentSessionDirectMediaNavigationUsesCoordinator();
+    void documentSessionImageDocumentSyncUsesRuntime();
     void documentSessionVideoDocumentSyncUsesRuntime();
     void imageDocumentSourceLoadPlanDispatchHasNamedExecutor();
     void imageDocumentOpenPlanDispatchHasNamedExecutor();
@@ -1672,6 +1673,30 @@ void TestArchitectureBoundaries::documentSessionVideoDocumentSyncUsesRuntime()
         !runtimeSource.contains(QStringLiteral("DocumentSessionRuntime::syncFromVideoDocument")));
     QVERIFY(!runtimeSource.contains(QStringLiteral("documentSessionVideoDocumentSyncPlan")));
     QVERIFY(!runtimeSource.contains(QStringLiteral("DocumentSessionVideoDocumentSyncOperation")));
+}
+
+void TestArchitectureBoundaries::documentSessionImageDocumentSyncUsesRuntime()
+{
+    const QString syncRuntimeHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionimagedocumentsyncruntime.h"));
+    const QString runtimeHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.h"));
+    const QString runtimeSource
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.cpp"));
+
+    QVERIFY(syncRuntimeHeader.contains(
+        QStringLiteral("class DocumentSessionImageDocumentSyncRuntime")));
+    QVERIFY(runtimeHeader.contains(QStringLiteral("DocumentSessionImageDocumentSyncRuntime")));
+    QVERIFY(!runtimeHeader.contains(QStringLiteral("documentsessionimagedocumentsync.h")));
+    QVERIFY(!runtimeHeader.contains(QStringLiteral("documentsessiondirectimagecursorsync.h")));
+    QVERIFY(!runtimeSource.contains(
+        QStringLiteral("DocumentSessionRuntime::syncDirectImageCursorFromDocument")));
+    QVERIFY(!runtimeSource.contains(QStringLiteral("documentSessionImageDocumentSyncPlan")));
+    QVERIFY(!runtimeSource.contains(QStringLiteral("documentSessionDirectImageCursorSyncPlan")));
+    QVERIFY(!runtimeSource.contains(
+        QStringLiteral("DocumentSessionImageDocumentSyncDirectMediaOperation")));
+    QVERIFY(!runtimeSource.contains(
+        QStringLiteral("DocumentSessionImageDocumentSyncProjectionOperation")));
 }
 
 void TestArchitectureBoundaries::imageDocumentSourceLoadPlanDispatchHasNamedExecutor()
