@@ -8,14 +8,13 @@
 #include "navigation/directmedianavigationmodel.h"
 #include "session/activenavigationprojection.h"
 #include "session/documentsessionactivenavigationruntime.h"
-#include "session/documentsessiondirectimagecursorsync.h"
 #include "session/documentsessiondirectmediaactivityport.h"
 #include "session/documentsessiondirectmedianavigationcoordinator.h"
 #include "session/documentsessiondirectmedianavigationinputport.h"
 #include "session/documentsessiondirectmediascopeport.h"
 #include "session/documentsessiondocumentports.h"
 #include "session/documentsessionimagedocumentcommandruntime.h"
-#include "session/documentsessionimagedocumentsync.h"
+#include "session/documentsessionimagedocumentsyncruntime.h"
 #include "session/documentsessionmediadeletioncompletionruntime.h"
 #include "session/documentsessionmediadeletionruntime.h"
 #include "session/documentsessionmediaopenwithplanport.h"
@@ -161,13 +160,13 @@ private:
     void cancelMediaOpenWith();
     DocumentSessionVideoOutputAttachmentPort videoOutputAttachmentPort();
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
-    bool syncDirectImageCursorFromDocument();
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
     DocumentSessionPublicSnapshotInput publicSnapshotInput(quint64 inputRevision) const;
 
     QObject *m_owner = nullptr;
     DocumentSessionImageDocumentSnapshotPort m_imageDocument;
     DocumentSessionImageDocumentCommandRuntime m_imageDocumentCommandRuntime;
+    DocumentSessionImageDocumentSyncRuntime m_imageDocumentSyncRuntime;
     DocumentSessionVideoDocumentSnapshotPort m_videoDocument;
     DocumentSessionVideoDocumentCommandRuntime m_videoDocumentCommandRuntime;
     DocumentSessionState m_state;

@@ -72,6 +72,16 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     : m_owner(owner)
     , m_imageDocument(std::move(imageDocument))
     , m_imageDocumentCommandRuntime(std::move(imageCommands))
+    , m_imageDocumentSyncRuntime(DocumentSessionImageDocumentSyncRuntimePorts {
+          [this](const QUrl &url) { return m_state.confirmDirectImageCursor(url); },
+          [this]() { return m_state.restoreDirectImageCursorAfterFailure(); },
+          [this](const QUrl &url) { m_state.setSourceIdentity(url); },
+          [this](bool inProgress) { m_state.setFileDeletionInProgress(inProgress); },
+          [this]() { m_directMediaNavigationCoordinator.refresh(m_owner); },
+          [this]() { cacheDisplayedMediaPredecodeImages(); },
+          [this]() { publishActiveNavigationForImagePages(); },
+          [this]() { recomputePublicProjection(); },
+      })
     , m_videoDocument(std::move(videoDocument))
     , m_videoDocumentCommandRuntime(std::move(videoCommands),
           [this](const DocumentSessionVideoOutputAttachmentPort &attachmentPort) {
@@ -152,7 +162,8 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
               setDocumentKind(DocumentSessionKind::Video);
           },
           [this]() {
-              const bool changed = syncDirectImageCursorFromDocument();
+              const bool changed = m_imageDocumentSyncRuntime.syncDirectImageCursor(
+                  m_state.documentKind(), m_state.directMediaCursor(), m_imagePublicSnapshot);
               logDirectMediaScope(
                   "direct image cursor synced from document", m_state.directMediaScope());
               return changed;
@@ -607,56 +618,16 @@ void DocumentSessionRuntime::handleImageDocumentSnapshotChanged()
     const ImageDocumentPageActiveNavigationSnapshot previousPageNavigation
         = m_imagePublicSnapshot.pageNavigation;
     refreshImagePublicSnapshot();
-    if (m_routingSource || m_state.documentKind() != DocumentSessionKind::Image) {
-        return;
-    }
-
-    const bool directMediaScopeChanged = syncDirectImageCursorFromDocument();
-    const DocumentSessionImageDocumentSyncPlan plan
-        = documentSessionImageDocumentSyncPlan(DocumentSessionImageDocumentSyncInput {
-            m_routingSource,
-            m_state.documentKind(),
-            m_directMediaActivityPort.directImageSourceScopeEligible(),
-            m_directMediaActivityPort.navigationActive(),
-            m_state.directMediaNavigationKnown(),
-            directMediaScopeChanged,
-            previousPageNavigation,
-            m_imagePublicSnapshot,
-        });
-    if (!plan.active) {
-        return;
-    }
-
-    if (plan.setSourceIdentity) {
-        m_state.setSourceIdentity(plan.sourceIdentityUrl);
-    }
-    if (plan.syncFileDeletionProgress) {
-        m_state.setFileDeletionInProgress(plan.fileDeletionInProgress);
-    }
-
-    switch (plan.directMediaOperation) {
-    case DocumentSessionImageDocumentSyncDirectMediaOperation::None:
-        break;
-    case DocumentSessionImageDocumentSyncDirectMediaOperation::RefreshDirectMediaNavigation:
-        m_directMediaNavigationCoordinator.refresh(m_owner);
-        break;
-    case DocumentSessionImageDocumentSyncDirectMediaOperation::CacheDisplayedMediaPredecodeImages:
-        cacheDisplayedMediaPredecodeImages();
-        break;
-    }
-
-    switch (plan.projectionOperation) {
-    case DocumentSessionImageDocumentSyncProjectionOperation::None:
-        return;
-    case DocumentSessionImageDocumentSyncProjectionOperation::RecomputePublicProjection:
-        recomputePublicProjection();
-        return;
-    case DocumentSessionImageDocumentSyncProjectionOperation::PublishImagePageActiveNavigation:
-        setActiveNavigationRevealContext(
-            ActiveNavigationRevealContext { ActiveNavigationRevealIntent::ProgrammaticSync });
-        publishActiveNavigationForImagePages();
-        return;
-    }
+    m_imageDocumentSyncRuntime.sync(DocumentSessionImageDocumentSyncRuntimeInput {
+        m_routingSource,
+        m_state.documentKind(),
+        m_directMediaActivityPort.directImageSourceScopeEligible(),
+        m_directMediaActivityPort.navigationActive(),
+        m_state.directMediaNavigationKnown(),
+        m_state.directMediaCursor(),
+        previousPageNavigation,
+        m_imagePublicSnapshot,
+    });
 }
 
 void DocumentSessionRuntime::handleVideoDocumentSnapshotChanged()
@@ -790,26 +761,6 @@ DocumentSessionVideoOutputAttachmentPort DocumentSessionRuntime::videoOutputAtta
 void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion)
 {
     m_mediaDeletionCompletionRuntime.apply(completion);
-}
-
-bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
-{
-    const DocumentSessionDirectImageCursorSyncPlan plan
-        = documentSessionDirectImageCursorSyncPlan(DocumentSessionDirectImageCursorSyncInput {
-            m_state.documentKind(),
-            m_state.directMediaCursor(),
-            m_imagePublicSnapshot,
-        });
-    switch (plan.operation) {
-    case DocumentSessionDirectImageCursorSyncOperation::None:
-        return false;
-    case DocumentSessionDirectImageCursorSyncOperation::ConfirmDirectImageCursor:
-        return m_state.confirmDirectImageCursor(plan.url);
-    case DocumentSessionDirectImageCursorSyncOperation::RestoreDirectImageCursorAfterFailure:
-        return m_state.restoreDirectImageCursorAfterFailure();
-    }
-
-    return false;
 }
 
 ActiveZoomSnapshot DocumentSessionRuntime::activeZoomSnapshotForKind(DocumentSessionKind kind) const

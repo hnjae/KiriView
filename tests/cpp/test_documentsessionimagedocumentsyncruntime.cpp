@@ -148,8 +148,10 @@ void TestDocumentSessionImageDocumentSyncRuntime::
     publishesImagePageNavigationWhenTheLeafNavigationChanges()
 {
     ImageSyncFixture fixture;
+    fixture.confirmedCursorChanged = false;
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     kiriview::DocumentSessionImageDocumentSyncRuntimeInput input = activeInput(imageUrl);
+    input.directImageLoadMayUseImageDocumentSourceScope = true;
     input.previousPageNavigation.known = false;
     input.image.pageNavigation.known = true;
     input.image.pageNavigation.currentNumber = 2;
