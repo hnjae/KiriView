@@ -120,16 +120,6 @@ QString QImageReaderTileDecodeDiagnostics::userMessage() const
     return {};
 }
 
-QString QImageReaderDisplayDecodeDiagnostics::userMessage() const
-{
-    for (auto failure = failures.crbegin(); failure != failures.crend(); ++failure) {
-        if (!failure->userMessage.isEmpty()) {
-            return failure->userMessage;
-        }
-    }
-    return {};
-}
-
 std::shared_ptr<QImageReaderTileSource> QImageReaderTileSource::open(
     const QByteArray &data, const QByteArray &format, QString *errorString)
 {

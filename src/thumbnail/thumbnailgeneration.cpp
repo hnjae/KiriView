@@ -189,8 +189,13 @@ QImage renderedThumbnailImage(
                     }
                     return {};
                 }
-                return image.displayImage.refinementSource->decodeBlockingDisplayImage(
-                    maximumLongEdge, errorString);
+                kiriview::ImageTileSourceDisplayDecodeResult result
+                    = image.displayImage.refinementSource
+                          ->decodeBlockingDisplayImageWithDiagnostics(maximumLongEdge);
+                if (result.image.isNull() && errorString != nullptr) {
+                    *errorString = result.diagnostics.userMessage();
+                }
+                return result.image;
             } else {
                 Q_UNUSED(errorString)
                 return thumbnailFrame(image.firstFrame, maximumLongEdge);

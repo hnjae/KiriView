@@ -46,41 +46,12 @@ struct QImageReaderTileDecodeResult {
     QImageReaderTileDecodeDiagnostics diagnostics;
 };
 
-enum class QImageReaderDisplayDecodeOperation {
-    FirstDisplayImage,
-    RasterDisplayImage,
-    BlockingDisplayImage,
-};
-
-enum class QImageReaderDisplayDecodeFailureSeverity {
-    Error,
-};
-
-struct QImageReaderDisplayDecodeFailure {
-    QImageReaderDisplayDecodeOperation operation
-        = QImageReaderDisplayDecodeOperation::RasterDisplayImage;
-    QString userMessage;
-    QString diagnosticDetail;
-    QImageReaderDisplayDecodeFailureSeverity severity
-        = QImageReaderDisplayDecodeFailureSeverity::Error;
-    bool retryable = false;
-};
-
-struct QImageReaderDisplayDecodeDiagnostics {
-    std::vector<QImageReaderDisplayDecodeFailure> failures;
-
-    QString userMessage() const;
-};
-
-struct QImageReaderDisplayDecodeResult {
-    QImage image;
-    QImageReaderDisplayDecodeDiagnostics diagnostics;
-};
-
-struct QImageReaderFirstDisplayDecodeResult {
-    FirstDisplayImageDecodeResult firstDisplay;
-    QImageReaderDisplayDecodeDiagnostics diagnostics;
-};
+using QImageReaderDisplayDecodeOperation = ImageTileSourceDisplayDecodeOperation;
+using QImageReaderDisplayDecodeFailureSeverity = ImageTileSourceDisplayDecodeFailureSeverity;
+using QImageReaderDisplayDecodeFailure = ImageTileSourceDisplayDecodeFailure;
+using QImageReaderDisplayDecodeDiagnostics = ImageTileSourceDisplayDecodeDiagnostics;
+using QImageReaderDisplayDecodeResult = ImageTileSourceDisplayDecodeResult;
+using QImageReaderFirstDisplayDecodeResult = ImageTileSourceFirstDisplayDecodeResult;
 
 class QImageReaderTileSource final : public ImageTileSource
 {
@@ -96,15 +67,15 @@ public:
         const TileRequest &request, QString *errorString) const override;
     QImageReaderTileDecodeResult decodeTileWithDiagnostics(const TileRequest &request) const;
     QImageReaderFirstDisplayDecodeResult decodeFirstDisplayImageWithDiagnostics(
-        const ImageFirstDisplayDecodeContext &context) const;
+        const ImageFirstDisplayDecodeContext &context) const override;
     FirstDisplayImageDecodeResult decodeFirstDisplayImage(
         const ImageFirstDisplayDecodeContext &context, QString *errorString) const override;
     bool supportsRasterDisplayRefinement() const override;
     QImageReaderDisplayDecodeResult decodeRasterDisplayImageWithDiagnostics(
-        const QSize &rasterSize) const;
+        const QSize &rasterSize) const override;
     QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *errorString) const override;
     QImageReaderDisplayDecodeResult decodeBlockingDisplayImageWithDiagnostics(
-        int maximumLongEdge) const;
+        int maximumLongEdge) const override;
     QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const override;
     qsizetype byteCost() const override;
     StaticImageReaderTransform imageReaderTransform() const override;

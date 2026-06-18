@@ -128,9 +128,10 @@ namespace {
             return { work.ticket, std::move(work.demandKey), work.renderContext, {}, false };
         }
 
-        QString errorString;
-        QImage image = work.source->decodeRasterDisplayImage(work.rasterSize, &errorString);
-        Q_UNUSED(errorString);
+        ImageTileSourceDisplayDecodeResult decodeResult
+            = work.source->decodeRasterDisplayImageWithDiagnostics(work.rasterSize);
+        Q_UNUSED(decodeResult.diagnostics);
+        QImage image = std::move(decodeResult.image);
         if (image.isNull()) {
             return { work.ticket, std::move(work.demandKey), work.renderContext, {}, false };
         }

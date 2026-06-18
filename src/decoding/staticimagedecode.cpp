@@ -17,14 +17,25 @@ QString errorStringValue(QString *errorString)
 }
 
 kiriview::DecodedImageResult failedStaticDecodedImageResult(
-    kiriview::DecodedImageFailureOperation operation, QString *errorString)
+    kiriview::DecodedImageFailureOperation operation, QString *errorString,
+    const kiriview::ImageTileSourceDisplayDecodeDiagnostics *diagnostics = nullptr)
 {
-    const QString message = errorStringValue(errorString);
+    QString message = diagnostics == nullptr ? QString() : diagnostics->userMessage();
+    if (message.isEmpty()) {
+        message = errorStringValue(errorString);
+    }
+    QString diagnosticDetail = diagnostics == nullptr ? QString() : diagnostics->diagnosticDetail();
+    if (diagnosticDetail.isEmpty()) {
+        diagnosticDetail = message;
+    }
+    if (errorString != nullptr && !message.isEmpty()) {
+        *errorString = message;
+    }
     return kiriview::failedDecodedImageResult(kiriview::DecodedImageFailure {
         message,
         kiriview::DecodedImageFailureRoute::Unknown,
         operation,
-        message,
+        diagnosticDetail,
         kiriview::DecodedImageFailureSeverity::Error,
         false,
     });
@@ -86,35 +97,39 @@ DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> sou
             DecodedImageFailureOperation::OpenStaticImageSource, errorString);
     }
 
-    FirstDisplayImageDecodeResult firstDisplayResult
-        = source->decodeFirstDisplayImage(request.firstDisplay(), errorString);
-    switch (firstDisplayResult.status) {
+    ImageTileSourceFirstDisplayDecodeResult firstDisplayResult
+        = source->decodeFirstDisplayImageWithDiagnostics(request.firstDisplay());
+    switch (firstDisplayResult.firstDisplay.status) {
     case FirstDisplayImageDecodeStatus::Ready:
-        if (firstDisplayResult.image.isNull()) {
+        if (firstDisplayResult.firstDisplay.image.isNull()) {
             return failedStaticDecodedImageResult(
-                DecodedImageFailureOperation::DecodeFirstDisplayImage, errorString);
+                DecodedImageFailureOperation::DecodeFirstDisplayImage, errorString,
+                &firstDisplayResult.diagnostics);
         }
         return successfulDecodedImageResult(StaticDecodedImage {
-            staticDisplayPayload(std::move(source), request, std::move(firstDisplayResult.image),
-                true, firstDisplayResult.displayPixelsPerSourcePixel),
+            staticDisplayPayload(std::move(source), request,
+                std::move(firstDisplayResult.firstDisplay.image), true,
+                firstDisplayResult.firstDisplay.displayPixelsPerSourcePixel),
             {},
         });
     case FirstDisplayImageDecodeStatus::NotImplemented:
         break;
     case FirstDisplayImageDecodeStatus::Error:
-        return failedStaticDecodedImageResult(
-            DecodedImageFailureOperation::DecodeFirstDisplayImage, errorString);
+        return failedStaticDecodedImageResult(DecodedImageFailureOperation::DecodeFirstDisplayImage,
+            errorString, &firstDisplayResult.diagnostics);
     }
 
-    QImage preview
-        = source->decodeBlockingDisplayImage(imageBlockingDisplayLongEdgeMax, errorString);
-    if (preview.isNull()) {
+    ImageTileSourceDisplayDecodeResult previewResult
+        = source->decodeBlockingDisplayImageWithDiagnostics(imageBlockingDisplayLongEdgeMax);
+    if (previewResult.image.isNull()) {
         return failedStaticDecodedImageResult(
-            DecodedImageFailureOperation::DecodeBlockingDisplayImage, errorString);
+            DecodedImageFailureOperation::DecodeBlockingDisplayImage, errorString,
+            &previewResult.diagnostics);
     }
 
     return successfulDecodedImageResult(StaticDecodedImage {
-        staticDisplayPayload(std::move(source), request, std::move(preview), false, 0.0),
+        staticDisplayPayload(
+            std::move(source), request, std::move(previewResult.image), false, 0.0),
         {},
     });
 }

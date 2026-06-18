@@ -15,6 +15,7 @@
 #include <QtGlobal>
 #include <memory>
 #include <optional>
+#include <vector>
 
 namespace kiriview {
 inline constexpr int imageBlockingDisplayLongEdgeMax = 2048;
@@ -38,6 +39,43 @@ struct FirstDisplayImageDecodeResult {
     qreal displayPixelsPerSourcePixel = 0.0;
 };
 
+enum class ImageTileSourceDisplayDecodeOperation {
+    FirstDisplayImage,
+    RasterDisplayImage,
+    BlockingDisplayImage,
+};
+
+enum class ImageTileSourceDisplayDecodeFailureSeverity {
+    Error,
+};
+
+struct ImageTileSourceDisplayDecodeFailure {
+    ImageTileSourceDisplayDecodeOperation operation
+        = ImageTileSourceDisplayDecodeOperation::RasterDisplayImage;
+    QString userMessage;
+    QString diagnosticDetail;
+    ImageTileSourceDisplayDecodeFailureSeverity severity
+        = ImageTileSourceDisplayDecodeFailureSeverity::Error;
+    bool retryable = false;
+};
+
+struct ImageTileSourceDisplayDecodeDiagnostics {
+    std::vector<ImageTileSourceDisplayDecodeFailure> failures;
+
+    QString userMessage() const;
+    QString diagnosticDetail() const;
+};
+
+struct ImageTileSourceDisplayDecodeResult {
+    QImage image;
+    ImageTileSourceDisplayDecodeDiagnostics diagnostics;
+};
+
+struct ImageTileSourceFirstDisplayDecodeResult {
+    FirstDisplayImageDecodeResult firstDisplay;
+    ImageTileSourceDisplayDecodeDiagnostics diagnostics;
+};
+
 struct StaticImageReaderTransform {
     QImageIOHandler::Transformations transformations = QImageIOHandler::TransformationNone;
 
@@ -53,10 +91,16 @@ public:
     virtual std::optional<DecodedTile> decodeTile(
         const TileRequest &request, QString *errorString) const
         = 0;
+    virtual ImageTileSourceFirstDisplayDecodeResult decodeFirstDisplayImageWithDiagnostics(
+        const ImageFirstDisplayDecodeContext &context) const;
     virtual FirstDisplayImageDecodeResult decodeFirstDisplayImage(
         const ImageFirstDisplayDecodeContext &context, QString *errorString) const;
     virtual bool supportsRasterDisplayRefinement() const;
+    virtual ImageTileSourceDisplayDecodeResult decodeRasterDisplayImageWithDiagnostics(
+        const QSize &rasterSize) const;
     virtual QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *errorString) const;
+    virtual ImageTileSourceDisplayDecodeResult decodeBlockingDisplayImageWithDiagnostics(
+        int maximumLongEdge) const;
     virtual QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const = 0;
     virtual qsizetype byteCost() const = 0;
     virtual bool isResolutionIndependent() const;
