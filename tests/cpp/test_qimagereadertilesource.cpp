@@ -50,6 +50,21 @@ QByteArray jpegWriterFormat()
     return imageWriterSupports(QByteArrayLiteral("jpg")) ? QByteArrayLiteral("jpg")
                                                          : QByteArrayLiteral("jpeg");
 }
+
+void verifyDisplayFailure(const kiriview::QImageReaderDisplayDecodeResult &result,
+    kiriview::QImageReaderDisplayDecodeOperation expectedOperation)
+{
+    QVERIFY(result.image.isNull());
+    QCOMPARE(result.diagnostics.failures.size(), 1);
+
+    const kiriview::QImageReaderDisplayDecodeFailure &failure = result.diagnostics.failures.front();
+    QCOMPARE(failure.operation, expectedOperation);
+    QVERIFY(!failure.userMessage.isEmpty());
+    QVERIFY(!failure.diagnosticDetail.isEmpty());
+    QCOMPARE(failure.severity, kiriview::QImageReaderDisplayDecodeFailureSeverity::Error);
+    QVERIFY(!failure.retryable);
+    QCOMPARE(result.diagnostics.userMessage(), failure.userMessage);
+}
 }
 
 class TestQImageReaderTileSource : public QObject
@@ -59,6 +74,7 @@ class TestQImageReaderTileSource : public QObject
 private Q_SLOTS:
     void sourceDecodesBlockingDisplayImageAndTile();
     void failedTileDecodePreservesAttemptDiagnostics();
+    void failedDisplayDecodePreservesOperationDiagnostics();
     void jpegSourceDecodesFirstDisplayToViewport();
     void jpegSourceSkipsFirstDisplayWhenImageFitsViewport();
     void pngSourceLeavesFirstDisplayNotImplemented();
@@ -114,6 +130,34 @@ void TestQImageReaderTileSource::failedTileDecodePreservesAttemptDiagnostics()
         = source.decodeTile(request, &compatibilityError);
     QVERIFY(!compatibilityTile.has_value());
     QCOMPARE(compatibilityError, result.diagnostics.userMessage());
+}
+
+void TestQImageReaderTileSource::failedDisplayDecodePreservesOperationDiagnostics()
+{
+    kiriview::QImageReaderTileSource source(QByteArrayLiteral("not image data"),
+        QByteArrayLiteral("png"), QSize(4, 4), kiriview::StaticImageReaderTransform {});
+
+    const kiriview::QImageReaderDisplayDecodeResult rasterResult
+        = source.decodeRasterDisplayImageWithDiagnostics(QSize(2, 2));
+    verifyDisplayFailure(
+        rasterResult, kiriview::QImageReaderDisplayDecodeOperation::RasterDisplayImage);
+
+    QString rasterCompatibilityError;
+    const QImage rasterCompatibilityImage
+        = source.decodeRasterDisplayImage(QSize(2, 2), &rasterCompatibilityError);
+    QVERIFY(rasterCompatibilityImage.isNull());
+    QCOMPARE(rasterCompatibilityError, rasterResult.diagnostics.userMessage());
+
+    const kiriview::QImageReaderDisplayDecodeResult blockingResult
+        = source.decodeBlockingDisplayImageWithDiagnostics(2);
+    verifyDisplayFailure(
+        blockingResult, kiriview::QImageReaderDisplayDecodeOperation::BlockingDisplayImage);
+
+    QString blockingCompatibilityError;
+    const QImage blockingCompatibilityImage
+        = source.decodeBlockingDisplayImage(2, &blockingCompatibilityError);
+    QVERIFY(blockingCompatibilityImage.isNull());
+    QCOMPARE(blockingCompatibilityError, blockingResult.diagnostics.userMessage());
 }
 
 void TestQImageReaderTileSource::jpegSourceDecodesFirstDisplayToViewport()
