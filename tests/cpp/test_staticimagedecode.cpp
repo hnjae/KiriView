@@ -38,6 +38,23 @@ public:
         return std::nullopt;
     }
 
+    kiriview::ImageTileSourceFirstDisplayDecodeResult decodeFirstDisplayImageWithDiagnostics(
+        const kiriview::ImageFirstDisplayDecodeContext &) const override
+    {
+        ++firstDisplayDecodeCount;
+        kiriview::ImageTileSourceFirstDisplayDecodeResult result;
+        result.firstDisplay = firstDisplayResult;
+        if (firstDisplayResult.status == kiriview::FirstDisplayImageDecodeStatus::Error) {
+            result.diagnostics.failures.push_back(kiriview::ImageTileSourceDisplayDecodeFailure {
+                kiriview::ImageTileSourceDisplayDecodeOperation::FirstDisplayImage,
+                firstDisplayError,
+                firstDisplayDiagnosticDetail.isEmpty() ? firstDisplayError
+                                                       : firstDisplayDiagnosticDetail,
+            });
+        }
+        return result;
+    }
+
     kiriview::FirstDisplayImageDecodeResult decodeFirstDisplayImage(
         const kiriview::ImageFirstDisplayDecodeContext &, QString *errorString) const override
     {
@@ -46,6 +63,25 @@ public:
             *errorString = firstDisplayError;
         }
         return firstDisplayResult;
+    }
+
+    kiriview::ImageTileSourceDisplayDecodeResult decodeBlockingDisplayImageWithDiagnostics(
+        int maximumLongEdge) const override
+    {
+        ++blockingDisplayDecodeCount;
+        blockingDisplayMaximumLongEdge = maximumLongEdge;
+
+        kiriview::ImageTileSourceDisplayDecodeResult result;
+        result.image = blockingDisplay;
+        if (blockingDisplay.isNull()) {
+            result.diagnostics.failures.push_back(kiriview::ImageTileSourceDisplayDecodeFailure {
+                kiriview::ImageTileSourceDisplayDecodeOperation::BlockingDisplayImage,
+                blockingDisplayError,
+                blockingDisplayDiagnosticDetail.isEmpty() ? blockingDisplayError
+                                                          : blockingDisplayDiagnosticDetail,
+            });
+        }
+        return result;
     }
 
     QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const override
@@ -62,6 +98,8 @@ public:
     QImage blockingDisplay;
     QString firstDisplayError;
     QString blockingDisplayError;
+    QString firstDisplayDiagnosticDetail;
+    QString blockingDisplayDiagnosticDetail;
     mutable int firstDisplayDecodeCount = 0;
     mutable int blockingDisplayDecodeCount = 0;
     mutable int blockingDisplayMaximumLongEdge = 0;
@@ -172,6 +210,7 @@ void TestStaticImageDecode::staticResultReportsFirstDisplayErrors()
     auto source = std::make_shared<ResultTileSource>();
     source->firstDisplayResult.status = kiriview::FirstDisplayImageDecodeStatus::Error;
     source->firstDisplayError = QStringLiteral("first display failed");
+    source->firstDisplayDiagnosticDetail = QStringLiteral("first display backend detail");
     source->blockingDisplay = testImage(QSize(12, 9));
 
     QString errorString;
@@ -183,7 +222,7 @@ void TestStaticImageDecode::staticResultReportsFirstDisplayErrors()
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("first display failed"));
     QCOMPARE(failure->operation, kiriview::DecodedImageFailureOperation::DecodeFirstDisplayImage);
-    QCOMPARE(failure->diagnosticDetail, QStringLiteral("first display failed"));
+    QCOMPARE(failure->diagnosticDetail, QStringLiteral("first display backend detail"));
     QCOMPARE(failure->severity, kiriview::DecodedImageFailureSeverity::Error);
     QVERIFY(!failure->retryable);
     QCOMPARE(source->firstDisplayDecodeCount, 1);
@@ -210,6 +249,7 @@ void TestStaticImageDecode::staticResultReportsMissingBlockingPreview()
 {
     auto source = std::make_shared<ResultTileSource>();
     source->blockingDisplayError = QStringLiteral("blocking display failed");
+    source->blockingDisplayDiagnosticDetail = QStringLiteral("blocking display backend detail");
 
     QString errorString;
     const kiriview::DecodedImageResult result = kiriview::staticDecodedImageResult(source,
@@ -219,6 +259,11 @@ void TestStaticImageDecode::staticResultReportsMissingBlockingPreview()
     const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("blocking display failed"));
+    QCOMPARE(
+        failure->operation, kiriview::DecodedImageFailureOperation::DecodeBlockingDisplayImage);
+    QCOMPARE(failure->diagnosticDetail, QStringLiteral("blocking display backend detail"));
+    QCOMPARE(failure->severity, kiriview::DecodedImageFailureSeverity::Error);
+    QVERIFY(!failure->retryable);
     QCOMPARE(source->firstDisplayDecodeCount, 1);
     QCOMPARE(source->blockingDisplayDecodeCount, 1);
 }
