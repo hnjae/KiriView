@@ -75,6 +75,7 @@ private Q_SLOTS:
     void documentSessionDirectMediaActivityUsesNamedPort();
     void documentSessionMediaPredecodeInputUsesNamedPort();
     void documentSessionDirectMediaNavigationInputUsesNamedPort();
+    void documentSessionDirectMediaNavigationUsesCoordinator();
     void imageDocumentSourceLoadPlanDispatchHasNamedExecutor();
     void imageDocumentOpenPlanDispatchHasNamedExecutor();
     void imageDocumentPredecodePlanDispatchHasNamedExecutor();
@@ -1626,6 +1627,31 @@ void TestArchitectureBoundaries::documentSessionDirectMediaNavigationInputUsesNa
     QVERIFY(!runtimeHeader.contains(QStringLiteral("directMediaActiveNavigationInput")));
     QVERIFY(!runtimeSource.contains(
         QStringLiteral("DocumentSessionRuntime::directMediaActiveNavigationInput")));
+}
+
+void TestArchitectureBoundaries::documentSessionDirectMediaNavigationUsesCoordinator()
+{
+    const QString coordinatorHeader = readProjectFile(
+        QStringLiteral("src/session/documentsessiondirectmedianavigationcoordinator.h"));
+    const QString runtimeHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.h"));
+    const QString runtimeSource
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.cpp"));
+
+    QVERIFY(coordinatorHeader.contains(
+        QStringLiteral("class DocumentSessionDirectMediaNavigationCoordinator")));
+    QVERIFY(
+        runtimeHeader.contains(QStringLiteral("DocumentSessionDirectMediaNavigationCoordinator")));
+    QVERIFY(!runtimeHeader.contains(QStringLiteral("DocumentSessionDirectMediaNavigationRuntime")));
+    QVERIFY(!runtimeHeader.contains(
+        QStringLiteral("DocumentSessionDirectMediaNavigationApplicationRuntime")));
+    QVERIFY(!runtimeSource.contains(QStringLiteral("DocumentSessionRuntime::openMedia(")));
+    QVERIFY(!runtimeSource.contains(
+        QStringLiteral("DocumentSessionRuntime::refreshDirectMediaNavigation")));
+    QVERIFY(!runtimeSource.contains(
+        QStringLiteral("DocumentSessionRuntime::finishDirectMediaNavigation")));
+    QVERIFY(!runtimeSource.contains(
+        QStringLiteral("DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState")));
 }
 
 void TestArchitectureBoundaries::imageDocumentSourceLoadPlanDispatchHasNamedExecutor()

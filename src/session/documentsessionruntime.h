@@ -10,9 +10,8 @@
 #include "session/documentsessionactivenavigationruntime.h"
 #include "session/documentsessiondirectimagecursorsync.h"
 #include "session/documentsessiondirectmediaactivityport.h"
-#include "session/documentsessiondirectmedianavigationapplicationruntime.h"
+#include "session/documentsessiondirectmedianavigationcoordinator.h"
 #include "session/documentsessiondirectmedianavigationinputport.h"
-#include "session/documentsessiondirectmedianavigationruntime.h"
 #include "session/documentsessiondirectmediascopeport.h"
 #include "session/documentsessiondocumentports.h"
 #include "session/documentsessionimagedocumentcommandruntime.h"
@@ -155,18 +154,9 @@ private:
     void recomputePublicProjection();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
-    void openPreviousMedia();
-    void openNextMedia();
-    void openMediaAtNumber(int mediaNumber);
-    void openMedia(DirectMediaNavigationOpenRequest request);
     void executeRoutePlan(const DocumentSessionRoutePlan &plan);
     void leaveVideoMode();
     void syncFromVideoDocument();
-    void refreshDirectMediaNavigation();
-    void finishDirectMediaNavigation(DocumentSessionDirectMediaNavigationOpenResult result);
-    void updateDirectMediaNavigationBoundaryState(
-        DocumentSessionDirectMediaNavigationRefreshResult result);
-    void scheduleMediaPredecode(const std::vector<DirectMediaNavigationCandidate> &candidates);
     void cacheDisplayedMediaPredecodeImages();
     void cancelMediaDeletion();
     void cancelMediaOpenWith();
@@ -189,9 +179,7 @@ private:
     DocumentSessionRouteRuntime m_routeRuntime;
     DocumentSessionActiveNavigationRuntime m_activeNavigationRuntime;
     DocumentSessionThumbnailRuntime m_activeNavigationThumbnailRuntime;
-    DocumentSessionDirectMediaNavigationRuntime m_directMediaNavigationRuntime;
-    DocumentSessionDirectMediaNavigationApplicationRuntime
-        m_directMediaNavigationApplicationRuntime;
+    DocumentSessionDirectMediaNavigationCoordinator m_directMediaNavigationCoordinator;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
     DocumentSessionMediaDeletionCompletionRuntime m_mediaDeletionCompletionRuntime;
     DocumentSessionMediaOpenWithRuntime m_mediaOpenWithRuntime;

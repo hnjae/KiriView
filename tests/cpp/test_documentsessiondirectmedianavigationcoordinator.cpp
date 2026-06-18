@@ -54,9 +54,12 @@ kiriview::ActiveNavigationSnapshot knownActiveNavigation(int currentNumber, int 
 }
 
 struct ManualDirectMediaNavigationCandidateLoad {
+    QObject *object = nullptr;
     QUrl parentUrl;
     kiriview::DirectMediaNavigationCandidatesCallback callback;
     kiriview::ErrorCallback errorCallback;
+    kiriview::ImageIoJobCompletion completion;
+    bool canceled = false;
 };
 
 class ManualDirectMediaNavigationCandidateProvider
