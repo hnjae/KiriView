@@ -75,6 +75,7 @@ private Q_SLOTS:
     void documentSessionDirectMediaActivityUsesNamedPort();
     void documentSessionMediaPredecodeInputUsesNamedPort();
     void documentSessionDirectMediaNavigationInputUsesNamedPort();
+    void documentSessionPublicSnapshotInputUsesNamedPort();
     void documentSessionRouteRuntimePortsAreGrouped();
     void documentSessionDirectMediaNavigationUsesCoordinator();
     void documentSessionImageDocumentSyncUsesRuntime();
@@ -1630,6 +1631,22 @@ void TestArchitectureBoundaries::documentSessionDirectMediaNavigationInputUsesNa
     QVERIFY(!runtimeHeader.contains(QStringLiteral("directMediaActiveNavigationInput")));
     QVERIFY(!runtimeSource.contains(
         QStringLiteral("DocumentSessionRuntime::directMediaActiveNavigationInput")));
+}
+
+void TestArchitectureBoundaries::documentSessionPublicSnapshotInputUsesNamedPort()
+{
+    const QString portHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionpublicsnapshotinputport.h"));
+    const QString runtimeHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.h"));
+    const QString runtimeSource
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.cpp"));
+
+    QVERIFY(portHeader.contains(QStringLiteral("class DocumentSessionPublicSnapshotInputPort")));
+    QVERIFY(runtimeHeader.contains(QStringLiteral("DocumentSessionPublicSnapshotInputPort")));
+    QVERIFY(!runtimeHeader.contains(QStringLiteral("publicSnapshotInput(")));
+    QVERIFY(!runtimeHeader.contains(QStringLiteral("m_publicSnapshotInputRevision")));
+    QVERIFY(!runtimeSource.contains(QStringLiteral("DocumentSessionRuntime::publicSnapshotInput")));
 }
 
 void TestArchitectureBoundaries::documentSessionRouteRuntimePortsAreGrouped()
