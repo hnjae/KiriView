@@ -78,6 +78,16 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
               m_videoOutputRuntime.clearAttachment(attachmentPort);
           })
     , m_state(std::move(changeCallback))
+    , m_videoDocumentSyncRuntime(DocumentSessionVideoDocumentSyncRuntimePorts {
+          [this]() { m_state.clearDirectMediaCursor(); },
+          [this](const QUrl &url) { m_state.setSourceIdentity(url); },
+          [this](DocumentSessionKind kind) { setDocumentKind(kind); },
+          [this]() { m_state.setDirectMediaNavigation({}, false, {}); },
+          [this](const QUrl &url) { return m_state.setDirectVideoCursor(url); },
+          [this]() { m_directMediaNavigationCoordinator.refresh(m_owner); },
+          [this]() { recomputePublicProjection(); },
+          [this]() { recomputeActiveZoomReadout(); },
+      })
     , m_directMediaScopePort(&m_state)
     , m_directMediaActivityPort(&m_state, &m_directMediaScopePort)
     , m_directMediaNavigationInputPort(&m_state)
@@ -652,7 +662,11 @@ void DocumentSessionRuntime::handleImageDocumentSnapshotChanged()
 void DocumentSessionRuntime::handleVideoDocumentSnapshotChanged()
 {
     refreshVideoPublicSnapshot();
-    syncFromVideoDocument();
+    if (m_routingSource) {
+        return;
+    }
+
+    m_videoDocumentSyncRuntime.sync(m_state.documentKind(), m_videoPublicSnapshot);
 }
 
 void DocumentSessionRuntime::refreshImagePublicSnapshot()
@@ -746,40 +760,6 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
 void DocumentSessionRuntime::leaveVideoMode()
 {
     m_videoDocumentCommandRuntime.leaveMode(m_videoPublicSnapshot.sourceUrl);
-}
-
-void DocumentSessionRuntime::syncFromVideoDocument()
-{
-    if (m_routingSource || m_state.documentKind() != DocumentSessionKind::Video) {
-        return;
-    }
-
-    const DocumentSessionVideoDocumentSyncPlan plan = documentSessionVideoDocumentSyncPlan(
-        DocumentSessionVideoDocumentSyncInput { m_state.documentKind(), m_videoPublicSnapshot });
-    switch (plan.operation) {
-    case DocumentSessionVideoDocumentSyncOperation::None:
-        break;
-    case DocumentSessionVideoDocumentSyncOperation::ClearSessionDirectMedia:
-        qCDebug(kiriviewNavigationLog) << "sync from video document"
-                                       << "state" << "empty-source";
-        m_state.clearDirectMediaCursor();
-        m_state.setSourceIdentity(QUrl());
-        setDocumentKind(DocumentSessionKind::Empty);
-        m_state.setDirectMediaNavigation({}, false, {});
-        break;
-    case DocumentSessionVideoDocumentSyncOperation::CommitDirectVideoCursor: {
-        const bool directMediaScopeChanged = m_state.setDirectVideoCursor(plan.url);
-        logDirectMediaScope("sync from video document", m_state.directMediaScope());
-        m_state.setSourceIdentity(plan.url);
-        if (directMediaScopeChanged) {
-            m_directMediaNavigationCoordinator.refresh(m_owner);
-        }
-        break;
-    }
-    }
-
-    recomputePublicProjection();
-    recomputeActiveZoomReadout();
 }
 
 void DocumentSessionRuntime::cacheDisplayedMediaPredecodeImages()

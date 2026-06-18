@@ -227,6 +227,7 @@ src/session/documentsessiondirectmedianavigationinputport.cpp
 src/session/documentsessiondirectmediascopeport.cpp
 src/session/documentsessionimagedocumentsync.cpp
 src/session/documentsessionvideodocumentsync.cpp
+src/session/documentsessionvideodocumentsyncruntime.cpp
 src/session/documentsessiondirectmedianavigationloadstate.cpp
 src/session/documentsessiondirectmedianavigationapplicationruntime.cpp
 src/session/documentsessiondirectmedianavigationcoordinator.cpp

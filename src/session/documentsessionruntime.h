@@ -30,7 +30,7 @@
 #include "session/documentsessionstate.h"
 #include "session/documentsessionthumbnailruntime.h"
 #include "session/documentsessionvideodocumentcommandruntime.h"
-#include "session/documentsessionvideodocumentsync.h"
+#include "session/documentsessionvideodocumentsyncruntime.h"
 #include "session/documentsessionvideooutputruntime.h"
 #include "system/filedeletion.h"
 
@@ -156,7 +156,6 @@ private:
     void openMediaUrl(const QUrl &url);
     void executeRoutePlan(const DocumentSessionRoutePlan &plan);
     void leaveVideoMode();
-    void syncFromVideoDocument();
     void cacheDisplayedMediaPredecodeImages();
     void cancelMediaDeletion();
     void cancelMediaOpenWith();
@@ -172,6 +171,7 @@ private:
     DocumentSessionVideoDocumentSnapshotPort m_videoDocument;
     DocumentSessionVideoDocumentCommandRuntime m_videoDocumentCommandRuntime;
     DocumentSessionState m_state;
+    DocumentSessionVideoDocumentSyncRuntime m_videoDocumentSyncRuntime;
     DocumentSessionDirectMediaScopePort m_directMediaScopePort;
     DocumentSessionDirectMediaActivityPort m_directMediaActivityPort;
     DocumentSessionDirectMediaNavigationInputPort m_directMediaNavigationInputPort;

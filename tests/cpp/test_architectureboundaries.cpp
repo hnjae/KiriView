@@ -76,6 +76,7 @@ private Q_SLOTS:
     void documentSessionMediaPredecodeInputUsesNamedPort();
     void documentSessionDirectMediaNavigationInputUsesNamedPort();
     void documentSessionDirectMediaNavigationUsesCoordinator();
+    void documentSessionVideoDocumentSyncUsesRuntime();
     void imageDocumentSourceLoadPlanDispatchHasNamedExecutor();
     void imageDocumentOpenPlanDispatchHasNamedExecutor();
     void imageDocumentPredecodePlanDispatchHasNamedExecutor();
@@ -1652,6 +1653,25 @@ void TestArchitectureBoundaries::documentSessionDirectMediaNavigationUsesCoordin
         QStringLiteral("DocumentSessionRuntime::finishDirectMediaNavigation")));
     QVERIFY(!runtimeSource.contains(
         QStringLiteral("DocumentSessionRuntime::updateDirectMediaNavigationBoundaryState")));
+}
+
+void TestArchitectureBoundaries::documentSessionVideoDocumentSyncUsesRuntime()
+{
+    const QString syncRuntimeHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionvideodocumentsyncruntime.h"));
+    const QString runtimeHeader
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.h"));
+    const QString runtimeSource
+        = readProjectFile(QStringLiteral("src/session/documentsessionruntime.cpp"));
+
+    QVERIFY(syncRuntimeHeader.contains(
+        QStringLiteral("class DocumentSessionVideoDocumentSyncRuntime")));
+    QVERIFY(runtimeHeader.contains(QStringLiteral("DocumentSessionVideoDocumentSyncRuntime")));
+    QVERIFY(!runtimeHeader.contains(QStringLiteral("documentsessionvideodocumentsync.h")));
+    QVERIFY(
+        !runtimeSource.contains(QStringLiteral("DocumentSessionRuntime::syncFromVideoDocument")));
+    QVERIFY(!runtimeSource.contains(QStringLiteral("documentSessionVideoDocumentSyncPlan")));
+    QVERIFY(!runtimeSource.contains(QStringLiteral("DocumentSessionVideoDocumentSyncOperation")));
 }
 
 void TestArchitectureBoundaries::imageDocumentSourceLoadPlanDispatchHasNamedExecutor()
