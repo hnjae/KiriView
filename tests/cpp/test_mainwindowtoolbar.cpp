@@ -51,6 +51,7 @@ private Q_SLOTS:
     void directoryImageDocumentShowsPagePosition();
     void mediaViewportHostLoadsOnlyActiveDelegate();
     void panelActionsToggleResizablePanels();
+    void infoPanelAdvancedMetadataSectionFoldsRows();
     void infoPanelUsesOverlayDrawerOnNarrowWindows();
     void escapeClosesInfoPanelBeforeLeavingFullscreen();
     void panelShortcutsToggleResizablePanels();
@@ -152,6 +153,33 @@ QList<QQuickItem *> visibleItemsByObjectName(QObject *root, const QString &objec
     return visibleItems;
 }
 
+void appendVisibleItemsByText(QQuickItem *root, const QString &text, QList<QQuickItem *> *items)
+{
+    if (root == nullptr) {
+        return;
+    }
+    if (root->property("text").toString() == text && effectivelyVisible(root)) {
+        items->append(root);
+    }
+    const QList<QQuickItem *> children = root->childItems();
+    for (QQuickItem *child : children) {
+        appendVisibleItemsByText(child, text, items);
+    }
+}
+
+QList<QQuickItem *> visibleItemsByText(QObject *root, const QString &text)
+{
+    QList<QQuickItem *> items;
+    if (QQuickWindow *window = qobject_cast<QQuickWindow *>(root)) {
+        appendVisibleItemsByText(window->contentItem(), text, &items);
+    } else {
+        if (QQuickItem *item = qobject_cast<QQuickItem *>(root)) {
+            appendVisibleItemsByText(item, text, &items);
+        }
+    }
+    return items;
+}
+
 QQuickItem *findQuickItem(QObject *root, const QString &objectName)
 {
     return root->findChild<QQuickItem *>(objectName, Qt::FindChildrenRecursively);
@@ -178,6 +206,72 @@ bool writeTestPng(const QString &path)
     QImage image(QSize(2, 2), QImage::Format_RGBA8888);
     image.fill(Qt::red);
     return image.save(path, "PNG");
+}
+
+void appendLe16(QByteArray *data, quint16 value)
+{
+    data->append(static_cast<char>(value & 0xff));
+    data->append(static_cast<char>((value >> 8) & 0xff));
+}
+
+void appendLe32(QByteArray *data, quint32 value)
+{
+    appendLe16(data, static_cast<quint16>(value & 0xffff));
+    appendLe16(data, static_cast<quint16>((value >> 16) & 0xffff));
+}
+
+void appendBe16(QByteArray *data, quint16 value)
+{
+    data->append(static_cast<char>((value >> 8) & 0xff));
+    data->append(static_cast<char>(value & 0xff));
+}
+
+QByteArray testExifSegmentWithArtist()
+{
+    constexpr quint16 artistTag = 0x013b;
+    const QByteArray artist = QByteArrayLiteral("Kiri Tester\0");
+    QByteArray tiff;
+    tiff.append("II", 2);
+    appendLe16(&tiff, 42);
+    appendLe32(&tiff, 8);
+    appendLe16(&tiff, 1);
+    appendLe16(&tiff, artistTag);
+    appendLe16(&tiff, 2);
+    appendLe32(&tiff, artist.size());
+    appendLe32(&tiff, 26);
+    appendLe32(&tiff, 0);
+    tiff.append(artist);
+
+    const QByteArray payload = QByteArrayLiteral("Exif\0\0") + tiff;
+    QByteArray segment;
+    segment.append(static_cast<char>(0xff));
+    segment.append(static_cast<char>(0xe1));
+    appendBe16(&segment, static_cast<quint16>(payload.size() + 2));
+    segment.append(payload);
+    return segment;
+}
+
+bool writeAdvancedMetadataJpeg(const QString &path)
+{
+    QImage image(QSize(2, 2), QImage::Format_RGB888);
+    image.fill(Qt::red);
+
+    QByteArray jpegData;
+    QBuffer buffer(&jpegData);
+    if (!buffer.open(QIODevice::WriteOnly) || !image.save(&buffer, "JPEG")) {
+        return false;
+    }
+    if (jpegData.size() < 2 || static_cast<uchar>(jpegData.at(0)) != 0xff
+        || static_cast<uchar>(jpegData.at(1)) != 0xd8) {
+        return false;
+    }
+
+    jpegData.insert(2, testExifSegmentWithArtist());
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly)) {
+        return false;
+    }
+    return file.write(jpegData) == jpegData.size();
 }
 
 QByteArray encodedTestPng(Qt::GlobalColor color)
@@ -429,6 +523,23 @@ void clickItem(QQuickWindow *window, QQuickItem *item, Qt::MouseButton button)
     QVERIFY(point.y() >= 0);
     QTest::mouseClick(window, button, Qt::NoModifier, point);
     QCoreApplication::processEvents();
+}
+
+QQuickItem *findAdvancedMetadataSection(QObject *root)
+{
+    const QList<QQuickItem *> titles
+        = visibleItemsByText(root, QStringLiteral("Advanced Metadata"));
+    for (QQuickItem *title : titles) {
+        QQuickItem *row = title->parentItem();
+        if (row == nullptr) {
+            continue;
+        }
+        QQuickItem *section = row->parentItem();
+        if (section != nullptr && section->property("expanded").isValid()) {
+            return section;
+        }
+    }
+    return nullptr;
 }
 
 void wheelItem(QQuickWindow *window, QQuickItem *item, int angleDeltaY)
@@ -710,6 +821,48 @@ void TestMainWindowToolBar::panelActionsToggleResizablePanels()
     QTRY_VERIFY(!infoPanel->isVisible());
     QTRY_VERIFY(!infoPanelOverlay->isVisible());
     QTRY_VERIFY(!thumbnailPanel->isVisible());
+}
+
+void TestMainWindowToolBar::infoPanelAdvancedMetadataSectionFoldsRows()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString imagePath = directory.filePath(QStringLiteral("metadata.jpg"));
+    QVERIFY(writeAdvancedMetadataJpeg(imagePath));
+
+    MainWindowFixture fixture = createMainWindowFixture(QUrl::fromLocalFile(imagePath));
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    resizeWindow(fixture, QSize(1200, 800));
+
+    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    QVERIFY(documentSession != nullptr);
+    QTRY_VERIFY(documentSession->activeImageReady());
+    QTRY_VERIFY(documentSession->mediaInformation()->hasAdvancedSection());
+    QTRY_COMPARE(documentSession->mediaInformation()->advancedRows()->rowCount(), 1);
+
+    KiriViewApplication *application = findApplication(fixture.window);
+    QVERIFY(application != nullptr);
+    QAction *infoPanelAction
+        = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
+    QVERIFY(infoPanelAction != nullptr);
+    infoPanelAction->trigger();
+
+    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QVERIFY(infoPanel != nullptr);
+    QTRY_VERIFY(infoPanel->isVisible());
+
+    QTRY_COMPARE(visibleItemsByText(infoPanel, QStringLiteral("Advanced Metadata")).size(), 1);
+    QCOMPARE(visibleItemsByText(infoPanel, QStringLiteral("Kiri Tester")).size(), 0);
+
+    QQuickItem *advancedMetadataSection = findAdvancedMetadataSection(infoPanel);
+    QVERIFY(advancedMetadataSection != nullptr);
+    QVERIFY(advancedMetadataSection->setProperty("expanded", true));
+    QCoreApplication::processEvents();
+    QTRY_COMPARE(visibleItemsByText(infoPanel, QStringLiteral("Kiri Tester")).size(), 1);
+
+    QVERIFY(advancedMetadataSection->setProperty("expanded", false));
+    QCoreApplication::processEvents();
+    QTRY_COMPARE(visibleItemsByText(infoPanel, QStringLiteral("Kiri Tester")).size(), 0);
 }
 
 void TestMainWindowToolBar::infoPanelUsesOverlayDrawerOnNarrowWindows()
