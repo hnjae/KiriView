@@ -1656,12 +1656,15 @@ void TestArchitectureBoundaries::documentSessionRouteRuntimePortsAreGrouped()
         QStringLiteral("DocumentSessionRouteSourceIdentityPorts sourceIdentity")));
     QVERIFY(
         routeRuntimeHeader.contains(QStringLiteral("DocumentSessionRouteFollowUpPorts followUp")));
-    QVERIFY(
-        !routeRuntimeHeader.contains(QStringLiteral("std::function<void()> cancelMediaOpenWith;")));
-    QVERIFY(!routeRuntimeHeader.contains(
-        QStringLiteral("std::function<void()> clearSessionErrorString;")));
-    QVERIFY(!routeRuntimeHeader.contains(
-        QStringLiteral("std::function<void()> recomputePublicProjection;")));
+    const qsizetype runtimePortsIndex
+        = routeRuntimeHeader.indexOf(QStringLiteral("struct DocumentSessionRouteRuntimePorts"));
+    QVERIFY(runtimePortsIndex >= 0);
+    const qsizetype runtimePortsEnd
+        = routeRuntimeHeader.indexOf(QStringLiteral("};"), runtimePortsIndex);
+    QVERIFY(runtimePortsEnd > runtimePortsIndex);
+    const QString runtimePortsBlock
+        = routeRuntimeHeader.mid(runtimePortsIndex, runtimePortsEnd - runtimePortsIndex);
+    QVERIFY(!runtimePortsBlock.contains(QStringLiteral("std::function<")));
 }
 
 void TestArchitectureBoundaries::documentSessionDirectMediaNavigationUsesCoordinator()

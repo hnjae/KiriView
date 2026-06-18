@@ -30,32 +30,33 @@ void TestDocumentSessionRouteRuntime::executionRunsMutationPublicationFollowUpAn
 {
     std::vector<QString> events;
     kiriview::DocumentSessionRouteRuntimePorts ports;
-    ports.cancelMediaOpenWith
+    ports.session.cancelMediaOpenWith
         = [&events]() { events.push_back(QStringLiteral("cancel-open-with")); };
-    ports.clearSessionErrorString
+    ports.session.clearSessionErrorString
         = [&events]() { events.push_back(QStringLiteral("clear-error")); };
-    ports.clearDirectMediaCursor = [&events]() {
+    ports.directMedia.clearDirectMediaCursor = [&events]() {
         events.push_back(QStringLiteral("clear-cursor"));
         return true;
     };
-    ports.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
+    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
         events.push_back(QStringLiteral("suppress-begin"));
         mutation();
         events.push_back(QStringLiteral("suppress-end"));
     };
-    ports.enterImageDocument = [&events](const QUrl &url) {
+    ports.documents.enterImageDocument = [&events](const QUrl &url) {
         events.push_back(QStringLiteral("enter-image:%1").arg(url.toString()));
     };
-    ports.useOriginalSourceIdentity = [&events](const QUrl &url) {
+    ports.sourceIdentity.useOriginalSourceIdentity = [&events](const QUrl &url) {
         events.push_back(QStringLiteral("identity:%1").arg(url.toString()));
     };
-    ports.recomputePublicProjection = [&events]() { events.push_back(QStringLiteral("publish")); };
-    ports.directMediaNavigationActive = []() { return false; };
-    ports.refreshDirectMediaNavigation
+    ports.followUp.recomputePublicProjection
+        = [&events]() { events.push_back(QStringLiteral("publish")); };
+    ports.directMedia.directMediaNavigationActive = []() { return false; };
+    ports.directMedia.refreshDirectMediaNavigation
         = [&events]() { events.push_back(QStringLiteral("refresh-navigation")); };
-    ports.clearMediaPredecode
+    ports.followUp.clearMediaPredecode
         = [&events]() { events.push_back(QStringLiteral("clear-predecode")); };
-    ports.routeCompleted = [&events]() { events.push_back(QStringLiteral("complete")); };
+    ports.session.routeCompleted = [&events]() { events.push_back(QStringLiteral("complete")); };
 
     kiriview::DocumentSessionRouteRuntime runtime(std::move(ports));
     const QUrl imageUrl = localUrl(QStringLiteral("/tmp/page.png"));
@@ -102,44 +103,46 @@ void TestDocumentSessionRouteRuntime::routeSourceUrlPlansAndExecutesFromCurrentK
 {
     std::vector<QString> events;
     kiriview::DocumentSessionRouteRuntimePorts ports;
-    ports.cancelMediaOpenWith
+    ports.session.cancelMediaOpenWith
         = [&events]() { events.push_back(QStringLiteral("cancel-open-with")); };
-    ports.clearSessionErrorString
+    ports.session.clearSessionErrorString
         = [&events]() { events.push_back(QStringLiteral("clear-error")); };
-    ports.cancelDirectMediaNavigation
+    ports.directMedia.cancelDirectMediaNavigation
         = [&events]() { events.push_back(QStringLiteral("cancel-navigation")); };
-    ports.cancelMediaDeletion
+    ports.directMedia.cancelMediaDeletion
         = [&events]() { events.push_back(QStringLiteral("cancel-deletion")); };
-    ports.clearDirectMediaNavigation
+    ports.directMedia.clearDirectMediaNavigation
         = [&events]() { events.push_back(QStringLiteral("clear-navigation")); };
-    ports.clearDirectMediaCursor = [&events]() {
+    ports.directMedia.clearDirectMediaCursor = [&events]() {
         events.push_back(QStringLiteral("clear-cursor"));
         return true;
     };
-    ports.requestDirectImageCursor = [&events](const QUrl &url) {
+    ports.directMedia.requestDirectImageCursor = [&events](const QUrl &url) {
         events.push_back(QStringLiteral("request-image-cursor:%1").arg(url.toString()));
         return true;
     };
-    ports.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
+    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
         events.push_back(QStringLiteral("suppress-begin"));
         mutation();
         events.push_back(QStringLiteral("suppress-end"));
     };
-    ports.leaveVideoMode = [&events]() { events.push_back(QStringLiteral("leave-video")); };
-    ports.enterImageDocument = [&events](const QUrl &url) {
+    ports.documents.leaveVideoMode
+        = [&events]() { events.push_back(QStringLiteral("leave-video")); };
+    ports.documents.enterImageDocument = [&events](const QUrl &url) {
         events.push_back(QStringLiteral("enter-image:%1").arg(url.toString()));
     };
-    ports.syncDirectImageCursorFromDocument = [&events]() {
+    ports.directMedia.syncDirectImageCursorFromDocument = [&events]() {
         events.push_back(QStringLiteral("sync-image-cursor"));
         return true;
     };
-    ports.useImageDocumentSourceIdentity
+    ports.sourceIdentity.useImageDocumentSourceIdentity
         = [&events]() { events.push_back(QStringLiteral("image-document-identity")); };
-    ports.recomputePublicProjection = [&events]() { events.push_back(QStringLiteral("publish")); };
-    ports.directMediaNavigationActive = []() { return false; };
-    ports.refreshDirectMediaNavigation
+    ports.followUp.recomputePublicProjection
+        = [&events]() { events.push_back(QStringLiteral("publish")); };
+    ports.directMedia.directMediaNavigationActive = []() { return false; };
+    ports.directMedia.refreshDirectMediaNavigation
         = [&events]() { events.push_back(QStringLiteral("refresh-navigation")); };
-    ports.routeCompleted = [&events]() { events.push_back(QStringLiteral("complete")); };
+    ports.session.routeCompleted = [&events]() { events.push_back(QStringLiteral("complete")); };
 
     kiriview::DocumentSessionRouteRuntime runtime(std::move(ports));
     const QUrl imageUrl = localUrl(QStringLiteral("/tmp/page.png"));
@@ -173,29 +176,31 @@ void TestDocumentSessionRouteRuntime::routeMediaUrlPlansAndExecutesFromCurrentKi
 {
     std::vector<QString> events;
     kiriview::DocumentSessionRouteRuntimePorts ports;
-    ports.cancelMediaOpenWith
+    ports.session.cancelMediaOpenWith
         = [&events]() { events.push_back(QStringLiteral("cancel-open-with")); };
-    ports.setDirectVideoCursor = [&events](const QUrl &url) {
+    ports.directMedia.setDirectVideoCursor = [&events](const QUrl &url) {
         events.push_back(QStringLiteral("video-cursor:%1").arg(url.toString()));
         return true;
     };
-    ports.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
+    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
         events.push_back(QStringLiteral("suppress-begin"));
         mutation();
         events.push_back(QStringLiteral("suppress-end"));
     };
-    ports.enterVideoDocument = [&events](const QUrl &url) {
+    ports.documents.enterVideoDocument = [&events](const QUrl &url) {
         events.push_back(QStringLiteral("enter-video:%1").arg(url.toString()));
     };
-    ports.clearImageDocument = [&events]() { events.push_back(QStringLiteral("clear-image")); };
-    ports.useOriginalSourceIdentity = [&events](const QUrl &url) {
+    ports.documents.clearImageDocument
+        = [&events]() { events.push_back(QStringLiteral("clear-image")); };
+    ports.sourceIdentity.useOriginalSourceIdentity = [&events](const QUrl &url) {
         events.push_back(QStringLiteral("identity:%1").arg(url.toString()));
     };
-    ports.recomputePublicProjection = [&events]() { events.push_back(QStringLiteral("publish")); };
-    ports.directMediaNavigationActive = []() { return false; };
-    ports.refreshDirectMediaNavigation
+    ports.followUp.recomputePublicProjection
+        = [&events]() { events.push_back(QStringLiteral("publish")); };
+    ports.directMedia.directMediaNavigationActive = []() { return false; };
+    ports.directMedia.refreshDirectMediaNavigation
         = [&events]() { events.push_back(QStringLiteral("refresh-navigation")); };
-    ports.routeCompleted = [&events]() { events.push_back(QStringLiteral("complete")); };
+    ports.session.routeCompleted = [&events]() { events.push_back(QStringLiteral("complete")); };
 
     kiriview::DocumentSessionRouteRuntime runtime(std::move(ports));
     const QUrl videoUrl = localUrl(QStringLiteral("/tmp/movie.mp4"));
@@ -223,32 +228,33 @@ void TestDocumentSessionRouteRuntime::executionPublishesBeforeTypedFollowUps()
 {
     std::vector<QString> events;
     kiriview::DocumentSessionRouteRuntimePorts ports;
-    ports.cancelMediaOpenWith
+    ports.session.cancelMediaOpenWith
         = [&events]() { events.push_back(QStringLiteral("cancel-open-with")); };
-    ports.clearSessionErrorString
+    ports.session.clearSessionErrorString
         = [&events]() { events.push_back(QStringLiteral("clear-error")); };
-    ports.clearDirectMediaCursor = [&events]() {
+    ports.directMedia.clearDirectMediaCursor = [&events]() {
         events.push_back(QStringLiteral("clear-cursor"));
         return true;
     };
-    ports.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
+    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
         events.push_back(QStringLiteral("suppress-begin"));
         mutation();
         events.push_back(QStringLiteral("suppress-end"));
     };
-    ports.enterImageDocument = [&events](const QUrl &url) {
+    ports.documents.enterImageDocument = [&events](const QUrl &url) {
         events.push_back(QStringLiteral("enter-image:%1").arg(url.toString()));
     };
-    ports.useOriginalSourceIdentity = [&events](const QUrl &url) {
+    ports.sourceIdentity.useOriginalSourceIdentity = [&events](const QUrl &url) {
         events.push_back(QStringLiteral("identity:%1").arg(url.toString()));
     };
-    ports.recomputePublicProjection = [&events]() { events.push_back(QStringLiteral("publish")); };
-    ports.directMediaNavigationActive = []() { return false; };
-    ports.refreshDirectMediaNavigation
+    ports.followUp.recomputePublicProjection
+        = [&events]() { events.push_back(QStringLiteral("publish")); };
+    ports.directMedia.directMediaNavigationActive = []() { return false; };
+    ports.directMedia.refreshDirectMediaNavigation
         = [&events]() { events.push_back(QStringLiteral("refresh-navigation")); };
-    ports.clearMediaPredecode
+    ports.followUp.clearMediaPredecode
         = [&events]() { events.push_back(QStringLiteral("clear-predecode")); };
-    ports.routeCompleted = [&events]() { events.push_back(QStringLiteral("complete")); };
+    ports.session.routeCompleted = [&events]() { events.push_back(QStringLiteral("complete")); };
 
     kiriview::DocumentSessionRouteRuntime runtime(std::move(ports));
     const QUrl imageUrl = localUrl(QStringLiteral("/tmp/page.png"));
@@ -295,13 +301,14 @@ void TestDocumentSessionRouteRuntime::clearedNavigationRepublishesBeforePredecod
 {
     std::vector<QString> events;
     kiriview::DocumentSessionRouteRuntimePorts ports;
-    ports.cancelMediaOpenWith = []() { };
-    ports.clearDirectMediaNavigation
+    ports.session.cancelMediaOpenWith = []() { };
+    ports.directMedia.clearDirectMediaNavigation
         = [&events]() { events.push_back(QStringLiteral("clear-navigation")); };
-    ports.recomputePublicProjection = [&events]() { events.push_back(QStringLiteral("publish")); };
-    ports.clearMediaPredecode
+    ports.followUp.recomputePublicProjection
+        = [&events]() { events.push_back(QStringLiteral("publish")); };
+    ports.followUp.clearMediaPredecode
         = [&events]() { events.push_back(QStringLiteral("clear-predecode")); };
-    ports.routeCompleted = []() { };
+    ports.session.routeCompleted = []() { };
 
     kiriview::DocumentSessionRouteRuntime runtime(std::move(ports));
     kiriview::DocumentSessionRoutePlan plan;
@@ -329,10 +336,10 @@ void TestDocumentSessionRouteRuntime::activeNavigationRefreshesWithoutScopeChang
 {
     int refreshCount = 0;
     kiriview::DocumentSessionRouteRuntimePorts ports;
-    ports.cancelMediaOpenWith = []() { };
-    ports.directMediaNavigationActive = []() { return true; };
-    ports.refreshDirectMediaNavigation = [&refreshCount]() { ++refreshCount; };
-    ports.routeCompleted = []() { };
+    ports.session.cancelMediaOpenWith = []() { };
+    ports.directMedia.directMediaNavigationActive = []() { return true; };
+    ports.directMedia.refreshDirectMediaNavigation = [&refreshCount]() { ++refreshCount; };
+    ports.session.routeCompleted = []() { };
 
     kiriview::DocumentSessionRouteRuntime runtime(std::move(ports));
     kiriview::DocumentSessionRoutePlan plan;

@@ -9,30 +9,50 @@
 #include <functional>
 
 namespace kiriview {
-struct DocumentSessionRouteRuntimePorts {
+struct DocumentSessionRouteSessionPorts {
     std::function<void()> cancelMediaOpenWith;
     std::function<void()> clearSessionErrorString;
+    std::function<void(const std::function<void()> &)> executeWithRoutingSuppressed;
+    std::function<void()> routeCompleted;
+};
+
+struct DocumentSessionRouteDirectMediaPorts {
     std::function<void()> cancelDirectMediaNavigation;
     std::function<void()> cancelMediaDeletion;
     std::function<void()> clearDirectMediaNavigation;
     std::function<bool()> clearDirectMediaCursor;
     std::function<bool(const QUrl &)> setDirectVideoCursor;
     std::function<bool(const QUrl &)> requestDirectImageCursor;
-    std::function<void(const std::function<void()> &)> executeWithRoutingSuppressed;
+    std::function<bool()> syncDirectImageCursorFromDocument;
+    std::function<bool()> directMediaNavigationActive;
+    std::function<void()> refreshDirectMediaNavigation;
+};
+
+struct DocumentSessionRouteDocumentPorts {
     std::function<void()> clearImageDocument;
     std::function<void()> leaveVideoMode;
     std::function<void()> enterEmptyDocument;
     std::function<void(const QUrl &)> enterImageDocument;
     std::function<void(const QUrl &)> enterVideoDocument;
-    std::function<bool()> syncDirectImageCursorFromDocument;
+};
+
+struct DocumentSessionRouteSourceIdentityPorts {
     std::function<void()> clearSourceIdentity;
     std::function<void(const QUrl &)> useOriginalSourceIdentity;
     std::function<void()> useImageDocumentSourceIdentity;
+};
+
+struct DocumentSessionRouteFollowUpPorts {
     std::function<void()> recomputePublicProjection;
-    std::function<bool()> directMediaNavigationActive;
-    std::function<void()> refreshDirectMediaNavigation;
     std::function<void()> clearMediaPredecode;
-    std::function<void()> routeCompleted;
+};
+
+struct DocumentSessionRouteRuntimePorts {
+    DocumentSessionRouteSessionPorts session;
+    DocumentSessionRouteDirectMediaPorts directMedia;
+    DocumentSessionRouteDocumentPorts documents;
+    DocumentSessionRouteSourceIdentityPorts sourceIdentity;
+    DocumentSessionRouteFollowUpPorts followUp;
 };
 
 class DocumentSessionRouteRuntime final

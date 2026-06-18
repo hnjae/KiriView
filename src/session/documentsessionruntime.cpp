@@ -118,64 +118,74 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           [this]() { clearActiveNavigationRevealContextIfUnavailable(); },
       })
     , m_routeRuntime(DocumentSessionRouteRuntimePorts {
-          [this]() { cancelMediaOpenWith(); },
-          [this]() { m_state.setSessionErrorString(QString()); },
-          [this]() { m_directMediaNavigationCoordinator.cancel(); },
-          [this]() { cancelMediaDeletion(); },
-          [this]() { m_state.setDirectMediaNavigation({}, false, {}); },
-          [this]() {
-              const bool changed = m_state.clearDirectMediaCursor();
-              logDirectMediaScope("direct media cursor cleared", m_state.directMediaScope());
-              return changed;
+          DocumentSessionRouteSessionPorts {
+              [this]() { cancelMediaOpenWith(); },
+              [this]() { m_state.setSessionErrorString(QString()); },
+              [this](const std::function<void()> &mutation) {
+                  QScopedValueRollback<bool> routingSource(m_routingSource, true);
+                  mutation();
+              },
+              [this]() { clearActiveNavigationRevealContextIfUnavailable(); },
           },
-          [this](const QUrl &url) {
-              const bool changed = m_state.setDirectVideoCursor(url);
-              logDirectMediaScope("direct video cursor set", m_state.directMediaScope());
-              return changed;
+          DocumentSessionRouteDirectMediaPorts {
+              [this]() { m_directMediaNavigationCoordinator.cancel(); },
+              [this]() { cancelMediaDeletion(); },
+              [this]() { m_state.setDirectMediaNavigation({}, false, {}); },
+              [this]() {
+                  const bool changed = m_state.clearDirectMediaCursor();
+                  logDirectMediaScope("direct media cursor cleared", m_state.directMediaScope());
+                  return changed;
+              },
+              [this](const QUrl &url) {
+                  const bool changed = m_state.setDirectVideoCursor(url);
+                  logDirectMediaScope("direct video cursor set", m_state.directMediaScope());
+                  return changed;
+              },
+              [this](const QUrl &url) {
+                  const bool changed = m_state.requestDirectImageCursor(url);
+                  logDirectMediaScope("direct image cursor requested", m_state.directMediaScope());
+                  return changed;
+              },
+              [this]() {
+                  const bool changed = m_imageDocumentSyncRuntime.syncDirectImageCursor(
+                      m_state.documentKind(), m_state.directMediaCursor(), m_imagePublicSnapshot);
+                  logDirectMediaScope(
+                      "direct image cursor synced from document", m_state.directMediaScope());
+                  return changed;
+              },
+              [this]() { return m_directMediaActivityPort.navigationActive(); },
+              [this]() { m_directMediaNavigationCoordinator.refresh(m_owner); },
           },
-          [this](const QUrl &url) {
-              const bool changed = m_state.requestDirectImageCursor(url);
-              logDirectMediaScope("direct image cursor requested", m_state.directMediaScope());
-              return changed;
+          DocumentSessionRouteDocumentPorts {
+              [this]() {
+                  m_imageDocumentCommandRuntime.clearSourceUrl();
+                  refreshImagePublicSnapshot();
+              },
+              [this]() {
+                  leaveVideoMode();
+                  refreshVideoPublicSnapshot();
+              },
+              [this]() { setDocumentKind(DocumentSessionKind::Empty); },
+              [this](const QUrl &url) {
+                  m_imageDocumentCommandRuntime.setSourceUrl(url);
+                  refreshImagePublicSnapshot();
+                  setDocumentKind(DocumentSessionKind::Image);
+              },
+              [this](const QUrl &url) {
+                  m_videoDocumentCommandRuntime.setSourceUrl(url);
+                  refreshVideoPublicSnapshot();
+                  setDocumentKind(DocumentSessionKind::Video);
+              },
           },
-          [this](const std::function<void()> &mutation) {
-              QScopedValueRollback<bool> routingSource(m_routingSource, true);
-              mutation();
+          DocumentSessionRouteSourceIdentityPorts {
+              [this]() { m_state.setSourceIdentity(QUrl()); },
+              [this](const QUrl &url) { m_state.setSourceIdentity(url); },
+              [this]() { m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl); },
           },
-          [this]() {
-              m_imageDocumentCommandRuntime.clearSourceUrl();
-              refreshImagePublicSnapshot();
+          DocumentSessionRouteFollowUpPorts {
+              [this]() { recomputePublicProjection(); },
+              [this]() { m_mediaPredecodeRuntime.clear(); },
           },
-          [this]() {
-              leaveVideoMode();
-              refreshVideoPublicSnapshot();
-          },
-          [this]() { setDocumentKind(DocumentSessionKind::Empty); },
-          [this](const QUrl &url) {
-              m_imageDocumentCommandRuntime.setSourceUrl(url);
-              refreshImagePublicSnapshot();
-              setDocumentKind(DocumentSessionKind::Image);
-          },
-          [this](const QUrl &url) {
-              m_videoDocumentCommandRuntime.setSourceUrl(url);
-              refreshVideoPublicSnapshot();
-              setDocumentKind(DocumentSessionKind::Video);
-          },
-          [this]() {
-              const bool changed = m_imageDocumentSyncRuntime.syncDirectImageCursor(
-                  m_state.documentKind(), m_state.directMediaCursor(), m_imagePublicSnapshot);
-              logDirectMediaScope(
-                  "direct image cursor synced from document", m_state.directMediaScope());
-              return changed;
-          },
-          [this]() { m_state.setSourceIdentity(QUrl()); },
-          [this](const QUrl &url) { m_state.setSourceIdentity(url); },
-          [this]() { m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl); },
-          [this]() { recomputePublicProjection(); },
-          [this]() { return m_directMediaActivityPort.navigationActive(); },
-          [this]() { m_directMediaNavigationCoordinator.refresh(m_owner); },
-          [this]() { m_mediaPredecodeRuntime.clear(); },
-          [this]() { clearActiveNavigationRevealContextIfUnavailable(); },
       })
     , m_activeNavigationRuntime(DocumentSessionActiveNavigationRuntimePorts {
           [this](ActiveNavigationRevealContext context) {

@@ -84,8 +84,8 @@ void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)
     };
 
     RouteExecutionResult result;
-    if (m_ports.cancelMediaOpenWith) {
-        m_ports.cancelMediaOpenWith();
+    if (m_ports.session.cancelMediaOpenWith) {
+        m_ports.session.cancelMediaOpenWith();
     }
 
     result.publishPublicProjection = plan.publishPublicProjection;
@@ -96,99 +96,101 @@ void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)
                 using Operation = std::decay_t<decltype(payload)>;
 
                 if constexpr (std::is_same_v<Operation, ClearSessionErrorStringRouteOperation>) {
-                    if (m_ports.clearSessionErrorString) {
-                        m_ports.clearSessionErrorString();
+                    if (m_ports.session.clearSessionErrorString) {
+                        m_ports.session.clearSessionErrorString();
                     }
                 } else if constexpr (std::is_same_v<Operation,
                                          CancelDirectMediaNavigationRouteOperation>) {
-                    if (m_ports.cancelDirectMediaNavigation) {
-                        m_ports.cancelDirectMediaNavigation();
+                    if (m_ports.directMedia.cancelDirectMediaNavigation) {
+                        m_ports.directMedia.cancelDirectMediaNavigation();
                     }
                 } else if constexpr (std::is_same_v<Operation, CancelMediaDeletionRouteOperation>) {
-                    if (m_ports.cancelMediaDeletion) {
-                        m_ports.cancelMediaDeletion();
+                    if (m_ports.directMedia.cancelMediaDeletion) {
+                        m_ports.directMedia.cancelMediaDeletion();
                     }
                 } else if constexpr (std::is_same_v<Operation,
                                          ClearDirectMediaNavigationRouteOperation>) {
-                    if (m_ports.clearDirectMediaNavigation) {
-                        m_ports.clearDirectMediaNavigation();
+                    if (m_ports.directMedia.clearDirectMediaNavigation) {
+                        m_ports.directMedia.clearDirectMediaNavigation();
                     }
                     result.directMediaNavigationCleared = true;
                 } else if constexpr (std::is_same_v<Operation,
                                          ClearDirectMediaCursorRouteOperation>) {
                     result.directMediaScopeChanged
-                        = (m_ports.clearDirectMediaCursor && m_ports.clearDirectMediaCursor())
+                        = (m_ports.directMedia.clearDirectMediaCursor
+                              && m_ports.directMedia.clearDirectMediaCursor())
                         || result.directMediaScopeChanged;
                 } else if constexpr (std::is_same_v<Operation,
                                          SetDirectVideoCursorRouteOperation>) {
                     result.directMediaScopeChanged
-                        = (m_ports.setDirectVideoCursor
-                              && m_ports.setDirectVideoCursor(payload.url))
+                        = (m_ports.directMedia.setDirectVideoCursor
+                              && m_ports.directMedia.setDirectVideoCursor(payload.url))
                         || result.directMediaScopeChanged;
                 } else if constexpr (std::is_same_v<Operation,
                                          RequestDirectImageCursorRouteOperation>) {
                     result.directMediaScopeChanged
-                        = (m_ports.requestDirectImageCursor
-                              && m_ports.requestDirectImageCursor(payload.url))
+                        = (m_ports.directMedia.requestDirectImageCursor
+                              && m_ports.directMedia.requestDirectImageCursor(payload.url))
                         || result.directMediaScopeChanged;
                 } else if constexpr (std::is_same_v<Operation,
                                          ClearThenRequestDirectImageCursorRouteOperation>) {
                     result.directMediaScopeChanged
-                        = (m_ports.clearDirectMediaCursor && m_ports.clearDirectMediaCursor())
+                        = (m_ports.directMedia.clearDirectMediaCursor
+                              && m_ports.directMedia.clearDirectMediaCursor())
                         || result.directMediaScopeChanged;
                     result.directMediaScopeChanged
-                        = (m_ports.requestDirectImageCursor
-                              && m_ports.requestDirectImageCursor(payload.url))
+                        = (m_ports.directMedia.requestDirectImageCursor
+                              && m_ports.directMedia.requestDirectImageCursor(payload.url))
                         || result.directMediaScopeChanged;
                 } else if constexpr (std::is_same_v<Operation, ClearImageDocumentRouteOperation>) {
                     executeSuppressed([this]() {
-                        if (m_ports.clearImageDocument) {
-                            m_ports.clearImageDocument();
+                        if (m_ports.documents.clearImageDocument) {
+                            m_ports.documents.clearImageDocument();
                         }
                     });
                 } else if constexpr (std::is_same_v<Operation, LeaveVideoModeRouteOperation>) {
                     executeSuppressed([this]() {
-                        if (m_ports.leaveVideoMode) {
-                            m_ports.leaveVideoMode();
+                        if (m_ports.documents.leaveVideoMode) {
+                            m_ports.documents.leaveVideoMode();
                         }
                     });
                 } else if constexpr (std::is_same_v<Operation, EnterEmptyDocumentRouteOperation>) {
                     executeSuppressed([this]() {
-                        if (m_ports.enterEmptyDocument) {
-                            m_ports.enterEmptyDocument();
+                        if (m_ports.documents.enterEmptyDocument) {
+                            m_ports.documents.enterEmptyDocument();
                         }
                     });
                 } else if constexpr (std::is_same_v<Operation, EnterImageDocumentRouteOperation>) {
                     executeSuppressed([this, &payload]() {
-                        if (m_ports.enterImageDocument) {
-                            m_ports.enterImageDocument(payload.url);
+                        if (m_ports.documents.enterImageDocument) {
+                            m_ports.documents.enterImageDocument(payload.url);
                         }
                     });
                 } else if constexpr (std::is_same_v<Operation, EnterVideoDocumentRouteOperation>) {
                     executeSuppressed([this, &payload]() {
-                        if (m_ports.enterVideoDocument) {
-                            m_ports.enterVideoDocument(payload.url);
+                        if (m_ports.documents.enterVideoDocument) {
+                            m_ports.documents.enterVideoDocument(payload.url);
                         }
                     });
                 } else if constexpr (std::is_same_v<Operation,
                                          SyncDirectImageCursorFromDocumentRouteOperation>) {
                     result.directMediaScopeChanged
-                        = (m_ports.syncDirectImageCursorFromDocument
-                              && m_ports.syncDirectImageCursorFromDocument())
+                        = (m_ports.directMedia.syncDirectImageCursorFromDocument
+                              && m_ports.directMedia.syncDirectImageCursorFromDocument())
                         || result.directMediaScopeChanged;
                 } else if constexpr (std::is_same_v<Operation, ClearSourceIdentityRouteOperation>) {
-                    if (m_ports.clearSourceIdentity) {
-                        m_ports.clearSourceIdentity();
+                    if (m_ports.sourceIdentity.clearSourceIdentity) {
+                        m_ports.sourceIdentity.clearSourceIdentity();
                     }
                 } else if constexpr (std::is_same_v<Operation,
                                          UseOriginalSourceIdentityRouteOperation>) {
-                    if (m_ports.useOriginalSourceIdentity) {
-                        m_ports.useOriginalSourceIdentity(payload.url);
+                    if (m_ports.sourceIdentity.useOriginalSourceIdentity) {
+                        m_ports.sourceIdentity.useOriginalSourceIdentity(payload.url);
                     }
                 } else if constexpr (std::is_same_v<Operation,
                                          UseImageDocumentSourceIdentityRouteOperation>) {
-                    if (m_ports.useImageDocumentSourceIdentity) {
-                        m_ports.useImageDocumentSourceIdentity();
+                    if (m_ports.sourceIdentity.useImageDocumentSourceIdentity) {
+                        m_ports.sourceIdentity.useImageDocumentSourceIdentity();
                     }
                 }
             },
@@ -202,8 +204,9 @@ void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)
 
                 if constexpr (std::is_same_v<Effect,
                                   RefreshDirectMediaNavigationAfterRoutingRouteEffect>) {
-                    const bool directMediaNavigationActive = m_ports.directMediaNavigationActive
-                        && m_ports.directMediaNavigationActive();
+                    const bool directMediaNavigationActive
+                        = m_ports.directMedia.directMediaNavigationActive
+                        && m_ports.directMedia.directMediaNavigationActive();
                     if (result.directMediaScopeChanged || result.directMediaNavigationCleared
                         || directMediaNavigationActive) {
                         result.refreshDirectMediaNavigation = true;
@@ -219,28 +222,29 @@ void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)
             effect);
     }
 
-    if (result.clearDirectMediaNavigationBeforePredecode && m_ports.clearDirectMediaNavigation) {
-        m_ports.clearDirectMediaNavigation();
+    if (result.clearDirectMediaNavigationBeforePredecode
+        && m_ports.directMedia.clearDirectMediaNavigation) {
+        m_ports.directMedia.clearDirectMediaNavigation();
     }
-    if (result.publishPublicProjection && m_ports.recomputePublicProjection) {
-        m_ports.recomputePublicProjection();
+    if (result.publishPublicProjection && m_ports.followUp.recomputePublicProjection) {
+        m_ports.followUp.recomputePublicProjection();
     }
-    if (result.refreshDirectMediaNavigation && m_ports.refreshDirectMediaNavigation) {
-        m_ports.refreshDirectMediaNavigation();
+    if (result.refreshDirectMediaNavigation && m_ports.directMedia.refreshDirectMediaNavigation) {
+        m_ports.directMedia.refreshDirectMediaNavigation();
     }
-    if (result.clearMediaPredecode && m_ports.clearMediaPredecode) {
-        m_ports.clearMediaPredecode();
+    if (result.clearMediaPredecode && m_ports.followUp.clearMediaPredecode) {
+        m_ports.followUp.clearMediaPredecode();
     }
 
-    if (m_ports.routeCompleted) {
-        m_ports.routeCompleted();
+    if (m_ports.session.routeCompleted) {
+        m_ports.session.routeCompleted();
     }
 }
 
 void DocumentSessionRouteRuntime::executeSuppressed(const std::function<void()> &mutation)
 {
-    if (m_ports.executeWithRoutingSuppressed) {
-        m_ports.executeWithRoutingSuppressed(mutation);
+    if (m_ports.session.executeWithRoutingSuppressed) {
+        m_ports.session.executeWithRoutingSuppressed(mutation);
         return;
     }
 
