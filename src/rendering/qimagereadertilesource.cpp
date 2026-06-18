@@ -73,6 +73,21 @@ void appendTileDecodeFailure(kiriview::QImageReaderTileDecodeDiagnostics *diagno
     });
 }
 
+void appendDisplayDecodeFailure(kiriview::QImageReaderDisplayDecodeDiagnostics *diagnostics,
+    kiriview::QImageReaderDisplayDecodeOperation operation, const QString &errorString)
+{
+    if (diagnostics == nullptr) {
+        return;
+    }
+
+    const QString message = errorString.isEmpty() ? imageDataReadError() : errorString;
+    diagnostics->failures.push_back(kiriview::QImageReaderDisplayDecodeFailure {
+        operation,
+        message,
+        message,
+    });
+}
+
 template <typename ConfigureReader>
 QImage readBufferedImage(const QByteArray &data, const QByteArray &format, bool autoTransform,
     ConfigureReader configureReader, QString *errorString)
@@ -100,6 +115,16 @@ QString QImageReaderTileDecodeDiagnostics::userMessage() const
     for (auto failure = failures.crbegin(); failure != failures.crend(); ++failure) {
         if (!failure->errorString.isEmpty()) {
             return failure->errorString;
+        }
+    }
+    return {};
+}
+
+QString QImageReaderDisplayDecodeDiagnostics::userMessage() const
+{
+    for (auto failure = failures.crbegin(); failure != failures.crend(); ++failure) {
+        if (!failure->userMessage.isEmpty()) {
+            return failure->userMessage;
         }
     }
     return {};
@@ -235,49 +260,92 @@ std::optional<DecodedTile> QImageReaderTileSource::decodeFullImageFallbackTile(
     return decodedTileFromLevelImage(request, levelFallback);
 }
 
-FirstDisplayImageDecodeResult QImageReaderTileSource::decodeFirstDisplayImage(
-    const ImageFirstDisplayDecodeContext &context, QString *errorString) const
+QImageReaderFirstDisplayDecodeResult QImageReaderTileSource::decodeFirstDisplayImageWithDiagnostics(
+    const ImageFirstDisplayDecodeContext &context) const
 {
+    QImageReaderFirstDisplayDecodeResult result;
     if (!context.isValid() || !supportsJpegScaledFirstDisplay()) {
-        return {};
+        return result;
     }
 
     const QSize scaledSize = firstDisplayScaledImageSize(m_imageSize, context.physicalViewportSize);
     if (scaledSize.isEmpty()) {
-        return {};
+        return result;
     }
 
-    QImage image = readScaledImage(scaledSize, errorString);
+    QString errorString;
+    QImage image = readScaledImage(scaledSize, &errorString);
     if (image.isNull()) {
-        return { FirstDisplayImageDecodeStatus::Error, {}, 0.0 };
+        appendDisplayDecodeFailure(&result.diagnostics,
+            QImageReaderDisplayDecodeOperation::FirstDisplayImage, errorString);
+        result.firstDisplay.status = FirstDisplayImageDecodeStatus::Error;
+        return result;
     }
 
     const qreal displayPixelsPerSourcePixel = imagePixelsPerSourcePixel(m_imageSize, image.size());
     if (displayPixelsPerSourcePixel <= 0.0) {
-        setTileSourceError(
-            errorString, imageErrorText(ImageErrorTextId::DetermineJpegFirstDisplaySize));
-        return { FirstDisplayImageDecodeStatus::Error, {}, 0.0 };
+        appendDisplayDecodeFailure(&result.diagnostics,
+            QImageReaderDisplayDecodeOperation::FirstDisplayImage,
+            imageErrorText(ImageErrorTextId::DetermineJpegFirstDisplaySize));
+        result.firstDisplay.status = FirstDisplayImageDecodeStatus::Error;
+        return result;
     }
 
-    return { FirstDisplayImageDecodeStatus::Ready, std::move(image), displayPixelsPerSourcePixel };
+    result.firstDisplay
+        = { FirstDisplayImageDecodeStatus::Ready, std::move(image), displayPixelsPerSourcePixel };
+    return result;
+}
+
+FirstDisplayImageDecodeResult QImageReaderTileSource::decodeFirstDisplayImage(
+    const ImageFirstDisplayDecodeContext &context, QString *errorString) const
+{
+    QImageReaderFirstDisplayDecodeResult result = decodeFirstDisplayImageWithDiagnostics(context);
+    if (result.firstDisplay.status == FirstDisplayImageDecodeStatus::Error
+        && !result.diagnostics.failures.empty()) {
+        setTileSourceError(errorString, result.diagnostics.userMessage());
+    }
+    return std::move(result.firstDisplay);
 }
 
 bool QImageReaderTileSource::supportsRasterDisplayRefinement() const { return true; }
 
-QImage QImageReaderTileSource::decodeRasterDisplayImage(
-    const QSize &rasterSize, QString *errorString) const
+QImageReaderDisplayDecodeResult QImageReaderTileSource::decodeRasterDisplayImageWithDiagnostics(
+    const QSize &rasterSize) const
 {
     if (rasterSize.isEmpty()) {
         return {};
     }
 
-    return readScaledImage(rasterSize, errorString);
+    return readScaledDisplayImage(
+        rasterSize, QImageReaderDisplayDecodeOperation::RasterDisplayImage);
+}
+
+QImage QImageReaderTileSource::decodeRasterDisplayImage(
+    const QSize &rasterSize, QString *errorString) const
+{
+    QImageReaderDisplayDecodeResult result = decodeRasterDisplayImageWithDiagnostics(rasterSize);
+    if (result.image.isNull() && !result.diagnostics.failures.empty()) {
+        setTileSourceError(errorString, result.diagnostics.userMessage());
+    }
+    return std::move(result.image);
+}
+
+QImageReaderDisplayDecodeResult QImageReaderTileSource::decodeBlockingDisplayImageWithDiagnostics(
+    int maximumLongEdge) const
+{
+    return readScaledDisplayImage(boundedPreviewSize(m_imageSize, maximumLongEdge),
+        QImageReaderDisplayDecodeOperation::BlockingDisplayImage);
 }
 
 QImage QImageReaderTileSource::decodeBlockingDisplayImage(
     int maximumLongEdge, QString *errorString) const
 {
-    return readScaledImage(boundedPreviewSize(m_imageSize, maximumLongEdge), errorString);
+    QImageReaderDisplayDecodeResult result
+        = decodeBlockingDisplayImageWithDiagnostics(maximumLongEdge);
+    if (result.image.isNull() && !result.diagnostics.failures.empty()) {
+        setTileSourceError(errorString, result.diagnostics.userMessage());
+    }
+    return std::move(result.image);
 }
 
 qsizetype QImageReaderTileSource::byteCost() const { return m_data.size(); }
@@ -291,6 +359,18 @@ bool QImageReaderTileSource::supportsJpegScaledFirstDisplay() const
 {
     const QByteArray format = m_format.toLower();
     return format == QByteArrayLiteral("jpg") || format == QByteArrayLiteral("jpeg");
+}
+
+QImageReaderDisplayDecodeResult QImageReaderTileSource::readScaledDisplayImage(
+    const QSize &scaledSize, QImageReaderDisplayDecodeOperation operation) const
+{
+    QImageReaderDisplayDecodeResult result;
+    QString errorString;
+    result.image = readScaledImage(scaledSize, &errorString);
+    if (result.image.isNull()) {
+        appendDisplayDecodeFailure(&result.diagnostics, operation, errorString);
+    }
+    return result;
 }
 
 QImage QImageReaderTileSource::readScaledImage(const QSize &scaledSize, QString *errorString) const
