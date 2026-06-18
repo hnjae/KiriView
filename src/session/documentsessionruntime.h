@@ -24,7 +24,7 @@
 #include "session/documentsessionprojectionruntime.h"
 #include "session/documentsessionpublicleafsnapshotbuilder.h"
 #include "session/documentsessionpublicprojection.h"
-#include "session/documentsessionpublicsnapshotinputbuilder.h"
+#include "session/documentsessionpublicsnapshotinputport.h"
 #include "session/documentsessionrouteruntime.h"
 #include "session/documentsessionstate.h"
 #include "session/documentsessionthumbnailruntime.h"
@@ -161,8 +161,6 @@ private:
     DocumentSessionVideoOutputAttachmentPort videoOutputAttachmentPort();
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
-    DocumentSessionPublicSnapshotInput publicSnapshotInput(quint64 inputRevision) const;
-
     QObject *m_owner = nullptr;
     DocumentSessionImageDocumentSnapshotPort m_imageDocument;
     DocumentSessionImageDocumentCommandRuntime m_imageDocumentCommandRuntime;
@@ -186,10 +184,10 @@ private:
     std::vector<QMetaObject::Connection> m_documentConnections;
     DocumentSessionPublicImageLeafSnapshot m_imagePublicSnapshot;
     DocumentSessionPublicVideoLeafSnapshot m_videoPublicSnapshot;
+    DocumentSessionPublicSnapshotInputPort m_publicSnapshotInputPort;
     DocumentSessionMediaPredecodeInputPort m_mediaPredecodeInputPort;
     DocumentSessionMediaOpenWithPlanPort m_mediaOpenWithPlanPort;
     DocumentSessionVideoOutputRuntime m_videoOutputRuntime;
-    quint64 m_publicSnapshotInputRevision = 0;
     bool m_routingSource = false;
 };
 }

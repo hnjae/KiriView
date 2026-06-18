@@ -64,8 +64,8 @@ void TestDocumentSessionPublicSnapshotInputPort::assignsRevisionsWhileBuildingFr
     QCOMPARE(firstInput.session.activeNavigationRevealDirection,
         kiriview::ActiveNavigationRevealDirection::Next);
     QVERIFY(firstInput.session.directMediaNavigation.known);
-    QCOMPARE(firstInput.session.directMediaNavigation.currentNumber, 2);
-    QCOMPARE(firstInput.session.directMediaNavigation.count, 4);
+    QCOMPARE(firstInput.session.directMediaNavigation.boundaryState.currentNumber, 2);
+    QCOMPARE(firstInput.session.directMediaNavigation.boundaryState.count, 4);
     QCOMPARE(firstInput.image.sourceUrl, image.sourceUrl);
     QVERIFY(firstInput.image.directImageReplacementPending);
     QVERIFY(firstInput.operations.displayedMediaOpenWithAvailable);

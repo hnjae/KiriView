@@ -237,6 +237,8 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
       })
     , m_mediaOpenWithRuntime(std::move(dependencies.mediaOpenWithProvider))
     , m_mediaPredecodeRuntime(owner, std::move(dependencies.directMediaPredecodeDependencies))
+    , m_publicSnapshotInputPort(&m_state, &m_directMediaActivityPort,
+          &m_directMediaNavigationInputPort, &m_imagePublicSnapshot, &m_videoPublicSnapshot)
     , m_mediaPredecodeInputPort(
           &m_state, &m_directMediaActivityPort, &m_directMediaScopePort, &m_imagePublicSnapshot)
     , m_mediaOpenWithPlanPort(&m_state, &m_imagePublicSnapshot, &m_videoPublicSnapshot)
@@ -699,14 +701,14 @@ void DocumentSessionRuntime::publishActiveNavigationForImagePages()
 {
     setActiveNavigationRevealContext(
         takePendingActiveNavigationRevealContext(ActiveNavigationRevealIntent::ProgrammaticSync));
-    m_projectionRuntime.publishForSourceKind(publicSnapshotInput(++m_publicSnapshotInputRevision),
+    m_projectionRuntime.publishForSourceKind(m_publicSnapshotInputPort.nextInput(),
         ActiveNavigationSourceKind::ImageDocumentPages, m_imagePublicSnapshot.pageNavigationRows);
 }
 
 void DocumentSessionRuntime::recomputePublicProjection()
 {
-    m_projectionRuntime.publish(publicSnapshotInput(++m_publicSnapshotInputRevision),
-        m_imagePublicSnapshot.pageNavigationRows);
+    m_projectionRuntime.publish(
+        m_publicSnapshotInputPort.nextInput(), m_imagePublicSnapshot.pageNavigationRows);
 }
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
@@ -776,26 +778,6 @@ void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCom
 ActiveZoomSnapshot DocumentSessionRuntime::activeZoomSnapshotForKind(DocumentSessionKind kind) const
 {
     return documentSessionActiveZoomSnapshot(kind, m_imagePublicSnapshot, m_videoPublicSnapshot);
-}
-
-DocumentSessionPublicSnapshotInput DocumentSessionRuntime::publicSnapshotInput(
-    quint64 inputRevision) const
-{
-    DocumentSessionPublicSnapshotInputBuilderInput input;
-    input.inputRevision = inputRevision;
-    input.session.sourceUrl = m_state.sourceUrl();
-    input.session.documentKind = m_state.documentKind();
-    input.session.sessionErrorString = m_state.sessionErrorString();
-    input.session.fileDeletionInProgress = m_state.fileDeletionInProgress();
-    input.session.directImageLoadMayUseImageDocumentSourceScope
-        = m_directMediaActivityPort.directImageSourceScopeEligible();
-    input.session.directMediaNavigation = m_directMediaNavigationInputPort.currentInput();
-    input.session.activeNavigationRevealIntent = m_state.activeNavigationRevealIntent();
-    input.session.activeNavigationRevealDirection = m_state.activeNavigationRevealDirection();
-    input.image = m_imagePublicSnapshot;
-    input.video = m_videoPublicSnapshot;
-    input.directMediaCursor = m_state.directMediaCursor();
-    return buildDocumentSessionPublicSnapshotInput(input);
 }
 
 }
