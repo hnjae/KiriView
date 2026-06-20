@@ -174,7 +174,9 @@ The fullscreen overlay toolbar contains media controls without the toolbar appli
 
 The fullscreen overlay toolbar is shown when entering fullscreen and when the pointer enters the top reveal area near the toolbar.
 
-It hides after 1.0 seconds of inactivity unless the pointer is over the toolbar, the pointer is in the top reveal area, or a toolbar input is focused.
+Fullscreen hides the pointer when entering fullscreen. Moving the pointer shows it again, and KiriView hides it again after 1.0 seconds without pointer movement.
+
+The fullscreen overlay toolbar hides after 1.0 seconds without pointer movement unless the user is actively interacting with toolbar controls or a toolbar input is focused. Pointer hover over the toolbar or top reveal area does not keep the toolbar visible by itself.
 
 Leaving fullscreen restores the window's previous windowed, maximized, or minimized state and restores the normal header toolbar.
 
