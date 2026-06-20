@@ -15,6 +15,7 @@ Controls.Pane {
 
     required property KiriDocumentSession documentSession
     readonly property var mediaInformation: documentSession.mediaInformation
+    readonly property string fixedWidthFontFamily: Kirigami.Theme.fixedWidthFont.family
 
     signal closeRequested
 
@@ -97,9 +98,12 @@ Controls.Pane {
                     }
 
                     Controls.Label {
+                        objectName: "infoPanelMetadataValue"
+
                         Layout.fillWidth: true
                         color: Kirigami.Theme.textColor
                         elide: Text.ElideMiddle
+                        font.family: root.fixedWidthFontFamily
                         horizontalAlignment: Text.AlignRight
                         maximumLineCount: 1
                         text: rowDelegate.value
@@ -177,6 +181,7 @@ Controls.Pane {
                     color: Kirigami.Theme.textColor
                     elide: Text.ElideRight
                     font.bold: true
+                    font.family: root.fixedWidthFontFamily
                     maximumLineCount: 1
                     text: root.mediaInformation.title
                     textFormat: Text.PlainText
@@ -188,6 +193,7 @@ Controls.Pane {
                     Layout.fillWidth: true
                     color: Kirigami.Theme.disabledTextColor
                     elide: Text.ElideRight
+                    font.family: root.fixedWidthFontFamily
                     maximumLineCount: 1
                     text: root.mediaInformation.summary
                     textFormat: Text.PlainText
