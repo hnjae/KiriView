@@ -20,6 +20,7 @@ class TestDisplayImagePage : public QObject
 
 private Q_SLOTS:
     void bindsProjectionToProviderImage();
+    void transposesProviderImageGeometryForSidewaysRotation();
     void acknowledgesLoadedProviderRevision();
     void skipsAcknowledgmentWhenProjectionDoesNotRequireIt();
     void reportsMissingAcknowledgmentForRequiredEmptyProviderUrl();
@@ -167,6 +168,20 @@ void TestDisplayImagePage::bindsProjectionToProviderImage()
     QCOMPARE(image->property("rotation").toReal(), 90.0);
     QCOMPARE(image->property("smooth").toBool(), true);
     QCOMPARE(image->property("mipmap").toBool(), true);
+}
+
+void TestDisplayImagePage::transposesProviderImageGeometryForSidewaysRotation()
+{
+    Fixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    QObject *image = providerImage(fixture);
+    QVERIFY(image != nullptr);
+
+    QCOMPARE(image->property("width").toReal(), 60.0);
+    QCOMPARE(image->property("height").toReal(), 80.0);
+    QCOMPARE(image->property("x").toReal(), 10.0);
+    QCOMPARE(image->property("y").toReal(), -10.0);
 }
 
 void TestDisplayImagePage::acknowledgesLoadedProviderRevision()
