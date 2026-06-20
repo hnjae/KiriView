@@ -26,6 +26,7 @@ StatefulApp.StatefulWindow {
     readonly property bool fullscreen: visibility === Window.FullScreen
     readonly property bool menuBarMode: kiriApplication.menuPresentation === KiriViewApplication.MenuBar
     readonly property bool applicationMenuShortcutEnabled: !root.menuBarMode && !root.fullscreen && !root.helpDialogOpen
+    property bool fullscreenPointerHidden: false
     property bool fullscreenToolBarRevealed: false
 
     function restoredVisibility(visibility) {
@@ -70,6 +71,22 @@ StatefulApp.StatefulWindow {
         scheduleFullscreenToolBarHide();
     }
 
+    function handleFullscreenPointerMovement(position) {
+        if (!fullscreen) {
+            return;
+        }
+
+        fullscreenPointerHidden = false;
+        fullscreenPointerIdleTimer.restart();
+
+        if (position.y >= 0 && position.y <= fullscreenToolBarRevealArea.height) {
+            revealFullscreenToolBar();
+            return;
+        }
+
+        scheduleFullscreenToolBarHide();
+    }
+
     function scheduleFullscreenToolBarHide() {
         if (!fullscreen || !fullscreenToolBarRevealed) {
             fullscreenToolBarHideTimer.stop();
@@ -85,7 +102,7 @@ StatefulApp.StatefulWindow {
     }
 
     function fullscreenToolBarInteractionActive() {
-        return mainImageToolBar.interactionActive || fullscreenToolBarRevealArea.hovered;
+        return mainImageToolBar.interactionActive;
     }
 
     function activeImageToolBar() {
@@ -119,10 +136,14 @@ StatefulApp.StatefulWindow {
 
     onFullscreenChanged: {
         if (fullscreen) {
+            fullscreenPointerHidden = true;
+            fullscreenPointerIdleTimer.stop();
             revealFullscreenToolBar();
             return;
         }
 
+        fullscreenPointerIdleTimer.stop();
+        fullscreenPointerHidden = false;
         fullscreenToolBarHideTimer.stop();
         fullscreenToolBarRevealed = false;
     }
@@ -205,6 +226,24 @@ StatefulApp.StatefulWindow {
 
         onTriggered: {
             if (root.fullscreen && !root.fullscreenToolBarInteractionActive()) {
+                root.fullscreenToolBarRevealed = false;
+            }
+        }
+    }
+
+    Timer {
+        id: fullscreenPointerIdleTimer
+
+        interval: 1000
+        repeat: false
+
+        onTriggered: {
+            if (!root.fullscreen) {
+                return;
+            }
+
+            root.fullscreenPointerHidden = true;
+            if (root.fullscreenToolBarRevealed && !root.fullscreenToolBarInteractionActive()) {
                 root.fullscreenToolBarRevealed = false;
             }
         }
@@ -299,6 +338,24 @@ StatefulApp.StatefulWindow {
                 root.activeImageToolBar().commitTextInputEditing(true);
                 root.focusActiveViewport();
                 viewerContextMenu.popup(popupParent, position.x, position.y);
+            }
+        }
+
+        Item {
+            id: fullscreenPointerTrackingArea
+
+            anchors.fill: parent
+            enabled: root.fullscreen
+            visible: enabled
+            z: 999
+
+            HoverHandler {
+                id: fullscreenPointerTrackingHoverHandler
+
+                cursorShape: root.fullscreenPointerHidden ? Qt.BlankCursor : Qt.ArrowCursor
+                enabled: fullscreenPointerTrackingArea.enabled
+
+                onPointChanged: root.handleFullscreenPointerMovement(point.position)
             }
         }
 

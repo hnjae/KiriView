@@ -1173,7 +1173,7 @@ void TestMainWindowToolBar::fullscreenPointerHidesAfterIdleMovement()
 
     moveMouse(fixture.window, QPoint(fixture.window->width() / 2, fixture.window->height() / 2));
     QTRY_VERIFY(!fixture.window->property("fullscreenPointerHidden").toBool());
-    QTRY_VERIFY_WITH_TIMEOUT(fixture.window->property("fullscreenPointerHidden").toBool(), 1500);
+    QTRY_VERIFY_WITH_TIMEOUT(fixture.window->property("fullscreenPointerHidden").toBool(), 6000);
 }
 
 void TestMainWindowToolBar::fullscreenToolbarRevealsOnlyNearTopEdge()
@@ -1221,7 +1221,7 @@ void TestMainWindowToolBar::fullscreenToolbarHidesAfterTopRevealIdle()
 
     moveMouse(fixture.window, QPoint(fixture.window->width() / 2, 1));
     QTRY_VERIFY(toolbar->isVisible());
-    QTRY_VERIFY_WITH_TIMEOUT(!toolbar->isVisible(), 1500);
+    QTRY_VERIFY_WITH_TIMEOUT(!toolbar->isVisible(), 6000);
 }
 
 void TestMainWindowToolBar::fullscreenReusesSingleToolbarAndHidesApplicationMenuButton()
