@@ -59,7 +59,9 @@ private Q_SLOTS:
     void viewerRightClickOpensContextMenuOnlyFromMediaViewport();
     void toolbarZoomWheelAppliesFineManualStep();
     void rightButtonWheelSuppressesContextMenuTap();
+    void fullscreenPointerHidesAfterIdleMovement();
     void fullscreenToolbarRevealsOnlyNearTopEdge();
+    void fullscreenToolbarHidesAfterTopRevealIdle();
     void fullscreenReusesSingleToolbarAndHidesApplicationMenuButton();
 };
 
@@ -1159,6 +1161,21 @@ void TestMainWindowToolBar::rightButtonWheelSuppressesContextMenuTap()
     QTRY_VERIFY(popupOpen(contextMenu));
 }
 
+void TestMainWindowToolBar::fullscreenPointerHidesAfterIdleMovement()
+{
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    resizeWindow(fixture, QSize(1200, 800));
+
+    fixture.window->setVisibility(QWindow::FullScreen);
+    QTRY_COMPARE(fixture.window->visibility(), QWindow::FullScreen);
+    QTRY_VERIFY(fixture.window->property("fullscreenPointerHidden").toBool());
+
+    moveMouse(fixture.window, QPoint(fixture.window->width() / 2, fixture.window->height() / 2));
+    QTRY_VERIFY(!fixture.window->property("fullscreenPointerHidden").toBool());
+    QTRY_VERIFY_WITH_TIMEOUT(fixture.window->property("fullscreenPointerHidden").toBool(), 1500);
+}
+
 void TestMainWindowToolBar::fullscreenToolbarRevealsOnlyNearTopEdge()
 {
     MainWindowFixture fixture = createMainWindowFixture();
@@ -1183,6 +1200,28 @@ void TestMainWindowToolBar::fullscreenToolbarRevealsOnlyNearTopEdge()
 
     moveMouse(fixture.window, QPoint(fixture.window->width() / 2, 1));
     QTRY_VERIFY(toolbar->isVisible());
+}
+
+void TestMainWindowToolBar::fullscreenToolbarHidesAfterTopRevealIdle()
+{
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    resizeWindow(fixture, QSize(1200, 800));
+
+    QQuickItem *toolbar = findQuickItem(fixture.window, QStringLiteral("mainImageToolBar"));
+    QVERIFY(toolbar != nullptr);
+
+    fixture.window->setVisibility(QWindow::FullScreen);
+    QTRY_COMPARE(fixture.window->visibility(), QWindow::FullScreen);
+    QTRY_VERIFY(toolbar->isVisible());
+
+    moveMouse(fixture.window, QPoint(fixture.window->width() / 2, fixture.window->height() / 2));
+    QVERIFY(fixture.window->setProperty("fullscreenToolBarRevealed", false));
+    QTRY_VERIFY(!toolbar->isVisible());
+
+    moveMouse(fixture.window, QPoint(fixture.window->width() / 2, 1));
+    QTRY_VERIFY(toolbar->isVisible());
+    QTRY_VERIFY_WITH_TIMEOUT(!toolbar->isVisible(), 1500);
 }
 
 void TestMainWindowToolBar::fullscreenReusesSingleToolbarAndHidesApplicationMenuButton()
