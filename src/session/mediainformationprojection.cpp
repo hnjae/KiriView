@@ -4,6 +4,7 @@
 #include "mediainformationprojection.h"
 
 #include "archive/archiveformat.h"
+#include "archive/archivepath.h"
 #include "session/documentsessiontypes.h"
 
 #include <KLocalizedString>
@@ -87,8 +88,23 @@ QUrl informationTargetUrl(const kiriview::MediaInformationProjectionInput &input
 
 bool canOpenContainingLocation(const QUrl &url) { return !url.isEmpty() && !url.path().isEmpty(); }
 
+QString generalPathValue(
+    const QUrl &targetUrl, const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+{
+    if (!openedCollectionScope.isEmpty()) {
+        const QString entryPath
+            = kiriview::openedCollectionEntryPathForUrl(openedCollectionScope, targetUrl);
+        if (!entryPath.isEmpty()) {
+            return entryPath;
+        }
+    }
+
+    return kiriview::mediaInformationDisplayPathForUrl(targetUrl);
+}
+
 std::vector<kiriview::MediaInformationProjectionRow> generalRows(
-    kiriview::MediaInformationKind kind, const QUrl &targetUrl)
+    kiriview::MediaInformationKind kind, const QUrl &targetUrl,
+    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
 {
     QString typeValue;
     switch (kind) {
@@ -104,8 +120,8 @@ std::vector<kiriview::MediaInformationProjectionRow> generalRows(
 
     std::vector<kiriview::MediaInformationProjectionRow> rows;
     appendRowIfValue(rows, i18nc("@label:metadata", "Type"), typeValue);
-    appendRowIfValue(rows, i18nc("@label:metadata", "Path"),
-        kiriview::mediaInformationDisplayPathForUrl(targetUrl));
+    appendRowIfValue(
+        rows, i18nc("@label:metadata", "Path"), generalPathValue(targetUrl, openedCollectionScope));
     return rows;
 }
 
@@ -207,7 +223,8 @@ MediaInformationProjectionSnapshot projectMediaInformation(
         snapshot.summary = hasValidDimensions(input.imageSize)
             ? i18nc("@info:metadata summary", "Image, %1", dimensionsText(input.imageSize))
             : i18nc("@info:metadata summary", "Image");
-        snapshot.generalRows = generalRows(snapshot.kind, snapshot.targetUrl);
+        snapshot.generalRows = generalRows(
+            snapshot.kind, snapshot.targetUrl, input.imageDisplayedOpenedCollectionScope);
         snapshot.mediaRows = imageRows(input.imageSize);
         snapshot.cameraRows = cameraRows(input.imageEmbeddedMetadata);
         snapshot.advancedRows = advancedRows(input.imageEmbeddedMetadata);
@@ -218,7 +235,8 @@ MediaInformationProjectionSnapshot projectMediaInformation(
         snapshot.summary = hasValidDimensions(input.videoSize)
             ? i18nc("@info:metadata summary", "Video, %1", dimensionsText(input.videoSize))
             : i18nc("@info:metadata summary", "Video");
-        snapshot.generalRows = generalRows(snapshot.kind, snapshot.targetUrl);
+        snapshot.generalRows
+            = generalRows(snapshot.kind, snapshot.targetUrl, OpenedCollectionScopeLocation::none());
         snapshot.mediaRows = videoRows(input.videoSize, input.videoEmbeddedMetadata);
         snapshot.cameraRows = cameraRows(input.videoEmbeddedMetadata);
         snapshot.advancedRows = advancedRows(input.videoEmbeddedMetadata);
