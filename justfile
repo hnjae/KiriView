@@ -101,6 +101,7 @@ run:
 [group('build')]
 install:
     devenv shell -- flatpak-builder --install --user --disable-tests \
+        --default-branch main \
         --delete-build-dirs \
         --force-clean build-dir \
         org.hnjae.kiriview.json
