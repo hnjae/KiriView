@@ -228,6 +228,8 @@ When a media item is available, the Info Panel shows the current file name, a su
 
 The General section shows available non-placeholder file identity rows such as type and path.
 
+For media items displayed inside an opened archive or local directory collection, the General section path is the item path relative to the collection root.
+
 The Image section uses the current image dimensions when they are known and omits unavailable rows.
 
 The Video section uses the current video frame dimensions when they are known. It may also show embedded video metadata such as duration and frame size when available, and omits unavailable rows.
