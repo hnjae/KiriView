@@ -21,6 +21,8 @@ Item {
     readonly property string sourceIdentity: hasDisplaySource ? displaySource.sourceIdentity : ""
     readonly property size sourceSizeHint: hasDisplaySource ? displaySource.sourceSizeHint : Qt.size(0, 0)
     readonly property bool loadAcknowledgmentRequired: hasDisplaySource && displaySource.loadAcknowledgmentRequired
+    readonly property int imageRotationDegrees: hasDisplaySource ? displaySource.rotationDegrees : 0
+    readonly property bool imageSideways: Math.abs(imageRotationDegrees % 180) === 90
     readonly property string acknowledgementKey: providerUrl.toString() + "\n" + revisionToken + "\n" + sourceIdentity
     property string acknowledgedKey: ""
     property bool acknowledgementQueued: false
@@ -73,17 +75,19 @@ Item {
         id: providerImage
 
         objectName: "providerImage"
-        anchors.fill: parent
+        anchors.centerIn: parent
         asynchronous: false
         cache: root.hasDisplaySource && root.displaySource.cacheEnabled
         fillMode: Image.PreserveAspectFit
+        height: root.imageSideways ? root.width : root.height
         mipmap: true
         retainWhileLoading: root.hasDisplaySource && root.displaySource.retainWhileLoadingEligible
-        rotation: root.hasDisplaySource ? root.displaySource.rotationDegrees : 0
+        rotation: root.imageRotationDegrees
         smooth: true
         source: root.providerUrl
         sourceSize: root.sourceSizeHint
         visible: root.visible && root.providerUrl.toString() !== ""
+        width: root.imageSideways ? root.height : root.width
 
         onStatusChanged: root.queueLoadAcknowledgment()
     }
