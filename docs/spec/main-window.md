@@ -224,7 +224,7 @@ The Info Panel header shows an information icon, the title `Information`, and a 
 
 When no media item is available, the Info Panel shows an unavailable state rather than stale media details.
 
-When a media item is available, the Info Panel shows the current file name, a summary line, General and media-specific metadata sections, a Camera section only when camera metadata rows are available, and an Advanced Metadata section only when additional parsed metadata rows are available. File names and displayed paths decode percent-encoded URL path text for user readability.
+When a media item is available, the Info Panel shows the current file name, a summary line, General and media-specific metadata sections, a Camera section only when camera metadata rows are available, and an Advanced Metadata section only when additional parsed metadata rows are available. File names and displayed paths decode percent-encoded URL path text for user readability. The current file name, summary line, and metadata row values are rendered in a fixed-width font.
 
 The General section shows available non-placeholder file identity rows such as type and path.
 
