@@ -29,6 +29,7 @@ private Q_SLOTS:
     void formattedZoomText();
     void displayTextReflectsMissingAndUnknownZoomValues();
     void displayTextIsRightAligned();
+    void percentSuffixTrailingSpacingFollowsControlSpacing();
 };
 
 namespace {
@@ -101,6 +102,15 @@ QObject *findObject(QObject *root, const QString &objectName)
     return root->findChild<QObject *>(objectName, Qt::FindChildrenRecursively);
 }
 
+void compareZoomValueText(QObject *zoomTextInput, const QString &expectedText)
+{
+    const QString actualText = zoomTextInput->property("text").toString();
+    QCOMPARE(actualText, expectedText);
+    QVERIFY2(!actualText.contains(QLatin1Char('%')),
+        qPrintable(
+            QStringLiteral("zoom value text must not contain percent suffix: %1").arg(actualText)));
+}
+
 QString invokeFormattedZoomText(
     QObject *zoomSpinBox, double rawPercent, bool valueAvailable, bool valueKnown)
 {
@@ -135,24 +145,23 @@ void TestImageZoomControls::formattedZoomText_data()
     QTest::addColumn<bool>("valueKnown");
     QTest::addColumn<QString>("expectedText");
 
-    QTest::newRow("missing value") << 0.0 << false << false << QStringLiteral("    - %");
-    QTest::newRow("unknown value") << 0.0 << true << false << QStringLiteral("    ? %");
-    QTest::newRow("ordinary value") << 100.0 << true << true << QStringLiteral("  100 %");
-    QTest::newRow("rounded below threshold") << 9998.4 << true << true << QStringLiteral(" 9998 %");
-    QTest::newRow("rounded to numeric cap") << 9998.6 << true << true << QStringLiteral(" 9999 %");
-    QTest::newRow("sub-threshold cap") << 9999.9 << true << true << QStringLiteral(" 9999 %");
-    QTest::newRow("exact ten k") << 10000.0 << true << true << QStringLiteral("  10k %");
-    QTest::newRow("epsilon ten k") << 10000.0005 << true << true << QStringLiteral("  10k %");
-    QTest::newRow("ten k plus") << 10000.1 << true << true << QStringLiteral(" 10k+ %");
-    QTest::newRow("bucket floor") << 10999.9 << true << true << QStringLiteral(" 10k+ %");
-    QTest::newRow("exact eleven k") << 11000.0 << true << true << QStringLiteral("  11k %");
-    QTest::newRow("exact upper bucket") << 999000.0 << true << true << QStringLiteral(" 999k %");
-    QTest::newRow("upper bucket plus") << 999000.1 << true << true << QStringLiteral("999k+ %");
-    QTest::newRow("epsilon million cap")
-        << 999999.9995 << true << true << QStringLiteral("999k+ %");
-    QTest::newRow("million cap") << 1000000.0 << true << true << QStringLiteral("999k+ %");
+    QTest::newRow("missing value") << 0.0 << false << false << QStringLiteral("    -");
+    QTest::newRow("unknown value") << 0.0 << true << false << QStringLiteral("    ?");
+    QTest::newRow("ordinary value") << 100.0 << true << true << QStringLiteral("  100");
+    QTest::newRow("rounded below threshold") << 9998.4 << true << true << QStringLiteral(" 9998");
+    QTest::newRow("rounded to numeric cap") << 9998.6 << true << true << QStringLiteral(" 9999");
+    QTest::newRow("sub-threshold cap") << 9999.9 << true << true << QStringLiteral(" 9999");
+    QTest::newRow("exact ten k") << 10000.0 << true << true << QStringLiteral("  10k");
+    QTest::newRow("epsilon ten k") << 10000.0005 << true << true << QStringLiteral("  10k");
+    QTest::newRow("ten k plus") << 10000.1 << true << true << QStringLiteral(" 10k+");
+    QTest::newRow("bucket floor") << 10999.9 << true << true << QStringLiteral(" 10k+");
+    QTest::newRow("exact eleven k") << 11000.0 << true << true << QStringLiteral("  11k");
+    QTest::newRow("exact upper bucket") << 999000.0 << true << true << QStringLiteral(" 999k");
+    QTest::newRow("upper bucket plus") << 999000.1 << true << true << QStringLiteral("999k+");
+    QTest::newRow("epsilon million cap") << 999999.9995 << true << true << QStringLiteral("999k+");
+    QTest::newRow("million cap") << 1000000.0 << true << true << QStringLiteral("999k+");
     QTest::newRow("non-finite") << std::numeric_limits<double>::quiet_NaN() << true << true
-                                << QStringLiteral("    ? %");
+                                << QStringLiteral("    ?");
 }
 
 void TestImageZoomControls::formattedZoomText()
@@ -175,17 +184,21 @@ void TestImageZoomControls::displayTextReflectsMissingAndUnknownZoomValues()
     ZoomControlsFixture fixture = createZoomControlsFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QObject *zoomTextInput = findObject(fixture.root.get(), QStringLiteral("zoomTextInput"));
+    QObject *zoomPercentSuffixLabel
+        = findObject(fixture.root.get(), QStringLiteral("zoomPercentSuffixLabel"));
     QObject *zoomSpinBox = findObject(fixture.root.get(), QStringLiteral("zoomSpinBox"));
     QVERIFY(zoomTextInput != nullptr);
+    QVERIFY(zoomPercentSuffixLabel != nullptr);
     QVERIFY(zoomSpinBox != nullptr);
-    QCOMPARE(zoomTextInput->property("text").toString(), QStringLiteral("    - %"));
+    QCOMPARE(zoomPercentSuffixLabel->property("text").toString(), QStringLiteral("%"));
+    compareZoomValueText(zoomTextInput, QStringLiteral("    -"));
     QCOMPARE(zoomSpinBox->property("value").toInt(), 0);
 
     QVERIFY(fixture.root->setProperty("zoomPercent", 208.0));
     QVERIFY(fixture.root->setProperty("zoomPercentAvailable", false));
     QVERIFY(fixture.root->setProperty("zoomPercentKnown", false));
     QCoreApplication::processEvents();
-    QCOMPARE(zoomTextInput->property("text").toString(), QStringLiteral("    - %"));
+    compareZoomValueText(zoomTextInput, QStringLiteral("    -"));
     QCOMPARE(zoomSpinBox->property("value").toInt(), 0);
 
     QVERIFY(fixture.root->setProperty("readOnlyDisplayMode", true));
@@ -193,15 +206,20 @@ void TestImageZoomControls::displayTextReflectsMissingAndUnknownZoomValues()
     QVERIFY(fixture.root->setProperty("zoomPercentKnown", false));
     QVERIFY(fixture.root->setProperty("readOnlyPercentKnown", false));
     QCoreApplication::processEvents();
-    QCOMPARE(zoomTextInput->property("text").toString(), QStringLiteral("    ? %"));
+    compareZoomValueText(zoomTextInput, QStringLiteral("    ?"));
     QCOMPARE(zoomSpinBox->property("value").toInt(), 0);
 
     QVERIFY(fixture.root->setProperty("zoomPercentKnown", true));
-    QVERIFY(fixture.root->setProperty("zoomPercent", 10000.0));
+    QVERIFY(fixture.root->setProperty("zoomPercent", 100.0));
     QVERIFY(fixture.root->setProperty("readOnlyPercentKnown", true));
+    QVERIFY(fixture.root->setProperty("readOnlyPercent", 100));
+    QCoreApplication::processEvents();
+    compareZoomValueText(zoomTextInput, QStringLiteral("  100"));
+
+    QVERIFY(fixture.root->setProperty("zoomPercent", 10000.0));
     QVERIFY(fixture.root->setProperty("readOnlyPercent", 10000));
     QCoreApplication::processEvents();
-    QCOMPARE(zoomTextInput->property("text").toString(), QStringLiteral("  10k %"));
+    compareZoomValueText(zoomTextInput, QStringLiteral("  10k"));
 }
 
 void TestImageZoomControls::displayTextIsRightAligned()
@@ -211,6 +229,24 @@ void TestImageZoomControls::displayTextIsRightAligned()
     QObject *zoomTextInput = findObject(fixture.root.get(), QStringLiteral("zoomTextInput"));
     QVERIFY(zoomTextInput != nullptr);
     QCOMPARE(zoomTextInput->property("horizontalAlignment").toInt(), int(Qt::AlignRight));
+}
+
+void TestImageZoomControls::percentSuffixTrailingSpacingFollowsControlSpacing()
+{
+    ZoomControlsFixture fixture = createZoomControlsFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QObject *zoomPercentSuffixLabel
+        = findObject(fixture.root.get(), QStringLiteral("zoomPercentSuffixLabel"));
+    QVERIFY(zoomPercentSuffixLabel != nullptr);
+
+    const int normalSpacing = fixture.root->property("controlSpacing").toInt();
+    QCOMPARE(zoomPercentSuffixLabel->property("trailingSpacing").toInt(), normalSpacing);
+
+    QVERIFY(fixture.root->setProperty("compact", true));
+    QCoreApplication::processEvents();
+    const int compactSpacing = fixture.root->property("controlSpacing").toInt();
+    QCOMPARE(zoomPercentSuffixLabel->property("trailingSpacing").toInt(), compactSpacing);
+    QVERIFY(compactSpacing <= normalSpacing);
 }
 
 QTEST_MAIN(TestImageZoomControls)
