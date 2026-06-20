@@ -18,6 +18,7 @@
 #include <QBuffer>
 #include <QDir>
 #include <QFile>
+#include <QFont>
 #include <QImage>
 #include <QObject>
 #include <QQmlApplicationEngine>
@@ -52,6 +53,7 @@ private Q_SLOTS:
     void mediaViewportHostLoadsOnlyActiveDelegate();
     void panelActionsToggleResizablePanels();
     void infoPanelAdvancedMetadataSectionFoldsRows();
+    void infoPanelUsesFixedWidthFontForFileAndValues();
     void infoPanelUsesOverlayDrawerOnNarrowWindows();
     void escapeClosesInfoPanelBeforeLeavingFullscreen();
     void panelShortcutsToggleResizablePanels();
@@ -155,6 +157,34 @@ QList<QQuickItem *> visibleItemsByObjectName(QObject *root, const QString &objec
     return visibleItems;
 }
 
+void appendVisualItemsByObjectName(
+    QQuickItem *root, const QString &objectName, QList<QQuickItem *> *items)
+{
+    if (root == nullptr) {
+        return;
+    }
+    if (root->objectName() == objectName) {
+        items->append(root);
+    }
+    const QList<QQuickItem *> children = root->childItems();
+    for (QQuickItem *child : children) {
+        appendVisualItemsByObjectName(child, objectName, items);
+    }
+}
+
+QList<QQuickItem *> visualItemsByObjectName(QObject *root, const QString &objectName)
+{
+    QList<QQuickItem *> items;
+    if (QQuickWindow *window = qobject_cast<QQuickWindow *>(root)) {
+        appendVisualItemsByObjectName(window->contentItem(), objectName, &items);
+    } else {
+        if (QQuickItem *item = qobject_cast<QQuickItem *>(root)) {
+            appendVisualItemsByObjectName(item, objectName, &items);
+        }
+    }
+    return items;
+}
+
 void appendVisibleItemsByText(QQuickItem *root, const QString &text, QList<QQuickItem *> *items)
 {
     if (root == nullptr) {
@@ -190,6 +220,11 @@ QQuickItem *findQuickItem(QObject *root, const QString &objectName)
 QObject *findObject(QObject *root, const QString &objectName)
 {
     return root->findChild<QObject *>(objectName, Qt::FindChildrenRecursively);
+}
+
+QString fontFamily(QQuickItem *item)
+{
+    return qvariant_cast<QFont>(item->property("font")).family();
 }
 
 KiriDocumentSession *findDocumentSession(QObject *root)
@@ -865,6 +900,51 @@ void TestMainWindowToolBar::infoPanelAdvancedMetadataSectionFoldsRows()
     QVERIFY(advancedMetadataSection->setProperty("expanded", false));
     QCoreApplication::processEvents();
     QTRY_COMPARE(visibleItemsByText(infoPanel, QStringLiteral("Kiri Tester")).size(), 0);
+}
+
+void TestMainWindowToolBar::infoPanelUsesFixedWidthFontForFileAndValues()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString imagePath = directory.filePath(QStringLiteral("fixed-width-info.png"));
+    QVERIFY(writeTestPng(imagePath));
+
+    MainWindowFixture fixture = createMainWindowFixture(QUrl::fromLocalFile(imagePath));
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    resizeWindow(fixture, QSize(1200, 800));
+
+    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    QVERIFY(documentSession != nullptr);
+    QTRY_VERIFY(documentSession->mediaInformation()->available());
+
+    KiriViewApplication *application = findApplication(fixture.window);
+    QVERIFY(application != nullptr);
+    QAction *infoPanelAction
+        = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
+    QVERIFY(infoPanelAction != nullptr);
+    infoPanelAction->trigger();
+
+    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QVERIFY(infoPanel != nullptr);
+    QTRY_VERIFY(infoPanel->isVisible());
+
+    const QString fixedWidthFamily = infoPanel->property("fixedWidthFontFamily").toString();
+    QVERIFY(!fixedWidthFamily.isEmpty());
+
+    QQuickItem *title = findQuickItem(infoPanel, QStringLiteral("infoPanelTitle"));
+    QQuickItem *summary = findQuickItem(infoPanel, QStringLiteral("infoPanelSummary"));
+    QVERIFY(title != nullptr);
+    QVERIFY(summary != nullptr);
+    QCOMPARE(fontFamily(title), fixedWidthFamily);
+    QCOMPARE(fontFamily(summary), fixedWidthFamily);
+
+    QList<QQuickItem *> valueLabels;
+    QTRY_VERIFY(!(
+        valueLabels = visualItemsByObjectName(infoPanel, QStringLiteral("infoPanelMetadataValue")))
+            .isEmpty());
+    for (QQuickItem *valueLabel : valueLabels) {
+        QCOMPARE(fontFamily(valueLabel), fixedWidthFamily);
+    }
 }
 
 void TestMainWindowToolBar::infoPanelUsesOverlayDrawerOnNarrowWindows()
