@@ -223,7 +223,12 @@ fn main() {
             cc.include("src");
             cc.include(&generated_state.include_dir);
             for dir in &native_include_dirs {
-                cc.include(dir);
+                if is_system_native_include_dir(dir) {
+                    cc.flag("-isystem");
+                    cc.flag(dir.as_os_str());
+                } else {
+                    cc.include(dir);
+                }
             }
         });
     }
@@ -460,6 +465,13 @@ fn native_include_dirs() -> Vec<PathBuf> {
         dirs.extend(include_dirs(search.collectors, search.pkg_config_packages));
     }
     dirs.into_iter().collect()
+}
+
+fn is_system_native_include_dir(dir: &Path) -> bool {
+    !DEFAULT_INCLUDE_ROOTS
+        .iter()
+        .map(Path::new)
+        .any(|root| dir == root)
 }
 
 fn include_dirs(collectors: &[IncludeDirCollector], pkg_config_packages: &[&str]) -> Vec<PathBuf> {
