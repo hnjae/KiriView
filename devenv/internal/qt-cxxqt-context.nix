@@ -116,6 +116,13 @@ let
     "-DQT_WIDGETS_LIB"
     "-DTRANSLATION_DOMAIN=\"kiriview\""
   ];
+  gccVersion = lib.getVersion pkgs.stdenv.cc.cc;
+  toolchainSystemIncludeDirs = [
+    "${pkgs.stdenv.cc.cc}/include/c++/${gccVersion}"
+    "${pkgs.stdenv.cc.cc}/include/c++/${gccVersion}/${pkgs.stdenv.hostPlatform.config}"
+    "${pkgs.llvmPackages.clang}/resource-root/include"
+    "${pkgs.glibc.dev}/include"
+  ];
   qtIncludeModules = [
     "QtCore"
     "QtDBus"
@@ -148,6 +155,7 @@ let
     ".devenv/profile/include/QtGui/${qtVersion}/QtGui"
     ".devenv/profile/mkspecs/linux-g++"
   ]
+  ++ toolchainSystemIncludeDirs
   ++ map (module: ".devenv/profile/include/${module}") qtIncludeModules;
   cppCompileCommand = source: extraArguments: {
     directory = config.devenv.root;

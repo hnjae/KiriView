@@ -48,6 +48,7 @@ public:
 
     bool isValid() const { return static_cast<bool>(m_schedule); }
 
+    // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks)
     template <typename Work, typename Finish>
     void run(QObject *context, Work work, Finish finish) const
     {
@@ -75,6 +76,7 @@ public:
 
         schedule(context, std::move(operation), std::move(completion));
     }
+    // NOLINTEND(clang-analyzer-cplusplus.NewDeleteLeaks)
 
 private:
     void schedule(
