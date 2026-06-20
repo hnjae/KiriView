@@ -79,7 +79,7 @@ RowLayout {
         objectName: "zoomSpinBox"
 
         property bool completingEdit: false
-        readonly property int zoomDisplayWidth: 7
+        readonly property int zoomDisplayWidth: 5
         readonly property real zoomDisplayEpsilon: 0.001
         readonly property int zoomKiloThresholdPercent: 10000
         readonly property int zoomOverflowThresholdPercent: 1000000
@@ -135,65 +135,94 @@ RowLayout {
             top: zoomSpinBox.to
         }
 
-        contentItem: TextInput {
-            id: zoomTextInput
+        contentItem: RowLayout {
+            spacing: zoomSuffixGapMetrics.advanceWidth
 
-            objectName: "zoomTextInput"
+            TextMetrics {
+                id: zoomSuffixGapMetrics
 
-            color: zoomSpinBox.palette.text
-            font: Kirigami.Theme.fixedWidthFont
-            horizontalAlignment: Text.AlignRight
-            inputMethodHints: Qt.ImhFormattedNumbersOnly
-            readOnly: !root.zoomEditable || !zoomSpinBox.editable
-            selectByMouse: true
-            selectedTextColor: zoomSpinBox.palette.highlightedText
-            selectionColor: zoomSpinBox.palette.highlight
-            verticalAlignment: Text.AlignVCenter
-
-            Binding {
-                property: "text"
-                target: zoomTextInput
-                value: zoomSpinBox.formattedDisplayText
-                when: !root.zoomEditable || !zoomTextInput.activeFocus
+                font: Kirigami.Theme.fixedWidthFont
+                text: " "
             }
 
-            onActiveFocusChanged: {
-                if (activeFocus && root.zoomEditable && zoomSpinBox.enabled) {
-                    text = zoomSpinBox.editableDisplayText;
+            TextInput {
+                id: zoomTextInput
+
+                objectName: "zoomTextInput"
+
+                Layout.fillWidth: true
+
+                color: zoomSpinBox.palette.text
+                font: Kirigami.Theme.fixedWidthFont
+                horizontalAlignment: Text.AlignRight
+                inputMethodHints: Qt.ImhFormattedNumbersOnly
+                readOnly: !root.zoomEditable || !zoomSpinBox.editable
+                selectByMouse: true
+                selectedTextColor: zoomSpinBox.palette.highlightedText
+                selectionColor: zoomSpinBox.palette.highlight
+                verticalAlignment: Text.AlignVCenter
+
+                Binding {
+                    property: "text"
+                    target: zoomTextInput
+                    value: zoomSpinBox.formattedDisplayText
+                    when: !root.zoomEditable || !zoomTextInput.activeFocus
                 }
+
+                onActiveFocusChanged: {
+                    if (activeFocus && root.zoomEditable && zoomSpinBox.enabled) {
+                        text = zoomSpinBox.editableDisplayText;
+                    }
+                }
+            }
+
+            Text {
+                id: zoomPercentSuffixLabel
+
+                objectName: "zoomPercentSuffixLabel"
+
+                readonly property int trailingSpacing: Layout.rightMargin
+
+                Layout.alignment: Qt.AlignVCenter
+                Layout.rightMargin: root.controlSpacing
+
+                color: zoomSpinBox.palette.text
+                font: Kirigami.Theme.fixedWidthFont
+                text: "%"
+                verticalAlignment: Text.AlignVCenter
             }
         }
 
         function formattedZoomText(rawPercent, valueAvailable, valueKnown) {
             if (!valueAvailable) {
-                return paddedZoomText("- %");
+                return paddedZoomText("-");
             }
 
             const percent = Number(rawPercent);
             if (!valueKnown || !Number.isFinite(percent)) {
-                return paddedZoomText("? %");
+                return paddedZoomText("?");
             }
 
             if (percent < zoomKiloThresholdPercent) {
                 const roundedPercent = Math.min(zoomKiloThresholdPercent - 1, Math.max(0, Math.round(percent)));
-                return paddedZoomText(roundedPercent.toString() + " %");
+                return paddedZoomText(roundedPercent.toString());
             }
 
             if (percent >= zoomOverflowThresholdPercent) {
-                return paddedZoomText("999k+ %");
+                return paddedZoomText("999k+");
             }
 
             const nearestKilo = Math.round(percent / 1000);
             const nearestKiloPercent = nearestKilo * 1000;
             if (Math.abs(percent - nearestKiloPercent) < zoomDisplayEpsilon) {
                 if (nearestKilo >= 1000) {
-                    return paddedZoomText("999k+ %");
+                    return paddedZoomText("999k+");
                 }
-                return paddedZoomText(nearestKilo.toString() + "k %");
+                return paddedZoomText(nearestKilo.toString() + "k");
             }
 
             const kilo = Math.min(999, Math.floor(percent / 1000));
-            return paddedZoomText(kilo.toString() + "k+ %");
+            return paddedZoomText(kilo.toString() + "k+");
         }
 
         function paddedZoomText(text) {
@@ -205,7 +234,7 @@ RowLayout {
         }
 
         function plainZoomText(value) {
-            return Number(value).toString() + " %";
+            return Number(value).toString();
         }
 
         function cancelEditing(returnViewerFocus) {
