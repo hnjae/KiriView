@@ -32,7 +32,7 @@ Outside fullscreen, the toolbar uses normal application header placement, reserv
 
 Controls that require selected, navigable, or ready media are disabled until the corresponding program state is available.
 
-The toolbar zoom control displays the document session's active zoom readout rather than reading image or video document zoom values directly. When the document session is empty, the zoom control remains in place and displays `- %`.
+The toolbar zoom control displays the document session's active zoom readout rather than reading image or video document zoom values directly. Its editable value text and percent suffix are separate visual parts, so an empty document displays `- %` while the value input owns only `-`, and the suffix preserves normal toolbar spacing before the stepper buttons.
 
 The toolbar does not infer image readiness, video readiness, action availability, page navigation, zoom editability, or title subject by combining raw image-document and video-document properties. It renders the current document-session projections so that related controls change together.
 

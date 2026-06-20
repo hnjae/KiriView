@@ -114,7 +114,7 @@ Rotation is unavailable while Two-Page Spread is enabled. Enabling Two-Page Spre
 
 ## Zoom Controls
 
-The toolbar provides a fixed-width zoom percentage input. It shows values below 10,000% as a rounded integer percentage without digit grouping, capped at `9999 %`. It shows values from 10,000% through 999,999% in thousands using `k`, adds `+` when the actual value is above the displayed thousand bucket, and shows values at or above 1,000,000% as `999k+ %`. The displayed text is right-aligned, uses a fixed-width font, and includes one space between the number or suffix and `%`.
+The toolbar provides a fixed-width zoom percentage input with a separate percent suffix. It shows values below 10,000% as a rounded integer percentage without digit grouping, capped at `9999 %`. It shows values from 10,000% through 999,999% in thousands using `k`, adds `+` when the actual value is above the displayed thousand bucket, and shows values at or above 1,000,000% as `999k+ %`. The editable value text is right-aligned, uses a fixed-width font, and excludes `%`; the adjacent percent suffix provides `%` after a one-space visual gap and keeps toolbar spacing before the stepper buttons.
 
 When no image or direct video has an active zoom readout, the toolbar zoom control displays `- %`. An image zoom readout exists only while a ready image with a displayed image size is active. Empty, loading, error, and non-image document states must not expose image render-context fallback zoom values through the toolbar.
 
