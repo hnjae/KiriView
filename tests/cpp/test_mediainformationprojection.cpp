@@ -48,7 +48,8 @@ private Q_SLOTS:
     void emptySessionProjectsUnavailableInformation();
     void readyImageProjectsTargetMetadataAndFileActions();
     void directVideoProjectsVideoSectionFromSessionSource();
-    void kioArchivePathDisplayDecodesPercentEscapedText();
+    void archiveCollectionImagePathDisplaysRelativeEntryPath();
+    void directoryCollectionImagePathDisplaysRelativeEntryPath();
     void unsupportedArchiveImageTargetClearsInformation();
 };
 
@@ -138,7 +139,7 @@ void TestMediaInformationProjection::directVideoProjectsVideoSectionFromSessionS
     QVERIFY(snapshot.canOpenContainingFolder);
 }
 
-void TestMediaInformationProjection::kioArchivePathDisplayDecodesPercentEscapedText()
+void TestMediaInformationProjection::archiveCollectionImagePathDisplaysRelativeEntryPath()
 {
     kiriview::MediaInformationProjectionInput input;
     input.documentKind = kiriview::DocumentSessionKind::Image;
@@ -157,7 +158,28 @@ void TestMediaInformationProjection::kioArchivePathDisplayDecodesPercentEscapedT
     QCOMPARE(snapshot.targetUrl, input.imageDisplayedUrl);
     QCOMPARE(snapshot.title, QStringLiteral("01 [2880p].jxl"));
     QCOMPARE(valueForLabel(snapshot.generalRows, QStringLiteral("Path")),
-        QStringLiteral("zip:///books/book [2880p].cbz!/chapter/01 [2880p].jxl"));
+        QStringLiteral("chapter/01 [2880p].jxl"));
+}
+
+void TestMediaInformationProjection::directoryCollectionImagePathDisplaysRelativeEntryPath()
+{
+    kiriview::MediaInformationProjectionInput input;
+    input.documentKind = kiriview::DocumentSessionKind::Image;
+    input.imageReady = true;
+    input.imageDisplayedUrl = QUrl::fromLocalFile(QStringLiteral("/books/book/chapter/01.png"));
+    input.imageDisplayedOpenedCollectionScope = kiriview::OpenedCollectionScopeLocation::fromUrls(
+        QUrl::fromLocalFile(QStringLiteral("/books/book")),
+        QUrl::fromLocalFile(QStringLiteral("/books/book/")),
+        kiriview::OpenedCollectionScopeKind::Directory);
+
+    const kiriview::MediaInformationProjectionSnapshot snapshot
+        = kiriview::projectMediaInformation(input, 14);
+
+    QVERIFY(snapshot.available);
+    QCOMPARE(snapshot.targetUrl, input.imageDisplayedUrl);
+    QCOMPARE(snapshot.title, QStringLiteral("01.png"));
+    QCOMPARE(valueForLabel(snapshot.generalRows, QStringLiteral("Path")),
+        QStringLiteral("chapter/01.png"));
 }
 
 void TestMediaInformationProjection::unsupportedArchiveImageTargetClearsInformation()
