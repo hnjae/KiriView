@@ -157,7 +157,7 @@ private Q_SLOTS:
     void scheduleCachesVisibleSpreadPagesAndSkipsSecondaryPredecode();
     void scheduleRejectsInvalidDisplayedContext();
     void archivePredecodeKeepsOpenedCollectionScopeContext();
-    void regularPredecodeWindowKeepsOnePreviousAndTwoNextPages();
+    void regularPredecodeWindowKeepsTwoPreviousAndTwoNextPages();
     void directoryCollectionStartsTwoBackgroundDecodes();
     void candidateListingFailureStartsEmptyFallbackWindow();
     void archiveThreadCountProviderControlsParallelLoadLimit();
@@ -307,7 +307,7 @@ void TestImagePredecodeCoordinator::archivePredecodeKeepsOpenedCollectionScopeCo
     QCOMPARE(predecoded->location.openedCollectionScopeRootUrl(), openedCollectionScope->rootUrl());
 }
 
-void TestImagePredecodeCoordinator::regularPredecodeWindowKeepsOnePreviousAndTwoNextPages()
+void TestImagePredecodeCoordinator::regularPredecodeWindowKeepsTwoPreviousAndTwoNextPages()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -327,6 +327,7 @@ void TestImagePredecodeCoordinator::regularPredecodeWindowKeepsOnePreviousAndTwo
         indexedImageUrl(6),
         indexedImageUrl(4),
         indexedImageUrl(7),
+        indexedImageUrl(3),
     };
     std::size_t expectedLoadCount = 0;
     for (const QUrl &expectedUrl : expectedLoadOrder) {
