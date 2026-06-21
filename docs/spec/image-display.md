@@ -144,9 +144,9 @@ Double-clicking the image viewport toggles between Fit mode and 100% manual zoom
 
 When an image is ready, `` ` `` switches to 50% manual zoom, `1` switches to 100% manual zoom, `2` switches to 200% manual zoom, `8` selects Fit Height mode, `9` selects Fit Width mode, and `0` selects Fit to Window mode.
 
-Viewport zoom, fit, panning, and scan results are computed from the current active presentation state. Physical gesture sampling may happen in the Qt Quick viewport, but stale or delayed physical viewport callbacks must not overwrite newer zoom, pan, rotation, resize, or device-pixel-ratio results.
+Viewport zoom, fit, panning, and scan results are computed from the current active presentation state. Stale or delayed viewport observations must not overwrite newer zoom, pan, rotation, resize, or device-pixel-ratio results.
 
-Viewport observations promote physical item state only at explicit commit points: command acknowledgement, user gesture commit, inertia settle, overshoot settle, resize commit, rotation commit, device-pixel-ratio commit, or system projection commit. Earlier physical samples may update the immediate visual position but must not become the canonical viewport frame after a newer presentation command has superseded them.
+During active gestures, KiriView may update the immediate visual position before the final viewport state is committed. Once a newer presentation command supersedes an older observation, the older observation must not become the authoritative viewport frame.
 
 Switching between single-page display and Two-Page Spread is transactional. During a transition, users may temporarily see the previous committed presentation or a placeholder for the next presentation, but controls, zoom readout, panning availability, and render output must not combine properties from both presentations. If the transition cannot be completed, the previous committed presentation remains authoritative.
 

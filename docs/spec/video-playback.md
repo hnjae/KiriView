@@ -24,23 +24,23 @@ KiriView advertises direct video support through the desktop file for the MIME t
 
 ## Source URL Identity
 
-KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend, such as through KIOFuse or another KIO-backed resolver. Resolution succeeds only when the resolved playback URL can be consumed by the video backend; otherwise the video load fails while keeping the original direct media URL as the public source and error context.
+KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend. Resolution succeeds only when the resolved playback URL can be consumed by the video backend; otherwise the video load fails while keeping the original direct media URL as the public source and error context.
 
 When direct video playback URL resolution fails, the user-facing error text is a stable KiriView message that the selected video could not be opened. Backend, DBus, KIO, and Qt resolver messages are internal diagnostics and are not displayed as the primary error text.
 
 Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent direct media navigation, deletion target, error context, and direct-media versus opened-collection routing decisions remain based on the original direct media URL.
 
-Resolver-local playback URLs are video-only. Opening a direct image after a direct video must route the image through the image document with the original image URL, not through the previous video playback URL or another KIOFuse local playback URL.
+Resolver-local playback URLs are video-only. Opening a direct image after a direct video uses the original image URL and restores normal image behavior, not the previous video playback URL.
 
 Direct video embedded metadata is parsed from the resolved playback URL when it is local and from the original direct local URL otherwise. Parsed metadata may populate the Info Panel while keeping the original direct media URL as the user-facing source identity.
 
-Opening a video after an image must not route the video through `KiriImageDocument`.
+Opening a video after an image switches to video behavior rather than image behavior.
 
 Opening an image after a video restores image behavior.
 
-The top-level document session owns the active document kind for direct image and video routing. Its public source URL follows the same user-facing identity as the active image or video document: assigning it starts an open request, successful opens expose the original direct media URL, direct image replacement failures keep the failed target as the session source and error context, direct video source-load failures keep the original direct media URL as the public source and error context, and resolver-local playback URLs are never exposed as the session source.
+The public source URL follows the same user-facing identity for direct images and direct videos: assigning it starts an open request, successful opens expose the original direct media URL, direct image replacement failures keep the failed target as the public source and error context, direct video source-load failures keep the original direct media URL as the public source and error context, and resolver-local playback URLs are never exposed as the public source.
 
-For direct image and direct video URLs in direct media scopes, the document session owns the active navigation projection used by toolbar readouts, shared action availability, and navigation dispatch. Asynchronous sibling discovery uses the requested session-owned direct media URL as the cursor for the eventual readout, not an image-document displayed URL.
+For direct image and direct video URLs in direct media scopes, toolbar readouts, shared action availability, and navigation dispatch use the same active direct media scope. Asynchronous sibling discovery uses the requested direct media URL as the cursor for the eventual readout, not a stale or empty displayed image URL.
 
 ## Ordinary Direct Media URL Scope
 
@@ -50,15 +50,15 @@ This includes ordinary local parent directories and KDE archive URL parent locat
 
 Opening a directory URL creates the existing directory collection and does not create a video-capable direct media scope.
 
-The ordinary direct media URL parent follows KiriView's existing direct image candidate context rule rather than a new URL-scheme-specific parser: KiriView normalizes the original direct URL through the same `navigationSourceUrl(...)` path used for displayed direct images, then derives the parent with `QUrl::RemoveFilename | QUrl::NormalizePathSegments`.
+The ordinary direct media URL parent is derived from the original direct media URL after KiriView applies its normal navigation-source handling. Local and KDE archive-entry URLs keep their user-visible containing location as the direct media scope.
 
 Direct KDE archive-entry URLs use this direct URL branch unless KiriView has explicitly opened an archive or directory collection scope.
 
 Supported image files and supported direct video files share one locale-aware sibling order in ordinary direct media URL scopes.
 
-Direct media navigation is non-recursive, does not wrap, and uses the same session-owned active navigation projection and boundary-feedback model as image-document page navigation. Boundary feedback in a direct media scope uses neutral first-media-item and last-media-item wording rather than calling every boundary item an image.
+Direct media navigation is non-recursive, does not wrap, and uses the same active navigation readout and boundary-feedback model as collection page navigation. Boundary feedback in a direct media scope uses neutral first-media-item and last-media-item wording rather than calling every boundary item an image.
 
-The top-level document session dispatches adjacent Previous and Next through direct media navigation in video mode and in image mode only when the active image belongs to an ordinary direct media URL scope. Archive collection and directly opened directory collection scopes keep opened-collection navigation as the session projection's internal source.
+Adjacent Previous and Next use direct media navigation in video mode and in image mode only when the active image belongs to an ordinary direct media URL scope. Archive collection and directly opened directory collection scopes keep opened-collection navigation active instead.
 
 ## Playback
 
@@ -68,7 +68,7 @@ When a video load or backend error is superseded by a later accepted non-error p
 
 Video mode shows a video viewport and a Breeze-style playback control panel at the bottom edge of the video viewport.
 
-The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, the total supported media item count for the ordinary direct media URL scope when that list is known, and the same trailing control order as image mode, all from the document session's active navigation projection.
+The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, the total supported media item count for the ordinary direct media URL scope when that list is known, and the same trailing control order as image mode.
 
 Video mode keeps image-only toolbar controls visible in their image-mode positions but unavailable: Right-to-Left Reading, Two-Page Spread, and Fit are disabled, and the zoom control is read-only.
 

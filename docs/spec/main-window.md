@@ -8,15 +8,15 @@ The main window toolbar shows media controls without a page title.
 
 The leading side of the toolbar contains Previous, the current page number, `of`, the total item count, and Next.
 
-The toolbar page navigation readout and page-number entry use the document session's active navigation projection. The toolbar does not combine raw image-document page state with separate direct-media-navigation state.
+The toolbar page navigation readout and page-number entry use the current active navigation scope. The toolbar does not show a mixed readout from more than one scope.
 
-When the active navigation projection is unavailable or unknown, the toolbar page navigation readout displays `– of –` and keeps the page-number entry and navigation buttons disabled.
+When active navigation is unavailable or unknown, the toolbar page navigation readout displays `– of –` and keeps the page-number entry and navigation buttons disabled.
 
 When an image from a directly opened CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, RAR, or local directory collection is displayed, the trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, a Fit menu button, zoom, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
 
 When no archive or directory collection is open, including empty state, ordinary direct image files, direct video files, and direct KDE archive-entry URLs, the trailing action toolbar does not show Right-to-Left Reading or Two-Page Spread.
 
-When a video is displayed, image-only toolbar controls such as editable zoom and Fit remain in the same positions but are disabled or read-only.
+When a direct video is displayed, Fit and zoom remain in their image-mode positions; Fit is disabled and zoom is read-only. Right-to-Left Reading and Two-Page Spread are hidden unless an opened collection scope makes those controls visible.
 
 The trailing action toolbar shows as many trailing controls as fit and moves the rest into an overflow menu. When it runs out of horizontal space, KiriView keeps the zoom percentage visible the longest, then the Fit menu button. The Fit menu button shows its selected fit label when there is enough toolbar space and collapses to icon-only when space is constrained.
 
@@ -24,7 +24,7 @@ Visible trailing toolbar controls align to a common vertical center and use cons
 
 When full trailing toolbar controls fit and Right-to-Left Reading and Two-Page Spread are visible, they are text-beside-icon buttons with the toolbar labels `Right-to-Left` and `Two-Page Spread`. If the toolbar cannot fit the text-bearing controls, KiriView may collapse them to icon-only controls or move them into overflow according to Kirigami toolbar layout behavior.
 
-Visible text-bearing Right-to-Left Reading and Two-Page Spread toolbar buttons expose KDE/Qt control mnemonics through the toolbar button labels. Their menu labels, tooltips, action identity, shortcut configuration, checked state, and enabled state remain unchanged.
+Visible text-bearing Right-to-Left Reading and Two-Page Spread toolbar buttons expose control mnemonics through the toolbar button labels. Their menu labels, tooltips, action identity, shortcut configuration, checked state, and enabled state remain unchanged.
 
 When visible, the Right-to-Left Reading control is immediately to the left of the Two-Page Spread control. It toggles archive binding between left-to-right and right-to-left reading when that option is available.
 
@@ -32,23 +32,23 @@ Outside fullscreen, the toolbar uses normal application header placement, reserv
 
 Controls that require selected, navigable, or ready media are disabled until the corresponding program state is available.
 
-The toolbar zoom control displays the document session's active zoom readout rather than reading image or video document zoom values directly. Its editable value text and percent suffix are separate visual parts, so an empty document displays `- %` while the value input owns only `-`, and the suffix preserves normal toolbar spacing before the stepper buttons.
+The toolbar zoom control displays the active zoom readout for the current media state. Its editable value text and percent suffix are separate visual parts, so an empty document displays `- %` while the value input owns only `-`, and the suffix preserves normal toolbar spacing before the stepper buttons.
 
-The toolbar does not infer image readiness, video readiness, action availability, page navigation, zoom editability, or title subject by combining raw image-document and video-document properties. It renders the current document-session projections so that related controls change together.
+The toolbar updates related readiness, action availability, page navigation, zoom editability, and title-subject controls together for the current media state. It must not show stale control state from a previous image, video, or viewport after a newer state has been accepted.
 
 The toolbar page navigation arrow buttons keep their physical affordance. The left arrow button triggers Previous in Left-to-Right Reading mode and Next in Right-to-Left Reading mode. The right arrow button triggers Next in Left-to-Right Reading mode and Previous in Right-to-Left Reading mode. Each button's tooltip and accessible text follow the action that button triggers.
 
-The toolbar page navigation arrow buttons, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts dispatch through the document session's active navigation dispatch. Their enabled state comes from the same active navigation projection.
+The toolbar page navigation arrow buttons, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts all target the same active navigation scope and share the same enabled state.
 
-Configurable application actions and their shortcuts use one shared runtime availability decision. If an action is disabled, activating its menu item, toolbar placement, context-menu placement, or shortcut has no effect.
+Configurable application actions and their shortcuts use one shared availability decision. If an action is disabled, activating its menu item, toolbar placement, context-menu placement, or shortcut has no effect.
 
-Configurable shortcuts have an action-owned activation scope. `ProgramWide` shortcuts are active throughout the KiriView window subject to the action's normal enabled state. `ViewerLocal` shortcuts are active only in viewer context after the viewer shortcut gates for the action are enabled.
+Configurable shortcuts have a declared activation scope. `ProgramWide` shortcuts are active throughout the KiriView window subject to the action's normal enabled state. `ViewerLocal` shortcuts are active only in viewer context after the viewer shortcut gates for the action are enabled.
 
 Users may edit a shortcut slot's key sequence but may not change that slot's activation scope.
 
-Program-wide configurable shortcuts are stored in the KDE/Kirigami action collection and appear as ordinary action shortcuts in menus, Keyboard Shortcuts configuration, and Keyboard Shortcuts help.
+Program-wide configurable shortcuts appear as ordinary action shortcuts in menus, Keyboard Shortcuts configuration, and Keyboard Shortcuts help.
 
-Viewer-local configurable shortcuts are stored by KiriView, shown in Keyboard Shortcuts help and KiriView shortcut configuration as viewer-local shortcuts, and are routed only by KiriView's viewer shortcut handler. They never become ordinary global `QAction` shortcuts.
+Viewer-local configurable shortcuts are shown in Keyboard Shortcuts help and KiriView shortcut configuration as viewer-local shortcuts. They do not appear as ordinary global action shortcuts.
 
 Viewer-local shortcuts are inactive while text input, input-method-sensitive UI, shortcut help, modal UI, inactive windows, or other viewer-suppressed states are active.
 
@@ -56,7 +56,7 @@ Unmodified ASCII printable key sequences are allowed for viewer-local configurab
 
 Viewer commands use viewer-local shortcuts by default unless the action explicitly declares a program-wide shortcut slot. KiriView does not derive runtime-only viewer aliases by dropping Ctrl from program-wide shortcuts and does not keep program-wide Ctrl fallbacks for viewer-local commands.
 
-Toolbar controls, menus, context menus, shortcut help, and shortcut handling use the same current action availability decision. During media replacement, mode switches, deletion, modal dialogs, or focus changes, KiriView must not display or trigger action state derived from an older document, older viewport, or older UI gate observation after a newer state has been accepted.
+Toolbar controls, menus, context menus, shortcut help, and shortcut handling use the same current action availability decision. During media replacement, mode switches, deletion, modal dialogs, or focus changes, KiriView must not display or trigger action state derived from an older media item, older viewport, or older UI gate observation after a newer state has been accepted.
 
 Open, Open With, Previous Archive, and Next Archive are provided by the application menu and shortcuts rather than fixed toolbar buttons. Previous Archive and Next Archive use visually distinct previous/next-use icons so they are not confused with page Previous and Next navigation.
 
@@ -192,7 +192,7 @@ It lists user-configurable KiriView actions and their current configured shortcu
 
 Program-wide and viewer-local configurable shortcuts are both listed. Viewer-local shortcuts are identified by scope text or grouping.
 
-Shortcut help is presented as a Kirigami Addons FormCard dialog grouped by app-menu category headers.
+Shortcut help is grouped by app-menu category headers.
 
 Each listed action is shown as a compact form-card delegate with the action text on the leading side and one or more rounded, fixed-width keycap badges for its configured shortcut sequences on the trailing side.
 
@@ -206,19 +206,19 @@ Video seek shortcuts are fixed shortcuts and are not listed in Keyboard Shortcut
 
 ## Video Playback Panel
 
-Video mode shows a video viewport with a Kirigami floating playback panel over the bottom of the video.
+Video mode shows a video viewport with playback controls at the bottom of the video.
 
 The panel includes play/pause, timeline position selection and scrubbing, duration and position display, and a disabled non-interactive timeline state when the media is not seekable.
 
-The floating panel uses a responsive width based on the video viewport, targets 65% of that width, keeps enough minimum width for its controls, caps at a moderate desktop width, and preserves side margins on narrow viewports.
+In the default video-control presentation, the panel floats inside the video viewport, uses a responsive width, keeps enough minimum width for its controls, caps at a moderate desktop width, and preserves side margins on narrow viewports.
 
 The floating panel does not reserve page layout height.
 
-The floating panel remains usable in fullscreen and remains visible while video mode is active in the MVP.
+The panel remains usable in fullscreen. Its visibility, auto-hide behavior, and compact fixed-bottom presentation follow the video playback controls contract.
 
 ## Side and Thumbnail Panels
 
-KiriView provides an Info Panel with user-visible media information for the current document session.
+KiriView provides an Info Panel with user-visible media information for the current media state.
 
 The Info Panel header shows an information icon, the title `Information`, and a close button that hides the panel.
 
@@ -262,7 +262,7 @@ The Thumbnail Panel scrolls the horizontal strip enough to keep the selected ite
 
 Far active-navigation jumps, synchronization while the Thumbnail Panel is hidden, and rapid repeated active-navigation changes update the strip position immediately without scroll animation.
 
-The Thumbnail Panel uses native Qt Quick ListView and Flickable scrolling behavior only. It does not remap vertical mouse-wheel events to horizontal movement.
+The Thumbnail Panel does not remap vertical mouse-wheel events to horizontal movement.
 
 The Thumbnail Panel has a subtle top separator using the viewer foreground color at reduced opacity. Strip items use compact spacing, a small corner radius, and a subtle hover fill without shadow, glow, or card treatment. The selected strip item is indicated with a 2-pixel border using the theme highlight color.
 
@@ -270,7 +270,7 @@ The Thumbnail Panel uses image and video icons to distinguish supported still im
 
 The number of visible strip items matches the active navigation total count. When active navigation is unavailable or unknown, the strip is empty.
 
-Activating a Thumbnail Panel strip item opens the item at that active navigation number, using the same document-session dispatch path as the toolbar page-number entry.
+Activating a Thumbnail Panel strip item opens the item at that active navigation number, matching the toolbar page-number entry behavior.
 
 When both panels are visible, the Info Panel occupies the right side for the full content height, and the Thumbnail Panel occupies only the bottom of the media area that remains to its left.
 

@@ -50,11 +50,11 @@ While a Two-Page Spread transition is loading, the previously displayed page or 
 
 When Two-Page Spread is enabled for a directly opened comic book archive, ordinary Previous and Next image navigation move by the currently displayed spread rather than always by one page.
 
-If two pages are visible, Next opens the page after the right page.
+If two pages are visible, Next opens the first page after the displayed spread in reading order.
 
 If only one page is visible, Next opens the next page.
 
-Previous opens the previous eligible spread, falling back to the immediately previous page when that page is the cover or a wide page.
+Previous opens the previous eligible spread in reading order, falling back to the immediately previous page in that order when that page is the cover or a wide page.
 
 Shift+Left and Shift+Right are fixed viewer-only shortcuts for moving by exactly one page while an image is ready.
 
@@ -62,7 +62,7 @@ Their direction is physical: in Left-to-Right Reading mode, Shift+Left opens the
 
 These fixed shortcuts are inactive while the page number or zoom input is focused or Keyboard Shortcuts help is open, and are not user-configurable actions.
 
-When a Two-Page Spread navigation target is loading and the supported image list is known, additional Previous, Next, Shift+Left, or Shift+Right navigation is calculated from the most recent requested primary page.
+When a Two-Page Spread navigation target is loading and the supported media list is known, additional Previous, Next, Shift+Left, or Shift+Right navigation is calculated from the most recent requested primary page.
 
 KiriView moves by one primary page selection at a time while loading. The final single-page or two-page spread pairing is decided after the selected primary page has loaded.
 
@@ -92,11 +92,11 @@ Navigation does not wrap. Pressing Previous Archive on the first candidate or Ne
 
 `[` opens the previous sibling archive and `]` opens the next sibling archive when archive navigation is available.
 
-`Home` opens the first image in the current archive, and `End` opens the last image in the current archive.
+`Home` opens the first supported media item in the current archive, and `End` opens the last supported media item in the current archive.
 
-Opening a comic book archive displays the first supported image or supported video in that archive using the same archive media ordering as page navigation. If the first supported item is a video, KiriView displays the unsupported-video placeholder.
+Opening a comic book archive displays the first supported media item in that archive using the same archive media ordering as page navigation. If the first supported item is a video, KiriView displays the unsupported-video placeholder.
 
-When KiriView is started with a direct comic book archive source, the first supported image page appears in the main viewport once it is display-ready. Thumbnail pane visibility, information pane visibility, and other layout side effects do not control whether the accepted archive page is rendered.
+When KiriView is started with a direct comic book archive source, the first supported media item appears in the main viewport once it is display-ready or represented by an unsupported-video placeholder. Thumbnail pane visibility, information pane visibility, and other layout side effects do not control whether the accepted archive item is rendered.
 
 If a target sibling archive has no supported media, KiriView clears any displayed image and shows an error state explaining that the selected collection does not contain any supported media.
 

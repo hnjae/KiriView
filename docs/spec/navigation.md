@@ -4,11 +4,11 @@
 
 The toolbar provides page navigation with Previous and Next actions, the current page number, the total number of supported items in the current scope after that scope's supported list has been confirmed, and editable page number entry.
 
-The document session owns the active navigation projection used by the toolbar readout, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts. QML renders that projection and calls session dispatch; it does not decide whether the active item is backed by direct media siblings or image-document page navigation.
+Toolbar readouts, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts use one active navigation scope at a time.
 
-The document session also owns the active navigation thumbnail-strip projection. When the active navigation list is known, the strip exposes one item per supported active navigation item with the same ordering and 1-based numbering as the toolbar readout and page-number entry.
+When the active navigation list is known, the thumbnail strip exposes one item per supported active navigation item with the same ordering and 1-based numbering as the toolbar readout and page-number entry.
 
-The active navigation thumbnail strip may display generated preview thumbnails for supported direct local image items, supported direct local video items, and supported image pages inside ZIP-backed archive collections: CBZ and directly opened ZIP archive entries whose metadata can identify the entry for thumbnail caching. Supported direct local video thumbnails may use an embedded video cover or thumbnail image when available, falling back to a decoded video frame when no usable embedded image is available. Unsupported, pending, failed, non-local direct video, archive-entry media, CB7/7z and other non-ZIP-backed archive-collection items, ZIP-backed entries without usable thumbnail identity metadata, and directory-collection items keep placeholder media-type icons instead of generated preview thumbnails.
+The active navigation thumbnail strip may display generated preview thumbnails for supported direct local image items, supported direct local video items, and supported image pages inside ZIP-backed archive collections: CBZ and directly opened ZIP archive entries whose metadata can identify the entry for thumbnail caching. Generated thumbnails are representative previews for navigation, not authoritative media content. Supported direct local video thumbnails may use an embedded video cover or thumbnail image when available, falling back to a decoded video frame when no usable embedded image is available. Video thumbnail orientation and mirroring follow the embedded image or decoded frame supplied by the platform. Unsupported, pending, failed, non-local direct video, direct archive-entry media, CB7/7z and other non-ZIP-backed archive-collection items, ZIP-backed entries without usable thumbnail identity metadata, and directory-collection items keep placeholder media-type icons instead of generated preview thumbnails.
 
 The active navigation thumbnail strip chooses generated preview quality from the thumbnail's physical display size, including the current device pixel ratio. During panel resize, fractional-scale changes, or movement between screens with different scale factors, a previously ready smaller thumbnail may remain visible as a temporary fallback while KiriView loads a newly required larger thumbnail, and the strip replaces it only after the newer result is ready. If the newer request fails, KiriView keeps an existing usable thumbnail visible when one is available; otherwise the row uses the normal fallback icon path.
 
@@ -16,9 +16,9 @@ After visible, nearby, and user-navigation thumbnail demand for the current acti
 
 The active navigation thumbnail strip keeps the active item visually selected. When adjacent main-view navigation changes the active item, the strip uses a preferred visible zone inset from the viewport edges: if the selected thumbnail remains inside that zone, the strip keeps its scroll position unchanged, and if it leaves that zone, the strip may reveal it back toward a stable visible position. Adjacent Next navigation places the selected thumbnail toward the leading side of the preferred zone so more following items remain visible; adjacent Previous navigation places it toward the trailing side so more preceding items remain visible. This anchoring follows the semantic Previous or Next action dispatched by the session, including when Right-to-Left Reading mode maps physical keys differently. Nearby automatic reveal may use a short easing animation, but at most one automatic reveal target is active at a time: repeated navigation replaces older pending scroll movement with the latest selected item, and rapid navigation may update the strip immediately instead of animating each step. Direct thumbnail activation preserves the thumbnail strip scroll position unless model or layout changes require immediate containment. User-initiated thumbnail scrolling temporarily suppresses automatic preferred-zone follow movement unless the selected thumbnail would otherwise leave the visible viewport. Large jumps such as First, Last, and page-number entry may reposition the strip to keep the selected thumbnail discoverable. File open or load routing may reveal the selected thumbnail for the newly loaded scope, but KiriView does not replay stale or duplicate automatic thumbnail scrolling during programmatic synchronization. KiriView does not promise exact thumbnail pixel offsets, centered positioning, or animation duration.
 
-For ordinary direct media URL scopes, including direct image files, direct video files, and KDE archive-entry media URLs opened as individual media items, the document session's direct media navigation is the only active page-control navigation source. The image document must not keep a competing ordinary direct media page-navigation list for those scopes.
+For ordinary direct media URL scopes, including direct image files, direct video files, and KDE archive-entry media URLs opened as individual media items, page controls follow only the ordinary direct media sibling list.
 
-Image-document page navigation is active only for image-document page scopes such as directly opened archive collections and directly opened directory collections.
+Page navigation for opened collections is active only for directly opened archive collections and directly opened directory collections.
 
 For ordinary direct media URL scopes, archive collection scopes, and directly opened directory collection scopes, the page navigation controls count and select supported images and supported videos together.
 
@@ -28,11 +28,11 @@ The Previous action placement is disabled on the first item, and the Next action
 
 Page numbers are shown to users starting at 1.
 
-The active navigation projection has these user-visible invariants: `available` means the current mode exposes a navigable scope; `known` means KiriView has a confirmed current position and total count for the active scope; `editable` means entering a page number can dispatch to that same scope. When navigation is unavailable or unknown, the page-number entry is disabled, Previous, Next, First, and Last are disabled, and KiriView does not display a stale current/count pair. When navigation is known, the current number is within `1..total`, the total count is at least 1, previous and next availability match whether a previous or next target exists in reading order, and first/last boundary state matches whether the active visible item or spread is at the known start or end of the scope.
+The active navigation state has these user-visible invariants: `available` means the current mode exposes a navigable scope; `known` means KiriView has a confirmed current position and total count for the active scope; `editable` means entering a page number can open an item in that same scope. When navigation is unavailable or unknown, the page-number entry is disabled, Previous, Next, First, and Last are disabled, and KiriView does not display a stale current/count pair. When navigation is known, the current number is within `1..total`, the total count is at least 1, previous and next availability match whether a previous or next target exists in reading order, and first/last boundary state matches whether the active visible item or spread is at the known start or end of the scope.
 
-For image-mode scopes, the active navigation projection consumes the image document's full page-navigation snapshot rather than a single raw current page number. The snapshot includes the current first and last visible page for spread-aware display, total count, previous and next availability, and first and last boundary state, so QML does not recompute spread boundaries.
+For image-mode scopes, page controls account for spread-aware display: the visible item may cover a first and last visible page, and Previous, Next, First, and Last availability follow those visible spread boundaries rather than a single raw page number.
 
-For image-mode scopes, the thumbnail strip uses the image-document page candidate names. Directory and archive collection names may be collection-relative paths so that same-basename items in different folders remain distinguishable.
+For image-mode scopes, the thumbnail strip uses page candidate names. Directory and archive collection names may be collection-relative paths so that same-basename items in different folders remain distinguishable.
 
 When a new directory collection, archive collection, or ordinary direct media scope is being listed and KiriView has no confirmed supported item list for that same scope yet, the current page number and total item count are unknown, and KiriView does not treat the current item as the first or last item.
 
@@ -56,7 +56,7 @@ If users make multiple page selections before loading finishes, only the most re
 
 If that replacement load fails, KiriView reports the selected target's error state and page navigation remains on the selected target when the target belongs to the confirmed active navigation list.
 
-During empty startup, loading intervals without a confirmed same-scope selection, and mode switches, KiriView clears or marks unknown the active navigation projection before exposing any new readout. Values from the previous document are not reused for the current number, total count, editability, dispatch availability, or boundary state.
+During empty startup, loading intervals without a confirmed same-scope selection, and mode switches, KiriView clears or marks unknown the active navigation state before exposing any new readout. Values from the previous document are not reused for the current number, total count, editability, action availability, or boundary state.
 
 When moving between items in the current scope, the page navigation controls keep their layout stable.
 
@@ -66,7 +66,7 @@ The current page number updates to the newly displayed item, and the known total
 
 When an ordinary direct image or video is open, Page Up opens the previous supported media file in the same ordinary direct media URL scope and Page Down opens the next one.
 
-For direct media, sibling discovery may be asynchronous. The cursor used for the eventual active navigation readout is the session-owned direct media URL requested for the active open operation, not an image-document displayed URL observed before image replacement has completed.
+For direct media, sibling discovery may be asynchronous. The eventual active navigation readout follows the direct media URL requested for the active open operation, not a stale or empty displayed image URL observed before image replacement has completed.
 
 After sibling discovery succeeds for the active ordinary direct media scope, the toolbar readout becomes known and shows the current supported media item number and total supported media item count for that scope. Confirming that a pending direct image request is now displayed does not make an already-started sibling discovery result stale when the effective direct media URL and parent scope are unchanged.
 
@@ -82,7 +82,7 @@ Supported direct video extensions are MP4 (`.mp4`), M4V (`.m4v`), and MOV (`.mov
 
 An ordinary direct media URL scope is the non-recursive parent URL of the active direct media URL. This includes ordinary local parent directories and KDE archive URL parent locations such as `zip:///path/archive.zip!/chapter/`.
 
-The ordinary direct media URL parent follows KiriView's existing direct image candidate context rule rather than a new URL-scheme-specific parser: KiriView normalizes the original direct URL through the same `navigationSourceUrl(...)` path used for displayed direct images, then derives the parent with `QUrl::RemoveFilename | QUrl::NormalizePathSegments`.
+The ordinary direct media URL parent is derived from the original direct media URL after KiriView applies its normal navigation-source handling. Local and KDE archive-entry URLs keep their user-visible containing location as the direct media scope.
 
 When an image or video is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats the opened item as a single direct media URL, and navigation moves between supported media files in the same directory inside that archive URL.
 
@@ -126,7 +126,7 @@ When a ready image is larger than the viewport at the current zoom, horizontal a
 
 When the image is smaller than the viewport, it remains centered.
 
-KiriView derives scrollbar visibility, drag-panning availability, scan availability, and Left/Right panning fallback from the active viewport geometry frame. QML layout measurements must not independently decide whether an image is pannable.
+KiriView derives scrollbar visibility, drag-panning availability, scan availability, and Left/Right panning fallback from the active viewport geometry. These affordances must change together and must not briefly disagree during layout or viewport updates.
 
 While the page number or zoom input is not focused, the plain arrow keys are fixed viewer-only shortcuts for keyboard panning and physical adjacent navigation. They are not user-configurable actions and are not listed in Keyboard Shortcuts configuration, shortcut help, or menus.
 
