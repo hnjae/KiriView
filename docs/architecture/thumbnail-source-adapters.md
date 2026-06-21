@@ -8,7 +8,7 @@ Adapters consume the active thumbnail source key and demand bucket described by 
 
 Thumbnail cache lookup, generation requests, cache original identity, source-kind classification, and bucket sizing are neutral thumbnail infrastructure, not session-owned active-navigation state. The active-navigation strip and main-image preview may both consume these contracts, so decoding code must import thumbnail cache contracts from the thumbnail boundary rather than from `session/`, and active-navigation row kinds must be mapped into thumbnail source kinds before crossing the generation provider boundary.
 
-The default thumbnail generation core resolves source bytes, bucket scaling, image decode/render, opened-collection cache identity, and cache lookup/install through injectable thumbnail dependencies before it publishes a generated thumbnail. Default dependencies may use local files, media-entry source metadata, media-entry source bytes, KiriView image decoding, rendering refinement sources, and the XDG thumbnail cache, but tests and future clients must be able to replace source loading, scaling policy, decoding, and cache repository behavior without constructing session runtimes, mutating global opened-collection state, or writing to the user's thumbnail cache.
+The default thumbnail generation core resolves source bytes or video frame extraction, bucket scaling, image decode/render, opened-collection cache identity, and cache lookup/install through injectable thumbnail dependencies before it publishes a generated thumbnail. Default dependencies may use local files, media-entry source metadata, media-entry source bytes, KiriView image decoding, Qt Multimedia video frame extraction, rendering refinement sources, and the XDG thumbnail cache, but tests and future clients must be able to replace source loading, scaling policy, decoding, frame extraction, and cache repository behavior without constructing session runtimes, mutating global opened-collection state, borrowing playback state, or writing to the user's thumbnail cache.
 
 ## Original Identity
 
@@ -26,9 +26,11 @@ Unsupported direct image rows, including non-local URLs, stay on the runtime fal
 
 ## Direct Video
 
-A future direct-video adapter should supply stable source identity, freshness facts for the backing file, and a representative-frame renderer. When the video source can satisfy Freedesktop personal-cache identity and freshness requirements, it may use the same cache lookup, generation, cache install, image-store, and result publication path as direct images. Video playback state remains independent from thumbnail generation; the adapter must not borrow the playback backend as its state owner.
+The default direct-video adapter accepts supported direct local video rows only. It exposes the local path bytes used by Freedesktop thumbnail lookup and generation, enables XDG cache lookup, and allows generated results to be installed into the personal thumbnail cache when freshness requirements are satisfied by the cache helper. Non-local direct video rows stay on the runtime fallback path unless a future adapter explicitly supplies another renderable plan.
 
-If representative-frame extraction can render an image but cannot provide cache-safe identity or freshness, the adapter should return an in-memory-only generation plan so the runtime skips XDG lookup and disables cache writes.
+On XDG cache miss, v1 direct-video generation owns a short-lived Qt Multimedia extraction job. The job creates its own `QMediaPlayer` and `QVideoSink`, sets the source at position `0`, starts decoding, accepts the first valid `QVideoFrame` emitted by the sink, converts it to `QImage`, scales it to the requested thumbnail bucket, converts the result to RGBA8, and returns that image to the normal thumbnail runtime path for cache install and image-store publication. The video document playback backend is not reused for thumbnails, and thumbnail jobs must be cancelable by stopping and deleting their extractor object.
+
+The first decoded frame is a representative frame, not a frame-accurate timestamp guarantee. Rotation or mirroring metadata is honored only when Qt's delivered frame image already reflects it.
 
 ## Archive Entries
 
