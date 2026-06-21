@@ -191,6 +191,8 @@ kiriview::MediaInformationProjectionInput mediaInformationInputForSnapshotInput(
     mediaInformationInput.inputRevision = input.inputRevision;
     mediaInformationInput.documentKind = input.session.documentKind;
     mediaInformationInput.imageReady = input.image.readyForInformation;
+    mediaInformationInput.imageUnsupportedOpenedCollectionVideo
+        = input.image.unsupportedOpenedCollectionVideo;
     mediaInformationInput.imageDisplayedUrl = input.image.displayedUrl;
     mediaInformationInput.imageDisplayedOpenedCollectionScope
         = input.image.displayedOpenedCollectionScope;

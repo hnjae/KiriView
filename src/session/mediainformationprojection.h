@@ -59,6 +59,7 @@ struct MediaInformationProjectionInput {
     quint64 inputRevision = 0;
     DocumentSessionKind documentKind {};
     bool imageReady = false;
+    bool imageUnsupportedOpenedCollectionVideo = false;
     QUrl imageDisplayedUrl;
     OpenedCollectionScopeLocation imageDisplayedOpenedCollectionScope;
     QSize imageSize;

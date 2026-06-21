@@ -146,6 +146,7 @@ void TestMediaInformationProjection::
     kiriview::MediaInformationProjectionInput input;
     input.documentKind = kiriview::DocumentSessionKind::Image;
     input.imageReady = true;
+    input.imageUnsupportedOpenedCollectionVideo = true;
     input.imageDisplayedUrl = QUrl(QStringLiteral("zip:///books/book.cbz!/chapter/clip.mp4"));
     input.imageDisplayedOpenedCollectionScope = kiriview::OpenedCollectionScopeLocation::fromUrls(
         QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),

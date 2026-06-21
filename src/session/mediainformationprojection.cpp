@@ -218,6 +218,14 @@ MediaInformationProjectionSnapshot projectMediaInformation(
 
     switch (input.documentKind) {
     case DocumentSessionKind::Image:
+        if (input.imageUnsupportedOpenedCollectionVideo) {
+            snapshot.kind = MediaInformationKind::Video;
+            snapshot.mediaSectionTitle = i18nc("@title:group", "Video");
+            snapshot.summary = i18nc("@info:metadata summary", "Video");
+            snapshot.generalRows = generalRows(
+                snapshot.kind, snapshot.targetUrl, input.imageDisplayedOpenedCollectionScope);
+            break;
+        }
         snapshot.kind = MediaInformationKind::Image;
         snapshot.mediaSectionTitle = i18nc("@title:group", "Image");
         snapshot.summary = hasValidDimensions(input.imageSize)
