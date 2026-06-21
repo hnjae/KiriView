@@ -8,6 +8,7 @@
 #include <QMediaPlayer>
 #include <QSize>
 #include <QTimer>
+#include <QVariant>
 #include <QVideoFrame>
 #include <QVideoSink>
 #include <Qt>
@@ -29,6 +30,21 @@ QSize boundedSize(const QSize &size, int maximumLongEdge)
     }
 
     return size.scaled(QSize(maximumLongEdge, maximumLongEdge), Qt::KeepAspectRatio);
+}
+
+QImage embeddedImageFromMetadata(const QMediaMetaData &metadata)
+{
+    QImage cover = metadata.value(QMediaMetaData::CoverArtImage).value<QImage>();
+    if (!cover.isNull()) {
+        return cover;
+    }
+
+    QImage thumbnail = metadata.value(QMediaMetaData::ThumbnailImage).value<QImage>();
+    if (!thumbnail.isNull()) {
+        return thumbnail;
+    }
+
+    return {};
 }
 
 kiriview::VideoThumbnailExtractionResult failedExtraction(QString errorString)
@@ -72,29 +88,32 @@ public:
         m_player.setVideoSink(&m_sink);
         connect(&m_sink, &QVideoSink::videoFrameChanged, this,
             [this](const QVideoFrame &frame) { acceptFrame(frame); });
+        connect(&m_player, &QMediaPlayer::metaDataChanged, this,
+            [this]() { acceptMetadataIfAvailable(); });
         connect(&m_player, &QMediaPlayer::errorOccurred, this,
             [this](QMediaPlayer::Error, const QString &errorString) {
+                if (acceptMetadataIfAvailable()) {
+                    return;
+                }
                 finish(failedExtraction(errorString.isEmpty()
                         ? QStringLiteral("video thumbnail decode failed")
                         : errorString));
             });
         connect(&m_player, &QMediaPlayer::mediaStatusChanged, this,
-            [this](QMediaPlayer::MediaStatus status) {
-                if (status == QMediaPlayer::InvalidMedia) {
-                    finish(failedExtraction(QStringLiteral("video thumbnail media is invalid")));
-                } else if (status == QMediaPlayer::EndOfMedia) {
-                    finish(failedExtraction(
-                        QStringLiteral("video thumbnail decode produced no frame")));
-                }
-            });
+            [this](QMediaPlayer::MediaStatus status) { handleMediaStatus(status); });
         connect(&m_timeout, &QTimer::timeout, this, [this]() {
+            if (acceptMetadataIfAvailable()) {
+                return;
+            }
             finish(failedExtraction(QStringLiteral("video thumbnail extraction timed out")));
         });
 
         m_player.setSource(m_request.sourceUrl);
         m_player.setPosition(0);
-        m_player.play();
         m_timeout.start();
+        if (!acceptMetadataIfAvailable()) {
+            handleMediaStatus(m_player.mediaStatus());
+        }
     }
 
     void cancel()
@@ -105,9 +124,69 @@ public:
     }
 
 private:
+    void handleMediaStatus(QMediaPlayer::MediaStatus status)
+    {
+        if (m_finished || acceptMetadataIfAvailable()) {
+            return;
+        }
+
+        switch (status) {
+        case QMediaPlayer::InvalidMedia:
+            finish(failedExtraction(QStringLiteral("video thumbnail media is invalid")));
+            break;
+        case QMediaPlayer::LoadedMedia:
+        case QMediaPlayer::BufferedMedia:
+            startFrameExtraction();
+            break;
+        case QMediaPlayer::EndOfMedia:
+            if (m_frameExtractionStarted) {
+                finish(
+                    failedExtraction(QStringLiteral("video thumbnail decode produced no frame")));
+            }
+            break;
+        case QMediaPlayer::NoMedia:
+        case QMediaPlayer::LoadingMedia:
+        case QMediaPlayer::BufferingMedia:
+        case QMediaPlayer::StalledMedia:
+            break;
+        }
+    }
+
+    bool acceptMetadataIfAvailable()
+    {
+        if (m_finished) {
+            return true;
+        }
+
+        QString errorString;
+        QImage image = kiriview::videoThumbnailImageFromMetadata(
+            m_player.metaData(), m_request.maximumLongEdge, &errorString);
+        if (image.isNull()) {
+            return false;
+        }
+
+        finish(kiriview::VideoThumbnailExtractionResult {
+            kiriview::ThumbnailGenerationStatus::Ready,
+            std::move(image),
+            {},
+        });
+        return true;
+    }
+
+    void startFrameExtraction()
+    {
+        if (m_finished || m_frameExtractionStarted || acceptMetadataIfAvailable()) {
+            return;
+        }
+
+        m_frameExtractionStarted = true;
+        m_player.setPosition(0);
+        m_player.play();
+    }
+
     void acceptFrame(const QVideoFrame &frame)
     {
-        if (!frame.isValid()) {
+        if (m_finished || !frame.isValid() || acceptMetadataIfAvailable()) {
             return;
         }
 
@@ -130,6 +209,10 @@ private:
 
     void finish(kiriview::VideoThumbnailExtractionResult result)
     {
+        if (m_finished) {
+            return;
+        }
+        m_finished = true;
         m_timeout.stop();
         m_player.stop();
 
@@ -149,6 +232,8 @@ private:
     QMediaPlayer m_player;
     QVideoSink m_sink;
     QTimer m_timeout;
+    bool m_frameExtractionStarted = false;
+    bool m_finished = false;
 };
 }
 
@@ -174,6 +259,20 @@ QImage videoThumbnailImageFromFrameImage(QImage image, int maximumLongEdge, QStr
     }
 
     return image.scaled(targetSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+}
+
+QImage videoThumbnailImageFromMetadata(
+    const QMediaMetaData &metadata, int maximumLongEdge, QString *errorString)
+{
+    QImage image = embeddedImageFromMetadata(metadata);
+    if (image.isNull()) {
+        if (errorString != nullptr) {
+            *errorString = QStringLiteral("video metadata produced no embedded image");
+        }
+        return {};
+    }
+
+    return videoThumbnailImageFromFrameImage(std::move(image), maximumLongEdge, errorString);
 }
 
 ImageIoJob startVideoThumbnailExtraction(QObject *receiver, VideoThumbnailExtractionRequest request,
