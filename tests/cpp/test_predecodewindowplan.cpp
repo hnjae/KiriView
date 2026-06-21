@@ -88,11 +88,12 @@ void TestPredecodeWindowPlan::regularImagePlansCandidateContextAndNeutralWindow(
         = kiriview::predecodeWindowPlanForCandidates(startPlan, imageDocumentPageCandidates(15));
 
     QCOMPARE(windowPlan.parallelLimit, std::size_t(1));
-    QCOMPARE(windowPlan.urls.size(), std::size_t(4));
+    QCOMPARE(windowPlan.urls.size(), std::size_t(5));
     QCOMPARE(windowPlan.urls.at(0), indexedImageUrl(5));
     QCOMPARE(windowPlan.urls.at(1), indexedImageUrl(6));
     QCOMPARE(windowPlan.urls.at(2), indexedImageUrl(4));
     QCOMPARE(windowPlan.urls.at(3), indexedImageUrl(7));
+    QCOMPARE(windowPlan.urls.at(4), indexedImageUrl(3));
 }
 
 void TestPredecodeWindowPlan::powerSaverSuppressesCandidateLoading()
@@ -142,9 +143,15 @@ void TestPredecodeWindowPlan::directoryCollectionUsesDocumentParallelLimit()
         = kiriview::predecodeWindowPlanForCandidates(startPlan, imageDocumentPageCandidates(15));
 
     QCOMPARE(windowPlan.parallelLimit, std::size_t(2));
-    QVERIFY(windowPlan.urls.size() >= 2);
+    QCOMPARE(windowPlan.urls.size(), std::size_t(8));
     QCOMPARE(windowPlan.urls.at(0), indexedImageUrl(5));
     QCOMPARE(windowPlan.urls.at(1), indexedImageUrl(6));
+    QCOMPARE(windowPlan.urls.at(2), indexedImageUrl(4));
+    QCOMPARE(windowPlan.urls.at(3), indexedImageUrl(7));
+    QCOMPARE(windowPlan.urls.at(4), indexedImageUrl(3));
+    QCOMPARE(windowPlan.urls.at(5), indexedImageUrl(8));
+    QCOMPARE(windowPlan.urls.at(6), indexedImageUrl(2));
+    QCOMPARE(windowPlan.urls.at(7), indexedImageUrl(9));
 }
 
 void TestPredecodeWindowPlan::predecodeWindowSkipsOpenedCollectionVideoCandidates()

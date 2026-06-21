@@ -142,21 +142,21 @@ mod tests {
     use super::*;
 
     const DIRECT_MEDIA_PROFILE: RustPredecodeSourceProfile = RustPredecodeSourceProfile {
-        neutral_previous_image_count: 1,
+        neutral_previous_image_count: 2,
         neutral_next_image_count: 2,
         biased_direction_image_count: 3,
         parallel_limit: 1,
     };
     const DIRECTORY_COLLECTION_PROFILE: RustPredecodeSourceProfile = RustPredecodeSourceProfile {
-        neutral_previous_image_count: 2,
+        neutral_previous_image_count: 3,
         neutral_next_image_count: 4,
         biased_direction_image_count: 6,
         parallel_limit: 2,
     };
     const ARCHIVE_COLLECTION_PROFILE: RustPredecodeSourceProfile = RustPredecodeSourceProfile {
-        neutral_previous_image_count: 2,
+        neutral_previous_image_count: 3,
         neutral_next_image_count: 4,
-        biased_direction_image_count: 8,
+        biased_direction_image_count: 6,
         parallel_limit: 4,
     };
 
@@ -172,7 +172,23 @@ mod tests {
                     false,
                 ),
             ),
-            expected_schedule_plan(1, vec![5, 6, 4, 7])
+            expected_schedule_plan(1, vec![5, 6, 4, 7, 3])
+        );
+    }
+
+    #[test]
+    fn schedule_plan_uses_direct_media_biased_profile() {
+        assert_eq!(
+            schedule_plan_for_current(
+                15,
+                5,
+                policy_input(
+                    DIRECT_MEDIA_PROFILE,
+                    RustPredecodeMomentumMode::NextBiased,
+                    false,
+                ),
+            ),
+            expected_schedule_plan(1, vec![5, 6, 4, 7, 8])
         );
     }
 
@@ -188,7 +204,7 @@ mod tests {
                     false,
                 ),
             ),
-            expected_schedule_plan(4, vec![5, 6, 4, 7, 3, 8, 9])
+            expected_schedule_plan(4, vec![5, 6, 4, 7, 3, 8, 2, 9])
         );
     }
 
@@ -204,7 +220,7 @@ mod tests {
                     false,
                 ),
             ),
-            expected_schedule_plan(4, vec![5, 6, 4, 7, 8, 9, 10, 11, 12, 13])
+            expected_schedule_plan(4, vec![5, 6, 4, 7, 8, 9, 10, 11])
         );
         assert_eq!(
             schedule_plan_for_current(

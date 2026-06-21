@@ -46,26 +46,32 @@ private Q_SLOTS:
 
 void TestMediaPredecodeWindowPlan::mediaWindowUsesVideoCursorAndQueuesOnlyImages()
 {
-    const QUrl previousImage = localUrl(QStringLiteral("/media/00.png"));
-    const QUrl currentVideo = localUrl(QStringLiteral("/media/01.mp4"));
-    const QUrl nextImage = localUrl(QStringLiteral("/media/02.png"));
-    const QUrl nextVideo = localUrl(QStringLiteral("/media/03.mov"));
-    const kiriview::PredecodeWindowPlan windowPlan
-        = kiriview::mediaPredecodeWindowPlan(eligibilitySnapshot(
-                                                 {
-                                                     directMediaNavigationCandidate(previousImage),
-                                                     directMediaNavigationCandidate(currentVideo),
-                                                     directMediaNavigationCandidate(nextImage),
-                                                     directMediaNavigationCandidate(nextVideo),
-                                                 },
-                                                 currentVideo),
-            regularPolicyInput());
+    const QUrl secondPreviousImage = localUrl(QStringLiteral("/media/00.png"));
+    const QUrl previousImage = localUrl(QStringLiteral("/media/01.png"));
+    const QUrl currentVideo = localUrl(QStringLiteral("/media/02.mp4"));
+    const QUrl nextImage = localUrl(QStringLiteral("/media/03.png"));
+    const QUrl secondNextImage = localUrl(QStringLiteral("/media/04.png"));
+    const QUrl nextVideo = localUrl(QStringLiteral("/media/05.mov"));
+    const kiriview::PredecodeWindowPlan windowPlan = kiriview::mediaPredecodeWindowPlan(
+        eligibilitySnapshot(
+            {
+                directMediaNavigationCandidate(secondPreviousImage),
+                directMediaNavigationCandidate(previousImage),
+                directMediaNavigationCandidate(currentVideo),
+                directMediaNavigationCandidate(nextImage),
+                directMediaNavigationCandidate(secondNextImage),
+                directMediaNavigationCandidate(nextVideo),
+            },
+            currentVideo),
+        regularPolicyInput());
 
     QCOMPARE(windowPlan.openedCollectionScope, kiriview::OpenedCollectionScopeLocation {});
     QCOMPARE(windowPlan.parallelLimit, std::size_t(1));
-    QCOMPARE(windowPlan.urls.size(), std::size_t(2));
+    QCOMPARE(windowPlan.urls.size(), std::size_t(4));
     QCOMPARE(windowPlan.urls.at(0), nextImage);
     QCOMPARE(windowPlan.urls.at(1), previousImage);
+    QCOMPARE(windowPlan.urls.at(2), secondNextImage);
+    QCOMPARE(windowPlan.urls.at(3), secondPreviousImage);
 }
 
 void TestMediaPredecodeWindowPlan::missingCurrentCandidateYieldsEmptyWindow()

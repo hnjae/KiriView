@@ -40,6 +40,17 @@ private Q_SLOTS:
 
 void TestPredecodePolicy::schedulePlanUsesCppCandidateSnapshot()
 {
+    const PredecodeSourceProfile directProfile = kiriview::directMediaPredecodeSourceProfile();
+    const PredecodeSchedulePlan directNeutralPlan
+        = kiriview::predecodeSchedulePlan(15, 5, policyInput(directProfile));
+    QCOMPARE(directNeutralPlan.parallelLimit, std::size_t(1));
+    QVERIFY(directNeutralPlan.targetIndices == std::vector<std::size_t>({ 5, 6, 4, 7, 3 }));
+
+    const PredecodeSchedulePlan directBiasedPlan = kiriview::predecodeSchedulePlan(
+        15, 5, policyInput(directProfile, PredecodeMomentumMode::NextBiased));
+    QCOMPARE(directBiasedPlan.parallelLimit, std::size_t(1));
+    QVERIFY(directBiasedPlan.targetIndices == std::vector<std::size_t>({ 5, 6, 4, 7, 8 }));
+
     const std::optional<kiriview::OpenedCollectionScopeLocation> openedCollectionScope
         = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(
             localUrl(QStringLiteral("/book.cbz")));
@@ -51,7 +62,7 @@ void TestPredecodePolicy::schedulePlanUsesCppCandidateSnapshot()
         = kiriview::predecodeSchedulePlan(15, 5, policyInput(archiveProfile));
 
     QCOMPARE(plan.parallelLimit, std::size_t(4));
-    QVERIFY(plan.targetIndices == std::vector<std::size_t>({ 5, 6, 4, 7, 3, 8, 9 }));
+    QVERIFY(plan.targetIndices == std::vector<std::size_t>({ 5, 6, 4, 7, 3, 8, 2, 9 }));
 
     const PredecodeSchedulePlan missingCurrent = kiriview::predecodeSchedulePlan(
         15, std::nullopt, policyInput(kiriview::directMediaPredecodeSourceProfile()));
@@ -66,7 +77,7 @@ void TestPredecodePolicy::openedCollectionSourceProfilesPreserveRuntimeTuning()
             imagesDirectoryUrl(), kiriview::OpenedCollectionScopeKind::Directory);
     const PredecodeSourceProfile directoryProfile
         = kiriview::predecodeSourceProfileForOpenedCollectionScope(directoryCollection, 8);
-    QCOMPARE(directoryProfile.neutralPreviousPageCount, std::size_t(2));
+    QCOMPARE(directoryProfile.neutralPreviousPageCount, std::size_t(3));
     QCOMPARE(directoryProfile.neutralNextPageCount, std::size_t(4));
     QCOMPARE(directoryProfile.biasedDirectionPageCount, std::size_t(6));
     QCOMPARE(directoryProfile.parallelLimit, std::size_t(2));
@@ -77,9 +88,9 @@ void TestPredecodePolicy::openedCollectionSourceProfilesPreserveRuntimeTuning()
     QVERIFY(openedCollectionScope.has_value());
     const PredecodeSourceProfile archiveProfile
         = kiriview::predecodeSourceProfileForOpenedCollectionScope(*openedCollectionScope, 8);
-    QCOMPARE(archiveProfile.neutralPreviousPageCount, std::size_t(2));
+    QCOMPARE(archiveProfile.neutralPreviousPageCount, std::size_t(3));
     QCOMPARE(archiveProfile.neutralNextPageCount, std::size_t(4));
-    QCOMPARE(archiveProfile.biasedDirectionPageCount, std::size_t(8));
+    QCOMPARE(archiveProfile.biasedDirectionPageCount, std::size_t(6));
     QCOMPARE(archiveProfile.parallelLimit, std::size_t(4));
 }
 
