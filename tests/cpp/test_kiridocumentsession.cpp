@@ -1179,8 +1179,10 @@ void TestKiriDocumentSession::activeNavigationThumbnailDemandProjectsPendingAndU
     FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
     const QUrl videoUrl = localUrl(QStringLiteral("/media/02.mp4"));
+    const QUrl remoteVideoUrl(QStringLiteral("https://example.invalid/03.mp4"));
     directMediaNavigationProvider.setMedia(localUrl(QStringLiteral("/media/")),
-        { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(videoUrl) });
+        { directMediaNavigationCandidate(imageUrl), directMediaNavigationCandidate(videoUrl),
+            directMediaNavigationCandidate(remoteVideoUrl) });
     std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
     session->setSourceUrl(imageUrl);
@@ -1188,7 +1190,7 @@ void TestKiriDocumentSession::activeNavigationThumbnailDemandProjectsPendingAndU
     QAbstractItemModel *model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QVERIFY(session->activeNavigationKnown());
-    QCOMPARE(model->rowCount(), 2);
+    QCOMPARE(model->rowCount(), 3);
 
     const quint64 generation = thumbnailData(
         *session, 0, kiriview::ActiveNavigationThumbnailModel::NavigationGenerationRole)
@@ -1206,9 +1208,17 @@ void TestKiriDocumentSession::activeNavigationThumbnailDemandProjectsPendingAndU
     QVERIFY(session->reportActiveNavigationThumbnailDemand(2, videoUrl, 96,
         KiriDocumentSession::ThumbnailDemandPriority::VisibleThumbnailDemand, generation));
     QCOMPARE(thumbnailDataForRoleName(*session, 1, QByteArrayLiteral("thumbnailStatus")).toInt(),
-        static_cast<int>(KiriDocumentSession::ThumbnailResultStatus::UnsupportedThumbnailResult));
+        static_cast<int>(KiriDocumentSession::ThumbnailResultStatus::PendingThumbnailResult));
     QCOMPARE(
         thumbnailDataForRoleName(*session, 1, QByteArrayLiteral("thumbnailImageSource")).toUrl(),
+        QUrl());
+
+    QVERIFY(session->reportActiveNavigationThumbnailDemand(3, remoteVideoUrl, 96,
+        KiriDocumentSession::ThumbnailDemandPriority::VisibleThumbnailDemand, generation));
+    QCOMPARE(thumbnailDataForRoleName(*session, 2, QByteArrayLiteral("thumbnailStatus")).toInt(),
+        static_cast<int>(KiriDocumentSession::ThumbnailResultStatus::UnsupportedThumbnailResult));
+    QCOMPARE(
+        thumbnailDataForRoleName(*session, 2, QByteArrayLiteral("thumbnailImageSource")).toUrl(),
         QUrl());
 }
 

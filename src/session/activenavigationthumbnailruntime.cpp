@@ -84,9 +84,11 @@ namespace kiriview {
 ThumbnailSourceAdapter defaultThumbnailSourceAdapter()
 {
     return [](ThumbnailSourceAdapterRequest request) {
-        if (!thumbnailSourceKeyHasSourceKind(
-                request.sourceKey, ActiveNavigationThumbnailSourceKind::DirectImage)
-            || !request.sourceKey.url.isLocalFile()) {
+        const bool supportedDirectSource = thumbnailSourceKeyHasSourceKind(request.sourceKey,
+                                               ActiveNavigationThumbnailSourceKind::DirectImage)
+            || thumbnailSourceKeyHasSourceKind(
+                request.sourceKey, ActiveNavigationThumbnailSourceKind::DirectVideo);
+        if (!supportedDirectSource || !request.sourceKey.url.isLocalFile()) {
             return ThumbnailSourceAdapterPlan {};
         }
 

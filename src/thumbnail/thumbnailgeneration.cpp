@@ -369,6 +369,42 @@ kiriview::ThumbnailGenerationCacheInstallResult installThumbnail(
     };
 }
 
+kiriview::ThumbnailGenerationResult finishGeneratedThumbnailImage(
+    const kiriview::ThumbnailGenerationRequest &request,
+    const kiriview::ThumbnailOriginalIdentity &originalIdentity, QImage image,
+    const kiriview::ThumbnailGenerationDependencies &dependencies)
+{
+    QImage rgba8 = image.convertToFormat(QImage::Format_RGBA8888);
+    if (rgba8.isNull()) {
+        return failedResult(
+            request.requestedBucket, QStringLiteral("thumbnail image conversion failed"));
+    }
+
+    if (!request.cacheInstallEnabled) {
+        return kiriview::ThumbnailGenerationResult {
+            kiriview::ThumbnailGenerationStatus::Ready,
+            std::move(rgba8),
+            request.requestedBucket,
+            {},
+            {},
+        };
+    }
+
+    const kiriview::ThumbnailGenerationCacheInstallResult install
+        = dependencies.cacheRepository.install(originalIdentity, request.requestedBucket, rgba8);
+    if (!install.success) {
+        return failedResult(install.requestedBucket, install.errorString);
+    }
+
+    return kiriview::ThumbnailGenerationResult {
+        kiriview::ThumbnailGenerationStatus::Ready,
+        std::move(rgba8),
+        install.requestedBucket,
+        install.installedCachePath,
+        {},
+    };
+}
+
 kiriview::ThumbnailGenerationDependencies resolvedThumbnailGenerationDependencies(
     kiriview::ThumbnailGenerationDependencies dependencies)
 {
@@ -390,6 +426,9 @@ kiriview::ThumbnailGenerationDependencies resolvedThumbnailGenerationDependencie
     }
     if (!dependencies.cacheRepository.install) {
         dependencies.cacheRepository.install = installThumbnail;
+    }
+    if (!dependencies.videoExtractor) {
+        dependencies.videoExtractor = kiriview::startVideoThumbnailExtraction;
     }
     return dependencies;
 }
@@ -446,35 +485,63 @@ kiriview::ThumbnailGenerationResult generateThumbnailWithDependencies(
                                   : std::move(decodeError));
     }
 
-    QImage rgba8 = image.convertToFormat(QImage::Format_RGBA8888);
-    if (rgba8.isNull()) {
-        return failedResult(
-            request.requestedBucket, QStringLiteral("thumbnail image conversion failed"));
+    return finishGeneratedThumbnailImage(request, originalIdentity, std::move(image), dependencies);
+}
+
+kiriview::ImageIoJob startVideoThumbnailGenerationJob(QObject *receiver,
+    kiriview::ThumbnailGenerationRequest request, kiriview::ThumbnailGenerationCallback callback,
+    kiriview::ThumbnailGenerationDependencies dependencies)
+{
+    const int maximumLongEdge = dependencies.maximumLongEdgeForBucket(request.requestedBucket);
+    if (maximumLongEdge <= 0) {
+        if (callback) {
+            callback(failedResult(request.requestedBucket,
+                QStringLiteral("thumbnail generation requires a size bucket")));
+        }
+        return {};
     }
 
-    if (!request.cacheInstallEnabled) {
-        return kiriview::ThumbnailGenerationResult {
-            kiriview::ThumbnailGenerationStatus::Ready,
-            std::move(rgba8),
-            request.requestedBucket,
-            {},
-            {},
-        };
+    kiriview::ThumbnailOriginalIdentity originalIdentity = request.originalIdentity.isValid()
+        ? request.originalIdentity
+        : kiriview::ThumbnailOriginalIdentity::fromLocalPathBytes(request.localPathBytes);
+    if (!originalIdentity.isValid()) {
+        if (callback) {
+            callback(failedResult(
+                request.requestedBucket, QStringLiteral("video thumbnail identity failed")));
+        }
+        return {};
     }
 
-    const kiriview::ThumbnailGenerationCacheInstallResult install
-        = dependencies.cacheRepository.install(originalIdentity, request.requestedBucket, rgba8);
-    if (!install.success) {
-        return failedResult(install.requestedBucket, install.errorString);
-    }
+    kiriview::VideoThumbnailExtractionRequest extractionRequest;
+    extractionRequest.localPathBytes = request.localPathBytes;
+    extractionRequest.sourceUrl = request.sourceUrl;
+    extractionRequest.requestedBucket = request.requestedBucket;
+    extractionRequest.maximumLongEdge = maximumLongEdge;
 
-    return kiriview::ThumbnailGenerationResult {
-        kiriview::ThumbnailGenerationStatus::Ready,
-        std::move(rgba8),
-        install.requestedBucket,
-        install.installedCachePath,
-        {},
-    };
+    kiriview::VideoThumbnailExtractionProvider videoExtractor = dependencies.videoExtractor;
+    return videoExtractor(receiver, std::move(extractionRequest),
+        [request = std::move(request), originalIdentity = std::move(originalIdentity),
+            callback = std::move(callback), dependencies = std::move(dependencies)](
+            kiriview::VideoThumbnailExtractionResult extractionResult) mutable {
+            if (!callback) {
+                return;
+            }
+            if (extractionResult.status == kiriview::ThumbnailGenerationStatus::Failed) {
+                callback(failedResult(request.requestedBucket,
+                    extractionResult.errorString.isEmpty()
+                        ? QStringLiteral("video thumbnail extraction failed")
+                        : std::move(extractionResult.errorString)));
+                return;
+            }
+            if (extractionResult.image.isNull()) {
+                callback(failedResult(
+                    request.requestedBucket, QStringLiteral("video thumbnail produced no image")));
+                return;
+            }
+
+            callback(finishGeneratedThumbnailImage(
+                request, originalIdentity, std::move(extractionResult.image), dependencies));
+        });
 }
 }
 
@@ -488,6 +555,7 @@ ThumbnailGenerationDependencies defaultThumbnailGenerationDependencies()
         defaultOpenedCollectionOriginalIdentityLoader,
         ThumbnailGenerationCacheRepository {
             defaultThumbnailGenerationCacheLookup, installThumbnail },
+        startVideoThumbnailExtraction,
     };
 }
 
@@ -504,9 +572,16 @@ ThumbnailGenerationProvider defaultThumbnailGenerationProvider(
     return [workerScheduler = std::move(workerScheduler), dependencies = std::move(dependencies)](
                QObject *receiver, ThumbnailGenerationRequest request,
                ThumbnailGenerationCallback callback) {
+        ThumbnailGenerationDependencies resolvedDependencies
+            = resolvedThumbnailGenerationDependencies(dependencies);
+        if (request.sourceKind == ThumbnailSourceKind::DirectVideo) {
+            return startVideoThumbnailGenerationJob(
+                receiver, std::move(request), std::move(callback), std::move(resolvedDependencies));
+        }
+
         return startImageIoWorkerJob(
             receiver, workerScheduler,
-            [request = std::move(request), dependencies]() {
+            [request = std::move(request), dependencies = std::move(resolvedDependencies)]() {
                 return generateThumbnail(request, dependencies);
             },
             [callback = std::move(callback)](ThumbnailGenerationResult result) mutable {

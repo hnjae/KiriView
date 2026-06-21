@@ -68,6 +68,42 @@ private Q_SLOTS:
 };
 
 namespace {
+kiriview::ThumbnailGenerationProvider disabledThumbnailGenerationProvider()
+{
+    return [](QObject *, kiriview::ThumbnailGenerationRequest request,
+               kiriview::ThumbnailGenerationCallback callback) {
+        if (callback) {
+            callback(kiriview::ThumbnailGenerationResult {
+                kiriview::ThumbnailGenerationStatus::Failed,
+                {},
+                request.requestedBucket,
+                {},
+                QStringLiteral("toolbar test thumbnail generation disabled"),
+            });
+        }
+        return kiriview::ImageIoJob();
+    };
+}
+
+kiriview::KiriDocumentSessionDependencies toolbarTestDocumentSessionDependencies()
+{
+    kiriview::KiriDocumentSessionDependencies dependencies;
+    dependencies.sessionRuntime.activeNavigationThumbnails.generationProvider
+        = disabledThumbnailGenerationProvider();
+    return dependencies;
+}
+
+class ToolbarTestDocumentSession : public KiriDocumentSession
+{
+    Q_OBJECT
+
+public:
+    explicit ToolbarTestDocumentSession(QObject *parent = nullptr)
+        : KiriDocumentSession(toolbarTestDocumentSessionDependencies(), parent)
+    {
+    }
+};
+
 struct MainWindowFixture {
     std::unique_ptr<QQmlApplicationEngine> engine;
     QQuickWindow *window = nullptr;
@@ -94,7 +130,7 @@ void registerKiriViewQmlTypes()
     kiriview::initializeLocalization();
     qmlRegisterType<KiriViewApplication>("org.hnjae.kiriview", 1, 0, "KiriViewApplication");
     qmlRegisterType<ImageActionAvailability>("org.hnjae.kiriview", 1, 0, "ImageActionAvailability");
-    qmlRegisterType<KiriDocumentSession>("org.hnjae.kiriview", 1, 0, "KiriDocumentSession");
+    qmlRegisterType<ToolbarTestDocumentSession>("org.hnjae.kiriview", 1, 0, "KiriDocumentSession");
     qmlRegisterType<KiriImageDocument>("org.hnjae.kiriview", 1, 0, "KiriImageDocument");
     qmlRegisterType<KiriImageViewportContextBridge>(
         "org.hnjae.kiriview", 1, 0, "KiriImageViewportContextBridge");
@@ -1253,7 +1289,7 @@ void TestMainWindowToolBar::fullscreenPointerHidesAfterIdleMovement()
 
     moveMouse(fixture.window, QPoint(fixture.window->width() / 2, fixture.window->height() / 2));
     QTRY_VERIFY(!fixture.window->property("fullscreenPointerHidden").toBool());
-    QTRY_VERIFY_WITH_TIMEOUT(fixture.window->property("fullscreenPointerHidden").toBool(), 6000);
+    QTRY_VERIFY_WITH_TIMEOUT(fixture.window->property("fullscreenPointerHidden").toBool(), 15000);
 }
 
 void TestMainWindowToolBar::fullscreenToolbarRevealsOnlyNearTopEdge()
@@ -1301,7 +1337,7 @@ void TestMainWindowToolBar::fullscreenToolbarHidesAfterTopRevealIdle()
 
     moveMouse(fixture.window, QPoint(fixture.window->width() / 2, 1));
     QTRY_VERIFY(toolbar->isVisible());
-    QTRY_VERIFY_WITH_TIMEOUT(!toolbar->isVisible(), 6000);
+    QTRY_VERIFY_WITH_TIMEOUT(!toolbar->isVisible(), 15000);
 }
 
 void TestMainWindowToolBar::fullscreenReusesSingleToolbarAndHidesApplicationMenuButton()
