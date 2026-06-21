@@ -238,6 +238,8 @@ For images, embedded metadata is parsed from the same backend-provided bytes use
 
 For direct videos, embedded metadata is parsed from the resolved playback or local file path. Collection-internal video metadata is not shown while those videos remain unsupported placeholders.
 
+An unsupported-video placeholder keeps the current media item's video identity in the Info Panel. Its General section type is Video and its media-specific section is Video, but collection-internal video metadata rows remain omitted until collection-internal video support exists.
+
 The Camera section shows curated embedded metadata rows only when the values are available: Camera, Taken, Location, Lens, Exposure, ISO, Focal Length, and Software. Camera combines make and model when both exist. Location is shown as coordinates only.
 
 The Advanced Metadata section is collapsed by default and contains parsed embedded tags not already consumed by curated rows, excluding empty, binary, and unprintable values.
