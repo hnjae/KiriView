@@ -48,6 +48,7 @@ private Q_SLOTS:
     void emptySessionProjectsUnavailableInformation();
     void readyImageProjectsTargetMetadataAndFileActions();
     void directVideoProjectsVideoSectionFromSessionSource();
+    void unsupportedOpenedCollectionVideoProjectsVideoIdentityWithoutMetadata();
     void archiveCollectionImagePathDisplaysRelativeEntryPath();
     void directoryCollectionImagePathDisplaysRelativeEntryPath();
     void unsupportedArchiveImageTargetClearsInformation();
@@ -135,6 +136,39 @@ void TestMediaInformationProjection::directVideoProjectsVideoSectionFromSessionS
         valueForLabel(snapshot.mediaRows, QStringLiteral("Duration")), QStringLiteral("00:01:23"));
     QCOMPARE(valueForLabel(snapshot.mediaRows, QStringLiteral("Frame Size")),
         QStringLiteral("1920×1080 px"));
+    QVERIFY(snapshot.canCopyFilePath);
+    QVERIFY(snapshot.canOpenContainingFolder);
+}
+
+void TestMediaInformationProjection::
+    unsupportedOpenedCollectionVideoProjectsVideoIdentityWithoutMetadata()
+{
+    kiriview::MediaInformationProjectionInput input;
+    input.documentKind = kiriview::DocumentSessionKind::Image;
+    input.imageReady = true;
+    input.imageDisplayedUrl = QUrl(QStringLiteral("zip:///books/book.cbz!/chapter/clip.mp4"));
+    input.imageDisplayedOpenedCollectionScope = kiriview::OpenedCollectionScopeLocation::fromUrls(
+        QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),
+        QUrl(QStringLiteral("zip:///books/book.cbz!/")),
+        kiriview::OpenedCollectionScopeKind::ComicBookArchive);
+    input.imageSize = QSize(640, 480);
+    input.imageEmbeddedMetadata = cameraMetadata();
+
+    const kiriview::MediaInformationProjectionSnapshot snapshot
+        = kiriview::projectMediaInformation(input, 9);
+
+    QCOMPARE(snapshot.kind, kiriview::MediaInformationKind::Video);
+    QVERIFY(snapshot.available);
+    QCOMPARE(snapshot.targetUrl, input.imageDisplayedUrl);
+    QCOMPARE(snapshot.title, QStringLiteral("clip.mp4"));
+    QCOMPARE(snapshot.summary, QStringLiteral("Video"));
+    QCOMPARE(snapshot.mediaSectionTitle, QStringLiteral("Video"));
+    QCOMPARE(valueForLabel(snapshot.generalRows, QStringLiteral("Type")), QStringLiteral("Video"));
+    QCOMPARE(valueForLabel(snapshot.generalRows, QStringLiteral("Path")),
+        QStringLiteral("chapter/clip.mp4"));
+    QVERIFY(snapshot.mediaRows.empty());
+    QVERIFY(snapshot.cameraRows.empty());
+    QVERIFY(snapshot.advancedRows.empty());
     QVERIFY(snapshot.canCopyFilePath);
     QVERIFY(snapshot.canOpenContainingFolder);
 }
