@@ -9,6 +9,7 @@
 
 #include <QByteArray>
 #include <QImage>
+#include <QMediaMetaData>
 #include <QString>
 #include <QUrl>
 #include <functional>
@@ -38,6 +39,8 @@ using VideoThumbnailExtractionProvider = std::function<ImageIoJob(
 
 QImage videoThumbnailImageFromFrameImage(
     QImage image, int maximumLongEdge, QString *errorString = nullptr);
+QImage videoThumbnailImageFromMetadata(
+    const QMediaMetaData &metadata, int maximumLongEdge, QString *errorString = nullptr);
 
 ImageIoJob startVideoThumbnailExtraction(QObject *receiver, VideoThumbnailExtractionRequest request,
     VideoThumbnailExtractionCallback callback);

@@ -5,6 +5,7 @@
 
 #include <QColor>
 #include <QImage>
+#include <QMediaMetaData>
 #include <QObject>
 #include <QSize>
 #include <QString>
@@ -17,6 +18,9 @@ class TestVideoThumbnailExtractor : public QObject
 private Q_SLOTS:
     void framePostProcessingScalesToBucketEdge();
     void framePostProcessingRejectsNullImages();
+    void metadataPostProcessingPrefersCoverArtImage();
+    void metadataPostProcessingUsesThumbnailImageFallback();
+    void metadataPostProcessingRejectsMissingEmbeddedImage();
 };
 
 void TestVideoThumbnailExtractor::framePostProcessingScalesToBucketEdge()
@@ -41,6 +45,50 @@ void TestVideoThumbnailExtractor::framePostProcessingRejectsNullImages()
 
     QVERIFY(thumbnail.isNull());
     QCOMPARE(errorString, QStringLiteral("video frame produced no image"));
+}
+
+void TestVideoThumbnailExtractor::metadataPostProcessingPrefersCoverArtImage()
+{
+    QImage cover(QSize(300, 150), QImage::Format_RGB32);
+    cover.fill(QColor(Qt::red));
+    QImage thumbnailFallback(QSize(40, 20), QImage::Format_RGB32);
+    thumbnailFallback.fill(QColor(Qt::blue));
+    QMediaMetaData metadata;
+    metadata[QMediaMetaData::CoverArtImage] = cover;
+    metadata[QMediaMetaData::ThumbnailImage] = thumbnailFallback;
+    QString errorString;
+
+    const QImage thumbnail = kiriview::videoThumbnailImageFromMetadata(metadata, 128, &errorString);
+
+    QCOMPARE(thumbnail.size(), QSize(128, 64));
+    QCOMPARE(thumbnail.pixelColor(0, 0), QColor(Qt::red));
+    QVERIFY(errorString.isEmpty());
+}
+
+void TestVideoThumbnailExtractor::metadataPostProcessingUsesThumbnailImageFallback()
+{
+    QImage embeddedThumbnail(QSize(90, 60), QImage::Format_RGB32);
+    embeddedThumbnail.fill(QColor(Qt::blue));
+    QMediaMetaData metadata;
+    metadata[QMediaMetaData::ThumbnailImage] = embeddedThumbnail;
+    QString errorString;
+
+    const QImage thumbnail = kiriview::videoThumbnailImageFromMetadata(metadata, 45, &errorString);
+
+    QCOMPARE(thumbnail.size(), QSize(45, 30));
+    QCOMPARE(thumbnail.pixelColor(0, 0), QColor(Qt::blue));
+    QVERIFY(errorString.isEmpty());
+}
+
+void TestVideoThumbnailExtractor::metadataPostProcessingRejectsMissingEmbeddedImage()
+{
+    QMediaMetaData metadata;
+    QString errorString;
+
+    const QImage thumbnail = kiriview::videoThumbnailImageFromMetadata(metadata, 128, &errorString);
+
+    QVERIFY(thumbnail.isNull());
+    QCOMPARE(errorString, QStringLiteral("video metadata produced no embedded image"));
 }
 
 QTEST_GUILESS_MAIN(TestVideoThumbnailExtractor)
