@@ -32,9 +32,9 @@ On XDG cache miss, v1 direct-video generation owns a short-lived Qt Multimedia e
 
 The embedded cover image is preferred because it is the media-provided representative image. The first decoded frame fallback is a representative frame, not a frame-accurate timestamp guarantee. Rotation or mirroring metadata is honored only when Qt's delivered embedded image or frame image already reflects it.
 
-## Archive Entries
+## Direct Archive-Entry Media
 
-Archive-entry thumbnails represent an item inside an archive-backed image-document scope. The adapter should identify the entry relative to the archive scope, include backing archive freshness and entry identity when available, and render through the runtime generation provider. Cache writes are allowed only after the Freedesktop cache identity and freshness model is revisited for archive-internal sources; until then, archive-entry thumbnails should use in-memory-only generation.
+Direct archive-entry media thumbnails represent KDE archive-entry URLs opened as individual direct media items, such as `zip:///path/archive.zip!/page.png`, not entries inside a directly opened collection. In v1 these rows return unsupported fallback because direct archive-entry media preview thumbnails are outside the product scope. They must not reuse opened-collection cache identity, media-entry source metadata, or collection entry byte access.
 
 ## Opened Collection Entries
 
