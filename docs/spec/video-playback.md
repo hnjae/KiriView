@@ -70,7 +70,7 @@ Video mode shows a video viewport and a Breeze-style playback control panel at t
 
 The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, the total supported media item count for the ordinary direct media URL scope when that list is known, and the same trailing control order as image mode.
 
-Video mode keeps image-only toolbar controls visible in their image-mode positions but unavailable: Right-to-Left Reading, Two-Page Spread, and Fit are disabled, and the zoom control is read-only.
+In ordinary direct media video mode, Right-to-Left Reading and Two-Page Spread are hidden because they belong to opened archive and directory collection scopes. Fit remains in its image-mode position but is disabled, and the zoom control is read-only.
 
 Video mode shows a read-only zoom percentage when the video frame size, displayed video content rectangle, and target window effective device pixel ratio are known. The value is the current fitted display size in physical pixels relative to the video's intrinsic frame size. When the percentage is unknown, the read-only zoom control displays `? %`. Users cannot edit this value or use image zoom actions for video.
 

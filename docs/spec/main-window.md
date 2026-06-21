@@ -12,11 +12,11 @@ The toolbar page navigation readout and page-number entry use the current active
 
 When active navigation is unavailable or unknown, the toolbar page navigation readout displays `– of –` and keeps the page-number entry and navigation buttons disabled.
 
-When an image from a directly opened CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, RAR, or local directory collection is displayed, the trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, a Fit menu button, zoom, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
+When the active navigation scope is a directly opened CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, RAR, or local directory collection, the trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, a Fit menu button, zoom, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
 
-When no archive or directory collection is open, including empty state, ordinary direct image files, direct video files, and direct KDE archive-entry URLs, the trailing action toolbar does not show Right-to-Left Reading or Two-Page Spread.
+When the active navigation scope is not an opened archive or directory collection, including empty state, ordinary direct image files, direct video files, and direct KDE archive-entry URLs, the trailing action toolbar does not show Right-to-Left Reading or Two-Page Spread.
 
-When a direct video is displayed, Fit and zoom remain in their image-mode positions; Fit is disabled and zoom is read-only. Right-to-Left Reading and Two-Page Spread are hidden unless an opened collection scope makes those controls visible.
+Right-to-Left Reading and Two-Page Spread visibility is determined by the active navigation scope, not by whether the current media item is an image, direct video, or unsupported-video placeholder. When a direct video is displayed in an ordinary direct media scope, Fit and zoom remain in their image-mode positions; Fit is disabled and zoom is read-only.
 
 The trailing action toolbar shows as many trailing controls as fit and moves the rest into an overflow menu. When it runs out of horizontal space, KiriView keeps the zoom percentage visible the longest, then the Fit menu button. The Fit menu button shows its selected fit label when there is enough toolbar space and collapses to icon-only when space is constrained.
 
