@@ -27,7 +27,7 @@ enum class PredecodeMomentumDirection {
 };
 
 struct PredecodeSourceProfile {
-    std::size_t neutralPreviousPageCount = 1;
+    std::size_t neutralPreviousPageCount = 2;
     std::size_t neutralNextPageCount = 2;
     std::size_t biasedDirectionPageCount = 3;
     std::size_t parallelLimit = 1;
@@ -35,7 +35,7 @@ struct PredecodeSourceProfile {
 
 constexpr PredecodeSourceProfile directMediaPredecodeSourceProfile()
 {
-    return PredecodeSourceProfile { 1, 2, 3, 1 };
+    return PredecodeSourceProfile { 2, 2, 3, 1 };
 }
 
 struct PredecodePolicyInput {

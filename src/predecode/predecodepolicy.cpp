@@ -23,12 +23,12 @@ PredecodeSourceProfile predecodeSourceProfileForOpenedCollectionScope(
     }
 
     if (openedCollectionScope.isDirectory()) {
-        return PredecodeSourceProfile { 2, 4, 6, 2 };
+        return PredecodeSourceProfile { 3, 4, 6, 2 };
     }
 
     const int halfThreadCount = idealThreadCount / 2;
     const std::size_t parallelLimit = static_cast<std::size_t>(std::clamp(halfThreadCount, 1, 4));
-    return PredecodeSourceProfile { 2, 4, 8, parallelLimit };
+    return PredecodeSourceProfile { 3, 4, 6, parallelLimit };
 }
 
 std::vector<std::size_t> predecodeRetainedCachedImageIndices(
