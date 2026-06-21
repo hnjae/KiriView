@@ -16,7 +16,18 @@ let
   rustHostLinker = pkgs.writeShellApplication {
     name = "kiriview-rust-host-linker";
     text = ''
-      exec ${lib.getExe' pkgs.stdenv.cc "cc"} -B${rustHostLldBin}/bin/ "$@"
+      filtered_args=()
+      for arg in "$@"; do
+          case "$arg" in
+              -fuse-ld=gold)
+                  ;;
+              *)
+                  filtered_args+=("$arg")
+                  ;;
+          esac
+      done
+
+      exec ${lib.getExe' pkgs.stdenv.cc "cc"} -B${rustHostLldBin}/bin/ "''${filtered_args[@]}"
     '';
   };
   rustHostCargoTargetDir = "${config.devenv.root}/target";
