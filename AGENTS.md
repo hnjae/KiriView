@@ -12,7 +12,7 @@ Layout: `src/` (app), `tests/cpp/` (C++ tests), `docs/` (docs), `po/` (translati
 
 ## Policies
 
-- **Architecture lives in `docs/architecture/`** (start at `README.md`). Follow it for language boundaries, module ownership, FFI, and workflow structure. Record long-term rules there or in ADRs — never duplicate them here.
+- **Documentation routing:** `docs/spec/` is for user-visible behavior only, including visible unsupported states and disabled controls; do not put implementation details, milestone labels, test strategy, or coverage IDs there. `docs/architecture/` (start at `README.md`) is for durable design boundaries and ownership rules, including provider, render, state, language-boundary, FFI, workflow, and architecture test ownership; record long-term rules there or in ADRs, never duplicate them here, and do not put milestone acceptance criteria or deferred-work lists there. `docs/planning/` is for milestone scope, deferred work, non-goals, and acceptance criteria; planning does not override current behavior in `docs/spec/` or durable boundaries in `docs/architecture/`.
 - **Pre-release: no backward compatibility.** Do not preserve compatibility for configs, APIs, or internal formats unless explicitly asked.
 
 ## External dependency and upstream boundaries

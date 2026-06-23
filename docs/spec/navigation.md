@@ -158,9 +158,9 @@ Video mode supports configurable viewer-local current-content boundary shortcuts
 
 Video seek shortcuts are video-mode-only and do not affect image mode, archive collection scope, or directly opened directory collection scope.
 
-Video seek shortcuts are best-effort time seeks through Qt Multimedia position seeking. They run only when the media is seekable, clamp to the valid `[0, duration]` range when duration is known, and do not promise frame-accurate seeking.
+Video seek shortcuts are best-effort time seeks. They run only when the media is seekable, clamp to the valid `[0, duration]` range when duration is known, and do not promise frame-accurate seeking.
 
-The actual landed position may be adjusted by the Qt Multimedia backend, commonly to a nearby decodable or keyframe position.
+The actual landed position may be adjusted by the playback engine, commonly to a nearby decodable or keyframe position.
 
 ## Scan Shortcuts
 

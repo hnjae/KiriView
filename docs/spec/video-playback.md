@@ -2,11 +2,11 @@
 
 ## Product Boundary
 
-KiriView supports direct video files as moving, sound-capable image-like media items in the MVP.
+KiriView supports direct video files as moving, sound-capable image-like media items.
 
 Supported direct video inputs may come from the startup argument, drop, open dialog selection, or ordinary adjacent direct media navigation from a direct media URL scope.
 
-The MVP direct video format list is MP4, M4V, and MOV, case-insensitively. These cover common camera and phone video files without expanding the initial scope to less common container behavior.
+The direct video format list is MP4, M4V, and MOV, case-insensitively.
 
 Direct video playback supports direct file-like URLs that KiriView can hand to KDE/KIO as ordinary file items, including local paths, `file://` URLs, and KDE-supported archive URLs that point at a file entry such as `zip:///path/archive.zip!/clip.mp4`.
 
@@ -18,15 +18,15 @@ Video files do not participate in video-frame predecode, video-frame image cache
 
 In ordinary direct media URL scopes, showing a video must not clear or stop the background predecode/cache lifecycle for nearby supported image files. KiriView may keep and continue predecoding adjacent still images around the current video cursor, but it must not attempt to predecode the video itself.
 
-Archive-collection-internal video playback, directly opened directory-collection video playback, collection-internal video metadata, playlists, subtitles, track selection, frame stepping, and timeline preview thumbnails are out of scope.
+Archive-collection-internal video playback, directly opened directory-collection video playback, collection-internal video metadata, playlists, subtitles, track selection, frame stepping, and timeline preview thumbnails are not provided.
 
-KiriView advertises direct video support through the desktop file for the MIME types that cover the MVP MP4, M4V, and MOV format list: `video/mp4` and `video/quicktime`.
+KiriView advertises direct video support through the desktop file for the MIME types that cover the MP4, M4V, and MOV format list: `video/mp4` and `video/quicktime`.
 
 ## Source URL Identity
 
-KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend. Resolution succeeds only when the resolved playback URL can be consumed by the video backend; otherwise the video load fails while keeping the original direct media URL as the public source and error context.
+KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before playback starts. Resolution succeeds only when the resolved playback URL can be played; otherwise the video load fails while keeping the original direct media URL as the public source and error context.
 
-When direct video playback URL resolution fails, the user-facing error text is a stable KiriView message that the selected video could not be opened. Backend, DBus, KIO, and Qt resolver messages are internal diagnostics and are not displayed as the primary error text.
+When direct video playback URL resolution fails, the user-facing error text is a stable KiriView message that the selected video could not be opened. Platform, resolver, and playback diagnostic messages are internal diagnostics and are not displayed as the primary error text.
 
 Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent direct media navigation, deletion target, error context, and direct-media versus opened-collection routing decisions remain based on the original direct media URL.
 
@@ -64,7 +64,7 @@ Adjacent Previous and Next use direct media navigation in video mode and in imag
 
 Opening a video starts playback automatically.
 
-When a video load or backend error is superseded by a later accepted non-error playback state for the same video, KiriView clears the public video error text. Public video states such as Loading, Ready, or Null must not expose stale error text from an earlier failed backend state.
+When a video load or playback error is superseded by a later accepted non-error playback state for the same video, KiriView clears the public video error text. Public video states such as Loading, Ready, or Null must not expose stale error text from an earlier failed playback state.
 
 Video mode shows a video viewport and a Breeze-style playback control panel at the bottom edge of the video viewport.
 
@@ -78,7 +78,7 @@ The playback control panel is shown only when the current video is ready and has
 
 The playback control panel includes icon-only play/pause and mute/unmute buttons, current time, timeline position selection and scrubbing, total duration, and a disabled non-interactive timeline state when the media is not seekable. The timeline row order is play/pause, current time, timeline, total duration, and mute/unmute. Time readouts use fixed-width digits and are the only visible text in the panel.
 
-Muting is session state owned by the video document. Toggling mute affects the current backend audio output and persists across video source changes during the app session, including when a new media backend is created lazily for a later source.
+Toggling mute affects the current video audio output and persists across video source changes during the app session.
 
 In regular windowed and fullscreen video mode, the default playback control style is a floating panel inside the video viewport, aligned to the bottom edge with a large-spacing bottom margin. The floating panel uses the active Kirigami background color with theme-aware translucency, the Kirigami corner radius, a weak shadow, centered content width, and a maximum width of about 75% of the viewport while preserving viewport side margins.
 
@@ -124,9 +124,9 @@ The configurable current-content start and end shortcuts follow the same media s
 
 Video seek shortcuts are video-mode-only and must not affect image mode, archive collection scope, or directly opened directory collection scope.
 
-Video seek shortcuts are best-effort time seeks through Qt Multimedia position seeking. They run only when the media is seekable, clamp to the valid `[0, duration]` range when duration is known, and must not promise frame-accurate seeking.
+Video seek shortcuts are best-effort time seeks. They run only when the media is seekable, clamp to the valid `[0, duration]` range when duration is known, and must not promise frame-accurate seeking.
 
-The actual landed position may be adjusted by the Qt Multimedia backend, commonly to a nearby decodable or keyframe position.
+The actual landed position may be adjusted by the playback engine, commonly to a nearby decodable or keyframe position.
 
 ## Deletion
 

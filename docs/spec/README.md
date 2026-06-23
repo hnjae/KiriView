@@ -1,10 +1,12 @@
 # Product Specifications
 
-This directory is the canonical source for KiriView's user-visible behavior. The README is an index only; the subject files below own the actual specifications.
+This directory is the canonical source for KiriView's user-visible behavior, including visible unsupported states and disabled controls. The README is an index only; the subject files below own the actual specifications.
+
+Specifications describe external behavior only. Keep implementation ownership, backend details, test strategy, coverage identifiers, milestone labels, and deferred-work rationale in the owning architecture or planning documents.
 
 Before implementing a product behavior change, update every relevant subject file with the intended behavior, commit that spec update, then implement against the committed spec. Development-only and repository-maintenance changes do not require a spec update.
 
-- [Scope](scope.md): product boundaries, supported top-level content types, localization baseline, and explicit out-of-scope areas.
+- [Scope](scope.md): product boundaries, supported top-level content types, localization baseline, and not-provided areas.
 - [File Access](file-access.md): supported sources, Flatpak access, deletion behavior, and live directory updates.
 - [Main Window](main-window.md): toolbar, menus, startup, window state, fullscreen, shortcut help, video controls, and quit behavior.
 - [Image Display](image-display.md): loading and replacement, rendering, fit and zoom state, rotation, zoom controls, and animation.

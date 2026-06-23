@@ -56,9 +56,9 @@ HEIF-family still images, including AVIF still images, are supported when the st
 
 If a recognized HEIF-family still image uses an unsupported compression format or cannot be decoded, KiriView reports the decode error for the selected target instead of restoring a previously displayed image.
 
-Camera RAW files open as static images. KiriView processes supported RAW files with LibRaw into display-ready 8-bit sRGB images and does not expose RAW editing controls such as demosaic, white-balance, tone-curve, or embedded-preview selection.
+Camera RAW files open as static images. KiriView displays supported RAW files as display-ready 8-bit sRGB images and does not expose RAW editing controls such as demosaic, white-balance, tone-curve, or embedded-preview selection.
 
-When KiriView recognizes selected image data as RAW, including TIFF-family RAW files such as DNG files, it uses LibRaw for that input and reports the LibRaw decode result without retrying the same bytes through another image backend. Ordinary TIFF files that are not recognized as RAW are decoded as general raster images through Qt imageformats.
+When KiriView recognizes selected image data as RAW, including TIFF-family RAW files such as DNG files, it reports the RAW decode result without retrying the same bytes through another image path. Ordinary TIFF files that are not recognized as RAW are decoded as general raster images.
 
 RAW files participate in the same open, adjacent navigation, archive, and directory workflows as other supported static image files.
 

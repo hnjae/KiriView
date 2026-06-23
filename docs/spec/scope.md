@@ -6,10 +6,10 @@ KiriView's installed application, desktop file, and icon identity is `org.hnjae.
 
 When an installed `kiriview` translation catalog is available, KiriView's UI text and desktop metadata follow the user's KDE and Qt language settings. When no matching translation is available, KiriView shows the original English text.
 
-KiriView does not expose a general Settings page in the current scope.
+KiriView does not expose a general Settings page.
 
 The active navigation thumbnail strip may generate preview thumbnails only for supported direct local image items, supported direct local video items, and supported image pages inside ZIP-backed archive collections: CBZ and directly opened ZIP archive entries whose metadata can identify the entry for thumbnail caching.
 
-## Out of Scope
+## Not Provided
 
-Editing, filesystem indexer metadata, reverse geocoding, map lookup, archive-collection video playback, directory-collection video playback, collection-internal video metadata, recursive directory video playback, playlists, subtitles, track selection, frame stepping, generated timeline thumbnails beyond an embedded cover or first decoded direct local video frame, direct archive-entry media preview thumbnails, generated thumbnail previews for CB7/7z and other non-ZIP-backed archive collections, and directory-collection preview thumbnails are out of scope for the current version.
+KiriView does not provide editing, filesystem indexer metadata, reverse geocoding, map lookup, archive-collection video playback, directory-collection video playback, collection-internal video metadata, recursive directory video playback, playlists, subtitles, track selection, frame stepping, generated timeline thumbnails beyond an embedded cover or first decoded direct local video frame, direct archive-entry media preview thumbnails, generated thumbnail previews for CB7/7z and other non-ZIP-backed archive collections, or directory-collection preview thumbnails.

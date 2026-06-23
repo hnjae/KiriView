@@ -10,7 +10,7 @@ Direct video URLs include local paths, `file://` URLs, and KDE-supported archive
 
 When a video is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats it as a single direct media URL rather than opening the whole archive as an archive collection.
 
-KiriView may internally resolve a KIO-backed direct video URL to a playback URL before handing it to the video backend. KiriView treats this resolution as successful only when the resolved playback URL can be consumed by the video backend. This does not change the user-facing source URL for the window title, adjacent direct media navigation, deletion target, error context, or direct-media versus opened-collection routing decisions.
+KiriView may internally resolve a KIO-backed direct video URL to a playback URL before playback starts. KiriView treats this resolution as successful only when the resolved playback URL can be played. This does not change the user-facing source URL for the window title, adjacent direct media navigation, deletion target, error context, or direct-media versus opened-collection routing decisions.
 
 KiriView opens local `.cbz`, `.cbt`, `.cb7`, and `.cbr` comic book archives. When a local comic book archive is opened directly, KiriView uses that archive as the current archive collection and displays the first supported media item inside that archive. If the first supported item is a video, KiriView displays the unsupported-video placeholder.
 

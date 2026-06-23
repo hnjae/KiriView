@@ -234,7 +234,7 @@ The Image section uses the current image dimensions when they are known and omit
 
 The Video section uses the current video frame dimensions when they are known. It may also show embedded video metadata such as duration and frame size when available, and omits unavailable rows.
 
-For images, embedded metadata is parsed from the same backend-provided bytes used for image decoding, so direct files, directory collections, and archive collections follow their owning source backend.
+For images, embedded metadata is parsed from the same media content used for image display, so direct files, directory collections, and archive collections expose metadata consistently with the displayed image source.
 
 For direct videos, embedded metadata is parsed from the resolved playback or local file path. Collection-internal video metadata is not shown while those videos remain unsupported placeholders.
 

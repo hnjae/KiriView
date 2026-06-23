@@ -2,7 +2,7 @@
 
 This directory records the long-term architecture direction for KiriView. It is not a product behavior specification; user-visible behavior belongs in the files under `../spec/`.
 
-Use these documents when changing module ownership, crossing the Rust/C++/QML boundary, introducing new runtime workflow shape, or adjusting test strategy. Architecture decision records with dated rationale live in `../adr/`.
+Use these documents when changing module ownership, crossing the Rust/C++/QML boundary, introducing new runtime workflow shape, or adjusting testing ownership and boundary enforcement. Keep milestone acceptance criteria and deferred-work lists in `../planning/`. Architecture decision records with dated rationale live in `../adr/`.
 
 - [Overview](overview.md)
 - [Terminology](terminology.md)
