@@ -21,7 +21,8 @@ using kiriview::MediaEntrySourceError;
 using kiriview::MediaEntrySourceImageData;
 using kiriview::MediaEntrySourceImageDataResult;
 
-template <typename... Handlers> struct MediaEntrySourceResultHandler : Handlers... {
+template <typename... Handlers> struct MediaEntrySourceResultHandler : Handlers...
+{
     using Handlers::operator()...;
 };
 
@@ -33,17 +34,17 @@ void finishMediaEntrySourceWorkerResult(
     Result result, ErrorCallback errorCallback, SuccessCallback successCallback)
 {
     auto resultHandler = MediaEntrySourceResultHandler {
-        [&errorCallback](const MediaEntrySourceError &error) {
+        [&errorCallback](const MediaEntrySourceError& error) {
             kiriview::invokeIfSet(errorCallback, error.errorString);
         },
-        [&successCallback](Success &success) mutable { successCallback(std::move(success)); },
+        [&successCallback](Success& success) mutable { successCallback(std::move(success)); },
     };
     std::visit(resultHandler, result);
 }
 
-void cancelKJob(QObject *object)
+void cancelKJob(QObject* object)
 {
-    auto *job = qobject_cast<KJob *>(object);
+    auto* job = qobject_cast<KJob*>(object);
     if (job == nullptr) {
         return;
     }
@@ -52,8 +53,8 @@ void cancelKJob(QObject *object)
 }
 
 template <typename Work, typename Finish>
-kiriview::ImageIoJob startMediaEntrySourceWorkerJob(QObject *receiver,
-    const kiriview::ImageWorkerScheduler &workerScheduler, Work work, Finish finish)
+kiriview::ImageIoJob startMediaEntrySourceWorkerJob(QObject* receiver,
+    const kiriview::ImageWorkerScheduler& workerScheduler, Work work, Finish finish)
 {
     return kiriview::startImageIoWorkerJob(
         receiver, workerScheduler, std::move(work), std::move(finish));
@@ -61,15 +62,15 @@ kiriview::ImageIoJob startMediaEntrySourceWorkerJob(QObject *receiver,
 }
 
 namespace kiriview {
-ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
+ImageIoJob startStoredImageDataLoad(QObject* receiver, ImageDecodeRequest request,
     ImageDataCallback callback, ErrorCallback errorCallback)
 {
     return startStoredImageDataLoad(receiver, std::move(request), ImageWorkerScheduler(),
         std::move(callback), std::move(errorCallback));
 }
 
-ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
-    const ImageWorkerScheduler &workerScheduler, ImageDataCallback callback,
+ImageIoJob startStoredImageDataLoad(QObject* receiver, ImageDecodeRequest request,
+    const ImageWorkerScheduler& workerScheduler, ImageDataCallback callback,
     ErrorCallback errorCallback)
 {
     if (openedCollectionScopeContainsUrl(request.openedCollectionScope(), request.imageUrl())) {
@@ -89,13 +90,13 @@ ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest reques
             });
     }
 
-    auto *job = KIO::storedGet(request.imageUrl(), KIO::NoReload, KIO::HideProgressInfo);
+    auto* job = KIO::storedGet(request.imageUrl(), KIO::NoReload, KIO::HideProgressInfo);
     ImageIoJob ioJob(job, cancelKJob);
     const ImageIoJobCompletion completion = ioJob.completion();
 
     QObject::connect(job, &KJob::result, receiver,
         [completion, job, callback = std::move(callback), errorCallback = std::move(errorCallback)](
-            KJob *finishedJob) mutable {
+            KJob* finishedJob) mutable {
             completion.claimAndRun([&]() {
                 if (finishedJob->error() != KJob::NoError) {
                     kiriview::invokeIfSet(errorCallback, finishedJob->errorString());

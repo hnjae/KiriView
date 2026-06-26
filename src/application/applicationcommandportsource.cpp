@@ -50,7 +50,7 @@ ApplicationCommandRouterVideoPorts ApplicationCommandPortSource::commandRouterVi
     return {};
 }
 
-ApplicationCommandRouterPorts applicationCommandRouterPorts(ApplicationCommandPortSource &source)
+ApplicationCommandRouterPorts applicationCommandRouterPorts(ApplicationCommandPortSource& source)
 {
     ApplicationCommandRouterPorts ports;
     ports.shell = source.commandRouterShellPorts();

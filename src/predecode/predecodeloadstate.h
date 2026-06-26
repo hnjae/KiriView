@@ -17,7 +17,8 @@
 #include <vector>
 
 namespace kiriview {
-struct PredecodeLoadWindow {
+struct PredecodeLoadWindow
+{
     QUrl primaryDisplayedUrl;
     OpenedCollectionScopeLocation openedCollectionScope;
     std::vector<QUrl> urls;
@@ -27,7 +28,8 @@ struct PredecodeLoadWindow {
     std::size_t parallelLimit = 0;
 };
 
-struct PredecodeLoadStart {
+struct PredecodeLoadStart
+{
     ImageDecodeRequest request;
 };
 
@@ -36,26 +38,27 @@ class PredecodeLoadState final
 public:
     explicit PredecodeLoadState(qsizetype cacheByteBudget);
 
-    void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage> &images);
+    void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage>& images);
     void clearWindowUrls();
     void startWindow(PredecodeLoadWindow window);
-    std::optional<PredecodeLoadStart> takeNextLoad(const PredecodeActiveLoads &activeLoads);
+    std::optional<PredecodeLoadStart> takeNextLoad(const PredecodeActiveLoads& activeLoads);
     void cacheDecodedImage(
-        const ImageDecodeRequest &request, StaticDisplayImagePayload displayImage);
-    void cacheDecodedImage(const ImageDecodeRequest &request,
+        const ImageDecodeRequest& request, StaticDisplayImagePayload displayImage);
+    void cacheDecodedImage(const ImageDecodeRequest& request,
         StaticDisplayImagePayload displayImage, EmbeddedMetadata metadata);
     void cancelBackgroundWork();
     void clear();
-    std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
+    std::optional<PredecodedImage> findPredecodedImage(const QUrl& url) const;
 
 private:
-    struct ActiveWindow {
+    struct ActiveWindow
+    {
         ImageFirstDisplayDecodeContext firstDisplayContext;
         quint64 generation = 0;
         std::size_t parallelLimit = 0;
     };
 
-    bool canStartMoreLoads(const PredecodeActiveLoads &activeLoads) const;
+    bool canStartMoreLoads(const PredecodeActiveLoads& activeLoads) const;
 
     std::optional<ActiveWindow> m_activeWindow;
     PredecodeCache m_cache;

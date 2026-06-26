@@ -17,8 +17,8 @@ private Q_SLOTS:
 };
 
 namespace {
-void compareChanges(const std::vector<kiriview::ImageDocumentChange> &actual,
-    const std::vector<kiriview::ImageDocumentChange> &expected)
+void compareChanges(const std::vector<kiriview::ImageDocumentChange>& actual,
+    const std::vector<kiriview::ImageDocumentChange>& expected)
 {
     QCOMPARE(actual.size(), expected.size());
     for (std::size_t index = 0; index < expected.size(); ++index) {

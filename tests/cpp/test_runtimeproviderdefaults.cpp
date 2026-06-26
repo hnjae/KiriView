@@ -26,7 +26,8 @@ namespace {
 using kiriview::TestSupport::archivePageUrl;
 using kiriview::TestSupport::localUrl;
 
-struct ManualImageWorkerSchedule {
+struct ManualImageWorkerSchedule
+{
     kiriview::ImageWorkerOperation work;
     kiriview::ImageWorkerCompletion completion;
 };
@@ -36,7 +37,7 @@ class ManualImageWorkerScheduler
 public:
     kiriview::ImageWorkerScheduler scheduler()
     {
-        return kiriview::ImageWorkerScheduler([this](QObject *, kiriview::ImageWorkerOperation work,
+        return kiriview::ImageWorkerScheduler([this](QObject*, kiriview::ImageWorkerOperation work,
                                                   kiriview::ImageWorkerCompletion completion) {
             m_schedules.push_back(
                 ManualImageWorkerSchedule { std::move(work), std::move(completion) });
@@ -88,13 +89,13 @@ void TestRuntimeProviderDefaults::candidateProviderDefaultsFillMissingLoadersAnd
     int directoryChangeSubscriptionCount = 0;
     kiriview::ImageDocumentPageCandidateProvider provider;
     provider.directoryImageDocumentPages
-        = [&directoryLoadCount](QObject *, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
+        = [&directoryLoadCount](QObject*, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
               kiriview::ErrorCallback) {
               ++directoryLoadCount;
               return kiriview::ImageIoJob();
           };
     provider.directoryImageDocumentPageChanges
-        = [&directoryChangeSubscriptionCount](QObject *, QUrl,
+        = [&directoryChangeSubscriptionCount](QObject*, QUrl,
               kiriview::ImageDocumentPageCandidatesCallback, kiriview::ErrorCallback) {
               ++directoryChangeSubscriptionCount;
               return kiriview::ImageIoJob();
@@ -120,7 +121,7 @@ void TestRuntimeProviderDefaults::candidateProviderDefaultsBindContainerLoaderTo
     QUrl providerUrl;
     int providerCallCount = 0;
     kiriview::DirectoryItemListProvider directoryItemListProvider
-        = [&providerCallCount, &providerUrl](QObject *, QUrl directoryUrl,
+        = [&providerCallCount, &providerUrl](QObject*, QUrl directoryUrl,
               kiriview::DirectoryItemListCallback callback, kiriview::ErrorCallback) {
               ++providerCallCount;
               providerUrl = std::move(directoryUrl);
@@ -188,7 +189,7 @@ void TestRuntimeProviderDefaults::directMediaProviderDefaultBindsDirectoryProvid
     QUrl providerUrl;
     int providerCallCount = 0;
     kiriview::DirectoryItemListProvider directoryItemListProvider
-        = [&providerCallCount, &providerUrl](QObject *, QUrl directoryUrl,
+        = [&providerCallCount, &providerUrl](QObject*, QUrl directoryUrl,
               kiriview::DirectoryItemListCallback callback, kiriview::ErrorCallback) {
               ++providerCallCount;
               providerUrl = std::move(directoryUrl);
@@ -224,7 +225,7 @@ void TestRuntimeProviderDefaults::
     int providerCallCount = 0;
     kiriview::ImageDocumentRuntimeDependencyOverrides overrides;
     overrides.directoryItemListProvider
-        = [&providerCallCount, &providerUrl](QObject *, QUrl directoryUrl,
+        = [&providerCallCount, &providerUrl](QObject*, QUrl directoryUrl,
               kiriview::DirectoryItemListCallback callback, kiriview::ErrorCallback) {
               ++providerCallCount;
               providerUrl = std::move(directoryUrl);
@@ -290,7 +291,7 @@ void TestRuntimeProviderDefaults::decodeDependencyDefaultsFillMissingFunctionsAn
 {
     int dataLoadCount = 0;
     kiriview::ImageDataLoader dataLoader
-        = [&dataLoadCount](QObject *, kiriview::ImageDecodeRequest, kiriview::ImageDataCallback,
+        = [&dataLoadCount](QObject*, kiriview::ImageDecodeRequest, kiriview::ImageDataCallback,
               kiriview::ErrorCallback) {
               ++dataLoadCount;
               return kiriview::ImageIoJob();
@@ -378,7 +379,7 @@ void TestRuntimeProviderDefaults::fileDeletionDefaultFillsMissingProviderAndPres
     int fileDeletionCount = 0;
     kiriview::FileDeletionProvider fileDeletionProvider
         = [&fileDeletionCount](
-              QObject *, kiriview::FileDeletionRequest, kiriview::FileDeletionCallback) {
+              QObject*, kiriview::FileDeletionRequest, kiriview::FileDeletionCallback) {
               ++fileDeletionCount;
               return kiriview::ImageIoJob();
           };
@@ -396,7 +397,7 @@ void TestRuntimeProviderDefaults::powerSaverDefaultFillsMissingProviderAndPreser
 {
     int monitorCount = 0;
     kiriview::PowerSaverProvider provider;
-    provider.monitor = [&monitorCount](QObject *, kiriview::PowerSaverChangedCallback) {
+    provider.monitor = [&monitorCount](QObject*, kiriview::PowerSaverChangedCallback) {
         ++monitorCount;
         return std::unique_ptr<kiriview::PowerSaverStateMonitor>();
     };

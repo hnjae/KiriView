@@ -21,9 +21,9 @@ private Q_SLOTS:
 };
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl& url)
 {
     return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
@@ -43,13 +43,15 @@ kiriview::ActiveNavigationSnapshot knownActiveNavigation(int currentNumber, int 
     };
 }
 
-struct AppliedNavigation {
+struct AppliedNavigation
+{
     kiriview::DirectMediaNavigationBoundaryState state;
     bool known = false;
     std::vector<kiriview::DirectMediaNavigationCandidate> candidates;
 };
 
-struct ApplicationFixture {
+struct ApplicationFixture
+{
     enum class Event {
         SetNavigation,
         Reveal,
@@ -82,11 +84,11 @@ struct ApplicationFixture {
                 events.push_back(Event::ClearPredecode);
                 ++clearPredecodeCount;
             },
-            [this](const std::vector<kiriview::DirectMediaNavigationCandidate> &candidates) {
+            [this](const std::vector<kiriview::DirectMediaNavigationCandidate>& candidates) {
                 events.push_back(Event::Predecode);
                 predecodeCandidates = candidates;
             },
-            [this](const QUrl &url) {
+            [this](const QUrl& url) {
                 events.push_back(Event::Route);
                 routeTargetUrl = url;
             },

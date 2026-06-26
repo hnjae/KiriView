@@ -19,7 +19,8 @@ enum class AnimationProviderChurnGateFailure {
     UrlChurn,
 };
 
-struct AnimationProviderChurnGateThresholds {
+struct AnimationProviderChurnGateThresholds
+{
     int maximumFrameScheduleDriftMs = 2;
     int maximumProviderRequestLatencyP95Ms = 2;
     int maximumProviderRequestLatencyMaxMs = 5;
@@ -27,7 +28,8 @@ struct AnimationProviderChurnGateThresholds {
     int providerUrlsPerAcceptedFrame = 1;
 };
 
-struct AnimationProviderChurnGateSample {
+struct AnimationProviderChurnGateSample
+{
     int normalizedFrameDelayMs = 0;
     bool timerWaitsForProviderLoad = false;
     int maximumFrameScheduleDriftMs = 0;
@@ -40,7 +42,8 @@ struct AnimationProviderChurnGateSample {
     bool providerUrlsRevisionUnique = false;
 };
 
-struct AnimationProviderChurnGateResult {
+struct AnimationProviderChurnGateResult
+{
     AnimationPresenterKind presenter = AnimationPresenterKind::DegradedUnsupported;
     AnimationProviderChurnGateFailure failure = AnimationProviderChurnGateFailure::None;
     bool requiresLoadOutcomeAcknowledgment = false;
@@ -52,8 +55,8 @@ struct AnimationProviderChurnGateResult {
 
 AnimationProviderChurnGateThresholds defaultAnimationProviderChurnGateThresholds();
 AnimationProviderChurnGateResult evaluateAnimationProviderChurnGate(
-    const AnimationProviderChurnGateSample &sample,
-    const AnimationProviderChurnGateThresholds &thresholds
+    const AnimationProviderChurnGateSample& sample,
+    const AnimationProviderChurnGateThresholds& thresholds
     = defaultAnimationProviderChurnGateThresholds());
 }
 

@@ -25,27 +25,27 @@ class MenuAccessKeyRouterRuntime final
 public:
     using ChangeCallback = std::function<void(MenuAccessKeyRouterChange)>;
 
-    explicit MenuAccessKeyRouterRuntime(QObject *owner, ChangeCallback changeCallback = {});
+    explicit MenuAccessKeyRouterRuntime(QObject* owner, ChangeCallback changeCallback = {});
 
-    QObject *menu() const;
-    void setMenu(QObject *menu);
+    QObject* menu() const;
+    void setMenu(QObject* menu);
     bool isEnabled() const;
     void setEnabled(bool enabled);
 
-    bool handleEvent(QEvent *event);
+    bool handleEvent(QEvent* event);
     void clearMenuAccessKeys();
 
 private:
-    bool handleKeyPress(QKeyEvent *event);
-    bool handleKeyRelease(QKeyEvent *event);
-    bool handleShortcutOverride(QKeyEvent *event);
-    bool routeOpenMenuKey(QKeyEvent *event, MenuAccessKeyRoutingPhase phase);
-    QObject *openMenuOrClearAccessKeys();
+    bool handleKeyPress(QKeyEvent* event);
+    bool handleKeyRelease(QKeyEvent* event);
+    bool handleShortcutOverride(QKeyEvent* event);
+    bool routeOpenMenuKey(QKeyEvent* event, MenuAccessKeyRoutingPhase phase);
+    QObject* openMenuOrClearAccessKeys();
     void applySessionPlan(MenuAccessKeySessionPlan plan);
-    bool executeSessionPlan(QKeyEvent *event, MenuAccessKeySessionPlan plan);
+    bool executeSessionPlan(QKeyEvent* event, MenuAccessKeySessionPlan plan);
     void notify(MenuAccessKeyRouterChange change) const;
 
-    QObject *m_owner = nullptr;
+    QObject* m_owner = nullptr;
     ChangeCallback m_changeCallback;
     MenuAccessKeyMenuRuntime m_menuRuntime;
     QMetaObject::Connection m_menuClosedConnection;

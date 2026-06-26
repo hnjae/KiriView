@@ -8,7 +8,7 @@ class QQmlApplicationEngine;
 
 namespace kiriview {
 void initializeLocalization();
-void setupLocalizedContext(QQmlApplicationEngine &engine);
+void setupLocalizedContext(QQmlApplicationEngine& engine);
 }
 
 #endif

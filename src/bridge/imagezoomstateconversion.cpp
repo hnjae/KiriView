@@ -40,7 +40,7 @@ ImageZoomMode imageZoomModeFromRust(RustImageZoomMode zoomMode)
     return ImageZoomMode::Fit;
 }
 
-RustImageZoomState rustImageZoomState(const ImageZoomSnapshot &snapshot)
+RustImageZoomState rustImageZoomState(const ImageZoomSnapshot& snapshot)
 {
     return RustImageZoomState { snapshot.imageSize.width(), snapshot.imageSize.height(),
         snapshot.viewportSize.width(), snapshot.viewportSize.height(), snapshot.displaySize.width(),
@@ -48,7 +48,7 @@ RustImageZoomState rustImageZoomState(const ImageZoomSnapshot &snapshot)
 }
 
 ImageZoomSnapshot imageZoomSnapshotFromRust(
-    const RustImageZoomState &state, const QUrl &containerUrl)
+    const RustImageZoomState& state, const QUrl& containerUrl)
 {
     return ImageZoomSnapshot {
         qtSize(RustZoomSize { state.image_width, state.image_height }),
@@ -60,13 +60,13 @@ ImageZoomSnapshot imageZoomSnapshotFromRust(
     };
 }
 
-RustLoadedImageZoom rustLoadedImageZoom(const LoadedImageZoom &zoom)
+RustLoadedImageZoom rustLoadedImageZoom(const LoadedImageZoom& zoom)
 {
     return RustLoadedImageZoom { rustImageZoomMode(zoom.zoomMode), zoom.zoomPercent,
         zoom.displaySize.width(), zoom.displaySize.height() };
 }
 
-LoadedImageZoom loadedImageZoomFromRust(const RustLoadedImageZoom &zoom)
+LoadedImageZoom loadedImageZoomFromRust(const RustLoadedImageZoom& zoom)
 {
     return LoadedImageZoom {
         imageZoomModeFromRust(zoom.zoom_mode),

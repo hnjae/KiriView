@@ -6,7 +6,7 @@
 #include <QCoreApplication>
 #include <QEvent>
 
-MenuAccessKeyRouter::MenuAccessKeyRouter(QObject *parent)
+MenuAccessKeyRouter::MenuAccessKeyRouter(QObject* parent)
     : QObject(parent)
     , m_runtime(this, [this](kiriview::MenuAccessKeyRouterChange change) {
         switch (change) {
@@ -31,15 +31,15 @@ MenuAccessKeyRouter::~MenuAccessKeyRouter()
     }
 }
 
-QObject *MenuAccessKeyRouter::menu() const { return m_runtime.menu(); }
+QObject* MenuAccessKeyRouter::menu() const { return m_runtime.menu(); }
 
-void MenuAccessKeyRouter::setMenu(QObject *menu) { m_runtime.setMenu(menu); }
+void MenuAccessKeyRouter::setMenu(QObject* menu) { m_runtime.setMenu(menu); }
 
 bool MenuAccessKeyRouter::isEnabled() const { return m_runtime.isEnabled(); }
 
 void MenuAccessKeyRouter::setEnabled(bool enabled) { m_runtime.setEnabled(enabled); }
 
-bool MenuAccessKeyRouter::eventFilter(QObject *watched, QEvent *event)
+bool MenuAccessKeyRouter::eventFilter(QObject* watched, QEvent* event)
 {
     Q_UNUSED(watched)
 

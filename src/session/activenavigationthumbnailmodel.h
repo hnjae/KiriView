@@ -29,20 +29,21 @@ public:
         ThumbnailImageSourceRole,
     };
 
-    explicit ActiveNavigationThumbnailModel(QObject *parent = nullptr);
+    explicit ActiveNavigationThumbnailModel(QObject* parent = nullptr);
 
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
     void setRows(std::vector<ActiveNavigationThumbnailRow> rows, quint64 navigationGeneration);
     void clear();
-    bool containsRowIdentity(int number, const QUrl &url, quint64 navigationGeneration) const;
+    bool containsRowIdentity(int number, const QUrl& url, quint64 navigationGeneration) const;
     void setThumbnailResultAt(
-        int row, ActiveNavigationThumbnailResultStatus status, const QUrl &imageSource = {});
+        int row, ActiveNavigationThumbnailResultStatus status, const QUrl& imageSource = {});
 
 private:
-    struct ThumbnailResultProjection {
+    struct ThumbnailResultProjection
+    {
         ActiveNavigationThumbnailResultStatus status
             = ActiveNavigationThumbnailResultStatus::NoResult;
         QUrl imageSource;
@@ -50,11 +51,11 @@ private:
 
     static QString iconName(ActiveNavigationThumbnailKind kind);
     static bool sameRowIdentity(
-        const ActiveNavigationThumbnailRow &left, const ActiveNavigationThumbnailRow &right);
-    static bool sameRows(const std::vector<ActiveNavigationThumbnailRow> &left,
-        const std::vector<ActiveNavigationThumbnailRow> &right);
-    static bool sameRowIdentities(const std::vector<ActiveNavigationThumbnailRow> &left,
-        const std::vector<ActiveNavigationThumbnailRow> &right);
+        const ActiveNavigationThumbnailRow& left, const ActiveNavigationThumbnailRow& right);
+    static bool sameRows(const std::vector<ActiveNavigationThumbnailRow>& left,
+        const std::vector<ActiveNavigationThumbnailRow>& right);
+    static bool sameRowIdentities(const std::vector<ActiveNavigationThumbnailRow>& left,
+        const std::vector<ActiveNavigationThumbnailRow>& right);
 
     std::vector<ActiveNavigationThumbnailRow> m_rows;
     std::vector<ThumbnailResultProjection> m_results;

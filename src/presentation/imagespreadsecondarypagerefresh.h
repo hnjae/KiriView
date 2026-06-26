@@ -19,7 +19,8 @@ enum class ImageSpreadSecondaryPageRefreshAction {
     LoadTarget,
 };
 
-struct ImageSpreadSecondaryPageRefreshRequest {
+struct ImageSpreadSecondaryPageRefreshRequest
+{
     bool twoPageModeActive = false;
     bool primaryPageIsWide = false;
     bool secondaryPageVisible = false;
@@ -27,13 +28,15 @@ struct ImageSpreadSecondaryPageRefreshRequest {
     ImageDocumentPageNavigationSnapshot navigation;
 };
 
-struct ImageSpreadSecondaryPageRefreshResult {
+struct ImageSpreadSecondaryPageRefreshResult
+{
     ImageSpreadSecondaryPageRefreshAction action
         = ImageSpreadSecondaryPageRefreshAction::PrimaryOnly;
     QUrl targetUrl;
 };
 
-struct ImageSpreadPageNavigationContext {
+struct ImageSpreadPageNavigationContext
+{
     bool twoPageModeActive = false;
     bool secondaryPageVisible = false;
     ImageDocumentPageNavigationSnapshot navigation;
@@ -42,27 +45,27 @@ struct ImageSpreadPageNavigationContext {
 class ImageSpreadSecondaryPageRefresh final
 {
 public:
-    void cachePageSize(const QUrl &url, const QSize &imageSize);
-    std::optional<bool> cachedPageIsWide(const QUrl &url) const;
+    void cachePageSize(const QUrl& url, const QSize& imageSize);
+    std::optional<bool> cachedPageIsWide(const QUrl& url) const;
 
     ImageSpreadSecondaryPageRefreshResult planRefresh(
-        const ImageSpreadSecondaryPageRefreshRequest &request) const;
-    int currentLastPageNumber(const ImageSpreadPageNavigationContext &context) const;
+        const ImageSpreadSecondaryPageRefreshRequest& request) const;
+    int currentLastPageNumber(const ImageSpreadPageNavigationContext& context) const;
     ImageDocumentPageActiveNavigationSnapshot activeNavigationSnapshot(
-        const ImageSpreadPageNavigationContext &context) const;
+        const ImageSpreadPageNavigationContext& context) const;
     ImageSpreadPageNavigationTarget pageNavigationTarget(
-        NavigationDirection direction, const ImageSpreadPageNavigationContext &context) const;
+        NavigationDirection direction, const ImageSpreadPageNavigationContext& context) const;
     int relativePageNavigationTarget(
-        int offset, const ImageSpreadPageNavigationContext &context) const;
+        int offset, const ImageSpreadPageNavigationContext& context) const;
     bool shouldBeginNavigationTransition(
-        int targetPageNumber, const ImageSpreadPageNavigationContext &context) const;
+        int targetPageNumber, const ImageSpreadPageNavigationContext& context) const;
     bool primarySelectionMatchesDisplayed(
-        const ImageDocumentPageNavigationSnapshot &navigation, const QUrl &displayedUrl) const;
+        const ImageDocumentPageNavigationSnapshot& navigation, const QUrl& displayedUrl) const;
 
 private:
     ImageSpreadNavigationState navigationState(
-        const ImageSpreadPageNavigationContext &context, bool previousPageIsWide = false) const;
-    bool previousPageIsWideForNavigation(const ImageSpreadPageNavigationContext &context) const;
+        const ImageSpreadPageNavigationContext& context, bool previousPageIsWide = false) const;
+    bool previousPageIsWideForNavigation(const ImageSpreadPageNavigationContext& context) const;
     ImageSpreadPageCache m_pageCache;
 };
 }

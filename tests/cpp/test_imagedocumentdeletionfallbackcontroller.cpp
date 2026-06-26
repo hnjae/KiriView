@@ -22,8 +22,9 @@ using kiriview::TestSupport::comicBookContainerCandidate;
 using kiriview::TestSupport::imageDocumentPageCandidate;
 using kiriview::TestSupport::localUrl;
 
-struct ManualImageDocumentPageCandidateLoad {
-    QObject *object = nullptr;
+struct ManualImageDocumentPageCandidateLoad
+{
+    QObject* object = nullptr;
     QUrl url;
     kiriview::ImageDocumentPageCandidatesCallback callback;
     kiriview::ErrorCallback errorCallback;
@@ -38,7 +39,7 @@ public:
     {
         kiriview::ImageDocumentPageCandidateProvider provider;
         provider.directoryImageDocumentPages
-            = [this](QObject *receiver, QUrl directoryUrl,
+            = [this](QObject* receiver, QUrl directoryUrl,
                   kiriview::ImageDocumentPageCandidatesCallback callback,
                   kiriview::ErrorCallback errorCallback) {
                   auto load = std::make_shared<ManualImageDocumentPageCandidateLoad>();
@@ -52,22 +53,22 @@ public:
                   return job;
               };
         provider.directoryContainers
-            = [](QObject *, QUrl, kiriview::ContainerCandidatesCallback, kiriview::ErrorCallback) {
+            = [](QObject*, QUrl, kiriview::ContainerCandidatesCallback, kiriview::ErrorCallback) {
                   return kiriview::ImageIoJob();
               };
         provider.openedCollectionCandidates
-            = [](QObject *, kiriview::OpenedCollectionScopeLocation,
+            = [](QObject*, kiriview::OpenedCollectionScopeLocation,
                   kiriview::ImageDocumentPageCandidatesCallback,
                   kiriview::ErrorCallback) { return kiriview::ImageIoJob(); };
         provider.directoryImageDocumentPageChanges
-            = [](QObject *, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
+            = [](QObject*, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
                   kiriview::ErrorCallback) { return kiriview::ImageIoJob(); };
         return provider;
     }
 
     std::size_t imageLoadCount() const { return m_imageLoads.size(); }
 
-    ManualImageDocumentPageCandidateLoad &backImageLoad() { return *m_imageLoads.back(); }
+    ManualImageDocumentPageCandidateLoad& backImageLoad() { return *m_imageLoads.back(); }
 
     void deliverBackImageDocumentPageCandidatesIgnoringCancellation(
         std::vector<kiriview::ImageDocumentPageCandidate> candidates)
@@ -82,10 +83,10 @@ private:
 };
 
 template <typename Operation>
-const Operation *findOperation(const kiriview::ImageDocumentRuntimePlan &plan)
+const Operation* findOperation(const kiriview::ImageDocumentRuntimePlan& plan)
 {
-    for (const kiriview::ImageDocumentRuntimeOperation &operation : plan) {
-        if (const auto *payload = std::get_if<Operation>(&operation)) {
+    for (const kiriview::ImageDocumentRuntimeOperation& operation : plan) {
+        if (const auto* payload = std::get_if<Operation>(&operation)) {
             return payload;
         }
     }
@@ -93,16 +94,16 @@ const Operation *findOperation(const kiriview::ImageDocumentRuntimePlan &plan)
     return nullptr;
 }
 
-bool planLoadsUrl(const kiriview::ImageDocumentRuntimePlan &plan, const QUrl &url)
+bool planLoadsUrl(const kiriview::ImageDocumentRuntimePlan& plan, const QUrl& url)
 {
-    const auto *operation = findOperation<kiriview::LoadUrlOperation>(plan);
+    const auto* operation = findOperation<kiriview::LoadUrlOperation>(plan);
     return operation != nullptr && operation->target.url == url;
 }
 
 bool planLoadsContainerImage(
-    const kiriview::ImageDocumentRuntimePlan &plan, const QUrl &imageUrl, const QUrl &containerUrl)
+    const kiriview::ImageDocumentRuntimePlan& plan, const QUrl& imageUrl, const QUrl& containerUrl)
 {
-    const auto *operation = findOperation<kiriview::LoadContainerImageOperation>(plan);
+    const auto* operation = findOperation<kiriview::LoadContainerImageOperation>(plan);
     return operation != nullptr && operation->target.url == imageUrl
         && operation->containerUrl == containerUrl;
 }

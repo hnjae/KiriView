@@ -33,7 +33,7 @@ kiriview::ImageCacheRetainedEntry retainedEntryFromRust(kiriview::RustLruCacheRe
 
 namespace kiriview {
 std::vector<ImageCacheRetainedEntry> lruCacheRetentionPlan(
-    const std::vector<ImageCacheRetentionEntry> &entries, qsizetype byteBudget)
+    const std::vector<ImageCacheRetentionEntry>& entries, qsizetype byteBudget)
 {
     rust::Vec<RustLruCacheRetentionEntry> rustEntries;
     rustEntries.reserve(entries.size());

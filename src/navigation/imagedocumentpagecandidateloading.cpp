@@ -11,7 +11,7 @@
 
 namespace {
 template <typename CandidateCallback, typename CandidateFactory>
-kiriview::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &directoryUrl,
+kiriview::ImageIoJob startDirectoryCandidateList(QObject* receiver, const QUrl& directoryUrl,
     CandidateCallback callback, kiriview::ErrorCallback errorCallback,
     kiriview::DirectoryItemListProvider directoryItemListProvider,
     CandidateFactory candidateFactory)
@@ -27,14 +27,14 @@ kiriview::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &
 }
 
 namespace kiriview {
-ImageIoJob startDirectoryImageDocumentPageCandidateList(QObject *receiver, QUrl directoryUrl,
+ImageIoJob startDirectoryImageDocumentPageCandidateList(QObject* receiver, QUrl directoryUrl,
     ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
     return startDirectoryCandidateList(receiver, directoryUrl, std::move(callback),
         std::move(errorCallback), {}, imageDocumentPageNavigationCandidates);
 }
 
-ImageIoJob startDirectoryImageDocumentPageCandidateList(QObject *receiver, QUrl directoryUrl,
+ImageIoJob startDirectoryImageDocumentPageCandidateList(QObject* receiver, QUrl directoryUrl,
     ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback,
     DirectoryItemListProvider directoryItemListProvider)
 {
@@ -43,14 +43,14 @@ ImageIoJob startDirectoryImageDocumentPageCandidateList(QObject *receiver, QUrl 
         imageDocumentPageNavigationCandidates);
 }
 
-ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl directoryUrl,
+ImageIoJob startDirectoryContainerCandidateList(QObject* receiver, QUrl directoryUrl,
     ContainerCandidatesCallback callback, ErrorCallback errorCallback)
 {
     return startDirectoryCandidateList(receiver, directoryUrl, std::move(callback),
         std::move(errorCallback), {}, containerNavigationCandidates);
 }
 
-ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl directoryUrl,
+ImageIoJob startDirectoryContainerCandidateList(QObject* receiver, QUrl directoryUrl,
     ContainerCandidatesCallback callback, ErrorCallback errorCallback,
     DirectoryItemListProvider directoryItemListProvider)
 {

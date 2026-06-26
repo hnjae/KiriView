@@ -17,7 +17,7 @@ namespace {
     int defaultPredecodeThreadCount() { return QThread::idealThreadCount(); }
 }
 
-ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
+ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject* parent,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,
     qsizetype cacheByteBudget, TimerScheduler timerScheduler,
@@ -29,7 +29,7 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
     , m_loadController(this, std::move(decodeDependencies), cacheByteBudget)
     , m_scheduleRuntime(
           this, m_loadController,
-          [this](const PredecodePendingSchedule &schedule) {
+          [this](const PredecodePendingSchedule& schedule) {
               scheduleAdjacentImagePredecode(schedule);
           },
           [this]() { m_listerJob.cancel(); }, std::move(powerSaverProvider),
@@ -56,7 +56,7 @@ bool ImagePredecodeCoordinator::powerSaverEnabled() const
 }
 
 void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
-    const PredecodePendingSchedule &schedule)
+    const PredecodePendingSchedule& schedule)
 {
     const PredecodeWindowStartPlan plan = predecodeWindowStartPlan(PredecodeWindowPlanRequest {
         schedule.context.currentLocation,
@@ -80,13 +80,13 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
 
     m_listerJob = m_candidateRepository.loadImages(
         this, plan.candidateList->context,
-        [this, schedule, plan](const std::vector<ImageDocumentPageCandidate> &candidates) {
+        [this, schedule, plan](const std::vector<ImageDocumentPageCandidate>& candidates) {
             qCDebug(kiriviewPredecodeLog)
                 << "image predecode candidates loaded"
                 << "generation" << schedule.generation << "count" << candidates.size();
             startPredecodeImageLoads(predecodeWindowPlanForCandidates(plan, candidates), schedule);
         },
-        [this, schedule, plan](const QString &errorString) {
+        [this, schedule, plan](const QString& errorString) {
             qCDebug(kiriviewPredecodeLog)
                 << "image predecode candidates failed"
                 << "generation" << schedule.generation << "error" << errorString;
@@ -95,7 +95,7 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
 }
 
 void ImagePredecodeCoordinator::startPredecodeImageLoads(
-    const PredecodeWindowPlan &plan, const PredecodePendingSchedule &schedule)
+    const PredecodeWindowPlan& plan, const PredecodePendingSchedule& schedule)
 {
     if (!m_scheduleRuntime.accepts(schedule.generation)) {
         qCDebug(kiriviewPredecodeLog) << "image predecode window ignored"
@@ -128,7 +128,7 @@ void ImagePredecodeCoordinator::clear()
     m_loadController.clear();
 }
 
-std::optional<PredecodedImage> ImagePredecodeCoordinator::findPredecodedImage(const QUrl &url) const
+std::optional<PredecodedImage> ImagePredecodeCoordinator::findPredecodedImage(const QUrl& url) const
 {
     return m_loadController.findPredecodedImage(url);
 }

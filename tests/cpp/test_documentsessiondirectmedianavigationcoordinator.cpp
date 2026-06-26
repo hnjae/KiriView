@@ -22,14 +22,14 @@ private Q_SLOTS:
 };
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl& url)
 {
     return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
-kiriview::DirectMediaScope directMediaScope(const QUrl &currentUrl)
+kiriview::DirectMediaScope directMediaScope(const QUrl& currentUrl)
 {
     return kiriview::DirectMediaScope {
         currentUrl,
@@ -53,8 +53,9 @@ kiriview::ActiveNavigationSnapshot knownActiveNavigation(int currentNumber, int 
     };
 }
 
-struct ManualDirectMediaNavigationCandidateLoad {
-    QObject *object = nullptr;
+struct ManualDirectMediaNavigationCandidateLoad
+{
+    QObject* object = nullptr;
     QUrl parentUrl;
     kiriview::DirectMediaNavigationCandidatesCallback callback;
     kiriview::ErrorCallback errorCallback;
@@ -68,7 +69,7 @@ public:
     kiriview::DirectMediaNavigationCandidateProvider provider()
     {
         return kiriview::DirectMediaNavigationCandidateProvider {
-            [this](QObject *receiver, QUrl parentUrl,
+            [this](QObject* receiver, QUrl parentUrl,
                 kiriview::DirectMediaNavigationCandidatesCallback callback,
                 kiriview::ErrorCallback errorCallback) {
                 auto load = std::make_shared<ManualDirectMediaNavigationCandidateLoad>();
@@ -83,7 +84,7 @@ public:
 
     std::size_t loadCount() const { return m_loads.size(); }
 
-    ManualDirectMediaNavigationCandidateLoad &loadAt(std::size_t index)
+    ManualDirectMediaNavigationCandidateLoad& loadAt(std::size_t index)
     {
         return *m_loads.at(index);
     }
@@ -91,7 +92,7 @@ public:
     void deliver(
         std::size_t index, std::vector<kiriview::DirectMediaNavigationCandidate> candidates)
     {
-        ManualDirectMediaNavigationCandidateLoad &load = loadAt(index);
+        ManualDirectMediaNavigationCandidateLoad& load = loadAt(index);
         if (load.callback) {
             load.callback(std::move(candidates));
         }
@@ -101,13 +102,15 @@ private:
     std::vector<std::shared_ptr<ManualDirectMediaNavigationCandidateLoad>> m_loads;
 };
 
-struct AppliedNavigation {
+struct AppliedNavigation
+{
     kiriview::DirectMediaNavigationBoundaryState state;
     bool known = false;
     std::vector<kiriview::DirectMediaNavigationCandidate> candidates;
 };
 
-struct CoordinatorFixture {
+struct CoordinatorFixture
+{
     enum class Event {
         SetNavigation,
         Reveal,
@@ -141,7 +144,7 @@ struct CoordinatorFixture {
         ports.navigationActive = [this]() { return navigationActive; };
         ports.directImageSourceScopeEligible = [this]() { return directImageSourceScopeEligible; };
         ports.currentScope = [this]() { return scope; };
-        ports.cursorMatches = [this](const kiriview::DirectMediaScope &candidateScope) {
+        ports.cursorMatches = [this](const kiriview::DirectMediaScope& candidateScope) {
             return candidateScope.currentUrl == scope.currentUrl
                 && candidateScope.parentUrl == scope.parentUrl
                 && candidateScope.generation == scope.generation;
@@ -166,11 +169,11 @@ struct CoordinatorFixture {
             ++clearPredecodeCount;
         };
         ports.schedulePredecode
-            = [this](const std::vector<kiriview::DirectMediaNavigationCandidate> &candidates) {
+            = [this](const std::vector<kiriview::DirectMediaNavigationCandidate>& candidates) {
                   events.push_back(Event::Predecode);
                   predecodeCandidates = candidates;
               };
-        ports.openMediaUrl = [this](const QUrl &url) {
+        ports.openMediaUrl = [this](const QUrl& url) {
             events.push_back(Event::Route);
             routeTargetUrl = url;
         };

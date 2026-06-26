@@ -8,24 +8,24 @@
 #include <utility>
 
 namespace kiriview {
-ActiveNavigationThumbnailModel::ActiveNavigationThumbnailModel(QObject *parent)
+ActiveNavigationThumbnailModel::ActiveNavigationThumbnailModel(QObject* parent)
     : QAbstractListModel(parent)
 {
 }
 
-int ActiveNavigationThumbnailModel::rowCount(const QModelIndex &parent) const
+int ActiveNavigationThumbnailModel::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : static_cast<int>(m_rows.size());
 }
 
-QVariant ActiveNavigationThumbnailModel::data(const QModelIndex &index, int role) const
+QVariant ActiveNavigationThumbnailModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() < 0
         || static_cast<std::size_t>(index.row()) >= m_rows.size()) {
         return {};
     }
 
-    const ActiveNavigationThumbnailRow &row = m_rows.at(static_cast<std::size_t>(index.row()));
+    const ActiveNavigationThumbnailRow& row = m_rows.at(static_cast<std::size_t>(index.row()));
     switch (role) {
     case NumberRole:
         return row.number;
@@ -94,13 +94,13 @@ void ActiveNavigationThumbnailModel::setRows(
 void ActiveNavigationThumbnailModel::clear() { setRows({}, m_navigationGeneration); }
 
 bool ActiveNavigationThumbnailModel::containsRowIdentity(
-    int number, const QUrl &url, quint64 navigationGeneration) const
+    int number, const QUrl& url, quint64 navigationGeneration) const
 {
     if (navigationGeneration == 0 || navigationGeneration != m_navigationGeneration) {
         return false;
     }
 
-    for (const ActiveNavigationThumbnailRow &row : m_rows) {
+    for (const ActiveNavigationThumbnailRow& row : m_rows) {
         if (row.number == number && row.url == url) {
             return true;
         }
@@ -110,13 +110,13 @@ bool ActiveNavigationThumbnailModel::containsRowIdentity(
 }
 
 void ActiveNavigationThumbnailModel::setThumbnailResultAt(
-    int row, ActiveNavigationThumbnailResultStatus status, const QUrl &imageSource)
+    int row, ActiveNavigationThumbnailResultStatus status, const QUrl& imageSource)
 {
     if (row < 0 || static_cast<std::size_t>(row) >= m_results.size()) {
         return;
     }
 
-    ThumbnailResultProjection &result = m_results.at(static_cast<std::size_t>(row));
+    ThumbnailResultProjection& result = m_results.at(static_cast<std::size_t>(row));
     if (result.status == status && result.imageSource == imageSource) {
         return;
     }
@@ -140,14 +140,14 @@ QString ActiveNavigationThumbnailModel::iconName(ActiveNavigationThumbnailKind k
 }
 
 bool ActiveNavigationThumbnailModel::sameRowIdentity(
-    const ActiveNavigationThumbnailRow &left, const ActiveNavigationThumbnailRow &right)
+    const ActiveNavigationThumbnailRow& left, const ActiveNavigationThumbnailRow& right)
 {
     return left.number == right.number && left.url == right.url && left.label == right.label
         && left.kind == right.kind && left.sourceKind == right.sourceKind;
 }
 
-bool ActiveNavigationThumbnailModel::sameRows(const std::vector<ActiveNavigationThumbnailRow> &left,
-    const std::vector<ActiveNavigationThumbnailRow> &right)
+bool ActiveNavigationThumbnailModel::sameRows(const std::vector<ActiveNavigationThumbnailRow>& left,
+    const std::vector<ActiveNavigationThumbnailRow>& right)
 {
     if (left.size() != right.size()) {
         return false;
@@ -164,8 +164,8 @@ bool ActiveNavigationThumbnailModel::sameRows(const std::vector<ActiveNavigation
 }
 
 bool ActiveNavigationThumbnailModel::sameRowIdentities(
-    const std::vector<ActiveNavigationThumbnailRow> &left,
-    const std::vector<ActiveNavigationThumbnailRow> &right)
+    const std::vector<ActiveNavigationThumbnailRow>& left,
+    const std::vector<ActiveNavigationThumbnailRow>& right)
 {
     if (left.size() != right.size()) {
         return false;

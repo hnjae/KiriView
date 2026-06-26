@@ -11,11 +11,13 @@
 #include <optional>
 
 namespace kiriview {
-struct MediaOpenWithRequest {
+struct MediaOpenWithRequest
+{
     QUrl targetUrl;
 };
 
-struct MediaOpenWithPlanInput {
+struct MediaOpenWithPlanInput
+{
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     bool imageReady = false;
     QUrl imageDisplayedUrl;
@@ -24,13 +26,14 @@ struct MediaOpenWithPlanInput {
     QUrl videoSourceUrl;
 };
 
-struct MediaOpenWithPlan {
+struct MediaOpenWithPlan
+{
     std::optional<MediaOpenWithRequest> request;
 
     bool hasRequest() const { return request.has_value(); }
 };
 
-MediaOpenWithPlan mediaOpenWithPlan(const MediaOpenWithPlanInput &input);
+MediaOpenWithPlan mediaOpenWithPlan(const MediaOpenWithPlanInput& input);
 }
 
 #endif

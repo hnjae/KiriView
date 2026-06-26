@@ -22,7 +22,7 @@ using kiriview::TestSupport::testImage;
 
 constexpr qsizetype testCacheByteBudget = 1024 * 1024;
 
-kiriview::DisplayedPredecodeImage displayedImage(const QUrl &url)
+kiriview::DisplayedPredecodeImage displayedImage(const QUrl& url)
 {
     return kiriview::DisplayedPredecodeImage {
         kiriview::DisplayedImageLocation::fromUrl(url),
@@ -31,7 +31,7 @@ kiriview::DisplayedPredecodeImage displayedImage(const QUrl &url)
     };
 }
 
-kiriview::PredecodeScheduleContext scheduleContext(const QUrl &url)
+kiriview::PredecodeScheduleContext scheduleContext(const QUrl& url)
 {
     return kiriview::PredecodeScheduleContext {
         kiriview::DisplayedImageLocation::fromUrl(url),
@@ -45,7 +45,7 @@ kiriview::PredecodeScheduleContext scheduleContext(const QUrl &url)
 kiriview::PowerSaverProvider noOpPowerSaverProvider()
 {
     return kiriview::PowerSaverProvider {
-        [](QObject *, kiriview::PowerSaverChangedCallback) {
+        [](QObject*, kiriview::PowerSaverChangedCallback) {
             return std::unique_ptr<kiriview::PowerSaverStateMonitor>();
         },
     };
@@ -73,7 +73,7 @@ void TestPredecodeScheduleRuntime::scheduleCachesDisplayedImagesAndStartsAdjacen
     ManualTimerScheduler timerScheduler;
     kiriview::PredecodeScheduleRuntime runtime(
         this, loadController,
-        [&startCount, &capturedSchedule](const kiriview::PredecodePendingSchedule &schedule) {
+        [&startCount, &capturedSchedule](const kiriview::PredecodePendingSchedule& schedule) {
             ++startCount;
             capturedSchedule = schedule;
         },
@@ -104,7 +104,7 @@ void TestPredecodeScheduleRuntime::manualTimerSchedulerFiresDebouncedPredecode()
     std::optional<kiriview::PredecodePendingSchedule> capturedSchedule;
     kiriview::PredecodeScheduleRuntime runtime(
         this, loadController,
-        [&startCount, &capturedSchedule](const kiriview::PredecodePendingSchedule &schedule) {
+        [&startCount, &capturedSchedule](const kiriview::PredecodePendingSchedule& schedule) {
             ++startCount;
             capturedSchedule = schedule;
         },
@@ -132,7 +132,7 @@ void TestPredecodeScheduleRuntime::invalidScheduleCancelsDomainBackgroundWork()
         this, kiriview::ImageDecodeDependencies {}, testCacheByteBudget);
     int cancelCount = 0;
     kiriview::PredecodeScheduleRuntime runtime(
-        this, loadController, [](const kiriview::PredecodePendingSchedule &) {},
+        this, loadController, [](const kiriview::PredecodePendingSchedule&) {},
         [&cancelCount]() { ++cancelCount; }, noOpPowerSaverProvider());
 
     runtime.schedule({});
@@ -144,13 +144,13 @@ void TestPredecodeScheduleRuntime::powerSaverSuppressesAndReschedulesPendingPred
 {
     kiriview::PredecodeLoadController loadController(
         this, kiriview::ImageDecodeDependencies {}, testCacheByteBudget);
-    ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
+    ManualPowerSaverMonitor* powerSaverMonitor = nullptr;
     ManualTimerScheduler timerScheduler;
     int startCount = 0;
     std::optional<kiriview::PredecodePendingSchedule> capturedSchedule;
     kiriview::PredecodeScheduleRuntime runtime(
         this, loadController,
-        [&startCount, &capturedSchedule](const kiriview::PredecodePendingSchedule &schedule) {
+        [&startCount, &capturedSchedule](const kiriview::PredecodePendingSchedule& schedule) {
             ++startCount;
             capturedSchedule = schedule;
         },

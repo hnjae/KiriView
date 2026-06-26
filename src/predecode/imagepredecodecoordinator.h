@@ -30,7 +30,7 @@ class ImagePredecodeCoordinator final : public QObject
 public:
     using Context = PredecodeScheduleContext;
 
-    ImagePredecodeCoordinator(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
+    ImagePredecodeCoordinator(QObject* parent, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,
         qsizetype cacheByteBudget, TimerScheduler timerScheduler = {},
         PredecodeThreadCountProvider threadCountProvider = {});
@@ -40,12 +40,12 @@ public:
     bool powerSaverEnabled() const;
     void cancel();
     void clear();
-    std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
+    std::optional<PredecodedImage> findPredecodedImage(const QUrl& url) const;
 
 private:
-    void scheduleAdjacentImagePredecode(const PredecodePendingSchedule &schedule);
+    void scheduleAdjacentImagePredecode(const PredecodePendingSchedule& schedule);
     void startPredecodeImageLoads(
-        const PredecodeWindowPlan &plan, const PredecodePendingSchedule &schedule);
+        const PredecodeWindowPlan& plan, const PredecodePendingSchedule& schedule);
 
     PredecodeThreadCountProvider m_threadCountProvider;
     ImageIoJob m_listerJob;

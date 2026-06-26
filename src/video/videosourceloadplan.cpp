@@ -16,7 +16,7 @@ VideoSourceLoadPlan videoSourceLoadClearPlan()
     };
 }
 
-VideoSourceLoadPlan videoSourceLoadStartPlan(const QUrl &sourceUrl)
+VideoSourceLoadPlan videoSourceLoadStartPlan(const QUrl& sourceUrl)
 {
     return {
         ClearVideoPlaybackSourceOperation {},
@@ -24,7 +24,7 @@ VideoSourceLoadPlan videoSourceLoadStartPlan(const QUrl &sourceUrl)
     };
 }
 
-VideoSourceLoadPlan videoSourceLoadReadyPlan(const QUrl &sourceUrl, const QUrl &playbackUrl)
+VideoSourceLoadPlan videoSourceLoadReadyPlan(const QUrl& sourceUrl, const QUrl& playbackUrl)
 {
     return {
         ApplyVideoPlaybackUrlOperation {
@@ -35,7 +35,7 @@ VideoSourceLoadPlan videoSourceLoadReadyPlan(const QUrl &sourceUrl, const QUrl &
 }
 
 VideoSourceLoadFailure videoSourceLoadPlaybackUrlResolutionFailure(
-    const QUrl &sourceUrl, const QString &diagnosticDetail)
+    const QUrl& sourceUrl, const QString& diagnosticDetail)
 {
     return VideoSourceLoadFailure {
         sourceUrl,
@@ -56,7 +56,7 @@ VideoSourceLoadPlan videoSourceLoadFailurePlan(VideoSourceLoadFailure failure)
     };
 }
 
-VideoSourceLoadPlan videoSourceLoadFailurePlan(const QUrl &sourceUrl, const QString &errorString)
+VideoSourceLoadPlan videoSourceLoadFailurePlan(const QUrl& sourceUrl, const QString& errorString)
 {
     return videoSourceLoadFailurePlan(
         videoSourceLoadPlaybackUrlResolutionFailure(sourceUrl, errorString));

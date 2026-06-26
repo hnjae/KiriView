@@ -15,12 +15,12 @@
 
 namespace kiriview {
 std::vector<ImageDocumentPageCandidate> imageDocumentPageNavigationCandidates(
-    const KFileItemList &items)
+    const KFileItemList& items)
 {
     std::vector<ImageDocumentPageCandidate> candidates;
     candidates.reserve(static_cast<std::size_t>(items.size()));
 
-    for (const KFileItem &item : items) {
+    for (const KFileItem& item : items) {
         const QString name = item.name();
         if (!item.isFile() || !kiriview::isSupportedOrdinaryMediaFileName(name)) {
             continue;
@@ -36,13 +36,13 @@ std::vector<ImageDocumentPageCandidate> imageDocumentPageNavigationCandidates(
 }
 
 std::vector<DirectMediaNavigationCandidate> directMediaNavigationCandidates(
-    const KFileItemList &items)
+    const KFileItemList& items)
 {
     const std::vector<ImageDocumentPageCandidate> imageDocumentPageCandidates
         = imageDocumentPageNavigationCandidates(items);
     std::vector<DirectMediaNavigationCandidate> candidates;
     candidates.reserve(imageDocumentPageCandidates.size());
-    for (const ImageDocumentPageCandidate &candidate : imageDocumentPageCandidates) {
+    for (const ImageDocumentPageCandidate& candidate : imageDocumentPageCandidates) {
         candidates.push_back(DirectMediaNavigationCandidate { candidate.url, candidate.name });
     }
 
@@ -62,12 +62,12 @@ std::vector<DirectMediaNavigationCandidate> directMediaNavigationCandidates(
     return candidates;
 }
 
-std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items)
+std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList& items)
 {
     std::vector<ContainerNavigationCandidate> candidates;
     candidates.reserve(static_cast<std::size_t>(items.size()));
 
-    for (const KFileItem &item : items) {
+    for (const KFileItem& item : items) {
         const QString name = item.name();
         if (item.isFile() && item.url().isLocalFile()
             && kiriview::isComicBookArchiveFileName(name)) {

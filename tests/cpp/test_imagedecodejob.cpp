@@ -44,7 +44,7 @@ kiriview::ImageDecodeJob::Callbacks decodeJobCallbacks(
     };
 }
 
-QByteArray encodedPngData(const QSize &size)
+QByteArray encodedPngData(const QSize& size)
 {
     QImage image(size, QImage::Format_RGBA8888);
     image.fill(QColor(Qt::green));
@@ -59,7 +59,7 @@ QByteArray encodedPngData(const QSize &size)
     return data;
 }
 
-QImage thumbnailImage(const QSize &size = QSize(400, 300))
+QImage thumbnailImage(const QSize& size = QSize(400, 300))
 {
     QImage image(size, QImage::Format_RGBA8888);
     image.fill(QColor(Qt::blue));
@@ -104,7 +104,7 @@ class ManualThumbnailLookupProvider
 public:
     kiriview::ThumbnailCacheLookupProvider provider()
     {
-        return [this](QObject *, kiriview::ThumbnailCacheLookupRequest request,
+        return [this](QObject*, kiriview::ThumbnailCacheLookupRequest request,
                    kiriview::ThumbnailCacheLookupCallback callback) {
             requests.push_back(std::move(request));
             callbacks.push_back(std::move(callback));
@@ -125,7 +125,8 @@ public:
     std::vector<kiriview::ThumbnailCacheLookupCallback> callbacks;
 };
 
-struct ManualImageWorkerSchedule {
+struct ManualImageWorkerSchedule
+{
     kiriview::ImageWorkerOperation work;
     kiriview::ImageWorkerCompletion completion;
 };
@@ -135,7 +136,7 @@ class ManualImageWorkerScheduler
 public:
     kiriview::ImageWorkerScheduler scheduler()
     {
-        return kiriview::ImageWorkerScheduler([this](QObject *, kiriview::ImageWorkerOperation work,
+        return kiriview::ImageWorkerScheduler([this](QObject*, kiriview::ImageWorkerOperation work,
                                                   kiriview::ImageWorkerCompletion completion) {
             m_schedules.push_back(
                 ManualImageWorkerSchedule { std::move(work), std::move(completion) });
@@ -165,7 +166,7 @@ private:
 class SemaphoreReleaseOnExit
 {
 public:
-    explicit SemaphoreReleaseOnExit(QSemaphore &semaphore)
+    explicit SemaphoreReleaseOnExit(QSemaphore& semaphore)
         : m_semaphore(&semaphore)
     {
     }
@@ -180,7 +181,7 @@ public:
     void dismiss() { m_semaphore = nullptr; }
 
 private:
-    QSemaphore *m_semaphore = nullptr;
+    QSemaphore* m_semaphore = nullptr;
 };
 
 class MinimumThreadPoolConcurrency
@@ -208,7 +209,7 @@ class ManualRawEmbeddedThumbnailPreviewExtractor
 public:
     kiriview::RawEmbeddedThumbnailPreviewExtractor extractor()
     {
-        return [this](const QByteArray &data, const kiriview::ImageDecodeRequest &request) {
+        return [this](const QByteArray& data, const kiriview::ImageDecodeRequest& request) {
             if (mayReturn != nullptr) {
                 mayReturn->acquire();
             }
@@ -245,7 +246,7 @@ public:
         QSize(32, 32),
         {},
     };
-    QSemaphore *mayReturn = nullptr;
+    QSemaphore* mayReturn = nullptr;
 
 private:
     mutable std::mutex m_mutex;
@@ -255,9 +256,9 @@ private:
 };
 
 kiriview::ImageDecodeDependencies imageDecodeDependenciesForThumbnailPreview(
-    ManualImageDataLoader &dataLoader, kiriview::ImageDataDecoder dataDecoder,
-    ManualThumbnailLookupProvider &thumbnailLookup,
-    ManualRawEmbeddedThumbnailPreviewExtractor *rawExtractor = nullptr)
+    ManualImageDataLoader& dataLoader, kiriview::ImageDataDecoder dataDecoder,
+    ManualThumbnailLookupProvider& thumbnailLookup,
+    ManualRawEmbeddedThumbnailPreviewExtractor* rawExtractor = nullptr)
 {
     kiriview::ImageDecodeDependencies dependencies
         = imageDecodeDependenciesFor(dataLoader, std::move(dataDecoder));
@@ -301,7 +302,7 @@ void TestImageDecodeJob::emptyRequestLeavesDiagnosticWarning()
         decodeJobCallbacks([&decodedCount](kiriview::ImageDecodeRequest,
                                kiriview::DecodedImageResult) { ++decodedCount; },
             [&loadErrorCount](
-                const kiriview::ImageDecodeRequest &, const QString &) { ++loadErrorCount; }));
+                const kiriview::ImageDecodeRequest&, const QString&) { ++loadErrorCount; }));
 
     QTest::ignoreMessage(
         QtWarningMsg, QRegularExpression(".*KiriView image decode rejected empty request.*"));
@@ -364,7 +365,7 @@ void TestImageDecodeJob::restartedSameRequestIgnoresStaleLoadResult()
     int decodedCount = 0;
     kiriview::ImageDecodeJob decodeJob(this,
         imageDecodeDependenciesFor(dataLoader,
-            [&decodedData](const QByteArray &data, const kiriview::ImageDecodeRequest &) {
+            [&decodedData](const QByteArray& data, const kiriview::ImageDecodeRequest&) {
                 decodedData = data;
                 return kiriview::successfulDecodedImageResult(
                     kiriview::TestSupport::staticDecodedTestImage());
@@ -398,7 +399,7 @@ void TestImageDecodeJob::loadErrorsAreDeliveredForCurrentRequest()
         imageDecodeDependenciesFor(dataLoader, staticImageDataDecoderRejectingBadData()),
         decodeJobCallbacks({},
             [&errorRequests, &errorString](
-                const kiriview::ImageDecodeRequest &request, const QString &error) {
+                const kiriview::ImageDecodeRequest& request, const QString& error) {
                 errorRequests.push_back(request);
                 errorString = error;
             }));
@@ -427,7 +428,7 @@ void TestImageDecodeJob::decodeErrorsAreDeliveredAsResults()
     dataLoader.finishFrontLoad(QByteArrayLiteral("bad"));
 
     QTRY_VERIFY(decodedResult.has_value());
-    const auto *failure = kiriview::decodedImageResultFailure(*decodedResult);
+    const auto* failure = kiriview::decodedImageResultFailure(*decodedResult);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, testImageDecodeFailureString());
     QVERIFY(!decodeJob.hasActiveRequest());
@@ -439,7 +440,7 @@ void TestImageDecodeJob::decodeRequestIsPassedToDecoder()
     std::optional<kiriview::ImageDecodeRequest> decoderRequest;
     kiriview::ImageDecodeJob decodeJob(this,
         imageDecodeDependenciesFor(dataLoader,
-            [&decoderRequest](const QByteArray &, const kiriview::ImageDecodeRequest &request) {
+            [&decoderRequest](const QByteArray&, const kiriview::ImageDecodeRequest& request) {
                 decoderRequest = request;
                 return kiriview::successfulDecodedImageResult(
                     kiriview::TestSupport::staticDecodedTestImage());
@@ -462,7 +463,7 @@ void TestImageDecodeJob::decodeWorkerSchedulerCanBeDrivenManually()
     bool decoderCalled = false;
     std::vector<kiriview::ImageDecodeRequest> decodedRequests;
     kiriview::ImageDecodeDependencies dependencies = imageDecodeDependenciesFor(
-        dataLoader, [&decoderCalled](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+        dataLoader, [&decoderCalled](const QByteArray&, const kiriview::ImageDecodeRequest&) {
             decoderCalled = true;
             return kiriview::successfulDecodedImageResult(
                 kiriview::TestSupport::staticDecodedTestImage());
@@ -506,7 +507,7 @@ void TestImageDecodeJob::xdgThumbnailPreviewIsDeliveredBeforeDecodeCompletes()
     kiriview::ImageDecodeJob decodeJob(this,
         imageDecodeDependenciesForThumbnailPreview(
             dataLoader,
-            [&decoderMayFinish](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+            [&decoderMayFinish](const QByteArray&, const kiriview::ImageDecodeRequest&) {
                 decoderMayFinish.acquire();
                 return kiriview::successfulDecodedImageResult(
                     kiriview::TestSupport::staticDecodedTestImage(
@@ -517,7 +518,7 @@ void TestImageDecodeJob::xdgThumbnailPreviewIsDeliveredBeforeDecodeCompletes()
                                kiriview::DecodedImageResult) { ++decodedCount; },
             {},
             [&previewPayload](
-                const kiriview::ImageDecodeRequest &, kiriview::StaticDisplayImagePayload payload) {
+                const kiriview::ImageDecodeRequest&, kiriview::StaticDisplayImagePayload payload) {
                 previewPayload = std::move(payload);
             }));
 
@@ -554,7 +555,7 @@ void TestImageDecodeJob::staleXdgThumbnailPreviewIsIgnored()
         imageDecodeDependenciesForThumbnailPreview(
             dataLoader,
             [&decoderMayFinish, &decoderCalls](
-                const QByteArray &, const kiriview::ImageDecodeRequest &) {
+                const QByteArray&, const kiriview::ImageDecodeRequest&) {
                 ++decoderCalls;
                 decoderMayFinish.acquire();
                 return kiriview::successfulDecodedImageResult(
@@ -563,7 +564,7 @@ void TestImageDecodeJob::staleXdgThumbnailPreviewIsIgnored()
             },
             thumbnailLookup),
         decodeJobCallbacks([](kiriview::ImageDecodeRequest, kiriview::DecodedImageResult) {}, {},
-            [&previewCount](const kiriview::ImageDecodeRequest &,
+            [&previewCount](const kiriview::ImageDecodeRequest&,
                 kiriview::StaticDisplayImagePayload) { ++previewCount; }));
 
     decodeJob.start(kiriview::ImageDecodeRequest::fromUrl(9, indexedImageUrl(9)));
@@ -592,7 +593,7 @@ void TestImageDecodeJob::nonRawXdgMissDoesNotRunRawEmbeddedPreview()
     kiriview::ImageDecodeJob decodeJob(this,
         imageDecodeDependenciesForThumbnailPreview(
             dataLoader,
-            [&decoderMayFinish](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+            [&decoderMayFinish](const QByteArray&, const kiriview::ImageDecodeRequest&) {
                 decoderMayFinish.acquire();
                 return kiriview::successfulDecodedImageResult(
                     kiriview::TestSupport::staticDecodedTestImage(
@@ -632,7 +633,7 @@ void TestImageDecodeJob::rawEmbeddedPreviewIsDeliveredAfterXdgMiss()
     kiriview::ImageDecodeJob decodeJob(this,
         imageDecodeDependenciesForThumbnailPreview(
             dataLoader,
-            [&decoderMayFinish](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+            [&decoderMayFinish](const QByteArray&, const kiriview::ImageDecodeRequest&) {
                 decoderMayFinish.acquire();
                 return kiriview::successfulDecodedImageResult(
                     kiriview::TestSupport::staticDecodedTestImage(
@@ -643,7 +644,7 @@ void TestImageDecodeJob::rawEmbeddedPreviewIsDeliveredAfterXdgMiss()
                                kiriview::DecodedImageResult) { ++decodedCount; },
             {},
             [&previewPayload](
-                const kiriview::ImageDecodeRequest &, kiriview::StaticDisplayImagePayload payload) {
+                const kiriview::ImageDecodeRequest&, kiriview::StaticDisplayImagePayload payload) {
                 previewPayload = std::move(payload);
             }));
 
@@ -692,7 +693,7 @@ void TestImageDecodeJob::rawEmbeddedPreviewMissDoesNotPublish()
     kiriview::ImageDecodeJob decodeJob(this,
         imageDecodeDependenciesForThumbnailPreview(
             dataLoader,
-            [&decoderMayFinish](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+            [&decoderMayFinish](const QByteArray&, const kiriview::ImageDecodeRequest&) {
                 decoderMayFinish.acquire();
                 return kiriview::successfulDecodedImageResult(
                     kiriview::TestSupport::staticDecodedTestImage(
@@ -702,7 +703,7 @@ void TestImageDecodeJob::rawEmbeddedPreviewMissDoesNotPublish()
         decodeJobCallbacks([&decodedCount](kiriview::ImageDecodeRequest,
                                kiriview::DecodedImageResult) { ++decodedCount; },
             {},
-            [&previewCount](const kiriview::ImageDecodeRequest &,
+            [&previewCount](const kiriview::ImageDecodeRequest&,
                 kiriview::StaticDisplayImagePayload) { ++previewCount; }));
 
     decodeJob.start(kiriview::ImageDecodeRequest::fromUrl(
@@ -738,7 +739,7 @@ void TestImageDecodeJob::lateRawEmbeddedPreviewAfterDecodeIsIgnored()
     kiriview::ImageDecodeJob decodeJob(this,
         imageDecodeDependenciesForThumbnailPreview(
             dataLoader,
-            [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+            [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
                 return kiriview::successfulDecodedImageResult(
                     kiriview::TestSupport::staticDecodedTestImage(
                         kiriview::TestSupport::testImage(32, 32)));
@@ -747,7 +748,7 @@ void TestImageDecodeJob::lateRawEmbeddedPreviewAfterDecodeIsIgnored()
         decodeJobCallbacks([&decodedCount](kiriview::ImageDecodeRequest,
                                kiriview::DecodedImageResult) { ++decodedCount; },
             {},
-            [&previewCount](const kiriview::ImageDecodeRequest &,
+            [&previewCount](const kiriview::ImageDecodeRequest&,
                 kiriview::StaticDisplayImagePayload) { ++previewCount; }));
 
     decodeJob.start(kiriview::ImageDecodeRequest::fromUrl(
@@ -780,7 +781,7 @@ void TestImageDecodeJob::readyXdgThumbnailPreviewSuppressesRawEmbeddedPreview()
     kiriview::ImageDecodeJob decodeJob(this,
         imageDecodeDependenciesForThumbnailPreview(
             dataLoader,
-            [&decoderMayFinish](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+            [&decoderMayFinish](const QByteArray&, const kiriview::ImageDecodeRequest&) {
                 decoderMayFinish.acquire();
                 return kiriview::successfulDecodedImageResult(
                     kiriview::TestSupport::staticDecodedTestImage(
@@ -791,7 +792,7 @@ void TestImageDecodeJob::readyXdgThumbnailPreviewSuppressesRawEmbeddedPreview()
                                kiriview::DecodedImageResult) { ++decodedCount; },
             {},
             [&previewPayload](
-                const kiriview::ImageDecodeRequest &, kiriview::StaticDisplayImagePayload payload) {
+                const kiriview::ImageDecodeRequest&, kiriview::StaticDisplayImagePayload payload) {
                 previewPayload = std::move(payload);
             }));
 

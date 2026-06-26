@@ -37,7 +37,7 @@ public:
     {
     }
 
-    QImage requestImage(const QString &, QSize *size, const QSize &requestedSize) override
+    QImage requestImage(const QString&, QSize* size, const QSize& requestedSize) override
     {
         const QSize imageSize
             = requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(12, 8);
@@ -51,9 +51,10 @@ public:
     }
 };
 
-struct Fixture {
+struct Fixture
+{
     std::unique_ptr<QQmlEngine> engine;
-    QObject *root = nullptr;
+    QObject* root = nullptr;
     QString errorString;
 
     bool isValid() const { return engine != nullptr && root != nullptr; }
@@ -66,7 +67,7 @@ QString qmlSourceImport()
     return QUrl::fromLocalFile(qmlPath).toString();
 }
 
-QString fixtureQml(bool loadAcknowledgmentRequired, const QString &providerUrl)
+QString fixtureQml(bool loadAcknowledgmentRequired, const QString& providerUrl)
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -108,7 +109,7 @@ Item {
 }
 
 Fixture createFixture(bool loadAcknowledgmentRequired = true,
-    const QString &providerUrl = QStringLiteral("image://test-display/ready"))
+    const QString& providerUrl = QStringLiteral("image://test-display/ready"))
 {
     Fixture fixture;
     fixture.engine = std::make_unique<QQmlEngine>();
@@ -135,18 +136,18 @@ Fixture createFixture(bool loadAcknowledgmentRequired = true,
     return fixture;
 }
 
-QObject *displayImagePage(const Fixture &fixture)
+QObject* displayImagePage(const Fixture& fixture)
 {
     return fixture.root == nullptr
         ? nullptr
-        : fixture.root->findChild<QObject *>(QStringLiteral("displayImagePage"));
+        : fixture.root->findChild<QObject*>(QStringLiteral("displayImagePage"));
 }
 
-QObject *providerImage(const Fixture &fixture)
+QObject* providerImage(const Fixture& fixture)
 {
     return fixture.root == nullptr
         ? nullptr
-        : fixture.root->findChild<QObject *>(QStringLiteral("providerImage"));
+        : fixture.root->findChild<QObject*>(QStringLiteral("providerImage"));
 }
 }
 
@@ -155,7 +156,7 @@ void TestDisplayImagePage::bindsProjectionToProviderImage()
     Fixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    QObject *image = providerImage(fixture);
+    QObject* image = providerImage(fixture);
     QVERIFY(image != nullptr);
     QTRY_COMPARE(image->property("status").toInt(), 1);
     QCOMPARE(image->property("source").toUrl(), QUrl(QStringLiteral("image://test-display/ready")));
@@ -173,7 +174,7 @@ void TestDisplayImagePage::transposesProviderImageGeometryForSidewaysRotation()
     Fixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    QObject *image = providerImage(fixture);
+    QObject* image = providerImage(fixture);
     QVERIFY(image != nullptr);
 
     QCOMPARE(image->property("width").toReal(), 60.0);
@@ -187,7 +188,7 @@ void TestDisplayImagePage::acknowledgesLoadedProviderRevision()
     Fixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    QObject *page = displayImagePage(fixture);
+    QObject* page = displayImagePage(fixture);
     QVERIFY(page != nullptr);
     QSignalSpy spy(page, SIGNAL(loadOutcomeAcknowledged(QUrl, QString, QString, int)));
     QVERIFY(spy.isValid());
@@ -205,7 +206,7 @@ void TestDisplayImagePage::skipsAcknowledgmentWhenProjectionDoesNotRequireIt()
     Fixture fixture = createFixture(false);
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    QObject *page = displayImagePage(fixture);
+    QObject* page = displayImagePage(fixture);
     QVERIFY(page != nullptr);
     QSignalSpy spy(page, SIGNAL(loadOutcomeAcknowledged(QUrl, QString, QString, int)));
     QVERIFY(spy.isValid());
@@ -219,7 +220,7 @@ void TestDisplayImagePage::reportsMissingAcknowledgmentForRequiredEmptyProviderU
     Fixture fixture = createFixture(true, QString());
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    QObject *page = displayImagePage(fixture);
+    QObject* page = displayImagePage(fixture);
     QVERIFY(page != nullptr);
     QSignalSpy spy(page, SIGNAL(loadOutcomeAcknowledged(QUrl, QString, QString, int)));
     QVERIFY(spy.isValid());

@@ -20,7 +20,8 @@ namespace {
 using kiriview::TestSupport::archivePageUrl;
 using kiriview::TestSupport::localUrl;
 
-struct ManualImageWorkerSchedule {
+struct ManualImageWorkerSchedule
+{
     kiriview::ImageWorkerOperation work;
     kiriview::ImageWorkerCompletion completion;
 };
@@ -30,7 +31,7 @@ class ManualImageWorkerScheduler
 public:
     kiriview::ImageWorkerScheduler scheduler()
     {
-        return kiriview::ImageWorkerScheduler([this](QObject *, kiriview::ImageWorkerOperation work,
+        return kiriview::ImageWorkerScheduler([this](QObject*, kiriview::ImageWorkerOperation work,
                                                   kiriview::ImageWorkerCompletion completion) {
             m_schedules.push_back(
                 ManualImageWorkerSchedule { std::move(work), std::move(completion) });
@@ -57,8 +58,8 @@ private:
     std::vector<ManualImageWorkerSchedule> m_schedules;
 };
 
-kiriview::ActiveNavigationThumbnailRow thumbnailRow(int number, const QUrl &url,
-    const QString &label, kiriview::ActiveNavigationThumbnailSourceKind sourceKind,
+kiriview::ActiveNavigationThumbnailRow thumbnailRow(int number, const QUrl& url,
+    const QString& label, kiriview::ActiveNavigationThumbnailSourceKind sourceKind,
     bool current = false)
 {
     return kiriview::ActiveNavigationThumbnailRow {
@@ -75,7 +76,7 @@ kiriview::ActiveNavigationThumbnailRow thumbnailRow(int number, const QUrl &url,
     };
 }
 
-int roleForName(const QAbstractItemModel &model, const QByteArray &name)
+int roleForName(const QAbstractItemModel& model, const QByteArray& name)
 {
     const QHash<int, QByteArray> roles = model.roleNames();
     for (auto iterator = roles.cbegin(); iterator != roles.cend(); ++iterator) {
@@ -87,7 +88,7 @@ int roleForName(const QAbstractItemModel &model, const QByteArray &name)
     return -1;
 }
 
-QVariant modelData(const QAbstractItemModel &model, int row, const QByteArray &roleName)
+QVariant modelData(const QAbstractItemModel& model, int row, const QByteArray& roleName)
 {
     const int role = roleForName(model, roleName);
     if (role < 0) {
@@ -97,8 +98,9 @@ QVariant modelData(const QAbstractItemModel &model, int row, const QByteArray &r
     return model.data(model.index(row, 0), role);
 }
 
-struct ManualThumbnailLookup {
-    QObject *object = nullptr;
+struct ManualThumbnailLookup
+{
+    QObject* object = nullptr;
     kiriview::ThumbnailCacheLookupRequest request;
     kiriview::ThumbnailCacheLookupCallback callback;
     kiriview::ImageIoJobCompletion completion;
@@ -110,7 +112,7 @@ class ManualThumbnailLookupProvider
 public:
     kiriview::ThumbnailCacheLookupProvider provider()
     {
-        return [this](QObject *receiver, kiriview::ThumbnailCacheLookupRequest request,
+        return [this](QObject* receiver, kiriview::ThumbnailCacheLookupRequest request,
                    kiriview::ThumbnailCacheLookupCallback callback) {
             auto lookup = std::make_shared<ManualThumbnailLookup>();
             lookup->request = std::move(request);
@@ -125,12 +127,12 @@ public:
 
     std::size_t lookupCount() const { return m_lookups.size(); }
 
-    ManualThumbnailLookup &lookupAt(std::size_t index) { return *m_lookups.at(index); }
+    ManualThumbnailLookup& lookupAt(std::size_t index) { return *m_lookups.at(index); }
 
     void finish(std::size_t index, kiriview::ThumbnailCacheLookupResult result)
     {
         kiriview::TestSupport::Detail::finishManualIoJob(m_lookups.at(index),
-            [result = std::move(result)](ManualThumbnailLookup &lookup) mutable {
+            [result = std::move(result)](ManualThumbnailLookup& lookup) mutable {
                 if (lookup.callback) {
                     lookup.callback(std::move(result));
                 }
@@ -139,7 +141,7 @@ public:
 
     void deliverIgnoringCancellation(std::size_t index, kiriview::ThumbnailCacheLookupResult result)
     {
-        ManualThumbnailLookup &lookup = lookupAt(index);
+        ManualThumbnailLookup& lookup = lookupAt(index);
         if (lookup.callback) {
             lookup.callback(std::move(result));
         }
@@ -149,8 +151,9 @@ private:
     std::vector<std::shared_ptr<ManualThumbnailLookup>> m_lookups;
 };
 
-struct ManualThumbnailGeneration {
-    QObject *object = nullptr;
+struct ManualThumbnailGeneration
+{
+    QObject* object = nullptr;
     kiriview::ThumbnailGenerationRequest request;
     kiriview::ThumbnailGenerationCallback callback;
     kiriview::ImageIoJobCompletion completion;
@@ -162,7 +165,7 @@ class ManualThumbnailGenerationProvider
 public:
     kiriview::ThumbnailGenerationProvider provider()
     {
-        return [this](QObject *receiver, kiriview::ThumbnailGenerationRequest request,
+        return [this](QObject* receiver, kiriview::ThumbnailGenerationRequest request,
                    kiriview::ThumbnailGenerationCallback callback) {
             auto generation = std::make_shared<ManualThumbnailGeneration>();
             generation->request = std::move(request);
@@ -177,12 +180,12 @@ public:
 
     std::size_t generationCount() const { return m_generations.size(); }
 
-    ManualThumbnailGeneration &generationAt(std::size_t index) { return *m_generations.at(index); }
+    ManualThumbnailGeneration& generationAt(std::size_t index) { return *m_generations.at(index); }
 
     void finish(std::size_t index, kiriview::ThumbnailGenerationResult result)
     {
         kiriview::TestSupport::Detail::finishManualIoJob(m_generations.at(index),
-            [result = std::move(result)](ManualThumbnailGeneration &generation) mutable {
+            [result = std::move(result)](ManualThumbnailGeneration& generation) mutable {
                 if (generation.callback) {
                     generation.callback(std::move(result));
                 }
@@ -191,7 +194,7 @@ public:
 
     void deliverIgnoringCancellation(std::size_t index, kiriview::ThumbnailGenerationResult result)
     {
-        ManualThumbnailGeneration &generation = generationAt(index);
+        ManualThumbnailGeneration& generation = generationAt(index);
         if (generation.callback) {
             generation.callback(std::move(result));
         }
@@ -208,7 +211,7 @@ QImage testThumbnailImage(QColor color = Qt::red)
     return image;
 }
 
-QString thumbnailImageStoreId(const QUrl &source) { return source.path().mid(1); }
+QString thumbnailImageStoreId(const QUrl& source) { return source.path().mid(1); }
 
 kiriview::ThumbnailCacheLookupResult lookupResult(kiriview::ThumbnailCacheLookupStatus status,
     QImage image = {},
@@ -454,7 +457,7 @@ void TestActiveNavigationThumbnailRuntime::unsupportedRowsProjectThroughModelRes
     QVERIFY(runtime.reportDemand(1, videoUrl, Bucket::Normal, Priority::Visible, generation));
     QVERIFY(runtime.reportDemand(2, pageUrl, Bucket::Normal, Priority::Visible, generation));
 
-    QAbstractItemModel *model = runtime.model();
+    QAbstractItemModel* model = runtime.model();
     QVERIFY(model != nullptr);
     QCOMPARE(modelData(*model, 0, QByteArrayLiteral("thumbnailStatus")).toInt(),
         static_cast<int>(kiriview::ActiveNavigationThumbnailResultStatus::Unsupported));
@@ -877,7 +880,7 @@ void TestActiveNavigationThumbnailRuntime::failureDiagnosticsPreserveSourceAndEr
         lookupResult(kiriview::ThumbnailCacheLookupStatus::Failed, {}, Bucket::Normal,
             QStringLiteral("cache database unavailable")));
 
-    const std::vector<kiriview::ActiveNavigationThumbnailFailureDiagnostic> &lookupDiagnostics
+    const std::vector<kiriview::ActiveNavigationThumbnailFailureDiagnostic>& lookupDiagnostics
         = runtime.failureDiagnostics();
     QCOMPARE(lookupDiagnostics.size(), std::size_t(1));
     if (lookupDiagnostics.size() != std::size_t(1)) {
@@ -899,7 +902,7 @@ void TestActiveNavigationThumbnailRuntime::failureDiagnosticsPreserveSourceAndEr
         generationResult(kiriview::ThumbnailGenerationStatus::Failed, {}, Bucket::Large,
             QStringLiteral("decoder rejected thumbnail bytes")));
 
-    const std::vector<kiriview::ActiveNavigationThumbnailFailureDiagnostic> &diagnostics
+    const std::vector<kiriview::ActiveNavigationThumbnailFailureDiagnostic>& diagnostics
         = runtime.failureDiagnostics();
     QCOMPARE(diagnostics.size(), std::size_t(2));
     if (diagnostics.size() != std::size_t(2)) {
@@ -1076,7 +1079,7 @@ void TestActiveNavigationThumbnailRuntime::
 
     QCOMPARE(runtime.resultAt(0).status, Status::Failed);
     QCOMPARE(runtime.resultAt(0).imageSource, QUrl());
-    const std::vector<kiriview::ActiveNavigationThumbnailFailureDiagnostic> &diagnostics
+    const std::vector<kiriview::ActiveNavigationThumbnailFailureDiagnostic>& diagnostics
         = runtime.failureDiagnostics();
     QCOMPARE(diagnostics.size(), std::size_t(1));
     if (diagnostics.empty()) {

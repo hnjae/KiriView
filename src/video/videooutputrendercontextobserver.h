@@ -21,17 +21,17 @@ class VideoOutputRenderContextObserver final : public QObject
 {
 public:
     explicit VideoOutputRenderContextObserver(
-        QObject *parent = nullptr, std::function<void()> renderContextChanged = {});
+        QObject* parent = nullptr, std::function<void()> renderContextChanged = {});
 
-    void setVideoOutput(QObject *videoOutput);
+    void setVideoOutput(QObject* videoOutput);
     std::optional<qreal> devicePixelRatio() const;
 
 protected:
-    bool eventFilter(QObject *watched, QEvent *event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
     void clearVideoOutputConnections();
-    void setObservedWindow(QQuickWindow *window);
+    void setObservedWindow(QQuickWindow* window);
     void clearWindowConnections();
     void notifyRenderContextChanged() const;
 

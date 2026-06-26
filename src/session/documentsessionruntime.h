@@ -50,7 +50,8 @@ class QString;
 
 namespace kiriview {
 enum class DocumentSessionDirectMediaNavigationRevealAction;
-struct DocumentSessionRuntimeDependencies {
+struct DocumentSessionRuntimeDependencies
+{
     DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProvider;
     FileDeletionProvider fileDeletionProvider;
     MediaOpenWithProvider mediaOpenWithProvider;
@@ -63,7 +64,7 @@ class DocumentSessionRuntime final
 public:
     using ChangeCallback = DocumentSessionState::ChangeCallback;
 
-    DocumentSessionRuntime(QObject *owner, DocumentSessionImageDocumentSnapshotPort imageDocument,
+    DocumentSessionRuntime(QObject* owner, DocumentSessionImageDocumentSnapshotPort imageDocument,
         DocumentSessionImageDocumentCommandPort imageCommands,
         DocumentSessionVideoDocumentSnapshotPort videoDocument,
         DocumentSessionVideoDocumentCommandPort videoCommands, ChangeCallback changeCallback = {},
@@ -71,7 +72,7 @@ public:
     ~DocumentSessionRuntime();
 
     QUrl sourceUrl() const;
-    void setSourceUrl(const QUrl &sourceUrl);
+    void setSourceUrl(const QUrl& sourceUrl);
     DocumentSessionKind documentKind() const;
     quint64 publicProjectionRevision() const;
     QString errorString() const;
@@ -79,7 +80,7 @@ public:
     bool displayedFileDeletionAvailable() const;
     bool displayedMediaOpenWithAvailable() const;
     bool fileDeletionInProgress() const;
-    const MediaInformationProjectionSnapshot &mediaInformationSnapshot() const;
+    const MediaInformationProjectionSnapshot& mediaInformationSnapshot() const;
     bool activeZoomPercentAvailable() const;
     bool activeZoomPercentKnown() const;
     qreal activeZoomPercent() const;
@@ -90,7 +91,7 @@ public:
     bool activeImageRightToLeftReadingActive() const;
     bool activeVideoReady() const;
     bool activeVideoControlsReady() const;
-    const DocumentSessionActionAvailabilityFacts &actionAvailabilityFacts() const;
+    const DocumentSessionActionAvailabilityFacts& actionAvailabilityFacts() const;
     bool activeNavigationAvailable() const;
     bool activeNavigationKnown() const;
     bool activeNavigationEditable() const;
@@ -106,16 +107,16 @@ public:
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     ActiveNavigationRevealIntent activeNavigationRevealIntent() const;
     ActiveNavigationRevealDirection activeNavigationRevealDirection() const;
-    QAbstractListModel *activeNavigationThumbnailModel() const;
+    QAbstractListModel* activeNavigationThumbnailModel() const;
     ActiveNavigationThumbnailDemandBucket activeNavigationThumbnailDemandBucket(
         int physicalMaxEdge) const;
-    bool reportActiveNavigationThumbnailDemand(int number, const QUrl &url, int physicalMaxEdge,
+    bool reportActiveNavigationThumbnailDemand(int number, const QUrl& url, int physicalMaxEdge,
         ActiveNavigationThumbnailDemandPriority priority, quint64 navigationGeneration);
     QString nextVideoOutputSurfaceClaimToken();
-    bool reportVideoOutputSurfaceClaim(const QString &claimToken, quint64 projectionRevision,
-        QObject *surfaceOwner, QObject *videoOutput, bool active, const QRectF &contentRect,
-        const QRectF &sourceRect);
-    std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
+    bool reportVideoOutputSurfaceClaim(const QString& claimToken, quint64 projectionRevision,
+        QObject* surfaceOwner, QObject* videoOutput, bool active, const QRectF& contentRect,
+        const QRectF& sourceRect);
+    std::optional<PredecodedImage> findPredecodedImage(const QUrl& url) const;
 
     void openPreviousActiveNavigation();
     void openNextActiveNavigation();
@@ -151,9 +152,9 @@ private:
     void recomputeActiveZoomReadoutForKind(DocumentSessionKind kind);
     void publishActiveNavigationForImagePages();
     void recomputePublicProjection();
-    void routeSourceUrl(const QUrl &sourceUrl);
-    void openMediaUrl(const QUrl &url);
-    void executeRoutePlan(const DocumentSessionRoutePlan &plan);
+    void routeSourceUrl(const QUrl& sourceUrl);
+    void openMediaUrl(const QUrl& url);
+    void executeRoutePlan(const DocumentSessionRoutePlan& plan);
     void leaveVideoMode();
     void cacheDisplayedMediaPredecodeImages();
     void cancelMediaDeletion();
@@ -161,7 +162,7 @@ private:
     DocumentSessionVideoOutputAttachmentPort videoOutputAttachmentPort();
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
-    QObject *m_owner = nullptr;
+    QObject* m_owner = nullptr;
     DocumentSessionImageDocumentSnapshotPort m_imageDocument;
     DocumentSessionImageDocumentCommandRuntime m_imageDocumentCommandRuntime;
     DocumentSessionImageDocumentSyncRuntime m_imageDocumentSyncRuntime;

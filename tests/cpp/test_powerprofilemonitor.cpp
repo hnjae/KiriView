@@ -14,11 +14,12 @@
 #include <vector>
 
 namespace {
-struct FakePowerProfilePortal {
+struct FakePowerProfilePortal
+{
     QVariantList readArguments;
     int readCount = 0;
     int subscriptionCount = 0;
-    QObject *subscriber = nullptr;
+    QObject* subscriber = nullptr;
 
     kiriview::PowerProfileMonitorRuntime runtime()
     {
@@ -27,15 +28,15 @@ struct FakePowerProfilePortal {
                 ++readCount;
                 return readArguments;
             },
-            [this](QObject *receiver) {
+            [this](QObject* receiver) {
                 ++subscriptionCount;
                 subscriber = receiver;
             },
         };
     }
 
-    bool emitPropertiesChanged(const QString &interfaceName, const QVariantMap &changedProperties,
-        const QStringList &invalidatedProperties) const
+    bool emitPropertiesChanged(const QString& interfaceName, const QVariantMap& changedProperties,
+        const QStringList& invalidatedProperties) const
     {
         if (subscriber == nullptr) {
             return false;

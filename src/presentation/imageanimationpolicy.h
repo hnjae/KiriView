@@ -5,12 +5,14 @@
 #define KIRIVIEW_IMAGEANIMATIONPOLICY_H
 
 namespace kiriview {
-struct AnimationLoopState {
+struct AnimationLoopState
+{
     int loopCount = 0;
     int completedLoops = 0;
 };
 
-struct AnimationLoopAdvance {
+struct AnimationLoopAdvance
+{
     bool shouldContinue = false;
     int completedLoops = 0;
 };
@@ -20,7 +22,8 @@ enum class AnimationFrameAction {
     ScheduleNextFrame,
 };
 
-struct AnimationFramePlan {
+struct AnimationFramePlan
+{
     AnimationFrameAction action = AnimationFrameAction::Stop;
     int completedLoops = 0;
 };
@@ -30,7 +33,8 @@ enum class AnimationSequenceAction {
     RestartSequence,
 };
 
-struct AnimationSequencePlan {
+struct AnimationSequencePlan
+{
     AnimationSequenceAction action = AnimationSequenceAction::Stop;
     int completedLoops = 0;
 };

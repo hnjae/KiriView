@@ -7,7 +7,7 @@ namespace kiriview::ApplicationActions {
 ApplicationActionStateSource::~ApplicationActionStateSource() = default;
 
 ApplicationActionSourceAttachment::ApplicationActionSourceAttachment(
-    ApplicationActionRuntime &runtime, QObject &context)
+    ApplicationActionRuntime& runtime, QObject& context)
     : m_runtime(runtime)
     , m_context(&context)
 {
@@ -15,7 +15,7 @@ ApplicationActionSourceAttachment::ApplicationActionSourceAttachment(
 
 ApplicationActionSourceAttachment::~ApplicationActionSourceAttachment() { disconnectSource(); }
 
-void ApplicationActionSourceAttachment::setSource(ApplicationActionStateSource *source)
+void ApplicationActionSourceAttachment::setSource(ApplicationActionStateSource* source)
 {
     if (m_source == source) {
         return;
@@ -55,7 +55,7 @@ void ApplicationActionSourceAttachment::connectSource()
 
 void ApplicationActionSourceAttachment::disconnectSource()
 {
-    for (const QMetaObject::Connection &connection : m_connections) {
+    for (const QMetaObject::Connection& connection : m_connections) {
         QObject::disconnect(connection);
     }
     m_connections.clear();

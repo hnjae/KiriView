@@ -45,7 +45,7 @@ kiriview::VideoDocumentStatus videoDocumentStatus(kiriview::RustVideoDocumentSta
 }
 
 kiriview::VideoPlaybackBackendOperation videoPlaybackBackendOperation(
-    const kiriview::RustVideoPlaybackBackendOperation &operation)
+    const kiriview::RustVideoPlaybackBackendOperation& operation)
 {
     switch (operation.kind) {
     case kiriview::RustVideoPlaybackBackendOperationKind::EnsureBackend:
@@ -66,7 +66,7 @@ kiriview::VideoPlaybackBackendOperation videoPlaybackBackendOperation(
 
 namespace kiriview::Bridge {
 RustVideoDocumentStatusSnapshot rustVideoDocumentStatusSnapshot(
-    const VideoDocumentStatusSnapshot &snapshot)
+    const VideoDocumentStatusSnapshot& snapshot)
 {
     return RustVideoDocumentStatusSnapshot {
         snapshot.sourceUrlEmpty,
@@ -76,7 +76,7 @@ RustVideoDocumentStatusSnapshot rustVideoDocumentStatusSnapshot(
     };
 }
 
-VideoDocumentStatusPlan videoDocumentStatusPlanFromRust(const RustVideoDocumentStatusPlan &plan)
+VideoDocumentStatusPlan videoDocumentStatusPlanFromRust(const RustVideoDocumentStatusPlan& plan)
 {
     return VideoDocumentStatusPlan {
         videoDocumentStatus(plan.status),
@@ -86,7 +86,7 @@ VideoDocumentStatusPlan videoDocumentStatusPlanFromRust(const RustVideoDocumentS
 }
 
 RustVideoPlaybackControlSnapshot rustVideoPlaybackControlSnapshot(
-    const VideoPlaybackControlSnapshot &snapshot)
+    const VideoPlaybackControlSnapshot& snapshot)
 {
     return RustVideoPlaybackControlSnapshot {
         snapshot.sourceUrlEmpty,
@@ -100,10 +100,10 @@ RustVideoPlaybackControlSnapshot rustVideoPlaybackControlSnapshot(
 }
 
 VideoPlaybackControlPlan videoPlaybackControlPlanFromRust(
-    const RustVideoPlaybackControlPlan &rustPlan)
+    const RustVideoPlaybackControlPlan& rustPlan)
 {
     VideoPlaybackControlPlan plan;
-    const RustVideoPlaybackStateDelta &delta = rustPlan.state_delta;
+    const RustVideoPlaybackStateDelta& delta = rustPlan.state_delta;
     if (delta.media_ended_changed) {
         plan.stateDelta.mediaEnded = delta.media_ended;
     }
@@ -115,7 +115,7 @@ VideoPlaybackControlPlan videoPlaybackControlPlanFromRust(
     }
 
     plan.backendOperations.reserve(rustPlan.backend_operations.size());
-    for (const RustVideoPlaybackBackendOperation &operation : rustPlan.backend_operations) {
+    for (const RustVideoPlaybackBackendOperation& operation : rustPlan.backend_operations) {
         plan.backendOperations.push_back(videoPlaybackBackendOperation(operation));
     }
     return plan;

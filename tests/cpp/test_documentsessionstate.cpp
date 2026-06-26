@@ -11,13 +11,13 @@
 #include <vector>
 
 namespace {
-kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl& url)
 {
     return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
 kiriview::DocumentSessionPublicSnapshotInput snapshotInputForProjection(
-    const kiriview::DocumentSessionPublicProjectionInput &input)
+    const kiriview::DocumentSessionPublicProjectionInput& input)
 {
     kiriview::DocumentSessionPublicSnapshotInput snapshotInput;
     snapshotInput.session.documentKind = input.documentKind;
@@ -62,7 +62,7 @@ void TestDocumentSessionState::sourceIdentityUpdatesInternalStateUntilSnapshotCo
 {
     std::vector<kiriview::DocumentSessionChange> changes;
     kiriview::DocumentSessionState state(
-        [&changes](const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::DocumentSessionChange>& publishedChanges) {
             changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
         });
 
@@ -80,7 +80,7 @@ void TestDocumentSessionState::documentKindUpdatesInternalStateUntilSnapshotComm
 {
     std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
     kiriview::DocumentSessionState state(
-        [&batches](const std::vector<kiriview::DocumentSessionChange> &changes) {
+        [&batches](const std::vector<kiriview::DocumentSessionChange>& changes) {
             batches.push_back(changes);
         });
 
@@ -99,7 +99,7 @@ void TestDocumentSessionState::activeZoomReadoutPublishesThroughSnapshotCommit()
 {
     std::vector<kiriview::DocumentSessionChange> changes;
     kiriview::DocumentSessionState state(
-        [&changes](const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::DocumentSessionChange>& publishedChanges) {
             changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
         });
 
@@ -130,7 +130,7 @@ void TestDocumentSessionState::fileDeletionProgressPublishesThroughSnapshotCommi
 {
     std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
     kiriview::DocumentSessionState state(
-        [&batches](const std::vector<kiriview::DocumentSessionChange> &changes) {
+        [&batches](const std::vector<kiriview::DocumentSessionChange>& changes) {
             batches.push_back(changes);
         });
 
@@ -155,7 +155,7 @@ void TestDocumentSessionState::directMediaNavigationSnapshotOwnsBoundaryAndCandi
 {
     std::vector<kiriview::DocumentSessionChange> changes;
     kiriview::DocumentSessionState state(
-        [&changes](const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::DocumentSessionChange>& publishedChanges) {
             changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
         });
 
@@ -207,10 +207,10 @@ void TestDocumentSessionState::directMediaNavigationSnapshotOwnsBoundaryAndCandi
 void TestDocumentSessionState::publicSnapshotCommitsProjectionValuesBeforePublishing()
 {
     std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
-    kiriview::DocumentSessionState *stateDuringCallback = nullptr;
+    kiriview::DocumentSessionState* stateDuringCallback = nullptr;
     kiriview::DocumentSessionState state(
         [&batches, &stateDuringCallback](
-            const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
+            const std::vector<kiriview::DocumentSessionChange>& publishedChanges) {
             batches.push_back(publishedChanges);
             QVERIFY(stateDuringCallback != nullptr);
             QCOMPARE(stateDuringCallback->activeNavigationSourceKind(),
@@ -253,7 +253,7 @@ void TestDocumentSessionState::publicSnapshotOnlyNotifiesChangedProjectionOutput
 {
     std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
     kiriview::DocumentSessionState state(
-        [&batches](const std::vector<kiriview::DocumentSessionChange> &changes) {
+        [&batches](const std::vector<kiriview::DocumentSessionChange>& changes) {
             batches.push_back(changes);
         });
 
@@ -316,10 +316,10 @@ void TestDocumentSessionState::publicSnapshotOnlyNotifiesChangedProjectionOutput
 void TestDocumentSessionState::publicSnapshotCommitsOneRevisionedBatch()
 {
     std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
-    kiriview::DocumentSessionState *stateDuringCallback = nullptr;
+    kiriview::DocumentSessionState* stateDuringCallback = nullptr;
     kiriview::DocumentSessionState state(
         [&batches, &stateDuringCallback](
-            const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
+            const std::vector<kiriview::DocumentSessionChange>& publishedChanges) {
             batches.push_back(publishedChanges);
             QVERIFY(stateDuringCallback != nullptr);
             QCOMPARE(stateDuringCallback->publicSnapshot().revision, quint64(1));
@@ -369,7 +369,7 @@ void TestDocumentSessionState::unchangedPublicSnapshotDoesNotAdvanceRevision()
 {
     std::vector<std::vector<kiriview::DocumentSessionChange>> batches;
     kiriview::DocumentSessionState state(
-        [&batches](const std::vector<kiriview::DocumentSessionChange> &changes) {
+        [&batches](const std::vector<kiriview::DocumentSessionChange>& changes) {
             batches.push_back(changes);
         });
 
@@ -390,7 +390,7 @@ void TestDocumentSessionState::publishDeduplicatesChangesInOrder()
 {
     std::vector<kiriview::DocumentSessionChange> changes;
     kiriview::DocumentSessionState state(
-        [&changes](const std::vector<kiriview::DocumentSessionChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::DocumentSessionChange>& publishedChanges) {
             changes = publishedChanges;
         });
 

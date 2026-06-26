@@ -10,7 +10,7 @@
 
 namespace kiriview {
 MediaEntrySourceStore::MediaEntrySourceStore(
-    MediaEntrySourceFactory sourceFactory, QObject *parent, ImageWorkerScheduler workerScheduler)
+    MediaEntrySourceFactory sourceFactory, QObject* parent, ImageWorkerScheduler workerScheduler)
     : QObject(parent)
     , m_runtime(this, std::move(sourceFactory), std::move(workerScheduler))
 {
@@ -22,7 +22,7 @@ ImageDocumentPageCandidateProvider MediaEntrySourceStore::wrapCandidateProvider(
     ImageDocumentPageCandidateProvider provider)
 {
     provider.openedCollectionCandidates
-        = [this](QObject *receiver, OpenedCollectionScopeLocation openedCollectionScope,
+        = [this](QObject* receiver, OpenedCollectionScopeLocation openedCollectionScope,
               ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) {
               return loadOpenedCollectionCandidates(receiver, std::move(openedCollectionScope),
                   std::move(callback), std::move(errorCallback));
@@ -35,7 +35,7 @@ ImageDecodeDependencies MediaEntrySourceStore::wrapDecodeDependencies(
 {
     ImageDataLoader upstreamDataLoader = std::move(dependencies.dataLoader);
     dependencies.dataLoader = [this, upstreamDataLoader = std::move(upstreamDataLoader)](
-                                  QObject *receiver, ImageDecodeRequest request,
+                                  QObject* receiver, ImageDecodeRequest request,
                                   ImageDataCallback callback, ErrorCallback errorCallback) {
         if (openedCollectionScopeContainsUrl(request.openedCollectionScope(), request.imageUrl())) {
             return loadOpenedCollectionImageData(
@@ -54,7 +54,7 @@ ImageDecodeDependencies MediaEntrySourceStore::wrapDecodeDependencies(
 }
 
 void MediaEntrySourceStore::prepareForOpenedCollectionScope(
-    const OpenedCollectionScopeLocation &openedCollectionScope)
+    const OpenedCollectionScopeLocation& openedCollectionScope)
 {
     if (!openedCollectionScope.isEmpty()) {
         m_runtime.switchToOpenedCollectionScope(openedCollectionScope);
@@ -72,12 +72,12 @@ bool MediaEntrySourceStore::hasCurrentOpenedCollectionScope() const
 }
 
 bool MediaEntrySourceStore::hasCurrentOpenedCollectionScope(
-    const OpenedCollectionScopeLocation &openedCollectionScope) const
+    const OpenedCollectionScopeLocation& openedCollectionScope) const
 {
     return m_runtime.hasCurrentOpenedCollectionScope(openedCollectionScope);
 }
 
-ImageIoJob MediaEntrySourceStore::loadOpenedCollectionCandidates(QObject *receiver,
+ImageIoJob MediaEntrySourceStore::loadOpenedCollectionCandidates(QObject* receiver,
     OpenedCollectionScopeLocation openedCollectionScope,
     ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
@@ -85,7 +85,7 @@ ImageIoJob MediaEntrySourceStore::loadOpenedCollectionCandidates(QObject *receiv
         receiver, std::move(openedCollectionScope), std::move(callback), std::move(errorCallback));
 }
 
-ImageIoJob MediaEntrySourceStore::loadOpenedCollectionImageData(QObject *receiver,
+ImageIoJob MediaEntrySourceStore::loadOpenedCollectionImageData(QObject* receiver,
     ImageDecodeRequest request, ImageDataCallback callback, ErrorCallback errorCallback)
 {
     return m_runtime.loadOpenedCollectionImageData(

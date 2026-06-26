@@ -7,7 +7,7 @@
 #include "kiriview/src/policy/heiftiling.cxx.h"
 
 namespace {
-kiriview::RustHeifTiling rustHeifTiling(const heif_image_tiling &tiling)
+kiriview::RustHeifTiling rustHeifTiling(const heif_image_tiling& tiling)
 {
     return kiriview::RustHeifTiling {
         tiling.num_columns,
@@ -17,7 +17,7 @@ kiriview::RustHeifTiling rustHeifTiling(const heif_image_tiling &tiling)
     };
 }
 
-kiriview::HeifTileGrid heifTileGridFromRust(const kiriview::RustHeifTileGrid &grid)
+kiriview::HeifTileGrid heifTileGridFromRust(const kiriview::RustHeifTileGrid& grid)
 {
     return kiriview::HeifTileGrid {
         grid.columns,
@@ -28,7 +28,7 @@ kiriview::HeifTileGrid heifTileGridFromRust(const kiriview::RustHeifTileGrid &gr
 }
 
 kiriview::HeifTileDecodeRegion heifTileDecodeRegionFromRust(
-    const kiriview::RustHeifTileDecodeRegion &region)
+    const kiriview::RustHeifTileDecodeRegion& region)
 {
     return kiriview::HeifTileDecodeRegion {
         region.tile_x,
@@ -37,7 +37,7 @@ kiriview::HeifTileDecodeRegion heifTileDecodeRegionFromRust(
     };
 }
 
-kiriview::RustHeifTileGrid rustHeifTileGrid(const kiriview::HeifTileGrid &grid)
+kiriview::RustHeifTileGrid rustHeifTileGrid(const kiriview::HeifTileGrid& grid)
 {
     return kiriview::RustHeifTileGrid {
         grid.columns,
@@ -47,7 +47,7 @@ kiriview::RustHeifTileGrid rustHeifTileGrid(const kiriview::HeifTileGrid &grid)
     };
 }
 
-kiriview::RustHeifTileRect rustHeifTileRect(const QRect &rect)
+kiriview::RustHeifTileRect rustHeifTileRect(const QRect& rect)
 {
     return kiriview::Bridge::rustRect<kiriview::RustHeifTileRect>(rect);
 }
@@ -55,7 +55,7 @@ kiriview::RustHeifTileRect rustHeifTileRect(const QRect &rect)
 }
 
 namespace kiriview {
-std::optional<HeifTileGrid> heifTileGridForTiling(const heif_image_tiling &tiling)
+std::optional<HeifTileGrid> heifTileGridForTiling(const heif_image_tiling& tiling)
 {
     const RustHeifTileGridPlan plan = rustHeifTileGridForTiling(rustHeifTiling(tiling));
     if (!plan.found) {
@@ -66,13 +66,13 @@ std::optional<HeifTileGrid> heifTileGridForTiling(const heif_image_tiling &tilin
 }
 
 std::vector<HeifTileDecodeRegion> heifTileDecodeRegions(
-    const HeifTileGrid &grid, const QRect &sourceRect)
+    const HeifTileGrid& grid, const QRect& sourceRect)
 {
     std::vector<HeifTileDecodeRegion> regions;
     const rust::Vec<RustHeifTileDecodeRegion> rustRegions
         = rustHeifTileDecodeRegions(rustHeifTileGrid(grid), rustHeifTileRect(sourceRect));
     regions.reserve(rustRegions.size());
-    for (const RustHeifTileDecodeRegion &region : rustRegions) {
+    for (const RustHeifTileDecodeRegion& region : rustRegions) {
         regions.push_back(heifTileDecodeRegionFromRust(region));
     }
     return regions;

@@ -7,7 +7,7 @@
 
 namespace {
 void dispatchPlan(
-    const kiriview::VideoSourceLoadPlanCallback &callback, kiriview::VideoSourceLoadPlan plan)
+    const kiriview::VideoSourceLoadPlanCallback& callback, kiriview::VideoSourceLoadPlan plan)
 {
     if (callback) {
         callback(std::move(plan));
@@ -27,7 +27,7 @@ VideoSourceLoadRuntime::~VideoSourceLoadRuntime() { shutdown(); }
 bool VideoSourceLoadRuntime::active() const { return m_resolution.active(); }
 
 void VideoSourceLoadRuntime::setSourceUrl(
-    const QUrl &sourceUrl, QObject *receiver, VideoSourceLoadPlanCallback planCallback)
+    const QUrl& sourceUrl, QObject* receiver, VideoSourceLoadPlanCallback planCallback)
 {
     m_shutdown = false;
     cancelAndCleanup();
@@ -70,7 +70,7 @@ void VideoSourceLoadRuntime::cancelAndCleanup()
 }
 
 void VideoSourceLoadRuntime::completePlaybackUrlResolution(
-    const VideoPlaybackUrlResolution &resolution, const VideoSourceLoadPlanCallback &callback)
+    const VideoPlaybackUrlResolution& resolution, const VideoSourceLoadPlanCallback& callback)
 {
     if (!m_resolution.finish(resolution.operationId, resolution.sourceUrl)) {
         return;
@@ -79,8 +79,8 @@ void VideoSourceLoadRuntime::completePlaybackUrlResolution(
     dispatchPlan(callback, videoSourceLoadReadyPlan(resolution.sourceUrl, resolution.playbackUrl));
 }
 
-void VideoSourceLoadRuntime::failPlaybackUrlResolution(quint64 operationId, const QUrl &sourceUrl,
-    const QString &errorString, const VideoSourceLoadPlanCallback &callback)
+void VideoSourceLoadRuntime::failPlaybackUrlResolution(quint64 operationId, const QUrl& sourceUrl,
+    const QString& errorString, const VideoSourceLoadPlanCallback& callback)
 {
     if (!m_resolution.finish(operationId, sourceUrl)) {
         return;

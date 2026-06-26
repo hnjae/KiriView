@@ -18,7 +18,7 @@ DocumentSessionMediaOpenWithRuntime::DocumentSessionMediaOpenWithRuntime(
 DocumentSessionMediaOpenWithRuntime::~DocumentSessionMediaOpenWithRuntime() { cancel(); }
 
 void DocumentSessionMediaOpenWithRuntime::open(
-    QObject *receiver, const MediaOpenWithPlan &plan, MediaOpenWithCallback callback)
+    QObject* receiver, const MediaOpenWithPlan& plan, MediaOpenWithCallback callback)
 {
     if (!plan.hasRequest()) {
         invokeIfSet(callback, MediaOpenWithResult::Failed,
@@ -33,7 +33,7 @@ void DocumentSessionMediaOpenWithRuntime::open(
     auto sharedCallback = std::make_shared<MediaOpenWithCallback>(std::move(callback));
     m_job = m_provider(receiver, *plan.request,
         [operationState, operationId, sharedCallback](
-            MediaOpenWithResult result, const KioOperationFailure &failure) {
+            MediaOpenWithResult result, const KioOperationFailure& failure) {
             if (!operationState->finish(operationId)) {
                 return;
             }

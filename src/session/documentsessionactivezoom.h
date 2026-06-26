@@ -11,8 +11,8 @@ struct DocumentSessionPublicImageLeafSnapshot;
 struct DocumentSessionPublicVideoLeafSnapshot;
 
 ActiveZoomSnapshot documentSessionActiveZoomSnapshot(DocumentSessionKind documentKind,
-    const DocumentSessionPublicImageLeafSnapshot &image,
-    const DocumentSessionPublicVideoLeafSnapshot &video);
+    const DocumentSessionPublicImageLeafSnapshot& image,
+    const DocumentSessionPublicVideoLeafSnapshot& video);
 }
 
 #endif

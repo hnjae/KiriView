@@ -40,7 +40,7 @@ using FakeCandidateProvider = kiriview::TestSupport::FakeImageDocumentPageCandid
 class RuntimeOwner final : public QObject
 {
 public:
-    RuntimeOwner(QObject *parent,
+    RuntimeOwner(QObject* parent,
         kiriview::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
         kiriview::ImageDocumentRuntime::ChangeCallback changeCallback,
         kiriview::ImageDocumentRuntimeDependencyOverrides dependencies,
@@ -61,7 +61,7 @@ public:
 class RuntimeHandle final
 {
 public:
-    RuntimeHandle(QObject *parent,
+    RuntimeHandle(QObject* parent,
         kiriview::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
         kiriview::ImageDocumentRuntime::ChangeCallback changeCallback,
         kiriview::ImageDocumentRuntimeDependencyOverrides dependencies,
@@ -76,10 +76,10 @@ public:
     {
     }
 
-    kiriview::ImageDocumentRuntime *operator->() { return &m_owner->runtime; }
-    const kiriview::ImageDocumentRuntime *operator->() const { return &m_owner->runtime; }
-    kiriview::ImageDocumentRuntime &operator*() { return m_owner->runtime; }
-    const kiriview::ImageDocumentRuntime &operator*() const { return m_owner->runtime; }
+    kiriview::ImageDocumentRuntime* operator->() { return &m_owner->runtime; }
+    const kiriview::ImageDocumentRuntime* operator->() const { return &m_owner->runtime; }
+    kiriview::ImageDocumentRuntime& operator*() { return m_owner->runtime; }
+    const kiriview::ImageDocumentRuntime& operator*() const { return m_owner->runtime; }
 
 private:
     std::unique_ptr<RuntimeOwner> m_owner;
@@ -96,12 +96,12 @@ public:
     QSize imageSize() const override { return m_image.size(); }
 
     std::optional<kiriview::DecodedTile> decodeTile(
-        const kiriview::TileRequest &, QString *) const override
+        const kiriview::TileRequest&, QString*) const override
     {
         return std::nullopt;
     }
 
-    QImage decodeBlockingDisplayImage(int, QString *) const override { return m_image; }
+    QImage decodeBlockingDisplayImage(int, QString*) const override { return m_image; }
 
     qsizetype byteCost() const override { return std::numeric_limits<qsizetype>::max() / 2; }
 
@@ -110,7 +110,7 @@ private:
 };
 
 kiriview::DecodedImageResult staticDecodedImageWithPreview(
-    const QSize &sourceSize, const QSize &previewSize, qreal firstDisplayPixelsPerSourcePixel = 0.0)
+    const QSize& sourceSize, const QSize& previewSize, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
     return kiriview::successfulDecodedImageResult(kiriview::StaticDecodedImage {
         staticDisplayTestImagePayload(testImage(sourceSize), testImage(previewSize),
@@ -120,7 +120,7 @@ kiriview::DecodedImageResult staticDecodedImageWithPreview(
     });
 }
 
-kiriview::DecodedImageResult singleFrameDecodedImage(const QSize &size)
+kiriview::DecodedImageResult singleFrameDecodedImage(const QSize& size)
 {
     QImage image = testImage(size);
     return kiriview::successfulDecodedImageResult(kiriview::StaticDecodedImage {
@@ -147,8 +147,8 @@ kiriview::DecodedImageResult invalidAnimationDecodedImage()
     });
 }
 
-RuntimeHandle createRuntime(QObject *parent, FakeCandidateProvider &candidateProvider,
-    ManualImageDataLoader &dataLoader,
+RuntimeHandle createRuntime(QObject* parent, FakeCandidateProvider& candidateProvider,
+    ManualImageDataLoader& dataLoader,
     kiriview::ImageDataDecoder dataDecoder = staticImageDataDecoder(testImage(2)),
     int maximumTextureSize = kiriview::fallbackTextureSizeMax, qreal devicePixelRatio = 1.0,
     kiriview::FileDeletionProvider fileDeletionProvider = {},
@@ -172,17 +172,17 @@ RuntimeHandle createRuntime(QObject *parent, FakeCandidateProvider &candidatePro
         std::move(unsupportedOpenedCollectionVideoEnteredCallback));
 }
 
-void finishLoad(ManualImageDataLoader &dataLoader)
+void finishLoad(ManualImageDataLoader& dataLoader)
 {
     dataLoader.finishBackLoad(QByteArrayLiteral("ok"));
 }
 
-bool finishOldestActiveLoadForUrl(ManualImageDataLoader &dataLoader, const QUrl &url)
+bool finishOldestActiveLoadForUrl(ManualImageDataLoader& dataLoader, const QUrl& url)
 {
     return dataLoader.finishOldestActiveLoadForUrl(url, QByteArrayLiteral("ok"));
 }
 
-bool hasReadyDisplaySourceProjection(const kiriview::ImageDocumentRuntime &runtime,
+bool hasReadyDisplaySourceProjection(const kiriview::ImageDocumentRuntime& runtime,
     kiriview::DisplayedPageRole role = kiriview::DisplayedPageRole::Primary)
 {
     const kiriview::ImageDisplaySourceProjection projection = runtime.displaySourceProjection(role);
@@ -191,7 +191,7 @@ bool hasReadyDisplaySourceProjection(const kiriview::ImageDocumentRuntime &runti
 }
 
 bool containsChange(
-    const std::vector<kiriview::ImageDocumentChange> &changes, kiriview::ImageDocumentChange change)
+    const std::vector<kiriview::ImageDocumentChange>& changes, kiriview::ImageDocumentChange change)
 {
     return std::find(changes.begin(), changes.end(), change) != changes.end();
 }
@@ -437,7 +437,7 @@ void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
         staticImageDataDecoder(testImage(2)), kiriview::fallbackTextureSizeMax, 1.0, {}, {},
         [&unsupportedVideoMessages](
-            const QString &message) { unsupportedVideoMessages.push_back(message); });
+            const QString& message) { unsupportedVideoMessages.push_back(message); });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
@@ -521,11 +521,11 @@ void TestImageDocumentRuntime::renderContextProviderCanBeReplacedAfterConstructi
                 kiriview::fallbackTextureSizeMax,
             };
         },
-        [&changes](const std::vector<kiriview::ImageDocumentChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::ImageDocumentChange>& publishedChanges) {
             changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
         },
         imageDocumentRuntimeDependencyOverridesFor(candidateProvider, dataLoader,
-            [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+            [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
                 return staticDecodedImageWithPreview(QSize(1000, 500), QSize(1000, 500));
             }));
 
@@ -559,7 +559,7 @@ void TestImageDocumentRuntime::maximumManualZoomChangesAfterViewportImageAndRend
     const QUrl firstImageUrl = localUrl(QStringLiteral("/images/regular.png"));
     const QUrl secondImageUrl = localUrl(QStringLiteral("/images/wide.png"));
 
-    auto dataDecoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &request) {
+    auto dataDecoder = [](const QByteArray&, const kiriview::ImageDecodeRequest& request) {
         const QSize sourceSize = request.imageUrl().fileName() == QStringLiteral("wide.png")
             ? QSize(2000, 1000)
             : QSize(1000, 500);
@@ -573,7 +573,7 @@ void TestImageDocumentRuntime::maximumManualZoomChangesAfterViewportImageAndRend
                 kiriview::fallbackTextureSizeMax,
             };
         },
-        [&changes](const std::vector<kiriview::ImageDocumentChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::ImageDocumentChange>& publishedChanges) {
             changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
         },
         imageDocumentRuntimeDependencyOverridesFor(
@@ -691,11 +691,11 @@ void TestImageDocumentRuntime::rotationChangesLogicalSizeAndPreservesManualZoom(
                 kiriview::fallbackTextureSizeMax,
             };
         },
-        [&changes](const std::vector<kiriview::ImageDocumentChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::ImageDocumentChange>& publishedChanges) {
             changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
         },
         imageDocumentRuntimeDependencyOverridesFor(candidateProvider, dataLoader,
-            [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+            [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
                 return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
             }));
     runtime->setViewportSize(QSizeF(500.0, 500.0));
@@ -737,7 +737,7 @@ void TestImageDocumentRuntime::rotationRecomputesFitZoomForRotatedBounds()
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
-        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+        [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
             return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
         });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
@@ -776,7 +776,7 @@ void TestImageDocumentRuntime::rotationResetsOnImageDocumentPageNavigation()
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
-        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+        [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
             return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
         });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
@@ -818,7 +818,7 @@ void TestImageDocumentRuntime::rotationResetsAndStopsWhileTwoPageModeIsEnabled()
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
-        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+        [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
             return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
         });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
@@ -1179,7 +1179,7 @@ void TestImageDocumentRuntime::smallStaticImagePublishesProviderDisplay()
 
     RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader,
-        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+        [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
             return staticDecodedImageWithPreview(QSize(1024, 1), QSize(1024, 1));
         },
         kiriview::fallbackTextureSizeMax);
@@ -1208,7 +1208,7 @@ void TestImageDocumentRuntime::largeStaticImagePublishesProviderPreview()
 
     RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader,
-        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+        [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
             return staticDecodedImageWithPreview(
                 QSize(kiriview::imageBlockingDisplayLongEdgeMax + 1, 1),
                 QSize(kiriview::imageBlockingDisplayLongEdgeMax, 1));
@@ -1240,7 +1240,7 @@ void TestImageDocumentRuntime::staticImageStillSchedulesAdjacentPredecode()
 
     RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader,
-        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+        [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
             return staticDecodedImageWithPreview(QSize(1024, 1), QSize(1024, 1));
         },
         kiriview::fallbackTextureSizeMax);
@@ -1409,7 +1409,7 @@ void TestImageDocumentRuntime::presentationFailurePreservesTypedFailureMetadata(
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
-        [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+        [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
             return invalidAnimationDecodedImage();
         });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
@@ -1526,7 +1526,7 @@ void TestImageDocumentRuntime::fileDeletionFailureKeepsDisplayedImageAndReportsE
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
         staticImageDataDecoder(testImage(2)), kiriview::fallbackTextureSizeMax, 1.0,
         fileDeletionProviderFor(fileDeletionProvider),
-        [&deletionErrors](const QString &errorString) { deletionErrors.push_back(errorString); });
+        [&deletionErrors](const QString& errorString) { deletionErrors.push_back(errorString); });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
@@ -1567,7 +1567,7 @@ void TestImageDocumentRuntime::fileDeletionCancelKeepsDisplayedImageWithoutError
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
         staticImageDataDecoder(testImage(2)), kiriview::fallbackTextureSizeMax, 1.0,
         fileDeletionProviderFor(fileDeletionProvider),
-        [&deletionErrors](const QString &errorString) { deletionErrors.push_back(errorString); });
+        [&deletionErrors](const QString& errorString) { deletionErrors.push_back(errorString); });
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
@@ -1853,7 +1853,7 @@ void TestImageDocumentRuntime::twoPageModeDisplaysCurrentAndNextComicArchivePage
             imageDocumentPageCandidate(thirdPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));
@@ -1924,7 +1924,7 @@ void TestImageDocumentRuntime::twoPageModeUsesRightToLeftPageOrder()
             imageDocumentPageCandidate(thirdPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
         return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
     };
     RuntimeHandle runtime
@@ -1976,7 +1976,7 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
             imageDocumentPageCandidate(fourthPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));
@@ -2042,7 +2042,7 @@ void TestImageDocumentRuntime::twoPageModePublishesAndClearsSecondaryDisplaySour
             imageDocumentPageCandidate(thirdPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
     RuntimeHandle runtime(
@@ -2053,7 +2053,7 @@ void TestImageDocumentRuntime::twoPageModePublishesAndClearsSecondaryDisplaySour
                 kiriview::fallbackTextureSizeMax,
             };
         },
-        [&changes](const std::vector<kiriview::ImageDocumentChange> &publishedChanges) {
+        [&changes](const std::vector<kiriview::ImageDocumentChange>& publishedChanges) {
             changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
         },
         imageDocumentRuntimeDependencyOverridesFor(
@@ -2126,7 +2126,7 @@ void TestImageDocumentRuntime::twoPageModeClearsPreviousSpreadWhileTargetSpreadL
             imageDocumentPageCandidate(fifthPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));
@@ -2200,7 +2200,7 @@ void TestImageDocumentRuntime::twoPageModeLoadingNavigationUsesPendingPrimaryPag
             imageDocumentPageCandidate(fifthPageUrl),
         });
 
-    auto decoder = [](const QByteArray &, const kiriview::ImageDecodeRequest &) {
+    auto decoder = [](const QByteArray&, const kiriview::ImageDecodeRequest&) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));

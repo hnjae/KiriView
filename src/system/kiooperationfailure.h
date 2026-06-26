@@ -15,7 +15,8 @@ enum class KioOperationKind {
     MediaOpenWith,
 };
 
-struct KioOperationFailure {
+struct KioOperationFailure
+{
     KioOperationKind operationKind = KioOperationKind::Unknown;
     QUrl targetUrl;
     std::optional<int> rawErrorCode;
@@ -27,9 +28,9 @@ struct KioOperationFailure {
 
 bool isKioOperationCanceledError(int errorCode);
 KioOperationFailure kioOperationFailureFromKJob(
-    KioOperationKind operationKind, const QUrl &targetUrl, int errorCode, const QString &errorText);
+    KioOperationKind operationKind, const QUrl& targetUrl, int errorCode, const QString& errorText);
 KioOperationFailure kioOperationValidationFailure(
-    KioOperationKind operationKind, const QUrl &targetUrl, const QString &diagnosticDetail);
+    KioOperationKind operationKind, const QUrl& targetUrl, const QString& diagnosticDetail);
 }
 
 #endif

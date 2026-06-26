@@ -26,9 +26,10 @@ class QObject;
 namespace kiriview {
 class MediaEntrySourceStore;
 
-using ExternalPredecodedImageFinder = std::function<std::optional<PredecodedImage>(const QUrl &)>;
+using ExternalPredecodedImageFinder = std::function<std::optional<PredecodedImage>(const QUrl&)>;
 
-struct ImageDocumentRuntimeDependencyOverrides {
+struct ImageDocumentRuntimeDependencyOverrides
+{
     ImageDocumentPageCandidateProvider candidateProvider;
     ImageDecodeDependencies imageDecode;
     FileDeletionProvider fileDeletionProvider;
@@ -43,7 +44,8 @@ struct ImageDocumentRuntimeDependencyOverrides {
     bool ordinaryDirectMediaPredecodeEnabled = true;
 };
 
-struct ImageDocumentRuntimeDependencies {
+struct ImageDocumentRuntimeDependencies
+{
     ImageDocumentPageCandidateProvider candidateProvider;
     ImageDecodeDependencies imageDecode;
     FileDeletionProvider fileDeletionProvider;
@@ -59,7 +61,7 @@ struct ImageDocumentRuntimeDependencies {
 };
 
 ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
-    ImageDocumentRuntimeDependencyOverrides overrides, QObject *parent);
+    ImageDocumentRuntimeDependencyOverrides overrides, QObject* parent);
 ImageCacheBudgetRequest imageDocumentCacheBudgetRequestWithDefaults(
     ImageCacheBudgetRequest request);
 ImageCacheBudgets resolveImageDocumentCacheBudgets(ImageCacheBudgetRequest request);

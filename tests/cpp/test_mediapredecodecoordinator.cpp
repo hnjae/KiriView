@@ -26,7 +26,7 @@ using kiriview::TestSupport::testImage;
 
 constexpr qsizetype testCacheByteBudget = 1024 * 1024;
 
-kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl& url)
 {
     return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
@@ -41,7 +41,7 @@ std::vector<kiriview::DirectMediaNavigationCandidate> mixedDirectMediaNavigation
     };
 }
 
-kiriview::DisplayedPredecodeImage displayedImage(const QUrl &url)
+kiriview::DisplayedPredecodeImage displayedImage(const QUrl& url)
 {
     return kiriview::DisplayedPredecodeImage {
         kiriview::DisplayedImageLocation::fromUrl(url),
@@ -53,14 +53,14 @@ kiriview::DisplayedPredecodeImage displayedImage(const QUrl &url)
 kiriview::PowerSaverProvider noOpPowerSaverProvider()
 {
     return kiriview::PowerSaverProvider {
-        [](QObject *, kiriview::PowerSaverChangedCallback) {
+        [](QObject*, kiriview::PowerSaverChangedCallback) {
             return std::unique_ptr<kiriview::PowerSaverStateMonitor>();
         },
     };
 }
 
-kiriview::MediaPredecodeCoordinator createCoordinator(QObject *parent,
-    ManualImageDataLoader &dataLoader, kiriview::PowerSaverProvider powerSaverProvider,
+kiriview::MediaPredecodeCoordinator createCoordinator(QObject* parent,
+    ManualImageDataLoader& dataLoader, kiriview::PowerSaverProvider powerSaverProvider,
     kiriview::TimerScheduler timerScheduler = {})
 {
     return kiriview::MediaPredecodeCoordinator(parent,
@@ -73,7 +73,7 @@ kiriview::MediaPredecodeCoordinator createCoordinator(QObject *parent,
 }
 
 kiriview::MediaPredecodeCoordinator createCoordinator(
-    QObject *parent, ManualImageDataLoader &dataLoader)
+    QObject* parent, ManualImageDataLoader& dataLoader)
 {
     return createCoordinator(parent, dataLoader, noOpPowerSaverProvider());
 }
@@ -130,7 +130,7 @@ void TestMediaPredecodeCoordinator::videoCursorKeepsImageCacheAndLoadsAdjacentIm
 void TestMediaPredecodeCoordinator::powerSaverSuppressesLoadsButRetainsDisplayedImages()
 {
     ManualImageDataLoader dataLoader;
-    ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
+    ManualPowerSaverMonitor* powerSaverMonitor = nullptr;
     ManualTimerScheduler timerScheduler;
     kiriview::MediaPredecodeCoordinator coordinator = createCoordinator(this, dataLoader,
         powerSaverProviderFor(powerSaverMonitor, true), timerScheduler.scheduler());
@@ -162,7 +162,7 @@ void TestMediaPredecodeCoordinator::powerSaverSuppressesLoadsButRetainsDisplayed
 void TestMediaPredecodeCoordinator::powerSaverReschedulesVideoCursorWithoutDisplayedImages()
 {
     ManualImageDataLoader dataLoader;
-    ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
+    ManualPowerSaverMonitor* powerSaverMonitor = nullptr;
     ManualTimerScheduler timerScheduler;
     kiriview::MediaPredecodeCoordinator coordinator = createCoordinator(this, dataLoader,
         powerSaverProviderFor(powerSaverMonitor, true), timerScheduler.scheduler());
@@ -192,7 +192,7 @@ void TestMediaPredecodeCoordinator::powerSaverReschedulesVideoCursorWithoutDispl
 void TestMediaPredecodeCoordinator::invalidScheduleClearsSuppressedDirectMediaNavigationCandidates()
 {
     ManualImageDataLoader dataLoader;
-    ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
+    ManualPowerSaverMonitor* powerSaverMonitor = nullptr;
     ManualTimerScheduler timerScheduler;
     kiriview::MediaPredecodeCoordinator coordinator = createCoordinator(this, dataLoader,
         powerSaverProviderFor(powerSaverMonitor, true), timerScheduler.scheduler());

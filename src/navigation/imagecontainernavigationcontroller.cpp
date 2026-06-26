@@ -12,7 +12,7 @@
 #include <utility>
 
 namespace {
-QUrl parentUrlForAdjacentContainerNavigation(const QUrl &currentContainerUrl)
+QUrl parentUrlForAdjacentContainerNavigation(const QUrl& currentContainerUrl)
 {
     if (currentContainerUrl.isEmpty()) {
         return {};
@@ -23,22 +23,22 @@ QUrl parentUrlForAdjacentContainerNavigation(const QUrl &currentContainerUrl)
 }
 
 namespace kiriview {
-ImageContainerNavigationController::ImageContainerNavigationController(QObject *parent,
-    const ImageDocumentPageCandidateRepository &candidateRepository, Callbacks callbacks)
+ImageContainerNavigationController::ImageContainerNavigationController(QObject* parent,
+    const ImageDocumentPageCandidateRepository& candidateRepository, Callbacks callbacks)
     : QObject(parent)
     , m_candidateRepository(candidateRepository)
     , m_callbacks(std::move(callbacks))
 {
 }
 
-bool ImageContainerNavigationController::canOpenAdjacentContainer(const QUrl &currentContainerUrl)
+bool ImageContainerNavigationController::canOpenAdjacentContainer(const QUrl& currentContainerUrl)
 {
     const QUrl parentUrl = parentUrlForAdjacentContainerNavigation(currentContainerUrl);
     return parentUrl.isValid() && !parentUrl.isEmpty();
 }
 
 void ImageContainerNavigationController::openAdjacentContainer(
-    const QUrl &currentContainerUrl, NavigationDirection direction)
+    const QUrl& currentContainerUrl, NavigationDirection direction)
 {
     const QUrl parentUrl = parentUrlForAdjacentContainerNavigation(currentContainerUrl);
     if (!parentUrl.isValid() || parentUrl.isEmpty()) {
@@ -54,7 +54,7 @@ void ImageContainerNavigationController::openAdjacentContainer(
             finishContainerNavigation(
                 operationId, std::move(candidates), direction, currentContainerUrl);
         },
-        [this, operationId, currentContainerUrl, parentUrl, direction](const QString &errorString) {
+        [this, operationId, currentContainerUrl, parentUrl, direction](const QString& errorString) {
             finishContainerNavigationListWithError(
                 operationId, currentContainerUrl, parentUrl, direction, errorString);
         });
@@ -69,7 +69,7 @@ void ImageContainerNavigationController::cancel()
 
 void ImageContainerNavigationController::finishContainerNavigation(quint64 operationId,
     std::vector<ContainerNavigationCandidate> candidates, NavigationDirection direction,
-    const QUrl &currentContainerUrl)
+    const QUrl& currentContainerUrl)
 {
     if (!m_navigationState.acceptsNavigation(operationId)) {
         return;
@@ -95,8 +95,8 @@ void ImageContainerNavigationController::finishContainerNavigation(quint64 opera
 }
 
 void ImageContainerNavigationController::finishContainerNavigationListWithError(quint64 operationId,
-    const QUrl &currentContainerUrl, const QUrl &parentUrl, NavigationDirection direction,
-    const QString &errorString)
+    const QUrl& currentContainerUrl, const QUrl& parentUrl, NavigationDirection direction,
+    const QString& errorString)
 {
     if (!m_navigationState.finishNavigation(operationId)) {
         return;
@@ -117,7 +117,7 @@ void ImageContainerNavigationController::finishContainerNavigationListWithError(
 }
 
 void ImageContainerNavigationController::loadFirstImageFromContainerNavigation(
-    quint64 operationId, const ContainerNavigationCandidate &container)
+    quint64 operationId, const ContainerNavigationCandidate& container)
 {
     const ImageContainerOpenPlan plan = imageContainerOpenPlanForCandidate(container);
     if (!plan.shouldLoadCandidates()) {
@@ -131,14 +131,14 @@ void ImageContainerNavigationController::loadFirstImageFromContainerNavigation(
         [this, operationId, containerUrl](std::vector<ImageDocumentPageCandidate> candidates) {
             finishContainerNavigationImageLoad(operationId, containerUrl, std::move(candidates));
         },
-        [this, operationId, containerUrl](const QString &errorString) {
+        [this, operationId, containerUrl](const QString& errorString) {
             finishContainerNavigationLoadWithError(
                 operationId, containerUrl, ImageContainerOpenError::Generic, errorString);
         });
 }
 
 void ImageContainerNavigationController::finishContainerNavigationImageLoad(quint64 operationId,
-    const QUrl &containerUrl, std::vector<ImageDocumentPageCandidate> candidates)
+    const QUrl& containerUrl, std::vector<ImageDocumentPageCandidate> candidates)
 {
     const ImageContainerOpenResult result = imageContainerOpenResultForCandidates(candidates);
     if (result.openedImage()) {
@@ -150,7 +150,7 @@ void ImageContainerNavigationController::finishContainerNavigationImageLoad(quin
 }
 
 void ImageContainerNavigationController::openImageFromContainerNavigation(
-    quint64 operationId, const ImageDocumentPageTarget &target, const QUrl &containerUrl)
+    quint64 operationId, const ImageDocumentPageTarget& target, const QUrl& containerUrl)
 {
     if (!m_navigationState.finishNavigation(operationId)) {
         return;
@@ -164,7 +164,7 @@ void ImageContainerNavigationController::openImageFromContainerNavigation(
 }
 
 void ImageContainerNavigationController::finishContainerNavigationLoadWithError(quint64 operationId,
-    const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString)
+    const QUrl& containerUrl, ContainerNavigationError error, const QString& errorString)
 {
     if (!m_navigationState.finishNavigation(operationId)) {
         return;

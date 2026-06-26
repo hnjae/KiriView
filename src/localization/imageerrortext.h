@@ -60,8 +60,8 @@ enum class ImageErrorActionTextId {
 
 QString imageErrorText(ImageErrorTextId id);
 QString imageErrorActionText(ImageErrorActionTextId id);
-QString heifDecodeErrorText(const QString &action, const QString &detail);
-QString rawDecodeErrorText(const QString &action, const QString &detail);
+QString heifDecodeErrorText(const QString& action, const QString& detail);
+QString rawDecodeErrorText(const QString& action, const QString& detail);
 }
 
 #endif

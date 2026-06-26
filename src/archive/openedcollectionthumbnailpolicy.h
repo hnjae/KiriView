@@ -16,18 +16,19 @@ enum class OpenedCollectionThumbnailSourcePlanKind {
     CacheableOpenedCollectionEntry,
 };
 
-struct OpenedCollectionThumbnailSourcePlan {
+struct OpenedCollectionThumbnailSourcePlan
+{
     OpenedCollectionThumbnailSourcePlanKind kind
         = OpenedCollectionThumbnailSourcePlanKind::Unsupported;
     OpenedCollectionScopeLocation openedCollectionScope;
 };
 
 bool openedCollectionEntrySupportsThumbnailContentIdentity(
-    const OpenedCollectionScopeLocation &openedCollectionScope, ImageDocumentPageKind pageKind);
+    const OpenedCollectionScopeLocation& openedCollectionScope, ImageDocumentPageKind pageKind);
 bool openedCollectionEntryPathSupportsThumbnailContentIdentity(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath);
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QString& entryPath);
 OpenedCollectionThumbnailSourcePlan openedCollectionThumbnailSourcePlan(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &entryUrl,
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& entryUrl,
     ImageDocumentPageKind pageKind);
 }
 

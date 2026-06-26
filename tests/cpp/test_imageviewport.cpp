@@ -74,7 +74,7 @@ class FakeKiriImageDisplaySource : public QObject
             setRetainWhileLoadingEligible NOTIFY changed)
 
 public:
-    explicit FakeKiriImageDisplaySource(int pageRole, QObject *parent = nullptr)
+    explicit FakeKiriImageDisplaySource(int pageRole, QObject* parent = nullptr)
         : QObject(parent)
         , m_pageRole(pageRole)
     {
@@ -101,7 +101,7 @@ public:
         Q_EMIT changed();
     }
 
-    void setProviderUrl(const QUrl &providerUrl)
+    void setProviderUrl(const QUrl& providerUrl)
     {
         if (m_providerUrl == providerUrl) {
             return;
@@ -111,7 +111,7 @@ public:
         Q_EMIT changed();
     }
 
-    void setRevisionToken(const QString &revisionToken)
+    void setRevisionToken(const QString& revisionToken)
     {
         if (m_revisionToken == revisionToken) {
             return;
@@ -121,7 +121,7 @@ public:
         Q_EMIT changed();
     }
 
-    void setSourceIdentity(const QString &sourceIdentity)
+    void setSourceIdentity(const QString& sourceIdentity)
     {
         if (m_sourceIdentity == sourceIdentity) {
             return;
@@ -131,7 +131,7 @@ public:
         Q_EMIT changed();
     }
 
-    void setSourceSizeHint(const QSize &sourceSizeHint)
+    void setSourceSizeHint(const QSize& sourceSizeHint)
     {
         if (m_sourceSizeHint == sourceSizeHint) {
             return;
@@ -237,8 +237,8 @@ class FakeKiriImageDocument : public QObject
     Q_PROPERTY(bool secondaryPageVisible READ secondaryPageVisible CONSTANT)
     Q_PROPERTY(bool rightToLeftReadingEnabled READ rightToLeftReadingEnabled CONSTANT)
     Q_PROPERTY(bool rightToLeftReadingAvailable READ rightToLeftReadingAvailable CONSTANT)
-    Q_PROPERTY(QObject *primaryDisplaySource READ primaryDisplaySource CONSTANT)
-    Q_PROPERTY(QObject *secondaryDisplaySource READ secondaryDisplaySource CONSTANT)
+    Q_PROPERTY(QObject* primaryDisplaySource READ primaryDisplaySource CONSTANT)
+    Q_PROPERTY(QObject* secondaryDisplaySource READ secondaryDisplaySource CONSTANT)
 
 public:
     enum class Status {
@@ -280,7 +280,7 @@ public:
     };
     Q_ENUM(ViewportCommandStatus)
 
-    explicit FakeKiriImageDocument(QObject *parent = nullptr)
+    explicit FakeKiriImageDocument(QObject* parent = nullptr)
         : QObject(parent)
         , m_primaryDisplaySource(0, this)
         , m_secondaryDisplaySource(1, this)
@@ -290,7 +290,7 @@ public:
     }
 
     QUrl sourceUrl() const { return m_sourceUrl; }
-    void setSourceUrl(const QUrl &sourceUrl)
+    void setSourceUrl(const QUrl& sourceUrl)
     {
         if (m_sourceUrl == sourceUrl) {
             return;
@@ -303,7 +303,7 @@ public:
     Status status() const { return Status::Ready; }
 
     QSizeF viewportSize() const { return m_viewportSize; }
-    void setViewportSize(const QSizeF &viewportSize)
+    void setViewportSize(const QSizeF& viewportSize)
     {
         if (m_viewportSize == viewportSize) {
             return;
@@ -316,7 +316,7 @@ public:
     }
 
     QPointF viewportContentPosition() const { return viewportFrame().contentPosition; }
-    void setViewportContentPosition(const QPointF &viewportContentPosition)
+    void setViewportContentPosition(const QPointF& viewportContentPosition)
     {
         const kiriview::ImageViewportFrame previousFrame = viewportFrame();
         m_viewportContentPosition = viewportContentPosition;
@@ -343,7 +343,7 @@ public:
     bool viewportPannable() const { return viewportFrame().pannable; }
 
     QRectF visibleItemRect() const { return m_visibleItemRect; }
-    void setVisibleItemRect(const QRectF &visibleItemRect)
+    void setVisibleItemRect(const QRectF& visibleItemRect)
     {
         if (m_visibleItemRect == visibleItemRect) {
             return;
@@ -395,8 +395,8 @@ public:
     bool secondaryPageVisible() const { return false; }
     bool rightToLeftReadingEnabled() const { return false; }
     bool rightToLeftReadingAvailable() const { return false; }
-    QObject *primaryDisplaySource() { return &m_primaryDisplaySource; }
-    QObject *secondaryDisplaySource() { return &m_secondaryDisplaySource; }
+    QObject* primaryDisplaySource() { return &m_primaryDisplaySource; }
+    QObject* secondaryDisplaySource() { return &m_secondaryDisplaySource; }
 
     Q_INVOKABLE double steppedManualZoomPercent(double stepCount) const
     {
@@ -442,7 +442,7 @@ public:
             QPointF(m_viewportSize.width() / 2.0, m_viewportSize.height() / 2.0));
     }
 
-    Q_INVOKABLE bool requestZoomByStep(double stepCount, const QPointF &viewportAnchorPoint)
+    Q_INVOKABLE bool requestZoomByStep(double stepCount, const QPointF& viewportAnchorPoint)
     {
         if (!pointIsFinite(viewportAnchorPoint)) {
             return false;
@@ -466,7 +466,7 @@ public:
         return true;
     }
 
-    Q_INVOKABLE bool requestToggleFitOrActualSize(const QPointF &viewportPoint)
+    Q_INVOKABLE bool requestToggleFitOrActualSize(const QPointF& viewportPoint)
     {
         if (!pointIsFinite(viewportPoint)) {
             return false;
@@ -485,14 +485,14 @@ public:
         return requestAnchoredManualZoom(clampedManualZoomPercent(100.0), anchorPoint);
     }
 
-    Q_INVOKABLE bool viewportPointInsideImage(const QPointF &viewportPoint) const
+    Q_INVOKABLE bool viewportPointInsideImage(const QPointF& viewportPoint) const
     {
         ++m_documentHitTestHelperCallCount;
         return kiriview::imageViewportPointInsideImage(
             viewportContentPosition(), viewportPoint, viewportImageRect());
     }
 
-    Q_INVOKABLE QPointF nearestImageViewportPoint(const QPointF &viewportAnchorPoint) const
+    Q_INVOKABLE QPointF nearestImageViewportPoint(const QPointF& viewportAnchorPoint) const
     {
         ++m_documentHitTestHelperCallCount;
         return kiriview::imageViewportNearestImagePoint(
@@ -579,8 +579,8 @@ public:
         m_primaryDisplaySource.setLoadAcknowledgmentRequired(true);
     }
 
-    Q_INVOKABLE void acknowledgeStillImageDisplayLoad(int pageRole, const QUrl &providerUrl,
-        const QString &revisionToken, const QString &sourceIdentity, int outcome)
+    Q_INVOKABLE void acknowledgeStillImageDisplayLoad(int pageRole, const QUrl& providerUrl,
+        const QString& revisionToken, const QString& sourceIdentity, int outcome)
     {
         m_lastStillImageAcknowledgedPageRole = pageRole;
         m_lastStillImageAcknowledgedProviderUrl = providerUrl;
@@ -590,8 +590,8 @@ public:
         ++m_stillImageLoadAcknowledgmentCount;
     }
 
-    Q_INVOKABLE void acknowledgeDisplayImageLoad(int pageRole, const QUrl &providerUrl,
-        const QString &revisionToken, const QString &sourceIdentity, int outcome)
+    Q_INVOKABLE void acknowledgeDisplayImageLoad(int pageRole, const QUrl& providerUrl,
+        const QString& revisionToken, const QString& sourceIdentity, int outcome)
     {
         m_lastAcknowledgedPageRole = pageRole;
         m_lastAcknowledgedProviderUrl = providerUrl;
@@ -626,18 +626,18 @@ public:
             kiriview::imageViewportInitialZScanPosition(m_viewportSize, viewportImageRect()));
     }
 
-    Q_INVOKABLE bool requestViewportContentPosition(const QPointF &viewportContentPosition)
+    Q_INVOKABLE bool requestViewportContentPosition(const QPointF& viewportContentPosition)
     {
         return issueViewportContentPositionCommand(viewportContentPosition) > 0;
     }
 
-    Q_INVOKABLE bool viewportCommandRevisionNewerThan(const QString &revisionToken) const
+    Q_INVOKABLE bool viewportCommandRevisionNewerThan(const QString& revisionToken) const
     {
         return revisionIsNewerThanToken(m_viewportCommandRevision, revisionToken);
     }
 
     Q_INVOKABLE bool viewportProjectionNewerThan(
-        const QString &commandRevisionToken, const QString &observationRevisionToken) const
+        const QString& commandRevisionToken, const QString& observationRevisionToken) const
     {
         quint64 commandRevision = 0;
         quint64 observationRevision = 0;
@@ -651,7 +651,7 @@ public:
                 && m_viewportObservationRevision > observationRevision);
     }
 
-    Q_INVOKABLE bool beginViewportCommandApplication(const QString &commandRevisionToken)
+    Q_INVOKABLE bool beginViewportCommandApplication(const QString& commandRevisionToken)
     {
         quint64 commandRevision = 0;
         return revisionFromToken(commandRevisionToken, &commandRevision)
@@ -659,7 +659,7 @@ public:
     }
 
     Q_INVOKABLE bool completeViewportCommandApplication(
-        const QString &commandRevisionToken, const QPointF &actualContentPosition)
+        const QString& commandRevisionToken, const QPointF& actualContentPosition)
     {
         quint64 commandRevision = 0;
         return revisionFromToken(commandRevisionToken, &commandRevision)
@@ -667,7 +667,7 @@ public:
     }
 
     Q_INVOKABLE bool acknowledgeViewportCommand(
-        const QString &commandRevisionToken, const QPointF &actualContentPosition)
+        const QString& commandRevisionToken, const QPointF& actualContentPosition)
     {
         quint64 commandRevision = 0;
         return revisionFromToken(commandRevisionToken, &commandRevision)
@@ -675,7 +675,7 @@ public:
     }
 
     Q_INVOKABLE bool observeViewportContentPosition(
-        const QPointF &contentPosition, ViewportObservationOrigin)
+        const QPointF& contentPosition, ViewportObservationOrigin)
     {
         ++m_viewportObservationRevision;
         m_viewportCommandStatus = ViewportCommandStatus::Settled;
@@ -696,14 +696,14 @@ Q_SIGNALS:
     void zoomModeChanged();
 
 private:
-    static bool pointIsFinite(const QPointF &point)
+    static bool pointIsFinite(const QPointF& point)
     {
         return std::isfinite(point.x()) && std::isfinite(point.y());
     }
 
     static QString revisionToken(quint64 revision) { return QString::number(revision); }
 
-    static bool revisionFromToken(const QString &revisionToken, quint64 *revision)
+    static bool revisionFromToken(const QString& revisionToken, quint64* revision)
     {
         bool ok = false;
         const quint64 parsedRevision = revisionToken.toULongLong(&ok);
@@ -715,13 +715,13 @@ private:
         return true;
     }
 
-    static bool revisionIsNewerThanToken(quint64 revision, const QString &revisionToken)
+    static bool revisionIsNewerThanToken(quint64 revision, const QString& revisionToken)
     {
         quint64 tokenRevision = 0;
         return !revisionFromToken(revisionToken, &tokenRevision) || revision > tokenRevision;
     }
 
-    quint64 issueViewportContentPositionCommand(const QPointF &viewportContentPosition)
+    quint64 issueViewportContentPositionCommand(const QPointF& viewportContentPosition)
     {
         const kiriview::ImageViewportFrame previousFrame = viewportFrame();
         m_viewportContentPosition = viewportContentPosition;
@@ -746,7 +746,7 @@ private:
     }
 
     bool completeViewportCommandApplication(
-        quint64 commandRevision, const QPointF &actualContentPosition)
+        quint64 commandRevision, const QPointF& actualContentPosition)
     {
         if (!acceptCommandRevision(commandRevision)) {
             return false;
@@ -759,7 +759,7 @@ private:
         return true;
     }
 
-    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF &actualContentPosition)
+    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF& actualContentPosition)
     {
         if (!acceptCommandRevision(commandRevision)) {
             return false;
@@ -773,7 +773,7 @@ private:
         return true;
     }
 
-    bool requestViewportInteractionContentPosition(const QPointF &contentPosition)
+    bool requestViewportInteractionContentPosition(const QPointF& contentPosition)
     {
         if (!pointIsFinite(contentPosition)) {
             return false;
@@ -799,7 +799,7 @@ private:
         return false;
     }
 
-    bool requestAnchoredManualZoom(double zoomPercent, const QPointF &viewportAnchorPoint)
+    bool requestAnchoredManualZoom(double zoomPercent, const QPointF& viewportAnchorPoint)
     {
         if (!pointIsFinite(viewportAnchorPoint)) {
             return false;
@@ -880,18 +880,18 @@ class FakeKiriImageViewportContextBridge : public QQuickItem
     Q_OBJECT
 
     Q_PROPERTY(
-        FakeKiriImageDocument *document READ document WRITE setDocument NOTIFY documentChanged)
+        FakeKiriImageDocument* document READ document WRITE setDocument NOTIFY documentChanged)
     Q_PROPERTY(
         bool secondaryPage READ secondaryPage WRITE setSecondaryPage NOTIFY secondaryPageChanged)
 
 public:
-    explicit FakeKiriImageViewportContextBridge(QQuickItem *parent = nullptr)
+    explicit FakeKiriImageViewportContextBridge(QQuickItem* parent = nullptr)
         : QQuickItem(parent)
     {
     }
 
-    FakeKiriImageDocument *document() const { return m_document; }
-    void setDocument(FakeKiriImageDocument *document)
+    FakeKiriImageDocument* document() const { return m_document; }
+    void setDocument(FakeKiriImageDocument* document)
     {
         if (m_document == document) {
             return;
@@ -917,7 +917,7 @@ Q_SIGNALS:
     void secondaryPageChanged();
 
 private:
-    FakeKiriImageDocument *m_document = nullptr;
+    FakeKiriImageDocument* m_document = nullptr;
     bool m_secondaryPage = false;
 };
 
@@ -926,19 +926,19 @@ class FakeKiriImageViewportCommandBridge : public QQuickItem
     Q_OBJECT
 
     Q_PROPERTY(
-        FakeKiriImageDocument *document READ document WRITE setDocument NOTIFY documentChanged)
-    Q_PROPERTY(QQuickItem *target READ target WRITE setTarget NOTIFY targetChanged)
+        FakeKiriImageDocument* document READ document WRITE setDocument NOTIFY documentChanged)
+    Q_PROPERTY(QQuickItem* target READ target WRITE setTarget NOTIFY targetChanged)
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
     Q_PROPERTY(bool applying READ applying NOTIFY applyingChanged)
 
 public:
-    explicit FakeKiriImageViewportCommandBridge(QQuickItem *parent = nullptr)
+    explicit FakeKiriImageViewportCommandBridge(QQuickItem* parent = nullptr)
         : QQuickItem(parent)
     {
     }
 
-    FakeKiriImageDocument *document() const { return m_document; }
-    void setDocument(FakeKiriImageDocument *document)
+    FakeKiriImageDocument* document() const { return m_document; }
+    void setDocument(FakeKiriImageDocument* document)
     {
         if (m_document == document) {
             return;
@@ -957,8 +957,8 @@ public:
         applyViewportProjection();
     }
 
-    QQuickItem *target() const { return m_target; }
-    void setTarget(QQuickItem *target)
+    QQuickItem* target() const { return m_target; }
+    void setTarget(QQuickItem* target)
     {
         if (m_target == target) {
             return;
@@ -993,7 +993,7 @@ public:
             m_target->property("contentX").toReal(), m_target->property("contentY").toReal());
     }
 
-    Q_INVOKABLE bool requestContentPosition(const QPointF &contentPosition)
+    Q_INVOKABLE bool requestContentPosition(const QPointF& contentPosition)
     {
         if (!ready()) {
             return false;
@@ -1070,27 +1070,28 @@ private:
         Q_EMIT applyingChanged();
     }
 
-    FakeKiriImageDocument *m_document = nullptr;
-    QQuickItem *m_target = nullptr;
+    FakeKiriImageDocument* m_document = nullptr;
+    QQuickItem* m_target = nullptr;
     bool m_active = false;
     bool m_applying = false;
     QString m_appliedCommandRevisionToken = QStringLiteral("0");
     QString m_appliedObservationRevisionToken = QStringLiteral("0");
 };
 
-struct ImageViewportFixture {
+struct ImageViewportFixture
+{
     std::unique_ptr<QQuickView> view;
     std::unique_ptr<QTemporaryDir> qmlDirectory;
-    QObject *root = nullptr;
+    QObject* root = nullptr;
     QString errorString;
 
     bool isValid() const { return view != nullptr && root != nullptr; }
 };
 
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
@@ -1102,7 +1103,7 @@ void registerKiriViewQmlTypes()
         return;
     }
 
-    const char *uri = "org.hnjae.kiriview.tests";
+    const char* uri = "org.hnjae.kiriview.tests";
     qmlRegisterType<FakeKiriImageDocument>(uri, 1, 0, "KiriImageDocument");
     qmlRegisterType<FakeKiriImageViewportCommandBridge>(
         uri, 1, 0, "KiriImageViewportCommandBridge");
@@ -1111,13 +1112,13 @@ void registerKiriViewQmlTypes()
     registered = true;
 }
 
-QString sourceQmlPath(const QString &fileName)
+QString sourceQmlPath(const QString& fileName)
 {
     return QDir(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR))
         .absoluteFilePath(QStringLiteral("../../src/qml/%1").arg(fileName));
 }
 
-bool writeFile(const QString &path, const QByteArray &content, QString *errorString)
+bool writeFile(const QString& path, const QByteArray& content, QString* errorString)
 {
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
@@ -1132,7 +1133,7 @@ bool writeFile(const QString &path, const QByteArray &content, QString *errorStr
     return true;
 }
 
-std::unique_ptr<QTemporaryDir> createTestQmlDirectory(QString *errorString)
+std::unique_ptr<QTemporaryDir> createTestQmlDirectory(QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -1147,7 +1148,7 @@ std::unique_ptr<QTemporaryDir> createTestQmlDirectory(QString *errorString)
         QStringLiteral("MediaViewportDelegate.qml"),
         QStringLiteral("ZoomWheelStepPolicy.qml"),
     };
-    for (const QString &fileName : files) {
+    for (const QString& fileName : files) {
         QFile sourceFile(sourceQmlPath(fileName));
         if (!sourceFile.open(QIODevice::ReadOnly)) {
             *errorString = QStringLiteral("failed to read %1: %2")
@@ -1175,9 +1176,9 @@ std::unique_ptr<QTemporaryDir> createTestQmlDirectory(QString *errorString)
     return directory;
 }
 
-QString qmlDirectoryImport(const QString &path) { return QUrl::fromLocalFile(path).toString(); }
+QString qmlDirectoryImport(const QString& path) { return QUrl::fromLocalFile(path).toString(); }
 
-QString fixtureQml(const QString &qmlImportPath)
+QString fixtureQml(const QString& qmlImportPath)
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -1346,7 +1347,7 @@ ImageViewportFixture createFixture()
         return fixture;
     }
 
-    QObject *root = component.create();
+    QObject* root = component.create();
     if (root == nullptr) {
         fixture.errorString = component.errorString();
         return fixture;
@@ -1364,7 +1365,7 @@ ImageViewportFixture createFixture()
     return fixture;
 }
 
-bool invokeBool(QObject *object, const char *method)
+bool invokeBool(QObject* object, const char* method)
 {
     QVariant result;
     const bool invoked = QMetaObject::invokeMethod(
@@ -1372,7 +1373,7 @@ bool invokeBool(QObject *object, const char *method)
     return invoked && result.toBool();
 }
 
-qreal invokeReal(QObject *object, const char *method)
+qreal invokeReal(QObject* object, const char* method)
 {
     QVariant result;
     const bool invoked = QMetaObject::invokeMethod(
@@ -1380,7 +1381,7 @@ qreal invokeReal(QObject *object, const char *method)
     return invoked ? result.toReal() : std::numeric_limits<qreal>::quiet_NaN();
 }
 
-int invokeInt(QObject *object, const char *method)
+int invokeInt(QObject* object, const char* method)
 {
     QVariant result;
     const bool invoked = QMetaObject::invokeMethod(
@@ -1388,7 +1389,7 @@ int invokeInt(QObject *object, const char *method)
     return invoked ? result.toInt() : std::numeric_limits<int>::min();
 }
 
-QString invokeString(QObject *object, const char *method)
+QString invokeString(QObject* object, const char* method)
 {
     QVariant result;
     const bool invoked = QMetaObject::invokeMethod(
@@ -1396,29 +1397,29 @@ QString invokeString(QObject *object, const char *method)
     return invoked ? result.toString() : QString();
 }
 
-void invokeVoid(QObject *object, const char *method)
+void invokeVoid(QObject* object, const char* method)
 {
     QVERIFY(QMetaObject::invokeMethod(object, method, Qt::DirectConnection));
 }
 
-void invokeSetReal(QObject *object, const char *method, qreal value)
+void invokeSetReal(QObject* object, const char* method, qreal value)
 {
     QVERIFY(QMetaObject::invokeMethod(object, method, Q_ARG(QVariant, QVariant::fromValue(value))));
 }
 
-void sendLeftClick(QQuickView *view, const QPointF &position)
+void sendLeftClick(QQuickView* view, const QPointF& position)
 {
     QTest::mouseClick(view, Qt::LeftButton, Qt::NoModifier, position.toPoint());
     QCoreApplication::processEvents();
 }
 
-void sendLeftDoubleClick(QQuickView *view, const QPointF &position)
+void sendLeftDoubleClick(QQuickView* view, const QPointF& position)
 {
     QTest::mouseDClick(view, Qt::LeftButton, Qt::NoModifier, position.toPoint());
     QCoreApplication::processEvents();
 }
 
-void sendWheel(QQuickView *view, const QPointF &position, int angleDeltaY,
+void sendWheel(QQuickView* view, const QPointF& position, int angleDeltaY,
     Qt::KeyboardModifiers modifiers = Qt::NoModifier, Qt::MouseButtons buttons = Qt::NoButton)
 {
     QWheelEvent event(position, view->mapToGlobal(position.toPoint()), QPoint(),
@@ -1427,7 +1428,7 @@ void sendWheel(QQuickView *view, const QPointF &position, int angleDeltaY,
     QCoreApplication::processEvents();
 }
 
-void sendRightButtonWheel(QQuickView *view, const QPointF &position, int angleDeltaY)
+void sendRightButtonWheel(QQuickView* view, const QPointF& position, int angleDeltaY)
 {
     const QPoint point = position.toPoint();
     QTest::mousePress(view, Qt::RightButton, Qt::NoModifier, point);
@@ -1436,7 +1437,7 @@ void sendRightButtonWheel(QQuickView *view, const QPointF &position, int angleDe
     QCoreApplication::processEvents();
 }
 
-void preparePannableImage(ImageViewportFixture &fixture)
+void preparePannableImage(ImageViewportFixture& fixture)
 {
     QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
     invokeSetReal(fixture.root, "setManualZoom", 100.0);
@@ -1612,20 +1613,20 @@ void TestImageViewport::viewportUsesDisplayImagePagesWithContextBridge()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
 
-    QObject *primaryBridge
-        = fixture.root->findChild<QObject *>(QStringLiteral("primaryContextBridge"));
-    QObject *secondaryBridge
-        = fixture.root->findChild<QObject *>(QStringLiteral("secondaryContextBridge"));
+    QObject* primaryBridge
+        = fixture.root->findChild<QObject*>(QStringLiteral("primaryContextBridge"));
+    QObject* secondaryBridge
+        = fixture.root->findChild<QObject*>(QStringLiteral("secondaryContextBridge"));
     QVERIFY(primaryBridge != nullptr);
     QVERIFY(secondaryBridge != nullptr);
     QCOMPARE(primaryBridge->property("secondaryPage").toBool(), false);
     QCOMPARE(secondaryBridge->property("secondaryPage").toBool(), true);
     QVERIFY(
-        fixture.root->findChild<QObject *>(QStringLiteral("primaryDisplayImagePage")) != nullptr);
+        fixture.root->findChild<QObject*>(QStringLiteral("primaryDisplayImagePage")) != nullptr);
     QVERIFY(
-        fixture.root->findChild<QObject *>(QStringLiteral("secondaryDisplayImagePage")) != nullptr);
-    QVERIFY(fixture.root->findChild<QObject *>(QStringLiteral("primaryImageView")) == nullptr);
-    QVERIFY(fixture.root->findChild<QObject *>(QStringLiteral("secondaryImageView")) == nullptr);
+        fixture.root->findChild<QObject*>(QStringLiteral("secondaryDisplayImagePage")) != nullptr);
+    QVERIFY(fixture.root->findChild<QObject*>(QStringLiteral("primaryImageView")) == nullptr);
+    QVERIFY(fixture.root->findChild<QObject*>(QStringLiteral("secondaryImageView")) == nullptr);
 }
 
 void TestImageViewport::displayImagePageLoadAcknowledgmentReachesDocument()

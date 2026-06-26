@@ -9,8 +9,8 @@
 
 namespace {
 bool refreshSelectionChanged(kiriview::ActiveNavigationSourceKind sourceKind,
-    const kiriview::ActiveNavigationSnapshot &previousSnapshot,
-    const kiriview::DirectMediaNavigationBoundaryState &boundaryState)
+    const kiriview::ActiveNavigationSnapshot& previousSnapshot,
+    const kiriview::DirectMediaNavigationBoundaryState& boundaryState)
 {
     return sourceKind != kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia
         || !previousSnapshot.known || previousSnapshot.currentNumber != boundaryState.currentNumber
@@ -49,7 +49,7 @@ documentSessionDirectMediaNavigationRefreshApplication(ActiveNavigationSourceKin
 
 DocumentSessionDirectMediaNavigationOpenApplication
 documentSessionDirectMediaNavigationOpenApplication(
-    const QUrl &activeDirectMediaCursorUrl, DocumentSessionDirectMediaNavigationOpenResult result)
+    const QUrl& activeDirectMediaCursorUrl, DocumentSessionDirectMediaNavigationOpenResult result)
 {
     if (!result.succeeded) {
         return DocumentSessionDirectMediaNavigationOpenApplication {

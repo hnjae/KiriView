@@ -29,14 +29,14 @@ using kiriview::TestSupport::staticDisplayTestImagePayload;
 using kiriview::TestSupport::staticImageDataDecoder;
 using kiriview::TestSupport::testImage;
 
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl& url)
 {
     return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
-kiriview::DisplayedPredecodeImage displayedImage(const QUrl &url)
+kiriview::DisplayedPredecodeImage displayedImage(const QUrl& url)
 {
     return kiriview::DisplayedPredecodeImage {
         kiriview::DisplayedImageLocation::fromUrl(url),
@@ -45,7 +45,7 @@ kiriview::DisplayedPredecodeImage displayedImage(const QUrl &url)
     };
 }
 
-kiriview::DocumentSessionMediaPredecodeInput activeImageInput(const QUrl &currentUrl)
+kiriview::DocumentSessionMediaPredecodeInput activeImageInput(const QUrl& currentUrl)
 {
     return kiriview::DocumentSessionMediaPredecodeInput {
         true,
@@ -58,14 +58,14 @@ kiriview::DocumentSessionMediaPredecodeInput activeImageInput(const QUrl &curren
     };
 }
 
-kiriview::DocumentSessionMediaPredecodeInput inactiveImageInput(const QUrl &currentUrl)
+kiriview::DocumentSessionMediaPredecodeInput inactiveImageInput(const QUrl& currentUrl)
 {
     kiriview::DocumentSessionMediaPredecodeInput input = activeImageInput(currentUrl);
     input.directMediaNavigationActive = false;
     return input;
 }
 
-kiriview::MediaPredecodeDependencyOverrides predecodeDependencies(ManualImageDataLoader &dataLoader)
+kiriview::MediaPredecodeDependencyOverrides predecodeDependencies(ManualImageDataLoader& dataLoader)
 {
     kiriview::MediaPredecodeDependencyOverrides dependencies;
     dependencies.imageDecode = imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder());

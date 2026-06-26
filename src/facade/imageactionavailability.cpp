@@ -11,7 +11,7 @@ kiriview::ApplicationActions::ImageShortcutScope applicationShortcutScope(
 }
 }
 
-ImageActionAvailability::ImageActionAvailability(QObject *parent)
+ImageActionAvailability::ImageActionAvailability(QObject* parent)
     : QObject(parent)
     , m_runtime([this]() { Q_EMIT availabilityChanged(); })
 {

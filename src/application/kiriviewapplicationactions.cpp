@@ -11,9 +11,10 @@ using ActivationScope = kiriview::ApplicationActions::ApplicationShortcutActivat
 using Category = kiriview::ApplicationActions::ShortcutHelpCategory;
 using Scope = kiriview::ApplicationActions::ImageShortcutScope;
 
-struct ShortcutHelpCategoryDefinition {
+struct ShortcutHelpCategoryDefinition
+{
     Category category;
-    const char *key;
+    const char* key;
     KLazyLocalizedString text;
     int order = 0;
 };
@@ -72,7 +73,7 @@ constexpr Actions::DefaultShortcutRouteSpec shortcutRouteSpecs(Routes... routes)
     return Actions::DefaultShortcutRouteSpec { { routes... }, sizeof...(Routes) };
 }
 
-constexpr Actions::ActionDefinition existingAction(Actions::ActionId actionId, const char *name,
+constexpr Actions::ActionDefinition existingAction(Actions::ActionId actionId, const char* name,
     Category shortcutHelpCategory, Actions::DefaultShortcutSpec programWideShortcuts,
     Actions::DefaultShortcutSpec viewerLocalShortcuts,
     Actions::DefaultShortcutRouteSpec shortcutRoutes)
@@ -82,7 +83,7 @@ constexpr Actions::ActionDefinition existingAction(Actions::ActionId actionId, c
         shortcutRoutes, shortcutHelpCategory };
 }
 
-constexpr Actions::ActionDefinition inheritedAction(Actions::ActionId actionId, const char *name,
+constexpr Actions::ActionDefinition inheritedAction(Actions::ActionId actionId, const char* name,
     Category shortcutHelpCategory,
     Actions::DefaultShortcutRouteSpec shortcutRoutes = noShortcutRoutes())
 {
@@ -91,8 +92,8 @@ constexpr Actions::ActionDefinition inheritedAction(Actions::ActionId actionId, 
         shortcutRoutes, shortcutHelpCategory };
 }
 
-constexpr Actions::ActionDefinition registeredAction(Actions::ActionId actionId, const char *name,
-    Category shortcutHelpCategory, KLazyLocalizedString text, const char *iconName,
+constexpr Actions::ActionDefinition registeredAction(Actions::ActionId actionId, const char* name,
+    Category shortcutHelpCategory, KLazyLocalizedString text, const char* iconName,
     Actions::DefaultShortcutSpec programWideShortcuts,
     Actions::DefaultShortcutSpec viewerLocalShortcuts,
     Actions::DefaultShortcutRouteSpec shortcutRoutes)
@@ -102,7 +103,7 @@ constexpr Actions::ActionDefinition registeredAction(Actions::ActionId actionId,
         shortcutRoutes, shortcutHelpCategory };
 }
 
-constexpr Actions::ActionDefinition standardAction(Actions::ActionId actionId, const char *name,
+constexpr Actions::ActionDefinition standardAction(Actions::ActionId actionId, const char* name,
     Category shortcutHelpCategory, KStandardActions::StandardAction actionType,
     KLazyLocalizedString text, Actions::DefaultShortcutSpec programWideShortcuts,
     Actions::DefaultShortcutSpec viewerLocalShortcuts,
@@ -113,7 +114,7 @@ constexpr Actions::ActionDefinition standardAction(Actions::ActionId actionId, c
         shortcutHelpCategory };
 }
 
-constexpr Actions::ActionDefinition showMenubarAction(Actions::ActionId actionId, const char *name,
+constexpr Actions::ActionDefinition showMenubarAction(Actions::ActionId actionId, const char* name,
     Category shortcutHelpCategory, KStandardActions::StandardAction actionType,
     KLazyLocalizedString text, Actions::DefaultShortcutSpec defaultShortcuts,
     Actions::DefaultShortcutRouteSpec shortcutRoutes)
@@ -123,8 +124,8 @@ constexpr Actions::ActionDefinition showMenubarAction(Actions::ActionId actionId
         shortcutHelpCategory, Actions::ShortcutConfigurability::NonConfigurable };
 }
 
-constexpr Actions::ActionDefinition fixedCommandAction(Actions::ActionId actionId, const char *name,
-    Category shortcutHelpCategory, KLazyLocalizedString text, const char *iconName,
+constexpr Actions::ActionDefinition fixedCommandAction(Actions::ActionId actionId, const char* name,
+    Category shortcutHelpCategory, KLazyLocalizedString text, const char* iconName,
     Actions::DefaultShortcutSpec defaultShortcuts)
 {
     return Actions::ActionDefinition { actionId, name, Actions::RegistrationKind::Registered,
@@ -136,7 +137,7 @@ constexpr Actions::ActionDefinition fixedCommandAction(Actions::ActionId actionI
 constexpr Actions::ActionDefinition zoomPresetAction(
     Actions::ActionId actionId, Actions::DefaultShortcutSpec viewerLocalShortcuts)
 {
-    const Actions::ZoomPresetDescriptor *preset = Actions::zoomPresetDescriptorForAction(actionId);
+    const Actions::ZoomPresetDescriptor* preset = Actions::zoomPresetDescriptorForAction(actionId);
     return registeredAction(actionId, preset == nullptr ? "" : preset->actionName, Category::View,
         preset == nullptr ? KLazyLocalizedString() : preset->actionText, nullptr,
         noDefaultShortcuts(), viewerLocalShortcuts,
@@ -305,13 +306,13 @@ bool actionIdInRange(Actions::ActionId actionId)
     return index >= 0 && index < static_cast<int>(Actions::actionDefinitionCount);
 }
 
-QKeySequence shortcut(const char *sequence)
+QKeySequence shortcut(const char* sequence)
 {
     return QKeySequence::fromString(QString::fromLatin1(sequence), QKeySequence::PortableText);
 }
 
 QList<QKeySequence> portableShortcutList(
-    const std::array<const char *, Actions::maxPortableShortcutCount> &sequences, std::size_t count)
+    const std::array<const char*, Actions::maxPortableShortcutCount>& sequences, std::size_t count)
 {
     QList<QKeySequence> shortcutList;
     shortcutList.reserve(static_cast<qsizetype>(count));
@@ -327,9 +328,9 @@ QList<QKeySequence> standardShortcuts(QKeySequence::StandardKey key)
     return QKeySequence::keyBindings(key);
 }
 
-const ShortcutHelpCategoryDefinition &shortcutHelpCategoryDefinition(Category category)
+const ShortcutHelpCategoryDefinition& shortcutHelpCategoryDefinition(Category category)
 {
-    for (const ShortcutHelpCategoryDefinition &definition : shortcutHelpCategories) {
+    for (const ShortcutHelpCategoryDefinition& definition : shortcutHelpCategories) {
         if (definition.category == category) {
             return definition;
         }
@@ -340,12 +341,12 @@ const ShortcutHelpCategoryDefinition &shortcutHelpCategoryDefinition(Category ca
 }
 
 namespace kiriview::ApplicationActions {
-const std::array<ActionDefinition, actionDefinitionCount> &definitions()
+const std::array<ActionDefinition, actionDefinitionCount>& definitions()
 {
     return actionDefinitions;
 }
 
-const ActionDefinition *definitionForId(Actions::ActionId actionId)
+const ActionDefinition* definitionForId(Actions::ActionId actionId)
 {
     if (!actionIdInRange(actionId)) {
         return nullptr;
@@ -354,9 +355,9 @@ const ActionDefinition *definitionForId(Actions::ActionId actionId)
     return &actionDefinitions[static_cast<std::size_t>(actionId)];
 }
 
-const ActionDefinition *definitionForName(const QString &actionName)
+const ActionDefinition* definitionForName(const QString& actionName)
 {
-    for (const ActionDefinition &definition : actionDefinitions) {
+    for (const ActionDefinition& definition : actionDefinitions) {
         if (actionName == QString::fromLatin1(definition.name)) {
             return &definition;
         }
@@ -367,16 +368,16 @@ const ActionDefinition *definitionForName(const QString &actionName)
 
 QString actionName(Actions::ActionId actionId)
 {
-    const Actions::ActionDefinition *definition = definitionForId(actionId);
+    const Actions::ActionDefinition* definition = definitionForId(actionId);
     return definition == nullptr ? QString() : QString::fromLatin1(definition->name);
 }
 
-QString latin1String(const char *text)
+QString latin1String(const char* text)
 {
     return text == nullptr ? QString() : QString::fromLatin1(text);
 }
 
-QString localizedString(const KLazyLocalizedString &text)
+QString localizedString(const KLazyLocalizedString& text)
 {
     return text.isEmpty() ? QString() : text.toString();
 }
@@ -396,7 +397,7 @@ int shortcutHelpCategoryOrder(ShortcutHelpCategory category)
     return shortcutHelpCategoryDefinition(category).order;
 }
 
-QList<QKeySequence> defaultShortcuts(const DefaultShortcutSpec &spec)
+QList<QKeySequence> defaultShortcuts(const DefaultShortcutSpec& spec)
 {
     switch (spec.kind) {
     case ShortcutSpecKind::None:

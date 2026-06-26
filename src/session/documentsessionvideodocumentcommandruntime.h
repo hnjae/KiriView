@@ -12,7 +12,7 @@
 
 namespace kiriview {
 using DocumentSessionVideoOutputClearPort
-    = std::function<void(const DocumentSessionVideoOutputAttachmentPort &)>;
+    = std::function<void(const DocumentSessionVideoOutputAttachmentPort&)>;
 
 class DocumentSessionVideoDocumentCommandRuntime final
 {
@@ -21,12 +21,12 @@ public:
         DocumentSessionVideoDocumentCommandPort commands = {},
         DocumentSessionVideoOutputClearPort clearVideoOutput = {});
 
-    void setSourceUrl(const QUrl &sourceUrl);
-    void leaveMode(const QUrl &currentSourceUrl);
+    void setSourceUrl(const QUrl& sourceUrl);
+    void leaveMode(const QUrl& currentSourceUrl);
     DocumentSessionVideoOutputAttachmentPort outputAttachmentPort() const;
 
 private:
-    QObject *videoOutput() const;
+    QObject* videoOutput() const;
     void clearVideoOutput();
 
     DocumentSessionVideoDocumentCommandPort m_commands;

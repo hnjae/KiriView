@@ -20,11 +20,11 @@ namespace kiriview {
 class ImageAnimationPlayer
 {
 public:
-    using FrameReadyCallback = std::function<void(const QImage &image)>;
-    using ErrorCallback = std::function<void(const QString &errorString)>;
+    using FrameReadyCallback = std::function<void(const QImage& image)>;
+    using ErrorCallback = std::function<void(const QString& errorString)>;
     using PlaybackStoppedCallback = std::function<void()>;
 
-    ImageAnimationPlayer(QObject *context, FrameReadyCallback frameReady,
+    ImageAnimationPlayer(QObject* context, FrameReadyCallback frameReady,
         ErrorCallback animationError, PlaybackStoppedCallback playbackStopped = {},
         TimerScheduler timerScheduler = {});
     ~ImageAnimationPlayer();
@@ -40,12 +40,12 @@ private:
     void applyFramePlan(AnimationFramePlan plan, int delay);
     void clearPlaybackState();
     void notifyStoppedIfActive();
-    void finishWithError(const QString &errorString);
+    void finishWithError(const QString& errorString);
 
     FrameReadyCallback m_frameReady;
     ErrorCallback m_animationError;
     PlaybackStoppedCallback m_playbackStopped;
-    QObject *m_context = nullptr;
+    QObject* m_context = nullptr;
     TimerScheduler m_timerScheduler;
     std::unique_ptr<RuntimeTimerHandle> m_frameTimer;
     std::unique_ptr<ImageAnimationPlaybackSource> m_source;

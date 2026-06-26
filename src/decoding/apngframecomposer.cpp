@@ -19,10 +19,10 @@ std::optional<std::size_t> frameRowBytes(quint32 width)
     return pixelCount * kiriview::ApngRgbaBuffer::bytesPerPixel;
 }
 
-void premultiplyRgbaRow(unsigned char *row, std::size_t width)
+void premultiplyRgbaRow(unsigned char* row, std::size_t width)
 {
     for (std::size_t x = 0; x < width; ++x) {
-        unsigned char *pixel = row + x * kiriview::ApngRgbaBuffer::bytesPerPixel;
+        unsigned char* pixel = row + x * kiriview::ApngRgbaBuffer::bytesPerPixel;
         const unsigned int alpha = pixel[3];
         pixel[0]
             = static_cast<unsigned char>((static_cast<unsigned int>(pixel[0]) * alpha + 127) / 255);
@@ -41,7 +41,7 @@ unsigned char overChannel(
     return static_cast<unsigned char>(std::min(value, 255U));
 }
 
-void blendPixelOver(unsigned char *destination, const unsigned char *source)
+void blendPixelOver(unsigned char* destination, const unsigned char* source)
 {
     const unsigned int inverseAlpha = 255U - source[3];
     destination[0] = overChannel(source[0], destination[0], inverseAlpha);
@@ -100,14 +100,14 @@ void ApngFrameComposer::clear()
     m_frame.clear();
 }
 
-bool ApngFrameComposer::canComposeFrame(const ApngFrameControl &control) const
+bool ApngFrameComposer::canComposeFrame(const ApngFrameControl& control) const
 {
     return m_canvas.contains(region(control));
 }
 
-unsigned char **ApngFrameComposer::frameRows() { return m_frame.rows(); }
+unsigned char** ApngFrameComposer::frameRows() { return m_frame.rows(); }
 
-bool ApngFrameComposer::setFrameBytes(const ApngFrameControl &control, const unsigned char *bytes,
+bool ApngFrameComposer::setFrameBytes(const ApngFrameControl& control, const unsigned char* bytes,
     std::size_t byteCount, std::size_t rowBytes)
 {
     if (bytes == nullptr || !canComposeFrame(control)) {
@@ -134,7 +134,7 @@ std::optional<QImage> ApngFrameComposer::composeFrame(ApngFrameControl control)
     }
 
     const ApngFrameCompositionPlan plan = apngFrameCompositionPlan(m_hasDisplayedFrame, control);
-    const ApngFrameControl &displayControl = plan.displayControl;
+    const ApngFrameControl& displayControl = plan.displayControl;
 
     premultiplyFrame(displayControl);
     std::optional<std::vector<unsigned char>> previous
@@ -156,12 +156,12 @@ std::optional<QImage> ApngFrameComposer::composeFrame(ApngFrameControl control)
     return image;
 }
 
-ApngRgbaRegion ApngFrameComposer::region(const ApngFrameControl &control) const
+ApngRgbaRegion ApngFrameComposer::region(const ApngFrameControl& control) const
 {
     return ApngRgbaRegion { control.width, control.height, control.xOffset, control.yOffset };
 }
 
-void ApngFrameComposer::premultiplyFrame(const ApngFrameControl &control)
+void ApngFrameComposer::premultiplyFrame(const ApngFrameControl& control)
 {
     const std::size_t width = static_cast<std::size_t>(control.width);
     for (quint32 y = 0; y < control.height; ++y) {
@@ -169,7 +169,7 @@ void ApngFrameComposer::premultiplyFrame(const ApngFrameControl &control)
     }
 }
 
-bool ApngFrameComposer::blendFrame(const ApngFrameControl &control)
+bool ApngFrameComposer::blendFrame(const ApngFrameControl& control)
 {
     const std::size_t width = static_cast<std::size_t>(control.width);
     const std::optional<std::size_t> rowLength = frameRowBytes(control.width);
@@ -184,8 +184,8 @@ bool ApngFrameComposer::blendFrame(const ApngFrameControl &control)
             return false;
         }
 
-        unsigned char *destination = m_canvas.data() + *destinationOffset;
-        const unsigned char *source = m_frame.row(y);
+        unsigned char* destination = m_canvas.data() + *destinationOffset;
+        const unsigned char* source = m_frame.row(y);
         if (control.blendOp == ApngFrameBlendOp::Over) {
             for (std::size_t x = 0; x < width; ++x) {
                 blendPixelOver(destination + x * ApngRgbaBuffer::bytesPerPixel,
@@ -199,7 +199,7 @@ bool ApngFrameComposer::blendFrame(const ApngFrameControl &control)
 }
 
 bool ApngFrameComposer::applyDispose(
-    const ApngFrameCompositionPlan &plan, const std::optional<std::vector<unsigned char>> &previous)
+    const ApngFrameCompositionPlan& plan, const std::optional<std::vector<unsigned char>>& previous)
 {
     switch (plan.disposeAction) {
     case ApngFrameDisposeAction::ClearFrameRegion:

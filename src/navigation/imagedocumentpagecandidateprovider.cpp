@@ -12,7 +12,7 @@
 
 namespace {
 kiriview::ImageIoJob noOpImageDocumentPageCandidateChanges(
-    QObject *, QUrl, kiriview::ImageDocumentPageCandidatesCallback, kiriview::ErrorCallback)
+    QObject*, QUrl, kiriview::ImageDocumentPageCandidatesCallback, kiriview::ErrorCallback)
 {
     return kiriview::ImageIoJob();
 }
@@ -24,23 +24,23 @@ ImageDocumentPageCandidateProvider defaultImageDocumentPageCandidateProvider(
 {
     auto candidateStore = std::make_shared<ImageDocumentPageCandidateStore>();
     return ImageDocumentPageCandidateProvider {
-        [candidateStore](QObject *receiver, QUrl directoryUrl,
+        [candidateStore](QObject* receiver, QUrl directoryUrl,
             ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) {
             return candidateStore->loadDirectoryImages(
                 receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));
         },
-        [directoryItemListProvider = std::move(directoryItemListProvider)](QObject *receiver,
+        [directoryItemListProvider = std::move(directoryItemListProvider)](QObject* receiver,
             QUrl directoryUrl, ContainerCandidatesCallback callback, ErrorCallback errorCallback) {
             return startDirectoryContainerCandidateList(receiver, std::move(directoryUrl),
                 std::move(callback), std::move(errorCallback), directoryItemListProvider);
         },
-        [workerScheduler = std::move(workerScheduler)](QObject *receiver,
+        [workerScheduler = std::move(workerScheduler)](QObject* receiver,
             OpenedCollectionScopeLocation openedCollectionScope,
             ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) {
             return startOpenedCollectionCandidateList(receiver, std::move(openedCollectionScope),
                 workerScheduler, std::move(callback), std::move(errorCallback));
         },
-        [candidateStore](QObject *receiver, QUrl directoryUrl,
+        [candidateStore](QObject* receiver, QUrl directoryUrl,
             ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) {
             return candidateStore->watchDirectoryImages(
                 receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));

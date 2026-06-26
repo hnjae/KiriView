@@ -29,7 +29,8 @@ enum class VideoDocumentPublicSignal {
     EmbeddedMetadata,
 };
 
-struct VideoDocumentPublicSignalOperations {
+struct VideoDocumentPublicSignalOperations
+{
     std::function<void()> sourceUrlChanged;
     std::function<void()> statusChanged;
     std::function<void()> errorStringChanged;
@@ -53,7 +54,7 @@ class VideoDocumentPublicSignalEmitter final
 public:
     explicit VideoDocumentPublicSignalEmitter(VideoDocumentPublicSignalOperations operations);
 
-    void emitChanges(const std::vector<VideoDocumentChange> &changes) const;
+    void emitChanges(const std::vector<VideoDocumentChange>& changes) const;
     void emitSignal(VideoDocumentPublicSignal signal) const;
 
 private:
@@ -62,7 +63,7 @@ private:
 
 std::vector<VideoDocumentPublicSignal> videoDocumentPublicSignals(VideoDocumentChange change);
 std::vector<VideoDocumentPublicSignal> videoDocumentPublicSignalsForChanges(
-    const std::vector<VideoDocumentChange> &changes);
+    const std::vector<VideoDocumentChange>& changes);
 }
 
 #endif

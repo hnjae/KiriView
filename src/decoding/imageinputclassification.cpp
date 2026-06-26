@@ -8,7 +8,7 @@
 #include "kiriview/src/policy/imageinputclassification.cxx.h"
 
 namespace kiriview {
-ImageInputClassification classifyImageInput(const QByteArray &data, const QString &fileName)
+ImageInputClassification classifyImageInput(const QByteArray& data, const QString& fileName)
 {
     const QByteArray utf8FileName = fileName.toUtf8();
     const RustImageInputClassification classification

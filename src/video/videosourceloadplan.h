@@ -10,17 +10,21 @@
 #include <vector>
 
 namespace kiriview {
-struct ClearVideoPlaybackSourceOperation {
+struct ClearVideoPlaybackSourceOperation
+{
 };
 
-struct ResetClearedVideoSourceOperation {
+struct ResetClearedVideoSourceOperation
+{
 };
 
-struct ResetVideoSourceLoadOperation {
+struct ResetVideoSourceLoadOperation
+{
     QUrl sourceUrl;
 };
 
-struct ApplyVideoPlaybackUrlOperation {
+struct ApplyVideoPlaybackUrlOperation
+{
     QUrl sourceUrl;
     QUrl playbackUrl;
 };
@@ -33,7 +37,8 @@ enum class VideoSourceLoadFailureSeverity {
     Error,
 };
 
-struct VideoSourceLoadFailure {
+struct VideoSourceLoadFailure
+{
     QUrl sourceUrl;
     VideoSourceLoadFailureKind kind = VideoSourceLoadFailureKind::PlaybackUrlResolution;
     QString userMessage;
@@ -42,7 +47,8 @@ struct VideoSourceLoadFailure {
     bool retryable = false;
 };
 
-struct PublishVideoSourceLoadFailureOperation {
+struct PublishVideoSourceLoadFailureOperation
+{
     VideoSourceLoadFailure failure;
 };
 
@@ -52,12 +58,12 @@ using VideoSourceLoadOperation = std::variant<ClearVideoPlaybackSourceOperation,
 using VideoSourceLoadPlan = std::vector<VideoSourceLoadOperation>;
 
 VideoSourceLoadPlan videoSourceLoadClearPlan();
-VideoSourceLoadPlan videoSourceLoadStartPlan(const QUrl &sourceUrl);
-VideoSourceLoadPlan videoSourceLoadReadyPlan(const QUrl &sourceUrl, const QUrl &playbackUrl);
+VideoSourceLoadPlan videoSourceLoadStartPlan(const QUrl& sourceUrl);
+VideoSourceLoadPlan videoSourceLoadReadyPlan(const QUrl& sourceUrl, const QUrl& playbackUrl);
 VideoSourceLoadFailure videoSourceLoadPlaybackUrlResolutionFailure(
-    const QUrl &sourceUrl, const QString &diagnosticDetail);
+    const QUrl& sourceUrl, const QString& diagnosticDetail);
 VideoSourceLoadPlan videoSourceLoadFailurePlan(VideoSourceLoadFailure failure);
-VideoSourceLoadPlan videoSourceLoadFailurePlan(const QUrl &sourceUrl, const QString &errorString);
+VideoSourceLoadPlan videoSourceLoadFailurePlan(const QUrl& sourceUrl, const QString& errorString);
 }
 
 #endif

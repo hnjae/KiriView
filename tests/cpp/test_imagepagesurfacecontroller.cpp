@@ -60,7 +60,8 @@ private Q_SLOTS:
 namespace {
 constexpr qsizetype testByteBudget = 1024 * 1024;
 
-struct ManualImageWorkerSchedule {
+struct ManualImageWorkerSchedule
+{
     kiriview::ImageWorkerOperation work;
     kiriview::ImageWorkerCompletion completion;
 };
@@ -70,7 +71,7 @@ class ManualImageWorkerScheduler
 public:
     kiriview::ImageWorkerScheduler scheduler()
     {
-        return kiriview::ImageWorkerScheduler([this](QObject *, kiriview::ImageWorkerOperation work,
+        return kiriview::ImageWorkerScheduler([this](QObject*, kiriview::ImageWorkerOperation work,
                                                   kiriview::ImageWorkerCompletion completion) {
             m_schedules.push_back(
                 ManualImageWorkerSchedule { std::move(work), std::move(completion) });
@@ -114,7 +115,7 @@ kiriview::ImageDocumentRenderContext renderContext()
     };
 }
 
-kiriview::ImagePresentationRenderProjection visibleProjection(const QSizeF &displaySize)
+kiriview::ImagePresentationRenderProjection visibleProjection(const QSizeF& displaySize)
 {
     kiriview::ImagePresentationRenderProjection projection;
     projection.visible = true;
@@ -129,24 +130,24 @@ kiriview::ImagePresentationRenderProjection visibleProjection()
     return visibleProjection(QSizeF(8.0, 4.0));
 }
 
-kiriview::StaticDisplayImagePayload displayPayload(const QSize &size)
+kiriview::StaticDisplayImagePayload displayPayload(const QSize& size)
 {
     return kiriview::TestSupport::staticDisplayTestImagePayload(
         kiriview::TestSupport::testImage(size));
 }
 
-QString entryId(const kiriview::ImageDisplaySourceSlot &slot)
+QString entryId(const kiriview::ImageDisplaySourceSlot& slot)
 {
     return slot.providerUrl.path().mid(1);
 }
 
 bool hasChange(
-    const std::vector<kiriview::ImageDocumentChange> &changes, kiriview::ImageDocumentChange change)
+    const std::vector<kiriview::ImageDocumentChange>& changes, kiriview::ImageDocumentChange change)
 {
     return std::find(changes.cbegin(), changes.cend(), change) != changes.cend();
 }
 
-QByteArray encodedPng(const QImage &image)
+QByteArray encodedPng(const QImage& image)
 {
     QByteArray data;
     QBuffer buffer(&data);
@@ -155,7 +156,7 @@ QByteArray encodedPng(const QImage &image)
     return data;
 }
 
-QByteArray svgData(const QSize &size)
+QByteArray svgData(const QSize& size)
 {
     return QByteArray("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"")
         + QByteArray::number(size.width()) + "\" height=\"" + QByteArray::number(size.height())
@@ -163,16 +164,16 @@ QByteArray svgData(const QSize &size)
         + QByteArray::number(size.height()) + "\" fill=\"red\"/></svg>";
 }
 
-heif_error appendHeifBytes(heif_context *, const void *data, std::size_t size, void *userdata)
+heif_error appendHeifBytes(heif_context*, const void* data, std::size_t size, void* userdata)
 {
-    QByteArray *output = static_cast<QByteArray *>(userdata);
-    output->append(static_cast<const char *>(data), static_cast<qsizetype>(size));
+    QByteArray* output = static_cast<QByteArray*>(userdata);
+    output->append(static_cast<const char*>(data), static_cast<qsizetype>(size));
     return heif_error_success;
 }
 
-bool heifOk(const heif_error &error) { return error.code == heif_error_Ok; }
+bool heifOk(const heif_error& error) { return error.code == heif_error_Ok; }
 
-QByteArray encodedHeifStill(const QSize &size)
+QByteArray encodedHeifStill(const QSize& size)
 {
     if (size.isEmpty()) {
         return {};
@@ -184,7 +185,7 @@ QByteArray encodedHeifStill(const QSize &size)
         return {};
     }
 
-    heif_image *rawImage = nullptr;
+    heif_image* rawImage = nullptr;
     if (!heifOk(heif_image_create(size.width(), size.height(), heif_colorspace_RGB,
             heif_chroma_interleaved_RGB, &rawImage))) {
         return {};
@@ -197,14 +198,14 @@ QByteArray encodedHeifStill(const QSize &size)
     }
 
     std::size_t stride = 0;
-    std::uint8_t *pixels = heif_image_get_plane2(image.get(), heif_channel_interleaved, &stride);
+    std::uint8_t* pixels = heif_image_get_plane2(image.get(), heif_channel_interleaved, &stride);
     if (pixels == nullptr) {
         return {};
     }
 
     for (int y = 0; y < size.height(); ++y) {
         for (int x = 0; x < size.width(); ++x) {
-            std::uint8_t *pixel
+            std::uint8_t* pixel
                 = pixels + static_cast<std::size_t>(y) * stride + static_cast<std::size_t>(x) * 3;
             pixel[0] = static_cast<std::uint8_t>((x * 13) % 255);
             pixel[1] = static_cast<std::uint8_t>((y * 17) % 255);
@@ -212,7 +213,7 @@ QByteArray encodedHeifStill(const QSize &size)
         }
     }
 
-    heif_encoder *rawEncoder = nullptr;
+    heif_encoder* rawEncoder = nullptr;
     if (!heifOk(heif_context_get_encoder_for_format(
             context.get(), heif_compression_JPEG, &rawEncoder))) {
         return {};
@@ -223,7 +224,7 @@ QByteArray encodedHeifStill(const QSize &size)
         return {};
     }
 
-    heif_image_handle *rawHandle = nullptr;
+    heif_image_handle* rawHandle = nullptr;
     if (!heifOk(heif_context_encode_image(
             context.get(), image.get(), encoder.get(), nullptr, &rawHandle))) {
         return {};
@@ -243,8 +244,8 @@ QByteArray encodedHeifStill(const QSize &size)
     return data;
 }
 
-kiriview::StaticDisplayImagePayload qtRasterPayload(const QSize &originalSize,
-    const QSize &rasterSize, const QString &sourceIdentity,
+kiriview::StaticDisplayImagePayload qtRasterPayload(const QSize& originalSize,
+    const QSize& rasterSize, const QString& sourceIdentity,
     kiriview::DisplayImageQuality quality = kiriview::DisplayImageQuality::FirstDisplay)
 {
     QString errorString;
@@ -266,8 +267,8 @@ kiriview::StaticDisplayImagePayload qtRasterPayload(const QSize &originalSize,
     };
 }
 
-kiriview::StaticDisplayImagePayload svgPayload(const QSize &originalSize, const QSize &rasterSize,
-    const QString &sourceIdentity,
+kiriview::StaticDisplayImagePayload svgPayload(const QSize& originalSize, const QSize& rasterSize,
+    const QString& sourceIdentity,
     kiriview::DisplayImageQuality quality = kiriview::DisplayImageQuality::FirstDisplay)
 {
     QString errorString;
@@ -287,8 +288,8 @@ kiriview::StaticDisplayImagePayload svgPayload(const QSize &originalSize, const 
     };
 }
 
-std::optional<kiriview::StaticDisplayImagePayload> heifPayload(const QSize &originalSize,
-    const QSize &rasterSize, const QString &sourceIdentity,
+std::optional<kiriview::StaticDisplayImagePayload> heifPayload(const QSize& originalSize,
+    const QSize& rasterSize, const QString& sourceIdentity,
     kiriview::DisplayImageQuality quality = kiriview::DisplayImageQuality::FirstDisplay)
 {
     QString errorString;
@@ -320,8 +321,8 @@ QByteArray rawFixtureData()
     return file.readAll();
 }
 
-std::optional<kiriview::StaticDisplayImagePayload> rawPayload(const QSize &rasterSize,
-    const QString &sourceIdentity,
+std::optional<kiriview::StaticDisplayImagePayload> rawPayload(const QSize& rasterSize,
+    const QString& sourceIdentity,
     kiriview::DisplayImageQuality quality = kiriview::DisplayImageQuality::FirstDisplay)
 {
     const QByteArray data = rawFixtureData();
@@ -333,7 +334,7 @@ std::optional<kiriview::StaticDisplayImagePayload> rawPayload(const QSize &raste
         QUrl::fromLocalFile(
             QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/raw-cfa-smoke.dng")));
     const kiriview::DecodedImageResult result = kiriview::decodeImageData(data, request);
-    const auto *decoded = kiriview::decodedImageResultImageAs<kiriview::StaticDecodedImage>(result);
+    const auto* decoded = kiriview::decodedImageResultImageAs<kiriview::StaticDecodedImage>(result);
     if (decoded == nullptr || decoded->displayImage.refinementSource == nullptr) {
         return std::nullopt;
     }

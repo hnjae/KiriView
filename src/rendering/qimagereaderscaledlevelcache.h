@@ -22,7 +22,7 @@ public:
     qsizetype byteCost() const;
     bool contains(int level) const;
     std::optional<QImage> find(int level);
-    bool insert(int level, const QImage &image);
+    bool insert(int level, const QImage& image);
     void clear();
 
 private:

@@ -16,7 +16,8 @@ using kiriview::MediaEntrySourceCandidates;
 using kiriview::MediaEntrySourceCandidatesResult;
 using kiriview::MediaEntrySourceError;
 
-template <typename... Handlers> struct MediaEntrySourceResultHandler : Handlers... {
+template <typename... Handlers> struct MediaEntrySourceResultHandler : Handlers...
+{
     using Handlers::operator()...;
 };
 
@@ -28,17 +29,17 @@ void finishMediaEntrySourceWorkerResult(
     Result result, ErrorCallback errorCallback, SuccessCallback successCallback)
 {
     auto resultHandler = MediaEntrySourceResultHandler {
-        [&errorCallback](const MediaEntrySourceError &error) {
+        [&errorCallback](const MediaEntrySourceError& error) {
             kiriview::invokeIfSet(errorCallback, error.errorString);
         },
-        [&successCallback](Success &success) mutable { successCallback(std::move(success)); },
+        [&successCallback](Success& success) mutable { successCallback(std::move(success)); },
     };
     std::visit(resultHandler, result);
 }
 
 template <typename Work, typename Finish>
-kiriview::ImageIoJob startMediaEntrySourceWorkerJob(QObject *receiver,
-    const kiriview::ImageWorkerScheduler &workerScheduler, Work work, Finish finish)
+kiriview::ImageIoJob startMediaEntrySourceWorkerJob(QObject* receiver,
+    const kiriview::ImageWorkerScheduler& workerScheduler, Work work, Finish finish)
 {
     return kiriview::startImageIoWorkerJob(
         receiver, workerScheduler, std::move(work), std::move(finish));
@@ -46,7 +47,7 @@ kiriview::ImageIoJob startMediaEntrySourceWorkerJob(QObject *receiver,
 }
 
 namespace kiriview {
-ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
+ImageIoJob startOpenedCollectionCandidateList(QObject* receiver,
     OpenedCollectionScopeLocation openedCollectionScope,
     ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
@@ -54,9 +55,9 @@ ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
         ImageWorkerScheduler(), std::move(callback), std::move(errorCallback));
 }
 
-ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
+ImageIoJob startOpenedCollectionCandidateList(QObject* receiver,
     OpenedCollectionScopeLocation openedCollectionScope,
-    const ImageWorkerScheduler &workerScheduler, ImageDocumentPageCandidatesCallback callback,
+    const ImageWorkerScheduler& workerScheduler, ImageDocumentPageCandidatesCallback callback,
     ErrorCallback errorCallback)
 {
     return startMediaEntrySourceWorkerJob(

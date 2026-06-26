@@ -7,7 +7,7 @@
 #include <utility>
 
 namespace {
-template <typename Operation> void run(const Operation &operation)
+template <typename Operation> void run(const Operation& operation)
 {
     if (operation) {
         operation();
@@ -23,7 +23,7 @@ DocumentSessionPublicSignalEmitter::DocumentSessionPublicSignalEmitter(
 }
 
 void DocumentSessionPublicSignalEmitter::emitChanges(
-    const std::vector<DocumentSessionChange> &changes) const
+    const std::vector<DocumentSessionChange>& changes) const
 {
     for (DocumentSessionPublicSignal signal : documentSessionPublicSignalsForChanges(changes)) {
         emitSignal(signal);
@@ -110,7 +110,7 @@ std::vector<DocumentSessionPublicSignal> documentSessionPublicSignals(DocumentSe
 }
 
 std::vector<DocumentSessionPublicSignal> documentSessionPublicSignalsForChanges(
-    const std::vector<DocumentSessionChange> &changes)
+    const std::vector<DocumentSessionChange>& changes)
 {
     std::vector<DocumentSessionPublicSignal> plannedSignals;
     for (DocumentSessionChange change : changes) {

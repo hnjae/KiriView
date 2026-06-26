@@ -9,7 +9,7 @@
 
 namespace kiriview {
 MediaPredecodeEligibilitySnapshot mediaPredecodeEligibilitySnapshot(
-    const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl)
+    const std::vector<DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl)
 {
     MediaPredecodeEligibilitySnapshot snapshot {
         candidates.size(),
@@ -19,7 +19,7 @@ MediaPredecodeEligibilitySnapshot mediaPredecodeEligibilitySnapshot(
     snapshot.images.reserve(candidates.size());
 
     for (std::size_t index = 0; index < candidates.size(); ++index) {
-        const DirectMediaNavigationCandidate &candidate = candidates.at(index);
+        const DirectMediaNavigationCandidate& candidate = candidates.at(index);
         if (isSupportedStillImageDirectMediaNavigationCandidate(candidate)) {
             snapshot.images.push_back(MediaPredecodeEligibleImage { candidate.url, index });
         }
@@ -29,7 +29,7 @@ MediaPredecodeEligibilitySnapshot mediaPredecodeEligibilitySnapshot(
 }
 
 std::vector<QUrl> mediaPredecodeEligibleUrlsForTargetIndices(
-    const MediaPredecodeEligibilitySnapshot &snapshot, const std::vector<std::size_t> &indices)
+    const MediaPredecodeEligibilitySnapshot& snapshot, const std::vector<std::size_t>& indices)
 {
     std::vector<QUrl> urls;
     urls.reserve(indices.size());
@@ -37,7 +37,7 @@ std::vector<QUrl> mediaPredecodeEligibleUrlsForTargetIndices(
     for (std::size_t index : indices) {
         const auto eligible = std::find_if(snapshot.images.cbegin(), snapshot.images.cend(),
             [index](
-                const MediaPredecodeEligibleImage &image) { return image.mediaIndex == index; });
+                const MediaPredecodeEligibleImage& image) { return image.mediaIndex == index; });
         if (eligible != snapshot.images.cend()) {
             urls.push_back(eligible->url);
         }

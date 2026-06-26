@@ -20,15 +20,15 @@ namespace kiriview {
 class DocumentSessionThumbnailRuntime final
 {
 public:
-    DocumentSessionThumbnailRuntime(QObject *owner,
-        DocumentSessionImageDocumentSnapshotPort *imageDocument,
+    DocumentSessionThumbnailRuntime(QObject* owner,
+        DocumentSessionImageDocumentSnapshotPort* imageDocument,
         ActiveNavigationThumbnailRuntimeDependencies dependencies = {});
 
-    QAbstractListModel *model() const;
+    QAbstractListModel* model() const;
     quint64 navigationGeneration() const;
     ActiveNavigationThumbnailDemandBucket demandBucket(int physicalMaxEdge) const;
     void setRows(std::vector<ActiveNavigationThumbnailRow> rows);
-    bool reportDemand(int number, const QUrl &url, int physicalMaxEdge,
+    bool reportDemand(int number, const QUrl& url, int physicalMaxEdge,
         ActiveNavigationThumbnailDemandPriority priority, quint64 navigationGeneration);
 
 private:

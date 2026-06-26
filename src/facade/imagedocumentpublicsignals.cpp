@@ -7,7 +7,7 @@
 #include <utility>
 
 namespace {
-template <typename Operation> void run(const Operation &operation)
+template <typename Operation> void run(const Operation& operation)
 {
     if (operation) {
         operation();
@@ -28,7 +28,7 @@ void ImageDocumentPublicSignalEmitter::emitChange(ImageDocumentChange change) co
 }
 
 void ImageDocumentPublicSignalEmitter::emitChanges(
-    const std::vector<ImageDocumentChange> &changes) const
+    const std::vector<ImageDocumentChange>& changes) const
 {
     for (ImageDocumentPublicSignal signal : imageDocumentPublicSignalsForChanges(changes)) {
         emitSignal(signal);
@@ -180,7 +180,7 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentC
 }
 
 std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignalsForChanges(
-    const std::vector<ImageDocumentChange> &changes)
+    const std::vector<ImageDocumentChange>& changes)
 {
     std::vector<ImageDocumentPublicSignal> plannedSignals;
     bool imageDocumentSourceScopeChanged = false;

@@ -9,7 +9,7 @@
 namespace kiriview {
 namespace {
     template <typename Operation, typename... Args>
-    void run(const Operation &operation, Args &&...args)
+    void run(const Operation& operation, Args&&... args)
     {
         if (operation) {
             operation(std::forward<Args>(args)...);
@@ -24,7 +24,7 @@ ImageDocumentLifecycleRuntimePlanExecutor::ImageDocumentLifecycleRuntimePlanExec
 }
 
 bool ImageDocumentLifecycleRuntimePlanExecutor::dispatchOperation(
-    const ImageDocumentRuntimeOperation &operation)
+    const ImageDocumentRuntimeOperation& operation)
 {
     if (std::holds_alternative<CancelFileDeletionOperation>(operation)) {
         run(m_operations.cancelFileDeletion);

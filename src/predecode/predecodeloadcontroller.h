@@ -20,23 +20,23 @@ class PredecodeLoadController final
 {
 public:
     PredecodeLoadController(
-        QObject *parent, ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget);
+        QObject* parent, ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget);
     ~PredecodeLoadController();
 
-    void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage> &images);
+    void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage>& images);
     void clearWindowUrls();
     void startWindowLoads(PredecodeLoadWindow window);
     void cancelBackgroundWork();
     void clear();
-    std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
+    std::optional<PredecodedImage> findPredecodedImage(const QUrl& url) const;
 
 private:
     void startNextLoads();
     bool startLoad(PredecodeLoadStart load);
-    void finishLoadError(const ImageDecodeRequest &request);
-    void finishDecode(ImageDecodeRequest request, const DecodedImageResult &result);
+    void finishLoadError(const ImageDecodeRequest& request);
+    void finishDecode(ImageDecodeRequest request, const DecodedImageResult& result);
 
-    QObject *m_parent = nullptr;
+    QObject* m_parent = nullptr;
     ImageDecodeDependencies m_decodeDependencies;
     PredecodeLoadState m_loadState;
     PredecodeActiveDecodeStore m_activeDecodes;

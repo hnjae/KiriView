@@ -17,17 +17,17 @@ using Category = kiriview::ApplicationActions::ShortcutHelpCategory;
 using ActivationScope = kiriview::ApplicationActions::ApplicationShortcutActivationScope;
 using Scope = kiriview::ApplicationActions::ImageShortcutScope;
 
-QKeySequence shortcut(const QString &sequence)
+QKeySequence shortcut(const QString& sequence)
 {
     return QKeySequence::fromString(sequence, QKeySequence::PortableText);
 }
 
-QString nativeText(const QKeySequence &sequence)
+QString nativeText(const QKeySequence& sequence)
 {
     return sequence.toString(QKeySequence::NativeText);
 }
 
-QVariantList actionIdVariants(const QList<ActionId> &actionIds)
+QVariantList actionIdVariants(const QList<ActionId>& actionIds)
 {
     QVariantList variants;
     variants.reserve(actionIds.size());
@@ -42,7 +42,7 @@ QVariantList actionIdVariants(const QList<ActionId> &actionIds)
 QList<kiriview::ApplicationActions::ShortcutRouteSpec> routeSpecsFor(ActionId actionId)
 {
     QList<kiriview::ApplicationActions::ShortcutRouteSpec> specs;
-    const kiriview::ApplicationActions::ActionDefinition *definition
+    const kiriview::ApplicationActions::ActionDefinition* definition
         = kiriview::ApplicationActions::definitionForId(actionId);
     if (definition == nullptr) {
         return specs;
@@ -57,7 +57,7 @@ QList<kiriview::ApplicationActions::ShortcutRouteSpec> routeSpecsFor(ActionId ac
 
 bool hasRouteSpec(ActionId actionId, ActivationScope activationScope, Scope scope)
 {
-    for (const kiriview::ApplicationActions::ShortcutRouteSpec &spec : routeSpecsFor(actionId)) {
+    for (const kiriview::ApplicationActions::ShortcutRouteSpec& spec : routeSpecsFor(actionId)) {
         if (spec.activationScope == activationScope && spec.shortcutScope == scope) {
             return true;
         }
@@ -66,10 +66,10 @@ bool hasRouteSpec(ActionId actionId, ActivationScope activationScope, Scope scop
     return false;
 }
 
-const kiriview::ApplicationActions::ApplicationShortcutRoute *routeFor(
+const kiriview::ApplicationActions::ApplicationShortcutRoute* routeFor(
     ActivationScope activationScope, Scope scope)
 {
-    for (const kiriview::ApplicationActions::ApplicationShortcutRoute &route :
+    for (const kiriview::ApplicationActions::ApplicationShortcutRoute& route :
         kiriview::ApplicationActions::shortcutRoutes()) {
         if (route.activationScope == activationScope && route.shortcutScope == scope) {
             return &route;
@@ -232,7 +232,7 @@ void TestApplicationShortcutPolicy::actionDefinitionsOwnApplicationShortcutRoute
 void TestApplicationShortcutPolicy::actionDefinitionsOwnShortcutHelpCategories()
 {
     const auto categoryFor = [](ActionId actionId) {
-        const kiriview::ApplicationActions::ActionDefinition *definition
+        const kiriview::ApplicationActions::ActionDefinition* definition
             = kiriview::ApplicationActions::definitionForId(actionId);
         Q_ASSERT(definition != nullptr);
         return definition->shortcutHelpCategory;
@@ -279,7 +279,7 @@ void TestApplicationShortcutPolicy::actionDefinitionsOwnShortcutHelpCategories()
 
 void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
 {
-    const kiriview::ApplicationActions::ApplicationShortcutRoute *readyRoute
+    const kiriview::ApplicationActions::ApplicationShortcutRoute* readyRoute
         = routeFor(ActivationScope::ViewerLocal, Scope::ReadyViewerShortcutScope);
     QVERIFY(readyRoute != nullptr);
     QCOMPARE(actionIdVariants(readyRoute->actionIds),
@@ -291,20 +291,20 @@ void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
             ActionId::ViewToggleTwoPageModeAction, ActionId::ViewScanForwardAction,
             ActionId::ViewScanBackwardAction, ActionId::ViewToggleVideoPlaybackAction }));
 
-    const kiriview::ApplicationActions::ApplicationShortcutRoute *containerRoute
+    const kiriview::ApplicationActions::ApplicationShortcutRoute* containerRoute
         = routeFor(ActivationScope::ViewerLocal, Scope::ContainerViewerShortcutScope);
     QVERIFY(containerRoute != nullptr);
     QCOMPARE(actionIdVariants(containerRoute->actionIds),
         actionIdVariants({ ActionId::GoPreviousArchiveAction, ActionId::GoNextArchiveAction }));
 
-    const kiriview::ApplicationActions::ApplicationShortcutRoute *viewerLocalRoute
+    const kiriview::ApplicationActions::ApplicationShortcutRoute* viewerLocalRoute
         = routeFor(ActivationScope::ViewerLocal, Scope::ViewerShortcutScope);
     QVERIFY(viewerLocalRoute != nullptr);
     QVERIFY(viewerLocalRoute->actionIds.contains(ActionId::ViewToggleInfoPanelAction));
     QVERIFY(viewerLocalRoute->actionIds.contains(ActionId::ViewToggleThumbnailPanelAction));
     QVERIFY(viewerLocalRoute->actionIds.contains(ActionId::FileQuitAction));
 
-    for (const kiriview::ApplicationActions::ApplicationShortcutRoute &route :
+    for (const kiriview::ApplicationActions::ApplicationShortcutRoute& route :
         kiriview::ApplicationActions::shortcutRoutes()) {
         QVERIFY(!route.actionIds.isEmpty());
         for (ActionId actionId : route.actionIds) {
@@ -313,11 +313,11 @@ void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
         }
     }
 
-    for (const kiriview::ApplicationActions::ActionDefinition &definition :
+    for (const kiriview::ApplicationActions::ActionDefinition& definition :
         kiriview::ApplicationActions::definitions()) {
-        for (const kiriview::ApplicationActions::ShortcutRouteSpec &spec :
+        for (const kiriview::ApplicationActions::ShortcutRouteSpec& spec :
             routeSpecsFor(definition.actionId)) {
-            const kiriview::ApplicationActions::ApplicationShortcutRoute *route
+            const kiriview::ApplicationActions::ApplicationShortcutRoute* route
                 = routeFor(spec.activationScope, spec.shortcutScope);
             QVERIFY(route != nullptr);
             QVERIFY(route->actionIds.contains(definition.actionId));

@@ -217,7 +217,7 @@ bool ImageActionAvailabilityRuntime::mediaShortcutsEnabledForScope(ImageShortcut
         scope);
 }
 
-void ImageActionAvailabilityRuntime::setBool(bool &target, bool value)
+void ImageActionAvailabilityRuntime::setBool(bool& target, bool value)
 {
     if (target == value) {
         return;

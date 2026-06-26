@@ -10,9 +10,9 @@
 
 namespace kiriview {
 DocumentSessionMediaPredecodeInputPort::DocumentSessionMediaPredecodeInputPort(
-    const DocumentSessionState *state, const DocumentSessionDirectMediaActivityPort *activity,
-    const DocumentSessionDirectMediaScopePort *scope,
-    const DocumentSessionPublicImageLeafSnapshot *image)
+    const DocumentSessionState* state, const DocumentSessionDirectMediaActivityPort* activity,
+    const DocumentSessionDirectMediaScopePort* scope,
+    const DocumentSessionPublicImageLeafSnapshot* image)
     : m_state(state)
     , m_activity(activity)
     , m_scope(scope)

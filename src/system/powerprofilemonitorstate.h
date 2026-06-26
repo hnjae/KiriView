@@ -11,7 +11,8 @@ enum class PowerProfileMonitorEventKind {
     PowerSaverInvalidated,
 };
 
-struct PowerProfileMonitorEvent {
+struct PowerProfileMonitorEvent
+{
     PowerProfileMonitorEventKind kind = PowerProfileMonitorEventKind::Ignore;
     bool powerSaverEnabled = false;
 
@@ -20,7 +21,8 @@ struct PowerProfileMonitorEvent {
     static PowerProfileMonitorEvent powerSaverInvalidated();
 };
 
-struct PowerProfileMonitorPlan {
+struct PowerProfileMonitorPlan
+{
     bool powerSaverChanged = false;
     bool refreshPowerSaverEnabled = false;
 };

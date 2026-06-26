@@ -34,15 +34,15 @@
 namespace kiriview {
 namespace {
     ImageDocumentRenderContext renderContextOrDefault(
-        const std::function<ImageDocumentRenderContext()> &renderContext)
+        const std::function<ImageDocumentRenderContext()>& renderContext)
     {
         return renderContext ? renderContext() : ImageDocumentRenderContext {};
     }
 
 }
 
-ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *documentObject,
-    ImageDocumentState &state, ImageDocumentRuntimeDependencyOverrides dependencies,
+ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject* documentObject,
+    ImageDocumentState& state, ImageDocumentRuntimeDependencyOverrides dependencies,
     ImageDocumentRuntimeControllerCallbacks callbacks)
     : m_callbacks(std::move(callbacks))
 {
@@ -55,7 +55,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
     m_pageSurfaceController = std::make_unique<ImagePageSurfaceController>(documentObject,
         ImagePageSurfaceController::Callbacks {
             [this](ImageDocumentChange change) { invokeIfSet(m_callbacks.notify, change); },
-            [this](const QString &errorString) {
+            [this](const QString& errorString) {
                 m_animationLoadErrorPort->finishAnimationLoadWithError(errorString);
             },
         },
@@ -89,7 +89,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         = std::make_unique<ImageDocumentCurrentPageNumberPort>(m_navigationService.get());
     m_adjacentPredecodeSchedulerPort
         = std::make_unique<ImageDocumentAdjacentPredecodeSchedulerPort>(
-            [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); });
+            [this](const ImageDocumentRuntimePlan& plan) { dispatchPlan(plan); });
     m_predecodeController = std::make_unique<ImageDocumentPredecodeController>(
         documentObject, state, *m_pageSurfaceController, *m_presentationRuntime,
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode,
@@ -106,7 +106,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         state, *m_pageSurfaceController, *m_presentationRuntime,
         ImageSpreadPresentationController::Callbacks {
             [this](ImageDocumentChange change) { invokeIfSet(m_callbacks.notify, change); },
-            [this](const QUrl &url) { return m_predecodedImageLookup->find(url); },
+            [this](const QUrl& url) { return m_predecodedImageLookup->find(url); },
             [this]() { return m_navigationSnapshotPort->snapshot(); },
             [this]() { m_adjacentPredecodeSchedulerPort->scheduleAdjacentImagePredecode(); },
         },
@@ -117,10 +117,10 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
     m_openController = std::make_unique<ImageOpenController>(documentObject, state,
         *m_pageSurfaceController, *m_presentationRuntime,
         ImageOpenController::Callbacks {
-            [this](const QUrl &url) { return m_predecodedImageLookup->find(url); },
-            [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); },
+            [this](const QUrl& url) { return m_predecodedImageLookup->find(url); },
+            [this](const ImageDocumentRuntimePlan& plan) { dispatchPlan(plan); },
             std::move(m_callbacks.unsupportedOpenedCollectionVideoEntered),
-            [this](const DisplayedImageLocation &location) {
+            [this](const DisplayedImageLocation& location) {
                 m_primaryPageSlotPort->commit(location);
             },
             [this]() { m_primaryPageSlotPort->clear(); },
@@ -147,32 +147,32 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
 
 ImageDocumentRuntimeControllers::~ImageDocumentRuntimeControllers() = default;
 
-ImageDocumentDeletionController &ImageDocumentRuntimeControllers::deletionController() const
+ImageDocumentDeletionController& ImageDocumentRuntimeControllers::deletionController() const
 {
     return *m_deletionController;
 }
 
-ImagePageSurfaceController &ImageDocumentRuntimeControllers::pageSurfaceController() const
+ImagePageSurfaceController& ImageDocumentRuntimeControllers::pageSurfaceController() const
 {
     return *m_pageSurfaceController;
 }
 
-ImagePresentationRuntime &ImageDocumentRuntimeControllers::presentationRuntime() const
+ImagePresentationRuntime& ImageDocumentRuntimeControllers::presentationRuntime() const
 {
     return *m_presentationRuntime;
 }
 
-ImageDocumentNavigationController &ImageDocumentRuntimeControllers::navigationController() const
+ImageDocumentNavigationController& ImageDocumentRuntimeControllers::navigationController() const
 {
     return *m_navigationController;
 }
 
-ImageSpreadPresentationController &ImageDocumentRuntimeControllers::spreadController() const
+ImageSpreadPresentationController& ImageDocumentRuntimeControllers::spreadController() const
 {
     return *m_spreadController;
 }
 
-void ImageDocumentRuntimeControllers::dispatchPlan(const ImageDocumentRuntimePlan &plan)
+void ImageDocumentRuntimeControllers::dispatchPlan(const ImageDocumentRuntimePlan& plan)
 {
     if (m_runtimeWorkflow != nullptr) {
         m_runtimeWorkflow->dispatchPlan(plan);

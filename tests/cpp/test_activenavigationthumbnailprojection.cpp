@@ -10,17 +10,17 @@
 #include <vector>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
 kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(
-    const QUrl &url, const QString &name = {})
+    const QUrl& url, const QString& name = {})
 {
     return kiriview::DirectMediaNavigationCandidate { url, name };
 }
 
-kiriview::ImageDocumentPageTarget imageTarget(const QUrl &url,
+kiriview::ImageDocumentPageTarget imageTarget(const QUrl& url,
     kiriview::ImageDocumentPageKind kind = kiriview::ImageDocumentPageKind::Image,
-    const QString &name = {})
+    const QString& name = {})
 {
     return kiriview::ImageDocumentPageTarget(url, kind, name);
 }

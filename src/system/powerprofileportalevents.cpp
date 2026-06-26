@@ -12,7 +12,7 @@ constexpr auto powerSaverEnabledProperty = "power-saver-enabled";
 }
 
 namespace kiriview {
-PowerProfileMonitorEvent powerProfileMonitorEventFromRefreshReply(const QVariantList &arguments)
+PowerProfileMonitorEvent powerProfileMonitorEventFromRefreshReply(const QVariantList& arguments)
 {
     if (arguments.isEmpty()) {
         return PowerProfileMonitorEvent::powerSaverValue(false);
@@ -22,8 +22,8 @@ PowerProfileMonitorEvent powerProfileMonitorEventFromRefreshReply(const QVariant
         powerSaverEnabledFromPortalValue(arguments.first()).value_or(false));
 }
 
-PowerProfileMonitorEvent powerProfileMonitorEventFromPropertiesChanged(const QString &interfaceName,
-    const QVariantMap &changedProperties, const QStringList &invalidatedProperties)
+PowerProfileMonitorEvent powerProfileMonitorEventFromPropertiesChanged(const QString& interfaceName,
+    const QVariantMap& changedProperties, const QStringList& invalidatedProperties)
 {
     if (interfaceName != QLatin1String(powerProfileMonitorInterface)) {
         return PowerProfileMonitorEvent::ignore();

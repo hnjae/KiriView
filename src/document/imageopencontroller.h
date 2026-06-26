@@ -30,13 +30,14 @@ class ImagePresentationRuntime;
 class ImageOpenController final
 {
 public:
-    using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
-    using RuntimePlanCallback = std::function<void(const ImageDocumentRuntimePlan &)>;
-    using UnsupportedOpenedCollectionVideoEnteredCallback = std::function<void(const QString &)>;
-    using CommitPrimaryPageSlotCallback = std::function<void(const DisplayedImageLocation &)>;
+    using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl&)>;
+    using RuntimePlanCallback = std::function<void(const ImageDocumentRuntimePlan&)>;
+    using UnsupportedOpenedCollectionVideoEnteredCallback = std::function<void(const QString&)>;
+    using CommitPrimaryPageSlotCallback = std::function<void(const DisplayedImageLocation&)>;
     using ClearPrimaryPageSlotCallback = std::function<void()>;
 
-    struct Callbacks {
+    struct Callbacks
+    {
         FindPredecodedImageCallback findPredecodedImage;
         RuntimePlanCallback runtimePlan;
         UnsupportedOpenedCollectionVideoEnteredCallback unsupportedOpenedCollectionVideoEntered;
@@ -44,9 +45,9 @@ public:
         ClearPrimaryPageSlotCallback clearPrimaryPageSlot;
     };
 
-    ImageOpenController(QObject *parent, ImageDocumentState &state,
-        ImagePageSurfaceController &pageSurfaceController,
-        ImagePresentationRuntime &presentationRuntime, Callbacks callbacks,
+    ImageOpenController(QObject* parent, ImageDocumentState& state,
+        ImagePageSurfaceController& pageSurfaceController,
+        ImagePresentationRuntime& presentationRuntime, Callbacks callbacks,
         ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies);
     ~ImageOpenController();
@@ -54,10 +55,10 @@ public:
     void open();
     void cancel();
     void finishEmptySourceLoad();
-    void finishAnimationLoadWithError(const QString &errorString);
-    void finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl);
+    void finishAnimationLoadWithError(const QString& errorString);
+    void finishContainerNavigationWithEmptyContainer(const QUrl& containerUrl);
     void finishContainerNavigationLoadWithError(
-        const QUrl &containerUrl, const QString &errorString);
+        const QUrl& containerUrl, const QString& errorString);
 
 private:
     void beginSourceLoad();
@@ -66,15 +67,15 @@ private:
     void finishThumbnailPreviewLoad(ImageLoadSession session, StaticDisplayImagePayload preview);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
-    void finishPresentedImageLoad(const ImageLoadSession &session,
-        const ImagePresentationLoadResult &result, EmbeddedMetadata metadata);
-    void finishLoadWithError(const ImageLoadSession &session, ImageLoadFailure failure);
-    void finishSuccessfulImageLoad(const ImageLoadSession &session, EmbeddedMetadata metadata);
+    void finishPresentedImageLoad(const ImageLoadSession& session,
+        const ImagePresentationLoadResult& result, EmbeddedMetadata metadata);
+    void finishLoadWithError(const ImageLoadSession& session, ImageLoadFailure failure);
+    void finishSuccessfulImageLoad(const ImageLoadSession& session, EmbeddedMetadata metadata);
     void reportRuntimePlan(ImageDocumentRuntimePlan plan);
 
-    ImageDocumentState &m_state;
-    ImagePageSurfaceController &m_pageSurfaceController;
-    ImagePresentationRuntime &m_presentationRuntime;
+    ImageDocumentState& m_state;
+    ImagePageSurfaceController& m_pageSurfaceController;
+    ImagePresentationRuntime& m_presentationRuntime;
     Callbacks m_callbacks;
     std::unique_ptr<ImageLoader> m_imageLoader;
 };

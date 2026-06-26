@@ -54,7 +54,7 @@ public:
         callbacks = std::move(nextCallbacks);
     }
 
-    void setSource(const QUrl &nextSourceUrl) override
+    void setSource(const QUrl& nextSourceUrl) override
     {
         sourceUrl = nextSourceUrl;
         ++setSourceCount;
@@ -95,13 +95,13 @@ public:
         callbacks.mutedChanged();
     }
 
-    void setVideoOutput(QObject *nextVideoOutput) override
+    void setVideoOutput(QObject* nextVideoOutput) override
     {
         output = nextVideoOutput;
         ++setVideoOutputCount;
     }
 
-    QObject *videoOutput() const override { return output.data(); }
+    QObject* videoOutput() const override { return output.data(); }
     kiriview::VideoMediaStatus mediaStatus() const override { return currentStatus; }
     QString errorString() const override { return currentErrorString; }
     qint64 duration() const override { return currentDuration; }
@@ -171,8 +171,10 @@ public:
     int stopCount = 0;
 };
 
-struct FakeResolverState {
-    struct Request {
+struct FakeResolverState
+{
+    struct Request
+    {
         quint64 operationId = 0;
         QUrl sourceUrl;
         kiriview::VideoPlaybackUrlResolvedCallback resolvedCallback;
@@ -192,7 +194,7 @@ public:
     {
     }
 
-    void resolve(quint64 operationId, const QUrl &sourceUrl, QObject *,
+    void resolve(quint64 operationId, const QUrl& sourceUrl, QObject*,
         kiriview::VideoPlaybackUrlResolvedCallback resolvedCallback,
         kiriview::VideoPlaybackUrlFailedCallback failedCallback) override
     {
@@ -207,9 +209,10 @@ private:
     std::shared_ptr<FakeResolverState> state;
 };
 
-struct RuntimeFixture {
+struct RuntimeFixture
+{
     QObject documentObject;
-    FakeVideoMediaBackend *backend = nullptr;
+    FakeVideoMediaBackend* backend = nullptr;
     std::shared_ptr<FakeResolverState> resolverState = std::make_shared<FakeResolverState>();
     std::vector<kiriview::VideoDocumentChange> changes;
     std::unique_ptr<kiriview::VideoDocumentRuntime> runtime;
@@ -220,15 +223,15 @@ struct RuntimeFixture {
         backend = mediaBackend.get();
         runtime = std::make_unique<kiriview::VideoDocumentRuntime>(
             &documentObject,
-            [this](const std::vector<kiriview::VideoDocumentChange> &nextChanges) {
+            [this](const std::vector<kiriview::VideoDocumentChange>& nextChanges) {
                 changes.insert(changes.end(), nextChanges.begin(), nextChanges.end());
             },
             std::move(mediaBackend), std::make_unique<FakeVideoPlaybackUrlResolver>(resolverState));
     }
 
-    void resolveLatest(const QUrl &playbackUrl)
+    void resolveLatest(const QUrl& playbackUrl)
     {
-        auto &request = resolverState->requests.back();
+        auto& request = resolverState->requests.back();
         request.resolvedCallback(kiriview::VideoPlaybackUrlResolution {
             request.operationId,
             request.sourceUrl,
@@ -236,14 +239,14 @@ struct RuntimeFixture {
         });
     }
 
-    void failLatest(const QString &errorString)
+    void failLatest(const QString& errorString)
     {
-        auto &request = resolverState->requests.back();
+        auto& request = resolverState->requests.back();
         request.failedCallback(request.operationId, request.sourceUrl, errorString);
     }
 };
 
-void appendU32(QByteArray &data, quint32 value)
+void appendU32(QByteArray& data, quint32 value)
 {
     data.append(static_cast<char>((value >> 24) & 0xff));
     data.append(static_cast<char>((value >> 16) & 0xff));
@@ -251,14 +254,14 @@ void appendU32(QByteArray &data, quint32 value)
     data.append(static_cast<char>(value & 0xff));
 }
 
-void appendBox(QByteArray &data, const char *kind, const QByteArray &payload)
+void appendBox(QByteArray& data, const char* kind, const QByteArray& payload)
 {
     appendU32(data, static_cast<quint32>(payload.size() + 8));
     data.append(kind, 4);
     data.append(payload);
 }
 
-bool writeTinyMetadataMp4(const QString &path)
+bool writeTinyMetadataMp4(const QString& path)
 {
     QByteArray ftypPayload;
     ftypPayload.append("isom", 4);
@@ -331,12 +334,12 @@ void TestVideoDocumentRuntime::mediaBackendFactoryIsLazyUntilPlaybackUrlResoluti
     QObject documentObject;
     QObject output;
     auto resolverState = std::make_shared<FakeResolverState>();
-    FakeVideoMediaBackend *backend = nullptr;
-    QObject *factoryParent = nullptr;
+    FakeVideoMediaBackend* backend = nullptr;
+    QObject* factoryParent = nullptr;
     int factoryCallCount = 0;
     kiriview::VideoDocumentRuntime runtime(&documentObject, {},
         std::unique_ptr<kiriview::VideoMediaBackend>(),
-        std::make_unique<FakeVideoPlaybackUrlResolver>(resolverState), [&](QObject *parent) {
+        std::make_unique<FakeVideoPlaybackUrlResolver>(resolverState), [&](QObject* parent) {
             factoryParent = parent;
             ++factoryCallCount;
             auto mediaBackend = std::make_unique<FakeVideoMediaBackend>();
@@ -357,7 +360,7 @@ void TestVideoDocumentRuntime::mediaBackendFactoryIsLazyUntilPlaybackUrlResoluti
     QCOMPARE(runtime.status(), kiriview::VideoDocumentStatus::Loading);
     QCOMPARE(resolverState->requests.size(), std::size_t(1));
 
-    auto &request = resolverState->requests.back();
+    auto& request = resolverState->requests.back();
     request.resolvedCallback(kiriview::VideoPlaybackUrlResolution {
         request.operationId,
         request.sourceUrl,
@@ -556,7 +559,7 @@ void TestVideoDocumentRuntime::staleResolverCompletionsAreIgnored()
     fixture.runtime->setSourceUrl(firstSourceUrl);
     fixture.runtime->setSourceUrl(secondSourceUrl);
 
-    auto &firstRequest = fixture.resolverState->requests.front();
+    auto& firstRequest = fixture.resolverState->requests.front();
     firstRequest.resolvedCallback(kiriview::VideoPlaybackUrlResolution {
         firstRequest.operationId,
         firstRequest.sourceUrl,
@@ -776,7 +779,7 @@ void TestVideoDocumentRuntime::seekByNoopsWhenNotSeekable()
 void TestVideoDocumentRuntime::videoOutputDetachAndDestructionClearBackendOutput()
 {
     RuntimeFixture fixture;
-    auto *output = new QObject();
+    auto* output = new QObject();
 
     fixture.runtime->setVideoOutput(output);
     QCOMPARE(fixture.runtime->videoOutput(), output);

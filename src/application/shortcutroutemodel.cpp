@@ -10,7 +10,7 @@
 #include <QVariantList>
 
 namespace {
-QVariantList actionIdVariants(const QList<kiriview::ApplicationActions::ActionId> &actionIds)
+QVariantList actionIdVariants(const QList<kiriview::ApplicationActions::ActionId>& actionIds)
 {
     QVariantList variants;
     variants.reserve(actionIds.size());
@@ -24,24 +24,24 @@ QVariantList actionIdVariants(const QList<kiriview::ApplicationActions::ActionId
 }
 
 namespace kiriview::ApplicationActions {
-ShortcutRouteModel::ShortcutRouteModel(QObject *parent)
+ShortcutRouteModel::ShortcutRouteModel(QObject* parent)
     : QAbstractListModel(parent)
 {
 }
 
-int ShortcutRouteModel::rowCount(const QModelIndex &parent) const
+int ShortcutRouteModel::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : static_cast<int>(shortcutRoutes().size());
 }
 
-QVariant ShortcutRouteModel::data(const QModelIndex &index, int role) const
+QVariant ShortcutRouteModel::data(const QModelIndex& index, int role) const
 {
-    const QList<ApplicationShortcutRoute> &routes = shortcutRoutes();
+    const QList<ApplicationShortcutRoute>& routes = shortcutRoutes();
     if (!index.isValid() || index.row() < 0 || index.row() >= routes.size()) {
         return {};
     }
 
-    const ApplicationShortcutRoute &route = routes.at(index.row());
+    const ApplicationShortcutRoute& route = routes.at(index.row());
     switch (role) {
     case ActionIdsRole:
         return actionIdVariants(route.actionIds);

@@ -12,13 +12,13 @@
 namespace kiriview {
 class ImageDecodeRequest;
 
-std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &data);
+std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray& data);
 std::optional<DecodedImageResult> decodeHeifStillImageData(
-    const QByteArray &data, const ImageDecodeRequest &request);
-std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data);
-std::optional<DecodedImageResult> decodeHeifImageData(const QByteArray &data);
+    const QByteArray& data, const ImageDecodeRequest& request);
+std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray& data);
+std::optional<DecodedImageResult> decodeHeifImageData(const QByteArray& data);
 std::optional<DecodedImageResult> decodeHeifImageData(
-    const QByteArray &data, const ImageDecodeRequest &request);
+    const QByteArray& data, const ImageDecodeRequest& request);
 }
 
 #endif

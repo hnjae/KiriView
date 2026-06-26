@@ -20,7 +20,8 @@ enum class WebPAnimationOpenStatus {
     Error,
 };
 
-struct WebPAnimationOpenResult {
+struct WebPAnimationOpenResult
+{
     WebPAnimationOpenStatus status = WebPAnimationOpenStatus::NotWebP;
     QImage firstFrame;
     int firstFrameDelay = 0;
@@ -35,13 +36,13 @@ public:
     WebPAnimationReader();
     ~WebPAnimationReader();
 
-    WebPAnimationReader(const WebPAnimationReader &) = delete;
-    WebPAnimationReader &operator=(const WebPAnimationReader &) = delete;
-    WebPAnimationReader(WebPAnimationReader &&) noexcept;
-    WebPAnimationReader &operator=(WebPAnimationReader &&) noexcept;
+    WebPAnimationReader(const WebPAnimationReader&) = delete;
+    WebPAnimationReader& operator=(const WebPAnimationReader&) = delete;
+    WebPAnimationReader(WebPAnimationReader&&) noexcept;
+    WebPAnimationReader& operator=(WebPAnimationReader&&) noexcept;
 
     WebPAnimationOpenResult open(QByteArray data);
-    std::optional<AnimationFrame> readNextFrame(QString *errorString);
+    std::optional<AnimationFrame> readNextFrame(QString* errorString);
     bool hasMoreFrames() const;
     void close();
 

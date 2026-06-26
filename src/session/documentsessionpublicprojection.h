@@ -15,7 +15,8 @@
 #include <optional>
 
 namespace kiriview {
-struct DocumentSessionPublicProjectionInput {
+struct DocumentSessionPublicProjectionInput
+{
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     bool directImageLoadMayUseImageDocumentSourceScope = false;
     bool imageSourceMayRepresentDocument = false;
@@ -33,7 +34,8 @@ struct DocumentSessionPublicProjectionInput {
     bool displayedMediaOpenWithAvailable = false;
 };
 
-struct DocumentSessionPublicSessionLeafSnapshot {
+struct DocumentSessionPublicSessionLeafSnapshot
+{
     QUrl sourceUrl;
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     QString sessionErrorString;
@@ -45,7 +47,8 @@ struct DocumentSessionPublicSessionLeafSnapshot {
         = ActiveNavigationRevealDirection::None;
 };
 
-struct DocumentSessionPublicImageLeafSnapshot {
+struct DocumentSessionPublicImageLeafSnapshot
+{
     QUrl sourceUrl;
     bool sourceMayRepresentDocument = false;
     ImageDocumentPageActiveNavigationSnapshot pageNavigation;
@@ -78,7 +81,8 @@ struct DocumentSessionPublicImageLeafSnapshot {
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext;
 };
 
-struct DocumentSessionPublicVideoLeafSnapshot {
+struct DocumentSessionPublicVideoLeafSnapshot
+{
     QUrl sourceUrl;
     QString windowTitleFileName;
     QSize directMediaSize;
@@ -92,11 +96,13 @@ struct DocumentSessionPublicVideoLeafSnapshot {
     QString errorString;
 };
 
-struct DocumentSessionPublicOperationAvailabilitySnapshot {
+struct DocumentSessionPublicOperationAvailabilitySnapshot
+{
     bool displayedMediaOpenWithAvailable = false;
 };
 
-struct DocumentSessionPublicSnapshotInput {
+struct DocumentSessionPublicSnapshotInput
+{
     quint64 inputRevision = 0;
     DocumentSessionPublicSessionLeafSnapshot session;
     DocumentSessionPublicImageLeafSnapshot image;
@@ -109,7 +115,7 @@ DocumentSessionPublicProjection projectDocumentSessionPublicState(
     DocumentSessionPublicProjectionInput input);
 
 DocumentSessionPublicSnapshot projectDocumentSessionPublicSnapshot(
-    const DocumentSessionPublicSnapshotInput &input, quint64 revision);
+    const DocumentSessionPublicSnapshotInput& input, quint64 revision);
 }
 
 #endif

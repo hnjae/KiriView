@@ -86,7 +86,8 @@ inline constexpr bool imageShortcutScopeKnown(ImageShortcutScope scope)
         && static_cast<int>(scope) < static_cast<int>(ImageShortcutScope::ImageShortcutScopeCount);
 }
 
-struct ShortcutRouteSpec {
+struct ShortcutRouteSpec
+{
     ApplicationShortcutActivationScope activationScope
         = ApplicationShortcutActivationScope::ProgramWide;
     ImageShortcutScope shortcutScope = ImageShortcutScope::HelpShortcutScope;

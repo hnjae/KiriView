@@ -12,8 +12,8 @@
 #include <utility>
 
 namespace kiriview {
-ImageDocumentPageNavigationController::ImageDocumentPageNavigationController(QObject *parent,
-    const ImageDocumentPageCandidateRepository &candidateRepository, Callbacks callbacks)
+ImageDocumentPageNavigationController::ImageDocumentPageNavigationController(QObject* parent,
+    const ImageDocumentPageCandidateRepository& candidateRepository, Callbacks callbacks)
     : QObject(parent)
     , m_candidateRepository(candidateRepository)
     , m_callbacks(std::move(callbacks))
@@ -87,7 +87,7 @@ void ImageDocumentPageNavigationController::openAdjacentPage(
             finishNavigation(
                 std::move(candidates), direction, currentUrl, std::move(candidateSource));
         },
-        [](const QString &) {});
+        [](const QString&) {});
 }
 
 void ImageDocumentPageNavigationController::update(
@@ -117,7 +117,7 @@ void ImageDocumentPageNavigationController::update(
                 notifyChanged();
             }
         },
-        [](const QString &) {});
+        [](const QString&) {});
 }
 
 void ImageDocumentPageNavigationController::cancelNavigation()
@@ -142,7 +142,7 @@ void ImageDocumentPageNavigationController::clear()
 
 void ImageDocumentPageNavigationController::finishNavigation(
     std::vector<ImageDocumentPageCandidate> candidates, NavigationDirection direction,
-    const QUrl &currentUrl, ImageDocumentPageCandidateListSource candidateSource)
+    const QUrl& currentUrl, ImageDocumentPageCandidateListSource candidateSource)
 {
     const std::optional<ImageDocumentPageCandidate> candidate
         = adjacentImageDocumentPageCandidate(candidates, currentUrl, direction);
@@ -159,7 +159,7 @@ void ImageDocumentPageNavigationController::finishNavigation(
 }
 
 void ImageDocumentPageNavigationController::watchChanges(
-    const ImageDocumentPageCandidateListContext &context)
+    const ImageDocumentPageCandidateListContext& context)
 {
     if (m_model.shouldKeepExistingWatcherFor(context) && m_changesJob.isActive()) {
         return;
@@ -172,7 +172,7 @@ void ImageDocumentPageNavigationController::watchChanges(
         [this, source](std::vector<ImageDocumentPageCandidate> candidates) {
             updateFromChangedCandidates(std::move(candidates), source);
         },
-        [](const QString &) {});
+        [](const QString&) {});
 }
 
 void ImageDocumentPageNavigationController::updateFromChangedCandidates(

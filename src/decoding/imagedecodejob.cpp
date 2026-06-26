@@ -15,7 +15,7 @@
 
 namespace {
 bool rawEmbeddedThumbnailPreviewEligible(
-    const QByteArray &data, const kiriview::ImageDecodeRequest &request)
+    const QByteArray& data, const kiriview::ImageDecodeRequest& request)
 {
     const kiriview::ImageInputClassification classification
         = kiriview::classifyImageInput(data, request.imageUrl().fileName());
@@ -24,23 +24,23 @@ bool rawEmbeddedThumbnailPreviewEligible(
 }
 
 namespace kiriview {
-ImageDecodeJob::ImageDecodeJob(QObject *parent)
+ImageDecodeJob::ImageDecodeJob(QObject* parent)
     : ImageDecodeJob(parent, Callbacks {})
 {
 }
 
-ImageDecodeJob::ImageDecodeJob(QObject *parent, Callbacks callbacks)
+ImageDecodeJob::ImageDecodeJob(QObject* parent, Callbacks callbacks)
     : ImageDecodeJob(parent, {}, std::move(callbacks))
 {
 }
 
-ImageDecodeJob::ImageDecodeJob(QObject *parent, ImageDecodeDependencies dependencies)
+ImageDecodeJob::ImageDecodeJob(QObject* parent, ImageDecodeDependencies dependencies)
     : ImageDecodeJob(parent, std::move(dependencies), Callbacks {})
 {
 }
 
 ImageDecodeJob::ImageDecodeJob(
-    QObject *parent, ImageDecodeDependencies dependencies, Callbacks callbacks)
+    QObject* parent, ImageDecodeDependencies dependencies, Callbacks callbacks)
     : QObject(parent)
     , m_dependencies(imageDecodeDependenciesWithDefaults(std::move(dependencies)))
     , m_callbacks(std::move(callbacks))
@@ -64,16 +64,16 @@ void ImageDecodeJob::start(ImageDecodeRequest request)
         this, ticket.request,
         [this, ticket](QByteArray data) mutable {
             ImageDecodeJobRuntimePlan plan = m_state.acceptLoadedData(ticket);
-            auto *operation = std::get_if<StartImageDecodeOperation>(&plan.operation);
+            auto* operation = std::get_if<StartImageDecodeOperation>(&plan.operation);
             if (operation == nullptr) {
                 return;
             }
 
             startDecode(std::move(data), std::move(ticket), std::move(operation->request));
         },
-        [this, ticket](const QString &errorString) {
+        [this, ticket](const QString& errorString) {
             ImageDecodeJobRuntimePlan plan = m_state.acceptLoadError(ticket);
-            const auto *operation = std::get_if<DeliverImageLoadErrorOperation>(&plan.operation);
+            const auto* operation = std::get_if<DeliverImageLoadErrorOperation>(&plan.operation);
             if (operation == nullptr) {
                 return;
             }
@@ -104,7 +104,7 @@ void ImageDecodeJob::startDecode(
         },
         [this, ticket = std::move(ticket)](DecodedImageResult result) mutable {
             ImageDecodeJobRuntimePlan plan = m_state.acceptDecodeResult(ticket);
-            auto *operation = std::get_if<DeliverImageDecodeResultOperation>(&plan.operation);
+            auto* operation = std::get_if<DeliverImageDecodeResultOperation>(&plan.operation);
             if (operation == nullptr) {
                 return;
             }
@@ -114,7 +114,7 @@ void ImageDecodeJob::startDecode(
 }
 
 void ImageDecodeJob::startThumbnailPreviewLookup(
-    const QByteArray &data, ImageDecodeJobTicket ticket, const ImageDecodeRequest &request)
+    const QByteArray& data, ImageDecodeJobTicket ticket, const ImageDecodeRequest& request)
 {
     if (!m_dependencies.thumbnailPreviewLookupProvider
         || (!m_callbacks.thumbnailPreview
@@ -143,7 +143,7 @@ void ImageDecodeJob::startThumbnailPreviewLookup(
             rawPreviewEligible, rawPreviewData = std::move(rawPreviewData)](
             ThumbnailCacheLookupResult lookupResult) mutable {
             ImageDecodeJobRuntimePlan plan = m_state.acceptThumbnailPreview(ticket);
-            const auto *operation
+            const auto* operation
                 = std::get_if<DeliverImageThumbnailPreviewOperation>(&plan.operation);
             if (operation == nullptr) {
                 return;
@@ -193,7 +193,7 @@ void ImageDecodeJob::startRawEmbeddedThumbnailPreviewValidation(
             }
 
             ImageDecodeJobRuntimePlan plan = m_state.acceptThumbnailPreview(ticket);
-            const auto *operation
+            const auto* operation
                 = std::get_if<DeliverImageThumbnailPreviewOperation>(&plan.operation);
             if (operation == nullptr) {
                 return;

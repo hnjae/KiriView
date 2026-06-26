@@ -64,7 +64,8 @@ enum class ImageOpenEffect {
     ClearSecondaryPage = 7,
 };
 
-struct ImageOpenStateDelta {
+struct ImageOpenStateDelta
+{
     ImageOpenUrlTarget sourceUrl = ImageOpenUrlTarget::Unchanged;
     ImageOpenSourceKindTarget sourceKind = ImageOpenSourceKindTarget::Unchanged;
     ImageOpenDisplayedLocationTarget displayedLocation
@@ -78,7 +79,8 @@ struct ImageOpenStateDelta {
     bool clearLoadingContainerNavigationUrl = false;
 };
 
-struct ImageOpenTransition {
+struct ImageOpenTransition
+{
     ImageOpenStateDelta stateDelta;
     std::vector<ImageOpenEffect> effects;
 };

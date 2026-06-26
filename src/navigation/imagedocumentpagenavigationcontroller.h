@@ -24,14 +24,15 @@ public:
     using PageNavigationChangedCallback = std::function<void()>;
     using DeletionInProgressCallback = std::function<bool()>;
 
-    struct Callbacks {
+    struct Callbacks
+    {
         NavigationPlanCallback navigationPlan;
         PageNavigationChangedCallback pageNavigationChanged;
         DeletionInProgressCallback deletionInProgress;
     };
 
-    ImageDocumentPageNavigationController(QObject *parent,
-        const ImageDocumentPageCandidateRepository &candidateRepository, Callbacks callbacks);
+    ImageDocumentPageNavigationController(QObject* parent,
+        const ImageDocumentPageCandidateRepository& candidateRepository, Callbacks callbacks);
 
     int currentPageNumber() const;
     int pageCount() const;
@@ -49,9 +50,9 @@ public:
 
 private:
     void finishNavigation(std::vector<ImageDocumentPageCandidate> candidates,
-        NavigationDirection direction, const QUrl &currentUrl,
+        NavigationDirection direction, const QUrl& currentUrl,
         ImageDocumentPageCandidateListSource candidateSource);
-    void watchChanges(const ImageDocumentPageCandidateListContext &context);
+    void watchChanges(const ImageDocumentPageCandidateListContext& context);
     void updateFromChangedCandidates(std::vector<ImageDocumentPageCandidate> candidates,
         ImageDocumentPageCandidateListSource source);
     void notifyChanged();
@@ -60,7 +61,7 @@ private:
         ImageDocumentPageCandidateListContext context);
     bool deletionInProgress() const;
 
-    const ImageDocumentPageCandidateRepository &m_candidateRepository;
+    const ImageDocumentPageCandidateRepository& m_candidateRepository;
     Callbacks m_callbacks;
     ImageDocumentPageNavigationModel m_model;
     ImageIoJob m_navigationListerJob;

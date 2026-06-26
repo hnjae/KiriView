@@ -9,7 +9,7 @@
 #include <utility>
 
 namespace {
-template <typename Value> bool replaceIfChanged(Value &current, const Value &next)
+template <typename Value> bool replaceIfChanged(Value& current, const Value& next)
 {
     if (current == next) {
         return false;
@@ -27,7 +27,7 @@ ImageDocumentState::ImageDocumentState(ChangeCallback changeCallback)
 {
 }
 
-ImageDocumentState::ImageDocumentState(ImageDocumentChangeBatcher &changes)
+ImageDocumentState::ImageDocumentState(ImageDocumentChangeBatcher& changes)
     : m_changes(&changes)
 {
 }
@@ -37,29 +37,29 @@ ImageDocumentState::ChangeBatch ImageDocumentState::beginChangeBatch()
     return m_changes->beginBatch();
 }
 
-const QUrl &ImageDocumentState::sourceUrl() const { return m_sourceUrl; }
+const QUrl& ImageDocumentState::sourceUrl() const { return m_sourceUrl; }
 
 ImageDocumentPageKind ImageDocumentState::sourceKind() const { return m_sourceKind; }
 
-const DisplayedImageLocation &ImageDocumentState::displayedImageLocation() const
+const DisplayedImageLocation& ImageDocumentState::displayedImageLocation() const
 {
     return m_displayedImageLocation;
 }
 
-const OpenedCollectionScopeLocation &ImageDocumentState::displayedOpenedCollectionScope() const
+const OpenedCollectionScopeLocation& ImageDocumentState::displayedOpenedCollectionScope() const
 {
     return m_displayedImageLocation.openedCollectionScope();
 }
 
-const QUrl &ImageDocumentState::displayedUrl() const { return m_displayedImageLocation.imageUrl(); }
+const QUrl& ImageDocumentState::displayedUrl() const { return m_displayedImageLocation.imageUrl(); }
 
 ImageDocumentStatus ImageDocumentState::status() const { return m_status; }
 
 bool ImageDocumentState::loading() const { return m_loading; }
 
-const QString &ImageDocumentState::errorString() const { return m_errorString; }
+const QString& ImageDocumentState::errorString() const { return m_errorString; }
 
-const std::optional<ImageLoadFailure> &ImageDocumentState::loadFailure() const
+const std::optional<ImageLoadFailure>& ImageDocumentState::loadFailure() const
 {
     return m_loadFailure;
 }
@@ -69,9 +69,9 @@ QString ImageDocumentState::windowTitleFileName() const
     return windowTitleFileNameForDisplayedLocation(m_displayedImageLocation);
 }
 
-const QUrl &ImageDocumentState::containerNavigationUrl() const { return m_containerNavigationUrl; }
+const QUrl& ImageDocumentState::containerNavigationUrl() const { return m_containerNavigationUrl; }
 
-const QUrl &ImageDocumentState::loadingContainerNavigationUrl() const
+const QUrl& ImageDocumentState::loadingContainerNavigationUrl() const
 {
     return m_loadingContainerNavigationUrl;
 }
@@ -86,9 +86,9 @@ bool ImageDocumentState::unsupportedOpenedCollectionVideo() const
     return m_unsupportedOpenedCollectionVideo;
 }
 
-const EmbeddedMetadata &ImageDocumentState::embeddedMetadata() const { return m_embeddedMetadata; }
+const EmbeddedMetadata& ImageDocumentState::embeddedMetadata() const { return m_embeddedMetadata; }
 
-void ImageDocumentState::setSourceUrl(const QUrl &sourceUrl)
+void ImageDocumentState::setSourceUrl(const QUrl& sourceUrl)
 {
     if (replaceIfChanged(m_sourceUrl, sourceUrl)) {
         notify(ImageDocumentChange::SourceUrl);
@@ -100,7 +100,7 @@ void ImageDocumentState::setSourceKind(ImageDocumentPageKind sourceKind)
     m_sourceKind = sourceKind;
 }
 
-void ImageDocumentState::setDisplayedImageLocation(const DisplayedImageLocation &location)
+void ImageDocumentState::setDisplayedImageLocation(const DisplayedImageLocation& location)
 {
     replaceDisplayedImageLocation(location);
 }
@@ -140,7 +140,7 @@ void ImageDocumentState::setLoading(bool loading)
     }
 }
 
-void ImageDocumentState::setErrorString(const QString &errorString)
+void ImageDocumentState::setErrorString(const QString& errorString)
 {
     m_loadFailure.reset();
 
@@ -158,14 +158,14 @@ void ImageDocumentState::setLoadFailure(ImageLoadFailure failure)
     }
 }
 
-void ImageDocumentState::setContainerNavigationUrl(const QUrl &containerUrl)
+void ImageDocumentState::setContainerNavigationUrl(const QUrl& containerUrl)
 {
     if (replaceIfChanged(m_containerNavigationUrl, containerUrl)) {
         notify(ImageDocumentChange::ContainerNavigation);
     }
 }
 
-void ImageDocumentState::setLoadingContainerNavigationUrl(const QUrl &containerUrl)
+void ImageDocumentState::setLoadingContainerNavigationUrl(const QUrl& containerUrl)
 {
     m_loadingContainerNavigationUrl = containerUrl;
 }

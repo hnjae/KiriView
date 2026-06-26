@@ -59,13 +59,14 @@ constexpr int panelWidth = 360;
 constexpr int panelHeight = 96;
 constexpr double fuzzyPixel = 0.75;
 
-struct ThumbnailPanelFixture {
+struct ThumbnailPanelFixture
+{
     std::unique_ptr<QQmlComponent> component;
     std::unique_ptr<QQuickView> view;
     std::unique_ptr<QTemporaryDir> directory;
-    KiriDocumentSession *documentSession = nullptr;
-    QQuickItem *root = nullptr;
-    QQuickItem *thumbnailStrip = nullptr;
+    KiriDocumentSession* documentSession = nullptr;
+    QQuickItem* root = nullptr;
+    QQuickItem* thumbnailStrip = nullptr;
     QString errorString;
 
     bool isValid() const
@@ -75,10 +76,10 @@ struct ThumbnailPanelFixture {
     }
 };
 
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
@@ -102,7 +103,7 @@ QString qmlSourceImport()
     return QUrl::fromLocalFile(qmlPath).toString();
 }
 
-QString fixtureQml(const QString &sourceUrl)
+QString fixtureQml(const QString& sourceUrl)
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -137,7 +138,7 @@ Item {
         .arg(sourceUrl);
 }
 
-bool writeTestImages(QTemporaryDir &directory, QString *firstImagePath, QString *errorString)
+bool writeTestImages(QTemporaryDir& directory, QString* firstImagePath, QString* errorString)
 {
     QImage image(QSize(3, 2), QImage::Format_RGBA8888);
     image.fill(Qt::blue);
@@ -192,13 +193,13 @@ ThumbnailPanelFixture createFixture()
         return fixture;
     }
 
-    QObject *createdRoot = fixture.component->create();
+    QObject* createdRoot = fixture.component->create();
     if (createdRoot == nullptr) {
         fixture.errorString = fixture.component->errorString();
         return fixture;
     }
 
-    fixture.root = qobject_cast<QQuickItem *>(createdRoot);
+    fixture.root = qobject_cast<QQuickItem*>(createdRoot);
     if (fixture.root == nullptr) {
         fixture.errorString = QStringLiteral("fixture root is not a QQuickItem");
         delete createdRoot;
@@ -211,40 +212,39 @@ ThumbnailPanelFixture createFixture()
     QCoreApplication::processEvents();
 
     fixture.documentSession
-        = fixture.root->findChild<KiriDocumentSession *>(QStringLiteral("documentSession"));
-    fixture.thumbnailStrip
-        = fixture.root->findChild<QQuickItem *>(QStringLiteral("thumbnailStrip"));
+        = fixture.root->findChild<KiriDocumentSession*>(QStringLiteral("documentSession"));
+    fixture.thumbnailStrip = fixture.root->findChild<QQuickItem*>(QStringLiteral("thumbnailStrip"));
     if (!fixture.isValid()) {
         fixture.errorString = QStringLiteral("fixture did not create required objects");
     }
     return fixture;
 }
 
-double realProperty(const QObject &object, const char *name)
+double realProperty(const QObject& object, const char* name)
 {
     return object.property(name).toDouble();
 }
 
-double itemStart(const QQuickItem &thumbnailStrip, int number)
+double itemStart(const QQuickItem& thumbnailStrip, int number)
 {
     return (number - 1) * realProperty(thumbnailStrip, "itemPitch");
 }
 
-double contentX(const QQuickItem &thumbnailStrip)
+double contentX(const QQuickItem& thumbnailStrip)
 {
     return realProperty(thumbnailStrip, "contentX");
 }
 
 bool nearlyEqual(double left, double right) { return std::abs(left - right) <= fuzzyPixel; }
 
-double clampedContentXForSnapPosition(const QQuickItem &thumbnailStrip, int number, double snap)
+double clampedContentXForSnapPosition(const QQuickItem& thumbnailStrip, int number, double snap)
 {
     const double contentWidth = realProperty(thumbnailStrip, "contentWidth");
     const double maxContentX = std::max(0.0, contentWidth - thumbnailStrip.width());
     return std::max(0.0, std::min(maxContentX, itemStart(thumbnailStrip, number) - snap));
 }
 
-double clampedContentXForContainment(const QQuickItem &thumbnailStrip, int number)
+double clampedContentXForContainment(const QQuickItem& thumbnailStrip, int number)
 {
     const double viewportStart = contentX(thumbnailStrip);
     const double viewportEnd = viewportStart + thumbnailStrip.width();
@@ -262,13 +262,13 @@ double clampedContentXForContainment(const QQuickItem &thumbnailStrip, int numbe
     return std::max(0.0, std::min(maxContentX, target));
 }
 
-double currentThumbnailStartInViewport(const QQuickItem &thumbnailStrip)
+double currentThumbnailStartInViewport(const QQuickItem& thumbnailStrip)
 {
     const int currentIndex = thumbnailStrip.property("currentIndex").toInt();
     return currentIndex * realProperty(thumbnailStrip, "itemPitch") - contentX(thumbnailStrip);
 }
 
-bool waitForActiveNavigation(const KiriDocumentSession &documentSession, int current, int count)
+bool waitForActiveNavigation(const KiriDocumentSession& documentSession, int current, int count)
 {
     QElapsedTimer timer;
     timer.start();
@@ -285,7 +285,7 @@ bool waitForActiveNavigation(const KiriDocumentSession &documentSession, int cur
     return false;
 }
 
-bool waitForContentX(const QQuickItem &thumbnailStrip, double expected)
+bool waitForContentX(const QQuickItem& thumbnailStrip, double expected)
 {
     QElapsedTimer timer;
     timer.start();
@@ -300,13 +300,13 @@ bool waitForContentX(const QQuickItem &thumbnailStrip, double expected)
     return false;
 }
 
-void setContentX(QQuickItem &thumbnailStrip, double value)
+void setContentX(QQuickItem& thumbnailStrip, double value)
 {
     thumbnailStrip.setProperty("contentX", value);
     QCoreApplication::processEvents();
 }
 
-bool currentThumbnailFullyVisible(const QQuickItem &thumbnailStrip)
+bool currentThumbnailFullyVisible(const QQuickItem& thumbnailStrip)
 {
     const int currentIndex = thumbnailStrip.property("currentIndex").toInt();
     if (currentIndex < 0) {
@@ -320,15 +320,15 @@ bool currentThumbnailFullyVisible(const QQuickItem &thumbnailStrip)
     return start >= viewportStart - fuzzyPixel && end <= viewportEnd + fuzzyPixel;
 }
 
-QQuickItem *thumbnailDelegateForNumber(QQuickItem &item, int number)
+QQuickItem* thumbnailDelegateForNumber(QQuickItem& item, int number)
 {
     if (item.objectName() == QStringLiteral("thumbnailStripItem")
         && item.property("number").toInt() == number) {
         return &item;
     }
 
-    for (QQuickItem *child : item.childItems()) {
-        if (QQuickItem *delegate = thumbnailDelegateForNumber(*child, number);
+    for (QQuickItem* child : item.childItems()) {
+        if (QQuickItem* delegate = thumbnailDelegateForNumber(*child, number);
             delegate != nullptr) {
             return delegate;
         }
@@ -337,13 +337,13 @@ QQuickItem *thumbnailDelegateForNumber(QQuickItem &item, int number)
     return nullptr;
 }
 
-void noteUserThumbnailScroll(QQuickItem &thumbnailStrip)
+void noteUserThumbnailScroll(QQuickItem& thumbnailStrip)
 {
     QVERIFY(QMetaObject::invokeMethod(
         &thumbnailStrip, "noteUserThumbnailScroll", Qt::DirectConnection));
 }
 
-int roleForName(const QAbstractItemModel &model, const QByteArray &name)
+int roleForName(const QAbstractItemModel& model, const QByteArray& name)
 {
     return model.roleNames().key(name, -1);
 }
@@ -370,7 +370,7 @@ void TestThumbnailPanel::delegateReportsThumbnailDemandThroughSessionModel()
     QVERIFY2(waitForActiveNavigation(*fixture.documentSession, 1, testImageCount),
         "active navigation did not become ready");
 
-    QAbstractItemModel *model = fixture.documentSession->activeNavigationThumbnailModel();
+    QAbstractItemModel* model = fixture.documentSession->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QCOMPARE(model->rowCount(), testImageCount);
     const int statusRole = roleForName(*model, QByteArrayLiteral("thumbnailStatus"));
@@ -393,11 +393,11 @@ void TestThumbnailPanel::delegateReportsThumbnailDemandThroughSessionModel()
         QVERIFY(firstThumbnailSource.isEmpty());
     }
 
-    QQuickItem *firstDelegate = nullptr;
+    QQuickItem* firstDelegate = nullptr;
     QTRY_VERIFY(
         (firstDelegate = thumbnailDelegateForNumber(*fixture.thumbnailStrip, 1)) != nullptr);
-    QQuickItem *previewBox
-        = firstDelegate->findChild<QQuickItem *>(QStringLiteral("thumbnailPreviewBox"));
+    QQuickItem* previewBox
+        = firstDelegate->findChild<QQuickItem*>(QStringLiteral("thumbnailPreviewBox"));
     QVERIFY(previewBox != nullptr);
     QVERIFY(previewBox->width() > 0);
     QVERIFY(previewBox->height() > 0);
@@ -819,7 +819,7 @@ void TestThumbnailPanel::visibleThumbnailClickDispatchesWithoutScrollMovement()
     QVERIFY2(waitForContentX(*fixture.thumbnailStrip, visibleScrollPosition),
         "thumbnail strip did not accept the initial scroll position");
 
-    QQuickItem *delegate = nullptr;
+    QQuickItem* delegate = nullptr;
     QTRY_VERIFY(
         (delegate = thumbnailDelegateForNumber(*fixture.thumbnailStrip, clickedNumber)) != nullptr);
     const QPointF clickPosition
@@ -850,7 +850,7 @@ void TestThumbnailPanel::scrolledThumbnailClickDispatchesWithoutScrollMovement()
     QVERIFY2(waitForContentX(*fixture.thumbnailStrip, scrolledPosition),
         "thumbnail strip did not accept the user scroll position");
 
-    QQuickItem *delegate = nullptr;
+    QQuickItem* delegate = nullptr;
     QTRY_VERIFY(
         (delegate = thumbnailDelegateForNumber(*fixture.thumbnailStrip, clickedNumber)) != nullptr);
     const QPointF clickPosition

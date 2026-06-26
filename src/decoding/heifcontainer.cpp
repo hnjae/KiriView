@@ -12,12 +12,12 @@ namespace {
 rust::Slice<const std::uint8_t> rustBrandBytes(std::string_view brand)
 {
     return rust::Slice<const std::uint8_t>(
-        reinterpret_cast<const std::uint8_t *>(brand.data()), brand.size());
+        reinterpret_cast<const std::uint8_t*>(brand.data()), brand.size());
 }
 
-rust::Slice<const std::uint8_t> rustByteArrayBytes(const QByteArray &data)
+rust::Slice<const std::uint8_t> rustByteArrayBytes(const QByteArray& data)
 {
-    return rust::Slice<const std::uint8_t>(reinterpret_cast<const std::uint8_t *>(data.constData()),
+    return rust::Slice<const std::uint8_t>(reinterpret_cast<const std::uint8_t*>(data.constData()),
         static_cast<std::size_t>(data.size()));
 }
 
@@ -41,19 +41,19 @@ HeifBrandKind heifBrandKind(std::string_view brand)
     return heifBrandKindFromRust(rustHeifBrandKind(rustBrandBytes(brand)));
 }
 
-bool isLikelyHeifContainer(const QByteArray &data) { return heifContainerInfo(data).isHeif(); }
+bool isLikelyHeifContainer(const QByteArray& data) { return heifContainerInfo(data).isHeif(); }
 
-bool isLikelyHeifStillImageContainer(const QByteArray &data)
+bool isLikelyHeifStillImageContainer(const QByteArray& data)
 {
     return heifContainerInfo(data).stillImage;
 }
 
-bool isLikelyHeifSequenceContainer(const QByteArray &data)
+bool isLikelyHeifSequenceContainer(const QByteArray& data)
 {
     return heifContainerInfo(data).imageSequence;
 }
 
-HeifContainerInfo heifContainerInfo(const QByteArray &data)
+HeifContainerInfo heifContainerInfo(const QByteArray& data)
 {
     const RustHeifContainerInfo rustInfo = rustHeifContainerInfo(rustByteArrayBytes(data));
     return HeifContainerInfo {

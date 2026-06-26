@@ -15,39 +15,43 @@ namespace kiriview {
 inline constexpr int imageTileCoreSize = 512;
 inline constexpr int imageTileApronSourcePixels = 1;
 
-struct TileKey {
+struct TileKey
+{
     int level = 0;
     int x = 0;
     int y = 0;
     int scaleBucket = 0;
 
-    friend bool operator==(const TileKey &left, const TileKey &right)
+    friend bool operator==(const TileKey& left, const TileKey& right)
     {
         return left.level == right.level && left.x == right.x && left.y == right.y
             && left.scaleBucket == right.scaleBucket;
     }
 
-    friend bool operator!=(const TileKey &left, const TileKey &right) { return !(left == right); }
+    friend bool operator!=(const TileKey& left, const TileKey& right) { return !(left == right); }
 };
 
-uint qHash(const TileKey &key, uint seed = 0);
+uint qHash(const TileKey& key, uint seed = 0);
 
-struct ActiveTileLayer {
+struct ActiveTileLayer
+{
     int level = 0;
     int scaleBucket = 0;
 
-    bool contains(const TileKey &key) const
+    bool contains(const TileKey& key) const
     {
         return key.level == level && key.scaleBucket == scaleBucket;
     }
 };
 
-struct TileLevel {
+struct TileLevel
+{
     int index = 0;
     QSize size;
 };
 
-struct TileRequest {
+struct TileRequest
+{
     TileKey key;
     QSize levelSize;
     QRect levelRect;
@@ -57,7 +61,8 @@ struct TileRequest {
     QRectF displaySourceRectF;
 };
 
-struct DecodedTile {
+struct DecodedTile
+{
     TileKey key;
     QSize levelSize;
     QRect levelRect;
@@ -80,13 +85,13 @@ public:
     QSize levelSize(int level) const;
     QSize tileGridSize(int level) const;
     bool containsLevel(int level) const;
-    bool containsTile(const TileKey &key) const;
+    bool containsTile(const TileKey& key) const;
     int selectLevelForDisplayScale(qreal displayPixelsPerSourcePixel) const;
-    QRect levelTileRect(const TileKey &key) const;
-    QRect levelTileTextureRect(const TileKey &key) const;
-    QRect sourceRectForLevelRect(int level, const QRect &levelRect) const;
-    TileRequest requestForTile(const TileKey &key) const;
-    std::vector<TileKey> tilesIntersectingLevelRect(int level, const QRect &levelRect) const;
+    QRect levelTileRect(const TileKey& key) const;
+    QRect levelTileTextureRect(const TileKey& key) const;
+    QRect sourceRectForLevelRect(int level, const QRect& levelRect) const;
+    TileRequest requestForTile(const TileKey& key) const;
+    std::vector<TileKey> tilesIntersectingLevelRect(int level, const QRect& levelRect) const;
 
 private:
     void rebuildLevels();

@@ -10,10 +10,10 @@
 
 namespace kiriview {
 DocumentSessionPublicSnapshotInputPort::DocumentSessionPublicSnapshotInputPort(
-    const DocumentSessionState *state, const DocumentSessionDirectMediaActivityPort *activity,
-    const DocumentSessionDirectMediaNavigationInputPort *directMediaNavigation,
-    const DocumentSessionPublicImageLeafSnapshot *image,
-    const DocumentSessionPublicVideoLeafSnapshot *video)
+    const DocumentSessionState* state, const DocumentSessionDirectMediaActivityPort* activity,
+    const DocumentSessionDirectMediaNavigationInputPort* directMediaNavigation,
+    const DocumentSessionPublicImageLeafSnapshot* image,
+    const DocumentSessionPublicVideoLeafSnapshot* video)
     : m_state(state)
     , m_activity(activity)
     , m_directMediaNavigation(directMediaNavigation)

@@ -22,7 +22,7 @@ DocumentSessionMediaDeletionCompletionRuntime::DocumentSessionMediaDeletionCompl
 }
 
 void DocumentSessionMediaDeletionCompletionRuntime::apply(
-    const DocumentSessionMediaDeletionCompletion &completion)
+    const DocumentSessionMediaDeletionCompletion& completion)
 {
     if (m_ports.setFileDeletionInProgress) {
         m_ports.setFileDeletionInProgress(false);

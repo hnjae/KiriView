@@ -19,7 +19,8 @@ enum class HeifSequenceOpenStatus {
     Error,
 };
 
-struct HeifSequenceOpenResult {
+struct HeifSequenceOpenResult
+{
     HeifSequenceOpenStatus status = HeifSequenceOpenStatus::NotHeif;
     QString errorString;
 };
@@ -30,13 +31,13 @@ public:
     HeifSequenceReader();
     ~HeifSequenceReader();
 
-    HeifSequenceReader(const HeifSequenceReader &) = delete;
-    HeifSequenceReader &operator=(const HeifSequenceReader &) = delete;
-    HeifSequenceReader(HeifSequenceReader &&) noexcept;
-    HeifSequenceReader &operator=(HeifSequenceReader &&) noexcept;
+    HeifSequenceReader(const HeifSequenceReader&) = delete;
+    HeifSequenceReader& operator=(const HeifSequenceReader&) = delete;
+    HeifSequenceReader(HeifSequenceReader&&) noexcept;
+    HeifSequenceReader& operator=(HeifSequenceReader&&) noexcept;
 
     HeifSequenceOpenResult open(QByteArray data);
-    std::optional<AnimationFrame> readNextFrame(QString *errorString);
+    std::optional<AnimationFrame> readNextFrame(QString* errorString);
     void close();
 
 private:

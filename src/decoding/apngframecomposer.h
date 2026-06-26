@@ -31,7 +31,8 @@ enum class ApngFrameDisposeAction {
     RestorePreviousRegion,
 };
 
-struct ApngFrameControl {
+struct ApngFrameControl
+{
     quint32 width = 0;
     quint32 height = 0;
     quint32 xOffset = 0;
@@ -40,7 +41,8 @@ struct ApngFrameControl {
     ApngFrameBlendOp blendOp = ApngFrameBlendOp::Source;
 };
 
-struct ApngFrameCompositionPlan {
+struct ApngFrameCompositionPlan
+{
     ApngFrameControl displayControl;
     bool capturePreviousRegion = false;
     ApngFrameDisposeAction disposeAction = ApngFrameDisposeAction::None;
@@ -54,18 +56,18 @@ public:
     bool initialize(QSize canvasSize, std::size_t rowBytes);
     void clear();
 
-    bool canComposeFrame(const ApngFrameControl &control) const;
-    unsigned char **frameRows();
-    bool setFrameBytes(const ApngFrameControl &control, const unsigned char *bytes,
+    bool canComposeFrame(const ApngFrameControl& control) const;
+    unsigned char** frameRows();
+    bool setFrameBytes(const ApngFrameControl& control, const unsigned char* bytes,
         std::size_t byteCount, std::size_t rowBytes);
     std::optional<QImage> composeFrame(ApngFrameControl control);
 
 private:
-    ApngRgbaRegion region(const ApngFrameControl &control) const;
-    void premultiplyFrame(const ApngFrameControl &control);
-    bool blendFrame(const ApngFrameControl &control);
-    bool applyDispose(const ApngFrameCompositionPlan &plan,
-        const std::optional<std::vector<unsigned char>> &previous);
+    ApngRgbaRegion region(const ApngFrameControl& control) const;
+    void premultiplyFrame(const ApngFrameControl& control);
+    bool blendFrame(const ApngFrameControl& control);
+    bool applyDispose(const ApngFrameCompositionPlan& plan,
+        const std::optional<std::vector<unsigned char>>& previous);
 
     bool m_hasDisplayedFrame = false;
     ApngRgbaBuffer m_canvas;

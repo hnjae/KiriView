@@ -19,9 +19,10 @@ public:
 
 using PowerSaverChangedCallback = std::function<void(bool)>;
 using PowerSaverMonitorFactory
-    = std::function<std::unique_ptr<PowerSaverStateMonitor>(QObject *, PowerSaverChangedCallback)>;
+    = std::function<std::unique_ptr<PowerSaverStateMonitor>(QObject*, PowerSaverChangedCallback)>;
 
-struct PowerSaverProvider {
+struct PowerSaverProvider
+{
     PowerSaverMonitorFactory monitor;
 };
 

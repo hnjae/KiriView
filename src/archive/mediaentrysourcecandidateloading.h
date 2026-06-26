@@ -13,12 +13,12 @@
 class QObject;
 
 namespace kiriview {
-ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
+ImageIoJob startOpenedCollectionCandidateList(QObject* receiver,
     OpenedCollectionScopeLocation openedCollectionScope,
     ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback);
-ImageIoJob startOpenedCollectionCandidateList(QObject *receiver,
+ImageIoJob startOpenedCollectionCandidateList(QObject* receiver,
     OpenedCollectionScopeLocation openedCollectionScope,
-    const ImageWorkerScheduler &workerScheduler, ImageDocumentPageCandidatesCallback callback,
+    const ImageWorkerScheduler& workerScheduler, ImageDocumentPageCandidatesCallback callback,
     ErrorCallback errorCallback);
 }
 

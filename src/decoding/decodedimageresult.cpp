@@ -19,26 +19,26 @@ DecodedImageResult::DecodedImageResult(DecodedImage image)
 {
 }
 
-const DecodedImageFailure *DecodedImageResult::failure() const
+const DecodedImageFailure* DecodedImageResult::failure() const
 {
     return std::get_if<DecodedImageFailure>(&m_payload);
 }
 
-DecodedImageFailure *DecodedImageResult::failure()
+DecodedImageFailure* DecodedImageResult::failure()
 {
     return std::get_if<DecodedImageFailure>(&m_payload);
 }
 
-const DecodedImage *DecodedImageResult::image() const
+const DecodedImage* DecodedImageResult::image() const
 {
     return std::get_if<DecodedImage>(&m_payload);
 }
 
-DecodedImage *DecodedImageResult::image() { return std::get_if<DecodedImage>(&m_payload); }
+DecodedImage* DecodedImageResult::image() { return std::get_if<DecodedImage>(&m_payload); }
 
 std::optional<DecodedImage> DecodedImageResult::takeImage() &&
 {
-    auto *image = std::get_if<DecodedImage>(&m_payload);
+    auto* image = std::get_if<DecodedImage>(&m_payload);
     if (image == nullptr) {
         return std::nullopt;
     }
@@ -72,34 +72,34 @@ DecodedImageResult successfulDecodedImageResult(DecodedImage image)
     return DecodedImageResult(std::move(image));
 }
 
-const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result)
+const DecodedImageFailure* decodedImageResultFailure(const DecodedImageResult& result)
 {
     return result.failure();
 }
 
-DecodedImageFailure *decodedImageResultFailure(DecodedImageResult &result)
+DecodedImageFailure* decodedImageResultFailure(DecodedImageResult& result)
 {
     return result.failure();
 }
 
-const DecodedImage *decodedImageResultImage(const DecodedImageResult &result)
+const DecodedImage* decodedImageResultImage(const DecodedImageResult& result)
 {
     return result.image();
 }
 
-DecodedImage *decodedImageResultImage(DecodedImageResult &result) { return result.image(); }
+DecodedImage* decodedImageResultImage(DecodedImageResult& result) { return result.image(); }
 
-const EmbeddedMetadata &decodedImageEmbeddedMetadata(const DecodedImage &image)
+const EmbeddedMetadata& decodedImageEmbeddedMetadata(const DecodedImage& image)
 {
     return std::visit(
-        [](const auto &decoded) -> const EmbeddedMetadata & { return decoded.embeddedMetadata; },
+        [](const auto& decoded) -> const EmbeddedMetadata& { return decoded.embeddedMetadata; },
         image);
 }
 
-void setDecodedImageEmbeddedMetadata(DecodedImage &image, EmbeddedMetadata metadata)
+void setDecodedImageEmbeddedMetadata(DecodedImage& image, EmbeddedMetadata metadata)
 {
     std::visit(
-        [&metadata](auto &decoded) {
+        [&metadata](auto& decoded) {
             decoded.embeddedMetadata = metadata;
             if constexpr (std::is_same_v<std::decay_t<decltype(decoded)>, StaticDecodedImage>) {
                 decoded.displayImage.embeddedMetadata = metadata;

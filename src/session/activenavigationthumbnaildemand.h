@@ -16,7 +16,8 @@ enum class ActiveNavigationThumbnailDemandPriority {
     Nearby,
 };
 
-struct ActiveNavigationThumbnailDemand {
+struct ActiveNavigationThumbnailDemand
+{
     int number = 0;
     QUrl url;
     ActiveNavigationThumbnailDemandBucket bucket = ActiveNavigationThumbnailDemandBucket::None;
@@ -31,7 +32,7 @@ ActiveNavigationThumbnailDemandBucket activeNavigationThumbnailDemandBucketForPh
 class ActiveNavigationThumbnailDemandTracker final
 {
 public:
-    bool record(const ActiveNavigationThumbnailDemand &demand);
+    bool record(const ActiveNavigationThumbnailDemand& demand);
     void reset();
 
 private:

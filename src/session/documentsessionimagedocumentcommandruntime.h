@@ -15,7 +15,7 @@ public:
     explicit DocumentSessionImageDocumentCommandRuntime(
         DocumentSessionImageDocumentCommandPort commands = {});
 
-    void setSourceUrl(const QUrl &sourceUrl);
+    void setSourceUrl(const QUrl& sourceUrl);
     void clearSourceUrl();
     void openPreviousPage();
     void openNextPage();

@@ -21,7 +21,8 @@ public:
     virtual ~PredecodeSchedulePayload() = default;
 };
 
-struct PredecodeScheduleContext {
+struct PredecodeScheduleContext
+{
     DisplayedImageLocation currentLocation;
     std::vector<DisplayedPredecodeImage> displayedImages;
     ImageFirstDisplayDecodeContext firstDisplayContext;
@@ -29,35 +30,41 @@ struct PredecodeScheduleContext {
     std::shared_ptr<const PredecodeSchedulePayload> payload;
 };
 
-struct PredecodePendingSchedule {
+struct PredecodePendingSchedule
+{
     PredecodeScheduleContext context;
     quint64 generation = 0;
 };
 
 template <typename Payload>
-const Payload *predecodeSchedulePayload(const PredecodeScheduleContext &context)
+const Payload* predecodeSchedulePayload(const PredecodeScheduleContext& context)
 {
     return context.payload == nullptr ? nullptr
-                                      : dynamic_cast<const Payload *>(context.payload.get());
+                                      : dynamic_cast<const Payload*>(context.payload.get());
 }
 
 template <typename Payload>
-const Payload *predecodeSchedulePayload(const PredecodePendingSchedule &schedule)
+const Payload* predecodeSchedulePayload(const PredecodePendingSchedule& schedule)
 {
     return predecodeSchedulePayload<Payload>(schedule.context);
 }
 
-struct CancelBackgroundPredecodeOperation {
+struct CancelBackgroundPredecodeOperation
+{
 };
-struct CacheDisplayedPredecodeContextOperation {
+struct CacheDisplayedPredecodeContextOperation
+{
     std::vector<DisplayedPredecodeImage> images;
 };
-struct ClearPredecodeWindowUrlsOperation {
+struct ClearPredecodeWindowUrlsOperation
+{
 };
-struct StartPredecodeDebounceOperation {
+struct StartPredecodeDebounceOperation
+{
     PredecodePendingSchedule schedule;
 };
-struct StartAdjacentPredecodeOperation {
+struct StartAdjacentPredecodeOperation
+{
     PredecodePendingSchedule schedule;
 };
 

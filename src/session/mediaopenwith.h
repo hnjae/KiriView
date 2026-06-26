@@ -20,9 +20,9 @@ enum class MediaOpenWithResult {
     Failed,
 };
 
-using MediaOpenWithCallback = std::function<void(MediaOpenWithResult, const KioOperationFailure &)>;
+using MediaOpenWithCallback = std::function<void(MediaOpenWithResult, const KioOperationFailure&)>;
 using MediaOpenWithProvider
-    = std::function<ImageIoJob(QObject *, MediaOpenWithRequest, MediaOpenWithCallback)>;
+    = std::function<ImageIoJob(QObject*, MediaOpenWithRequest, MediaOpenWithCallback)>;
 
 MediaOpenWithProvider defaultMediaOpenWithProvider();
 MediaOpenWithProvider mediaOpenWithProviderWithDefault(MediaOpenWithProvider provider);

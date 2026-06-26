@@ -14,8 +14,8 @@
 #include <vector>
 
 namespace {
-kiriview::ImageIoJob startDirectoryDirectMediaNavigationCandidateList(QObject *receiver,
-    const QUrl &directoryUrl, kiriview::DirectMediaNavigationCandidatesCallback callback,
+kiriview::ImageIoJob startDirectoryDirectMediaNavigationCandidateList(QObject* receiver,
+    const QUrl& directoryUrl, kiriview::DirectMediaNavigationCandidatesCallback callback,
     kiriview::ErrorCallback errorCallback,
     kiriview::DirectoryItemListProvider directoryItemListProvider)
 {
@@ -32,7 +32,7 @@ kiriview::ImageIoJob startDirectoryDirectMediaNavigationCandidateList(QObject *r
                 << candidates.size();
             kiriview::invokeIfSet(callback, std::move(candidates));
         },
-        [errorCallback = std::move(errorCallback), directoryUrl](const QString &errorString) {
+        [errorCallback = std::move(errorCallback), directoryUrl](const QString& errorString) {
             qCDebug(kiriviewNavigationLog)
                 << "direct media navigation candidate provider listing failed"
                 << "directoryUrl" << directoryUrl << "error" << errorString;
@@ -47,7 +47,7 @@ DirectMediaNavigationCandidateProvider defaultDirectMediaNavigationCandidateProv
     DirectoryItemListProvider directoryItemListProvider)
 {
     return DirectMediaNavigationCandidateProvider {
-        [directoryItemListProvider = std::move(directoryItemListProvider)](QObject *receiver,
+        [directoryItemListProvider = std::move(directoryItemListProvider)](QObject* receiver,
             QUrl directoryUrl, DirectMediaNavigationCandidatesCallback callback,
             ErrorCallback errorCallback) {
             return startDirectoryDirectMediaNavigationCandidateList(receiver, directoryUrl,

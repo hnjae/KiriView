@@ -20,7 +20,7 @@ namespace {
 using ProcessedRawImage
     = std::unique_ptr<libraw_processed_image_t, decltype(&LibRaw::dcraw_clear_mem)>;
 
-void setRawDecodeError(QString *errorString, QString message)
+void setRawDecodeError(QString* errorString, QString message)
 {
     if (errorString != nullptr) {
         *errorString = std::move(message);
@@ -28,7 +28,7 @@ void setRawDecodeError(QString *errorString, QString message)
 }
 
 void setRawDecodeFailure(
-    QString *errorString, QString *diagnosticDetail, QString message, QString detail)
+    QString* errorString, QString* diagnosticDetail, QString message, QString detail)
 {
     setRawDecodeError(errorString, std::move(message));
     setRawDecodeError(diagnosticDetail, std::move(detail));
@@ -37,39 +37,39 @@ void setRawDecodeFailure(
 QString rawBackendMessage(int errorCode)
 {
     QString message = kiriview::imageErrorText(kiriview::ImageErrorTextId::UnknownLibrawError);
-    if (const char *rawMessage = LibRaw::strerror(errorCode); rawMessage != nullptr) {
+    if (const char* rawMessage = LibRaw::strerror(errorCode); rawMessage != nullptr) {
         message = QString::fromUtf8(rawMessage);
     }
     return message;
 }
 
-QString rawDecodeErrorString(const QString &action, int errorCode)
+QString rawDecodeErrorString(const QString& action, int errorCode)
 {
     const QString message = rawBackendMessage(errorCode);
     return kiriview::rawDecodeErrorText(action, message);
 }
 
-QString rawDecodeDiagnosticDetail(const QString &action, int errorCode)
+QString rawDecodeDiagnosticDetail(const QString& action, int errorCode)
 {
     return QStringLiteral("LibRaw %1 failed with code %2: %3")
         .arg(action, QString::number(errorCode), rawBackendMessage(errorCode));
 }
 
-QString rawDecodeDiagnosticDetail(const QString &stage, const QString &message)
+QString rawDecodeDiagnosticDetail(const QString& stage, const QString& message)
 {
     return QStringLiteral("RAW %1 failed: %2").arg(stage, message);
 }
 
-QSize libRawImageSize(const LibRaw &processor)
+QSize libRawImageSize(const LibRaw& processor)
 {
-    const libraw_image_sizes_t &sizes = processor.imgdata.sizes;
+    const libraw_image_sizes_t& sizes = processor.imgdata.sizes;
     if (sizes.iwidth > 0 && sizes.iheight > 0) {
         return QSize(sizes.iwidth, sizes.iheight);
     }
     return QSize(sizes.width, sizes.height);
 }
 
-bool validateRawImageSize(const QSize &size, QString *errorString, QString *diagnosticDetail)
+bool validateRawImageSize(const QSize& size, QString* errorString, QString* diagnosticDetail)
 {
     if (size.isEmpty()) {
         const QString message
@@ -91,7 +91,7 @@ bool validateRawImageSize(const QSize &size, QString *errorString, QString *diag
 }
 
 std::optional<QImage> qImageFromRawProcessedImage(
-    const libraw_processed_image_t *processedImage, QString *errorString, QString *diagnosticDetail)
+    const libraw_processed_image_t* processedImage, QString* errorString, QString* diagnosticDetail)
 {
     if (processedImage == nullptr) {
         const QString message
@@ -136,9 +136,9 @@ std::optional<QImage> qImageFromRawProcessedImage(
         return std::nullopt;
     }
 
-    const unsigned char *source = processedImage->data;
+    const unsigned char* source = processedImage->data;
     for (int y = 0; y < image.height(); ++y) {
-        unsigned char *target = image.scanLine(y);
+        unsigned char* target = image.scanLine(y);
         for (int x = 0; x < image.width(); ++x) {
             const std::size_t sourceOffset
                 = (static_cast<std::size_t>(y) * static_cast<std::size_t>(image.width())
@@ -157,7 +157,7 @@ std::optional<QImage> qImageFromRawProcessedImage(
 }
 
 std::optional<QImage> decodeRawImage(
-    const QByteArray &data, QString *errorString, QString *diagnosticDetail)
+    const QByteArray& data, QString* errorString, QString* diagnosticDetail)
 {
     LibRaw processor;
     int errorCode = processor.open_buffer(data.constData(), static_cast<std::size_t>(data.size()));
@@ -222,7 +222,7 @@ public:
     qsizetype byteCost() const override { return kiriview::imageByteCost(m_image); }
     bool supportsRasterDisplayRefinement() const override { return true; }
 
-    QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *) const override
+    QImage decodeRasterDisplayImage(const QSize& rasterSize, QString*) const override
     {
         if (rasterSize.isEmpty()) {
             return {};
@@ -231,14 +231,14 @@ public:
         return kiriview::scaledTileImage(m_image, rasterSize);
     }
 
-    QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *) const override
+    QImage decodeBlockingDisplayImage(int maximumLongEdge, QString*) const override
     {
         return kiriview::scaledTileImage(
             m_image, kiriview::boundedPreviewSize(m_image.size(), maximumLongEdge));
     }
 
     std::optional<kiriview::DecodedTile> decodeTile(
-        const kiriview::TileRequest &request, QString *errorString) const override
+        const kiriview::TileRequest& request, QString* errorString) const override
     {
         if (!kiriview::tileRequestCanDecode(request)) {
             return std::nullopt;
@@ -261,7 +261,7 @@ private:
 }
 
 namespace kiriview {
-DecodedImageResult decodeRawImageData(const QByteArray &data, const ImageDecodeRequest &request)
+DecodedImageResult decodeRawImageData(const QByteArray& data, const ImageDecodeRequest& request)
 {
     QString errorString;
     QString diagnosticDetail;

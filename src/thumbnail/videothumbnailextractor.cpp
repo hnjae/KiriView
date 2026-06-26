@@ -18,7 +18,7 @@
 namespace {
 constexpr int extractionTimeoutMsec = 10000;
 
-QSize boundedSize(const QSize &size, int maximumLongEdge)
+QSize boundedSize(const QSize& size, int maximumLongEdge)
 {
     if (size.isEmpty() || maximumLongEdge <= 0) {
         return {};
@@ -32,7 +32,7 @@ QSize boundedSize(const QSize &size, int maximumLongEdge)
     return size.scaled(QSize(maximumLongEdge, maximumLongEdge), Qt::KeepAspectRatio);
 }
 
-QImage embeddedImageFromMetadata(const QMediaMetaData &metadata)
+QImage embeddedImageFromMetadata(const QMediaMetaData& metadata)
 {
     QImage cover = metadata.value(QMediaMetaData::CoverArtImage).value<QImage>();
     if (!cover.isNull()) {
@@ -60,7 +60,7 @@ class VideoThumbnailExtractionJob final : public QObject
 {
 public:
     VideoThumbnailExtractionJob(kiriview::VideoThumbnailExtractionRequest request,
-        kiriview::VideoThumbnailExtractionCallback callback, QObject *parent)
+        kiriview::VideoThumbnailExtractionCallback callback, QObject* parent)
         : QObject(parent)
         , m_request(std::move(request))
         , m_callback(std::move(callback))
@@ -87,11 +87,11 @@ public:
 
         m_player.setVideoSink(&m_sink);
         connect(&m_sink, &QVideoSink::videoFrameChanged, this,
-            [this](const QVideoFrame &frame) { acceptFrame(frame); });
+            [this](const QVideoFrame& frame) { acceptFrame(frame); });
         connect(&m_player, &QMediaPlayer::metaDataChanged, this,
             [this]() { acceptMetadataIfAvailable(); });
         connect(&m_player, &QMediaPlayer::errorOccurred, this,
-            [this](QMediaPlayer::Error, const QString &errorString) {
+            [this](QMediaPlayer::Error, const QString& errorString) {
                 if (acceptMetadataIfAvailable()) {
                     return;
                 }
@@ -184,7 +184,7 @@ private:
         m_player.play();
     }
 
-    void acceptFrame(const QVideoFrame &frame)
+    void acceptFrame(const QVideoFrame& frame)
     {
         if (m_finished || !frame.isValid() || acceptMetadataIfAvailable()) {
             return;
@@ -238,7 +238,7 @@ private:
 }
 
 namespace kiriview {
-QImage videoThumbnailImageFromFrameImage(QImage image, int maximumLongEdge, QString *errorString)
+QImage videoThumbnailImageFromFrameImage(QImage image, int maximumLongEdge, QString* errorString)
 {
     if (image.isNull()) {
         if (errorString != nullptr) {
@@ -262,7 +262,7 @@ QImage videoThumbnailImageFromFrameImage(QImage image, int maximumLongEdge, QStr
 }
 
 QImage videoThumbnailImageFromMetadata(
-    const QMediaMetaData &metadata, int maximumLongEdge, QString *errorString)
+    const QMediaMetaData& metadata, int maximumLongEdge, QString* errorString)
 {
     QImage image = embeddedImageFromMetadata(metadata);
     if (image.isNull()) {
@@ -275,13 +275,13 @@ QImage videoThumbnailImageFromMetadata(
     return videoThumbnailImageFromFrameImage(std::move(image), maximumLongEdge, errorString);
 }
 
-ImageIoJob startVideoThumbnailExtraction(QObject *receiver, VideoThumbnailExtractionRequest request,
+ImageIoJob startVideoThumbnailExtraction(QObject* receiver, VideoThumbnailExtractionRequest request,
     VideoThumbnailExtractionCallback callback)
 {
-    auto *jobObject
+    auto* jobObject
         = new VideoThumbnailExtractionJob(std::move(request), std::move(callback), receiver);
-    ImageIoJob job(jobObject, [](QObject *object) {
-        if (auto *extractionJob = dynamic_cast<VideoThumbnailExtractionJob *>(object)) {
+    ImageIoJob job(jobObject, [](QObject* object) {
+        if (auto* extractionJob = dynamic_cast<VideoThumbnailExtractionJob*>(object)) {
             extractionJob->cancel();
         } else if (object != nullptr) {
             object->deleteLater();

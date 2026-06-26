@@ -19,8 +19,8 @@ private Q_SLOTS:
 };
 
 namespace {
-void comparePublicSignals(const std::vector<kiriview::VideoDocumentPublicSignal> &actual,
-    const std::vector<kiriview::VideoDocumentPublicSignal> &expected)
+void comparePublicSignals(const std::vector<kiriview::VideoDocumentPublicSignal>& actual,
+    const std::vector<kiriview::VideoDocumentPublicSignal>& expected)
 {
     QCOMPARE(actual.size(), expected.size());
     for (std::size_t index = 0; index < expected.size(); ++index) {
@@ -28,7 +28,7 @@ void comparePublicSignals(const std::vector<kiriview::VideoDocumentPublicSignal>
     }
 }
 
-kiriview::VideoDocumentPublicSignalOperations recordingOperations(QStringList &events)
+kiriview::VideoDocumentPublicSignalOperations recordingOperations(QStringList& events)
 {
     kiriview::VideoDocumentPublicSignalOperations operations;
     operations.sourceUrlChanged = [&events]() { events.append(QStringLiteral("sourceUrl")); };

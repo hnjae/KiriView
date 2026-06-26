@@ -14,7 +14,7 @@
 #include <optional>
 
 namespace {
-QByteArray encodedImageData(const QImage &image, const QByteArray &format, QString *errorString)
+QByteArray encodedImageData(const QImage& image, const QByteArray& format, QString* errorString)
 {
     QByteArray data;
     QBuffer buffer(&data);
@@ -39,7 +39,7 @@ QByteArray pngData()
     return encodedImageData(image, QByteArrayLiteral("png"), nullptr);
 }
 
-bool imageWriterSupports(const QByteArray &format)
+bool imageWriterSupports(const QByteArray& format)
 {
     const QByteArrayList formats = QImageWriter::supportedImageFormats();
     return formats.contains(format) || formats.contains(format.toUpper());
@@ -51,13 +51,13 @@ QByteArray jpegWriterFormat()
                                                          : QByteArrayLiteral("jpeg");
 }
 
-void verifyDisplayFailure(const kiriview::QImageReaderDisplayDecodeResult &result,
+void verifyDisplayFailure(const kiriview::QImageReaderDisplayDecodeResult& result,
     kiriview::QImageReaderDisplayDecodeOperation expectedOperation)
 {
     QVERIFY(result.image.isNull());
     QCOMPARE(result.diagnostics.failures.size(), 1);
 
-    const kiriview::QImageReaderDisplayDecodeFailure &failure = result.diagnostics.failures.front();
+    const kiriview::QImageReaderDisplayDecodeFailure& failure = result.diagnostics.failures.front();
     QCOMPARE(failure.operation, expectedOperation);
     QVERIFY(!failure.userMessage.isEmpty());
     QVERIFY(!failure.diagnosticDetail.isEmpty());
@@ -118,7 +118,7 @@ void TestQImageReaderTileSource::failedTileDecodePreservesAttemptDiagnostics()
         kiriview::QImageReaderTileDecodeAttemptKind::ScaledLevel);
     QCOMPARE(result.diagnostics.failures.at(3).kind,
         kiriview::QImageReaderTileDecodeAttemptKind::FullImageFallback);
-    for (const kiriview::QImageReaderTileDecodeAttemptFailure &failure :
+    for (const kiriview::QImageReaderTileDecodeAttemptFailure& failure :
         result.diagnostics.failures) {
         QVERIFY(!failure.errorString.isEmpty());
         QCOMPARE(failure.severity, kiriview::QImageReaderTileDecodeFailureSeverity::Error);

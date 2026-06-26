@@ -17,15 +17,16 @@
 class QObject;
 
 namespace kiriview {
-struct ImageDocumentPageCandidateProvider {
+struct ImageDocumentPageCandidateProvider
+{
     using ImageDocumentPageCandidateLoader = std::function<ImageIoJob(
-        QObject *, QUrl, ImageDocumentPageCandidatesCallback, ErrorCallback)>;
-    using OpenedCollectionCandidateLoader = std::function<ImageIoJob(QObject *,
+        QObject*, QUrl, ImageDocumentPageCandidatesCallback, ErrorCallback)>;
+    using OpenedCollectionCandidateLoader = std::function<ImageIoJob(QObject*,
         OpenedCollectionScopeLocation, ImageDocumentPageCandidatesCallback, ErrorCallback)>;
     using ContainerCandidateLoader
-        = std::function<ImageIoJob(QObject *, QUrl, ContainerCandidatesCallback, ErrorCallback)>;
+        = std::function<ImageIoJob(QObject*, QUrl, ContainerCandidatesCallback, ErrorCallback)>;
     using ImageDocumentPageCandidateChangeSubscriber = std::function<ImageIoJob(
-        QObject *, QUrl, ImageDocumentPageCandidatesCallback, ErrorCallback)>;
+        QObject*, QUrl, ImageDocumentPageCandidatesCallback, ErrorCallback)>;
 
     ImageDocumentPageCandidateLoader directoryImageDocumentPages;
     ContainerCandidateLoader directoryContainers;

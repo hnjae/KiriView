@@ -9,33 +9,33 @@
 #include <QRectF>
 
 namespace kiriview {
-QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
+QRectF imageTargetRect(const QSize& imageSize, const QSizeF& boundsSize)
 {
     return Bridge::qtRectF(rustImageTargetRect(Bridge::rustSize<RustImageRenderSize>(imageSize),
         Bridge::rustSizeF<RustImageRenderSizeF>(boundsSize)));
 }
 
-QSize scaledImageSizeToFit(const QSizeF &imageSize, const QSize &boundsSize)
+QSize scaledImageSizeToFit(const QSizeF& imageSize, const QSize& boundsSize)
 {
     return Bridge::qtSize(
         rustScaledImageSizeToFit(Bridge::rustSizeF<RustImageRenderSizeF>(imageSize),
             Bridge::rustSize<RustImageRenderSize>(boundsSize)));
 }
 
-QSize firstDisplayScaledImageSize(const QSize &imageSize, const QSize &physicalViewportSize)
+QSize firstDisplayScaledImageSize(const QSize& imageSize, const QSize& physicalViewportSize)
 {
     return Bridge::qtSize(
         rustFirstDisplayScaledImageSize(Bridge::rustSize<RustImageRenderSize>(imageSize),
             Bridge::rustSize<RustImageRenderSize>(physicalViewportSize)));
 }
 
-qreal imagePixelsPerSourcePixel(const QSize &imageSize, const QSize &displaySize)
+qreal imagePixelsPerSourcePixel(const QSize& imageSize, const QSize& displaySize)
 {
     return rustImagePixelsPerSourcePixel(Bridge::rustSize<RustImageRenderSize>(imageSize),
         Bridge::rustSize<RustImageRenderSize>(displaySize));
 }
 
-QImage displayReadyImage(const QImage &image)
+QImage displayReadyImage(const QImage& image)
 {
     if (image.format() == QImage::Format_RGBA8888_Premultiplied) {
         return image;
@@ -56,7 +56,7 @@ ImageDocumentRenderContext normalizedImageDocumentRenderContext(ImageDocumentRen
 }
 
 ImageFirstDisplayDecodeContext imageFirstDisplayDecodeContext(
-    const QSizeF &viewportSize, qreal devicePixelRatio)
+    const QSizeF& viewportSize, qreal devicePixelRatio)
 {
     return ImageFirstDisplayDecodeContext {
         Bridge::qtSize(rustFirstDisplayPhysicalViewportSize(

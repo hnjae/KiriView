@@ -110,7 +110,7 @@ void TestImageFormatRegistry::supportedImageExtensionsIncludeAdvertisedFormats()
 void TestImageFormatRegistry::supportedImageExtensionsIncludeRawFormats()
 {
     const QStringList extensions = kiriview::supportedImageExtensions();
-    for (const QString &extension : expectedRawExtensions()) {
+    for (const QString& extension : expectedRawExtensions()) {
         QVERIFY2(extensions.contains(extension), qPrintable(extension));
         QVERIFY2(kiriview::isSupportedImageFileName(QStringLiteral("image.%1").arg(extension)),
             qPrintable(extension));
@@ -128,7 +128,7 @@ void TestImageFormatRegistry::supportedImageExtensionsIncludeRawFormats()
 void TestImageFormatRegistry::supportedImageMimeTypesIncludeRawFormats()
 {
     const QStringList mimeTypes = kiriview::supportedImageMimeTypes();
-    for (const QString &mimeType : expectedRawMimeTypes()) {
+    for (const QString& mimeType : expectedRawMimeTypes()) {
         QVERIFY2(mimeTypes.contains(mimeType), qPrintable(mimeType));
     }
 }

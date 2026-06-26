@@ -11,11 +11,12 @@
 #include <functional>
 
 namespace kiriview {
-struct DocumentSessionMediaDeletionCompletionRuntimePorts {
+struct DocumentSessionMediaDeletionCompletionRuntimePorts
+{
     std::function<void(bool)> setFileDeletionInProgress;
-    std::function<void(const QString &)> setSessionErrorString;
+    std::function<void(const QString&)> setSessionErrorString;
     std::function<void()> recomputePublicProjection;
-    std::function<void(const DocumentSessionRoutePlan &)> executeRoutePlan;
+    std::function<void(const DocumentSessionRoutePlan&)> executeRoutePlan;
 };
 
 class DocumentSessionMediaDeletionCompletionRuntime final
@@ -24,7 +25,7 @@ public:
     explicit DocumentSessionMediaDeletionCompletionRuntime(
         DocumentSessionMediaDeletionCompletionRuntimePorts ports = {});
 
-    void apply(const DocumentSessionMediaDeletionCompletion &completion);
+    void apply(const DocumentSessionMediaDeletionCompletion& completion);
 
 private:
     DocumentSessionMediaDeletionCompletionRuntimePorts m_ports;

@@ -7,7 +7,7 @@
 #include "presentation/imagespreadgeometry.h"
 
 namespace kiriview {
-void ImageSpreadPageCache::cachePageSize(const QUrl &url, const QSize &imageSize)
+void ImageSpreadPageCache::cachePageSize(const QUrl& url, const QSize& imageSize)
 {
     const QString key = cacheKey(url);
     if (key.isEmpty() || imageSize.isEmpty()) {
@@ -17,7 +17,7 @@ void ImageSpreadPageCache::cachePageSize(const QUrl &url, const QSize &imageSize
     m_widePageByUrl[key] = imageSpreadPageIsWide(imageSize);
 }
 
-std::optional<bool> ImageSpreadPageCache::cachedPageIsWide(const QUrl &url) const
+std::optional<bool> ImageSpreadPageCache::cachedPageIsWide(const QUrl& url) const
 {
     const QString key = cacheKey(url);
     if (key.isEmpty()) {
@@ -32,5 +32,5 @@ std::optional<bool> ImageSpreadPageCache::cachedPageIsWide(const QUrl &url) cons
     return cached->second;
 }
 
-QString ImageSpreadPageCache::cacheKey(const QUrl &url) { return normalizedUrlIdentityKey(url); }
+QString ImageSpreadPageCache::cacheKey(const QUrl& url) { return normalizedUrlIdentityKey(url); }
 }

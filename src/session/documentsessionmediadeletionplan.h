@@ -14,7 +14,8 @@
 #include <vector>
 
 namespace kiriview {
-struct DocumentSessionMediaDeletionFallbackPlan {
+struct DocumentSessionMediaDeletionFallbackPlan
+{
     QUrl targetUrl;
     std::optional<QUrl> preferredFallbackUrl;
     std::optional<QUrl> fallbackUrl;
@@ -22,13 +23,15 @@ struct DocumentSessionMediaDeletionFallbackPlan {
     bool hasTarget() const { return !targetUrl.isEmpty(); }
 };
 
-struct DocumentSessionMediaDeletionStartPlan {
+struct DocumentSessionMediaDeletionStartPlan
+{
     bool shouldStartDeletion = false;
     FileDeletionRequest request;
     DocumentSessionMediaDeletionFallbackPlan fallbackPlan;
 };
 
-struct DocumentSessionMediaDeletionCompletionPlan {
+struct DocumentSessionMediaDeletionCompletionPlan
+{
     DocumentSessionRoutePlan routePlan;
     bool reportFailure = false;
 
@@ -40,11 +43,11 @@ struct DocumentSessionMediaDeletionCompletionPlan {
 };
 
 DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(FileDeletionMode mode,
-    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl);
+    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl& currentUrl);
 DocumentSessionMediaDeletionFallbackPlan documentSessionMediaDeletionFallbackPlan(
-    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl);
+    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl& currentUrl);
 DocumentSessionMediaDeletionCompletionPlan documentSessionMediaDeletionCompletionPlan(
-    DocumentSessionKind currentKind, const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan,
+    DocumentSessionKind currentKind, const DocumentSessionMediaDeletionFallbackPlan& fallbackPlan,
     FileDeletionResult result);
 }
 

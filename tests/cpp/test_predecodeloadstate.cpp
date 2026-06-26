@@ -18,7 +18,7 @@ using kiriview::TestSupport::staticDisplayTestImagePayload;
 using kiriview::TestSupport::testImage;
 
 kiriview::DisplayedPredecodeImage displayedImage(
-    const QUrl &url, qreal firstDisplayPixelsPerSourcePixel = 0.0)
+    const QUrl& url, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
     const kiriview::DisplayImageQuality quality = firstDisplayPixelsPerSourcePixel > 0.0
         ? kiriview::DisplayImageQuality::FirstDisplay
@@ -32,7 +32,7 @@ kiriview::DisplayedPredecodeImage displayedImage(
 }
 
 kiriview::PredecodeLoadWindow loadWindow(
-    const QUrl &displayedUrl, std::vector<QUrl> urls, quint64 generation = 7)
+    const QUrl& displayedUrl, std::vector<QUrl> urls, quint64 generation = 7)
 {
     return kiriview::PredecodeLoadWindow {
         displayedUrl,

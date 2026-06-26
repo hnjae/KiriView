@@ -30,9 +30,10 @@ public:
 using RuntimeTimerCallback = std::function<void()>;
 using MonotonicClock = std::function<qint64()>;
 using SingleShotTimerFactory
-    = std::function<std::unique_ptr<RuntimeTimerHandle>(QObject *, int, RuntimeTimerCallback)>;
+    = std::function<std::unique_ptr<RuntimeTimerHandle>(QObject*, int, RuntimeTimerCallback)>;
 
-struct TimerScheduler {
+struct TimerScheduler
+{
     MonotonicClock currentMonotonicMsec;
     SingleShotTimerFactory singleShotTimer;
 };
@@ -41,13 +42,13 @@ namespace Detail {
     class QtSingleShotTimer final : public RuntimeTimerHandle
     {
     public:
-        QtSingleShotTimer(QObject *owner, int intervalMsec, RuntimeTimerCallback callback)
+        QtSingleShotTimer(QObject* owner, int intervalMsec, RuntimeTimerCallback callback)
             : m_callback(std::move(callback))
         {
             m_timer.setSingleShot(true);
             m_timer.setInterval(intervalMsec);
 
-            QObject *context = owner == nullptr ? &m_timer : owner;
+            QObject* context = owner == nullptr ? &m_timer : owner;
             QObject::connect(&m_timer, &QTimer::timeout, context, [this]() {
                 if (m_callback) {
                     m_callback();
@@ -72,7 +73,7 @@ inline TimerScheduler defaultTimerScheduler()
 
     return TimerScheduler {
         [clock]() { return clock->isValid() ? clock->elapsed() : 0; },
-        [](QObject *owner, int intervalMsec,
+        [](QObject* owner, int intervalMsec,
             RuntimeTimerCallback callback) -> std::unique_ptr<RuntimeTimerHandle> {
             return std::make_unique<Detail::QtSingleShotTimer>(
                 owner, intervalMsec, std::move(callback));

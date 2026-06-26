@@ -65,20 +65,21 @@ private Q_SLOTS:
 };
 
 namespace {
-struct ImageShortcutsFixture {
+struct ImageShortcutsFixture
+{
     std::unique_ptr<QQuickView> view;
     std::unique_ptr<QTemporaryDir> temporaryDirectory;
-    QObject *root = nullptr;
-    KiriViewApplication *application = nullptr;
+    QObject* root = nullptr;
+    KiriViewApplication* application = nullptr;
     QString errorString;
 
     bool isValid() const { return view != nullptr && root != nullptr && application != nullptr; }
 };
 
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
@@ -103,7 +104,7 @@ void registerKiriViewQmlTypes()
 
 void resetConfig()
 {
-    KiriViewState *state = KiriViewState::self();
+    KiriViewState* state = KiriViewState::self();
     state->config()->deleteGroup(QStringLiteral("Interface"));
     state->config()->sync();
     state->config()->reparseConfiguration();
@@ -123,14 +124,14 @@ QString qmlSourceImport()
     return QUrl::fromLocalFile(qmlPath).toString();
 }
 
-bool writeTestPng(const QString &path)
+bool writeTestPng(const QString& path)
 {
     QImage image(QSize(800, 800), QImage::Format_RGBA8888);
     image.fill(Qt::red);
     return image.save(path, "PNG");
 }
 
-std::unique_ptr<QTemporaryDir> createImageDirectory(QString *sourcePath, QString *errorString)
+std::unique_ptr<QTemporaryDir> createImageDirectory(QString* sourcePath, QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -148,7 +149,7 @@ std::unique_ptr<QTemporaryDir> createImageDirectory(QString *sourcePath, QString
     return directory;
 }
 
-std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QString *errorString)
+std::unique_ptr<QTemporaryDir> createComicBookArchive(QString* sourcePath, QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -186,7 +187,7 @@ std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QStri
     return directory;
 }
 
-std::unique_ptr<QTemporaryDir> createVideoFile(QString *sourcePath, QString *errorString)
+std::unique_ptr<QTemporaryDir> createVideoFile(QString* sourcePath, QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -206,7 +207,7 @@ std::unique_ptr<QTemporaryDir> createVideoFile(QString *sourcePath, QString *err
     return directory;
 }
 
-QString fixtureQml(const QString &sourceUrl = QString())
+QString fixtureQml(const QString& sourceUrl = QString())
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -334,7 +335,7 @@ Item {
         .arg(qmlSourceImport(), sourceUrl);
 }
 
-ImageShortcutsFixture createFixture(const QString &sourceUrl = QString())
+ImageShortcutsFixture createFixture(const QString& sourceUrl = QString())
 {
     ImageShortcutsFixture fixture;
     registerKiriViewQmlTypes();
@@ -356,7 +357,7 @@ ImageShortcutsFixture createFixture(const QString &sourceUrl = QString())
         return fixture;
     }
 
-    QObject *root = component.create();
+    QObject* root = component.create();
     if (root == nullptr) {
         fixture.errorString = component.errorString();
         return fixture;
@@ -371,7 +372,7 @@ ImageShortcutsFixture createFixture(const QString &sourceUrl = QString())
     }
 
     fixture.root = root;
-    fixture.application = root->findChild<KiriViewApplication *>(QStringLiteral("application"));
+    fixture.application = root->findChild<KiriViewApplication*>(QStringLiteral("application"));
     if (fixture.application == nullptr) {
         fixture.errorString = QStringLiteral("application was not created");
     }
@@ -426,7 +427,7 @@ ImageShortcutsFixture createVideoFixture()
     return fixture;
 }
 
-bool documentReady(QObject *root)
+bool documentReady(QObject* root)
 {
     QVariant result;
     const bool invoked = QMetaObject::invokeMethod(
@@ -434,30 +435,30 @@ bool documentReady(QObject *root)
     return invoked && result.toBool();
 }
 
-void pressKey(QQuickView *view, Qt::Key key)
+void pressKey(QQuickView* view, Qt::Key key)
 {
     QTest::keyClick(view, key);
     QCoreApplication::processEvents();
 }
 
-void pressKey(QQuickView *view, Qt::Key key, Qt::KeyboardModifiers modifiers)
+void pressKey(QQuickView* view, Qt::Key key, Qt::KeyboardModifiers modifiers)
 {
     QTest::keyClick(view, key, modifiers);
     QCoreApplication::processEvents();
 }
 
-bool openImageAtPage(QObject *root, int pageNumber)
+bool openImageAtPage(QObject* root, int pageNumber)
 {
     return QMetaObject::invokeMethod(
         root, "openImageAtPage", Qt::DirectConnection, Q_ARG(QVariant, QVariant(pageNumber)));
 }
 
-bool refreshDerivedDocumentState(QObject *root)
+bool refreshDerivedDocumentState(QObject* root)
 {
     return QMetaObject::invokeMethod(root, "refreshDerivedDocumentState", Qt::DirectConnection);
 }
 
-bool zoomToActualSize(QObject *root)
+bool zoomToActualSize(QObject* root)
 {
     QVariant result;
     return QMetaObject::invokeMethod(
@@ -465,26 +466,26 @@ bool zoomToActualSize(QObject *root)
         && result.toBool();
 }
 
-QPointF viewportContentPosition(QObject *root)
+QPointF viewportContentPosition(QObject* root)
 {
     return root->property("viewportContentPosition").toPointF();
 }
 
-int imageZoomMode(QObject *root) { return root->property("zoomMode").toInt(); }
+int imageZoomMode(QObject* root) { return root->property("zoomMode").toInt(); }
 
-double imageZoomPercent(QObject *root) { return root->property("zoomPercent").toDouble(); }
+double imageZoomPercent(QObject* root) { return root->property("zoomPercent").toDouble(); }
 
-bool zoomPercentApproximately(QObject *root, double expected)
+bool zoomPercentApproximately(QObject* root, double expected)
 {
     return std::abs(imageZoomPercent(root) - expected) < 0.001;
 }
 
-void prepareTwoPageSpread(ImageShortcutsFixture &fixture)
+void prepareTwoPageSpread(ImageShortcutsFixture& fixture)
 {
     QVERIFY(fixture.isValid());
     QTRY_VERIFY(documentReady(fixture.root));
     QTRY_COMPARE(fixture.root->property("pageCount").toInt(), 4);
-    QObject *document = fixture.root->property("testImageDocument").value<QObject *>();
+    QObject* document = fixture.root->property("testImageDocument").value<QObject*>();
     QVERIFY(document != nullptr);
     QTRY_VERIFY(document->property("twoPageModeAvailable").toBool());
     QTRY_VERIFY(document->property("rightToLeftReadingAvailable").toBool());
@@ -672,7 +673,7 @@ void TestImageShortcuts::configuredActionShortcutsTriggerActions()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(documentReady(fixture.root));
 
-    QAction *rotateAction = fixture.application->action(QStringLiteral("view_rotate_clockwise"));
+    QAction* rotateAction = fixture.application->action(QStringLiteral("view_rotate_clockwise"));
     QVERIFY(rotateAction != nullptr);
     QSignalSpy triggeredSpy(rotateAction, &QAction::triggered);
 
@@ -696,7 +697,7 @@ void TestImageShortcuts::quitViewerLocalShortcutTriggersQuitAction()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(documentReady(fixture.root));
 
-    QAction *quitAction = fixture.application->action(QStringLiteral("file_quit"));
+    QAction* quitAction = fixture.application->action(QStringLiteral("file_quit"));
     QVERIFY(quitAction != nullptr);
     QSignalSpy triggeredSpy(quitAction, &QAction::triggered);
 
@@ -717,15 +718,15 @@ void TestImageShortcuts::windowCommandShortcutsWorkWithoutQmlShortcutInstallers(
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(documentReady(fixture.root));
 
-    QAction *rotateAction = fixture.application->action(QStringLiteral("view_rotate_clockwise"));
-    QAction *showMenubarAction
+    QAction* rotateAction = fixture.application->action(QStringLiteral("view_rotate_clockwise"));
+    QAction* showMenubarAction
         = fixture.application->action(QStringLiteral("options_show_menubar"));
     QVERIFY(rotateAction != nullptr);
     QVERIFY(showMenubarAction != nullptr);
     QSignalSpy rotateSpy(rotateAction, &QAction::triggered);
     QSignalSpy showMenubarSpy(showMenubarAction, &QAction::triggered);
 
-    QObject *imageShortcuts = fixture.root->findChild<QObject *>(QStringLiteral("imageShortcuts"));
+    QObject* imageShortcuts = fixture.root->findChild<QObject*>(QStringLiteral("imageShortcuts"));
     QVERIFY(imageShortcuts != nullptr);
     imageShortcuts->setProperty("visible", false);
 
@@ -754,7 +755,7 @@ void TestImageShortcuts::videoViewerLocalShortcutTriggersFullscreenAction()
     QTRY_COMPARE(fixture.root->property("documentKind").toInt(),
         static_cast<int>(KiriDocumentSession::DocumentKind::Video));
 
-    QAction *fullscreenAction = fixture.application->action(QStringLiteral("window_fullscreen"));
+    QAction* fullscreenAction = fixture.application->action(QStringLiteral("window_fullscreen"));
     QVERIFY(fullscreenAction != nullptr);
     QSignalSpy triggeredSpy(fullscreenAction, &QAction::triggered);
 
@@ -771,7 +772,7 @@ void TestImageShortcuts::videoPlaybackShortcutTriggersPlaybackAction()
     QTRY_COMPARE(fixture.root->property("documentKind").toInt(),
         static_cast<int>(KiriDocumentSession::DocumentKind::Video));
 
-    QAction *playbackAction
+    QAction* playbackAction
         = fixture.application->action(QStringLiteral("view_toggle_video_playback"));
     QVERIFY(playbackAction != nullptr);
     QSignalSpy triggeredSpy(playbackAction, &QAction::triggered);
@@ -789,7 +790,7 @@ void TestImageShortcuts::videoPlaybackShortcutShowsImageUnsupportedToastForReady
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(documentReady(fixture.root));
 
-    QAction *playbackAction
+    QAction* playbackAction
         = fixture.application->action(QStringLiteral("view_toggle_video_playback"));
     QVERIFY(playbackAction != nullptr);
     QSignalSpy triggeredSpy(playbackAction, &QAction::triggered);
@@ -812,14 +813,14 @@ void TestImageShortcuts::videoImageOnlyShortcutsShowUnsupportedToast()
     QTRY_COMPARE(fixture.root->property("documentKind").toInt(),
         static_cast<int>(KiriDocumentSession::DocumentKind::Video));
 
-    QAction *rotateAction = fixture.application->action(QStringLiteral("view_rotate_clockwise"));
-    QAction *zoomInAction = fixture.application->action(QStringLiteral("view_zoom_in"));
-    QAction *zoom50Action = fixture.application->action(QStringLiteral("view_zoom_50_percent"));
-    QAction *zoom100Action = fixture.application->action(QStringLiteral("view_zoom_100_percent"));
-    QAction *zoom200Action = fixture.application->action(QStringLiteral("view_zoom_200_percent"));
-    QAction *fitHeightAction = fixture.application->action(QStringLiteral("view_fit_height"));
-    QAction *fitWidthAction = fixture.application->action(QStringLiteral("view_fit_width"));
-    QAction *fitWindowAction = fixture.application->action(QStringLiteral("view_fit"));
+    QAction* rotateAction = fixture.application->action(QStringLiteral("view_rotate_clockwise"));
+    QAction* zoomInAction = fixture.application->action(QStringLiteral("view_zoom_in"));
+    QAction* zoom50Action = fixture.application->action(QStringLiteral("view_zoom_50_percent"));
+    QAction* zoom100Action = fixture.application->action(QStringLiteral("view_zoom_100_percent"));
+    QAction* zoom200Action = fixture.application->action(QStringLiteral("view_zoom_200_percent"));
+    QAction* fitHeightAction = fixture.application->action(QStringLiteral("view_fit_height"));
+    QAction* fitWidthAction = fixture.application->action(QStringLiteral("view_fit_width"));
+    QAction* fitWindowAction = fixture.application->action(QStringLiteral("view_fit"));
     QVERIFY(rotateAction != nullptr);
     QVERIFY(zoomInAction != nullptr);
     QVERIFY(zoom50Action != nullptr);

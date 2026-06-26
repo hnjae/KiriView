@@ -68,7 +68,7 @@ kiriview::ThumbnailCacheLookupStatus thumbnailStatus(
 }
 
 kiriview::ThumbnailCacheLookupResult lookupThumbnailCache(
-    const kiriview::ThumbnailCacheLookupRequest &request)
+    const kiriview::ThumbnailCacheLookupRequest& request)
 {
     kiriview::RustThumbnailCacheLookupResult rustResult;
     if (request.originalIdentity.isNonFileUri()) {
@@ -99,7 +99,7 @@ kiriview::ThumbnailCacheLookupResult lookupThumbnailCache(
     }
 
     const QByteArray pixels = kiriview::Bridge::qtByteArray(rustResult.pixels);
-    const QImage image(reinterpret_cast<const uchar *>(pixels.constData()), rustResult.width,
+    const QImage image(reinterpret_cast<const uchar*>(pixels.constData()), rustResult.width,
         rustResult.height, rustResult.stride, QImage::Format_RGBA8888);
     if (image.isNull()) {
         result.status = kiriview::ThumbnailCacheLookupStatus::Failed;
@@ -116,7 +116,7 @@ namespace kiriview {
 ThumbnailCacheLookupProvider defaultThumbnailCacheLookupProvider(
     ImageWorkerScheduler workerScheduler)
 {
-    return [workerScheduler = std::move(workerScheduler)](QObject *receiver,
+    return [workerScheduler = std::move(workerScheduler)](QObject* receiver,
                ThumbnailCacheLookupRequest request, ThumbnailCacheLookupCallback callback) {
         return startImageIoWorkerJob(
             receiver, workerScheduler,

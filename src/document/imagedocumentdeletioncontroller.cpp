@@ -16,15 +16,15 @@ QString genericFileDeletionErrorMessage()
     return kiriview::imageErrorText(kiriview::ImageErrorTextId::DeleteFile);
 }
 
-bool documentReadyForFileDeletion(const kiriview::ImageDocumentState &state)
+bool documentReadyForFileDeletion(const kiriview::ImageDocumentState& state)
 {
     return state.status() == kiriview::ImageDocumentStatus::Ready;
 }
 }
 
 namespace kiriview {
-ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent,
-    ImageDocumentState &state, ImagePageSurfaceController &pageSurfaceController,
+ImageDocumentDeletionController::ImageDocumentDeletionController(QObject* parent,
+    ImageDocumentState& state, ImagePageSurfaceController& pageSurfaceController,
     ImageDocumentPageCandidateProvider candidateProvider, FileDeletionProvider fileDeletionProvider,
     Callbacks callbacks)
     : m_parent(parent)
@@ -65,14 +65,14 @@ void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
     m_fileDeletionJob
         = m_fileDeletionProvider(m_parent, FileDeletionRequest { removalPlan.targetUrl, mode },
             [this, operationId = operation.operationId, fallbackPlan = removalPlan.fallbackPlan](
-                FileDeletionResult result, const KioOperationFailure &failure) {
+                FileDeletionResult result, const KioOperationFailure& failure) {
                 finishFileDeletion(operationId, fallbackPlan, result, failure);
             });
 }
 
 void ImageDocumentDeletionController::finishFileDeletion(quint64 operationId,
-    const ImageRemovalFallbackPlan &fallbackPlan, FileDeletionResult result,
-    const KioOperationFailure &failure)
+    const ImageRemovalFallbackPlan& fallbackPlan, FileDeletionResult result,
+    const KioOperationFailure& failure)
 {
     const ImageDocumentDeletionFileOperationFinish operation
         = m_deletionState.finishFileDeletion(operationId);
@@ -120,7 +120,7 @@ void ImageDocumentDeletionController::reportRuntimePlan(ImageDocumentRuntimePlan
     invokeIfSet(m_callbacks.runtimePlan, std::move(plan));
 }
 
-void ImageDocumentDeletionController::reportFailure(const KioOperationFailure &failure)
+void ImageDocumentDeletionController::reportFailure(const KioOperationFailure& failure)
 {
     const QString message
         = failure.userMessage.isEmpty() ? genericFileDeletionErrorMessage() : failure.userMessage;

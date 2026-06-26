@@ -7,9 +7,9 @@
 #include <QTest>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-kiriview::DirectMediaNavigationCandidate candidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate candidate(const QUrl& url)
 {
     return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }

@@ -21,7 +21,7 @@ class MediaEntrySourceRunner;
 class MediaEntrySourceRuntime final
 {
 public:
-    explicit MediaEntrySourceRuntime(QObject *context, MediaEntrySourceFactory sourceFactory = {},
+    explicit MediaEntrySourceRuntime(QObject* context, MediaEntrySourceFactory sourceFactory = {},
         ImageWorkerScheduler workerScheduler = {});
     ~MediaEntrySourceRuntime();
 
@@ -30,12 +30,12 @@ public:
 
     bool hasCurrentOpenedCollectionScope() const;
     bool hasCurrentOpenedCollectionScope(
-        const OpenedCollectionScopeLocation &openedCollectionScope) const;
+        const OpenedCollectionScopeLocation& openedCollectionScope) const;
 
-    ImageIoJob loadOpenedCollectionCandidates(QObject *receiver,
+    ImageIoJob loadOpenedCollectionCandidates(QObject* receiver,
         OpenedCollectionScopeLocation openedCollectionScope,
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback);
-    ImageIoJob loadOpenedCollectionImageData(QObject *receiver, ImageDecodeRequest request,
+    ImageIoJob loadOpenedCollectionImageData(QObject* receiver, ImageDecodeRequest request,
         ImageDataCallback callback, ErrorCallback errorCallback);
 
 private:
@@ -44,7 +44,7 @@ private:
         MediaEntrySourceCandidateLoadBatch batch, MediaEntrySourceCandidatesResult result);
     void cancelCandidateLoadBatch();
 
-    QObject *m_context = nullptr;
+    QObject* m_context = nullptr;
     MediaEntrySourceFactory m_sourceFactory;
     ImageWorkerScheduler m_workerScheduler;
     std::shared_ptr<MediaEntrySourceRunner> m_runner;

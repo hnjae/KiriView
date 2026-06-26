@@ -43,7 +43,7 @@ std::optional<bool> boolTarget(kiriview::ImageOpenBoolTarget target)
 }
 
 std::optional<QString> errorStringTarget(kiriview::ImageOpenErrorStringTarget target,
-    const kiriview::ImageOpenTransitionContext &context)
+    const kiriview::ImageOpenTransitionContext& context)
 {
     switch (target) {
     case kiriview::ImageOpenErrorStringTarget::Clear:
@@ -59,7 +59,7 @@ std::optional<QString> errorStringTarget(kiriview::ImageOpenErrorStringTarget ta
 
 std::optional<kiriview::ImageLoadFailure> loadFailureTarget(
     kiriview::ImageOpenErrorStringTarget target,
-    const kiriview::ImageOpenTransitionContext &context)
+    const kiriview::ImageOpenTransitionContext& context)
 {
     if (target == kiriview::ImageOpenErrorStringTarget::Provided) {
         return context.loadFailure;
@@ -70,7 +70,7 @@ std::optional<kiriview::ImageLoadFailure> loadFailureTarget(
 
 std::optional<kiriview::EmbeddedMetadata> embeddedMetadataTarget(
     kiriview::ImageOpenEmbeddedMetadataTarget target,
-    const kiriview::ImageOpenTransitionContext &context)
+    const kiriview::ImageOpenTransitionContext& context)
 {
     switch (target) {
     case kiriview::ImageOpenEmbeddedMetadataTarget::Clear:
@@ -85,7 +85,7 @@ std::optional<kiriview::EmbeddedMetadata> embeddedMetadataTarget(
 }
 
 std::optional<kiriview::ImageDocumentPageKind> sourceKindTarget(
-    kiriview::ImageOpenSourceKindTarget target, const kiriview::ImageOpenTransitionContext &context)
+    kiriview::ImageOpenSourceKindTarget target, const kiriview::ImageOpenTransitionContext& context)
 {
     switch (target) {
     case kiriview::ImageOpenSourceKindTarget::Session:
@@ -102,7 +102,7 @@ std::optional<kiriview::ImageDocumentPageKind> sourceKindTarget(
 
 std::optional<kiriview::DisplayedImageLocation> displayedLocationTarget(
     kiriview::ImageOpenDisplayedLocationTarget target,
-    const kiriview::ImageOpenTransitionContext &context)
+    const kiriview::ImageOpenTransitionContext& context)
 {
     switch (target) {
     case kiriview::ImageOpenDisplayedLocationTarget::Session:
@@ -117,8 +117,8 @@ std::optional<kiriview::DisplayedImageLocation> displayedLocationTarget(
     return std::nullopt;
 }
 
-void appendRuntimeOperationsForOpenEffect(kiriview::ImageDocumentRuntimePlan &plan,
-    kiriview::ImageOpenEffect effect, const kiriview::ImageOpenTransitionContext &context)
+void appendRuntimeOperationsForOpenEffect(kiriview::ImageDocumentRuntimePlan& plan,
+    kiriview::ImageOpenEffect effect, const kiriview::ImageOpenTransitionContext& context)
 {
     switch (effect) {
     case kiriview::ImageOpenEffect::ClearImage: {
@@ -158,7 +158,7 @@ void appendRuntimeOperationsForOpenEffect(kiriview::ImageDocumentRuntimePlan &pl
 }
 
 std::optional<QUrl> resolvedUrlForTarget(
-    kiriview::ImageOpenUrlTarget target, const kiriview::ImageOpenTransitionContext &context)
+    kiriview::ImageOpenUrlTarget target, const kiriview::ImageOpenTransitionContext& context)
 {
     switch (target) {
     case kiriview::ImageOpenUrlTarget::Empty:
@@ -186,7 +186,7 @@ std::optional<QUrl> resolvedUrlForTarget(
 }
 
 kiriview::ImageOpenResolvedStateDelta resolvedStateDelta(
-    const kiriview::ImageOpenStateDelta &delta, const kiriview::ImageOpenTransitionContext &context)
+    const kiriview::ImageOpenStateDelta& delta, const kiriview::ImageOpenTransitionContext& context)
 {
     return kiriview::ImageOpenResolvedStateDelta {
         resolvedUrlForTarget(delta.sourceUrl, context),
@@ -204,8 +204,8 @@ kiriview::ImageOpenResolvedStateDelta resolvedStateDelta(
 }
 
 kiriview::ImageDocumentRuntimePlan resolvedRuntimePlan(
-    const kiriview::ImageOpenTransition &transition,
-    const kiriview::ImageOpenTransitionContext &context)
+    const kiriview::ImageOpenTransition& transition,
+    const kiriview::ImageOpenTransitionContext& context)
 {
     kiriview::ImageDocumentRuntimePlan plan;
     plan.reserve(transition.effects.size());
@@ -216,7 +216,7 @@ kiriview::ImageDocumentRuntimePlan resolvedRuntimePlan(
 }
 
 QString finalErrorString(
-    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+    const kiriview::ImageDocumentState& state, const kiriview::ImageOpenResolvedStateDelta& delta)
 {
     if (delta.loadFailure.has_value()) {
         return delta.loadFailure->userMessage;
@@ -228,45 +228,45 @@ QString finalErrorString(
 }
 
 QUrl finalSourceUrl(
-    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+    const kiriview::ImageDocumentState& state, const kiriview::ImageOpenResolvedStateDelta& delta)
 {
     return delta.sourceUrl.value_or(state.sourceUrl());
 }
 
 kiriview::DisplayedImageLocation finalDisplayedLocation(
-    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+    const kiriview::ImageDocumentState& state, const kiriview::ImageOpenResolvedStateDelta& delta)
 {
     return delta.displayedLocation.value_or(state.displayedImageLocation());
 }
 
 kiriview::ImageDocumentPageKind finalSourceKind(
-    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+    const kiriview::ImageDocumentState& state, const kiriview::ImageOpenResolvedStateDelta& delta)
 {
     return delta.sourceKind.value_or(state.sourceKind());
 }
 
 bool finalUnsupportedOpenedCollectionVideo(
-    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+    const kiriview::ImageDocumentState& state, const kiriview::ImageOpenResolvedStateDelta& delta)
 {
     return delta.unsupportedOpenedCollectionVideo.value_or(
         state.unsupportedOpenedCollectionVideo());
 }
 
 QUrl finalContainerNavigationUrl(
-    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+    const kiriview::ImageDocumentState& state, const kiriview::ImageOpenResolvedStateDelta& delta)
 {
     return delta.containerNavigationUrl.value_or(state.containerNavigationUrl());
 }
 
 bool finalReadyContainerNavigationUrlIsValid(
-    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+    const kiriview::ImageDocumentState& state, const kiriview::ImageOpenResolvedStateDelta& delta)
 {
     return finalContainerNavigationUrl(state, delta)
         == containerNavigationUrlForLocation(finalDisplayedLocation(state, delta));
 }
 
 bool finalImageOpenStateIsValid(
-    const kiriview::ImageDocumentState &state, const kiriview::ImageOpenResolvedStateDelta &delta)
+    const kiriview::ImageDocumentState& state, const kiriview::ImageOpenResolvedStateDelta& delta)
 {
     const kiriview::ImageDocumentStatus status = delta.status.value_or(state.status());
     const bool loading = delta.loading.value_or(state.loading());
@@ -293,7 +293,7 @@ bool finalImageOpenStateIsValid(
 class ImageOpenTransitionApplier final
 {
 public:
-    explicit ImageOpenTransitionApplier(kiriview::ImageDocumentState &state)
+    explicit ImageOpenTransitionApplier(kiriview::ImageDocumentState& state)
         : m_state(state)
         , m_batch(m_state.beginChangeBatch())
     {
@@ -312,7 +312,7 @@ public:
     kiriview::ImageDocumentRuntimePlan takeRuntimePlan() { return std::move(m_runtimePlan); }
 
 private:
-    void applyStateDelta(const kiriview::ImageOpenResolvedStateDelta &delta)
+    void applyStateDelta(const kiriview::ImageOpenResolvedStateDelta& delta)
     {
         applyUnsupportedOpenedCollectionVideo(delta.unsupportedOpenedCollectionVideo, false);
 
@@ -345,12 +345,12 @@ private:
     }
 
     bool trackedLoadCompletionBeforeVisibleState(
-        const kiriview::ImageOpenResolvedStateDelta &delta) const
+        const kiriview::ImageOpenResolvedStateDelta& delta) const
     {
         return delta.clearLoadingContainerNavigationUrl && !delta.displayedLocation.has_value();
     }
 
-    void applyTrackedLoadCompletion(const kiriview::ImageOpenResolvedStateDelta &delta)
+    void applyTrackedLoadCompletion(const kiriview::ImageOpenResolvedStateDelta& delta)
     {
         if (delta.clearLoadingContainerNavigationUrl) {
             m_state.clearLoadingContainerNavigationUrl();
@@ -358,50 +358,50 @@ private:
         applyLoading(delta.loading);
     }
 
-    void applySourceUrl(const std::optional<QUrl> &url)
+    void applySourceUrl(const std::optional<QUrl>& url)
     {
         if (url.has_value()) {
             m_state.setSourceUrl(*url);
         }
     }
 
-    void applySourceKind(const std::optional<kiriview::ImageDocumentPageKind> &sourceKind)
+    void applySourceKind(const std::optional<kiriview::ImageDocumentPageKind>& sourceKind)
     {
         if (sourceKind.has_value()) {
             m_state.setSourceKind(*sourceKind);
         }
     }
 
-    void applyDisplayedLocation(const std::optional<kiriview::DisplayedImageLocation> &location)
+    void applyDisplayedLocation(const std::optional<kiriview::DisplayedImageLocation>& location)
     {
         if (location.has_value()) {
             m_state.setDisplayedImageLocation(*location);
         }
     }
 
-    void applyContainerNavigationUrl(const std::optional<QUrl> &url)
+    void applyContainerNavigationUrl(const std::optional<QUrl>& url)
     {
         if (url.has_value()) {
             m_state.setContainerNavigationUrl(*url);
         }
     }
 
-    void applyLoading(const std::optional<bool> &loading)
+    void applyLoading(const std::optional<bool>& loading)
     {
         if (loading.has_value()) {
             m_state.setLoading(*loading);
         }
     }
 
-    void applyStatus(const std::optional<kiriview::ImageDocumentStatus> &status)
+    void applyStatus(const std::optional<kiriview::ImageDocumentStatus>& status)
     {
         if (status.has_value()) {
             m_state.setStatus(*status);
         }
     }
 
-    void applyError(const std::optional<QString> &errorString,
-        const std::optional<kiriview::ImageLoadFailure> &loadFailure)
+    void applyError(const std::optional<QString>& errorString,
+        const std::optional<kiriview::ImageLoadFailure>& loadFailure)
     {
         if (loadFailure.has_value()) {
             m_state.setLoadFailure(*loadFailure);
@@ -413,7 +413,7 @@ private:
         }
     }
 
-    void applyEmbeddedMetadata(const std::optional<kiriview::EmbeddedMetadata> &metadata)
+    void applyEmbeddedMetadata(const std::optional<kiriview::EmbeddedMetadata>& metadata)
     {
         if (metadata.has_value()) {
             m_state.setEmbeddedMetadata(*metadata);
@@ -421,14 +421,14 @@ private:
     }
 
     void applyUnsupportedOpenedCollectionVideo(
-        const std::optional<bool> &unsupported, bool targetValue)
+        const std::optional<bool>& unsupported, bool targetValue)
     {
         if (unsupported.has_value() && *unsupported == targetValue) {
             m_state.setUnsupportedOpenedCollectionVideo(*unsupported);
         }
     }
 
-    kiriview::ImageDocumentState &m_state;
+    kiriview::ImageDocumentState& m_state;
     kiriview::ImageDocumentState::ChangeBatch m_batch;
     kiriview::ImageDocumentRuntimePlan m_runtimePlan;
 };
@@ -436,7 +436,7 @@ private:
 
 namespace kiriview {
 ImageOpenTransitionContext ImageOpenTransitionContext::sourceResolved(
-    const ImageLoadSession &session)
+    const ImageLoadSession& session)
 {
     ImageOpenTransitionContext context;
     context.session = &session;
@@ -444,7 +444,7 @@ ImageOpenTransitionContext ImageOpenTransitionContext::sourceResolved(
 }
 
 ImageOpenTransitionContext ImageOpenTransitionContext::successfulImageLoad(
-    const ImageLoadSession &session)
+    const ImageLoadSession& session)
 {
     ImageOpenTransitionContext context;
     context.session = &session;
@@ -452,7 +452,7 @@ ImageOpenTransitionContext ImageOpenTransitionContext::successfulImageLoad(
 }
 
 ImageOpenTransitionContext ImageOpenTransitionContext::successfulImageLoad(
-    const ImageLoadSession &session, EmbeddedMetadata metadata)
+    const ImageLoadSession& session, EmbeddedMetadata metadata)
 {
     ImageOpenTransitionContext context = successfulImageLoad(session);
     context.embeddedMetadata = std::move(metadata);
@@ -460,7 +460,7 @@ ImageOpenTransitionContext ImageOpenTransitionContext::successfulImageLoad(
 }
 
 ImageOpenTransitionContext ImageOpenTransitionContext::sourceLoadError(
-    const ImageLoadSession &session, const QUrl &displayedUrl, ImageLoadFailure failure)
+    const ImageLoadSession& session, const QUrl& displayedUrl, ImageLoadFailure failure)
 {
     ImageOpenTransitionContext context;
     context.session = &session;
@@ -472,7 +472,7 @@ ImageOpenTransitionContext ImageOpenTransitionContext::sourceLoadError(
 }
 
 ImageOpenTransitionContext ImageOpenTransitionContext::containerNavigationError(
-    const QUrl &containerUrl, const QString &errorString)
+    const QUrl& containerUrl, const QString& errorString)
 {
     ImageOpenTransitionContext context;
     context.containerUrl = containerUrl;
@@ -480,7 +480,7 @@ ImageOpenTransitionContext ImageOpenTransitionContext::containerNavigationError(
     return context;
 }
 
-ImageOpenTransitionContext ImageOpenTransitionContext::animationError(const QString &errorString)
+ImageOpenTransitionContext ImageOpenTransitionContext::animationError(const QString& errorString)
 {
     ImageOpenTransitionContext context;
     context.errorString = errorString;
@@ -488,7 +488,7 @@ ImageOpenTransitionContext ImageOpenTransitionContext::animationError(const QStr
 }
 
 ImageOpenApplicationPlan imageOpenApplicationPlan(
-    const ImageOpenTransition &transition, const ImageOpenTransitionContext &context)
+    const ImageOpenTransition& transition, const ImageOpenTransitionContext& context)
 {
     return ImageOpenApplicationPlan {
         resolvedStateDelta(transition.stateDelta, context),
@@ -497,15 +497,15 @@ ImageOpenApplicationPlan imageOpenApplicationPlan(
 }
 
 ImageDocumentRuntimePlan applyImageOpenApplicationPlan(
-    ImageDocumentState &state, ImageOpenApplicationPlan plan)
+    ImageDocumentState& state, ImageOpenApplicationPlan plan)
 {
     ImageOpenTransitionApplier applier(state);
     applier.apply(std::move(plan));
     return applier.takeRuntimePlan();
 }
 
-ImageDocumentRuntimePlan applyImageOpenTransition(ImageDocumentState &state,
-    const ImageOpenTransition &transition, const ImageOpenTransitionContext &context)
+ImageDocumentRuntimePlan applyImageOpenTransition(ImageDocumentState& state,
+    const ImageOpenTransition& transition, const ImageOpenTransitionContext& context)
 {
     return applyImageOpenApplicationPlan(state, imageOpenApplicationPlan(transition, context));
 }

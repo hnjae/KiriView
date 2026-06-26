@@ -11,31 +11,35 @@
 #include <vector>
 
 namespace kiriview {
-struct ImageCacheRetentionEntry {
+struct ImageCacheRetentionEntry
+{
     qsizetype byteCost = 0;
     quint64 lastUse = 0;
 };
 
-struct ImageCacheRetainedEntry {
+struct ImageCacheRetainedEntry
+{
     std::size_t originalIndex = 0;
     qsizetype byteCost = 0;
 };
 
-struct ImageCacheBudgetRequest {
+struct ImageCacheBudgetRequest
+{
     qsizetype predecodeCacheByteBudget = 0;
     qsizetype displayImageCacheByteBudget = 0;
     qsizetype displayImageCachePreferredByteBudget = 0;
     qsizetype thumbnailCacheByteBudget = 0;
 };
 
-struct ImageCacheBudgets {
+struct ImageCacheBudgets
+{
     qsizetype predecodeCacheByteBudget = 0;
     qsizetype displayImageCacheByteBudget = 0;
     qsizetype thumbnailCacheByteBudget = 0;
 };
 
 std::vector<ImageCacheRetainedEntry> lruCacheRetentionPlan(
-    const std::vector<ImageCacheRetentionEntry> &entries, qsizetype byteBudget);
+    const std::vector<ImageCacheRetentionEntry>& entries, qsizetype byteBudget);
 qsizetype predecodeCachePreferredByteBudget();
 qsizetype predecodeCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
 qsizetype thumbnailCachePreferredByteBudget();

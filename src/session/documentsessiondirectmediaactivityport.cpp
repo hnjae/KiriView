@@ -8,7 +8,7 @@
 
 namespace kiriview {
 DocumentSessionDirectMediaActivityPort::DocumentSessionDirectMediaActivityPort(
-    const DocumentSessionState *state, const DocumentSessionDirectMediaScopePort *scope)
+    const DocumentSessionState* state, const DocumentSessionDirectMediaScopePort* scope)
     : m_state(state)
     , m_scope(scope)
 {

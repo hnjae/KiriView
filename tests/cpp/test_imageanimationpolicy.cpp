@@ -36,7 +36,7 @@ kiriview::AnimationLoopState loopState(int loopCount, int completedLoops)
     };
 }
 
-int maximumValue(const QVector<int> &values)
+int maximumValue(const QVector<int>& values)
 {
     return values.isEmpty() ? 0 : *std::max_element(values.cbegin(), values.cend());
 }
@@ -55,7 +55,7 @@ int percentile95Value(QVector<int> values)
 }
 
 kiriview::AnimationProviderChurnGateSample sampleFromMeasuredProviderTiming(
-    int frameDelayMs, const QVector<int> &timerDriftMs, const QVector<int> &providerLatencyMs)
+    int frameDelayMs, const QVector<int>& timerDriftMs, const QVector<int>& providerLatencyMs)
 {
     return kiriview::AnimationProviderChurnGateSample {
         kiriview::normalizedAnimationFrameDelay(frameDelayMs),

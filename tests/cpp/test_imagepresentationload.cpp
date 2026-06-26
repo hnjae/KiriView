@@ -37,7 +37,8 @@ constexpr qsizetype testPredecodeCacheByteBudget = 1024 * 1024;
 constexpr qsizetype testDisplayImageCacheByteBudget = 512 * 1024;
 constexpr std::array<unsigned char, 8> pngSignature { 0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a };
 
-struct FrameSpec {
+struct FrameSpec
+{
     quint32 width = 0;
     quint32 height = 0;
     quint16 delayNum = 1;
@@ -45,7 +46,7 @@ struct FrameSpec {
     QByteArray pixels;
 };
 
-QByteArray pixelBytes(const QColor &color)
+QByteArray pixelBytes(const QColor& color)
 {
     const std::array<unsigned char, 4> pixel {
         static_cast<unsigned char>(color.red()),
@@ -54,22 +55,22 @@ QByteArray pixelBytes(const QColor &color)
         static_cast<unsigned char>(color.alpha()),
     };
     return QByteArray(
-        reinterpret_cast<const char *>(pixel.data()), static_cast<qsizetype>(pixel.size()));
+        reinterpret_cast<const char*>(pixel.data()), static_cast<qsizetype>(pixel.size()));
 }
 
-QImage solidRgbaImage(const QColor &color)
+QImage solidRgbaImage(const QColor& color)
 {
     QImage image(1, 1, QImage::Format_RGBA8888);
     std::memcpy(image.scanLine(0), pixelBytes(color).constData(), 4);
     return image;
 }
 
-FrameSpec fullCanvasFrame(const QColor &color)
+FrameSpec fullCanvasFrame(const QColor& color)
 {
     return FrameSpec { 1, 1, 1, 1000, pixelBytes(color) };
 }
 
-quint32 readBe32(const QByteArray &data, qsizetype offset)
+quint32 readBe32(const QByteArray& data, qsizetype offset)
 {
     return (static_cast<quint32>(static_cast<unsigned char>(data[offset])) << 24)
         | (static_cast<quint32>(static_cast<unsigned char>(data[offset + 1])) << 16)
@@ -77,7 +78,7 @@ quint32 readBe32(const QByteArray &data, qsizetype offset)
         | static_cast<quint32>(static_cast<unsigned char>(data[offset + 3]));
 }
 
-void appendBe32(QByteArray *data, quint32 value)
+void appendBe32(QByteArray* data, quint32 value)
 {
     data->append(static_cast<char>((value >> 24) & 0xff));
     data->append(static_cast<char>((value >> 16) & 0xff));
@@ -85,13 +86,13 @@ void appendBe32(QByteArray *data, quint32 value)
     data->append(static_cast<char>(value & 0xff));
 }
 
-void appendBe16(QByteArray *data, quint16 value)
+void appendBe16(QByteArray* data, quint16 value)
 {
     data->append(static_cast<char>((value >> 8) & 0xff));
     data->append(static_cast<char>(value & 0xff));
 }
 
-quint32 crc32(const QByteArray &data)
+quint32 crc32(const QByteArray& data)
 {
     quint32 crc = 0xffffffffU;
     for (unsigned char byte : data) {
@@ -103,7 +104,7 @@ quint32 crc32(const QByteArray &data)
     return crc ^ 0xffffffffU;
 }
 
-void appendPngChunk(QByteArray *png, const char *kind, const QByteArray &payload)
+void appendPngChunk(QByteArray* png, const char* kind, const QByteArray& payload)
 {
     appendBe32(png, static_cast<quint32>(payload.size()));
     const qsizetype typeOffset = png->size();
@@ -112,7 +113,7 @@ void appendPngChunk(QByteArray *png, const char *kind, const QByteArray &payload
     appendBe32(png, crc32(png->mid(typeOffset, 4 + payload.size())));
 }
 
-std::vector<QByteArray> extractChunks(const QByteArray &png, const char *expectedKind)
+std::vector<QByteArray> extractChunks(const QByteArray& png, const char* expectedKind)
 {
     std::vector<QByteArray> chunks;
     qsizetype offset = static_cast<qsizetype>(pngSignature.size());
@@ -131,14 +132,14 @@ std::vector<QByteArray> extractChunks(const QByteArray &png, const char *expecte
     return chunks;
 }
 
-QByteArray firstChunk(const QByteArray &png, const char *kind)
+QByteArray firstChunk(const QByteArray& png, const char* kind)
 {
     const std::vector<QByteArray> chunks = extractChunks(png, kind);
     Q_ASSERT(!chunks.empty());
     return chunks.front();
 }
 
-QByteArray encodeRgbaPng(quint32 width, quint32 height, const QByteArray &pixels)
+QByteArray encodeRgbaPng(quint32 width, quint32 height, const QByteArray& pixels)
 {
     QImage image(static_cast<int>(width), static_cast<int>(height), QImage::Format_RGBA8888);
     Q_ASSERT(!image.isNull());
@@ -151,7 +152,7 @@ QByteArray encodeRgbaPng(quint32 width, quint32 height, const QByteArray &pixels
     return png;
 }
 
-QByteArray frameControlPayload(quint32 sequenceNumber, const FrameSpec &frame)
+QByteArray frameControlPayload(quint32 sequenceNumber, const FrameSpec& frame)
 {
     QByteArray payload;
     appendBe32(&payload, sequenceNumber);
@@ -166,13 +167,13 @@ QByteArray frameControlPayload(quint32 sequenceNumber, const FrameSpec &frame)
     return payload;
 }
 
-QByteArray makeApng(const std::vector<FrameSpec> &frames)
+QByteArray makeApng(const std::vector<FrameSpec>& frames)
 {
     Q_ASSERT(!frames.empty());
     const QByteArray defaultPng = encodeRgbaPng(1, 1, frames.front().pixels);
 
     QByteArray apng;
-    apng.append(reinterpret_cast<const char *>(pngSignature.data()), pngSignature.size());
+    apng.append(reinterpret_cast<const char*>(pngSignature.data()), pngSignature.size());
     appendPngChunk(&apng, "IHDR", firstChunk(defaultPng, "IHDR"));
 
     QByteArray animationControl;
@@ -182,17 +183,17 @@ QByteArray makeApng(const std::vector<FrameSpec> &frames)
 
     quint32 sequenceNumber = 0;
     appendPngChunk(&apng, "fcTL", frameControlPayload(sequenceNumber++, frames.front()));
-    for (const QByteArray &idat : extractChunks(defaultPng, "IDAT")) {
+    for (const QByteArray& idat : extractChunks(defaultPng, "IDAT")) {
         appendPngChunk(&apng, "IDAT", idat);
     }
 
     for (std::size_t index = 1; index < frames.size(); ++index) {
-        const FrameSpec &frame = frames.at(index);
+        const FrameSpec& frame = frames.at(index);
         appendPngChunk(&apng, "fcTL", frameControlPayload(sequenceNumber++, frame));
         const QByteArray framePng = encodeRgbaPng(frame.width, frame.height, frame.pixels);
         QByteArray frameData;
         appendBe32(&frameData, sequenceNumber++);
-        for (const QByteArray &idat : extractChunks(framePng, "IDAT")) {
+        for (const QByteArray& idat : extractChunks(framePng, "IDAT")) {
             frameData.append(idat);
         }
         appendPngChunk(&apng, "fdAT", frameData);
@@ -202,28 +203,30 @@ QByteArray makeApng(const std::vector<FrameSpec> &frames)
     return apng;
 }
 
-template <typename Image, typename = void> struct HasSourceIdentity : std::false_type {
+template <typename Image, typename = void> struct HasSourceIdentity : std::false_type
+{
 };
 
 template <typename Image>
-struct HasSourceIdentity<Image, std::void_t<decltype(std::declval<Image &>().sourceIdentity)>>
-    : std::true_type {
+struct HasSourceIdentity<Image, std::void_t<decltype(std::declval<Image&>().sourceIdentity)>>
+    : std::true_type
+{
 };
 
-template <typename Image> void assignSourceIdentity(Image &image, const QString &sourceIdentity)
+template <typename Image> void assignSourceIdentity(Image& image, const QString& sourceIdentity)
 {
     if constexpr (HasSourceIdentity<Image>::value) {
         image.sourceIdentity = sourceIdentity;
     }
 }
 
-void assignDecodedSourceIdentity(kiriview::DecodedImage &decoded, const QString &sourceIdentity)
+void assignDecodedSourceIdentity(kiriview::DecodedImage& decoded, const QString& sourceIdentity)
 {
     std::visit(
-        [&sourceIdentity](auto &image) { assignSourceIdentity(image, sourceIdentity); }, decoded);
+        [&sourceIdentity](auto& image) { assignSourceIdentity(image, sourceIdentity); }, decoded);
 }
 
-kiriview::ImageLoadSession loadSession(const QUrl &url)
+kiriview::ImageLoadSession loadSession(const QUrl& url)
 {
     return kiriview::ImageLoadSession(1, kiriview::ImageLoadRequest::fromUrl(url),
         kiriview::DisplayedImageLocation::fromUrl(url));
@@ -237,7 +240,7 @@ kiriview::ImageDocumentRenderContext renderContext()
     };
 }
 
-kiriview::ImagePageSurfaceController pageSurfaceController(QObject *parent)
+kiriview::ImagePageSurfaceController pageSurfaceController(QObject* parent)
 {
     return kiriview::ImagePageSurfaceController(parent, {},
         kiriview::ImageCacheBudgets {
@@ -247,7 +250,7 @@ kiriview::ImagePageSurfaceController pageSurfaceController(QObject *parent)
 }
 
 kiriview::ImagePageSurfaceController pageSurfaceController(
-    QObject *parent, std::shared_ptr<kiriview::DisplayImageStore> displayImageStore)
+    QObject* parent, std::shared_ptr<kiriview::DisplayImageStore> displayImageStore)
 {
     return kiriview::ImagePageSurfaceController(parent, {},
         kiriview::ImageCacheBudgets {
@@ -257,12 +260,12 @@ kiriview::ImagePageSurfaceController pageSurfaceController(
         std::move(displayImageStore));
 }
 
-QString entryId(const kiriview::ImageDisplaySourceSlot &slot)
+QString entryId(const kiriview::ImageDisplaySourceSlot& slot)
 {
     return slot.providerUrl.path().mid(1);
 }
 
-template <typename Load> const Load *planPayload(const kiriview::ImagePresentationLoadPlan &plan)
+template <typename Load> const Load* planPayload(const kiriview::ImagePresentationLoadPlan& plan)
 {
     return std::get_if<Load>(&plan.payload);
 }
@@ -299,7 +302,7 @@ void TestImagePresentationLoad::predecodedImagesPlanStaticCacheablePresentation(
         = kiriview::planPredecodedImagePresentationLoad(std::move(image));
 
     QVERIFY(plan.hasPresentation());
-    const auto *load = planPayload<kiriview::ImagePresentationStaticImageLoad>(plan);
+    const auto* load = planPayload<kiriview::ImagePresentationStaticImageLoad>(plan);
     QVERIFY(load != nullptr);
     QVERIFY(load->predecodeCacheable);
     QCOMPARE(load->displayImage.sourceIdentity, QStringLiteral("test-image"));
@@ -357,7 +360,7 @@ void TestImagePresentationLoad::decodedImagesPlanPresentationActions()
             testPredecodeCacheByteBudget);
 
         QVERIFY(plan.hasPresentation());
-        const auto *load = planPayload<kiriview::ImagePresentationStaticImageLoad>(plan);
+        const auto* load = planPayload<kiriview::ImagePresentationStaticImageLoad>(plan);
         QVERIFY(load != nullptr);
         QVERIFY(load->predecodeCacheable);
         QVERIFY(load->displayImage.refinementSource != nullptr);
@@ -381,7 +384,7 @@ void TestImagePresentationLoad::staticDecodedPredecodeCacheabilityUsesInjectedBu
     const kiriview::ImagePresentationLoadPlan plan = kiriview::planDecodedImagePresentationLoad(
         std::move(decoded), kiriview::ImagePresentationAnimationHandling::StartAnimation, 1);
 
-    const auto *load = planPayload<kiriview::ImagePresentationStaticImageLoad>(plan);
+    const auto* load = planPayload<kiriview::ImagePresentationStaticImageLoad>(plan);
     QVERIFY(load != nullptr);
     QVERIFY(!load->predecodeCacheable);
 }
@@ -397,7 +400,7 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
             std::move(decoded), kiriview::ImagePresentationAnimationHandling::FirstFrameOnly,
             testPredecodeCacheByteBudget);
 
-        const auto *load = planPayload<kiriview::ImagePresentationFrameLoad>(plan);
+        const auto* load = planPayload<kiriview::ImagePresentationFrameLoad>(plan);
         QVERIFY(load != nullptr);
         QCOMPARE(load->frame.size(), QSize(13, 7));
     }
@@ -412,10 +415,10 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
             std::move(decoded), kiriview::ImagePresentationAnimationHandling::StartAnimation,
             testPredecodeCacheByteBudget);
 
-        const auto *load = planPayload<kiriview::ImagePresentationAnimationLoad>(plan);
+        const auto* load = planPayload<kiriview::ImagePresentationAnimationLoad>(plan);
         QVERIFY(load != nullptr);
         QCOMPARE(load->firstFrame.size(), QSize(10, 6));
-        const auto *request
+        const auto* request
             = std::get_if<kiriview::ReaderAnimationPlaybackRequest>(&load->playback.payload);
         QVERIFY(request != nullptr);
         QCOMPARE(request->data, QByteArrayLiteral("reader-data"));
@@ -431,10 +434,10 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
             std::move(decoded), kiriview::ImagePresentationAnimationHandling::StartAnimation,
             testPredecodeCacheByteBudget);
 
-        const auto *load = planPayload<kiriview::ImagePresentationAnimationLoad>(plan);
+        const auto* load = planPayload<kiriview::ImagePresentationAnimationLoad>(plan);
         QVERIFY(load != nullptr);
         QCOMPARE(load->firstFrame.size(), QSize(14, 8));
-        const auto *request
+        const auto* request
             = std::get_if<kiriview::ApngAnimationPlaybackRequest>(&load->playback.payload);
         QVERIFY(request != nullptr);
         QCOMPARE(request->data, QByteArrayLiteral("apng-data"));
@@ -449,10 +452,10 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
             std::move(decoded), kiriview::ImagePresentationAnimationHandling::StartAnimation,
             testPredecodeCacheByteBudget);
 
-        const auto *load = planPayload<kiriview::ImagePresentationAnimationLoad>(plan);
+        const auto* load = planPayload<kiriview::ImagePresentationAnimationLoad>(plan);
         QVERIFY(load != nullptr);
         QCOMPARE(load->firstFrame.size(), QSize(9, 6));
-        const auto *request
+        const auto* request
             = std::get_if<kiriview::WebPAnimationPlaybackRequest>(&load->playback.payload);
         QVERIFY(request != nullptr);
         QCOMPARE(request->data, QByteArrayLiteral("webp-data"));
@@ -467,10 +470,10 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
             std::move(decoded), kiriview::ImagePresentationAnimationHandling::StartAnimation,
             testPredecodeCacheByteBudget);
 
-        const auto *load = planPayload<kiriview::ImagePresentationAnimationLoad>(plan);
+        const auto* load = planPayload<kiriview::ImagePresentationAnimationLoad>(plan);
         QVERIFY(load != nullptr);
         QCOMPARE(load->firstFrame.size(), QSize(15, 9));
-        const auto *request
+        const auto* request
             = std::get_if<kiriview::JxlAnimationPlaybackRequest>(&load->playback.payload);
         QVERIFY(request != nullptr);
         QCOMPARE(request->data, QByteArrayLiteral("jxl-data"));
@@ -485,10 +488,10 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
             std::move(decoded), kiriview::ImagePresentationAnimationHandling::StartAnimation,
             testPredecodeCacheByteBudget);
 
-        const auto *load = planPayload<kiriview::ImagePresentationAnimationLoad>(plan);
+        const auto* load = planPayload<kiriview::ImagePresentationAnimationLoad>(plan);
         QVERIFY(load != nullptr);
         QCOMPARE(load->firstFrame.size(), QSize(11, 5));
-        const auto *request
+        const auto* request
             = std::get_if<kiriview::HeifSequenceAnimationPlaybackRequest>(&load->playback.payload);
         QVERIFY(request != nullptr);
         QCOMPARE(request->data, QByteArrayLiteral("heif-data"));

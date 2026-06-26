@@ -12,10 +12,10 @@
 
 namespace kiriview {
 std::vector<ImageDocumentPageCandidate> imageDocumentPageNavigationCandidates(
-    const KFileItemList &items);
+    const KFileItemList& items);
 std::vector<DirectMediaNavigationCandidate> directMediaNavigationCandidates(
-    const KFileItemList &items);
-std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items);
+    const KFileItemList& items);
+std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList& items);
 }
 
 #endif

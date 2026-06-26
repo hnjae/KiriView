@@ -18,11 +18,12 @@ private Q_SLOTS:
 };
 
 namespace {
-struct ImageCommandProbe {
+struct ImageCommandProbe
+{
     kiriview::DocumentSessionImageDocumentCommandPort port()
     {
         return kiriview::DocumentSessionImageDocumentCommandPort {
-            { [this](const QUrl &url) {
+            { [this](const QUrl& url) {
                 sourceUrl = url;
                 events.push_back(
                     url.isEmpty() ? QStringLiteral("clear-source") : QStringLiteral("set-source"));

@@ -39,17 +39,17 @@ MediaPredecodeSchedulePlan mediaPredecodeSchedulePlan(MediaPredecodeScheduleRequ
     return MediaPredecodeSchedulePlan { std::move(context) };
 }
 
-const std::vector<DirectMediaNavigationCandidate> *mediaPredecodeScheduleCandidates(
-    const PredecodePendingSchedule &schedule)
+const std::vector<DirectMediaNavigationCandidate>* mediaPredecodeScheduleCandidates(
+    const PredecodePendingSchedule& schedule)
 {
-    const auto *payload = predecodeSchedulePayload<MediaPredecodeSchedulePayload>(schedule);
+    const auto* payload = predecodeSchedulePayload<MediaPredecodeSchedulePayload>(schedule);
     return payload != nullptr ? &payload->directMediaNavigationCandidates : nullptr;
 }
 
-const MediaPredecodeEligibilitySnapshot *mediaPredecodeScheduleEligibility(
-    const PredecodePendingSchedule &schedule)
+const MediaPredecodeEligibilitySnapshot* mediaPredecodeScheduleEligibility(
+    const PredecodePendingSchedule& schedule)
 {
-    const auto *payload = predecodeSchedulePayload<MediaPredecodeSchedulePayload>(schedule);
+    const auto* payload = predecodeSchedulePayload<MediaPredecodeSchedulePayload>(schedule);
     return payload != nullptr ? &payload->eligibleImages : nullptr;
 }
 }

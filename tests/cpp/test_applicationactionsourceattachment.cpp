@@ -27,9 +27,9 @@ public:
     {
     }
 
-    QObject *actionContext() override { return &object; }
-    KirigamiActionCollection *mainActionCollection() override { return &collection; }
-    QAction *inheritedAction(const QString &actionName) override
+    QObject* actionContext() override { return &object; }
+    KirigamiActionCollection* mainActionCollection() override { return &collection; }
+    QAction* inheritedAction(const QString& actionName) override
     {
         return collection.action(actionName);
     }
@@ -50,7 +50,7 @@ public:
     }
 
     std::vector<QMetaObject::Connection> connectActionStateChanged(
-        QObject *context, std::function<void()> refresh) override
+        QObject* context, std::function<void()> refresh) override
     {
         ++connectCount;
         std::vector<QMetaObject::Connection> connections;
@@ -122,7 +122,7 @@ void TestApplicationActionSourceAttachment::sourceReplacementDisconnectsPrevious
     QVERIFY(runtime.commandRouterInput().videoMode);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     qputenv("QT_QPA_PLATFORM", QByteArray("offscreen"));
 

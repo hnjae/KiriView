@@ -8,14 +8,14 @@
 
 namespace {
 void appendDeletedDirectMediaNavigationCandidate(
-    std::vector<kiriview::DirectMediaNavigationCandidate> *candidates, const QUrl &currentUrl)
+    std::vector<kiriview::DirectMediaNavigationCandidate>* candidates, const QUrl& currentUrl)
 {
     candidates->push_back(
         kiriview::DirectMediaNavigationCandidate { currentUrl, currentUrl.fileName() });
 }
 
 std::optional<QUrl> preferredMediaDeletionFallback(
-    const kiriview::DocumentSessionMediaDeletionFallbackPlan &fallbackPlan)
+    const kiriview::DocumentSessionMediaDeletionFallbackPlan& fallbackPlan)
 {
     if (fallbackPlan.preferredFallbackUrl.has_value()) {
         return fallbackPlan.preferredFallbackUrl;
@@ -27,7 +27,7 @@ std::optional<QUrl> preferredMediaDeletionFallback(
 
 namespace kiriview {
 DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(FileDeletionMode mode,
-    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl)
+    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl& currentUrl)
 {
     const DocumentSessionMediaDeletionFallbackPlan fallbackPlan
         = documentSessionMediaDeletionFallbackPlan(std::move(candidates), currentUrl);
@@ -43,7 +43,7 @@ DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(File
 }
 
 DocumentSessionMediaDeletionFallbackPlan documentSessionMediaDeletionFallbackPlan(
-    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl)
+    std::vector<DirectMediaNavigationCandidate> candidates, const QUrl& currentUrl)
 {
     const QUrl identityUrl = directMediaNavigationSourceUrl(currentUrl);
     if (identityUrl.isEmpty()) {
@@ -63,7 +63,7 @@ DocumentSessionMediaDeletionFallbackPlan documentSessionMediaDeletionFallbackPla
 }
 
 DocumentSessionMediaDeletionCompletionPlan documentSessionMediaDeletionCompletionPlan(
-    DocumentSessionKind currentKind, const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan,
+    DocumentSessionKind currentKind, const DocumentSessionMediaDeletionFallbackPlan& fallbackPlan,
     FileDeletionResult result)
 {
     switch (fileDeletionCompletionAction(result)) {

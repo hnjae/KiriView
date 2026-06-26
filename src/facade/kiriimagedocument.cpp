@@ -52,7 +52,7 @@ KiriImageDocument::ZoomMode fromImageZoomMode(ImageZoomMode zoomMode)
 
 QString viewportRevisionToken(quint64 revision) { return QString::number(revision); }
 
-std::optional<quint64> viewportRevisionFromToken(const QString &token)
+std::optional<quint64> viewportRevisionFromToken(const QString& token)
 {
     bool ok = false;
     const quint64 revision = token.toULongLong(&ok);
@@ -63,7 +63,7 @@ std::optional<quint64> viewportRevisionFromToken(const QString &token)
     return revision;
 }
 
-bool revisionIsNewerThanToken(quint64 revision, const QString &token)
+bool revisionIsNewerThanToken(quint64 revision, const QString& token)
 {
     const std::optional<quint64> tokenRevision = viewportRevisionFromToken(token);
     return !tokenRevision.has_value() || revision > *tokenRevision;
@@ -187,7 +187,7 @@ KiriImageDocument::Status fromImageDocumentStatus(ImageDocumentStatus status)
     return KiriImageDocument::Status::Null;
 }
 
-kiriview::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDocument &document)
+kiriview::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDocument& document)
 {
     kiriview::ImageDocumentPublicSignalOperations operations;
     operations.sourceUrlChanged = [&document]() { Q_EMIT document.sourceUrlChanged(); };
@@ -230,22 +230,22 @@ kiriview::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
 }
 }
 
-KiriImageDocument::KiriImageDocument(QObject *parent)
+KiriImageDocument::KiriImageDocument(QObject* parent)
     : KiriImageDocument(kiriview::ImageDocumentRuntimeDependencyOverrides {}, parent)
 {
 }
 
 KiriImageDocument::KiriImageDocument(
-    kiriview::ImageDocumentRuntimeDependencyOverrides dependencies, QObject *parent)
+    kiriview::ImageDocumentRuntimeDependencyOverrides dependencies, QObject* parent)
     : QObject(parent)
 {
     m_runtime = std::make_unique<kiriview::ImageDocumentRuntime>(
         this, RenderContextProvider {},
-        [this](const std::vector<ImageDocumentChange> &changes) { handleDocumentChanges(changes); },
+        [this](const std::vector<ImageDocumentChange>& changes) { handleDocumentChanges(changes); },
         std::move(dependencies),
-        [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); },
-        [this](const QString &message) { Q_EMIT unsupportedOpenedCollectionVideoEntered(message); },
-        [this](const QString &message) { Q_EMIT containerNavigationBoundaryReached(message); });
+        [this](const QString& errorString) { Q_EMIT fileDeletionFailed(errorString); },
+        [this](const QString& message) { Q_EMIT unsupportedOpenedCollectionVideoEntered(message); },
+        [this](const QString& message) { Q_EMIT containerNavigationBoundaryReached(message); });
     m_primaryDisplaySource
         = std::make_unique<KiriImageDisplaySource>(kiriview::DisplayedPageRole::Primary, this);
     m_secondaryDisplaySource
@@ -257,7 +257,7 @@ KiriImageDocument::~KiriImageDocument() = default;
 
 QUrl KiriImageDocument::sourceUrl() const { return m_runtime->sourceUrl(); }
 
-void KiriImageDocument::setSourceUrl(const QUrl &sourceUrl) { m_runtime->setSourceUrl(sourceUrl); }
+void KiriImageDocument::setSourceUrl(const QUrl& sourceUrl) { m_runtime->setSourceUrl(sourceUrl); }
 
 KiriImageDocument::Status KiriImageDocument::status() const
 {
@@ -285,7 +285,7 @@ QSize KiriImageDocument::secondaryImageSize() const { return m_runtime->secondar
 
 QSizeF KiriImageDocument::viewportSize() const { return m_runtime->viewportSize(); }
 
-void KiriImageDocument::setViewportSize(const QSizeF &viewportSize)
+void KiriImageDocument::setViewportSize(const QSizeF& viewportSize)
 {
     m_runtime->setViewportSize(viewportSize);
 }
@@ -477,12 +477,12 @@ bool KiriImageDocument::unsupportedOpenedCollectionVideo() const
     return m_runtime->unsupportedOpenedCollectionVideo();
 }
 
-KiriImageDisplaySource *KiriImageDocument::primaryDisplaySource() const
+KiriImageDisplaySource* KiriImageDocument::primaryDisplaySource() const
 {
     return m_primaryDisplaySource.get();
 }
 
-KiriImageDisplaySource *KiriImageDocument::secondaryDisplaySource() const
+KiriImageDisplaySource* KiriImageDocument::secondaryDisplaySource() const
 {
     return m_secondaryDisplaySource.get();
 }
@@ -498,7 +498,7 @@ kiriview::ImageFirstDisplayDecodeContext KiriImageDocument::firstDisplayDecodeCo
     return m_runtime->firstDisplayDecodeContext();
 }
 
-const kiriview::EmbeddedMetadata &KiriImageDocument::embeddedMetadata() const
+const kiriview::EmbeddedMetadata& KiriImageDocument::embeddedMetadata() const
 {
     return m_runtime->embeddedMetadata();
 }
@@ -553,7 +553,7 @@ bool KiriImageDocument::requestManualZoomPercent(double zoomPercent)
     return m_runtime->requestManualZoomPercentAtCenter(zoomPercent);
 }
 
-bool KiriImageDocument::requestZoomByStep(double stepCount, const QPointF &viewportAnchorPoint)
+bool KiriImageDocument::requestZoomByStep(double stepCount, const QPointF& viewportAnchorPoint)
 {
     return m_runtime->requestZoomByStep(stepCount, viewportAnchorPoint);
 }
@@ -583,7 +583,7 @@ bool KiriImageDocument::requestFitMode(ZoomMode zoomMode)
     return true;
 }
 
-bool KiriImageDocument::requestToggleFitOrActualSize(const QPointF &viewportPoint)
+bool KiriImageDocument::requestToggleFitOrActualSize(const QPointF& viewportPoint)
 {
     return m_runtime->requestToggleFitOrActualSize(viewportPoint);
 }
@@ -623,12 +623,12 @@ bool KiriImageDocument::requestDisplayedImageInitialContentPosition()
     return m_runtime->requestDisplayedImageInitialContentPosition() > 0;
 }
 
-bool KiriImageDocument::viewportPointInsideImage(const QPointF &viewportPoint) const
+bool KiriImageDocument::viewportPointInsideImage(const QPointF& viewportPoint) const
 {
     return m_runtime->viewportPointInsideImage(viewportPoint);
 }
 
-QPointF KiriImageDocument::nearestImageViewportPoint(const QPointF &viewportPoint) const
+QPointF KiriImageDocument::nearestImageViewportPoint(const QPointF& viewportPoint) const
 {
     return m_runtime->nearestImageViewportPoint(viewportPoint);
 }
@@ -642,18 +642,18 @@ void KiriImageDocument::requestToggleRightToLeftReading()
 
 void KiriImageDocument::updateRenderContext() { m_runtime->updateRenderContext(); }
 
-bool KiriImageDocument::requestViewportContentPosition(const QPointF &viewportContentPosition)
+bool KiriImageDocument::requestViewportContentPosition(const QPointF& viewportContentPosition)
 {
     return m_runtime->requestViewportContentPosition(viewportContentPosition) > 0;
 }
 
-bool KiriImageDocument::viewportCommandRevisionNewerThan(const QString &revisionToken) const
+bool KiriImageDocument::viewportCommandRevisionNewerThan(const QString& revisionToken) const
 {
     return revisionIsNewerThanToken(viewportCommandRevision(), revisionToken);
 }
 
 bool KiriImageDocument::viewportProjectionNewerThan(
-    const QString &commandRevisionToken, const QString &observationRevisionToken) const
+    const QString& commandRevisionToken, const QString& observationRevisionToken) const
 {
     const std::optional<quint64> commandRevision = viewportRevisionFromToken(commandRevisionToken);
     const std::optional<quint64> observationRevision
@@ -673,20 +673,20 @@ bool KiriImageDocument::beginViewportCommandApplication(quint64 commandRevision)
     return m_runtime->beginViewportCommandApplication(commandRevision);
 }
 
-bool KiriImageDocument::beginViewportCommandApplication(const QString &commandRevisionToken)
+bool KiriImageDocument::beginViewportCommandApplication(const QString& commandRevisionToken)
 {
     const std::optional<quint64> commandRevision = viewportRevisionFromToken(commandRevisionToken);
     return commandRevision.has_value() && beginViewportCommandApplication(*commandRevision);
 }
 
 bool KiriImageDocument::completeViewportCommandApplication(
-    quint64 commandRevision, const QPointF &actualContentPosition)
+    quint64 commandRevision, const QPointF& actualContentPosition)
 {
     return m_runtime->completeViewportCommandApplication(commandRevision, actualContentPosition);
 }
 
 bool KiriImageDocument::completeViewportCommandApplication(
-    const QString &commandRevisionToken, const QPointF &actualContentPosition)
+    const QString& commandRevisionToken, const QPointF& actualContentPosition)
 {
     const std::optional<quint64> commandRevision = viewportRevisionFromToken(commandRevisionToken);
     return commandRevision.has_value()
@@ -694,13 +694,13 @@ bool KiriImageDocument::completeViewportCommandApplication(
 }
 
 bool KiriImageDocument::acknowledgeViewportCommand(
-    quint64 commandRevision, const QPointF &actualContentPosition)
+    quint64 commandRevision, const QPointF& actualContentPosition)
 {
     return m_runtime->acknowledgeViewportCommand(commandRevision, actualContentPosition);
 }
 
 bool KiriImageDocument::acknowledgeViewportCommand(
-    const QString &commandRevisionToken, const QPointF &actualContentPosition)
+    const QString& commandRevisionToken, const QPointF& actualContentPosition)
 {
     const std::optional<quint64> commandRevision = viewportRevisionFromToken(commandRevisionToken);
     return commandRevision.has_value()
@@ -708,14 +708,14 @@ bool KiriImageDocument::acknowledgeViewportCommand(
 }
 
 bool KiriImageDocument::observeViewportContentPosition(
-    const QPointF &contentPosition, KiriImageDocument::ViewportObservationOrigin origin)
+    const QPointF& contentPosition, KiriImageDocument::ViewportObservationOrigin origin)
 {
     return m_runtime->observeViewportContentPosition(
         contentPosition, toImageViewportObservationOrigin(origin));
 }
 
-bool KiriImageDocument::acknowledgeStillImageDisplayLoad(int pageRole, const QUrl &providerUrl,
-    const QString &revisionToken, const QString &sourceIdentity, int outcome)
+bool KiriImageDocument::acknowledgeStillImageDisplayLoad(int pageRole, const QUrl& providerUrl,
+    const QString& revisionToken, const QString& sourceIdentity, int outcome)
 {
     const std::optional<kiriview::DisplayedPageRole> displayPageRole
         = toDisplayedPageRole(pageRole);
@@ -731,8 +731,8 @@ bool KiriImageDocument::acknowledgeStillImageDisplayLoad(int pageRole, const QUr
     return true;
 }
 
-bool KiriImageDocument::acknowledgeDisplayImageLoad(int pageRole, const QUrl &providerUrl,
-    const QString &revisionToken, const QString &sourceIdentity, int outcome)
+bool KiriImageDocument::acknowledgeDisplayImageLoad(int pageRole, const QUrl& providerUrl,
+    const QString& revisionToken, const QString& sourceIdentity, int outcome)
 {
     const std::optional<kiriview::DisplayedPageRole> displayPageRole
         = toDisplayedPageRole(pageRole);
@@ -748,7 +748,7 @@ bool KiriImageDocument::acknowledgeDisplayImageLoad(int pageRole, const QUrl &pr
     return true;
 }
 
-void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
+void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange>& changes)
 {
     refreshDisplaySources();
     kiriview::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);

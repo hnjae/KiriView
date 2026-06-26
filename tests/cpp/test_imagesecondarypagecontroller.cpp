@@ -36,12 +36,13 @@ kiriview::ImageCacheBudgets testCacheBudgets()
     };
 }
 
-kiriview::DisplayedImageLocation displayedLocation(const QUrl &url)
+kiriview::DisplayedImageLocation displayedLocation(const QUrl& url)
 {
     return kiriview::DisplayedImageLocation::fromUrl(url);
 }
 
-struct SecondaryPageLoadReport {
+struct SecondaryPageLoadReport
+{
     kiriview::ImageSecondaryPageLoadResult result = kiriview::ImageSecondaryPageLoadResult::Failed;
     kiriview::DisplayedImageLocation location;
     QSize imageSize;
@@ -55,28 +56,28 @@ public:
               kiriview::ImageSecondaryPageController::Callbacks {
                   [this](kiriview::ImageDocumentChange change) { changes.push_back(change); },
                   [this](kiriview::ImageSecondaryPageLoadResult result,
-                      const kiriview::DisplayedImageLocation &location, const QSize &imageSize) {
+                      const kiriview::DisplayedImageLocation& location, const QSize& imageSize) {
                       loadReports.push_back(
                           SecondaryPageLoadReport { result, location, imageSize });
                   },
                   [this]() { ++visibilityChangedCount; },
-                  [this](const QUrl &url) { return findPredecodedImage(url); },
+                  [this](const QUrl& url) { return findPredecodedImage(url); },
               },
               {}, {}, testCacheBudgets())
     {
     }
 
-    void addPredecodedPage(const QUrl &url, const QSize &imageSize)
+    void addPredecodedPage(const QUrl& url, const QSize& imageSize)
     {
         predecodedImageSizes[url] = imageSize;
     }
 
-    void startLoad(const QUrl &url)
+    void startLoad(const QUrl& url)
     {
         controller.startLoad(url, kiriview::OpenedCollectionScopeLocation::none(), {});
     }
 
-    std::optional<kiriview::PredecodedImage> findPredecodedImage(const QUrl &url) const
+    std::optional<kiriview::PredecodedImage> findPredecodedImage(const QUrl& url) const
     {
         const auto imageSize = predecodedImageSizes.find(url);
         if (imageSize == predecodedImageSizes.cend()) {

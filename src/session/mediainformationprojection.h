@@ -22,23 +22,25 @@ enum class MediaInformationKind {
     Video,
 };
 
-struct MediaInformationProjectionRow {
+struct MediaInformationProjectionRow
+{
     QString label;
     QString value;
 
     friend bool operator==(
-        const MediaInformationProjectionRow &left, const MediaInformationProjectionRow &right)
+        const MediaInformationProjectionRow& left, const MediaInformationProjectionRow& right)
     {
         return left.label == right.label && left.value == right.value;
     }
     friend bool operator!=(
-        const MediaInformationProjectionRow &left, const MediaInformationProjectionRow &right)
+        const MediaInformationProjectionRow& left, const MediaInformationProjectionRow& right)
     {
         return !(left == right);
     }
 };
 
-struct MediaInformationProjectionSnapshot {
+struct MediaInformationProjectionSnapshot
+{
     quint64 revision = 0;
     quint64 inputRevision = 0;
     bool available = false;
@@ -55,7 +57,8 @@ struct MediaInformationProjectionSnapshot {
     std::vector<MediaInformationProjectionRow> advancedRows;
 };
 
-struct MediaInformationProjectionInput {
+struct MediaInformationProjectionInput
+{
     quint64 inputRevision = 0;
     DocumentSessionKind documentKind {};
     bool imageReady = false;
@@ -70,10 +73,10 @@ struct MediaInformationProjectionInput {
 };
 
 MediaInformationProjectionSnapshot projectMediaInformation(
-    const MediaInformationProjectionInput &input, quint64 revision);
-bool sameMediaInformationProjectionSnapshot(const MediaInformationProjectionSnapshot &left,
-    const MediaInformationProjectionSnapshot &right);
-QString mediaInformationDisplayPathForUrl(const QUrl &url);
+    const MediaInformationProjectionInput& input, quint64 revision);
+bool sameMediaInformationProjectionSnapshot(const MediaInformationProjectionSnapshot& left,
+    const MediaInformationProjectionSnapshot& right);
+QString mediaInformationDisplayPathForUrl(const QUrl& url);
 }
 
 #endif

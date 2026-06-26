@@ -7,7 +7,8 @@
 #include "application/applicationtypes.h"
 
 namespace kiriview::ApplicationActions {
-struct VideoShortcutAvailabilityInput {
+struct VideoShortcutAvailabilityInput
+{
     bool helpShortcutsEnabled = false;
     bool viewerShortcutsEnabled = false;
     bool fileDeletionInProgress = false;
@@ -15,7 +16,8 @@ struct VideoShortcutAvailabilityInput {
 };
 }
 
-struct ImageActionAvailabilityInput {
+struct ImageActionAvailabilityInput
+{
     bool imageReady = false;
     bool fileDeletionInProgress = false;
     bool helpDialogOpen = false;
@@ -28,7 +30,8 @@ struct ImageActionAvailabilityInput {
     bool rightToLeftReadingAvailable = false;
 };
 
-struct ImageActionAvailabilityProjection {
+struct ImageActionAvailabilityProjection
+{
     bool canUseReadyActions = false;
     bool canUseRotateActions = false;
     bool canUseTwoPageModeActions = false;
@@ -50,7 +53,8 @@ struct ImageActionAvailabilityProjection {
     bool containerViewerShortcutsEnabled = false;
 };
 
-struct ActiveMediaShortcutAvailabilityInput {
+struct ActiveMediaShortcutAvailabilityInput
+{
     ImageActionAvailabilityProjection imageProjection;
     bool videoMode = false;
     bool activeNavigationActionsAvailable = false;
@@ -58,18 +62,18 @@ struct ActiveMediaShortcutAvailabilityInput {
 };
 
 ImageActionAvailabilityProjection imageActionAvailabilityProjection(
-    const ImageActionAvailabilityInput &input);
+    const ImageActionAvailabilityInput& input);
 bool imageActionAvailabilityShortcutsEnabledForScope(
-    const ImageActionAvailabilityProjection &projection,
+    const ImageActionAvailabilityProjection& projection,
     kiriview::ApplicationActions::ImageShortcutScope scope);
-bool activeMediaShortcutsEnabledForScope(const ActiveMediaShortcutAvailabilityInput &input,
+bool activeMediaShortcutsEnabledForScope(const ActiveMediaShortcutAvailabilityInput& input,
     kiriview::ApplicationActions::ImageShortcutScope scope);
 
 namespace kiriview::ApplicationActions {
 bool videoShortcutsEnabledForScope(
-    const VideoShortcutAvailabilityInput &input, ImageShortcutScope scope);
+    const VideoShortcutAvailabilityInput& input, ImageShortcutScope scope);
 bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
-    const VideoShortcutAvailabilityInput &videoInput);
+    const VideoShortcutAvailabilityInput& videoInput);
 }
 
 #endif

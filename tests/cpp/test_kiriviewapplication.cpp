@@ -28,9 +28,9 @@ namespace Actions = kiriview::ApplicationActions;
 
 using DomainActionId = kiriview::ApplicationActions::ActionId;
 
-constexpr const char *interfaceConfigGroup = "Interface";
-constexpr const char *menuPresentationConfigKey = "menuPresentation";
-constexpr const char *stateConfigFileName = "kiriviewstaterc";
+constexpr const char* interfaceConfigGroup = "Interface";
+constexpr const char* menuPresentationConfigKey = "menuPresentation";
+constexpr const char* stateConfigFileName = "kiriviewstaterc";
 constexpr int shortcutHelpActionIdRole = Qt::UserRole + 1;
 constexpr int shortcutHelpActionNameRole = Qt::UserRole + 2;
 constexpr int shortcutHelpActionTextRole = Qt::UserRole + 3;
@@ -42,12 +42,12 @@ constexpr int shortcutHelpCategoryLastRole = Qt::UserRole + 8;
 constexpr int shortcutHelpShortcutKeyTextsRole = Qt::UserRole + 9;
 constexpr int shortcutHelpScopeTextRole = Qt::UserRole + 10;
 
-QKeySequence shortcut(const QString &sequence)
+QKeySequence shortcut(const QString& sequence)
 {
     return QKeySequence::fromString(sequence, QKeySequence::PortableText);
 }
 
-QVariantList actionIdVariants(const QList<DomainActionId> &actionIds)
+QVariantList actionIdVariants(const QList<DomainActionId>& actionIds)
 {
     QVariantList variants;
     variants.reserve(actionIds.size());
@@ -59,17 +59,17 @@ QVariantList actionIdVariants(const QList<DomainActionId> &actionIds)
     return variants;
 }
 
-QString nativeText(const QKeySequence &sequence)
+QString nativeText(const QKeySequence& sequence)
 {
     return sequence.toString(QKeySequence::NativeText);
 }
 
-QString definitionActionName(const Actions::ActionDefinition &definition)
+QString definitionActionName(const Actions::ActionDefinition& definition)
 {
     return QString::fromLatin1(definition.name);
 }
 
-bool actionDefaultShortcutsAreManagedByKiriView(const Actions::ActionDefinition &definition)
+bool actionDefaultShortcutsAreManagedByKiriView(const Actions::ActionDefinition& definition)
 {
     return definition.kind != Actions::RegistrationKind::Inherited;
 }
@@ -86,7 +86,7 @@ KConfigGroup stateInterfaceGroup()
 
 void resetConfig()
 {
-    KiriViewState *state = KiriViewState::self();
+    KiriViewState* state = KiriViewState::self();
     state->config()->deleteGroup(QStringLiteral("Interface"));
     state->config()->sync();
     state->config()->reparseConfiguration();
@@ -99,16 +99,16 @@ void resetConfig()
     appConfig->reparseConfiguration();
 }
 
-void expectDefaultShortcuts(KiriViewApplication &application, const QString &actionName,
-    const QList<QKeySequence> &shortcuts)
+void expectDefaultShortcuts(KiriViewApplication& application, const QString& actionName,
+    const QList<QKeySequence>& shortcuts)
 {
-    QAction *action = application.action(actionName);
+    QAction* action = application.action(actionName);
     QVERIFY2(action != nullptr, qPrintable(QStringLiteral("Missing action %1").arg(actionName)));
     QCOMPARE(KirigamiActionCollection::defaultShortcuts(action), shortcuts);
     QCOMPARE(action->shortcuts(), shortcuts);
 }
 
-QModelIndex shortcutHelpIndexForAction(QAbstractItemModel *model, const QString &actionName)
+QModelIndex shortcutHelpIndexForAction(QAbstractItemModel* model, const QString& actionName)
 {
     if (model == nullptr) {
         return {};
@@ -125,7 +125,7 @@ QModelIndex shortcutHelpIndexForAction(QAbstractItemModel *model, const QString 
 }
 
 QModelIndex shortcutHelpIndexForActionAndScope(
-    QAbstractItemModel *model, const QString &actionName, const QString &scopeText)
+    QAbstractItemModel* model, const QString& actionName, const QString& scopeText)
 {
     if (model == nullptr) {
         return {};
@@ -188,7 +188,7 @@ void TestKiriViewApplication::actionsAreRegisteredWithDefaultShortcuts()
 {
     KiriViewApplication application;
 
-    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
+    for (const Actions::ActionDefinition& definition : Actions::definitions()) {
         const QString actionName = definitionActionName(definition);
         QVERIFY2(application.action(actionName) != nullptr,
             qPrintable(QStringLiteral("Missing action %1").arg(actionName)));
@@ -209,12 +209,12 @@ void TestKiriViewApplication::generalSettingsActionIsNotRegistered()
 
 void TestKiriViewApplication::actionDefinitionTableIsCanonicalIdentitySource()
 {
-    const auto &definitions = Actions::definitions();
+    const auto& definitions = Actions::definitions();
     QCOMPARE(definitions.size(), Actions::actionDefinitionCount);
 
     for (std::size_t index = 0; index < definitions.size(); ++index) {
         const auto actionId = static_cast<DomainActionId>(index);
-        const Actions::ActionDefinition *definition = Actions::definitionForId(actionId);
+        const Actions::ActionDefinition* definition = Actions::definitionForId(actionId);
 
         QVERIFY(definition != nullptr);
         QCOMPARE(definition, &definitions.at(index));
@@ -252,7 +252,7 @@ void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
 {
     KiriViewApplication application;
 
-    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
+    for (const Actions::ActionDefinition& definition : Actions::definitions()) {
         const QString actionName = definitionActionName(definition);
         const KiriViewApplication::ActionId actionId = facadeActionId(definition.actionId);
         QCOMPARE(application.actionName(actionId), actionName);
@@ -303,15 +303,15 @@ void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
 void TestKiriViewApplication::shortcutRouteModelExposesApplicationPolicy()
 {
     KiriViewApplication application;
-    QAbstractItemModel *model = application.shortcutRouteModel();
+    QAbstractItemModel* model = application.shortcutRouteModel();
     QVERIFY(model != nullptr);
 
-    const QList<Actions::ApplicationShortcutRoute> &routes = Actions::shortcutRoutes();
+    const QList<Actions::ApplicationShortcutRoute>& routes = Actions::shortcutRoutes();
     QCOMPARE(model->rowCount(), static_cast<int>(routes.size()));
 
     for (int row = 0; row < model->rowCount(); ++row) {
         const QModelIndex index = model->index(row, 0);
-        const Actions::ApplicationShortcutRoute &route = routes.at(row);
+        const Actions::ApplicationShortcutRoute& route = routes.at(row);
         QCOMPARE(model->data(index, Actions::ShortcutRouteModel::ActionIdsRole).toList(),
             actionIdVariants(route.actionIds));
         QCOMPARE(model->data(index, Actions::ShortcutRouteModel::ActivationScopeRole).toInt(),
@@ -376,7 +376,7 @@ void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
     QCOMPARE(application.shortcuts(QStringLiteral("view_pan_left")), QList<QKeySequence>());
     QCOMPARE(application.shortcuts(QStringLiteral("missing_action")), QList<QKeySequence>());
 
-    QAction *openAction = application.action(QStringLiteral("file_open"));
+    QAction* openAction = application.action(QStringLiteral("file_open"));
     QVERIFY(openAction != nullptr);
     const QList<QKeySequence> customShortcuts = {
         shortcut(QStringLiteral("Alt+O")),
@@ -439,7 +439,7 @@ void TestKiriViewApplication::shortcutScopeApisSeparateProgramWideAndViewerLocal
     QCOMPARE(
         application.viewerLocalShortcuts(QStringLiteral("missing_action")), QList<QKeySequence>());
 
-    QAction *quitAction = application.action(QStringLiteral("file_quit"));
+    QAction* quitAction = application.action(QStringLiteral("file_quit"));
     QVERIFY(quitAction != nullptr);
     quitAction->setShortcuts({ shortcut(QStringLiteral("Alt+Q")),
         shortcut(QStringLiteral("Shift+Q")), shortcut(QStringLiteral("Meta+Q")),
@@ -483,7 +483,7 @@ void TestKiriViewApplication::menuShortcutTextReturnsFirstDisplaySafeShortcut()
     QVERIFY(application.menuShortcutText(QStringLiteral("view_pan_left")).isEmpty());
     QVERIFY(application.menuShortcutText(QStringLiteral("go_previous_image")).isEmpty());
 
-    QAction *openAction = application.action(QStringLiteral("file_open"));
+    QAction* openAction = application.action(QStringLiteral("file_open"));
     QVERIFY(openAction != nullptr);
     openAction->setShortcuts({ QKeySequence(), shortcut(QStringLiteral("Delete")),
         shortcut(QStringLiteral("Alt+O")), shortcut(QStringLiteral("Ctrl+Shift+O")) });
@@ -519,7 +519,7 @@ void TestKiriViewApplication::shortcutRevisionTracksShortcutChanges()
 {
     KiriViewApplication application;
     QSignalSpy revisionSpy(&application, &KiriViewApplication::shortcutRevisionChanged);
-    QAction *rotateAction = application.action(QStringLiteral("view_rotate_clockwise"));
+    QAction* rotateAction = application.action(QStringLiteral("view_rotate_clockwise"));
     QVERIFY(rotateAction != nullptr);
 
     const int initialRevision = application.shortcutRevision();
@@ -546,7 +546,7 @@ void TestKiriViewApplication::fixedCommandShortcutsAreNonConfigurable()
 {
     KiriViewApplication application;
 
-    QAction *showMenubarAction = application.action(QStringLiteral("options_show_menubar"));
+    QAction* showMenubarAction = application.action(QStringLiteral("options_show_menubar"));
     QVERIFY(showMenubarAction != nullptr);
     QCOMPARE(KirigamiActionCollection::defaultShortcuts(showMenubarAction),
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+M")) }));
@@ -554,7 +554,7 @@ void TestKiriViewApplication::fixedCommandShortcutsAreNonConfigurable()
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+M")) }));
     QVERIFY(!KirigamiActionCollection::isShortcutsConfigurable(showMenubarAction));
 
-    QAction *openApplicationMenuAction
+    QAction* openApplicationMenuAction
         = application.action(QStringLiteral("open_application_menu"));
     QVERIFY(openApplicationMenuAction != nullptr);
     QCOMPARE(KirigamiActionCollection::defaultShortcuts(openApplicationMenuAction),
@@ -568,7 +568,7 @@ void TestKiriViewApplication::shortcutHelpModelListsConfigurableActions()
 {
     KiriViewApplication application;
 
-    QAbstractItemModel *model = application.shortcutHelpModel();
+    QAbstractItemModel* model = application.shortcutHelpModel();
     QVERIFY(model != nullptr);
 
     const QModelIndex moveToTrashIndex
@@ -684,7 +684,7 @@ void TestKiriViewApplication::shortcutHelpModelUpdatesShortcutText()
 {
     KiriViewApplication application;
 
-    QAbstractItemModel *model = application.shortcutHelpModel();
+    QAbstractItemModel* model = application.shortcutHelpModel();
     QVERIFY(model != nullptr);
     const QModelIndex rotateIndex
         = shortcutHelpIndexForAction(model, QStringLiteral("view_rotate_clockwise"));
@@ -710,14 +710,14 @@ void TestKiriViewApplication::shortcutHelpModelResetsWhenConfigurableRowsChange(
 {
     KiriViewApplication application;
 
-    QAbstractItemModel *model = application.shortcutHelpModel();
+    QAbstractItemModel* model = application.shortcutHelpModel();
     QVERIFY(model != nullptr);
     const QModelIndex rotateIndex
         = shortcutHelpIndexForAction(model, QStringLiteral("view_rotate_clockwise"));
     QVERIFY(rotateIndex.isValid());
 
     QSignalSpy resetSpy(model, &QAbstractItemModel::modelReset);
-    QAction *rotateAction = application.action(QStringLiteral("view_rotate_clockwise"));
+    QAction* rotateAction = application.action(QStringLiteral("view_rotate_clockwise"));
     QVERIFY(rotateAction != nullptr);
 
     KirigamiActionCollection::setShortcutsConfigurable(rotateAction, false);
@@ -789,7 +789,7 @@ void TestKiriViewApplication::showMenubarActionTogglesMenuPresentation()
 {
     KiriViewApplication application;
 
-    QAction *showMenubarAction = application.action(QStringLiteral("options_show_menubar"));
+    QAction* showMenubarAction = application.action(QStringLiteral("options_show_menubar"));
     QVERIFY(showMenubarAction != nullptr);
     QVERIFY(showMenubarAction->isCheckable());
     QVERIFY(!showMenubarAction->isChecked());
@@ -804,7 +804,7 @@ void TestKiriViewApplication::showMenubarActionTogglesMenuPresentation()
     QVERIFY(!showMenubarAction->isChecked());
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     qputenv("QT_QPA_PLATFORM", QByteArray("offscreen"));
 

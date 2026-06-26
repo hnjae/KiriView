@@ -14,7 +14,7 @@
 namespace {
 using kiriview::TestSupport::localUrl;
 
-kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl& url)
 {
     return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
@@ -29,7 +29,7 @@ kiriview::PredecodePolicyInput regularPolicyInput()
 }
 
 kiriview::MediaPredecodeEligibilitySnapshot eligibilitySnapshot(
-    const std::vector<kiriview::DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl)
+    const std::vector<kiriview::DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl)
 {
     return kiriview::mediaPredecodeEligibilitySnapshot(candidates, currentUrl);
 }

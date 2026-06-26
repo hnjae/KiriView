@@ -26,9 +26,9 @@ public:
     {
     }
 
-    QObject *actionContext() override { return &object; }
-    KirigamiActionCollection *mainActionCollection() override { return &collection; }
-    QAction *inheritedAction(const QString &actionName) override
+    QObject* actionContext() override { return &object; }
+    KirigamiActionCollection* mainActionCollection() override { return &collection; }
+    QAction* inheritedAction(const QString& actionName) override
     {
         return collection.action(actionName);
     }
@@ -38,7 +38,8 @@ public:
     KirigamiActionCollection collection;
 };
 
-struct CommandLog {
+struct CommandLog
+{
     int openDialogCount = 0;
     int previousNavigationCount = 0;
 };
@@ -166,7 +167,7 @@ void TestApplicationActionRuntime::actionStateSnapshotBuildsCommandRouterInput()
     QVERIFY(input.canOpenPreviousActiveNavigation);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     qputenv("QT_QPA_PLATFORM", QByteArray("offscreen"));
 

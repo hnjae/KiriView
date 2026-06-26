@@ -26,7 +26,7 @@ private Q_SLOTS:
 };
 
 namespace {
-void comparePlan(const kiriview::MenuAccessKeySessionPlan &plan,
+void comparePlan(const kiriview::MenuAccessKeySessionPlan& plan,
     kiriview::MenuAccessKeyVisualEffect visualEffect, bool consumeEvent, bool triggerMnemonic,
     bool accessKeySessionActive)
 {

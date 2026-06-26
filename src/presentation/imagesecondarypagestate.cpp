@@ -19,7 +19,7 @@ QSize ImageSecondaryPageState::imageSize() const
 void ImageSecondaryPageState::clear() { m_displayedPage.reset(); }
 
 ImageSecondaryPageLoadCompletion ImageSecondaryPageState::finishPresentedLoad(
-    const DisplayedImageLocation &location, const QSize &imageSize, bool primaryOnly)
+    const DisplayedImageLocation& location, const QSize& imageSize, bool primaryOnly)
 {
     if (primaryOnly) {
         clear();
@@ -41,7 +41,7 @@ ImageSecondaryPageLoadCompletion ImageSecondaryPageState::finishPresentedLoad(
 }
 
 ImageSecondaryPageLoadCompletion ImageSecondaryPageState::finishFailedLoad(
-    const DisplayedImageLocation &location) const
+    const DisplayedImageLocation& location) const
 {
     return ImageSecondaryPageLoadCompletion {
         ImageSecondaryPageLoadResult::Failed,

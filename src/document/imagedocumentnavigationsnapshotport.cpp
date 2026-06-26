@@ -7,7 +7,7 @@
 
 namespace kiriview {
 ImageDocumentNavigationSnapshotPort::ImageDocumentNavigationSnapshotPort(
-    const ImageDocumentPageNavigationService *navigationService)
+    const ImageDocumentPageNavigationService* navigationService)
     : m_navigationService(navigationService)
 {
 }

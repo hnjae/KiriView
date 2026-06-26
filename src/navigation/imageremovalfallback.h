@@ -15,16 +15,19 @@
 #include <vector>
 
 namespace kiriview {
-struct NoImageRemovalFallback {
+struct NoImageRemovalFallback
+{
 };
 
-struct ImageRemovalFallback {
+struct ImageRemovalFallback
+{
     ImageDocumentPageCandidateListContext imageContext;
     QUrl currentUrl;
     QString currentName;
 };
 
-struct ComicBookRemovalFallback {
+struct ComicBookRemovalFallback
+{
     QUrl currentContainerUrl;
     QUrl candidateDirectoryUrl;
     QString currentName;
@@ -33,25 +36,27 @@ struct ComicBookRemovalFallback {
 using ImageRemovalFallbackPlan
     = std::variant<NoImageRemovalFallback, ImageRemovalFallback, ComicBookRemovalFallback>;
 
-struct ComicBookRemovalFallbackCandidates {
+struct ComicBookRemovalFallbackCandidates
+{
     std::optional<ContainerNavigationCandidate> preferred;
     std::optional<ContainerNavigationCandidate> fallback;
 };
 
-struct ImageRemovalPlan {
+struct ImageRemovalPlan
+{
     QUrl targetUrl;
     ImageRemovalFallbackPlan fallbackPlan;
 
     bool hasTarget() const { return !targetUrl.isEmpty(); }
 };
 
-ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocation &location);
+ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocation& location);
 ImageRemovalFallback imageRemovalFallbackForImageContext(
-    const ImageDocumentPageCandidateListContext &context);
+    const ImageDocumentPageCandidateListContext& context);
 std::optional<ImageDocumentPageTarget> imageRemovalFallbackTarget(
-    std::vector<ImageDocumentPageCandidate> candidates, const ImageRemovalFallback &fallback);
+    std::vector<ImageDocumentPageCandidate> candidates, const ImageRemovalFallback& fallback);
 ComicBookRemovalFallbackCandidates comicBookRemovalFallbackCandidates(
-    std::vector<ContainerNavigationCandidate> candidates, const ComicBookRemovalFallback &fallback);
+    std::vector<ContainerNavigationCandidate> candidates, const ComicBookRemovalFallback& fallback);
 }
 
 #endif

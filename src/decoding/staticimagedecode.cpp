@@ -11,14 +11,14 @@
 #include <utility>
 
 namespace {
-QString errorStringValue(QString *errorString)
+QString errorStringValue(QString* errorString)
 {
     return errorString == nullptr ? QString() : *errorString;
 }
 
 kiriview::DecodedImageResult failedStaticDecodedImageResult(
-    kiriview::DecodedImageFailureOperation operation, QString *errorString,
-    const kiriview::ImageTileSourceDisplayDecodeDiagnostics *diagnostics = nullptr)
+    kiriview::DecodedImageFailureOperation operation, QString* errorString,
+    const kiriview::ImageTileSourceDisplayDecodeDiagnostics* diagnostics = nullptr)
 {
     QString message = diagnostics == nullptr ? QString() : diagnostics->userMessage();
     if (message.isEmpty()) {
@@ -41,12 +41,12 @@ kiriview::DecodedImageResult failedStaticDecodedImageResult(
     });
 }
 
-QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest &request)
+QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest& request)
 {
     return kiriview::sourceKeyForUrl(request.imageUrl()).identity;
 }
 
-qreal displayPixelsPerSourcePixel(const QSize &originalSize, const QImage &image)
+qreal displayPixelsPerSourcePixel(const QSize& originalSize, const QImage& image)
 {
     const qreal pixelsPerSourcePixel
         = kiriview::imagePixelsPerSourcePixel(originalSize, image.size());
@@ -54,7 +54,7 @@ qreal displayPixelsPerSourcePixel(const QSize &originalSize, const QImage &image
 }
 
 kiriview::DisplayImageQuality displayQualityForImage(
-    const QSize &originalSize, const QImage &image, bool firstDisplay)
+    const QSize& originalSize, const QImage& image, bool firstDisplay)
 {
     if (firstDisplay || image.size() != originalSize) {
         return kiriview::DisplayImageQuality::FirstDisplay;
@@ -63,7 +63,7 @@ kiriview::DisplayImageQuality displayQualityForImage(
 }
 
 kiriview::StaticDisplayImagePayload staticDisplayPayload(
-    std::shared_ptr<kiriview::ImageTileSource> source, const kiriview::ImageDecodeRequest &request,
+    std::shared_ptr<kiriview::ImageTileSource> source, const kiriview::ImageDecodeRequest& request,
     QImage image, bool firstDisplay, qreal firstDisplayPixelsPerSourcePixel)
 {
     QImage displayImage = kiriview::displayReadyImage(image);
@@ -90,7 +90,7 @@ kiriview::StaticDisplayImagePayload staticDisplayPayload(
 
 namespace kiriview {
 DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> source,
-    const ImageDecodeRequest &request, QString *errorString)
+    const ImageDecodeRequest& request, QString* errorString)
 {
     if (source == nullptr) {
         return failedStaticDecodedImageResult(

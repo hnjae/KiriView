@@ -12,12 +12,14 @@
 #include <vector>
 
 namespace kiriview {
-struct DirectMediaNavigationCandidate {
+struct DirectMediaNavigationCandidate
+{
     QUrl url;
     QString name;
 };
 
-struct DirectMediaNavigationBoundaryState {
+struct DirectMediaNavigationBoundaryState
+{
     bool canOpenPrevious = false;
     bool canOpenNext = false;
     bool atKnownFirst = false;
@@ -32,12 +34,14 @@ enum class DirectMediaNavigationOpenKind {
     Number,
 };
 
-struct DirectMediaNavigationOpenRequest {
+struct DirectMediaNavigationOpenRequest
+{
     DirectMediaNavigationOpenKind kind = DirectMediaNavigationOpenKind::Next;
     int mediaNumber = 0;
 };
 
-struct DirectMediaNavigationOpenPlan {
+struct DirectMediaNavigationOpenPlan
+{
     DirectMediaNavigationBoundaryState boundaryState;
     std::optional<QUrl> targetUrl;
 };
@@ -45,19 +49,19 @@ struct DirectMediaNavigationOpenPlan {
 DirectMediaNavigationOpenRequest previousDirectMediaNavigationOpenRequest();
 DirectMediaNavigationOpenRequest nextDirectMediaNavigationOpenRequest();
 DirectMediaNavigationOpenRequest numberedDirectMediaNavigationOpenRequest(int mediaNumber);
-QUrl directMediaNavigationSourceUrl(const QUrl &url);
-QUrl directMediaNavigationParentUrl(const QUrl &url);
+QUrl directMediaNavigationSourceUrl(const QUrl& url);
+QUrl directMediaNavigationParentUrl(const QUrl& url);
 std::optional<std::size_t> directMediaNavigationCandidateIndex(
-    const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl);
+    const std::vector<DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl);
 std::optional<QUrl> adjacentDirectMediaNavigationUrl(
-    const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl,
+    const std::vector<DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl,
     NavigationDirection direction);
 DirectMediaNavigationBoundaryState directMediaNavigationBoundaryState(
-    const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl);
+    const std::vector<DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl);
 DirectMediaNavigationOpenPlan directMediaNavigationOpenPlan(
-    const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl,
+    const std::vector<DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl,
     DirectMediaNavigationOpenRequest request);
-void sortDirectMediaNavigationCandidates(std::vector<DirectMediaNavigationCandidate> *candidates);
+void sortDirectMediaNavigationCandidates(std::vector<DirectMediaNavigationCandidate>* candidates);
 }
 
 #endif

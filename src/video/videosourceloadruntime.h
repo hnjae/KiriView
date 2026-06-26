@@ -26,15 +26,15 @@ public:
 
     bool active() const;
     void setSourceUrl(
-        const QUrl &sourceUrl, QObject *receiver, VideoSourceLoadPlanCallback planCallback);
+        const QUrl& sourceUrl, QObject* receiver, VideoSourceLoadPlanCallback planCallback);
     void shutdown();
 
 private:
     void cancelAndCleanup();
     void completePlaybackUrlResolution(
-        const VideoPlaybackUrlResolution &resolution, const VideoSourceLoadPlanCallback &callback);
-    void failPlaybackUrlResolution(quint64 operationId, const QUrl &sourceUrl,
-        const QString &errorString, const VideoSourceLoadPlanCallback &callback);
+        const VideoPlaybackUrlResolution& resolution, const VideoSourceLoadPlanCallback& callback);
+    void failPlaybackUrlResolution(quint64 operationId, const QUrl& sourceUrl,
+        const QString& errorString, const VideoSourceLoadPlanCallback& callback);
 
     std::unique_ptr<VideoPlaybackUrlResolver> m_resolver;
     ImageAsyncScopedOperationState<QUrl> m_resolution;

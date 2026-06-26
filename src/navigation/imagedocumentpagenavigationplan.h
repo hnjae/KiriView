@@ -15,30 +15,36 @@
 namespace kiriview {
 using ContainerNavigationError = ImageContainerOpenError;
 
-struct OpenImageDocumentPageUrlEffect {
+struct OpenImageDocumentPageUrlEffect
+{
     ImageDocumentPageTarget target;
 };
 
-struct OpenContainerImageDocumentPageNavigationEffect {
+struct OpenContainerImageDocumentPageNavigationEffect
+{
     ImageDocumentPageTarget target;
     QUrl containerUrl;
 };
 
-struct ReportContainerNavigationErrorEffect {
+struct ReportContainerNavigationErrorEffect
+{
     QUrl containerUrl;
     ContainerNavigationError error = ContainerNavigationError::Generic;
     QString errorString;
 };
 
-struct ReportContainerNavigationBoundaryEffect {
+struct ReportContainerNavigationBoundaryEffect
+{
     NavigationDirection direction = NavigationDirection::Next;
 };
 
-struct ReportContainerNavigationListErrorEffect {
+struct ReportContainerNavigationListErrorEffect
+{
     ContainerNavigationListFailure failure;
 };
 
-struct ClearCurrentImageDocumentPageNavigationEffect {
+struct ClearCurrentImageDocumentPageNavigationEffect
+{
 };
 
 using ImageDocumentPageNavigationEffect

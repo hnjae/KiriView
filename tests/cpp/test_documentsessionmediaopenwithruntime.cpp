@@ -28,15 +28,15 @@ private Q_SLOTS:
 };
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-kiriview::MediaOpenWithPlan openWithPlanFor(const QUrl &targetUrl)
+kiriview::MediaOpenWithPlan openWithPlanFor(const QUrl& targetUrl)
 {
     return kiriview::MediaOpenWithPlan { kiriview::MediaOpenWithRequest { targetUrl } };
 }
 
 kiriview::KioOperationFailure openWithFailure(
-    const QUrl &targetUrl, kiriview::MediaOpenWithResult result, const QString &errorString)
+    const QUrl& targetUrl, kiriview::MediaOpenWithResult result, const QString& errorString)
 {
     kiriview::KioOperationFailure failure;
     failure.operationKind = kiriview::KioOperationKind::MediaOpenWith;
@@ -48,8 +48,9 @@ kiriview::KioOperationFailure openWithFailure(
     return failure;
 }
 
-struct ManualMediaOpenWithOperation {
-    QObject *object = nullptr;
+struct ManualMediaOpenWithOperation
+{
+    QObject* object = nullptr;
     kiriview::MediaOpenWithRequest request;
     kiriview::MediaOpenWithCallback callback;
     kiriview::ImageIoJobCompletion completion;
@@ -61,7 +62,7 @@ class ManualMediaOpenWithProvider
 public:
     kiriview::MediaOpenWithProvider provider()
     {
-        return [this](QObject *receiver, kiriview::MediaOpenWithRequest request,
+        return [this](QObject* receiver, kiriview::MediaOpenWithRequest request,
                    kiriview::MediaOpenWithCallback callback) {
             auto operation = std::make_shared<ManualMediaOpenWithOperation>();
             operation->request = std::move(request);
@@ -69,7 +70,7 @@ public:
             operation->object = new QObject(receiver);
 
             std::weak_ptr<ManualMediaOpenWithOperation> weakOperation = operation;
-            kiriview::ImageIoJob job(operation->object, [weakOperation](QObject *object) {
+            kiriview::ImageIoJob job(operation->object, [weakOperation](QObject* object) {
                 if (std::shared_ptr<ManualMediaOpenWithOperation> operation
                     = weakOperation.lock()) {
                     operation->canceled = true;
@@ -87,10 +88,10 @@ public:
 
     std::size_t operationCount() const { return m_operations.size(); }
 
-    ManualMediaOpenWithOperation &operationAt(std::size_t index) { return *m_operations.at(index); }
+    ManualMediaOpenWithOperation& operationAt(std::size_t index) { return *m_operations.at(index); }
 
     void finishOperationAt(std::size_t index, kiriview::MediaOpenWithResult result,
-        const QString &errorString = QString())
+        const QString& errorString = QString())
     {
         finishOperationAt(index, result,
             openWithFailure(m_operations.at(index)->request.targetUrl, result, errorString));
@@ -103,14 +104,14 @@ public:
     }
 
     void deliverOperationAtIgnoringCancellation(std::size_t index,
-        kiriview::MediaOpenWithResult result, const QString &errorString = QString())
+        kiriview::MediaOpenWithResult result, const QString& errorString = QString())
     {
         deliverOperationAtIgnoringCancellation(index, result,
             openWithFailure(m_operations.at(index)->request.targetUrl, result, errorString));
     }
 
     void deliverOperationAtIgnoringCancellation(std::size_t index,
-        kiriview::MediaOpenWithResult result, const kiriview::KioOperationFailure &failure)
+        kiriview::MediaOpenWithResult result, const kiriview::KioOperationFailure& failure)
     {
         if (m_operations.at(index)->callback) {
             m_operations.at(index)->callback(result, failure);
@@ -118,10 +119,10 @@ public:
     }
 
 private:
-    static void finishOperation(const std::shared_ptr<ManualMediaOpenWithOperation> &operation,
+    static void finishOperation(const std::shared_ptr<ManualMediaOpenWithOperation>& operation,
         kiriview::MediaOpenWithResult result, kiriview::KioOperationFailure failure)
     {
-        QObject *object = operation->object;
+        QObject* object = operation->object;
         operation->completion.claimAndRun([&]() {
             operation->object = nullptr;
             if (operation->callback) {
@@ -136,22 +137,24 @@ private:
     std::vector<std::shared_ptr<ManualMediaOpenWithOperation>> m_operations;
 };
 
-struct CompletionRecord {
+struct CompletionRecord
+{
     kiriview::MediaOpenWithResult result = kiriview::MediaOpenWithResult::Succeeded;
     kiriview::KioOperationFailure failure;
 };
 
-struct RuntimeFixture {
+struct RuntimeFixture
+{
     QObject receiver;
     ManualMediaOpenWithProvider provider;
     kiriview::DocumentSessionMediaOpenWithRuntime runtime { provider.provider() };
     std::vector<CompletionRecord> completions;
 
-    void open(const kiriview::MediaOpenWithPlan &plan)
+    void open(const kiriview::MediaOpenWithPlan& plan)
     {
         runtime.open(&receiver, plan,
             [this](kiriview::MediaOpenWithResult result,
-                const kiriview::KioOperationFailure &failure) {
+                const kiriview::KioOperationFailure& failure) {
                 completions.push_back(CompletionRecord { result, failure });
             });
     }
@@ -276,7 +279,7 @@ void TestDocumentSessionMediaOpenWithRuntime::destructionCancelsAndRejectsLateCo
         kiriview::DocumentSessionMediaOpenWithRuntime runtime(provider.provider());
         runtime.open(&receiver, openWithPlanFor(localUrl(QStringLiteral("/media/01.png"))),
             [&completions](kiriview::MediaOpenWithResult result,
-                const kiriview::KioOperationFailure &failure) {
+                const kiriview::KioOperationFailure& failure) {
                 completions.push_back(CompletionRecord { result, failure });
             });
 

@@ -11,7 +11,7 @@ bool ImageContainerOpenPlan::shouldLoadCandidates() const { return source.has_va
 bool ImageContainerOpenResult::openedImage() const { return target.has_value(); }
 
 ImageContainerOpenPlan imageContainerOpenPlanForCandidate(
-    const ContainerNavigationCandidate &container)
+    const ContainerNavigationCandidate& container)
 {
     switch (container.type) {
     case ContainerNavigationCandidateType::Directory:
@@ -34,13 +34,13 @@ ImageContainerOpenPlan imageContainerOpenPlanForCandidate(
 }
 
 ImageContainerOpenResult imageContainerOpenResultForCandidates(
-    const std::vector<ImageDocumentPageCandidate> &candidates)
+    const std::vector<ImageDocumentPageCandidate>& candidates)
 {
     if (candidates.empty()) {
         return { std::nullopt, ImageContainerOpenError::EmptyContainer };
     }
 
-    const ImageDocumentPageCandidate &candidate = candidates.front();
+    const ImageDocumentPageCandidate& candidate = candidates.front();
     return { ImageDocumentPageTarget { candidate.url, candidate.kind },
         ImageContainerOpenError::Generic };
 }

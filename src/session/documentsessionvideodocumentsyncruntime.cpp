@@ -14,14 +14,14 @@ DocumentSessionVideoDocumentSyncRuntime::DocumentSessionVideoDocumentSyncRuntime
 }
 
 void DocumentSessionVideoDocumentSyncRuntime::sync(
-    DocumentSessionKind documentKind, const DocumentSessionPublicVideoLeafSnapshot &video)
+    DocumentSessionKind documentKind, const DocumentSessionPublicVideoLeafSnapshot& video)
 {
     apply(documentSessionVideoDocumentSyncPlan(
         DocumentSessionVideoDocumentSyncInput { documentKind, video }));
 }
 
 void DocumentSessionVideoDocumentSyncRuntime::apply(
-    const DocumentSessionVideoDocumentSyncPlan &plan)
+    const DocumentSessionVideoDocumentSyncPlan& plan)
 {
     switch (plan.operation) {
     case DocumentSessionVideoDocumentSyncOperation::None:

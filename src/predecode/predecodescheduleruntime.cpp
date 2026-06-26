@@ -14,16 +14,16 @@ template <typename> inline constexpr bool alwaysFalse = false;
 }
 
 namespace kiriview {
-PredecodeScheduleRuntime::PredecodeScheduleRuntime(QObject *owner,
-    PredecodeLoadController &loadController, StartAdjacentPredecodeCallback startAdjacentPredecode,
+PredecodeScheduleRuntime::PredecodeScheduleRuntime(QObject* owner,
+    PredecodeLoadController& loadController, StartAdjacentPredecodeCallback startAdjacentPredecode,
     PowerSaverProvider powerSaverProvider)
     : PredecodeScheduleRuntime(owner, loadController, std::move(startAdjacentPredecode), {},
           std::move(powerSaverProvider), {})
 {
 }
 
-PredecodeScheduleRuntime::PredecodeScheduleRuntime(QObject *owner,
-    PredecodeLoadController &loadController, StartAdjacentPredecodeCallback startAdjacentPredecode,
+PredecodeScheduleRuntime::PredecodeScheduleRuntime(QObject* owner,
+    PredecodeLoadController& loadController, StartAdjacentPredecodeCallback startAdjacentPredecode,
     CancelDomainBackgroundCallback cancelDomainBackground, PowerSaverProvider powerSaverProvider,
     TimerScheduler timerScheduler)
     : m_loadController(loadController)
@@ -78,18 +78,18 @@ bool PredecodeScheduleRuntime::accepts(quint64 generation) const
     return m_scheduleState.accepts(generation);
 }
 
-void PredecodeScheduleRuntime::dispatchSchedulePlan(const PredecodeScheduleRuntimePlan &plan)
+void PredecodeScheduleRuntime::dispatchSchedulePlan(const PredecodeScheduleRuntimePlan& plan)
 {
-    for (const PredecodeScheduleOperation &operation : plan) {
+    for (const PredecodeScheduleOperation& operation : plan) {
         dispatchScheduleOperation(operation);
     }
 }
 
 void PredecodeScheduleRuntime::dispatchScheduleOperation(
-    const PredecodeScheduleOperation &operation)
+    const PredecodeScheduleOperation& operation)
 {
     std::visit(
-        [this](const auto &payload) {
+        [this](const auto& payload) {
             using Operation = std::decay_t<decltype(payload)>;
             if constexpr (std::is_same_v<Operation, CancelBackgroundPredecodeOperation>) {
                 qCDebug(kiriviewPredecodeLog) << "cancel background predecode";

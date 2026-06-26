@@ -66,7 +66,7 @@ kiriview::ImageDecodeDataSource imageDecodeDataSourceFromBridge(
 
 namespace kiriview {
 ImageInputClassification imageInputClassificationFromBridge(
-    const RustImageInputClassification &classification)
+    const RustImageInputClassification& classification)
 {
     return ImageInputClassification {
         imageInputKindFromBridge(classification.kind),

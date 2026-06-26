@@ -10,25 +10,25 @@
 #include <utility>
 
 namespace kiriview::ApplicationActions {
-ShortcutHelpModel::ShortcutHelpModel(ShortcutHelpRowsProvider rowsProvider, QObject *parent)
+ShortcutHelpModel::ShortcutHelpModel(ShortcutHelpRowsProvider rowsProvider, QObject* parent)
     : QAbstractListModel(parent)
     , m_rowsProvider(std::move(rowsProvider))
     , m_rows(collectRows())
 {
 }
 
-int ShortcutHelpModel::rowCount(const QModelIndex &parent) const
+int ShortcutHelpModel::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : m_rows.size();
 }
 
-QVariant ShortcutHelpModel::data(const QModelIndex &index, int role) const
+QVariant ShortcutHelpModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_rows.size()) {
         return {};
     }
 
-    const ShortcutHelpRow &row = m_rows.at(index.row());
+    const ShortcutHelpRow& row = m_rows.at(index.row());
     switch (role) {
     case ActionIdRole:
         return row.actionId;
@@ -102,7 +102,7 @@ QList<ShortcutHelpRow> ShortcutHelpModel::collectRows() const
 }
 
 bool ShortcutHelpModel::sameRowIdentities(
-    const QList<ShortcutHelpRow> &left, const QList<ShortcutHelpRow> &right)
+    const QList<ShortcutHelpRow>& left, const QList<ShortcutHelpRow>& right)
 {
     if (left.size() != right.size()) {
         return false;
@@ -119,7 +119,7 @@ bool ShortcutHelpModel::sameRowIdentities(
     return true;
 }
 
-bool ShortcutHelpModel::sameRowData(const ShortcutHelpRow &left, const ShortcutHelpRow &right)
+bool ShortcutHelpModel::sameRowData(const ShortcutHelpRow& left, const ShortcutHelpRow& right)
 {
     return left.actionText == right.actionText && left.shortcutText == right.shortcutText
         && left.categoryKey == right.categoryKey && left.categoryText == right.categoryText

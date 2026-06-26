@@ -14,7 +14,8 @@
 #include <optional>
 
 namespace kiriview {
-struct MediaPredecodeDependencyOverrides {
+struct MediaPredecodeDependencyOverrides
+{
     ImageDecodeDependencies imageDecode;
     PowerSaverProvider powerSaver;
     TimerScheduler timerScheduler;
@@ -22,7 +23,8 @@ struct MediaPredecodeDependencyOverrides {
     std::optional<SystemMemorySnapshot> systemMemorySnapshot;
 };
 
-struct MediaPredecodeDependencies {
+struct MediaPredecodeDependencies
+{
     ImageDecodeDependencies imageDecode;
     PowerSaverProvider powerSaver;
     qsizetype cacheByteBudget = 0;

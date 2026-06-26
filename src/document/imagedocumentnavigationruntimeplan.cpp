@@ -12,11 +12,11 @@
 namespace {
 template <typename> inline constexpr bool alwaysFalse = false;
 
-void appendNavigationEffectRuntimeOperation(kiriview::ImageDocumentRuntimePlan &plan,
-    const kiriview::ImageDocumentPageNavigationEffect &effect)
+void appendNavigationEffectRuntimeOperation(kiriview::ImageDocumentRuntimePlan& plan,
+    const kiriview::ImageDocumentPageNavigationEffect& effect)
 {
     std::visit(
-        [&plan](const auto &payload) {
+        [&plan](const auto& payload) {
             using Effect = std::decay_t<decltype(payload)>;
             if constexpr (std::is_same_v<Effect, kiriview::OpenImageDocumentPageUrlEffect>) {
                 plan.push_back(kiriview::LoadUrlOperation { payload.target });
@@ -72,11 +72,11 @@ void appendNavigationEffectRuntimeOperation(kiriview::ImageDocumentRuntimePlan &
 
 namespace kiriview {
 ImageDocumentRuntimePlan imageDocumentRuntimePlanForNavigationPlan(
-    const ImageDocumentPageNavigationPlan &navigationPlan)
+    const ImageDocumentPageNavigationPlan& navigationPlan)
 {
     ImageDocumentRuntimePlan runtimePlan;
     runtimePlan.reserve(navigationPlan.size());
-    for (const ImageDocumentPageNavigationEffect &effect : navigationPlan) {
+    for (const ImageDocumentPageNavigationEffect& effect : navigationPlan) {
         appendNavigationEffectRuntimeOperation(runtimePlan, effect);
     }
     return runtimePlan;

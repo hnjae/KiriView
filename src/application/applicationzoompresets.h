@@ -10,9 +10,10 @@
 #include <array>
 
 namespace kiriview::ApplicationActions {
-struct ZoomPresetDescriptor {
+struct ZoomPresetDescriptor
+{
     ActionId actionId;
-    const char *actionName;
+    const char* actionName;
     double zoomPercent = 100.0;
     KLazyLocalizedString actionText;
     KLazyLocalizedString menuText;
@@ -27,9 +28,9 @@ inline constexpr std::array<ZoomPresetDescriptor, 3> zoomPresetDescriptors {
         kli18nc("@action", "Zoom to 200%"), kli18nc("@action:inmenu", "Zoom to &200%") },
 };
 
-constexpr const ZoomPresetDescriptor *zoomPresetDescriptorForAction(ActionId actionId)
+constexpr const ZoomPresetDescriptor* zoomPresetDescriptorForAction(ActionId actionId)
 {
-    for (const ZoomPresetDescriptor &descriptor : zoomPresetDescriptors) {
+    for (const ZoomPresetDescriptor& descriptor : zoomPresetDescriptors) {
         if (descriptor.actionId == actionId) {
             return &descriptor;
         }

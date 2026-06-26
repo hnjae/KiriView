@@ -25,15 +25,15 @@ private Q_SLOTS:
 };
 
 namespace {
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
 
-QObject *createNotification(QQmlEngine &engine)
+QObject* createNotification(QQmlEngine& engine)
 {
     addEnvironmentImportPaths(engine);
 
@@ -45,7 +45,7 @@ QObject *createNotification(QQmlEngine &engine)
         qWarning().noquote() << component.errorString();
     }
 
-    QObject *object = component.create();
+    QObject* object = component.create();
     if (object == nullptr) {
         qWarning().noquote() << component.errorString();
     }
@@ -53,25 +53,25 @@ QObject *createNotification(QQmlEngine &engine)
     return object;
 }
 
-void showToastNotification(QObject &object, const QString &message, const QString &scope)
+void showToastNotification(QObject& object, const QString& message, const QString& scope)
 {
     QVERIFY(
         QMetaObject::invokeMethod(&object, "show", Q_ARG(QVariant, QVariant::fromValue(message)),
             Q_ARG(QVariant, QVariant::fromValue(scope))));
 }
 
-void dismissToastNotification(QObject &object)
+void dismissToastNotification(QObject& object)
 {
     QVERIFY(QMetaObject::invokeMethod(&object, "dismiss"));
 }
 
-void dismissToastNotificationIfScope(QObject &object, const QString &scope)
+void dismissToastNotificationIfScope(QObject& object, const QString& scope)
 {
     QVERIFY(QMetaObject::invokeMethod(
         &object, "dismissIfScope", Q_ARG(QVariant, QVariant::fromValue(scope))));
 }
 
-void compareClearedNotification(QObject &object)
+void compareClearedNotification(QObject& object)
 {
     QCOMPARE(object.property("active").toBool(), false);
     QCOMPARE(object.property("message").toString(), QString());

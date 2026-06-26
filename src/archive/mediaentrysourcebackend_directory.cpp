@@ -18,7 +18,7 @@ namespace {
 namespace Backend = kiriview::MediaEntrySourceBackendDetail;
 
 std::optional<QString> directoryPathForCollection(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     if (!openedCollectionScope.isDirectory()) {
         return std::nullopt;
@@ -33,7 +33,7 @@ std::optional<QString> directoryPathForCollection(
 }
 
 kiriview::MediaEntrySourceCandidatesResult loadDirectoryCollectionImageDocumentPageCandidates(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     const std::optional<QString> directoryPath = directoryPathForCollection(openedCollectionScope);
     if (!directoryPath.has_value()) {
@@ -68,7 +68,7 @@ kiriview::MediaEntrySourceCandidatesResult loadDirectoryCollectionImageDocumentP
 }
 
 kiriview::MediaEntrySourceImageDataResult loadDirectoryCollectionImageData(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope, const QString& entryPath)
 {
     const std::optional<QString> directoryPath = directoryPathForCollection(openedCollectionScope);
     if (!directoryPath.has_value()) {
@@ -117,7 +117,7 @@ public:
     {
     }
 
-    kiriview::MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) override
+    kiriview::MediaEntrySourceImageDataResult loadImageData(const QUrl& imageUrl) override
     {
         const std::optional<QString> entryPath
             = Backend::openedCollectionImageEntryPathForRead(m_openedCollectionScope, imageUrl);
@@ -136,15 +136,15 @@ private:
 };
 
 kiriview::MediaEntrySourceOpenResult openDirectoryCollectionMediaEntrySource(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     kiriview::MediaEntrySourceCandidatesResult candidatesResult
         = loadDirectoryCollectionImageDocumentPageCandidates(openedCollectionScope);
-    if (const auto *error = std::get_if<kiriview::MediaEntrySourceError>(&candidatesResult)) {
+    if (const auto* error = std::get_if<kiriview::MediaEntrySourceError>(&candidatesResult)) {
         return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(*error);
     }
 
-    const auto *candidates = std::get_if<kiriview::MediaEntrySourceCandidates>(&candidatesResult);
+    const auto* candidates = std::get_if<kiriview::MediaEntrySourceCandidates>(&candidatesResult);
     if (candidates == nullptr) {
         return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
             Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::Directory,
@@ -158,7 +158,7 @@ kiriview::MediaEntrySourceOpenResult openDirectoryCollectionMediaEntrySource(
 }
 
 namespace kiriview::MediaEntrySourceBackendDetail {
-const MediaEntrySourceBackendOperations *directoryCollectionMediaEntrySourceBackendOperations()
+const MediaEntrySourceBackendOperations* directoryCollectionMediaEntrySourceBackendOperations()
 {
     static const MediaEntrySourceBackendOperations operations {
         openDirectoryCollectionMediaEntrySource,

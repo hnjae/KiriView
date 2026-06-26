@@ -46,25 +46,28 @@ enum class ShortcutHelpCategory {
 
 inline constexpr std::size_t maxPortableShortcutCount = 4;
 
-struct DefaultShortcutSpec {
+struct DefaultShortcutSpec
+{
     ShortcutSpecKind kind = ShortcutSpecKind::None;
     QKeySequence::StandardKey standardKey = QKeySequence::UnknownKey;
-    std::array<const char *, maxPortableShortcutCount> portableText {};
+    std::array<const char*, maxPortableShortcutCount> portableText {};
     std::size_t portableTextCount = 0;
 };
 
-struct DefaultShortcutRouteSpec {
+struct DefaultShortcutRouteSpec
+{
     std::array<ShortcutRouteSpec, maxShortcutRouteSpecCount> specs {};
     std::size_t count = 0;
 };
 
-struct ActionDefinition {
+struct ActionDefinition
+{
     ActionId actionId;
-    const char *name;
+    const char* name;
     RegistrationKind kind;
     KStandardActions::StandardAction actionType;
     KLazyLocalizedString text;
-    const char *iconName;
+    const char* iconName;
     DefaultShortcutSpec defaultProgramWideShortcuts;
     DefaultShortcutSpec defaultViewerLocalShortcuts;
     DefaultShortcutRouteSpec shortcutRoutes;
@@ -72,16 +75,16 @@ struct ActionDefinition {
     ShortcutConfigurability shortcutConfigurability = ShortcutConfigurability::Configurable;
 };
 
-const std::array<ActionDefinition, actionDefinitionCount> &definitions();
-const ActionDefinition *definitionForId(ActionId actionId);
-const ActionDefinition *definitionForName(const QString &actionName);
+const std::array<ActionDefinition, actionDefinitionCount>& definitions();
+const ActionDefinition* definitionForId(ActionId actionId);
+const ActionDefinition* definitionForName(const QString& actionName);
 QString actionName(ActionId actionId);
-QString latin1String(const char *text);
-QString localizedString(const KLazyLocalizedString &text);
+QString latin1String(const char* text);
+QString localizedString(const KLazyLocalizedString& text);
 QString shortcutHelpCategoryKey(ShortcutHelpCategory category);
 QString shortcutHelpCategoryText(ShortcutHelpCategory category);
 int shortcutHelpCategoryOrder(ShortcutHelpCategory category);
-QList<QKeySequence> defaultShortcuts(const DefaultShortcutSpec &spec);
+QList<QKeySequence> defaultShortcuts(const DefaultShortcutSpec& spec);
 }
 
 #endif

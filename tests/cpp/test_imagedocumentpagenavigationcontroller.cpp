@@ -31,25 +31,25 @@ public:
     kiriview::ImageDocumentPageCandidateProvider provider()
     {
         return kiriview::ImageDocumentPageCandidateProvider {
-            [this](QObject *, QUrl directoryUrl,
+            [this](QObject*, QUrl directoryUrl,
                 kiriview::ImageDocumentPageCandidatesCallback callback, kiriview::ErrorCallback) {
                 m_loads.push_back(Load { std::move(directoryUrl), std::move(callback) });
                 return kiriview::ImageIoJob();
             },
-            [](QObject *, QUrl, kiriview::ContainerCandidatesCallback, kiriview::ErrorCallback) {
+            [](QObject*, QUrl, kiriview::ContainerCandidatesCallback, kiriview::ErrorCallback) {
                 return kiriview::ImageIoJob();
             },
-            [](QObject *, kiriview::OpenedCollectionScopeLocation,
+            [](QObject*, kiriview::OpenedCollectionScopeLocation,
                 kiriview::ImageDocumentPageCandidatesCallback,
                 kiriview::ErrorCallback) { return kiriview::ImageIoJob(); },
-            [](QObject *, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
+            [](QObject*, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
                 kiriview::ErrorCallback) { return kiriview::ImageIoJob(); },
         };
     }
 
     std::size_t loadCount() const { return m_loads.size(); }
 
-    const QUrl &loadDirectory(std::size_t index) const { return m_loads.at(index).directoryUrl; }
+    const QUrl& loadDirectory(std::size_t index) const { return m_loads.at(index).directoryUrl; }
 
     void finishLoad(std::size_t index, std::vector<ImageDocumentPageCandidate> candidates)
     {
@@ -60,7 +60,8 @@ public:
     }
 
 private:
-    struct Load {
+    struct Load
+    {
         QUrl directoryUrl;
         kiriview::ImageDocumentPageCandidatesCallback callback;
     };
@@ -69,7 +70,7 @@ private:
 };
 
 ImageDocumentPageNavigationController::Callbacks controllerCallbacks(
-    std::function<void(const QUrl &)> openUrl = {},
+    std::function<void(const QUrl&)> openUrl = {},
     ImageDocumentPageNavigationController::PageNavigationChangedCallback pageNavigationChanged = {},
     std::function<void()> clearCurrentImage = {},
     ImageDocumentPageNavigationController::DeletionInProgressCallback deletionInProgress = {})
@@ -77,8 +78,8 @@ ImageDocumentPageNavigationController::Callbacks controllerCallbacks(
     return ImageDocumentPageNavigationController::Callbacks {
         [openUrl = std::move(openUrl), clearCurrentImage = std::move(clearCurrentImage)](
             kiriview::ImageDocumentPageNavigationPlan plan) mutable {
-            for (const kiriview::ImageDocumentPageNavigationEffect &effect : plan) {
-                if (const auto *openEffect
+            for (const kiriview::ImageDocumentPageNavigationEffect& effect : plan) {
+                if (const auto* openEffect
                     = std::get_if<kiriview::OpenImageDocumentPageUrlEffect>(&effect)) {
                     kiriview::invokeIfSet(openUrl, openEffect->target.url);
                 } else if (std::holds_alternative<
@@ -93,7 +94,7 @@ ImageDocumentPageNavigationController::Callbacks controllerCallbacks(
 }
 
 ImageDocumentPageCandidateListContext directoryContext(
-    const QUrl &currentUrl, const QUrl &directoryUrl)
+    const QUrl& currentUrl, const QUrl& directoryUrl)
 {
     return ImageDocumentPageCandidateListContext::forDirectory(currentUrl, directoryUrl);
 }
@@ -163,7 +164,7 @@ void TestImageDocumentPageNavigationController::
     QUrl openedUrl;
     int clearCount = 0;
     ImageDocumentPageNavigationController controller(nullptr, repository,
-        controllerCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {},
+        controllerCallbacks([&openedUrl](const QUrl& url) { openedUrl = url; }, {},
             [&clearCount]() { ++clearCount; }));
     controller.update(directoryContext(secondUrl, directoryUrl));
 
@@ -199,7 +200,7 @@ void TestImageDocumentPageNavigationController::
     int clearCount = 0;
     bool deletionInProgress = true;
     ImageDocumentPageNavigationController controller(nullptr, repository,
-        controllerCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {},
+        controllerCallbacks([&openedUrl](const QUrl& url) { openedUrl = url; }, {},
             [&clearCount]() { ++clearCount; },
             [&deletionInProgress]() { return deletionInProgress; }));
     controller.update(directoryContext(secondUrl, directoryUrl));
@@ -235,9 +236,9 @@ void TestImageDocumentPageNavigationController::
     QUrl openedUrl;
     int currentPageAtOpen = 0;
     int pageCountAtOpen = 0;
-    ImageDocumentPageNavigationController *controllerPtr = nullptr;
+    ImageDocumentPageNavigationController* controllerPtr = nullptr;
     ImageDocumentPageNavigationController controller(
-        nullptr, repository, controllerCallbacks([&](const QUrl &url) {
+        nullptr, repository, controllerCallbacks([&](const QUrl& url) {
             openedUrl = url;
             currentPageAtOpen = controllerPtr->currentPageNumber();
             pageCountAtOpen = controllerPtr->pageCount();
@@ -265,7 +266,7 @@ void TestImageDocumentPageNavigationController::
     QUrl openedUrl;
     int changeCount = 0;
     ImageDocumentPageNavigationController controller(nullptr, repository,
-        controllerCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; },
+        controllerCallbacks([&openedUrl](const QUrl& url) { openedUrl = url; },
             [&changeCount]() { ++changeCount; }));
 
     controller.openAdjacentPage(

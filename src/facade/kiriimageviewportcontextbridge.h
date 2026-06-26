@@ -17,23 +17,23 @@ class KiriImageViewportContextBridge : public QQuickItem
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(KiriImageDocument *document READ document WRITE setDocument NOTIFY documentChanged)
+    Q_PROPERTY(KiriImageDocument* document READ document WRITE setDocument NOTIFY documentChanged)
     Q_PROPERTY(
         bool secondaryPage READ secondaryPage WRITE setSecondaryPage NOTIFY secondaryPageChanged)
     Q_PROPERTY(bool renderContextProviderInstalled READ renderContextProviderInstalled NOTIFY
             renderContextProviderInstalledChanged)
 
 public:
-    explicit KiriImageViewportContextBridge(QQuickItem *parent = nullptr);
+    explicit KiriImageViewportContextBridge(QQuickItem* parent = nullptr);
     ~KiriImageViewportContextBridge() override;
 
-    KiriImageDocument *document() const;
-    void setDocument(KiriImageDocument *document);
+    KiriImageDocument* document() const;
+    void setDocument(KiriImageDocument* document);
     bool secondaryPage() const;
     void setSecondaryPage(bool secondaryPage);
     bool renderContextProviderInstalled() const;
 
-    void itemChange(ItemChange change, const ItemChangeData &value) override;
+    void itemChange(ItemChange change, const ItemChangeData& value) override;
     void releaseResources() override;
     void classBegin() override;
     void componentComplete() override;
@@ -48,16 +48,16 @@ private:
         bool documentAttached) const;
     void connectDocument();
     void disconnectDocument();
-    void synchronizeRenderContextBinding(KiriImageDocument *document, bool documentAttached);
+    void synchronizeRenderContextBinding(KiriImageDocument* document, bool documentAttached);
     void applyRenderContextBinding(
-        kiriview::ImageViewRenderContextBindingAction action, KiriImageDocument *document);
+        kiriview::ImageViewRenderContextBindingAction action, KiriImageDocument* document);
     void emitProviderInstalledChangeIfNeeded(bool previouslyInstalled);
     void invalidateRenderContext();
     kiriview::ImageDocumentRenderContext renderContext() const;
     qreal displayDevicePixelRatio() const;
     int maximumTextureSize() const;
 
-    KiriImageDocument *m_document = nullptr;
+    KiriImageDocument* m_document = nullptr;
     bool m_secondaryPage = false;
     bool m_componentComplete = true;
     quint64 m_renderContextGeneration = 1;

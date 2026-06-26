@@ -9,7 +9,8 @@
 #include <functional>
 
 namespace kiriview {
-struct ImageDocumentPredecodeRuntimeOperations {
+struct ImageDocumentPredecodeRuntimeOperations
+{
     std::function<void()> clearPredecode;
     std::function<void()> cancelPredecode;
     std::function<void()> scheduleAdjacentImagePredecode;
@@ -21,7 +22,7 @@ public:
     explicit ImageDocumentPredecodeRuntimePlanExecutor(
         ImageDocumentPredecodeRuntimeOperations operations);
 
-    bool dispatchOperation(const ImageDocumentRuntimeOperation &operation);
+    bool dispatchOperation(const ImageDocumentRuntimeOperation& operation);
 
 private:
     ImageDocumentPredecodeRuntimeOperations m_operations;

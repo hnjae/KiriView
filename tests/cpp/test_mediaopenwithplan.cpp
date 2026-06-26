@@ -6,9 +6,9 @@
 #include <QTest>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-kiriview::OpenedCollectionScopeLocation archiveScope(const QString &scheme)
+kiriview::OpenedCollectionScopeLocation archiveScope(const QString& scheme)
 {
     QUrl rootUrl;
     rootUrl.setScheme(scheme);
@@ -34,13 +34,13 @@ private Q_SLOTS:
 };
 
 namespace {
-void expectNoRequest(const kiriview::MediaOpenWithPlan &plan)
+void expectNoRequest(const kiriview::MediaOpenWithPlan& plan)
 {
     QVERIFY(!plan.hasRequest());
     QVERIFY(!plan.request.has_value());
 }
 
-void expectRequestTarget(const kiriview::MediaOpenWithPlan &plan, const QUrl &targetUrl)
+void expectRequestTarget(const kiriview::MediaOpenWithPlan& plan, const QUrl& targetUrl)
 {
     QVERIFY(plan.hasRequest());
     QVERIFY(plan.request.has_value());

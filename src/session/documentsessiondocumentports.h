@@ -27,9 +27,10 @@ class QObject;
 namespace kiriview {
 using DocumentSessionDocumentChangeHandler = std::function<void()>;
 using DocumentSessionDocumentSignalConnector = std::function<std::vector<QMetaObject::Connection>(
-    QObject *, DocumentSessionDocumentChangeHandler)>;
+    QObject*, DocumentSessionDocumentChangeHandler)>;
 
-struct DocumentSessionImageDocumentSnapshot {
+struct DocumentSessionImageDocumentSnapshot
+{
     QUrl sourceUrl;
     QString errorString;
     QString windowTitleFileName;
@@ -59,32 +60,38 @@ struct DocumentSessionImageDocumentSnapshot {
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext;
 };
 
-struct DocumentSessionImageDocumentSnapshotPort {
+struct DocumentSessionImageDocumentSnapshotPort
+{
     std::function<DocumentSessionImageDocumentSnapshot()> snapshot;
     DocumentSessionDocumentSignalConnector snapshotChanged;
 };
 
-struct DocumentSessionImageDocumentSourceCommandPort {
-    std::function<void(const QUrl &)> setSourceUrl;
+struct DocumentSessionImageDocumentSourceCommandPort
+{
+    std::function<void(const QUrl&)> setSourceUrl;
 };
 
-struct DocumentSessionImageDocumentPageNavigationCommandPort {
+struct DocumentSessionImageDocumentPageNavigationCommandPort
+{
     std::function<void()> openPreviousPage;
     std::function<void()> openNextPage;
     std::function<void(int)> openImageAtPage;
 };
 
-struct DocumentSessionImageDocumentDeletionCommandPort {
+struct DocumentSessionImageDocumentDeletionCommandPort
+{
     std::function<void(FileDeletionMode)> deleteDisplayedFile;
 };
 
-struct DocumentSessionImageDocumentCommandPort {
+struct DocumentSessionImageDocumentCommandPort
+{
     DocumentSessionImageDocumentSourceCommandPort source;
     DocumentSessionImageDocumentPageNavigationCommandPort pageNavigation;
     DocumentSessionImageDocumentDeletionCommandPort deletion;
 };
 
-struct DocumentSessionVideoDocumentSnapshot {
+struct DocumentSessionVideoDocumentSnapshot
+{
     QUrl sourceUrl;
     QString errorString;
     QString windowTitleFileName;
@@ -97,26 +104,31 @@ struct DocumentSessionVideoDocumentSnapshot {
     EmbeddedMetadata embeddedMetadata;
 };
 
-struct DocumentSessionVideoDocumentSnapshotPort {
+struct DocumentSessionVideoDocumentSnapshotPort
+{
     std::function<DocumentSessionVideoDocumentSnapshot()> snapshot;
     DocumentSessionDocumentSignalConnector snapshotChanged;
 };
 
-struct DocumentSessionVideoDocumentSourceCommandPort {
-    std::function<void(const QUrl &)> setSourceUrl;
+struct DocumentSessionVideoDocumentSourceCommandPort
+{
+    std::function<void(const QUrl&)> setSourceUrl;
 };
 
-struct DocumentSessionVideoDocumentPlaybackCommandPort {
+struct DocumentSessionVideoDocumentPlaybackCommandPort
+{
     std::function<void()> stop;
 };
 
-struct DocumentSessionVideoDocumentOutputCommandPort {
-    std::function<QObject *()> videoOutput;
-    std::function<void(QObject *)> setVideoOutput;
-    std::function<void(const QRectF &, const QRectF &)> setVideoOutputGeometry;
+struct DocumentSessionVideoDocumentOutputCommandPort
+{
+    std::function<QObject*()> videoOutput;
+    std::function<void(QObject*)> setVideoOutput;
+    std::function<void(const QRectF&, const QRectF&)> setVideoOutputGeometry;
 };
 
-struct DocumentSessionVideoDocumentCommandPort {
+struct DocumentSessionVideoDocumentCommandPort
+{
     DocumentSessionVideoDocumentSourceCommandPort source;
     DocumentSessionVideoDocumentPlaybackCommandPort playback;
     DocumentSessionVideoDocumentOutputCommandPort output;

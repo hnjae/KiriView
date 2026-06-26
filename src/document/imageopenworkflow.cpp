@@ -11,8 +11,8 @@
 
 namespace {
 kiriview::Bridge::ImageDocumentSourceLoadKind sourceLoadKind(
-    const kiriview::ImageDocumentSourceLoadSnapshot &snapshot,
-    const kiriview::ImageDocumentSourceLoadRequest &request)
+    const kiriview::ImageDocumentSourceLoadSnapshot& snapshot,
+    const kiriview::ImageDocumentSourceLoadRequest& request)
 {
     if (snapshot.currentSourceUrl == request.sourceUrl) {
         return kiriview::Bridge::ImageDocumentSourceLoadKind::CurrentSource;
@@ -22,8 +22,8 @@ kiriview::Bridge::ImageDocumentSourceLoadKind sourceLoadKind(
 }
 
 bool sourceWithinDisplayedComicBookArchive(
-    const kiriview::ImageDocumentSourceLoadSnapshot &snapshot,
-    const kiriview::ImageDocumentSourceLoadRequest &request)
+    const kiriview::ImageDocumentSourceLoadSnapshot& snapshot,
+    const kiriview::ImageDocumentSourceLoadRequest& request)
 {
     return snapshot.displayedOpenedCollectionScope.isComicBook()
         && kiriview::openedCollectionScopeContainsUrl(
@@ -31,8 +31,8 @@ bool sourceWithinDisplayedComicBookArchive(
 }
 
 kiriview::Bridge::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
-    const kiriview::ImageDocumentSourceLoadSnapshot &snapshot,
-    const kiriview::ImageDocumentSourceLoadRequest &request)
+    const kiriview::ImageDocumentSourceLoadSnapshot& snapshot,
+    const kiriview::ImageDocumentSourceLoadRequest& request)
 {
     return kiriview::Bridge::ImageDocumentSourceLoadPolicyInput {
         sourceLoadKind(snapshot, request),
@@ -43,9 +43,9 @@ kiriview::Bridge::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
     };
 }
 
-void appendSourceLoadRuntimeOperation(kiriview::ImageDocumentRuntimePlan &runtimePlan,
+void appendSourceLoadRuntimeOperation(kiriview::ImageDocumentRuntimePlan& runtimePlan,
     kiriview::ImageDocumentSourceLoadEffect effect,
-    const kiriview::ImageDocumentSourceLoadRequest &request)
+    const kiriview::ImageDocumentSourceLoadRequest& request)
 {
     using Effect = kiriview::ImageDocumentSourceLoadEffect;
 
@@ -99,8 +99,8 @@ void appendSourceLoadRuntimeOperation(kiriview::ImageDocumentRuntimePlan &runtim
 }
 
 kiriview::ImageDocumentRuntimePlan sourceLoadRuntimePlan(
-    const kiriview::ImageDocumentSourceLoadPlan &sourceLoadPlan,
-    const kiriview::ImageDocumentSourceLoadRequest &request)
+    const kiriview::ImageDocumentSourceLoadPlan& sourceLoadPlan,
+    const kiriview::ImageDocumentSourceLoadRequest& request)
 {
     kiriview::ImageDocumentRuntimePlan runtimePlan;
     runtimePlan.reserve(sourceLoadPlan.size());
@@ -113,7 +113,7 @@ kiriview::ImageDocumentRuntimePlan sourceLoadRuntimePlan(
 
 namespace kiriview::ImageOpenWorkflow {
 ImageDocumentRuntimePlan sourceLoadPlan(
-    const ImageDocumentSourceLoadSnapshot &snapshot, const ImageDocumentSourceLoadRequest &request)
+    const ImageDocumentSourceLoadSnapshot& snapshot, const ImageDocumentSourceLoadRequest& request)
 {
     const Bridge::ImageDocumentSourceLoadPolicyInput input
         = sourceLoadPolicyInput(snapshot, request);
@@ -132,28 +132,28 @@ ImageOpenApplicationPlan finishEmptySourceLoadPlan()
     return imageOpenApplicationPlan(finishEmptySourceLoadTransition());
 }
 
-ImageOpenApplicationPlan resolveSourceImagePlan(const ImageLoadSession &session)
+ImageOpenApplicationPlan resolveSourceImagePlan(const ImageLoadSession& session)
 {
     return imageOpenApplicationPlan(
         resolveSourceImageTransition(), ImageOpenTransitionContext::sourceResolved(session));
 }
 
 ImageOpenApplicationPlan finishUnsupportedOpenedCollectionVideoLoadPlan(
-    const ImageLoadSession &session)
+    const ImageLoadSession& session)
 {
     return imageOpenApplicationPlan(finishUnsupportedOpenedCollectionVideoLoadTransition(),
         ImageOpenTransitionContext::successfulImageLoad(session));
 }
 
 ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
-    ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession &session)
+    ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession& session)
 {
     return imageOpenApplicationPlan(finishSuccessfulImageLoadTransition(snapshot),
         ImageOpenTransitionContext::successfulImageLoad(session));
 }
 
 ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
-    ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession &session,
+    ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession& session,
     EmbeddedMetadata metadata)
 {
     ImageOpenTransition transition = finishSuccessfulImageLoadTransition(snapshot);
@@ -163,20 +163,20 @@ ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
 }
 
 ImageOpenApplicationPlan finishLoadWithErrorPlan(ImageOpenLoadErrorSnapshot snapshot,
-    const ImageLoadSession &session, const QUrl &displayedUrl, ImageLoadFailure failure)
+    const ImageLoadSession& session, const QUrl& displayedUrl, ImageLoadFailure failure)
 {
     return imageOpenApplicationPlan(finishLoadWithErrorTransition(snapshot),
         ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, std::move(failure)));
 }
 
 ImageOpenApplicationPlan finishContainerNavigationLoadWithErrorPlan(
-    const QUrl &containerUrl, const QString &errorString)
+    const QUrl& containerUrl, const QString& errorString)
 {
     return imageOpenApplicationPlan(finishContainerNavigationLoadWithErrorTransition(),
         ImageOpenTransitionContext::containerNavigationError(containerUrl, errorString));
 }
 
-ImageOpenApplicationPlan finishAnimationLoadWithErrorPlan(const QString &errorString)
+ImageOpenApplicationPlan finishAnimationLoadWithErrorPlan(const QString& errorString)
 {
     return imageOpenApplicationPlan(finishAnimationLoadWithErrorTransition(),
         ImageOpenTransitionContext::animationError(errorString));

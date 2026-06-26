@@ -29,8 +29,9 @@ using kiriview::TestSupport::videoCandidate;
 
 using FakeCandidateProvider = kiriview::TestSupport::FakeImageDocumentPageCandidateProvider;
 
-struct ManualOpenedCollectionCandidateLoad {
-    QObject *object = nullptr;
+struct ManualOpenedCollectionCandidateLoad
+{
+    QObject* object = nullptr;
     kiriview::OpenedCollectionScopeLocation archiveCollection;
     kiriview::ImageDocumentPageCandidatesCallback callback;
     kiriview::ErrorCallback errorCallback;
@@ -41,7 +42,7 @@ struct ManualOpenedCollectionCandidateLoad {
 class ManualOpenedCollectionCandidateProvider
 {
 public:
-    kiriview::ImageIoJob start(QObject *receiver,
+    kiriview::ImageIoJob start(QObject* receiver,
         kiriview::OpenedCollectionScopeLocation archiveCollection,
         kiriview::ImageDocumentPageCandidatesCallback callback,
         kiriview::ErrorCallback errorCallback)
@@ -58,23 +59,23 @@ public:
 
     std::size_t loadCount() const { return m_loads.size(); }
 
-    const ManualOpenedCollectionCandidateLoad &frontLoad() const { return *m_loads.front(); }
+    const ManualOpenedCollectionCandidateLoad& frontLoad() const { return *m_loads.front(); }
 
     void finishFrontLoad(std::vector<kiriview::ImageDocumentPageCandidate> candidates)
     {
         kiriview::TestSupport::Detail::finishManualIoJob(m_loads.front(),
             [candidates = std::move(candidates)](
-                ManualOpenedCollectionCandidateLoad &load) mutable {
+                ManualOpenedCollectionCandidateLoad& load) mutable {
                 if (load.callback) {
                     load.callback(std::move(candidates));
                 }
             });
     }
 
-    void failFrontLoad(const QString &errorString)
+    void failFrontLoad(const QString& errorString)
     {
         kiriview::TestSupport::Detail::finishManualIoJob(
-            m_loads.front(), [&errorString](ManualOpenedCollectionCandidateLoad &load) {
+            m_loads.front(), [&errorString](ManualOpenedCollectionCandidateLoad& load) {
                 if (load.errorCallback) {
                     load.errorCallback(errorString);
                 }
@@ -84,27 +85,27 @@ public:
     kiriview::ImageDocumentPageCandidateProvider provider()
     {
         return kiriview::ImageDocumentPageCandidateProvider {
-            [](QObject *, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
+            [](QObject*, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
                 kiriview::ErrorCallback errorCallback) {
                 if (errorCallback) {
                     errorCallback(QStringLiteral("unexpected directory image listing"));
                 }
                 return kiriview::ImageIoJob();
             },
-            [](QObject *, QUrl, kiriview::ContainerCandidatesCallback,
+            [](QObject*, QUrl, kiriview::ContainerCandidatesCallback,
                 kiriview::ErrorCallback errorCallback) {
                 if (errorCallback) {
                     errorCallback(QStringLiteral("unexpected container listing"));
                 }
                 return kiriview::ImageIoJob();
             },
-            [this](QObject *receiver, kiriview::OpenedCollectionScopeLocation archiveCollection,
+            [this](QObject* receiver, kiriview::OpenedCollectionScopeLocation archiveCollection,
                 kiriview::ImageDocumentPageCandidatesCallback callback,
                 kiriview::ErrorCallback errorCallback) {
                 return start(receiver, std::move(archiveCollection), std::move(callback),
                     std::move(errorCallback));
             },
-            [](QObject *, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
+            [](QObject*, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
                 kiriview::ErrorCallback) { return kiriview::ImageIoJob(); },
         };
     }
@@ -113,8 +114,8 @@ private:
     std::vector<std::shared_ptr<ManualOpenedCollectionCandidateLoad>> m_loads;
 };
 
-kiriview::ImageLoader createLoader(QObject *parent, FakeCandidateProvider &candidateProvider,
-    ManualImageDataLoader &dataLoader, kiriview::ImageLoader::Callbacks callbacks = {},
+kiriview::ImageLoader createLoader(QObject* parent, FakeCandidateProvider& candidateProvider,
+    ManualImageDataLoader& dataLoader, kiriview::ImageLoader::Callbacks callbacks = {},
     kiriview::ImageDataDecoder dataDecoder = staticImageDataDecoderRejectingBadData())
 {
     return kiriview::ImageLoader(parent, candidateProvider.provider(),
@@ -217,7 +218,7 @@ void TestImageLoader::predecodedImageBypassesDataLoad()
     std::optional<kiriview::ImageLoadSession> predecodedSession;
     QSize imageSize;
     kiriview::ImageLoader::Callbacks callbacks;
-    callbacks.findPredecodedImage = [imageUrl, archiveCollection](const QUrl &url) {
+    callbacks.findPredecodedImage = [imageUrl, archiveCollection](const QUrl& url) {
         if (url != imageUrl) {
             return std::optional<kiriview::PredecodedImage>();
         }
@@ -258,7 +259,7 @@ void TestImageLoader::mismatchedPredecodedImageFallsBackToDecode()
     int predecodedCount = 0;
     std::optional<kiriview::ImageLoadSession> decodedSession;
     kiriview::ImageLoader::Callbacks callbacks;
-    callbacks.findPredecodedImage = [imageUrl, archiveCollection](const QUrl &url) {
+    callbacks.findPredecodedImage = [imageUrl, archiveCollection](const QUrl& url) {
         if (url != imageUrl) {
             return std::optional<kiriview::PredecodedImage>();
         }

@@ -10,7 +10,7 @@
 #include <QByteArray>
 
 namespace kiriview {
-DecodedImageResult decodeRawImageData(const QByteArray &data, const ImageDecodeRequest &request);
+DecodedImageResult decodeRawImageData(const QByteArray& data, const ImageDecodeRequest& request);
 }
 
 #endif

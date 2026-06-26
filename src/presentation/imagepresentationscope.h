@@ -7,7 +7,8 @@
 #include <QUrl>
 
 namespace kiriview {
-struct ImagePresentationScopeKey {
+struct ImagePresentationScopeKey
+{
     enum class Kind {
         Empty,
         DirectImage,
@@ -17,18 +18,18 @@ struct ImagePresentationScopeKey {
     Kind kind = Kind::Empty;
     QUrl url;
 
-    static ImagePresentationScopeKey directImage(const QUrl &url);
-    static ImagePresentationScopeKey openedCollection(const QUrl &url);
+    static ImagePresentationScopeKey directImage(const QUrl& url);
+    static ImagePresentationScopeKey openedCollection(const QUrl& url);
     bool preservesPageNavigationZoom() const;
 
     friend bool operator==(
-        const ImagePresentationScopeKey &left, const ImagePresentationScopeKey &right)
+        const ImagePresentationScopeKey& left, const ImagePresentationScopeKey& right)
     {
         return left.kind == right.kind && left.url == right.url;
     }
 
     friend bool operator!=(
-        const ImagePresentationScopeKey &left, const ImagePresentationScopeKey &right)
+        const ImagePresentationScopeKey& left, const ImagePresentationScopeKey& right)
     {
         return !(left == right);
     }

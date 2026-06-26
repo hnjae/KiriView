@@ -37,8 +37,8 @@ class KiriViewApplication : public AbstractKirigamiApplication
             NOTIFY menuPresentationChanged)
     Q_PROPERTY(int shortcutRevision READ shortcutRevision NOTIFY shortcutRevisionChanged)
     Q_PROPERTY(int actionStateRevision READ actionStateRevision NOTIFY actionStateRevisionChanged)
-    Q_PROPERTY(QAbstractListModel *shortcutHelpModel READ shortcutHelpModel CONSTANT)
-    Q_PROPERTY(QAbstractListModel *shortcutRouteModel READ shortcutRouteModel CONSTANT)
+    Q_PROPERTY(QAbstractListModel* shortcutHelpModel READ shortcutHelpModel CONSTANT)
+    Q_PROPERTY(QAbstractListModel* shortcutRouteModel READ shortcutRouteModel CONSTANT)
 
 public:
     enum MenuPresentation {
@@ -87,15 +87,15 @@ public:
     };
     Q_ENUM(ActionId)
 
-    explicit KiriViewApplication(QObject *parent = nullptr);
+    explicit KiriViewApplication(QObject* parent = nullptr);
     ~KiriViewApplication() override;
 
     MenuPresentation menuPresentation() const;
     void setMenuPresentation(MenuPresentation presentation);
     int shortcutRevision() const;
     int actionStateRevision() const;
-    QAbstractListModel *shortcutHelpModel() const;
-    QAbstractListModel *shortcutRouteModel() const;
+    QAbstractListModel* shortcutHelpModel() const;
+    QAbstractListModel* shortcutRouteModel() const;
 
     static kiriview::ApplicationActions::MenuPresentation domainMenuPresentation(
         KiriViewApplication::MenuPresentation presentation);
@@ -106,36 +106,36 @@ public:
     static KiriViewApplication::ActionId facadeActionId(
         kiriview::ApplicationActions::ActionId actionId);
 
-    Q_INVOKABLE QAction *action(const QString &actionName);
-    Q_INVOKABLE QAction *actionForId(KiriViewApplication::ActionId actionId);
+    Q_INVOKABLE QAction* action(const QString& actionName);
+    Q_INVOKABLE QAction* actionForId(KiriViewApplication::ActionId actionId);
     Q_INVOKABLE QString actionName(KiriViewApplication::ActionId actionId) const;
-    Q_INVOKABLE QList<QKeySequence> shortcuts(const QString &actionName) const;
+    Q_INVOKABLE QList<QKeySequence> shortcuts(const QString& actionName) const;
     Q_INVOKABLE QList<QKeySequence> shortcutsForId(KiriViewApplication::ActionId actionId) const;
-    Q_INVOKABLE QList<QKeySequence> programWideShortcuts(const QString &actionName) const;
+    Q_INVOKABLE QList<QKeySequence> programWideShortcuts(const QString& actionName) const;
     Q_INVOKABLE QList<QKeySequence> programWideShortcutsForId(
         KiriViewApplication::ActionId actionId) const;
-    Q_INVOKABLE QList<QKeySequence> viewerLocalShortcuts(const QString &actionName) const;
+    Q_INVOKABLE QList<QKeySequence> viewerLocalShortcuts(const QString& actionName) const;
     Q_INVOKABLE QList<QKeySequence> viewerLocalShortcutsForId(
         KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool setViewerLocalShortcuts(
-        const QString &actionName, const QList<QKeySequence> &shortcuts);
+        const QString& actionName, const QList<QKeySequence>& shortcuts);
     Q_INVOKABLE bool setViewerLocalShortcutsForId(
-        KiriViewApplication::ActionId actionId, const QList<QKeySequence> &shortcuts);
-    Q_INVOKABLE QString shortcutText(const QString &actionName) const;
+        KiriViewApplication::ActionId actionId, const QList<QKeySequence>& shortcuts);
+    Q_INVOKABLE QString shortcutText(const QString& actionName) const;
     Q_INVOKABLE QString shortcutTextForId(KiriViewApplication::ActionId actionId) const;
-    Q_INVOKABLE QKeySequence menuShortcut(const QString &actionName) const;
+    Q_INVOKABLE QKeySequence menuShortcut(const QString& actionName) const;
     Q_INVOKABLE QKeySequence menuShortcutForId(KiriViewApplication::ActionId actionId) const;
-    Q_INVOKABLE QString menuShortcutText(const QString &actionName) const;
+    Q_INVOKABLE QString menuShortcutText(const QString& actionName) const;
     Q_INVOKABLE QString menuShortcutTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool actionPlacementEnabled(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString actionMenuTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString actionToolbarTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString actionToolbarTooltipTextForId(KiriViewApplication::ActionId actionId) const;
-    Q_INVOKABLE void setDocumentSession(QObject *session);
+    Q_INVOKABLE void setDocumentSession(QObject* session);
     Q_INVOKABLE void updateActionUiGateSnapshot(bool helpDialogOpen, bool textInputFocused,
         bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,
         bool applicationMenuShortcutEnabled, bool showMenubarActionEnabled);
-    Q_INVOKABLE void setShortcutHost(QObject *host);
+    Q_INVOKABLE void setShortcutHost(QObject* host);
     Q_INVOKABLE bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool imageActionUnsupported(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool mediaHorizontalArrowShortcutsEnabled(bool videoMode,
@@ -152,7 +152,7 @@ Q_SIGNALS:
     void toggleFullScreenRequested();
     void toggleInfoPanelRequested();
     void toggleThumbnailPanelRequested();
-    void imageBoundaryReached(const QString &message);
+    void imageBoundaryReached(const QString& message);
     void unsupportedVideoActionTriggered(KiriViewApplication::ActionId actionId);
     void unsupportedImageActionTriggered(KiriViewApplication::ActionId actionId);
 
@@ -163,16 +163,16 @@ private:
     friend class kiriview::ApplicationActions::KiriViewApplicationActionHost;
     friend class kiriview::ApplicationActions::KiriViewApplicationCommandPortSource;
 
-    KirigamiActionCollection *applicationMainActionCollection();
-    QAction *inheritedApplicationAction(const QString &actionName);
+    KirigamiActionCollection* applicationMainActionCollection();
+    QAction* inheritedApplicationAction(const QString& actionName);
     void readApplicationActionSettings();
-    KiriImageDocument *imageDocument() const;
+    KiriImageDocument* imageDocument() const;
     void moveDisplayedFileToTrash();
     void deleteDisplayedFilePermanently();
     void requestImageFitMode();
     void requestImageFitHeightMode();
     void requestImageFitWidthMode();
-    void emitBoundaryText(const QString &message);
+    void emitBoundaryText(const QString& message);
     void requestPreviousActiveNavigationWithBoundary();
     void requestNextActiveNavigationWithBoundary();
     void handleScanForwardAction();

@@ -13,15 +13,15 @@
 
 namespace kiriview {
 VideoOutputRenderContextObserver::VideoOutputRenderContextObserver(
-    QObject *parent, std::function<void()> renderContextChanged)
+    QObject* parent, std::function<void()> renderContextChanged)
     : QObject(parent)
     , m_renderContextChanged(std::move(renderContextChanged))
 {
 }
 
-void VideoOutputRenderContextObserver::setVideoOutput(QObject *videoOutput)
+void VideoOutputRenderContextObserver::setVideoOutput(QObject* videoOutput)
 {
-    auto *item = qobject_cast<QQuickItem *>(videoOutput);
+    auto* item = qobject_cast<QQuickItem*>(videoOutput);
     if (m_videoOutputItem.data() == item) {
         setObservedWindow(item == nullptr ? nullptr : item->window());
         notifyRenderContextChanged();
@@ -40,7 +40,7 @@ void VideoOutputRenderContextObserver::setVideoOutput(QObject *videoOutput)
                 notifyRenderContextChanged();
             }));
         m_videoOutputConnections.push_back(
-            QObject::connect(item, &QQuickItem::windowChanged, this, [this](QQuickWindow *window) {
+            QObject::connect(item, &QQuickItem::windowChanged, this, [this](QQuickWindow* window) {
                 setObservedWindow(window);
                 notifyRenderContextChanged();
             }));
@@ -68,7 +68,7 @@ std::optional<qreal> VideoOutputRenderContextObserver::devicePixelRatio() const
     return ratio;
 }
 
-bool VideoOutputRenderContextObserver::eventFilter(QObject *watched, QEvent *event)
+bool VideoOutputRenderContextObserver::eventFilter(QObject* watched, QEvent* event)
 {
     if (watched == m_window.data() && event->type() == QEvent::DevicePixelRatioChange) {
         notifyRenderContextChanged();
@@ -79,14 +79,14 @@ bool VideoOutputRenderContextObserver::eventFilter(QObject *watched, QEvent *eve
 
 void VideoOutputRenderContextObserver::clearVideoOutputConnections()
 {
-    for (const QMetaObject::Connection &connection : m_videoOutputConnections) {
+    for (const QMetaObject::Connection& connection : m_videoOutputConnections) {
         QObject::disconnect(connection);
     }
     m_videoOutputConnections.clear();
     m_videoOutputItem.clear();
 }
 
-void VideoOutputRenderContextObserver::setObservedWindow(QQuickWindow *window)
+void VideoOutputRenderContextObserver::setObservedWindow(QQuickWindow* window)
 {
     if (m_window.data() == window) {
         return;
@@ -106,12 +106,12 @@ void VideoOutputRenderContextObserver::setObservedWindow(QQuickWindow *window)
             notifyRenderContextChanged();
         }));
     m_windowConnections.push_back(QObject::connect(m_window.data(), &QWindow::screenChanged, this,
-        [this](QScreen *) { notifyRenderContextChanged(); }));
+        [this](QScreen*) { notifyRenderContextChanged(); }));
 }
 
 void VideoOutputRenderContextObserver::clearWindowConnections()
 {
-    for (const QMetaObject::Connection &connection : m_windowConnections) {
+    for (const QMetaObject::Connection& connection : m_windowConnections) {
         QObject::disconnect(connection);
     }
     m_windowConnections.clear();

@@ -18,11 +18,11 @@
 #include <sys/xattr.h>
 
 namespace {
-constexpr const char *documentPortalHostPathAttribute = "user.document-portal.host-path";
+constexpr const char* documentPortalHostPathAttribute = "user.document-portal.host-path";
 
 QString runtimeDirForNavigationSource() { return QFile::decodeName(qgetenv("XDG_RUNTIME_DIR")); }
 
-QUrl navigationUrlForLocalPath(const QString &localPath, const QString &runtimeDir)
+QUrl navigationUrlForLocalPath(const QString& localPath, const QString& runtimeDir)
 {
     const std::optional<QUrl> kioUrl
         = kiriview::kioFuseArchiveUrlForLocalPath(localPath, runtimeDir);
@@ -33,7 +33,7 @@ QUrl navigationUrlForLocalPath(const QString &localPath, const QString &runtimeD
     return QUrl::fromLocalFile(localPath);
 }
 
-QUrl normalizedContainerBaseUrl(const QUrl &url)
+QUrl normalizedContainerBaseUrl(const QUrl& url)
 {
     QUrl normalizedUrl = url.adjusted(QUrl::NormalizePathSegments);
     normalizedUrl.setQuery(QString());
@@ -41,7 +41,7 @@ QUrl normalizedContainerBaseUrl(const QUrl &url)
     return normalizedUrl;
 }
 
-std::optional<QString> documentPortalHostPath(const QUrl &url)
+std::optional<QString> documentPortalHostPath(const QUrl& url)
 {
     if (!url.isLocalFile()) {
         return std::nullopt;
@@ -98,14 +98,14 @@ bool DirectoryNavigationLocation::isValid() const
         && !directoryUrl.isEmpty();
 }
 
-QUrl normalizedUrlForIdentity(const QUrl &url) { return url.adjusted(QUrl::NormalizePathSegments); }
+QUrl normalizedUrlForIdentity(const QUrl& url) { return url.adjusted(QUrl::NormalizePathSegments); }
 
-QString normalizedUrlIdentityKey(const QUrl &url, QUrl::ComponentFormattingOptions options)
+QString normalizedUrlIdentityKey(const QUrl& url, QUrl::ComponentFormattingOptions options)
 {
     return normalizedUrlForIdentity(url).toString(options);
 }
 
-std::optional<QUrl> normalizedValidUrlForIdentity(const QUrl &url)
+std::optional<QUrl> normalizedValidUrlForIdentity(const QUrl& url)
 {
     const QUrl normalizedUrl = normalizedUrlForIdentity(url);
     if (!normalizedUrl.isValid() || normalizedUrl.isEmpty()) {
@@ -115,21 +115,21 @@ std::optional<QUrl> normalizedValidUrlForIdentity(const QUrl &url)
     return normalizedUrl;
 }
 
-QUrl normalizedImageUrl(const QUrl &url) { return normalizedUrlForIdentity(url); }
+QUrl normalizedImageUrl(const QUrl& url) { return normalizedUrlForIdentity(url); }
 
-std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
+std::optional<QUrl> normalizedValidImageUrl(const QUrl& url)
 {
     return normalizedValidUrlForIdentity(url);
 }
 
-QUrl normalizedDirectoryUrlForIdentity(const QUrl &url) { return normalizedUrlForIdentity(url); }
+QUrl normalizedDirectoryUrlForIdentity(const QUrl& url) { return normalizedUrlForIdentity(url); }
 
-QString directoryUrlIdentityKey(const QUrl &url, QUrl::ComponentFormattingOptions options)
+QString directoryUrlIdentityKey(const QUrl& url, QUrl::ComponentFormattingOptions options)
 {
     return normalizedUrlIdentityKey(normalizedDirectoryUrlForIdentity(url), options);
 }
 
-QUrl normalizedFileContainerUrl(const QUrl &url)
+QUrl normalizedFileContainerUrl(const QUrl& url)
 {
     QUrl normalizedUrl = normalizedContainerBaseUrl(url);
 
@@ -139,7 +139,7 @@ QUrl normalizedFileContainerUrl(const QUrl &url)
     return normalizedUrl;
 }
 
-QUrl normalizedDirectoryContainerUrl(const QUrl &url)
+QUrl normalizedDirectoryContainerUrl(const QUrl& url)
 {
     QUrl normalizedUrl = normalizedContainerBaseUrl(url);
 
@@ -151,12 +151,12 @@ QUrl normalizedDirectoryContainerUrl(const QUrl &url)
     return normalizedUrl;
 }
 
-QUrl parentDirectoryUrlForFileNavigation(const QUrl &url)
+QUrl parentDirectoryUrlForFileNavigation(const QUrl& url)
 {
     return url.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
 }
 
-QUrl parentUrlForContainerNavigation(const QUrl &containerUrl)
+QUrl parentUrlForContainerNavigation(const QUrl& containerUrl)
 {
     QUrl parentSourceUrl = containerUrl.adjusted(QUrl::NormalizePathSegments);
     QString path = parentSourceUrl.path();
@@ -168,11 +168,11 @@ QUrl parentUrlForContainerNavigation(const QUrl &containerUrl)
     return parentSourceUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
 }
 
-QUrl navigationSourceUrlForFacts(const QUrl &url, const NavigationSourceFacts &facts)
+QUrl navigationSourceUrlForFacts(const QUrl& url, const NavigationSourceFacts& facts)
 {
     if (url.isLocalFile() && facts.documentPortalHostPath.has_value()) {
         const QString localPath = url.toLocalFile();
-        const QString &hostPath = facts.documentPortalHostPath.value();
+        const QString& hostPath = facts.documentPortalHostPath.value();
         if (!hostPath.isEmpty() && hostPath != localPath) {
             return navigationUrlForLocalPath(hostPath, facts.runtimeDir);
         }
@@ -189,7 +189,7 @@ QUrl navigationSourceUrlForFacts(const QUrl &url, const NavigationSourceFacts &f
     return url;
 }
 
-QUrl navigationSourceUrl(const QUrl &url)
+QUrl navigationSourceUrl(const QUrl& url)
 {
     const NavigationSourceFacts facts {
         documentPortalHostPath(url),
@@ -203,7 +203,7 @@ QUrl navigationSourceUrl(const QUrl &url)
     return navigationUrl;
 }
 
-DirectoryNavigationLocation directoryNavigationLocationForFileUrl(const QUrl &url)
+DirectoryNavigationLocation directoryNavigationLocationForFileUrl(const QUrl& url)
 {
     QUrl fileUrl = navigationSourceUrl(url);
     return DirectoryNavigationLocation {
@@ -212,12 +212,12 @@ DirectoryNavigationLocation directoryNavigationLocationForFileUrl(const QUrl &ur
     };
 }
 
-bool sameNormalizedUrl(const QUrl &left, const QUrl &right)
+bool sameNormalizedUrl(const QUrl& left, const QUrl& right)
 {
     return left.matches(right, QUrl::NormalizePathSegments);
 }
 
-bool sameNormalizedUrlOrEmpty(const QUrl &left, const QUrl &right)
+bool sameNormalizedUrlOrEmpty(const QUrl& left, const QUrl& right)
 {
     if (left.isEmpty() || right.isEmpty()) {
         return left.isEmpty() && right.isEmpty();
@@ -226,7 +226,7 @@ bool sameNormalizedUrlOrEmpty(const QUrl &left, const QUrl &right)
     return sameNormalizedUrl(left, right);
 }
 
-bool sameContainerNavigationUrl(const QUrl &left, const QUrl &right)
+bool sameContainerNavigationUrl(const QUrl& left, const QUrl& right)
 {
     return !left.isEmpty() && !right.isEmpty() && sameNormalizedUrl(left, right);
 }

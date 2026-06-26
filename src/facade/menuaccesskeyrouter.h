@@ -20,15 +20,15 @@ class MenuAccessKeyRouter : public QObject
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(QObject *menu READ menu WRITE setMenu NOTIFY menuChanged)
+    Q_PROPERTY(QObject* menu READ menu WRITE setMenu NOTIFY menuChanged)
     Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
 
 public:
-    explicit MenuAccessKeyRouter(QObject *parent = nullptr);
+    explicit MenuAccessKeyRouter(QObject* parent = nullptr);
     ~MenuAccessKeyRouter() override;
 
-    QObject *menu() const;
-    void setMenu(QObject *menu);
+    QObject* menu() const;
+    void setMenu(QObject* menu);
     bool isEnabled() const;
     void setEnabled(bool enabled);
 
@@ -37,7 +37,7 @@ Q_SIGNALS:
     void enabledChanged();
 
 protected:
-    bool eventFilter(QObject *watched, QEvent *event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private Q_SLOTS:
     void clearMenuAccessKeys();

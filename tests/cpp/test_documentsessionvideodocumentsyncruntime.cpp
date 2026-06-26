@@ -20,9 +20,10 @@ private Q_SLOTS:
 };
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-struct VideoSyncFixture {
+struct VideoSyncFixture
+{
     enum class Event {
         ClearCursor,
         SetSourceIdentity,
@@ -42,7 +43,7 @@ struct VideoSyncFixture {
     kiriview::DocumentSessionVideoDocumentSyncRuntime runtime {
         kiriview::DocumentSessionVideoDocumentSyncRuntimePorts {
             [this]() { events.push_back(Event::ClearCursor); },
-            [this](const QUrl &url) {
+            [this](const QUrl& url) {
                 events.push_back(Event::SetSourceIdentity);
                 sourceIdentity = url;
             },
@@ -51,7 +52,7 @@ struct VideoSyncFixture {
                 documentKind = kind;
             },
             [this]() { events.push_back(Event::ClearNavigation); },
-            [this](const QUrl &url) {
+            [this](const QUrl& url) {
                 events.push_back(Event::SetDirectVideoCursor);
                 directVideoCursorUrl = url;
                 return directVideoCursorChanged;
@@ -63,7 +64,7 @@ struct VideoSyncFixture {
     };
 };
 
-kiriview::DocumentSessionPublicVideoLeafSnapshot videoSnapshot(const QUrl &url)
+kiriview::DocumentSessionPublicVideoLeafSnapshot videoSnapshot(const QUrl& url)
 {
     kiriview::DocumentSessionPublicVideoLeafSnapshot snapshot;
     snapshot.sourceUrl = url;

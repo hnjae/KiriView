@@ -71,8 +71,8 @@ void TestMediaEntrySourceRunner::candidateLoadsAreCachedAfterLazyOpen()
     kiriview::MediaEntrySourceCandidatesResult secondResult
         = runner.loadImageDocumentPageCandidates();
 
-    const auto *firstCandidates = std::get_if<MediaEntrySourceCandidates>(&firstResult);
-    const auto *secondCandidates = std::get_if<MediaEntrySourceCandidates>(&secondResult);
+    const auto* firstCandidates = std::get_if<MediaEntrySourceCandidates>(&firstResult);
+    const auto* secondCandidates = std::get_if<MediaEntrySourceCandidates>(&secondResult);
     QVERIFY(firstCandidates != nullptr);
     QVERIFY(secondCandidates != nullptr);
     QCOMPARE(firstCandidates->candidates.size(), std::size_t(2));
@@ -102,8 +102,8 @@ void TestMediaEntrySourceRunner::dataLoadsReuseLazyOpenSource()
     kiriview::MediaEntrySourceImageDataResult firstResult = runner.loadImageData(pageUrl);
     kiriview::MediaEntrySourceImageDataResult secondResult = runner.loadImageData(pageUrl);
 
-    const auto *firstData = std::get_if<MediaEntrySourceImageData>(&firstResult);
-    const auto *secondData = std::get_if<MediaEntrySourceImageData>(&secondResult);
+    const auto* firstData = std::get_if<MediaEntrySourceImageData>(&firstResult);
+    const auto* secondData = std::get_if<MediaEntrySourceImageData>(&secondResult);
     QVERIFY(firstData != nullptr);
     QVERIFY(secondData != nullptr);
     QCOMPARE(firstData->data, QByteArrayLiteral("image"));

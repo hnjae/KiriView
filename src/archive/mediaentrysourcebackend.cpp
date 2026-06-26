@@ -18,9 +18,9 @@
 namespace {
 namespace Backend = kiriview::MediaEntrySourceBackendDetail;
 
-const Backend::MediaEntrySourceBackendOperations *
+const Backend::MediaEntrySourceBackendOperations*
 mediaEntrySourceBackendOperationsForOpenedCollection(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     if (openedCollectionScope.isDirectory()) {
         return Backend::directoryCollectionMediaEntrySourceBackendOperations();
@@ -42,9 +42,9 @@ mediaEntrySourceBackendOperationsForOpenedCollection(
 }
 
 kiriview::MediaEntrySourceOpenResult openWithMediaEntrySourceBackend(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
-    const Backend::MediaEntrySourceBackendOperations *backend
+    const Backend::MediaEntrySourceBackendOperations* backend
         = mediaEntrySourceBackendOperationsForOpenedCollection(openedCollectionScope);
     if (backend == nullptr) {
         return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceOpenResult>(
@@ -59,7 +59,7 @@ kiriview::MediaEntrySourceOpenResult openWithMediaEntrySourceBackend(
 
 namespace kiriview {
 MediaEntrySourceThumbnailMetadataResult MediaEntrySource::loadThumbnailMetadata(
-    const QUrl &imageUrl)
+    const QUrl& imageUrl)
 {
     Q_UNUSED(imageUrl)
     return MediaEntrySourceBackendDetail::mediaEntrySourceErrorResult<
@@ -91,7 +91,7 @@ void MediaEntrySourceWithCandidateSnapshot::replaceCandidateSnapshot(
 }
 
 std::optional<ImageDocumentPageCandidate> openedCollectionImageDocumentPageCandidate(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath)
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QString& entryPath)
 {
     const QString candidateName = normalizedArchiveEntryPath(entryPath);
     if (candidateName.isEmpty() || !isSupportedOrdinaryMediaFileName(candidateName)) {
@@ -109,7 +109,7 @@ std::optional<ImageDocumentPageCandidate> openedCollectionImageDocumentPageCandi
 }
 
 std::optional<QString> openedCollectionImageEntryPathForRead(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl)
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& imageUrl)
 {
     const QString entryPath = openedCollectionEntryPathForUrl(openedCollectionScope, imageUrl);
     if (openedCollectionScope.isEmpty() || entryPath.isEmpty()) {
@@ -120,7 +120,7 @@ std::optional<QString> openedCollectionImageEntryPathForRead(
 }
 
 QString fallbackMediaEntrySourceOpenError(
-    const OpenedCollectionScopeLocation &openedCollectionScope)
+    const OpenedCollectionScopeLocation& openedCollectionScope)
 {
     const QString fileName = openedCollectionScope.fileUrl().fileName();
     if (fileName.isEmpty()) {
@@ -146,7 +146,7 @@ QString openedCollectionThumbnailMetadataUnsupportedError()
 }
 
 MediaEntrySourceError mediaEntrySourceError(MediaEntrySourceBackendKind backend,
-    MediaEntrySourceOperation operation, const OpenedCollectionScopeLocation &openedCollectionScope,
+    MediaEntrySourceOperation operation, const OpenedCollectionScopeLocation& openedCollectionScope,
     QString errorString, QString diagnosticDetail, QString entryPath)
 {
     const QString resolvedDiagnosticDetail
@@ -176,14 +176,14 @@ MediaEntrySourceThumbnailMetadataResult mediaEntrySourceThumbnailMetadataResult(
 
 namespace kiriview {
 MediaEntrySourceCandidatesResult loadMediaEntrySourceCandidates(
-    const OpenedCollectionScopeLocation &openedCollectionScope)
+    const OpenedCollectionScopeLocation& openedCollectionScope)
 {
     MediaEntrySourceOpenResult opened = openMediaEntrySource(openedCollectionScope);
-    if (const auto *error = std::get_if<MediaEntrySourceError>(&opened)) {
+    if (const auto* error = std::get_if<MediaEntrySourceError>(&opened)) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceCandidatesResult>(*error);
     }
 
-    const auto *source = std::get_if<MediaEntrySourcePtr>(&opened);
+    const auto* source = std::get_if<MediaEntrySourcePtr>(&opened);
     if (source == nullptr || *source == nullptr) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceCandidatesResult>(
             Backend::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
@@ -195,14 +195,14 @@ MediaEntrySourceCandidatesResult loadMediaEntrySourceCandidates(
 }
 
 MediaEntrySourceImageDataResult loadMediaEntrySourceImageData(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl)
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& imageUrl)
 {
     MediaEntrySourceOpenResult opened = openMediaEntrySource(openedCollectionScope);
-    if (const auto *error = std::get_if<MediaEntrySourceError>(&opened)) {
+    if (const auto* error = std::get_if<MediaEntrySourceError>(&opened)) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceImageDataResult>(*error);
     }
 
-    const auto *source = std::get_if<MediaEntrySourcePtr>(&opened);
+    const auto* source = std::get_if<MediaEntrySourcePtr>(&opened);
     if (source == nullptr || *source == nullptr) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceImageDataResult>(
             Backend::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
@@ -214,15 +214,15 @@ MediaEntrySourceImageDataResult loadMediaEntrySourceImageData(
 }
 
 MediaEntrySourceThumbnailMetadataResult loadMediaEntrySourceThumbnailMetadata(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl)
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& imageUrl)
 {
     MediaEntrySourceOpenResult opened = openMediaEntrySource(openedCollectionScope);
-    if (const auto *error = std::get_if<MediaEntrySourceError>(&opened)) {
+    if (const auto* error = std::get_if<MediaEntrySourceError>(&opened)) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceThumbnailMetadataResult>(
             *error);
     }
 
-    const auto *source = std::get_if<MediaEntrySourcePtr>(&opened);
+    const auto* source = std::get_if<MediaEntrySourcePtr>(&opened);
     if (source == nullptr || *source == nullptr) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceThumbnailMetadataResult>(
             Backend::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
@@ -234,7 +234,7 @@ MediaEntrySourceThumbnailMetadataResult loadMediaEntrySourceThumbnailMetadata(
 }
 
 MediaEntrySourceOpenResult openMediaEntrySource(
-    const OpenedCollectionScopeLocation &openedCollectionScope)
+    const OpenedCollectionScopeLocation& openedCollectionScope)
 {
     if (openedCollectionScope.isEmpty()) {
         return Backend::mediaEntrySourceErrorResult<MediaEntrySourceOpenResult>(

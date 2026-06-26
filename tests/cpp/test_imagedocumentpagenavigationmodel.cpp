@@ -20,7 +20,7 @@ using kiriview::TestSupport::imageDocumentPageCandidate;
 using kiriview::TestSupport::indexedImageUrl;
 using kiriview::TestSupport::localUrl;
 
-void comparePage(const ImageDocumentPageNavigationModel &model, int pageNumber, int pageCount)
+void comparePage(const ImageDocumentPageNavigationModel& model, int pageNumber, int pageCount)
 {
     QCOMPARE(model.currentPageNumber(), pageNumber);
     QCOMPARE(model.pageCount(), pageCount);

@@ -9,7 +9,7 @@
 
 namespace {
 template <typename Operation>
-const Operation *dispatchOperation(const kiriview::ActiveNavigationDispatchPlan &plan)
+const Operation* dispatchOperation(const kiriview::ActiveNavigationDispatchPlan& plan)
 {
     return std::get_if<Operation>(&plan.operation);
 }
@@ -115,7 +115,7 @@ void TestActiveNavigationProjectionConversion::dispatchRequestAndPlanConvertAcro
         = kiriview::Bridge::activeNavigationDispatchPlanFromRust(rustPlan);
     QVERIFY(plan.shouldDispatch());
     QCOMPARE(plan.outcome, kiriview::ActiveNavigationDispatchOutcome::Dispatch);
-    const auto *operation
+    const auto* operation
         = dispatchOperation<kiriview::OpenDirectMediaNavigationAtNumberOperation>(plan);
     QVERIFY(operation != nullptr);
     QCOMPARE(operation->number, 5);

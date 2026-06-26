@@ -20,23 +20,24 @@ private Q_SLOTS:
 };
 
 namespace {
-struct VideoCommandProbe {
+struct VideoCommandProbe
+{
     kiriview::DocumentSessionVideoDocumentCommandPort port()
     {
         return kiriview::DocumentSessionVideoDocumentCommandPort {
-            { [this](const QUrl &url) {
+            { [this](const QUrl& url) {
                 sourceUrl = url;
                 events.push_back(
                     url.isEmpty() ? QStringLiteral("clear-source") : QStringLiteral("set-source"));
             } },
             { [this]() { events.push_back(QStringLiteral("stop")); } },
-            { [this]() -> QObject * { return attachedVideoOutput; },
-                [this](QObject *videoOutput) {
+            { [this]() -> QObject* { return attachedVideoOutput; },
+                [this](QObject* videoOutput) {
                     attachedVideoOutput = videoOutput;
                     events.push_back(videoOutput == nullptr ? QStringLiteral("detach-output")
                                                             : QStringLiteral("attach-output"));
                 },
-                [this](const QRectF &contentRect, const QRectF &sourceRect) {
+                [this](const QRectF& contentRect, const QRectF& sourceRect) {
                     lastContentRect = contentRect;
                     lastSourceRect = sourceRect;
                     events.push_back(QStringLiteral("set-geometry"));
@@ -45,7 +46,7 @@ struct VideoCommandProbe {
     }
 
     QUrl sourceUrl;
-    QObject *attachedVideoOutput = nullptr;
+    QObject* attachedVideoOutput = nullptr;
     QRectF lastContentRect;
     QRectF lastSourceRect;
     QStringList events;

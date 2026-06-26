@@ -4,7 +4,7 @@
 #include "predecodeschedulestate.h"
 
 namespace {
-bool validPredecodeScheduleContext(const kiriview::PredecodeScheduleContext &context)
+bool validPredecodeScheduleContext(const kiriview::PredecodeScheduleContext& context)
 {
     return !context.currentLocation.isEmpty();
 }

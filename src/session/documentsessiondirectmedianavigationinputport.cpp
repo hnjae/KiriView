@@ -7,7 +7,7 @@
 
 namespace kiriview {
 DocumentSessionDirectMediaNavigationInputPort::DocumentSessionDirectMediaNavigationInputPort(
-    const DocumentSessionState *state)
+    const DocumentSessionState* state)
     : m_state(state)
 {
 }

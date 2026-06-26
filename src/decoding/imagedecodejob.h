@@ -20,20 +20,21 @@ class ImageDecodeJob final : public QObject
 {
 public:
     using DecodedCallback = std::function<void(ImageDecodeRequest, DecodedImageResult)>;
-    using LoadErrorCallback = std::function<void(const ImageDecodeRequest &, const QString &)>;
+    using LoadErrorCallback = std::function<void(const ImageDecodeRequest&, const QString&)>;
     using ThumbnailPreviewCallback
-        = std::function<void(const ImageDecodeRequest &, StaticDisplayImagePayload)>;
+        = std::function<void(const ImageDecodeRequest&, StaticDisplayImagePayload)>;
 
-    struct Callbacks {
+    struct Callbacks
+    {
         DecodedCallback decoded;
         LoadErrorCallback loadError;
         ThumbnailPreviewCallback thumbnailPreview;
     };
 
-    explicit ImageDecodeJob(QObject *parent = nullptr);
-    ImageDecodeJob(QObject *parent, Callbacks callbacks);
-    ImageDecodeJob(QObject *parent, ImageDecodeDependencies dependencies);
-    ImageDecodeJob(QObject *parent, ImageDecodeDependencies dependencies, Callbacks callbacks);
+    explicit ImageDecodeJob(QObject* parent = nullptr);
+    ImageDecodeJob(QObject* parent, Callbacks callbacks);
+    ImageDecodeJob(QObject* parent, ImageDecodeDependencies dependencies);
+    ImageDecodeJob(QObject* parent, ImageDecodeDependencies dependencies, Callbacks callbacks);
 
     void start(ImageDecodeRequest request);
     void cancel();
@@ -41,7 +42,7 @@ public:
 
 private:
     void startThumbnailPreviewLookup(
-        const QByteArray &data, ImageDecodeJobTicket ticket, const ImageDecodeRequest &request);
+        const QByteArray& data, ImageDecodeJobTicket ticket, const ImageDecodeRequest& request);
     void startRawEmbeddedThumbnailPreviewValidation(
         QByteArray data, ImageDecodeJobTicket ticket, ImageDecodeRequest request);
     void startDecode(QByteArray data, ImageDecodeJobTicket ticket, ImageDecodeRequest request);

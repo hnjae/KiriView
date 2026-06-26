@@ -7,13 +7,13 @@
 #include "session/windowtitleprojection.h"
 
 namespace {
-bool imageDocumentPagesArePresent(const kiriview::ImageDocumentPageActiveNavigationSnapshot &input)
+bool imageDocumentPagesArePresent(const kiriview::ImageDocumentPageActiveNavigationSnapshot& input)
 {
     return input.currentNumber > 0 || input.count > 0;
 }
 
 kiriview::ActiveNavigationSourceKind sourceKindForInput(
-    const kiriview::DocumentSessionPublicProjectionInput &input)
+    const kiriview::DocumentSessionPublicProjectionInput& input)
 {
     switch (input.documentKind) {
     case kiriview::DocumentSessionKind::Video:
@@ -34,7 +34,7 @@ kiriview::ActiveNavigationSourceKind sourceKindForInput(
     return kiriview::ActiveNavigationSourceKind::None;
 }
 
-QSize directMediaSizeForInput(const kiriview::DocumentSessionPublicProjectionInput &input,
+QSize directMediaSizeForInput(const kiriview::DocumentSessionPublicProjectionInput& input,
     kiriview::ActiveNavigationSourceKind sourceKind)
 {
     if (sourceKind != kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia) {
@@ -53,7 +53,7 @@ QSize directMediaSizeForInput(const kiriview::DocumentSessionPublicProjectionInp
     return {};
 }
 
-QString windowTitleFileNameForInput(const kiriview::DocumentSessionPublicProjectionInput &input)
+QString windowTitleFileNameForInput(const kiriview::DocumentSessionPublicProjectionInput& input)
 {
     switch (input.documentKind) {
     case kiriview::DocumentSessionKind::Image:
@@ -68,7 +68,7 @@ QString windowTitleFileNameForInput(const kiriview::DocumentSessionPublicProject
 }
 
 bool displayedFileDeletionAvailableForInput(
-    const kiriview::DocumentSessionPublicProjectionInput &input)
+    const kiriview::DocumentSessionPublicProjectionInput& input)
 {
     if (input.fileDeletionInProgress) {
         return false;
@@ -90,38 +90,38 @@ bool displayedFileDeletionAvailableForInput(
     return false;
 }
 
-bool activeImageReadyForInput(const kiriview::DocumentSessionPublicSnapshotInput &input)
+bool activeImageReadyForInput(const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
     return input.session.documentKind == kiriview::DocumentSessionKind::Image
         && input.image.readyForInformation && !input.image.unsupportedOpenedCollectionVideo;
 }
 
 bool activeImageOpenedCollectionScopeActiveForInput(
-    const kiriview::DocumentSessionPublicSnapshotInput &input)
+    const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
     return input.session.documentKind == kiriview::DocumentSessionKind::Image
         && input.image.openedCollectionScopeActive;
 }
 
 bool activeImageRightToLeftReadingActiveForInput(
-    const kiriview::DocumentSessionPublicSnapshotInput &input)
+    const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
     return input.session.documentKind == kiriview::DocumentSessionKind::Image
         && input.image.rightToLeftReadingEnabled && input.image.rightToLeftReadingAvailable;
 }
 
-bool activeVideoReadyForInput(const kiriview::DocumentSessionPublicSnapshotInput &input)
+bool activeVideoReadyForInput(const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
     return input.session.documentKind == kiriview::DocumentSessionKind::Video && input.video.ready;
 }
 
-bool activeVideoControlsReadyForInput(const kiriview::DocumentSessionPublicSnapshotInput &input)
+bool activeVideoControlsReadyForInput(const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
     return activeVideoReadyForInput(input) && input.video.hasVideo;
 }
 
 kiriview::DocumentSessionActionAvailabilityFacts actionAvailabilityFactsForInput(
-    const kiriview::DocumentSessionPublicSnapshotInput &input)
+    const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
     if (input.session.documentKind != kiriview::DocumentSessionKind::Image) {
         return {};
@@ -140,7 +140,7 @@ kiriview::DocumentSessionActionAvailabilityFacts actionAvailabilityFactsForInput
     };
 }
 
-QString errorStringForInput(const kiriview::DocumentSessionPublicSnapshotInput &input)
+QString errorStringForInput(const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
     if (!input.session.sessionErrorString.isEmpty()) {
         return input.session.sessionErrorString;
@@ -159,7 +159,7 @@ QString errorStringForInput(const kiriview::DocumentSessionPublicSnapshotInput &
 }
 
 kiriview::DocumentSessionPublicProjectionInput projectionInputForSnapshotInput(
-    const kiriview::DocumentSessionPublicSnapshotInput &input)
+    const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
     return kiriview::DocumentSessionPublicProjectionInput {
         input.session.documentKind,
@@ -181,7 +181,7 @@ kiriview::DocumentSessionPublicProjectionInput projectionInputForSnapshotInput(
 }
 
 kiriview::MediaInformationProjectionInput mediaInformationInputForSnapshotInput(
-    const kiriview::DocumentSessionPublicSnapshotInput &input)
+    const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
     if (input.mediaInformation.inputRevision != 0) {
         return input.mediaInformation;
@@ -227,7 +227,7 @@ DocumentSessionPublicProjection projectDocumentSessionPublicState(
 }
 
 DocumentSessionPublicSnapshot projectDocumentSessionPublicSnapshot(
-    const DocumentSessionPublicSnapshotInput &input, quint64 revision)
+    const DocumentSessionPublicSnapshotInput& input, quint64 revision)
 {
     DocumentSessionPublicSnapshot snapshot;
     snapshot.revision = revision;

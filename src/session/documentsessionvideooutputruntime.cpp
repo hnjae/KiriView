@@ -8,7 +8,7 @@
 namespace {
 QString surfaceClaimToken(quint64 revision) { return QString::number(revision); }
 
-std::optional<quint64> surfaceClaimRevisionFromToken(const QString &token)
+std::optional<quint64> surfaceClaimRevisionFromToken(const QString& token)
 {
     bool ok = false;
     const quint64 revision = token.toULongLong(&ok);
@@ -28,8 +28,8 @@ QString DocumentSessionVideoOutputRuntime::nextSurfaceClaimToken()
 }
 
 bool DocumentSessionVideoOutputRuntime::reportSurfaceClaim(
-    const DocumentSessionVideoOutputClaimReport &report,
-    const DocumentSessionVideoOutputAttachmentPort &attachmentPort)
+    const DocumentSessionVideoOutputClaimReport& report,
+    const DocumentSessionVideoOutputAttachmentPort& attachmentPort)
 {
     const std::optional<quint64> claimRevision = surfaceClaimRevisionFromToken(report.claimToken);
     if (!claimRevision || report.surfaceOwner == nullptr) {
@@ -65,7 +65,7 @@ bool DocumentSessionVideoOutputRuntime::reportSurfaceClaim(
 }
 
 void DocumentSessionVideoOutputRuntime::clearAttachment(
-    const DocumentSessionVideoOutputAttachmentPort &attachmentPort)
+    const DocumentSessionVideoOutputAttachmentPort& attachmentPort)
 {
     clear();
     if (attachmentPort.setVideoOutput) {

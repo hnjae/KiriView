@@ -16,7 +16,7 @@ using kiriview::TestSupport::hasOperationTypes;
 using kiriview::TestSupport::operationAt;
 using kiriview::TestSupport::operationTypes;
 
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 }
 
 class TestImageOpenSourceLoadWorkflow : public QObject

@@ -25,14 +25,15 @@ public:
     using PageNavigationChangedCallback = std::function<void()>;
     using DeletionInProgressCallback = std::function<bool()>;
 
-    struct Callbacks {
+    struct Callbacks
+    {
         NavigationPlanCallback navigationPlan;
         PageNavigationChangedCallback pageNavigationChanged;
         DeletionInProgressCallback deletionInProgress;
     };
 
     ImageDocumentPageNavigationService(
-        QObject *parent, ImageDocumentPageCandidateProvider candidateProvider, Callbacks callbacks);
+        QObject* parent, ImageDocumentPageCandidateProvider candidateProvider, Callbacks callbacks);
 
     int currentPageNumber() const;
     int pageCount() const;
@@ -43,7 +44,7 @@ public:
 
     void openAdjacentPage(std::optional<ImageDocumentPageCandidateListContext> context,
         NavigationDirection direction);
-    void openAdjacentContainer(const QUrl &currentContainerUrl, NavigationDirection direction);
+    void openAdjacentContainer(const QUrl& currentContainerUrl, NavigationDirection direction);
     void updatePageNavigation(std::optional<ImageDocumentPageCandidateListContext> context);
 
     void cancelNavigation();

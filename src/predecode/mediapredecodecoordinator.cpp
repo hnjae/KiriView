@@ -14,12 +14,12 @@
 
 namespace kiriview {
 MediaPredecodeCoordinator::MediaPredecodeCoordinator(
-    QObject *parent, MediaPredecodeDependencies dependencies)
+    QObject* parent, MediaPredecodeDependencies dependencies)
     : QObject(parent)
     , m_loadController(this, std::move(dependencies.imageDecode), dependencies.cacheByteBudget)
     , m_scheduleRuntime(
           this, m_loadController,
-          [this](const PredecodePendingSchedule &schedule) { startPredecodeWindow(schedule); }, {},
+          [this](const PredecodePendingSchedule& schedule) { startPredecodeWindow(schedule); }, {},
           std::move(dependencies.powerSaver), std::move(dependencies.timerScheduler))
 {
 }
@@ -45,7 +45,7 @@ void MediaPredecodeCoordinator::schedule(Context context)
 }
 
 void MediaPredecodeCoordinator::cacheDisplayedImages(
-    const std::vector<DisplayedPredecodeImage> &images)
+    const std::vector<DisplayedPredecodeImage>& images)
 {
     m_loadController.cacheDisplayedImages(images);
 }
@@ -60,7 +60,7 @@ bool MediaPredecodeCoordinator::powerSaverEnabled() const
     return m_scheduleRuntime.powerSaverEnabled();
 }
 
-void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSchedule &schedule)
+void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSchedule& schedule)
 {
     if (!m_scheduleRuntime.accepts(schedule.generation)) {
         qCDebug(kiriviewPredecodeLog) << "media predecode window ignored"
@@ -70,9 +70,9 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
         return;
     }
 
-    const std::vector<DirectMediaNavigationCandidate> *candidates
+    const std::vector<DirectMediaNavigationCandidate>* candidates
         = mediaPredecodeScheduleCandidates(schedule);
-    const MediaPredecodeEligibilitySnapshot *eligibility
+    const MediaPredecodeEligibilitySnapshot* eligibility
         = mediaPredecodeScheduleEligibility(schedule);
     if (candidates == nullptr || eligibility == nullptr) {
         qCDebug(kiriviewPredecodeLog) << "media predecode window ignored"
@@ -116,7 +116,7 @@ void MediaPredecodeCoordinator::clear()
     m_loadController.clear();
 }
 
-std::optional<PredecodedImage> MediaPredecodeCoordinator::findPredecodedImage(const QUrl &url) const
+std::optional<PredecodedImage> MediaPredecodeCoordinator::findPredecodedImage(const QUrl& url) const
 {
     return m_loadController.findPredecodedImage(url);
 }

@@ -18,19 +18,19 @@ public:
     using ChangeCallback = std::function<void()>;
 
     explicit ApplicationMenuPresentationRuntime(
-        ApplicationActionHost &host, ChangeCallback changeCallback = {});
+        ApplicationActionHost& host, ChangeCallback changeCallback = {});
 
     MenuPresentation menuPresentation() const;
     void setMenuPresentation(MenuPresentation presentation);
-    void bindShowMenuBarAction(QAction *action);
+    void bindShowMenuBarAction(QAction* action);
     void syncFromSettings();
     void syncShowMenuBarAction();
 
 private:
-    ApplicationActionHost &m_host;
+    ApplicationActionHost& m_host;
     ChangeCallback m_changeCallback;
     ApplicationMenuPresentationState m_state;
-    QAction *m_showMenuBarAction = nullptr;
+    QAction* m_showMenuBarAction = nullptr;
 };
 }
 

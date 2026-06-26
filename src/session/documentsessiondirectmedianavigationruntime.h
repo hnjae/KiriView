@@ -15,20 +15,23 @@
 class QObject;
 
 namespace kiriview {
-struct DocumentSessionDirectMediaNavigationCandidatesResult {
+struct DocumentSessionDirectMediaNavigationCandidatesResult
+{
     std::vector<DirectMediaNavigationCandidate> candidates;
     bool succeeded = false;
     QString errorString;
 };
 
-struct DocumentSessionDirectMediaNavigationRefreshResult {
+struct DocumentSessionDirectMediaNavigationRefreshResult
+{
     std::vector<DirectMediaNavigationCandidate> candidates;
     DirectMediaNavigationBoundaryState boundaryState;
     bool succeeded = false;
     QString errorString;
 };
 
-struct DocumentSessionDirectMediaNavigationOpenResult {
+struct DocumentSessionDirectMediaNavigationOpenResult
+{
     std::vector<DirectMediaNavigationCandidate> candidates;
     DirectMediaNavigationOpenPlan plan;
     bool succeeded = false;
@@ -38,7 +41,7 @@ struct DocumentSessionDirectMediaNavigationOpenResult {
 class DocumentSessionDirectMediaNavigationRuntime final
 {
 public:
-    using ScopeAccepted = std::function<bool(const DirectMediaScope &)>;
+    using ScopeAccepted = std::function<bool(const DirectMediaScope&)>;
     using CandidatesCallback
         = std::function<void(DocumentSessionDirectMediaNavigationCandidatesResult)>;
     using RefreshCallback = std::function<void(DocumentSessionDirectMediaNavigationRefreshResult)>;
@@ -48,21 +51,21 @@ public:
         DirectMediaNavigationCandidateProvider provider = {});
     ~DocumentSessionDirectMediaNavigationRuntime();
 
-    void loadCandidates(QObject *receiver, const DirectMediaScope &scope,
+    void loadCandidates(QObject* receiver, const DirectMediaScope& scope,
         ScopeAccepted scopeAccepted, CandidatesCallback callback);
-    void refresh(QObject *receiver, const DirectMediaScope &scope, ScopeAccepted scopeAccepted,
+    void refresh(QObject* receiver, const DirectMediaScope& scope, ScopeAccepted scopeAccepted,
         RefreshCallback callback);
-    void open(QObject *receiver, const DirectMediaScope &scope,
+    void open(QObject* receiver, const DirectMediaScope& scope,
         DirectMediaNavigationOpenRequest request, ScopeAccepted scopeAccepted,
         OpenCallback callback);
     void cancel();
 
 private:
-    void startLoad(QObject *receiver, const DirectMediaScope &scope, ScopeAccepted scopeAccepted,
+    void startLoad(QObject* receiver, const DirectMediaScope& scope, ScopeAccepted scopeAccepted,
         CandidatesCallback callback);
     void finish(DocumentSessionDirectMediaNavigationLoad load,
         DocumentSessionDirectMediaNavigationCandidatesResult result,
-        const ScopeAccepted &scopeAccepted, const CandidatesCallback &callback);
+        const ScopeAccepted& scopeAccepted, const CandidatesCallback& callback);
 
     DirectMediaNavigationCandidateProvider m_provider;
     ImageIoJob m_job;

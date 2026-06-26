@@ -47,7 +47,7 @@ using kiriview::TestSupport::testImage;
 using FakeCandidateProvider = kiriview::TestSupport::FakeImageDocumentPageCandidateProvider;
 
 std::unique_ptr<KiriDocumentSession> createSession(
-    QObject *parent, FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
+    QObject* parent, FakeCandidateProvider& candidateProvider, ManualImageDataLoader& dataLoader)
 {
     kiriview::KiriDocumentSessionDependencies dependencies;
     dependencies.imageDocument = imageDocumentRuntimeDependencyOverridesFor(
@@ -57,9 +57,9 @@ std::unique_ptr<KiriDocumentSession> createSession(
     return session;
 }
 
-std::unique_ptr<KiriDocumentSession> createSession(QObject *parent,
-    FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
-    const QImage &decodedImage)
+std::unique_ptr<KiriDocumentSession> createSession(QObject* parent,
+    FakeCandidateProvider& candidateProvider, ManualImageDataLoader& dataLoader,
+    const QImage& decodedImage)
 {
     kiriview::KiriDocumentSessionDependencies dependencies;
     dependencies.imageDocument = imageDocumentRuntimeDependencyOverridesFor(
@@ -69,22 +69,22 @@ std::unique_ptr<KiriDocumentSession> createSession(QObject *parent,
     return session;
 }
 
-std::unique_ptr<KiriDocumentSession> createRealDecodeSession(QObject *parent)
+std::unique_ptr<KiriDocumentSession> createRealDecodeSession(QObject* parent)
 {
     auto session = std::make_unique<KiriDocumentSession>(parent);
     session->imageDocument()->setViewportSize(QSizeF(400.0, 300.0));
     return session;
 }
 
-QString fixturePath(const QString &fileName)
+QString fixturePath(const QString& fileName)
 {
     return QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/") + fileName;
 }
 
-void loadReady(KiriDocumentSession &session, ManualImageDataLoader &dataLoader,
-    const QUrl &sourceUrl, const QUrl &loadUrl)
+void loadReady(KiriDocumentSession& session, ManualImageDataLoader& dataLoader,
+    const QUrl& sourceUrl, const QUrl& loadUrl)
 {
-    KiriImageDocument &document = *session.imageDocument();
+    KiriImageDocument& document = *session.imageDocument();
     QSignalSpy scopeSpy(&document, &KiriImageDocument::imageDocumentSourceScopeChanged);
 
     session.setSourceUrl(sourceUrl);
@@ -96,7 +96,7 @@ void loadReady(KiriDocumentSession &session, ManualImageDataLoader &dataLoader,
 
 bool approximatelyEqual(qreal left, qreal right) { return std::abs(left - right) < 0.001; }
 
-void comparePoint(const QPointF &actual, const QPointF &expected)
+void comparePoint(const QPointF& actual, const QPointF& expected)
 {
     QVERIFY2(approximatelyEqual(actual.x(), expected.x()),
         qPrintable(QStringLiteral("x=%1 expected=%2").arg(actual.x()).arg(expected.x())));
@@ -104,9 +104,9 @@ void comparePoint(const QPointF &actual, const QPointF &expected)
         qPrintable(QStringLiteral("y=%1 expected=%2").arg(actual.y()).arg(expected.y())));
 }
 
-std::unique_ptr<KiriDocumentSession> createReadyLargeImageSession(QObject *parent,
-    FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
-    const QUrl &imageUrl)
+std::unique_ptr<KiriDocumentSession> createReadyLargeImageSession(QObject* parent,
+    FakeCandidateProvider& candidateProvider, ManualImageDataLoader& dataLoader,
+    const QUrl& imageUrl)
 {
     candidateProvider.setDirectoryImages(
         localUrl(QStringLiteral("/images/")), { imageDocumentPageCandidate(imageUrl) });
@@ -119,7 +119,7 @@ std::unique_ptr<KiriDocumentSession> createReadyLargeImageSession(QObject *paren
 
 void TestKiriImageDocument::sourceUrlPropertyIsReadOnlyObservation()
 {
-    const QMetaObject &metaObject = KiriImageDocument::staticMetaObject;
+    const QMetaObject& metaObject = KiriImageDocument::staticMetaObject;
     const int sourceUrlIndex = metaObject.indexOfProperty("sourceUrl");
     QVERIFY(sourceUrlIndex >= 0);
 
@@ -130,7 +130,7 @@ void TestKiriImageDocument::sourceUrlPropertyIsReadOnlyObservation()
 
 void TestKiriImageDocument::displaySourceFacadeObjectsAreStableReadOnlyObservations()
 {
-    const QMetaObject &metaObject = KiriImageDocument::staticMetaObject;
+    const QMetaObject& metaObject = KiriImageDocument::staticMetaObject;
     const int primaryIndex = metaObject.indexOfProperty("primaryDisplaySource");
     const int secondaryIndex = metaObject.indexOfProperty("secondaryDisplaySource");
     QVERIFY(primaryIndex >= 0);
@@ -148,9 +148,9 @@ void TestKiriImageDocument::displaySourceFacadeObjectsAreStableReadOnlyObservati
     std::unique_ptr<KiriDocumentSession> session
         = createSession(this, candidateProvider, dataLoader);
 
-    KiriImageDocument &document = *session->imageDocument();
-    KiriImageDisplaySource *primary = document.primaryDisplaySource();
-    KiriImageDisplaySource *secondary = document.secondaryDisplaySource();
+    KiriImageDocument& document = *session->imageDocument();
+    KiriImageDisplaySource* primary = document.primaryDisplaySource();
+    KiriImageDisplaySource* secondary = document.secondaryDisplaySource();
     QVERIFY(primary != nullptr);
     QVERIFY(secondary != nullptr);
     QCOMPARE(primary, document.primaryDisplaySource());
@@ -192,8 +192,8 @@ void TestKiriImageDocument::animatedFixturePlaybackUpdatesPrimaryDisplaySource()
     QVERIFY2(QFile::exists(path), qPrintable(path));
 
     std::unique_ptr<KiriDocumentSession> session = createRealDecodeSession(this);
-    KiriImageDocument &document = *session->imageDocument();
-    KiriImageDisplaySource *primary = document.primaryDisplaySource();
+    KiriImageDocument& document = *session->imageDocument();
+    KiriImageDisplaySource* primary = document.primaryDisplaySource();
     QVERIFY(primary != nullptr);
     QSignalSpy primarySpy(primary, &KiriImageDisplaySource::changed);
 
@@ -285,7 +285,7 @@ void TestKiriImageDocument::manualZoomAtCenterKeepsCenterAnchored()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     std::unique_ptr<KiriDocumentSession> session
         = createReadyLargeImageSession(this, candidateProvider, dataLoader, imageUrl);
-    KiriImageDocument &document = *session->imageDocument();
+    KiriImageDocument& document = *session->imageDocument();
 
     QCOMPARE(document.displaySize(), QSizeF(300.0, 300.0));
     QCOMPARE(document.viewportContentPosition(), QPointF());
@@ -305,7 +305,7 @@ void TestKiriImageDocument::viewportPanAndScanCommandsUpdateContentPosition()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     std::unique_ptr<KiriDocumentSession> session
         = createReadyLargeImageSession(this, candidateProvider, dataLoader, imageUrl);
-    KiriImageDocument &document = *session->imageDocument();
+    KiriImageDocument& document = *session->imageDocument();
 
     QVERIFY(document.requestActualSizeAtCenter());
     QVERIFY(document.viewportPannable());
@@ -339,7 +339,7 @@ void TestKiriImageDocument::nextDisplayedImageCanStartAtFinalScanPosition()
         { imageDocumentPageCandidate(firstImageUrl), imageDocumentPageCandidate(secondImageUrl) });
     std::unique_ptr<KiriDocumentSession> session
         = createSession(this, candidateProvider, dataLoader, testImage(800, 800));
-    KiriImageDocument &document = *session->imageDocument();
+    KiriImageDocument& document = *session->imageDocument();
 
     loadReady(*session, dataLoader, archiveUrl, firstImageUrl);
     QVERIFY(document.requestActualSizeAtCenter());

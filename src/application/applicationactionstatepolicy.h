@@ -10,7 +10,8 @@
 #include <QtGlobal>
 
 namespace kiriview::ApplicationActions {
-struct ApplicationActionStateInput {
+struct ApplicationActionStateInput
+{
     quint64 uiGateRevision = 0;
     bool helpActionsEnabled = false;
     bool readyActionsEnabled = false;
@@ -55,7 +56,8 @@ struct ApplicationActionStateInput {
     qint64 videoDuration = 0;
 };
 
-struct ApplicationActionState {
+struct ApplicationActionState
+{
     bool actionEnabled = true;
     bool placementEnabled = true;
     bool checkable = false;
@@ -63,12 +65,12 @@ struct ApplicationActionState {
 };
 
 ApplicationActionState applicationActionState(
-    ActionId actionId, const ApplicationActionStateInput &input);
-QString applicationActionMenuText(ActionId actionId, const ApplicationActionStateInput &input);
+    ActionId actionId, const ApplicationActionStateInput& input);
+QString applicationActionMenuText(ActionId actionId, const ApplicationActionStateInput& input);
 QString applicationActionToolbarText(ActionId actionId);
 QString applicationActionToolbarTooltipText(ActionId actionId);
 bool applicationShortcutsEnabledForScope(
-    const ApplicationActionStateInput &input, ImageShortcutScope scope);
+    const ApplicationActionStateInput& input, ImageShortcutScope scope);
 }
 
 #endif

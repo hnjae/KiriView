@@ -16,9 +16,9 @@
 #include <utility>
 
 namespace {
-bool imageDocumentPageNavigationScopeActive(const kiriview::ImageDocumentState &state)
+bool imageDocumentPageNavigationScopeActive(const kiriview::ImageDocumentState& state)
 {
-    const kiriview::DisplayedImageLocation &location = state.displayedImageLocation();
+    const kiriview::DisplayedImageLocation& location = state.displayedImageLocation();
     if (!kiriview::displayedLocationIsInsideOpenedCollectionScope(location)) {
         return false;
     }
@@ -29,8 +29,8 @@ bool imageDocumentPageNavigationScopeActive(const kiriview::ImageDocumentState &
 }
 
 std::optional<kiriview::ImageDocumentPageCandidateListContext> navigationCandidateContext(
-    const kiriview::ImageDocumentState &state,
-    const kiriview::ImagePageSurfaceController &pageSurfaceController)
+    const kiriview::ImageDocumentState& state,
+    const kiriview::ImagePageSurfaceController& pageSurfaceController)
 {
     if (!pageSurfaceController.hasImage() && !state.unsupportedOpenedCollectionVideo()) {
         return std::nullopt;
@@ -46,10 +46,10 @@ std::optional<kiriview::ImageDocumentPageCandidateListContext> navigationCandida
 }
 
 namespace kiriview {
-ImageDocumentNavigationController::ImageDocumentNavigationController(ImageDocumentState &state,
-    ImagePageSurfaceController &pageSurfaceController,
-    ImageDocumentPageNavigationService &navigationService,
-    ImageSpreadPresentationController &spreadController, RuntimePlanCallback runtimePlanCallback)
+ImageDocumentNavigationController::ImageDocumentNavigationController(ImageDocumentState& state,
+    ImagePageSurfaceController& pageSurfaceController,
+    ImageDocumentPageNavigationService& navigationService,
+    ImageSpreadPresentationController& spreadController, RuntimePlanCallback runtimePlanCallback)
     : m_state(state)
     , m_pageSurfaceController(pageSurfaceController)
     , m_navigationService(navigationService)

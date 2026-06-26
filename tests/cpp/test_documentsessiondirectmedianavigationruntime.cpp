@@ -29,15 +29,16 @@ private Q_SLOTS:
 };
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl& url)
 {
     return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
-struct ManualDirectMediaNavigationCandidateLoad {
-    QObject *object = nullptr;
+struct ManualDirectMediaNavigationCandidateLoad
+{
+    QObject* object = nullptr;
     QUrl parentUrl;
     kiriview::DirectMediaNavigationCandidatesCallback callback;
     kiriview::ErrorCallback errorCallback;
@@ -51,7 +52,7 @@ public:
     kiriview::DirectMediaNavigationCandidateProvider provider()
     {
         return kiriview::DirectMediaNavigationCandidateProvider {
-            [this](QObject *receiver, QUrl parentUrl,
+            [this](QObject* receiver, QUrl parentUrl,
                 kiriview::DirectMediaNavigationCandidatesCallback callback,
                 kiriview::ErrorCallback errorCallback) {
                 auto load = std::make_shared<ManualDirectMediaNavigationCandidateLoad>();
@@ -69,7 +70,7 @@ public:
 
     std::size_t loadCount() const { return m_loads.size(); }
 
-    ManualDirectMediaNavigationCandidateLoad &loadAt(std::size_t index)
+    ManualDirectMediaNavigationCandidateLoad& loadAt(std::size_t index)
     {
         return *m_loads.at(index);
     }
@@ -77,15 +78,15 @@ public:
     void deliverIgnoringCancellation(
         std::size_t index, std::vector<kiriview::DirectMediaNavigationCandidate> candidates)
     {
-        ManualDirectMediaNavigationCandidateLoad &load = loadAt(index);
+        ManualDirectMediaNavigationCandidateLoad& load = loadAt(index);
         if (load.callback) {
             load.callback(std::move(candidates));
         }
     }
 
-    void deliverErrorIgnoringCancellation(std::size_t index, const QString &errorString)
+    void deliverErrorIgnoringCancellation(std::size_t index, const QString& errorString)
     {
-        ManualDirectMediaNavigationCandidateLoad &load = loadAt(index);
+        ManualDirectMediaNavigationCandidateLoad& load = loadAt(index);
         if (load.errorCallback) {
             load.errorCallback(errorString);
         }
@@ -95,7 +96,8 @@ private:
     std::vector<std::shared_ptr<ManualDirectMediaNavigationCandidateLoad>> m_loads;
 };
 
-struct RuntimeFixture {
+struct RuntimeFixture
+{
     QObject receiver;
     ManualDirectMediaNavigationCandidateProvider provider;
     kiriview::DocumentSessionDirectMediaNavigationRuntime runtime { provider.provider() };
@@ -103,10 +105,10 @@ struct RuntimeFixture {
     kiriview::DocumentSessionDirectMediaNavigationCandidatesResult result;
     bool acceptScope = true;
 
-    void load(const kiriview::DirectMediaScope &scope)
+    void load(const kiriview::DirectMediaScope& scope)
     {
         runtime.loadCandidates(
-            &receiver, scope, [this](const kiriview::DirectMediaScope &) { return acceptScope; },
+            &receiver, scope, [this](const kiriview::DirectMediaScope&) { return acceptScope; },
             [this](kiriview::DocumentSessionDirectMediaNavigationCandidatesResult loadResult) {
                 ++completionCount;
                 result = std::move(loadResult);
@@ -114,7 +116,7 @@ struct RuntimeFixture {
     }
 };
 
-kiriview::DirectMediaScope directMediaScope(const QUrl &currentUrl)
+kiriview::DirectMediaScope directMediaScope(const QUrl& currentUrl)
 {
     return kiriview::DirectMediaScope {
         currentUrl,
@@ -162,7 +164,7 @@ void TestDocumentSessionDirectMediaNavigationRuntime::refreshPublishesBoundaryPl
 
     fixture.runtime.refresh(
         &fixture.receiver, directMediaScope(currentUrl),
-        [](const kiriview::DirectMediaScope &) { return true; },
+        [](const kiriview::DirectMediaScope&) { return true; },
         [&fixture, &result](
             kiriview::DocumentSessionDirectMediaNavigationRefreshResult loadResult) {
             ++fixture.completionCount;
@@ -191,7 +193,7 @@ void TestDocumentSessionDirectMediaNavigationRuntime::openPublishesTargetPlanAnd
     fixture.runtime.open(
         &fixture.receiver, directMediaScope(currentUrl),
         kiriview::nextDirectMediaNavigationOpenRequest(),
-        [](const kiriview::DirectMediaScope &) { return true; },
+        [](const kiriview::DirectMediaScope&) { return true; },
         [&fixture, &result](kiriview::DocumentSessionDirectMediaNavigationOpenResult loadResult) {
             ++fixture.completionCount;
             result = std::move(loadResult);
@@ -217,7 +219,7 @@ void TestDocumentSessionDirectMediaNavigationRuntime::failedOpenPublishesUnknown
     fixture.runtime.open(
         &fixture.receiver, directMediaScope(currentUrl),
         kiriview::nextDirectMediaNavigationOpenRequest(),
-        [](const kiriview::DirectMediaScope &) { return true; },
+        [](const kiriview::DirectMediaScope&) { return true; },
         [&fixture, &result](kiriview::DocumentSessionDirectMediaNavigationOpenResult loadResult) {
             ++fixture.completionCount;
             result = std::move(loadResult);
@@ -277,7 +279,7 @@ void TestDocumentSessionDirectMediaNavigationRuntime::
 
     fixture.runtime.loadCandidates(
         &fixture.receiver, directMediaScope(currentUrl),
-        [confirmedUrl](const kiriview::DirectMediaScope &scope) {
+        [confirmedUrl](const kiriview::DirectMediaScope& scope) {
             return kiriview::sameNormalizedUrl(scope.currentUrl, confirmedUrl)
                 && scope.generation == 7;
         },

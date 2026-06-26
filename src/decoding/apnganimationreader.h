@@ -19,7 +19,8 @@ enum class ApngOpenStatus {
     Error,
 };
 
-struct ApngOpenResult {
+struct ApngOpenResult
+{
     ApngOpenStatus status = ApngOpenStatus::NotApng;
     QImage firstFrame;
     int firstFrameDelay = 0;
@@ -34,11 +35,11 @@ public:
     ApngAnimationReader();
     ~ApngAnimationReader();
 
-    ApngAnimationReader(const ApngAnimationReader &) = delete;
-    ApngAnimationReader &operator=(const ApngAnimationReader &) = delete;
+    ApngAnimationReader(const ApngAnimationReader&) = delete;
+    ApngAnimationReader& operator=(const ApngAnimationReader&) = delete;
 
     ApngOpenResult open(QByteArray data);
-    std::optional<AnimationFrame> readNextFrame(QString *errorString);
+    std::optional<AnimationFrame> readNextFrame(QString* errorString);
     bool hasMoreFrames() const;
 
 private:

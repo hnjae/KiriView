@@ -39,12 +39,12 @@ class ImageDocumentRuntime final
 {
 public:
     using RenderContextProvider = std::function<ImageDocumentRenderContext()>;
-    using ChangeCallback = std::function<void(const std::vector<ImageDocumentChange> &)>;
-    using FileDeletionFailedCallback = std::function<void(const QString &)>;
-    using UnsupportedOpenedCollectionVideoEnteredCallback = std::function<void(const QString &)>;
-    using ContainerNavigationBoundaryReachedCallback = std::function<void(const QString &)>;
+    using ChangeCallback = std::function<void(const std::vector<ImageDocumentChange>&)>;
+    using FileDeletionFailedCallback = std::function<void(const QString&)>;
+    using UnsupportedOpenedCollectionVideoEnteredCallback = std::function<void(const QString&)>;
+    using ContainerNavigationBoundaryReachedCallback = std::function<void(const QString&)>;
 
-    ImageDocumentRuntime(QObject *documentObject, RenderContextProvider renderContextProvider,
+    ImageDocumentRuntime(QObject* documentObject, RenderContextProvider renderContextProvider,
         ChangeCallback changeCallback, ImageDocumentRuntimeDependencyOverrides dependencies,
         FileDeletionFailedCallback fileDeletionFailedCallback = {},
         UnsupportedOpenedCollectionVideoEnteredCallback
@@ -54,11 +54,11 @@ public:
     ~ImageDocumentRuntime();
 
     QUrl sourceUrl() const;
-    void setSourceUrl(const QUrl &sourceUrl);
+    void setSourceUrl(const QUrl& sourceUrl);
     ImageDocumentStatus status() const;
     bool loading() const;
     QString errorString() const;
-    const std::optional<ImageLoadFailure> &loadFailure() const;
+    const std::optional<ImageLoadFailure>& loadFailure() const;
     QString windowTitleFileName() const;
     QUrl displayedUrl() const;
     OpenedCollectionScopeLocation displayedOpenedCollectionScope() const;
@@ -66,10 +66,10 @@ public:
     QSize primaryImageSize() const;
     QSize secondaryImageSize() const;
     QSizeF viewportSize() const;
-    void setViewportSize(const QSizeF &viewportSize);
+    void setViewportSize(const QSizeF& viewportSize);
     QPointF viewportContentPosition() const;
-    quint64 requestViewportContentPosition(const QPointF &viewportContentPosition);
-    quint64 requestViewportPanBy(const QPointF &delta);
+    quint64 requestViewportContentPosition(const QPointF& viewportContentPosition);
+    quint64 requestViewportPanBy(const QPointF& delta);
     quint64 requestViewportPanToInitialScanPosition();
     quint64 requestViewportPanToFinalScanPosition();
     quint64 requestViewportScanForward();
@@ -78,10 +78,10 @@ public:
     quint64 requestDisplayedImageInitialContentPosition();
     bool beginViewportCommandApplication(quint64 commandRevision);
     bool completeViewportCommandApplication(
-        quint64 commandRevision, const QPointF &actualContentPosition);
-    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF &actualContentPosition);
+        quint64 commandRevision, const QPointF& actualContentPosition);
+    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF& actualContentPosition);
     bool observeViewportContentPosition(
-        const QPointF &contentPosition, ImageViewportObservationOrigin origin);
+        const QPointF& contentPosition, ImageViewportObservationOrigin origin);
     quint64 viewportCommandRevision() const;
     quint64 viewportAppliedCommandRevision() const;
     quint64 viewportObservationRevision() const;
@@ -100,10 +100,10 @@ public:
     qreal zoomPercent() const;
     void requestManualZoomPercent(qreal zoomPercent);
     bool requestManualZoomPercentAtCenter(qreal zoomPercent);
-    bool requestZoomByStep(qreal stepCount, const QPointF &viewportAnchorPoint);
+    bool requestZoomByStep(qreal stepCount, const QPointF& viewportAnchorPoint);
     bool requestZoomByStepAtCenter(qreal stepCount);
     bool requestActualSizeAtCenter();
-    bool requestToggleFitOrActualSize(const QPointF &viewportPoint);
+    bool requestToggleFitOrActualSize(const QPointF& viewportPoint);
     ImageZoomMode zoomMode() const;
     ImageZoomMode fitModeSelection() const;
     qreal maximumManualZoomPercent() const;
@@ -127,18 +127,18 @@ public:
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
     ImagePresentationTransitionState presentationTransitionState() const;
-    bool viewportPointInsideImage(const QPointF &viewportPoint) const;
-    QPointF nearestImageViewportPoint(const QPointF &viewportPoint) const;
+    bool viewportPointInsideImage(const QPointF& viewportPoint) const;
+    QPointF nearestImageViewportPoint(const QPointF& viewportPoint) const;
     bool unsupportedOpenedCollectionVideo() const;
     std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
-    const EmbeddedMetadata &embeddedMetadata() const;
+    const EmbeddedMetadata& embeddedMetadata() const;
     ImageDisplaySourceProjection displaySourceProjection(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
-    void acknowledgeDisplayImageLoad(DisplayedPageRole role, const QUrl &providerUrl,
-        quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
-    void acknowledgeStillImageDisplayLoad(DisplayedPageRole role, const QUrl &providerUrl,
-        quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
+    void acknowledgeDisplayImageLoad(DisplayedPageRole role, const QUrl& providerUrl,
+        quint64 revision, const QString& sourceIdentity, ImageDisplayLoadOutcome outcome);
+    void acknowledgeStillImageDisplayLoad(DisplayedPageRole role, const QUrl& providerUrl,
+        quint64 revision, const QString& sourceIdentity, ImageDisplayLoadOutcome outcome);
 
     void notify(ImageDocumentChange change);
     void setRenderContextProvider(RenderContextProvider provider);
@@ -159,13 +159,13 @@ public:
 
 private:
     ImageDocumentRenderContext renderContext() const;
-    quint64 requestViewportInteractionContentPosition(const QPointF &contentPosition);
-    bool requestAnchoredManualZoom(qreal zoomPercent, const QPointF &viewportAnchorPoint);
+    quint64 requestViewportInteractionContentPosition(const QPointF& contentPosition);
+    bool requestAnchoredManualZoom(qreal zoomPercent, const QPointF& viewportAnchorPoint);
     ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
     void updateViewportInteractionForPublishedChanges(
-        const std::vector<ImageDocumentChange> &changes);
-    void loadSource(const ImageDocumentSourceLoadRequest &request);
-    void publishChanges(const std::vector<ImageDocumentChange> &changes);
+        const std::vector<ImageDocumentChange>& changes);
+    void loadSource(const ImageDocumentSourceLoadRequest& request);
+    void publishChanges(const std::vector<ImageDocumentChange>& changes);
 
     ImageDocumentChangeBatcher changeBatcher;
     ImageDocumentState state;

@@ -23,12 +23,12 @@
 namespace kiriview::TestSupport {
 namespace Detail {
     template <typename Operation>
-    ImageIoJob startManualIoJob(QObject *receiver, const std::shared_ptr<Operation> &operation)
+    ImageIoJob startManualIoJob(QObject* receiver, const std::shared_ptr<Operation>& operation)
     {
         operation->object = new QObject(receiver);
 
         std::weak_ptr<Operation> weakOperation = operation;
-        ImageIoJob job(operation->object, [weakOperation](QObject *object) {
+        ImageIoJob job(operation->object, [weakOperation](QObject* object) {
             if (std::shared_ptr<Operation> operation = weakOperation.lock()) {
                 operation->canceled = true;
                 operation->object = nullptr;
@@ -42,13 +42,13 @@ namespace Detail {
     }
 
     template <typename Operation, typename Delivery>
-    void finishManualIoJob(const std::shared_ptr<Operation> &operation, Delivery &&delivery)
+    void finishManualIoJob(const std::shared_ptr<Operation>& operation, Delivery&& delivery)
     {
         if (operation == nullptr) {
             return;
         }
 
-        QObject *object = operation->object;
+        QObject* object = operation->object;
         operation->completion.claimAndRun([&]() mutable {
             operation->object = nullptr;
             std::forward<Delivery>(delivery)(*operation);
@@ -97,7 +97,7 @@ public:
     {
         return TimerScheduler {
             [this]() { return m_currentMsec; },
-            [this](QObject *, int intervalMsec,
+            [this](QObject*, int intervalMsec,
                 RuntimeTimerCallback callback) -> std::unique_ptr<RuntimeTimerHandle> {
                 auto timer
                     = std::make_unique<ManualRuntimeTimer>(intervalMsec, std::move(callback));
@@ -109,15 +109,16 @@ public:
 
     void advanceTo(qint64 monotonicMsec) { m_currentMsec = monotonicMsec; }
     std::size_t timerCount() const { return m_timers.size(); }
-    ManualRuntimeTimer &timerAt(std::size_t index) { return *m_timers.at(index); }
+    ManualRuntimeTimer& timerAt(std::size_t index) { return *m_timers.at(index); }
 
 private:
     qint64 m_currentMsec = 0;
-    std::vector<ManualRuntimeTimer *> m_timers;
+    std::vector<ManualRuntimeTimer*> m_timers;
 };
 
-struct ManualImageDataLoad {
-    QObject *object = nullptr;
+struct ManualImageDataLoad
+{
+    QObject* object = nullptr;
     QUrl url;
     OpenedCollectionScopeLocation openedCollectionScope;
     ImageFirstDisplayDecodeContext firstDisplay;
@@ -130,7 +131,7 @@ struct ManualImageDataLoad {
 class ManualImageDataLoader
 {
 public:
-    ImageIoJob start(QObject *receiver, ImageDecodeRequest request, ImageDataCallback callback,
+    ImageIoJob start(QObject* receiver, ImageDecodeRequest request, ImageDataCallback callback,
         ErrorCallback errorCallback)
     {
         auto load = std::make_shared<ManualImageDataLoad>();
@@ -149,21 +150,21 @@ public:
 
     bool empty() const { return m_loads.empty(); }
 
-    ManualImageDataLoad &frontLoad() { return *m_loads.front(); }
+    ManualImageDataLoad& frontLoad() { return *m_loads.front(); }
 
-    const ManualImageDataLoad &frontLoad() const { return *m_loads.front(); }
+    const ManualImageDataLoad& frontLoad() const { return *m_loads.front(); }
 
-    ManualImageDataLoad &backLoad() { return *m_loads.back(); }
+    ManualImageDataLoad& backLoad() { return *m_loads.back(); }
 
-    const ManualImageDataLoad &backLoad() const { return *m_loads.back(); }
+    const ManualImageDataLoad& backLoad() const { return *m_loads.back(); }
 
     void finishFrontLoad(QByteArray data) { finishDataLoad(m_loads.front(), std::move(data)); }
 
     void finishBackLoad(QByteArray data) { finishDataLoad(m_loads.back(), std::move(data)); }
 
-    bool finishOldestActiveLoadForUrl(const QUrl &url, QByteArray data)
+    bool finishOldestActiveLoadForUrl(const QUrl& url, QByteArray data)
     {
-        for (const std::shared_ptr<ManualImageDataLoad> &load : m_loads) {
+        for (const std::shared_ptr<ManualImageDataLoad>& load : m_loads) {
             if (load != nullptr && load->object != nullptr && load->url == url) {
                 finishDataLoad(load, std::move(data));
                 return true;
@@ -173,12 +174,12 @@ public:
         return false;
     }
 
-    void failFrontLoad(const QString &errorString)
+    void failFrontLoad(const QString& errorString)
     {
         finishLoadError(m_loads.front(), errorString);
     }
 
-    void failBackLoad(const QString &errorString) { finishLoadError(m_loads.back(), errorString); }
+    void failBackLoad(const QString& errorString) { finishLoadError(m_loads.back(), errorString); }
 
     void deliverFrontLoadDataIgnoringCancellation(QByteArray data)
     {
@@ -187,29 +188,29 @@ public:
 
 private:
     template <typename Delivery>
-    static void finishLoad(const std::shared_ptr<ManualImageDataLoad> &load, Delivery &&delivery)
+    static void finishLoad(const std::shared_ptr<ManualImageDataLoad>& load, Delivery&& delivery)
     {
         Detail::finishManualIoJob(load, std::forward<Delivery>(delivery));
     }
 
-    static void finishDataLoad(const std::shared_ptr<ManualImageDataLoad> &load, QByteArray data)
+    static void finishDataLoad(const std::shared_ptr<ManualImageDataLoad>& load, QByteArray data)
     {
-        finishLoad(load, [data = std::move(data)](ManualImageDataLoad &load) mutable {
+        finishLoad(load, [data = std::move(data)](ManualImageDataLoad& load) mutable {
             deliverData(load, std::move(data));
         });
     }
 
     static void finishLoadError(
-        const std::shared_ptr<ManualImageDataLoad> &load, const QString &errorString)
+        const std::shared_ptr<ManualImageDataLoad>& load, const QString& errorString)
     {
-        finishLoad(load, [&errorString](ManualImageDataLoad &load) {
+        finishLoad(load, [&errorString](ManualImageDataLoad& load) {
             if (load.errorCallback) {
                 load.errorCallback(errorString);
             }
         });
     }
 
-    static void deliverData(ManualImageDataLoad &load, QByteArray data)
+    static void deliverData(ManualImageDataLoad& load, QByteArray data)
     {
         if (load.dataCallback) {
             load.dataCallback(std::move(data));
@@ -222,12 +223,12 @@ private:
 class ManualImageDataLoaderAdapter
 {
 public:
-    explicit ManualImageDataLoaderAdapter(ManualImageDataLoader &dataLoader)
+    explicit ManualImageDataLoaderAdapter(ManualImageDataLoader& dataLoader)
         : m_dataLoader(&dataLoader)
     {
     }
 
-    ImageIoJob operator()(QObject *receiver, ImageDecodeRequest request, ImageDataCallback callback,
+    ImageIoJob operator()(QObject* receiver, ImageDecodeRequest request, ImageDataCallback callback,
         ErrorCallback errorCallback) const
     {
         return m_dataLoader->start(
@@ -235,10 +236,10 @@ public:
     }
 
 private:
-    ManualImageDataLoader *m_dataLoader = nullptr;
+    ManualImageDataLoader* m_dataLoader = nullptr;
 };
 
-inline ImageDataLoader dataLoaderFor(ManualImageDataLoader &dataLoader)
+inline ImageDataLoader dataLoaderFor(ManualImageDataLoader& dataLoader)
 {
     return ManualImageDataLoaderAdapter(dataLoader);
 }
@@ -272,10 +273,10 @@ private:
 };
 
 inline PowerSaverProvider powerSaverProviderFor(
-    ManualPowerSaverMonitor *&monitor, bool initialEnabled)
+    ManualPowerSaverMonitor*& monitor, bool initialEnabled)
 {
     return PowerSaverProvider {
-        [&monitor, initialEnabled](QObject *, PowerSaverChangedCallback callback) {
+        [&monitor, initialEnabled](QObject*, PowerSaverChangedCallback callback) {
             auto instance
                 = std::make_unique<ManualPowerSaverMonitor>(initialEnabled, std::move(callback));
             monitor = instance.get();
@@ -284,8 +285,9 @@ inline PowerSaverProvider powerSaverProviderFor(
     };
 }
 
-struct ManualFileDeletionOperation {
-    QObject *object = nullptr;
+struct ManualFileDeletionOperation
+{
+    QObject* object = nullptr;
     FileDeletionRequest request;
     FileDeletionCallback callback;
     ImageIoJobCompletion completion;
@@ -293,7 +295,7 @@ struct ManualFileDeletionOperation {
 };
 
 inline KioOperationFailure manualFileDeletionFailure(
-    const FileDeletionRequest &request, FileDeletionResult result, const QString &errorString)
+    const FileDeletionRequest& request, FileDeletionResult result, const QString& errorString)
 {
     KioOperationFailure failure;
     failure.operationKind = KioOperationKind::FileDeletion;
@@ -308,7 +310,7 @@ inline KioOperationFailure manualFileDeletionFailure(
 class ManualFileDeletionProvider
 {
 public:
-    ImageIoJob start(QObject *receiver, FileDeletionRequest request, FileDeletionCallback callback)
+    ImageIoJob start(QObject* receiver, FileDeletionRequest request, FileDeletionCallback callback)
     {
         auto operation = std::make_shared<ManualFileDeletionOperation>();
         operation->request = std::move(request);
@@ -321,18 +323,18 @@ public:
 
     std::size_t operationCount() const { return m_operations.size(); }
 
-    ManualFileDeletionOperation &backOperation() { return *m_operations.back(); }
+    ManualFileDeletionOperation& backOperation() { return *m_operations.back(); }
 
-    const ManualFileDeletionOperation &backOperation() const { return *m_operations.back(); }
+    const ManualFileDeletionOperation& backOperation() const { return *m_operations.back(); }
 
-    ManualFileDeletionOperation &operationAt(std::size_t index) { return *m_operations.at(index); }
+    ManualFileDeletionOperation& operationAt(std::size_t index) { return *m_operations.at(index); }
 
-    const ManualFileDeletionOperation &operationAt(std::size_t index) const
+    const ManualFileDeletionOperation& operationAt(std::size_t index) const
     {
         return *m_operations.at(index);
     }
 
-    void finishBackOperation(FileDeletionResult result, const QString &errorString = QString())
+    void finishBackOperation(FileDeletionResult result, const QString& errorString = QString())
     {
         finishBackOperation(
             result, manualFileDeletionFailure(m_operations.back()->request, result, errorString));
@@ -344,14 +346,14 @@ public:
     }
 
     void deliverOperationAtIgnoringCancellation(
-        std::size_t index, FileDeletionResult result, const QString &errorString = QString())
+        std::size_t index, FileDeletionResult result, const QString& errorString = QString())
     {
         deliverOperationAtIgnoringCancellation(index, result,
             manualFileDeletionFailure(m_operations.at(index)->request, result, errorString));
     }
 
     void deliverOperationAtIgnoringCancellation(
-        std::size_t index, FileDeletionResult result, const KioOperationFailure &failure)
+        std::size_t index, FileDeletionResult result, const KioOperationFailure& failure)
     {
         if (m_operations.at(index)->callback) {
             m_operations.at(index)->callback(result, failure);
@@ -359,11 +361,11 @@ public:
     }
 
 private:
-    static void finishOperation(const std::shared_ptr<ManualFileDeletionOperation> &operation,
+    static void finishOperation(const std::shared_ptr<ManualFileDeletionOperation>& operation,
         FileDeletionResult result, KioOperationFailure failure)
     {
         Detail::finishManualIoJob(operation,
-            [result, failure = std::move(failure)](ManualFileDeletionOperation &operation) {
+            [result, failure = std::move(failure)](ManualFileDeletionOperation& operation) {
                 if (operation.callback) {
                     operation.callback(result, failure);
                 }
@@ -376,22 +378,22 @@ private:
 class ManualFileDeletionProviderAdapter
 {
 public:
-    explicit ManualFileDeletionProviderAdapter(ManualFileDeletionProvider &provider)
+    explicit ManualFileDeletionProviderAdapter(ManualFileDeletionProvider& provider)
         : m_provider(&provider)
     {
     }
 
     ImageIoJob operator()(
-        QObject *receiver, FileDeletionRequest request, FileDeletionCallback callback) const
+        QObject* receiver, FileDeletionRequest request, FileDeletionCallback callback) const
     {
         return m_provider->start(receiver, std::move(request), std::move(callback));
     }
 
 private:
-    ManualFileDeletionProvider *m_provider = nullptr;
+    ManualFileDeletionProvider* m_provider = nullptr;
 };
 
-inline FileDeletionProvider fileDeletionProviderFor(ManualFileDeletionProvider &provider)
+inline FileDeletionProvider fileDeletionProviderFor(ManualFileDeletionProvider& provider)
 {
     return ManualFileDeletionProviderAdapter(provider);
 }

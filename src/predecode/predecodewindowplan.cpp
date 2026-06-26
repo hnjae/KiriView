@@ -10,8 +10,8 @@
 
 namespace {
 std::vector<QUrl> predecodeWindowImageUrls(
-    const std::vector<kiriview::ImageDocumentPageCandidate> &candidates,
-    const std::vector<std::size_t> &indices)
+    const std::vector<kiriview::ImageDocumentPageCandidate>& candidates,
+    const std::vector<std::size_t>& indices)
 {
     std::vector<QUrl> urls;
     urls.reserve(indices.size());
@@ -28,7 +28,7 @@ std::vector<QUrl> predecodeWindowImageUrls(
 namespace kiriview {
 bool PredecodeWindowStartPlan::shouldLoadCandidates() const { return candidateList.has_value(); }
 
-PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanRequest &request)
+PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanRequest& request)
 {
     const OpenedCollectionScopeLocation openedCollectionScope
         = request.displayedLocation.openedCollectionScope();
@@ -54,7 +54,7 @@ PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanReque
 }
 
 PredecodeWindowPlan predecodeWindowPlanForCandidates(
-    const PredecodeWindowStartPlan &plan, const std::vector<ImageDocumentPageCandidate> &candidates)
+    const PredecodeWindowStartPlan& plan, const std::vector<ImageDocumentPageCandidate>& candidates)
 {
     if (!plan.candidateList.has_value()) {
         return plan.fallbackWindow;

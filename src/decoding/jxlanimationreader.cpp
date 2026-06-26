@@ -22,8 +22,9 @@
 #include <vector>
 
 namespace {
-struct JxlDecoderDeleter {
-    void operator()(JxlDecoder *decoder) const
+struct JxlDecoderDeleter
+{
+    void operator()(JxlDecoder* decoder) const
     {
         if (decoder != nullptr) {
             JxlDecoderDestroy(decoder);
@@ -31,8 +32,9 @@ struct JxlDecoderDeleter {
     }
 };
 
-struct JxlThreadRunnerDeleter {
-    void operator()(void *runner) const
+struct JxlThreadRunnerDeleter
+{
+    void operator()(void* runner) const
     {
         if (runner != nullptr) {
             JxlThreadParallelRunnerDestroy(runner);
@@ -50,7 +52,8 @@ enum class JxlReadStatus {
     Error,
 };
 
-struct JxlReadResult {
+struct JxlReadResult
+{
     JxlReadStatus status = JxlReadStatus::Error;
     kiriview::AnimationFrame frame;
     QString errorString;
@@ -87,13 +90,13 @@ JxlReadResult errorReadResult(QString errorString)
     };
 }
 
-bool isJxlData(const QByteArray &data)
+bool isJxlData(const QByteArray& data)
 {
     if (data.isEmpty()) {
         return false;
     }
     const JxlSignature signature
-        = JxlSignatureCheck(reinterpret_cast<const std::uint8_t *>(data.constData()),
+        = JxlSignatureCheck(reinterpret_cast<const std::uint8_t*>(data.constData()),
             static_cast<std::size_t>(data.size()));
     return signature == JXL_SIG_CODESTREAM || signature == JXL_SIG_CONTAINER;
 }
@@ -108,7 +111,7 @@ JxlPixelFormat rgbaPixelFormat()
     };
 }
 
-std::optional<QSize> imageSizeForInfo(const JxlBasicInfo &info)
+std::optional<QSize> imageSizeForInfo(const JxlBasicInfo& info)
 {
     if (info.xsize == 0 || info.ysize == 0
         || info.xsize > static_cast<std::uint32_t>(std::numeric_limits<int>::max())
@@ -118,7 +121,7 @@ std::optional<QSize> imageSizeForInfo(const JxlBasicInfo &info)
     return QSize(static_cast<int>(info.xsize), static_cast<int>(info.ysize));
 }
 
-std::optional<QImage> imageFromRgbaBuffer(const std::vector<std::uint8_t> &buffer, QSize size)
+std::optional<QImage> imageFromRgbaBuffer(const std::vector<std::uint8_t>& buffer, QSize size)
 {
     if (buffer.empty() || size.isEmpty()) {
         return std::nullopt;
@@ -201,7 +204,7 @@ public:
         return result;
     }
 
-    std::optional<AnimationFrame> readNextFrame(QString *errorString)
+    std::optional<AnimationFrame> readNextFrame(QString* errorString)
     {
         clearError(errorString);
         if (bufferedFrame.has_value()) {
@@ -258,7 +261,7 @@ private:
         }
 
         if (JxlDecoderSetInput(decoder.get(),
-                reinterpret_cast<const std::uint8_t *>(data.constData()),
+                reinterpret_cast<const std::uint8_t*>(data.constData()),
                 static_cast<std::size_t>(data.size()))
             != JXL_DEC_SUCCESS) {
             return false;
@@ -367,14 +370,14 @@ private:
             == JXL_DEC_SUCCESS;
     }
 
-    void clearError(QString *errorString)
+    void clearError(QString* errorString)
     {
         if (errorString != nullptr) {
             errorString->clear();
         }
     }
 
-    void setError(QString *errorString, const QString &message)
+    void setError(QString* errorString, const QString& message)
     {
         if (errorString != nullptr) {
             *errorString = message;
@@ -400,16 +403,16 @@ JxlAnimationReader::JxlAnimationReader()
 
 JxlAnimationReader::~JxlAnimationReader() = default;
 
-JxlAnimationReader::JxlAnimationReader(JxlAnimationReader &&) noexcept = default;
+JxlAnimationReader::JxlAnimationReader(JxlAnimationReader&&) noexcept = default;
 
-JxlAnimationReader &JxlAnimationReader::operator=(JxlAnimationReader &&) noexcept = default;
+JxlAnimationReader& JxlAnimationReader::operator=(JxlAnimationReader&&) noexcept = default;
 
 JxlAnimationOpenResult JxlAnimationReader::open(QByteArray data)
 {
     return d->open(std::move(data));
 }
 
-std::optional<AnimationFrame> JxlAnimationReader::readNextFrame(QString *errorString)
+std::optional<AnimationFrame> JxlAnimationReader::readNextFrame(QString* errorString)
 {
     return d->readNextFrame(errorString);
 }

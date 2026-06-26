@@ -27,7 +27,7 @@ kiriview::ImageDocumentRenderContext renderContext()
     };
 }
 
-kiriview::ImagePresentationPageSlotSnapshot pageSlot(const QSize &imageSize, quint64 revision)
+kiriview::ImagePresentationPageSlotSnapshot pageSlot(const QSize& imageSize, quint64 revision)
 {
     kiriview::ImageDisplaySourceSlot source;
     source.originalSize = imageSize;

@@ -10,12 +10,13 @@
 #include <functional>
 
 namespace kiriview {
-struct ImageDocumentOpenRuntimeOperations {
+struct ImageDocumentOpenRuntimeOperations
+{
     std::function<void()> cancelOpen;
     std::function<void()> clearDisplayedImageLocation;
     std::function<void()> clearPresentationImage;
-    std::function<void(const ImageDocumentPageTarget &)> setSourceUrl;
-    std::function<void(const QString &)> setErrorString;
+    std::function<void(const ImageDocumentPageTarget&)> setSourceUrl;
+    std::function<void(const QString&)> setErrorString;
     std::function<void()> finishEmptySourceLoad;
 };
 
@@ -24,7 +25,7 @@ class ImageDocumentOpenRuntimePlanExecutor final
 public:
     explicit ImageDocumentOpenRuntimePlanExecutor(ImageDocumentOpenRuntimeOperations operations);
 
-    bool dispatchOperation(const ImageDocumentRuntimeOperation &operation);
+    bool dispatchOperation(const ImageDocumentRuntimeOperation& operation);
 
 private:
     ImageDocumentOpenRuntimeOperations m_operations;

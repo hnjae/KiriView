@@ -18,36 +18,36 @@ namespace kiriview {
 class DocumentSessionState final
 {
 public:
-    using ChangeCallback = std::function<void(const std::vector<DocumentSessionChange> &)>;
+    using ChangeCallback = std::function<void(const std::vector<DocumentSessionChange>&)>;
 
     explicit DocumentSessionState(ChangeCallback changeCallback = {});
 
-    const QUrl &sourceUrl() const;
+    const QUrl& sourceUrl() const;
     DocumentSessionKind documentKind() const;
-    const QString &sessionErrorString() const;
-    const QString &windowTitleSubject() const;
+    const QString& sessionErrorString() const;
+    const QString& windowTitleSubject() const;
     bool fileDeletionInProgress() const;
-    const ActiveZoomSnapshot &activeZoomSnapshot() const;
+    const ActiveZoomSnapshot& activeZoomSnapshot() const;
     bool activeImageReady() const;
     bool activeImageUnsupportedOpenedCollectionVideo() const;
-    const DirectMediaNavigationBoundaryState &directMediaNavigationState() const;
+    const DirectMediaNavigationBoundaryState& directMediaNavigationState() const;
     bool directMediaNavigationKnown() const;
-    const std::vector<DirectMediaNavigationCandidate> &directMediaNavigationCandidates() const;
-    const ActiveNavigationSnapshot &activeNavigationSnapshot() const;
+    const std::vector<DirectMediaNavigationCandidate>& directMediaNavigationCandidates() const;
+    const ActiveNavigationSnapshot& activeNavigationSnapshot() const;
     ActiveNavigationRevealIntent activeNavigationRevealIntent() const;
     ActiveNavigationRevealDirection activeNavigationRevealDirection() const;
     ActiveNavigationSourceKind activeNavigationSourceKind() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     bool displayedMediaOpenWithAvailable() const;
     bool displayedFileDeletionAvailable() const;
-    const MediaInformationProjectionSnapshot &mediaInformationSnapshot() const;
-    const DocumentSessionPublicProjection &publicProjection() const;
-    const DocumentSessionPublicSnapshot &publicSnapshot() const;
-    const DirectMediaCursor &directMediaCursor() const;
+    const MediaInformationProjectionSnapshot& mediaInformationSnapshot() const;
+    const DocumentSessionPublicProjection& publicProjection() const;
+    const DocumentSessionPublicSnapshot& publicSnapshot() const;
+    const DirectMediaCursor& directMediaCursor() const;
     QUrl directMediaCursorUrl() const;
     DirectMediaScope directMediaScope() const;
 
-    void setSourceIdentity(const QUrl &url);
+    void setSourceIdentity(const QUrl& url);
     void setDocumentKind(DocumentSessionKind kind);
     void setDocumentKindAndActiveZoomSnapshot(
         DocumentSessionKind kind, ActiveZoomSnapshot activeZoomSnapshot);
@@ -57,15 +57,15 @@ public:
     void setActiveNavigationRevealDirection(ActiveNavigationRevealDirection direction);
     void setDirectMediaNavigation(DirectMediaNavigationBoundaryState state, bool known,
         std::vector<DirectMediaNavigationCandidate> candidates);
-    bool updatePublicSnapshot(const DocumentSessionPublicSnapshotInput &input);
+    bool updatePublicSnapshot(const DocumentSessionPublicSnapshotInput& input);
     bool updatePublicSnapshotForSourceKind(
-        const DocumentSessionPublicSnapshotInput &input, ActiveNavigationSourceKind sourceKind);
-    void setSessionErrorString(const QString &errorString);
+        const DocumentSessionPublicSnapshotInput& input, ActiveNavigationSourceKind sourceKind);
+    void setSessionErrorString(const QString& errorString);
     bool clearDirectMediaCursor();
-    bool requestDirectImageCursor(const QUrl &url);
-    bool confirmDirectImageCursor(const QUrl &url);
+    bool requestDirectImageCursor(const QUrl& url);
+    bool confirmDirectImageCursor(const QUrl& url);
     bool restoreDirectImageCursorAfterFailure();
-    bool setDirectVideoCursor(const QUrl &url);
+    bool setDirectVideoCursor(const QUrl& url);
 
     void publish(DocumentSessionChange change);
     void publish(std::vector<DocumentSessionChange> changes);

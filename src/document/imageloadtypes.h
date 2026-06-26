@@ -14,7 +14,8 @@
 #include <utility>
 
 namespace kiriview {
-struct ImageLoadRequest {
+struct ImageLoadRequest
+{
     ImageLocation source;
     ImageDocumentPageKind sourceKind = ImageDocumentPageKind::Image;
     OpenedCollectionScopeLocation displayedOpenedCollectionScope;
@@ -45,13 +46,13 @@ struct ImageLoadRequest {
             ContainerLocation::fromUrl(std::move(containerNavigationUrl)) };
     }
 
-    const QUrl &sourceUrl() const { return source.url(); }
+    const QUrl& sourceUrl() const { return source.url(); }
     ImageDocumentPageKind kind() const { return sourceKind; }
-    const OpenedCollectionScopeLocation &openedCollectionScope() const
+    const OpenedCollectionScopeLocation& openedCollectionScope() const
     {
         return displayedOpenedCollectionScope;
     }
-    const QUrl &containerNavigationUrl() const { return containerNavigation.url(); }
+    const QUrl& containerNavigationUrl() const { return containerNavigation.url(); }
     bool isEmpty() const { return source.isEmpty(); }
     bool isContainerNavigation() const { return !containerNavigation.isEmpty(); }
 };
@@ -64,20 +65,20 @@ public:
         ImageFirstDisplayDecodeContext firstDisplay = {});
 
     quint64 id() const;
-    const ImageLoadRequest &request() const;
-    const DisplayedImageLocation &location() const;
-    const ImageFirstDisplayDecodeContext &firstDisplay() const;
-    const QUrl &imageUrl() const;
+    const ImageLoadRequest& request() const;
+    const DisplayedImageLocation& location() const;
+    const ImageFirstDisplayDecodeContext& firstDisplay() const;
+    const QUrl& imageUrl() const;
     ImageDocumentPageKind kind() const;
-    const OpenedCollectionScopeLocation &openedCollectionScope() const;
-    const QUrl &containerNavigationUrl() const;
+    const OpenedCollectionScopeLocation& openedCollectionScope() const;
+    const QUrl& containerNavigationUrl() const;
     bool hasContainerNavigationTarget() const;
     ImageDecodeRequest decodeRequest() const;
-    bool sameSession(const ImageLoadSession &session) const;
+    bool sameSession(const ImageLoadSession& session) const;
 
-    void setImageDocumentPageCandidate(const ImageDocumentPageCandidate &candidate);
-    void setImageTarget(const ImageDocumentPageTarget &target);
-    void setImageUrl(const QUrl &url);
+    void setImageDocumentPageCandidate(const ImageDocumentPageCandidate& candidate);
+    void setImageTarget(const ImageDocumentPageTarget& target);
+    void setImageUrl(const QUrl& url);
     void setLocation(DisplayedImageLocation location);
 
 private:

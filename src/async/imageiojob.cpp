@@ -9,14 +9,14 @@
 #include <utility>
 
 namespace kiriview {
-ImageIoJobState::ImageIoJobState(QObject *object, CancelCallback cancelCallback)
+ImageIoJobState::ImageIoJobState(QObject* object, CancelCallback cancelCallback)
     : m_token(object)
     , m_activeObject(object)
     , m_cancelCallback(std::move(cancelCallback))
 {
 }
 
-bool ImageIoJobState::claim(QObject *object)
+bool ImageIoJobState::claim(QObject* object)
 {
     if (m_activeObject.isNull() || object != m_activeObject.data()) {
         return false;
@@ -34,7 +34,7 @@ void ImageIoJobState::cancel()
         return;
     }
 
-    QObject *object = m_activeObject.data();
+    QObject* object = m_activeObject.data();
     CancelCallback cancelCallback = std::move(m_cancelCallback);
     m_activeObject.clear();
     invokeIfSet(cancelCallback, object);
@@ -42,14 +42,14 @@ void ImageIoJobState::cancel()
 
 bool ImageIoJobState::isActive() const { return !m_activeObject.isNull(); }
 
-QObject *ImageIoJobState::token() const { return m_token.data(); }
+QObject* ImageIoJobState::token() const { return m_token.data(); }
 
 ImageIoJobCompletion::ImageIoJobCompletion(std::shared_ptr<ImageIoJobState> state)
     : m_state(std::move(state))
 {
 }
 
-QObject *ImageIoJobCompletion::object() const
+QObject* ImageIoJobCompletion::object() const
 {
     return m_state == nullptr ? nullptr : m_state->token();
 }
@@ -65,14 +65,14 @@ void ImageIoJobCompletion::cancel() const
     m_state->cancel();
 }
 
-ImageIoJob::ImageIoJob(QObject *object, CancelCallback cancelCallback)
+ImageIoJob::ImageIoJob(QObject* object, CancelCallback cancelCallback)
     : m_state(std::make_shared<ImageIoJobState>(object, std::move(cancelCallback)))
 {
 }
 
 ImageIoJob::~ImageIoJob() { cancel(); }
 
-ImageIoJob &ImageIoJob::operator=(ImageIoJob &&other) noexcept
+ImageIoJob& ImageIoJob::operator=(ImageIoJob&& other) noexcept
 {
     if (this == &other) {
         return *this;

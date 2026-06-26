@@ -11,14 +11,14 @@
 
 namespace {
 std::vector<kiriview::ImageDocumentPageCandidate> imageDocumentPageCandidatesWithoutDeletedUrls(
-    const std::vector<kiriview::ImageDocumentPageCandidate> &candidates,
-    const QList<QUrl> &deletedUrls)
+    const std::vector<kiriview::ImageDocumentPageCandidate>& candidates,
+    const QList<QUrl>& deletedUrls)
 {
     std::vector<kiriview::ImageDocumentPageCandidate> filteredCandidates;
     filteredCandidates.reserve(candidates.size());
-    for (const kiriview::ImageDocumentPageCandidate &candidate : candidates) {
+    for (const kiriview::ImageDocumentPageCandidate& candidate : candidates) {
         const bool removed
-            = std::any_of(deletedUrls.cbegin(), deletedUrls.cend(), [&candidate](const QUrl &url) {
+            = std::any_of(deletedUrls.cbegin(), deletedUrls.cend(), [&candidate](const QUrl& url) {
                   return kiriview::sameNormalizedUrl(candidate.url, url);
               });
         if (!removed) {
@@ -28,14 +28,14 @@ std::vector<kiriview::ImageDocumentPageCandidate> imageDocumentPageCandidatesWit
     return filteredCandidates;
 }
 
-QObject *createEntryJobToken(QObject *receiver, QObject *fallbackParent)
+QObject* createEntryJobToken(QObject* receiver, QObject* fallbackParent)
 {
     return new QObject(receiver == nullptr ? fallbackParent : receiver);
 }
 
-kiriview::ImageIoJob createEntryJob(QObject *token, std::function<void(QObject *)> removeToken)
+kiriview::ImageIoJob createEntryJob(QObject* token, std::function<void(QObject*)> removeToken)
 {
-    return kiriview::ImageIoJob(token, [removeToken = std::move(removeToken)](QObject *object) {
+    return kiriview::ImageIoJob(token, [removeToken = std::move(removeToken)](QObject* object) {
         removeToken(object);
         object->deleteLater();
     });
@@ -43,20 +43,20 @@ kiriview::ImageIoJob createEntryJob(QObject *token, std::function<void(QObject *
 
 void applyEntryNotificationPlan(kiriview::ImageDocumentPageCandidateStoreEntryNotificationPlan plan)
 {
-    for (const kiriview::ImageDocumentPageCandidateStoreEntryPendingLoad &load :
+    for (const kiriview::ImageDocumentPageCandidateStoreEntryPendingLoad& load :
         plan.completedLoads) {
         load.completion.claimAndDelete(
             [&]() { kiriview::invokeIfSet(load.callback, plan.candidates); });
     }
-    for (const kiriview::ImageDocumentPageCandidateStoreEntrySubscriber &subscriber :
+    for (const kiriview::ImageDocumentPageCandidateStoreEntrySubscriber& subscriber :
         plan.changedSubscribers) {
         kiriview::invokeIfSet(subscriber.callback, plan.candidates);
     }
-    for (const kiriview::ImageDocumentPageCandidateStoreEntryPendingLoad &load : plan.failedLoads) {
+    for (const kiriview::ImageDocumentPageCandidateStoreEntryPendingLoad& load : plan.failedLoads) {
         load.completion.claimAndDelete(
             [&]() { kiriview::invokeIfSet(load.errorCallback, plan.errorString); });
     }
-    for (const kiriview::ImageDocumentPageCandidateStoreEntrySubscriber &subscriber :
+    for (const kiriview::ImageDocumentPageCandidateStoreEntrySubscriber& subscriber :
         plan.failedSubscribers) {
         kiriview::invokeIfSet(subscriber.errorCallback, plan.errorString);
     }
@@ -66,7 +66,7 @@ void applyEntryNotificationPlan(kiriview::ImageDocumentPageCandidateStoreEntryNo
 namespace kiriview {
 ImageDocumentPageCandidateDirectoryEntry::ImageDocumentPageCandidateDirectoryEntry(
     QUrl directoryUrl, ImageDocumentPageCandidateWatchProvider watchProvider,
-    QObject *signalContext)
+    QObject* signalContext)
     : m_directoryUrl(std::move(directoryUrl))
     , m_watchProvider(std::move(watchProvider))
     , m_signalContext(signalContext)
@@ -85,12 +85,12 @@ bool ImageDocumentPageCandidateDirectoryEntry::failed() const { return m_state.f
 
 bool ImageDocumentPageCandidateDirectoryEntry::listed() const { return m_state.listed(); }
 
-const QString &ImageDocumentPageCandidateDirectoryEntry::errorString() const
+const QString& ImageDocumentPageCandidateDirectoryEntry::errorString() const
 {
     return m_state.errorString();
 }
 
-const std::vector<ImageDocumentPageCandidate> &
+const std::vector<ImageDocumentPageCandidate>&
 ImageDocumentPageCandidateDirectoryEntry::candidates() const
 {
     return m_state.candidates();
@@ -111,7 +111,7 @@ bool ImageDocumentPageCandidateDirectoryEntry::open()
             handleChanged(std::move(candidates));
         },
         [this](QList<QUrl> urls) { handleDeleted(std::move(urls)); },
-        [this](const QString &errorString) { handleError(errorString); });
+        [this](const QString& errorString) { handleError(errorString); });
     return m_watchJob.isActive();
 }
 
@@ -127,43 +127,43 @@ void ImageDocumentPageCandidateDirectoryEntry::handleChanged(
     applyEntryNotificationPlan(m_state.updateListing(std::move(candidates)));
 }
 
-void ImageDocumentPageCandidateDirectoryEntry::handleDeleted(const QList<QUrl> &urls)
+void ImageDocumentPageCandidateDirectoryEntry::handleDeleted(const QList<QUrl>& urls)
 {
     applyEntryNotificationPlan(
         m_state.updateListing(imageDocumentPageCandidatesWithoutDeletedUrls(candidates(), urls)));
 }
 
-void ImageDocumentPageCandidateDirectoryEntry::handleError(const QString &errorString)
+void ImageDocumentPageCandidateDirectoryEntry::handleError(const QString& errorString)
 {
     applyEntryNotificationPlan(m_state.failListing(errorString));
 }
 
 ImageIoJob ImageDocumentPageCandidateDirectoryEntry::addPendingLoad(
-    ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback, QObject *receiver,
-    std::function<void(QObject *)> removeToken)
+    ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback, QObject* receiver,
+    std::function<void(QObject*)> removeToken)
 {
-    QObject *token = createEntryJobToken(receiver, m_signalContext);
+    QObject* token = createEntryJobToken(receiver, m_signalContext);
     ImageIoJob job = createEntryJob(token, std::move(removeToken));
     m_state.addPendingLoad(job.completion(), std::move(callback), std::move(errorCallback));
     return job;
 }
 
 ImageIoJob ImageDocumentPageCandidateDirectoryEntry::addSubscriber(
-    ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback, QObject *receiver,
-    std::function<void(QObject *)> removeToken)
+    ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback, QObject* receiver,
+    std::function<void(QObject*)> removeToken)
 {
-    QObject *token = createEntryJobToken(receiver, m_signalContext);
+    QObject* token = createEntryJobToken(receiver, m_signalContext);
     ImageIoJob job = createEntryJob(token, std::move(removeToken));
     m_state.addSubscriber(token, std::move(callback), std::move(errorCallback));
     return job;
 }
 
-void ImageDocumentPageCandidateDirectoryEntry::removePendingLoad(QObject *token)
+void ImageDocumentPageCandidateDirectoryEntry::removePendingLoad(QObject* token)
 {
     m_state.removePendingLoad(token);
 }
 
-void ImageDocumentPageCandidateDirectoryEntry::removeSubscriber(QObject *token)
+void ImageDocumentPageCandidateDirectoryEntry::removeSubscriber(QObject* token)
 {
     m_state.removeSubscriber(token);
 }

@@ -9,15 +9,15 @@
 #include <QSizeF>
 
 namespace kiriview {
-QSize imageSpreadImageSize(const QSize &primarySize, const QSize &secondarySize);
+QSize imageSpreadImageSize(const QSize& primarySize, const QSize& secondarySize);
 QSizeF imageSpreadScaledPageDisplaySize(
-    const QSize &pageSize, const QSize &spreadImageSize, const QSizeF &spreadDisplaySize);
-QRectF imageSpreadPrimaryPageRect(const QSizeF &primaryDisplaySize,
-    const QSizeF &secondaryDisplaySize, const QSizeF &spreadDisplaySize, bool rightToLeftReading);
-QRectF imageSpreadSecondaryPageRect(const QSizeF &primaryDisplaySize,
-    const QSizeF &secondaryDisplaySize, const QSizeF &spreadDisplaySize, bool rightToLeftReading);
-QRectF imageSpreadVisiblePageRect(const QRectF &visibleRect, const QRectF &pageRect);
-bool imageSpreadPageIsWide(const QSize &imageSize);
+    const QSize& pageSize, const QSize& spreadImageSize, const QSizeF& spreadDisplaySize);
+QRectF imageSpreadPrimaryPageRect(const QSizeF& primaryDisplaySize,
+    const QSizeF& secondaryDisplaySize, const QSizeF& spreadDisplaySize, bool rightToLeftReading);
+QRectF imageSpreadSecondaryPageRect(const QSizeF& primaryDisplaySize,
+    const QSizeF& secondaryDisplaySize, const QSizeF& spreadDisplaySize, bool rightToLeftReading);
+QRectF imageSpreadVisiblePageRect(const QRectF& visibleRect, const QRectF& pageRect);
+bool imageSpreadPageIsWide(const QSize& imageSize);
 }
 
 #endif

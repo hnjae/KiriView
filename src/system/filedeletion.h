@@ -31,14 +31,15 @@ enum class FileDeletionCompletionAction {
     ReportFailure,
 };
 
-struct FileDeletionRequest {
+struct FileDeletionRequest
+{
     QUrl targetUrl;
     FileDeletionMode mode = FileDeletionMode::MoveToTrash;
 };
 
-using FileDeletionCallback = std::function<void(FileDeletionResult, const KioOperationFailure &)>;
+using FileDeletionCallback = std::function<void(FileDeletionResult, const KioOperationFailure&)>;
 using FileDeletionProvider
-    = std::function<ImageIoJob(QObject *, FileDeletionRequest, FileDeletionCallback)>;
+    = std::function<ImageIoJob(QObject*, FileDeletionRequest, FileDeletionCallback)>;
 
 FileDeletionCompletionAction fileDeletionCompletionAction(FileDeletionResult result);
 FileDeletionProvider defaultFileDeletionProvider();

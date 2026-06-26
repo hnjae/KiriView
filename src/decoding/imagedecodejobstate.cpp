@@ -27,7 +27,7 @@ void ImageDecodeJobState::cancel()
 
 bool ImageDecodeJobState::hasActiveRequest() const { return m_request.has_value(); }
 
-ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptLoadedData(const ImageDecodeJobTicket &ticket)
+ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptLoadedData(const ImageDecodeJobTicket& ticket)
 {
     if (!accepts(ticket) || m_phase != Phase::LoadingData) {
         return noOperation();
@@ -37,13 +37,13 @@ ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptLoadedData(const ImageDecod
     return startDecodePlan(*m_request);
 }
 
-ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptLoadError(const ImageDecodeJobTicket &ticket)
+ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptLoadError(const ImageDecodeJobTicket& ticket)
 {
     return claim<DeliverImageLoadErrorOperation>(ticket, Phase::LoadingData);
 }
 
 ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptThumbnailPreview(
-    const ImageDecodeJobTicket &ticket)
+    const ImageDecodeJobTicket& ticket)
 {
     if (!accepts(ticket) || m_phase != Phase::Decoding) {
         return noOperation();
@@ -53,12 +53,12 @@ ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptThumbnailPreview(
 }
 
 ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptDecodeResult(
-    const ImageDecodeJobTicket &ticket)
+    const ImageDecodeJobTicket& ticket)
 {
     return claim<DeliverImageDecodeResultOperation>(ticket, Phase::Decoding);
 }
 
-bool ImageDecodeJobState::accepts(const ImageDecodeJobTicket &ticket) const
+bool ImageDecodeJobState::accepts(const ImageDecodeJobTicket& ticket) const
 {
     return m_request.has_value() && m_operation.accepts(ticket.operationId)
         && m_request->matches(ticket.request);
@@ -67,7 +67,7 @@ bool ImageDecodeJobState::accepts(const ImageDecodeJobTicket &ticket) const
 ImageDecodeJobRuntimePlan ImageDecodeJobState::noOperation() const { return {}; }
 
 ImageDecodeJobRuntimePlan ImageDecodeJobState::startDecodePlan(
-    const ImageDecodeRequest &request) const
+    const ImageDecodeRequest& request) const
 {
     return ImageDecodeJobRuntimePlan {
         StartImageDecodeOperation { request },
@@ -75,7 +75,7 @@ ImageDecodeJobRuntimePlan ImageDecodeJobState::startDecodePlan(
 }
 
 ImageDecodeJobRuntimePlan ImageDecodeJobState::thumbnailPreviewPlan(
-    const ImageDecodeRequest &request) const
+    const ImageDecodeRequest& request) const
 {
     return ImageDecodeJobRuntimePlan {
         DeliverImageThumbnailPreviewOperation { request },
@@ -84,7 +84,7 @@ ImageDecodeJobRuntimePlan ImageDecodeJobState::thumbnailPreviewPlan(
 
 template <typename Operation>
 ImageDecodeJobRuntimePlan ImageDecodeJobState::claim(
-    const ImageDecodeJobTicket &ticket, Phase phase)
+    const ImageDecodeJobTicket& ticket, Phase phase)
 {
     if (!accepts(ticket) || m_phase != phase) {
         return noOperation();

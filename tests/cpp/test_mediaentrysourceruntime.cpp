@@ -25,7 +25,8 @@ using kiriview::TestSupport::InstrumentedMediaEntrySourceState;
 using kiriview::TestSupport::localUrl;
 using kiriview::TestSupport::releaseInstrumentedMediaEntrySourceLoads;
 
-struct ManualImageWorkerSchedule {
+struct ManualImageWorkerSchedule
+{
     kiriview::ImageWorkerOperation work;
     kiriview::ImageWorkerCompletion completion;
 };
@@ -35,7 +36,7 @@ class ManualImageWorkerScheduler
 public:
     kiriview::ImageWorkerScheduler scheduler()
     {
-        return kiriview::ImageWorkerScheduler([this](QObject *, kiriview::ImageWorkerOperation work,
+        return kiriview::ImageWorkerScheduler([this](QObject*, kiriview::ImageWorkerOperation work,
                                                   kiriview::ImageWorkerCompletion completion) {
             m_schedules.push_back(
                 ManualImageWorkerSchedule { std::move(work), std::move(completion) });

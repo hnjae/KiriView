@@ -16,11 +16,11 @@ std::vector<ImageDocumentChange> imageDocumentDisplayedLocationNotifications(
     bool displayedUrlChanged, bool windowTitleFileNameChanged);
 std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications();
 std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications(
-    const ImageZoomChangeSet &changes);
+    const ImageZoomChangeSet& changes);
 std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(
     bool secondaryPageVisible);
 std::vector<ImageDocumentChange> imageDocumentPresentationZoomNotifications(
-    const ImageZoomChangeSet &changes);
+    const ImageZoomChangeSet& changes);
 }
 
 #endif

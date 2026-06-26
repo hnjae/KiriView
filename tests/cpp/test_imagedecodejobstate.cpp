@@ -17,16 +17,16 @@ kiriview::ImageDecodeRequest request(int index)
         static_cast<quint64>(index), kiriview::TestSupport::indexedImageUrl(index));
 }
 
-void compareNoOperation(const kiriview::ImageDecodeJobRuntimePlan &plan)
+void compareNoOperation(const kiriview::ImageDecodeJobRuntimePlan& plan)
 {
     QVERIFY(std::holds_alternative<kiriview::NoImageDecodeJobOperation>(plan.operation));
     QVERIFY(!plan.hasOperation());
 }
 
 template <typename Operation>
-void compareOperation(const kiriview::ImageDecodeJobRuntimePlan &plan, quint64 requestId)
+void compareOperation(const kiriview::ImageDecodeJobRuntimePlan& plan, quint64 requestId)
 {
-    const auto *operation = std::get_if<Operation>(&plan.operation);
+    const auto* operation = std::get_if<Operation>(&plan.operation);
     QVERIFY(operation != nullptr);
     QVERIFY(plan.hasOperation());
     QCOMPARE(operation->request.id(), requestId);

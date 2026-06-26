@@ -10,7 +10,8 @@
 #include <functional>
 
 namespace kiriview {
-struct DocumentSessionImageDocumentSyncRuntimeInput {
+struct DocumentSessionImageDocumentSyncRuntimeInput
+{
     bool routingSource = false;
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     bool directImageLoadMayUseImageDocumentSourceScope = false;
@@ -21,10 +22,11 @@ struct DocumentSessionImageDocumentSyncRuntimeInput {
     DocumentSessionPublicImageLeafSnapshot image;
 };
 
-struct DocumentSessionImageDocumentSyncRuntimePorts {
-    std::function<bool(const QUrl &)> confirmDirectImageCursor;
+struct DocumentSessionImageDocumentSyncRuntimePorts
+{
+    std::function<bool(const QUrl&)> confirmDirectImageCursor;
     std::function<bool()> restoreDirectImageCursorAfterFailure;
-    std::function<void(const QUrl &)> setSourceIdentity;
+    std::function<void(const QUrl&)> setSourceIdentity;
     std::function<void(bool)> setFileDeletionInProgress;
     std::function<void()> refreshDirectMediaNavigation;
     std::function<void()> cacheDisplayedMediaPredecodeImages;
@@ -38,12 +40,12 @@ public:
     explicit DocumentSessionImageDocumentSyncRuntime(
         DocumentSessionImageDocumentSyncRuntimePorts ports = {});
 
-    void sync(const DocumentSessionImageDocumentSyncRuntimeInput &input);
-    bool syncDirectImageCursor(DocumentSessionKind documentKind, const DirectMediaCursor &cursor,
-        const DocumentSessionPublicImageLeafSnapshot &image);
+    void sync(const DocumentSessionImageDocumentSyncRuntimeInput& input);
+    bool syncDirectImageCursor(DocumentSessionKind documentKind, const DirectMediaCursor& cursor,
+        const DocumentSessionPublicImageLeafSnapshot& image);
 
 private:
-    void apply(const DocumentSessionImageDocumentSyncPlan &plan);
+    void apply(const DocumentSessionImageDocumentSyncPlan& plan);
 
     DocumentSessionImageDocumentSyncRuntimePorts m_ports;
 };

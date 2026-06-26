@@ -10,7 +10,8 @@
 #include <functional>
 
 namespace kiriview {
-struct ImageZoomWorkflowMutationResult {
+struct ImageZoomWorkflowMutationResult
+{
     ImageZoomChangeSet changes;
     ImageRenderContextChange renderContextChange;
 };
@@ -19,18 +20,18 @@ class ImageZoomWorkflowState final
 {
 public:
     using RenderContextProvider = ImageRenderContextState::Provider;
-    using ZoomStateMutation = std::function<void(ImageZoomState &, qreal devicePixelRatio)>;
+    using ZoomStateMutation = std::function<void(ImageZoomState&, qreal devicePixelRatio)>;
 
     explicit ImageZoomWorkflowState(RenderContextProvider renderContextProvider = {});
 
-    const ImageZoomState &zoomState() const;
+    const ImageZoomState& zoomState() const;
     ImageDocumentRenderContext renderContext() const;
     qreal devicePixelRatio() const;
 
     void clear();
     void clearContainer();
     ImageZoomWorkflowMutationResult mutate(
-        const ZoomStateMutation &mutation, bool forceDisplayProjectionUpdate = false);
+        const ZoomStateMutation& mutation, bool forceDisplayProjectionUpdate = false);
 
 private:
     ImageRenderContextState m_renderContextState;

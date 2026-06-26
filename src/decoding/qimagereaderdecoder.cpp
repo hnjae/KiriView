@@ -38,8 +38,8 @@ QString qtRasterFailureOperationName(kiriview::DecodedImageFailureOperation oper
     return QStringLiteral("unknown");
 }
 
-QString qtRasterFailureDiagnosticDetail(const QByteArray &format,
-    kiriview::DecodedImageFailureOperation operation, const QString &backendError)
+QString qtRasterFailureDiagnosticDetail(const QByteArray& format,
+    kiriview::DecodedImageFailureOperation operation, const QString& backendError)
 {
     return QStringLiteral("Qt image reader %1 failed for format %2: %3")
         .arg(qtRasterFailureOperationName(operation), QString::fromLatin1(format),
@@ -47,8 +47,8 @@ QString qtRasterFailureDiagnosticDetail(const QByteArray &format,
 }
 
 kiriview::DecodedImageResult failedQtRasterDecodedImageResult(QString errorString,
-    kiriview::DecodedImageFailureOperation operation, const QByteArray &format,
-    const QString &backendError)
+    kiriview::DecodedImageFailureOperation operation, const QByteArray& format,
+    const QString& backendError)
 {
     return kiriview::failedDecodedImageResult(kiriview::DecodedImageFailure {
         std::move(errorString),
@@ -60,9 +60,9 @@ kiriview::DecodedImageResult failedQtRasterDecodedImageResult(QString errorStrin
     });
 }
 
-void stampQtRasterFailure(kiriview::DecodedImageResult &result, const QByteArray &format)
+void stampQtRasterFailure(kiriview::DecodedImageResult& result, const QByteArray& format)
 {
-    kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    kiriview::DecodedImageFailure* failure = kiriview::decodedImageResultFailure(result);
     if (failure == nullptr) {
         return;
     }
@@ -72,7 +72,7 @@ void stampQtRasterFailure(kiriview::DecodedImageResult &result, const QByteArray
 }
 
 kiriview::DecodedImageResult openedStaticImageResult(
-    const QByteArray &data, const kiriview::ImageDecodeRequest &request, const QByteArray &format)
+    const QByteArray& data, const kiriview::ImageDecodeRequest& request, const QByteArray& format)
 {
     QString errorString;
     std::shared_ptr<kiriview::ImageTileSource> source
@@ -88,7 +88,7 @@ kiriview::DecodedImageResult openedStaticImageResult(
     return result;
 }
 
-QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest &request)
+QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest& request)
 {
     return kiriview::sourceKeyForUrl(request.imageUrl()).identity;
 }
@@ -96,7 +96,7 @@ QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest &request)
 
 namespace kiriview {
 DecodedImageResult decodeQImageReaderImageData(
-    const QByteArray &data, const ImageDecodeRequest &request, QtRasterFormat format)
+    const QByteArray& data, const ImageDecodeRequest& request, QtRasterFormat format)
 {
     const QByteArray readerFormat = qtImageReaderFormat(format);
     BufferedImageReader reader(data, readerFormat);

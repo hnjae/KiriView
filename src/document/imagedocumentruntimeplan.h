@@ -13,95 +13,132 @@
 #include <vector>
 
 namespace kiriview {
-struct CancelFileDeletionOperation {
+struct CancelFileDeletionOperation
+{
 };
-struct StopPresentationAnimationOperation {
+struct StopPresentationAnimationOperation
+{
 };
-struct ShutdownSpreadOperation {
+struct ShutdownSpreadOperation
+{
 };
-struct ClearMediaEntrySourceOperation {
+struct ClearMediaEntrySourceOperation
+{
 };
-struct ClearPredecodeOperation {
+struct ClearPredecodeOperation
+{
 };
-struct CancelPredecodeOperation {
+struct CancelPredecodeOperation
+{
 };
-struct ScheduleAdjacentImagePredecodeOperation {
+struct ScheduleAdjacentImagePredecodeOperation
+{
 };
-struct FinishSpreadTransitionOperation {
+struct FinishSpreadTransitionOperation
+{
 };
-struct ResetRightToLeftReadingOperation {
+struct ResetRightToLeftReadingOperation
+{
 };
-struct ClearSecondaryPageOperation {
+struct ClearSecondaryPageOperation
+{
 };
-struct NotifyRightToLeftReadingChangedOperation {
+struct NotifyRightToLeftReadingChangedOperation
+{
 };
-struct ResetZoomOperation {
+struct ResetZoomOperation
+{
 };
-struct PrepareFailedContainerOperation {
+struct PrepareFailedContainerOperation
+{
     QUrl containerUrl;
 };
-struct CancelPageNavigationUpdateOperation {
+struct CancelPageNavigationUpdateOperation
+{
 };
-struct CancelNavigationOperation {
+struct CancelNavigationOperation
+{
 };
-struct CancelContainerNavigationOperation {
+struct CancelContainerNavigationOperation
+{
 };
-struct CancelAllNavigationOperation {
+struct CancelAllNavigationOperation
+{
 };
-struct ClearPageNavigationOperation {
+struct ClearPageNavigationOperation
+{
 };
-struct UpdatePageNavigationOperation {
+struct UpdatePageNavigationOperation
+{
 };
-struct LoadUrlOperation {
+struct LoadUrlOperation
+{
     ImageDocumentPageTarget target;
 };
-struct LoadContainerImageOperation {
+struct LoadContainerImageOperation
+{
     ImageDocumentPageTarget target;
     QUrl containerUrl;
 };
-struct FinishEmptyContainerNavigationOperation {
+struct FinishEmptyContainerNavigationOperation
+{
     QUrl containerUrl;
 };
-struct FinishContainerNavigationLoadWithErrorOperation {
+struct FinishContainerNavigationLoadWithErrorOperation
+{
     QUrl containerUrl;
     QString errorString;
 };
-struct ReportContainerNavigationBoundaryOperation {
+struct ReportContainerNavigationBoundaryOperation
+{
     NavigationDirection direction = NavigationDirection::Next;
 };
-struct ReportContainerNavigationListFailureOperation {
+struct ReportContainerNavigationListFailureOperation
+{
     ContainerNavigationListFailure failure;
 };
-struct LoadPageNavigationUrlOperation {
+struct LoadPageNavigationUrlOperation
+{
     ImageDocumentPageTarget target;
     bool preserveTwoPageSpreadTransition = false;
 };
-struct CancelOpenOperation {
+struct CancelOpenOperation
+{
 };
-struct ClearDisplayedImageLocationOperation {
+struct ClearDisplayedImageLocationOperation
+{
 };
-struct ClearPresentationImageOperation {
+struct ClearPresentationImageOperation
+{
 };
-struct ClearLoadingContainerNavigationUrlOperation {
+struct ClearLoadingContainerNavigationUrlOperation
+{
 };
-struct SetLoadingContainerNavigationUrlOperation {
+struct SetLoadingContainerNavigationUrlOperation
+{
     QUrl url;
 };
-struct SetContainerNavigationUrlOperation {
+struct SetContainerNavigationUrlOperation
+{
     QUrl url;
 };
-struct PrepareSourceLoadOperation {
+struct PrepareSourceLoadOperation
+{
     ImageDocumentSourceLoadRequest request;
 };
-struct SetSourceUrlOperation {
+struct SetSourceUrlOperation
+{
     ImageDocumentPageTarget target;
 };
-struct BeginOpenOperation {
+struct BeginOpenOperation
+{
 };
-struct SetErrorStringOperation {
+struct SetErrorStringOperation
+{
     QString errorString;
 };
-struct FinishEmptySourceLoadOperation {
+struct FinishEmptySourceLoadOperation
+{
 };
 
 using ImageDocumentRuntimeOperation = std::variant<CancelFileDeletionOperation,

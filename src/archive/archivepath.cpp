@@ -11,24 +11,24 @@
 #include <optional>
 
 namespace {
-QString rustStringForQString(const QString &value, rust::String (*rustFunction)(rust::Str))
+QString rustStringForQString(const QString& value, rust::String (*rustFunction)(rust::Str))
 {
     return kiriview::Bridge::qtString(kiriview::Bridge::rustResultForQString(value, rustFunction));
 }
 }
 
 namespace kiriview {
-QString normalizedArchiveRootPath(const QUrl &archiveRootUrl)
+QString normalizedArchiveRootPath(const QUrl& archiveRootUrl)
 {
     return rustStringForQString(archiveRootUrl.path(), rustNormalizedArchiveRootPath);
 }
 
-QString normalizedArchiveEntryPath(const QString &entryPath)
+QString normalizedArchiveEntryPath(const QString& entryPath)
 {
     return rustStringForQString(entryPath, rustNormalizedArchiveEntryPath);
 }
 
-QString archiveRelativePathForUrl(const QUrl &archiveRootUrl, const QUrl &url)
+QString archiveRelativePathForUrl(const QUrl& archiveRootUrl, const QUrl& url)
 {
     const QByteArray archiveRootScheme = archiveRootUrl.scheme().toUtf8();
     const QByteArray archiveRootPath = archiveRootUrl.path().toUtf8();
@@ -40,7 +40,7 @@ QString archiveRelativePathForUrl(const QUrl &archiveRootUrl, const QUrl &url)
 }
 
 QString openedCollectionEntryPathForUrl(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl)
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& imageUrl)
 {
     if (openedCollectionScope.isEmpty()) {
         return {};
@@ -51,7 +51,7 @@ QString openedCollectionEntryPathForUrl(
 }
 
 QUrl openedCollectionEntryUrl(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath)
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QString& entryPath)
 {
     const QString cleanEntryPath = normalizedArchiveEntryPath(entryPath);
     if (openedCollectionScope.isEmpty() || cleanEntryPath.isEmpty()) {
@@ -66,7 +66,7 @@ QUrl openedCollectionEntryUrl(
 }
 
 std::optional<KioFuseArchivePath> kioFuseArchivePath(
-    const QString &localPath, const QString &runtimeDir)
+    const QString& localPath, const QString& runtimeDir)
 {
     const QByteArray localPathBytes = localPath.toUtf8();
     const QByteArray runtimeDirBytes = runtimeDir.toUtf8();
@@ -83,7 +83,7 @@ std::optional<KioFuseArchivePath> kioFuseArchivePath(
 }
 
 std::optional<QUrl> kioFuseArchiveUrlForLocalPath(
-    const QString &localPath, const QString &runtimeDir)
+    const QString& localPath, const QString& runtimeDir)
 {
     const std::optional<KioFuseArchivePath> archivePath = kioFuseArchivePath(localPath, runtimeDir);
     if (!archivePath.has_value()) {

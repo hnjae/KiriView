@@ -5,7 +5,7 @@
 
 namespace kiriview::Bridge {
 RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
-    const ::ImageActionAvailabilityInput &input)
+    const ::ImageActionAvailabilityInput& input)
 {
     return RustImageActionAvailabilityInput {
         input.imageReady,
@@ -22,7 +22,7 @@ RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
 }
 
 RustImageActionAvailabilityProjection rustImageActionAvailabilityProjection(
-    const ::ImageActionAvailabilityProjection &projection)
+    const ::ImageActionAvailabilityProjection& projection)
 {
     return RustImageActionAvailabilityProjection {
         projection.canUseReadyActions,
@@ -94,7 +94,7 @@ RustImageShortcutScope rustImageShortcutScope(ApplicationActions::ImageShortcutS
 }
 
 RustVideoShortcutAvailabilityInput rustVideoShortcutAvailabilityInput(
-    const ApplicationActions::VideoShortcutAvailabilityInput &input)
+    const ApplicationActions::VideoShortcutAvailabilityInput& input)
 {
     return RustVideoShortcutAvailabilityInput {
         input.helpShortcutsEnabled,
@@ -105,7 +105,7 @@ RustVideoShortcutAvailabilityInput rustVideoShortcutAvailabilityInput(
 }
 
 ::ImageActionAvailabilityProjection imageActionAvailabilityProjectionFromRust(
-    const RustImageActionAvailabilityProjection &projection)
+    const RustImageActionAvailabilityProjection& projection)
 {
     return ::ImageActionAvailabilityProjection {
         projection.can_use_ready_actions,

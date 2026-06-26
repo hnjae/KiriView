@@ -18,9 +18,9 @@ using kiriview::ImageZoomMode;
 using kiriview::ImageZoomState;
 using kiriview::LoadedImageZoom;
 
-QUrl containerUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl containerUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-qreal longEdge(const QSizeF &size) { return std::max(size.width(), size.height()); }
+qreal longEdge(const QSizeF& size) { return std::max(size.width(), size.height()); }
 
 qreal binaryOctaveZoomStepFactor() { return std::pow(2.0, 1.0 / 8.0); }
 }

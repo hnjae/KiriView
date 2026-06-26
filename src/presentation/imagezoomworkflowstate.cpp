@@ -11,7 +11,7 @@ ImageZoomWorkflowState::ImageZoomWorkflowState(RenderContextProvider renderConte
 {
 }
 
-const ImageZoomState &ImageZoomWorkflowState::zoomState() const { return m_zoomState; }
+const ImageZoomState& ImageZoomWorkflowState::zoomState() const { return m_zoomState; }
 
 ImageDocumentRenderContext ImageZoomWorkflowState::renderContext() const
 {
@@ -28,7 +28,7 @@ void ImageZoomWorkflowState::clear() { m_zoomState = ImageZoomState {}; }
 void ImageZoomWorkflowState::clearContainer() { m_zoomState.clearContainer(); }
 
 ImageZoomWorkflowMutationResult ImageZoomWorkflowState::mutate(
-    const ZoomStateMutation &mutation, bool forceDisplayProjectionUpdate)
+    const ZoomStateMutation& mutation, bool forceDisplayProjectionUpdate)
 {
     const ImageZoomSnapshot previous = m_zoomState.snapshot();
     const ImageRenderContextChange renderContextChange = m_renderContextState.refresh();

@@ -29,7 +29,7 @@ kiriview::ApplicationActions::ApplicationActionStateInput readyImageInput()
 }
 
 kiriview::ApplicationActions::ApplicationActionState stateFor(
-    ActionId actionId, const kiriview::ApplicationActions::ApplicationActionStateInput &input)
+    ActionId actionId, const kiriview::ApplicationActions::ApplicationActionStateInput& input)
 {
     return kiriview::ApplicationActions::applicationActionState(actionId, input);
 }

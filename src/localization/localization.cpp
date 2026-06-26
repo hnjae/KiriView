@@ -18,7 +18,7 @@ void initializeLocalization()
     KLocalizedString::setApplicationDomain(QByteArrayLiteral(TRANSLATION_DOMAIN));
 }
 
-void setupLocalizedContext(QQmlApplicationEngine &engine)
+void setupLocalizedContext(QQmlApplicationEngine& engine)
 {
     KLocalization::setupLocalizedContext(&engine);
 }

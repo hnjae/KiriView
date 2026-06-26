@@ -43,12 +43,13 @@ private Q_SLOTS:
 };
 
 namespace {
-struct ImageActionsFixture {
+struct ImageActionsFixture
+{
     std::unique_ptr<QQmlEngine> engine;
     std::unique_ptr<QObject> root;
     std::unique_ptr<QTemporaryDir> temporaryDirectory;
-    KiriDocumentSession *documentSession = nullptr;
-    KiriViewApplication *application = nullptr;
+    KiriDocumentSession* documentSession = nullptr;
+    KiriViewApplication* application = nullptr;
     QString errorString;
 
     bool isValid() const
@@ -58,10 +59,10 @@ struct ImageActionsFixture {
     }
 };
 
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
@@ -90,7 +91,7 @@ QString qmlSourceImport()
     return QUrl::fromLocalFile(qmlPath).toString();
 }
 
-std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QString *errorString)
+std::unique_ptr<QTemporaryDir> createComicBookArchive(QString* sourcePath, QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -126,7 +127,7 @@ std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QStri
     return directory;
 }
 
-QString fixtureQml(const QString &sourceUrl)
+QString fixtureQml(const QString& sourceUrl)
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -222,7 +223,7 @@ Item {
         .arg(qmlSourceImport(), sourceUrl);
 }
 
-ImageActionsFixture createFixture(const QString &sourceUrl = QString())
+ImageActionsFixture createFixture(const QString& sourceUrl = QString())
 {
     ImageActionsFixture fixture;
     registerKiriViewQmlTypes();
@@ -244,7 +245,7 @@ ImageActionsFixture createFixture(const QString &sourceUrl = QString())
         return fixture;
     }
 
-    QObject *root = component.create();
+    QObject* root = component.create();
     if (root == nullptr) {
         fixture.errorString = component.errorString();
         return fixture;
@@ -252,15 +253,15 @@ ImageActionsFixture createFixture(const QString &sourceUrl = QString())
 
     fixture.root.reset(root);
     fixture.documentSession
-        = root->findChild<KiriDocumentSession *>(QStringLiteral("documentSession"));
-    fixture.application = root->findChild<KiriViewApplication *>(QStringLiteral("application"));
+        = root->findChild<KiriDocumentSession*>(QStringLiteral("documentSession"));
+    fixture.application = root->findChild<KiriViewApplication*>(QStringLiteral("application"));
     if (!fixture.isValid()) {
         fixture.errorString = QStringLiteral("fixture did not create required objects");
     }
     return fixture;
 }
 
-bool invoke(QObject &object, const char *method)
+bool invoke(QObject& object, const char* method)
 {
     return QMetaObject::invokeMethod(&object, method, Qt::DirectConnection);
 }

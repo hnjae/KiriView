@@ -11,12 +11,12 @@ class ImageDocumentDeletionProgressPort final
 {
 public:
     explicit ImageDocumentDeletionProgressPort(
-        const ImageDocumentDeletionController *deletionController = nullptr);
+        const ImageDocumentDeletionController* deletionController = nullptr);
 
     bool inProgress() const;
 
 private:
-    const ImageDocumentDeletionController *m_deletionController = nullptr;
+    const ImageDocumentDeletionController* m_deletionController = nullptr;
 };
 }
 

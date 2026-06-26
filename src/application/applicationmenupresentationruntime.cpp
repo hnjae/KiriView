@@ -13,7 +13,7 @@
 
 namespace kiriview::ApplicationActions {
 ApplicationMenuPresentationRuntime::ApplicationMenuPresentationRuntime(
-    ApplicationActionHost &host, ChangeCallback changeCallback)
+    ApplicationActionHost& host, ChangeCallback changeCallback)
     : m_host(host)
     , m_changeCallback(std::move(changeCallback))
     , m_state(ApplicationMenuPresentationState::presentationForStoredValue(
@@ -40,7 +40,7 @@ void ApplicationMenuPresentationRuntime::setMenuPresentation(MenuPresentation pr
     }
 }
 
-void ApplicationMenuPresentationRuntime::bindShowMenuBarAction(QAction *action)
+void ApplicationMenuPresentationRuntime::bindShowMenuBarAction(QAction* action)
 {
     m_showMenuBarAction = action;
     if (m_showMenuBarAction == nullptr) {

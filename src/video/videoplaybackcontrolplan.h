@@ -10,7 +10,8 @@
 #include <vector>
 
 namespace kiriview {
-struct VideoPlaybackControlSnapshot {
+struct VideoPlaybackControlSnapshot
+{
     bool sourceUrlEmpty = true;
     bool mediaBackendAvailable = false;
     bool playing = false;
@@ -20,25 +21,31 @@ struct VideoPlaybackControlSnapshot {
     qint64 duration = 0;
 };
 
-struct VideoPlaybackStateDelta {
+struct VideoPlaybackStateDelta
+{
     std::optional<bool> mediaEnded;
     std::optional<bool> playing;
     std::optional<qint64> position;
 };
 
-struct EnsureVideoPlaybackBackendOperation {
+struct EnsureVideoPlaybackBackendOperation
+{
 };
 
-struct PlayVideoPlaybackOperation {
+struct PlayVideoPlaybackOperation
+{
 };
 
-struct PauseVideoPlaybackOperation {
+struct PauseVideoPlaybackOperation
+{
 };
 
-struct StopVideoPlaybackOperation {
+struct StopVideoPlaybackOperation
+{
 };
 
-struct SetVideoPlaybackPositionOperation {
+struct SetVideoPlaybackPositionOperation
+{
     qint64 position = 0;
 };
 
@@ -46,7 +53,8 @@ using VideoPlaybackBackendOperation
     = std::variant<EnsureVideoPlaybackBackendOperation, PlayVideoPlaybackOperation,
         PauseVideoPlaybackOperation, StopVideoPlaybackOperation, SetVideoPlaybackPositionOperation>;
 
-struct VideoPlaybackControlPlan {
+struct VideoPlaybackControlPlan
+{
     VideoPlaybackStateDelta stateDelta;
     std::vector<VideoPlaybackBackendOperation> backendOperations;
 

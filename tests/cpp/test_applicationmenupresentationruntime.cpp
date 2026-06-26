@@ -17,8 +17,8 @@
 
 namespace {
 using MenuPresentation = kiriview::ApplicationActions::MenuPresentation;
-constexpr const char *interfaceConfigGroup = "Interface";
-constexpr const char *menuPresentationConfigKey = "menuPresentation";
+constexpr const char* interfaceConfigGroup = "Interface";
+constexpr const char* menuPresentationConfigKey = "menuPresentation";
 
 KConfigGroup stateInterfaceGroup()
 {
@@ -27,7 +27,7 @@ KConfigGroup stateInterfaceGroup()
 
 void resetConfig()
 {
-    KiriViewState *state = KiriViewState::self();
+    KiriViewState* state = KiriViewState::self();
     state->config()->deleteGroup(QStringLiteral("Interface"));
     state->config()->sync();
     state->config()->reparseConfiguration();
@@ -50,9 +50,9 @@ public:
     {
     }
 
-    QObject *actionContext() override { return this; }
-    KirigamiActionCollection *mainActionCollection() override { return &collection; }
-    QAction *inheritedAction(const QString &actionName) override
+    QObject* actionContext() override { return this; }
+    KirigamiActionCollection* mainActionCollection() override { return &collection; }
+    QAction* inheritedAction(const QString& actionName) override
     {
         return collection.action(actionName);
     }
@@ -65,7 +65,7 @@ Q_SIGNALS:
 };
 
 kiriview::ApplicationActions::ApplicationMenuPresentationRuntime createRuntime(
-    FakeApplicationActionHost &host)
+    FakeApplicationActionHost& host)
 {
     return kiriview::ApplicationActions::ApplicationMenuPresentationRuntime(
         host, [&host]() { Q_EMIT host.menuPresentationChanged(); });
@@ -167,7 +167,7 @@ void TestApplicationMenuPresentationRuntime::showMenuBarActionMirrorsAndUpdatesP
     QVERIFY(action.isChecked());
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     qputenv("QT_QPA_PLATFORM", QByteArray("offscreen"));
 

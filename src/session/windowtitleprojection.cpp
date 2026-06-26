@@ -4,9 +4,9 @@
 #include "windowtitleprojection.h"
 
 namespace {
-bool validSize(const QSize &size) { return size.width() > 0 && size.height() > 0; }
+bool validSize(const QSize& size) { return size.width() > 0 && size.height() > 0; }
 
-QString mediaSizeStatus(const QSize &size)
+QString mediaSizeStatus(const QSize& size)
 {
     if (!validSize(size)) {
         return {};
@@ -15,7 +15,7 @@ QString mediaSizeStatus(const QSize &size)
     return QStringLiteral("%1×%2").arg(size.width()).arg(size.height());
 }
 
-QString navigationStatus(const kiriview::ActiveNavigationSnapshot &snapshot)
+QString navigationStatus(const kiriview::ActiveNavigationSnapshot& snapshot)
 {
     if (!snapshot.known || snapshot.currentNumber < 1 || snapshot.count < 1
         || snapshot.currentNumber > snapshot.count) {

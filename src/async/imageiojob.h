@@ -14,12 +14,12 @@ namespace kiriview {
 class ImageIoJobState final
 {
 public:
-    using CancelCallback = std::function<void(QObject *)>;
+    using CancelCallback = std::function<void(QObject*)>;
 
-    ImageIoJobState(QObject *object, CancelCallback cancelCallback);
+    ImageIoJobState(QObject* object, CancelCallback cancelCallback);
 
-    bool claim(QObject *object);
-    template <typename Finish> bool claimAndRun(QObject *object, Finish &&finish)
+    bool claim(QObject* object);
+    template <typename Finish> bool claimAndRun(QObject* object, Finish&& finish)
     {
         if (!claim(object)) {
             return false;
@@ -35,7 +35,7 @@ private:
     friend class ImageIoJob;
     friend class ImageIoJobCompletion;
 
-    QObject *token() const;
+    QObject* token() const;
 
     QPointer<QObject> m_token;
     QPointer<QObject> m_activeObject;
@@ -48,13 +48,13 @@ public:
     ImageIoJobCompletion() = default;
     explicit ImageIoJobCompletion(std::shared_ptr<ImageIoJobState> state);
 
-    QObject *object() const;
+    QObject* object() const;
     bool isActive() const;
     void cancel() const;
 
-    template <typename Finish> bool claimAndRun(Finish &&finish) const
+    template <typename Finish> bool claimAndRun(Finish&& finish) const
     {
-        QObject *object = this->object();
+        QObject* object = this->object();
         if (m_state == nullptr || object == nullptr) {
             return false;
         }
@@ -62,9 +62,9 @@ public:
         return m_state->claimAndRun(object, std::forward<Finish>(finish));
     }
 
-    template <typename Finish> bool claimAndDelete(Finish &&finish) const
+    template <typename Finish> bool claimAndDelete(Finish&& finish) const
     {
-        QObject *object = this->object();
+        QObject* object = this->object();
         if (m_state == nullptr || object == nullptr) {
             return false;
         }
@@ -85,13 +85,13 @@ public:
     using CancelCallback = ImageIoJobState::CancelCallback;
 
     ImageIoJob() = default;
-    ImageIoJob(QObject *object, CancelCallback cancelCallback);
+    ImageIoJob(QObject* object, CancelCallback cancelCallback);
     ~ImageIoJob();
 
-    ImageIoJob(const ImageIoJob &) = delete;
-    ImageIoJob &operator=(const ImageIoJob &) = delete;
-    ImageIoJob(ImageIoJob &&) noexcept = default;
-    ImageIoJob &operator=(ImageIoJob &&other) noexcept;
+    ImageIoJob(const ImageIoJob&) = delete;
+    ImageIoJob& operator=(const ImageIoJob&) = delete;
+    ImageIoJob(ImageIoJob&&) noexcept = default;
+    ImageIoJob& operator=(ImageIoJob&& other) noexcept;
 
     void cancel();
     bool isActive() const;

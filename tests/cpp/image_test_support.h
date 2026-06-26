@@ -22,7 +22,7 @@
 
 namespace kiriview::TestSupport {
 namespace Detail {
-    inline void appendFourCc(QByteArray &data, std::string_view fourCc)
+    inline void appendFourCc(QByteArray& data, std::string_view fourCc)
     {
         Q_ASSERT(fourCc.size() == 4);
 
@@ -54,7 +54,7 @@ inline QByteArray heifFtypBox(
     return data;
 }
 
-inline QImage testImage(const QSize &size = QSize(1, 1))
+inline QImage testImage(const QSize& size = QSize(1, 1))
 {
     QImage image(size, QImage::Format_RGBA8888_Premultiplied);
     image.fill(Qt::transparent);
@@ -74,9 +74,9 @@ public:
     QSize imageSize() const override { return m_image.size(); }
     qsizetype byteCost() const override { return m_image.sizeInBytes(); }
 
-    QImage decodeBlockingDisplayImage(int, QString *) const override { return m_image; }
+    QImage decodeBlockingDisplayImage(int, QString*) const override { return m_image; }
 
-    std::optional<DecodedTile> decodeTile(const TileRequest &request, QString *) const override
+    std::optional<DecodedTile> decodeTile(const TileRequest& request, QString*) const override
     {
         if (request.textureLevelRect.isEmpty()) {
             return std::nullopt;
@@ -93,8 +93,8 @@ private:
     QImage m_image;
 };
 
-inline StaticDisplayImagePayload staticDisplayTestImagePayload(const QImage &sourceImage,
-    const QImage &displayImage, qreal firstDisplayPixelsPerSourcePixel = 0.0,
+inline StaticDisplayImagePayload staticDisplayTestImagePayload(const QImage& sourceImage,
+    const QImage& displayImage, qreal firstDisplayPixelsPerSourcePixel = 0.0,
     DisplayImageQuality quality = DisplayImageQuality::Exact)
 {
     const qreal displayPixelsPerSourcePixel = firstDisplayPixelsPerSourcePixel > 0.0
@@ -113,12 +113,12 @@ inline StaticDisplayImagePayload staticDisplayTestImagePayload(const QImage &sou
 }
 
 inline StaticDisplayImagePayload staticDisplayTestImagePayload(
-    const QImage &image = testImage(), DisplayImageQuality quality = DisplayImageQuality::Exact)
+    const QImage& image = testImage(), DisplayImageQuality quality = DisplayImageQuality::Exact)
 {
     return staticDisplayTestImagePayload(image, image, 0.0, quality);
 }
 
-inline StaticDecodedImage staticDecodedTestImage(const QImage &image = testImage())
+inline StaticDecodedImage staticDecodedTestImage(const QImage& image = testImage())
 {
     return StaticDecodedImage { staticDisplayTestImagePayload(image) };
 }
@@ -132,7 +132,7 @@ inline DecodedImageResult failedTestImageDecodeResult()
 
 inline ImageDataDecoder staticImageDataDecoder(QImage image = testImage())
 {
-    return [image = std::move(image)](const QByteArray &, const ImageDecodeRequest &) {
+    return [image = std::move(image)](const QByteArray&, const ImageDecodeRequest&) {
         return successfulDecodedImageResult(staticDecodedTestImage(image));
     };
 }
@@ -140,7 +140,7 @@ inline ImageDataDecoder staticImageDataDecoder(QImage image = testImage())
 inline ImageDataDecoder staticImageDataDecoderRejectingBadData(QImage image = testImage())
 {
     return [decoder = staticImageDataDecoder(std::move(image))](
-               const QByteArray &data, const ImageDecodeRequest &request) {
+               const QByteArray& data, const ImageDecodeRequest& request) {
         if (data == QByteArrayLiteral("bad")) {
             return failedTestImageDecodeResult();
         }
@@ -150,7 +150,7 @@ inline ImageDataDecoder staticImageDataDecoderRejectingBadData(QImage image = te
 }
 
 inline ImageDecodeDependencies imageDecodeDependenciesFor(
-    ManualImageDataLoader &dataLoader, ImageDataDecoder dataDecoder)
+    ManualImageDataLoader& dataLoader, ImageDataDecoder dataDecoder)
 {
     return ImageDecodeDependencies {
         dataLoaderFor(dataLoader),
@@ -159,7 +159,7 @@ inline ImageDecodeDependencies imageDecodeDependenciesFor(
 }
 
 inline ImageDocumentRuntimeDependencyOverrides imageDocumentRuntimeDependencyOverridesFor(
-    FakeImageDocumentPageCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
+    FakeImageDocumentPageCandidateProvider& candidateProvider, ManualImageDataLoader& dataLoader,
     ImageDataDecoder dataDecoder, FileDeletionProvider fileDeletionProvider = {})
 {
     return ImageDocumentRuntimeDependencyOverrides {

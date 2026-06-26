@@ -42,7 +42,7 @@ void TestImageDocumentChangeBatcher::batchCallbacksReceiveWholeOrderedBatches()
     std::vector<std::vector<kiriview::ImageDocumentChange>> publishedBatches;
     kiriview::ImageDocumentChangeBatcher batcher(
         kiriview::ImageDocumentChangeBatcher::ChangeBatchCallback(
-            [&publishedBatches](const std::vector<kiriview::ImageDocumentChange> &changes) {
+            [&publishedBatches](const std::vector<kiriview::ImageDocumentChange>& changes) {
                 publishedBatches.push_back(changes);
             }));
 
@@ -69,7 +69,7 @@ void TestImageDocumentChangeBatcher::emptyBatchesDoNotPublish()
     kiriview::ImageDocumentChangeBatcher batcher(
         kiriview::ImageDocumentChangeBatcher::ChangeBatchCallback(
             [&publishCount](
-                const std::vector<kiriview::ImageDocumentChange> &) { ++publishCount; }));
+                const std::vector<kiriview::ImageDocumentChange>&) { ++publishCount; }));
 
     {
         [[maybe_unused]] auto batch = batcher.beginBatch();

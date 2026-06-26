@@ -12,13 +12,13 @@ class ImageOpenController;
 class ImageDocumentAnimationLoadErrorPort final
 {
 public:
-    explicit ImageDocumentAnimationLoadErrorPort(ImageOpenController *openController = nullptr);
+    explicit ImageDocumentAnimationLoadErrorPort(ImageOpenController* openController = nullptr);
 
-    void setOpenController(ImageOpenController *openController);
-    void finishAnimationLoadWithError(const QString &errorString) const;
+    void setOpenController(ImageOpenController* openController);
+    void finishAnimationLoadWithError(const QString& errorString) const;
 
 private:
-    ImageOpenController *m_openController = nullptr;
+    ImageOpenController* m_openController = nullptr;
 };
 }
 

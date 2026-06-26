@@ -21,7 +21,8 @@ private Q_SLOTS:
 };
 
 namespace {
-struct RuntimeFixture {
+struct RuntimeFixture
+{
     QObject context;
     QPointer<QObject> backendOutput;
     int backendOutputSetCount = 0;
@@ -32,7 +33,7 @@ struct RuntimeFixture {
     RuntimeFixture()
         : runtime(&context,
               kiriview::VideoOutputRuntimeCallbacks {
-                  [this](QObject *output) {
+                  [this](QObject* output) {
                       backendOutput = output;
                       ++backendOutputSetCount;
                   },
@@ -74,7 +75,7 @@ void TestVideoOutputRuntime::outputAttachDetachAndSameOutputAreCanonical()
 void TestVideoOutputRuntime::outputDestructionClearsCanonicalOutputAndBackend()
 {
     RuntimeFixture fixture;
-    auto *output = new QObject();
+    auto* output = new QObject();
 
     fixture.runtime.setVideoOutput(output);
     delete output;

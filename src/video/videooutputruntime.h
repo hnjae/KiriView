@@ -16,8 +16,9 @@ class QObject;
 namespace kiriview {
 class VideoOutputRenderContextObserver;
 
-struct VideoOutputRuntimeCallbacks {
-    std::function<void(QObject *)> setBackendVideoOutput;
+struct VideoOutputRuntimeCallbacks
+{
+    std::function<void(QObject*)> setBackendVideoOutput;
     std::function<void()> videoOutputChanged;
     std::function<void()> zoomProjectionChanged;
 };
@@ -25,20 +26,20 @@ struct VideoOutputRuntimeCallbacks {
 class VideoOutputRuntime final
 {
 public:
-    explicit VideoOutputRuntime(QObject *context, VideoOutputRuntimeCallbacks callbacks = {});
+    explicit VideoOutputRuntime(QObject* context, VideoOutputRuntimeCallbacks callbacks = {});
     ~VideoOutputRuntime();
 
-    QObject *videoOutput() const;
-    void setVideoOutput(QObject *videoOutput);
-    void setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect);
+    QObject* videoOutput() const;
+    void setVideoOutput(QObject* videoOutput);
+    void setVideoOutputGeometry(const QRectF& contentRect, const QRectF& sourceRect);
     std::optional<int> zoomPercent() const;
 
 private:
-    void connectVideoOutputDestroyed(QObject *videoOutput);
+    void connectVideoOutputDestroyed(QObject* videoOutput);
     void disconnectVideoOutputDestroyed();
     void notifyVideoOutputChanged() const;
     void notifyZoomProjectionChanged() const;
-    void setBackendVideoOutput(QObject *videoOutput) const;
+    void setBackendVideoOutput(QObject* videoOutput) const;
 
     VideoOutputRuntimeCallbacks m_callbacks;
     std::unique_ptr<VideoOutputRenderContextObserver> m_renderContextObserver;

@@ -15,7 +15,7 @@
 namespace {
 bool approximatelyEqual(qreal left, qreal right) { return std::abs(left - right) < 0.001; }
 
-void comparePoint(const QPointF &actual, const QPointF &expected)
+void comparePoint(const QPointF& actual, const QPointF& expected)
 {
     QVERIFY2(approximatelyEqual(actual.x(), expected.x()),
         qPrintable(QStringLiteral("x=%1").arg(actual.x())));

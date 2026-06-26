@@ -13,14 +13,16 @@
 #include <vector>
 
 namespace kiriview {
-struct ImageDocumentPageNavigationRefreshResult {
+struct ImageDocumentPageNavigationRefreshResult
+{
     bool accepted = false;
     bool changed = false;
     bool currentPageRemoved = false;
     std::optional<ImageDocumentPageCandidateListContext> context;
 };
 
-struct ImageDocumentPageNavigationRefreshPlan {
+struct ImageDocumentPageNavigationRefreshPlan
+{
     bool changed = false;
     quint64 refreshId = 0;
 };
@@ -37,22 +39,22 @@ public:
     std::optional<ImageDocumentPageTarget> selectPage(int pageNumber);
     std::optional<ImageDocumentPageTarget> selectAdjacentPage(NavigationDirection direction);
 
-    bool shouldKeepExistingWatcherFor(const ImageDocumentPageCandidateListContext &context) const;
+    bool shouldKeepExistingWatcherFor(const ImageDocumentPageCandidateListContext& context) const;
     ImageDocumentPageNavigationRefreshPlan beginRefresh(
-        const ImageDocumentPageCandidateListContext &context);
-    bool completeRefresh(const std::vector<ImageDocumentPageCandidate> &candidates,
-        const QUrl &currentUrl, ImageDocumentPageCandidateListSource source);
+        const ImageDocumentPageCandidateListContext& context);
+    bool completeRefresh(const std::vector<ImageDocumentPageCandidate>& candidates,
+        const QUrl& currentUrl, ImageDocumentPageCandidateListSource source);
     ImageDocumentPageNavigationRefreshResult completePendingRefresh(
-        const std::vector<ImageDocumentPageCandidate> &candidates, quint64 refreshId,
+        const std::vector<ImageDocumentPageCandidate>& candidates, quint64 refreshId,
         ImageDocumentPageCandidateListSource source);
     ImageDocumentPageNavigationRefreshResult completeWatchedRefreshFromCurrentContext(
-        const std::vector<ImageDocumentPageCandidate> &candidates,
+        const std::vector<ImageDocumentPageCandidate>& candidates,
         ImageDocumentPageCandidateListSource source);
     bool clear();
 
 private:
     ImageDocumentPageNavigationRefreshResult completeRefreshFromCurrentContext(
-        const std::vector<ImageDocumentPageCandidate> &candidates,
+        const std::vector<ImageDocumentPageCandidate>& candidates,
         ImageDocumentPageCandidateListContext context);
     std::optional<ImageDocumentPageCandidateListContext> acceptedPendingRefreshContext(
         quint64 refreshId, ImageDocumentPageCandidateListSource source) const;

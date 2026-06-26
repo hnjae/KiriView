@@ -9,7 +9,8 @@
 #include <utility>
 
 namespace {
-struct RecordedWorkflowOperations {
+struct RecordedWorkflowOperations
+{
     kiriview::ImageDocumentRuntimeOperations operations;
     QStringList events;
 

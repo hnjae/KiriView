@@ -12,7 +12,7 @@
 namespace kiriview {
 PredecodeActiveDecodeStore::~PredecodeActiveDecodeStore() { cancel(); }
 
-bool PredecodeActiveDecodeStore::add(ImageDecodeRequest request, ImageDecodeJob *decodeJob)
+bool PredecodeActiveDecodeStore::add(ImageDecodeRequest request, ImageDecodeJob* decodeJob)
 {
     const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(request.imageUrl());
     if (request.isEmpty() || decodeJob == nullptr || !normalizedUrl.has_value()
@@ -26,7 +26,7 @@ bool PredecodeActiveDecodeStore::add(ImageDecodeRequest request, ImageDecodeJob 
 
 std::size_t PredecodeActiveDecodeStore::size() const { return m_entries.size(); }
 
-bool PredecodeActiveDecodeStore::containsUrl(const QUrl &url) const
+bool PredecodeActiveDecodeStore::containsUrl(const QUrl& url) const
 {
     const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
     if (!normalizedUrl.has_value()) {
@@ -34,24 +34,24 @@ bool PredecodeActiveDecodeStore::containsUrl(const QUrl &url) const
     }
 
     return std::any_of(m_entries.cbegin(), m_entries.cend(),
-        [&normalizedUrl](const Entry &entry) { return entry.normalizedUrl == *normalizedUrl; });
+        [&normalizedUrl](const Entry& entry) { return entry.normalizedUrl == *normalizedUrl; });
 }
 
 PredecodeActiveLoads PredecodeActiveDecodeStore::activeLoads() const
 {
     std::vector<QUrl> urls;
     urls.reserve(m_entries.size());
-    for (const Entry &entry : m_entries) {
+    for (const Entry& entry : m_entries) {
         urls.push_back(entry.normalizedUrl);
     }
     return PredecodeActiveLoads::fromUrls(std::move(urls));
 }
 
 std::optional<ImageDecodeRequest> PredecodeActiveDecodeStore::finish(
-    const ImageDecodeRequest &request)
+    const ImageDecodeRequest& request)
 {
     const auto entry = std::find_if(m_entries.begin(), m_entries.end(),
-        [&request](const Entry &candidate) { return candidate.request.matches(request); });
+        [&request](const Entry& candidate) { return candidate.request.matches(request); });
     if (entry == m_entries.end()) {
         return std::nullopt;
     }
@@ -66,7 +66,7 @@ std::optional<ImageDecodeRequest> PredecodeActiveDecodeStore::finish(
 
 void PredecodeActiveDecodeStore::cancel()
 {
-    for (const Entry &entry : m_entries) {
+    for (const Entry& entry : m_entries) {
         if (entry.decodeJob == nullptr) {
             continue;
         }

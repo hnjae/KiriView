@@ -27,8 +27,8 @@ public:
     Private() = default;
     ~Private() = default;
 
-    Private(const Private &) = delete;
-    Private &operator=(const Private &) = delete;
+    Private(const Private&) = delete;
+    Private& operator=(const Private&) = delete;
 
     void reset()
     {
@@ -53,9 +53,9 @@ HeifSequenceReader::HeifSequenceReader()
 
 HeifSequenceReader::~HeifSequenceReader() = default;
 
-HeifSequenceReader::HeifSequenceReader(HeifSequenceReader &&) noexcept = default;
+HeifSequenceReader::HeifSequenceReader(HeifSequenceReader&&) noexcept = default;
 
-HeifSequenceReader &HeifSequenceReader::operator=(HeifSequenceReader &&) noexcept = default;
+HeifSequenceReader& HeifSequenceReader::operator=(HeifSequenceReader&&) noexcept = default;
 
 HeifSequenceOpenResult HeifSequenceReader::open(QByteArray data)
 {
@@ -101,7 +101,7 @@ HeifSequenceOpenResult HeifSequenceReader::open(QByteArray data)
     return { HeifSequenceOpenStatus::Success, {} };
 }
 
-std::optional<AnimationFrame> HeifSequenceReader::readNextFrame(QString *errorString)
+std::optional<AnimationFrame> HeifSequenceReader::readNextFrame(QString* errorString)
 {
     if (errorString != nullptr) {
         errorString->clear();

@@ -59,7 +59,7 @@ void DocumentSessionActiveNavigationRuntime::setRevealContext(ActiveNavigationRe
 }
 
 void DocumentSessionActiveNavigationRuntime::clearRevealContextIfUnavailable(
-    const ActiveNavigationSnapshot &snapshot)
+    const ActiveNavigationSnapshot& snapshot)
 {
     if (!snapshot.available || !snapshot.known) {
         setRevealContext({});
@@ -67,14 +67,14 @@ void DocumentSessionActiveNavigationRuntime::clearRevealContextIfUnavailable(
 }
 
 void DocumentSessionActiveNavigationRuntime::executeDispatchPlan(
-    const ActiveNavigationDispatchPlan &plan)
+    const ActiveNavigationDispatchPlan& plan)
 {
     if (!plan.shouldDispatch()) {
         return;
     }
 
     std::visit(
-        [this](const auto &operation) {
+        [this](const auto& operation) {
             using Operation = std::decay_t<decltype(operation)>;
             if constexpr (std::is_same_v<Operation, OpenPreviousDirectMediaNavigationOperation>) {
                 if (m_ports.openPreviousDirectMedia) {

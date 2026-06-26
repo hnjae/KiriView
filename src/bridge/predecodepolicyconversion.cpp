@@ -101,7 +101,7 @@ RustPredecodeMomentumState rustPredecodeMomentumState(PredecodeMomentumState sta
     };
 }
 
-PredecodeMomentumState predecodeMomentumStateFromRust(const RustPredecodeMomentumState &state)
+PredecodeMomentumState predecodeMomentumStateFromRust(const RustPredecodeMomentumState& state)
 {
     return PredecodeMomentumState {
         state.last_page_index,
@@ -112,7 +112,7 @@ PredecodeMomentumState predecodeMomentumStateFromRust(const RustPredecodeMomentu
     };
 }
 
-RustPredecodeCachedImageState rustPredecodeCachedImageState(const PredecodeCachedImageState &state)
+RustPredecodeCachedImageState rustPredecodeCachedImageState(const PredecodeCachedImageState& state)
 {
     return RustPredecodeCachedImageState {
         state.currentDisplayed,
@@ -124,12 +124,12 @@ RustPredecodeCachedImageState rustPredecodeCachedImageState(const PredecodeCache
     };
 }
 
-RustPredecodeWindowLoadState rustPredecodeWindowLoadState(const PredecodeWindowLoadState &state)
+RustPredecodeWindowLoadState rustPredecodeWindowLoadState(const PredecodeWindowLoadState& state)
 {
     return RustPredecodeWindowLoadState { state.displayed, state.cached, state.inFlight };
 }
 
-RustPredecodeQueuedLoadState rustPredecodeQueuedLoadState(const PredecodeQueuedLoadState &state)
+RustPredecodeQueuedLoadState rustPredecodeQueuedLoadState(const PredecodeQueuedLoadState& state)
 {
     return RustPredecodeQueuedLoadState {
         state.valid,
@@ -139,7 +139,7 @@ RustPredecodeQueuedLoadState rustPredecodeQueuedLoadState(const PredecodeQueuedL
     };
 }
 
-PredecodeSchedulePlan predecodeSchedulePlanFromRust(const RustPredecodeSchedulePlan &plan)
+PredecodeSchedulePlan predecodeSchedulePlanFromRust(const RustPredecodeSchedulePlan& plan)
 {
     return PredecodeSchedulePlan {
         plan.parallel_limit,
@@ -147,7 +147,7 @@ PredecodeSchedulePlan predecodeSchedulePlanFromRust(const RustPredecodeScheduleP
     };
 }
 
-PredecodeQueuedLoadPlan predecodeQueuedLoadPlanFromRust(const RustPredecodeQueuedLoadPlan &plan)
+PredecodeQueuedLoadPlan predecodeQueuedLoadPlanFromRust(const RustPredecodeQueuedLoadPlan& plan)
 {
     return PredecodeQueuedLoadPlan { plan.found, plan.index, plan.discard_count };
 }

@@ -12,12 +12,12 @@ class DocumentSessionState;
 class DocumentSessionDirectMediaNavigationInputPort final
 {
 public:
-    explicit DocumentSessionDirectMediaNavigationInputPort(const DocumentSessionState *state);
+    explicit DocumentSessionDirectMediaNavigationInputPort(const DocumentSessionState* state);
 
     DirectMediaActiveNavigationInput currentInput() const;
 
 private:
-    const DocumentSessionState *m_state = nullptr;
+    const DocumentSessionState* m_state = nullptr;
 };
 }
 

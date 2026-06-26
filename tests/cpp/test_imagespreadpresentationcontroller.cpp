@@ -46,14 +46,14 @@ kiriview::OpenedCollectionScopeLocation openedCollectionScope()
         kiriview::OpenedCollectionScopeKind::ComicBookArchive);
 }
 
-kiriview::DisplayedImageLocation displayedLocation(const QUrl &url)
+kiriview::DisplayedImageLocation displayedLocation(const QUrl& url)
 {
     return kiriview::DisplayedImageLocation::fromOpenedCollectionScope(
         url, openedCollectionScope());
 }
 
 kiriview::ImageDocumentPageNavigationSnapshot navigationSnapshot(
-    const std::vector<QUrl> &urls, int currentPageNumber)
+    const std::vector<QUrl>& urls, int currentPageNumber)
 {
     return kiriview::ImageDocumentPageNavigationSnapshot {
         kiriview::PageNavigationState {
@@ -63,7 +63,7 @@ kiriview::ImageDocumentPageNavigationSnapshot navigationSnapshot(
     };
 }
 
-bool projectionReady(const kiriview::ImageDisplaySourceProjection &projection)
+bool projectionReady(const kiriview::ImageDisplaySourceProjection& projection)
 {
     return projection.visible && projection.status == kiriview::ImageDisplaySourceStatus::Ready
         && !projection.providerUrl.isEmpty();
@@ -78,7 +78,7 @@ public:
         , controller(&context, renderContext, state, primaryPageSurface, presentationRuntime,
               kiriview::ImageSpreadPresentationController::Callbacks {
                   {},
-                  [this](const QUrl &url) { return findPredecodedImage(url); },
+                  [this](const QUrl& url) { return findPredecodedImage(url); },
                   [this]() { return snapshot; },
                   {},
               },
@@ -87,7 +87,7 @@ public:
         controller.setViewportSize(QSizeF(800.0, 600.0));
     }
 
-    void displayPrimaryPage(const QUrl &url, const QSize &imageSize, int pageNumber)
+    void displayPrimaryPage(const QUrl& url, const QSize& imageSize, int pageNumber)
     {
         snapshot = navigationSnapshot(pageUrls, pageNumber);
         state.setDisplayedImageLocation(displayedLocation(url));
@@ -96,7 +96,7 @@ public:
         controller.commitPrimaryPageSlot(state.displayedImageLocation());
     }
 
-    std::optional<kiriview::PredecodedImage> findPredecodedImage(const QUrl &url) const
+    std::optional<kiriview::PredecodedImage> findPredecodedImage(const QUrl& url) const
     {
         const auto imageSize = predecodedImageSizes.find(url);
         if (imageSize == predecodedImageSizes.cend()) {

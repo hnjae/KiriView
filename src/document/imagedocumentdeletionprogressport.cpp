@@ -7,7 +7,7 @@
 
 namespace kiriview {
 ImageDocumentDeletionProgressPort::ImageDocumentDeletionProgressPort(
-    const ImageDocumentDeletionController *deletionController)
+    const ImageDocumentDeletionController* deletionController)
     : m_deletionController(deletionController)
 {
 }

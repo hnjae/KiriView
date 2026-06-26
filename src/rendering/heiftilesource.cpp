@@ -33,7 +33,7 @@ qsizetype HeifTileSource::byteCost() const { return m_data.size(); }
 
 bool HeifTileSource::supportsRasterDisplayRefinement() const { return true; }
 
-QImage HeifTileSource::decodeRasterDisplayImage(const QSize &rasterSize, QString *errorString) const
+QImage HeifTileSource::decodeRasterDisplayImage(const QSize& rasterSize, QString* errorString) const
 {
     if (rasterSize.isEmpty()) {
         return {};
@@ -44,13 +44,13 @@ QImage HeifTileSource::decodeRasterDisplayImage(const QSize &rasterSize, QString
     return decodeFullOrScaled(rasterSize, errorString);
 }
 
-QImage HeifTileSource::decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const
+QImage HeifTileSource::decodeBlockingDisplayImage(int maximumLongEdge, QString* errorString) const
 {
     return decodeFullOrScaled(boundedPreviewSize(m_imageSize, maximumLongEdge), errorString);
 }
 
 std::optional<DecodedTile> HeifTileSource::decodeTile(
-    const TileRequest &request, QString *errorString) const
+    const TileRequest& request, QString* errorString) const
 {
     if (!tileRequestCanDecode(request)) {
         return std::nullopt;
@@ -78,7 +78,7 @@ std::optional<DecodedTile> HeifTileSource::decodeTile(
     return tile;
 }
 
-QImage HeifTileSource::decodeFullOrScaled(const QSize &targetSize, QString *errorString) const
+QImage HeifTileSource::decodeFullOrScaled(const QSize& targetSize, QString* errorString) const
 {
     if (estimatedRgbaByteCost(m_imageSize) > imageFullDecodeFallbackByteLimit) {
         setTileSourceError(
@@ -111,7 +111,7 @@ QImage HeifTileSource::decodeFullOrScaled(const QSize &targetSize, QString *erro
 }
 
 QImage HeifTileSource::decodeGridRasterDisplayImage(
-    const QSize &rasterSize, QString *errorString) const
+    const QSize& rasterSize, QString* errorString) const
 {
     if (!m_tileGrid.has_value()) {
         return {};
@@ -133,7 +133,7 @@ QImage HeifTileSource::decodeGridRasterDisplayImage(
     const qreal scaleY = static_cast<qreal>(rasterSize.height()) / m_imageSize.height();
     HeifDecodingOptions options;
     QPainter painter(&image);
-    for (const HeifTileDecodeRegion &region :
+    for (const HeifTileDecodeRegion& region :
         heifTileDecodeRegions(*m_tileGrid, QRect(QPoint(0, 0), m_imageSize))) {
         HeifImage heifImage;
         const heif_error error = heif_image_handle_decode_image_tile(opened->handle.get(),
@@ -159,7 +159,7 @@ QImage HeifTileSource::decodeGridRasterDisplayImage(
     return image;
 }
 
-QImage HeifTileSource::decodeGridSourceRect(const QRect &sourceRect, QString *errorString) const
+QImage HeifTileSource::decodeGridSourceRect(const QRect& sourceRect, QString* errorString) const
 {
     std::optional<HeifPrimaryImage> opened = openHeifPrimaryImage(m_data, errorString);
     if (!opened.has_value()) {
@@ -175,7 +175,7 @@ QImage HeifTileSource::decodeGridSourceRect(const QRect &sourceRect, QString *er
 
     HeifDecodingOptions options;
     QPainter painter(&image);
-    for (const HeifTileDecodeRegion &region : heifTileDecodeRegions(*m_tileGrid, sourceRect)) {
+    for (const HeifTileDecodeRegion& region : heifTileDecodeRegions(*m_tileGrid, sourceRect)) {
         HeifImage heifImage;
         const heif_error error = heif_image_handle_decode_image_tile(opened->handle.get(),
             heifImage.out(), heif_colorspace_RGB, heif_chroma_interleaved_RGBA, options.get(),
@@ -198,7 +198,7 @@ QImage HeifTileSource::decodeGridSourceRect(const QRect &sourceRect, QString *er
     return image;
 }
 
-std::shared_ptr<HeifTileSource> openHeifTileSource(const QByteArray &data, QString *errorString)
+std::shared_ptr<HeifTileSource> openHeifTileSource(const QByteArray& data, QString* errorString)
 {
     if (!isLikelyHeifStillImageContainer(data)) {
         return {};

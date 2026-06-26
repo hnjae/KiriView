@@ -30,7 +30,7 @@ public:
     virtual ApplicationCommandRouterVideoPorts commandRouterVideoPorts();
 };
 
-ApplicationCommandRouterPorts applicationCommandRouterPorts(ApplicationCommandPortSource &source);
+ApplicationCommandRouterPorts applicationCommandRouterPorts(ApplicationCommandPortSource& source);
 }
 
 #endif

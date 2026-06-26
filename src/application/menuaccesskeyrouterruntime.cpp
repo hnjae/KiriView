@@ -12,15 +12,15 @@
 
 namespace kiriview {
 MenuAccessKeyRouterRuntime::MenuAccessKeyRouterRuntime(
-    QObject *owner, ChangeCallback changeCallback)
+    QObject* owner, ChangeCallback changeCallback)
     : m_owner(owner)
     , m_changeCallback(std::move(changeCallback))
 {
 }
 
-QObject *MenuAccessKeyRouterRuntime::menu() const { return m_menuRuntime.menu(); }
+QObject* MenuAccessKeyRouterRuntime::menu() const { return m_menuRuntime.menu(); }
 
-void MenuAccessKeyRouterRuntime::setMenu(QObject *menu)
+void MenuAccessKeyRouterRuntime::setMenu(QObject* menu)
 {
     if (m_menuRuntime.menu() == menu) {
         return;
@@ -52,7 +52,7 @@ void MenuAccessKeyRouterRuntime::setEnabled(bool enabled)
     notify(MenuAccessKeyRouterChange::Enabled);
 }
 
-bool MenuAccessKeyRouterRuntime::handleEvent(QEvent *event)
+bool MenuAccessKeyRouterRuntime::handleEvent(QEvent* event)
 {
     if (!m_enabled || m_menuRuntime.menu() == nullptr) {
         return false;
@@ -60,22 +60,22 @@ bool MenuAccessKeyRouterRuntime::handleEvent(QEvent *event)
 
     switch (event->type()) {
     case QEvent::KeyPress:
-        return handleKeyPress(static_cast<QKeyEvent *>(event));
+        return handleKeyPress(static_cast<QKeyEvent*>(event));
     case QEvent::KeyRelease:
-        return handleKeyRelease(static_cast<QKeyEvent *>(event));
+        return handleKeyRelease(static_cast<QKeyEvent*>(event));
     case QEvent::ShortcutOverride:
-        return handleShortcutOverride(static_cast<QKeyEvent *>(event));
+        return handleShortcutOverride(static_cast<QKeyEvent*>(event));
     default:
         return false;
     }
 }
 
-bool MenuAccessKeyRouterRuntime::handleKeyPress(QKeyEvent *event)
+bool MenuAccessKeyRouterRuntime::handleKeyPress(QKeyEvent* event)
 {
     return routeOpenMenuKey(event, MenuAccessKeyRoutingPhase::KeyPress);
 }
 
-bool MenuAccessKeyRouterRuntime::handleKeyRelease(QKeyEvent *event)
+bool MenuAccessKeyRouterRuntime::handleKeyRelease(QKeyEvent* event)
 {
     if (event->key() != Qt::Key_Alt) {
         return false;
@@ -90,12 +90,12 @@ bool MenuAccessKeyRouterRuntime::handleKeyRelease(QKeyEvent *event)
     return plan.consumeEvent;
 }
 
-bool MenuAccessKeyRouterRuntime::handleShortcutOverride(QKeyEvent *event)
+bool MenuAccessKeyRouterRuntime::handleShortcutOverride(QKeyEvent* event)
 {
     return routeOpenMenuKey(event, MenuAccessKeyRoutingPhase::ShortcutOverride);
 }
 
-bool MenuAccessKeyRouterRuntime::routeOpenMenuKey(QKeyEvent *event, MenuAccessKeyRoutingPhase phase)
+bool MenuAccessKeyRouterRuntime::routeOpenMenuKey(QKeyEvent* event, MenuAccessKeyRoutingPhase phase)
 {
     if (openMenuOrClearAccessKeys() == nullptr) {
         return false;
@@ -105,9 +105,9 @@ bool MenuAccessKeyRouterRuntime::routeOpenMenuKey(QKeyEvent *event, MenuAccessKe
         event, m_accessKeySession.routeOpenMenuKey(menuAccessKeyInputKind(*event), phase));
 }
 
-QObject *MenuAccessKeyRouterRuntime::openMenuOrClearAccessKeys()
+QObject* MenuAccessKeyRouterRuntime::openMenuOrClearAccessKeys()
 {
-    QObject *menu = m_menuRuntime.openMenu();
+    QObject* menu = m_menuRuntime.openMenu();
     if (menu != nullptr) {
         return menu;
     }
@@ -117,7 +117,7 @@ QObject *MenuAccessKeyRouterRuntime::openMenuOrClearAccessKeys()
     return nullptr;
 }
 
-bool MenuAccessKeyRouterRuntime::executeSessionPlan(QKeyEvent *event, MenuAccessKeySessionPlan plan)
+bool MenuAccessKeyRouterRuntime::executeSessionPlan(QKeyEvent* event, MenuAccessKeySessionPlan plan)
 {
     applySessionPlan(plan);
 

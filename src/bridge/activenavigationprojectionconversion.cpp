@@ -61,7 +61,7 @@ RustActiveNavigationSourceKind rustActiveNavigationSourceKind(ActiveNavigationSo
 }
 
 RustDirectMediaNavigationBoundaryState rustDirectMediaNavigationBoundaryState(
-    const DirectMediaNavigationBoundaryState &state)
+    const DirectMediaNavigationBoundaryState& state)
 {
     return RustDirectMediaNavigationBoundaryState { state.canOpenPrevious, state.canOpenNext,
         state.atKnownFirst, state.atKnownLast, state.currentNumber, state.count };
@@ -132,7 +132,7 @@ ActiveNavigationBoundaryScope activeNavigationBoundaryScopeFromRust(
 }
 
 ActiveNavigationSnapshot activeNavigationSnapshotFromRust(
-    const RustActiveNavigationSnapshot &snapshot)
+    const RustActiveNavigationSnapshot& snapshot)
 {
     return ActiveNavigationSnapshot { snapshot.available, snapshot.known, snapshot.editable,
         snapshot.can_open_previous, snapshot.can_open_next, snapshot.at_known_first,
@@ -140,7 +140,7 @@ ActiveNavigationSnapshot activeNavigationSnapshotFromRust(
 }
 
 ActiveNavigationDispatchPlan activeNavigationDispatchPlanFromRust(
-    const RustActiveNavigationDispatchPlan &plan)
+    const RustActiveNavigationDispatchPlan& plan)
 {
     return ActiveNavigationDispatchPlan {
         activeNavigationDispatchOperationFromRust(plan.operation_kind, plan.operation_number),

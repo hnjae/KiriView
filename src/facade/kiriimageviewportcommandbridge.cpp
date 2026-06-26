@@ -5,7 +5,7 @@
 
 #include <QVariant>
 
-KiriImageViewportCommandBridge::KiriImageViewportCommandBridge(QQuickItem *parent)
+KiriImageViewportCommandBridge::KiriImageViewportCommandBridge(QQuickItem* parent)
     : QQuickItem(parent)
 {
 }
@@ -16,9 +16,9 @@ KiriImageViewportCommandBridge::~KiriImageViewportCommandBridge()
     disconnectTarget();
 }
 
-KiriImageDocument *KiriImageViewportCommandBridge::document() const { return m_document; }
+KiriImageDocument* KiriImageViewportCommandBridge::document() const { return m_document; }
 
-void KiriImageViewportCommandBridge::setDocument(KiriImageDocument *document)
+void KiriImageViewportCommandBridge::setDocument(KiriImageDocument* document)
 {
     if (m_document == document) {
         return;
@@ -31,9 +31,9 @@ void KiriImageViewportCommandBridge::setDocument(KiriImageDocument *document)
     applyViewportProjection();
 }
 
-QQuickItem *KiriImageViewportCommandBridge::target() const { return m_target; }
+QQuickItem* KiriImageViewportCommandBridge::target() const { return m_target; }
 
-void KiriImageViewportCommandBridge::setTarget(QQuickItem *target)
+void KiriImageViewportCommandBridge::setTarget(QQuickItem* target)
 {
     if (m_target == target) {
         return;
@@ -77,7 +77,7 @@ QPointF KiriImageViewportCommandBridge::currentContentPosition() const
         m_target->property("contentX").toReal(), m_target->property("contentY").toReal());
 }
 
-bool KiriImageViewportCommandBridge::requestContentPosition(const QPointF &contentPosition)
+bool KiriImageViewportCommandBridge::requestContentPosition(const QPointF& contentPosition)
 {
     if (!bridgeReady()) {
         return false;
@@ -138,12 +138,12 @@ bool KiriImageViewportCommandBridge::bridgeReady() const
     return m_active && m_document != nullptr && m_target != nullptr;
 }
 
-bool KiriImageViewportCommandBridge::contentPositionChanged(const QPointF &contentPosition) const
+bool KiriImageViewportCommandBridge::contentPositionChanged(const QPointF& contentPosition) const
 {
     return currentContentPosition() != contentPosition;
 }
 
-bool KiriImageViewportCommandBridge::setContentPosition(const QPointF &contentPosition)
+bool KiriImageViewportCommandBridge::setContentPosition(const QPointF& contentPosition)
 {
     if (m_target == nullptr) {
         return false;

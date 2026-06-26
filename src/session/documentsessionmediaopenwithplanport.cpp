@@ -8,8 +8,8 @@
 
 namespace kiriview {
 DocumentSessionMediaOpenWithPlanPort::DocumentSessionMediaOpenWithPlanPort(
-    const DocumentSessionState *state, const DocumentSessionPublicImageLeafSnapshot *image,
-    const DocumentSessionPublicVideoLeafSnapshot *video)
+    const DocumentSessionState* state, const DocumentSessionPublicImageLeafSnapshot* image,
+    const DocumentSessionPublicVideoLeafSnapshot* video)
     : m_state(state)
     , m_image(image)
     , m_video(video)

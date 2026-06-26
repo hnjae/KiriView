@@ -10,7 +10,7 @@
 
 namespace {
 kiriview::EmbeddedMetadataRow embeddedMetadataRowFromRust(
-    const kiriview::RustEmbeddedMetadataRow &row)
+    const kiriview::RustEmbeddedMetadataRow& row)
 {
     return kiriview::EmbeddedMetadataRow {
         kiriview::Bridge::qtString(row.label),
@@ -18,7 +18,7 @@ kiriview::EmbeddedMetadataRow embeddedMetadataRowFromRust(
     };
 }
 
-kiriview::EmbeddedMetadata embeddedMetadataFromRust(const kiriview::RustEmbeddedMetadata &metadata)
+kiriview::EmbeddedMetadata embeddedMetadataFromRust(const kiriview::RustEmbeddedMetadata& metadata)
 {
     kiriview::EmbeddedMetadata converted;
     converted.cameraMake = kiriview::Bridge::qtString(metadata.camera_make);
@@ -33,7 +33,7 @@ kiriview::EmbeddedMetadata embeddedMetadataFromRust(const kiriview::RustEmbedded
     converted.duration = kiriview::Bridge::qtString(metadata.duration);
     converted.frameSize = kiriview::Bridge::qtString(metadata.frame_size);
     converted.advancedRows.reserve(metadata.advanced_rows.size());
-    for (const kiriview::RustEmbeddedMetadataRow &row : metadata.advanced_rows) {
+    for (const kiriview::RustEmbeddedMetadataRow& row : metadata.advanced_rows) {
         converted.advancedRows.push_back(embeddedMetadataRowFromRust(row));
     }
     return converted;
@@ -48,12 +48,12 @@ bool EmbeddedMetadata::isEmpty() const
         && software.isEmpty() && duration.isEmpty() && frameSize.isEmpty() && advancedRows.empty();
 }
 
-EmbeddedMetadata parseImageEmbeddedMetadata(const QByteArray &data)
+EmbeddedMetadata parseImageEmbeddedMetadata(const QByteArray& data)
 {
     return embeddedMetadataFromRust(rustParseImageEmbeddedMetadata(Bridge::rustBytes(data)));
 }
 
-EmbeddedMetadata parsePathEmbeddedMetadata(const QString &path)
+EmbeddedMetadata parsePathEmbeddedMetadata(const QString& path)
 {
     const QByteArray bytes = path.toUtf8();
     return embeddedMetadataFromRust(rustParsePathEmbeddedMetadata(Bridge::rustStr(bytes)));

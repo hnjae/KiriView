@@ -7,7 +7,7 @@
 #include <QQmlComponent>
 #include <QTest>
 
-inline bool waitForQmlComponentReady(QQmlComponent &component, int timeoutMs = 10000)
+inline bool waitForQmlComponentReady(QQmlComponent& component, int timeoutMs = 10000)
 {
     const int intervalMs = 10;
     const int attempts = timeoutMs / intervalMs;

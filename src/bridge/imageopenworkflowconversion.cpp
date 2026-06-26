@@ -182,7 +182,7 @@ kiriview::ImageOpenEffect imageOpenEffect(kiriview::RustImageOpenEffect effect)
 
 namespace kiriview {
 RustImageDocumentSourceLoadPolicyInput rustImageDocumentSourceLoadPolicyInput(
-    const Bridge::ImageDocumentSourceLoadPolicyInput &input)
+    const Bridge::ImageDocumentSourceLoadPolicyInput& input)
 {
     return RustImageDocumentSourceLoadPolicyInput {
         rustSourceLoadKind(input.loadKind),
@@ -194,7 +194,7 @@ RustImageDocumentSourceLoadPolicyInput rustImageDocumentSourceLoadPolicyInput(
 }
 
 ImageDocumentSourceLoadPlan imageDocumentSourceLoadPlanFromBridge(
-    const RustImageDocumentSourceLoadPlan &rustPlan)
+    const RustImageDocumentSourceLoadPlan& rustPlan)
 {
     ImageDocumentSourceLoadPlan plan;
     plan.reserve(rustPlan.operations.size());
@@ -241,7 +241,7 @@ RustImageOpenWorkflowEvent rustSourceLoadErrorEvent(ImageOpenLoadErrorSnapshot s
     return event;
 }
 
-ImageOpenTransition imageOpenTransitionFromBridge(const RustImageOpenTransition &rustTransition)
+ImageOpenTransition imageOpenTransitionFromBridge(const RustImageOpenTransition& rustTransition)
 {
     ImageOpenTransition transition;
     transition.stateDelta = ImageOpenStateDelta {

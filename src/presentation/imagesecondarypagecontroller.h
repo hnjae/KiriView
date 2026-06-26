@@ -37,32 +37,33 @@ public:
     using RenderContextProvider = std::function<ImageDocumentRenderContext()>;
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
     using LoadFinishedCallback = std::function<void(
-        ImageSecondaryPageLoadResult, const DisplayedImageLocation &, const QSize &)>;
+        ImageSecondaryPageLoadResult, const DisplayedImageLocation&, const QSize&)>;
     using VisibilityChangedCallback = std::function<void()>;
-    using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
+    using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl&)>;
 
-    struct Callbacks {
+    struct Callbacks
+    {
         ChangeCallback change;
         LoadFinishedCallback loadFinished;
         VisibilityChangedCallback visibilityChanged;
         FindPredecodedImageCallback findPredecodedImage;
     };
 
-    ImageSecondaryPageController(QObject *parent, RenderContextProvider renderContextProvider,
+    ImageSecondaryPageController(QObject* parent, RenderContextProvider renderContextProvider,
         Callbacks callbacks, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, ImageCacheBudgets cacheBudgets);
     ~ImageSecondaryPageController();
 
-    ImagePageSurfaceController &pageSurfaceController();
-    const ImagePageSurfaceController &pageSurfaceController() const;
+    ImagePageSurfaceController& pageSurfaceController();
+    const ImagePageSurfaceController& pageSurfaceController() const;
     bool visible() const;
     DisplayedImageLocation displayedImageLocation() const;
     QSize imageSize() const;
     ImagePresentationPageSlotSnapshot pageSlotSnapshot() const;
 
-    void startLoad(const QUrl &url,
-        const OpenedCollectionScopeLocation &displayedOpenedCollectionScope,
-        const ImageFirstDisplayDecodeContext &firstDisplayContext);
+    void startLoad(const QUrl& url,
+        const OpenedCollectionScopeLocation& displayedOpenedCollectionScope,
+        const ImageFirstDisplayDecodeContext& firstDisplayContext);
     void clear();
     void cancel();
     void stopAnimation();
@@ -71,9 +72,9 @@ private:
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
     void finishImagePresentation(
-        const ImageLoadSession &session, const ImagePresentationLoadResult &result);
-    void finishLoadWithError(const ImageLoadSession &session);
-    void applyLoadCompletion(const ImageSecondaryPageLoadCompletion &completion);
+        const ImageLoadSession& session, const ImagePresentationLoadResult& result);
+    void finishLoadWithError(const ImageLoadSession& session);
+    void applyLoadCompletion(const ImageSecondaryPageLoadCompletion& completion);
     ImageDocumentRenderContext renderContext() const;
     void notify(ImageDocumentChange change);
 

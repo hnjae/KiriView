@@ -19,7 +19,8 @@ class QObject;
 namespace kiriview {
 enum class ThumbnailGenerationStatus;
 
-struct VideoThumbnailExtractionRequest {
+struct VideoThumbnailExtractionRequest
+{
     QByteArray localPathBytes;
     QUrl sourceUrl;
     ActiveNavigationThumbnailDemandBucket requestedBucket
@@ -27,7 +28,8 @@ struct VideoThumbnailExtractionRequest {
     int maximumLongEdge = 0;
 };
 
-struct VideoThumbnailExtractionResult {
+struct VideoThumbnailExtractionResult
+{
     ThumbnailGenerationStatus status;
     QImage image;
     QString errorString;
@@ -35,14 +37,14 @@ struct VideoThumbnailExtractionResult {
 
 using VideoThumbnailExtractionCallback = std::function<void(VideoThumbnailExtractionResult)>;
 using VideoThumbnailExtractionProvider = std::function<ImageIoJob(
-    QObject *, VideoThumbnailExtractionRequest, VideoThumbnailExtractionCallback)>;
+    QObject*, VideoThumbnailExtractionRequest, VideoThumbnailExtractionCallback)>;
 
 QImage videoThumbnailImageFromFrameImage(
-    QImage image, int maximumLongEdge, QString *errorString = nullptr);
+    QImage image, int maximumLongEdge, QString* errorString = nullptr);
 QImage videoThumbnailImageFromMetadata(
-    const QMediaMetaData &metadata, int maximumLongEdge, QString *errorString = nullptr);
+    const QMediaMetaData& metadata, int maximumLongEdge, QString* errorString = nullptr);
 
-ImageIoJob startVideoThumbnailExtraction(QObject *receiver, VideoThumbnailExtractionRequest request,
+ImageIoJob startVideoThumbnailExtraction(QObject* receiver, VideoThumbnailExtractionRequest request,
     VideoThumbnailExtractionCallback callback);
 }
 

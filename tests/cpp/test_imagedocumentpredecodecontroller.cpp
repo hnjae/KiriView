@@ -50,7 +50,7 @@ kiriview::ImageDocumentRenderContext renderContext()
     };
 }
 
-kiriview::ImagePageSurfaceController createPageSurfaceController(QObject *parent)
+kiriview::ImagePageSurfaceController createPageSurfaceController(QObject* parent)
 {
     return kiriview::ImagePageSurfaceController(parent, {}, testCacheBudgets());
 }
@@ -62,7 +62,7 @@ kiriview::ImagePresentationRuntime createPresentationRuntime()
 
 kiriview::ImageWorkerScheduler immediateWorkerScheduler()
 {
-    return kiriview::ImageWorkerScheduler([](QObject *, kiriview::ImageWorkerOperation work,
+    return kiriview::ImageWorkerScheduler([](QObject*, kiriview::ImageWorkerOperation work,
                                               kiriview::ImageWorkerCompletion completion) {
         work();
         completion();
@@ -70,7 +70,7 @@ kiriview::ImageWorkerScheduler immediateWorkerScheduler()
 }
 
 kiriview::StaticDisplayImagePayload displayTestImagePayload(
-    const QImage &image, qreal firstDisplayPixelsPerSourcePixel = 0.0)
+    const QImage& image, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
     const kiriview::DisplayImageQuality quality = firstDisplayPixelsPerSourcePixel > 0.0
         ? kiriview::DisplayImageQuality::FirstDisplay
@@ -164,7 +164,7 @@ void TestImageDocumentPredecodeController::
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
+    ManualPowerSaverMonitor* powerSaverMonitor = nullptr;
     ManualTimerScheduler timerScheduler;
     kiriview::ImageDocumentState state;
     kiriview::ImagePageSurfaceController pageSurface = createPageSurfaceController(this);

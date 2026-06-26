@@ -12,9 +12,9 @@
 #include <QVariant>
 
 namespace kiriview {
-QObject *MenuAccessKeyMenuRuntime::menu() const { return m_menu; }
+QObject* MenuAccessKeyMenuRuntime::menu() const { return m_menu; }
 
-bool MenuAccessKeyMenuRuntime::setMenu(QObject *menu)
+bool MenuAccessKeyMenuRuntime::setMenu(QObject* menu)
 {
     if (m_menu == menu) {
         return false;
@@ -24,7 +24,7 @@ bool MenuAccessKeyMenuRuntime::setMenu(QObject *menu)
     return true;
 }
 
-QObject *MenuAccessKeyMenuRuntime::openMenu() const
+QObject* MenuAccessKeyMenuRuntime::openMenu() const
 {
     if (m_menu.isNull() || !isOpenMenu(m_menu)) {
         return nullptr;
@@ -33,19 +33,19 @@ QObject *MenuAccessKeyMenuRuntime::openMenu() const
     return deepestOpenMenu(m_menu);
 }
 
-bool MenuAccessKeyMenuRuntime::triggerMnemonic(QKeyEvent *event, bool accessKeySessionActive)
+bool MenuAccessKeyMenuRuntime::triggerMnemonic(QKeyEvent* event, bool accessKeySessionActive)
 {
-    QObject *menu = openMenu();
+    QObject* menu = openMenu();
     if (menu == nullptr || !menuAccessKeyIsMnemonicKeyPress(*event)) {
         return false;
     }
 
-    QObject *item = menuItemForMnemonic(menu, *event);
+    QObject* item = menuItemForMnemonic(menu, *event);
     if (item == nullptr) {
         return menuAccessKeyIsAltMnemonicKeyPress(*event);
     }
 
-    QObject *subMenu = subMenuForItem(item);
+    QObject* subMenu = subMenuForItem(item);
     if (subMenu != nullptr) {
         const bool opened = openSubMenu(subMenu, item);
         if (opened && (accessKeySessionActive || (event->modifiers() & Qt::AltModifier))) {
@@ -62,12 +62,12 @@ void MenuAccessKeyMenuRuntime::setAccessKeysActive(bool active)
     setMenuAccessKeysActive(m_menu, active);
 }
 
-bool MenuAccessKeyMenuRuntime::isMenu(QObject *object)
+bool MenuAccessKeyMenuRuntime::isMenu(QObject* object)
 {
     return object != nullptr && object->inherits("QQuickMenu");
 }
 
-bool MenuAccessKeyMenuRuntime::isOpenMenu(QObject *object)
+bool MenuAccessKeyMenuRuntime::isOpenMenu(QObject* object)
 {
     if (!isMenu(object)) {
         return false;
@@ -82,36 +82,36 @@ bool MenuAccessKeyMenuRuntime::isOpenMenu(QObject *object)
     return visible.isValid() && visible.toBool();
 }
 
-bool MenuAccessKeyMenuRuntime::isEnabledMenuItem(QObject *object)
+bool MenuAccessKeyMenuRuntime::isEnabledMenuItem(QObject* object)
 {
     const QVariant enabled = object->property("enabled");
     return !enabled.isValid() || enabled.toBool();
 }
 
-QQuickItem *MenuAccessKeyMenuRuntime::itemAt(QObject *menu, int index)
+QQuickItem* MenuAccessKeyMenuRuntime::itemAt(QObject* menu, int index)
 {
-    QQuickItem *item = nullptr;
+    QQuickItem* item = nullptr;
     QMetaObject::invokeMethod(
-        menu, "itemAt", Qt::DirectConnection, Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, index));
+        menu, "itemAt", Qt::DirectConnection, Q_RETURN_ARG(QQuickItem*, item), Q_ARG(int, index));
     return item;
 }
 
-QObject *MenuAccessKeyMenuRuntime::subMenuForItem(QObject *item)
+QObject* MenuAccessKeyMenuRuntime::subMenuForItem(QObject* item)
 {
     if (item == nullptr) {
         return nullptr;
     }
 
-    return item->property("subMenu").value<QObject *>();
+    return item->property("subMenu").value<QObject*>();
 }
 
-QObject *MenuAccessKeyMenuRuntime::deepestOpenMenu(QObject *menu)
+QObject* MenuAccessKeyMenuRuntime::deepestOpenMenu(QObject* menu)
 {
     if (!isOpenMenu(menu)) {
         return nullptr;
     }
 
-    QObject *deepest = menu;
+    QObject* deepest = menu;
     bool ok = false;
     const int count = menu->property("count").toInt(&ok);
     if (!ok) {
@@ -119,8 +119,8 @@ QObject *MenuAccessKeyMenuRuntime::deepestOpenMenu(QObject *menu)
     }
 
     for (int index = 0; index < count; ++index) {
-        QObject *subMenu = subMenuForItem(itemAt(menu, index));
-        QObject *openSubMenu = deepestOpenMenu(subMenu);
+        QObject* subMenu = subMenuForItem(itemAt(menu, index));
+        QObject* openSubMenu = deepestOpenMenu(subMenu);
         if (openSubMenu != nullptr) {
             deepest = openSubMenu;
         }
@@ -129,7 +129,7 @@ QObject *MenuAccessKeyMenuRuntime::deepestOpenMenu(QObject *menu)
     return deepest;
 }
 
-QObject *MenuAccessKeyMenuRuntime::menuItemForMnemonic(QObject *menu, const QKeyEvent &event)
+QObject* MenuAccessKeyMenuRuntime::menuItemForMnemonic(QObject* menu, const QKeyEvent& event)
 {
     bool ok = false;
     const int count = menu->property("count").toInt(&ok);
@@ -138,7 +138,7 @@ QObject *MenuAccessKeyMenuRuntime::menuItemForMnemonic(QObject *menu, const QKey
     }
 
     for (int index = 0; index < count; ++index) {
-        QObject *item = itemAt(menu, index);
+        QObject* item = itemAt(menu, index);
         if (item != nullptr && itemMatchesMnemonic(item, event)) {
             return item;
         }
@@ -147,7 +147,7 @@ QObject *MenuAccessKeyMenuRuntime::menuItemForMnemonic(QObject *menu, const QKey
     return nullptr;
 }
 
-bool MenuAccessKeyMenuRuntime::itemMatchesMnemonic(QObject *item, const QKeyEvent &event)
+bool MenuAccessKeyMenuRuntime::itemMatchesMnemonic(QObject* item, const QKeyEvent& event)
 {
     if (!isEnabledMenuItem(item)) {
         return false;
@@ -168,9 +168,9 @@ bool MenuAccessKeyMenuRuntime::itemMatchesMnemonic(QObject *item, const QKeyEven
         && combination.key() == static_cast<Qt::Key>(event.key());
 }
 
-bool MenuAccessKeyMenuRuntime::openSubMenu(QObject *subMenu, QObject *item)
+bool MenuAccessKeyMenuRuntime::openSubMenu(QObject* subMenu, QObject* item)
 {
-    QQuickItem *menuItem = qobject_cast<QQuickItem *>(item);
+    QQuickItem* menuItem = qobject_cast<QQuickItem*>(item);
     if (menuItem == nullptr) {
         return false;
     }
@@ -188,7 +188,7 @@ bool MenuAccessKeyMenuRuntime::openSubMenu(QObject *subMenu, QObject *item)
     // clang-format on
 }
 
-void MenuAccessKeyMenuRuntime::setMenuAccessKeysActive(QObject *menu, bool active)
+void MenuAccessKeyMenuRuntime::setMenuAccessKeysActive(QObject* menu, bool active)
 {
     if (!isMenu(menu)) {
         return;
@@ -201,7 +201,7 @@ void MenuAccessKeyMenuRuntime::setMenuAccessKeysActive(QObject *menu, bool activ
     }
 
     for (int index = 0; index < count; ++index) {
-        QObject *item = itemAt(menu, index);
+        QObject* item = itemAt(menu, index);
         if (item == nullptr) {
             continue;
         }
@@ -211,7 +211,7 @@ void MenuAccessKeyMenuRuntime::setMenuAccessKeysActive(QObject *menu, bool activ
     }
 }
 
-bool MenuAccessKeyMenuRuntime::clickMenuItem(QObject *item)
+bool MenuAccessKeyMenuRuntime::clickMenuItem(QObject* item)
 {
     return QMetaObject::invokeMethod(item, "click", Qt::DirectConnection);
 }

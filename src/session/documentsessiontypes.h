@@ -49,19 +49,22 @@ enum class ActiveNavigationRevealDirection {
     Next,
 };
 
-struct ActiveNavigationRevealContext {
+struct ActiveNavigationRevealContext
+{
     ActiveNavigationRevealIntent intent = ActiveNavigationRevealIntent::None;
     ActiveNavigationRevealDirection direction = ActiveNavigationRevealDirection::None;
 };
 
-struct ActiveZoomSnapshot {
+struct ActiveZoomSnapshot
+{
     bool available = false;
     bool known = false;
     qreal percent = 0.0;
     bool editable = false;
 };
 
-struct DocumentSessionActionAvailabilityFacts {
+struct DocumentSessionActionAvailabilityFacts
+{
     bool imageReady = false;
     bool containerNavigationAvailable = false;
     bool twoPageModeActive = false;
@@ -73,7 +76,8 @@ struct DocumentSessionActionAvailabilityFacts {
     bool fitWidthModeSelected = false;
 };
 
-struct DocumentSessionPublicProjection {
+struct DocumentSessionPublicProjection
+{
     ActiveNavigationSourceKind sourceKind = ActiveNavigationSourceKind::None;
     ActiveNavigationBoundaryScope boundaryScope = ActiveNavigationBoundaryScope::None;
     ActiveNavigationSnapshot activeNavigation;
@@ -82,7 +86,8 @@ struct DocumentSessionPublicProjection {
     bool displayedFileDeletionAvailable = false;
 };
 
-struct DocumentSessionPublicSnapshot {
+struct DocumentSessionPublicSnapshot
+{
     quint64 revision = 0;
     quint64 inputRevision = 0;
     QUrl sourceUrl;

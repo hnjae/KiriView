@@ -20,7 +20,8 @@ enum class DocumentSessionDirectMediaNavigationRevealAction {
     UsePendingOrProgrammaticSyncAndKeepPending,
 };
 
-struct DocumentSessionDirectMediaNavigationRefreshApplication {
+struct DocumentSessionDirectMediaNavigationRefreshApplication
+{
     DirectMediaNavigationBoundaryState boundaryState;
     bool known = false;
     std::vector<DirectMediaNavigationCandidate> candidates;
@@ -29,7 +30,8 @@ struct DocumentSessionDirectMediaNavigationRefreshApplication {
     bool schedulePredecode = false;
 };
 
-struct DocumentSessionDirectMediaNavigationOpenApplication {
+struct DocumentSessionDirectMediaNavigationOpenApplication
+{
     DirectMediaNavigationBoundaryState boundaryState;
     bool known = false;
     std::vector<DirectMediaNavigationCandidate> candidates;
@@ -46,7 +48,7 @@ documentSessionDirectMediaNavigationRefreshApplication(ActiveNavigationSourceKin
 
 DocumentSessionDirectMediaNavigationOpenApplication
 documentSessionDirectMediaNavigationOpenApplication(
-    const QUrl &activeDirectMediaCursorUrl, DocumentSessionDirectMediaNavigationOpenResult result);
+    const QUrl& activeDirectMediaCursorUrl, DocumentSessionDirectMediaNavigationOpenResult result);
 }
 
 #endif

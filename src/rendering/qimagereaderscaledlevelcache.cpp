@@ -33,7 +33,7 @@ std::optional<QImage> QImageReaderScaledLevelCache::find(int level)
     return m_cache.find(level);
 }
 
-bool QImageReaderScaledLevelCache::insert(int level, const QImage &image)
+bool QImageReaderScaledLevelCache::insert(int level, const QImage& image)
 {
     const qsizetype byteCost = imageByteCost(image);
 

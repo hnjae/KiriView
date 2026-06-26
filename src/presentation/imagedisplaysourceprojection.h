@@ -33,7 +33,8 @@ enum class ImageDisplayLoadOutcome {
     Missing,
 };
 
-struct ImageDisplaySourceSlot {
+struct ImageDisplaySourceSlot
+{
     QUrl providerUrl;
     quint64 revision = 0;
     QString sourceIdentity;
@@ -48,7 +49,8 @@ struct ImageDisplaySourceSlot {
     bool retainWhileLoadingEligible = false;
 };
 
-struct ImageDisplaySourceProjection {
+struct ImageDisplaySourceProjection
+{
     bool visible = false;
     DisplayedPageRole pageRole = DisplayedPageRole::Primary;
     QUrl providerUrl;

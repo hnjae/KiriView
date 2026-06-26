@@ -9,7 +9,8 @@
 #include <functional>
 
 namespace kiriview {
-struct ImageDocumentMediaEntrySourceRuntimeOperations {
+struct ImageDocumentMediaEntrySourceRuntimeOperations
+{
     std::function<void()> clear;
 };
 
@@ -19,7 +20,7 @@ public:
     explicit ImageDocumentMediaEntrySourceRuntimePlanExecutor(
         ImageDocumentMediaEntrySourceRuntimeOperations operations);
 
-    bool dispatchOperation(const ImageDocumentRuntimeOperation &operation);
+    bool dispatchOperation(const ImageDocumentRuntimeOperation& operation);
 
 private:
     ImageDocumentMediaEntrySourceRuntimeOperations m_operations;

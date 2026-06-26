@@ -14,21 +14,21 @@ class ImageDocumentChangeBatcher final
 {
 public:
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
-    using ChangeBatchCallback = std::function<void(const std::vector<ImageDocumentChange> &)>;
+    using ChangeBatchCallback = std::function<void(const std::vector<ImageDocumentChange>&)>;
 
     class Batch final
     {
     public:
-        explicit Batch(ImageDocumentChangeBatcher &batcher);
+        explicit Batch(ImageDocumentChangeBatcher& batcher);
         ~Batch();
 
-        Batch(const Batch &) = delete;
-        Batch &operator=(const Batch &) = delete;
-        Batch(Batch &&other) noexcept;
-        Batch &operator=(Batch &&) = delete;
+        Batch(const Batch&) = delete;
+        Batch& operator=(const Batch&) = delete;
+        Batch(Batch&& other) noexcept;
+        Batch& operator=(Batch&&) = delete;
 
     private:
-        ImageDocumentChangeBatcher *m_batcher = nullptr;
+        ImageDocumentChangeBatcher* m_batcher = nullptr;
     };
 
     explicit ImageDocumentChangeBatcher(ChangeCallback changeCallback = {});
@@ -36,12 +36,12 @@ public:
 
     Batch beginBatch();
     void notify(ImageDocumentChange change);
-    void notifyAll(const std::vector<ImageDocumentChange> &changes);
+    void notifyAll(const std::vector<ImageDocumentChange>& changes);
 
 private:
     void begin();
     void end();
-    void emitChanges(const std::vector<ImageDocumentChange> &changes);
+    void emitChanges(const std::vector<ImageDocumentChange>& changes);
 
     ChangeCallback m_changeCallback;
     ChangeBatchCallback m_changeBatchCallback;

@@ -10,7 +10,7 @@
 
 namespace kiriview {
 PredecodeWindowPlan mediaPredecodeWindowPlan(
-    const MediaPredecodeEligibilitySnapshot &snapshot, PredecodePolicyInput policyInput);
+    const MediaPredecodeEligibilitySnapshot& snapshot, PredecodePolicyInput policyInput);
 }
 
 #endif

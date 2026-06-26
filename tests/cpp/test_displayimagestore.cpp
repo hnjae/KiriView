@@ -30,7 +30,7 @@ private Q_SLOTS:
 };
 
 namespace {
-QImage testImage(const QSize &size, QColor color = Qt::red)
+QImage testImage(const QSize& size, QColor color = Qt::red)
 {
     QImage image(size, QImage::Format_RGBA8888);
     image.fill(color);
@@ -38,7 +38,7 @@ QImage testImage(const QSize &size, QColor color = Qt::red)
 }
 
 kiriview::DisplayImageEntry testEntry(
-    const QSize &rasterSize, kiriview::DisplayImageRetentionPriority priority = {})
+    const QSize& rasterSize, kiriview::DisplayImageRetentionPriority priority = {})
 {
     return kiriview::DisplayImageEntry {
         testImage(rasterSize),
@@ -180,7 +180,7 @@ void TestDisplayImageStore::providerRequestsAreThreadSafeReads()
             [&provider, id]() { return provider.requestImage(id, nullptr, QSize(8, 8)).size(); }));
     }
 
-    for (std::future<QSize> &future : futures) {
+    for (std::future<QSize>& future : futures) {
         QCOMPARE(future.get(), QSize(8, 4));
     }
 }

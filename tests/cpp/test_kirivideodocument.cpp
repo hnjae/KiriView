@@ -45,7 +45,7 @@ void TestKiriVideoDocument::initialStateIsNull()
 
 void TestKiriVideoDocument::sourceUrlAndVideoOutputPropertiesAreReadOnlyObservations()
 {
-    const QMetaObject &metaObject = KiriVideoDocument::staticMetaObject;
+    const QMetaObject& metaObject = KiriVideoDocument::staticMetaObject;
     const int sourceUrlIndex = metaObject.indexOfProperty("sourceUrl");
     QVERIFY(sourceUrlIndex >= 0);
 
@@ -81,7 +81,7 @@ void TestKiriVideoDocument::mutedPropertyNotifiesAndToggles()
 void TestKiriVideoDocument::sourceUrlAndTitleNotifyOnSetAndClear()
 {
     KiriDocumentSession session;
-    KiriVideoDocument &document = *session.videoDocument();
+    KiriVideoDocument& document = *session.videoDocument();
     QSignalSpy sourceUrlSpy(&document, &KiriVideoDocument::sourceUrlChanged);
     QSignalSpy titleSpy(&document, &KiriVideoDocument::windowTitleFileNameChanged);
     QSignalSpy statusSpy(&document, &KiriVideoDocument::statusChanged);
@@ -106,9 +106,9 @@ void TestKiriVideoDocument::sourceUrlAndTitleNotifyOnSetAndClear()
 void TestKiriVideoDocument::videoOutputCanDetachAndToleratesDestroyedOutput()
 {
     KiriDocumentSession session;
-    KiriVideoDocument &document = *session.videoDocument();
+    KiriVideoDocument& document = *session.videoDocument();
     QSignalSpy videoOutputSpy(&document, &KiriVideoDocument::videoOutputChanged);
-    auto *output = new QObject();
+    auto* output = new QObject();
     QObject surfaceOwner;
     QObject staleSurfaceOwner;
     const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/tmp/clip.mp4"));

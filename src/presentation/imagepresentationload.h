@@ -24,28 +24,33 @@ enum class ImagePresentationAnimationHandling {
     StartAnimation,
 };
 
-struct ImagePresentationLoadResult {
+struct ImagePresentationLoadResult
+{
     bool presented = false;
     QSize imageSize;
 };
 
-struct ImagePresentationStaticImageLoad {
+struct ImagePresentationStaticImageLoad
+{
     StaticDisplayImagePayload displayImage;
     bool predecodeCacheable = false;
 };
 
-struct ImagePresentationFrameLoad {
+struct ImagePresentationFrameLoad
+{
     QImage frame;
     QString sourceIdentity;
 };
 
-struct ImagePresentationAnimationLoad {
+struct ImagePresentationAnimationLoad
+{
     QImage firstFrame;
     ImageAnimationPlaybackRequest playback;
     QString sourceIdentity;
 };
 
-struct ImagePresentationLoadPlan {
+struct ImagePresentationLoadPlan
+{
     using Payload = std::variant<std::monostate, ImagePresentationStaticImageLoad,
         ImagePresentationFrameLoad, ImagePresentationAnimationLoad>;
 
@@ -58,13 +63,13 @@ ImagePresentationLoadPlan planPredecodedImagePresentationLoad(PredecodedImage im
 ImagePresentationLoadPlan planDecodedImagePresentationLoad(DecodedImage image,
     ImagePresentationAnimationHandling animationHandling, qsizetype predecodeCacheByteBudget);
 ImagePresentationLoadResult executeImagePresentationLoadPlan(
-    ImagePageSurfaceController &pageSurface, ImagePresentationLoadPlan plan,
-    const ImageDocumentRenderContext &renderContext);
-ImagePresentationLoadResult presentPredecodedImageLoad(ImagePageSurfaceController &pageSurface,
-    PredecodedImage image, const ImageDocumentRenderContext &renderContext);
-ImagePresentationLoadResult presentDecodedImageLoad(ImagePageSurfaceController &pageSurface,
+    ImagePageSurfaceController& pageSurface, ImagePresentationLoadPlan plan,
+    const ImageDocumentRenderContext& renderContext);
+ImagePresentationLoadResult presentPredecodedImageLoad(ImagePageSurfaceController& pageSurface,
+    PredecodedImage image, const ImageDocumentRenderContext& renderContext);
+ImagePresentationLoadResult presentDecodedImageLoad(ImagePageSurfaceController& pageSurface,
     DecodedImage image, ImagePresentationAnimationHandling animationHandling,
-    const ImageDocumentRenderContext &renderContext);
+    const ImageDocumentRenderContext& renderContext);
 }
 
 #endif

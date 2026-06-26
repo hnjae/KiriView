@@ -18,10 +18,10 @@ namespace kiriview {
 using ImageWorkerOperation = std::function<void()>;
 using ImageWorkerCompletion = std::function<void()>;
 using ImageWorkerScheduleCallback
-    = std::function<void(QObject *, ImageWorkerOperation, ImageWorkerCompletion)>;
+    = std::function<void(QObject*, ImageWorkerOperation, ImageWorkerCompletion)>;
 
 inline void defaultImageWorkerSchedule(
-    QObject *context, ImageWorkerOperation operation, ImageWorkerCompletion completion)
+    QObject* context, ImageWorkerOperation operation, ImageWorkerCompletion completion)
 {
     runAsyncWorker(
         context,
@@ -50,9 +50,9 @@ public:
 
     // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks)
     template <typename Work, typename Finish>
-    void run(QObject *context, Work work, Finish finish) const
+    void run(QObject* context, Work work, Finish finish) const
     {
-        using Result = std::invoke_result_t<Work &>;
+        using Result = std::invoke_result_t<Work&>;
         static_assert(
             !std::is_void_v<Result>, "ImageWorkerScheduler requires a non-void work result");
 
@@ -80,7 +80,7 @@ public:
 
 private:
     void schedule(
-        QObject *context, ImageWorkerOperation operation, ImageWorkerCompletion completion) const
+        QObject* context, ImageWorkerOperation operation, ImageWorkerCompletion completion) const
     {
         if (m_schedule) {
             m_schedule(context, std::move(operation), std::move(completion));

@@ -6,12 +6,12 @@
 #include "imagedecodepipeline.h"
 
 namespace kiriview {
-DecodedImageResult decodeImageData(const QByteArray &data)
+DecodedImageResult decodeImageData(const QByteArray& data)
 {
     return decodeImageData(data, ImageDecodeRequest {});
 }
 
-DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequest &request)
+DecodedImageResult decodeImageData(const QByteArray& data, const ImageDecodeRequest& request)
 {
     return decodeImageDataWithDefaultRouter(data, request);
 }

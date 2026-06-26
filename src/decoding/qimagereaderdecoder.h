@@ -12,7 +12,7 @@
 
 namespace kiriview {
 DecodedImageResult decodeQImageReaderImageData(
-    const QByteArray &data, const ImageDecodeRequest &request, QtRasterFormat format);
+    const QByteArray& data, const ImageDecodeRequest& request, QtRasterFormat format);
 }
 
 #endif

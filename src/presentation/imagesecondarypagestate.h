@@ -16,12 +16,14 @@ enum class ImageSecondaryPageLoadResult {
     Failed,
 };
 
-struct ImageSecondaryPageDisplayState {
+struct ImageSecondaryPageDisplayState
+{
     DisplayedImageLocation location;
     QSize imageSize;
 };
 
-struct ImageSecondaryPageLoadCompletion {
+struct ImageSecondaryPageLoadCompletion
+{
     ImageSecondaryPageLoadResult result = ImageSecondaryPageLoadResult::Failed;
     DisplayedImageLocation location;
     QSize imageSize;
@@ -37,8 +39,8 @@ public:
 
     void clear();
     ImageSecondaryPageLoadCompletion finishPresentedLoad(
-        const DisplayedImageLocation &location, const QSize &imageSize, bool primaryOnly);
-    ImageSecondaryPageLoadCompletion finishFailedLoad(const DisplayedImageLocation &location) const;
+        const DisplayedImageLocation& location, const QSize& imageSize, bool primaryOnly);
+    ImageSecondaryPageLoadCompletion finishFailedLoad(const DisplayedImageLocation& location) const;
 
 private:
     std::optional<ImageSecondaryPageDisplayState> m_displayedPage;

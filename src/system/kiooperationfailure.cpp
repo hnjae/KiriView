@@ -13,7 +13,7 @@ bool isKioOperationCanceledError(int errorCode)
 }
 
 KioOperationFailure kioOperationFailureFromKJob(
-    KioOperationKind operationKind, const QUrl &targetUrl, int errorCode, const QString &errorText)
+    KioOperationKind operationKind, const QUrl& targetUrl, int errorCode, const QString& errorText)
 {
     const bool canceled = isKioOperationCanceledError(errorCode);
     return KioOperationFailure {
@@ -28,7 +28,7 @@ KioOperationFailure kioOperationFailureFromKJob(
 }
 
 KioOperationFailure kioOperationValidationFailure(
-    KioOperationKind operationKind, const QUrl &targetUrl, const QString &diagnosticDetail)
+    KioOperationKind operationKind, const QUrl& targetUrl, const QString& diagnosticDetail)
 {
     return KioOperationFailure {
         operationKind,

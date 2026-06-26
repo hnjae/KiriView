@@ -7,7 +7,7 @@
 
 namespace kiriview {
 ImageDocumentCurrentPageNumberPort::ImageDocumentCurrentPageNumberPort(
-    const ImageDocumentPageNavigationService *navigationService)
+    const ImageDocumentPageNavigationService* navigationService)
     : m_navigationService(navigationService)
 {
 }

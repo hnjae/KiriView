@@ -50,7 +50,7 @@ QString heifFailureOperationName(kiriview::DecodedImageFailureOperation operatio
 }
 
 QString heifFailureDiagnosticDetail(
-    kiriview::DecodedImageFailureOperation operation, const QString &backendError)
+    kiriview::DecodedImageFailureOperation operation, const QString& backendError)
 {
     return QStringLiteral("HEIF decoder %1 failed: %2")
         .arg(heifFailureOperationName(operation),
@@ -71,9 +71,9 @@ kiriview::DecodedImageResult failedHeifDecodedImageResult(
     });
 }
 
-void stampHeifFailure(kiriview::DecodedImageResult &result)
+void stampHeifFailure(kiriview::DecodedImageResult& result)
 {
-    kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    kiriview::DecodedImageFailure* failure = kiriview::decodedImageResultFailure(result);
     if (failure == nullptr) {
         return;
     }
@@ -82,8 +82,8 @@ void stampHeifFailure(kiriview::DecodedImageResult &result)
         = heifFailureDiagnosticDetail(failure->operation, failure->diagnosticDetail);
 }
 
-std::optional<kiriview::DecodedImageResult> decodeHeifStillImageDataForInfo(const QByteArray &data,
-    const kiriview::HeifContainerInfo &info, const kiriview::ImageDecodeRequest &request)
+std::optional<kiriview::DecodedImageResult> decodeHeifStillImageDataForInfo(const QByteArray& data,
+    const kiriview::HeifContainerInfo& info, const kiriview::ImageDecodeRequest& request)
 {
     if (!info.stillImage) {
         return std::nullopt;
@@ -104,8 +104,8 @@ std::optional<kiriview::DecodedImageResult> decodeHeifStillImageDataForInfo(cons
 }
 
 std::optional<kiriview::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
-    const QByteArray &data, const kiriview::HeifContainerInfo &info,
-    const kiriview::ImageDecodeRequest &request)
+    const QByteArray& data, const kiriview::HeifContainerInfo& info,
+    const kiriview::ImageDecodeRequest& request)
 {
     if (!info.isHeif()) {
         return std::nullopt;
@@ -142,29 +142,29 @@ std::optional<kiriview::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
 }
 
 namespace kiriview {
-std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &data)
+std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray& data)
 {
     return decodeHeifStillImageData(data, {});
 }
 
 std::optional<DecodedImageResult> decodeHeifStillImageData(
-    const QByteArray &data, const ImageDecodeRequest &request)
+    const QByteArray& data, const ImageDecodeRequest& request)
 {
     return decodeHeifStillImageDataForInfo(data, heifContainerInfo(data), request);
 }
 
-std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data)
+std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray& data)
 {
     return decodeHeifSequenceImageDataForInfo(data, heifContainerInfo(data), {});
 }
 
-std::optional<DecodedImageResult> decodeHeifImageData(const QByteArray &data)
+std::optional<DecodedImageResult> decodeHeifImageData(const QByteArray& data)
 {
     return decodeHeifImageData(data, {});
 }
 
 std::optional<DecodedImageResult> decodeHeifImageData(
-    const QByteArray &data, const ImageDecodeRequest &request)
+    const QByteArray& data, const ImageDecodeRequest& request)
 {
     const HeifContainerInfo info = heifContainerInfo(data);
     if (std::optional<DecodedImageResult> sequenceResult

@@ -13,28 +13,34 @@
 #include <variant>
 
 namespace kiriview {
-struct ReaderAnimationPlaybackRequest {
+struct ReaderAnimationPlaybackRequest
+{
     QByteArray data;
     QByteArray format;
 };
 
-struct ApngAnimationPlaybackRequest {
+struct ApngAnimationPlaybackRequest
+{
     QByteArray data;
 };
 
-struct WebPAnimationPlaybackRequest {
+struct WebPAnimationPlaybackRequest
+{
     QByteArray data;
 };
 
-struct JxlAnimationPlaybackRequest {
+struct JxlAnimationPlaybackRequest
+{
     QByteArray data;
 };
 
-struct HeifSequenceAnimationPlaybackRequest {
+struct HeifSequenceAnimationPlaybackRequest
+{
     QByteArray data;
 };
 
-struct ImageAnimationPlaybackRequest {
+struct ImageAnimationPlaybackRequest
+{
     using Payload = std::variant<std::monostate, ReaderAnimationPlaybackRequest,
         ApngAnimationPlaybackRequest, WebPAnimationPlaybackRequest, JxlAnimationPlaybackRequest,
         HeifSequenceAnimationPlaybackRequest>;
@@ -49,7 +55,8 @@ enum class ImageAnimationPlaybackOpenStatus {
     Error,
 };
 
-struct ImageAnimationPlaybackOpenResult {
+struct ImageAnimationPlaybackOpenResult
+{
     ImageAnimationPlaybackOpenStatus status = ImageAnimationPlaybackOpenStatus::Error;
     QImage firstFrame;
     int firstFrameDelay = 0;
@@ -64,7 +71,8 @@ enum class ImageAnimationPlaybackReadStatus {
     Error,
 };
 
-struct ImageAnimationPlaybackReadResult {
+struct ImageAnimationPlaybackReadResult
+{
     ImageAnimationPlaybackReadStatus status = ImageAnimationPlaybackReadStatus::End;
     AnimationFrame frame;
     bool sourceHasMoreFrames = false;

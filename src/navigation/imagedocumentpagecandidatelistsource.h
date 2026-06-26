@@ -15,11 +15,13 @@ namespace kiriview {
 class ImageDocumentPageCandidateListSource
 {
 public:
-    struct Directory {
+    struct Directory
+    {
         QUrl directoryUrl;
     };
 
-    struct OpenedCollectionScope {
+    struct OpenedCollectionScope
+    {
         OpenedCollectionScopeLocation openedCollectionScope;
     };
 
@@ -29,7 +31,7 @@ public:
 
     OpenedCollectionScopeLocation openedCollectionScope() const;
 
-    template <typename Visitor> decltype(auto) visit(Visitor &&visitor) const
+    template <typename Visitor> decltype(auto) visit(Visitor&& visitor) const
     {
         return std::visit(std::forward<Visitor>(visitor), m_source);
     }
@@ -42,8 +44,8 @@ private:
     Payload m_source;
 };
 
-bool sameImageDocumentPageCandidateListSource(const ImageDocumentPageCandidateListSource &left,
-    const ImageDocumentPageCandidateListSource &right);
+bool sameImageDocumentPageCandidateListSource(const ImageDocumentPageCandidateListSource& left,
+    const ImageDocumentPageCandidateListSource& right);
 
 class ImageDocumentPageCandidateListContext
 {
@@ -58,11 +60,11 @@ public:
     static ImageDocumentPageCandidateListContext forSource(
         QUrl currentUrl, ImageDocumentPageCandidateListSource source);
 
-    const QUrl &currentUrl() const;
-    const ImageDocumentPageCandidateListSource &source() const;
+    const QUrl& currentUrl() const;
+    const ImageDocumentPageCandidateListSource& source() const;
     OpenedCollectionScopeLocation openedCollectionScope() const;
 
-    template <typename Visitor> decltype(auto) visit(Visitor &&visitor) const
+    template <typename Visitor> decltype(auto) visit(Visitor&& visitor) const
     {
         return m_source.visit(std::forward<Visitor>(visitor));
     }
@@ -75,11 +77,11 @@ private:
     ImageDocumentPageCandidateListSource m_source;
 };
 
-bool sameImageDocumentPageCandidateListContext(const ImageDocumentPageCandidateListContext &left,
-    const ImageDocumentPageCandidateListContext &right);
+bool sameImageDocumentPageCandidateListContext(const ImageDocumentPageCandidateListContext& left,
+    const ImageDocumentPageCandidateListContext& right);
 
 std::optional<ImageDocumentPageCandidateListContext>
-imageDocumentPageCandidateListContextForDisplayedImage(const DisplayedImageLocation &location);
+imageDocumentPageCandidateListContextForDisplayedImage(const DisplayedImageLocation& location);
 }
 
 #endif

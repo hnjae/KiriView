@@ -49,7 +49,7 @@ kiriview::ApngFrameBlendOp blendOpFromRust(kiriview::RustApngBlendOp blendOp)
                                                       : kiriview::ApngFrameBlendOp::Source;
 }
 
-kiriview::ApngFrameControl frameControlFromRust(const kiriview::RustApngFrameResult &frame)
+kiriview::ApngFrameControl frameControlFromRust(const kiriview::RustApngFrameResult& frame)
 {
     return kiriview::ApngFrameControl {
         frame.width,
@@ -113,7 +113,7 @@ public:
         return result;
     }
 
-    std::optional<AnimationFrame> readNextFrame(QString *errorString)
+    std::optional<AnimationFrame> readNextFrame(QString* errorString)
     {
         clearError(errorString);
 
@@ -159,14 +159,14 @@ public:
     }
 
 private:
-    void clearError(QString *errorString)
+    void clearError(QString* errorString)
     {
         if (errorString != nullptr) {
             errorString->clear();
         }
     }
 
-    void setError(QString *errorString, const QString &message)
+    void setError(QString* errorString, const QString& message)
     {
         if (errorString != nullptr) {
             *errorString = message;
@@ -186,7 +186,7 @@ ApngAnimationReader::~ApngAnimationReader() = default;
 
 ApngOpenResult ApngAnimationReader::open(QByteArray data) { return d->open(std::move(data)); }
 
-std::optional<AnimationFrame> ApngAnimationReader::readNextFrame(QString *errorString)
+std::optional<AnimationFrame> ApngAnimationReader::readNextFrame(QString* errorString)
 {
     return d->readNextFrame(errorString);
 }

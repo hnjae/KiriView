@@ -15,19 +15,21 @@ enum class DocumentSessionVideoDocumentSyncOperation {
     CommitDirectVideoCursor,
 };
 
-struct DocumentSessionVideoDocumentSyncInput {
+struct DocumentSessionVideoDocumentSyncInput
+{
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     DocumentSessionPublicVideoLeafSnapshot video;
 };
 
-struct DocumentSessionVideoDocumentSyncPlan {
+struct DocumentSessionVideoDocumentSyncPlan
+{
     DocumentSessionVideoDocumentSyncOperation operation
         = DocumentSessionVideoDocumentSyncOperation::None;
     QUrl url;
 };
 
 DocumentSessionVideoDocumentSyncPlan documentSessionVideoDocumentSyncPlan(
-    const DocumentSessionVideoDocumentSyncInput &input);
+    const DocumentSessionVideoDocumentSyncInput& input);
 }
 
 #endif

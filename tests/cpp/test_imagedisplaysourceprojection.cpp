@@ -25,7 +25,7 @@ private Q_SLOTS:
 
 namespace {
 kiriview::ImageDisplaySourceSlot displaySourceSlot(
-    const QString &id, const QSize &originalSize, const QSize &rasterSize)
+    const QString& id, const QSize& originalSize, const QSize& rasterSize)
 {
     return kiriview::ImageDisplaySourceSlot {
         QUrl(QStringLiteral("image://kiriview-images/%1").arg(id)),

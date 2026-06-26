@@ -64,7 +64,7 @@ public:
 
     ImagePresentationPageSlotSourceKind kind() const { return m_kind; }
     bool hasImage() const { return m_kind != ImagePresentationPageSlotSourceKind::Empty; }
-    const ImageDisplaySourceSlot &displaySource() const { return m_displaySource; }
+    const ImageDisplaySourceSlot& displaySource() const { return m_displaySource; }
 
 private:
     ImagePresentationPageSlotSource(
@@ -78,16 +78,18 @@ private:
     ImageDisplaySourceSlot m_displaySource;
 };
 
-struct ImagePresentationPageSlotSnapshot {
+struct ImagePresentationPageSlotSnapshot
+{
     quint64 imageRevision = 0;
     QSize imageSize;
     ImagePresentationPageSlotSource source;
 
     bool hasImage() const { return source.hasImage(); }
-    const ImageDisplaySourceSlot &displaySource() const { return source.displaySource(); }
+    const ImageDisplaySourceSlot& displaySource() const { return source.displaySource(); }
 };
 
-struct ImagePresentationRenderProjection {
+struct ImagePresentationRenderProjection
+{
     bool visible = false;
     DisplayedPageRole pageRole = DisplayedPageRole::Primary;
     quint64 imageRevision = 0;
@@ -100,7 +102,8 @@ struct ImagePresentationRenderProjection {
     int rotationDegrees = 0;
 };
 
-struct ImagePresentationSnapshot {
+struct ImagePresentationSnapshot
+{
     ImagePresentationMode mode = ImagePresentationMode::SinglePage;
     bool rightToLeftReading = false;
     ImagePresentationTransitionState transitionState
@@ -115,11 +118,13 @@ struct ImagePresentationSnapshot {
     int rotationDegrees = 0;
 };
 
-struct ImagePresentationRestorationSnapshot {
+struct ImagePresentationRestorationSnapshot
+{
     ImagePresentationSnapshot snapshot;
 };
 
-struct ImagePresentationRotationChange {
+struct ImagePresentationRotationChange
+{
     bool changed = false;
     ImageZoomChangeSet zoomChanges;
 };
@@ -161,30 +166,30 @@ public:
     void resetRightToLeftReading();
     bool secondaryPageVisible() const;
 
-    const ImageViewportFrame &viewportFrame() const;
-    const ImageViewportProjection &viewportProjection() const;
-    ImageViewportCommand requestViewportContentPosition(const QPointF &contentPosition);
+    const ImageViewportFrame& viewportFrame() const;
+    const ImageViewportProjection& viewportProjection() const;
+    ImageViewportCommand requestViewportContentPosition(const QPointF& contentPosition);
     bool beginViewportCommandApplication(quint64 commandRevision);
     bool completeViewportCommandApplication(
-        quint64 commandRevision, const QPointF &actualContentPosition);
-    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF &actualContentPosition);
+        quint64 commandRevision, const QPointF& actualContentPosition);
+    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF& actualContentPosition);
     bool observeViewportContentPosition(
-        const QPointF &contentPosition, ImageViewportObservationOrigin origin);
+        const QPointF& contentPosition, ImageViewportObservationOrigin origin);
 
-    ImageZoomChangeSet setViewportSize(const QSizeF &viewportSize);
+    ImageZoomChangeSet setViewportSize(const QSizeF& viewportSize);
     ImageZoomChangeSet setZoomPercent(qreal zoomPercent);
     ImageZoomChangeSet setFitMode(ImageZoomMode zoomMode);
     ImageZoomChangeSet resetZoom();
     ImageZoomChangeSet updateRenderContext();
     ImageZoomChangeSet setMode(ImagePresentationMode mode);
     void setSecondaryPageVisible(bool visible);
-    ImageZoomChangeSet commitPrimaryPageSlot(const ImagePresentationPageSlotSnapshot &slot,
-        const ImagePresentationScopeKey &scopeKey, ImagePresentationPrimaryChangePolicy policy);
+    ImageZoomChangeSet commitPrimaryPageSlot(const ImagePresentationPageSlotSnapshot& slot,
+        const ImagePresentationScopeKey& scopeKey, ImagePresentationPrimaryChangePolicy policy);
     ImageZoomChangeSet commitPrimaryPageSlot(
-        const ImagePresentationPageSlotSnapshot &slot, const ImagePresentationScopeKey &scopeKey);
-    ImageZoomChangeSet commitSecondaryPageSlot(const ImagePresentationPageSlotSnapshot &slot);
-    bool updatePrimaryPageSlot(const ImagePresentationPageSlotSnapshot &slot);
-    bool updateSecondaryPageSlot(const ImagePresentationPageSlotSnapshot &slot);
+        const ImagePresentationPageSlotSnapshot& slot, const ImagePresentationScopeKey& scopeKey);
+    ImageZoomChangeSet commitSecondaryPageSlot(const ImagePresentationPageSlotSnapshot& slot);
+    bool updatePrimaryPageSlot(const ImagePresentationPageSlotSnapshot& slot);
+    bool updateSecondaryPageSlot(const ImagePresentationPageSlotSnapshot& slot);
     void clearPrimaryPageSlot();
     void clearSecondaryPageSlot();
 
@@ -205,23 +210,23 @@ private:
 
     ImagePresentationSnapshot currentSnapshot() const;
     QSize sourceImageSize() const;
-    QSize sourceImageSize(const ImagePresentationSnapshot &snapshot) const;
+    QSize sourceImageSize(const ImagePresentationSnapshot& snapshot) const;
     QSize logicalSinglePageImageSize() const;
-    QSize logicalSinglePageImageSize(const ImagePresentationSnapshot &snapshot) const;
-    QSize spreadImageSize(const ImagePresentationSnapshot &snapshot) const;
-    QSizeF displaySize(const ImagePresentationSnapshot &snapshot) const;
-    QSizeF primaryDisplaySize(const ImagePresentationSnapshot &snapshot) const;
-    QSizeF secondaryDisplaySize(const ImagePresentationSnapshot &snapshot) const;
-    QRectF primaryPageRect(const ImagePresentationSnapshot &snapshot) const;
-    QRectF secondaryPageRect(const ImagePresentationSnapshot &snapshot) const;
+    QSize logicalSinglePageImageSize(const ImagePresentationSnapshot& snapshot) const;
+    QSize spreadImageSize(const ImagePresentationSnapshot& snapshot) const;
+    QSizeF displaySize(const ImagePresentationSnapshot& snapshot) const;
+    QSizeF primaryDisplaySize(const ImagePresentationSnapshot& snapshot) const;
+    QSizeF secondaryDisplaySize(const ImagePresentationSnapshot& snapshot) const;
+    QRectF primaryPageRect(const ImagePresentationSnapshot& snapshot) const;
+    QRectF secondaryPageRect(const ImagePresentationSnapshot& snapshot) const;
     ImageZoomChangeSet mutateZoomState(
-        const ZoomStateMutation &mutation, bool forceDisplayProjectionUpdate = false);
+        const ZoomStateMutation& mutation, bool forceDisplayProjectionUpdate = false);
     void refreshViewportFrame(ImageViewportObservationOrigin origin);
     ImagePresentationRenderProjection renderProjection(
-        const ImagePresentationSnapshot &snapshot, DisplayedPageRole role) const;
+        const ImagePresentationSnapshot& snapshot, DisplayedPageRole role) const;
     ImageDisplaySourceProjection displaySourceProjection(
-        const ImagePresentationSnapshot &snapshot, DisplayedPageRole role) const;
-    void restoreSnapshot(const ImagePresentationSnapshot &snapshot);
+        const ImagePresentationSnapshot& snapshot, DisplayedPageRole role) const;
+    void restoreSnapshot(const ImagePresentationSnapshot& snapshot);
 
     ImageZoomWorkflowState m_zoomWorkflowState;
     ImageViewportCommandState m_viewportCommands;

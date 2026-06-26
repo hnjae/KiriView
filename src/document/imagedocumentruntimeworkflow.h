@@ -22,17 +22,18 @@ class ImageOpenController;
 class ImagePageSurfaceController;
 class ImageSpreadPresentationController;
 
-struct ImageDocumentRuntimeWorkflowPorts {
-    ImageDocumentState *state = nullptr;
-    MediaEntrySourceStore *mediaEntrySourceStore = nullptr;
-    ImageDocumentDeletionController *deletionController = nullptr;
-    ImagePageSurfaceController *pageSurfaceController = nullptr;
-    ImageOpenController *openController = nullptr;
-    ImageDocumentPredecodeController *predecodeController = nullptr;
-    ImageSpreadPresentationController *spreadController = nullptr;
-    ImageDocumentNavigationController *navigationController = nullptr;
-    std::function<void(const ImageDocumentSourceLoadRequest &)> loadSource;
-    std::function<void(const QString &)> containerNavigationBoundaryReached;
+struct ImageDocumentRuntimeWorkflowPorts
+{
+    ImageDocumentState* state = nullptr;
+    MediaEntrySourceStore* mediaEntrySourceStore = nullptr;
+    ImageDocumentDeletionController* deletionController = nullptr;
+    ImagePageSurfaceController* pageSurfaceController = nullptr;
+    ImageOpenController* openController = nullptr;
+    ImageDocumentPredecodeController* predecodeController = nullptr;
+    ImageSpreadPresentationController* spreadController = nullptr;
+    ImageDocumentNavigationController* navigationController = nullptr;
+    std::function<void(const ImageDocumentSourceLoadRequest&)> loadSource;
+    std::function<void(const QString&)> containerNavigationBoundaryReached;
 };
 
 class ImageDocumentRuntimeWorkflow final
@@ -41,7 +42,7 @@ public:
     explicit ImageDocumentRuntimeWorkflow(ImageDocumentRuntimeOperations operations);
     explicit ImageDocumentRuntimeWorkflow(ImageDocumentRuntimeWorkflowPorts ports);
 
-    void dispatchPlan(const ImageDocumentRuntimePlan &plan);
+    void dispatchPlan(const ImageDocumentRuntimePlan& plan);
     void shutdownRuntime();
 
 private:

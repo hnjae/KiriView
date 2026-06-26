@@ -13,7 +13,7 @@
 
 namespace kiriview {
 PredecodeLoadController::PredecodeLoadController(
-    QObject *parent, ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget)
+    QObject* parent, ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget)
     : m_parent(parent)
     , m_decodeDependencies(imageDecodeDependenciesWithDefaults(std::move(decodeDependencies)))
     , m_loadState(cacheByteBudget)
@@ -23,7 +23,7 @@ PredecodeLoadController::PredecodeLoadController(
 PredecodeLoadController::~PredecodeLoadController() = default;
 
 void PredecodeLoadController::cacheDisplayedImages(
-    const std::vector<DisplayedPredecodeImage> &images)
+    const std::vector<DisplayedPredecodeImage>& images)
 {
     m_loadState.cacheDisplayedImages(images);
 }
@@ -64,13 +64,12 @@ bool PredecodeLoadController::startLoad(PredecodeLoadStart load)
         return false;
     }
 
-    auto *decodeJob = new ImageDecodeJob(m_parent, m_decodeDependencies,
+    auto* decodeJob = new ImageDecodeJob(m_parent, m_decodeDependencies,
         ImageDecodeJob::Callbacks {
             [this](ImageDecodeRequest request, DecodedImageResult result) {
                 finishDecode(std::move(request), result);
             },
-            [this](
-                const ImageDecodeRequest &request, const QString &) { finishLoadError(request); },
+            [this](const ImageDecodeRequest& request, const QString&) { finishLoadError(request); },
             {},
         });
     const ImageDecodeRequest request = load.request;
@@ -91,7 +90,7 @@ bool PredecodeLoadController::startLoad(PredecodeLoadStart load)
     return true;
 }
 
-void PredecodeLoadController::finishLoadError(const ImageDecodeRequest &request)
+void PredecodeLoadController::finishLoadError(const ImageDecodeRequest& request)
 {
     if (!m_activeDecodes.finish(request).has_value()) {
         qCDebug(kiriviewPredecodeLog)
@@ -108,7 +107,7 @@ void PredecodeLoadController::finishLoadError(const ImageDecodeRequest &request)
 }
 
 void PredecodeLoadController::finishDecode(
-    ImageDecodeRequest request, const DecodedImageResult &result)
+    ImageDecodeRequest request, const DecodedImageResult& result)
 {
     std::optional<ImageDecodeRequest> activeRequest = m_activeDecodes.finish(request);
     if (!activeRequest.has_value()) {
@@ -120,7 +119,7 @@ void PredecodeLoadController::finishDecode(
         return;
     }
 
-    const auto *failure = decodedImageResultFailure(result);
+    const auto* failure = decodedImageResultFailure(result);
     if (failure != nullptr) {
         qCDebug(kiriviewPredecodeLog)
             << "predecode decode failed"
@@ -130,7 +129,7 @@ void PredecodeLoadController::finishDecode(
         return;
     }
 
-    const auto *staticImage = decodedImageResultImageAs<StaticDecodedImage>(result);
+    const auto* staticImage = decodedImageResultImageAs<StaticDecodedImage>(result);
     if (staticImage != nullptr) {
         StaticDisplayImagePayload displayImage = staticImage->displayImage;
         qCDebug(kiriviewPredecodeLog)
@@ -164,7 +163,7 @@ void PredecodeLoadController::clear()
     m_loadState.clear();
 }
 
-std::optional<PredecodedImage> PredecodeLoadController::findPredecodedImage(const QUrl &url) const
+std::optional<PredecodedImage> PredecodeLoadController::findPredecodedImage(const QUrl& url) const
 {
     return m_loadState.findPredecodedImage(url);
 }

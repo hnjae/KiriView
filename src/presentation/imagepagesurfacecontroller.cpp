@@ -16,7 +16,8 @@
 
 namespace kiriview {
 namespace {
-    struct RasterDisplayRefinementWork {
+    struct RasterDisplayRefinementWork
+    {
         quint64 ticket = 0;
         RasterDisplayRefinementDemandKey demandKey;
         ImageDocumentRenderContext renderContext;
@@ -26,7 +27,8 @@ namespace {
         DisplayImageQuality quality = DisplayImageQuality::Exact;
     };
 
-    struct RasterDisplayRefinementResult {
+    struct RasterDisplayRefinementResult
+    {
         quint64 ticket = 0;
         RasterDisplayRefinementDemandKey demandKey;
         ImageDocumentRenderContext renderContext;
@@ -34,10 +36,10 @@ namespace {
         bool ready = false;
     };
 
-    RasterDisplayRefinementDemandKey rasterDemandKey(const StaticDisplayImagePayload &displayImage,
-        const ImagePresentationRenderProjection &projection, quint64 displaySourceRevision,
+    RasterDisplayRefinementDemandKey rasterDemandKey(const StaticDisplayImagePayload& displayImage,
+        const ImagePresentationRenderProjection& projection, quint64 displaySourceRevision,
         qsizetype displayImageByteBudget, quint64 renderRevision,
-        const RasterDisplayBucketKey &bucketKey)
+        const RasterDisplayBucketKey& bucketKey)
     {
         return RasterDisplayRefinementDemandKey {
             displayImage.sourceIdentity,
@@ -55,7 +57,7 @@ namespace {
     }
 
     ImageDocumentRenderContext renderContextForProjection(
-        const ImagePresentationRenderProjection &projection)
+        const ImagePresentationRenderProjection& projection)
     {
         return ImageDocumentRenderContext {
             projection.devicePixelRatio,
@@ -78,7 +80,7 @@ namespace {
         return ImageDisplaySourceStatus::Error;
     }
 
-    ImageDisplaySourceSlot displayErrorSourceSlot(const QSize &imageSize, quint64 revision)
+    ImageDisplaySourceSlot displayErrorSourceSlot(const QSize& imageSize, quint64 revision)
     {
         return ImageDisplaySourceSlot {
             QUrl(),
@@ -97,7 +99,7 @@ namespace {
     }
 
     ImagePresentationPageSlotSource pageSlotSource(
-        bool hasImage, const ImageDisplaySourceSlot &displaySource)
+        bool hasImage, const ImageDisplaySourceSlot& displaySource)
     {
         if (!hasImage) {
             return ImagePresentationPageSlotSource::empty();
@@ -141,7 +143,7 @@ namespace {
     }
 }
 
-ImagePageSurfaceController::ImagePageSurfaceController(QObject *context,
+ImagePageSurfaceController::ImagePageSurfaceController(QObject* context,
     ImagePageSurfaceController::Callbacks callbacks, ImageCacheBudgets cacheBudgets,
     std::shared_ptr<DisplayImageStore> displayImageStore, DisplayedPageRole pageRole,
     ImageWorkerScheduler workerScheduler)
@@ -156,9 +158,9 @@ ImagePageSurfaceController::ImagePageSurfaceController(QObject *context,
 {
     m_animationPlayer = std::make_unique<ImageAnimationPlayer>(
         context,
-        [this](const QImage &image) { setAnimationFrame(image, m_animationFrameSourceIdentity); },
+        [this](const QImage& image) { setAnimationFrame(image, m_animationFrameSourceIdentity); },
         [this](
-            const QString &errorString) { invokeIfSet(m_callbacks.animationError, errorString); },
+            const QString& errorString) { invokeIfSet(m_callbacks.animationError, errorString); },
         [this]() { releaseRetainedAnimationFrameEntry(); });
 }
 
@@ -196,7 +198,7 @@ ImagePresentationPageSlotSnapshot ImagePageSurfaceController::snapshot() const
     };
 }
 
-void ImagePageSurfaceController::setImage(const QImage &image, bool predecodeCacheable)
+void ImagePageSurfaceController::setImage(const QImage& image, bool predecodeCacheable)
 {
     cancelRasterDisplayRefinement();
     clearShadowDisplayImage();
@@ -210,7 +212,7 @@ void ImagePageSurfaceController::setImage(const QImage &image, bool predecodeCac
 }
 
 void ImagePageSurfaceController::setAnimationFrame(
-    const QImage &image, const QString &sourceIdentity)
+    const QImage& image, const QString& sourceIdentity)
 {
     cancelRasterDisplayRefinement();
     clearShadowDisplayImage();
@@ -223,7 +225,7 @@ void ImagePageSurfaceController::setAnimationFrame(
 }
 
 void ImagePageSurfaceController::setStaticDisplayImage(StaticDisplayImagePayload displayImage,
-    bool predecodeCacheable, const ImageDocumentRenderContext &renderContext)
+    bool predecodeCacheable, const ImageDocumentRenderContext& renderContext)
 {
     cancelRasterDisplayRefinement();
     stopAnimation();
@@ -238,7 +240,7 @@ void ImagePageSurfaceController::setStaticDisplayImage(StaticDisplayImagePayload
 }
 
 void ImagePageSurfaceController::updateDisplayProjection(
-    const ImagePresentationRenderProjection &projection)
+    const ImagePresentationRenderProjection& projection)
 {
     if (!projection.visible || projection.visibleItemRect.isEmpty()) {
         cancelRasterDisplayRefinement();
@@ -281,7 +283,7 @@ void ImagePageSurfaceController::acceptImageState(
     ++m_imageRevision;
 }
 
-void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePayload &displayImage)
+void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePayload& displayImage)
 {
     releaseRetainedAnimationFrameEntry();
     clearAnimationFrameLoadContract();
@@ -333,7 +335,7 @@ void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePa
 }
 
 void ImagePageSurfaceController::publishAnimationFrameDisplaySource(
-    const QImage &image, const QString &sourceIdentity)
+    const QImage& image, const QString& sourceIdentity)
 {
     retainCurrentAnimationFrameEntryForLoad();
 
@@ -540,8 +542,8 @@ void ImagePageSurfaceController::clearAnimationFrameLoadContract()
     m_pendingAnimationFrameSourceIdentity.clear();
 }
 
-bool ImagePageSurfaceController::acknowledgeDisplayImageLoad(const QUrl &providerUrl,
-    quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome)
+bool ImagePageSurfaceController::acknowledgeDisplayImageLoad(const QUrl& providerUrl,
+    quint64 revision, const QString& sourceIdentity, ImageDisplayLoadOutcome outcome)
 {
     if (m_currentDisplayEntryIsAnimationFrame) {
         return acknowledgeAnimationFrameDisplayLoad(providerUrl, revision, sourceIdentity, outcome);
@@ -550,8 +552,8 @@ bool ImagePageSurfaceController::acknowledgeDisplayImageLoad(const QUrl &provide
     return acknowledgeStillImageDisplayLoad(providerUrl, revision, sourceIdentity, outcome);
 }
 
-bool ImagePageSurfaceController::acknowledgeStillImageDisplayLoad(const QUrl &providerUrl,
-    quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome)
+bool ImagePageSurfaceController::acknowledgeStillImageDisplayLoad(const QUrl& providerUrl,
+    quint64 revision, const QString& sourceIdentity, ImageDisplayLoadOutcome outcome)
 {
     if (m_currentDisplayEntryIsAnimationFrame || !m_stillImageDisplayLoadPending
         || providerUrl != m_pendingStillImageProviderUrl || revision != m_pendingStillImageRevision
@@ -566,8 +568,8 @@ bool ImagePageSurfaceController::acknowledgeStillImageDisplayLoad(const QUrl &pr
     return true;
 }
 
-bool ImagePageSurfaceController::acknowledgeAnimationFrameDisplayLoad(const QUrl &providerUrl,
-    quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome)
+bool ImagePageSurfaceController::acknowledgeAnimationFrameDisplayLoad(const QUrl& providerUrl,
+    quint64 revision, const QString& sourceIdentity, ImageDisplayLoadOutcome outcome)
 {
     if (!m_currentDisplayEntryIsAnimationFrame || !m_animationFrameDisplayLoadPending
         || providerUrl != m_pendingAnimationFrameProviderUrl
@@ -609,7 +611,7 @@ void ImagePageSurfaceController::updateDisplaySourceVisibility(bool visible)
 }
 
 void ImagePageSurfaceController::scheduleRasterDisplayRefinement(
-    const ImagePresentationRenderProjection &projection)
+    const ImagePresentationRenderProjection& projection)
 {
     if (!projection.visible || projection.visibleItemRect.isEmpty()) {
         cancelRasterDisplayRefinement();

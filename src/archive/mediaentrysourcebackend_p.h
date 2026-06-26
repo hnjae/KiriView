@@ -15,10 +15,10 @@
 #include <vector>
 
 namespace kiriview::MediaEntrySourceBackendDetail {
-using MediaEntrySourceOpener
-    = MediaEntrySourceOpenResult (*)(const OpenedCollectionScopeLocation &);
+using MediaEntrySourceOpener = MediaEntrySourceOpenResult (*)(const OpenedCollectionScopeLocation&);
 
-struct MediaEntrySourceBackendOperations {
+struct MediaEntrySourceBackendOperations
+{
     MediaEntrySourceOpener openSource;
 };
 
@@ -38,17 +38,17 @@ private:
 };
 
 std::optional<ImageDocumentPageCandidate> openedCollectionImageDocumentPageCandidate(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath);
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QString& entryPath);
 std::optional<QString> openedCollectionImageEntryPathForRead(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl);
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& imageUrl);
 QString fallbackMediaEntrySourceOpenError(
-    const OpenedCollectionScopeLocation &openedCollectionScope);
+    const OpenedCollectionScopeLocation& openedCollectionScope);
 QString openedCollectionImageNotFoundError();
 QString openedCollectionImageReadError();
 QString openedCollectionThumbnailMetadataUnsupportedError();
 
 MediaEntrySourceError mediaEntrySourceError(MediaEntrySourceBackendKind backend,
-    MediaEntrySourceOperation operation, const OpenedCollectionScopeLocation &openedCollectionScope,
+    MediaEntrySourceOperation operation, const OpenedCollectionScopeLocation& openedCollectionScope,
     QString errorString, QString diagnosticDetail = QString(), QString entryPath = QString());
 
 template <typename Result> Result mediaEntrySourceErrorResult(MediaEntrySourceError error)
@@ -62,9 +62,9 @@ MediaEntrySourceImageDataResult mediaEntrySourceImageDataResult(QByteArray data)
 MediaEntrySourceThumbnailMetadataResult mediaEntrySourceThumbnailMetadataResult(
     MediaEntrySourceThumbnailMetadata metadata);
 
-const MediaEntrySourceBackendOperations *kArchiveMediaEntrySourceBackendOperations();
-const MediaEntrySourceBackendOperations *libArchiveMediaEntrySourceBackendOperations();
-const MediaEntrySourceBackendOperations *directoryCollectionMediaEntrySourceBackendOperations();
+const MediaEntrySourceBackendOperations* kArchiveMediaEntrySourceBackendOperations();
+const MediaEntrySourceBackendOperations* libArchiveMediaEntrySourceBackendOperations();
+const MediaEntrySourceBackendOperations* directoryCollectionMediaEntrySourceBackendOperations();
 }
 
 #endif

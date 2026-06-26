@@ -472,7 +472,7 @@ std::unique_ptr<ImageAnimationPlaybackSource> makeImageAnimationPlaybackSource(
     ImageAnimationPlaybackRequest request)
 {
     return std::visit(
-        [](auto &&playbackRequest) { return makePlaybackSource(std::move(playbackRequest)); },
+        [](auto&& playbackRequest) { return makePlaybackSource(std::move(playbackRequest)); },
         std::move(request.payload));
 }
 }

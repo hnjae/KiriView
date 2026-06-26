@@ -43,20 +43,21 @@ class ImageSpreadPresentationController final
 public:
     using RenderContextProvider = std::function<ImageDocumentRenderContext()>;
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
-    using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
+    using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl&)>;
     using PageNavigationSnapshotProvider = std::function<ImageDocumentPageNavigationSnapshot()>;
     using ScheduleAdjacentPredecodeCallback = std::function<void()>;
 
-    struct Callbacks {
+    struct Callbacks
+    {
         ChangeCallback change;
         FindPredecodedImageCallback findPredecodedImage;
         PageNavigationSnapshotProvider pageNavigationSnapshot;
         ScheduleAdjacentPredecodeCallback scheduleAdjacentPredecode;
     };
 
-    ImageSpreadPresentationController(QObject *parent, RenderContextProvider renderContextProvider,
-        ImageDocumentState &state, ImagePageSurfaceController &primaryPageSurface,
-        ImagePresentationRuntime &presentationRuntime, Callbacks callbacks,
+    ImageSpreadPresentationController(QObject* parent, RenderContextProvider renderContextProvider,
+        ImageDocumentState& state, ImagePageSurfaceController& primaryPageSurface,
+        ImagePresentationRuntime& presentationRuntime, Callbacks callbacks,
         ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, ImageCacheBudgets cacheBudgets);
     ~ImageSpreadPresentationController();
@@ -73,13 +74,13 @@ public:
     QSizeF primaryDisplaySize() const;
     QSizeF secondaryDisplaySize() const;
     QPointF viewportContentPosition() const;
-    ImageViewportCommand requestViewportContentPosition(const QPointF &viewportContentPosition);
+    ImageViewportCommand requestViewportContentPosition(const QPointF& viewportContentPosition);
     bool beginViewportCommandApplication(quint64 commandRevision);
     bool completeViewportCommandApplication(
-        quint64 commandRevision, const QPointF &actualContentPosition);
-    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF &actualContentPosition);
+        quint64 commandRevision, const QPointF& actualContentPosition);
+    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF& actualContentPosition);
     bool observeViewportContentPosition(
-        const QPointF &contentPosition, ImageViewportObservationOrigin origin);
+        const QPointF& contentPosition, ImageViewportObservationOrigin origin);
     quint64 viewportCommandRevision() const;
     quint64 viewportAppliedCommandRevision() const;
     quint64 viewportObservationRevision() const;
@@ -116,14 +117,14 @@ public:
     bool secondaryPageVisible() const;
     std::optional<DisplayedPredecodeImage> secondaryDisplayedPredecodeImage() const;
     ImageDisplaySourceProjection displaySourceProjection(DisplayedPageRole role) const;
-    void acknowledgeDisplayImageLoad(DisplayedPageRole role, const QUrl &providerUrl,
-        quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
-    void acknowledgeStillImageDisplayLoad(DisplayedPageRole role, const QUrl &providerUrl,
-        quint64 revision, const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
+    void acknowledgeDisplayImageLoad(DisplayedPageRole role, const QUrl& providerUrl,
+        quint64 revision, const QString& sourceIdentity, ImageDisplayLoadOutcome outcome);
+    void acknowledgeStillImageDisplayLoad(DisplayedPageRole role, const QUrl& providerUrl,
+        quint64 revision, const QString& sourceIdentity, ImageDisplayLoadOutcome outcome);
 
-    void commitPrimaryPageSlot(const DisplayedImageLocation &location);
+    void commitPrimaryPageSlot(const DisplayedImageLocation& location);
     void clearPrimaryPageSlot();
-    void setViewportSize(const QSizeF &viewportSize);
+    void setViewportSize(const QSizeF& viewportSize);
     void resetZoom();
     void setFitMode(ImageZoomMode zoomMode);
     void rotateClockwise();
@@ -143,9 +144,9 @@ public:
     void notifyRightToLeftReadingChanged();
 
 private:
-    void startSecondaryPageLoad(const QUrl &url);
+    void startSecondaryPageLoad(const QUrl& url);
     void handleSecondaryPageLoadFinished(ImageSecondaryPageLoadResult result,
-        const DisplayedImageLocation &location, const QSize &imageSize);
+        const DisplayedImageLocation& location, const QSize& imageSize);
     void discardSecondaryPage();
     void finishSecondaryPageAsPrimaryOnly();
     void finishSecondaryPageVisible();
@@ -159,17 +160,17 @@ private:
     ImageDocumentPageNavigationSnapshot pageNavigationSnapshot() const;
     void notifyTwoPageModeChanged();
     void applyActivePresentationChanges(
-        const ImageZoomChangeSet &changes, bool notifyPublicChanges = true);
-    void notifyActivePresentationZoomChanged(const ImageZoomChangeSet &changes);
+        const ImageZoomChangeSet& changes, bool notifyPublicChanges = true);
+    void notifyActivePresentationZoomChanged(const ImageZoomChangeSet& changes);
     bool updatePresentationPageSlot(DisplayedPageRole role);
     void updateDisplayProjections();
-    const ImageViewportFrame &viewportFrame() const;
-    void notifyChanges(const std::vector<ImageDocumentChange> &changes);
+    const ImageViewportFrame& viewportFrame() const;
+    void notifyChanges(const std::vector<ImageDocumentChange>& changes);
     void notify(ImageDocumentChange change);
 
-    ImageDocumentState &m_state;
-    ImagePageSurfaceController &m_primaryPageSurface;
-    ImagePresentationRuntime &m_presentationRuntime;
+    ImageDocumentState& m_state;
+    ImagePageSurfaceController& m_primaryPageSurface;
+    ImagePresentationRuntime& m_presentationRuntime;
     Callbacks m_callbacks;
     std::unique_ptr<ImageSecondaryPageController> m_secondaryPageController;
     ImageSpreadSecondaryPageRefresh m_secondaryPageRefresh;

@@ -81,7 +81,7 @@ public:
     };
     Q_ENUM(ShortcutScope)
 
-    explicit ImageActionAvailability(QObject *parent = nullptr);
+    explicit ImageActionAvailability(QObject* parent = nullptr);
 
     bool imageReady() const;
     void setImageReady(bool imageReady);

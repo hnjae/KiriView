@@ -5,13 +5,15 @@
 #define KIRIVIEW_IMAGESPREADMODEPOLICY_H
 
 namespace kiriview {
-struct ImageSpreadReadingAvailability {
+struct ImageSpreadReadingAvailability
+{
     bool hasImage = false;
     bool hasDisplayedImage = false;
     bool displayedDocumentIsComicBook = false;
 };
 
-struct ImageSpreadTwoPageModeChange {
+struct ImageSpreadTwoPageModeChange
+{
     bool changed = false;
     bool finishTransition = false;
     bool clearSecondaryPage = false;
@@ -19,7 +21,7 @@ struct ImageSpreadTwoPageModeChange {
     bool notifyTwoPageMode = false;
 };
 
-bool imageSpreadReadingControlsAvailable(const ImageSpreadReadingAvailability &availability);
+bool imageSpreadReadingControlsAvailable(const ImageSpreadReadingAvailability& availability);
 ImageSpreadTwoPageModeChange imageSpreadTwoPageModeChange(
     bool currentEnabled, bool nextEnabled, bool secondaryPageVisible);
 }

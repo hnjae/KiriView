@@ -9,12 +9,14 @@
 #include <vector>
 
 namespace kiriview {
-struct EmbeddedMetadataRow {
+struct EmbeddedMetadataRow
+{
     QString label;
     QString value;
 };
 
-struct EmbeddedMetadata {
+struct EmbeddedMetadata
+{
     QString cameraMake;
     QString cameraModel;
     QString taken;
@@ -31,8 +33,8 @@ struct EmbeddedMetadata {
     bool isEmpty() const;
 };
 
-EmbeddedMetadata parseImageEmbeddedMetadata(const QByteArray &data);
-EmbeddedMetadata parsePathEmbeddedMetadata(const QString &path);
+EmbeddedMetadata parseImageEmbeddedMetadata(const QByteArray& data);
+EmbeddedMetadata parsePathEmbeddedMetadata(const QString& path);
 }
 
 #endif

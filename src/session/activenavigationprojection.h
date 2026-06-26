@@ -37,18 +37,24 @@ enum class ActiveNavigationDispatchOutcome {
     LastBoundary,
 };
 
-struct OpenPreviousDirectMediaNavigationOperation {
+struct OpenPreviousDirectMediaNavigationOperation
+{
 };
-struct OpenNextDirectMediaNavigationOperation {
+struct OpenNextDirectMediaNavigationOperation
+{
 };
-struct OpenDirectMediaNavigationAtNumberOperation {
+struct OpenDirectMediaNavigationAtNumberOperation
+{
     int number = 0;
 };
-struct OpenPreviousImageDocumentPageOperation {
+struct OpenPreviousImageDocumentPageOperation
+{
 };
-struct OpenNextImageDocumentPageOperation {
+struct OpenNextImageDocumentPageOperation
+{
 };
-struct OpenImageDocumentPageAtNumberOperation {
+struct OpenImageDocumentPageAtNumberOperation
+{
     int number = 0;
 };
 
@@ -57,7 +63,8 @@ using ActiveNavigationDispatchOperation = std::variant<std::monostate,
     OpenDirectMediaNavigationAtNumberOperation, OpenPreviousImageDocumentPageOperation,
     OpenNextImageDocumentPageOperation, OpenImageDocumentPageAtNumberOperation>;
 
-struct ActiveNavigationSnapshot {
+struct ActiveNavigationSnapshot
+{
     bool available = false;
     bool known = false;
     bool editable = false;
@@ -69,17 +76,20 @@ struct ActiveNavigationSnapshot {
     int count = 0;
 };
 
-struct DirectMediaActiveNavigationInput {
+struct DirectMediaActiveNavigationInput
+{
     DirectMediaNavigationBoundaryState boundaryState;
     bool known = false;
 };
 
-struct ActiveNavigationDispatchRequest {
+struct ActiveNavigationDispatchRequest
+{
     ActiveNavigationDispatchRequestKind kind = ActiveNavigationDispatchRequestKind::Next;
     int number = 0;
 };
 
-struct ActiveNavigationDispatchPlan {
+struct ActiveNavigationDispatchPlan
+{
     ActiveNavigationDispatchOperation operation;
     ActiveNavigationDispatchOutcome outcome = ActiveNavigationDispatchOutcome::NoOp;
 

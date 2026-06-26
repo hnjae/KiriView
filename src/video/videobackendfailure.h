@@ -16,7 +16,8 @@ enum class VideoBackendFailureSeverity {
     Error,
 };
 
-struct VideoBackendFailure {
+struct VideoBackendFailure
+{
     QUrl sourceUrl;
     VideoBackendFailureKind kind = VideoBackendFailureKind::Playback;
     QString userMessage;

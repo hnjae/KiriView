@@ -11,7 +11,7 @@
 #include <QUrl>
 
 namespace {
-kiriview::DisplayedImageLocation displayedLocation(const QString &path)
+kiriview::DisplayedImageLocation displayedLocation(const QString& path)
 {
     return kiriview::DisplayedImageLocation::fromUrl(kiriview::TestSupport::localUrl(path));
 }

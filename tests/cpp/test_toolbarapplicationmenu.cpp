@@ -68,19 +68,20 @@ private Q_SLOTS:
 };
 
 namespace {
-struct ToolBarMenuFixture {
+struct ToolBarMenuFixture
+{
     std::unique_ptr<QQuickView> view;
     std::unique_ptr<QTemporaryDir> temporaryDirectory;
-    QObject *root = nullptr;
+    QObject* root = nullptr;
     QString errorString;
 
     bool isValid() const { return view != nullptr && root != nullptr; }
 };
 
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
@@ -110,14 +111,14 @@ QString qmlSourceImport()
     return QUrl::fromLocalFile(qmlPath).toString();
 }
 
-bool writeTestPng(const QString &path)
+bool writeTestPng(const QString& path)
 {
     QImage image(QSize(2, 2), QImage::Format_RGBA8888);
     image.fill(Qt::red);
     return image.save(path, "PNG");
 }
 
-std::unique_ptr<QTemporaryDir> createImageDirectory(QString *sourcePath, QString *errorString)
+std::unique_ptr<QTemporaryDir> createImageDirectory(QString* sourcePath, QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -138,7 +139,7 @@ std::unique_ptr<QTemporaryDir> createImageDirectory(QString *sourcePath, QString
     return directory;
 }
 
-std::unique_ptr<QTemporaryDir> createDirectoryCollection(QString *sourcePath, QString *errorString)
+std::unique_ptr<QTemporaryDir> createDirectoryCollection(QString* sourcePath, QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -159,7 +160,7 @@ std::unique_ptr<QTemporaryDir> createDirectoryCollection(QString *sourcePath, QS
     return directory;
 }
 
-std::unique_ptr<QTemporaryDir> createZipArchive(QString *sourcePath, QString *errorString)
+std::unique_ptr<QTemporaryDir> createZipArchive(QString* sourcePath, QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -192,7 +193,7 @@ std::unique_ptr<QTemporaryDir> createZipArchive(QString *sourcePath, QString *er
     return directory;
 }
 
-std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QString *errorString)
+std::unique_ptr<QTemporaryDir> createComicBookArchive(QString* sourcePath, QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -225,9 +226,9 @@ std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QStri
     return directory;
 }
 
-QString fixtureQml(const QString &sourceUrl = QString(), bool navigationActionsEnabled = false,
-    const QString &readingControlsVisibleExpression = QStringLiteral("true"),
-    const QString &readingControlsEnabledExpression = QStringLiteral("!root.videoMode"))
+QString fixtureQml(const QString& sourceUrl = QString(), bool navigationActionsEnabled = false,
+    const QString& readingControlsVisibleExpression = QStringLiteral("true"),
+    const QString& readingControlsEnabledExpression = QStringLiteral("!root.videoMode"))
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -599,7 +600,7 @@ Item {
 }
 
 QString openedCollectionScopeFixtureQml(
-    const QString &sourceUrl = QString(), bool navigationActionsEnabled = false)
+    const QString& sourceUrl = QString(), bool navigationActionsEnabled = false)
 {
     return fixtureQml(sourceUrl, navigationActionsEnabled,
         QStringLiteral("!root.videoMode && root.sessionImageDocument.openedCollectionScopeActive"),
@@ -735,7 +736,7 @@ Item {
         .arg(qmlSourceImport());
 }
 
-QString imageActionsFixtureQml(const QString &sourceUrl)
+QString imageActionsFixtureQml(const QString& sourceUrl)
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -810,7 +811,7 @@ Item {
         .arg(qmlSourceImport(), sourceUrl);
 }
 
-ToolBarMenuFixture createFixtureFromQml(const QString &qml, const QUrl &componentUrl)
+ToolBarMenuFixture createFixtureFromQml(const QString& qml, const QUrl& componentUrl)
 {
     ToolBarMenuFixture fixture;
     registerKiriViewQmlTypes();
@@ -831,7 +832,7 @@ ToolBarMenuFixture createFixtureFromQml(const QString &qml, const QUrl &componen
         return fixture;
     }
 
-    QObject *root = component.create();
+    QObject* root = component.create();
     if (root == nullptr) {
         fixture.errorString = component.errorString();
         return fixture;
@@ -849,14 +850,14 @@ ToolBarMenuFixture createFixtureFromQml(const QString &qml, const QUrl &componen
 }
 
 ToolBarMenuFixture createFixture(
-    const QString &sourceUrl = QString(), bool navigationActionsEnabled = false)
+    const QString& sourceUrl = QString(), bool navigationActionsEnabled = false)
 {
     return createFixtureFromQml(fixtureQml(sourceUrl, navigationActionsEnabled),
         QUrl(QStringLiteral("memory:test_toolbarapplicationmenu.qml")));
 }
 
 ToolBarMenuFixture createOpenedCollectionScopeFixture(
-    const QString &sourceUrl = QString(), bool navigationActionsEnabled = false)
+    const QString& sourceUrl = QString(), bool navigationActionsEnabled = false)
 {
     return createFixtureFromQml(
         openedCollectionScopeFixtureQml(sourceUrl, navigationActionsEnabled),
@@ -869,13 +870,13 @@ ToolBarMenuFixture createMenuBarFixture()
         menuBarFixtureQml(), QUrl(QStringLiteral("memory:test_applicationmenubar.qml")));
 }
 
-ToolBarMenuFixture createImageActionsFixture(const QString &sourceUrl)
+ToolBarMenuFixture createImageActionsFixture(const QString& sourceUrl)
 {
     return createFixtureFromQml(imageActionsFixtureQml(sourceUrl),
         QUrl(QStringLiteral("memory:test_imageactions_applicationmenu.qml")));
 }
 
-QVariant invokeVariant(QObject *root, const char *method, bool *invoked = nullptr)
+QVariant invokeVariant(QObject* root, const char* method, bool* invoked = nullptr)
 {
     QVariant result;
     const bool ok = QMetaObject::invokeMethod(
@@ -886,7 +887,7 @@ QVariant invokeVariant(QObject *root, const char *method, bool *invoked = nullpt
     return result;
 }
 
-QVariantMap invokeVariantMap(QObject *root, const char *method, bool *ok = nullptr)
+QVariantMap invokeVariantMap(QObject* root, const char* method, bool* ok = nullptr)
 {
     bool invoked = false;
     const QVariant result = invokeVariant(root, method, &invoked);
@@ -897,7 +898,7 @@ QVariantMap invokeVariantMap(QObject *root, const char *method, bool *ok = nullp
     return result.toMap();
 }
 
-bool invokeBool(QObject *root, const char *method, bool *invoked = nullptr)
+bool invokeBool(QObject* root, const char* method, bool* invoked = nullptr)
 {
     bool ok = false;
     const QVariant result = invokeVariant(root, method, &ok);
@@ -907,9 +908,9 @@ bool invokeBool(QObject *root, const char *method, bool *invoked = nullptr)
     return ok && result.toBool();
 }
 
-bool applicationMenuOpen(QObject *root) { return invokeBool(root, "applicationMenuOpen"); }
+bool applicationMenuOpen(QObject* root) { return invokeBool(root, "applicationMenuOpen"); }
 
-int invokeInt(QObject *root, const char *method, bool *invoked = nullptr)
+int invokeInt(QObject* root, const char* method, bool* invoked = nullptr)
 {
     bool ok = false;
     const QVariant result = invokeVariant(root, method, &ok);
@@ -919,12 +920,12 @@ int invokeInt(QObject *root, const char *method, bool *invoked = nullptr)
     return ok ? result.toInt() : 0;
 }
 
-void invokeVoid(QObject *root, const char *method)
+void invokeVoid(QObject* root, const char* method)
 {
     QVERIFY(QMetaObject::invokeMethod(root, method, Qt::DirectConnection));
 }
 
-QStringList invokeStringList(QObject *root, const char *method, bool *ok = nullptr)
+QStringList invokeStringList(QObject* root, const char* method, bool* ok = nullptr)
 {
     bool invoked = false;
     const QVariant result = invokeVariant(root, method, &invoked);
@@ -938,7 +939,7 @@ QStringList invokeStringList(QObject *root, const char *method, bool *ok = nullp
     }
 
     const QVariantList values = result.toList();
-    for (const QVariant &value : values) {
+    for (const QVariant& value : values) {
         strings.append(value.toString());
     }
     if (ok != nullptr) {
@@ -947,7 +948,7 @@ QStringList invokeStringList(QObject *root, const char *method, bool *ok = nullp
     return strings;
 }
 
-QPoint invokePoint(QObject *root, const char *method, bool *ok = nullptr)
+QPoint invokePoint(QObject* root, const char* method, bool* ok = nullptr)
 {
     bool invoked = false;
     const QVariant result = invokeVariant(root, method, &invoked);
@@ -962,14 +963,14 @@ QPoint invokePoint(QObject *root, const char *method, bool *ok = nullptr)
     return result.toPointF().toPoint();
 }
 
-QQuickItem *findQuickItem(QObject *root, const QString &objectName)
+QQuickItem* findQuickItem(QObject* root, const QString& objectName)
 {
-    return root->findChild<QQuickItem *>(objectName, Qt::FindChildrenRecursively);
+    return root->findChild<QQuickItem*>(objectName, Qt::FindChildrenRecursively);
 }
 
-QPoint quickItemCenter(QObject *root, QQuickItem *item)
+QPoint quickItemCenter(QObject* root, QQuickItem* item)
 {
-    QQuickItem *rootItem = qobject_cast<QQuickItem *>(root);
+    QQuickItem* rootItem = qobject_cast<QQuickItem*>(root);
     if (rootItem == nullptr || item == nullptr || item->width() <= 0 || item->height() <= 0) {
         return QPoint(-1, -1);
     }
@@ -977,7 +978,7 @@ QPoint quickItemCenter(QObject *root, QQuickItem *item)
     return item->mapToItem(rootItem, item->width() / 2, item->height() / 2).toPoint();
 }
 
-void clickAt(QQuickView *view, const QPoint &point)
+void clickAt(QQuickView* view, const QPoint& point)
 {
     QVERIFY(point.x() >= 0);
     QVERIFY(point.y() >= 0);
@@ -986,12 +987,12 @@ void clickAt(QQuickView *view, const QPoint &point)
     QCoreApplication::processEvents();
 }
 
-void clickItem(const ToolBarMenuFixture &fixture, QQuickItem *item)
+void clickItem(const ToolBarMenuFixture& fixture, QQuickItem* item)
 {
     clickAt(fixture.view.get(), quickItemCenter(fixture.root, item));
 }
 
-void clickApplicationMenuButton(const ToolBarMenuFixture &fixture)
+void clickApplicationMenuButton(const ToolBarMenuFixture& fixture)
 {
     bool ok = false;
     const QPoint point = invokePoint(fixture.root, "applicationMenuButtonCenter", &ok);
@@ -999,7 +1000,7 @@ void clickApplicationMenuButton(const ToolBarMenuFixture &fixture)
     clickAt(fixture.view.get(), point);
 }
 
-void clickOutsideMenuParent(const ToolBarMenuFixture &fixture)
+void clickOutsideMenuParent(const ToolBarMenuFixture& fixture)
 {
     bool ok = false;
     const QPoint point = invokePoint(fixture.root, "outsideClickPoint", &ok);
@@ -1156,8 +1157,8 @@ void TestToolBarApplicationMenu::trailingToolbarControlsShareSpacingAndVerticalA
     QVERIFY(ok);
 
     const auto itemGeometry
-        = [&geometries](const QString &name) { return geometries.value(name).toMap(); };
-    const auto numeric = [](const QVariantMap &geometry, const QString &name) {
+        = [&geometries](const QString& name) { return geometries.value(name).toMap(); };
+    const auto numeric = [](const QVariantMap& geometry, const QString& name) {
         return geometry.value(name).toDouble();
     };
     const auto closeEnough = [](qreal left, qreal right) { return qAbs(left - right) <= 1.0; };
@@ -1167,7 +1168,7 @@ void TestToolBarApplicationMenu::trailingToolbarControlsShareSpacingAndVerticalA
     const QVariantMap fit = itemGeometry(QStringLiteral("fit"));
     const QVariantMap zoom = itemGeometry(QStringLiteral("zoom"));
 
-    for (const QVariantMap &geometry : { rightToLeft, twoPage, fit, zoom }) {
+    for (const QVariantMap& geometry : { rightToLeft, twoPage, fit, zoom }) {
         QVERIFY(geometry.value(QStringLiteral("found")).toBool());
     }
 
@@ -1192,7 +1193,7 @@ void TestToolBarApplicationMenu::fitMenuButtonClickOnlyOpensMenu()
     ToolBarMenuFixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    QQuickItem *fitButton = findQuickItem(fixture.root, QStringLiteral("fitModeMenuButton"));
+    QQuickItem* fitButton = findQuickItem(fixture.root, QStringLiteral("fitModeMenuButton"));
     QVERIFY2(fitButton != nullptr, "fit menu button was not created");
     QTRY_VERIFY(fitButton->isEnabled());
 
@@ -1201,7 +1202,7 @@ void TestToolBarApplicationMenu::fitMenuButtonClickOnlyOpensMenu()
     QCOMPARE(fixture.root->property("fitWidthTriggerCount").toInt(), 0);
     QCOMPARE(fixture.root->property("fitHeightTriggerCount").toInt(), 0);
 
-    QQuickItem *fitWidthMenuItem = findQuickItem(fixture.root, QStringLiteral("fitWidthMenuItem"));
+    QQuickItem* fitWidthMenuItem = findQuickItem(fixture.root, QStringLiteral("fitWidthMenuItem"));
     QVERIFY2(fitWidthMenuItem != nullptr, "fit width menu item was not created");
     QTRY_VERIFY(fitWidthMenuItem->isVisible());
 }
@@ -1219,12 +1220,12 @@ void TestToolBarApplicationMenu::fitMenuButtonMenuSelectionUpdatesRuntimeSelecti
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
 
-    QQuickItem *fitButton = findQuickItem(fixture.root, QStringLiteral("fitModeMenuButton"));
+    QQuickItem* fitButton = findQuickItem(fixture.root, QStringLiteral("fitModeMenuButton"));
     QVERIFY2(fitButton != nullptr, "fit menu button was not created");
     QTRY_VERIFY(fitButton->isEnabled());
 
     clickItem(fixture, fitButton);
-    QQuickItem *fitWidthMenuItem = findQuickItem(fixture.root, QStringLiteral("fitWidthMenuItem"));
+    QQuickItem* fitWidthMenuItem = findQuickItem(fixture.root, QStringLiteral("fitWidthMenuItem"));
     QVERIFY2(fitWidthMenuItem != nullptr, "fit width menu item was not created");
     QTRY_VERIFY(fitWidthMenuItem->isVisible());
 
@@ -1375,7 +1376,7 @@ void TestToolBarApplicationMenu::videoToolbarHidesReadingControlsAndDisablesImag
         = invokeVariant(fixture.root, "toolbarControlEnabledStates", &invoked).toList();
     QVERIFY(invoked);
     QCOMPARE(enabledStates.size(), 2);
-    for (const QVariant &enabledState : enabledStates) {
+    for (const QVariant& enabledState : enabledStates) {
         QVERIFY(!enabledState.toBool());
     }
 }
@@ -1483,9 +1484,9 @@ void TestToolBarApplicationMenu::pageNavigationButtonsUseSemanticActionsForReadi
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
 
-    QQuickItem *leftButton
+    QQuickItem* leftButton
         = findQuickItem(fixture.root, QStringLiteral("leftPageNavigationButton"));
-    QQuickItem *rightButton
+    QQuickItem* rightButton
         = findQuickItem(fixture.root, QStringLiteral("rightPageNavigationButton"));
     QVERIFY2(leftButton != nullptr, "left page navigation button was not created");
     QVERIFY2(rightButton != nullptr, "right page navigation button was not created");

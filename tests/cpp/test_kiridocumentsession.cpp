@@ -31,22 +31,22 @@
 #include <utility>
 
 namespace {
-QString keyForUrl(const QUrl &url) { return url.adjusted(QUrl::NormalizePathSegments).toString(); }
+QString keyForUrl(const QUrl& url) { return url.adjusted(QUrl::NormalizePathSegments).toString(); }
 
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl& url)
 {
     return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
-QVariant thumbnailData(const KiriDocumentSession &session, int row, int role)
+QVariant thumbnailData(const KiriDocumentSession& session, int row, int role)
 {
-    QAbstractItemModel *model = session.activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session.activeNavigationThumbnailModel();
     return model->data(model->index(row, 0), role);
 }
 
-int roleForName(const QAbstractItemModel &model, const QByteArray &name)
+int roleForName(const QAbstractItemModel& model, const QByteArray& name)
 {
     const QHash<int, QByteArray> roles = model.roleNames();
     for (auto iterator = roles.cbegin(); iterator != roles.cend(); ++iterator) {
@@ -59,7 +59,7 @@ int roleForName(const QAbstractItemModel &model, const QByteArray &name)
 }
 
 QVariant mediaInformationRowData(
-    const QAbstractItemModel &model, int row, const QByteArray &roleName)
+    const QAbstractItemModel& model, int row, const QByteArray& roleName)
 {
     const int role = roleForName(model, roleName);
     if (role < 0) {
@@ -69,7 +69,7 @@ QVariant mediaInformationRowData(
     return model.data(model.index(row, 0), role);
 }
 
-QString mediaInformationValueForLabel(const QAbstractItemModel &model, const QString &label)
+QString mediaInformationValueForLabel(const QAbstractItemModel& model, const QString& label)
 {
     for (int row = 0; row < model.rowCount(); ++row) {
         if (mediaInformationRowData(model, row, QByteArrayLiteral("label")).toString() == label) {
@@ -80,8 +80,8 @@ QString mediaInformationValueForLabel(const QAbstractItemModel &model, const QSt
     return {};
 }
 
-void compareThumbnailRow(const KiriDocumentSession &session, int row, int number, const QUrl &url,
-    const QString &label, const QString &iconName, bool current)
+void compareThumbnailRow(const KiriDocumentSession& session, int row, int number, const QUrl& url,
+    const QString& label, const QString& iconName, bool current)
 {
     QCOMPARE(
         thumbnailData(session, row, kiriview::ActiveNavigationThumbnailModel::NumberRole).toInt(),
@@ -100,9 +100,9 @@ void compareThumbnailRow(const KiriDocumentSession &session, int row, int number
 }
 
 QVariant thumbnailDataForRoleName(
-    const KiriDocumentSession &session, int row, const QByteArray &roleName)
+    const KiriDocumentSession& session, int row, const QByteArray& roleName)
 {
-    QAbstractItemModel *model = session.activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session.activeNavigationThumbnailModel();
     const int role = roleForName(*model, roleName);
     if (role < 0) {
         return {};
@@ -115,7 +115,7 @@ class FakeDirectMediaNavigationCandidateProvider
 {
 public:
     void setMedia(
-        const QUrl &parentUrl, std::vector<kiriview::DirectMediaNavigationCandidate> candidates)
+        const QUrl& parentUrl, std::vector<kiriview::DirectMediaNavigationCandidate> candidates)
     {
         m_candidates[keyForUrl(parentUrl)] = std::move(candidates);
     }
@@ -123,7 +123,7 @@ public:
     kiriview::DirectMediaNavigationCandidateProvider provider()
     {
         return kiriview::DirectMediaNavigationCandidateProvider {
-            [this](QObject *, QUrl parentUrl,
+            [this](QObject*, QUrl parentUrl,
                 kiriview::DirectMediaNavigationCandidatesCallback callback,
                 kiriview::ErrorCallback errorCallback) {
                 const auto candidates = m_candidates.find(keyForUrl(parentUrl));
@@ -146,8 +146,9 @@ private:
     std::map<QString, std::vector<kiriview::DirectMediaNavigationCandidate>> m_candidates;
 };
 
-struct ManualDirectMediaNavigationCandidateLoad {
-    QObject *object = nullptr;
+struct ManualDirectMediaNavigationCandidateLoad
+{
+    QObject* object = nullptr;
     QUrl parentUrl;
     kiriview::DirectMediaNavigationCandidatesCallback callback;
     kiriview::ErrorCallback errorCallback;
@@ -161,7 +162,7 @@ public:
     kiriview::DirectMediaNavigationCandidateProvider provider()
     {
         return kiriview::DirectMediaNavigationCandidateProvider {
-            [this](QObject *receiver, QUrl parentUrl,
+            [this](QObject* receiver, QUrl parentUrl,
                 kiriview::DirectMediaNavigationCandidatesCallback callback,
                 kiriview::ErrorCallback errorCallback) {
                 auto load = std::make_shared<ManualDirectMediaNavigationCandidateLoad>();
@@ -179,7 +180,7 @@ public:
 
     std::size_t loadCount() const { return m_loads.size(); }
 
-    ManualDirectMediaNavigationCandidateLoad &loadAt(std::size_t index)
+    ManualDirectMediaNavigationCandidateLoad& loadAt(std::size_t index)
     {
         return *m_loads.at(index);
     }
@@ -189,7 +190,7 @@ public:
     {
         kiriview::TestSupport::Detail::finishManualIoJob(m_loads.at(index),
             [candidates = std::move(candidates)](
-                ManualDirectMediaNavigationCandidateLoad &load) mutable {
+                ManualDirectMediaNavigationCandidateLoad& load) mutable {
                 if (load.callback) {
                     load.callback(std::move(candidates));
                 }
@@ -199,7 +200,7 @@ public:
     void deliverIgnoringCancellation(
         std::size_t index, std::vector<kiriview::DirectMediaNavigationCandidate> candidates)
     {
-        ManualDirectMediaNavigationCandidateLoad &load = loadAt(index);
+        ManualDirectMediaNavigationCandidateLoad& load = loadAt(index);
         if (load.callback) {
             load.callback(std::move(candidates));
         }
@@ -214,7 +215,7 @@ class FakeMediaOpenWithProvider
 public:
     kiriview::MediaOpenWithProvider provider()
     {
-        return [this](QObject *, kiriview::MediaOpenWithRequest request,
+        return [this](QObject*, kiriview::MediaOpenWithRequest request,
                    kiriview::MediaOpenWithCallback callback) {
             requests.push_back(std::move(request));
             if (callback) {
@@ -230,7 +231,7 @@ public:
 
 private:
     static kiriview::KioOperationFailure failureFor(
-        const QUrl &targetUrl, kiriview::MediaOpenWithResult result, const QString &errorString)
+        const QUrl& targetUrl, kiriview::MediaOpenWithResult result, const QString& errorString)
     {
         kiriview::KioOperationFailure failure;
         failure.operationKind = kiriview::KioOperationKind::MediaOpenWith;
@@ -244,8 +245,9 @@ private:
     }
 };
 
-struct ManualMediaOpenWithOperation {
-    QObject *object = nullptr;
+struct ManualMediaOpenWithOperation
+{
+    QObject* object = nullptr;
     kiriview::MediaOpenWithRequest request;
     kiriview::MediaOpenWithCallback callback;
     kiriview::ImageIoJobCompletion completion;
@@ -257,7 +259,7 @@ class ManualMediaOpenWithProvider
 public:
     kiriview::MediaOpenWithProvider provider()
     {
-        return [this](QObject *receiver, kiriview::MediaOpenWithRequest request,
+        return [this](QObject* receiver, kiriview::MediaOpenWithRequest request,
                    kiriview::MediaOpenWithCallback callback) {
             auto operation = std::make_shared<ManualMediaOpenWithOperation>();
             operation->request = std::move(request);
@@ -272,10 +274,10 @@ public:
 
     std::size_t operationCount() const { return m_operations.size(); }
 
-    ManualMediaOpenWithOperation &operationAt(std::size_t index) { return *m_operations.at(index); }
+    ManualMediaOpenWithOperation& operationAt(std::size_t index) { return *m_operations.at(index); }
 
     void finishOperationAt(
-        std::size_t index, kiriview::MediaOpenWithResult result, const QString &errorString = {})
+        std::size_t index, kiriview::MediaOpenWithResult result, const QString& errorString = {})
     {
         finishOperationAt(index, result,
             failureFor(m_operations.at(index)->request.targetUrl, result, errorString));
@@ -285,7 +287,7 @@ public:
         kiriview::KioOperationFailure failure)
     {
         kiriview::TestSupport::Detail::finishManualIoJob(m_operations.at(index),
-            [result, failure = std::move(failure)](ManualMediaOpenWithOperation &operation) {
+            [result, failure = std::move(failure)](ManualMediaOpenWithOperation& operation) {
                 if (operation.callback) {
                     operation.callback(result, failure);
                 }
@@ -293,16 +295,16 @@ public:
     }
 
     void deliverOperationAtIgnoringCancellation(
-        std::size_t index, kiriview::MediaOpenWithResult result, const QString &errorString = {})
+        std::size_t index, kiriview::MediaOpenWithResult result, const QString& errorString = {})
     {
         deliverOperationAtIgnoringCancellation(index, result,
             failureFor(m_operations.at(index)->request.targetUrl, result, errorString));
     }
 
     void deliverOperationAtIgnoringCancellation(std::size_t index,
-        kiriview::MediaOpenWithResult result, const kiriview::KioOperationFailure &failure)
+        kiriview::MediaOpenWithResult result, const kiriview::KioOperationFailure& failure)
     {
-        ManualMediaOpenWithOperation &operation = operationAt(index);
+        ManualMediaOpenWithOperation& operation = operationAt(index);
         if (operation.callback) {
             operation.callback(result, failure);
         }
@@ -310,7 +312,7 @@ public:
 
 private:
     static kiriview::KioOperationFailure failureFor(
-        const QUrl &targetUrl, kiriview::MediaOpenWithResult result, const QString &errorString)
+        const QUrl& targetUrl, kiriview::MediaOpenWithResult result, const QString& errorString)
     {
         kiriview::KioOperationFailure failure;
         failure.operationKind = kiriview::KioOperationKind::MediaOpenWith;
@@ -331,7 +333,7 @@ class FakeThumbnailLookupProvider
 public:
     kiriview::ThumbnailCacheLookupProvider provider()
     {
-        return [this](QObject *, kiriview::ThumbnailCacheLookupRequest request,
+        return [this](QObject*, kiriview::ThumbnailCacheLookupRequest request,
                    kiriview::ThumbnailCacheLookupCallback callback) {
             requests.push_back(std::move(request));
             if (callback) {
@@ -350,7 +352,7 @@ class FakeThumbnailGenerationProvider
 public:
     kiriview::ThumbnailGenerationProvider provider()
     {
-        return [this](QObject *, kiriview::ThumbnailGenerationRequest request,
+        return [this](QObject*, kiriview::ThumbnailGenerationRequest request,
                    kiriview::ThumbnailGenerationCallback callback) {
             requests.push_back(std::move(request));
             if (callback) {
@@ -366,8 +368,8 @@ public:
 
 std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
     kiriview::DirectMediaNavigationCandidateProvider directMediaNavigationCandidateProvider,
-    kiriview::TestSupport::ManualFileDeletionProvider *fileDeletion = nullptr,
-    kiriview::TestSupport::ManualImageDataLoader *imageDataLoader = nullptr,
+    kiriview::TestSupport::ManualFileDeletionProvider* fileDeletion = nullptr,
+    kiriview::TestSupport::ManualImageDataLoader* imageDataLoader = nullptr,
     kiriview::ImageDocumentPageCandidateProvider imageDocumentPageCandidateProvider = {},
     kiriview::ImageDataDecoder imageDataDecoder = kiriview::TestSupport::staticImageDataDecoder(),
     kiriview::MediaOpenWithProvider mediaOpenWithProvider = {},
@@ -400,15 +402,15 @@ std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
 }
 
 std::unique_ptr<KiriDocumentSession> createSession(
-    FakeDirectMediaNavigationCandidateProvider &directMediaNavigationProvider,
-    kiriview::TestSupport::ManualFileDeletionProvider *fileDeletion = nullptr,
-    kiriview::TestSupport::ManualImageDataLoader *imageDataLoader = nullptr)
+    FakeDirectMediaNavigationCandidateProvider& directMediaNavigationProvider,
+    kiriview::TestSupport::ManualFileDeletionProvider* fileDeletion = nullptr,
+    kiriview::TestSupport::ManualImageDataLoader* imageDataLoader = nullptr)
 {
     return createSessionWithProvider(
         directMediaNavigationProvider.provider(), fileDeletion, imageDataLoader);
 }
 
-void compareUnavailableActiveNavigation(const KiriDocumentSession &session)
+void compareUnavailableActiveNavigation(const KiriDocumentSession& session)
 {
     QVERIFY(!session.activeNavigationAvailable());
     QVERIFY(!session.activeNavigationKnown());
@@ -421,14 +423,14 @@ void compareUnavailableActiveNavigation(const KiriDocumentSession &session)
     QVERIFY(!session.atKnownLastActiveNavigation());
 }
 
-bool writeTestImage(const QString &path)
+bool writeTestImage(const QString& path)
 {
     QImage image(QSize(2, 2), QImage::Format_RGBA8888);
     image.fill(Qt::red);
     return image.save(path, "PNG");
 }
 
-bool writeEmptyFile(const QString &path)
+bool writeEmptyFile(const QString& path)
 {
     QFile file(path);
     return file.open(QIODevice::WriteOnly);
@@ -459,14 +461,14 @@ kiriview::ImageDataDecoder staticImageDataDecoderWithMetadata(
     kiriview::EmbeddedMetadata metadata, QImage image = kiriview::TestSupport::testImage(2, 2))
 {
     return [metadata = std::move(metadata), image = std::move(image)](
-               const QByteArray &, const kiriview::ImageDecodeRequest &) mutable {
+               const QByteArray&, const kiriview::ImageDecodeRequest&) mutable {
         kiriview::StaticDecodedImage decoded = kiriview::TestSupport::staticDecodedTestImage(image);
         decoded.embeddedMetadata = metadata;
         return kiriview::successfulDecodedImageResult(std::move(decoded));
     };
 }
 
-bool modelValuesContainCaseInsensitive(const QAbstractItemModel &model, const QString &needle)
+bool modelValuesContainCaseInsensitive(const QAbstractItemModel& model, const QString& needle)
 {
     for (int row = 0; row < model.rowCount(); ++row) {
         const QString value
@@ -571,7 +573,7 @@ void TestKiriDocumentSession::emptySessionProjectsUnavailableMediaInformation()
     FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     std::unique_ptr<KiriDocumentSession> session = createSession(directMediaNavigationProvider);
 
-    KiriMediaInformation *mediaInformation = session->mediaInformation();
+    KiriMediaInformation* mediaInformation = session->mediaInformation();
     QVERIFY(mediaInformation != nullptr);
     QVERIFY(!mediaInformation->available());
     QVERIFY(!mediaInformation->canCopyFilePath());
@@ -607,7 +609,7 @@ void TestKiriDocumentSession::imageMediaInformationUsesEmbeddedMetadataAndKnownD
 
     QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
-    KiriMediaInformation *mediaInformation = session->mediaInformation();
+    KiriMediaInformation* mediaInformation = session->mediaInformation();
     QVERIFY(mediaInformation->available());
     QCOMPARE(mediaInformation->title(), QStringLiteral("photo.png"));
     QCOMPARE(mediaInformation->summary(), QStringLiteral("Image, 2×2 px"));
@@ -665,8 +667,8 @@ void TestKiriDocumentSession::imageMediaInformationClearsStaleEmbeddedMetadataOn
     directMediaNavigationProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
         { directMediaNavigationCandidate(firstUrl), directMediaNavigationCandidate(secondUrl) });
     kiriview::EmbeddedMetadata metadata = testCameraMetadata();
-    kiriview::ImageDataDecoder decoder = [metadata = std::move(metadata)](const QByteArray &data,
-                                             const kiriview::ImageDecodeRequest &request) {
+    kiriview::ImageDataDecoder decoder = [metadata = std::move(metadata)](const QByteArray& data,
+                                             const kiriview::ImageDecodeRequest& request) {
         kiriview::StaticDecodedImage decoded
             = kiriview::TestSupport::staticDecodedTestImage(kiriview::TestSupport::testImage(
                 request.imageUrl().fileName() == QStringLiteral("first.png") ? 2 : 3, 2));
@@ -702,7 +704,7 @@ void TestKiriDocumentSession::videoMediaInformationUsesVideoSectionAndNoCameraRo
     session->setSourceUrl(clip);
 
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
-    KiriMediaInformation *mediaInformation = session->mediaInformation();
+    KiriMediaInformation* mediaInformation = session->mediaInformation();
     QVERIFY(mediaInformation->available());
     QCOMPARE(mediaInformation->title(), QStringLiteral("clip.mp4"));
     QCOMPARE(mediaInformation->summary(), QStringLiteral("Video"));
@@ -726,7 +728,7 @@ void TestKiriDocumentSession::mediaInformationDerivesFilenameAndPathFromTargetUr
 
     session->setSourceUrl(clip);
 
-    KiriMediaInformation *mediaInformation = session->mediaInformation();
+    KiriMediaInformation* mediaInformation = session->mediaInformation();
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
     QVERIFY(mediaInformation->available());
     QCOMPARE(mediaInformation->title(), QStringLiteral("clip.mp4"));
@@ -754,7 +756,7 @@ void TestKiriDocumentSession::mediaInformationRowModelsExposeLabelAndValueRoles(
     session->setSourceUrl(imageUrl);
 
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
-    QAbstractItemModel *model = session->mediaInformation()->generalRows();
+    QAbstractItemModel* model = session->mediaInformation()->generalRows();
     QVERIFY(model != nullptr);
     QCOMPARE(roleForName(*model, QByteArrayLiteral("label")),
         static_cast<int>(KiriMediaInformationRowModel::LabelRole));
@@ -1057,7 +1059,7 @@ void TestKiriDocumentSession::directMediaThumbnailModelTracksSiblingCandidates()
 
     session->setSourceUrl(videoUrl);
 
-    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
@@ -1079,7 +1081,7 @@ void TestKiriDocumentSession::directMediaThumbnailModelStaysEmptyUntilCandidates
 
     session->setSourceUrl(videoUrl);
 
-    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QCOMPARE(directMediaNavigationProvider.loadCount(), std::size_t(1));
     QVERIFY(session->activeNavigationAvailable());
@@ -1107,7 +1109,7 @@ void TestKiriDocumentSession::activeNavigationThumbnailModelExposesSourceNeutral
 
     session->setSourceUrl(imageUrl);
 
-    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(model->rowCount(), 1);
@@ -1132,7 +1134,7 @@ void TestKiriDocumentSession::activeNavigationThumbnailDemandSurfaceValidatesIde
 
     session->setSourceUrl(videoUrl);
 
-    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(model->rowCount(), 2);
@@ -1187,7 +1189,7 @@ void TestKiriDocumentSession::activeNavigationThumbnailDemandProjectsPendingAndU
 
     session->setSourceUrl(imageUrl);
 
-    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(model->rowCount(), 3);
@@ -1251,7 +1253,7 @@ void TestKiriDocumentSession::directImageThumbnailDemandProjectsReadyCacheHitSou
 
     session->setSourceUrl(imageUrl);
 
-    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     QCOMPARE(model->rowCount(), 1);
@@ -1303,7 +1305,7 @@ void TestKiriDocumentSession::directImageThumbnailDemandProjectsReadyGeneratedSo
 
     session->setSourceUrl(imageUrl);
 
-    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     const quint64 generation = thumbnailData(
@@ -1342,7 +1344,7 @@ void TestKiriDocumentSession::directImageThumbnailDemandKeepsFallbackForFailedLo
 
     session->setSourceUrl(imageUrl);
 
-    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     const quint64 generation = thumbnailData(
@@ -1380,7 +1382,7 @@ void TestKiriDocumentSession::directImageThumbnailDemandKeepsFallbackForFailedGe
 
     session->setSourceUrl(imageUrl);
 
-    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     const quint64 generation = thumbnailData(
@@ -1797,7 +1799,7 @@ void TestKiriDocumentSession::archiveCollectionThumbnailModelUsesPageCandidateNa
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     dataLoader.finishBackLoad(QByteArrayLiteral("first"));
 
-    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QAbstractItemModel* model = session->activeNavigationThumbnailModel();
     QVERIFY(model != nullptr);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);

@@ -22,22 +22,22 @@ public:
     QSize imageSize() const override;
     qsizetype byteCost() const override;
     bool supportsRasterDisplayRefinement() const override;
-    QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *errorString) const override;
-    QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const override;
+    QImage decodeRasterDisplayImage(const QSize& rasterSize, QString* errorString) const override;
+    QImage decodeBlockingDisplayImage(int maximumLongEdge, QString* errorString) const override;
     std::optional<DecodedTile> decodeTile(
-        const TileRequest &request, QString *errorString) const override;
+        const TileRequest& request, QString* errorString) const override;
 
 private:
-    QImage decodeFullOrScaled(const QSize &targetSize, QString *errorString) const;
-    QImage decodeGridRasterDisplayImage(const QSize &rasterSize, QString *errorString) const;
-    QImage decodeGridSourceRect(const QRect &sourceRect, QString *errorString) const;
+    QImage decodeFullOrScaled(const QSize& targetSize, QString* errorString) const;
+    QImage decodeGridRasterDisplayImage(const QSize& rasterSize, QString* errorString) const;
+    QImage decodeGridSourceRect(const QRect& sourceRect, QString* errorString) const;
 
     QByteArray m_data;
     QSize m_imageSize;
     std::optional<HeifTileGrid> m_tileGrid;
 };
 
-std::shared_ptr<HeifTileSource> openHeifTileSource(const QByteArray &data, QString *errorString);
+std::shared_ptr<HeifTileSource> openHeifTileSource(const QByteArray& data, QString* errorString);
 }
 
 #endif

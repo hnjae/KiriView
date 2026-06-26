@@ -12,12 +12,12 @@
 #include <QModelIndex>
 #include <utility>
 
-KiriMediaInformationRowModel::KiriMediaInformationRowModel(QObject *parent)
+KiriMediaInformationRowModel::KiriMediaInformationRowModel(QObject* parent)
     : QAbstractListModel(parent)
 {
 }
 
-int KiriMediaInformationRowModel::rowCount(const QModelIndex &parent) const
+int KiriMediaInformationRowModel::rowCount(const QModelIndex& parent) const
 {
     if (parent.isValid()) {
         return 0;
@@ -26,14 +26,14 @@ int KiriMediaInformationRowModel::rowCount(const QModelIndex &parent) const
     return static_cast<int>(m_rows.size());
 }
 
-QVariant KiriMediaInformationRowModel::data(const QModelIndex &index, int role) const
+QVariant KiriMediaInformationRowModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() < 0
         || static_cast<std::size_t>(index.row()) >= m_rows.size()) {
         return {};
     }
 
-    const Row &row = m_rows.at(static_cast<std::size_t>(index.row()));
+    const Row& row = m_rows.at(static_cast<std::size_t>(index.row()));
     switch (role) {
     case LabelRole:
         return row.label;
@@ -61,7 +61,7 @@ void KiriMediaInformationRowModel::setRows(std::vector<Row> rows)
     endResetModel();
 }
 
-KiriMediaInformation::KiriMediaInformation(KiriDocumentSession &session, QObject *parent)
+KiriMediaInformation::KiriMediaInformation(KiriDocumentSession& session, QObject* parent)
     : QObject(parent)
     , m_session(session)
     , m_generalRows(this)
@@ -89,13 +89,13 @@ bool KiriMediaInformation::hasCameraSection() const { return m_cameraRows.rowCou
 
 bool KiriMediaInformation::hasAdvancedSection() const { return m_advancedRows.rowCount() > 0; }
 
-QAbstractListModel *KiriMediaInformation::generalRows() { return &m_generalRows; }
+QAbstractListModel* KiriMediaInformation::generalRows() { return &m_generalRows; }
 
-QAbstractListModel *KiriMediaInformation::mediaRows() { return &m_mediaRows; }
+QAbstractListModel* KiriMediaInformation::mediaRows() { return &m_mediaRows; }
 
-QAbstractListModel *KiriMediaInformation::cameraRows() { return &m_cameraRows; }
+QAbstractListModel* KiriMediaInformation::cameraRows() { return &m_cameraRows; }
 
-QAbstractListModel *KiriMediaInformation::advancedRows() { return &m_advancedRows; }
+QAbstractListModel* KiriMediaInformation::advancedRows() { return &m_advancedRows; }
 
 bool KiriMediaInformation::canCopyFilePath() const { return m_canCopyFilePath; }
 
@@ -107,11 +107,11 @@ void KiriMediaInformation::copyFilePath()
         return;
     }
 
-    if (qobject_cast<QGuiApplication *>(QCoreApplication::instance()) == nullptr) {
+    if (qobject_cast<QGuiApplication*>(QCoreApplication::instance()) == nullptr) {
         return;
     }
 
-    QClipboard *clipboard = QGuiApplication::clipboard();
+    QClipboard* clipboard = QGuiApplication::clipboard();
     if (clipboard != nullptr) {
         clipboard->setText(copiedFilePath());
     }
@@ -123,7 +123,7 @@ void KiriMediaInformation::openContainingFolder()
         return;
     }
 
-    auto *job = KIO::highlightInFileManager(QList<QUrl> { m_targetUrl });
+    auto* job = KIO::highlightInFileManager(QList<QUrl> { m_targetUrl });
     if (job != nullptr) {
         job->setParent(this);
     }
@@ -131,7 +131,7 @@ void KiriMediaInformation::openContainingFolder()
 
 void KiriMediaInformation::refresh()
 {
-    const kiriview::MediaInformationProjectionSnapshot &snapshot
+    const kiriview::MediaInformationProjectionSnapshot& snapshot
         = m_session.mediaInformationSnapshot();
     m_revision = snapshot.revision;
     m_available = snapshot.available;

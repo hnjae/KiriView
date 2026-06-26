@@ -12,7 +12,7 @@
 #include <utility>
 
 namespace kiriview {
-ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
+ImageSecondaryPageController::ImageSecondaryPageController(QObject* parent,
     RenderContextProvider renderContextProvider, ImageSecondaryPageController::Callbacks callbacks,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, ImageCacheBudgets cacheBudgets)
@@ -26,7 +26,7 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
                     notify(change);
                 }
             },
-            [this](const QString &) {
+            [this](const QString&) {
                 const bool hadDisplayedPage = visible();
                 clear();
                 if (hadDisplayedPage) {
@@ -47,7 +47,7 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
             },
             {},
             {},
-            [this](const QUrl &url) {
+            [this](const QUrl& url) {
                 if (!m_callbacks.findPredecodedImage) {
                     return std::optional<PredecodedImage>();
                 }
@@ -64,12 +64,12 @@ ImageSecondaryPageController::~ImageSecondaryPageController()
     stopAnimation();
 }
 
-ImagePageSurfaceController &ImageSecondaryPageController::pageSurfaceController()
+ImagePageSurfaceController& ImageSecondaryPageController::pageSurfaceController()
 {
     return *m_pageSurfaceController;
 }
 
-const ImagePageSurfaceController &ImageSecondaryPageController::pageSurfaceController() const
+const ImagePageSurfaceController& ImageSecondaryPageController::pageSurfaceController() const
 {
     return *m_pageSurfaceController;
 }
@@ -88,9 +88,9 @@ ImagePresentationPageSlotSnapshot ImageSecondaryPageController::pageSlotSnapshot
     return visible() ? m_pageSurfaceController->snapshot() : ImagePresentationPageSlotSnapshot {};
 }
 
-void ImageSecondaryPageController::startLoad(const QUrl &url,
-    const OpenedCollectionScopeLocation &displayedOpenedCollectionScope,
-    const ImageFirstDisplayDecodeContext &firstDisplayContext)
+void ImageSecondaryPageController::startLoad(const QUrl& url,
+    const OpenedCollectionScopeLocation& displayedOpenedCollectionScope,
+    const ImageFirstDisplayDecodeContext& firstDisplayContext)
 {
     cancel();
     stopAnimation();
@@ -136,7 +136,7 @@ void ImageSecondaryPageController::finishDecodedImageLoad(
 }
 
 void ImageSecondaryPageController::finishImagePresentation(
-    const ImageLoadSession &session, const ImagePresentationLoadResult &result)
+    const ImageLoadSession& session, const ImagePresentationLoadResult& result)
 {
     if (!result.presented) {
         finishLoadWithError(session);
@@ -147,13 +147,13 @@ void ImageSecondaryPageController::finishImagePresentation(
         session.location(), result.imageSize, imageSpreadPageIsWide(result.imageSize)));
 }
 
-void ImageSecondaryPageController::finishLoadWithError(const ImageLoadSession &session)
+void ImageSecondaryPageController::finishLoadWithError(const ImageLoadSession& session)
 {
     applyLoadCompletion(m_displayState.finishFailedLoad(session.location()));
 }
 
 void ImageSecondaryPageController::applyLoadCompletion(
-    const ImageSecondaryPageLoadCompletion &completion)
+    const ImageSecondaryPageLoadCompletion& completion)
 {
     if (completion.clearPresentation) {
         m_pageSurfaceController->clearImage();

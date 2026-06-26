@@ -7,12 +7,12 @@
 #include "kiriview/src/policy/applicationruntime.cxx.h"
 
 namespace {
-QString startupSourceText(const kiriview::ApplicationStartupSource &source)
+QString startupSourceText(const kiriview::ApplicationStartupSource& source)
 {
     return kiriview::Bridge::qtString(source.text);
 }
 
-QUrl validInitialSourceUrl(const QUrl &url)
+QUrl validInitialSourceUrl(const QUrl& url)
 {
     if (url.isEmpty() || !url.isValid()) {
         return QUrl();
@@ -23,7 +23,7 @@ QUrl validInitialSourceUrl(const QUrl &url)
 }
 
 namespace kiriview {
-QUrl initialSourceUrlFromStartupSource(const ApplicationStartupSource &source)
+QUrl initialSourceUrlFromStartupSource(const ApplicationStartupSource& source)
 {
     switch (source.kind) {
     case ApplicationStartupSourceKind::None:

@@ -30,9 +30,9 @@ class ImageDocumentPredecodeController final
 public:
     using CurrentPageNumberCallback = std::function<int()>;
 
-    ImageDocumentPredecodeController(QObject *parent, ImageDocumentState &state,
-        ImagePageSurfaceController &pageSurfaceController,
-        ImagePresentationRuntime &presentationRuntime,
+    ImageDocumentPredecodeController(QObject* parent, ImageDocumentState& state,
+        ImagePageSurfaceController& pageSurfaceController,
+        ImagePresentationRuntime& presentationRuntime,
         ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
         CurrentPageNumberCallback currentPageNumber = {},
@@ -44,12 +44,12 @@ public:
         std::optional<DisplayedPredecodeImage> secondaryImage = std::nullopt);
     void cancel();
     void clear();
-    std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
+    std::optional<PredecodedImage> findPredecodedImage(const QUrl& url) const;
 
 private:
-    ImageDocumentState &m_state;
-    ImagePageSurfaceController &m_pageSurfaceController;
-    ImagePresentationRuntime &m_presentationRuntime;
+    ImageDocumentState& m_state;
+    ImagePageSurfaceController& m_pageSurfaceController;
+    ImagePresentationRuntime& m_presentationRuntime;
     std::unique_ptr<ImagePredecodeCoordinator> m_coordinator;
     CurrentPageNumberCallback m_currentPageNumber;
     bool m_ordinaryDirectMediaPredecodeEnabled = true;

@@ -10,7 +10,8 @@
 #include <QString>
 
 namespace kiriview {
-struct WindowTitleSubjectInput {
+struct WindowTitleSubjectInput
+{
     QString baseName;
     ActiveNavigationSourceKind sourceKind = ActiveNavigationSourceKind::None;
     QSize directMediaSize;

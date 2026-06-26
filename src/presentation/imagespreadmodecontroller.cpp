@@ -19,13 +19,13 @@ ImageSpreadTwoPageModeChange ImageSpreadModeController::setTwoPageModeEnabled(
 }
 
 bool ImageSpreadModeController::twoPageModeAvailable(
-    const ImageSpreadReadingAvailability &availability) const
+    const ImageSpreadReadingAvailability& availability) const
 {
     return imageSpreadReadingControlsAvailable(availability);
 }
 
 bool ImageSpreadModeController::twoPageModeActive(
-    const ImageSpreadReadingAvailability &availability) const
+    const ImageSpreadReadingAvailability& availability) const
 {
     return m_twoPageModeEnabled && twoPageModeAvailable(availability);
 }
@@ -46,13 +46,13 @@ bool ImageSpreadModeController::setRightToLeftReadingEnabled(bool enabled)
 }
 
 bool ImageSpreadModeController::rightToLeftReadingAvailable(
-    const ImageSpreadReadingAvailability &availability) const
+    const ImageSpreadReadingAvailability& availability) const
 {
     return imageSpreadReadingControlsAvailable(availability);
 }
 
 bool ImageSpreadModeController::rightToLeftReadingActive(
-    const ImageSpreadReadingAvailability &availability) const
+    const ImageSpreadReadingAvailability& availability) const
 {
     return m_rightToLeftReadingEnabled && rightToLeftReadingAvailable(availability);
 }

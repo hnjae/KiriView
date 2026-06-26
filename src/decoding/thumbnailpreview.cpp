@@ -22,7 +22,7 @@
 namespace {
 using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
 
-bool validImageSize(const QSize &size)
+bool validImageSize(const QSize& size)
 {
     return size.isValid() && !size.isEmpty() && size.width() > 0 && size.height() > 0;
 }
@@ -42,13 +42,13 @@ bool supportedPreviewBucket(Bucket bucket)
     return false;
 }
 
-bool thumbnailFitsOriginal(const QSize &thumbnailSize, const QSize &originalSize)
+bool thumbnailFitsOriginal(const QSize& thumbnailSize, const QSize& originalSize)
 {
     return thumbnailSize.width() <= originalSize.width()
         && thumbnailSize.height() <= originalSize.height();
 }
 
-bool aspectCompatible(const QSize &thumbnailSize, const QSize &originalSize)
+bool aspectCompatible(const QSize& thumbnailSize, const QSize& originalSize)
 {
     if (!validImageSize(thumbnailSize) || !validImageSize(originalSize)) {
         return false;
@@ -66,7 +66,7 @@ bool aspectCompatible(const QSize &thumbnailSize, const QSize &originalSize)
     return std::fabsl(left - right) / maximum <= 0.01L;
 }
 
-QSize transformedImageSize(const QSize &size, QImageIOHandler::Transformations transformations)
+QSize transformedImageSize(const QSize& size, QImageIOHandler::Transformations transformations)
 {
     if (size.isEmpty()) {
         return {};
@@ -78,7 +78,7 @@ QSize transformedImageSize(const QSize &size, QImageIOHandler::Transformations t
 }
 
 std::optional<QSize> qtRasterTrustedOriginalSize(
-    const QByteArray &data, kiriview::QtRasterFormat format)
+    const QByteArray& data, kiriview::QtRasterFormat format)
 {
     kiriview::BufferedImageReader reader(data, kiriview::qtImageReaderFormat(format));
     if (!reader || reader.supportsAnimation()) {
@@ -92,7 +92,7 @@ std::optional<QSize> qtRasterTrustedOriginalSize(
     return size;
 }
 
-std::optional<QSize> svgTrustedOriginalSize(const QByteArray &data)
+std::optional<QSize> svgTrustedOriginalSize(const QByteArray& data)
 {
     QString errorString;
     const std::shared_ptr<kiriview::SvgTileSource> source
@@ -103,7 +103,7 @@ std::optional<QSize> svgTrustedOriginalSize(const QByteArray &data)
     return source->imageSize();
 }
 
-std::optional<QSize> heifTrustedOriginalSize(const QByteArray &data)
+std::optional<QSize> heifTrustedOriginalSize(const QByteArray& data)
 {
     QString errorString;
     const std::shared_ptr<kiriview::ImageTileSource> source
@@ -115,7 +115,7 @@ std::optional<QSize> heifTrustedOriginalSize(const QByteArray &data)
 }
 
 std::optional<QSize> trustedOriginalSizeForDecodeData(
-    const QByteArray &data, const kiriview::ImageDecodeRequest &request)
+    const QByteArray& data, const kiriview::ImageDecodeRequest& request)
 {
     const kiriview::ImageInputClassification classification
         = kiriview::classifyImageInput(data, request.imageUrl().fileName());
@@ -136,8 +136,8 @@ std::optional<QSize> trustedOriginalSizeForDecodeData(
     return std::nullopt;
 }
 
-kiriview::XdgThumbnailPreviewResult baseResult(const kiriview::XdgThumbnailPreviewRequest &request,
-    const kiriview::ThumbnailCacheLookupResult &lookupResult)
+kiriview::XdgThumbnailPreviewResult baseResult(const kiriview::XdgThumbnailPreviewRequest& request,
+    const kiriview::ThumbnailCacheLookupResult& lookupResult)
 {
     return kiriview::XdgThumbnailPreviewResult {
         lookupResult.status,
@@ -152,8 +152,8 @@ kiriview::XdgThumbnailPreviewResult baseResult(const kiriview::XdgThumbnailPrevi
 }
 
 kiriview::XdgThumbnailPreviewResult invalidResult(
-    const kiriview::XdgThumbnailPreviewRequest &request,
-    const kiriview::ThumbnailCacheLookupResult &lookupResult, QString errorString)
+    const kiriview::XdgThumbnailPreviewRequest& request,
+    const kiriview::ThumbnailCacheLookupResult& lookupResult, QString errorString)
 {
     kiriview::XdgThumbnailPreviewResult result = baseResult(request, lookupResult);
     result.status = kiriview::ThumbnailCacheLookupStatus::Invalid;
@@ -164,7 +164,7 @@ kiriview::XdgThumbnailPreviewResult invalidResult(
 
 namespace kiriview {
 std::optional<ThumbnailCacheLookupRequest> xdgThumbnailPreviewCacheLookupRequest(
-    const XdgThumbnailPreviewRequest &request)
+    const XdgThumbnailPreviewRequest& request)
 {
     if (!request.stillImage || !request.sourceUrl.isLocalFile()
         || !validImageSize(request.trustedOriginalSize)
@@ -185,7 +185,7 @@ std::optional<ThumbnailCacheLookupRequest> xdgThumbnailPreviewCacheLookupRequest
 }
 
 XdgThumbnailPreviewResult xdgThumbnailPreviewResult(
-    const XdgThumbnailPreviewRequest &request, ThumbnailCacheLookupResult lookupResult)
+    const XdgThumbnailPreviewRequest& request, ThumbnailCacheLookupResult lookupResult)
 {
     XdgThumbnailPreviewResult result = baseResult(request, lookupResult);
     if (lookupResult.status != ThumbnailCacheLookupStatus::Ready) {
@@ -219,7 +219,7 @@ XdgThumbnailPreviewResult xdgThumbnailPreviewResult(
 }
 
 std::optional<XdgThumbnailPreviewRequest> xdgThumbnailPreviewRequestForDecodeData(
-    const QByteArray &data, const ImageDecodeRequest &request)
+    const QByteArray& data, const ImageDecodeRequest& request)
 {
     if (request.isEmpty()) {
         return std::nullopt;
@@ -239,7 +239,7 @@ std::optional<XdgThumbnailPreviewRequest> xdgThumbnailPreviewRequestForDecodeDat
 }
 
 std::optional<StaticDisplayImagePayload> xdgThumbnailPreviewDisplayPayload(
-    const ImageDecodeRequest &request, XdgThumbnailPreviewResult result)
+    const ImageDecodeRequest& request, XdgThumbnailPreviewResult result)
 {
     if (result.status != ThumbnailCacheLookupStatus::Ready || result.image.isNull()
         || !validImageSize(result.originalSize)) {

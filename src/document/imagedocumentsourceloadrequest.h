@@ -9,37 +9,38 @@
 #include <QUrl>
 
 namespace kiriview {
-struct ImageDocumentSourceLoadRequest {
+struct ImageDocumentSourceLoadRequest
+{
     QUrl sourceUrl;
     ImageDocumentPageKind sourceKind = ImageDocumentPageKind::Image;
     QUrl containerNavigationUrl;
     bool preserveTwoPageSpreadTransition = false;
 
-    static ImageDocumentSourceLoadRequest fromUrl(const QUrl &sourceUrl)
+    static ImageDocumentSourceLoadRequest fromUrl(const QUrl& sourceUrl)
     {
         return fromTarget(ImageDocumentPageTarget { sourceUrl, ImageDocumentPageKind::Image });
     }
 
-    static ImageDocumentSourceLoadRequest fromTarget(const ImageDocumentPageTarget &target)
+    static ImageDocumentSourceLoadRequest fromTarget(const ImageDocumentPageTarget& target)
     {
         return ImageDocumentSourceLoadRequest { target.url, target.kind, QUrl(), false };
     }
 
     static ImageDocumentSourceLoadRequest fromContainerImage(
-        const QUrl &imageUrl, const QUrl &containerUrl)
+        const QUrl& imageUrl, const QUrl& containerUrl)
     {
         return fromContainerTarget(
             ImageDocumentPageTarget { imageUrl, ImageDocumentPageKind::Image }, containerUrl);
     }
 
     static ImageDocumentSourceLoadRequest fromContainerTarget(
-        const ImageDocumentPageTarget &target, const QUrl &containerUrl)
+        const ImageDocumentPageTarget& target, const QUrl& containerUrl)
     {
         return ImageDocumentSourceLoadRequest { target.url, target.kind, containerUrl, false };
     }
 
     static ImageDocumentSourceLoadRequest fromPageNavigation(
-        const QUrl &sourceUrl, bool preserveTwoPageSpreadTransition)
+        const QUrl& sourceUrl, bool preserveTwoPageSpreadTransition)
     {
         return fromPageNavigationTarget(
             ImageDocumentPageTarget { sourceUrl, ImageDocumentPageKind::Image },
@@ -47,7 +48,7 @@ struct ImageDocumentSourceLoadRequest {
     }
 
     static ImageDocumentSourceLoadRequest fromPageNavigationTarget(
-        const ImageDocumentPageTarget &target, bool preserveTwoPageSpreadTransition)
+        const ImageDocumentPageTarget& target, bool preserveTwoPageSpreadTransition)
     {
         return ImageDocumentSourceLoadRequest {
             target.url,

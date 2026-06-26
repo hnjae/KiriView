@@ -18,7 +18,8 @@
 #include <vector>
 
 namespace kiriview {
-struct PredecodeRequest {
+struct PredecodeRequest
+{
     QUrl url;
     OpenedCollectionScopeLocation openedCollectionScope;
 };
@@ -26,31 +27,32 @@ struct PredecodeRequest {
 class PredecodeCache
 {
 public:
-    static bool canCacheImage(const StaticDisplayImagePayload &displayImage, qsizetype byteBudget);
+    static bool canCacheImage(const StaticDisplayImagePayload& displayImage, qsizetype byteBudget);
 
     explicit PredecodeCache(qsizetype byteBudget);
 
     void clear();
     void clearQueuedLoads();
-    void setWindowUrls(const std::vector<QUrl> &urls);
-    void setDisplayedUrls(const std::vector<QUrl> &urls);
-    void enqueueMissingWindowLoads(const QUrl &displayedUrl,
-        const OpenedCollectionScopeLocation &openedCollectionScope,
-        const PredecodeActiveLoads &activeLoads);
-    std::optional<PredecodeRequest> takeNextRequest(const PredecodeActiveLoads &activeLoads);
-    bool windowContains(const QUrl &url) const;
-    bool hasImage(const QUrl &url) const;
-    bool isInFlight(const QUrl &url, const PredecodeActiveLoads &activeLoads) const;
-    std::optional<PredecodedImage> findImage(const QUrl &url) const;
-    std::optional<PredecodedImage> findImage(const DisplayedImageLocation &location) const;
-    void cacheImage(const QUrl &url, const OpenedCollectionScopeLocation &openedCollectionScope,
+    void setWindowUrls(const std::vector<QUrl>& urls);
+    void setDisplayedUrls(const std::vector<QUrl>& urls);
+    void enqueueMissingWindowLoads(const QUrl& displayedUrl,
+        const OpenedCollectionScopeLocation& openedCollectionScope,
+        const PredecodeActiveLoads& activeLoads);
+    std::optional<PredecodeRequest> takeNextRequest(const PredecodeActiveLoads& activeLoads);
+    bool windowContains(const QUrl& url) const;
+    bool hasImage(const QUrl& url) const;
+    bool isInFlight(const QUrl& url, const PredecodeActiveLoads& activeLoads) const;
+    std::optional<PredecodedImage> findImage(const QUrl& url) const;
+    std::optional<PredecodedImage> findImage(const DisplayedImageLocation& location) const;
+    void cacheImage(const QUrl& url, const OpenedCollectionScopeLocation& openedCollectionScope,
         StaticDisplayImagePayload displayImage, EmbeddedMetadata metadata = {});
-    void cacheDisplayedImage(bool cacheable, const QUrl &url,
-        const OpenedCollectionScopeLocation &openedCollectionScope,
+    void cacheDisplayedImage(bool cacheable, const QUrl& url,
+        const OpenedCollectionScopeLocation& openedCollectionScope,
         StaticDisplayImagePayload displayImage, EmbeddedMetadata metadata = {});
 
 private:
-    struct CachedImage {
+    struct CachedImage
+    {
         QUrl url;
         OpenedCollectionScopeLocation openedCollectionScope;
         StaticDisplayImagePayload displayImage;
@@ -59,16 +61,16 @@ private:
     using CachedImageIterator = std::vector<CachedImage>::iterator;
     using ConstCachedImageIterator = std::vector<CachedImage>::const_iterator;
 
-    static bool containsUrl(const std::vector<QUrl> &urls, const QUrl &url);
-    CachedImageIterator findCachedImage(const QUrl &normalizedUrl);
-    ConstCachedImageIterator findCachedImage(const QUrl &normalizedUrl) const;
+    static bool containsUrl(const std::vector<QUrl>& urls, const QUrl& url);
+    CachedImageIterator findCachedImage(const QUrl& normalizedUrl);
+    ConstCachedImageIterator findCachedImage(const QUrl& normalizedUrl) const;
     CachedImageIterator findCachedImage(
-        const QUrl &normalizedUrl, const OpenedCollectionScopeLocation &openedCollectionScope);
-    ConstCachedImageIterator findCachedImage(const QUrl &normalizedUrl,
-        const OpenedCollectionScopeLocation &openedCollectionScope) const;
+        const QUrl& normalizedUrl, const OpenedCollectionScopeLocation& openedCollectionScope);
+    ConstCachedImageIterator findCachedImage(const QUrl& normalizedUrl,
+        const OpenedCollectionScopeLocation& openedCollectionScope) const;
     void removeCachedImage(
-        const QUrl &normalizedUrl, const OpenedCollectionScopeLocation &openedCollectionScope);
-    std::size_t windowPriority(const QUrl &normalizedUrl) const;
+        const QUrl& normalizedUrl, const OpenedCollectionScopeLocation& openedCollectionScope);
+    std::size_t windowPriority(const QUrl& normalizedUrl) const;
     void trimImagesToWindow();
 
     std::vector<QUrl> m_windowUrls;

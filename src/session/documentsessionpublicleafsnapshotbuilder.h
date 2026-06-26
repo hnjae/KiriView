@@ -9,10 +9,10 @@
 
 namespace kiriview {
 DocumentSessionPublicImageLeafSnapshot buildDocumentSessionPublicImageLeafSnapshot(
-    const DocumentSessionImageDocumentSnapshot &leafSnapshot);
+    const DocumentSessionImageDocumentSnapshot& leafSnapshot);
 
 DocumentSessionPublicVideoLeafSnapshot buildDocumentSessionPublicVideoLeafSnapshot(
-    const DocumentSessionVideoDocumentSnapshot &leafSnapshot);
+    const DocumentSessionVideoDocumentSnapshot& leafSnapshot);
 }
 
 #endif

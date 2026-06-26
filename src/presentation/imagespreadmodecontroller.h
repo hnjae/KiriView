@@ -12,13 +12,13 @@ class ImageSpreadModeController final
 public:
     bool twoPageModeEnabled() const;
     ImageSpreadTwoPageModeChange setTwoPageModeEnabled(bool enabled, bool secondaryPageVisible);
-    bool twoPageModeAvailable(const ImageSpreadReadingAvailability &availability) const;
-    bool twoPageModeActive(const ImageSpreadReadingAvailability &availability) const;
+    bool twoPageModeAvailable(const ImageSpreadReadingAvailability& availability) const;
+    bool twoPageModeActive(const ImageSpreadReadingAvailability& availability) const;
 
     bool rightToLeftReadingEnabled() const;
     bool setRightToLeftReadingEnabled(bool enabled);
-    bool rightToLeftReadingAvailable(const ImageSpreadReadingAvailability &availability) const;
-    bool rightToLeftReadingActive(const ImageSpreadReadingAvailability &availability) const;
+    bool rightToLeftReadingAvailable(const ImageSpreadReadingAvailability& availability) const;
+    bool rightToLeftReadingActive(const ImageSpreadReadingAvailability& availability) const;
     void resetRightToLeftReading();
 
 private:

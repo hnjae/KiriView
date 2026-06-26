@@ -12,21 +12,23 @@
 #include <vector>
 
 namespace kiriview {
-struct MediaPredecodeEligibleImage {
+struct MediaPredecodeEligibleImage
+{
     QUrl url;
     std::size_t mediaIndex = 0;
 };
 
-struct MediaPredecodeEligibilitySnapshot {
+struct MediaPredecodeEligibilitySnapshot
+{
     std::size_t directMediaNavigationCandidateCount = 0;
     std::optional<std::size_t> currentMediaIndex;
     std::vector<MediaPredecodeEligibleImage> images;
 };
 
 MediaPredecodeEligibilitySnapshot mediaPredecodeEligibilitySnapshot(
-    const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl);
+    const std::vector<DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl);
 std::vector<QUrl> mediaPredecodeEligibleUrlsForTargetIndices(
-    const MediaPredecodeEligibilitySnapshot &snapshot, const std::vector<std::size_t> &indices);
+    const MediaPredecodeEligibilitySnapshot& snapshot, const std::vector<std::size_t>& indices);
 }
 
 #endif

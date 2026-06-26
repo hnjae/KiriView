@@ -11,13 +11,15 @@
 #include <optional>
 
 namespace kiriview {
-struct PredecodedImage {
+struct PredecodedImage
+{
     StaticDisplayImagePayload displayImage;
     DisplayedImageLocation location;
     EmbeddedMetadata embeddedMetadata;
 };
 
-struct DisplayedPredecodeImage {
+struct DisplayedPredecodeImage
+{
     DisplayedImageLocation location;
     bool cacheable = false;
     std::optional<StaticDisplayImagePayload> displayImage;

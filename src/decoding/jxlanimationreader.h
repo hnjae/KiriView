@@ -20,7 +20,8 @@ enum class JxlAnimationOpenStatus {
     Error,
 };
 
-struct JxlAnimationOpenResult {
+struct JxlAnimationOpenResult
+{
     JxlAnimationOpenStatus status = JxlAnimationOpenStatus::NotJxl;
     QImage firstFrame;
     int firstFrameDelay = 0;
@@ -35,13 +36,13 @@ public:
     JxlAnimationReader();
     ~JxlAnimationReader();
 
-    JxlAnimationReader(const JxlAnimationReader &) = delete;
-    JxlAnimationReader &operator=(const JxlAnimationReader &) = delete;
-    JxlAnimationReader(JxlAnimationReader &&) noexcept;
-    JxlAnimationReader &operator=(JxlAnimationReader &&) noexcept;
+    JxlAnimationReader(const JxlAnimationReader&) = delete;
+    JxlAnimationReader& operator=(const JxlAnimationReader&) = delete;
+    JxlAnimationReader(JxlAnimationReader&&) noexcept;
+    JxlAnimationReader& operator=(JxlAnimationReader&&) noexcept;
 
     JxlAnimationOpenResult open(QByteArray data);
-    std::optional<AnimationFrame> readNextFrame(QString *errorString);
+    std::optional<AnimationFrame> readNextFrame(QString* errorString);
     void close();
 
 private:

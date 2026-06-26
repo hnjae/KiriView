@@ -15,32 +15,36 @@
 #include <vector>
 
 namespace kiriview {
-struct PredecodeWindowPlanRequest {
+struct PredecodeWindowPlanRequest
+{
     DisplayedImageLocation displayedLocation;
     PredecodePolicyInput policyInput;
 };
 
-struct PredecodeCandidateListLoadPlan {
+struct PredecodeCandidateListLoadPlan
+{
     ImageDocumentPageCandidateListContext context;
     PredecodePolicyInput policyInput;
 };
 
-struct PredecodeWindowPlan {
+struct PredecodeWindowPlan
+{
     OpenedCollectionScopeLocation openedCollectionScope;
     std::vector<QUrl> urls;
     std::size_t parallelLimit = 0;
 };
 
-struct PredecodeWindowStartPlan {
+struct PredecodeWindowStartPlan
+{
     PredecodeWindowPlan fallbackWindow;
     std::optional<PredecodeCandidateListLoadPlan> candidateList;
 
     bool shouldLoadCandidates() const;
 };
 
-PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanRequest &request);
-PredecodeWindowPlan predecodeWindowPlanForCandidates(const PredecodeWindowStartPlan &plan,
-    const std::vector<ImageDocumentPageCandidate> &candidates);
+PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanRequest& request);
+PredecodeWindowPlan predecodeWindowPlanForCandidates(const PredecodeWindowStartPlan& plan,
+    const std::vector<ImageDocumentPageCandidate>& candidates);
 }
 
 #endif

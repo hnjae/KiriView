@@ -27,16 +27,17 @@ class ImageDocumentDeletionController final
 public:
     using InProgressChangedCallback = std::function<void()>;
     using RuntimePlanCallback = std::function<void(ImageDocumentRuntimePlan)>;
-    using FailedCallback = std::function<void(const QString &)>;
+    using FailedCallback = std::function<void(const QString&)>;
 
-    struct Callbacks {
+    struct Callbacks
+    {
         InProgressChangedCallback inProgressChanged;
         RuntimePlanCallback runtimePlan;
         FailedCallback failed;
     };
 
-    ImageDocumentDeletionController(QObject *parent, ImageDocumentState &state,
-        ImagePageSurfaceController &pageSurfaceController,
+    ImageDocumentDeletionController(QObject* parent, ImageDocumentState& state,
+        ImagePageSurfaceController& pageSurfaceController,
         ImageDocumentPageCandidateProvider candidateProvider,
         FileDeletionProvider fileDeletionProvider, Callbacks callbacks);
     ~ImageDocumentDeletionController();
@@ -46,16 +47,16 @@ public:
     void cancel();
 
 private:
-    void finishFileDeletion(quint64 operationId, const ImageRemovalFallbackPlan &fallbackPlan,
-        FileDeletionResult result, const KioOperationFailure &failure);
+    void finishFileDeletion(quint64 operationId, const ImageRemovalFallbackPlan& fallbackPlan,
+        FileDeletionResult result, const KioOperationFailure& failure);
     void notifyInProgressChangedIf(bool changed);
     void cancelFileDeletion();
     void reportRuntimePlan(ImageDocumentRuntimePlan plan);
-    void reportFailure(const KioOperationFailure &failure);
+    void reportFailure(const KioOperationFailure& failure);
 
-    QObject *m_parent = nullptr;
-    ImageDocumentState &m_state;
-    ImagePageSurfaceController &m_pageSurfaceController;
+    QObject* m_parent = nullptr;
+    ImageDocumentState& m_state;
+    ImagePageSurfaceController& m_pageSurfaceController;
     Callbacks m_callbacks;
     FileDeletionProvider m_fileDeletionProvider;
     ImageIoJob m_fileDeletionJob;

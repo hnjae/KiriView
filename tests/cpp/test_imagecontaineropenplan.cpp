@@ -20,9 +20,9 @@ using kiriview::TestSupport::imageDocumentPageCandidate;
 using kiriview::TestSupport::localUrl;
 
 template <typename ExpectedSource>
-const ExpectedSource *typedSource(const ImageDocumentPageCandidateListSource &source)
+const ExpectedSource* typedSource(const ImageDocumentPageCandidateListSource& source)
 {
-    return source.visit([](const auto &typedSource) -> const ExpectedSource * {
+    return source.visit([](const auto& typedSource) -> const ExpectedSource* {
         using Source = std::decay_t<decltype(typedSource)>;
         if constexpr (std::is_same_v<Source, ExpectedSource>) {
             return &typedSource;
@@ -52,7 +52,7 @@ void TestImageContainerOpenPlan::directoryContainerPlansDirectoryListing()
             containerUrl, QStringLiteral("a"), ContainerNavigationCandidateType::Directory });
 
     QVERIFY(plan.shouldLoadCandidates());
-    const auto *directory
+    const auto* directory
         = typedSource<ImageDocumentPageCandidateListSource::Directory>(*plan.source);
     QVERIFY(directory != nullptr);
     QCOMPARE(directory->directoryUrl, containerUrl);
@@ -70,7 +70,7 @@ void TestImageContainerOpenPlan::comicBookArchiveContainerPlansArchiveListing()
             ContainerNavigationCandidateType::ComicBookArchive });
 
     QVERIFY(plan.shouldLoadCandidates());
-    const auto *archive
+    const auto* archive
         = typedSource<ImageDocumentPageCandidateListSource::OpenedCollectionScope>(*plan.source);
     QVERIFY(archive != nullptr);
     QCOMPARE(archive->openedCollectionScope.rootUrl(), openedCollectionScope->rootUrl());

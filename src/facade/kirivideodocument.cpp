@@ -25,7 +25,7 @@ KiriVideoDocument::Status fromVideoDocumentStatus(kiriview::VideoDocumentStatus 
     return KiriVideoDocument::Status::Null;
 }
 
-kiriview::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDocument &document)
+kiriview::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDocument& document)
 {
     kiriview::VideoDocumentPublicSignalOperations operations;
     operations.sourceUrlChanged = [&document]() { Q_EMIT document.sourceUrlChanged(); };
@@ -51,11 +51,11 @@ kiriview::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDo
 }
 }
 
-KiriVideoDocument::KiriVideoDocument(QObject *parent)
+KiriVideoDocument::KiriVideoDocument(QObject* parent)
     : QObject(parent)
 {
     m_runtime = std::make_unique<kiriview::VideoDocumentRuntime>(
-        this, [this](const std::vector<kiriview::VideoDocumentChange> &changes) {
+        this, [this](const std::vector<kiriview::VideoDocumentChange>& changes) {
             handleDocumentChanges(changes);
         });
 }
@@ -64,7 +64,7 @@ KiriVideoDocument::~KiriVideoDocument() = default;
 
 QUrl KiriVideoDocument::sourceUrl() const { return m_runtime->sourceUrl(); }
 
-void KiriVideoDocument::setSourceUrl(const QUrl &sourceUrl) { m_runtime->setSourceUrl(sourceUrl); }
+void KiriVideoDocument::setSourceUrl(const QUrl& sourceUrl) { m_runtime->setSourceUrl(sourceUrl); }
 
 KiriVideoDocument::Status KiriVideoDocument::status() const
 {
@@ -95,14 +95,14 @@ int KiriVideoDocument::zoomPercent() const { return m_runtime->zoomPercent(); }
 
 bool KiriVideoDocument::muted() const { return m_runtime->muted(); }
 
-QObject *KiriVideoDocument::videoOutput() const { return m_runtime->videoOutput(); }
+QObject* KiriVideoDocument::videoOutput() const { return m_runtime->videoOutput(); }
 
-const kiriview::EmbeddedMetadata &KiriVideoDocument::embeddedMetadata() const
+const kiriview::EmbeddedMetadata& KiriVideoDocument::embeddedMetadata() const
 {
     return m_runtime->embeddedMetadata();
 }
 
-void KiriVideoDocument::setVideoOutput(QObject *videoOutput)
+void KiriVideoDocument::setVideoOutput(QObject* videoOutput)
 {
     m_runtime->setVideoOutput(videoOutput);
 }
@@ -123,13 +123,13 @@ void KiriVideoDocument::setPosition(qint64 position) { m_runtime->setPosition(po
 
 void KiriVideoDocument::seekBy(qint64 deltaMilliseconds) { m_runtime->seekBy(deltaMilliseconds); }
 
-void KiriVideoDocument::setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect)
+void KiriVideoDocument::setVideoOutputGeometry(const QRectF& contentRect, const QRectF& sourceRect)
 {
     m_runtime->setVideoOutputGeometry(contentRect, sourceRect);
 }
 
 void KiriVideoDocument::handleDocumentChanges(
-    const std::vector<kiriview::VideoDocumentChange> &changes)
+    const std::vector<kiriview::VideoDocumentChange>& changes)
 {
     kiriview::VideoDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
 }

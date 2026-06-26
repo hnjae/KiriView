@@ -14,12 +14,12 @@ struct DirectMediaNavigationCandidate;
 
 QStringList supportedOrdinaryMediaExtensions();
 QStringList supportedOrdinaryMediaMimeTypes();
-bool isSupportedOrdinaryMediaFileName(const QString &name);
-bool isSupportedDirectVideoFileName(const QString &name);
-bool isSupportedDirectImageUrl(const QUrl &url);
-bool isSupportedDirectVideoUrl(const QUrl &url);
+bool isSupportedOrdinaryMediaFileName(const QString& name);
+bool isSupportedDirectVideoFileName(const QString& name);
+bool isSupportedDirectImageUrl(const QUrl& url);
+bool isSupportedDirectVideoUrl(const QUrl& url);
 bool isSupportedStillImageDirectMediaNavigationCandidate(
-    const DirectMediaNavigationCandidate &candidate);
+    const DirectMediaNavigationCandidate& candidate);
 }
 
 #endif

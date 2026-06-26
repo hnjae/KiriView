@@ -19,24 +19,24 @@ class ImageDocumentPageCandidateRepository
 public:
     explicit ImageDocumentPageCandidateRepository(ImageDocumentPageCandidateProvider provider);
 
-    ImageIoJob loadImages(QObject *receiver, const ImageDocumentPageCandidateListSource &source,
+    ImageIoJob loadImages(QObject* receiver, const ImageDocumentPageCandidateListSource& source,
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) const;
-    ImageIoJob loadImages(QObject *receiver, const ImageDocumentPageCandidateListContext &context,
+    ImageIoJob loadImages(QObject* receiver, const ImageDocumentPageCandidateListContext& context,
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) const;
-    ImageIoJob loadDirectoryImages(QObject *receiver, const QUrl &directoryUrl,
+    ImageIoJob loadDirectoryImages(QObject* receiver, const QUrl& directoryUrl,
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) const;
-    ImageIoJob loadOpenedCollectionCandidates(QObject *receiver,
+    ImageIoJob loadOpenedCollectionCandidates(QObject* receiver,
         OpenedCollectionScopeLocation openedCollectionScope,
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) const;
-    ImageIoJob loadContainers(QObject *receiver, const QUrl &directoryUrl,
+    ImageIoJob loadContainers(QObject* receiver, const QUrl& directoryUrl,
         ContainerCandidatesCallback callback, ErrorCallback errorCallback) const;
-    ImageIoJob watchCandidateChanges(QObject *receiver,
-        const ImageDocumentPageCandidateListSource &source,
+    ImageIoJob watchCandidateChanges(QObject* receiver,
+        const ImageDocumentPageCandidateListSource& source,
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) const;
-    ImageIoJob watchCandidateChanges(QObject *receiver,
-        const ImageDocumentPageCandidateListContext &context,
+    ImageIoJob watchCandidateChanges(QObject* receiver,
+        const ImageDocumentPageCandidateListContext& context,
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) const;
-    ImageIoJob watchDirectoryImageChanges(QObject *receiver, const QUrl &directoryUrl,
+    ImageIoJob watchDirectoryImageChanges(QObject* receiver, const QUrl& directoryUrl,
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback) const;
 
 private:

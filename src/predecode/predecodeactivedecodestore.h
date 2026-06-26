@@ -21,15 +21,16 @@ class PredecodeActiveDecodeStore final
 public:
     ~PredecodeActiveDecodeStore();
 
-    bool add(ImageDecodeRequest request, ImageDecodeJob *decodeJob);
+    bool add(ImageDecodeRequest request, ImageDecodeJob* decodeJob);
     std::size_t size() const;
-    bool containsUrl(const QUrl &url) const;
+    bool containsUrl(const QUrl& url) const;
     PredecodeActiveLoads activeLoads() const;
-    std::optional<ImageDecodeRequest> finish(const ImageDecodeRequest &request);
+    std::optional<ImageDecodeRequest> finish(const ImageDecodeRequest& request);
     void cancel();
 
 private:
-    struct Entry {
+    struct Entry
+    {
         ImageDecodeRequest request;
         QUrl normalizedUrl;
         QPointer<ImageDecodeJob> decodeJob;

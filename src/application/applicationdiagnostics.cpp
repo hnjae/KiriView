@@ -23,7 +23,7 @@ QStringList verboseDiagnosticCategoryNames()
 QString verboseDiagnosticFilterRules()
 {
     QStringList rules;
-    for (const QString &categoryName : verboseDiagnosticCategoryNames()) {
+    for (const QString& categoryName : verboseDiagnosticCategoryNames()) {
         rules.append(QStringLiteral("%1.debug=true").arg(categoryName));
     }
     return rules.join(QLatin1Char('\n'));

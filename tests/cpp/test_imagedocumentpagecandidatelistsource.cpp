@@ -22,9 +22,9 @@ using OpenedCollectionCandidateContext
 using DirectoryCandidateContext = ImageDocumentPageCandidateListContext::DirectoryContext;
 
 template <typename ExpectedContext>
-const ExpectedContext *typedCandidateContext(const ImageDocumentPageCandidateListContext &context)
+const ExpectedContext* typedCandidateContext(const ImageDocumentPageCandidateListContext& context)
 {
-    return context.visit([](const auto &typedContext) -> const ExpectedContext * {
+    return context.visit([](const auto& typedContext) -> const ExpectedContext* {
         using Context = std::decay_t<decltype(typedContext)>;
         if constexpr (std::is_same_v<Context, ExpectedContext>) {
             return &typedContext;
@@ -53,7 +53,7 @@ void TestImageDocumentPageCandidateListSource::
             kiriview::DisplayedImageLocation::fromUrl(fileUrl));
     QVERIFY(directoryContext.has_value());
     QCOMPARE(directoryContext->currentUrl(), fileUrl);
-    const DirectoryCandidateContext *directory
+    const DirectoryCandidateContext* directory
         = typedCandidateContext<DirectoryCandidateContext>(*directoryContext);
     QVERIFY(directory != nullptr);
     QCOMPARE(directory->directoryUrl, localUrl(QStringLiteral("/images/")));
@@ -71,7 +71,7 @@ void TestImageDocumentPageCandidateListSource::
                 pageUrl, *openedCollectionScope));
     QVERIFY(archiveContext.has_value());
     QCOMPARE(archiveContext->currentUrl(), pageUrl);
-    const OpenedCollectionCandidateContext *archive
+    const OpenedCollectionCandidateContext* archive
         = typedCandidateContext<OpenedCollectionCandidateContext>(*archiveContext);
     QVERIFY(archive != nullptr);
     QCOMPARE(archive->openedCollectionScope.rootUrl(), openedCollectionScope->rootUrl());
@@ -90,7 +90,7 @@ void TestImageDocumentPageCandidateListSource::
                 directArchivePageUrl, *directArchiveCollection));
     QVERIFY(directArchiveContext.has_value());
     QCOMPARE(directArchiveContext->currentUrl(), directArchivePageUrl);
-    const OpenedCollectionCandidateContext *directArchive
+    const OpenedCollectionCandidateContext* directArchive
         = typedCandidateContext<OpenedCollectionCandidateContext>(*directArchiveContext);
     QVERIFY(directArchive != nullptr);
     QCOMPARE(directArchive->openedCollectionScope.rootUrl(), directArchiveCollection->rootUrl());
@@ -103,7 +103,7 @@ void TestImageDocumentPageCandidateListSource::
             kiriview::DisplayedImageLocation::fromUrl(explicitArchiveImageUrl));
     QVERIFY(explicitArchiveContext.has_value());
     QCOMPARE(explicitArchiveContext->currentUrl(), explicitArchiveImageUrl);
-    const DirectoryCandidateContext *explicitArchiveDirectory
+    const DirectoryCandidateContext* explicitArchiveDirectory
         = typedCandidateContext<DirectoryCandidateContext>(*explicitArchiveContext);
     QVERIFY(explicitArchiveDirectory != nullptr);
     QCOMPARE(explicitArchiveDirectory->directoryUrl,

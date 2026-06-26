@@ -26,7 +26,8 @@ private:
     quint64 m_activeOperationId = 0;
 };
 
-template <typename Scope> struct ImageAsyncScopedOperation {
+template <typename Scope> struct ImageAsyncScopedOperation
+{
     quint64 operationId = 0;
     Scope scope;
 };
@@ -48,22 +49,22 @@ public:
         };
     }
 
-    bool accepts(const ImageAsyncScopedOperation<Scope> &operation) const
+    bool accepts(const ImageAsyncScopedOperation<Scope>& operation) const
     {
         return accepts(operation.operationId, operation.scope);
     }
 
-    bool accepts(quint64 operationId, const Scope &scope) const
+    bool accepts(quint64 operationId, const Scope& scope) const
     {
         return m_operation.accepts(operationId) && m_scope == scope;
     }
 
-    bool finish(const ImageAsyncScopedOperation<Scope> &operation)
+    bool finish(const ImageAsyncScopedOperation<Scope>& operation)
     {
         return finish(operation.operationId, operation.scope);
     }
 
-    bool finish(quint64 operationId, const Scope &scope)
+    bool finish(quint64 operationId, const Scope& scope)
     {
         if (!accepts(operationId, scope)) {
             return false;

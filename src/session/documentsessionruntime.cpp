@@ -14,7 +14,7 @@
 #include <utility>
 
 namespace {
-const char *documentKindName(kiriview::DocumentSessionKind kind)
+const char* documentKindName(kiriview::DocumentSessionKind kind)
 {
     switch (kind) {
     case kiriview::DocumentSessionKind::Empty:
@@ -28,7 +28,7 @@ const char *documentKindName(kiriview::DocumentSessionKind kind)
     return "Unknown";
 }
 
-const char *routeKindName(kiriview::DocumentSessionRouteKind kind)
+const char* routeKindName(kiriview::DocumentSessionRouteKind kind)
 {
     switch (kind) {
     case kiriview::DocumentSessionRouteKind::Empty:
@@ -44,14 +44,14 @@ const char *routeKindName(kiriview::DocumentSessionRouteKind kind)
     return "Unknown";
 }
 
-void logDirectMediaScope(const char *message, const kiriview::DirectMediaScope &scope)
+void logDirectMediaScope(const char* message, const kiriview::DirectMediaScope& scope)
 {
     qCDebug(kiriviewNavigationLog) << message << "currentUrl" << scope.currentUrl << "parentUrl"
                                    << scope.parentUrl << "generation" << scope.generation;
 }
 
-void appendConnection(std::vector<QMetaObject::Connection> &connections,
-    const kiriview::DocumentSessionDocumentSignalConnector &connector, QObject *owner,
+void appendConnection(std::vector<QMetaObject::Connection>& connections,
+    const kiriview::DocumentSessionDocumentSignalConnector& connector, QObject* owner,
     kiriview::DocumentSessionDocumentChangeHandler handler)
 {
     if (connector) {
@@ -63,7 +63,7 @@ void appendConnection(std::vector<QMetaObject::Connection> &connections,
 }
 
 namespace kiriview {
-DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
+DocumentSessionRuntime::DocumentSessionRuntime(QObject* owner,
     DocumentSessionImageDocumentSnapshotPort imageDocument,
     DocumentSessionImageDocumentCommandPort imageCommands,
     DocumentSessionVideoDocumentSnapshotPort videoDocument,
@@ -73,9 +73,9 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_imageDocument(std::move(imageDocument))
     , m_imageDocumentCommandRuntime(std::move(imageCommands))
     , m_imageDocumentSyncRuntime(DocumentSessionImageDocumentSyncRuntimePorts {
-          [this](const QUrl &url) { return m_state.confirmDirectImageCursor(url); },
+          [this](const QUrl& url) { return m_state.confirmDirectImageCursor(url); },
           [this]() { return m_state.restoreDirectImageCursorAfterFailure(); },
-          [this](const QUrl &url) { m_state.setSourceIdentity(url); },
+          [this](const QUrl& url) { m_state.setSourceIdentity(url); },
           [this](bool inProgress) { m_state.setFileDeletionInProgress(inProgress); },
           [this]() { m_directMediaNavigationCoordinator.refresh(m_owner); },
           [this]() { cacheDisplayedMediaPredecodeImages(); },
@@ -84,16 +84,16 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
       })
     , m_videoDocument(std::move(videoDocument))
     , m_videoDocumentCommandRuntime(std::move(videoCommands),
-          [this](const DocumentSessionVideoOutputAttachmentPort &attachmentPort) {
+          [this](const DocumentSessionVideoOutputAttachmentPort& attachmentPort) {
               m_videoOutputRuntime.clearAttachment(attachmentPort);
           })
     , m_state(std::move(changeCallback))
     , m_videoDocumentSyncRuntime(DocumentSessionVideoDocumentSyncRuntimePorts {
           [this]() { m_state.clearDirectMediaCursor(); },
-          [this](const QUrl &url) { m_state.setSourceIdentity(url); },
+          [this](const QUrl& url) { m_state.setSourceIdentity(url); },
           [this](DocumentSessionKind kind) { setDocumentKind(kind); },
           [this]() { m_state.setDirectMediaNavigation({}, false, {}); },
-          [this](const QUrl &url) { return m_state.setDirectVideoCursor(url); },
+          [this](const QUrl& url) { return m_state.setDirectVideoCursor(url); },
           [this]() { m_directMediaNavigationCoordinator.refresh(m_owner); },
           [this]() { recomputePublicProjection(); },
           [this]() { recomputeActiveZoomReadout(); },
@@ -102,10 +102,10 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
     , m_directMediaActivityPort(&m_state, &m_directMediaScopePort)
     , m_directMediaNavigationInputPort(&m_state)
     , m_projectionRuntime(DocumentSessionProjectionRuntimePorts {
-          [this](const DocumentSessionPublicSnapshotInput &input) {
+          [this](const DocumentSessionPublicSnapshotInput& input) {
               return m_state.updatePublicSnapshot(input);
           },
-          [this](const DocumentSessionPublicSnapshotInput &input,
+          [this](const DocumentSessionPublicSnapshotInput& input,
               ActiveNavigationSourceKind sourceKind) {
               return m_state.updatePublicSnapshotForSourceKind(input, sourceKind);
           },
@@ -121,7 +121,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           DocumentSessionRouteSessionPorts {
               [this]() { cancelMediaOpenWith(); },
               [this]() { m_state.setSessionErrorString(QString()); },
-              [this](const std::function<void()> &mutation) {
+              [this](const std::function<void()>& mutation) {
                   QScopedValueRollback<bool> routingSource(m_routingSource, true);
                   mutation();
               },
@@ -136,12 +136,12 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
                   logDirectMediaScope("direct media cursor cleared", m_state.directMediaScope());
                   return changed;
               },
-              [this](const QUrl &url) {
+              [this](const QUrl& url) {
                   const bool changed = m_state.setDirectVideoCursor(url);
                   logDirectMediaScope("direct video cursor set", m_state.directMediaScope());
                   return changed;
               },
-              [this](const QUrl &url) {
+              [this](const QUrl& url) {
                   const bool changed = m_state.requestDirectImageCursor(url);
                   logDirectMediaScope("direct image cursor requested", m_state.directMediaScope());
                   return changed;
@@ -166,12 +166,12 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
                   refreshVideoPublicSnapshot();
               },
               [this]() { setDocumentKind(DocumentSessionKind::Empty); },
-              [this](const QUrl &url) {
+              [this](const QUrl& url) {
                   m_imageDocumentCommandRuntime.setSourceUrl(url);
                   refreshImagePublicSnapshot();
                   setDocumentKind(DocumentSessionKind::Image);
               },
-              [this](const QUrl &url) {
+              [this](const QUrl& url) {
                   m_videoDocumentCommandRuntime.setSourceUrl(url);
                   refreshVideoPublicSnapshot();
                   setDocumentKind(DocumentSessionKind::Video);
@@ -179,7 +179,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
           },
           DocumentSessionRouteSourceIdentityPorts {
               [this]() { m_state.setSourceIdentity(QUrl()); },
-              [this](const QUrl &url) { m_state.setSourceIdentity(url); },
+              [this](const QUrl& url) { m_state.setSourceIdentity(url); },
               [this]() { m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl); },
           },
           DocumentSessionRouteFollowUpPorts {
@@ -206,7 +206,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
               [this]() { return m_directMediaActivityPort.navigationActive(); },
               [this]() { return m_directMediaActivityPort.directImageSourceScopeEligible(); },
               [this]() { return m_directMediaScopePort.currentScope(); },
-              [this](const DirectMediaScope &scope) {
+              [this](const DirectMediaScope& scope) {
                   return m_directMediaScopePort.cursorMatches(scope);
               },
               [this]() { return m_directMediaScopePort.activeCursorUrl(); },
@@ -221,19 +221,19 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
               },
               [this]() { recomputePublicProjection(); },
               [this]() { m_mediaPredecodeRuntime.clear(); },
-              [this](const std::vector<DirectMediaNavigationCandidate> &candidates) {
+              [this](const std::vector<DirectMediaNavigationCandidate>& candidates) {
                   m_mediaPredecodeRuntime.schedule(
                       m_mediaPredecodeInputPort.currentInput(), candidates);
               },
-              [this](const QUrl &url) { openMediaUrl(url); },
+              [this](const QUrl& url) { openMediaUrl(url); },
           })
     , m_mediaDeletionRuntime(std::move(dependencies.fileDeletionProvider),
           std::move(dependencies.directMediaNavigationCandidateProvider))
     , m_mediaDeletionCompletionRuntime(DocumentSessionMediaDeletionCompletionRuntimePorts {
           [this](bool inProgress) { m_state.setFileDeletionInProgress(inProgress); },
-          [this](const QString &errorString) { m_state.setSessionErrorString(errorString); },
+          [this](const QString& errorString) { m_state.setSessionErrorString(errorString); },
           [this]() { recomputePublicProjection(); },
-          [this](const DocumentSessionRoutePlan &plan) { executeRoutePlan(plan); },
+          [this](const DocumentSessionRoutePlan& plan) { executeRoutePlan(plan); },
       })
     , m_mediaOpenWithRuntime(std::move(dependencies.mediaOpenWithProvider))
     , m_mediaPredecodeRuntime(owner, std::move(dependencies.directMediaPredecodeDependencies))
@@ -249,7 +249,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner,
 
 DocumentSessionRuntime::~DocumentSessionRuntime()
 {
-    for (const QMetaObject::Connection &connection : m_documentConnections) {
+    for (const QMetaObject::Connection& connection : m_documentConnections) {
         QObject::disconnect(connection);
     }
     m_mediaDeletionRuntime.cancel();
@@ -259,7 +259,7 @@ DocumentSessionRuntime::~DocumentSessionRuntime()
 
 QUrl DocumentSessionRuntime::sourceUrl() const { return m_state.publicSnapshot().sourceUrl; }
 
-void DocumentSessionRuntime::setSourceUrl(const QUrl &sourceUrl) { routeSourceUrl(sourceUrl); }
+void DocumentSessionRuntime::setSourceUrl(const QUrl& sourceUrl) { routeSourceUrl(sourceUrl); }
 
 DocumentSessionKind DocumentSessionRuntime::documentKind() const
 {
@@ -290,7 +290,7 @@ bool DocumentSessionRuntime::fileDeletionInProgress() const
     return m_state.publicSnapshot().fileDeletionInProgress;
 }
 
-const MediaInformationProjectionSnapshot &DocumentSessionRuntime::mediaInformationSnapshot() const
+const MediaInformationProjectionSnapshot& DocumentSessionRuntime::mediaInformationSnapshot() const
 {
     return m_state.mediaInformationSnapshot();
 }
@@ -345,7 +345,7 @@ bool DocumentSessionRuntime::activeVideoControlsReady() const
     return m_state.publicSnapshot().activeVideoControlsReady;
 }
 
-const DocumentSessionActionAvailabilityFacts &
+const DocumentSessionActionAvailabilityFacts&
 DocumentSessionRuntime::actionAvailabilityFacts() const
 {
     return m_state.publicSnapshot().actionAvailability;
@@ -373,7 +373,7 @@ bool DocumentSessionRuntime::activeNavigationHasTargets() const
 
 bool DocumentSessionRuntime::activeNavigationDispatchAvailable() const
 {
-    const ActiveNavigationSnapshot &snapshot = m_state.activeNavigationSnapshot();
+    const ActiveNavigationSnapshot& snapshot = m_state.activeNavigationSnapshot();
     return snapshot.available && snapshot.known && snapshot.count > 0
         && !m_state.fileDeletionInProgress();
 }
@@ -428,7 +428,7 @@ ActiveNavigationRevealDirection DocumentSessionRuntime::activeNavigationRevealDi
     return m_state.publicSnapshot().activeNavigationRevealDirection;
 }
 
-QAbstractListModel *DocumentSessionRuntime::activeNavigationThumbnailModel() const
+QAbstractListModel* DocumentSessionRuntime::activeNavigationThumbnailModel() const
 {
     return m_activeNavigationThumbnailRuntime.model();
 }
@@ -439,7 +439,7 @@ ActiveNavigationThumbnailDemandBucket DocumentSessionRuntime::activeNavigationTh
     return m_activeNavigationThumbnailRuntime.demandBucket(physicalMaxEdge);
 }
 
-bool DocumentSessionRuntime::reportActiveNavigationThumbnailDemand(int number, const QUrl &url,
+bool DocumentSessionRuntime::reportActiveNavigationThumbnailDemand(int number, const QUrl& url,
     int physicalMaxEdge, ActiveNavigationThumbnailDemandPriority priority,
     quint64 navigationGeneration)
 {
@@ -452,9 +452,9 @@ QString DocumentSessionRuntime::nextVideoOutputSurfaceClaimToken()
     return m_videoOutputRuntime.nextSurfaceClaimToken();
 }
 
-bool DocumentSessionRuntime::reportVideoOutputSurfaceClaim(const QString &claimToken,
-    quint64 projectionRevision, QObject *surfaceOwner, QObject *videoOutput, bool active,
-    const QRectF &contentRect, const QRectF &sourceRect)
+bool DocumentSessionRuntime::reportVideoOutputSurfaceClaim(const QString& claimToken,
+    quint64 projectionRevision, QObject* surfaceOwner, QObject* videoOutput, bool active,
+    const QRectF& contentRect, const QRectF& sourceRect)
 {
     const bool currentProjection = projectionRevision == m_state.publicSnapshot().revision;
     if (!currentProjection) {
@@ -470,7 +470,7 @@ bool DocumentSessionRuntime::reportVideoOutputSurfaceClaim(const QString &claimT
         videoOutputAttachmentPort());
 }
 
-std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
+std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl& url) const
 {
     return m_mediaPredecodeRuntime.findPredecodedImage(url);
 }
@@ -600,7 +600,7 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
     const bool started = m_mediaDeletionRuntime.startForDirectMedia(
         m_owner, mode, m_directMediaScopePort.currentScope(),
         [this](
-            const DirectMediaScope &scope) { return m_directMediaScopePort.cursorMatches(scope); },
+            const DirectMediaScope& scope) { return m_directMediaScopePort.cursorMatches(scope); },
         m_state.documentKind(),
         [this](DocumentSessionMediaDeletionCompletion completion) {
             finishMediaDeletion(std::move(completion));
@@ -711,19 +711,19 @@ void DocumentSessionRuntime::recomputePublicProjection()
         m_publicSnapshotInputPort.nextInput(), m_imagePublicSnapshot.pageNavigationRows);
 }
 
-void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
+void DocumentSessionRuntime::routeSourceUrl(const QUrl& sourceUrl)
 {
     setPendingActiveNavigationRevealContext(
         ActiveNavigationRevealContext { ActiveNavigationRevealIntent::LoadOrOpen });
     m_routeRuntime.routeSourceUrl(sourceUrl, m_state.documentKind());
 }
 
-void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
+void DocumentSessionRuntime::openMediaUrl(const QUrl& url)
 {
     m_routeRuntime.routeMediaUrl(url, m_state.documentKind());
 }
 
-void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &plan)
+void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan& plan)
 {
     qCDebug(kiriviewNavigationLog)
         << "execute route plan"

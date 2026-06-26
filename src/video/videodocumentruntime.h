@@ -26,21 +26,21 @@ namespace kiriview {
 class VideoDocumentRuntime final
 {
 public:
-    using ChangeCallback = std::function<void(const std::vector<VideoDocumentChange> &)>;
-    using MediaBackendFactory = std::function<std::unique_ptr<VideoMediaBackend>(QObject *)>;
+    using ChangeCallback = std::function<void(const std::vector<VideoDocumentChange>&)>;
+    using MediaBackendFactory = std::function<std::unique_ptr<VideoMediaBackend>(QObject*)>;
 
-    explicit VideoDocumentRuntime(QObject *documentObject, ChangeCallback changeCallback = {},
+    explicit VideoDocumentRuntime(QObject* documentObject, ChangeCallback changeCallback = {},
         std::unique_ptr<VideoMediaBackend> mediaBackend = {},
         std::unique_ptr<VideoPlaybackUrlResolver> playbackUrlResolver = {},
         MediaBackendFactory mediaBackendFactory = {});
     ~VideoDocumentRuntime();
 
     QUrl sourceUrl() const;
-    void setSourceUrl(const QUrl &sourceUrl);
+    void setSourceUrl(const QUrl& sourceUrl);
     VideoDocumentStatus status() const;
     QString errorString() const;
-    const std::optional<VideoSourceLoadFailure> &sourceLoadFailure() const;
-    const std::optional<VideoBackendFailure> &backendFailure() const;
+    const std::optional<VideoSourceLoadFailure>& sourceLoadFailure() const;
+    const std::optional<VideoBackendFailure>& backendFailure() const;
     QString windowTitleFileName() const;
     qint64 duration() const;
     qint64 position() const;
@@ -54,10 +54,10 @@ public:
     int zoomPercent() const;
     bool muted() const;
     void setMuted(bool muted);
-    QObject *videoOutput() const;
-    const EmbeddedMetadata &embeddedMetadata() const;
-    void setVideoOutput(QObject *videoOutput);
-    void setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect);
+    QObject* videoOutput() const;
+    const EmbeddedMetadata& embeddedMetadata() const;
+    void setVideoOutput(QObject* videoOutput);
+    void setVideoOutputGeometry(const QRectF& contentRect, const QRectF& sourceRect);
 
     void play();
     void pause();
@@ -71,26 +71,26 @@ public:
 
 private:
     VideoPlaybackControlSnapshot playbackControlSnapshot() const;
-    void executePlaybackControlPlan(const VideoPlaybackControlPlan &plan);
-    void executePlaybackBackendOperation(const VideoPlaybackBackendOperation &operation);
-    void executePlaybackBackendOperation(const EnsureVideoPlaybackBackendOperation &operation);
-    void executePlaybackBackendOperation(const PlayVideoPlaybackOperation &operation);
-    void executePlaybackBackendOperation(const PauseVideoPlaybackOperation &operation);
-    void executePlaybackBackendOperation(const StopVideoPlaybackOperation &operation);
-    void executePlaybackBackendOperation(const SetVideoPlaybackPositionOperation &operation);
-    void applyPlaybackStateDelta(const VideoPlaybackStateDelta &delta);
-    VideoMediaBackend *ensureMediaBackend();
+    void executePlaybackControlPlan(const VideoPlaybackControlPlan& plan);
+    void executePlaybackBackendOperation(const VideoPlaybackBackendOperation& operation);
+    void executePlaybackBackendOperation(const EnsureVideoPlaybackBackendOperation& operation);
+    void executePlaybackBackendOperation(const PlayVideoPlaybackOperation& operation);
+    void executePlaybackBackendOperation(const PauseVideoPlaybackOperation& operation);
+    void executePlaybackBackendOperation(const StopVideoPlaybackOperation& operation);
+    void executePlaybackBackendOperation(const SetVideoPlaybackPositionOperation& operation);
+    void applyPlaybackStateDelta(const VideoPlaybackStateDelta& delta);
+    VideoMediaBackend* ensureMediaBackend();
     void installMediaBackendCallbacks();
-    void executeSourceLoadPlan(const VideoSourceLoadPlan &plan);
-    void executeSourceLoadOperation(const VideoSourceLoadOperation &operation);
-    void executeSourceLoadOperation(const ClearVideoPlaybackSourceOperation &operation);
-    void executeSourceLoadOperation(const ResetClearedVideoSourceOperation &operation);
-    void executeSourceLoadOperation(const ResetVideoSourceLoadOperation &operation);
-    void executeSourceLoadOperation(const ApplyVideoPlaybackUrlOperation &operation);
-    void executeSourceLoadOperation(const PublishVideoSourceLoadFailureOperation &operation);
+    void executeSourceLoadPlan(const VideoSourceLoadPlan& plan);
+    void executeSourceLoadOperation(const VideoSourceLoadOperation& operation);
+    void executeSourceLoadOperation(const ClearVideoPlaybackSourceOperation& operation);
+    void executeSourceLoadOperation(const ResetClearedVideoSourceOperation& operation);
+    void executeSourceLoadOperation(const ResetVideoSourceLoadOperation& operation);
+    void executeSourceLoadOperation(const ApplyVideoPlaybackUrlOperation& operation);
+    void executeSourceLoadOperation(const PublishVideoSourceLoadFailureOperation& operation);
     void clearPlaybackSource();
-    void applyResolvedPlaybackUrl(const QUrl &playbackUrl);
-    void publishSourceLoadFailure(const VideoSourceLoadFailure &failure);
+    void applyResolvedPlaybackUrl(const QUrl& playbackUrl);
+    void publishSourceLoadFailure(const VideoSourceLoadFailure& failure);
     void invalidatePlaybackCallbacks();
     void acceptPlaybackCallbacks();
     bool playbackCallbacksAccepted() const;
@@ -99,7 +99,7 @@ private:
     void updateZoomPercent();
     void publish(VideoDocumentChange change);
 
-    QObject *m_documentObject = nullptr;
+    QObject* m_documentObject = nullptr;
     VideoDocumentState m_state;
     std::unique_ptr<VideoMediaBackend> m_mediaBackend;
     MediaBackendFactory m_mediaBackendFactory;

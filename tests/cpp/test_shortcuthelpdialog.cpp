@@ -43,19 +43,20 @@ private Q_SLOTS:
 };
 
 namespace {
-struct ShortcutHelpDialogFixture {
+struct ShortcutHelpDialogFixture
+{
     std::unique_ptr<QQuickView> view;
-    QObject *root = nullptr;
-    QObject *dialog = nullptr;
+    QObject* root = nullptr;
+    QObject* dialog = nullptr;
     QString errorString;
 
     bool isValid() const { return view != nullptr && root != nullptr && dialog != nullptr; }
 };
 
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
@@ -86,7 +87,7 @@ QString qmlSourceImport()
     return QUrl::fromLocalFile(qmlPath).toString();
 }
 
-QString fixtureQml(const QSize &viewSize)
+QString fixtureQml(const QSize& viewSize)
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -131,7 +132,7 @@ Item {
         .arg(viewSize.height());
 }
 
-ShortcutHelpDialogFixture createFixture(const QSize &viewSize = QSize(900, 700))
+ShortcutHelpDialogFixture createFixture(const QSize& viewSize = QSize(900, 700))
 {
     ShortcutHelpDialogFixture fixture;
     registerKiriViewQmlTypes();
@@ -153,7 +154,7 @@ ShortcutHelpDialogFixture createFixture(const QSize &viewSize = QSize(900, 700))
         return fixture;
     }
 
-    QObject *root = component.create();
+    QObject* root = component.create();
     if (root == nullptr) {
         fixture.errorString = component.errorString();
         return fixture;
@@ -168,30 +169,30 @@ ShortcutHelpDialogFixture createFixture(const QSize &viewSize = QSize(900, 700))
     }
 
     fixture.root = root;
-    fixture.dialog = root->findChild<QObject *>(QStringLiteral("shortcutHelpDialog"));
+    fixture.dialog = root->findChild<QObject*>(QStringLiteral("shortcutHelpDialog"));
     if (fixture.dialog == nullptr) {
         fixture.errorString = QStringLiteral("shortcut help dialog was not created");
     }
     return fixture;
 }
 
-bool invokeRoot(QObject *root, const char *method)
+bool invokeRoot(QObject* root, const char* method)
 {
     return QMetaObject::invokeMethod(root, method, Qt::DirectConnection);
 }
 
-bool dialogOpened(QObject *root) { return root->property("dialogOpened").toBool(); }
+bool dialogOpened(QObject* root) { return root->property("dialogOpened").toBool(); }
 
-int intProperty(QObject *root, const char *name) { return root->property(name).toInt(); }
+int intProperty(QObject* root, const char* name) { return root->property(name).toInt(); }
 
-void openDialog(ShortcutHelpDialogFixture &fixture)
+void openDialog(ShortcutHelpDialogFixture& fixture)
 {
     QVERIFY(invokeRoot(fixture.root, "openDialog"));
     QTRY_VERIFY(dialogOpened(fixture.root));
 }
 
 void collectChildProperties(
-    QQuickItem *root, const QString &objectName, const char *propertyName, QStringList &values)
+    QQuickItem* root, const QString& objectName, const char* propertyName, QStringList& values)
 {
     if (root == nullptr) {
         return;
@@ -201,39 +202,39 @@ void collectChildProperties(
         values.push_back(root->property(propertyName).toString());
     }
 
-    for (QQuickItem *child : root->childItems()) {
+    for (QQuickItem* child : root->childItems()) {
         collectChildProperties(child, objectName, propertyName, values);
     }
 }
 
-QStringList childTexts(QQuickItem *root, const QString &objectName)
+QStringList childTexts(QQuickItem* root, const QString& objectName)
 {
     QStringList texts;
     collectChildProperties(root, objectName, "text", texts);
     return texts;
 }
 
-QStringList childTitles(QQuickItem *root, const QString &objectName)
+QStringList childTitles(QQuickItem* root, const QString& objectName)
 {
     QStringList titles;
     collectChildProperties(root, objectName, "title", titles);
     return titles;
 }
 
-int childObjectCount(QQuickItem *root, const QString &objectName)
+int childObjectCount(QQuickItem* root, const QString& objectName)
 {
     if (root == nullptr) {
         return 0;
     }
 
     int count = root->objectName() == objectName ? 1 : 0;
-    for (QQuickItem *child : root->childItems()) {
+    for (QQuickItem* child : root->childItems()) {
         count += childObjectCount(child, objectName);
     }
     return count;
 }
 
-QQuickItem *findChildItem(QQuickItem *root, const QString &objectName)
+QQuickItem* findChildItem(QQuickItem* root, const QString& objectName)
 {
     if (root == nullptr) {
         return nullptr;
@@ -243,29 +244,29 @@ QQuickItem *findChildItem(QQuickItem *root, const QString &objectName)
         return root;
     }
 
-    for (QQuickItem *child : root->childItems()) {
-        if (QQuickItem *matchingChild = findChildItem(child, objectName)) {
+    for (QQuickItem* child : root->childItems()) {
+        if (QQuickItem* matchingChild = findChildItem(child, objectName)) {
             return matchingChild;
         }
     }
     return nullptr;
 }
 
-QQuickItem *dialogContentItem(QObject *dialog)
+QQuickItem* dialogContentItem(QObject* dialog)
 {
-    return qvariant_cast<QQuickItem *>(dialog->property("contentItem"));
+    return qvariant_cast<QQuickItem*>(dialog->property("contentItem"));
 }
 
-QRectF sceneBounds(QQuickItem *item)
+QRectF sceneBounds(QQuickItem* item)
 {
     return item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
 }
 
-QRectF dialogSceneBounds(QObject *dialog)
+QRectF dialogSceneBounds(QObject* dialog)
 {
     const QPointF localTopLeft(dialog->property("x").toReal(), dialog->property("y").toReal());
     QPointF sceneTopLeft = localTopLeft;
-    if (QQuickItem *parent = qvariant_cast<QQuickItem *>(dialog->property("parent"))) {
+    if (QQuickItem* parent = qvariant_cast<QQuickItem*>(dialog->property("parent"))) {
         sceneTopLeft = parent->mapToScene(localTopLeft);
     }
     return QRectF(sceneTopLeft,
@@ -330,10 +331,10 @@ void TestShortcutHelpDialog::presentsConfigurableActionShortcutsAsFormCards()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     openDialog(fixture);
 
-    QVERIFY(fixture.view->contentItem()->findChild<QObject *>(QStringLiteral("shortcutHelpForm"))
+    QVERIFY(fixture.view->contentItem()->findChild<QObject*>(QStringLiteral("shortcutHelpForm"))
         == nullptr);
     QVERIFY(
-        fixture.view->contentItem()->findChild<QObject *>(QStringLiteral("shortcutHelpScrollView"))
+        fixture.view->contentItem()->findChild<QObject*>(QStringLiteral("shortcutHelpScrollView"))
         != nullptr);
     QVERIFY(childObjectCount(fixture.view->contentItem(), QStringLiteral("shortcutDelegate")) > 0);
 
@@ -369,11 +370,11 @@ void TestShortcutHelpDialog::shortcutListScrollsWithinConstrainedDialog()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     openDialog(fixture);
 
-    QQuickItem *rootItem = qobject_cast<QQuickItem *>(fixture.root);
-    QQuickItem *dialogContent = dialogContentItem(fixture.dialog);
-    QQuickItem *scrollView
+    QQuickItem* rootItem = qobject_cast<QQuickItem*>(fixture.root);
+    QQuickItem* dialogContent = dialogContentItem(fixture.dialog);
+    QQuickItem* scrollView
         = findChildItem(fixture.view->contentItem(), QStringLiteral("shortcutHelpScrollView"));
-    QQuickItem *shortcutList
+    QQuickItem* shortcutList
         = findChildItem(fixture.view->contentItem(), QStringLiteral("shortcutHelpList"));
     QVERIFY(rootItem != nullptr);
     QVERIFY(dialogContent != nullptr);

@@ -10,7 +10,8 @@
 #include <functional>
 
 namespace kiriview {
-struct DocumentSessionActiveNavigationRuntimePorts {
+struct DocumentSessionActiveNavigationRuntimePorts
+{
     std::function<void(ActiveNavigationRevealContext)> setRevealContext;
     std::function<void()> recomputePublicProjection;
     std::function<void()> openPreviousDirectMedia;
@@ -34,10 +35,10 @@ public:
     ActiveNavigationRevealContext takePendingRevealContext(
         ActiveNavigationRevealIntent fallbackIntent);
     void setRevealContext(ActiveNavigationRevealContext context);
-    void clearRevealContextIfUnavailable(const ActiveNavigationSnapshot &snapshot);
+    void clearRevealContextIfUnavailable(const ActiveNavigationSnapshot& snapshot);
 
 private:
-    void executeDispatchPlan(const ActiveNavigationDispatchPlan &plan);
+    void executeDispatchPlan(const ActiveNavigationDispatchPlan& plan);
 
     DocumentSessionActiveNavigationRuntimePorts m_ports;
     ActiveNavigationRevealContext m_pendingRevealContext;

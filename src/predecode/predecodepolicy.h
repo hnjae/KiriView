@@ -26,7 +26,8 @@ enum class PredecodeMomentumDirection {
     Next,
 };
 
-struct PredecodeSourceProfile {
+struct PredecodeSourceProfile
+{
     std::size_t neutralPreviousPageCount = 2;
     std::size_t neutralNextPageCount = 2;
     std::size_t biasedDirectionPageCount = 3;
@@ -38,18 +39,21 @@ constexpr PredecodeSourceProfile directMediaPredecodeSourceProfile()
     return PredecodeSourceProfile { 2, 2, 3, 1 };
 }
 
-struct PredecodePolicyInput {
+struct PredecodePolicyInput
+{
     PredecodeSourceProfile sourceProfile = directMediaPredecodeSourceProfile();
     PredecodeMomentumMode momentumMode = PredecodeMomentumMode::Neutral;
     bool powerSaverEnabled = false;
 };
 
-struct PredecodeSchedulePlan {
+struct PredecodeSchedulePlan
+{
     std::size_t parallelLimit = 0;
     std::vector<std::size_t> targetIndices;
 };
 
-struct PredecodeMomentumState {
+struct PredecodeMomentumState
+{
     int lastPageIndex = -1;
     qint64 lastNavigationMsec = -1;
     int sameDirectionMoveCount = 0;
@@ -57,7 +61,8 @@ struct PredecodeMomentumState {
     PredecodeMomentumMode mode = PredecodeMomentumMode::Neutral;
 };
 
-struct PredecodeCachedImageState {
+struct PredecodeCachedImageState
+{
     bool currentDisplayed = false;
     bool recentDisplayed = false;
     std::size_t currentDisplayedPriority = 0;
@@ -66,20 +71,23 @@ struct PredecodeCachedImageState {
     qsizetype byteCost = 0;
 };
 
-struct PredecodeWindowLoadState {
+struct PredecodeWindowLoadState
+{
     bool displayed = false;
     bool cached = false;
     bool inFlight = false;
 };
 
-struct PredecodeQueuedLoadState {
+struct PredecodeQueuedLoadState
+{
     bool valid = false;
     bool inWindow = false;
     bool cached = false;
     bool inFlight = false;
 };
 
-struct PredecodeQueuedLoadPlan {
+struct PredecodeQueuedLoadPlan
+{
     bool found = false;
     std::size_t index = 0;
     std::size_t discardCount = 0;
@@ -88,18 +96,18 @@ struct PredecodeQueuedLoadPlan {
 int predecodeDebounceMsec();
 int predecodeNeutralRefreshMsec();
 PredecodeSourceProfile predecodeSourceProfileForOpenedCollectionScope(
-    const OpenedCollectionScopeLocation &openedCollectionScope, int idealThreadCount);
+    const OpenedCollectionScopeLocation& openedCollectionScope, int idealThreadCount);
 std::vector<std::size_t> predecodeRetainedCachedImageIndices(
-    const std::vector<PredecodeCachedImageState> &states, std::size_t windowCount,
+    const std::vector<PredecodeCachedImageState>& states, std::size_t windowCount,
     qsizetype byteBudget);
 std::vector<std::size_t> predecodeMissingWindowLoadIndices(
-    const std::vector<PredecodeWindowLoadState> &states);
+    const std::vector<PredecodeWindowLoadState>& states);
 PredecodeSchedulePlan predecodeSchedulePlan(std::size_t candidateCount,
     std::optional<std::size_t> currentIndex, PredecodePolicyInput input);
 PredecodeMomentumState predecodeUpdatedMomentumState(
     PredecodeMomentumState state, int pageIndex, qint64 monotonicMsec);
 PredecodeQueuedLoadPlan predecodeNextQueuedLoadPlan(
-    const std::vector<PredecodeQueuedLoadState> &states);
+    const std::vector<PredecodeQueuedLoadState>& states);
 }
 
 #endif

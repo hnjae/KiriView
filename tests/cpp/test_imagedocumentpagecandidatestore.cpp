@@ -16,13 +16,13 @@ QUrl directoryUrl()
     return QUrl::fromLocalFile(QStringLiteral("/tmp/kiriview-candidate-store-test/"));
 }
 
-QUrl fileUrl(const QString &fileName)
+QUrl fileUrl(const QString& fileName)
 {
     return QUrl::fromLocalFile(
         QStringLiteral("/tmp/kiriview-candidate-store-test/%1").arg(fileName));
 }
 
-kiriview::ImageDocumentPageCandidate candidate(const QString &fileName)
+kiriview::ImageDocumentPageCandidate candidate(const QString& fileName)
 {
     return kiriview::ImageDocumentPageCandidate {
         fileUrl(fileName),
@@ -31,17 +31,18 @@ kiriview::ImageDocumentPageCandidate candidate(const QString &fileName)
     };
 }
 
-std::vector<QUrl> candidateUrls(const std::vector<kiriview::ImageDocumentPageCandidate> &candidates)
+std::vector<QUrl> candidateUrls(const std::vector<kiriview::ImageDocumentPageCandidate>& candidates)
 {
     std::vector<QUrl> urls;
     urls.reserve(candidates.size());
-    for (const kiriview::ImageDocumentPageCandidate &candidate : candidates) {
+    for (const kiriview::ImageDocumentPageCandidate& candidate : candidates) {
         urls.push_back(candidate.url);
     }
     return urls;
 }
 
-struct FakeWatchProvider {
+struct FakeWatchProvider
+{
     QUrl watchedUrl;
     kiriview::ImageDocumentPageCandidateWatchSnapshotCallback initialSnapshot;
     kiriview::ImageDocumentPageCandidateWatchSnapshotCallback changedSnapshot;
@@ -51,7 +52,7 @@ struct FakeWatchProvider {
 
     kiriview::ImageDocumentPageCandidateWatchProvider provider()
     {
-        return [this](QObject *receiver, QUrl directory,
+        return [this](QObject* receiver, QUrl directory,
                    kiriview::ImageDocumentPageCandidateWatchSnapshotCallback initial,
                    kiriview::ImageDocumentPageCandidateWatchSnapshotCallback changed,
                    kiriview::ImageDocumentPageCandidateWatchDeletedCallback deleted,
@@ -62,8 +63,8 @@ struct FakeWatchProvider {
             changedSnapshot = std::move(changed);
             deletedUrls = std::move(deleted);
             errorCallback = std::move(error);
-            auto *token = new QObject(receiver);
-            return kiriview::ImageIoJob(token, [](QObject *object) { object->deleteLater(); });
+            auto* token = new QObject(receiver);
+            return kiriview::ImageIoJob(token, [](QObject* object) { object->deleteLater(); });
         };
     }
 
@@ -105,7 +106,7 @@ void TestImageDocumentPageCandidateStore::localDirectoryPublishesProviderSnapsho
             loadedCandidates = std::move(candidates);
             loaded = true;
         },
-        [&loadError](const QString &errorString) { loadError = errorString; });
+        [&loadError](const QString& errorString) { loadError = errorString; });
 
     QVERIFY(loadJob.isActive());
     QCOMPARE(provider.startCount, 1);
@@ -125,7 +126,7 @@ void TestImageDocumentPageCandidateStore::localDirectoryPublishesProviderSnapsho
             changedCandidates = std::move(candidates);
             ++changeCount;
         },
-        [](const QString &) {});
+        [](const QString&) {});
 
     provider.change({ candidate(QStringLiteral("01.png")), candidate(QStringLiteral("02.png")) });
     const std::vector<QUrl> addedUrls {
@@ -141,7 +142,7 @@ void TestImageDocumentPageCandidateStore::localDirectoryPublishesProviderSnapsho
         [&cachedCandidates](std::vector<kiriview::ImageDocumentPageCandidate> candidates) {
             cachedCandidates = std::move(candidates);
         },
-        [](const QString &) {});
+        [](const QString&) {});
     QCOMPARE(candidateUrls(cachedCandidates), addedUrls);
     QCOMPARE(provider.startCount, 1);
 
@@ -156,7 +157,7 @@ void TestImageDocumentPageCandidateStore::liveDirectoryWatchJobCanOutliveStore()
         kiriview::ImageDocumentPageCandidateStore store(provider.provider());
         watchJob = store.watchDirectoryImages(
             this, directoryUrl(), [](std::vector<kiriview::ImageDocumentPageCandidate>) { },
-            [](const QString &) { });
+            [](const QString&) { });
         QVERIFY(watchJob.isActive());
     }
 

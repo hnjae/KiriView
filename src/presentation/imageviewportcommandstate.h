@@ -32,13 +32,15 @@ enum class ImageViewportObservationOrigin {
     System,
 };
 
-struct ImageViewportCommand {
+struct ImageViewportCommand
+{
     quint64 revision = 0;
     QPointF requestedContentPosition;
     ImageViewportFrame frame;
 };
 
-struct ImageViewportProjection {
+struct ImageViewportProjection
+{
     quint64 commandRevision = 0;
     quint64 appliedCommandRevision = 0;
     quint64 observationRevision = 0;
@@ -51,24 +53,24 @@ struct ImageViewportProjection {
 class ImageViewportCommandState final
 {
 public:
-    const ImageViewportProjection &projection() const;
+    const ImageViewportProjection& projection() const;
     QSizeF viewportSize() const;
     QSizeF displaySize() const;
 
-    bool setGeometry(const QSizeF &viewportSize, const QSizeF &displaySize,
+    bool setGeometry(const QSizeF& viewportSize, const QSizeF& displaySize,
         ImageViewportObservationOrigin origin = ImageViewportObservationOrigin::Resize);
-    ImageViewportCommand requestContentPosition(const QPointF &contentPosition);
+    ImageViewportCommand requestContentPosition(const QPointF& contentPosition);
     bool acknowledgeCommand(quint64 commandRevision);
-    bool acknowledgeCommand(quint64 commandRevision, const QPointF &actualContentPosition);
+    bool acknowledgeCommand(quint64 commandRevision, const QPointF& actualContentPosition);
     bool observeContentPosition(
-        const QPointF &contentPosition, ImageViewportObservationOrigin origin);
+        const QPointF& contentPosition, ImageViewportObservationOrigin origin);
     bool markCommandApplying(quint64 commandRevision);
     bool markCommandApplied(quint64 commandRevision);
-    bool completeCommandApplication(quint64 commandRevision, const QPointF &actualContentPosition);
+    bool completeCommandApplication(quint64 commandRevision, const QPointF& actualContentPosition);
 
 private:
-    ImageViewportFrame project(const QPointF &contentPosition) const;
-    bool setFrame(const ImageViewportFrame &frame);
+    ImageViewportFrame project(const QPointF& contentPosition) const;
+    bool setFrame(const ImageViewportFrame& frame);
 
     QSizeF m_viewportSize;
     QSizeF m_displaySize;

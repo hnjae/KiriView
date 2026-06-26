@@ -40,7 +40,8 @@ namespace {
 class ThumbnailImageStore::Private
 {
 public:
-    struct Entry {
+    struct Entry
+    {
         QString id;
         QImage image;
         qsizetype byteCost = 0;
@@ -55,23 +56,23 @@ public:
     mutable quint64 useClock = 0;
     quint64 nextId = 1;
 
-    std::vector<Entry>::iterator findEntry(const QString &id)
+    std::vector<Entry>::iterator findEntry(const QString& id)
     {
         return std::find_if(
-            images.begin(), images.end(), [&id](const Entry &entry) { return entry.id == id; });
+            images.begin(), images.end(), [&id](const Entry& entry) { return entry.id == id; });
     }
 
-    std::vector<Entry>::const_iterator findEntry(const QString &id) const
+    std::vector<Entry>::const_iterator findEntry(const QString& id) const
     {
         return std::find_if(
-            images.cbegin(), images.cend(), [&id](const Entry &entry) { return entry.id == id; });
+            images.cbegin(), images.cend(), [&id](const Entry& entry) { return entry.id == id; });
     }
 
     void trimToBudget()
     {
         while (byteCost > byteBudget && !images.empty()) {
             auto removable = std::min_element(
-                images.begin(), images.end(), [](const Entry &left, const Entry &right) {
+                images.begin(), images.end(), [](const Entry& left, const Entry& right) {
                     const int leftPriority = priorityRank(left.priority);
                     const int rightPriority = priorityRank(right.priority);
                     if (leftPriority != rightPriority) {
@@ -133,7 +134,7 @@ QString ThumbnailImageStore::insert(QImage image, ThumbnailImageRetentionPriorit
 }
 
 void ThumbnailImageStore::updatePriority(
-    const QString &id, ThumbnailImageRetentionPriority priority)
+    const QString& id, ThumbnailImageRetentionPriority priority)
 {
     if (id.isEmpty()) {
         return;
@@ -150,7 +151,7 @@ void ThumbnailImageStore::updatePriority(
     d->trimToBudget();
 }
 
-void ThumbnailImageStore::release(const QString &id)
+void ThumbnailImageStore::release(const QString& id)
 {
     if (id.isEmpty()) {
         return;
@@ -180,7 +181,7 @@ void ThumbnailImageStore::setByteBudget(qsizetype byteBudget)
     d->trimToBudget();
 }
 
-QImage ThumbnailImageStore::image(const QString &id) const
+QImage ThumbnailImageStore::image(const QString& id) const
 {
     QMutexLocker locker(&d->mutex);
     auto entry = d->findEntry(id);
@@ -217,7 +218,7 @@ ThumbnailImageProvider::ThumbnailImageProvider(std::shared_ptr<ThumbnailImageSto
 }
 
 QImage ThumbnailImageProvider::requestImage(
-    const QString &id, QSize *size, const QSize &requestedSize)
+    const QString& id, QSize* size, const QSize& requestedSize)
 {
     const QImage image = m_store == nullptr ? QImage() : m_store->image(id);
     if (size != nullptr) {
@@ -242,7 +243,7 @@ void configureSharedThumbnailImageStoreByteBudget(qsizetype byteBudget)
     sharedThumbnailImageStore()->setByteBudget(byteBudget);
 }
 
-QUrl thumbnailImageSourceForId(const QString &id)
+QUrl thumbnailImageSourceForId(const QString& id)
 {
     if (id.isEmpty()) {
         return {};

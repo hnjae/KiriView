@@ -24,30 +24,30 @@ namespace kiriview::ApplicationActions {
 class KiriViewApplicationActionHost final : public ApplicationActionHost
 {
 public:
-    explicit KiriViewApplicationActionHost(KiriViewApplication &application)
+    explicit KiriViewApplicationActionHost(KiriViewApplication& application)
         : m_application(application)
     {
     }
 
-    QObject *actionContext() override { return &m_application; }
-    KirigamiActionCollection *mainActionCollection() override
+    QObject* actionContext() override { return &m_application; }
+    KirigamiActionCollection* mainActionCollection() override
     {
         return m_application.applicationMainActionCollection();
     }
-    QAction *inheritedAction(const QString &actionName) override
+    QAction* inheritedAction(const QString& actionName) override
     {
         return m_application.inheritedApplicationAction(actionName);
     }
     void readActionSettings() override { m_application.readApplicationActionSettings(); }
 
 private:
-    KiriViewApplication &m_application;
+    KiriViewApplication& m_application;
 };
 
 class KiriViewApplicationActionStateSource final : public ApplicationActionStateSource
 {
 public:
-    void setDocumentSession(KiriDocumentSession *session) { m_documentSession = session; }
+    void setDocumentSession(KiriDocumentSession* session) { m_documentSession = session; }
     void setUiGateSnapshot(ApplicationActionUiGateSnapshot snapshot)
     {
         ++m_uiGateRevision;
@@ -56,10 +56,10 @@ public:
 
     ApplicationActionStateSnapshot actionStateSnapshot() const override;
     std::vector<QMetaObject::Connection> connectActionStateChanged(
-        QObject *context, std::function<void()> refresh) override;
+        QObject* context, std::function<void()> refresh) override;
 
 private:
-    KiriImageDocument *imageDocument() const;
+    KiriImageDocument* imageDocument() const;
     bool imageMode() const;
     bool videoMode() const;
     bool sharedImagePannable() const;
@@ -72,7 +72,7 @@ private:
 class KiriViewApplicationCommandPortSource final : public ApplicationCommandPortSource
 {
 public:
-    explicit KiriViewApplicationCommandPortSource(KiriViewApplication &application)
+    explicit KiriViewApplicationCommandPortSource(KiriViewApplication& application)
         : m_application(application)
     {
     }
@@ -87,7 +87,7 @@ public:
     ApplicationCommandRouterVideoPorts commandRouterVideoPorts() override;
 
 private:
-    KiriViewApplication &m_application;
+    KiriViewApplication& m_application;
 };
 }
 
@@ -100,7 +100,7 @@ static_assert(static_cast<int>(Actions::ActionId::FileOpenAction)
 static_assert(static_cast<int>(Actions::ActionId::ActionCount)
     == static_cast<int>(KiriViewApplication::ActionCount));
 
-KiriViewApplication::KiriViewApplication(QObject *parent)
+KiriViewApplication::KiriViewApplication(QObject* parent)
     : AbstractKirigamiApplication(parent)
     , m_actionHost(std::make_unique<Actions::KiriViewApplicationActionHost>(*this))
     , m_actionStateSource(std::make_unique<Actions::KiriViewApplicationActionStateSource>())
@@ -144,12 +144,12 @@ int KiriViewApplication::actionStateRevision() const
     return m_actionRuntime->actionStateRevision();
 }
 
-QAbstractListModel *KiriViewApplication::shortcutHelpModel() const
+QAbstractListModel* KiriViewApplication::shortcutHelpModel() const
 {
     return m_actionRuntime->shortcutHelpModel();
 }
 
-QAbstractListModel *KiriViewApplication::shortcutRouteModel() const
+QAbstractListModel* KiriViewApplication::shortcutRouteModel() const
 {
     return m_actionRuntime->shortcutRouteModel();
 }
@@ -183,12 +183,12 @@ KiriViewApplication::ActionId KiriViewApplication::facadeActionId(Actions::Actio
     return static_cast<ActionId>(static_cast<int>(actionId));
 }
 
-QAction *KiriViewApplication::action(const QString &actionName)
+QAction* KiriViewApplication::action(const QString& actionName)
 {
     return m_actionRuntime->action(actionName);
 }
 
-QAction *KiriViewApplication::actionForId(ActionId actionId)
+QAction* KiriViewApplication::actionForId(ActionId actionId)
 {
     return m_actionRuntime->actionForId(domainActionId(actionId));
 }
@@ -198,7 +198,7 @@ QString KiriViewApplication::actionName(ActionId actionId) const
     return m_actionRuntime->actionName(domainActionId(actionId));
 }
 
-QList<QKeySequence> KiriViewApplication::shortcuts(const QString &actionName) const
+QList<QKeySequence> KiriViewApplication::shortcuts(const QString& actionName) const
 {
     return m_actionRuntime->shortcutProjection(actionName).shortcuts;
 }
@@ -208,7 +208,7 @@ QList<QKeySequence> KiriViewApplication::shortcutsForId(ActionId actionId) const
     return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).shortcuts;
 }
 
-QList<QKeySequence> KiriViewApplication::programWideShortcuts(const QString &actionName) const
+QList<QKeySequence> KiriViewApplication::programWideShortcuts(const QString& actionName) const
 {
     return m_actionRuntime->programWideShortcuts(actionName);
 }
@@ -218,7 +218,7 @@ QList<QKeySequence> KiriViewApplication::programWideShortcutsForId(ActionId acti
     return m_actionRuntime->programWideShortcutsForId(domainActionId(actionId));
 }
 
-QList<QKeySequence> KiriViewApplication::viewerLocalShortcuts(const QString &actionName) const
+QList<QKeySequence> KiriViewApplication::viewerLocalShortcuts(const QString& actionName) const
 {
     return m_actionRuntime->viewerLocalShortcuts(actionName);
 }
@@ -229,18 +229,18 @@ QList<QKeySequence> KiriViewApplication::viewerLocalShortcutsForId(ActionId acti
 }
 
 bool KiriViewApplication::setViewerLocalShortcuts(
-    const QString &actionName, const QList<QKeySequence> &shortcuts)
+    const QString& actionName, const QList<QKeySequence>& shortcuts)
 {
     return m_actionRuntime->setViewerLocalShortcuts(actionName, shortcuts);
 }
 
 bool KiriViewApplication::setViewerLocalShortcutsForId(
-    ActionId actionId, const QList<QKeySequence> &shortcuts)
+    ActionId actionId, const QList<QKeySequence>& shortcuts)
 {
     return m_actionRuntime->setViewerLocalShortcutsForId(domainActionId(actionId), shortcuts);
 }
 
-QString KiriViewApplication::shortcutText(const QString &actionName) const
+QString KiriViewApplication::shortcutText(const QString& actionName) const
 {
     return m_actionRuntime->shortcutProjection(actionName).shortcutText;
 }
@@ -250,7 +250,7 @@ QString KiriViewApplication::shortcutTextForId(ActionId actionId) const
     return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).shortcutText;
 }
 
-QKeySequence KiriViewApplication::menuShortcut(const QString &actionName) const
+QKeySequence KiriViewApplication::menuShortcut(const QString& actionName) const
 {
     return m_actionRuntime->shortcutProjection(actionName).menuShortcut;
 }
@@ -260,7 +260,7 @@ QKeySequence KiriViewApplication::menuShortcutForId(ActionId actionId) const
     return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).menuShortcut;
 }
 
-QString KiriViewApplication::menuShortcutText(const QString &actionName) const
+QString KiriViewApplication::menuShortcutText(const QString& actionName) const
 {
     return m_actionRuntime->shortcutProjection(actionName).menuShortcutText;
 }
@@ -290,9 +290,9 @@ QString KiriViewApplication::actionToolbarTooltipTextForId(ActionId actionId) co
     return m_actionRuntime->actionToolbarTooltipText(domainActionId(actionId));
 }
 
-void KiriViewApplication::setDocumentSession(QObject *session)
+void KiriViewApplication::setDocumentSession(QObject* session)
 {
-    auto *documentSession = qobject_cast<KiriDocumentSession *>(session);
+    auto* documentSession = qobject_cast<KiriDocumentSession*>(session);
     if (m_documentSession == documentSession) {
         return;
     }
@@ -318,7 +318,7 @@ void KiriViewApplication::updateActionUiGateSnapshot(bool helpDialogOpen, bool t
     m_actionSourceAttachment->refresh();
 }
 
-void KiriViewApplication::setShortcutHost(QObject *host) { m_actionRuntime->setShortcutHost(host); }
+void KiriViewApplication::setShortcutHost(QObject* host) { m_actionRuntime->setShortcutHost(host); }
 
 bool KiriViewApplication::videoActionUnsupported(ActionId actionId) const
 {
@@ -347,12 +347,12 @@ void KiriViewApplication::setupActions()
     }
 }
 
-KirigamiActionCollection *KiriViewApplication::applicationMainActionCollection()
+KirigamiActionCollection* KiriViewApplication::applicationMainActionCollection()
 {
     return mainCollection();
 }
 
-QAction *KiriViewApplication::inheritedApplicationAction(const QString &actionName)
+QAction* KiriViewApplication::inheritedApplicationAction(const QString& actionName)
 {
     return AbstractKirigamiApplication::action(actionName);
 }
@@ -361,19 +361,19 @@ void KiriViewApplication::readApplicationActionSettings() { readSettings(); }
 
 std::vector<QMetaObject::Connection>
 Actions::KiriViewApplicationActionStateSource::connectActionStateChanged(
-    QObject *context, std::function<void()> refresh)
+    QObject* context, std::function<void()> refresh)
 {
     std::vector<QMetaObject::Connection> connections;
     if (m_documentSession == nullptr) {
         return connections;
     }
 
-    const auto connectRefresh = [&connections, context, refresh](auto *sender, auto signal) {
+    const auto connectRefresh = [&connections, context, refresh](auto* sender, auto signal) {
         connections.push_back(
             QObject::connect(sender, signal, context, [refresh]() { refresh(); }));
     };
 
-    KiriDocumentSession *session = m_documentSession.data();
+    KiriDocumentSession* session = m_documentSession.data();
     connectRefresh(session, &KiriDocumentSession::publicProjectionRevisionChanged);
     connectRefresh(session, &KiriDocumentSession::documentKindChanged);
     connectRefresh(session, &KiriDocumentSession::displayedFileDeletionAvailabilityChanged);
@@ -381,10 +381,10 @@ Actions::KiriViewApplicationActionStateSource::connectActionStateChanged(
     connectRefresh(session, &KiriDocumentSession::fileDeletionInProgressChanged);
     connectRefresh(session, &KiriDocumentSession::activeMediaReadinessChanged);
     connectRefresh(session, &KiriDocumentSession::activeNavigationChanged);
-    if (KiriImageDocument *image = session->imageDocument()) {
+    if (KiriImageDocument* image = session->imageDocument()) {
         connectRefresh(image, &KiriImageDocument::viewportFrameChanged);
     }
-    if (KiriVideoDocument *video = session->videoDocument()) {
+    if (KiriVideoDocument* video = session->videoDocument()) {
         connectRefresh(video, &KiriVideoDocument::seekableChanged);
         connectRefresh(video, &KiriVideoDocument::durationChanged);
     }
@@ -392,12 +392,12 @@ Actions::KiriViewApplicationActionStateSource::connectActionStateChanged(
     return connections;
 }
 
-KiriImageDocument *KiriViewApplication::imageDocument() const
+KiriImageDocument* KiriViewApplication::imageDocument() const
 {
     return m_documentSession == nullptr ? nullptr : m_documentSession->imageDocument();
 }
 
-KiriImageDocument *Actions::KiriViewApplicationActionStateSource::imageDocument() const
+KiriImageDocument* Actions::KiriViewApplicationActionStateSource::imageDocument() const
 {
     return m_documentSession == nullptr ? nullptr : m_documentSession->imageDocument();
 }
@@ -416,7 +416,7 @@ bool Actions::KiriViewApplicationActionStateSource::videoMode() const
 
 bool Actions::KiriViewApplicationActionStateSource::sharedImagePannable() const
 {
-    const KiriImageDocument *image = imageDocument();
+    const KiriImageDocument* image = imageDocument();
     return imageMode() && image != nullptr && image->viewportPannable();
 }
 
@@ -463,7 +463,7 @@ Actions::KiriViewApplicationActionStateSource::actionStateSnapshot() const
     snapshot.fullscreen = m_uiGateSnapshot.fullscreen;
     snapshot.applicationMenuShortcutEnabled = m_uiGateSnapshot.applicationMenuShortcutEnabled;
     snapshot.showMenubarActionEnabled = m_uiGateSnapshot.showMenubarActionEnabled;
-    if (KiriVideoDocument *video
+    if (KiriVideoDocument* video
         = m_documentSession == nullptr ? nullptr : m_documentSession->videoDocument()) {
         snapshot.videoSeekable = video->seekable();
         snapshot.videoDuration = video->duration();
@@ -518,42 +518,42 @@ Actions::KiriViewApplicationCommandPortSource::commandRouterImageDocumentPorts()
     Actions::ApplicationCommandRouterImageDocumentPorts ports;
     ports.imageAvailable = [this]() { return m_application.imageDocument() != nullptr; };
     ports.openPreviousContainer = [this]() {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->openPreviousContainer();
         }
     };
     ports.openNextContainer = [this]() {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->openNextContainer();
         }
     };
     ports.openPreviousSinglePage = [this]() {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->openPreviousSinglePage();
         }
     };
     ports.openNextSinglePage = [this]() {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->openNextSinglePage();
         }
     };
     ports.rotateClockwise = [this]() {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->rotateClockwise();
         }
     };
     ports.rotateCounterclockwise = [this]() {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->rotateCounterclockwise();
         }
     };
     ports.requestToggleTwoPageMode = [this]() {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->requestToggleTwoPageMode();
         }
     };
     ports.requestToggleRightToLeftReading = [this]() {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->requestToggleRightToLeftReading();
         }
     };
@@ -565,44 +565,44 @@ Actions::KiriViewApplicationCommandPortSource::commandRouterImagePresentationPor
 {
     Actions::ApplicationCommandRouterImagePresentationPorts ports;
     ports.imageViewportHorizontallyPannable = [this]() {
-        KiriImageDocument *image = m_application.imageDocument();
+        KiriImageDocument* image = m_application.imageDocument();
         return image != nullptr && image->viewportHorizontallyPannable();
     };
     ports.requestViewportPanBy = [this](double dx, double dy) {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->requestViewportPanBy(dx, dy);
         }
     };
     ports.requestViewportScanForward = [this]() {
-        KiriImageDocument *image = m_application.imageDocument();
+        KiriImageDocument* image = m_application.imageDocument();
         return image != nullptr && image->requestViewportScanForward();
     };
     ports.requestViewportScanBackward = [this]() {
-        KiriImageDocument *image = m_application.imageDocument();
+        KiriImageDocument* image = m_application.imageDocument();
         return image != nullptr && image->requestViewportScanBackward();
     };
     ports.requestNextDisplayedImageStartToFinalScanPosition = [this]() {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->requestNextDisplayedImageStartToFinalScanPosition();
         }
     };
     ports.requestViewportPanToInitialScanPosition = [this]() {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->requestViewportPanToInitialScanPosition();
         }
     };
     ports.requestViewportPanToFinalScanPosition = [this]() {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->requestViewportPanToFinalScanPosition();
         }
     };
     ports.requestZoomByStepAtCenter = [this](double stepCount) {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->requestZoomByStepAtCenter(stepCount);
         }
     };
     ports.requestManualZoomPercent = [this](double zoomPercent) {
-        if (KiriImageDocument *image = m_application.imageDocument()) {
+        if (KiriImageDocument* image = m_application.imageDocument()) {
             image->requestManualZoomPercent(zoomPercent);
         }
     };
@@ -646,33 +646,33 @@ Actions::KiriViewApplicationCommandPortSource::commandRouterVideoPorts()
             && m_application.m_documentSession->videoDocument() != nullptr;
     };
     ports.videoSeekable = [this]() {
-        KiriVideoDocument *video = m_application.m_documentSession == nullptr
+        KiriVideoDocument* video = m_application.m_documentSession == nullptr
             ? nullptr
             : m_application.m_documentSession->videoDocument();
         return video != nullptr && video->seekable();
     };
     ports.videoDuration = [this]() {
-        KiriVideoDocument *video = m_application.m_documentSession == nullptr
+        KiriVideoDocument* video = m_application.m_documentSession == nullptr
             ? nullptr
             : m_application.m_documentSession->videoDocument();
         return video == nullptr ? qint64(0) : video->duration();
     };
     ports.seekVideoBy = [this](qint64 deltaMilliseconds) {
-        if (KiriVideoDocument *video = m_application.m_documentSession == nullptr
+        if (KiriVideoDocument* video = m_application.m_documentSession == nullptr
                 ? nullptr
                 : m_application.m_documentSession->videoDocument()) {
             video->seekBy(deltaMilliseconds);
         }
     };
     ports.setVideoPosition = [this](qint64 positionMilliseconds) {
-        if (KiriVideoDocument *video = m_application.m_documentSession == nullptr
+        if (KiriVideoDocument* video = m_application.m_documentSession == nullptr
                 ? nullptr
                 : m_application.m_documentSession->videoDocument()) {
             video->setPosition(positionMilliseconds);
         }
     };
     ports.toggleVideoPlayback = [this]() {
-        if (KiriVideoDocument *video = m_application.m_documentSession == nullptr
+        if (KiriVideoDocument* video = m_application.m_documentSession == nullptr
                 ? nullptr
                 : m_application.m_documentSession->videoDocument()) {
             video->togglePlayback();
@@ -699,7 +699,7 @@ void KiriViewApplication::deleteDisplayedFilePermanently()
 
 void KiriViewApplication::requestImageFitMode()
 {
-    if (KiriImageDocument *image = imageDocument()) {
+    if (KiriImageDocument* image = imageDocument()) {
         const auto mode = KiriImageDocument::ZoomMode::Fit;
         image->requestFitMode(mode);
     }
@@ -707,7 +707,7 @@ void KiriViewApplication::requestImageFitMode()
 
 void KiriViewApplication::requestImageFitHeightMode()
 {
-    if (KiriImageDocument *image = imageDocument()) {
+    if (KiriImageDocument* image = imageDocument()) {
         const auto mode = KiriImageDocument::ZoomMode::FitHeight;
         image->requestFitMode(mode);
     }
@@ -715,13 +715,13 @@ void KiriViewApplication::requestImageFitHeightMode()
 
 void KiriViewApplication::requestImageFitWidthMode()
 {
-    if (KiriImageDocument *image = imageDocument()) {
+    if (KiriImageDocument* image = imageDocument()) {
         const auto mode = KiriImageDocument::ZoomMode::FitWidth;
         image->requestFitMode(mode);
     }
 }
 
-void KiriViewApplication::emitBoundaryText(const QString &message)
+void KiriViewApplication::emitBoundaryText(const QString& message)
 {
     if (!message.isEmpty()) {
         Q_EMIT imageBoundaryReached(message);

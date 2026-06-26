@@ -31,7 +31,8 @@ enum class MediaEntrySourceOperation {
     LoadThumbnailMetadata,
 };
 
-struct MediaEntrySourceError {
+struct MediaEntrySourceError
+{
     MediaEntrySourceBackendKind backend = MediaEntrySourceBackendKind::Unknown;
     MediaEntrySourceOperation operation = MediaEntrySourceOperation::OpenCollection;
     QUrl collectionUrl;
@@ -40,11 +41,13 @@ struct MediaEntrySourceError {
     QString diagnosticDetail;
 };
 
-struct MediaEntrySourceCandidates {
+struct MediaEntrySourceCandidates
+{
     std::vector<ImageDocumentPageCandidate> candidates;
 };
 
-struct MediaEntrySourceImageData {
+struct MediaEntrySourceImageData
+{
     QByteArray data;
 };
 
@@ -52,12 +55,14 @@ enum class MediaEntryContentChecksumAlgorithm {
     Crc32,
 };
 
-struct MediaEntryContentChecksum {
+struct MediaEntryContentChecksum
+{
     MediaEntryContentChecksumAlgorithm algorithm = MediaEntryContentChecksumAlgorithm::Crc32;
     quint64 value = 0;
 };
 
-struct MediaEntrySourceThumbnailMetadata {
+struct MediaEntrySourceThumbnailMetadata
+{
     MediaEntryContentChecksum checksum;
     qint64 uncompressedSize = -1;
 };
@@ -74,23 +79,23 @@ public:
     virtual ~MediaEntrySource() = default;
 
     virtual MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates() = 0;
-    virtual MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) = 0;
-    virtual MediaEntrySourceThumbnailMetadataResult loadThumbnailMetadata(const QUrl &imageUrl);
+    virtual MediaEntrySourceImageDataResult loadImageData(const QUrl& imageUrl) = 0;
+    virtual MediaEntrySourceThumbnailMetadataResult loadThumbnailMetadata(const QUrl& imageUrl);
 };
 
 using MediaEntrySourcePtr = std::shared_ptr<MediaEntrySource>;
 using MediaEntrySourceOpenResult = MediaEntrySourceResult<MediaEntrySourcePtr>;
 using MediaEntrySourceFactory
-    = std::function<MediaEntrySourceOpenResult(const OpenedCollectionScopeLocation &)>;
+    = std::function<MediaEntrySourceOpenResult(const OpenedCollectionScopeLocation&)>;
 
 MediaEntrySourceCandidatesResult loadMediaEntrySourceCandidates(
-    const OpenedCollectionScopeLocation &openedCollectionScope);
+    const OpenedCollectionScopeLocation& openedCollectionScope);
 MediaEntrySourceImageDataResult loadMediaEntrySourceImageData(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl);
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& imageUrl);
 MediaEntrySourceThumbnailMetadataResult loadMediaEntrySourceThumbnailMetadata(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &imageUrl);
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& imageUrl);
 MediaEntrySourceOpenResult openMediaEntrySource(
-    const OpenedCollectionScopeLocation &openedCollectionScope);
+    const OpenedCollectionScopeLocation& openedCollectionScope);
 }
 
 #endif

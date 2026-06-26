@@ -25,7 +25,7 @@ std::optional<std::size_t> clampedMediaNumberIndex(int mediaNumber, std::size_t 
 }
 
 std::optional<QUrl> directMediaNavigationTargetUrlForRequest(
-    const std::vector<kiriview::DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl,
+    const std::vector<kiriview::DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl,
     kiriview::DirectMediaNavigationOpenRequest request)
 {
     switch (request.kind) {
@@ -66,24 +66,24 @@ DirectMediaNavigationOpenRequest numberedDirectMediaNavigationOpenRequest(int me
     return DirectMediaNavigationOpenRequest { DirectMediaNavigationOpenKind::Number, mediaNumber };
 }
 
-QUrl directMediaNavigationSourceUrl(const QUrl &url)
+QUrl directMediaNavigationSourceUrl(const QUrl& url)
 {
     return directoryNavigationLocationForFileUrl(url).fileUrl;
 }
 
-QUrl directMediaNavigationParentUrl(const QUrl &url)
+QUrl directMediaNavigationParentUrl(const QUrl& url)
 {
     return directoryNavigationLocationForFileUrl(url).directoryUrl;
 }
 
 std::optional<std::size_t> directMediaNavigationCandidateIndex(
-    const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl)
+    const std::vector<DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl)
 {
     return navigationCandidateIndex(candidates, directMediaNavigationSourceUrl(currentUrl));
 }
 
 std::optional<QUrl> adjacentDirectMediaNavigationUrl(
-    const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl,
+    const std::vector<DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl,
     NavigationDirection direction)
 {
     const std::optional<std::size_t> targetIndex = adjacentNavigationIndex(
@@ -96,7 +96,7 @@ std::optional<QUrl> adjacentDirectMediaNavigationUrl(
 }
 
 DirectMediaNavigationBoundaryState directMediaNavigationBoundaryState(
-    const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl)
+    const std::vector<DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl)
 {
     const std::optional<std::size_t> currentIndex
         = directMediaNavigationCandidateIndex(candidates, currentUrl);
@@ -115,7 +115,7 @@ DirectMediaNavigationBoundaryState directMediaNavigationBoundaryState(
 }
 
 DirectMediaNavigationOpenPlan directMediaNavigationOpenPlan(
-    const std::vector<DirectMediaNavigationCandidate> &candidates, const QUrl &currentUrl,
+    const std::vector<DirectMediaNavigationCandidate>& candidates, const QUrl& currentUrl,
     DirectMediaNavigationOpenRequest request)
 {
     return DirectMediaNavigationOpenPlan {
@@ -124,7 +124,7 @@ DirectMediaNavigationOpenPlan directMediaNavigationOpenPlan(
     };
 }
 
-void sortDirectMediaNavigationCandidates(std::vector<DirectMediaNavigationCandidate> *candidates)
+void sortDirectMediaNavigationCandidates(std::vector<DirectMediaNavigationCandidate>* candidates)
 {
     sortNavigationCandidatesByNameAndUrl(candidates);
 }

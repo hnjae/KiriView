@@ -4,16 +4,16 @@
 #include "activenavigationthumbnaildemand.h"
 
 namespace {
-bool sameDemandState(const kiriview::ActiveNavigationThumbnailDemand &left,
-    const kiriview::ActiveNavigationThumbnailDemand &right)
+bool sameDemandState(const kiriview::ActiveNavigationThumbnailDemand& left,
+    const kiriview::ActiveNavigationThumbnailDemand& right)
 {
     return left.number == right.number && left.url == right.url && left.bucket == right.bucket
         && left.priority == right.priority
         && left.navigationGeneration == right.navigationGeneration;
 }
 
-bool sameDemandIdentity(const kiriview::ActiveNavigationThumbnailDemand &left,
-    const kiriview::ActiveNavigationThumbnailDemand &right)
+bool sameDemandIdentity(const kiriview::ActiveNavigationThumbnailDemand& left,
+    const kiriview::ActiveNavigationThumbnailDemand& right)
 {
     return left.number == right.number && left.url == right.url
         && left.navigationGeneration == right.navigationGeneration;
@@ -40,7 +40,7 @@ ActiveNavigationThumbnailDemandBucket activeNavigationThumbnailDemandBucketForPh
     return ActiveNavigationThumbnailDemandBucket::XXLarge;
 }
 
-bool ActiveNavigationThumbnailDemandTracker::record(const ActiveNavigationThumbnailDemand &demand)
+bool ActiveNavigationThumbnailDemandTracker::record(const ActiveNavigationThumbnailDemand& demand)
 {
     if (demand.number <= 0 || demand.url.isEmpty()
         || demand.bucket == ActiveNavigationThumbnailDemandBucket::None
@@ -48,7 +48,7 @@ bool ActiveNavigationThumbnailDemandTracker::record(const ActiveNavigationThumbn
         return false;
     }
 
-    for (ActiveNavigationThumbnailDemand &acceptedDemand : m_acceptedDemands) {
+    for (ActiveNavigationThumbnailDemand& acceptedDemand : m_acceptedDemands) {
         if (!sameDemandIdentity(acceptedDemand, demand)) {
             continue;
         }

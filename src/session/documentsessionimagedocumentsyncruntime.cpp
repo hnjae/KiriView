@@ -13,7 +13,7 @@ DocumentSessionImageDocumentSyncRuntime::DocumentSessionImageDocumentSyncRuntime
 }
 
 void DocumentSessionImageDocumentSyncRuntime::sync(
-    const DocumentSessionImageDocumentSyncRuntimeInput &input)
+    const DocumentSessionImageDocumentSyncRuntimeInput& input)
 {
     if (input.routingSource || input.documentKind != DocumentSessionKind::Image) {
         return;
@@ -34,8 +34,8 @@ void DocumentSessionImageDocumentSyncRuntime::sync(
 }
 
 bool DocumentSessionImageDocumentSyncRuntime::syncDirectImageCursor(
-    DocumentSessionKind documentKind, const DirectMediaCursor &cursor,
-    const DocumentSessionPublicImageLeafSnapshot &image)
+    DocumentSessionKind documentKind, const DirectMediaCursor& cursor,
+    const DocumentSessionPublicImageLeafSnapshot& image)
 {
     const DocumentSessionDirectImageCursorSyncPlan plan = documentSessionDirectImageCursorSyncPlan(
         DocumentSessionDirectImageCursorSyncInput { documentKind, cursor, image });
@@ -55,7 +55,7 @@ bool DocumentSessionImageDocumentSyncRuntime::syncDirectImageCursor(
 }
 
 void DocumentSessionImageDocumentSyncRuntime::apply(
-    const DocumentSessionImageDocumentSyncPlan &plan)
+    const DocumentSessionImageDocumentSyncPlan& plan)
 {
     if (!plan.active) {
         return;

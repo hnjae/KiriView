@@ -51,7 +51,7 @@ bool shortcutCombinationIsMenuDisplaySafe(QKeyCombination combination)
     return key != Qt::Key_unknown;
 }
 
-bool shortcutIsMenuDisplaySafe(const QKeySequence &shortcut)
+bool shortcutIsMenuDisplaySafe(const QKeySequence& shortcut)
 {
     if (shortcut.isEmpty()) {
         return false;
@@ -72,19 +72,19 @@ bool shortcutCombinationIsUnmodifiedAsciiPrintable(QKeyCombination combination)
         && isAsciiPrintableKey(combination.key());
 }
 
-bool shortcutIsUnmodifiedAsciiPrintable(const QKeySequence &shortcut)
+bool shortcutIsUnmodifiedAsciiPrintable(const QKeySequence& shortcut)
 {
     return shortcut.count() == 1 && shortcutCombinationIsUnmodifiedAsciiPrintable(shortcut[0]);
 }
 
-bool exactShortcut(const QKeySequence &shortcut, const char *portableText)
+bool exactShortcut(const QKeySequence& shortcut, const char* portableText)
 {
     return shortcut.matches(QKeySequence::fromString(
                QString::fromLatin1(portableText), QKeySequence::PortableText))
         == QKeySequence::ExactMatch;
 }
 
-std::optional<qint64> fixedVideoSeekShortcutDeltaMilliseconds(const QKeySequence &shortcut)
+std::optional<qint64> fixedVideoSeekShortcutDeltaMilliseconds(const QKeySequence& shortcut)
 {
     if (exactShortcut(shortcut, "Alt+Left")) {
         return -5000;
@@ -102,16 +102,16 @@ std::optional<qint64> fixedVideoSeekShortcutDeltaMilliseconds(const QKeySequence
     return std::nullopt;
 }
 
-bool routeMatchesSpec(const Route &route, const RouteSpec &spec)
+bool routeMatchesSpec(const Route& route, const RouteSpec& spec)
 {
     return route.activationScope == spec.activationScope
         && route.shortcutScope == spec.shortcutScope;
 }
 
 void appendActionToRoute(
-    QList<Route> &routes, kiriview::ApplicationActions::ActionId actionId, const RouteSpec &spec)
+    QList<Route>& routes, kiriview::ApplicationActions::ActionId actionId, const RouteSpec& spec)
 {
-    for (Route &route : routes) {
+    for (Route& route : routes) {
         if (!routeMatchesSpec(route, spec)) {
             continue;
         }
@@ -128,7 +128,7 @@ void appendActionToRoute(
 QList<Route> buildShortcutRoutes()
 {
     QList<Route> routes;
-    for (const kiriview::ApplicationActions::ActionDefinition &definition :
+    for (const kiriview::ApplicationActions::ActionDefinition& definition :
         kiriview::ApplicationActions::definitions()) {
         for (std::size_t index = 0; index < definition.shortcutRoutes.count; ++index) {
             appendActionToRoute(
@@ -142,9 +142,9 @@ QList<Route> buildShortcutRoutes()
 }
 
 namespace kiriview::ApplicationActions {
-QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts)
+QKeySequence menuShortcut(const QList<QKeySequence>& shortcuts)
 {
-    for (const QKeySequence &shortcut : shortcuts) {
+    for (const QKeySequence& shortcut : shortcuts) {
         if (shortcutIsMenuDisplaySafe(shortcut)) {
             return shortcut;
         }
@@ -153,11 +153,11 @@ QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts)
     return {};
 }
 
-QString shortcutListText(const QList<QKeySequence> &shortcuts)
+QString shortcutListText(const QList<QKeySequence>& shortcuts)
 {
     QStringList texts;
     texts.reserve(shortcuts.size());
-    for (const QKeySequence &shortcut : shortcuts) {
+    for (const QKeySequence& shortcut : shortcuts) {
         if (!shortcut.isEmpty()) {
             texts.push_back(shortcut.toString(QKeySequence::NativeText));
         }
@@ -166,12 +166,12 @@ QString shortcutListText(const QList<QKeySequence> &shortcuts)
     return texts.join(QStringLiteral(" / "));
 }
 
-QList<QKeySequence> sanitizeProgramWideShortcuts(const QList<QKeySequence> &shortcuts)
+QList<QKeySequence> sanitizeProgramWideShortcuts(const QList<QKeySequence>& shortcuts)
 {
     QList<QKeySequence> sanitizedShortcuts;
     sanitizedShortcuts.reserve(shortcuts.size());
 
-    for (const QKeySequence &shortcut : shortcuts) {
+    for (const QKeySequence& shortcut : shortcuts) {
         if (!shortcutIsUnmodifiedAsciiPrintable(shortcut)) {
             sanitizedShortcuts.push_back(shortcut);
         }
@@ -180,8 +180,8 @@ QList<QKeySequence> sanitizeProgramWideShortcuts(const QList<QKeySequence> &shor
     return sanitizedShortcuts;
 }
 
-ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &programWideShortcuts,
-    const QList<QKeySequence> &viewerLocalShortcuts)
+ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence>& programWideShortcuts,
+    const QList<QKeySequence>& viewerLocalShortcuts)
 {
     QList<QKeySequence> shortcuts = programWideShortcuts;
     shortcuts.append(viewerLocalShortcuts);
@@ -196,7 +196,7 @@ ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &prog
     };
 }
 
-const QList<ApplicationShortcutRoute> &shortcutRoutes()
+const QList<ApplicationShortcutRoute>& shortcutRoutes()
 {
     static const QList<ApplicationShortcutRoute> routes = buildShortcutRoutes();
     return routes;
@@ -214,7 +214,7 @@ std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value)
 }
 
 FixedShortcutDispatchOutcome fixedShortcutDispatchOutcome(
-    const FixedShortcutDispatchInput &input, const QKeySequence &shortcut)
+    const FixedShortcutDispatchInput& input, const QKeySequence& shortcut)
 {
     if (!input.focusApplicable) {
         return {};
@@ -265,7 +265,7 @@ FixedShortcutDispatchOutcome fixedShortcutDispatchOutcome(
 }
 
 bool genericShortcutBindingEnabled(
-    const ApplicationActionStateInput &actionState, const GenericShortcutBinding &binding)
+    const ApplicationActionStateInput& actionState, const GenericShortcutBinding& binding)
 {
     const bool unsupportedVideoIntercept
         = actionState.videoMode && videoActionUnsupported(binding.actionId);
@@ -288,13 +288,13 @@ bool genericShortcutBindingEnabled(
 }
 
 GenericShortcutDispatchOutcome genericShortcutDispatchOutcome(
-    const GenericShortcutDispatchInput &input, const QKeySequence &shortcut)
+    const GenericShortcutDispatchInput& input, const QKeySequence& shortcut)
 {
     if (!input.focusApplicable || shortcut.isEmpty()) {
         return {};
     }
 
-    for (const GenericShortcutBinding &binding : input.bindings) {
+    for (const GenericShortcutBinding& binding : input.bindings) {
         if (!binding.shortcuts.contains(shortcut)
             || !genericShortcutBindingEnabled(input.actionState, binding)) {
             continue;

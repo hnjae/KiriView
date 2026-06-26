@@ -43,12 +43,12 @@ void initializeApplicationRuntime()
     setupDefaultQuickStyle();
 }
 
-void configureApplicationRuntimeDiagnostics(const ApplicationStartupSource &startupSource)
+void configureApplicationRuntimeDiagnostics(const ApplicationStartupSource& startupSource)
 {
     configureApplicationDiagnosticLogging(startupSource.verbose);
 }
 
-void registerApplicationImageProviders(QQmlEngine &engine)
+void registerApplicationImageProviders(QQmlEngine& engine)
 {
     engine.addImageProvider(QStringLiteral("kiriview-thumbnails"),
         new ThumbnailImageProvider(sharedThumbnailImageStore()));
@@ -57,7 +57,7 @@ void registerApplicationImageProviders(QQmlEngine &engine)
 }
 
 void loadApplicationMainQml(
-    QQmlApplicationEngine &engine, const ApplicationStartupSource &startupSource)
+    QQmlApplicationEngine& engine, const ApplicationStartupSource& startupSource)
 {
     setupLocalizedContext(engine);
     registerApplicationImageProviders(engine);
@@ -72,10 +72,10 @@ void loadApplicationMainQml(
     engine.load(QUrl(QStringLiteral("qrc:/qt/qml/org/hnjae/kiriview/src/qml/Main.qml")));
 }
 
-int runApplication(const ApplicationStartupSource &startupSource)
+int runApplication(const ApplicationStartupSource& startupSource)
 {
     std::array<char, 9> applicationName { 'k', 'i', 'r', 'i', 'v', 'i', 'e', 'w', '\0' };
-    char *arguments[] = { applicationName.data() };
+    char* arguments[] = { applicationName.data() };
     int argumentCount = 1;
 
     QApplication application(argumentCount, arguments);

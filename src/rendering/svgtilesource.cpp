@@ -22,7 +22,7 @@
 #include <utility>
 
 namespace {
-QImage imageFromPremultipliedRgbaBytes(const QByteArray &bytes, const QSize &size)
+QImage imageFromPremultipliedRgbaBytes(const QByteArray& bytes, const QSize& size)
 {
     if (bytes.isEmpty() || size.isEmpty()) {
         return {};
@@ -35,12 +35,12 @@ QImage imageFromPremultipliedRgbaBytes(const QByteArray &bytes, const QSize &siz
         return {};
     }
 
-    const QImage image(reinterpret_cast<const uchar *>(bytes.constData()), size.width(),
+    const QImage image(reinterpret_cast<const uchar*>(bytes.constData()), size.width(),
         size.height(), QImage::Format_RGBA8888_Premultiplied);
     return image.copy();
 }
 
-QByteArray renderSvgImageBytes(const QByteArray &data, const QSize &size)
+QByteArray renderSvgImageBytes(const QByteArray& data, const QSize& size)
 {
     if (size.isEmpty()) {
         return {};
@@ -50,12 +50,12 @@ QByteArray renderSvgImageBytes(const QByteArray &data, const QSize &size)
         kiriview::Bridge::rustBytes(data), size.width(), size.height()));
 }
 
-QImage renderSvgImage(const QByteArray &data, const QSize &size)
+QImage renderSvgImage(const QByteArray& data, const QSize& size)
 {
     return imageFromPremultipliedRgbaBytes(renderSvgImageBytes(data, size), size);
 }
 
-QSize svgFirstDisplayPreviewSize(const QSize &imageSize, const QSize &physicalViewportSize)
+QSize svgFirstDisplayPreviewSize(const QSize& imageSize, const QSize& physicalViewportSize)
 {
     if (imageSize.isEmpty() || physicalViewportSize.isEmpty()) {
         return {};
@@ -74,7 +74,7 @@ QSize svgFirstDisplayPreviewSize(const QSize &imageSize, const QSize &physicalVi
 }
 
 namespace kiriview {
-std::shared_ptr<SvgTileSource> SvgTileSource::open(const QByteArray &data, QString *errorString)
+std::shared_ptr<SvgTileSource> SvgTileSource::open(const QByteArray& data, QString* errorString)
 {
     const RustSvgImageSize intrinsicSize = rustSvgIntrinsicSize(Bridge::rustBytes(data));
     if (!intrinsicSize.valid) {
@@ -99,7 +99,7 @@ SvgTileSource::SvgTileSource(QByteArray data, QSize imageSize)
 QSize SvgTileSource::imageSize() const { return m_imageSize; }
 
 std::optional<DecodedTile> SvgTileSource::decodeTile(
-    const TileRequest &request, QString *errorString) const
+    const TileRequest& request, QString* errorString) const
 {
     if (!tileRequestCanDecode(request)) {
         return std::nullopt;
@@ -119,7 +119,7 @@ std::optional<DecodedTile> SvgTileSource::decodeTile(
 }
 
 FirstDisplayImageDecodeResult SvgTileSource::decodeFirstDisplayImage(
-    const ImageFirstDisplayDecodeContext &context, QString *errorString) const
+    const ImageFirstDisplayDecodeContext& context, QString* errorString) const
 {
     if (!context.isValid()) {
         return {};
@@ -149,7 +149,7 @@ FirstDisplayImageDecodeResult SvgTileSource::decodeFirstDisplayImage(
 
 bool SvgTileSource::supportsRasterDisplayRefinement() const { return true; }
 
-QImage SvgTileSource::decodeRasterDisplayImage(const QSize &rasterSize, QString *errorString) const
+QImage SvgTileSource::decodeRasterDisplayImage(const QSize& rasterSize, QString* errorString) const
 {
     const QImage image = renderSvgImage(m_data, rasterSize);
     if (image.isNull()) {
@@ -159,7 +159,7 @@ QImage SvgTileSource::decodeRasterDisplayImage(const QSize &rasterSize, QString 
     return image;
 }
 
-QImage SvgTileSource::decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const
+QImage SvgTileSource::decodeBlockingDisplayImage(int maximumLongEdge, QString* errorString) const
 {
     const QSize previewSize = boundedPreviewSize(m_imageSize, maximumLongEdge);
     const QImage preview = renderSvgImage(m_data, previewSize);

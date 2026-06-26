@@ -7,7 +7,7 @@
 #include <utility>
 
 namespace {
-void cancelMediaEntrySourceCandidateLoadToken(QObject *object)
+void cancelMediaEntrySourceCandidateLoadToken(QObject* object)
 {
     if (object != nullptr) {
         object->deleteLater();
@@ -17,9 +17,9 @@ void cancelMediaEntrySourceCandidateLoadToken(QObject *object)
 
 namespace kiriview {
 ImageIoJob MediaEntrySourceCandidateLoadState::addLoad(
-    QObject *receiver, ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
+    QObject* receiver, ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
-    QObject *token = new QObject(receiver);
+    QObject* token = new QObject(receiver);
     ImageIoJob job(token, cancelMediaEntrySourceCandidateLoadToken);
     m_pendingLoads.push_back(MediaEntrySourceCandidateLoad {
         job.completion(),
@@ -62,7 +62,7 @@ std::vector<MediaEntrySourceCandidateLoad> MediaEntrySourceCandidateLoadState::f
 
 void MediaEntrySourceCandidateLoadState::cancel()
 {
-    for (const MediaEntrySourceCandidateLoad &load : m_pendingLoads) {
+    for (const MediaEntrySourceCandidateLoad& load : m_pendingLoads) {
         load.completion.cancel();
     }
     reset();

@@ -14,7 +14,8 @@
 #include <utility>
 
 namespace {
-struct TestPredecodeSchedulePayload final : kiriview::PredecodeSchedulePayload {
+struct TestPredecodeSchedulePayload final : kiriview::PredecodeSchedulePayload
+{
     int marker = 0;
 };
 
@@ -25,7 +26,7 @@ std::shared_ptr<const kiriview::PredecodeSchedulePayload> testPayload(int marker
     return payload;
 }
 
-kiriview::PredecodeScheduleContext scheduleContext(const QUrl &url, int pageIndex = 0)
+kiriview::PredecodeScheduleContext scheduleContext(const QUrl& url, int pageIndex = 0)
 {
     kiriview::DisplayedPredecodeImage displayedImage {
         kiriview::DisplayedImageLocation::fromUrl(url),
@@ -41,19 +42,19 @@ kiriview::PredecodeScheduleContext scheduleContext(const QUrl &url, int pageInde
     };
 }
 
-const TestPredecodeSchedulePayload *testPayload(const kiriview::PredecodeScheduleContext &context)
+const TestPredecodeSchedulePayload* testPayload(const kiriview::PredecodeScheduleContext& context)
 {
     return kiriview::predecodeSchedulePayload<TestPredecodeSchedulePayload>(context);
 }
 
-int payloadMarker(const kiriview::PredecodeScheduleContext &context)
+int payloadMarker(const kiriview::PredecodeScheduleContext& context)
 {
-    const TestPredecodeSchedulePayload *payload = testPayload(context);
+    const TestPredecodeSchedulePayload* payload = testPayload(context);
     return payload == nullptr ? 0 : payload->marker;
 }
 
 template <typename Operation>
-const Operation *operationAt(const kiriview::PredecodeScheduleRuntimePlan &plan, std::size_t index)
+const Operation* operationAt(const kiriview::PredecodeScheduleRuntimePlan& plan, std::size_t index)
 {
     if (index >= plan.size()) {
         return nullptr;
@@ -88,12 +89,12 @@ void TestPredecodeScheduleState::schedulePublishesCurrentContextAndPendingGenera
 
     QCOMPARE(update.size(), std::size_t(3));
     QVERIFY(operationAt<kiriview::CancelBackgroundPredecodeOperation>(update, 0) != nullptr);
-    const auto *cacheOperation
+    const auto* cacheOperation
         = operationAt<kiriview::CacheDisplayedPredecodeContextOperation>(update, 1);
     QVERIFY(cacheOperation != nullptr);
     QCOMPARE(cacheOperation->images.size(), std::size_t(1));
     QCOMPARE(cacheOperation->images.front().location.imageUrl(), firstUrl);
-    const auto *debounceOperation
+    const auto* debounceOperation
         = operationAt<kiriview::StartPredecodeDebounceOperation>(update, 2);
     QVERIFY(debounceOperation != nullptr);
     QCOMPARE(debounceOperation->schedule.context.currentLocation.imageUrl(), firstUrl);
@@ -110,7 +111,7 @@ void TestPredecodeScheduleState::invalidScheduleCancelsPendingAndClearsCurrentCo
     kiriview::PredecodeScheduleState state;
     const kiriview::PredecodeScheduleRuntimePlan update
         = state.schedule(scheduleContext(kiriview::TestSupport::indexedImageUrl(2), 2), 1000);
-    const auto *debounceOperation
+    const auto* debounceOperation
         = operationAt<kiriview::StartPredecodeDebounceOperation>(update, 2);
     QVERIFY(debounceOperation != nullptr);
 
@@ -139,11 +140,11 @@ void TestPredecodeScheduleState::scheduleAcceptsCursorWithoutDisplayedImages()
 
     QCOMPARE(update.size(), std::size_t(3));
     QVERIFY(operationAt<kiriview::CancelBackgroundPredecodeOperation>(update, 0) != nullptr);
-    const auto *cacheOperation
+    const auto* cacheOperation
         = operationAt<kiriview::CacheDisplayedPredecodeContextOperation>(update, 1);
     QVERIFY(cacheOperation != nullptr);
     QVERIFY(cacheOperation->images.empty());
-    const auto *debounceOperation
+    const auto* debounceOperation
         = operationAt<kiriview::StartPredecodeDebounceOperation>(update, 2);
     QVERIFY(debounceOperation != nullptr);
     QCOMPARE(debounceOperation->schedule.context.currentLocation.imageUrl(), cursorUrl);
@@ -160,7 +161,7 @@ void TestPredecodeScheduleState::pendingScheduleCarriesPayload()
 
     const kiriview::PredecodeScheduleRuntimePlan update = state.schedule(std::move(context), 1000);
 
-    const auto *debounceOperation
+    const auto* debounceOperation
         = operationAt<kiriview::StartPredecodeDebounceOperation>(update, 2);
     QVERIFY(debounceOperation != nullptr);
     QCOMPARE(payloadMarker(debounceOperation->schedule.context), 42);
@@ -185,7 +186,7 @@ void TestPredecodeScheduleState::powerSaverSuppressesPendingScheduleButKeepsCurr
 
     QCOMPARE(update.size(), std::size_t(3));
     QVERIFY(operationAt<kiriview::CancelBackgroundPredecodeOperation>(update, 0) != nullptr);
-    const auto *cacheOperation
+    const auto* cacheOperation
         = operationAt<kiriview::CacheDisplayedPredecodeContextOperation>(update, 1);
     QVERIFY(cacheOperation != nullptr);
     QVERIFY(operationAt<kiriview::ClearPredecodeWindowUrlsOperation>(update, 2) != nullptr);
@@ -212,12 +213,12 @@ void TestPredecodeScheduleState::disablingPowerSaverReschedulesCurrentContext()
 
     QCOMPARE(resumed.size(), std::size_t(3));
     QVERIFY(operationAt<kiriview::CancelBackgroundPredecodeOperation>(resumed, 0) != nullptr);
-    const auto *cacheOperation
+    const auto* cacheOperation
         = operationAt<kiriview::CacheDisplayedPredecodeContextOperation>(resumed, 1);
     QVERIFY(cacheOperation != nullptr);
     QCOMPARE(cacheOperation->images.size(), std::size_t(1));
     QCOMPARE(cacheOperation->images.front().location.imageUrl(), displayedUrl);
-    const auto *debounceOperation
+    const auto* debounceOperation
         = operationAt<kiriview::StartPredecodeDebounceOperation>(resumed, 2);
     QVERIFY(debounceOperation != nullptr);
     QCOMPARE(payloadMarker(debounceOperation->schedule.context), 77);
@@ -249,7 +250,7 @@ void TestPredecodeScheduleState::settledNeutralScheduleReissuesPendingGeneration
     biasedContext.payload = testPayload(99);
     const kiriview::PredecodeScheduleRuntimePlan biasedUpdate
         = state.schedule(std::move(biasedContext), 1600);
-    const auto *biasedDebounceOperation
+    const auto* biasedDebounceOperation
         = operationAt<kiriview::StartPredecodeDebounceOperation>(biasedUpdate, 2);
     QVERIFY(biasedDebounceOperation != nullptr);
     const quint64 biasedGeneration = biasedDebounceOperation->schedule.generation;
@@ -259,7 +260,7 @@ void TestPredecodeScheduleState::settledNeutralScheduleReissuesPendingGeneration
 
     QCOMPARE(settled.size(), std::size_t(2));
     QVERIFY(operationAt<kiriview::CancelBackgroundPredecodeOperation>(settled, 0) != nullptr);
-    const auto *startOperation = operationAt<kiriview::StartAdjacentPredecodeOperation>(settled, 1);
+    const auto* startOperation = operationAt<kiriview::StartAdjacentPredecodeOperation>(settled, 1);
     QVERIFY(startOperation != nullptr);
     QCOMPARE(payloadMarker(startOperation->schedule.context), 99);
     QVERIFY(state.momentumMode() == kiriview::PredecodeMomentumMode::Neutral);

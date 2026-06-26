@@ -7,7 +7,7 @@
 #include "location/imagedocumentlocation.h"
 
 namespace {
-bool rootSchemeSupportsThumbnailContentIdentity(const QString &rootScheme)
+bool rootSchemeSupportsThumbnailContentIdentity(const QString& rootScheme)
 {
     return rootScheme == QStringLiteral("zip");
 }
@@ -15,14 +15,14 @@ bool rootSchemeSupportsThumbnailContentIdentity(const QString &rootScheme)
 
 namespace kiriview {
 bool openedCollectionEntrySupportsThumbnailContentIdentity(
-    const OpenedCollectionScopeLocation &openedCollectionScope, ImageDocumentPageKind pageKind)
+    const OpenedCollectionScopeLocation& openedCollectionScope, ImageDocumentPageKind pageKind)
 {
     return pageKind == ImageDocumentPageKind::Image
         && rootSchemeSupportsThumbnailContentIdentity(openedCollectionScope.rootUrl().scheme());
 }
 
 bool openedCollectionEntryPathSupportsThumbnailContentIdentity(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath)
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QString& entryPath)
 {
     return isSupportedImageFileName(entryPath)
         && openedCollectionEntrySupportsThumbnailContentIdentity(
@@ -30,7 +30,7 @@ bool openedCollectionEntryPathSupportsThumbnailContentIdentity(
 }
 
 OpenedCollectionThumbnailSourcePlan openedCollectionThumbnailSourcePlan(
-    const OpenedCollectionScopeLocation &openedCollectionScope, const QUrl &entryUrl,
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& entryUrl,
     ImageDocumentPageKind pageKind)
 {
     if (!openedCollectionEntrySupportsThumbnailContentIdentity(openedCollectionScope, pageKind)

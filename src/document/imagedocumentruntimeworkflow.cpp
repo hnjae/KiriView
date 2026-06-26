@@ -85,7 +85,7 @@ kiriview::ImageDocumentRuntimeOperations runtimeOperations(
             ports.spreadController->resetZoom();
         }
     };
-    operations.spread.prepareFailedContainer = [ports](const QUrl &) {
+    operations.spread.prepareFailedContainer = [ports](const QUrl&) {
         if (ports.spreadController != nullptr) {
             ports.spreadController->resetZoom();
         }
@@ -120,25 +120,25 @@ kiriview::ImageDocumentRuntimeOperations runtimeOperations(
             ports.navigationController->updatePageNavigation();
         }
     };
-    operations.navigation.loadUrl = [ports](const kiriview::ImageDocumentPageTarget &target) {
+    operations.navigation.loadUrl = [ports](const kiriview::ImageDocumentPageTarget& target) {
         if (ports.loadSource) {
             ports.loadSource(kiriview::ImageDocumentSourceLoadRequest::fromTarget(target));
         }
     };
     operations.navigation.loadContainerImage
-        = [ports](const kiriview::ImageDocumentPageTarget &target, const QUrl &containerUrl) {
+        = [ports](const kiriview::ImageDocumentPageTarget& target, const QUrl& containerUrl) {
               if (ports.loadSource) {
                   ports.loadSource(kiriview::ImageDocumentSourceLoadRequest::fromContainerTarget(
                       target, containerUrl));
               }
           };
-    operations.navigation.finishEmptyContainerNavigation = [ports](const QUrl &containerUrl) {
+    operations.navigation.finishEmptyContainerNavigation = [ports](const QUrl& containerUrl) {
         if (ports.openController != nullptr) {
             ports.openController->finishContainerNavigationWithEmptyContainer(containerUrl);
         }
     };
-    operations.navigation.finishContainerNavigationLoadWithError = [ports](const QUrl &containerUrl,
-                                                                       const QString &errorString) {
+    operations.navigation.finishContainerNavigationLoadWithError = [ports](const QUrl& containerUrl,
+                                                                       const QString& errorString) {
         if (ports.openController != nullptr) {
             ports.openController->finishContainerNavigationLoadWithError(containerUrl, errorString);
         }
@@ -151,7 +151,7 @@ kiriview::ImageDocumentRuntimeOperations runtimeOperations(
               }
           };
     operations.navigation.reportContainerNavigationListFailure
-        = [](const kiriview::ContainerNavigationListFailure &failure) {
+        = [](const kiriview::ContainerNavigationListFailure& failure) {
               qCDebug(kiriviewNavigationLog)
                   << "container navigation listing failed"
                   << "currentContainerUrl" << failure.currentContainerUrl << "parentUrl"
@@ -161,7 +161,7 @@ kiriview::ImageDocumentRuntimeOperations runtimeOperations(
           };
     operations.navigation.loadPageNavigationUrl =
         [ports](
-            const kiriview::ImageDocumentPageTarget &target, bool preserveTwoPageSpreadTransition) {
+            const kiriview::ImageDocumentPageTarget& target, bool preserveTwoPageSpreadTransition) {
             if (ports.loadSource) {
                 ports.loadSource(kiriview::ImageDocumentSourceLoadRequest::fromPageNavigationTarget(
                     target, preserveTwoPageSpreadTransition));
@@ -190,25 +190,25 @@ kiriview::ImageDocumentRuntimeOperations runtimeOperations(
             ports.state->clearLoadingContainerNavigationUrl();
         }
     };
-    operations.sourceLoad.setLoadingContainerNavigationUrl = [ports](const QUrl &url) {
+    operations.sourceLoad.setLoadingContainerNavigationUrl = [ports](const QUrl& url) {
         if (ports.state != nullptr) {
             ports.state->setLoadingContainerNavigationUrl(url);
         }
     };
-    operations.sourceLoad.setContainerNavigationUrl = [ports](const QUrl &url) {
+    operations.sourceLoad.setContainerNavigationUrl = [ports](const QUrl& url) {
         if (ports.state != nullptr) {
             ports.state->setContainerNavigationUrl(url);
         }
     };
     operations.sourceLoad.prepareSourceLoad
-        = [ports](const kiriview::ImageDocumentSourceLoadRequest &request) {
+        = [ports](const kiriview::ImageDocumentSourceLoadRequest& request) {
               if (ports.mediaEntrySourceStore != nullptr && ports.state != nullptr) {
                   ports.mediaEntrySourceStore->prepareForOpenedCollectionScope(
                       kiriview::openedCollectionScopeForImageDocumentSourceLoad(
                           request, ports.state->displayedOpenedCollectionScope()));
               }
           };
-    operations.open.setSourceUrl = [ports](const kiriview::ImageDocumentPageTarget &target) {
+    operations.open.setSourceUrl = [ports](const kiriview::ImageDocumentPageTarget& target) {
         if (ports.state != nullptr) {
             ports.state->setSourceKind(target.kind);
             ports.state->setSourceUrl(target.url);
@@ -219,7 +219,7 @@ kiriview::ImageDocumentRuntimeOperations runtimeOperations(
             ports.openController->open();
         }
     };
-    operations.open.setErrorString = [ports](const QString &errorString) {
+    operations.open.setErrorString = [ports](const QString& errorString) {
         if (ports.state != nullptr) {
             ports.state->setErrorString(errorString);
         }
@@ -245,7 +245,7 @@ ImageDocumentRuntimeWorkflow::ImageDocumentRuntimeWorkflow(ImageDocumentRuntimeW
 {
 }
 
-void ImageDocumentRuntimeWorkflow::dispatchPlan(const ImageDocumentRuntimePlan &plan)
+void ImageDocumentRuntimeWorkflow::dispatchPlan(const ImageDocumentRuntimePlan& plan)
 {
     m_executor.dispatchPlan(plan);
 }

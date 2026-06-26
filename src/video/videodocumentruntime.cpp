@@ -11,7 +11,7 @@
 #include <variant>
 
 namespace kiriview {
-VideoDocumentRuntime::VideoDocumentRuntime(QObject *documentObject, ChangeCallback changeCallback,
+VideoDocumentRuntime::VideoDocumentRuntime(QObject* documentObject, ChangeCallback changeCallback,
     std::unique_ptr<VideoMediaBackend> mediaBackend,
     std::unique_ptr<VideoPlaybackUrlResolver> playbackUrlResolver,
     MediaBackendFactory mediaBackendFactory)
@@ -22,7 +22,7 @@ VideoDocumentRuntime::VideoDocumentRuntime(QObject *documentObject, ChangeCallba
     , m_sourceLoadRuntime(std::move(playbackUrlResolver))
     , m_outputRuntime(documentObject,
           VideoOutputRuntimeCallbacks {
-              [this](QObject *videoOutput) {
+              [this](QObject* videoOutput) {
                   if (m_mediaBackend != nullptr) {
                       m_mediaBackend->setVideoOutput(videoOutput);
                   }
@@ -33,7 +33,7 @@ VideoDocumentRuntime::VideoDocumentRuntime(QObject *documentObject, ChangeCallba
 {
     if (!m_mediaBackendFactory) {
         m_mediaBackendFactory
-            = [](QObject *parent) { return createDefaultVideoMediaBackend(parent); };
+            = [](QObject* parent) { return createDefaultVideoMediaBackend(parent); };
     }
 
     if (m_mediaBackend == nullptr) {
@@ -43,7 +43,7 @@ VideoDocumentRuntime::VideoDocumentRuntime(QObject *documentObject, ChangeCallba
     installMediaBackendCallbacks();
 }
 
-VideoMediaBackend *VideoDocumentRuntime::ensureMediaBackend()
+VideoMediaBackend* VideoDocumentRuntime::ensureMediaBackend()
 {
     if (m_mediaBackend == nullptr) {
         m_mediaBackend = m_mediaBackendFactory(m_documentObject);
@@ -115,7 +115,7 @@ VideoDocumentRuntime::~VideoDocumentRuntime()
 
 QUrl VideoDocumentRuntime::sourceUrl() const { return m_state.sourceUrl(); }
 
-void VideoDocumentRuntime::setSourceUrl(const QUrl &sourceUrl)
+void VideoDocumentRuntime::setSourceUrl(const QUrl& sourceUrl)
 {
     if (m_state.sourceUrl() == sourceUrl) {
         return;
@@ -129,12 +129,12 @@ VideoDocumentStatus VideoDocumentRuntime::status() const { return m_state.status
 
 QString VideoDocumentRuntime::errorString() const { return m_state.errorString(); }
 
-const std::optional<VideoSourceLoadFailure> &VideoDocumentRuntime::sourceLoadFailure() const
+const std::optional<VideoSourceLoadFailure>& VideoDocumentRuntime::sourceLoadFailure() const
 {
     return m_state.sourceLoadFailure();
 }
 
-const std::optional<VideoBackendFailure> &VideoDocumentRuntime::backendFailure() const
+const std::optional<VideoBackendFailure>& VideoDocumentRuntime::backendFailure() const
 {
     return m_state.backendFailure();
 }
@@ -174,20 +174,20 @@ void VideoDocumentRuntime::setMuted(bool muted)
     }
 }
 
-QObject *VideoDocumentRuntime::videoOutput() const { return m_outputRuntime.videoOutput(); }
+QObject* VideoDocumentRuntime::videoOutput() const { return m_outputRuntime.videoOutput(); }
 
-const EmbeddedMetadata &VideoDocumentRuntime::embeddedMetadata() const
+const EmbeddedMetadata& VideoDocumentRuntime::embeddedMetadata() const
 {
     return m_state.embeddedMetadata();
 }
 
-void VideoDocumentRuntime::setVideoOutput(QObject *videoOutput)
+void VideoDocumentRuntime::setVideoOutput(QObject* videoOutput)
 {
     m_outputRuntime.setVideoOutput(videoOutput);
 }
 
 void VideoDocumentRuntime::setVideoOutputGeometry(
-    const QRectF &contentRect, const QRectF &sourceRect)
+    const QRectF& contentRect, const QRectF& sourceRect)
 {
     m_outputRuntime.setVideoOutputGeometry(contentRect, sourceRect);
 }
@@ -239,9 +239,9 @@ VideoPlaybackControlSnapshot VideoDocumentRuntime::playbackControlSnapshot() con
     };
 }
 
-void VideoDocumentRuntime::executePlaybackControlPlan(const VideoPlaybackControlPlan &plan)
+void VideoDocumentRuntime::executePlaybackControlPlan(const VideoPlaybackControlPlan& plan)
 {
-    for (const VideoPlaybackBackendOperation &operation : plan.backendOperations) {
+    for (const VideoPlaybackBackendOperation& operation : plan.backendOperations) {
         executePlaybackBackendOperation(operation);
     }
 
@@ -249,33 +249,33 @@ void VideoDocumentRuntime::executePlaybackControlPlan(const VideoPlaybackControl
 }
 
 void VideoDocumentRuntime::executePlaybackBackendOperation(
-    const VideoPlaybackBackendOperation &operation)
+    const VideoPlaybackBackendOperation& operation)
 {
     std::visit(
-        [this](const auto &payload) { executePlaybackBackendOperation(payload); }, operation);
+        [this](const auto& payload) { executePlaybackBackendOperation(payload); }, operation);
 }
 
 void VideoDocumentRuntime::executePlaybackBackendOperation(
-    const EnsureVideoPlaybackBackendOperation &)
+    const EnsureVideoPlaybackBackendOperation&)
 {
     ensureMediaBackend();
 }
 
-void VideoDocumentRuntime::executePlaybackBackendOperation(const PlayVideoPlaybackOperation &)
+void VideoDocumentRuntime::executePlaybackBackendOperation(const PlayVideoPlaybackOperation&)
 {
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->play();
     }
 }
 
-void VideoDocumentRuntime::executePlaybackBackendOperation(const PauseVideoPlaybackOperation &)
+void VideoDocumentRuntime::executePlaybackBackendOperation(const PauseVideoPlaybackOperation&)
 {
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->pause();
     }
 }
 
-void VideoDocumentRuntime::executePlaybackBackendOperation(const StopVideoPlaybackOperation &)
+void VideoDocumentRuntime::executePlaybackBackendOperation(const StopVideoPlaybackOperation&)
 {
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->stop();
@@ -283,14 +283,14 @@ void VideoDocumentRuntime::executePlaybackBackendOperation(const StopVideoPlayba
 }
 
 void VideoDocumentRuntime::executePlaybackBackendOperation(
-    const SetVideoPlaybackPositionOperation &operation)
+    const SetVideoPlaybackPositionOperation& operation)
 {
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->setPosition(operation.position);
     }
 }
 
-void VideoDocumentRuntime::applyPlaybackStateDelta(const VideoPlaybackStateDelta &delta)
+void VideoDocumentRuntime::applyPlaybackStateDelta(const VideoPlaybackStateDelta& delta)
 {
     if (delta.mediaEnded.has_value()) {
         m_state.setMediaEnded(delta.mediaEnded.value());
@@ -311,51 +311,51 @@ void VideoDocumentRuntime::clearPlaybackSource()
     }
 }
 
-void VideoDocumentRuntime::executeSourceLoadPlan(const VideoSourceLoadPlan &plan)
+void VideoDocumentRuntime::executeSourceLoadPlan(const VideoSourceLoadPlan& plan)
 {
-    for (const VideoSourceLoadOperation &operation : plan) {
+    for (const VideoSourceLoadOperation& operation : plan) {
         executeSourceLoadOperation(operation);
     }
 }
 
-void VideoDocumentRuntime::executeSourceLoadOperation(const VideoSourceLoadOperation &operation)
+void VideoDocumentRuntime::executeSourceLoadOperation(const VideoSourceLoadOperation& operation)
 {
-    std::visit([this](const auto &payload) { executeSourceLoadOperation(payload); }, operation);
+    std::visit([this](const auto& payload) { executeSourceLoadOperation(payload); }, operation);
 }
 
-void VideoDocumentRuntime::executeSourceLoadOperation(const ClearVideoPlaybackSourceOperation &)
+void VideoDocumentRuntime::executeSourceLoadOperation(const ClearVideoPlaybackSourceOperation&)
 {
     invalidatePlaybackCallbacks();
     clearPlaybackSource();
 }
 
-void VideoDocumentRuntime::executeSourceLoadOperation(const ResetClearedVideoSourceOperation &)
+void VideoDocumentRuntime::executeSourceLoadOperation(const ResetClearedVideoSourceOperation&)
 {
     m_state.resetForClearedSource();
 }
 
 void VideoDocumentRuntime::executeSourceLoadOperation(
-    const ResetVideoSourceLoadOperation &operation)
+    const ResetVideoSourceLoadOperation& operation)
 {
     invalidatePlaybackCallbacks();
     m_state.resetForSourceLoad(operation.sourceUrl);
 }
 
 void VideoDocumentRuntime::executeSourceLoadOperation(
-    const ApplyVideoPlaybackUrlOperation &operation)
+    const ApplyVideoPlaybackUrlOperation& operation)
 {
     applyResolvedPlaybackUrl(operation.playbackUrl);
 }
 
 void VideoDocumentRuntime::executeSourceLoadOperation(
-    const PublishVideoSourceLoadFailureOperation &operation)
+    const PublishVideoSourceLoadFailureOperation& operation)
 {
     publishSourceLoadFailure(operation.failure);
 }
 
-void VideoDocumentRuntime::applyResolvedPlaybackUrl(const QUrl &playbackUrl)
+void VideoDocumentRuntime::applyResolvedPlaybackUrl(const QUrl& playbackUrl)
 {
-    VideoMediaBackend *mediaBackend = ensureMediaBackend();
+    VideoMediaBackend* mediaBackend = ensureMediaBackend();
     acceptPlaybackCallbacks();
     mediaBackend->setSource(playbackUrl);
     m_state.setEmbeddedMetadata(playbackUrl.isLocalFile()
@@ -366,7 +366,7 @@ void VideoDocumentRuntime::applyResolvedPlaybackUrl(const QUrl &playbackUrl)
     play();
 }
 
-void VideoDocumentRuntime::publishSourceLoadFailure(const VideoSourceLoadFailure &failure)
+void VideoDocumentRuntime::publishSourceLoadFailure(const VideoSourceLoadFailure& failure)
 {
     invalidatePlaybackCallbacks();
     m_state.setEmbeddedMetadata({});

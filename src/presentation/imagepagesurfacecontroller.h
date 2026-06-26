@@ -32,14 +32,15 @@ class ImagePageSurfaceController final
 {
 public:
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
-    using AnimationErrorCallback = std::function<void(const QString &)>;
+    using AnimationErrorCallback = std::function<void(const QString&)>;
 
-    struct Callbacks {
+    struct Callbacks
+    {
         ChangeCallback change;
         AnimationErrorCallback animationError;
     };
 
-    ImagePageSurfaceController(QObject *context, Callbacks callbacks,
+    ImagePageSurfaceController(QObject* context, Callbacks callbacks,
         ImageCacheBudgets cacheBudgets, std::shared_ptr<DisplayImageStore> displayImageStore = {},
         DisplayedPageRole pageRole = DisplayedPageRole::Primary,
         ImageWorkerScheduler workerScheduler = {});
@@ -53,29 +54,29 @@ public:
     std::optional<StaticDisplayImagePayload> displayImage() const;
     ImagePresentationPageSlotSnapshot snapshot() const;
 
-    void setImage(const QImage &image, bool predecodeCacheable);
-    void setAnimationFrame(const QImage &image, const QString &sourceIdentity);
+    void setImage(const QImage& image, bool predecodeCacheable);
+    void setAnimationFrame(const QImage& image, const QString& sourceIdentity);
     void setStaticDisplayImage(StaticDisplayImagePayload displayImage, bool predecodeCacheable,
-        const ImageDocumentRenderContext &renderContext);
+        const ImageDocumentRenderContext& renderContext);
     QString publishShadowDisplayImage(StaticDisplayImagePayload displayImage);
     void clearShadowDisplayImage();
-    void updateDisplayProjection(const ImagePresentationRenderProjection &projection);
+    void updateDisplayProjection(const ImagePresentationRenderProjection& projection);
     void clearImage();
 
     void startAnimation(ImageAnimationPlaybackRequest request);
     void stopAnimation();
-    bool acknowledgeDisplayImageLoad(const QUrl &providerUrl, quint64 revision,
-        const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
-    bool acknowledgeStillImageDisplayLoad(const QUrl &providerUrl, quint64 revision,
-        const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
-    bool acknowledgeAnimationFrameDisplayLoad(const QUrl &providerUrl, quint64 revision,
-        const QString &sourceIdentity, ImageDisplayLoadOutcome outcome);
+    bool acknowledgeDisplayImageLoad(const QUrl& providerUrl, quint64 revision,
+        const QString& sourceIdentity, ImageDisplayLoadOutcome outcome);
+    bool acknowledgeStillImageDisplayLoad(const QUrl& providerUrl, quint64 revision,
+        const QString& sourceIdentity, ImageDisplayLoadOutcome outcome);
+    bool acknowledgeAnimationFrameDisplayLoad(const QUrl& providerUrl, quint64 revision,
+        const QString& sourceIdentity, ImageDisplayLoadOutcome outcome);
 
 private:
     void acceptImageState(QSize imageSize, bool predecodeCacheable,
         std::optional<StaticDisplayImagePayload> displayImage);
-    void publishDisplaySource(const StaticDisplayImagePayload &displayImage);
-    void publishAnimationFrameDisplaySource(const QImage &image, const QString &sourceIdentity);
+    void publishDisplaySource(const StaticDisplayImagePayload& displayImage);
+    void publishAnimationFrameDisplaySource(const QImage& image, const QString& sourceIdentity);
     void clearDisplaySource();
     void releaseCurrentDisplayEntry();
     void releaseShadowDisplayEntry();
@@ -85,11 +86,11 @@ private:
     void clearAnimationFrameLoadContract();
     void updateDisplaySourceVisibility(bool visible);
     void cancelRasterDisplayRefinement();
-    void scheduleRasterDisplayRefinement(const ImagePresentationRenderProjection &projection);
+    void scheduleRasterDisplayRefinement(const ImagePresentationRenderProjection& projection);
     void notify(ImageDocumentChange change);
 
     Callbacks m_callbacks;
-    QObject *m_context = nullptr;
+    QObject* m_context = nullptr;
     qsizetype m_predecodeCacheByteBudget = 0;
     qsizetype m_displayImageByteBudget = 0;
     std::shared_ptr<DisplayImageStore> m_displayImageStore;

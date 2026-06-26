@@ -24,7 +24,7 @@ private Q_SLOTS:
 
 namespace {
 template <typename Operation>
-const Operation &operationAt(const kiriview::VideoSourceLoadPlan &plan, std::size_t index)
+const Operation& operationAt(const kiriview::VideoSourceLoadPlan& plan, std::size_t index)
 {
     return std::get<Operation>(plan.at(index));
 }
@@ -57,7 +57,7 @@ void TestVideoSourceLoadPlan::readyPlanCarriesSourceAndPlaybackUrls()
         = kiriview::videoSourceLoadReadyPlan(sourceUrl, playbackUrl);
 
     QCOMPARE(plan.size(), std::size_t(1));
-    const kiriview::ApplyVideoPlaybackUrlOperation &operation
+    const kiriview::ApplyVideoPlaybackUrlOperation& operation
         = operationAt<kiriview::ApplyVideoPlaybackUrlOperation>(plan, 0);
     QCOMPARE(operation.sourceUrl, sourceUrl);
     QCOMPARE(operation.playbackUrl, playbackUrl);
@@ -72,7 +72,7 @@ void TestVideoSourceLoadPlan::failurePlanCarriesSourceAndError()
         = kiriview::videoSourceLoadFailurePlan(sourceUrl, errorString);
 
     QCOMPARE(plan.size(), std::size_t(1));
-    const kiriview::PublishVideoSourceLoadFailureOperation &operation
+    const kiriview::PublishVideoSourceLoadFailureOperation& operation
         = operationAt<kiriview::PublishVideoSourceLoadFailureOperation>(plan, 0);
     QCOMPARE(operation.failure.sourceUrl, sourceUrl);
     QVERIFY(operation.failure.kind == kiriview::VideoSourceLoadFailureKind::PlaybackUrlResolution);

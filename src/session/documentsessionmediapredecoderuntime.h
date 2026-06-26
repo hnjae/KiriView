@@ -19,7 +19,8 @@ class QObject;
 namespace kiriview {
 class MediaPredecodeCoordinator;
 
-struct DocumentSessionMediaPredecodeInput {
+struct DocumentSessionMediaPredecodeInput
+{
     bool directMediaNavigationActive = false;
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     bool activeImageUsesImageDocumentSourceScope = false;
@@ -33,19 +34,19 @@ class DocumentSessionMediaPredecodeRuntime final
 {
 public:
     DocumentSessionMediaPredecodeRuntime(
-        QObject *owner, MediaPredecodeDependencyOverrides dependencies = {});
+        QObject* owner, MediaPredecodeDependencyOverrides dependencies = {});
     ~DocumentSessionMediaPredecodeRuntime();
 
-    void schedule(const DocumentSessionMediaPredecodeInput &input,
+    void schedule(const DocumentSessionMediaPredecodeInput& input,
         std::vector<DirectMediaNavigationCandidate> candidates);
-    void cacheDisplayedImages(const DocumentSessionMediaPredecodeInput &input);
+    void cacheDisplayedImages(const DocumentSessionMediaPredecodeInput& input);
     void cancel();
     void clear();
-    std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
+    std::optional<PredecodedImage> findPredecodedImage(const QUrl& url) const;
 
 private:
     static std::vector<DisplayedPredecodeImage> displayedImages(
-        const DocumentSessionMediaPredecodeInput &input);
+        const DocumentSessionMediaPredecodeInput& input);
 
     std::unique_ptr<MediaPredecodeCoordinator> m_coordinator;
 };

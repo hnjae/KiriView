@@ -31,7 +31,7 @@ public:
         callbacks = std::move(nextCallbacks);
     }
 
-    void setSource(const QUrl &nextSourceUrl) override { sourceUrl = nextSourceUrl; }
+    void setSource(const QUrl& nextSourceUrl) override { sourceUrl = nextSourceUrl; }
     void play() override
     {
         isPlaying = true;
@@ -57,8 +57,8 @@ public:
         isMuted = nextMuted;
         callbacks.mutedChanged();
     }
-    void setVideoOutput(QObject *nextVideoOutput) override { output = nextVideoOutput; }
-    QObject *videoOutput() const override { return output.data(); }
+    void setVideoOutput(QObject* nextVideoOutput) override { output = nextVideoOutput; }
+    QObject* videoOutput() const override { return output.data(); }
     kiriview::VideoMediaStatus mediaStatus() const override { return currentStatus; }
     QString errorString() const override { return {}; }
     qint64 duration() const override { return 0; }
@@ -95,7 +95,7 @@ public:
 class ImmediateVideoPlaybackUrlResolver final : public kiriview::VideoPlaybackUrlResolver
 {
 public:
-    void resolve(quint64 operationId, const QUrl &sourceUrl, QObject *,
+    void resolve(quint64 operationId, const QUrl& sourceUrl, QObject*,
         kiriview::VideoPlaybackUrlResolvedCallback resolvedCallback,
         kiriview::VideoPlaybackUrlFailedCallback) override
     {
@@ -110,9 +110,10 @@ public:
     void cleanup() override { }
 };
 
-struct RuntimeFixture {
+struct RuntimeFixture
+{
     QObject documentObject;
-    FakeVideoMediaBackend *backend = nullptr;
+    FakeVideoMediaBackend* backend = nullptr;
     std::unique_ptr<kiriview::VideoDocumentRuntime> runtime;
 
     RuntimeFixture()

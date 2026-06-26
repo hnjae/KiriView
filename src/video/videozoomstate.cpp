@@ -13,7 +13,7 @@ bool positiveFinite(qreal value) { return std::isfinite(value) && value > 0.0; }
 
 namespace kiriview {
 std::optional<int> videoZoomPercentForRects(
-    const QRectF &contentRect, const QRectF &sourceRect, qreal devicePixelRatio)
+    const QRectF& contentRect, const QRectF& sourceRect, qreal devicePixelRatio)
 {
     if (!positiveFinite(contentRect.width()) || !positiveFinite(contentRect.height())
         || !positiveFinite(sourceRect.width()) || !positiveFinite(sourceRect.height())

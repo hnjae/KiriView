@@ -15,7 +15,7 @@
 #include <utility>
 
 namespace {
-bool hasSpreadZoomStateChange(const kiriview::ImageZoomChangeSet &changes)
+bool hasSpreadZoomStateChange(const kiriview::ImageZoomChangeSet& changes)
 {
     return changes.imageSizeChanged || changes.viewportSizeChanged || changes.zoomModeChanged
         || changes.zoomPercentChanged || changes.displaySizeChanged
@@ -23,7 +23,7 @@ bool hasSpreadZoomStateChange(const kiriview::ImageZoomChangeSet &changes)
 }
 
 kiriview::ImagePresentationScopeKey presentationScopeKeyForLocation(
-    const kiriview::DisplayedImageLocation &location)
+    const kiriview::DisplayedImageLocation& location)
 {
     const QUrl openedCollectionScopeUrl = kiriview::zoomScopeUrlForLocation(location);
     if (!openedCollectionScopeUrl.isEmpty()) {
@@ -35,9 +35,9 @@ kiriview::ImagePresentationScopeKey presentationScopeKeyForLocation(
 }
 
 namespace kiriview {
-ImageSpreadPresentationController::ImageSpreadPresentationController(QObject *parent,
-    RenderContextProvider renderContextProvider, ImageDocumentState &state,
-    ImagePageSurfaceController &primaryPageSurface, ImagePresentationRuntime &presentationRuntime,
+ImageSpreadPresentationController::ImageSpreadPresentationController(QObject* parent,
+    RenderContextProvider renderContextProvider, ImageDocumentState& state,
+    ImagePageSurfaceController& primaryPageSurface, ImagePresentationRuntime& presentationRuntime,
     ImageSpreadPresentationController::Callbacks callbacks,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, ImageCacheBudgets cacheBudgets)
@@ -50,12 +50,12 @@ ImageSpreadPresentationController::ImageSpreadPresentationController(QObject *pa
         = std::make_unique<ImageSecondaryPageController>(parent, std::move(renderContextProvider),
             ImageSecondaryPageController::Callbacks {
                 [this](ImageDocumentChange change) { notify(change); },
-                [this](ImageSecondaryPageLoadResult result, const DisplayedImageLocation &location,
-                    const QSize &imageSize) {
+                [this](ImageSecondaryPageLoadResult result, const DisplayedImageLocation& location,
+                    const QSize& imageSize) {
                     handleSecondaryPageLoadFinished(result, location, imageSize);
                 },
                 [this]() { notifyTwoPageModeChanged(); },
-                [this](const QUrl &url) {
+                [this](const QUrl& url) {
                     if (!m_callbacks.findPredecodedImage) {
                         return std::optional<PredecodedImage>();
                     }
@@ -127,7 +127,7 @@ QPointF ImageSpreadPresentationController::viewportContentPosition() const
 }
 
 ImageViewportCommand ImageSpreadPresentationController::requestViewportContentPosition(
-    const QPointF &viewportContentPosition)
+    const QPointF& viewportContentPosition)
 {
     const ImageViewportCommand command
         = m_presentationRuntime.requestViewportContentPosition(viewportContentPosition);
@@ -145,7 +145,7 @@ bool ImageSpreadPresentationController::beginViewportCommandApplication(quint64 
 }
 
 bool ImageSpreadPresentationController::completeViewportCommandApplication(
-    quint64 commandRevision, const QPointF &actualContentPosition)
+    quint64 commandRevision, const QPointF& actualContentPosition)
 {
     const bool changed = m_presentationRuntime.completeViewportCommandApplication(
         commandRevision, actualContentPosition);
@@ -158,7 +158,7 @@ bool ImageSpreadPresentationController::completeViewportCommandApplication(
 }
 
 bool ImageSpreadPresentationController::acknowledgeViewportCommand(
-    quint64 commandRevision, const QPointF &actualContentPosition)
+    quint64 commandRevision, const QPointF& actualContentPosition)
 {
     const bool changed
         = m_presentationRuntime.acknowledgeViewportCommand(commandRevision, actualContentPosition);
@@ -171,7 +171,7 @@ bool ImageSpreadPresentationController::acknowledgeViewportCommand(
 }
 
 bool ImageSpreadPresentationController::observeViewportContentPosition(
-    const QPointF &contentPosition, ImageViewportObservationOrigin origin)
+    const QPointF& contentPosition, ImageViewportObservationOrigin origin)
 {
     if (!m_presentationRuntime.observeViewportContentPosition(contentPosition, origin)) {
         return false;
@@ -389,7 +389,7 @@ ImageSpreadPresentationController::secondaryDisplayedPredecodeImage() const
         return std::nullopt;
     }
 
-    const ImagePageSurfaceController &pageSurface
+    const ImagePageSurfaceController& pageSurface
         = m_secondaryPageController->pageSurfaceController();
     return DisplayedPredecodeImage {
         m_secondaryPageController->displayedImageLocation(),
@@ -406,7 +406,7 @@ ImageDisplaySourceProjection ImageSpreadPresentationController::displaySourcePro
 }
 
 void ImageSpreadPresentationController::acknowledgeDisplayImageLoad(DisplayedPageRole role,
-    const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
+    const QUrl& providerUrl, quint64 revision, const QString& sourceIdentity,
     ImageDisplayLoadOutcome outcome)
 {
     bool accepted = false;
@@ -431,7 +431,7 @@ void ImageSpreadPresentationController::acknowledgeDisplayImageLoad(DisplayedPag
 }
 
 void ImageSpreadPresentationController::acknowledgeStillImageDisplayLoad(DisplayedPageRole role,
-    const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
+    const QUrl& providerUrl, quint64 revision, const QString& sourceIdentity,
     ImageDisplayLoadOutcome outcome)
 {
     bool accepted = false;
@@ -456,7 +456,7 @@ void ImageSpreadPresentationController::acknowledgeStillImageDisplayLoad(Display
 }
 
 void ImageSpreadPresentationController::commitPrimaryPageSlot(
-    const DisplayedImageLocation &location)
+    const DisplayedImageLocation& location)
 {
     const ImageZoomChangeSet changes = m_presentationRuntime.commitPrimaryPageSlot(
         m_primaryPageSurface.snapshot(), presentationScopeKeyForLocation(location));
@@ -478,7 +478,7 @@ void ImageSpreadPresentationController::clearPrimaryPageSlot()
         ImageDocumentChange::ViewportFrame, ImageDocumentChange::DisplaySource });
 }
 
-void ImageSpreadPresentationController::setViewportSize(const QSizeF &viewportSize)
+void ImageSpreadPresentationController::setViewportSize(const QSizeF& viewportSize)
 {
     applyActivePresentationChanges(m_presentationRuntime.setViewportSize(viewportSize));
 }
@@ -671,7 +671,7 @@ void ImageSpreadPresentationController::notifyRightToLeftReadingChanged()
     notifyChanges(imageDocumentRightToLeftReadingNotifications(secondaryPageVisible()));
 }
 
-void ImageSpreadPresentationController::startSecondaryPageLoad(const QUrl &url)
+void ImageSpreadPresentationController::startSecondaryPageLoad(const QUrl& url)
 {
     m_secondaryPageController->startLoad(url, m_state.displayedOpenedCollectionScope(),
         m_presentationRuntime.firstDisplayDecodeContext());
@@ -679,8 +679,8 @@ void ImageSpreadPresentationController::startSecondaryPageLoad(const QUrl &url)
 }
 
 void ImageSpreadPresentationController::handleSecondaryPageLoadFinished(
-    ImageSecondaryPageLoadResult result, const DisplayedImageLocation &location,
-    const QSize &imageSize)
+    ImageSecondaryPageLoadResult result, const DisplayedImageLocation& location,
+    const QSize& imageSize)
 {
     if (result != ImageSecondaryPageLoadResult::Failed) {
         m_secondaryPageRefresh.cachePageSize(location.imageUrl(), imageSize);
@@ -735,7 +735,7 @@ bool ImageSpreadPresentationController::primaryPageIsWide() const
 
 ImageSpreadReadingAvailability ImageSpreadPresentationController::readingAvailability() const
 {
-    const DisplayedImageLocation &location = m_state.displayedImageLocation();
+    const DisplayedImageLocation& location = m_state.displayedImageLocation();
     return ImageSpreadReadingAvailability { m_primaryPageSurface.hasImage(), !location.isEmpty(),
         location.openedCollectionScope().isComicBook() };
 }
@@ -773,7 +773,7 @@ void ImageSpreadPresentationController::notifyTwoPageModeChanged()
 }
 
 void ImageSpreadPresentationController::applyActivePresentationChanges(
-    const ImageZoomChangeSet &changes, bool notifyPublicChanges)
+    const ImageZoomChangeSet& changes, bool notifyPublicChanges)
 {
     if (hasSpreadZoomStateChange(changes)) {
         updateDisplayProjections();
@@ -787,7 +787,7 @@ void ImageSpreadPresentationController::applyActivePresentationChanges(
 }
 
 void ImageSpreadPresentationController::notifyActivePresentationZoomChanged(
-    const ImageZoomChangeSet &changes)
+    const ImageZoomChangeSet& changes)
 {
     notifyChanges(imageDocumentSpreadZoomNotifications(changes));
 }
@@ -816,13 +816,13 @@ void ImageSpreadPresentationController::updateDisplayProjections()
         m_presentationRuntime.renderProjection(DisplayedPageRole::Secondary));
 }
 
-const ImageViewportFrame &ImageSpreadPresentationController::viewportFrame() const
+const ImageViewportFrame& ImageSpreadPresentationController::viewportFrame() const
 {
     return m_presentationRuntime.viewportFrame();
 }
 
 void ImageSpreadPresentationController::notifyChanges(
-    const std::vector<ImageDocumentChange> &changes)
+    const std::vector<ImageDocumentChange>& changes)
 {
     for (ImageDocumentChange change : changes) {
         notify(change);

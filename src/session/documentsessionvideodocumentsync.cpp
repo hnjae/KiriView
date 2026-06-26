@@ -5,7 +5,7 @@
 
 namespace kiriview {
 DocumentSessionVideoDocumentSyncPlan documentSessionVideoDocumentSyncPlan(
-    const DocumentSessionVideoDocumentSyncInput &input)
+    const DocumentSessionVideoDocumentSyncInput& input)
 {
     if (input.documentKind != DocumentSessionKind::Video) {
         return {};

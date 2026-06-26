@@ -56,7 +56,7 @@ KiriImageDocument::DeletionMode toImageDocumentDeletionMode(kiriview::FileDeleti
 }
 
 kiriview::DocumentSessionImageDocumentSnapshot imageDocumentSessionSnapshot(
-    KiriImageDocument &document)
+    KiriImageDocument& document)
 {
     return kiriview::DocumentSessionImageDocumentSnapshot {
         document.sourceUrl(),
@@ -90,7 +90,7 @@ kiriview::DocumentSessionImageDocumentSnapshot imageDocumentSessionSnapshot(
 }
 
 kiriview::DocumentSessionVideoDocumentSnapshot videoDocumentSessionSnapshot(
-    KiriVideoDocument &document)
+    KiriVideoDocument& document)
 {
     return kiriview::DocumentSessionVideoDocumentSnapshot {
         document.sourceUrl(),
@@ -210,10 +210,10 @@ kiriview::ActiveNavigationThumbnailDemandPriority toRuntimeThumbnailDemandPriori
 
 template <typename Document>
 kiriview::DocumentSessionDocumentSignalConnector documentSignalConnector(
-    Document &document, std::vector<void (Document::*)()> signalMethods)
+    Document& document, std::vector<void (Document::*)()> signalMethods)
 {
     return [&document, signalMethods = std::move(signalMethods)](
-               QObject *context, kiriview::DocumentSessionDocumentChangeHandler handler) {
+               QObject* context, kiriview::DocumentSessionDocumentChangeHandler handler) {
         std::vector<QMetaObject::Connection> connections;
         connections.reserve(signalMethods.size());
         for (void (Document::*signal)() : signalMethods) {
@@ -237,11 +237,11 @@ kiriview::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithP
 }
 
 void inheritMissingDirectMediaPredecodeDependencies(
-    kiriview::KiriDocumentSessionDependencies &dependencies)
+    kiriview::KiriDocumentSessionDependencies& dependencies)
 {
-    kiriview::MediaPredecodeDependencyOverrides &directMediaPredecode
+    kiriview::MediaPredecodeDependencyOverrides& directMediaPredecode
         = dependencies.sessionRuntime.directMediaPredecodeDependencies;
-    const kiriview::ImageDocumentRuntimeDependencyOverrides &imageDocument
+    const kiriview::ImageDocumentRuntimeDependencyOverrides& imageDocument
         = dependencies.imageDocument;
 
     if (!directMediaPredecode.imageDecode.dataLoader) {
@@ -294,7 +294,7 @@ kiriview::KiriDocumentSessionDependencies documentSessionDependenciesWithCompose
     return dependencies;
 }
 
-kiriview::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocumentSession &session)
+kiriview::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocumentSession& session)
 {
     kiriview::DocumentSessionPublicSignalOperations operations;
     operations.publicProjectionRevisionChanged
@@ -324,7 +324,7 @@ kiriview::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
 }
 
 kiriview::DocumentSessionImageDocumentSnapshotPort KiriDocumentSession::imageDocumentSnapshotPort(
-    KiriImageDocument &document)
+    KiriImageDocument& document)
 {
     return kiriview::DocumentSessionImageDocumentSnapshotPort {
         [&document]() { return imageDocumentSessionSnapshot(document); },
@@ -345,10 +345,10 @@ kiriview::DocumentSessionImageDocumentSnapshotPort KiriDocumentSession::imageDoc
 }
 
 kiriview::DocumentSessionImageDocumentCommandPort KiriDocumentSession::imageDocumentCommandPort(
-    KiriImageDocument &document)
+    KiriImageDocument& document)
 {
     return kiriview::DocumentSessionImageDocumentCommandPort {
-        { [&document](const QUrl &url) { document.setSourceUrl(url); } },
+        { [&document](const QUrl& url) { document.setSourceUrl(url); } },
         { [&document]() { document.openPreviousPage(); },
             [&document]() { document.openNextPage(); },
             [&document](int pageNumber) { document.openImageAtPage(pageNumber); } },
@@ -359,7 +359,7 @@ kiriview::DocumentSessionImageDocumentCommandPort KiriDocumentSession::imageDocu
 }
 
 kiriview::DocumentSessionVideoDocumentSnapshotPort KiriDocumentSession::videoDocumentSnapshotPort(
-    KiriVideoDocument &document)
+    KiriVideoDocument& document)
 {
     return kiriview::DocumentSessionVideoDocumentSnapshotPort {
         [&document]() { return videoDocumentSessionSnapshot(document); },
@@ -373,37 +373,37 @@ kiriview::DocumentSessionVideoDocumentSnapshotPort KiriDocumentSession::videoDoc
 }
 
 kiriview::DocumentSessionVideoDocumentCommandPort KiriDocumentSession::videoDocumentCommandPort(
-    KiriVideoDocument &document)
+    KiriVideoDocument& document)
 {
     return kiriview::DocumentSessionVideoDocumentCommandPort {
-        { [&document](const QUrl &url) { document.setSourceUrl(url); } },
+        { [&document](const QUrl& url) { document.setSourceUrl(url); } },
         { [&document]() { document.stop(); } },
         { [&document]() { return document.videoOutput(); },
-            [&document](QObject *videoOutput) { document.setVideoOutput(videoOutput); },
-            [&document](const QRectF &contentRect, const QRectF &sourceRect) {
+            [&document](QObject* videoOutput) { document.setVideoOutput(videoOutput); },
+            [&document](const QRectF& contentRect, const QRectF& sourceRect) {
                 document.setVideoOutputGeometry(contentRect, sourceRect);
             } },
     };
 }
 
-KiriDocumentSession::KiriDocumentSession(QObject *parent)
+KiriDocumentSession::KiriDocumentSession(QObject* parent)
     : KiriDocumentSession(kiriview::KiriDocumentSessionDependencies {}, parent)
 {
 }
 
 KiriDocumentSession::KiriDocumentSession(
-    kiriview::KiriDocumentSessionDependencies dependencies, QObject *parent)
+    kiriview::KiriDocumentSessionDependencies dependencies, QObject* parent)
     : KiriDocumentSession(documentSessionDependenciesWithComposedDefaults(std::move(dependencies)),
           ResolvedDependenciesTag {}, parent)
 {
 }
 
 KiriDocumentSession::KiriDocumentSession(kiriview::KiriDocumentSessionDependencies dependencies,
-    ResolvedDependenciesTag, QObject *parent)
+    ResolvedDependenciesTag, QObject* parent)
     : QObject(parent)
     , m_imageDocument(std::make_unique<KiriImageDocument>(
           imageDocumentDependenciesWithPredecodeFinder(dependencies.imageDocument,
-              [this](const QUrl &url) {
+              [this](const QUrl& url) {
                   return m_runtime != nullptr ? m_runtime->findPredecodedImage(url)
                                               : std::optional<kiriview::PredecodedImage>();
               }),
@@ -414,7 +414,7 @@ KiriDocumentSession::KiriDocumentSession(kiriview::KiriDocumentSessionDependenci
         this, imageDocumentSnapshotPort(*m_imageDocument),
         imageDocumentCommandPort(*m_imageDocument), videoDocumentSnapshotPort(*m_videoDocument),
         videoDocumentCommandPort(*m_videoDocument),
-        [this](const std::vector<kiriview::DocumentSessionChange> &changes) {
+        [this](const std::vector<kiriview::DocumentSessionChange>& changes) {
             handleSessionChanges(changes);
         },
         std::move(dependencies.sessionRuntime));
@@ -425,7 +425,7 @@ KiriDocumentSession::~KiriDocumentSession() = default;
 
 QUrl KiriDocumentSession::sourceUrl() const { return m_runtime->sourceUrl(); }
 
-void KiriDocumentSession::setSourceUrl(const QUrl &sourceUrl)
+void KiriDocumentSession::setSourceUrl(const QUrl& sourceUrl)
 {
     m_runtime->setSourceUrl(sourceUrl);
 }
@@ -580,31 +580,31 @@ KiriDocumentSession::activeNavigationRevealDirection() const
     return fromRuntimeRevealDirection(m_runtime->activeNavigationRevealDirection());
 }
 
-QAbstractListModel *KiriDocumentSession::activeNavigationThumbnailModel() const
+QAbstractListModel* KiriDocumentSession::activeNavigationThumbnailModel() const
 {
     return m_runtime->activeNavigationThumbnailModel();
 }
 
-KiriMediaInformation *KiriDocumentSession::mediaInformation() const
+KiriMediaInformation* KiriDocumentSession::mediaInformation() const
 {
     return m_mediaInformation.get();
 }
 
-const kiriview::MediaInformationProjectionSnapshot &
+const kiriview::MediaInformationProjectionSnapshot&
 KiriDocumentSession::mediaInformationSnapshot() const
 {
     return m_runtime->mediaInformationSnapshot();
 }
 
-const kiriview::DocumentSessionActionAvailabilityFacts &
+const kiriview::DocumentSessionActionAvailabilityFacts&
 KiriDocumentSession::actionAvailabilityFacts() const
 {
     return m_runtime->actionAvailabilityFacts();
 }
 
-KiriImageDocument *KiriDocumentSession::imageDocument() const { return m_imageDocument.get(); }
+KiriImageDocument* KiriDocumentSession::imageDocument() const { return m_imageDocument.get(); }
 
-KiriVideoDocument *KiriDocumentSession::videoDocument() const { return m_videoDocument.get(); }
+KiriVideoDocument* KiriDocumentSession::videoDocument() const { return m_videoDocument.get(); }
 
 void KiriDocumentSession::openPreviousActiveNavigation()
 {
@@ -670,8 +670,8 @@ QString KiriDocumentSession::nextVideoOutputSurfaceClaimToken()
     return m_runtime->nextVideoOutputSurfaceClaimToken();
 }
 
-bool KiriDocumentSession::reportVideoOutputSurfaceClaim(const QString &claimToken,
-    quint64 projectionRevision, QObject *surfaceOwner, QObject *videoOutput, bool active,
+bool KiriDocumentSession::reportVideoOutputSurfaceClaim(const QString& claimToken,
+    quint64 projectionRevision, QObject* surfaceOwner, QObject* videoOutput, bool active,
     QRectF contentRect, QRectF sourceRect)
 {
     return m_runtime->reportVideoOutputSurfaceClaim(
@@ -686,7 +686,7 @@ void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)
 void KiriDocumentSession::openCurrentMediaWith()
 {
     m_runtime->openCurrentMediaWith(
-        [this](kiriview::MediaOpenWithResult result, const kiriview::KioOperationFailure &failure) {
+        [this](kiriview::MediaOpenWithResult result, const kiriview::KioOperationFailure& failure) {
             if (result == kiriview::MediaOpenWithResult::Failed) {
                 Q_EMIT openWithFailed(failure.userMessage);
             }
@@ -694,7 +694,7 @@ void KiriDocumentSession::openCurrentMediaWith()
 }
 
 void KiriDocumentSession::handleSessionChanges(
-    const std::vector<kiriview::DocumentSessionChange> &changes)
+    const std::vector<kiriview::DocumentSessionChange>& changes)
 {
     kiriview::DocumentSessionPublicSignalEmitter(publicSignalOperations(*this))
         .emitChanges(changes);

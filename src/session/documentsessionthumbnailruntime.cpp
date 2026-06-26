@@ -9,7 +9,7 @@
 
 namespace {
 kiriview::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
-    kiriview::DocumentSessionImageDocumentSnapshotPort *imageDocument,
+    kiriview::DocumentSessionImageDocumentSnapshotPort* imageDocument,
     kiriview::ThumbnailSourceAdapter injectedAdapter)
 {
     return [imageDocument, injectedAdapter = std::move(injectedAdapter),
@@ -52,7 +52,7 @@ kiriview::ThumbnailSourceAdapter documentSessionThumbnailSourceAdapter(
 }
 
 kiriview::ActiveNavigationThumbnailRuntimeDependencies documentSessionThumbnailDependencies(
-    kiriview::DocumentSessionImageDocumentSnapshotPort *imageDocument,
+    kiriview::DocumentSessionImageDocumentSnapshotPort* imageDocument,
     kiriview::ActiveNavigationThumbnailRuntimeDependencies dependencies)
 {
     dependencies.sourceAdapter = documentSessionThumbnailSourceAdapter(
@@ -62,14 +62,14 @@ kiriview::ActiveNavigationThumbnailRuntimeDependencies documentSessionThumbnailD
 }
 
 namespace kiriview {
-DocumentSessionThumbnailRuntime::DocumentSessionThumbnailRuntime(QObject *owner,
-    DocumentSessionImageDocumentSnapshotPort *imageDocument,
+DocumentSessionThumbnailRuntime::DocumentSessionThumbnailRuntime(QObject* owner,
+    DocumentSessionImageDocumentSnapshotPort* imageDocument,
     ActiveNavigationThumbnailRuntimeDependencies dependencies)
     : m_runtime(owner, documentSessionThumbnailDependencies(imageDocument, std::move(dependencies)))
 {
 }
 
-QAbstractListModel *DocumentSessionThumbnailRuntime::model() const { return m_runtime.model(); }
+QAbstractListModel* DocumentSessionThumbnailRuntime::model() const { return m_runtime.model(); }
 
 quint64 DocumentSessionThumbnailRuntime::navigationGeneration() const
 {
@@ -87,7 +87,7 @@ void DocumentSessionThumbnailRuntime::setRows(std::vector<ActiveNavigationThumbn
     m_runtime.setRows(std::move(rows));
 }
 
-bool DocumentSessionThumbnailRuntime::reportDemand(int number, const QUrl &url, int physicalMaxEdge,
+bool DocumentSessionThumbnailRuntime::reportDemand(int number, const QUrl& url, int physicalMaxEdge,
     ActiveNavigationThumbnailDemandPriority priority, quint64 navigationGeneration)
 {
     const ActiveNavigationThumbnailDemandBucket bucket = demandBucket(physicalMaxEdge);

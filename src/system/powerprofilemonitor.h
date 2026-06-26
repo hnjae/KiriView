@@ -16,9 +16,10 @@
 
 namespace kiriview {
 using PowerProfilePortalReader = std::function<QVariantList()>;
-using PowerProfilePortalSubscription = std::function<void(QObject *)>;
+using PowerProfilePortalSubscription = std::function<void(QObject*)>;
 
-struct PowerProfileMonitorRuntime {
+struct PowerProfileMonitorRuntime
+{
     PowerProfilePortalReader readPowerSaverEnabled;
     PowerProfilePortalSubscription subscribePropertiesChanged;
 };
@@ -29,15 +30,15 @@ class PowerProfileMonitor final : public QObject, public PowerSaverStateMonitor
 
 public:
     explicit PowerProfileMonitor(
-        QObject *parent = nullptr, PowerSaverChangedCallback callback = {});
+        QObject* parent = nullptr, PowerSaverChangedCallback callback = {});
     PowerProfileMonitor(
-        QObject *parent, PowerSaverChangedCallback callback, PowerProfileMonitorRuntime runtime);
+        QObject* parent, PowerSaverChangedCallback callback, PowerProfileMonitorRuntime runtime);
 
     bool powerSaverEnabled() const override;
 
 private Q_SLOTS:
-    void handlePropertiesChanged(const QString &interfaceName, const QVariantMap &changedProperties,
-        const QStringList &invalidatedProperties);
+    void handlePropertiesChanged(const QString& interfaceName, const QVariantMap& changedProperties,
+        const QStringList& invalidatedProperties);
 
 private:
     void refreshPowerSaverEnabled();

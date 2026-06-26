@@ -30,16 +30,16 @@ private Q_SLOTS:
 namespace {
 using Change = kiriview::VideoDocumentChange;
 
-std::vector<Change> flatten(const std::vector<std::vector<Change>> &batches)
+std::vector<Change> flatten(const std::vector<std::vector<Change>>& batches)
 {
     std::vector<Change> changes;
-    for (const std::vector<Change> &batch : batches) {
+    for (const std::vector<Change>& batch : batches) {
         changes.insert(changes.end(), batch.cbegin(), batch.cend());
     }
     return changes;
 }
 
-void compareChanges(const std::vector<Change> &actual, const std::vector<Change> &expected)
+void compareChanges(const std::vector<Change>& actual, const std::vector<Change>& expected)
 {
     QCOMPARE(actual.size(), expected.size());
     for (std::size_t index = 0; index < expected.size(); ++index) {
@@ -52,7 +52,7 @@ void TestVideoDocumentState::sourceLoadResetsPublicPlaybackStateInOrder()
 {
     std::vector<std::vector<Change>> batches;
     kiriview::VideoDocumentState state(
-        [&batches](const std::vector<Change> &changes) { batches.push_back(changes); });
+        [&batches](const std::vector<Change>& changes) { batches.push_back(changes); });
     const QUrl initialUrl = QUrl::fromLocalFile(QStringLiteral("/videos/old.mp4"));
     const QUrl sourceUrl(QStringLiteral("zip:///videos/archive.zip!/new.mov"));
 
@@ -97,7 +97,7 @@ void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
 {
     std::vector<std::vector<Change>> batches;
     kiriview::VideoDocumentState state(
-        [&batches](const std::vector<Change> &changes) { batches.push_back(changes); });
+        [&batches](const std::vector<Change>& changes) { batches.push_back(changes); });
 
     state.resetForSourceLoad(QUrl::fromLocalFile(QStringLiteral("/videos/clip.mp4")));
     state.setErrorString(QStringLiteral("backend error"));
@@ -140,7 +140,7 @@ void TestVideoDocumentState::sourceLoadFailureStoresTypedFailureAndPublishesUser
 {
     std::vector<std::vector<Change>> batches;
     kiriview::VideoDocumentState state(
-        [&batches](const std::vector<Change> &changes) { batches.push_back(changes); });
+        [&batches](const std::vector<Change>& changes) { batches.push_back(changes); });
     const QUrl sourceUrl(QStringLiteral("zip:///videos/archive.zip!/clip.mp4"));
     const QString userMessage = QStringLiteral("Could not open the selected video.");
     const QString diagnosticDetail = QStringLiteral("resolver rejected archive entry");
@@ -180,7 +180,7 @@ void TestVideoDocumentState::backendFailureStoresTypedFailureAndPublishesUserMes
 {
     std::vector<std::vector<Change>> batches;
     kiriview::VideoDocumentState state(
-        [&batches](const std::vector<Change> &changes) { batches.push_back(changes); });
+        [&batches](const std::vector<Change>& changes) { batches.push_back(changes); });
     const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/videos/clip.mp4"));
     const QString backendError = QStringLiteral("Qt Multimedia backend rejected stream");
 
@@ -234,7 +234,7 @@ void TestVideoDocumentState::scalarSettersOnlyNotifyOnChangedValues()
 {
     std::vector<std::vector<Change>> batches;
     kiriview::VideoDocumentState state(
-        [&batches](const std::vector<Change> &changes) { batches.push_back(changes); });
+        [&batches](const std::vector<Change>& changes) { batches.push_back(changes); });
 
     state.setDuration(-10);
     state.setPosition(-10);
@@ -272,7 +272,7 @@ void TestVideoDocumentState::zoomPercentStatePublishesKnownValuePair()
 {
     std::vector<std::vector<Change>> batches;
     kiriview::VideoDocumentState state(
-        [&batches](const std::vector<Change> &changes) { batches.push_back(changes); });
+        [&batches](const std::vector<Change>& changes) { batches.push_back(changes); });
 
     state.setZoomPercent(std::optional<int>(150));
 
@@ -295,7 +295,7 @@ void TestVideoDocumentState::mutedStatePersistsAcrossSourceResets()
 {
     std::vector<std::vector<Change>> batches;
     kiriview::VideoDocumentState state(
-        [&batches](const std::vector<Change> &changes) { batches.push_back(changes); });
+        [&batches](const std::vector<Change>& changes) { batches.push_back(changes); });
 
     state.setMuted(true);
     QCOMPARE(batches.size(), std::size_t(1));
@@ -330,7 +330,7 @@ void TestVideoDocumentState::publishDeduplicatesChangesInOrder()
 {
     std::vector<Change> published;
     kiriview::VideoDocumentState state(
-        [&published](const std::vector<Change> &changes) { published = changes; });
+        [&published](const std::vector<Change>& changes) { published = changes; });
 
     state.publish({ Change::Position, Change::Status, Change::Position, Change::Playing });
 

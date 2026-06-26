@@ -15,7 +15,8 @@ enum class ThumbnailOriginalIdentityMode {
     NonFileUri,
 };
 
-struct ThumbnailOriginalIdentity {
+struct ThumbnailOriginalIdentity
+{
     ThumbnailOriginalIdentityMode mode = ThumbnailOriginalIdentityMode::LocalPath;
     QByteArray localPathBytes;
     QString uri;

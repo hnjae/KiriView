@@ -9,7 +9,7 @@
 namespace kiriview {
 namespace {
     template <typename Operation, typename... Args>
-    void run(const Operation &operation, Args &&...args)
+    void run(const Operation& operation, Args&&... args)
     {
         if (operation) {
             operation(std::forward<Args>(args)...);
@@ -24,7 +24,7 @@ ImageDocumentOpenRuntimePlanExecutor::ImageDocumentOpenRuntimePlanExecutor(
 }
 
 bool ImageDocumentOpenRuntimePlanExecutor::dispatchOperation(
-    const ImageDocumentRuntimeOperation &operation)
+    const ImageDocumentRuntimeOperation& operation)
 {
     if (std::holds_alternative<CancelOpenOperation>(operation)) {
         run(m_operations.cancelOpen);
@@ -38,11 +38,11 @@ bool ImageDocumentOpenRuntimePlanExecutor::dispatchOperation(
         run(m_operations.clearPresentationImage);
         return true;
     }
-    if (const auto *payload = std::get_if<SetSourceUrlOperation>(&operation)) {
+    if (const auto* payload = std::get_if<SetSourceUrlOperation>(&operation)) {
         run(m_operations.setSourceUrl, payload->target);
         return true;
     }
-    if (const auto *payload = std::get_if<SetErrorStringOperation>(&operation)) {
+    if (const auto* payload = std::get_if<SetErrorStringOperation>(&operation)) {
         run(m_operations.setErrorString, payload->errorString);
         return true;
     }

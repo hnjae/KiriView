@@ -4,8 +4,8 @@
 #include "session/documentsessionimagedocumentsync.h"
 
 namespace {
-bool sameActiveNavigationSnapshot(const kiriview::ImageDocumentPageActiveNavigationSnapshot &left,
-    const kiriview::ImageDocumentPageActiveNavigationSnapshot &right)
+bool sameActiveNavigationSnapshot(const kiriview::ImageDocumentPageActiveNavigationSnapshot& left,
+    const kiriview::ImageDocumentPageActiveNavigationSnapshot& right)
 {
     return left.known == right.known && left.canOpenPrevious == right.canOpenPrevious
         && left.canOpenNext == right.canOpenNext && left.atKnownFirst == right.atKnownFirst
@@ -16,7 +16,7 @@ bool sameActiveNavigationSnapshot(const kiriview::ImageDocumentPageActiveNavigat
 
 namespace kiriview {
 DocumentSessionImageDocumentSyncPlan documentSessionImageDocumentSyncPlan(
-    const DocumentSessionImageDocumentSyncInput &input)
+    const DocumentSessionImageDocumentSyncInput& input)
 {
     if (input.routingSource || input.documentKind != DocumentSessionKind::Image) {
         return {};

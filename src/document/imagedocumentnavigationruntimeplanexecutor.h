@@ -11,21 +11,21 @@
 #include <functional>
 
 namespace kiriview {
-struct ImageDocumentNavigationRuntimeOperations {
+struct ImageDocumentNavigationRuntimeOperations
+{
     std::function<void()> cancelPageNavigationUpdate;
     std::function<void()> cancelNavigation;
     std::function<void()> cancelContainerNavigation;
     std::function<void()> cancelAllNavigation;
     std::function<void()> clearPageNavigation;
     std::function<void()> updatePageNavigation;
-    std::function<void(const ImageDocumentPageTarget &)> loadUrl;
-    std::function<void(const ImageDocumentPageTarget &, const QUrl &)> loadContainerImage;
-    std::function<void(const QUrl &)> finishEmptyContainerNavigation;
-    std::function<void(const QUrl &, const QString &)> finishContainerNavigationLoadWithError;
+    std::function<void(const ImageDocumentPageTarget&)> loadUrl;
+    std::function<void(const ImageDocumentPageTarget&, const QUrl&)> loadContainerImage;
+    std::function<void(const QUrl&)> finishEmptyContainerNavigation;
+    std::function<void(const QUrl&, const QString&)> finishContainerNavigationLoadWithError;
     std::function<void(NavigationDirection)> reportContainerNavigationBoundary;
-    std::function<void(const ContainerNavigationListFailure &)>
-        reportContainerNavigationListFailure;
-    std::function<void(const ImageDocumentPageTarget &, bool)> loadPageNavigationUrl;
+    std::function<void(const ContainerNavigationListFailure&)> reportContainerNavigationListFailure;
+    std::function<void(const ImageDocumentPageTarget&, bool)> loadPageNavigationUrl;
 };
 
 class ImageDocumentNavigationRuntimePlanExecutor final
@@ -34,7 +34,7 @@ public:
     explicit ImageDocumentNavigationRuntimePlanExecutor(
         ImageDocumentNavigationRuntimeOperations operations);
 
-    bool dispatchOperation(const ImageDocumentRuntimeOperation &operation);
+    bool dispatchOperation(const ImageDocumentRuntimeOperation& operation);
 
 private:
     ImageDocumentNavigationRuntimeOperations m_operations;

@@ -22,14 +22,14 @@ DocumentSessionDirectMediaNavigationRuntime::~DocumentSessionDirectMediaNavigati
     cancel();
 }
 
-void DocumentSessionDirectMediaNavigationRuntime::loadCandidates(QObject *receiver,
-    const DirectMediaScope &scope, ScopeAccepted scopeAccepted, CandidatesCallback callback)
+void DocumentSessionDirectMediaNavigationRuntime::loadCandidates(QObject* receiver,
+    const DirectMediaScope& scope, ScopeAccepted scopeAccepted, CandidatesCallback callback)
 {
     startLoad(receiver, scope, std::move(scopeAccepted), std::move(callback));
 }
 
-void DocumentSessionDirectMediaNavigationRuntime::refresh(QObject *receiver,
-    const DirectMediaScope &scope, ScopeAccepted scopeAccepted, RefreshCallback callback)
+void DocumentSessionDirectMediaNavigationRuntime::refresh(QObject* receiver,
+    const DirectMediaScope& scope, ScopeAccepted scopeAccepted, RefreshCallback callback)
 {
     startLoad(receiver, scope, std::move(scopeAccepted),
         [callback = std::move(callback), currentUrl = scope.currentUrl](
@@ -48,8 +48,8 @@ void DocumentSessionDirectMediaNavigationRuntime::refresh(QObject *receiver,
         });
 }
 
-void DocumentSessionDirectMediaNavigationRuntime::open(QObject *receiver,
-    const DirectMediaScope &scope, DirectMediaNavigationOpenRequest request,
+void DocumentSessionDirectMediaNavigationRuntime::open(QObject* receiver,
+    const DirectMediaScope& scope, DirectMediaNavigationOpenRequest request,
     ScopeAccepted scopeAccepted, OpenCallback callback)
 {
     startLoad(receiver, scope, std::move(scopeAccepted),
@@ -69,8 +69,8 @@ void DocumentSessionDirectMediaNavigationRuntime::open(QObject *receiver,
         });
 }
 
-void DocumentSessionDirectMediaNavigationRuntime::startLoad(QObject *receiver,
-    const DirectMediaScope &scope, ScopeAccepted scopeAccepted, CandidatesCallback callback)
+void DocumentSessionDirectMediaNavigationRuntime::startLoad(QObject* receiver,
+    const DirectMediaScope& scope, ScopeAccepted scopeAccepted, CandidatesCallback callback)
 {
     cancel();
 
@@ -104,7 +104,7 @@ void DocumentSessionDirectMediaNavigationRuntime::startLoad(QObject *receiver,
                     std::move(candidates), true, QString() },
                 *sharedScopeAccepted, *sharedCallback);
         },
-        [this, load, sharedScopeAccepted, sharedCallback](const QString &errorString) {
+        [this, load, sharedScopeAccepted, sharedCallback](const QString& errorString) {
             finish(load,
                 DocumentSessionDirectMediaNavigationCandidatesResult { {}, false, errorString },
                 *sharedScopeAccepted, *sharedCallback);
@@ -119,8 +119,8 @@ void DocumentSessionDirectMediaNavigationRuntime::cancel()
 
 void DocumentSessionDirectMediaNavigationRuntime::finish(
     DocumentSessionDirectMediaNavigationLoad load,
-    DocumentSessionDirectMediaNavigationCandidatesResult result, const ScopeAccepted &scopeAccepted,
-    const CandidatesCallback &callback)
+    DocumentSessionDirectMediaNavigationCandidatesResult result, const ScopeAccepted& scopeAccepted,
+    const CandidatesCallback& callback)
 {
     if (!m_loadState.finish(load)) {
         qCDebug(kiriviewNavigationLog)

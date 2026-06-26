@@ -14,7 +14,8 @@
 #include "imagedocumentspreadruntimeplanexecutor.h"
 
 namespace kiriview {
-struct ImageDocumentRuntimeOperations {
+struct ImageDocumentRuntimeOperations
+{
     ImageDocumentLifecycleRuntimeOperations lifecycle;
     ImageDocumentMediaEntrySourceRuntimeOperations mediaEntrySource;
     ImageDocumentPredecodeRuntimeOperations predecode;
@@ -29,11 +30,11 @@ class ImageDocumentRuntimePlanExecutor final
 public:
     explicit ImageDocumentRuntimePlanExecutor(ImageDocumentRuntimeOperations operations);
 
-    void dispatchPlan(const ImageDocumentRuntimePlan &plan);
+    void dispatchPlan(const ImageDocumentRuntimePlan& plan);
     void shutdownRuntime();
 
 private:
-    void dispatchOperation(const ImageDocumentRuntimeOperation &operation);
+    void dispatchOperation(const ImageDocumentRuntimeOperation& operation);
 
     ImageDocumentRuntimeOperations m_operations;
     ImageDocumentLifecycleRuntimePlanExecutor m_lifecycleExecutor;

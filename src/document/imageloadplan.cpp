@@ -17,7 +17,7 @@ using kiriview::OpenedCollectionScopeLocation;
 using kiriview::openedCollectionScopeLocationForLocalArchiveUrl;
 
 std::optional<OpenedCollectionScopeLocation> containerOpenedCollectionScopeForImageLoadRequest(
-    const kiriview::ImageLoadRequest &request)
+    const kiriview::ImageLoadRequest& request)
 {
     if (!request.isContainerNavigation()) {
         return std::nullopt;
@@ -48,7 +48,7 @@ ImageLoadStartEffect imageLoadStartEffectForPageScopeEffect(OpenedCollectionScop
 
 namespace kiriview {
 OpenedCollectionScopeLoadPlan openedCollectionScopeLoadPlan(
-    const ImageLoadRequest &request, const ImageLoadResolvedSourceFacts &resolvedSourceFacts)
+    const ImageLoadRequest& request, const ImageLoadResolvedSourceFacts& resolvedSourceFacts)
 {
     const std::optional<OpenedCollectionScopeLocation> sourceOpenedCollectionScope
         = resolvedSourceFacts.directlyOpenedCollectionScope;

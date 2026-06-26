@@ -9,7 +9,7 @@
 #include <utility>
 
 namespace {
-void logDirectMediaScope(const char *message, const kiriview::DirectMediaScope &scope)
+void logDirectMediaScope(const char* message, const kiriview::DirectMediaScope& scope)
 {
     qCDebug(kiriviewNavigationLog) << message << "currentUrl" << scope.currentUrl << "parentUrl"
                                    << scope.parentUrl << "generation" << scope.generation;
@@ -44,12 +44,12 @@ DocumentSessionDirectMediaNavigationCoordinator::DocumentSessionDirectMediaNavig
                   m_ports.clearPredecode();
               }
           },
-          [this](const std::vector<DirectMediaNavigationCandidate> &candidates) {
+          [this](const std::vector<DirectMediaNavigationCandidate>& candidates) {
               if (m_ports.schedulePredecode) {
                   m_ports.schedulePredecode(candidates);
               }
           },
-          [this](const QUrl &url) {
+          [this](const QUrl& url) {
               if (m_ports.openMediaUrl) {
                   m_ports.openMediaUrl(url);
               }
@@ -65,7 +65,7 @@ DocumentSessionDirectMediaNavigationCoordinator::~DocumentSessionDirectMediaNavi
 
 void DocumentSessionDirectMediaNavigationCoordinator::cancel() { m_navigationRuntime.cancel(); }
 
-void DocumentSessionDirectMediaNavigationCoordinator::refresh(QObject *receiver)
+void DocumentSessionDirectMediaNavigationCoordinator::refresh(QObject* receiver)
 {
     if (!navigationActive()) {
         qCDebug(kiriviewNavigationLog) << "direct media navigation refresh skipped"
@@ -80,31 +80,31 @@ void DocumentSessionDirectMediaNavigationCoordinator::refresh(QObject *receiver)
     logDirectMediaScope("direct media navigation refresh requested", scope);
     m_navigationRuntime.refresh(
         receiver, scope,
-        [this](const DirectMediaScope &acceptedScope) { return cursorMatches(acceptedScope); },
+        [this](const DirectMediaScope& acceptedScope) { return cursorMatches(acceptedScope); },
         [this](DocumentSessionDirectMediaNavigationRefreshResult result) {
             m_applicationRuntime.applyRefresh(
                 activeNavigationSourceKind(), activeNavigationSnapshot(), std::move(result));
         });
 }
 
-void DocumentSessionDirectMediaNavigationCoordinator::openPrevious(QObject *receiver)
+void DocumentSessionDirectMediaNavigationCoordinator::openPrevious(QObject* receiver)
 {
     open(receiver, previousDirectMediaNavigationOpenRequest());
 }
 
-void DocumentSessionDirectMediaNavigationCoordinator::openNext(QObject *receiver)
+void DocumentSessionDirectMediaNavigationCoordinator::openNext(QObject* receiver)
 {
     open(receiver, nextDirectMediaNavigationOpenRequest());
 }
 
 void DocumentSessionDirectMediaNavigationCoordinator::openAtNumber(
-    QObject *receiver, int mediaNumber)
+    QObject* receiver, int mediaNumber)
 {
     open(receiver, numberedDirectMediaNavigationOpenRequest(mediaNumber));
 }
 
 void DocumentSessionDirectMediaNavigationCoordinator::open(
-    QObject *receiver, DirectMediaNavigationOpenRequest request)
+    QObject* receiver, DirectMediaNavigationOpenRequest request)
 {
     if (!navigationActive()) {
         return;
@@ -112,7 +112,7 @@ void DocumentSessionDirectMediaNavigationCoordinator::open(
 
     m_navigationRuntime.open(
         receiver, currentScope(), request,
-        [this](const DirectMediaScope &acceptedScope) { return cursorMatches(acceptedScope); },
+        [this](const DirectMediaScope& acceptedScope) { return cursorMatches(acceptedScope); },
         [this](DocumentSessionDirectMediaNavigationOpenResult result) {
             m_applicationRuntime.applyOpen(activeCursorUrl(), std::move(result));
         });
@@ -138,7 +138,7 @@ DirectMediaScope DocumentSessionDirectMediaNavigationCoordinator::currentScope()
 }
 
 bool DocumentSessionDirectMediaNavigationCoordinator::cursorMatches(
-    const DirectMediaScope &scope) const
+    const DirectMediaScope& scope) const
 {
     return !m_ports.cursorMatches || m_ports.cursorMatches(scope);
 }

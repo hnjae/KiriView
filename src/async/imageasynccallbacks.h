@@ -10,7 +10,7 @@
 
 namespace kiriview {
 using ImageDataCallback = std::function<void(QByteArray)>;
-using ErrorCallback = std::function<void(const QString &)>;
+using ErrorCallback = std::function<void(const QString&)>;
 }
 
 #endif

@@ -7,7 +7,7 @@
 #include <utility>
 
 namespace kiriview {
-template <typename Callback, typename... Args> void invokeIfSet(Callback &callback, Args &&...args)
+template <typename Callback, typename... Args> void invokeIfSet(Callback& callback, Args&&... args)
 {
     if (callback) {
         callback(std::forward<Args>(args)...);

@@ -23,7 +23,8 @@ enum class OpenedCollectionCandidateCompletionAction {
     ReportUnsupportedOpenedCollectionVideo,
 };
 
-struct OpenedCollectionCandidateCompletion {
+struct OpenedCollectionCandidateCompletion
+{
     OpenedCollectionCandidateCompletionAction action
         = OpenedCollectionCandidateCompletionAction::Ignored;
     ImageLoadSession session;
@@ -38,15 +39,15 @@ public:
         ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
     void cancel();
 
-    bool isCurrent(const ImageLoadSession &session) const;
+    bool isCurrent(const ImageLoadSession& session) const;
     std::optional<ImageLoadSession> currentForDecodeRequest(
-        const ImageDecodeRequest &request) const;
-    std::optional<ImageLoadSession> claimCurrentForDecodeRequest(const ImageDecodeRequest &request);
+        const ImageDecodeRequest& request) const;
+    std::optional<ImageLoadSession> claimCurrentForDecodeRequest(const ImageDecodeRequest& request);
     OpenedCollectionCandidateCompletion completeOpenedCollectionCandidates(
-        const ImageLoadSession &session, const std::vector<ImageDocumentPageCandidate> &candidates);
+        const ImageLoadSession& session, const std::vector<ImageDocumentPageCandidate>& candidates);
     std::optional<ImageLoadSession> claimPredecodedImage(
-        const ImageLoadSession &session, DisplayedImageLocation location);
-    std::optional<ImageLoadSession> claimCurrent(const ImageLoadSession &session);
+        const ImageLoadSession& session, DisplayedImageLocation location);
+    std::optional<ImageLoadSession> claimCurrent(const ImageLoadSession& session);
 
 private:
     quint64 nextSessionId();

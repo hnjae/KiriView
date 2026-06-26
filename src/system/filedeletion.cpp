@@ -25,9 +25,9 @@ KIO::AskUserActionInterface::DeletionType kioDeletionType(kiriview::FileDeletion
     return KIO::AskUserActionInterface::Trash;
 }
 
-void cancelKJob(QObject *object)
+void cancelKJob(QObject* object)
 {
-    auto *job = qobject_cast<KJob *>(object);
+    auto* job = qobject_cast<KJob*>(object);
     if (job == nullptr) {
         return;
     }
@@ -35,7 +35,7 @@ void cancelKJob(QObject *object)
     job->kill(KJob::Quietly);
 }
 
-kiriview::ImageIoJob startKioFileDeletion(QObject *receiver, kiriview::FileDeletionRequest request,
+kiriview::ImageIoJob startKioFileDeletion(QObject* receiver, kiriview::FileDeletionRequest request,
     kiriview::FileDeletionCallback callback)
 {
     if (request.targetUrl.isEmpty()) {
@@ -46,14 +46,14 @@ kiriview::ImageIoJob startKioFileDeletion(QObject *receiver, kiriview::FileDelet
     }
 
     const QUrl targetUrl = request.targetUrl;
-    auto *job = new KIO::DeleteOrTrashJob(QList<QUrl> { request.targetUrl },
+    auto* job = new KIO::DeleteOrTrashJob(QList<QUrl> { request.targetUrl },
         kioDeletionType(request.mode), KIO::AskUserActionInterface::ForceConfirmation, receiver);
     kiriview::ImageIoJob ioJob(job, cancelKJob);
     const kiriview::ImageIoJobCompletion completion = ioJob.completion();
-    QObject *context = receiver == nullptr ? job : receiver;
+    QObject* context = receiver == nullptr ? job : receiver;
 
     QObject::connect(job, &KJob::result, context,
-        [completion, targetUrl, callback = std::move(callback)](KJob *finishedJob) mutable {
+        [completion, targetUrl, callback = std::move(callback)](KJob* finishedJob) mutable {
             completion.claimAndRun([&]() {
                 if (finishedJob->error() == KJob::NoError) {
                     kiriview::invokeIfSet(callback, kiriview::FileDeletionResult::Succeeded,
@@ -103,7 +103,7 @@ FileDeletionCompletionAction fileDeletionCompletionAction(FileDeletionResult res
 
 FileDeletionProvider defaultFileDeletionProvider()
 {
-    return [](QObject *receiver, FileDeletionRequest request, FileDeletionCallback callback) {
+    return [](QObject* receiver, FileDeletionRequest request, FileDeletionCallback callback) {
         return startKioFileDeletion(receiver, std::move(request), std::move(callback));
     };
 }

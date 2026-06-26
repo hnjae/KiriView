@@ -8,14 +8,16 @@
 #include "video/videomediabackend.h"
 
 namespace kiriview {
-struct VideoDocumentStatusSnapshot {
+struct VideoDocumentStatusSnapshot
+{
     bool sourceUrlEmpty = true;
     bool sourceLoadActive = false;
     bool mediaBackendAvailable = false;
     VideoMediaStatus mediaStatus = VideoMediaStatus::Null;
 };
 
-struct VideoDocumentStatusPlan {
+struct VideoDocumentStatusPlan
+{
     VideoDocumentStatus status = VideoDocumentStatus::Null;
     bool mediaEnded = false;
     bool clearPlaying = false;

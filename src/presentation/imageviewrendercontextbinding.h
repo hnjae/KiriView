@@ -11,7 +11,8 @@ enum class ImageViewRenderContextBindingAction {
     ClearProvider,
 };
 
-struct ImageViewRenderContextBindingInput {
+struct ImageViewRenderContextBindingInput
+{
     bool documentAttached = false;
     bool secondaryPage = false;
     bool componentComplete = true;
@@ -21,11 +22,11 @@ class ImageViewRenderContextBinding final
 {
 public:
     ImageViewRenderContextBindingAction synchronize(
-        const ImageViewRenderContextBindingInput &input);
+        const ImageViewRenderContextBindingInput& input);
     bool providerInstalled() const;
 
 private:
-    static bool shouldInstallProvider(const ImageViewRenderContextBindingInput &input);
+    static bool shouldInstallProvider(const ImageViewRenderContextBindingInput& input);
 
     bool m_providerInstalled = false;
 };

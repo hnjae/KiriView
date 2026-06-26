@@ -9,7 +9,8 @@
 #include <QSizeF>
 
 namespace kiriview {
-struct ImageViewportFrame {
+struct ImageViewportFrame
+{
     QRectF imageRect;
     QSizeF contentSize;
     QPointF maximumContentPosition;
@@ -19,7 +20,7 @@ struct ImageViewportFrame {
     bool verticalPannable = false;
     bool pannable = false;
 
-    friend bool operator==(const ImageViewportFrame &left, const ImageViewportFrame &right)
+    friend bool operator==(const ImageViewportFrame& left, const ImageViewportFrame& right)
     {
         return left.imageRect == right.imageRect && left.contentSize == right.contentSize
             && left.maximumContentPosition == right.maximumContentPosition
@@ -29,14 +30,14 @@ struct ImageViewportFrame {
             && left.verticalPannable == right.verticalPannable && left.pannable == right.pannable;
     }
 
-    friend bool operator!=(const ImageViewportFrame &left, const ImageViewportFrame &right)
+    friend bool operator!=(const ImageViewportFrame& left, const ImageViewportFrame& right)
     {
         return !(left == right);
     }
 };
 
 ImageViewportFrame projectImageViewportFrame(
-    const QSizeF &viewportSize, const QSizeF &displaySize, const QPointF &contentPosition);
+    const QSizeF& viewportSize, const QSizeF& displaySize, const QPointF& contentPosition);
 }
 
 #endif

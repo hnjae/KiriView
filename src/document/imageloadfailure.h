@@ -21,7 +21,8 @@ enum class ImageLoadFailureSeverity {
     Error,
 };
 
-struct ImageLoadFailure {
+struct ImageLoadFailure
+{
     QUrl sourceUrl;
     quint64 sessionId = 0;
     ImageLoadFailureKind kind = ImageLoadFailureKind::DataLoad;

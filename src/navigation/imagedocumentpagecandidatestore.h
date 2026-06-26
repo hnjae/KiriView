@@ -19,20 +19,20 @@ class ImageDocumentPageCandidateDirectoryEntry;
 class ImageDocumentPageCandidateStore final : public QObject
 {
 public:
-    explicit ImageDocumentPageCandidateStore(QObject *parent = nullptr);
+    explicit ImageDocumentPageCandidateStore(QObject* parent = nullptr);
     explicit ImageDocumentPageCandidateStore(
-        ImageDocumentPageCandidateWatchProvider watchProvider, QObject *parent = nullptr);
+        ImageDocumentPageCandidateWatchProvider watchProvider, QObject* parent = nullptr);
     ~ImageDocumentPageCandidateStore() override;
 
-    ImageIoJob loadDirectoryImages(QObject *receiver, QUrl directoryUrl,
+    ImageIoJob loadDirectoryImages(QObject* receiver, QUrl directoryUrl,
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback);
-    ImageIoJob watchDirectoryImages(QObject *receiver, QUrl directoryUrl,
+    ImageIoJob watchDirectoryImages(QObject* receiver, QUrl directoryUrl,
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback);
 
 private:
-    ImageDocumentPageCandidateDirectoryEntry &entryForLocalDirectory(const QUrl &directoryUrl);
-    void removePendingLoad(const QString &key, QObject *token);
-    void removeSubscriber(const QString &key, QObject *token);
+    ImageDocumentPageCandidateDirectoryEntry& entryForLocalDirectory(const QUrl& directoryUrl);
+    void removePendingLoad(const QString& key, QObject* token);
+    void removeSubscriber(const QString& key, QObject* token);
 
     std::map<QString, std::unique_ptr<ImageDocumentPageCandidateDirectoryEntry>> m_entries;
     ImageDocumentPageCandidateWatchProvider m_watchProvider;

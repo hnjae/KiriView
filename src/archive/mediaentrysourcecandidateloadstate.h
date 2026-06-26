@@ -16,20 +16,22 @@
 class QObject;
 
 namespace kiriview {
-struct MediaEntrySourceCandidateLoad {
+struct MediaEntrySourceCandidateLoad
+{
     ImageIoJobCompletion completion;
     ImageDocumentPageCandidatesCallback callback;
     ErrorCallback errorCallback;
 };
 
-struct MediaEntrySourceCandidateLoadBatch {
+struct MediaEntrySourceCandidateLoadBatch
+{
     quint64 operationId = 0;
 };
 
 class MediaEntrySourceCandidateLoadState final
 {
 public:
-    ImageIoJob addLoad(QObject *receiver, ImageDocumentPageCandidatesCallback callback,
+    ImageIoJob addLoad(QObject* receiver, ImageDocumentPageCandidatesCallback callback,
         ErrorCallback errorCallback);
     std::optional<MediaEntrySourceCandidateLoadBatch> startBatch();
     bool acceptsBatch(MediaEntrySourceCandidateLoadBatch batch) const;

@@ -10,7 +10,7 @@
 #include <variant>
 
 namespace {
-void compareUnavailable(const kiriview::ActiveNavigationSnapshot &snapshot)
+void compareUnavailable(const kiriview::ActiveNavigationSnapshot& snapshot)
 {
     QVERIFY(!snapshot.available);
     QVERIFY(!snapshot.known);
@@ -23,7 +23,7 @@ void compareUnavailable(const kiriview::ActiveNavigationSnapshot &snapshot)
     QCOMPARE(snapshot.count, 0);
 }
 
-void compareUnknown(const kiriview::ActiveNavigationSnapshot &snapshot)
+void compareUnknown(const kiriview::ActiveNavigationSnapshot& snapshot)
 {
     QVERIFY(snapshot.available);
     QVERIFY(!snapshot.known);
@@ -37,7 +37,7 @@ void compareUnknown(const kiriview::ActiveNavigationSnapshot &snapshot)
 }
 
 template <typename Operation>
-const Operation *dispatchOperation(const kiriview::ActiveNavigationDispatchPlan &plan)
+const Operation* dispatchOperation(const kiriview::ActiveNavigationDispatchPlan& plan)
 {
     return std::get_if<Operation>(&plan.operation);
 }
@@ -256,7 +256,7 @@ void TestActiveNavigationProjection::directMediaDispatchPlanFollowsProjectedBoun
         kiriview::numberedActiveNavigationDispatchRequest(3));
     QVERIFY(numbered.shouldDispatch());
     QCOMPARE(numbered.outcome, kiriview::ActiveNavigationDispatchOutcome::Dispatch);
-    const auto *numberedOperation
+    const auto* numberedOperation
         = dispatchOperation<kiriview::OpenDirectMediaNavigationAtNumberOperation>(numbered);
     QVERIFY(numberedOperation != nullptr);
     QCOMPARE(numberedOperation->number, 3);
@@ -283,7 +283,7 @@ void TestActiveNavigationProjection::imageDocumentDispatchPlanUsesNumberedPageTa
         kiriview::firstActiveNavigationDispatchRequest());
     QVERIFY(first.shouldDispatch());
     QCOMPARE(first.outcome, kiriview::ActiveNavigationDispatchOutcome::Dispatch);
-    const auto *firstOperation
+    const auto* firstOperation
         = dispatchOperation<kiriview::OpenImageDocumentPageAtNumberOperation>(first);
     QVERIFY(firstOperation != nullptr);
     QCOMPARE(firstOperation->number, 1);
@@ -293,7 +293,7 @@ void TestActiveNavigationProjection::imageDocumentDispatchPlanUsesNumberedPageTa
         kiriview::lastActiveNavigationDispatchRequest());
     QVERIFY(last.shouldDispatch());
     QCOMPARE(last.outcome, kiriview::ActiveNavigationDispatchOutcome::Dispatch);
-    const auto *lastOperation
+    const auto* lastOperation
         = dispatchOperation<kiriview::OpenImageDocumentPageAtNumberOperation>(last);
     QVERIFY(lastOperation != nullptr);
     QCOMPARE(lastOperation->number, 5);
@@ -303,7 +303,7 @@ void TestActiveNavigationProjection::imageDocumentDispatchPlanUsesNumberedPageTa
         kiriview::numberedActiveNavigationDispatchRequest(4));
     QVERIFY(numbered.shouldDispatch());
     QCOMPARE(numbered.outcome, kiriview::ActiveNavigationDispatchOutcome::Dispatch);
-    const auto *numberedOperation
+    const auto* numberedOperation
         = dispatchOperation<kiriview::OpenImageDocumentPageAtNumberOperation>(numbered);
     QVERIFY(numberedOperation != nullptr);
     QCOMPARE(numberedOperation->number, 4);
@@ -322,7 +322,7 @@ void TestActiveNavigationProjection::numberedDispatchPlanClampsToKnownRange()
             kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia, directMedia,
             kiriview::numberedActiveNavigationDispatchRequest(0));
     QVERIFY(directMediaBelowRange.shouldDispatch());
-    const auto *directMediaOperation
+    const auto* directMediaOperation
         = dispatchOperation<kiriview::OpenDirectMediaNavigationAtNumberOperation>(
             directMediaBelowRange);
     QVERIFY(directMediaOperation != nullptr);
@@ -337,7 +337,7 @@ void TestActiveNavigationProjection::numberedDispatchPlanClampsToKnownRange()
             kiriview::ActiveNavigationSourceKind::ImageDocumentPages, imageDocument,
             kiriview::numberedActiveNavigationDispatchRequest(8));
     QVERIFY(imageDocumentAboveRange.shouldDispatch());
-    const auto *imageDocumentOperation
+    const auto* imageDocumentOperation
         = dispatchOperation<kiriview::OpenImageDocumentPageAtNumberOperation>(
             imageDocumentAboveRange);
     QVERIFY(imageDocumentOperation != nullptr);

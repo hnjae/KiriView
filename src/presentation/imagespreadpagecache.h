@@ -14,10 +14,10 @@ namespace kiriview {
 class ImageSpreadPageCache
 {
 public:
-    void cachePageSize(const QUrl &url, const QSize &imageSize);
-    std::optional<bool> cachedPageIsWide(const QUrl &url) const;
+    void cachePageSize(const QUrl& url, const QSize& imageSize);
+    std::optional<bool> cachedPageIsWide(const QUrl& url) const;
 
-    static QString cacheKey(const QUrl &url);
+    static QString cacheKey(const QUrl& url);
 
 private:
     std::map<QString, bool> m_widePageByUrl;

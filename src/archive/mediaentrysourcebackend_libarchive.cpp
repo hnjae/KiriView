@@ -17,7 +17,7 @@
 
 namespace {
 namespace Backend = kiriview::MediaEntrySourceBackendDetail;
-using LibArchiveReader = std::unique_ptr<archive, int (*)(archive *)>;
+using LibArchiveReader = std::unique_ptr<archive, int (*)(archive*)>;
 
 class ScopedFileDescriptor final
 {
@@ -31,13 +31,13 @@ public:
 
     ~ScopedFileDescriptor() { close(); }
 
-    ScopedFileDescriptor(const ScopedFileDescriptor &) = delete;
-    ScopedFileDescriptor &operator=(const ScopedFileDescriptor &) = delete;
-    ScopedFileDescriptor(ScopedFileDescriptor &&other) noexcept
+    ScopedFileDescriptor(const ScopedFileDescriptor&) = delete;
+    ScopedFileDescriptor& operator=(const ScopedFileDescriptor&) = delete;
+    ScopedFileDescriptor(ScopedFileDescriptor&& other) noexcept
         : m_fileDescriptor(std::exchange(other.m_fileDescriptor, -1))
     {
     }
-    ScopedFileDescriptor &operator=(ScopedFileDescriptor &&other) noexcept
+    ScopedFileDescriptor& operator=(ScopedFileDescriptor&& other) noexcept
     {
         if (this == &other) {
             return *this;
@@ -64,14 +64,15 @@ private:
     int m_fileDescriptor = -1;
 };
 
-struct OpenArchiveFileResult {
+struct OpenArchiveFileResult
+{
     ScopedFileDescriptor fileDescriptor;
     QString errorString;
 };
 
-QString libArchiveErrorString(archive *reader, const QString &fallback)
+QString libArchiveErrorString(archive* reader, const QString& fallback)
 {
-    const char *message = reader == nullptr ? nullptr : archive_error_string(reader);
+    const char* message = reader == nullptr ? nullptr : archive_error_string(reader);
     if (message == nullptr || message[0] == '\0') {
         return fallback;
     }
@@ -85,7 +86,7 @@ LibArchiveReader makeLibArchiveReader()
 }
 
 OpenArchiveFileResult openArchiveFileDescriptor(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     const QString filePath = openedCollectionScope.fileUrl().toLocalFile();
     if (filePath.isEmpty()) {
@@ -109,8 +110,8 @@ OpenArchiveFileResult openArchiveFileDescriptor(
     return OpenArchiveFileResult { ScopedFileDescriptor(fileDescriptor), QString() };
 }
 
-bool configureLibArchiveReader(archive *reader,
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, QString *errorString)
+bool configureLibArchiveReader(archive* reader,
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope, QString* errorString)
 {
     if (archive_read_support_filter_all(reader) != ARCHIVE_OK
         || archive_read_support_format_rar(reader) != ARCHIVE_OK
@@ -124,8 +125,8 @@ bool configureLibArchiveReader(archive *reader,
 }
 
 LibArchiveReader openLibArchiveReaderOnFd(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, int fileDescriptor,
-    QString *errorString)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope, int fileDescriptor,
+    QString* errorString)
 {
     if (fileDescriptor < 0 || ::lseek(fileDescriptor, 0, SEEK_SET) < 0) {
         *errorString = Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope);
@@ -151,14 +152,14 @@ LibArchiveReader openLibArchiveReaderOnFd(
     return reader;
 }
 
-QString libArchiveEntryPath(archive_entry *entry)
+QString libArchiveEntryPath(archive_entry* entry)
 {
-    const char *utf8Path = archive_entry_pathname_utf8(entry);
+    const char* utf8Path = archive_entry_pathname_utf8(entry);
     if (utf8Path != nullptr) {
         return QString::fromUtf8(utf8Path);
     }
 
-    const char *path = archive_entry_pathname(entry);
+    const char* path = archive_entry_pathname(entry);
     if (path == nullptr) {
         return {};
     }
@@ -166,7 +167,7 @@ QString libArchiveEntryPath(archive_entry *entry)
     return QFile::decodeName(path);
 }
 
-bool skipLibArchiveEntry(archive *reader, QString *errorString)
+bool skipLibArchiveEntry(archive* reader, QString* errorString)
 {
     if (archive_read_data_skip(reader) == ARCHIVE_OK) {
         return true;
@@ -177,8 +178,8 @@ bool skipLibArchiveEntry(archive *reader, QString *errorString)
 }
 
 kiriview::MediaEntrySourceImageDataResult readLibArchiveEntryData(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath,
-    archive *reader, archive_entry *entry)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope, const QString& entryPath,
+    archive* reader, archive_entry* entry)
 {
     QByteArray data;
     char buffer[64 * 1024];
@@ -212,17 +213,18 @@ kiriview::MediaEntrySourceImageDataResult readLibArchiveEntryData(
     return Backend::mediaEntrySourceImageDataResult(std::move(data));
 }
 
-struct LibArchiveMediaEntrySourceMetadata {
+struct LibArchiveMediaEntrySourceMetadata
+{
     std::vector<kiriview::ImageDocumentPageCandidate> candidates;
     std::map<QString, int> entryOrderByPath;
 };
 
 std::optional<LibArchiveMediaEntrySourceMetadata> scanLibArchiveMediaEntrySourceMetadata(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, archive *reader,
-    QString *errorString)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope, archive* reader,
+    QString* errorString)
 {
     LibArchiveMediaEntrySourceMetadata metadata;
-    archive_entry *entry = nullptr;
+    archive_entry* entry = nullptr;
     int entryOrder = 0;
 
     while (true) {
@@ -259,7 +261,7 @@ class LibArchiveMediaEntrySource final : public Backend::MediaEntrySourceWithCan
 {
 public:
     static kiriview::MediaEntrySourceOpenResult create(
-        const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+        const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
     {
         OpenArchiveFileResult opened = openArchiveFileDescriptor(openedCollectionScope);
         if (!opened.fileDescriptor) {
@@ -297,7 +299,7 @@ public:
         return kiriview::MediaEntrySourcePtr(std::move(source));
     }
 
-    kiriview::MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) override
+    kiriview::MediaEntrySourceImageDataResult loadImageData(const QUrl& imageUrl) override
     {
         const std::optional<QString> entryPath
             = Backend::openedCollectionImageEntryPathForRead(m_openedCollectionScope, imageUrl);
@@ -329,7 +331,7 @@ private:
     }
 
     kiriview::MediaEntrySourceImageDataResult readImageDataAtOrder(
-        int targetEntryOrder, const QString &targetEntryPath)
+        int targetEntryOrder, const QString& targetEntryPath)
     {
         QString errorString;
         if (!prepareReaderForEntry(targetEntryOrder, &errorString)) {
@@ -339,7 +341,7 @@ private:
                     Backend::openedCollectionImageReadError(), errorString, targetEntryPath));
         }
 
-        archive_entry *entry = nullptr;
+        archive_entry* entry = nullptr;
         while (m_nextEntryOrder <= targetEntryOrder) {
             const int currentEntryOrder = m_nextEntryOrder;
             const int status = archive_read_next_header(m_reader.get(), &entry);
@@ -391,7 +393,7 @@ private:
                 Backend::openedCollectionImageReadError(), {}, targetEntryPath));
     }
 
-    bool prepareReaderForEntry(int targetEntryOrder, QString *errorString)
+    bool prepareReaderForEntry(int targetEntryOrder, QString* errorString)
     {
         if (m_reader == nullptr || m_readerExhausted || targetEntryOrder < m_nextEntryOrder) {
             return resetReader(errorString);
@@ -400,7 +402,7 @@ private:
         return true;
     }
 
-    bool resetReader(QString *errorString)
+    bool resetReader(QString* errorString)
     {
         m_reader.reset();
         m_nextEntryOrder = 0;
@@ -425,14 +427,14 @@ private:
 };
 
 kiriview::MediaEntrySourceOpenResult openLibArchiveMediaEntrySource(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     return LibArchiveMediaEntrySource::create(openedCollectionScope);
 }
 }
 
 namespace kiriview::MediaEntrySourceBackendDetail {
-const MediaEntrySourceBackendOperations *libArchiveMediaEntrySourceBackendOperations()
+const MediaEntrySourceBackendOperations* libArchiveMediaEntrySourceBackendOperations()
 {
     static const MediaEntrySourceBackendOperations operations {
         openLibArchiveMediaEntrySource,

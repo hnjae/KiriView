@@ -28,16 +28,16 @@ kiriview::ApngFrameControl frameControl(quint32 width, quint32 height)
     return control;
 }
 
-void writeFramePixels(kiriview::ApngFrameComposer *composer, std::initializer_list<Pixel> pixels)
+void writeFramePixels(kiriview::ApngFrameComposer* composer, std::initializer_list<Pixel> pixels)
 {
-    unsigned char **rows = composer->frameRows();
+    unsigned char** rows = composer->frameRows();
     Q_ASSERT(rows != nullptr);
     std::memcpy(rows[0], pixels.begin(), pixels.size() * sizeof(Pixel));
 }
 
-QColor pixel(const QImage &image, int x, int y) { return image.pixelColor(x, y); }
+QColor pixel(const QImage& image, int x, int y) { return image.pixelColor(x, y); }
 
-void comparePlan(const kiriview::ApngFrameCompositionPlan &plan, kiriview::ApngFrameBlendOp blendOp,
+void comparePlan(const kiriview::ApngFrameCompositionPlan& plan, kiriview::ApngFrameBlendOp blendOp,
     kiriview::ApngFrameDisposeOp disposeOp, bool capturePreviousRegion,
     kiriview::ApngFrameDisposeAction disposeAction)
 {

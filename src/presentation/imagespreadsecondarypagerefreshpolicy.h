@@ -11,7 +11,8 @@ enum class ImageSpreadSecondaryPageDecision {
     KeepCurrentSecondary,
 };
 
-struct ImageSpreadSecondaryPageRefreshState {
+struct ImageSpreadSecondaryPageRefreshState
+{
     bool twoPageModeActive = false;
     int currentPageNumber = 0;
     int pageCount = 0;
@@ -21,13 +22,14 @@ struct ImageSpreadSecondaryPageRefreshState {
     bool currentSecondaryMatchesNext = false;
 };
 
-struct ImageSpreadSecondaryPageRefreshPlan {
+struct ImageSpreadSecondaryPageRefreshPlan
+{
     ImageSpreadSecondaryPageDecision decision = ImageSpreadSecondaryPageDecision::PrimaryOnly;
     int targetPageNumber = 0;
 };
 
 ImageSpreadSecondaryPageRefreshPlan imageSpreadSecondaryPageRefreshPlan(
-    const ImageSpreadSecondaryPageRefreshState &state);
+    const ImageSpreadSecondaryPageRefreshState& state);
 }
 
 #endif

@@ -9,12 +9,13 @@
 #include <functional>
 
 namespace kiriview {
-struct DocumentSessionVideoDocumentSyncRuntimePorts {
+struct DocumentSessionVideoDocumentSyncRuntimePorts
+{
     std::function<void()> clearDirectMediaCursor;
-    std::function<void(const QUrl &)> setSourceIdentity;
+    std::function<void(const QUrl&)> setSourceIdentity;
     std::function<void(DocumentSessionKind)> setDocumentKind;
     std::function<void()> clearDirectMediaNavigation;
-    std::function<bool(const QUrl &)> setDirectVideoCursor;
+    std::function<bool(const QUrl&)> setDirectVideoCursor;
     std::function<void()> refreshDirectMediaNavigation;
     std::function<void()> recomputePublicProjection;
     std::function<void()> recomputeActiveZoomReadout;
@@ -27,10 +28,10 @@ public:
         DocumentSessionVideoDocumentSyncRuntimePorts ports = {});
 
     void sync(
-        DocumentSessionKind documentKind, const DocumentSessionPublicVideoLeafSnapshot &video);
+        DocumentSessionKind documentKind, const DocumentSessionPublicVideoLeafSnapshot& video);
 
 private:
-    void apply(const DocumentSessionVideoDocumentSyncPlan &plan);
+    void apply(const DocumentSessionVideoDocumentSyncPlan& plan);
 
     DocumentSessionVideoDocumentSyncRuntimePorts m_ports;
 };

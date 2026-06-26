@@ -81,8 +81,8 @@ KiriImageDisplaySource::RetentionStatus retentionStatus(
     return KiriImageDisplaySource::RetentionStatus::None;
 }
 
-bool projectionsEqual(const kiriview::ImageDisplaySourceProjection &left,
-    const kiriview::ImageDisplaySourceProjection &right)
+bool projectionsEqual(const kiriview::ImageDisplaySourceProjection& left,
+    const kiriview::ImageDisplaySourceProjection& right)
 {
     return left.visible == right.visible && left.pageRole == right.pageRole
         && left.providerUrl == right.providerUrl && left.revision == right.revision
@@ -99,7 +99,7 @@ bool projectionsEqual(const kiriview::ImageDisplaySourceProjection &left,
 }
 }
 
-KiriImageDisplaySource::KiriImageDisplaySource(kiriview::DisplayedPageRole role, QObject *parent)
+KiriImageDisplaySource::KiriImageDisplaySource(kiriview::DisplayedPageRole role, QObject* parent)
     : QObject(parent)
 {
     m_projection.pageRole = role;

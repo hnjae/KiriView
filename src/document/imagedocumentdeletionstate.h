@@ -7,12 +7,14 @@
 #include "async/imageasyncoperationstate.h"
 
 namespace kiriview {
-struct ImageDocumentDeletionFileOperationStart {
+struct ImageDocumentDeletionFileOperationStart
+{
     quint64 operationId = 0;
     bool inProgressChanged = false;
 };
 
-struct ImageDocumentDeletionFileOperationFinish {
+struct ImageDocumentDeletionFileOperationFinish
+{
     bool accepted = false;
     bool inProgressChanged = false;
 };

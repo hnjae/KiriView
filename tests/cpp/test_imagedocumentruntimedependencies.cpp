@@ -99,7 +99,7 @@ void TestImageDocumentRuntimeDependencies::partialNonSourceOverridesStillUseMedi
     int directoryLoadCount = 0;
     kiriview::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.candidateProvider.directoryImageDocumentPages
-        = [&directoryLoadCount](QObject *, QUrl,
+        = [&directoryLoadCount](QObject*, QUrl,
               kiriview::ImageDocumentPageCandidatesCallback callback, kiriview::ErrorCallback) {
               ++directoryLoadCount;
               callback({});
@@ -130,7 +130,7 @@ void TestImageDocumentRuntimeDependencies::
     int openCount = 0;
     kiriview::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.mediaEntrySourceFactory
-        = [&openCount](const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+        = [&openCount](const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
         -> kiriview::MediaEntrySourceOpenResult {
         ++openCount;
         return kiriview::MediaEntrySourceError {
@@ -154,7 +154,7 @@ void TestImageDocumentRuntimeDependencies::
         nullptr, testArchiveCollection(),
         [&candidatesReported](
             std::vector<kiriview::ImageDocumentPageCandidate>) { candidatesReported = true; },
-        [&errorString](const QString &error) { errorString = error; });
+        [&errorString](const QString& error) { errorString = error; });
 
     QCOMPARE(openCount, 1);
     QVERIFY(!candidatesReported);
@@ -172,14 +172,14 @@ void TestImageDocumentRuntimeDependencies::
 
     kiriview::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.candidateProvider.openedCollectionCandidates
-        = [&openedCollectionLoadCount](QObject *, kiriview::OpenedCollectionScopeLocation,
+        = [&openedCollectionLoadCount](QObject*, kiriview::OpenedCollectionScopeLocation,
               kiriview::ImageDocumentPageCandidatesCallback callback, kiriview::ErrorCallback) {
               ++openedCollectionLoadCount;
               callback({});
               return kiriview::ImageIoJob();
           };
     dependencies.imageDecode.dataLoader
-        = [&dataLoadCount](QObject *, kiriview::ImageDecodeRequest,
+        = [&dataLoadCount](QObject*, kiriview::ImageDecodeRequest,
               kiriview::ImageDataCallback callback, kiriview::ErrorCallback) {
               ++dataLoadCount;
               callback(QByteArrayLiteral("custom image data"));
@@ -187,18 +187,18 @@ void TestImageDocumentRuntimeDependencies::
           };
     dependencies.fileDeletionProvider
         = [&fileDeletionCount](
-              QObject *, kiriview::FileDeletionRequest, kiriview::FileDeletionCallback) {
+              QObject*, kiriview::FileDeletionRequest, kiriview::FileDeletionCallback) {
               ++fileDeletionCount;
               return kiriview::ImageIoJob();
           };
     dependencies.powerSaver.monitor
-        = [&powerSaverMonitorCount](QObject *, kiriview::PowerSaverChangedCallback) {
+        = [&powerSaverMonitorCount](QObject*, kiriview::PowerSaverChangedCallback) {
               ++powerSaverMonitorCount;
               return std::make_unique<FakePowerSaverMonitor>();
           };
     dependencies.predecodeTimerScheduler.currentMonotonicMsec = []() { return 8675; };
     dependencies.predecodeTimerScheduler.singleShotTimer =
-        [&timerFactoryCount](QObject *, int intervalMsec, kiriview::RuntimeTimerCallback callback) {
+        [&timerFactoryCount](QObject*, int intervalMsec, kiriview::RuntimeTimerCallback callback) {
             ++timerFactoryCount;
             return std::make_unique<kiriview::TestSupport::ManualRuntimeTimer>(
                 intervalMsec, std::move(callback));

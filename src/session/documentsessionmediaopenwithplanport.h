@@ -14,16 +14,16 @@ struct DocumentSessionPublicVideoLeafSnapshot;
 class DocumentSessionMediaOpenWithPlanPort final
 {
 public:
-    DocumentSessionMediaOpenWithPlanPort(const DocumentSessionState *state,
-        const DocumentSessionPublicImageLeafSnapshot *image,
-        const DocumentSessionPublicVideoLeafSnapshot *video);
+    DocumentSessionMediaOpenWithPlanPort(const DocumentSessionState* state,
+        const DocumentSessionPublicImageLeafSnapshot* image,
+        const DocumentSessionPublicVideoLeafSnapshot* video);
 
     MediaOpenWithPlan currentPlan() const;
 
 private:
-    const DocumentSessionState *m_state = nullptr;
-    const DocumentSessionPublicImageLeafSnapshot *m_image = nullptr;
-    const DocumentSessionPublicVideoLeafSnapshot *m_video = nullptr;
+    const DocumentSessionState* m_state = nullptr;
+    const DocumentSessionPublicImageLeafSnapshot* m_image = nullptr;
+    const DocumentSessionPublicVideoLeafSnapshot* m_video = nullptr;
 };
 }
 

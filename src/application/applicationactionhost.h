@@ -15,9 +15,9 @@ class ApplicationActionHost
 public:
     virtual ~ApplicationActionHost() = default;
 
-    virtual QObject *actionContext() = 0;
-    virtual KirigamiActionCollection *mainActionCollection() = 0;
-    virtual QAction *inheritedAction(const QString &actionName) = 0;
+    virtual QObject* actionContext() = 0;
+    virtual KirigamiActionCollection* mainActionCollection() = 0;
+    virtual QAction* inheritedAction(const QString& actionName) = 0;
     virtual void readActionSettings() = 0;
 };
 }

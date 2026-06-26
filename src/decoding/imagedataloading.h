@@ -12,10 +12,10 @@
 class QObject;
 
 namespace kiriview {
-ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
+ImageIoJob startStoredImageDataLoad(QObject* receiver, ImageDecodeRequest request,
     ImageDataCallback callback, ErrorCallback errorCallback);
-ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
-    const ImageWorkerScheduler &workerScheduler, ImageDataCallback callback,
+ImageIoJob startStoredImageDataLoad(QObject* receiver, ImageDecodeRequest request,
+    const ImageWorkerScheduler& workerScheduler, ImageDataCallback callback,
     ErrorCallback errorCallback);
 }
 

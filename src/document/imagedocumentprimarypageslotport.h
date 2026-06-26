@@ -13,13 +13,13 @@ class ImageDocumentPrimaryPageSlotPort final
 {
 public:
     explicit ImageDocumentPrimaryPageSlotPort(
-        ImageSpreadPresentationController *spreadController = nullptr);
+        ImageSpreadPresentationController* spreadController = nullptr);
 
-    void commit(const DisplayedImageLocation &location) const;
+    void commit(const DisplayedImageLocation& location) const;
     void clear() const;
 
 private:
-    ImageSpreadPresentationController *m_spreadController = nullptr;
+    ImageSpreadPresentationController* m_spreadController = nullptr;
 };
 }
 

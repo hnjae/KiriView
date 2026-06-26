@@ -21,25 +21,26 @@ namespace kiriview {
 class MediaPredecodeCoordinator final : public QObject
 {
 public:
-    struct Context {
+    struct Context
+    {
         QUrl currentUrl;
         std::vector<DirectMediaNavigationCandidate> candidates;
         std::vector<DisplayedPredecodeImage> displayedImages;
         ImageFirstDisplayDecodeContext firstDisplayContext;
     };
 
-    MediaPredecodeCoordinator(QObject *parent, MediaPredecodeDependencies dependencies);
+    MediaPredecodeCoordinator(QObject* parent, MediaPredecodeDependencies dependencies);
 
     void schedule(Context context);
-    void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage> &images);
+    void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage>& images);
     void setPowerSaverEnabled(bool enabled);
     bool powerSaverEnabled() const;
     void cancel();
     void clear();
-    std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
+    std::optional<PredecodedImage> findPredecodedImage(const QUrl& url) const;
 
 private:
-    void startPredecodeWindow(const PredecodePendingSchedule &schedule);
+    void startPredecodeWindow(const PredecodePendingSchedule& schedule);
     PredecodePolicyInput policyInput() const;
 
     PredecodeLoadController m_loadController;

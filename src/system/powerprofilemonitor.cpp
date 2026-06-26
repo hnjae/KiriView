@@ -33,7 +33,7 @@ QVariantList readPortalPowerSaverEnabled()
     return reply.arguments();
 }
 
-void subscribePortalPowerSaverChanges(QObject *receiver)
+void subscribePortalPowerSaverChanges(QObject* receiver)
 {
     // clang-format off
     QDBusConnection::sessionBus().connect(portalService, portalPath, dbusPropertiesInterface,
@@ -44,13 +44,13 @@ void subscribePortalPowerSaverChanges(QObject *receiver)
 }
 
 namespace kiriview {
-PowerProfileMonitor::PowerProfileMonitor(QObject *parent, PowerSaverChangedCallback callback)
+PowerProfileMonitor::PowerProfileMonitor(QObject* parent, PowerSaverChangedCallback callback)
     : PowerProfileMonitor(parent, std::move(callback), {})
 {
 }
 
 PowerProfileMonitor::PowerProfileMonitor(
-    QObject *parent, PowerSaverChangedCallback callback, PowerProfileMonitorRuntime runtime)
+    QObject* parent, PowerSaverChangedCallback callback, PowerProfileMonitorRuntime runtime)
     : QObject(parent)
     , m_callback(std::move(callback))
     , m_runtime(powerProfileMonitorRuntimeWithDefaults(std::move(runtime)))
@@ -61,8 +61,8 @@ PowerProfileMonitor::PowerProfileMonitor(
 
 bool PowerProfileMonitor::powerSaverEnabled() const { return m_state.powerSaverEnabled(); }
 
-void PowerProfileMonitor::handlePropertiesChanged(const QString &interfaceName,
-    const QVariantMap &changedProperties, const QStringList &invalidatedProperties)
+void PowerProfileMonitor::handlePropertiesChanged(const QString& interfaceName,
+    const QVariantMap& changedProperties, const QStringList& invalidatedProperties)
 {
     const PowerProfileMonitorPlan plan
         = m_state.applyEvent(powerProfileMonitorEventFromPropertiesChanged(

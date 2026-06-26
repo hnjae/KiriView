@@ -21,7 +21,8 @@ namespace kiriview {
 inline constexpr int imageBlockingDisplayLongEdgeMax = 2048;
 inline constexpr qsizetype imageFullDecodeFallbackByteLimit = 512 * 1024 * 1024;
 
-struct ImageFirstDisplayDecodeContext {
+struct ImageFirstDisplayDecodeContext
+{
     QSize physicalViewportSize;
 
     bool isValid() const { return !physicalViewportSize.isEmpty(); }
@@ -33,7 +34,8 @@ enum class FirstDisplayImageDecodeStatus {
     Error,
 };
 
-struct FirstDisplayImageDecodeResult {
+struct FirstDisplayImageDecodeResult
+{
     FirstDisplayImageDecodeStatus status = FirstDisplayImageDecodeStatus::NotImplemented;
     QImage image;
     qreal displayPixelsPerSourcePixel = 0.0;
@@ -49,7 +51,8 @@ enum class ImageTileSourceDisplayDecodeFailureSeverity {
     Error,
 };
 
-struct ImageTileSourceDisplayDecodeFailure {
+struct ImageTileSourceDisplayDecodeFailure
+{
     ImageTileSourceDisplayDecodeOperation operation
         = ImageTileSourceDisplayDecodeOperation::RasterDisplayImage;
     QString userMessage;
@@ -59,24 +62,28 @@ struct ImageTileSourceDisplayDecodeFailure {
     bool retryable = false;
 };
 
-struct ImageTileSourceDisplayDecodeDiagnostics {
+struct ImageTileSourceDisplayDecodeDiagnostics
+{
     std::vector<ImageTileSourceDisplayDecodeFailure> failures;
 
     QString userMessage() const;
     QString diagnosticDetail() const;
 };
 
-struct ImageTileSourceDisplayDecodeResult {
+struct ImageTileSourceDisplayDecodeResult
+{
     QImage image;
     ImageTileSourceDisplayDecodeDiagnostics diagnostics;
 };
 
-struct ImageTileSourceFirstDisplayDecodeResult {
+struct ImageTileSourceFirstDisplayDecodeResult
+{
     FirstDisplayImageDecodeResult firstDisplay;
     ImageTileSourceDisplayDecodeDiagnostics diagnostics;
 };
 
-struct StaticImageReaderTransform {
+struct StaticImageReaderTransform
+{
     QImageIOHandler::Transformations transformations = QImageIOHandler::TransformationNone;
 
     bool hasTransform() const { return transformations != QImageIOHandler::TransformationNone; }
@@ -89,25 +96,26 @@ public:
 
     virtual QSize imageSize() const = 0;
     virtual std::optional<DecodedTile> decodeTile(
-        const TileRequest &request, QString *errorString) const
+        const TileRequest& request, QString* errorString) const
         = 0;
     virtual ImageTileSourceFirstDisplayDecodeResult decodeFirstDisplayImageWithDiagnostics(
-        const ImageFirstDisplayDecodeContext &context) const;
+        const ImageFirstDisplayDecodeContext& context) const;
     virtual FirstDisplayImageDecodeResult decodeFirstDisplayImage(
-        const ImageFirstDisplayDecodeContext &context, QString *errorString) const;
+        const ImageFirstDisplayDecodeContext& context, QString* errorString) const;
     virtual bool supportsRasterDisplayRefinement() const;
     virtual ImageTileSourceDisplayDecodeResult decodeRasterDisplayImageWithDiagnostics(
-        const QSize &rasterSize) const;
-    virtual QImage decodeRasterDisplayImage(const QSize &rasterSize, QString *errorString) const;
+        const QSize& rasterSize) const;
+    virtual QImage decodeRasterDisplayImage(const QSize& rasterSize, QString* errorString) const;
     virtual ImageTileSourceDisplayDecodeResult decodeBlockingDisplayImageWithDiagnostics(
         int maximumLongEdge) const;
-    virtual QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const = 0;
+    virtual QImage decodeBlockingDisplayImage(int maximumLongEdge, QString* errorString) const = 0;
     virtual qsizetype byteCost() const = 0;
     virtual bool isResolutionIndependent() const;
     virtual StaticImageReaderTransform imageReaderTransform() const;
 };
 
-struct StaticDisplayImagePayload {
+struct StaticDisplayImagePayload
+{
     QString sourceIdentity;
     StaticImageReaderTransform imageReaderTransform;
     QSize originalSize;

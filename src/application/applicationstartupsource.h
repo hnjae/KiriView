@@ -9,7 +9,7 @@
 namespace kiriview {
 struct ApplicationStartupSource;
 
-QUrl initialSourceUrlFromStartupSource(const ApplicationStartupSource &source);
+QUrl initialSourceUrlFromStartupSource(const ApplicationStartupSource& source);
 }
 
 #endif

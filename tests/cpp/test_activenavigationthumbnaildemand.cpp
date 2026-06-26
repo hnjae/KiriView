@@ -8,7 +8,7 @@
 #include <QUrl>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 }
 
 class TestActiveNavigationThumbnailDemand : public QObject

@@ -12,14 +12,14 @@ namespace {
 using ActionId = kiriview::ApplicationActions::ActionId;
 
 bool activeNavigationActionEnabled(
-    const kiriview::ApplicationActions::ApplicationActionStateInput &input)
+    const kiriview::ApplicationActions::ApplicationActionStateInput& input)
 {
     return input.helpActionsEnabled && input.activeNavigationAvailable
         && input.activeNavigationKnown && input.activeNavigationHasTargets
         && !input.fileDeletionInProgress;
 }
 
-bool videoSeekActionEnabled(const kiriview::ApplicationActions::ApplicationActionStateInput &input)
+bool videoSeekActionEnabled(const kiriview::ApplicationActions::ApplicationActionStateInput& input)
 {
     return input.videoMode && input.helpActionsEnabled && input.videoSeekable
         && !input.fileDeletionInProgress;
@@ -45,7 +45,7 @@ QString emptyText() { return {}; }
 
 namespace kiriview::ApplicationActions {
 ApplicationActionState applicationActionState(
-    ActionId actionId, const ApplicationActionStateInput &input)
+    ActionId actionId, const ApplicationActionStateInput& input)
 {
     switch (actionId) {
     case ActionId::FileOpenAction:
@@ -125,7 +125,7 @@ ApplicationActionState applicationActionState(
     return state(false);
 }
 
-QString applicationActionMenuText(ActionId actionId, const ApplicationActionStateInput &input)
+QString applicationActionMenuText(ActionId actionId, const ApplicationActionStateInput& input)
 {
     switch (actionId) {
     case ActionId::FileOpenAction:
@@ -159,7 +159,7 @@ QString applicationActionMenuText(ActionId actionId, const ApplicationActionStat
     case ActionId::ViewZoom50PercentAction:
     case ActionId::ViewZoom100PercentAction:
     case ActionId::ViewZoom200PercentAction:
-        if (const kiriview::ApplicationActions::ZoomPresetDescriptor *preset
+        if (const kiriview::ApplicationActions::ZoomPresetDescriptor* preset
             = zoomPresetDescriptorForAction(actionId)) {
             return preset->menuText.toString();
         }
@@ -225,7 +225,7 @@ QString applicationActionToolbarTooltipText(ActionId actionId)
 }
 
 bool applicationShortcutsEnabledForScope(
-    const ApplicationActionStateInput &input, ImageShortcutScope scope)
+    const ApplicationActionStateInput& input, ImageShortcutScope scope)
 {
     const ImageActionAvailabilityProjection projection {
         input.readyActionsEnabled,

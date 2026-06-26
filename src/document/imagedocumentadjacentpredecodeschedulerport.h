@@ -12,7 +12,7 @@ namespace kiriview {
 class ImageDocumentAdjacentPredecodeSchedulerPort final
 {
 public:
-    using RuntimePlanDispatcher = std::function<void(const ImageDocumentRuntimePlan &)>;
+    using RuntimePlanDispatcher = std::function<void(const ImageDocumentRuntimePlan&)>;
 
     explicit ImageDocumentAdjacentPredecodeSchedulerPort(RuntimePlanDispatcher dispatchPlan = {});
 

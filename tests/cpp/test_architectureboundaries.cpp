@@ -104,12 +104,12 @@ private Q_SLOTS:
 };
 
 namespace {
-QString projectPath(const QString &relativePath)
+QString projectPath(const QString& relativePath)
 {
     return QDir(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../..")).filePath(relativePath);
 }
 
-QString readProjectFile(const QString &relativePath)
+QString readProjectFile(const QString& relativePath)
 {
     QFile file(projectPath(relativePath));
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -130,10 +130,10 @@ QStringList productionQmlFiles()
     return files;
 }
 
-QStringList projectFilesUnder(const QStringList &relativeRoots, const QStringList &nameFilters)
+QStringList projectFilesUnder(const QStringList& relativeRoots, const QStringList& nameFilters)
 {
     QStringList files;
-    for (const QString &relativeRoot : relativeRoots) {
+    for (const QString& relativeRoot : relativeRoots) {
         QDirIterator iterator(
             projectPath(relativeRoot), nameFilters, QDir::Files, QDirIterator::Subdirectories);
         while (iterator.hasNext()) {
@@ -144,12 +144,12 @@ QStringList projectFilesUnder(const QStringList &relativeRoots, const QStringLis
     return files;
 }
 
-QString relativeProjectPath(const QString &absolutePath)
+QString relativeProjectPath(const QString& absolutePath)
 {
     return QDir(projectPath(QString())).relativeFilePath(absolutePath);
 }
 
-QString matchingLines(const QString &filePath, const QList<QRegularExpression> &patterns)
+QString matchingLines(const QString& filePath, const QList<QRegularExpression>& patterns)
 {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -161,7 +161,7 @@ QString matchingLines(const QString &filePath, const QList<QRegularExpression> &
     while (!file.atEnd()) {
         ++lineNumber;
         const QString line = QString::fromUtf8(file.readLine()).trimmed();
-        for (const QRegularExpression &pattern : patterns) {
+        for (const QRegularExpression& pattern : patterns) {
             if (pattern.match(line).hasMatch()) {
                 matches.push_back(QStringLiteral("%1:%2: %3")
                         .arg(relativeProjectPath(filePath))
@@ -174,7 +174,7 @@ QString matchingLines(const QString &filePath, const QList<QRegularExpression> &
     return matches.join(QLatin1Char('\n'));
 }
 
-void verifySourceUrlReadOnly(const QMetaObject &metaObject)
+void verifySourceUrlReadOnly(const QMetaObject& metaObject)
 {
     const int sourceUrlIndex = metaObject.indexOfProperty("sourceUrl");
     QVERIFY(sourceUrlIndex >= 0);
@@ -184,7 +184,7 @@ void verifySourceUrlReadOnly(const QMetaObject &metaObject)
     QVERIFY(!sourceUrlProperty.isWritable());
 }
 
-void verifyPrivateRouteSetter(const QString &relativePath)
+void verifyPrivateRouteSetter(const QString& relativePath)
 {
     const QString header = readProjectFile(relativePath);
     const QRegularExpression propertyPattern(QStringLiteral(
@@ -208,10 +208,10 @@ void verifyPrivateRouteSetter(const QString &relativePath)
                 .arg(relativePath)));
 }
 
-QStringList existingProjectFiles(const QList<QString> &relativePaths)
+QStringList existingProjectFiles(const QList<QString>& relativePaths)
 {
     QStringList existing;
-    for (const QString &relativePath : relativePaths) {
+    for (const QString& relativePath : relativePaths) {
         if (QFileInfo::exists(projectPath(relativePath))) {
             existing.push_back(relativePath);
         }
@@ -247,7 +247,7 @@ void TestArchitectureBoundaries::qmlCannotSetLeafDocumentRoutes()
     };
 
     QStringList violations;
-    for (const QString &filePath : productionQmlFiles()) {
+    for (const QString& filePath : productionQmlFiles()) {
         const QString matches = matchingLines(filePath, forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -275,7 +275,7 @@ void TestArchitectureBoundaries::qmlDoesNotWriteSharedActionState()
     };
 
     QStringList violations;
-    for (const QString &filePath : productionQmlFiles()) {
+    for (const QString& filePath : productionQmlFiles()) {
         const QString matches = matchingLines(filePath, forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -296,7 +296,7 @@ void TestArchitectureBoundaries::qmlActionProxiesDoNotOverrideRuntimeActionState
     };
 
     QStringList violations;
-    for (const QRegularExpression &pattern : forbiddenPatterns) {
+    for (const QRegularExpression& pattern : forbiddenPatterns) {
         QRegularExpressionMatchIterator iterator = pattern.globalMatch(combined);
         while (iterator.hasNext()) {
             violations.push_back(iterator.next().captured(0));
@@ -317,7 +317,7 @@ void TestArchitectureBoundaries::qmlDoesNotOwnSharedActionPolicy()
     };
 
     QStringList violations;
-    for (const QString &relativePath : { QStringLiteral("src/qml/ImageActions.qml"),
+    for (const QString& relativePath : { QStringLiteral("src/qml/ImageActions.qml"),
              QStringLiteral("src/qml/ImageShortcuts.qml") }) {
         const QString matches = matchingLines(projectPath(relativePath), forbiddenPatterns);
         if (!matches.isEmpty()) {
@@ -341,7 +341,7 @@ void TestArchitectureBoundaries::qmlDoesNotComputePannabilityActionGate()
         QRegularExpression(QStringLiteral(R"(\bimageInteractionSurface\s*\.\s*imagePannable\b)")),
     };
     QStringList violations;
-    for (const QRegularExpression &pattern : forbiddenPatterns) {
+    for (const QRegularExpression& pattern : forbiddenPatterns) {
         QRegularExpressionMatchIterator iterator = pattern.globalMatch(mainQml);
         while (iterator.hasNext()) {
             violations.push_back(iterator.next().captured(0));
@@ -365,7 +365,7 @@ void TestArchitectureBoundaries::qmlDoesNotRecomputeSharedMediaReadiness()
     };
 
     QStringList violations;
-    for (const QString &filePath : productionQmlFiles()) {
+    for (const QString& filePath : productionQmlFiles()) {
         const QString matches = matchingLines(filePath, forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -393,7 +393,7 @@ void TestArchitectureBoundaries::qmlDoesNotWriteDurablePresentationState()
     };
 
     QStringList violations;
-    for (const QString &filePath : productionQmlFiles()) {
+    for (const QString& filePath : productionQmlFiles()) {
         const QString matches = matchingLines(filePath, forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -418,7 +418,7 @@ void TestArchitectureBoundaries::imageDocumentHasNoPublicPresentationBackdoorSet
         QRegularExpression(QStringLiteral(R"(\bvoid\s+setRightToLeftReadingEnabled\s*\()")),
     };
     QStringList violations;
-    for (const QRegularExpression &pattern : forbiddenPatterns) {
+    for (const QRegularExpression& pattern : forbiddenPatterns) {
         const QRegularExpressionMatch match = pattern.match(publicHeader);
         if (match.hasMatch()) {
             violations.push_back(match.captured(0));
@@ -469,7 +469,7 @@ void TestArchitectureBoundaries::qmlViewportCommandHandlersDoNotApplyProjectionD
     };
 
     QStringList violations;
-    for (const QString &handler : commandHandlers) {
+    for (const QString& handler : commandHandlers) {
         const QRegularExpression functionPattern(
             QStringLiteral(R"(function\s+%1\s*\([^)]*\)\s*\{([\s\S]*?)\n    \})")
                 .arg(QRegularExpression::escape(handler)));
@@ -508,13 +508,13 @@ void TestArchitectureBoundaries::qmlViewportUsesOpaqueRevisionTokens()
             R"(Q_INVOKABLE\s+bool\s+(?:beginViewportCommandApplication|completeViewportCommandApplication|acknowledgeViewportCommand)\s*\(\s*quint64\b)")),
     };
     QStringList violations;
-    for (const QRegularExpression &pattern : qmlForbiddenPatterns) {
+    for (const QRegularExpression& pattern : qmlForbiddenPatterns) {
         QRegularExpressionMatchIterator iterator = pattern.globalMatch(viewport);
         while (iterator.hasNext()) {
             violations.push_back(iterator.next().captured(0));
         }
     }
-    for (const QRegularExpression &pattern : headerForbiddenPatterns) {
+    for (const QRegularExpression& pattern : headerForbiddenPatterns) {
         QRegularExpressionMatchIterator iterator = pattern.globalMatch(imageDocumentHeader);
         while (iterator.hasNext()) {
             violations.push_back(iterator.next().captured(0));
@@ -570,9 +570,9 @@ void TestArchitectureBoundaries::qmlDoesNotManufactureStaleSensitiveRevisions()
             QStringLiteral(R"(reportVideoOutputSurfaceClaim\s*\(\s*quint64\s+claimRevision\b)")),
     };
     QStringList violations;
-    for (const QString &source :
+    for (const QString& source :
         { mainQml, videoViewport, applicationHeader, sessionHeader, sessionRuntimeHeader }) {
-        for (const QRegularExpression &pattern : forbiddenPatterns) {
+        for (const QRegularExpression& pattern : forbiddenPatterns) {
             QRegularExpressionMatchIterator iterator = pattern.globalMatch(source);
             while (iterator.hasNext()) {
                 violations.push_back(iterator.next().captured(0));
@@ -626,8 +626,8 @@ void TestArchitectureBoundaries::qmlDoesNotExposeFixedViewerScanCommandRoutes()
     };
 
     QStringList violations;
-    for (const QString &source : { imageViewport, imageInteractionSurface }) {
-        for (const QRegularExpression &pattern : forbiddenQmlPatterns) {
+    for (const QString& source : { imageViewport, imageInteractionSurface }) {
+        for (const QRegularExpression& pattern : forbiddenQmlPatterns) {
             QRegularExpressionMatchIterator iterator = pattern.globalMatch(source);
             while (iterator.hasNext()) {
                 violations.push_back(iterator.next().captured(0));
@@ -663,7 +663,7 @@ void TestArchitectureBoundaries::videoSeekShortcutsRouteThroughApplicationRuntim
     };
 
     QStringList violations;
-    for (const QRegularExpression &pattern : forbiddenVideoViewportPatterns) {
+    for (const QRegularExpression& pattern : forbiddenVideoViewportPatterns) {
         QRegularExpressionMatchIterator iterator = pattern.globalMatch(videoViewport);
         while (iterator.hasNext()) {
             violations.push_back(iterator.next().captured(0));
@@ -803,7 +803,7 @@ void TestArchitectureBoundaries::sessionPublicProjectionDoesNotSampleLeafFacades
         QRegularExpression(QStringLiteral(R"(\bm_videoDocument\s*\.)")),
     };
     QStringList violations;
-    for (const QRegularExpression &pattern : forbiddenPatterns) {
+    for (const QRegularExpression& pattern : forbiddenPatterns) {
         QRegularExpressionMatchIterator iterator = pattern.globalMatch(body);
         while (iterator.hasNext()) {
             violations.push_back(iterator.next().captured(0));
@@ -822,7 +822,7 @@ void TestArchitectureBoundaries::qmlDoesNotWriteSharedVideoOutputAttachment()
     };
 
     QStringList violations;
-    for (const QString &filePath : productionQmlFiles()) {
+    for (const QString& filePath : productionQmlFiles()) {
         const QString matches = matchingLines(filePath, forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -852,7 +852,7 @@ void TestArchitectureBoundaries::qmlDoesNotDeriveSharedControlPolicyFromLeafDocu
     };
 
     QStringList violations;
-    for (const QString &filePath : productionQmlFiles()) {
+    for (const QString& filePath : productionQmlFiles()) {
         const QString matches = matchingLines(filePath, forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -878,7 +878,7 @@ void TestArchitectureBoundaries::qmlUsesCentralNavigationPresentationOrder()
     };
 
     QStringList violations;
-    for (const QString &filePath : productionQmlFiles()) {
+    for (const QString& filePath : productionQmlFiles()) {
         if (relativeProjectPath(filePath) == projectionRelativePath) {
             continue;
         }
@@ -958,7 +958,7 @@ void TestArchitectureBoundaries::viewportContextBridgeIsNonRenderingPublicQtFaca
         QStringLiteral(".rhi("),
     };
     QStringList violations;
-    for (const QString &token : forbiddenTokens) {
+    for (const QString& token : forbiddenTokens) {
         if (combined.contains(token)) {
             violations.push_back(token);
         }
@@ -1031,7 +1031,7 @@ void TestArchitectureBoundaries::oldImageRendererArtifactsAreAbsent()
     const QString manifests
         = coreSources + QLatin1Char('\n') + cxxqtSources + QLatin1Char('\n') + cxxqtHeaders;
     QStringList manifestViolations;
-    for (const QString &relativePath : forbiddenFiles) {
+    for (const QString& relativePath : forbiddenFiles) {
         if (manifests.contains(relativePath)) {
             manifestViolations.push_back(relativePath);
         }
@@ -1055,7 +1055,7 @@ void TestArchitectureBoundaries::oldImageRendererBuildWiringIsAbsent()
     };
 
     QStringList buildViolations;
-    for (const QString &token : forbiddenBuildTokens) {
+    for (const QString& token : forbiddenBuildTokens) {
         if (buildScript.contains(token)) {
             buildViolations.push_back(QStringLiteral("build.rs: %1").arg(token));
         }
@@ -1068,7 +1068,7 @@ void TestArchitectureBoundaries::oldImageRendererBuildWiringIsAbsent()
         QStringLiteral("rhi/qrhi.h"),
         QStringLiteral("rhi/qshader.h"),
     };
-    for (const QString &token : forbiddenTestCMakeTokens) {
+    for (const QString& token : forbiddenTestCMakeTokens) {
         if (testCMake.contains(token)) {
             buildViolations.push_back(QStringLiteral("tests/cpp/CMakeLists.txt: %1").arg(token));
         }
@@ -1096,13 +1096,13 @@ void TestArchitectureBoundaries::cppTestBuildConsumesCargoAppLibraryOnly()
     };
 
     QStringList violations;
-    for (const QString &token : forbiddenTokens) {
+    for (const QString& token : forbiddenTokens) {
         if (testCMake.contains(token)) {
             violations.push_back(
                 QStringLiteral("tests/cpp/CMakeLists.txt must not contain %1").arg(token));
         }
     }
-    for (const QString &token : requiredTokens) {
+    for (const QString& token : requiredTokens) {
         if (!testCMake.contains(token)) {
             violations.push_back(
                 QStringLiteral("tests/cpp/CMakeLists.txt must contain %1").arg(token));
@@ -1148,7 +1148,7 @@ void TestArchitectureBoundaries::productionImageDisplayUsesProviderPathOnly()
     const QStringList files = projectFilesUnder({ QStringLiteral("src") },
         { QStringLiteral("*.cpp"), QStringLiteral("*.h"), QStringLiteral("*.qml"),
             QStringLiteral("*.txt") });
-    for (const QString &filePath : files) {
+    for (const QString& filePath : files) {
         const QString matches = matchingLines(filePath, forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -1161,7 +1161,7 @@ void TestArchitectureBoundaries::productionImageDisplayUsesProviderPathOnly()
 void TestArchitectureBoundaries::sourceKeysExposeTypedExtensionFamilies()
 {
     const QString header = readProjectFile(QStringLiteral("src/location/sourcekey.h"));
-    for (const QString &typeName : {
+    for (const QString& typeName : {
              QStringLiteral("OrdinaryFileSourceKey"),
              QStringLiteral("DirectMediaSourceKey"),
              QStringLiteral("DirectMediaScopeKey"),
@@ -1178,7 +1178,7 @@ void TestArchitectureBoundaries::sourceKeysExposeTypedExtensionFamilies()
 void TestArchitectureBoundaries::sourceKeysExposeOperationalExtensionContracts()
 {
     const QString header = readProjectFile(QStringLiteral("src/location/sourcekey.h"));
-    for (const QString &symbolName : {
+    for (const QString& symbolName : {
              QStringLiteral("openedCollectionEntrySourceKey"),
              QStringLiteral("thumbnailSourceKey"),
              QStringLiteral("predecodeCandidateKey"),
@@ -1217,7 +1217,7 @@ void TestArchitectureBoundaries::openedCollectionThumbnailEligibilityUsesSharedP
     };
 
     QStringList violations;
-    for (const QRegularExpression &pattern : forbiddenPatterns) {
+    for (const QRegularExpression& pattern : forbiddenPatterns) {
         QRegularExpressionMatchIterator iterator = pattern.globalMatch(karchiveBackend);
         while (iterator.hasNext()) {
             violations.push_back(iterator.next().captured(0));
@@ -1238,7 +1238,7 @@ void TestArchitectureBoundaries::decodingUsesNeutralThumbnailContracts()
     };
 
     QStringList violations;
-    for (const QString &filePath : files) {
+    for (const QString& filePath : files) {
         const QString matches = matchingLines(filePath, forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -1264,7 +1264,7 @@ void TestArchitectureBoundaries::cppNamespaceIsLowercaseKiriview()
     };
 
     QStringList violations;
-    for (const QString &filePath : projectFilesUnder(QStringList { QStringLiteral("src") },
+    for (const QString& filePath : projectFilesUnder(QStringList { QStringLiteral("src") },
              QStringList {
                  QStringLiteral("*.cpp"),
                  QStringLiteral("*.h"),
@@ -1274,7 +1274,7 @@ void TestArchitectureBoundaries::cppNamespaceIsLowercaseKiriview()
             violations.push_back(matches);
         }
     }
-    for (const QString &filePath : projectFilesUnder(QStringList { QStringLiteral("src/policy") },
+    for (const QString& filePath : projectFilesUnder(QStringList { QStringLiteral("src/policy") },
              QStringList { QStringLiteral("*.rs") })) {
         const QString matches = matchingLines(filePath, forbiddenRustPatterns);
         if (!matches.isEmpty()) {
@@ -1341,7 +1341,7 @@ void TestArchitectureBoundaries::documentSessionUsesThumbnailStripDependencyPort
     };
 
     QStringList violations;
-    for (const QRegularExpression &pattern : rawThumbnailProviderFields) {
+    for (const QRegularExpression& pattern : rawThumbnailProviderFields) {
         if (pattern.match(documentSessionHeader).hasMatch()) {
             violations.push_back(pattern.pattern());
         }
@@ -1368,7 +1368,7 @@ void TestArchitectureBoundaries::documentSessionUsesOpenWithRuntime()
     };
 
     QStringList violations;
-    for (const QRegularExpression &pattern : rawOpenWithFields) {
+    for (const QRegularExpression& pattern : rawOpenWithFields) {
         if (pattern.match(documentSessionHeader).hasMatch()) {
             violations.push_back(pattern.pattern());
         }
@@ -1453,7 +1453,7 @@ void TestArchitectureBoundaries::mediaFormatRegistryDoesNotOwnLocalizedDialogLab
     };
 
     QStringList violations;
-    for (const QRegularExpression &pattern : forbiddenPatterns) {
+    for (const QRegularExpression& pattern : forbiddenPatterns) {
         QRegularExpressionMatchIterator iterator = pattern.globalMatch(combined);
         while (iterator.hasNext()) {
             violations.push_back(iterator.next().captured(0));
@@ -1477,7 +1477,7 @@ void TestArchitectureBoundaries::asyncImageIoJobsDoNotOwnDecodeDataLoading()
     };
 
     QStringList violations;
-    for (const QString &relativePath : relativePaths) {
+    for (const QString& relativePath : relativePaths) {
         const QString matches = matchingLines(projectPath(relativePath), forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -1501,7 +1501,7 @@ void TestArchitectureBoundaries::asyncImageIoJobsDoNotOwnDirectoryCandidateLoadi
     };
 
     QStringList violations;
-    for (const QString &relativePath : relativePaths) {
+    for (const QString& relativePath : relativePaths) {
         const QString matches = matchingLines(projectPath(relativePath), forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -1525,7 +1525,7 @@ void TestArchitectureBoundaries::asyncImageIoJobsDoNotOwnOpenedCollectionCandida
     };
 
     QStringList violations;
-    for (const QString &relativePath : relativePaths) {
+    for (const QString& relativePath : relativePaths) {
         const QString matches = matchingLines(projectPath(relativePath), forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -1548,7 +1548,7 @@ void TestArchitectureBoundaries::mediaEntrySourceStoreDoesNotDependOnDocumentPla
     };
 
     QStringList violations;
-    for (const QString &relativePath : relativePaths) {
+    for (const QString& relativePath : relativePaths) {
         const QString matches = matchingLines(projectPath(relativePath), forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -1995,7 +1995,7 @@ void TestArchitectureBoundaries::imagePageSurfaceOwnersExposeNoPresentationState
     };
 
     QStringList violations;
-    for (const QRegularExpression &pattern : forbiddenPatterns) {
+    for (const QRegularExpression& pattern : forbiddenPatterns) {
         QRegularExpressionMatchIterator iterator = pattern.globalMatch(header);
         while (iterator.hasNext()) {
             violations.push_back(iterator.next().captured(0));
@@ -2029,7 +2029,7 @@ void TestArchitectureBoundaries::activePresentationDoesNotWritePageSurfacePresen
     };
 
     QStringList violations;
-    for (const QString &relativePath : relativePaths) {
+    for (const QString& relativePath : relativePaths) {
         const QString path = projectPath(relativePath);
         if (!QFileInfo::exists(path)) {
             continue;
@@ -2058,9 +2058,9 @@ void TestArchitectureBoundaries::productionFacadesDoNotExposePresentationBackdoo
     };
 
     QStringList violations;
-    for (const QString &relativePath : relativePaths) {
+    for (const QString& relativePath : relativePaths) {
         const QString contents = readProjectFile(relativePath);
-        for (const QRegularExpression &pattern : forbiddenPatterns) {
+        for (const QRegularExpression& pattern : forbiddenPatterns) {
             QRegularExpressionMatchIterator iterator = pattern.globalMatch(contents);
             while (iterator.hasNext()) {
                 violations.push_back(
@@ -2101,7 +2101,7 @@ void TestArchitectureBoundaries::sessionLeafSnapshotPortsAreSeparateFromCommandP
     QVERIFY(!header.contains(QStringLiteral("struct DocumentSessionImageDocumentPort")));
     QVERIFY(!header.contains(QStringLiteral("struct DocumentSessionVideoDocumentPort")));
 
-    for (const QString &port : snapshotPorts + commandPorts) {
+    for (const QString& port : snapshotPorts + commandPorts) {
         const QRegularExpression structPattern(QStringLiteral(R"(struct\s+%1\s*\{([\s\S]*?)\n\};)")
                 .arg(QRegularExpression::escape(port)));
         const QRegularExpressionMatch match = structPattern.match(header);
@@ -2126,7 +2126,7 @@ void TestArchitectureBoundaries::sessionLeafSnapshotPortsAreSeparateFromCommandP
         QStringLiteral("std::function<void(int)> openImageAtPage"),
         QStringLiteral("std::function<void(FileDeletionMode)> deleteDisplayedFile"),
     };
-    for (const QString &token : imageCommandAggregateForbiddenTokens) {
+    for (const QString& token : imageCommandAggregateForbiddenTokens) {
         QVERIFY2(!imageCommandPortBody.contains(token),
             qPrintable(QStringLiteral("DocumentSessionImageDocumentCommandPort still contains %1")
                     .arg(token)));
@@ -2150,7 +2150,7 @@ void TestArchitectureBoundaries::sessionLeafSnapshotPortsAreSeparateFromCommandP
         QStringLiteral(
             "std::function<void(const QRectF &, const QRectF &)> setVideoOutputGeometry"),
     };
-    for (const QString &token : videoCommandAggregateForbiddenTokens) {
+    for (const QString& token : videoCommandAggregateForbiddenTokens) {
         QVERIFY2(!videoCommandPortBody.contains(token),
             qPrintable(QStringLiteral("DocumentSessionVideoDocumentCommandPort still contains %1")
                     .arg(token)));
@@ -2173,13 +2173,13 @@ void TestArchitectureBoundaries::sessionLeafSnapshotPortsAreSeparateFromCommandP
     };
 
     QStringList violations;
-    for (const QString &port : snapshotPorts + commandPorts) {
+    for (const QString& port : snapshotPorts + commandPorts) {
         const QRegularExpression structPattern(QStringLiteral(R"(struct\s+%1\s*\{([\s\S]*?)\n\};)")
                 .arg(QRegularExpression::escape(port)));
         const QString body = structPattern.match(header).captured(1);
         const QStringList forbiddenTokens
             = snapshotPorts.contains(port) ? snapshotForbiddenTokens : commandForbiddenTokens;
-        for (const QString &token : forbiddenTokens) {
+        for (const QString& token : forbiddenTokens) {
             if (body.contains(token)) {
                 violations.push_back(QStringLiteral("%1 contains %2").arg(port, token));
             }

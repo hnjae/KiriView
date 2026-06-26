@@ -16,14 +16,16 @@
 #include <optional>
 
 namespace kiriview::ApplicationActions {
-struct ApplicationShortcutRoute {
+struct ApplicationShortcutRoute
+{
     QList<ActionId> actionIds;
     ApplicationShortcutActivationScope activationScope
         = ApplicationShortcutActivationScope::ProgramWide;
     ImageShortcutScope shortcutScope = ImageShortcutScope::HelpShortcutScope;
 };
 
-struct ApplicationShortcutProjection {
+struct ApplicationShortcutProjection
+{
     QList<QKeySequence> shortcuts;
     QList<QKeySequence> programWideShortcuts;
     QList<QKeySequence> viewerLocalShortcuts;
@@ -40,7 +42,8 @@ enum class FixedShortcutDispatchKind {
     VideoSeek,
 };
 
-struct FixedShortcutDispatchInput {
+struct FixedShortcutDispatchInput
+{
     bool focusApplicable = true;
     bool videoMode = false;
     bool helpActionsEnabled = false;
@@ -52,7 +55,8 @@ struct FixedShortcutDispatchInput {
     bool pannableViewerShortcutsEnabled = false;
 };
 
-struct FixedShortcutDispatchOutcome {
+struct FixedShortcutDispatchOutcome
+{
     FixedShortcutDispatchKind kind = FixedShortcutDispatchKind::None;
     bool previousOrUp = false;
     qint64 videoSeekDeltaMilliseconds = 0;
@@ -65,37 +69,40 @@ enum class GenericShortcutDispatchKind {
     UnsupportedImageAction,
 };
 
-struct GenericShortcutBinding {
+struct GenericShortcutBinding
+{
     ActionId actionId = ActionId::ActionCount;
     std::optional<ImageShortcutScope> shortcutScope;
     QList<QKeySequence> shortcuts;
     bool actionEnabled = false;
 };
 
-struct GenericShortcutDispatchInput {
+struct GenericShortcutDispatchInput
+{
     bool focusApplicable = true;
     ApplicationActionStateInput actionState;
     QList<GenericShortcutBinding> bindings;
 };
 
-struct GenericShortcutDispatchOutcome {
+struct GenericShortcutDispatchOutcome
+{
     GenericShortcutDispatchKind kind = GenericShortcutDispatchKind::None;
     ActionId actionId = ActionId::ActionCount;
 };
 
-QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts);
-QString shortcutListText(const QList<QKeySequence> &shortcuts);
-QList<QKeySequence> sanitizeProgramWideShortcuts(const QList<QKeySequence> &shortcuts);
-ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &programWideShortcuts,
-    const QList<QKeySequence> &viewerLocalShortcuts = {});
-const QList<ApplicationShortcutRoute> &shortcutRoutes();
+QKeySequence menuShortcut(const QList<QKeySequence>& shortcuts);
+QString shortcutListText(const QList<QKeySequence>& shortcuts);
+QList<QKeySequence> sanitizeProgramWideShortcuts(const QList<QKeySequence>& shortcuts);
+ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence>& programWideShortcuts,
+    const QList<QKeySequence>& viewerLocalShortcuts = {});
+const QList<ApplicationShortcutRoute>& shortcutRoutes();
 std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value);
 FixedShortcutDispatchOutcome fixedShortcutDispatchOutcome(
-    const FixedShortcutDispatchInput &input, const QKeySequence &shortcut);
+    const FixedShortcutDispatchInput& input, const QKeySequence& shortcut);
 bool genericShortcutBindingEnabled(
-    const ApplicationActionStateInput &actionState, const GenericShortcutBinding &binding);
+    const ApplicationActionStateInput& actionState, const GenericShortcutBinding& binding);
 GenericShortcutDispatchOutcome genericShortcutDispatchOutcome(
-    const GenericShortcutDispatchInput &input, const QKeySequence &shortcut);
+    const GenericShortcutDispatchInput& input, const QKeySequence& shortcut);
 bool videoActionUnsupported(ActionId actionId);
 bool imageActionUnsupported(ActionId actionId);
 }

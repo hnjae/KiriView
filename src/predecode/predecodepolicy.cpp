@@ -16,7 +16,7 @@ int predecodeDebounceMsec() { return rustPredecodeDebounceMsec(); }
 int predecodeNeutralRefreshMsec() { return rustPredecodeNeutralRefreshMsec(); }
 
 PredecodeSourceProfile predecodeSourceProfileForOpenedCollectionScope(
-    const OpenedCollectionScopeLocation &openedCollectionScope, int idealThreadCount)
+    const OpenedCollectionScopeLocation& openedCollectionScope, int idealThreadCount)
 {
     if (openedCollectionScope.isEmpty()) {
         return directMediaPredecodeSourceProfile();
@@ -32,12 +32,12 @@ PredecodeSourceProfile predecodeSourceProfileForOpenedCollectionScope(
 }
 
 std::vector<std::size_t> predecodeRetainedCachedImageIndices(
-    const std::vector<PredecodeCachedImageState> &states, std::size_t windowCount,
+    const std::vector<PredecodeCachedImageState>& states, std::size_t windowCount,
     qsizetype byteBudget)
 {
     rust::Vec<RustPredecodeCachedImageState> rustStates;
     rustStates.reserve(states.size());
-    for (const PredecodeCachedImageState &state : states) {
+    for (const PredecodeCachedImageState& state : states) {
         rustStates.push_back(Bridge::rustPredecodeCachedImageState(state));
     }
 
@@ -47,11 +47,11 @@ std::vector<std::size_t> predecodeRetainedCachedImageIndices(
 }
 
 std::vector<std::size_t> predecodeMissingWindowLoadIndices(
-    const std::vector<PredecodeWindowLoadState> &states)
+    const std::vector<PredecodeWindowLoadState>& states)
 {
     rust::Vec<RustPredecodeWindowLoadState> rustStates;
     rustStates.reserve(states.size());
-    for (const PredecodeWindowLoadState &state : states) {
+    for (const PredecodeWindowLoadState& state : states) {
         rustStates.push_back(Bridge::rustPredecodeWindowLoadState(state));
     }
 
@@ -82,11 +82,11 @@ PredecodeMomentumState predecodeUpdatedMomentumState(
 }
 
 PredecodeQueuedLoadPlan predecodeNextQueuedLoadPlan(
-    const std::vector<PredecodeQueuedLoadState> &states)
+    const std::vector<PredecodeQueuedLoadState>& states)
 {
     rust::Vec<RustPredecodeQueuedLoadState> rustStates;
     rustStates.reserve(states.size());
-    for (const PredecodeQueuedLoadState &state : states) {
+    for (const PredecodeQueuedLoadState& state : states) {
         rustStates.push_back(Bridge::rustPredecodeQueuedLoadState(state));
     }
 

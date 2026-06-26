@@ -6,13 +6,13 @@
 #include "navigation/mediaformatregistry.h"
 
 namespace {
-void prependMutations(kiriview::DocumentSessionRoutePlan &plan,
+void prependMutations(kiriview::DocumentSessionRoutePlan& plan,
     std::vector<kiriview::DocumentSessionRouteMutation> mutations)
 {
     plan.mutations.insert(plan.mutations.begin(), mutations.cbegin(), mutations.cend());
 }
 
-void appendSourceRoutingPreparation(kiriview::DocumentSessionRoutePlan &plan)
+void appendSourceRoutingPreparation(kiriview::DocumentSessionRoutePlan& plan)
 {
     prependMutations(plan,
         std::vector<kiriview::DocumentSessionRouteMutation> {
@@ -62,7 +62,7 @@ std::vector<kiriview::DocumentSessionRouteMutation> clearDeletedDocumentMutation
 }
 
 void appendDirectImageCursorOperation(
-    kiriview::DocumentSessionRoutePlan &plan, kiriview::DocumentSessionKind currentKind)
+    kiriview::DocumentSessionRoutePlan& plan, kiriview::DocumentSessionKind currentKind)
 {
     if (currentKind == kiriview::DocumentSessionKind::Image) {
         plan.mutations.push_back(
@@ -74,13 +74,13 @@ void appendDirectImageCursorOperation(
         kiriview::ClearThenRequestDirectImageCursorRouteOperation { plan.sourceUrl });
 }
 
-void appendEnterImageDocumentMutations(kiriview::DocumentSessionRoutePlan &plan)
+void appendEnterImageDocumentMutations(kiriview::DocumentSessionRoutePlan& plan)
 {
     plan.mutations.push_back(kiriview::LeaveVideoModeRouteOperation {});
     plan.mutations.push_back(kiriview::EnterImageDocumentRouteOperation { plan.sourceUrl });
 }
 
-void appendRefreshableImageDocumentRoute(kiriview::DocumentSessionRoutePlan &plan)
+void appendRefreshableImageDocumentRoute(kiriview::DocumentSessionRoutePlan& plan)
 {
     appendEnterImageDocumentMutations(plan);
     plan.mutations.push_back(kiriview::SyncDirectImageCursorFromDocumentRouteOperation {});
@@ -90,7 +90,7 @@ void appendRefreshableImageDocumentRoute(kiriview::DocumentSessionRoutePlan &pla
         kiriview::RefreshDirectMediaNavigationAfterRoutingRouteEffect {});
 }
 
-kiriview::DocumentSessionRoutePlan emptyRoutePlan(const QUrl &sourceUrl)
+kiriview::DocumentSessionRoutePlan emptyRoutePlan(const QUrl& sourceUrl)
 {
     kiriview::DocumentSessionRoutePlan plan;
     plan.kind = kiriview::DocumentSessionRouteKind::Empty;
@@ -105,7 +105,7 @@ kiriview::DocumentSessionRoutePlan emptyRoutePlan(const QUrl &sourceUrl)
     return plan;
 }
 
-kiriview::DocumentSessionRoutePlan directVideoRoutePlan(const QUrl &sourceUrl)
+kiriview::DocumentSessionRoutePlan directVideoRoutePlan(const QUrl& sourceUrl)
 {
     kiriview::DocumentSessionRoutePlan plan;
     plan.kind = kiriview::DocumentSessionRouteKind::DirectVideo;
@@ -121,7 +121,7 @@ kiriview::DocumentSessionRoutePlan directVideoRoutePlan(const QUrl &sourceUrl)
 }
 
 kiriview::DocumentSessionRoutePlan directImageRoutePlan(
-    const QUrl &sourceUrl, kiriview::DocumentSessionKind currentKind)
+    const QUrl& sourceUrl, kiriview::DocumentSessionKind currentKind)
 {
     kiriview::DocumentSessionRoutePlan plan;
     plan.kind = kiriview::DocumentSessionRouteKind::DirectImage;
@@ -131,7 +131,7 @@ kiriview::DocumentSessionRoutePlan directImageRoutePlan(
     return plan;
 }
 
-kiriview::DocumentSessionRoutePlan imageDocumentRoutePlan(const QUrl &sourceUrl)
+kiriview::DocumentSessionRoutePlan imageDocumentRoutePlan(const QUrl& sourceUrl)
 {
     kiriview::DocumentSessionRoutePlan plan;
     plan.kind = kiriview::DocumentSessionRouteKind::ImageDocument;
@@ -142,7 +142,7 @@ kiriview::DocumentSessionRoutePlan imageDocumentRoutePlan(const QUrl &sourceUrl)
 }
 
 kiriview::DocumentSessionRoutePlan baseRoutePlan(
-    const QUrl &sourceUrl, kiriview::DocumentSessionKind currentKind)
+    const QUrl& sourceUrl, kiriview::DocumentSessionKind currentKind)
 {
     if (sourceUrl.isEmpty()) {
         return emptyRoutePlan(sourceUrl);
@@ -162,7 +162,7 @@ kiriview::DocumentSessionRoutePlan baseRoutePlan(
 
 namespace kiriview {
 DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
-    const QUrl &sourceUrl, DocumentSessionKind currentKind)
+    const QUrl& sourceUrl, DocumentSessionKind currentKind)
 {
     DocumentSessionRoutePlan plan = baseRoutePlan(sourceUrl, currentKind);
     appendSourceRoutingPreparation(plan);
@@ -170,7 +170,7 @@ DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
 }
 
 DocumentSessionRoutePlan documentSessionRoutePlanForMediaUrl(
-    const QUrl &url, DocumentSessionKind currentKind)
+    const QUrl& url, DocumentSessionKind currentKind)
 {
     return baseRoutePlan(url, currentKind);
 }

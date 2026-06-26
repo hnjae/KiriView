@@ -14,7 +14,7 @@
 namespace {
 using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
 
-bool thumbnailSourceKeyHasSourceKind(const kiriview::ThumbnailSourceKey &sourceKey,
+bool thumbnailSourceKeyHasSourceKind(const kiriview::ThumbnailSourceKey& sourceKey,
     kiriview::ActiveNavigationThumbnailSourceKind sourceKind)
 {
     return sourceKey.sourceKind
@@ -22,7 +22,7 @@ bool thumbnailSourceKeyHasSourceKind(const kiriview::ThumbnailSourceKey &sourceK
 }
 
 kiriview::ThumbnailSourceKey sourceKeyForRow(
-    const kiriview::ActiveNavigationThumbnailRow &row, quint64 navigationGeneration)
+    const kiriview::ActiveNavigationThumbnailRow& row, quint64 navigationGeneration)
 {
     return kiriview::thumbnailSourceKey(row.number, row.url, row.label,
         kiriview::activeNavigationThumbnailPageKindIdentity(row.kind),
@@ -35,7 +35,7 @@ constexpr std::array<Bucket, 4> backgroundFillBuckets()
     return { Bucket::Normal, Bucket::Large, Bucket::XLarge, Bucket::XXLarge };
 }
 
-kiriview::ThumbnailSourceKind thumbnailSourceKind(const QString &sourceKind)
+kiriview::ThumbnailSourceKind thumbnailSourceKind(const QString& sourceKind)
 {
     if (sourceKind
         == kiriview::activeNavigationThumbnailSourceKindIdentity(
@@ -103,14 +103,14 @@ ThumbnailSourceAdapter defaultThumbnailSourceAdapter()
 }
 
 ActiveNavigationThumbnailRuntime::ActiveNavigationThumbnailRuntime(
-    QObject *owner, ActiveNavigationThumbnailRuntimeDependencies dependencies)
+    QObject* owner, ActiveNavigationThumbnailRuntimeDependencies dependencies)
     : ActiveNavigationThumbnailRuntime(owner, std::move(dependencies.lookupProvider),
           std::move(dependencies.imageStore), std::move(dependencies.generationProvider),
           std::move(dependencies.sourceAdapter), std::move(dependencies.workerScheduler))
 {
 }
 
-ActiveNavigationThumbnailRuntime::ActiveNavigationThumbnailRuntime(QObject *owner,
+ActiveNavigationThumbnailRuntime::ActiveNavigationThumbnailRuntime(QObject* owner,
     ThumbnailCacheLookupProvider lookupProvider, std::shared_ptr<ThumbnailImageStore> imageStore,
     ThumbnailGenerationProvider generationProvider, ThumbnailSourceAdapter sourceAdapter,
     ImageWorkerScheduler workerScheduler)
@@ -134,7 +134,7 @@ ActiveNavigationThumbnailRuntime::~ActiveNavigationThumbnailRuntime()
     releaseAllImages();
 }
 
-QAbstractListModel *ActiveNavigationThumbnailRuntime::model() const { return m_model.get(); }
+QAbstractListModel* ActiveNavigationThumbnailRuntime::model() const { return m_model.get(); }
 
 quint64 ActiveNavigationThumbnailRuntime::navigationGeneration() const
 {
@@ -170,7 +170,7 @@ void ActiveNavigationThumbnailRuntime::setRows(std::vector<ActiveNavigationThumb
                                   << m_navigationGeneration << "rowCount" << rows.size();
     m_rows.clear();
     m_rows.reserve(rows.size());
-    for (ActiveNavigationThumbnailRow &row : rows) {
+    for (ActiveNavigationThumbnailRow& row : rows) {
         RowState state;
         state.row = std::move(row);
         state.sourceKey = sourceKeyForRow(state.row, m_navigationGeneration);
@@ -179,7 +179,7 @@ void ActiveNavigationThumbnailRuntime::setRows(std::vector<ActiveNavigationThumb
     publishRows();
 }
 
-bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl &url,
+bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl& url,
     ActiveNavigationThumbnailDemandBucket bucket, ActiveNavigationThumbnailDemandPriority priority,
     quint64 navigationGeneration)
 {
@@ -213,7 +213,7 @@ bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl &url,
         return false;
     }
 
-    RowState &state = m_rows.at(*rowIndex);
+    RowState& state = m_rows.at(*rowIndex);
     const ThumbnailSourceAdapterPlan sourcePlan
         = sourcePlanForDemand(state.sourceKey, bucket, priority);
     const AcceptedDemand demand {
@@ -277,14 +277,14 @@ bool ActiveNavigationThumbnailRuntime::reportDemand(int number, const QUrl &url,
 }
 
 bool ActiveNavigationThumbnailRuntime::applyCompletion(
-    const ActiveNavigationThumbnailCompletion &completion)
+    const ActiveNavigationThumbnailCompletion& completion)
 {
     const std::optional<std::size_t> rowIndex = rowIndexForSourceKey(completion.sourceKey);
     if (!rowIndex.has_value()) {
         return false;
     }
 
-    RowState &state = m_rows.at(*rowIndex);
+    RowState& state = m_rows.at(*rowIndex);
     if (!state.acceptedDemand.has_value()
         || !sameFreshThumbnailSourceKey(state.acceptedDemand->sourceKey, completion.sourceKey)
         || state.acceptedDemand->bucket != completion.bucket) {
@@ -316,7 +316,7 @@ ActiveNavigationThumbnailResult ActiveNavigationThumbnailRuntime::resultAt(std::
     return m_rows.at(row).result;
 }
 
-const std::vector<ActiveNavigationThumbnailFailureDiagnostic> &
+const std::vector<ActiveNavigationThumbnailFailureDiagnostic>&
 ActiveNavigationThumbnailRuntime::failureDiagnostics() const
 {
     return m_failureDiagnostics;
@@ -325,7 +325,7 @@ ActiveNavigationThumbnailRuntime::failureDiagnostics() const
 qsizetype ActiveNavigationThumbnailRuntime::activeJobCount() const
 {
     qsizetype count = 0;
-    for (const RowState &state : m_rows) {
+    for (const RowState& state : m_rows) {
         if (state.activeJob.has_value()) {
             ++count;
         }
@@ -339,21 +339,21 @@ qsizetype ActiveNavigationThumbnailRuntime::canceledJobCount() const
 }
 
 bool ActiveNavigationThumbnailRuntime::sameRowIdentity(
-    const ActiveNavigationThumbnailRow &left, const ActiveNavigationThumbnailRow &right)
+    const ActiveNavigationThumbnailRow& left, const ActiveNavigationThumbnailRow& right)
 {
     return left.number == right.number && left.url == right.url && left.label == right.label
         && left.kind == right.kind && left.sourceKind == right.sourceKind;
 }
 
 bool ActiveNavigationThumbnailRuntime::sameFreshThumbnailSourceKey(
-    const ThumbnailSourceKey &left, const ThumbnailSourceKey &right)
+    const ThumbnailSourceKey& left, const ThumbnailSourceKey& right)
 {
     return sameThumbnailSourceKey(left, right)
         && left.navigationGeneration == right.navigationGeneration;
 }
 
 bool ActiveNavigationThumbnailRuntime::sameSourceAdapterPlan(
-    const ThumbnailSourceAdapterPlan &left, const ThumbnailSourceAdapterPlan &right)
+    const ThumbnailSourceAdapterPlan& left, const ThumbnailSourceAdapterPlan& right)
 {
     return left.kind == right.kind && left.localPathBytes == right.localPathBytes
         && left.originalIdentity.mode == right.originalIdentity.mode
@@ -367,7 +367,7 @@ bool ActiveNavigationThumbnailRuntime::sameSourceAdapterPlan(
 }
 
 bool ActiveNavigationThumbnailRuntime::sameAcceptedDemand(
-    const AcceptedDemand &left, const AcceptedDemand &right)
+    const AcceptedDemand& left, const AcceptedDemand& right)
 {
     return sameFreshThumbnailSourceKey(left.sourceKey, right.sourceKey)
         && left.bucket == right.bucket && left.priority == right.priority
@@ -375,7 +375,7 @@ bool ActiveNavigationThumbnailRuntime::sameAcceptedDemand(
 }
 
 bool ActiveNavigationThumbnailRuntime::supportsGeneratedThumbnail(
-    const ThumbnailSourceAdapterPlan &plan)
+    const ThumbnailSourceAdapterPlan& plan)
 {
     return plan.kind == ThumbnailSourceAdapterPlanKind::InMemoryOnly
         || (plan.kind == ThumbnailSourceAdapterPlanKind::CacheableLocalFile
@@ -384,13 +384,13 @@ bool ActiveNavigationThumbnailRuntime::supportsGeneratedThumbnail(
             && !plan.openedCollectionScope.isEmpty());
 }
 
-bool ActiveNavigationThumbnailRuntime::usesCacheLookup(const ThumbnailSourceAdapterPlan &plan)
+bool ActiveNavigationThumbnailRuntime::usesCacheLookup(const ThumbnailSourceAdapterPlan& plan)
 {
     return plan.kind == ThumbnailSourceAdapterPlanKind::CacheableLocalFile
         && !plan.localPathBytes.isEmpty();
 }
 
-bool ActiveNavigationThumbnailRuntime::enablesCacheInstall(const ThumbnailSourceAdapterPlan &plan)
+bool ActiveNavigationThumbnailRuntime::enablesCacheInstall(const ThumbnailSourceAdapterPlan& plan)
 {
     return (plan.kind == ThumbnailSourceAdapterPlanKind::CacheableLocalFile
                && !plan.localPathBytes.isEmpty())
@@ -422,10 +422,10 @@ ThumbnailImageRetentionPriority ActiveNavigationThumbnailRuntime::imageRetention
 }
 
 std::optional<std::size_t> ActiveNavigationThumbnailRuntime::rowIndexForIdentity(
-    int number, const QUrl &url, quint64 navigationGeneration) const
+    int number, const QUrl& url, quint64 navigationGeneration) const
 {
     for (std::size_t row = 0; row < m_rows.size(); ++row) {
-        const ThumbnailSourceKey &sourceKey = m_rows.at(row).sourceKey;
+        const ThumbnailSourceKey& sourceKey = m_rows.at(row).sourceKey;
         if (sourceKey.rowNumber == number && sourceKey.url == url
             && sourceKey.navigationGeneration == navigationGeneration) {
             return row;
@@ -436,7 +436,7 @@ std::optional<std::size_t> ActiveNavigationThumbnailRuntime::rowIndexForIdentity
 }
 
 std::optional<std::size_t> ActiveNavigationThumbnailRuntime::rowIndexForSourceKey(
-    const ThumbnailSourceKey &sourceKey) const
+    const ThumbnailSourceKey& sourceKey) const
 {
     for (std::size_t row = 0; row < m_rows.size(); ++row) {
         if (sameFreshThumbnailSourceKey(m_rows.at(row).sourceKey, sourceKey)) {
@@ -447,7 +447,7 @@ std::optional<std::size_t> ActiveNavigationThumbnailRuntime::rowIndexForSourceKe
     return {};
 }
 
-void ActiveNavigationThumbnailRuntime::cancelActiveJob(RowState &state)
+void ActiveNavigationThumbnailRuntime::cancelActiveJob(RowState& state)
 {
     if (!state.activeJob.has_value()) {
         return;
@@ -464,7 +464,7 @@ void ActiveNavigationThumbnailRuntime::cancelActiveJob(RowState &state)
 
 void ActiveNavigationThumbnailRuntime::cancelActiveBackgroundJob()
 {
-    for (RowState &state : m_rows) {
+    for (RowState& state : m_rows) {
         if (state.activeJob.has_value() && state.activeJob->kind == ThumbnailWorkKind::Background) {
             cancelActiveJob(state);
             return;
@@ -474,27 +474,27 @@ void ActiveNavigationThumbnailRuntime::cancelActiveBackgroundJob()
 
 void ActiveNavigationThumbnailRuntime::cancelAllActiveJobs()
 {
-    for (RowState &state : m_rows) {
+    for (RowState& state : m_rows) {
         cancelActiveJob(state);
     }
 }
 
 bool ActiveNavigationThumbnailRuntime::hasActiveForegroundJob() const
 {
-    return std::any_of(m_rows.cbegin(), m_rows.cend(), [](const RowState &state) {
+    return std::any_of(m_rows.cbegin(), m_rows.cend(), [](const RowState& state) {
         return state.activeJob.has_value()
             && state.activeJob->kind == ThumbnailWorkKind::Foreground;
     });
 }
 
-bool ActiveNavigationThumbnailRuntime::hasUsableReadyImage(const RowState &state) const
+bool ActiveNavigationThumbnailRuntime::hasUsableReadyImage(const RowState& state) const
 {
     return state.result.status == ActiveNavigationThumbnailResultStatus::Ready
         && !state.imageStoreId.isEmpty() && m_imageStore != nullptr
         && !m_imageStore->image(state.imageStoreId).isNull();
 }
 
-void ActiveNavigationThumbnailRuntime::releaseImage(RowState &state)
+void ActiveNavigationThumbnailRuntime::releaseImage(RowState& state)
 {
     if (m_imageStore != nullptr && !state.imageStoreId.isEmpty()) {
         m_imageStore->release(state.imageStoreId);
@@ -504,13 +504,13 @@ void ActiveNavigationThumbnailRuntime::releaseImage(RowState &state)
 
 void ActiveNavigationThumbnailRuntime::releaseAllImages()
 {
-    for (RowState &state : m_rows) {
+    for (RowState& state : m_rows) {
         releaseImage(state);
     }
 }
 
 void ActiveNavigationThumbnailRuntime::startLookupJob(
-    RowState &state, const AcceptedDemand &demand, ThumbnailWorkKind kind)
+    RowState& state, const AcceptedDemand& demand, ThumbnailWorkKind kind)
 {
     if (state.activeJob == std::nullopt || !m_lookupProvider) {
         return;
@@ -540,7 +540,7 @@ void ActiveNavigationThumbnailRuntime::startLookupJob(
 }
 
 void ActiveNavigationThumbnailRuntime::startGenerationJob(
-    RowState &state, const AcceptedDemand &demand, ThumbnailWorkKind kind)
+    RowState& state, const AcceptedDemand& demand, ThumbnailWorkKind kind)
 {
     if (state.activeJob == std::nullopt || !m_generationProvider) {
         const quint64 jobId = state.activeJob.has_value() ? state.activeJob->id : 0;
@@ -590,9 +590,9 @@ void ActiveNavigationThumbnailRuntime::startGenerationJob(
 }
 
 void ActiveNavigationThumbnailRuntime::recordFailureDiagnostic(quint64 jobId,
-    const ThumbnailSourceKey &sourceKey, ThumbnailWorkKind workKind,
+    const ThumbnailSourceKey& sourceKey, ThumbnailWorkKind workKind,
     ActiveNavigationThumbnailDemandBucket bucket, ActiveNavigationThumbnailFailureKind failureKind,
-    const QString &errorString)
+    const QString& errorString)
 {
     const QString resolvedErrorString
         = errorString.isEmpty() ? fallbackThumbnailFailureError(failureKind) : errorString;
@@ -612,15 +612,15 @@ void ActiveNavigationThumbnailRuntime::recordFailureDiagnostic(quint64 jobId,
                                   << resolvedErrorString;
 }
 
-bool ActiveNavigationThumbnailRuntime::activeJobMatches(const RowState &state, quint64 jobId,
-    const AcceptedDemand &demand, ThumbnailWorkKind kind) const
+bool ActiveNavigationThumbnailRuntime::activeJobMatches(const RowState& state, quint64 jobId,
+    const AcceptedDemand& demand, ThumbnailWorkKind kind) const
 {
     return state.activeJob.has_value() && state.activeJob->id == jobId
         && state.activeJob->kind == kind && sameAcceptedDemand(state.activeJob->demand, demand);
 }
 
 bool ActiveNavigationThumbnailRuntime::backgroundBucketCompleted(
-    const RowState &state, ActiveNavigationThumbnailDemandBucket bucket) const
+    const RowState& state, ActiveNavigationThumbnailDemandBucket bucket) const
 {
     if (state.acceptedDemand.has_value() && state.acceptedDemand->bucket == bucket) {
         return true;
@@ -632,7 +632,7 @@ bool ActiveNavigationThumbnailRuntime::backgroundBucketCompleted(
 }
 
 void ActiveNavigationThumbnailRuntime::markBackgroundBucketCompleted(
-    RowState &state, ActiveNavigationThumbnailDemandBucket bucket)
+    RowState& state, ActiveNavigationThumbnailDemandBucket bucket)
 {
     if (std::find(state.completedBackgroundBuckets.cbegin(),
             state.completedBackgroundBuckets.cend(), bucket)
@@ -647,14 +647,14 @@ void ActiveNavigationThumbnailRuntime::maybeScheduleBackgroundWork()
         return;
     }
 
-    for (const RowState &state : m_rows) {
+    for (const RowState& state : m_rows) {
         if (state.activeJob.has_value()) {
             return;
         }
     }
 
     for (ActiveNavigationThumbnailDemandBucket bucket : backgroundFillBuckets()) {
-        for (RowState &state : m_rows) {
+        for (RowState& state : m_rows) {
             if (backgroundBucketCompleted(state, bucket)
                 || (state.acceptedDemand.has_value()
                     && !supportsGeneratedThumbnail(state.acceptedDemand->sourcePlan))) {
@@ -678,7 +678,7 @@ void ActiveNavigationThumbnailRuntime::maybeScheduleBackgroundWork()
 }
 
 ThumbnailSourceAdapterPlan ActiveNavigationThumbnailRuntime::sourcePlanForDemand(
-    const ThumbnailSourceKey &sourceKey, ActiveNavigationThumbnailDemandBucket bucket,
+    const ThumbnailSourceKey& sourceKey, ActiveNavigationThumbnailDemandBucket bucket,
     ActiveNavigationThumbnailDemandPriority priority) const
 {
     if (!m_sourceAdapter) {
@@ -692,7 +692,7 @@ ThumbnailSourceAdapterPlan ActiveNavigationThumbnailRuntime::sourcePlanForDemand
     });
 }
 
-void ActiveNavigationThumbnailRuntime::startBackgroundWork(RowState &state,
+void ActiveNavigationThumbnailRuntime::startBackgroundWork(RowState& state,
     ActiveNavigationThumbnailDemandBucket bucket, ThumbnailSourceAdapterPlan sourcePlan)
 {
     const AcceptedDemand demand {
@@ -715,7 +715,7 @@ void ActiveNavigationThumbnailRuntime::startBackgroundWork(RowState &state,
 }
 
 void ActiveNavigationThumbnailRuntime::finishLookup(quint64 jobId,
-    const ThumbnailSourceKey &sourceKey, ActiveNavigationThumbnailDemandBucket bucket,
+    const ThumbnailSourceKey& sourceKey, ActiveNavigationThumbnailDemandBucket bucket,
     ThumbnailCacheLookupResult lookupResult)
 {
     const std::optional<std::size_t> rowIndex = rowIndexForSourceKey(sourceKey);
@@ -725,7 +725,7 @@ void ActiveNavigationThumbnailRuntime::finishLookup(quint64 jobId,
         return;
     }
 
-    RowState &state = m_rows.at(*rowIndex);
+    RowState& state = m_rows.at(*rowIndex);
     if (!state.activeJob.has_value() || state.activeJob->id != jobId
         || !sameFreshThumbnailSourceKey(state.activeJob->demand.sourceKey, sourceKey)
         || state.activeJob->demand.bucket != bucket) {
@@ -824,7 +824,7 @@ void ActiveNavigationThumbnailRuntime::finishLookup(quint64 jobId,
 }
 
 void ActiveNavigationThumbnailRuntime::finishGeneration(quint64 jobId,
-    const ThumbnailSourceKey &sourceKey, ActiveNavigationThumbnailDemandBucket bucket,
+    const ThumbnailSourceKey& sourceKey, ActiveNavigationThumbnailDemandBucket bucket,
     ThumbnailGenerationResult generationResult)
 {
     const std::optional<std::size_t> rowIndex = rowIndexForSourceKey(sourceKey);
@@ -834,7 +834,7 @@ void ActiveNavigationThumbnailRuntime::finishGeneration(quint64 jobId,
         return;
     }
 
-    RowState &state = m_rows.at(*rowIndex);
+    RowState& state = m_rows.at(*rowIndex);
     if (!state.activeJob.has_value() || state.activeJob->id != jobId
         || !sameFreshThumbnailSourceKey(state.activeJob->demand.sourceKey, sourceKey)
         || state.activeJob->demand.bucket != bucket) {
@@ -911,7 +911,7 @@ void ActiveNavigationThumbnailRuntime::publishRows()
 {
     std::vector<ActiveNavigationThumbnailRow> rows;
     rows.reserve(m_rows.size());
-    for (const RowState &state : m_rows) {
+    for (const RowState& state : m_rows) {
         rows.push_back(state.row);
     }
     m_model->setRows(std::move(rows), m_navigationGeneration);
@@ -922,7 +922,7 @@ void ActiveNavigationThumbnailRuntime::publishRows()
 
 void ActiveNavigationThumbnailRuntime::publishResultAt(std::size_t row)
 {
-    const RowState &state = m_rows.at(row);
+    const RowState& state = m_rows.at(row);
     m_model->setThumbnailResultAt(
         static_cast<int>(row), state.result.status, state.result.imageSource);
 }

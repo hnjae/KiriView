@@ -19,9 +19,10 @@ namespace kiriview {
 using DirectMediaNavigationCandidatesCallback
     = std::function<void(std::vector<DirectMediaNavigationCandidate>)>;
 
-struct DirectMediaNavigationCandidateProvider {
+struct DirectMediaNavigationCandidateProvider
+{
     using DirectMediaNavigationCandidateLoader = std::function<ImageIoJob(
-        QObject *, QUrl, DirectMediaNavigationCandidatesCallback, ErrorCallback)>;
+        QObject*, QUrl, DirectMediaNavigationCandidatesCallback, ErrorCallback)>;
 
     DirectMediaNavigationCandidateLoader directoryCandidateLoader;
 };

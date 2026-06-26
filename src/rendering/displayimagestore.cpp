@@ -36,7 +36,7 @@ namespace {
 
     qsizetype defaultDisplayStoreByteBudget() { return displayImageCachePreferredByteBudget(); }
 
-    QSize normalizedOriginalSize(const DisplayImageEntry &entry)
+    QSize normalizedOriginalSize(const DisplayImageEntry& entry)
     {
         if (entry.originalSize.isValid() && !entry.originalSize.isEmpty()) {
             return entry.originalSize;
@@ -47,7 +47,7 @@ namespace {
         return entry.image.size();
     }
 
-    QSize normalizedRasterSize(const DisplayImageEntry &entry)
+    QSize normalizedRasterSize(const DisplayImageEntry& entry)
     {
         if (entry.rasterSize.isValid() && !entry.rasterSize.isEmpty()) {
             return entry.rasterSize;
@@ -56,7 +56,7 @@ namespace {
     }
 
     QSize oneDimensionalDownscaleSize(
-        const QSize &imageSize, int requestedWidth, int requestedHeight)
+        const QSize& imageSize, int requestedWidth, int requestedHeight)
     {
         if (requestedWidth > 0) {
             if (requestedWidth >= imageSize.width()) {
@@ -76,7 +76,7 @@ namespace {
         return QSize(std::min(targetWidth, imageSize.width()), requestedHeight);
     }
 
-    QSize downscaleTargetSize(const QSize &imageSize, const QSize &requestedSize)
+    QSize downscaleTargetSize(const QSize& imageSize, const QSize& requestedSize)
     {
         if (imageSize.isEmpty()) {
             return imageSize;
@@ -109,7 +109,8 @@ namespace {
 class DisplayImageStore::Private
 {
 public:
-    struct Entry {
+    struct Entry
+    {
         QString id;
         QImage image;
         QSize originalSize;
@@ -142,19 +143,19 @@ public:
     mutable quint64 useClock = 0;
     quint64 nextId = 1;
 
-    std::vector<Entry>::iterator findEntry(const QString &id)
+    std::vector<Entry>::iterator findEntry(const QString& id)
     {
         return std::find_if(
-            images.begin(), images.end(), [&id](const Entry &entry) { return entry.id == id; });
+            images.begin(), images.end(), [&id](const Entry& entry) { return entry.id == id; });
     }
 
-    std::vector<Entry>::const_iterator findEntry(const QString &id) const
+    std::vector<Entry>::const_iterator findEntry(const QString& id) const
     {
         return std::find_if(
-            images.cbegin(), images.cend(), [&id](const Entry &entry) { return entry.id == id; });
+            images.cbegin(), images.cend(), [&id](const Entry& entry) { return entry.id == id; });
     }
 
-    int &pinCount(Entry &entry, DisplayImagePinKind kind)
+    int& pinCount(Entry& entry, DisplayImagePinKind kind)
     {
         switch (kind) {
         case DisplayImagePinKind::Visible:
@@ -170,7 +171,7 @@ public:
         return entry.visiblePins;
     }
 
-    DisplayImageStoreEntry publicEntry(const Entry &entry) const
+    DisplayImageStoreEntry publicEntry(const Entry& entry) const
     {
         return DisplayImageStoreEntry {
             entry.id,
@@ -275,7 +276,7 @@ QString DisplayImageStore::insert(DisplayImageEntry entry)
     return d->findEntry(id) == d->images.end() ? QString() : id;
 }
 
-std::optional<DisplayImageStoreEntry> DisplayImageStore::entry(const QString &id) const
+std::optional<DisplayImageStoreEntry> DisplayImageStore::entry(const QString& id) const
 {
     if (id.isEmpty()) {
         return std::nullopt;
@@ -291,7 +292,7 @@ std::optional<DisplayImageStoreEntry> DisplayImageStore::entry(const QString &id
     return d->publicEntry(*entry);
 }
 
-void DisplayImageStore::updatePriority(const QString &id, DisplayImageRetentionPriority priority)
+void DisplayImageStore::updatePriority(const QString& id, DisplayImageRetentionPriority priority)
 {
     if (id.isEmpty()) {
         return;
@@ -308,7 +309,7 @@ void DisplayImageStore::updatePriority(const QString &id, DisplayImageRetentionP
     d->trimToBudget();
 }
 
-bool DisplayImageStore::acquirePinLease(const QString &id, DisplayImagePinKind kind)
+bool DisplayImageStore::acquirePinLease(const QString& id, DisplayImagePinKind kind)
 {
     if (id.isEmpty()) {
         return false;
@@ -325,7 +326,7 @@ bool DisplayImageStore::acquirePinLease(const QString &id, DisplayImagePinKind k
     return true;
 }
 
-void DisplayImageStore::releasePinLease(const QString &id, DisplayImagePinKind kind)
+void DisplayImageStore::releasePinLease(const QString& id, DisplayImagePinKind kind)
 {
     if (id.isEmpty()) {
         return;
@@ -337,7 +338,7 @@ void DisplayImageStore::releasePinLease(const QString &id, DisplayImagePinKind k
         return;
     }
 
-    int &pinCount = d->pinCount(*entry, kind);
+    int& pinCount = d->pinCount(*entry, kind);
     if (pinCount > 0) {
         --pinCount;
     }
@@ -349,7 +350,7 @@ void DisplayImageStore::releasePinLease(const QString &id, DisplayImagePinKind k
     d->trimToBudget();
 }
 
-void DisplayImageStore::release(const QString &id)
+void DisplayImageStore::release(const QString& id)
 {
     if (id.isEmpty()) {
         return;
@@ -409,7 +410,7 @@ DisplayImageProvider::DisplayImageProvider(std::shared_ptr<DisplayImageStore> st
 }
 
 QImage DisplayImageProvider::requestImage(
-    const QString &id, QSize *size, const QSize &requestedSize)
+    const QString& id, QSize* size, const QSize& requestedSize)
 {
     const bool logRequest = kiriviewDisplayProviderLog().isDebugEnabled();
     QElapsedTimer elapsedTimer;
@@ -468,7 +469,7 @@ void configureSharedDisplayImageStoreByteBudget(qsizetype byteBudget)
     sharedDisplayImageStore()->setByteBudget(byteBudget);
 }
 
-QUrl displayImageSourceForId(const QString &id)
+QUrl displayImageSourceForId(const QString& id)
 {
     if (id.isEmpty()) {
         return {};

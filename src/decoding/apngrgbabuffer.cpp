@@ -75,24 +75,24 @@ QSize ApngRgbaBuffer::imageSize() const { return m_imageSize; }
 
 std::size_t ApngRgbaBuffer::rowBytes() const { return m_rowBytes; }
 
-unsigned char *ApngRgbaBuffer::data() { return m_bytes.empty() ? nullptr : m_bytes.data(); }
+unsigned char* ApngRgbaBuffer::data() { return m_bytes.empty() ? nullptr : m_bytes.data(); }
 
-const unsigned char *ApngRgbaBuffer::data() const
+const unsigned char* ApngRgbaBuffer::data() const
 {
     return m_bytes.empty() ? nullptr : m_bytes.data();
 }
 
-unsigned char *ApngRgbaBuffer::row(std::size_t y)
+unsigned char* ApngRgbaBuffer::row(std::size_t y)
 {
     return y >= m_rows.size() ? nullptr : m_rows[y];
 }
 
-const unsigned char *ApngRgbaBuffer::row(std::size_t y) const
+const unsigned char* ApngRgbaBuffer::row(std::size_t y) const
 {
     return y >= m_rows.size() ? nullptr : m_rows[y];
 }
 
-unsigned char **ApngRgbaBuffer::rows() { return m_rows.empty() ? nullptr : m_rows.data(); }
+unsigned char** ApngRgbaBuffer::rows() { return m_rows.empty() ? nullptr : m_rows.data(); }
 
 bool ApngRgbaBuffer::contains(ApngRgbaRegion region) const
 {
@@ -163,7 +163,7 @@ bool ApngRgbaBuffer::clearRegion(ApngRgbaRegion region)
     return true;
 }
 
-bool ApngRgbaBuffer::restoreRegion(ApngRgbaRegion region, const std::vector<unsigned char> &bytes)
+bool ApngRgbaBuffer::restoreRegion(ApngRgbaRegion region, const std::vector<unsigned char>& bytes)
 {
     if (!contains(region)) {
         return false;

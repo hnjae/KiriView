@@ -46,7 +46,7 @@ kiriview::PredecodeActiveLoads activeLoads(std::vector<QUrl> urls)
 }
 
 kiriview::StaticDisplayImagePayload cacheDisplayImage(
-    const QImage &image, qreal firstDisplayPixelsPerSourcePixel = 0.0)
+    const QImage& image, qreal firstDisplayPixelsPerSourcePixel = 0.0)
 {
     const kiriview::DisplayImageQuality quality = firstDisplayPixelsPerSourcePixel > 0.0
         ? kiriview::DisplayImageQuality::FirstDisplay

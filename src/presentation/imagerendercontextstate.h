@@ -10,7 +10,8 @@
 #include <functional>
 
 namespace kiriview {
-struct ImageRenderContextChange {
+struct ImageRenderContextChange
+{
     ImageDocumentRenderContext previous;
     ImageDocumentRenderContext current;
 };

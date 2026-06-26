@@ -27,7 +27,7 @@
 Q_LOGGING_CATEGORY(kiriviewDecodeLog, "org.hnjae.kiriview.decode", QtWarningMsg)
 
 namespace {
-const char *imageInputKindName(kiriview::ImageInputKind kind)
+const char* imageInputKindName(kiriview::ImageInputKind kind)
 {
     switch (kind) {
     case kiriview::ImageInputKind::Unknown:
@@ -47,7 +47,7 @@ const char *imageInputKindName(kiriview::ImageInputKind kind)
     return "Unknown";
 }
 
-const char *imageDecodeHandlerKindName(kiriview::ImageDecodeHandlerKind kind)
+const char* imageDecodeHandlerKindName(kiriview::ImageDecodeHandlerKind kind)
 {
     switch (kind) {
     case kiriview::ImageDecodeHandlerKind::None:
@@ -88,7 +88,7 @@ kiriview::DecodedImageFailureRoute decodedFailureRouteForHandlerKind(
     return kiriview::DecodedImageFailureRoute::Unknown;
 }
 
-const char *imageDecodeDataSourceName(kiriview::ImageDecodeDataSource source)
+const char* imageDecodeDataSourceName(kiriview::ImageDecodeDataSource source)
 {
     switch (source) {
     case kiriview::ImageDecodeDataSource::Original:
@@ -100,7 +100,7 @@ const char *imageDecodeDataSourceName(kiriview::ImageDecodeDataSource source)
     return "Original";
 }
 
-const char *qtRasterFormatName(kiriview::QtRasterFormat format)
+const char* qtRasterFormatName(kiriview::QtRasterFormat format)
 {
     switch (format) {
     case kiriview::QtRasterFormat::None:
@@ -126,7 +126,7 @@ const char *qtRasterFormatName(kiriview::QtRasterFormat format)
     return "None";
 }
 
-QByteArray avifCompatibleImageData(const QByteArray &data)
+QByteArray avifCompatibleImageData(const QByteArray& data)
 {
     return kiriview::Bridge::qtByteArray(
         kiriview::avifDataWithCompatibilityFixes(kiriview::Bridge::rustBytes(data)));
@@ -135,14 +135,14 @@ QByteArray avifCompatibleImageData(const QByteArray &data)
 class ImageDecodeRouterByteInputs
 {
 public:
-    ImageDecodeRouterByteInputs(const QByteArray &originalData,
-        const kiriview::ImageDecodeCompatibleDataTransform &compatibleDataTransform)
+    ImageDecodeRouterByteInputs(const QByteArray& originalData,
+        const kiriview::ImageDecodeCompatibleDataTransform& compatibleDataTransform)
         : m_originalData(originalData)
         , m_compatibleDataTransform(compatibleDataTransform)
     {
     }
 
-    const QByteArray &dataFor(kiriview::ImageDecodeDataSource dataSource)
+    const QByteArray& dataFor(kiriview::ImageDecodeDataSource dataSource)
     {
         switch (dataSource) {
         case kiriview::ImageDecodeDataSource::Original:
@@ -155,7 +155,7 @@ public:
     }
 
 private:
-    const QByteArray &compatibleData()
+    const QByteArray& compatibleData()
     {
         if (!m_compatibleData.has_value()) {
             m_compatibleData = m_compatibleDataTransform ? m_compatibleDataTransform(m_originalData)
@@ -164,8 +164,8 @@ private:
         return *m_compatibleData;
     }
 
-    const QByteArray &m_originalData;
-    const kiriview::ImageDecodeCompatibleDataTransform &m_compatibleDataTransform;
+    const QByteArray& m_originalData;
+    const kiriview::ImageDecodeCompatibleDataTransform& m_compatibleDataTransform;
     std::optional<QByteArray> m_compatibleData;
 };
 
@@ -198,8 +198,8 @@ QString decodedFailureOperationName(kiriview::DecodedImageFailureOperation opera
     return QStringLiteral("unknown");
 }
 
-QString adapterFailureDiagnosticDetail(const QString &adapterName,
-    kiriview::DecodedImageFailureOperation operation, const QString &backendError)
+QString adapterFailureDiagnosticDetail(const QString& adapterName,
+    kiriview::DecodedImageFailureOperation operation, const QString& backendError)
 {
     return QStringLiteral("%1 decoder %2 failed: %3")
         .arg(adapterName, decodedFailureOperationName(operation),
@@ -208,7 +208,7 @@ QString adapterFailureDiagnosticDetail(const QString &adapterName,
 
 kiriview::DecodedImageResult failedAdapterDecodedImageResult(QString errorString,
     kiriview::DecodedImageFailureRoute route, kiriview::DecodedImageFailureOperation operation,
-    const QString &adapterName)
+    const QString& adapterName)
 {
     const QString backendError = errorString;
     return kiriview::failedDecodedImageResult(kiriview::DecodedImageFailure {
@@ -221,10 +221,10 @@ kiriview::DecodedImageResult failedAdapterDecodedImageResult(QString errorString
     });
 }
 
-void stampAdapterFailure(kiriview::DecodedImageResult &result,
-    kiriview::DecodedImageFailureRoute route, const QString &adapterName)
+void stampAdapterFailure(kiriview::DecodedImageResult& result,
+    kiriview::DecodedImageFailureRoute route, const QString& adapterName)
 {
-    kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    kiriview::DecodedImageFailure* failure = kiriview::decodedImageResultFailure(result);
     if (failure == nullptr) {
         return;
     }
@@ -248,12 +248,12 @@ kiriview::DecodedImageResult failedAnimationOpenResult(QString errorString, QStr
     });
 }
 
-QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest &request)
+QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest& request)
 {
     return kiriview::sourceKeyForUrl(request.imageUrl()).identity;
 }
 
-kiriview::DecodedImageResult decodeSvgImageData(const kiriview::ImageDecodeRouterInput &input)
+kiriview::DecodedImageResult decodeSvgImageData(const kiriview::ImageDecodeRouterInput& input)
 {
     QString errorString;
     std::shared_ptr<kiriview::SvgTileSource> source
@@ -273,7 +273,7 @@ kiriview::DecodedImageResult decodeSvgImageData(const kiriview::ImageDecodeRoute
     return result;
 }
 
-kiriview::DecodedImageResult decodeApngImageData(const kiriview::ImageDecodeRouterInput &input)
+kiriview::DecodedImageResult decodeApngImageData(const kiriview::ImageDecodeRouterInput& input)
 {
     kiriview::ApngAnimationReader apngReader;
     kiriview::ApngOpenResult apngResult = apngReader.open(input.data);
@@ -298,7 +298,7 @@ kiriview::DecodedImageResult decodeApngImageData(const kiriview::ImageDecodeRout
 }
 
 kiriview::DecodedImageResult decodeHeifRouterImageData(
-    const kiriview::ImageDecodeRouterInput &input)
+    const kiriview::ImageDecodeRouterInput& input)
 {
     std::optional<kiriview::DecodedImageResult> result
         = kiriview::decodeHeifImageData(input.data, input.request);
@@ -308,13 +308,13 @@ kiriview::DecodedImageResult decodeHeifRouterImageData(
     return std::move(*result);
 }
 
-kiriview::DecodedImageResult decodeRawRouterImageData(const kiriview::ImageDecodeRouterInput &input)
+kiriview::DecodedImageResult decodeRawRouterImageData(const kiriview::ImageDecodeRouterInput& input)
 {
     return kiriview::decodeRawImageData(input.data, input.request);
 }
 
 kiriview::DecodedImageResult decodeQImageReaderRouterImageData(
-    const kiriview::ImageDecodeRouterInput &input)
+    const kiriview::ImageDecodeRouterInput& input)
 {
     if (input.qtRasterFormat == kiriview::QtRasterFormat::Webp) {
         kiriview::WebPAnimationReader reader;
@@ -390,28 +390,28 @@ kiriview::ImageDecodeRouterHandlers withDefaultHandlers(
     return handlers;
 }
 
-kiriview::DecodedImageResult dispatchToHandler(const kiriview::ImageDecodeRouterHandler &handler,
-    const kiriview::ImageDecodeRouterInput &input, kiriview::ImageDecodeHandlerKind handlerKind)
+kiriview::DecodedImageResult dispatchToHandler(const kiriview::ImageDecodeRouterHandler& handler,
+    const kiriview::ImageDecodeRouterInput& input, kiriview::ImageDecodeHandlerKind handlerKind)
 {
     if (!handler) {
         return failedReadImageDataResult();
     }
     kiriview::DecodedImageResult result = handler(input);
-    kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    kiriview::DecodedImageFailure* failure = kiriview::decodedImageResultFailure(result);
     if (failure != nullptr && failure->route == kiriview::DecodedImageFailureRoute::Unknown) {
         failure->route = decodedFailureRouteForHandlerKind(handlerKind);
     }
     return result;
 }
 
-const kiriview::ImageDecodeRouterHandler &emptyHandler()
+const kiriview::ImageDecodeRouterHandler& emptyHandler()
 {
     static const kiriview::ImageDecodeRouterHandler handler;
     return handler;
 }
 
-const kiriview::ImageDecodeRouterHandler &handlerForRoute(
-    const kiriview::ImageDecodeRouterHandlers &handlers,
+const kiriview::ImageDecodeRouterHandler& handlerForRoute(
+    const kiriview::ImageDecodeRouterHandlers& handlers,
     kiriview::ImageDecodeHandlerKind handlerKind)
 {
     switch (handlerKind) {
@@ -482,7 +482,7 @@ ImageDecodeRouterRuntime::ImageDecodeRouterRuntime(
 }
 
 DecodedImageResult ImageDecodeRouterRuntime::execute(
-    const ImageDecodeRoute &route, const QByteArray &data, const ImageDecodeRequest &request) const
+    const ImageDecodeRoute& route, const QByteArray& data, const ImageDecodeRequest& request) const
 {
     if (!route.shouldDecode()) {
         return failedReadImageDataResult();
@@ -511,7 +511,7 @@ ImageDecodeRouter::ImageDecodeRouter(ImageDecodeRouterHandlers handlers,
 }
 
 DecodedImageResult ImageDecodeRouter::decode(
-    const QByteArray &data, const ImageDecodeRequest &request) const
+    const QByteArray& data, const ImageDecodeRequest& request) const
 {
     const ImageInputClassification classification
         = m_classifier(data, request.imageUrl().fileName());
@@ -524,7 +524,7 @@ DecodedImageResult ImageDecodeRouter::decode(
                                << "qtFormat" << qtRasterFormatName(route.qtRasterFormat) << "bytes"
                                << data.size();
     DecodedImageResult result = m_runtime.execute(route, data, request);
-    DecodedImage *image = decodedImageResultImage(result);
+    DecodedImage* image = decodedImageResultImage(result);
     if (image != nullptr) {
         EmbeddedMetadata metadata = parseImageEmbeddedMetadata(data);
         if (!metadata.isEmpty()) {
@@ -535,7 +535,7 @@ DecodedImageResult ImageDecodeRouter::decode(
 }
 
 DecodedImageResult decodeImageDataWithDefaultRouter(
-    const QByteArray &data, const ImageDecodeRequest &request)
+    const QByteArray& data, const ImageDecodeRequest& request)
 {
     static const ImageDecodeRouter router;
     return router.decode(data, request);

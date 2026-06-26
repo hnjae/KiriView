@@ -24,22 +24,22 @@ namespace {
 using ProcessedRawImage
     = std::unique_ptr<libraw_processed_image_t, decltype(&LibRaw::dcraw_clear_mem)>;
 
-bool validImageSize(const QSize &size)
+bool validImageSize(const QSize& size)
 {
     return size.isValid() && !size.isEmpty() && size.width() > 0 && size.height() > 0;
 }
 
-void setError(QString *errorString, QString message)
+void setError(QString* errorString, QString message)
 {
     if (errorString != nullptr) {
         *errorString = std::move(message);
     }
 }
 
-QString rawDecodeErrorString(const QString &action, int errorCode)
+QString rawDecodeErrorString(const QString& action, int errorCode)
 {
     QString message = kiriview::imageErrorText(kiriview::ImageErrorTextId::UnknownLibrawError);
-    if (const char *rawMessage = LibRaw::strerror(errorCode); rawMessage != nullptr) {
+    if (const char* rawMessage = LibRaw::strerror(errorCode); rawMessage != nullptr) {
         message = QString::fromUtf8(rawMessage);
     }
 
@@ -65,34 +65,34 @@ bool rawThumbnailMissingError(int errorCode)
 }
 
 bool rawInputIsEligibleForEmbeddedThumbnail(
-    const QByteArray &data, const kiriview::ImageDecodeRequest &request)
+    const QByteArray& data, const kiriview::ImageDecodeRequest& request)
 {
     const kiriview::ImageInputClassification classification
         = kiriview::classifyImageInput(data, request.imageUrl().fileName());
     return classification.kind == kiriview::ImageInputKind::Raw;
 }
 
-QSize libRawImageSize(const LibRaw &processor)
+QSize libRawImageSize(const LibRaw& processor)
 {
-    const libraw_image_sizes_t &sizes = processor.imgdata.sizes;
+    const libraw_image_sizes_t& sizes = processor.imgdata.sizes;
     if (sizes.iwidth > 0 && sizes.iheight > 0) {
         return QSize(sizes.iwidth, sizes.iheight);
     }
     return QSize(sizes.width, sizes.height);
 }
 
-bool rawPreviewByteCostFitsBudget(const QSize &size)
+bool rawPreviewByteCostFitsBudget(const QSize& size)
 {
     const qsizetype byteCost = kiriview::estimatedRgbaByteCost(size);
     return byteCost > 0 && byteCost <= kiriview::imageFullDecodeFallbackByteLimit;
 }
 
-bool validateTrustedOriginalSize(const QSize &size)
+bool validateTrustedOriginalSize(const QSize& size)
 {
     return validImageSize(size) && rawPreviewByteCostFitsBudget(size);
 }
 
-std::optional<QSize> trustedOriginalSizeFromRawData(const QByteArray &data, QString *errorString)
+std::optional<QSize> trustedOriginalSizeFromRawData(const QByteArray& data, QString* errorString)
 {
     LibRaw processor;
     const int errorCode
@@ -114,13 +114,13 @@ std::optional<QSize> trustedOriginalSizeFromRawData(const QByteArray &data, QStr
     return originalSize;
 }
 
-bool thumbnailFitsOriginal(const QSize &thumbnailSize, const QSize &originalSize)
+bool thumbnailFitsOriginal(const QSize& thumbnailSize, const QSize& originalSize)
 {
     return thumbnailSize.width() <= originalSize.width()
         && thumbnailSize.height() <= originalSize.height();
 }
 
-bool aspectCompatible(const QSize &thumbnailSize, const QSize &originalSize)
+bool aspectCompatible(const QSize& thumbnailSize, const QSize& originalSize)
 {
     if (!validImageSize(thumbnailSize) || !validImageSize(originalSize)) {
         return false;
@@ -138,7 +138,7 @@ bool aspectCompatible(const QSize &thumbnailSize, const QSize &originalSize)
     return std::fabsl(left - right) / maximum <= 0.01L;
 }
 
-bool validateRawPreviewImage(const QImage &image, const QSize &originalSize, QString *errorString)
+bool validateRawPreviewImage(const QImage& image, const QSize& originalSize, QString* errorString)
 {
     if (image.isNull() || !validImageSize(image.size())) {
         setError(errorString,
@@ -170,7 +170,7 @@ bool validateRawPreviewImage(const QImage &image, const QSize &originalSize, QSt
 }
 
 std::optional<QImage> jpegThumbnailImage(
-    const libraw_processed_image_t *processedImage, QString *errorString)
+    const libraw_processed_image_t* processedImage, QString* errorString)
 {
     if (processedImage->data_size <= 0
         || processedImage->data_size
@@ -180,7 +180,7 @@ std::optional<QImage> jpegThumbnailImage(
         return std::nullopt;
     }
 
-    const QByteArray jpegData(reinterpret_cast<const char *>(processedImage->data),
+    const QByteArray jpegData(reinterpret_cast<const char*>(processedImage->data),
         static_cast<qsizetype>(processedImage->data_size));
     kiriview::BufferedImageReader reader(jpegData, QByteArrayLiteral("jpeg"));
     if (!reader.canRead()) {
@@ -203,7 +203,7 @@ std::optional<QImage> jpegThumbnailImage(
 }
 
 std::optional<QImage> bitmapThumbnailImage(
-    const libraw_processed_image_t *processedImage, QString *errorString)
+    const libraw_processed_image_t* processedImage, QString* errorString)
 {
     if (processedImage->bits != 8 || (processedImage->colors != 3 && processedImage->colors != 4)) {
         setError(errorString,
@@ -234,9 +234,9 @@ std::optional<QImage> bitmapThumbnailImage(
         return std::nullopt;
     }
 
-    const unsigned char *source = processedImage->data;
+    const unsigned char* source = processedImage->data;
     for (int y = 0; y < image.height(); ++y) {
-        unsigned char *target = image.scanLine(y);
+        unsigned char* target = image.scanLine(y);
         for (int x = 0; x < image.width(); ++x) {
             const std::size_t sourceOffset
                 = (static_cast<std::size_t>(y) * static_cast<std::size_t>(image.width())
@@ -254,7 +254,7 @@ std::optional<QImage> bitmapThumbnailImage(
 }
 
 std::optional<QImage> thumbnailImageFromProcessedRaw(
-    const libraw_processed_image_t *processedImage, QString *errorString, bool *unsupported)
+    const libraw_processed_image_t* processedImage, QString* errorString, bool* unsupported)
 {
     if (unsupported != nullptr) {
         *unsupported = false;
@@ -282,7 +282,7 @@ std::optional<QImage> thumbnailImageFromProcessedRaw(
 
 namespace kiriview {
 std::optional<QSize> rawEmbeddedThumbnailPreviewTrustedOriginalSize(
-    const QByteArray &data, const ImageDecodeRequest &request)
+    const QByteArray& data, const ImageDecodeRequest& request)
 {
     if (!rawInputIsEligibleForEmbeddedThumbnail(data, request)) {
         return std::nullopt;
@@ -292,7 +292,7 @@ std::optional<QSize> rawEmbeddedThumbnailPreviewTrustedOriginalSize(
 }
 
 RawEmbeddedThumbnailPreviewResult rawEmbeddedThumbnailPreviewResult(
-    const QByteArray &data, const ImageDecodeRequest &request)
+    const QByteArray& data, const ImageDecodeRequest& request)
 {
     if (!rawInputIsEligibleForEmbeddedThumbnail(data, request)) {
         return rawResult(RawEmbeddedThumbnailPreviewStatus::Missing);
@@ -354,7 +354,7 @@ RawEmbeddedThumbnailPreviewResult rawEmbeddedThumbnailPreviewResult(
 }
 
 std::optional<StaticDisplayImagePayload> rawEmbeddedThumbnailPreviewDisplayPayload(
-    const ImageDecodeRequest &request, RawEmbeddedThumbnailPreviewResult result)
+    const ImageDecodeRequest& request, RawEmbeddedThumbnailPreviewResult result)
 {
     if (result.status != RawEmbeddedThumbnailPreviewStatus::Ready) {
         return std::nullopt;

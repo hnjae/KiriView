@@ -20,7 +20,7 @@ constexpr auto kioFuseService = "org.kde.KIOFuse";
 constexpr auto kioFusePath = "/org/kde/KIOFuse";
 constexpr auto kioFuseInterface = "org.kde.KIOFuse.VFS";
 
-void deleteQObjectLater(QObject *object)
+void deleteQObjectLater(QObject* object)
 {
     if (object == nullptr) {
         return;
@@ -29,14 +29,14 @@ void deleteQObjectLater(QObject *object)
     object->deleteLater();
 }
 
-bool isDirectBackendScheme(const QString &scheme)
+bool isDirectBackendScheme(const QString& scheme)
 {
     return scheme == QLatin1String("file") || scheme == QLatin1String("http")
         || scheme == QLatin1String("https") || scheme == QLatin1String("qrc")
         || scheme == QLatin1String("data");
 }
 
-bool kioProtocolMayProvideLocalPath(const QUrl &url)
+bool kioProtocolMayProvideLocalPath(const QUrl& url)
 {
     return KProtocolInfo::protocolClass(url.scheme()) == QLatin1String(":local");
 }
@@ -44,7 +44,7 @@ bool kioProtocolMayProvideLocalPath(const QUrl &url)
 class KioFuseVideoPlaybackUrlResolver final : public kiriview::VideoPlaybackUrlResolver
 {
 public:
-    void resolve(quint64 operationId, const QUrl &sourceUrl, QObject *receiver,
+    void resolve(quint64 operationId, const QUrl& sourceUrl, QObject* receiver,
         kiriview::VideoPlaybackUrlResolvedCallback resolvedCallback,
         kiriview::VideoPlaybackUrlFailedCallback failedCallback) override
     {
@@ -71,16 +71,16 @@ public:
 
         QDBusInterface kioFuse(
             kioFuseService, kioFusePath, kioFuseInterface, QDBusConnection::sessionBus());
-        auto *watcher = new QDBusPendingCallWatcher(
+        auto* watcher = new QDBusPendingCallWatcher(
             kioFuse.asyncCall(QStringLiteral("mountUrl"), sourceUrl.toString(QUrl::FullyEncoded)));
         m_job = kiriview::ImageIoJob(watcher, deleteQObjectLater);
         const kiriview::ImageIoJobCompletion completion = m_job.completion();
-        QObject *context = receiver == nullptr ? watcher : receiver;
+        QObject* context = receiver == nullptr ? watcher : receiver;
 
         QObject::connect(watcher, &QDBusPendingCallWatcher::finished, context,
             [completion, operationId, sourceUrl, resolvedCallback = std::move(resolvedCallback),
                 failedCallback = std::move(failedCallback)](
-                QDBusPendingCallWatcher *finishedWatcher) mutable {
+                QDBusPendingCallWatcher* finishedWatcher) mutable {
                 completion.claimAndDelete([&]() {
                     const QDBusPendingReply<QString> reply(*finishedWatcher);
                     if (reply.isError()) {
@@ -116,7 +116,7 @@ private:
 }
 
 namespace kiriview {
-bool videoPlaybackBackendCanConsumeUrl(const QUrl &url)
+bool videoPlaybackBackendCanConsumeUrl(const QUrl& url)
 {
     return url.isValid() && !url.isEmpty() && isDirectBackendScheme(url.scheme());
 }

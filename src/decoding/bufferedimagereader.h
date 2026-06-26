@@ -20,7 +20,7 @@ class BufferedImageReader final
 {
 public:
     explicit BufferedImageReader(
-        const QByteArray &data, const QByteArray &format, bool autoTransform = true);
+        const QByteArray& data, const QByteArray& format, bool autoTransform = true);
     ~BufferedImageReader();
 
     explicit operator bool() const;
@@ -33,9 +33,9 @@ public:
     int loopCount() const;
     QString errorString() const;
 
-    void setScaledSize(const QSize &size);
-    void setScaledClipRect(const QRect &rect);
-    void setClipRect(const QRect &rect);
+    void setScaledSize(const QSize& size);
+    void setScaledClipRect(const QRect& rect);
+    void setClipRect(const QRect& rect);
     QImage read();
 
 private:

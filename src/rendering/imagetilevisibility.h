@@ -13,29 +13,31 @@
 #include <vector>
 
 namespace kiriview {
-struct TileVisibilityContext {
+struct TileVisibilityContext
+{
     QSizeF displaySize;
     QRectF visibleItemRect;
     qreal devicePixelRatio = 1.0;
     int rotationDegrees = 0;
 };
 
-struct TileSourceVisibilityContext {
+struct TileSourceVisibilityContext
+{
     QSizeF displaySize;
     QRectF visibleItemRect;
 };
 
-TileSourceVisibilityContext tileSourceVisibilityContext(const TileVisibilityContext &context);
+TileSourceVisibilityContext tileSourceVisibilityContext(const TileVisibilityContext& context);
 qreal tileDisplayPixelsPerSourcePixel(
-    const TilePyramid &pyramid, const QSizeF &displaySize, qreal devicePixelRatio);
+    const TilePyramid& pyramid, const QSizeF& displaySize, qreal devicePixelRatio);
 ActiveTileLayer activeTileLayer(
-    const TilePyramid &pyramid, const TileVisibilityContext &context, bool resolutionIndependent);
-bool tileFirstDisplayIsSufficient(const TilePyramid &pyramid, const QSizeF &displaySize,
+    const TilePyramid& pyramid, const TileVisibilityContext& context, bool resolutionIndependent);
+bool tileFirstDisplayIsSufficient(const TilePyramid& pyramid, const QSizeF& displaySize,
     qreal devicePixelRatio, qreal firstDisplayPixelsPerSourcePixel);
 QRect tileLevelRectForItemRect(
-    const TilePyramid &pyramid, int level, const QSizeF &displaySize, const QRectF &itemRect);
+    const TilePyramid& pyramid, int level, const QSizeF& displaySize, const QRectF& itemRect);
 std::vector<TileKey> visibleTileKeys(
-    const TilePyramid &pyramid, const TileVisibilityContext &context);
+    const TilePyramid& pyramid, const TileVisibilityContext& context);
 }
 
 #endif

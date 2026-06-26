@@ -12,7 +12,7 @@
 #include <utility>
 
 namespace kiriview {
-ImageAnimationPlayer::ImageAnimationPlayer(QObject *context, FrameReadyCallback frameReady,
+ImageAnimationPlayer::ImageAnimationPlayer(QObject* context, FrameReadyCallback frameReady,
     ErrorCallback animationError, PlaybackStoppedCallback playbackStopped,
     TimerScheduler timerScheduler)
     : m_frameReady(std::move(frameReady))
@@ -194,7 +194,7 @@ void ImageAnimationPlayer::notifyStoppedIfActive()
     }
 }
 
-void ImageAnimationPlayer::finishWithError(const QString &errorString)
+void ImageAnimationPlayer::finishWithError(const QString& errorString)
 {
     qCDebug(kiriviewAnimationLog) << "animation error" << errorString;
     notifyStoppedIfActive();

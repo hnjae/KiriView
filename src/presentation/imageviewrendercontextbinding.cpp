@@ -5,7 +5,7 @@
 
 namespace kiriview {
 ImageViewRenderContextBindingAction ImageViewRenderContextBinding::synchronize(
-    const ImageViewRenderContextBindingInput &input)
+    const ImageViewRenderContextBindingInput& input)
 {
     const bool install = shouldInstallProvider(input);
     if (install == m_providerInstalled) {
@@ -20,7 +20,7 @@ ImageViewRenderContextBindingAction ImageViewRenderContextBinding::synchronize(
 bool ImageViewRenderContextBinding::providerInstalled() const { return m_providerInstalled; }
 
 bool ImageViewRenderContextBinding::shouldInstallProvider(
-    const ImageViewRenderContextBindingInput &input)
+    const ImageViewRenderContextBindingInput& input)
 {
     return input.componentComplete && input.documentAttached && !input.secondaryPage;
 }

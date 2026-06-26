@@ -7,7 +7,7 @@
 
 namespace kiriview {
 DocumentSessionPublicSnapshotInput buildDocumentSessionPublicSnapshotInput(
-    const DocumentSessionPublicSnapshotInputBuilderInput &builderInput)
+    const DocumentSessionPublicSnapshotInputBuilderInput& builderInput)
 {
     DocumentSessionPublicSnapshotInput input;
     input.inputRevision = builderInput.inputRevision;

@@ -20,9 +20,10 @@ private Q_SLOTS:
 };
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-struct ImageSyncFixture {
+struct ImageSyncFixture
+{
     enum class Event {
         ConfirmDirectImageCursor,
         RestoreDirectImageCursorAfterFailure,
@@ -42,7 +43,7 @@ struct ImageSyncFixture {
     bool fileDeletionInProgress = false;
     kiriview::DocumentSessionImageDocumentSyncRuntime runtime {
         kiriview::DocumentSessionImageDocumentSyncRuntimePorts {
-            [this](const QUrl &url) {
+            [this](const QUrl& url) {
                 events.push_back(Event::ConfirmDirectImageCursor);
                 confirmedCursorUrl = url;
                 return confirmedCursorChanged;
@@ -51,7 +52,7 @@ struct ImageSyncFixture {
                 events.push_back(Event::RestoreDirectImageCursorAfterFailure);
                 return restoredCursorChanged;
             },
-            [this](const QUrl &url) {
+            [this](const QUrl& url) {
                 events.push_back(Event::SetSourceIdentity);
                 sourceIdentity = url;
             },
@@ -67,7 +68,7 @@ struct ImageSyncFixture {
     };
 };
 
-kiriview::DocumentSessionImageDocumentSyncRuntimeInput activeInput(const QUrl &url)
+kiriview::DocumentSessionImageDocumentSyncRuntimeInput activeInput(const QUrl& url)
 {
     kiriview::DocumentSessionImageDocumentSyncRuntimeInput input;
     input.documentKind = kiriview::DocumentSessionKind::Image;

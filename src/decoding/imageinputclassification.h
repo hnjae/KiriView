@@ -34,13 +34,14 @@ enum class ImageDecodeDataSource {
     AvifCompatible,
 };
 
-struct ImageInputClassification {
+struct ImageInputClassification
+{
     ImageInputKind kind = ImageInputKind::Unknown;
     QtRasterFormat qtFormat = QtRasterFormat::None;
     ImageDecodeDataSource dataSource = ImageDecodeDataSource::Original;
 };
 
-ImageInputClassification classifyImageInput(const QByteArray &data, const QString &fileName);
+ImageInputClassification classifyImageInput(const QByteArray& data, const QString& fileName);
 QByteArray qtImageReaderFormat(QtRasterFormat format);
 }
 

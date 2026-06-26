@@ -33,7 +33,8 @@ private Q_SLOTS:
 };
 
 namespace {
-struct ZoomControlsFixture {
+struct ZoomControlsFixture
+{
     std::unique_ptr<QQmlEngine> engine;
     std::unique_ptr<KiriImageDocument> imageDocument;
     std::unique_ptr<QObject> root;
@@ -42,10 +43,10 @@ struct ZoomControlsFixture {
     bool isValid() const { return engine != nullptr && root != nullptr; }
 };
 
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
@@ -84,7 +85,7 @@ ZoomControlsFixture createZoomControlsFixture()
     fixture.imageDocument = std::make_unique<KiriImageDocument>();
     const QVariantMap properties {
         { QStringLiteral("imageDocument"),
-            QVariant::fromValue(static_cast<QObject *>(fixture.imageDocument.get())) },
+            QVariant::fromValue(static_cast<QObject*>(fixture.imageDocument.get())) },
         { QStringLiteral("imageReady"), false },
         { QStringLiteral("minimumManualZoomPercent"), 10 },
         { QStringLiteral("maximumManualZoomPercent"), 1'000'000 },
@@ -97,12 +98,12 @@ ZoomControlsFixture createZoomControlsFixture()
     return fixture;
 }
 
-QObject *findObject(QObject *root, const QString &objectName)
+QObject* findObject(QObject* root, const QString& objectName)
 {
-    return root->findChild<QObject *>(objectName, Qt::FindChildrenRecursively);
+    return root->findChild<QObject*>(objectName, Qt::FindChildrenRecursively);
 }
 
-void compareZoomValueText(QObject *zoomTextInput, const QString &expectedText)
+void compareZoomValueText(QObject* zoomTextInput, const QString& expectedText)
 {
     const QString actualText = zoomTextInput->property("text").toString();
     QCOMPARE(actualText, expectedText);
@@ -112,7 +113,7 @@ void compareZoomValueText(QObject *zoomTextInput, const QString &expectedText)
 }
 
 QString invokeFormattedZoomText(
-    QObject *zoomSpinBox, double rawPercent, bool valueAvailable, bool valueKnown)
+    QObject* zoomSpinBox, double rawPercent, bool valueAvailable, bool valueKnown)
 {
     QVariant result;
     const bool invoked = QMetaObject::invokeMethod(zoomSpinBox, "formattedZoomText",
@@ -168,7 +169,7 @@ void TestImageZoomControls::formattedZoomText()
 {
     ZoomControlsFixture fixture = createZoomControlsFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-    QObject *zoomSpinBox = findObject(fixture.root.get(), QStringLiteral("zoomSpinBox"));
+    QObject* zoomSpinBox = findObject(fixture.root.get(), QStringLiteral("zoomSpinBox"));
     QVERIFY(zoomSpinBox != nullptr);
 
     QFETCH(double, rawPercent);
@@ -183,10 +184,10 @@ void TestImageZoomControls::displayTextReflectsMissingAndUnknownZoomValues()
 {
     ZoomControlsFixture fixture = createZoomControlsFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-    QObject *zoomTextInput = findObject(fixture.root.get(), QStringLiteral("zoomTextInput"));
-    QObject *zoomPercentSuffixLabel
+    QObject* zoomTextInput = findObject(fixture.root.get(), QStringLiteral("zoomTextInput"));
+    QObject* zoomPercentSuffixLabel
         = findObject(fixture.root.get(), QStringLiteral("zoomPercentSuffixLabel"));
-    QObject *zoomSpinBox = findObject(fixture.root.get(), QStringLiteral("zoomSpinBox"));
+    QObject* zoomSpinBox = findObject(fixture.root.get(), QStringLiteral("zoomSpinBox"));
     QVERIFY(zoomTextInput != nullptr);
     QVERIFY(zoomPercentSuffixLabel != nullptr);
     QVERIFY(zoomSpinBox != nullptr);
@@ -226,7 +227,7 @@ void TestImageZoomControls::displayTextIsRightAligned()
 {
     ZoomControlsFixture fixture = createZoomControlsFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-    QObject *zoomTextInput = findObject(fixture.root.get(), QStringLiteral("zoomTextInput"));
+    QObject* zoomTextInput = findObject(fixture.root.get(), QStringLiteral("zoomTextInput"));
     QVERIFY(zoomTextInput != nullptr);
     QCOMPARE(zoomTextInput->property("horizontalAlignment").toInt(), int(Qt::AlignRight));
 }
@@ -235,7 +236,7 @@ void TestImageZoomControls::percentSuffixTrailingSpacingFollowsControlSpacing()
 {
     ZoomControlsFixture fixture = createZoomControlsFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-    QObject *zoomPercentSuffixLabel
+    QObject* zoomPercentSuffixLabel
         = findObject(fixture.root.get(), QStringLiteral("zoomPercentSuffixLabel"));
     QVERIFY(zoomPercentSuffixLabel != nullptr);
 

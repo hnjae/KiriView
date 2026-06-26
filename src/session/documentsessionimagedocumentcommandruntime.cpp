@@ -12,7 +12,7 @@ DocumentSessionImageDocumentCommandRuntime::DocumentSessionImageDocumentCommandR
 {
 }
 
-void DocumentSessionImageDocumentCommandRuntime::setSourceUrl(const QUrl &sourceUrl)
+void DocumentSessionImageDocumentCommandRuntime::setSourceUrl(const QUrl& sourceUrl)
 {
     if (m_commands.source.setSourceUrl) {
         m_commands.source.setSourceUrl(sourceUrl);

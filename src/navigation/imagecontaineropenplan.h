@@ -18,14 +18,16 @@ enum class ImageContainerOpenError {
     InvalidComicBookArchive,
 };
 
-struct ImageContainerOpenPlan {
+struct ImageContainerOpenPlan
+{
     std::optional<ImageDocumentPageCandidateListSource> source;
     ImageContainerOpenError error = ImageContainerOpenError::Generic;
 
     bool shouldLoadCandidates() const;
 };
 
-struct ImageContainerOpenResult {
+struct ImageContainerOpenResult
+{
     std::optional<ImageDocumentPageTarget> target;
     ImageContainerOpenError error = ImageContainerOpenError::Generic;
 
@@ -33,9 +35,9 @@ struct ImageContainerOpenResult {
 };
 
 ImageContainerOpenPlan imageContainerOpenPlanForCandidate(
-    const ContainerNavigationCandidate &container);
+    const ContainerNavigationCandidate& container);
 ImageContainerOpenResult imageContainerOpenResultForCandidates(
-    const std::vector<ImageDocumentPageCandidate> &candidates);
+    const std::vector<ImageDocumentPageCandidate>& candidates);
 }
 
 #endif

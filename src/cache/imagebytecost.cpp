@@ -7,7 +7,7 @@
 #include "kiriview/src/policy/imagebytecost.cxx.h"
 
 namespace kiriview {
-qsizetype imageByteCost(const QImage &image)
+qsizetype imageByteCost(const QImage& image)
 {
     if (image.isNull()) {
         return 0;
@@ -15,7 +15,7 @@ qsizetype imageByteCost(const QImage &image)
     return image.sizeInBytes();
 }
 
-qsizetype estimatedRgbaByteCost(const QSize &size)
+qsizetype estimatedRgbaByteCost(const QSize& size)
 {
     return saturatedQtByteSize(rustEstimatedRgbaByteCost(size.width(), size.height()));
 }

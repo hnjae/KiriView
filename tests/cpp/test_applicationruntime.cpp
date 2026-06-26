@@ -17,7 +17,7 @@
 
 namespace {
 kiriview::ApplicationStartupSource startupSource(
-    kiriview::ApplicationStartupSourceKind kind, const QString &text = {}, bool verbose = false)
+    kiriview::ApplicationStartupSourceKind kind, const QString& text = {}, bool verbose = false)
 {
     const QByteArray utf8Text = text.toUtf8();
     return kiriview::ApplicationStartupSource {
@@ -27,7 +27,7 @@ kiriview::ApplicationStartupSource startupSource(
     };
 }
 
-bool categoryDebugEnabled(const QString &name)
+bool categoryDebugEnabled(const QString& name)
 {
     const QByteArray utf8Name = name.toUtf8();
     QLoggingCategory category(utf8Name.constData(), QtWarningMsg);
@@ -118,7 +118,7 @@ void TestApplicationRuntime::runtimeDiagnosticsStayDisabledWithoutVerboseStartup
     kiriview::configureApplicationRuntimeDiagnostics(
         startupSource(kiriview::ApplicationStartupSourceKind::None));
 
-    for (const QString &categoryName : diagnosticCategoryNames()) {
+    for (const QString& categoryName : diagnosticCategoryNames()) {
         QVERIFY2(!categoryDebugEnabled(categoryName), qPrintable(categoryName));
     }
 }
@@ -130,7 +130,7 @@ void TestApplicationRuntime::runtimeDiagnosticsEnableVerboseStartupCategories()
     kiriview::configureApplicationRuntimeDiagnostics(
         startupSource(kiriview::ApplicationStartupSourceKind::None, {}, true));
 
-    for (const QString &categoryName : diagnosticCategoryNames()) {
+    for (const QString& categoryName : diagnosticCategoryNames()) {
         QVERIFY2(categoryDebugEnabled(categoryName), qPrintable(categoryName));
     }
 }

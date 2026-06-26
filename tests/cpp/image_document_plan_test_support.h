@@ -10,7 +10,8 @@
 #include <variant>
 
 namespace kiriview::TestSupport {
-template <typename... Operations> struct ImageDocumentRuntimeOperationTypes {
+template <typename... Operations> struct ImageDocumentRuntimeOperationTypes
+{
 };
 
 template <typename... Operations>
@@ -21,7 +22,7 @@ constexpr ImageDocumentRuntimeOperationTypes<Operations...> operationTypes()
 
 template <typename... Operations>
 bool hasOperationTypes(
-    const ImageDocumentRuntimePlan &plan, ImageDocumentRuntimeOperationTypes<Operations...>)
+    const ImageDocumentRuntimePlan& plan, ImageDocumentRuntimeOperationTypes<Operations...>)
 {
     if (plan.size() != sizeof...(Operations)) {
         return false;
@@ -32,7 +33,7 @@ bool hasOperationTypes(
 }
 
 template <typename Operation>
-const Operation &operationAt(const ImageDocumentRuntimePlan &plan, std::size_t index)
+const Operation& operationAt(const ImageDocumentRuntimePlan& plan, std::size_t index)
 {
     return std::get<Operation>(plan.at(index));
 }

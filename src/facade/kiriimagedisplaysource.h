@@ -73,7 +73,7 @@ public:
     };
     Q_ENUM(RetentionStatus)
 
-    explicit KiriImageDisplaySource(kiriview::DisplayedPageRole role, QObject *parent = nullptr);
+    explicit KiriImageDisplaySource(kiriview::DisplayedPageRole role, QObject* parent = nullptr);
 
     bool visible() const;
     PageRole pageRole() const;

@@ -12,10 +12,10 @@
 #include <type_traits>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
 template <typename Operation>
-const Operation *operationAt(const kiriview::DocumentSessionRoutePlan &plan, std::size_t index)
+const Operation* operationAt(const kiriview::DocumentSessionRoutePlan& plan, std::size_t index)
 {
     if (index >= plan.mutations.size()) {
         return nullptr;
@@ -24,9 +24,9 @@ const Operation *operationAt(const kiriview::DocumentSessionRoutePlan &plan, std
     return std::get_if<Operation>(&plan.mutations.at(index));
 }
 
-template <typename Operation> bool hasOperation(const kiriview::DocumentSessionRoutePlan &plan)
+template <typename Operation> bool hasOperation(const kiriview::DocumentSessionRoutePlan& plan)
 {
-    for (const kiriview::DocumentSessionRouteMutation &operation : plan.mutations) {
+    for (const kiriview::DocumentSessionRouteMutation& operation : plan.mutations) {
         if (std::holds_alternative<Operation>(operation)) {
             return true;
         }
@@ -36,7 +36,7 @@ template <typename Operation> bool hasOperation(const kiriview::DocumentSessionR
 }
 
 template <typename Effect>
-const Effect *followUpEffectAt(const kiriview::DocumentSessionRoutePlan &plan, std::size_t index)
+const Effect* followUpEffectAt(const kiriview::DocumentSessionRoutePlan& plan, std::size_t index)
 {
     if (index >= plan.followUpEffects.size()) {
         return nullptr;
@@ -45,9 +45,9 @@ const Effect *followUpEffectAt(const kiriview::DocumentSessionRoutePlan &plan, s
     return std::get_if<Effect>(&plan.followUpEffects.at(index));
 }
 
-template <typename Effect> bool hasFollowUpEffect(const kiriview::DocumentSessionRoutePlan &plan)
+template <typename Effect> bool hasFollowUpEffect(const kiriview::DocumentSessionRoutePlan& plan)
 {
-    for (const kiriview::DocumentSessionRouteFollowUpEffect &effect : plan.followUpEffects) {
+    for (const kiriview::DocumentSessionRouteFollowUpEffect& effect : plan.followUpEffects) {
         if (std::holds_alternative<Effect>(effect)) {
             return true;
         }
@@ -56,7 +56,7 @@ template <typename Effect> bool hasFollowUpEffect(const kiriview::DocumentSessio
     return false;
 }
 
-void verifyRoutePhasesSeparated(const kiriview::DocumentSessionRoutePlan &plan)
+void verifyRoutePhasesSeparated(const kiriview::DocumentSessionRoutePlan& plan)
 {
     QVERIFY(plan.publishPublicProjection);
     QVERIFY(!plan.followUpEffects.empty());
@@ -113,7 +113,7 @@ void TestDocumentSessionRoutePlan::directVideoLocalAndKdeArchiveUrlsRouteToDirec
     const QUrl localVideo = localUrl(QStringLiteral("/media/clip.mp4"));
     const QUrl archiveVideo = QUrl(QStringLiteral("zip:///books/book.zip!/chapter/clip.mov"));
 
-    for (const QUrl &url : { localVideo, archiveVideo }) {
+    for (const QUrl& url : { localVideo, archiveVideo }) {
         const kiriview::DocumentSessionRoutePlan plan
             = kiriview::documentSessionRoutePlanForSourceUrl(
                 url, kiriview::DocumentSessionKind::Image);
@@ -121,14 +121,14 @@ void TestDocumentSessionRoutePlan::directVideoLocalAndKdeArchiveUrlsRouteToDirec
         QVERIFY(kiriview::isSupportedDirectVideoUrl(url));
         QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::DirectVideo);
         QCOMPARE(plan.sourceUrl, url);
-        const auto *cursor = operationAt<kiriview::SetDirectVideoCursorRouteOperation>(plan, 4);
+        const auto* cursor = operationAt<kiriview::SetDirectVideoCursorRouteOperation>(plan, 4);
         QVERIFY(cursor != nullptr);
         QCOMPARE(cursor->url, url);
         QVERIFY(operationAt<kiriview::ClearImageDocumentRouteOperation>(plan, 5) != nullptr);
-        const auto *enterVideo = operationAt<kiriview::EnterVideoDocumentRouteOperation>(plan, 6);
+        const auto* enterVideo = operationAt<kiriview::EnterVideoDocumentRouteOperation>(plan, 6);
         QVERIFY(enterVideo != nullptr);
         QCOMPARE(enterVideo->url, url);
-        const auto *identity
+        const auto* identity
             = operationAt<kiriview::UseOriginalSourceIdentityRouteOperation>(plan, 7);
         QVERIFY(identity != nullptr);
         QCOMPARE(identity->url, url);
@@ -145,7 +145,7 @@ void TestDocumentSessionRoutePlan::directImageLocalAndKdeArchiveUrlsRouteToDirec
     const QUrl localImage = localUrl(QStringLiteral("/media/page.png"));
     const QUrl archiveImage = QUrl(QStringLiteral("zip:///books/book.zip!/chapter/page.avif"));
 
-    for (const QUrl &url : { localImage, archiveImage }) {
+    for (const QUrl& url : { localImage, archiveImage }) {
         const kiriview::DocumentSessionRoutePlan plan
             = kiriview::documentSessionRoutePlanForSourceUrl(
                 url, kiriview::DocumentSessionKind::Image);
@@ -153,11 +153,11 @@ void TestDocumentSessionRoutePlan::directImageLocalAndKdeArchiveUrlsRouteToDirec
         QVERIFY(kiriview::isSupportedDirectImageUrl(url));
         QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::DirectImage);
         QCOMPARE(plan.sourceUrl, url);
-        const auto *cursor = operationAt<kiriview::RequestDirectImageCursorRouteOperation>(plan, 4);
+        const auto* cursor = operationAt<kiriview::RequestDirectImageCursorRouteOperation>(plan, 4);
         QVERIFY(cursor != nullptr);
         QCOMPARE(cursor->url, url);
         QVERIFY(operationAt<kiriview::LeaveVideoModeRouteOperation>(plan, 5) != nullptr);
-        const auto *enterImage = operationAt<kiriview::EnterImageDocumentRouteOperation>(plan, 6);
+        const auto* enterImage = operationAt<kiriview::EnterImageDocumentRouteOperation>(plan, 6);
         QVERIFY(enterImage != nullptr);
         QCOMPARE(enterImage->url, url);
         QVERIFY(operationAt<kiriview::SyncDirectImageCursorFromDocumentRouteOperation>(plan, 7)
@@ -174,7 +174,7 @@ void TestDocumentSessionRoutePlan::directImageLocalAndKdeArchiveUrlsRouteToDirec
 
 void TestDocumentSessionRoutePlan::localDirectoryAndGeneralArchiveNamesRouteToImageDocument()
 {
-    for (const QUrl &url :
+    for (const QUrl& url :
         { localUrl(QStringLiteral("/books/")), localUrl(QStringLiteral("/books/book.zip")),
             localUrl(QStringLiteral("/books/book.tar")), localUrl(QStringLiteral("/books/book.7z")),
             localUrl(QStringLiteral("/books/book.rar")) }) {
@@ -248,7 +248,7 @@ void TestDocumentSessionRoutePlan::routePlanDoesNotAdvertiseVideoBeyondDirectUrl
     const QUrl directoryRoot = localUrl(QStringLiteral("/books/"));
     const QUrl archiveVideoEntry = QUrl(QStringLiteral("zip:///books/book.zip!/clip.mp4"));
 
-    for (const QUrl &url : { archiveRoot, directoryRoot }) {
+    for (const QUrl& url : { archiveRoot, directoryRoot }) {
         const kiriview::DocumentSessionRoutePlan plan
             = kiriview::documentSessionRoutePlanForSourceUrl(
                 url, kiriview::DocumentSessionKind::Image);
@@ -308,7 +308,7 @@ void TestDocumentSessionRoutePlan::deletedImageFallbackRoutesAfterClearingImageD
     QCOMPARE(plan.kind, kiriview::DocumentSessionRouteKind::DirectImage);
     QCOMPARE(plan.sourceUrl, fallback);
     QVERIFY(operationAt<kiriview::ClearImageDocumentRouteOperation>(plan, 0) != nullptr);
-    const auto *cursor = operationAt<kiriview::RequestDirectImageCursorRouteOperation>(plan, 1);
+    const auto* cursor = operationAt<kiriview::RequestDirectImageCursorRouteOperation>(plan, 1);
     QVERIFY(cursor != nullptr);
     QCOMPARE(cursor->url, fallback);
     QVERIFY(!hasOperation<kiriview::ClearDirectMediaNavigationRouteOperation>(plan));
@@ -327,7 +327,7 @@ void TestDocumentSessionRoutePlan::deletedVideoFallbackRoutesFromEmptySession()
     QCOMPARE(plan.sourceUrl, fallback);
     QVERIFY(operationAt<kiriview::LeaveVideoModeRouteOperation>(plan, 0) != nullptr);
     QVERIFY(operationAt<kiriview::EnterEmptyDocumentRouteOperation>(plan, 1) != nullptr);
-    const auto *cursor
+    const auto* cursor
         = operationAt<kiriview::ClearThenRequestDirectImageCursorRouteOperation>(plan, 2);
     QVERIFY(cursor != nullptr);
     QCOMPARE(cursor->url, fallback);

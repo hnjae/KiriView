@@ -10,16 +10,16 @@
 #include <vector>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-QUrl archivePageUrl(const QUrl &rootUrl, const QString &entryPath)
+QUrl archivePageUrl(const QUrl& rootUrl, const QString& entryPath)
 {
     QUrl url = rootUrl;
     url.setPath(rootUrl.path() + entryPath);
     return url;
 }
 
-kiriview::ActiveNavigationThumbnailRow thumbnailRow(int number, const QUrl &url)
+kiriview::ActiveNavigationThumbnailRow thumbnailRow(int number, const QUrl& url)
 {
     return kiriview::ActiveNavigationThumbnailRow {
         number,
@@ -61,14 +61,14 @@ void TestDocumentSessionThumbnailRuntime::
     int generationCount = 0;
     kiriview::ActiveNavigationThumbnailRuntimeDependencies dependencies;
     dependencies.generationProvider
-        = [&generatedRequest, &generationCount](QObject *,
+        = [&generatedRequest, &generationCount](QObject*,
               kiriview::ThumbnailGenerationRequest request, kiriview::ThumbnailGenerationCallback) {
               ++generationCount;
               generatedRequest = std::move(request);
               return kiriview::ImageIoJob {};
           };
     dependencies.lookupProvider
-        = [](QObject *, kiriview::ThumbnailCacheLookupRequest,
+        = [](QObject*, kiriview::ThumbnailCacheLookupRequest,
               kiriview::ThumbnailCacheLookupCallback) { return kiriview::ImageIoJob {}; };
 
     kiriview::DocumentSessionThumbnailRuntime runtime(

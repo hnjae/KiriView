@@ -10,7 +10,7 @@
 #include <utility>
 
 namespace kiriview {
-VideoOutputRuntime::VideoOutputRuntime(QObject *context, VideoOutputRuntimeCallbacks callbacks)
+VideoOutputRuntime::VideoOutputRuntime(QObject* context, VideoOutputRuntimeCallbacks callbacks)
     : m_callbacks(std::move(callbacks))
     , m_renderContextObserver(std::make_unique<VideoOutputRenderContextObserver>(
           context, [this]() { notifyZoomProjectionChanged(); }))
@@ -23,9 +23,9 @@ VideoOutputRuntime::~VideoOutputRuntime()
     setBackendVideoOutput(nullptr);
 }
 
-QObject *VideoOutputRuntime::videoOutput() const { return m_videoOutput.data(); }
+QObject* VideoOutputRuntime::videoOutput() const { return m_videoOutput.data(); }
 
-void VideoOutputRuntime::setVideoOutput(QObject *videoOutput)
+void VideoOutputRuntime::setVideoOutput(QObject* videoOutput)
 {
     if (m_videoOutput.data() == videoOutput) {
         setBackendVideoOutput(videoOutput);
@@ -40,7 +40,7 @@ void VideoOutputRuntime::setVideoOutput(QObject *videoOutput)
     notifyVideoOutputChanged();
 }
 
-void VideoOutputRuntime::setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect)
+void VideoOutputRuntime::setVideoOutputGeometry(const QRectF& contentRect, const QRectF& sourceRect)
 {
     if (m_contentRect == contentRect && m_sourceRect == sourceRect) {
         return;
@@ -61,7 +61,7 @@ std::optional<int> VideoOutputRuntime::zoomPercent() const
     return videoZoomPercentForRects(m_contentRect, m_sourceRect, devicePixelRatio.value());
 }
 
-void VideoOutputRuntime::connectVideoOutputDestroyed(QObject *videoOutput)
+void VideoOutputRuntime::connectVideoOutputDestroyed(QObject* videoOutput)
 {
     if (videoOutput == nullptr) {
         return;
@@ -98,7 +98,7 @@ void VideoOutputRuntime::notifyZoomProjectionChanged() const
     }
 }
 
-void VideoOutputRuntime::setBackendVideoOutput(QObject *videoOutput) const
+void VideoOutputRuntime::setBackendVideoOutput(QObject* videoOutput) const
 {
     if (m_callbacks.setBackendVideoOutput) {
         m_callbacks.setBackendVideoOutput(videoOutput);

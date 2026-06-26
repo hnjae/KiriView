@@ -22,7 +22,8 @@ enum class RawEmbeddedThumbnailPreviewStatus {
     Failed,
 };
 
-struct RawEmbeddedThumbnailPreviewResult {
+struct RawEmbeddedThumbnailPreviewResult
+{
     RawEmbeddedThumbnailPreviewStatus status = RawEmbeddedThumbnailPreviewStatus::Missing;
     QImage image;
     QSize originalSize;
@@ -30,14 +31,14 @@ struct RawEmbeddedThumbnailPreviewResult {
 };
 
 using RawEmbeddedThumbnailPreviewExtractor = std::function<RawEmbeddedThumbnailPreviewResult(
-    const QByteArray &, const ImageDecodeRequest &)>;
+    const QByteArray&, const ImageDecodeRequest&)>;
 
 std::optional<QSize> rawEmbeddedThumbnailPreviewTrustedOriginalSize(
-    const QByteArray &data, const ImageDecodeRequest &request);
+    const QByteArray& data, const ImageDecodeRequest& request);
 RawEmbeddedThumbnailPreviewResult rawEmbeddedThumbnailPreviewResult(
-    const QByteArray &data, const ImageDecodeRequest &request);
+    const QByteArray& data, const ImageDecodeRequest& request);
 std::optional<StaticDisplayImagePayload> rawEmbeddedThumbnailPreviewDisplayPayload(
-    const ImageDecodeRequest &request, RawEmbeddedThumbnailPreviewResult result);
+    const ImageDecodeRequest& request, RawEmbeddedThumbnailPreviewResult result);
 }
 
 #endif

@@ -16,7 +16,7 @@ namespace {
 class QtVideoMediaBackend final : public QObject, public kiriview::VideoMediaBackend
 {
 public:
-    explicit QtVideoMediaBackend(QObject *parent)
+    explicit QtVideoMediaBackend(QObject* parent)
         : QObject(parent)
         , m_player(this)
         , m_audioOutput(this)
@@ -51,14 +51,14 @@ public:
         m_callbacks = std::move(callbacks);
     }
 
-    void setSource(const QUrl &sourceUrl) override { m_player.setSource(sourceUrl); }
+    void setSource(const QUrl& sourceUrl) override { m_player.setSource(sourceUrl); }
     void play() override { m_player.play(); }
     void pause() override { m_player.pause(); }
     void stop() override { m_player.stop(); }
     void setPosition(qint64 position) override { m_player.setPosition(position); }
     void setMuted(bool muted) override { m_audioOutput.setMuted(muted); }
-    void setVideoOutput(QObject *videoOutput) override { m_player.setVideoOutput(videoOutput); }
-    QObject *videoOutput() const override { return m_player.videoOutput(); }
+    void setVideoOutput(QObject* videoOutput) override { m_player.setVideoOutput(videoOutput); }
+    QObject* videoOutput() const override { return m_player.videoOutput(); }
 
     kiriview::VideoMediaStatus mediaStatus() const override
     {
@@ -105,7 +105,7 @@ private:
 }
 
 namespace kiriview {
-std::unique_ptr<VideoMediaBackend> createDefaultVideoMediaBackend(QObject *parent)
+std::unique_ptr<VideoMediaBackend> createDefaultVideoMediaBackend(QObject* parent)
 {
     return std::make_unique<QtVideoMediaBackend>(parent);
 }

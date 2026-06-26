@@ -15,9 +15,9 @@
 #include <vector>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &path)
+QUrl archivePageUrl(const QUrl& archiveRootUrl, const QString& path)
 {
     QUrl url = archiveRootUrl;
     url.setPath(archiveRootUrl.path() + path);
@@ -37,10 +37,10 @@ kiriview::ImageOpenStateDelta stateDelta(kiriview::ImageOpenUrlTarget sourceUrl,
 }
 
 template <typename Operation>
-const Operation *findOperation(const kiriview::ImageDocumentRuntimePlan &plan)
+const Operation* findOperation(const kiriview::ImageDocumentRuntimePlan& plan)
 {
-    for (const kiriview::ImageDocumentRuntimeOperation &operation : plan) {
-        if (const auto *payload = std::get_if<Operation>(&operation)) {
+    for (const kiriview::ImageDocumentRuntimeOperation& operation : plan) {
+        if (const auto* payload = std::get_if<Operation>(&operation)) {
             return payload;
         }
     }
@@ -48,7 +48,7 @@ const Operation *findOperation(const kiriview::ImageDocumentRuntimePlan &plan)
 }
 
 bool containsChange(
-    const std::vector<kiriview::ImageDocumentChange> &changes, kiriview::ImageDocumentChange change)
+    const std::vector<kiriview::ImageDocumentChange>& changes, kiriview::ImageDocumentChange change)
 {
     return std::find(changes.cbegin(), changes.cend(), change) != changes.cend();
 }

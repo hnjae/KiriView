@@ -14,22 +14,26 @@
 #include <vector>
 
 namespace kiriview {
-struct ImageDocumentSourceLoadSnapshot {
+struct ImageDocumentSourceLoadSnapshot
+{
     QUrl currentSourceUrl;
     OpenedCollectionScopeLocation displayedOpenedCollectionScope;
     bool rightToLeftReadingEnabled = false;
 };
 
-struct ImageOpenBeginSourceLoadSnapshot {
+struct ImageOpenBeginSourceLoadSnapshot
+{
     bool hasImage = false;
     bool hasLoadingContainerNavigationTarget = false;
 };
 
-struct ImageOpenSuccessfulImageLoadSnapshot {
+struct ImageOpenSuccessfulImageLoadSnapshot
+{
     bool hasRequestContainerNavigationTarget = false;
 };
 
-struct ImageOpenLoadErrorSnapshot {
+struct ImageOpenLoadErrorSnapshot
+{
     bool hasContainerNavigationTarget = false;
     bool hasImage = false;
     bool hasDisplayedUrl = false;
@@ -54,23 +58,23 @@ enum class ImageDocumentSourceLoadEffect {
 using ImageDocumentSourceLoadPlan = std::vector<ImageDocumentSourceLoadEffect>;
 
 namespace ImageOpenWorkflow {
-    ImageDocumentRuntimePlan sourceLoadPlan(const ImageDocumentSourceLoadSnapshot &snapshot,
-        const ImageDocumentSourceLoadRequest &request);
+    ImageDocumentRuntimePlan sourceLoadPlan(const ImageDocumentSourceLoadSnapshot& snapshot,
+        const ImageDocumentSourceLoadRequest& request);
     ImageOpenApplicationPlan beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot snapshot);
     ImageOpenApplicationPlan finishEmptySourceLoadPlan();
-    ImageOpenApplicationPlan resolveSourceImagePlan(const ImageLoadSession &session);
+    ImageOpenApplicationPlan resolveSourceImagePlan(const ImageLoadSession& session);
     ImageOpenApplicationPlan finishUnsupportedOpenedCollectionVideoLoadPlan(
-        const ImageLoadSession &session);
+        const ImageLoadSession& session);
     ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
-        ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession &session);
+        ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession& session);
     ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
-        ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession &session,
+        ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession& session,
         EmbeddedMetadata metadata);
     ImageOpenApplicationPlan finishLoadWithErrorPlan(ImageOpenLoadErrorSnapshot snapshot,
-        const ImageLoadSession &session, const QUrl &displayedUrl, ImageLoadFailure failure);
+        const ImageLoadSession& session, const QUrl& displayedUrl, ImageLoadFailure failure);
     ImageOpenApplicationPlan finishContainerNavigationLoadWithErrorPlan(
-        const QUrl &containerUrl, const QString &errorString);
-    ImageOpenApplicationPlan finishAnimationLoadWithErrorPlan(const QString &errorString);
+        const QUrl& containerUrl, const QString& errorString);
+    ImageOpenApplicationPlan finishAnimationLoadWithErrorPlan(const QString& errorString);
     ImageOpenTransition beginSourceLoadTransition(ImageOpenBeginSourceLoadSnapshot snapshot);
     ImageOpenTransition finishEmptySourceLoadTransition();
     ImageOpenTransition resolveSourceImageTransition();

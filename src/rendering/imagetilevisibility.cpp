@@ -7,7 +7,7 @@
 #include "rendering/imagerotation.h"
 
 namespace kiriview {
-TileSourceVisibilityContext tileSourceVisibilityContext(const TileVisibilityContext &context)
+TileSourceVisibilityContext tileSourceVisibilityContext(const TileVisibilityContext& context)
 {
     const QSizeF sourceDisplaySize = rotatedImageSize(context.displaySize, context.rotationDegrees);
     return TileSourceVisibilityContext {
@@ -18,20 +18,20 @@ TileSourceVisibilityContext tileSourceVisibilityContext(const TileVisibilityCont
 }
 
 qreal tileDisplayPixelsPerSourcePixel(
-    const TilePyramid &pyramid, const QSizeF &displaySize, qreal devicePixelRatio)
+    const TilePyramid& pyramid, const QSizeF& displaySize, qreal devicePixelRatio)
 {
     return ImageTileGeometryPolicy::tileDisplayPixelsPerSourcePixel(
         pyramid.imageSize(), displaySize, devicePixelRatio);
 }
 
 ActiveTileLayer activeTileLayer(
-    const TilePyramid &pyramid, const TileVisibilityContext &context, bool resolutionIndependent)
+    const TilePyramid& pyramid, const TileVisibilityContext& context, bool resolutionIndependent)
 {
     return ImageTileGeometryPolicy::activeTileLayer(pyramid.imageSize(), context.displaySize,
         context.devicePixelRatio, context.rotationDegrees, resolutionIndependent);
 }
 
-bool tileFirstDisplayIsSufficient(const TilePyramid &pyramid, const QSizeF &displaySize,
+bool tileFirstDisplayIsSufficient(const TilePyramid& pyramid, const QSizeF& displaySize,
     qreal devicePixelRatio, qreal firstDisplayPixelsPerSourcePixel)
 {
     return ImageTileGeometryPolicy::tileFirstDisplayIsSufficient(
@@ -39,14 +39,14 @@ bool tileFirstDisplayIsSufficient(const TilePyramid &pyramid, const QSizeF &disp
 }
 
 QRect tileLevelRectForItemRect(
-    const TilePyramid &pyramid, int level, const QSizeF &displaySize, const QRectF &itemRect)
+    const TilePyramid& pyramid, int level, const QSizeF& displaySize, const QRectF& itemRect)
 {
     return ImageTileGeometryPolicy::tileLevelRectForItemRect(
         pyramid.imageSize(), level, displaySize, itemRect);
 }
 
 std::vector<TileKey> visibleTileKeys(
-    const TilePyramid &pyramid, const TileVisibilityContext &context)
+    const TilePyramid& pyramid, const TileVisibilityContext& context)
 {
     const TileSourceVisibilityContext sourceContext = tileSourceVisibilityContext(context);
     return ImageTileGeometryPolicy::visibleTileKeys(pyramid.imageSize(), pyramid.tileSize(),

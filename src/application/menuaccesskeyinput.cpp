@@ -6,7 +6,7 @@
 #include <QKeyEvent>
 
 namespace kiriview {
-bool menuAccessKeyIsMnemonicKeyPress(const QKeyEvent &event)
+bool menuAccessKeyIsMnemonicKeyPress(const QKeyEvent& event)
 {
     if (event.key() == Qt::Key_Alt) {
         return false;
@@ -18,12 +18,12 @@ bool menuAccessKeyIsMnemonicKeyPress(const QKeyEvent &event)
     return modifiers == Qt::NoModifier;
 }
 
-bool menuAccessKeyIsAltMnemonicKeyPress(const QKeyEvent &event)
+bool menuAccessKeyIsAltMnemonicKeyPress(const QKeyEvent& event)
 {
     return menuAccessKeyIsMnemonicKeyPress(event) && (event.modifiers() & Qt::AltModifier);
 }
 
-MenuAccessKeyInputKind menuAccessKeyInputKind(const QKeyEvent &event)
+MenuAccessKeyInputKind menuAccessKeyInputKind(const QKeyEvent& event)
 {
     if (event.key() == Qt::Key_Alt) {
         return MenuAccessKeyInputKind::AltKey;

@@ -15,16 +15,16 @@
 namespace {
 namespace Backend = kiriview::MediaEntrySourceBackendDetail;
 
-void finishMediaEntrySourceCandidateResult(const kiriview::MediaEntrySourceCandidatesResult &result,
-    const kiriview::ImageDocumentPageCandidatesCallback &callback,
-    const kiriview::ErrorCallback &errorCallback)
+void finishMediaEntrySourceCandidateResult(const kiriview::MediaEntrySourceCandidatesResult& result,
+    const kiriview::ImageDocumentPageCandidatesCallback& callback,
+    const kiriview::ErrorCallback& errorCallback)
 {
-    if (const auto *error = std::get_if<kiriview::MediaEntrySourceError>(&result)) {
+    if (const auto* error = std::get_if<kiriview::MediaEntrySourceError>(&result)) {
         kiriview::invokeIfSet(errorCallback, error->errorString);
         return;
     }
 
-    const auto *candidates = std::get_if<kiriview::MediaEntrySourceCandidates>(&result);
+    const auto* candidates = std::get_if<kiriview::MediaEntrySourceCandidates>(&result);
     if (candidates != nullptr) {
         kiriview::invokeIfSet(callback, candidates->candidates);
     }
@@ -33,12 +33,12 @@ void finishMediaEntrySourceCandidateResult(const kiriview::MediaEntrySourceCandi
 void finishMediaEntrySourceDataResult(kiriview::MediaEntrySourceImageDataResult result,
     kiriview::ImageDataCallback callback, kiriview::ErrorCallback errorCallback)
 {
-    if (const auto *error = std::get_if<kiriview::MediaEntrySourceError>(&result)) {
+    if (const auto* error = std::get_if<kiriview::MediaEntrySourceError>(&result)) {
         kiriview::invokeIfSet(errorCallback, error->errorString);
         return;
     }
 
-    auto *data = std::get_if<kiriview::MediaEntrySourceImageData>(&result);
+    auto* data = std::get_if<kiriview::MediaEntrySourceImageData>(&result);
     if (data != nullptr) {
         kiriview::invokeIfSet(callback, std::move(data->data));
     }
@@ -48,7 +48,7 @@ void finishMediaEntrySourceDataResult(kiriview::MediaEntrySourceImageDataResult 
 
 namespace kiriview {
 MediaEntrySourceRuntime::MediaEntrySourceRuntime(
-    QObject *context, MediaEntrySourceFactory sourceFactory, ImageWorkerScheduler workerScheduler)
+    QObject* context, MediaEntrySourceFactory sourceFactory, ImageWorkerScheduler workerScheduler)
     : m_context(context)
     , m_sourceFactory(std::move(sourceFactory))
     , m_workerScheduler(std::move(workerScheduler))
@@ -87,14 +87,14 @@ bool MediaEntrySourceRuntime::hasCurrentOpenedCollectionScope() const
 }
 
 bool MediaEntrySourceRuntime::hasCurrentOpenedCollectionScope(
-    const OpenedCollectionScopeLocation &openedCollectionScope) const
+    const OpenedCollectionScopeLocation& openedCollectionScope) const
 {
     return hasCurrentOpenedCollectionScope()
         && sameOpenedCollectionScopeLocation(
             m_runner->openedCollectionScope(), openedCollectionScope);
 }
 
-ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionCandidates(QObject *receiver,
+ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionCandidates(QObject* receiver,
     OpenedCollectionScopeLocation openedCollectionScope,
     ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
@@ -133,7 +133,7 @@ ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionCandidates(QObject *rece
     return ioJob;
 }
 
-ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionImageData(QObject *receiver,
+ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionImageData(QObject* receiver,
     ImageDecodeRequest request, ImageDataCallback callback, ErrorCallback errorCallback)
 {
     const OpenedCollectionScopeLocation requestedOpenedCollectionScope
@@ -191,7 +191,7 @@ void MediaEntrySourceRuntime::finishCandidateLoad(
     std::vector<MediaEntrySourceCandidateLoad> pendingLoads
         = m_candidateLoadState.finishBatch(batch);
 
-    for (const MediaEntrySourceCandidateLoad &load : pendingLoads) {
+    for (const MediaEntrySourceCandidateLoad& load : pendingLoads) {
         load.completion.claimAndDelete([&]() {
             finishMediaEntrySourceCandidateResult(result, load.callback, load.errorCallback);
         });

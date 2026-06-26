@@ -24,14 +24,16 @@ enum class ThumbnailCacheLookupStatus {
     Failed,
 };
 
-struct ThumbnailCacheLookupRequest {
+struct ThumbnailCacheLookupRequest
+{
     QByteArray localPathBytes;
     ThumbnailOriginalIdentity originalIdentity;
     ActiveNavigationThumbnailDemandBucket requestedBucket
         = ActiveNavigationThumbnailDemandBucket::None;
 };
 
-struct ThumbnailCacheLookupResult {
+struct ThumbnailCacheLookupResult
+{
     ThumbnailCacheLookupStatus status = ThumbnailCacheLookupStatus::Missing;
     QImage image;
     ActiveNavigationThumbnailDemandBucket requestedBucket
@@ -44,7 +46,7 @@ struct ThumbnailCacheLookupResult {
 
 using ThumbnailCacheLookupCallback = std::function<void(ThumbnailCacheLookupResult)>;
 using ThumbnailCacheLookupProvider = std::function<ImageIoJob(
-    QObject *, ThumbnailCacheLookupRequest, ThumbnailCacheLookupCallback)>;
+    QObject*, ThumbnailCacheLookupRequest, ThumbnailCacheLookupCallback)>;
 
 ThumbnailCacheLookupProvider defaultThumbnailCacheLookupProvider(
     ImageWorkerScheduler workerScheduler = {});

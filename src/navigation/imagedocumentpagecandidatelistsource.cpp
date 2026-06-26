@@ -11,22 +11,22 @@
 
 namespace {
 bool sameImageDocumentPageCandidateListSourcePayload(
-    const kiriview::ImageDocumentPageCandidateListSource::Directory &left,
-    const kiriview::ImageDocumentPageCandidateListSource::Directory &right)
+    const kiriview::ImageDocumentPageCandidateListSource::Directory& left,
+    const kiriview::ImageDocumentPageCandidateListSource::Directory& right)
 {
     return kiriview::sameNormalizedUrl(left.directoryUrl, right.directoryUrl);
 }
 
 bool sameImageDocumentPageCandidateListSourcePayload(
-    const kiriview::ImageDocumentPageCandidateListSource::OpenedCollectionScope &left,
-    const kiriview::ImageDocumentPageCandidateListSource::OpenedCollectionScope &right)
+    const kiriview::ImageDocumentPageCandidateListSource::OpenedCollectionScope& left,
+    const kiriview::ImageDocumentPageCandidateListSource::OpenedCollectionScope& right)
 {
     return kiriview::sameOpenedCollectionScopeLocation(
         left.openedCollectionScope, right.openedCollectionScope);
 }
 
 template <typename Left, typename Right>
-bool sameImageDocumentPageCandidateListSourcePayload(const Left &, const Right &)
+bool sameImageDocumentPageCandidateListSourcePayload(const Left&, const Right&)
 {
     return false;
 }
@@ -48,7 +48,7 @@ ImageDocumentPageCandidateListSource ImageDocumentPageCandidateListSource::forOp
 
 OpenedCollectionScopeLocation ImageDocumentPageCandidateListSource::openedCollectionScope() const
 {
-    const auto *archiveSource = std::get_if<OpenedCollectionScope>(&m_source);
+    const auto* archiveSource = std::get_if<OpenedCollectionScope>(&m_source);
     return archiveSource == nullptr ? OpenedCollectionScopeLocation::none()
                                     : archiveSource->openedCollectionScope;
 }
@@ -58,11 +58,11 @@ ImageDocumentPageCandidateListSource::ImageDocumentPageCandidateListSource(Paylo
 {
 }
 
-bool sameImageDocumentPageCandidateListSource(const ImageDocumentPageCandidateListSource &left,
-    const ImageDocumentPageCandidateListSource &right)
+bool sameImageDocumentPageCandidateListSource(const ImageDocumentPageCandidateListSource& left,
+    const ImageDocumentPageCandidateListSource& right)
 {
-    return left.visit([&right](const auto &leftSource) {
-        return right.visit([&leftSource](const auto &rightSource) {
+    return left.visit([&right](const auto& leftSource) {
+        return right.visit([&leftSource](const auto& rightSource) {
             return sameImageDocumentPageCandidateListSourcePayload(leftSource, rightSource);
         });
     });
@@ -97,9 +97,9 @@ ImageDocumentPageCandidateListContext ImageDocumentPageCandidateListContext::for
     };
 }
 
-const QUrl &ImageDocumentPageCandidateListContext::currentUrl() const { return m_currentUrl; }
+const QUrl& ImageDocumentPageCandidateListContext::currentUrl() const { return m_currentUrl; }
 
-const ImageDocumentPageCandidateListSource &ImageDocumentPageCandidateListContext::source() const
+const ImageDocumentPageCandidateListSource& ImageDocumentPageCandidateListContext::source() const
 {
     return m_source;
 }
@@ -116,17 +116,17 @@ ImageDocumentPageCandidateListContext::ImageDocumentPageCandidateListContext(
 {
 }
 
-bool sameImageDocumentPageCandidateListContext(const ImageDocumentPageCandidateListContext &left,
-    const ImageDocumentPageCandidateListContext &right)
+bool sameImageDocumentPageCandidateListContext(const ImageDocumentPageCandidateListContext& left,
+    const ImageDocumentPageCandidateListContext& right)
 {
     return sameNormalizedUrl(left.currentUrl(), right.currentUrl())
         && sameImageDocumentPageCandidateListSource(left.source(), right.source());
 }
 
 std::optional<ImageDocumentPageCandidateListContext>
-imageDocumentPageCandidateListContextForDisplayedImage(const DisplayedImageLocation &location)
+imageDocumentPageCandidateListContextForDisplayedImage(const DisplayedImageLocation& location)
 {
-    const QUrl &displayedUrl = location.imageUrl();
+    const QUrl& displayedUrl = location.imageUrl();
     if (displayedUrl.isEmpty()) {
         return std::nullopt;
     }

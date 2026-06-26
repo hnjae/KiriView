@@ -21,7 +21,7 @@ using ImageDocumentPageCandidateWatchSnapshotCallback
     = std::function<void(std::vector<ImageDocumentPageCandidate>)>;
 using ImageDocumentPageCandidateWatchDeletedCallback = std::function<void(QList<QUrl>)>;
 using ImageDocumentPageCandidateWatchProvider
-    = std::function<ImageIoJob(QObject *, QUrl, ImageDocumentPageCandidateWatchSnapshotCallback,
+    = std::function<ImageIoJob(QObject*, QUrl, ImageDocumentPageCandidateWatchSnapshotCallback,
         ImageDocumentPageCandidateWatchSnapshotCallback,
         ImageDocumentPageCandidateWatchDeletedCallback, ErrorCallback)>;
 

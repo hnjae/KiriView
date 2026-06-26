@@ -12,14 +12,14 @@ class DocumentSessionDirectMediaActivityPort final
 {
 public:
     DocumentSessionDirectMediaActivityPort(
-        const DocumentSessionState *state, const DocumentSessionDirectMediaScopePort *scope);
+        const DocumentSessionState* state, const DocumentSessionDirectMediaScopePort* scope);
 
     bool navigationActive() const;
     bool directImageSourceScopeEligible() const;
 
 private:
-    const DocumentSessionState *m_state = nullptr;
-    const DocumentSessionDirectMediaScopePort *m_scope = nullptr;
+    const DocumentSessionState* m_state = nullptr;
+    const DocumentSessionDirectMediaScopePort* m_scope = nullptr;
 };
 }
 

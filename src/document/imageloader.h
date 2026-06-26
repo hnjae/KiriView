@@ -35,9 +35,10 @@ public:
     using ThumbnailPreviewCallback
         = std::function<void(ImageLoadSession, StaticDisplayImagePayload)>;
     using UnsupportedOpenedCollectionVideoCallback = std::function<void(ImageLoadSession)>;
-    using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
+    using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl&)>;
 
-    struct Callbacks {
+    struct Callbacks
+    {
         ErrorCallback error;
         DecodedImageCallback decodedImage;
         PredecodedImageCallback predecodedImage;
@@ -47,11 +48,11 @@ public:
         SourceResolvedCallback sourceResolved;
     };
 
-    explicit ImageLoader(QObject *parent = nullptr);
-    ImageLoader(QObject *parent, Callbacks callbacks);
-    ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
+    explicit ImageLoader(QObject* parent = nullptr);
+    ImageLoader(QObject* parent, Callbacks callbacks);
+    ImageLoader(QObject* parent, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies);
-    ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
+    ImageLoader(QObject* parent, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, Callbacks callbacks);
 
     void start(ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
@@ -60,14 +61,14 @@ public:
 private:
     void finishDecodeResult(ImageDecodeRequest request, DecodedImageResult result);
     void finishThumbnailPreview(
-        const ImageDecodeRequest &request, StaticDisplayImagePayload preview);
-    void finishImageLoadError(const ImageDecodeRequest &request, const QString &errorString);
+        const ImageDecodeRequest& request, StaticDisplayImagePayload preview);
+    void finishImageLoadError(const ImageDecodeRequest& request, const QString& errorString);
     void startImageLoad(ImageLoadSession session);
     void startOpenedCollectionLoad(ImageLoadSession session);
     bool tryReportUnsupportedOpenedCollectionVideo(ImageLoadSession session);
     bool tryDisplayPredecodedImage(ImageLoadSession session);
     void finishDecodeRequestWithError(
-        const ImageDecodeRequest &request, ImageLoadFailureKind kind, const QString &errorString);
+        const ImageDecodeRequest& request, ImageLoadFailureKind kind, const QString& errorString);
     void finishDecodedImage(ImageLoadSession session, DecodedImage image);
     void finishPredecodedImage(ImageLoadSession session, PredecodedImage image);
     void finishThumbnailPreview(ImageLoadSession session, StaticDisplayImagePayload preview);

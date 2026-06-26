@@ -43,14 +43,15 @@ private Q_SLOTS:
 };
 
 namespace {
-struct PageNavigationFixture {
+struct PageNavigationFixture
+{
     std::unique_ptr<QQmlComponent> component;
     std::unique_ptr<QQuickView> view;
-    QQuickItem *root = nullptr;
-    QQuickItem *pageNavigation = nullptr;
-    QQuickItem *pageNumberField = nullptr;
-    QQuickItem *leftButton = nullptr;
-    QQuickItem *rightButton = nullptr;
+    QQuickItem* root = nullptr;
+    QQuickItem* pageNavigation = nullptr;
+    QQuickItem* pageNumberField = nullptr;
+    QQuickItem* leftButton = nullptr;
+    QQuickItem* rightButton = nullptr;
     QString errorString;
 
     bool isValid() const
@@ -61,83 +62,100 @@ struct PageNavigationFixture {
     }
 };
 
-template <typename, typename = void> struct HasOpenPreviousActiveNavigation : std::false_type {
+template <typename, typename = void> struct HasOpenPreviousActiveNavigation : std::false_type
+{
 };
 
 template <typename T>
 struct HasOpenPreviousActiveNavigation<T,
-    std::void_t<decltype(std::declval<T &>().openPreviousActiveNavigation())>> : std::true_type {
+    std::void_t<decltype(std::declval<T&>().openPreviousActiveNavigation())>> : std::true_type
+{
 };
 
-template <typename, typename = void> struct HasOpenNextActiveNavigation : std::false_type {
+template <typename, typename = void> struct HasOpenNextActiveNavigation : std::false_type
+{
 };
 
 template <typename T>
 struct HasOpenNextActiveNavigation<T,
-    std::void_t<decltype(std::declval<T &>().openNextActiveNavigation())>> : std::true_type {
+    std::void_t<decltype(std::declval<T&>().openNextActiveNavigation())>> : std::true_type
+{
 };
 
-template <typename, typename = void> struct HasOpenActiveNavigationAtNumber : std::false_type {
+template <typename, typename = void> struct HasOpenActiveNavigationAtNumber : std::false_type
+{
 };
 
 template <typename T>
 struct HasOpenActiveNavigationAtNumber<T,
-    std::void_t<decltype(std::declval<T &>().openActiveNavigationAtNumber(1))>> : std::true_type {
+    std::void_t<decltype(std::declval<T&>().openActiveNavigationAtNumber(1))>> : std::true_type
+{
 };
 
-template <typename, typename = void> struct HasOpenPreviousMedia : std::false_type {
-};
-
-template <typename T>
-struct HasOpenPreviousMedia<T, std::void_t<decltype(std::declval<T &>().openPreviousMedia())>>
-    : std::true_type {
-};
-
-template <typename, typename = void> struct HasOpenNextMedia : std::false_type {
+template <typename, typename = void> struct HasOpenPreviousMedia : std::false_type
+{
 };
 
 template <typename T>
-struct HasOpenNextMedia<T, std::void_t<decltype(std::declval<T &>().openNextMedia())>>
-    : std::true_type {
+struct HasOpenPreviousMedia<T, std::void_t<decltype(std::declval<T&>().openPreviousMedia())>>
+    : std::true_type
+{
 };
 
-template <typename, typename = void> struct HasOpenMediaAtNumber : std::false_type {
+template <typename, typename = void> struct HasOpenNextMedia : std::false_type
+{
 };
 
 template <typename T>
-struct HasOpenMediaAtNumber<T, std::void_t<decltype(std::declval<T &>().openMediaAtNumber(1))>>
-    : std::true_type {
+struct HasOpenNextMedia<T, std::void_t<decltype(std::declval<T&>().openNextMedia())>>
+    : std::true_type
+{
 };
 
-template <typename, typename = void> struct HasCurrentMediaNumber : std::false_type {
+template <typename, typename = void> struct HasOpenMediaAtNumber : std::false_type
+{
+};
+
+template <typename T>
+struct HasOpenMediaAtNumber<T, std::void_t<decltype(std::declval<T&>().openMediaAtNumber(1))>>
+    : std::true_type
+{
+};
+
+template <typename, typename = void> struct HasCurrentMediaNumber : std::false_type
+{
 };
 
 template <typename T>
 struct HasCurrentMediaNumber<T,
-    std::void_t<decltype(std::declval<const T &>().currentMediaNumber())>> : std::true_type {
+    std::void_t<decltype(std::declval<const T&>().currentMediaNumber())>> : std::true_type
+{
 };
 
-template <typename, typename = void> struct HasMediaCount : std::false_type {
+template <typename, typename = void> struct HasMediaCount : std::false_type
+{
 };
 
 template <typename T>
-struct HasMediaCount<T, std::void_t<decltype(std::declval<const T &>().mediaCount())>>
-    : std::true_type {
+struct HasMediaCount<T, std::void_t<decltype(std::declval<const T&>().mediaCount())>>
+    : std::true_type
+{
 };
 
-template <typename, typename = void> struct HasDirectMediaNavigationKnown : std::false_type {
+template <typename, typename = void> struct HasDirectMediaNavigationKnown : std::false_type
+{
 };
 
 template <typename T>
 struct HasDirectMediaNavigationKnown<T,
-    std::void_t<decltype(std::declval<const T &>().directMediaNavigationKnown())>>
-    : std::true_type {
+    std::void_t<decltype(std::declval<const T&>().directMediaNavigationKnown())>> : std::true_type
+{
 };
 
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
@@ -253,13 +271,13 @@ PageNavigationFixture createPageNavigationFixture()
         return fixture;
     }
 
-    QObject *createdRoot = fixture.component->create();
+    QObject* createdRoot = fixture.component->create();
     if (createdRoot == nullptr) {
         fixture.errorString = fixture.component->errorString();
         return fixture;
     }
 
-    fixture.root = qobject_cast<QQuickItem *>(createdRoot);
+    fixture.root = qobject_cast<QQuickItem*>(createdRoot);
     if (fixture.root == nullptr) {
         fixture.errorString = QStringLiteral("fixture root is not a QQuickItem");
         delete createdRoot;
@@ -274,21 +292,20 @@ PageNavigationFixture createPageNavigationFixture()
         return fixture;
     }
 
-    fixture.pageNavigation
-        = fixture.root->findChild<QQuickItem *>(QStringLiteral("pageNavigation"));
+    fixture.pageNavigation = fixture.root->findChild<QQuickItem*>(QStringLiteral("pageNavigation"));
     fixture.pageNumberField
-        = fixture.root->findChild<QQuickItem *>(QStringLiteral("pageNumberField"));
+        = fixture.root->findChild<QQuickItem*>(QStringLiteral("pageNumberField"));
     fixture.leftButton
-        = fixture.root->findChild<QQuickItem *>(QStringLiteral("leftPageNavigationButton"));
+        = fixture.root->findChild<QQuickItem*>(QStringLiteral("leftPageNavigationButton"));
     fixture.rightButton
-        = fixture.root->findChild<QQuickItem *>(QStringLiteral("rightPageNavigationButton"));
+        = fixture.root->findChild<QQuickItem*>(QStringLiteral("rightPageNavigationButton"));
     if (!fixture.isValid()) {
         fixture.errorString = QStringLiteral("fixture did not create required objects");
     }
     return fixture;
 }
 
-QPoint itemCenter(QQuickItem *item)
+QPoint itemCenter(QQuickItem* item)
 {
     if (item == nullptr || item->width() <= 0 || item->height() <= 0) {
         return QPoint(-1, -1);
@@ -296,7 +313,7 @@ QPoint itemCenter(QQuickItem *item)
     return item->mapToScene(QPointF(item->width() / 2.0, item->height() / 2.0)).toPoint();
 }
 
-void clickItem(QQuickView *view, QQuickItem *item)
+void clickItem(QQuickView* view, QQuickItem* item)
 {
     const QPoint point = itemCenter(item);
     QVERIFY(point.x() >= 0);
@@ -305,29 +322,29 @@ void clickItem(QQuickView *view, QQuickItem *item)
     QCoreApplication::processEvents();
 }
 
-bool invokeCommitEditing(QQuickItem *pageNavigation, bool returnViewerFocus)
+bool invokeCommitEditing(QQuickItem* pageNavigation, bool returnViewerFocus)
 {
     return QMetaObject::invokeMethod(pageNavigation, "commitEditing", Qt::DirectConnection,
         Q_ARG(QVariant, QVariant(returnViewerFocus)));
 }
 
-void focusPageNumberField(QQuickItem *pageNumberField)
+void focusPageNumberField(QQuickItem* pageNumberField)
 {
     pageNumberField->forceActiveFocus();
     QTRY_VERIFY(pageNumberField->hasActiveFocus());
 }
 
-bool metaObjectHasProperty(const QMetaObject &metaObject, const char *name)
+bool metaObjectHasProperty(const QMetaObject& metaObject, const char* name)
 {
     return metaObject.indexOfProperty(name) >= 0;
 }
 
-bool metaObjectHasMethod(const QMetaObject &metaObject, const char *signature)
+bool metaObjectHasMethod(const QMetaObject& metaObject, const char* signature)
 {
     return metaObject.indexOfMethod(QMetaObject::normalizedSignature(signature)) >= 0;
 }
 
-bool metaObjectExposesName(const QMetaObject &metaObject, const QByteArray &name)
+bool metaObjectExposesName(const QMetaObject& metaObject, const QByteArray& name)
 {
     for (int index = metaObject.propertyOffset(); index < metaObject.propertyCount(); ++index) {
         if (metaObject.property(index).name() == name) {
@@ -421,7 +438,7 @@ void TestMainWindowVideoIntegration::pageNavigationUnavailableStateBlocksEditing
 
 void TestMainWindowVideoIntegration::documentSessionFacadeExposesOnlySharedActiveNavigationSurface()
 {
-    const QMetaObject &metaObject = KiriDocumentSession::staticMetaObject;
+    const QMetaObject& metaObject = KiriDocumentSession::staticMetaObject;
     QVERIFY(metaObjectHasProperty(metaObject, "activeNavigationAvailable"));
     QVERIFY(metaObjectHasProperty(metaObject, "activeNavigationKnown"));
     QVERIFY(metaObjectHasProperty(metaObject, "activeNavigationCurrentNumber"));
@@ -448,7 +465,7 @@ void TestMainWindowVideoIntegration::documentSessionFacadeExposesOnlySharedActiv
         QByteArrayLiteral("openMediaAtNumber"),
         QByteArrayLiteral("directMediaNavigationAvailabilityChanged"),
     };
-    for (const QByteArray &name : rawDirectMediaNames) {
+    for (const QByteArray& name : rawDirectMediaNames) {
         QVERIFY2(!metaObjectExposesName(metaObject, name),
             qPrintable(
                 QStringLiteral("unexpected QML API surface: %1").arg(QString::fromLatin1(name))));

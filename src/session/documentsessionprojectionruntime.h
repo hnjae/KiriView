@@ -13,9 +13,10 @@
 #include <vector>
 
 namespace kiriview {
-struct DocumentSessionProjectionRuntimePorts {
-    std::function<bool(const DocumentSessionPublicSnapshotInput &)> updatePublicSnapshot;
-    std::function<bool(const DocumentSessionPublicSnapshotInput &, ActiveNavigationSourceKind)>
+struct DocumentSessionProjectionRuntimePorts
+{
+    std::function<bool(const DocumentSessionPublicSnapshotInput&)> updatePublicSnapshot;
+    std::function<bool(const DocumentSessionPublicSnapshotInput&, ActiveNavigationSourceKind)>
         updatePublicSnapshotForSourceKind;
     std::function<ActiveNavigationSourceKind()> activeNavigationSourceKind;
     std::function<ActiveNavigationSnapshot()> activeNavigationSnapshot;
@@ -29,15 +30,15 @@ class DocumentSessionProjectionRuntime final
 public:
     explicit DocumentSessionProjectionRuntime(DocumentSessionProjectionRuntimePorts ports = {});
 
-    void publish(const DocumentSessionPublicSnapshotInput &input,
-        const ImageDocumentPageNavigationSnapshot &imageDocumentPageNavigationRows);
-    void publishForSourceKind(const DocumentSessionPublicSnapshotInput &input,
+    void publish(const DocumentSessionPublicSnapshotInput& input,
+        const ImageDocumentPageNavigationSnapshot& imageDocumentPageNavigationRows);
+    void publishForSourceKind(const DocumentSessionPublicSnapshotInput& input,
         ActiveNavigationSourceKind sourceKind,
-        const ImageDocumentPageNavigationSnapshot &imageDocumentPageNavigationRows);
+        const ImageDocumentPageNavigationSnapshot& imageDocumentPageNavigationRows);
 
 private:
     void syncActiveNavigationThumbnailRows(
-        const ImageDocumentPageNavigationSnapshot &imageDocumentPageNavigationRows);
+        const ImageDocumentPageNavigationSnapshot& imageDocumentPageNavigationRows);
     void clearActiveNavigationRevealContextIfUnavailable();
 
     DocumentSessionProjectionRuntimePorts m_ports;

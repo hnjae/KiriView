@@ -48,11 +48,12 @@ private Q_SLOTS:
 };
 
 namespace {
-struct MenuFixture {
+struct MenuFixture
+{
     std::unique_ptr<QQuickView> view;
-    QObject *root = nullptr;
-    QObject *menu = nullptr;
-    QObject *subMenu = nullptr;
+    QObject* root = nullptr;
+    QObject* menu = nullptr;
+    QObject* subMenu = nullptr;
     QString errorString;
 
     bool isValid() const { return view != nullptr && root != nullptr && menu != nullptr; }
@@ -68,10 +69,10 @@ void addPopupFixtureRows()
     QTest::newRow("popup-menu-custom-item-action-shortcut") << true << true;
 }
 
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
@@ -92,7 +93,7 @@ QString menuItemType(bool customMenuItem)
 QString boolLiteral(bool value) { return value ? QStringLiteral("true") : QStringLiteral("false"); }
 
 QString popupMenuFixtureQml(
-    bool actionHasShortcut, bool customMenuItem, bool actionEnabled, const QString &actionText)
+    bool actionHasShortcut, bool customMenuItem, bool actionEnabled, const QString& actionText)
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -250,7 +251,7 @@ Item {
 }
 
 MenuFixture createPopupMenuFixture(bool actionHasShortcut, bool customMenuItem,
-    bool actionEnabled = true, const QString &actionText = QStringLiteral("&Open"))
+    bool actionEnabled = true, const QString& actionText = QStringLiteral("&Open"))
 {
     MenuFixture fixture;
     fixture.view = std::make_unique<QQuickView>();
@@ -271,7 +272,7 @@ MenuFixture createPopupMenuFixture(bool actionHasShortcut, bool customMenuItem,
         return fixture;
     }
 
-    QObject *root = component.create();
+    QObject* root = component.create();
     if (root == nullptr) {
         fixture.errorString = component.errorString();
         return fixture;
@@ -287,7 +288,7 @@ MenuFixture createPopupMenuFixture(bool actionHasShortcut, bool customMenuItem,
 
     fixture.root = root;
     fixture.menu
-        = root->findChild<QObject *>(QStringLiteral("targetMenu"), Qt::FindChildrenRecursively);
+        = root->findChild<QObject*>(QStringLiteral("targetMenu"), Qt::FindChildrenRecursively);
     if (fixture.menu == nullptr) {
         fixture.errorString = QStringLiteral("target menu was not created");
     }
@@ -295,7 +296,7 @@ MenuFixture createPopupMenuFixture(bool actionHasShortcut, bool customMenuItem,
     return fixture;
 }
 
-MenuFixture createMenuFixture(const QString &source)
+MenuFixture createMenuFixture(const QString& source)
 {
     MenuFixture fixture;
     fixture.view = std::make_unique<QQuickView>();
@@ -314,7 +315,7 @@ MenuFixture createMenuFixture(const QString &source)
         return fixture;
     }
 
-    QObject *root = component.create();
+    QObject* root = component.create();
     if (root == nullptr) {
         fixture.errorString = component.errorString();
         return fixture;
@@ -330,9 +331,9 @@ MenuFixture createMenuFixture(const QString &source)
 
     fixture.root = root;
     fixture.menu
-        = root->findChild<QObject *>(QStringLiteral("targetMenu"), Qt::FindChildrenRecursively);
+        = root->findChild<QObject*>(QStringLiteral("targetMenu"), Qt::FindChildrenRecursively);
     fixture.subMenu
-        = root->findChild<QObject *>(QStringLiteral("fitMenu"), Qt::FindChildrenRecursively);
+        = root->findChild<QObject*>(QStringLiteral("fitMenu"), Qt::FindChildrenRecursively);
     if (fixture.menu == nullptr) {
         fixture.errorString = QStringLiteral("target menu was not created");
     } else if (fixture.subMenu == nullptr) {
@@ -346,14 +347,14 @@ MenuFixture createNestedSubmenuFixture() { return createMenuFixture(nestedSubmen
 
 MenuFixture createMenubarFixture() { return createMenuFixture(menubarFixtureQml()); }
 
-bool isMenuOpen(QObject *menu)
+bool isMenuOpen(QObject* menu)
 {
     return menu != nullptr
         && (menu->property("opened").toBool() || menu->property("visible").toBool());
 }
 
-bool sendKey(QObject *target, QEvent::Type type, Qt::Key key, Qt::KeyboardModifiers modifiers,
-    const QString &text = {})
+bool sendKey(QObject* target, QEvent::Type type, Qt::Key key, Qt::KeyboardModifiers modifiers,
+    const QString& text = {})
 {
     QKeyEvent event(type, key, modifiers, text);
     QCoreApplication::sendEvent(target, &event);
@@ -361,41 +362,41 @@ bool sendKey(QObject *target, QEvent::Type type, Qt::Key key, Qt::KeyboardModifi
     return event.isAccepted();
 }
 
-void keyClick(QQuickView *view, Qt::Key key,
+void keyClick(QQuickView* view, Qt::Key key,
     Qt::KeyboardModifiers modifiers = Qt::KeyboardModifiers(Qt::NoModifier))
 {
     QTest::keyClick(view, key, modifiers);
     QCoreApplication::processEvents();
 }
 
-void keyPress(QQuickView *view, Qt::Key key,
+void keyPress(QQuickView* view, Qt::Key key,
     Qt::KeyboardModifiers modifiers = Qt::KeyboardModifiers(Qt::NoModifier))
 {
     QTest::keyPress(view, key, modifiers);
     QCoreApplication::processEvents();
 }
 
-void keyRelease(QQuickView *view, Qt::Key key,
+void keyRelease(QQuickView* view, Qt::Key key,
     Qt::KeyboardModifiers modifiers = Qt::KeyboardModifiers(Qt::NoModifier))
 {
     QTest::keyRelease(view, key, modifiers);
     QCoreApplication::processEvents();
 }
 
-void openTargetMenu(QObject *root)
+void openTargetMenu(QObject* root)
 {
     QVERIFY(QMetaObject::invokeMethod(root, "openTargetMenu", Qt::DirectConnection));
 }
 
-void closeMenu(QObject *menu)
+void closeMenu(QObject* menu)
 {
     QVERIFY(QMetaObject::invokeMethod(menu, "close", Qt::DirectConnection));
     QCoreApplication::processEvents();
 }
 
-QObject *findObject(QObject *root, const QString &objectName)
+QObject* findObject(QObject* root, const QString& objectName)
 {
-    return root->findChild<QObject *>(objectName, Qt::FindChildrenRecursively);
+    return root->findChild<QObject*>(objectName, Qt::FindChildrenRecursively);
 }
 }
 
@@ -432,7 +433,7 @@ void TestMenuAccessKeyRouter::altPressShowsMnemonicUnderline()
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    QObject *label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
+    QObject* label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
     QVERIFY2(label != nullptr, "menu action item text label was not created");
     const QString initialText = label->property("text").toString();
 
@@ -456,7 +457,7 @@ void TestMenuAccessKeyRouter::menuCloseClearsActiveSessionBeforeAltRelease()
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    QObject *label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
+    QObject* label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
     QVERIFY2(label != nullptr, "menu action item text label was not created");
 
     keyPress(fixture.view.get(), Qt::Key_Alt, Qt::AltModifier);
@@ -480,7 +481,7 @@ void TestMenuAccessKeyRouter::menuReplacementClearsActiveSessionAndVisuals()
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    QObject *label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
+    QObject* label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
     QVERIFY2(label != nullptr, "menu action item text label was not created");
 
     keyPress(fixture.view.get(), Qt::Key_Alt, Qt::AltModifier);
@@ -501,7 +502,7 @@ void TestMenuAccessKeyRouter::disableClearsActiveSessionAndVisuals()
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    QObject *label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
+    QObject* label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
     QVERIFY2(label != nullptr, "menu action item text label was not created");
 
     keyPress(fixture.view.get(), Qt::Key_Alt, Qt::AltModifier);
@@ -522,7 +523,7 @@ void TestMenuAccessKeyRouter::shortcutOverrideClaimsAltMnemonicWithoutTriggering
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    QObject *label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
+    QObject* label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
     QVERIFY2(label != nullptr, "menu action item text label was not created");
 
     QVERIFY(sendKey(fixture.menu, QEvent::ShortcutOverride, Qt::Key_O, Qt::AltModifier));

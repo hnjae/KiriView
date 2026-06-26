@@ -11,7 +11,8 @@
 #include <functional>
 
 namespace kiriview::ApplicationActions {
-struct ApplicationCommandRouterInput {
+struct ApplicationCommandRouterInput
+{
     bool imagePannable = false;
     bool rightToLeftReadingActive = false;
     bool videoMode = false;
@@ -20,12 +21,14 @@ struct ApplicationCommandRouterInput {
     bool canOpenPreviousActiveNavigation = false;
 };
 
-struct ApplicationCommandRouterShellPorts {
+struct ApplicationCommandRouterShellPorts
+{
     std::function<void()> requestOpenDialog;
     std::function<void()> openApplicationMenu;
 };
 
-struct ApplicationCommandRouterSessionPorts {
+struct ApplicationCommandRouterSessionPorts
+{
     std::function<void()> openCurrentMediaWith;
     std::function<void()> moveDisplayedFileToTrash;
     std::function<void()> deleteDisplayedFilePermanently;
@@ -36,7 +39,8 @@ struct ApplicationCommandRouterSessionPorts {
     std::function<void()> showFirstImageBoundary;
 };
 
-struct ApplicationCommandRouterImageDocumentPorts {
+struct ApplicationCommandRouterImageDocumentPorts
+{
     std::function<bool()> imageAvailable;
     std::function<void()> openPreviousContainer;
     std::function<void()> openNextContainer;
@@ -48,7 +52,8 @@ struct ApplicationCommandRouterImageDocumentPorts {
     std::function<void()> requestToggleRightToLeftReading;
 };
 
-struct ApplicationCommandRouterImagePresentationPorts {
+struct ApplicationCommandRouterImagePresentationPorts
+{
     std::function<bool()> imageViewportHorizontallyPannable;
     std::function<void(double, double)> requestViewportPanBy;
     std::function<bool()> requestViewportScanForward;
@@ -63,20 +68,24 @@ struct ApplicationCommandRouterImagePresentationPorts {
     std::function<void()> requestFitWidthMode;
 };
 
-struct ApplicationCommandRouterPanelPorts {
+struct ApplicationCommandRouterPanelPorts
+{
     std::function<void()> toggleInfoPanel;
     std::function<void()> toggleThumbnailPanel;
 };
 
-struct ApplicationCommandRouterWindowPorts {
+struct ApplicationCommandRouterWindowPorts
+{
     std::function<void()> toggleFullScreen;
 };
 
-struct ApplicationCommandRouterHelpPorts {
+struct ApplicationCommandRouterHelpPorts
+{
     std::function<void()> requestShortcutHelp;
 };
 
-struct ApplicationCommandRouterVideoPorts {
+struct ApplicationCommandRouterVideoPorts
+{
     std::function<bool()> videoAvailable;
     std::function<bool()> videoSeekable;
     std::function<qint64()> videoDuration;
@@ -85,7 +94,8 @@ struct ApplicationCommandRouterVideoPorts {
     std::function<void()> toggleVideoPlayback;
 };
 
-struct ApplicationCommandRouterPorts {
+struct ApplicationCommandRouterPorts
+{
     ApplicationCommandRouterShellPorts shell;
     ApplicationCommandRouterSessionPorts session;
     ApplicationCommandRouterImageDocumentPorts imageDocument;
@@ -99,20 +109,20 @@ struct ApplicationCommandRouterPorts {
 class ApplicationCommandRouter final
 {
 public:
-    void handleActionTriggered(ActionId actionId, const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports) const;
-    void handleScanForwardAction(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports) const;
-    void handleScanBackwardAction(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports) const;
-    bool executeHorizontalArrowShortcut(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports, bool leftArrow) const;
-    bool executeSinglePageArrowShortcut(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports, bool leftArrow) const;
-    bool executeVerticalPanShortcut(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports, bool up) const;
-    bool executeVideoSeekShortcut(const ApplicationCommandRouterInput &input,
-        const ApplicationCommandRouterPorts &ports, qint64 deltaMilliseconds) const;
+    void handleActionTriggered(ActionId actionId, const ApplicationCommandRouterInput& input,
+        const ApplicationCommandRouterPorts& ports) const;
+    void handleScanForwardAction(const ApplicationCommandRouterInput& input,
+        const ApplicationCommandRouterPorts& ports) const;
+    void handleScanBackwardAction(const ApplicationCommandRouterInput& input,
+        const ApplicationCommandRouterPorts& ports) const;
+    bool executeHorizontalArrowShortcut(const ApplicationCommandRouterInput& input,
+        const ApplicationCommandRouterPorts& ports, bool leftArrow) const;
+    bool executeSinglePageArrowShortcut(const ApplicationCommandRouterInput& input,
+        const ApplicationCommandRouterPorts& ports, bool leftArrow) const;
+    bool executeVerticalPanShortcut(const ApplicationCommandRouterInput& input,
+        const ApplicationCommandRouterPorts& ports, bool up) const;
+    bool executeVideoSeekShortcut(const ApplicationCommandRouterInput& input,
+        const ApplicationCommandRouterPorts& ports, qint64 deltaMilliseconds) const;
 
 private:
     kiriview::ImageShortcutNavigationPolicy m_navigationPolicy;

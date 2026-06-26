@@ -20,7 +20,8 @@
 class QObject;
 
 namespace kiriview {
-struct DocumentSessionMediaDeletionCompletion {
+struct DocumentSessionMediaDeletionCompletion
+{
     DocumentSessionMediaDeletionCompletionPlan plan;
     KioOperationFailure failure;
 };
@@ -35,19 +36,19 @@ public:
         DirectMediaNavigationCandidateProvider candidateProvider = {});
     ~DocumentSessionMediaDeletionRuntime();
 
-    DocumentSessionMediaDeletionStartPlan start(QObject *receiver, FileDeletionMode mode,
-        std::vector<DirectMediaNavigationCandidate> candidates, const QUrl &currentUrl,
+    DocumentSessionMediaDeletionStartPlan start(QObject* receiver, FileDeletionMode mode,
+        std::vector<DirectMediaNavigationCandidate> candidates, const QUrl& currentUrl,
         DocumentSessionKind documentKind, CompletionCallback callback);
-    bool startForDirectMedia(QObject *receiver, FileDeletionMode mode,
-        const DirectMediaScope &scope, ScopeAccepted scopeAccepted,
+    bool startForDirectMedia(QObject* receiver, FileDeletionMode mode,
+        const DirectMediaScope& scope, ScopeAccepted scopeAccepted,
         DocumentSessionKind documentKind, CompletionCallback callback);
     void cancel();
     bool active() const;
 
 private:
     void finish(quint64 operationId, DocumentSessionKind documentKind,
-        const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan, FileDeletionResult result,
-        const KioOperationFailure &failure, const CompletionCallback &callback);
+        const DocumentSessionMediaDeletionFallbackPlan& fallbackPlan, FileDeletionResult result,
+        const KioOperationFailure& failure, const CompletionCallback& callback);
 
     FileDeletionProvider m_fileDeletionProvider;
     DocumentSessionDirectMediaNavigationRuntime m_candidateRuntime;

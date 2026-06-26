@@ -19,11 +19,12 @@ class QObject;
 
 namespace kiriview {
 using ImageDataLoader
-    = std::function<ImageIoJob(QObject *, ImageDecodeRequest, ImageDataCallback, ErrorCallback)>;
+    = std::function<ImageIoJob(QObject*, ImageDecodeRequest, ImageDataCallback, ErrorCallback)>;
 using ImageDataDecoder
-    = std::function<DecodedImageResult(const QByteArray &, const ImageDecodeRequest &)>;
+    = std::function<DecodedImageResult(const QByteArray&, const ImageDecodeRequest&)>;
 
-struct ImageDecodeDependencies {
+struct ImageDecodeDependencies
+{
     ImageDataLoader dataLoader;
     ImageDataDecoder dataDecoder;
     ThumbnailCacheLookupProvider thumbnailPreviewLookupProvider;

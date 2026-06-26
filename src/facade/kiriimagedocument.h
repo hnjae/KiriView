@@ -111,8 +111,8 @@ class KiriImageDocument : public QObject
             presentationTransitionState NOTIFY presentationTransitionStateChanged)
     Q_PROPERTY(bool unsupportedOpenedCollectionVideo READ unsupportedOpenedCollectionVideo NOTIFY
             unsupportedOpenedCollectionVideoChanged)
-    Q_PROPERTY(KiriImageDisplaySource *primaryDisplaySource READ primaryDisplaySource CONSTANT)
-    Q_PROPERTY(KiriImageDisplaySource *secondaryDisplaySource READ secondaryDisplaySource CONSTANT)
+    Q_PROPERTY(KiriImageDisplaySource* primaryDisplaySource READ primaryDisplaySource CONSTANT)
+    Q_PROPERTY(KiriImageDisplaySource* secondaryDisplaySource READ secondaryDisplaySource CONSTANT)
 
 public:
     using RenderContextProvider = std::function<kiriview::ImageDocumentRenderContext()>;
@@ -169,9 +169,9 @@ public:
     };
     Q_ENUM(PresentationTransitionState)
 
-    explicit KiriImageDocument(QObject *parent = nullptr);
+    explicit KiriImageDocument(QObject* parent = nullptr);
     explicit KiriImageDocument(
-        kiriview::ImageDocumentRuntimeDependencyOverrides dependencies, QObject *parent = nullptr);
+        kiriview::ImageDocumentRuntimeDependencyOverrides dependencies, QObject* parent = nullptr);
     ~KiriImageDocument() override;
 
     QUrl sourceUrl() const;
@@ -186,7 +186,7 @@ public:
     QSize primaryImageSize() const;
     QSize secondaryImageSize() const;
     QSizeF viewportSize() const;
-    void setViewportSize(const QSizeF &viewportSize);
+    void setViewportSize(const QSizeF& viewportSize);
     QPointF viewportContentPosition() const;
     quint64 viewportCommandRevision() const;
     QString viewportCommandRevisionToken() const;
@@ -235,11 +235,11 @@ public:
     bool secondaryPageVisible() const;
     PresentationTransitionState presentationTransitionState() const;
     bool unsupportedOpenedCollectionVideo() const;
-    KiriImageDisplaySource *primaryDisplaySource() const;
-    KiriImageDisplaySource *secondaryDisplaySource() const;
+    KiriImageDisplaySource* primaryDisplaySource() const;
+    KiriImageDisplaySource* secondaryDisplaySource() const;
     std::optional<kiriview::DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     kiriview::ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
-    const kiriview::EmbeddedMetadata &embeddedMetadata() const;
+    const kiriview::EmbeddedMetadata& embeddedMetadata() const;
 
     void setRenderContextProvider(RenderContextProvider provider);
 
@@ -258,11 +258,11 @@ public:
     Q_INVOKABLE double clampedManualZoomPercent(double zoomPercent) const;
     Q_INVOKABLE double steppedManualZoomPercent(double stepCount) const;
     Q_INVOKABLE bool requestManualZoomPercent(double zoomPercent);
-    Q_INVOKABLE bool requestZoomByStep(double stepCount, const QPointF &viewportAnchorPoint);
+    Q_INVOKABLE bool requestZoomByStep(double stepCount, const QPointF& viewportAnchorPoint);
     Q_INVOKABLE bool requestZoomByStepAtCenter(double stepCount);
     Q_INVOKABLE bool requestActualSizeAtCenter();
     Q_INVOKABLE bool requestFitMode(KiriImageDocument::ZoomMode zoomMode);
-    Q_INVOKABLE bool requestToggleFitOrActualSize(const QPointF &viewportPoint);
+    Q_INVOKABLE bool requestToggleFitOrActualSize(const QPointF& viewportPoint);
     Q_INVOKABLE bool requestViewportPanBy(double deltaX, double deltaY);
     Q_INVOKABLE bool requestViewportPanToInitialScanPosition();
     Q_INVOKABLE bool requestViewportPanToFinalScanPosition();
@@ -270,30 +270,30 @@ public:
     Q_INVOKABLE bool requestViewportScanBackward();
     Q_INVOKABLE void requestNextDisplayedImageStartToFinalScanPosition();
     Q_INVOKABLE bool requestDisplayedImageInitialContentPosition();
-    Q_INVOKABLE bool viewportPointInsideImage(const QPointF &viewportPoint) const;
-    Q_INVOKABLE QPointF nearestImageViewportPoint(const QPointF &viewportPoint) const;
+    Q_INVOKABLE bool viewportPointInsideImage(const QPointF& viewportPoint) const;
+    Q_INVOKABLE QPointF nearestImageViewportPoint(const QPointF& viewportPoint) const;
     Q_INVOKABLE void requestToggleTwoPageMode();
     Q_INVOKABLE void requestToggleRightToLeftReading();
     Q_INVOKABLE void updateRenderContext();
-    Q_INVOKABLE bool requestViewportContentPosition(const QPointF &viewportContentPosition);
-    Q_INVOKABLE bool viewportCommandRevisionNewerThan(const QString &revisionToken) const;
+    Q_INVOKABLE bool requestViewportContentPosition(const QPointF& viewportContentPosition);
+    Q_INVOKABLE bool viewportCommandRevisionNewerThan(const QString& revisionToken) const;
     Q_INVOKABLE bool viewportProjectionNewerThan(
-        const QString &commandRevisionToken, const QString &observationRevisionToken) const;
+        const QString& commandRevisionToken, const QString& observationRevisionToken) const;
     bool beginViewportCommandApplication(quint64 commandRevision);
-    Q_INVOKABLE bool beginViewportCommandApplication(const QString &commandRevisionToken);
+    Q_INVOKABLE bool beginViewportCommandApplication(const QString& commandRevisionToken);
     bool completeViewportCommandApplication(
-        quint64 commandRevision, const QPointF &actualContentPosition);
+        quint64 commandRevision, const QPointF& actualContentPosition);
     Q_INVOKABLE bool completeViewportCommandApplication(
-        const QString &commandRevisionToken, const QPointF &actualContentPosition);
-    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF &actualContentPosition);
+        const QString& commandRevisionToken, const QPointF& actualContentPosition);
+    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF& actualContentPosition);
     Q_INVOKABLE bool acknowledgeViewportCommand(
-        const QString &commandRevisionToken, const QPointF &actualContentPosition);
+        const QString& commandRevisionToken, const QPointF& actualContentPosition);
     Q_INVOKABLE bool observeViewportContentPosition(
-        const QPointF &contentPosition, KiriImageDocument::ViewportObservationOrigin origin);
-    Q_INVOKABLE bool acknowledgeDisplayImageLoad(int pageRole, const QUrl &providerUrl,
-        const QString &revisionToken, const QString &sourceIdentity, int outcome);
-    Q_INVOKABLE bool acknowledgeStillImageDisplayLoad(int pageRole, const QUrl &providerUrl,
-        const QString &revisionToken, const QString &sourceIdentity, int outcome);
+        const QPointF& contentPosition, KiriImageDocument::ViewportObservationOrigin origin);
+    Q_INVOKABLE bool acknowledgeDisplayImageLoad(int pageRole, const QUrl& providerUrl,
+        const QString& revisionToken, const QString& sourceIdentity, int outcome);
+    Q_INVOKABLE bool acknowledgeStillImageDisplayLoad(int pageRole, const QUrl& providerUrl,
+        const QString& revisionToken, const QString& sourceIdentity, int outcome);
 
 Q_SIGNALS:
     void sourceUrlChanged();
@@ -319,20 +319,20 @@ Q_SIGNALS:
     void twoPageModeChanged();
     void rightToLeftReadingChanged();
     void presentationTransitionStateChanged();
-    void fileDeletionFailed(const QString &errorString);
+    void fileDeletionFailed(const QString& errorString);
     void unsupportedOpenedCollectionVideoChanged();
     void embeddedMetadataChanged();
     void displaySourceChanged();
-    void unsupportedOpenedCollectionVideoEntered(const QString &message);
-    void containerNavigationBoundaryReached(const QString &message);
+    void unsupportedOpenedCollectionVideoEntered(const QString& message);
+    void containerNavigationBoundaryReached(const QString& message);
 
 private:
     friend class KiriDocumentSession;
 
-    void setSourceUrl(const QUrl &sourceUrl);
+    void setSourceUrl(const QUrl& sourceUrl);
     void setTwoPageModeEnabled(bool enabled);
     void setRightToLeftReadingEnabled(bool enabled);
-    void handleDocumentChanges(const std::vector<kiriview::ImageDocumentChange> &changes);
+    void handleDocumentChanges(const std::vector<kiriview::ImageDocumentChange>& changes);
     void refreshDisplaySources();
 
     std::unique_ptr<kiriview::ImageDocumentRuntime> m_runtime;

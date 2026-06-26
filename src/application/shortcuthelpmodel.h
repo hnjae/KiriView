@@ -14,7 +14,8 @@
 #include <functional>
 
 namespace kiriview::ApplicationActions {
-struct ShortcutHelpRow {
+struct ShortcutHelpRow
+{
     int actionId = -1;
     QString actionName;
     QString actionText;
@@ -45,10 +46,10 @@ public:
         ScopeTextRole,
     };
 
-    explicit ShortcutHelpModel(ShortcutHelpRowsProvider rowsProvider, QObject *parent = nullptr);
+    explicit ShortcutHelpModel(ShortcutHelpRowsProvider rowsProvider, QObject* parent = nullptr);
 
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
     void handleRowsChanged();
 
@@ -56,8 +57,8 @@ private:
     QList<ShortcutHelpRow> collectRows() const;
 
     static bool sameRowIdentities(
-        const QList<ShortcutHelpRow> &left, const QList<ShortcutHelpRow> &right);
-    static bool sameRowData(const ShortcutHelpRow &left, const ShortcutHelpRow &right);
+        const QList<ShortcutHelpRow>& left, const QList<ShortcutHelpRow>& right);
+    static bool sameRowData(const ShortcutHelpRow& left, const ShortcutHelpRow& right);
 
     ShortcutHelpRowsProvider m_rowsProvider;
     QList<ShortcutHelpRow> m_rows;

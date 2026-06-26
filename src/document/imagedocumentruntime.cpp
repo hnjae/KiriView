@@ -20,13 +20,13 @@
 
 namespace kiriview {
 namespace {
-    bool pointIsFinite(const QPointF &point)
+    bool pointIsFinite(const QPointF& point)
     {
         return std::isfinite(point.x()) && std::isfinite(point.y());
     }
 
     ImageDocumentSourceLoadSnapshot sourceLoadSnapshot(
-        const ImageDocumentState &state, const ImageSpreadPresentationController &spreadController)
+        const ImageDocumentState& state, const ImageSpreadPresentationController& spreadController)
     {
         return ImageDocumentSourceLoadSnapshot {
             state.sourceUrl(),
@@ -36,14 +36,14 @@ namespace {
     }
 }
 
-ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
+ImageDocumentRuntime::ImageDocumentRuntime(QObject* documentObject,
     RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
     ImageDocumentRuntimeDependencyOverrides dependencies,
     FileDeletionFailedCallback fileDeletionFailedCallback,
     UnsupportedOpenedCollectionVideoEnteredCallback unsupportedOpenedCollectionVideoEnteredCallback,
     ContainerNavigationBoundaryReachedCallback containerNavigationBoundaryReachedCallback)
     : changeBatcher(ImageDocumentChangeBatcher::ChangeBatchCallback(
-          [this](const std::vector<ImageDocumentChange> &changes) { publishChanges(changes); }))
+          [this](const std::vector<ImageDocumentChange>& changes) { publishChanges(changes); }))
     , state(changeBatcher)
     , changeCallback(std::move(changeCallback))
     , renderContextProvider(std::move(renderContextProvider))
@@ -53,7 +53,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
         ImageDocumentRuntimeControllerCallbacks {
             [this]() { return renderContext(); },
             [this](ImageDocumentChange change) { notify(change); },
-            [this](const ImageDocumentSourceLoadRequest &request) { loadSource(request); },
+            [this](const ImageDocumentSourceLoadRequest& request) { loadSource(request); },
             std::move(fileDeletionFailedCallback),
             std::move(unsupportedOpenedCollectionVideoEnteredCallback),
             std::move(containerNavigationBoundaryReachedCallback),
@@ -64,7 +64,7 @@ ImageDocumentRuntime::~ImageDocumentRuntime() { shutdown(); }
 
 QUrl ImageDocumentRuntime::sourceUrl() const { return state.sourceUrl(); }
 
-void ImageDocumentRuntime::setSourceUrl(const QUrl &sourceUrl)
+void ImageDocumentRuntime::setSourceUrl(const QUrl& sourceUrl)
 {
     loadSource(ImageDocumentSourceLoadRequest::fromUrl(sourceUrl));
 }
@@ -81,7 +81,7 @@ bool ImageDocumentRuntime::loading() const
 
 QString ImageDocumentRuntime::errorString() const { return state.errorString(); }
 
-const std::optional<ImageLoadFailure> &ImageDocumentRuntime::loadFailure() const
+const std::optional<ImageLoadFailure>& ImageDocumentRuntime::loadFailure() const
 {
     return state.loadFailure();
 }
@@ -134,7 +134,7 @@ QSizeF ImageDocumentRuntime::viewportSize() const
     return controllers->presentationRuntime().viewportSize();
 }
 
-void ImageDocumentRuntime::setViewportSize(const QSizeF &viewportSize)
+void ImageDocumentRuntime::setViewportSize(const QSizeF& viewportSize)
 {
     controllers->spreadController().setViewportSize(viewportSize);
 }
@@ -148,7 +148,7 @@ QPointF ImageDocumentRuntime::viewportContentPosition() const
     return controllers->spreadController().viewportContentPosition();
 }
 
-quint64 ImageDocumentRuntime::requestViewportContentPosition(const QPointF &viewportContentPosition)
+quint64 ImageDocumentRuntime::requestViewportContentPosition(const QPointF& viewportContentPosition)
 {
     if (!pointIsFinite(viewportContentPosition)) {
         return 0;
@@ -159,7 +159,7 @@ quint64 ImageDocumentRuntime::requestViewportContentPosition(const QPointF &view
         .revision;
 }
 
-quint64 ImageDocumentRuntime::requestViewportPanBy(const QPointF &delta)
+quint64 ImageDocumentRuntime::requestViewportPanBy(const QPointF& delta)
 {
     if (!viewportPannable() || !pointIsFinite(delta)) {
         return 0;
@@ -236,21 +236,21 @@ bool ImageDocumentRuntime::beginViewportCommandApplication(quint64 commandRevisi
 }
 
 bool ImageDocumentRuntime::completeViewportCommandApplication(
-    quint64 commandRevision, const QPointF &actualContentPosition)
+    quint64 commandRevision, const QPointF& actualContentPosition)
 {
     return controllers->spreadController().completeViewportCommandApplication(
         commandRevision, actualContentPosition);
 }
 
 bool ImageDocumentRuntime::acknowledgeViewportCommand(
-    quint64 commandRevision, const QPointF &actualContentPosition)
+    quint64 commandRevision, const QPointF& actualContentPosition)
 {
     return controllers->spreadController().acknowledgeViewportCommand(
         commandRevision, actualContentPosition);
 }
 
 bool ImageDocumentRuntime::observeViewportContentPosition(
-    const QPointF &contentPosition, ImageViewportObservationOrigin origin)
+    const QPointF& contentPosition, ImageViewportObservationOrigin origin)
 {
     return controllers->spreadController().observeViewportContentPosition(contentPosition, origin);
 }
@@ -387,7 +387,7 @@ bool ImageDocumentRuntime::requestManualZoomPercentAtCenter(qreal zoomPercent)
         QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
 }
 
-bool ImageDocumentRuntime::requestZoomByStep(qreal stepCount, const QPointF &viewportAnchorPoint)
+bool ImageDocumentRuntime::requestZoomByStep(qreal stepCount, const QPointF& viewportAnchorPoint)
 {
     if (status() != ImageDocumentStatus::Ready || !pointIsFinite(viewportAnchorPoint)) {
         return false;
@@ -418,7 +418,7 @@ bool ImageDocumentRuntime::requestActualSizeAtCenter()
         QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
 }
 
-bool ImageDocumentRuntime::requestToggleFitOrActualSize(const QPointF &viewportPoint)
+bool ImageDocumentRuntime::requestToggleFitOrActualSize(const QPointF& viewportPoint)
 {
     if (status() != ImageDocumentStatus::Ready || !pointIsFinite(viewportPoint)) {
         return false;
@@ -553,13 +553,13 @@ ImagePresentationTransitionState ImageDocumentRuntime::presentationTransitionSta
     return controllers->spreadController().presentationTransitionState();
 }
 
-bool ImageDocumentRuntime::viewportPointInsideImage(const QPointF &viewportPoint) const
+bool ImageDocumentRuntime::viewportPointInsideImage(const QPointF& viewportPoint) const
 {
     return viewportInteraction.viewportPointInsideImage(
         viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
 }
 
-QPointF ImageDocumentRuntime::nearestImageViewportPoint(const QPointF &viewportPoint) const
+QPointF ImageDocumentRuntime::nearestImageViewportPoint(const QPointF& viewportPoint) const
 {
     return viewportInteraction.nearestImageViewportPoint(
         viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
@@ -592,7 +592,7 @@ ImageFirstDisplayDecodeContext ImageDocumentRuntime::firstDisplayDecodeContext()
     return controllers->presentationRuntime().firstDisplayDecodeContext();
 }
 
-const EmbeddedMetadata &ImageDocumentRuntime::embeddedMetadata() const
+const EmbeddedMetadata& ImageDocumentRuntime::embeddedMetadata() const
 {
     return state.embeddedMetadata();
 }
@@ -611,7 +611,7 @@ ImageDisplaySourceProjection ImageDocumentRuntime::displaySourceProjection(
 }
 
 void ImageDocumentRuntime::acknowledgeStillImageDisplayLoad(DisplayedPageRole role,
-    const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
+    const QUrl& providerUrl, quint64 revision, const QString& sourceIdentity,
     ImageDisplayLoadOutcome outcome)
 {
     controllers->spreadController().acknowledgeStillImageDisplayLoad(
@@ -619,7 +619,7 @@ void ImageDocumentRuntime::acknowledgeStillImageDisplayLoad(DisplayedPageRole ro
 }
 
 void ImageDocumentRuntime::acknowledgeDisplayImageLoad(DisplayedPageRole role,
-    const QUrl &providerUrl, quint64 revision, const QString &sourceIdentity,
+    const QUrl& providerUrl, quint64 revision, const QString& sourceIdentity,
     ImageDisplayLoadOutcome outcome)
 {
     controllers->spreadController().acknowledgeDisplayImageLoad(
@@ -644,7 +644,7 @@ ImageDocumentRenderContext ImageDocumentRuntime::renderContext() const
 }
 
 quint64 ImageDocumentRuntime::requestViewportInteractionContentPosition(
-    const QPointF &contentPosition)
+    const QPointF& contentPosition)
 {
     if (!pointIsFinite(contentPosition)) {
         return 0;
@@ -662,7 +662,7 @@ quint64 ImageDocumentRuntime::requestViewportInteractionContentPosition(
 }
 
 bool ImageDocumentRuntime::requestAnchoredManualZoom(
-    qreal zoomPercent, const QPointF &viewportAnchorPoint)
+    qreal zoomPercent, const QPointF& viewportAnchorPoint)
 {
     if (!pointIsFinite(viewportAnchorPoint)) {
         return false;
@@ -696,7 +696,7 @@ ImageViewportInteractionSnapshot ImageDocumentRuntime::viewportInteractionSnapsh
 }
 
 void ImageDocumentRuntime::updateViewportInteractionForPublishedChanges(
-    const std::vector<ImageDocumentChange> &changes)
+    const std::vector<ImageDocumentChange>& changes)
 {
     for (ImageDocumentChange change : changes) {
         switch (change) {
@@ -714,13 +714,13 @@ void ImageDocumentRuntime::updateViewportInteractionForPublishedChanges(
     }
 }
 
-void ImageDocumentRuntime::loadSource(const ImageDocumentSourceLoadRequest &request)
+void ImageDocumentRuntime::loadSource(const ImageDocumentSourceLoadRequest& request)
 {
     controllers->dispatchPlan(ImageOpenWorkflow::sourceLoadPlan(
         sourceLoadSnapshot(state, controllers->spreadController()), request));
 }
 
-void ImageDocumentRuntime::publishChanges(const std::vector<ImageDocumentChange> &changes)
+void ImageDocumentRuntime::publishChanges(const std::vector<ImageDocumentChange>& changes)
 {
     for (ImageDocumentChange change : changes) {
         controllers->spreadController().handleDocumentChange(change);

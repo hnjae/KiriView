@@ -9,7 +9,7 @@
 
 namespace kiriview {
 BufferedImageReader::BufferedImageReader(
-    const QByteArray &data, const QByteArray &format, bool autoTransform)
+    const QByteArray& data, const QByteArray& format, bool autoTransform)
 {
     if (format.isEmpty()) {
         return;
@@ -62,21 +62,21 @@ QString BufferedImageReader::errorString() const
     return m_reader == nullptr ? QString() : m_reader->errorString();
 }
 
-void BufferedImageReader::setScaledSize(const QSize &size)
+void BufferedImageReader::setScaledSize(const QSize& size)
 {
     if (m_reader != nullptr) {
         m_reader->setScaledSize(size);
     }
 }
 
-void BufferedImageReader::setScaledClipRect(const QRect &rect)
+void BufferedImageReader::setScaledClipRect(const QRect& rect)
 {
     if (m_reader != nullptr) {
         m_reader->setScaledClipRect(rect);
     }
 }
 
-void BufferedImageReader::setClipRect(const QRect &rect)
+void BufferedImageReader::setClipRect(const QRect& rect)
 {
     if (m_reader != nullptr) {
         m_reader->setClipRect(rect);

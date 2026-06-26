@@ -69,7 +69,7 @@ namespace {
         return RasterDisplayBucketStatus::Failed;
     }
 
-    RustRasterDisplayBucketInput rustBucketInput(const RasterDisplayBucketPolicyInput &input)
+    RustRasterDisplayBucketInput rustBucketInput(const RasterDisplayBucketPolicyInput& input)
     {
         return RustRasterDisplayBucketInput {
             input.originalSize.width(),
@@ -90,7 +90,7 @@ namespace {
         };
     }
 
-    RasterDisplayBucketKey bucketKeyFromRust(const RustRasterDisplayBucketKey &key)
+    RasterDisplayBucketKey bucketKeyFromRust(const RustRasterDisplayBucketKey& key)
     {
         return RasterDisplayBucketKey {
             QSize(key.raster_width, key.raster_height),
@@ -101,7 +101,7 @@ namespace {
     }
 
     RasterDisplayBucketDecision bucketDecisionFromRust(
-        const RustRasterDisplayBucketDecision &decision)
+        const RustRasterDisplayBucketDecision& decision)
     {
         return RasterDisplayBucketDecision {
             bucketStatusFromRust(decision.status),
@@ -113,12 +113,12 @@ namespace {
     }
 }
 
-RasterDisplayBucketDecision rasterDisplayBucketDecision(const RasterDisplayBucketPolicyInput &input)
+RasterDisplayBucketDecision rasterDisplayBucketDecision(const RasterDisplayBucketPolicyInput& input)
 {
     return bucketDecisionFromRust(rustRasterDisplayBucketDecision(rustBucketInput(input)));
 }
 
-RasterDisplayBucketDecision svgDisplayBucketDecision(const RasterDisplayBucketPolicyInput &input)
+RasterDisplayBucketDecision svgDisplayBucketDecision(const RasterDisplayBucketPolicyInput& input)
 {
     return bucketDecisionFromRust(rustSvgDisplayBucketDecision(rustBucketInput(input)));
 }

@@ -20,10 +20,10 @@ class ImageDocumentNavigationController final
 public:
     using RuntimePlanCallback = std::function<void(ImageDocumentRuntimePlan)>;
 
-    ImageDocumentNavigationController(ImageDocumentState &state,
-        ImagePageSurfaceController &pageSurfaceController,
-        ImageDocumentPageNavigationService &navigationService,
-        ImageSpreadPresentationController &spreadController,
+    ImageDocumentNavigationController(ImageDocumentState& state,
+        ImagePageSurfaceController& pageSurfaceController,
+        ImageDocumentPageNavigationService& navigationService,
+        ImageSpreadPresentationController& spreadController,
         RuntimePlanCallback runtimePlanCallback);
 
     int currentPageNumber() const;
@@ -43,10 +43,10 @@ public:
     void clearPageNavigation();
 
 private:
-    ImageDocumentState &m_state;
-    ImagePageSurfaceController &m_pageSurfaceController;
-    ImageDocumentPageNavigationService &m_navigationService;
-    ImageSpreadPresentationController &m_spreadController;
+    ImageDocumentState& m_state;
+    ImagePageSurfaceController& m_pageSurfaceController;
+    ImageDocumentPageNavigationService& m_navigationService;
+    ImageSpreadPresentationController& m_spreadController;
     RuntimePlanCallback m_runtimePlanCallback;
 };
 }

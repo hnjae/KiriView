@@ -17,14 +17,14 @@
 namespace kiriview {
 inline constexpr int fallbackTextureSizeMax = 16384;
 
-QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize);
-QSize scaledImageSizeToFit(const QSizeF &imageSize, const QSize &boundsSize);
-QSize firstDisplayScaledImageSize(const QSize &imageSize, const QSize &physicalViewportSize);
-qreal imagePixelsPerSourcePixel(const QSize &imageSize, const QSize &displaySize);
-QImage displayReadyImage(const QImage &image);
+QRectF imageTargetRect(const QSize& imageSize, const QSizeF& boundsSize);
+QSize scaledImageSizeToFit(const QSizeF& imageSize, const QSize& boundsSize);
+QSize firstDisplayScaledImageSize(const QSize& imageSize, const QSize& physicalViewportSize);
+qreal imagePixelsPerSourcePixel(const QSize& imageSize, const QSize& displaySize);
+QImage displayReadyImage(const QImage& image);
 ImageDocumentRenderContext normalizedImageDocumentRenderContext(ImageDocumentRenderContext context);
 ImageFirstDisplayDecodeContext imageFirstDisplayDecodeContext(
-    const QSizeF &viewportSize, qreal devicePixelRatio);
+    const QSizeF& viewportSize, qreal devicePixelRatio);
 }
 
 #endif

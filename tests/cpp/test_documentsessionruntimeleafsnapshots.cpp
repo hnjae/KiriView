@@ -18,7 +18,7 @@ private Q_SLOTS:
 };
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
 class SnapshotChangeEmitter : public QObject
 {
@@ -29,9 +29,9 @@ Q_SIGNALS:
 };
 
 kiriview::DocumentSessionDocumentSignalConnector imageSnapshotChangedConnector(
-    SnapshotChangeEmitter &emitter)
+    SnapshotChangeEmitter& emitter)
 {
-    return [&emitter](QObject *context, kiriview::DocumentSessionDocumentChangeHandler handler) {
+    return [&emitter](QObject* context, kiriview::DocumentSessionDocumentChangeHandler handler) {
         std::vector<QMetaObject::Connection> connections;
         connections.push_back(
             QObject::connect(&emitter, &SnapshotChangeEmitter::imageSnapshotChanged, context,
@@ -55,7 +55,7 @@ void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeaf
     kiriview::DocumentSessionImageDocumentSnapshotPort imagePort;
     imagePort.snapshot = [&imageSnapshot]() { return imageSnapshot; };
     kiriview::DocumentSessionImageDocumentCommandPort imageCommands;
-    imageCommands.source.setSourceUrl = [&imageSnapshot](const QUrl &url) {
+    imageCommands.source.setSourceUrl = [&imageSnapshot](const QUrl& url) {
         imageSnapshot.sourceUrl = url;
         imageSnapshot.displayedUrl = url;
         imageSnapshot.windowTitleFileName = url.fileName();
@@ -74,11 +74,11 @@ void TestDocumentSessionRuntimeLeafSnapshots::directImageRoutePublishesImageLeaf
     videoPort.snapshot = [&videoSnapshot]() { return videoSnapshot; };
     kiriview::DocumentSessionVideoDocumentCommandPort videoCommands;
     videoCommands.source.setSourceUrl
-        = [&videoSnapshot](const QUrl &url) { videoSnapshot.sourceUrl = url; };
-    videoCommands.output.videoOutput = []() -> QObject * { return nullptr; };
+        = [&videoSnapshot](const QUrl& url) { videoSnapshot.sourceUrl = url; };
+    videoCommands.output.videoOutput = []() -> QObject* { return nullptr; };
     videoCommands.playback.stop = []() { };
-    videoCommands.output.setVideoOutput = [](QObject *) { };
-    videoCommands.output.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
+    videoCommands.output.setVideoOutput = [](QObject*) { };
+    videoCommands.output.setVideoOutputGeometry = [](const QRectF&, const QRectF&) { };
 
     kiriview::DocumentSessionRuntime runtime(&owner, std::move(imagePort), std::move(imageCommands),
         std::move(videoPort), std::move(videoCommands));
@@ -107,7 +107,7 @@ void TestDocumentSessionRuntimeLeafSnapshots::imageSnapshotChangeRefreshesPublic
     imagePort.snapshot = [&imageSnapshot]() { return imageSnapshot; };
     imagePort.snapshotChanged = imageSnapshotChangedConnector(emitter);
     kiriview::DocumentSessionImageDocumentCommandPort imageCommands;
-    imageCommands.source.setSourceUrl = [&imageSnapshot](const QUrl &url) {
+    imageCommands.source.setSourceUrl = [&imageSnapshot](const QUrl& url) {
         imageSnapshot.sourceUrl = url;
         imageSnapshot.displayedUrl = url;
         imageSnapshot.windowTitleFileName = url.fileName();
@@ -124,11 +124,11 @@ void TestDocumentSessionRuntimeLeafSnapshots::imageSnapshotChangeRefreshesPublic
     videoPort.snapshot = [&videoSnapshot]() { return videoSnapshot; };
     kiriview::DocumentSessionVideoDocumentCommandPort videoCommands;
     videoCommands.source.setSourceUrl
-        = [&videoSnapshot](const QUrl &url) { videoSnapshot.sourceUrl = url; };
-    videoCommands.output.videoOutput = []() -> QObject * { return nullptr; };
+        = [&videoSnapshot](const QUrl& url) { videoSnapshot.sourceUrl = url; };
+    videoCommands.output.videoOutput = []() -> QObject* { return nullptr; };
     videoCommands.playback.stop = []() { };
-    videoCommands.output.setVideoOutput = [](QObject *) { };
-    videoCommands.output.setVideoOutputGeometry = [](const QRectF &, const QRectF &) { };
+    videoCommands.output.setVideoOutput = [](QObject*) { };
+    videoCommands.output.setVideoOutputGeometry = [](const QRectF&, const QRectF&) { };
 
     kiriview::DocumentSessionRuntime runtime(&owner, std::move(imagePort), std::move(imageCommands),
         std::move(videoPort), std::move(videoCommands));

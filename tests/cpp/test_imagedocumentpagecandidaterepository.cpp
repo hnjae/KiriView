@@ -24,14 +24,14 @@ using kiriview::TestSupport::imageDocumentPageCandidate;
 using kiriview::TestSupport::localUrl;
 
 void compareSingleImageDocumentPageCandidate(
-    const std::vector<ImageDocumentPageCandidate> &candidates, const QUrl &url)
+    const std::vector<ImageDocumentPageCandidate>& candidates, const QUrl& url)
 {
     QCOMPARE(candidates.size(), std::size_t(1));
     QCOMPARE(candidates.front().url, url);
 }
 
 void compareSingleContainerCandidate(
-    const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &url)
+    const std::vector<ContainerNavigationCandidate>& candidates, const QUrl& url)
 {
     QCOMPARE(candidates.size(), std::size_t(1));
     QCOMPARE(candidates.front().url, url);

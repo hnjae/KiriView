@@ -11,11 +11,11 @@ namespace kiriview {
 class ImageDocumentState;
 
 ImageOpenApplicationPlan imageOpenApplicationPlan(
-    const ImageOpenTransition &transition, const ImageOpenTransitionContext &context = {});
+    const ImageOpenTransition& transition, const ImageOpenTransitionContext& context = {});
 ImageDocumentRuntimePlan applyImageOpenApplicationPlan(
-    ImageDocumentState &state, ImageOpenApplicationPlan plan);
-ImageDocumentRuntimePlan applyImageOpenTransition(ImageDocumentState &state,
-    const ImageOpenTransition &transition, const ImageOpenTransitionContext &context = {});
+    ImageDocumentState& state, ImageOpenApplicationPlan plan);
+ImageDocumentRuntimePlan applyImageOpenTransition(ImageDocumentState& state,
+    const ImageOpenTransition& transition, const ImageOpenTransitionContext& context = {});
 }
 
 #endif

@@ -20,25 +20,25 @@ kiriview::ImageSpreadSecondaryPageRefreshResult keepCurrentSecondaryRefresh()
     return { kiriview::ImageSpreadSecondaryPageRefreshAction::KeepCurrentSecondary, {} };
 }
 
-kiriview::ImageSpreadSecondaryPageRefreshResult loadTargetRefresh(const QUrl &targetUrl)
+kiriview::ImageSpreadSecondaryPageRefreshResult loadTargetRefresh(const QUrl& targetUrl)
 {
     return { kiriview::ImageSpreadSecondaryPageRefreshAction::LoadTarget, targetUrl };
 }
 }
 
 namespace kiriview {
-void ImageSpreadSecondaryPageRefresh::cachePageSize(const QUrl &url, const QSize &imageSize)
+void ImageSpreadSecondaryPageRefresh::cachePageSize(const QUrl& url, const QSize& imageSize)
 {
     m_pageCache.cachePageSize(url, imageSize);
 }
 
-std::optional<bool> ImageSpreadSecondaryPageRefresh::cachedPageIsWide(const QUrl &url) const
+std::optional<bool> ImageSpreadSecondaryPageRefresh::cachedPageIsWide(const QUrl& url) const
 {
     return m_pageCache.cachedPageIsWide(url);
 }
 
 ImageSpreadSecondaryPageRefreshResult ImageSpreadSecondaryPageRefresh::planRefresh(
-    const ImageSpreadSecondaryPageRefreshRequest &request) const
+    const ImageSpreadSecondaryPageRefreshRequest& request) const
 {
     const int currentPage = request.navigation.currentPageNumber();
     const int nextPageNumber = currentPage == std::numeric_limits<int>::max() ? 0 : currentPage + 1;
@@ -81,13 +81,13 @@ ImageSpreadSecondaryPageRefreshResult ImageSpreadSecondaryPageRefresh::planRefre
 }
 
 int ImageSpreadSecondaryPageRefresh::currentLastPageNumber(
-    const ImageSpreadPageNavigationContext &context) const
+    const ImageSpreadPageNavigationContext& context) const
 {
     return imageSpreadNavigationCurrentLastPageNumber(navigationState(context));
 }
 
 ImageDocumentPageActiveNavigationSnapshot ImageSpreadSecondaryPageRefresh::activeNavigationSnapshot(
-    const ImageSpreadPageNavigationContext &context) const
+    const ImageSpreadPageNavigationContext& context) const
 {
     const int currentPageNumber = context.navigation.currentPageNumber();
     const int currentLastPageNumber = this->currentLastPageNumber(context);
@@ -109,7 +109,7 @@ ImageDocumentPageActiveNavigationSnapshot ImageSpreadSecondaryPageRefresh::activ
 }
 
 ImageSpreadPageNavigationTarget ImageSpreadSecondaryPageRefresh::pageNavigationTarget(
-    NavigationDirection direction, const ImageSpreadPageNavigationContext &context) const
+    NavigationDirection direction, const ImageSpreadPageNavigationContext& context) const
 {
     ImageSpreadNavigationState state = navigationState(context);
     if (direction == NavigationDirection::Previous) {
@@ -120,19 +120,19 @@ ImageSpreadPageNavigationTarget ImageSpreadSecondaryPageRefresh::pageNavigationT
 }
 
 int ImageSpreadSecondaryPageRefresh::relativePageNavigationTarget(
-    int offset, const ImageSpreadPageNavigationContext &context) const
+    int offset, const ImageSpreadPageNavigationContext& context) const
 {
     return imageSpreadRelativePageNavigationTarget(navigationState(context), offset);
 }
 
 bool ImageSpreadSecondaryPageRefresh::shouldBeginNavigationTransition(
-    int targetPageNumber, const ImageSpreadPageNavigationContext &context) const
+    int targetPageNumber, const ImageSpreadPageNavigationContext& context) const
 {
     return imageSpreadShouldBeginNavigationTransition(navigationState(context), targetPageNumber);
 }
 
 bool ImageSpreadSecondaryPageRefresh::primarySelectionMatchesDisplayed(
-    const ImageDocumentPageNavigationSnapshot &navigation, const QUrl &displayedUrl) const
+    const ImageDocumentPageNavigationSnapshot& navigation, const QUrl& displayedUrl) const
 {
     const int pageNumber = navigation.currentPageNumber();
     if (pageNumber <= 0) {
@@ -148,7 +148,7 @@ bool ImageSpreadSecondaryPageRefresh::primarySelectionMatchesDisplayed(
 }
 
 ImageSpreadNavigationState ImageSpreadSecondaryPageRefresh::navigationState(
-    const ImageSpreadPageNavigationContext &context, bool previousPageIsWide) const
+    const ImageSpreadPageNavigationContext& context, bool previousPageIsWide) const
 {
     return ImageSpreadNavigationState { context.twoPageModeActive,
         context.navigation.currentPageNumber(), context.navigation.pageCount(),
@@ -156,7 +156,7 @@ ImageSpreadNavigationState ImageSpreadSecondaryPageRefresh::navigationState(
 }
 
 bool ImageSpreadSecondaryPageRefresh::previousPageIsWideForNavigation(
-    const ImageSpreadPageNavigationContext &context) const
+    const ImageSpreadPageNavigationContext& context) const
 {
     const int pageNumber = context.navigation.currentPageNumber();
     if (!context.secondaryPageVisible || pageNumber <= 2) {

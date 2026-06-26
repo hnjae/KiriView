@@ -12,22 +12,24 @@
 #include <vector>
 
 namespace kiriview {
-struct HeifTileGrid {
+struct HeifTileGrid
+{
     int columns = 0;
     int rows = 0;
     int tileWidth = 0;
     int tileHeight = 0;
 };
 
-struct HeifTileDecodeRegion {
+struct HeifTileDecodeRegion
+{
     int tileX = 0;
     int tileY = 0;
     QPoint targetPoint;
 };
 
-std::optional<HeifTileGrid> heifTileGridForTiling(const heif_image_tiling &tiling);
+std::optional<HeifTileGrid> heifTileGridForTiling(const heif_image_tiling& tiling);
 std::vector<HeifTileDecodeRegion> heifTileDecodeRegions(
-    const HeifTileGrid &grid, const QRect &sourceRect);
+    const HeifTileGrid& grid, const QRect& sourceRect);
 }
 
 #endif

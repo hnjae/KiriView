@@ -14,7 +14,8 @@ namespace Bridge {
         ReplacementSource,
     };
 
-    struct ImageDocumentSourceLoadPolicyInput {
+    struct ImageDocumentSourceLoadPolicyInput
+    {
         ImageDocumentSourceLoadKind loadKind = ImageDocumentSourceLoadKind::CurrentSource;
         bool preserveTwoPageSpreadTransition = false;
         bool rightToLeftReadingEnabled = false;
@@ -24,16 +25,16 @@ namespace Bridge {
 }
 
 RustImageDocumentSourceLoadPolicyInput rustImageDocumentSourceLoadPolicyInput(
-    const Bridge::ImageDocumentSourceLoadPolicyInput &input);
+    const Bridge::ImageDocumentSourceLoadPolicyInput& input);
 ImageDocumentSourceLoadPlan imageDocumentSourceLoadPlanFromBridge(
-    const RustImageDocumentSourceLoadPlan &rustPlan);
+    const RustImageDocumentSourceLoadPlan& rustPlan);
 
 RustImageOpenWorkflowEvent rustImageOpenWorkflowEvent(RustImageOpenWorkflowEventKind kind);
 RustImageOpenWorkflowEvent rustBeginSourceLoadEvent(ImageOpenBeginSourceLoadSnapshot snapshot);
 RustImageOpenWorkflowEvent rustSuccessfulImageLoadEvent(
     ImageOpenSuccessfulImageLoadSnapshot snapshot);
 RustImageOpenWorkflowEvent rustSourceLoadErrorEvent(ImageOpenLoadErrorSnapshot snapshot);
-ImageOpenTransition imageOpenTransitionFromBridge(const RustImageOpenTransition &rustTransition);
+ImageOpenTransition imageOpenTransitionFromBridge(const RustImageOpenTransition& rustTransition);
 }
 
 #endif

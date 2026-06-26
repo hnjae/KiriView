@@ -32,7 +32,7 @@ std::vector<ImageDocumentPageCandidate> imageDocumentPageCandidates(int count)
     return candidates;
 }
 
-void compareUrls(const std::vector<QUrl> &actual, const std::vector<QUrl> &expected)
+void compareUrls(const std::vector<QUrl>& actual, const std::vector<QUrl>& expected)
 {
     QCOMPARE(static_cast<int>(actual.size()), static_cast<int>(expected.size()));
     for (std::size_t index = 0; index < expected.size(); ++index) {

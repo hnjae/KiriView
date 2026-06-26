@@ -63,7 +63,7 @@ public:
         bool activeNavigationActionsAvailable, bool videoFileDeletionInProgress) const;
 
 private:
-    void setBool(bool &target, bool value);
+    void setBool(bool& target, bool value);
     void publishInputChange();
     void notifyChanged() const;
 

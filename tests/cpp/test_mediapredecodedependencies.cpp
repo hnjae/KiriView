@@ -67,25 +67,25 @@ void TestMediaPredecodeDependencies::explicitDependenciesArePreserved()
 
     kiriview::MediaPredecodeDependencyOverrides overrides;
     overrides.imageDecode.dataLoader
-        = [&dataLoadCount](QObject *, kiriview::ImageDecodeRequest,
+        = [&dataLoadCount](QObject*, kiriview::ImageDecodeRequest,
               kiriview::ImageDataCallback callback, kiriview::ErrorCallback) {
               ++dataLoadCount;
               callback(QByteArrayLiteral("custom media predecode data"));
               return kiriview::ImageIoJob();
           };
-    overrides.imageDecode.dataDecoder = [&dataDecodeCount, &decodedData](const QByteArray &data,
-                                            const kiriview::ImageDecodeRequest &) {
+    overrides.imageDecode.dataDecoder = [&dataDecodeCount, &decodedData](const QByteArray& data,
+                                            const kiriview::ImageDecodeRequest&) {
         ++dataDecodeCount;
         decodedData = data;
         return kiriview::failedDecodedImageResult(QStringLiteral("decoded by override"));
     };
     overrides.powerSaver.monitor
-        = [&powerSaverMonitorCount](QObject *, kiriview::PowerSaverChangedCallback) {
+        = [&powerSaverMonitorCount](QObject*, kiriview::PowerSaverChangedCallback) {
               ++powerSaverMonitorCount;
               return std::make_unique<FakePowerSaverMonitor>();
           };
     overrides.timerScheduler.currentMonotonicMsec = []() { return 4242; };
-    overrides.timerScheduler.singleShotTimer = [&timerFactoryCount](QObject *, int intervalMsec,
+    overrides.timerScheduler.singleShotTimer = [&timerFactoryCount](QObject*, int intervalMsec,
                                                    kiriview::RuntimeTimerCallback callback) {
         ++timerFactoryCount;
         return std::make_unique<kiriview::TestSupport::ManualRuntimeTimer>(

@@ -44,10 +44,10 @@ inline std::optional<std::size_t> adjacentNavigationIndex(std::size_t candidateC
 
 template <typename Candidate>
 std::optional<std::size_t> navigationCandidateIndex(
-    const std::vector<Candidate> &candidates, const QUrl &currentUrl)
+    const std::vector<Candidate>& candidates, const QUrl& currentUrl)
 {
     const auto currentCandidate = std::find_if(
-        candidates.cbegin(), candidates.cend(), [&currentUrl](const Candidate &candidate) {
+        candidates.cbegin(), candidates.cend(), [&currentUrl](const Candidate& candidate) {
             return sameNormalizedUrl(candidate.url, currentUrl);
         });
     if (currentCandidate == candidates.cend()) {
@@ -59,7 +59,7 @@ std::optional<std::size_t> navigationCandidateIndex(
 
 template <typename Candidate>
 std::optional<std::size_t> adjacentNavigationCandidateIndex(
-    const std::vector<Candidate> &candidates, const QUrl &currentUrl, NavigationDirection direction)
+    const std::vector<Candidate>& candidates, const QUrl& currentUrl, NavigationDirection direction)
 {
     return adjacentNavigationIndex(
         candidates.size(), navigationCandidateIndex(candidates, currentUrl), direction);
@@ -67,7 +67,7 @@ std::optional<std::size_t> adjacentNavigationCandidateIndex(
 
 template <typename Candidate>
 std::optional<Candidate> adjacentNavigationCandidate(
-    const std::vector<Candidate> &candidates, const QUrl &currentUrl, NavigationDirection direction)
+    const std::vector<Candidate>& candidates, const QUrl& currentUrl, NavigationDirection direction)
 {
     const std::optional<std::size_t> targetIndex
         = adjacentNavigationCandidateIndex(candidates, currentUrl, direction);
@@ -80,7 +80,7 @@ std::optional<Candidate> adjacentNavigationCandidate(
 
 template <typename Candidate>
 std::optional<QUrl> adjacentNavigationCandidateUrl(
-    const std::vector<Candidate> &candidates, const QUrl &currentUrl, NavigationDirection direction)
+    const std::vector<Candidate>& candidates, const QUrl& currentUrl, NavigationDirection direction)
 {
     const std::optional<std::size_t> targetIndex
         = adjacentNavigationCandidateIndex(candidates, currentUrl, direction);
@@ -92,7 +92,7 @@ std::optional<QUrl> adjacentNavigationCandidateUrl(
 }
 
 template <typename Candidate>
-void sortNavigationCandidatesByNameAndUrl(std::vector<Candidate> *candidates)
+void sortNavigationCandidatesByNameAndUrl(std::vector<Candidate>* candidates)
 {
     QCollator collator(QLocale::system());
     collator.setCaseSensitivity(Qt::CaseSensitive);
@@ -100,7 +100,7 @@ void sortNavigationCandidatesByNameAndUrl(std::vector<Candidate> *candidates)
     collator.setIgnorePunctuation(false);
 
     std::stable_sort(candidates->begin(), candidates->end(),
-        [&collator](const Candidate &left, const Candidate &right) {
+        [&collator](const Candidate& left, const Candidate& right) {
             const int nameComparison = collator.compare(left.name, right.name);
             if (nameComparison != 0) {
                 return nameComparison < 0;
@@ -110,7 +110,7 @@ void sortNavigationCandidatesByNameAndUrl(std::vector<Candidate> *candidates)
         });
 
     const auto duplicateStart = std::unique(
-        candidates->begin(), candidates->end(), [](const Candidate &left, const Candidate &right) {
+        candidates->begin(), candidates->end(), [](const Candidate& left, const Candidate& right) {
             return sameNormalizedUrl(left.url, right.url);
         });
     candidates->erase(duplicateStart, candidates->end());

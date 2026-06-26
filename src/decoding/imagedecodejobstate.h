@@ -12,26 +12,32 @@
 #include <variant>
 
 namespace kiriview {
-struct ImageDecodeJobTicket {
+struct ImageDecodeJobTicket
+{
     quint64 operationId = 0;
     ImageDecodeRequest request;
 };
 
-struct NoImageDecodeJobOperation {
+struct NoImageDecodeJobOperation
+{
 };
 
-struct StartImageDecodeOperation {
+struct StartImageDecodeOperation
+{
     ImageDecodeRequest request;
 };
 
-struct DeliverImageLoadErrorOperation {
+struct DeliverImageLoadErrorOperation
+{
     ImageDecodeRequest request;
 };
 
-struct DeliverImageDecodeResultOperation {
+struct DeliverImageDecodeResultOperation
+{
     ImageDecodeRequest request;
 };
-struct DeliverImageThumbnailPreviewOperation {
+struct DeliverImageThumbnailPreviewOperation
+{
     ImageDecodeRequest request;
 };
 
@@ -39,7 +45,8 @@ using ImageDecodeJobRuntimeOperation = std::variant<NoImageDecodeJobOperation,
     StartImageDecodeOperation, DeliverImageLoadErrorOperation, DeliverImageDecodeResultOperation,
     DeliverImageThumbnailPreviewOperation>;
 
-struct ImageDecodeJobRuntimePlan {
+struct ImageDecodeJobRuntimePlan
+{
     ImageDecodeJobRuntimeOperation operation;
 
     bool hasOperation() const
@@ -57,10 +64,10 @@ public:
     void cancel();
     bool hasActiveRequest() const;
 
-    ImageDecodeJobRuntimePlan acceptLoadedData(const ImageDecodeJobTicket &ticket);
-    ImageDecodeJobRuntimePlan acceptLoadError(const ImageDecodeJobTicket &ticket);
-    ImageDecodeJobRuntimePlan acceptThumbnailPreview(const ImageDecodeJobTicket &ticket);
-    ImageDecodeJobRuntimePlan acceptDecodeResult(const ImageDecodeJobTicket &ticket);
+    ImageDecodeJobRuntimePlan acceptLoadedData(const ImageDecodeJobTicket& ticket);
+    ImageDecodeJobRuntimePlan acceptLoadError(const ImageDecodeJobTicket& ticket);
+    ImageDecodeJobRuntimePlan acceptThumbnailPreview(const ImageDecodeJobTicket& ticket);
+    ImageDecodeJobRuntimePlan acceptDecodeResult(const ImageDecodeJobTicket& ticket);
 
 private:
     enum class Phase {
@@ -68,12 +75,12 @@ private:
         Decoding,
     };
 
-    bool accepts(const ImageDecodeJobTicket &ticket) const;
+    bool accepts(const ImageDecodeJobTicket& ticket) const;
     ImageDecodeJobRuntimePlan noOperation() const;
-    ImageDecodeJobRuntimePlan startDecodePlan(const ImageDecodeRequest &request) const;
-    ImageDecodeJobRuntimePlan thumbnailPreviewPlan(const ImageDecodeRequest &request) const;
+    ImageDecodeJobRuntimePlan startDecodePlan(const ImageDecodeRequest& request) const;
+    ImageDecodeJobRuntimePlan thumbnailPreviewPlan(const ImageDecodeRequest& request) const;
     template <typename Operation>
-    ImageDecodeJobRuntimePlan claim(const ImageDecodeJobTicket &ticket, Phase phase);
+    ImageDecodeJobRuntimePlan claim(const ImageDecodeJobTicket& ticket, Phase phase);
 
     ImageAsyncOperationState m_operation;
     std::optional<ImageDecodeRequest> m_request;

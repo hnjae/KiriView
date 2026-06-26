@@ -110,7 +110,7 @@ kiriview::ThumbnailCacheLookupStatus thumbnailCacheStatus(
 }
 
 kiriview::ThumbnailCacheLookupResult lookupResultFromRust(
-    const kiriview::RustThumbnailCacheLookupResult &rustResult)
+    const kiriview::RustThumbnailCacheLookupResult& rustResult)
 {
     kiriview::ThumbnailCacheLookupResult result;
     result.status = thumbnailCacheStatus(rustResult.status);
@@ -125,7 +125,7 @@ kiriview::ThumbnailCacheLookupResult lookupResultFromRust(
     }
 
     const QByteArray pixels = kiriview::Bridge::qtByteArray(rustResult.pixels);
-    const QImage image(reinterpret_cast<const uchar *>(pixels.constData()), rustResult.width,
+    const QImage image(reinterpret_cast<const uchar*>(pixels.constData()), rustResult.width,
         rustResult.height, rustResult.stride, QImage::Format_RGBA8888);
     if (image.isNull()) {
         result.status = kiriview::ThumbnailCacheLookupStatus::Failed;
@@ -138,7 +138,7 @@ kiriview::ThumbnailCacheLookupResult lookupResultFromRust(
 }
 
 kiriview::ThumbnailGenerationResult readyResultFromCache(
-    const kiriview::ThumbnailCacheLookupResult &lookup)
+    const kiriview::ThumbnailCacheLookupResult& lookup)
 {
     return kiriview::ThumbnailGenerationResult {
         kiriview::ThumbnailGenerationStatus::Ready,
@@ -149,7 +149,7 @@ kiriview::ThumbnailGenerationResult readyResultFromCache(
     };
 }
 
-QSize boundedSize(const QSize &size, int maximumLongEdge)
+QSize boundedSize(const QSize& size, int maximumLongEdge)
 {
     if (size.isEmpty() || maximumLongEdge <= 0) {
         return {};
@@ -177,10 +177,10 @@ QImage thumbnailFrame(QImage image, int maximumLongEdge)
 }
 
 QImage renderedThumbnailImage(
-    const kiriview::DecodedImage &decoded, int maximumLongEdge, QString *errorString)
+    const kiriview::DecodedImage& decoded, int maximumLongEdge, QString* errorString)
 {
     return std::visit(
-        [maximumLongEdge, errorString](const auto &image) -> QImage {
+        [maximumLongEdge, errorString](const auto& image) -> QImage {
             using Image = std::decay_t<decltype(image)>;
             if constexpr (std::is_same_v<Image, kiriview::StaticDecodedImage>) {
                 if (image.displayImage.refinementSource == nullptr) {
@@ -205,17 +205,17 @@ QImage renderedThumbnailImage(
 }
 
 QImage defaultThumbnailGenerationImageDecoder(
-    QByteArray bytes, int maximumLongEdge, QString *errorString)
+    QByteArray bytes, int maximumLongEdge, QString* errorString)
 {
     kiriview::DecodedImageResult decodeResult = kiriview::decodeImageData(bytes);
-    if (const kiriview::DecodedImageFailure *failure = decodeResult.failure()) {
+    if (const kiriview::DecodedImageFailure* failure = decodeResult.failure()) {
         if (errorString != nullptr) {
             *errorString = failure->errorString;
         }
         return {};
     }
 
-    const kiriview::DecodedImage *decoded = decodeResult.image();
+    const kiriview::DecodedImage* decoded = decodeResult.image();
     if (decoded == nullptr) {
         if (errorString != nullptr) {
             *errorString = QStringLiteral("image decode produced no image");
@@ -227,21 +227,21 @@ QImage defaultThumbnailGenerationImageDecoder(
 }
 
 kiriview::MediaEntrySourceImageDataResult loadOpenedCollectionThumbnailBytes(
-    const kiriview::ThumbnailGenerationRequest &request)
+    const kiriview::ThumbnailGenerationRequest& request)
 {
     return kiriview::loadMediaEntrySourceImageData(
         request.openedCollectionScope, request.sourceUrl);
 }
 
 kiriview::MediaEntrySourceThumbnailMetadataResult loadOpenedCollectionThumbnailMetadata(
-    const kiriview::ThumbnailGenerationRequest &request)
+    const kiriview::ThumbnailGenerationRequest& request)
 {
     return kiriview::loadMediaEntrySourceThumbnailMetadata(
         request.openedCollectionScope, request.sourceUrl);
 }
 
 std::optional<kiriview::ThumbnailOriginalIdentity> openedCollectionVirtualOriginalIdentity(
-    const kiriview::MediaEntrySourceThumbnailMetadata &metadata)
+    const kiriview::MediaEntrySourceThumbnailMetadata& metadata)
 {
     if (metadata.checksum.algorithm != kiriview::MediaEntryContentChecksumAlgorithm::Crc32
         || metadata.checksum.value > std::numeric_limits<std::uint32_t>::max()
@@ -262,18 +262,18 @@ std::optional<kiriview::ThumbnailOriginalIdentity> openedCollectionVirtualOrigin
 }
 
 QByteArray defaultThumbnailGenerationBytesLoader(
-    const kiriview::ThumbnailGenerationRequest &request, QString *errorString)
+    const kiriview::ThumbnailGenerationRequest& request, QString* errorString)
 {
     if (!request.openedCollectionScope.isEmpty()) {
         kiriview::MediaEntrySourceImageDataResult dataResult
             = loadOpenedCollectionThumbnailBytes(request);
-        if (const auto *error = std::get_if<kiriview::MediaEntrySourceError>(&dataResult)) {
+        if (const auto* error = std::get_if<kiriview::MediaEntrySourceError>(&dataResult)) {
             if (errorString != nullptr) {
                 *errorString = error->errorString;
             }
             return {};
         }
-        if (auto *data = std::get_if<kiriview::MediaEntrySourceImageData>(&dataResult)) {
+        if (auto* data = std::get_if<kiriview::MediaEntrySourceImageData>(&dataResult)) {
             return std::move(data->data);
         }
         if (errorString != nullptr) {
@@ -294,18 +294,18 @@ QByteArray defaultThumbnailGenerationBytesLoader(
 }
 
 std::optional<kiriview::ThumbnailOriginalIdentity> defaultOpenedCollectionOriginalIdentityLoader(
-    const kiriview::ThumbnailGenerationRequest &request, QString *errorString)
+    const kiriview::ThumbnailGenerationRequest& request, QString* errorString)
 {
     kiriview::MediaEntrySourceThumbnailMetadataResult metadataResult
         = loadOpenedCollectionThumbnailMetadata(request);
-    if (const auto *error = std::get_if<kiriview::MediaEntrySourceError>(&metadataResult)) {
+    if (const auto* error = std::get_if<kiriview::MediaEntrySourceError>(&metadataResult)) {
         if (errorString != nullptr) {
             *errorString = error->errorString;
         }
         return std::nullopt;
     }
 
-    const auto *metadata
+    const auto* metadata
         = std::get_if<kiriview::MediaEntrySourceThumbnailMetadata>(&metadataResult);
     if (metadata == nullptr) {
         if (errorString != nullptr) {
@@ -323,7 +323,7 @@ std::optional<kiriview::ThumbnailOriginalIdentity> defaultOpenedCollectionOrigin
 }
 
 std::optional<kiriview::ThumbnailCacheLookupResult> defaultThumbnailGenerationCacheLookup(
-    const kiriview::ThumbnailOriginalIdentity &identity,
+    const kiriview::ThumbnailOriginalIdentity& identity,
     kiriview::ActiveNavigationThumbnailDemandBucket requestedBucket)
 {
     kiriview::RustThumbnailCacheLookupResult rustResult;
@@ -341,11 +341,11 @@ std::optional<kiriview::ThumbnailCacheLookupResult> defaultThumbnailGenerationCa
 }
 
 kiriview::ThumbnailGenerationCacheInstallResult installThumbnail(
-    const kiriview::ThumbnailOriginalIdentity &identity,
-    kiriview::ActiveNavigationThumbnailDemandBucket requestedBucket, const QImage &rgba8)
+    const kiriview::ThumbnailOriginalIdentity& identity,
+    kiriview::ActiveNavigationThumbnailDemandBucket requestedBucket, const QImage& rgba8)
 {
     const rust::Slice<const std::uint8_t> pixels(
-        reinterpret_cast<const std::uint8_t *>(rgba8.constBits()),
+        reinterpret_cast<const std::uint8_t*>(rgba8.constBits()),
         static_cast<std::size_t>(rgba8.sizeInBytes()));
     kiriview::RustThumbnailCacheInstallResult install;
     if (identity.isNonFileUri()) {
@@ -370,9 +370,9 @@ kiriview::ThumbnailGenerationCacheInstallResult installThumbnail(
 }
 
 kiriview::ThumbnailGenerationResult finishGeneratedThumbnailImage(
-    const kiriview::ThumbnailGenerationRequest &request,
-    const kiriview::ThumbnailOriginalIdentity &originalIdentity, QImage image,
-    const kiriview::ThumbnailGenerationDependencies &dependencies)
+    const kiriview::ThumbnailGenerationRequest& request,
+    const kiriview::ThumbnailOriginalIdentity& originalIdentity, QImage image,
+    const kiriview::ThumbnailGenerationDependencies& dependencies)
 {
     QImage rgba8 = image.convertToFormat(QImage::Format_RGBA8888);
     if (rgba8.isNull()) {
@@ -434,7 +434,7 @@ kiriview::ThumbnailGenerationDependencies resolvedThumbnailGenerationDependencie
 }
 
 kiriview::ThumbnailGenerationResult generateThumbnailWithDependencies(
-    const kiriview::ThumbnailGenerationRequest &request,
+    const kiriview::ThumbnailGenerationRequest& request,
     kiriview::ThumbnailGenerationDependencies dependencies)
 {
     const int maximumLongEdge = dependencies.maximumLongEdgeForBucket(request.requestedBucket);
@@ -488,7 +488,7 @@ kiriview::ThumbnailGenerationResult generateThumbnailWithDependencies(
     return finishGeneratedThumbnailImage(request, originalIdentity, std::move(image), dependencies);
 }
 
-kiriview::ImageIoJob startVideoThumbnailGenerationJob(QObject *receiver,
+kiriview::ImageIoJob startVideoThumbnailGenerationJob(QObject* receiver,
     kiriview::ThumbnailGenerationRequest request, kiriview::ThumbnailGenerationCallback callback,
     kiriview::ThumbnailGenerationDependencies dependencies)
 {
@@ -560,7 +560,7 @@ ThumbnailGenerationDependencies defaultThumbnailGenerationDependencies()
 }
 
 ThumbnailGenerationResult generateThumbnail(
-    const ThumbnailGenerationRequest &request, ThumbnailGenerationDependencies dependencies)
+    const ThumbnailGenerationRequest& request, ThumbnailGenerationDependencies dependencies)
 {
     return generateThumbnailWithDependencies(
         request, resolvedThumbnailGenerationDependencies(std::move(dependencies)));
@@ -570,7 +570,7 @@ ThumbnailGenerationProvider defaultThumbnailGenerationProvider(
     ImageWorkerScheduler workerScheduler, ThumbnailGenerationDependencies dependencies)
 {
     return [workerScheduler = std::move(workerScheduler), dependencies = std::move(dependencies)](
-               QObject *receiver, ThumbnailGenerationRequest request,
+               QObject* receiver, ThumbnailGenerationRequest request,
                ThumbnailGenerationCallback callback) {
         ThumbnailGenerationDependencies resolvedDependencies
             = resolvedThumbnailGenerationDependencies(dependencies);

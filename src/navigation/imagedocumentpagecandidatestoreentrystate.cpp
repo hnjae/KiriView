@@ -9,8 +9,8 @@
 #include <utility>
 
 namespace {
-bool sameImageDocumentPageCandidates(const std::vector<kiriview::ImageDocumentPageCandidate> &left,
-    const std::vector<kiriview::ImageDocumentPageCandidate> &right)
+bool sameImageDocumentPageCandidates(const std::vector<kiriview::ImageDocumentPageCandidate>& left,
+    const std::vector<kiriview::ImageDocumentPageCandidate>& right)
 {
     if (left.size() != right.size()) {
         return false;
@@ -26,16 +26,16 @@ bool sameImageDocumentPageCandidates(const std::vector<kiriview::ImageDocumentPa
     return true;
 }
 
-template <typename Item> void pruneInactiveItems(std::vector<Item> *items)
+template <typename Item> void pruneInactiveItems(std::vector<Item>* items)
 {
     const auto inactiveStart = std::remove_if(
-        items->begin(), items->end(), [](const Item &item) { return item.token.isNull(); });
+        items->begin(), items->end(), [](const Item& item) { return item.token.isNull(); });
     items->erase(inactiveStart, items->end());
 }
 }
 
 namespace kiriview {
-const std::vector<ImageDocumentPageCandidate> &
+const std::vector<ImageDocumentPageCandidate>&
 ImageDocumentPageCandidateStoreEntryState::candidates() const
 {
     return m_candidates;
@@ -45,7 +45,7 @@ bool ImageDocumentPageCandidateStoreEntryState::listed() const { return m_listed
 
 bool ImageDocumentPageCandidateStoreEntryState::failed() const { return m_failed; }
 
-const QString &ImageDocumentPageCandidateStoreEntryState::errorString() const
+const QString& ImageDocumentPageCandidateStoreEntryState::errorString() const
 {
     return m_errorString;
 }
@@ -61,7 +61,7 @@ void ImageDocumentPageCandidateStoreEntryState::addPendingLoad(ImageIoJobComplet
 }
 
 void ImageDocumentPageCandidateStoreEntryState::addSubscriber(
-    QObject *token, ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
+    QObject* token, ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback)
 {
     m_subscribers.push_back(ImageDocumentPageCandidateStoreEntrySubscriber {
         token,
@@ -70,19 +70,19 @@ void ImageDocumentPageCandidateStoreEntryState::addSubscriber(
     });
 }
 
-void ImageDocumentPageCandidateStoreEntryState::removePendingLoad(QObject *token)
+void ImageDocumentPageCandidateStoreEntryState::removePendingLoad(QObject* token)
 {
     const auto removed = std::remove_if(m_pendingLoads.begin(), m_pendingLoads.end(),
-        [token](const ImageDocumentPageCandidateStoreEntryPendingLoad &load) {
+        [token](const ImageDocumentPageCandidateStoreEntryPendingLoad& load) {
             return load.completion.object() == token;
         });
     m_pendingLoads.erase(removed, m_pendingLoads.end());
 }
 
-void ImageDocumentPageCandidateStoreEntryState::removeSubscriber(QObject *token)
+void ImageDocumentPageCandidateStoreEntryState::removeSubscriber(QObject* token)
 {
     const auto removed = std::remove_if(m_subscribers.begin(), m_subscribers.end(),
-        [token](const ImageDocumentPageCandidateStoreEntrySubscriber &subscriber) {
+        [token](const ImageDocumentPageCandidateStoreEntrySubscriber& subscriber) {
             return subscriber.token.data() == token;
         });
     m_subscribers.erase(removed, m_subscribers.end());

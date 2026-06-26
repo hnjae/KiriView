@@ -24,12 +24,12 @@ QStringList supportedOpenExtensions()
     return Bridge::qtStringList(rustSupportedOpenExtensions());
 }
 
-bool isSupportedImageFileName(const QString &name)
+bool isSupportedImageFileName(const QString& name)
 {
     return Bridge::rustResultForQString(name, rustIsSupportedImageFileName);
 }
 
-bool isSupportedRawImageFileName(const QString &name)
+bool isSupportedRawImageFileName(const QString& name)
 {
     return Bridge::rustResultForQString(name, rustIsSupportedRawImageFileName);
 }

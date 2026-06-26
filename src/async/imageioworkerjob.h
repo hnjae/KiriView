@@ -12,7 +12,7 @@
 
 namespace kiriview {
 namespace Detail {
-    inline void cancelImageIoWorkerToken(QObject *object)
+    inline void cancelImageIoWorkerToken(QObject* object)
     {
         if (object != nullptr) {
             object->deleteLater();
@@ -21,15 +21,15 @@ namespace Detail {
 }
 
 template <typename Work, typename Finish>
-ImageIoJob startImageIoWorkerJob(QObject *context, QObject *receiver,
-    const ImageWorkerScheduler &workerScheduler, Work work, Finish finish)
+ImageIoJob startImageIoWorkerJob(QObject* context, QObject* receiver,
+    const ImageWorkerScheduler& workerScheduler, Work work, Finish finish)
 {
     if (context == nullptr || receiver == nullptr) {
         std::forward<Finish>(finish)(std::forward<Work>(work)());
         return ImageIoJob();
     }
 
-    auto *token = new QObject(receiver);
+    auto* token = new QObject(receiver);
     ImageIoJob ioJob(token, Detail::cancelImageIoWorkerToken);
     const ImageIoJobCompletion completion = ioJob.completion();
 
@@ -41,7 +41,7 @@ ImageIoJob startImageIoWorkerJob(QObject *context, QObject *receiver,
 }
 
 template <typename Work, typename Finish>
-ImageIoJob startImageIoWorkerJob(QObject *context, QObject *receiver, Work work, Finish finish)
+ImageIoJob startImageIoWorkerJob(QObject* context, QObject* receiver, Work work, Finish finish)
 {
     return startImageIoWorkerJob(context, receiver, ImageWorkerScheduler(),
         std::forward<Work>(work), std::forward<Finish>(finish));
@@ -49,14 +49,14 @@ ImageIoJob startImageIoWorkerJob(QObject *context, QObject *receiver, Work work,
 
 template <typename Work, typename Finish>
 ImageIoJob startImageIoWorkerJob(
-    QObject *receiver, const ImageWorkerScheduler &workerScheduler, Work work, Finish finish)
+    QObject* receiver, const ImageWorkerScheduler& workerScheduler, Work work, Finish finish)
 {
     return startImageIoWorkerJob(receiver, receiver, workerScheduler, std::forward<Work>(work),
         std::forward<Finish>(finish));
 }
 
 template <typename Work, typename Finish>
-ImageIoJob startImageIoWorkerJob(QObject *receiver, Work work, Finish finish)
+ImageIoJob startImageIoWorkerJob(QObject* receiver, Work work, Finish finish)
 {
     return startImageIoWorkerJob(
         receiver, receiver, std::forward<Work>(work), std::forward<Finish>(finish));

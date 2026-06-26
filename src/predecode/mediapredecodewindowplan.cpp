@@ -5,7 +5,7 @@
 
 namespace kiriview {
 PredecodeWindowPlan mediaPredecodeWindowPlan(
-    const MediaPredecodeEligibilitySnapshot &snapshot, PredecodePolicyInput policyInput)
+    const MediaPredecodeEligibilitySnapshot& snapshot, PredecodePolicyInput policyInput)
 {
     const PredecodeSchedulePlan schedule = predecodeSchedulePlan(
         snapshot.directMediaNavigationCandidateCount, snapshot.currentMediaIndex, policyInput);

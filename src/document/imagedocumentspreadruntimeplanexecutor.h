@@ -10,13 +10,14 @@
 #include <functional>
 
 namespace kiriview {
-struct ImageDocumentSpreadRuntimeOperations {
+struct ImageDocumentSpreadRuntimeOperations
+{
     std::function<void()> finishSpreadTransition;
     std::function<void()> resetRightToLeftReading;
     std::function<void()> clearSecondaryPage;
     std::function<void()> notifyRightToLeftReadingChanged;
     std::function<void()> resetZoom;
-    std::function<void(const QUrl &)> prepareFailedContainer;
+    std::function<void(const QUrl&)> prepareFailedContainer;
 };
 
 class ImageDocumentSpreadRuntimePlanExecutor final
@@ -25,7 +26,7 @@ public:
     explicit ImageDocumentSpreadRuntimePlanExecutor(
         ImageDocumentSpreadRuntimeOperations operations);
 
-    bool dispatchOperation(const ImageDocumentRuntimeOperation &operation);
+    bool dispatchOperation(const ImageDocumentRuntimeOperation& operation);
 
 private:
     ImageDocumentSpreadRuntimeOperations m_operations;

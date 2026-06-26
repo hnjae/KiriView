@@ -8,9 +8,9 @@
 
 namespace kiriview {
 namespace {
-    void appendDisplayDecodeFailure(ImageTileSourceDisplayDecodeDiagnostics *diagnostics,
-        ImageTileSourceDisplayDecodeOperation operation, const QString &userMessage,
-        const QString &diagnosticDetail)
+    void appendDisplayDecodeFailure(ImageTileSourceDisplayDecodeDiagnostics* diagnostics,
+        ImageTileSourceDisplayDecodeOperation operation, const QString& userMessage,
+        const QString& diagnosticDetail)
     {
         if (diagnostics == nullptr) {
             return;
@@ -45,7 +45,7 @@ QString ImageTileSourceDisplayDecodeDiagnostics::diagnosticDetail() const
 }
 
 ImageTileSourceFirstDisplayDecodeResult ImageTileSource::decodeFirstDisplayImageWithDiagnostics(
-    const ImageFirstDisplayDecodeContext &context) const
+    const ImageFirstDisplayDecodeContext& context) const
 {
     QString errorString;
     ImageTileSourceFirstDisplayDecodeResult result;
@@ -58,7 +58,7 @@ ImageTileSourceFirstDisplayDecodeResult ImageTileSource::decodeFirstDisplayImage
 }
 
 FirstDisplayImageDecodeResult ImageTileSource::decodeFirstDisplayImage(
-    const ImageFirstDisplayDecodeContext &context, QString *errorString) const
+    const ImageFirstDisplayDecodeContext& context, QString* errorString) const
 {
     Q_UNUSED(context);
     Q_UNUSED(errorString);
@@ -68,7 +68,7 @@ FirstDisplayImageDecodeResult ImageTileSource::decodeFirstDisplayImage(
 bool ImageTileSource::supportsRasterDisplayRefinement() const { return false; }
 
 ImageTileSourceDisplayDecodeResult ImageTileSource::decodeRasterDisplayImageWithDiagnostics(
-    const QSize &rasterSize) const
+    const QSize& rasterSize) const
 {
     if (rasterSize.isEmpty()) {
         return {};
@@ -85,7 +85,7 @@ ImageTileSourceDisplayDecodeResult ImageTileSource::decodeRasterDisplayImageWith
 }
 
 QImage ImageTileSource::decodeRasterDisplayImage(
-    const QSize &rasterSize, QString *errorString) const
+    const QSize& rasterSize, QString* errorString) const
 {
     Q_UNUSED(rasterSize);
     Q_UNUSED(errorString);

@@ -28,15 +28,15 @@ Actions::VideoShortcutAvailabilityInput videoShortcutInput(bool helpShortcutsEna
 }
 
 bool sharedImagePannabilityActionGate(
-    const kiriview::DocumentSessionActionAvailabilityFacts &facts, bool viewportLocalPannable)
+    const kiriview::DocumentSessionActionAvailabilityFacts& facts, bool viewportLocalPannable)
 {
     return facts.imageReady && viewportLocalPannable;
 }
 
 ImageActionAvailabilityInput imageActionAvailabilityInput(
-    const Actions::ApplicationActionStateSnapshot &snapshot)
+    const Actions::ApplicationActionStateSnapshot& snapshot)
 {
-    const kiriview::DocumentSessionActionAvailabilityFacts &facts
+    const kiriview::DocumentSessionActionAvailabilityFacts& facts
         = snapshot.sessionActionAvailability;
     return ImageActionAvailabilityInput {
         facts.imageReady,
@@ -53,10 +53,10 @@ ImageActionAvailabilityInput imageActionAvailabilityInput(
 }
 
 Actions::ApplicationActionStateInput actionStateInput(
-    const Actions::ApplicationActionStateSnapshot &snapshot,
-    const ImageActionAvailabilityProjection &projection)
+    const Actions::ApplicationActionStateSnapshot& snapshot,
+    const ImageActionAvailabilityProjection& projection)
 {
-    const kiriview::DocumentSessionActionAvailabilityFacts &facts
+    const kiriview::DocumentSessionActionAvailabilityFacts& facts
         = snapshot.sessionActionAvailability;
     const bool activeNavigationActionsAvailable
         = snapshot.activeNavigationDispatchAvailable && projection.helpShortcutsEnabled;
@@ -109,8 +109,8 @@ Actions::ApplicationActionStateInput actionStateInput(
 }
 
 Actions::ApplicationCommandRouterInput routerInputForSnapshot(
-    const Actions::ApplicationActionStateSnapshot &snapshot,
-    const ImageActionAvailabilityProjection &projection)
+    const Actions::ApplicationActionStateSnapshot& snapshot,
+    const ImageActionAvailabilityProjection& projection)
 {
     Actions::ApplicationCommandRouterInput input;
     input.imagePannable = snapshot.imagePannable;
@@ -124,7 +124,7 @@ Actions::ApplicationCommandRouterInput routerInputForSnapshot(
 }
 
 namespace kiriview::ApplicationActions {
-ApplicationActionRuntime::ApplicationActionRuntime(ApplicationActionHost &host, Callbacks callbacks)
+ApplicationActionRuntime::ApplicationActionRuntime(ApplicationActionHost& host, Callbacks callbacks)
     : m_host(host)
     , m_actionRegistry(host)
     , m_menuPresentationRuntime(host, std::move(callbacks.menuPresentationChanged))
@@ -160,22 +160,22 @@ int ApplicationActionRuntime::shortcutRevision() const
     return m_shortcutRuntime->shortcutRevision();
 }
 
-QAbstractListModel *ApplicationActionRuntime::shortcutHelpModel() const
+QAbstractListModel* ApplicationActionRuntime::shortcutHelpModel() const
 {
     return m_shortcutRuntime->shortcutHelpModel();
 }
 
-QAbstractListModel *ApplicationActionRuntime::shortcutRouteModel() const
+QAbstractListModel* ApplicationActionRuntime::shortcutRouteModel() const
 {
     return m_shortcutRuntime->shortcutRouteModel();
 }
 
-QAction *ApplicationActionRuntime::action(const QString &actionName)
+QAction* ApplicationActionRuntime::action(const QString& actionName)
 {
     return m_actionRegistry.action(actionName);
 }
 
-QAction *ApplicationActionRuntime::actionForId(ActionId actionId)
+QAction* ApplicationActionRuntime::actionForId(ActionId actionId)
 {
     return m_actionRegistry.actionForId(actionId);
 }
@@ -186,7 +186,7 @@ QString ApplicationActionRuntime::actionName(ActionId actionId) const
 }
 
 ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjection(
-    const QString &actionName) const
+    const QString& actionName) const
 {
     return m_shortcutRuntime->shortcutProjection(actionName);
 }
@@ -197,7 +197,7 @@ ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForId(
     return m_shortcutRuntime->shortcutProjectionForId(actionId);
 }
 
-QList<QKeySequence> ApplicationActionRuntime::programWideShortcuts(const QString &actionName) const
+QList<QKeySequence> ApplicationActionRuntime::programWideShortcuts(const QString& actionName) const
 {
     return m_shortcutRuntime->programWideShortcuts(actionName);
 }
@@ -207,7 +207,7 @@ QList<QKeySequence> ApplicationActionRuntime::programWideShortcutsForId(ActionId
     return m_shortcutRuntime->programWideShortcutsForId(actionId);
 }
 
-QList<QKeySequence> ApplicationActionRuntime::viewerLocalShortcuts(const QString &actionName) const
+QList<QKeySequence> ApplicationActionRuntime::viewerLocalShortcuts(const QString& actionName) const
 {
     return m_shortcutRuntime->viewerLocalShortcuts(actionName);
 }
@@ -218,13 +218,13 @@ QList<QKeySequence> ApplicationActionRuntime::viewerLocalShortcutsForId(ActionId
 }
 
 bool ApplicationActionRuntime::setViewerLocalShortcuts(
-    const QString &actionName, const QList<QKeySequence> &shortcuts)
+    const QString& actionName, const QList<QKeySequence>& shortcuts)
 {
     return m_shortcutRuntime->setViewerLocalShortcuts(actionName, shortcuts);
 }
 
 bool ApplicationActionRuntime::setViewerLocalShortcutsForId(
-    ActionId actionId, const QList<QKeySequence> &shortcuts)
+    ActionId actionId, const QList<QKeySequence>& shortcuts)
 {
     return m_shortcutRuntime->setViewerLocalShortcutsForId(actionId, shortcuts);
 }
@@ -272,7 +272,7 @@ bool ApplicationActionRuntime::mediaHorizontalArrowShortcutsEnabled(bool videoMo
 }
 
 void ApplicationActionRuntime::setActionStateSnapshot(
-    const ApplicationActionStateSnapshot &snapshot)
+    const ApplicationActionStateSnapshot& snapshot)
 {
     m_actionStateSnapshot = snapshot;
     m_imageActionProjection
@@ -280,7 +280,7 @@ void ApplicationActionRuntime::setActionStateSnapshot(
     setActionStateInput(actionStateInput(snapshot, m_imageActionProjection));
 }
 
-void ApplicationActionRuntime::setActionStateInput(const ApplicationActionStateInput &input)
+void ApplicationActionRuntime::setActionStateInput(const ApplicationActionStateInput& input)
 {
     m_actionStateInput = input;
     applyActionState();
@@ -291,7 +291,7 @@ void ApplicationActionRuntime::setActionStateInput(const ApplicationActionStateI
     }
 }
 
-void ApplicationActionRuntime::setCommandPortSource(ApplicationCommandPortSource *source)
+void ApplicationActionRuntime::setCommandPortSource(ApplicationCommandPortSource* source)
 {
     m_commandPortSource = source;
 }
@@ -345,7 +345,7 @@ bool ApplicationActionRuntime::executeVideoSeekShortcut(qint64 deltaMilliseconds
         commandRouterInput(), commandRouterPorts(), deltaMilliseconds);
 }
 
-void ApplicationActionRuntime::setShortcutHost(QObject *host)
+void ApplicationActionRuntime::setShortcutHost(QObject* host)
 {
     m_shortcutRuntime->setShortcutHost(host);
 }
@@ -354,15 +354,15 @@ void ApplicationActionRuntime::setupActions()
 {
     m_host.mainActionCollection()->setComponentDisplayName(QStringLiteral("KiriView"));
 
-    const auto addAction = [this](const Actions::ActionDefinition &definition) {
+    const auto addAction = [this](const Actions::ActionDefinition& definition) {
         const QString name = QString::fromLatin1(definition.name);
         const QList<QKeySequence> shortcuts
             = Actions::defaultShortcuts(definition.defaultProgramWideShortcuts);
-        QAction *registeredAction = nullptr;
+        QAction* registeredAction = nullptr;
 
         switch (definition.kind) {
         case Actions::RegistrationKind::Existing:
-            if (QAction *action = m_actionRegistry.collectionAction(name)) {
+            if (QAction* action = m_actionRegistry.collectionAction(name)) {
                 registeredAction = finishRegisteredAction(action, action->text(), shortcuts);
             }
             break;
@@ -398,7 +398,7 @@ void ApplicationActionRuntime::setupActions()
         }
     };
 
-    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
+    for (const Actions::ActionDefinition& definition : Actions::definitions()) {
         addAction(definition);
     }
 
@@ -409,10 +409,10 @@ void ApplicationActionRuntime::setupActions()
     m_shortcutRuntime->setActionStateInput(m_actionStateInput);
 }
 
-QAction *ApplicationActionRuntime::addRegisteredAction(const QString &name, const QString &text,
-    const QString &iconName, const QList<QKeySequence> &defaultShortcuts)
+QAction* ApplicationActionRuntime::addRegisteredAction(const QString& name, const QString& text,
+    const QString& iconName, const QList<QKeySequence>& defaultShortcuts)
 {
-    auto *action = new QAction(m_host.actionContext());
+    auto* action = new QAction(m_host.actionContext());
     action->setObjectName(name);
     action->setText(text);
     if (!iconName.isEmpty()) {
@@ -426,16 +426,16 @@ QAction *ApplicationActionRuntime::addRegisteredAction(const QString &name, cons
     return action;
 }
 
-QAction *ApplicationActionRuntime::addStandardAction(KStandardActions::StandardAction actionType,
-    const QString &name, const QString &text, const QList<QKeySequence> &defaultShortcuts)
+QAction* ApplicationActionRuntime::addStandardAction(KStandardActions::StandardAction actionType,
+    const QString& name, const QString& text, const QList<QKeySequence>& defaultShortcuts)
 {
-    QAction *action = m_host.mainActionCollection()->addAction(
+    QAction* action = m_host.mainActionCollection()->addAction(
         actionType, name, m_host.actionContext(), [](bool) { });
     return finishRegisteredAction(action, text, defaultShortcuts);
 }
 
-QAction *ApplicationActionRuntime::finishRegisteredAction(
-    QAction *action, const QString &text, const QList<QKeySequence> &defaultShortcuts)
+QAction* ApplicationActionRuntime::finishRegisteredAction(
+    QAction* action, const QString& text, const QList<QKeySequence>& defaultShortcuts)
 {
     action->setText(text);
     KirigamiActionCollection::setDefaultShortcuts(action, defaultShortcuts);
@@ -444,7 +444,7 @@ QAction *ApplicationActionRuntime::finishRegisteredAction(
     return action;
 }
 
-void ApplicationActionRuntime::handleActionChanged(QAction *changedAction)
+void ApplicationActionRuntime::handleActionChanged(QAction* changedAction)
 {
     if (m_applyingActionState) {
         return;
@@ -452,7 +452,7 @@ void ApplicationActionRuntime::handleActionChanged(QAction *changedAction)
     m_shortcutRuntime->handleActionChanged(changedAction);
 }
 
-void ApplicationActionRuntime::handleActionTriggered(ActionId actionId, QAction *triggeredAction)
+void ApplicationActionRuntime::handleActionTriggered(ActionId actionId, QAction* triggeredAction)
 {
     if (triggeredAction == nullptr || !triggeredAction->isEnabled()) {
         return;
@@ -463,9 +463,9 @@ void ApplicationActionRuntime::handleActionTriggered(ActionId actionId, QAction 
 void ApplicationActionRuntime::applyActionState()
 {
     m_applyingActionState = true;
-    for (const RegisteredApplicationAction &registeredAction :
+    for (const RegisteredApplicationAction& registeredAction :
         m_actionRegistry.registeredActions()) {
-        QAction *action = registeredAction.action;
+        QAction* action = registeredAction.action;
         const ApplicationActionState state
             = applicationActionState(registeredAction.actionId, m_actionStateInput);
         action->setEnabled(state.actionEnabled);

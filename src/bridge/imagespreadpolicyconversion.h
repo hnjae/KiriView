@@ -13,21 +13,21 @@
 
 namespace kiriview::Bridge {
 RustImageSpreadReadingAvailability rustImageSpreadReadingAvailability(
-    const ImageSpreadReadingAvailability &availability);
+    const ImageSpreadReadingAvailability& availability);
 ImageSpreadTwoPageModeChange imageSpreadTwoPageModeChangeFromRust(
-    const RustImageSpreadTwoPageModeChange &change);
+    const RustImageSpreadTwoPageModeChange& change);
 RustImageSpreadSecondaryPageRefreshState rustImageSpreadSecondaryPageRefreshState(
-    const ImageSpreadSecondaryPageRefreshState &state);
+    const ImageSpreadSecondaryPageRefreshState& state);
 ImageSpreadSecondaryPageDecision imageSpreadSecondaryPageDecisionFromRust(
     RustImageSpreadSecondaryPageDecision decision);
 ImageSpreadSecondaryPageRefreshPlan imageSpreadSecondaryPageRefreshPlanFromRust(
-    const RustImageSpreadSecondaryPageRefreshPlan &plan);
+    const RustImageSpreadSecondaryPageRefreshPlan& plan);
 RustImageSpreadNavigationDirection rustImageSpreadNavigationDirection(
     NavigationDirection direction);
 RustImageSpreadNavigationState rustImageSpreadNavigationState(
-    const ImageSpreadNavigationState &state);
+    const ImageSpreadNavigationState& state);
 ImageSpreadPageNavigationTarget imageSpreadPageNavigationTargetFromRust(
-    const RustImageSpreadPageNavigationTarget &target);
+    const RustImageSpreadPageNavigationTarget& target);
 }
 
 #endif

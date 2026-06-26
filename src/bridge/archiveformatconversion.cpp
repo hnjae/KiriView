@@ -39,7 +39,7 @@ ArchiveStorageBackend archiveStorageBackendFromBridge(RustArchiveStorageBackend 
     return ArchiveStorageBackend::None;
 }
 
-std::optional<ArchiveOpenMatch> archiveOpenMatchFromBridge(const RustArchiveOpenMatch &match)
+std::optional<ArchiveOpenMatch> archiveOpenMatchFromBridge(const RustArchiveOpenMatch& match)
 {
     if (!match.found) {
         return std::nullopt;

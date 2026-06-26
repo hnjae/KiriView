@@ -7,7 +7,7 @@
 
 namespace kiriview {
 DocumentSessionPublicImageLeafSnapshot buildDocumentSessionPublicImageLeafSnapshot(
-    const DocumentSessionImageDocumentSnapshot &leafSnapshot)
+    const DocumentSessionImageDocumentSnapshot& leafSnapshot)
 {
     DocumentSessionPublicImageLeafSnapshot snapshot;
     const QUrl sourceUrl = leafSnapshot.sourceUrl;
@@ -45,7 +45,7 @@ DocumentSessionPublicImageLeafSnapshot buildDocumentSessionPublicImageLeafSnapsh
 }
 
 DocumentSessionPublicVideoLeafSnapshot buildDocumentSessionPublicVideoLeafSnapshot(
-    const DocumentSessionVideoDocumentSnapshot &leafSnapshot)
+    const DocumentSessionVideoDocumentSnapshot& leafSnapshot)
 {
     DocumentSessionPublicVideoLeafSnapshot snapshot;
     snapshot.sourceUrl = leafSnapshot.sourceUrl;

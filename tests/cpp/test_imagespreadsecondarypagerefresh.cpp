@@ -15,7 +15,7 @@ namespace {
 using kiriview::TestSupport::localUrl;
 
 kiriview::ImageDocumentPageNavigationSnapshot navigationSnapshot(
-    const std::vector<QUrl> &urls, int currentPageNumber)
+    const std::vector<QUrl>& urls, int currentPageNumber)
 {
     return kiriview::ImageDocumentPageNavigationSnapshot {
         kiriview::PageNavigationState {
@@ -26,7 +26,7 @@ kiriview::ImageDocumentPageNavigationSnapshot navigationSnapshot(
 }
 
 kiriview::ImageSpreadSecondaryPageRefreshRequest refreshRequest(
-    const std::vector<QUrl> &urls, int currentPageNumber)
+    const std::vector<QUrl>& urls, int currentPageNumber)
 {
     return kiriview::ImageSpreadSecondaryPageRefreshRequest {
         true,

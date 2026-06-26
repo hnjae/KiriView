@@ -7,28 +7,28 @@
 #include "kiriview/src/policy/imagespreadnavigation.cxx.h"
 
 namespace kiriview {
-int imageSpreadNavigationCurrentLastPageNumber(const ImageSpreadNavigationState &state)
+int imageSpreadNavigationCurrentLastPageNumber(const ImageSpreadNavigationState& state)
 {
     return rustImageSpreadNavigationCurrentLastPageNumber(
         Bridge::rustImageSpreadNavigationState(state));
 }
 
 ImageSpreadPageNavigationTarget imageSpreadPageNavigationTarget(
-    NavigationDirection direction, const ImageSpreadNavigationState &state)
+    NavigationDirection direction, const ImageSpreadNavigationState& state)
 {
     return Bridge::imageSpreadPageNavigationTargetFromRust(
         rustImageSpreadPageNavigationTarget(Bridge::rustImageSpreadNavigationDirection(direction),
             Bridge::rustImageSpreadNavigationState(state)));
 }
 
-int imageSpreadRelativePageNavigationTarget(const ImageSpreadNavigationState &state, int offset)
+int imageSpreadRelativePageNavigationTarget(const ImageSpreadNavigationState& state, int offset)
 {
     return rustImageSpreadRelativePageNavigationTarget(
         Bridge::rustImageSpreadNavigationState(state), offset);
 }
 
 bool imageSpreadShouldBeginNavigationTransition(
-    const ImageSpreadNavigationState &state, int targetPageNumber)
+    const ImageSpreadNavigationState& state, int targetPageNumber)
 {
     return rustImageSpreadShouldBeginNavigationTransition(
         Bridge::rustImageSpreadNavigationState(state), targetPageNumber);

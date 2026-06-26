@@ -32,7 +32,7 @@ kiriview::XdgThumbnailPreviewRequest previewRequest(
     };
 }
 
-QImage previewImage(const QSize &size)
+QImage previewImage(const QSize& size)
 {
     QImage image(size, QImage::Format_RGBA8888);
     image.fill(QColor(Qt::red));

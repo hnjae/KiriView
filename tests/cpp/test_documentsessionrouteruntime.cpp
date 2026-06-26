@@ -23,7 +23,7 @@ private Q_SLOTS:
 };
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 }
 
 void TestDocumentSessionRouteRuntime::executionRunsMutationPublicationFollowUpAndCompletionInOrder()
@@ -38,15 +38,15 @@ void TestDocumentSessionRouteRuntime::executionRunsMutationPublicationFollowUpAn
         events.push_back(QStringLiteral("clear-cursor"));
         return true;
     };
-    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
+    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()>& mutation) {
         events.push_back(QStringLiteral("suppress-begin"));
         mutation();
         events.push_back(QStringLiteral("suppress-end"));
     };
-    ports.documents.enterImageDocument = [&events](const QUrl &url) {
+    ports.documents.enterImageDocument = [&events](const QUrl& url) {
         events.push_back(QStringLiteral("enter-image:%1").arg(url.toString()));
     };
-    ports.sourceIdentity.useOriginalSourceIdentity = [&events](const QUrl &url) {
+    ports.sourceIdentity.useOriginalSourceIdentity = [&events](const QUrl& url) {
         events.push_back(QStringLiteral("identity:%1").arg(url.toString()));
     };
     ports.followUp.recomputePublicProjection
@@ -117,18 +117,18 @@ void TestDocumentSessionRouteRuntime::routeSourceUrlPlansAndExecutesFromCurrentK
         events.push_back(QStringLiteral("clear-cursor"));
         return true;
     };
-    ports.directMedia.requestDirectImageCursor = [&events](const QUrl &url) {
+    ports.directMedia.requestDirectImageCursor = [&events](const QUrl& url) {
         events.push_back(QStringLiteral("request-image-cursor:%1").arg(url.toString()));
         return true;
     };
-    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
+    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()>& mutation) {
         events.push_back(QStringLiteral("suppress-begin"));
         mutation();
         events.push_back(QStringLiteral("suppress-end"));
     };
     ports.documents.leaveVideoMode
         = [&events]() { events.push_back(QStringLiteral("leave-video")); };
-    ports.documents.enterImageDocument = [&events](const QUrl &url) {
+    ports.documents.enterImageDocument = [&events](const QUrl& url) {
         events.push_back(QStringLiteral("enter-image:%1").arg(url.toString()));
     };
     ports.directMedia.syncDirectImageCursorFromDocument = [&events]() {
@@ -178,21 +178,21 @@ void TestDocumentSessionRouteRuntime::routeMediaUrlPlansAndExecutesFromCurrentKi
     kiriview::DocumentSessionRouteRuntimePorts ports;
     ports.session.cancelMediaOpenWith
         = [&events]() { events.push_back(QStringLiteral("cancel-open-with")); };
-    ports.directMedia.setDirectVideoCursor = [&events](const QUrl &url) {
+    ports.directMedia.setDirectVideoCursor = [&events](const QUrl& url) {
         events.push_back(QStringLiteral("video-cursor:%1").arg(url.toString()));
         return true;
     };
-    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
+    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()>& mutation) {
         events.push_back(QStringLiteral("suppress-begin"));
         mutation();
         events.push_back(QStringLiteral("suppress-end"));
     };
-    ports.documents.enterVideoDocument = [&events](const QUrl &url) {
+    ports.documents.enterVideoDocument = [&events](const QUrl& url) {
         events.push_back(QStringLiteral("enter-video:%1").arg(url.toString()));
     };
     ports.documents.clearImageDocument
         = [&events]() { events.push_back(QStringLiteral("clear-image")); };
-    ports.sourceIdentity.useOriginalSourceIdentity = [&events](const QUrl &url) {
+    ports.sourceIdentity.useOriginalSourceIdentity = [&events](const QUrl& url) {
         events.push_back(QStringLiteral("identity:%1").arg(url.toString()));
     };
     ports.followUp.recomputePublicProjection
@@ -236,15 +236,15 @@ void TestDocumentSessionRouteRuntime::executionPublishesBeforeTypedFollowUps()
         events.push_back(QStringLiteral("clear-cursor"));
         return true;
     };
-    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()> &mutation) {
+    ports.session.executeWithRoutingSuppressed = [&events](const std::function<void()>& mutation) {
         events.push_back(QStringLiteral("suppress-begin"));
         mutation();
         events.push_back(QStringLiteral("suppress-end"));
     };
-    ports.documents.enterImageDocument = [&events](const QUrl &url) {
+    ports.documents.enterImageDocument = [&events](const QUrl& url) {
         events.push_back(QStringLiteral("enter-image:%1").arg(url.toString()));
     };
-    ports.sourceIdentity.useOriginalSourceIdentity = [&events](const QUrl &url) {
+    ports.sourceIdentity.useOriginalSourceIdentity = [&events](const QUrl& url) {
         events.push_back(QStringLiteral("identity:%1").arg(url.toString()));
     };
     ports.followUp.recomputePublicProjection

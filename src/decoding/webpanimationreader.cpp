@@ -20,8 +20,9 @@
 #include <utility>
 
 namespace {
-struct WebPAnimDecoderDeleter {
-    void operator()(WebPAnimDecoder *decoder) const
+struct WebPAnimDecoderDeleter
+{
+    void operator()(WebPAnimDecoder* decoder) const
     {
         if (decoder != nullptr) {
             WebPAnimDecoderDelete(decoder);
@@ -53,15 +54,15 @@ kiriview::WebPAnimationOpenResult errorOpenResult(QString errorString)
     return result;
 }
 
-WebPData webpDataFor(const QByteArray &data)
+WebPData webpDataFor(const QByteArray& data)
 {
     return WebPData {
-        reinterpret_cast<const std::uint8_t *>(data.constData()),
+        reinterpret_cast<const std::uint8_t*>(data.constData()),
         static_cast<std::size_t>(data.size()),
     };
 }
 
-std::optional<QImage> imageFromRgbaFrame(const std::uint8_t *bytes, QSize size)
+std::optional<QImage> imageFromRgbaFrame(const std::uint8_t* bytes, QSize size)
 {
     if (bytes == nullptr || size.isEmpty()) {
         return std::nullopt;
@@ -97,7 +98,7 @@ public:
 
         int width = 0;
         int height = 0;
-        if (WebPGetInfo(reinterpret_cast<const std::uint8_t *>(inputData.constData()),
+        if (WebPGetInfo(reinterpret_cast<const std::uint8_t*>(inputData.constData()),
                 static_cast<std::size_t>(inputData.size()), &width, &height)
             == 0) {
             return notWebPResult();
@@ -159,14 +160,14 @@ public:
         return result;
     }
 
-    std::optional<AnimationFrame> readNextFrame(QString *errorString)
+    std::optional<AnimationFrame> readNextFrame(QString* errorString)
     {
         clearError(errorString);
         if (decoder == nullptr || !hasMoreFrames()) {
             return std::nullopt;
         }
 
-        std::uint8_t *bytes = nullptr;
+        std::uint8_t* bytes = nullptr;
         int timestamp = 0;
         if (WebPAnimDecoderGetNext(decoder.get(), &bytes, &timestamp) == 0) {
             setError(errorString, webpAnimationDecodeErrorString());
@@ -199,14 +200,14 @@ public:
     }
 
 private:
-    void clearError(QString *errorString)
+    void clearError(QString* errorString)
     {
         if (errorString != nullptr) {
             errorString->clear();
         }
     }
 
-    void setError(QString *errorString, const QString &message)
+    void setError(QString* errorString, const QString& message)
     {
         if (errorString != nullptr) {
             *errorString = message;
@@ -227,16 +228,16 @@ WebPAnimationReader::WebPAnimationReader()
 
 WebPAnimationReader::~WebPAnimationReader() = default;
 
-WebPAnimationReader::WebPAnimationReader(WebPAnimationReader &&) noexcept = default;
+WebPAnimationReader::WebPAnimationReader(WebPAnimationReader&&) noexcept = default;
 
-WebPAnimationReader &WebPAnimationReader::operator=(WebPAnimationReader &&) noexcept = default;
+WebPAnimationReader& WebPAnimationReader::operator=(WebPAnimationReader&&) noexcept = default;
 
 WebPAnimationOpenResult WebPAnimationReader::open(QByteArray data)
 {
     return d->open(std::move(data));
 }
 
-std::optional<AnimationFrame> WebPAnimationReader::readNextFrame(QString *errorString)
+std::optional<AnimationFrame> WebPAnimationReader::readNextFrame(QString* errorString)
 {
     return d->readNextFrame(errorString);
 }

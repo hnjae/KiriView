@@ -11,7 +11,7 @@
 
 namespace kiriview {
 ArchiveStorageBackend archiveStorageBackendFromBridge(RustArchiveStorageBackend backend);
-std::optional<ArchiveOpenMatch> archiveOpenMatchFromBridge(const RustArchiveOpenMatch &match);
+std::optional<ArchiveOpenMatch> archiveOpenMatchFromBridge(const RustArchiveOpenMatch& match);
 }
 
 #endif

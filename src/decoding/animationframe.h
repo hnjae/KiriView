@@ -7,7 +7,8 @@
 #include <QImage>
 
 namespace kiriview {
-struct AnimationFrame {
+struct AnimationFrame
+{
     QImage image;
     int delay = 0;
 };

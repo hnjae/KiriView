@@ -6,7 +6,7 @@
 #include "presentation/imageviewportgeometry.h"
 
 namespace {
-QRectF viewportImageRect(const kiriview::ImageViewportInteractionSnapshot &snapshot)
+QRectF viewportImageRect(const kiriview::ImageViewportInteractionSnapshot& snapshot)
 {
     return kiriview::imageViewportImageRect(snapshot.viewportSize, snapshot.displaySize);
 }
@@ -14,36 +14,36 @@ QRectF viewportImageRect(const kiriview::ImageViewportInteractionSnapshot &snaps
 
 namespace kiriview {
 QPointF ImageViewportInteraction::panContentPosition(
-    const ImageViewportInteractionSnapshot &snapshot, const QPointF &contentPosition,
-    const QPointF &delta) const
+    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition,
+    const QPointF& delta) const
 {
     return imageViewportPanPosition(
         snapshot.viewportSize, viewportImageRect(snapshot), contentPosition, delta);
 }
 
 QPointF ImageViewportInteraction::nextScanContentPosition(
-    const ImageViewportInteractionSnapshot &snapshot, const QPointF &contentPosition) const
+    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition) const
 {
     return imageViewportNextZScanPosition(snapshot.viewportSize, viewportImageRect(snapshot),
         contentPosition, snapshot.rightToLeftReadingActive);
 }
 
 QPointF ImageViewportInteraction::previousScanContentPosition(
-    const ImageViewportInteractionSnapshot &snapshot, const QPointF &contentPosition) const
+    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition) const
 {
     return imageViewportPreviousZScanPosition(snapshot.viewportSize, viewportImageRect(snapshot),
         contentPosition, snapshot.rightToLeftReadingActive);
 }
 
 QPointF ImageViewportInteraction::initialScanContentPosition(
-    const ImageViewportInteractionSnapshot &snapshot) const
+    const ImageViewportInteractionSnapshot& snapshot) const
 {
     return imageViewportInitialZScanPosition(
         snapshot.viewportSize, viewportImageRect(snapshot), snapshot.rightToLeftReadingActive);
 }
 
 QPointF ImageViewportInteraction::finalScanContentPosition(
-    const ImageViewportInteractionSnapshot &snapshot) const
+    const ImageViewportInteractionSnapshot& snapshot) const
 {
     return imageViewportFinalZScanPosition(
         snapshot.viewportSize, viewportImageRect(snapshot), snapshot.rightToLeftReadingActive);
@@ -65,7 +65,7 @@ void ImageViewportInteraction::cancelPendingDisplayedImageStart()
 }
 
 QPointF ImageViewportInteraction::displayedImageInitialContentPosition(
-    const ImageViewportInteractionSnapshot &snapshot) const
+    const ImageViewportInteractionSnapshot& snapshot) const
 {
     if (m_scanState.displayedImageScanStart() == ImageViewportScanStart::Final) {
         return finalScanContentPosition(snapshot);
@@ -75,24 +75,24 @@ QPointF ImageViewportInteraction::displayedImageInitialContentPosition(
 }
 
 bool ImageViewportInteraction::viewportPointInsideImage(
-    const ImageViewportInteractionSnapshot &snapshot, const QPointF &contentPosition,
-    const QPointF &viewportPoint) const
+    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition,
+    const QPointF& viewportPoint) const
 {
     return imageViewportPointInsideImage(
         contentPosition, viewportPoint, viewportImageRect(snapshot));
 }
 
 QPointF ImageViewportInteraction::nearestImageViewportPoint(
-    const ImageViewportInteractionSnapshot &snapshot, const QPointF &contentPosition,
-    const QPointF &viewportPoint) const
+    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition,
+    const QPointF& viewportPoint) const
 {
     return imageViewportNearestImagePoint(
         contentPosition, viewportPoint, viewportImageRect(snapshot));
 }
 
 QPointF ImageViewportInteraction::zoomContentPosition(
-    const ImageViewportInteractionSnapshot &snapshot, const QPointF &contentPosition,
-    const QPointF &viewportAnchorPoint, qreal nextZoomPercent) const
+    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition,
+    const QPointF& viewportAnchorPoint, qreal nextZoomPercent) const
 {
     const QSizeF nextDisplaySize = imageViewportDisplaySizeForZoom(
         snapshot.imageSize, nextZoomPercent, snapshot.devicePixelRatio);

@@ -11,8 +11,8 @@
 #include <vector>
 
 namespace {
-QString archivePageWindowTitle(const QUrl &pageUrl, const QUrl &archiveFileUrl,
-    const QUrl &archiveRootUrl, kiriview::OpenedCollectionScopeKind kind)
+QString archivePageWindowTitle(const QUrl& pageUrl, const QUrl& archiveFileUrl,
+    const QUrl& archiveRootUrl, kiriview::OpenedCollectionScopeKind kind)
 {
     const kiriview::OpenedCollectionScopeLocation archiveCollection
         = kiriview::OpenedCollectionScopeLocation::fromUrls(archiveFileUrl, archiveRootUrl, kind);
@@ -21,13 +21,14 @@ QString archivePageWindowTitle(const QUrl &pageUrl, const QUrl &archiveFileUrl,
     return kiriview::windowTitleFileNameForDisplayedLocation(location);
 }
 
-struct ArchiveInteriorCase {
+struct ArchiveInteriorCase
+{
     QString scheme;
     QString extension;
     kiriview::OpenedCollectionScopeKind kind;
 };
 
-QUrl archiveRootUrl(const QString &scheme, const QString &archiveName)
+QUrl archiveRootUrl(const QString& scheme, const QString& archiveName)
 {
     QUrl rootUrl;
     rootUrl.setScheme(scheme);
@@ -36,7 +37,7 @@ QUrl archiveRootUrl(const QString &scheme, const QString &archiveName)
 }
 
 std::optional<QUrl> containingArchiveRootUrl(
-    const QUrl &pageUrl, kiriview::OpenedCollectionScopeKind kind)
+    const QUrl& pageUrl, kiriview::OpenedCollectionScopeKind kind)
 {
     if (kind == kiriview::OpenedCollectionScopeKind::ComicBookArchive) {
         return kiriview::containingComicBookArchiveRootUrl(pageUrl);
@@ -45,7 +46,7 @@ std::optional<QUrl> containingArchiveRootUrl(
     return kiriview::containingDirectArchiveOpenRootUrl(pageUrl);
 }
 
-void verifyArchiveInteriorRoot(const ArchiveInteriorCase &testCase)
+void verifyArchiveInteriorRoot(const ArchiveInteriorCase& testCase)
 {
     const QString archiveName = QStringLiteral("book.") + testCase.extension;
     const QUrl archiveFileUrl = QUrl::fromLocalFile(QStringLiteral("/books/") + archiveName);
@@ -166,7 +167,7 @@ void TestImageDocumentLocation::archiveInteriorUrlsResolveToTheirRootAndTitle()
             kiriview::OpenedCollectionScopeKind::GeneralArchive },
     };
 
-    for (const ArchiveInteriorCase &testCase : cases) {
+    for (const ArchiveInteriorCase& testCase : cases) {
         verifyArchiveInteriorRoot(testCase);
     }
 }

@@ -15,19 +15,21 @@
 #include <vector>
 
 namespace {
-QImage frameImage(const QSize &size)
+QImage frameImage(const QSize& size)
 {
     QImage image(size, QImage::Format_RGBA8888_Premultiplied);
     image.fill(Qt::transparent);
     return image;
 }
 
-struct FakePlaybackSourceStats {
+struct FakePlaybackSourceStats
+{
     int openCount = 0;
     int readCount = 0;
 };
 
-struct ManualTimerState {
+struct ManualTimerState
+{
     int intervalMsec = 0;
     kiriview::RuntimeTimerCallback callback;
     bool active = false;
@@ -67,7 +69,7 @@ public:
     {
         return kiriview::TimerScheduler {
             []() { return qint64(0); },
-            [this](QObject *, int intervalMsec, kiriview::RuntimeTimerCallback callback)
+            [this](QObject*, int intervalMsec, kiriview::RuntimeTimerCallback callback)
                 -> std::unique_ptr<kiriview::RuntimeTimerHandle> {
                 auto state = std::make_shared<ManualTimerState>(
                     ManualTimerState { intervalMsec, std::move(callback), false });
@@ -109,7 +111,7 @@ kiriview::ImageAnimationPlaybackOpenResult openResult(
     };
 }
 
-kiriview::ImageAnimationPlaybackOpenResult openError(const QString &errorString)
+kiriview::ImageAnimationPlaybackOpenResult openError(const QString& errorString)
 {
     kiriview::ImageAnimationPlaybackOpenResult result;
     result.errorString = errorString;
@@ -139,7 +141,7 @@ kiriview::ImageAnimationPlaybackReadResult readEnd()
     };
 }
 
-kiriview::ImageAnimationPlaybackReadResult readError(const QString &errorString)
+kiriview::ImageAnimationPlaybackReadResult readError(const QString& errorString)
 {
     return kiriview::ImageAnimationPlaybackReadResult {
         kiriview::ImageAnimationPlaybackReadStatus::Error,
@@ -232,7 +234,7 @@ void TestImageAnimationPlayer::playbackRequestsAreTypedValues()
         = kiriview::readerAnimationPlaybackRequest(
             QByteArrayLiteral("reader-data"), QByteArrayLiteral("gif"));
     QVERIFY(readerRequest.isValid());
-    const auto *readerPayload
+    const auto* readerPayload
         = std::get_if<kiriview::ReaderAnimationPlaybackRequest>(&readerRequest.payload);
     QVERIFY(readerPayload != nullptr);
     QCOMPARE(readerPayload->data, QByteArrayLiteral("reader-data"));
@@ -241,7 +243,7 @@ void TestImageAnimationPlayer::playbackRequestsAreTypedValues()
     kiriview::ImageAnimationPlaybackRequest apngRequest
         = kiriview::apngAnimationPlaybackRequest(QByteArrayLiteral("apng-data"));
     QVERIFY(apngRequest.isValid());
-    const auto *apngPayload
+    const auto* apngPayload
         = std::get_if<kiriview::ApngAnimationPlaybackRequest>(&apngRequest.payload);
     QVERIFY(apngPayload != nullptr);
     QCOMPARE(apngPayload->data, QByteArrayLiteral("apng-data"));
@@ -249,7 +251,7 @@ void TestImageAnimationPlayer::playbackRequestsAreTypedValues()
     kiriview::ImageAnimationPlaybackRequest webpRequest
         = kiriview::webpAnimationPlaybackRequest(QByteArrayLiteral("webp-data"));
     QVERIFY(webpRequest.isValid());
-    const auto *webpPayload
+    const auto* webpPayload
         = std::get_if<kiriview::WebPAnimationPlaybackRequest>(&webpRequest.payload);
     QVERIFY(webpPayload != nullptr);
     QCOMPARE(webpPayload->data, QByteArrayLiteral("webp-data"));
@@ -257,7 +259,7 @@ void TestImageAnimationPlayer::playbackRequestsAreTypedValues()
     kiriview::ImageAnimationPlaybackRequest jxlRequest
         = kiriview::jxlAnimationPlaybackRequest(QByteArrayLiteral("jxl-data"));
     QVERIFY(jxlRequest.isValid());
-    const auto *jxlPayload
+    const auto* jxlPayload
         = std::get_if<kiriview::JxlAnimationPlaybackRequest>(&jxlRequest.payload);
     QVERIFY(jxlPayload != nullptr);
     QCOMPARE(jxlPayload->data, QByteArrayLiteral("jxl-data"));
@@ -265,7 +267,7 @@ void TestImageAnimationPlayer::playbackRequestsAreTypedValues()
     kiriview::ImageAnimationPlaybackRequest heifRequest
         = kiriview::heifSequenceAnimationPlaybackRequest(QByteArrayLiteral("heif-data"));
     QVERIFY(heifRequest.isValid());
-    const auto *heifPayload
+    const auto* heifPayload
         = std::get_if<kiriview::HeifSequenceAnimationPlaybackRequest>(&heifRequest.payload);
     QVERIFY(heifPayload != nullptr);
     QCOMPARE(heifPayload->data, QByteArrayLiteral("heif-data"));
@@ -278,8 +280,8 @@ void TestImageAnimationPlayer::startConsumesFirstFrameAndEmitsSubsequentFrames()
     ManualTimerScheduler timerScheduler;
     kiriview::ImageAnimationPlayer player(
         this,
-        [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
-        [&errorString](const QString &error) { errorString = error; }, {},
+        [&emittedFrameSizes](const QImage& image) { emittedFrameSizes.push_back(image.size()); },
+        [&errorString](const QString& error) { errorString = error; }, {},
         timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
@@ -304,8 +306,8 @@ void TestImageAnimationPlayer::restartableSourcesEmitFirstFrameOnLoopRestart()
     ManualTimerScheduler timerScheduler;
     kiriview::ImageAnimationPlayer player(
         this,
-        [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
-        [](const QString &) {}, {}, timerScheduler.scheduler());
+        [&emittedFrameSizes](const QImage& image) { emittedFrameSizes.push_back(image.size()); },
+        [](const QString&) {}, {}, timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
@@ -328,8 +330,8 @@ void TestImageAnimationPlayer::nonRestartableSourcesDoNotReopenAtSequenceEnd()
     ManualTimerScheduler timerScheduler;
     kiriview::ImageAnimationPlayer player(
         this,
-        [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
-        [](const QString &) {}, {}, timerScheduler.scheduler());
+        [&emittedFrameSizes](const QImage& image) { emittedFrameSizes.push_back(image.size()); },
+        [](const QString&) {}, {}, timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
@@ -349,8 +351,8 @@ void TestImageAnimationPlayer::startReportsOpenErrors()
     QString errorString;
     kiriview::ImageAnimationPlayer player(
         this,
-        [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
-        [&errorString](const QString &error) { errorString = error; });
+        [&emittedFrameSizes](const QImage& image) { emittedFrameSizes.push_back(image.size()); },
+        [&errorString](const QString& error) { errorString = error; });
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
     player.start(std::make_unique<FakePlaybackSource>(
@@ -369,7 +371,7 @@ void TestImageAnimationPlayer::readFrameErrorsAreReportedWithoutSequenceRestart(
     QString errorString;
     ManualTimerScheduler timerScheduler;
     kiriview::ImageAnimationPlayer player(
-        this, [](const QImage &) {}, [&errorString](const QString &error) { errorString = error; },
+        this, [](const QImage&) {}, [&errorString](const QString& error) { errorString = error; },
         {}, timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
@@ -394,7 +396,7 @@ void TestImageAnimationPlayer::readEndStopsOptimisticSourceWithoutError()
     QString errorString;
     ManualTimerScheduler timerScheduler;
     kiriview::ImageAnimationPlayer player(
-        this, [](const QImage &) {}, [&errorString](const QString &error) { errorString = error; },
+        this, [](const QImage&) {}, [&errorString](const QString& error) { errorString = error; },
         {}, timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();
@@ -421,8 +423,8 @@ void TestImageAnimationPlayer::restartOpenErrorsAreReported()
     ManualTimerScheduler timerScheduler;
     kiriview::ImageAnimationPlayer player(
         this,
-        [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
-        [&errorString](const QString &error) { errorString = error; }, {},
+        [&emittedFrameSizes](const QImage& image) { emittedFrameSizes.push_back(image.size()); },
+        [&errorString](const QString& error) { errorString = error; }, {},
         timerScheduler.scheduler());
 
     auto stats = std::make_shared<FakePlaybackSourceStats>();

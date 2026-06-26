@@ -4,7 +4,7 @@
 #include "presentation/imageviewportcommandstate.h"
 
 namespace kiriview {
-const ImageViewportProjection &ImageViewportCommandState::projection() const
+const ImageViewportProjection& ImageViewportCommandState::projection() const
 {
     return m_projection;
 }
@@ -14,7 +14,7 @@ QSizeF ImageViewportCommandState::viewportSize() const { return m_viewportSize; 
 QSizeF ImageViewportCommandState::displaySize() const { return m_displaySize; }
 
 bool ImageViewportCommandState::setGeometry(
-    const QSizeF &viewportSize, const QSizeF &displaySize, ImageViewportObservationOrigin origin)
+    const QSizeF& viewportSize, const QSizeF& displaySize, ImageViewportObservationOrigin origin)
 {
     if (m_viewportSize == viewportSize && m_displaySize == displaySize) {
         return false;
@@ -33,7 +33,7 @@ bool ImageViewportCommandState::setGeometry(
 }
 
 ImageViewportCommand ImageViewportCommandState::requestContentPosition(
-    const QPointF &contentPosition)
+    const QPointF& contentPosition)
 {
     const ImageViewportFrame frame = project(contentPosition);
     ++m_projection.commandRevision;
@@ -64,14 +64,14 @@ bool ImageViewportCommandState::acknowledgeCommand(quint64 commandRevision)
 }
 
 bool ImageViewportCommandState::acknowledgeCommand(
-    quint64 commandRevision, const QPointF &actualContentPosition)
+    quint64 commandRevision, const QPointF& actualContentPosition)
 {
     return completeCommandApplication(commandRevision, actualContentPosition)
         && acknowledgeCommand(commandRevision);
 }
 
 bool ImageViewportCommandState::observeContentPosition(
-    const QPointF &contentPosition, ImageViewportObservationOrigin origin)
+    const QPointF& contentPosition, ImageViewportObservationOrigin origin)
 {
     const ImageViewportFrame previousFrame = m_projection.frame;
     const ImageViewportCommandStatus previousStatus = m_projection.status;
@@ -116,7 +116,7 @@ bool ImageViewportCommandState::markCommandApplied(quint64 commandRevision)
 }
 
 bool ImageViewportCommandState::completeCommandApplication(
-    quint64 commandRevision, const QPointF &actualContentPosition)
+    quint64 commandRevision, const QPointF& actualContentPosition)
 {
     if (!markCommandApplied(commandRevision)) {
         return false;
@@ -130,12 +130,12 @@ bool ImageViewportCommandState::completeCommandApplication(
     return true;
 }
 
-ImageViewportFrame ImageViewportCommandState::project(const QPointF &contentPosition) const
+ImageViewportFrame ImageViewportCommandState::project(const QPointF& contentPosition) const
 {
     return projectImageViewportFrame(m_viewportSize, m_displaySize, contentPosition);
 }
 
-bool ImageViewportCommandState::setFrame(const ImageViewportFrame &frame)
+bool ImageViewportCommandState::setFrame(const ImageViewportFrame& frame)
 {
     if (m_projection.frame == frame) {
         m_projection.requestedContentPosition = frame.contentPosition;

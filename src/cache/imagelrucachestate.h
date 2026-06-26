@@ -25,9 +25,9 @@ public:
     qsizetype byteBudget() const { return m_byteBudget; }
     qsizetype byteCost() const { return m_byteCost; }
 
-    bool contains(const Key &key) const { return findEntry(key) != m_entries.cend(); }
+    bool contains(const Key& key) const { return findEntry(key) != m_entries.cend(); }
 
-    std::optional<Value> find(const Key &key)
+    std::optional<Value> find(const Key& key)
     {
         auto entry = findEntry(key);
         if (entry == m_entries.end()) {
@@ -42,7 +42,7 @@ public:
     {
         std::vector<Value> cachedValues;
         cachedValues.reserve(m_entries.size());
-        for (const Entry &entry : m_entries) {
+        for (const Entry& entry : m_entries) {
             cachedValues.push_back(entry.value);
         }
         return cachedValues;
@@ -73,7 +73,8 @@ public:
     }
 
 private:
-    struct Entry {
+    struct Entry
+    {
         Key key;
         Value value;
         qsizetype byteCost = 0;
@@ -85,7 +86,7 @@ private:
         std::vector<ImageCacheRetentionEntry> retentionEntries;
         retentionEntries.reserve(m_entries.size());
 
-        for (const Entry &entry : m_entries) {
+        for (const Entry& entry : m_entries) {
             retentionEntries.push_back(ImageCacheRetentionEntry {
                 entry.byteCost,
                 entry.lastUse,
@@ -111,16 +112,16 @@ private:
         m_byteCost = retainedByteCost;
     }
 
-    typename std::vector<Entry>::iterator findEntry(const Key &key)
+    typename std::vector<Entry>::iterator findEntry(const Key& key)
     {
         return std::find_if(m_entries.begin(), m_entries.end(),
-            [&key](const Entry &entry) { return entry.key == key; });
+            [&key](const Entry& entry) { return entry.key == key; });
     }
 
-    typename std::vector<Entry>::const_iterator findEntry(const Key &key) const
+    typename std::vector<Entry>::const_iterator findEntry(const Key& key) const
     {
         return std::find_if(m_entries.cbegin(), m_entries.cend(),
-            [&key](const Entry &entry) { return entry.key == key; });
+            [&key](const Entry& entry) { return entry.key == key; });
     }
 
     std::vector<Entry> m_entries;

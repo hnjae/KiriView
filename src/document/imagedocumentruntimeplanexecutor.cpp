@@ -87,15 +87,15 @@ void ImageDocumentRuntimePlanExecutor::shutdownRuntime()
     dispatchPlan(imageDocumentShutdownPlan());
 }
 
-void ImageDocumentRuntimePlanExecutor::dispatchPlan(const ImageDocumentRuntimePlan &plan)
+void ImageDocumentRuntimePlanExecutor::dispatchPlan(const ImageDocumentRuntimePlan& plan)
 {
-    for (const ImageDocumentRuntimeOperation &operation : plan) {
+    for (const ImageDocumentRuntimeOperation& operation : plan) {
         dispatchOperation(operation);
     }
 }
 
 void ImageDocumentRuntimePlanExecutor::dispatchOperation(
-    const ImageDocumentRuntimeOperation &operation)
+    const ImageDocumentRuntimeOperation& operation)
 {
     if (m_lifecycleExecutor.dispatchOperation(operation)) {
         return;
@@ -120,7 +120,7 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
     }
 
     std::visit(
-        [](const auto &payload) {
+        [](const auto& payload) {
             using Operation = std::decay_t<decltype(payload)>;
             if constexpr (isSourceLoadRuntimeOperation<Operation>
                 || isOpenRuntimeOperation<Operation> || isPredecodeRuntimeOperation<Operation>

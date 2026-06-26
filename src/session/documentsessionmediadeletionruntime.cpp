@@ -19,9 +19,9 @@ DocumentSessionMediaDeletionRuntime::DocumentSessionMediaDeletionRuntime(
 
 DocumentSessionMediaDeletionRuntime::~DocumentSessionMediaDeletionRuntime() { cancel(); }
 
-DocumentSessionMediaDeletionStartPlan DocumentSessionMediaDeletionRuntime::start(QObject *receiver,
+DocumentSessionMediaDeletionStartPlan DocumentSessionMediaDeletionRuntime::start(QObject* receiver,
     FileDeletionMode mode, std::vector<DirectMediaNavigationCandidate> candidates,
-    const QUrl &currentUrl, DocumentSessionKind documentKind, CompletionCallback callback)
+    const QUrl& currentUrl, DocumentSessionKind documentKind, CompletionCallback callback)
 {
     const DocumentSessionMediaDeletionStartPlan plan
         = documentSessionMediaDeletionStartPlan(mode, std::move(candidates), currentUrl);
@@ -35,14 +35,14 @@ DocumentSessionMediaDeletionStartPlan DocumentSessionMediaDeletionRuntime::start
     auto sharedCallback = std::make_shared<CompletionCallback>(std::move(callback));
     m_job = m_fileDeletionProvider(receiver, plan.request,
         [this, operationId, documentKind, fallbackPlan = plan.fallbackPlan, sharedCallback](
-            FileDeletionResult result, const KioOperationFailure &failure) {
+            FileDeletionResult result, const KioOperationFailure& failure) {
             finish(operationId, documentKind, fallbackPlan, result, failure, *sharedCallback);
         });
     return plan;
 }
 
-bool DocumentSessionMediaDeletionRuntime::startForDirectMedia(QObject *receiver,
-    FileDeletionMode mode, const DirectMediaScope &scope, ScopeAccepted scopeAccepted,
+bool DocumentSessionMediaDeletionRuntime::startForDirectMedia(QObject* receiver,
+    FileDeletionMode mode, const DirectMediaScope& scope, ScopeAccepted scopeAccepted,
     DocumentSessionKind documentKind, CompletionCallback callback)
 {
     cancel();
@@ -70,9 +70,9 @@ void DocumentSessionMediaDeletionRuntime::cancel()
 bool DocumentSessionMediaDeletionRuntime::active() const { return m_operation.active(); }
 
 void DocumentSessionMediaDeletionRuntime::finish(quint64 operationId,
-    DocumentSessionKind documentKind, const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan,
-    FileDeletionResult result, const KioOperationFailure &failure,
-    const CompletionCallback &callback)
+    DocumentSessionKind documentKind, const DocumentSessionMediaDeletionFallbackPlan& fallbackPlan,
+    FileDeletionResult result, const KioOperationFailure& failure,
+    const CompletionCallback& callback)
 {
     if (!m_operation.finish(operationId)) {
         return;

@@ -35,10 +35,10 @@ public:
 
     ~ScopedKArchive() { close(); }
 
-    ScopedKArchive(const ScopedKArchive &) = delete;
-    ScopedKArchive &operator=(const ScopedKArchive &) = delete;
-    ScopedKArchive(ScopedKArchive &&) noexcept = default;
-    ScopedKArchive &operator=(ScopedKArchive &&other) noexcept
+    ScopedKArchive(const ScopedKArchive&) = delete;
+    ScopedKArchive& operator=(const ScopedKArchive&) = delete;
+    ScopedKArchive(ScopedKArchive&&) noexcept = default;
+    ScopedKArchive& operator=(ScopedKArchive&& other) noexcept
     {
         if (this == &other) {
             return *this;
@@ -49,7 +49,7 @@ public:
         return *this;
     }
 
-    const KArchiveDirectory *directory() const
+    const KArchiveDirectory* directory() const
     {
         return m_archive == nullptr ? nullptr : m_archive->directory();
     }
@@ -67,13 +67,14 @@ private:
     std::unique_ptr<KArchive> m_archive;
 };
 
-struct OpenKArchiveResult {
+struct OpenKArchiveResult
+{
     ScopedKArchive archive;
     QString errorString;
 };
 
 std::unique_ptr<KArchive> createArchive(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     const QString filePath = openedCollectionScope.fileUrl().toLocalFile();
     if (filePath.isEmpty()) {
@@ -97,9 +98,9 @@ std::unique_ptr<KArchive> createArchive(
 }
 
 void appendArchiveDirectoryImageDocumentPageCandidates(
-    std::vector<kiriview::ImageDocumentPageCandidate> *candidates,
-    const KArchiveDirectory *directory,
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, const QString &prefix)
+    std::vector<kiriview::ImageDocumentPageCandidate>* candidates,
+    const KArchiveDirectory* directory,
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope, const QString& prefix)
 {
     if (directory == nullptr) {
         return;
@@ -107,17 +108,17 @@ void appendArchiveDirectoryImageDocumentPageCandidates(
 
     const QStringList entries = directory->entries();
     candidates->reserve(candidates->size() + static_cast<std::size_t>(entries.size()));
-    for (const QString &entryName : entries) {
+    for (const QString& entryName : entries) {
         const QString entryPath
             = prefix.isEmpty() ? entryName : prefix + QLatin1Char('/') + entryName;
-        const KArchiveEntry *entry = directory->entry(entryName);
+        const KArchiveEntry* entry = directory->entry(entryName);
         if (entry == nullptr) {
             continue;
         }
 
         if (entry->isDirectory()) {
             appendArchiveDirectoryImageDocumentPageCandidates(candidates,
-                static_cast<const KArchiveDirectory *>(entry), openedCollectionScope, entryPath);
+                static_cast<const KArchiveDirectory*>(entry), openedCollectionScope, entryPath);
             continue;
         }
 
@@ -134,8 +135,8 @@ void appendArchiveDirectoryImageDocumentPageCandidates(
 }
 
 std::vector<kiriview::ImageDocumentPageCandidate> archiveDirectoryImageDocumentPageCandidates(
-    const KArchiveDirectory *directory,
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const KArchiveDirectory* directory,
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     std::vector<kiriview::ImageDocumentPageCandidate> candidates;
     appendArchiveDirectoryImageDocumentPageCandidates(
@@ -144,7 +145,7 @@ std::vector<kiriview::ImageDocumentPageCandidate> archiveDirectoryImageDocumentP
 }
 
 OpenKArchiveResult openKArchiveCollection(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     std::unique_ptr<KArchive> archive = createArchive(openedCollectionScope);
     if (archive == nullptr) {
@@ -163,8 +164,8 @@ OpenKArchiveResult openKArchiveCollection(
 }
 
 kiriview::MediaEntrySourceImageDataResult readKArchiveFileData(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope, const QString &entryPath,
-    const KArchiveFile &file)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope, const QString& entryPath,
+    const KArchiveFile& file)
 {
     std::unique_ptr<QIODevice> device(file.createDevice());
     if (device == nullptr) {
@@ -187,9 +188,9 @@ kiriview::MediaEntrySourceImageDataResult readKArchiveFileData(
 }
 
 std::optional<kiriview::MediaEntrySourceThumbnailMetadata> thumbnailMetadataForKArchiveFile(
-    const KArchiveFile &file)
+    const KArchiveFile& file)
 {
-    const auto *zipFile = dynamic_cast<const KZipFileEntry *>(&file);
+    const auto* zipFile = dynamic_cast<const KZipFileEntry*>(&file);
     if (zipFile == nullptr || file.size() < 0) {
         return std::nullopt;
     }
@@ -214,7 +215,7 @@ public:
     {
     }
 
-    kiriview::MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) override
+    kiriview::MediaEntrySourceImageDataResult loadImageData(const QUrl& imageUrl) override
     {
         const std::optional<QString> entryPath
             = Backend::openedCollectionImageEntryPathForRead(m_openedCollectionScope, imageUrl);
@@ -225,8 +226,8 @@ public:
                     Backend::openedCollectionImageNotFoundError(), imageUrl.toString()));
         }
 
-        const KArchiveDirectory *directory = m_archive.directory();
-        const KArchiveFile *file = directory == nullptr ? nullptr : directory->file(*entryPath);
+        const KArchiveDirectory* directory = m_archive.directory();
+        const KArchiveFile* file = directory == nullptr ? nullptr : directory->file(*entryPath);
         if (file == nullptr) {
             return Backend::mediaEntrySourceErrorResult<kiriview::MediaEntrySourceImageDataResult>(
                 Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::KArchive,
@@ -238,7 +239,7 @@ public:
     }
 
     kiriview::MediaEntrySourceThumbnailMetadataResult loadThumbnailMetadata(
-        const QUrl &imageUrl) override
+        const QUrl& imageUrl) override
     {
         const std::optional<QString> entryPath
             = Backend::openedCollectionImageEntryPathForRead(m_openedCollectionScope, imageUrl);
@@ -259,8 +260,8 @@ public:
                 Backend::openedCollectionThumbnailMetadataUnsupportedError(), {}, *entryPath));
         }
 
-        const KArchiveDirectory *directory = m_archive.directory();
-        const KArchiveFile *file = directory == nullptr ? nullptr : directory->file(*entryPath);
+        const KArchiveDirectory* directory = m_archive.directory();
+        const KArchiveFile* file = directory == nullptr ? nullptr : directory->file(*entryPath);
         if (file == nullptr) {
             return Backend::mediaEntrySourceErrorResult<
                 kiriview::MediaEntrySourceThumbnailMetadataResult>(Backend::mediaEntrySourceError(
@@ -288,7 +289,7 @@ private:
 };
 
 kiriview::MediaEntrySourceOpenResult openKArchiveMediaEntrySource(
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     OpenKArchiveResult opened = openKArchiveCollection(openedCollectionScope);
     if (!opened.archive) {
@@ -308,7 +309,7 @@ kiriview::MediaEntrySourceOpenResult openKArchiveMediaEntrySource(
 }
 
 namespace kiriview::MediaEntrySourceBackendDetail {
-const MediaEntrySourceBackendOperations *kArchiveMediaEntrySourceBackendOperations()
+const MediaEntrySourceBackendOperations* kArchiveMediaEntrySourceBackendOperations()
 {
     static const MediaEntrySourceBackendOperations operations {
         openKArchiveMediaEntrySource,

@@ -40,7 +40,8 @@ enum class DecodedImageFailureSeverity {
     Error,
 };
 
-struct DecodedImageFailure {
+struct DecodedImageFailure
+{
     QString errorString;
     DecodedImageFailureRoute route = DecodedImageFailureRoute::Unknown;
     DecodedImageFailureOperation operation = DecodedImageFailureOperation::Unknown;
@@ -49,19 +50,22 @@ struct DecodedImageFailure {
     bool retryable = false;
 };
 
-struct StaticDecodedImage {
+struct StaticDecodedImage
+{
     StaticDisplayImagePayload displayImage;
     EmbeddedMetadata embeddedMetadata;
 };
 
-struct ApngAnimationImage {
+struct ApngAnimationImage
+{
     QImage firstFrame;
     QByteArray data;
     EmbeddedMetadata embeddedMetadata;
     QString sourceIdentity;
 };
 
-struct ReaderAnimationImage {
+struct ReaderAnimationImage
+{
     QImage firstFrame;
     QByteArray data;
     QByteArray format;
@@ -69,21 +73,24 @@ struct ReaderAnimationImage {
     QString sourceIdentity;
 };
 
-struct WebPAnimationImage {
+struct WebPAnimationImage
+{
     QImage firstFrame;
     QByteArray data;
     EmbeddedMetadata embeddedMetadata;
     QString sourceIdentity;
 };
 
-struct JxlAnimationImage {
+struct JxlAnimationImage
+{
     QImage firstFrame;
     QByteArray data;
     EmbeddedMetadata embeddedMetadata;
     QString sourceIdentity;
 };
 
-struct HeifSequenceAnimationImage {
+struct HeifSequenceAnimationImage
+{
     QImage firstFrame;
     QByteArray data;
     EmbeddedMetadata embeddedMetadata;
@@ -99,10 +106,10 @@ public:
     explicit DecodedImageResult(DecodedImageFailure failure);
     explicit DecodedImageResult(DecodedImage image);
 
-    const DecodedImageFailure *failure() const;
-    DecodedImageFailure *failure();
-    const DecodedImage *image() const;
-    DecodedImage *image();
+    const DecodedImageFailure* failure() const;
+    DecodedImageFailure* failure();
+    const DecodedImage* image() const;
+    DecodedImage* image();
     std::optional<DecodedImage> takeImage() &&;
 
 private:
@@ -118,15 +125,15 @@ template <typename Image> DecodedImageResult successfulDecodedImageResult(Image 
 {
     return successfulDecodedImageResult(DecodedImage { std::move(image) });
 }
-const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result);
-const DecodedImage *decodedImageResultImage(const DecodedImageResult &result);
-DecodedImage *decodedImageResultImage(DecodedImageResult &result);
-DecodedImageFailure *decodedImageResultFailure(DecodedImageResult &result);
-const EmbeddedMetadata &decodedImageEmbeddedMetadata(const DecodedImage &image);
-void setDecodedImageEmbeddedMetadata(DecodedImage &image, EmbeddedMetadata metadata);
-template <typename Image> const Image *decodedImageResultImageAs(const DecodedImageResult &result)
+const DecodedImageFailure* decodedImageResultFailure(const DecodedImageResult& result);
+const DecodedImage* decodedImageResultImage(const DecodedImageResult& result);
+DecodedImage* decodedImageResultImage(DecodedImageResult& result);
+DecodedImageFailure* decodedImageResultFailure(DecodedImageResult& result);
+const EmbeddedMetadata& decodedImageEmbeddedMetadata(const DecodedImage& image);
+void setDecodedImageEmbeddedMetadata(DecodedImage& image, EmbeddedMetadata metadata);
+template <typename Image> const Image* decodedImageResultImageAs(const DecodedImageResult& result)
 {
-    const DecodedImage *image = decodedImageResultImage(result);
+    const DecodedImage* image = decodedImageResultImage(result);
     return image == nullptr ? nullptr : std::get_if<Image>(image);
 }
 }

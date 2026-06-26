@@ -25,7 +25,8 @@ enum class MenuAccessKeySessionEvent {
     Clear,
 };
 
-struct MenuAccessKeySessionPlan {
+struct MenuAccessKeySessionPlan
+{
     MenuAccessKeyVisualEffect visualEffect = MenuAccessKeyVisualEffect::None;
     bool consumeEvent = false;
     bool triggerMnemonic = false;

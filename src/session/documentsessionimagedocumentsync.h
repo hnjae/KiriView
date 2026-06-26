@@ -21,7 +21,8 @@ enum class DocumentSessionImageDocumentSyncProjectionOperation {
     PublishImagePageActiveNavigation,
 };
 
-struct DocumentSessionImageDocumentSyncInput {
+struct DocumentSessionImageDocumentSyncInput
+{
     bool routingSource = false;
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     bool directImageLoadMayUseImageDocumentSourceScope = false;
@@ -32,7 +33,8 @@ struct DocumentSessionImageDocumentSyncInput {
     DocumentSessionPublicImageLeafSnapshot image;
 };
 
-struct DocumentSessionImageDocumentSyncPlan {
+struct DocumentSessionImageDocumentSyncPlan
+{
     bool active = false;
     bool setSourceIdentity = false;
     QUrl sourceIdentityUrl;
@@ -45,7 +47,7 @@ struct DocumentSessionImageDocumentSyncPlan {
 };
 
 DocumentSessionImageDocumentSyncPlan documentSessionImageDocumentSyncPlan(
-    const DocumentSessionImageDocumentSyncInput &input);
+    const DocumentSessionImageDocumentSyncInput& input);
 }
 
 #endif

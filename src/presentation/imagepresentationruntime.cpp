@@ -27,7 +27,7 @@ namespace {
     }
 
     bool displaySourceSlotsEqual(
-        const ImageDisplaySourceSlot &left, const ImageDisplaySourceSlot &right)
+        const ImageDisplaySourceSlot& left, const ImageDisplaySourceSlot& right)
     {
         return left.providerUrl == right.providerUrl && left.revision == right.revision
             && left.sourceIdentity == right.sourceIdentity
@@ -40,26 +40,26 @@ namespace {
     }
 
     bool pageSlotSourcesEqual(
-        const ImagePresentationPageSlotSource &left, const ImagePresentationPageSlotSource &right)
+        const ImagePresentationPageSlotSource& left, const ImagePresentationPageSlotSource& right)
     {
         return left.kind() == right.kind()
             && displaySourceSlotsEqual(left.displaySource(), right.displaySource());
     }
 
-    bool pageSlotsEqual(const ImagePresentationPageSlotSnapshot &left,
-        const ImagePresentationPageSlotSnapshot &right)
+    bool pageSlotsEqual(const ImagePresentationPageSlotSnapshot& left,
+        const ImagePresentationPageSlotSnapshot& right)
     {
         return left.imageRevision == right.imageRevision && left.imageSize == right.imageSize
             && pageSlotSourcesEqual(left.source, right.source);
     }
 }
 
-ImagePresentationScopeKey ImagePresentationScopeKey::directImage(const QUrl &url)
+ImagePresentationScopeKey ImagePresentationScopeKey::directImage(const QUrl& url)
 {
     return ImagePresentationScopeKey { Kind::DirectImage, url };
 }
 
-ImagePresentationScopeKey ImagePresentationScopeKey::openedCollection(const QUrl &url)
+ImagePresentationScopeKey ImagePresentationScopeKey::openedCollection(const QUrl& url)
 {
     return ImagePresentationScopeKey { Kind::OpenedCollection, url };
 }
@@ -241,18 +241,18 @@ bool ImagePresentationRuntime::secondaryPageVisible() const
     return m_secondaryPageVisible && m_mode == ImagePresentationMode::TwoPageSpread;
 }
 
-const ImageViewportFrame &ImagePresentationRuntime::viewportFrame() const
+const ImageViewportFrame& ImagePresentationRuntime::viewportFrame() const
 {
     return m_viewportCommands.projection().frame;
 }
 
-const ImageViewportProjection &ImagePresentationRuntime::viewportProjection() const
+const ImageViewportProjection& ImagePresentationRuntime::viewportProjection() const
 {
     return m_viewportCommands.projection();
 }
 
 ImageViewportCommand ImagePresentationRuntime::requestViewportContentPosition(
-    const QPointF &contentPosition)
+    const QPointF& contentPosition)
 {
     return m_viewportCommands.requestContentPosition(contentPosition);
 }
@@ -263,27 +263,27 @@ bool ImagePresentationRuntime::beginViewportCommandApplication(quint64 commandRe
 }
 
 bool ImagePresentationRuntime::completeViewportCommandApplication(
-    quint64 commandRevision, const QPointF &actualContentPosition)
+    quint64 commandRevision, const QPointF& actualContentPosition)
 {
     return m_viewportCommands.completeCommandApplication(commandRevision, actualContentPosition);
 }
 
 bool ImagePresentationRuntime::acknowledgeViewportCommand(
-    quint64 commandRevision, const QPointF &actualContentPosition)
+    quint64 commandRevision, const QPointF& actualContentPosition)
 {
     return m_viewportCommands.acknowledgeCommand(commandRevision, actualContentPosition);
 }
 
 bool ImagePresentationRuntime::observeViewportContentPosition(
-    const QPointF &contentPosition, ImageViewportObservationOrigin origin)
+    const QPointF& contentPosition, ImageViewportObservationOrigin origin)
 {
     return m_viewportCommands.observeContentPosition(contentPosition, origin);
 }
 
-ImageZoomChangeSet ImagePresentationRuntime::setViewportSize(const QSizeF &viewportSize)
+ImageZoomChangeSet ImagePresentationRuntime::setViewportSize(const QSizeF& viewportSize)
 {
     ImageZoomChangeSet changes
-        = mutateZoomState([viewportSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        = mutateZoomState([viewportSize](ImageZoomState& zoomState, qreal devicePixelRatio) {
               zoomState.setViewportSize(viewportSize, devicePixelRatio);
           });
     refreshViewportFrame(ImageViewportObservationOrigin::Resize);
@@ -293,7 +293,7 @@ ImageZoomChangeSet ImagePresentationRuntime::setViewportSize(const QSizeF &viewp
 ImageZoomChangeSet ImagePresentationRuntime::setZoomPercent(qreal zoomPercent)
 {
     ImageZoomChangeSet changes
-        = mutateZoomState([zoomPercent](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        = mutateZoomState([zoomPercent](ImageZoomState& zoomState, qreal devicePixelRatio) {
               zoomState.setManualZoomPercent(zoomPercent, devicePixelRatio);
           });
     refreshViewportFrame(ImageViewportObservationOrigin::System);
@@ -307,7 +307,7 @@ ImageZoomChangeSet ImagePresentationRuntime::setFitMode(ImageZoomMode zoomMode)
     }
 
     ImageZoomChangeSet changes
-        = mutateZoomState([zoomMode](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        = mutateZoomState([zoomMode](ImageZoomState& zoomState, qreal devicePixelRatio) {
               zoomState.setFitMode(zoomMode, devicePixelRatio);
           });
     refreshViewportFrame(ImageViewportObservationOrigin::System);
@@ -317,7 +317,7 @@ ImageZoomChangeSet ImagePresentationRuntime::setFitMode(ImageZoomMode zoomMode)
 ImageZoomChangeSet ImagePresentationRuntime::resetZoom()
 {
     ImageZoomChangeSet changes
-        = mutateZoomState([](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        = mutateZoomState([](ImageZoomState& zoomState, qreal devicePixelRatio) {
               zoomState.resetZoom(devicePixelRatio);
           });
     refreshViewportFrame(ImageViewportObservationOrigin::System);
@@ -327,7 +327,7 @@ ImageZoomChangeSet ImagePresentationRuntime::resetZoom()
 ImageZoomChangeSet ImagePresentationRuntime::updateRenderContext()
 {
     ImageZoomChangeSet changes
-        = mutateZoomState([](ImageZoomState &zoomState,
+        = mutateZoomState([](ImageZoomState& zoomState,
                               qreal devicePixelRatio) { zoomState.update(devicePixelRatio); },
             true);
     refreshViewportFrame(ImageViewportObservationOrigin::DevicePixelRatio);
@@ -346,7 +346,7 @@ ImageZoomChangeSet ImagePresentationRuntime::setMode(ImagePresentationMode mode)
     }
 
     ImageZoomChangeSet changes
-        = mutateZoomState([this](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        = mutateZoomState([this](ImageZoomState& zoomState, qreal devicePixelRatio) {
               const ImageZoomMode activeZoomMode = zoomState.zoomMode();
               const qreal activeZoomPercent = zoomState.zoomPercent();
               zoomState.setImageSize(sourceImageSize(), devicePixelRatio);
@@ -367,7 +367,7 @@ void ImagePresentationRuntime::setSecondaryPageVisible(bool visible)
 }
 
 ImageZoomChangeSet ImagePresentationRuntime::commitPrimaryPageSlot(
-    const ImagePresentationPageSlotSnapshot &slot, const ImagePresentationScopeKey &scopeKey,
+    const ImagePresentationPageSlotSnapshot& slot, const ImagePresentationScopeKey& scopeKey,
     ImagePresentationPrimaryChangePolicy policy)
 {
     const bool imageChanged = m_primarySlot.imageRevision != slot.imageRevision;
@@ -378,7 +378,7 @@ ImageZoomChangeSet ImagePresentationRuntime::commitPrimaryPageSlot(
     }
 
     ImageZoomChangeSet changes = mutateZoomState(
-        [this, scopeKey, policy](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        [this, scopeKey, policy](ImageZoomState& zoomState, qreal devicePixelRatio) {
             const ImageZoomMode activeZoomMode = zoomState.zoomMode();
             const qreal activeZoomPercent = zoomState.zoomPercent();
             zoomState.prepareImageContainer(
@@ -403,7 +403,7 @@ ImageZoomChangeSet ImagePresentationRuntime::commitPrimaryPageSlot(
 }
 
 ImageZoomChangeSet ImagePresentationRuntime::commitPrimaryPageSlot(
-    const ImagePresentationPageSlotSnapshot &slot, const ImagePresentationScopeKey &scopeKey)
+    const ImagePresentationPageSlotSnapshot& slot, const ImagePresentationScopeKey& scopeKey)
 {
     const bool preserveZoom = scopeKey.preservesPageNavigationZoom() && scopeKey == m_scopeKey;
     return commitPrimaryPageSlot(slot, scopeKey,
@@ -412,7 +412,7 @@ ImageZoomChangeSet ImagePresentationRuntime::commitPrimaryPageSlot(
 }
 
 ImageZoomChangeSet ImagePresentationRuntime::commitSecondaryPageSlot(
-    const ImagePresentationPageSlotSnapshot &slot)
+    const ImagePresentationPageSlotSnapshot& slot)
 {
     m_secondarySlot = slot;
     if (m_mode != ImagePresentationMode::TwoPageSpread) {
@@ -420,7 +420,7 @@ ImageZoomChangeSet ImagePresentationRuntime::commitSecondaryPageSlot(
     }
 
     ImageZoomChangeSet changes
-        = mutateZoomState([this](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        = mutateZoomState([this](ImageZoomState& zoomState, qreal devicePixelRatio) {
               const ImageZoomMode activeZoomMode = zoomState.zoomMode();
               const qreal activeZoomPercent = zoomState.zoomPercent();
               zoomState.setImageSize(sourceImageSize(), devicePixelRatio);
@@ -435,7 +435,7 @@ ImageZoomChangeSet ImagePresentationRuntime::commitSecondaryPageSlot(
     return changes;
 }
 
-bool ImagePresentationRuntime::updatePrimaryPageSlot(const ImagePresentationPageSlotSnapshot &slot)
+bool ImagePresentationRuntime::updatePrimaryPageSlot(const ImagePresentationPageSlotSnapshot& slot)
 {
     if (pageSlotsEqual(m_primarySlot, slot)) {
         return false;
@@ -451,7 +451,7 @@ bool ImagePresentationRuntime::updatePrimaryPageSlot(const ImagePresentationPage
 }
 
 bool ImagePresentationRuntime::updateSecondaryPageSlot(
-    const ImagePresentationPageSlotSnapshot &slot)
+    const ImagePresentationPageSlotSnapshot& slot)
 {
     if (pageSlotsEqual(m_secondarySlot, slot)) {
         return false;
@@ -471,7 +471,7 @@ void ImagePresentationRuntime::clearPrimaryPageSlot()
     m_primarySlot = {};
     m_scopeKey = {};
     m_rotationDegrees = 0;
-    mutateZoomState([](ImageZoomState &zoomState, qreal devicePixelRatio) {
+    mutateZoomState([](ImageZoomState& zoomState, qreal devicePixelRatio) {
         zoomState.prepareImageContainer(QUrl());
         zoomState.setImageSize(QSize(), devicePixelRatio);
         zoomState.resetZoom(devicePixelRatio);
@@ -496,7 +496,7 @@ ImagePresentationRotationChange ImagePresentationRuntime::resetRotationChange()
 
     m_rotationDegrees = 0;
     ImageZoomChangeSet changes
-        = mutateZoomState([this](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        = mutateZoomState([this](ImageZoomState& zoomState, qreal devicePixelRatio) {
               zoomState.setImageSize(sourceImageSize(), devicePixelRatio);
           });
     refreshViewportFrame(ImageViewportObservationOrigin::Rotation);
@@ -511,7 +511,7 @@ ImagePresentationRotationChange ImagePresentationRuntime::rotateClockwiseChange(
 
     m_rotationDegrees = imageRotationClockwise(m_rotationDegrees);
     ImageZoomChangeSet changes
-        = mutateZoomState([this](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        = mutateZoomState([this](ImageZoomState& zoomState, qreal devicePixelRatio) {
               zoomState.setImageSize(sourceImageSize(), devicePixelRatio);
           });
     refreshViewportFrame(ImageViewportObservationOrigin::Rotation);
@@ -526,7 +526,7 @@ ImagePresentationRotationChange ImagePresentationRuntime::rotateCounterclockwise
 
     m_rotationDegrees = imageRotationCounterclockwise(m_rotationDegrees);
     ImageZoomChangeSet changes
-        = mutateZoomState([this](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        = mutateZoomState([this](ImageZoomState& zoomState, qreal devicePixelRatio) {
               zoomState.setImageSize(sourceImageSize(), devicePixelRatio);
           });
     refreshViewportFrame(ImageViewportObservationOrigin::Rotation);
@@ -605,7 +605,7 @@ QSize ImagePresentationRuntime::sourceImageSize() const
     return sourceImageSize(currentSnapshot());
 }
 
-QSize ImagePresentationRuntime::sourceImageSize(const ImagePresentationSnapshot &snapshot) const
+QSize ImagePresentationRuntime::sourceImageSize(const ImagePresentationSnapshot& snapshot) const
 {
     return snapshot.mode == ImagePresentationMode::TwoPageSpread
         ? spreadImageSize(snapshot)
@@ -618,22 +618,22 @@ QSize ImagePresentationRuntime::logicalSinglePageImageSize() const
 }
 
 QSize ImagePresentationRuntime::logicalSinglePageImageSize(
-    const ImagePresentationSnapshot &snapshot) const
+    const ImagePresentationSnapshot& snapshot) const
 {
     return rotatedImageSize(snapshot.primary.imageSize, snapshot.rotationDegrees);
 }
 
-QSize ImagePresentationRuntime::spreadImageSize(const ImagePresentationSnapshot &snapshot) const
+QSize ImagePresentationRuntime::spreadImageSize(const ImagePresentationSnapshot& snapshot) const
 {
     return imageSpreadImageSize(snapshot.primary.imageSize, snapshot.secondary.imageSize);
 }
 
-QSizeF ImagePresentationRuntime::displaySize(const ImagePresentationSnapshot &snapshot) const
+QSizeF ImagePresentationRuntime::displaySize(const ImagePresentationSnapshot& snapshot) const
 {
     return snapshot.zoom.displaySize;
 }
 
-QSizeF ImagePresentationRuntime::primaryDisplaySize(const ImagePresentationSnapshot &snapshot) const
+QSizeF ImagePresentationRuntime::primaryDisplaySize(const ImagePresentationSnapshot& snapshot) const
 {
     if (snapshot.mode == ImagePresentationMode::SinglePage) {
         return displaySize(snapshot);
@@ -644,7 +644,7 @@ QSizeF ImagePresentationRuntime::primaryDisplaySize(const ImagePresentationSnaps
 }
 
 QSizeF ImagePresentationRuntime::secondaryDisplaySize(
-    const ImagePresentationSnapshot &snapshot) const
+    const ImagePresentationSnapshot& snapshot) const
 {
     if (snapshot.mode == ImagePresentationMode::SinglePage) {
         return {};
@@ -654,20 +654,20 @@ QSizeF ImagePresentationRuntime::secondaryDisplaySize(
         snapshot.secondary.imageSize, spreadImageSize(snapshot), displaySize(snapshot));
 }
 
-QRectF ImagePresentationRuntime::primaryPageRect(const ImagePresentationSnapshot &snapshot) const
+QRectF ImagePresentationRuntime::primaryPageRect(const ImagePresentationSnapshot& snapshot) const
 {
     return imageSpreadPrimaryPageRect(primaryDisplaySize(snapshot), secondaryDisplaySize(snapshot),
         displaySize(snapshot), snapshot.rightToLeftReading);
 }
 
-QRectF ImagePresentationRuntime::secondaryPageRect(const ImagePresentationSnapshot &snapshot) const
+QRectF ImagePresentationRuntime::secondaryPageRect(const ImagePresentationSnapshot& snapshot) const
 {
     return imageSpreadSecondaryPageRect(primaryDisplaySize(snapshot),
         secondaryDisplaySize(snapshot), displaySize(snapshot), snapshot.rightToLeftReading);
 }
 
 ImageZoomChangeSet ImagePresentationRuntime::mutateZoomState(
-    const ZoomStateMutation &mutation, bool forceDisplayProjectionUpdate)
+    const ZoomStateMutation& mutation, bool forceDisplayProjectionUpdate)
 {
     return m_zoomWorkflowState.mutate(mutation, forceDisplayProjectionUpdate).changes;
 }
@@ -678,11 +678,11 @@ void ImagePresentationRuntime::refreshViewportFrame(ImageViewportObservationOrig
 }
 
 ImagePresentationRenderProjection ImagePresentationRuntime::renderProjection(
-    const ImagePresentationSnapshot &snapshot, DisplayedPageRole role) const
+    const ImagePresentationSnapshot& snapshot, DisplayedPageRole role) const
 {
     const ImageDocumentRenderContext context = renderContext();
     const bool secondary = role == DisplayedPageRole::Secondary;
-    const ImagePresentationPageSlotSnapshot &slot
+    const ImagePresentationPageSlotSnapshot& slot
         = secondary ? snapshot.secondary : snapshot.primary;
     if (!slot.hasImage()) {
         return hiddenProjection(role);
@@ -728,10 +728,10 @@ ImagePresentationRenderProjection ImagePresentationRuntime::renderProjection(
 }
 
 ImageDisplaySourceProjection ImagePresentationRuntime::displaySourceProjection(
-    const ImagePresentationSnapshot &snapshot, DisplayedPageRole role) const
+    const ImagePresentationSnapshot& snapshot, DisplayedPageRole role) const
 {
     const bool secondary = role == DisplayedPageRole::Secondary;
-    const ImagePresentationPageSlotSnapshot &slot
+    const ImagePresentationPageSlotSnapshot& slot
         = secondary ? snapshot.secondary : snapshot.primary;
     if (!slot.hasImage()) {
         return hiddenDisplaySourceProjection(role);
@@ -744,7 +744,7 @@ ImageDisplaySourceProjection ImagePresentationRuntime::displaySourceProjection(
     ImageDisplaySourceProjection projection;
     projection.visible = true;
     projection.pageRole = role;
-    const ImageDisplaySourceSlot &displaySource = slot.displaySource();
+    const ImageDisplaySourceSlot& displaySource = slot.displaySource();
     projection.providerUrl = displaySource.providerUrl;
     projection.revision = displaySource.revision;
     projection.revisionToken = imageDisplaySourceRevisionToken(projection.revision);
@@ -777,7 +777,7 @@ ImageDisplaySourceProjection ImagePresentationRuntime::displaySourceProjection(
     return projection;
 }
 
-void ImagePresentationRuntime::restoreSnapshot(const ImagePresentationSnapshot &snapshot)
+void ImagePresentationRuntime::restoreSnapshot(const ImagePresentationSnapshot& snapshot)
 {
     m_mode = snapshot.mode;
     m_rightToLeftReadingEnabled = snapshot.rightToLeftReading;
@@ -788,7 +788,7 @@ void ImagePresentationRuntime::restoreSnapshot(const ImagePresentationSnapshot &
     m_secondaryPageVisible = snapshot.secondaryPageVisible;
     m_rotationDegrees = snapshot.rotationDegrees;
     m_zoomWorkflowState.clear();
-    mutateZoomState([snapshot](ImageZoomState &zoomState, qreal devicePixelRatio) {
+    mutateZoomState([snapshot](ImageZoomState& zoomState, qreal devicePixelRatio) {
         zoomState.prepareImageContainer(snapshot.zoom.containerUrl);
         zoomState.setViewportSize(snapshot.zoom.viewportSize, devicePixelRatio);
         zoomState.setImageSize(snapshot.zoom.imageSize, devicePixelRatio);

@@ -22,7 +22,8 @@ private Q_SLOTS:
 };
 
 namespace {
-struct RuntimeProbe {
+struct RuntimeProbe
+{
     std::vector<QString> operations;
     std::vector<bool> progressValues;
     std::vector<QString> errors;
@@ -34,12 +35,12 @@ struct RuntimeProbe {
                 operations.push_back(QStringLiteral("progress"));
                 progressValues.push_back(inProgress);
             },
-            [this](const QString &errorString) {
+            [this](const QString& errorString) {
                 operations.push_back(QStringLiteral("error"));
                 errors.push_back(errorString);
             },
             [this]() { operations.push_back(QStringLiteral("publish")); },
-            [this](const kiriview::DocumentSessionRoutePlan &plan) {
+            [this](const kiriview::DocumentSessionRoutePlan& plan) {
                 operations.push_back(QStringLiteral("route"));
                 routePlans.push_back(plan);
             },
@@ -55,7 +56,7 @@ kiriview::DocumentSessionMediaDeletionCompletion failedCompletion(QString userMe
     return completion;
 }
 
-kiriview::DocumentSessionMediaDeletionCompletion routedCompletion(const QUrl &targetUrl)
+kiriview::DocumentSessionMediaDeletionCompletion routedCompletion(const QUrl& targetUrl)
 {
     kiriview::DocumentSessionMediaDeletionCompletion completion;
     completion.plan.routePlan.kind = kiriview::DocumentSessionRouteKind::DirectImage;

@@ -24,36 +24,37 @@ class ImageContainerNavigationController final : public QObject
 public:
     using NavigationPlanCallback = std::function<void(ImageDocumentPageNavigationPlan)>;
 
-    struct Callbacks {
+    struct Callbacks
+    {
         NavigationPlanCallback navigationPlan;
     };
 
-    ImageContainerNavigationController(QObject *parent,
-        const ImageDocumentPageCandidateRepository &candidateRepository, Callbacks callbacks);
+    ImageContainerNavigationController(QObject* parent,
+        const ImageDocumentPageCandidateRepository& candidateRepository, Callbacks callbacks);
 
-    static bool canOpenAdjacentContainer(const QUrl &currentContainerUrl);
+    static bool canOpenAdjacentContainer(const QUrl& currentContainerUrl);
 
-    void openAdjacentContainer(const QUrl &currentContainerUrl, NavigationDirection direction);
+    void openAdjacentContainer(const QUrl& currentContainerUrl, NavigationDirection direction);
     void cancel();
 
 private:
     void finishContainerNavigation(quint64 operationId,
         std::vector<ContainerNavigationCandidate> candidates, NavigationDirection direction,
-        const QUrl &currentContainerUrl);
+        const QUrl& currentContainerUrl);
     void finishContainerNavigationListWithError(quint64 operationId,
-        const QUrl &currentContainerUrl, const QUrl &parentUrl, NavigationDirection direction,
-        const QString &errorString);
+        const QUrl& currentContainerUrl, const QUrl& parentUrl, NavigationDirection direction,
+        const QString& errorString);
     void loadFirstImageFromContainerNavigation(
-        quint64 operationId, const ContainerNavigationCandidate &container);
-    void finishContainerNavigationImageLoad(quint64 operationId, const QUrl &containerUrl,
+        quint64 operationId, const ContainerNavigationCandidate& container);
+    void finishContainerNavigationImageLoad(quint64 operationId, const QUrl& containerUrl,
         std::vector<ImageDocumentPageCandidate> candidates);
     void openImageFromContainerNavigation(
-        quint64 operationId, const ImageDocumentPageTarget &target, const QUrl &containerUrl);
-    void finishContainerNavigationLoadWithError(quint64 operationId, const QUrl &containerUrl,
-        ContainerNavigationError error, const QString &errorString);
+        quint64 operationId, const ImageDocumentPageTarget& target, const QUrl& containerUrl);
+    void finishContainerNavigationLoadWithError(quint64 operationId, const QUrl& containerUrl,
+        ContainerNavigationError error, const QString& errorString);
     void reportNavigationPlan(ImageDocumentPageNavigationPlan plan);
 
-    const ImageDocumentPageCandidateRepository &m_candidateRepository;
+    const ImageDocumentPageCandidateRepository& m_candidateRepository;
     Callbacks m_callbacks;
     ImageContainerNavigationState m_navigationState;
     ImageIoJob m_containerListJob;

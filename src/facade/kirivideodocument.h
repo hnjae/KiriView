@@ -44,7 +44,7 @@ class KiriVideoDocument : public QObject
     Q_PROPERTY(bool zoomPercentKnown READ zoomPercentKnown NOTIFY zoomPercentKnownChanged)
     Q_PROPERTY(int zoomPercent READ zoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(bool muted READ muted WRITE setMuted NOTIFY mutedChanged)
-    Q_PROPERTY(QObject *videoOutput READ videoOutput NOTIFY videoOutputChanged)
+    Q_PROPERTY(QObject* videoOutput READ videoOutput NOTIFY videoOutputChanged)
 
 public:
     enum class Status {
@@ -55,7 +55,7 @@ public:
     };
     Q_ENUM(Status)
 
-    explicit KiriVideoDocument(QObject *parent = nullptr);
+    explicit KiriVideoDocument(QObject* parent = nullptr);
     ~KiriVideoDocument() override;
 
     QUrl sourceUrl() const;
@@ -72,8 +72,8 @@ public:
     bool zoomPercentKnown() const;
     int zoomPercent() const;
     bool muted() const;
-    QObject *videoOutput() const;
-    const kiriview::EmbeddedMetadata &embeddedMetadata() const;
+    QObject* videoOutput() const;
+    const kiriview::EmbeddedMetadata& embeddedMetadata() const;
     Q_INVOKABLE void play();
     Q_INVOKABLE void pause();
     Q_INVOKABLE void stop();
@@ -104,10 +104,10 @@ Q_SIGNALS:
 private:
     friend class KiriDocumentSession;
 
-    void setSourceUrl(const QUrl &sourceUrl);
-    void setVideoOutput(QObject *videoOutput);
-    void setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect);
-    void handleDocumentChanges(const std::vector<kiriview::VideoDocumentChange> &changes);
+    void setSourceUrl(const QUrl& sourceUrl);
+    void setVideoOutput(QObject* videoOutput);
+    void setVideoOutputGeometry(const QRectF& contentRect, const QRectF& sourceRect);
+    void handleDocumentChanges(const std::vector<kiriview::VideoDocumentChange>& changes);
 
     std::unique_ptr<kiriview::VideoDocumentRuntime> m_runtime;
 };

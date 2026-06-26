@@ -68,7 +68,7 @@ std::optional<ImageDocumentPageTarget> ImageDocumentPageNavigationModel::selectA
 }
 
 bool ImageDocumentPageNavigationModel::shouldKeepExistingWatcherFor(
-    const ImageDocumentPageCandidateListContext &context) const
+    const ImageDocumentPageCandidateListContext& context) const
 {
     return m_knownRefreshContext.has_value()
         && sameImageDocumentPageCandidateListSource(
@@ -76,7 +76,7 @@ bool ImageDocumentPageNavigationModel::shouldKeepExistingWatcherFor(
 }
 
 ImageDocumentPageNavigationRefreshPlan ImageDocumentPageNavigationModel::beginRefresh(
-    const ImageDocumentPageCandidateListContext &context)
+    const ImageDocumentPageCandidateListContext& context)
 {
     const quint64 refreshId = m_pendingRefresh.start();
     const bool keepKnownUrls = m_knownRefreshContext.has_value() && !m_state.targets.empty()
@@ -100,7 +100,7 @@ ImageDocumentPageNavigationRefreshPlan ImageDocumentPageNavigationModel::beginRe
 }
 
 bool ImageDocumentPageNavigationModel::completeRefresh(
-    const std::vector<ImageDocumentPageCandidate> &candidates, const QUrl &currentUrl,
+    const std::vector<ImageDocumentPageCandidate>& candidates, const QUrl& currentUrl,
     ImageDocumentPageCandidateListSource source)
 {
     return completeRefresh(imageDocumentPageCandidateTargets(candidates),
@@ -108,7 +108,7 @@ bool ImageDocumentPageNavigationModel::completeRefresh(
 }
 
 ImageDocumentPageNavigationRefreshResult ImageDocumentPageNavigationModel::completePendingRefresh(
-    const std::vector<ImageDocumentPageCandidate> &candidates, quint64 refreshId,
+    const std::vector<ImageDocumentPageCandidate>& candidates, quint64 refreshId,
     ImageDocumentPageCandidateListSource source)
 {
     std::optional<ImageDocumentPageCandidateListContext> context
@@ -123,7 +123,7 @@ ImageDocumentPageNavigationRefreshResult ImageDocumentPageNavigationModel::compl
 
 ImageDocumentPageNavigationRefreshResult
 ImageDocumentPageNavigationModel::completeWatchedRefreshFromCurrentContext(
-    const std::vector<ImageDocumentPageCandidate> &candidates,
+    const std::vector<ImageDocumentPageCandidate>& candidates,
     ImageDocumentPageCandidateListSource source)
 {
     std::optional<ImageDocumentPageCandidateListContext> context
@@ -137,7 +137,7 @@ ImageDocumentPageNavigationModel::completeWatchedRefreshFromCurrentContext(
 
 ImageDocumentPageNavigationRefreshResult
 ImageDocumentPageNavigationModel::completeRefreshFromCurrentContext(
-    const std::vector<ImageDocumentPageCandidate> &candidates,
+    const std::vector<ImageDocumentPageCandidate>& candidates,
     ImageDocumentPageCandidateListContext context)
 {
     const bool currentPageRemoved

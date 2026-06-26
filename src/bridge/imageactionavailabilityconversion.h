@@ -9,14 +9,14 @@
 
 namespace kiriview::Bridge {
 RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
-    const ::ImageActionAvailabilityInput &input);
+    const ::ImageActionAvailabilityInput& input);
 RustImageActionAvailabilityProjection rustImageActionAvailabilityProjection(
-    const ::ImageActionAvailabilityProjection &projection);
+    const ::ImageActionAvailabilityProjection& projection);
 RustImageShortcutScope rustImageShortcutScope(ApplicationActions::ImageShortcutScope scope);
 RustVideoShortcutAvailabilityInput rustVideoShortcutAvailabilityInput(
-    const ApplicationActions::VideoShortcutAvailabilityInput &input);
+    const ApplicationActions::VideoShortcutAvailabilityInput& input);
 ::ImageActionAvailabilityProjection imageActionAvailabilityProjectionFromRust(
-    const RustImageActionAvailabilityProjection &projection);
+    const RustImageActionAvailabilityProjection& projection);
 }
 
 #endif

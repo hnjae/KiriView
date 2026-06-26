@@ -17,7 +17,8 @@ using kiriview::ApplicationActions::ApplicationCommandRouterInput;
 using kiriview::ApplicationActions::ApplicationCommandRouterPorts;
 using ActionId = kiriview::ApplicationActions::ActionId;
 
-struct CommandLog {
+struct CommandLog
+{
     QStringList actionCalls;
     bool imageAvailable = true;
     bool videoAvailable = true;
@@ -43,7 +44,7 @@ struct CommandLog {
     qint64 lastVideoPosition = -1;
 };
 
-ApplicationCommandRouterPorts commandPorts(CommandLog &log)
+ApplicationCommandRouterPorts commandPorts(CommandLog& log)
 {
     ApplicationCommandRouterPorts ports;
     ports.shell.requestOpenDialog
@@ -417,9 +418,9 @@ void TestApplicationCommandRouter::zoomPresetDescriptorsOwnMetadataAndDispatch()
     ApplicationCommandRouterInput input;
     kiriview::ApplicationActions::ApplicationActionStateInput stateInput;
 
-    for (const kiriview::ApplicationActions::ZoomPresetDescriptor &descriptor :
+    for (const kiriview::ApplicationActions::ZoomPresetDescriptor& descriptor :
         kiriview::ApplicationActions::zoomPresetDescriptors) {
-        const kiriview::ApplicationActions::ActionDefinition *definition
+        const kiriview::ApplicationActions::ActionDefinition* definition
             = kiriview::ApplicationActions::definitionForId(descriptor.actionId);
         QVERIFY(definition != nullptr);
         QCOMPARE(QString::fromLatin1(definition->name), QString::fromLatin1(descriptor.actionName));

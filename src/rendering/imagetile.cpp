@@ -9,7 +9,7 @@
 #include <utility>
 
 namespace kiriview {
-uint qHash(const TileKey &key, uint seed)
+uint qHash(const TileKey& key, uint seed)
 {
     return qHashMulti(seed, key.level, key.x, key.y, key.scaleBucket);
 }
@@ -49,7 +49,7 @@ bool TilePyramid::containsLevel(int level) const
     return ImageTileGeometryPolicy::tilePyramidContainsLevel(levelCount(), level);
 }
 
-bool TilePyramid::containsTile(const TileKey &key) const
+bool TilePyramid::containsTile(const TileKey& key) const
 {
     return ImageTileGeometryPolicy::tilePyramidContainsTile(m_imageSize, m_tileSize, key);
 }
@@ -60,24 +60,24 @@ int TilePyramid::selectLevelForDisplayScale(qreal displayPixelsPerSourcePixel) c
         m_imageSize, displayPixelsPerSourcePixel);
 }
 
-QRect TilePyramid::levelTileRect(const TileKey &key) const
+QRect TilePyramid::levelTileRect(const TileKey& key) const
 {
     return ImageTileGeometryPolicy::tilePyramidLevelTileRect(m_imageSize, m_tileSize, key);
 }
 
-QRect TilePyramid::levelTileTextureRect(const TileKey &key) const
+QRect TilePyramid::levelTileTextureRect(const TileKey& key) const
 {
     return ImageTileGeometryPolicy::tilePyramidLevelTileTextureRect(
         m_imageSize, m_tileSize, m_apronSourcePixels, key);
 }
 
-QRect TilePyramid::sourceRectForLevelRect(int level, const QRect &levelRect) const
+QRect TilePyramid::sourceRectForLevelRect(int level, const QRect& levelRect) const
 {
     return ImageTileGeometryPolicy::tilePyramidSourceRectForLevelRect(
         m_imageSize, level, levelRect);
 }
 
-TileRequest TilePyramid::requestForTile(const TileKey &key) const
+TileRequest TilePyramid::requestForTile(const TileKey& key) const
 {
     TileRequest request = ImageTileGeometryPolicy::tilePyramidRequestForTile(
         m_imageSize, m_tileSize, m_apronSourcePixels, key);
@@ -88,7 +88,7 @@ TileRequest TilePyramid::requestForTile(const TileKey &key) const
 }
 
 std::vector<TileKey> TilePyramid::tilesIntersectingLevelRect(
-    int level, const QRect &levelRect) const
+    int level, const QRect& levelRect) const
 {
     return ImageTileGeometryPolicy::tilePyramidTilesIntersectingLevelRect(
         m_imageSize, m_tileSize, level, levelRect);

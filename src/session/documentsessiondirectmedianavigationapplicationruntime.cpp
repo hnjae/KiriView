@@ -31,7 +31,7 @@ void DocumentSessionDirectMediaNavigationApplicationRuntime::applyInactiveRefres
 }
 
 void DocumentSessionDirectMediaNavigationApplicationRuntime::applyRefresh(
-    ActiveNavigationSourceKind sourceKind, const ActiveNavigationSnapshot &previousSnapshot,
+    ActiveNavigationSourceKind sourceKind, const ActiveNavigationSnapshot& previousSnapshot,
     DocumentSessionDirectMediaNavigationRefreshResult result)
 {
     const QString errorString = result.errorString;
@@ -60,7 +60,7 @@ void DocumentSessionDirectMediaNavigationApplicationRuntime::applyRefresh(
 }
 
 void DocumentSessionDirectMediaNavigationApplicationRuntime::applyOpen(
-    const QUrl &activeDirectMediaCursorUrl, DocumentSessionDirectMediaNavigationOpenResult result)
+    const QUrl& activeDirectMediaCursorUrl, DocumentSessionDirectMediaNavigationOpenResult result)
 {
     const QString errorString = result.errorString;
     const DocumentSessionDirectMediaNavigationOpenApplication application

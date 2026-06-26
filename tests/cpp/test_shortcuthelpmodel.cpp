@@ -24,7 +24,7 @@ constexpr int shortcutKeyTextsRole = Qt::UserRole + 9;
 constexpr int scopeTextRole = Qt::UserRole + 10;
 
 kiriview::ApplicationActions::ShortcutHelpRow row(
-    int actionId, const QString &actionName, const QString &actionText, const QString &shortcutText)
+    int actionId, const QString& actionName, const QString& actionText, const QString& shortcutText)
 {
     return kiriview::ApplicationActions::ShortcutHelpRow {
         actionId,

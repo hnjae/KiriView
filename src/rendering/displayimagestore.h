@@ -30,7 +30,8 @@ enum class DisplayImagePinKind {
     FrameRetention,
 };
 
-struct DisplayImageEntry {
+struct DisplayImageEntry
+{
     QImage image;
     QSize originalSize;
     QSize rasterSize;
@@ -43,7 +44,8 @@ struct DisplayImageEntry {
     DisplayImagePreviewOrigin previewOrigin = DisplayImagePreviewOrigin::None;
 };
 
-struct DisplayImageStoreEntry {
+struct DisplayImageStoreEntry
+{
     QString id;
     QImage image;
     QSize originalSize;
@@ -65,11 +67,11 @@ public:
     ~DisplayImageStore();
 
     QString insert(DisplayImageEntry entry);
-    std::optional<DisplayImageStoreEntry> entry(const QString &id) const;
-    void updatePriority(const QString &id, DisplayImageRetentionPriority priority);
-    bool acquirePinLease(const QString &id, DisplayImagePinKind kind);
-    void releasePinLease(const QString &id, DisplayImagePinKind kind);
-    void release(const QString &id);
+    std::optional<DisplayImageStoreEntry> entry(const QString& id) const;
+    void updatePriority(const QString& id, DisplayImageRetentionPriority priority);
+    bool acquirePinLease(const QString& id, DisplayImagePinKind kind);
+    void releasePinLease(const QString& id, DisplayImagePinKind kind);
+    void release(const QString& id);
     void clear();
     void setByteBudget(qsizetype byteBudget);
     qsizetype byteBudget() const;
@@ -86,7 +88,7 @@ class DisplayImageProvider final : public QQuickImageProvider
 public:
     explicit DisplayImageProvider(std::shared_ptr<DisplayImageStore> store);
 
-    QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
+    QImage requestImage(const QString& id, QSize* size, const QSize& requestedSize) override;
 
 private:
     std::shared_ptr<DisplayImageStore> m_store;
@@ -94,7 +96,7 @@ private:
 
 std::shared_ptr<DisplayImageStore> sharedDisplayImageStore();
 void configureSharedDisplayImageStoreByteBudget(qsizetype byteBudget);
-QUrl displayImageSourceForId(const QString &id);
+QUrl displayImageSourceForId(const QString& id);
 }
 
 #endif

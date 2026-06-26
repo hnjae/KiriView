@@ -67,7 +67,8 @@ void TestVideoDocumentStatusPlan::sourceAndResolverStateTakePrecedenceOverBacken
 
 void TestVideoDocumentStatusPlan::mediaStatusMapsToPublicDocumentStatus()
 {
-    struct Case {
+    struct Case
+    {
         kiriview::VideoMediaStatus mediaStatus;
         kiriview::VideoDocumentStatus documentStatus;
     };
@@ -81,7 +82,7 @@ void TestVideoDocumentStatusPlan::mediaStatusMapsToPublicDocumentStatus()
         { kiriview::VideoMediaStatus::Invalid, kiriview::VideoDocumentStatus::Error },
     };
 
-    for (const Case &testCase : cases) {
+    for (const Case& testCase : cases) {
         const kiriview::VideoDocumentStatusPlan plan = planForMediaStatus(testCase.mediaStatus);
 
         QCOMPARE(plan.status, testCase.documentStatus);

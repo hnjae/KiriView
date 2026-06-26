@@ -13,7 +13,7 @@
 namespace {
 using ActionId = kiriview::ApplicationActions::ActionId;
 
-QVariantList actionIdVariants(const QList<ActionId> &actionIds)
+QVariantList actionIdVariants(const QList<ActionId>& actionIds)
 {
     QVariantList variants;
     variants.reserve(actionIds.size());
@@ -38,7 +38,7 @@ private Q_SLOTS:
 void TestShortcutRouteModel::routeRowsExposeApplicationShortcutPolicy()
 {
     kiriview::ApplicationActions::ShortcutRouteModel model;
-    const QList<kiriview::ApplicationActions::ApplicationShortcutRoute> &routes
+    const QList<kiriview::ApplicationActions::ApplicationShortcutRoute>& routes
         = kiriview::ApplicationActions::shortcutRoutes();
 
     QCOMPARE(model.rowCount(), static_cast<int>(routes.size()));
@@ -54,7 +54,7 @@ void TestShortcutRouteModel::routeRowsExposeApplicationShortcutPolicy()
 
     for (int row = 0; row < model.rowCount(); ++row) {
         const QModelIndex index = model.index(row, 0);
-        const kiriview::ApplicationActions::ApplicationShortcutRoute &route = routes.at(row);
+        const kiriview::ApplicationActions::ApplicationShortcutRoute& route = routes.at(row);
         QCOMPARE(model.data(index, kiriview::ApplicationActions::ShortcutRouteModel::ActionIdsRole)
                      .toList(),
             actionIdVariants(route.actionIds));

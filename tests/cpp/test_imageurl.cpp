@@ -18,7 +18,7 @@
 #include <sys/xattr.h>
 
 namespace {
-QUrl archiveUrl(const QString &scheme, const QString &path)
+QUrl archiveUrl(const QString& scheme, const QString& path)
 {
     QUrl url;
     url.setScheme(scheme);
@@ -26,7 +26,7 @@ QUrl archiveUrl(const QString &scheme, const QString &path)
     return url;
 }
 
-bool writeEmptyFile(const QString &path)
+bool writeEmptyFile(const QString& path)
 {
     QFile file(path);
     return file.open(QIODevice::WriteOnly);

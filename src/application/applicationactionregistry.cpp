@@ -6,22 +6,22 @@
 #include <cstddef>
 
 namespace kiriview::ApplicationActions {
-ApplicationActionRegistry::ApplicationActionRegistry(ApplicationActionHost &host)
+ApplicationActionRegistry::ApplicationActionRegistry(ApplicationActionHost& host)
     : m_host(host)
 {
 }
 
-QAction *ApplicationActionRegistry::collectionAction(const QString &actionName) const
+QAction* ApplicationActionRegistry::collectionAction(const QString& actionName) const
 {
     return m_host.inheritedAction(actionName);
 }
 
-QAction *ApplicationActionRegistry::collectionAction(const ActionDefinition &definition) const
+QAction* ApplicationActionRegistry::collectionAction(const ActionDefinition& definition) const
 {
     return collectionAction(definitionName(definition));
 }
 
-void ApplicationActionRegistry::registerAction(const ActionDefinition &definition, QAction *action)
+void ApplicationActionRegistry::registerAction(const ActionDefinition& definition, QAction* action)
 {
     if (action == nullptr) {
         return;
@@ -31,14 +31,14 @@ void ApplicationActionRegistry::registerAction(const ActionDefinition &definitio
     m_actionsByName.insert(definitionName(definition), action);
 }
 
-QAction *ApplicationActionRegistry::action(const QString &actionName) const
+QAction* ApplicationActionRegistry::action(const QString& actionName) const
 {
     return m_actionsByName.value(actionName, nullptr);
 }
 
-QAction *ApplicationActionRegistry::actionForId(ActionId actionId) const
+QAction* ApplicationActionRegistry::actionForId(ActionId actionId) const
 {
-    const ActionDefinition *definition = definitionForId(actionId);
+    const ActionDefinition* definition = definitionForId(actionId);
     if (definition == nullptr) {
         return nullptr;
     }
@@ -56,8 +56,8 @@ QList<RegisteredApplicationAction> ApplicationActionRegistry::registeredActions(
     QList<RegisteredApplicationAction> actions;
     actions.reserve(static_cast<qsizetype>(definitions().size()));
 
-    for (const ActionDefinition &definition : definitions()) {
-        QAction *registeredAction = actionForId(definition.actionId);
+    for (const ActionDefinition& definition : definitions()) {
+        QAction* registeredAction = actionForId(definition.actionId);
         if (registeredAction == nullptr) {
             continue;
         }
@@ -72,7 +72,7 @@ QList<RegisteredApplicationAction> ApplicationActionRegistry::registeredActions(
     return actions;
 }
 
-QString ApplicationActionRegistry::definitionName(const ActionDefinition &definition)
+QString ApplicationActionRegistry::definitionName(const ActionDefinition& definition)
 {
     return QString::fromLatin1(definition.name);
 }

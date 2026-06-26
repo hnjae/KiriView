@@ -10,9 +10,9 @@
 #include <utility>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl &url)
+kiriview::DirectMediaNavigationCandidate directMediaNavigationCandidate(const QUrl& url)
 {
     return kiriview::DirectMediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
@@ -28,8 +28,8 @@ kiriview::DocumentSessionMediaDeletionFallbackPlan fallbackPlan(
 }
 
 template <typename Operation>
-const Operation *operationAt(
-    const kiriview::DocumentSessionMediaDeletionCompletionPlan &plan, std::size_t index)
+const Operation* operationAt(
+    const kiriview::DocumentSessionMediaDeletionCompletionPlan& plan, std::size_t index)
 {
     if (index >= plan.routePlan.mutations.size()) {
         return nullptr;
@@ -39,8 +39,8 @@ const Operation *operationAt(
 }
 
 template <typename Effect>
-const Effect *followUpEffectAt(
-    const kiriview::DocumentSessionMediaDeletionCompletionPlan &plan, std::size_t index)
+const Effect* followUpEffectAt(
+    const kiriview::DocumentSessionMediaDeletionCompletionPlan& plan, std::size_t index)
 {
     if (index >= plan.routePlan.followUpEffects.size()) {
         return nullptr;
@@ -128,7 +128,7 @@ void TestDocumentSessionMediaDeletionPlan::
     QCOMPARE(imagePlan.routePlan.kind, kiriview::DocumentSessionRouteKind::DirectImage);
     QCOMPARE(imagePlan.routePlan.sourceUrl, localUrl(QStringLiteral("/media/03.png")));
     QVERIFY(operationAt<kiriview::ClearImageDocumentRouteOperation>(imagePlan, 0) != nullptr);
-    const auto *imageCursor
+    const auto* imageCursor
         = operationAt<kiriview::RequestDirectImageCursorRouteOperation>(imagePlan, 1);
     QVERIFY(imageCursor != nullptr);
     QCOMPARE(imageCursor->url, localUrl(QStringLiteral("/media/03.png")));

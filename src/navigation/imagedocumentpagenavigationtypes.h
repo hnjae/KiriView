@@ -16,13 +16,15 @@ enum class ImageDocumentPageKind {
     Video,
 };
 
-struct ImageDocumentPageCandidate {
+struct ImageDocumentPageCandidate
+{
     QUrl url;
     QString name;
     ImageDocumentPageKind kind = ImageDocumentPageKind::Image;
 };
 
-struct ImageDocumentPageTarget {
+struct ImageDocumentPageTarget
+{
     ImageDocumentPageTarget() = default;
     explicit ImageDocumentPageTarget(
         QUrl url, ImageDocumentPageKind kind = ImageDocumentPageKind::Image, QString name = {})
@@ -40,7 +42,7 @@ struct ImageDocumentPageTarget {
     QString name;
 
     friend bool operator==(
-        const ImageDocumentPageTarget &left, const ImageDocumentPageTarget &right)
+        const ImageDocumentPageTarget& left, const ImageDocumentPageTarget& right)
     {
         return left.url == right.url && left.kind == right.kind && left.name == right.name;
     }
@@ -59,7 +61,8 @@ enum class ContainerNavigationListFailureSeverity {
     Diagnostic,
 };
 
-struct ContainerNavigationListFailure {
+struct ContainerNavigationListFailure
+{
     QUrl currentContainerUrl;
     QUrl parentUrl;
     NavigationDirection direction = NavigationDirection::Next;
@@ -74,13 +77,15 @@ enum class ContainerNavigationCandidateType {
     ComicBookArchive,
 };
 
-struct ContainerNavigationCandidate {
+struct ContainerNavigationCandidate
+{
     QUrl url;
     QString name;
     ContainerNavigationCandidateType type = ContainerNavigationCandidateType::Directory;
 };
 
-struct PageNavigationState {
+struct PageNavigationState
+{
     PageNavigationState() = default;
     PageNavigationState(std::vector<ImageDocumentPageTarget> targets, int currentIndex = -1)
         : targets(std::move(targets))
@@ -93,7 +98,8 @@ struct PageNavigationState {
     int currentIndex = -1;
 };
 
-struct ImageDocumentPageNavigationSnapshot {
+struct ImageDocumentPageNavigationSnapshot
+{
     PageNavigationState state;
 
     int currentPageNumber() const;
@@ -101,7 +107,8 @@ struct ImageDocumentPageNavigationSnapshot {
     std::optional<QUrl> urlAtPage(int pageNumber) const;
 };
 
-struct ImageDocumentPageActiveNavigationSnapshot {
+struct ImageDocumentPageActiveNavigationSnapshot
+{
     bool known = false;
     bool canOpenPrevious = false;
     bool canOpenNext = false;

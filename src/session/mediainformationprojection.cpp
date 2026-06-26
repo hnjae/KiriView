@@ -12,9 +12,9 @@
 #include <utility>
 
 namespace {
-bool hasValidDimensions(const QSize &size) { return size.width() > 0 && size.height() > 0; }
+bool hasValidDimensions(const QSize& size) { return size.width() > 0 && size.height() > 0; }
 
-QString dimensionsText(const QSize &size)
+QString dimensionsText(const QSize& size)
 {
     if (!hasValidDimensions(size)) {
         return {};
@@ -23,7 +23,7 @@ QString dimensionsText(const QSize &size)
     return QStringLiteral("%1×%2 px").arg(size.width()).arg(size.height());
 }
 
-QString fileNameForUrl(const QUrl &url)
+QString fileNameForUrl(const QUrl& url)
 {
     QString fileName = url.fileName(QUrl::FullyDecoded);
     if (!fileName.isEmpty()) {
@@ -34,14 +34,14 @@ QString fileNameForUrl(const QUrl &url)
 }
 
 void appendRowIfValue(
-    std::vector<kiriview::MediaInformationProjectionRow> &rows, QString label, const QString &value)
+    std::vector<kiriview::MediaInformationProjectionRow>& rows, QString label, const QString& value)
 {
     if (!value.isEmpty()) {
         rows.push_back({ std::move(label), value });
     }
 }
 
-bool openedCollectionScopeInformationAvailable(const kiriview::OpenedCollectionScopeLocation &scope)
+bool openedCollectionScopeInformationAvailable(const kiriview::OpenedCollectionScopeLocation& scope)
 {
     if (scope.isEmpty() || scope.isDirectory()) {
         return true;
@@ -50,7 +50,7 @@ bool openedCollectionScopeInformationAvailable(const kiriview::OpenedCollectionS
     return kiriview::archiveRootSchemeUsesKioFuse(scope.rootUrl().scheme());
 }
 
-QUrl imageInformationTargetUrl(const kiriview::MediaInformationProjectionInput &input)
+QUrl imageInformationTargetUrl(const kiriview::MediaInformationProjectionInput& input)
 {
     if (input.documentKind != kiriview::DocumentSessionKind::Image || !input.imageReady) {
         return {};
@@ -63,7 +63,7 @@ QUrl imageInformationTargetUrl(const kiriview::MediaInformationProjectionInput &
     return input.imageDisplayedUrl;
 }
 
-QUrl videoInformationTargetUrl(const kiriview::MediaInformationProjectionInput &input)
+QUrl videoInformationTargetUrl(const kiriview::MediaInformationProjectionInput& input)
 {
     if (input.documentKind != kiriview::DocumentSessionKind::Video) {
         return {};
@@ -72,7 +72,7 @@ QUrl videoInformationTargetUrl(const kiriview::MediaInformationProjectionInput &
     return input.videoSourceUrl;
 }
 
-QUrl informationTargetUrl(const kiriview::MediaInformationProjectionInput &input)
+QUrl informationTargetUrl(const kiriview::MediaInformationProjectionInput& input)
 {
     switch (input.documentKind) {
     case kiriview::DocumentSessionKind::Image:
@@ -86,10 +86,10 @@ QUrl informationTargetUrl(const kiriview::MediaInformationProjectionInput &input
     return {};
 }
 
-bool canOpenContainingLocation(const QUrl &url) { return !url.isEmpty() && !url.path().isEmpty(); }
+bool canOpenContainingLocation(const QUrl& url) { return !url.isEmpty() && !url.path().isEmpty(); }
 
 QString generalPathValue(
-    const QUrl &targetUrl, const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    const QUrl& targetUrl, const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     if (!openedCollectionScope.isEmpty()) {
         const QString entryPath
@@ -103,8 +103,8 @@ QString generalPathValue(
 }
 
 std::vector<kiriview::MediaInformationProjectionRow> generalRows(
-    kiriview::MediaInformationKind kind, const QUrl &targetUrl,
-    const kiriview::OpenedCollectionScopeLocation &openedCollectionScope)
+    kiriview::MediaInformationKind kind, const QUrl& targetUrl,
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope)
 {
     QString typeValue;
     switch (kind) {
@@ -125,7 +125,7 @@ std::vector<kiriview::MediaInformationProjectionRow> generalRows(
     return rows;
 }
 
-std::vector<kiriview::MediaInformationProjectionRow> imageRows(const QSize &size)
+std::vector<kiriview::MediaInformationProjectionRow> imageRows(const QSize& size)
 {
     std::vector<kiriview::MediaInformationProjectionRow> rows;
     appendRowIfValue(rows, i18nc("@label:metadata", "Dimensions"), dimensionsText(size));
@@ -133,7 +133,7 @@ std::vector<kiriview::MediaInformationProjectionRow> imageRows(const QSize &size
 }
 
 std::vector<kiriview::MediaInformationProjectionRow> videoRows(
-    const QSize &size, const kiriview::EmbeddedMetadata &metadata)
+    const QSize& size, const kiriview::EmbeddedMetadata& metadata)
 {
     std::vector<kiriview::MediaInformationProjectionRow> rows;
     appendRowIfValue(rows, i18nc("@label:metadata", "Duration"), metadata.duration);
@@ -142,7 +142,7 @@ std::vector<kiriview::MediaInformationProjectionRow> videoRows(
     return rows;
 }
 
-QString cameraText(const kiriview::EmbeddedMetadata &metadata)
+QString cameraText(const kiriview::EmbeddedMetadata& metadata)
 {
     if (!metadata.cameraMake.isEmpty() && !metadata.cameraModel.isEmpty()) {
         return QStringLiteral("%1 %2").arg(metadata.cameraMake, metadata.cameraModel);
@@ -154,7 +154,7 @@ QString cameraText(const kiriview::EmbeddedMetadata &metadata)
 }
 
 std::vector<kiriview::MediaInformationProjectionRow> cameraRows(
-    const kiriview::EmbeddedMetadata &metadata)
+    const kiriview::EmbeddedMetadata& metadata)
 {
     std::vector<kiriview::MediaInformationProjectionRow> rows;
     appendRowIfValue(rows, i18nc("@label:metadata", "Camera"), cameraText(metadata));
@@ -169,18 +169,18 @@ std::vector<kiriview::MediaInformationProjectionRow> cameraRows(
 }
 
 std::vector<kiriview::MediaInformationProjectionRow> advancedRows(
-    const kiriview::EmbeddedMetadata &metadata)
+    const kiriview::EmbeddedMetadata& metadata)
 {
     std::vector<kiriview::MediaInformationProjectionRow> rows;
     rows.reserve(metadata.advancedRows.size());
-    for (const kiriview::EmbeddedMetadataRow &row : metadata.advancedRows) {
+    for (const kiriview::EmbeddedMetadataRow& row : metadata.advancedRows) {
         appendRowIfValue(rows, row.label, row.value);
     }
     return rows;
 }
 
 kiriview::MediaInformationProjectionSnapshot unavailableSnapshot(
-    const kiriview::MediaInformationProjectionInput &input, quint64 revision)
+    const kiriview::MediaInformationProjectionInput& input, quint64 revision)
 {
     kiriview::MediaInformationProjectionSnapshot snapshot;
     snapshot.revision = revision;
@@ -192,7 +192,7 @@ kiriview::MediaInformationProjectionSnapshot unavailableSnapshot(
 }
 
 namespace kiriview {
-QString mediaInformationDisplayPathForUrl(const QUrl &url)
+QString mediaInformationDisplayPathForUrl(const QUrl& url)
 {
     if (url.isLocalFile()) {
         return QDir::toNativeSeparators(url.toLocalFile());
@@ -203,7 +203,7 @@ QString mediaInformationDisplayPathForUrl(const QUrl &url)
 }
 
 MediaInformationProjectionSnapshot projectMediaInformation(
-    const MediaInformationProjectionInput &input, quint64 revision)
+    const MediaInformationProjectionInput& input, quint64 revision)
 {
     MediaInformationProjectionSnapshot snapshot = unavailableSnapshot(input, revision);
     snapshot.targetUrl = informationTargetUrl(input);
@@ -257,7 +257,7 @@ MediaInformationProjectionSnapshot projectMediaInformation(
 }
 
 bool sameMediaInformationProjectionSnapshot(
-    const MediaInformationProjectionSnapshot &left, const MediaInformationProjectionSnapshot &right)
+    const MediaInformationProjectionSnapshot& left, const MediaInformationProjectionSnapshot& right)
 {
     return left.available == right.available && left.kind == right.kind
         && left.targetUrl == right.targetUrl && left.title == right.title

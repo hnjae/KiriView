@@ -28,8 +28,9 @@ kiriview::ImageCacheBudgets testCacheBudgets()
     };
 }
 
-struct ManualImageDocumentPageCandidateLoad {
-    QObject *object = nullptr;
+struct ManualImageDocumentPageCandidateLoad
+{
+    QObject* object = nullptr;
     QUrl url;
     kiriview::ImageDocumentPageCandidatesCallback callback;
     kiriview::ErrorCallback errorCallback;
@@ -44,7 +45,7 @@ public:
     {
         kiriview::ImageDocumentPageCandidateProvider provider;
         provider.directoryImageDocumentPages
-            = [this](QObject *receiver, QUrl directoryUrl,
+            = [this](QObject* receiver, QUrl directoryUrl,
                   kiriview::ImageDocumentPageCandidatesCallback callback,
                   kiriview::ErrorCallback errorCallback) {
                   auto load = std::make_shared<ManualImageDocumentPageCandidateLoad>();
@@ -58,22 +59,22 @@ public:
                   return job;
               };
         provider.directoryContainers
-            = [](QObject *, QUrl, kiriview::ContainerCandidatesCallback, kiriview::ErrorCallback) {
+            = [](QObject*, QUrl, kiriview::ContainerCandidatesCallback, kiriview::ErrorCallback) {
                   return kiriview::ImageIoJob();
               };
         provider.openedCollectionCandidates
-            = [](QObject *, kiriview::OpenedCollectionScopeLocation,
+            = [](QObject*, kiriview::OpenedCollectionScopeLocation,
                   kiriview::ImageDocumentPageCandidatesCallback,
                   kiriview::ErrorCallback) { return kiriview::ImageIoJob(); };
         provider.directoryImageDocumentPageChanges
-            = [](QObject *, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
+            = [](QObject*, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
                   kiriview::ErrorCallback) { return kiriview::ImageIoJob(); };
         return provider;
     }
 
     std::size_t imageLoadCount() const { return m_imageLoads.size(); }
 
-    ManualImageDocumentPageCandidateLoad &backImageLoad() { return *m_imageLoads.back(); }
+    ManualImageDocumentPageCandidateLoad& backImageLoad() { return *m_imageLoads.back(); }
 
     void deliverBackImageDocumentPageCandidatesIgnoringCancellation(
         std::vector<kiriview::ImageDocumentPageCandidate> candidates)
@@ -88,10 +89,10 @@ private:
 };
 
 template <typename Operation>
-const Operation *findOperation(const kiriview::ImageDocumentRuntimePlan &plan)
+const Operation* findOperation(const kiriview::ImageDocumentRuntimePlan& plan)
 {
-    for (const kiriview::ImageDocumentRuntimeOperation &operation : plan) {
-        if (const auto *payload = std::get_if<Operation>(&operation)) {
+    for (const kiriview::ImageDocumentRuntimeOperation& operation : plan) {
+        if (const auto* payload = std::get_if<Operation>(&operation)) {
             return payload;
         }
     }
@@ -136,7 +137,7 @@ void TestImageDocumentDeletionController::
             [&runtimePlans](kiriview::ImageDocumentRuntimePlan plan) {
                 runtimePlans.push_back(std::move(plan));
             },
-            [&failures](const QString &errorString) { failures.push_back(errorString); },
+            [&failures](const QString& errorString) { failures.push_back(errorString); },
         });
 
     controller.deleteDisplayedFile(kiriview::FileDeletionMode::MoveToTrash);
@@ -173,7 +174,7 @@ void TestImageDocumentDeletionController::
             [&runtimePlans](kiriview::ImageDocumentRuntimePlan plan) {
                 runtimePlans.push_back(std::move(plan));
             },
-            [&failures](const QString &errorString) { failures.push_back(errorString); },
+            [&failures](const QString& errorString) { failures.push_back(errorString); },
         });
 
     controller.deleteDisplayedFile(kiriview::FileDeletionMode::DeletePermanently);
@@ -208,7 +209,7 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
             [&runtimePlans](kiriview::ImageDocumentRuntimePlan plan) {
                 runtimePlans.push_back(std::move(plan));
             },
-            [&failures](const QString &errorString) { failures.push_back(errorString); },
+            [&failures](const QString& errorString) { failures.push_back(errorString); },
         });
 
     controller.deleteDisplayedFile(kiriview::FileDeletionMode::MoveToTrash);
@@ -252,7 +253,7 @@ void TestImageDocumentDeletionController::canceledFallbackCandidateCompletionIsI
             [&runtimePlans](kiriview::ImageDocumentRuntimePlan plan) {
                 runtimePlans.push_back(std::move(plan));
             },
-            [&failures](const QString &errorString) { failures.push_back(errorString); },
+            [&failures](const QString& errorString) { failures.push_back(errorString); },
         });
 
     controller.deleteDisplayedFile(kiriview::FileDeletionMode::MoveToTrash);

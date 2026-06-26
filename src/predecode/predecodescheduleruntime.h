@@ -17,13 +17,13 @@ namespace kiriview {
 class PredecodeScheduleRuntime final
 {
 public:
-    using StartAdjacentPredecodeCallback = std::function<void(const PredecodePendingSchedule &)>;
+    using StartAdjacentPredecodeCallback = std::function<void(const PredecodePendingSchedule&)>;
     using CancelDomainBackgroundCallback = std::function<void()>;
 
-    PredecodeScheduleRuntime(QObject *owner, PredecodeLoadController &loadController,
+    PredecodeScheduleRuntime(QObject* owner, PredecodeLoadController& loadController,
         StartAdjacentPredecodeCallback startAdjacentPredecode,
         PowerSaverProvider powerSaverProvider = {});
-    PredecodeScheduleRuntime(QObject *owner, PredecodeLoadController &loadController,
+    PredecodeScheduleRuntime(QObject* owner, PredecodeLoadController& loadController,
         StartAdjacentPredecodeCallback startAdjacentPredecode,
         CancelDomainBackgroundCallback cancelDomainBackground,
         PowerSaverProvider powerSaverProvider = {}, TimerScheduler timerScheduler = {});
@@ -36,14 +36,14 @@ public:
     void cancel();
 
 private:
-    void dispatchSchedulePlan(const PredecodeScheduleRuntimePlan &plan);
-    void dispatchScheduleOperation(const PredecodeScheduleOperation &operation);
+    void dispatchSchedulePlan(const PredecodeScheduleRuntimePlan& plan);
+    void dispatchScheduleOperation(const PredecodeScheduleOperation& operation);
     void startDebouncedPredecode();
     void scheduleSettledNeutralPredecode();
     void cancelBackgroundRuntime();
     qint64 currentMonotonicMsec() const;
 
-    PredecodeLoadController &m_loadController;
+    PredecodeLoadController& m_loadController;
     StartAdjacentPredecodeCallback m_startAdjacentPredecode;
     CancelDomainBackgroundCallback m_cancelDomainBackground;
     TimerScheduler m_timerScheduler;

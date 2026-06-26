@@ -20,22 +20,25 @@ enum class ImageLoadStartEffect {
     LoadOpenedCollectionScopeCandidates,
 };
 
-struct OpenedCollectionScopeLoadPlan {
+struct OpenedCollectionScopeLoadPlan
+{
     OpenedCollectionScopeLocation openedCollectionScope;
     OpenedCollectionScopeLoadEffect effect = OpenedCollectionScopeLoadEffect::ReadImage;
 };
 
-struct ImageLoadPlan {
+struct ImageLoadPlan
+{
     ImageLoadSession session;
     ImageLoadStartEffect startEffect = ImageLoadStartEffect::DecodeImage;
 };
 
-struct ImageLoadResolvedSourceFacts {
+struct ImageLoadResolvedSourceFacts
+{
     std::optional<OpenedCollectionScopeLocation> directlyOpenedCollectionScope;
 };
 
 OpenedCollectionScopeLoadPlan openedCollectionScopeLoadPlan(
-    const ImageLoadRequest &request, const ImageLoadResolvedSourceFacts &resolvedSourceFacts = {});
+    const ImageLoadRequest& request, const ImageLoadResolvedSourceFacts& resolvedSourceFacts = {});
 ImageLoadPlan imageLoadPlan(quint64 id, ImageLoadRequest request,
     ImageFirstDisplayDecodeContext firstDisplayContext = {},
     ImageLoadResolvedSourceFacts resolvedSourceFacts = {});

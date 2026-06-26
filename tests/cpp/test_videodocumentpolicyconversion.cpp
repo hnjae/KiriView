@@ -19,7 +19,7 @@ private Q_SLOTS:
 
 namespace {
 template <typename Operation>
-const Operation *operationAt(const kiriview::VideoPlaybackControlPlan &plan, std::size_t index)
+const Operation* operationAt(const kiriview::VideoPlaybackControlPlan& plan, std::size_t index)
 {
     return std::get_if<Operation>(&plan.backendOperations.at(index));
 }
@@ -64,7 +64,7 @@ void TestVideoDocumentPolicyConversion::playbackPlanConversionPreservesOrderedBa
 
     QCOMPARE(plan.backendOperations.size(), std::size_t(3));
     QVERIFY(operationAt<kiriview::EnsureVideoPlaybackBackendOperation>(plan, 0) != nullptr);
-    const auto *setPosition = operationAt<kiriview::SetVideoPlaybackPositionOperation>(plan, 1);
+    const auto* setPosition = operationAt<kiriview::SetVideoPlaybackPositionOperation>(plan, 1);
     QVERIFY(setPosition != nullptr);
     QCOMPARE(setPosition->position, 0);
     QVERIFY(operationAt<kiriview::PlayVideoPlaybackOperation>(plan, 2) != nullptr);

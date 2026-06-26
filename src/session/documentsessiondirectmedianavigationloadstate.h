@@ -10,7 +10,8 @@
 #include <QtGlobal>
 
 namespace kiriview {
-struct DocumentSessionDirectMediaNavigationLoad {
+struct DocumentSessionDirectMediaNavigationLoad
+{
     quint64 operationId = 0;
     DirectMediaScope scope;
 };
@@ -20,9 +21,9 @@ class DocumentSessionDirectMediaNavigationLoadState final
 public:
     explicit DocumentSessionDirectMediaNavigationLoadState(quint64 nextOperationId = 0);
 
-    DocumentSessionDirectMediaNavigationLoad start(const DirectMediaScope &scope);
-    bool accepts(const DocumentSessionDirectMediaNavigationLoad &load) const;
-    bool finish(const DocumentSessionDirectMediaNavigationLoad &load);
+    DocumentSessionDirectMediaNavigationLoad start(const DirectMediaScope& scope);
+    bool accepts(const DocumentSessionDirectMediaNavigationLoad& load) const;
+    bool finish(const DocumentSessionDirectMediaNavigationLoad& load);
     void cancel();
 
 private:

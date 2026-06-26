@@ -28,7 +28,8 @@ enum class ThumbnailGenerationStatus {
     Failed,
 };
 
-struct ThumbnailGenerationRequest {
+struct ThumbnailGenerationRequest
+{
     QByteArray localPathBytes;
     ThumbnailOriginalIdentity originalIdentity;
     OpenedCollectionScopeLocation openedCollectionScope;
@@ -40,7 +41,8 @@ struct ThumbnailGenerationRequest {
     bool cacheInstallEnabled = true;
 };
 
-struct ThumbnailGenerationResult {
+struct ThumbnailGenerationResult
+{
     ThumbnailGenerationStatus status = ThumbnailGenerationStatus::Failed;
     QImage image;
     ActiveNavigationThumbnailDemandBucket requestedBucket
@@ -50,15 +52,16 @@ struct ThumbnailGenerationResult {
 };
 
 using ThumbnailGenerationBytesLoader
-    = std::function<QByteArray(const ThumbnailGenerationRequest &, QString *)>;
+    = std::function<QByteArray(const ThumbnailGenerationRequest&, QString*)>;
 using ThumbnailGenerationOriginalIdentityLoader
     = std::function<std::optional<ThumbnailOriginalIdentity>(
-        const ThumbnailGenerationRequest &, QString *)>;
-using ThumbnailGenerationImageDecoder = std::function<QImage(QByteArray, int, QString *)>;
+        const ThumbnailGenerationRequest&, QString*)>;
+using ThumbnailGenerationImageDecoder = std::function<QImage(QByteArray, int, QString*)>;
 using ThumbnailGenerationMaximumLongEdgePolicy
     = std::function<int(ActiveNavigationThumbnailDemandBucket)>;
 
-struct ThumbnailGenerationCacheInstallResult {
+struct ThumbnailGenerationCacheInstallResult
+{
     bool success = false;
     ActiveNavigationThumbnailDemandBucket requestedBucket
         = ActiveNavigationThumbnailDemandBucket::None;
@@ -67,16 +70,18 @@ struct ThumbnailGenerationCacheInstallResult {
 };
 
 using ThumbnailGenerationCacheLookup = std::function<std::optional<ThumbnailCacheLookupResult>(
-    const ThumbnailOriginalIdentity &, ActiveNavigationThumbnailDemandBucket)>;
+    const ThumbnailOriginalIdentity&, ActiveNavigationThumbnailDemandBucket)>;
 using ThumbnailGenerationCacheInstall = std::function<ThumbnailGenerationCacheInstallResult(
-    const ThumbnailOriginalIdentity &, ActiveNavigationThumbnailDemandBucket, const QImage &)>;
+    const ThumbnailOriginalIdentity&, ActiveNavigationThumbnailDemandBucket, const QImage&)>;
 
-struct ThumbnailGenerationCacheRepository {
+struct ThumbnailGenerationCacheRepository
+{
     ThumbnailGenerationCacheLookup lookup;
     ThumbnailGenerationCacheInstall install;
 };
 
-struct ThumbnailGenerationDependencies {
+struct ThumbnailGenerationDependencies
+{
     ThumbnailGenerationBytesLoader bytesLoader;
     ThumbnailGenerationImageDecoder imageDecoder;
     ThumbnailGenerationMaximumLongEdgePolicy maximumLongEdgeForBucket;
@@ -87,12 +92,12 @@ struct ThumbnailGenerationDependencies {
 
 using ThumbnailGenerationCallback = std::function<void(ThumbnailGenerationResult)>;
 using ThumbnailGenerationProvider
-    = std::function<ImageIoJob(QObject *, ThumbnailGenerationRequest, ThumbnailGenerationCallback)>;
+    = std::function<ImageIoJob(QObject*, ThumbnailGenerationRequest, ThumbnailGenerationCallback)>;
 
 ThumbnailGenerationDependencies defaultThumbnailGenerationDependencies();
 
 ThumbnailGenerationResult generateThumbnail(
-    const ThumbnailGenerationRequest &request, ThumbnailGenerationDependencies dependencies = {});
+    const ThumbnailGenerationRequest& request, ThumbnailGenerationDependencies dependencies = {});
 
 ThumbnailGenerationProvider defaultThumbnailGenerationProvider(
     ImageWorkerScheduler workerScheduler = {}, ThumbnailGenerationDependencies dependencies = {});

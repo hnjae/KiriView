@@ -7,18 +7,18 @@
 
 namespace kiriview {
 ImageDocumentAnimationLoadErrorPort::ImageDocumentAnimationLoadErrorPort(
-    ImageOpenController *openController)
+    ImageOpenController* openController)
     : m_openController(openController)
 {
 }
 
-void ImageDocumentAnimationLoadErrorPort::setOpenController(ImageOpenController *openController)
+void ImageDocumentAnimationLoadErrorPort::setOpenController(ImageOpenController* openController)
 {
     m_openController = openController;
 }
 
 void ImageDocumentAnimationLoadErrorPort::finishAnimationLoadWithError(
-    const QString &errorString) const
+    const QString& errorString) const
 {
     if (m_openController != nullptr) {
         m_openController->finishAnimationLoadWithError(errorString);

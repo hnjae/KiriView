@@ -37,12 +37,12 @@ using kiriview::TestSupport::testImage;
 kiriview::ImageDocumentPageCandidateProvider openedCollectionOnlyProvider()
 {
     return kiriview::ImageDocumentPageCandidateProvider {
-        [](QObject *, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
+        [](QObject*, QUrl, kiriview::ImageDocumentPageCandidatesCallback,
             kiriview::ErrorCallback errorCallback) {
             kiriview::invokeIfSet(errorCallback, QStringLiteral("unexpected directory listing"));
             return kiriview::ImageIoJob();
         },
-        [](QObject *, QUrl, kiriview::ContainerCandidatesCallback,
+        [](QObject*, QUrl, kiriview::ContainerCandidatesCallback,
             kiriview::ErrorCallback errorCallback) {
             kiriview::invokeIfSet(errorCallback, QStringLiteral("unexpected container listing"));
             return kiriview::ImageIoJob();
@@ -53,15 +53,15 @@ kiriview::ImageDocumentPageCandidateProvider openedCollectionOnlyProvider()
 }
 
 kiriview::ImageDocumentPageNavigationService::Callbacks navigationCallbacks(
-    std::function<void(const QUrl &)> openUrl = {},
+    std::function<void(const QUrl&)> openUrl = {},
     kiriview::ImageDocumentPageNavigationService::PageNavigationChangedCallback
         pageNavigationChanged
     = {})
 {
     return kiriview::ImageDocumentPageNavigationService::Callbacks {
         [openUrl = std::move(openUrl)](kiriview::ImageDocumentPageNavigationPlan plan) mutable {
-            for (const kiriview::ImageDocumentPageNavigationEffect &effect : plan) {
-                if (const auto *openEffect
+            for (const kiriview::ImageDocumentPageNavigationEffect& effect : plan) {
+                if (const auto* openEffect
                     = std::get_if<kiriview::OpenImageDocumentPageUrlEffect>(&effect)) {
                     kiriview::invokeIfSet(openUrl, openEffect->target.url);
                 }
@@ -212,7 +212,7 @@ void TestMediaEntrySourceStore::navigationReusesCachedOpenedCollectionCandidates
     QUrl openedUrl;
     kiriview::ImageDocumentPageNavigationService service(this,
         store.wrapCandidateProvider(openedCollectionOnlyProvider()),
-        navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }));
+        navigationCallbacks([&openedUrl](const QUrl& url) { openedUrl = url; }));
 
     service.updatePageNavigation(navigationContext(
         kiriview::DisplayedImageLocation::fromOpenedCollectionScope(firstUrl, *archiveCollection)));

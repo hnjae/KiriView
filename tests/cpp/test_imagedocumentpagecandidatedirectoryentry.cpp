@@ -16,13 +16,13 @@ QUrl directoryUrl()
     return QUrl::fromLocalFile(QStringLiteral("/tmp/kiriview-directory-entry-test/"));
 }
 
-QUrl fileUrl(const QString &fileName)
+QUrl fileUrl(const QString& fileName)
 {
     return QUrl::fromLocalFile(
         QStringLiteral("/tmp/kiriview-directory-entry-test/%1").arg(fileName));
 }
 
-kiriview::ImageDocumentPageCandidate candidate(const QString &fileName)
+kiriview::ImageDocumentPageCandidate candidate(const QString& fileName)
 {
     return kiriview::ImageDocumentPageCandidate {
         fileUrl(fileName),
@@ -31,17 +31,18 @@ kiriview::ImageDocumentPageCandidate candidate(const QString &fileName)
     };
 }
 
-std::vector<QUrl> candidateUrls(const std::vector<kiriview::ImageDocumentPageCandidate> &candidates)
+std::vector<QUrl> candidateUrls(const std::vector<kiriview::ImageDocumentPageCandidate>& candidates)
 {
     std::vector<QUrl> urls;
     urls.reserve(candidates.size());
-    for (const kiriview::ImageDocumentPageCandidate &candidate : candidates) {
+    for (const kiriview::ImageDocumentPageCandidate& candidate : candidates) {
         urls.push_back(candidate.url);
     }
     return urls;
 }
 
-struct FakeWatchProvider {
+struct FakeWatchProvider
+{
     QUrl watchedUrl;
     kiriview::ImageDocumentPageCandidateWatchSnapshotCallback initialSnapshot;
     kiriview::ImageDocumentPageCandidateWatchSnapshotCallback changedSnapshot;
@@ -51,7 +52,7 @@ struct FakeWatchProvider {
 
     kiriview::ImageDocumentPageCandidateWatchProvider provider()
     {
-        return [this](QObject *receiver, QUrl directory,
+        return [this](QObject* receiver, QUrl directory,
                    kiriview::ImageDocumentPageCandidateWatchSnapshotCallback initial,
                    kiriview::ImageDocumentPageCandidateWatchSnapshotCallback changed,
                    kiriview::ImageDocumentPageCandidateWatchDeletedCallback deleted,
@@ -62,8 +63,8 @@ struct FakeWatchProvider {
             changedSnapshot = std::move(changed);
             deletedUrls = std::move(deleted);
             errorCallback = std::move(error);
-            auto *token = new QObject(receiver);
-            return kiriview::ImageIoJob(token, [](QObject *object) { object->deleteLater(); });
+            auto* token = new QObject(receiver);
+            return kiriview::ImageIoJob(token, [](QObject* object) { object->deleteLater(); });
         };
     }
 
@@ -88,7 +89,7 @@ struct FakeWatchProvider {
         }
     }
 
-    void fail(const QString &message)
+    void fail(const QString& message)
     {
         if (errorCallback) {
             errorCallback(message);
@@ -121,7 +122,7 @@ void TestImageDocumentPageCandidateDirectoryEntry::providerCompletionPublishesPe
             loadedCandidates = std::move(candidates);
             loaded = true;
         },
-        [&errorString](const QString &message) { errorString = message; }, this, [](QObject *) {});
+        [&errorString](const QString& message) { errorString = message; }, this, [](QObject*) {});
 
     QVERIFY(loadJob.isActive());
     QVERIFY(entry.open());
@@ -147,7 +148,7 @@ void TestImageDocumentPageCandidateDirectoryEntry::providerChangesPublishSubscri
     bool loaded = false;
     kiriview::ImageIoJob loadJob = entry.addPendingLoad(
         [&loaded](std::vector<kiriview::ImageDocumentPageCandidate>) { loaded = true; },
-        [&errorString](const QString &message) { errorString = message; }, this, [](QObject *) {});
+        [&errorString](const QString& message) { errorString = message; }, this, [](QObject*) {});
     QVERIFY(loadJob.isActive());
     QVERIFY(entry.open());
     provider.complete({ candidate(QStringLiteral("01.png")) });
@@ -162,7 +163,7 @@ void TestImageDocumentPageCandidateDirectoryEntry::providerChangesPublishSubscri
             changedCandidates = std::move(candidates);
             ++changeCount;
         },
-        [&errorString](const QString &message) { errorString = message; }, this, [](QObject *) {});
+        [&errorString](const QString& message) { errorString = message; }, this, [](QObject*) {});
 
     QVERIFY(watchJob.isActive());
     provider.change({ candidate(QStringLiteral("01.png")), candidate(QStringLiteral("02.png")) });
@@ -189,7 +190,7 @@ void TestImageDocumentPageCandidateDirectoryEntry::providerFailurePublishesPendi
     bool loaded = false;
     kiriview::ImageIoJob loadJob = entry.addPendingLoad(
         [&loaded](std::vector<kiriview::ImageDocumentPageCandidate>) { loaded = true; },
-        [&errorString](const QString &message) { errorString = message; }, this, [](QObject *) {});
+        [&errorString](const QString& message) { errorString = message; }, this, [](QObject*) {});
 
     QVERIFY(loadJob.isActive());
     QVERIFY(entry.open());

@@ -12,32 +12,32 @@
 #include <vector>
 
 namespace {
-void appendRemovedCandidate(std::vector<kiriview::ImageDocumentPageCandidate> *candidates,
-    const QUrl &currentUrl, const QString &currentName)
+void appendRemovedCandidate(std::vector<kiriview::ImageDocumentPageCandidate>* candidates,
+    const QUrl& currentUrl, const QString& currentName)
 {
     candidates->push_back(kiriview::ImageDocumentPageCandidate { currentUrl, currentName });
 }
 
-void appendRemovedCandidate(std::vector<kiriview::ContainerNavigationCandidate> *candidates,
-    const QUrl &currentUrl, const QString &currentName)
+void appendRemovedCandidate(std::vector<kiriview::ContainerNavigationCandidate>* candidates,
+    const QUrl& currentUrl, const QString& currentName)
 {
     candidates->push_back(kiriview::ContainerNavigationCandidate {
         currentUrl, currentName, kiriview::ContainerNavigationCandidateType::ComicBookArchive });
 }
 
-void sortRemovalFallbackCandidates(std::vector<kiriview::ImageDocumentPageCandidate> *candidates)
+void sortRemovalFallbackCandidates(std::vector<kiriview::ImageDocumentPageCandidate>* candidates)
 {
     kiriview::sortImageDocumentPageCandidates(candidates);
 }
 
-void sortRemovalFallbackCandidates(std::vector<kiriview::ContainerNavigationCandidate> *candidates)
+void sortRemovalFallbackCandidates(std::vector<kiriview::ContainerNavigationCandidate>* candidates)
 {
     kiriview::sortContainerNavigationCandidates(candidates);
 }
 
 template <typename Candidate>
 std::vector<Candidate> removalFallbackCandidates(
-    std::vector<Candidate> candidates, const QUrl &currentUrl, const QString &currentName)
+    std::vector<Candidate> candidates, const QUrl& currentUrl, const QString& currentName)
 {
     appendRemovedCandidate(&candidates, currentUrl, currentName);
     sortRemovalFallbackCandidates(&candidates);
@@ -46,34 +46,34 @@ std::vector<Candidate> removalFallbackCandidates(
 }
 
 std::optional<kiriview::ImageDocumentPageCandidate> nextFallbackCandidate(
-    const std::vector<kiriview::ImageDocumentPageCandidate> &candidates, const QUrl &currentUrl)
+    const std::vector<kiriview::ImageDocumentPageCandidate>& candidates, const QUrl& currentUrl)
 {
     return kiriview::adjacentImageDocumentPageCandidate(
         candidates, currentUrl, kiriview::NavigationDirection::Next);
 }
 
 std::optional<kiriview::ImageDocumentPageCandidate> previousFallbackCandidate(
-    const std::vector<kiriview::ImageDocumentPageCandidate> &candidates, const QUrl &currentUrl)
+    const std::vector<kiriview::ImageDocumentPageCandidate>& candidates, const QUrl& currentUrl)
 {
     return kiriview::adjacentImageDocumentPageCandidate(
         candidates, currentUrl, kiriview::NavigationDirection::Previous);
 }
 
 std::optional<kiriview::ContainerNavigationCandidate> nextFallbackCandidate(
-    const std::vector<kiriview::ContainerNavigationCandidate> &candidates, const QUrl &currentUrl)
+    const std::vector<kiriview::ContainerNavigationCandidate>& candidates, const QUrl& currentUrl)
 {
     return kiriview::adjacentContainerNavigationCandidate(
         candidates, currentUrl, kiriview::NavigationDirection::Next);
 }
 
 std::optional<kiriview::ContainerNavigationCandidate> previousFallbackCandidate(
-    const std::vector<kiriview::ContainerNavigationCandidate> &candidates, const QUrl &currentUrl)
+    const std::vector<kiriview::ContainerNavigationCandidate>& candidates, const QUrl& currentUrl)
 {
     return kiriview::adjacentContainerNavigationCandidate(
         candidates, currentUrl, kiriview::NavigationDirection::Previous);
 }
 
-QUrl removalTargetUrlForDisplayedLocation(const kiriview::DisplayedImageLocation &location)
+QUrl removalTargetUrlForDisplayedLocation(const kiriview::DisplayedImageLocation& location)
 {
     if (location.imageUrl().isEmpty()) {
         return {};
@@ -88,7 +88,7 @@ QUrl removalTargetUrlForDisplayedLocation(const kiriview::DisplayedImageLocation
 }
 
 kiriview::ImageRemovalFallbackPlan removalFallbackPlanForDisplayedLocation(
-    const kiriview::DisplayedImageLocation &location)
+    const kiriview::DisplayedImageLocation& location)
 {
     const std::optional<kiriview::ImageDocumentPageCandidateListContext> imageContext
         = kiriview::imageDocumentPageCandidateListContextForDisplayedImage(location);
@@ -114,7 +114,7 @@ kiriview::ImageRemovalFallbackPlan removalFallbackPlanForDisplayedLocation(
 }
 
 namespace kiriview {
-ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocation &location)
+ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocation& location)
 {
     const QUrl targetUrl = removalTargetUrlForDisplayedLocation(location);
     if (targetUrl.isEmpty()) {
@@ -125,14 +125,14 @@ ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocati
 }
 
 ImageRemovalFallback imageRemovalFallbackForImageContext(
-    const ImageDocumentPageCandidateListContext &context)
+    const ImageDocumentPageCandidateListContext& context)
 {
     const QUrl currentUrl = context.currentUrl();
     return ImageRemovalFallback { context, currentUrl, currentUrl.fileName() };
 }
 
 std::optional<ImageDocumentPageTarget> imageRemovalFallbackTarget(
-    std::vector<ImageDocumentPageCandidate> candidates, const ImageRemovalFallback &fallback)
+    std::vector<ImageDocumentPageCandidate> candidates, const ImageRemovalFallback& fallback)
 {
     if (fallback.currentUrl.isEmpty()) {
         return std::nullopt;
@@ -157,7 +157,7 @@ std::optional<ImageDocumentPageTarget> imageRemovalFallbackTarget(
 }
 
 ComicBookRemovalFallbackCandidates comicBookRemovalFallbackCandidates(
-    std::vector<ContainerNavigationCandidate> candidates, const ComicBookRemovalFallback &fallback)
+    std::vector<ContainerNavigationCandidate> candidates, const ComicBookRemovalFallback& fallback)
 {
     if (fallback.currentContainerUrl.isEmpty()) {
         return {};

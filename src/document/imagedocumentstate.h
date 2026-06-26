@@ -24,36 +24,36 @@ public:
     using ChangeBatch = ImageDocumentChangeBatcher::Batch;
 
     explicit ImageDocumentState(ChangeCallback changeCallback = {});
-    explicit ImageDocumentState(ImageDocumentChangeBatcher &changes);
+    explicit ImageDocumentState(ImageDocumentChangeBatcher& changes);
 
     ChangeBatch beginChangeBatch();
 
-    const QUrl &sourceUrl() const;
+    const QUrl& sourceUrl() const;
     ImageDocumentPageKind sourceKind() const;
-    const DisplayedImageLocation &displayedImageLocation() const;
-    const OpenedCollectionScopeLocation &displayedOpenedCollectionScope() const;
-    const QUrl &displayedUrl() const;
+    const DisplayedImageLocation& displayedImageLocation() const;
+    const OpenedCollectionScopeLocation& displayedOpenedCollectionScope() const;
+    const QUrl& displayedUrl() const;
     ImageDocumentStatus status() const;
     bool loading() const;
-    const QString &errorString() const;
-    const std::optional<ImageLoadFailure> &loadFailure() const;
+    const QString& errorString() const;
+    const std::optional<ImageLoadFailure>& loadFailure() const;
     QString windowTitleFileName() const;
-    const QUrl &containerNavigationUrl() const;
-    const QUrl &loadingContainerNavigationUrl() const;
+    const QUrl& containerNavigationUrl() const;
+    const QUrl& loadingContainerNavigationUrl() const;
     bool containerNavigationAvailable() const;
     bool unsupportedOpenedCollectionVideo() const;
-    const EmbeddedMetadata &embeddedMetadata() const;
+    const EmbeddedMetadata& embeddedMetadata() const;
 
-    void setSourceUrl(const QUrl &sourceUrl);
+    void setSourceUrl(const QUrl& sourceUrl);
     void setSourceKind(ImageDocumentPageKind sourceKind);
-    void setDisplayedImageLocation(const DisplayedImageLocation &location);
+    void setDisplayedImageLocation(const DisplayedImageLocation& location);
     void clearDisplayedImageLocation();
     void setStatus(ImageDocumentStatus status);
     void setLoading(bool loading);
-    void setErrorString(const QString &errorString);
+    void setErrorString(const QString& errorString);
     void setLoadFailure(ImageLoadFailure failure);
-    void setContainerNavigationUrl(const QUrl &containerUrl);
-    void setLoadingContainerNavigationUrl(const QUrl &containerUrl);
+    void setContainerNavigationUrl(const QUrl& containerUrl);
+    void setLoadingContainerNavigationUrl(const QUrl& containerUrl);
     void clearLoadingContainerNavigationUrl();
     void setUnsupportedOpenedCollectionVideo(bool unsupported);
     void setEmbeddedMetadata(EmbeddedMetadata metadata);
@@ -63,7 +63,7 @@ private:
     void notify(ImageDocumentChange change);
 
     std::unique_ptr<ImageDocumentChangeBatcher> m_ownedChanges;
-    ImageDocumentChangeBatcher *m_changes = nullptr;
+    ImageDocumentChangeBatcher* m_changes = nullptr;
     QUrl m_sourceUrl;
     ImageDocumentPageKind m_sourceKind = ImageDocumentPageKind::Image;
     DisplayedImageLocation m_displayedImageLocation;

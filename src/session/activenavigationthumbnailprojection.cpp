@@ -9,7 +9,7 @@
 
 namespace {
 kiriview::ActiveNavigationThumbnailKind thumbnailKindForDirectMediaNavigationCandidate(
-    const kiriview::DirectMediaNavigationCandidate &candidate)
+    const kiriview::DirectMediaNavigationCandidate& candidate)
 {
     return kiriview::isSupportedDirectVideoFileName(candidate.name)
             || kiriview::isSupportedDirectVideoUrl(candidate.url)
@@ -18,26 +18,26 @@ kiriview::ActiveNavigationThumbnailKind thumbnailKindForDirectMediaNavigationCan
 }
 
 kiriview::ActiveNavigationThumbnailKind thumbnailKindForImageDocumentPageTarget(
-    const kiriview::ImageDocumentPageTarget &target)
+    const kiriview::ImageDocumentPageTarget& target)
 {
     return target.kind == kiriview::ImageDocumentPageKind::Video
         ? kiriview::ActiveNavigationThumbnailKind::Video
         : kiriview::ActiveNavigationThumbnailKind::Image;
 }
 
-QString thumbnailLabel(const QString &candidateName, const QUrl &url)
+QString thumbnailLabel(const QString& candidateName, const QUrl& url)
 {
     return candidateName.isEmpty() ? url.fileName(QUrl::PrettyDecoded) : candidateName;
 }
 
 std::vector<kiriview::ActiveNavigationThumbnailRow> thumbnailRowsForDirectMediaNavigationCandidates(
-    const std::vector<kiriview::DirectMediaNavigationCandidate> &candidates, int currentNumber)
+    const std::vector<kiriview::DirectMediaNavigationCandidate>& candidates, int currentNumber)
 {
     std::vector<kiriview::ActiveNavigationThumbnailRow> rows;
     rows.reserve(candidates.size());
 
     int number = 1;
-    for (const kiriview::DirectMediaNavigationCandidate &candidate : candidates) {
+    for (const kiriview::DirectMediaNavigationCandidate& candidate : candidates) {
         const kiriview::ActiveNavigationThumbnailKind kind
             = thumbnailKindForDirectMediaNavigationCandidate(candidate);
         rows.push_back(kiriview::ActiveNavigationThumbnailRow {
@@ -58,13 +58,13 @@ std::vector<kiriview::ActiveNavigationThumbnailRow> thumbnailRowsForDirectMediaN
 
 std::vector<kiriview::ActiveNavigationThumbnailRow>
 thumbnailRowsForImageDocumentPageNavigationSnapshot(
-    const kiriview::ImageDocumentPageNavigationSnapshot &snapshot, int currentNumber)
+    const kiriview::ImageDocumentPageNavigationSnapshot& snapshot, int currentNumber)
 {
     std::vector<kiriview::ActiveNavigationThumbnailRow> rows;
     rows.reserve(snapshot.state.targets.size());
 
     int number = 1;
-    for (const kiriview::ImageDocumentPageTarget &target : snapshot.state.targets) {
+    for (const kiriview::ImageDocumentPageTarget& target : snapshot.state.targets) {
         const kiriview::ActiveNavigationThumbnailKind kind
             = thumbnailKindForImageDocumentPageTarget(target);
         rows.push_back(kiriview::ActiveNavigationThumbnailRow {
@@ -114,9 +114,9 @@ QString activeNavigationThumbnailSourceKindIdentity(ActiveNavigationThumbnailSou
 }
 
 std::vector<ActiveNavigationThumbnailRow> projectActiveNavigationThumbnailRows(
-    ActiveNavigationSourceKind sourceKind, const ActiveNavigationSnapshot &navigation,
-    const std::vector<DirectMediaNavigationCandidate> &directMediaNavigationCandidates,
-    const ImageDocumentPageNavigationSnapshot &imageDocumentPageNavigationSnapshot)
+    ActiveNavigationSourceKind sourceKind, const ActiveNavigationSnapshot& navigation,
+    const std::vector<DirectMediaNavigationCandidate>& directMediaNavigationCandidates,
+    const ImageDocumentPageNavigationSnapshot& imageDocumentPageNavigationSnapshot)
 {
     if (!navigation.available || !navigation.known || navigation.count < 1) {
         return {};

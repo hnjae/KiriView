@@ -20,7 +20,7 @@ using kiriview::TestSupport::indexedImageUrl;
 using kiriview::TestSupport::ManualImageDataLoader;
 using kiriview::TestSupport::staticImageDataDecoder;
 
-kiriview::ImageDecodeRequest decodeRequest(quint64 id, const QUrl &url)
+kiriview::ImageDecodeRequest decodeRequest(quint64 id, const QUrl& url)
 {
     return kiriview::ImageDecodeRequest::fromUrl(id, url);
 }
@@ -43,8 +43,8 @@ private Q_SLOTS:
 void TestPredecodeActiveDecodeStore::addRejectsDuplicateOrInvalidRequests()
 {
     kiriview::PredecodeActiveDecodeStore store;
-    auto *firstJob = new kiriview::ImageDecodeJob(this);
-    auto *duplicateJob = new kiriview::ImageDecodeJob(this);
+    auto* firstJob = new kiriview::ImageDecodeJob(this);
+    auto* duplicateJob = new kiriview::ImageDecodeJob(this);
     const QUrl url = indexedImageUrl(1);
 
     QVERIFY(store.add(decodeRequest(7, url), firstJob));
@@ -61,7 +61,7 @@ void TestPredecodeActiveDecodeStore::addRejectsDuplicateOrInvalidRequests()
 void TestPredecodeActiveDecodeStore::finishReturnsMatchingRequestAndDeletesJob()
 {
     kiriview::PredecodeActiveDecodeStore store;
-    auto *job = new kiriview::ImageDecodeJob(this);
+    auto* job = new kiriview::ImageDecodeJob(this);
     QPointer<kiriview::ImageDecodeJob> jobGuard(job);
     const QUrl url = indexedImageUrl(1);
 
@@ -89,7 +89,7 @@ void TestPredecodeActiveDecodeStore::finishReturnsMatchingRequestAndDeletesJob()
 void TestPredecodeActiveDecodeStore::finishRejectsStaleGenerationAndUrl()
 {
     kiriview::PredecodeActiveDecodeStore store;
-    auto *job = new kiriview::ImageDecodeJob(this);
+    auto* job = new kiriview::ImageDecodeJob(this);
     const QUrl url = indexedImageUrl(1);
     const QUrl otherUrl = indexedImageUrl(2);
 
@@ -106,8 +106,8 @@ void TestPredecodeActiveDecodeStore::finishRejectsStaleGenerationAndUrl()
 void TestPredecodeActiveDecodeStore::finishRemovesOnlyMatchingEntry()
 {
     kiriview::PredecodeActiveDecodeStore store;
-    auto *firstJob = new kiriview::ImageDecodeJob(this);
-    auto *secondJob = new kiriview::ImageDecodeJob(this);
+    auto* firstJob = new kiriview::ImageDecodeJob(this);
+    auto* secondJob = new kiriview::ImageDecodeJob(this);
     QPointer<kiriview::ImageDecodeJob> firstJobGuard(firstJob);
     QPointer<kiriview::ImageDecodeJob> secondJobGuard(secondJob);
     const QUrl firstUrl = indexedImageUrl(1);
@@ -136,7 +136,7 @@ void TestPredecodeActiveDecodeStore::cancelCancelsDecodeJobsAndClearsStore()
     kiriview::ImageDecodeDependencies dependencies
         = imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder());
     kiriview::PredecodeActiveDecodeStore store;
-    auto *job = new kiriview::ImageDecodeJob(this, dependencies);
+    auto* job = new kiriview::ImageDecodeJob(this, dependencies);
     QPointer<kiriview::ImageDecodeJob> jobGuard(job);
     const kiriview::ImageDecodeRequest request = decodeRequest(7, indexedImageUrl(1));
 

@@ -12,7 +12,8 @@ enum class DisplayedPageRole {
     Secondary,
 };
 
-struct ImageDocumentRenderContext {
+struct ImageDocumentRenderContext
+{
     qreal devicePixelRatio = 1.0;
     int maximumTextureSize = 0;
     quint64 generation = 0;

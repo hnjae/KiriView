@@ -17,7 +17,7 @@ using kiriview::TestSupport::hasOperationTypes;
 using kiriview::TestSupport::operationAt;
 using kiriview::TestSupport::operationTypes;
 
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 }
 
 class TestImageDocumentNavigationRuntimePlan : public QObject
@@ -169,7 +169,7 @@ void TestImageDocumentNavigationRuntimePlan::containerListErrorIsDiagnosticOnly(
 
     QVERIFY(hasOperationTypes(
         plan, operationTypes<kiriview::ReportContainerNavigationListFailureOperation>()));
-    const kiriview::ContainerNavigationListFailure &failure
+    const kiriview::ContainerNavigationListFailure& failure
         = operationAt<kiriview::ReportContainerNavigationListFailureOperation>(plan, 0).failure;
     QCOMPARE(failure.currentContainerUrl, currentContainerUrl);
     QCOMPARE(failure.parentUrl, parentUrl);

@@ -7,7 +7,7 @@
 
 namespace kiriview {
 DocumentSessionDirectImageCursorSyncPlan documentSessionDirectImageCursorSyncPlan(
-    const DocumentSessionDirectImageCursorSyncInput &input)
+    const DocumentSessionDirectImageCursorSyncInput& input)
 {
     if (input.documentKind != DocumentSessionKind::Image) {
         return {};

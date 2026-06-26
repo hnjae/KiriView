@@ -19,7 +19,7 @@ public:
     explicit DocumentSessionMediaOpenWithRuntime(MediaOpenWithProvider provider = {});
     ~DocumentSessionMediaOpenWithRuntime();
 
-    void open(QObject *receiver, const MediaOpenWithPlan &plan, MediaOpenWithCallback callback);
+    void open(QObject* receiver, const MediaOpenWithPlan& plan, MediaOpenWithCallback callback);
     void cancel();
     bool active() const;
 

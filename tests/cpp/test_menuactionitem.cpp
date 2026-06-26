@@ -26,18 +26,19 @@ private Q_SLOTS:
 };
 
 namespace {
-struct MenuActionItemFixture {
+struct MenuActionItemFixture
+{
     std::unique_ptr<QQuickView> view;
-    QObject *root = nullptr;
+    QObject* root = nullptr;
     QString errorString;
 
     bool isValid() const { return view != nullptr && root != nullptr; }
 };
 
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
@@ -164,7 +165,7 @@ MenuActionItemFixture createFixture()
         return fixture;
     }
 
-    QObject *root = component.create();
+    QObject* root = component.create();
     if (root == nullptr) {
         fixture.errorString = component.errorString();
         return fixture;
@@ -182,9 +183,9 @@ MenuActionItemFixture createFixture()
     return fixture;
 }
 
-QObject *findObject(QObject *root, const QString &objectName)
+QObject* findObject(QObject* root, const QString& objectName)
 {
-    return root->findChild<QObject *>(objectName, Qt::FindChildrenRecursively);
+    return root->findChild<QObject*>(objectName, Qt::FindChildrenRecursively);
 }
 }
 
@@ -205,9 +206,9 @@ void TestMenuActionItem::controlTextDrivesMnemonicDisplay()
 
     QCOMPARE(fixture.root->property("mnemonicLabel").toString(), QStringLiteral("Save &As"));
 
-    QObject *item = findObject(fixture.root, QStringLiteral("overrideTextItem"));
+    QObject* item = findObject(fixture.root, QStringLiteral("overrideTextItem"));
     QVERIFY2(item != nullptr, "overrideTextItem was not created");
-    QObject *label = findObject(item, QStringLiteral("menuActionItemTextLabel"));
+    QObject* label = findObject(item, QStringLiteral("menuActionItemTextLabel"));
     QVERIFY2(label != nullptr, "menuActionItemTextLabel was not created");
     const QString renderedText = label->property("text").toString();
     QVERIFY(renderedText.contains(QStringLiteral("Save")));
@@ -219,7 +220,7 @@ void TestMenuActionItem::actionStateFollowsAction()
     MenuActionItemFixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    QObject *inheritedItem = findObject(fixture.root, QStringLiteral("inheritedStateItem"));
+    QObject* inheritedItem = findObject(fixture.root, QStringLiteral("inheritedStateItem"));
     QVERIFY2(inheritedItem != nullptr, "inheritedStateItem was not created");
     QVERIFY(!inheritedItem->property("enabled").toBool());
     QVERIFY(inheritedItem->property("checkable").toBool());
@@ -233,9 +234,9 @@ void TestMenuActionItem::menuShortcutTextRendersWithoutRegisteringShortcut()
     MenuActionItemFixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    QObject *item = findObject(fixture.root, QStringLiteral("shortcutDisplayItem"));
+    QObject* item = findObject(fixture.root, QStringLiteral("shortcutDisplayItem"));
     QVERIFY2(item != nullptr, "shortcutDisplayItem was not created");
-    QObject *shortcutLabel = findObject(item, QStringLiteral("menuActionItemShortcutLabel"));
+    QObject* shortcutLabel = findObject(item, QStringLiteral("menuActionItemShortcutLabel"));
     QVERIFY2(shortcutLabel != nullptr, "menuActionItemShortcutLabel was not created");
 
     QCOMPARE(item->property("menuShortcutText").toString(), QStringLiteral("Ctrl+O"));

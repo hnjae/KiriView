@@ -26,7 +26,7 @@ MediaEntrySourceRunner::MediaEntrySourceRunner(
 {
 }
 
-const OpenedCollectionScopeLocation &MediaEntrySourceRunner::openedCollectionScope() const
+const OpenedCollectionScopeLocation& MediaEntrySourceRunner::openedCollectionScope() const
 {
     return m_openedCollectionScope;
 }
@@ -44,13 +44,13 @@ MediaEntrySourceCandidatesResult MediaEntrySourceRunner::loadImageDocumentPageCa
     }
 
     MediaEntrySourceCandidatesResult result = m_source->loadImageDocumentPageCandidates();
-    if (const auto *candidates = std::get_if<MediaEntrySourceCandidates>(&result)) {
+    if (const auto* candidates = std::get_if<MediaEntrySourceCandidates>(&result)) {
         m_cachedCandidates = candidates->candidates;
     }
     return result;
 }
 
-MediaEntrySourceImageDataResult MediaEntrySourceRunner::loadImageData(const QUrl &imageUrl)
+MediaEntrySourceImageDataResult MediaEntrySourceRunner::loadImageData(const QUrl& imageUrl)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     const std::optional<MediaEntrySourceError> error = ensureSource();
@@ -79,12 +79,12 @@ std::optional<MediaEntrySourceError> MediaEntrySourceRunner::ensureSource()
 
     m_openAttempted = true;
     MediaEntrySourceOpenResult result = m_sourceFactory(m_openedCollectionScope);
-    if (const auto *error = std::get_if<MediaEntrySourceError>(&result)) {
+    if (const auto* error = std::get_if<MediaEntrySourceError>(&result)) {
         m_openError = *error;
         return m_openError;
     }
 
-    const auto *source = std::get_if<MediaEntrySourcePtr>(&result);
+    const auto* source = std::get_if<MediaEntrySourcePtr>(&result);
     if (source == nullptr || *source == nullptr) {
         m_openError = Backend::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
             MediaEntrySourceOperation::OpenCollection, m_openedCollectionScope,

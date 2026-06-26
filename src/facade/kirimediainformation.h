@@ -31,10 +31,10 @@ public:
 
     using Row = kiriview::MediaInformationProjectionRow;
 
-    explicit KiriMediaInformationRowModel(QObject *parent = nullptr);
+    explicit KiriMediaInformationRowModel(QObject* parent = nullptr);
 
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
     void setRows(std::vector<Row> rows);
@@ -56,15 +56,15 @@ class KiriMediaInformation : public QObject
     Q_PROPERTY(QString mediaSectionTitle READ mediaSectionTitle NOTIFY changed)
     Q_PROPERTY(bool hasCameraSection READ hasCameraSection NOTIFY changed)
     Q_PROPERTY(bool hasAdvancedSection READ hasAdvancedSection NOTIFY changed)
-    Q_PROPERTY(QAbstractListModel *generalRows READ generalRows CONSTANT)
-    Q_PROPERTY(QAbstractListModel *mediaRows READ mediaRows CONSTANT)
-    Q_PROPERTY(QAbstractListModel *cameraRows READ cameraRows CONSTANT)
-    Q_PROPERTY(QAbstractListModel *advancedRows READ advancedRows CONSTANT)
+    Q_PROPERTY(QAbstractListModel* generalRows READ generalRows CONSTANT)
+    Q_PROPERTY(QAbstractListModel* mediaRows READ mediaRows CONSTANT)
+    Q_PROPERTY(QAbstractListModel* cameraRows READ cameraRows CONSTANT)
+    Q_PROPERTY(QAbstractListModel* advancedRows READ advancedRows CONSTANT)
     Q_PROPERTY(bool canCopyFilePath READ canCopyFilePath NOTIFY changed)
     Q_PROPERTY(bool canOpenContainingFolder READ canOpenContainingFolder NOTIFY changed)
 
 public:
-    explicit KiriMediaInformation(KiriDocumentSession &session, QObject *parent = nullptr);
+    explicit KiriMediaInformation(KiriDocumentSession& session, QObject* parent = nullptr);
 
     bool available() const;
     quint64 revision() const;
@@ -73,10 +73,10 @@ public:
     QString mediaSectionTitle() const;
     bool hasCameraSection() const;
     bool hasAdvancedSection() const;
-    QAbstractListModel *generalRows();
-    QAbstractListModel *mediaRows();
-    QAbstractListModel *cameraRows();
-    QAbstractListModel *advancedRows();
+    QAbstractListModel* generalRows();
+    QAbstractListModel* mediaRows();
+    QAbstractListModel* cameraRows();
+    QAbstractListModel* advancedRows();
     bool canCopyFilePath() const;
     bool canOpenContainingFolder() const;
 
@@ -91,7 +91,7 @@ private:
     QUrl targetUrl() const;
     QString copiedFilePath() const;
 
-    KiriDocumentSession &m_session;
+    KiriDocumentSession& m_session;
     KiriMediaInformationRowModel m_generalRows;
     KiriMediaInformationRowModel m_mediaRows;
     KiriMediaInformationRowModel m_cameraRows;

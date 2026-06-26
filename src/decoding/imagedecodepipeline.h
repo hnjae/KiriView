@@ -12,9 +12,10 @@
 #include <functional>
 
 namespace kiriview {
-struct ImageDecodeRouterInput {
-    const QByteArray &data;
-    const ImageDecodeRequest &request;
+struct ImageDecodeRouterInput
+{
+    const QByteArray& data;
+    const ImageDecodeRequest& request;
     QtRasterFormat qtRasterFormat = QtRasterFormat::None;
 };
 
@@ -27,7 +28,8 @@ enum class ImageDecodeHandlerKind {
     QtRaster,
 };
 
-struct ImageDecodeRoute {
+struct ImageDecodeRoute
+{
     ImageDecodeHandlerKind handlerKind = ImageDecodeHandlerKind::None;
     ImageDecodeDataSource dataSource = ImageDecodeDataSource::Original;
     QtRasterFormat qtRasterFormat = QtRasterFormat::None;
@@ -35,9 +37,10 @@ struct ImageDecodeRoute {
     bool shouldDecode() const { return handlerKind != ImageDecodeHandlerKind::None; }
 };
 
-using ImageDecodeRouterHandler = std::function<DecodedImageResult(const ImageDecodeRouterInput &)>;
+using ImageDecodeRouterHandler = std::function<DecodedImageResult(const ImageDecodeRouterInput&)>;
 
-struct ImageDecodeRouterHandlers {
+struct ImageDecodeRouterHandlers
+{
     ImageDecodeRouterHandler svg;
     ImageDecodeRouterHandler apng;
     ImageDecodeRouterHandler heifFamily;
@@ -46,8 +49,8 @@ struct ImageDecodeRouterHandlers {
 };
 
 using ImageDecodeInputClassifier
-    = std::function<ImageInputClassification(const QByteArray &, const QString &)>;
-using ImageDecodeCompatibleDataTransform = std::function<QByteArray(const QByteArray &)>;
+    = std::function<ImageInputClassification(const QByteArray&, const QString&)>;
+using ImageDecodeCompatibleDataTransform = std::function<QByteArray(const QByteArray&)>;
 
 ImageDecodeRoute imageDecodeRouteForClassification(ImageInputClassification classification);
 
@@ -57,8 +60,8 @@ public:
     explicit ImageDecodeRouterRuntime(ImageDecodeRouterHandlers handlers = {},
         ImageDecodeCompatibleDataTransform compatibleDataTransform = {});
 
-    DecodedImageResult execute(const ImageDecodeRoute &route, const QByteArray &data,
-        const ImageDecodeRequest &request) const;
+    DecodedImageResult execute(const ImageDecodeRoute& route, const QByteArray& data,
+        const ImageDecodeRequest& request) const;
 
 private:
     ImageDecodeRouterHandlers m_handlers;
@@ -72,7 +75,7 @@ public:
         ImageDecodeInputClassifier classifier = {},
         ImageDecodeCompatibleDataTransform compatibleDataTransform = {});
 
-    DecodedImageResult decode(const QByteArray &data, const ImageDecodeRequest &request) const;
+    DecodedImageResult decode(const QByteArray& data, const ImageDecodeRequest& request) const;
 
 private:
     ImageDecodeInputClassifier m_classifier;
@@ -80,7 +83,7 @@ private:
 };
 
 DecodedImageResult decodeImageDataWithDefaultRouter(
-    const QByteArray &data, const ImageDecodeRequest &request);
+    const QByteArray& data, const ImageDecodeRequest& request);
 }
 
 #endif

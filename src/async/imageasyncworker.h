@@ -17,16 +17,17 @@
 
 namespace kiriview {
 namespace Detail {
-    template <typename Work, typename Finish> struct AsyncWorkerCallbacks {
+    template <typename Work, typename Finish> struct AsyncWorkerCallbacks
+    {
         Work work;
         Finish finish;
     };
 }
 
 template <typename Work, typename Finish>
-void runAsyncWorker(QObject *context, Work work, Finish finish)
+void runAsyncWorker(QObject* context, Work work, Finish finish)
 {
-    using Result = std::invoke_result_t<Work &>;
+    using Result = std::invoke_result_t<Work&>;
     static_assert(!std::is_void_v<Result>, "runAsyncWorker requires a non-void work result");
 
     auto callbacks = std::make_shared<Detail::AsyncWorkerCallbacks<Work, Finish>>(
@@ -37,7 +38,7 @@ void runAsyncWorker(QObject *context, Work work, Finish finish)
         return;
     }
 
-    QObject *deliveryContext = QCoreApplication::instance();
+    QObject* deliveryContext = QCoreApplication::instance();
     if (deliveryContext == nullptr) {
         callbacks->finish(callbacks->work());
         return;

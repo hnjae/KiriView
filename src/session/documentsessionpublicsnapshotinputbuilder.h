@@ -8,7 +8,8 @@
 #include "session/documentsessionpublicprojection.h"
 
 namespace kiriview {
-struct DocumentSessionPublicSnapshotInputBuilderInput {
+struct DocumentSessionPublicSnapshotInputBuilderInput
+{
     quint64 inputRevision = 0;
     DocumentSessionPublicSessionLeafSnapshot session;
     DocumentSessionPublicImageLeafSnapshot image;
@@ -17,7 +18,7 @@ struct DocumentSessionPublicSnapshotInputBuilderInput {
 };
 
 DocumentSessionPublicSnapshotInput buildDocumentSessionPublicSnapshotInput(
-    const DocumentSessionPublicSnapshotInputBuilderInput &input);
+    const DocumentSessionPublicSnapshotInputBuilderInput& input);
 }
 
 #endif

@@ -115,7 +115,7 @@ QString imageErrorActionText(ImageErrorActionTextId id)
     return {};
 }
 
-QString heifDecodeErrorText(const QString &action, const QString &detail)
+QString heifDecodeErrorText(const QString& action, const QString& detail)
 {
     return ki18nc("@info:status", "Could not decode the selected HEIF image: %1: %2")
         .subs(action)
@@ -123,7 +123,7 @@ QString heifDecodeErrorText(const QString &action, const QString &detail)
         .toString();
 }
 
-QString rawDecodeErrorText(const QString &action, const QString &detail)
+QString rawDecodeErrorText(const QString& action, const QString& detail)
 {
     return ki18nc("@info:status", "Could not decode the selected RAW image: %1: %2")
         .subs(action)

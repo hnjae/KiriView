@@ -10,7 +10,7 @@
 
 namespace {
 bool shouldUseMediaEntrySourceStore(
-    const kiriview::ImageDocumentRuntimeDependencyOverrides &overrides)
+    const kiriview::ImageDocumentRuntimeDependencyOverrides& overrides)
 {
     return overrides.mediaEntrySourceFactory
         || (!overrides.candidateProvider.openedCollectionCandidates
@@ -43,7 +43,7 @@ ImageCacheBudgets resolveImageDocumentCacheBudgets(
 }
 
 ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
-    ImageDocumentRuntimeDependencyOverrides overrides, QObject *parent)
+    ImageDocumentRuntimeDependencyOverrides overrides, QObject* parent)
 {
     const bool useMediaEntrySourceStore = shouldUseMediaEntrySourceStore(overrides);
     MediaEntrySourceFactory mediaEntrySourceFactory = std::move(overrides.mediaEntrySourceFactory);

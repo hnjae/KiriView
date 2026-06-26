@@ -27,7 +27,8 @@ private Q_SLOTS:
 };
 
 namespace {
-struct ResolverResult {
+struct ResolverResult
+{
     bool finished = false;
     bool resolved = false;
     quint64 operationId = 0;
@@ -38,7 +39,7 @@ struct ResolverResult {
 
 bool kioFuseServiceMayResolveUrls()
 {
-    QDBusConnectionInterface *interface = QDBusConnection::sessionBus().interface();
+    QDBusConnectionInterface* interface = QDBusConnection::sessionBus().interface();
     if (interface == nullptr) {
         return false;
     }
@@ -54,7 +55,7 @@ bool kioFuseServiceMayResolveUrls()
         && activatableServices.value().contains(QStringLiteral("org.kde.KIOFuse"));
 }
 
-ResolverResult resolvePlaybackUrl(const QUrl &sourceUrl, int timeoutMilliseconds = 10000)
+ResolverResult resolvePlaybackUrl(const QUrl& sourceUrl, int timeoutMilliseconds = 10000)
 {
     QObject receiver;
     QEventLoop loop;

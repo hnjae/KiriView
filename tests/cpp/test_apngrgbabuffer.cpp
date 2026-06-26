@@ -20,12 +20,12 @@ Pixel rgba(unsigned char red, unsigned char green, unsigned char blue, unsigned 
     return Pixel { red, green, blue, alpha };
 }
 
-void writePixels(unsigned char *row, std::initializer_list<Pixel> pixels)
+void writePixels(unsigned char* row, std::initializer_list<Pixel> pixels)
 {
     std::memcpy(row, pixels.begin(), pixels.size() * sizeof(Pixel));
 }
 
-QColor pixel(const QImage &image, int x, int y) { return image.pixelColor(x, y); }
+QColor pixel(const QImage& image, int x, int y) { return image.pixelColor(x, y); }
 }
 
 class TestApngRgbaBuffer : public QObject

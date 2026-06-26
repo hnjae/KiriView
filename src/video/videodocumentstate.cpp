@@ -7,7 +7,7 @@
 #include <utility>
 
 namespace {
-QString fileNameForWindowTitle(const QUrl &sourceUrl)
+QString fileNameForWindowTitle(const QUrl& sourceUrl)
 {
     return sourceUrl.fileName(QUrl::PrettyDecoded);
 }
@@ -30,23 +30,23 @@ VideoDocumentState::VideoDocumentState(ChangeCallback changeCallback)
 {
 }
 
-const QUrl &VideoDocumentState::sourceUrl() const { return m_sourceUrl; }
+const QUrl& VideoDocumentState::sourceUrl() const { return m_sourceUrl; }
 
 VideoDocumentStatus VideoDocumentState::status() const { return m_status; }
 
-const QString &VideoDocumentState::errorString() const { return m_errorString; }
+const QString& VideoDocumentState::errorString() const { return m_errorString; }
 
-const std::optional<VideoSourceLoadFailure> &VideoDocumentState::sourceLoadFailure() const
+const std::optional<VideoSourceLoadFailure>& VideoDocumentState::sourceLoadFailure() const
 {
     return m_sourceLoadFailure;
 }
 
-const std::optional<VideoBackendFailure> &VideoDocumentState::backendFailure() const
+const std::optional<VideoBackendFailure>& VideoDocumentState::backendFailure() const
 {
     return m_backendFailure;
 }
 
-const QString &VideoDocumentState::windowTitleFileName() const { return m_windowTitleFileName; }
+const QString& VideoDocumentState::windowTitleFileName() const { return m_windowTitleFileName; }
 
 qint64 VideoDocumentState::duration() const { return m_duration; }
 
@@ -70,7 +70,7 @@ bool VideoDocumentState::muted() const { return m_muted; }
 
 bool VideoDocumentState::mediaEnded() const { return m_mediaEnded; }
 
-const EmbeddedMetadata &VideoDocumentState::embeddedMetadata() const { return m_embeddedMetadata; }
+const EmbeddedMetadata& VideoDocumentState::embeddedMetadata() const { return m_embeddedMetadata; }
 
 void VideoDocumentState::resetForClearedSource()
 {
@@ -97,7 +97,7 @@ void VideoDocumentState::resetForClearedSource()
     publish(std::move(changes));
 }
 
-void VideoDocumentState::resetForSourceLoad(const QUrl &sourceUrl)
+void VideoDocumentState::resetForSourceLoad(const QUrl& sourceUrl)
 {
     m_mediaEnded = false;
     m_sourceLoadFailure.reset();
@@ -156,7 +156,7 @@ void VideoDocumentState::setStatus(VideoDocumentStatus status)
     publish(std::move(changes));
 }
 
-void VideoDocumentState::setStatusAndError(VideoDocumentStatus status, const QString &errorString)
+void VideoDocumentState::setStatusAndError(VideoDocumentStatus status, const QString& errorString)
 {
     const QString nextErrorString = status == VideoDocumentStatus::Error ? errorString : QString();
     if (status != VideoDocumentStatus::Error
@@ -175,7 +175,7 @@ void VideoDocumentState::setStatusAndError(VideoDocumentStatus status, const QSt
     publish(std::move(changes));
 }
 
-void VideoDocumentState::setErrorString(const QString &errorString)
+void VideoDocumentState::setErrorString(const QString& errorString)
 {
     m_sourceLoadFailure.reset();
     m_backendFailure.reset();
@@ -290,7 +290,7 @@ void VideoDocumentState::publish(std::vector<VideoDocumentChange> changes)
 }
 
 void VideoDocumentState::appendIfSourceUrlChanged(
-    std::vector<VideoDocumentChange> &changes, const QUrl &sourceUrl)
+    std::vector<VideoDocumentChange>& changes, const QUrl& sourceUrl)
 {
     if (m_sourceUrl == sourceUrl) {
         return;
@@ -301,7 +301,7 @@ void VideoDocumentState::appendIfSourceUrlChanged(
 }
 
 void VideoDocumentState::appendIfStatusChanged(
-    std::vector<VideoDocumentChange> &changes, VideoDocumentStatus status)
+    std::vector<VideoDocumentChange>& changes, VideoDocumentStatus status)
 {
     if (m_status == status) {
         return;
@@ -312,7 +312,7 @@ void VideoDocumentState::appendIfStatusChanged(
 }
 
 void VideoDocumentState::appendIfErrorStringChanged(
-    std::vector<VideoDocumentChange> &changes, const QString &errorString)
+    std::vector<VideoDocumentChange>& changes, const QString& errorString)
 {
     if (m_errorString == errorString) {
         return;
@@ -323,7 +323,7 @@ void VideoDocumentState::appendIfErrorStringChanged(
 }
 
 void VideoDocumentState::appendIfWindowTitleFileNameChanged(
-    std::vector<VideoDocumentChange> &changes, const QString &fileName)
+    std::vector<VideoDocumentChange>& changes, const QString& fileName)
 {
     if (m_windowTitleFileName == fileName) {
         return;
@@ -334,7 +334,7 @@ void VideoDocumentState::appendIfWindowTitleFileNameChanged(
 }
 
 void VideoDocumentState::appendIfDurationChanged(
-    std::vector<VideoDocumentChange> &changes, qint64 duration)
+    std::vector<VideoDocumentChange>& changes, qint64 duration)
 {
     const qint64 normalizedDuration = nonNegative(duration);
     if (m_duration == normalizedDuration) {
@@ -346,7 +346,7 @@ void VideoDocumentState::appendIfDurationChanged(
 }
 
 void VideoDocumentState::appendIfPositionChanged(
-    std::vector<VideoDocumentChange> &changes, qint64 position)
+    std::vector<VideoDocumentChange>& changes, qint64 position)
 {
     const qint64 normalizedPosition = nonNegative(position);
     if (m_position == normalizedPosition) {
@@ -358,7 +358,7 @@ void VideoDocumentState::appendIfPositionChanged(
 }
 
 void VideoDocumentState::appendIfPlayingChanged(
-    std::vector<VideoDocumentChange> &changes, bool playing)
+    std::vector<VideoDocumentChange>& changes, bool playing)
 {
     if (m_playing == playing) {
         return;
@@ -369,7 +369,7 @@ void VideoDocumentState::appendIfPlayingChanged(
 }
 
 void VideoDocumentState::appendIfSeekableChanged(
-    std::vector<VideoDocumentChange> &changes, bool seekable)
+    std::vector<VideoDocumentChange>& changes, bool seekable)
 {
     if (m_seekable == seekable) {
         return;
@@ -380,7 +380,7 @@ void VideoDocumentState::appendIfSeekableChanged(
 }
 
 void VideoDocumentState::appendIfHasVideoChanged(
-    std::vector<VideoDocumentChange> &changes, bool hasVideo)
+    std::vector<VideoDocumentChange>& changes, bool hasVideo)
 {
     if (m_hasVideo == hasVideo) {
         return;
@@ -391,7 +391,7 @@ void VideoDocumentState::appendIfHasVideoChanged(
 }
 
 void VideoDocumentState::appendIfHasAudioChanged(
-    std::vector<VideoDocumentChange> &changes, bool hasAudio)
+    std::vector<VideoDocumentChange>& changes, bool hasAudio)
 {
     if (m_hasAudio == hasAudio) {
         return;
@@ -402,7 +402,7 @@ void VideoDocumentState::appendIfHasAudioChanged(
 }
 
 void VideoDocumentState::appendIfVideoSizeChanged(
-    std::vector<VideoDocumentChange> &changes, QSize size)
+    std::vector<VideoDocumentChange>& changes, QSize size)
 {
     const QSize normalizedSize = normalizedVideoSize(size);
     if (m_videoSize == normalizedSize) {
@@ -414,7 +414,7 @@ void VideoDocumentState::appendIfVideoSizeChanged(
 }
 
 void VideoDocumentState::appendIfZoomPercentKnownChanged(
-    std::vector<VideoDocumentChange> &changes, bool known)
+    std::vector<VideoDocumentChange>& changes, bool known)
 {
     if (m_zoomPercentKnown == known) {
         return;
@@ -425,7 +425,7 @@ void VideoDocumentState::appendIfZoomPercentKnownChanged(
 }
 
 void VideoDocumentState::appendIfZoomPercentChanged(
-    std::vector<VideoDocumentChange> &changes, int zoomPercent)
+    std::vector<VideoDocumentChange>& changes, int zoomPercent)
 {
     const int normalizedZoomPercent = nonNegative(zoomPercent);
     if (m_zoomPercent == normalizedZoomPercent) {
@@ -436,7 +436,7 @@ void VideoDocumentState::appendIfZoomPercentChanged(
     changes.push_back(VideoDocumentChange::ZoomPercent);
 }
 
-void VideoDocumentState::appendIfMutedChanged(std::vector<VideoDocumentChange> &changes, bool muted)
+void VideoDocumentState::appendIfMutedChanged(std::vector<VideoDocumentChange>& changes, bool muted)
 {
     if (m_muted == muted) {
         return;

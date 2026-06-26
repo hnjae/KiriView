@@ -22,10 +22,10 @@ namespace {
 using kiriview::TestSupport::archivePageUrl;
 using kiriview::TestSupport::localUrl;
 
-kiriview::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageUrl,
-    const kiriview::OpenedCollectionScopeLocation &archiveCollection
+kiriview::ImageLoadSession loadSession(const QUrl& sourceUrl, const QUrl& imageUrl,
+    const kiriview::OpenedCollectionScopeLocation& archiveCollection
     = kiriview::OpenedCollectionScopeLocation::none(),
-    const QUrl &containerNavigationUrl = QUrl())
+    const QUrl& containerNavigationUrl = QUrl())
 {
     return kiriview::ImageLoadSession(1,
         kiriview::ImageLoadRequest::fromLocation(
@@ -34,10 +34,10 @@ kiriview::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageU
 }
 
 template <typename Operation>
-const Operation *findOperation(const kiriview::ImageDocumentRuntimePlan &plan)
+const Operation* findOperation(const kiriview::ImageDocumentRuntimePlan& plan)
 {
-    for (const kiriview::ImageDocumentRuntimeOperation &operation : plan) {
-        if (const auto *payload = std::get_if<Operation>(&operation)) {
+    for (const kiriview::ImageDocumentRuntimeOperation& operation : plan) {
+        if (const auto* payload = std::get_if<Operation>(&operation)) {
             return payload;
         }
     }
@@ -45,13 +45,13 @@ const Operation *findOperation(const kiriview::ImageDocumentRuntimePlan &plan)
     return nullptr;
 }
 
-template <typename Operation> bool hasOperation(const kiriview::ImageDocumentRuntimePlan &plan)
+template <typename Operation> bool hasOperation(const kiriview::ImageDocumentRuntimePlan& plan)
 {
     return findOperation<Operation>(plan) != nullptr;
 }
 
 template <typename Operation>
-bool operationAtType(const kiriview::ImageDocumentRuntimePlan &plan, std::size_t index)
+bool operationAtType(const kiriview::ImageDocumentRuntimePlan& plan, std::size_t index)
 {
     if (index >= plan.size()) {
         return false;
@@ -61,14 +61,14 @@ bool operationAtType(const kiriview::ImageDocumentRuntimePlan &plan, std::size_t
 }
 
 bool transitionHasEffect(
-    const kiriview::ImageOpenTransition &transition, kiriview::ImageOpenEffect effect)
+    const kiriview::ImageOpenTransition& transition, kiriview::ImageOpenEffect effect)
 {
     return std::find(transition.effects.cbegin(), transition.effects.cend(), effect)
         != transition.effects.cend();
 }
 
 kiriview::ImageDocumentRuntimePlan beginSourceLoad(
-    kiriview::ImageDocumentState &state, bool hasImage)
+    kiriview::ImageDocumentState& state, bool hasImage)
 {
     return kiriview::applyImageOpenApplicationPlan(state,
         kiriview::ImageOpenWorkflow::beginSourceLoadPlan(
@@ -78,28 +78,28 @@ kiriview::ImageDocumentRuntimePlan beginSourceLoad(
             }));
 }
 
-kiriview::ImageDocumentRuntimePlan finishEmptySourceLoad(kiriview::ImageDocumentState &state)
+kiriview::ImageDocumentRuntimePlan finishEmptySourceLoad(kiriview::ImageDocumentState& state)
 {
     return kiriview::applyImageOpenApplicationPlan(
         state, kiriview::ImageOpenWorkflow::finishEmptySourceLoadPlan());
 }
 
 kiriview::ImageDocumentRuntimePlan resolveSourceImage(
-    kiriview::ImageDocumentState &state, const kiriview::ImageLoadSession &session)
+    kiriview::ImageDocumentState& state, const kiriview::ImageLoadSession& session)
 {
     return kiriview::applyImageOpenApplicationPlan(
         state, kiriview::ImageOpenWorkflow::resolveSourceImagePlan(session));
 }
 
 kiriview::ImageDocumentRuntimePlan finishUnsupportedOpenedCollectionVideoLoad(
-    kiriview::ImageDocumentState &state, const kiriview::ImageLoadSession &session)
+    kiriview::ImageDocumentState& state, const kiriview::ImageLoadSession& session)
 {
     return kiriview::applyImageOpenApplicationPlan(state,
         kiriview::ImageOpenWorkflow::finishUnsupportedOpenedCollectionVideoLoadPlan(session));
 }
 
 kiriview::ImageDocumentRuntimePlan finishSuccessfulImageLoad(
-    kiriview::ImageDocumentState &state, const kiriview::ImageLoadSession &session)
+    kiriview::ImageDocumentState& state, const kiriview::ImageLoadSession& session)
 {
     return kiriview::applyImageOpenApplicationPlan(state,
         kiriview::ImageOpenWorkflow::finishSuccessfulImageLoadPlan(
@@ -109,8 +109,8 @@ kiriview::ImageDocumentRuntimePlan finishSuccessfulImageLoad(
             session));
 }
 
-kiriview::ImageDocumentRuntimePlan finishLoadWithError(kiriview::ImageDocumentState &state,
-    const kiriview::ImageLoadSession &session, bool hasImage, const QString &errorString)
+kiriview::ImageDocumentRuntimePlan finishLoadWithError(kiriview::ImageDocumentState& state,
+    const kiriview::ImageLoadSession& session, bool hasImage, const QString& errorString)
 {
     const QUrl displayedUrl = state.displayedUrl();
     kiriview::ImageLoadFailure failure {
@@ -133,7 +133,7 @@ kiriview::ImageDocumentRuntimePlan finishLoadWithError(kiriview::ImageDocumentSt
 }
 
 kiriview::ImageDocumentRuntimePlan finishContainerNavigationLoadWithError(
-    kiriview::ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
+    kiriview::ImageDocumentState& state, const QUrl& containerUrl, const QString& errorString)
 {
     return kiriview::applyImageOpenApplicationPlan(state,
         kiriview::ImageOpenWorkflow::finishContainerNavigationLoadWithErrorPlan(
@@ -141,7 +141,7 @@ kiriview::ImageDocumentRuntimePlan finishContainerNavigationLoadWithError(
 }
 
 kiriview::ImageDocumentRuntimePlan finishAnimationLoadWithError(
-    kiriview::ImageDocumentState &state, const QString &errorString)
+    kiriview::ImageDocumentState& state, const QString& errorString)
 {
     return kiriview::applyImageOpenApplicationPlan(
         state, kiriview::ImageOpenWorkflow::finishAnimationLoadWithErrorPlan(errorString));
@@ -372,7 +372,7 @@ void TestImageOpenWorkflow::emptyContainerFailureSelectsFailedContainer()
     const kiriview::ImageDocumentRuntimePlan plan
         = finishContainerNavigationLoadWithError(state, containerUrl, QStringLiteral("empty"));
     QVERIFY(hasOperation<kiriview::ClearPresentationImageOperation>(plan));
-    const auto *prepareFailedContainer
+    const auto* prepareFailedContainer
         = findOperation<kiriview::PrepareFailedContainerOperation>(plan);
     QVERIFY(prepareFailedContainer != nullptr);
     QCOMPARE(prepareFailedContainer->containerUrl, containerUrl);
@@ -578,7 +578,7 @@ void TestImageOpenWorkflow::workflowTransitionsClearUnsupportedOpenedCollectionV
 void TestImageOpenWorkflow::workflowTransitionsClearEmbeddedMetadata()
 {
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
-    auto publishMetadata = [](kiriview::ImageDocumentState &state) {
+    auto publishMetadata = [](kiriview::ImageDocumentState& state) {
         kiriview::EmbeddedMetadata metadata;
         metadata.cameraMake = QStringLiteral("Kiri Camera");
         state.setEmbeddedMetadata(metadata);

@@ -7,7 +7,7 @@
 #include <utility>
 
 namespace {
-template <typename Operation> void run(const Operation &operation)
+template <typename Operation> void run(const Operation& operation)
 {
     if (operation) {
         operation();
@@ -23,7 +23,7 @@ VideoDocumentPublicSignalEmitter::VideoDocumentPublicSignalEmitter(
 }
 
 void VideoDocumentPublicSignalEmitter::emitChanges(
-    const std::vector<VideoDocumentChange> &changes) const
+    const std::vector<VideoDocumentChange>& changes) const
 {
     for (VideoDocumentPublicSignal signal : videoDocumentPublicSignalsForChanges(changes)) {
         emitSignal(signal);
@@ -125,7 +125,7 @@ std::vector<VideoDocumentPublicSignal> videoDocumentPublicSignals(VideoDocumentC
 }
 
 std::vector<VideoDocumentPublicSignal> videoDocumentPublicSignalsForChanges(
-    const std::vector<VideoDocumentChange> &changes)
+    const std::vector<VideoDocumentChange>& changes)
 {
     std::vector<VideoDocumentPublicSignal> plannedSignals;
     for (VideoDocumentChange change : changes) {

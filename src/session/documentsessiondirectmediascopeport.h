@@ -14,14 +14,14 @@ class DocumentSessionState;
 class DocumentSessionDirectMediaScopePort final
 {
 public:
-    explicit DocumentSessionDirectMediaScopePort(const DocumentSessionState *state);
+    explicit DocumentSessionDirectMediaScopePort(const DocumentSessionState* state);
 
     DirectMediaScope currentScope() const;
     QUrl activeCursorUrl() const;
-    bool cursorMatches(const DirectMediaScope &scope) const;
+    bool cursorMatches(const DirectMediaScope& scope) const;
 
 private:
-    const DocumentSessionState *m_state = nullptr;
+    const DocumentSessionState* m_state = nullptr;
 };
 }
 

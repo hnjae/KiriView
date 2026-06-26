@@ -20,7 +20,7 @@ private Q_SLOTS:
 
 namespace {
 kiriview::DirectMediaScope directMediaScope(
-    const QString &currentPath, const QString &parentPath, quint64 generation)
+    const QString& currentPath, const QString& parentPath, quint64 generation)
 {
     return kiriview::DirectMediaScope {
         QUrl::fromLocalFile(currentPath),

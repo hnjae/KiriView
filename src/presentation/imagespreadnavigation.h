@@ -7,7 +7,8 @@
 #include "navigation/imagedocumentpagenavigationtypes.h"
 
 namespace kiriview {
-struct ImageSpreadNavigationState {
+struct ImageSpreadNavigationState
+{
     bool twoPageModeActive = false;
     int currentPageNumber = 0;
     int pageCount = 0;
@@ -15,17 +16,18 @@ struct ImageSpreadNavigationState {
     bool previousPageIsWide = false;
 };
 
-struct ImageSpreadPageNavigationTarget {
+struct ImageSpreadPageNavigationTarget
+{
     bool handledBySpread = false;
     int pageNumber = 0;
 };
 
-int imageSpreadNavigationCurrentLastPageNumber(const ImageSpreadNavigationState &state);
+int imageSpreadNavigationCurrentLastPageNumber(const ImageSpreadNavigationState& state);
 ImageSpreadPageNavigationTarget imageSpreadPageNavigationTarget(
-    NavigationDirection direction, const ImageSpreadNavigationState &state);
-int imageSpreadRelativePageNavigationTarget(const ImageSpreadNavigationState &state, int offset);
+    NavigationDirection direction, const ImageSpreadNavigationState& state);
+int imageSpreadRelativePageNavigationTarget(const ImageSpreadNavigationState& state, int offset);
 bool imageSpreadShouldBeginNavigationTransition(
-    const ImageSpreadNavigationState &state, int targetPageNumber);
+    const ImageSpreadNavigationState& state, int targetPageNumber);
 }
 
 #endif

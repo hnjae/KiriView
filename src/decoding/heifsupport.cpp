@@ -13,7 +13,7 @@
 #include <utility>
 
 namespace {
-void setHeifSupportError(QString *errorString, const QString &message)
+void setHeifSupportError(QString* errorString, const QString& message)
 {
     if (errorString != nullptr) {
         *errorString = message;
@@ -22,7 +22,7 @@ void setHeifSupportError(QString *errorString, const QString &message)
 }
 
 namespace kiriview {
-QString heifErrorString(const QString &action, const heif_error &error)
+QString heifErrorString(const QString& action, const heif_error& error)
 {
     QString message = imageErrorText(ImageErrorTextId::UnknownLibheifError);
     if (error.message != nullptr) {
@@ -51,22 +51,22 @@ HeifContext::HeifContext()
 {
 }
 
-heif_context *HeifContext::get() const { return m_context.get(); }
+heif_context* HeifContext::get() const { return m_context.get(); }
 
-heif_image_handle **HeifImageHandle::out() { return m_handle.out(); }
+heif_image_handle** HeifImageHandle::out() { return m_handle.out(); }
 
-const heif_image_handle *HeifImageHandle::get() const { return m_handle.get(); }
+const heif_image_handle* HeifImageHandle::get() const { return m_handle.get(); }
 
-HeifTrack::HeifTrack(heif_track *track)
+HeifTrack::HeifTrack(heif_track* track)
     : m_track(track)
 {
 }
 
-heif_track *HeifTrack::get() const { return m_track.get(); }
+heif_track* HeifTrack::get() const { return m_track.get(); }
 
-heif_image **HeifImage::out() { return m_image.out(); }
+heif_image** HeifImage::out() { return m_image.out(); }
 
-const heif_image *HeifImage::get() const { return m_image.get(); }
+const heif_image* HeifImage::get() const { return m_image.get(); }
 
 HeifDecodingOptions::HeifDecodingOptions()
     : m_options(heif_decoding_options_alloc())
@@ -76,9 +76,9 @@ HeifDecodingOptions::HeifDecodingOptions()
     }
 }
 
-const heif_decoding_options *HeifDecodingOptions::get() const { return m_options.get(); }
+const heif_decoding_options* HeifDecodingOptions::get() const { return m_options.get(); }
 
-std::optional<HeifContext> openHeifContext(const QByteArray &data, QString *errorString)
+std::optional<HeifContext> openHeifContext(const QByteArray& data, QString* errorString)
 {
     if (std::optional<QString> initError = initializeHeifLibrary()) {
         setHeifSupportError(errorString, *initError);
@@ -104,7 +104,7 @@ std::optional<HeifContext> openHeifContext(const QByteArray &data, QString *erro
     return std::optional<HeifContext>(std::move(context));
 }
 
-std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray &data, QString *errorString)
+std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray& data, QString* errorString)
 {
     std::optional<HeifContext> context = openHeifContext(data, errorString);
     if (!context.has_value()) {
@@ -122,7 +122,7 @@ std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray &data, QSt
     return HeifPrimaryImage { std::move(*context), std::move(handle) };
 }
 
-std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *errorString)
+std::optional<QImage> qImageFromHeifImage(const heif_image* heifImage, QString* errorString)
 {
     if (heifImage == nullptr) {
         if (errorString != nullptr) {
@@ -141,7 +141,7 @@ std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *
     }
 
     size_t sourceStride = 0;
-    const uint8_t *source
+    const uint8_t* source
         = heif_image_get_plane_readonly2(heifImage, heif_channel_interleaved, &sourceStride);
     constexpr size_t bytesPerPixel = 4;
     const size_t rowBytes = static_cast<size_t>(imageWidth) * bytesPerPixel;

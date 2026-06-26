@@ -19,61 +19,78 @@ enum class DocumentSessionRouteKind {
     ImageDocument,
 };
 
-struct ClearSessionErrorStringRouteOperation {
+struct ClearSessionErrorStringRouteOperation
+{
 };
 
-struct CancelDirectMediaNavigationRouteOperation {
+struct CancelDirectMediaNavigationRouteOperation
+{
 };
 
-struct CancelMediaDeletionRouteOperation {
+struct CancelMediaDeletionRouteOperation
+{
 };
 
-struct ClearDirectMediaNavigationRouteOperation {
+struct ClearDirectMediaNavigationRouteOperation
+{
 };
 
-struct ClearDirectMediaCursorRouteOperation {
+struct ClearDirectMediaCursorRouteOperation
+{
 };
 
-struct SetDirectVideoCursorRouteOperation {
+struct SetDirectVideoCursorRouteOperation
+{
     QUrl url;
 };
 
-struct RequestDirectImageCursorRouteOperation {
+struct RequestDirectImageCursorRouteOperation
+{
     QUrl url;
 };
 
-struct ClearThenRequestDirectImageCursorRouteOperation {
+struct ClearThenRequestDirectImageCursorRouteOperation
+{
     QUrl url;
 };
 
-struct ClearImageDocumentRouteOperation {
+struct ClearImageDocumentRouteOperation
+{
 };
 
-struct LeaveVideoModeRouteOperation {
+struct LeaveVideoModeRouteOperation
+{
 };
 
-struct EnterEmptyDocumentRouteOperation {
+struct EnterEmptyDocumentRouteOperation
+{
 };
 
-struct EnterImageDocumentRouteOperation {
+struct EnterImageDocumentRouteOperation
+{
     QUrl url;
 };
 
-struct EnterVideoDocumentRouteOperation {
+struct EnterVideoDocumentRouteOperation
+{
     QUrl url;
 };
 
-struct SyncDirectImageCursorFromDocumentRouteOperation {
+struct SyncDirectImageCursorFromDocumentRouteOperation
+{
 };
 
-struct ClearSourceIdentityRouteOperation {
+struct ClearSourceIdentityRouteOperation
+{
 };
 
-struct UseOriginalSourceIdentityRouteOperation {
+struct UseOriginalSourceIdentityRouteOperation
+{
     QUrl url;
 };
 
-struct UseImageDocumentSourceIdentityRouteOperation {
+struct UseImageDocumentSourceIdentityRouteOperation
+{
 };
 
 using DocumentSessionRouteMutation = std::variant<ClearSessionErrorStringRouteOperation,
@@ -86,17 +103,20 @@ using DocumentSessionRouteMutation = std::variant<ClearSessionErrorStringRouteOp
     SyncDirectImageCursorFromDocumentRouteOperation, ClearSourceIdentityRouteOperation,
     UseOriginalSourceIdentityRouteOperation, UseImageDocumentSourceIdentityRouteOperation>;
 
-struct RefreshDirectMediaNavigationAfterRoutingRouteEffect {
+struct RefreshDirectMediaNavigationAfterRoutingRouteEffect
+{
 };
 
-struct ClearMediaPredecodeRouteEffect {
+struct ClearMediaPredecodeRouteEffect
+{
 };
 
 using DocumentSessionRouteFollowUpEffect
     = std::variant<RefreshDirectMediaNavigationAfterRoutingRouteEffect,
         ClearMediaPredecodeRouteEffect>;
 
-struct DocumentSessionRoutePlan {
+struct DocumentSessionRoutePlan
+{
     DocumentSessionRouteKind kind = DocumentSessionRouteKind::Empty;
     QUrl sourceUrl;
     std::vector<DocumentSessionRouteMutation> mutations;
@@ -105,9 +125,9 @@ struct DocumentSessionRoutePlan {
 };
 
 DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
-    const QUrl &sourceUrl, DocumentSessionKind currentKind);
+    const QUrl& sourceUrl, DocumentSessionKind currentKind);
 DocumentSessionRoutePlan documentSessionRoutePlanForMediaUrl(
-    const QUrl &url, DocumentSessionKind currentKind);
+    const QUrl& url, DocumentSessionKind currentKind);
 DocumentSessionRoutePlan documentSessionRoutePlanAfterMediaDeletion(
     DocumentSessionKind deletedKind, std::optional<QUrl> fallbackUrl);
 }

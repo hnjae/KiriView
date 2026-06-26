@@ -18,15 +18,16 @@ private Q_SLOTS:
 };
 
 namespace {
-struct AttachmentProbe {
+struct AttachmentProbe
+{
     kiriview::DocumentSessionVideoOutputAttachmentPort port()
     {
         return kiriview::DocumentSessionVideoOutputAttachmentPort {
-            [this](QObject *videoOutput) {
+            [this](QObject* videoOutput) {
                 attachedVideoOutput = videoOutput;
                 ++setVideoOutputCount;
             },
-            [this](const QRectF &contentRect, const QRectF &sourceRect) {
+            [this](const QRectF& contentRect, const QRectF& sourceRect) {
                 lastContentRect = contentRect;
                 lastSourceRect = sourceRect;
                 ++setGeometryCount;
@@ -34,7 +35,7 @@ struct AttachmentProbe {
         };
     }
 
-    QObject *attachedVideoOutput = nullptr;
+    QObject* attachedVideoOutput = nullptr;
     QRectF lastContentRect;
     QRectF lastSourceRect;
     int setVideoOutputCount = 0;

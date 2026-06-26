@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace {
-kiriview::ImageLoadFailure imageLoadFailure(const kiriview::ImageLoadSession &session,
+kiriview::ImageLoadFailure imageLoadFailure(const kiriview::ImageLoadSession& session,
     kiriview::ImageLoadFailureKind kind, QString userMessage, QString diagnosticDetail)
 {
     return kiriview::ImageLoadFailure {
@@ -24,32 +24,32 @@ kiriview::ImageLoadFailure imageLoadFailure(const kiriview::ImageLoadSession &se
     };
 }
 
-kiriview::ImageLoadFailure imageLoadFailure(const kiriview::ImageLoadSession &session,
-    kiriview::ImageLoadFailureKind kind, const QString &errorString)
+kiriview::ImageLoadFailure imageLoadFailure(const kiriview::ImageLoadSession& session,
+    kiriview::ImageLoadFailureKind kind, const QString& errorString)
 {
     return imageLoadFailure(session, kind, errorString, errorString);
 }
 }
 
 namespace kiriview {
-ImageLoader::ImageLoader(QObject *parent)
+ImageLoader::ImageLoader(QObject* parent)
     : ImageLoader(parent, ImageDocumentPageCandidateProvider {}, ImageDecodeDependencies {})
 {
 }
 
-ImageLoader::ImageLoader(QObject *parent, Callbacks callbacks)
+ImageLoader::ImageLoader(QObject* parent, Callbacks callbacks)
     : ImageLoader(parent, ImageDocumentPageCandidateProvider {}, ImageDecodeDependencies {},
           std::move(callbacks))
 {
 }
 
-ImageLoader::ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
+ImageLoader::ImageLoader(QObject* parent, ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies)
     : ImageLoader(parent, std::move(candidateProvider), std::move(decodeDependencies), {})
 {
 }
 
-ImageLoader::ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
+ImageLoader::ImageLoader(QObject* parent, ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, Callbacks callbacks)
     : QObject(parent)
     , m_callbacks(std::move(callbacks))
@@ -58,10 +58,10 @@ ImageLoader::ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider can
               [this](ImageDecodeRequest request, DecodedImageResult result) {
                   finishDecodeResult(std::move(request), std::move(result));
               },
-              [this](const ImageDecodeRequest &request, const QString &errorString) {
+              [this](const ImageDecodeRequest& request, const QString& errorString) {
                   finishImageLoadError(request, errorString);
               },
-              [this](const ImageDecodeRequest &request, StaticDisplayImagePayload preview) {
+              [this](const ImageDecodeRequest& request, StaticDisplayImagePayload preview) {
                   finishThumbnailPreview(request, std::move(preview));
               },
           })
@@ -71,7 +71,7 @@ ImageLoader::ImageLoader(QObject *parent, ImageDocumentPageCandidateProvider can
 
 void ImageLoader::finishDecodeResult(ImageDecodeRequest request, DecodedImageResult result)
 {
-    if (const DecodedImageFailure *failure = result.failure()) {
+    if (const DecodedImageFailure* failure = result.failure()) {
         finishDecodeRequestWithError(request, ImageLoadFailureKind::Decode, failure->errorString);
         return;
     }
@@ -91,13 +91,13 @@ void ImageLoader::finishDecodeResult(ImageDecodeRequest request, DecodedImageRes
 }
 
 void ImageLoader::finishImageLoadError(
-    const ImageDecodeRequest &request, const QString &errorString)
+    const ImageDecodeRequest& request, const QString& errorString)
 {
     finishDecodeRequestWithError(request, ImageLoadFailureKind::DataLoad, errorString);
 }
 
 void ImageLoader::finishThumbnailPreview(
-    const ImageDecodeRequest &request, StaticDisplayImagePayload preview)
+    const ImageDecodeRequest& request, StaticDisplayImagePayload preview)
 {
     std::optional<ImageLoadSession> session = m_sessionTracker.currentForDecodeRequest(request);
     if (!session.has_value()) {
@@ -172,7 +172,7 @@ void ImageLoader::startOpenedCollectionLoad(ImageLoadSession session)
             invokeIfSet(m_callbacks.sourceResolved, completion.session);
             startImageLoad(std::move(completion.session));
         },
-        [this, session](const QString &errorString) {
+        [this, session](const QString& errorString) {
             std::optional<ImageLoadSession> currentSession = m_sessionTracker.claimCurrent(session);
             if (!currentSession.has_value()) {
                 return;
@@ -235,7 +235,7 @@ bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
 }
 
 void ImageLoader::finishDecodeRequestWithError(
-    const ImageDecodeRequest &request, ImageLoadFailureKind kind, const QString &errorString)
+    const ImageDecodeRequest& request, ImageLoadFailureKind kind, const QString& errorString)
 {
     std::optional<ImageLoadSession> session
         = m_sessionTracker.claimCurrentForDecodeRequest(request);

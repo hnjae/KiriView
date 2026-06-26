@@ -29,13 +29,13 @@ ImageLoadPlan ImageLoadSessionTracker::start(
 
 void ImageLoadSessionTracker::cancel() { m_session.reset(); }
 
-bool ImageLoadSessionTracker::isCurrent(const ImageLoadSession &session) const
+bool ImageLoadSessionTracker::isCurrent(const ImageLoadSession& session) const
 {
     return m_session.has_value() && m_session->sameSession(session);
 }
 
 std::optional<ImageLoadSession> ImageLoadSessionTracker::currentForDecodeRequest(
-    const ImageDecodeRequest &request) const
+    const ImageDecodeRequest& request) const
 {
     if (!m_session.has_value() || !request.matches(m_session->decodeRequest())) {
         return std::nullopt;
@@ -45,7 +45,7 @@ std::optional<ImageLoadSession> ImageLoadSessionTracker::currentForDecodeRequest
 }
 
 std::optional<ImageLoadSession> ImageLoadSessionTracker::claimCurrentForDecodeRequest(
-    const ImageDecodeRequest &request)
+    const ImageDecodeRequest& request)
 {
     if (!m_session.has_value() || !request.matches(m_session->decodeRequest())) {
         return std::nullopt;
@@ -57,7 +57,7 @@ std::optional<ImageLoadSession> ImageLoadSessionTracker::claimCurrentForDecodeRe
 }
 
 OpenedCollectionCandidateCompletion ImageLoadSessionTracker::completeOpenedCollectionCandidates(
-    const ImageLoadSession &session, const std::vector<ImageDocumentPageCandidate> &candidates)
+    const ImageLoadSession& session, const std::vector<ImageDocumentPageCandidate>& candidates)
 {
     if (!isCurrent(session)) {
         return {};
@@ -87,7 +87,7 @@ OpenedCollectionCandidateCompletion ImageLoadSessionTracker::completeOpenedColle
 }
 
 std::optional<ImageLoadSession> ImageLoadSessionTracker::claimPredecodedImage(
-    const ImageLoadSession &session, DisplayedImageLocation location)
+    const ImageLoadSession& session, DisplayedImageLocation location)
 {
     if (!isCurrent(session)) {
         return std::nullopt;
@@ -98,7 +98,7 @@ std::optional<ImageLoadSession> ImageLoadSessionTracker::claimPredecodedImage(
 }
 
 std::optional<ImageLoadSession> ImageLoadSessionTracker::claimCurrent(
-    const ImageLoadSession &session)
+    const ImageLoadSession& session)
 {
     if (!isCurrent(session)) {
         return std::nullopt;

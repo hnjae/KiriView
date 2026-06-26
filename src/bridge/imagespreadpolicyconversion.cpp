@@ -5,21 +5,21 @@
 
 namespace kiriview::Bridge {
 RustImageSpreadReadingAvailability rustImageSpreadReadingAvailability(
-    const ImageSpreadReadingAvailability &availability)
+    const ImageSpreadReadingAvailability& availability)
 {
     return RustImageSpreadReadingAvailability { availability.hasImage,
         availability.hasDisplayedImage, availability.displayedDocumentIsComicBook };
 }
 
 ImageSpreadTwoPageModeChange imageSpreadTwoPageModeChangeFromRust(
-    const RustImageSpreadTwoPageModeChange &change)
+    const RustImageSpreadTwoPageModeChange& change)
 {
     return ImageSpreadTwoPageModeChange { change.changed, change.finish_transition,
         change.clear_secondary_page, change.refresh_secondary_page, change.notify_two_page_mode };
 }
 
 RustImageSpreadSecondaryPageRefreshState rustImageSpreadSecondaryPageRefreshState(
-    const ImageSpreadSecondaryPageRefreshState &state)
+    const ImageSpreadSecondaryPageRefreshState& state)
 {
     return RustImageSpreadSecondaryPageRefreshState { state.twoPageModeActive,
         state.currentPageNumber, state.pageCount, state.primaryPageIsWide, state.nextPageAvailable,
@@ -42,7 +42,7 @@ ImageSpreadSecondaryPageDecision imageSpreadSecondaryPageDecisionFromRust(
 }
 
 ImageSpreadSecondaryPageRefreshPlan imageSpreadSecondaryPageRefreshPlanFromRust(
-    const RustImageSpreadSecondaryPageRefreshPlan &plan)
+    const RustImageSpreadSecondaryPageRefreshPlan& plan)
 {
     return ImageSpreadSecondaryPageRefreshPlan {
         imageSpreadSecondaryPageDecisionFromRust(plan.decision),
@@ -63,14 +63,14 @@ RustImageSpreadNavigationDirection rustImageSpreadNavigationDirection(Navigation
 }
 
 RustImageSpreadNavigationState rustImageSpreadNavigationState(
-    const ImageSpreadNavigationState &state)
+    const ImageSpreadNavigationState& state)
 {
     return RustImageSpreadNavigationState { state.twoPageModeActive, state.currentPageNumber,
         state.pageCount, state.secondaryPageVisible, state.previousPageIsWide };
 }
 
 ImageSpreadPageNavigationTarget imageSpreadPageNavigationTargetFromRust(
-    const RustImageSpreadPageNavigationTarget &target)
+    const RustImageSpreadPageNavigationTarget& target)
 {
     return ImageSpreadPageNavigationTarget { target.handled_by_spread, target.page_number };
 }

@@ -7,7 +7,7 @@
 
 namespace kiriview {
 DocumentSessionDirectMediaScopePort::DocumentSessionDirectMediaScopePort(
-    const DocumentSessionState *state)
+    const DocumentSessionState* state)
     : m_state(state)
 {
 }
@@ -22,7 +22,7 @@ QUrl DocumentSessionDirectMediaScopePort::activeCursorUrl() const
     return m_state->directMediaCursorUrl();
 }
 
-bool DocumentSessionDirectMediaScopePort::cursorMatches(const DirectMediaScope &scope) const
+bool DocumentSessionDirectMediaScopePort::cursorMatches(const DirectMediaScope& scope) const
 {
     return directMediaScopeMatchesCursor(m_state->directMediaCursor(), scope);
 }

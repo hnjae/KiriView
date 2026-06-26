@@ -23,26 +23,28 @@ enum class RasterDisplayBucketStatus {
     Failed,
 };
 
-struct RasterDisplayBucketKey {
+struct RasterDisplayBucketKey
+{
     QSize rasterSize;
     bool exact = false;
     int maximumTextureSize = 0;
     qsizetype displayImageByteBudget = 0;
 
-    friend bool operator==(const RasterDisplayBucketKey &left, const RasterDisplayBucketKey &right)
+    friend bool operator==(const RasterDisplayBucketKey& left, const RasterDisplayBucketKey& right)
     {
         return left.rasterSize == right.rasterSize && left.exact == right.exact
             && left.maximumTextureSize == right.maximumTextureSize
             && left.displayImageByteBudget == right.displayImageByteBudget;
     }
 
-    friend bool operator!=(const RasterDisplayBucketKey &left, const RasterDisplayBucketKey &right)
+    friend bool operator!=(const RasterDisplayBucketKey& left, const RasterDisplayBucketKey& right)
     {
         return !(left == right);
     }
 };
 
-struct RasterDisplayBucketPolicyInput {
+struct RasterDisplayBucketPolicyInput
+{
     QSize originalSize;
     QSize currentRasterSize;
     DisplayImageQuality currentQuality = DisplayImageQuality::FirstDisplay;
@@ -54,7 +56,8 @@ struct RasterDisplayBucketPolicyInput {
     qsizetype displayImageByteBudget = 0;
 };
 
-struct RasterDisplayBucketDecision {
+struct RasterDisplayBucketDecision
+{
     RasterDisplayBucketStatus status = RasterDisplayBucketStatus::Failed;
     DisplayImageQuality quality = DisplayImageQuality::Failed;
     RasterDisplayBucketKey bucketKey;
@@ -62,7 +65,8 @@ struct RasterDisplayBucketDecision {
     bool currentImageRetained = false;
 };
 
-struct RasterDisplayRefinementDemandKey {
+struct RasterDisplayRefinementDemandKey
+{
     QString sourceIdentity;
     QSize originalSize;
     DisplayedPageRole pageRole = DisplayedPageRole::Primary;
@@ -76,7 +80,7 @@ struct RasterDisplayRefinementDemandKey {
     RasterDisplayBucketKey bucketKey;
 
     friend bool operator==(
-        const RasterDisplayRefinementDemandKey &left, const RasterDisplayRefinementDemandKey &right)
+        const RasterDisplayRefinementDemandKey& left, const RasterDisplayRefinementDemandKey& right)
     {
         return left.sourceIdentity == right.sourceIdentity
             && left.originalSize == right.originalSize && left.pageRole == right.pageRole
@@ -90,15 +94,15 @@ struct RasterDisplayRefinementDemandKey {
     }
 
     friend bool operator!=(
-        const RasterDisplayRefinementDemandKey &left, const RasterDisplayRefinementDemandKey &right)
+        const RasterDisplayRefinementDemandKey& left, const RasterDisplayRefinementDemandKey& right)
     {
         return !(left == right);
     }
 };
 
 RasterDisplayBucketDecision rasterDisplayBucketDecision(
-    const RasterDisplayBucketPolicyInput &input);
-RasterDisplayBucketDecision svgDisplayBucketDecision(const RasterDisplayBucketPolicyInput &input);
+    const RasterDisplayBucketPolicyInput& input);
+RasterDisplayBucketDecision svgDisplayBucketDecision(const RasterDisplayBucketPolicyInput& input);
 }
 
 #endif

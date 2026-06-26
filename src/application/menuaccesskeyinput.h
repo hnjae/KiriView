@@ -14,9 +14,9 @@ enum class MenuAccessKeyInputKind {
     Other,
 };
 
-bool menuAccessKeyIsMnemonicKeyPress(const QKeyEvent &event);
-bool menuAccessKeyIsAltMnemonicKeyPress(const QKeyEvent &event);
-MenuAccessKeyInputKind menuAccessKeyInputKind(const QKeyEvent &event);
+bool menuAccessKeyIsMnemonicKeyPress(const QKeyEvent& event);
+bool menuAccessKeyIsAltMnemonicKeyPress(const QKeyEvent& event);
+MenuAccessKeyInputKind menuAccessKeyInputKind(const QKeyEvent& event);
 }
 
 #endif

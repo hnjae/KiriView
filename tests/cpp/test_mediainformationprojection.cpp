@@ -12,9 +12,9 @@
 
 namespace {
 QString valueForLabel(
-    const std::vector<kiriview::MediaInformationProjectionRow> &rows, const QString &label)
+    const std::vector<kiriview::MediaInformationProjectionRow>& rows, const QString& label)
 {
-    for (const kiriview::MediaInformationProjectionRow &row : rows) {
+    for (const kiriview::MediaInformationProjectionRow& row : rows) {
         if (row.label == label) {
             return row.value;
         }

@@ -16,20 +16,22 @@ enum class DocumentSessionDirectImageCursorSyncOperation {
     RestoreDirectImageCursorAfterFailure,
 };
 
-struct DocumentSessionDirectImageCursorSyncInput {
+struct DocumentSessionDirectImageCursorSyncInput
+{
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     DirectMediaCursor cursor;
     DocumentSessionPublicImageLeafSnapshot image;
 };
 
-struct DocumentSessionDirectImageCursorSyncPlan {
+struct DocumentSessionDirectImageCursorSyncPlan
+{
     DocumentSessionDirectImageCursorSyncOperation operation
         = DocumentSessionDirectImageCursorSyncOperation::None;
     QUrl url;
 };
 
 DocumentSessionDirectImageCursorSyncPlan documentSessionDirectImageCursorSyncPlan(
-    const DocumentSessionDirectImageCursorSyncInput &input);
+    const DocumentSessionDirectImageCursorSyncInput& input);
 }
 
 #endif

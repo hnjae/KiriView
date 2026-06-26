@@ -23,7 +23,7 @@ private Q_SLOTS:
 };
 
 namespace {
-void compareEvent(const kiriview::PowerProfileMonitorEvent &event,
+void compareEvent(const kiriview::PowerProfileMonitorEvent& event,
     kiriview::PowerProfileMonitorEventKind kind, bool powerSaverEnabled = false)
 {
     QCOMPARE(static_cast<int>(event.kind), static_cast<int>(kind));

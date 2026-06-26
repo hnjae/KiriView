@@ -33,7 +33,8 @@ enum class ActiveNavigationThumbnailResultStatus {
     Failed,
 };
 
-struct ActiveNavigationThumbnailRow {
+struct ActiveNavigationThumbnailRow
+{
     int number = 0;
     QUrl url;
     QString label;
@@ -46,9 +47,9 @@ struct ActiveNavigationThumbnailRow {
 QString activeNavigationThumbnailPageKindIdentity(ActiveNavigationThumbnailKind kind);
 QString activeNavigationThumbnailSourceKindIdentity(ActiveNavigationThumbnailSourceKind sourceKind);
 std::vector<ActiveNavigationThumbnailRow> projectActiveNavigationThumbnailRows(
-    ActiveNavigationSourceKind sourceKind, const ActiveNavigationSnapshot &navigation,
-    const std::vector<DirectMediaNavigationCandidate> &directMediaNavigationCandidates,
-    const ImageDocumentPageNavigationSnapshot &imageDocumentPageNavigationSnapshot);
+    ActiveNavigationSourceKind sourceKind, const ActiveNavigationSnapshot& navigation,
+    const std::vector<DirectMediaNavigationCandidate>& directMediaNavigationCandidates,
+    const ImageDocumentPageNavigationSnapshot& imageDocumentPageNavigationSnapshot);
 }
 
 #endif

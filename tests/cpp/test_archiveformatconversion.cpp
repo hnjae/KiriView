@@ -8,7 +8,7 @@
 #include <string>
 
 namespace {
-rust::String rustString(const QString &text)
+rust::String rustString(const QString& text)
 {
     const QByteArray utf8Text = text.toUtf8();
     return rust::String(

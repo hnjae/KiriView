@@ -7,12 +7,12 @@
 
 namespace kiriview {
 ImageDocumentPrimaryPageSlotPort::ImageDocumentPrimaryPageSlotPort(
-    ImageSpreadPresentationController *spreadController)
+    ImageSpreadPresentationController* spreadController)
     : m_spreadController(spreadController)
 {
 }
 
-void ImageDocumentPrimaryPageSlotPort::commit(const DisplayedImageLocation &location) const
+void ImageDocumentPrimaryPageSlotPort::commit(const DisplayedImageLocation& location) const
 {
     if (m_spreadController != nullptr) {
         m_spreadController->commitPrimaryPageSlot(location);

@@ -70,7 +70,7 @@ private Q_SLOTS:
 namespace {
 kiriview::ThumbnailGenerationProvider disabledThumbnailGenerationProvider()
 {
-    return [](QObject *, kiriview::ThumbnailGenerationRequest request,
+    return [](QObject*, kiriview::ThumbnailGenerationRequest request,
                kiriview::ThumbnailGenerationCallback callback) {
         if (callback) {
             callback(kiriview::ThumbnailGenerationResult {
@@ -98,24 +98,25 @@ class ToolbarTestDocumentSession : public KiriDocumentSession
     Q_OBJECT
 
 public:
-    explicit ToolbarTestDocumentSession(QObject *parent = nullptr)
+    explicit ToolbarTestDocumentSession(QObject* parent = nullptr)
         : KiriDocumentSession(toolbarTestDocumentSessionDependencies(), parent)
     {
     }
 };
 
-struct MainWindowFixture {
+struct MainWindowFixture
+{
     std::unique_ptr<QQmlApplicationEngine> engine;
-    QQuickWindow *window = nullptr;
+    QQuickWindow* window = nullptr;
     QString errorString;
 
     bool isValid() const { return engine != nullptr && window != nullptr; }
 };
 
-void addEnvironmentImportPaths(QQmlEngine &engine)
+void addEnvironmentImportPaths(QQmlEngine& engine)
 {
     const QString paths = qEnvironmentVariable("NIXPKGS_QML_SEARCH_PATHS");
-    for (const QString &path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
+    for (const QString& path : paths.split(QLatin1Char(':'), Qt::SkipEmptyParts)) {
         engine.addImportPath(path);
     }
 }
@@ -143,7 +144,7 @@ void registerKiriViewQmlTypes()
 
 void resetConfig()
 {
-    KiriViewState *state = KiriViewState::self();
+    KiriViewState* state = KiriViewState::self();
     state->config()->deleteGroup(QStringLiteral("Interface"));
     state->config()->sync();
     state->config()->reparseConfiguration();
@@ -156,12 +157,12 @@ QUrl mainQmlUrl()
             .absoluteFilePath(QStringLiteral("../../src/qml/Main.qml")));
 }
 
-QList<QQuickItem *> controlToolBars(QObject *root)
+QList<QQuickItem*> controlToolBars(QObject* root)
 {
-    QList<QQuickItem *> toolbars;
-    const QList<QQuickItem *> items
-        = root->findChildren<QQuickItem *>(QString(), Qt::FindChildrenRecursively);
-    for (QQuickItem *item : items) {
+    QList<QQuickItem*> toolbars;
+    const QList<QQuickItem*> items
+        = root->findChildren<QQuickItem*>(QString(), Qt::FindChildrenRecursively);
+    for (QQuickItem* item : items) {
         if (item->inherits("QQuickToolBar")) {
             toolbars.append(item);
         }
@@ -169,9 +170,9 @@ QList<QQuickItem *> controlToolBars(QObject *root)
     return toolbars;
 }
 
-bool effectivelyVisible(QQuickItem *item)
+bool effectivelyVisible(QQuickItem* item)
 {
-    for (QQuickItem *current = item; current != nullptr; current = current->parentItem()) {
+    for (QQuickItem* current = item; current != nullptr; current = current->parentItem()) {
         if (!current->isVisible()) {
             return false;
         }
@@ -180,12 +181,12 @@ bool effectivelyVisible(QQuickItem *item)
     return item != nullptr;
 }
 
-QList<QQuickItem *> visibleItemsByObjectName(QObject *root, const QString &objectName)
+QList<QQuickItem*> visibleItemsByObjectName(QObject* root, const QString& objectName)
 {
-    QList<QQuickItem *> visibleItems;
-    const QList<QQuickItem *> items
-        = root->findChildren<QQuickItem *>(objectName, Qt::FindChildrenRecursively);
-    for (QQuickItem *item : items) {
+    QList<QQuickItem*> visibleItems;
+    const QList<QQuickItem*> items
+        = root->findChildren<QQuickItem*>(objectName, Qt::FindChildrenRecursively);
+    for (QQuickItem* item : items) {
         if (effectivelyVisible(item)) {
             visibleItems.append(item);
         }
@@ -194,7 +195,7 @@ QList<QQuickItem *> visibleItemsByObjectName(QObject *root, const QString &objec
 }
 
 void appendVisualItemsByObjectName(
-    QQuickItem *root, const QString &objectName, QList<QQuickItem *> *items)
+    QQuickItem* root, const QString& objectName, QList<QQuickItem*>* items)
 {
     if (root == nullptr) {
         return;
@@ -202,26 +203,26 @@ void appendVisualItemsByObjectName(
     if (root->objectName() == objectName) {
         items->append(root);
     }
-    const QList<QQuickItem *> children = root->childItems();
-    for (QQuickItem *child : children) {
+    const QList<QQuickItem*> children = root->childItems();
+    for (QQuickItem* child : children) {
         appendVisualItemsByObjectName(child, objectName, items);
     }
 }
 
-QList<QQuickItem *> visualItemsByObjectName(QObject *root, const QString &objectName)
+QList<QQuickItem*> visualItemsByObjectName(QObject* root, const QString& objectName)
 {
-    QList<QQuickItem *> items;
-    if (QQuickWindow *window = qobject_cast<QQuickWindow *>(root)) {
+    QList<QQuickItem*> items;
+    if (QQuickWindow* window = qobject_cast<QQuickWindow*>(root)) {
         appendVisualItemsByObjectName(window->contentItem(), objectName, &items);
     } else {
-        if (QQuickItem *item = qobject_cast<QQuickItem *>(root)) {
+        if (QQuickItem* item = qobject_cast<QQuickItem*>(root)) {
             appendVisualItemsByObjectName(item, objectName, &items);
         }
     }
     return items;
 }
 
-void appendVisibleItemsByText(QQuickItem *root, const QString &text, QList<QQuickItem *> *items)
+void appendVisibleItemsByText(QQuickItem* root, const QString& text, QList<QQuickItem*>* items)
 {
     if (root == nullptr) {
         return;
@@ -229,71 +230,71 @@ void appendVisibleItemsByText(QQuickItem *root, const QString &text, QList<QQuic
     if (root->property("text").toString() == text && effectivelyVisible(root)) {
         items->append(root);
     }
-    const QList<QQuickItem *> children = root->childItems();
-    for (QQuickItem *child : children) {
+    const QList<QQuickItem*> children = root->childItems();
+    for (QQuickItem* child : children) {
         appendVisibleItemsByText(child, text, items);
     }
 }
 
-QList<QQuickItem *> visibleItemsByText(QObject *root, const QString &text)
+QList<QQuickItem*> visibleItemsByText(QObject* root, const QString& text)
 {
-    QList<QQuickItem *> items;
-    if (QQuickWindow *window = qobject_cast<QQuickWindow *>(root)) {
+    QList<QQuickItem*> items;
+    if (QQuickWindow* window = qobject_cast<QQuickWindow*>(root)) {
         appendVisibleItemsByText(window->contentItem(), text, &items);
     } else {
-        if (QQuickItem *item = qobject_cast<QQuickItem *>(root)) {
+        if (QQuickItem* item = qobject_cast<QQuickItem*>(root)) {
             appendVisibleItemsByText(item, text, &items);
         }
     }
     return items;
 }
 
-QQuickItem *findQuickItem(QObject *root, const QString &objectName)
+QQuickItem* findQuickItem(QObject* root, const QString& objectName)
 {
-    return root->findChild<QQuickItem *>(objectName, Qt::FindChildrenRecursively);
+    return root->findChild<QQuickItem*>(objectName, Qt::FindChildrenRecursively);
 }
 
-QObject *findObject(QObject *root, const QString &objectName)
+QObject* findObject(QObject* root, const QString& objectName)
 {
-    return root->findChild<QObject *>(objectName, Qt::FindChildrenRecursively);
+    return root->findChild<QObject*>(objectName, Qt::FindChildrenRecursively);
 }
 
-QString fontFamily(QQuickItem *item)
+QString fontFamily(QQuickItem* item)
 {
     return qvariant_cast<QFont>(item->property("font")).family();
 }
 
-KiriDocumentSession *findDocumentSession(QObject *root)
+KiriDocumentSession* findDocumentSession(QObject* root)
 {
-    return root->findChild<KiriDocumentSession *>(
+    return root->findChild<KiriDocumentSession*>(
         QStringLiteral("documentSession"), Qt::FindChildrenRecursively);
 }
 
-KiriViewApplication *findApplication(QObject *root)
+KiriViewApplication* findApplication(QObject* root)
 {
-    return root->findChild<KiriViewApplication *>(QString(), Qt::FindChildrenRecursively);
+    return root->findChild<KiriViewApplication*>(QString(), Qt::FindChildrenRecursively);
 }
 
-bool writeTestPng(const QString &path)
+bool writeTestPng(const QString& path)
 {
     QImage image(QSize(2, 2), QImage::Format_RGBA8888);
     image.fill(Qt::red);
     return image.save(path, "PNG");
 }
 
-void appendLe16(QByteArray *data, quint16 value)
+void appendLe16(QByteArray* data, quint16 value)
 {
     data->append(static_cast<char>(value & 0xff));
     data->append(static_cast<char>((value >> 8) & 0xff));
 }
 
-void appendLe32(QByteArray *data, quint32 value)
+void appendLe32(QByteArray* data, quint32 value)
 {
     appendLe16(data, static_cast<quint16>(value & 0xffff));
     appendLe16(data, static_cast<quint16>((value >> 16) & 0xffff));
 }
 
-void appendBe16(QByteArray *data, quint16 value)
+void appendBe16(QByteArray* data, quint16 value)
 {
     data->append(static_cast<char>((value >> 8) & 0xff));
     data->append(static_cast<char>(value & 0xff));
@@ -324,7 +325,7 @@ QByteArray testExifSegmentWithArtist()
     return segment;
 }
 
-bool writeAdvancedMetadataJpeg(const QString &path)
+bool writeAdvancedMetadataJpeg(const QString& path)
 {
     QImage image(QSize(2, 2), QImage::Format_RGB888);
     image.fill(Qt::red);
@@ -361,14 +362,14 @@ QByteArray encodedTestPng(Qt::GlobalColor color)
     return data;
 }
 
-bool writeEmptyFile(const QString &path)
+bool writeEmptyFile(const QString& path)
 {
     QFile file(path);
     return file.open(QIODevice::WriteOnly);
 }
 
 std::unique_ptr<QTemporaryDir> createMediaDirectory(
-    QString *imageSourcePath, QString *videoSourcePath, QString *errorString)
+    QString* imageSourcePath, QString* videoSourcePath, QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -389,7 +390,7 @@ std::unique_ptr<QTemporaryDir> createMediaDirectory(
     return directory;
 }
 
-std::unique_ptr<QTemporaryDir> createDirectoryCollection(QString *sourcePath, QString *errorString)
+std::unique_ptr<QTemporaryDir> createDirectoryCollection(QString* sourcePath, QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -410,7 +411,7 @@ std::unique_ptr<QTemporaryDir> createDirectoryCollection(QString *sourcePath, QS
     return directory;
 }
 
-std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QString *errorString)
+std::unique_ptr<QTemporaryDir> createComicBookArchive(QString* sourcePath, QString* errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
     if (!directory->isValid()) {
@@ -442,11 +443,11 @@ std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QStri
     return directory;
 }
 
-MainWindowFixture createMainWindowFixture(const QUrl &initialSourceUrl);
+MainWindowFixture createMainWindowFixture(const QUrl& initialSourceUrl);
 
 MainWindowFixture createMainWindowFixture() { return createMainWindowFixture(QUrl()); }
 
-MainWindowFixture createMainWindowFixture(const QUrl &initialSourceUrl)
+MainWindowFixture createMainWindowFixture(const QUrl& initialSourceUrl)
 {
     MainWindowFixture fixture;
     registerKiriViewQmlTypes();
@@ -468,7 +469,7 @@ MainWindowFixture createMainWindowFixture(const QUrl &initialSourceUrl)
         return fixture;
     }
 
-    fixture.window = qobject_cast<QQuickWindow *>(fixture.engine->rootObjects().constFirst());
+    fixture.window = qobject_cast<QQuickWindow*>(fixture.engine->rootObjects().constFirst());
     if (fixture.window == nullptr) {
         fixture.errorString = QStringLiteral("Main.qml root object is not a QQuickWindow");
         return fixture;
@@ -482,11 +483,11 @@ MainWindowFixture createMainWindowFixture(const QUrl &initialSourceUrl)
     return fixture;
 }
 
-QQuickItem *readyProviderImage(QObject *root)
+QQuickItem* readyProviderImage(QObject* root)
 {
-    const QList<QQuickItem *> items = root->findChildren<QQuickItem *>(
+    const QList<QQuickItem*> items = root->findChildren<QQuickItem*>(
         QStringLiteral("providerImage"), Qt::FindChildrenRecursively);
-    for (QQuickItem *item : items) {
+    for (QQuickItem* item : items) {
         if (effectivelyVisible(item) && item->property("status").toInt() == 1
             && !item->property("source").toUrl().isEmpty() && item->width() > 0
             && item->height() > 0) {
@@ -496,12 +497,12 @@ QQuickItem *readyProviderImage(QObject *root)
     return nullptr;
 }
 
-QString providerImageStateReport(QObject *root)
+QString providerImageStateReport(QObject* root)
 {
     QStringList states;
-    KiriDocumentSession *documentSession = findDocumentSession(root);
+    KiriDocumentSession* documentSession = findDocumentSession(root);
     if (documentSession != nullptr && documentSession->imageDocument() != nullptr) {
-        KiriImageDocument *imageDocument = documentSession->imageDocument();
+        KiriImageDocument* imageDocument = documentSession->imageDocument();
         states.append(QStringLiteral("document viewport=%1x%2 display=%3x%4 primary=%5x%6")
                 .arg(imageDocument->viewportSize().width())
                 .arg(imageDocument->viewportSize().height())
@@ -510,11 +511,11 @@ QString providerImageStateReport(QObject *root)
                 .arg(imageDocument->primaryDisplaySize().width())
                 .arg(imageDocument->primaryDisplaySize().height()));
     }
-    const QList<QQuickItem *> items = root->findChildren<QQuickItem *>(
+    const QList<QQuickItem*> items = root->findChildren<QQuickItem*>(
         QStringLiteral("providerImage"), Qt::FindChildrenRecursively);
-    for (QQuickItem *item : items) {
+    for (QQuickItem* item : items) {
         QStringList ancestors;
-        for (QQuickItem *ancestor = item->parentItem(); ancestor != nullptr;
+        for (QQuickItem* ancestor = item->parentItem(); ancestor != nullptr;
             ancestor = ancestor->parentItem()) {
             ancestors.append(QStringLiteral("%1:%2x%3")
                     .arg(ancestor->objectName())
@@ -534,14 +535,14 @@ QString providerImageStateReport(QObject *root)
     return states.join(QStringLiteral("; "));
 }
 
-void openSourceUrl(MainWindowFixture &fixture, const QString &sourcePath)
+void openSourceUrl(MainWindowFixture& fixture, const QString& sourcePath)
 {
-    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    KiriDocumentSession* documentSession = findDocumentSession(fixture.window);
     QVERIFY(documentSession != nullptr);
     documentSession->setSourceUrl(QUrl::fromLocalFile(sourcePath));
 }
 
-void resizeWindow(MainWindowFixture &fixture, const QSize &size)
+void resizeWindow(MainWindowFixture& fixture, const QSize& size)
 {
     fixture.window->resize(size);
     QTRY_COMPARE(fixture.window->size(), size);
@@ -549,13 +550,13 @@ void resizeWindow(MainWindowFixture &fixture, const QSize &size)
 }
 
 void compareToolbarPageReadout(
-    MainWindowFixture &fixture, const QString &currentText, const QString &countText, bool enabled)
+    MainWindowFixture& fixture, const QString& currentText, const QString& countText, bool enabled)
 {
-    QQuickItem *pageNumberField = findQuickItem(fixture.window, QStringLiteral("pageNumberField"));
-    QQuickItem *pageCountLabel = findQuickItem(fixture.window, QStringLiteral("pageCountLabel"));
-    QQuickItem *leftPageButton
+    QQuickItem* pageNumberField = findQuickItem(fixture.window, QStringLiteral("pageNumberField"));
+    QQuickItem* pageCountLabel = findQuickItem(fixture.window, QStringLiteral("pageCountLabel"));
+    QQuickItem* leftPageButton
         = findQuickItem(fixture.window, QStringLiteral("leftPageNavigationButton"));
-    QQuickItem *rightPageButton
+    QQuickItem* rightPageButton
         = findQuickItem(fixture.window, QStringLiteral("rightPageNavigationButton"));
     QVERIFY(pageNumberField != nullptr);
     QVERIFY(pageCountLabel != nullptr);
@@ -567,12 +568,12 @@ void compareToolbarPageReadout(
     QCOMPARE(pageNumberField->isEnabled(), enabled);
 }
 
-bool popupOpen(QObject *popup)
+bool popupOpen(QObject* popup)
 {
     return popup->property("visible").toBool() || popup->property("opened").toBool();
 }
 
-bool invokeBool(QObject *object, const char *method)
+bool invokeBool(QObject* object, const char* method)
 {
     QVariant result;
     const bool invoked = QMetaObject::invokeMethod(
@@ -580,7 +581,7 @@ bool invokeBool(QObject *object, const char *method)
     return invoked && result.toBool();
 }
 
-QPoint itemCenter(QQuickItem *item)
+QPoint itemCenter(QQuickItem* item)
 {
     if (item == nullptr || item->width() <= 0 || item->height() <= 0) {
         return QPoint(-1, -1);
@@ -589,7 +590,7 @@ QPoint itemCenter(QQuickItem *item)
     return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
 }
 
-void clickItem(QQuickWindow *window, QQuickItem *item, Qt::MouseButton button)
+void clickItem(QQuickWindow* window, QQuickItem* item, Qt::MouseButton button)
 {
     const QPoint point = itemCenter(item);
     QVERIFY(point.x() >= 0);
@@ -598,16 +599,15 @@ void clickItem(QQuickWindow *window, QQuickItem *item, Qt::MouseButton button)
     QCoreApplication::processEvents();
 }
 
-QQuickItem *findAdvancedMetadataSection(QObject *root)
+QQuickItem* findAdvancedMetadataSection(QObject* root)
 {
-    const QList<QQuickItem *> titles
-        = visibleItemsByText(root, QStringLiteral("Advanced Metadata"));
-    for (QQuickItem *title : titles) {
-        QQuickItem *row = title->parentItem();
+    const QList<QQuickItem*> titles = visibleItemsByText(root, QStringLiteral("Advanced Metadata"));
+    for (QQuickItem* title : titles) {
+        QQuickItem* row = title->parentItem();
         if (row == nullptr) {
             continue;
         }
-        QQuickItem *section = row->parentItem();
+        QQuickItem* section = row->parentItem();
         if (section != nullptr && section->property("expanded").isValid()) {
             return section;
         }
@@ -615,7 +615,7 @@ QQuickItem *findAdvancedMetadataSection(QObject *root)
     return nullptr;
 }
 
-void wheelItem(QQuickWindow *window, QQuickItem *item, int angleDeltaY)
+void wheelItem(QQuickWindow* window, QQuickItem* item, int angleDeltaY)
 {
     const QPoint point = itemCenter(item);
     QVERIFY(point.x() >= 0);
@@ -627,7 +627,7 @@ void wheelItem(QQuickWindow *window, QQuickItem *item, int angleDeltaY)
     QCoreApplication::processEvents();
 }
 
-void rightButtonWheelItem(QQuickWindow *window, QQuickItem *item, int angleDeltaY)
+void rightButtonWheelItem(QQuickWindow* window, QQuickItem* item, int angleDeltaY)
 {
     const QPoint point = itemCenter(item);
     QVERIFY(point.x() >= 0);
@@ -641,13 +641,13 @@ void rightButtonWheelItem(QQuickWindow *window, QQuickItem *item, int angleDelta
     QCoreApplication::processEvents();
 }
 
-void moveMouse(QQuickWindow *window, const QPoint &point)
+void moveMouse(QQuickWindow* window, const QPoint& point)
 {
     QTest::mouseMove(window, point);
     QCoreApplication::processEvents();
 }
 
-void closePopup(QObject *popup)
+void closePopup(QObject* popup)
 {
     popup->setProperty("visible", false);
     QCoreApplication::processEvents();
@@ -679,13 +679,13 @@ void TestMainWindowToolBar::startupCreatesOneVisibleToolbarWithDisabledMediaCont
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
     QTRY_COMPARE(controlToolBars(fixture.window).size(), 1);
-    QQuickItem *toolbar = controlToolBars(fixture.window).constFirst();
+    QQuickItem* toolbar = controlToolBars(fixture.window).constFirst();
     QVERIFY(toolbar->isVisible());
     QCOMPARE(toolbar->objectName(), QStringLiteral("mainImageToolBar"));
 
-    QQuickItem *leftPageButton
+    QQuickItem* leftPageButton
         = findQuickItem(fixture.window, QStringLiteral("leftPageNavigationButton"));
-    QQuickItem *rightPageButton
+    QQuickItem* rightPageButton
         = findQuickItem(fixture.window, QStringLiteral("rightPageNavigationButton"));
     QVERIFY(leftPageButton != nullptr);
     QVERIFY(rightPageButton != nullptr);
@@ -693,15 +693,15 @@ void TestMainWindowToolBar::startupCreatesOneVisibleToolbarWithDisabledMediaCont
     QVERIFY(!rightPageButton->isEnabled());
     compareToolbarPageReadout(fixture, QStringLiteral("–"), QStringLiteral("–"), false);
 
-    QQuickItem *zoomSpinBox = findQuickItem(fixture.window, QStringLiteral("zoomSpinBox"));
-    QQuickItem *zoomTextInput = findQuickItem(fixture.window, QStringLiteral("zoomTextInput"));
+    QQuickItem* zoomSpinBox = findQuickItem(fixture.window, QStringLiteral("zoomSpinBox"));
+    QQuickItem* zoomTextInput = findQuickItem(fixture.window, QStringLiteral("zoomTextInput"));
     QVERIFY(zoomSpinBox != nullptr);
     QVERIFY(zoomTextInput != nullptr);
     QVERIFY(!zoomSpinBox->isEnabled());
     QTRY_COMPARE(zoomSpinBox->property("value").toInt(), 0);
     QTRY_COMPARE(zoomTextInput->property("text").toString(), QStringLiteral("    -"));
 
-    const QList<QQuickItem *> visibleApplicationMenuButtons
+    const QList<QQuickItem*> visibleApplicationMenuButtons
         = visibleItemsByObjectName(fixture.window, QStringLiteral("toolbarApplicationMenuButton"));
     QCOMPARE(visibleApplicationMenuButtons.size(), 1);
     QVERIFY(visibleApplicationMenuButtons.constFirst()->isEnabled());
@@ -717,16 +717,16 @@ void TestMainWindowToolBar::startupInitialDirectImageRendersMainViewport()
     MainWindowFixture fixture = createMainWindowFixture(QUrl::fromLocalFile(imagePath));
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    KiriDocumentSession* documentSession = findDocumentSession(fixture.window);
     QVERIFY(documentSession != nullptr);
     QTRY_VERIFY(documentSession->activeImageReady());
     QTRY_COMPARE(documentSession->imageDocument()->status(), KiriImageDocument::Status::Ready);
 
-    QQuickItem *thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
+    QQuickItem* thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
     QVERIFY(thumbnailPanel != nullptr);
     QVERIFY(!thumbnailPanel->isVisible());
 
-    QQuickItem *providerImage = nullptr;
+    QQuickItem* providerImage = nullptr;
     QTRY_VERIFY2((providerImage = readyProviderImage(fixture.window)) != nullptr,
         qPrintable(providerImageStateReport(fixture.window)));
     QVERIFY(!providerImage->property("source").toUrl().isEmpty());
@@ -745,17 +745,17 @@ void TestMainWindowToolBar::startupInitialComicArchiveRendersAndNavigatesMainVie
     MainWindowFixture fixture = createMainWindowFixture(QUrl::fromLocalFile(archivePath));
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    KiriDocumentSession* documentSession = findDocumentSession(fixture.window);
     QVERIFY(documentSession != nullptr);
     QTRY_VERIFY(documentSession->activeImageReady());
     QTRY_COMPARE(documentSession->imageDocument()->status(), KiriImageDocument::Status::Ready);
     compareToolbarPageReadout(fixture, QStringLiteral("1"), QStringLiteral("2"), true);
 
-    QQuickItem *thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
+    QQuickItem* thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
     QVERIFY(thumbnailPanel != nullptr);
     QVERIFY(!thumbnailPanel->isVisible());
 
-    QQuickItem *providerImage = nullptr;
+    QQuickItem* providerImage = nullptr;
     QTRY_VERIFY2((providerImage = readyProviderImage(fixture.window)) != nullptr,
         qPrintable(providerImageStateReport(fixture.window)));
     const QUrl firstPageSource = providerImage->property("source").toUrl();
@@ -844,23 +844,23 @@ void TestMainWindowToolBar::panelActionsToggleResizablePanels()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     resizeWindow(fixture, QSize(1200, 800));
 
-    KiriViewApplication *application = findApplication(fixture.window);
+    KiriViewApplication* application = findApplication(fixture.window);
     QVERIFY(application != nullptr);
-    QAction *infoPanelAction
+    QAction* infoPanelAction
         = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
-    QAction *thumbnailPanelAction
+    QAction* thumbnailPanelAction
         = application->actionForId(KiriViewApplication::ViewToggleThumbnailPanelAction);
     QVERIFY(infoPanelAction != nullptr);
     QVERIFY(thumbnailPanelAction != nullptr);
 
-    QQuickItem *contentSplitView
+    QQuickItem* contentSplitView
         = findQuickItem(fixture.window, QStringLiteral("contentSplitView"));
-    QQuickItem *mediaPanelSplitView
+    QQuickItem* mediaPanelSplitView
         = findQuickItem(fixture.window, QStringLiteral("mediaPanelSplitView"));
-    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
-    QQuickItem *infoPanelOverlay
+    QQuickItem* infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem* infoPanelOverlay
         = findQuickItem(fixture.window, QStringLiteral("infoPanelOverlayContent"));
-    QQuickItem *thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
+    QQuickItem* thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
     QVERIFY(contentSplitView != nullptr);
     QVERIFY(mediaPanelSplitView != nullptr);
     QVERIFY(infoPanel != nullptr);
@@ -907,27 +907,27 @@ void TestMainWindowToolBar::infoPanelAdvancedMetadataSectionFoldsRows()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     resizeWindow(fixture, QSize(1200, 800));
 
-    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    KiriDocumentSession* documentSession = findDocumentSession(fixture.window);
     QVERIFY(documentSession != nullptr);
     QTRY_VERIFY(documentSession->activeImageReady());
     QTRY_VERIFY(documentSession->mediaInformation()->hasAdvancedSection());
     QTRY_COMPARE(documentSession->mediaInformation()->advancedRows()->rowCount(), 1);
 
-    KiriViewApplication *application = findApplication(fixture.window);
+    KiriViewApplication* application = findApplication(fixture.window);
     QVERIFY(application != nullptr);
-    QAction *infoPanelAction
+    QAction* infoPanelAction
         = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
     QVERIFY(infoPanelAction != nullptr);
     infoPanelAction->trigger();
 
-    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem* infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
     QVERIFY(infoPanel != nullptr);
     QTRY_VERIFY(infoPanel->isVisible());
 
     QTRY_COMPARE(visibleItemsByText(infoPanel, QStringLiteral("Advanced Metadata")).size(), 1);
     QCOMPARE(visibleItemsByText(infoPanel, QStringLiteral("Kiri Tester")).size(), 0);
 
-    QQuickItem *advancedMetadataSection = findAdvancedMetadataSection(infoPanel);
+    QQuickItem* advancedMetadataSection = findAdvancedMetadataSection(infoPanel);
     QVERIFY(advancedMetadataSection != nullptr);
     QVERIFY(advancedMetadataSection->setProperty("expanded", true));
     QCoreApplication::processEvents();
@@ -949,36 +949,36 @@ void TestMainWindowToolBar::infoPanelUsesFixedWidthFontForFileAndValues()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     resizeWindow(fixture, QSize(1200, 800));
 
-    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    KiriDocumentSession* documentSession = findDocumentSession(fixture.window);
     QVERIFY(documentSession != nullptr);
     QTRY_VERIFY(documentSession->mediaInformation()->available());
 
-    KiriViewApplication *application = findApplication(fixture.window);
+    KiriViewApplication* application = findApplication(fixture.window);
     QVERIFY(application != nullptr);
-    QAction *infoPanelAction
+    QAction* infoPanelAction
         = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
     QVERIFY(infoPanelAction != nullptr);
     infoPanelAction->trigger();
 
-    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem* infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
     QVERIFY(infoPanel != nullptr);
     QTRY_VERIFY(infoPanel->isVisible());
 
     const QString fixedWidthFamily = infoPanel->property("fixedWidthFontFamily").toString();
     QVERIFY(!fixedWidthFamily.isEmpty());
 
-    QQuickItem *title = findQuickItem(infoPanel, QStringLiteral("infoPanelTitle"));
-    QQuickItem *summary = findQuickItem(infoPanel, QStringLiteral("infoPanelSummary"));
+    QQuickItem* title = findQuickItem(infoPanel, QStringLiteral("infoPanelTitle"));
+    QQuickItem* summary = findQuickItem(infoPanel, QStringLiteral("infoPanelSummary"));
     QVERIFY(title != nullptr);
     QVERIFY(summary != nullptr);
     QCOMPARE(fontFamily(title), fixedWidthFamily);
     QCOMPARE(fontFamily(summary), fixedWidthFamily);
 
-    QList<QQuickItem *> valueLabels;
+    QList<QQuickItem*> valueLabels;
     QTRY_VERIFY(!(
         valueLabels = visualItemsByObjectName(infoPanel, QStringLiteral("infoPanelMetadataValue")))
             .isEmpty());
-    for (QQuickItem *valueLabel : valueLabels) {
+    for (QQuickItem* valueLabel : valueLabels) {
         QCOMPARE(fontFamily(valueLabel), fixedWidthFamily);
     }
 }
@@ -989,18 +989,18 @@ void TestMainWindowToolBar::infoPanelUsesOverlayDrawerOnNarrowWindows()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     resizeWindow(fixture, QSize(520, 420));
 
-    KiriViewApplication *application = findApplication(fixture.window);
+    KiriViewApplication* application = findApplication(fixture.window);
     QVERIFY(application != nullptr);
-    QAction *infoPanelAction
+    QAction* infoPanelAction
         = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
     QVERIFY(infoPanelAction != nullptr);
 
-    QQuickItem *mediaViewportSlot
+    QQuickItem* mediaViewportSlot
         = findQuickItem(fixture.window, QStringLiteral("mediaViewportSlot"));
-    QQuickItem *inlineInfoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
-    QQuickItem *overlayInfoPanel
+    QQuickItem* inlineInfoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem* overlayInfoPanel
         = findQuickItem(fixture.window, QStringLiteral("infoPanelOverlayContent"));
-    QObject *overlayDrawer = findObject(fixture.window, QStringLiteral("infoPanelOverlayDrawer"));
+    QObject* overlayDrawer = findObject(fixture.window, QStringLiteral("infoPanelOverlayDrawer"));
     QVERIFY(mediaViewportSlot != nullptr);
     QVERIFY(inlineInfoPanel != nullptr);
     QVERIFY(overlayInfoPanel != nullptr);
@@ -1014,7 +1014,7 @@ void TestMainWindowToolBar::infoPanelUsesOverlayDrawerOnNarrowWindows()
     QVERIFY(overlayDrawer->property("drawerOpen").toBool());
     QVERIFY(qAbs(mediaViewportSlot->width() - viewportWidthBeforeOpen) <= 1.0);
 
-    const QList<QQuickItem *> closeButtons
+    const QList<QQuickItem*> closeButtons
         = visibleItemsByObjectName(fixture.window, QStringLiteral("infoPanelCloseButton"));
     QCOMPARE(closeButtons.size(), 1);
     QTRY_VERIFY(itemCenter(closeButtons.constFirst()).x() < fixture.window->width());
@@ -1029,16 +1029,16 @@ void TestMainWindowToolBar::escapeClosesInfoPanelBeforeLeavingFullscreen()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     resizeWindow(fixture, QSize(1200, 800));
 
-    KiriViewApplication *application = findApplication(fixture.window);
+    KiriViewApplication* application = findApplication(fixture.window);
     QVERIFY(application != nullptr);
-    QAction *infoPanelAction
+    QAction* infoPanelAction
         = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
     QVERIFY(infoPanelAction != nullptr);
 
     fixture.window->setVisibility(QWindow::FullScreen);
     QTRY_COMPARE(fixture.window->visibility(), QWindow::FullScreen);
 
-    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem* infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
     QVERIFY(infoPanel != nullptr);
     infoPanelAction->trigger();
     QTRY_VERIFY(infoPanel->isVisible());
@@ -1067,8 +1067,8 @@ void TestMainWindowToolBar::panelShortcutsToggleResizablePanels()
     openSourceUrl(fixture, imageSourcePath);
     QTRY_VERIFY(findQuickItem(fixture.window, QStringLiteral("imageViewport")) != nullptr);
 
-    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
-    QQuickItem *thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
+    QQuickItem* infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem* thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
     QVERIFY(infoPanel != nullptr);
     QVERIFY(thumbnailPanel != nullptr);
     QVERIFY(!infoPanel->isVisible());
@@ -1100,14 +1100,14 @@ void TestMainWindowToolBar::commandFixedShortcutsUseApplicationActions()
     MainWindowFixture fixture = createMainWindowFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
-    KiriViewApplication *application = findApplication(fixture.window);
-    QQuickItem *toolbar = findQuickItem(fixture.window, QStringLiteral("mainImageToolBar"));
+    KiriViewApplication* application = findApplication(fixture.window);
+    QQuickItem* toolbar = findQuickItem(fixture.window, QStringLiteral("mainImageToolBar"));
     QVERIFY(application != nullptr);
     QVERIFY(toolbar != nullptr);
 
-    QAction *showMenubarAction
+    QAction* showMenubarAction
         = application->actionForId(KiriViewApplication::OptionsShowMenubarAction);
-    QAction *openApplicationMenuAction
+    QAction* openApplicationMenuAction
         = application->actionForId(KiriViewApplication::OpenApplicationMenuAction);
     QVERIFY(showMenubarAction != nullptr);
     QVERIFY(openApplicationMenuAction != nullptr);
@@ -1155,17 +1155,17 @@ void TestMainWindowToolBar::viewerRightClickOpensContextMenuOnlyFromMediaViewpor
     openSourceUrl(fixture, imageSourcePath);
     compareToolbarPageReadout(fixture, QStringLiteral("3"), QStringLiteral("3"), true);
 
-    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    KiriDocumentSession* documentSession = findDocumentSession(fixture.window);
     QVERIFY(documentSession != nullptr);
-    KiriImageDocument *imageDocument = documentSession->imageDocument();
+    KiriImageDocument* imageDocument = documentSession->imageDocument();
     QVERIFY(imageDocument != nullptr);
     QTRY_COMPARE(imageDocument->status(), KiriImageDocument::Status::Ready);
     QTRY_VERIFY(documentSession->activeImageReady());
 
-    QObject *contextMenu = findObject(fixture.window, QStringLiteral("viewerContextMenu"));
-    QQuickItem *mediaViewportSlot
+    QObject* contextMenu = findObject(fixture.window, QStringLiteral("viewerContextMenu"));
+    QQuickItem* mediaViewportSlot
         = findQuickItem(fixture.window, QStringLiteral("mediaViewportSlot"));
-    QQuickItem *toolbar = findQuickItem(fixture.window, QStringLiteral("mainImageToolBar"));
+    QQuickItem* toolbar = findQuickItem(fixture.window, QStringLiteral("mainImageToolBar"));
     QVERIFY(contextMenu != nullptr);
     QVERIFY(mediaViewportSlot != nullptr);
     QVERIFY(toolbar != nullptr);
@@ -1180,19 +1180,19 @@ void TestMainWindowToolBar::viewerRightClickOpensContextMenuOnlyFromMediaViewpor
     closePopup(contextMenu);
     QTRY_VERIFY(!popupOpen(contextMenu));
 
-    KiriViewApplication *application = findApplication(fixture.window);
+    KiriViewApplication* application = findApplication(fixture.window);
     QVERIFY(application != nullptr);
-    QAction *infoPanelAction
+    QAction* infoPanelAction
         = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
-    QAction *thumbnailPanelAction
+    QAction* thumbnailPanelAction
         = application->actionForId(KiriViewApplication::ViewToggleThumbnailPanelAction);
     QVERIFY(infoPanelAction != nullptr);
     QVERIFY(thumbnailPanelAction != nullptr);
     infoPanelAction->trigger();
     thumbnailPanelAction->trigger();
 
-    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
-    QQuickItem *thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
+    QQuickItem* infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem* thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
     QVERIFY(infoPanel != nullptr);
     QVERIFY(thumbnailPanel != nullptr);
     QTRY_VERIFY(infoPanel->isVisible());
@@ -1228,13 +1228,13 @@ void TestMainWindowToolBar::toolbarZoomWheelAppliesFineManualStep()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     openSourceUrl(fixture, imageSourcePath);
 
-    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    KiriDocumentSession* documentSession = findDocumentSession(fixture.window);
     QVERIFY(documentSession != nullptr);
-    KiriImageDocument *imageDocument = documentSession->imageDocument();
+    KiriImageDocument* imageDocument = documentSession->imageDocument();
     QVERIFY(imageDocument != nullptr);
     QTRY_COMPARE(imageDocument->status(), KiriImageDocument::Status::Ready);
 
-    QQuickItem *zoomSpinBox = findQuickItem(fixture.window, QStringLiteral("zoomSpinBox"));
+    QQuickItem* zoomSpinBox = findQuickItem(fixture.window, QStringLiteral("zoomSpinBox"));
     QVERIFY(zoomSpinBox != nullptr);
     QTRY_VERIFY(zoomSpinBox->isEnabled());
 
@@ -1263,8 +1263,8 @@ void TestMainWindowToolBar::rightButtonWheelSuppressesContextMenuTap()
     openSourceUrl(fixture, imageSourcePath);
     compareToolbarPageReadout(fixture, QStringLiteral("3"), QStringLiteral("3"), true);
 
-    QObject *contextMenu = findObject(fixture.window, QStringLiteral("viewerContextMenu"));
-    QQuickItem *mediaViewportSlot
+    QObject* contextMenu = findObject(fixture.window, QStringLiteral("viewerContextMenu"));
+    QQuickItem* mediaViewportSlot
         = findQuickItem(fixture.window, QStringLiteral("mediaViewportSlot"));
     QVERIFY(contextMenu != nullptr);
     QVERIFY(mediaViewportSlot != nullptr);
@@ -1298,7 +1298,7 @@ void TestMainWindowToolBar::fullscreenToolbarRevealsOnlyNearTopEdge()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     resizeWindow(fixture, QSize(1200, 800));
 
-    QQuickItem *toolbar = findQuickItem(fixture.window, QStringLiteral("mainImageToolBar"));
+    QQuickItem* toolbar = findQuickItem(fixture.window, QStringLiteral("mainImageToolBar"));
     QVERIFY(toolbar != nullptr);
 
     fixture.window->setVisibility(QWindow::FullScreen);
@@ -1324,7 +1324,7 @@ void TestMainWindowToolBar::fullscreenToolbarHidesAfterTopRevealIdle()
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     resizeWindow(fixture, QSize(1200, 800));
 
-    QQuickItem *toolbar = findQuickItem(fixture.window, QStringLiteral("mainImageToolBar"));
+    QQuickItem* toolbar = findQuickItem(fixture.window, QStringLiteral("mainImageToolBar"));
     QVERIFY(toolbar != nullptr);
 
     fixture.window->setVisibility(QWindow::FullScreen);
@@ -1345,7 +1345,7 @@ void TestMainWindowToolBar::fullscreenReusesSingleToolbarAndHidesApplicationMenu
     MainWindowFixture fixture = createMainWindowFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_COMPARE(controlToolBars(fixture.window).size(), 1);
-    QQuickItem *windowedToolbar = controlToolBars(fixture.window).constFirst();
+    QQuickItem* windowedToolbar = controlToolBars(fixture.window).constFirst();
 
     fixture.window->setVisibility(QWindow::FullScreen);
     QTRY_COMPARE(fixture.window->visibility(), QWindow::FullScreen);
@@ -1354,7 +1354,7 @@ void TestMainWindowToolBar::fullscreenReusesSingleToolbarAndHidesApplicationMenu
     QCOMPARE(controlToolBars(fixture.window).constFirst(), windowedToolbar);
     QVERIFY(windowedToolbar->isVisible());
 
-    const QList<QQuickItem *> visibleApplicationMenuButtons
+    const QList<QQuickItem*> visibleApplicationMenuButtons
         = visibleItemsByObjectName(fixture.window, QStringLiteral("toolbarApplicationMenuButton"));
     QVERIFY(visibleApplicationMenuButtons.isEmpty());
 }

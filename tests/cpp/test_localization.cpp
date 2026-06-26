@@ -46,11 +46,11 @@ void TestLocalization::actionsUseTestCatalog()
 {
     KiriViewApplication application;
 
-    QAction *openAction = application.action(QStringLiteral("file_open"));
+    QAction* openAction = application.action(QStringLiteral("file_open"));
     QVERIFY(openAction != nullptr);
     QCOMPARE(openAction->text(), QStringLiteral("__kiriview_test_open__"));
 
-    QAction *previousArchiveAction = application.action(QStringLiteral("go_previous_archive"));
+    QAction* previousArchiveAction = application.action(QStringLiteral("go_previous_archive"));
     QVERIFY(previousArchiveAction != nullptr);
     QCOMPARE(previousArchiveAction->text(), QStringLiteral("__kiriview_test_previous_archive__"));
 }

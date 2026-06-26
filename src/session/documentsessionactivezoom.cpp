@@ -7,8 +7,8 @@
 
 namespace kiriview {
 ActiveZoomSnapshot documentSessionActiveZoomSnapshot(DocumentSessionKind documentKind,
-    const DocumentSessionPublicImageLeafSnapshot &image,
-    const DocumentSessionPublicVideoLeafSnapshot &video)
+    const DocumentSessionPublicImageLeafSnapshot& image,
+    const DocumentSessionPublicVideoLeafSnapshot& video)
 {
     switch (documentKind) {
     case DocumentSessionKind::Image:

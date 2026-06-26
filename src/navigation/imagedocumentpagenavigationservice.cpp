@@ -10,7 +10,7 @@
 
 namespace kiriview {
 ImageDocumentPageNavigationService::ImageDocumentPageNavigationService(
-    QObject *parent, ImageDocumentPageCandidateProvider candidateProvider, Callbacks callbacks)
+    QObject* parent, ImageDocumentPageCandidateProvider candidateProvider, Callbacks callbacks)
     : QObject(parent)
     , m_callbacks(std::move(callbacks))
     , m_candidateRepository(std::move(candidateProvider))
@@ -67,7 +67,7 @@ void ImageDocumentPageNavigationService::openAdjacentPage(
 void ImageDocumentPageNavigationService::cancelNavigation() { m_pageNavigation.cancelNavigation(); }
 
 void ImageDocumentPageNavigationService::openAdjacentContainer(
-    const QUrl &currentContainerUrl, NavigationDirection direction)
+    const QUrl& currentContainerUrl, NavigationDirection direction)
 {
     if (!ImageContainerNavigationController::canOpenAdjacentContainer(currentContainerUrl)) {
         return;

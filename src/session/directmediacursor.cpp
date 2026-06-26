@@ -10,7 +10,7 @@
 #include <utility>
 
 namespace {
-bool sameDirectMediaCurrentUrlKeyOrEmpty(const QUrl &left, const QUrl &right)
+bool sameDirectMediaCurrentUrlKeyOrEmpty(const QUrl& left, const QUrl& right)
 {
     if (left.isEmpty() || right.isEmpty()) {
         return left.isEmpty() && right.isEmpty();
@@ -20,7 +20,7 @@ bool sameDirectMediaCurrentUrlKeyOrEmpty(const QUrl &left, const QUrl &right)
         kiriview::sourceKeyForDirectMediaCurrentUrl(right));
 }
 
-bool sameDirectMediaParentUrlKeyOrEmpty(const QUrl &left, const QUrl &right)
+bool sameDirectMediaParentUrlKeyOrEmpty(const QUrl& left, const QUrl& right)
 {
     if (left.isEmpty() || right.isEmpty()) {
         return left.isEmpty() && right.isEmpty();
@@ -31,7 +31,7 @@ bool sameDirectMediaParentUrlKeyOrEmpty(const QUrl &left, const QUrl &right)
 }
 
 bool sameEffectiveDirectMediaCursorUrl(
-    const kiriview::DirectMediaCursor &left, const kiriview::DirectMediaCursor &right)
+    const kiriview::DirectMediaCursor& left, const kiriview::DirectMediaCursor& right)
 {
     const kiriview::DirectMediaScope leftScope = kiriview::directMediaScopeForCursor(left);
     const kiriview::DirectMediaScope rightScope = kiriview::directMediaScopeForCursor(right);
@@ -40,7 +40,7 @@ bool sameEffectiveDirectMediaCursorUrl(
 }
 
 bool replaceDirectMediaCursor(
-    kiriview::DirectMediaCursor &current, kiriview::DirectMediaCursor next)
+    kiriview::DirectMediaCursor& current, kiriview::DirectMediaCursor next)
 {
     if (current.stableUrl == next.stableUrl && current.pendingUrl == next.pendingUrl) {
         return false;
@@ -53,7 +53,7 @@ bool replaceDirectMediaCursor(
 }
 
 void logCursorOperation(
-    const char *operation, const kiriview::DirectMediaCursor &cursor, bool effectiveUrlChanged)
+    const char* operation, const kiriview::DirectMediaCursor& cursor, bool effectiveUrlChanged)
 {
     const kiriview::DirectMediaScope scope = kiriview::directMediaScopeForCursor(cursor);
     qCDebug(kiriviewNavigationLog)
@@ -65,12 +65,12 @@ void logCursorOperation(
 }
 
 namespace kiriview {
-QUrl effectiveDirectMediaCursorUrl(const DirectMediaCursor &cursor)
+QUrl effectiveDirectMediaCursorUrl(const DirectMediaCursor& cursor)
 {
     return !cursor.pendingUrl.isEmpty() ? cursor.pendingUrl : cursor.stableUrl;
 }
 
-DirectMediaScope directMediaScopeForCursor(const DirectMediaCursor &cursor)
+DirectMediaScope directMediaScopeForCursor(const DirectMediaCursor& cursor)
 {
     const QUrl currentUrl = effectiveDirectMediaCursorUrl(cursor);
     return DirectMediaScope {
@@ -80,13 +80,13 @@ DirectMediaScope directMediaScopeForCursor(const DirectMediaCursor &cursor)
     };
 }
 
-bool directMediaScopeMatchesCursor(const DirectMediaCursor &cursor, const DirectMediaScope &scope)
+bool directMediaScopeMatchesCursor(const DirectMediaCursor& cursor, const DirectMediaScope& scope)
 {
     const DirectMediaScope currentScope = directMediaScopeForCursor(cursor);
     return currentScope == scope;
 }
 
-bool clearDirectMediaCursor(DirectMediaCursor &cursor)
+bool clearDirectMediaCursor(DirectMediaCursor& cursor)
 {
     DirectMediaCursor next;
     next.generation = cursor.generation;
@@ -95,7 +95,7 @@ bool clearDirectMediaCursor(DirectMediaCursor &cursor)
     return effectiveUrlChanged;
 }
 
-bool requestDirectImageCursor(DirectMediaCursor &cursor, const QUrl &url)
+bool requestDirectImageCursor(DirectMediaCursor& cursor, const QUrl& url)
 {
     DirectMediaCursor next = cursor;
     next.pendingUrl = url;
@@ -104,7 +104,7 @@ bool requestDirectImageCursor(DirectMediaCursor &cursor, const QUrl &url)
     return effectiveUrlChanged;
 }
 
-bool confirmDirectImageCursor(DirectMediaCursor &cursor, const QUrl &url)
+bool confirmDirectImageCursor(DirectMediaCursor& cursor, const QUrl& url)
 {
     DirectMediaCursor next = cursor;
     next.stableUrl = url;
@@ -114,7 +114,7 @@ bool confirmDirectImageCursor(DirectMediaCursor &cursor, const QUrl &url)
     return effectiveUrlChanged;
 }
 
-bool restoreDirectImageCursorAfterFailure(DirectMediaCursor &cursor)
+bool restoreDirectImageCursorAfterFailure(DirectMediaCursor& cursor)
 {
     DirectMediaCursor next = cursor;
     next.pendingUrl = QUrl();
@@ -123,7 +123,7 @@ bool restoreDirectImageCursorAfterFailure(DirectMediaCursor &cursor)
     return effectiveUrlChanged;
 }
 
-bool setDirectVideoCursor(DirectMediaCursor &cursor, const QUrl &url)
+bool setDirectVideoCursor(DirectMediaCursor& cursor, const QUrl& url)
 {
     DirectMediaCursor next = cursor;
     next.stableUrl = url;

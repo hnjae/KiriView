@@ -9,7 +9,8 @@
 #include <functional>
 
 namespace kiriview {
-struct ImageDocumentLifecycleRuntimeOperations {
+struct ImageDocumentLifecycleRuntimeOperations
+{
     std::function<void()> cancelFileDeletion;
     std::function<void()> stopPresentationAnimation;
     std::function<void()> shutdownSpread;
@@ -21,7 +22,7 @@ public:
     explicit ImageDocumentLifecycleRuntimePlanExecutor(
         ImageDocumentLifecycleRuntimeOperations operations);
 
-    bool dispatchOperation(const ImageDocumentRuntimeOperation &operation);
+    bool dispatchOperation(const ImageDocumentRuntimeOperation& operation);
 
 private:
     ImageDocumentLifecycleRuntimeOperations m_operations;

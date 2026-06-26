@@ -26,7 +26,8 @@
 namespace {
 constexpr std::array<unsigned char, 8> pngSignature { 0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a };
 
-struct FrameSpec {
+struct FrameSpec
+{
     quint32 width = 0;
     quint32 height = 0;
     quint32 xOffset = 0;
@@ -42,8 +43,8 @@ QByteArray pixelBytes(std::initializer_list<std::array<unsigned char, 4>> pixels
 {
     QByteArray bytes;
     bytes.reserve(static_cast<qsizetype>(pixels.size() * 4));
-    for (const std::array<unsigned char, 4> &pixel : pixels) {
-        bytes.append(reinterpret_cast<const char *>(pixel.data()), 4);
+    for (const std::array<unsigned char, 4>& pixel : pixels) {
+        bytes.append(reinterpret_cast<const char*>(pixel.data()), 4);
     }
     return bytes;
 }
@@ -53,7 +54,7 @@ FrameSpec fullCanvasFrame(quint32 width, quint32 height, QByteArray pixels)
     return FrameSpec { width, height, 0, 0, 1, 10, 0, 0, std::move(pixels) };
 }
 
-quint32 readBe32(const QByteArray &data, qsizetype offset)
+quint32 readBe32(const QByteArray& data, qsizetype offset)
 {
     return (static_cast<quint32>(static_cast<unsigned char>(data[offset])) << 24)
         | (static_cast<quint32>(static_cast<unsigned char>(data[offset + 1])) << 16)
@@ -61,7 +62,7 @@ quint32 readBe32(const QByteArray &data, qsizetype offset)
         | static_cast<quint32>(static_cast<unsigned char>(data[offset + 3]));
 }
 
-void appendBe32(QByteArray *data, quint32 value)
+void appendBe32(QByteArray* data, quint32 value)
 {
     data->append(static_cast<char>((value >> 24) & 0xff));
     data->append(static_cast<char>((value >> 16) & 0xff));
@@ -69,13 +70,13 @@ void appendBe32(QByteArray *data, quint32 value)
     data->append(static_cast<char>(value & 0xff));
 }
 
-void appendBe16(QByteArray *data, quint16 value)
+void appendBe16(QByteArray* data, quint16 value)
 {
     data->append(static_cast<char>((value >> 8) & 0xff));
     data->append(static_cast<char>(value & 0xff));
 }
 
-quint32 crc32(const QByteArray &data)
+quint32 crc32(const QByteArray& data)
 {
     quint32 crc = 0xffffffffU;
     for (unsigned char byte : data) {
@@ -87,7 +88,7 @@ quint32 crc32(const QByteArray &data)
     return crc ^ 0xffffffffU;
 }
 
-void appendPngChunk(QByteArray *png, const char *kind, const QByteArray &payload)
+void appendPngChunk(QByteArray* png, const char* kind, const QByteArray& payload)
 {
     appendBe32(png, static_cast<quint32>(payload.size()));
     const qsizetype typeOffset = png->size();
@@ -96,7 +97,7 @@ void appendPngChunk(QByteArray *png, const char *kind, const QByteArray &payload
     appendBe32(png, crc32(png->mid(typeOffset, 4 + payload.size())));
 }
 
-std::vector<QByteArray> extractChunks(const QByteArray &png, const char *expectedKind)
+std::vector<QByteArray> extractChunks(const QByteArray& png, const char* expectedKind)
 {
     std::vector<QByteArray> chunks;
     qsizetype offset = static_cast<qsizetype>(pngSignature.size());
@@ -115,14 +116,14 @@ std::vector<QByteArray> extractChunks(const QByteArray &png, const char *expecte
     return chunks;
 }
 
-QByteArray firstChunk(const QByteArray &png, const char *kind)
+QByteArray firstChunk(const QByteArray& png, const char* kind)
 {
     const std::vector<QByteArray> chunks = extractChunks(png, kind);
     Q_ASSERT(!chunks.empty());
     return chunks.front();
 }
 
-QByteArray encodeRgbaPng(quint32 width, quint32 height, const QByteArray &pixels)
+QByteArray encodeRgbaPng(quint32 width, quint32 height, const QByteArray& pixels)
 {
     QImage image(static_cast<int>(width), static_cast<int>(height), QImage::Format_RGBA8888);
     Q_ASSERT(!image.isNull());
@@ -138,7 +139,7 @@ QByteArray encodeRgbaPng(quint32 width, quint32 height, const QByteArray &pixels
     return png;
 }
 
-QByteArray frameControlPayload(quint32 sequenceNumber, const FrameSpec &frame)
+QByteArray frameControlPayload(quint32 sequenceNumber, const FrameSpec& frame)
 {
     QByteArray payload;
     appendBe32(&payload, sequenceNumber);
@@ -154,14 +155,14 @@ QByteArray frameControlPayload(quint32 sequenceNumber, const FrameSpec &frame)
 }
 
 QByteArray makeApng(quint32 canvasWidth, quint32 canvasHeight, quint32 playCount,
-    const std::vector<FrameSpec> &frames, std::optional<QByteArray> hiddenDefault = std::nullopt)
+    const std::vector<FrameSpec>& frames, std::optional<QByteArray> hiddenDefault = std::nullopt)
 {
     Q_ASSERT(!frames.empty());
     const QByteArray defaultPixels = hiddenDefault.value_or(frames.front().pixels);
     const QByteArray defaultPng = encodeRgbaPng(canvasWidth, canvasHeight, defaultPixels);
 
     QByteArray apng;
-    apng.append(reinterpret_cast<const char *>(pngSignature.data()), pngSignature.size());
+    apng.append(reinterpret_cast<const char*>(pngSignature.data()), pngSignature.size());
     appendPngChunk(&apng, "IHDR", firstChunk(defaultPng, "IHDR"));
 
     QByteArray animationControl;
@@ -172,23 +173,23 @@ QByteArray makeApng(quint32 canvasWidth, quint32 canvasHeight, quint32 playCount
     quint32 sequenceNumber = 0;
     if (!hiddenDefault.has_value()) {
         appendPngChunk(&apng, "fcTL", frameControlPayload(sequenceNumber++, frames.front()));
-        for (const QByteArray &idat : extractChunks(defaultPng, "IDAT")) {
+        for (const QByteArray& idat : extractChunks(defaultPng, "IDAT")) {
             appendPngChunk(&apng, "IDAT", idat);
         }
     } else {
-        for (const QByteArray &idat : extractChunks(defaultPng, "IDAT")) {
+        for (const QByteArray& idat : extractChunks(defaultPng, "IDAT")) {
             appendPngChunk(&apng, "IDAT", idat);
         }
     }
 
     const qsizetype firstFdatFrame = hiddenDefault.has_value() ? 0 : 1;
     for (qsizetype index = firstFdatFrame; index < static_cast<qsizetype>(frames.size()); ++index) {
-        const FrameSpec &frame = frames[static_cast<std::size_t>(index)];
+        const FrameSpec& frame = frames[static_cast<std::size_t>(index)];
         appendPngChunk(&apng, "fcTL", frameControlPayload(sequenceNumber++, frame));
         const QByteArray framePng = encodeRgbaPng(frame.width, frame.height, frame.pixels);
         QByteArray frameData;
         appendBe32(&frameData, sequenceNumber++);
-        for (const QByteArray &idat : extractChunks(framePng, "IDAT")) {
+        for (const QByteArray& idat : extractChunks(framePng, "IDAT")) {
             frameData.append(idat);
         }
         appendPngChunk(&apng, "fdAT", frameData);
@@ -198,11 +199,11 @@ QByteArray makeApng(quint32 canvasWidth, quint32 canvasHeight, quint32 playCount
     return apng;
 }
 
-QColor pixel(const QImage &image, int x, int y) { return image.pixelColor(x, y); }
+QColor pixel(const QImage& image, int x, int y) { return image.pixelColor(x, y); }
 
-template <typename Image> const Image *decodedImage(const kiriview::DecodedImageResult &result)
+template <typename Image> const Image* decodedImage(const kiriview::DecodedImageResult& result)
 {
-    const kiriview::DecodedImage *image = kiriview::decodedImageResultImage(result);
+    const kiriview::DecodedImage* image = kiriview::decodedImageResultImage(result);
     return image == nullptr ? nullptr : std::get_if<Image>(image);
 }
 }
@@ -354,7 +355,7 @@ void TestApngAnimationReader::imageDecoderReturnsStreamingApngImage()
     const QByteArray apng = makeApng(1, 1, 1, { first, second });
 
     const kiriview::DecodedImageResult result = kiriview::decodeImageData(apng);
-    const auto *decoded = decodedImage<kiriview::ApngAnimationImage>(result);
+    const auto* decoded = decodedImage<kiriview::ApngAnimationImage>(result);
     QVERIFY(decoded != nullptr);
     QCOMPARE(pixel(decoded->firstFrame, 0, 0), QColor(255, 0, 0, 255));
     QCOMPARE(decoded->data, apng);

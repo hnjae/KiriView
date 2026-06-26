@@ -24,7 +24,7 @@ private Q_SLOTS:
 };
 
 namespace {
-QByteArray rawFixtureData(QFileInfo *fixtureInfo)
+QByteArray rawFixtureData(QFileInfo* fixtureInfo)
 {
     *fixtureInfo
         = QFileInfo(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/raw-cfa-smoke.dng"));
@@ -37,12 +37,12 @@ QByteArray rawFixtureData(QFileInfo *fixtureInfo)
 }
 
 void verifyDecodedRawFixture(
-    const QByteArray &imageData, const kiriview::ImageDecodeRequest &request)
+    const QByteArray& imageData, const kiriview::ImageDecodeRequest& request)
 {
     const kiriview::DecodedImageResult result = kiriview::decodeImageData(imageData, request);
 
-    const auto *decoded = kiriview::decodedImageResultImageAs<kiriview::StaticDecodedImage>(result);
-    const auto *failure = kiriview::decodedImageResultFailure(result);
+    const auto* decoded = kiriview::decodedImageResultImageAs<kiriview::StaticDecodedImage>(result);
+    const auto* failure = kiriview::decodedImageResultFailure(result);
     QVERIFY2(decoded != nullptr,
         qPrintable(failure != nullptr ? failure->errorString
                                       : QStringLiteral("RAW fixture did not decode.")));
@@ -88,7 +88,7 @@ void TestRawDecodeIntegration::invalidRawDataPreservesBackendFailureDiagnostics(
     const kiriview::DecodedImageResult result = kiriview::decodeRawImageData(
         QByteArrayLiteral("not raw image data"), kiriview::ImageDecodeRequest {});
 
-    const kiriview::DecodedImageFailure *failure = kiriview::decodedImageResultFailure(result);
+    const kiriview::DecodedImageFailure* failure = kiriview::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->route, kiriview::DecodedImageFailureRoute::Raw);
     QVERIFY(failure->operation != kiriview::DecodedImageFailureOperation::Unknown);

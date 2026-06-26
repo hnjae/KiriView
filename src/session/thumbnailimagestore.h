@@ -25,11 +25,11 @@ public:
 
     QString insert(QImage image,
         ThumbnailImageRetentionPriority priority = ThumbnailImageRetentionPriority::Nearby);
-    void updatePriority(const QString &id, ThumbnailImageRetentionPriority priority);
-    void release(const QString &id);
+    void updatePriority(const QString& id, ThumbnailImageRetentionPriority priority);
+    void release(const QString& id);
     void clear();
     void setByteBudget(qsizetype byteBudget);
-    QImage image(const QString &id) const;
+    QImage image(const QString& id) const;
     qsizetype byteBudget() const;
     qsizetype byteCost() const;
     qsizetype size() const;
@@ -44,7 +44,7 @@ class ThumbnailImageProvider final : public QQuickImageProvider
 public:
     explicit ThumbnailImageProvider(std::shared_ptr<ThumbnailImageStore> store);
 
-    QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
+    QImage requestImage(const QString& id, QSize* size, const QSize& requestedSize) override;
 
 private:
     std::shared_ptr<ThumbnailImageStore> m_store;
@@ -52,7 +52,7 @@ private:
 
 std::shared_ptr<ThumbnailImageStore> sharedThumbnailImageStore();
 void configureSharedThumbnailImageStoreByteBudget(qsizetype byteBudget);
-QUrl thumbnailImageSourceForId(const QString &id);
+QUrl thumbnailImageSourceForId(const QString& id);
 }
 
 #endif

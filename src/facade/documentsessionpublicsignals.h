@@ -26,7 +26,8 @@ enum class DocumentSessionPublicSignal {
     ActiveNavigationRevealDirection,
 };
 
-struct DocumentSessionPublicSignalOperations {
+struct DocumentSessionPublicSignalOperations
+{
     std::function<void()> publicProjectionRevisionChanged;
     std::function<void()> sourceUrlChanged;
     std::function<void()> documentKindChanged;
@@ -47,7 +48,7 @@ class DocumentSessionPublicSignalEmitter final
 public:
     explicit DocumentSessionPublicSignalEmitter(DocumentSessionPublicSignalOperations operations);
 
-    void emitChanges(const std::vector<DocumentSessionChange> &changes) const;
+    void emitChanges(const std::vector<DocumentSessionChange>& changes) const;
     void emitSignal(DocumentSessionPublicSignal signal) const;
 
 private:
@@ -56,7 +57,7 @@ private:
 
 std::vector<DocumentSessionPublicSignal> documentSessionPublicSignals(DocumentSessionChange change);
 std::vector<DocumentSessionPublicSignal> documentSessionPublicSignalsForChanges(
-    const std::vector<DocumentSessionChange> &changes);
+    const std::vector<DocumentSessionChange>& changes);
 }
 
 #endif

@@ -9,7 +9,7 @@
 namespace kiriview {
 namespace {
     template <typename Operation, typename... Args>
-    void run(const Operation &operation, Args &&...args)
+    void run(const Operation& operation, Args&&... args)
     {
         if (operation) {
             operation(std::forward<Args>(args)...);
@@ -24,7 +24,7 @@ ImageDocumentNavigationRuntimePlanExecutor::ImageDocumentNavigationRuntimePlanEx
 }
 
 bool ImageDocumentNavigationRuntimePlanExecutor::dispatchOperation(
-    const ImageDocumentRuntimeOperation &operation)
+    const ImageDocumentRuntimeOperation& operation)
 {
     if (std::holds_alternative<CancelPageNavigationUpdateOperation>(operation)) {
         run(m_operations.cancelPageNavigationUpdate);
@@ -50,34 +50,34 @@ bool ImageDocumentNavigationRuntimePlanExecutor::dispatchOperation(
         run(m_operations.updatePageNavigation);
         return true;
     }
-    if (const auto *payload = std::get_if<LoadUrlOperation>(&operation)) {
+    if (const auto* payload = std::get_if<LoadUrlOperation>(&operation)) {
         run(m_operations.loadUrl, payload->target);
         return true;
     }
-    if (const auto *payload = std::get_if<LoadContainerImageOperation>(&operation)) {
+    if (const auto* payload = std::get_if<LoadContainerImageOperation>(&operation)) {
         run(m_operations.loadContainerImage, payload->target, payload->containerUrl);
         return true;
     }
-    if (const auto *payload = std::get_if<FinishEmptyContainerNavigationOperation>(&operation)) {
+    if (const auto* payload = std::get_if<FinishEmptyContainerNavigationOperation>(&operation)) {
         run(m_operations.finishEmptyContainerNavigation, payload->containerUrl);
         return true;
     }
-    if (const auto *payload
+    if (const auto* payload
         = std::get_if<FinishContainerNavigationLoadWithErrorOperation>(&operation)) {
         run(m_operations.finishContainerNavigationLoadWithError, payload->containerUrl,
             payload->errorString);
         return true;
     }
-    if (const auto *payload = std::get_if<ReportContainerNavigationBoundaryOperation>(&operation)) {
+    if (const auto* payload = std::get_if<ReportContainerNavigationBoundaryOperation>(&operation)) {
         run(m_operations.reportContainerNavigationBoundary, payload->direction);
         return true;
     }
-    if (const auto *payload
+    if (const auto* payload
         = std::get_if<ReportContainerNavigationListFailureOperation>(&operation)) {
         run(m_operations.reportContainerNavigationListFailure, payload->failure);
         return true;
     }
-    if (const auto *payload = std::get_if<LoadPageNavigationUrlOperation>(&operation)) {
+    if (const auto* payload = std::get_if<LoadPageNavigationUrlOperation>(&operation)) {
         run(m_operations.loadPageNavigationUrl, payload->target,
             payload->preserveTwoPageSpreadTransition);
         return true;

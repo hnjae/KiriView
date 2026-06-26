@@ -9,7 +9,7 @@
 namespace kiriview {
 namespace {
     template <typename Operation, typename... Args>
-    void run(const Operation &operation, Args &&...args)
+    void run(const Operation& operation, Args&&... args)
     {
         if (operation) {
             operation(std::forward<Args>(args)...);
@@ -24,7 +24,7 @@ ImageDocumentSpreadRuntimePlanExecutor::ImageDocumentSpreadRuntimePlanExecutor(
 }
 
 bool ImageDocumentSpreadRuntimePlanExecutor::dispatchOperation(
-    const ImageDocumentRuntimeOperation &operation)
+    const ImageDocumentRuntimeOperation& operation)
 {
     if (std::holds_alternative<FinishSpreadTransitionOperation>(operation)) {
         run(m_operations.finishSpreadTransition);
@@ -46,7 +46,7 @@ bool ImageDocumentSpreadRuntimePlanExecutor::dispatchOperation(
         run(m_operations.resetZoom);
         return true;
     }
-    if (const auto *payload = std::get_if<PrepareFailedContainerOperation>(&operation)) {
+    if (const auto* payload = std::get_if<PrepareFailedContainerOperation>(&operation)) {
         run(m_operations.prepareFailedContainer, payload->containerUrl);
         return true;
     }

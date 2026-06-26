@@ -14,7 +14,8 @@ enum class HeifBrandKind {
     ImageSequence,
 };
 
-struct HeifContainerInfo {
+struct HeifContainerInfo
+{
     bool stillImage = false;
     bool imageSequence = false;
 
@@ -22,10 +23,10 @@ struct HeifContainerInfo {
 };
 
 HeifBrandKind heifBrandKind(std::string_view brand);
-HeifContainerInfo heifContainerInfo(const QByteArray &data);
-bool isLikelyHeifContainer(const QByteArray &data);
-bool isLikelyHeifStillImageContainer(const QByteArray &data);
-bool isLikelyHeifSequenceContainer(const QByteArray &data);
+HeifContainerInfo heifContainerInfo(const QByteArray& data);
+bool isLikelyHeifContainer(const QByteArray& data);
+bool isLikelyHeifStillImageContainer(const QByteArray& data);
+bool isLikelyHeifSequenceContainer(const QByteArray& data);
 }
 
 #endif

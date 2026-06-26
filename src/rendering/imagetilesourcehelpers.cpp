@@ -9,17 +9,17 @@
 #include <utility>
 
 namespace kiriview {
-QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge)
+QSize boundedPreviewSize(const QSize& imageSize, int maximumLongEdge)
 {
     return scaledImageSizeToFit(QSizeF(imageSize), QSize(maximumLongEdge, maximumLongEdge));
 }
 
-bool tileRequestCanDecode(const TileRequest &request)
+bool tileRequestCanDecode(const TileRequest& request)
 {
     return !request.textureLevelRect.isEmpty() && !request.sourceRect.isEmpty();
 }
 
-QImage scaledTileImage(const QImage &image, const QSize &size)
+QImage scaledTileImage(const QImage& image, const QSize& size)
 {
     if (image.isNull() || size.isEmpty()) {
         return {};
@@ -30,7 +30,7 @@ QImage scaledTileImage(const QImage &image, const QSize &size)
     return displayReadyImage(image.scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
 }
 
-QImage cropLevelTexture(const QImage &levelImage, const QRect &textureLevelRect)
+QImage cropLevelTexture(const QImage& levelImage, const QRect& textureLevelRect)
 {
     if (levelImage.isNull() || textureLevelRect.isEmpty()) {
         return {};
@@ -38,7 +38,7 @@ QImage cropLevelTexture(const QImage &levelImage, const QRect &textureLevelRect)
     return displayReadyImage(levelImage.copy(textureLevelRect));
 }
 
-DecodedTile decodedTileFromImage(const TileRequest &request, QImage image)
+DecodedTile decodedTileFromImage(const TileRequest& request, QImage image)
 {
     return DecodedTile {
         request.key,
@@ -52,7 +52,7 @@ DecodedTile decodedTileFromImage(const TileRequest &request, QImage image)
 }
 
 std::optional<DecodedTile> decodedTileFromLevelImage(
-    const TileRequest &request, const QImage &levelImage)
+    const TileRequest& request, const QImage& levelImage)
 {
     QImage image = cropLevelTexture(levelImage, request.textureLevelRect);
     if (image.isNull()) {
@@ -63,7 +63,7 @@ std::optional<DecodedTile> decodedTileFromLevelImage(
 }
 
 std::optional<DecodedTile> decodedTileFromSourceImage(
-    const TileRequest &request, const QImage &sourceImage)
+    const TileRequest& request, const QImage& sourceImage)
 {
     QImage image = scaledTileImage(sourceImage, request.textureLevelRect.size());
     if (image.isNull()) {
@@ -73,7 +73,7 @@ std::optional<DecodedTile> decodedTileFromSourceImage(
     return decodedTileFromImage(request, std::move(image));
 }
 
-void setTileSourceError(QString *errorString, const QString &message)
+void setTileSourceError(QString* errorString, const QString& message)
 {
     if (errorString != nullptr) {
         *errorString = message;

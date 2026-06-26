@@ -21,14 +21,14 @@ namespace {
 namespace Actions = kiriview::ApplicationActions;
 using ActionId = kiriview::ApplicationActions::ActionId;
 
-QString definitionActionName(const Actions::ActionDefinition &definition)
+QString definitionActionName(const Actions::ActionDefinition& definition)
 {
     return QString::fromLatin1(definition.name);
 }
 
 void resetConfig()
 {
-    KiriViewState *state = KiriViewState::self();
+    KiriViewState* state = KiriViewState::self();
     state->config()->deleteGroup(QStringLiteral("Interface"));
     state->config()->sync();
     state->config()->reparseConfiguration();
@@ -43,9 +43,9 @@ public:
     {
     }
 
-    QObject *actionContext() override { return &object; }
-    KirigamiActionCollection *mainActionCollection() override { return &collection; }
-    QAction *inheritedAction(const QString &actionName) override
+    QObject* actionContext() override { return &object; }
+    KirigamiActionCollection* mainActionCollection() override { return &collection; }
+    QAction* inheritedAction(const QString& actionName) override
     {
         ++inheritedActionLookupCount;
         return collection.action(actionName);
@@ -59,7 +59,7 @@ public:
     int readActionSettingsCount = 0;
 };
 
-void addHostAction(FakeApplicationActionHost &host, const Actions::ActionDefinition &definition)
+void addHostAction(FakeApplicationActionHost& host, const Actions::ActionDefinition& definition)
 {
     const QString actionName = definitionActionName(definition);
     auto action = std::make_unique<QAction>(&host.object);
@@ -68,9 +68,9 @@ void addHostAction(FakeApplicationActionHost &host, const Actions::ActionDefinit
     host.actions.push_back(std::move(action));
 }
 
-void addHostActions(FakeApplicationActionHost &host)
+void addHostActions(FakeApplicationActionHost& host)
 {
-    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
+    for (const Actions::ActionDefinition& definition : Actions::definitions()) {
         addHostAction(host, definition);
     }
 }
@@ -102,13 +102,13 @@ void TestApplicationActionRegistry::registeredActionsResolveThroughDefinitionIde
     addHostActions(host);
     Actions::ApplicationActionRegistry registry(host);
 
-    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
+    for (const Actions::ActionDefinition& definition : Actions::definitions()) {
         registry.registerAction(definition, registry.collectionAction(definition));
     }
 
-    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
+    for (const Actions::ActionDefinition& definition : Actions::definitions()) {
         const QString actionName = definitionActionName(definition);
-        QAction *action = registry.action(actionName);
+        QAction* action = registry.action(actionName);
 
         QVERIFY2(
             action != nullptr, qPrintable(QStringLiteral("Missing action %1").arg(actionName)));
@@ -130,7 +130,7 @@ void TestApplicationActionRegistry::registeredActionsFollowDefinitionOrder()
     addHostActions(host);
     Actions::ApplicationActionRegistry registry(host);
 
-    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
+    for (const Actions::ActionDefinition& definition : Actions::definitions()) {
         registry.registerAction(definition, registry.collectionAction(definition));
     }
 
@@ -139,7 +139,7 @@ void TestApplicationActionRegistry::registeredActionsFollowDefinitionOrder()
 
     QCOMPARE(registeredActions.size(), static_cast<int>(Actions::definitions().size()));
     for (qsizetype index = 0; index < registeredActions.size(); ++index) {
-        const Actions::ActionDefinition &definition
+        const Actions::ActionDefinition& definition
             = Actions::definitions().at(static_cast<std::size_t>(index));
         QCOMPARE(registeredActions.at(index).actionId, definition.actionId);
         QCOMPARE(registeredActions.at(index).actionName, definitionActionName(definition));
@@ -150,13 +150,13 @@ void TestApplicationActionRegistry::registeredActionsFollowDefinitionOrder()
 void TestApplicationActionRegistry::registryUsesHostInheritedActionLookup()
 {
     FakeApplicationActionHost host;
-    const Actions::ActionDefinition &definition = Actions::definitions().front();
+    const Actions::ActionDefinition& definition = Actions::definitions().front();
     const QString actionName = definitionActionName(definition);
     addHostAction(host, definition);
 
     Actions::ApplicationActionRegistry registry(host);
 
-    QAction *action = host.collection.action(actionName);
+    QAction* action = host.collection.action(actionName);
     QCOMPARE(registry.collectionAction(definition), action);
     QCOMPARE(host.inheritedActionLookupCount, 1);
 
@@ -165,7 +165,7 @@ void TestApplicationActionRegistry::registryUsesHostInheritedActionLookup()
     QCOMPARE(registry.actionForId(definition.actionId), action);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     qputenv("QT_QPA_PLATFORM", QByteArray("offscreen"));
 

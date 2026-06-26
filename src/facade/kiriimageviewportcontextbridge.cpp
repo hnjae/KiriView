@@ -9,16 +9,16 @@
 #include <QQuickWindow>
 #include <cmath>
 
-KiriImageViewportContextBridge::KiriImageViewportContextBridge(QQuickItem *parent)
+KiriImageViewportContextBridge::KiriImageViewportContextBridge(QQuickItem* parent)
     : QQuickItem(parent)
 {
 }
 
 KiriImageViewportContextBridge::~KiriImageViewportContextBridge() { disconnectDocument(); }
 
-KiriImageDocument *KiriImageViewportContextBridge::document() const { return m_document; }
+KiriImageDocument* KiriImageViewportContextBridge::document() const { return m_document; }
 
-void KiriImageViewportContextBridge::setDocument(KiriImageDocument *document)
+void KiriImageViewportContextBridge::setDocument(KiriImageDocument* document)
 {
     if (m_document == document) {
         return;
@@ -48,7 +48,7 @@ bool KiriImageViewportContextBridge::renderContextProviderInstalled() const
     return m_renderContextBinding.providerInstalled();
 }
 
-void KiriImageViewportContextBridge::itemChange(ItemChange change, const ItemChangeData &value)
+void KiriImageViewportContextBridge::itemChange(ItemChange change, const ItemChangeData& value)
 {
     QQuickItem::itemChange(change, value);
 
@@ -106,7 +106,7 @@ void KiriImageViewportContextBridge::connectDocument()
 
 void KiriImageViewportContextBridge::disconnectDocument()
 {
-    KiriImageDocument *document = m_document;
+    KiriImageDocument* document = m_document;
     m_document = nullptr;
     QObject::disconnect(m_documentDestroyedConnection);
     m_documentDestroyedConnection = {};
@@ -114,7 +114,7 @@ void KiriImageViewportContextBridge::disconnectDocument()
 }
 
 void KiriImageViewportContextBridge::synchronizeRenderContextBinding(
-    KiriImageDocument *document, bool documentAttached)
+    KiriImageDocument* document, bool documentAttached)
 {
     const bool previouslyInstalled = m_renderContextBinding.providerInstalled();
     applyRenderContextBinding(
@@ -123,7 +123,7 @@ void KiriImageViewportContextBridge::synchronizeRenderContextBinding(
 }
 
 void KiriImageViewportContextBridge::applyRenderContextBinding(
-    kiriview::ImageViewRenderContextBindingAction action, KiriImageDocument *document)
+    kiriview::ImageViewRenderContextBindingAction action, KiriImageDocument* document)
 {
     if (document == nullptr) {
         return;
@@ -167,7 +167,7 @@ kiriview::ImageDocumentRenderContext KiriImageViewportContextBridge::renderConte
 
 qreal KiriImageViewportContextBridge::displayDevicePixelRatio() const
 {
-    const QQuickWindow *quickWindow = window();
+    const QQuickWindow* quickWindow = window();
     if (quickWindow == nullptr) {
         return 1.0;
     }

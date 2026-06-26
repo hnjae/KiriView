@@ -8,25 +8,25 @@
 namespace {
 constexpr double keyboardPanDistance = 64.0;
 
-bool callBool(const std::function<bool()> &callback) { return callback && callback(); }
+bool callBool(const std::function<bool()>& callback) { return callback && callback(); }
 
-void callVoid(const std::function<void()> &callback)
+void callVoid(const std::function<void()>& callback)
 {
     if (callback) {
         callback();
     }
 }
 
-void callDouble(const std::function<void(double)> &callback, double value)
+void callDouble(const std::function<void(double)>& callback, double value)
 {
     if (callback) {
         callback(value);
     }
 }
 
-qint64 callInt64(const std::function<qint64()> &callback) { return callback ? callback() : 0; }
+qint64 callInt64(const std::function<qint64()>& callback) { return callback ? callback() : 0; }
 
-void callInt64(const std::function<void(qint64)> &callback, qint64 value)
+void callInt64(const std::function<void(qint64)>& callback, qint64 value)
 {
     if (callback) {
         callback(value);
@@ -34,7 +34,7 @@ void callInt64(const std::function<void(qint64)> &callback, qint64 value)
 }
 
 void panBy(
-    const kiriview::ApplicationActions::ApplicationCommandRouterPorts &ports, double dx, double dy)
+    const kiriview::ApplicationActions::ApplicationCommandRouterPorts& ports, double dx, double dy)
 {
     if (ports.imagePresentation.requestViewportPanBy) {
         ports.imagePresentation.requestViewportPanBy(dx, dy);
@@ -44,7 +44,7 @@ void panBy(
 
 namespace kiriview::ApplicationActions {
 void ApplicationCommandRouter::handleActionTriggered(ActionId actionId,
-    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
+    const ApplicationCommandRouterInput& input, const ApplicationCommandRouterPorts& ports) const
 {
     switch (actionId) {
     case ActionId::FileOpenAction:
@@ -86,7 +86,7 @@ void ApplicationCommandRouter::handleActionTriggered(ActionId actionId,
     case ActionId::ViewZoom50PercentAction:
     case ActionId::ViewZoom100PercentAction:
     case ActionId::ViewZoom200PercentAction:
-        if (const ZoomPresetDescriptor *preset = zoomPresetDescriptorForAction(actionId)) {
+        if (const ZoomPresetDescriptor* preset = zoomPresetDescriptorForAction(actionId)) {
             callDouble(ports.imagePresentation.requestManualZoomPercent, preset->zoomPercent);
         }
         return;
@@ -166,7 +166,7 @@ void ApplicationCommandRouter::handleActionTriggered(ActionId actionId,
 }
 
 void ApplicationCommandRouter::handleScanForwardAction(
-    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
+    const ApplicationCommandRouterInput& input, const ApplicationCommandRouterPorts& ports) const
 {
     if (input.videoMode) {
         callVoid(ports.session.requestNextActiveNavigationWithBoundary);
@@ -186,7 +186,7 @@ void ApplicationCommandRouter::handleScanForwardAction(
 }
 
 void ApplicationCommandRouter::handleScanBackwardAction(
-    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports) const
+    const ApplicationCommandRouterInput& input, const ApplicationCommandRouterPorts& ports) const
 {
     if (input.videoMode) {
         callVoid(ports.session.requestPreviousActiveNavigationWithBoundary);
@@ -216,7 +216,7 @@ void ApplicationCommandRouter::handleScanBackwardAction(
 }
 
 bool ApplicationCommandRouter::executeHorizontalArrowShortcut(
-    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports,
+    const ApplicationCommandRouterInput& input, const ApplicationCommandRouterPorts& ports,
     bool leftArrow) const
 {
     if (input.videoMode) {
@@ -257,7 +257,7 @@ bool ApplicationCommandRouter::executeHorizontalArrowShortcut(
 }
 
 bool ApplicationCommandRouter::executeSinglePageArrowShortcut(
-    const ApplicationCommandRouterInput &input, const ApplicationCommandRouterPorts &ports,
+    const ApplicationCommandRouterInput& input, const ApplicationCommandRouterPorts& ports,
     bool leftArrow) const
 {
     if (!callBool(ports.imageDocument.imageAvailable)) {
@@ -278,8 +278,8 @@ bool ApplicationCommandRouter::executeSinglePageArrowShortcut(
     return false;
 }
 
-bool ApplicationCommandRouter::executeVerticalPanShortcut(const ApplicationCommandRouterInput &,
-    const ApplicationCommandRouterPorts &ports, bool up) const
+bool ApplicationCommandRouter::executeVerticalPanShortcut(
+    const ApplicationCommandRouterInput&, const ApplicationCommandRouterPorts& ports, bool up) const
 {
     if (!callBool(ports.imageDocument.imageAvailable)) {
         return false;
@@ -289,8 +289,8 @@ bool ApplicationCommandRouter::executeVerticalPanShortcut(const ApplicationComma
     return true;
 }
 
-bool ApplicationCommandRouter::executeVideoSeekShortcut(const ApplicationCommandRouterInput &input,
-    const ApplicationCommandRouterPorts &ports, qint64 deltaMilliseconds) const
+bool ApplicationCommandRouter::executeVideoSeekShortcut(const ApplicationCommandRouterInput& input,
+    const ApplicationCommandRouterPorts& ports, qint64 deltaMilliseconds) const
 {
     if (!input.videoMode || !callBool(ports.video.videoAvailable)) {
         return false;

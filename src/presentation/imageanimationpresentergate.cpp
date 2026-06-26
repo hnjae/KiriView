@@ -13,8 +13,8 @@ bool AnimationProviderChurnGateResult::passed() const
 AnimationProviderChurnGateThresholds defaultAnimationProviderChurnGateThresholds() { return {}; }
 
 AnimationProviderChurnGateResult evaluateAnimationProviderChurnGate(
-    const AnimationProviderChurnGateSample &sample,
-    const AnimationProviderChurnGateThresholds &thresholds)
+    const AnimationProviderChurnGateSample& sample,
+    const AnimationProviderChurnGateThresholds& thresholds)
 {
     AnimationProviderChurnGateResult result;
     result.maximumPinnedFrameEntriesPerPageRole = thresholds.maximumPinnedFrameEntriesPerPageRole;

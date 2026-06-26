@@ -12,9 +12,10 @@ namespace {
 using kiriview::ImageDocumentRuntimeOperations;
 using kiriview::ImageDocumentRuntimePlan;
 
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 
-struct RecordedRuntimeOperations {
+struct RecordedRuntimeOperations
+{
     ImageDocumentRuntimeOperations operations;
     QStringList events;
     QUrl url;
@@ -53,7 +54,7 @@ struct RecordedRuntimeOperations {
         operations.spread.notifyRightToLeftReadingChanged
             = [this]() { record(QStringLiteral("notifyRightToLeftReadingChanged")); };
         operations.spread.resetZoom = [this]() { record(QStringLiteral("resetZoom")); };
-        operations.spread.prepareFailedContainer = [this](const QUrl &containerUrl) {
+        operations.spread.prepareFailedContainer = [this](const QUrl& containerUrl) {
             url = containerUrl;
             record(QStringLiteral("prepareFailedContainer"));
         };
@@ -69,24 +70,24 @@ struct RecordedRuntimeOperations {
             = [this]() { record(QStringLiteral("clearPageNavigation")); };
         operations.navigation.updatePageNavigation
             = [this]() { record(QStringLiteral("updatePageNavigation")); };
-        operations.navigation.loadUrl = [this](const kiriview::ImageDocumentPageTarget &target) {
+        operations.navigation.loadUrl = [this](const kiriview::ImageDocumentPageTarget& target) {
             url = target.url;
             kind = target.kind;
             record(QStringLiteral("loadUrl"));
         };
         operations.navigation.loadContainerImage
-            = [this](const kiriview::ImageDocumentPageTarget &target, const QUrl &containerUrl) {
+            = [this](const kiriview::ImageDocumentPageTarget& target, const QUrl& containerUrl) {
                   url = target.url;
                   kind = target.kind;
                   secondaryUrl = containerUrl;
                   record(QStringLiteral("loadContainerImage"));
               };
-        operations.navigation.finishEmptyContainerNavigation = [this](const QUrl &containerUrl) {
+        operations.navigation.finishEmptyContainerNavigation = [this](const QUrl& containerUrl) {
             url = containerUrl;
             record(QStringLiteral("finishEmptyContainerNavigation"));
         };
         operations.navigation.finishContainerNavigationLoadWithError
-            = [this](const QUrl &containerUrl, const QString &message) {
+            = [this](const QUrl& containerUrl, const QString& message) {
                   url = containerUrl;
                   errorString = message;
                   record(QStringLiteral("finishContainerNavigationLoadWithError"));
@@ -97,7 +98,7 @@ struct RecordedRuntimeOperations {
                   record(QStringLiteral("reportContainerNavigationBoundary"));
               };
         operations.navigation.reportContainerNavigationListFailure
-            = [this](const kiriview::ContainerNavigationListFailure &failure) {
+            = [this](const kiriview::ContainerNavigationListFailure& failure) {
                   url = failure.currentContainerUrl;
                   secondaryUrl = failure.parentUrl;
                   direction = failure.direction;
@@ -107,7 +108,7 @@ struct RecordedRuntimeOperations {
                   record(QStringLiteral("reportContainerNavigationListFailure"));
               };
         operations.navigation.loadPageNavigationUrl
-            = [this](const kiriview::ImageDocumentPageTarget &target, bool preserveTransition) {
+            = [this](const kiriview::ImageDocumentPageTarget& target, bool preserveTransition) {
                   url = target.url;
                   kind = target.kind;
                   flag = preserveTransition;
@@ -120,28 +121,28 @@ struct RecordedRuntimeOperations {
             = [this]() { record(QStringLiteral("clearPresentationImage")); };
         operations.sourceLoad.clearLoadingContainerNavigationUrl
             = [this]() { record(QStringLiteral("clearLoadingContainerNavigationUrl")); };
-        operations.sourceLoad.setLoadingContainerNavigationUrl = [this](const QUrl &targetUrl) {
+        operations.sourceLoad.setLoadingContainerNavigationUrl = [this](const QUrl& targetUrl) {
             url = targetUrl;
             record(QStringLiteral("setLoadingContainerNavigationUrl"));
         };
-        operations.sourceLoad.setContainerNavigationUrl = [this](const QUrl &targetUrl) {
+        operations.sourceLoad.setContainerNavigationUrl = [this](const QUrl& targetUrl) {
             url = targetUrl;
             record(QStringLiteral("setContainerNavigationUrl"));
         };
         operations.sourceLoad.prepareSourceLoad
-            = [this](const kiriview::ImageDocumentSourceLoadRequest &request) {
+            = [this](const kiriview::ImageDocumentSourceLoadRequest& request) {
                   url = request.sourceUrl;
                   secondaryUrl = request.containerNavigationUrl;
                   flag = request.preserveTwoPageSpreadTransition;
                   record(QStringLiteral("prepareSourceLoad"));
               };
-        operations.open.setSourceUrl = [this](const kiriview::ImageDocumentPageTarget &target) {
+        operations.open.setSourceUrl = [this](const kiriview::ImageDocumentPageTarget& target) {
             url = target.url;
             kind = target.kind;
             record(QStringLiteral("setSourceUrl"));
         };
         operations.sourceLoad.beginOpen = [this]() { record(QStringLiteral("beginOpen")); };
-        operations.open.setErrorString = [this](const QString &message) {
+        operations.open.setErrorString = [this](const QString& message) {
             errorString = message;
             record(QStringLiteral("setErrorString"));
         };
@@ -162,7 +163,7 @@ struct RecordedRuntimeOperations {
         flag = false;
     }
 
-    void record(const QString &event) { events.append(event); }
+    void record(const QString& event) { events.append(event); }
 };
 }
 

@@ -10,7 +10,7 @@
 
 namespace kiriview {
 DocumentSessionMediaPredecodeRuntime::DocumentSessionMediaPredecodeRuntime(
-    QObject *owner, MediaPredecodeDependencyOverrides dependencies)
+    QObject* owner, MediaPredecodeDependencyOverrides dependencies)
     : m_coordinator(std::make_unique<MediaPredecodeCoordinator>(
           owner, resolveMediaPredecodeDependencies(std::move(dependencies))))
 {
@@ -18,7 +18,7 @@ DocumentSessionMediaPredecodeRuntime::DocumentSessionMediaPredecodeRuntime(
 
 DocumentSessionMediaPredecodeRuntime::~DocumentSessionMediaPredecodeRuntime() = default;
 
-void DocumentSessionMediaPredecodeRuntime::schedule(const DocumentSessionMediaPredecodeInput &input,
+void DocumentSessionMediaPredecodeRuntime::schedule(const DocumentSessionMediaPredecodeInput& input,
     std::vector<DirectMediaNavigationCandidate> candidates)
 {
     if (!input.directMediaNavigationActive || input.currentUrl.isEmpty()) {
@@ -34,7 +34,7 @@ void DocumentSessionMediaPredecodeRuntime::schedule(const DocumentSessionMediaPr
 }
 
 void DocumentSessionMediaPredecodeRuntime::cacheDisplayedImages(
-    const DocumentSessionMediaPredecodeInput &input)
+    const DocumentSessionMediaPredecodeInput& input)
 {
     if (!input.directMediaNavigationActive) {
         return;
@@ -53,13 +53,13 @@ void DocumentSessionMediaPredecodeRuntime::cancel() { m_coordinator->cancel(); }
 void DocumentSessionMediaPredecodeRuntime::clear() { m_coordinator->clear(); }
 
 std::optional<PredecodedImage> DocumentSessionMediaPredecodeRuntime::findPredecodedImage(
-    const QUrl &url) const
+    const QUrl& url) const
 {
     return m_coordinator->findPredecodedImage(url);
 }
 
 std::vector<DisplayedPredecodeImage> DocumentSessionMediaPredecodeRuntime::displayedImages(
-    const DocumentSessionMediaPredecodeInput &input)
+    const DocumentSessionMediaPredecodeInput& input)
 {
     if (input.documentKind != DocumentSessionKind::Image
         || !input.activeImageUsesImageDocumentSourceScope || !input.imageReady

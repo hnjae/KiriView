@@ -21,7 +21,8 @@
 #include <vector>
 
 namespace kiriview {
-struct KiriDocumentSessionDependencies {
+struct KiriDocumentSessionDependencies
+{
     DocumentSessionRuntimeDependencies sessionRuntime;
     ImageDocumentRuntimeDependencyOverrides imageDocument;
 };
@@ -89,11 +90,11 @@ class KiriDocumentSession : public QObject
             activeNavigationRevealIntent NOTIFY activeNavigationRevealIntentChanged)
     Q_PROPERTY(ActiveNavigationRevealDirection activeNavigationRevealDirection READ
             activeNavigationRevealDirection NOTIFY activeNavigationRevealDirectionChanged)
-    Q_PROPERTY(QAbstractListModel *activeNavigationThumbnailModel READ
+    Q_PROPERTY(QAbstractListModel* activeNavigationThumbnailModel READ
             activeNavigationThumbnailModel CONSTANT)
-    Q_PROPERTY(KiriMediaInformation *mediaInformation READ mediaInformation CONSTANT)
-    Q_PROPERTY(KiriImageDocument *imageDocument READ imageDocument CONSTANT)
-    Q_PROPERTY(KiriVideoDocument *videoDocument READ videoDocument CONSTANT)
+    Q_PROPERTY(KiriMediaInformation* mediaInformation READ mediaInformation CONSTANT)
+    Q_PROPERTY(KiriImageDocument* imageDocument READ imageDocument CONSTANT)
+    Q_PROPERTY(KiriVideoDocument* videoDocument READ videoDocument CONSTANT)
 
 public:
     enum class DocumentKind {
@@ -165,13 +166,13 @@ public:
     };
     Q_ENUM(ThumbnailResultStatus)
 
-    explicit KiriDocumentSession(QObject *parent = nullptr);
+    explicit KiriDocumentSession(QObject* parent = nullptr);
     explicit KiriDocumentSession(
-        kiriview::KiriDocumentSessionDependencies dependencies, QObject *parent = nullptr);
+        kiriview::KiriDocumentSessionDependencies dependencies, QObject* parent = nullptr);
     ~KiriDocumentSession() override;
 
     QUrl sourceUrl() const;
-    void setSourceUrl(const QUrl &sourceUrl);
+    void setSourceUrl(const QUrl& sourceUrl);
     quint64 publicProjectionRevision() const;
     DocumentKind documentKind() const;
     QString errorString() const;
@@ -205,12 +206,12 @@ public:
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     ActiveNavigationRevealIntent activeNavigationRevealIntent() const;
     ActiveNavigationRevealDirection activeNavigationRevealDirection() const;
-    QAbstractListModel *activeNavigationThumbnailModel() const;
-    KiriMediaInformation *mediaInformation() const;
-    const kiriview::MediaInformationProjectionSnapshot &mediaInformationSnapshot() const;
-    const kiriview::DocumentSessionActionAvailabilityFacts &actionAvailabilityFacts() const;
-    KiriImageDocument *imageDocument() const;
-    KiriVideoDocument *videoDocument() const;
+    QAbstractListModel* activeNavigationThumbnailModel() const;
+    KiriMediaInformation* mediaInformation() const;
+    const kiriview::MediaInformationProjectionSnapshot& mediaInformationSnapshot() const;
+    const kiriview::DocumentSessionActionAvailabilityFacts& actionAvailabilityFacts() const;
+    KiriImageDocument* imageDocument() const;
+    KiriVideoDocument* videoDocument() const;
 
     Q_INVOKABLE void openPreviousActiveNavigation();
     Q_INVOKABLE void openNextActiveNavigation();
@@ -229,8 +230,8 @@ public:
         int physicalMaxEdge, KiriDocumentSession::ThumbnailDemandPriority priority,
         quint64 navigationGeneration);
     Q_INVOKABLE QString nextVideoOutputSurfaceClaimToken();
-    Q_INVOKABLE bool reportVideoOutputSurfaceClaim(const QString &claimToken,
-        quint64 projectionRevision, QObject *surfaceOwner, QObject *videoOutput, bool active,
+    Q_INVOKABLE bool reportVideoOutputSurfaceClaim(const QString& claimToken,
+        quint64 projectionRevision, QObject* surfaceOwner, QObject* videoOutput, bool active,
         QRectF contentRect, QRectF sourceRect);
     Q_INVOKABLE void deleteDisplayedFile(KiriDocumentSession::DeletionMode mode);
     Q_INVOKABLE void openCurrentMediaWith();
@@ -249,25 +250,26 @@ Q_SIGNALS:
     void activeNavigationChanged();
     void activeNavigationRevealIntentChanged();
     void activeNavigationRevealDirectionChanged();
-    void openWithFailed(const QString &errorString);
+    void openWithFailed(const QString& errorString);
 
 private:
-    struct ResolvedDependenciesTag {
+    struct ResolvedDependenciesTag
+    {
     };
 
     static kiriview::DocumentSessionImageDocumentSnapshotPort imageDocumentSnapshotPort(
-        KiriImageDocument &document);
+        KiriImageDocument& document);
     static kiriview::DocumentSessionImageDocumentCommandPort imageDocumentCommandPort(
-        KiriImageDocument &document);
+        KiriImageDocument& document);
     static kiriview::DocumentSessionVideoDocumentSnapshotPort videoDocumentSnapshotPort(
-        KiriVideoDocument &document);
+        KiriVideoDocument& document);
     static kiriview::DocumentSessionVideoDocumentCommandPort videoDocumentCommandPort(
-        KiriVideoDocument &document);
+        KiriVideoDocument& document);
 
     KiriDocumentSession(kiriview::KiriDocumentSessionDependencies dependencies,
-        ResolvedDependenciesTag, QObject *parent = nullptr);
+        ResolvedDependenciesTag, QObject* parent = nullptr);
 
-    void handleSessionChanges(const std::vector<kiriview::DocumentSessionChange> &changes);
+    void handleSessionChanges(const std::vector<kiriview::DocumentSessionChange>& changes);
 
     std::unique_ptr<KiriImageDocument> m_imageDocument;
     std::unique_ptr<KiriVideoDocument> m_videoDocument;

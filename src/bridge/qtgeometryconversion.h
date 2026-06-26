@@ -12,54 +12,54 @@
 #include <QtGlobal>
 
 namespace kiriview::Bridge {
-template <typename RustSize> RustSize rustSize(const QSize &size)
+template <typename RustSize> RustSize rustSize(const QSize& size)
 {
     return RustSize { size.width(), size.height() };
 }
 
-template <typename RustSizeF> RustSizeF rustSizeF(const QSizeF &size)
+template <typename RustSizeF> RustSizeF rustSizeF(const QSizeF& size)
 {
     return RustSizeF { size.width(), size.height() };
 }
 
-template <typename RustPointF> RustPointF rustPointF(const QPointF &point)
+template <typename RustPointF> RustPointF rustPointF(const QPointF& point)
 {
     return RustPointF { point.x(), point.y() };
 }
 
-template <typename RustRect> RustRect rustRect(const QRect &rect)
+template <typename RustRect> RustRect rustRect(const QRect& rect)
 {
     return RustRect { rect.x(), rect.y(), rect.width(), rect.height() };
 }
 
-template <typename RustRectF> RustRectF rustRectF(const QRectF &rect)
+template <typename RustRectF> RustRectF rustRectF(const QRectF& rect)
 {
     return RustRectF { rect.x(), rect.y(), rect.width(), rect.height() };
 }
 
-template <typename RustSize> QSize qtSize(const RustSize &size)
+template <typename RustSize> QSize qtSize(const RustSize& size)
 {
     return QSize(size.width, size.height);
 }
 
-template <typename RustSizeF> QSizeF qtSizeF(const RustSizeF &size)
+template <typename RustSizeF> QSizeF qtSizeF(const RustSizeF& size)
 {
     return QSizeF(size.width, size.height);
 }
 
 inline QSizeF qtSizeF(qreal width, qreal height) { return QSizeF(width, height); }
 
-template <typename RustPointF> QPointF qtPointF(const RustPointF &point)
+template <typename RustPointF> QPointF qtPointF(const RustPointF& point)
 {
     return QPointF(point.x, point.y);
 }
 
-template <typename RustRect> QRect qtRect(const RustRect &rect)
+template <typename RustRect> QRect qtRect(const RustRect& rect)
 {
     return QRect(rect.x, rect.y, rect.width, rect.height);
 }
 
-template <typename RustRectF> QRectF qtRectF(const RustRectF &rect)
+template <typename RustRectF> QRectF qtRectF(const RustRectF& rect)
 {
     return QRectF(rect.x, rect.y, rect.width, rect.height);
 }

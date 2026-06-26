@@ -11,7 +11,7 @@
 #include <variant>
 
 namespace {
-const char *documentKindName(kiriview::DocumentSessionKind kind)
+const char* documentKindName(kiriview::DocumentSessionKind kind)
 {
     switch (kind) {
     case kiriview::DocumentSessionKind::Empty:
@@ -25,7 +25,7 @@ const char *documentKindName(kiriview::DocumentSessionKind kind)
     return "Unknown";
 }
 
-const char *routeKindName(kiriview::DocumentSessionRouteKind kind)
+const char* routeKindName(kiriview::DocumentSessionRouteKind kind)
 {
     switch (kind) {
     case kiriview::DocumentSessionRouteKind::Empty:
@@ -49,7 +49,7 @@ DocumentSessionRouteRuntime::DocumentSessionRouteRuntime(DocumentSessionRouteRun
 }
 
 void DocumentSessionRouteRuntime::routeSourceUrl(
-    const QUrl &sourceUrl, DocumentSessionKind currentKind)
+    const QUrl& sourceUrl, DocumentSessionKind currentKind)
 {
     const DocumentSessionRoutePlan plan
         = documentSessionRoutePlanForSourceUrl(sourceUrl, currentKind);
@@ -61,7 +61,7 @@ void DocumentSessionRouteRuntime::routeSourceUrl(
     execute(plan);
 }
 
-void DocumentSessionRouteRuntime::routeMediaUrl(const QUrl &url, DocumentSessionKind currentKind)
+void DocumentSessionRouteRuntime::routeMediaUrl(const QUrl& url, DocumentSessionKind currentKind)
 {
     const DocumentSessionRoutePlan plan = documentSessionRoutePlanForMediaUrl(url, currentKind);
     qCDebug(kiriviewNavigationLog)
@@ -72,9 +72,10 @@ void DocumentSessionRouteRuntime::routeMediaUrl(const QUrl &url, DocumentSession
     execute(plan);
 }
 
-void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)
+void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan& plan)
 {
-    struct RouteExecutionResult {
+    struct RouteExecutionResult
+    {
         bool directMediaScopeChanged = false;
         bool directMediaNavigationCleared = false;
         bool publishPublicProjection = false;
@@ -90,9 +91,9 @@ void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)
 
     result.publishPublicProjection = plan.publishPublicProjection;
 
-    for (const DocumentSessionRouteMutation &mutation : plan.mutations) {
+    for (const DocumentSessionRouteMutation& mutation : plan.mutations) {
         std::visit(
-            [this, &result](const auto &payload) {
+            [this, &result](const auto& payload) {
                 using Operation = std::decay_t<decltype(payload)>;
 
                 if constexpr (std::is_same_v<Operation, ClearSessionErrorStringRouteOperation>) {
@@ -197,9 +198,9 @@ void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)
             mutation);
     }
 
-    for (const DocumentSessionRouteFollowUpEffect &effect : plan.followUpEffects) {
+    for (const DocumentSessionRouteFollowUpEffect& effect : plan.followUpEffects) {
         std::visit(
-            [this, &result](const auto &payload) {
+            [this, &result](const auto& payload) {
                 using Effect = std::decay_t<decltype(payload)>;
 
                 if constexpr (std::is_same_v<Effect,
@@ -241,7 +242,7 @@ void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan &plan)
     }
 }
 
-void DocumentSessionRouteRuntime::executeSuppressed(const std::function<void()> &mutation)
+void DocumentSessionRouteRuntime::executeSuppressed(const std::function<void()>& mutation)
 {
     if (m_ports.session.executeWithRoutingSuppressed) {
         m_ports.session.executeWithRoutingSuppressed(mutation);

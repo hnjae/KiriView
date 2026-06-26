@@ -12,29 +12,32 @@
 #include <vector>
 
 namespace kiriview {
-struct MediaPredecodeSchedulePayload final : PredecodeSchedulePayload {
+struct MediaPredecodeSchedulePayload final : PredecodeSchedulePayload
+{
     std::vector<DirectMediaNavigationCandidate> directMediaNavigationCandidates;
     MediaPredecodeEligibilitySnapshot eligibleImages;
 };
 
-struct MediaPredecodeScheduleRequest {
+struct MediaPredecodeScheduleRequest
+{
     QUrl currentUrl;
     std::vector<DirectMediaNavigationCandidate> candidates;
     std::vector<DisplayedPredecodeImage> displayedImages;
     ImageFirstDisplayDecodeContext firstDisplayContext;
 };
 
-struct MediaPredecodeSchedulePlan {
+struct MediaPredecodeSchedulePlan
+{
     PredecodeScheduleContext context;
 
     bool shouldSchedule() const;
 };
 
 MediaPredecodeSchedulePlan mediaPredecodeSchedulePlan(MediaPredecodeScheduleRequest request);
-const std::vector<DirectMediaNavigationCandidate> *mediaPredecodeScheduleCandidates(
-    const PredecodePendingSchedule &schedule);
-const MediaPredecodeEligibilitySnapshot *mediaPredecodeScheduleEligibility(
-    const PredecodePendingSchedule &schedule);
+const std::vector<DirectMediaNavigationCandidate>* mediaPredecodeScheduleCandidates(
+    const PredecodePendingSchedule& schedule);
+const MediaPredecodeEligibilitySnapshot* mediaPredecodeScheduleEligibility(
+    const PredecodePendingSchedule& schedule);
 }
 
 #endif

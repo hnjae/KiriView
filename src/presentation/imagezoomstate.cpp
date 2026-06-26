@@ -14,7 +14,7 @@ bool imageZoomApproximatelyEqual(qreal left, qreal right)
     return rustImageZoomApproximatelyEqual(left, right);
 }
 
-bool imageZoomApproximatelyEqual(const QSizeF &left, const QSizeF &right)
+bool imageZoomApproximatelyEqual(const QSizeF& left, const QSizeF& right)
 {
     return rustImageZoomSizeApproximatelyEqual(
         Bridge::rustSizeF<RustZoomSizeF>(left), Bridge::rustSizeF<RustZoomSizeF>(right));
@@ -30,14 +30,14 @@ int ImageZoomState::manualZoomPercentPropertyValue(qreal zoomPercent)
 qreal ImageZoomState::manualZoomStepFactor() { return rustImageZoomManualZoomStepFactor(); }
 
 qreal ImageZoomState::maximumManualZoomPercent(
-    const ImageZoomSnapshot &snapshot, qreal devicePixelRatio)
+    const ImageZoomSnapshot& snapshot, qreal devicePixelRatio)
 {
     return rustImageZoomMaximumManualZoomPercent(
         Bridge::rustImageZoomState(snapshot), devicePixelRatio);
 }
 
-ImageZoomChangeSet ImageZoomState::changeSet(const ImageZoomSnapshot &previous,
-    qreal previousDevicePixelRatio, const ImageZoomSnapshot &current, qreal currentDevicePixelRatio,
+ImageZoomChangeSet ImageZoomState::changeSet(const ImageZoomSnapshot& previous,
+    qreal previousDevicePixelRatio, const ImageZoomSnapshot& current, qreal currentDevicePixelRatio,
     bool forceDisplayProjectionUpdate)
 {
     const RustImageZoomChangeSet changes = rustImageZoomChangeSet(
@@ -48,11 +48,11 @@ ImageZoomChangeSet ImageZoomState::changeSet(const ImageZoomSnapshot &previous,
         changes.maximum_manual_zoom_percent_changed, changes.display_projection_update_needed };
 }
 
-const QSize &ImageZoomState::imageSize() const { return m_imageSize; }
+const QSize& ImageZoomState::imageSize() const { return m_imageSize; }
 
-const QSizeF &ImageZoomState::viewportSize() const { return m_viewportSize; }
+const QSizeF& ImageZoomState::viewportSize() const { return m_viewportSize; }
 
-const QSizeF &ImageZoomState::displaySize() const { return m_displaySize; }
+const QSizeF& ImageZoomState::displaySize() const { return m_displaySize; }
 
 qreal ImageZoomState::zoomPercent() const { return m_zoomPercent; }
 
@@ -60,7 +60,7 @@ ImageZoomMode ImageZoomState::zoomMode() const { return m_zoomMode; }
 
 ImageZoomMode ImageZoomState::fitModeSelection() const { return m_fitModeSelection; }
 
-const QUrl &ImageZoomState::containerUrl() const { return m_containerUrl; }
+const QUrl& ImageZoomState::containerUrl() const { return m_containerUrl; }
 
 ImageZoomSnapshot ImageZoomState::snapshot() const
 {
@@ -68,7 +68,7 @@ ImageZoomSnapshot ImageZoomState::snapshot() const
         m_zoomMode, m_containerUrl };
 }
 
-void ImageZoomState::applySnapshot(const ImageZoomSnapshot &snapshot)
+void ImageZoomState::applySnapshot(const ImageZoomSnapshot& snapshot)
 {
     m_imageSize = snapshot.imageSize;
     m_viewportSize = snapshot.viewportSize;
@@ -81,7 +81,7 @@ void ImageZoomState::applySnapshot(const ImageZoomSnapshot &snapshot)
     m_containerUrl = snapshot.containerUrl;
 }
 
-bool ImageZoomState::setViewportSize(const QSizeF &viewportSize, qreal devicePixelRatio)
+bool ImageZoomState::setViewportSize(const QSizeF& viewportSize, qreal devicePixelRatio)
 {
     const RustImageZoomStateChange change
         = rustImageZoomSetViewportSize(Bridge::rustImageZoomState(snapshot()),
@@ -90,7 +90,7 @@ bool ImageZoomState::setViewportSize(const QSizeF &viewportSize, qreal devicePix
     return change.changed;
 }
 
-bool ImageZoomState::setImageSize(const QSize &imageSize, qreal devicePixelRatio)
+bool ImageZoomState::setImageSize(const QSize& imageSize, qreal devicePixelRatio)
 {
     const RustImageZoomStateChange change
         = rustImageZoomSetImageSize(Bridge::rustImageZoomState(snapshot()),
@@ -123,7 +123,7 @@ void ImageZoomState::resetZoom(qreal devicePixelRatio)
     applySnapshot(Bridge::imageZoomSnapshotFromRust(state, m_containerUrl));
 }
 
-void ImageZoomState::prepareImageContainer(const QUrl &containerUrl)
+void ImageZoomState::prepareImageContainer(const QUrl& containerUrl)
 {
     const RustImageZoomState state
         = rustImageZoomPrepareImageContainer(Bridge::rustImageZoomState(snapshot()),
@@ -132,7 +132,7 @@ void ImageZoomState::prepareImageContainer(const QUrl &containerUrl)
 }
 
 LoadedImageZoom ImageZoomState::loadedImageZoom(
-    const QUrl &containerUrl, const QSize &imageSize, qreal devicePixelRatio) const
+    const QUrl& containerUrl, const QSize& imageSize, qreal devicePixelRatio) const
 {
     const RustLoadedImageZoom zoom
         = rustImageZoomLoadedImageZoom(Bridge::rustImageZoomState(snapshot()),
@@ -141,7 +141,7 @@ LoadedImageZoom ImageZoomState::loadedImageZoom(
     return Bridge::loadedImageZoomFromRust(zoom);
 }
 
-void ImageZoomState::setLoadedSvgZoom(const QUrl &containerUrl, const LoadedImageZoom &zoom)
+void ImageZoomState::setLoadedSvgZoom(const QUrl& containerUrl, const LoadedImageZoom& zoom)
 {
     const RustImageZoomState state = rustImageZoomSetLoadedSvgZoom(
         Bridge::rustImageZoomState(snapshot()), Bridge::rustLoadedImageZoom(zoom));
@@ -181,7 +181,7 @@ qreal ImageZoomState::fitZoomPercent(ImageZoomMode zoomMode, qreal devicePixelRa
 }
 
 qreal ImageZoomState::fitZoomPercentForImageSize(
-    ImageZoomMode zoomMode, const QSize &imageSize, qreal devicePixelRatio) const
+    ImageZoomMode zoomMode, const QSize& imageSize, qreal devicePixelRatio) const
 {
     return rustImageZoomFitZoomPercentForImageSize(Bridge::rustImageZoomState(snapshot()),
         Bridge::rustImageZoomMode(zoomMode), Bridge::rustSize<RustZoomSize>(imageSize),
@@ -194,7 +194,7 @@ QSizeF ImageZoomState::displaySizeForZoomPercent(qreal zoomPercent, qreal device
 }
 
 QSizeF ImageZoomState::displaySizeForZoomPercent(
-    qreal zoomPercent, const QSize &imageSize, qreal devicePixelRatio) const
+    qreal zoomPercent, const QSize& imageSize, qreal devicePixelRatio) const
 {
     return Bridge::qtSizeF(rustImageZoomDisplaySizeForZoomPercent(
         Bridge::rustSize<RustZoomSize>(imageSize), zoomPercent, devicePixelRatio));

@@ -11,15 +11,16 @@
 #include <vector>
 
 namespace kiriview {
-struct DocumentSessionDirectMediaNavigationApplicationPorts {
+struct DocumentSessionDirectMediaNavigationApplicationPorts
+{
     std::function<void(
         DirectMediaNavigationBoundaryState, bool, std::vector<DirectMediaNavigationCandidate>)>
         setDirectMediaNavigation;
     std::function<void(DocumentSessionDirectMediaNavigationRevealAction)> applyRevealAction;
     std::function<void()> publishProjection;
     std::function<void()> clearPredecode;
-    std::function<void(const std::vector<DirectMediaNavigationCandidate> &)> schedulePredecode;
-    std::function<void(const QUrl &)> routeMediaUrl;
+    std::function<void(const std::vector<DirectMediaNavigationCandidate>&)> schedulePredecode;
+    std::function<void(const QUrl&)> routeMediaUrl;
 };
 
 class DocumentSessionDirectMediaNavigationApplicationRuntime final
@@ -30,9 +31,9 @@ public:
 
     void applyInactiveRefresh(bool clearPredecode);
     void applyRefresh(ActiveNavigationSourceKind sourceKind,
-        const ActiveNavigationSnapshot &previousSnapshot,
+        const ActiveNavigationSnapshot& previousSnapshot,
         DocumentSessionDirectMediaNavigationRefreshResult result);
-    void applyOpen(const QUrl &activeDirectMediaCursorUrl,
+    void applyOpen(const QUrl& activeDirectMediaCursorUrl,
         DocumentSessionDirectMediaNavigationOpenResult result);
 
 private:

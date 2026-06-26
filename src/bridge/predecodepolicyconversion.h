@@ -16,12 +16,12 @@ PredecodeMomentumDirection predecodeMomentumDirectionFromRust(
     RustPredecodeMomentumDirection direction);
 RustPredecodePolicyInput rustPredecodePolicyInput(PredecodePolicyInput input);
 RustPredecodeMomentumState rustPredecodeMomentumState(PredecodeMomentumState state);
-PredecodeMomentumState predecodeMomentumStateFromRust(const RustPredecodeMomentumState &state);
-RustPredecodeCachedImageState rustPredecodeCachedImageState(const PredecodeCachedImageState &state);
-RustPredecodeWindowLoadState rustPredecodeWindowLoadState(const PredecodeWindowLoadState &state);
-RustPredecodeQueuedLoadState rustPredecodeQueuedLoadState(const PredecodeQueuedLoadState &state);
-PredecodeSchedulePlan predecodeSchedulePlanFromRust(const RustPredecodeSchedulePlan &plan);
-PredecodeQueuedLoadPlan predecodeQueuedLoadPlanFromRust(const RustPredecodeQueuedLoadPlan &plan);
+PredecodeMomentumState predecodeMomentumStateFromRust(const RustPredecodeMomentumState& state);
+RustPredecodeCachedImageState rustPredecodeCachedImageState(const PredecodeCachedImageState& state);
+RustPredecodeWindowLoadState rustPredecodeWindowLoadState(const PredecodeWindowLoadState& state);
+RustPredecodeQueuedLoadState rustPredecodeQueuedLoadState(const PredecodeQueuedLoadState& state);
+PredecodeSchedulePlan predecodeSchedulePlanFromRust(const RustPredecodeSchedulePlan& plan);
+PredecodeQueuedLoadPlan predecodeQueuedLoadPlanFromRust(const RustPredecodeQueuedLoadPlan& plan);
 }
 
 #endif

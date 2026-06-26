@@ -14,9 +14,9 @@
 #include <vector>
 
 namespace kiriview {
-ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject *parent,
-    ImageDocumentState &state, ImagePageSurfaceController &pageSurfaceController,
-    ImagePresentationRuntime &presentationRuntime,
+ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject* parent,
+    ImageDocumentState& state, ImagePageSurfaceController& pageSurfaceController,
+    ImagePresentationRuntime& presentationRuntime,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
     CurrentPageNumberCallback currentPageNumber, PowerSaverProvider powerSaverProvider,
@@ -79,7 +79,7 @@ void ImageDocumentPredecodeController::cancel() { m_coordinator->cancel(); }
 void ImageDocumentPredecodeController::clear() { m_coordinator->clear(); }
 
 std::optional<PredecodedImage> ImageDocumentPredecodeController::findPredecodedImage(
-    const QUrl &url) const
+    const QUrl& url) const
 {
     return m_coordinator->findPredecodedImage(url);
 }

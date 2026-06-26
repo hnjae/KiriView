@@ -14,9 +14,9 @@
 #include <utility>
 
 namespace {
-void cancelKJob(QObject *object)
+void cancelKJob(QObject* object)
 {
-    auto *job = qobject_cast<KJob *>(object);
+    auto* job = qobject_cast<KJob*>(object);
     if (job == nullptr) {
         return;
     }
@@ -24,7 +24,7 @@ void cancelKJob(QObject *object)
     job->kill(KJob::Quietly);
 }
 
-kiriview::ImageIoJob startKioMediaOpenWith(QObject *receiver,
+kiriview::ImageIoJob startKioMediaOpenWith(QObject* receiver,
     kiriview::MediaOpenWithRequest request, kiriview::MediaOpenWithCallback callback)
 {
     if (request.targetUrl.isEmpty()) {
@@ -35,17 +35,17 @@ kiriview::ImageIoJob startKioMediaOpenWith(QObject *receiver,
     }
 
     const QUrl targetUrl = request.targetUrl;
-    auto *job = new KIO::ApplicationLauncherJob(receiver);
+    auto* job = new KIO::ApplicationLauncherJob(receiver);
     job->setUrls(QList<QUrl> { request.targetUrl });
     job->setUiDelegate(
         KIO::createDefaultJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled, nullptr));
 
     kiriview::ImageIoJob ioJob(job, cancelKJob);
     const kiriview::ImageIoJobCompletion completion = ioJob.completion();
-    QObject *context = receiver == nullptr ? job : receiver;
+    QObject* context = receiver == nullptr ? job : receiver;
 
     QObject::connect(job, &KJob::result, context,
-        [completion, targetUrl, callback = std::move(callback)](KJob *finishedJob) mutable {
+        [completion, targetUrl, callback = std::move(callback)](KJob* finishedJob) mutable {
             completion.claimAndRun([&]() {
                 if (finishedJob->error() == KJob::NoError) {
                     kiriview::invokeIfSet(callback, kiriview::MediaOpenWithResult::Succeeded,
@@ -81,7 +81,7 @@ kiriview::ImageIoJob startKioMediaOpenWith(QObject *receiver,
 namespace kiriview {
 MediaOpenWithProvider defaultMediaOpenWithProvider()
 {
-    return [](QObject *receiver, MediaOpenWithRequest request, MediaOpenWithCallback callback) {
+    return [](QObject* receiver, MediaOpenWithRequest request, MediaOpenWithCallback callback) {
         return startKioMediaOpenWith(receiver, std::move(request), std::move(callback));
     };
 }

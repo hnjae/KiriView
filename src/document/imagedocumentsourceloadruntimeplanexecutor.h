@@ -10,11 +10,12 @@
 #include <functional>
 
 namespace kiriview {
-struct ImageDocumentSourceLoadRuntimeOperations {
+struct ImageDocumentSourceLoadRuntimeOperations
+{
     std::function<void()> clearLoadingContainerNavigationUrl;
-    std::function<void(const QUrl &)> setLoadingContainerNavigationUrl;
-    std::function<void(const QUrl &)> setContainerNavigationUrl;
-    std::function<void(const ImageDocumentSourceLoadRequest &)> prepareSourceLoad;
+    std::function<void(const QUrl&)> setLoadingContainerNavigationUrl;
+    std::function<void(const QUrl&)> setContainerNavigationUrl;
+    std::function<void(const ImageDocumentSourceLoadRequest&)> prepareSourceLoad;
     std::function<void()> beginOpen;
 };
 
@@ -24,7 +25,7 @@ public:
     explicit ImageDocumentSourceLoadRuntimePlanExecutor(
         ImageDocumentSourceLoadRuntimeOperations operations);
 
-    bool dispatchOperation(const ImageDocumentRuntimeOperation &operation);
+    bool dispatchOperation(const ImageDocumentRuntimeOperation& operation);
 
 private:
     ImageDocumentSourceLoadRuntimeOperations m_operations;

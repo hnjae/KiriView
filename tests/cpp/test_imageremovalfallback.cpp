@@ -116,7 +116,7 @@ void TestImageRemovalFallback::regularImagePlanUsesSiblingImageContext()
 
     const kiriview::ImageRemovalPlan plan = kiriview::imageRemovalPlanForDisplayedLocation(
         kiriview::DisplayedImageLocation::fromUrl(imageUrl));
-    const auto *imagePlan = std::get_if<kiriview::ImageRemovalFallback>(&plan.fallbackPlan);
+    const auto* imagePlan = std::get_if<kiriview::ImageRemovalFallback>(&plan.fallbackPlan);
 
     QVERIFY(imagePlan != nullptr);
     QCOMPARE(imagePlan->currentUrl, imageUrl);
@@ -134,7 +134,7 @@ void TestImageRemovalFallback::comicBookPagePlanUsesArchiveContainer()
 
     const kiriview::ImageRemovalPlan plan = kiriview::imageRemovalPlanForDisplayedLocation(
         kiriview::DisplayedImageLocation::fromOpenedCollectionScope(pageUrl, *archiveCollection));
-    const auto *comicBookPlan = std::get_if<kiriview::ComicBookRemovalFallback>(&plan.fallbackPlan);
+    const auto* comicBookPlan = std::get_if<kiriview::ComicBookRemovalFallback>(&plan.fallbackPlan);
 
     QVERIFY(comicBookPlan != nullptr);
     QCOMPARE(comicBookPlan->currentContainerUrl, archiveUrl);

@@ -11,11 +11,13 @@
 namespace kiriview {
 using PhysicalSystemMemoryReader = std::function<std::optional<qsizetype>()>;
 
-struct SystemMemoryRuntime {
+struct SystemMemoryRuntime
+{
     PhysicalSystemMemoryReader readPhysicalSystemMemory;
 };
 
-struct SystemMemorySnapshot {
+struct SystemMemorySnapshot
+{
     qsizetype physicalByteSize = 0;
 
     bool hasPhysicalByteSize() const { return physicalByteSize > 0; }

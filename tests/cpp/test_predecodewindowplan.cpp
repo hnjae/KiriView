@@ -31,7 +31,7 @@ std::vector<kiriview::ImageDocumentPageCandidate> imageDocumentPageCandidates(in
 }
 
 kiriview::PredecodePolicyInput policyInputForLocation(
-    const kiriview::DisplayedImageLocation &location,
+    const kiriview::DisplayedImageLocation& location,
     kiriview::PredecodeMomentumMode momentumMode = kiriview::PredecodeMomentumMode::Neutral,
     bool powerSaverEnabled = false, int idealThreadCount = 4)
 {
@@ -44,7 +44,7 @@ kiriview::PredecodePolicyInput policyInputForLocation(
 }
 
 kiriview::PredecodeWindowStartPlan startPlanForLocation(
-    const kiriview::DisplayedImageLocation &location,
+    const kiriview::DisplayedImageLocation& location,
     kiriview::PredecodeMomentumMode momentumMode = kiriview::PredecodeMomentumMode::Neutral,
     bool powerSaverEnabled = false, int idealThreadCount = 4)
 {

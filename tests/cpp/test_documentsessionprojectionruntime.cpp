@@ -11,7 +11,7 @@
 #include <vector>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+QUrl localUrl(const QString& path) { return QUrl::fromLocalFile(path); }
 }
 
 class TestDocumentSessionProjectionRuntime : public QObject
@@ -36,7 +36,7 @@ void TestDocumentSessionProjectionRuntime::
     kiriview::DocumentSessionProjectionRuntimePorts ports;
     ports.updatePublicSnapshot
         = [&events, &committedSourceKind, &committedNavigation, &committedCandidates](
-              const kiriview::DocumentSessionPublicSnapshotInput &input) {
+              const kiriview::DocumentSessionPublicSnapshotInput& input) {
               events.push_back(QStringLiteral("commit:%1").arg(input.inputRevision));
               committedSourceKind = kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia;
               committedNavigation.available = true;
@@ -88,7 +88,7 @@ void TestDocumentSessionProjectionRuntime::sourceKindPublishSkipsThumbnailRowsWh
     std::vector<QString> events;
     kiriview::DocumentSessionProjectionRuntimePorts ports;
     ports.updatePublicSnapshotForSourceKind
-        = [&events](const kiriview::DocumentSessionPublicSnapshotInput &,
+        = [&events](const kiriview::DocumentSessionPublicSnapshotInput&,
               kiriview::ActiveNavigationSourceKind sourceKind) {
               events.push_back(QStringLiteral("commit-source-kind:%1")
                       .arg(sourceKind == kiriview::ActiveNavigationSourceKind::ImageDocumentPages));

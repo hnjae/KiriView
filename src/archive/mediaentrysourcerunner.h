@@ -17,10 +17,10 @@ public:
     MediaEntrySourceRunner(
         OpenedCollectionScopeLocation openedCollectionScope, MediaEntrySourceFactory sourceFactory);
 
-    const OpenedCollectionScopeLocation &openedCollectionScope() const;
+    const OpenedCollectionScopeLocation& openedCollectionScope() const;
 
     MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates();
-    MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl);
+    MediaEntrySourceImageDataResult loadImageData(const QUrl& imageUrl);
     std::optional<std::vector<ImageDocumentPageCandidate>> cachedImageDocumentPageCandidates();
 
 private:

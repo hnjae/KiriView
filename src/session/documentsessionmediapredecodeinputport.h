@@ -15,18 +15,18 @@ class DocumentSessionState;
 class DocumentSessionMediaPredecodeInputPort final
 {
 public:
-    DocumentSessionMediaPredecodeInputPort(const DocumentSessionState *state,
-        const DocumentSessionDirectMediaActivityPort *activity,
-        const DocumentSessionDirectMediaScopePort *scope,
-        const DocumentSessionPublicImageLeafSnapshot *image);
+    DocumentSessionMediaPredecodeInputPort(const DocumentSessionState* state,
+        const DocumentSessionDirectMediaActivityPort* activity,
+        const DocumentSessionDirectMediaScopePort* scope,
+        const DocumentSessionPublicImageLeafSnapshot* image);
 
     DocumentSessionMediaPredecodeInput currentInput() const;
 
 private:
-    const DocumentSessionState *m_state = nullptr;
-    const DocumentSessionDirectMediaActivityPort *m_activity = nullptr;
-    const DocumentSessionDirectMediaScopePort *m_scope = nullptr;
-    const DocumentSessionPublicImageLeafSnapshot *m_image = nullptr;
+    const DocumentSessionState* m_state = nullptr;
+    const DocumentSessionDirectMediaActivityPort* m_activity = nullptr;
+    const DocumentSessionDirectMediaScopePort* m_scope = nullptr;
+    const DocumentSessionPublicImageLeafSnapshot* m_image = nullptr;
 };
 }
 

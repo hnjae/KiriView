@@ -36,30 +36,31 @@ class ImagePageSurfaceController;
 class ImagePresentationRuntime;
 class ImageSpreadPresentationController;
 
-struct ImageDocumentRuntimeControllerCallbacks {
+struct ImageDocumentRuntimeControllerCallbacks
+{
     std::function<ImageDocumentRenderContext()> renderContext;
     std::function<void(ImageDocumentChange)> notify;
-    std::function<void(const ImageDocumentSourceLoadRequest &)> loadSource;
-    std::function<void(const QString &)> fileDeletionFailed;
-    std::function<void(const QString &)> unsupportedOpenedCollectionVideoEntered;
-    std::function<void(const QString &)> containerNavigationBoundaryReached;
+    std::function<void(const ImageDocumentSourceLoadRequest&)> loadSource;
+    std::function<void(const QString&)> fileDeletionFailed;
+    std::function<void(const QString&)> unsupportedOpenedCollectionVideoEntered;
+    std::function<void(const QString&)> containerNavigationBoundaryReached;
 };
 
 class ImageDocumentRuntimeControllers final
 {
 public:
-    ImageDocumentRuntimeControllers(QObject *documentObject, ImageDocumentState &state,
+    ImageDocumentRuntimeControllers(QObject* documentObject, ImageDocumentState& state,
         ImageDocumentRuntimeDependencyOverrides dependencies,
         ImageDocumentRuntimeControllerCallbacks callbacks);
     ~ImageDocumentRuntimeControllers();
 
-    ImageDocumentDeletionController &deletionController() const;
-    ImagePageSurfaceController &pageSurfaceController() const;
-    ImagePresentationRuntime &presentationRuntime() const;
-    ImageDocumentNavigationController &navigationController() const;
-    ImageSpreadPresentationController &spreadController() const;
+    ImageDocumentDeletionController& deletionController() const;
+    ImagePageSurfaceController& pageSurfaceController() const;
+    ImagePresentationRuntime& presentationRuntime() const;
+    ImageDocumentNavigationController& navigationController() const;
+    ImageSpreadPresentationController& spreadController() const;
 
-    void dispatchPlan(const ImageDocumentRuntimePlan &plan);
+    void dispatchPlan(const ImageDocumentRuntimePlan& plan);
     void shutdownRuntime();
 
 private:

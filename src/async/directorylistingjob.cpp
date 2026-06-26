@@ -13,9 +13,9 @@
 #include <utility>
 
 namespace {
-void cancelDirLister(QObject *object)
+void cancelDirLister(QObject* object)
 {
-    auto *lister = qobject_cast<KCoreDirLister *>(object);
+    auto* lister = qobject_cast<KCoreDirLister*>(object);
     if (lister == nullptr) {
         return;
     }
@@ -24,9 +24,9 @@ void cancelDirLister(QObject *object)
     lister->deleteLater();
 }
 
-KCoreDirLister *createDirectoryItemLister(QObject *parent)
+KCoreDirLister* createDirectoryItemLister(QObject* parent)
 {
-    auto *lister = new KCoreDirLister(parent);
+    auto* lister = new KCoreDirLister(parent);
     lister->setAutoErrorHandlingEnabled(false);
     lister->setAutoUpdate(false);
     lister->setDelayedMimeTypes(true);
@@ -35,12 +35,12 @@ KCoreDirLister *createDirectoryItemLister(QObject *parent)
 }
 
 void finishDirectoryItemListWithError(kiriview::ImageIoJobCompletion completion,
-    const QString &errorString, const kiriview::ErrorCallback &errorCallback)
+    const QString& errorString, const kiriview::ErrorCallback& errorCallback)
 {
     completion.claimAndDelete([&]() { kiriview::invokeIfSet(errorCallback, errorString); });
 }
 
-QString directoryListingDiagnosticUrl(const QUrl &directoryUrl)
+QString directoryListingDiagnosticUrl(const QUrl& directoryUrl)
 {
     return directoryUrl.isEmpty() ? QStringLiteral("<empty>") : directoryUrl.toDisplayString();
 }
@@ -50,13 +50,13 @@ void warnDirectoryListingRejectedEmptyUrl()
     qWarning().noquote() << QStringLiteral("KiriView directory listing rejected empty URL");
 }
 
-void warnDirectoryListingOpenFailure(const QUrl &directoryUrl)
+void warnDirectoryListingOpenFailure(const QUrl& directoryUrl)
 {
     qWarning().noquote() << QStringLiteral("KiriView directory listing openUrl failed for URL %1")
                                 .arg(directoryListingDiagnosticUrl(directoryUrl));
 }
 
-void warnDirectoryListingJobFailure(const QUrl &directoryUrl, const QString &errorString)
+void warnDirectoryListingJobFailure(const QUrl& directoryUrl, const QString& errorString)
 {
     const QString diagnosticError
         = errorString.isEmpty() ? QStringLiteral("<empty error>") : errorString;
@@ -67,10 +67,10 @@ void warnDirectoryListingJobFailure(const QUrl &directoryUrl, const QString &err
 
 namespace kiriview {
 namespace {
-    ImageIoJob startKCoreDirectoryItemList(QObject *receiver, QUrl directoryUrl,
+    ImageIoJob startKCoreDirectoryItemList(QObject* receiver, QUrl directoryUrl,
         DirectoryItemListCallback callback, ErrorCallback errorCallback)
     {
-        auto *lister = createDirectoryItemLister(receiver);
+        auto* lister = createDirectoryItemLister(receiver);
         ImageIoJob ioJob(lister, cancelDirLister);
         const ImageIoJobCompletion completion = ioJob.completion();
 
@@ -81,7 +81,7 @@ namespace {
                 });
             });
         QObject::connect(lister, &KCoreDirLister::jobError, receiver,
-            [completion, directoryUrl, errorCallback](KIO::Job *job) {
+            [completion, directoryUrl, errorCallback](KIO::Job* job) {
                 const QString errorString = job == nullptr ? QString() : job->errorString();
                 warnDirectoryListingJobFailure(directoryUrl, errorString);
                 finishDirectoryItemListWithError(completion, errorString, errorCallback);
@@ -102,14 +102,14 @@ namespace {
     }
 }
 
-ImageIoJob startDirectoryItemList(QObject *receiver, QUrl directoryUrl,
+ImageIoJob startDirectoryItemList(QObject* receiver, QUrl directoryUrl,
     DirectoryItemListCallback callback, ErrorCallback errorCallback)
 {
     return startDirectoryItemList(receiver, std::move(directoryUrl), std::move(callback),
         std::move(errorCallback), defaultDirectoryItemListProvider());
 }
 
-ImageIoJob startDirectoryItemList(QObject *receiver, QUrl directoryUrl,
+ImageIoJob startDirectoryItemList(QObject* receiver, QUrl directoryUrl,
     DirectoryItemListCallback callback, ErrorCallback errorCallback,
     DirectoryItemListProvider provider)
 {
@@ -122,7 +122,7 @@ ImageIoJob startDirectoryItemList(QObject *receiver, QUrl directoryUrl,
 
 DirectoryItemListProvider defaultDirectoryItemListProvider()
 {
-    return [](QObject *receiver, QUrl directoryUrl, DirectoryItemListCallback callback,
+    return [](QObject* receiver, QUrl directoryUrl, DirectoryItemListCallback callback,
                ErrorCallback errorCallback) {
         return startKCoreDirectoryItemList(
             receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));

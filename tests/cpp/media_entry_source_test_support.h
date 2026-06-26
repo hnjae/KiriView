@@ -21,12 +21,14 @@
 #include <vector>
 
 namespace kiriview::TestSupport {
-struct InstrumentedMediaEntrySourceFixture {
+struct InstrumentedMediaEntrySourceFixture
+{
     std::vector<ImageDocumentPageCandidate> candidates;
     std::map<QString, QByteArray> dataByUrl;
 };
 
-struct InstrumentedMediaEntrySourceState {
+struct InstrumentedMediaEntrySourceState
+{
     std::atomic<int> openCount = 0;
     std::atomic<int> candidateLoadCount = 0;
     std::atomic<int> dataLoadCount = 0;
@@ -61,7 +63,7 @@ public:
         };
     }
 
-    MediaEntrySourceImageDataResult loadImageData(const QUrl &imageUrl) override
+    MediaEntrySourceImageDataResult loadImageData(const QUrl& imageUrl) override
     {
         ++m_state->dataLoadCount;
         waitIfBlocked(InstrumentedMediaEntrySourceLoadKind::Data);
@@ -94,7 +96,7 @@ private:
             return;
         }
 
-        std::atomic<int> &waitingCount = kind == InstrumentedMediaEntrySourceLoadKind::Candidate
+        std::atomic<int>& waitingCount = kind == InstrumentedMediaEntrySourceLoadKind::Candidate
             ? m_state->waitingCandidateLoadCount
             : m_state->waitingDataLoadCount;
         ++waitingCount;
@@ -102,7 +104,7 @@ private:
         m_state->loadBlockChanged.wait(lock, [this]() { return m_state->releaseLoads; });
     }
 
-    const InstrumentedMediaEntrySourceFixture &fixture() const
+    const InstrumentedMediaEntrySourceFixture& fixture() const
     {
         return m_state->fixturesByRootUrl.at(keyForUrl(m_openedCollectionScope.rootUrl()));
     }
@@ -114,7 +116,7 @@ private:
 inline MediaEntrySourceFactory instrumentedMediaEntrySourceFactory(
     std::shared_ptr<InstrumentedMediaEntrySourceState> state)
 {
-    return [state = std::move(state)](const OpenedCollectionScopeLocation &openedCollectionScope)
+    return [state = std::move(state)](const OpenedCollectionScopeLocation& openedCollectionScope)
                -> MediaEntrySourceOpenResult {
         ++state->openCount;
         std::lock_guard<std::mutex> lock(state->mutex);
@@ -131,7 +133,7 @@ inline MediaEntrySourceFactory instrumentedMediaEntrySourceFactory(
 }
 
 inline void blockInstrumentedMediaEntrySourceCandidateLoads(
-    const std::shared_ptr<InstrumentedMediaEntrySourceState> &state)
+    const std::shared_ptr<InstrumentedMediaEntrySourceState>& state)
 {
     std::lock_guard<std::mutex> lock(state->loadBlockMutex);
     state->blockCandidateLoads = true;
@@ -139,7 +141,7 @@ inline void blockInstrumentedMediaEntrySourceCandidateLoads(
 }
 
 inline void blockInstrumentedMediaEntrySourceDataLoads(
-    const std::shared_ptr<InstrumentedMediaEntrySourceState> &state)
+    const std::shared_ptr<InstrumentedMediaEntrySourceState>& state)
 {
     std::lock_guard<std::mutex> lock(state->loadBlockMutex);
     state->blockDataLoads = true;
@@ -147,7 +149,7 @@ inline void blockInstrumentedMediaEntrySourceDataLoads(
 }
 
 inline void releaseInstrumentedMediaEntrySourceLoads(
-    const std::shared_ptr<InstrumentedMediaEntrySourceState> &state)
+    const std::shared_ptr<InstrumentedMediaEntrySourceState>& state)
 {
     {
         std::lock_guard<std::mutex> lock(state->loadBlockMutex);
@@ -157,19 +159,19 @@ inline void releaseInstrumentedMediaEntrySourceLoads(
 }
 
 inline std::optional<OpenedCollectionScopeLocation> archiveCollectionForLocalArchiveUrl(
-    const QUrl &archiveUrl)
+    const QUrl& archiveUrl)
 {
     return openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
 }
 
 inline void addInstrumentedMediaEntrySourceFixture(
     std::shared_ptr<InstrumentedMediaEntrySourceState> state,
-    const OpenedCollectionScopeLocation &openedCollectionScope,
+    const OpenedCollectionScopeLocation& openedCollectionScope,
     std::vector<ImageDocumentPageCandidate> candidates)
 {
     InstrumentedMediaEntrySourceFixture fixture;
     fixture.candidates = std::move(candidates);
-    for (const ImageDocumentPageCandidate &candidate : fixture.candidates) {
+    for (const ImageDocumentPageCandidate& candidate : fixture.candidates) {
         fixture.dataByUrl[keyForUrl(candidate.url)] = QByteArrayLiteral("image");
     }
 

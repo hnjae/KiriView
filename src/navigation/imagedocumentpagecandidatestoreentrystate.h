@@ -16,19 +16,22 @@
 class QObject;
 
 namespace kiriview {
-struct ImageDocumentPageCandidateStoreEntryPendingLoad {
+struct ImageDocumentPageCandidateStoreEntryPendingLoad
+{
     ImageIoJobCompletion completion;
     ImageDocumentPageCandidatesCallback callback;
     ErrorCallback errorCallback;
 };
 
-struct ImageDocumentPageCandidateStoreEntrySubscriber {
+struct ImageDocumentPageCandidateStoreEntrySubscriber
+{
     QPointer<QObject> token;
     ImageDocumentPageCandidatesCallback callback;
     ErrorCallback errorCallback;
 };
 
-struct ImageDocumentPageCandidateStoreEntryNotificationPlan {
+struct ImageDocumentPageCandidateStoreEntryNotificationPlan
+{
     std::vector<ImageDocumentPageCandidateStoreEntryPendingLoad> completedLoads;
     std::vector<ImageDocumentPageCandidateStoreEntryPendingLoad> failedLoads;
     std::vector<ImageDocumentPageCandidateStoreEntrySubscriber> changedSubscribers;
@@ -40,17 +43,17 @@ struct ImageDocumentPageCandidateStoreEntryNotificationPlan {
 class ImageDocumentPageCandidateStoreEntryState final
 {
 public:
-    const std::vector<ImageDocumentPageCandidate> &candidates() const;
+    const std::vector<ImageDocumentPageCandidate>& candidates() const;
     bool listed() const;
     bool failed() const;
-    const QString &errorString() const;
+    const QString& errorString() const;
 
     void addPendingLoad(ImageIoJobCompletion completion,
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback);
     void addSubscriber(
-        QObject *token, ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback);
-    void removePendingLoad(QObject *token);
-    void removeSubscriber(QObject *token);
+        QObject* token, ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback);
+    void removePendingLoad(QObject* token);
+    void removeSubscriber(QObject* token);
 
     ImageDocumentPageCandidateStoreEntryNotificationPlan completeListing(
         std::vector<ImageDocumentPageCandidate> candidates);

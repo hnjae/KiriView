@@ -33,7 +33,8 @@ class ApplicationShortcutRuntime final
 {
 public:
     using ChangeCallback = std::function<void()>;
-    struct TriggerCallbacks {
+    struct TriggerCallbacks
+    {
         std::function<void(ActionId)> unsupportedVideoActionTriggered;
         std::function<void(ActionId)> unsupportedImageActionTriggered;
         std::function<bool(bool)> horizontalArrowShortcutTriggered;
@@ -42,51 +43,52 @@ public:
         std::function<bool(qint64)> videoSeekShortcutTriggered;
     };
 
-    ApplicationShortcutRuntime(ApplicationActionHost &host,
-        const ApplicationActionRegistry &actionRegistry, ChangeCallback changeCallback = {},
+    ApplicationShortcutRuntime(ApplicationActionHost& host,
+        const ApplicationActionRegistry& actionRegistry, ChangeCallback changeCallback = {},
         TriggerCallbacks triggerCallbacks = {});
     ~ApplicationShortcutRuntime();
 
     void setup();
-    void handleActionChanged(QAction *changedAction);
-    void setActionStateInput(const ApplicationActionStateInput &input);
-    void setShortcutHost(QObject *host);
+    void handleActionChanged(QAction* changedAction);
+    void setActionStateInput(const ApplicationActionStateInput& input);
+    void setShortcutHost(QObject* host);
 
     int shortcutRevision() const;
-    QAbstractListModel *shortcutHelpModel() const;
-    QAbstractListModel *shortcutRouteModel() const;
-    ApplicationShortcutProjection shortcutProjection(const QString &actionName) const;
+    QAbstractListModel* shortcutHelpModel() const;
+    QAbstractListModel* shortcutRouteModel() const;
+    ApplicationShortcutProjection shortcutProjection(const QString& actionName) const;
     ApplicationShortcutProjection shortcutProjectionForId(ActionId actionId) const;
-    QList<QKeySequence> programWideShortcuts(const QString &actionName) const;
+    QList<QKeySequence> programWideShortcuts(const QString& actionName) const;
     QList<QKeySequence> programWideShortcutsForId(ActionId actionId) const;
-    QList<QKeySequence> viewerLocalShortcuts(const QString &actionName) const;
+    QList<QKeySequence> viewerLocalShortcuts(const QString& actionName) const;
     QList<QKeySequence> viewerLocalShortcutsForId(ActionId actionId) const;
-    bool setViewerLocalShortcuts(const QString &actionName, const QList<QKeySequence> &shortcuts);
-    bool setViewerLocalShortcutsForId(ActionId actionId, const QList<QKeySequence> &shortcuts);
+    bool setViewerLocalShortcuts(const QString& actionName, const QList<QKeySequence>& shortcuts);
+    bool setViewerLocalShortcutsForId(ActionId actionId, const QList<QKeySequence>& shortcuts);
 
 private:
     void loadViewerLocalShortcuts();
     void persistViewerLocalShortcuts(ActionId actionId) const;
     void notifyShortcutRowsChanged();
     void sanitizeProgramWideActionShortcuts();
-    void sanitizeProgramWideActionShortcuts(QAction *action);
+    void sanitizeProgramWideActionShortcuts(QAction* action);
     ApplicationShortcutProjection shortcutProjectionForAction(
-        ActionId actionId, const QAction *action) const;
-    static QString actionDisplayText(const QAction *action);
-    static QString shortcutDisplayText(const QAction *action);
-    static QStringList shortcutKeyDisplayTexts(const QAction *action);
+        ActionId actionId, const QAction* action) const;
+    static QString actionDisplayText(const QAction* action);
+    static QString shortcutDisplayText(const QAction* action);
+    static QStringList shortcutKeyDisplayTexts(const QAction* action);
     QList<ShortcutHelpRow> shortcutHelpRows() const;
     void clearShortcutRouter();
     void rebuildShortcutRouter();
-    void addShortcutBinding(ActionId actionId, const QList<QKeySequence> &shortcuts,
+    void addShortcutBinding(ActionId actionId, const QList<QKeySequence>& shortcuts,
         ApplicationShortcutActivationScope activationScope,
         std::optional<ImageShortcutScope> shortcutScope = std::nullopt);
-    bool handleShortcutEvent(const QKeySequence &shortcut);
-    bool handleFixedShortcutEvent(const QKeySequence &shortcut);
+    bool handleShortcutEvent(const QKeySequence& shortcut);
+    bool handleFixedShortcutEvent(const QKeySequence& shortcut);
     bool actionEnabledForShortcut(ActionId actionId) const;
     void updateShortcutEnabledStates();
 
-    struct ShortcutBinding {
+    struct ShortcutBinding
+    {
         ActionId actionId = ActionId::ActionCount;
         ApplicationShortcutActivationScope activationScope
             = ApplicationShortcutActivationScope::ProgramWide;
@@ -95,8 +97,8 @@ private:
         bool enabled = false;
     };
 
-    ApplicationActionHost &m_host;
-    const ApplicationActionRegistry &m_actionRegistry;
+    ApplicationActionHost& m_host;
+    const ApplicationActionRegistry& m_actionRegistry;
     ChangeCallback m_changeCallback;
     TriggerCallbacks m_triggerCallbacks;
     std::unique_ptr<ShortcutHelpModel> m_shortcutHelpModel;

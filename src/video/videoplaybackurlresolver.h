@@ -13,7 +13,8 @@
 class QObject;
 
 namespace kiriview {
-struct VideoPlaybackUrlResolution {
+struct VideoPlaybackUrlResolution
+{
     quint64 operationId = 0;
     QUrl sourceUrl;
     QUrl playbackUrl;
@@ -27,7 +28,7 @@ class VideoPlaybackUrlResolver
 public:
     virtual ~VideoPlaybackUrlResolver() = default;
 
-    virtual void resolve(quint64 operationId, const QUrl &sourceUrl, QObject *receiver,
+    virtual void resolve(quint64 operationId, const QUrl& sourceUrl, QObject* receiver,
         VideoPlaybackUrlResolvedCallback resolvedCallback,
         VideoPlaybackUrlFailedCallback failedCallback)
         = 0;
@@ -35,7 +36,7 @@ public:
     virtual void cleanup() = 0;
 };
 
-bool videoPlaybackBackendCanConsumeUrl(const QUrl &url);
+bool videoPlaybackBackendCanConsumeUrl(const QUrl& url);
 std::unique_ptr<VideoPlaybackUrlResolver> createDefaultVideoPlaybackUrlResolver();
 }
 

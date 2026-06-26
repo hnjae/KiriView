@@ -11,7 +11,7 @@
 #include <QUrl>
 
 namespace {
-template <typename Predicate> bool matchesUrlFileNameOrString(const QUrl &url, Predicate predicate)
+template <typename Predicate> bool matchesUrlFileNameOrString(const QUrl& url, Predicate predicate)
 {
     const QString fileName = url.fileName(QUrl::PrettyDecoded);
     if (predicate(fileName)) {
@@ -33,28 +33,28 @@ QStringList supportedOrdinaryMediaMimeTypes()
     return Bridge::qtStringList(rustSupportedOrdinaryMediaMimeTypes());
 }
 
-bool isSupportedOrdinaryMediaFileName(const QString &name)
+bool isSupportedOrdinaryMediaFileName(const QString& name)
 {
     return Bridge::rustResultForQString(name, rustIsSupportedOrdinaryMediaFileName);
 }
 
-bool isSupportedDirectVideoFileName(const QString &name)
+bool isSupportedDirectVideoFileName(const QString& name)
 {
     return Bridge::rustResultForQString(name, rustIsSupportedDirectVideoFileName);
 }
 
-bool isSupportedDirectImageUrl(const QUrl &url)
+bool isSupportedDirectImageUrl(const QUrl& url)
 {
     return matchesUrlFileNameOrString(url, kiriview::isSupportedImageFileName);
 }
 
-bool isSupportedDirectVideoUrl(const QUrl &url)
+bool isSupportedDirectVideoUrl(const QUrl& url)
 {
     return matchesUrlFileNameOrString(url, kiriview::isSupportedDirectVideoFileName);
 }
 
 bool isSupportedStillImageDirectMediaNavigationCandidate(
-    const DirectMediaNavigationCandidate &candidate)
+    const DirectMediaNavigationCandidate& candidate)
 {
     return isSupportedImageFileName(candidate.name) || isSupportedDirectImageUrl(candidate.url);
 }

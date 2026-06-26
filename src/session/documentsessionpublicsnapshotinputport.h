@@ -16,20 +16,20 @@ class DocumentSessionState;
 class DocumentSessionPublicSnapshotInputPort final
 {
 public:
-    DocumentSessionPublicSnapshotInputPort(const DocumentSessionState *state,
-        const DocumentSessionDirectMediaActivityPort *activity,
-        const DocumentSessionDirectMediaNavigationInputPort *directMediaNavigation,
-        const DocumentSessionPublicImageLeafSnapshot *image,
-        const DocumentSessionPublicVideoLeafSnapshot *video);
+    DocumentSessionPublicSnapshotInputPort(const DocumentSessionState* state,
+        const DocumentSessionDirectMediaActivityPort* activity,
+        const DocumentSessionDirectMediaNavigationInputPort* directMediaNavigation,
+        const DocumentSessionPublicImageLeafSnapshot* image,
+        const DocumentSessionPublicVideoLeafSnapshot* video);
 
     DocumentSessionPublicSnapshotInput nextInput();
 
 private:
-    const DocumentSessionState *m_state = nullptr;
-    const DocumentSessionDirectMediaActivityPort *m_activity = nullptr;
-    const DocumentSessionDirectMediaNavigationInputPort *m_directMediaNavigation = nullptr;
-    const DocumentSessionPublicImageLeafSnapshot *m_image = nullptr;
-    const DocumentSessionPublicVideoLeafSnapshot *m_video = nullptr;
+    const DocumentSessionState* m_state = nullptr;
+    const DocumentSessionDirectMediaActivityPort* m_activity = nullptr;
+    const DocumentSessionDirectMediaNavigationInputPort* m_directMediaNavigation = nullptr;
+    const DocumentSessionPublicImageLeafSnapshot* m_image = nullptr;
+    const DocumentSessionPublicVideoLeafSnapshot* m_video = nullptr;
     quint64 m_nextRevision = 1;
 };
 }

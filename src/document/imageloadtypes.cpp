@@ -18,25 +18,25 @@ ImageLoadSession::ImageLoadSession(quint64 id, ImageLoadRequest request,
 
 quint64 ImageLoadSession::id() const { return m_id; }
 
-const ImageLoadRequest &ImageLoadSession::request() const { return m_request; }
+const ImageLoadRequest& ImageLoadSession::request() const { return m_request; }
 
-const DisplayedImageLocation &ImageLoadSession::location() const { return m_location; }
+const DisplayedImageLocation& ImageLoadSession::location() const { return m_location; }
 
-const ImageFirstDisplayDecodeContext &ImageLoadSession::firstDisplay() const
+const ImageFirstDisplayDecodeContext& ImageLoadSession::firstDisplay() const
 {
     return m_firstDisplay;
 }
 
-const QUrl &ImageLoadSession::imageUrl() const { return m_location.imageUrl(); }
+const QUrl& ImageLoadSession::imageUrl() const { return m_location.imageUrl(); }
 
 ImageDocumentPageKind ImageLoadSession::kind() const { return m_kind; }
 
-const OpenedCollectionScopeLocation &ImageLoadSession::openedCollectionScope() const
+const OpenedCollectionScopeLocation& ImageLoadSession::openedCollectionScope() const
 {
     return m_location.openedCollectionScope();
 }
 
-const QUrl &ImageLoadSession::containerNavigationUrl() const
+const QUrl& ImageLoadSession::containerNavigationUrl() const
 {
     return m_request.containerNavigationUrl();
 }
@@ -51,23 +51,23 @@ ImageDecodeRequest ImageLoadSession::decodeRequest() const
     return ImageDecodeRequest::fromLocation(m_id, m_location, m_firstDisplay);
 }
 
-bool ImageLoadSession::sameSession(const ImageLoadSession &session) const
+bool ImageLoadSession::sameSession(const ImageLoadSession& session) const
 {
     return m_id != 0 && m_id == session.m_id;
 }
 
-void ImageLoadSession::setImageDocumentPageCandidate(const ImageDocumentPageCandidate &candidate)
+void ImageLoadSession::setImageDocumentPageCandidate(const ImageDocumentPageCandidate& candidate)
 {
     setImageTarget(ImageDocumentPageTarget { candidate.url, candidate.kind });
 }
 
-void ImageLoadSession::setImageTarget(const ImageDocumentPageTarget &target)
+void ImageLoadSession::setImageTarget(const ImageDocumentPageTarget& target)
 {
     m_location.setImageUrl(target.url);
     m_kind = target.kind;
 }
 
-void ImageLoadSession::setImageUrl(const QUrl &url)
+void ImageLoadSession::setImageUrl(const QUrl& url)
 {
     setImageTarget(ImageDocumentPageTarget { url, ImageDocumentPageKind::Image });
 }

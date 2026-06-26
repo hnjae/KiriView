@@ -10,18 +10,20 @@
 #include <QtGlobal>
 
 namespace kiriview {
-struct DirectMediaCursor {
+struct DirectMediaCursor
+{
     QUrl stableUrl;
     QUrl pendingUrl;
     quint64 generation = 0;
 };
 
-struct DirectMediaScope {
+struct DirectMediaScope
+{
     QUrl currentUrl;
     QUrl parentUrl;
     quint64 generation = 0;
 
-    friend bool operator==(const DirectMediaScope &left, const DirectMediaScope &right)
+    friend bool operator==(const DirectMediaScope& left, const DirectMediaScope& right)
     {
         return sameSourceKey(sourceKeyForDirectMediaCurrentUrl(left.currentUrl),
                    sourceKeyForDirectMediaCurrentUrl(right.currentUrl))
@@ -31,14 +33,14 @@ struct DirectMediaScope {
     }
 };
 
-QUrl effectiveDirectMediaCursorUrl(const DirectMediaCursor &cursor);
-DirectMediaScope directMediaScopeForCursor(const DirectMediaCursor &cursor);
-bool directMediaScopeMatchesCursor(const DirectMediaCursor &cursor, const DirectMediaScope &scope);
-bool clearDirectMediaCursor(DirectMediaCursor &cursor);
-bool requestDirectImageCursor(DirectMediaCursor &cursor, const QUrl &url);
-bool confirmDirectImageCursor(DirectMediaCursor &cursor, const QUrl &url);
-bool restoreDirectImageCursorAfterFailure(DirectMediaCursor &cursor);
-bool setDirectVideoCursor(DirectMediaCursor &cursor, const QUrl &url);
+QUrl effectiveDirectMediaCursorUrl(const DirectMediaCursor& cursor);
+DirectMediaScope directMediaScopeForCursor(const DirectMediaCursor& cursor);
+bool directMediaScopeMatchesCursor(const DirectMediaCursor& cursor, const DirectMediaScope& scope);
+bool clearDirectMediaCursor(DirectMediaCursor& cursor);
+bool requestDirectImageCursor(DirectMediaCursor& cursor, const QUrl& url);
+bool confirmDirectImageCursor(DirectMediaCursor& cursor, const QUrl& url);
+bool restoreDirectImageCursorAfterFailure(DirectMediaCursor& cursor);
+bool setDirectVideoCursor(DirectMediaCursor& cursor, const QUrl& url);
 }
 
 #endif

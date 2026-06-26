@@ -39,7 +39,8 @@ enum class ImageDocumentPublicSignal {
     DisplaySource,
 };
 
-struct ImageDocumentPublicSignalOperations {
+struct ImageDocumentPublicSignalOperations
+{
     std::function<void()> sourceUrlChanged;
     std::function<void()> statusChanged;
     std::function<void()> loadingChanged;
@@ -73,7 +74,7 @@ class ImageDocumentPublicSignalEmitter final
 public:
     explicit ImageDocumentPublicSignalEmitter(ImageDocumentPublicSignalOperations operations);
 
-    void emitChanges(const std::vector<ImageDocumentChange> &changes) const;
+    void emitChanges(const std::vector<ImageDocumentChange>& changes) const;
     void emitChange(ImageDocumentChange change) const;
     void emitSignal(ImageDocumentPublicSignal signal) const;
 
@@ -82,7 +83,7 @@ private:
 };
 
 std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignalsForChanges(
-    const std::vector<ImageDocumentChange> &changes);
+    const std::vector<ImageDocumentChange>& changes);
 std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentChange change);
 }
 

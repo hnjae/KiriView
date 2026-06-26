@@ -9,7 +9,7 @@
 #include <utility>
 
 namespace kiriview {
-ImageDocumentChangeBatcher::Batch::Batch(ImageDocumentChangeBatcher &batcher)
+ImageDocumentChangeBatcher::Batch::Batch(ImageDocumentChangeBatcher& batcher)
     : m_batcher(&batcher)
 {
     m_batcher->begin();
@@ -22,7 +22,7 @@ ImageDocumentChangeBatcher::Batch::~Batch()
     }
 }
 
-ImageDocumentChangeBatcher::Batch::Batch(Batch &&other) noexcept
+ImageDocumentChangeBatcher::Batch::Batch(Batch&& other) noexcept
     : m_batcher(other.m_batcher)
 {
     other.m_batcher = nullptr;
@@ -55,7 +55,7 @@ void ImageDocumentChangeBatcher::notify(ImageDocumentChange change)
     emitChanges({ change });
 }
 
-void ImageDocumentChangeBatcher::notifyAll(const std::vector<ImageDocumentChange> &changes)
+void ImageDocumentChangeBatcher::notifyAll(const std::vector<ImageDocumentChange>& changes)
 {
     for (ImageDocumentChange change : changes) {
         notify(change);
@@ -80,7 +80,7 @@ void ImageDocumentChangeBatcher::end()
     emitChanges(changes);
 }
 
-void ImageDocumentChangeBatcher::emitChanges(const std::vector<ImageDocumentChange> &changes)
+void ImageDocumentChangeBatcher::emitChanges(const std::vector<ImageDocumentChange>& changes)
 {
     if (changes.empty()) {
         return;
