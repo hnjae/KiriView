@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "qml_component_test_support.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QObject>
@@ -153,11 +155,7 @@ MenuActionItemFixture createFixture()
     QQmlComponent component(fixture.view->engine());
     component.setData(
         fixtureQml().toUtf8(), QUrl(QStringLiteral("memory:test_menuactionitem.qml")));
-    for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
-        QCoreApplication::processEvents();
-        QTest::qWait(10);
-    }
-    if (component.isLoading()) {
+    if (!waitForQmlComponentReady(component)) {
         fixture.errorString = QStringLiteral("QML component did not become ready");
         return fixture;
     }

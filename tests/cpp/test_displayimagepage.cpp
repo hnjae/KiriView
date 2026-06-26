@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "qml_component_test_support.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QImage>
@@ -115,11 +117,7 @@ Fixture createFixture(bool loadAcknowledgmentRequired = true,
     QQmlComponent component(fixture.engine.get());
     component.setData(fixtureQml(loadAcknowledgmentRequired, providerUrl).toUtf8(),
         QUrl(QStringLiteral("memory:test_displayimagepage.qml")));
-    for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
-        QCoreApplication::processEvents();
-        QTest::qWait(10);
-    }
-    if (component.isLoading()) {
+    if (!waitForQmlComponentReady(component)) {
         fixture.errorString = QStringLiteral("QML component did not become ready");
         return fixture;
     }

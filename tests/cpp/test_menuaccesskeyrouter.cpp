@@ -3,6 +3,8 @@
 
 #include "facade/menuaccesskeyrouter.h"
 
+#include "qml_component_test_support.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QEvent>
@@ -260,11 +262,7 @@ MenuFixture createPopupMenuFixture(bool actionHasShortcut, bool customMenuItem,
     component.setData(
         popupMenuFixtureQml(actionHasShortcut, customMenuItem, actionEnabled, actionText).toUtf8(),
         QUrl(QStringLiteral("memory:test_menuaccesskeyrouter.qml")));
-    for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
-        QCoreApplication::processEvents();
-        QTest::qWait(10);
-    }
-    if (component.isLoading()) {
+    if (!waitForQmlComponentReady(component)) {
         fixture.errorString = QStringLiteral("QML component did not become ready");
         return fixture;
     }
@@ -307,11 +305,7 @@ MenuFixture createMenuFixture(const QString &source)
 
     QQmlComponent component(fixture.view->engine());
     component.setData(source.toUtf8(), QUrl(QStringLiteral("memory:test_menuaccesskeyrouter.qml")));
-    for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
-        QCoreApplication::processEvents();
-        QTest::qWait(10);
-    }
-    if (component.isLoading()) {
+    if (!waitForQmlComponentReady(component)) {
         fixture.errorString = QStringLiteral("QML component did not become ready");
         return fixture;
     }

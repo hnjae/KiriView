@@ -5,6 +5,8 @@
 #include "localization/localization.h"
 #include "session/documentsessionruntime.h"
 
+#include "qml_component_test_support.h"
+
 #include <KLocalizedQmlContext>
 #include <QCoreApplication>
 #include <QDir>
@@ -242,11 +244,7 @@ PageNavigationFixture createPageNavigationFixture()
     fixture.component = std::make_unique<QQmlComponent>(fixture.view->engine());
     fixture.component->setData(
         pageNavigationFixtureQml().toUtf8(), QUrl(QStringLiteral("memory:page_navigation.qml")));
-    for (int attempt = 0; fixture.component->isLoading() && attempt < 100; ++attempt) {
-        QCoreApplication::processEvents();
-        QTest::qWait(10);
-    }
-    if (fixture.component->isLoading()) {
+    if (!waitForQmlComponentReady(*fixture.component)) {
         fixture.errorString = QStringLiteral("QML component did not become ready");
         return fixture;
     }

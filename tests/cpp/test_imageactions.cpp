@@ -8,6 +8,8 @@
 #include "facade/kiriviewapplication.h"
 #include "localization/localization.h"
 
+#include "qml_component_test_support.h"
+
 #include <KLocalizedQmlContext>
 #include <KZip>
 #include <QAction>
@@ -233,11 +235,7 @@ ImageActionsFixture createFixture(const QString &sourceUrl = QString())
     QQmlComponent component(fixture.engine.get());
     component.setData(
         fixtureQml(sourceUrl).toUtf8(), QUrl(QStringLiteral("memory:test_imageactions.qml")));
-    for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
-        QCoreApplication::processEvents();
-        QTest::qWait(10);
-    }
-    if (component.isLoading()) {
+    if (!waitForQmlComponentReady(component)) {
         fixture.errorString = QStringLiteral("QML component did not become ready");
         return fixture;
     }

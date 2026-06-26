@@ -4,6 +4,8 @@
 #include "presentation/imageviewportframe.h"
 #include "presentation/imageviewportgeometry.h"
 
+#include "qml_component_test_support.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -1335,11 +1337,7 @@ ImageViewportFixture createFixture()
     QQmlComponent component(fixture.view->engine());
     component.setData(fixtureQml(qmlDirectoryImport(fixture.qmlDirectory->path())).toUtf8(),
         QUrl(QStringLiteral("memory:test_imageviewport.qml")));
-    for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
-        QCoreApplication::processEvents();
-        QTest::qWait(10);
-    }
-    if (component.isLoading()) {
+    if (!waitForQmlComponentReady(component)) {
         fixture.errorString = QStringLiteral("QML component did not become ready");
         return fixture;
     }

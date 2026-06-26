@@ -10,6 +10,8 @@
 #include "kiriviewstate.h"
 #include "localization/localization.h"
 
+#include "qml_component_test_support.h"
+
 #include <KConfigGroup>
 #include <KLocalizedQmlContext>
 #include <KSharedConfig>
@@ -345,11 +347,7 @@ ImageShortcutsFixture createFixture(const QString &sourceUrl = QString())
     QQmlComponent component(fixture.view->engine());
     component.setData(
         fixtureQml(sourceUrl).toUtf8(), QUrl(QStringLiteral("memory:test_imageshortcuts.qml")));
-    for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
-        QCoreApplication::processEvents();
-        QTest::qWait(10);
-    }
-    if (component.isLoading()) {
+    if (!waitForQmlComponentReady(component)) {
         fixture.errorString = QStringLiteral("QML component did not become ready");
         return fixture;
     }

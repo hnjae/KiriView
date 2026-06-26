@@ -4,6 +4,8 @@
 #include "facade/kiriviewapplication.h"
 #include "localization/localization.h"
 
+#include "qml_component_test_support.h"
+
 #include <KLocalizedQmlContext>
 #include <KSharedConfig>
 #include <QCoreApplication>
@@ -142,11 +144,7 @@ ShortcutHelpDialogFixture createFixture(const QSize &viewSize = QSize(900, 700))
     QQmlComponent component(fixture.view->engine());
     component.setData(
         fixtureQml(viewSize).toUtf8(), QUrl(QStringLiteral("memory:test_shortcuthelpdialog.qml")));
-    for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
-        QCoreApplication::processEvents();
-        QTest::qWait(10);
-    }
-    if (component.isLoading()) {
+    if (!waitForQmlComponentReady(component)) {
         fixture.errorString = QStringLiteral("QML component did not become ready");
         return fixture;
     }

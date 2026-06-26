@@ -9,6 +9,8 @@
 #include "facade/menuaccesskeyrouter.h"
 #include "localization/localization.h"
 
+#include "qml_component_test_support.h"
+
 #include <KLocalizedQmlContext>
 #include <KZip>
 #include <QBuffer>
@@ -820,11 +822,7 @@ ToolBarMenuFixture createFixtureFromQml(const QString &qml, const QUrl &componen
 
     QQmlComponent component(fixture.view->engine());
     component.setData(qml.toUtf8(), componentUrl);
-    for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
-        QCoreApplication::processEvents();
-        QTest::qWait(10);
-    }
-    if (component.isLoading()) {
+    if (!waitForQmlComponentReady(component)) {
         fixture.errorString = QStringLiteral("QML component did not become ready");
         return fixture;
     }
