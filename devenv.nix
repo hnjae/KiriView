@@ -3,6 +3,7 @@
 {
   imports = [
     ./devenv/modules/qt-cxxqt-dev.nix
+    ./devenv/modules/cpp-lint-policy.nix
     ./devenv/modules/check-tasks.nix
     ./devenv/modules/git-hooks.nix
     ./devenv/modules/i18n.nix

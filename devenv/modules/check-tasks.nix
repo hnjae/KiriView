@@ -64,6 +64,7 @@ in
           --clazy-binary <path>   clazy-standalone binary to execute.
           --checks <checks>       clazy checks to run.
           --ignore-dirs <regex>   Directories for clazy to ignore.
+          --export-fixes-dir <dir> Directory for per-source exported fixit YAML files.
           -p, --compile-db <dir>  Compilation database directory.
         EOF
         }
@@ -72,6 +73,7 @@ in
         clazy_binary="''${CLAZY_BINARY:-clazy-standalone}"
         checks="''${CLAZY_CHECKS:-level0}"
         ignore_dirs=""
+        export_fixes_dir=""
         compile_db="."
 
         while (($# > 0)); do
@@ -124,6 +126,18 @@ in
                 ignore_dirs="''${1#--ignore-dirs=}"
                 shift
                 ;;
+            --export-fixes-dir)
+                if (($# < 2)); then
+                    usage
+                    exit 2
+                fi
+                export_fixes_dir="$2"
+                shift 2
+                ;;
+            --export-fixes-dir=*)
+                export_fixes_dir="''${1#--export-fixes-dir=}"
+                shift
+                ;;
             -p | --compile-db)
                 if (($# < 2)); then
                     usage
@@ -158,6 +172,9 @@ in
             printf 'Invalid --jobs value: %s\n' "$jobs" >&2
             exit 2
         fi
+        if [[ -n $export_fixes_dir ]]; then
+            mkdir -p "$export_fixes_dir"
+        fi
 
         sources=("$@")
         source_count="$#"
@@ -178,18 +195,17 @@ in
             set +e
             {
                 printf '[%d/%d] Processing file %s.\n' "$((index + 1))" "$source_count" "$source"
+                clazy_args=(
+                    --checks="$checks"
+                    -p "$compile_db"
+                )
                 if [[ -n $ignore_dirs ]]; then
-                    "$clazy_binary" \
-                        --checks="$checks" \
-                        --ignore-dirs="$ignore_dirs" \
-                        -p "$compile_db" \
-                        "$source"
-                else
-                    "$clazy_binary" \
-                        --checks="$checks" \
-                        -p "$compile_db" \
-                        "$source"
+                    clazy_args+=(--ignore-dirs="$ignore_dirs")
                 fi
+                if [[ -n $export_fixes_dir ]]; then
+                    clazy_args+=(--export-fixes="$export_fixes_dir/$index.yaml")
+                fi
+                "$clazy_binary" "''${clazy_args[@]}" "$source"
             } >"$output_file" 2>&1
             status="$?"
             printf '%s\n' "$status" >"$status_file"
@@ -239,6 +255,40 @@ in
   };
 
   tasks = {
+    "dev:fix:cpp" = {
+      description = "Apply clazy C++ fixits";
+      exec = # sh
+        ''
+          ${baseTaskPrelude}
+          ${qtBuildPrelude}
+          ${rustHostEnvironment}
+          ${lintJobsPrelude}
+
+          if [[ -z ''${CLAZY_FIXIT:-} ]]; then
+              printf 'CLAZY_FIXIT is empty; no clazy fixits are configured.\n' >&2
+              exit 2
+          fi
+
+          ${lib.getExe qtCxxqt.refreshCompileCommands} "$lint_jobs" ${lib.escapeShellArg "${rustHostCargoTargetDir}/debug"}
+          ${qtCxxqt.cppLintPrelude}
+
+          fixes_dir="$(mktemp -d)"
+          trap 'rm -rf "$fixes_dir"' EXIT
+
+          run-clazy-parallel \
+              --jobs "$lint_jobs" \
+              --clazy-binary ${lib.getExe' pkgs.clazy "clazy-standalone"} \
+              --checks "$CLAZY_FIXIT" \
+              --ignore-dirs=${lib.escapeShellArg qtCxxqt.clazyIgnoreDirsRegex} \
+              --export-fixes-dir "$fixes_dir" \
+              -p . \
+              -- \
+              ${qtCxxqt.cppSourcesShellArgs}
+
+          ${lib.getExe' pkgs.clang-tools "clang-apply-replacements"} "$fixes_dir"
+        '';
+    };
+
     "dev:lsp:refresh" = {
       description = "Refresh generated LSP metadata for rust-analyzer and clangd";
       exec = # sh

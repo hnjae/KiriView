@@ -24,6 +24,7 @@ path = [
   # Tool configurations:
   ".gitignore",
   ".clang-format",
+  ".clang-tidy",
   ".editorconfig",
   "biome.json",
   "cog.toml",
