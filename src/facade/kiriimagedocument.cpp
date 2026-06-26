@@ -285,7 +285,7 @@ QSize KiriImageDocument::secondaryImageSize() const { return m_runtime->secondar
 
 QSizeF KiriImageDocument::viewportSize() const { return m_runtime->viewportSize(); }
 
-void KiriImageDocument::setViewportSize(const QSizeF& viewportSize)
+void KiriImageDocument::setViewportSize(QSizeF viewportSize)
 {
     m_runtime->setViewportSize(viewportSize);
 }
@@ -553,7 +553,7 @@ bool KiriImageDocument::requestManualZoomPercent(double zoomPercent)
     return m_runtime->requestManualZoomPercentAtCenter(zoomPercent);
 }
 
-bool KiriImageDocument::requestZoomByStep(double stepCount, const QPointF& viewportAnchorPoint)
+bool KiriImageDocument::requestZoomByStep(double stepCount, QPointF viewportAnchorPoint)
 {
     return m_runtime->requestZoomByStep(stepCount, viewportAnchorPoint);
 }
@@ -583,7 +583,7 @@ bool KiriImageDocument::requestFitMode(ZoomMode zoomMode)
     return true;
 }
 
-bool KiriImageDocument::requestToggleFitOrActualSize(const QPointF& viewportPoint)
+bool KiriImageDocument::requestToggleFitOrActualSize(QPointF viewportPoint)
 {
     return m_runtime->requestToggleFitOrActualSize(viewportPoint);
 }
@@ -623,12 +623,12 @@ bool KiriImageDocument::requestDisplayedImageInitialContentPosition()
     return m_runtime->requestDisplayedImageInitialContentPosition() > 0;
 }
 
-bool KiriImageDocument::viewportPointInsideImage(const QPointF& viewportPoint) const
+bool KiriImageDocument::viewportPointInsideImage(QPointF viewportPoint) const
 {
     return m_runtime->viewportPointInsideImage(viewportPoint);
 }
 
-QPointF KiriImageDocument::nearestImageViewportPoint(const QPointF& viewportPoint) const
+QPointF KiriImageDocument::nearestImageViewportPoint(QPointF viewportPoint) const
 {
     return m_runtime->nearestImageViewportPoint(viewportPoint);
 }
@@ -642,7 +642,7 @@ void KiriImageDocument::requestToggleRightToLeftReading()
 
 void KiriImageDocument::updateRenderContext() { m_runtime->updateRenderContext(); }
 
-bool KiriImageDocument::requestViewportContentPosition(const QPointF& viewportContentPosition)
+bool KiriImageDocument::requestViewportContentPosition(QPointF viewportContentPosition)
 {
     return m_runtime->requestViewportContentPosition(viewportContentPosition) > 0;
 }
@@ -680,13 +680,13 @@ bool KiriImageDocument::beginViewportCommandApplication(const QString& commandRe
 }
 
 bool KiriImageDocument::completeViewportCommandApplication(
-    quint64 commandRevision, const QPointF& actualContentPosition)
+    quint64 commandRevision, QPointF actualContentPosition)
 {
     return m_runtime->completeViewportCommandApplication(commandRevision, actualContentPosition);
 }
 
 bool KiriImageDocument::completeViewportCommandApplication(
-    const QString& commandRevisionToken, const QPointF& actualContentPosition)
+    const QString& commandRevisionToken, QPointF actualContentPosition)
 {
     const std::optional<quint64> commandRevision = viewportRevisionFromToken(commandRevisionToken);
     return commandRevision.has_value()
@@ -694,13 +694,13 @@ bool KiriImageDocument::completeViewportCommandApplication(
 }
 
 bool KiriImageDocument::acknowledgeViewportCommand(
-    quint64 commandRevision, const QPointF& actualContentPosition)
+    quint64 commandRevision, QPointF actualContentPosition)
 {
     return m_runtime->acknowledgeViewportCommand(commandRevision, actualContentPosition);
 }
 
 bool KiriImageDocument::acknowledgeViewportCommand(
-    const QString& commandRevisionToken, const QPointF& actualContentPosition)
+    const QString& commandRevisionToken, QPointF actualContentPosition)
 {
     const std::optional<quint64> commandRevision = viewportRevisionFromToken(commandRevisionToken);
     return commandRevision.has_value()
@@ -708,7 +708,7 @@ bool KiriImageDocument::acknowledgeViewportCommand(
 }
 
 bool KiriImageDocument::observeViewportContentPosition(
-    const QPointF& contentPosition, KiriImageDocument::ViewportObservationOrigin origin)
+    QPointF contentPosition, KiriImageDocument::ViewportObservationOrigin origin)
 {
     return m_runtime->observeViewportContentPosition(
         contentPosition, toImageViewportObservationOrigin(origin));

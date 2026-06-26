@@ -22,12 +22,12 @@ struct ImageSpreadPageNavigationTarget
     int pageNumber = 0;
 };
 
-int imageSpreadNavigationCurrentLastPageNumber(const ImageSpreadNavigationState& state);
+int imageSpreadNavigationCurrentLastPageNumber(ImageSpreadNavigationState state);
 ImageSpreadPageNavigationTarget imageSpreadPageNavigationTarget(
-    NavigationDirection direction, const ImageSpreadNavigationState& state);
-int imageSpreadRelativePageNavigationTarget(const ImageSpreadNavigationState& state, int offset);
+    NavigationDirection direction, ImageSpreadNavigationState state);
+int imageSpreadRelativePageNavigationTarget(ImageSpreadNavigationState state, int offset);
 bool imageSpreadShouldBeginNavigationTransition(
-    const ImageSpreadNavigationState& state, int targetPageNumber);
+    ImageSpreadNavigationState state, int targetPageNumber);
 }
 
 #endif

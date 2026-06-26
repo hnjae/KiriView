@@ -22,7 +22,7 @@
 namespace {
 using Bucket = kiriview::ActiveNavigationThumbnailDemandBucket;
 
-bool validImageSize(const QSize& size)
+bool validImageSize(QSize size)
 {
     return size.isValid() && !size.isEmpty() && size.width() > 0 && size.height() > 0;
 }
@@ -42,13 +42,13 @@ bool supportedPreviewBucket(Bucket bucket)
     return false;
 }
 
-bool thumbnailFitsOriginal(const QSize& thumbnailSize, const QSize& originalSize)
+bool thumbnailFitsOriginal(QSize thumbnailSize, QSize originalSize)
 {
     return thumbnailSize.width() <= originalSize.width()
         && thumbnailSize.height() <= originalSize.height();
 }
 
-bool aspectCompatible(const QSize& thumbnailSize, const QSize& originalSize)
+bool aspectCompatible(QSize thumbnailSize, QSize originalSize)
 {
     if (!validImageSize(thumbnailSize) || !validImageSize(originalSize)) {
         return false;
@@ -66,7 +66,7 @@ bool aspectCompatible(const QSize& thumbnailSize, const QSize& originalSize)
     return std::fabsl(left - right) / maximum <= 0.01L;
 }
 
-QSize transformedImageSize(const QSize& size, QImageIOHandler::Transformations transformations)
+QSize transformedImageSize(QSize size, QImageIOHandler::Transformations transformations)
 {
     if (size.isEmpty()) {
         return {};

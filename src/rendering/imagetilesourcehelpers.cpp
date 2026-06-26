@@ -9,7 +9,7 @@
 #include <utility>
 
 namespace kiriview {
-QSize boundedPreviewSize(const QSize& imageSize, int maximumLongEdge)
+QSize boundedPreviewSize(QSize imageSize, int maximumLongEdge)
 {
     return scaledImageSizeToFit(QSizeF(imageSize), QSize(maximumLongEdge, maximumLongEdge));
 }
@@ -19,7 +19,7 @@ bool tileRequestCanDecode(const TileRequest& request)
     return !request.textureLevelRect.isEmpty() && !request.sourceRect.isEmpty();
 }
 
-QImage scaledTileImage(const QImage& image, const QSize& size)
+QImage scaledTileImage(const QImage& image, QSize size)
 {
     if (image.isNull() || size.isEmpty()) {
         return {};
@@ -30,7 +30,7 @@ QImage scaledTileImage(const QImage& image, const QSize& size)
     return displayReadyImage(image.scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
 }
 
-QImage cropLevelTexture(const QImage& levelImage, const QRect& textureLevelRect)
+QImage cropLevelTexture(const QImage& levelImage, QRect textureLevelRect)
 {
     if (levelImage.isNull() || textureLevelRect.isEmpty()) {
         return {};

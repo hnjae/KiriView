@@ -7,7 +7,7 @@
 #include "presentation/imagespreadgeometry.h"
 
 namespace kiriview {
-void ImageSpreadPageCache::cachePageSize(const QUrl& url, const QSize& imageSize)
+void ImageSpreadPageCache::cachePageSize(const QUrl& url, QSize imageSize)
 {
     const QString key = cacheKey(url);
     if (key.isEmpty() || imageSize.isEmpty()) {

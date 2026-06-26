@@ -92,10 +92,10 @@ private:
     std::optional<DecodedTile> decodeFullImageFallbackTile(
         const TileRequest& request, QImageReaderTileDecodeDiagnostics* diagnostics) const;
     QImageReaderDisplayDecodeResult readScaledDisplayImage(
-        const QSize& scaledSize, QImageReaderDisplayDecodeOperation operation) const;
-    QImage readScaledImage(const QSize& scaledSize, QString* errorString) const;
+        QSize scaledSize, QImageReaderDisplayDecodeOperation operation) const;
+    QImage readScaledImage(QSize scaledSize, QString* errorString) const;
     QImage readFullImage(QString* errorString) const;
-    QImage readSourceClip(const QRect& sourceRect, QString* errorString) const;
+    QImage readSourceClip(QRect sourceRect, QString* errorString) const;
 
     QByteArray m_data;
     QByteArray m_format;

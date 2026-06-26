@@ -31,7 +31,7 @@ void DocumentSessionDirectMediaNavigationApplicationRuntime::applyInactiveRefres
 }
 
 void DocumentSessionDirectMediaNavigationApplicationRuntime::applyRefresh(
-    ActiveNavigationSourceKind sourceKind, const ActiveNavigationSnapshot& previousSnapshot,
+    ActiveNavigationSourceKind sourceKind, ActiveNavigationSnapshot previousSnapshot,
     DocumentSessionDirectMediaNavigationRefreshResult result)
 {
     const QString errorString = result.errorString;

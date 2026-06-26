@@ -27,7 +27,7 @@ kiriview::ImageSpreadSecondaryPageRefreshResult loadTargetRefresh(const QUrl& ta
 }
 
 namespace kiriview {
-void ImageSpreadSecondaryPageRefresh::cachePageSize(const QUrl& url, const QSize& imageSize)
+void ImageSpreadSecondaryPageRefresh::cachePageSize(const QUrl& url, QSize imageSize)
 {
     m_pageCache.cachePageSize(url, imageSize);
 }

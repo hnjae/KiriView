@@ -90,7 +90,7 @@ ImagePresentationPageSlotSnapshot ImageSecondaryPageController::pageSlotSnapshot
 
 void ImageSecondaryPageController::startLoad(const QUrl& url,
     const OpenedCollectionScopeLocation& displayedOpenedCollectionScope,
-    const ImageFirstDisplayDecodeContext& firstDisplayContext)
+    ImageFirstDisplayDecodeContext firstDisplayContext)
 {
     cancel();
     stopAnimation();
@@ -136,7 +136,7 @@ void ImageSecondaryPageController::finishDecodedImageLoad(
 }
 
 void ImageSecondaryPageController::finishImagePresentation(
-    const ImageLoadSession& session, const ImagePresentationLoadResult& result)
+    const ImageLoadSession& session, ImagePresentationLoadResult result)
 {
     if (!result.presented) {
         finishLoadWithError(session);

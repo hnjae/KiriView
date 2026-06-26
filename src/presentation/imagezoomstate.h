@@ -65,14 +65,14 @@ public:
     const QUrl& containerUrl() const;
     ImageZoomSnapshot snapshot() const;
 
-    bool setViewportSize(const QSizeF& viewportSize, qreal devicePixelRatio);
-    bool setImageSize(const QSize& imageSize, qreal devicePixelRatio);
+    bool setViewportSize(QSizeF viewportSize, qreal devicePixelRatio);
+    bool setImageSize(QSize imageSize, qreal devicePixelRatio);
     bool setManualZoomPercent(qreal zoomPercent, qreal devicePixelRatio);
     bool setFitMode(ImageZoomMode zoomMode, qreal devicePixelRatio);
     void resetZoom(qreal devicePixelRatio);
     void prepareImageContainer(const QUrl& containerUrl);
     LoadedImageZoom loadedImageZoom(
-        const QUrl& containerUrl, const QSize& imageSize, qreal devicePixelRatio) const;
+        const QUrl& containerUrl, QSize imageSize, qreal devicePixelRatio) const;
     void setLoadedSvgZoom(const QUrl& containerUrl, const LoadedImageZoom& zoom);
     void clearContainer();
     void update(qreal devicePixelRatio);
@@ -82,10 +82,10 @@ public:
     qreal steppedManualZoomPercent(qreal stepCount, qreal devicePixelRatio) const;
     qreal fitZoomPercent(ImageZoomMode zoomMode, qreal devicePixelRatio) const;
     qreal fitZoomPercentForImageSize(
-        ImageZoomMode zoomMode, const QSize& imageSize, qreal devicePixelRatio) const;
+        ImageZoomMode zoomMode, QSize imageSize, qreal devicePixelRatio) const;
     QSizeF displaySizeForZoomPercent(qreal zoomPercent, qreal devicePixelRatio) const;
     QSizeF displaySizeForZoomPercent(
-        qreal zoomPercent, const QSize& imageSize, qreal devicePixelRatio) const;
+        qreal zoomPercent, QSize imageSize, qreal devicePixelRatio) const;
 
 private:
     void applySnapshot(const ImageZoomSnapshot& snapshot);
@@ -100,7 +100,7 @@ private:
 };
 
 bool imageZoomApproximatelyEqual(qreal left, qreal right);
-bool imageZoomApproximatelyEqual(const QSizeF& left, const QSizeF& right);
+bool imageZoomApproximatelyEqual(QSizeF left, QSizeF right);
 }
 
 #endif

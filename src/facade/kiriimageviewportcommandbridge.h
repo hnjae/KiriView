@@ -35,7 +35,7 @@ public:
     bool applying() const;
 
     Q_INVOKABLE QPointF currentContentPosition() const;
-    Q_INVOKABLE bool requestContentPosition(const QPointF& contentPosition);
+    Q_INVOKABLE bool requestContentPosition(QPointF contentPosition);
     Q_INVOKABLE bool observeViewportContentPosition(
         KiriImageDocument::ViewportObservationOrigin origin);
     Q_INVOKABLE void applyViewportProjection();
@@ -48,8 +48,8 @@ Q_SIGNALS:
 
 private:
     bool bridgeReady() const;
-    bool contentPositionChanged(const QPointF& contentPosition) const;
-    bool setContentPosition(const QPointF& contentPosition);
+    bool contentPositionChanged(QPointF contentPosition) const;
+    bool setContentPosition(QPointF contentPosition);
     void connectDocument();
     void disconnectDocument();
     void disconnectTarget();

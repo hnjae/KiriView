@@ -80,7 +80,7 @@ namespace {
         return ImageDisplaySourceStatus::Error;
     }
 
-    ImageDisplaySourceSlot displayErrorSourceSlot(const QSize& imageSize, quint64 revision)
+    ImageDisplaySourceSlot displayErrorSourceSlot(QSize imageSize, quint64 revision)
     {
         return ImageDisplaySourceSlot {
             QUrl(),

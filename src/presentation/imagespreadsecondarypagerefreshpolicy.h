@@ -29,7 +29,7 @@ struct ImageSpreadSecondaryPageRefreshPlan
 };
 
 ImageSpreadSecondaryPageRefreshPlan imageSpreadSecondaryPageRefreshPlan(
-    const ImageSpreadSecondaryPageRefreshState& state);
+    ImageSpreadSecondaryPageRefreshState state);
 }
 
 #endif

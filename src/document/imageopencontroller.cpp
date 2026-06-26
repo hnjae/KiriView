@@ -215,8 +215,8 @@ void ImageOpenController::finishDecodedImageLoad(ImageLoadSession session, Decod
         std::move(metadata));
 }
 
-void ImageOpenController::finishPresentedImageLoad(const ImageLoadSession& session,
-    const ImagePresentationLoadResult& result, EmbeddedMetadata metadata)
+void ImageOpenController::finishPresentedImageLoad(
+    const ImageLoadSession& session, ImagePresentationLoadResult result, EmbeddedMetadata metadata)
 {
     if (!result.presented) {
         finishLoadWithError(session,

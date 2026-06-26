@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_POWERSAVERPROVIDER_H
 #define KIRIVIEW_POWERSAVERPROVIDER_H
 
+#include <QtGlobal>
+
 #include <functional>
 #include <memory>
 
@@ -13,8 +15,12 @@ namespace kiriview {
 class PowerSaverStateMonitor
 {
 public:
+    PowerSaverStateMonitor() = default;
+
+public:
     virtual ~PowerSaverStateMonitor() = default;
     virtual bool powerSaverEnabled() const = 0;
+    Q_DISABLE_COPY(PowerSaverStateMonitor)
 };
 
 using PowerSaverChangedCallback = std::function<void(bool)>;

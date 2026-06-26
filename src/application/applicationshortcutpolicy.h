@@ -98,7 +98,7 @@ ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence>& prog
 const QList<ApplicationShortcutRoute>& shortcutRoutes();
 std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value);
 FixedShortcutDispatchOutcome fixedShortcutDispatchOutcome(
-    const FixedShortcutDispatchInput& input, const QKeySequence& shortcut);
+    FixedShortcutDispatchInput input, const QKeySequence& shortcut);
 bool genericShortcutBindingEnabled(
     const ApplicationActionStateInput& actionState, const GenericShortcutBinding& binding);
 GenericShortcutDispatchOutcome genericShortcutDispatchOutcome(

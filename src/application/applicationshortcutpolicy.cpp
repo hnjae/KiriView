@@ -102,14 +102,14 @@ std::optional<qint64> fixedVideoSeekShortcutDeltaMilliseconds(const QKeySequence
     return std::nullopt;
 }
 
-bool routeMatchesSpec(const Route& route, const RouteSpec& spec)
+bool routeMatchesSpec(const Route& route, RouteSpec spec)
 {
     return route.activationScope == spec.activationScope
         && route.shortcutScope == spec.shortcutScope;
 }
 
 void appendActionToRoute(
-    QList<Route>& routes, kiriview::ApplicationActions::ActionId actionId, const RouteSpec& spec)
+    QList<Route>& routes, kiriview::ApplicationActions::ActionId actionId, RouteSpec spec)
 {
     for (Route& route : routes) {
         if (!routeMatchesSpec(route, spec)) {
@@ -214,7 +214,7 @@ std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value)
 }
 
 FixedShortcutDispatchOutcome fixedShortcutDispatchOutcome(
-    const FixedShortcutDispatchInput& input, const QKeySequence& shortcut)
+    FixedShortcutDispatchInput input, const QKeySequence& shortcut)
 {
     if (!input.focusApplicable) {
         return {};

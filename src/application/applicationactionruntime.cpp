@@ -28,7 +28,7 @@ Actions::VideoShortcutAvailabilityInput videoShortcutInput(bool helpShortcutsEna
 }
 
 bool sharedImagePannabilityActionGate(
-    const kiriview::DocumentSessionActionAvailabilityFacts& facts, bool viewportLocalPannable)
+    kiriview::DocumentSessionActionAvailabilityFacts facts, bool viewportLocalPannable)
 {
     return facts.imageReady && viewportLocalPannable;
 }

@@ -14,22 +14,21 @@ QRectF viewportImageRect(const kiriview::ImageViewportInteractionSnapshot& snaps
 
 namespace kiriview {
 QPointF ImageViewportInteraction::panContentPosition(
-    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition,
-    const QPointF& delta) const
+    const ImageViewportInteractionSnapshot& snapshot, QPointF contentPosition, QPointF delta) const
 {
     return imageViewportPanPosition(
         snapshot.viewportSize, viewportImageRect(snapshot), contentPosition, delta);
 }
 
 QPointF ImageViewportInteraction::nextScanContentPosition(
-    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition) const
+    const ImageViewportInteractionSnapshot& snapshot, QPointF contentPosition) const
 {
     return imageViewportNextZScanPosition(snapshot.viewportSize, viewportImageRect(snapshot),
         contentPosition, snapshot.rightToLeftReadingActive);
 }
 
 QPointF ImageViewportInteraction::previousScanContentPosition(
-    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition) const
+    const ImageViewportInteractionSnapshot& snapshot, QPointF contentPosition) const
 {
     return imageViewportPreviousZScanPosition(snapshot.viewportSize, viewportImageRect(snapshot),
         contentPosition, snapshot.rightToLeftReadingActive);
@@ -75,24 +74,24 @@ QPointF ImageViewportInteraction::displayedImageInitialContentPosition(
 }
 
 bool ImageViewportInteraction::viewportPointInsideImage(
-    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition,
-    const QPointF& viewportPoint) const
+    const ImageViewportInteractionSnapshot& snapshot, QPointF contentPosition,
+    QPointF viewportPoint) const
 {
     return imageViewportPointInsideImage(
         contentPosition, viewportPoint, viewportImageRect(snapshot));
 }
 
 QPointF ImageViewportInteraction::nearestImageViewportPoint(
-    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition,
-    const QPointF& viewportPoint) const
+    const ImageViewportInteractionSnapshot& snapshot, QPointF contentPosition,
+    QPointF viewportPoint) const
 {
     return imageViewportNearestImagePoint(
         contentPosition, viewportPoint, viewportImageRect(snapshot));
 }
 
 QPointF ImageViewportInteraction::zoomContentPosition(
-    const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition,
-    const QPointF& viewportAnchorPoint, qreal nextZoomPercent) const
+    const ImageViewportInteractionSnapshot& snapshot, QPointF contentPosition,
+    QPointF viewportAnchorPoint, qreal nextZoomPercent) const
 {
     const QSizeF nextDisplaySize = imageViewportDisplaySizeForZoom(
         snapshot.imageSize, nextZoomPercent, snapshot.devicePixelRatio);

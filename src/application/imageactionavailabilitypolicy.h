@@ -62,7 +62,7 @@ struct ActiveMediaShortcutAvailabilityInput
 };
 
 ImageActionAvailabilityProjection imageActionAvailabilityProjection(
-    const ImageActionAvailabilityInput& input);
+    ImageActionAvailabilityInput input);
 bool imageActionAvailabilityShortcutsEnabledForScope(
     const ImageActionAvailabilityProjection& projection,
     kiriview::ApplicationActions::ImageShortcutScope scope);
@@ -70,10 +70,9 @@ bool activeMediaShortcutsEnabledForScope(const ActiveMediaShortcutAvailabilityIn
     kiriview::ApplicationActions::ImageShortcutScope scope);
 
 namespace kiriview::ApplicationActions {
-bool videoShortcutsEnabledForScope(
-    const VideoShortcutAvailabilityInput& input, ImageShortcutScope scope);
+bool videoShortcutsEnabledForScope(VideoShortcutAvailabilityInput input, ImageShortcutScope scope);
 bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
-    const VideoShortcutAvailabilityInput& videoInput);
+    VideoShortcutAvailabilityInput videoInput);
 }
 
 #endif

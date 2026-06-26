@@ -36,7 +36,8 @@ bool isSupportedRawImageFileName(const QString& name)
 
 QStringList openDialogNameFilters()
 {
-    const QString extensionFilter = QStringLiteral("*.") + supportedOpenExtensions().join(" *.");
+    const QString extensionFilter
+        = QStringLiteral("*.") + supportedOpenExtensions().join(QStringLiteral(" *."));
     return {
         ki18nc("@item:inlistbox", "Image and comic book files (%1)")
             .subs(extensionFilter)

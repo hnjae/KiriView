@@ -248,34 +248,32 @@ void VideoDocumentRuntime::executePlaybackControlPlan(const VideoPlaybackControl
     applyPlaybackStateDelta(plan.stateDelta);
 }
 
-void VideoDocumentRuntime::executePlaybackBackendOperation(
-    const VideoPlaybackBackendOperation& operation)
+void VideoDocumentRuntime::executePlaybackBackendOperation(VideoPlaybackBackendOperation operation)
 {
     std::visit(
         [this](const auto& payload) { executePlaybackBackendOperation(payload); }, operation);
 }
 
-void VideoDocumentRuntime::executePlaybackBackendOperation(
-    const EnsureVideoPlaybackBackendOperation&)
+void VideoDocumentRuntime::executePlaybackBackendOperation(EnsureVideoPlaybackBackendOperation)
 {
     ensureMediaBackend();
 }
 
-void VideoDocumentRuntime::executePlaybackBackendOperation(const PlayVideoPlaybackOperation&)
+void VideoDocumentRuntime::executePlaybackBackendOperation(PlayVideoPlaybackOperation)
 {
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->play();
     }
 }
 
-void VideoDocumentRuntime::executePlaybackBackendOperation(const PauseVideoPlaybackOperation&)
+void VideoDocumentRuntime::executePlaybackBackendOperation(PauseVideoPlaybackOperation)
 {
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->pause();
     }
 }
 
-void VideoDocumentRuntime::executePlaybackBackendOperation(const StopVideoPlaybackOperation&)
+void VideoDocumentRuntime::executePlaybackBackendOperation(StopVideoPlaybackOperation)
 {
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->stop();
@@ -283,7 +281,7 @@ void VideoDocumentRuntime::executePlaybackBackendOperation(const StopVideoPlayba
 }
 
 void VideoDocumentRuntime::executePlaybackBackendOperation(
-    const SetVideoPlaybackPositionOperation& operation)
+    SetVideoPlaybackPositionOperation operation)
 {
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->setPosition(operation.position);
@@ -323,13 +321,13 @@ void VideoDocumentRuntime::executeSourceLoadOperation(const VideoSourceLoadOpera
     std::visit([this](const auto& payload) { executeSourceLoadOperation(payload); }, operation);
 }
 
-void VideoDocumentRuntime::executeSourceLoadOperation(const ClearVideoPlaybackSourceOperation&)
+void VideoDocumentRuntime::executeSourceLoadOperation(ClearVideoPlaybackSourceOperation)
 {
     invalidatePlaybackCallbacks();
     clearPlaybackSource();
 }
 
-void VideoDocumentRuntime::executeSourceLoadOperation(const ResetClearedVideoSourceOperation&)
+void VideoDocumentRuntime::executeSourceLoadOperation(ResetClearedVideoSourceOperation)
 {
     m_state.resetForClearedSource();
 }

@@ -7,7 +7,7 @@
 #include "kiriview/src/policy/imageactionavailability.cxx.h"
 
 ImageActionAvailabilityProjection imageActionAvailabilityProjection(
-    const ImageActionAvailabilityInput& input)
+    ImageActionAvailabilityInput input)
 {
     return kiriview::Bridge::imageActionAvailabilityProjectionFromRust(
         kiriview::rustImageActionAvailabilityProjection(
@@ -41,8 +41,7 @@ bool activeMediaShortcutsEnabledForScope(const ActiveMediaShortcutAvailabilityIn
 }
 
 namespace kiriview::ApplicationActions {
-bool videoShortcutsEnabledForScope(
-    const VideoShortcutAvailabilityInput& input, ImageShortcutScope scope)
+bool videoShortcutsEnabledForScope(VideoShortcutAvailabilityInput input, ImageShortcutScope scope)
 {
     if (!imageShortcutScopeKnown(scope)) {
         return false;
@@ -54,7 +53,7 @@ bool videoShortcutsEnabledForScope(
 }
 
 bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
-    const VideoShortcutAvailabilityInput& videoInput)
+    VideoShortcutAvailabilityInput videoInput)
 {
     return kiriview::rustMediaHorizontalArrowShortcutsEnabled(
         kiriview::RustMediaHorizontalArrowShortcutInput {

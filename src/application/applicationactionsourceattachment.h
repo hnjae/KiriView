@@ -9,6 +9,7 @@
 #include <QMetaObject>
 #include <QObject>
 #include <QPointer>
+#include <QtGlobal>
 #include <functional>
 #include <vector>
 
@@ -27,12 +28,16 @@ struct ApplicationActionUiGateSnapshot
 class ApplicationActionStateSource
 {
 public:
+    ApplicationActionStateSource() = default;
+
+public:
     virtual ~ApplicationActionStateSource();
 
     virtual ApplicationActionStateSnapshot actionStateSnapshot() const = 0;
     virtual std::vector<QMetaObject::Connection> connectActionStateChanged(
         QObject* context, std::function<void()> refresh)
         = 0;
+    Q_DISABLE_COPY(ApplicationActionStateSource)
 };
 
 class ApplicationActionSourceAttachment final

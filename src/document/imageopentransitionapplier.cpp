@@ -365,7 +365,7 @@ private:
         }
     }
 
-    void applySourceKind(const std::optional<kiriview::ImageDocumentPageKind>& sourceKind)
+    void applySourceKind(std::optional<kiriview::ImageDocumentPageKind> sourceKind)
     {
         if (sourceKind.has_value()) {
             m_state.setSourceKind(*sourceKind);
@@ -386,14 +386,14 @@ private:
         }
     }
 
-    void applyLoading(const std::optional<bool>& loading)
+    void applyLoading(std::optional<bool> loading)
     {
         if (loading.has_value()) {
             m_state.setLoading(*loading);
         }
     }
 
-    void applyStatus(const std::optional<kiriview::ImageDocumentStatus>& status)
+    void applyStatus(std::optional<kiriview::ImageDocumentStatus> status)
     {
         if (status.has_value()) {
             m_state.setStatus(*status);
@@ -420,8 +420,7 @@ private:
         }
     }
 
-    void applyUnsupportedOpenedCollectionVideo(
-        const std::optional<bool>& unsupported, bool targetValue)
+    void applyUnsupportedOpenedCollectionVideo(std::optional<bool> unsupported, bool targetValue)
     {
         if (unsupported.has_value() && *unsupported == targetValue) {
             m_state.setUnsupportedOpenedCollectionVideo(*unsupported);

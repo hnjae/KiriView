@@ -10,6 +10,7 @@
 #include "staticimagedecode.h"
 
 #include <QColorSpace>
+#include <QtGlobal>
 #include <cstddef>
 #include <libraw/libraw.h>
 #include <memory>
@@ -69,7 +70,7 @@ QSize libRawImageSize(const LibRaw& processor)
     return QSize(sizes.width, sizes.height);
 }
 
-bool validateRawImageSize(const QSize& size, QString* errorString, QString* diagnosticDetail)
+bool validateRawImageSize(QSize size, QString* errorString, QString* diagnosticDetail)
 {
     if (size.isEmpty()) {
         const QString message
@@ -257,6 +258,7 @@ public:
 
 private:
     QImage m_image;
+    Q_DISABLE_COPY(RawImageTileSource)
 };
 }
 

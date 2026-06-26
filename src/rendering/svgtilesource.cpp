@@ -22,7 +22,7 @@
 #include <utility>
 
 namespace {
-QImage imageFromPremultipliedRgbaBytes(const QByteArray& bytes, const QSize& size)
+QImage imageFromPremultipliedRgbaBytes(const QByteArray& bytes, QSize size)
 {
     if (bytes.isEmpty() || size.isEmpty()) {
         return {};
@@ -40,7 +40,7 @@ QImage imageFromPremultipliedRgbaBytes(const QByteArray& bytes, const QSize& siz
     return image.copy();
 }
 
-QByteArray renderSvgImageBytes(const QByteArray& data, const QSize& size)
+QByteArray renderSvgImageBytes(const QByteArray& data, QSize size)
 {
     if (size.isEmpty()) {
         return {};
@@ -50,12 +50,12 @@ QByteArray renderSvgImageBytes(const QByteArray& data, const QSize& size)
         kiriview::Bridge::rustBytes(data), size.width(), size.height()));
 }
 
-QImage renderSvgImage(const QByteArray& data, const QSize& size)
+QImage renderSvgImage(const QByteArray& data, QSize size)
 {
     return imageFromPremultipliedRgbaBytes(renderSvgImageBytes(data, size), size);
 }
 
-QSize svgFirstDisplayPreviewSize(const QSize& imageSize, const QSize& physicalViewportSize)
+QSize svgFirstDisplayPreviewSize(QSize imageSize, QSize physicalViewportSize)
 {
     if (imageSize.isEmpty() || physicalViewportSize.isEmpty()) {
         return {};

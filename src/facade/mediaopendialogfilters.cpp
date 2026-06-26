@@ -16,7 +16,7 @@ QStringList ordinaryMediaOpenDialogNameFilters()
     extensions.sort();
     extensions.removeDuplicates();
 
-    const QString extensionFilter = QStringLiteral("*.") + extensions.join(" *.");
+    const QString extensionFilter = QStringLiteral("*.") + extensions.join(QStringLiteral(" *."));
     return {
         ki18nc("@item:inlistbox", "Image, video, and comic book files (%1)")
             .subs(extensionFilter)

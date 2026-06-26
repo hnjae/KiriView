@@ -12,10 +12,10 @@
 #include <optional>
 
 namespace kiriview {
-QSize boundedPreviewSize(const QSize& imageSize, int maximumLongEdge);
+QSize boundedPreviewSize(QSize imageSize, int maximumLongEdge);
 bool tileRequestCanDecode(const TileRequest& request);
-QImage scaledTileImage(const QImage& image, const QSize& size);
-QImage cropLevelTexture(const QImage& levelImage, const QRect& textureLevelRect);
+QImage scaledTileImage(const QImage& image, QSize size);
+QImage cropLevelTexture(const QImage& levelImage, QRect textureLevelRect);
 DecodedTile decodedTileFromImage(const TileRequest& request, QImage image);
 std::optional<DecodedTile> decodedTileFromLevelImage(
     const TileRequest& request, const QImage& levelImage);

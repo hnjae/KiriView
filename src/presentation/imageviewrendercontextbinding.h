@@ -21,12 +21,11 @@ struct ImageViewRenderContextBindingInput
 class ImageViewRenderContextBinding final
 {
 public:
-    ImageViewRenderContextBindingAction synchronize(
-        const ImageViewRenderContextBindingInput& input);
+    ImageViewRenderContextBindingAction synchronize(ImageViewRenderContextBindingInput input);
     bool providerInstalled() const;
 
 private:
-    static bool shouldInstallProvider(const ImageViewRenderContextBindingInput& input);
+    static bool shouldInstallProvider(ImageViewRenderContextBindingInput input);
 
     bool m_providerInstalled = false;
 };

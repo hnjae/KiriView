@@ -33,9 +33,9 @@ public:
     int loopCount() const;
     QString errorString() const;
 
-    void setScaledSize(const QSize& size);
-    void setScaledClipRect(const QRect& rect);
-    void setClipRect(const QRect& rect);
+    void setScaledSize(QSize size);
+    void setScaledClipRect(QRect rect);
+    void setClipRect(QRect rect);
     QImage read();
 
 private:

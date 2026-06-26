@@ -186,7 +186,7 @@ public:
     QSize primaryImageSize() const;
     QSize secondaryImageSize() const;
     QSizeF viewportSize() const;
-    void setViewportSize(const QSizeF& viewportSize);
+    void setViewportSize(QSizeF viewportSize);
     QPointF viewportContentPosition() const;
     quint64 viewportCommandRevision() const;
     QString viewportCommandRevisionToken() const;
@@ -258,11 +258,11 @@ public:
     Q_INVOKABLE double clampedManualZoomPercent(double zoomPercent) const;
     Q_INVOKABLE double steppedManualZoomPercent(double stepCount) const;
     Q_INVOKABLE bool requestManualZoomPercent(double zoomPercent);
-    Q_INVOKABLE bool requestZoomByStep(double stepCount, const QPointF& viewportAnchorPoint);
+    Q_INVOKABLE bool requestZoomByStep(double stepCount, QPointF viewportAnchorPoint);
     Q_INVOKABLE bool requestZoomByStepAtCenter(double stepCount);
     Q_INVOKABLE bool requestActualSizeAtCenter();
     Q_INVOKABLE bool requestFitMode(KiriImageDocument::ZoomMode zoomMode);
-    Q_INVOKABLE bool requestToggleFitOrActualSize(const QPointF& viewportPoint);
+    Q_INVOKABLE bool requestToggleFitOrActualSize(QPointF viewportPoint);
     Q_INVOKABLE bool requestViewportPanBy(double deltaX, double deltaY);
     Q_INVOKABLE bool requestViewportPanToInitialScanPosition();
     Q_INVOKABLE bool requestViewportPanToFinalScanPosition();
@@ -270,26 +270,25 @@ public:
     Q_INVOKABLE bool requestViewportScanBackward();
     Q_INVOKABLE void requestNextDisplayedImageStartToFinalScanPosition();
     Q_INVOKABLE bool requestDisplayedImageInitialContentPosition();
-    Q_INVOKABLE bool viewportPointInsideImage(const QPointF& viewportPoint) const;
-    Q_INVOKABLE QPointF nearestImageViewportPoint(const QPointF& viewportPoint) const;
+    Q_INVOKABLE bool viewportPointInsideImage(QPointF viewportPoint) const;
+    Q_INVOKABLE QPointF nearestImageViewportPoint(QPointF viewportPoint) const;
     Q_INVOKABLE void requestToggleTwoPageMode();
     Q_INVOKABLE void requestToggleRightToLeftReading();
     Q_INVOKABLE void updateRenderContext();
-    Q_INVOKABLE bool requestViewportContentPosition(const QPointF& viewportContentPosition);
+    Q_INVOKABLE bool requestViewportContentPosition(QPointF viewportContentPosition);
     Q_INVOKABLE bool viewportCommandRevisionNewerThan(const QString& revisionToken) const;
     Q_INVOKABLE bool viewportProjectionNewerThan(
         const QString& commandRevisionToken, const QString& observationRevisionToken) const;
     bool beginViewportCommandApplication(quint64 commandRevision);
     Q_INVOKABLE bool beginViewportCommandApplication(const QString& commandRevisionToken);
-    bool completeViewportCommandApplication(
-        quint64 commandRevision, const QPointF& actualContentPosition);
+    bool completeViewportCommandApplication(quint64 commandRevision, QPointF actualContentPosition);
     Q_INVOKABLE bool completeViewportCommandApplication(
-        const QString& commandRevisionToken, const QPointF& actualContentPosition);
-    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF& actualContentPosition);
+        const QString& commandRevisionToken, QPointF actualContentPosition);
+    bool acknowledgeViewportCommand(quint64 commandRevision, QPointF actualContentPosition);
     Q_INVOKABLE bool acknowledgeViewportCommand(
-        const QString& commandRevisionToken, const QPointF& actualContentPosition);
+        const QString& commandRevisionToken, QPointF actualContentPosition);
     Q_INVOKABLE bool observeViewportContentPosition(
-        const QPointF& contentPosition, KiriImageDocument::ViewportObservationOrigin origin);
+        QPointF contentPosition, KiriImageDocument::ViewportObservationOrigin origin);
     Q_INVOKABLE bool acknowledgeDisplayImageLoad(int pageRole, const QUrl& providerUrl,
         const QString& revisionToken, const QString& sourceIdentity, int outcome);
     Q_INVOKABLE bool acknowledgeStillImageDisplayLoad(int pageRole, const QUrl& providerUrl,

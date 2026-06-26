@@ -21,7 +21,7 @@ struct ImageSpreadTwoPageModeChange
     bool notifyTwoPageMode = false;
 };
 
-bool imageSpreadReadingControlsAvailable(const ImageSpreadReadingAvailability& availability);
+bool imageSpreadReadingControlsAvailable(ImageSpreadReadingAvailability availability);
 ImageSpreadTwoPageModeChange imageSpreadTwoPageModeChange(
     bool currentEnabled, bool nextEnabled, bool secondaryPageVisible);
 }

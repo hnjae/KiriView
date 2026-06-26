@@ -46,7 +46,7 @@ QString sourceIdentityForRequest(const kiriview::ImageDecodeRequest& request)
     return kiriview::sourceKeyForUrl(request.imageUrl()).identity;
 }
 
-qreal displayPixelsPerSourcePixel(const QSize& originalSize, const QImage& image)
+qreal displayPixelsPerSourcePixel(QSize originalSize, const QImage& image)
 {
     const qreal pixelsPerSourcePixel
         = kiriview::imagePixelsPerSourcePixel(originalSize, image.size());
@@ -54,7 +54,7 @@ qreal displayPixelsPerSourcePixel(const QSize& originalSize, const QImage& image
 }
 
 kiriview::DisplayImageQuality displayQualityForImage(
-    const QSize& originalSize, const QImage& image, bool firstDisplay)
+    QSize originalSize, const QImage& image, bool firstDisplay)
 {
     if (firstDisplay || image.size() != originalSize) {
         return kiriview::DisplayImageQuality::FirstDisplay;

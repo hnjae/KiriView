@@ -42,6 +42,9 @@ struct VideoMediaBackendCallbacks
 class VideoMediaBackend
 {
 public:
+    VideoMediaBackend() = default;
+
+public:
     virtual ~VideoMediaBackend() = default;
 
     virtual void setCallbacks(VideoMediaBackendCallbacks callbacks) = 0;
@@ -63,6 +66,7 @@ public:
     virtual bool hasAudio() const = 0;
     virtual QSize videoSize() const = 0;
     virtual bool muted() const = 0;
+    Q_DISABLE_COPY(VideoMediaBackend)
 };
 
 std::unique_ptr<VideoMediaBackend> createDefaultVideoMediaBackend(QObject* parent);

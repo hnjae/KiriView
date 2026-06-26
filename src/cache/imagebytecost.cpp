@@ -15,7 +15,7 @@ qsizetype imageByteCost(const QImage& image)
     return image.sizeInBytes();
 }
 
-qsizetype estimatedRgbaByteCost(const QSize& size)
+qsizetype estimatedRgbaByteCost(QSize size)
 {
     return saturatedQtByteSize(rustEstimatedRgbaByteCost(size.width(), size.height()));
 }

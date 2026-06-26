@@ -19,8 +19,8 @@ template <typename Value> bool replaceIfChanged(Value& current, const Value& nex
     return true;
 }
 
-bool sameDirectMediaNavigationState(const kiriview::DirectMediaNavigationBoundaryState& left,
-    const kiriview::DirectMediaNavigationBoundaryState& right)
+bool sameDirectMediaNavigationState(kiriview::DirectMediaNavigationBoundaryState left,
+    kiriview::DirectMediaNavigationBoundaryState right)
 {
     return left.canOpenPrevious == right.canOpenPrevious && left.canOpenNext == right.canOpenNext
         && left.atKnownFirst == right.atKnownFirst && left.atKnownLast == right.atKnownLast
@@ -46,7 +46,7 @@ bool sameDirectMediaNavigationCandidates(
 }
 
 bool sameActiveNavigationSnapshot(
-    const kiriview::ActiveNavigationSnapshot& left, const kiriview::ActiveNavigationSnapshot& right)
+    kiriview::ActiveNavigationSnapshot left, kiriview::ActiveNavigationSnapshot right)
 {
     return left.available == right.available && left.known == right.known
         && left.editable == right.editable && left.canOpenPrevious == right.canOpenPrevious
@@ -62,8 +62,8 @@ bool sameActiveZoomSnapshot(
         && qAbs(left.percent - right.percent) < 0.000001 && left.editable == right.editable;
 }
 
-bool sameActionAvailabilityFacts(const kiriview::DocumentSessionActionAvailabilityFacts& left,
-    const kiriview::DocumentSessionActionAvailabilityFacts& right)
+bool sameActionAvailabilityFacts(kiriview::DocumentSessionActionAvailabilityFacts left,
+    kiriview::DocumentSessionActionAvailabilityFacts right)
 {
     return left.imageReady == right.imageReady
         && left.containerNavigationAvailable == right.containerNavigationAvailable

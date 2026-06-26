@@ -14,35 +14,32 @@
 #include <vector>
 
 namespace kiriview::ImageTileGeometryPolicy {
-std::vector<TileLevel> tilePyramidLevels(const QSize& imageSize);
-QSize tilePyramidTileGridSize(const QSize& imageSize, int tileSize, int level);
+std::vector<TileLevel> tilePyramidLevels(QSize imageSize);
+QSize tilePyramidTileGridSize(QSize imageSize, int tileSize, int level);
 bool tilePyramidContainsLevel(int levelCount, int level);
-bool tilePyramidContainsTile(const QSize& imageSize, int tileSize, const TileKey& key);
-int tilePyramidSelectLevelForDisplayScale(
-    const QSize& imageSize, qreal displayPixelsPerSourcePixel);
-QRect tilePyramidLevelTileRect(const QSize& imageSize, int tileSize, const TileKey& key);
+bool tilePyramidContainsTile(QSize imageSize, int tileSize, TileKey key);
+int tilePyramidSelectLevelForDisplayScale(QSize imageSize, qreal displayPixelsPerSourcePixel);
+QRect tilePyramidLevelTileRect(QSize imageSize, int tileSize, TileKey key);
 QRect tilePyramidLevelTileTextureRect(
-    const QSize& imageSize, int tileSize, int apronSourcePixels, const TileKey& key);
-QRect tilePyramidSourceRectForLevelRect(const QSize& imageSize, int level, const QRect& levelRect);
+    QSize imageSize, int tileSize, int apronSourcePixels, TileKey key);
+QRect tilePyramidSourceRectForLevelRect(QSize imageSize, int level, QRect levelRect);
 TileRequest tilePyramidRequestForTile(
-    const QSize& imageSize, int tileSize, int apronSourcePixels, const TileKey& key);
+    QSize imageSize, int tileSize, int apronSourcePixels, TileKey key);
 std::vector<TileKey> tilePyramidTilesIntersectingLevelRect(
-    const QSize& imageSize, int tileSize, int level, const QRect& levelRect);
-qreal tilePyramidLevelPixelsPerSourcePixel(const QSize& imageSize, int level);
-ActiveTileLayer activeTileLayer(const QSize& imageSize, const QSizeF& displaySize,
-    qreal devicePixelRatio, int rotationDegrees, bool resolutionIndependent);
+    QSize imageSize, int tileSize, int level, QRect levelRect);
+qreal tilePyramidLevelPixelsPerSourcePixel(QSize imageSize, int level);
+ActiveTileLayer activeTileLayer(QSize imageSize, QSizeF displaySize, qreal devicePixelRatio,
+    int rotationDegrees, bool resolutionIndependent);
 
-qreal tileDisplayPixelsPerSourcePixel(
-    const QSize& imageSize, const QSizeF& displaySize, qreal devicePixelRatio);
-bool tileFirstDisplayIsSufficient(const QSize& imageSize, const QSizeF& displaySize,
-    qreal devicePixelRatio, qreal firstDisplayPixelsPerSourcePixel);
+qreal tileDisplayPixelsPerSourcePixel(QSize imageSize, QSizeF displaySize, qreal devicePixelRatio);
+bool tileFirstDisplayIsSufficient(QSize imageSize, QSizeF displaySize, qreal devicePixelRatio,
+    qreal firstDisplayPixelsPerSourcePixel);
 QRect tileLevelRectForItemRect(
-    const QSize& imageSize, int level, const QSizeF& displaySize, const QRectF& itemRect);
-std::vector<TileKey> visibleTileKeys(const QSize& imageSize, int tileSize,
-    const QSizeF& displaySize, const QRectF& visibleItemRect, qreal devicePixelRatio);
-std::vector<TileRequest> svgRasterTileRequests(const QSize& imageSize, int tileSize,
-    int apronSourcePixels, const QSizeF& displaySize, const QRectF& visibleItemRect,
-    qreal devicePixelRatio);
+    QSize imageSize, int level, QSizeF displaySize, const QRectF& itemRect);
+std::vector<TileKey> visibleTileKeys(QSize imageSize, int tileSize, QSizeF displaySize,
+    const QRectF& visibleItemRect, qreal devicePixelRatio);
+std::vector<TileRequest> svgRasterTileRequests(QSize imageSize, int tileSize, int apronSourcePixels,
+    QSizeF displaySize, const QRectF& visibleItemRect, qreal devicePixelRatio);
 
 }
 

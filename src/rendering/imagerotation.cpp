@@ -21,20 +21,20 @@ int imageRotationCounterclockwise(int degrees)
 
 bool imageRotationSwapsAxes(int degrees) { return rustImageRotationSwapsAxes(degrees); }
 
-QSize rotatedImageSize(const QSize& size, int degrees)
+QSize rotatedImageSize(QSize size, int degrees)
 {
     return Bridge::qtSize(
         rustRotatedImageSize(Bridge::rustSize<RustImageRenderSize>(size), degrees));
 }
 
-QSizeF rotatedImageSize(const QSizeF& size, int degrees)
+QSizeF rotatedImageSize(QSizeF size, int degrees)
 {
     return Bridge::qtSizeF(
         rustRotatedImageSizeF(Bridge::rustSizeF<RustImageRenderSizeF>(size), degrees));
 }
 
 QRectF rotatedSourceRectInTarget(
-    const QRectF& sourceRect, const QSizeF& sourceSize, const QRectF& targetRect, int degrees)
+    const QRectF& sourceRect, QSizeF sourceSize, const QRectF& targetRect, int degrees)
 {
     return Bridge::qtRectF(
         rustRotatedSourceRectInTarget(Bridge::rustRectF<RustImageRenderRectF>(sourceRect),
@@ -43,7 +43,7 @@ QRectF rotatedSourceRectInTarget(
 }
 
 QRectF unrotatedVisibleRectForRotation(
-    const QSizeF& sourceDisplaySize, const QRectF& visibleItemRect, int degrees)
+    QSizeF sourceDisplaySize, const QRectF& visibleItemRect, int degrees)
 {
     return Bridge::qtRectF(rustUnrotatedVisibleRectForRotation(
         Bridge::rustSizeF<RustImageRenderSizeF>(sourceDisplaySize),

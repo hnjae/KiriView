@@ -19,6 +19,7 @@
 namespace kiriview {
 class ImageDocumentPageNavigationController final : public QObject
 {
+    Q_OBJECT
 public:
     using NavigationPlanCallback = std::function<void(ImageDocumentPageNavigationPlan)>;
     using PageNavigationChangedCallback = std::function<void()>;

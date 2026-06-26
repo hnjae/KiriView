@@ -44,7 +44,7 @@ void panBy(
 
 namespace kiriview::ApplicationActions {
 void ApplicationCommandRouter::handleActionTriggered(ActionId actionId,
-    const ApplicationCommandRouterInput& input, const ApplicationCommandRouterPorts& ports) const
+    ApplicationCommandRouterInput input, const ApplicationCommandRouterPorts& ports) const
 {
     switch (actionId) {
     case ActionId::FileOpenAction:
@@ -166,7 +166,7 @@ void ApplicationCommandRouter::handleActionTriggered(ActionId actionId,
 }
 
 void ApplicationCommandRouter::handleScanForwardAction(
-    const ApplicationCommandRouterInput& input, const ApplicationCommandRouterPorts& ports) const
+    ApplicationCommandRouterInput input, const ApplicationCommandRouterPorts& ports) const
 {
     if (input.videoMode) {
         callVoid(ports.session.requestNextActiveNavigationWithBoundary);
@@ -186,7 +186,7 @@ void ApplicationCommandRouter::handleScanForwardAction(
 }
 
 void ApplicationCommandRouter::handleScanBackwardAction(
-    const ApplicationCommandRouterInput& input, const ApplicationCommandRouterPorts& ports) const
+    ApplicationCommandRouterInput input, const ApplicationCommandRouterPorts& ports) const
 {
     if (input.videoMode) {
         callVoid(ports.session.requestPreviousActiveNavigationWithBoundary);
@@ -215,9 +215,8 @@ void ApplicationCommandRouter::handleScanBackwardAction(
     }
 }
 
-bool ApplicationCommandRouter::executeHorizontalArrowShortcut(
-    const ApplicationCommandRouterInput& input, const ApplicationCommandRouterPorts& ports,
-    bool leftArrow) const
+bool ApplicationCommandRouter::executeHorizontalArrowShortcut(ApplicationCommandRouterInput input,
+    const ApplicationCommandRouterPorts& ports, bool leftArrow) const
 {
     if (input.videoMode) {
         if (leftArrow) {
@@ -256,9 +255,8 @@ bool ApplicationCommandRouter::executeHorizontalArrowShortcut(
     return false;
 }
 
-bool ApplicationCommandRouter::executeSinglePageArrowShortcut(
-    const ApplicationCommandRouterInput& input, const ApplicationCommandRouterPorts& ports,
-    bool leftArrow) const
+bool ApplicationCommandRouter::executeSinglePageArrowShortcut(ApplicationCommandRouterInput input,
+    const ApplicationCommandRouterPorts& ports, bool leftArrow) const
 {
     if (!callBool(ports.imageDocument.imageAvailable)) {
         return false;
@@ -279,7 +277,7 @@ bool ApplicationCommandRouter::executeSinglePageArrowShortcut(
 }
 
 bool ApplicationCommandRouter::executeVerticalPanShortcut(
-    const ApplicationCommandRouterInput&, const ApplicationCommandRouterPorts& ports, bool up) const
+    ApplicationCommandRouterInput, const ApplicationCommandRouterPorts& ports, bool up) const
 {
     if (!callBool(ports.imageDocument.imageAvailable)) {
         return false;
@@ -289,7 +287,7 @@ bool ApplicationCommandRouter::executeVerticalPanShortcut(
     return true;
 }
 
-bool ApplicationCommandRouter::executeVideoSeekShortcut(const ApplicationCommandRouterInput& input,
+bool ApplicationCommandRouter::executeVideoSeekShortcut(ApplicationCommandRouterInput input,
     const ApplicationCommandRouterPorts& ports, qint64 deltaMilliseconds) const
 {
     if (!input.videoMode || !callBool(ports.video.videoAvailable)) {

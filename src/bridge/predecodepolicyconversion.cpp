@@ -124,12 +124,12 @@ RustPredecodeCachedImageState rustPredecodeCachedImageState(const PredecodeCache
     };
 }
 
-RustPredecodeWindowLoadState rustPredecodeWindowLoadState(const PredecodeWindowLoadState& state)
+RustPredecodeWindowLoadState rustPredecodeWindowLoadState(PredecodeWindowLoadState state)
 {
     return RustPredecodeWindowLoadState { state.displayed, state.cached, state.inFlight };
 }
 
-RustPredecodeQueuedLoadState rustPredecodeQueuedLoadState(const PredecodeQueuedLoadState& state)
+RustPredecodeQueuedLoadState rustPredecodeQueuedLoadState(PredecodeQueuedLoadState state)
 {
     return RustPredecodeQueuedLoadState {
         state.valid,

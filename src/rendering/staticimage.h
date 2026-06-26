@@ -92,6 +92,9 @@ struct StaticImageReaderTransform
 class ImageTileSource
 {
 public:
+    ImageTileSource() = default;
+
+public:
     virtual ~ImageTileSource() = default;
 
     virtual QSize imageSize() const = 0;
@@ -112,6 +115,7 @@ public:
     virtual qsizetype byteCost() const = 0;
     virtual bool isResolutionIndependent() const;
     virtual StaticImageReaderTransform imageReaderTransform() const;
+    Q_DISABLE_COPY(ImageTileSource)
 };
 
 struct StaticDisplayImagePayload

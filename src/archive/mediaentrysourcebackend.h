@@ -10,6 +10,7 @@
 #include <QByteArray>
 #include <QString>
 #include <QUrl>
+#include <QtGlobal>
 #include <functional>
 #include <memory>
 #include <variant>
@@ -76,11 +77,15 @@ using MediaEntrySourceThumbnailMetadataResult
 class MediaEntrySource
 {
 public:
+    MediaEntrySource() = default;
+
+public:
     virtual ~MediaEntrySource() = default;
 
     virtual MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates() = 0;
     virtual MediaEntrySourceImageDataResult loadImageData(const QUrl& imageUrl) = 0;
     virtual MediaEntrySourceThumbnailMetadataResult loadThumbnailMetadata(const QUrl& imageUrl);
+    Q_DISABLE_COPY(MediaEntrySource)
 };
 
 using MediaEntrySourcePtr = std::shared_ptr<MediaEntrySource>;

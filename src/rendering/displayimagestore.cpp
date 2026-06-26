@@ -55,8 +55,7 @@ namespace {
         return entry.image.size();
     }
 
-    QSize oneDimensionalDownscaleSize(
-        const QSize& imageSize, int requestedWidth, int requestedHeight)
+    QSize oneDimensionalDownscaleSize(QSize imageSize, int requestedWidth, int requestedHeight)
     {
         if (requestedWidth > 0) {
             if (requestedWidth >= imageSize.width()) {
@@ -76,7 +75,7 @@ namespace {
         return QSize(std::min(targetWidth, imageSize.width()), requestedHeight);
     }
 
-    QSize downscaleTargetSize(const QSize& imageSize, const QSize& requestedSize)
+    QSize downscaleTargetSize(QSize imageSize, QSize requestedSize)
     {
         if (imageSize.isEmpty()) {
             return imageSize;

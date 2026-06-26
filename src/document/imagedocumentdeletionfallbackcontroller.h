@@ -32,7 +32,7 @@ public:
     void cancel();
 
 private:
-    void openFallbackPlan(quint64 operationId, const NoImageRemovalFallback&);
+    void openFallbackPlan(quint64 operationId, NoImageRemovalFallback);
     void openFallbackPlan(quint64 operationId, const ImageRemovalFallback& fallback);
     void openFallbackPlan(quint64 operationId, const ComicBookRemovalFallback& fallback);
     void openComicBookFallbackCandidate(quint64 operationId,

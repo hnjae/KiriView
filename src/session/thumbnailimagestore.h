@@ -41,6 +41,7 @@ private:
 
 class ThumbnailImageProvider final : public QQuickImageProvider
 {
+    Q_OBJECT
 public:
     explicit ThumbnailImageProvider(std::shared_ptr<ThumbnailImageStore> store);
 

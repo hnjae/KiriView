@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_APPLICATIONCOMMANDPORTSOURCE_H
 #define KIRIVIEW_APPLICATIONCOMMANDPORTSOURCE_H
 
+#include <QtGlobal>
+
 namespace kiriview::ApplicationActions {
 struct ApplicationCommandRouterPorts;
 struct ApplicationCommandRouterShellPorts;
@@ -18,6 +20,9 @@ struct ApplicationCommandRouterVideoPorts;
 class ApplicationCommandPortSource
 {
 public:
+    ApplicationCommandPortSource() = default;
+
+public:
     virtual ~ApplicationCommandPortSource();
 
     virtual ApplicationCommandRouterShellPorts commandRouterShellPorts();
@@ -28,6 +33,7 @@ public:
     virtual ApplicationCommandRouterWindowPorts commandRouterWindowPorts();
     virtual ApplicationCommandRouterHelpPorts commandRouterHelpPorts();
     virtual ApplicationCommandRouterVideoPorts commandRouterVideoPorts();
+    Q_DISABLE_COPY(ApplicationCommandPortSource)
 };
 
 ApplicationCommandRouterPorts applicationCommandRouterPorts(ApplicationCommandPortSource& source);

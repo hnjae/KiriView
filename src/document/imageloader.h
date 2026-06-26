@@ -27,6 +27,7 @@
 namespace kiriview {
 class ImageLoader final : public QObject
 {
+    Q_OBJECT
 public:
     using SourceResolvedCallback = std::function<void(ImageLoadSession)>;
     using ErrorCallback = std::function<void(ImageLoadSession, ImageLoadFailure)>;

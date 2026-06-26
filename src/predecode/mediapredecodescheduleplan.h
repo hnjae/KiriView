@@ -9,13 +9,17 @@
 #include "predecodeschedulestate.h"
 
 #include <QUrl>
+#include <QtGlobal>
 #include <vector>
 
 namespace kiriview {
 struct MediaPredecodeSchedulePayload final : PredecodeSchedulePayload
 {
+public:
+    MediaPredecodeSchedulePayload() = default;
     std::vector<DirectMediaNavigationCandidate> directMediaNavigationCandidates;
     MediaPredecodeEligibilitySnapshot eligibleImages;
+    Q_DISABLE_COPY(MediaPredecodeSchedulePayload)
 };
 
 struct MediaPredecodeScheduleRequest

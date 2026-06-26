@@ -25,7 +25,7 @@ namespace Bridge {
 }
 
 RustImageDocumentSourceLoadPolicyInput rustImageDocumentSourceLoadPolicyInput(
-    const Bridge::ImageDocumentSourceLoadPolicyInput& input);
+    Bridge::ImageDocumentSourceLoadPolicyInput input);
 ImageDocumentSourceLoadPlan imageDocumentSourceLoadPlanFromBridge(
     const RustImageDocumentSourceLoadPlan& rustPlan);
 

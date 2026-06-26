@@ -9,6 +9,7 @@
 #include <QByteArray>
 #include <QImage>
 #include <QString>
+#include <QtGlobal>
 #include <memory>
 #include <variant>
 
@@ -82,11 +83,15 @@ struct ImageAnimationPlaybackReadResult
 class ImageAnimationPlaybackSource
 {
 public:
+    ImageAnimationPlaybackSource() = default;
+
+public:
     virtual ~ImageAnimationPlaybackSource() = default;
 
     virtual ImageAnimationPlaybackOpenResult open() = 0;
     virtual ImageAnimationPlaybackReadResult readNextFrame() = 0;
     virtual bool restartable() const = 0;
+    Q_DISABLE_COPY(ImageAnimationPlaybackSource)
 };
 
 ImageAnimationPlaybackRequest readerAnimationPlaybackRequest(QByteArray data, QByteArray format);

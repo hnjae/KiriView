@@ -28,8 +28,7 @@ struct HeifTileDecodeRegion
 };
 
 std::optional<HeifTileGrid> heifTileGridForTiling(const heif_image_tiling& tiling);
-std::vector<HeifTileDecodeRegion> heifTileDecodeRegions(
-    const HeifTileGrid& grid, const QRect& sourceRect);
+std::vector<HeifTileDecodeRegion> heifTileDecodeRegions(HeifTileGrid grid, QRect sourceRect);
 }
 
 #endif

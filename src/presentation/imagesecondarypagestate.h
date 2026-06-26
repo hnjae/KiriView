@@ -39,7 +39,7 @@ public:
 
     void clear();
     ImageSecondaryPageLoadCompletion finishPresentedLoad(
-        const DisplayedImageLocation& location, const QSize& imageSize, bool primaryOnly);
+        const DisplayedImageLocation& location, QSize imageSize, bool primaryOnly);
     ImageSecondaryPageLoadCompletion finishFailedLoad(const DisplayedImageLocation& location) const;
 
 private:

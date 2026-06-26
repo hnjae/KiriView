@@ -31,7 +31,7 @@ public:
 
     void applyInactiveRefresh(bool clearPredecode);
     void applyRefresh(ActiveNavigationSourceKind sourceKind,
-        const ActiveNavigationSnapshot& previousSnapshot,
+        ActiveNavigationSnapshot previousSnapshot,
         DocumentSessionDirectMediaNavigationRefreshResult result);
     void applyOpen(const QUrl& activeDirectMediaCursorUrl,
         DocumentSessionDirectMediaNavigationOpenResult result);

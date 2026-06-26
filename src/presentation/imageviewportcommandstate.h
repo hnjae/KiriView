@@ -57,19 +57,18 @@ public:
     QSizeF viewportSize() const;
     QSizeF displaySize() const;
 
-    bool setGeometry(const QSizeF& viewportSize, const QSizeF& displaySize,
+    bool setGeometry(QSizeF viewportSize, QSizeF displaySize,
         ImageViewportObservationOrigin origin = ImageViewportObservationOrigin::Resize);
-    ImageViewportCommand requestContentPosition(const QPointF& contentPosition);
+    ImageViewportCommand requestContentPosition(QPointF contentPosition);
     bool acknowledgeCommand(quint64 commandRevision);
-    bool acknowledgeCommand(quint64 commandRevision, const QPointF& actualContentPosition);
-    bool observeContentPosition(
-        const QPointF& contentPosition, ImageViewportObservationOrigin origin);
+    bool acknowledgeCommand(quint64 commandRevision, QPointF actualContentPosition);
+    bool observeContentPosition(QPointF contentPosition, ImageViewportObservationOrigin origin);
     bool markCommandApplying(quint64 commandRevision);
     bool markCommandApplied(quint64 commandRevision);
-    bool completeCommandApplication(quint64 commandRevision, const QPointF& actualContentPosition);
+    bool completeCommandApplication(quint64 commandRevision, QPointF actualContentPosition);
 
 private:
-    ImageViewportFrame project(const QPointF& contentPosition) const;
+    ImageViewportFrame project(QPointF contentPosition) const;
     bool setFrame(const ImageViewportFrame& frame);
 
     QSizeF m_viewportSize;

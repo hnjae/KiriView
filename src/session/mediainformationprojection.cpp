@@ -12,9 +12,9 @@
 #include <utility>
 
 namespace {
-bool hasValidDimensions(const QSize& size) { return size.width() > 0 && size.height() > 0; }
+bool hasValidDimensions(QSize size) { return size.width() > 0 && size.height() > 0; }
 
-QString dimensionsText(const QSize& size)
+QString dimensionsText(QSize size)
 {
     if (!hasValidDimensions(size)) {
         return {};
@@ -125,7 +125,7 @@ std::vector<kiriview::MediaInformationProjectionRow> generalRows(
     return rows;
 }
 
-std::vector<kiriview::MediaInformationProjectionRow> imageRows(const QSize& size)
+std::vector<kiriview::MediaInformationProjectionRow> imageRows(QSize size)
 {
     std::vector<kiriview::MediaInformationProjectionRow> rows;
     appendRowIfValue(rows, i18nc("@label:metadata", "Dimensions"), dimensionsText(size));
@@ -133,7 +133,7 @@ std::vector<kiriview::MediaInformationProjectionRow> imageRows(const QSize& size
 }
 
 std::vector<kiriview::MediaInformationProjectionRow> videoRows(
-    const QSize& size, const kiriview::EmbeddedMetadata& metadata)
+    QSize size, const kiriview::EmbeddedMetadata& metadata)
 {
     std::vector<kiriview::MediaInformationProjectionRow> rows;
     appendRowIfValue(rows, i18nc("@label:metadata", "Duration"), metadata.duration);

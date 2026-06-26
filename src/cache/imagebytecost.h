@@ -10,7 +10,7 @@
 
 namespace kiriview {
 qsizetype imageByteCost(const QImage& image);
-qsizetype estimatedRgbaByteCost(const QSize& size);
+qsizetype estimatedRgbaByteCost(QSize size);
 }
 
 #endif

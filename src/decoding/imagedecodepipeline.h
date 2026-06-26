@@ -60,8 +60,8 @@ public:
     explicit ImageDecodeRouterRuntime(ImageDecodeRouterHandlers handlers = {},
         ImageDecodeCompatibleDataTransform compatibleDataTransform = {});
 
-    DecodedImageResult execute(const ImageDecodeRoute& route, const QByteArray& data,
-        const ImageDecodeRequest& request) const;
+    DecodedImageResult execute(
+        ImageDecodeRoute route, const QByteArray& data, const ImageDecodeRequest& request) const;
 
 private:
     ImageDecodeRouterHandlers m_handlers;

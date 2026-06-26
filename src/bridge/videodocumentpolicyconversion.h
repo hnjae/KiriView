@@ -10,8 +10,8 @@
 
 namespace kiriview::Bridge {
 RustVideoDocumentStatusSnapshot rustVideoDocumentStatusSnapshot(
-    const VideoDocumentStatusSnapshot& snapshot);
-VideoDocumentStatusPlan videoDocumentStatusPlanFromRust(const RustVideoDocumentStatusPlan& plan);
+    VideoDocumentStatusSnapshot snapshot);
+VideoDocumentStatusPlan videoDocumentStatusPlanFromRust(RustVideoDocumentStatusPlan plan);
 
 RustVideoPlaybackControlSnapshot rustVideoPlaybackControlSnapshot(
     const VideoPlaybackControlSnapshot& snapshot);

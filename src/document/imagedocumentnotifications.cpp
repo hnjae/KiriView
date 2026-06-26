@@ -33,8 +33,7 @@ std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications()
         ImageDocumentChange::DisplaySource };
 }
 
-std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications(
-    const ImageZoomChangeSet& changes)
+std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications(ImageZoomChangeSet changes)
 {
     std::vector<ImageDocumentChange> notifications;
     bool twoPageMode = false;
@@ -74,7 +73,7 @@ std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(
 }
 
 std::vector<ImageDocumentChange> imageDocumentPresentationZoomNotifications(
-    const ImageZoomChangeSet& changes)
+    ImageZoomChangeSet changes)
 {
     std::vector<ImageDocumentChange> notifications;
     if (changes.imageSizeChanged) {

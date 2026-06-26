@@ -10,8 +10,8 @@
 #include <QSizeF>
 
 namespace kiriview {
-QRect boundedIntegerRect(const QRect& rect, const QSize& boundsSize);
-QRect scaledIntegerRect(const QRectF& rect, const QSizeF& sourceSize, const QSize& targetSize);
+QRect boundedIntegerRect(QRect rect, QSize boundsSize);
+QRect scaledIntegerRect(const QRectF& rect, QSizeF sourceSize, QSize targetSize);
 }
 
 #endif

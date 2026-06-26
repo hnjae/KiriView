@@ -74,13 +74,12 @@ public:
     QSizeF primaryDisplaySize() const;
     QSizeF secondaryDisplaySize() const;
     QPointF viewportContentPosition() const;
-    ImageViewportCommand requestViewportContentPosition(const QPointF& viewportContentPosition);
+    ImageViewportCommand requestViewportContentPosition(QPointF viewportContentPosition);
     bool beginViewportCommandApplication(quint64 commandRevision);
-    bool completeViewportCommandApplication(
-        quint64 commandRevision, const QPointF& actualContentPosition);
-    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF& actualContentPosition);
+    bool completeViewportCommandApplication(quint64 commandRevision, QPointF actualContentPosition);
+    bool acknowledgeViewportCommand(quint64 commandRevision, QPointF actualContentPosition);
     bool observeViewportContentPosition(
-        const QPointF& contentPosition, ImageViewportObservationOrigin origin);
+        QPointF contentPosition, ImageViewportObservationOrigin origin);
     quint64 viewportCommandRevision() const;
     quint64 viewportAppliedCommandRevision() const;
     quint64 viewportObservationRevision() const;
@@ -124,7 +123,7 @@ public:
 
     void commitPrimaryPageSlot(const DisplayedImageLocation& location);
     void clearPrimaryPageSlot();
-    void setViewportSize(const QSizeF& viewportSize);
+    void setViewportSize(QSizeF viewportSize);
     void resetZoom();
     void setFitMode(ImageZoomMode zoomMode);
     void rotateClockwise();
@@ -146,7 +145,7 @@ public:
 private:
     void startSecondaryPageLoad(const QUrl& url);
     void handleSecondaryPageLoadFinished(ImageSecondaryPageLoadResult result,
-        const DisplayedImageLocation& location, const QSize& imageSize);
+        const DisplayedImageLocation& location, QSize imageSize);
     void discardSecondaryPage();
     void finishSecondaryPageAsPrimaryOnly();
     void finishSecondaryPageVisible();
@@ -160,8 +159,8 @@ private:
     ImageDocumentPageNavigationSnapshot pageNavigationSnapshot() const;
     void notifyTwoPageModeChanged();
     void applyActivePresentationChanges(
-        const ImageZoomChangeSet& changes, bool notifyPublicChanges = true);
-    void notifyActivePresentationZoomChanged(const ImageZoomChangeSet& changes);
+        ImageZoomChangeSet changes, bool notifyPublicChanges = true);
+    void notifyActivePresentationZoomChanged(ImageZoomChangeSet changes);
     bool updatePresentationPageSlot(DisplayedPageRole role);
     void updateDisplayProjections();
     const ImageViewportFrame& viewportFrame() const;

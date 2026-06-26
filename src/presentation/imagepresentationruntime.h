@@ -168,15 +168,14 @@ public:
 
     const ImageViewportFrame& viewportFrame() const;
     const ImageViewportProjection& viewportProjection() const;
-    ImageViewportCommand requestViewportContentPosition(const QPointF& contentPosition);
+    ImageViewportCommand requestViewportContentPosition(QPointF contentPosition);
     bool beginViewportCommandApplication(quint64 commandRevision);
-    bool completeViewportCommandApplication(
-        quint64 commandRevision, const QPointF& actualContentPosition);
-    bool acknowledgeViewportCommand(quint64 commandRevision, const QPointF& actualContentPosition);
+    bool completeViewportCommandApplication(quint64 commandRevision, QPointF actualContentPosition);
+    bool acknowledgeViewportCommand(quint64 commandRevision, QPointF actualContentPosition);
     bool observeViewportContentPosition(
-        const QPointF& contentPosition, ImageViewportObservationOrigin origin);
+        QPointF contentPosition, ImageViewportObservationOrigin origin);
 
-    ImageZoomChangeSet setViewportSize(const QSizeF& viewportSize);
+    ImageZoomChangeSet setViewportSize(QSizeF viewportSize);
     ImageZoomChangeSet setZoomPercent(qreal zoomPercent);
     ImageZoomChangeSet setFitMode(ImageZoomMode zoomMode);
     ImageZoomChangeSet resetZoom();

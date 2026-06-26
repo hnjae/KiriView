@@ -482,7 +482,7 @@ ImageDecodeRouterRuntime::ImageDecodeRouterRuntime(
 }
 
 DecodedImageResult ImageDecodeRouterRuntime::execute(
-    const ImageDecodeRoute& route, const QByteArray& data, const ImageDecodeRequest& request) const
+    ImageDecodeRoute route, const QByteArray& data, const ImageDecodeRequest& request) const
 {
     if (!route.shouldDecode()) {
         return failedReadImageDataResult();

@@ -10,6 +10,7 @@
 
 #include <QByteArray>
 #include <QString>
+#include <QtGlobal>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -35,6 +36,7 @@ protected:
 
 private:
     std::vector<ImageDocumentPageCandidate> m_candidates;
+    Q_DISABLE_COPY(MediaEntrySourceWithCandidateSnapshot)
 };
 
 std::optional<ImageDocumentPageCandidate> openedCollectionImageDocumentPageCandidate(

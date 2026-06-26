@@ -45,7 +45,7 @@ kiriview::VideoDocumentStatus videoDocumentStatus(kiriview::RustVideoDocumentSta
 }
 
 kiriview::VideoPlaybackBackendOperation videoPlaybackBackendOperation(
-    const kiriview::RustVideoPlaybackBackendOperation& operation)
+    kiriview::RustVideoPlaybackBackendOperation operation)
 {
     switch (operation.kind) {
     case kiriview::RustVideoPlaybackBackendOperationKind::EnsureBackend:
@@ -66,7 +66,7 @@ kiriview::VideoPlaybackBackendOperation videoPlaybackBackendOperation(
 
 namespace kiriview::Bridge {
 RustVideoDocumentStatusSnapshot rustVideoDocumentStatusSnapshot(
-    const VideoDocumentStatusSnapshot& snapshot)
+    VideoDocumentStatusSnapshot snapshot)
 {
     return RustVideoDocumentStatusSnapshot {
         snapshot.sourceUrlEmpty,
@@ -76,7 +76,7 @@ RustVideoDocumentStatusSnapshot rustVideoDocumentStatusSnapshot(
     };
 }
 
-VideoDocumentStatusPlan videoDocumentStatusPlanFromRust(const RustVideoDocumentStatusPlan& plan)
+VideoDocumentStatusPlan videoDocumentStatusPlanFromRust(RustVideoDocumentStatusPlan plan)
 {
     return VideoDocumentStatusPlan {
         videoDocumentStatus(plan.status),

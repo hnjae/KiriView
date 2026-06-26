@@ -83,7 +83,7 @@ void stampHeifFailure(kiriview::DecodedImageResult& result)
 }
 
 std::optional<kiriview::DecodedImageResult> decodeHeifStillImageDataForInfo(const QByteArray& data,
-    const kiriview::HeifContainerInfo& info, const kiriview::ImageDecodeRequest& request)
+    kiriview::HeifContainerInfo info, const kiriview::ImageDecodeRequest& request)
 {
     if (!info.stillImage) {
         return std::nullopt;
@@ -104,7 +104,7 @@ std::optional<kiriview::DecodedImageResult> decodeHeifStillImageDataForInfo(cons
 }
 
 std::optional<kiriview::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
-    const QByteArray& data, const kiriview::HeifContainerInfo& info,
+    const QByteArray& data, kiriview::HeifContainerInfo info,
     const kiriview::ImageDecodeRequest& request)
 {
     if (!info.isHeif()) {

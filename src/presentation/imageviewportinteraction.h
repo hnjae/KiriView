@@ -25,11 +25,11 @@ class ImageViewportInteraction final
 {
 public:
     QPointF panContentPosition(const ImageViewportInteractionSnapshot& snapshot,
-        const QPointF& contentPosition, const QPointF& delta) const;
+        QPointF contentPosition, QPointF delta) const;
     QPointF nextScanContentPosition(
-        const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition) const;
+        const ImageViewportInteractionSnapshot& snapshot, QPointF contentPosition) const;
     QPointF previousScanContentPosition(
-        const ImageViewportInteractionSnapshot& snapshot, const QPointF& contentPosition) const;
+        const ImageViewportInteractionSnapshot& snapshot, QPointF contentPosition) const;
     QPointF initialScanContentPosition(const ImageViewportInteractionSnapshot& snapshot) const;
     QPointF finalScanContentPosition(const ImageViewportInteractionSnapshot& snapshot) const;
     void requestNextDisplayedImageFinalScanStart();
@@ -38,12 +38,11 @@ public:
     QPointF displayedImageInitialContentPosition(
         const ImageViewportInteractionSnapshot& snapshot) const;
     bool viewportPointInsideImage(const ImageViewportInteractionSnapshot& snapshot,
-        const QPointF& contentPosition, const QPointF& viewportPoint) const;
+        QPointF contentPosition, QPointF viewportPoint) const;
     QPointF nearestImageViewportPoint(const ImageViewportInteractionSnapshot& snapshot,
-        const QPointF& contentPosition, const QPointF& viewportPoint) const;
+        QPointF contentPosition, QPointF viewportPoint) const;
     QPointF zoomContentPosition(const ImageViewportInteractionSnapshot& snapshot,
-        const QPointF& contentPosition, const QPointF& viewportAnchorPoint,
-        qreal nextZoomPercent) const;
+        QPointF contentPosition, QPointF viewportAnchorPoint, qreal nextZoomPercent) const;
     ImageViewportScanStart displayedImageScanStart() const;
     bool pendingFinalScanStart() const;
 

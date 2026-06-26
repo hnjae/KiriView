@@ -72,19 +72,19 @@ public:
 private:
     VideoPlaybackControlSnapshot playbackControlSnapshot() const;
     void executePlaybackControlPlan(const VideoPlaybackControlPlan& plan);
-    void executePlaybackBackendOperation(const VideoPlaybackBackendOperation& operation);
-    void executePlaybackBackendOperation(const EnsureVideoPlaybackBackendOperation& operation);
-    void executePlaybackBackendOperation(const PlayVideoPlaybackOperation& operation);
-    void executePlaybackBackendOperation(const PauseVideoPlaybackOperation& operation);
-    void executePlaybackBackendOperation(const StopVideoPlaybackOperation& operation);
-    void executePlaybackBackendOperation(const SetVideoPlaybackPositionOperation& operation);
+    void executePlaybackBackendOperation(VideoPlaybackBackendOperation operation);
+    void executePlaybackBackendOperation(EnsureVideoPlaybackBackendOperation operation);
+    void executePlaybackBackendOperation(PlayVideoPlaybackOperation operation);
+    void executePlaybackBackendOperation(PauseVideoPlaybackOperation operation);
+    void executePlaybackBackendOperation(StopVideoPlaybackOperation operation);
+    void executePlaybackBackendOperation(SetVideoPlaybackPositionOperation operation);
     void applyPlaybackStateDelta(const VideoPlaybackStateDelta& delta);
     VideoMediaBackend* ensureMediaBackend();
     void installMediaBackendCallbacks();
     void executeSourceLoadPlan(const VideoSourceLoadPlan& plan);
     void executeSourceLoadOperation(const VideoSourceLoadOperation& operation);
-    void executeSourceLoadOperation(const ClearVideoPlaybackSourceOperation& operation);
-    void executeSourceLoadOperation(const ResetClearedVideoSourceOperation& operation);
+    void executeSourceLoadOperation(ClearVideoPlaybackSourceOperation operation);
+    void executeSourceLoadOperation(ResetClearedVideoSourceOperation operation);
     void executeSourceLoadOperation(const ResetVideoSourceLoadOperation& operation);
     void executeSourceLoadOperation(const ApplyVideoPlaybackUrlOperation& operation);
     void executeSourceLoadOperation(const PublishVideoSourceLoadFailureOperation& operation);

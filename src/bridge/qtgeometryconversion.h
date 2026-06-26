@@ -12,22 +12,22 @@
 #include <QtGlobal>
 
 namespace kiriview::Bridge {
-template <typename RustSize> RustSize rustSize(const QSize& size)
+template <typename RustSize> RustSize rustSize(QSize size)
 {
     return RustSize { size.width(), size.height() };
 }
 
-template <typename RustSizeF> RustSizeF rustSizeF(const QSizeF& size)
+template <typename RustSizeF> RustSizeF rustSizeF(QSizeF size)
 {
     return RustSizeF { size.width(), size.height() };
 }
 
-template <typename RustPointF> RustPointF rustPointF(const QPointF& point)
+template <typename RustPointF> RustPointF rustPointF(QPointF point)
 {
     return RustPointF { point.x(), point.y() };
 }
 
-template <typename RustRect> RustRect rustRect(const QRect& rect)
+template <typename RustRect> RustRect rustRect(QRect rect)
 {
     return RustRect { rect.x(), rect.y(), rect.width(), rect.height() };
 }

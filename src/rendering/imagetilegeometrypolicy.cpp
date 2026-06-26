@@ -7,17 +7,17 @@
 #include "kiriview/src/policy/imagetilegeometry.cxx.h"
 
 namespace {
-kiriview::RustTileSize rustTileSize(const QSize& size)
+kiriview::RustTileSize rustTileSize(QSize size)
 {
     return kiriview::Bridge::rustSize<kiriview::RustTileSize>(size);
 }
 
-kiriview::RustTileSizeF rustTileSizeF(const QSizeF& size)
+kiriview::RustTileSizeF rustTileSizeF(QSizeF size)
 {
     return kiriview::Bridge::rustSizeF<kiriview::RustTileSizeF>(size);
 }
 
-kiriview::RustTileRect rustTileRect(const QRect& rect)
+kiriview::RustTileRect rustTileRect(QRect rect)
 {
     return kiriview::Bridge::rustRect<kiriview::RustTileRect>(rect);
 }
@@ -27,22 +27,22 @@ kiriview::RustTileRectF rustTileRectF(const QRectF& rect)
     return kiriview::Bridge::rustRectF<kiriview::RustTileRectF>(rect);
 }
 
-kiriview::RustTileKey rustTileKey(const kiriview::TileKey& key)
+kiriview::RustTileKey rustTileKey(kiriview::TileKey key)
 {
     return kiriview::RustTileKey { key.level, key.x, key.y, key.scaleBucket };
 }
 
-kiriview::TileKey tileKeyFromRust(const kiriview::RustTileKey& key)
+kiriview::TileKey tileKeyFromRust(kiriview::RustTileKey key)
 {
     return kiriview::TileKey { key.level, key.x, key.y, key.scale_bucket };
 }
 
-kiriview::TileLevel tileLevelFromRust(const kiriview::RustTileLevel& level)
+kiriview::TileLevel tileLevelFromRust(kiriview::RustTileLevel level)
 {
     return kiriview::TileLevel { level.index, kiriview::Bridge::qtSize(level.size) };
 }
 
-kiriview::ActiveTileLayer activeTileLayerFromRust(const kiriview::RustActiveTileLayer& layer)
+kiriview::ActiveTileLayer activeTileLayerFromRust(kiriview::RustActiveTileLayer layer)
 {
     return kiriview::ActiveTileLayer { layer.level, layer.scale_bucket };
 }
@@ -63,7 +63,7 @@ kiriview::TileRequest tileRequestFromRust(const kiriview::RustTileRequest& reque
 }
 
 namespace kiriview::ImageTileGeometryPolicy {
-std::vector<TileLevel> tilePyramidLevels(const QSize& imageSize)
+std::vector<TileLevel> tilePyramidLevels(QSize imageSize)
 {
     std::vector<TileLevel> levels;
     const rust::Vec<RustTileLevel> rustLevels = rustTilePyramidLevels(rustTileSize(imageSize));
@@ -74,7 +74,7 @@ std::vector<TileLevel> tilePyramidLevels(const QSize& imageSize)
     return levels;
 }
 
-QSize tilePyramidTileGridSize(const QSize& imageSize, int tileSize, int level)
+QSize tilePyramidTileGridSize(QSize imageSize, int tileSize, int level)
 {
     return Bridge::qtSize(rustTilePyramidTileGridSize(rustTileSize(imageSize), tileSize, level));
 }
@@ -84,45 +84,45 @@ bool tilePyramidContainsLevel(int levelCount, int level)
     return rustTilePyramidContainsLevel(levelCount, level);
 }
 
-bool tilePyramidContainsTile(const QSize& imageSize, int tileSize, const TileKey& key)
+bool tilePyramidContainsTile(QSize imageSize, int tileSize, TileKey key)
 {
     return rustTilePyramidContainsTile(rustTileSize(imageSize), tileSize, rustTileKey(key));
 }
 
-int tilePyramidSelectLevelForDisplayScale(const QSize& imageSize, qreal displayPixelsPerSourcePixel)
+int tilePyramidSelectLevelForDisplayScale(QSize imageSize, qreal displayPixelsPerSourcePixel)
 {
     return rustTilePyramidSelectLevelForDisplayScale(
         rustTileSize(imageSize), displayPixelsPerSourcePixel);
 }
 
-QRect tilePyramidLevelTileRect(const QSize& imageSize, int tileSize, const TileKey& key)
+QRect tilePyramidLevelTileRect(QSize imageSize, int tileSize, TileKey key)
 {
     return Bridge::qtRect(
         rustTilePyramidLevelTileRect(rustTileSize(imageSize), tileSize, rustTileKey(key)));
 }
 
 QRect tilePyramidLevelTileTextureRect(
-    const QSize& imageSize, int tileSize, int apronSourcePixels, const TileKey& key)
+    QSize imageSize, int tileSize, int apronSourcePixels, TileKey key)
 {
     return Bridge::qtRect(rustTilePyramidLevelTileTextureRect(
         rustTileSize(imageSize), tileSize, apronSourcePixels, rustTileKey(key)));
 }
 
-QRect tilePyramidSourceRectForLevelRect(const QSize& imageSize, int level, const QRect& levelRect)
+QRect tilePyramidSourceRectForLevelRect(QSize imageSize, int level, QRect levelRect)
 {
     return Bridge::qtRect(rustTilePyramidSourceRectForLevelRect(
         rustTileSize(imageSize), level, rustTileRect(levelRect)));
 }
 
 TileRequest tilePyramidRequestForTile(
-    const QSize& imageSize, int tileSize, int apronSourcePixels, const TileKey& key)
+    QSize imageSize, int tileSize, int apronSourcePixels, TileKey key)
 {
     return tileRequestFromRust(rustTilePyramidRequestForTile(
         rustTileSize(imageSize), tileSize, apronSourcePixels, rustTileKey(key)));
 }
 
 std::vector<TileKey> tilePyramidTilesIntersectingLevelRect(
-    const QSize& imageSize, int tileSize, int level, const QRect& levelRect)
+    QSize imageSize, int tileSize, int level, QRect levelRect)
 {
     std::vector<TileKey> keys;
     const rust::Vec<RustTileKey> rustKeys = rustTilePyramidTilesIntersectingLevelRect(
@@ -134,41 +134,40 @@ std::vector<TileKey> tilePyramidTilesIntersectingLevelRect(
     return keys;
 }
 
-qreal tilePyramidLevelPixelsPerSourcePixel(const QSize& imageSize, int level)
+qreal tilePyramidLevelPixelsPerSourcePixel(QSize imageSize, int level)
 {
     return rustTilePyramidLevelPixelsPerSourcePixel(rustTileSize(imageSize), level);
 }
 
-ActiveTileLayer activeTileLayer(const QSize& imageSize, const QSizeF& displaySize,
-    qreal devicePixelRatio, int rotationDegrees, bool resolutionIndependent)
+ActiveTileLayer activeTileLayer(QSize imageSize, QSizeF displaySize, qreal devicePixelRatio,
+    int rotationDegrees, bool resolutionIndependent)
 {
     return activeTileLayerFromRust(rustActiveTileLayer(rustTileSize(imageSize),
         rustTileSizeF(displaySize), devicePixelRatio, rotationDegrees, resolutionIndependent));
 }
 
-qreal tileDisplayPixelsPerSourcePixel(
-    const QSize& imageSize, const QSizeF& displaySize, qreal devicePixelRatio)
+qreal tileDisplayPixelsPerSourcePixel(QSize imageSize, QSizeF displaySize, qreal devicePixelRatio)
 {
     return rustTileDisplayPixelsPerSourcePixel(
         rustTileSize(imageSize), rustTileSizeF(displaySize), devicePixelRatio);
 }
 
-bool tileFirstDisplayIsSufficient(const QSize& imageSize, const QSizeF& displaySize,
-    qreal devicePixelRatio, qreal firstDisplayPixelsPerSourcePixel)
+bool tileFirstDisplayIsSufficient(QSize imageSize, QSizeF displaySize, qreal devicePixelRatio,
+    qreal firstDisplayPixelsPerSourcePixel)
 {
     return rustTileFirstDisplayIsSufficient(rustTileSize(imageSize), rustTileSizeF(displaySize),
         devicePixelRatio, firstDisplayPixelsPerSourcePixel);
 }
 
 QRect tileLevelRectForItemRect(
-    const QSize& imageSize, int level, const QSizeF& displaySize, const QRectF& itemRect)
+    QSize imageSize, int level, QSizeF displaySize, const QRectF& itemRect)
 {
     return Bridge::qtRect(rustTileLevelRectForItemRect(
         rustTileSize(imageSize), level, rustTileSizeF(displaySize), rustTileRectF(itemRect)));
 }
 
-std::vector<TileKey> visibleTileKeys(const QSize& imageSize, int tileSize,
-    const QSizeF& displaySize, const QRectF& visibleItemRect, qreal devicePixelRatio)
+std::vector<TileKey> visibleTileKeys(QSize imageSize, int tileSize, QSizeF displaySize,
+    const QRectF& visibleItemRect, qreal devicePixelRatio)
 {
     std::vector<TileKey> keys;
     const rust::Vec<RustTileKey> rustKeys = rustVisibleTileKeys(rustTileSize(imageSize), tileSize,
@@ -180,9 +179,8 @@ std::vector<TileKey> visibleTileKeys(const QSize& imageSize, int tileSize,
     return keys;
 }
 
-std::vector<TileRequest> svgRasterTileRequests(const QSize& imageSize, int tileSize,
-    int apronSourcePixels, const QSizeF& displaySize, const QRectF& visibleItemRect,
-    qreal devicePixelRatio)
+std::vector<TileRequest> svgRasterTileRequests(QSize imageSize, int tileSize, int apronSourcePixels,
+    QSizeF displaySize, const QRectF& visibleItemRect, qreal devicePixelRatio)
 {
     std::vector<TileRequest> requests;
     const rust::Vec<RustTileRequest> rustRequests

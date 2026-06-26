@@ -77,7 +77,7 @@ QPointF KiriImageViewportCommandBridge::currentContentPosition() const
         m_target->property("contentX").toReal(), m_target->property("contentY").toReal());
 }
 
-bool KiriImageViewportCommandBridge::requestContentPosition(const QPointF& contentPosition)
+bool KiriImageViewportCommandBridge::requestContentPosition(QPointF contentPosition)
 {
     if (!bridgeReady()) {
         return false;
@@ -138,12 +138,12 @@ bool KiriImageViewportCommandBridge::bridgeReady() const
     return m_active && m_document != nullptr && m_target != nullptr;
 }
 
-bool KiriImageViewportCommandBridge::contentPositionChanged(const QPointF& contentPosition) const
+bool KiriImageViewportCommandBridge::contentPositionChanged(QPointF contentPosition) const
 {
     return currentContentPosition() != contentPosition;
 }
 
-bool KiriImageViewportCommandBridge::setContentPosition(const QPointF& contentPosition)
+bool KiriImageViewportCommandBridge::setContentPosition(QPointF contentPosition)
 {
     if (m_target == nullptr) {
         return false;

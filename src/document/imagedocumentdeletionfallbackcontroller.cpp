@@ -37,7 +37,7 @@ void ImageDocumentDeletionFallbackController::cancel()
 }
 
 void ImageDocumentDeletionFallbackController::openFallbackPlan(
-    quint64 operationId, const NoImageRemovalFallback&)
+    quint64 operationId, NoImageRemovalFallback)
 {
     m_operation.finish(operationId);
 }

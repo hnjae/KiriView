@@ -62,21 +62,21 @@ QString BufferedImageReader::errorString() const
     return m_reader == nullptr ? QString() : m_reader->errorString();
 }
 
-void BufferedImageReader::setScaledSize(const QSize& size)
+void BufferedImageReader::setScaledSize(QSize size)
 {
     if (m_reader != nullptr) {
         m_reader->setScaledSize(size);
     }
 }
 
-void BufferedImageReader::setScaledClipRect(const QRect& rect)
+void BufferedImageReader::setScaledClipRect(QRect rect)
 {
     if (m_reader != nullptr) {
         m_reader->setScaledClipRect(rect);
     }
 }
 
-void BufferedImageReader::setClipRect(const QRect& rect)
+void BufferedImageReader::setClipRect(QRect rect)
 {
     if (m_reader != nullptr) {
         m_reader->setClipRect(rect);

@@ -32,6 +32,7 @@ using ShortcutHelpRowsProvider = std::function<QList<ShortcutHelpRow>()>;
 
 class ShortcutHelpModel : public QAbstractListModel
 {
+    Q_OBJECT
 public:
     enum Role {
         ActionIdRole = Qt::UserRole + 1,

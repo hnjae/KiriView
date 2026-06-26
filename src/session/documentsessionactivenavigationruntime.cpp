@@ -59,15 +59,14 @@ void DocumentSessionActiveNavigationRuntime::setRevealContext(ActiveNavigationRe
 }
 
 void DocumentSessionActiveNavigationRuntime::clearRevealContextIfUnavailable(
-    const ActiveNavigationSnapshot& snapshot)
+    ActiveNavigationSnapshot snapshot)
 {
     if (!snapshot.available || !snapshot.known) {
         setRevealContext({});
     }
 }
 
-void DocumentSessionActiveNavigationRuntime::executeDispatchPlan(
-    const ActiveNavigationDispatchPlan& plan)
+void DocumentSessionActiveNavigationRuntime::executeDispatchPlan(ActiveNavigationDispatchPlan plan)
 {
     if (!plan.shouldDispatch()) {
         return;

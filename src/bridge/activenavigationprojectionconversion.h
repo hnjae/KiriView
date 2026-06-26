@@ -11,7 +11,7 @@ namespace kiriview::Bridge {
 RustActiveNavigationSourceKind rustActiveNavigationSourceKind(
     ActiveNavigationSourceKind sourceKind);
 RustDirectMediaNavigationBoundaryState rustDirectMediaNavigationBoundaryState(
-    const DirectMediaNavigationBoundaryState& state);
+    DirectMediaNavigationBoundaryState state);
 RustDirectMediaActiveNavigationInput rustDirectMediaActiveNavigationInput(
     DirectMediaActiveNavigationInput input);
 RustImageDocumentPageActiveNavigationSnapshot rustImageDocumentPageActiveNavigationSnapshot(
@@ -21,10 +21,9 @@ RustActiveNavigationDispatchRequest rustActiveNavigationDispatchRequest(
     ActiveNavigationDispatchRequest request);
 ActiveNavigationBoundaryScope activeNavigationBoundaryScopeFromRust(
     RustActiveNavigationBoundaryScope scope);
-ActiveNavigationSnapshot activeNavigationSnapshotFromRust(
-    const RustActiveNavigationSnapshot& snapshot);
+ActiveNavigationSnapshot activeNavigationSnapshotFromRust(RustActiveNavigationSnapshot snapshot);
 ActiveNavigationDispatchPlan activeNavigationDispatchPlanFromRust(
-    const RustActiveNavigationDispatchPlan& plan);
+    RustActiveNavigationDispatchPlan plan);
 }
 
 #endif

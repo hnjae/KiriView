@@ -78,7 +78,7 @@ std::optional<DecodedTile> HeifTileSource::decodeTile(
     return tile;
 }
 
-QImage HeifTileSource::decodeFullOrScaled(const QSize& targetSize, QString* errorString) const
+QImage HeifTileSource::decodeFullOrScaled(QSize targetSize, QString* errorString) const
 {
     if (estimatedRgbaByteCost(m_imageSize) > imageFullDecodeFallbackByteLimit) {
         setTileSourceError(
@@ -110,8 +110,7 @@ QImage HeifTileSource::decodeFullOrScaled(const QSize& targetSize, QString* erro
     return scaledTileImage(*image, targetSize.isEmpty() ? m_imageSize : targetSize);
 }
 
-QImage HeifTileSource::decodeGridRasterDisplayImage(
-    const QSize& rasterSize, QString* errorString) const
+QImage HeifTileSource::decodeGridRasterDisplayImage(QSize rasterSize, QString* errorString) const
 {
     if (!m_tileGrid.has_value()) {
         return {};
@@ -159,7 +158,7 @@ QImage HeifTileSource::decodeGridRasterDisplayImage(
     return image;
 }
 
-QImage HeifTileSource::decodeGridSourceRect(const QRect& sourceRect, QString* errorString) const
+QImage HeifTileSource::decodeGridSourceRect(QRect sourceRect, QString* errorString) const
 {
     std::optional<HeifPrimaryImage> opened = openHeifPrimaryImage(m_data, errorString);
     if (!opened.has_value()) {

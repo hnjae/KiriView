@@ -68,7 +68,7 @@ private:
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
     void finishPresentedImageLoad(const ImageLoadSession& session,
-        const ImagePresentationLoadResult& result, EmbeddedMetadata metadata);
+        ImagePresentationLoadResult result, EmbeddedMetadata metadata);
     void finishLoadWithError(const ImageLoadSession& session, ImageLoadFailure failure);
     void finishSuccessfulImageLoad(const ImageLoadSession& session, EmbeddedMetadata metadata);
     void reportRuntimePlan(ImageDocumentRuntimePlan plan);

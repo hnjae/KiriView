@@ -27,6 +27,7 @@ struct PredecodeWindowPlan;
 
 class ImagePredecodeCoordinator final : public QObject
 {
+    Q_OBJECT
 public:
     using Context = PredecodeScheduleContext;
 

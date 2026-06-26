@@ -18,13 +18,14 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <type_traits>
 #include <utility>
 
 namespace {
 using ProcessedRawImage
     = std::unique_ptr<libraw_processed_image_t, decltype(&LibRaw::dcraw_clear_mem)>;
 
-bool validImageSize(const QSize& size)
+bool validImageSize(QSize size)
 {
     return size.isValid() && !size.isEmpty() && size.width() > 0 && size.height() > 0;
 }
@@ -81,13 +82,13 @@ QSize libRawImageSize(const LibRaw& processor)
     return QSize(sizes.width, sizes.height);
 }
 
-bool rawPreviewByteCostFitsBudget(const QSize& size)
+bool rawPreviewByteCostFitsBudget(QSize size)
 {
     const qsizetype byteCost = kiriview::estimatedRgbaByteCost(size);
     return byteCost > 0 && byteCost <= kiriview::imageFullDecodeFallbackByteLimit;
 }
 
-bool validateTrustedOriginalSize(const QSize& size)
+bool validateTrustedOriginalSize(QSize size)
 {
     return validImageSize(size) && rawPreviewByteCostFitsBudget(size);
 }
@@ -114,13 +115,13 @@ std::optional<QSize> trustedOriginalSizeFromRawData(const QByteArray& data, QStr
     return originalSize;
 }
 
-bool thumbnailFitsOriginal(const QSize& thumbnailSize, const QSize& originalSize)
+bool thumbnailFitsOriginal(QSize thumbnailSize, QSize originalSize)
 {
     return thumbnailSize.width() <= originalSize.width()
         && thumbnailSize.height() <= originalSize.height();
 }
 
-bool aspectCompatible(const QSize& thumbnailSize, const QSize& originalSize)
+bool aspectCompatible(QSize thumbnailSize, QSize originalSize)
 {
     if (!validImageSize(thumbnailSize) || !validImageSize(originalSize)) {
         return false;
@@ -138,7 +139,7 @@ bool aspectCompatible(const QSize& thumbnailSize, const QSize& originalSize)
     return std::fabsl(left - right) / maximum <= 0.01L;
 }
 
-bool validateRawPreviewImage(const QImage& image, const QSize& originalSize, QString* errorString)
+bool validateRawPreviewImage(const QImage& image, QSize originalSize, QString* errorString)
 {
     if (image.isNull() || !validImageSize(image.size())) {
         setError(errorString,
@@ -169,12 +170,27 @@ bool validateRawPreviewImage(const QImage& image, const QSize& originalSize, QSt
     return true;
 }
 
+bool rawProcessedDataSizeFitsQByteArray(decltype(libraw_processed_image_t::data_size) dataSize)
+{
+    if (dataSize == 0) {
+        return false;
+    }
+
+    using DataSize = decltype(dataSize);
+    using UnsignedQSizeType = std::make_unsigned_t<qsizetype>;
+    constexpr UnsignedQSizeType maxQByteArraySize
+        = static_cast<UnsignedQSizeType>(std::numeric_limits<qsizetype>::max());
+    if constexpr (std::numeric_limits<DataSize>::max() > maxQByteArraySize) {
+        return dataSize <= static_cast<DataSize>(maxQByteArraySize);
+    }
+
+    return true;
+}
+
 std::optional<QImage> jpegThumbnailImage(
     const libraw_processed_image_t* processedImage, QString* errorString)
 {
-    if (processedImage->data_size <= 0
-        || processedImage->data_size
-            > static_cast<std::size_t>(std::numeric_limits<qsizetype>::max())) {
+    if (!rawProcessedDataSizeFitsQByteArray(processedImage->data_size)) {
         setError(errorString,
             kiriview::imageErrorText(kiriview::ImageErrorTextId::RawDecodedPixelDataInvalid));
         return std::nullopt;

@@ -8,7 +8,7 @@
 
 namespace kiriview {
 ImageSpreadSecondaryPageRefreshPlan imageSpreadSecondaryPageRefreshPlan(
-    const ImageSpreadSecondaryPageRefreshState& state)
+    ImageSpreadSecondaryPageRefreshState state)
 {
     const RustImageSpreadSecondaryPageRefreshPlan plan = rustImageSpreadSecondaryPageRefreshPlan(
         Bridge::rustImageSpreadSecondaryPageRefreshState(state));

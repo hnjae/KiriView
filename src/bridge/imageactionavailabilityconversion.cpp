@@ -5,7 +5,7 @@
 
 namespace kiriview::Bridge {
 RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
-    const ::ImageActionAvailabilityInput& input)
+    ::ImageActionAvailabilityInput input)
 {
     return RustImageActionAvailabilityInput {
         input.imageReady,
@@ -94,7 +94,7 @@ RustImageShortcutScope rustImageShortcutScope(ApplicationActions::ImageShortcutS
 }
 
 RustVideoShortcutAvailabilityInput rustVideoShortcutAvailabilityInput(
-    const ApplicationActions::VideoShortcutAvailabilityInput& input)
+    ApplicationActions::VideoShortcutAvailabilityInput input)
 {
     return RustVideoShortcutAvailabilityInput {
         input.helpShortcutsEnabled,

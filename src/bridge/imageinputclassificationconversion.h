@@ -9,7 +9,7 @@
 
 namespace kiriview {
 ImageInputClassification imageInputClassificationFromBridge(
-    const RustImageInputClassification& classification);
+    RustImageInputClassification classification);
 }
 
 #endif

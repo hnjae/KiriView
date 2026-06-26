@@ -10,6 +10,7 @@
 #include <QImage>
 #include <QSize>
 #include <QString>
+#include <QtGlobal>
 #include <memory>
 #include <optional>
 
@@ -35,6 +36,7 @@ public:
 private:
     QByteArray m_data;
     QSize m_imageSize;
+    Q_DISABLE_COPY(SvgTileSource)
 };
 }
 

@@ -35,10 +35,10 @@ public:
     ActiveNavigationRevealContext takePendingRevealContext(
         ActiveNavigationRevealIntent fallbackIntent);
     void setRevealContext(ActiveNavigationRevealContext context);
-    void clearRevealContextIfUnavailable(const ActiveNavigationSnapshot& snapshot);
+    void clearRevealContextIfUnavailable(ActiveNavigationSnapshot snapshot);
 
 private:
-    void executeDispatchPlan(const ActiveNavigationDispatchPlan& plan);
+    void executeDispatchPlan(ActiveNavigationDispatchPlan plan);
 
     DocumentSessionActiveNavigationRuntimePorts m_ports;
     ActiveNavigationRevealContext m_pendingRevealContext;

@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QIODevice>
+#include <QtGlobal>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -133,6 +134,7 @@ public:
 
 private:
     kiriview::OpenedCollectionScopeLocation m_openedCollectionScope;
+    Q_DISABLE_COPY(DirectoryCollectionMediaEntrySource)
 };
 
 kiriview::MediaEntrySourceOpenResult openDirectoryCollectionMediaEntrySource(

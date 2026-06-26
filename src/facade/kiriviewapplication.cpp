@@ -42,10 +42,14 @@ public:
 
 private:
     KiriViewApplication& m_application;
+    Q_DISABLE_COPY(KiriViewApplicationActionHost)
 };
 
 class KiriViewApplicationActionStateSource final : public ApplicationActionStateSource
 {
+public:
+    KiriViewApplicationActionStateSource() = default;
+
 public:
     void setDocumentSession(KiriDocumentSession* session) { m_documentSession = session; }
     void setUiGateSnapshot(ApplicationActionUiGateSnapshot snapshot)
@@ -67,6 +71,7 @@ private:
     QPointer<KiriDocumentSession> m_documentSession;
     ApplicationActionUiGateSnapshot m_uiGateSnapshot;
     quint64 m_uiGateRevision = 0;
+    Q_DISABLE_COPY(KiriViewApplicationActionStateSource)
 };
 
 class KiriViewApplicationCommandPortSource final : public ApplicationCommandPortSource
@@ -88,6 +93,7 @@ public:
 
 private:
     KiriViewApplication& m_application;
+    Q_DISABLE_COPY(KiriViewApplicationCommandPortSource)
 };
 }
 

@@ -15,7 +15,7 @@
 #include <utility>
 
 namespace {
-bool hasSpreadZoomStateChange(const kiriview::ImageZoomChangeSet& changes)
+bool hasSpreadZoomStateChange(kiriview::ImageZoomChangeSet changes)
 {
     return changes.imageSizeChanged || changes.viewportSizeChanged || changes.zoomModeChanged
         || changes.zoomPercentChanged || changes.displaySizeChanged
@@ -46,24 +46,22 @@ ImageSpreadPresentationController::ImageSpreadPresentationController(QObject* pa
     , m_presentationRuntime(presentationRuntime)
     , m_callbacks(std::move(callbacks))
 {
-    m_secondaryPageController
-        = std::make_unique<ImageSecondaryPageController>(parent, std::move(renderContextProvider),
-            ImageSecondaryPageController::Callbacks {
-                [this](ImageDocumentChange change) { notify(change); },
-                [this](ImageSecondaryPageLoadResult result, const DisplayedImageLocation& location,
-                    const QSize& imageSize) {
-                    handleSecondaryPageLoadFinished(result, location, imageSize);
-                },
-                [this]() { notifyTwoPageModeChanged(); },
-                [this](const QUrl& url) {
-                    if (!m_callbacks.findPredecodedImage) {
-                        return std::optional<PredecodedImage>();
-                    }
+    m_secondaryPageController = std::make_unique<ImageSecondaryPageController>(parent,
+        std::move(renderContextProvider),
+        ImageSecondaryPageController::Callbacks {
+            [this](ImageDocumentChange change) { notify(change); },
+            [this](ImageSecondaryPageLoadResult result, const DisplayedImageLocation& location,
+                QSize imageSize) { handleSecondaryPageLoadFinished(result, location, imageSize); },
+            [this]() { notifyTwoPageModeChanged(); },
+            [this](const QUrl& url) {
+                if (!m_callbacks.findPredecodedImage) {
+                    return std::optional<PredecodedImage>();
+                }
 
-                    return m_callbacks.findPredecodedImage(url);
-                },
+                return m_callbacks.findPredecodedImage(url);
             },
-            std::move(candidateProvider), std::move(decodeDependencies), cacheBudgets);
+        },
+        std::move(candidateProvider), std::move(decodeDependencies), cacheBudgets);
 }
 
 ImageSpreadPresentationController::~ImageSpreadPresentationController() { shutdown(); }
@@ -127,7 +125,7 @@ QPointF ImageSpreadPresentationController::viewportContentPosition() const
 }
 
 ImageViewportCommand ImageSpreadPresentationController::requestViewportContentPosition(
-    const QPointF& viewportContentPosition)
+    QPointF viewportContentPosition)
 {
     const ImageViewportCommand command
         = m_presentationRuntime.requestViewportContentPosition(viewportContentPosition);
@@ -145,7 +143,7 @@ bool ImageSpreadPresentationController::beginViewportCommandApplication(quint64 
 }
 
 bool ImageSpreadPresentationController::completeViewportCommandApplication(
-    quint64 commandRevision, const QPointF& actualContentPosition)
+    quint64 commandRevision, QPointF actualContentPosition)
 {
     const bool changed = m_presentationRuntime.completeViewportCommandApplication(
         commandRevision, actualContentPosition);
@@ -158,7 +156,7 @@ bool ImageSpreadPresentationController::completeViewportCommandApplication(
 }
 
 bool ImageSpreadPresentationController::acknowledgeViewportCommand(
-    quint64 commandRevision, const QPointF& actualContentPosition)
+    quint64 commandRevision, QPointF actualContentPosition)
 {
     const bool changed
         = m_presentationRuntime.acknowledgeViewportCommand(commandRevision, actualContentPosition);
@@ -171,7 +169,7 @@ bool ImageSpreadPresentationController::acknowledgeViewportCommand(
 }
 
 bool ImageSpreadPresentationController::observeViewportContentPosition(
-    const QPointF& contentPosition, ImageViewportObservationOrigin origin)
+    QPointF contentPosition, ImageViewportObservationOrigin origin)
 {
     if (!m_presentationRuntime.observeViewportContentPosition(contentPosition, origin)) {
         return false;
@@ -478,7 +476,7 @@ void ImageSpreadPresentationController::clearPrimaryPageSlot()
         ImageDocumentChange::ViewportFrame, ImageDocumentChange::DisplaySource });
 }
 
-void ImageSpreadPresentationController::setViewportSize(const QSizeF& viewportSize)
+void ImageSpreadPresentationController::setViewportSize(QSizeF viewportSize)
 {
     applyActivePresentationChanges(m_presentationRuntime.setViewportSize(viewportSize));
 }
@@ -679,8 +677,7 @@ void ImageSpreadPresentationController::startSecondaryPageLoad(const QUrl& url)
 }
 
 void ImageSpreadPresentationController::handleSecondaryPageLoadFinished(
-    ImageSecondaryPageLoadResult result, const DisplayedImageLocation& location,
-    const QSize& imageSize)
+    ImageSecondaryPageLoadResult result, const DisplayedImageLocation& location, QSize imageSize)
 {
     if (result != ImageSecondaryPageLoadResult::Failed) {
         m_secondaryPageRefresh.cachePageSize(location.imageUrl(), imageSize);
@@ -773,7 +770,7 @@ void ImageSpreadPresentationController::notifyTwoPageModeChanged()
 }
 
 void ImageSpreadPresentationController::applyActivePresentationChanges(
-    const ImageZoomChangeSet& changes, bool notifyPublicChanges)
+    ImageZoomChangeSet changes, bool notifyPublicChanges)
 {
     if (hasSpreadZoomStateChange(changes)) {
         updateDisplayProjections();
@@ -787,7 +784,7 @@ void ImageSpreadPresentationController::applyActivePresentationChanges(
 }
 
 void ImageSpreadPresentationController::notifyActivePresentationZoomChanged(
-    const ImageZoomChangeSet& changes)
+    ImageZoomChangeSet changes)
 {
     notifyChanges(imageDocumentSpreadZoomNotifications(changes));
 }

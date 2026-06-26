@@ -10,29 +10,27 @@
 #include <QSizeF>
 
 namespace kiriview {
-QRectF imageViewportImageRect(const QSizeF& viewportSize, const QSizeF& displaySize);
-QPointF imageViewportMaximumContentPosition(const QSizeF& viewportSize, const QRectF& imageRect);
+QRectF imageViewportImageRect(QSizeF viewportSize, QSizeF displaySize);
+QPointF imageViewportMaximumContentPosition(QSizeF viewportSize, const QRectF& imageRect);
 QPointF imageViewportClampedContentPosition(
-    const QSizeF& viewportSize, const QRectF& imageRect, const QPointF& contentPosition);
-QPointF imageViewportPanPosition(const QSizeF& viewportSize, const QRectF& imageRect,
-    const QPointF& contentPosition, const QPointF& delta);
-QPointF imageViewportNextZScanPosition(const QSizeF& viewportSize, const QRectF& imageRect,
-    const QPointF& contentPosition, bool rightToLeftReading = false);
-QPointF imageViewportPreviousZScanPosition(const QSizeF& viewportSize, const QRectF& imageRect,
-    const QPointF& contentPosition, bool rightToLeftReading = false);
+    QSizeF viewportSize, const QRectF& imageRect, QPointF contentPosition);
+QPointF imageViewportPanPosition(
+    QSizeF viewportSize, const QRectF& imageRect, QPointF contentPosition, QPointF delta);
+QPointF imageViewportNextZScanPosition(QSizeF viewportSize, const QRectF& imageRect,
+    QPointF contentPosition, bool rightToLeftReading = false);
+QPointF imageViewportPreviousZScanPosition(QSizeF viewportSize, const QRectF& imageRect,
+    QPointF contentPosition, bool rightToLeftReading = false);
 QPointF imageViewportInitialZScanPosition(
-    const QSizeF& viewportSize, const QRectF& imageRect, bool rightToLeftReading = false);
+    QSizeF viewportSize, const QRectF& imageRect, bool rightToLeftReading = false);
 QPointF imageViewportFinalZScanPosition(
-    const QSizeF& viewportSize, const QRectF& imageRect, bool rightToLeftReading = false);
+    QSizeF viewportSize, const QRectF& imageRect, bool rightToLeftReading = false);
 bool imageViewportPointInsideImage(
-    const QPointF& contentPosition, const QPointF& viewportPoint, const QRectF& imageRect);
+    QPointF contentPosition, QPointF viewportPoint, const QRectF& imageRect);
 QPointF imageViewportNearestImagePoint(
-    const QPointF& contentPosition, const QPointF& viewportPoint, const QRectF& imageRect);
-QPointF imageViewportContentPositionForZoom(const QSizeF& viewportSize,
-    const QSizeF& currentDisplaySize, const QSizeF& nextDisplaySize, const QPointF& contentPosition,
-    const QPointF& viewportAnchorPoint);
-QSizeF imageViewportDisplaySizeForZoom(
-    const QSize& imageSize, qreal zoomPercent, qreal devicePixelRatio);
+    QPointF contentPosition, QPointF viewportPoint, const QRectF& imageRect);
+QPointF imageViewportContentPositionForZoom(QSizeF viewportSize, QSizeF currentDisplaySize,
+    QSizeF nextDisplaySize, QPointF contentPosition, QPointF viewportAnchorPoint);
+QSizeF imageViewportDisplaySizeForZoom(QSize imageSize, qreal zoomPercent, qreal devicePixelRatio);
 }
 
 #endif

@@ -907,8 +907,9 @@ void TestArchitectureBoundaries::viewportCommandBridgeOwnsFullCommandLifecycle()
     QVERIFY(header.contains(QStringLiteral("class KiriImageViewportCommandBridge")));
     QVERIFY(header.contains(QStringLiteral("QML_ELEMENT")));
     QVERIFY(header.contains(QStringLiteral("public QQuickItem")));
-    QVERIFY(header.contains(QStringLiteral("KiriImageDocument *document")));
-    QVERIFY(header.contains(QStringLiteral("QQuickItem *target")));
+    QVERIFY(header.contains(
+        QRegularExpression(QStringLiteral("KiriImageDocument\\s*\\*\\s*document"))));
+    QVERIFY(header.contains(QRegularExpression(QStringLiteral("QQuickItem\\s*\\*\\s*target"))));
     QVERIFY(combined.contains(QStringLiteral("beginViewportCommandApplication(")));
     QVERIFY(combined.contains(QStringLiteral("completeViewportCommandApplication(")));
     QVERIFY(combined.contains(QStringLiteral("acknowledgeViewportCommand(")));
@@ -943,7 +944,8 @@ void TestArchitectureBoundaries::viewportContextBridgeIsNonRenderingPublicQtFaca
     QVERIFY(header.contains(QStringLiteral("class KiriImageViewportContextBridge")));
     QVERIFY(header.contains(QStringLiteral("QML_ELEMENT")));
     QVERIFY(header.contains(QStringLiteral("public QQuickItem")));
-    QVERIFY(header.contains(QStringLiteral("KiriImageDocument *document")));
+    QVERIFY(header.contains(
+        QRegularExpression(QStringLiteral("KiriImageDocument\\s*\\*\\s*document"))));
     QVERIFY(header.contains(QStringLiteral("bool secondaryPage")));
     QVERIFY(header.contains(QStringLiteral("renderContextProviderInstalled")));
 

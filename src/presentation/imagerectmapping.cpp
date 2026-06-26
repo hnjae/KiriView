@@ -7,17 +7,17 @@
 #include "kiriview/src/policy/imagetilegeometry.cxx.h"
 
 namespace {
-kiriview::RustTileSize rustTileSize(const QSize& size)
+kiriview::RustTileSize rustTileSize(QSize size)
 {
     return kiriview::Bridge::rustSize<kiriview::RustTileSize>(size);
 }
 
-kiriview::RustTileSizeF rustTileSizeF(const QSizeF& size)
+kiriview::RustTileSizeF rustTileSizeF(QSizeF size)
 {
     return kiriview::Bridge::rustSizeF<kiriview::RustTileSizeF>(size);
 }
 
-kiriview::RustTileRect rustTileRect(const QRect& rect)
+kiriview::RustTileRect rustTileRect(QRect rect)
 {
     return kiriview::Bridge::rustRect<kiriview::RustTileRect>(rect);
 }
@@ -29,12 +29,12 @@ kiriview::RustTileRectF rustTileRectF(const QRectF& rect)
 }
 
 namespace kiriview {
-QRect boundedIntegerRect(const QRect& rect, const QSize& boundsSize)
+QRect boundedIntegerRect(QRect rect, QSize boundsSize)
 {
     return Bridge::qtRect(rustBoundedIntegerRect(rustTileRect(rect), rustTileSize(boundsSize)));
 }
 
-QRect scaledIntegerRect(const QRectF& rect, const QSizeF& sourceSize, const QSize& targetSize)
+QRect scaledIntegerRect(const QRectF& rect, QSizeF sourceSize, QSize targetSize)
 {
     return Bridge::qtRect(rustScaledIntegerRect(
         rustTileRectF(rect), rustTileSizeF(sourceSize), rustTileSize(targetSize)));

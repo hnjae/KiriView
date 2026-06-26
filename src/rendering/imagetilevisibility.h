@@ -29,13 +29,13 @@ struct TileSourceVisibilityContext
 
 TileSourceVisibilityContext tileSourceVisibilityContext(const TileVisibilityContext& context);
 qreal tileDisplayPixelsPerSourcePixel(
-    const TilePyramid& pyramid, const QSizeF& displaySize, qreal devicePixelRatio);
+    const TilePyramid& pyramid, QSizeF displaySize, qreal devicePixelRatio);
 ActiveTileLayer activeTileLayer(
     const TilePyramid& pyramid, const TileVisibilityContext& context, bool resolutionIndependent);
-bool tileFirstDisplayIsSufficient(const TilePyramid& pyramid, const QSizeF& displaySize,
+bool tileFirstDisplayIsSufficient(const TilePyramid& pyramid, QSizeF displaySize,
     qreal devicePixelRatio, qreal firstDisplayPixelsPerSourcePixel);
 QRect tileLevelRectForItemRect(
-    const TilePyramid& pyramid, int level, const QSizeF& displaySize, const QRectF& itemRect);
+    const TilePyramid& pyramid, int level, QSizeF displaySize, const QRectF& itemRect);
 std::vector<TileKey> visibleTileKeys(
     const TilePyramid& pyramid, const TileVisibilityContext& context);
 }

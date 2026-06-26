@@ -21,7 +21,7 @@ QString imageDataReadError()
     return kiriview::imageErrorText(kiriview::ImageErrorTextId::ReadImageData);
 }
 
-QSize transformedImageSize(const QSize& size, QImageIOHandler::Transformations transformations)
+QSize transformedImageSize(QSize size, QImageIOHandler::Transformations transformations)
 {
     if (size.isEmpty()) {
         return {};
@@ -352,7 +352,7 @@ bool QImageReaderTileSource::supportsJpegScaledFirstDisplay() const
 }
 
 QImageReaderDisplayDecodeResult QImageReaderTileSource::readScaledDisplayImage(
-    const QSize& scaledSize, QImageReaderDisplayDecodeOperation operation) const
+    QSize scaledSize, QImageReaderDisplayDecodeOperation operation) const
 {
     QImageReaderDisplayDecodeResult result;
     QString errorString;
@@ -363,7 +363,7 @@ QImageReaderDisplayDecodeResult QImageReaderTileSource::readScaledDisplayImage(
     return result;
 }
 
-QImage QImageReaderTileSource::readScaledImage(const QSize& scaledSize, QString* errorString) const
+QImage QImageReaderTileSource::readScaledImage(QSize scaledSize, QString* errorString) const
 {
     const bool hasTransform = m_transform.hasTransform();
     const QSize readerScaledSize
@@ -392,7 +392,7 @@ QImage QImageReaderTileSource::readFullImage(QString* errorString) const
     return readScaledImage(m_imageSize, errorString);
 }
 
-QImage QImageReaderTileSource::readSourceClip(const QRect& sourceRect, QString* errorString) const
+QImage QImageReaderTileSource::readSourceClip(QRect sourceRect, QString* errorString) const
 {
     return readBufferedImage(
         m_data, m_format, false,

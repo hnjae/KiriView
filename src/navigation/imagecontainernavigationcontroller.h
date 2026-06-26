@@ -21,6 +21,7 @@ class ImageDocumentPageCandidateRepository;
 
 class ImageContainerNavigationController final : public QObject
 {
+    Q_OBJECT
 public:
     using NavigationPlanCallback = std::function<void(ImageDocumentPageNavigationPlan)>;
 

@@ -20,7 +20,7 @@
 
 namespace kiriview {
 namespace {
-    bool pointIsFinite(const QPointF& point)
+    bool pointIsFinite(QPointF point)
     {
         return std::isfinite(point.x()) && std::isfinite(point.y());
     }
@@ -134,7 +134,7 @@ QSizeF ImageDocumentRuntime::viewportSize() const
     return controllers->presentationRuntime().viewportSize();
 }
 
-void ImageDocumentRuntime::setViewportSize(const QSizeF& viewportSize)
+void ImageDocumentRuntime::setViewportSize(QSizeF viewportSize)
 {
     controllers->spreadController().setViewportSize(viewportSize);
 }
@@ -148,7 +148,7 @@ QPointF ImageDocumentRuntime::viewportContentPosition() const
     return controllers->spreadController().viewportContentPosition();
 }
 
-quint64 ImageDocumentRuntime::requestViewportContentPosition(const QPointF& viewportContentPosition)
+quint64 ImageDocumentRuntime::requestViewportContentPosition(QPointF viewportContentPosition)
 {
     if (!pointIsFinite(viewportContentPosition)) {
         return 0;
@@ -159,7 +159,7 @@ quint64 ImageDocumentRuntime::requestViewportContentPosition(const QPointF& view
         .revision;
 }
 
-quint64 ImageDocumentRuntime::requestViewportPanBy(const QPointF& delta)
+quint64 ImageDocumentRuntime::requestViewportPanBy(QPointF delta)
 {
     if (!viewportPannable() || !pointIsFinite(delta)) {
         return 0;
@@ -236,21 +236,21 @@ bool ImageDocumentRuntime::beginViewportCommandApplication(quint64 commandRevisi
 }
 
 bool ImageDocumentRuntime::completeViewportCommandApplication(
-    quint64 commandRevision, const QPointF& actualContentPosition)
+    quint64 commandRevision, QPointF actualContentPosition)
 {
     return controllers->spreadController().completeViewportCommandApplication(
         commandRevision, actualContentPosition);
 }
 
 bool ImageDocumentRuntime::acknowledgeViewportCommand(
-    quint64 commandRevision, const QPointF& actualContentPosition)
+    quint64 commandRevision, QPointF actualContentPosition)
 {
     return controllers->spreadController().acknowledgeViewportCommand(
         commandRevision, actualContentPosition);
 }
 
 bool ImageDocumentRuntime::observeViewportContentPosition(
-    const QPointF& contentPosition, ImageViewportObservationOrigin origin)
+    QPointF contentPosition, ImageViewportObservationOrigin origin)
 {
     return controllers->spreadController().observeViewportContentPosition(contentPosition, origin);
 }
@@ -387,7 +387,7 @@ bool ImageDocumentRuntime::requestManualZoomPercentAtCenter(qreal zoomPercent)
         QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
 }
 
-bool ImageDocumentRuntime::requestZoomByStep(qreal stepCount, const QPointF& viewportAnchorPoint)
+bool ImageDocumentRuntime::requestZoomByStep(qreal stepCount, QPointF viewportAnchorPoint)
 {
     if (status() != ImageDocumentStatus::Ready || !pointIsFinite(viewportAnchorPoint)) {
         return false;
@@ -418,7 +418,7 @@ bool ImageDocumentRuntime::requestActualSizeAtCenter()
         QPointF(viewportSize().width() / 2.0, viewportSize().height() / 2.0));
 }
 
-bool ImageDocumentRuntime::requestToggleFitOrActualSize(const QPointF& viewportPoint)
+bool ImageDocumentRuntime::requestToggleFitOrActualSize(QPointF viewportPoint)
 {
     if (status() != ImageDocumentStatus::Ready || !pointIsFinite(viewportPoint)) {
         return false;
@@ -553,13 +553,13 @@ ImagePresentationTransitionState ImageDocumentRuntime::presentationTransitionSta
     return controllers->spreadController().presentationTransitionState();
 }
 
-bool ImageDocumentRuntime::viewportPointInsideImage(const QPointF& viewportPoint) const
+bool ImageDocumentRuntime::viewportPointInsideImage(QPointF viewportPoint) const
 {
     return viewportInteraction.viewportPointInsideImage(
         viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
 }
 
-QPointF ImageDocumentRuntime::nearestImageViewportPoint(const QPointF& viewportPoint) const
+QPointF ImageDocumentRuntime::nearestImageViewportPoint(QPointF viewportPoint) const
 {
     return viewportInteraction.nearestImageViewportPoint(
         viewportInteractionSnapshot(), viewportContentPosition(), viewportPoint);
@@ -643,8 +643,7 @@ ImageDocumentRenderContext ImageDocumentRuntime::renderContext() const
     return ImageDocumentRenderContext {};
 }
 
-quint64 ImageDocumentRuntime::requestViewportInteractionContentPosition(
-    const QPointF& contentPosition)
+quint64 ImageDocumentRuntime::requestViewportInteractionContentPosition(QPointF contentPosition)
 {
     if (!pointIsFinite(contentPosition)) {
         return 0;
@@ -661,8 +660,7 @@ quint64 ImageDocumentRuntime::requestViewportInteractionContentPosition(
     return 0;
 }
 
-bool ImageDocumentRuntime::requestAnchoredManualZoom(
-    qreal zoomPercent, const QPointF& viewportAnchorPoint)
+bool ImageDocumentRuntime::requestAnchoredManualZoom(qreal zoomPercent, QPointF viewportAnchorPoint)
 {
     if (!pointIsFinite(viewportAnchorPoint)) {
         return false;

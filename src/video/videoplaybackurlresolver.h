@@ -26,6 +26,9 @@ using VideoPlaybackUrlFailedCallback = std::function<void(quint64, QUrl, QString
 class VideoPlaybackUrlResolver
 {
 public:
+    VideoPlaybackUrlResolver() = default;
+
+public:
     virtual ~VideoPlaybackUrlResolver() = default;
 
     virtual void resolve(quint64 operationId, const QUrl& sourceUrl, QObject* receiver,
@@ -34,6 +37,7 @@ public:
         = 0;
     virtual void cancel() = 0;
     virtual void cleanup() = 0;
+    Q_DISABLE_COPY(VideoPlaybackUrlResolver)
 };
 
 bool videoPlaybackBackendCanConsumeUrl(const QUrl& url);

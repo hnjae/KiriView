@@ -37,7 +37,7 @@ struct ImageViewportFrame
 };
 
 ImageViewportFrame projectImageViewportFrame(
-    const QSizeF& viewportSize, const QSizeF& displaySize, const QPointF& contentPosition);
+    QSizeF viewportSize, QSizeF displaySize, QPointF contentPosition);
 }
 
 #endif

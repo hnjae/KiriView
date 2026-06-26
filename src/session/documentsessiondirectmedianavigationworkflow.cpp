@@ -9,8 +9,8 @@
 
 namespace {
 bool refreshSelectionChanged(kiriview::ActiveNavigationSourceKind sourceKind,
-    const kiriview::ActiveNavigationSnapshot& previousSnapshot,
-    const kiriview::DirectMediaNavigationBoundaryState& boundaryState)
+    kiriview::ActiveNavigationSnapshot previousSnapshot,
+    kiriview::DirectMediaNavigationBoundaryState boundaryState)
 {
     return sourceKind != kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia
         || !previousSnapshot.known || previousSnapshot.currentNumber != boundaryState.currentNumber

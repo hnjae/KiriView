@@ -109,19 +109,19 @@ struct ApplicationCommandRouterPorts
 class ApplicationCommandRouter final
 {
 public:
-    void handleActionTriggered(ActionId actionId, const ApplicationCommandRouterInput& input,
+    void handleActionTriggered(ActionId actionId, ApplicationCommandRouterInput input,
         const ApplicationCommandRouterPorts& ports) const;
-    void handleScanForwardAction(const ApplicationCommandRouterInput& input,
-        const ApplicationCommandRouterPorts& ports) const;
-    void handleScanBackwardAction(const ApplicationCommandRouterInput& input,
-        const ApplicationCommandRouterPorts& ports) const;
-    bool executeHorizontalArrowShortcut(const ApplicationCommandRouterInput& input,
+    void handleScanForwardAction(
+        ApplicationCommandRouterInput input, const ApplicationCommandRouterPorts& ports) const;
+    void handleScanBackwardAction(
+        ApplicationCommandRouterInput input, const ApplicationCommandRouterPorts& ports) const;
+    bool executeHorizontalArrowShortcut(ApplicationCommandRouterInput input,
         const ApplicationCommandRouterPorts& ports, bool leftArrow) const;
-    bool executeSinglePageArrowShortcut(const ApplicationCommandRouterInput& input,
+    bool executeSinglePageArrowShortcut(ApplicationCommandRouterInput input,
         const ApplicationCommandRouterPorts& ports, bool leftArrow) const;
-    bool executeVerticalPanShortcut(const ApplicationCommandRouterInput& input,
+    bool executeVerticalPanShortcut(ApplicationCommandRouterInput input,
         const ApplicationCommandRouterPorts& ports, bool up) const;
-    bool executeVideoSeekShortcut(const ApplicationCommandRouterInput& input,
+    bool executeVideoSeekShortcut(ApplicationCommandRouterInput input,
         const ApplicationCommandRouterPorts& ports, qint64 deltaMilliseconds) const;
 
 private:

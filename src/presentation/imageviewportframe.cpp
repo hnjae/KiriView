@@ -8,7 +8,7 @@
 
 namespace kiriview {
 ImageViewportFrame projectImageViewportFrame(
-    const QSizeF& viewportSize, const QSizeF& displaySize, const QPointF& contentPosition)
+    QSizeF viewportSize, QSizeF displaySize, QPointF contentPosition)
 {
     const RustImageViewportFrame frame = rustImageViewportFrame(
         Bridge::rustSizeF<RustSizeF>(viewportSize), Bridge::rustSizeF<RustSizeF>(displaySize),

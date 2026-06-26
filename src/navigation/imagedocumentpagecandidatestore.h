@@ -18,6 +18,7 @@ class ImageDocumentPageCandidateDirectoryEntry;
 
 class ImageDocumentPageCandidateStore final : public QObject
 {
+    Q_OBJECT
 public:
     explicit ImageDocumentPageCandidateStore(QObject* parent = nullptr);
     explicit ImageDocumentPageCandidateStore(

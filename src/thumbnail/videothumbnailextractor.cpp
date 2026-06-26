@@ -18,7 +18,7 @@
 namespace {
 constexpr int extractionTimeoutMsec = 10000;
 
-QSize boundedSize(const QSize& size, int maximumLongEdge)
+QSize boundedSize(QSize size, int maximumLongEdge)
 {
     if (size.isEmpty() || maximumLongEdge <= 0) {
         return {};

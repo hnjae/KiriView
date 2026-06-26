@@ -20,6 +20,7 @@
 namespace kiriview {
 class MediaPredecodeCoordinator final : public QObject
 {
+    Q_OBJECT
 public:
     struct Context
     {

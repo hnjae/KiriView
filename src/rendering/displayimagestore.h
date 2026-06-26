@@ -85,6 +85,7 @@ private:
 
 class DisplayImageProvider final : public QQuickImageProvider
 {
+    Q_OBJECT
 public:
     explicit DisplayImageProvider(std::shared_ptr<DisplayImageStore> store);
 

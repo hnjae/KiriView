@@ -16,6 +16,9 @@ namespace kiriview {
 class RuntimeTimerHandle
 {
 public:
+    RuntimeTimerHandle() = default;
+
+public:
     virtual ~RuntimeTimerHandle() = default;
 
     virtual void start() = 0;
@@ -25,6 +28,7 @@ public:
         start();
     }
     virtual void stop() = 0;
+    Q_DISABLE_COPY(RuntimeTimerHandle)
 };
 
 using RuntimeTimerCallback = std::function<void()>;

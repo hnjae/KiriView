@@ -63,7 +63,7 @@ public:
 
     void startLoad(const QUrl& url,
         const OpenedCollectionScopeLocation& displayedOpenedCollectionScope,
-        const ImageFirstDisplayDecodeContext& firstDisplayContext);
+        ImageFirstDisplayDecodeContext firstDisplayContext);
     void clear();
     void cancel();
     void stopAnimation();
@@ -72,7 +72,7 @@ private:
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
     void finishImagePresentation(
-        const ImageLoadSession& session, const ImagePresentationLoadResult& result);
+        const ImageLoadSession& session, ImagePresentationLoadResult result);
     void finishLoadWithError(const ImageLoadSession& session);
     void applyLoadCompletion(const ImageSecondaryPageLoadCompletion& completion);
     ImageDocumentRenderContext renderContext() const;

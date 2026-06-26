@@ -252,7 +252,7 @@ const ImageViewportProjection& ImagePresentationRuntime::viewportProjection() co
 }
 
 ImageViewportCommand ImagePresentationRuntime::requestViewportContentPosition(
-    const QPointF& contentPosition)
+    QPointF contentPosition)
 {
     return m_viewportCommands.requestContentPosition(contentPosition);
 }
@@ -263,24 +263,24 @@ bool ImagePresentationRuntime::beginViewportCommandApplication(quint64 commandRe
 }
 
 bool ImagePresentationRuntime::completeViewportCommandApplication(
-    quint64 commandRevision, const QPointF& actualContentPosition)
+    quint64 commandRevision, QPointF actualContentPosition)
 {
     return m_viewportCommands.completeCommandApplication(commandRevision, actualContentPosition);
 }
 
 bool ImagePresentationRuntime::acknowledgeViewportCommand(
-    quint64 commandRevision, const QPointF& actualContentPosition)
+    quint64 commandRevision, QPointF actualContentPosition)
 {
     return m_viewportCommands.acknowledgeCommand(commandRevision, actualContentPosition);
 }
 
 bool ImagePresentationRuntime::observeViewportContentPosition(
-    const QPointF& contentPosition, ImageViewportObservationOrigin origin)
+    QPointF contentPosition, ImageViewportObservationOrigin origin)
 {
     return m_viewportCommands.observeContentPosition(contentPosition, origin);
 }
 
-ImageZoomChangeSet ImagePresentationRuntime::setViewportSize(const QSizeF& viewportSize)
+ImageZoomChangeSet ImagePresentationRuntime::setViewportSize(QSizeF viewportSize)
 {
     ImageZoomChangeSet changes
         = mutateZoomState([viewportSize](ImageZoomState& zoomState, qreal devicePixelRatio) {

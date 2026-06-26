@@ -9,27 +9,27 @@
 #include <QRectF>
 
 namespace kiriview {
-QRectF imageTargetRect(const QSize& imageSize, const QSizeF& boundsSize)
+QRectF imageTargetRect(QSize imageSize, QSizeF boundsSize)
 {
     return Bridge::qtRectF(rustImageTargetRect(Bridge::rustSize<RustImageRenderSize>(imageSize),
         Bridge::rustSizeF<RustImageRenderSizeF>(boundsSize)));
 }
 
-QSize scaledImageSizeToFit(const QSizeF& imageSize, const QSize& boundsSize)
+QSize scaledImageSizeToFit(QSizeF imageSize, QSize boundsSize)
 {
     return Bridge::qtSize(
         rustScaledImageSizeToFit(Bridge::rustSizeF<RustImageRenderSizeF>(imageSize),
             Bridge::rustSize<RustImageRenderSize>(boundsSize)));
 }
 
-QSize firstDisplayScaledImageSize(const QSize& imageSize, const QSize& physicalViewportSize)
+QSize firstDisplayScaledImageSize(QSize imageSize, QSize physicalViewportSize)
 {
     return Bridge::qtSize(
         rustFirstDisplayScaledImageSize(Bridge::rustSize<RustImageRenderSize>(imageSize),
             Bridge::rustSize<RustImageRenderSize>(physicalViewportSize)));
 }
 
-qreal imagePixelsPerSourcePixel(const QSize& imageSize, const QSize& displaySize)
+qreal imagePixelsPerSourcePixel(QSize imageSize, QSize displaySize)
 {
     return rustImagePixelsPerSourcePixel(Bridge::rustSize<RustImageRenderSize>(imageSize),
         Bridge::rustSize<RustImageRenderSize>(displaySize));
@@ -56,7 +56,7 @@ ImageDocumentRenderContext normalizedImageDocumentRenderContext(ImageDocumentRen
 }
 
 ImageFirstDisplayDecodeContext imageFirstDisplayDecodeContext(
-    const QSizeF& viewportSize, qreal devicePixelRatio)
+    QSizeF viewportSize, qreal devicePixelRatio)
 {
     return ImageFirstDisplayDecodeContext {
         Bridge::qtSize(rustFirstDisplayPhysicalViewportSize(

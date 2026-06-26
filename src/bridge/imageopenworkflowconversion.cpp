@@ -182,7 +182,7 @@ kiriview::ImageOpenEffect imageOpenEffect(kiriview::RustImageOpenEffect effect)
 
 namespace kiriview {
 RustImageDocumentSourceLoadPolicyInput rustImageDocumentSourceLoadPolicyInput(
-    const Bridge::ImageDocumentSourceLoadPolicyInput& input)
+    Bridge::ImageDocumentSourceLoadPolicyInput input)
 {
     return RustImageDocumentSourceLoadPolicyInput {
         rustSourceLoadKind(input.loadKind),

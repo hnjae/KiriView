@@ -17,6 +17,7 @@
 namespace kiriview {
 class ActiveNavigationThumbnailModel final : public QAbstractListModel
 {
+    Q_OBJECT
 public:
     enum Role {
         NumberRole = Qt::UserRole + 1,

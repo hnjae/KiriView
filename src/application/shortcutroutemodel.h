@@ -13,6 +13,7 @@
 namespace kiriview::ApplicationActions {
 class ShortcutRouteModel : public QAbstractListModel
 {
+    Q_OBJECT
 public:
     enum Role {
         ActionIdsRole = Qt::UserRole + 1,

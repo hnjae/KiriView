@@ -18,6 +18,7 @@
 namespace kiriview {
 class ImageDecodeJob final : public QObject
 {
+    Q_OBJECT
 public:
     using DecodedCallback = std::function<void(ImageDecodeRequest, DecodedImageResult)>;
     using LoadErrorCallback = std::function<void(const ImageDecodeRequest&, const QString&)>;

@@ -45,7 +45,7 @@ struct ImageSpreadPageNavigationContext
 class ImageSpreadSecondaryPageRefresh final
 {
 public:
-    void cachePageSize(const QUrl& url, const QSize& imageSize);
+    void cachePageSize(const QUrl& url, QSize imageSize);
     std::optional<bool> cachedPageIsWide(const QUrl& url) const;
 
     ImageSpreadSecondaryPageRefreshResult planRefresh(

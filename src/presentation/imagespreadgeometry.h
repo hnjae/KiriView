@@ -9,15 +9,15 @@
 #include <QSizeF>
 
 namespace kiriview {
-QSize imageSpreadImageSize(const QSize& primarySize, const QSize& secondarySize);
+QSize imageSpreadImageSize(QSize primarySize, QSize secondarySize);
 QSizeF imageSpreadScaledPageDisplaySize(
-    const QSize& pageSize, const QSize& spreadImageSize, const QSizeF& spreadDisplaySize);
-QRectF imageSpreadPrimaryPageRect(const QSizeF& primaryDisplaySize,
-    const QSizeF& secondaryDisplaySize, const QSizeF& spreadDisplaySize, bool rightToLeftReading);
-QRectF imageSpreadSecondaryPageRect(const QSizeF& primaryDisplaySize,
-    const QSizeF& secondaryDisplaySize, const QSizeF& spreadDisplaySize, bool rightToLeftReading);
+    QSize pageSize, QSize spreadImageSize, QSizeF spreadDisplaySize);
+QRectF imageSpreadPrimaryPageRect(QSizeF primaryDisplaySize, QSizeF secondaryDisplaySize,
+    QSizeF spreadDisplaySize, bool rightToLeftReading);
+QRectF imageSpreadSecondaryPageRect(QSizeF primaryDisplaySize, QSizeF secondaryDisplaySize,
+    QSizeF spreadDisplaySize, bool rightToLeftReading);
 QRectF imageSpreadVisiblePageRect(const QRectF& visibleRect, const QRectF& pageRect);
-bool imageSpreadPageIsWide(const QSize& imageSize);
+bool imageSpreadPageIsWide(QSize imageSize);
 }
 
 #endif
