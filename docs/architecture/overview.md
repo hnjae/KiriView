@@ -85,4 +85,6 @@ Native source manifests under `src/` are the build-validated ownership point for
 
 Cargo is the canonical compiler for KiriView application native code. The Cargo build owns Rust, production C++ sources from the manifests, CXX-Qt generated code, KConfig generated state code, QML resources, and the resulting app static library. CMake is used for C++ test binaries only: it may compile test-local sources and generated test fixtures, but it consumes Cargo-produced application artifacts instead of rebuilding production app sources.
 
+Compile command metadata follows the same build ownership. Cargo/CXX-Qt emits application C++ compile commands by observing actual compiler invocations during the Cargo app build, and CMake emits C++ test compile commands through its exported compilation database. Development-environment tooling may orchestrate refresh, merge, and root symlink installation for editor and lint consumers, but it must not duplicate C++ compiler flags or synthesize hand-authored production/test compile commands.
+
 Development-environment modules that need Qt/CXX-Qt build, runtime, lint, or editor metadata should consume a shared Qt/CXX-Qt tooling context instead of duplicating qmake wrappers, QML import paths, compile-command inputs, generated include refresh logic, or Qt runtime environment snippets in each module.
