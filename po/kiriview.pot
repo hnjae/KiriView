@@ -885,6 +885,18 @@ msgstr ""
 #: src/session/mediainformationprojection.cpp
 #, kde-format
 msgctxt "@title:group"
+msgid "Video"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@info:metadata summary"
+msgid "Video"
+msgstr ""
+
+#: src/session/mediainformationprojection.cpp
+#, kde-format
+msgctxt "@title:group"
 msgid "Image"
 msgstr ""
 
@@ -902,20 +914,8 @@ msgstr ""
 
 #: src/session/mediainformationprojection.cpp
 #, kde-format
-msgctxt "@title:group"
-msgid "Video"
-msgstr ""
-
-#: src/session/mediainformationprojection.cpp
-#, kde-format
 msgctxt "@info:metadata summary"
 msgid "Video, %1"
-msgstr ""
-
-#: src/session/mediainformationprojection.cpp
-#, kde-format
-msgctxt "@info:metadata summary"
-msgid "Video"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
