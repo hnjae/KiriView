@@ -41,7 +41,6 @@ in
       ${rustHostEnvironment}
     '';
 
-  files."compile_commands.json".json = qtCxxqt.compileCommands;
   files."rust-analyzer.toml".text = qtCxxqt.rustAnalyzerToml;
   files.".qmlls.ini".ini.General = qtCxxqt.qmllsGeneral;
 

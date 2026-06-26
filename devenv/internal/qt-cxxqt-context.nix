@@ -90,7 +90,6 @@ let
     ])
   ];
   qtPluginPath = "${config.devenv.root}/.devenv/profile/lib/qt-6/plugins";
-  qtVersion = lib.getVersion pkgs.kdePackages.qtbase;
   readSourceManifest =
     path:
     lib.filter (source: source != "" && !(lib.hasPrefix "#" source)) (
@@ -99,97 +98,6 @@ let
   cppCoreSources = readSourceManifest ../../src/cpp_core_sources.txt;
   cxxQtCppSources = readSourceManifest ../../src/cpp_cxxqt_sources.txt;
   cppSources = lib.sort builtins.lessThan (cxxQtCppSources ++ cppCoreSources);
-  cppTestSources = lib.sort builtins.lessThan (
-    map (name: "tests/cpp/${name}") (
-      lib.filter (name: lib.hasPrefix "test_" name && lib.hasSuffix ".cpp" name) (
-        builtins.attrNames (builtins.readDir ../../tests/cpp)
-      )
-    )
-  );
-  qtCompileDefines = [
-    "-DQT_CORE_LIB"
-    "-DQT_DBUS_LIB"
-    "-DQT_GUI_LIB"
-    "-DQT_MULTIMEDIA_LIB"
-    "-DQT_NETWORK_LIB"
-    "-DQT_QML_LIB"
-    "-DQT_QUICK_LIB"
-    "-DQT_QUICKCONTROLS2_LIB"
-    "-DQT_WIDGETS_LIB"
-    "-DTRANSLATION_DOMAIN=\"kiriview\""
-  ];
-  gccVersion = lib.getVersion pkgs.stdenv.cc.cc;
-  toolchainSystemIncludeDirs = [
-    "${pkgs.stdenv.cc.cc}/include/c++/${gccVersion}"
-    "${pkgs.stdenv.cc.cc}/include/c++/${gccVersion}/${pkgs.stdenv.hostPlatform.config}"
-    "${pkgs.llvmPackages.clang}/resource-root/include"
-    "${pkgs.glibc.dev}/include"
-  ];
-  qtIncludeModules = [
-    "QtCore"
-    "QtDBus"
-    "QtGui"
-    "QtMultimedia"
-    "QtNetwork"
-    "QtQml"
-    "QtQmlIntegration"
-    "QtQuick"
-    "QtQuickControls2"
-    "QtTest"
-    "QtWidgets"
-  ];
-  systemIncludeDirs = [
-    ".devenv/profile/include"
-    ".devenv/profile/include/KF6/KArchive"
-    ".devenv/profile/include/KF6/KConfig"
-    ".devenv/profile/include/KF6/KConfigCore"
-    ".devenv/profile/include/KF6/KConfigGui"
-    ".devenv/profile/include/KF6/KCoreAddons"
-    ".devenv/profile/include/KF6/KI18n"
-    ".devenv/profile/include/KF6/KI18nQml"
-    ".devenv/profile/include/KF6/KIO"
-    ".devenv/profile/include/KF6/KIOCore"
-    ".devenv/profile/include/KF6/KIOGui"
-    ".devenv/profile/include/KF6/KIOWidgets"
-    ".devenv/profile/include/KF6/KJobWidgets"
-    ".devenv/profile/include/KF6/KService"
-    ".devenv/profile/include/KirigamiAddonsStatefulApp"
-    ".devenv/profile/include/QtGui/${qtVersion}/QtGui"
-    ".devenv/profile/mkspecs/linux-g++"
-  ]
-  ++ toolchainSystemIncludeDirs
-  ++ map (module: ".devenv/profile/include/${module}") qtIncludeModules;
-  cppCompileCommand = source: extraArguments: {
-    directory = config.devenv.root;
-    file = source;
-    arguments = [
-      "clang++"
-      "-std=c++17"
-      "-Isrc"
-      "-Itarget/cxxqt/clangd/include"
-    ]
-    ++ extraArguments
-    ++ qtCompileDefines
-    ++ lib.concatMap (dir: [
-      "-isystem"
-      dir
-    ]) systemIncludeDirs
-    ++ [ source ];
-  };
-  cppTestCompileCommand =
-    source:
-    let
-      testTarget = lib.removeSuffix ".cpp" (baseNameOf source);
-    in
-    cppCompileCommand source [
-      "-Itests/cpp"
-      "-Itarget/devenv/cpp-tests/${testTarget}_autogen/include"
-      "-DQT_TESTLIB_LIB"
-      "-DKIRIVIEW_TEST_SOURCE_DIR=\"${config.devenv.root}/tests/cpp\""
-    ];
-  compileCommands =
-    (map (source: cppCompileCommand source [ ]) cppSources)
-    ++ (map cppTestCompileCommand cppTestSources);
   cppSourcesShellArgs = lib.escapeShellArgs cppSources;
   clazyIgnoreDirsRegex = "(^|/)(\\.devenv|target)(/|$)|^/nix/store/";
   qmlLintImportArgs = lib.escapeShellArgs (
@@ -218,6 +126,190 @@ let
           "target",
       ]
     '';
+  compileCommandRecorder = pkgs.writeShellApplication {
+    name = "kiriview-compile-command-recorder";
+    runtimeInputs = with pkgs; [
+      coreutils
+      jq
+      util-linux
+    ];
+    text = ''
+      set -euo pipefail
+
+      if (($# < 1)); then
+          printf 'Usage: kiriview-compile-command-recorder <compiler> [args...]\n' >&2
+          exit 2
+      fi
+
+      compiler="$1"
+      shift
+
+      compiler_path="$(command -v -- "$compiler" || true)"
+      if [[ -z $compiler_path ]]; then
+          printf 'Compiler not found: %s\n' "$compiler" >&2
+          exit 127
+      fi
+
+      log_file="''${KIRIVIEW_COMPILE_COMMAND_LOG:-}"
+      if [[ -n $log_file ]]; then
+          has_compile_flag=0
+          source_file=""
+          for arg in "$@"; do
+              if [[ $arg == "-c" ]]; then
+                  has_compile_flag=1
+              fi
+
+              case "$arg" in
+                  *.c | *.cc | *.cpp | *.cxx | *.C | *.CC | *.CPP | *.CXX)
+                      source_file="$arg"
+                      ;;
+              esac
+          done
+
+          if ((has_compile_flag)) && [[ -n $source_file && ''${source_file##*/} != flag_check.cpp ]]; then
+              mkdir -p "$(dirname "$log_file")"
+              prefix_arguments_json="''${KIRIVIEW_COMPILE_COMMAND_PREFIX_ARGUMENTS_JSON:-}"
+              jq_prefix_args=(--argjson prefix '[]')
+              if [[ -n $prefix_arguments_json && -f $prefix_arguments_json ]]; then
+                  jq_prefix_args=(--slurpfile prefix "$prefix_arguments_json")
+              fi
+              entry="$(
+                  jq \
+                      --null-input \
+                      --compact-output \
+                      "''${jq_prefix_args[@]}" \
+                      --arg directory "$PWD" \
+                      --arg file "$source_file" \
+                      '($prefix[0] // []) as $prefix_arguments | $ARGS.positional as $arguments | { directory: $directory, file: $file, arguments: ([$arguments[0]] + $prefix_arguments + ($arguments[1:] // [])) }' \
+                      --args -- "$compiler_path" "$@"
+              )"
+              lock_file="''${KIRIVIEW_COMPILE_COMMAND_LOG_LOCK:-$log_file.lock}"
+              {
+                  flock 9
+                  printf '%s\n' "$entry" >>"$log_file"
+              } 9>"$lock_file"
+          fi
+      fi
+
+      exec "$compiler_path" "$@"
+    '';
+  };
+  refreshCompileCommands = pkgs.writeShellApplication {
+    name = "kiriview-refresh-compile-commands";
+    runtimeInputs =
+      with pkgs;
+      [
+        cmake
+        coreutils
+        gnumake
+        jq
+      ]
+      ++ [ compileCommandRecorder ];
+    text = ''
+      set -euo pipefail
+
+      if (($# != 2)); then
+          printf 'Usage: kiriview-refresh-compile-commands <jobs> <cargo-debug-artifact-dir>\n' >&2
+          exit 2
+      fi
+
+      jobs="$1"
+      cargo_debug_artifact_dir="$2"
+
+      if ! [[ $jobs =~ ^[0-9]+$ ]] || ((jobs < 1)); then
+          printf 'Invalid job count: %s\n' "$jobs" >&2
+          exit 2
+      fi
+
+      repo_root=${lib.escapeShellArg config.devenv.root}
+      cd "$repo_root"
+
+      metadata_dir="$repo_root/target/devenv"
+      app_compile_log="$metadata_dir/app-compile-commands.jsonl"
+      cxx_prefix_arguments_json="$metadata_dir/cxx-wrapper-arguments.json"
+      tmp_cxx_prefix_arguments_json="$metadata_dir/cxx-wrapper-arguments.json.tmp.$$"
+      cpp_tests_dir="$metadata_dir/cpp-tests"
+      merged_compile_db="$metadata_dir/compile_commands.json"
+      tmp_compile_db="$metadata_dir/compile_commands.json.tmp.$$"
+      root_link_tmp="$repo_root/compile_commands.json.tmp.$$"
+
+      mkdir -p "$metadata_dir"
+      rm -f "$app_compile_log" "$app_compile_log.lock" "$tmp_cxx_prefix_arguments_json" "$tmp_compile_db" "$root_link_tmp"
+
+      cxx_prefix_arguments=()
+      while IFS= read -r include_dir; do
+          cxx_prefix_arguments+=("-isystem" "$include_dir")
+      done < <(
+          c++ -E -x c++ - -v </dev/null 2>&1 \
+              | sed -n '/#include <...> search starts here:/,/End of search list./p' \
+              | sed '1d;$d;s/^ //;s/ (framework directory)$//'
+      )
+      jq \
+          --null-input \
+          '$ARGS.positional' \
+          --args -- "''${cxx_prefix_arguments[@]}" \
+          >"$tmp_cxx_prefix_arguments_json"
+      mv -f "$tmp_cxx_prefix_arguments_json" "$cxx_prefix_arguments_json"
+
+      printf 'Cleaning Cargo-owned KiriView app artifacts...\n'
+      cargo clean -p kiriview
+
+      printf 'Building Cargo-owned KiriView app library artifacts with %d jobs...\n' "$jobs"
+      CC_KNOWN_WRAPPER_CUSTOM=kiriview-compile-command-recorder \
+      CC="kiriview-compile-command-recorder cc" \
+      CXX="kiriview-compile-command-recorder c++" \
+      KIRIVIEW_COMPILE_COMMAND_LOG="$app_compile_log" \
+      KIRIVIEW_COMPILE_COMMAND_PREFIX_ARGUMENTS_JSON="$cxx_prefix_arguments_json" \
+          cargo \
+              build \
+              --locked \
+              --lib \
+              --all-features \
+              --jobs "$jobs"
+
+      if [[ ! -s $app_compile_log ]]; then
+          printf 'Cargo app build did not capture any C++ compile commands.\n' >&2
+          exit 1
+      fi
+
+      cmake_make_program="$(command -v make)"
+      cmake \
+          -S tests/cpp \
+          -B "$cpp_tests_dir" \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          -DCMAKE_MAKE_PROGRAM="$cmake_make_program" \
+          -DKIRIVIEW_CARGO_TARGET_DIR="$cargo_debug_artifact_dir"
+
+      if [[ ! -f $cpp_tests_dir/compile_commands.json ]]; then
+          printf 'CMake did not emit %s.\n' "$cpp_tests_dir/compile_commands.json" >&2
+          exit 1
+      fi
+
+      jq \
+          --slurp \
+          --arg repo_root "$repo_root" \
+          '
+              def normalize_file:
+                  if (.file | type == "string" and startswith($repo_root + "/")) then
+                      .file = (.file | .[($repo_root | length) + 1:])
+                  else
+                      .
+                  end;
+
+              map(if type == "array" then .[] else . end)
+              | map(normalize_file)
+              | sort_by(.file, .directory, (.arguments // [ .command ]))
+          ' \
+          "$app_compile_log" \
+          "$cpp_tests_dir/compile_commands.json" \
+          >"$tmp_compile_db"
+      mv -f "$tmp_compile_db" "$merged_compile_db"
+
+      ln -sT "target/devenv/compile_commands.json" "$root_link_tmp"
+      mv -Tf "$root_link_tmp" "$repo_root/compile_commands.json"
+    '';
+  };
   refreshCxxqtIncludes = pkgs.writeShellApplication {
     name = "refresh-cxxqt-includes";
     runtimeInputs = with pkgs; [
@@ -279,7 +371,7 @@ let
     ${lib.getExe refreshCxxqtIncludes}
 
     if [[ ! -f compile_commands.json ]]; then
-        echo "compile_commands.json was not found; enter the devenv shell to generate it" >&2
+        echo "compile_commands.json was not found; run 'devenv tasks run --mode single dev:lsp:refresh' to generate editor metadata" >&2
         exit 1
     fi
   ''
@@ -368,12 +460,12 @@ let
 in
 {
   inherit
-    compileCommands
     clazyIgnoreDirsRegex
     cppLintPrelude
     cppSourcesShellArgs
     qmake
     qmlLintImportArgs
+    refreshCompileCommands
     refreshCxxqtIncludes
     rustAnalyzerToml
     qtBuildEnvironment
