@@ -156,6 +156,7 @@ private Q_SLOTS:
     void actionDefinitionTableIsCanonicalIdentitySource();
     void facadeActionIdsConvertAtApplicationBoundary();
     void actionIdsResolveActionNamesAndShortcuts();
+    void navigationPresentationApiConvertsRuntimeProjection();
     void shortcutRouteModelExposesApplicationPolicy();
     void mediaShortcutPolicyApiExposesApplicationPolicy();
     void shortcutsApiReturnsCurrentShortcuts();
@@ -298,6 +299,46 @@ void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
     QVERIFY(application.shortcutTextForId(KiriViewApplication::ActionCount).isEmpty());
     QVERIFY(application.menuShortcutForId(KiriViewApplication::ActionCount).isEmpty());
     QVERIFY(application.menuShortcutTextForId(KiriViewApplication::ActionCount).isEmpty());
+}
+
+void TestKiriViewApplication::navigationPresentationApiConvertsRuntimeProjection()
+{
+    KiriViewApplication application;
+
+    QCOMPARE(
+        application.navigationPresentationActionId(KiriViewApplication::LeadingImageActionSlot),
+        KiriViewApplication::GoPreviousImageAction);
+    QCOMPARE(
+        application.navigationPresentationIconActionId(KiriViewApplication::LeadingImageActionSlot),
+        KiriViewApplication::GoPreviousImageAction);
+    QCOMPARE(
+        application.navigationPresentationActionId(KiriViewApplication::TrailingImageActionSlot),
+        KiriViewApplication::GoNextImageAction);
+    QCOMPARE(application.navigationPresentationIconActionId(
+                 KiriViewApplication::TrailingImageActionSlot),
+        KiriViewApplication::GoNextImageAction);
+    QCOMPARE(
+        application.navigationPresentationActionId(KiriViewApplication::FirstImageMenuActionSlot),
+        KiriViewApplication::GoFirstImageAction);
+    QCOMPARE(application.navigationPresentationIconActionId(
+                 KiriViewApplication::FirstImageMenuActionSlot),
+        KiriViewApplication::GoFirstImageAction);
+    QCOMPARE(application.navigationPresentationActionId(
+                 KiriViewApplication::LeadingArchiveMenuActionSlot),
+        KiriViewApplication::GoPreviousArchiveAction);
+    QCOMPARE(application.navigationPresentationIconActionId(
+                 KiriViewApplication::LeadingArchiveMenuActionSlot),
+        KiriViewApplication::GoPreviousArchiveAction);
+    QCOMPARE(application.navigationApplicationMenuActionIds(),
+        QVariantList({ static_cast<int>(KiriViewApplication::GoPreviousArchiveAction),
+            static_cast<int>(KiriViewApplication::GoNextArchiveAction) }));
+
+    QCOMPARE(application.navigationPresentationActionId(
+                 static_cast<KiriViewApplication::NavigationPresentationSlot>(-1)),
+        KiriViewApplication::ActionCount);
+    QCOMPARE(application.navigationPresentationIconActionId(
+                 static_cast<KiriViewApplication::NavigationPresentationSlot>(999)),
+        KiriViewApplication::ActionCount);
 }
 
 void TestKiriViewApplication::shortcutRouteModelExposesApplicationPolicy()

@@ -5,6 +5,7 @@
 #include "application/applicationactionruntime.h"
 #include "application/applicationcommandportsource.h"
 #include "application/applicationcommandrouter.h"
+#include "application/navigationpresentationprojection.h"
 #include "session/documentsessiontypes.h"
 
 #include <KirigamiActionCollection>
@@ -44,6 +45,13 @@ struct CommandLog
     int previousNavigationCount = 0;
 };
 
+void compareNavigationSlot(
+    const Actions::NavigationPresentationSlot& slot, ActionId actionId, ActionId iconActionId)
+{
+    QCOMPARE(slot.actionId, actionId);
+    QCOMPARE(slot.iconActionId, iconActionId);
+}
+
 class FakeCommandPortSource final : public Actions::ApplicationCommandPortSource
 {
 public:
@@ -75,6 +83,7 @@ private Q_SLOTS:
     void fixedShortcutDispatchesThroughRuntimeOwnedRouter();
     void actionStateSnapshotBuildsRuntimePolicyInput();
     void actionStateSnapshotBuildsCommandRouterInput();
+    void navigationPresentationProjectionFollowsActionStateSnapshot();
 };
 
 void TestApplicationActionRuntime::triggeredActionDispatchesThroughRuntimeOwnedRouter()
@@ -165,6 +174,32 @@ void TestApplicationActionRuntime::actionStateSnapshotBuildsCommandRouterInput()
     QVERIFY(input.imageDocumentPageNavigationActive);
     QVERIFY(input.atKnownFirstActiveNavigation);
     QVERIFY(input.canOpenPreviousActiveNavigation);
+}
+
+void TestApplicationActionRuntime::navigationPresentationProjectionFollowsActionStateSnapshot()
+{
+    FakeApplicationActionHost host;
+    Actions::ApplicationActionRuntime runtime(host);
+
+    Actions::NavigationPresentationProjection projection
+        = runtime.navigationPresentationProjection();
+    compareNavigationSlot(projection.leadingImageAction, ActionId::GoPreviousImageAction,
+        ActionId::GoPreviousImageAction);
+    compareNavigationSlot(projection.trailingArchiveMenuAction, ActionId::GoNextArchiveAction,
+        ActionId::GoNextArchiveAction);
+
+    Actions::ApplicationActionStateSnapshot snapshot;
+    snapshot.sessionActionAvailability.imageReady = true;
+    snapshot.sessionActionAvailability.rightToLeftReadingActive = true;
+    snapshot.sessionActionAvailability.rightToLeftReadingAvailable = true;
+
+    runtime.setActionStateSnapshot(snapshot);
+
+    projection = runtime.navigationPresentationProjection();
+    compareNavigationSlot(projection.leadingImageAction, ActionId::GoNextImageAction,
+        ActionId::GoPreviousImageAction);
+    compareNavigationSlot(projection.trailingArchiveMenuAction, ActionId::GoPreviousArchiveAction,
+        ActionId::GoNextArchiveAction);
 }
 
 int main(int argc, char** argv)

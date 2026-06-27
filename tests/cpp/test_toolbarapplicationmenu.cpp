@@ -252,7 +252,7 @@ Item {
     property int fitHeightTriggerCount: 0
     property int fitWidthTriggerCount: 0
     property bool navigationActionsEnabled: %3
-    property bool rightToLeftReadingActive: false
+    property alias rightToLeftPresentationActive: navigationPresentationProvider.rightToLeftReadingActive
     property bool videoMode: false
     readonly property bool readingControlsVisible: %4
 
@@ -445,6 +445,60 @@ Item {
         }
     }
 
+    QtObject {
+        id: navigationPresentationProvider
+
+        property bool rightToLeftReadingActive: false
+
+        function navigationPresentationActionId(slot) {
+            switch (slot) {
+            case KiriViewApplication.LeadingImageActionSlot:
+            case KiriViewApplication.LeadingImageMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoNextImageAction : KiriViewApplication.GoPreviousImageAction;
+            case KiriViewApplication.TrailingImageActionSlot:
+            case KiriViewApplication.TrailingImageMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoPreviousImageAction : KiriViewApplication.GoNextImageAction;
+            case KiriViewApplication.FirstImageMenuActionSlot:
+                return KiriViewApplication.GoFirstImageAction;
+            case KiriViewApplication.LastImageMenuActionSlot:
+                return KiriViewApplication.GoLastImageAction;
+            case KiriViewApplication.LeadingArchiveMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoNextArchiveAction : KiriViewApplication.GoPreviousArchiveAction;
+            case KiriViewApplication.TrailingArchiveMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoPreviousArchiveAction : KiriViewApplication.GoNextArchiveAction;
+            default:
+                return KiriViewApplication.ActionCount;
+            }
+        }
+
+        function navigationPresentationIconActionId(slot) {
+            switch (slot) {
+            case KiriViewApplication.LeadingImageActionSlot:
+            case KiriViewApplication.LeadingImageMenuActionSlot:
+                return KiriViewApplication.GoPreviousImageAction;
+            case KiriViewApplication.TrailingImageActionSlot:
+            case KiriViewApplication.TrailingImageMenuActionSlot:
+                return KiriViewApplication.GoNextImageAction;
+            case KiriViewApplication.LeadingArchiveMenuActionSlot:
+                return KiriViewApplication.GoPreviousArchiveAction;
+            case KiriViewApplication.TrailingArchiveMenuActionSlot:
+                return KiriViewApplication.GoNextArchiveAction;
+            case KiriViewApplication.FirstImageMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoLastImageAction : KiriViewApplication.GoFirstImageAction;
+            case KiriViewApplication.LastImageMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoFirstImageAction : KiriViewApplication.GoLastImageAction;
+            default:
+                return KiriViewApplication.ActionCount;
+            }
+        }
+
+        function navigationApplicationMenuActionIds() {
+            return rightToLeftReadingActive
+                ? [KiriViewApplication.GoNextArchiveAction, KiriViewApplication.GoPreviousArchiveAction]
+                : [KiriViewApplication.GoPreviousArchiveAction, KiriViewApplication.GoNextArchiveAction];
+        }
+    }
+
     readonly property KiriImageDocument sessionImageDocument: documentSession.imageDocument
 
     KiriDocumentSession {
@@ -581,7 +635,7 @@ Item {
         imageReady: !root.videoMode && root.sessionImageDocument.status === KiriImageDocument.Ready
         maximumManualZoomPercent: root.sessionImageDocument.maximumManualZoomPercent
         minimumManualZoomPercent: root.sessionImageDocument.minimumManualZoomPercent
-        rightToLeftReadingActive: root.rightToLeftReadingActive
+        navigationPresentationProvider: navigationPresentationProvider
         rightToLeftReadingControlVisible: root.readingControlsVisible
         showApplicationMenuActions: true
         twoPageModeControlVisible: root.readingControlsVisible
@@ -621,7 +675,7 @@ Item {
     width: 720
     height: 420
 
-    property bool rightToLeftReadingActive: false
+    property alias rightToLeftPresentationActive: navigationPresentationProvider.rightToLeftReadingActive
 
     function sanitizedText(text) {
         return String(text).replace(/&/g, "");
@@ -725,11 +779,65 @@ Item {
         readonly property var shortcutHelpMenuAction: stubShortcutHelpMenuAction
     }
 
+    QtObject {
+        id: navigationPresentationProvider
+
+        property bool rightToLeftReadingActive: false
+
+        function navigationPresentationActionId(slot) {
+            switch (slot) {
+            case KiriViewApplication.LeadingImageActionSlot:
+            case KiriViewApplication.LeadingImageMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoNextImageAction : KiriViewApplication.GoPreviousImageAction;
+            case KiriViewApplication.TrailingImageActionSlot:
+            case KiriViewApplication.TrailingImageMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoPreviousImageAction : KiriViewApplication.GoNextImageAction;
+            case KiriViewApplication.FirstImageMenuActionSlot:
+                return KiriViewApplication.GoFirstImageAction;
+            case KiriViewApplication.LastImageMenuActionSlot:
+                return KiriViewApplication.GoLastImageAction;
+            case KiriViewApplication.LeadingArchiveMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoNextArchiveAction : KiriViewApplication.GoPreviousArchiveAction;
+            case KiriViewApplication.TrailingArchiveMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoPreviousArchiveAction : KiriViewApplication.GoNextArchiveAction;
+            default:
+                return KiriViewApplication.ActionCount;
+            }
+        }
+
+        function navigationPresentationIconActionId(slot) {
+            switch (slot) {
+            case KiriViewApplication.LeadingImageActionSlot:
+            case KiriViewApplication.LeadingImageMenuActionSlot:
+                return KiriViewApplication.GoPreviousImageAction;
+            case KiriViewApplication.TrailingImageActionSlot:
+            case KiriViewApplication.TrailingImageMenuActionSlot:
+                return KiriViewApplication.GoNextImageAction;
+            case KiriViewApplication.FirstImageMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoLastImageAction : KiriViewApplication.GoFirstImageAction;
+            case KiriViewApplication.LastImageMenuActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoFirstImageAction : KiriViewApplication.GoLastImageAction;
+            case KiriViewApplication.LeadingArchiveMenuActionSlot:
+                return KiriViewApplication.GoPreviousArchiveAction;
+            case KiriViewApplication.TrailingArchiveMenuActionSlot:
+                return KiriViewApplication.GoNextArchiveAction;
+            default:
+                return KiriViewApplication.ActionCount;
+            }
+        }
+
+        function navigationApplicationMenuActionIds() {
+            return rightToLeftReadingActive
+                ? [KiriViewApplication.GoNextArchiveAction, KiriViewApplication.GoPreviousArchiveAction]
+                : [KiriViewApplication.GoPreviousArchiveAction, KiriViewApplication.GoNextArchiveAction];
+        }
+    }
+
     KiriViewQml.ApplicationMenuBar {
         id: menuBar
 
         actions: menuActions
-        rightToLeftReadingActive: root.rightToLeftReadingActive
+        navigationPresentationProvider: navigationPresentationProvider
     }
 }
 )")
@@ -773,7 +881,7 @@ Item {
     }
 
     function rightToLeftReadingActive() {
-        return imageActions.rightToLeftReadingActive;
+        return documentSession.activeImageRightToLeftReadingActive;
     }
 
     function rightToLeftReadingAvailable() {
@@ -1508,7 +1616,7 @@ void TestToolBarApplicationMenu::pageNavigationButtonsUseSemanticActionsForReadi
 
     QVERIFY(QMetaObject::invokeMethod(
         fixture.root, "resetNavigationTriggerCounts", Qt::DirectConnection));
-    fixture.root->setProperty("rightToLeftReadingActive", true);
+    fixture.root->setProperty("rightToLeftPresentationActive", true);
     QCoreApplication::processEvents();
 
     QTRY_COMPARE(leftButton->property("text").toString(), QStringLiteral("Next Image"));
@@ -1551,7 +1659,7 @@ void TestToolBarApplicationMenu::menubarGoMenuOrderFollowsReadingDirection()
     QCOMPARE(invokeStringList(fixture.root, "goMenuActionTexts", &ok), leftToRightOrder);
     QVERIFY(ok);
 
-    fixture.root->setProperty("rightToLeftReadingActive", true);
+    fixture.root->setProperty("rightToLeftPresentationActive", true);
     QCoreApplication::processEvents();
 
     QTRY_COMPARE(invokeStringList(fixture.root, "goMenuActionTexts"), rightToLeftOrder);
@@ -1583,7 +1691,7 @@ void TestToolBarApplicationMenu::menubarGoMenuIconsFollowReadingDirection()
     QCOMPARE(invokeStringList(fixture.root, "goMenuActionIconNames", &ok), leftToRightIcons);
     QVERIFY(ok);
 
-    fixture.root->setProperty("rightToLeftReadingActive", true);
+    fixture.root->setProperty("rightToLeftPresentationActive", true);
     QCoreApplication::processEvents();
 
     QTRY_COMPARE(invokeStringList(fixture.root, "goMenuActionIconNames"), rightToLeftIcons);

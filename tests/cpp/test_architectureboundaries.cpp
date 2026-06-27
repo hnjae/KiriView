@@ -867,7 +867,7 @@ void TestArchitectureBoundaries::qmlUsesCentralNavigationPresentationOrder()
     const QString projectionRelativePath
         = QStringLiteral("src/qml/NavigationPresentationOrder.qml");
     QVERIFY2(QFileInfo::exists(projectPath(projectionRelativePath)),
-        qPrintable(QStringLiteral("%1 must own RTL-aware navigation presentation ordering")
+        qPrintable(QStringLiteral("%1 must adapt the C++ navigation presentation projection")
                 .arg(projectionRelativePath)));
 
     const QList<QRegularExpression> forbiddenPatterns {
@@ -879,10 +879,6 @@ void TestArchitectureBoundaries::qmlUsesCentralNavigationPresentationOrder()
 
     QStringList violations;
     for (const QString& filePath : productionQmlFiles()) {
-        if (relativeProjectPath(filePath) == projectionRelativePath) {
-            continue;
-        }
-
         const QString matches = matchingLines(filePath, forbiddenPatterns);
         if (!matches.isEmpty()) {
             violations.push_back(matches);
@@ -892,9 +888,26 @@ void TestArchitectureBoundaries::qmlUsesCentralNavigationPresentationOrder()
     QVERIFY2(violations.isEmpty(), qPrintable(violations.join(QLatin1Char('\n'))));
 
     const QString projection = readProjectFile(projectionRelativePath);
-    QVERIFY(projection.contains(QStringLiteral("rightToLeftReadingActive")));
+    QVERIFY(!projection.contains(QStringLiteral("rightToLeftReadingActive")));
+    QVERIFY(projection.contains(QStringLiteral("required property var projectionProvider")));
+    QVERIFY(projection.contains(QStringLiteral("navigationPresentationActionId")));
+    QVERIFY(projection.contains(QStringLiteral("navigationPresentationIconActionId")));
+    QVERIFY(projection.contains(QStringLiteral("navigationApplicationMenuActionIds")));
     QVERIFY(projection.contains(QStringLiteral("leading")));
     QVERIFY(projection.contains(QStringLiteral("trailing")));
+
+    const QList<QString> consumers {
+        QStringLiteral("src/qml/ImageActions.qml"),
+        QStringLiteral("src/qml/ApplicationMenuBar.qml"),
+        QStringLiteral("src/qml/ImageDocumentPageNavigation.qml"),
+    };
+    for (const QString& relativePath : consumers) {
+        const QString consumer = readProjectFile(relativePath);
+        QVERIFY2(consumer.contains(QStringLiteral("projectionProvider:")),
+            qPrintable(QStringLiteral("%1 must consume NavigationPresentationOrder through a "
+                                      "C++ projection provider")
+                    .arg(relativePath)));
+    }
 }
 
 void TestArchitectureBoundaries::viewportCommandBridgeOwnsFullCommandLifecycle()

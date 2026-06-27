@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "facade/kiridocumentsession.h"
+#include "facade/kiriviewapplication.h"
 #include "localization/localization.h"
 #include "session/documentsessionruntime.h"
 
@@ -24,6 +25,7 @@
 #include <QTest>
 #include <QUrl>
 #include <QVariant>
+#include <QtQml/qqml.h>
 #include <memory>
 #include <type_traits>
 #include <utility>
@@ -172,6 +174,7 @@ QString pageNavigationFixtureQml()
     return QStringLiteral(R"(
 import QtQuick
 import QtQuick.Controls as Controls
+import org.hnjae.kiriview
 import "%1" as KiriViewQml
 
 Item {
@@ -189,11 +192,11 @@ Item {
     property bool activeNavigationKnown: true
     property bool nextEnabled: true
     property bool previousEnabled: true
-    property bool rightToLeftReadingActive: false
     property bool editingReturnedFocus: false
     property int nextTriggerCount: 0
     property int openedNumber: -1
     property int previousTriggerCount: 0
+    property alias rightToLeftPresentationActive: navigationPresentationProvider.rightToLeftReadingActive
 
     function openActiveNavigationAtNumber(number) {
         openedNumber = number;
@@ -225,6 +228,38 @@ Item {
         property var previousImageAction: previousAction
     }
 
+    QtObject {
+        id: navigationPresentationProvider
+
+        property bool rightToLeftReadingActive: false
+
+        function navigationPresentationActionId(slot) {
+            switch (slot) {
+            case KiriViewApplication.LeadingImageActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoNextImageAction : KiriViewApplication.GoPreviousImageAction;
+            case KiriViewApplication.TrailingImageActionSlot:
+                return rightToLeftReadingActive ? KiriViewApplication.GoPreviousImageAction : KiriViewApplication.GoNextImageAction;
+            default:
+                return KiriViewApplication.ActionCount;
+            }
+        }
+
+        function navigationPresentationIconActionId(slot) {
+            switch (slot) {
+            case KiriViewApplication.LeadingImageActionSlot:
+                return KiriViewApplication.GoPreviousImageAction;
+            case KiriViewApplication.TrailingImageActionSlot:
+                return KiriViewApplication.GoNextImageAction;
+            default:
+                return KiriViewApplication.ActionCount;
+            }
+        }
+
+        function navigationApplicationMenuActionIds() {
+            return [];
+        }
+    }
+
     KiriViewQml.ImageDocumentPageNavigation {
         id: pageNavigation
 
@@ -236,8 +271,8 @@ Item {
         activeNavigationEditable: root.activeNavigationEditable
         activeNavigationKnown: root.activeNavigationKnown
         actions: actions
+        navigationPresentationProvider: navigationPresentationProvider
         openActiveNavigationAtNumber: root.openActiveNavigationAtNumber
-        rightToLeftReadingActive: root.rightToLeftReadingActive
 
         onEditingCompleted: function (returnViewerFocus) {
             root.editingReturnedFocus = returnViewerFocus;
@@ -364,6 +399,7 @@ void TestMainWindowVideoIntegration::initTestCase()
 {
     QStandardPaths::setTestModeEnabled(true);
     kiriview::initializeLocalization();
+    qmlRegisterType<KiriViewApplication>("org.hnjae.kiriview", 1, 0, "KiriViewApplication");
     if (!qEnvironmentVariableIsSet("QT_QUICK_CONTROLS_STYLE")) {
         QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
     }
@@ -388,7 +424,7 @@ void TestMainWindowVideoIntegration::pageNavigationButtonsTriggerActiveNavigatio
     QCOMPARE(fixture.root->property("previousTriggerCount").toInt(), 1);
     QCOMPARE(fixture.root->property("nextTriggerCount").toInt(), 1);
 
-    QVERIFY(fixture.root->setProperty("rightToLeftReadingActive", true));
+    QVERIFY(fixture.root->setProperty("rightToLeftPresentationActive", true));
     QCoreApplication::processEvents();
     clickItem(fixture.view.get(), fixture.leftButton);
     QCOMPARE(fixture.root->property("previousTriggerCount").toInt(), 1);
