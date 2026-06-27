@@ -16,7 +16,7 @@ When the active navigation scope is a directly opened CBZ, CBT, CB7, CBR, ZIP, T
 
 When the active navigation scope is not an opened archive or directory collection, including empty state, ordinary direct image files, direct video files, and direct KDE archive-entry URLs, the trailing action toolbar does not show Right-to-Left Reading or Two-Page Spread.
 
-Right-to-Left Reading and Two-Page Spread visibility is determined by the active navigation scope, not by whether the current media item is an image, direct video, or unsupported-video placeholder. When a direct video is displayed in an ordinary direct media scope, Fit and zoom remain in their image-mode positions; Fit is disabled and zoom is read-only.
+Right-to-Left Reading and Two-Page Spread visibility is determined by the active navigation scope, not by whether the current media item is an image, direct video, playable collection video, or unsupported-video placeholder. When a video is displayed, Fit and zoom remain in their image-mode positions; Fit is disabled and zoom is read-only.
 
 When Right-to-Left Reading or Two-Page Spread is visible for an opened collection that is not a directly opened local CBZ, CBT, CB7, or CBR comic book archive, the control is disabled.
 
@@ -236,9 +236,9 @@ The Video section uses the current video frame dimensions when they are known. I
 
 For images, embedded metadata is parsed from the same media content used for image display, so direct files, directory collections, and archive collections expose metadata consistently with the displayed image source.
 
-For direct videos, embedded metadata is parsed from the resolved playback or local file path. Collection-internal video metadata is not shown while those videos remain unsupported placeholders.
+For direct videos, embedded metadata is parsed from the resolved playback or local file path. Collection-internal video metadata is not shown for playable collection videos or unsupported-video placeholders.
 
-An unsupported-video placeholder keeps the current media item's video identity in the Info Panel. Its General section type is Video and its media-specific section is Video, but collection-internal video metadata rows are omitted because collection-internal video playback and metadata are not provided.
+Playable collection videos and unsupported-video placeholders keep the current media item's video identity in the Info Panel. Their General section type is Video and their media-specific section is Video, but collection-internal video metadata rows are omitted.
 
 The Camera section shows curated embedded metadata rows only when the values are available: Camera, Taken, Location, Lens, Exposure, ISO, Focal Length, and Software. Camera combines make and model when both exist. Location is shown as coordinates only.
 

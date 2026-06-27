@@ -2,23 +2,25 @@
 
 ## Product Boundary
 
-KiriView supports direct video files as moving, sound-capable image-like media items.
+KiriView supports direct video files and eligible video entries inside directly opened archive collections as moving, sound-capable image-like media items.
 
 Supported direct video inputs may come from the startup argument, drop, open dialog selection, or ordinary adjacent direct media navigation from a direct media URL scope.
 
-The direct video format list is MP4, M4V, and MOV, case-insensitively.
+The video format list is MP4, M4V, and MOV, case-insensitively.
+
+A directly opened archive collection video entry is playable only when it is an uncompressed stored ZIP entry inside a local CBZ or ZIP archive, or a plain TAR entry inside a local CBT or TAR archive.
 
 Direct video playback supports direct file-like URLs that KiriView can hand to KDE/KIO as ordinary file items, including local paths, `file://` URLs, KDE-supported remote file URLs such as `smb://`, and KDE-supported archive URLs that point at a file entry such as `zip:///path/archive.zip!/clip.mp4`.
 
 Direct KDE archive-entry URLs are not KiriView archive collection scope. KiriView may open `zip:///path/archive.zip!/clip.mp4` as a direct media URL while still opening `/path/archive.zip` as an archive collection when the archive itself is selected.
 
-The product boundary is based on KiriView's opened collection state, not on URL scheme alone. If KiriView has opened an archive or directory as an opened collection, supported video entries inside that collection are opened collection navigation items with an unsupported-video placeholder and are not played. If KiriView is handling a direct media URL without an active archive or directory collection context, that URL remains eligible for video support even when its scheme is a KDE archive scheme.
+The product boundary is based on KiriView's opened collection state, not on URL scheme alone. If KiriView has opened an archive as an opened collection, supported video entries inside that collection are opened collection navigation items; eligible stored ZIP and plain TAR entries are played, while ineligible archive video entries show the unsupported-video placeholder. If KiriView has opened a directory as an opened collection, supported video entries inside that directory remain unsupported-video placeholders and are not played. If KiriView is handling a direct media URL without an active archive or directory collection context, that URL remains eligible for direct video support even when its scheme is a KDE archive scheme.
 
-Video files do not participate in video-frame preparation for image-style quick navigation, editable image zoom, image pan, image rotate, two-page spread pairing, or Right-to-Left Reading.
+Video files do not participate in video-frame preparation for image-style quick navigation, editable image zoom, image pan, image rotate, or two-page spread pairing.
 
 In ordinary direct media URL scopes, showing a video must not clear or stop background preparation for nearby supported image files. KiriView may keep and continue preparing adjacent still images around the current video cursor, but it must not prepare the video itself as still-image quick-navigation data.
 
-Archive-collection-internal video playback, directly opened directory-collection video playback, collection-internal video metadata, playlists, subtitles, track selection, frame stepping, and timeline preview thumbnails are not provided.
+Archive-collection-internal video playback is limited to eligible stored ZIP and plain TAR entries. Directly opened directory-collection video playback, collection-internal video metadata, playlists, subtitles, track selection, frame stepping, and timeline preview thumbnails are not provided.
 
 KiriView advertises direct video support through the desktop file for the MIME types that cover the MP4, M4V, and MOV format list: `video/mp4` and `video/quicktime`.
 
@@ -30,9 +32,13 @@ When direct video playback URL resolution fails, the user-facing error text is a
 
 Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent direct media navigation, deletion target, error context, and direct-media versus opened-collection routing decisions remain based on the original direct media URL.
 
+Opened archive collection video playback keeps the collection entry URL as the user-facing source identity. Any internal playback source device or helper source is not exposed as the public source URL and does not create an ordinary direct media scope.
+
 Resolver-local playback URLs are video-only. Opening a direct image after a direct video uses the original image URL and restores normal image behavior, not the previous video playback URL.
 
 Direct video embedded metadata is parsed from the resolved playback URL when it is local and from the original direct local URL otherwise. Parsed metadata may populate the Info Panel while keeping the original direct media URL as the user-facing source identity.
+
+Collection-internal video metadata is not parsed for the Info Panel.
 
 Opening a video after an image switches to video behavior rather than image behavior.
 
@@ -58,7 +64,7 @@ Supported image files and supported direct video files share one locale-aware si
 
 Direct media navigation is non-recursive, does not wrap, and uses the same active navigation readout and boundary-feedback model as collection page navigation. Boundary feedback in a direct media scope uses neutral first-media-item and last-media-item wording rather than calling every boundary item an image.
 
-Adjacent Previous and Next use direct media navigation in video mode and in image mode only when the active image belongs to an ordinary direct media URL scope. Archive collection and directly opened directory collection scopes keep opened-collection navigation active instead.
+Adjacent Previous and Next use direct media navigation in ordinary direct media video mode and in image mode only when the active image belongs to an ordinary direct media URL scope. Archive collection and directly opened directory collection scopes keep opened-collection navigation active instead.
 
 ## Playback
 
@@ -71,6 +77,8 @@ Video mode shows a video viewport and a Breeze-style playback control panel at t
 The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, the total supported media item count for the ordinary direct media URL scope when that list is known, and the same trailing control order as image mode.
 
 In ordinary direct media video mode, Right-to-Left Reading and Two-Page Spread are hidden because they belong to opened archive and directory collection scopes. Fit remains in its image-mode position but is disabled, and the zoom control is read-only.
+
+In opened archive collection video mode, active navigation remains the opened archive collection. Right-to-Left Reading and Two-Page Spread visibility follows the archive collection toolbar rules, but Two-Page Spread never pairs a video item. Fit remains disabled, and the zoom control is read-only.
 
 Video mode shows a read-only zoom percentage when the video frame size, displayed video content rectangle, and target window effective device pixel ratio are known. The value is the current fitted display size in physical pixels relative to the video's intrinsic frame size. When the percentage is unknown, the read-only zoom control displays `? %`. Users cannot edit this value or use image zoom actions for video.
 
@@ -98,11 +106,13 @@ Unknown duration, invalid duration, and non-seekable media produce a stable disa
 
 ## Video Navigation and Seeking
 
-In video mode, viewer Left and Right and existing adjacent navigation actions move to the previous or next supported media item in the ordinary parent location. They do not seek within the video.
+In direct video mode, viewer Left and Right and existing adjacent navigation actions move to the previous or next supported media item in the ordinary parent location. They do not seek within the video.
 
-In video mode, the shared scan shortcuts also use adjacent navigation: `.` and `Space` move to the next supported media item, while `,` and `Shift+Space` move to the previous supported media item. They do not pan or seek within the video.
+In opened archive collection video mode, viewer Left and Right and existing adjacent navigation actions move to the previous or next supported media item in the opened archive collection. They do not seek within the video.
 
-Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Current Content Start, Current Content End, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, and Quit. Shared direct media navigation shortcuts use session active-navigation dispatch and availability.
+In video mode, the shared scan shortcuts also use adjacent navigation in the active navigation scope: `.` and `Space` move to the next supported media item, while `,` and `Shift+Space` move to the previous supported media item. They do not pan or seek within the video.
+
+Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Current Content Start, Current Content End, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, and Quit. Shared navigation shortcuts use session active-navigation dispatch and availability.
 
 The fixed Show Menubar shortcut follows the Menu Presentation contract in video mode.
 
@@ -124,7 +134,7 @@ Video mode also supports fixed local seek shortcuts: `Alt+Left` seeks backward 5
 
 The configurable current-content start and end shortcuts follow the same media seekability gates as timeline seeking. Current Content End is unavailable when the duration is unknown, zero, or invalid.
 
-Video seek shortcuts are video-mode-only and must not affect image mode, archive collection scope, or directly opened directory collection scope.
+Video seek shortcuts are video-mode-only and must not affect image mode, unsupported-video placeholders, or directly opened directory collection scope.
 
 Video seek shortcuts are best-effort time seeks. They run only when the media is seekable, clamp to the valid `[0, duration]` range when duration is known, and must not promise frame-accurate seeking.
 

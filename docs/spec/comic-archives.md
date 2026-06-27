@@ -12,7 +12,7 @@ Any page whose pixel width is greater than its pixel height is treated as a wide
 
 If the next page after the current page is wide, the current page is displayed alone and the next navigation action opens that wide page.
 
-If the next opened collection item after the current image is a video, the current image is displayed alone and the next navigation action opens that video item as an unsupported-video placeholder.
+If the next opened collection item after the current image is a video, the current image is displayed alone and the next navigation action opens that video item. Eligible stored ZIP and plain TAR video entries play in video mode; ineligible video entries show the unsupported-video placeholder.
 
 Two-Page Spread is unavailable for ordinary image files, direct video files, KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories.
 
@@ -80,7 +80,7 @@ When the current item is a normal image file, direct video file, inside a KDE-su
 
 Previous Archive and Next Archive are also disabled inside directly opened directory collections.
 
-Supported video entries inside a comic book archive opened directly by KiriView participate in archive collection navigation, but KiriView shows them as unsupported-video placeholders instead of playing them.
+Supported video entries inside a comic book archive opened directly by KiriView participate in archive collection navigation. Eligible stored ZIP and plain TAR video entries play in video mode; ineligible video entries show unsupported-video placeholders.
 
 KDE archive URLs that point at individual video file entries remain direct media URLs and do not create comic book archive collection context.
 
@@ -94,7 +94,7 @@ Navigation does not wrap. Pressing Previous Archive on the first candidate keeps
 
 `Home` opens the first supported media item in the current archive, and `End` opens the last supported media item in the current archive.
 
-Opening a comic book archive displays the first supported media item in that archive using the same archive media ordering as page navigation. If the first supported item is a video, KiriView displays the unsupported-video placeholder.
+Opening a comic book archive displays the first supported media item in that archive using the same archive media ordering as page navigation. If the first supported item is a playable collection video, KiriView plays it. If the first supported item is an ineligible video, KiriView displays the unsupported-video placeholder.
 
 When KiriView is started with a direct comic book archive source, the first supported media item appears in the main viewport once it is display-ready or represented by an unsupported-video placeholder. Thumbnail pane visibility, information pane visibility, and other layout side effects do not control whether the accepted archive item is rendered.
 

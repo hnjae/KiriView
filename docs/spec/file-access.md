@@ -14,11 +14,13 @@ Direct video URLs include local paths, `file://` URLs, KDE-supported remote file
 
 When a video is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats it as a single direct media URL rather than opening the whole archive as an archive collection.
 
+When a video is opened from a directly opened archive collection, KiriView plays MP4, M4V, and MOV entries only when they are uncompressed stored ZIP entries inside local CBZ or ZIP archives, or plain TAR entries inside local CBT or TAR archives.
+
 KiriView may internally resolve a KIO-backed direct video URL to a playback URL before playback starts. KiriView treats this resolution as successful only when the resolved playback URL can be played. This does not change the user-facing source URL for the window title, adjacent direct media navigation, deletion target, error context, or direct-media versus opened-collection routing decisions.
 
-KiriView opens local `.cbz`, `.cbt`, `.cb7`, and `.cbr` comic book archives. When a local comic book archive is opened directly, KiriView uses that archive as the current archive collection and displays the first supported media item inside that archive. If the first supported item is a video, KiriView displays the unsupported-video placeholder.
+KiriView opens local `.cbz`, `.cbt`, `.cb7`, and `.cbr` comic book archives. When a local comic book archive is opened directly, KiriView uses that archive as the current archive collection and displays the first supported media item inside that archive. If the first supported item is a playable collection video, KiriView plays it. If the first supported item is an ineligible video, KiriView displays the unsupported-video placeholder.
 
-KiriView opens local `.zip`, `.tar`, `.7z`, and `.rar` archives only when they are directly provided, such as through a startup argument or the open dialog's `All files (*)` filter. When a local general archive is opened directly, KiriView uses that archive as the current archive collection and displays the first supported media item inside that archive. If the first supported item is a video, KiriView displays the unsupported-video placeholder.
+KiriView opens local `.zip`, `.tar`, `.7z`, and `.rar` archives only when they are directly provided, such as through a startup argument or the open dialog's `All files (*)` filter. When a local general archive is opened directly, KiriView uses that archive as the current archive collection and displays the first supported media item inside that archive. If the first supported item is a playable collection video, KiriView plays it. If the first supported item is an ineligible video, KiriView displays the unsupported-video placeholder.
 
 General archives are not advertised through the desktop file's file associations, the open dialog's default image, video, and comic book filter, or sibling archive navigation.
 
@@ -54,7 +56,7 @@ In Flatpak, KiriView can also request write access to those same locations for f
 
 ## Deletion
 
-When an image, direct video, or opened-collection unsupported-video placeholder has a current deletion target, Delete requests moving that target to trash and Shift+Delete requests permanently deleting that target.
+When an image, direct video, playable collection video, or opened-collection unsupported-video placeholder has a current deletion target, Delete requests moving that target to trash and Shift+Delete requests permanently deleting that target.
 
 The actions are available from the application menu or menubar File menu and through their shortcuts, but not from the toolbar.
 
@@ -98,7 +100,7 @@ The Open With action opens the currently displayed media item with another appli
 
 The Open With target is the current media item rather than the deletion target. For direct images, remote images, direct videos, and media opened directly from KDE-supported archive URLs such as `zip://`, the target is the displayed or original direct media URL. For a directly opened local directory collection, the target is the currently displayed image or unsupported-video placeholder file inside that directory.
 
-For media items displayed inside a directly opened local CBZ, CBT, CB7, ZIP, TAR, or 7Z archive collection, the Open With target is the currently displayed internal media URL when that URL uses a KDE-supported archive scheme such as `zip://`, `tar://`, or `sevenz://`.
+For media items displayed inside a directly opened local CBZ, CBT, CB7, ZIP, TAR, or 7Z archive collection, including playable collection videos and unsupported-video placeholders, the Open With target is the currently displayed internal media URL when that URL uses a KDE-supported archive scheme such as `zip://`, `tar://`, or `sevenz://`.
 
 For media items displayed inside a directly opened local CBR or RAR archive collection, Open With is disabled because KiriView's internal RAR support is not treated as a KDE/KIO-openable media URL.
 
@@ -112,7 +114,7 @@ For direct images, remote images, direct videos, and media opened directly from 
 
 For media items displayed inside a directly opened local directory collection, the Copy File Path target is the currently displayed image or unsupported-video placeholder file inside that directory.
 
-For media items displayed inside a directly opened local CBZ, CBT, CB7, ZIP, TAR, or 7Z archive collection, the Copy File Path target is the currently displayed internal media URL when that URL uses a KDE-supported archive scheme such as `zip://`, `tar://`, or `sevenz://`.
+For media items displayed inside a directly opened local CBZ, CBT, CB7, ZIP, TAR, or 7Z archive collection, including playable collection videos and unsupported-video placeholders, the Copy File Path target is the currently displayed internal media URL when that URL uses a KDE-supported archive scheme such as `zip://`, `tar://`, or `sevenz://`.
 
 For media items displayed inside a directly opened local CBR or RAR archive collection, Copy File Path is disabled because KiriView's internal RAR support is not treated as a KDE/KIO-openable media URL.
 

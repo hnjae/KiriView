@@ -82,13 +82,13 @@ The ordinary direct media URL parent is derived from the original direct media U
 
 When an image or video is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats the opened item as a single direct media URL, and navigation moves between supported media files in the same directory inside that archive URL.
 
-When an image or unsupported-video placeholder is displayed from a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive collection opened directly by KiriView, navigation moves between all supported image and video files inside that archive collection, including supported media in subdirectories.
+When an image, playable collection video, or unsupported-video placeholder is displayed from a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive collection opened directly by KiriView, navigation moves between all supported image and video files inside that archive collection, including supported media in subdirectories.
 
 When an image or unsupported-video placeholder is displayed from a local directory collection opened directly by KiriView, navigation moves between all supported image and video files inside that directory tree, including supported media in subdirectories.
 
 After the archive or directory collection has been listed, page navigation uses all supported image and video files inside that opened collection as its navigation target set.
 
-Supported video entries inside directly opened archive collections and directly opened directory collections are valid opened collection navigation items. KiriView does not play those videos while an opened collection scope is active; selecting one keeps image mode active and shows an unsupported-video placeholder with the message `KiriView can’t play videos inside directly opened archives or directories.` Entering that placeholder also shows the same text as an in-app toast.
+Supported video entries inside directly opened archive collections and directly opened directory collections are valid opened collection navigation items. Eligible stored ZIP and plain TAR archive entries open in video mode and play inside the opened archive collection scope. Ineligible archive video entries and directly opened directory collection video entries keep image mode active and show an unsupported-video placeholder with the message `KiriView can’t play this video from the selected collection.` Entering that placeholder also shows the same text as an in-app toast.
 
 If the parent URL cannot be listed, the current media item is not found, or no adjacent supported media item exists, the current media item remains open and the app remains ready for another open action.
 
@@ -154,7 +154,7 @@ Video mode supports fixed local seek shortcuts: `Alt+Left` seeks backward 5 seco
 
 Video mode supports configurable viewer-local current-content boundary shortcuts: `Shift+,` and `Alt+Home` seek to the start of the current video, and `Shift+.` and `Alt+End` seek to the end of the current video when the video is seekable and has a known positive duration.
 
-Video seek shortcuts are video-mode-only and do not affect image mode, archive collection scope, or directly opened directory collection scope.
+Video seek shortcuts are video-mode-only and do not affect image mode, unsupported-video placeholders, or directly opened directory collection scope.
 
 Video seek shortcuts are best-effort time seeks. They run only when the media is seekable, clamp to the valid `[0, duration]` range when duration is known, and do not promise frame-accurate seeking.
 
@@ -188,7 +188,7 @@ When Two-Page Spread shows two pages, both the current primary page and the visi
 
 When users move quickly through pages, KiriView may briefly postpone this background work and then prioritize pages around the page where navigation settles, rather than every skipped page.
 
-Directly opened archive and directory collections may make more pages available in the current reading direction than ordinary image navigation. Opened collection video items are positions for navigation and background-loading planning, but KiriView prepares only nearby supported images.
+Directly opened archive and directory collections may make more pages available in the current reading direction than ordinary image navigation. Opened collection video items are positions for navigation and background-loading planning, but KiriView prepares only nearby supported images and does not prepare video frames for image-style quick navigation.
 
 When the desktop Power Saver mode is enabled, KiriView does not newly schedule or run background work for adjacent pages.
 
