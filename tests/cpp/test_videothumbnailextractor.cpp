@@ -10,18 +10,68 @@
 #include <QSize>
 #include <QString>
 #include <QTest>
+#include <QVector>
+
+namespace kiriview {
+QVector<qint64> videoThumbnailCandidatePositions(qint64 durationMsec);
+bool videoThumbnailFrameIsInteresting(const QImage& image);
+}
 
 class TestVideoThumbnailExtractor : public QObject
 {
     Q_OBJECT
 
 private Q_SLOTS:
+    void interestingFrameRejectsSolidImage();
+    void interestingFrameAcceptsHighVarianceImage();
+    void interestingFrameRejectsNullImage();
+    void candidatePositionsUseTotemOrder();
+    void candidatePositionsRejectNonPositiveDuration();
     void framePostProcessingScalesToBucketEdge();
     void framePostProcessingRejectsNullImages();
     void metadataPostProcessingPrefersCoverArtImage();
     void metadataPostProcessingUsesThumbnailImageFallback();
     void metadataPostProcessingRejectsMissingEmbeddedImage();
 };
+
+void TestVideoThumbnailExtractor::interestingFrameRejectsSolidImage()
+{
+    QImage frame(QSize(16, 16), QImage::Format_RGB32);
+    frame.fill(QColor(Qt::black));
+
+    QVERIFY(!kiriview::videoThumbnailFrameIsInteresting(frame));
+}
+
+void TestVideoThumbnailExtractor::interestingFrameAcceptsHighVarianceImage()
+{
+    QImage frame(QSize(16, 16), QImage::Format_RGB32);
+    for (int y = 0; y < frame.height(); ++y) {
+        for (int x = 0; x < frame.width(); ++x) {
+            frame.setPixelColor(
+                x, y, x < frame.width() / 2 ? QColor(Qt::black) : QColor(Qt::white));
+        }
+    }
+
+    QVERIFY(kiriview::videoThumbnailFrameIsInteresting(frame));
+}
+
+void TestVideoThumbnailExtractor::interestingFrameRejectsNullImage()
+{
+    QVERIFY(!kiriview::videoThumbnailFrameIsInteresting({}));
+}
+
+void TestVideoThumbnailExtractor::candidatePositionsUseTotemOrder()
+{
+    const QVector<qint64> positions = kiriview::videoThumbnailCandidatePositions(90000);
+
+    QCOMPARE(positions, QVector<qint64>({ 30000, 60000, 9000, 81000, 45000 }));
+}
+
+void TestVideoThumbnailExtractor::candidatePositionsRejectNonPositiveDuration()
+{
+    QVERIFY(kiriview::videoThumbnailCandidatePositions(0).isEmpty());
+    QVERIFY(kiriview::videoThumbnailCandidatePositions(-1).isEmpty());
+}
 
 void TestVideoThumbnailExtractor::framePostProcessingScalesToBucketEdge()
 {
