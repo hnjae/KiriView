@@ -14,7 +14,7 @@ Prefer Rust for logic that:
 Prefer C++ for logic that:
 
 - Is mostly `QObject`, Qt property, signal, or QML API plumbing.
-- Depends on `QImage`, `QUrl`, `QAction`, `KIO::Job`, `QQuickItem`, or `QSGRenderNode`.
+- Depends on `QImage`, `QUrl`, `QAction`, `KIO::Job`, `QQuickItem`, or Qt Quick provider and presenter APIs.
 - Exists to manage async lifetime, cancellation, ownership, or thread affinity.
 - Immediately executes Qt/KDE side effects.
 - Is only a small local branch whose Rust bridge would be larger than the policy itself.

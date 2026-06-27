@@ -8,11 +8,11 @@ Toolbar readouts, page-number entry, shared Previous, Next, First, and Last acti
 
 When the active navigation list is known, the thumbnail strip exposes one item per supported active navigation item with the same ordering and 1-based numbering as the toolbar readout and page-number entry.
 
-The active navigation thumbnail strip may display generated preview thumbnails for supported direct local image items, supported direct local video items, and supported image pages inside ZIP-backed archive collections: CBZ and directly opened ZIP archive entries whose metadata can identify the entry for thumbnail caching. Generated thumbnails are representative previews for navigation, not authoritative media content. Supported direct local video thumbnails may use an embedded video cover or thumbnail image when available, falling back to a decoded video frame when no usable embedded image is available. Video thumbnail orientation and mirroring follow the embedded image or decoded frame supplied by the platform. Unsupported, pending, failed, non-local direct video, direct archive-entry media, CB7/7z and other non-ZIP-backed archive-collection items, ZIP-backed entries without usable thumbnail identity metadata, and directory-collection items keep placeholder media-type icons instead of generated preview thumbnails.
+The active navigation thumbnail strip may display generated preview thumbnails for supported direct local image items, supported direct local video items, and supported image pages inside CBZ and directly opened ZIP archive collections. Generated thumbnails are representative previews for navigation, not authoritative media content. Supported direct local video thumbnails may use an embedded video cover or thumbnail image when available, falling back to a decoded video frame when no usable embedded image is available. Video thumbnail orientation and mirroring follow the embedded image or decoded frame supplied by the platform. Unsupported, pending, failed, non-local direct video, direct archive-entry media, CB7/7z and other non-ZIP-backed archive-collection items, and directory-collection items keep placeholder media-type icons instead of generated preview thumbnails.
 
 The active navigation thumbnail strip chooses generated preview quality from the thumbnail's physical display size, including the current device pixel ratio. During panel resize, fractional-scale changes, or movement between screens with different scale factors, a previously ready smaller thumbnail may remain visible as a temporary fallback while KiriView loads a newly required larger thumbnail, and the strip replaces it only after the newer result is ready. If the newer request fails, KiriView keeps an existing usable thumbnail visible when one is available; otherwise the row uses the normal fallback icon path.
 
-After visible, nearby, and user-navigation thumbnail demand for the current active navigation list has been satisfied, KiriView may silently fill supported direct local image thumbnails, supported direct local video thumbnails, and supported archive-metadata-backed image page thumbnails from ZIP-backed archive collections for that active list in the background. Visible, nearby, and user-navigation demand always takes precedence over this background fill work, and new foreground demand, navigation changes, or thumbnail-list resets may cancel background work already in progress. Background fill failures do not show user-facing errors and keep the normal thumbnail fallback UI.
+After visible, nearby, and user-navigation thumbnail demand for the current active navigation list has been satisfied, KiriView may silently fill supported direct local image thumbnails, supported direct local video thumbnails, and supported image-page thumbnails inside CBZ and directly opened ZIP archive collections for that active list in the background. Visible, nearby, and user-navigation demand always takes precedence over this background fill work, and new foreground demand, navigation changes, or thumbnail-list resets may cancel background work already in progress. Background fill failures do not show user-facing errors and keep the normal thumbnail fallback UI.
 
 The active navigation thumbnail strip keeps the active item visually selected. When adjacent main-view navigation changes the active item, the strip uses a preferred visible zone inset from the viewport edges: if the selected thumbnail remains inside that zone, the strip keeps its scroll position unchanged, and if it leaves that zone, the strip may reveal it back toward a stable visible position. Adjacent Next navigation places the selected thumbnail toward the leading side of the preferred zone so more following items remain visible; adjacent Previous navigation places it toward the trailing side so more preceding items remain visible. This anchoring follows the semantic Previous or Next action dispatched by the session, including when Right-to-Left Reading mode maps physical keys differently. Nearby automatic reveal may use a short easing animation, but at most one automatic reveal target is active at a time: repeated navigation replaces older pending scroll movement with the latest selected item, and rapid navigation may update the strip immediately instead of animating each step. Direct thumbnail activation preserves the thumbnail strip scroll position unless model or layout changes require immediate containment. User-initiated thumbnail scrolling temporarily suppresses automatic preferred-zone follow movement unless the selected thumbnail would otherwise leave the visible viewport. Large jumps such as First, Last, and page-number entry may reposition the strip to keep the selected thumbnail discoverable. File open or load routing may reveal the selected thumbnail for the newly loaded scope, but KiriView does not replay stale or duplicate automatic thumbnail scrolling during programmatic synchronization. KiriView does not promise exact thumbnail pixel offsets, centered positioning, or animation duration.
 
@@ -50,7 +50,7 @@ During that loading interval, the page number shown in the UI is the most recent
 
 The displayed image URL or direct video source URL continues to mean the media item actually being shown.
 
-For image selections that are still loading and are not yet displayed from predecode, the displayed image URL is empty even though the source URL and active navigation selection already refer to the selected target.
+For image selections that are still loading and are not displayed from a prepared image, the displayed image URL is empty even though the source URL and active navigation selection already refer to the selected target.
 
 If users make multiple page selections before loading finishes, only the most recent selection is displayed.
 
@@ -74,11 +74,7 @@ If the current media item is the first supported media item, pressing Page Up ke
 
 If the current media item is the last supported media item, pressing Page Down keeps the current item open and notifies the user that it is the last media item.
 
-Supported image extensions match the open dialog: AVIF (`.avif` and `.avifs`), BMP, camera RAW (`.3fr`, `.arw`, `.bay`, `.bmq`, `.cr2`, `.cr3`, `.crw`, `.cs1`, `.cs2`, `.dcr`, `.dng`, `.erf`, `.fff`, `.iiq`, `.k25`, `.kdc`, `.mdc`, `.mef`, `.mos`, `.mrw`, `.nef`, `.nrw`, `.orf`, `.pef`, `.raf`, `.raw`, `.rdc`, `.rwl`, `.rw2`, `.sr2`, `.srf`, `.srw`, and `.x3f`), GIF, HEIF (`.heic`, `.heics`, `.heif`, `.heifs`, `.hif`, `.avci`, and `.hej2`), JPEG, JPEG 2000 (`.jp2`), JPEG XL (`.jxl`), PNG, SVG, TIFF (`.tif` and `.tiff`), and WebP, case-insensitively.
-
-JPEG-compressed HEIF files use the generic HEIF extensions because they do not have a dedicated extension.
-
-Supported direct video extensions are MP4 (`.mp4`), M4V (`.m4v`), and MOV (`.mov`), case-insensitively.
+Adjacent media candidates use the supported image and direct video source formats defined in File Access.
 
 An ordinary direct media URL scope is the non-recursive parent URL of the active direct media URL. This includes ordinary local parent directories and KDE archive URL parent locations such as `zip:///path/archive.zip!/chapter/`.
 
@@ -92,7 +88,7 @@ When an image or unsupported-video placeholder is displayed from a local directo
 
 After the archive or directory collection has been listed, page navigation uses all supported image and video files inside that opened collection as its navigation target set.
 
-Supported video entries inside directly opened archive collections and directly opened directory collections are valid opened collection navigation items. KiriView does not play those videos while an opened collection scope is active; selecting one keeps image mode active and shows an unsupported-video placeholder with the message `KiriView can’t play videos inside directly opened archives or directories yet.` Entering that placeholder also shows the same text as an in-app toast.
+Supported video entries inside directly opened archive collections and directly opened directory collections are valid opened collection navigation items. KiriView does not play those videos while an opened collection scope is active; selecting one keeps image mode active and shows an unsupported-video placeholder with the message `KiriView can’t play videos inside directly opened archives or directories.` Entering that placeholder also shows the same text as an in-app toast.
 
 If the parent URL cannot be listed, the current media item is not found, or no adjacent supported media item exists, the current media item remains open and the app remains ready for another open action.
 
@@ -110,7 +106,7 @@ Boundary feedback may be requested by configured shortcuts and fixed viewer navi
 
 KiriView shows those first-item and last-item notifications only when the current supported list is known and the current item is at a known boundary.
 
-Previous Archive and Next Archive are collection navigation actions for the current opened collection. When users trigger Previous Archive or Next Archive from a menu or configured shortcut and KiriView confirms that no adjacent collection exists in that direction, the current collection remains open and KiriView shows an in-app toast: `No previous collection` or `No next collection`.
+Previous Archive and Next Archive are comic-book archive navigation actions for the current directly opened comic book archive. When archive navigation is available and users trigger Previous Archive or Next Archive from a menu or configured shortcut, KiriView confirms sibling comic book archives in that direction; if none exists, the current archive remains open and KiriView shows an in-app toast: `No previous collection` or `No next collection`.
 
 KiriView has one visible in-app toast notification slot.
 
@@ -136,11 +132,13 @@ When UI focus, modal state, active viewport, or transient tool focus changes rap
 
 When an image is horizontally pannable at the current zoom, Left and Right pan the image within the available horizontal scroll bounds.
 
-When the current image is not horizontally pannable, Left opens the previous supported media item and Right opens the next supported media item with the same boundary behavior as the Previous and Next actions in an ordinary direct media scope.
+When the current image is not horizontally pannable, Left and Right dispatch Previous or Next against the active image navigation scope with the same boundary behavior as the shared Previous and Next actions.
+
+In Left-to-Right Reading mode, Left opens the previous supported media item and Right opens the next supported media item.
 
 In video mode, Left opens the previous supported media item and Right opens the next supported media item in the ordinary direct media scope. They do not seek within the video.
 
-In Right-to-Left Reading mode, Left and Right keep physical horizontal panning while the image can pan horizontally, but their non-pannable ordinary direct media navigation fallback is reversed: Left opens the next supported media item and Right opens the previous supported media item.
+In Right-to-Left Reading mode, Left and Right keep physical horizontal panning while the image can pan horizontally, but their non-pannable navigation fallback is reversed: Left opens the next supported media item and Right opens the previous supported media item.
 
 When an image is zoomed large enough to pan in any direction, Up and Down pan the image vertically within the available scroll bounds and have no image-navigation fallback. `Shift+,` and `Alt+Home` move the current content to its scan start position, and `Shift+.` and `Alt+End` move the current content to its scan end position. For images, scan start and scan end are the same geometry-aware positions used by scan navigation, including Right-to-Left Reading order. The mouse cursor shows that the image can be dragged to pan.
 
@@ -182,7 +180,7 @@ In Right-to-Left Reading mode, scan order starts at the top-right and proceeds t
 
 After an image is displayed, KiriView may make adjacent images available for quicker Previous or Next navigation, so the switch can happen without showing a full-page loading state.
 
-In an ordinary direct media URL scope, direct videos act as navigation positions for this background image loading even though video frames are not predecoded. While a direct video is current, KiriView may continue making nearby supported image files available for quick Previous or Next navigation.
+In an ordinary direct media URL scope, direct videos act as navigation positions for this background image loading even though video frames are not prepared for image-style quick navigation. While a direct video is current, KiriView may continue making nearby supported image files available for quick Previous or Next navigation.
 
 This background work must not change what is displayed until the user opens an adjacent image.
 
@@ -190,7 +188,7 @@ When Two-Page Spread shows two pages, both the current primary page and the visi
 
 When users move quickly through pages, KiriView may briefly postpone this background work and then prioritize pages around the page where navigation settles, rather than every skipped page.
 
-Directly opened archive and directory collections may make more pages available in the current reading direction than ordinary image navigation. Opened collection video items are positions for navigation and predecode planning, but KiriView predecodes only nearby supported images.
+Directly opened archive and directory collections may make more pages available in the current reading direction than ordinary image navigation. Opened collection video items are positions for navigation and background-loading planning, but KiriView prepares only nearby supported images.
 
 When the desktop Power Saver mode is enabled, KiriView does not newly schedule or run background work for adjacent pages.
 

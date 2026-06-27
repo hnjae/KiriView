@@ -8,15 +8,15 @@ Supported direct video inputs may come from the startup argument, drop, open dia
 
 The direct video format list is MP4, M4V, and MOV, case-insensitively.
 
-Direct video playback supports direct file-like URLs that KiriView can hand to KDE/KIO as ordinary file items, including local paths, `file://` URLs, and KDE-supported archive URLs that point at a file entry such as `zip:///path/archive.zip!/clip.mp4`.
+Direct video playback supports direct file-like URLs that KiriView can hand to KDE/KIO as ordinary file items, including local paths, `file://` URLs, KDE-supported remote file URLs such as `smb://`, and KDE-supported archive URLs that point at a file entry such as `zip:///path/archive.zip!/clip.mp4`.
 
 Direct KDE archive-entry URLs are not KiriView archive collection scope. KiriView may open `zip:///path/archive.zip!/clip.mp4` as a direct media URL while still opening `/path/archive.zip` as an archive collection when the archive itself is selected.
 
 The product boundary is based on KiriView's opened collection state, not on URL scheme alone. If KiriView has opened an archive or directory as an opened collection, supported video entries inside that collection are opened collection navigation items with an unsupported-video placeholder and are not played. If KiriView is handling a direct media URL without an active archive or directory collection context, that URL remains eligible for video support even when its scheme is a KDE archive scheme.
 
-Video files do not participate in video-frame predecode, video-frame image cache, editable image zoom, image pan, image rotate, two-page spread pairing, or Right-to-Left Reading.
+Video files do not participate in video-frame preparation for image-style quick navigation, editable image zoom, image pan, image rotate, two-page spread pairing, or Right-to-Left Reading.
 
-In ordinary direct media URL scopes, showing a video must not clear or stop the background predecode/cache lifecycle for nearby supported image files. KiriView may keep and continue predecoding adjacent still images around the current video cursor, but it must not attempt to predecode the video itself.
+In ordinary direct media URL scopes, showing a video must not clear or stop background preparation for nearby supported image files. KiriView may keep and continue preparing adjacent still images around the current video cursor, but it must not prepare the video itself as still-image quick-navigation data.
 
 Archive-collection-internal video playback, directly opened directory-collection video playback, collection-internal video metadata, playlists, subtitles, track selection, frame stepping, and timeline preview thumbnails are not provided.
 
@@ -102,7 +102,9 @@ In video mode, viewer Left and Right and existing adjacent navigation actions mo
 
 In video mode, the shared scan shortcuts also use adjacent navigation: `.` and `Space` move to the next supported media item, while `,` and `Shift+Space` move to the previous supported media item. They do not pan or seek within the video.
 
-Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Current Content Start, Current Content End, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit. Shared direct media navigation shortcuts use session active-navigation dispatch and availability.
+Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Current Content Start, Current Content End, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, and Quit. Shared direct media navigation shortcuts use session active-navigation dispatch and availability.
+
+The fixed Show Menubar shortcut follows the Menu Presentation contract in video mode.
 
 The Current Content Start and Current Content End shortcuts are viewer-local configurable video seek actions. By default, `Shift+,` and `Alt+Home` seek to position `0 ms` in the current video, and `Shift+.` and `Alt+End` seek to the video's known positive duration. They are distinct from the fixed `Alt+Arrow` video seek shortcuts.
 

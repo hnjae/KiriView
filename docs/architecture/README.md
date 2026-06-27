@@ -15,7 +15,7 @@ Use these documents when changing module ownership, crossing the Rust/C++/QML bo
 - [FFI Design](ffi-design.md)
 - [Workflow Shape](workflow-shape.md)
 - [Async Lifecycle](async-lifecycle.md)
-- [Target Direction](target-direction.md)
+- [Policy Boundary Contracts](target-direction.md)
 - [Testing Strategy](testing-strategy.md)
 - [Evolution Rules](evolution-rules.md)
 - [Architecture Decisions](architecture-decisions.md)

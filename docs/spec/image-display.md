@@ -10,13 +10,13 @@ If no media item is selected, the empty state says that no file is selected and 
 
 If the selected image or video cannot be opened while no media item is displayed, the error state explains that the selected file could not be opened, shows the underlying error when available, and offers Open.
 
-If a media item is already displayed and users select a different image, the new selection owns the image viewport immediately. If the new image is already available from predecode, it replaces the view immediately; otherwise KiriView clears the previous image presentation and shows the normal loading state until the new image is ready.
+If a media item is already displayed and users select a different image, the new selection owns the image viewport immediately. If the new image is already available from prior preparation, it replaces the view immediately; otherwise KiriView clears the previous image presentation and shows the normal loading state until the new image is ready.
 
 If a media item is already displayed and users select a video, KiriView leaves image mode immediately and shows the video loading state.
 
 If another file is selected before the previous load finishes, only the most recent selection is displayed.
 
-When a new image is selected while an image is already displayed and the new image is not already available from predecode, any running animation stops when the previous image presentation is cleared.
+When a new image is selected while an image is already displayed and the new image is not already available from prior preparation, any running animation stops when the previous image presentation is cleared.
 
 If the selected URL cannot be read or the file is not a decodable image or playable video, KiriView keeps the selected target active and shows the target's error state instead of restoring the previous media item.
 
@@ -32,7 +32,7 @@ Image zoom is expressed in physical display pixels. At 100%, one image pixel map
 
 For SVG files, 100% uses the SVG's intrinsic size. SVGs remain sharp instead of pixelated when Fit mode, manual zoom, window resizing, or display scale changes the displayed size.
 
-Static SVG rendering applies ordinary static SVG features such as clip paths. SVG script execution, animation playback, and loading external network or file resources referenced from SVG content are outside the current scope.
+Static SVG rendering applies ordinary static SVG features such as clip paths. KiriView does not execute SVG scripts, play SVG animation, or load external network or file resources referenced from SVG content.
 
 Static image files, including bitmap images and SVG files, appear at full resolution when they are small enough to display directly.
 
@@ -48,7 +48,7 @@ After zooming far out and then back in, SVG display eventually returns to curren
 
 When adjacent images are already available, Previous and Next navigation can replace the view immediately.
 
-When ordinary direct media navigation moves from an image to a video and then back to a nearby image, previously prepared still-image data may remain available so returning to that image can avoid a full-page loading state. Direct videos themselves are not decoded into this still-image cache.
+When ordinary direct media navigation moves from an image to a video and then back to a nearby image, previously prepared still-image data may remain available so returning to that image can avoid a full-page loading state. Direct videos themselves are not prepared as still-image replacements.
 
 If a static image exceeds the supported decode or display size, KiriView reports an error or unsupported state for the selected target instead of restoring a previously displayed image.
 

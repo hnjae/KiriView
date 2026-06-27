@@ -18,6 +18,8 @@ When the active navigation scope is not an opened archive or directory collectio
 
 Right-to-Left Reading and Two-Page Spread visibility is determined by the active navigation scope, not by whether the current media item is an image, direct video, or unsupported-video placeholder. When a direct video is displayed in an ordinary direct media scope, Fit and zoom remain in their image-mode positions; Fit is disabled and zoom is read-only.
 
+When Right-to-Left Reading or Two-Page Spread is visible for an opened collection that is not a directly opened local CBZ, CBT, CB7, or CBR comic book archive, the control is disabled.
+
 The trailing action toolbar shows as many trailing controls as fit and moves the rest into an overflow menu. When it runs out of horizontal space, KiriView keeps the zoom percentage visible the longest, then the Fit menu button. The Fit menu button shows its selected fit label when there is enough toolbar space and collapses to icon-only when space is constrained.
 
 Visible trailing toolbar controls align to a common vertical center and use consistent outer spacing between adjacent top-level controls. The Fit menu button is rendered as one top-level toolbar control with the same vertical alignment and spacing as adjacent visible trailing toolbar controls.
@@ -70,7 +72,7 @@ In Hamburger Menu mode outside fullscreen, the toolbar application menu contains
 
 In menubar mode outside fullscreen, those application actions are available from the menubar. Any toolbar overflow menu appears only when toolbar controls do not fit.
 
-The conventional menubar is an in-window menubar. Native or global menubar integration is outside the current scope.
+The conventional menubar is an in-window menubar. KiriView does not integrate with native or global menubars.
 
 In fullscreen, KiriView hides both the menubar and toolbar application menu button. Actions with configured shortcuts remain available through those shortcuts.
 
@@ -151,8 +153,6 @@ When a direct video file is displayed and its intrinsic video frame size is know
 When a direct video file is displayed and its intrinsic video frame size is unknown, the title omits the size and uses the original direct media URL's file name, a spaced em dash, and `KiriView`.
 
 When a CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive collection opened by KiriView is displayed and the active page position is known, the title is the archive file name, a spaced en dash, the current primary page number, `/`, the total supported item count, a spaced em dash, and `KiriView`.
-
-When a supported direct local image, supported direct local video, or supported image page inside a ZIP-backed archive collection appears in the thumbnail strip and provides usable thumbnail identity metadata, KiriView may show a generated preview thumbnail for that item. Direct local video thumbnails may use an embedded video cover or thumbnail image when available, falling back to a decoded video frame when no usable embedded image is available. This first-class path covers ordinary local media files, CBZ, and directly opened ZIP collections. CB7/7z and other directly opened archive-collection formats, ZIP-backed entries without usable thumbnail identity metadata, directly opened directory collections, collection-internal video placeholders, non-local direct videos, and direct archive-entry media URLs keep their normal placeholder thumbnail icons.
 
 When a directly opened local directory collection is displayed and the active page position is known, the title is the directory name, a spaced en dash, the current primary page number, `/`, the total supported item count, a spaced em dash, and `KiriView`.
 
@@ -238,7 +238,7 @@ For images, embedded metadata is parsed from the same media content used for ima
 
 For direct videos, embedded metadata is parsed from the resolved playback or local file path. Collection-internal video metadata is not shown while those videos remain unsupported placeholders.
 
-An unsupported-video placeholder keeps the current media item's video identity in the Info Panel. Its General section type is Video and its media-specific section is Video, but collection-internal video metadata rows remain omitted until collection-internal video support exists.
+An unsupported-video placeholder keeps the current media item's video identity in the Info Panel. Its General section type is Video and its media-specific section is Video, but collection-internal video metadata rows are omitted because collection-internal video playback and metadata are not provided.
 
 The Camera section shows curated embedded metadata rows only when the values are available: Camera, Taken, Location, Lens, Exposure, ISO, Focal Length, and Software. Camera combines make and model when both exist. Location is shown as coordinates only.
 
@@ -256,7 +256,7 @@ The Info Panel uses the same width bounds in inline and overlay modes: minimum 1
 
 The Thumbnail Panel is a compact, layout-reserving bottom filmstrip in the remaining media area to the left of the Info Panel. It uses the same dark viewer surface and matching foreground colors as the media viewport rather than a light page-panel surface.
 
-The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a generated preview thumbnail when the item is a supported direct local image, supported direct local video, or supported ZIP-backed archive image page with a ready thumbnail result, and otherwise shows a placeholder media-type icon above the existing active-navigation candidate name. The candidate name is rendered in a fixed-width font on one elided line. The horizontal scrollbar occupies a dedicated lane below the strip items and must not overlap or obscure candidate names.
+The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a generated preview thumbnail when the item is a supported direct local image, supported direct local video, or supported image page inside a CBZ or directly opened ZIP archive collection with a ready thumbnail result, and otherwise shows a placeholder media-type icon above the existing active-navigation candidate name. The candidate name is rendered in a fixed-width font on one elided line. The horizontal scrollbar occupies a dedicated lane below the strip items and must not overlap or obscure candidate names.
 
 The Thumbnail Panel highlights the selected active-navigation item immediately when the active navigation position changes.
 

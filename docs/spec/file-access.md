@@ -4,9 +4,13 @@
 
 KiriView opens user-selected image URLs, including local files, KDE-supported remote URLs such as `smb://`, and KDE-supported archive URLs such as `zip://`, `tar://`, and `sevenz://`.
 
+Supported image extensions are AVIF (`.avif` and `.avifs`), BMP, camera RAW (`.3fr`, `.arw`, `.bay`, `.bmq`, `.cr2`, `.cr3`, `.crw`, `.cs1`, `.cs2`, `.dcr`, `.dng`, `.erf`, `.fff`, `.iiq`, `.k25`, `.kdc`, `.mdc`, `.mef`, `.mos`, `.mrw`, `.nef`, `.nrw`, `.orf`, `.pef`, `.raf`, `.raw`, `.rdc`, `.rwl`, `.rw2`, `.sr2`, `.srf`, `.srw`, and `.x3f`), GIF, HEIF (`.heic`, `.heics`, `.heif`, `.heifs`, `.hif`, `.avci`, and `.hej2`), JPEG, JPEG 2000 (`.jp2`), JPEG XL (`.jxl`), PNG, SVG, TIFF (`.tif` and `.tiff`), and WebP, case-insensitively.
+
+JPEG-compressed HEIF files use the generic HEIF extensions because they do not have a dedicated extension.
+
 KiriView opens direct video URLs as direct media items for MP4, M4V, and MOV files, case-insensitively.
 
-Direct video URLs include local paths, `file://` URLs, and KDE-supported archive URLs that point at a file entry such as `zip:///path/archive.zip!/clip.mp4`.
+Direct video URLs include local paths, `file://` URLs, KDE-supported remote file URLs such as `smb://`, and KDE-supported archive URLs that point at a file entry such as `zip:///path/archive.zip!/clip.mp4`.
 
 When a video is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats it as a single direct media URL rather than opening the whole archive as an archive collection.
 
@@ -14,7 +18,7 @@ KiriView may internally resolve a KIO-backed direct video URL to a playback URL 
 
 KiriView opens local `.cbz`, `.cbt`, `.cb7`, and `.cbr` comic book archives. When a local comic book archive is opened directly, KiriView uses that archive as the current archive collection and displays the first supported media item inside that archive. If the first supported item is a video, KiriView displays the unsupported-video placeholder.
 
-KiriView opens local `.zip`, `.tar`, `.7z`, and `.rar` archives only when they are directly provided, such as through a startup argument or the open dialog's `All files (*)` filter. When a local general archive is opened directly, KiriView uses that archive as the current archive collection and displays the first supported media item inside that archive. If the first supported item is a video, KiriView displays the unsupported-video placeholder. CBZ and directly opened ZIP archives are KiriView's first-class ZIP-backed archive collection path for generated opened-collection preview thumbnails.
+KiriView opens local `.zip`, `.tar`, `.7z`, and `.rar` archives only when they are directly provided, such as through a startup argument or the open dialog's `All files (*)` filter. When a local general archive is opened directly, KiriView uses that archive as the current archive collection and displays the first supported media item inside that archive. If the first supported item is a video, KiriView displays the unsupported-video placeholder.
 
 General archives are not advertised through the desktop file's file associations, the open dialog's default image, video, and comic book filter, or sibling archive navigation.
 
@@ -25,6 +29,8 @@ Opening a directory URL creates a directory collection and does not create a vid
 Directory collections use the same recursive supported-media page ordering as archive collections, with page names based on directory-relative paths such as `chapter/page001.png`.
 
 Directly opened directories are not advertised through the desktop file's file associations, the open dialog's default image, video, and comic book filter, or sibling archive navigation.
+
+If a directly opened archive or directory collection contains no supported media, KiriView clears any displayed media and shows an error state explaining that the selected collection does not contain any supported media.
 
 Errors shown while opening or reading media from a directly opened archive or directory collection use collection-neutral wording such as "selected collection" unless the failed operation specifically concerns an archive file, archive URL scheme, or archive format.
 

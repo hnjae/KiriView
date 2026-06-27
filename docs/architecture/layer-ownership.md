@@ -31,6 +31,6 @@ C++ Qt/KDE runtime code owns platform integration and side effects:
 Rust owns Qt-independent policy and algorithms:
 
 - State transitions, workflow plans, and reducer-like decisions.
-- Zoom, viewport, provider display bucket, compatibility tile, spread, navigation, deletion-target, follow-up, and cache decisions when they are computed from plain value snapshots.
+- Zoom, viewport, provider display bucket, spread, navigation, deletion-target, follow-up, and cache decisions when they are computed from plain value snapshots.
 - Parsing and byte-level format inspection that is independent of Qt objects.
 - Pure calculations where the same input should produce the same output.

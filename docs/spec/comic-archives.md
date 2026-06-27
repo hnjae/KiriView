@@ -88,7 +88,7 @@ Sibling archive candidates are local `.cbz`, `.cbt`, `.cb7`, or `.cbr` files in 
 
 Candidates are sorted with the same user locale-aware file name order used for image navigation.
 
-Navigation does not wrap. Pressing Previous Archive on the first candidate or Next Archive on the last candidate keeps the current view unchanged.
+Navigation does not wrap. Pressing Previous Archive on the first candidate keeps the current view unchanged and shows `No previous collection`; pressing Next Archive on the last candidate keeps the current view unchanged and shows `No next collection`.
 
 `[` opens the previous sibling archive and `]` opens the next sibling archive when archive navigation is available.
 

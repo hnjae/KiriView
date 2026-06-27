@@ -17,9 +17,9 @@ The main maintenance goal is to keep product policy testable without making Rust
 
 The public QML facade layer is grouped in `src/facade/`. Domain runtime code remains in directories such as `src/document/`, `src/presentation/`, `src/rendering/`, `src/navigation/`, and `src/application/`. Shared C++ runtime support with clear ownership, such as localized user-facing text, localization setup, and KDE file-deletion side-effect providers, lives in a named support domain such as `src/localization/` or `src/system/`. C++ helpers that only convert values across the Rust/C++ boundary live in `src/bridge/`; Rust policy bridge files remain under `src/policy/`. The provider-rendering architecture is recorded separately in [Provider Rendering Architecture](provider-rendering.md); `src/rendering/` owns provider display storage, render-context value helpers, display bucket policy, and decoder/refinement helpers, not custom Qt Quick render nodes or QRhi resources.
 
-## Current Source Shape
+## Source Ownership Shape
 
-The current source tree maps the layer model onto a few stable directory groups:
+The source tree maps the layer model onto stable directory groups:
 
 ```mermaid
 flowchart TD
