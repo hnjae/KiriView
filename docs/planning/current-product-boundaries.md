@@ -4,7 +4,7 @@ This page tracks deferred product areas that shape current milestone scope. User
 
 ## Deferred Media Scope
 
-KiriView currently focuses video support on direct video files in ordinary direct media scopes. Archive-collection video playback, directory-collection video playback, collection-internal video metadata, recursive directory video playback, playlists, subtitles, track selection, frame stepping, and generated timeline thumbnails are deferred.
+KiriView currently focuses video support on direct video files in ordinary direct media scopes and eligible stored ZIP or plain TAR video entries inside directly opened archive collections. Archive-collection video playback outside that stored ZIP/plain TAR boundary, directory-collection video playback, collection-internal video metadata, recursive directory video playback, playlists, subtitles, track selection, frame stepping, and generated timeline thumbnails are deferred.
 
 ## Deferred Thumbnail Scope
 
