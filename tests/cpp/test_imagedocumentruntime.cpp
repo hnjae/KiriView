@@ -463,7 +463,7 @@ void TestImageDocumentRuntime::openedCollectionVideoPlaceholderKeepsNavigation()
     QCOMPARE(unsupportedVideoMessages.front(),
         QString::fromUtf8(
             "KiriView can\342\200\231t play videos inside directly opened archives or "
-            "directories yet."));
+            "directories."));
 
     runtime->openNextPage();
 
