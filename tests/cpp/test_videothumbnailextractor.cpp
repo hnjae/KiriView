@@ -12,11 +12,6 @@
 #include <QTest>
 #include <QVector>
 
-namespace kiriview {
-QVector<qint64> videoThumbnailCandidatePositions(qint64 durationMsec);
-bool videoThumbnailFrameIsInteresting(const QImage& image);
-}
-
 class TestVideoThumbnailExtractor : public QObject
 {
     Q_OBJECT

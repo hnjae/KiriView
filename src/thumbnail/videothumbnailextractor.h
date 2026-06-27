@@ -12,6 +12,7 @@
 #include <QMediaMetaData>
 #include <QString>
 #include <QUrl>
+#include <QVector>
 #include <functional>
 
 class QObject;
@@ -43,6 +44,8 @@ QImage videoThumbnailImageFromFrameImage(
     QImage image, int maximumLongEdge, QString* errorString = nullptr);
 QImage videoThumbnailImageFromMetadata(
     const QMediaMetaData& metadata, int maximumLongEdge, QString* errorString = nullptr);
+QVector<qint64> videoThumbnailCandidatePositions(qint64 durationMsec);
+bool videoThumbnailFrameIsInteresting(const QImage& image);
 
 ImageIoJob startVideoThumbnailExtraction(QObject* receiver, VideoThumbnailExtractionRequest request,
     VideoThumbnailExtractionCallback callback);
