@@ -55,6 +55,7 @@ flowchart TD
     Rendering --> Decoding
     Navigation --> Archive
     VideoDocument --> Navigation
+    VideoDocument --> Archive
     Application --> Bridge
     Session --> Bridge
     ImageDocument --> Bridge
@@ -77,6 +78,7 @@ The diagram is directory-level, not a complete call graph. Update it when a long
 - `src/qml/` binds to facade types; `src/facade/` is the QML API boundary.
 - `KiriDocumentSession` in `src/session/` routes top-level image/video state; image and video document internals remain below `KiriImageDocument` and `KiriVideoDocument`.
 - Image work is split by durable domains: lifecycle in `src/document/`, navigation in `src/navigation/`, presentation in `src/presentation/`, rendering in `src/rendering/`, decoding in `src/decoding/`, opened collection media entry access in `src/archive/`, and predecode in `src/predecode/`.
+- Video work remains owned by `src/video/`, but eligible opened archive collection video playback consumes collection-owned source devices from `src/archive/` rather than direct-media playback URL resolution.
 - `src/policy/` is Rust value policy and `src/bridge/` converts boundary values. C++ remains the owner of Qt/KDE objects, side effects, async lifetimes, and authoritative runtime state.
 
 ## Source Manifests

@@ -10,7 +10,7 @@ A demand describes requested work from an owner snapshot: key, generation, size 
 
 Adapters are synchronous policy or asynchronous payload providers behind an owner. Synchronous adapters return plans and capability facts. Asynchronous adapters return payloads through the owner's lifecycle contract, carrying the owner-held operation id, source key plus generation, demand key, or display-source revision needed for stale-completion rejection. Adapter APIs must not accept QML objects, facade objects, mutable public projection objects, or platform action objects; if a capability needs Qt runtime data, the owner captures that data into a plain demand before calling the adapter.
 
-Capabilities are descriptive. They can say whether bytes can be read, thumbnails can be generated or cached, a still image can be predecoded, a decode route is supported, a provider-ready display image can be produced, or a whole-image refinement source is available. Capabilities must not imply ownership of public state or platform side effects.
+Capabilities are descriptive. They can say whether bytes can be read, thumbnails can be generated or cached, a still image can be predecoded, a collection video source device can be opened, a decode route is supported, a provider-ready display image can be produced, or a whole-image refinement source is available. Capabilities must not imply ownership of public state or platform side effects.
 
 ## Source Key Families
 
@@ -22,7 +22,7 @@ Direct-media scope identity is `{ current key, parent key, generation }`. The cu
 
 Image-document page keys identify a page URL plus its image-document source scope. Ordinary direct image pages use the direct media key. Opened-collection pages include the opened collection scope and page URL. Page keys preserve page kind so image and video rows do not share render, thumbnail, or predecode capabilities by accident.
 
-Opened-collection scope keys identify the backing collection file URL, collection root URL, and collection kind. Comic-book archive, general archive, and directory scopes are distinct even if URLs match. A collection entry key adds the entry URL relative to that scope.
+Opened-collection scope keys identify the backing collection file URL, collection root URL, and collection kind. Comic-book archive, general archive, and directory scopes are distinct even if URLs match. A collection entry key adds the entry URL relative to that scope and carries the page kind needed to keep playable video source devices separate from image byte reads.
 
 Archive root keys identify the backing archive file and root URL. Archive-entry freshness is owned by the opened collection backend. Thumbnail cache writes may use archive-record virtual originals only when the backend exposes public entry metadata that satisfies the thumbnail contract.
 
@@ -40,7 +40,7 @@ Provider-rendering work must carry a display-source demand key and publish only 
 
 ## Adapter Contracts
 
-Media entry source adapters list and read opened-collection entries. They return candidates, image bytes, optional thumbnail metadata, and typed failure payloads through the media entry source owner. Failure payloads must preserve backend, operation, collection URL, optional entry path, user-facing text, and diagnostic detail before any document or thumbnail owner projects them into broader UI messages. They do not update document source state, page navigation, deletion state, thumbnails, or QML models directly.
+Media entry source adapters list and read opened-collection entries. They return candidates, image bytes, eligible video playback source devices, optional thumbnail metadata, and typed failure payloads through the media entry source owner. A returned video playback source device keeps any backing archive, entry, and device lifetime behind the media entry source contract until the video source owner clears or supersedes it. Failure payloads must preserve backend, operation, collection URL, optional entry path, user-facing text, and diagnostic detail before any document, video, or thumbnail owner projects them into broader UI messages. They do not update document source state, page navigation, deletion state, thumbnails, playback state, or QML models directly.
 
 Thumbnail source adapters consume thumbnail source keys and demand buckets, then return unsupported fallback, cacheable local-file generation, cacheable opened-collection entry generation, or in-memory-only generation. The document-session thumbnail runtime owns scheduling, lookup, generation jobs, cache installation, image-store retention, result projection, cancellation, and stale-completion rejection.
 
