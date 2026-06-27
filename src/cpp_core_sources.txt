@@ -16,6 +16,7 @@ src/application/applicationdiagnostics.cpp
 src/application/applicationmenupresentationruntime.cpp
 src/application/applicationmenupresentationstate.cpp
 src/application/applicationshortcutruntime.cpp
+src/application/navigationpresentationprojection.cpp
 src/application/applicationruntime.cpp
 src/application/applicationstartupsource.cpp
 src/archive/mediaentrysourcebackend.cpp

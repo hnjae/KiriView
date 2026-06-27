@@ -20,6 +20,7 @@ Controls.ToolBar {
     required property int maximumManualZoomPercent
     required property real zoomStepFactor
     required property var actions
+    required property var navigationPresentationProvider
     property bool compact: false
     property bool floating: false
     property bool transientOverlay: false
@@ -36,7 +37,6 @@ Controls.ToolBar {
     property bool activeNavigationEditable: false
     property bool activeNavigationKnown: false
     property var openActiveNavigationAtNumber: function (number) {}
-    property bool rightToLeftReadingActive: false
     property bool rightToLeftReadingControlVisible: false
     property bool twoPageModeControlVisible: false
     property bool pageNavigationInputFocused: false
@@ -427,8 +427,8 @@ Controls.ToolBar {
             activeNavigationEditable: root.activeNavigationEditable
             activeNavigationKnown: root.activeNavigationKnown
             compact: root.compact
+            navigationPresentationProvider: root.navigationPresentationProvider
             openActiveNavigationAtNumber: root.openActiveNavigationAtNumber
-            rightToLeftReadingActive: root.rightToLeftReadingActive
 
             Component.onDestruction: {
                 if (textInputActive) {

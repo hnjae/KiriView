@@ -306,6 +306,12 @@ bool ApplicationActionRuntime::rightToLeftReadingActive() const
     return m_imageActionProjection.rightToLeftReadingActive;
 }
 
+NavigationPresentationProjection ApplicationActionRuntime::navigationPresentationProjection() const
+{
+    return kiriview::ApplicationActions::navigationPresentationProjection(
+        m_imageActionProjection.rightToLeftReadingActive);
+}
+
 void ApplicationActionRuntime::handleActionTriggered(ActionId actionId) const
 {
     m_commandRouter.handleActionTriggered(actionId, commandRouterInput(), commandRouterPorts());

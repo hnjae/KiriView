@@ -13,6 +13,7 @@
 #include <QList>
 #include <QPointer>
 #include <QString>
+#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 #include <memory>
 
@@ -87,6 +88,19 @@ public:
     };
     Q_ENUM(ActionId)
 
+    enum NavigationPresentationSlot {
+        LeadingImageActionSlot = 0,
+        TrailingImageActionSlot,
+        LeadingImageMenuActionSlot,
+        TrailingImageMenuActionSlot,
+        FirstImageMenuActionSlot,
+        LastImageMenuActionSlot,
+        LeadingArchiveMenuActionSlot,
+        TrailingArchiveMenuActionSlot,
+        NavigationPresentationSlotCount,
+    };
+    Q_ENUM(NavigationPresentationSlot)
+
     explicit KiriViewApplication(QObject* parent = nullptr);
     ~KiriViewApplication() override;
 
@@ -131,6 +145,11 @@ public:
     Q_INVOKABLE QString actionMenuTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString actionToolbarTextForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString actionToolbarTooltipTextForId(KiriViewApplication::ActionId actionId) const;
+    Q_INVOKABLE KiriViewApplication::ActionId navigationPresentationActionId(
+        KiriViewApplication::NavigationPresentationSlot slot) const;
+    Q_INVOKABLE KiriViewApplication::ActionId navigationPresentationIconActionId(
+        KiriViewApplication::NavigationPresentationSlot slot) const;
+    Q_INVOKABLE QVariantList navigationApplicationMenuActionIds() const;
     Q_INVOKABLE void setDocumentSession(QObject* session);
     Q_INVOKABLE void updateActionUiGateSnapshot(bool helpDialogOpen, bool textInputFocused,
         bool infoPanelVisible, bool thumbnailPanelVisible, bool fullscreen,

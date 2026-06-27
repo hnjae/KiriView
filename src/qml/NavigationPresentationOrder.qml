@@ -2,31 +2,90 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import QtQml
+import org.hnjae.kiriview
 
 QtObject {
     id: root
 
     required property var actions
-    property bool rightToLeftReadingActive: false
+    required property var projectionProvider
+    readonly property int projectionRevision: root.projectionProvider?.actionStateRevision ?? 0
 
-    readonly property var leadingImageAction: root.rightToLeftReadingActive ? root.actions.nextImageAction : root.actions.previousImageAction
-    readonly property var trailingImageAction: root.rightToLeftReadingActive ? root.actions.previousImageAction : root.actions.nextImageAction
-    readonly property string leadingImageIconName: root.actions.previousImageAction?.icon.name ?? ""
-    readonly property string trailingImageIconName: root.actions.nextImageAction?.icon.name ?? ""
+    readonly property var actionLookup: {
+        const lookup = {};
+        lookup[KiriViewApplication.GoPreviousArchiveAction] = root.actions.previousContainerAction;
+        lookup[KiriViewApplication.GoNextArchiveAction] = root.actions.nextContainerAction;
+        lookup[KiriViewApplication.GoPreviousImageAction] = root.actions.previousImageAction;
+        lookup[KiriViewApplication.GoNextImageAction] = root.actions.nextImageAction;
+        lookup[KiriViewApplication.GoFirstImageAction] = root.actions.firstImageAction;
+        lookup[KiriViewApplication.GoLastImageAction] = root.actions.lastImageAction;
+        return lookup;
+    }
+    readonly property var menuActionLookup: {
+        const lookup = {};
+        lookup[KiriViewApplication.GoPreviousArchiveAction] = root.actions.previousContainerMenuAction;
+        lookup[KiriViewApplication.GoNextArchiveAction] = root.actions.nextContainerMenuAction;
+        lookup[KiriViewApplication.GoPreviousImageAction] = root.actions.previousImageMenuAction;
+        lookup[KiriViewApplication.GoNextImageAction] = root.actions.nextImageMenuAction;
+        lookup[KiriViewApplication.GoFirstImageAction] = root.actions.firstImageMenuAction;
+        lookup[KiriViewApplication.GoLastImageAction] = root.actions.lastImageMenuAction;
+        return lookup;
+    }
 
-    readonly property var leadingImageMenuAction: root.rightToLeftReadingActive ? root.actions.nextImageMenuAction : root.actions.previousImageMenuAction
-    readonly property var trailingImageMenuAction: root.rightToLeftReadingActive ? root.actions.previousImageMenuAction : root.actions.nextImageMenuAction
-    readonly property string leadingImageMenuIconName: root.actions.previousImageMenuAction?.icon.name ?? ""
-    readonly property string trailingImageMenuIconName: root.actions.nextImageMenuAction?.icon.name ?? ""
+    readonly property var leadingImageAction: root.actionForSlot(KiriViewApplication.LeadingImageActionSlot)
+    readonly property var trailingImageAction: root.actionForSlot(KiriViewApplication.TrailingImageActionSlot)
+    readonly property string leadingImageIconName: root.iconNameForSlot(KiriViewApplication.LeadingImageActionSlot, false)
+    readonly property string trailingImageIconName: root.iconNameForSlot(KiriViewApplication.TrailingImageActionSlot, false)
 
-    readonly property var firstImageMenuAction: root.actions.firstImageMenuAction
-    readonly property var lastImageMenuAction: root.actions.lastImageMenuAction
-    readonly property string firstImageMenuIconName: root.rightToLeftReadingActive ? (root.actions.lastImageMenuAction?.icon.name ?? "") : (root.actions.firstImageMenuAction?.icon.name ?? "")
-    readonly property string lastImageMenuIconName: root.rightToLeftReadingActive ? (root.actions.firstImageMenuAction?.icon.name ?? "") : (root.actions.lastImageMenuAction?.icon.name ?? "")
+    readonly property var leadingImageMenuAction: root.menuActionForSlot(KiriViewApplication.LeadingImageMenuActionSlot)
+    readonly property var trailingImageMenuAction: root.menuActionForSlot(KiriViewApplication.TrailingImageMenuActionSlot)
+    readonly property string leadingImageMenuIconName: root.iconNameForSlot(KiriViewApplication.LeadingImageMenuActionSlot, true)
+    readonly property string trailingImageMenuIconName: root.iconNameForSlot(KiriViewApplication.TrailingImageMenuActionSlot, true)
 
-    readonly property var leadingArchiveMenuAction: root.rightToLeftReadingActive ? root.actions.nextContainerMenuAction : root.actions.previousContainerMenuAction
-    readonly property var trailingArchiveMenuAction: root.rightToLeftReadingActive ? root.actions.previousContainerMenuAction : root.actions.nextContainerMenuAction
-    readonly property string leadingArchiveMenuIconName: root.actions.previousContainerMenuAction?.icon.name ?? ""
-    readonly property string trailingArchiveMenuIconName: root.actions.nextContainerMenuAction?.icon.name ?? ""
-    readonly property var applicationMenuNavigationActions: [leadingArchiveMenuAction, trailingArchiveMenuAction]
+    readonly property var firstImageMenuAction: root.menuActionForSlot(KiriViewApplication.FirstImageMenuActionSlot)
+    readonly property var lastImageMenuAction: root.menuActionForSlot(KiriViewApplication.LastImageMenuActionSlot)
+    readonly property string firstImageMenuIconName: root.iconNameForSlot(KiriViewApplication.FirstImageMenuActionSlot, true)
+    readonly property string lastImageMenuIconName: root.iconNameForSlot(KiriViewApplication.LastImageMenuActionSlot, true)
+
+    readonly property var leadingArchiveMenuAction: root.menuActionForSlot(KiriViewApplication.LeadingArchiveMenuActionSlot)
+    readonly property var trailingArchiveMenuAction: root.menuActionForSlot(KiriViewApplication.TrailingArchiveMenuActionSlot)
+    readonly property string leadingArchiveMenuIconName: root.iconNameForSlot(KiriViewApplication.LeadingArchiveMenuActionSlot, true)
+    readonly property string trailingArchiveMenuIconName: root.iconNameForSlot(KiriViewApplication.TrailingArchiveMenuActionSlot, true)
+    readonly property var applicationMenuNavigationActions: root.navigationApplicationMenuActionIds().map(actionId => root.menuActionForId(actionId)).filter(action => action !== null)
+
+    function actionForId(actionId) {
+        return root.actionLookup[actionId] ?? null;
+    }
+
+    function menuActionForId(actionId) {
+        return root.menuActionLookup[actionId] ?? null;
+    }
+
+    function projectedActionId(slot) {
+        root.projectionRevision;
+        return root.projectionProvider.navigationPresentationActionId(slot);
+    }
+
+    function projectedIconActionId(slot) {
+        root.projectionRevision;
+        return root.projectionProvider.navigationPresentationIconActionId(slot);
+    }
+
+    function navigationApplicationMenuActionIds() {
+        root.projectionRevision;
+        return root.projectionProvider.navigationApplicationMenuActionIds();
+    }
+
+    function actionForSlot(slot) {
+        return root.actionForId(projectedActionId(slot));
+    }
+
+    function menuActionForSlot(slot) {
+        return root.menuActionForId(projectedActionId(slot));
+    }
+
+    function iconNameForSlot(slot, menuAction) {
+        const action = menuAction ? root.menuActionForId(projectedIconActionId(slot)) : root.actionForId(projectedIconActionId(slot));
+        return action?.icon.name ?? "";
+    }
 }

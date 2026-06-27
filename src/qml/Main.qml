@@ -484,11 +484,11 @@ StatefulApp.StatefulWindow {
             height: implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
+            navigationPresentationProvider: kiriApplication
             applicationMenuActions: imageActions.applicationMenuActions
             openActiveNavigationAtNumber: function (number) {
                 documentSession.openActiveNavigationAtNumber(number);
             }
-            rightToLeftReadingActive: imageActions.rightToLeftReadingActive
             rightToLeftReadingControlVisible: documentSession.activeImageOpenedCollectionScopeActive
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             transientOverlay: root.fullscreen
@@ -522,7 +522,7 @@ StatefulApp.StatefulWindow {
         actions: imageActions
         imageMode: page.imageMode
         mediaMode: page.imageMode || page.videoMode
-        rightToLeftReadingActive: imageActions.rightToLeftReadingActive
+        navigationPresentationProvider: kiriApplication
         visible: root.menuBarMode && !root.fullscreen
     }
 

@@ -106,6 +106,36 @@ static_assert(static_cast<int>(Actions::ActionId::FileOpenAction)
 static_assert(static_cast<int>(Actions::ActionId::ActionCount)
     == static_cast<int>(KiriViewApplication::ActionCount));
 
+namespace {
+Actions::NavigationPresentationSlot projectedNavigationPresentationSlot(
+    const Actions::NavigationPresentationProjection& projection,
+    KiriViewApplication::NavigationPresentationSlot slot)
+{
+    switch (slot) {
+    case KiriViewApplication::LeadingImageActionSlot:
+        return projection.leadingImageAction;
+    case KiriViewApplication::TrailingImageActionSlot:
+        return projection.trailingImageAction;
+    case KiriViewApplication::LeadingImageMenuActionSlot:
+        return projection.leadingImageMenuAction;
+    case KiriViewApplication::TrailingImageMenuActionSlot:
+        return projection.trailingImageMenuAction;
+    case KiriViewApplication::FirstImageMenuActionSlot:
+        return projection.firstImageMenuAction;
+    case KiriViewApplication::LastImageMenuActionSlot:
+        return projection.lastImageMenuAction;
+    case KiriViewApplication::LeadingArchiveMenuActionSlot:
+        return projection.leadingArchiveMenuAction;
+    case KiriViewApplication::TrailingArchiveMenuActionSlot:
+        return projection.trailingArchiveMenuAction;
+    case KiriViewApplication::NavigationPresentationSlotCount:
+        break;
+    }
+
+    return {};
+}
+}
+
 KiriViewApplication::KiriViewApplication(QObject* parent)
     : AbstractKirigamiApplication(parent)
     , m_actionHost(std::make_unique<Actions::KiriViewApplicationActionHost>(*this))
@@ -294,6 +324,35 @@ QString KiriViewApplication::actionToolbarTextForId(ActionId actionId) const
 QString KiriViewApplication::actionToolbarTooltipTextForId(ActionId actionId) const
 {
     return m_actionRuntime->actionToolbarTooltipText(domainActionId(actionId));
+}
+
+KiriViewApplication::ActionId KiriViewApplication::navigationPresentationActionId(
+    NavigationPresentationSlot slot) const
+{
+    return facadeActionId(projectedNavigationPresentationSlot(
+        m_actionRuntime->navigationPresentationProjection(), slot)
+            .actionId);
+}
+
+KiriViewApplication::ActionId KiriViewApplication::navigationPresentationIconActionId(
+    NavigationPresentationSlot slot) const
+{
+    return facadeActionId(projectedNavigationPresentationSlot(
+        m_actionRuntime->navigationPresentationProjection(), slot)
+            .iconActionId);
+}
+
+QVariantList KiriViewApplication::navigationApplicationMenuActionIds() const
+{
+    const Actions::NavigationPresentationProjection projection
+        = m_actionRuntime->navigationPresentationProjection();
+
+    QVariantList actionIds;
+    actionIds.reserve(static_cast<int>(projection.applicationMenuArchiveActionIds.size()));
+    for (Actions::ActionId actionId : projection.applicationMenuArchiveActionIds) {
+        actionIds.push_back(static_cast<int>(facadeActionId(actionId)));
+    }
+    return actionIds;
 }
 
 void KiriViewApplication::setDocumentSession(QObject* session)

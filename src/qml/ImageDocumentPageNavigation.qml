@@ -17,13 +17,13 @@ RowLayout {
     required property bool activeNavigationKnown
     required property var openActiveNavigationAtNumber
     required property var actions
+    required property var navigationPresentationProvider
     property bool compact: false
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
     readonly property int currentItemNumber: activeNavigationKnown ? activeNavigationCurrentNumber : 0
     readonly property int itemCount: activeNavigationKnown ? activeNavigationCount : 0
     readonly property string unknownNavigationText: "–"
     property int pageNumberDigitCapacity: 1
-    property bool rightToLeftReadingActive: false
     readonly property var leftNavigationAction: navigationPresentationOrder.leadingImageAction
     readonly property var rightNavigationAction: navigationPresentationOrder.trailingImageAction
     readonly property bool textInputActive: pageNumberField.activeFocus
@@ -38,7 +38,7 @@ RowLayout {
         id: navigationPresentationOrder
 
         actions: root.actions
-        rightToLeftReadingActive: root.rightToLeftReadingActive
+        projectionProvider: root.navigationPresentationProvider
     }
 
     function cancelEditing(returnViewerFocus) {

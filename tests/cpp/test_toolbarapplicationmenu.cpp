@@ -449,6 +449,7 @@ Item {
         id: navigationPresentationProvider
 
         property bool rightToLeftReadingActive: false
+        property int actionStateRevision: rightToLeftReadingActive ? 1 : 0
 
         function navigationPresentationActionId(slot) {
             switch (slot) {
@@ -783,6 +784,7 @@ Item {
         id: navigationPresentationProvider
 
         property bool rightToLeftReadingActive: false
+        property int actionStateRevision: rightToLeftReadingActive ? 1 : 0
 
         function navigationPresentationActionId(slot) {
             switch (slot) {

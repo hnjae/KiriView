@@ -11,6 +11,7 @@
 #include "applicationmenupresentationruntime.h"
 #include "applicationshortcutpolicy.h"
 #include "imageactionavailabilitypolicy.h"
+#include "navigationpresentationprojection.h"
 #include "session/documentsessiontypes.h"
 
 #include <KStandardActions>
@@ -104,6 +105,7 @@ public:
     void setCommandPortSource(ApplicationCommandPortSource* source);
     ApplicationCommandRouterInput commandRouterInput() const;
     bool rightToLeftReadingActive() const;
+    NavigationPresentationProjection navigationPresentationProjection() const;
     void handleActionTriggered(ActionId actionId) const;
     void handleScanForwardAction() const;
     void handleScanBackwardAction() const;

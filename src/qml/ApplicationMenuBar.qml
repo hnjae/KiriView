@@ -9,9 +9,9 @@ Controls.MenuBar {
     id: root
 
     required property var actions
+    required property var navigationPresentationProvider
     property bool imageMode: true
     property bool mediaMode: imageMode
-    property bool rightToLeftReadingActive: false
 
     readonly property var leadingArchiveMenuAction: navigationPresentationOrder.leadingArchiveMenuAction
     readonly property var leadingImageMenuAction: navigationPresentationOrder.leadingImageMenuAction
@@ -28,7 +28,7 @@ Controls.MenuBar {
         id: navigationPresentationOrder
 
         actions: root.actions
-        rightToLeftReadingActive: root.rightToLeftReadingActive
+        projectionProvider: root.navigationPresentationProvider
     }
 
     Controls.Menu {
