@@ -51,7 +51,7 @@ Item {
     Kirigami.PlaceholderMessage {
         anchors.centerIn: parent
         icon.name: "video-x-generic-symbolic"
-        text: KI18n.i18nc("@info:placeholder", "KiriView can’t play videos inside directly opened archives or directories yet.")
+        text: KI18n.i18nc("@info:placeholder", "KiriView can’t play videos inside directly opened archives or directories.")
         visible: root.unsupportedOpenedCollectionVideo
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 24)
     }
