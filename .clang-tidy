@@ -135,7 +135,7 @@ Checks: >
   readability-simplify-boolean-expr,
   readability-static-definition-in-anonymous-namespace,
   readability-string-compare
-WarningsAsErrors: ''
+WarningsAsErrors: '*'
 HeaderFilterRegex: '^(src|tests|examples)/'
 FormatStyle: none
 CheckOptions:

@@ -197,6 +197,7 @@ in
                 printf '[%d/%d] Processing file %s.\n' "$((index + 1))" "$source_count" "$source"
                 clazy_args=(
                     --checks="$checks"
+                    --extra-arg=-Werror
                     -p "$compile_db"
                 )
                 if [[ -n $ignore_dirs ]]; then
