@@ -376,7 +376,7 @@ std::optional<StaticDisplayImagePayload> rawEmbeddedThumbnailPreviewDisplayPaylo
         return std::nullopt;
     }
 
-    QImage image = displayReadyImage(std::move(result.image));
+    QImage image = displayReadyImage(result.image);
     QString errorString;
     if (!validateRawPreviewImage(image, result.originalSize, &errorString)) {
         return std::nullopt;

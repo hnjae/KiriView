@@ -22,8 +22,8 @@ namespace kiriview {
 HeifTileSource::HeifTileSource(
     QByteArray data, QSize imageSize, std::optional<HeifTileGrid> tileGrid)
     : m_data(std::move(data))
-    , m_imageSize(std::move(imageSize))
-    , m_tileGrid(std::move(tileGrid))
+    , m_imageSize(imageSize)
+    , m_tileGrid(tileGrid)
 {
 }
 
@@ -223,6 +223,6 @@ std::shared_ptr<HeifTileSource> openHeifTileSource(const QByteArray& data, QStri
         tileGrid = heifTileGridForTiling(tiling);
     }
 
-    return std::make_shared<HeifTileSource>(data, imageSize, std::move(tileGrid));
+    return std::make_shared<HeifTileSource>(data, imageSize, tileGrid);
 }
 }

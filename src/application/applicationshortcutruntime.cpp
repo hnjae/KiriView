@@ -239,7 +239,8 @@ void ApplicationShortcutRuntime::notifyShortcutRowsChanged()
 
 void ApplicationShortcutRuntime::sanitizeProgramWideActionShortcuts()
 {
-    for (QAction* action : m_host.mainActionCollection()->actions()) {
+    const QList<QAction*> actions = m_host.mainActionCollection()->actions();
+    for (QAction* action : actions) {
         sanitizeProgramWideActionShortcuts(action);
     }
 }
@@ -591,8 +592,9 @@ QList<ShortcutHelpRow> ApplicationShortcutRuntime::shortcutHelpRows() const
     QList<ShortcutHelpRow> rows;
     rows.reserve(static_cast<qsizetype>(definitions().size()));
 
-    for (const RegisteredApplicationAction& registeredAction :
-        m_actionRegistry.registeredActions()) {
+    const QList<RegisteredApplicationAction> registeredActions
+        = m_actionRegistry.registeredActions();
+    for (const RegisteredApplicationAction& registeredAction : registeredActions) {
         if (!KirigamiActionCollection::isShortcutsConfigurable(registeredAction.action)) {
             continue;
         }

@@ -13,8 +13,8 @@ using Scope = kiriview::ApplicationActions::ImageShortcutScope;
 
 struct ShortcutHelpCategoryDefinition
 {
-    Category category;
-    const char* key;
+    Category category = Category::File;
+    const char* key = nullptr;
     KLazyLocalizedString text;
     int order = 0;
 };

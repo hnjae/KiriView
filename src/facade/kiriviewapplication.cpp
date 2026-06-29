@@ -50,7 +50,6 @@ class KiriViewApplicationActionStateSource final : public ApplicationActionState
 public:
     KiriViewApplicationActionStateSource() = default;
 
-public:
     void setDocumentSession(KiriDocumentSession* session) { m_documentSession = session; }
     void setUiGateSnapshot(ApplicationActionUiGateSnapshot snapshot)
     {

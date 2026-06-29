@@ -127,6 +127,7 @@ namespace kiriview::ApplicationActions {
 ApplicationActionRuntime::ApplicationActionRuntime(ApplicationActionHost& host, Callbacks callbacks)
     : m_host(host)
     , m_actionRegistry(host)
+    , m_commandRouter()
     , m_menuPresentationRuntime(host, std::move(callbacks.menuPresentationChanged))
     , m_shortcutRuntime(std::make_unique<ApplicationShortcutRuntime>(m_host, m_actionRegistry,
           std::move(callbacks.shortcutRevisionChanged),
@@ -469,8 +470,9 @@ void ApplicationActionRuntime::handleActionTriggered(ActionId actionId, QAction*
 void ApplicationActionRuntime::applyActionState()
 {
     m_applyingActionState = true;
-    for (const RegisteredApplicationAction& registeredAction :
-        m_actionRegistry.registeredActions()) {
+    const QList<RegisteredApplicationAction> registeredActions
+        = m_actionRegistry.registeredActions();
+    for (const RegisteredApplicationAction& registeredAction : registeredActions) {
         QAction* action = registeredAction.action;
         const ApplicationActionState state
             = applicationActionState(registeredAction.actionId, m_actionStateInput);

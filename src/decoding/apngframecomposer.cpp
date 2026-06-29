@@ -11,9 +11,8 @@ namespace {
 std::optional<std::size_t> frameRowBytes(quint32 width)
 {
     const auto pixelCount = static_cast<std::size_t>(width);
-    if (pixelCount != 0
-        && pixelCount
-            > std::numeric_limits<std::size_t>::max() / kiriview::ApngRgbaBuffer::bytesPerPixel) {
+    if (pixelCount
+        > std::numeric_limits<std::size_t>::max() / kiriview::ApngRgbaBuffer::bytesPerPixel) {
         return std::nullopt;
     }
     return pixelCount * kiriview::ApngRgbaBuffer::bytesPerPixel;

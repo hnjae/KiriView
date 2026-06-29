@@ -292,10 +292,8 @@ bool ActiveNavigationThumbnailRuntime::applyCompletion(
     }
 
     state.activeJob.reset();
-    if (completion.result.status == ActiveNavigationThumbnailResultStatus::Ready) {
-        releaseImage(state);
-        state.result = completion.result;
-    } else if (hasUsableReadyImage(state)) {
+    if (completion.result.status != ActiveNavigationThumbnailResultStatus::Ready
+        && hasUsableReadyImage(state)) {
         state.result.status = ActiveNavigationThumbnailResultStatus::Ready;
         state.result.imageSource = thumbnailImageSourceForId(state.imageStoreId);
     } else {
@@ -865,15 +863,11 @@ void ActiveNavigationThumbnailRuntime::finishGeneration(quint64 jobId,
         if (imageId.isEmpty()) {
             recordFailureDiagnostic(jobId, sourceKey, kind, bucket,
                 ActiveNavigationThumbnailFailureKind::ImageStoreInsertFailed, {});
-            if (kind == ThumbnailWorkKind::Background) {
-                markBackgroundBucketCompleted(state, bucket);
-            } else if (!hasUsableReadyImage(state)) {
-                markBackgroundBucketCompleted(state, bucket);
+            markBackgroundBucketCompleted(state, bucket);
+            if (kind != ThumbnailWorkKind::Background && !hasUsableReadyImage(state)) {
                 releaseImage(state);
                 state.result.status = ActiveNavigationThumbnailResultStatus::Failed;
                 state.result.imageSource = QUrl();
-            } else {
-                markBackgroundBucketCompleted(state, bucket);
             }
             break;
         }

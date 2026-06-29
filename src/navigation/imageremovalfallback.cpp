@@ -127,7 +127,7 @@ ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocati
 ImageRemovalFallback imageRemovalFallbackForImageContext(
     const ImageDocumentPageCandidateListContext& context)
 {
-    const QUrl currentUrl = context.currentUrl();
+    const QUrl& currentUrl = context.currentUrl();
     return ImageRemovalFallback { context, currentUrl, currentUrl.fileName() };
 }
 

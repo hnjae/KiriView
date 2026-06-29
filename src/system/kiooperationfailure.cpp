@@ -9,6 +9,8 @@
 namespace kiriview {
 bool isKioOperationCanceledError(int errorCode)
 {
+    // Qt currently exposes these cancellation names with the same value.
+    // NOLINTNEXTLINE(misc-redundant-expression)
     return errorCode == KJob::KilledJobError || errorCode == KIO::ERR_USER_CANCELED;
 }
 

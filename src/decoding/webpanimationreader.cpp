@@ -72,7 +72,7 @@ std::optional<QImage> imageFromRgbaFrame(const std::uint8_t* bytes, QSize size)
         return std::nullopt;
     }
 
-    const qsizetype bytesPerLine = static_cast<qsizetype>(width * 4U);
+    const qsizetype bytesPerLine = static_cast<qsizetype>(width) * 4;
     const QImage borrowedImage(
         bytes, size.width(), size.height(), bytesPerLine, QImage::Format_RGBA8888);
     if (borrowedImage.isNull()) {

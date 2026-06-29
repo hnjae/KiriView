@@ -115,7 +115,7 @@ namespace {
     StaticDisplayImagePayload refinedDisplayImagePayload(
         RasterDisplayRefinementWork work, QImage image)
     {
-        work.currentDisplay.image = displayReadyImage(std::move(image));
+        work.currentDisplay.image = displayReadyImage(image);
         work.currentDisplay.quality = work.quality;
         work.currentDisplay.displayPixelsPerSourcePixel = imagePixelsPerSourcePixel(
             work.currentDisplay.originalSize, work.currentDisplay.image.size());

@@ -166,7 +166,7 @@ void ImageDocumentPageNavigationController::watchChanges(
     }
 
     m_changesJob.cancel();
-    const ImageDocumentPageCandidateListSource source = context.source();
+    const ImageDocumentPageCandidateListSource& source = context.source();
     m_changesJob = m_candidateRepository.watchCandidateChanges(
         this, context,
         [this, source](std::vector<ImageDocumentPageCandidate> candidates) {

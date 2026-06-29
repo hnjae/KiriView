@@ -15,7 +15,7 @@ uint qHash(TileKey key, uint seed)
 }
 
 TilePyramid::TilePyramid(QSize imageSize, int tileSize, int apronSourcePixels)
-    : m_imageSize(std::move(imageSize))
+    : m_imageSize(imageSize)
     , m_tileSize(std::max(1, tileSize))
     , m_apronSourcePixels(std::max(0, apronSourcePixels))
 {

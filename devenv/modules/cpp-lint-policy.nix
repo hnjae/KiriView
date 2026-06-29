@@ -4,7 +4,7 @@
   env.CLAZY_CHECKS = builtins.concatStringsSep "," [
     # Checks from Manual Level:
     # "assert-with-side-effects" # managed by clang-tidy: bugprone-assert-side-effect
-    # "unneeded-cast"            # managed by clang-tidy: readability-redundant-casting/cppcoreguidelines-pro-type-*
+    # "unneeded-cast"            # managed by clang-tidy: readability-redundant-casting/cppcoreguidelines-pro-type-cstyle-cast
     # "unused-result-check"      # managed by clang-tidy: bugprone-unused-return-value
     "ifndef-define-typo"
     "qhash-with-char-pointer-key"
@@ -19,7 +19,8 @@
     "container-inside-loop"
     "detaching-member"
     "isempty-vs-count"
-    "reserve-candidates"
+    # False-positives on already-reserved std::vector caches.
+    # "reserve-candidates"
     "use-chrono-in-qtimer"
     "use-arrow-operator-instead-of-data"
 
@@ -27,20 +28,23 @@
     "level1"
     # Requires manual ownership decisions for QObject/moc integration and copy semantics.
     # clazy fixits previously added Q_OBJECT/Q_DISABLE_COPY without matching build metadata.
-    # "no-rule-of-two-soft" # managed by clang-tidy: cppcoreguidelines-special-member-functions
+    # "no-rule-of-two-soft" # requires manual ownership decisions for QObject/moc integration and copy semantics
 
     # Checks from Level 2:
-    # "function-args-by-ref"      # managed by clang-tidy: performance-unnecessary-value-param
+    # "function-args-by-ref"      # too noisy for Qt callback and implicitly shared value patterns
     # "implicit-casts"            # managed by clang-tidy: bugprone-bool-pointer-implicit-conversion
     # "returning-void-expression" # managed by clang-tidy: readability-avoid-return-with-void-value
-    # "rule-of-three"             # managed by clang-tidy: cppcoreguidelines-special-member-functions
+    # "rule-of-three"             # requires manual ownership decisions for QObject/moc integration and copy semantics
     # "virtual-call-ctor"         # managed by clang-tidy: clang-analyzer-cplusplus.PureVirtualCall/clang-analyzer-optin.cplusplus.VirtualCall
     "base-class-event"
     # "copyable-polymorphic" # requires manual copy/move and ABI ownership decisions
-    "ctor-missing-parent-argument"
-    "function-args-by-value"
+    # QQuickImageProvider is not a QObject-parent ownership surface.
+    # "ctor-missing-parent-argument"
+    # Flags virtual override signatures and shared interfaces.
+    # "function-args-by-value"
     # "missing-qobject-macro" # requires adding matching moc build metadata when accepted
-    "old-style-connect"
+    # Dynamic QObject/QML signals are not always available as typed C++ signals.
+    # "old-style-connect"
     "qstring-allocations"
     "static-pmf"
   ];
@@ -66,8 +70,8 @@
     "fix-range-loop-add-ref"
 
     # Checks from Level 2:
-    # "fix-function-args-by-ref" # check managed by clang-tidy
+    # "fix-function-args-by-ref" # disabled with the corresponding clazy check
     # "fix-missing-qobject-macro" # Q_OBJECT additions require matching moc build metadata
-    "fix-old-style-connect"
+    # "fix-old-style-connect"
   ];
 }

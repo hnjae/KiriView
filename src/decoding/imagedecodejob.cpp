@@ -69,7 +69,7 @@ void ImageDecodeJob::start(ImageDecodeRequest request)
                 return;
             }
 
-            startDecode(std::move(data), std::move(ticket), std::move(operation->request));
+            startDecode(std::move(data), ticket, std::move(operation->request));
         },
         [this, ticket](const QString& errorString) {
             ImageDecodeJobRuntimePlan plan = m_state.acceptLoadError(ticket);

@@ -92,7 +92,7 @@ std::shared_ptr<SvgTileSource> SvgTileSource::open(const QByteArray& data, QStri
 
 SvgTileSource::SvgTileSource(QByteArray data, QSize imageSize)
     : m_data(std::move(data))
-    , m_imageSize(std::move(imageSize))
+    , m_imageSize(imageSize)
 {
 }
 

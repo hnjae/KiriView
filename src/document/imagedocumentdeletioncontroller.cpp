@@ -32,7 +32,6 @@ ImageDocumentDeletionController::ImageDocumentDeletionController(QObject* parent
     , m_pageSurfaceController(pageSurfaceController)
     , m_callbacks(std::move(callbacks))
     , m_fileDeletionProvider(fileDeletionProviderWithDefault(std::move(fileDeletionProvider)))
-    , m_deletionState()
     , m_fallbackController(m_parent, std::move(candidateProvider),
           [this](ImageDocumentRuntimePlan plan) { reportRuntimePlan(std::move(plan)); })
 {

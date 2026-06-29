@@ -6,4 +6,5 @@ extend-ignore-re = ["Commit: [0-9a-f]{7,40}", "`[0-9a-f]{7,40}`"]
 
 [default.extend-words]
 INVOKABLE = "INVOKABLE"
+optin = "optin"
 trak = "trak"

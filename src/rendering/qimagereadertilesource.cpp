@@ -144,7 +144,7 @@ QImageReaderTileSource::QImageReaderTileSource(
     QByteArray data, QByteArray format, QSize imageSize, StaticImageReaderTransform transform)
     : m_data(std::move(data))
     , m_format(std::move(format))
-    , m_imageSize(std::move(imageSize))
+    , m_imageSize(imageSize)
     , m_transform(transform)
 {
 }

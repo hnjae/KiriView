@@ -136,7 +136,7 @@ ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionCandidates(QObject* rece
 ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionImageData(QObject* receiver,
     ImageDecodeRequest request, ImageDataCallback callback, ErrorCallback errorCallback)
 {
-    const OpenedCollectionScopeLocation requestedOpenedCollectionScope
+    const OpenedCollectionScopeLocation& requestedOpenedCollectionScope
         = request.openedCollectionScope();
     switchToOpenedCollectionScope(request.openedCollectionScope());
     if (m_runner == nullptr) {
@@ -152,7 +152,7 @@ ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionImageData(QObject* recei
     }
 
     const quint64 generation = m_sourceGeneration.current();
-    const QUrl imageUrl = request.imageUrl();
+    const QUrl& imageUrl = request.imageUrl();
     std::shared_ptr<MediaEntrySourceRunner> runner = m_runner;
 
     return startImageIoWorkerJob(

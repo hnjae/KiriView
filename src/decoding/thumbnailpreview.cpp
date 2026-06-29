@@ -246,7 +246,7 @@ std::optional<StaticDisplayImagePayload> xdgThumbnailPreviewDisplayPayload(
         return std::nullopt;
     }
 
-    QImage image = displayReadyImage(std::move(result.image));
+    QImage image = displayReadyImage(result.image);
     const qreal pixelsPerSourcePixel = imagePixelsPerSourcePixel(result.originalSize, image.size());
     return StaticDisplayImagePayload {
         sourceKeyForUrl(request.imageUrl()).identity,

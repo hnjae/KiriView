@@ -53,8 +53,7 @@ kiriview::RustNavigationIndex pageRustNavigationIndex(std::optional<std::size_t>
 
 namespace kiriview {
 PageNavigationState::PageNavigationState(std::vector<QUrl> urls, int currentIndex)
-    : targets()
-    , currentIndex(currentIndex)
+    : currentIndex(currentIndex)
 {
     targets.reserve(urls.size());
     for (QUrl& url : urls) {
