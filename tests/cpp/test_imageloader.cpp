@@ -136,6 +136,7 @@ private Q_SLOTS:
     void directArchiveResolvesFirstVideoAsUnsupportedOpenedCollectionVideo();
     void directArchiveResolvesFirstImage();
     void directoryCollectionResolvesFirstImage();
+    void directoryCollectionVideoReportsUnsupportedOpenedCollectionVideo();
     void explicitKioArchiveImageStaysImageUrlMode();
     void archiveInteriorVideoReportsUnsupportedOpenedCollectionVideo();
     void archiveInteriorImageKeepsComicBookRoot();
@@ -443,6 +444,48 @@ void TestImageLoader::directoryCollectionResolvesFirstImage()
         decodedSession->location().openedCollectionScopeRootUrl(), directoryCollection->rootUrl());
     QCOMPARE(decodedSession->openedCollectionScope().kind(),
         kiriview::OpenedCollectionScopeKind::Directory);
+}
+
+void TestImageLoader::directoryCollectionVideoReportsUnsupportedOpenedCollectionVideo()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QUrl directoryUrl = localUrl(directory.path());
+    const std::optional<kiriview::OpenedCollectionScopeLocation> directoryCollection
+        = kiriview::openedCollectionScopeLocationForDirectlyOpenedLocalUrl(directoryUrl);
+    QVERIFY(directoryCollection.has_value());
+    const QUrl videoUrl = archivePageUrl(directoryCollection->rootUrl(), QStringLiteral("01.mp4"));
+    candidateProvider.setOpenedCollectionCandidates(directoryCollection->rootUrl(),
+        {
+            videoCandidate(videoUrl),
+        });
+
+    std::optional<kiriview::ImageLoadSession> resolvedSession;
+    std::optional<kiriview::ImageLoadSession> unsupportedSession;
+    kiriview::ImageLoader::Callbacks callbacks;
+    callbacks.sourceResolved = [&resolvedSession](kiriview::ImageLoadSession session) {
+        resolvedSession = std::move(session);
+    };
+    callbacks.unsupportedOpenedCollectionVideo
+        = [&unsupportedSession](
+              kiriview::ImageLoadSession session) { unsupportedSession = std::move(session); };
+    kiriview::ImageLoader loader
+        = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
+
+    loader.start(kiriview::ImageLoadRequest::fromUrl(directoryUrl));
+
+    QVERIFY(resolvedSession.has_value());
+    QCOMPARE(resolvedSession->imageUrl(), videoUrl);
+    QVERIFY(unsupportedSession.has_value());
+    QCOMPARE(unsupportedSession->imageUrl(), videoUrl);
+    QCOMPARE(unsupportedSession->kind(), kiriview::ImageDocumentPageKind::Video);
+    QCOMPARE(unsupportedSession->openedCollectionScope().kind(),
+        kiriview::OpenedCollectionScopeKind::Directory);
+    QCOMPARE(unsupportedSession->openedCollectionScope().rootUrl(), directoryCollection->rootUrl());
+    QVERIFY(dataLoader.empty());
 }
 
 void TestImageLoader::explicitKioArchiveImageStaysImageUrlMode()
