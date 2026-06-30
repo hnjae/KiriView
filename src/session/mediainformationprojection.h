@@ -68,6 +68,7 @@ struct MediaInformationProjectionInput
     QSize imageSize;
     EmbeddedMetadata imageEmbeddedMetadata;
     QUrl videoSourceUrl;
+    OpenedCollectionScopeLocation videoOpenedCollectionScope;
     QSize videoSize;
     EmbeddedMetadata videoEmbeddedMetadata;
 };

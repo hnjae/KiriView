@@ -6,6 +6,19 @@
 #include "session/mediaopenwithplan.h"
 
 namespace kiriview {
+namespace {
+    OpenedCollectionScopeLocation mediaOpenWithScopeForInput(
+        const DocumentSessionPublicSnapshotInputBuilderInput& input)
+    {
+        if (input.session.documentKind == DocumentSessionKind::Video
+            && !input.session.openedCollectionVideoActive) {
+            return OpenedCollectionScopeLocation::none();
+        }
+
+        return input.image.displayedOpenedCollectionScope;
+    }
+}
+
 DocumentSessionPublicSnapshotInput buildDocumentSessionPublicSnapshotInput(
     const DocumentSessionPublicSnapshotInputBuilderInput& builderInput)
 {
@@ -21,7 +34,7 @@ DocumentSessionPublicSnapshotInput buildDocumentSessionPublicSnapshotInput(
                                 builderInput.session.documentKind,
                                 builderInput.image.readyForInformation,
                                 builderInput.image.displayedUrl,
-                                builderInput.image.displayedOpenedCollectionScope,
+                                mediaOpenWithScopeForInput(builderInput),
                                 builderInput.video.ready,
                                 builderInput.video.sourceUrl,
                             })

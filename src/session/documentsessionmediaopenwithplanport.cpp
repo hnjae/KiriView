@@ -7,6 +7,19 @@
 #include "session/documentsessionstate.h"
 
 namespace kiriview {
+namespace {
+    OpenedCollectionScopeLocation mediaOpenWithScopeForDocumentKind(
+        DocumentSessionKind documentKind, bool openedCollectionVideoActive,
+        const DocumentSessionPublicImageLeafSnapshot& image)
+    {
+        if (documentKind == DocumentSessionKind::Video && !openedCollectionVideoActive) {
+            return OpenedCollectionScopeLocation::none();
+        }
+
+        return image.displayedOpenedCollectionScope;
+    }
+}
+
 DocumentSessionMediaOpenWithPlanPort::DocumentSessionMediaOpenWithPlanPort(
     const DocumentSessionState* state, const DocumentSessionPublicImageLeafSnapshot* image,
     const DocumentSessionPublicVideoLeafSnapshot* video)
@@ -22,7 +35,8 @@ MediaOpenWithPlan DocumentSessionMediaOpenWithPlanPort::currentPlan() const
         m_state->documentKind(),
         m_image->readyForInformation,
         m_image->displayedUrl,
-        m_image->displayedOpenedCollectionScope,
+        mediaOpenWithScopeForDocumentKind(
+            m_state->documentKind(), m_state->openedCollectionVideoActive(), *m_image),
         m_video->ready,
         m_video->sourceUrl,
     });

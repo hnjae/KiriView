@@ -69,6 +69,10 @@ QUrl videoInformationTargetUrl(const kiriview::MediaInformationProjectionInput& 
         return {};
     }
 
+    if (!openedCollectionScopeInformationAvailable(input.videoOpenedCollectionScope)) {
+        return {};
+    }
+
     return input.videoSourceUrl;
 }
 
@@ -240,14 +244,17 @@ MediaInformationProjectionSnapshot projectMediaInformation(
     case DocumentSessionKind::Video:
         snapshot.kind = MediaInformationKind::Video;
         snapshot.mediaSectionTitle = i18nc("@title:group", "Video");
-        snapshot.summary = hasValidDimensions(input.videoSize)
+        snapshot.summary
+            = input.videoOpenedCollectionScope.isEmpty() && hasValidDimensions(input.videoSize)
             ? i18nc("@info:metadata summary", "Video, %1", dimensionsText(input.videoSize))
             : i18nc("@info:metadata summary", "Video");
         snapshot.generalRows
-            = generalRows(snapshot.kind, snapshot.targetUrl, OpenedCollectionScopeLocation::none());
-        snapshot.mediaRows = videoRows(input.videoSize, input.videoEmbeddedMetadata);
-        snapshot.cameraRows = cameraRows(input.videoEmbeddedMetadata);
-        snapshot.advancedRows = advancedRows(input.videoEmbeddedMetadata);
+            = generalRows(snapshot.kind, snapshot.targetUrl, input.videoOpenedCollectionScope);
+        if (input.videoOpenedCollectionScope.isEmpty()) {
+            snapshot.mediaRows = videoRows(input.videoSize, input.videoEmbeddedMetadata);
+            snapshot.cameraRows = cameraRows(input.videoEmbeddedMetadata);
+            snapshot.advancedRows = advancedRows(input.videoEmbeddedMetadata);
+        }
         break;
     case DocumentSessionKind::Empty:
         break;

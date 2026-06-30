@@ -145,6 +145,7 @@ private:
     void handleVideoDocumentSnapshotChanged();
     bool tryEnterOpenedCollectionVideoFromImageSnapshot();
     bool tryReturnToImageDocumentFromOpenedCollectionVideo();
+    bool tryClearOpenedCollectionVideoAfterImageDocumentCleared();
     void enterOpenedCollectionVideoDocument(
         const QUrl& sourceUrl, VideoPlaybackSourceDevice sourceDevice);
     void refreshImagePublicSnapshot();

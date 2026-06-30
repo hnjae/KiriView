@@ -197,6 +197,17 @@ kiriview::DocumentSessionPublicProjectionInput projectionInputForSnapshotInput(
     };
 }
 
+kiriview::OpenedCollectionScopeLocation videoOpenedCollectionScopeForInput(
+    const kiriview::DocumentSessionPublicSnapshotInput& input)
+{
+    if (input.session.documentKind == kiriview::DocumentSessionKind::Video
+        && input.session.openedCollectionVideoActive) {
+        return input.image.displayedOpenedCollectionScope;
+    }
+
+    return kiriview::OpenedCollectionScopeLocation::none();
+}
+
 kiriview::MediaInformationProjectionInput mediaInformationInputForSnapshotInput(
     const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
@@ -216,6 +227,7 @@ kiriview::MediaInformationProjectionInput mediaInformationInputForSnapshotInput(
     mediaInformationInput.imageSize = input.image.directMediaSize;
     mediaInformationInput.imageEmbeddedMetadata = input.image.embeddedMetadata;
     mediaInformationInput.videoSourceUrl = input.video.sourceUrl;
+    mediaInformationInput.videoOpenedCollectionScope = videoOpenedCollectionScopeForInput(input);
     mediaInformationInput.videoSize = input.video.directMediaSize;
     mediaInformationInput.videoEmbeddedMetadata = input.video.embeddedMetadata;
     return mediaInformationInput;

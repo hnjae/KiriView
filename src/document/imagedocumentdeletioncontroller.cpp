@@ -6,6 +6,7 @@
 #include "async/imagecallback.h"
 #include "imagedocumentstate.h"
 #include "localization/imageerrortext.h"
+#include "location/imagedocumentlocation.h"
 #include "presentation/imagepagesurfacecontroller.h"
 
 #include <utility>
@@ -19,6 +20,12 @@ QString genericFileDeletionErrorMessage()
 bool documentReadyForFileDeletion(const kiriview::ImageDocumentState& state)
 {
     return state.status() == kiriview::ImageDocumentStatus::Ready;
+}
+
+bool displayedOpenedCollectionVideoHasDeletionTarget(const kiriview::ImageDocumentState& state)
+{
+    return state.sourceKind() == kiriview::ImageDocumentPageKind::Video
+        && kiriview::displayedLocationIsInsideOpenedCollectionScope(state.displayedImageLocation());
 }
 }
 
@@ -47,7 +54,8 @@ void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
         return;
     }
 
-    if (!m_pageSurfaceController.hasImage()) {
+    if (!m_pageSurfaceController.hasImage()
+        && !displayedOpenedCollectionVideoHasDeletionTarget(m_state)) {
         return;
     }
 

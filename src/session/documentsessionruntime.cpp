@@ -600,6 +600,17 @@ void DocumentSessionRuntime::clearActiveNavigationRevealContextIfUnavailable()
 
 void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 {
+    if (m_state.documentKind() == DocumentSessionKind::Video
+        && m_state.openedCollectionVideoActive()) {
+        if (!displayedFileDeletionAvailable()) {
+            return;
+        }
+
+        m_imageDocumentCommandRuntime.deleteDisplayedFile(mode);
+        syncImageDocumentFileDeletionProgress();
+        return;
+    }
+
     if (m_state.documentKind() == DocumentSessionKind::Image
         && !m_directMediaActivityPort.directImageSourceScopeEligible()) {
         m_imageDocumentCommandRuntime.deleteDisplayedFile(mode);
@@ -652,6 +663,10 @@ void DocumentSessionRuntime::handleImageDocumentSnapshotChanged()
     if (tryReturnToImageDocumentFromOpenedCollectionVideo()) {
         return;
     }
+    if (tryClearOpenedCollectionVideoAfterImageDocumentCleared()) {
+        return;
+    }
+    syncImageDocumentFileDeletionProgress();
     m_imageDocumentSyncRuntime.sync(DocumentSessionImageDocumentSyncRuntimeInput {
         m_routingSource,
         m_state.documentKind(),
@@ -713,7 +728,8 @@ bool DocumentSessionRuntime::tryReturnToImageDocumentFromOpenedCollectionVideo()
     if (m_routingSource || !m_state.openedCollectionVideoActive()
         || m_state.documentKind() != DocumentSessionKind::Video
         || m_imagePublicSnapshot.sourceKind == ImageDocumentPageKind::Video
-        || !m_imagePublicSnapshot.readyForInformation) {
+        || !m_imagePublicSnapshot.readyForInformation
+        || m_imagePublicSnapshot.sourceUrl.isEmpty()) {
         return false;
     }
 
@@ -724,6 +740,26 @@ bool DocumentSessionRuntime::tryReturnToImageDocumentFromOpenedCollectionVideo()
     m_state.setFileDeletionInProgress(m_imagePublicSnapshot.fileDeletionInProgress);
     setDocumentKind(DocumentSessionKind::Image);
     publishActiveNavigationForImagePages();
+    return true;
+}
+
+bool DocumentSessionRuntime::tryClearOpenedCollectionVideoAfterImageDocumentCleared()
+{
+    if (m_routingSource || !m_state.openedCollectionVideoActive()
+        || m_state.documentKind() != DocumentSessionKind::Video
+        || !m_imagePublicSnapshot.sourceUrl.isEmpty() || m_imagePublicSnapshot.readyForInformation
+        || m_imagePublicSnapshot.error || m_imagePublicSnapshot.fileDeletionInProgress) {
+        return false;
+    }
+
+    leaveVideoMode();
+    refreshVideoPublicSnapshot();
+    m_state.setOpenedCollectionVideoActive(false);
+    m_state.setSourceIdentity({});
+    m_state.setFileDeletionInProgress(false);
+    setDocumentKind(DocumentSessionKind::Empty);
+    recomputePublicProjection();
+    clearActiveNavigationRevealContextIfUnavailable();
     return true;
 }
 
@@ -764,8 +800,12 @@ void DocumentSessionRuntime::refreshLeafPublicSnapshots()
 
 void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
 {
-    if (m_state.documentKind() != DocumentSessionKind::Image
-        || m_directMediaActivityPort.directImageSourceScopeEligible()) {
+    const bool imageDeletionOwnsProgress
+        = (m_state.documentKind() == DocumentSessionKind::Image
+              && !m_directMediaActivityPort.directImageSourceScopeEligible())
+        || (m_state.documentKind() == DocumentSessionKind::Video
+            && m_state.openedCollectionVideoActive());
+    if (!imageDeletionOwnsProgress) {
         return;
     }
 

@@ -202,7 +202,7 @@ Expected tests/checks:
 
 ### Milestone 6: File Actions, Info Panel, And Deletion
 
-Status: Pending
+Status: Complete
 
 Dependencies: Milestones 4 and 5
 

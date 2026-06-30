@@ -27,7 +27,8 @@ QUrl imageOpenWithTargetUrl(const kiriview::MediaOpenWithPlanInput& input)
 
 QUrl videoOpenWithTargetUrl(const kiriview::MediaOpenWithPlanInput& input)
 {
-    if (!input.videoReady || input.videoSourceUrl.isEmpty()) {
+    if (!input.videoReady || input.videoSourceUrl.isEmpty()
+        || !openedCollectionScopeOpenWithAvailable(input.openedCollectionScope)) {
         return {};
     }
 
