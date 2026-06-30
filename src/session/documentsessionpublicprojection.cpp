@@ -57,8 +57,13 @@ QSize directMediaSizeForInput(const kiriview::DocumentSessionPublicProjectionInp
     return {};
 }
 
-QString windowTitleFileNameForInput(const kiriview::DocumentSessionPublicProjectionInput& input)
+QString windowTitleFileNameForInput(const kiriview::DocumentSessionPublicProjectionInput& input,
+    kiriview::ActiveNavigationSourceKind sourceKind)
 {
+    if (sourceKind == kiriview::ActiveNavigationSourceKind::ImageDocumentPages) {
+        return input.imageWindowTitleFileName;
+    }
+
     switch (input.documentKind) {
     case kiriview::DocumentSessionKind::Image:
         return input.imageWindowTitleFileName;
@@ -103,8 +108,10 @@ bool activeImageReadyForInput(const kiriview::DocumentSessionPublicSnapshotInput
 bool activeImageOpenedCollectionScopeActiveForInput(
     const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
-    return input.session.documentKind == kiriview::DocumentSessionKind::Image
-        && input.image.openedCollectionScopeActive;
+    return input.image.openedCollectionScopeActive
+        && (input.session.documentKind == kiriview::DocumentSessionKind::Image
+            || (input.session.documentKind == kiriview::DocumentSessionKind::Video
+                && input.session.openedCollectionVideoActive));
 }
 
 bool activeImageRightToLeftReadingActiveForInput(
@@ -127,7 +134,12 @@ bool activeVideoControlsReadyForInput(const kiriview::DocumentSessionPublicSnaps
 kiriview::DocumentSessionActionAvailabilityFacts actionAvailabilityFactsForInput(
     const kiriview::DocumentSessionPublicSnapshotInput& input)
 {
-    if (input.session.documentKind != kiriview::DocumentSessionKind::Image) {
+    const bool imageDocumentScopeActive
+        = input.session.documentKind == kiriview::DocumentSessionKind::Image
+        || (input.session.documentKind == kiriview::DocumentSessionKind::Video
+            && input.session.openedCollectionVideoActive
+            && input.image.openedCollectionScopeActive);
+    if (!imageDocumentScopeActive) {
         return {};
     }
 
@@ -221,7 +233,7 @@ DocumentSessionPublicProjection projectDocumentSessionPublicState(
         = projectActiveNavigation(projection.sourceKind, input.directMediaNavigation,
             input.imageDocumentPageNavigation, input.fileDeletionInProgress);
     projection.windowTitleSubject = projectWindowTitleSubject(WindowTitleSubjectInput {
-        windowTitleFileNameForInput(input),
+        windowTitleFileNameForInput(input, projection.sourceKind),
         projection.sourceKind,
         directMediaSizeForInput(input, projection.sourceKind),
         projection.activeNavigation,

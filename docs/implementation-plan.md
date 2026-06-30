@@ -134,7 +134,7 @@ Expected tests/checks:
 
 ### Milestone 4: Session Projection, Navigation, Toolbar, And Title State
 
-Status: Pending
+Status: Complete
 
 Dependencies: Milestone 3
 
