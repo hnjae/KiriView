@@ -11,6 +11,7 @@
 #include "rendering/staticimage.h"
 #include "session/activenavigationprojection.h"
 #include "system/filedeletion.h"
+#include "video/videoplaybacksource.h"
 
 #include <QMetaObject>
 #include <QRectF>
@@ -113,6 +114,7 @@ struct DocumentSessionVideoDocumentSnapshotPort
 struct DocumentSessionVideoDocumentSourceCommandPort
 {
     std::function<void(const QUrl&)> setSourceUrl;
+    std::function<void(const QUrl&, VideoPlaybackSourceDevice)> setSourceDevice;
 };
 
 struct DocumentSessionVideoDocumentPlaybackCommandPort

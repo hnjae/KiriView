@@ -50,6 +50,12 @@ void VideoSourceLoadRuntime::setSourceUrl(
         });
 }
 
+void VideoSourceLoadRuntime::cancelPendingResolution()
+{
+    m_shutdown = false;
+    cancelAndCleanup();
+}
+
 void VideoSourceLoadRuntime::shutdown()
 {
     if (m_shutdown) {

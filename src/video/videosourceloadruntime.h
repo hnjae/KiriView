@@ -27,6 +27,7 @@ public:
     bool active() const;
     void setSourceUrl(
         const QUrl& sourceUrl, QObject* receiver, VideoSourceLoadPlanCallback planCallback);
+    void cancelPendingResolution();
     void shutdown();
 
 private:

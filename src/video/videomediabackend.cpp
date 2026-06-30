@@ -52,6 +52,10 @@ public:
     }
 
     void setSource(const QUrl& sourceUrl) override { m_player.setSource(sourceUrl); }
+    void setSourceDevice(QIODevice* device, const QUrl& sourceUrl) override
+    {
+        m_player.setSourceDevice(device, sourceUrl);
+    }
     void play() override { m_player.play(); }
     void pause() override { m_player.pause(); }
     void stop() override { m_player.stop(); }

@@ -22,6 +22,14 @@ void DocumentSessionVideoDocumentCommandRuntime::setSourceUrl(const QUrl& source
     }
 }
 
+void DocumentSessionVideoDocumentCommandRuntime::setSourceDevice(
+    const QUrl& sourceUrl, VideoPlaybackSourceDevice sourceDevice)
+{
+    if (m_commands.source.setSourceDevice) {
+        m_commands.source.setSourceDevice(sourceUrl, std::move(sourceDevice));
+    }
+}
+
 void DocumentSessionVideoDocumentCommandRuntime::leaveMode(const QUrl& currentSourceUrl)
 {
     if (currentSourceUrl.isEmpty() && videoOutput() == nullptr) {

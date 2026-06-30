@@ -64,7 +64,7 @@ Expected tests/checks:
 
 ### Milestone 2: Video Document Source-Device Playback Path
 
-Status: Pending
+Status: Complete
 
 Dependencies: Milestone 1
 

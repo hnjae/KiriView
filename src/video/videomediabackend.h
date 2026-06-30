@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_VIDEOMEDIABACKEND_H
 #define KIRIVIEW_VIDEOMEDIABACKEND_H
 
+#include <QIODevice>
 #include <QObject>
 #include <QSize>
 #include <QString>
@@ -49,6 +50,7 @@ public:
 
     virtual void setCallbacks(VideoMediaBackendCallbacks callbacks) = 0;
     virtual void setSource(const QUrl& sourceUrl) = 0;
+    virtual void setSourceDevice(QIODevice* device, const QUrl& sourceUrl) = 0;
     virtual void play() = 0;
     virtual void pause() = 0;
     virtual void stop() = 0;

@@ -32,6 +32,10 @@ public:
     }
 
     void setSource(const QUrl& nextSourceUrl) override { sourceUrl = nextSourceUrl; }
+    void setSourceDevice(QIODevice*, const QUrl& nextSourceUrl) override
+    {
+        sourceUrl = nextSourceUrl;
+    }
     void play() override
     {
         isPlaying = true;

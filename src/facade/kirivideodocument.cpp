@@ -7,6 +7,7 @@
 #include "video/videodocumentruntime.h"
 
 #include <memory>
+#include <utility>
 
 namespace {
 KiriVideoDocument::Status fromVideoDocumentStatus(kiriview::VideoDocumentStatus status)
@@ -65,6 +66,12 @@ KiriVideoDocument::~KiriVideoDocument() = default;
 QUrl KiriVideoDocument::sourceUrl() const { return m_runtime->sourceUrl(); }
 
 void KiriVideoDocument::setSourceUrl(const QUrl& sourceUrl) { m_runtime->setSourceUrl(sourceUrl); }
+
+void KiriVideoDocument::setSourceDevice(
+    const QUrl& sourceUrl, kiriview::VideoPlaybackSourceDevice sourceDevice)
+{
+    m_runtime->setSourceDevice(sourceUrl, std::move(sourceDevice));
+}
 
 KiriVideoDocument::Status KiriVideoDocument::status() const
 {

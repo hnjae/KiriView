@@ -9,6 +9,7 @@
 #include "video/videomediabackend.h"
 #include "video/videooutputruntime.h"
 #include "video/videoplaybackcontrolplan.h"
+#include "video/videoplaybacksource.h"
 #include "video/videosourceloadplan.h"
 #include "video/videosourceloadruntime.h"
 
@@ -37,6 +38,7 @@ public:
 
     QUrl sourceUrl() const;
     void setSourceUrl(const QUrl& sourceUrl);
+    void setSourceDevice(const QUrl& sourceUrl, VideoPlaybackSourceDevice sourceDevice);
     VideoDocumentStatus status() const;
     QString errorString() const;
     const std::optional<VideoSourceLoadFailure>& sourceLoadFailure() const;
@@ -90,6 +92,7 @@ private:
     void executeSourceLoadOperation(const PublishVideoSourceLoadFailureOperation& operation);
     void clearPlaybackSource();
     void applyResolvedPlaybackUrl(const QUrl& playbackUrl);
+    void applyPlaybackSourceDevice(VideoPlaybackSourceDevice sourceDevice, const QUrl& sourceUrl);
     void publishSourceLoadFailure(const VideoSourceLoadFailure& failure);
     void invalidatePlaybackCallbacks();
     void acceptPlaybackCallbacks();
@@ -104,6 +107,7 @@ private:
     std::unique_ptr<VideoMediaBackend> m_mediaBackend;
     MediaBackendFactory m_mediaBackendFactory;
     VideoSourceLoadRuntime m_sourceLoadRuntime;
+    VideoPlaybackSourceDevice m_playbackSourceDevice;
     VideoOutputRuntime m_outputRuntime;
     quint64 m_playbackGeneration = 0;
     quint64 m_acceptedPlaybackGeneration = 0;

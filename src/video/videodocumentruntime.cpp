@@ -111,18 +111,32 @@ VideoDocumentRuntime::~VideoDocumentRuntime()
         m_mediaBackend->setVideoOutput(nullptr);
         m_mediaBackend->setSource(QUrl());
     }
+    m_playbackSourceDevice = {};
 }
 
 QUrl VideoDocumentRuntime::sourceUrl() const { return m_state.sourceUrl(); }
 
 void VideoDocumentRuntime::setSourceUrl(const QUrl& sourceUrl)
 {
-    if (m_state.sourceUrl() == sourceUrl) {
+    if (m_state.sourceUrl() == sourceUrl && m_playbackSourceDevice.device == nullptr) {
         return;
     }
 
     m_sourceLoadRuntime.setSourceUrl(sourceUrl, m_documentObject,
         [this](VideoSourceLoadPlan plan) { executeSourceLoadPlan(plan); });
+}
+
+void VideoDocumentRuntime::setSourceDevice(
+    const QUrl& sourceUrl, VideoPlaybackSourceDevice sourceDevice)
+{
+    if (sourceUrl.isEmpty() || sourceDevice.device == nullptr) {
+        setSourceUrl(QUrl());
+        return;
+    }
+
+    m_sourceLoadRuntime.cancelPendingResolution();
+    executeSourceLoadPlan(videoSourceLoadStartPlan(sourceUrl));
+    applyPlaybackSourceDevice(std::move(sourceDevice), sourceUrl);
 }
 
 VideoDocumentStatus VideoDocumentRuntime::status() const { return m_state.status(); }
@@ -307,6 +321,7 @@ void VideoDocumentRuntime::clearPlaybackSource()
         m_mediaBackend->stop();
         m_mediaBackend->setSource(QUrl());
     }
+    m_playbackSourceDevice = {};
 }
 
 void VideoDocumentRuntime::executeSourceLoadPlan(const VideoSourceLoadPlan& plan)
@@ -356,9 +371,22 @@ void VideoDocumentRuntime::applyResolvedPlaybackUrl(const QUrl& playbackUrl)
     VideoMediaBackend* mediaBackend = ensureMediaBackend();
     acceptPlaybackCallbacks();
     mediaBackend->setSource(playbackUrl);
+    m_playbackSourceDevice = {};
     m_state.setEmbeddedMetadata(playbackUrl.isLocalFile()
             ? parsePathEmbeddedMetadata(playbackUrl.toLocalFile())
             : EmbeddedMetadata {});
+    m_state.setVideoSize(mediaBackend->videoSize());
+    updateStatusFromBackend();
+    play();
+}
+
+void VideoDocumentRuntime::applyPlaybackSourceDevice(
+    VideoPlaybackSourceDevice sourceDevice, const QUrl& sourceUrl)
+{
+    VideoMediaBackend* mediaBackend = ensureMediaBackend();
+    m_playbackSourceDevice = std::move(sourceDevice);
+    acceptPlaybackCallbacks();
+    mediaBackend->setSourceDevice(m_playbackSourceDevice.device.get(), sourceUrl);
     m_state.setVideoSize(mediaBackend->videoSize());
     updateStatusFromBackend();
     play();

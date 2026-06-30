@@ -5,6 +5,7 @@
 #define KIRIVIEW_KIRIVIDEODOCUMENT_H
 
 #include "metadata/embeddedmetadata.h"
+#include "video/videoplaybacksource.h"
 
 #include <QObject>
 #include <QRectF>
@@ -105,6 +106,7 @@ private:
     friend class KiriDocumentSession;
 
     void setSourceUrl(const QUrl& sourceUrl);
+    void setSourceDevice(const QUrl& sourceUrl, kiriview::VideoPlaybackSourceDevice sourceDevice);
     void setVideoOutput(QObject* videoOutput);
     void setVideoOutputGeometry(const QRectF& contentRect, const QRectF& sourceRect);
     void handleDocumentChanges(const std::vector<kiriview::VideoDocumentChange>& changes);
