@@ -3,6 +3,7 @@
 
 #include "facade/kiridocumentsession.h"
 
+#include "archive/mediaentrysourcebackend.h"
 #include "candidate_test_support.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kirimediainformation.h"
@@ -18,6 +19,7 @@
 #include "session/thumbnailimagestore.h"
 
 #include <QAbstractItemModel>
+#include <QBuffer>
 #include <QFile>
 #include <QImage>
 #include <QObject>
@@ -245,6 +247,54 @@ private:
     }
 };
 
+class FakeOpenedCollectionMediaEntrySource final : public kiriview::MediaEntrySource
+{
+public:
+    explicit FakeOpenedCollectionMediaEntrySource(
+        std::vector<kiriview::ImageDocumentPageCandidate> candidates)
+        : m_candidates(std::move(candidates))
+    {
+    }
+
+    kiriview::MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates() override
+    {
+        return kiriview::MediaEntrySourceCandidates { m_candidates };
+    }
+
+    kiriview::MediaEntrySourceImageDataResult loadImageData(const QUrl&) override
+    {
+        QByteArray data;
+        QBuffer buffer(&data);
+        buffer.open(QIODevice::WriteOnly);
+        QImage image(QSize(1, 1), QImage::Format_RGBA8888);
+        image.fill(Qt::red);
+        image.save(&buffer, "PNG");
+        return kiriview::MediaEntrySourceImageData { data };
+    }
+
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult loadVideoPlaybackDevice(
+        const QUrl&) override
+    {
+        auto device = std::make_unique<QBuffer>();
+        device->setData(QByteArrayLiteral("video"));
+        device->open(QIODevice::ReadOnly);
+        return kiriview::MediaEntrySourceVideoPlaybackDevice { {}, std::move(device) };
+    }
+
+private:
+    std::vector<kiriview::ImageDocumentPageCandidate> m_candidates;
+};
+
+kiriview::MediaEntrySourceFactory mediaEntrySourceFactoryForCandidates(
+    std::vector<kiriview::ImageDocumentPageCandidate> candidates)
+{
+    return [candidates = std::move(candidates)](const kiriview::OpenedCollectionScopeLocation&)
+               -> kiriview::MediaEntrySourceOpenResult {
+        return kiriview::MediaEntrySourcePtr(
+            std::make_shared<FakeOpenedCollectionMediaEntrySource>(candidates));
+    };
+}
+
 struct ManualMediaOpenWithOperation
 {
     QObject* object = nullptr;
@@ -375,7 +425,8 @@ std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
     kiriview::MediaOpenWithProvider mediaOpenWithProvider = {},
     kiriview::ThumbnailCacheLookupProvider thumbnailLookupProvider = {},
     kiriview::ThumbnailGenerationProvider thumbnailGenerationProvider = {},
-    std::shared_ptr<kiriview::ThumbnailImageStore> thumbnailImageStore = {})
+    std::shared_ptr<kiriview::ThumbnailImageStore> thumbnailImageStore = {},
+    kiriview::MediaEntrySourceFactory mediaEntrySourceFactory = {})
 {
     kiriview::KiriDocumentSessionDependencies dependencies;
     dependencies.sessionRuntime.directMediaNavigationCandidateProvider
@@ -388,6 +439,7 @@ std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
     dependencies.sessionRuntime.activeNavigationThumbnails.imageStore
         = std::move(thumbnailImageStore);
     dependencies.imageDocument.candidateProvider = std::move(imageDocumentPageCandidateProvider);
+    dependencies.imageDocument.mediaEntrySourceFactory = std::move(mediaEntrySourceFactory);
     if (fileDeletion != nullptr) {
         dependencies.sessionRuntime.fileDeletionProvider
             = kiriview::TestSupport::fileDeletionProviderFor(*fileDeletion);
@@ -494,6 +546,7 @@ private Q_SLOTS:
     void videoMediaInformationUsesVideoSectionAndNoCameraRows();
     void mediaInformationDerivesFilenameAndPathFromTargetUrl();
     void mediaInformationRowModelsExposeLabelAndValueRoles();
+    void playableCollectionVideoMediaInformationUsesCollectionEntryWithoutMetadata();
     void directVideoRoutesToVideoDocumentWithOriginalSource();
     void publicProjectionRevisionCommitsBeforeScalarSignals();
     void activeZoomReadoutFollowsSessionDocumentKind();
@@ -555,6 +608,7 @@ private Q_SLOTS:
     void directImageDeletionCanOpenVideoFallback();
     void pendingDirectImageReplacementDoesNotExposeDisplayedDeletion();
     void pendingDirectMediaDeletionCandidateLoadIsCanceledBySourceChange();
+    void playableCollectionVideoDeletionTargetsOpenedCollectionContainerAndClearsPlayback();
     void videoDeletionUsesOriginalUrlAndOpensMediaFallback();
     void canceledVideoDeletionKeepsCurrentVideo();
     void failedVideoDeletionPublishesErrorWithProgressCompletion();
@@ -767,6 +821,56 @@ void TestKiriDocumentSession::mediaInformationRowModelsExposeLabelAndValueRoles(
         QStringLiteral("Type"));
     QCOMPARE(mediaInformationRowData(*model, 0, QByteArrayLiteral("value")).toString(),
         QStringLiteral("Image"));
+}
+
+void TestKiriDocumentSession::
+    playableCollectionVideoMediaInformationUsesCollectionEntryWithoutMetadata()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/info-video.cbz"));
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPage = kiriview::TestSupport::archivePageUrl(
+        archiveCollection->rootUrl(), QStringLiteral("chapter/01.png"));
+    const QUrl videoPage = kiriview::TestSupport::archivePageUrl(
+        archiveCollection->rootUrl(), QStringLiteral("chapter/clip.mp4"));
+    kiriview::MediaEntrySourceFactory mediaEntrySourceFactory
+        = mediaEntrySourceFactoryForCandidates(
+            { kiriview::TestSupport::imageDocumentPageCandidate(firstPage),
+                kiriview::TestSupport::videoCandidate(videoPage) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(directMediaNavigationProvider.provider(), nullptr, nullptr, {},
+            kiriview::TestSupport::staticImageDataDecoder(), {}, {}, {}, {},
+            std::move(mediaEntrySourceFactory));
+
+    session->setSourceUrl(archiveUrl);
+    QTRY_VERIFY2(session->imageDocument()->status() == KiriImageDocument::Status::Ready,
+        qPrintable(session->imageDocument()->errorString()));
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+
+    session->openActiveNavigationAtNumber(2);
+
+    QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QCOMPARE(session->sourceUrl(), videoPage);
+    QCOMPARE(session->videoDocument()->sourceUrl(), videoPage);
+    KiriMediaInformation* mediaInformation = session->mediaInformation();
+    QVERIFY(mediaInformation->available());
+    QCOMPARE(session->mediaInformationSnapshot().targetUrl, videoPage);
+    QCOMPARE(mediaInformation->title(), QStringLiteral("clip.mp4"));
+    QCOMPARE(mediaInformation->summary(), QStringLiteral("Video"));
+    QCOMPARE(mediaInformation->mediaSectionTitle(), QStringLiteral("Video"));
+    QVERIFY(mediaInformation->canCopyFilePath());
+    QVERIFY(mediaInformation->canOpenContainingFolder());
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->generalRows(), QStringLiteral("Type")),
+        QStringLiteral("Video"));
+    QCOMPARE(
+        mediaInformationValueForLabel(*mediaInformation->generalRows(), QStringLiteral("Path")),
+        QStringLiteral("chapter/clip.mp4"));
+    QCOMPARE(mediaInformation->mediaRows()->rowCount(), 0);
+    QCOMPARE(mediaInformation->cameraRows()->rowCount(), 0);
+    QCOMPARE(mediaInformation->advancedRows()->rowCount(), 0);
 }
 
 void TestKiriDocumentSession::directVideoRoutesToVideoDocumentWithOriginalSource()
@@ -2890,6 +2994,53 @@ void TestKiriDocumentSession::pendingDirectMediaDeletionCandidateLoadIsCanceledB
     QCOMPARE(fileDeletionProvider.operationCount(), std::size_t(0));
     QCOMPARE(session->sourceUrl(), secondClip);
     QVERIFY(!session->fileDeletionInProgress());
+}
+
+void TestKiriDocumentSession::
+    playableCollectionVideoDeletionTargetsOpenedCollectionContainerAndClearsPlayback()
+{
+    FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
+    kiriview::TestSupport::FakeImageDocumentPageCandidateProvider imageDocumentPageCandidates;
+    kiriview::TestSupport::ManualFileDeletionProvider fileDeletionProvider;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/delete-video.cbz"));
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl firstPage = kiriview::TestSupport::archivePageUrl(
+        archiveCollection->rootUrl(), QStringLiteral("01.png"));
+    const QUrl videoPage = kiriview::TestSupport::archivePageUrl(
+        archiveCollection->rootUrl(), QStringLiteral("02.mp4"));
+    kiriview::MediaEntrySourceFactory mediaEntrySourceFactory
+        = mediaEntrySourceFactoryForCandidates(
+            { kiriview::TestSupport::imageDocumentPageCandidate(firstPage),
+                kiriview::TestSupport::videoCandidate(videoPage) });
+    imageDocumentPageCandidates.setContainerCandidates(localUrl(QStringLiteral("/books/")), {});
+    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
+        directMediaNavigationProvider.provider(), &fileDeletionProvider, nullptr,
+        imageDocumentPageCandidates.provider(), kiriview::TestSupport::staticImageDataDecoder(), {},
+        {}, {}, {}, std::move(mediaEntrySourceFactory));
+
+    session->setSourceUrl(archiveUrl);
+    QTRY_VERIFY2(session->imageDocument()->status() == KiriImageDocument::Status::Ready,
+        qPrintable(session->imageDocument()->errorString()));
+    session->openActiveNavigationAtNumber(2);
+    QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QCOMPARE(session->sourceUrl(), videoPage);
+    QVERIFY(session->displayedFileDeletionAvailable());
+
+    session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
+
+    QCOMPARE(fileDeletionProvider.operationCount(), std::size_t(1));
+    QCOMPARE(fileDeletionProvider.backOperation().request.targetUrl, archiveUrl);
+    QVERIFY(session->fileDeletionInProgress());
+
+    fileDeletionProvider.finishBackOperation(kiriview::FileDeletionResult::Succeeded);
+
+    QVERIFY(!session->fileDeletionInProgress());
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Empty);
+    QCOMPARE(session->sourceUrl(), QUrl());
+    QCOMPARE(session->videoDocument()->sourceUrl(), QUrl());
+    QVERIFY(!session->activeVideoReady());
 }
 
 void TestKiriDocumentSession::videoDeletionUsesOriginalUrlAndOpensMediaFallback()

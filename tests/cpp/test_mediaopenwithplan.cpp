@@ -28,9 +28,11 @@ private Q_SLOTS:
     void directImageUsesDisplayedUrl();
     void directVideoUsesSourceUrl();
     void directoryCollectionUsesCurrentImageUrl();
+    void kioSupportedArchiveCollectionVideoUsesCurrentVideoUrl();
     void kioSupportedArchiveCollectionsUseCurrentImageUrl_data();
     void kioSupportedArchiveCollectionsUseCurrentImageUrl();
     void rarArchiveCollectionsHaveNoTarget();
+    void rarArchiveCollectionVideoHasNoTarget();
 };
 
 namespace {
@@ -108,6 +110,20 @@ void TestMediaOpenWithPlan::directoryCollectionUsesCurrentImageUrl()
         imageUrl);
 }
 
+void TestMediaOpenWithPlan::kioSupportedArchiveCollectionVideoUsesCurrentVideoUrl()
+{
+    const QUrl videoUrl(QStringLiteral("zip:///books/book.zip!/chapter/clip.mp4"));
+    expectRequestTarget(kiriview::mediaOpenWithPlan(kiriview::MediaOpenWithPlanInput {
+                            kiriview::DocumentSessionKind::Video,
+                            false,
+                            {},
+                            archiveScope(QStringLiteral("zip")),
+                            true,
+                            videoUrl,
+                        }),
+        videoUrl);
+}
+
 void TestMediaOpenWithPlan::kioSupportedArchiveCollectionsUseCurrentImageUrl_data()
 {
     QTest::addColumn<QString>("scheme");
@@ -143,6 +159,19 @@ void TestMediaOpenWithPlan::rarArchiveCollectionsHaveNoTarget()
         true,
         imageUrl,
         archiveScope(QStringLiteral("rar")),
+    }));
+}
+
+void TestMediaOpenWithPlan::rarArchiveCollectionVideoHasNoTarget()
+{
+    const QUrl videoUrl(QStringLiteral("rar:///books/book.rar!/chapter/clip.mp4"));
+    expectNoRequest(kiriview::mediaOpenWithPlan(kiriview::MediaOpenWithPlanInput {
+        kiriview::DocumentSessionKind::Video,
+        false,
+        {},
+        archiveScope(QStringLiteral("rar")),
+        true,
+        videoUrl,
     }));
 }
 
