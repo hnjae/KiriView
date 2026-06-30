@@ -25,6 +25,9 @@ public:
         ImageWorkerScheduler workerScheduler = {});
     ~MediaEntrySourceRuntime();
 
+    MediaEntrySourceRuntime(const MediaEntrySourceRuntime&) = delete;
+    MediaEntrySourceRuntime& operator=(const MediaEntrySourceRuntime&) = delete;
+
     void clear();
     void switchToOpenedCollectionScope(OpenedCollectionScopeLocation openedCollectionScope);
 

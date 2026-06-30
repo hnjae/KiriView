@@ -19,7 +19,11 @@ class ImageDecodeJob;
 class PredecodeActiveDecodeStore final
 {
 public:
+    PredecodeActiveDecodeStore() = default;
     ~PredecodeActiveDecodeStore();
+
+    PredecodeActiveDecodeStore(const PredecodeActiveDecodeStore&) = delete;
+    PredecodeActiveDecodeStore& operator=(const PredecodeActiveDecodeStore&) = delete;
 
     bool add(ImageDecodeRequest request, ImageDecodeJob* decodeJob);
     std::size_t size() const;

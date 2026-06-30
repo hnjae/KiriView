@@ -26,23 +26,22 @@
 
     # Checks from Level 0-1:
     "level1"
-    # Requires manual ownership decisions for QObject/moc integration and copy semantics.
-    # clazy fixits previously added Q_OBJECT/Q_DISABLE_COPY without matching build metadata.
-    # "no-rule-of-two-soft" # requires manual ownership decisions for QObject/moc integration and copy semantics
+    "no-rule-of-two-soft"
 
     # Checks from Level 2:
     # "function-args-by-ref"      # too noisy for Qt callback and implicitly shared value patterns
     # "implicit-casts"            # managed by clang-tidy: bugprone-bool-pointer-implicit-conversion
     # "returning-void-expression" # managed by clang-tidy: readability-avoid-return-with-void-value
-    # "rule-of-three"             # requires manual ownership decisions for QObject/moc integration and copy semantics
+    "rule-of-three"
     # "virtual-call-ctor"         # managed by clang-tidy: clang-analyzer-cplusplus.PureVirtualCall/clang-analyzer-optin.cplusplus.VirtualCall
     "base-class-event"
-    # "copyable-polymorphic" # requires manual copy/move and ABI ownership decisions
+    "copyable-polymorphic"
     # QQuickImageProvider is not a QObject-parent ownership surface.
     # "ctor-missing-parent-argument"
     # Flags virtual override signatures and shared interfaces.
     # "function-args-by-value"
-    # "missing-qobject-macro" # requires adding matching moc build metadata when accepted
+    # Local QObject helpers that do not use signals, slots, or properties do not need moc metadata.
+    # "missing-qobject-macro"
     # Dynamic QObject/QML signals are not always available as typed C++ signals.
     # "old-style-connect"
     "qstring-allocations"
