@@ -98,6 +98,13 @@ kiriview::ImageDocumentRuntimePlan finishUnsupportedOpenedCollectionVideoLoad(
         kiriview::ImageOpenWorkflow::finishUnsupportedOpenedCollectionVideoLoadPlan(session));
 }
 
+kiriview::ImageDocumentRuntimePlan finishPlayableOpenedCollectionVideoLoad(
+    kiriview::ImageDocumentState& state, const kiriview::ImageLoadSession& session)
+{
+    return kiriview::applyImageOpenApplicationPlan(
+        state, kiriview::ImageOpenWorkflow::finishPlayableOpenedCollectionVideoLoadPlan(session));
+}
+
 kiriview::ImageDocumentRuntimePlan finishSuccessfulImageLoad(
     kiriview::ImageDocumentState& state, const kiriview::ImageLoadSession& session)
 {
@@ -158,6 +165,7 @@ private Q_SLOTS:
     void sourceResolutionUsesCanonicalSessionImageUrl();
     void sourceResolutionTracksSessionSourceKind();
     void unsupportedOpenedCollectionVideoTransitionPublishesReadyVideoState();
+    void playableOpenedCollectionVideoTransitionPublishesHandoffState();
     void firstImageLoadSuccessTransitionsToReady();
     void directArchiveImageLoadSuccessDisablesContainerNavigation();
     void replacementLoadFailureSelectsTargetError();
@@ -283,6 +291,42 @@ void TestImageOpenWorkflow::unsupportedOpenedCollectionVideoTransitionPublishesR
     QVERIFY(!state.loading());
     QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Ready);
     QVERIFY(state.unsupportedOpenedCollectionVideo());
+    QCOMPARE(plan.size(), std::size_t(3));
+    QVERIFY(operationAtType<kiriview::FinishSpreadTransitionOperation>(plan, 0));
+    QVERIFY(operationAtType<kiriview::ClearSecondaryPageOperation>(plan, 1));
+    QVERIFY(operationAtType<kiriview::UpdatePageNavigationOperation>(plan, 2));
+}
+
+void TestImageOpenWorkflow::playableOpenedCollectionVideoTransitionPublishesHandoffState()
+{
+    kiriview::ImageDocumentState state;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = kiriview::openedCollectionScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl videoUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("02.mp4"));
+    const kiriview::DisplayedImageLocation location
+        = kiriview::DisplayedImageLocation::fromUrl(videoUrl, *archiveCollection);
+    state.setLoading(true);
+    state.setLoadingContainerNavigationUrl(archiveUrl);
+    state.setUnsupportedOpenedCollectionVideo(true);
+
+    const kiriview::ImageLoadSession session(9,
+        kiriview::ImageLoadRequest::fromTarget(
+            kiriview::ImageDocumentPageTarget { videoUrl, kiriview::ImageDocumentPageKind::Video },
+            *archiveCollection),
+        location);
+
+    const kiriview::ImageDocumentRuntimePlan plan
+        = finishPlayableOpenedCollectionVideoLoad(state, session);
+
+    QCOMPARE(state.sourceUrl(), videoUrl);
+    QCOMPARE(state.sourceKind(), kiriview::ImageDocumentPageKind::Video);
+    QCOMPARE(state.displayedImageLocation(), location);
+    QCOMPARE(state.containerNavigationUrl(), kiriview::containerNavigationUrlForLocation(location));
+    QVERIFY(!state.loading());
+    QCOMPARE(state.status(), kiriview::ImageDocumentStatus::Ready);
+    QVERIFY(!state.unsupportedOpenedCollectionVideo());
     QCOMPARE(plan.size(), std::size_t(3));
     QVERIFY(operationAtType<kiriview::FinishSpreadTransitionOperation>(plan, 0));
     QVERIFY(operationAtType<kiriview::ClearSecondaryPageOperation>(plan, 1));

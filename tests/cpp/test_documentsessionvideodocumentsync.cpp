@@ -15,6 +15,7 @@ private Q_SLOTS:
     void ignoresInactiveDocumentKind();
     void clearsSessionWhenVideoSourceBecomesEmpty();
     void commitsDirectVideoCursorWhenVideoSourceIsPresent();
+    void openedCollectionVideoCommitsSourceWithoutDirectCursor();
 };
 
 void TestDocumentSessionVideoDocumentSync::ignoresInactiveDocumentKind()
@@ -54,6 +55,21 @@ void TestDocumentSessionVideoDocumentSync::commitsDirectVideoCursorWhenVideoSour
 
     QCOMPARE(plan.operation,
         kiriview::DocumentSessionVideoDocumentSyncOperation::CommitDirectVideoCursor);
+    QCOMPARE(plan.url, input.video.sourceUrl);
+}
+
+void TestDocumentSessionVideoDocumentSync::openedCollectionVideoCommitsSourceWithoutDirectCursor()
+{
+    kiriview::DocumentSessionVideoDocumentSyncInput input;
+    input.documentKind = kiriview::DocumentSessionKind::Video;
+    input.openedCollectionVideoActive = true;
+    input.video.sourceUrl = QUrl(QStringLiteral("zip:///books/book.zip!/clip.mp4"));
+
+    const kiriview::DocumentSessionVideoDocumentSyncPlan plan
+        = kiriview::documentSessionVideoDocumentSyncPlan(input);
+
+    QCOMPARE(plan.operation,
+        kiriview::DocumentSessionVideoDocumentSyncOperation::CommitOpenedCollectionVideoSource);
     QCOMPARE(plan.url, input.video.sourceUrl);
 }
 

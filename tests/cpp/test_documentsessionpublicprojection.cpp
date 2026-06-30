@@ -16,6 +16,7 @@ private Q_SLOTS:
     void emptySessionProjectsUnavailableNavigationAndEmptyTitle();
     void directImageProjectsDirectMediaNavigationAndIntrinsicSizeTitle();
     void archiveImageProjectsPageNavigationAndCounterTitle();
+    void openedCollectionVideoProjectsImagePageNavigation();
     void deletionMasksNavigationDispatchWithoutDroppingTitleCounter();
     void imageDeletionAvailabilityRequiresReadyImageWithoutPendingReplacement();
     void videoDeletionAvailabilityRequiresSourceWithoutError();
@@ -100,6 +101,38 @@ void TestDocumentSessionPublicProjection::archiveImageProjectsPageNavigationAndC
     QCOMPARE(projection.activeNavigation.currentNumber, 2);
     QCOMPARE(projection.activeNavigation.count, 5);
     QCOMPARE(projection.windowTitleSubject, QStringLiteral("book.cbz – 2/5"));
+    QVERIFY(projection.displayedFileDeletionAvailable);
+}
+
+void TestDocumentSessionPublicProjection::openedCollectionVideoProjectsImagePageNavigation()
+{
+    kiriview::DocumentSessionPublicProjectionInput input;
+    input.documentKind = kiriview::DocumentSessionKind::Video;
+    input.openedCollectionVideoActive = true;
+    input.imageDocumentPageNavigation = kiriview::ImageDocumentPageActiveNavigationSnapshot {
+        true,
+        true,
+        false,
+        false,
+        true,
+        3,
+        5,
+    };
+    input.videoWindowTitleFileName = QStringLiteral("clip.mp4");
+    input.videoDirectMediaSize = QSize(1920, 1080);
+    input.videoSourcePresent = true;
+
+    const kiriview::DocumentSessionPublicProjection projection
+        = kiriview::projectDocumentSessionPublicState(input);
+
+    QCOMPARE(projection.sourceKind, kiriview::ActiveNavigationSourceKind::ImageDocumentPages);
+    QCOMPARE(projection.boundaryScope, kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage);
+    QVERIFY(projection.activeNavigation.known);
+    QVERIFY(projection.activeNavigation.canOpenPrevious);
+    QVERIFY(!projection.activeNavigation.canOpenNext);
+    QCOMPARE(projection.activeNavigation.currentNumber, 3);
+    QCOMPARE(projection.activeNavigation.count, 5);
+    QCOMPARE(projection.windowTitleSubject, QStringLiteral("clip.mp4 – 3/5"));
     QVERIFY(projection.displayedFileDeletionAvailable);
 }
 

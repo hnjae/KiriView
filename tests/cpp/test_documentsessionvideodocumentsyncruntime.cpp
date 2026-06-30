@@ -17,6 +17,7 @@ private Q_SLOTS:
     void emptyVideoSourceClearsSessionDirectMedia();
     void directVideoSourceCommitsCursorAndRefreshesWhenScopeChanged();
     void unchangedDirectVideoCursorSkipsRefresh();
+    void openedCollectionVideoSourceDoesNotCommitDirectCursor();
 };
 
 namespace {
@@ -127,6 +128,25 @@ void TestDocumentSessionVideoDocumentSyncRuntime::unchangedDirectVideoCursorSkip
         (std::vector<VideoSyncFixture::Event> { VideoSyncFixture::Event::SetDirectVideoCursor,
             VideoSyncFixture::Event::SetSourceIdentity, VideoSyncFixture::Event::Publish,
             VideoSyncFixture::Event::ActiveZoom }));
+}
+
+void TestDocumentSessionVideoDocumentSyncRuntime::
+    openedCollectionVideoSourceDoesNotCommitDirectCursor()
+{
+    VideoSyncFixture fixture;
+    const QUrl clipUrl(QStringLiteral("zip:///books/book.zip!/clip.mp4"));
+    kiriview::DocumentSessionVideoDocumentSyncRuntimeInput input;
+    input.documentKind = kiriview::DocumentSessionKind::Video;
+    input.openedCollectionVideoActive = true;
+    input.video = videoSnapshot(clipUrl);
+
+    fixture.runtime.sync(input);
+
+    QVERIFY(fixture.directVideoCursorUrl.isEmpty());
+    QCOMPARE(fixture.sourceIdentity, clipUrl);
+    QCOMPARE(fixture.events,
+        (std::vector<VideoSyncFixture::Event> { VideoSyncFixture::Event::SetSourceIdentity,
+            VideoSyncFixture::Event::Publish, VideoSyncFixture::Event::ActiveZoom }));
 }
 
 QTEST_GUILESS_MAIN(TestDocumentSessionVideoDocumentSyncRuntime)
