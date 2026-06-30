@@ -55,9 +55,32 @@ kiriview::MediaEntrySourceOpenResult openWithMediaEntrySourceBackend(
 
     return backend->openSource(openedCollectionScope);
 }
+
+kiriview::MediaEntrySourceVideoPlaybackDeviceResult attachMediaEntrySourceOwner(
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult result,
+    kiriview::MediaEntrySourcePtr sourceOwner)
+{
+    if (auto* playbackDevice
+        = std::get_if<kiriview::MediaEntrySourceVideoPlaybackDevice>(&result)) {
+        playbackDevice->sourceOwner = std::move(sourceOwner);
+    }
+
+    return result;
+}
 }
 
 namespace kiriview {
+MediaEntrySourceVideoPlaybackDeviceResult MediaEntrySource::loadVideoPlaybackDevice(
+    const QUrl& videoUrl)
+{
+    Q_UNUSED(videoUrl)
+    return MediaEntrySourceBackendDetail::mediaEntrySourceErrorResult<
+        MediaEntrySourceVideoPlaybackDeviceResult>(
+        MediaEntrySourceBackendDetail::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
+            MediaEntrySourceOperation::OpenVideoPlaybackDevice, {},
+            MediaEntrySourceBackendDetail::openedCollectionVideoPlaybackUnsupportedError()));
+}
+
 MediaEntrySourceThumbnailMetadataResult MediaEntrySource::loadThumbnailMetadata(
     const QUrl& imageUrl)
 {
@@ -119,6 +142,18 @@ std::optional<QString> openedCollectionImageEntryPathForRead(
     return entryPath;
 }
 
+std::optional<QString> openedCollectionVideoEntryPathForRead(
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl)
+{
+    const QString entryPath = openedCollectionEntryPathForUrl(openedCollectionScope, videoUrl);
+    if (openedCollectionScope.isEmpty() || entryPath.isEmpty()
+        || !isSupportedDirectVideoFileName(entryPath)) {
+        return std::nullopt;
+    }
+
+    return entryPath;
+}
+
 QString fallbackMediaEntrySourceOpenError(
     const OpenedCollectionScopeLocation& openedCollectionScope)
 {
@@ -138,6 +173,16 @@ QString openedCollectionImageNotFoundError()
 QString openedCollectionImageReadError()
 {
     return i18nc("@info:status", "Could not read the selected collection image.");
+}
+
+QString openedCollectionVideoNotFoundError()
+{
+    return i18nc("@info:status", "Could not find the selected video in the collection.");
+}
+
+QString openedCollectionVideoPlaybackUnsupportedError()
+{
+    return i18nc("@info:status", "KiriView can’t play this video from the selected collection.");
 }
 
 QString openedCollectionThumbnailMetadataUnsupportedError()
@@ -165,6 +210,12 @@ MediaEntrySourceCandidatesResult mediaEntrySourceCandidatesResult(
 MediaEntrySourceImageDataResult mediaEntrySourceImageDataResult(QByteArray data)
 {
     return MediaEntrySourceImageData { std::move(data) };
+}
+
+MediaEntrySourceVideoPlaybackDeviceResult mediaEntrySourceVideoPlaybackDeviceResult(
+    std::unique_ptr<QIODevice> device, MediaEntrySourcePtr sourceOwner)
+{
+    return MediaEntrySourceVideoPlaybackDevice { std::move(sourceOwner), std::move(device) };
 }
 
 MediaEntrySourceThumbnailMetadataResult mediaEntrySourceThumbnailMetadataResult(
@@ -211,6 +262,26 @@ MediaEntrySourceImageDataResult loadMediaEntrySourceImageData(
     }
 
     return (*source)->loadImageData(imageUrl);
+}
+
+MediaEntrySourceVideoPlaybackDeviceResult loadMediaEntrySourceVideoPlaybackDevice(
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl)
+{
+    MediaEntrySourceOpenResult opened = openMediaEntrySource(openedCollectionScope);
+    if (const auto* error = std::get_if<MediaEntrySourceError>(&opened)) {
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceVideoPlaybackDeviceResult>(
+            *error);
+    }
+
+    const auto* source = std::get_if<MediaEntrySourcePtr>(&opened);
+    if (source == nullptr || *source == nullptr) {
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceVideoPlaybackDeviceResult>(
+            Backend::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
+                MediaEntrySourceOperation::OpenCollection, openedCollectionScope,
+                Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope)));
+    }
+
+    return attachMediaEntrySourceOwner((*source)->loadVideoPlaybackDevice(videoUrl), *source);
 }
 
 MediaEntrySourceThumbnailMetadataResult loadMediaEntrySourceThumbnailMetadata(

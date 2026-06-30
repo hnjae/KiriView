@@ -204,6 +204,51 @@ std::optional<kiriview::MediaEntrySourceThumbnailMetadata> thumbnailMetadataForK
     };
 }
 
+bool kArchiveFileSupportsVideoPlayback(
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope, const KArchiveFile& file)
+{
+    switch (
+        kiriview::archiveStorageBackendForRootScheme(openedCollectionScope.rootUrl().scheme())) {
+    case kiriview::ArchiveStorageBackend::KZip: {
+        constexpr int zipStoredCompressionMethod = 0;
+        const auto* zipFile = dynamic_cast<const KZipFileEntry*>(&file);
+        return zipFile != nullptr && zipFile->encoding() == zipStoredCompressionMethod;
+    }
+    case kiriview::ArchiveStorageBackend::KTar:
+        return true;
+    case kiriview::ArchiveStorageBackend::K7Zip:
+    case kiriview::ArchiveStorageBackend::LibArchive:
+    case kiriview::ArchiveStorageBackend::None:
+        return false;
+    }
+
+    return false;
+}
+
+kiriview::MediaEntrySourceVideoPlaybackDeviceResult openKArchiveFileVideoPlaybackDevice(
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope, const QString& entryPath,
+    const KArchiveFile& file)
+{
+    if (!kArchiveFileSupportsVideoPlayback(openedCollectionScope, file)) {
+        return Backend::mediaEntrySourceErrorResult<
+            kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(
+            Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::KArchive,
+                kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice, openedCollectionScope,
+                Backend::openedCollectionVideoPlaybackUnsupportedError(), {}, entryPath));
+    }
+
+    std::unique_ptr<QIODevice> device(file.createDevice());
+    if (device == nullptr) {
+        return Backend::mediaEntrySourceErrorResult<
+            kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(
+            Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::KArchive,
+                kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice, openedCollectionScope,
+                Backend::openedCollectionVideoPlaybackUnsupportedError(), {}, entryPath));
+    }
+
+    return Backend::mediaEntrySourceVideoPlaybackDeviceResult(std::move(device));
+}
+
 class KArchiveMediaEntrySource final : public Backend::MediaEntrySourceWithCandidateSnapshot
 {
 public:
@@ -236,6 +281,34 @@ public:
         }
 
         return readKArchiveFileData(m_openedCollectionScope, *entryPath, *file);
+    }
+
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult loadVideoPlaybackDevice(
+        const QUrl& videoUrl) override
+    {
+        const std::optional<QString> entryPath
+            = Backend::openedCollectionVideoEntryPathForRead(m_openedCollectionScope, videoUrl);
+        if (!entryPath.has_value()) {
+            return Backend::mediaEntrySourceErrorResult<
+                kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::KArchive,
+                    kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice,
+                    m_openedCollectionScope, Backend::openedCollectionVideoNotFoundError(),
+                    videoUrl.toString()));
+        }
+
+        const KArchiveDirectory* directory = m_archive.directory();
+        const KArchiveFile* file = directory == nullptr ? nullptr : directory->file(*entryPath);
+        if (file == nullptr) {
+            return Backend::mediaEntrySourceErrorResult<
+                kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::KArchive,
+                    kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice,
+                    m_openedCollectionScope, Backend::openedCollectionVideoNotFoundError(), {},
+                    *entryPath));
+        }
+
+        return openKArchiveFileVideoPlaybackDevice(m_openedCollectionScope, *entryPath, *file);
     }
 
     kiriview::MediaEntrySourceThumbnailMetadataResult loadThumbnailMetadata(

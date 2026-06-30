@@ -33,6 +33,7 @@ using kiriview::TestSupport::releaseInstrumentedMediaEntrySourceLoads;
 using kiriview::TestSupport::staticDisplayTestImagePayload;
 using kiriview::TestSupport::staticImageDataDecoder;
 using kiriview::TestSupport::testImage;
+using kiriview::TestSupport::videoCandidate;
 
 kiriview::ImageDocumentPageCandidateProvider openedCollectionOnlyProvider()
 {
@@ -90,6 +91,7 @@ private Q_SLOTS:
     void staleDataLoadCompletionIsIgnoredAfterArchiveSwitch();
     void navigationReusesCachedOpenedCollectionCandidates();
     void predecodeLoadsAdjacentOpenedCollectionImagesThroughSource();
+    void videoPlaybackDeviceKeepsSourceAliveAfterStoreClear();
     void lifecycleClearsSourceForDifferentArchiveNormalImageAndClear();
 };
 
@@ -281,6 +283,38 @@ void TestMediaEntrySourceStore::predecodeLoadsAdjacentOpenedCollectionImagesThro
     QCOMPARE(state->openCount.load(), 1);
     QCOMPARE(state->candidateLoadCount.load(), 1);
     QCOMPARE(state->dataLoadCount.load(), 2);
+}
+
+void TestMediaEntrySourceStore::videoPlaybackDeviceKeepsSourceAliveAfterStoreClear()
+{
+    auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = archiveCollectionForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveCollection.has_value());
+    const QUrl videoUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.mp4"));
+    addInstrumentedMediaEntrySourceFixture(state, *archiveCollection, { videoCandidate(videoUrl) });
+
+    std::optional<kiriview::MediaEntrySourceVideoPlaybackDeviceResult> retainedResult;
+    {
+        kiriview::MediaEntrySourceStore store(instrumentedMediaEntrySourceFactory(state));
+        retainedResult.emplace(
+            store.loadOpenedCollectionVideoPlaybackDevice(*archiveCollection, videoUrl));
+        auto* device = std::get_if<kiriview::MediaEntrySourceVideoPlaybackDevice>(&*retainedResult);
+        QVERIFY(device != nullptr);
+        QVERIFY(device->sourceOwner != nullptr);
+        QVERIFY(device->device != nullptr);
+        QCOMPARE(device->device->readAll(), QByteArrayLiteral("image"));
+        QCOMPARE(state->openCount.load(), 1);
+        QCOMPARE(state->playbackDeviceLoadCount.load(), 1);
+
+        store.clear();
+        QCOMPARE(state->sourceDestructionCount.load(), 0);
+    }
+
+    QCOMPARE(state->sourceDestructionCount.load(), 0);
+    retainedResult.reset();
+    QCOMPARE(state->sourceDestructionCount.load(), 1);
 }
 
 void TestMediaEntrySourceStore::lifecycleClearsSourceForDifferentArchiveNormalImageAndClear()

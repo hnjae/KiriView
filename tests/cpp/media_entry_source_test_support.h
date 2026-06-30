@@ -8,6 +8,7 @@
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
 
+#include <QBuffer>
 #include <QByteArray>
 #include <QString>
 #include <QUrl>
@@ -32,6 +33,8 @@ struct InstrumentedMediaEntrySourceState
     std::atomic<int> openCount = 0;
     std::atomic<int> candidateLoadCount = 0;
     std::atomic<int> dataLoadCount = 0;
+    std::atomic<int> playbackDeviceLoadCount = 0;
+    std::atomic<int> sourceDestructionCount = 0;
     std::atomic<int> waitingCandidateLoadCount = 0;
     std::atomic<int> waitingDataLoadCount = 0;
     std::mutex mutex;
@@ -52,6 +55,8 @@ public:
         , m_state(std::move(state))
     {
     }
+
+    ~InstrumentedMediaEntrySource() override { ++m_state->sourceDestructionCount; }
 
     MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates() override
     {
@@ -78,6 +83,26 @@ public:
         }
 
         return MediaEntrySourceImageData { data->second };
+    }
+
+    MediaEntrySourceVideoPlaybackDeviceResult loadVideoPlaybackDevice(const QUrl& videoUrl) override
+    {
+        ++m_state->playbackDeviceLoadCount;
+
+        std::lock_guard<std::mutex> lock(m_state->mutex);
+        const auto data = fixture().dataByUrl.find(keyForUrl(videoUrl));
+        if (data == fixture().dataByUrl.cend()) {
+            return MediaEntrySourceError { MediaEntrySourceBackendKind::Unknown,
+                MediaEntrySourceOperation::OpenVideoPlaybackDevice,
+                m_openedCollectionScope.fileUrl(), videoUrl.toString(),
+                QStringLiteral("missing fake media entry source playback device data"),
+                QStringLiteral("missing fake media entry source playback device data") };
+        }
+
+        auto device = std::make_unique<QBuffer>();
+        device->setData(data->second);
+        device->open(QIODevice::ReadOnly);
+        return MediaEntrySourceVideoPlaybackDevice { {}, std::move(device) };
     }
 
 private:

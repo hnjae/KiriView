@@ -21,6 +21,7 @@ public:
 
     MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates();
     MediaEntrySourceImageDataResult loadImageData(const QUrl& imageUrl);
+    MediaEntrySourceVideoPlaybackDeviceResult loadVideoPlaybackDevice(const QUrl& videoUrl);
     std::optional<std::vector<ImageDocumentPageCandidate>> cachedImageDocumentPageCandidates();
 
 private:

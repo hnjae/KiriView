@@ -25,6 +25,7 @@ using kiriview::TestSupport::imageDocumentPageCandidate;
 using kiriview::TestSupport::instrumentedMediaEntrySourceFactory;
 using kiriview::TestSupport::InstrumentedMediaEntrySourceState;
 using kiriview::TestSupport::localUrl;
+using kiriview::TestSupport::videoCandidate;
 }
 
 class TestMediaEntrySourceRunner : public QObject
@@ -35,6 +36,7 @@ private Q_SLOTS:
     void ownsOpenedCollectionScope();
     void candidateLoadsAreCachedAfterLazyOpen();
     void dataLoadsReuseLazyOpenSource();
+    void playbackDeviceLoadsReuseLazyOpenSourceAndAttachOwner();
     void failedOpenIsMemoized();
 };
 
@@ -110,6 +112,35 @@ void TestMediaEntrySourceRunner::dataLoadsReuseLazyOpenSource()
     QCOMPARE(secondData->data, QByteArrayLiteral("image"));
     QCOMPARE(state->openCount.load(), 1);
     QCOMPARE(state->dataLoadCount.load(), 2);
+}
+
+void TestMediaEntrySourceRunner::playbackDeviceLoadsReuseLazyOpenSourceAndAttachOwner()
+{
+    auto state = std::make_shared<InstrumentedMediaEntrySourceState>();
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = archiveCollectionForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
+    QVERIFY(archiveCollection.has_value());
+    const QUrl videoUrl = archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("01.mp4"));
+    addInstrumentedMediaEntrySourceFixture(state, *archiveCollection, { videoCandidate(videoUrl) });
+
+    kiriview::MediaEntrySourceRunner runner(
+        *archiveCollection, instrumentedMediaEntrySourceFactory(state));
+
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult firstResult
+        = runner.loadVideoPlaybackDevice(videoUrl);
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult secondResult
+        = runner.loadVideoPlaybackDevice(videoUrl);
+
+    auto* firstDevice = std::get_if<kiriview::MediaEntrySourceVideoPlaybackDevice>(&firstResult);
+    auto* secondDevice = std::get_if<kiriview::MediaEntrySourceVideoPlaybackDevice>(&secondResult);
+    QVERIFY(firstDevice != nullptr);
+    QVERIFY(secondDevice != nullptr);
+    QVERIFY(firstDevice->sourceOwner != nullptr);
+    QVERIFY(secondDevice->sourceOwner != nullptr);
+    QCOMPARE(firstDevice->device->readAll(), QByteArrayLiteral("image"));
+    QCOMPARE(secondDevice->device->readAll(), QByteArrayLiteral("image"));
+    QCOMPARE(state->openCount.load(), 1);
+    QCOMPARE(state->playbackDeviceLoadCount.load(), 2);
 }
 
 void TestMediaEntrySourceRunner::failedOpenIsMemoized()

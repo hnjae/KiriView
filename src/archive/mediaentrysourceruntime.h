@@ -40,6 +40,8 @@ public:
         ImageDocumentPageCandidatesCallback callback, ErrorCallback errorCallback);
     ImageIoJob loadOpenedCollectionImageData(QObject* receiver, ImageDecodeRequest request,
         ImageDataCallback callback, ErrorCallback errorCallback);
+    MediaEntrySourceVideoPlaybackDeviceResult loadOpenedCollectionVideoPlaybackDevice(
+        OpenedCollectionScopeLocation openedCollectionScope, const QUrl& videoUrl);
 
 private:
     void startCandidateLoad(MediaEntrySourceCandidateLoadBatch batch);

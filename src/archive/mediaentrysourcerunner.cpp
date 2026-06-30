@@ -61,6 +61,23 @@ MediaEntrySourceImageDataResult MediaEntrySourceRunner::loadImageData(const QUrl
     return m_source->loadImageData(imageUrl);
 }
 
+MediaEntrySourceVideoPlaybackDeviceResult MediaEntrySourceRunner::loadVideoPlaybackDevice(
+    const QUrl& videoUrl)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    const std::optional<MediaEntrySourceError> error = ensureSource();
+    if (error.has_value()) {
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceVideoPlaybackDeviceResult>(
+            *error);
+    }
+
+    MediaEntrySourceVideoPlaybackDeviceResult result = m_source->loadVideoPlaybackDevice(videoUrl);
+    if (auto* playbackDevice = std::get_if<MediaEntrySourceVideoPlaybackDevice>(&result)) {
+        playbackDevice->sourceOwner = m_source;
+    }
+    return result;
+}
+
 std::optional<std::vector<ImageDocumentPageCandidate>>
 MediaEntrySourceRunner::cachedImageDocumentPageCandidates()
 {

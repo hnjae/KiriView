@@ -132,6 +132,27 @@ public:
         return loadDirectoryCollectionImageData(m_openedCollectionScope, *entryPath);
     }
 
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult loadVideoPlaybackDevice(
+        const QUrl& videoUrl) override
+    {
+        const std::optional<QString> entryPath
+            = Backend::openedCollectionVideoEntryPathForRead(m_openedCollectionScope, videoUrl);
+        if (!entryPath.has_value()) {
+            return Backend::mediaEntrySourceErrorResult<
+                kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::Directory,
+                    kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice,
+                    m_openedCollectionScope, Backend::openedCollectionVideoNotFoundError(),
+                    videoUrl.toString()));
+        }
+
+        return Backend::mediaEntrySourceErrorResult<
+            kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(Backend::mediaEntrySourceError(
+            kiriview::MediaEntrySourceBackendKind::Directory,
+            kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice, m_openedCollectionScope,
+            Backend::openedCollectionVideoPlaybackUnsupportedError(), {}, *entryPath));
+    }
+
 private:
     kiriview::OpenedCollectionScopeLocation m_openedCollectionScope;
     Q_DISABLE_COPY(DirectoryCollectionMediaEntrySource)

@@ -8,6 +8,7 @@
 #include "navigation/imagedocumentpagenavigationtypes.h"
 
 #include <QByteArray>
+#include <QIODevice>
 #include <QString>
 #include <QUrl>
 #include <QtGlobal>
@@ -17,6 +18,9 @@
 #include <vector>
 
 namespace kiriview {
+class MediaEntrySource;
+using MediaEntrySourcePtr = std::shared_ptr<MediaEntrySource>;
+
 enum class MediaEntrySourceBackendKind {
     Unknown,
     Unsupported,
@@ -30,6 +34,7 @@ enum class MediaEntrySourceOperation {
     ListCandidates,
     ReadImageData,
     LoadThumbnailMetadata,
+    OpenVideoPlaybackDevice,
 };
 
 struct MediaEntrySourceError
@@ -52,6 +57,12 @@ struct MediaEntrySourceImageData
     QByteArray data;
 };
 
+struct MediaEntrySourceVideoPlaybackDevice
+{
+    MediaEntrySourcePtr sourceOwner;
+    std::unique_ptr<QIODevice> device;
+};
+
 enum class MediaEntryContentChecksumAlgorithm {
     Crc32,
 };
@@ -71,6 +82,8 @@ struct MediaEntrySourceThumbnailMetadata
 template <typename Value> using MediaEntrySourceResult = std::variant<Value, MediaEntrySourceError>;
 using MediaEntrySourceCandidatesResult = MediaEntrySourceResult<MediaEntrySourceCandidates>;
 using MediaEntrySourceImageDataResult = MediaEntrySourceResult<MediaEntrySourceImageData>;
+using MediaEntrySourceVideoPlaybackDeviceResult
+    = MediaEntrySourceResult<MediaEntrySourceVideoPlaybackDevice>;
 using MediaEntrySourceThumbnailMetadataResult
     = MediaEntrySourceResult<MediaEntrySourceThumbnailMetadata>;
 
@@ -84,11 +97,11 @@ public:
 
     virtual MediaEntrySourceCandidatesResult loadImageDocumentPageCandidates() = 0;
     virtual MediaEntrySourceImageDataResult loadImageData(const QUrl& imageUrl) = 0;
+    virtual MediaEntrySourceVideoPlaybackDeviceResult loadVideoPlaybackDevice(const QUrl& videoUrl);
     virtual MediaEntrySourceThumbnailMetadataResult loadThumbnailMetadata(const QUrl& imageUrl);
     Q_DISABLE_COPY(MediaEntrySource)
 };
 
-using MediaEntrySourcePtr = std::shared_ptr<MediaEntrySource>;
 using MediaEntrySourceOpenResult = MediaEntrySourceResult<MediaEntrySourcePtr>;
 using MediaEntrySourceFactory
     = std::function<MediaEntrySourceOpenResult(const OpenedCollectionScopeLocation&)>;
@@ -97,6 +110,8 @@ MediaEntrySourceCandidatesResult loadMediaEntrySourceCandidates(
     const OpenedCollectionScopeLocation& openedCollectionScope);
 MediaEntrySourceImageDataResult loadMediaEntrySourceImageData(
     const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& imageUrl);
+MediaEntrySourceVideoPlaybackDeviceResult loadMediaEntrySourceVideoPlaybackDevice(
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl);
 MediaEntrySourceThumbnailMetadataResult loadMediaEntrySourceThumbnailMetadata(
     const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& imageUrl);
 MediaEntrySourceOpenResult openMediaEntrySource(

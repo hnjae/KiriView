@@ -43,10 +43,14 @@ std::optional<ImageDocumentPageCandidate> openedCollectionImageDocumentPageCandi
     const OpenedCollectionScopeLocation& openedCollectionScope, const QString& entryPath);
 std::optional<QString> openedCollectionImageEntryPathForRead(
     const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& imageUrl);
+std::optional<QString> openedCollectionVideoEntryPathForRead(
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl);
 QString fallbackMediaEntrySourceOpenError(
     const OpenedCollectionScopeLocation& openedCollectionScope);
 QString openedCollectionImageNotFoundError();
 QString openedCollectionImageReadError();
+QString openedCollectionVideoNotFoundError();
+QString openedCollectionVideoPlaybackUnsupportedError();
 QString openedCollectionThumbnailMetadataUnsupportedError();
 
 MediaEntrySourceError mediaEntrySourceError(MediaEntrySourceBackendKind backend,
@@ -61,6 +65,8 @@ template <typename Result> Result mediaEntrySourceErrorResult(MediaEntrySourceEr
 MediaEntrySourceCandidatesResult mediaEntrySourceCandidatesResult(
     std::vector<ImageDocumentPageCandidate> candidates);
 MediaEntrySourceImageDataResult mediaEntrySourceImageDataResult(QByteArray data);
+MediaEntrySourceVideoPlaybackDeviceResult mediaEntrySourceVideoPlaybackDeviceResult(
+    std::unique_ptr<QIODevice> device, MediaEntrySourcePtr sourceOwner = {});
 MediaEntrySourceThumbnailMetadataResult mediaEntrySourceThumbnailMetadataResult(
     MediaEntrySourceThumbnailMetadata metadata);
 

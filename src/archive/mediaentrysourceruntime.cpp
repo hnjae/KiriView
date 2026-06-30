@@ -170,6 +170,22 @@ ImageIoJob MediaEntrySourceRuntime::loadOpenedCollectionImageData(QObject* recei
         });
 }
 
+MediaEntrySourceVideoPlaybackDeviceResult
+MediaEntrySourceRuntime::loadOpenedCollectionVideoPlaybackDevice(
+    OpenedCollectionScopeLocation openedCollectionScope, const QUrl& videoUrl)
+{
+    const OpenedCollectionScopeLocation requestedOpenedCollectionScope = openedCollectionScope;
+    switchToOpenedCollectionScope(std::move(openedCollectionScope));
+    if (m_runner == nullptr) {
+        return Backend::mediaEntrySourceErrorResult<MediaEntrySourceVideoPlaybackDeviceResult>(
+            Backend::mediaEntrySourceError(MediaEntrySourceBackendKind::Unknown,
+                MediaEntrySourceOperation::OpenCollection, requestedOpenedCollectionScope,
+                Backend::fallbackMediaEntrySourceOpenError(requestedOpenedCollectionScope)));
+    }
+
+    return m_runner->loadVideoPlaybackDevice(videoUrl);
+}
+
 void MediaEntrySourceRuntime::startCandidateLoad(MediaEntrySourceCandidateLoadBatch batch)
 {
     if (m_runner == nullptr || !m_candidateLoadState.acceptsBatch(batch)) {

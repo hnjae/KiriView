@@ -321,6 +321,37 @@ public:
         return readImageDataAtOrder(entryOrder->second, *entryPath);
     }
 
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult loadVideoPlaybackDevice(
+        const QUrl& videoUrl) override
+    {
+        const std::optional<QString> entryPath
+            = Backend::openedCollectionVideoEntryPathForRead(m_openedCollectionScope, videoUrl);
+        if (!entryPath.has_value()) {
+            return Backend::mediaEntrySourceErrorResult<
+                kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice,
+                    m_openedCollectionScope, Backend::openedCollectionVideoNotFoundError(),
+                    videoUrl.toString()));
+        }
+
+        const auto entryOrder = m_entryOrderByPath.find(*entryPath);
+        if (entryOrder == m_entryOrderByPath.cend()) {
+            return Backend::mediaEntrySourceErrorResult<
+                kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(
+                Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::LibArchive,
+                    kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice,
+                    m_openedCollectionScope, Backend::openedCollectionVideoNotFoundError(), {},
+                    *entryPath));
+        }
+
+        return Backend::mediaEntrySourceErrorResult<
+            kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(Backend::mediaEntrySourceError(
+            kiriview::MediaEntrySourceBackendKind::LibArchive,
+            kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice, m_openedCollectionScope,
+            Backend::openedCollectionVideoPlaybackUnsupportedError(), {}, *entryPath));
+    }
+
 private:
     LibArchiveMediaEntrySource(kiriview::OpenedCollectionScopeLocation openedCollectionScope,
         ScopedFileDescriptor archiveFile)

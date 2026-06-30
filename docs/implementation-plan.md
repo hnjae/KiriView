@@ -32,7 +32,7 @@ Unsupported collection video behavior also needs alignment. Directory collection
 
 ### Milestone 1: Media Entry Source Eligibility And Device Contract
 
-Status: Pending
+Status: Complete
 
 Dependencies: None
 
