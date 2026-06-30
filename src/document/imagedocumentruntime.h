@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIME_H
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIME_H
 
+#include "archive/mediaentrysourcebackend.h"
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentstate.h"
 #include "imagedocumenttypes.h"
@@ -54,7 +55,10 @@ public:
     ~ImageDocumentRuntime();
 
     QUrl sourceUrl() const;
+    ImageDocumentPageKind sourceKind() const;
     void setSourceUrl(const QUrl& sourceUrl);
+    MediaEntrySourceVideoPlaybackDeviceResult loadOpenedCollectionVideoPlaybackDevice(
+        const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl) const;
     ImageDocumentStatus status() const;
     bool loading() const;
     QString errorString() const;

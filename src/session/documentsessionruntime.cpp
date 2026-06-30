@@ -12,6 +12,7 @@
 #include <QScopedValueRollback>
 #include <QString>
 #include <utility>
+#include <variant>
 
 namespace {
 const char* documentKindName(kiriview::DocumentSessionKind kind)
@@ -58,6 +59,15 @@ void appendConnection(std::vector<QMetaObject::Connection>& connections,
         std::vector<QMetaObject::Connection> nextConnections = connector(owner, std::move(handler));
         connections.insert(connections.end(), nextConnections.begin(), nextConnections.end());
     }
+}
+
+kiriview::VideoPlaybackSourceDevice videoPlaybackSourceDeviceFromMediaEntryDevice(
+    kiriview::MediaEntrySourceVideoPlaybackDevice device)
+{
+    return kiriview::VideoPlaybackSourceDevice {
+        std::move(device.sourceOwner),
+        std::move(device.device),
+    };
 }
 
 }
@@ -158,6 +168,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject* owner,
           },
           DocumentSessionRouteDocumentPorts {
               [this]() {
+                  m_state.setOpenedCollectionVideoActive(false);
                   m_imageDocumentCommandRuntime.clearSourceUrl();
                   refreshImagePublicSnapshot();
               },
@@ -165,13 +176,18 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject* owner,
                   leaveVideoMode();
                   refreshVideoPublicSnapshot();
               },
-              [this]() { setDocumentKind(DocumentSessionKind::Empty); },
+              [this]() {
+                  m_state.setOpenedCollectionVideoActive(false);
+                  setDocumentKind(DocumentSessionKind::Empty);
+              },
               [this](const QUrl& url) {
+                  m_state.setOpenedCollectionVideoActive(false);
                   m_imageDocumentCommandRuntime.setSourceUrl(url);
                   refreshImagePublicSnapshot();
                   setDocumentKind(DocumentSessionKind::Image);
               },
               [this](const QUrl& url) {
+                  m_state.setOpenedCollectionVideoActive(false);
                   m_videoDocumentCommandRuntime.setSourceUrl(url);
                   refreshVideoPublicSnapshot();
                   setDocumentKind(DocumentSessionKind::Video);
@@ -630,6 +646,12 @@ void DocumentSessionRuntime::handleImageDocumentSnapshotChanged()
     const ImageDocumentPageActiveNavigationSnapshot previousPageNavigation
         = m_imagePublicSnapshot.pageNavigation;
     refreshImagePublicSnapshot();
+    if (tryEnterOpenedCollectionVideoFromImageSnapshot()) {
+        return;
+    }
+    if (tryReturnToImageDocumentFromOpenedCollectionVideo()) {
+        return;
+    }
     m_imageDocumentSyncRuntime.sync(DocumentSessionImageDocumentSyncRuntimeInput {
         m_routingSource,
         m_state.documentKind(),
@@ -649,7 +671,79 @@ void DocumentSessionRuntime::handleVideoDocumentSnapshotChanged()
         return;
     }
 
-    m_videoDocumentSyncRuntime.sync(m_state.documentKind(), m_videoPublicSnapshot);
+    m_videoDocumentSyncRuntime.sync(DocumentSessionVideoDocumentSyncRuntimeInput {
+        m_state.documentKind(),
+        m_videoPublicSnapshot,
+        m_state.openedCollectionVideoActive(),
+    });
+}
+
+bool DocumentSessionRuntime::tryEnterOpenedCollectionVideoFromImageSnapshot()
+{
+    if (m_routingSource || m_imagePublicSnapshot.sourceKind != ImageDocumentPageKind::Video
+        || m_imagePublicSnapshot.unsupportedOpenedCollectionVideo
+        || !m_imagePublicSnapshot.readyForInformation
+        || m_imagePublicSnapshot.displayedOpenedCollectionScope.isEmpty()
+        || m_imagePublicSnapshot.sourceUrl.isEmpty()
+        || m_imagePublicSnapshot.displayedUrl != m_imagePublicSnapshot.sourceUrl) {
+        return false;
+    }
+
+    if (m_state.openedCollectionVideoActive()
+        && m_state.documentKind() == DocumentSessionKind::Video
+        && m_state.sourceUrl() == m_imagePublicSnapshot.sourceUrl) {
+        return false;
+    }
+
+    MediaEntrySourceVideoPlaybackDeviceResult result
+        = m_imageDocumentCommandRuntime.loadOpenedCollectionVideoPlaybackDevice(
+            m_imagePublicSnapshot.displayedOpenedCollectionScope, m_imagePublicSnapshot.sourceUrl);
+    auto* playbackDevice = std::get_if<MediaEntrySourceVideoPlaybackDevice>(&result);
+    if (playbackDevice == nullptr || playbackDevice->device == nullptr) {
+        return false;
+    }
+
+    enterOpenedCollectionVideoDocument(m_imagePublicSnapshot.sourceUrl,
+        videoPlaybackSourceDeviceFromMediaEntryDevice(std::move(*playbackDevice)));
+    return true;
+}
+
+bool DocumentSessionRuntime::tryReturnToImageDocumentFromOpenedCollectionVideo()
+{
+    if (m_routingSource || !m_state.openedCollectionVideoActive()
+        || m_state.documentKind() != DocumentSessionKind::Video
+        || m_imagePublicSnapshot.sourceKind == ImageDocumentPageKind::Video
+        || !m_imagePublicSnapshot.readyForInformation) {
+        return false;
+    }
+
+    leaveVideoMode();
+    refreshVideoPublicSnapshot();
+    m_state.setOpenedCollectionVideoActive(false);
+    m_state.setSourceIdentity(m_imagePublicSnapshot.sourceUrl);
+    m_state.setFileDeletionInProgress(m_imagePublicSnapshot.fileDeletionInProgress);
+    setDocumentKind(DocumentSessionKind::Image);
+    publishActiveNavigationForImagePages();
+    return true;
+}
+
+void DocumentSessionRuntime::enterOpenedCollectionVideoDocument(
+    const QUrl& sourceUrl, VideoPlaybackSourceDevice sourceDevice)
+{
+    cancelMediaOpenWith();
+    cancelMediaDeletion();
+    m_state.setDirectMediaNavigation({}, false, {});
+    m_state.clearDirectMediaCursor();
+    leaveVideoMode();
+    refreshVideoPublicSnapshot();
+
+    m_state.setOpenedCollectionVideoActive(true);
+    m_state.setSourceIdentity(sourceUrl);
+    m_videoDocumentCommandRuntime.setSourceDevice(sourceUrl, std::move(sourceDevice));
+    refreshVideoPublicSnapshot();
+    setDocumentKind(DocumentSessionKind::Video);
+    recomputePublicProjection();
+    clearActiveNavigationRevealContextIfUnavailable();
 }
 
 void DocumentSessionRuntime::refreshImagePublicSnapshot()

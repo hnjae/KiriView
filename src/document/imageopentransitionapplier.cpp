@@ -265,6 +265,17 @@ bool finalReadyContainerNavigationUrlIsValid(
         == containerNavigationUrlForLocation(finalDisplayedLocation(state, delta));
 }
 
+bool finalOpenedCollectionVideoIsValid(
+    const kiriview::ImageDocumentState& state, const kiriview::ImageOpenResolvedStateDelta& delta)
+{
+    if (finalSourceKind(state, delta) != kiriview::ImageDocumentPageKind::Video) {
+        return true;
+    }
+
+    return finalUnsupportedOpenedCollectionVideo(state, delta)
+        || !finalDisplayedLocation(state, delta).openedCollectionScope().isEmpty();
+}
+
 bool finalImageOpenStateIsValid(
     const kiriview::ImageDocumentState& state, const kiriview::ImageOpenResolvedStateDelta& delta)
 {
@@ -281,8 +292,7 @@ bool finalImageOpenStateIsValid(
         return !loading && !hasError && !finalSourceUrl(state, delta).isEmpty()
             && !finalDisplayedLocation(state, delta).isEmpty()
             && finalReadyContainerNavigationUrlIsValid(state, delta)
-            && (finalSourceKind(state, delta) != kiriview::ImageDocumentPageKind::Video
-                || finalUnsupportedOpenedCollectionVideo(state, delta));
+            && finalOpenedCollectionVideoIsValid(state, delta);
     case kiriview::ImageDocumentStatus::Error:
         return !loading && hasError;
     }

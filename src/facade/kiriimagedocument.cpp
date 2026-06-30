@@ -257,7 +257,20 @@ KiriImageDocument::~KiriImageDocument() = default;
 
 QUrl KiriImageDocument::sourceUrl() const { return m_runtime->sourceUrl(); }
 
+kiriview::ImageDocumentPageKind KiriImageDocument::sourceKind() const
+{
+    return m_runtime->sourceKind();
+}
+
 void KiriImageDocument::setSourceUrl(const QUrl& sourceUrl) { m_runtime->setSourceUrl(sourceUrl); }
+
+kiriview::MediaEntrySourceVideoPlaybackDeviceResult
+KiriImageDocument::loadOpenedCollectionVideoPlaybackDevice(
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope,
+    const QUrl& videoUrl) const
+{
+    return m_runtime->loadOpenedCollectionVideoPlaybackDevice(openedCollectionScope, videoUrl);
+}
 
 KiriImageDocument::Status KiriImageDocument::status() const
 {

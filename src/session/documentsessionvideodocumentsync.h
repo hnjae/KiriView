@@ -13,12 +13,14 @@ enum class DocumentSessionVideoDocumentSyncOperation {
     None,
     ClearSessionDirectMedia,
     CommitDirectVideoCursor,
+    CommitOpenedCollectionVideoSource,
 };
 
 struct DocumentSessionVideoDocumentSyncInput
 {
     DocumentSessionKind documentKind = DocumentSessionKind::Empty;
     DocumentSessionPublicVideoLeafSnapshot video;
+    bool openedCollectionVideoActive = false;
 };
 
 struct DocumentSessionVideoDocumentSyncPlan

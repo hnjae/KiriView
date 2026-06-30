@@ -98,7 +98,7 @@ Expected tests/checks:
 
 ### Milestone 3: Opened Collection Video Handoff
 
-Status: Pending
+Status: Complete
 
 Dependencies: Milestones 1 and 2
 

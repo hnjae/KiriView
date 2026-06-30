@@ -86,6 +86,7 @@ kiriview::DocumentSessionImageDocumentSnapshot imageDocumentSessionSnapshot(
         document.activeNavigationSnapshot(),
         document.primaryDisplayedPredecodeImage(),
         document.firstDisplayDecodeContext(),
+        document.sourceKind(),
     };
 }
 
@@ -348,7 +349,12 @@ kiriview::DocumentSessionImageDocumentCommandPort KiriDocumentSession::imageDocu
     KiriImageDocument& document)
 {
     return kiriview::DocumentSessionImageDocumentCommandPort {
-        { [&document](const QUrl& url) { document.setSourceUrl(url); } },
+        { [&document](const QUrl& url) { document.setSourceUrl(url); },
+            [&document](const kiriview::OpenedCollectionScopeLocation& openedCollectionScope,
+                const QUrl& videoUrl) {
+                return document.loadOpenedCollectionVideoPlaybackDevice(
+                    openedCollectionScope, videoUrl);
+            } },
         { [&document]() { document.openPreviousPage(); },
             [&document]() { document.openNextPage(); },
             [&document](int pageNumber) { document.openImageAtPage(pageNumber); } },

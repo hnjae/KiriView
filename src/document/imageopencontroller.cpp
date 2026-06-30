@@ -180,6 +180,13 @@ void ImageOpenController::finishSourceResolved(ImageLoadSession session)
 
 void ImageOpenController::finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSession session)
 {
+    if (m_callbacks.openedCollectionVideoPlaybackAvailable
+        && m_callbacks.openedCollectionVideoPlaybackAvailable(
+            session.openedCollectionScope(), session.imageUrl())) {
+        finishPlayableOpenedCollectionVideoLoad(std::move(session));
+        return;
+    }
+
     const QString message = unsupportedOpenedCollectionVideoMessage();
     m_pageSurfaceController.clearImage();
     invokeIfSet(m_callbacks.clearPrimaryPageSlot);
@@ -187,6 +194,14 @@ void ImageOpenController::finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSe
         m_state, ImageOpenWorkflow::finishUnsupportedOpenedCollectionVideoLoadPlan(session));
     invokeIfSet(m_callbacks.unsupportedOpenedCollectionVideoEntered, message);
     reportRuntimePlan(plan);
+}
+
+void ImageOpenController::finishPlayableOpenedCollectionVideoLoad(ImageLoadSession session)
+{
+    m_pageSurfaceController.clearImage();
+    invokeIfSet(m_callbacks.clearPrimaryPageSlot);
+    reportRuntimePlan(applyImageOpenApplicationPlan(
+        m_state, ImageOpenWorkflow::finishPlayableOpenedCollectionVideoLoadPlan(session)));
 }
 
 void ImageOpenController::finishThumbnailPreviewLoad(

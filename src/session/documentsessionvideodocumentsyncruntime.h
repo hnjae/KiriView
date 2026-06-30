@@ -9,6 +9,8 @@
 #include <functional>
 
 namespace kiriview {
+using DocumentSessionVideoDocumentSyncRuntimeInput = DocumentSessionVideoDocumentSyncInput;
+
 struct DocumentSessionVideoDocumentSyncRuntimePorts
 {
     std::function<void()> clearDirectMediaCursor;
@@ -29,6 +31,7 @@ public:
 
     void sync(
         DocumentSessionKind documentKind, const DocumentSessionPublicVideoLeafSnapshot& video);
+    void sync(const DocumentSessionVideoDocumentSyncRuntimeInput& input);
 
 private:
     void apply(const DocumentSessionVideoDocumentSyncPlan& plan);

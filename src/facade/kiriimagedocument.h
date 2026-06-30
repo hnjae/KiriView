@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_KIRIIMAGEDOCUMENT_H
 #define KIRIVIEW_KIRIIMAGEDOCUMENT_H
 
+#include "archive/mediaentrysourcebackend.h"
 #include "document/imagedocumentruntimedependencies.h"
 #include "document/imagedocumenttypes.h"
 #include "facade/kiriimagedisplaysource.h"
@@ -175,6 +176,7 @@ public:
     ~KiriImageDocument() override;
 
     QUrl sourceUrl() const;
+    kiriview::ImageDocumentPageKind sourceKind() const;
 
     Status status() const;
     bool loading() const;
@@ -329,6 +331,9 @@ private:
     friend class KiriDocumentSession;
 
     void setSourceUrl(const QUrl& sourceUrl);
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult loadOpenedCollectionVideoPlaybackDevice(
+        const kiriview::OpenedCollectionScopeLocation& openedCollectionScope,
+        const QUrl& videoUrl) const;
     void setTwoPageModeEnabled(bool enabled);
     void setRightToLeftReadingEnabled(bool enabled);
     void handleDocumentChanges(const std::vector<kiriview::ImageDocumentChange>& changes);

@@ -17,6 +17,8 @@ public:
 
     void setSourceUrl(const QUrl& sourceUrl);
     void clearSourceUrl();
+    MediaEntrySourceVideoPlaybackDeviceResult loadOpenedCollectionVideoPlaybackDevice(
+        const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl);
     void openPreviousPage();
     void openNextPage();
     void openImageAtPage(int number);

@@ -16,8 +16,13 @@ DocumentSessionVideoDocumentSyncRuntime::DocumentSessionVideoDocumentSyncRuntime
 void DocumentSessionVideoDocumentSyncRuntime::sync(
     DocumentSessionKind documentKind, const DocumentSessionPublicVideoLeafSnapshot& video)
 {
-    apply(documentSessionVideoDocumentSyncPlan(
-        DocumentSessionVideoDocumentSyncInput { documentKind, video }));
+    sync(DocumentSessionVideoDocumentSyncRuntimeInput { documentKind, video, false });
+}
+
+void DocumentSessionVideoDocumentSyncRuntime::sync(
+    const DocumentSessionVideoDocumentSyncRuntimeInput& input)
+{
+    apply(documentSessionVideoDocumentSyncPlan(input));
 }
 
 void DocumentSessionVideoDocumentSyncRuntime::apply(
@@ -53,6 +58,11 @@ void DocumentSessionVideoDocumentSyncRuntime::apply(
         }
         break;
     }
+    case DocumentSessionVideoDocumentSyncOperation::CommitOpenedCollectionVideoSource:
+        if (m_ports.setSourceIdentity) {
+            m_ports.setSourceIdentity(plan.url);
+        }
+        break;
     }
 
     if (m_ports.recomputePublicProjection) {

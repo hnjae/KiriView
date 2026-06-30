@@ -71,6 +71,7 @@ mod ffi {
         FinishAnimationLoadWithError = 5,
         ResolveSourceImage = 6,
         FinishUnsupportedOpenedCollectionVideoLoad = 7,
+        FinishPlayableOpenedCollectionVideoLoad = 8,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -197,7 +198,10 @@ fn rust_image_open_transition(event: RustImageOpenWorkflowEvent) -> RustImageOpe
         }
         RustImageOpenWorkflowEventKind::ResolveSourceImage => resolve_source_image_transition(),
         RustImageOpenWorkflowEventKind::FinishUnsupportedOpenedCollectionVideoLoad => {
-            unsupported_opened_collection_video_transition()
+            opened_collection_video_transition(RustImageOpenBoolTarget::True)
+        }
+        RustImageOpenWorkflowEventKind::FinishPlayableOpenedCollectionVideoLoad => {
+            opened_collection_video_transition(RustImageOpenBoolTarget::False)
         }
         _ => empty_transition(),
     }
@@ -377,7 +381,9 @@ fn resolve_source_image_transition() -> RustImageOpenTransition {
     transition
 }
 
-fn unsupported_opened_collection_video_transition() -> RustImageOpenTransition {
+fn opened_collection_video_transition(
+    unsupported_opened_collection_video: RustImageOpenBoolTarget,
+) -> RustImageOpenTransition {
     let mut transition = empty_transition();
     set_source_url(&mut transition, RustImageOpenUrlTarget::SessionImage);
     set_source_kind(&mut transition, RustImageOpenSourceKindTarget::Session);
@@ -393,7 +399,7 @@ fn unsupported_opened_collection_video_transition() -> RustImageOpenTransition {
     set_embedded_metadata_cleared(&mut transition);
     set_tracked_load_completed(&mut transition);
     set_status(&mut transition, RustImageOpenStatusTarget::Ready);
-    set_unsupported_opened_collection_video(&mut transition, RustImageOpenBoolTarget::True);
+    set_unsupported_opened_collection_video(&mut transition, unsupported_opened_collection_video);
     push_effect(&mut transition, RustImageOpenEffect::FinishSpreadTransition);
     push_effect(&mut transition, RustImageOpenEffect::ClearSecondaryPage);
     push_effect(&mut transition, RustImageOpenEffect::UpdatePageNavigation);

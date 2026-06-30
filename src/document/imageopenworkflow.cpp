@@ -145,6 +145,13 @@ ImageOpenApplicationPlan finishUnsupportedOpenedCollectionVideoLoadPlan(
         ImageOpenTransitionContext::successfulImageLoad(session));
 }
 
+ImageOpenApplicationPlan finishPlayableOpenedCollectionVideoLoadPlan(
+    const ImageLoadSession& session)
+{
+    return imageOpenApplicationPlan(finishPlayableOpenedCollectionVideoLoadTransition(),
+        ImageOpenTransitionContext::successfulImageLoad(session));
+}
+
 ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
     ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession& session)
 {
@@ -204,6 +211,12 @@ ImageOpenTransition finishUnsupportedOpenedCollectionVideoLoadTransition()
 {
     return imageOpenTransitionFromBridge(rustImageOpenTransition(rustImageOpenWorkflowEvent(
         RustImageOpenWorkflowEventKind::FinishUnsupportedOpenedCollectionVideoLoad)));
+}
+
+ImageOpenTransition finishPlayableOpenedCollectionVideoLoadTransition()
+{
+    return imageOpenTransitionFromBridge(rustImageOpenTransition(rustImageOpenWorkflowEvent(
+        RustImageOpenWorkflowEventKind::FinishPlayableOpenedCollectionVideoLoad)));
 }
 
 ImageOpenTransition finishSuccessfulImageLoadTransition(

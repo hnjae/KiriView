@@ -64,9 +64,18 @@ ImageDocumentRuntime::~ImageDocumentRuntime() { shutdown(); }
 
 QUrl ImageDocumentRuntime::sourceUrl() const { return state.sourceUrl(); }
 
+ImageDocumentPageKind ImageDocumentRuntime::sourceKind() const { return state.sourceKind(); }
+
 void ImageDocumentRuntime::setSourceUrl(const QUrl& sourceUrl)
 {
     loadSource(ImageDocumentSourceLoadRequest::fromUrl(sourceUrl));
+}
+
+MediaEntrySourceVideoPlaybackDeviceResult
+ImageDocumentRuntime::loadOpenedCollectionVideoPlaybackDevice(
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl) const
+{
+    return controllers->loadOpenedCollectionVideoPlaybackDevice(openedCollectionScope, videoUrl);
 }
 
 ImageDocumentStatus ImageDocumentRuntime::status() const

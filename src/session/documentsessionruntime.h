@@ -143,6 +143,10 @@ private:
     void connectDocuments();
     void handleImageDocumentSnapshotChanged();
     void handleVideoDocumentSnapshotChanged();
+    bool tryEnterOpenedCollectionVideoFromImageSnapshot();
+    bool tryReturnToImageDocumentFromOpenedCollectionVideo();
+    void enterOpenedCollectionVideoDocument(
+        const QUrl& sourceUrl, VideoPlaybackSourceDevice sourceDevice);
     void refreshImagePublicSnapshot();
     void refreshVideoPublicSnapshot();
     void refreshLeafPublicSnapshots();

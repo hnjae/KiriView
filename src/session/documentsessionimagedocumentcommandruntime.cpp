@@ -3,6 +3,7 @@
 
 #include "documentsessionimagedocumentcommandruntime.h"
 
+#include <QString>
 #include <utility>
 
 namespace kiriview {
@@ -20,6 +21,25 @@ void DocumentSessionImageDocumentCommandRuntime::setSourceUrl(const QUrl& source
 }
 
 void DocumentSessionImageDocumentCommandRuntime::clearSourceUrl() { setSourceUrl(QUrl()); }
+
+MediaEntrySourceVideoPlaybackDeviceResult
+DocumentSessionImageDocumentCommandRuntime::loadOpenedCollectionVideoPlaybackDevice(
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl)
+{
+    if (m_commands.source.loadOpenedCollectionVideoPlaybackDevice) {
+        return m_commands.source.loadOpenedCollectionVideoPlaybackDevice(
+            openedCollectionScope, videoUrl);
+    }
+
+    return MediaEntrySourceError {
+        MediaEntrySourceBackendKind::Unsupported,
+        MediaEntrySourceOperation::OpenVideoPlaybackDevice,
+        openedCollectionScope.fileUrl(),
+        QString(),
+        QString(),
+        QString(),
+    };
+}
 
 void DocumentSessionImageDocumentCommandRuntime::openPreviousPage()
 {

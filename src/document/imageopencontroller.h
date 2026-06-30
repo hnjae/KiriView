@@ -33,6 +33,8 @@ public:
     using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl&)>;
     using RuntimePlanCallback = std::function<void(const ImageDocumentRuntimePlan&)>;
     using UnsupportedOpenedCollectionVideoEnteredCallback = std::function<void(const QString&)>;
+    using OpenedCollectionVideoPlaybackAvailableCallback
+        = std::function<bool(const OpenedCollectionScopeLocation&, const QUrl&)>;
     using CommitPrimaryPageSlotCallback = std::function<void(const DisplayedImageLocation&)>;
     using ClearPrimaryPageSlotCallback = std::function<void()>;
 
@@ -41,6 +43,7 @@ public:
         FindPredecodedImageCallback findPredecodedImage;
         RuntimePlanCallback runtimePlan;
         UnsupportedOpenedCollectionVideoEnteredCallback unsupportedOpenedCollectionVideoEntered;
+        OpenedCollectionVideoPlaybackAvailableCallback openedCollectionVideoPlaybackAvailable;
         CommitPrimaryPageSlotCallback commitPrimaryPageSlot;
         ClearPrimaryPageSlotCallback clearPrimaryPageSlot;
     };
@@ -64,6 +67,7 @@ private:
     void beginSourceLoad();
     void finishSourceResolved(ImageLoadSession session);
     void finishUnsupportedOpenedCollectionVideoLoad(ImageLoadSession session);
+    void finishPlayableOpenedCollectionVideoLoad(ImageLoadSession session);
     void finishThumbnailPreviewLoad(ImageLoadSession session, StaticDisplayImagePayload preview);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);

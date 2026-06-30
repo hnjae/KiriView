@@ -189,6 +189,8 @@ void TestDocumentSessionRuntimeLeafSnapshots::
     kiriview::DocumentSessionVideoDocumentSnapshot videoSnapshot;
 
     int playbackDeviceLoadCount = 0;
+    QUrl loadedPlaybackScopeRootUrl;
+    QUrl loadedPlaybackVideoUrl;
     kiriview::DocumentSessionImageDocumentSnapshotPort imagePort;
     imagePort.snapshot = [&imageSnapshot]() { return imageSnapshot; };
     imagePort.snapshotChanged = imageSnapshotChangedConnector(emitter);
@@ -198,16 +200,16 @@ void TestDocumentSessionRuntimeLeafSnapshots::
         imageSnapshot.displayedUrl = url;
     };
     imageCommands.source.loadOpenedCollectionVideoPlaybackDevice =
-        [&playbackDeviceLoadCount, archiveCollection, videoUrl](
+        [&playbackDeviceLoadCount, &loadedPlaybackScopeRootUrl, &loadedPlaybackVideoUrl](
             const kiriview::OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& url) {
             ++playbackDeviceLoadCount;
-            QCOMPARE(openedCollectionScope.rootUrl(), archiveCollection.rootUrl());
-            QCOMPARE(url, videoUrl);
+            loadedPlaybackScopeRootUrl = openedCollectionScope.rootUrl();
+            loadedPlaybackVideoUrl = url;
             auto device = std::make_unique<QBuffer>();
             device->setData(QByteArrayLiteral("collection-video-bytes"));
             device->open(QIODevice::ReadOnly);
             return kiriview::MediaEntrySourceVideoPlaybackDevice {
-                std::make_shared<int>(42),
+                {},
                 std::move(device),
             };
         };
@@ -251,6 +253,8 @@ void TestDocumentSessionRuntimeLeafSnapshots::
     Q_EMIT emitter.imageSnapshotChanged();
 
     QCOMPARE(playbackDeviceLoadCount, 1);
+    QCOMPARE(loadedPlaybackScopeRootUrl, archiveCollection.rootUrl());
+    QCOMPARE(loadedPlaybackVideoUrl, videoUrl);
     QCOMPARE(setSourceUrlCount, 0);
     QCOMPARE(setSourceDeviceCount, 1);
     QCOMPARE(videoSourceUrl, videoUrl);

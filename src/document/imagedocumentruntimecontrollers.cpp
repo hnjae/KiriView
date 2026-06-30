@@ -30,6 +30,7 @@
 #include <QUrl>
 #include <optional>
 #include <utility>
+#include <variant>
 
 namespace kiriview {
 namespace {
@@ -120,6 +121,18 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject* docume
             [this](const QUrl& url) { return m_predecodedImageLookup->find(url); },
             [this](const ImageDocumentRuntimePlan& plan) { dispatchPlan(plan); },
             std::move(m_callbacks.unsupportedOpenedCollectionVideoEntered),
+            [this](
+                const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl) {
+                if (m_mediaEntrySourceStore == nullptr) {
+                    return false;
+                }
+
+                MediaEntrySourceVideoPlaybackDeviceResult result
+                    = m_mediaEntrySourceStore->loadOpenedCollectionVideoPlaybackDevice(
+                        openedCollectionScope, videoUrl);
+                const auto* device = std::get_if<MediaEntrySourceVideoPlaybackDevice>(&result);
+                return device != nullptr && device->device != nullptr;
+            },
             [this](const DisplayedImageLocation& location) {
                 m_primaryPageSlotPort->commit(location);
             },
@@ -170,6 +183,25 @@ ImageDocumentNavigationController& ImageDocumentRuntimeControllers::navigationCo
 ImageSpreadPresentationController& ImageDocumentRuntimeControllers::spreadController() const
 {
     return *m_spreadController;
+}
+
+MediaEntrySourceVideoPlaybackDeviceResult
+ImageDocumentRuntimeControllers::loadOpenedCollectionVideoPlaybackDevice(
+    const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl) const
+{
+    if (m_mediaEntrySourceStore == nullptr) {
+        return MediaEntrySourceError {
+            MediaEntrySourceBackendKind::Unsupported,
+            MediaEntrySourceOperation::OpenVideoPlaybackDevice,
+            openedCollectionScope.fileUrl(),
+            QString(),
+            QString(),
+            QString(),
+        };
+    }
+
+    return m_mediaEntrySourceStore->loadOpenedCollectionVideoPlaybackDevice(
+        openedCollectionScope, videoUrl);
 }
 
 void ImageDocumentRuntimeControllers::dispatchPlan(const ImageDocumentRuntimePlan& plan)

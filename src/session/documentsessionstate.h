@@ -27,6 +27,7 @@ public:
     const QString& sessionErrorString() const;
     const QString& windowTitleSubject() const;
     bool fileDeletionInProgress() const;
+    bool openedCollectionVideoActive() const;
     const ActiveZoomSnapshot& activeZoomSnapshot() const;
     bool activeImageReady() const;
     bool activeImageUnsupportedOpenedCollectionVideo() const;
@@ -52,6 +53,7 @@ public:
     void setDocumentKindAndActiveZoomSnapshot(
         DocumentSessionKind kind, ActiveZoomSnapshot activeZoomSnapshot);
     void setFileDeletionInProgress(bool inProgress);
+    void setOpenedCollectionVideoActive(bool active);
     void setActiveZoomSnapshot(ActiveZoomSnapshot snapshot);
     void setActiveNavigationRevealIntent(ActiveNavigationRevealIntent intent);
     void setActiveNavigationRevealDirection(ActiveNavigationRevealDirection direction);
@@ -87,6 +89,7 @@ private:
         = ActiveNavigationRevealDirection::None;
     bool m_directMediaNavigationKnown = false;
     bool m_fileDeletionInProgress = false;
+    bool m_openedCollectionVideoActive = false;
     QString m_sourceErrorString;
 };
 }

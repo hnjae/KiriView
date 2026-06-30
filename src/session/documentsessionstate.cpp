@@ -131,6 +131,11 @@ const QString& DocumentSessionState::windowTitleSubject() const
 
 bool DocumentSessionState::fileDeletionInProgress() const { return m_fileDeletionInProgress; }
 
+bool DocumentSessionState::openedCollectionVideoActive() const
+{
+    return m_openedCollectionVideoActive;
+}
+
 const ActiveZoomSnapshot& DocumentSessionState::activeZoomSnapshot() const
 {
     return m_publicSnapshot.activeZoom;
@@ -248,6 +253,11 @@ void DocumentSessionState::setDocumentKindAndActiveZoomSnapshot(
 void DocumentSessionState::setFileDeletionInProgress(bool inProgress)
 {
     replaceIfChanged(m_fileDeletionInProgress, inProgress);
+}
+
+void DocumentSessionState::setOpenedCollectionVideoActive(bool active)
+{
+    replaceIfChanged(m_openedCollectionVideoActive, active);
 }
 
 void DocumentSessionState::setActiveZoomSnapshot(ActiveZoomSnapshot snapshot)

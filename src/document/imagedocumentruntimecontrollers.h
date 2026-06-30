@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMECONTROLLERS_H
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMECONTROLLERS_H
 
+#include "archive/mediaentrysourcebackend.h"
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentruntimeplan.h"
 #include "imagedocumenttypes.h"
@@ -59,6 +60,8 @@ public:
     ImagePresentationRuntime& presentationRuntime() const;
     ImageDocumentNavigationController& navigationController() const;
     ImageSpreadPresentationController& spreadController() const;
+    MediaEntrySourceVideoPlaybackDeviceResult loadOpenedCollectionVideoPlaybackDevice(
+        const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl) const;
 
     void dispatchPlan(const ImageDocumentRuntimePlan& plan);
     void shutdownRuntime();

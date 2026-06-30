@@ -17,6 +17,10 @@ kiriview::ActiveNavigationSourceKind sourceKindForInput(
 {
     switch (input.documentKind) {
     case kiriview::DocumentSessionKind::Video:
+        if (input.openedCollectionVideoActive
+            && imageDocumentPagesArePresent(input.imageDocumentPageNavigation)) {
+            return kiriview::ActiveNavigationSourceKind::ImageDocumentPages;
+        }
         return kiriview::ActiveNavigationSourceKind::OrdinaryDirectMedia;
     case kiriview::DocumentSessionKind::Image:
         if (input.directImageLoadMayUseImageDocumentSourceScope) {
@@ -177,6 +181,7 @@ kiriview::DocumentSessionPublicProjectionInput projectionInputForSnapshotInput(
         input.video.sourcePresent,
         input.video.error,
         input.operations.displayedMediaOpenWithAvailable,
+        input.session.openedCollectionVideoActive,
     };
 }
 

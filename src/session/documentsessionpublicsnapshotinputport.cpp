@@ -35,6 +35,7 @@ DocumentSessionPublicSnapshotInput DocumentSessionPublicSnapshotInputPort::nextI
     input.session.directMediaNavigation = m_directMediaNavigation->currentInput();
     input.session.activeNavigationRevealIntent = m_state->activeNavigationRevealIntent();
     input.session.activeNavigationRevealDirection = m_state->activeNavigationRevealDirection();
+    input.session.openedCollectionVideoActive = m_state->openedCollectionVideoActive();
     input.image = *m_image;
     input.video = *m_video;
     input.directMediaCursor = m_state->directMediaCursor();

@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_DOCUMENTSESSIONDOCUMENTPORTS_H
 #define KIRIVIEW_DOCUMENTSESSIONDOCUMENTPORTS_H
 
+#include "archive/mediaentrysourcebackend.h"
 #include "location/imagelocation.h"
 #include "metadata/embeddedmetadata.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
@@ -59,6 +60,7 @@ struct DocumentSessionImageDocumentSnapshot
     ImageDocumentPageActiveNavigationSnapshot activeNavigationSnapshot;
     std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext;
+    ImageDocumentPageKind snapshotSourceKind = ImageDocumentPageKind::Image;
 };
 
 struct DocumentSessionImageDocumentSnapshotPort
@@ -70,6 +72,9 @@ struct DocumentSessionImageDocumentSnapshotPort
 struct DocumentSessionImageDocumentSourceCommandPort
 {
     std::function<void(const QUrl&)> setSourceUrl;
+    std::function<MediaEntrySourceVideoPlaybackDeviceResult(
+        const OpenedCollectionScopeLocation&, const QUrl&)>
+        loadOpenedCollectionVideoPlaybackDevice;
 };
 
 struct DocumentSessionImageDocumentPageNavigationCommandPort

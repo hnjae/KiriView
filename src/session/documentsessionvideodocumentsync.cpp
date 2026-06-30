@@ -18,6 +18,13 @@ DocumentSessionVideoDocumentSyncPlan documentSessionVideoDocumentSyncPlan(
         };
     }
 
+    if (input.openedCollectionVideoActive) {
+        return DocumentSessionVideoDocumentSyncPlan {
+            DocumentSessionVideoDocumentSyncOperation::CommitOpenedCollectionVideoSource,
+            input.video.sourceUrl,
+        };
+    }
+
     return DocumentSessionVideoDocumentSyncPlan {
         DocumentSessionVideoDocumentSyncOperation::CommitDirectVideoCursor,
         input.video.sourceUrl,

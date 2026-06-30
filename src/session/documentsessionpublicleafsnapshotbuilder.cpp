@@ -12,6 +12,7 @@ DocumentSessionPublicImageLeafSnapshot buildDocumentSessionPublicImageLeafSnapsh
     DocumentSessionPublicImageLeafSnapshot snapshot;
     const QUrl sourceUrl = leafSnapshot.sourceUrl;
     snapshot.sourceUrl = leafSnapshot.sourceUrl;
+    snapshot.sourceKind = leafSnapshot.snapshotSourceKind;
     snapshot.sourceMayRepresentDocument
         = !sourceUrl.isEmpty() && !isSupportedDirectImageUrl(sourceUrl);
     snapshot.pageNavigation = leafSnapshot.activeNavigationSnapshot;

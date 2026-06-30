@@ -32,6 +32,7 @@ struct DocumentSessionPublicProjectionInput
     bool videoSourcePresent = false;
     bool videoError = false;
     bool displayedMediaOpenWithAvailable = false;
+    bool openedCollectionVideoActive = false;
 };
 
 struct DocumentSessionPublicSessionLeafSnapshot
@@ -45,11 +46,13 @@ struct DocumentSessionPublicSessionLeafSnapshot
     ActiveNavigationRevealIntent activeNavigationRevealIntent = ActiveNavigationRevealIntent::None;
     ActiveNavigationRevealDirection activeNavigationRevealDirection
         = ActiveNavigationRevealDirection::None;
+    bool openedCollectionVideoActive = false;
 };
 
 struct DocumentSessionPublicImageLeafSnapshot
 {
     QUrl sourceUrl;
+    ImageDocumentPageKind sourceKind = ImageDocumentPageKind::Image;
     bool sourceMayRepresentDocument = false;
     ImageDocumentPageActiveNavigationSnapshot pageNavigation;
     ImageDocumentPageNavigationSnapshot pageNavigationRows;
