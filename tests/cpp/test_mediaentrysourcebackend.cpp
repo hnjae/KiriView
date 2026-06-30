@@ -42,6 +42,18 @@ void writeZipArchive(const QString& path, const std::vector<ArchiveEntryData>& e
     QVERIFY(archive.close());
 }
 
+void writeZipArchiveWithCompression(const QString& path,
+    const std::vector<ArchiveEntryData>& entries, KZip::Compression compression)
+{
+    KZip archive(path);
+    QVERIFY(archive.open(QIODevice::WriteOnly));
+    archive.setCompression(compression);
+    for (const ArchiveEntryData& entry : entries) {
+        QVERIFY(archive.writeFile(entry.path, entry.data));
+    }
+    QVERIFY(archive.close());
+}
+
 void writeTarArchive(const QString& path, const std::vector<ArchiveEntryData>& entries)
 {
     KTar archive(path);
@@ -111,6 +123,12 @@ const kiriview::MediaEntrySourceThumbnailMetadata* mediaEntrySourceThumbnailMeta
     return std::get_if<kiriview::MediaEntrySourceThumbnailMetadata>(&result);
 }
 
+kiriview::MediaEntrySourceVideoPlaybackDevice* mediaEntrySourceVideoPlaybackDevice(
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult& result)
+{
+    return std::get_if<kiriview::MediaEntrySourceVideoPlaybackDevice>(&result);
+}
+
 const kiriview::MediaEntrySourceError* mediaEntrySourceError(
     const kiriview::MediaEntrySourceCandidatesResult& result)
 {
@@ -161,6 +179,10 @@ private Q_SLOTS:
     void genericZipImageEntryReturnsThumbnailMetadata();
     void cb7ImageEntryDoesNotReturnThumbnailMetadata();
     void unsupportedCollectionEntriesDoNotReturnThumbnailMetadata();
+    void storedZipVideoEntryReturnsPlaybackDevice();
+    void deflatedZipVideoEntryDoesNotReturnPlaybackDevice();
+    void plainTarVideoEntryReturnsPlaybackDevice();
+    void unsupportedCollectionVideosDoNotReturnPlaybackDevices();
     void readingUrlOutsideArchiveReturnsNotFound();
     void sourceErrorsPreserveBackendOperationAndIdentity();
     void missingEmptyAndInvalidArchivesReportExpectedResults();
@@ -782,6 +804,126 @@ void TestMediaEntrySourceBackend::unsupportedCollectionEntriesDoNotReturnThumbna
         = kiriview::loadMediaEntrySourceThumbnailMetadata(*cbzCollection,
             archivePageUrl(cbzCollection->rootUrl(), QStringLiteral("pages/clip.mp4")));
     QVERIFY(std::get_if<kiriview::MediaEntrySourceError>(&videoResult) != nullptr);
+}
+
+void TestMediaEntrySourceBackend::storedZipVideoEntryReturnsPlaybackDevice()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.cbz"));
+    const QByteArray expected = QByteArrayLiteral("video-bytes");
+    writeZipArchiveWithCompression(archivePath,
+        {
+            { QStringLiteral("pages/clip.mp4"), expected },
+        },
+        KZip::NoCompression);
+
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = archiveCollectionForPath(archivePath);
+    QVERIFY(archiveCollection.has_value());
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult result
+        = kiriview::loadMediaEntrySourceVideoPlaybackDevice(*archiveCollection,
+            archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("pages/clip.mp4")));
+    kiriview::MediaEntrySourceVideoPlaybackDevice* device
+        = mediaEntrySourceVideoPlaybackDevice(result);
+
+    QVERIFY(device != nullptr);
+    QVERIFY(device->sourceOwner != nullptr);
+    QVERIFY(device->device != nullptr);
+    QCOMPARE(device->device->readAll(), expected);
+}
+
+void TestMediaEntrySourceBackend::deflatedZipVideoEntryDoesNotReturnPlaybackDevice()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.zip"));
+    writeZipArchiveWithCompression(archivePath,
+        {
+            { QStringLiteral("pages/clip.mp4"), QByteArrayLiteral("video-bytes") },
+        },
+        KZip::DeflateCompression);
+
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = archiveCollectionForPath(archivePath);
+    QVERIFY(archiveCollection.has_value());
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult result
+        = kiriview::loadMediaEntrySourceVideoPlaybackDevice(*archiveCollection,
+            archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("pages/clip.mp4")));
+
+    const kiriview::MediaEntrySourceError* error
+        = std::get_if<kiriview::MediaEntrySourceError>(&result);
+    QVERIFY(error != nullptr);
+    QCOMPARE(error->backend, kiriview::MediaEntrySourceBackendKind::KArchive);
+    QCOMPARE(error->operation, kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice);
+    QCOMPARE(error->entryPath, QStringLiteral("pages/clip.mp4"));
+}
+
+void TestMediaEntrySourceBackend::plainTarVideoEntryReturnsPlaybackDevice()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.tar"));
+    const QByteArray expected = QByteArrayLiteral("video-bytes");
+    writeTarArchive(archivePath,
+        {
+            { QStringLiteral("pages/clip.mov"), expected },
+        });
+
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = archiveCollectionForPath(archivePath);
+    QVERIFY(archiveCollection.has_value());
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult result
+        = kiriview::loadMediaEntrySourceVideoPlaybackDevice(*archiveCollection,
+            archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("pages/clip.mov")));
+    kiriview::MediaEntrySourceVideoPlaybackDevice* device
+        = mediaEntrySourceVideoPlaybackDevice(result);
+
+    QVERIFY(device != nullptr);
+    QVERIFY(device->sourceOwner != nullptr);
+    QVERIFY(device->device != nullptr);
+    QCOMPARE(device->device->readAll(), expected);
+}
+
+void TestMediaEntrySourceBackend::unsupportedCollectionVideosDoNotReturnPlaybackDevices()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QDir root(dir.path());
+    QVERIFY(root.mkpath(QStringLiteral("pages")));
+    writeFile(dir.filePath(QStringLiteral("pages/clip.mp4")), QByteArrayLiteral("video-bytes"));
+
+    const std::optional<kiriview::OpenedCollectionScopeLocation> directoryCollection
+        = kiriview::openedCollectionScopeLocationForDirectlyOpenedLocalUrl(localUrl(dir.path()));
+    QVERIFY(directoryCollection.has_value());
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult directoryResult
+        = kiriview::loadMediaEntrySourceVideoPlaybackDevice(*directoryCollection,
+            archivePageUrl(directoryCollection->rootUrl(), QStringLiteral("pages/clip.mp4")));
+    const kiriview::MediaEntrySourceError* directoryError
+        = std::get_if<kiriview::MediaEntrySourceError>(&directoryResult);
+    QVERIFY(directoryError != nullptr);
+    QCOMPARE(directoryError->backend, kiriview::MediaEntrySourceBackendKind::Directory);
+    QCOMPARE(
+        directoryError->operation, kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice);
+
+    const QString archivePath = dir.filePath(QStringLiteral("book.cb7"));
+    write7zArchive(archivePath,
+        {
+            { QStringLiteral("pages/clip.m4v"), QByteArrayLiteral("video-bytes") },
+        });
+    const std::optional<kiriview::OpenedCollectionScopeLocation> archiveCollection
+        = archiveCollectionForPath(archivePath);
+    QVERIFY(archiveCollection.has_value());
+    kiriview::MediaEntrySourceVideoPlaybackDeviceResult sevenZipResult
+        = kiriview::loadMediaEntrySourceVideoPlaybackDevice(*archiveCollection,
+            archivePageUrl(archiveCollection->rootUrl(), QStringLiteral("pages/clip.m4v")));
+    const kiriview::MediaEntrySourceError* sevenZipError
+        = std::get_if<kiriview::MediaEntrySourceError>(&sevenZipResult);
+    QVERIFY(sevenZipError != nullptr);
+    QCOMPARE(sevenZipError->backend, kiriview::MediaEntrySourceBackendKind::KArchive);
+    QCOMPARE(
+        sevenZipError->operation, kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice);
+    QCOMPARE(sevenZipError->entryPath, QStringLiteral("pages/clip.m4v"));
 }
 
 void TestMediaEntrySourceBackend::readingUrlOutsideArchiveReturnsNotFound()
