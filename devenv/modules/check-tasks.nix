@@ -30,21 +30,40 @@ let
       ${qtCxxqt.qtBuildEnvironment}
       unset QT_ADDITIONAL_PACKAGES_PREFIX_PATH
     '';
-  testJobsPrelude = # sh
+  localJobsPrelude = # sh
     ''
-      test_jobs="''${KIRIVIEW_TEST_JOBS:-$(nproc)}"
-      if ! [[ $test_jobs =~ ^[0-9]+$ ]] || ((test_jobs < 1)); then
-          printf 'Invalid KIRIVIEW_TEST_JOBS value: %s\n' "$test_jobs" >&2
+      kiriview_default_local_jobs() {
+          local cpu_count
+          cpu_count="$(nproc)"
+          printf '%d\n' "$((cpu_count / 2 + 1))"
+      }
+    '';
+  jobsPrelude = # sh
+    ''
+      ${localJobsPrelude}
+
+      if [[ -n ''${KIRIVIEW_JOBS:-} ]]; then
+          kiriview_jobs="$KIRIVIEW_JOBS"
+          kiriview_jobs_source="KIRIVIEW_JOBS"
+      else
+          kiriview_jobs="$(kiriview_default_local_jobs)"
+          kiriview_jobs_source="local default job count"
+      fi
+
+      if ! [[ $kiriview_jobs =~ ^[0-9]+$ ]] || ((kiriview_jobs < 1)); then
+          printf 'Invalid %s value: %s\n' "$kiriview_jobs_source" "$kiriview_jobs" >&2
           exit 2
       fi
     '';
+  testJobsPrelude = # sh
+    ''
+      ${jobsPrelude}
+      test_jobs="$kiriview_jobs"
+    '';
   lintJobsPrelude = # sh
     ''
-      lint_jobs="''${KIRIVIEW_LINT_JOBS:-$(nproc)}"
-      if ! [[ $lint_jobs =~ ^[0-9]+$ ]] || ((lint_jobs < 1)); then
-          printf 'Invalid KIRIVIEW_LINT_JOBS value: %s\n' "$lint_jobs" >&2
-          exit 2
-      fi
+      ${jobsPrelude}
+      lint_jobs="$kiriview_jobs"
     '';
 in
 {
@@ -54,6 +73,12 @@ in
     exec = # sh
       ''
         set -euo pipefail
+
+        kiriview_default_local_jobs() {
+            local cpu_count
+            cpu_count="$(nproc)"
+            printf '%d\n' "$((cpu_count / 2 + 1))"
+        }
 
         usage() {
             cat >&2 <<'EOF'
@@ -166,7 +191,11 @@ in
         done
 
         if [[ -z $jobs ]]; then
-            jobs="$(nproc)"
+            if [[ -n ''${KIRIVIEW_JOBS:-} ]]; then
+                jobs="$KIRIVIEW_JOBS"
+            else
+                jobs="$(kiriview_default_local_jobs)"
+            fi
         fi
         if ! [[ $jobs =~ ^[0-9]+$ ]] || ((jobs < 1)); then
             printf 'Invalid --jobs value: %s\n' "$jobs" >&2

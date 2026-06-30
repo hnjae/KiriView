@@ -65,7 +65,8 @@ Always report any skipped focused or final check in your final response.
 **Rust (prefer a filtered lib test before the full suite)** — `<filter>` e.g. `imagezoomstate`:
 
 ```sh
-devenv shell -- env CARGO_TARGET_DIR=target cargo nextest run --locked --lib --all-features --build-jobs "$(nproc)" --test-threads "$(nproc)" <filter>
+jobs="${KIRIVIEW_JOBS:-$(( $(nproc) / 2 + 1 ))}"
+devenv shell -- env CARGO_TARGET_DIR=target cargo nextest run --locked --lib --all-features --build-jobs "$jobs" --test-threads "$jobs" <filter>
 ```
 
 **C++/Qt (build the Cargo-owned app staticlib and generated headers, then run the matching CTest target)** — `<test_target>` e.g. `test_imagezoomstate`:
@@ -73,8 +74,9 @@ devenv shell -- env CARGO_TARGET_DIR=target cargo nextest run --locked --lib --a
 For the full host C++ test task, run `devenv tasks run --mode single ci:test:cpp` when you intentionally want only the C++ task; it skips declared Rust test dependencies and builds the required Cargo-owned KiriView app library artifacts inside the task. Without `--mode single`, `ci:test:cpp` runs `ci:test:rust` first. The CMake build compiles C++ test binaries that link that Cargo-produced app library.
 
 ```sh
-devenv shell -- env CARGO_TARGET_DIR=target cargo build --locked --lib --all-features
+jobs="${KIRIVIEW_JOBS:-$(( $(nproc) / 2 + 1 ))}"
+devenv shell -- env CARGO_TARGET_DIR=target cargo build --locked --lib --all-features --jobs "$jobs"
 devenv shell -- cmake -S tests/cpp -B target/devenv/cpp-tests -DCMAKE_BUILD_TYPE=Debug -DKIRIVIEW_CARGO_TARGET_DIR="$PWD/target/debug"
-devenv shell -- cmake --build target/devenv/cpp-tests --target <test_target> --parallel "$(nproc)"
-devenv shell -- env LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 ctest --test-dir target/devenv/cpp-tests -R '^<test_target>$' --output-on-failure
+devenv shell -- cmake --build target/devenv/cpp-tests --target <test_target> --parallel "$jobs"
+devenv shell -- env LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 ctest --test-dir target/devenv/cpp-tests -R '^<test_target>$' --output-on-failure --parallel "$jobs"
 ```
