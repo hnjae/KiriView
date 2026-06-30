@@ -16,7 +16,8 @@ private Q_SLOTS:
     void emptySessionProjectsUnavailableNavigationAndEmptyTitle();
     void directImageProjectsDirectMediaNavigationAndIntrinsicSizeTitle();
     void archiveImageProjectsPageNavigationAndCounterTitle();
-    void openedCollectionVideoProjectsImagePageNavigation();
+    void openedCollectionVideoProjectsImagePageNavigationAndCollectionTitle();
+    void openedCollectionVideoPublicSnapshotKeepsCollectionToolbarScope();
     void deletionMasksNavigationDispatchWithoutDroppingTitleCounter();
     void imageDeletionAvailabilityRequiresReadyImageWithoutPendingReplacement();
     void videoDeletionAvailabilityRequiresSourceWithoutError();
@@ -104,7 +105,8 @@ void TestDocumentSessionPublicProjection::archiveImageProjectsPageNavigationAndC
     QVERIFY(projection.displayedFileDeletionAvailable);
 }
 
-void TestDocumentSessionPublicProjection::openedCollectionVideoProjectsImagePageNavigation()
+void TestDocumentSessionPublicProjection::
+    openedCollectionVideoProjectsImagePageNavigationAndCollectionTitle()
 {
     kiriview::DocumentSessionPublicProjectionInput input;
     input.documentKind = kiriview::DocumentSessionKind::Video;
@@ -118,6 +120,7 @@ void TestDocumentSessionPublicProjection::openedCollectionVideoProjectsImagePage
         3,
         5,
     };
+    input.imageWindowTitleFileName = QStringLiteral("book.cbz");
     input.videoWindowTitleFileName = QStringLiteral("clip.mp4");
     input.videoDirectMediaSize = QSize(1920, 1080);
     input.videoSourcePresent = true;
@@ -132,8 +135,66 @@ void TestDocumentSessionPublicProjection::openedCollectionVideoProjectsImagePage
     QVERIFY(!projection.activeNavigation.canOpenNext);
     QCOMPARE(projection.activeNavigation.currentNumber, 3);
     QCOMPARE(projection.activeNavigation.count, 5);
-    QCOMPARE(projection.windowTitleSubject, QStringLiteral("clip.mp4 – 3/5"));
+    QCOMPARE(projection.windowTitleSubject, QStringLiteral("book.cbz – 3/5"));
     QVERIFY(projection.displayedFileDeletionAvailable);
+}
+
+void TestDocumentSessionPublicProjection::
+    openedCollectionVideoPublicSnapshotKeepsCollectionToolbarScope()
+{
+    kiriview::DocumentSessionPublicSnapshotInput input;
+    input.inputRevision = 8;
+    input.session.sourceUrl = QUrl(QStringLiteral("zip:///books/book.cbz!/02.mp4"));
+    input.session.documentKind = kiriview::DocumentSessionKind::Video;
+    input.session.openedCollectionVideoActive = true;
+    input.image.sourceUrl = input.session.sourceUrl;
+    input.image.sourceKind = kiriview::ImageDocumentPageKind::Video;
+    input.image.openedCollectionScopeActive = true;
+    input.image.windowTitleFileName = QStringLiteral("book.cbz");
+    input.image.pageNavigation = kiriview::ImageDocumentPageActiveNavigationSnapshot {
+        true,
+        true,
+        true,
+        false,
+        false,
+        2,
+        4,
+    };
+    input.image.twoPageModeEnabled = true;
+    input.image.twoPageModeAvailable = true;
+    input.image.rightToLeftReadingEnabled = true;
+    input.image.rightToLeftReadingAvailable = true;
+    input.image.fitModeSelected = true;
+    input.video.sourceUrl = input.session.sourceUrl;
+    input.video.windowTitleFileName = QStringLiteral("02.mp4");
+    input.video.sourcePresent = true;
+    input.video.ready = true;
+    input.video.hasVideo = true;
+    input.video.zoomPercentKnown = true;
+    input.video.zoomPercent = 71;
+
+    const kiriview::DocumentSessionPublicSnapshot snapshot
+        = kiriview::projectDocumentSessionPublicSnapshot(input, 4);
+
+    QCOMPARE(snapshot.documentKind, kiriview::DocumentSessionKind::Video);
+    QVERIFY(snapshot.activeImageOpenedCollectionScopeActive);
+    QVERIFY(!snapshot.activeImageReady);
+    QVERIFY(snapshot.activeVideoReady);
+    QVERIFY(snapshot.actionAvailability.twoPageModeActive);
+    QVERIFY(snapshot.actionAvailability.twoPageModeAvailable);
+    QVERIFY(snapshot.actionAvailability.rightToLeftReadingActive);
+    QVERIFY(snapshot.actionAvailability.rightToLeftReadingAvailable);
+    QVERIFY(snapshot.actionAvailability.fitModeSelected);
+    QVERIFY(!snapshot.actionAvailability.imageReady);
+    QVERIFY(snapshot.activeZoom.available);
+    QVERIFY(snapshot.activeZoom.known);
+    QCOMPARE(snapshot.activeZoom.percent, 71.0);
+    QVERIFY(!snapshot.activeZoom.editable);
+    QCOMPARE(
+        snapshot.projection.sourceKind, kiriview::ActiveNavigationSourceKind::ImageDocumentPages);
+    QCOMPARE(snapshot.projection.activeNavigation.currentNumber, 2);
+    QCOMPARE(snapshot.projection.activeNavigation.count, 4);
+    QCOMPARE(snapshot.projection.windowTitleSubject, QStringLiteral("book.cbz – 2/4"));
 }
 
 void TestDocumentSessionPublicProjection::

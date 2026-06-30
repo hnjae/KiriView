@@ -162,9 +162,14 @@ void TestDocumentSessionRuntimeLeafSnapshots::
     imageSnapshot.sourceUrl = videoUrl;
     imageSnapshot.displayedUrl = videoUrl;
     imageSnapshot.displayedOpenedCollectionScope = archiveCollection;
-    imageSnapshot.windowTitleFileName = QStringLiteral("02.mp4");
+    imageSnapshot.windowTitleFileName = QStringLiteral("book.zip");
     imageSnapshot.ready = true;
     imageSnapshot.openedCollectionScopeActive = true;
+    imageSnapshot.twoPageModeEnabled = true;
+    imageSnapshot.twoPageModeAvailable = true;
+    imageSnapshot.rightToLeftReadingEnabled = true;
+    imageSnapshot.rightToLeftReadingAvailable = true;
+    imageSnapshot.fitModeSelected = true;
     imageSnapshot.pageNavigationSnapshot.state = kiriview::PageNavigationState(
         {
             kiriview::ImageDocumentPageTarget {
@@ -238,6 +243,8 @@ void TestDocumentSessionRuntimeLeafSnapshots::
               videoSnapshot.windowTitleFileName = url.fileName();
               videoSnapshot.ready = true;
               videoSnapshot.hasVideo = true;
+              videoSnapshot.zoomPercentKnown = true;
+              videoSnapshot.zoomPercent = 73;
               if (sourceDevice.device != nullptr) {
                   videoDeviceBytes = sourceDevice.device->readAll();
               }
@@ -262,11 +269,26 @@ void TestDocumentSessionRuntimeLeafSnapshots::
     QCOMPARE(runtime.documentKind(), kiriview::DocumentSessionKind::Video);
     QCOMPARE(runtime.sourceUrl(), videoUrl);
     QVERIFY(runtime.activeVideoReady());
+    QVERIFY(!runtime.activeImageReady());
+    QVERIFY(runtime.activeImageOpenedCollectionScopeActive());
     QCOMPARE(runtime.activeNavigationBoundaryScope(),
         kiriview::ActiveNavigationBoundaryScope::ImageDocumentPage);
     QVERIFY(!runtime.directMediaNavigationBoundaryActive());
     QCOMPARE(runtime.activeNavigationCurrentNumber(), 2);
     QCOMPARE(runtime.activeNavigationCount(), 2);
+    QCOMPARE(runtime.windowTitleSubject(), QStringLiteral("book.zip – 2/2"));
+    QVERIFY(runtime.activeZoomPercentAvailable());
+    QVERIFY(runtime.activeZoomPercentKnown());
+    QCOMPARE(runtime.activeZoomPercent(), 73.0);
+    QVERIFY(!runtime.activeZoomEditable());
+    const kiriview::DocumentSessionActionAvailabilityFacts& actionFacts
+        = runtime.actionAvailabilityFacts();
+    QVERIFY(!actionFacts.imageReady);
+    QVERIFY(actionFacts.twoPageModeActive);
+    QVERIFY(actionFacts.twoPageModeAvailable);
+    QVERIFY(actionFacts.rightToLeftReadingActive);
+    QVERIFY(actionFacts.rightToLeftReadingAvailable);
+    QVERIFY(actionFacts.fitModeSelected);
 }
 
 QTEST_GUILESS_MAIN(TestDocumentSessionRuntimeLeafSnapshots)
