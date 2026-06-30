@@ -5,8 +5,10 @@
 
 #include "metadata/embeddedmetadata.h"
 
+#include <QBuffer>
 #include <QByteArray>
 #include <QFile>
+#include <QIODevice>
 #include <QObject>
 #include <QPointer>
 #include <QSize>
@@ -32,6 +34,9 @@ private Q_SLOTS:
     void resolverFailurePreservesTypedFailureMetadata();
     void backendFailurePreservesTypedFailureMetadata();
     void backendRecoveryClearsStaleErrorText();
+    void sourceDevicePlaybackBypassesResolverAndSkipsMetadata();
+    void sourceDeviceOwnerLivesUntilReplacementAndDestruction();
+    void sourceDevicePlaybackInvalidatesPendingResolverCompletion();
     void staleResolverCompletionsAreIgnored();
     void resolverCleanupRunsOnSourceChangeAndDestruction();
     void videoSizeFollowsBackendMetadata();
@@ -57,7 +62,17 @@ public:
     void setSource(const QUrl& nextSourceUrl) override
     {
         sourceUrl = nextSourceUrl;
+        sourceDevice = nullptr;
+        sourceDeviceUrl = QUrl();
         ++setSourceCount;
+    }
+
+    void setSourceDevice(QIODevice* nextDevice, const QUrl& nextSourceUrl) override
+    {
+        sourceDevice = nextDevice;
+        sourceDeviceUrl = nextSourceUrl;
+        sourceUrl = QUrl();
+        ++setSourceDeviceCount;
     }
 
     void play() override
@@ -150,6 +165,8 @@ public:
     }
 
     QUrl sourceUrl;
+    QPointer<QIODevice> sourceDevice;
+    QUrl sourceDeviceUrl;
     QPointer<QObject> output;
     kiriview::VideoMediaBackendCallbacks callbacks;
     kiriview::VideoMediaStatus currentStatus = kiriview::VideoMediaStatus::Null;
@@ -163,6 +180,7 @@ public:
     bool audioAvailable = false;
     QSize currentVideoSize;
     int setSourceCount = 0;
+    int setSourceDeviceCount = 0;
     int setPositionCount = 0;
     int setMutedCount = 0;
     int setVideoOutputCount = 0;
@@ -307,6 +325,32 @@ bool writeTinyMetadataMp4(const QString& path)
         return false;
     }
     return file.write(data) == data.size();
+}
+
+struct SourceDeviceOwner
+{
+    explicit SourceDeviceOwner(int* destructionCount)
+        : destructionCount(destructionCount)
+    {
+    }
+
+    ~SourceDeviceOwner()
+    {
+        if (destructionCount != nullptr) {
+            ++*destructionCount;
+        }
+    }
+
+    int* destructionCount = nullptr;
+};
+
+kiriview::VideoPlaybackSourceDevice makePlaybackSourceDevice(
+    std::shared_ptr<void> owner, QByteArray data = QByteArrayLiteral("video-bytes"))
+{
+    auto buffer = std::make_unique<QBuffer>();
+    buffer->setData(std::move(data));
+    buffer->open(QIODevice::ReadOnly);
+    return kiriview::VideoPlaybackSourceDevice { std::move(owner), std::move(buffer) };
 }
 }
 
@@ -546,6 +590,94 @@ void TestVideoDocumentRuntime::backendRecoveryClearsStaleErrorText()
     QCOMPARE(fixture.runtime->status(), kiriview::VideoDocumentStatus::Ready);
     QCOMPARE(fixture.runtime->errorString(), QString());
     QVERIFY(!fixture.runtime->backendFailure().has_value());
+}
+
+void TestVideoDocumentRuntime::sourceDevicePlaybackBypassesResolverAndSkipsMetadata()
+{
+    RuntimeFixture fixture;
+    int destructionCount = 0;
+    const QUrl sourceUrl(QStringLiteral("zip:///home/me/videos.zip!/chapter/clip.mp4"));
+
+    fixture.runtime->setSourceDevice(sourceUrl,
+        makePlaybackSourceDevice(std::make_shared<SourceDeviceOwner>(&destructionCount)));
+
+    QCOMPARE(fixture.resolverState->requests.size(), std::size_t(0));
+    QCOMPARE(fixture.runtime->sourceUrl(), sourceUrl);
+    QCOMPARE(fixture.runtime->windowTitleFileName(), QStringLiteral("clip.mp4"));
+    QCOMPARE(fixture.runtime->status(), kiriview::VideoDocumentStatus::Loading);
+    QCOMPARE(fixture.backend->sourceUrl, QUrl());
+    QCOMPARE(fixture.backend->sourceDeviceUrl, sourceUrl);
+    QVERIFY(fixture.backend->sourceDevice != nullptr);
+    QCOMPARE(fixture.backend->setSourceDeviceCount, 1);
+    QCOMPARE(fixture.backend->playCount, 1);
+    QVERIFY(fixture.runtime->embeddedMetadata().isEmpty());
+    QCOMPARE(destructionCount, 0);
+}
+
+void TestVideoDocumentRuntime::sourceDeviceOwnerLivesUntilReplacementAndDestruction()
+{
+    int replacedDestructionCount = 0;
+    std::weak_ptr<SourceDeviceOwner> replacedOwner;
+    RuntimeFixture fixture;
+    const QUrl sourceUrl(QStringLiteral("zip:///home/me/videos.zip!/chapter/clip.mp4"));
+    const QUrl directUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/replacement.mp4"));
+
+    {
+        auto owner = std::make_shared<SourceDeviceOwner>(&replacedDestructionCount);
+        replacedOwner = owner;
+        fixture.runtime->setSourceDevice(sourceUrl, makePlaybackSourceDevice(owner));
+    }
+
+    QVERIFY(!replacedOwner.expired());
+    QCOMPARE(replacedDestructionCount, 0);
+
+    fixture.runtime->setSourceUrl(directUrl);
+
+    QVERIFY(replacedOwner.expired());
+    QCOMPARE(replacedDestructionCount, 1);
+    QCOMPARE(fixture.backend->sourceDevice, nullptr);
+
+    int destructionDestructionCount = 0;
+    std::weak_ptr<SourceDeviceOwner> destructionOwner;
+    {
+        RuntimeFixture destructionFixture;
+        auto owner = std::make_shared<SourceDeviceOwner>(&destructionDestructionCount);
+        destructionOwner = owner;
+        destructionFixture.runtime->setSourceDevice(sourceUrl, makePlaybackSourceDevice(owner));
+        QVERIFY(!destructionOwner.expired());
+        QCOMPARE(destructionDestructionCount, 0);
+    }
+
+    QVERIFY(destructionOwner.expired());
+    QCOMPARE(destructionDestructionCount, 1);
+}
+
+void TestVideoDocumentRuntime::sourceDevicePlaybackInvalidatesPendingResolverCompletion()
+{
+    RuntimeFixture fixture;
+    const QUrl directUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/direct.mp4"));
+    const QUrl stalePlaybackUrl = QUrl::fromLocalFile(QStringLiteral("/tmp/stale.mp4"));
+    const QUrl collectionUrl(QStringLiteral("zip:///home/me/videos.zip!/chapter/clip.mp4"));
+    int destructionCount = 0;
+
+    fixture.runtime->setSourceUrl(directUrl);
+    QCOMPARE(fixture.resolverState->requests.size(), std::size_t(1));
+    auto request = fixture.resolverState->requests.back();
+
+    fixture.runtime->setSourceDevice(collectionUrl,
+        makePlaybackSourceDevice(std::make_shared<SourceDeviceOwner>(&destructionCount)));
+    request.resolvedCallback(kiriview::VideoPlaybackUrlResolution {
+        request.operationId,
+        request.sourceUrl,
+        stalePlaybackUrl,
+    });
+
+    QCOMPARE(fixture.runtime->sourceUrl(), collectionUrl);
+    QCOMPARE(fixture.backend->sourceUrl, QUrl());
+    QCOMPARE(fixture.backend->sourceDeviceUrl, collectionUrl);
+    QVERIFY(fixture.backend->sourceDevice != nullptr);
+    QCOMPARE(fixture.backend->setSourceDeviceCount, 1);
+    QCOMPARE(destructionCount, 0);
 }
 
 void TestVideoDocumentRuntime::staleResolverCompletionsAreIgnored()
