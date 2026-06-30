@@ -171,7 +171,7 @@ Expected tests/checks:
 
 ### Milestone 5: Unsupported Collection Video Placeholder Conformance
 
-Status: Pending
+Status: Complete
 
 Dependencies: Milestone 3
 
