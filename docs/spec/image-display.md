@@ -26,17 +26,23 @@ If animation playback fails for the displayed image, the UI shows an error state
 
 ## Rendering
 
+### Static Image Rendering
+
 Opened images are displayed centered in the available page area while preserving their aspect ratio.
 
 When KiriView is started with a direct image source, the initial image appears in the main viewport once it is display-ready. The main viewport does not require thumbnail pane visibility, information pane visibility, or another layout side effect before showing that accepted image.
 
 Image zoom is expressed in physical display pixels. At 100%, one image pixel maps to one physical monitor pixel.
 
-For SVG files, 100% uses the SVG's intrinsic size. SVGs remain sharp instead of pixelated when Fit mode, manual zoom, window resizing, or display scale changes the displayed size.
-
-Static SVG rendering applies ordinary static SVG features such as clip paths. KiriView does not execute SVG scripts, play SVG animation, or load external network or file resources referenced from SVG content.
-
 Static image files, including bitmap images and SVG files, appear at full resolution when they are small enough to display directly.
+
+When adjacent images are already available, Previous and Next navigation can replace the view immediately.
+
+When ordinary direct media navigation moves from an image to a video and then back to a nearby image, previously prepared still-image data may remain available so returning to that image can avoid a full-page loading state. Direct videos themselves are not prepared as still-image replacements.
+
+If a static image exceeds the supported decode or display size, KiriView reports an error or unsupported state for the selected target instead of restoring a previously displayed image.
+
+### Preview And Refinement
 
 Large static images may first appear quickly from a trusted thumbnail preview, RAW embedded preview, or lower-detail first display. The image then becomes sharper when a matching full-detail or current-detail display is ready.
 
@@ -44,15 +50,17 @@ While sharper detail is being prepared for the same image, KiriView may keep the
 
 When a sharper replacement becomes available for the current image, it replaces the previous lower-detail image without changing the user's selected media target, zoom mode, or pan position except where the existing viewport rules require clamping.
 
+### SVG Safety And Detail
+
+For SVG files, 100% uses the SVG's intrinsic size. SVGs remain sharp instead of pixelated when Fit mode, manual zoom, window resizing, or display scale changes the displayed size.
+
+Static SVG rendering applies ordinary static SVG features such as clip paths. KiriView does not execute SVG scripts, play SVG animation, or load external network or file resources referenced from SVG content.
+
 SVG preview images are placeholders. KiriView may pre-render an SVG preview capped to the current physical viewport size so adjacent SVG images can appear immediately from the still-image cache. That preview may be visible while current-detail rendering is missing, but stale low-resolution SVG output does not substitute for the current-detail image after zoom, viewport, rotation, pan position, or device-pixel-ratio changes.
 
 After zooming far out and then back in, SVG display eventually returns to current-detail rendering. Stale lower-detail SVG output does not remain visible once KiriView can provide the current-detail image.
 
-When adjacent images are already available, Previous and Next navigation can replace the view immediately.
-
-When ordinary direct media navigation moves from an image to a video and then back to a nearby image, previously prepared still-image data may remain available so returning to that image can avoid a full-page loading state. Direct videos themselves are not prepared as still-image replacements.
-
-If a static image exceeds the supported decode or display size, KiriView reports an error or unsupported state for the selected target instead of restoring a previously displayed image.
+### HEIF And RAW
 
 HEIF-family still images, including AVIF still images, are supported when the still image is encoded with AV1, HEVC, AVC/H.264, JPEG, JPEG 2000, or VVC/H.266.
 
@@ -63,6 +71,8 @@ Camera RAW files open as static images. KiriView displays supported RAW files as
 When KiriView recognizes selected image data as RAW, including TIFF-family RAW files such as DNG files, it reports the RAW decode result without retrying the same bytes through another image path. Ordinary TIFF files that are not recognized as RAW are decoded as general raster images.
 
 RAW files participate in the same open, adjacent navigation, archive, and directory workflows as other supported static image files.
+
+### Viewer Surface And Readiness
 
 The image viewing area behind empty, loading, ready, and error states uses a dark background color derived from the KDE/Kirigami View color scheme. Dark color schemes use the View background color; light color schemes use the View text color so the image viewing area remains dark.
 

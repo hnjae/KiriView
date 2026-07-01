@@ -79,10 +79,10 @@ flowchart TD
     Bridge --> Policy
 ```
 
-- The document session owns top-level mixed-media routing, public source identity, active navigation projection, active zoom projection, title subject, displayed-media operation availability, thumbnail-strip projection, and action-availability inputs.
-- Image runtime owns image-mode loading, opened collection page state, presentation commands, still-image display resources, animation playback, embedded image metadata, image deletion behavior, and image-specific navigation facts.
+- The document session owns top-level mixed-media routing, public source identity, active navigation projection, active zoom projection, title subject, displayed-media operation availability, displayed-media operation planning inputs, direct-media deletion follow-up, thumbnail-strip projection, and action-availability inputs.
+- Image runtime owns image-mode loading, opened collection page state, presentation commands, still-image display resources, animation playback, embedded image metadata, image-mode removal fallback facts, and image-specific navigation facts.
 - Video runtime owns direct-video resolution, opened-collection video source-device acceptance, playback state, video status, video zoom readout, video metadata where supported, and playback-control readiness.
-- Navigation owns candidate ordering, page/media cursor state, boundary facts, live direct-media refresh, and sibling collection discovery. It exposes snapshots and plans rather than public UI state.
+- Navigation owns candidate ordering, page/media cursor state, boundary facts, live direct-media refresh, and sibling archive discovery. It exposes snapshots and plans rather than public UI state.
 - Collection access owns directly opened archive and directory listing, entry-byte access, entry metadata, and eligible collection-video playback devices. It must not update document, video, thumbnail, or QML state directly.
 - Provider rendering owns immutable provider display entries, display-source projections, display refinement, render-context capability inputs, and display-store memory pressure. Production image display uses provider-backed whole-image entries, not custom render nodes or visual tile scheduling.
 - Decoding owns route-specific image decoding, animation frame enumeration, metadata extraction, and whole-image refinement payloads. Decoder failures preserve typed diagnostics before any user-facing projection is derived.
@@ -91,10 +91,10 @@ flowchart TD
 
 ## Build and Tooling Ownership
 
-Native source manifests are the build-validated ownership point for production C++ and Rust source membership. Build scripts, linters, and editor tooling must consume those manifests instead of duplicating source inventories or compiler flags.
+Production native source membership must have build-validated ownership inventories for each language boundary. Build, lint, and editor tooling must consume those inventories instead of maintaining divergent source lists or compiler flags.
 
-Cargo is the canonical compiler for production native application code, including Rust, production C++ inputs, CXX-Qt generated code, KConfig generated state code, QML resources, and the resulting app static library. CMake may compile test-local C++ binaries and fixtures, but C++ tests consume Cargo-produced application artifacts instead of rebuilding production sources.
+The production application build is the single authority for compiling production Rust, C++, generated language-boundary code, generated configuration code, QML resources, and the resulting application artifact. Test build systems may compile test-local binaries and fixtures, but they must consume production application artifacts instead of rebuilding production sources through a separate ownership path.
 
-Compile-command metadata follows build ownership. Production compile commands come from observed Cargo/CXX-Qt application builds, and test compile commands come from the test build system. Development-environment tooling may orchestrate refresh, merge, and editor installation, but it must not synthesize hand-authored production or test compile commands.
+Compile-command metadata follows build ownership. Production compile commands must be derived from the production application build, and test compile commands must be derived from the test build that owns those test artifacts. Development-environment tooling may orchestrate refresh, merge, and editor installation, but it must not synthesize hand-authored production or test compile commands.
 
-Development-environment modules that need Qt/CXX-Qt build, runtime, lint, or editor metadata consume a shared Qt/CXX-Qt tooling context instead of duplicating qmake wrappers, QML import paths, compile-command inputs, generated-include refresh logic, or Qt runtime environment snippets.
+Development-environment modules that need Qt, CXX-Qt, build, runtime, lint, or editor metadata must consume a shared tooling context instead of duplicating wrapper commands, QML import paths, compile-command inputs, generated-include refresh logic, or Qt runtime environment snippets.

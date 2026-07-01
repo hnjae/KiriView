@@ -2,17 +2,11 @@
 
 ## Product Boundary
 
-KiriView supports direct video files and eligible video entries inside directly opened collections as moving, sound-capable image-like media items.
+KiriView supports the direct video files and eligible video entries inside directly opened collections defined in [File Access](file-access.md#supported-sources) as moving, sound-capable image-like media items.
 
 Supported direct video inputs may come from the startup argument, drop, open dialog selection, or ordinary adjacent direct media navigation from a direct media URL scope.
 
-The video format list is MP4, M4V, and MOV, case-insensitively.
-
-A directly opened archive collection video entry is playable only when it is an uncompressed stored ZIP entry inside a local CBZ or ZIP archive, or a plain TAR entry inside a local CBT or TAR archive. A video entry inside a directly opened local directory collection is playable when it is an MP4, M4V, or MOV file.
-
-Direct video playback supports direct file-like URLs that KiriView can hand to KDE/KIO as ordinary file items, including local paths, `file://` URLs, KDE-supported remote file URLs such as `smb://`, and KDE-supported archive URLs that point at a file entry such as `zip:///path/archive.zip!/clip.mp4`.
-
-Direct KDE archive-entry URLs are not KiriView archive collection scope. KiriView may open `zip:///path/archive.zip!/clip.mp4` as a direct media URL while still opening `/path/archive.zip` as an archive collection when the archive itself is selected.
+Direct KDE archive-entry URLs are not KiriView archive collection scope. KiriView may open `zip:///path/archive.zip!/clip.mp4` as a direct media URL while still opening `/path/archive.zip` as an archive collection when the archive file itself is selected.
 
 The product boundary is based on KiriView's opened collection state, not on URL scheme alone. If KiriView has opened an archive as an opened collection, supported video entries inside that collection are opened collection navigation items; eligible stored ZIP and plain TAR entries are played, while ineligible archive video entries show the unsupported-video placeholder. If KiriView has opened a directory as an opened collection, supported video entries inside that directory are opened collection navigation items and are played from the directory entry. If KiriView is handling a direct media URL without an active archive or directory collection context, that URL remains eligible for direct video support even when its scheme is a KDE archive scheme.
 
@@ -22,47 +16,35 @@ In ordinary direct media URL scopes, showing a video must not clear or stop back
 
 Opened collection video playback is limited to eligible stored ZIP archive entries, plain TAR archive entries, and supported video files inside directly opened local directory collections. Collection-internal video metadata, playlists, subtitles, track selection, frame stepping, and timeline preview thumbnails are not provided.
 
-KiriView advertises direct video support through the desktop file for the MIME types that cover the MP4, M4V, and MOV format list: `video/mp4` and `video/quicktime`.
-
 ## Source URL Identity
 
-KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before playback starts. Resolution succeeds only when the resolved playback URL can be played; otherwise the video load fails while keeping the original direct media URL as the public source and error context.
+The public source URL for direct image and direct video URLs in direct media scopes is the direct media URL requested by the user, startup input, drop input, open dialog, or navigation action.
 
-When direct video playback URL resolution fails, the user-facing error text is a stable KiriView message that the selected video could not be opened. Platform, resolver, and playback diagnostic messages are internal diagnostics and are not displayed as the primary error text.
+Assigning a direct media source starts an open request for that URL. Successful direct image and direct video opens expose the requested direct media URL as the public source. Direct image replacement failures keep the failed target as the public source and error context. Direct video load or playback-preparation failures keep the original direct media URL as the public source and error context.
 
-Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent direct media navigation, deletion target, error context, and direct-media versus opened-collection routing decisions remain based on the original direct media URL.
+When playback preparation fails, the user-facing error text is a stable KiriView message that the selected video could not be opened. Platform and playback diagnostic messages are internal diagnostics and are not displayed as the primary error text.
 
-Opened collection video playback keeps the collection entry URL as the user-facing source identity. Any internal playback source device or helper source is not exposed as the public source URL and does not create an ordinary direct media scope.
+Playback preparation details are never exposed as the public source URL. For direct videos, window title, adjacent direct media navigation, deletion target, error context, and direct-media routing decisions remain based on that public source URL.
 
-Resolver-local playback URLs are video-only. Opening a direct image after a direct video uses the original image URL and restores normal image behavior, not the previous video playback URL.
+Opened collection video playback keeps the collection entry URL as the user-facing source identity. Collection routing and collection-level operations remain based on the opened collection context, and playback preparation details do not create an ordinary direct media scope.
 
-Direct video embedded metadata is parsed from the resolved playback URL when it is local and from the original direct local URL otherwise. Parsed metadata may populate the Info Panel while keeping the original direct media URL as the user-facing source identity.
+Direct video embedded metadata may populate the Info Panel when available while keeping the original direct media URL as the user-facing source identity.
 
 Collection-internal video metadata is not parsed for the Info Panel.
 
 Opening a video after an image switches to video behavior rather than image behavior.
 
-Opening an image after a video restores image behavior.
+Opening a direct image after a direct video uses the image's own URL and restores image behavior.
 
-The public source URL follows the same user-facing identity for direct images and direct videos: assigning it starts an open request, successful opens expose the original direct media URL, direct image replacement failures keep the failed target as the public source and error context, direct video source-load failures keep the original direct media URL as the public source and error context, and resolver-local playback URLs are never exposed as the public source.
+For direct image and direct video URLs in direct media scopes, toolbar readouts, shared action availability, and navigation dispatch use the same active direct media scope defined in [Navigation](navigation.md#adjacent-media). Asynchronous sibling discovery uses the requested direct media URL as the cursor for the eventual readout, not a stale or empty displayed image URL.
 
-For direct image and direct video URLs in direct media scopes, toolbar readouts, shared action availability, and navigation dispatch use the same active direct media scope. Asynchronous sibling discovery uses the requested direct media URL as the cursor for the eventual readout, not a stale or empty displayed image URL.
+## Direct Media Scope
 
-## Ordinary Direct Media URL Scope
+Direct video uses the ordinary direct media URL scope defined in [Navigation](navigation.md#adjacent-media).
 
-An ordinary direct media URL scope is the non-recursive parent URL of the active direct media URL.
+Direct KDE archive-entry URLs use the direct media branch unless KiriView has explicitly opened an archive or directory collection scope.
 
-This includes ordinary local parent directories and KDE archive URL parent locations such as `zip:///path/archive.zip!/chapter/`.
-
-Opening a directory URL creates a directory collection and does not create a video-capable direct media scope.
-
-The ordinary direct media URL parent is derived from the original direct media URL after KiriView applies its normal navigation-source handling. Local and KDE archive-entry URLs keep their user-visible containing location as the direct media scope.
-
-Direct KDE archive-entry URLs use this direct URL branch unless KiriView has explicitly opened an archive or directory collection scope.
-
-Supported image files and supported direct video files share one locale-aware sibling order in ordinary direct media URL scopes.
-
-Direct media navigation is non-recursive, does not wrap, and uses the same active navigation readout and boundary-feedback model as collection page navigation. Boundary feedback in a direct media scope uses neutral first-media-item and last-media-item wording rather than calling every boundary item an image.
+Video mode does not create a separate video-only navigation scope. Supported image files and supported direct video files share one locale-aware sibling order, active navigation readout, non-wrapping navigation model, and boundary-feedback model in ordinary direct media URL scopes.
 
 Adjacent Previous and Next use direct media navigation in ordinary direct media video mode and in image mode only when the active image belongs to an ordinary direct media URL scope. Archive collection and directly opened directory collection scopes keep opened-collection navigation active instead.
 
@@ -70,11 +52,11 @@ Adjacent Previous and Next use direct media navigation in ordinary direct media 
 
 Opening a video starts playback automatically.
 
-When a video load or playback error is superseded by a later accepted non-error playback state for the same video, KiriView clears the public video error text. Public video states such as Loading, Ready, or Null must not expose stale error text from an earlier failed playback state.
+When a video load or playback error is superseded by a later accepted non-error playback state for the same video, KiriView clears the public video error text. Public video states such as loading, ready, or empty must not expose stale error text from an earlier failed playback state.
 
 Video mode shows a video viewport and a Breeze-style playback control panel at the bottom edge of the video viewport.
 
-The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, the total supported media item count for the ordinary direct media URL scope when that list is known, and the same trailing control order as image mode.
+The regular toolbar remains available in video mode for application menu access and active-scope navigation. It shows Previous and Next controls, the current media item number, the total supported media item count for the active navigation scope when that list is known, and the same trailing control order as image mode.
 
 In ordinary direct media video mode, Right-to-Left Reading and Two-Page Spread are hidden because they belong to opened archive and directory collection scopes. Fit remains in its image-mode position but is disabled, and the zoom control is read-only.
 
@@ -92,13 +74,13 @@ In regular windowed and fullscreen video mode, the default playback control styl
 
 The playback controls switch to a fixed bottom bar inside the video viewport when the viewport is compact, touch/mobile input is active, or system animations are disabled or reduced. Compact means roughly narrower than 32 grid units or shorter than 16 grid units. The fixed bottom bar is full-width, has no floating bottom margin, has no shadow, has square outer bottom corners, and reserves its height from the video display area so the video is not covered by the controls.
 
-When video playback reaches the natural end of the media, KiriView keeps the direct video output as the active presentation and must not clear the video output into an empty or null-like visual state. Playback stops at the final position. Pressing Play from that ended state restarts playback from the beginning when seeking is available.
+When video playback reaches the natural end of the media, KiriView keeps the video output as the active presentation and must not clear the video output into an empty or null-like visual state. Playback stops at the final position. Pressing Play from that ended state restarts playback from the beginning when seeking is available.
 
 The floating playback panel must not reserve page layout height and must remain usable in fullscreen.
 
 Auto-hide applies only in floating control mode while video is playing. Pointer movement, hover, focus, slider drag, button press, tap, or paused playback reveals the controls and keeps them visible while interaction continues. When controls are eligible to hide, they fade after a human-moment delay. If system animations are disabled or reduced, fixed bottom bar mode is used and controls do not auto-hide.
 
-In Flatpak, KiriView has the sandbox multimedia access needed for Qt Multimedia video playback initialization through the host PipeWire runtime socket while keeping PulseAudio-compatible audio output available.
+In Flatpak, KiriView supports video playback initialization and audio output using the sandbox multimedia access required for the current video source, without requiring broader filesystem access than the File Access contract allows.
 
 During timeline dragging, the user's drag position remains visually stable instead of being overwritten by ordinary playback position updates.
 
@@ -112,7 +94,7 @@ In opened collection video mode, viewer Left and Right and existing adjacent nav
 
 In video mode, the shared scan shortcuts also use adjacent navigation in the active navigation scope: `.` and `Space` move to the next supported media item, while `,` and `Shift+Space` move to the previous supported media item. They do not pan or seek within the video.
 
-Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Current Content Start, Current Content End, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, and Quit. Shared navigation shortcuts use session active-navigation dispatch and availability.
+Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Current Content Start, Current Content End, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, and Quit. Shared navigation shortcuts use active-navigation dispatch and availability.
 
 The fixed Show Menubar shortcut follows the Menu Presentation contract in video mode.
 
@@ -142,16 +124,6 @@ The actual landed position may be adjusted by the playback engine, commonly to a
 
 ## Deletion
 
-Direct video files support the same user-facing Move to Trash and Delete Permanently actions as images.
+Video deletion follows [File Access](file-access.md#deletion).
 
-The deletion target for a direct video is the original direct media URL, even if KiriView resolved a separate local playback URL internally.
-
-If deletion is canceled, the current video remains open and no notification is shown.
-
-If deletion fails, the current video remains open and the file operation error is shown as an in-app toast notification.
-
-After successful video deletion, playback stops and KiriView opens the next supported media item in the current direct media scope when possible, falls back to the previous supported media item when no next item exists, and otherwise returns to empty state.
-
-In image mode, ordinary direct media deletion uses the same direct-media fallback order, so deleting an image can open a neighboring supported video. Archive collection and directly opened directory collection image deletion keep their image and collection-specific fallback behavior.
-
-Playable collection videos use the same opened-collection deletion target and fallback behavior as images in that collection.
+After a successful direct-video deletion, playback stops before KiriView applies the direct-media follow-up item or empty-state fallback.

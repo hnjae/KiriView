@@ -2,15 +2,23 @@
 
 ## Toolbar
 
+### Toolbar Layout
+
 The main window has exactly one toolbar instance.
 
 The main window toolbar shows media controls without a page title.
 
 The leading side of the toolbar contains Previous, the current page number, `of`, the total item count, and Next.
 
-The toolbar page navigation readout and page-number entry use the current active navigation scope. The toolbar does not show a mixed readout from more than one scope.
+The trailing action toolbar shows as many trailing controls as fit and moves the rest into an overflow menu. When it runs out of horizontal space, KiriView keeps the zoom percentage visible the longest, then the Fit menu button. The Fit menu button shows its selected fit label when there is enough toolbar space and collapses to icon-only when space is constrained.
 
-When active navigation is unavailable or unknown, the toolbar page navigation readout displays `– of –` and keeps the page-number entry and navigation buttons disabled.
+Visible trailing toolbar controls align to a common vertical center and use consistent outer spacing between adjacent top-level controls. The Fit menu button is rendered as one top-level toolbar control with the same vertical alignment and spacing as adjacent visible trailing toolbar controls.
+
+Outside fullscreen, the toolbar uses normal application header placement, reserves layout space above the image viewing area, and remains visible even when no image or video is open.
+
+Open, Open With, Previous Archive, and Next Archive are provided by the application menu and shortcuts rather than fixed toolbar buttons. Previous Archive and Next Archive use visually distinct previous/next-use icons so they are not confused with page Previous and Next navigation.
+
+### Collection Controls
 
 When the active navigation scope is a directly opened CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, RAR, or local directory collection, the trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, a Fit menu button, zoom, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
 
@@ -20,27 +28,29 @@ Right-to-Left Reading and Two-Page Spread visibility is determined by the active
 
 When Right-to-Left Reading or Two-Page Spread is visible for an opened collection that is not a directly opened local CBZ, CBT, CB7, or CBR comic book archive, the control is disabled.
 
-The trailing action toolbar shows as many trailing controls as fit and moves the rest into an overflow menu. When it runs out of horizontal space, KiriView keeps the zoom percentage visible the longest, then the Fit menu button. The Fit menu button shows its selected fit label when there is enough toolbar space and collapses to icon-only when space is constrained.
-
-Visible trailing toolbar controls align to a common vertical center and use consistent outer spacing between adjacent top-level controls. The Fit menu button is rendered as one top-level toolbar control with the same vertical alignment and spacing as adjacent visible trailing toolbar controls.
-
 When full trailing toolbar controls fit and Right-to-Left Reading and Two-Page Spread are visible, they are text-beside-icon buttons with the toolbar labels `Right-to-Left` and `Two-Page Spread`. If the toolbar cannot fit the text-bearing controls, KiriView may collapse them to icon-only controls or move them into overflow according to Kirigami toolbar layout behavior.
 
 Visible text-bearing Right-to-Left Reading and Two-Page Spread toolbar buttons expose control mnemonics through the toolbar button labels. Their menu labels, tooltips, action identity, shortcut configuration, checked state, and enabled state remain unchanged.
 
 When visible, the Right-to-Left Reading control is immediately to the left of the Two-Page Spread control. It toggles archive binding between left-to-right and right-to-left reading when that option is available.
 
-Outside fullscreen, the toolbar uses normal application header placement, reserves layout space above the image viewing area, and remains visible even when no image or video is open.
+### Page Navigation Controls
+
+The toolbar page navigation readout and page-number entry use the current active navigation scope. The toolbar does not show a mixed readout from more than one scope.
+
+When active navigation is unavailable or unknown, the toolbar page navigation readout displays `– of –` and keeps the page-number entry and navigation buttons disabled.
+
+The toolbar page navigation arrow buttons keep their physical affordance. The left arrow button triggers Previous in Left-to-Right Reading mode and Next in Right-to-Left Reading mode. The right arrow button triggers Next in Left-to-Right Reading mode and Previous in Right-to-Left Reading mode. Each button's tooltip and accessible text follow the action that button triggers.
+
+The toolbar page navigation arrow buttons, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts all target the same active navigation scope and share the same enabled state.
+
+### Action Availability And Shortcuts
 
 Controls that require selected, navigable, or ready media are disabled until the corresponding program state is available.
 
 The toolbar zoom control displays the active zoom readout for the current media state. Its editable value text and percent suffix are separate visual parts, so an empty document displays `- %` while the value input owns only `-`, and the suffix preserves normal toolbar spacing before the stepper buttons.
 
 The toolbar updates related readiness, action availability, page navigation, zoom editability, and title-subject controls together for the current media state. It must not show stale control state from a previous image, video, or viewport after a newer state has been accepted.
-
-The toolbar page navigation arrow buttons keep their physical affordance. The left arrow button triggers Previous in Left-to-Right Reading mode and Next in Right-to-Left Reading mode. The right arrow button triggers Next in Left-to-Right Reading mode and Previous in Right-to-Left Reading mode. Each button's tooltip and accessible text follow the action that button triggers.
-
-The toolbar page navigation arrow buttons, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts all target the same active navigation scope and share the same enabled state.
 
 Configurable application actions and their shortcuts use one shared availability decision. If an action is disabled, activating its menu item, toolbar placement, context-menu placement, or shortcut has no effect.
 
@@ -59,8 +69,6 @@ Unmodified ASCII printable key sequences are allowed for viewer-local configurab
 Viewer commands use viewer-local shortcuts by default unless the action explicitly declares a program-wide shortcut slot. KiriView does not derive runtime-only viewer aliases by dropping Ctrl from program-wide shortcuts and does not keep program-wide Ctrl fallbacks for viewer-local commands.
 
 Toolbar controls, menus, context menus, shortcut help, and shortcut handling use the same current action availability decision. During media replacement, mode switches, deletion, modal dialogs, or focus changes, KiriView must not display or trigger action state from an older media item, older viewport, or older interaction context after a newer state is active.
-
-Open, Open With, Previous Archive, and Next Archive are provided by the application menu and shortcuts rather than fixed toolbar buttons. Previous Archive and Next Archive use visually distinct previous/next-use icons so they are not confused with page Previous and Next navigation.
 
 ## Application Menu and Menubar
 
@@ -206,17 +214,15 @@ Video seek shortcuts are fixed shortcuts and are not listed in Keyboard Shortcut
 
 ## Video Playback Panel
 
-Video mode shows a video viewport with playback controls at the bottom of the video.
+Video mode shows a video viewport with playback controls governed by [Video Playback](video-playback.md#playback).
 
-The panel includes play/pause, timeline position selection and scrubbing, duration and position display, and a disabled non-interactive timeline state when the media is not seekable.
+The main-window layout treats floating playback controls as a viewport overlay that does not reserve page layout height. Fixed-bottom playback controls follow the compact presentation rules in the video playback contract.
 
-In the default video-control presentation, the panel floats inside the video viewport, uses a responsive width, keeps enough minimum width for its controls, caps at a moderate desktop width, and preserves side margins on narrow viewports.
-
-The floating panel does not reserve page layout height.
-
-The panel remains usable in fullscreen. Its visibility, auto-hide behavior, and compact fixed-bottom presentation follow the video playback controls contract.
+Playback controls remain usable in fullscreen.
 
 ## Side and Thumbnail Panels
+
+### Info Panel Content
 
 KiriView provides an Info Panel with user-visible media information for the current media state.
 
@@ -225,6 +231,8 @@ The Info Panel header shows an information icon, the title `Information`, and a 
 When no media item is available, the Info Panel shows an unavailable state rather than stale media details.
 
 When a media item is available, the Info Panel shows the current file name, a summary line, General and media-specific metadata sections, a Camera section only when camera metadata rows are available, and an Advanced Metadata section only when additional parsed metadata rows are available. File names and displayed paths decode percent-encoded URL path text for user readability. The current file name, summary line, and metadata row values are rendered in a fixed-width font.
+
+### Info Panel Metadata
 
 The General section shows available non-placeholder file identity rows such as type and path.
 
@@ -236,13 +244,15 @@ The Video section uses the current video frame dimensions when they are known. I
 
 For images, embedded metadata is parsed from the same media content used for image display, so direct files, directory collections, and archive collections expose metadata consistently with the displayed image source.
 
-For direct videos, embedded metadata is parsed from the resolved playback or local file path. Collection-internal video metadata is not shown for playable collection videos or unsupported-video placeholders.
+For direct videos, the Info Panel may show embedded video metadata when available while preserving the original direct media URL as the displayed source identity. Collection-internal video metadata is not shown for playable collection videos or unsupported-video placeholders.
 
 Playable collection videos and unsupported-video placeholders keep the current media item's video identity in the Info Panel. Their General section type is Video and their media-specific section is Video, but collection-internal video metadata rows are omitted.
 
 The Camera section shows curated embedded metadata rows only when the values are available: Camera, Taken, Location, Lens, Exposure, ISO, Focal Length, and Software. Camera combines make and model when both exist. Location is shown as coordinates only.
 
 The Advanced Metadata section is collapsed by default and contains parsed embedded tags not already consumed by curated rows, excluding empty, binary, and unprintable values.
+
+### Info Panel Actions And Layout
 
 The Info Panel provides icon buttons to copy the current file path and open the containing folder when those operations have a valid target for the current media item.
 
@@ -254,17 +264,11 @@ On narrow windows, the Info Panel is a right-edge overlay drawer that does not s
 
 The Info Panel uses the same width bounds in inline and overlay modes: minimum 16 Kirigami grid units, preferred 18 Kirigami grid units, and maximum 20 Kirigami grid units.
 
+### Thumbnail Panel Content
+
 The Thumbnail Panel is a compact, layout-reserving bottom filmstrip in the remaining media area to the left of the Info Panel. It uses the same dark viewer surface and matching foreground colors as the media viewport rather than a light page-panel surface.
 
-The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a generated preview thumbnail when the item is a supported direct local image, supported direct local video, or supported image page inside a CBZ or directly opened ZIP archive collection with a ready thumbnail result, and otherwise shows a placeholder media-type icon above the existing active-navigation candidate name. The candidate name is rendered in a fixed-width font on one elided line. The horizontal scrollbar occupies a dedicated lane below the strip items and must not overlap or obscure candidate names.
-
-The Thumbnail Panel highlights the selected active-navigation item immediately when the active navigation position changes.
-
-The Thumbnail Panel scrolls the horizontal strip enough to keep the selected item visible. Nearby automatic scroll adjustments may use a short easing animation.
-
-Far active-navigation jumps, synchronization while the Thumbnail Panel is hidden, and rapid repeated active-navigation changes update the strip position immediately without scroll animation.
-
-The Thumbnail Panel does not remap vertical mouse-wheel events to horizontal movement.
+The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item renders according to the thumbnail eligibility and fallback behavior defined in [Navigation](navigation.md#page-controls). The candidate name is rendered in a fixed-width font on one elided line. The horizontal scrollbar occupies a dedicated lane below the strip items and must not overlap or obscure candidate names.
 
 The Thumbnail Panel has a subtle top separator using the viewer foreground color at reduced opacity. Strip items use compact spacing, a small corner radius, and a subtle hover fill without shadow, glow, or card treatment. The selected strip item is indicated with a 2-pixel border using the theme highlight color.
 
@@ -272,7 +276,13 @@ The Thumbnail Panel uses image and video icons to distinguish supported still im
 
 The number of visible strip items matches the active navigation total count. When active navigation is unavailable or unknown, the strip is empty.
 
-Activating a Thumbnail Panel strip item opens the item at that active navigation number, matching the toolbar page-number entry behavior.
+### Thumbnail Panel Selection And Scrolling
+
+The Thumbnail Panel follows the active-navigation thumbnail selection, activation, and scrolling behavior defined in [Navigation](navigation.md#thumbnail-strip-scrolling).
+
+The Thumbnail Panel does not remap vertical mouse-wheel events to horizontal movement.
+
+### Panel Resizing, Shortcuts, And State
 
 When both panels are visible, the Info Panel occupies the right side for the full content height, and the Thumbnail Panel occupies only the bottom of the media area that remains to its left.
 

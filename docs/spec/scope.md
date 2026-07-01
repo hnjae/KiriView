@@ -8,8 +8,8 @@ When an installed `kiriview` translation catalog is available, KiriView's UI tex
 
 KiriView does not expose a general Settings page.
 
-The active navigation thumbnail strip may generate preview thumbnails only for supported direct local image items, supported direct local video items, and supported image pages inside CBZ and directly opened ZIP archive collections.
+The active navigation thumbnail strip follows the thumbnail eligibility and fallback behavior defined in [Navigation](navigation.md#page-controls). KiriView does not provide generated navigation thumbnails outside that contract.
 
 ## Not Provided
 
-KiriView does not provide editing, filesystem indexer metadata, reverse geocoding, map lookup, archive-collection video playback outside eligible stored ZIP and plain TAR entries, collection-internal video metadata, playlists, subtitles, track selection, frame stepping, generated timeline thumbnails beyond an embedded cover or thumbnail image or representative decoded direct local video frame, direct archive-entry media preview thumbnails, generated thumbnail previews for CB7/7z and other non-ZIP-backed archive collections, or directory-collection preview thumbnails.
+KiriView does not provide editing, filesystem indexer metadata, reverse geocoding, map lookup, opened archive collection video playback outside eligible stored ZIP and plain TAR entries, collection-internal video metadata, playlists, subtitles, track selection, frame stepping, generated video timeline thumbnails, direct archive-entry media preview thumbnails, generated thumbnail previews for CB7/7z and other non-ZIP-backed archive collections, or directory-collection preview thumbnails.

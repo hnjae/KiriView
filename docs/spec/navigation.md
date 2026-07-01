@@ -2,19 +2,9 @@
 
 ## Page Controls
 
-The toolbar provides page navigation with Previous and Next actions, the current page number, the total number of supported items in the current scope after that scope's supported list has been confirmed, and editable page number entry.
+### Active Navigation Scope
 
 Toolbar readouts, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts use one active navigation scope at a time.
-
-When the active navigation list is known, the thumbnail strip exposes one item per supported active navigation item with the same ordering and 1-based numbering as the toolbar readout and page-number entry.
-
-The active navigation thumbnail strip may display generated preview thumbnails for supported direct local image items, supported direct local video items, and supported image pages inside CBZ and directly opened ZIP archive collections. Generated thumbnails are representative previews for navigation, not authoritative media content. Supported direct local video thumbnails may use an embedded video cover or thumbnail image when available. When no usable embedded image is available, KiriView may choose a representative decoded video frame intended to avoid uninformative first frames; it does not promise an exact frame or timestamp. Video thumbnail orientation and mirroring follow the embedded image or decoded frame supplied by the platform. Unsupported, pending, failed, non-local direct video, direct archive-entry media, CB7/7z and other non-ZIP-backed archive-collection items, and directory-collection items keep placeholder media-type icons instead of generated preview thumbnails.
-
-The active navigation thumbnail strip chooses generated preview quality from the thumbnail's physical display size, including the current device pixel ratio. During panel resize, fractional-scale changes, or movement between screens with different scale factors, a previously ready smaller thumbnail may remain visible as an interim fallback while KiriView loads a newly required larger thumbnail, and the strip replaces it only after the newer result is ready. If the newer request fails, KiriView keeps an existing usable thumbnail visible when one is available; otherwise the row uses the normal fallback icon path.
-
-After visible, nearby, and user-navigation thumbnail demand for the current active navigation list has been satisfied, KiriView may silently fill supported direct local image thumbnails, supported direct local video thumbnails, and supported image-page thumbnails inside CBZ and directly opened ZIP archive collections for that active list in the background. Visible, nearby, and user-navigation demand always takes precedence over this background fill work, and new foreground demand, navigation changes, or thumbnail-list resets may cancel background work already in progress. Background fill failures do not show user-facing errors and keep the normal thumbnail fallback UI.
-
-The active navigation thumbnail strip keeps the active item visually selected. When adjacent main-view navigation changes the active item, the strip uses a preferred visible zone inset from the viewport edges: if the selected thumbnail remains inside that zone, the strip keeps its scroll position unchanged, and if it leaves that zone, the strip may reveal it back toward a stable visible position. Adjacent Next navigation places the selected thumbnail toward the leading side of the preferred zone so more following items remain visible; adjacent Previous navigation places it toward the trailing side so more preceding items remain visible. This anchoring follows the semantic Previous or Next action dispatched by the session, including when Right-to-Left Reading mode maps physical keys differently. Nearby automatic reveal may use a short easing animation, but at most one automatic reveal target is active at a time: repeated navigation replaces older pending scroll movement with the latest selected item, and rapid navigation may update the strip immediately instead of animating each step. Direct thumbnail activation preserves the thumbnail strip scroll position unless model or layout changes require immediate containment. User-initiated thumbnail scrolling temporarily suppresses automatic preferred-zone follow movement unless the selected thumbnail would otherwise leave the visible viewport. Large jumps such as First, Last, and page-number entry may reposition the strip to keep the selected thumbnail discoverable. File open or load routing may reveal the selected thumbnail for the newly loaded scope, but KiriView does not replay stale or duplicate automatic thumbnail scrolling during programmatic synchronization. KiriView does not promise exact thumbnail pixel offsets, centered positioning, or animation duration.
 
 For ordinary direct media URL scopes, including direct image files, direct video files, and KDE archive-entry media URLs opened as individual media items, page controls follow only the ordinary direct media sibling list.
 
@@ -22,27 +12,51 @@ Page navigation for opened collections is active only for directly opened archiv
 
 For ordinary direct media URL scopes, archive collection scopes, and directly opened directory collection scopes, the page navigation controls count and select supported images and supported videos together.
 
+The active navigation state has these user-visible invariants: `available` means the current mode exposes a navigable scope; `known` means KiriView has a confirmed current position and total count for the active scope; `editable` means entering a page number can open an item in that same scope. When navigation is unavailable or unknown, the page-number entry is disabled, Previous, Next, First, and Last are disabled, and KiriView does not display a stale current/count pair. When navigation is known, the current number is within `1..total`, the total count is at least 1, previous and next availability match whether a previous or next target exists in reading order, and first/last boundary state matches whether the active visible item or spread is at the known start or end of the scope.
+
+For image-mode scopes, page controls account for spread-aware display: the visible item may cover a first and last visible page, and Previous, Next, First, and Last availability follow those visible spread boundaries rather than a single raw page number.
+
+### Toolbar Page Controls
+
+The toolbar provides page navigation with Previous and Next actions, the current page number, the total number of supported items in the current scope after that scope's supported list has been confirmed, and editable page number entry.
+
 First and Last are page navigation actions available through their configured shortcuts and menus. They open the first or last known page or media item in the current scope.
 
 The Previous action placement is disabled on the first item, and the Next action placement is disabled on the last item.
 
 Page numbers are shown to users starting at 1.
 
-The active navigation state has these user-visible invariants: `available` means the current mode exposes a navigable scope; `known` means KiriView has a confirmed current position and total count for the active scope; `editable` means entering a page number can open an item in that same scope. When navigation is unavailable or unknown, the page-number entry is disabled, Previous, Next, First, and Last are disabled, and KiriView does not display a stale current/count pair. When navigation is known, the current number is within `1..total`, the total count is at least 1, previous and next availability match whether a previous or next target exists in reading order, and first/last boundary state matches whether the active visible item or spread is at the known start or end of the scope.
+### Thumbnail Strip Eligibility
 
-For image-mode scopes, page controls account for spread-aware display: the visible item may cover a first and last visible page, and Previous, Next, First, and Last availability follow those visible spread boundaries rather than a single raw page number.
+When the active navigation list is known, the thumbnail strip exposes one item per supported active navigation item with the same ordering and 1-based numbering as the toolbar readout and page-number entry.
+
+The active navigation thumbnail strip may display generated preview thumbnails for supported direct local image items, supported direct local video items, and supported image pages inside CBZ and directly opened ZIP archive collections. Generated thumbnails are representative previews for navigation, not authoritative media content. Supported direct local video thumbnails may use an embedded video cover or thumbnail image when available. When no usable embedded image is available, KiriView may choose a representative decoded video frame intended to avoid uninformative first frames; it does not promise an exact frame or timestamp. Video thumbnail orientation and mirroring follow the embedded image or decoded frame supplied by the platform. Unsupported, pending, failed, non-local direct video, direct archive-entry media, CB7/7z and other non-ZIP-backed archive-collection items, and directory-collection items keep placeholder media-type icons instead of generated preview thumbnails.
+
+The active navigation thumbnail strip chooses generated preview quality from the thumbnail's physical display size, including the current device pixel ratio. During panel resize, fractional-scale changes, or movement between screens with different scale factors, a previously ready smaller thumbnail may remain visible as an interim fallback while KiriView loads a newly required larger thumbnail, and the strip replaces it only after the newer result is ready. If the newer request fails, KiriView keeps an existing usable thumbnail visible when one is available; otherwise the row uses the normal fallback icon path.
+
+After thumbnails needed for visible, nearby, and user-selected navigation items have been satisfied, KiriView may progressively replace additional eligible placeholder thumbnails in the current active navigation list without user action. Visible, nearby, and user-selected navigation items take precedence over not-yet-visible thumbnail filling. Failures for not-yet-visible thumbnails do not show user-facing errors and keep the normal thumbnail fallback UI.
 
 For image-mode scopes, the thumbnail strip uses page candidate names. Directory and archive collection names may be collection-relative paths so that same-basename items in different folders remain distinguishable.
 
-When a new directory collection, archive collection, or ordinary direct media scope is being listed and KiriView has no confirmed supported item list for that same scope yet, the current page number and total item count are unknown, and KiriView does not treat the current item as the first or last item.
+### Thumbnail Strip Scrolling
 
-During that unknown interval, KiriView also exposes an empty thumbnail strip rather than a partial or stale item list.
+The active navigation thumbnail strip keeps the active item visually selected. When adjacent main-view navigation changes the active item, the strip uses a preferred visible zone inset from the viewport edges: if the selected thumbnail remains inside that zone, the strip keeps its scroll position unchanged, and if it leaves that zone, the strip may reveal it back toward a stable visible position. Adjacent Next navigation places the selected thumbnail toward the leading side of the preferred zone so more following items remain visible; adjacent Previous navigation places it toward the trailing side so more preceding items remain visible. This anchoring follows the semantic Previous or Next action, including when Right-to-Left Reading mode maps physical keys differently. Nearby automatic reveal may use a short easing animation, but at most one automatic reveal target is active at a time: repeated navigation replaces older pending scroll movement with the latest selected item, and rapid navigation may update the strip immediately instead of animating each step. Direct thumbnail activation preserves the thumbnail strip scroll position unless model or layout changes require immediate containment. User-initiated thumbnail scrolling temporarily suppresses automatic preferred-zone follow movement unless the selected thumbnail would otherwise leave the visible viewport. Large jumps such as First, Last, and page-number entry may reposition the strip to keep the selected thumbnail discoverable. Opening or loading a new scope may reveal its selected thumbnail, but KiriView does not replay stale or duplicate automatic thumbnail scrolling. KiriView does not promise exact thumbnail pixel offsets, centered positioning, or animation duration.
+
+Activating a thumbnail strip item opens the item at that active navigation number, matching toolbar page-number entry behavior.
+
+### Page Number Editing
 
 Entering a page number and pressing Enter or clicking the image viewing area opens the nearest valid page, returns focus to the image viewing area, and restores viewer keyboard shortcuts.
 
 If the entered text cannot be parsed as a number, KiriView leaves the current item open and restores the displayed page number.
 
 Pressing Escape while editing the page number cancels the edit, restores the displayed page number, returns focus to the image viewing area, and does not leave fullscreen.
+
+### Pending Selection And Loading
+
+When a new directory collection, archive collection, or ordinary direct media scope is being listed and KiriView has no confirmed supported item list for that same scope yet, the current page number and total item count are unknown, and KiriView does not treat the current item as the first or last item.
+
+During that unknown interval, KiriView also exposes an empty thumbnail strip rather than a partial or stale item list.
 
 When KiriView has a confirmed supported item list for the current scope, Previous, Next, First, Last, and page number entry remain available while a selected image or video is still loading.
 
@@ -136,7 +150,7 @@ When the current image is not horizontally pannable, Left and Right dispatch Pre
 
 In Left-to-Right Reading mode, Left opens the previous supported media item and Right opens the next supported media item.
 
-In video mode, Left opens the previous supported media item and Right opens the next supported media item in the ordinary direct media scope. They do not seek within the video.
+In video mode, Left opens the previous supported media item and Right opens the next supported media item in the active navigation scope. They do not seek within the video.
 
 In Right-to-Left Reading mode, Left and Right keep physical horizontal panning while the image can pan horizontally, but their non-pannable navigation fallback is reversed: Left opens the next supported media item and Right opens the previous supported media item.
 
@@ -146,19 +160,9 @@ Keyboard panning and Left/Right viewer navigation are inactive while the page nu
 
 ## Video Seeking
 
-Timeline dragging and scrubbing is the primary way to seek within the current video.
+Video seeking behavior is specified in [Video Playback](video-playback.md#video-navigation-and-seeking).
 
-If keyboard focus is inside the timeline control, that control may handle its own keyboard interaction.
-
-Video mode supports fixed local seek shortcuts: `Alt+Left` seeks backward 5 seconds, `Alt+Right` seeks forward 5 seconds, `Alt+Up` seeks forward 45 seconds, and `Alt+Down` seeks backward 45 seconds.
-
-Video mode supports configurable viewer-local current-content boundary shortcuts: `Shift+,` and `Alt+Home` seek to the start of the current video, and `Shift+.` and `Alt+End` seek to the end of the current video when the video is seekable and has a known positive duration.
-
-Video seek shortcuts are video-mode-only and do not affect image mode or unsupported-video placeholders.
-
-Video seek shortcuts are best-effort time seeks. They run only when the media is seekable, clamp to the valid `[0, duration]` range when duration is known, and do not promise frame-accurate seeking.
-
-The actual landed position may be adjusted by the playback engine, commonly to a nearby decodable or keyframe position.
+Navigation-owned viewer shortcut gates also apply to video seek shortcuts. Seek shortcuts are inactive while text input, modal shortcut help, or another viewer-suppressed state is active.
 
 ## Scan Shortcuts
 
@@ -172,7 +176,7 @@ At the final scan position, `.` or `Space` opens the next image.
 
 When the current image is not zoomed large enough to pan, `.` or `Space` opens the next image and `,` or `Shift+Space` opens the previous image.
 
-In video mode, `.` or `Space` opens the next supported media item and `,` or `Shift+Space` opens the previous supported media item in the ordinary direct media scope. They do not pan or seek within the video.
+In video mode, `.` or `Space` opens the next supported media item and `,` or `Shift+Space` opens the previous supported media item in the active navigation scope. They do not pan or seek within the video.
 
 In Right-to-Left Reading mode, scan order starts at the top-right and proceeds toward the bottom-left. The forward scan shortcuts still scan forward or open the next image, the backward scan shortcuts still scan backward or open the previous image, `Shift+,` and `Alt+Home` jump to the current content start, and `Shift+.` and `Alt+End` jump to the current content end.
 

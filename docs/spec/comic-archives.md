@@ -2,7 +2,7 @@
 
 ## Two-Page Spread and Reading Direction
 
-When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is displayed, `S` toggles Two-Page Spread.
+When the active navigation scope is a directly opened local CBZ, CBT, CB7, or CBR comic book archive, `S` toggles Two-Page Spread.
 
 Two-Page Spread displays the current page on the left and the next page on the right when both pages are eligible images.
 
@@ -18,7 +18,7 @@ Two-Page Spread is unavailable for ordinary image files, direct video files, KDE
 
 Showing a disabled Two-Page Spread toolbar control while a directly opened ZIP, TAR, 7Z, RAR, or directory collection is active does not make Two-Page Spread available.
 
-When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is displayed, `B` toggles Right-to-Left Reading mode.
+When the active navigation scope is a directly opened local CBZ, CBT, CB7, or CBR comic book archive, `B` toggles Right-to-Left Reading mode.
 
 Right-to-Left Reading mode is off by default, is unavailable for ordinary image files, direct video files, KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories, and is not saved as a global setting.
 
@@ -48,7 +48,7 @@ While a Two-Page Spread transition is loading, the previously displayed page or 
 
 ## Two-Page Spread Navigation
 
-When Two-Page Spread is enabled for a directly opened comic book archive, ordinary Previous and Next image navigation move by the currently displayed spread rather than always by one page.
+When Two-Page Spread is enabled for a directly opened comic book archive, ordinary Previous and Next page navigation move by the currently displayed spread rather than always by one page.
 
 If two pages are visible, Next opens the first page after the displayed spread in reading order.
 
@@ -72,7 +72,7 @@ An archive for archive navigation is a local CBZ, CBT, CB7, or CBR comic book ar
 
 The current archive can be the comic book archive whose image is displayed, or an empty sibling comic book archive reached through archive navigation.
 
-When the current image is inside a local comic book archive opened directly by KiriView, its archive is that archive file.
+When the current media item is inside a local comic book archive opened directly by KiriView, its archive is that archive file.
 
 The Previous Archive and Next Archive actions open the previous or next sibling comic book archive beside the current archive.
 

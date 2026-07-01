@@ -2,7 +2,7 @@
 
 Active navigation thumbnails use source adapters to keep thumbnail scheduling and result projection independent from the kind of navigation row being displayed. The C++ document-session thumbnail runtime owns demand, async job lifetime, stale-completion rejection, foreground and background priority, and the image-provider store; adapters answer whether a row can produce a thumbnail and which cache or generation contract applies.
 
-The document session composes the active-navigation thumbnail strip through one strip dependency port. Session runtime construction may choose the strip's lookup provider, generation provider, source adapter, image store, and worker scheduler, but those dependencies must cross the session boundary as one active-navigation thumbnail dependency value rather than as unrelated raw providers.
+The document session composes the active-navigation thumbnail strip through one strip dependency port. The strip's lookup provider, generation provider, source adapter, image store, and worker scheduler must cross the session boundary as one active-navigation thumbnail dependency value rather than as unrelated raw providers.
 
 Adapters consume the active thumbnail source key and demand bucket described by [Extension Contracts](extension-contracts.md). They must not mutate QML-facing model state, schedule jobs independently, install cache entries directly, or bypass runtime stale-completion identity. Adapter outputs are plans: unsupported fallback, cacheable local-file generation, cacheable opened-collection entry generation, or in-memory-only generation.
 
@@ -16,17 +16,17 @@ Thumbnail cache identity is expressed separately from row source identity. Local
 
 Opened-collection entry thumbnails use archive-record virtual originals when the collection policy allows cache writes. The URI format is `x-kiriview://thumbnail/archive-entry/v1/crc32/<8-lower-hex-crc32>/<decimal-uncompressed-size>`, where the checksum and size come from collection-backend public ZIP entry metadata. The virtual original mtime is always `0` because freshness is carried by the archive-record URI. The original byte size is the archive entry uncompressed byte length.
 
-KiriView must not parse archive formats solely to derive thumbnail cache identity, must not require patched archive-library APIs for cache identity, and must not use decoded-byte or entry-byte hashes for opened-collection cache keys. The thumbnail generation job derives the CRC32 metadata URI before reading entry bytes, performs the XDG lookup with that virtual original, decodes and renders only on cache miss, then installs the generated thumbnail with the same virtual identity. CRC32 collisions are tolerated at the thumbnail-cache layer and may show a wrong preview thumbnail, but they must not affect opened image bytes, navigation, deletion, or source document state.
+KiriView must not parse archive formats solely to derive thumbnail cache identity, must not require patched archive-library APIs for cache identity, and must not use decoded-byte or entry-byte hashes for opened-collection cache keys. The thumbnail generation job derives the CRC32 metadata URI before reading entry bytes, performs the XDG lookup with that virtual original, decodes and renders only on cache miss, then installs the generated thumbnail with the same virtual identity. CRC32 cache identity is advisory and isolated to the thumbnail payload; cache collisions must not affect opened image bytes, navigation, deletion, or source document state.
 
 ## Direct Local Images
 
-The default direct-image adapter accepts supported direct local image rows only. It exposes the local path bytes used by Freedesktop thumbnail lookup and generation, enables XDG cache lookup, and allows generated results to be installed into the personal thumbnail cache when freshness requirements are satisfied by the cache helper.
+The direct-image adapter may return a cacheable generation plan only for active-navigation rows that satisfy the spec's direct-local-image thumbnail eligibility and provide a stable local-file original identity. It exposes the local path bytes used by Freedesktop thumbnail lookup and generation, enables XDG cache lookup, and allows generated results to be installed into the personal thumbnail cache when freshness requirements are satisfied by the cache boundary.
 
-Unsupported direct image rows, including non-local URLs, stay on the runtime fallback path.
+Direct image rows outside that eligibility return unsupported fallback.
 
 ## Direct Video
 
-The default direct-video adapter accepts supported direct local video rows only. It exposes the local path bytes used by Freedesktop thumbnail lookup and generation, enables XDG cache lookup, and allows generated results to be installed into the personal thumbnail cache when freshness requirements are satisfied by the cache helper. Non-local direct video rows stay on the runtime fallback path.
+The direct-video adapter may return a cacheable generation plan only for active-navigation rows that satisfy the spec's direct-local-video thumbnail eligibility and provide a stable local-file original identity. It exposes the local path bytes used by Freedesktop thumbnail lookup and generation, enables XDG cache lookup, and allows generated results to be installed into the personal thumbnail cache when freshness requirements are satisfied by the cache boundary. Direct video rows outside that eligibility return unsupported fallback.
 
 On XDG cache miss, direct-video generation may use an embedded representative image or a decoded representative frame through an isolated, cancelable thumbnail extraction job. The thumbnail path owns extraction lifecycle and result publication, must not reuse the video document playback backend, and returns a representative preview rather than a frame-accurate timestamp guarantee.
 
@@ -38,18 +38,18 @@ Direct archive-entry media thumbnails represent KDE archive-entry URLs opened as
 
 ## Opened Collection Entries
 
-Opened-collection entry thumbnails represent navigation rows inside a directly opened collection whose bytes are owned by a media entry source. The collection module owns the shared policy that decides whether an entry can be cached, and both thumbnail source planning and media entry source metadata loading consume that policy instead of duplicating archive-scheme or entry-kind checks. Only supported image entries inside directly opened archive collections backed by ZIP roots may return a cacheable opened-collection entry plan, and only when the collection backend exposes usable ZIP CRC32 metadata plus uncompressed size through public APIs. This covers cacheable CBZ and directly opened ZIP scopes; directory collections, TAR/CBT, RAR/libarchive, 7Z/CB7 collections, and video entries remain unsupported for cacheable opened-collection thumbnails.
+Opened-collection entry thumbnails represent navigation rows inside a directly opened collection whose bytes are owned by a media entry source. The collection access layer owns the shared policy that decides whether an entry can be cached, and both thumbnail source planning and media entry source metadata loading consume that policy instead of duplicating archive-scheme or entry-kind checks. Only opened-collection image rows that satisfy the spec's archive-entry thumbnail eligibility and whose collection backend exposes usable public record metadata may return a cacheable opened-collection entry plan.
 
-Directory collections, TAR-backed CBT scopes, RAR-backed CBR scopes, 7Z/CB7 archive collections, and collection video entries return unsupported fallback.
+Opened-collection rows outside that eligibility return unsupported fallback.
 
 ## Archive Collection Rows
 
-Archive-collection thumbnails represent a collection row rather than an entry inside a directly opened collection. KiriView's active-navigation thumbnail strip does not use generated collection-row thumbnails, so archive-collection rows return unsupported fallback and must not choose representative entries or composed previews.
+Archive-collection thumbnails represent a collection row rather than an entry inside a directly opened collection. Collection-row sources return unsupported fallback and must not choose representative entries or composed previews.
 
 ## Directory Collections
 
-Directory-collection thumbnails represent directory-backed collection rows or entries. KiriView's active-navigation thumbnail strip does not use generated directory-collection thumbnails, so directory-collection rows and entries return unsupported fallback and must not choose representative files or perform directory traversal from thumbnail demand.
+Directory-collection thumbnails represent directory-backed collection rows or entries. Directory-collection sources return unsupported fallback and must not choose representative files or perform directory traversal from thumbnail demand.
 
 ## In-Memory-Only Sources
 
-In-memory-only plans skip XDG lookup and disable cache installation. The runtime may still store the generated `QImage` in its image-provider cache, apply retention priority, publish the same ready result roles, and reject stale completions using the same source key and bucket checks as cacheable sources. This path does not expand the active-navigation thumbnail product contract: active-navigation rows outside supported direct local images, supported direct local videos, and supported image entries inside cacheable CBZ or directly opened ZIP archive collections return unsupported fallback.
+In-memory-only plans skip XDG lookup and disable cache installation. The runtime may still store the generated image in its image-provider cache, apply retention priority, publish the same ready result roles, and reject stale completions using the same source key and bucket checks as cacheable sources. This path must not expand the active-navigation thumbnail product contract: rows excluded by the spec return unsupported fallback even if a generation dependency could technically render them.
