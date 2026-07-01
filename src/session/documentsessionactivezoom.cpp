@@ -12,7 +12,7 @@ ActiveZoomSnapshot documentSessionActiveZoomSnapshot(DocumentSessionKind documen
 {
     switch (documentKind) {
     case DocumentSessionKind::Image:
-        if (!image.zoomPercentKnown) {
+        if (!image.readyForInformation || !image.zoomPercentKnown) {
             return {};
         }
         return ActiveZoomSnapshot { true, true, image.zoomPercent, true };

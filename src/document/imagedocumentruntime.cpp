@@ -34,6 +34,13 @@ namespace {
             spreadController.rightToLeftReadingEnabled(),
         };
     }
+
+    bool sameScopeCommittedPresentationPending(
+        ImageDocumentStatus status, const ImageSpreadPresentationController& spreadController)
+    {
+        return status == ImageDocumentStatus::Loading
+            && spreadController.sameScopeImageNavigationPresentationPending();
+    }
 }
 
 ImageDocumentRuntime::ImageDocumentRuntime(QObject* documentObject,
@@ -104,11 +111,15 @@ QString ImageDocumentRuntime::windowTitleFileName() const { return state.windowT
 
 QUrl ImageDocumentRuntime::displayedUrl() const
 {
-    if (status() != ImageDocumentStatus::Ready) {
-        return {};
+    const ImageDocumentStatus documentStatus = status();
+    if (documentStatus == ImageDocumentStatus::Ready) {
+        return state.displayedUrl();
+    }
+    if (sameScopeCommittedPresentationPending(documentStatus, controllers->spreadController())) {
+        return controllers->spreadController().committedPrimaryDisplayedImageLocation().imageUrl();
     }
 
-    return state.displayedUrl();
+    return {};
 }
 
 OpenedCollectionScopeLocation ImageDocumentRuntime::displayedOpenedCollectionScope() const
@@ -118,20 +129,28 @@ OpenedCollectionScopeLocation ImageDocumentRuntime::displayedOpenedCollectionSco
 
 QSize ImageDocumentRuntime::imageSize() const
 {
-    if (status() != ImageDocumentStatus::Ready) {
-        return {};
+    const ImageDocumentStatus documentStatus = status();
+    if (documentStatus == ImageDocumentStatus::Ready) {
+        return controllers->spreadController().imageSize();
+    }
+    if (sameScopeCommittedPresentationPending(documentStatus, controllers->spreadController())) {
+        return controllers->spreadController().committedImageSize();
     }
 
-    return controllers->spreadController().imageSize();
+    return {};
 }
 
 QSize ImageDocumentRuntime::primaryImageSize() const
 {
-    if (status() != ImageDocumentStatus::Ready) {
-        return {};
+    const ImageDocumentStatus documentStatus = status();
+    if (documentStatus == ImageDocumentStatus::Ready) {
+        return controllers->spreadController().primaryImageSize();
+    }
+    if (sameScopeCommittedPresentationPending(documentStatus, controllers->spreadController())) {
+        return controllers->spreadController().committedPrimaryImageSize();
     }
 
-    return controllers->spreadController().primaryImageSize();
+    return {};
 }
 
 QSize ImageDocumentRuntime::secondaryImageSize() const

@@ -88,6 +88,25 @@ bool ImageSpreadPresentationController::loading(bool documentLoading) const
     return transitionInProgress() || documentLoading;
 }
 
+bool ImageSpreadPresentationController::sameScopeImageNavigationPresentationPending() const
+{
+    return m_sameScopeImageNavigationPresentationPending
+        && !m_committedPrimaryDisplayedImageLocation.isEmpty();
+}
+
+const DisplayedImageLocation&
+ImageSpreadPresentationController::committedPrimaryDisplayedImageLocation() const
+{
+    return m_committedPrimaryDisplayedImageLocation;
+}
+
+QSize ImageSpreadPresentationController::committedImageSize() const { return m_committedImageSize; }
+
+QSize ImageSpreadPresentationController::committedPrimaryImageSize() const
+{
+    return m_committedPrimaryImageSize;
+}
+
 QSize ImageSpreadPresentationController::imageSize() const
 {
     return m_presentationRuntime.imageSize();
@@ -458,6 +477,10 @@ void ImageSpreadPresentationController::commitPrimaryPageSlot(
 {
     const ImageZoomChangeSet changes = m_presentationRuntime.commitPrimaryPageSlot(
         m_primaryPageSurface.snapshot(), presentationScopeKeyForLocation(location));
+    if (!transitionInProgress()) {
+        m_sameScopeImageNavigationPresentationPending = false;
+        refreshCommittedPresentationFacts(location);
+    }
     updateDisplayProjections();
     std::vector<ImageDocumentChange> notifications
         = imageDocumentPresentationZoomNotifications(changes);
@@ -470,6 +493,7 @@ void ImageSpreadPresentationController::commitPrimaryPageSlot(
 void ImageSpreadPresentationController::clearPrimaryPageSlot()
 {
     m_presentationRuntime.clearPrimaryPageSlot();
+    clearCommittedPresentationFacts();
     notifyChanges({ ImageDocumentChange::ImageSize, ImageDocumentChange::DisplaySize,
         ImageDocumentChange::ZoomPercent, ImageDocumentChange::ZoomMode,
         ImageDocumentChange::MaximumManualZoomPercent, ImageDocumentChange::VisibleItemRect,
@@ -579,6 +603,7 @@ void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange
     }
 
     if (change == ImageDocumentChange::ErrorString && !m_state.errorString().isEmpty()) {
+        m_sameScopeImageNavigationPresentationPending = false;
         finishTransition();
     }
 
@@ -622,6 +647,8 @@ void ImageSpreadPresentationController::finishTransition()
         return;
     }
 
+    m_sameScopeImageNavigationPresentationPending = false;
+    refreshCommittedPresentationFacts(m_state.displayedImageLocation());
     notifyTransitionChanged();
 }
 
@@ -636,6 +663,7 @@ void ImageSpreadPresentationController::abortTransition()
 
 void ImageSpreadPresentationController::beginSameScopeImageNavigationPresentation()
 {
+    m_sameScopeImageNavigationPresentationPending = true;
     m_primaryPageSurface.retainCurrentStaticDisplayImageForSameScopeNavigation();
     if (updatePresentationPageSlot(DisplayedPageRole::Primary)) {
         updateDisplayProjections();
@@ -796,6 +824,22 @@ void ImageSpreadPresentationController::notifyActivePresentationZoomChanged(
     ImageZoomChangeSet changes)
 {
     notifyChanges(imageDocumentSpreadZoomNotifications(changes));
+}
+
+void ImageSpreadPresentationController::refreshCommittedPresentationFacts(
+    const DisplayedImageLocation& location)
+{
+    m_committedPrimaryDisplayedImageLocation = location;
+    m_committedImageSize = imageSize();
+    m_committedPrimaryImageSize = primaryImageSize();
+}
+
+void ImageSpreadPresentationController::clearCommittedPresentationFacts()
+{
+    m_committedPrimaryDisplayedImageLocation = {};
+    m_committedImageSize = {};
+    m_committedPrimaryImageSize = {};
+    m_sameScopeImageNavigationPresentationPending = false;
 }
 
 bool ImageSpreadPresentationController::updatePresentationPageSlot(DisplayedPageRole role)

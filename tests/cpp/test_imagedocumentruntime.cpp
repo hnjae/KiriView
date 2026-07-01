@@ -915,7 +915,7 @@ void TestImageDocumentRuntime::pendingPageSelectionSupersedesEarlierLoad()
 
     runtime->openImageAtPage(3);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdImageUrl);
-    QCOMPARE(runtime->displayedUrl(), QUrl());
+    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
     QCOMPARE(runtime->currentPageNumber(), 3);
     QVERIFY(!finishOldestActiveLoadForUrl(dataLoader, secondImageUrl));
 
@@ -956,7 +956,7 @@ void TestImageDocumentRuntime::pageSelectionStartsTrackedLoadThroughEffectExecut
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeSelection + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, secondImageUrl);
     QCOMPARE(runtime->sourceUrl(), secondImageUrl);
-    QCOMPARE(runtime->displayedUrl(), QUrl());
+    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
     QCOMPARE(runtime->currentPageNumber(), 2);
 
     finishLoad(dataLoader);
@@ -999,6 +999,10 @@ void TestImageDocumentRuntime::sameScopePendingNavigationRetainsCommittedDisplay
 
     QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Loading);
     QCOMPARE(runtime->sourceUrl(), secondImageUrl);
+    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
+    QCOMPARE(runtime->primaryImageSize(), QSize(2, 1));
+    QCOMPARE(runtime->imageSize(), QSize(2, 1));
+    QVERIFY(!runtime->zoomPercentKnown());
     QCOMPARE(runtime->currentPageNumber(), 2);
     const kiriview::ImageDisplaySourceProjection retained
         = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Primary);
@@ -1093,7 +1097,7 @@ void TestImageDocumentRuntime::pendingLoadFailureKeepsTargetPageNavigation()
     runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
     QCOMPARE(runtime->sourceUrl(), secondImageUrl);
-    QCOMPARE(runtime->displayedUrl(), QUrl());
+    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
     QCOMPARE(runtime->currentPageNumber(), 2);
 
     dataLoader.failBackLoad(QStringLiteral("missing"));
@@ -1981,7 +1985,7 @@ void TestImageDocumentRuntime::twoPageModeDisplaysCurrentAndNextComicArchivePage
     runtime->openNextPage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->displayedUrl(), QUrl());
+    QTRY_COMPARE(runtime->displayedUrl(), firstPageUrl);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     finishLoad(dataLoader);
 
@@ -2101,7 +2105,7 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->displayedUrl(), QUrl());
+    QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(2));
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, fourthPageUrl));
@@ -2113,7 +2117,7 @@ void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSe
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(runtime->displayedUrl(), QUrl());
+    QTRY_COMPARE(runtime->displayedUrl(), thirdPageUrl);
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(2));
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, thirdPageUrl));
@@ -2258,6 +2262,7 @@ void TestImageDocumentRuntime::twoPageModeRetainsPreviousSpreadWhileTargetSpread
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
     QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Loading);
     QVERIFY(runtime->loading());
+    QCOMPARE(runtime->displayedUrl(), secondPageUrl);
     kiriview::ImageDisplaySourceProjection retainedPrimary
         = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Primary);
     kiriview::ImageDisplaySourceProjection retainedSecondary
@@ -2268,7 +2273,7 @@ void TestImageDocumentRuntime::twoPageModeRetainsPreviousSpreadWhileTargetSpread
     QVERIFY(hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(runtime->displayedUrl(), QUrl());
+    QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
     QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
     QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Loading);
     QVERIFY(runtime->loading());

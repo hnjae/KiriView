@@ -66,6 +66,10 @@ public:
     ImagePresentationTransitionState presentationTransitionState() const;
     ImageDocumentStatus status(ImageDocumentStatus documentStatus) const;
     bool loading(bool documentLoading) const;
+    bool sameScopeImageNavigationPresentationPending() const;
+    const DisplayedImageLocation& committedPrimaryDisplayedImageLocation() const;
+    QSize committedImageSize() const;
+    QSize committedPrimaryImageSize() const;
 
     QSize imageSize() const;
     QSize primaryImageSize() const;
@@ -162,6 +166,8 @@ private:
     void applyActivePresentationChanges(
         ImageZoomChangeSet changes, bool notifyPublicChanges = true);
     void notifyActivePresentationZoomChanged(ImageZoomChangeSet changes);
+    void refreshCommittedPresentationFacts(const DisplayedImageLocation& location);
+    void clearCommittedPresentationFacts();
     bool updatePresentationPageSlot(DisplayedPageRole role);
     void updateDisplayProjections();
     const ImageViewportFrame& viewportFrame() const;
@@ -174,6 +180,10 @@ private:
     Callbacks m_callbacks;
     std::unique_ptr<ImageSecondaryPageController> m_secondaryPageController;
     ImageSpreadSecondaryPageRefresh m_secondaryPageRefresh;
+    DisplayedImageLocation m_committedPrimaryDisplayedImageLocation;
+    QSize m_committedImageSize;
+    QSize m_committedPrimaryImageSize;
+    bool m_sameScopeImageNavigationPresentationPending = false;
 };
 }
 

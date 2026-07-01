@@ -105,6 +105,7 @@ void TestDocumentSessionState::activeZoomReadoutPublishesThroughSnapshotCommit()
 
     kiriview::DocumentSessionPublicSnapshotInput input;
     input.session.documentKind = kiriview::DocumentSessionKind::Image;
+    input.image.readyForInformation = true;
     input.image.zoomPercentKnown = true;
     input.image.zoomPercent = 125.0;
     state.updatePublicSnapshot(input);
@@ -112,17 +113,18 @@ void TestDocumentSessionState::activeZoomReadoutPublishesThroughSnapshotCommit()
     QVERIFY(state.activeZoomSnapshot().available);
     QVERIFY(state.activeZoomSnapshot().known);
     QCOMPARE(state.activeZoomSnapshot().percent, 125.0);
-    QCOMPARE(changes.size(), std::size_t(3));
+    QCOMPARE(changes.size(), std::size_t(4));
     QCOMPARE(changes.at(0), kiriview::DocumentSessionChange::PublicProjectionRevision);
     QCOMPARE(changes.at(2), kiriview::DocumentSessionChange::ActiveZoomReadout);
+    QCOMPARE(changes.at(3), kiriview::DocumentSessionChange::ActiveMediaReadiness);
 
     state.updatePublicSnapshot(input);
-    QCOMPARE(changes.size(), std::size_t(3));
+    QCOMPARE(changes.size(), std::size_t(4));
 
     input.image.zoomPercent = 150.0;
     state.updatePublicSnapshot(input);
-    QCOMPARE(changes.size(), std::size_t(5));
-    QCOMPARE(changes.at(4), kiriview::DocumentSessionChange::ActiveZoomReadout);
+    QCOMPARE(changes.size(), std::size_t(6));
+    QCOMPARE(changes.at(5), kiriview::DocumentSessionChange::ActiveZoomReadout);
     QCOMPARE(state.activeZoomSnapshot().percent, 150.0);
 }
 
@@ -345,6 +347,7 @@ void TestDocumentSessionState::publicSnapshotCommitsOneRevisionedBatch()
     };
     input.image.windowTitleFileName = QStringLiteral("01.png");
     input.image.directMediaSize = QSize(640, 480);
+    input.image.readyForInformation = true;
     input.image.readyForDeletion = true;
     input.image.zoomPercentKnown = true;
     input.image.zoomPercent = 125.0;
@@ -353,15 +356,16 @@ void TestDocumentSessionState::publicSnapshotCommitsOneRevisionedBatch()
     QVERIFY(state.updatePublicSnapshot(input));
 
     QCOMPARE(batches.size(), std::size_t(1));
-    QCOMPARE(batches.back().size(), std::size_t(8));
+    QCOMPARE(batches.back().size(), std::size_t(9));
     QCOMPARE(batches.back().at(0), kiriview::DocumentSessionChange::PublicProjectionRevision);
     QCOMPARE(batches.back().at(1), kiriview::DocumentSessionChange::SourceUrl);
     QCOMPARE(batches.back().at(2), kiriview::DocumentSessionChange::DocumentKind);
     QCOMPARE(batches.back().at(3), kiriview::DocumentSessionChange::ActiveZoomReadout);
-    QCOMPARE(batches.back().at(4), kiriview::DocumentSessionChange::ActiveNavigation);
-    QCOMPARE(batches.back().at(5), kiriview::DocumentSessionChange::WindowTitleSubject);
-    QCOMPARE(batches.back().at(6), kiriview::DocumentSessionChange::FileDeletionAvailability);
-    QCOMPARE(batches.back().at(7), kiriview::DocumentSessionChange::OpenWithAvailability);
+    QCOMPARE(batches.back().at(4), kiriview::DocumentSessionChange::ActiveMediaReadiness);
+    QCOMPARE(batches.back().at(5), kiriview::DocumentSessionChange::ActiveNavigation);
+    QCOMPARE(batches.back().at(6), kiriview::DocumentSessionChange::WindowTitleSubject);
+    QCOMPARE(batches.back().at(7), kiriview::DocumentSessionChange::FileDeletionAvailability);
+    QCOMPARE(batches.back().at(8), kiriview::DocumentSessionChange::OpenWithAvailability);
     QCOMPARE(state.publicSnapshot().inputRevision, quint64(12));
 }
 

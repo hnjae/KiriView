@@ -94,7 +94,13 @@ Expected tests/checks:
 
 ### Milestone 3: Align Public Projection, Readiness, And QML Retention
 
-Status: Not started
+Status: Completed
+
+Completed notes:
+
+- Public session projection now separates the selected pending navigation target from the committed visible image: active navigation follows the selected target while media information can continue to describe the retained committed image.
+- Pending same-scope image navigation suppresses stale image zoom/readiness affordances even when retained presentation facts remain available for display and media information.
+- The image document runtime exposes retained committed displayed URL and image size only while same-scope image navigation presentation is pending; replacement, error, deletion, and empty paths continue to clear public displayed identity.
 
 Dependencies: Milestones 1 and 2
 

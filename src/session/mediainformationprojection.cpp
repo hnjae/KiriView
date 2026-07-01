@@ -52,7 +52,8 @@ bool openedCollectionScopeInformationAvailable(const kiriview::OpenedCollectionS
 
 QUrl imageInformationTargetUrl(const kiriview::MediaInformationProjectionInput& input)
 {
-    if (input.documentKind != kiriview::DocumentSessionKind::Image || !input.imageReady) {
+    if (input.documentKind != kiriview::DocumentSessionKind::Image
+        || input.imageDisplayedUrl.isEmpty()) {
         return {};
     }
 
