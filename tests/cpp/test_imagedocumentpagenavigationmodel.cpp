@@ -41,6 +41,7 @@ private Q_SLOTS:
     void changedCandidateRefreshReportsCurrentImageRemoval();
     void clearDropsRefreshContexts();
     void snapshotIsStableProjection();
+    void candidateSnapshotTracksConfirmedFreshCandidates();
 };
 
 void TestImageDocumentPageNavigationModel::refreshCompletionPublishesCanonicalPageState()
@@ -298,6 +299,59 @@ void TestImageDocumentPageNavigationModel::snapshotIsStableProjection()
     QVERIFY(model.selectPage(3).has_value());
     QCOMPARE(model.currentPageNumber(), 3);
     QCOMPARE(snapshot.currentPageNumber(), 2);
+}
+
+void TestImageDocumentPageNavigationModel::candidateSnapshotTracksConfirmedFreshCandidates()
+{
+    ImageDocumentPageNavigationModel model;
+    const QUrl directory = localUrl(QStringLiteral("/images/"));
+    const QUrl first = indexedImageUrl(0);
+    const QUrl second = indexedImageUrl(1);
+    const QUrl third = indexedImageUrl(2);
+    const ImageDocumentPageCandidateListSource source
+        = ImageDocumentPageCandidateListSource::forDirectory(directory);
+
+    QVERIFY(model.completeRefresh(
+        { imageDocumentPageCandidate(first), imageDocumentPageCandidate(second) }, second, source));
+
+    std::optional<kiriview::ImageDocumentPageCandidateSnapshot> snapshot
+        = model.candidateSnapshot();
+    QVERIFY(snapshot.has_value());
+    QVERIFY(kiriview::imageDocumentPageCandidateSnapshotMatchesSource(*snapshot, source));
+    QCOMPARE(snapshot->candidates.size(), std::size_t(2));
+    QCOMPARE(snapshot->candidates.at(0).url, first);
+    QCOMPARE(snapshot->candidates.at(1).url, second);
+
+    QVERIFY(model.selectPage(1).has_value());
+    snapshot = model.candidateSnapshot();
+    QVERIFY(snapshot.has_value());
+    QCOMPARE(snapshot->candidates.at(0).url, first);
+
+    const ImageDocumentPageCandidateListContext sameSourceRefresh
+        = ImageDocumentPageCandidateListContext::forDirectory(third, directory);
+    const kiriview::ImageDocumentPageNavigationRefreshPlan refresh
+        = model.beginRefresh(sameSourceRefresh);
+    QVERIFY(refresh.changed);
+    QVERIFY(!model.candidateSnapshot().has_value());
+
+    const kiriview::ImageDocumentPageNavigationRefreshResult refreshResult
+        = model.completePendingRefresh(
+            { imageDocumentPageCandidate(first), imageDocumentPageCandidate(third) },
+            refresh.refreshId, sameSourceRefresh.source());
+    QVERIFY(refreshResult.accepted);
+    snapshot = model.candidateSnapshot();
+    QVERIFY(snapshot.has_value());
+    QCOMPARE(snapshot->candidates.size(), std::size_t(2));
+    QCOMPARE(snapshot->candidates.at(1).url, third);
+
+    const ImageDocumentPageCandidateListContext otherSourceRefresh
+        = ImageDocumentPageCandidateListContext::forDirectory(
+            localUrl(QStringLiteral("/other/01.png")), localUrl(QStringLiteral("/other/")));
+    model.beginRefresh(otherSourceRefresh);
+    QVERIFY(!model.candidateSnapshot().has_value());
+
+    model.clear();
+    QVERIFY(!model.candidateSnapshot().has_value());
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentPageNavigationModel)

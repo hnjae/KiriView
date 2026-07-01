@@ -4,6 +4,7 @@
 #include "decoding/kiriimagedecoder.h"
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
+#include "navigation/imagedocumentpagecandidatelistsource.h"
 #include "predecode/imagepredecodecoordinator.h"
 
 #include <QFile>
@@ -159,6 +160,7 @@ private Q_SLOTS:
     void archivePredecodeKeepsOpenedCollectionScopeContext();
     void regularPredecodeWindowKeepsTwoPreviousAndTwoNextPages();
     void directoryCollectionStartsTwoBackgroundDecodes();
+    void openedCollectionSnapshotPlansWindowWithoutListing();
     void candidateListingFailureStartsEmptyFallbackWindow();
     void archiveThreadCountProviderControlsParallelLoadLimit();
     void animatedBackgroundDecodeIsNotCachedAsStaticPredecodedImage_data();
@@ -362,6 +364,40 @@ void TestImagePredecodeCoordinator::directoryCollectionStartsTwoBackgroundDecode
         false,
         displayTestImagePayload(testImage()),
     }));
+
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
+    QCOMPARE(dataLoader.frontLoad().url, indexedImageUrl(6));
+    QCOMPARE(dataLoader.backLoad().url, indexedImageUrl(4));
+}
+
+void TestImagePredecodeCoordinator::openedCollectionSnapshotPlansWindowWithoutListing()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    kiriview::ImagePredecodeCoordinator coordinator
+        = createCoordinator(this, candidateProvider, dataLoader);
+
+    const kiriview::OpenedCollectionScopeLocation directoryCollection
+        = kiriview::OpenedCollectionScopeLocation::fromUrls(imagesDirectoryUrl(),
+            imagesDirectoryUrl(), kiriview::OpenedCollectionScopeKind::Directory);
+    const QUrl displayedUrl = indexedImageUrl(5);
+    candidateProvider.setOpenedCollectionCandidateError(
+        directoryCollection.rootUrl(), QStringLiteral("unexpected listing"));
+
+    kiriview::ImagePredecodeCoordinator::Context context
+        = predecodeContext(kiriview::DisplayedPredecodeImage {
+            kiriview::DisplayedImageLocation::fromOpenedCollectionScope(
+                displayedUrl, directoryCollection),
+            false,
+            displayTestImagePayload(testImage()),
+        });
+    context.candidateSnapshot = kiriview::ImageDocumentPageCandidateSnapshot {
+        kiriview::ImageDocumentPageCandidateListSource::forOpenedCollectionScope(
+            directoryCollection),
+        imageDocumentPageCandidates(15),
+    };
+
+    coordinator.schedule(std::move(context));
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.frontLoad().url, indexedImageUrl(6));
