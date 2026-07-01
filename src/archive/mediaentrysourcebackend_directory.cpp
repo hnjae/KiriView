@@ -106,6 +106,40 @@ kiriview::MediaEntrySourceImageDataResult loadDirectoryCollectionImageData(
     return Backend::mediaEntrySourceImageDataResult(std::move(data));
 }
 
+kiriview::MediaEntrySourceVideoPlaybackDeviceResult openDirectoryCollectionVideoPlaybackDevice(
+    const kiriview::OpenedCollectionScopeLocation& openedCollectionScope, const QString& entryPath)
+{
+    const std::optional<QString> directoryPath = directoryPathForCollection(openedCollectionScope);
+    if (!directoryPath.has_value()) {
+        return Backend::mediaEntrySourceErrorResult<
+            kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(
+            Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::Directory,
+                kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice, openedCollectionScope,
+                Backend::fallbackMediaEntrySourceOpenError(openedCollectionScope), {}, entryPath));
+    }
+
+    QFileInfo fileInfo(QDir(*directoryPath).filePath(entryPath));
+    if (!fileInfo.isFile()) {
+        return Backend::mediaEntrySourceErrorResult<
+            kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(
+            Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::Directory,
+                kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice, openedCollectionScope,
+                Backend::openedCollectionVideoNotFoundError(), fileInfo.filePath(), entryPath));
+    }
+
+    auto file = std::make_unique<QFile>(fileInfo.filePath());
+    if (!file->open(QIODevice::ReadOnly)) {
+        return Backend::mediaEntrySourceErrorResult<
+            kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(
+            Backend::mediaEntrySourceError(kiriview::MediaEntrySourceBackendKind::Directory,
+                kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice, openedCollectionScope,
+                Backend::openedCollectionVideoPlaybackUnsupportedError(), file->errorString(),
+                entryPath));
+    }
+
+    return Backend::mediaEntrySourceVideoPlaybackDeviceResult(std::move(file));
+}
+
 class DirectoryCollectionMediaEntrySource final
     : public Backend::MediaEntrySourceWithCandidateSnapshot
 {
@@ -146,11 +180,7 @@ public:
                     videoUrl.toString()));
         }
 
-        return Backend::mediaEntrySourceErrorResult<
-            kiriview::MediaEntrySourceVideoPlaybackDeviceResult>(Backend::mediaEntrySourceError(
-            kiriview::MediaEntrySourceBackendKind::Directory,
-            kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice, m_openedCollectionScope,
-            Backend::openedCollectionVideoPlaybackUnsupportedError(), {}, *entryPath));
+        return openDirectoryCollectionVideoPlaybackDevice(m_openedCollectionScope, *entryPath);
     }
 
 private:

@@ -28,11 +28,18 @@ bool imageDocumentPageNavigationScopeActive(const kiriview::ImageDocumentState& 
             location.openedCollectionScope(), state.sourceUrl());
 }
 
+bool imageDocumentPageNavigationSurfaceActive(const kiriview::ImageDocumentState& state,
+    const kiriview::ImagePageSurfaceController& pageSurfaceController)
+{
+    return pageSurfaceController.hasImage() || state.unsupportedOpenedCollectionVideo()
+        || state.sourceKind() == kiriview::ImageDocumentPageKind::Video;
+}
+
 std::optional<kiriview::ImageDocumentPageCandidateListContext> navigationCandidateContext(
     const kiriview::ImageDocumentState& state,
     const kiriview::ImagePageSurfaceController& pageSurfaceController)
 {
-    if (!pageSurfaceController.hasImage() && !state.unsupportedOpenedCollectionVideo()) {
+    if (!imageDocumentPageNavigationSurfaceActive(state, pageSurfaceController)) {
         return std::nullopt;
     }
 
