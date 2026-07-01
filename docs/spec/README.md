@@ -2,9 +2,7 @@
 
 This directory is the canonical source for KiriView's user-visible behavior, including visible unsupported states and disabled controls. The README is an index only; the subject files below own the actual specifications.
 
-Specifications describe external behavior only. Keep implementation ownership, backend details, test strategy, coverage identifiers, milestone labels, and deferred-work rationale in the owning architecture or planning documents.
-
-Before implementing a product behavior change, update every relevant subject file with the intended behavior, commit that spec update, then implement against the committed spec. Development-only and repository-maintenance changes do not require a spec update.
+Specifications describe external behavior only. Keep implementation ownership, backend details, test strategy, coverage identifiers, milestone labels, and deferred-work rationale out of these subject files.
 
 - [Scope](scope.md): product boundaries, supported top-level content types, localization baseline, and not-provided areas.
 - [File Access](file-access.md): supported sources, Flatpak access, deletion behavior, and live directory updates.

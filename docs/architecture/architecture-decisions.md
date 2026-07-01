@@ -1,17 +1,11 @@
 # Architecture Decisions
 
-Use `docs/adr/NNNN-title.md` for decisions that are too specific for this overview but important enough to preserve. Keep ADRs short:
+Use `docs/adr/NNNN-title.md` for durable decisions that are too specific for the architecture contract files but important enough to preserve with dated rationale. Keep ADRs short:
 
 - Context
 - Decision
 - Consequences
 
-Examples of ADR-worthy decisions include changing the Rust/C++ ownership model for image opening, replacing a Qt image path with a Rust decoder path, or moving workflow state ownership across the FFI boundary.
+ADR-worthy decisions include changing a Rust/C++ ownership boundary, replacing a media decoding or rendering family, moving workflow state ownership across the FFI boundary, or choosing a durable dependency boundary whose rationale would otherwise be lost.
 
-Existing ADRs:
-
-- `../adr/0001-single-open-media-entry-source.md`: opened collection media entry sources are owned by the C++ document runtime, including the opened collection scope, sorted candidate list, and serialized image entry reads.
-- `../adr/0002-libpng-apng-streaming-decoder.md`: superseded by ADR 0005.
-- `../adr/0003-resvg-svg-rendering.md`: static SVG parsing and rasterization are owned by Rust through resvg, while C++ keeps Qt image objects. Its older tile-source integration consequences are superseded for production display by the provider-rendering architecture.
-- `../adr/0004-explicit-image-input-classification.md`: image byte and file-name classification is owned by Rust, while C++ executes the selected decoder path and reports final decoder failures.
-- `../adr/0005-rust-png-apng-streaming-decoder.md`: APNG byte-stream decoding is owned by Rust through the `png` crate, while C++ keeps Qt frame composition and presentation.
+Architecture contract files remain the normative source for the current intended design. ADRs preserve rationale and consequences; they must not be used as deferred-work lists or implementation-status indexes.

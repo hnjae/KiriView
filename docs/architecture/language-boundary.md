@@ -1,6 +1,6 @@
 # Language Boundary
 
-The Rust/C++ boundary should be a policy boundary, not a mechanical split by feature name. A module belongs in Rust when its inputs and outputs can be expressed as plain values and it does not need to know about Qt object lifetime or side effects.
+The Rust/C++ boundary is a policy boundary, not a mechanical split by feature name. A module belongs in Rust when its inputs and outputs can be expressed as plain values and it does not need to know about Qt object lifetime or side effects.
 
 Prefer Rust for logic that:
 
@@ -19,4 +19,4 @@ Prefer C++ for logic that:
 - Immediately executes Qt/KDE side effects.
 - Is only a small local branch whose Rust bridge would be larger than the policy itself.
 
-Rust should not call back into Qt/KDE adapters directly. It should return typed plans, state deltas, or effect descriptions. C++ should execute those effects and feed completion events back into the workflow.
+Rust must not call back into Qt/KDE adapters directly. It returns typed plans, state deltas, or effect descriptions. C++ executes those effects and feeds completion events back into the workflow.

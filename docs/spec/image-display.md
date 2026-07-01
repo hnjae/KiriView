@@ -8,7 +8,7 @@ If no media item is currently displayed, the UI shows a loading state.
 
 If no media item is selected, the empty state says that no file is selected and offers Open.
 
-If the selected image or video cannot be opened while no media item is displayed, the error state explains that the selected file could not be opened, shows the underlying error when available, and offers Open.
+If the selected image or video cannot be opened while no media item is displayed, the error state explains that the selected file or URL could not be opened, shows the underlying error when available, and offers Open.
 
 If a media item is already displayed and users select a different image, the new selection owns the image viewport immediately. If the new image is already available from prior preparation, it replaces the view immediately; otherwise KiriView clears the previous image presentation and shows the normal loading state until the new image is ready.
 
@@ -38,7 +38,7 @@ Static image files, including bitmap images and SVG files, appear at full resolu
 
 Large static images may first appear quickly from a trusted thumbnail preview, RAW embedded preview, or lower-detail first display. The image then becomes sharper when a matching full-detail or current-detail display is ready.
 
-While sharper detail is being prepared for the same image, KiriView may keep the current accepted image visible. Zooming, panning, resizing, rotation, and display scale changes should not expose blank regions while a replacement for the same image is pending.
+While sharper detail is being prepared for the same image, KiriView may keep the current accepted image visible. Zooming, panning, resizing, rotation, and display scale changes must not expose blank regions while a replacement for the same image is pending.
 
 When a sharper replacement becomes available for the current image, it replaces the previous lower-detail image without changing the user's selected media target, zoom mode, or pan position except where the existing viewport rules require clamping.
 
@@ -144,11 +144,11 @@ Double-clicking the image viewport toggles between Fit mode and 100% manual zoom
 
 When an image is ready, `` ` `` switches to 50% manual zoom, `1` switches to 100% manual zoom, `2` switches to 200% manual zoom, `8` selects Fit Height mode, `9` selects Fit Width mode, and `0` selects Fit to Window mode.
 
-Viewport zoom, fit, panning, and scan results are computed from the current active presentation state. Stale or delayed viewport observations must not overwrite newer zoom, pan, rotation, resize, or device-pixel-ratio results.
+Viewport zoom, fit, panning, and scan results follow the currently visible image or spread. Delayed resize, display-scale, or gesture updates must not visibly revert newer zoom, pan, or rotation choices.
 
-During active gestures, KiriView may update the immediate visual position before the final viewport state is committed. Once a newer presentation command supersedes an older observation, the older observation must not become the authoritative viewport frame.
+During active gestures, KiriView may update the immediate visual position before settling the final position. Settling must preserve the user's newest visible zoom, pan, rotation, resize, and display-scale result.
 
-Switching between single-page display and Two-Page Spread is transactional. During a transition, users may temporarily see the previous committed presentation or a placeholder for the next presentation, but controls, zoom readout, panning availability, and render output must not combine properties from both presentations. If the transition cannot be completed, the previous committed presentation remains authoritative.
+Switching between single-page display and Two-Page Spread is atomic from the user's perspective. During a transition, users may temporarily see the previous presentation or a placeholder for the next presentation, but controls, zoom readout, panning availability, and render output must not combine properties from both presentations. If the transition cannot be completed, the previous presentation remains active.
 
 ## Animation
 

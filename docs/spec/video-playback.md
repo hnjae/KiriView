@@ -54,7 +54,7 @@ An ordinary direct media URL scope is the non-recursive parent URL of the active
 
 This includes ordinary local parent directories and KDE archive URL parent locations such as `zip:///path/archive.zip!/chapter/`.
 
-Opening a directory URL creates the existing directory collection and does not create a video-capable direct media scope.
+Opening a directory URL creates a directory collection and does not create a video-capable direct media scope.
 
 The ordinary direct media URL parent is derived from the original direct media URL after KiriView applies its normal navigation-source handling. Local and KDE archive-entry URLs keep their user-visible containing location as the direct media scope.
 
@@ -98,7 +98,7 @@ The floating playback panel must not reserve page layout height and must remain 
 
 Auto-hide applies only in floating control mode while video is playing. Pointer movement, hover, focus, slider drag, button press, tap, or paused playback reveals the controls and keeps them visible while interaction continues. When controls are eligible to hide, they fade after a human-moment delay. If system animations are disabled or reduced, fixed bottom bar mode is used and controls do not auto-hide.
 
-In Flatpak, KiriView exposes the host PipeWire runtime socket for Qt Multimedia video playback initialization while keeping PulseAudio-compatible audio output available.
+In Flatpak, KiriView has the sandbox multimedia access needed for Qt Multimedia video playback initialization through the host PipeWire runtime socket while keeping PulseAudio-compatible audio output available.
 
 During timeline dragging, the user's drag position remains visually stable instead of being overwritten by ordinary playback position updates.
 

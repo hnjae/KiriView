@@ -1,92 +1,100 @@
 # Architecture Overview
 
-KiriView is a KDE Kirigami image viewer built from three cooperating layers:
+KiriView is a KDE Kirigami image viewer built from cooperating UI, facade, runtime, and policy layers:
 
 ```mermaid
 flowchart TD
-    QML["QML / Kirigami"]
-    Facade["C++ QObject and QQuickItem facade"]
-    Runtime["C++ Qt/KDE runtime and effect executor"]
-    Rust["Rust Qt-independent policy core"]
+    UI["QML / Kirigami UI composition"]
+    Facade["C++ facade boundary"]
+    Runtime["C++ Qt/KDE runtime and effect owners"]
+    Policy["Rust Qt-independent policy core"]
 
-    QML --> Facade --> Runtime --> Rust
-    Rust -- "typed plans, state deltas, and effect descriptions" --> Runtime
+    UI --> Facade --> Runtime --> Policy
+    Policy -- "typed plans, state deltas, and effect descriptions" --> Runtime
 ```
 
-The main maintenance goal is to keep product policy testable without making Rust own Qt runtime concerns. Rust defines policy decisions. C++ executes them through Qt and KDE.
+The architecture keeps product policy testable without moving Qt object lifetime, KDE side effects, QML rendering objects, or authoritative runtime state into Rust. Rust computes policy from plain values. C++ owns runtime state, executes effects through Qt and KDE, rejects stale completions, and publishes coherent projections to QML.
 
-The public QML facade layer is grouped in `src/facade/`. Domain runtime code remains in directories such as `src/document/`, `src/presentation/`, `src/rendering/`, `src/navigation/`, and `src/application/`. Shared C++ runtime support with clear ownership, such as localized user-facing text, localization setup, and KDE file-deletion side-effect providers, lives in a named support domain such as `src/localization/` or `src/system/`. C++ helpers that only convert values across the Rust/C++ boundary live in `src/bridge/`; Rust policy bridge files remain under `src/policy/`. The provider-rendering architecture is recorded separately in [Provider Rendering Architecture](provider-rendering.md); `src/rendering/` owns provider display storage, render-context value helpers, display bucket policy, and decoder/refinement helpers, not custom Qt Quick render nodes or QRhi resources.
+## Dependency Direction
 
-## Source Ownership Shape
+- QML owns declarative composition and consumes the facade as a placement and interaction surface only.
+- The facade owns the QML API boundary, type conversion, and forwarding. It must not own domain workflow state.
+- C++ runtime owners own Qt/KDE effects, async lifecycles, projections, and platform integration.
+- Rust policy modules consume plain snapshots and return typed plans or values. They must not depend on Qt objects, call KDE adapters, or publish QML-facing state.
+- Shared support domains provide explicit capability snapshots or provider ports. Runtime owners consume those ports instead of probing platform state independently.
 
-The source tree maps the layer model onto stable directory groups:
+## Component Ownership Shape
+
+The component graph is a responsibility contract, not a complete call graph:
 
 ```mermaid
 flowchart TD
-    QML["src/qml/\nKirigami UI composition"]
-    Facade["src/facade/\nQML-facing facade types"]
-    Application["KiriViewApplication\nsrc/application/"]
-    Session["KiriDocumentSession\nsrc/session/"]
-    ImageDocument["KiriImageDocument\nsrc/document/"]
-    VideoDocument["KiriVideoDocument\nsrc/video/"]
-    Navigation["src/navigation/\nCandidates and page/media targets"]
-    Presentation["src/presentation/\nZoom, viewport, spread, animation"]
-    Rendering["src/rendering/\nDisplay store, source helpers, bucket policy"]
-    Decoding["src/decoding/\nDecode pipeline"]
-    Archive["src/archive/\nOpened collection entry sources"]
-    Predecode["src/predecode/\nAdjacent still-image cache"]
-    RuntimeSupport["src/async/, src/location/,\nsrc/cache/, src/system/, src/localization/"]
-    Bridge["src/bridge/\nC++/Rust value conversion"]
-    Policy["src/policy/\nRust value policy"]
+    UI["UI composition"]
+    Facade["Facade boundary"]
+    Shell["Application shell"]
+    Session["Document session"]
+    Image["Image runtime"]
+    Video["Video runtime"]
+    Navigation["Navigation and candidate lists"]
+    Presentation["Image presentation"]
+    Rendering["Provider display and refinement"]
+    Decoding["Image decode and metadata"]
+    Collections["Opened collection access"]
+    Predecode["Adjacent still-image preparation"]
+    Actions["Actions, shortcuts, and UI gates"]
+    System["System, localization, location, and async support"]
+    Bridge["Value bridge"]
+    Policy["Rust policy"]
 
-    QML --> Facade
-    Facade --> Application
+    UI --> Facade
+    Facade --> Shell
     Facade --> Session
-    Session --> ImageDocument
-    Session --> VideoDocument
+    Shell --> Actions
+    Shell --> System
+    Session --> Image
+    Session --> Video
     Session --> Navigation
     Session --> Predecode
-    ImageDocument --> Navigation
-    ImageDocument --> Presentation
-    ImageDocument --> Decoding
-    ImageDocument --> Archive
-    ImageDocument --> Predecode
+    Session --> Actions
+    Session --> System
+    Image --> Navigation
+    Image --> Presentation
+    Image --> Decoding
+    Image --> Collections
     Presentation --> Rendering
     Rendering --> Decoding
-    Navigation --> Archive
-    VideoDocument --> Navigation
-    VideoDocument --> Archive
-    Application --> Bridge
+    Video --> Navigation
+    Video --> Collections
+    Navigation --> Collections
+    Shell --> Bridge
     Session --> Bridge
-    ImageDocument --> Bridge
-    VideoDocument --> Bridge
+    Image --> Bridge
+    Video --> Bridge
     Navigation --> Bridge
     Presentation --> Bridge
     Rendering --> Bridge
     Decoding --> Bridge
-    Archive --> Bridge
+    Collections --> Bridge
     Predecode --> Bridge
     Bridge --> Policy
-    Application --> RuntimeSupport
-    Session --> RuntimeSupport
-    ImageDocument --> RuntimeSupport
-    VideoDocument --> RuntimeSupport
 ```
 
-The diagram is directory-level, not a complete call graph. Update it when a long-lived ownership boundary or route owner changes, not for ordinary helper calls.
+- The document session owns top-level mixed-media routing, public source identity, active navigation projection, active zoom projection, title subject, displayed-media operation availability, thumbnail-strip projection, and action-availability inputs.
+- Image runtime owns image-mode loading, opened collection page state, presentation commands, still-image display resources, animation playback, embedded image metadata, image deletion behavior, and image-specific navigation facts.
+- Video runtime owns direct-video resolution, opened-collection video source-device acceptance, playback state, video status, video zoom readout, video metadata where supported, and playback-control readiness.
+- Navigation owns candidate ordering, page/media cursor state, boundary facts, live direct-media refresh, and sibling collection discovery. It exposes snapshots and plans rather than public UI state.
+- Collection access owns directly opened archive and directory listing, entry-byte access, entry metadata, and eligible collection-video playback devices. It must not update document, video, thumbnail, or QML state directly.
+- Provider rendering owns immutable provider display entries, display-source projections, display refinement, render-context capability inputs, and display-store memory pressure. Production image display uses provider-backed whole-image entries, not custom render nodes or visual tile scheduling.
+- Decoding owns route-specific image decoding, animation frame enumeration, metadata extraction, and whole-image refinement payloads. Decoder failures preserve typed diagnostics before any user-facing projection is derived.
+- Predecode owns still-image-only adjacent preparation. Video rows may be cursor positions for scheduling, but they do not produce video-frame quick-navigation payloads.
+- Actions own `QAction` identity, shortcut routing, accepted UI-gate revisions, command dispatch, and unsupported-media shortcut interception. QML reports UI-local gate facts and renders action placements.
 
-- `src/qml/` binds to facade types; `src/facade/` is the QML API boundary.
-- `KiriDocumentSession` in `src/session/` routes top-level image/video state; image and video document internals remain below `KiriImageDocument` and `KiriVideoDocument`.
-- Image work is split by durable domains: lifecycle in `src/document/`, navigation in `src/navigation/`, presentation in `src/presentation/`, rendering in `src/rendering/`, decoding in `src/decoding/`, opened collection media entry access in `src/archive/`, and predecode in `src/predecode/`.
-- Video work remains owned by `src/video/`, but eligible opened archive collection video playback consumes collection-owned source devices from `src/archive/` rather than direct-media playback URL resolution.
-- `src/policy/` is Rust value policy and `src/bridge/` converts boundary values. C++ remains the owner of Qt/KDE objects, side effects, async lifetimes, and authoritative runtime state.
+## Build and Tooling Ownership
 
-## Source Manifests
+Native source manifests are the build-validated ownership point for production C++ and Rust source membership. Build scripts, linters, and editor tooling must consume those manifests instead of duplicating source inventories or compiler flags.
 
-Native source manifests under `src/` are the build-validated ownership point for Cargo and development tooling. Add new C++ and Rust sources to the relevant manifest instead of duplicating source lists in build scripts: C++ runtime sources go in `src/cpp_core_sources.txt`, CXX-Qt facade/render sources go in `src/cpp_cxxqt_header_sources.txt` or `src/cpp_cxxqt_sources.txt`, Rust policy sources go in `src/rust_policy_sources.txt`, and CXX-exposed Rust bridge sources also go in `src/rust_bridge_sources.txt`.
+Cargo is the canonical compiler for production native application code, including Rust, production C++ inputs, CXX-Qt generated code, KConfig generated state code, QML resources, and the resulting app static library. CMake may compile test-local C++ binaries and fixtures, but C++ tests consume Cargo-produced application artifacts instead of rebuilding production sources.
 
-Cargo is the canonical compiler for KiriView application native code. The Cargo build owns Rust, production C++ sources from the manifests, CXX-Qt generated code, KConfig generated state code, QML resources, and the resulting app static library. CMake is used for C++ test binaries only: it may compile test-local sources and generated test fixtures, but it consumes Cargo-produced application artifacts instead of rebuilding production app sources.
+Compile-command metadata follows build ownership. Production compile commands come from observed Cargo/CXX-Qt application builds, and test compile commands come from the test build system. Development-environment tooling may orchestrate refresh, merge, and editor installation, but it must not synthesize hand-authored production or test compile commands.
 
-Compile command metadata follows the same build ownership. Cargo/CXX-Qt emits application C++ compile commands by observing actual compiler invocations during the Cargo app build, and CMake emits C++ test compile commands through its exported compilation database. Development-environment tooling may orchestrate refresh, merge, and root symlink installation for editor and lint consumers, but it must not duplicate C++ compiler flags or synthesize hand-authored production/test compile commands.
-
-Development-environment modules that need Qt/CXX-Qt build, runtime, lint, or editor metadata should consume a shared Qt/CXX-Qt tooling context instead of duplicating qmake wrappers, QML import paths, compile-command inputs, generated include refresh logic, or Qt runtime environment snippets in each module.
+Development-environment modules that need Qt/CXX-Qt build, runtime, lint, or editor metadata consume a shared Qt/CXX-Qt tooling context instead of duplicating qmake wrappers, QML import paths, compile-command inputs, generated-include refresh logic, or Qt runtime environment snippets.

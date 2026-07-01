@@ -13,7 +13,7 @@ C++ QObject and QQuickItem facade classes own the public QML surface:
 - Conversion between QML-friendly types and internal controller APIs.
 - Thin forwarding to controllers and render items.
 
-These facade classes live under `src/facade/`. Keep QML-facing API shape there and move domain behavior into the appropriate runtime, presentation, rendering, or policy module instead of growing facade-owned workflow state.
+Facade classes are the only QML-facing API boundary. Domain behavior must live in the appropriate runtime, presentation, rendering, or policy owner instead of growing facade-owned workflow state.
 
 C++ Qt/KDE runtime code owns platform integration and side effects:
 
@@ -33,4 +33,4 @@ Rust owns Qt-independent policy and algorithms:
 - State transitions, workflow plans, and reducer-like decisions.
 - Zoom, viewport, provider display bucket, spread, navigation, deletion-target, follow-up, and cache decisions when they are computed from plain value snapshots.
 - Parsing and byte-level format inspection that is independent of Qt objects.
-- Pure calculations where the same input should produce the same output.
+- Pure calculations where the same input produces the same output.
