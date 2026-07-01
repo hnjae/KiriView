@@ -21,6 +21,12 @@ ImageDocumentPageNavigationSnapshot ImageDocumentPageNavigationModel::snapshot()
     return ImageDocumentPageNavigationSnapshot { m_state };
 }
 
+std::optional<ImageDocumentPageCandidateSnapshot>
+ImageDocumentPageNavigationModel::candidateSnapshot() const
+{
+    return m_candidateSnapshot;
+}
+
 bool ImageDocumentPageNavigationModel::hasKnownSelection() const
 {
     return pageNavigationHasKnownSelection(m_state);
@@ -85,6 +91,7 @@ ImageDocumentPageNavigationRefreshPlan ImageDocumentPageNavigationModel::beginRe
     if (!keepKnownUrls) {
         m_knownRefreshContext = std::nullopt;
     }
+    m_candidateSnapshot = std::nullopt;
 
     m_pendingRefreshContext = context;
 
@@ -103,7 +110,7 @@ bool ImageDocumentPageNavigationModel::completeRefresh(
     const std::vector<ImageDocumentPageCandidate>& candidates, const QUrl& currentUrl,
     ImageDocumentPageCandidateListSource source)
 {
-    return completeRefresh(imageDocumentPageCandidateTargets(candidates),
+    return completeRefresh(candidates,
         ImageDocumentPageCandidateListContext::forSource(currentUrl, std::move(source)));
 }
 
@@ -142,7 +149,7 @@ ImageDocumentPageNavigationModel::completeRefreshFromCurrentContext(
 {
     const bool currentPageRemoved
         = !imageDocumentPageCandidatesContainUrl(candidates, context.currentUrl());
-    const bool changed = completeRefresh(imageDocumentPageCandidateTargets(candidates), context);
+    const bool changed = completeRefresh(candidates, context);
     return ImageDocumentPageNavigationRefreshResult { true, changed, currentPageRemoved, context };
 }
 
@@ -171,15 +178,23 @@ ImageDocumentPageNavigationModel::acceptedWatchedRefreshContext(
 }
 
 bool ImageDocumentPageNavigationModel::completeRefresh(
-    std::vector<ImageDocumentPageTarget> targets, ImageDocumentPageCandidateListContext context)
+    const std::vector<ImageDocumentPageCandidate>& candidates,
+    ImageDocumentPageCandidateListContext context)
 {
     const QUrl currentUrl = context.currentUrl();
-    finishRefresh(std::move(context));
-    return replaceState(pageNavigationStateForTargets(std::move(targets), currentUrl));
+    finishRefresh(candidates, std::move(context));
+    return replaceState(
+        pageNavigationStateForTargets(imageDocumentPageCandidateTargets(candidates), currentUrl));
 }
 
-void ImageDocumentPageNavigationModel::finishRefresh(ImageDocumentPageCandidateListContext context)
+void ImageDocumentPageNavigationModel::finishRefresh(
+    const std::vector<ImageDocumentPageCandidate>& candidates,
+    ImageDocumentPageCandidateListContext context)
 {
+    m_candidateSnapshot = ImageDocumentPageCandidateSnapshot {
+        context.source(),
+        candidates,
+    };
     m_knownRefreshContext = std::move(context);
 }
 
@@ -188,6 +203,7 @@ bool ImageDocumentPageNavigationModel::clear()
     m_pendingRefresh.cancel();
     m_knownRefreshContext = std::nullopt;
     m_pendingRefreshContext = std::nullopt;
+    m_candidateSnapshot = std::nullopt;
     return replaceState(PageNavigationState {});
 }
 

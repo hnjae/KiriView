@@ -165,7 +165,14 @@ Expected tests/checks:
 
 ### Milestone 5: Reuse Confirmed Candidate Snapshots For Opened Collection Planning
 
-Status: Not started
+Status: Completed
+
+Completed notes:
+
+- Page navigation now owns a confirmed candidate snapshot for the active candidate-list source and invalidates it when a refresh begins, the active source changes, or navigation is cleared.
+- Opened collection foreground loading can consume a matching confirmed snapshot through the image loader before falling back to provider listing, preserving existing empty, unsupported-video, and decode behavior through the same completion path.
+- Image predecode scheduling contexts can carry the confirmed snapshot; the predecode controller obtains it through a named navigation-owned port and the coordinator reuses it only when the planned candidate-list source still matches.
+- The composition root uses `ImageDocumentPageCandidateSnapshotPort` for snapshot reads so loader and predecode consumers do not own or bypass navigation candidate-list state.
 
 Dependencies: Milestone 4
 

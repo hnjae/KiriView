@@ -92,6 +92,18 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
         return;
     }
 
+    if (schedule.context.candidateSnapshot.has_value()
+        && imageDocumentPageCandidateSnapshotMatchesSource(
+            *schedule.context.candidateSnapshot, plan.candidateList->context.source())) {
+        qCDebug(kiriviewPredecodeLog) << "image predecode candidates reused"
+                                      << "generation" << schedule.generation << "count"
+                                      << schedule.context.candidateSnapshot->candidates.size();
+        startPredecodeImageLoads(
+            predecodeWindowPlanForCandidates(plan, schedule.context.candidateSnapshot->candidates),
+            schedule);
+        return;
+    }
+
     m_listerJob = m_candidateRepository.loadImages(
         this, plan.candidateList->context,
         [this, schedule, plan](const std::vector<ImageDocumentPageCandidate>& candidates) {

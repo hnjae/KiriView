@@ -86,6 +86,7 @@ class TestImageDocumentPredecodeController : public QObject
 
 private Q_SLOTS:
     void scheduleAdjacentImagePredecodeUsesPresentationSnapshot();
+    void scheduleAdjacentImagePredecodeUsesCandidateSnapshotCallback();
     void selectedImageNavigationTargetPredecodeLoadsSelectedTargetImmediately();
     void selectedVideoNavigationTargetDoesNotStartPredecode();
     void scheduleAdjacentImagePredecodeWithoutSnapshotCancelsActivePredecode();
@@ -127,6 +128,50 @@ void TestImageDocumentPredecodeController::scheduleAdjacentImagePredecodeUsesPre
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
     QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(640, 480));
+}
+
+void TestImageDocumentPredecodeController::
+    scheduleAdjacentImagePredecodeUsesCandidateSnapshotCallback()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    kiriview::ImageDocumentState state;
+    kiriview::ImagePageSurfaceController pageSurface = createPageSurfaceController(this);
+    kiriview::ImagePresentationRuntime presentationRuntime = createPresentationRuntime();
+    const kiriview::OpenedCollectionScopeLocation directoryCollection
+        = kiriview::OpenedCollectionScopeLocation::fromUrls(imagesDirectoryUrl(),
+            imagesDirectoryUrl(), kiriview::OpenedCollectionScopeKind::Directory);
+    const QUrl previousUrl = indexedImageUrl(0);
+    const QUrl displayedUrl = indexedImageUrl(1);
+    const QUrl nextUrl = indexedImageUrl(2);
+    candidateProvider.setOpenedCollectionCandidateError(
+        directoryCollection.rootUrl(), QStringLiteral("unexpected listing"));
+    kiriview::ImageDocumentPredecodeController controller(
+        this, state, pageSurface, presentationRuntime, candidateProvider.provider(),
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget,
+        []() { return 2; },
+        [directoryCollection, previousUrl, displayedUrl, nextUrl]() {
+            return std::optional<kiriview::ImageDocumentPageCandidateSnapshot>(
+                kiriview::ImageDocumentPageCandidateSnapshot {
+                    kiriview::ImageDocumentPageCandidateListSource::forOpenedCollectionScope(
+                        directoryCollection),
+                    {
+                        imageDocumentPageCandidate(previousUrl),
+                        imageDocumentPageCandidate(displayedUrl),
+                        imageDocumentPageCandidate(nextUrl),
+                    },
+                });
+        });
+
+    state.setDisplayedImageLocation(kiriview::DisplayedImageLocation::fromOpenedCollectionScope(
+        displayedUrl, directoryCollection));
+    pageSurface.setStaticDisplayImage(displayTestImagePayload(testImage()), false, renderContext());
+
+    controller.scheduleAdjacentImagePredecode();
+
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
+    QCOMPARE(dataLoader.frontLoad().url, nextUrl);
+    QCOMPARE(dataLoader.backLoad().url, previousUrl);
 }
 
 void TestImageDocumentPredecodeController::
@@ -238,7 +283,7 @@ void TestImageDocumentPredecodeController::
     decodeDependencies.workerScheduler = immediateWorkerScheduler();
     kiriview::ImageDocumentPredecodeController controller(this, state, pageSurface,
         presentationRuntime, candidateProvider.provider(), std::move(decodeDependencies),
-        testCacheByteBudget, {}, powerSaverProviderFor(powerSaverMonitor, true), true,
+        testCacheByteBudget, {}, {}, powerSaverProviderFor(powerSaverMonitor, true), true,
         timerScheduler.scheduler(), []() { return 4; });
     QVERIFY(powerSaverMonitor != nullptr);
 

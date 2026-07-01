@@ -56,7 +56,8 @@ public:
     ImageLoader(QObject* parent, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, Callbacks callbacks);
 
-    void start(ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
+    void start(ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {},
+        std::optional<ImageDocumentPageCandidateSnapshot> candidateSnapshot = std::nullopt);
     void cancel();
 
 private:
@@ -65,7 +66,10 @@ private:
         const ImageDecodeRequest& request, StaticDisplayImagePayload preview);
     void finishImageLoadError(const ImageDecodeRequest& request, const QString& errorString);
     void startImageLoad(ImageLoadSession session);
-    void startOpenedCollectionLoad(ImageLoadSession session);
+    void startOpenedCollectionLoad(ImageLoadSession session,
+        std::optional<ImageDocumentPageCandidateSnapshot> candidateSnapshot);
+    void finishOpenedCollectionCandidates(
+        const ImageLoadSession& session, const std::vector<ImageDocumentPageCandidate>& candidates);
     bool tryReportUnsupportedOpenedCollectionVideo(ImageLoadSession session);
     bool tryDisplayPredecodedImage(ImageLoadSession session);
     void finishDecodeRequestWithError(

@@ -71,7 +71,8 @@ ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject* pare
     ImagePresentationRuntime& presentationRuntime,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
-    CurrentPageNumberCallback currentPageNumber, PowerSaverProvider powerSaverProvider,
+    CurrentPageNumberCallback currentPageNumber,
+    PageCandidateSnapshotCallback pageCandidateSnapshot, PowerSaverProvider powerSaverProvider,
     bool ordinaryDirectMediaPredecodeEnabled, TimerScheduler timerScheduler,
     PredecodeThreadCountProvider threadCountProvider)
     : m_state(state)
@@ -82,6 +83,7 @@ ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject* pare
               std::move(decodeDependencies), std::move(powerSaverProvider), cacheByteBudget,
               std::move(timerScheduler), std::move(threadCountProvider)))
     , m_currentPageNumber(std::move(currentPageNumber))
+    , m_pageCandidateSnapshot(std::move(pageCandidateSnapshot))
     , m_ordinaryDirectMediaPredecodeEnabled(ordinaryDirectMediaPredecodeEnabled)
 {
 }
@@ -104,13 +106,20 @@ void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
         return;
     }
 
-    m_coordinator->schedule(ImagePredecodeCoordinator::Context {
+    ImagePredecodeCoordinator::Context context {
         currentLocation,
         std::move(*displayedImages),
         m_presentationRuntime.firstDisplayDecodeContext(),
         m_currentPageNumber ? m_currentPageNumber() - 1 : -1,
         {},
-    });
+        false,
+        std::nullopt,
+    };
+    if (m_pageCandidateSnapshot) {
+        context.candidateSnapshot = m_pageCandidateSnapshot();
+    }
+
+    m_coordinator->schedule(std::move(context));
 }
 
 void ImageDocumentPredecodeController::scheduleImageNavigationTargetPredecode(
@@ -133,14 +142,20 @@ void ImageDocumentPredecodeController::scheduleImageNavigationTargetPredecode(
         return;
     }
 
-    m_coordinator->schedule(ImagePredecodeCoordinator::Context {
+    ImagePredecodeCoordinator::Context context {
         *targetLocation,
         std::move(*displayedImages),
         m_presentationRuntime.firstDisplayDecodeContext(),
         targetPageIndex,
         {},
         true,
-    });
+        std::nullopt,
+    };
+    if (m_pageCandidateSnapshot) {
+        context.candidateSnapshot = m_pageCandidateSnapshot();
+    }
+
+    m_coordinator->schedule(std::move(context));
 }
 
 void ImageDocumentPredecodeController::cancel() { m_coordinator->cancel(); }

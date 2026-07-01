@@ -6,6 +6,7 @@
 
 #include "async/timerscheduler.h"
 #include "decoding/imagedecodedependencies.h"
+#include "navigation/imagedocumentpagecandidatelistsource.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
 #include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
@@ -30,6 +31,8 @@ class ImageDocumentPredecodeController final
 {
 public:
     using CurrentPageNumberCallback = std::function<int()>;
+    using PageCandidateSnapshotCallback
+        = std::function<std::optional<ImageDocumentPageCandidateSnapshot>()>;
 
     ImageDocumentPredecodeController(QObject* parent, ImageDocumentState& state,
         ImagePageSurfaceController& pageSurfaceController,
@@ -37,6 +40,7 @@ public:
         ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
         CurrentPageNumberCallback currentPageNumber = {},
+        PageCandidateSnapshotCallback pageCandidateSnapshot = {},
         PowerSaverProvider powerSaverProvider = {}, bool ordinaryDirectMediaPredecodeEnabled = true,
         TimerScheduler timerScheduler = {}, PredecodeThreadCountProvider threadCountProvider = {});
     ~ImageDocumentPredecodeController();
@@ -55,6 +59,7 @@ private:
     ImagePresentationRuntime& m_presentationRuntime;
     std::unique_ptr<ImagePredecodeCoordinator> m_coordinator;
     CurrentPageNumberCallback m_currentPageNumber;
+    PageCandidateSnapshotCallback m_pageCandidateSnapshot;
     bool m_ordinaryDirectMediaPredecodeEnabled = true;
 };
 }

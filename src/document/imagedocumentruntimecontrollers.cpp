@@ -13,6 +13,7 @@
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentnavigationruntimeplan.h"
 #include "imagedocumentnavigationsnapshotport.h"
+#include "imagedocumentpagecandidatesnapshotport.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentpredecodedimagelookup.h"
 #include "imagedocumentprimarypageslotport.h"
@@ -88,6 +89,8 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject* docume
         = std::make_unique<ImageDocumentNavigationSnapshotPort>(m_navigationService.get());
     m_currentPageNumberPort
         = std::make_unique<ImageDocumentCurrentPageNumberPort>(m_navigationService.get());
+    m_pageCandidateSnapshotPort
+        = std::make_unique<ImageDocumentPageCandidateSnapshotPort>(m_navigationService.get());
     m_adjacentPredecodeSchedulerPort
         = std::make_unique<ImageDocumentAdjacentPredecodeSchedulerPort>(
             [this](const ImageDocumentRuntimePlan& plan) { dispatchPlan(plan); });
@@ -96,6 +99,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject* docume
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode,
         runtimeDependencies.cacheBudgets.predecodeCacheByteBudget,
         [this]() { return m_currentPageNumberPort->currentPageNumber(); },
+        [this]() { return m_pageCandidateSnapshotPort->snapshot(); },
         std::move(runtimeDependencies.powerSaver),
         runtimeDependencies.ordinaryDirectMediaPredecodeEnabled,
         std::move(runtimeDependencies.predecodeTimerScheduler),
@@ -137,6 +141,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject* docume
                 m_primaryPageSlotPort->commit(location);
             },
             [this]() { m_primaryPageSlotPort->clear(); },
+            [this]() { return m_pageCandidateSnapshotPort->snapshot(); },
         },
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
     m_animationLoadErrorPort->setOpenController(m_openController.get());

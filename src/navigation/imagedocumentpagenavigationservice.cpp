@@ -40,6 +40,12 @@ ImageDocumentPageNavigationService::pageNavigationSnapshot() const
     return m_pageNavigation.snapshot();
 }
 
+std::optional<ImageDocumentPageCandidateSnapshot>
+ImageDocumentPageNavigationService::pageCandidateSnapshot() const
+{
+    return m_pageNavigation.candidateSnapshot();
+}
+
 std::optional<QUrl> ImageDocumentPageNavigationService::urlAtPage(int pageNumber) const
 {
     return m_pageNavigation.urlAtPage(pageNumber);

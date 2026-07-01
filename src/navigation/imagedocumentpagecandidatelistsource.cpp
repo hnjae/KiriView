@@ -123,6 +123,13 @@ bool sameImageDocumentPageCandidateListContext(const ImageDocumentPageCandidateL
         && sameImageDocumentPageCandidateListSource(left.source(), right.source());
 }
 
+bool imageDocumentPageCandidateSnapshotMatchesSource(
+    const ImageDocumentPageCandidateSnapshot& snapshot,
+    const ImageDocumentPageCandidateListSource& source)
+{
+    return sameImageDocumentPageCandidateListSource(snapshot.source, source);
+}
+
 std::optional<ImageDocumentPageCandidateListContext>
 imageDocumentPageCandidateListContextForDisplayedImage(const DisplayedImageLocation& location)
 {

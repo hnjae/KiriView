@@ -90,6 +90,7 @@ private Q_SLOTS:
     void imageDocumentPredecodedImageLookupUsesNamedPort();
     void imageDocumentPrimaryPageSlotUsesNamedPort();
     void imageDocumentNavigationSnapshotUsesNamedPort();
+    void imageDocumentPageCandidateSnapshotUsesNamedPort();
     void imageDocumentAdjacentPredecodeSchedulingUsesNamedPort();
     void imageDocumentDeletionProgressUsesNamedPort();
     void imageDocumentCurrentPageNumberUsesNamedPort();
@@ -1917,6 +1918,19 @@ void TestArchitectureBoundaries::imageDocumentNavigationSnapshotUsesNamedPort()
     QVERIFY(controllersSource.contains(QStringLiteral("ImageDocumentNavigationSnapshotPort")));
     QVERIFY(!controllersSource.contains(
         QStringLiteral("m_navigationController->pageNavigationSnapshot")));
+}
+
+void TestArchitectureBoundaries::imageDocumentPageCandidateSnapshotUsesNamedPort()
+{
+    const QString portHeader
+        = readProjectFile(QStringLiteral("src/document/imagedocumentpagecandidatesnapshotport.h"));
+    const QString controllersSource
+        = readProjectFile(QStringLiteral("src/document/imagedocumentruntimecontrollers.cpp"));
+
+    QVERIFY(portHeader.contains(QStringLiteral("class ImageDocumentPageCandidateSnapshotPort")));
+    QVERIFY(controllersSource.contains(QStringLiteral("ImageDocumentPageCandidateSnapshotPort")));
+    QVERIFY(
+        !controllersSource.contains(QStringLiteral("m_navigationService->pageCandidateSnapshot")));
 }
 
 void TestArchitectureBoundaries::imageDocumentAdjacentPredecodeSchedulingUsesNamedPort()

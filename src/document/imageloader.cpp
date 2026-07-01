@@ -107,8 +107,9 @@ void ImageLoader::finishThumbnailPreview(
     finishThumbnailPreview(std::move(*session), std::move(preview));
 }
 
-void ImageLoader::start(
-    ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext)
+void ImageLoader::start(ImageLoadRequest request,
+    ImageFirstDisplayDecodeContext firstDisplayContext,
+    std::optional<ImageDocumentPageCandidateSnapshot> candidateSnapshot)
 {
     cancel();
 
@@ -118,7 +119,7 @@ void ImageLoader::start(
     case ImageLoadStartEffect::DecodeImage:
         break;
     case ImageLoadStartEffect::LoadOpenedCollectionScopeCandidates:
-        startOpenedCollectionLoad(session);
+        startOpenedCollectionLoad(session, std::move(candidateSnapshot));
         return;
     }
 
@@ -142,35 +143,22 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
     m_decodeJob.start(session.decodeRequest());
 }
 
-void ImageLoader::startOpenedCollectionLoad(ImageLoadSession session)
+void ImageLoader::startOpenedCollectionLoad(
+    ImageLoadSession session, std::optional<ImageDocumentPageCandidateSnapshot> candidateSnapshot)
 {
     const ImageDocumentPageCandidateListSource candidateSource
         = ImageDocumentPageCandidateListSource::forOpenedCollectionScope(
             session.openedCollectionScope());
+    if (candidateSnapshot.has_value()
+        && imageDocumentPageCandidateSnapshotMatchesSource(*candidateSnapshot, candidateSource)) {
+        finishOpenedCollectionCandidates(session, candidateSnapshot->candidates);
+        return;
+    }
+
     m_openedCollectionCandidateLoadJob = m_candidateRepository.loadImages(
         this, candidateSource,
         [this, session](std::vector<ImageDocumentPageCandidate> candidates) mutable {
-            OpenedCollectionCandidateCompletion completion
-                = m_sessionTracker.completeOpenedCollectionCandidates(session, candidates);
-            switch (completion.action) {
-            case OpenedCollectionCandidateCompletionAction::Ignored:
-                return;
-            case OpenedCollectionCandidateCompletionAction::ReportEmptyOpenedCollection:
-                invokeIfSet(m_callbacks.error, completion.session,
-                    imageLoadFailure(completion.session,
-                        ImageLoadFailureKind::EmptyOpenedCollection, QString(), QString()));
-                return;
-            case OpenedCollectionCandidateCompletionAction::ReportUnsupportedOpenedCollectionVideo:
-                invokeIfSet(m_callbacks.sourceResolved, completion.session);
-                invokeIfSet(
-                    m_callbacks.unsupportedOpenedCollectionVideo, std::move(completion.session));
-                return;
-            case OpenedCollectionCandidateCompletionAction::StartImageDecode:
-                break;
-            }
-
-            invokeIfSet(m_callbacks.sourceResolved, completion.session);
-            startImageLoad(std::move(completion.session));
+            finishOpenedCollectionCandidates(session, candidates);
         },
         [this, session](const QString& errorString) {
             std::optional<ImageLoadSession> currentSession = m_sessionTracker.claimCurrent(session);
@@ -182,6 +170,31 @@ void ImageLoader::startOpenedCollectionLoad(ImageLoadSession session)
                 imageLoadFailure(
                     *currentSession, ImageLoadFailureKind::OpenedCollectionLoad, errorString));
         });
+}
+
+void ImageLoader::finishOpenedCollectionCandidates(
+    const ImageLoadSession& session, const std::vector<ImageDocumentPageCandidate>& candidates)
+{
+    OpenedCollectionCandidateCompletion completion
+        = m_sessionTracker.completeOpenedCollectionCandidates(session, candidates);
+    switch (completion.action) {
+    case OpenedCollectionCandidateCompletionAction::Ignored:
+        return;
+    case OpenedCollectionCandidateCompletionAction::ReportEmptyOpenedCollection:
+        invokeIfSet(m_callbacks.error, completion.session,
+            imageLoadFailure(completion.session, ImageLoadFailureKind::EmptyOpenedCollection,
+                QString(), QString()));
+        return;
+    case OpenedCollectionCandidateCompletionAction::ReportUnsupportedOpenedCollectionVideo:
+        invokeIfSet(m_callbacks.sourceResolved, completion.session);
+        invokeIfSet(m_callbacks.unsupportedOpenedCollectionVideo, std::move(completion.session));
+        return;
+    case OpenedCollectionCandidateCompletionAction::StartImageDecode:
+        break;
+    }
+
+    invokeIfSet(m_callbacks.sourceResolved, completion.session);
+    startImageLoad(std::move(completion.session));
 }
 
 void ImageLoader::cancel()

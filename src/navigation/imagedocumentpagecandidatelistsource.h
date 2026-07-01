@@ -4,12 +4,14 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTPAGECANDIDATELISTSOURCE_H
 #define KIRIVIEW_IMAGEDOCUMENTPAGECANDIDATELISTSOURCE_H
 
+#include "imagedocumentpagenavigationtypes.h"
 #include "location/imagelocation.h"
 
 #include <QUrl>
 #include <optional>
 #include <utility>
 #include <variant>
+#include <vector>
 
 namespace kiriview {
 class ImageDocumentPageCandidateListSource
@@ -79,6 +81,16 @@ private:
 
 bool sameImageDocumentPageCandidateListContext(const ImageDocumentPageCandidateListContext& left,
     const ImageDocumentPageCandidateListContext& right);
+
+struct ImageDocumentPageCandidateSnapshot
+{
+    ImageDocumentPageCandidateListSource source;
+    std::vector<ImageDocumentPageCandidate> candidates;
+};
+
+bool imageDocumentPageCandidateSnapshotMatchesSource(
+    const ImageDocumentPageCandidateSnapshot& snapshot,
+    const ImageDocumentPageCandidateListSource& source);
 
 std::optional<ImageDocumentPageCandidateListContext>
 imageDocumentPageCandidateListContextForDisplayedImage(const DisplayedImageLocation& location);
