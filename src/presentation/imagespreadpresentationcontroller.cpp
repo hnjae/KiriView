@@ -634,6 +634,15 @@ void ImageSpreadPresentationController::abortTransition()
     notifyTransitionChanged();
 }
 
+void ImageSpreadPresentationController::beginSameScopeImageNavigationPresentation()
+{
+    m_primaryPageSurface.retainCurrentStaticDisplayImageForSameScopeNavigation();
+    if (updatePresentationPageSlot(DisplayedPageRole::Primary)) {
+        updateDisplayProjections();
+        notify(ImageDocumentChange::DisplaySource);
+    }
+}
+
 void ImageSpreadPresentationController::clearSecondaryPage()
 {
     if (presentationTransitionState() == ImagePresentationTransitionState::PreviousActive) {

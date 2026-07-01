@@ -81,9 +81,10 @@ void TestImageOpenSourceLoadWorkflow::displayedComicBookScopeSuppressesRightToLe
         = kiriview::ImageOpenWorkflow::sourceLoadPlan(snapshot, request);
     QVERIFY(hasOperationTypes(plan,
         operationTypes<kiriview::CancelFileDeletionOperation,
-            kiriview::ClearLoadingContainerNavigationUrlOperation, kiriview::SetSourceUrlOperation,
-            kiriview::BeginOpenOperation>()));
-    QCOMPARE(operationAt<kiriview::SetSourceUrlOperation>(plan, 2).target.url, imageUrl);
+            kiriview::ClearLoadingContainerNavigationUrlOperation,
+            kiriview::BeginSameScopeImageNavigationPresentationOperation,
+            kiriview::SetSourceUrlOperation, kiriview::BeginOpenOperation>()));
+    QCOMPARE(operationAt<kiriview::SetSourceUrlOperation>(plan, 3).target.url, imageUrl);
 
     request = kiriview::ImageDocumentSourceLoadRequest::fromUrl(replacementUrl);
     plan = kiriview::ImageOpenWorkflow::sourceLoadPlan(snapshot, request);
@@ -110,10 +111,11 @@ void TestImageOpenSourceLoadWorkflow::sameScopeImageNavigationStartsOpenWithoutR
 
     QVERIFY(hasOperationTypes(plan,
         operationTypes<kiriview::CancelFileDeletionOperation,
-            kiriview::ClearLoadingContainerNavigationUrlOperation, kiriview::SetSourceUrlOperation,
-            kiriview::BeginOpenOperation>()));
-    QCOMPARE(operationAt<kiriview::SetSourceUrlOperation>(plan, 2).target.url, targetUrl);
-    QCOMPARE(operationAt<kiriview::SetSourceUrlOperation>(plan, 2).target.kind,
+            kiriview::ClearLoadingContainerNavigationUrlOperation,
+            kiriview::BeginSameScopeImageNavigationPresentationOperation,
+            kiriview::SetSourceUrlOperation, kiriview::BeginOpenOperation>()));
+    QCOMPARE(operationAt<kiriview::SetSourceUrlOperation>(plan, 3).target.url, targetUrl);
+    QCOMPARE(operationAt<kiriview::SetSourceUrlOperation>(plan, 3).target.kind,
         kiriview::ImageDocumentPageKind::Image);
 }
 

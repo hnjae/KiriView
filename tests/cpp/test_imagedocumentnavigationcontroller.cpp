@@ -3,6 +3,7 @@
 
 #include "document/imagedocumentnavigationcontroller.h"
 
+#include "document/imagedocumentnavigationruntimeplan.h"
 #include "document/imagedocumentstate.h"
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
@@ -18,7 +19,6 @@
 #include <QUrl>
 #include <optional>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace {
@@ -70,13 +70,8 @@ public:
         , navigation(&context, candidateProvider.provider(),
               kiriview::ImageDocumentPageNavigationService::Callbacks {
                   [this](kiriview::ImageDocumentPageNavigationPlan plan) {
-                      for (const kiriview::ImageDocumentPageNavigationEffect& effect : plan) {
-                          if (const auto* openEffect
-                              = std::get_if<kiriview::OpenImageDocumentPageUrlEffect>(&effect)) {
-                              runtimePlans.push_back(kiriview::ImageDocumentRuntimePlan {
-                                  kiriview::LoadUrlOperation { openEffect->target } });
-                          }
-                      }
+                      runtimePlans.push_back(
+                          kiriview::imageDocumentRuntimePlanForNavigationPlan(plan));
                   },
                   {},
               })
@@ -273,9 +268,11 @@ void TestImageDocumentNavigationController::
     fixture.controller.openAdjacentPage(kiriview::NavigationDirection::Next);
 
     QCOMPARE(fixture.runtimePlans.size(), std::size_t(1));
-    const auto* operation = findOperation<kiriview::LoadUrlOperation>(fixture.runtimePlans.front());
+    const auto* operation
+        = findOperation<kiriview::LoadPageNavigationUrlOperation>(fixture.runtimePlans.front());
     QVERIFY(operation != nullptr);
     QCOMPARE(operation->target.url, secondUrl);
+    QVERIFY(!operation->preserveTwoPageSpreadTransition);
 }
 
 void TestImageDocumentNavigationController::pageSelectionDispatchesPageNavigationRuntimePlan()

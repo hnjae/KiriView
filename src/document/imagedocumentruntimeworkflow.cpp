@@ -75,6 +75,11 @@ kiriview::ImageDocumentRuntimeOperations runtimeOperations(
             ports.spreadController->clearSecondaryPage();
         }
     };
+    operations.spread.beginSameScopeImageNavigationPresentation = [ports]() {
+        if (ports.spreadController != nullptr) {
+            ports.spreadController->beginSameScopeImageNavigationPresentation();
+        }
+    };
     operations.spread.notifyRightToLeftReadingChanged = [ports]() {
         if (ports.spreadController != nullptr) {
             ports.spreadController->notifyRightToLeftReadingChanged();

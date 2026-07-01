@@ -247,7 +247,7 @@ private Q_SLOTS:
     void twoPageModeUsesRightToLeftPageOrder();
     void twoPageModeRightToLeftKeepsSinglePageNavigationSemantic();
     void twoPageModePublishesAndClearsSecondaryDisplaySourceProjection();
-    void twoPageModeClearsPreviousSpreadWhileTargetSpreadLoads();
+    void twoPageModeRetainsPreviousSpreadWhileTargetSpreadLoads();
     void twoPageModeLoadingNavigationUsesPendingPrimaryPage();
     void displaySourceProjectionPublishesProviderForStaticDecode();
 };
@@ -2200,7 +2200,7 @@ void TestImageDocumentRuntime::twoPageModePublishesAndClearsSecondaryDisplaySour
     QVERIFY(clearedSecondary.providerUrl.isEmpty());
 }
 
-void TestImageDocumentRuntime::twoPageModeClearsPreviousSpreadWhileTargetSpreadLoads()
+void TestImageDocumentRuntime::twoPageModeRetainsPreviousSpreadWhileTargetSpreadLoads()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -2248,22 +2248,36 @@ void TestImageDocumentRuntime::twoPageModeClearsPreviousSpreadWhileTargetSpreadL
     QCOMPARE(runtime->currentLastPageNumber(), 3);
     QVERIFY(hasReadyDisplaySourceProjection(*runtime));
     QVERIFY(hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
+    const kiriview::ImageDisplaySourceProjection committedPrimary
+        = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Primary);
+    const kiriview::ImageDisplaySourceProjection committedSecondary
+        = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Secondary);
 
     runtime->openNextPage();
 
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
     QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Loading);
     QVERIFY(runtime->loading());
-    QVERIFY(!hasReadyDisplaySourceProjection(*runtime));
-    QVERIFY(!hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
+    kiriview::ImageDisplaySourceProjection retainedPrimary
+        = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Primary);
+    kiriview::ImageDisplaySourceProjection retainedSecondary
+        = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Secondary);
+    QCOMPARE(retainedPrimary.providerUrl, committedPrimary.providerUrl);
+    QCOMPARE(retainedSecondary.providerUrl, committedSecondary.providerUrl);
+    QVERIFY(hasReadyDisplaySourceProjection(*runtime));
+    QVERIFY(hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->displayedUrl(), QUrl());
     QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
     QCOMPARE(runtime->status(), kiriview::ImageDocumentStatus::Loading);
     QVERIFY(runtime->loading());
-    QVERIFY(!hasReadyDisplaySourceProjection(*runtime));
-    QVERIFY(!hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
+    retainedPrimary = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Primary);
+    retainedSecondary = runtime->displaySourceProjection(kiriview::DisplayedPageRole::Secondary);
+    QCOMPARE(retainedPrimary.providerUrl, committedPrimary.providerUrl);
+    QCOMPARE(retainedSecondary.providerUrl, committedSecondary.providerUrl);
+    QVERIFY(hasReadyDisplaySourceProjection(*runtime));
+    QVERIFY(hasReadyDisplaySourceProjection(*runtime, kiriview::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->status(), kiriview::ImageDocumentStatus::Ready);

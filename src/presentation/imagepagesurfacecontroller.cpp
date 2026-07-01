@@ -167,6 +167,7 @@ ImagePageSurfaceController::ImagePageSurfaceController(QObject* context,
 ImagePageSurfaceController::~ImagePageSurfaceController()
 {
     releaseShadowDisplayEntry();
+    releaseRetainedStillImageEntry();
     releaseRetainedAnimationFrameEntry();
     releaseCurrentDisplayEntry();
 }
@@ -309,6 +310,7 @@ void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePa
     const QUrl providerUrl = displayImageSourceForId(entryId);
     const bool loadAcknowledgmentRequired = m_displayImageStore != nullptr && !entryId.isEmpty()
         && m_displayImageStore->acquirePinLease(entryId, DisplayImagePinKind::PendingLoad);
+    const bool retainedReplacement = !m_retainedStillImageEntryId.isEmpty();
 
     m_displayEntryId = entryId;
     m_displayEntryVisiblePinned = false;
@@ -329,8 +331,9 @@ void ImagePageSurfaceController::publishDisplaySource(const StaticDisplayImagePa
         entryId.isEmpty() ? ImageDisplaySourceStatus::Error : ImageDisplaySourceStatus::Ready,
         false,
         loadAcknowledgmentRequired,
-        ImageDisplaySourceRetentionStatus::None,
-        false,
+        retainedReplacement ? ImageDisplaySourceRetentionStatus::StaleRetained
+                            : ImageDisplaySourceRetentionStatus::None,
+        retainedReplacement && loadAcknowledgmentRequired,
     };
 }
 
@@ -413,16 +416,45 @@ QString ImagePageSurfaceController::publishShadowDisplayImage(
 
 void ImagePageSurfaceController::clearShadowDisplayImage() { releaseShadowDisplayEntry(); }
 
+void ImagePageSurfaceController::retainCurrentStaticDisplayImageForSameScopeNavigation()
+{
+    if (m_currentDisplayEntryIsAnimationFrame || m_displayEntryId.isEmpty()
+        || m_displayImageStore == nullptr) {
+        return;
+    }
+    if (m_retainedStillImageEntryId == m_displayEntryId || !m_retainedStillImageEntryId.isEmpty()) {
+        return;
+    }
+    if (!m_displayImageStore->acquirePinLease(
+            m_displayEntryId, DisplayImagePinKind::StaleRetained)) {
+        return;
+    }
+
+    clearStillImageLoadContract();
+    m_retainedStillImageEntryId = m_displayEntryId;
+    m_displaySource.loadAcknowledgmentRequired = false;
+    m_displaySource.retentionStatus = ImageDisplaySourceRetentionStatus::StaleRetained;
+    m_displaySource.retainWhileLoadingEligible = false;
+}
+
+void ImagePageSurfaceController::clearSameScopeImageNavigationRetention()
+{
+    releaseRetainedStillImageEntry();
+    m_displaySource.retentionStatus = ImageDisplaySourceRetentionStatus::None;
+    m_displaySource.retainWhileLoadingEligible = false;
+}
+
 void ImagePageSurfaceController::clearDisplaySource()
 {
     if (m_displaySource.providerUrl.isEmpty() && m_displayEntryId.isEmpty()
-        && m_retainedAnimationFrameEntryId.isEmpty()
+        && m_retainedStillImageEntryId.isEmpty() && m_retainedAnimationFrameEntryId.isEmpty()
         && m_displaySource.status == ImageDisplaySourceStatus::Missing
         && !m_stillImageDisplayLoadPending && !m_animationFrameDisplayLoadPending) {
         return;
     }
 
     clearStillImageLoadContract();
+    releaseRetainedStillImageEntry();
     releaseRetainedAnimationFrameEntry();
     clearAnimationFrameLoadContract();
     releaseCurrentDisplayEntry();
@@ -465,6 +497,18 @@ void ImagePageSurfaceController::releaseShadowDisplayEntry()
 
     m_displayImageStore->release(m_shadowDisplayEntryId);
     m_shadowDisplayEntryId.clear();
+}
+
+void ImagePageSurfaceController::releaseRetainedStillImageEntry()
+{
+    if (m_displayImageStore == nullptr || m_retainedStillImageEntryId.isEmpty()) {
+        m_retainedStillImageEntryId.clear();
+        return;
+    }
+
+    m_displayImageStore->releasePinLease(
+        m_retainedStillImageEntryId, DisplayImagePinKind::StaleRetained);
+    m_retainedStillImageEntryId.clear();
 }
 
 void ImagePageSurfaceController::retainCurrentAnimationFrameEntryForLoad()
@@ -562,8 +606,11 @@ bool ImagePageSurfaceController::acknowledgeStillImageDisplayLoad(const QUrl& pr
     }
 
     clearStillImageLoadContract();
+    releaseRetainedStillImageEntry();
     m_displaySource.status = displaySourceStatusForLoadOutcome(outcome);
     m_displaySource.loadAcknowledgmentRequired = false;
+    m_displaySource.retentionStatus = ImageDisplaySourceRetentionStatus::None;
+    m_displaySource.retainWhileLoadingEligible = false;
     notify(ImageDocumentChange::DisplaySource);
     return true;
 }

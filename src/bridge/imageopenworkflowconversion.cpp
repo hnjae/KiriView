@@ -39,6 +39,8 @@ kiriview::ImageDocumentSourceLoadEffect sourceLoadEffectFromBridge(
         return kiriview::ImageDocumentSourceLoadEffect::NotifyRightToLeftReadingChanged;
     case RustOperation::ClearSecondaryPage:
         return kiriview::ImageDocumentSourceLoadEffect::ClearSecondaryPage;
+    case RustOperation::BeginSameScopeImageNavigationPresentation:
+        return kiriview::ImageDocumentSourceLoadEffect::BeginSameScopeImageNavigationPresentation;
     case RustOperation::ClearLoadingContainerNavigationUrl:
         return kiriview::ImageDocumentSourceLoadEffect::ClearLoadingContainerNavigationUrl;
     case RustOperation::SetLoadingContainerNavigationUrlToRequested:

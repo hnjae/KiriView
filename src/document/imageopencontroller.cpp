@@ -247,6 +247,7 @@ void ImageOpenController::finishLoadWithError(
     const ImageLoadSession& session, ImageLoadFailure failure)
 {
     m_pageSurfaceController.clearShadowDisplayImage();
+    m_pageSurfaceController.clearSameScopeImageNavigationRetention();
     const QUrl displayedUrl = m_state.displayedUrl();
     const QString userMessage = loadFailureUserMessage(failure);
     const ImageLoadFailure normalizedFailure = withUserMessage(std::move(failure), userMessage);

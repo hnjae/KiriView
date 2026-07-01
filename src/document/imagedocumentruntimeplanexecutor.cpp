@@ -63,6 +63,7 @@ namespace {
         = std::is_same_v<Operation, FinishSpreadTransitionOperation>
         || std::is_same_v<Operation, ResetRightToLeftReadingOperation>
         || std::is_same_v<Operation, ClearSecondaryPageOperation>
+        || std::is_same_v<Operation, BeginSameScopeImageNavigationPresentationOperation>
         || std::is_same_v<Operation, NotifyRightToLeftReadingChangedOperation>
         || std::is_same_v<Operation, ResetZoomOperation>
         || std::is_same_v<Operation, PrepareFailedContainerOperation>;

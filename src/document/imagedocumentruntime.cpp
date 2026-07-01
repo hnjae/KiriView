@@ -615,6 +615,16 @@ ImageDisplaySourceProjection ImageDocumentRuntime::displaySourceProjection(
     DisplayedPageRole role) const
 {
     if (displayedUrl().isEmpty()) {
+        ImageDisplaySourceProjection retainedProjection
+            = controllers->spreadController().displaySourceProjection(role);
+        if (status() == ImageDocumentStatus::Loading
+            && (retainedProjection.retentionStatus
+                    == ImageDisplaySourceRetentionStatus::StaleRetained
+                || presentationTransitionState()
+                    == ImagePresentationTransitionState::PreviousActive)) {
+            return retainedProjection;
+        }
+
         ImageDisplaySourceProjection projection;
         projection.pageRole = role;
         projection.revisionToken = imageDisplaySourceRevisionToken(projection.revision);

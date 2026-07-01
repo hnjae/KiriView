@@ -76,6 +76,9 @@ void appendSourceLoadRuntimeOperation(kiriview::ImageDocumentRuntimePlan& runtim
     case Effect::ClearSecondaryPage:
         runtimePlan.push_back(kiriview::ClearSecondaryPageOperation {});
         return;
+    case Effect::BeginSameScopeImageNavigationPresentation:
+        runtimePlan.push_back(kiriview::BeginSameScopeImageNavigationPresentationOperation {});
+        return;
     case Effect::ClearLoadingContainerNavigationUrl:
         runtimePlan.push_back(kiriview::ClearLoadingContainerNavigationUrlOperation {});
         return;

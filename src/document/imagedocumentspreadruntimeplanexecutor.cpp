@@ -38,6 +38,10 @@ bool ImageDocumentSpreadRuntimePlanExecutor::dispatchOperation(
         run(m_operations.clearSecondaryPage);
         return true;
     }
+    if (std::holds_alternative<BeginSameScopeImageNavigationPresentationOperation>(operation)) {
+        run(m_operations.beginSameScopeImageNavigationPresentation);
+        return true;
+    }
     if (std::holds_alternative<NotifyRightToLeftReadingChangedOperation>(operation)) {
         run(m_operations.notifyRightToLeftReadingChanged);
         return true;

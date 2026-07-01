@@ -43,6 +43,9 @@ struct ResetRightToLeftReadingOperation
 struct ClearSecondaryPageOperation
 {
 };
+struct BeginSameScopeImageNavigationPresentationOperation
+{
+};
 struct NotifyRightToLeftReadingChangedOperation
 {
 };
@@ -145,17 +148,17 @@ using ImageDocumentRuntimeOperation = std::variant<CancelFileDeletionOperation,
     StopPresentationAnimationOperation, ShutdownSpreadOperation, ClearMediaEntrySourceOperation,
     ClearPredecodeOperation, CancelPredecodeOperation, ScheduleAdjacentImagePredecodeOperation,
     FinishSpreadTransitionOperation, ResetRightToLeftReadingOperation, ClearSecondaryPageOperation,
-    NotifyRightToLeftReadingChangedOperation, ResetZoomOperation, PrepareFailedContainerOperation,
-    CancelPageNavigationUpdateOperation, CancelNavigationOperation,
-    CancelContainerNavigationOperation, CancelAllNavigationOperation, ClearPageNavigationOperation,
-    UpdatePageNavigationOperation, LoadUrlOperation, LoadContainerImageOperation,
-    FinishEmptyContainerNavigationOperation, FinishContainerNavigationLoadWithErrorOperation,
-    ReportContainerNavigationBoundaryOperation, ReportContainerNavigationListFailureOperation,
-    LoadPageNavigationUrlOperation, CancelOpenOperation, ClearDisplayedImageLocationOperation,
-    ClearPresentationImageOperation, ClearLoadingContainerNavigationUrlOperation,
-    SetLoadingContainerNavigationUrlOperation, SetContainerNavigationUrlOperation,
-    PrepareSourceLoadOperation, SetSourceUrlOperation, BeginOpenOperation, SetErrorStringOperation,
-    FinishEmptySourceLoadOperation>;
+    BeginSameScopeImageNavigationPresentationOperation, NotifyRightToLeftReadingChangedOperation,
+    ResetZoomOperation, PrepareFailedContainerOperation, CancelPageNavigationUpdateOperation,
+    CancelNavigationOperation, CancelContainerNavigationOperation, CancelAllNavigationOperation,
+    ClearPageNavigationOperation, UpdatePageNavigationOperation, LoadUrlOperation,
+    LoadContainerImageOperation, FinishEmptyContainerNavigationOperation,
+    FinishContainerNavigationLoadWithErrorOperation, ReportContainerNavigationBoundaryOperation,
+    ReportContainerNavigationListFailureOperation, LoadPageNavigationUrlOperation,
+    CancelOpenOperation, ClearDisplayedImageLocationOperation, ClearPresentationImageOperation,
+    ClearLoadingContainerNavigationUrlOperation, SetLoadingContainerNavigationUrlOperation,
+    SetContainerNavigationUrlOperation, PrepareSourceLoadOperation, SetSourceUrlOperation,
+    BeginOpenOperation, SetErrorStringOperation, FinishEmptySourceLoadOperation>;
 
 using ImageDocumentRuntimePlan = std::vector<ImageDocumentRuntimeOperation>;
 

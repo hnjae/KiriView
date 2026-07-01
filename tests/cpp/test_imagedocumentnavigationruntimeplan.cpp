@@ -25,7 +25,7 @@ class TestImageDocumentNavigationRuntimePlan : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void openImageDocumentPageNavigationMapsToLoadUrl();
+    void openImageDocumentPageNavigationMapsToPageNavigationLoad();
     void openContainerImageDocumentPageNavigationMapsToContainerLoad();
     void emptyContainerErrorMapsToEmptyContainerCompletion();
     void invalidComicMediaEntrySourceErrorMapsToLocalizedOpenError();
@@ -36,7 +36,8 @@ private Q_SLOTS:
     void mixedNavigationPlanPreservesOperationOrder();
 };
 
-void TestImageDocumentNavigationRuntimePlan::openImageDocumentPageNavigationMapsToLoadUrl()
+void TestImageDocumentNavigationRuntimePlan::
+    openImageDocumentPageNavigationMapsToPageNavigationLoad()
 {
     const QUrl url = localUrl(QStringLiteral("/images/02.png"));
     const ImageDocumentRuntimePlan plan = kiriview::imageDocumentRuntimePlanForNavigationPlan({
@@ -45,10 +46,12 @@ void TestImageDocumentNavigationRuntimePlan::openImageDocumentPageNavigationMaps
         },
     });
 
-    QVERIFY(hasOperationTypes(plan, operationTypes<kiriview::LoadUrlOperation>()));
-    QCOMPARE(operationAt<kiriview::LoadUrlOperation>(plan, 0).target.url, url);
-    QCOMPARE(operationAt<kiriview::LoadUrlOperation>(plan, 0).target.kind,
+    QVERIFY(hasOperationTypes(plan, operationTypes<kiriview::LoadPageNavigationUrlOperation>()));
+    QCOMPARE(operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 0).target.url, url);
+    QCOMPARE(operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 0).target.kind,
         kiriview::ImageDocumentPageKind::Video);
+    QVERIFY(!operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 0)
+            .preserveTwoPageSpreadTransition);
 }
 
 void TestImageDocumentNavigationRuntimePlan::
@@ -223,10 +226,11 @@ void TestImageDocumentNavigationRuntimePlan::mixedNavigationPlanPreservesOperati
     });
 
     QVERIFY(hasOperationTypes(plan,
-        operationTypes<kiriview::LoadUrlOperation, kiriview::LoadContainerImageOperation,
+        operationTypes<kiriview::LoadPageNavigationUrlOperation,
+            kiriview::LoadContainerImageOperation,
             kiriview::FinishEmptyContainerNavigationOperation,
             kiriview::ReportContainerNavigationBoundaryOperation>()));
-    QCOMPARE(operationAt<kiriview::LoadUrlOperation>(plan, 0).target.url, firstUrl);
+    QCOMPARE(operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 0).target.url, firstUrl);
     QCOMPARE(operationAt<kiriview::LoadContainerImageOperation>(plan, 1).target.url, imageUrl);
     QCOMPARE(operationAt<kiriview::FinishEmptyContainerNavigationOperation>(plan, 2).containerUrl,
         containerUrl);

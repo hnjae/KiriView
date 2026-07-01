@@ -136,6 +136,7 @@ public:
     void showTransitionPlaceholder();
     void finishTransition();
     void abortTransition();
+    void beginSameScopeImageNavigationPresentation();
     void clearSecondaryPage();
     void shutdown();
 

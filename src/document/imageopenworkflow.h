@@ -47,6 +47,7 @@ enum class ImageDocumentSourceLoadEffect {
     ResetRightToLeftReading,
     NotifyRightToLeftReadingChanged,
     ClearSecondaryPage,
+    BeginSameScopeImageNavigationPresentation,
     ClearLoadingContainerNavigationUrl,
     SetLoadingContainerNavigationUrlToRequested,
     SetContainerNavigationUrlToRequested,

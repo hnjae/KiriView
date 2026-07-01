@@ -60,6 +60,8 @@ public:
         const ImageDocumentRenderContext& renderContext);
     QString publishShadowDisplayImage(StaticDisplayImagePayload displayImage);
     void clearShadowDisplayImage();
+    void retainCurrentStaticDisplayImageForSameScopeNavigation();
+    void clearSameScopeImageNavigationRetention();
     void updateDisplayProjection(const ImagePresentationRenderProjection& projection);
     void clearImage();
 
@@ -80,6 +82,7 @@ private:
     void clearDisplaySource();
     void releaseCurrentDisplayEntry();
     void releaseShadowDisplayEntry();
+    void releaseRetainedStillImageEntry();
     void retainCurrentAnimationFrameEntryForLoad();
     void releaseRetainedAnimationFrameEntry();
     void clearStillImageLoadContract();
@@ -104,6 +107,7 @@ private:
     QString m_displayEntryId;
     QString m_shadowDisplayEntryId;
     QString m_pendingStillImageEntryId;
+    QString m_retainedStillImageEntryId;
     QString m_retainedAnimationFrameEntryId;
     QString m_animationFrameSourceIdentity;
     QUrl m_pendingStillImageProviderUrl;

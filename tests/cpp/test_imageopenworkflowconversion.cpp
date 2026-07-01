@@ -47,6 +47,7 @@ void TestImageOpenWorkflowConversion::sourceLoadPlanMapsBridgeOperationsToDomain
     rustPlan.operations.push_back(RustOperation::ResetRightToLeftReading);
     rustPlan.operations.push_back(RustOperation::NotifyRightToLeftReadingChanged);
     rustPlan.operations.push_back(RustOperation::ClearSecondaryPage);
+    rustPlan.operations.push_back(RustOperation::BeginSameScopeImageNavigationPresentation);
     rustPlan.operations.push_back(RustOperation::ClearLoadingContainerNavigationUrl);
     rustPlan.operations.push_back(RustOperation::SetLoadingContainerNavigationUrlToRequested);
     rustPlan.operations.push_back(RustOperation::SetContainerNavigationUrlToRequested);
@@ -65,6 +66,7 @@ void TestImageOpenWorkflowConversion::sourceLoadPlanMapsBridgeOperationsToDomain
         Effect::ResetRightToLeftReading,
         Effect::NotifyRightToLeftReadingChanged,
         Effect::ClearSecondaryPage,
+        Effect::BeginSameScopeImageNavigationPresentation,
         Effect::ClearLoadingContainerNavigationUrl,
         Effect::SetLoadingContainerNavigationUrlToRequested,
         Effect::SetContainerNavigationUrlToRequested,

@@ -90,12 +90,13 @@ mod ffi {
         ResetRightToLeftReading = 4,
         NotifyRightToLeftReadingChanged = 5,
         ClearSecondaryPage = 6,
-        ClearLoadingContainerNavigationUrl = 7,
-        SetLoadingContainerNavigationUrlToRequested = 8,
-        SetContainerNavigationUrlToRequested = 9,
-        PrepareSourceLoad = 10,
-        SetSourceUrlToRequested = 11,
-        BeginOpen = 12,
+        BeginSameScopeImageNavigationPresentation = 7,
+        ClearLoadingContainerNavigationUrl = 8,
+        SetLoadingContainerNavigationUrlToRequested = 9,
+        SetContainerNavigationUrlToRequested = 10,
+        PrepareSourceLoad = 11,
+        SetSourceUrlToRequested = 12,
+        BeginOpen = 13,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -302,6 +303,10 @@ fn same_scope_image_navigation_load_plan(
     push_source_load_operation(
         &mut plan,
         RustImageDocumentSourceLoadOperation::ClearLoadingContainerNavigationUrl,
+    );
+    push_source_load_operation(
+        &mut plan,
+        RustImageDocumentSourceLoadOperation::BeginSameScopeImageNavigationPresentation,
     );
     push_source_load_operation(
         &mut plan,
@@ -1032,6 +1037,7 @@ mod tests {
                 operations: vec![
                     RustImageDocumentSourceLoadOperation::CancelFileDeletion,
                     RustImageDocumentSourceLoadOperation::ClearLoadingContainerNavigationUrl,
+                    RustImageDocumentSourceLoadOperation::BeginSameScopeImageNavigationPresentation,
                     RustImageDocumentSourceLoadOperation::SetSourceUrlToRequested,
                     RustImageDocumentSourceLoadOperation::BeginOpen,
                 ],
@@ -1053,6 +1059,7 @@ mod tests {
                 RustImageDocumentSourceLoadOperation::ResetRightToLeftReading,
                 RustImageDocumentSourceLoadOperation::NotifyRightToLeftReadingChanged,
                 RustImageDocumentSourceLoadOperation::ClearLoadingContainerNavigationUrl,
+                RustImageDocumentSourceLoadOperation::BeginSameScopeImageNavigationPresentation,
                 RustImageDocumentSourceLoadOperation::SetSourceUrlToRequested,
                 RustImageDocumentSourceLoadOperation::BeginOpen,
             ]

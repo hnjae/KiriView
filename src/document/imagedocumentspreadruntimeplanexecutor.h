@@ -15,6 +15,7 @@ struct ImageDocumentSpreadRuntimeOperations
     std::function<void()> finishSpreadTransition;
     std::function<void()> resetRightToLeftReading;
     std::function<void()> clearSecondaryPage;
+    std::function<void()> beginSameScopeImageNavigationPresentation;
     std::function<void()> notifyRightToLeftReadingChanged;
     std::function<void()> resetZoom;
     std::function<void(const QUrl&)> prepareFailedContainer;

@@ -59,7 +59,13 @@ Expected tests/checks:
 
 ### Milestone 2: Add Committed And Pending Image Presentation State
 
-Status: Not started
+Status: Completed
+
+Completed notes:
+
+- Same-scope image navigation now retains the committed provider-backed page projection while the selected image target is loading, including previous-active two-page spread transitions.
+- Newly published target display entries carry stale-retained status and `retainWhileLoading` eligibility until the matching display-load acknowledgement releases the prior retained entry.
+- Adjacent page navigation effects now route through the page-navigation source-load operation so ordinary previous/next commands use the same retained same-scope presentation path as explicit page selection.
 
 Dependencies: Milestone 1
 
