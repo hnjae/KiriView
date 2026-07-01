@@ -121,7 +121,9 @@ void TestPredecodeScheduleRuntime::immediateScheduleStartsAdjacentWithoutDebounc
     QCOMPARE(capturedSchedule->context.currentLocation.imageUrl(), selectedUrl);
     QVERIFY(capturedSchedule->context.immediate);
     QVERIFY(runtime.accepts(capturedSchedule->generation));
-    QCOMPARE(timerScheduler.timerCount(), std::size_t(0));
+    QCOMPARE(timerScheduler.timerCount(), std::size_t(2));
+    QVERIFY(!timerScheduler.timerAt(0).active());
+    QVERIFY(!timerScheduler.timerAt(1).active());
 }
 
 void TestPredecodeScheduleRuntime::manualTimerSchedulerFiresDebouncedPredecode()

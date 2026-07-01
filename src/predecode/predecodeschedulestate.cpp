@@ -29,7 +29,11 @@ PredecodeScheduleRuntimePlan PredecodeScheduleState::schedule(
 
     if (!m_powerSaverEnabled) {
         m_pendingSchedule = PredecodePendingSchedule { context, generation };
-        plan.push_back(StartPredecodeDebounceOperation { *m_pendingSchedule });
+        if (context.immediate) {
+            plan.push_back(StartAdjacentPredecodeOperation { *m_pendingSchedule });
+        } else {
+            plan.push_back(StartPredecodeDebounceOperation { *m_pendingSchedule });
+        }
     } else {
         plan.push_back(ClearPredecodeWindowUrlsOperation {});
     }
