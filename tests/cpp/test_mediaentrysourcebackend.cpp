@@ -182,7 +182,8 @@ private Q_SLOTS:
     void storedZipVideoEntryReturnsPlaybackDevice();
     void deflatedZipVideoEntryDoesNotReturnPlaybackDevice();
     void plainTarVideoEntryReturnsPlaybackDevice();
-    void unsupportedCollectionVideosDoNotReturnPlaybackDevices();
+    void directoryCollectionVideoEntryReturnsPlaybackDevice();
+    void unsupportedArchiveVideosDoNotReturnPlaybackDevices();
     void readingUrlOutsideArchiveReturnsNotFound();
     void sourceErrorsPreserveBackendOperationAndIdentity();
     void missingEmptyAndInvalidArchivesReportExpectedResults();
@@ -885,13 +886,14 @@ void TestMediaEntrySourceBackend::plainTarVideoEntryReturnsPlaybackDevice()
     QCOMPARE(device->device->readAll(), expected);
 }
 
-void TestMediaEntrySourceBackend::unsupportedCollectionVideosDoNotReturnPlaybackDevices()
+void TestMediaEntrySourceBackend::directoryCollectionVideoEntryReturnsPlaybackDevice()
 {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     QDir root(dir.path());
     QVERIFY(root.mkpath(QStringLiteral("pages")));
-    writeFile(dir.filePath(QStringLiteral("pages/clip.mp4")), QByteArrayLiteral("video-bytes"));
+    const QByteArray expected = QByteArrayLiteral("video-bytes");
+    writeFile(dir.filePath(QStringLiteral("pages/clip.mp4")), expected);
 
     const std::optional<kiriview::OpenedCollectionScopeLocation> directoryCollection
         = kiriview::openedCollectionScopeLocationForDirectlyOpenedLocalUrl(localUrl(dir.path()));
@@ -899,12 +901,19 @@ void TestMediaEntrySourceBackend::unsupportedCollectionVideosDoNotReturnPlayback
     kiriview::MediaEntrySourceVideoPlaybackDeviceResult directoryResult
         = kiriview::loadMediaEntrySourceVideoPlaybackDevice(*directoryCollection,
             archivePageUrl(directoryCollection->rootUrl(), QStringLiteral("pages/clip.mp4")));
-    const kiriview::MediaEntrySourceError* directoryError
-        = std::get_if<kiriview::MediaEntrySourceError>(&directoryResult);
-    QVERIFY(directoryError != nullptr);
-    QCOMPARE(directoryError->backend, kiriview::MediaEntrySourceBackendKind::Directory);
-    QCOMPARE(
-        directoryError->operation, kiriview::MediaEntrySourceOperation::OpenVideoPlaybackDevice);
+    kiriview::MediaEntrySourceVideoPlaybackDevice* device
+        = mediaEntrySourceVideoPlaybackDevice(directoryResult);
+
+    QVERIFY(device != nullptr);
+    QVERIFY(device->sourceOwner != nullptr);
+    QVERIFY(device->device != nullptr);
+    QCOMPARE(device->device->readAll(), expected);
+}
+
+void TestMediaEntrySourceBackend::unsupportedArchiveVideosDoNotReturnPlaybackDevices()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
 
     const QString archivePath = dir.filePath(QStringLiteral("book.cb7"));
     write7zArchive(archivePath,
