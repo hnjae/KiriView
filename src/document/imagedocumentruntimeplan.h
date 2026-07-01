@@ -9,6 +9,7 @@
 
 #include <QString>
 #include <QUrl>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -33,6 +34,8 @@ struct CancelPredecodeOperation
 };
 struct ScheduleAdjacentImagePredecodeOperation
 {
+    std::optional<ImageDocumentPageTarget> target;
+    int targetPageIndex = -1;
 };
 struct FinishSpreadTransitionOperation
 {

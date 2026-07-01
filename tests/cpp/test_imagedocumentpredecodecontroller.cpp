@@ -11,6 +11,7 @@
 #include <QObject>
 #include <QSize>
 #include <QSizeF>
+#include <QString>
 #include <QTest>
 #include <QUrl>
 #include <memory>
@@ -85,6 +86,8 @@ class TestImageDocumentPredecodeController : public QObject
 
 private Q_SLOTS:
     void scheduleAdjacentImagePredecodeUsesPresentationSnapshot();
+    void selectedImageNavigationTargetPredecodeLoadsSelectedTargetImmediately();
+    void selectedVideoNavigationTargetDoesNotStartPredecode();
     void scheduleAdjacentImagePredecodeWithoutSnapshotCancelsActivePredecode();
     void powerSaverSuppressesBackgroundPredecodeAndReschedulesWhenDisabled();
 };
@@ -124,6 +127,67 @@ void TestImageDocumentPredecodeController::scheduleAdjacentImagePredecodeUsesPre
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
     QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(640, 480));
+}
+
+void TestImageDocumentPredecodeController::
+    selectedImageNavigationTargetPredecodeLoadsSelectedTargetImmediately()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    kiriview::ImageDocumentState state;
+    kiriview::ImagePageSurfaceController pageSurface = createPageSurfaceController(this);
+    kiriview::ImagePresentationRuntime presentationRuntime = createPresentationRuntime();
+    kiriview::ImageDocumentPredecodeController controller(this, state, pageSurface,
+        presentationRuntime, candidateProvider.provider(),
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
+
+    const QUrl displayedUrl = indexedImageUrl(1);
+    const QUrl oldNextUrl = indexedImageUrl(2);
+    const QUrl targetUrl = indexedImageUrl(3);
+    const QUrl nextTargetUrl = indexedImageUrl(4);
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
+        {
+            imageDocumentPageCandidate(displayedUrl),
+            imageDocumentPageCandidate(oldNextUrl),
+            imageDocumentPageCandidate(targetUrl),
+            imageDocumentPageCandidate(nextTargetUrl),
+        });
+
+    state.setDisplayedImageLocation(kiriview::DisplayedImageLocation::fromUrl(displayedUrl));
+    pageSurface.setStaticDisplayImage(displayTestImagePayload(testImage()), true, renderContext());
+
+    controller.scheduleImageNavigationTargetPredecode(
+        kiriview::ImageDocumentPageTarget { targetUrl }, 2);
+
+    QVERIFY(controller.findPredecodedImage(displayedUrl).has_value());
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, targetUrl);
+}
+
+void TestImageDocumentPredecodeController::selectedVideoNavigationTargetDoesNotStartPredecode()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    kiriview::ImageDocumentState state;
+    kiriview::ImagePageSurfaceController pageSurface = createPageSurfaceController(this);
+    kiriview::ImagePresentationRuntime presentationRuntime = createPresentationRuntime();
+    kiriview::ImageDocumentPredecodeController controller(this, state, pageSurface,
+        presentationRuntime, candidateProvider.provider(),
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
+
+    const QUrl displayedUrl = indexedImageUrl(1);
+    const QUrl videoUrl = QUrl::fromLocalFile(QStringLiteral("/images/02.mp4"));
+    state.setDisplayedImageLocation(kiriview::DisplayedImageLocation::fromUrl(displayedUrl));
+    pageSurface.setStaticDisplayImage(displayTestImagePayload(testImage()), true, renderContext());
+
+    controller.scheduleImageNavigationTargetPredecode(
+        kiriview::ImageDocumentPageTarget {
+            videoUrl,
+            kiriview::ImageDocumentPageKind::Video,
+        },
+        1);
+
+    QCOMPARE(dataLoader.loadCount(), std::size_t(0));
 }
 
 void TestImageDocumentPredecodeController::

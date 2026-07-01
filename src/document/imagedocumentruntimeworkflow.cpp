@@ -17,6 +17,7 @@
 #include "presentation/imagespreadpresentationcontroller.h"
 
 #include <QDebug>
+#include <optional>
 #include <utility>
 
 namespace {
@@ -54,12 +55,21 @@ kiriview::ImageDocumentRuntimeOperations runtimeOperations(
             ports.predecodeController->cancel();
         }
     };
-    operations.predecode.scheduleAdjacentImagePredecode = [ports]() {
-        if (ports.predecodeController != nullptr && ports.spreadController != nullptr) {
-            ports.predecodeController->scheduleAdjacentImagePredecode(
-                ports.spreadController->secondaryDisplayedPredecodeImage());
-        }
-    };
+    operations.predecode.scheduleAdjacentImagePredecode
+        = [ports](const kiriview::ScheduleAdjacentImagePredecodeOperation& operation) {
+              if (ports.predecodeController != nullptr && ports.spreadController != nullptr) {
+                  std::optional<kiriview::DisplayedPredecodeImage> secondaryImage
+                      = ports.spreadController->secondaryDisplayedPredecodeImage();
+                  if (operation.target.has_value()) {
+                      ports.predecodeController->scheduleImageNavigationTargetPredecode(
+                          *operation.target, operation.targetPageIndex, std::move(secondaryImage));
+                      return;
+                  }
+
+                  ports.predecodeController->scheduleAdjacentImagePredecode(
+                      std::move(secondaryImage));
+              }
+          };
     operations.spread.finishSpreadTransition = [ports]() {
         if (ports.spreadController != nullptr) {
             ports.spreadController->finishTransition();

@@ -7,6 +7,7 @@
 #include "async/timerscheduler.h"
 #include "decoding/imagedecodedependencies.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
 #include "predecode/predecoderuntimefacts.h"
 #include "system/powersaverprovider.h"
@@ -42,6 +43,8 @@ public:
 
     void scheduleAdjacentImagePredecode(
         std::optional<DisplayedPredecodeImage> secondaryImage = std::nullopt);
+    void scheduleImageNavigationTargetPredecode(const ImageDocumentPageTarget& target,
+        int targetPageIndex, std::optional<DisplayedPredecodeImage> secondaryImage = std::nullopt);
     void cancel();
     void clear();
     std::optional<PredecodedImage> findPredecodedImage(const QUrl& url) const;

@@ -39,6 +39,8 @@ public:
 
     void schedule(const DocumentSessionMediaPredecodeInput& input,
         std::vector<DirectMediaNavigationCandidate> candidates);
+    void schedule(const DocumentSessionMediaPredecodeInput& input, const QUrl& selectedTargetUrl,
+        std::vector<DirectMediaNavigationCandidate> candidates);
     void cacheDisplayedImages(const DocumentSessionMediaPredecodeInput& input);
     void cancel();
     void clear();

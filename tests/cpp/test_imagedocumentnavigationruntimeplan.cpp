@@ -46,11 +46,17 @@ void TestImageDocumentNavigationRuntimePlan::
         },
     });
 
-    QVERIFY(hasOperationTypes(plan, operationTypes<kiriview::LoadPageNavigationUrlOperation>()));
-    QCOMPARE(operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 0).target.url, url);
-    QCOMPARE(operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 0).target.kind,
+    QVERIFY(hasOperationTypes(plan,
+        operationTypes<kiriview::ScheduleAdjacentImagePredecodeOperation,
+            kiriview::LoadPageNavigationUrlOperation>()));
+    QVERIFY(
+        operationAt<kiriview::ScheduleAdjacentImagePredecodeOperation>(plan, 0).target.has_value());
+    QCOMPARE(
+        operationAt<kiriview::ScheduleAdjacentImagePredecodeOperation>(plan, 0).target->url, url);
+    QCOMPARE(operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 1).target.url, url);
+    QCOMPARE(operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 1).target.kind,
         kiriview::ImageDocumentPageKind::Video);
-    QVERIFY(!operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 0)
+    QVERIFY(!operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 1)
             .preserveTwoPageSpreadTransition);
 }
 
@@ -226,15 +232,19 @@ void TestImageDocumentNavigationRuntimePlan::mixedNavigationPlanPreservesOperati
     });
 
     QVERIFY(hasOperationTypes(plan,
-        operationTypes<kiriview::LoadPageNavigationUrlOperation,
-            kiriview::LoadContainerImageOperation,
+        operationTypes<kiriview::ScheduleAdjacentImagePredecodeOperation,
+            kiriview::LoadPageNavigationUrlOperation, kiriview::LoadContainerImageOperation,
             kiriview::FinishEmptyContainerNavigationOperation,
             kiriview::ReportContainerNavigationBoundaryOperation>()));
-    QCOMPARE(operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 0).target.url, firstUrl);
-    QCOMPARE(operationAt<kiriview::LoadContainerImageOperation>(plan, 1).target.url, imageUrl);
-    QCOMPARE(operationAt<kiriview::FinishEmptyContainerNavigationOperation>(plan, 2).containerUrl,
+    QVERIFY(
+        operationAt<kiriview::ScheduleAdjacentImagePredecodeOperation>(plan, 0).target.has_value());
+    QCOMPARE(operationAt<kiriview::ScheduleAdjacentImagePredecodeOperation>(plan, 0).target->url,
+        firstUrl);
+    QCOMPARE(operationAt<kiriview::LoadPageNavigationUrlOperation>(plan, 1).target.url, firstUrl);
+    QCOMPARE(operationAt<kiriview::LoadContainerImageOperation>(plan, 2).target.url, imageUrl);
+    QCOMPARE(operationAt<kiriview::FinishEmptyContainerNavigationOperation>(plan, 3).containerUrl,
         containerUrl);
-    QCOMPARE(operationAt<kiriview::ReportContainerNavigationBoundaryOperation>(plan, 3).direction,
+    QCOMPARE(operationAt<kiriview::ReportContainerNavigationBoundaryOperation>(plan, 4).direction,
         kiriview::NavigationDirection::Next);
 }
 

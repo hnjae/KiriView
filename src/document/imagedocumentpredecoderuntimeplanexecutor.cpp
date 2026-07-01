@@ -34,8 +34,8 @@ bool ImageDocumentPredecodeRuntimePlanExecutor::dispatchOperation(
         run(m_operations.cancelPredecode);
         return true;
     }
-    if (std::holds_alternative<ScheduleAdjacentImagePredecodeOperation>(operation)) {
-        run(m_operations.scheduleAdjacentImagePredecode);
+    if (const auto* payload = std::get_if<ScheduleAdjacentImagePredecodeOperation>(&operation)) {
+        run(m_operations.scheduleAdjacentImagePredecode, *payload);
         return true;
     }
 

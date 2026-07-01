@@ -28,6 +28,7 @@ struct MediaPredecodeScheduleRequest
     std::vector<DirectMediaNavigationCandidate> candidates;
     std::vector<DisplayedPredecodeImage> displayedImages;
     ImageFirstDisplayDecodeContext firstDisplayContext;
+    bool immediate = false;
 };
 
 struct MediaPredecodeSchedulePlan

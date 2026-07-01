@@ -7,6 +7,7 @@
 #include <QStringList>
 #include <QTest>
 #include <QUrl>
+#include <optional>
 
 namespace {
 using kiriview::ImageDocumentRuntimeOperations;
@@ -20,6 +21,7 @@ struct RecordedRuntimeOperations
     QStringList events;
     QUrl url;
     QUrl secondaryUrl;
+    std::optional<kiriview::ImageDocumentPageTarget> predecodeTarget;
     kiriview::ImageDocumentPageKind kind = kiriview::ImageDocumentPageKind::Image;
     kiriview::NavigationDirection direction = kiriview::NavigationDirection::Next;
     kiriview::ContainerNavigationListFailureKind listFailureKind
@@ -44,7 +46,10 @@ struct RecordedRuntimeOperations
         operations.predecode.cancelPredecode
             = [this]() { record(QStringLiteral("cancelPredecode")); };
         operations.predecode.scheduleAdjacentImagePredecode
-            = [this]() { record(QStringLiteral("scheduleAdjacentImagePredecode")); };
+            = [this](const kiriview::ScheduleAdjacentImagePredecodeOperation& operation) {
+                  predecodeTarget = operation.target;
+                  record(QStringLiteral("scheduleAdjacentImagePredecode"));
+              };
         operations.spread.finishSpreadTransition
             = [this]() { record(QStringLiteral("finishSpreadTransition")); };
         operations.spread.resetRightToLeftReading
@@ -155,6 +160,7 @@ struct RecordedRuntimeOperations
         events.clear();
         url = QUrl();
         secondaryUrl = QUrl();
+        predecodeTarget.reset();
         kind = kiriview::ImageDocumentPageKind::Image;
         direction = kiriview::NavigationDirection::Next;
         listFailureKind = kiriview::ContainerNavigationListFailureKind::DirectoryListing;

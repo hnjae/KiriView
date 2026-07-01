@@ -135,6 +135,7 @@ struct CoordinatorFixture
         = kiriview::DocumentSessionDirectMediaNavigationRevealAction::None;
     int clearPredecodeCount = 0;
     std::vector<kiriview::DirectMediaNavigationCandidate> predecodeCandidates;
+    QUrl predecodeTargetUrl;
     QUrl routeTargetUrl;
     std::unique_ptr<kiriview::DocumentSessionDirectMediaNavigationCoordinator> coordinator;
 
@@ -169,8 +170,10 @@ struct CoordinatorFixture
             ++clearPredecodeCount;
         };
         ports.schedulePredecode
-            = [this](const std::vector<kiriview::DirectMediaNavigationCandidate>& candidates) {
+            = [this](const QUrl& targetUrl,
+                  const std::vector<kiriview::DirectMediaNavigationCandidate>& candidates) {
                   events.push_back(Event::Predecode);
+                  predecodeTargetUrl = targetUrl;
                   predecodeCandidates = candidates;
               };
         ports.openMediaUrl = [this](const QUrl& url) {
@@ -222,6 +225,7 @@ void TestDocumentSessionDirectMediaNavigationCoordinator::
     QCOMPARE(fixture.navigation.state.currentNumber, 2);
     QCOMPARE(fixture.navigation.state.count, 3);
     QCOMPARE(fixture.predecodeCandidates.size(), std::size_t(3));
+    QVERIFY(fixture.predecodeTargetUrl.isEmpty());
     QCOMPARE(fixture.events,
         (std::vector<CoordinatorFixture::Event> { CoordinatorFixture::Event::SetNavigation,
             CoordinatorFixture::Event::Reveal, CoordinatorFixture::Event::Publish,
@@ -240,6 +244,7 @@ void TestDocumentSessionDirectMediaNavigationCoordinator::activeOpenRoutesTarget
 
     QCOMPARE(fixture.routeTargetUrl, nextUrl);
     QCOMPARE(fixture.predecodeCandidates.size(), std::size_t(2));
+    QCOMPARE(fixture.predecodeTargetUrl, nextUrl);
     QCOMPARE(fixture.events,
         (std::vector<CoordinatorFixture::Event> { CoordinatorFixture::Event::SetNavigation,
             CoordinatorFixture::Event::Reveal, CoordinatorFixture::Event::Publish,

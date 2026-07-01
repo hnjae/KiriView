@@ -15,6 +15,20 @@
 namespace kiriview {
 namespace {
     int defaultPredecodeThreadCount() { return QThread::idealThreadCount(); }
+
+    QUrl primaryDisplayedUrlForWindow(const PredecodePendingSchedule& schedule)
+    {
+        if (schedule.context.immediate) {
+            if (!schedule.context.displayedImages.empty()
+                && schedule.context.displayedImages.front().hasLocation()) {
+                return schedule.context.displayedImages.front().location.imageUrl();
+            }
+
+            return {};
+        }
+
+        return schedule.context.currentLocation.imageUrl();
+    }
 }
 
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject* parent,
@@ -110,7 +124,7 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(
                                   << schedule.context.currentLocation.imageUrl() << "urls"
                                   << plan.urls.size() << "parallelLimit" << plan.parallelLimit;
     m_loadController.startWindowLoads(PredecodeLoadWindow {
-        schedule.context.currentLocation.imageUrl(),
+        primaryDisplayedUrlForWindow(schedule),
         plan.openedCollectionScope,
         plan.urls,
         schedule.context.displayedImages,

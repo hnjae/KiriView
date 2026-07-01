@@ -13,7 +13,8 @@ struct ImageDocumentPredecodeRuntimeOperations
 {
     std::function<void()> clearPredecode;
     std::function<void()> cancelPredecode;
-    std::function<void()> scheduleAdjacentImagePredecode;
+    std::function<void(const ScheduleAdjacentImagePredecodeOperation&)>
+        scheduleAdjacentImagePredecode;
 };
 
 class ImageDocumentPredecodeRuntimePlanExecutor final

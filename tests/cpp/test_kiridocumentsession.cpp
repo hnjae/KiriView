@@ -595,7 +595,7 @@ private Q_SLOTS:
     void staleOpenWithFailureAfterReplacementIsIgnored();
     void staleOpenWithFailureAfterSessionDestructionIsIgnored();
     void twoPageSpreadLastBoundaryProjectsThroughActiveNavigation();
-    void videoNavigationKeepsStillImagePredecodeCache();
+    void videoNavigationKeepsStillImageCacheWhileSchedulingSelectedPredecode();
     void videoActiveNavigationExposesCurrentNumberAndCount();
     void initialDirectImagePredecodeUsesRequestedMediaCursor();
     void directImagePredecodeUsesSessionDependencyOverrides();
@@ -2559,7 +2559,7 @@ void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavi
     QVERIFY(session->atKnownLastActiveNavigation());
 }
 
-void TestKiriDocumentSession::videoNavigationKeepsStillImagePredecodeCache()
+void TestKiriDocumentSession::videoNavigationKeepsStillImageCacheWhileSchedulingSelectedPredecode()
 {
     FakeDirectMediaNavigationCandidateProvider directMediaNavigationProvider;
     kiriview::TestSupport::ManualImageDataLoader imageDataLoader;
@@ -2593,7 +2593,8 @@ void TestKiriDocumentSession::videoNavigationKeepsStillImagePredecodeCache()
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QCOMPARE(session->sourceUrl(), firstImage);
     QCOMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
-    QCOMPARE(imageDataLoader.loadCount(), loadCountBeforeReturn);
+    QTRY_COMPARE(imageDataLoader.loadCount(), loadCountBeforeReturn + std::size_t(1));
+    QCOMPARE(imageDataLoader.backLoad().url, nextImage);
 }
 
 void TestKiriDocumentSession::videoActiveNavigationExposesCurrentNumberAndCount()

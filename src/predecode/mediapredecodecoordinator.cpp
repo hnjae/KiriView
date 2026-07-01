@@ -13,6 +13,22 @@
 #include <utility>
 
 namespace kiriview {
+namespace {
+    QUrl primaryDisplayedUrlForWindow(const PredecodePendingSchedule& schedule)
+    {
+        if (schedule.context.immediate) {
+            if (!schedule.context.displayedImages.empty()
+                && schedule.context.displayedImages.front().hasLocation()) {
+                return schedule.context.displayedImages.front().location.imageUrl();
+            }
+
+            return {};
+        }
+
+        return schedule.context.currentLocation.imageUrl();
+    }
+}
+
 MediaPredecodeCoordinator::MediaPredecodeCoordinator(
     QObject* parent, MediaPredecodeDependencies dependencies)
     : QObject(parent)
@@ -35,6 +51,7 @@ void MediaPredecodeCoordinator::schedule(Context context)
         std::move(context.candidates),
         std::move(context.displayedImages),
         context.firstDisplayContext,
+        context.immediate,
     });
     if (!plan.shouldSchedule()) {
         qCDebug(kiriviewPredecodeLog) << "media predecode schedule ignored"
@@ -89,7 +106,7 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
                                   << candidates->size() << "stillUrls" << plan.urls.size()
                                   << "parallelLimit" << plan.parallelLimit;
     m_loadController.startWindowLoads(PredecodeLoadWindow {
-        schedule.context.currentLocation.imageUrl(),
+        primaryDisplayedUrlForWindow(schedule),
         plan.openedCollectionScope,
         plan.urls,
         schedule.context.displayedImages,

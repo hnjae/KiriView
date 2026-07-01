@@ -347,7 +347,7 @@ void TestKiriImageDocument::nextDisplayedImageCanStartAtFinalScanPosition()
     document.requestNextDisplayedImageStartToFinalScanPosition();
 
     document.openNextSinglePage();
-    QVERIFY(dataLoader.finishOldestActiveLoadForUrl(secondImageUrl, QByteArrayLiteral("ok")));
+    QVERIFY(dataLoader.finishNewestActiveLoadForUrl(secondImageUrl, QByteArrayLiteral("ok")));
     QTRY_COMPARE(document.status(), KiriImageDocument::Status::Ready);
     QCOMPARE(document.displayedUrl(), secondImageUrl);
 

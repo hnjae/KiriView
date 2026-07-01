@@ -18,6 +18,8 @@ class TestDocumentSessionMediaPredecodeRuntime : public QObject
 
 private Q_SLOTS:
     void activeDirectMediaScheduleCachesDisplayedAndLoadsAdjacentImage();
+    void selectedTargetScheduleLoadsTargetBeforeDisplayedCursor();
+    void selectedTargetScheduleLoadsTargetWithoutDisplayedImage();
     void inactiveScheduleDoesNotStartPredecode();
     void cacheDisplayedImagesUsesOnlyReadyDirectImageSourceScope();
 };
@@ -88,6 +90,51 @@ void TestDocumentSessionMediaPredecodeRuntime::
     QVERIFY(runtime.findPredecodedImage(currentUrl).has_value());
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
+}
+
+void TestDocumentSessionMediaPredecodeRuntime::
+    selectedTargetScheduleLoadsTargetBeforeDisplayedCursor()
+{
+    ManualImageDataLoader dataLoader;
+    kiriview::DocumentSessionMediaPredecodeRuntime runtime(this, predecodeDependencies(dataLoader));
+    const QUrl displayedUrl = localUrl(QStringLiteral("/media/00.png"));
+    const QUrl oldNextUrl = localUrl(QStringLiteral("/media/01.png"));
+    const QUrl targetUrl = localUrl(QStringLiteral("/media/02.png"));
+    const QUrl nextTargetUrl = localUrl(QStringLiteral("/media/03.png"));
+
+    runtime.schedule(activeImageInput(displayedUrl), targetUrl,
+        {
+            directMediaNavigationCandidate(displayedUrl),
+            directMediaNavigationCandidate(oldNextUrl),
+            directMediaNavigationCandidate(targetUrl),
+            directMediaNavigationCandidate(nextTargetUrl),
+        });
+
+    QVERIFY(runtime.findPredecodedImage(displayedUrl).has_value());
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, targetUrl);
+}
+
+void TestDocumentSessionMediaPredecodeRuntime::
+    selectedTargetScheduleLoadsTargetWithoutDisplayedImage()
+{
+    ManualImageDataLoader dataLoader;
+    kiriview::DocumentSessionMediaPredecodeRuntime runtime(this, predecodeDependencies(dataLoader));
+    const QUrl videoCursorUrl = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl targetUrl = localUrl(QStringLiteral("/media/02.png"));
+    kiriview::DocumentSessionMediaPredecodeInput input = activeImageInput(videoCursorUrl);
+    input.documentKind = kiriview::DocumentSessionKind::Video;
+    input.imageReady = false;
+    input.primaryDisplayedPredecodeImage.reset();
+
+    runtime.schedule(input, targetUrl,
+        {
+            directMediaNavigationCandidate(videoCursorUrl),
+            directMediaNavigationCandidate(targetUrl),
+        });
+
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, targetUrl);
 }
 
 void TestDocumentSessionMediaPredecodeRuntime::inactiveScheduleDoesNotStartPredecode()

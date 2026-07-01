@@ -243,9 +243,10 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject* owner,
               },
               [this]() { recomputePublicProjection(); },
               [this]() { m_mediaPredecodeRuntime.clear(); },
-              [this](const std::vector<DirectMediaNavigationCandidate>& candidates) {
+              [this](const QUrl& targetUrl,
+                  const std::vector<DirectMediaNavigationCandidate>& candidates) {
                   m_mediaPredecodeRuntime.schedule(
-                      m_mediaPredecodeInputPort.currentInput(), candidates);
+                      m_mediaPredecodeInputPort.currentInput(), targetUrl, candidates);
               },
               [this](const QUrl& url) { openMediaUrl(url); },
           })

@@ -174,6 +174,18 @@ public:
         return false;
     }
 
+    bool finishNewestActiveLoadForUrl(const QUrl& url, QByteArray data)
+    {
+        for (auto load = m_loads.rbegin(); load != m_loads.rend(); ++load) {
+            if (*load != nullptr && (*load)->object != nullptr && (*load)->url == url) {
+                finishDataLoad(*load, std::move(data));
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     void failFrontLoad(const QString& errorString)
     {
         finishLoadError(m_loads.front(), errorString);

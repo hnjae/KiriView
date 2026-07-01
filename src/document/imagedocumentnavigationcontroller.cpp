@@ -119,6 +119,7 @@ void ImageDocumentNavigationController::openImageAtPage(int pageNumber)
 
     invokeIfSet(m_runtimePlanCallback,
         ImageDocumentRuntimePlan {
+            ScheduleAdjacentImagePredecodeOperation { *target, pageNumber - 1 },
             LoadPageNavigationUrlOperation { *target, spreadTransition },
         });
 }

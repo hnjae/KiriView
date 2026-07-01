@@ -14,6 +14,58 @@
 #include <vector>
 
 namespace kiriview {
+namespace {
+    std::optional<std::vector<DisplayedPredecodeImage>> displayedPredecodeImages(
+        ImageDocumentState& state, ImagePageSurfaceController& pageSurfaceController,
+        std::optional<DisplayedPredecodeImage> secondaryImage)
+    {
+        std::optional<StaticDisplayImagePayload> displayImage
+            = pageSurfaceController.displayImage();
+        if (!pageSurfaceController.hasImage() || state.displayedUrl().isEmpty()
+            || !displayImage.has_value()) {
+            return std::nullopt;
+        }
+
+        DisplayedPredecodeImage primaryImage {
+            state.displayedImageLocation(),
+            pageSurfaceController.isPredecodeCacheable(),
+            std::move(displayImage),
+            state.embeddedMetadata(),
+        };
+        std::vector<DisplayedPredecodeImage> displayedImages;
+        displayedImages.push_back(std::move(primaryImage));
+        if (secondaryImage.has_value()) {
+            displayedImages.push_back(std::move(*secondaryImage));
+        }
+
+        return displayedImages;
+    }
+
+    std::optional<DisplayedImageLocation> predecodeLocationForTarget(
+        const ImageDocumentPageTarget& target, const DisplayedImageLocation& currentLocation)
+    {
+        if (target.kind != ImageDocumentPageKind::Image || target.url.isEmpty()) {
+            return std::nullopt;
+        }
+
+        if (displayedLocationIsInsideOpenedCollectionScope(currentLocation)
+            && openedCollectionScopeContainsUrl(
+                currentLocation.openedCollectionScope(), target.url)) {
+            return DisplayedImageLocation::fromOpenedCollectionScope(
+                target.url, currentLocation.openedCollectionScope());
+        }
+
+        return DisplayedImageLocation::fromUrl(target.url);
+    }
+
+    bool predecodeScopeAllowed(
+        const DisplayedImageLocation& location, bool ordinaryDirectMediaPredecodeEnabled)
+    {
+        return ordinaryDirectMediaPredecodeEnabled
+            || displayedLocationIsInsideOpenedCollectionScope(location);
+    }
+}
+
 ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject* parent,
     ImageDocumentState& state, ImagePageSurfaceController& pageSurfaceController,
     ImagePresentationRuntime& presentationRuntime,
@@ -39,38 +91,55 @@ ImageDocumentPredecodeController::~ImageDocumentPredecodeController() = default;
 void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
     std::optional<DisplayedPredecodeImage> secondaryImage)
 {
-    std::optional<StaticDisplayImagePayload> displayImage = m_pageSurfaceController.displayImage();
-    if (!m_pageSurfaceController.hasImage() || m_state.displayedUrl().isEmpty()
-        || !displayImage.has_value()) {
+    std::optional<std::vector<DisplayedPredecodeImage>> displayedImages
+        = displayedPredecodeImages(m_state, m_pageSurfaceController, std::move(secondaryImage));
+    if (!displayedImages.has_value()) {
         m_coordinator->cancel();
         return;
     }
 
-    if (!m_ordinaryDirectMediaPredecodeEnabled
-        && !displayedLocationIsInsideOpenedCollectionScope(m_state.displayedImageLocation())) {
+    const DisplayedImageLocation currentLocation = m_state.displayedImageLocation();
+    if (!predecodeScopeAllowed(currentLocation, m_ordinaryDirectMediaPredecodeEnabled)) {
         m_coordinator->cancel();
         return;
-    }
-
-    DisplayedPredecodeImage primaryImage {
-        m_state.displayedImageLocation(),
-        m_pageSurfaceController.isPredecodeCacheable(),
-        std::move(displayImage),
-        m_state.embeddedMetadata(),
-    };
-    const DisplayedImageLocation currentLocation = primaryImage.location;
-    std::vector<DisplayedPredecodeImage> displayedImages;
-    displayedImages.push_back(std::move(primaryImage));
-    if (secondaryImage.has_value()) {
-        displayedImages.push_back(std::move(*secondaryImage));
     }
 
     m_coordinator->schedule(ImagePredecodeCoordinator::Context {
         currentLocation,
-        std::move(displayedImages),
+        std::move(*displayedImages),
         m_presentationRuntime.firstDisplayDecodeContext(),
         m_currentPageNumber ? m_currentPageNumber() - 1 : -1,
         {},
+    });
+}
+
+void ImageDocumentPredecodeController::scheduleImageNavigationTargetPredecode(
+    const ImageDocumentPageTarget& target, int targetPageIndex,
+    std::optional<DisplayedPredecodeImage> secondaryImage)
+{
+    const std::optional<DisplayedImageLocation> targetLocation
+        = predecodeLocationForTarget(target, m_state.displayedImageLocation());
+    if (!targetLocation.has_value()) {
+        return;
+    }
+
+    if (!predecodeScopeAllowed(*targetLocation, m_ordinaryDirectMediaPredecodeEnabled)) {
+        return;
+    }
+
+    std::optional<std::vector<DisplayedPredecodeImage>> displayedImages
+        = displayedPredecodeImages(m_state, m_pageSurfaceController, std::move(secondaryImage));
+    if (!displayedImages.has_value()) {
+        return;
+    }
+
+    m_coordinator->schedule(ImagePredecodeCoordinator::Context {
+        *targetLocation,
+        std::move(*displayedImages),
+        m_presentationRuntime.firstDisplayDecodeContext(),
+        targetPageIndex,
+        {},
+        true,
     });
 }
 

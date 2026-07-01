@@ -21,15 +21,23 @@ DocumentSessionMediaPredecodeRuntime::~DocumentSessionMediaPredecodeRuntime() = 
 void DocumentSessionMediaPredecodeRuntime::schedule(const DocumentSessionMediaPredecodeInput& input,
     std::vector<DirectMediaNavigationCandidate> candidates)
 {
+    schedule(input, QUrl(), std::move(candidates));
+}
+
+void DocumentSessionMediaPredecodeRuntime::schedule(const DocumentSessionMediaPredecodeInput& input,
+    const QUrl& selectedTargetUrl, std::vector<DirectMediaNavigationCandidate> candidates)
+{
     if (!input.directMediaNavigationActive || input.currentUrl.isEmpty()) {
         return;
     }
 
+    const bool immediate = !selectedTargetUrl.isEmpty();
     m_coordinator->schedule(MediaPredecodeCoordinator::Context {
-        input.currentUrl,
+        immediate ? selectedTargetUrl : input.currentUrl,
         std::move(candidates),
         displayedImages(input),
         input.firstDisplayDecodeContext,
+        immediate,
     });
 }
 

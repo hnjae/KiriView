@@ -55,7 +55,7 @@ void DocumentSessionDirectMediaNavigationApplicationRuntime::applyRefresh(
     invokeIfSet(m_ports.applyRevealAction, application.revealAction);
     invokeIfSet(m_ports.publishProjection);
     if (application.schedulePredecode) {
-        invokeIfSet(m_ports.schedulePredecode, application.candidates);
+        invokeIfSet(m_ports.schedulePredecode, QUrl(), application.candidates);
     }
 }
 
@@ -82,7 +82,8 @@ void DocumentSessionDirectMediaNavigationApplicationRuntime::applyOpen(
     invokeIfSet(m_ports.applyRevealAction, application.revealAction);
     invokeIfSet(m_ports.publishProjection);
     if (application.schedulePredecode) {
-        invokeIfSet(m_ports.schedulePredecode, application.candidates);
+        invokeIfSet(m_ports.schedulePredecode, application.routeTargetUrl.value_or(QUrl()),
+            application.candidates);
     }
     if (application.routeTargetUrl.has_value()) {
         invokeIfSet(m_ports.routeMediaUrl, *application.routeTargetUrl);

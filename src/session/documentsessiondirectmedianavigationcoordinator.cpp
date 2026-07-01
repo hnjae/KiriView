@@ -44,9 +44,10 @@ DocumentSessionDirectMediaNavigationCoordinator::DocumentSessionDirectMediaNavig
                   m_ports.clearPredecode();
               }
           },
-          [this](const std::vector<DirectMediaNavigationCandidate>& candidates) {
+          [this](const QUrl& targetUrl,
+              const std::vector<DirectMediaNavigationCandidate>& candidates) {
               if (m_ports.schedulePredecode) {
-                  m_ports.schedulePredecode(candidates);
+                  m_ports.schedulePredecode(targetUrl, candidates);
               }
           },
           [this](const QUrl& url) {

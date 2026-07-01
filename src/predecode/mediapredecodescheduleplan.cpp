@@ -35,6 +35,7 @@ MediaPredecodeSchedulePlan mediaPredecodeSchedulePlan(MediaPredecodeScheduleRequ
             ? static_cast<int>(*payload->eligibleImages.currentMediaIndex)
             : -1,
         std::move(payload),
+        request.immediate,
     };
     return MediaPredecodeSchedulePlan { std::move(context) };
 }

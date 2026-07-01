@@ -19,6 +19,10 @@ void appendNavigationEffectRuntimeOperation(kiriview::ImageDocumentRuntimePlan& 
         [&plan](const auto& payload) {
             using Effect = std::decay_t<decltype(payload)>;
             if constexpr (std::is_same_v<Effect, kiriview::OpenImageDocumentPageUrlEffect>) {
+                plan.push_back(kiriview::ScheduleAdjacentImagePredecodeOperation {
+                    payload.target,
+                    -1,
+                });
                 plan.push_back(kiriview::LoadPageNavigationUrlOperation { payload.target, false });
             } else if constexpr (std::is_same_v<Effect,
                                      kiriview::OpenContainerImageDocumentPageNavigationEffect>) {

@@ -28,6 +28,7 @@ public:
         std::vector<DirectMediaNavigationCandidate> candidates;
         std::vector<DisplayedPredecodeImage> displayedImages;
         ImageFirstDisplayDecodeContext firstDisplayContext;
+        bool immediate = false;
     };
 
     MediaPredecodeCoordinator(QObject* parent, MediaPredecodeDependencies dependencies);

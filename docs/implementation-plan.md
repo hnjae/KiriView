@@ -129,7 +129,14 @@ Expected tests/checks:
 
 ### Milestone 4: Schedule Predecode From Navigation Selection
 
-Status: Not started
+Status: Completed
+
+Completed notes:
+
+- Predecode schedule contexts can now mark selected-target work as immediate, which cancels obsolete background work and starts the target-centered window without waiting for the normal debounce.
+- Image-document page navigation now schedules a target-centered still-image predecode before loading the selected image; video rows do not start image predecode work.
+- Direct-media active navigation now passes explicit route targets into media predecode so Page Up/Page Down/Home/End and numbered selection can reprioritize around the selected target before route execution.
+- Immediate selected-target schedules center window planning on the selected target while still treating the actually displayed image as the already-displayed cache entry, so the selected target itself remains eligible for predecode when it is not already displayed.
 
 Dependencies: Milestones 1 through 3
 

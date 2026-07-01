@@ -67,6 +67,7 @@ struct ApplicationFixture
         = kiriview::DocumentSessionDirectMediaNavigationRevealAction::None;
     int clearPredecodeCount = 0;
     std::vector<kiriview::DirectMediaNavigationCandidate> predecodeCandidates;
+    QUrl predecodeTargetUrl;
     QUrl routeTargetUrl;
     kiriview::DocumentSessionDirectMediaNavigationApplicationRuntime runtime {
         kiriview::DocumentSessionDirectMediaNavigationApplicationPorts {
@@ -84,8 +85,10 @@ struct ApplicationFixture
                 events.push_back(Event::ClearPredecode);
                 ++clearPredecodeCount;
             },
-            [this](const std::vector<kiriview::DirectMediaNavigationCandidate>& candidates) {
+            [this](const QUrl& targetUrl,
+                const std::vector<kiriview::DirectMediaNavigationCandidate>& candidates) {
                 events.push_back(Event::Predecode);
+                predecodeTargetUrl = targetUrl;
                 predecodeCandidates = candidates;
             },
             [this](const QUrl& url) {
@@ -185,6 +188,7 @@ void TestDocumentSessionDirectMediaNavigationApplicationRuntime::
     QCOMPARE(fixture.revealAction,
         kiriview::DocumentSessionDirectMediaNavigationRevealAction::UsePendingOrProgrammaticSync);
     QCOMPARE(fixture.predecodeCandidates.size(), std::size_t(2));
+    QVERIFY(fixture.predecodeTargetUrl.isEmpty());
     QCOMPARE(fixture.events,
         (std::vector<ApplicationFixture::Event> { ApplicationFixture::Event::SetNavigation,
             ApplicationFixture::Event::Reveal, ApplicationFixture::Event::Publish,
@@ -226,6 +230,7 @@ void TestDocumentSessionDirectMediaNavigationApplicationRuntime::
         kiriview::DocumentSessionDirectMediaNavigationRevealAction::
             UsePendingOrProgrammaticSyncAndKeepPending);
     QCOMPARE(fixture.predecodeCandidates.size(), std::size_t(2));
+    QCOMPARE(fixture.predecodeTargetUrl, nextUrl);
     QCOMPARE(fixture.routeTargetUrl, nextUrl);
     QCOMPARE(fixture.events,
         (std::vector<ApplicationFixture::Event> { ApplicationFixture::Event::SetNavigation,
