@@ -13,6 +13,7 @@ class TestDocumentSessionImageDocumentCommandRuntime : public QObject
 
 private Q_SLOTS:
     void forwardsSourceRoutingThroughPort();
+    void forwardsSameScopeImageNavigationThroughPort();
     void forwardsPageNavigationThroughPort();
     void forwardsImageDocumentDeletionThroughPort();
 };
@@ -24,10 +25,14 @@ struct ImageCommandProbe
     {
         return kiriview::DocumentSessionImageDocumentCommandPort {
             { [this](const QUrl& url) {
-                sourceUrl = url;
-                events.push_back(
-                    url.isEmpty() ? QStringLiteral("clear-source") : QStringLiteral("set-source"));
-            } },
+                 sourceUrl = url;
+                 events.push_back(
+                     url.isEmpty() ? QStringLiteral("clear-source") : QStringLiteral("set-source"));
+             },
+                [this](const QUrl& url) {
+                    sourceUrl = url;
+                    events.push_back(QStringLiteral("same-scope-source"));
+                } },
             { [this]() { events.push_back(QStringLiteral("previous-page")); },
                 [this]() { events.push_back(QStringLiteral("next-page")); },
                 [this](int number) {
@@ -60,6 +65,18 @@ void TestDocumentSessionImageDocumentCommandRuntime::forwardsSourceRoutingThroug
     QCOMPARE(probe.sourceUrl, QUrl());
     QCOMPARE(probe.events,
         QStringList({ QStringLiteral("set-source"), QStringLiteral("clear-source") }));
+}
+
+void TestDocumentSessionImageDocumentCommandRuntime::forwardsSameScopeImageNavigationThroughPort()
+{
+    ImageCommandProbe probe;
+    kiriview::DocumentSessionImageDocumentCommandRuntime runtime(probe.port());
+    const QUrl imageUrl(QStringLiteral("file:///tmp/next.png"));
+
+    runtime.setSameScopeImageNavigationSourceUrl(imageUrl);
+
+    QCOMPARE(probe.sourceUrl, imageUrl);
+    QCOMPARE(probe.events, QStringList({ QStringLiteral("same-scope-source") }));
 }
 
 void TestDocumentSessionImageDocumentCommandRuntime::forwardsPageNavigationThroughPort()

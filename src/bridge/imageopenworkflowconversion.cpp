@@ -10,6 +10,8 @@ kiriview::RustImageDocumentSourceLoadKind rustSourceLoadKind(
     switch (loadKind) {
     case kiriview::Bridge::ImageDocumentSourceLoadKind::CurrentSource:
         return kiriview::RustImageDocumentSourceLoadKind::CurrentSource;
+    case kiriview::Bridge::ImageDocumentSourceLoadKind::SameScopeImageNavigation:
+        return kiriview::RustImageDocumentSourceLoadKind::SameScopeImageNavigation;
     case kiriview::Bridge::ImageDocumentSourceLoadKind::ReplacementSource:
         return kiriview::RustImageDocumentSourceLoadKind::ReplacementSource;
     }

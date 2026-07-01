@@ -75,6 +75,7 @@ private Q_SLOTS:
     void unsupportedExtensionRoutesToImageDocument();
     void fileNamesMatchCaseInsensitively();
     void sourceRoutesPrepareSessionForTopLevelRouting();
+    void directImageMediaRouteFromImageModeUsesSameScopeNavigationEntry();
     void routePlanDoesNotAdvertiseVideoBeyondDirectUrlClassification();
     void sourceRoutesClearDirectMediaNavigationButMediaRoutesKeepRequestedReadout();
     void directImageCursorActionPreservesStableCursorOnlyForImageReplacement();
@@ -240,6 +241,28 @@ void TestDocumentSessionRoutePlan::sourceRoutesPrepareSessionForTopLevelRouting(
     QVERIFY(!hasOperation<kiriview::ClearSessionErrorStringRouteOperation>(mediaPlan));
     QVERIFY(!hasOperation<kiriview::CancelDirectMediaNavigationRouteOperation>(mediaPlan));
     QVERIFY(!hasOperation<kiriview::CancelMediaDeletionRouteOperation>(mediaPlan));
+}
+
+void TestDocumentSessionRoutePlan::directImageMediaRouteFromImageModeUsesSameScopeNavigationEntry()
+{
+    const QUrl image = localUrl(QStringLiteral("/media/page.png"));
+
+    const kiriview::DocumentSessionRoutePlan imageModeMediaPlan
+        = kiriview::documentSessionRoutePlanForMediaUrl(
+            image, kiriview::DocumentSessionKind::Image);
+    const auto* sameScopeEntry
+        = operationAt<kiriview::EnterImageDocumentSameScopeNavigationRouteOperation>(
+            imageModeMediaPlan, 2);
+    QVERIFY(sameScopeEntry != nullptr);
+    QCOMPARE(sameScopeEntry->url, image);
+    QVERIFY(!hasOperation<kiriview::EnterImageDocumentRouteOperation>(imageModeMediaPlan));
+
+    const kiriview::DocumentSessionRoutePlan videoModeMediaPlan
+        = kiriview::documentSessionRoutePlanForMediaUrl(
+            image, kiriview::DocumentSessionKind::Video);
+    QVERIFY(hasOperation<kiriview::EnterImageDocumentRouteOperation>(videoModeMediaPlan));
+    QVERIFY(!hasOperation<kiriview::EnterImageDocumentSameScopeNavigationRouteOperation>(
+        videoModeMediaPlan));
 }
 
 void TestDocumentSessionRoutePlan::routePlanDoesNotAdvertiseVideoBeyondDirectUrlClassification()

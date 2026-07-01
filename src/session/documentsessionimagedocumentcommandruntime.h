@@ -16,6 +16,7 @@ public:
         DocumentSessionImageDocumentCommandPort commands = {});
 
     void setSourceUrl(const QUrl& sourceUrl);
+    void setSameScopeImageNavigationSourceUrl(const QUrl& sourceUrl);
     void clearSourceUrl();
     MediaEntrySourceVideoPlaybackDeviceResult loadOpenedCollectionVideoPlaybackDevice(
         const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl);

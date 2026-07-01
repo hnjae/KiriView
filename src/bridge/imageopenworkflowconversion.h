@@ -11,6 +11,7 @@ namespace kiriview {
 namespace Bridge {
     enum class ImageDocumentSourceLoadKind {
         CurrentSource,
+        SameScopeImageNavigation,
         ReplacementSource,
     };
 

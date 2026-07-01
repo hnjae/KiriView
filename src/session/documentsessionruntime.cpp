@@ -188,6 +188,12 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject* owner,
               },
               [this](const QUrl& url) {
                   m_state.setOpenedCollectionVideoActive(false);
+                  m_imageDocumentCommandRuntime.setSameScopeImageNavigationSourceUrl(url);
+                  refreshImagePublicSnapshot();
+                  setDocumentKind(DocumentSessionKind::Image);
+              },
+              [this](const QUrl& url) {
+                  m_state.setOpenedCollectionVideoActive(false);
                   m_videoDocumentCommandRuntime.setSourceUrl(url);
                   refreshVideoPublicSnapshot();
                   setDocumentKind(DocumentSessionKind::Video);

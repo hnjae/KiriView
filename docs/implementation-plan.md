@@ -26,7 +26,13 @@ The current predecode scheduler is display-success-driven. It cancels background
 
 ### Milestone 1: Split Image Navigation Target Selection From Source Replacement
 
-Status: Not started
+Status: Completed
+
+Completed notes:
+
+- Same-scope image navigation now has an explicit source-load kind that updates the selected source and starts the image open without replacement-only navigation or predecode cancellation.
+- Ordinary direct media image-to-image navigation from image mode routes through the same same-scope image navigation command; top-level source assignment and video-to-image routing continue to use normal source assignment.
+- Conservative assumption: same-scope image target selection reuses the current opened-collection media-entry source and therefore does not run `PrepareSourceLoadOperation`; active scope changes, container navigation, and other replacement paths still prepare source lifetime through the replacement workflow.
 
 Dependencies: None
 

@@ -77,7 +77,8 @@ mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum RustImageDocumentSourceLoadKind {
         CurrentSource = 0,
-        ReplacementSource = 1,
+        SameScopeImageNavigation = 1,
+        ReplacementSource = 2,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -212,6 +213,9 @@ fn rust_image_document_source_load_plan(
 ) -> RustImageDocumentSourceLoadPlan {
     match input.load_kind {
         RustImageDocumentSourceLoadKind::CurrentSource => current_source_load_plan(input),
+        RustImageDocumentSourceLoadKind::SameScopeImageNavigation => {
+            same_scope_image_navigation_load_plan(input)
+        }
         RustImageDocumentSourceLoadKind::ReplacementSource => replacement_source_load_plan(input),
         _ => current_source_load_plan(input),
     }
@@ -282,6 +286,28 @@ fn replacement_source_load_plan(
             RustImageDocumentSourceLoadOperation::NotifyRightToLeftReadingChanged,
         );
     }
+    plan
+}
+
+fn same_scope_image_navigation_load_plan(
+    input: RustImageDocumentSourceLoadPolicyInput,
+) -> RustImageDocumentSourceLoadPlan {
+    let mut plan = source_load_plan();
+    push_source_load_if(
+        &mut plan,
+        !input.preserve_two_page_spread_transition,
+        RustImageDocumentSourceLoadOperation::FinishSpreadTransition,
+    );
+    apply_right_to_left_reading_transition(&mut plan, input, false);
+    push_source_load_operation(
+        &mut plan,
+        RustImageDocumentSourceLoadOperation::ClearLoadingContainerNavigationUrl,
+    );
+    push_source_load_operation(
+        &mut plan,
+        RustImageDocumentSourceLoadOperation::SetSourceUrlToRequested,
+    );
+    push_source_load_operation(&mut plan, RustImageDocumentSourceLoadOperation::BeginOpen);
     plan
 }
 
@@ -989,6 +1015,47 @@ mod tests {
                     RustImageDocumentSourceLoadOperation::SetContainerNavigationUrlToRequested,
                 ],
             }
+        );
+    }
+
+    #[test]
+    fn same_scope_image_navigation_load_plan_begins_open_without_replacement_resets() {
+        assert_eq!(
+            rust_image_document_source_load_plan(source_load_policy_input(
+                RustImageDocumentSourceLoadKind::SameScopeImageNavigation,
+                true,
+                false,
+                false,
+                false,
+            )),
+            RustImageDocumentSourceLoadPlan {
+                operations: vec![
+                    RustImageDocumentSourceLoadOperation::CancelFileDeletion,
+                    RustImageDocumentSourceLoadOperation::ClearLoadingContainerNavigationUrl,
+                    RustImageDocumentSourceLoadOperation::SetSourceUrlToRequested,
+                    RustImageDocumentSourceLoadOperation::BeginOpen,
+                ],
+            }
+        );
+
+        assert_eq!(
+            rust_image_document_source_load_plan(source_load_policy_input(
+                RustImageDocumentSourceLoadKind::SameScopeImageNavigation,
+                false,
+                true,
+                false,
+                false,
+            ))
+            .operations,
+            vec![
+                RustImageDocumentSourceLoadOperation::CancelFileDeletion,
+                RustImageDocumentSourceLoadOperation::FinishSpreadTransition,
+                RustImageDocumentSourceLoadOperation::ResetRightToLeftReading,
+                RustImageDocumentSourceLoadOperation::NotifyRightToLeftReadingChanged,
+                RustImageDocumentSourceLoadOperation::ClearLoadingContainerNavigationUrl,
+                RustImageDocumentSourceLoadOperation::SetSourceUrlToRequested,
+                RustImageDocumentSourceLoadOperation::BeginOpen,
+            ]
         );
     }
 

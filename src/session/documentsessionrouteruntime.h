@@ -36,6 +36,7 @@ struct DocumentSessionRouteDocumentPorts
     std::function<void()> leaveVideoMode;
     std::function<void()> enterEmptyDocument;
     std::function<void(const QUrl&)> enterImageDocument;
+    std::function<void(const QUrl&)> enterImageDocumentSameScopeNavigation;
     std::function<void(const QUrl&)> enterVideoDocument;
 };
 

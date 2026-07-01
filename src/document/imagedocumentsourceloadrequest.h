@@ -15,6 +15,7 @@ struct ImageDocumentSourceLoadRequest
     ImageDocumentPageKind sourceKind = ImageDocumentPageKind::Image;
     QUrl containerNavigationUrl;
     bool preserveTwoPageSpreadTransition = false;
+    bool sameScopeImageNavigation = false;
 
     static ImageDocumentSourceLoadRequest fromUrl(const QUrl& sourceUrl)
     {
@@ -23,7 +24,7 @@ struct ImageDocumentSourceLoadRequest
 
     static ImageDocumentSourceLoadRequest fromTarget(const ImageDocumentPageTarget& target)
     {
-        return ImageDocumentSourceLoadRequest { target.url, target.kind, QUrl(), false };
+        return ImageDocumentSourceLoadRequest { target.url, target.kind, QUrl(), false, false };
     }
 
     static ImageDocumentSourceLoadRequest fromContainerImage(
@@ -36,7 +37,8 @@ struct ImageDocumentSourceLoadRequest
     static ImageDocumentSourceLoadRequest fromContainerTarget(
         const ImageDocumentPageTarget& target, const QUrl& containerUrl)
     {
-        return ImageDocumentSourceLoadRequest { target.url, target.kind, containerUrl, false };
+        return ImageDocumentSourceLoadRequest { target.url, target.kind, containerUrl, false,
+            false };
     }
 
     static ImageDocumentSourceLoadRequest fromPageNavigation(
@@ -55,7 +57,13 @@ struct ImageDocumentSourceLoadRequest
             target.kind,
             QUrl(),
             preserveTwoPageSpreadTransition,
+            true,
         };
+    }
+
+    static ImageDocumentSourceLoadRequest fromSameScopeImageNavigationUrl(const QUrl& sourceUrl)
+    {
+        return fromPageNavigation(sourceUrl, true);
     }
 };
 }

@@ -57,6 +57,7 @@ public:
     QUrl sourceUrl() const;
     ImageDocumentPageKind sourceKind() const;
     void setSourceUrl(const QUrl& sourceUrl);
+    void setSameScopeImageNavigationSourceUrl(const QUrl& sourceUrl);
     MediaEntrySourceVideoPlaybackDeviceResult loadOpenedCollectionVideoPlaybackDevice(
         const OpenedCollectionScopeLocation& openedCollectionScope, const QUrl& videoUrl) const;
     ImageDocumentStatus status() const;

@@ -6,6 +6,11 @@
 #include "navigation/mediaformatregistry.h"
 
 namespace {
+enum class ImageDocumentEnterMode {
+    SourceAssignment,
+    SameScopeNavigation,
+};
+
 void prependMutations(kiriview::DocumentSessionRoutePlan& plan,
     std::vector<kiriview::DocumentSessionRouteMutation> mutations)
 {
@@ -74,15 +79,25 @@ void appendDirectImageCursorOperation(
         kiriview::ClearThenRequestDirectImageCursorRouteOperation { plan.sourceUrl });
 }
 
-void appendEnterImageDocumentMutations(kiriview::DocumentSessionRoutePlan& plan)
+void appendEnterImageDocumentMutations(
+    kiriview::DocumentSessionRoutePlan& plan, ImageDocumentEnterMode enterMode)
 {
     plan.mutations.push_back(kiriview::LeaveVideoModeRouteOperation {});
-    plan.mutations.push_back(kiriview::EnterImageDocumentRouteOperation { plan.sourceUrl });
+    switch (enterMode) {
+    case ImageDocumentEnterMode::SourceAssignment:
+        plan.mutations.push_back(kiriview::EnterImageDocumentRouteOperation { plan.sourceUrl });
+        return;
+    case ImageDocumentEnterMode::SameScopeNavigation:
+        plan.mutations.push_back(
+            kiriview::EnterImageDocumentSameScopeNavigationRouteOperation { plan.sourceUrl });
+        return;
+    }
 }
 
-void appendRefreshableImageDocumentRoute(kiriview::DocumentSessionRoutePlan& plan)
+void appendRefreshableImageDocumentRoute(
+    kiriview::DocumentSessionRoutePlan& plan, ImageDocumentEnterMode enterMode)
 {
-    appendEnterImageDocumentMutations(plan);
+    appendEnterImageDocumentMutations(plan, enterMode);
     plan.mutations.push_back(kiriview::SyncDirectImageCursorFromDocumentRouteOperation {});
     plan.mutations.push_back(kiriview::UseImageDocumentSourceIdentityRouteOperation {});
     plan.publishPublicProjection = true;
@@ -120,14 +135,14 @@ kiriview::DocumentSessionRoutePlan directVideoRoutePlan(const QUrl& sourceUrl)
     return plan;
 }
 
-kiriview::DocumentSessionRoutePlan directImageRoutePlan(
-    const QUrl& sourceUrl, kiriview::DocumentSessionKind currentKind)
+kiriview::DocumentSessionRoutePlan directImageRoutePlan(const QUrl& sourceUrl,
+    kiriview::DocumentSessionKind currentKind, ImageDocumentEnterMode enterMode)
 {
     kiriview::DocumentSessionRoutePlan plan;
     plan.kind = kiriview::DocumentSessionRouteKind::DirectImage;
     plan.sourceUrl = sourceUrl;
     appendDirectImageCursorOperation(plan, currentKind);
-    appendRefreshableImageDocumentRoute(plan);
+    appendRefreshableImageDocumentRoute(plan, enterMode);
     return plan;
 }
 
@@ -137,7 +152,7 @@ kiriview::DocumentSessionRoutePlan imageDocumentRoutePlan(const QUrl& sourceUrl)
     plan.kind = kiriview::DocumentSessionRouteKind::ImageDocument;
     plan.sourceUrl = sourceUrl;
     plan.mutations.push_back(kiriview::ClearDirectMediaCursorRouteOperation {});
-    appendRefreshableImageDocumentRoute(plan);
+    appendRefreshableImageDocumentRoute(plan, ImageDocumentEnterMode::SourceAssignment);
     return plan;
 }
 
@@ -153,7 +168,8 @@ kiriview::DocumentSessionRoutePlan baseRoutePlan(
     }
 
     if (kiriview::isSupportedDirectImageUrl(sourceUrl)) {
-        return directImageRoutePlan(sourceUrl, currentKind);
+        return directImageRoutePlan(
+            sourceUrl, currentKind, ImageDocumentEnterMode::SourceAssignment);
     }
 
     return imageDocumentRoutePlan(sourceUrl);
@@ -172,6 +188,10 @@ DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
 DocumentSessionRoutePlan documentSessionRoutePlanForMediaUrl(
     const QUrl& url, DocumentSessionKind currentKind)
 {
+    if (kiriview::isSupportedDirectImageUrl(url) && currentKind == DocumentSessionKind::Image) {
+        return directImageRoutePlan(url, currentKind, ImageDocumentEnterMode::SameScopeNavigation);
+    }
+
     return baseRoutePlan(url, currentKind);
 }
 

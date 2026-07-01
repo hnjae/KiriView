@@ -331,6 +331,7 @@ private:
     friend class KiriDocumentSession;
 
     void setSourceUrl(const QUrl& sourceUrl);
+    void setSameScopeImageNavigationSourceUrl(const QUrl& sourceUrl);
     kiriview::MediaEntrySourceVideoPlaybackDeviceResult loadOpenedCollectionVideoPlaybackDevice(
         const kiriview::OpenedCollectionScopeLocation& openedCollectionScope,
         const QUrl& videoUrl) const;

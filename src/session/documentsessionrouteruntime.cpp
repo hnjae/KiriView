@@ -167,6 +167,13 @@ void DocumentSessionRouteRuntime::execute(const DocumentSessionRoutePlan& plan)
                             m_ports.documents.enterImageDocument(payload.url);
                         }
                     });
+                } else if constexpr (std::is_same_v<Operation,
+                                         EnterImageDocumentSameScopeNavigationRouteOperation>) {
+                    executeSuppressed([this, &payload]() {
+                        if (m_ports.documents.enterImageDocumentSameScopeNavigation) {
+                            m_ports.documents.enterImageDocumentSameScopeNavigation(payload.url);
+                        }
+                    });
                 } else if constexpr (std::is_same_v<Operation, EnterVideoDocumentRouteOperation>) {
                     executeSuppressed([this, &payload]() {
                         if (m_ports.documents.enterVideoDocument) {

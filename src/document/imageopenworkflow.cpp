@@ -18,6 +18,11 @@ kiriview::Bridge::ImageDocumentSourceLoadKind sourceLoadKind(
         return kiriview::Bridge::ImageDocumentSourceLoadKind::CurrentSource;
     }
 
+    if (request.sameScopeImageNavigation
+        && request.sourceKind == kiriview::ImageDocumentPageKind::Image) {
+        return kiriview::Bridge::ImageDocumentSourceLoadKind::SameScopeImageNavigation;
+    }
+
     return kiriview::Bridge::ImageDocumentSourceLoadKind::ReplacementSource;
 }
 

@@ -20,6 +20,14 @@ void DocumentSessionImageDocumentCommandRuntime::setSourceUrl(const QUrl& source
     }
 }
 
+void DocumentSessionImageDocumentCommandRuntime::setSameScopeImageNavigationSourceUrl(
+    const QUrl& sourceUrl)
+{
+    if (m_commands.source.setSameScopeImageNavigationSourceUrl) {
+        m_commands.source.setSameScopeImageNavigationSourceUrl(sourceUrl);
+    }
+}
+
 void DocumentSessionImageDocumentCommandRuntime::clearSourceUrl() { setSourceUrl(QUrl()); }
 
 MediaEntrySourceVideoPlaybackDeviceResult

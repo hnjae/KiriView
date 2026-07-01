@@ -71,6 +71,11 @@ struct EnterImageDocumentRouteOperation
     QUrl url;
 };
 
+struct EnterImageDocumentSameScopeNavigationRouteOperation
+{
+    QUrl url;
+};
+
 struct EnterVideoDocumentRouteOperation
 {
     QUrl url;
@@ -93,15 +98,16 @@ struct UseImageDocumentSourceIdentityRouteOperation
 {
 };
 
-using DocumentSessionRouteMutation = std::variant<ClearSessionErrorStringRouteOperation,
-    CancelDirectMediaNavigationRouteOperation, CancelMediaDeletionRouteOperation,
-    ClearDirectMediaNavigationRouteOperation, ClearDirectMediaCursorRouteOperation,
-    SetDirectVideoCursorRouteOperation, RequestDirectImageCursorRouteOperation,
-    ClearThenRequestDirectImageCursorRouteOperation, ClearImageDocumentRouteOperation,
-    LeaveVideoModeRouteOperation, EnterEmptyDocumentRouteOperation,
-    EnterImageDocumentRouteOperation, EnterVideoDocumentRouteOperation,
-    SyncDirectImageCursorFromDocumentRouteOperation, ClearSourceIdentityRouteOperation,
-    UseOriginalSourceIdentityRouteOperation, UseImageDocumentSourceIdentityRouteOperation>;
+using DocumentSessionRouteMutation
+    = std::variant<ClearSessionErrorStringRouteOperation, CancelDirectMediaNavigationRouteOperation,
+        CancelMediaDeletionRouteOperation, ClearDirectMediaNavigationRouteOperation,
+        ClearDirectMediaCursorRouteOperation, SetDirectVideoCursorRouteOperation,
+        RequestDirectImageCursorRouteOperation, ClearThenRequestDirectImageCursorRouteOperation,
+        ClearImageDocumentRouteOperation, LeaveVideoModeRouteOperation,
+        EnterEmptyDocumentRouteOperation, EnterImageDocumentRouteOperation,
+        EnterImageDocumentSameScopeNavigationRouteOperation, EnterVideoDocumentRouteOperation,
+        SyncDirectImageCursorFromDocumentRouteOperation, ClearSourceIdentityRouteOperation,
+        UseOriginalSourceIdentityRouteOperation, UseImageDocumentSourceIdentityRouteOperation>;
 
 struct RefreshDirectMediaNavigationAfterRoutingRouteEffect
 {
