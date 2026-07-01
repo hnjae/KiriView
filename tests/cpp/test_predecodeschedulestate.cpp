@@ -26,7 +26,8 @@ std::shared_ptr<const kiriview::PredecodeSchedulePayload> testPayload(int marker
     return payload;
 }
 
-kiriview::PredecodeScheduleContext scheduleContext(const QUrl& url, int pageIndex = 0)
+kiriview::PredecodeScheduleContext scheduleContext(
+    const QUrl& url, int pageIndex = 0, bool immediate = false)
 {
     kiriview::DisplayedPredecodeImage displayedImage {
         kiriview::DisplayedImageLocation::fromUrl(url),
@@ -39,6 +40,7 @@ kiriview::PredecodeScheduleContext scheduleContext(const QUrl& url, int pageInde
         kiriview::ImageFirstDisplayDecodeContext {},
         pageIndex,
         {},
+        immediate,
     };
 }
 
@@ -72,6 +74,7 @@ private Q_SLOTS:
     void schedulePublishesCurrentContextAndPendingGeneration();
     void invalidScheduleCancelsPendingAndClearsCurrentContext();
     void scheduleAcceptsCursorWithoutDisplayedImages();
+    void immediateScheduleStartsSelectedTargetWithoutDebounce();
     void pendingScheduleCarriesPayload();
     void powerSaverSuppressesPendingScheduleButKeepsCurrentContext();
     void disablingPowerSaverReschedulesCurrentContext();
@@ -149,6 +152,24 @@ void TestPredecodeScheduleState::scheduleAcceptsCursorWithoutDisplayedImages()
     QVERIFY(debounceOperation != nullptr);
     QCOMPARE(debounceOperation->schedule.context.currentLocation.imageUrl(), cursorUrl);
     QVERIFY(state.accepts(debounceOperation->schedule.generation));
+}
+
+void TestPredecodeScheduleState::immediateScheduleStartsSelectedTargetWithoutDebounce()
+{
+    kiriview::PredecodeScheduleState state;
+    const QUrl targetUrl = kiriview::TestSupport::indexedImageUrl(12);
+
+    const kiriview::PredecodeScheduleRuntimePlan update
+        = state.schedule(scheduleContext(targetUrl, 12, true), 1000);
+
+    QCOMPARE(update.size(), std::size_t(3));
+    QVERIFY(operationAt<kiriview::CancelBackgroundPredecodeOperation>(update, 0) != nullptr);
+    QVERIFY(operationAt<kiriview::CacheDisplayedPredecodeContextOperation>(update, 1) != nullptr);
+    const auto* startOperation = operationAt<kiriview::StartAdjacentPredecodeOperation>(update, 2);
+    QVERIFY(startOperation != nullptr);
+    QCOMPARE(startOperation->schedule.context.currentLocation.imageUrl(), targetUrl);
+    QVERIFY(startOperation->schedule.context.immediate);
+    QVERIFY(state.accepts(startOperation->schedule.generation));
 }
 
 void TestPredecodeScheduleState::pendingScheduleCarriesPayload()

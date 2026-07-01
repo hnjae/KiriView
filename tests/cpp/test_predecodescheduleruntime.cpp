@@ -31,7 +31,7 @@ kiriview::DisplayedPredecodeImage displayedImage(const QUrl& url)
     };
 }
 
-kiriview::PredecodeScheduleContext scheduleContext(const QUrl& url)
+kiriview::PredecodeScheduleContext scheduleContext(const QUrl& url, bool immediate = false)
 {
     return kiriview::PredecodeScheduleContext {
         kiriview::DisplayedImageLocation::fromUrl(url),
@@ -39,6 +39,7 @@ kiriview::PredecodeScheduleContext scheduleContext(const QUrl& url)
         {},
         1,
         {},
+        immediate,
     };
 }
 
@@ -59,6 +60,7 @@ class TestPredecodeScheduleRuntime : public QObject
 
 private Q_SLOTS:
     void scheduleCachesDisplayedImagesAndStartsAdjacentAfterDebounce();
+    void immediateScheduleStartsAdjacentWithoutDebounce();
     void manualTimerSchedulerFiresDebouncedPredecode();
     void invalidScheduleCancelsDomainBackgroundWork();
     void powerSaverSuppressesAndReschedulesPendingPredecode();
@@ -93,6 +95,33 @@ void TestPredecodeScheduleRuntime::scheduleCachesDisplayedImagesAndStartsAdjacen
     QVERIFY(capturedSchedule.has_value());
     QCOMPARE(capturedSchedule->context.currentLocation.imageUrl(), displayedUrl);
     QVERIFY(runtime.accepts(capturedSchedule->generation));
+}
+
+void TestPredecodeScheduleRuntime::immediateScheduleStartsAdjacentWithoutDebounce()
+{
+    kiriview::PredecodeLoadController loadController(
+        this, kiriview::ImageDecodeDependencies {}, testCacheByteBudget);
+    int startCount = 0;
+    std::optional<kiriview::PredecodePendingSchedule> capturedSchedule;
+    ManualTimerScheduler timerScheduler;
+    kiriview::PredecodeScheduleRuntime runtime(
+        this, loadController,
+        [&startCount, &capturedSchedule](const kiriview::PredecodePendingSchedule& schedule) {
+            ++startCount;
+            capturedSchedule = schedule;
+        },
+        {}, noOpPowerSaverProvider(), timerScheduler.scheduler());
+
+    const QUrl selectedUrl = indexedImageUrl(14);
+    timerScheduler.advanceTo(1000);
+    runtime.schedule(scheduleContext(selectedUrl, true));
+
+    QCOMPARE(startCount, 1);
+    QVERIFY(capturedSchedule.has_value());
+    QCOMPARE(capturedSchedule->context.currentLocation.imageUrl(), selectedUrl);
+    QVERIFY(capturedSchedule->context.immediate);
+    QVERIFY(runtime.accepts(capturedSchedule->generation));
+    QCOMPARE(timerScheduler.timerCount(), std::size_t(0));
 }
 
 void TestPredecodeScheduleRuntime::manualTimerSchedulerFiresDebouncedPredecode()

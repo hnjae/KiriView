@@ -32,6 +32,7 @@ struct PredecodeScheduleContext
     ImageFirstDisplayDecodeContext firstDisplayContext;
     int pageIndex = -1;
     std::shared_ptr<const PredecodeSchedulePayload> payload;
+    bool immediate = false;
 };
 
 struct PredecodePendingSchedule
