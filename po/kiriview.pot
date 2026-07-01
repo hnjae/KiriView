@@ -471,7 +471,7 @@ msgctxt "@info:status"
 msgid "Could not find the selected video in the collection."
 msgstr ""
 
-#: src/archive/mediaentrysourcebackend.cpp
+#: src/archive/mediaentrysourcebackend.cpp src/document/imageopencontroller.cpp
 #, kde-format
 msgctxt "@info:status"
 msgid "KiriView can’t play this video from the selected collection."
@@ -493,13 +493,6 @@ msgstr ""
 #, kde-format
 msgctxt "@item:inlistbox"
 msgid "All files (*)"
-msgstr ""
-
-#: src/document/imageopencontroller.cpp
-#, kde-format
-msgctxt "@info:status"
-msgid ""
-"KiriView can’t play videos inside directly opened archives or directories."
 msgstr ""
 
 #: src/facade/kiriviewapplication.cpp
@@ -996,8 +989,7 @@ msgstr ""
 
 #: src/qml/ImageStateOverlay.qml
 msgctxt "@info:placeholder"
-msgid ""
-"KiriView can’t play videos inside directly opened archives or directories."
+msgid "KiriView can’t play this video from the selected collection."
 msgstr ""
 
 #: src/qml/ImageStateOverlay.qml
