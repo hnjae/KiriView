@@ -48,9 +48,9 @@ When KiriView has a confirmed supported item list for the current scope, Previou
 
 During that loading interval, the page number shown in the UI is the most recent valid page selection requested by the user.
 
-The displayed image URL or direct video source URL continues to mean the media item actually being shown.
+The active navigation selection and the displayed media item may temporarily differ. The active navigation readout, selected thumbnail, and page-number entry follow the most recent valid page selection, while the displayed image URL or direct video source URL continues to mean the media item actually being shown.
 
-For image selections that are still loading and are not displayed from a prepared image, the displayed image URL is empty even though the source URL and active navigation selection already refer to the selected target.
+For image selections that are still loading and are not displayed from a prepared image, KiriView may keep the previous committed image visible when the selection stays inside the same active navigation scope. In that case the displayed image URL continues to identify the previous committed image until the selected image replaces it. If no previous committed image is retained, the displayed image URL is empty even though the source URL and active navigation selection already refer to the selected target.
 
 If users make multiple page selections before loading finishes, only the most recent selection is displayed.
 
@@ -60,7 +60,7 @@ During empty startup, loading intervals without a confirmed same-scope selection
 
 When moving between items in the current scope, the page navigation controls keep their layout stable.
 
-The current page number updates to the newly displayed item, and the known total item count remains visible while KiriView updates the current position.
+The current page number updates to the newly selected item, and the known total item count remains visible while KiriView prepares and commits the selected media item.
 
 ## Adjacent Media
 
@@ -183,6 +183,8 @@ After an image is displayed, KiriView may make adjacent images available for qui
 In an ordinary direct media URL scope, direct videos act as navigation positions for this background image loading even though video frames are not prepared for image-style quick navigation. While a direct video is current, KiriView may continue making nearby supported image files available for quick Previous or Next navigation.
 
 This background work must not change what is displayed until the user opens an adjacent image.
+
+When users select another image in the current active navigation scope, KiriView may reprioritize background loading around the newly selected target before that image is displayed.
 
 When Two-Page Spread shows two pages, both the current primary page and the visible secondary page are treated as displayed images for this background work.
 

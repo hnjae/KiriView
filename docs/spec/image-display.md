@@ -10,13 +10,15 @@ If no media item is selected, the empty state says that no file is selected and 
 
 If the selected image or video cannot be opened while no media item is displayed, the error state explains that the selected file or URL could not be opened, shows the underlying error when available, and offers Open.
 
-If a media item is already displayed and users select a different image, the new selection owns the image viewport immediately. If the new image is already available from prior preparation, it replaces the view immediately; otherwise KiriView clears the previous image presentation and shows the normal loading state until the new image is ready.
+If a media item is already displayed and users move to a different image through the current active navigation scope, the requested image becomes the selected navigation target immediately. If the requested image is already available from prior preparation, it replaces the view immediately; otherwise the previous committed image remains visible until the requested image is ready to display.
+
+If a media item is already displayed and users select a different image outside the current active navigation scope, the new selection owns the image viewport immediately. If the new image is already available from prior preparation, it replaces the view immediately; otherwise KiriView clears the previous image presentation and shows the normal loading state until the new image is ready.
 
 If a media item is already displayed and users select a video, KiriView leaves image mode immediately and shows the video loading state.
 
-If another file is selected before the previous load finishes, only the most recent selection is displayed.
+If another file or navigation target is selected before the previous load finishes, only the most recent selection is displayed.
 
-When a new image is selected while an image is already displayed and the new image is not already available from prior preparation, any running animation stops when the previous image presentation is cleared.
+When a new image outside the current active navigation scope is selected while an image is already displayed and the new image is not already available from prior preparation, any running animation stops when the previous image presentation is cleared.
 
 If the selected URL cannot be read or the file is not a decodable image or playable video, KiriView keeps the selected target active and shows the target's error state instead of restoring the previous media item.
 
@@ -70,7 +72,7 @@ The toolbar keeps its normal application styling.
 
 When an image is ready, the image viewing viewport does not add page padding around the image area.
 
-Readiness-dependent controls, overlays, panning affordances, zoom controls, and image-only actions all use the same current media readiness state. Empty, loading, replacement, error, video, and unsupported-placeholder intervals must not expose stale ready-image affordances from the previously displayed image.
+Readiness-dependent controls, overlays, panning affordances, zoom controls, and image-only actions all use the same current media readiness state. Empty, loading, pending-navigation, replacement, error, video, and unsupported-placeholder intervals must not expose stale ready-image affordances from the previously displayed image.
 
 ## Fit and Zoom State
 
