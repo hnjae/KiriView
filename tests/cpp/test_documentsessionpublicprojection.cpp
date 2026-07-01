@@ -22,6 +22,7 @@ private Q_SLOTS:
     void imageDeletionAvailabilityRequiresReadyImageWithoutPendingReplacement();
     void videoDeletionAvailabilityRequiresSourceWithoutError();
     void deletionProgressSuppressesDeletionAvailability();
+    void pendingImageNavigationKeepsVisibleImageInformationWithoutReadyAffordances();
     void publicSnapshotProjectsRevisionedMixedMediaState();
 };
 
@@ -285,6 +286,43 @@ void TestDocumentSessionPublicProjection::deletionProgressSuppressesDeletionAvai
     kiriview::DocumentSessionPublicProjection projection
         = kiriview::projectDocumentSessionPublicState(input);
     QVERIFY(!projection.displayedFileDeletionAvailable);
+}
+
+void TestDocumentSessionPublicProjection::
+    pendingImageNavigationKeepsVisibleImageInformationWithoutReadyAffordances()
+{
+    const QUrl visibleUrl = QUrl::fromLocalFile(QStringLiteral("/media/visible.png"));
+    kiriview::DocumentSessionPublicSnapshotInput input;
+    input.inputRevision = 11;
+    input.session.documentKind = kiriview::DocumentSessionKind::Image;
+    input.image.displayedUrl = visibleUrl;
+    input.image.directMediaSize = QSize(640, 480);
+    input.image.zoomPercentKnown = true;
+    input.image.zoomPercent = 125.0;
+    input.image.pageNavigation = kiriview::ImageDocumentPageActiveNavigationSnapshot {
+        true,
+        true,
+        true,
+        false,
+        false,
+        2,
+        5,
+    };
+
+    const kiriview::DocumentSessionPublicSnapshot snapshot
+        = kiriview::projectDocumentSessionPublicSnapshot(input, 4);
+
+    QVERIFY(!snapshot.activeImageReady);
+    QVERIFY(!snapshot.actionAvailability.imageReady);
+    QVERIFY(!snapshot.activeZoom.available);
+    QVERIFY(!snapshot.activeZoom.known);
+    QVERIFY(!snapshot.activeZoom.editable);
+    QVERIFY(snapshot.mediaInformation.available);
+    QCOMPARE(snapshot.mediaInformation.kind, kiriview::MediaInformationKind::Image);
+    QCOMPARE(snapshot.mediaInformation.targetUrl, visibleUrl);
+    QCOMPARE(snapshot.mediaInformation.summary, QStringLiteral("Image, 640×480 px"));
+    QCOMPARE(snapshot.projection.activeNavigation.currentNumber, 2);
+    QCOMPARE(snapshot.projection.activeNavigation.count, 5);
 }
 
 void TestDocumentSessionPublicProjection::publicSnapshotProjectsRevisionedMixedMediaState()

@@ -13,11 +13,13 @@ class TestDocumentSessionActiveZoom : public QObject
 
 private Q_SLOTS:
     void derivesImageVideoAndEmptyZoomSnapshots();
+    void pendingImageNavigationDoesNotExposeStaleImageZoom();
 };
 
 void TestDocumentSessionActiveZoom::derivesImageVideoAndEmptyZoomSnapshots()
 {
     kiriview::DocumentSessionPublicImageLeafSnapshot image;
+    image.readyForInformation = true;
     image.zoomPercentKnown = true;
     image.zoomPercent = 125.0;
     kiriview::DocumentSessionPublicVideoLeafSnapshot video;
@@ -56,6 +58,22 @@ void TestDocumentSessionActiveZoom::derivesImageVideoAndEmptyZoomSnapshots()
 
     snapshot = kiriview::documentSessionActiveZoomSnapshot(
         kiriview::DocumentSessionKind::Empty, image, video);
+    QVERIFY(!snapshot.available);
+    QVERIFY(!snapshot.known);
+    QCOMPARE(snapshot.percent, 0.0);
+    QVERIFY(!snapshot.editable);
+}
+
+void TestDocumentSessionActiveZoom::pendingImageNavigationDoesNotExposeStaleImageZoom()
+{
+    kiriview::DocumentSessionPublicImageLeafSnapshot image;
+    image.zoomPercentKnown = true;
+    image.zoomPercent = 125.0;
+    kiriview::DocumentSessionPublicVideoLeafSnapshot video;
+
+    const kiriview::ActiveZoomSnapshot snapshot = kiriview::documentSessionActiveZoomSnapshot(
+        kiriview::DocumentSessionKind::Image, image, video);
+
     QVERIFY(!snapshot.available);
     QVERIFY(!snapshot.known);
     QCOMPARE(snapshot.percent, 0.0);
